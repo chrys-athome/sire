@@ -38,6 +38,8 @@
 #include "Siren/forages.h"
 #include "Siren/errors.h"
 
+#include <QDebug>
+
 using namespace SireCluster;
 using namespace SireID;
 using namespace Siren;

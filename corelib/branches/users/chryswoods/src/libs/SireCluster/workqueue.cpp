@@ -89,6 +89,8 @@ SimpleQueue::SimpleQueue() : WorkQueue(), Thread(QObject::tr("SimpleQueue"))
 SimpleQueue::~SimpleQueue()
 {
     this->kill();
+    waiter.wakeAll();
+    this->wait();
 }
 
 SimpleQueue* SimpleQueue::create(const DormantFrontend &frontend) const
@@ -167,7 +169,7 @@ void SimpleQueue::kill()
 {
     MutexLocker lkr( &datamutex );
     kill_queue = true;
-    end_for_ages(this);
+    waiter.wakeAll();
 }
 
 WorkQueue* SimpleQueue::merge(WorkQueue &other)
@@ -241,95 +243,98 @@ void SimpleQueue::threadMain()
 {
     MutexLocker lkr( &datamutex );
     
-    while (for_ages())
+    try
     {
-        if (kill_queue)
-            return;
-
-        while (not promises_to_process.isEmpty())
+        while (for_ages())
         {
             if (kill_queue)
                 return;
-        
-            lkr.unlock();
-            
-            //see if any of the busy frontends are now idle
-            this->checkForFinishedNodes();
-            
-            ActiveFrontend frontend;
-            
-            while (frontend.isNull())
+
+            while (not promises_to_process.isEmpty())
             {
                 if (kill_queue)
                     return;
             
-                while (not idle_frontends.isEmpty())
+                lkr.unlock();
+                
+                //see if any of the busy frontends are now idle
+                this->checkForFinishedNodes();
+                
+                ActiveFrontend frontend;
+                
+                while (frontend.isNull())
                 {
-                    QUuid idle_frontend = idle_frontends.dequeue();
-                    busy_frontends.append(idle_frontend);
+                    if (kill_queue)
+                        return;
                 
-                    frontend = frontends[idle_frontend].tryActivate();
-                
-                    if (not frontend.isNull())
-                        break;
+                    while (not idle_frontends.isEmpty())
+                    {
+                        QUuid idle_frontend = idle_frontends.dequeue();
+                        busy_frontends.append(idle_frontend);
+                    
+                        frontend = frontends[idle_frontend].tryActivate();
+                    
+                        if (not frontend.isNull())
+                            break;
+                    }
+                    
+                    if (frontend.isNull())
+                    {
+                        if (not this->checkForFinishedNodes())
+                        {
+                            if (not kill_queue) QThread::msleep(500);
+                        }
+                    }
                 }
                 
                 if (frontend.isNull())
                 {
-                    if (not this->checkForFinishedNodes())
-                    {
-                        if (not kill_queue) QThread::msleep(500);
-                    }
+                    //there is no free node available
+                    QThread::msleep(500);
                 }
-            }
-            
-            if (frontend.isNull())
-            {
-                //there is no free node available
-                QThread::msleep(500);
-            }
-            else
-            {
-                //schedule the job
-                lkr.relock();
-                
-                bool need_new_node = false;
-                
-                while (not promises_to_process.isEmpty())
+                else
                 {
-                    Promise p = promises_to_process.dequeue();
-                
-                    if (WorkQueue::runPromise(p, frontend))
+                    //schedule the job
+                    lkr.relock();
+                    
+                    bool need_new_node = false;
+                    
+                    while (not promises_to_process.isEmpty())
                     {
-                        need_new_node = true;
-                        break;
+                        Promise p = promises_to_process.dequeue();
+                    
+                        if (WorkQueue::runPromise(p, frontend))
+                        {
+                            need_new_node = true;
+                            break;
+                        }
                     }
+                    
+                    lkr.unlock();
+                    
+                    if (not need_new_node)
+                        //there is nothing to run
+                        break;
                 }
                 
-                lkr.unlock();
-                
-                if (not need_new_node)
-                    //there is nothing to run
-                    break;
+                lkr.relock();
             }
             
-            lkr.relock();
-        }
-        
-        //there is nothing to process
-        try
-        {
+            //there is nothing to process
             waiter.wait( &datamutex, 5000 );
-        }
-        catch(...)
-        {
+            
             if (kill_queue)
                 return;
-                
-            throw;
-        }
             
-        //see if any of the busy frontends are now idle
-        this->checkForFinishedNodes();
+            //see if any of the busy frontends are now idle
+            this->checkForFinishedNodes();
+        }
+    }
+    catch(...)
+    {
+        if (kill_queue)
+            return;
+                
+        throw;
     }
 }

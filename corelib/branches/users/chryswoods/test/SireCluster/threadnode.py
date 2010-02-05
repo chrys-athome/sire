@@ -1,22 +1,24 @@
 
 from Sire.Cluster import *
 
-Cluster.addThread()
+for i in range(0,5):
+    Cluster.addThread()
 
 print "Getting local node..."
 node = Cluster.getLocalNode()
 print node
 
 print "Submitting job..."
-promise = node.submit( WorkTest(10,7) )
+promises = node.submit( [ WorkTest(10,0), WorkTest(10,0), WorkTest(5,0),
+                          WorkTest(1,11), WorkTest(1,6), WorkTest(1,11) ] )
 
 print "Waiting for job..."
-while not promise.wait(10000):
-   print "Still waiting..."
+promises.wait()
 
 print "Job complete!"
 
-print promise.result()
-print promise.result().isError()
-promise.result().throwError()
+for i in range(0,promises.count()):
+    print promises[i].result()
+    print promises[i].result().isError()
 
+print "End of script"

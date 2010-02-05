@@ -86,8 +86,6 @@ int ResourceManager::resourceListVersion()
 /** Call this function to register a backend with this resource manager */
 void ResourceManager::registerResource(const DormantBackend &backend)
 {
-    qDebug() << "Registering" << backend.toString();
-
     MutexLocker lkr( &(data()->datamutex) );
 
     if (not data()->resources.contains(backend.UID()))
@@ -100,8 +98,6 @@ void ResourceManager::registerResource(const DormantBackend &backend)
                     .arg(backend.UID().toString()), CODELOC );
 
         backend.setUID( QUuid::createUuid() );
-
-        qDebug() << "Registered" << backend.UID();
 
         data()->resources.insert(backend.UID(),backend);
         data()->free_resources.append(backend.UID());
@@ -167,8 +163,6 @@ static ActiveBackend reserveResource(const QList<QUuid> &backends,
     }
     else if (backends.count() == 1)
     {
-        qDebug() << "tryActivate(" << ms << ")";
-        
         if (ms <= 0)
             return data()->resources.value( backends.at(0) ).tryActivate();
         else
@@ -247,8 +241,6 @@ static QUuid pvt_reserveResource(int expires,
 
         QList<QUuid> free_resources = getResources();
      
-        qDebug() << "FREE RESOURCES ==" << free_resources;
-              
         if (free_resources.isEmpty())
         {
             Siren::sleep(60);
@@ -273,8 +265,6 @@ static QUuid pvt_reserveResource(int expires,
                                
             data()->free_resources.removeAll(active.UID());
                                           
-            qDebug() << "CREATED RESERVATION" << reservation_uid;
-                                                                                                                              
             return reservation_uid;
         }
     }
@@ -464,7 +454,6 @@ QList<QUuid> ResourceManager::reserveResources(const QString &description,
 static QUuid pvt_tryReserveResource(int ms, int expires,
                                     boost::function< QList<QUuid>() > getResources )
 {
-    qDebug() << CODELOC << ms;
     QTime t;
     t.start();
 
@@ -472,15 +461,11 @@ static QUuid pvt_tryReserveResource(int ms, int expires,
     {
         ::clearExpiredReservations();
 
-        qDebug() << CODELOC << t.elapsed();
-
         QList<QUuid> free_resources = getResources();
         
         if (free_resources.isEmpty())
         {
             int wait = qMin( 1 + (ms / 2), 60000 );
-        
-            qDebug() << wait;
         
             Siren::msleep(wait);
             ms -= t.restart();
@@ -660,20 +645,15 @@ QList<QUuid> ResourceManager::tryReserveResources(const QString &description,
     if this reservation doesn't exist or has expired */
 ActiveBackend ResourceManager::collectReservation(const QUuid &uid)
 {
-    qDebug() << "COLLECT RESERVATION" << uid;
-
     MutexLocker lkr( &(data()->datamutex) );
     
     QPair<QDateTime,ActiveBackend> reservation = data()->reservations.take(uid);
-    
-    qDebug() << reservation.first << QDateTime::currentDateTime();
     
     if (reservation.first > QDateTime::currentDateTime())
         return reservation.second;
     
     else
     {
-        qDebug() << "RESERVATION EXPIRED!";
         return ActiveBackend();
     }
 }

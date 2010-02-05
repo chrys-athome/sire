@@ -150,9 +150,7 @@ namespace SireCluster
                     
                     promise.resource().result_packet = frontend.result();
 
-                    qDebug() << CODELOC;
                     frontend = ActiveFrontend();
-                    qDebug() << CODELOC;
         
                     if (promise.resource().result_packet.isNull())
                     {
@@ -168,8 +166,6 @@ namespace SireCluster
                         
                     promise.resource().waiter.wakeAll();
                 }
-                
-                qDebug() << CODELOC;
             }
         };
         
@@ -186,7 +182,7 @@ bool Promise::runRemote(ActiveFrontend f)
     
     if (resource().state != PromiseData::IDLE)
         return false;
-        
+
     resource().state = PromiseData::RUNNING;
     resource().watcher.reset( new PromiseWatcher(f, *this) );
     

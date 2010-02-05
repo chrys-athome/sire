@@ -33,6 +33,8 @@
 
 #include "Siren/errors.h"
 
+#include <QDebug>
+
 using namespace Siren;
 using namespace Siren::detail;
 

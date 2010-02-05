@@ -126,7 +126,6 @@ bool Cluster::isRunning()
 /** Add a new ThreadBackend to the current process */
 void Cluster::addThread()
 {
-    qDebug() << "REGISTERING NEW THREADBACKEND";
     ResourceManager::registerResource( DormantBackend( new ThreadBackend() ) );
 }
 
@@ -282,7 +281,6 @@ Node Cluster::getLocalNode(int ms)
     
     while (for_ages())
     {
-        qDebug() << CODELOC << ms;
         QUuid reservation = ResourceManager::tryReserveResource(ms);
         
         if (not reservation.isNull())

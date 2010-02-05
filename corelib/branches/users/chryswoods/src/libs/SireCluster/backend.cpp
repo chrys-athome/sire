@@ -241,7 +241,7 @@ void ThreadBackend::startJob(const WorkPacket &workpacket)
     //block to ensure that only one job can be started 
     //at a time
     MutexLocker lkr( &startmutex );
-    
+
     while (job_is_starting)
     {
         //another thread is trying to start a job - we have to wait
@@ -349,13 +349,9 @@ WorkPacketPtr ThreadBackend::result()
         return WorkPacketPtr();
     else
     {
-        qDebug() << CODELOC;
         WorkPacketPtr final_result = resultpacket;
-        qDebug() << CODELOC;
         job_in_progress = WorkPacketPtr();
-        qDebug() << CODELOC;
         resultpacket = WorkPacketPtr();
-        qDebug() << CODELOC;
         
         return final_result;
     }

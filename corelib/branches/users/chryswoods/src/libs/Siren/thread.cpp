@@ -116,9 +116,7 @@ void Thread::run()
             QUuid::createUuid();
         #endif
     
-        qDebug() << Siren::getThreadString() << "threadMain()";
         this->threadMain();
-        qDebug() << Siren::getThreadString() << "threadMain() completed";
     }
     catch(const Siren::exception &e)
     {
