@@ -127,6 +127,8 @@ SimpleQueue* SimpleQueue::create(const QList<DormantFrontend> &frontends) const
         {
             s->frontends.insert(frontend.UID(), frontend);
             s->idle_frontends.append(frontend.UID());
+            
+            s->start();
         }
     }
     catch(...)
@@ -249,7 +251,7 @@ void SimpleQueue::threadMain()
         {
             if (kill_queue)
                 return;
-
+        
             while (not promises_to_process.isEmpty())
             {
                 if (kill_queue)

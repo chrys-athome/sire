@@ -75,14 +75,6 @@ ResourceManagerData::~ResourceManagerData()
 
 Q_GLOBAL_STATIC( ResourceManagerData, data );
 
-/** Return the version number of the list of resources - this
-    increases every time a resource is registered or unregistered */
-int ResourceManager::resourceListVersion()
-{
-    MutexLocker lkr( &(data()->datamutex) );
-    return data()->resource_version;
-}
-
 /** Call this function to register a backend with this resource manager */
 void ResourceManager::registerResource(const DormantBackend &backend)
 {
@@ -135,23 +127,6 @@ void ResourceManager::unregisterResource(ActiveBackend &backend)
     //now force the deactivation of this backend
     backend.abortJob();
     backend = ActiveBackend();
-}
-
-/** Return the list of available backends, together with their
-    descriptions (note this returns the list of all backends that
-    are available now - even if they are busy) */
-QHash<QUuid,QString> ResourceManager::availableResources()
-{
-    MutexLocker lkr( &(data()->datamutex) );
-    
-    QHash<QUuid,QString> resources;
-    
-    foreach (DormantBackend backend, data()->resources)
-    {
-        resources.insert( backend.UID(), backend.description() );
-    }
-    
-    return resources;
 }
 
 static ActiveBackend reserveResource(const QList<QUuid> &backends,
@@ -290,27 +265,6 @@ QUuid ResourceManager::reserveResource(int expires)
     return ::pvt_reserveResource(expires, &getAllResources);
 }
 
-static QList<QUuid> getResource(const QUuid &uid)
-{
-    QList<QUuid> backends;
-    
-    MutexLocker lkr( &(data()->datamutex) );
-    
-    if (data()->free_resources.contains(uid))
-    {
-        backends.append(uid);
-    }
-    
-    return backends;
-}
-
-/** Reserve the backend with specific UID 'uid' */
-QUuid ResourceManager::reserveResource(const QUuid &uid, int expires)
-{
-    QList<QUuid> (*get)(const QUuid&) = &::getResource;
-    return ::pvt_reserveResource( expires, boost::bind(get,uid) );
-}
-
 static QList<QUuid> getResource(const QString &description)
 {
     QList<QUuid> backends;
@@ -414,33 +368,6 @@ QList<QUuid> ResourceManager::reserveResources(int n, int expires)
     return ::pvt_reserveResources(n, expires, &getAllResources);
 }
 
-static QList<QUuid> getResources(const QList<QUuid> &uids)
-{
-    QList<QUuid> backends;
-    
-    MutexLocker lkr( &(data()->datamutex) );
-
-    foreach (QUuid uid, uids)
-    {
-        if (data()->free_resources.contains(uid))
-        {
-            backends.append(uid);
-        }
-    }
-    
-    return backends;
-}
-
-/** Reserve the backends whose UID's are listed in 'uids'. This blocks
-    until all of these backends are available */
-QList<QUuid> ResourceManager::reserveResources(const QList<QUuid> &uids,
-                                               int expires)
-{
-    QList<QUuid> (*get)(const QList<QUuid>&) = &::getResources;
-    return ::pvt_reserveResources( uids.count(), expires, 
-                                   boost::bind(get,uids) );
-}
-
 /** Reserve 'n' backends that match the passed description. This blocks
     until all of the backends are available */
 QList<QUuid> ResourceManager::reserveResources(const QString &description,
@@ -454,37 +381,14 @@ QList<QUuid> ResourceManager::reserveResources(const QString &description,
 static QUuid pvt_tryReserveResource(int ms, int expires,
                                     boost::function< QList<QUuid>() > getResources )
 {
-    QTime t;
-    t.start();
-
-    while ( for_ages() )
+    if (ms <= 0)
     {
         ::clearExpiredReservations();
-
+        
         QList<QUuid> free_resources = getResources();
         
-        if (free_resources.isEmpty())
-        {
-            int wait = qMin( 1 + (ms / 2), 60000 );
-        
-            Siren::msleep(wait);
-            ms -= t.restart();
-            
-            if (ms <= 0)
-                break;
-            else
-                continue;
-        }
+        ActiveBackend active = ::reserveResource( free_resources, 0 );
 
-        ms -= t.restart();
-
-        if (ms <= 0)
-            break;
-
-        int wait = qMin(ms, 60000);
-
-        ActiveBackend active = ::reserveResource( free_resources, wait );
-        
         if (not active.isNull())
         {
             //ok - we've got a backend - create a reservation
@@ -504,7 +408,60 @@ static QUuid pvt_tryReserveResource(int ms, int expires,
             return reservation_uid;
         }
     }
+    else
+    {
+        QTime t;
+        t.start();
 
+        while ( for_ages() )
+        {
+            ::clearExpiredReservations();
+
+            QList<QUuid> free_resources = getResources();
+            
+            if (free_resources.isEmpty())
+            {
+                int wait = qMin( 1 + (ms / 2), 60000 );
+            
+                Siren::msleep(wait);
+                ms -= t.restart();
+                
+                if (ms <= 0)
+                    break;
+                else
+                    continue;
+            }
+
+            ms -= t.restart();
+
+            if (ms <= 0)
+                break;
+
+            int wait = qMin(ms, 60000);
+
+            ActiveBackend active = ::reserveResource( free_resources, wait );
+            
+            if (not active.isNull())
+            {
+                //ok - we've got a backend - create a reservation
+                //slip which will expire 'expires' milliseconds from now
+                QUuid reservation_uid = QUuid::createUuid();
+                
+                MutexLocker lkr( &(data()->datamutex) );
+                
+                data()->reservations.insert( reservation_uid,
+                                             QPair<QDateTime,ActiveBackend>(
+                                                QDateTime::currentDateTime()
+                                                        .addMSecs(expires),
+                                                active ) );
+                                   
+                data()->free_resources.removeAll(active.UID());
+                                                                          
+                return reservation_uid;
+            }
+        }
+    }
+    
     return QUuid();
 }
 
@@ -514,14 +471,6 @@ static QUuid pvt_tryReserveResource(int ms, int expires,
 QUuid ResourceManager::tryReserveResource(int ms, int expires)
 {
     return ::pvt_tryReserveResource(ms, expires, &getAllResources);
-}
-
-/** Try to reserve the backend with UID 'uid' for up to 'ms' milliseconds */
-QUuid ResourceManager::tryReserveResource(int ms, const QUuid &uid,
-                                          int expires)
-{
-    QList<QUuid> (*get)(const QUuid&) = &::getResource;
-    return ::pvt_tryReserveResource( ms, expires, boost::bind(get,uid) );
 }
 
 /** Try to reserve a backend that matches the description 'description'
@@ -546,71 +495,114 @@ static QList<QUuid> pvt_tryReserveResources(int n, int ms, int expires,
         uids.append( ::pvt_tryReserveResource(ms, expires, getResources) );
         return uids;
     }
-
-    QList<ActiveBackend> actives;
-
-    QTime t;
-    t.start();
-
-    while ( for_ages() )
+    else if (ms <= 0)
     {
+        QList<ActiveBackend> actives;
+        
         ::clearExpiredReservations();
-
-        QList<QUuid> free_resources = getResources();
         
-        ms -= t.restart();
-        
-        if (ms <= 0)
-            break;
-        
-        int wait = qMin(ms, 60000);
-        
-        if (free_resources.isEmpty())
+        for (int i=0; i<n; ++i)
         {
-            Siren::msleep( wait / 2 );
-            continue;
-        }
+            QList<QUuid> free_resources = getResources();
 
-        ActiveBackend active = ::reserveResource( free_resources, wait );
-        
-        if (not active.isNull())
-        {
-            actives.append(active);
-
-            {
-                MutexLocker lkr( &(data()->datamutex) );
-                data()->free_resources.removeAll(active.UID());
-            }
+            ActiveBackend active = ::reserveResource(free_resources, 0);
             
-            if (actives.count() >= n)
-                break;
+            if (not active.isNull())
+                actives.append(active);
         }
-    }
+        
+        QList<QUuid> uids;
+        
+        if (actives.isEmpty())
+            return uids;
+            
+        MutexLocker lkr( &(data()->datamutex) );
+        
+        QDateTime expire_time = QDateTime::currentDateTime().addMSecs(expires);
+        
+        foreach (ActiveBackend active, actives)
+        {
+            //ok - we've got a backend - create a reservation
+            //slip which will expire 'expires' milliseconds from now
+            QUuid reservation_uid = QUuid::createUuid();
+            
+            data()->reservations.insert( reservation_uid,
+                                         QPair<QDateTime,ActiveBackend>(
+                                            expire_time,
+                                            active ) );
+                                                                      
+            uids.append(reservation_uid);
+        }
 
-    QList<QUuid> uids;
-    
-    if (actives.isEmpty())
         return uids;
-        
-    MutexLocker lkr( &(data()->datamutex) );
-    
-    QDateTime expire_time = QDateTime::currentDateTime().addMSecs(expires);
-    
-    foreach (ActiveBackend active, actives)
-    {
-        //ok - we've got a backend - create a reservation
-        //slip which will expire 'expires' milliseconds from now
-        QUuid reservation_uid = QUuid::createUuid();
-        
-        data()->reservations.insert( reservation_uid,
-                                     QPair<QDateTime,ActiveBackend>(
-                                        expire_time,
-                                        active ) );
-                                                                  
-        uids.append(reservation_uid);
     }
+    else
+    {
+        QList<ActiveBackend> actives;
 
-    return uids;
+        QTime t;
+        t.start();
+
+        while ( for_ages() )
+        {
+            ::clearExpiredReservations();
+
+            QList<QUuid> free_resources = getResources();
+            
+            ms -= t.restart();
+            
+            if (ms <= 0)
+                break;
+            
+            int wait = qMin(ms, 60000);
+            
+            if (free_resources.isEmpty())
+            {
+                Siren::msleep( wait / 2 );
+                continue;
+            }
+
+            ActiveBackend active = ::reserveResource( free_resources, wait );
+            
+            if (not active.isNull())
+            {
+                actives.append(active);
+
+                {
+                    MutexLocker lkr( &(data()->datamutex) );
+                    data()->free_resources.removeAll(active.UID());
+                }
+                
+                if (actives.count() >= n)
+                    break;
+            }
+        }
+
+        QList<QUuid> uids;
+        
+        if (actives.isEmpty())
+            return uids;
+            
+        MutexLocker lkr( &(data()->datamutex) );
+        
+        QDateTime expire_time = QDateTime::currentDateTime().addMSecs(expires);
+        
+        foreach (ActiveBackend active, actives)
+        {
+            //ok - we've got a backend - create a reservation
+            //slip which will expire 'expires' milliseconds from now
+            QUuid reservation_uid = QUuid::createUuid();
+            
+            data()->reservations.insert( reservation_uid,
+                                         QPair<QDateTime,ActiveBackend>(
+                                            expire_time,
+                                            active ) );
+                                                                      
+            uids.append(reservation_uid);
+        }
+
+        return uids;
+    }
 }
 
 /** Try to reserve up to 'n' backends for 'ms' milliseconds. This will
@@ -620,16 +612,6 @@ static QList<QUuid> pvt_tryReserveResources(int n, int ms, int expires,
 QList<QUuid> ResourceManager::tryReserveResources(int n, int ms, int expires)
 {
     return ::pvt_tryReserveResources(n, ms, expires, &getAllResources);
-}
-
-/** Try to reserve the backends whose UIDs are in 'uids', for up to 'ms'
-    milliseconds. This will return reservations for all of the backends
-    that were successfully reserved */
-QList<QUuid> ResourceManager::tryReserveResources(const QList<QUuid> &uids, int ms,
-                                                  int expires)
-{
-    QList<QUuid> (*get)(const QList<QUuid>&) = &::getResources;
-    return ::pvt_tryReserveResources( uids.count(), ms, expires, boost::bind(get,uids) );
 }
 
 /** Try to reserve up to 'n' backends that match the description 'description',

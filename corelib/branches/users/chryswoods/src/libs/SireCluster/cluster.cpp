@@ -63,20 +63,6 @@ public:
     /** Mutex to be used with run_waiter (mutex must not be recursive) */
     Mutex run_waiter_mutex;
     
-    /** The UIDs of all known local resources */
-    QSet<QUuid> local_resources;
-    
-    /** The UIDs of all known MPI resources */
-    QSet<QUuid> mpi_resources;
-    
-    /** The version number of the known local resources 
-        (this changes if resources are added or removed) */
-    int local_resource_version;
-    
-    /** The version number of known mpi resources
-        (this changes if resources are added or removed) */
-    int mpi_resource_version;
-    
     /** Whether or not the cluster is currently running */
     bool cluster_is_running;
 };
@@ -86,8 +72,6 @@ Q_GLOBAL_STATIC( ClusterData, clusterData );
 /** Constructor for the global cluster */
 ClusterData::ClusterData() 
             : datamutex( QMutex::Recursive ),
-              local_resource_version(0), 
-              mpi_resource_version(0),
               cluster_is_running(false)
 {}
 
@@ -162,114 +146,56 @@ void Cluster::shutdown()
     clusterData()->run_waiter.wakeAll();
 }
 
-/** Return the UIDs of local resources */
-QList<QUuid> Cluster::localUIDs()
+/** Internal function used to get the node associated with the passed reservation */
+Node Cluster::getReservedLocalNode(const QUuid &reservation)
 {
-    MutexLocker lkr( &(clusterData()->datamutex) );
-    
-    int version = ResourceManager::resourceListVersion();
-    
-    if (clusterData()->local_resource_version != version)
-    {
-        QHash<QUuid,QString> resources = ResourceManager::availableResources();
-        clusterData()->local_resources = resources.keys().toSet();
-        clusterData()->local_resource_version = version;
-    }
+    if (reservation.isNull())
+        return Node();
 
-    return clusterData()->local_resources.toList();
+    ActiveBackend resource = ResourceManager::collectReservation(reservation);
+    
+    if (not resource.isNull())
+    {
+        return Node( SimpleQueue().create(
+                        DormantFrontend(new LocalFrontend(resource)) ) );
+    }
+    else
+        return Node();
 }
 
-/** Return the UIDs of all resources */
-QList<QUuid> Cluster::UIDs()
+/** Internal function used to get the node associated with the passed reservations */
+Nodes Cluster::getReservedLocalNodes(const QList<QUuid> &reservations)
 {
-    MutexLocker lkr( &(clusterData()->datamutex) );
-
-    QList<QUuid> resources;
-    
-    #ifdef SIRE_USE_MPI
+    if (reservations.isEmpty())
+        return Nodes();
+        
+    QHash<QUuid,ActiveBackend> resources 
+                     = ResourceManager::collectReservation(reservations);
+                     
+    if (resources.isEmpty())
+        return Nodes();
+        
+    else
     {
-        int version = SireCluster::MPI::MPICluster::resourceListVersion()
-    
-        if (clusterData()->mpi_resource_version != version)
+        QList<DormantFrontend> frontends;
+        
+        foreach (ActiveBackend resource, resources)
         {
-            QHash<QUuid,QString> resources = 
-                SireCluster::MPI::MPICluster::availableResources();
-            
-            QList<QUuid> mpi_resources = resources.keys();
-        
-            QList<QUuid> local_resources = Cluster::localUIDs();
-        
-            foreach (QUuid local_resource, local_resources)
-            {
-                mpi_resources.removeAll(local_resource);
-            }
-        
-            clusterData()->mpi_resources = mpi_resources;
-            clusterData()->mpi_resource_version = version;
+            frontends.append( DormantFrontend(new LocalFrontend(resource)) );
         }
-        
-        resources += clusterData()->mpi_resources;
-    }
-    #endif // SIRE_USE_MPI
     
-    return clusterData()->local_resources.toList() + resources;
-}
-
-/** Return the descriptions of the local resources in the cluster */
-QHash<QUuid,QString> Cluster::localDescriptions()
-{
-    return ResourceManager::availableResources();
-}
-
-/** Return the descriptions of all of the resources available in the cluster */
-QHash<QUuid,QString> Cluster::descriptions()
-{
-    QHash<QUuid,QString> descs = ResourceManager::availableResources();
-
-    #ifdef SIRE_USE_MPI
-    {
-        QHash<QUuid,QString> mpi = SireCluster::MPI::MPICluster::availableResources();
-    
-        for (QHash<QUuid,QString>::const_iterator it = mpi.constBegin();
-             it != mpi.constEnd();
-             ++it)
-        {
-            if (not descs.contains(it.key()))
-                descs.insert(it.key(), it.value());
-        }
+        return Nodes( SimpleQueue().create(frontends) );
     }
-    #endif // SIRE_USE_MPI
-
-    return descs;
 }
 
-/** Return whether or not the resource identified with UID 'uid'
-    is local to this process */
-bool Cluster::isLocal(const QUuid &uid)
-{
-    return Cluster::localUIDs().contains(uid);
-}
-
-/** Return any local node - this blocks until a local node is available */
+/** Return any local node - this returns a null Node if no node is available */
 Node Cluster::getLocalNode()
 {
-    while (for_ages())
-    {
-        QUuid reservation = ResourceManager::reserveResource();
-    
-        if (not reservation.isNull())
-        {
-            ActiveBackend resource = ResourceManager::collectReservation(reservation);
-            
-            if (not resource.isNull())
-            {
-                return Node( SimpleQueue().create( 
-                                DormantFrontend(new LocalFrontend(resource)) ) );
-            }
-        }
-    }
+    QUuid reservation = ResourceManager::tryReserveResource(0);
 
-    return Node();
+    Node node = Cluster::getReservedLocalNode(reservation);
+
+    return node;
 }
 
 /** Return any local node, but only waiting up to 'ms' milliseconds.
@@ -283,16 +209,10 @@ Node Cluster::getLocalNode(int ms)
     {
         QUuid reservation = ResourceManager::tryReserveResource(ms);
         
-        if (not reservation.isNull())
-        {
-            ActiveBackend resource = ResourceManager::collectReservation(reservation);
-            
-            if (not resource.isNull())
-            {
-                return Node( SimpleQueue().create(
-                                DormantFrontend(new LocalFrontend(resource)) ) );
-            }
-        }
+        Node node = Cluster::getReservedLocalNode(reservation);
+        
+        if (not node.isNull())
+            return node;
         
         ms -= t.restart();
         
@@ -303,112 +223,150 @@ Node Cluster::getLocalNode(int ms)
     return Node();
 }
 
+/** Return any node - this returns a null Node if no node is available */
 Node Cluster::getNode()
 {
-    return Node();
+    return getLocalNode();
 }
 
+/** Return any node - keep trying for up to 'timeout' milliseconds.
+    This returns a null Node if no node is available */
 Node Cluster::getNode(int timeout)
 {
-    return Node();
+    return getLocalNode(timeout);
 }
 
-Node Cluster::getNode(const QUuid &uid)
+Node Cluster::getLocalNode(const QString &description)
 {
-    return Node();
+    QUuid reservation = ResourceManager::tryReserveResource(0, description);
+
+    Node node = Cluster::getReservedLocalNode(reservation);
+        
+    return node;
 }
 
-Node Cluster::getNode(const QUuid &uid, int timeout)
+Node Cluster::getLocalNode(const QString &description, int ms)
 {
-    return Node();
-}
-
-Node Cluster::getLocalNode(const QUuid &uid)
-{
-    return Node();
-}
-
-Node Cluster::getLocalNode(const QUuid &uid, int timeout)
-{
+    QTime t;
+    t.start();
+    
+    while (for_ages())
+    {
+        QUuid reservation = ResourceManager::tryReserveResource(ms, description);
+        
+        Node node = Cluster::getReservedLocalNode(reservation);
+        
+        if (not node.isNull())
+            return node;
+        
+        ms -= t.restart();
+        
+        if (ms <= 0)
+            break;
+    }
+    
     return Node();
 }
 
 Node Cluster::getNode(const QString &description)
 {
-    return Node();
+    return getLocalNode(description);
 }
 
 Node Cluster::getNode(const QString &description, int timeout)
 {
-    return Node();
-}
-
-Node Cluster::getLocalNode(const QString &description)
-{
-    return Node();
-}
-
-Node Cluster::getLocalNode(const QString &description, int timeout)
-{
-    return Node();
-}
-
-Nodes Cluster::getNodes(int nnodes)
-{
-    return Nodes();
-}
-
-Nodes Cluster::getNodes(int nnodes, int timeout)
-{
-    return Nodes();
+    return getLocalNode(description, timeout);
 }
 
 Nodes Cluster::getLocalNodes(int nnodes)
 {
-    return Nodes();
+    QList<QUuid> reservations = ResourceManager::tryReserveResources(nnodes, 0);
+
+    Nodes nodes = Cluster::getReservedLocalNodes(reservations);
+        
+    return nodes;
 }
 
-Nodes Cluster::getLocalNodes(int nnodes, int timeout)
+Nodes Cluster::getLocalNodes(int nnodes, int ms)
 {
-    return Nodes();
+    QTime t;
+    t.start();
+    
+    Nodes nodes;
+    
+    while (for_ages())
+    {
+        QList<QUuid> reservations = ResourceManager::tryReserveResources(nnodes, ms);
+        
+        Nodes new_nodes = Cluster::getReservedLocalNodes(reservations);
+        
+        nnodes -= new_nodes.count();
+        
+        nodes = Nodes::merge(nodes, new_nodes);
+        
+        ms -= t.restart();
+        
+        if (ms <= 0 or nnodes <= 0)
+            break;
+    }
+    
+    return nodes;
 }
 
-Nodes Cluster::getNodes(const QList<QUuid> &uids)
+Nodes Cluster::getNodes(int nnodes)
 {
-    return Nodes();
+    return getLocalNodes(nnodes);
 }
 
-Nodes Cluster::getNodes(const QList<QUuid> &uids, int timeout)
+Nodes Cluster::getNodes(int nnodes, int timeout)
 {
-    return Nodes();
-}
-
-Nodes Cluster::getLocalNodes(const QList<QUuid> &uids)
-{
-    return Nodes();
-}
-
-Nodes Cluster::getLocalNodes(const QList<QUuid> &uids, int timeout)
-{
-    return Nodes();
-}
-
-Nodes Cluster::getNodes(const QString &description, int nnodes)
-{
-    return Nodes();
-}
-
-Nodes Cluster::getNodes(const QString &description, int nnodes, int timeout)
-{
-    return Nodes();
+    return getLocalNodes(nnodes, timeout);
 }
 
 Nodes Cluster::getLocalNodes(const QString &description, int nnodes)
 {
-    return Nodes();
+    QList<QUuid> reservations = ResourceManager::tryReserveResources(description,
+                                                                     nnodes, 0);
+
+    Nodes nodes = Cluster::getReservedLocalNodes(reservations);
+        
+    return nodes;
 }
 
-Nodes Cluster::getLocalNodes(const QString &description, int nnodes, int timeout)
+Nodes Cluster::getLocalNodes(const QString &description, int nnodes, int ms)
 {
-    return Nodes();
+    QTime t;
+    t.start();
+    
+    Nodes nodes;
+    
+    while (for_ages())
+    {
+        QList<QUuid> reservations = ResourceManager::tryReserveResources(description,
+                                                                         nnodes, 
+                                                                         ms);
+        
+        Nodes new_nodes = Cluster::getReservedLocalNodes(reservations);
+        
+        nnodes -= new_nodes.count();
+        
+        nodes = Nodes::merge(nodes, new_nodes);
+        
+        ms -= t.restart();
+        
+        if (ms <= 0 or nnodes <= 0)
+            break;
+    }
+    
+    return nodes;
+}
+
+Nodes Cluster::getNodes(const QString &description, int nnodes)
+{
+    return getLocalNodes(description, nnodes);
+}
+
+Nodes Cluster::getNodes(const QString &description, int nnodes, int timeout)
+{
+    return getLocalNodes(description, nnodes, timeout);
 }

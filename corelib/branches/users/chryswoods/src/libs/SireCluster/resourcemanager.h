@@ -62,30 +62,20 @@ public:
     static void registerResource(const DormantBackend &backend);
     static void unregisterResource(ActiveBackend &backend);
 
-    static QHash<QUuid,QString> availableResources();
-    static int resourceListVersion();
-
     static QUuid reserveResource(int expires=DEFAULT_TIMEOUT);
-    static QUuid reserveResource(const QUuid &uid, int expires=DEFAULT_TIMEOUT);
     static QUuid reserveResource(const QString &description,
                                  int expires=DEFAULT_TIMEOUT);
 
     static QList<QUuid> reserveResources(int n, int expires=DEFAULT_TIMEOUT);
-    static QList<QUuid> reserveResources(const QList<QUuid> &uids,
-                                         int expires=DEFAULT_TIMEOUT);
     static QList<QUuid> reserveResources(const QString &description,
                                          int n, int expires=DEFAULT_TIMEOUT);
     
     static QUuid tryReserveResource(int ms, int expires=DEFAULT_TIMEOUT);
-    static QUuid tryReserveResource(int ms, const QUuid &uid,
-                                    int expires=DEFAULT_TIMEOUT);
     static QUuid tryReserveResource(int ms,
                                     const QString &description,
                                     int expires=DEFAULT_TIMEOUT);
 
     static QList<QUuid> tryReserveResources(int n, int ms, int expires=DEFAULT_TIMEOUT);
-    static QList<QUuid> tryReserveResources(const QList<QUuid> &uids, int ms,
-                                            int expires=DEFAULT_TIMEOUT);
     static QList<QUuid> tryReserveResources(const QString &description,
                                             int n, int ms, int expires=DEFAULT_TIMEOUT);
     

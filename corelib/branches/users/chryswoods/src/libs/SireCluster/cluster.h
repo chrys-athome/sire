@@ -54,13 +54,6 @@ class Nodes;
 class SIRECLUSTER_EXPORT Cluster
 {
 public:
-    static QList<QUuid> UIDs();
-    static QList<QUuid> localUIDs();
-
-    static QHash<QUuid,QString> descriptions();
-    static QHash<QUuid,QString> localDescriptions();
-
-    static bool isLocal(const QUuid &uid);
 
     static void start();
 
@@ -77,12 +70,6 @@ public:
 
     static Node getLocalNode();
     static Node getLocalNode(int timeout);
-
-    static Node getNode(const QUuid &uid);
-    static Node getNode(const QUuid &uid, int timeout);
-
-    static Node getLocalNode(const QUuid &uid);
-    static Node getLocalNode(const QUuid &uid, int timeout);
     
     static Node getNode(const QString &description);
     static Node getNode(const QString &description, int timeout);
@@ -96,17 +83,15 @@ public:
     static Nodes getLocalNodes(int nnodes);
     static Nodes getLocalNodes(int nnodes, int timeout);
     
-    static Nodes getNodes(const QList<QUuid> &uids);
-    static Nodes getNodes(const QList<QUuid> &uids, int timeout);
-    
-    static Nodes getLocalNodes(const QList<QUuid> &uids);
-    static Nodes getLocalNodes(const QList<QUuid> &uids, int timeout);
-    
     static Nodes getNodes(const QString &description, int nnodes);
     static Nodes getNodes(const QString &description, int nnodes, int timeout);
     
     static Nodes getLocalNodes(const QString &description, int nnodes);
     static Nodes getLocalNodes(const QString &description, int nnodes, int timeout);
+
+protected:
+    static Node getReservedLocalNode(const QUuid &uid);
+    static Nodes getReservedLocalNodes(const QList<QUuid> &uids);
 };
 
 }

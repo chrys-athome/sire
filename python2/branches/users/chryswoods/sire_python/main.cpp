@@ -18,6 +18,8 @@
 
 #include "SireBase/process.h"
 
+#include "Siren/forages.h"
+
 #include "pythonpacket.h"
 
 using std::printf;
@@ -51,6 +53,9 @@ void fatal_error_signal (int sig)
      
     // Kill any child processes
     SireBase::Process::killAll();
+
+    // This is the end of for-ages
+    Siren::end_for_ages();
 
     // Now do the clean up actions:
     Cluster::shutdown();
@@ -92,20 +97,21 @@ int main(int argc, char **argv)
  
     try
     {
-        //read the command line options to get the number of
-        //thread per node
-        int ppn = 1;
+        int mpi_rank = 0;
+        int mpi_count = 1;
 
         #ifdef SIRE_USE_MPI
             //start MPI - ABSOLUTELY must use multi-threaded MPI
             ::MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
+            mpi_rank = ::MPI::Get_rank();
+            mpi_count = ::MPI_Get_count();
         #endif
 
         //are we the first node in the cluster?
-        if (Cluster::getRank() == 0)
+        if (mpi_rank == 0)
         {
-            printf("Starting master node (%d of %d): nThreads()=%d\n", 
-                       Cluster::getRank(), Cluster::getCount(), ppn);
+            printf("Starting master node (%d of %d)\n", 
+                       mpi_rank, mpi_rank);
 
             //name this process and thread
             Siren::setProcessString("master");
@@ -168,11 +174,11 @@ int main(int argc, char **argv)
         else
         {
             //this is one of the compute nodes...
-            printf("Starting one of the compute nodes (%d of %d): nThreads()=%d\n", 
-                        Cluster::getRank(), Cluster::getCount(), ppn);
+            printf("Starting one of the compute nodes (%d of %d)\n", 
+                        mpi_rank, mpi_count);
 
             //name this process
-            Siren::setProcessString( QString("compute%1").arg(Cluster::getRank()) );
+            Siren::setProcessString( QString("compute%1").arg(mpi_rank) );
             Siren::setThreadString( "main" );
 
             //exec the Cluster - this starts the cluster and then

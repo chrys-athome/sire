@@ -32,6 +32,17 @@
 #include <QVector>
 #include <QSet>
 
+#include "Siren/convertlist.hpp"
+#include "Siren/convertdict.hpp"
+#include "Siren/convertset.hpp"
+#include "Siren/tuples.hpp"
+
+#include "SireCluster/workpacket.h"
+
+using namespace SireCluster;
+
 void register_SireCluster_containers()
 {
+    register_list< QList<WorkPacketPtr> >();
+    register_list< QVector<WorkPacketPtr> >();
 }

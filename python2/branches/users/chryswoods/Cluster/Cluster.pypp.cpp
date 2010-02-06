@@ -45,16 +45,6 @@ void register_Cluster_class(){
         typedef bp::class_< SireCluster::Cluster > Cluster_exposer_t;
         Cluster_exposer_t Cluster_exposer = Cluster_exposer_t( "Cluster" );
         bp::scope Cluster_scope( Cluster_exposer );
-        { //::SireCluster::Cluster::UIDs
-        
-            typedef ::QList< QUuid > ( *UIDs_function_type )(  );
-            UIDs_function_type UIDs_function_value( &::SireCluster::Cluster::UIDs );
-            
-            Cluster_exposer.def( 
-                "UIDs"
-                , UIDs_function_value );
-        
-        }
         { //::SireCluster::Cluster::addThread
         
             typedef void ( *addThread_function_type )(  );
@@ -63,16 +53,6 @@ void register_Cluster_class(){
             Cluster_exposer.def( 
                 "addThread"
                 , addThread_function_value );
-        
-        }
-        { //::SireCluster::Cluster::descriptions
-        
-            typedef ::QHash< QUuid, QString > ( *descriptions_function_type )(  );
-            descriptions_function_type descriptions_function_value( &::SireCluster::Cluster::descriptions );
-            
-            Cluster_exposer.def( 
-                "descriptions"
-                , descriptions_function_value );
         
         }
         { //::SireCluster::Cluster::getLocalNode
@@ -94,28 +74,6 @@ void register_Cluster_class(){
                 "getLocalNode"
                 , getLocalNode_function_value
                 , ( bp::arg("timeout") ) );
-        
-        }
-        { //::SireCluster::Cluster::getLocalNode
-        
-            typedef ::SireCluster::Node ( *getLocalNode_function_type )( ::QUuid const & );
-            getLocalNode_function_type getLocalNode_function_value( &::SireCluster::Cluster::getLocalNode );
-            
-            Cluster_exposer.def( 
-                "getLocalNode"
-                , getLocalNode_function_value
-                , ( bp::arg("uid") ) );
-        
-        }
-        { //::SireCluster::Cluster::getLocalNode
-        
-            typedef ::SireCluster::Node ( *getLocalNode_function_type )( ::QUuid const &,int );
-            getLocalNode_function_type getLocalNode_function_value( &::SireCluster::Cluster::getLocalNode );
-            
-            Cluster_exposer.def( 
-                "getLocalNode"
-                , getLocalNode_function_value
-                , ( bp::arg("uid"), bp::arg("timeout") ) );
         
         }
         { //::SireCluster::Cluster::getLocalNode
@@ -164,28 +122,6 @@ void register_Cluster_class(){
         }
         { //::SireCluster::Cluster::getLocalNodes
         
-            typedef ::SireCluster::Nodes ( *getLocalNodes_function_type )( ::QList< QUuid > const & );
-            getLocalNodes_function_type getLocalNodes_function_value( &::SireCluster::Cluster::getLocalNodes );
-            
-            Cluster_exposer.def( 
-                "getLocalNodes"
-                , getLocalNodes_function_value
-                , ( bp::arg("uids") ) );
-        
-        }
-        { //::SireCluster::Cluster::getLocalNodes
-        
-            typedef ::SireCluster::Nodes ( *getLocalNodes_function_type )( ::QList< QUuid > const &,int );
-            getLocalNodes_function_type getLocalNodes_function_value( &::SireCluster::Cluster::getLocalNodes );
-            
-            Cluster_exposer.def( 
-                "getLocalNodes"
-                , getLocalNodes_function_value
-                , ( bp::arg("uids"), bp::arg("timeout") ) );
-        
-        }
-        { //::SireCluster::Cluster::getLocalNodes
-        
             typedef ::SireCluster::Nodes ( *getLocalNodes_function_type )( ::QString const &,int );
             getLocalNodes_function_type getLocalNodes_function_value( &::SireCluster::Cluster::getLocalNodes );
             
@@ -225,28 +161,6 @@ void register_Cluster_class(){
                 "getNode"
                 , getNode_function_value
                 , ( bp::arg("timeout") ) );
-        
-        }
-        { //::SireCluster::Cluster::getNode
-        
-            typedef ::SireCluster::Node ( *getNode_function_type )( ::QUuid const & );
-            getNode_function_type getNode_function_value( &::SireCluster::Cluster::getNode );
-            
-            Cluster_exposer.def( 
-                "getNode"
-                , getNode_function_value
-                , ( bp::arg("uid") ) );
-        
-        }
-        { //::SireCluster::Cluster::getNode
-        
-            typedef ::SireCluster::Node ( *getNode_function_type )( ::QUuid const &,int );
-            getNode_function_type getNode_function_value( &::SireCluster::Cluster::getNode );
-            
-            Cluster_exposer.def( 
-                "getNode"
-                , getNode_function_value
-                , ( bp::arg("uid"), bp::arg("timeout") ) );
         
         }
         { //::SireCluster::Cluster::getNode
@@ -295,28 +209,6 @@ void register_Cluster_class(){
         }
         { //::SireCluster::Cluster::getNodes
         
-            typedef ::SireCluster::Nodes ( *getNodes_function_type )( ::QList< QUuid > const & );
-            getNodes_function_type getNodes_function_value( &::SireCluster::Cluster::getNodes );
-            
-            Cluster_exposer.def( 
-                "getNodes"
-                , getNodes_function_value
-                , ( bp::arg("uids") ) );
-        
-        }
-        { //::SireCluster::Cluster::getNodes
-        
-            typedef ::SireCluster::Nodes ( *getNodes_function_type )( ::QList< QUuid > const &,int );
-            getNodes_function_type getNodes_function_value( &::SireCluster::Cluster::getNodes );
-            
-            Cluster_exposer.def( 
-                "getNodes"
-                , getNodes_function_value
-                , ( bp::arg("uids"), bp::arg("timeout") ) );
-        
-        }
-        { //::SireCluster::Cluster::getNodes
-        
             typedef ::SireCluster::Nodes ( *getNodes_function_type )( ::QString const &,int );
             getNodes_function_type getNodes_function_value( &::SireCluster::Cluster::getNodes );
             
@@ -337,17 +229,6 @@ void register_Cluster_class(){
                 , ( bp::arg("description"), bp::arg("nnodes"), bp::arg("timeout") ) );
         
         }
-        { //::SireCluster::Cluster::isLocal
-        
-            typedef bool ( *isLocal_function_type )( ::QUuid const & );
-            isLocal_function_type isLocal_function_value( &::SireCluster::Cluster::isLocal );
-            
-            Cluster_exposer.def( 
-                "isLocal"
-                , isLocal_function_value
-                , ( bp::arg("uid") ) );
-        
-        }
         { //::SireCluster::Cluster::isRunning
         
             typedef bool ( *isRunning_function_type )(  );
@@ -356,26 +237,6 @@ void register_Cluster_class(){
             Cluster_exposer.def( 
                 "isRunning"
                 , isRunning_function_value );
-        
-        }
-        { //::SireCluster::Cluster::localDescriptions
-        
-            typedef ::QHash< QUuid, QString > ( *localDescriptions_function_type )(  );
-            localDescriptions_function_type localDescriptions_function_value( &::SireCluster::Cluster::localDescriptions );
-            
-            Cluster_exposer.def( 
-                "localDescriptions"
-                , localDescriptions_function_value );
-        
-        }
-        { //::SireCluster::Cluster::localUIDs
-        
-            typedef ::QList< QUuid > ( *localUIDs_function_type )(  );
-            localUIDs_function_type localUIDs_function_value( &::SireCluster::Cluster::localUIDs );
-            
-            Cluster_exposer.def( 
-                "localUIDs"
-                , localUIDs_function_value );
         
         }
         { //::SireCluster::Cluster::shutdown
@@ -408,17 +269,12 @@ void register_Cluster_class(){
                 , wait_function_value );
         
         }
-        Cluster_exposer.staticmethod( "UIDs" );
         Cluster_exposer.staticmethod( "addThread" );
-        Cluster_exposer.staticmethod( "descriptions" );
         Cluster_exposer.staticmethod( "getLocalNode" );
         Cluster_exposer.staticmethod( "getLocalNodes" );
         Cluster_exposer.staticmethod( "getNode" );
         Cluster_exposer.staticmethod( "getNodes" );
-        Cluster_exposer.staticmethod( "isLocal" );
         Cluster_exposer.staticmethod( "isRunning" );
-        Cluster_exposer.staticmethod( "localDescriptions" );
-        Cluster_exposer.staticmethod( "localUIDs" );
         Cluster_exposer.staticmethod( "shutdown" );
         Cluster_exposer.staticmethod( "start" );
         Cluster_exposer.staticmethod( "wait" );
