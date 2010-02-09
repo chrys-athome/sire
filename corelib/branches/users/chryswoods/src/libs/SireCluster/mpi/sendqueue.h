@@ -34,11 +34,12 @@
 #include <mpi.h>  // must be at the top, as that is what mpich needs
 
 #include <QQueue>
-#include <QThread>
-#include <QMutex>
-#include <QWaitCondition>
 
 #include <boost/noncopyable.hpp>
+
+#include "Siren/thread.h"
+#include "Siren/mutex.h"
+#include "Siren/waitcondition.h"
 
 #include "messages.h"
 
@@ -57,7 +58,7 @@ namespace MPI
     
     @author Christopher Woods
 */
-class SendQueue : private QThread, public boost::noncopyable
+class SendQueue : private Siren::Thread, public boost::noncopyable
 {
 public:
     SendQueue(::MPI::Intracomm send_comm);
@@ -65,29 +66,31 @@ public:
     
     void start();
     
-    void send(const Message &message);
+    void send(const Envelope &envelope);
     
     void stop();
     
     void wait();
     
+    void kill();
+    
     bool isRunning();
     
 protected:
-    void run();
+    void threadMain();
     
 private:
     /** Mutex to protect access to the queue of messages to send */
-    QMutex datamutex;
+    Siren::Mutex datamutex;
     
     /** Wait condition used to sleep until there is a message to send */
-    QWaitCondition waiter;
+    Siren::WaitCondition waiter;
     
     /** The communicator to use to send messages */
     ::MPI::Intracomm send_comm;
     
     /** The list of messages to send */
-    QQueue<Message> message_queue;
+    QQueue<Envelope> message_queue;
     
     /** Whether or not the queue has been stopped */
     bool been_stopped;

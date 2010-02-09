@@ -34,11 +34,12 @@
 #include <mpi.h> // mpich requires that this goes first
 
 #include <QQueue>
-#include <QThread>
-#include <QMutex>
-#include <QWaitCondition>
 
 #include <boost/noncopyable.hpp>
+
+#include "Siren/thread.h"
+#include "Siren/mutex.h"
+#include "Siren/waitcondition.h"
 
 #include "messages.h"
 
@@ -61,7 +62,7 @@ namespace MPI
     
     @author Christopher Woods
 */
-class ReceiveQueue : private QThread, public boost::noncopyable
+class ReceiveQueue : private Siren::Thread, public boost::noncopyable
 {
 
 protected:
@@ -79,31 +80,33 @@ public:
     
     void stop();
 
+    void kill();
+
     void wait();
     
     bool isRunning();
 
 protected:
-    void run();
-    void run2();
+    void threadMain();
+    void threadMain2();
     
     /** We need to have two background threads running to overlay
         computation with communication - one thread reads messages
         and adds them to the queue, while another thread reads and
         processes messages from the queue */
-    class SecondThread : public QThread
+    class SecondThread : public Siren::Thread
     {
     public:
-        SecondThread(ReceiveQueue *parent) : QThread(), p(parent)
+        SecondThread(ReceiveQueue *parent) : Siren::Thread(), p(parent)
         {}
         
         ~SecondThread()
         {}
         
     protected:
-        void run()
+        void threadMain()
         {
-            p->run2();
+            p->threadMain2();
         }
     
     private:
@@ -111,21 +114,21 @@ protected:
     };
 
 private:
-    Message unpackMessage(const QByteArray &message_data, int sender) const;
+    MessagePtr unpackMessage(const QByteArray &message_data, int sender) const;
 
     SecondThread *secondthread;
 
     /** Mutex to protect access to the queue of received messages */
-    QMutex datamutex;
+    Siren::Mutex datamutex;
     
     /** Wait condition used to sleep until there is a received message to read */
-    QWaitCondition waiter;
+    Siren::WaitCondition waiter;
     
     /** The communicator to use to receive messages */
     ::MPI::Intracomm recv_comm;
     
     /** The list of received messages */
-    QQueue<Message> message_queue;
+    QQueue<MessagePtr> message_queue;
 
     /** Whether or not to keep listening for messages */
     bool keep_listening;

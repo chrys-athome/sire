@@ -30,750 +30,185 @@
 
 #include <mpi.h>   //mpich requires that mpi.h is included first
 
-#include <QHash>
-#include <QMutex>
-#include <QUuid>
-#include <QTextStream>
-
-#include "SireCluster/cluster.h"
-#include "SireCluster/frontend.h"
-#include "SireCluster/backend.h"
-
 #include "mpicluster.h"
-#include "messages.h"
 #include "sendqueue.h"
 #include "receivequeue.h"
-#include "reply.h"
-#include "reservationmanager.h"
-#include "p2pcomm.h"
 
-#include "SireError/errors.h"
-#include "SireError/printerror.h"
-
-#include "sire_config.h"
-
-#include <QDebug>
+#include "Siren/mutex.h"
+#include "Siren/errors.h"
 
 using namespace SireCluster;
 using namespace SireCluster::MPI;
+using namespace Siren;
 
-using boost::shared_ptr;
-
-#ifndef HAVE_LSEEK64
-    //////
-    ////// add an lseek64 function stub to fill a function
-    ////// that is missing - mpich needs lseek64 to be
-    ////// defined, even if it is not available! Otherwise
-    ////// dlopen errors as the symbol can't be found
-    //////
-    extern "C"
-    {
-        int SIREMPI_EXPORT lseek64(int fd, int offset, int whence)
-        {
-            throw SireError::program_bug( QObject::tr(
-                "MPI implementation is calling lseek64 which is not supported "
-                "on OS X (Leopard - 32bit)"), CODELOC );
-            
-            return 0;
-        }
-    }
-#endif // HAVE_LSEEK64
-
-/** Private implementation of MPICluster */
-class MPIClusterPvt
+class MPIClusterData
 {
 public:
-    MPIClusterPvt();
+    MPIClusterData() : send_queue(0), receive_queue(0)
+    {
+        uid = QUuid::createUuid();
+    }
     
-    ~MPIClusterPvt();
+    ~MPIClusterData()
+    {
+        delete send_queue;
+        delete receive_queue;
+    }
     
-    /** Mutex to protect access to the data of this cluster */
-    QMutex datamutex;
+    /** The UID of this MPI process */
+    QUuid uid;
     
-    /** Mutex used to protect access to the reply registry */
-    QMutex replymutex;
-    
-    /** The UIDs of all backends, together with the rank of the 
-        process that contains that backend */
-    QHash<QUuid,int> backend_registry;
-
-    /** All of the active replys on this process - this provides
-        holders that will be filled with the replies to messages.
-        This is indexed by subject UID */
-    QHash<QUuid,ReplyPtr> reply_registry;
-
-    /** The global (private) MPI communicator */
+    /** The MPI communicator used for by SireCluster */
     ::MPI::Intracomm global_comm;
-
-    /** The send message event loop */
+    
+    /** Which MPI rank to send to reach each
+        process (identified by UID) - this allows
+        messages to be routed */
+    QHash<QUuid,int> uid_to_rank;
+    
+    /** Queue used to send messages */
     SendQueue *send_queue;
     
-    /** The receive message event loops */
+    /** Queue used to receive messages */
     ReceiveQueue *receive_queue;
-    
-    /** Whether or not we are being shutdown (or have shutdown) */
-    bool already_shutting_down;
 };
 
-Q_GLOBAL_STATIC( QMutex, mpiGlobalMutex );
+Q_GLOBAL_STATIC( Mutex, mpiMutex );
 
-static MPIClusterPvt *global_cluster = 0;
+static MPIClusterData *d(0);
 
-static MPIClusterPvt* globalCluster()
+/** Return the UID of this process - every process that can be reached
+    via MPI has its own UID (the MPI rank is not used as a process
+    may be in several inter-communicators) */
+QUuid MPICluster::processUID()
 {
-    if (global_cluster == 0)
-    {
-        QMutexLocker lkr( mpiGlobalMutex() );
-        
-        if (global_cluster == 0)
-            global_cluster = new MPIClusterPvt();
-    }
-
-    return global_cluster;
-}
-
-static void ensureMPIStarted()
-{
-    if (not ::MPI::Is_initialized())
-    {
-        int argc = 0;
-        char **argv = 0;
-        
-        //Absolutely must use multi-threaded MPI
-        ::MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
-    }
-}
-
-/** Construct the global cluster */
-MPIClusterPvt::MPIClusterPvt() : send_queue(0), receive_queue(0),
-                                 already_shutting_down(true)
-{
-    //create the private send and receive communicators
-    ::ensureMPIStarted();
-
-    //now make sure that we are using a version of MPI that
-    //has multi-thread support
-    int thread_level = ::MPI::Query_thread();
+    MutexLocker lkr( mpiMutex() );
     
-    if (thread_level != MPI_THREAD_MULTIPLE)
-    {
-        //we can't run without thread support, as we use multiple
-        //communicators running in multiple threads
-        if (MPICluster::isMaster())
-        {
-            QTextStream ts(stderr);
-        
-            ts << QObject::tr("Sire needs to use an MPI that supports threads.\n"
-                    "This means that MPI must have been started using "
-                    "MPI::Init_thread(MPI_THREAD_MULTIPLE), and that the MPI\n"
-                    "library supports multithreaded MPI.\n\n"
-                    "Check if your MPI library has been compiled with thread support.\n");
-        }
-        
-        //stop MPI and exit
-        ::MPI::COMM_WORLD.Barrier();
-        ::MPI::Finalize();
-        
-        //kill the program
-        std::exit(-1);
-    }
-        
-    //get the global MPI communicator
-    ::MPI::Group mpigroup = ::MPI::COMM_WORLD.Get_group();
-    global_comm = ::MPI::COMM_WORLD.Create(mpigroup);
-
-    ::MPI::Intracomm send_comm, recv_comm;
-        
-    if ( MPICluster::isMaster() )
-    {
-        //create the send, then receive communicators
-        send_comm = global_comm.Create(mpigroup);
-        recv_comm = global_comm.Create(mpigroup);
-    }
+    if (d)
+        return d->uid;
     else
-    {
-        //must be the other way around (as all other nodes
-        //listen to the master)
-        recv_comm = global_comm.Create(mpigroup);
-        send_comm = global_comm.Create(mpigroup);
-    }
+        return QUuid();
+}
+
+/** Return the MPI rank of the process that is associated
+    with the passed UID - this is either the rank itself,
+    or the rank of the process that acts as a bridge to
+    the desired process */
+int MPICluster::getRankFor(const QUuid &uid)
+{
+    MutexLocker lkr( mpiMutex() );
     
-    mpigroup.Free();
+    if (not d)
+        throw Siren::unavailable_resource( QObject::tr(
+                "MPI has not been started, so it is not possible "
+                "for it to be used to find the process with UID '%1'.")
+                    .arg(uid.toString()), CODELOC );
+
+    int rank = d->uid_to_rank.value(uid, -1);
     
-    //create and start the reservation manager
-    ReservationManager::start();
-        
-    //create and start the event loops
-    send_queue = new SendQueue(send_comm);
-    receive_queue = new ReceiveQueue(recv_comm);
-        
-    send_queue->start();
-    receive_queue->start();
-
-    //wait for everyone to get here
-    global_comm.Barrier();
-    
-    already_shutting_down = false;
+    if (rank == -1)
+        throw Siren::unavailable_resource( QObject::tr(
+                "The location of the MPI resource that allows "
+                "communication with 
 }
 
-/** Destructor */
-MPIClusterPvt::~MPIClusterPvt()
-{
-    //stop the reservation manager
-    ReservationManager::shutdown();
+/** Return the MPI ranks of the processes that are associated
+    with the passed UIDs */
 
-    global_comm.Free();
 
-    if (send_queue)
-    {
-        send_queue->stop();
-        send_queue->wait();
-        delete send_queue;
-        send_queue = 0;
-    }
-    
-    if (receive_queue)
-    {
-        receive_queue->stop();
-        receive_queue->wait();
-        delete receive_queue;
-        receive_queue = 0;
-    }
-}
-
-/** Start the MPI backend */
-void MPICluster::start()
-{
-    ::ensureMPIStarted();
-    globalCluster();
-}
-
-/** Synchronise the MPI processes - this can be used
-    as a Barrier to ensure that all processes have reached
-    the same point */
-void MPICluster::sync()
-{
-    ::ensureMPIStarted();
-
-    if (not ::MPI::Is_finalized())
-        globalCluster()->global_comm.Barrier();
-}
-
-/** Create a new P2P communicator that allow for direct and
-    private communicator between the processes with ranks
-    'master_rank' and 'slave_rank' */
-P2PComm MPICluster::createP2P(int master_rank, int slave_rank)
-{
-    int my_rank = MPICluster::getRank();
-        
-    bool is_master = (my_rank == master_rank);
-    bool is_slave = (my_rank == slave_rank);
-        
-    if (master_rank == slave_rank)
-    {   
-        //this is an intra-process communicator - no 
-        //need to do anything, unless it is us!
-        if (is_master)
-        {
-            return P2PComm::createLocal();
-        }
-        else
-            return P2PComm();
-    }
-    else
-    {
-        //we need to create a new communicator for this process
-        // - this requires a collective operation
-        QMutexLocker lkr( &(globalCluster()->datamutex) );
-        
-        if (::MPI::Is_finalized())
-            return P2PComm();
-        
-        int rank = 0;
-        
-        if (is_slave)
-            rank = 1;
-        
-        ::MPI::Intracomm private_comm = 
-                    globalCluster()->global_comm.Split( (is_master or is_slave),
-                                                         is_slave );
-        
-        return P2PComm::create(private_comm, master_rank, slave_rank);
-    }
-}
-
-/** Return the rank of this process in the MPI cluster */
-int MPICluster::getRank()
-{
-    ::ensureMPIStarted();
-
-    if (not ::MPI::Is_finalized())
-        return ::MPI::COMM_WORLD.Get_rank();
-    else
-        //MPI has finalized
-        return -1;
-}
-
-/** Return the number of processes in the MPI cluster */
-int MPICluster::getCount()
-{
-    ::ensureMPIStarted();
-    
-    if (not ::MPI::Is_finalized())
-        return ::MPI::COMM_WORLD.Get_size();
-    else
-        //MPI has shut down
-        return 0;
-}
-
-/** Return the rank of the master process */
-int MPICluster::master()
-{
-    return 0;
-}
-
-/** Return whether or not this is the master process */
+/** Return whether or not this is the master process of this
+    MPI cluster - the master process is the one with rank == 0
+    on MPI::COMM_WORLD. The master process is used to route
+    messages between nodes (it is a star network with the master
+    at the center) */
 bool MPICluster::isMaster()
 {
-    return MPICluster::getRank() == MPICluster::master();
-}
-
-/** Send the message 'message' (the destination is available
-    in message.destination()) */
-void MPICluster::send(const Message &message)
-{
-    if (message.isNull())
-        return;
-        
-    globalCluster()->send_queue->send(message);
-}
-
-/** Receive the message 'message' */
-void MPICluster::received(const Message &message)
-{
-    if (message.isNull())
-        return;
-        
-    globalCluster()->receive_queue->received(message);
-}
-
-/** Return the reply object for the message 'message' - this
-    will create a reply object for this message if one doesn't
-    already exist */ 
-Reply MPICluster::getReply(const Message &message)
-{
-    if (message.isNull())
-        return Reply();
-
-    QMutexLocker lkr( &(globalCluster()->replymutex) );
-    
-    Reply reply = globalCluster()->reply_registry.value(message.subjectUID());
-    
-    if (reply.isNull())
-    {
-        //we need to create the reply
-        reply = Reply::create(message);
-        
-        globalCluster()->reply_registry.insert(message.subjectUID(), reply);
-    }
-    
-    //take this opportunity to clear out any dead replies
-    QMutableHashIterator<QUuid,ReplyPtr> it(globalCluster()->reply_registry);
-    
-    while (it.hasNext())
-    {
-        it.next();
-        
-        if (it.value().isNull())
-        {
-            it.remove();
-        }
-    }
-    
-    return reply;
-}
-
-/** Post the result contained in 'result_data' for the message with
-    subject 'subject_uid', which has come from the process with 
-    rank 'sender' */
-void MPICluster::postResult(const QUuid &subject_uid, int sender,
-                            const QByteArray &result_data)
-{
-    QMutexLocker lkr( &(globalCluster()->replymutex) );
-    
-    Reply reply = globalCluster()->reply_registry.value(subject_uid).lock();
-    
-    if (reply.isNull())
-    {
-        qDebug() << "There is no reply on process" << MPICluster::getRank()
-                 << "awaiting the result on the subject"
-                 << subject_uid.toString() << "sent by the process" << sender;
-                 
-        return;
-    }
-    
-    if (not reply.isValidRank(sender))
-    {
-        qDebug() << "There is no space in the reply on process" << MPICluster::getRank()
-                 << "for the result on the subject"
-                 << subject_uid.toString() << "sent by the process" << sender;
-                 
-        return;
-    }
-    
-    reply.setResultFrom(sender, result_data);
-}
- 
-static void fatalError(const QByteArray &error_data,
-                       const QByteArray &message_data, int sender)
-{
-    if (MPICluster::isMaster())
-    {
-        QTextStream ts(stdout);
-        
-        ts << QObject::tr(
-                "\n*********************************************************\n"
-                "There was a fatal error on the MPI process with rank %1.\n\n")
-                    .arg(sender);
-                    
-        try
-        {
-            Message message = Message::unpack(message_data);
-            
-            ts << QObject::tr("The offending message is %1.\n"
-                       "It has UID %2, and was sent by process %3 to "
-                       "destination %4.\n\n")
-                            .arg(message.toString(), message.UID().toString())
-                            .arg(message.sender()).arg(message.destination());
-        }
-        catch(...)
-        {
-            ts << QObject::tr(
-                    "No information about the offending message is available.\n\n");
-        }
-        
-        ts << QObject::tr("_____ Here is the actual error _____\n");
-        
-        try
-        {
-            shared_ptr<SireError::exception> 
-                        e = SireError::exception::unpack(error_data);
-                        
-            SireError::printError( *e );
-        }
-        catch(const SireError::exception &e2)
-        {
-            SireError::printError(e2);
-        }
-        catch(...)
-        {
-            SireError::printError( SireError::unknown_exception( QObject::tr(
-                "Something went wrong when reading the error!"), CODELOC ) );
-        }
-        
-        //now shutdown the cluster
-        Cluster::shutdown();
-    }
-    else
-    {
-        MPICluster::send( Messages::Error(message_data, error_data) );
-    }
-}
- 
-/** Post the error contained in 'error_data' for the message with
-    subject 'subject_uid' (contained in 'message_data'), which has 
-    come from the process with rank 'sender' */
-void MPICluster::postError(const QUuid &subject_uid, int sender,
-                           const QByteArray &message_data,
-                           const QByteArray &error_data)
-{
-    QMutexLocker lkr( &(globalCluster()->replymutex) );
-    
-    Reply reply = globalCluster()->reply_registry.value(subject_uid).lock();
-    
-    if (reply.isNull())
-    {
-        //there is no space for a reply - there is no way to report a problem,
-        //so the safest thing is to send this to the master and shutdown the 
-        //cluster
-        ::fatalError(error_data, message_data, sender);
-    }
-    
-    if (not reply.isValidRank(sender))
-    {
-        //there is no space for a reply from the sender - there is no way
-        //to report a problem, so again it is best if we shut down
-        ::fatalError(error_data, message_data, sender);
-    }
-    
-    reply.setErrorFrom(sender, error_data);
-}
-
-/** Call this function on the master MPI process to register
-    that the backend with UID 'uid' is on the MPI process
-    with rank 'rank' */
-void MPICluster::registerBackend(int rank, const QUuid &uid)
-{
-    if ( not MPICluster::isMaster() )
-    {
-        //why is this message here - it should have been
-        //sent to the master!
-        throw SireError::program_bug( QObject::tr(
-            "A request to register the node with UID %1 on process %2 "
-            "has ended up on process %3, while the master is process %4.")
-                .arg(uid.toString())
-                .arg(rank)
-                .arg( MPICluster::getRank() )
-                .arg( MPICluster::master() ),
-                    CODELOC );
-    }
-
-    QMutexLocker lkr( &(globalCluster()->datamutex) );
-    
-    if (not globalCluster()->backend_registry.contains(uid))
-    {
-        globalCluster()->backend_registry.insert(uid, rank);
-    }
-}    
-
-/** Register the local Backend 'backend' with the MPI cluster so that
-    it can be connected to by any MPI-connected node */
-void MPICluster::registerBackend(const Backend &backend)
-{
-    if ( MPICluster::isMaster() )
-    {
-        MPICluster::registerBackend( MPICluster::master(), backend.UID() );
-    }
-    else
-    {
-        MPICluster::send( Messages::RegisterBackend(backend.UID()) );
-    }
-}
-
-/** Return the first available front end. This returns a null
-    frontend if there are no backends available
-*/
-Frontend MPICluster::getFrontend()
-{
-    //the Cluster should already have looked for local nodes...
-
-    //ask the master to reserve any backend for us
-    //(the master will only reserve remote backends)
-    Messages::ReserveBackend message(1);
-    
-    //create space to hold the reply (which contains the reservation)
-    Reply reply(message);
-    
-    MPICluster::send(message);
-    
-    //wait for the reply
-    reply.wait();
-    
-    //now get the UIDs of the nodes that have established a direct
-    //connection to us
-    QList<QUuid> uids = reply.from( MPICluster::master() )
-                             .asA< QList<QUuid> >();
-
-    if (uids.isEmpty())
-    {
-        return Frontend();
-    }
-    else
-    {
-        return ReservationManager::collectReservation(message, uids.first());
-    }
-}
-
-/** Return the first 'n' available frontends. This returns an empty
-    list if there are no backends available
-*/
-QList<Frontend> MPICluster::getFrontends(int n)
-{
-    if (n <= 0)
-        return QList<Frontend>();
-
-    //the Cluster should already have looked for local nodes...
-
-    //ask the master to reserve any backend for us
-    //(the master will only reserve remote backends)
-    Messages::ReserveBackend message(n);
-    
-    //create space to hold the reply (which contains the reservation)
-    Reply reply(message);
-    
-    MPICluster::send(message);
-    
-    //wait for the reply
-    reply.wait();
-    
-    //now get the UIDs of the nodes that have established a direct
-    //connection to us
-    QList<QUuid> uids = reply.from( MPICluster::master() )
-                             .asA< QList<QUuid> >();
-
-    while (uids.count() > n)
-    {
-        uids.removeLast();
-    }
-
-    return ReservationManager::collectReservation(message, uids);
-}
-
-/** Return the frontend for backend with UID 'uid'.
-    This returns a null frontend if this backend isn't
-    currently available, and it raises an error if there
-    is no backend associated with this UID
-    
-    \throw SireError::unavailable_resource
-*/
-Frontend MPICluster::getFrontend(const QUuid &uid)
-{
-    if (uid.isNull())
-        throw SireError::unavailable_resource( QObject::tr(
-            "There is no front end for the null backend!"), CODELOC );
-
-    //this interface is only to get *REMOTE* backends
-    BOOST_ASSERT( not Cluster::isLocal(uid) );
-
-    //ask the master to arrange the connection to this backend
-    Messages::ReserveBackend message(uid);
-    
-    //create space to hold the reply to this message
-    Reply reply(message);
-    
-    MPICluster::send(message);
-        
-    //wait for the reply
-    reply.wait();
-    
-    //now get the UIDs of the nodes that have established a direct
-    //connection to us
-    QList<QUuid> uids = reply.from( MPICluster::master() )
-                             .asA< QList<QUuid> >();
-
-    if (uids.isEmpty())
-        return Frontend();
-    else
-        return ReservationManager::collectReservation(message, uids.first());
-}
-
-/** Return the list of all of the UIDs of all of the backends
-    that are available via MPI */
-QList<QUuid> MPICluster::UIDs()
-{
-    if (MPICluster::isMaster())
-    {
-        QMutexLocker lkr( &(globalCluster()->datamutex) );
-        return globalCluster()->backend_registry.keys();
-    }
-    else
-    {
-        //ask the master for the list of UIDs
-        Messages::GetUIDs message;
-    
-        //create space to hold the reply to this message
-        Reply reply(message);
-    
-        MPICluster::send( message );
-
-        //wait for all of the responses
-        reply.wait();
-    
-        //return the result
-        return reply.from( MPICluster::master() ).asA< QList<QUuid> >();
-    }
-}
-
-/** Return whether or not this MPI cluster contains a backend
-    with UID 'uid' */
-bool MPICluster::hasBackend(const QUuid &uid)
-{
-    if (MPICluster::isMaster())
-    {
-        QMutexLocker lkr( &(globalCluster()->datamutex) );
-        return globalCluster()->backend_registry.contains(uid);
-    }
-    else
-    {
-        return MPICluster::UIDs().contains(uid);
-    }
-}
-
-/** Return whether or not the MPICluster is running */
-bool MPICluster::isRunning()
-{
     if (not ::MPI::Is_initialized())
-        return false;
-        
+        return true;
     else
-    {
-        return globalCluster()->send_queue->isRunning() or
-               globalCluster()->receive_queue->isRunning();
-    }
+        return ::MPI::COMM_WORLD.Get_rank() == 0;
 }
 
-Q_GLOBAL_STATIC( QMutex, shutdownMutex );
-
-/** This just shuts down this node */
-void MPICluster::informedShutdown()
+void MPICluster::start()
 {
-    //// Check we aren't already in the process of being shutdown
-    {
-        QMutexLocker lkr( shutdownMutex() );
-        
-        if (globalCluster()->already_shutting_down)
-            return;
-            
-        globalCluster()->already_shutting_down;
-    }
-
-    if (not MPICluster::isRunning())
-        return;
-
-    globalCluster()->send_queue->stop();
-    globalCluster()->receive_queue->stop();
+    MutexLocker lkr( mpiMutex() );
     
-    globalCluster()->send_queue->wait();
-    globalCluster()->receive_queue->wait();
-
-    ReservationManager::shutdown();
-
-    ////////// make sure that no-one is still waiting for a reply
+    if (d == 0)
     {
-        QMutexLocker lkr( &(globalCluster()->replymutex) );
-        
-        for (QHash<QUuid,ReplyPtr>::const_iterator 
-                    it = globalCluster()->reply_registry.constBegin();
-             it != globalCluster()->reply_registry.constEnd();
-             ++it)
+        if (not ::MPI::Is_initialized())
         {
-            it.value().lock().shutdown();
+            int argc = 0;
+            char **argv = 0;
+            
+            ::MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
+            
+            if (::MPI::Query_thread() != MPI_THREAD_MULTIPLE)
+            {
+                throw Siren::unsupported( QObject::tr(
+                        "SireCluster needs an MPI implementation that supports "
+                        "MPI_THREAD_MULTIPLE. Unfortunately, the MPI you are using "
+                        "does not support multi-threaded MPI."), CODELOC );
+            }
         }
-    }
 
-    //////////
-    {
-        QMutexLocker lkr( &(globalCluster()->datamutex) );
-        globalCluster()->backend_registry.clear();
-
-        //finally, get rid of the global communicator
-        globalCluster()->global_comm.Barrier();
-        globalCluster()->global_comm.Free();
-    }
+        if (::MPI::COMM_WORLD.Get_size() == 1)
+            //no need for MPI
+            return;
     
-    //shut down the cluster - this will call MPICluster::shutdown,
-    //but this won't recurse, as MPICluster::isRunning() will be false
-    Cluster::shutdown();
+        d = new MPIClusterData();
+
+        //get the global MPI communicator
+        ::MPI::Group mpigroup = ::MPI::COMM_WORLD.Get_group();
+        d->global_comm = ::MPI::COMM_WORLD.Create(mpigroup);
+
+        ::MPI::Intracomm send_comm, recv_comm;
+        
+        if ( MPICluster::isMaster() )
+        {
+            //create the send, then receive communicators
+            send_comm = d->global_comm.Create(mpigroup);
+            recv_comm = d->global_comm.Create(mpigroup);
+        }
+        else
+        {
+            //must be the other way around (as all other nodes
+            //listen to the master)
+            recv_comm = d->global_comm.Create(mpigroup);
+            send_comm = d->global_comm.Create(mpigroup);
+        }
+    
+        mpigroup.Free();
+
+        //create and start the event loops
+        d->send_queue = new SendQueue(send_comm);
+        d->receive_queue = new ReceiveQueue(recv_comm);
+        
+        d->send_queue->start();
+        d->receive_queue->start();
+
+        //wait for everyone to get here
+        d->global_comm.Barrier();
+        
+        //broadcast the rank / UID
+        MPICluster::broadcast( ProcessStarted(d->uid) );
+    }
 }
 
-/** Shutdown the MPI cluster */
 void MPICluster::shutdown()
 {
-    if (not MPICluster::isRunning())
-        return;
-
-    //this will shutdown the entire cluster!
-    MPICluster::send( Messages::Shutdown() );
+    MutexLocker lkr( mpiMutex() );
+    
+    if (d != 0)
+    {
+        //shutdown the cluster
+        MPICluster::broadcast( ProcessEnded(d->uid) );
+        
+        d->send_queue->kill();
+        d->receive_queue->kill();
+        
+        delete d;
+        d = 0;
+    }
 }
 
 #endif // SIRE_USE_MPI

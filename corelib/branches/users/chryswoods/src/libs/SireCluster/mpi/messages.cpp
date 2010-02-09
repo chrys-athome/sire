@@ -28,88 +28,28 @@
 
 #ifdef SIRE_USE_MPI
 
-#include <QThread>
-#include <QMutex>
-#include <QWaitCondition>
-
 #include "messages.h"
-#include "mpicluster.h"
-#include "reply.h"
-#include "reservationmanager.h"
 
-#include "SireMaths/rangenerator.h"
-
-#include "SireCluster/cluster.h"
-
-#include "SireError/exception.h"
-#include "SireError/printerror.h"
-
-#include "SireError/errors.h"
-
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/stream.h"
 
 #include <QDebug>
 
 using namespace SireCluster;
 using namespace SireCluster::MPI;
-using namespace SireCluster::MPI::Messages;
+using namespace SireCluster::MPI;
 
 using namespace SireBase;
-using namespace SireStream;
-
-using boost::tuple;
+using namespace Siren;
 
 /////////
-///////// Implementation of MessageBase
+///////// Implementation of Message
 /////////
 
-static const RegisterMetaType<MessageBase> r_msgbase( MAGIC_ONLY, 
-                                                      MessageBase::typeName() );
-                                                      
-/** Serialise to a binary datastream */
-QDataStream& operator<<(QDataStream &ds, const MessageBase &msgbase)
-{
-    writeHeader(ds, r_msgbase, 1);
-    
-    ds << msgbase.uid << msgbase.subject_uid
-       << msgbase.sent_by << msgbase.dest;
-       
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream& operator>>(QDataStream &ds, MessageBase &msgbase)
-{
-    VersionID v = readHeader(ds, r_msgbase);
-    
-    if (v == 1)
-    {
-        ds >> msgbase.uid >> msgbase.subject_uid
-           >> msgbase.sent_by >> msgbase.dest;
-    }
-    else
-        throw version_error( v, "1", r_msgbase, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<Message> r_message( VIRTUAL_CLASS, Message::typeName() );
 
 /** Null constructor */
-MessageBase::MessageBase()
-            : QSharedData(), sent_by(-1), dest(-1)
+Message::Message() : Extends<Message,Object>()
 {}
-
-static void assertValidDestination(int rank)
-{
-    if (rank != -1)
-    {
-        if (rank < 0 or rank >= MPICluster::getCount())
-            throw SireError::unavailable_resource( QObject::tr(
-                "There is no MPI process with rank %1. Available ranks are "
-                "from 0 to %2.")
-                    .arg(rank).arg(MPICluster::getCount()-1), CODELOC );
-    }
-}
 
 /** Construct a message that is intended to go to the MPI process
     with rank 'destination' */

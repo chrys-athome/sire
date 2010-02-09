@@ -54,7 +54,6 @@ class Nodes;
 class SIRECLUSTER_EXPORT Cluster
 {
 public:
-
     static void start();
 
     static void addThread();

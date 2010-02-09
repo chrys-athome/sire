@@ -41,8 +41,7 @@ SIRE_BEGIN_HEADER
 namespace SireCluster
 {
 
-class Frontend;
-class Backend;
+class DormantFrontend;
 
 namespace MPI
 {
@@ -63,36 +62,39 @@ class P2PComm;
 class MPICluster
 {
 public:
+    static QUuid processUID();
+    
+    static int getRankFor(const QUuid &uid);
+    static QSet<int> getRanksFor(const QSet<QUuid> &uids);
+
     static void start();
     static void shutdown();
 
-    static void sync();
-
     static bool isRunning();
-
-    static void registerBackend(const Backend &backend);
-
-    static P2PComm createP2P(int master_rank, int slave_rank);
     
-    static Frontend getFrontend();
-    static Frontend getFrontend(const QUuid &uid);
-    
-    static QList<Frontend> getFrontends(int n);
-    
-    static QList<QUuid> UIDs();
+    static DormantFrontend getResource();
+    static DormantFrontend getResource(int timeout);
 
-    static bool hasBackend(const QUuid &uid);
+    static DormantFrontend getResource(const QString &description);
+    static DormantFrontend getResource(const QString &description, int timeout);
+    
+    static QList<DormantFrontend> getResources(int n);
+    static QList<DormantFrontend> getResources(int n, int timeout);
+    
+    static QList<DormantFrontend> getResources(const QString &description, int n);
+    static QList<DormantFrontend> getResources(const QString &description, 
+                                               int n, int timeout);
 
-    static int master();
-    static int getRank();
-    static int getCount();
     static bool isMaster();
 
-    static void send(const Message &message);
+    static void send(const Message &message, const QUuid &destination);
+    static void send(const Message &message, const QSet<QUuid> &destinations);
+    static void broadcast(const Message &message);
+    
     static void received(const Message &message);
 
-    //functions called by MPI messages
-    static void registerBackend(int rank, const QUuid &uid);
+    static P2PComm createP2P(int master_rank, int slave_rank);
+
     static void informedShutdown();
 
     static Reply getReply(const Message &message);

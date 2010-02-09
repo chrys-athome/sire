@@ -70,6 +70,11 @@ set ( SIRECLUSTER_HEADERS
       resourcemanager.h
       workpacket.h
       workqueue.h
+
+      network/communicator.h
+      network/message.h
+      network/receivequeue.h
+      network/sendqueue.h
     )
 
 # Define the sources in SireCluster
@@ -86,6 +91,11 @@ set ( SIRECLUSTER_SOURCES
       workpacket.cpp
       workqueue.cpp 
 
+      network/communicator.cpp
+      network/message.cpp
+      network/receivequeue.cpp
+      network/sendqueue.cpp
+
       ${SIRECLUSTER_MPI_SOURCES}
       ${SIRECLUSTER_MPI_HEADERS}
 
@@ -101,6 +111,7 @@ set_target_properties (SireCluster PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireCluster
+                       SireSec
                        SireMaths
                        SireBase
                        Siren

@@ -18,6 +18,7 @@ set ( SUBDIRS
            #   SireMM
            #   SireMol
            #   SireMove
+              SireSec
            #   SireSystem
               SireUnits
               SireVol

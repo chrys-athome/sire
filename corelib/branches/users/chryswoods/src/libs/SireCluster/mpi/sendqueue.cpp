@@ -33,20 +33,15 @@
 #include "sendqueue.h"
 #include "mpicluster.h"
 
-#include "SireMaths/rangenerator.h"
-
-#include "SireError/errors.h"
-#include "SireError/printerror.h"
-
 #include <QDebug>
 
 using namespace SireCluster::MPI;
-using namespace SireCluster::MPI::Messages;
+using namespace Siren;
 
 /** Construct, using the passed MPI communicator to send the 
     messages */
 SendQueue::SendQueue(::MPI::Intracomm comm)
-          : QThread(), boost::noncopyable(),
+          : Thread(QObject::tr("SendQueue")), boost::noncopyable(),
             send_comm(comm), been_stopped(false)
 {}
 
@@ -57,10 +52,17 @@ SendQueue::~SendQueue()
     message_queue.clear();
     been_stopped = true;
     datamutex.unlock();
+
+    int count = 0;
     
-    while (not QThread::wait(200))
+    while (not Thread::wait(200))
     {
         waiter.wakeAll();
+        
+        ++count;
+        
+        if (count > 20)
+            break;
     }
 
     send_comm.Free();
@@ -69,29 +71,29 @@ SendQueue::~SendQueue()
 /** Start the event loop in a background thread */
 void SendQueue::start()
 {
-    QMutexLocker lkr(&datamutex);
+    MutexLocker lkr(&datamutex);
     been_stopped = false;
-    QThread::start();
+    Thread::start();
 }
 
-/** Send the message 'message' */
-void SendQueue::send(const Message &message)
+/** Send a message contained in the envelope 'envelope' */
+void SendQueue::send(const Envelope &envelope)
 {
-    if (not message.isNull())
-    {
-        QMutexLocker lkr(&datamutex);
-        
-        if (not been_stopped)
-            message_queue.enqueue(message);
+    if (envelope.isEmpty())
+        return;
 
-        waiter.wakeAll();
-    }
+    MutexLocker lkr(&datamutex);
+        
+    if (not been_stopped)
+        message_queue.enqueue(envelope);
+
+    waiter.wakeAll();
 }
 
 /** Wait until the queue has finished */
 void SendQueue::wait()
 {
-    while (not QThread::wait(200))
+    while (not Thread::wait(200))
     {
         waiter.wakeAll();
     }
@@ -100,26 +102,29 @@ void SendQueue::wait()
 /** Stop the queue - the clears all pending messages */
 void SendQueue::stop()
 {
-    QMutexLocker lkr(&datamutex);
+    MutexLocker lkr(&datamutex);
     message_queue.clear();
     been_stopped = true;
     waiter.wakeAll();
     lkr.unlock();
 }
 
+/** Kill the queue - this clears all pending messages */
+void SendQueue::kill()
+{
+    this->stop();
+}
+
 /** Return whether or not this queue is running */
 bool SendQueue::isRunning()
 {
-    return QThread::isRunning();
+    return Thread::isRunning();
 }
 
 /** This is the event loop */
-void SendQueue::run()
+void SendQueue::threadMain()
 {
-    SireError::setThreadString("SendQueue");
-    SireMaths::seed_qrand();
-    
-    QMutexLocker lkr(&datamutex);
+    MutexLocker lkr(&datamutex);
     
     if (message_queue.isEmpty())
     {
@@ -132,29 +137,38 @@ void SendQueue::run()
             //we've been stopped!
             break;
     
-        Message message = message_queue.dequeue();
+        Envelope message = message_queue.dequeue();
         lkr.unlock();
-
-        //qDebug() << MPICluster::getRank() << "sending" << message.toString()
-        //         << "to" << message.destination();
 
         try
         {
-            if (message.destination() == MPICluster::getRank())
+            if (message.isRecipient(MPICluster::processUID()) and
+                message.hasSingleRecipient())
             {
-                //the message is for us! - no need to send it
-                MPICluster::received(message);
+                //no need to send the message as we are the only recipient
             }
             else if ( MPICluster::isMaster() )
             {
-                //we can directly send the messages ourselves!
-                if (message.destination() == -1 and 
-                    not message.isA<Broadcast>())
-                {
-                    //this message is to be broadcast to everyone
-                    message = Broadcast(message);
-                }
+                //the master can send the message directly
                 
+                //get the MPI ranks of the processes to send this message to
+                QSet<int> recipient_ranks;
+                
+                if ( message.isBroadcast() )
+                {
+                    //this message is to be broadcast to everyone in the 
+                    //global communicator (rank 1 to count()-1)
+                    for (int i=0; i < ::MPI::COMM_WORLD.Get_size()-1; ++i)
+                    {
+                        recipient_ranks.insert(i);
+                    }
+                }
+                else 
+                {
+                    //look up the ranks of the recipients
+                    
+                }
+
                 //the master sends the message to just the intended recipients
                 QByteArray message_data = message.pack();
                 
