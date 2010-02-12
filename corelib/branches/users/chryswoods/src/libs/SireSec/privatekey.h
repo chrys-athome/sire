@@ -1,0 +1,93 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2010  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
+
+#ifndef SIRESEC_PRIVATEKEY_H
+#define SIRESEC_PRIVATEKEY_H
+
+#include <QPair>
+
+#include <boost/shared_ptr.hpp>
+
+#include "key.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireSec
+{
+
+namespace detail{ class PrivateKeyData; }
+
+class PublicKey;
+
+/** This is a private key, used to decrypt data using
+    a PubPriLock. This lock uses a pubic, widely known
+    key (PublicKey) to encrypt data, and a private,
+    secret key (PrivateKey) to decrypt data
+    
+    @author Christopher Woods
+*/
+class SIRESEC_EXPORT PrivateKey : public Siren::Implements<PrivateKey,Key>
+{
+public:
+    PrivateKey();
+    
+    PrivateKey(const PrivateKey &other);
+    
+    ~PrivateKey();
+    
+    PrivateKey& operator=(const PrivateKey &other);
+    
+    bool operator==(const PrivateKey &other) const;
+    bool operator!=(const PrivateKey &other) const;
+    
+    static QPair<PublicKey,PrivateKey> generate();
+    static QPair<PublicKey,PrivateKey> generate(const QDateTime &expiry);
+    
+    static QPair<PublicKey,PrivateKey> generate(KeyTypes::KeyType keytype);
+    static QPair<PublicKey,PrivateKey> generate(KeyTypes::KeyType keytype,
+                                                const QDateTime &expiry);
+    
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+    
+    bool availableToThisThread() const;
+    
+private:
+    boost::shared_ptr<detail::PrivateKeyData> d;
+};
+
+}
+
+Q_DECLARE_METATYPE( SireSec::PrivateKey )
+
+SIRE_EXPOSE_CLASS( SireSec::PrivateKey )
+
+SIRE_END_HEADER
+
+#endif

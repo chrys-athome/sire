@@ -41,6 +41,46 @@ SIRE_BEGIN_HEADER
 namespace SireSec
 {
 
+/** All of the (still secure, non-patented) Ciphers supported by 
+    cryptlib, and hence supported in SireSec */
+namespace Ciphers
+{
+    enum Cipher { AES = 1,
+                  Blowfish = 2,
+                  CAST_128 = 3,
+                  Triple_DES = 4 };
+}
+
+/** All of the (still secure, non-patented) public/private
+    key algorithms supported by cryptlib, and hence supported in SireSec */
+namespace KeyType
+{
+    enum KeyType { RSA = 1,
+                   Elgamal = 2
+                 };
+}
+
+/** All of the (still secure, non-patented) certificate algorithms
+    supported by cryptlib, and hence supported in SireSec */
+namespace CertificateTypes
+{
+    enum CertificateType { RSA = 1,
+                           Elgamal = 2,
+                           DSA = 3 };
+}
+
+/** All of the (still secure, non-patented) message authentication
+    algorithms supported by cryptlib, and hence supported in SireSec */
+namespace MACTypes
+{
+    enum MACType { HMAC_MD5 = 1,
+                   HMAC_SHA1 = 2,
+                   HMAC_RIPEMD_160 = 3,
+                   RIPEMD_160 = 4,
+                   SHA = 5,
+                   SHA2 = 6 }; 
+}
+
 /** This is the virtual base class of all Key objects.
     A Key, when used with a Lock, can be used to 
     encrypt or decrypt data

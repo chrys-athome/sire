@@ -400,51 +400,53 @@ namespace SireSec
             switch (crypt_algo)
             {
                 case CRYPT_ALGO_AES:
-                    return QObject::tr("AES");
+                    return QObject::tr("AES (cipher)");
                 case CRYPT_ALGO_BLOWFISH:
-                    return QObject::tr("Blowfish");
+                    return QObject::tr("Blowfish (cipher)");
                 case CRYPT_ALGO_CAST:
-                    return QObject::tr("CAST-128");
+                    return QObject::tr("CAST-128 (cipher)");
                 case CRYPT_ALGO_DES:
-                    return QObject::tr("DES (insecure!)");
+                    return QObject::tr("DES (cipher, insecure!)");
                 case CRYPT_ALGO_3DES:
-                    return QObject::tr("Triple DES");
+                    return QObject::tr("Triple DES (cipher)");
                 case CRYPT_ALGO_IDEA:
-                    return QObject::tr("IDEA");
+                    return QObject::tr("IDEA (cipher - patented, so unavailable)");
                 case CRYPT_ALGO_RC2:
-                    return QObject::tr("RC2 (obsolete!)");
+                    return QObject::tr("Algorithm compatible with RC2 "
+                                       "(cipher, insecure!)");
                 case CRYPT_ALGO_RC4:
-                    return QObject::tr("RC4");
+                    return QObject::tr("Algorithm compatible with RC4 "
+                                       "(cipher, insecure!)");
                 case CRYPT_ALGO_RC5:
-                    return QObject::tr("RC5");
+                    return QObject::tr("RC5 (cipher - patented, so unavailable)");
                 case CRYPT_ALGO_SKIPJACK:
-                    return QObject::tr("Skipjack (obsolete!)");
+                    return QObject::tr("Skipjack (cipher, obsolete!)");
                 case CRYPT_ALGO_DH:
-                    return QObject::tr("Diffie-Hellman");
+                    return QObject::tr("Diffie-Hellman (key-exchange algorithm)");
                 case CRYPT_ALGO_DSA:
-                    return QObject::tr("DSA");
+                    return QObject::tr("DSA (digital signature, royalty free patent)");
                 case CRYPT_ALGO_ELGAMAL:
-                    return QObject::tr("Elgamal");
+                    return QObject::tr("Elgamal (public key / digital signature)");
                 case CRYPT_ALGO_RSA:
-                    return QObject::tr("RSA");
+                    return QObject::tr("RSA (public key / digital signature)");
                 case CRYPT_ALGO_MD2:
-                    return QObject::tr("MD2 (obsolete!)");
+                    return QObject::tr("MD2 (message authentication, obsolete!)");
                 case CRYPT_ALGO_MD4:
-                    return QObject::tr("MD4 (insecure!)");
+                    return QObject::tr("MD4 (message authentication, insecure!)");
                 case CRYPT_ALGO_MD5:
-                    return QObject::tr("MD5 (insecure!)");
+                    return QObject::tr("MD5 (message authentication, insecure!)");
                 case CRYPT_ALGO_RIPEMD160:
-                    return QObject::tr("RIPE-MD 160");
+                    return QObject::tr("RIPE-MD 160 (message authentication)");
                 case CRYPT_ALGO_SHA:
-                    return QObject::tr("SHA/SHA-1");
+                    return QObject::tr("SHA/SHA-1 (message authentication)");
                 case CRYPT_ALGO_SHA2:
-                    return QObject::tr("SHA2/SHA-256");
+                    return QObject::tr("SHA2/SHA-256 (message authentication)");
                 case CRYPT_ALGO_HMAC_MD5:
-                    return QObject::tr("HMAC-MD5");
+                    return QObject::tr("HMAC-MD5 (message authentication)");
                 case CRYPT_ALGO_HMAC_RIPEMD160:
-                    return QObject::tr("HMAC-RIPEMD-160");
+                    return QObject::tr("HMAC-RIPEMD-160 (message authentication)");
                 case CRYPT_ALGO_HMAC_SHA:
-                    return QObject::tr("HMAC-SHA");
+                    return QObject::tr("HMAC-SHA (message authentication)");
                 default:
                     return QObject::tr("unknown");
             }
