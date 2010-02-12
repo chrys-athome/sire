@@ -29,20 +29,35 @@
 #ifndef SIRESEC_CRYPT_H
 #define SIRESEC_CRYPT_H
 
+#include "cryptlib.h"  // CONDITIONAL_INCLUDE
+
+#include <boost/function.hpp>
+
 #include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireSec
 {
-
-QByteArray encrypt(const QByteArray &data, const QString &password);
-QByteArray decrypt(const QByteArray &data, const QString &password);
-
+    namespace Crypt
+    {
+        CRYPT_ENVELOPE createDefaultEnvelope();
+        
+        int processThroughEnvelope(CRYPT_ENVELOPE envelope,
+                                   QDataStream &in_stream,
+                                   QDataStream &out_stream,
+                               boost::function<void (CRYPT_ENVELOPE,int)> key_function
+                                   );
+        
+        int processThroughEnvelope(CRYPT_ENVELOPE envelope,
+                                   QDataStream &in_stream,
+                                   QDataStream &out_stream);
+        
+        void assertValidStatus(int status, QUICK_CODELOC_ARGS);
+        
+        QString getStatusString(int status);
+    }
 }
-
-SIRE_EXPOSE_FUNCTION( encrypt )
-SIRE_EXPOSE_FUNCTION( decrypt )
 
 SIRE_END_HEADER
 

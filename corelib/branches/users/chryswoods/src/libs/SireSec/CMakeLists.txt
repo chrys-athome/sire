@@ -19,13 +19,22 @@ set( CRYPTLIB_LIBRARY "${CRYPTLIB_DIR}/libcl.a" )
 
 set ( SIRESEC_PUBLIC_HEADERS
 
-      crypt.h
+      errors.h
+      key.h
+      lock.h
+      password.h
     )
 
 set ( SIRESEC_SOURCES
 
       ${SIRESEC_PUBLIC_HEADERS}
 
+      errors.cpp
+      key.cpp
+      lock.cpp
+      password.cpp
+
+      crypt.h
       crypt.cpp
     )
 

@@ -23,6 +23,18 @@
    QObject::tr("FILE: %1, LINE: %2, FUNCTION: %3") \
            .arg(__FILE__).arg(__LINE__).arg(BOOST_CURRENT_FUNCTION)
 
+#ifdef QUICK_CODELOC
+#undef QUICK_CODELOC
+#endif
+
+#define QUICK_CODELOC __FILE__, __LINE__, BOOST_CURRENT_FUNCTION
+
+#ifdef QUICK_CODELOC_ARGS
+#undef QUICK_CODELOC_ARGS
+#endif
+
+#define QUICK_CODELOC_ARGS const char *file, int line, const char *current_function
+
 //copy the QT_BEGIN_HEADER and QT_END_HEADER
 //to SIRE_BEGIN_HEADER and SIRE_END_HEADER. This
 //will allow me to change their definition at some

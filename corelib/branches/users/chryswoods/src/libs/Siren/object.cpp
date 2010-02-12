@@ -70,6 +70,18 @@ Object& Object::operator=(const Object&)
     return *this;
 }
 
+/** Comparison operator */
+bool Object::operator==(const Object&) const
+{
+    return true;
+}
+
+/** Comparison operator */
+bool Object::operator!=(const Object&) const
+{
+    return false;
+}
+
 /** Return a clone of this object. */
 ObjRef Object::clone() const
 {

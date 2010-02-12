@@ -313,6 +313,8 @@ protected:
     static QStringList listInterfaces();
 
     Object& operator=(const Object &other);
+    bool operator==(const Object &other) const;
+    bool operator!=(const Object &other) const;
 
     /** Return a clone of this object. */
     virtual Object* ptr_clone() const=0;
@@ -371,6 +373,11 @@ public:
 
     ~Extends();
 
+    Extends<Derived,Base>& operator=(const Object &other);
+    
+    bool operator==(const Object &other) const;
+    bool operator!=(const Object &other) const;
+
 protected:
     static const Class& createTypeInfo();
 
@@ -420,6 +427,9 @@ public:
     virtual ~Implements();
 
     Implements<Derived,Base>& operator=(const Object &other);
+
+    bool operator==(const Object &other) const;
+    bool operator!=(const Object &other) const;
 
     static QString typeName();
 
@@ -543,6 +553,28 @@ template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
 Extends<Derived,Base>::~Extends()
 {}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+Extends<Derived,Base>& Extends<Derived,Base>::operator=(const Object &other)
+{
+    this->copy(other);
+    return *this;
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool Extends<Derived,Base>::operator==(const Object &other) const
+{
+    return this->equals(other);
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool Extends<Derived,Base>::operator!=(const Object &other) const
+{
+    return not this->equals(other);
+}
 
 /** Return the class typeinfo object for 'Derived' */
 template<class Derived, class Base>
@@ -733,8 +765,24 @@ SIREN_OUTOFLINE_TEMPLATE
 Implements<Derived,Base>&
 Implements<Derived,Base>::operator=(const Object &other)
 {
-    return static_cast<Derived*>(this)->operator=( other.asA<Derived>() );
+    this->copy(other);
+    return *this;
 }
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool Implements<Derived,Base>::operator==(const Object &other) const
+{
+    return this->equals(other);
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool Implements<Derived,Base>::operator!=(const Object &other) const
+{
+    return not this->equals(other);
+}
+
 
 //////
 ////// Implementation of 'Object'

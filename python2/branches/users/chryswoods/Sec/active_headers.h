@@ -3,7 +3,9 @@
 
 #ifdef GCCXML_PARSE
 
-#include "crypt.h"
+#include "key.h"
+#include "lock.h"
+#include "password.h"
 
 #endif
 
