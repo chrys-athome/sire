@@ -42,6 +42,9 @@ namespace SireSec
     namespace Crypt
     {
         CRYPT_ENVELOPE createDefaultEnvelope();
+        CRYPT_ENVELOPE createAutoFormatEnvelope();
+        
+        QString getEnvelopeDetails(CRYPT_ENVELOPE crypt_envelope);
         
         int processThroughEnvelope(CRYPT_ENVELOPE envelope,
                                    QDataStream &in_stream,

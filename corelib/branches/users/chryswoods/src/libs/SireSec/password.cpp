@@ -479,8 +479,6 @@ void PasswordLock::encryptStream(QDataStream &in_stream,
                                  QDataStream &out_stream,
                                  int nbytes) const
 {
-    qDebug() << "encryptStream" << nbytes;
-
     assertReadingStream(in_stream);
     assertWritingStream(out_stream);
     
@@ -497,42 +495,55 @@ void PasswordLock::encryptStream(QDataStream &in_stream,
     //create an envelope to encrypt the data
     CRYPT_ENVELOPE crypt_envelope = Crypt::createDefaultEnvelope();
 
-    //set the size of the data to be read
-    //if (nbytes > 0)
-    //    cryptSetAttribute( crypt_envelope, CRYPT_ENVINFO_DATASIZE, nbytes );
+    try
+    {
+        //set the size of the data to be read
+        if (nbytes > 0)
+            cryptSetAttribute( crypt_envelope, CRYPT_ENVINFO_DATASIZE, nbytes );
 
-    //set the password
-    //int status = cryptSetAttributeString( crypt_envelope, CRYPT_ENVINFO_PASSWORD,
-    //                                      utf8_passwd.constData(), 
-    //                                      utf8_passwd.length() );
-    //                                      
-    //Crypt::assertValidStatus(status, QUICK_CODELOC);
+        //add integrity checking so that the data cannot be tampered with
+        int status = cryptSetAttribute( crypt_envelope,
+                                        CRYPT_ENVINFO_INTEGRITY,
+                                        CRYPT_INTEGRITY_FULL );
+
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+
+        //set the password
+        status = cryptSetAttributeString( crypt_envelope, CRYPT_ENVINFO_PASSWORD,
+                                          utf8_passwd.constData(), 
+                                          utf8_passwd.length() );
+                                              
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
                              
-    //process the data
-    Crypt::processThroughEnvelope(crypt_envelope, in_stream, out_stream);
+        //process the data
+        Crypt::processThroughEnvelope(crypt_envelope, in_stream, out_stream);
+        
+        cryptDestroyEnvelope(crypt_envelope);
+    }
+    catch(...)
+    {
+        cryptDestroyEnvelope(crypt_envelope);
+        throw;
+    }
 }
 
 static void supply_key(QByteArray utf8_passwd,
                        CRYPT_ENVELOPE crypt_envelope, int ntries)
 {
-    qDebug() << "SUPPLYING PASSWORD" << utf8_passwd.constData();
-
     int status = cryptSetAttributeString( crypt_envelope, CRYPT_ENVINFO_PASSWORD,
                                           utf8_passwd.constData(),
                                           utf8_passwd.length() );
         
     if (status == CRYPT_OK)
         return;
+
+    else if (status == CRYPT_ERROR_WRONGKEY)
+        throw SireSec::invalid_key( QObject::tr(
+                "The supplied password is incorrect. Cannot decrypt the data!"),
+                     CODELOC );
                
-    if (ntries > 5)
-    {
-        if (status == CRYPT_ERROR_WRONGKEY)
-            throw SireSec::invalid_key( QObject::tr(
-                    "The supplied password is incorrect. Cannot decrypt the data!"),
-                        CODELOC );
-                        
+    else if (ntries > 5)
         Crypt::assertValidStatus(status, QUICK_CODELOC);
-    }
 }
 
 /** Decrypt the data read from 'in_stream' and write the output to 'out_stream'
@@ -544,8 +555,6 @@ void PasswordLock::decryptStream(QDataStream &in_stream,
                                  QDataStream &out_stream,
                                  int nbytes) const
 {
-    qDebug() << "decryptStream" << nbytes;
-
     assertReadingStream(in_stream);
     assertWritingStream(out_stream);
     
@@ -560,13 +569,23 @@ void PasswordLock::decryptStream(QDataStream &in_stream,
     QByteArray utf8_passwd = extractUtf8(passwd);
     
     //create an envelope to encrypt the data
-    CRYPT_ENVELOPE crypt_envelope = Crypt::createDefaultEnvelope();
+    CRYPT_ENVELOPE crypt_envelope = Crypt::createAutoFormatEnvelope();
 
-    //set the size of the data to be read
-    //if (nbytes > 0)
-    //    cryptSetAttribute( crypt_envelope, CRYPT_ENVINFO_DATASIZE, nbytes );
+    try
+    {
+        //set the size of the data to be read
+        if (nbytes > 0)
+            cryptSetAttribute( crypt_envelope, CRYPT_ENVINFO_DATASIZE, nbytes );
 
-    //process the data - providing the password when required
-    Crypt::processThroughEnvelope(crypt_envelope, in_stream, out_stream,
-                                  boost::bind(supply_key, utf8_passwd, _1, _2));
+        //process the data - providing the password when required
+        Crypt::processThroughEnvelope(crypt_envelope, in_stream, out_stream,
+                                      boost::bind(supply_key, utf8_passwd, _1, _2));
+
+        cryptDestroyEnvelope(crypt_envelope);
+    }
+    catch(...)
+    {
+        cryptDestroyEnvelope(crypt_envelope);
+        throw;
+    }
 }

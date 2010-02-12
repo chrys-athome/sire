@@ -52,7 +52,6 @@ namespace SireSec
         {
             if (init_int.testAndSetOrdered(0, 1))
             {
-                qDebug() << "cryptInit";
                 const int status = cryptInit();
     
                 if (status != CRYPT_OK)
@@ -76,7 +75,6 @@ namespace SireSec
         {
             if (init_int.testAndSetOrdered(1,0))
             {
-                qDebug() << "cryptEnd";
                 int status = cryptEnd();
         
                 if (status != CRYPT_OK)
@@ -90,7 +88,113 @@ namespace SireSec
             status 'status' */
         QString SIRESEC_EXPORT getStatusString(int status)
         {
-            return "unknown";
+            switch (status)
+            {
+                case CRYPT_OK:
+                    return QObject::tr("No error.");
+                case CRYPT_ERROR_PARAM1:
+                    return QObject::tr("There is a problem with the parameter 1.");
+                case CRYPT_ERROR_PARAM2:
+                    return QObject::tr("There is a problem with the parameter 2.");
+                case CRYPT_ERROR_PARAM3:
+                    return QObject::tr("There is a problem with the parameter 3.");
+                case CRYPT_ERROR_PARAM4:
+                    return QObject::tr("There is a problem with the parameter 4.");
+                case CRYPT_ERROR_PARAM5:
+                    return QObject::tr("There is a problem with the parameter 5.");
+                case CRYPT_ERROR_PARAM6:
+                    return QObject::tr("There is a problem with the parameter 6.");
+                case CRYPT_ERROR_PARAM7:
+                    return QObject::tr("There is a problem with the parameter 7.");
+                case CRYPT_ERROR_FAILED:
+                    return QObject::tr("The cryptlib operation failed.");
+                case CRYPT_ERROR_INITED:
+                    return QObject::tr("The object or attribute that you have tried to "
+                                       "initialise has already been initialised "
+                                       "previously.");
+                case CRYPT_ERROR_MEMORY:
+                    return QObject::tr("There is not enough memory available to perform "
+                                       "this operation.");
+                case CRYPT_ERROR_NOSECURE:
+                    return QObject::tr("cryptlib cannot perform an operation at the "
+                                       "requested security level.");
+                case CRYPT_ERROR_NOTINITED:
+                    return QObject::tr("The object or attribute that you have tried to "
+                                       "use hasn’t been initialised yet, or a resource "
+                                       "which is required isn’t available.");
+                case CRYPT_ERROR_RANDOM:
+                    return QObject::tr("Not enough random data is available for "
+                                       "cryptlib to perform the requested operation.");
+                case CRYPT_ERROR_COMPLETE:
+                    return QObject::tr("An operation that consists of multiple steps "
+                                       "(such as a message hash) is complete and cannot "
+                                       "be continued.");
+                case CRYPT_ERROR_INCOMPLETE:
+                    return QObject::tr("An operation that consists of multiple steps "
+                                       "(such as a message hash) is still in progress "
+                                       "and requires further steps before it can be "
+                                       "regarded as having completed.");
+                case CRYPT_ERROR_INVALID:
+                    return QObject::tr("The public/private key context or certificate "
+                                       "object or attribute is invalid for this type "
+                                       "of operation.");
+                case CRYPT_ERROR_NOTAVAIL:
+                    return QObject::tr("The requested operation is not available for "
+                                       "this object.");
+                case CRYPT_ERROR_PERMISSION:
+                    return QObject::tr("You don’t have permission to perform this "
+                                       "type of operation.");
+                case CRYPT_ERROR_SIGNALLED:
+                    return QObject::tr("An external event such as a signal from a "
+                                       "hardware device caused a change in the state "
+                                       "of the object.");
+                case CRYPT_ERROR_TIMEOUT:
+                    return QObject::tr("The operation timed out, either because of a "
+                                       "general timeout while accessing an object such "
+                                       "as a network connection or data file, or "
+                                       "because the object was in use for another "
+                                       "operation such as a key database lookup.");
+                case CRYPT_ERROR_WRONGKEY:
+                    return QObject::tr("The key being used to decrypt or verify the "
+                                       "signature on a piece of data is incorrect.");
+                case CRYPT_ERROR_BADDATA:
+                    return QObject::tr("The data item (typically encrypted or signed "
+                                       "data, or a key certificate) was corrupt, or "
+                                       "not all of the data was present, and it can’t "
+                                       "be processed.");
+                case CRYPT_ERROR_OVERFLOW:
+                    return QObject::tr("There is too much data for this function "
+                                       "to work with.");
+                case CRYPT_ERROR_SIGNATURE:
+                    return QObject::tr("The signature or integrity check value didn’t "
+                                       "match the data.");
+                case CRYPT_ERROR_UNDERFLOW:
+                    return QObject::tr("There is too little data in the envelope or "
+                                       "session for cryptlib to process.");
+                case CRYPT_ERROR_DUPLICATE:
+                    return QObject::tr("The given item is already present in the "
+                                       "container object.");
+                case CRYPT_ERROR_NOTFOUND:
+                    return QObject::tr("The requested item isn’t present in the "
+                                       "container object.");
+                case CRYPT_ERROR_OPEN:
+                    return QObject::tr("The container object couldn’t be opened, "
+                                       "either because it wasn’t found or because "
+                                       "the open operation failed.");
+                case CRYPT_ERROR_READ:
+                    return QObject::tr("The requested item couldn’t be read from the "
+                                       "container object.");
+                case CRYPT_ERROR_WRITE:
+                    return QObject::tr("The item couldn’t be written to the container "
+                                       "object or the data object couldn’t be updated.");
+                case CRYPT_ENVELOPE_RESOURCE:
+                    return QObject::tr("A resource such as an encryption key or "
+                                       "password needs to be added to the envelope "
+                                       "before cryptlib can continue processing "
+                                       "the data in it.");
+                default:
+                    return QObject::tr("An unknown error occurred.");
+            }
         }
         
         /** Assert that the cryptlib status is ok */
@@ -161,7 +265,6 @@ namespace SireSec
                         {
                             //the envelope requires more information to continue
                             ++n_key_calls;
-                            qDebug() << "NEED RESOURCE" << n_key_calls;
                             key_function(crypt_envelope, n_key_calls);
                             continue;
                         }
@@ -234,9 +337,6 @@ namespace SireSec
                     delete[] in_buffer;
                     delete[] out_buffer;
                     
-                    qDebug() << "READ" << n_total_bytes_read << "WRITTEN"
-                             << n_total_bytes_written;
-                    
                     return data_type;
                 }
             }
@@ -278,6 +378,109 @@ namespace SireSec
             assertValidStatus(status, QUICK_CODELOC);
             
             return crypt_envelope;
+        }
+
+        CRYPT_ENVELOPE SIRESEC_EXPORT createAutoFormatEnvelope()
+        {
+            SireSec_init();
+            
+            CRYPT_ENVELOPE crypt_envelope;
+            
+            int status = cryptCreateEnvelope( &crypt_envelope,
+                                              CRYPT_UNUSED,
+                                              CRYPT_FORMAT_AUTO );
+                                              
+            assertValidStatus(status, QUICK_CODELOC);
+            
+            return crypt_envelope;
+        }
+
+        QString getAlgorithm(int crypt_algo)
+        {
+            switch (crypt_algo)
+            {
+                case CRYPT_ALGO_AES:
+                    return QObject::tr("AES");
+                case CRYPT_ALGO_BLOWFISH:
+                    return QObject::tr("Blowfish");
+                case CRYPT_ALGO_CAST:
+                    return QObject::tr("CAST-128");
+                case CRYPT_ALGO_DES:
+                    return QObject::tr("DES (insecure!)");
+                case CRYPT_ALGO_3DES:
+                    return QObject::tr("Triple DES");
+                case CRYPT_ALGO_IDEA:
+                    return QObject::tr("IDEA");
+                case CRYPT_ALGO_RC2:
+                    return QObject::tr("RC2 (obsolete!)");
+                case CRYPT_ALGO_RC4:
+                    return QObject::tr("RC4");
+                case CRYPT_ALGO_RC5:
+                    return QObject::tr("RC5");
+                case CRYPT_ALGO_SKIPJACK:
+                    return QObject::tr("Skipjack (obsolete!)");
+                case CRYPT_ALGO_DH:
+                    return QObject::tr("Diffie-Hellman");
+                case CRYPT_ALGO_DSA:
+                    return QObject::tr("DSA");
+                case CRYPT_ALGO_ELGAMAL:
+                    return QObject::tr("Elgamal");
+                case CRYPT_ALGO_RSA:
+                    return QObject::tr("RSA");
+                case CRYPT_ALGO_MD2:
+                    return QObject::tr("MD2 (obsolete!)");
+                case CRYPT_ALGO_MD4:
+                    return QObject::tr("MD4 (insecure!)");
+                case CRYPT_ALGO_MD5:
+                    return QObject::tr("MD5 (insecure!)");
+                case CRYPT_ALGO_RIPEMD160:
+                    return QObject::tr("RIPE-MD 160");
+                case CRYPT_ALGO_SHA:
+                    return QObject::tr("SHA/SHA-1");
+                case CRYPT_ALGO_SHA2:
+                    return QObject::tr("SHA2/SHA-256");
+                case CRYPT_ALGO_HMAC_MD5:
+                    return QObject::tr("HMAC-MD5");
+                case CRYPT_ALGO_HMAC_RIPEMD160:
+                    return QObject::tr("HMAC-RIPEMD-160");
+                case CRYPT_ALGO_HMAC_SHA:
+                    return QObject::tr("HMAC-SHA");
+                default:
+                    return QObject::tr("unknown");
+            }
+        }
+
+        QString getMode(int crypt_mode)
+        {
+            switch (crypt_mode)
+            {
+                case CRYPT_MODE_ECB:
+                    return QObject::tr("ECB");
+                case CRYPT_MODE_CBC:
+                    return QObject::tr("CBC");
+                case CRYPT_MODE_CFB:
+                    return QObject::tr("CFB");
+                case CRYPT_MODE_OFB:
+                    return QObject::tr("OFB");
+                default:
+                    return QObject::tr("unknown");
+            }
+        }
+
+        QString SIRESEC_EXPORT getEnvelopeDetails(CRYPT_ENVELOPE crypt_envelope)
+        {
+            int crypt_algo;
+            int crypt_mode;
+            int key_size;
+            
+            cryptGetAttribute( crypt_envelope, CRYPT_CTXINFO_ALGO, &crypt_algo );
+            cryptGetAttribute( crypt_envelope, CRYPT_CTXINFO_MODE, &crypt_mode );
+            cryptGetAttribute( crypt_envelope, CRYPT_CTXINFO_KEYSIZE, &key_size );
+            
+            return QObject::tr("Envelope( algorithm : %1, mode : %2, key_size : %3 )")
+                        .arg( getAlgorithm(crypt_algo) )
+                        .arg( getMode(crypt_mode) )
+                        .arg(key_size);
         }
 
     } // end of namespace Crypt

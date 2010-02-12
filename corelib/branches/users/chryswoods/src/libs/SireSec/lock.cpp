@@ -239,9 +239,6 @@ QByteArray Lock::encrypt(const QByteArray &data) const
     
     this->encryptStream(in_stream, out_stream, data.count());
     
-    qDebug() << "Encrypted" << data.count() << "bytes to"
-             << encrypted_data.count() << "bytes...";
-    
     return encrypted_data;
 }
 
@@ -260,9 +257,6 @@ QByteArray Lock::decrypt(const QByteArray &data) const
     QDataStream out_stream(&decrypted_data, QIODevice::WriteOnly);
     
     this->decryptStream(in_stream, out_stream, data.count());
-
-    qDebug() << "Decrypted" << data.count() << "bytes to"
-             << decrypted_data.count() << "bytes...";
     
     return decrypted_data;
 }
