@@ -6,8 +6,10 @@
 #include "Siren/errors.h"
 #include "Siren/stream.h"
 #include "lock.h"
+#include <QDebug>
 #include "lock.h"
 #include "SireSec/errors.h"
+#include "Siren/errors.h"
 #include "Siren/stream.h"
 #include "key.h"
 #include "key.h"

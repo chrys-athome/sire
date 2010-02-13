@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include "crypt.h"  // CONDITIONAL_INCLUDE
+
 #include "privatekey.h"
 #include "publickey.h"
 #include "pubprilock.h"
@@ -38,30 +40,21 @@
 using namespace SireSec;
 using namespace Siren;
 
-namespace SireSec
-{
-    namespace detail
-    {
-        class PrivateKeyData
-        {
-        public:
-            PrivateKeyData()
-            {}
-            
-            ~PrivateKeyData()
-            {}
-        };
-    }
-}
-
 static const RegisterObject<PrivateKey> r_private_key;
 
 /** Null Constructor */
 PrivateKey::PrivateKey() : Implements<PrivateKey,Key>( Key::NonStreamable )
 {}
 
+/** Internal constructor */
+PrivateKey::PrivateKey(const boost::shared_ptr<Crypt::KeyContext> &context)
+           : Implements<PrivateKey,Key>( Key::NonStreamable ),
+             d(context)
+{}
+
 /** Copy constructor */
-PrivateKey::PrivateKey(const PrivateKey &other) : Implements<PrivateKey,Key>(other)
+PrivateKey::PrivateKey(const PrivateKey &other) 
+           : Implements<PrivateKey,Key>(other), d(other.d)
 {}
 
 /** Destructor */
@@ -88,8 +81,16 @@ bool PrivateKey::operator!=(const PrivateKey &other) const
     return not PrivateKey::operator==(other);
 }
 
-//QPair<PublicKey,PrivateKey> PrivateKey::generate()
-//QPair<PublicKey,PrivateKey> PrivateKey::generate(const QDateTime &expiry)
+bool PrivateKey::isValid() const
+{
+    return d.get() != 0;
+}
+
+/** Eventually I'll tie this down to a single thread... */
+bool PrivateKey::availableToThisThread() const
+{
+    return true;
+}
 
 QString PrivateKey::toString() const
 {
@@ -116,4 +117,87 @@ uint PrivateKey::hashCode() const
 void PrivateKey::stream(Siren::Stream &s)
 {
     this->assertIsStreamable();
+}
+
+/** Generate a public/private key pair, optionally supplying
+    the key type (algorithm used by the pair) */
+boost::tuple<PublicKey,PrivateKey> 
+PrivateKey::generate(QString label, KeyTypes::KeyType keytype, int keylength)
+{
+    CRYPT_CONTEXT crypt_context;
+    
+    try
+    {
+        Crypt::SireSec_init();
+    
+        int status;
+    
+        //generate the encryption context (this sets the key type)
+        switch (keytype)
+        {
+            case KeyTypes::DEFAULT:
+            case KeyTypes::RSA:
+                status = cryptCreateContext( &crypt_context, CRYPT_UNUSED, 
+                                             CRYPT_ALGO_RSA );
+                break;
+            
+            case KeyTypes::Elgamal:
+                status = cryptCreateContext( &crypt_context, CRYPT_UNUSED,
+                                             CRYPT_ALGO_ELGAMAL );
+                                             
+            default:
+                throw Siren::unsupported( QObject::tr(
+                        "An unsupported public/private key type was requested."),
+                            CODELOC );
+        }
+        
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+        
+        //now add a label to the key - this is necessary so that this
+        //key can be retrieved from a keyset
+        if (label.isEmpty())
+            label = "unnamed";
+        
+        QByteArray utf8_label = label.toUtf8();
+        
+        status = cryptSetAttributeString( crypt_context, CRYPT_CTXINFO_LABEL,
+                                          utf8_label.constData(), utf8_label.length() );
+                                          
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+        
+        //if specified, set the key length
+        if (keylength > 0)
+        {
+            //don't allow keys less than 128 bytes
+            if (keylength < 128)
+                keylength = 128;
+                
+            status = cryptSetAttribute( crypt_context, CRYPT_CTXINFO_KEYSIZE, keylength );
+            
+            Crypt::assertValidStatus(status, QUICK_CODELOC);
+        }
+        
+        //finally(!) generate the keys
+        status = cryptGenerateKey( crypt_context );
+        
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+       
+        //create the handle for the key context, and pass it to the keys
+        boost::shared_ptr<Crypt::KeyContext> d( new Crypt::KeyContext(crypt_context) );
+        
+        return boost::tuple<PublicKey,PrivateKey>( PublicKey(d), PrivateKey(d) );
+    }
+    catch(...)
+    {
+        cryptDestroyContext(crypt_context);
+        throw;
+    }
+}
+
+/** Generate a public/private key pair, optionally supplying
+    the key type (algorithm used by the pair) */
+boost::tuple<PublicKey,PrivateKey> 
+PrivateKey::generate(KeyTypes::KeyType keytype, int keylength)
+{
+    return generate(QString::null, keytype, keylength);
 }

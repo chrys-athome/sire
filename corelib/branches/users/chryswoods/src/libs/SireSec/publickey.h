@@ -38,8 +38,9 @@ SIRE_BEGIN_HEADER
 namespace SireSec
 {
 
-namespace detail{ class PublicKeyData; }
+namespace Crypt{ class KeyContext; }
 
+class PubPriLock;
 class PrivateKey;
 
 /** This is a public key, used to encrypt data in a PubPriLock
@@ -62,22 +63,21 @@ public:
     bool operator==(const PublicKey &other) const;
     bool operator!=(const PublicKey &other) const;
     
-    static QPair<PublicKey,PrivateKey> generate();
-    static QPair<PublicKey,PrivateKey> generate(const QDateTime &expiry);
-    
-    static QPair<PublicKey,PrivateKey> generate(KeyTypes::KeyType keytype);
-    static QPair<PublicKey,PrivateKey> generate(KeyTypes::KeyType keytype,
-                                                const QDateTime &expiry);
-    
     QString toString() const;
     uint hashCode() const;
     void stream(Siren::Stream &s);
     
+    bool isValid() const;
+    
     bool availableToThisThread() const;
+
+protected:
+    friend class PubPriLock;
+    friend class PrivateKey;
+    PublicKey(const boost::shared_ptr<Crypt::KeyContext> &d);
     
 private:
-    friend class PrivateKey;
-    boost::shared_ptr<detail::PublicKeyData> d;
+    boost::shared_ptr<Crypt::KeyContext> d;
 };
 
 }

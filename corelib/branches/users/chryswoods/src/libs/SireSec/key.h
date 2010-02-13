@@ -45,7 +45,8 @@ namespace SireSec
     cryptlib, and hence supported in SireSec */
 namespace Ciphers
 {
-    enum Cipher { AES = 1,
+    enum Cipher { DEFAULT = 0,
+                  AES = 1,
                   Blowfish = 2,
                   CAST_128 = 3,
                   Triple_DES = 4 };
@@ -53,33 +54,48 @@ namespace Ciphers
 
 /** All of the (still secure, non-patented) public/private
     key algorithms supported by cryptlib, and hence supported in SireSec */
-namespace KeyType
+namespace KeyTypes
 {
-    enum KeyType { RSA = 1,
+    enum KeyType { DEFAULT = 0,
+                   RSA = 1,
                    Elgamal = 2
                  };
 }
 
 /** All of the (still secure, non-patented) certificate algorithms
     supported by cryptlib, and hence supported in SireSec */
-namespace CertificateTypes
+namespace CertTypes
 {
-    enum CertificateType { RSA = 1,
-                           Elgamal = 2,
-                           DSA = 3 };
+    enum CertType { DEFAULT = 0,
+                    RSA = 1,
+                    Elgamal = 2,
+                    DSA = 3 };
 }
 
 /** All of the (still secure, non-patented) message authentication
     algorithms supported by cryptlib, and hence supported in SireSec */
 namespace MACTypes
 {
-    enum MACType { HMAC_MD5 = 1,
+    enum MACType { DEFAULT = 0,
+                   HMAC_MD5 = 1,
                    HMAC_SHA1 = 2,
                    HMAC_RIPEMD_160 = 3,
                    RIPEMD_160 = 4,
                    SHA = 5,
                    SHA2 = 6 }; 
 }
+
+QString cipherString(Ciphers::Cipher cipher);
+Ciphers::Cipher stringToCipher(const QString &string);
+
+QString keyTypeString(KeyTypes::KeyType keytype);
+KeyTypes::KeyType stringToKeyType(const QString &string);
+
+QString certTypeString(CertTypes::CertType certtype);
+CertTypes::CertType stringToCertType(const QString &string);
+
+QString macTypeString(MACTypes::MACType mactype);
+MACTypes::MACType stringToMACType(const QString &string);
 
 /** This is the virtual base class of all Key objects.
     A Key, when used with a Lock, can be used to 

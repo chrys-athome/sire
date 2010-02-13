@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "password.h"
 
+#include <QDebug>
+
 #include <QThreadStorage>
 
 #include <QUuid>

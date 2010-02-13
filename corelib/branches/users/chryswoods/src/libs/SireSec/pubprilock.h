@@ -45,12 +45,15 @@ class PrivateKey;
     
     @author Christopher Woods
 */
-class SIRESEC_EXPORT PubPriLock : Siren::Implements<PubPriLock,Lock>
+class SIRESEC_EXPORT PubPriLock : public Siren::Implements<PubPriLock,Lock>
 {
 public:
     PubPriLock();
-    PubPriLock(const PublicKey &public_key);
-    PubPriLock(const PublicKey &public_key, const PrivateKey &private_key);
+    PubPriLock(const PublicKey &public_key, 
+               Ciphers::Cipher cipher = Ciphers::DEFAULT);
+    PubPriLock(const PublicKey &public_key, 
+               const PrivateKey &private_key, 
+               Ciphers::Cipher cipher = Ciphers::DEFAULT);
     
     PubPriLock(const PubPriLock &other);
     
@@ -68,6 +71,8 @@ public:
     uint hashCode() const;
     void stream(Siren::Stream &s);
 
+    Ciphers::Cipher cipher() const;
+
 protected:
     void encryptStream(QDataStream &in_stream, QDataStream &out_stream,
                        int nbytes) const;
@@ -80,6 +85,11 @@ private:
         and is widely known as it is only used to encrypt the data.
         It is the private key that must remain secret! */
     PublicKey public_key;
+    
+    /** The cipher to use for the encryption (the public key
+        is used to encrypt the session key - the data is encrypted
+        using the specified cipher) */
+    Ciphers::Cipher cphr;
 };
 
 }

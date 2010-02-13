@@ -30,10 +30,191 @@
 
 #include "SireSec/errors.h"
 
+#include "Siren/errors.h"
 #include "Siren/stream.h"
 
 using namespace SireSec;
 using namespace Siren;
+
+namespace SireSec
+{
+    QString cipherString(Ciphers::Cipher cipher)
+    {
+        switch (cipher)
+        {
+            case Ciphers::DEFAULT:
+                return "DEFAULT";
+            case Ciphers::AES:
+                return "AES";
+            case Ciphers::Blowfish:
+                return "Blowfish";
+            case Ciphers::CAST_128:
+                return "CAST-128";
+            case Ciphers::Triple_DES:
+                return "Triple DES";
+        }
+        
+        return "DEFAULT";
+    }
+    
+    Ciphers::Cipher stringToCipher(const QString &string)
+    {
+        if (string == QLatin1String("DEFAULT"))
+            return Ciphers::DEFAULT;
+
+        else if (string == QLatin1String("AES"))
+            return Ciphers::AES;
+
+        else if (string == QLatin1String("Blowfish"))
+            return Ciphers::Blowfish;
+
+        else if (string == QLatin1String("CAST-128"))
+            return Ciphers::CAST_128;
+
+        else if (string == QLatin1String("Triple DES"))
+            return Ciphers::Triple_DES;
+        
+        else
+        {
+            throw Siren::unsupported( QObject::tr(
+                    "The cipher \"%1\" is not supported.").arg(string), CODELOC );
+
+            return Ciphers::DEFAULT;
+        }
+    }
+
+    QString keyTypeString(KeyTypes::KeyType keytype)
+    {
+        switch (keytype)
+        {
+            case KeyTypes::DEFAULT:
+                return "DEFAULT";
+            case KeyTypes::RSA:
+                return "RSA";
+            case KeyTypes::Elgamal:
+                return "Elgamal";
+        }
+        
+        return "DEFAULT";
+    }
+    
+    KeyTypes::KeyType stringToKeyType(const QString &string)
+    {
+        if (string == QLatin1String("DEFAULT"))
+            return KeyTypes::DEFAULT;
+
+        else if (string == QLatin1String("RSA"))
+            return KeyTypes::RSA;
+
+        else if (string == QLatin1String("Elgamal"))
+            return KeyTypes::Elgamal;
+        
+        else
+        {
+            throw Siren::unsupported( QObject::tr(
+                    "The key type \"%1\" is not supported.").arg(string), CODELOC );
+
+            return KeyTypes::DEFAULT;
+        }
+    }
+
+    QString certTypeString(CertTypes::CertType certtype)
+    {
+        switch (certtype)
+        {
+            case CertTypes::DEFAULT:
+                return "DEFAULT";
+            case CertTypes::RSA:
+                return "RSA";
+            case CertTypes::Elgamal:
+                return "Elgamal";
+            case CertTypes::DSA:
+                return "DSA";
+        }
+        
+        return "DEFAULT";
+    }
+
+    CertTypes::CertType stringToCertType(const QString &string)
+    {
+        if (string == QLatin1String("DEFAULT"))
+            return CertTypes::DEFAULT;
+
+        else if (string == QLatin1String("RSA"))
+            return CertTypes::RSA;
+
+        else if (string == QLatin1String("Elgamal"))
+            return CertTypes::Elgamal;
+
+        else if (string == QLatin1String("DSA"))
+            return CertTypes::DSA;
+        
+        else
+        {
+            throw Siren::unsupported( QObject::tr(
+                    "The certificate type \"%1\" is not supported.")
+                        .arg(string), CODELOC );
+
+            return CertTypes::DEFAULT;
+        }
+    }
+
+    QString macTypeString(MACTypes::MACType mactype)
+    {
+        switch (mactype)
+        {
+            case MACTypes::DEFAULT:
+                return "DEFAULT";
+            case MACTypes::HMAC_MD5:
+                return "HMAC-MD5";
+            case MACTypes::HMAC_SHA1:
+                return "HMAC-SHA1";
+            case MACTypes::HMAC_RIPEMD_160:
+                return "HMAC-RIPEMD-160";
+            case MACTypes::RIPEMD_160:
+                return "RIPEMD-160";
+            case MACTypes::SHA:
+                return "SHA";
+            case MACTypes::SHA2:
+                return "SHA2";
+        }
+        
+        return "DEFAULT";
+    }
+
+    MACTypes::MACType stringToMACType(const QString &string)
+    {
+        if (string == QLatin1String("DEFAULT"))
+            return MACTypes::DEFAULT;
+
+        else if (string == QLatin1String("HMAC-MD5"))
+            return MACTypes::HMAC_MD5;
+
+        else if (string == QLatin1String("HMAC-SHA1"))
+            return MACTypes::HMAC_SHA1;
+
+        else if (string == QLatin1String("HMAC-RIPEMD-160"))
+            return MACTypes::HMAC_RIPEMD_160;
+
+        else if (string == QLatin1String("RIPEMD-160"))
+            return MACTypes::RIPEMD_160;
+
+        else if (string == QLatin1String("SHA"))
+            return MACTypes::SHA;
+
+        else if (string == QLatin1String("SHA2"))
+            return MACTypes::SHA2;
+        
+        else
+        {
+            throw Siren::unsupported( QObject::tr(
+                    "The MAC type \"%1\" is not supported.")
+                        .arg(string), CODELOC );
+
+            return MACTypes::DEFAULT;
+        }
+    }
+}
 
 static const RegisterObject<Key> r_key( VIRTUAL_CLASS );
 

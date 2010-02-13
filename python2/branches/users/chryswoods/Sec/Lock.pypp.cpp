@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "lock.h"
 
+#include <QDebug>
+
 #include "lock.h"
 
 #include "Siren/logger.h"

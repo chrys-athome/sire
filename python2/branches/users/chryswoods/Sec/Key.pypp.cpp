@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "SireSec/errors.h"
 
+#include "Siren/errors.h"
+
 #include "Siren/stream.h"
 
 #include "key.h"

@@ -6,6 +6,9 @@
 #include "key.h"
 #include "lock.h"
 #include "password.h"
+#include "privatekey.h"
+#include "publickey.h"
+#include "pubprilock.h"
 
 #endif
 

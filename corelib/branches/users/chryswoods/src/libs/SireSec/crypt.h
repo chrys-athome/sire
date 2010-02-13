@@ -41,6 +41,23 @@ namespace SireSec
 {
     namespace Crypt
     {
+        class KeyContext
+        {
+        public:
+            KeyContext(CRYPT_CONTEXT context) : crypt_context(context)
+            {}
+            
+            ~KeyContext()
+            {
+                cryptDestroyContext(crypt_context);
+            }
+            
+            CRYPT_CONTEXT crypt_context;
+        };
+    
+        void SireSec_init();
+        void SireSec_end();
+    
         CRYPT_ENVELOPE createDefaultEnvelope();
         CRYPT_ENVELOPE createAutoFormatEnvelope();
         

@@ -29,8 +29,7 @@
 #ifndef SIRESEC_PRIVATEKEY_H
 #define SIRESEC_PRIVATEKEY_H
 
-#include <QPair>
-
+#include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "key.h"
@@ -40,8 +39,9 @@ SIRE_BEGIN_HEADER
 namespace SireSec
 {
 
-namespace detail{ class PrivateKeyData; }
+namespace Crypt{ class KeyContext; }
 
+class PubPriLock;
 class PublicKey;
 
 /** This is a private key, used to decrypt data using
@@ -65,21 +65,57 @@ public:
     bool operator==(const PrivateKey &other) const;
     bool operator!=(const PrivateKey &other) const;
     
-    static QPair<PublicKey,PrivateKey> generate();
-    static QPair<PublicKey,PrivateKey> generate(const QDateTime &expiry);
+    bool isValid() const;
     
-    static QPair<PublicKey,PrivateKey> generate(KeyTypes::KeyType keytype);
-    static QPair<PublicKey,PrivateKey> generate(KeyTypes::KeyType keytype,
-                                                const QDateTime &expiry);
+    static boost::tuple<PublicKey,PrivateKey>
+    generate(QString label, KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
+             int keylength = 0);
+
+    static boost::tuple<PublicKey,PrivateKey> 
+    generate(KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
+             int keylength = 0);
+    
+/*    static QPair<PublicKey,PrivateKey> 
+    generate(const QDateTime &expiry, QString label,
+             KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
+             int keylength = 0);
+    
+    static QPair<PublicKey,PrivateKey> 
+    generate(Key::Options keyoptions, QString label,
+             KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
+             int keylength = 0);
+    
+    static QPair<PublicKey,PrivateKey> 
+    generate(Key::Options keyoptions, const QDateTime &expiry,
+             QString label,
+             KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
+             int keylength = 0);
+    
+    static QPair<PublicKey,PrivateKey> 
+    generate(const QDateTime &expiry, KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
+             int keylength = 0);
+    
+    static QPair<PublicKey,PrivateKey> 
+    generate(Key::Options keyoptions, KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
+             int keylength = 0);
+    
+    static QPair<PublicKey,PrivateKey> 
+    generate(Key::Options keyoptions, const QDateTime &expiry, 
+             KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
+             int keylength = 0); */
     
     QString toString() const;
     uint hashCode() const;
     void stream(Siren::Stream &s);
     
     bool availableToThisThread() const;
+
+protected:
+    friend class PubPriLock;
+    PrivateKey(const boost::shared_ptr<Crypt::KeyContext> &d);
     
 private:
-    boost::shared_ptr<detail::PrivateKeyData> d;
+    boost::shared_ptr<Crypt::KeyContext> d;
 };
 
 }
