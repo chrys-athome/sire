@@ -178,13 +178,16 @@ void PubPriLock::encryptStream(QDataStream &in_stream, QDataStream &out_stream,
                     CODELOC );
                     
     CRYPT_ENVELOPE crypt_envelope = Crypt::createDefaultEnvelope();
+    CRYPT_ENVELOPE compress_envelope = Crypt::createDefaultEnvelope();
     
     try
     {
         //set the size of the data to be read
         if (nbytes > 0)
-            cryptSetAttribute( crypt_envelope, CRYPT_ENVINFO_DATASIZE, nbytes );
+            cryptSetAttribute( compress_envelope, CRYPT_ENVINFO_DATASIZE, nbytes );
 
+        cryptSetAttribute( compress_envelope, CRYPT_ENVINFO_COMPRESSION, CRYPT_UNUSED );
+        
         //add integrity checking so that the data cannot be tampered with
         int status = cryptSetAttribute( crypt_envelope,
                                         CRYPT_ENVINFO_INTEGRITY,
@@ -232,13 +235,16 @@ void PubPriLock::encryptStream(QDataStream &in_stream, QDataStream &out_stream,
             Crypt::assertValidStatus(status, QUICK_CODELOC);
         }
                                                            
-        //process the data
-        Crypt::processThroughEnvelope(crypt_envelope, in_stream, out_stream);
+        //process the data - compress then encrypt
+        Crypt::processThroughEnvelopes(compress_envelope, crypt_envelope, 
+                                       in_stream, out_stream);
         
+        cryptDestroyEnvelope(compress_envelope);
         cryptDestroyEnvelope(crypt_envelope);
     }
     catch(...)
     {
+        cryptDestroyEnvelope(compress_envelope);
         cryptDestroyEnvelope(crypt_envelope);
         throw;
     }
@@ -279,27 +285,31 @@ void PubPriLock::decryptStream(QDataStream &in_stream, QDataStream &out_stream,
         throw Siren::program_bug( QObject::tr(
                 "How has an invalid private key been saved?"), CODELOC );
     
-    //create an envelope to encrypt the data
+    //create an envelope to decrypt the data and decompress the data
     CRYPT_ENVELOPE crypt_envelope = Crypt::createAutoFormatEnvelope();
+    CRYPT_ENVELOPE compress_envelope = Crypt::createAutoFormatEnvelope();
 
     try
     {
         //set the size of the data to be read
         if (nbytes > 0)
-            cryptSetAttribute( crypt_envelope, CRYPT_ENVINFO_DATASIZE, nbytes );
+            cryptSetAttribute( compress_envelope, CRYPT_ENVINFO_DATASIZE, nbytes );
 
         //get the private key context
         CRYPT_CONTEXT crypt_context = key.d->crypt_context;
 
         //process the data - providing the password when required
-        Crypt::processThroughEnvelope(crypt_envelope, in_stream, out_stream,
-                                      boost::bind(supply_key, crypt_context, _1, _2));
+        Crypt::processThroughEnvelopes(crypt_envelope, compress_envelope,
+                                       in_stream, out_stream,
+                                       boost::bind(supply_key, crypt_context, _1, _2));
 
         cryptDestroyEnvelope(crypt_envelope);
+        cryptDestroyEnvelope(compress_envelope);
     }
     catch(...)
     {
         cryptDestroyEnvelope(crypt_envelope);
+        cryptDestroyEnvelope(compress_envelope);
         throw;
     }
 }

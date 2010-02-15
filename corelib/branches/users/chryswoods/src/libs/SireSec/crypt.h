@@ -37,6 +37,12 @@
 
 SIRE_BEGIN_HEADER
 
+/** This file contains functions used to interface SireSec with cryptlib.
+    These functions are private to SireSec and are not exported.
+    
+    This header is not in the public API!
+*/
+
 namespace SireSec
 {
     namespace Crypt
@@ -58,6 +64,7 @@ namespace SireSec
         void SireSec_init();
         void SireSec_end();
     
+        CRYPT_ENVELOPE createEnvelope(CRYPT_FORMAT_TYPE format);
         CRYPT_ENVELOPE createDefaultEnvelope();
         CRYPT_ENVELOPE createAutoFormatEnvelope();
         
@@ -72,6 +79,27 @@ namespace SireSec
         int processThroughEnvelope(CRYPT_ENVELOPE envelope,
                                    QDataStream &in_stream,
                                    QDataStream &out_stream);
+        
+        int processThroughEnvelopes(CRYPT_ENVELOPE envelope0,
+                                    CRYPT_ENVELOPE envelope1,
+                                    QDataStream &in_stream,
+                                    QDataStream &out_stream,
+                                boost::function<void (CRYPT_ENVELOPE,int)> key_function0,
+                                boost::function<void (CRYPT_ENVELOPE,int)> key_function1
+                                   );
+        
+        int processThroughEnvelopes(CRYPT_ENVELOPE envelope0,
+                                    CRYPT_ENVELOPE envelope1,
+                                    QDataStream &in_stream,
+                                    QDataStream &out_stream,
+                                boost::function<void (CRYPT_ENVELOPE,int)> key_function
+                                   );
+        
+        int processThroughEnvelopes(CRYPT_ENVELOPE envelope0,
+                                    CRYPT_ENVELOPE envelope1,
+                                    QDataStream &in_stream,
+                                    QDataStream &out_stream
+                                   );
         
         void assertValidStatus(int status, QUICK_CODELOC_ARGS);
         
