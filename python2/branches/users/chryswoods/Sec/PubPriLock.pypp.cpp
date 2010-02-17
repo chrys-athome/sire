@@ -21,8 +21,6 @@ namespace bp = boost::python;
 
 #include <QDebug>
 
-#include <boost/bind.hpp>
-
 #include "pubprilock.h"
 
 #include "Siren/logger.h"

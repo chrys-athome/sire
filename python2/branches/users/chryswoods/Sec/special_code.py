@@ -10,6 +10,8 @@ import pickle
 
 from pyplusplus.module_builder import call_policies
 
+implicitly_convertible = [ ("SireSec::Key::Option", "SireSec::Key::Options") ]
+
 def fixMB(mb):
     mb.add_declaration_code("#include \"SireSec/key.h\"")
 

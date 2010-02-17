@@ -40,6 +40,7 @@ namespace SireSec
 {
 
 namespace Crypt{ class KeyContext; }
+namespace detail{ class PrivateKeyData; }
 
 class PubPriLock;
 class PublicKey;
@@ -75,34 +76,34 @@ public:
     generate(KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
              int keylength = 0);
     
-/*    static QPair<PublicKey,PrivateKey> 
+    static boost::tuple<PublicKey,PrivateKey> 
     generate(const QDateTime &expiry, QString label,
              KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
              int keylength = 0);
     
-    static QPair<PublicKey,PrivateKey> 
+    static boost::tuple<PublicKey,PrivateKey> 
     generate(Key::Options keyoptions, QString label,
              KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
              int keylength = 0);
     
-    static QPair<PublicKey,PrivateKey> 
+    static boost::tuple<PublicKey,PrivateKey> 
     generate(Key::Options keyoptions, const QDateTime &expiry,
              QString label,
              KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
              int keylength = 0);
     
-    static QPair<PublicKey,PrivateKey> 
+    static boost::tuple<PublicKey,PrivateKey> 
     generate(const QDateTime &expiry, KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
              int keylength = 0);
     
-    static QPair<PublicKey,PrivateKey> 
+    static boost::tuple<PublicKey,PrivateKey> 
     generate(Key::Options keyoptions, KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
              int keylength = 0);
     
-    static QPair<PublicKey,PrivateKey> 
+    static boost::tuple<PublicKey,PrivateKey> 
     generate(Key::Options keyoptions, const QDateTime &expiry, 
              KeyTypes::KeyType keytype = KeyTypes::DEFAULT,
-             int keylength = 0); */
+             int keylength = 0);
     
     QString toString() const;
     uint hashCode() const;
@@ -112,10 +113,15 @@ public:
 
 protected:
     friend class PubPriLock;
-    PrivateKey(const boost::shared_ptr<Crypt::KeyContext> &d);
+    PrivateKey(const boost::shared_ptr<Crypt::KeyContext> &d,
+               const Key::Options &key_options,
+               const QDateTime &expiry_data);
     
 private:
-    boost::shared_ptr<Crypt::KeyContext> d;
+    /** The shared pointer to the UID of the private key data
+        (the private key data is not stored directly in the key) */
+    //boost::shared_ptr<Crypt::KeyContext> d;
+    boost::shared_ptr<detail::PrivateKeyData> d;
 };
 
 }

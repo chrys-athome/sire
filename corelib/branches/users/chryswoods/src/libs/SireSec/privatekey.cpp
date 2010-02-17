@@ -26,6 +26,12 @@
   *
 \*********************************************/
 
+#include <QThreadStorage>
+#include <QHash>
+#include <QUuid>
+
+#include <boost/bind.hpp>
+
 #include "crypt.h"  // CONDITIONAL_INCLUDE
 
 #include "privatekey.h"
@@ -34,6 +40,7 @@
 
 #include "SireSec/errors.h"
 
+#include "Siren/mutex.h"
 #include "Siren/errors.h"
 #include "Siren/stream.h"
 
@@ -42,6 +49,141 @@
 using namespace SireSec;
 using namespace Siren;
 
+////
+//// Implementation of PrivateKeyData
+////
+
+namespace SireSec 
+{ 
+    namespace detail
+    {
+        Q_GLOBAL_STATIC( Mutex, privateKeyMutex );
+        
+        typedef boost::shared_ptr<Crypt::KeyContext> ContextPtr;
+        
+        static QHash< QUuid,ContextPtr > *global_privkeys(0);
+        static QThreadStorage< QHash<QUuid,ContextPtr>* > local_privkeys;
+
+        ContextPtr get_privkey(const QUuid &uid, bool is_local)
+        {
+            if (is_local)
+            {
+                if (local_privkeys.hasLocalData())
+                {
+                    return local_privkeys.localData()->value(uid);
+                }
+            }
+            else
+            {
+                MutexLocker lkr( privateKeyMutex() );
+                
+                if (global_privkeys)
+                {
+                    return global_privkeys->value(uid);
+                }
+            }
+            
+            return ContextPtr();
+        }
+    
+        class PrivateKeyData : public boost::noncopyable
+        {
+        public:
+            QUuid uid;
+            bool is_local;
+        
+            PrivateKeyData(const ContextPtr &keycontext, bool thread_local)
+                   : boost::noncopyable()
+            {
+                uid = QUuid::createUuid();
+                is_local = thread_local;
+            
+                if (is_local)
+                {
+                    if (not local_privkeys.hasLocalData())
+                    {
+                        local_privkeys.setLocalData( new QHash<QUuid,ContextPtr>() );
+                    }
+                    
+                    local_privkeys.localData()->insert(uid, keycontext);
+                }
+                else
+                {
+                    MutexLocker lkr( privateKeyMutex() );
+                    
+                    if (global_privkeys == 0)
+                    {
+                        global_privkeys = new QHash<QUuid,ContextPtr>();
+                    }
+                    
+                    global_privkeys->insert(uid, keycontext);
+                }
+            }
+            
+            ~PrivateKeyData()
+            {
+                if (is_local)
+                {
+                    if (local_privkeys.hasLocalData())
+                    {
+                        if (local_privkeys.localData()->contains(uid))
+                        {
+                            local_privkeys.localData()->remove(uid);
+                            
+                            if (local_privkeys.localData()->isEmpty())
+                            {
+                                local_privkeys.setLocalData(0);
+                            }
+                        }
+                    }
+                }
+                else 
+                {
+                    MutexLocker lkr( privateKeyMutex() );
+                    
+                    if (global_privkeys)
+                    {
+                        global_privkeys->remove(uid);
+                        
+                        if (global_privkeys->isEmpty())
+                        {
+                            delete global_privkeys;
+                            global_privkeys = 0;
+                        }
+                    }
+                }
+            }
+            
+            bool canCopy() const
+            {
+                if (is_local)
+                {
+                    if (local_privkeys.hasLocalData())
+                    {
+                        if (local_privkeys.localData()->contains(uid))
+                            return true;
+                    }
+                    
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            bool availableToThisThread() const
+            {
+                return canCopy();
+            }
+        };
+    }
+}
+
+using namespace SireSec::detail;
+
+////
+//// Implementation of PrivateKey
+////
+
 static const RegisterObject<PrivateKey> r_private_key;
 
 /** Null Constructor */
@@ -49,15 +191,24 @@ PrivateKey::PrivateKey() : Implements<PrivateKey,Key>( Key::NonStreamable )
 {}
 
 /** Internal constructor */
-PrivateKey::PrivateKey(const boost::shared_ptr<Crypt::KeyContext> &context)
-           : Implements<PrivateKey,Key>( Key::NonStreamable ),
-             d(context)
+PrivateKey::PrivateKey(const boost::shared_ptr<Crypt::KeyContext> &context,
+                       const Key::Options &options, const QDateTime &expiry)
+           : Implements<PrivateKey,Key>(expiry, (options | Key::NonStreamable)),
+             d( new PrivateKeyData(context, options.testFlag(Key::LockedToThread)) )
 {}
 
 /** Copy constructor */
 PrivateKey::PrivateKey(const PrivateKey &other) 
            : Implements<PrivateKey,Key>(other), d(other.d)
-{}
+{
+    if (other.d.get() != 0)
+    {
+        if (other.d->canCopy())
+            d = other.d;
+        else
+            this->operator=(PrivateKey());
+    }
+}
 
 /** Destructor */
 PrivateKey::~PrivateKey()
@@ -66,8 +217,22 @@ PrivateKey::~PrivateKey()
 /** Copy assignment operator */
 PrivateKey& PrivateKey::operator=(const PrivateKey &other)
 {
-    d = other.d;
-    super::operator=(other);
+    if (this != &other)
+    {
+        if (d.get() != other.d.get())
+        {
+            if (other.d.get())
+            {
+                if (other.d->canCopy())
+                    d = other.d;
+                else
+                    return this->operator=(PrivateKey());
+            }
+        }
+        
+        super::operator=(other);
+    }
+    
     return *this;
 }
 
@@ -91,7 +256,12 @@ bool PrivateKey::isValid() const
 /** Eventually I'll tie this down to a single thread... */
 bool PrivateKey::availableToThisThread() const
 {
-    return true;
+    if (d.get() != 0)
+    {
+        return d->availableToThisThread();
+    }
+    else
+        return true;
 }
 
 QString PrivateKey::toString() const
@@ -103,12 +273,16 @@ QString PrivateKey::toString() const
     {
         if (isTemporal())
             return QObject::tr("PrivateKey( available - expires %1 )")
-                            .arg(this->bestBefore().toString());
+                                    .arg(bestBefore().toString());
+        else if (isStreamable())
+            return QObject::tr("PrivateKey( available and streamable )");
         else
-            return QObject::tr("PrivateKey( available )");
+            return QObject::tr("PrivateKey( available, but not streamable )");
     }
     else
+    {
         return QObject::tr("PrivateKey( unavailable to this thread )");
+    }
 }
 
 uint PrivateKey::hashCode() const
@@ -124,7 +298,9 @@ void PrivateKey::stream(Siren::Stream &s)
 /** Generate a public/private key pair, optionally supplying
     the key type (algorithm used by the pair) */
 boost::tuple<PublicKey,PrivateKey> 
-PrivateKey::generate(QString label, KeyTypes::KeyType keytype, int keylength)
+PrivateKey::generate(Key::Options keyoptions, const QDateTime &expiry,
+                     QString label, KeyTypes::KeyType keytype,
+                     int keylength)
 {
     CRYPT_CONTEXT crypt_context(0);
     CRYPT_CERTIFICATE crypt_certificate(0);
@@ -216,7 +392,8 @@ PrivateKey::generate(QString label, KeyTypes::KeyType keytype, int keylength)
                                                                 crypt_certificate) );
         
         return boost::tuple<PublicKey,PrivateKey>( PublicKey(pub_d), 
-                                                   PrivateKey(priv_d) );
+                                                   PrivateKey(priv_d, keyoptions,
+                                                              expiry) );
     }
     catch(...)
     {
@@ -226,10 +403,122 @@ PrivateKey::generate(QString label, KeyTypes::KeyType keytype, int keylength)
     }
 }
 
-/** Generate a public/private key pair, optionally supplying
-    the key type (algorithm used by the pair) */
+boost::tuple<PublicKey,PrivateKey>
+PrivateKey::generate(QString label, KeyTypes::KeyType keytype, int keylength)
+{
+    return generate(Key::Unrestricted, QDateTime(), label, keytype, keylength);
+}
+
 boost::tuple<PublicKey,PrivateKey> 
 PrivateKey::generate(KeyTypes::KeyType keytype, int keylength)
 {
-    return generate(QString::null, keytype, keylength);
+    return generate(Key::Unrestricted, QDateTime(), QString::null, keytype, keylength);
+}
+
+boost::tuple<PublicKey,PrivateKey> 
+PrivateKey::generate(const QDateTime &expiry, QString label, KeyTypes::KeyType keytype,
+                     int keylength)
+{
+    return generate(Key::Unrestricted, expiry, label, keytype, keylength);
+}
+
+boost::tuple<PublicKey,PrivateKey> 
+PrivateKey::generate(Key::Options keyoptions, QString label,
+                     KeyTypes::KeyType keytype, int keylength)
+{
+    return generate(keyoptions, QDateTime(), label, keytype, keylength);
+}
+
+boost::tuple<PublicKey,PrivateKey> 
+PrivateKey::generate(const QDateTime &expiry, KeyTypes::KeyType keytype,
+                     int keylength)
+{
+    return generate(Key::Unrestricted, expiry, QString::null, keytype, keylength);
+}
+
+boost::tuple<PublicKey,PrivateKey> 
+PrivateKey::generate(Key::Options keyoptions, KeyTypes::KeyType keytype,
+                     int keylength)
+{
+    return generate(keyoptions, QDateTime(), QString::null, keytype, keylength);
+}
+
+boost::tuple<PublicKey,PrivateKey> 
+PrivateKey::generate(Key::Options keyoptions, const QDateTime &expiry, 
+                     KeyTypes::KeyType keytype, int keylength)
+{
+    return generate(keyoptions, expiry, QString::null, keytype, keylength);
+}
+
+static void supply_key(CRYPT_CONTEXT crypt_context,
+                       CRYPT_ENVELOPE crypt_envelope, int ntries)
+{
+    int status = cryptSetAttribute( crypt_envelope, CRYPT_ENVINFO_PRIVATEKEY,
+                                    crypt_context );
+        
+    if (status == CRYPT_OK)
+        return;
+
+    else if (status == CRYPT_ERROR_WRONGKEY)
+        throw SireSec::invalid_key( QObject::tr(
+                "The supplied private key is incorrect. Cannot decrypt the data!"),
+                     CODELOC );
+               
+    else if (ntries > 5)
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+}
+
+void PubPriLock::decryptStream(QDataStream &in_stream, QDataStream &out_stream,
+                               int nbytes) const
+{
+    assertReadingStream(in_stream);
+    assertWritingStream(out_stream);
+    
+    if (not this->hasKey())
+        throw SireSec::missing_key( QObject::tr(
+                "It is not possible to decrypt this data without "
+                "providing a private key!"), CODELOC );
+    
+    const PrivateKey &key = this->getKey().asA<PrivateKey>();
+    
+    if (not key.isValid())
+        throw Siren::program_bug( QObject::tr(
+                "How has an invalid private key been saved?"), CODELOC );
+        
+    key.assertAvailableToThisThread();
+
+    ContextPtr context = get_privkey(key.d->uid, key.d->is_local); 
+
+    if (context.get() == 0)
+        throw SireSec::missing_key( QObject::tr(
+                "It is not possible to decrypt private key protected data with "
+                "a null private key!"), CODELOC );
+    
+    //create an envelope to decrypt the data and decompress the data
+    CRYPT_ENVELOPE crypt_envelope = Crypt::createAutoFormatEnvelope();
+    CRYPT_ENVELOPE compress_envelope = Crypt::createAutoFormatEnvelope();
+
+    try
+    {
+        //set the size of the data to be read
+        if (nbytes > 0)
+            cryptSetAttribute( compress_envelope, CRYPT_ENVINFO_DATASIZE, nbytes );
+
+        //get the private key context
+        CRYPT_CONTEXT crypt_context = context->crypt_context;
+
+        //process the data - providing the password when required
+        Crypt::processThroughEnvelopes(crypt_envelope, compress_envelope,
+                                       in_stream, out_stream,
+                                       boost::bind(supply_key, crypt_context, _1, _2));
+
+        cryptDestroyEnvelope(crypt_envelope);
+        cryptDestroyEnvelope(compress_envelope);
+    }
+    catch(...)
+    {
+        cryptDestroyEnvelope(crypt_envelope);
+        cryptDestroyEnvelope(compress_envelope);
+        throw;
+    }
 }

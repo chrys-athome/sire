@@ -3,7 +3,7 @@ from Sire.Sec import *
 from Sire.Siren import *
 from Sire.Qt import *
 
-(public, private) = PrivateKey.generate()
+(public, private) = PrivateKey.generate( Key.LockedToThread )
 
 (public2, private2) = PrivateKey.generate()
 

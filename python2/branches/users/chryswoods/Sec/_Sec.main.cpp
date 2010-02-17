@@ -48,6 +48,8 @@ BOOST_PYTHON_MODULE(_Sec){
 
     register_SireSec_properties();
 
+    bp::implicitly_convertible< SireSec::Key::Option, SireSec::Key::Options >();
+
     register_PublicKey_class();
 }
 

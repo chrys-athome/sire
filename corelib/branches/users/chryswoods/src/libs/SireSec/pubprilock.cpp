@@ -28,8 +28,6 @@
 
 #include "crypt.h" // CONDITIONAL_INCLUDE
 
-#include <boost/bind.hpp>
-
 #include "pubprilock.h"
 #include "publickey.h"
 #include "privatekey.h"
@@ -246,70 +244,6 @@ void PubPriLock::encryptStream(QDataStream &in_stream, QDataStream &out_stream,
     {
         cryptDestroyEnvelope(compress_envelope);
         cryptDestroyEnvelope(crypt_envelope);
-        throw;
-    }
-}
-
-static void supply_key(CRYPT_CONTEXT crypt_context,
-                       CRYPT_ENVELOPE crypt_envelope, int ntries)
-{
-    int status = cryptSetAttribute( crypt_envelope, CRYPT_ENVINFO_PRIVATEKEY,
-                                    crypt_context );
-        
-    if (status == CRYPT_OK)
-        return;
-
-    else if (status == CRYPT_ERROR_WRONGKEY)
-        throw SireSec::invalid_key( QObject::tr(
-                "The supplied private key is incorrect. Cannot decrypt the data!"),
-                     CODELOC );
-               
-    else if (ntries > 5)
-        Crypt::assertValidStatus(status, QUICK_CODELOC);
-}
-
-void PubPriLock::decryptStream(QDataStream &in_stream, QDataStream &out_stream,
-                               int nbytes) const
-{
-    assertReadingStream(in_stream);
-    assertWritingStream(out_stream);
-    
-    if (not this->hasKey())
-        throw SireSec::missing_key( QObject::tr(
-                "It is not possible to decrypt this data without "
-                "providing a private key!"), CODELOC );
-    
-    const PrivateKey &key = this->getKey().asA<PrivateKey>();
-    
-    if (not key.isValid())
-        throw Siren::program_bug( QObject::tr(
-                "How has an invalid private key been saved?"), CODELOC );
-    
-    //create an envelope to decrypt the data and decompress the data
-    CRYPT_ENVELOPE crypt_envelope = Crypt::createAutoFormatEnvelope();
-    CRYPT_ENVELOPE compress_envelope = Crypt::createAutoFormatEnvelope();
-
-    try
-    {
-        //set the size of the data to be read
-        if (nbytes > 0)
-            cryptSetAttribute( compress_envelope, CRYPT_ENVINFO_DATASIZE, nbytes );
-
-        //get the private key context
-        CRYPT_CONTEXT crypt_context = key.d->crypt_context;
-
-        //process the data - providing the password when required
-        Crypt::processThroughEnvelopes(crypt_envelope, compress_envelope,
-                                       in_stream, out_stream,
-                                       boost::bind(supply_key, crypt_context, _1, _2));
-
-        cryptDestroyEnvelope(crypt_envelope);
-        cryptDestroyEnvelope(compress_envelope);
-    }
-    catch(...)
-    {
-        cryptDestroyEnvelope(crypt_envelope);
-        cryptDestroyEnvelope(compress_envelope);
         throw;
     }
 }

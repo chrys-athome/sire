@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "Siren/errors.h"
 
+#include "Siren/mutex.h"
+
 #include "Siren/stream.h"
 
 #include "privatekey.h"
@@ -20,6 +22,14 @@ namespace bp = boost::python;
 #include "pubprilock.h"
 
 #include <QDebug>
+
+#include <QHash>
+
+#include <QThreadStorage>
+
+#include <QUuid>
+
+#include <boost/bind.hpp>
 
 #include "privatekey.h"
 
@@ -67,6 +77,72 @@ void register_PrivateKey_class(){
                 "generate"
                 , generate_function_value
                 , ( bp::arg("keytype")=::SireSec::KeyTypes::DEFAULT, bp::arg("keylength")=(int)(0) ) );
+        
+        }
+        { //::SireSec::PrivateKey::generate
+        
+            typedef ::boost::tuples::tuple< SireSec::PublicKey, SireSec::PrivateKey, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *generate_function_type )( ::QDateTime const &,::QString,::SireSec::KeyTypes::KeyType,int );
+            generate_function_type generate_function_value( &::SireSec::PrivateKey::generate );
+            
+            PrivateKey_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("expiry"), bp::arg("label"), bp::arg("keytype")=::SireSec::KeyTypes::DEFAULT, bp::arg("keylength")=(int)(0) ) );
+        
+        }
+        { //::SireSec::PrivateKey::generate
+        
+            typedef ::boost::tuples::tuple< SireSec::PublicKey, SireSec::PrivateKey, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *generate_function_type )( ::QFlags< SireSec::Key::Option >,::QString,::SireSec::KeyTypes::KeyType,int );
+            generate_function_type generate_function_value( &::SireSec::PrivateKey::generate );
+            
+            PrivateKey_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("keyoptions"), bp::arg("label"), bp::arg("keytype")=::SireSec::KeyTypes::DEFAULT, bp::arg("keylength")=(int)(0) ) );
+        
+        }
+        { //::SireSec::PrivateKey::generate
+        
+            typedef ::boost::tuples::tuple< SireSec::PublicKey, SireSec::PrivateKey, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *generate_function_type )( ::QFlags< SireSec::Key::Option >,::QDateTime const &,::QString,::SireSec::KeyTypes::KeyType,int );
+            generate_function_type generate_function_value( &::SireSec::PrivateKey::generate );
+            
+            PrivateKey_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("keyoptions"), bp::arg("expiry"), bp::arg("label"), bp::arg("keytype")=::SireSec::KeyTypes::DEFAULT, bp::arg("keylength")=(int)(0) ) );
+        
+        }
+        { //::SireSec::PrivateKey::generate
+        
+            typedef ::boost::tuples::tuple< SireSec::PublicKey, SireSec::PrivateKey, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *generate_function_type )( ::QDateTime const &,::SireSec::KeyTypes::KeyType,int );
+            generate_function_type generate_function_value( &::SireSec::PrivateKey::generate );
+            
+            PrivateKey_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("expiry"), bp::arg("keytype")=::SireSec::KeyTypes::DEFAULT, bp::arg("keylength")=(int)(0) ) );
+        
+        }
+        { //::SireSec::PrivateKey::generate
+        
+            typedef ::boost::tuples::tuple< SireSec::PublicKey, SireSec::PrivateKey, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *generate_function_type )( ::QFlags< SireSec::Key::Option >,::SireSec::KeyTypes::KeyType,int );
+            generate_function_type generate_function_value( &::SireSec::PrivateKey::generate );
+            
+            PrivateKey_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("keyoptions"), bp::arg("keytype")=::SireSec::KeyTypes::DEFAULT, bp::arg("keylength")=(int)(0) ) );
+        
+        }
+        { //::SireSec::PrivateKey::generate
+        
+            typedef ::boost::tuples::tuple< SireSec::PublicKey, SireSec::PrivateKey, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( *generate_function_type )( ::QFlags< SireSec::Key::Option >,::QDateTime const &,::SireSec::KeyTypes::KeyType,int );
+            generate_function_type generate_function_value( &::SireSec::PrivateKey::generate );
+            
+            PrivateKey_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("keyoptions"), bp::arg("expiry"), bp::arg("keytype")=::SireSec::KeyTypes::DEFAULT, bp::arg("keylength")=(int)(0) ) );
         
         }
         { //::SireSec::PrivateKey::hashCode
