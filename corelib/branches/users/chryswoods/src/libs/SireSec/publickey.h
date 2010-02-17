@@ -38,7 +38,7 @@ SIRE_BEGIN_HEADER
 namespace SireSec
 {
 
-namespace Crypt{ class KeyContext; }
+namespace Crypt{ class CertContext; }
 
 class PubPriLock;
 class PrivateKey;
@@ -74,10 +74,10 @@ public:
 protected:
     friend class PubPriLock;
     friend class PrivateKey;
-    PublicKey(const boost::shared_ptr<Crypt::KeyContext> &d);
+    PublicKey(const boost::shared_ptr<Crypt::CertContext> &d);
     
 private:
-    boost::shared_ptr<Crypt::KeyContext> d;
+    boost::shared_ptr<Crypt::CertContext> d;
 };
 
 }

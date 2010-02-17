@@ -19,6 +19,8 @@ namespace bp = boost::python;
 
 #include "pubprilock.h"
 
+#include <QDebug>
+
 #include "privatekey.h"
 
 #include "Siren/logger.h"

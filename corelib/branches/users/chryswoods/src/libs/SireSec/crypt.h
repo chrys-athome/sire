@@ -61,6 +61,20 @@ namespace SireSec
             CRYPT_CONTEXT crypt_context;
         };
     
+        class CertContext
+        {
+        public:
+            CertContext(CRYPT_CERTIFICATE cert) : crypt_certificate(cert)
+            {}
+            
+            ~CertContext()
+            {
+                cryptDestroyCert(crypt_certificate);
+            }
+            
+            CRYPT_CERTIFICATE crypt_certificate;
+        };
+    
         void SireSec_init();
         void SireSec_end();
     

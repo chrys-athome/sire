@@ -7,6 +7,10 @@
 
 namespace bp = boost::python;
 
+#include "SireSec/errors.h"
+
+#include "Siren/errors.h"
+
 #include "Siren/stream.h"
 
 #include "privatekey.h"
@@ -14,6 +18,10 @@ namespace bp = boost::python;
 #include "publickey.h"
 
 #include "pubprilock.h"
+
+#include <QDebug>
+
+#include <boost/bind.hpp>
 
 #include "pubprilock.h"
 

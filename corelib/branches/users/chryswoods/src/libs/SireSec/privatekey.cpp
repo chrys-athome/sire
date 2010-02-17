@@ -37,6 +37,8 @@
 #include "Siren/errors.h"
 #include "Siren/stream.h"
 
+#include <QDebug>
+
 using namespace SireSec;
 using namespace Siren;
 
@@ -124,7 +126,8 @@ void PrivateKey::stream(Siren::Stream &s)
 boost::tuple<PublicKey,PrivateKey> 
 PrivateKey::generate(QString label, KeyTypes::KeyType keytype, int keylength)
 {
-    CRYPT_CONTEXT crypt_context;
+    CRYPT_CONTEXT crypt_context(0);
+    CRYPT_CERTIFICATE crypt_certificate(0);
     
     try
     {
@@ -181,15 +184,44 @@ PrivateKey::generate(QString label, KeyTypes::KeyType keytype, int keylength)
         status = cryptGenerateKey( crypt_context );
         
         Crypt::assertValidStatus(status, QUICK_CODELOC);
-       
-        //create the handle for the key context, and pass it to the keys
-        boost::shared_ptr<Crypt::KeyContext> d( new Crypt::KeyContext(crypt_context) );
+
+        //create a certificate from the public key - this will
+        //allow the certificate to be separated from the private
+        //key, and will also allow it to be exported as text or streamed
+        status = cryptCreateCert( &crypt_certificate, CRYPT_UNUSED, 
+                                  CRYPT_CERTTYPE_CERTIFICATE );
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+                                
+        //tell cryptlib to create a simple, self-signed certificate
+        status = cryptSetAttribute( crypt_certificate, CRYPT_CERTINFO_XYZZY, 1 );
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
         
-        return boost::tuple<PublicKey,PrivateKey>( PublicKey(d), PrivateKey(d) );
+        status = cryptSetAttribute( crypt_certificate, 
+                                    CRYPT_CERTINFO_SUBJECTPUBLICKEYINFO,
+                                    crypt_context );
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+
+        status = cryptSetAttributeString( crypt_certificate, CRYPT_CERTINFO_COMMONNAME,
+                                          utf8_label.constData(), utf8_label.length() );
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+        
+        status = cryptSignCert( crypt_certificate, crypt_context );
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+        
+        //create the handle for the key context, and pass it to the private key
+        boost::shared_ptr<Crypt::KeyContext> priv_d( new Crypt::KeyContext(crypt_context) );
+
+        //create the handle for the certificate and pass it to the public key
+        boost::shared_ptr<Crypt::CertContext> pub_d( new Crypt::CertContext(
+                                                                crypt_certificate) );
+        
+        return boost::tuple<PublicKey,PrivateKey>( PublicKey(pub_d), 
+                                                   PrivateKey(priv_d) );
     }
     catch(...)
     {
         cryptDestroyContext(crypt_context);
+        cryptDestroyCert(crypt_certificate);
         throw;
     }
 }

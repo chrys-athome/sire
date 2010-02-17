@@ -1,9 +1,14 @@
 
 from Sire.Sec import *
+from Sire.Siren import *
+from Sire.Qt import *
 
 (public, private) = PrivateKey.generate()
 
 (public2, private2) = PrivateKey.generate()
+
+print public
+print public2
 
 lock = PubPriLock( public, private, Cipher.Blowfish )
 
@@ -35,3 +40,23 @@ try:
     print lock.decryptString(encrypted_data)
 except:
     print "Could not decrypt the data! (expected!)"
+
+bytearray = QByteArray()
+
+ds = DataStream(bytearray, QIODevice.WriteOnly)
+
+public2.save(ds)
+
+public3 = PublicKey()
+
+print bytearray.length()
+
+ds = DataStream(bytearray)
+
+public3.load(ds)
+
+lock2 = PubPriLock(public3)
+
+encrypted_data = lock2.encryptString("Hello from streamed key")
+
+print lock.decryptString(encrypted_data)

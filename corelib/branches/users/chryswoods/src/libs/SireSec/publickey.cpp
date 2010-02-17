@@ -29,6 +29,8 @@
 #include "publickey.h"
 #include "privatekey.h"
 
+#include "crypt.h" // CONDITIONAL_INCLUDE
+
 #include "Siren/stream.h"
 #include "Siren/errors.h"
 
@@ -42,7 +44,7 @@ PublicKey::PublicKey() : Implements<PublicKey,Key>()
 {}
 
 /** Internal constructor */
-PublicKey::PublicKey(const boost::shared_ptr<Crypt::KeyContext> &context)
+PublicKey::PublicKey(const boost::shared_ptr<Crypt::CertContext> &context)
           : Implements<PublicKey,Key>(), d(context)
 {}
 
@@ -80,9 +82,53 @@ bool PublicKey::isValid() const
     return d.get() != 0;
 }
 
+static QByteArray exportCert(CRYPT_CERTIFICATE crypt_certificate)
+{
+    //now export the data to a buffer - get the required size
+    int cert_size = 0;
+    int status = cryptExportCert( NULL, 0, &cert_size, 
+                                  CRYPT_CERTFORMAT_TEXT_CERTIFICATE,
+                                  crypt_certificate );
+    Crypt::assertValidStatus(status, QUICK_CODELOC);
+        
+    QByteArray exported_certificate;
+    exported_certificate.resize(cert_size);
+        
+    int exported_size;
+    status = cryptExportCert( exported_certificate.data(), cert_size,
+                              &exported_size, 
+                              CRYPT_CERTFORMAT_TEXT_CERTIFICATE,
+                              crypt_certificate );
+    Crypt::assertValidStatus(status, QUICK_CODELOC);                          
+
+    return exported_certificate;
+}
+
+static CRYPT_CERTIFICATE importCert(const QByteArray &cert_data)
+{
+    if (cert_data.isEmpty())
+        return CRYPT_CERTIFICATE();
+
+    CRYPT_CERTIFICATE crypt_certificate;
+    
+    int status = cryptImportCert( cert_data.constData(), cert_data.length(),
+                                  CRYPT_UNUSED, &crypt_certificate );
+                                  
+    Crypt::assertValidStatus(status, QUICK_CODELOC);
+    
+    return crypt_certificate;
+}
+
+/** Return a string representation of the public key */
 QString PublicKey::toString() const
 {
-    return QObject::tr("PublicKey");
+    if (d.get() == 0)
+        return QObject::tr("PublicKey::null");
+
+    QByteArray exported_certificate = exportCert(d->crypt_certificate);
+
+    return QString::fromAscii(exported_certificate.constData(), 
+                              exported_certificate.length());
 }
 
 uint PublicKey::hashCode() const
@@ -92,7 +138,32 @@ uint PublicKey::hashCode() const
 
 void PublicKey::stream(Siren::Stream &s)
 {
-    throw Siren::incomplete_code("Need to convert to certificate", CODELOC);
+    QByteArray exported_certificate;
+    
+    if (s.isSaving())
+    {
+        if (d.get() != 0)
+            exported_certificate = exportCert(d->crypt_certificate);
+    }
+
+    s.assertVersion<PublicKey>(1);
+    
+    Schema schema = s.item<PublicKey>();
+
+    schema.data("certificate") & exported_certificate;
+    
+    if (s.isLoading())
+    {
+        if (exported_certificate.isEmpty())
+            d.reset();
+        else
+        {
+            CRYPT_CERTIFICATE crypt_certificate = importCert(exported_certificate);
+            d.reset( new Crypt::CertContext(crypt_certificate) );
+        }
+    }
+    
+    super::stream(schema.base());
 }
 
 /** Public keys are always available (that's their purpose!) */

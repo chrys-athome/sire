@@ -197,7 +197,7 @@ void PubPriLock::encryptStream(QDataStream &in_stream, QDataStream &out_stream,
 
         //set the public key
         status = cryptSetAttribute( crypt_envelope, CRYPT_ENVINFO_PUBLICKEY,
-                                    public_key.d->crypt_context );
+                                    public_key.d->crypt_certificate );
                                               
         Crypt::assertValidStatus(status, QUICK_CODELOC);
               
