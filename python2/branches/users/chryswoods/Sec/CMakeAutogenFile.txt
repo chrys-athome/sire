@@ -8,6 +8,7 @@ set ( PYPP_SOURCES
        PrivateKey.pypp.cpp
        PublicKey.pypp.cpp
        PubPriLock.pypp.cpp
+       SignatureLock.pypp.cpp
        SireSec_containers.cpp
        SireSec_properties.cpp
     )

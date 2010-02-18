@@ -9,6 +9,7 @@
 #include "privatekey.h"
 #include "publickey.h"
 #include "pubprilock.h"
+#include "signaturelock.h"
 
 #endif
 

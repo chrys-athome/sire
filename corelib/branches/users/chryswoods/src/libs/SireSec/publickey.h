@@ -41,6 +41,7 @@ namespace SireSec
 namespace Crypt{ class CertContext; }
 
 class PubPriLock;
+class SignatureLock;
 class PrivateKey;
 
 /** This is a public key, used to encrypt data in a PubPriLock
@@ -73,6 +74,7 @@ public:
 
 protected:
     friend class PubPriLock;
+    friend class SignatureLock;
     friend class PrivateKey;
     PublicKey(const boost::shared_ptr<Crypt::CertContext> &d);
     

@@ -26,6 +26,7 @@ set ( SIRESEC_PUBLIC_HEADERS
       privatekey.h
       publickey.h
       pubprilock.h
+      signaturelock.h
     )
 
 set ( SIRESEC_SOURCES
@@ -39,6 +40,7 @@ set ( SIRESEC_SOURCES
       privatekey.cpp
       publickey.cpp
       pubprilock.cpp
+      signaturelock.cpp
 
       crypt.h
       crypt.cpp

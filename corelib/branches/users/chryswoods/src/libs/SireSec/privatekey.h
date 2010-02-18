@@ -113,6 +113,7 @@ public:
 
 protected:
     friend class PubPriLock;
+    friend class SignatureLock;
     PrivateKey(const boost::shared_ptr<Crypt::KeyContext> &d,
                const Key::Options &key_options,
                const QDateTime &expiry_data);

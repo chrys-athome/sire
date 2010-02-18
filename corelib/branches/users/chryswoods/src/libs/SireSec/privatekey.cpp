@@ -37,6 +37,7 @@
 #include "privatekey.h"
 #include "publickey.h"
 #include "pubprilock.h"
+#include "signaturelock.h"
 
 #include "SireSec/errors.h"
 
@@ -519,6 +520,104 @@ void PubPriLock::decryptStream(QDataStream &in_stream, QDataStream &out_stream,
     {
         cryptDestroyEnvelope(crypt_envelope);
         cryptDestroyEnvelope(compress_envelope);
+        throw;
+    }
+}
+
+void SignatureLock::encryptStream(QDataStream &in_stream, QDataStream &out_stream,
+                                  int nbytes) const
+{
+    assertReadingStream(in_stream);
+    assertWritingStream(out_stream);
+    
+    if (not this->hasKey())
+        throw SireSec::missing_key( QObject::tr(
+                "It is not possible to sign this data without "
+                "providing a private key!"), CODELOC );
+    
+    const PrivateKey &key = this->getKey().asA<PrivateKey>();
+    
+    if (not key.isValid())
+        throw Siren::program_bug( QObject::tr(
+                "How has an invalid private key been saved?"), CODELOC );
+        
+    key.assertAvailableToThisThread();
+
+    ContextPtr context = get_privkey(key.d->uid, key.d->is_local); 
+
+    if (context.get() == 0)
+        throw SireSec::missing_key( QObject::tr(
+                "It is not possible to sign data with "
+                "a null private key!"), CODELOC );
+                    
+    CRYPT_ENVELOPE sign_envelope = Crypt::createDefaultEnvelope();
+    
+    try
+    {
+        //set the size of the data to be read
+        if (nbytes > 0)
+            cryptSetAttribute( sign_envelope, CRYPT_ENVINFO_DATASIZE, nbytes );
+
+        //set the public key
+        int status = cryptSetAttribute( sign_envelope, CRYPT_ENVINFO_SIGNATURE,
+                                        context->crypt_context );
+                                              
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+              
+        //if necessary, set the MAC algorithm
+        if (mactype != MACTypes::DEFAULT)
+        {
+            switch (mactype)
+            {
+                case MACTypes::HMAC_MD5:
+                    status = cryptSetAttribute( sign_envelope, 
+                                                CRYPT_OPTION_ENCR_HASH,
+                                                CRYPT_ALGO_HMAC_MD5 );
+                    break;
+                   
+                case MACTypes::HMAC_SHA1:
+                    status = cryptSetAttribute( sign_envelope, 
+                                                CRYPT_OPTION_ENCR_HASH,
+                                                CRYPT_ALGO_HMAC_SHA1 );
+                    break;
+                   
+                case MACTypes::HMAC_RIPEMD_160:
+                    status = cryptSetAttribute( sign_envelope, 
+                                                CRYPT_OPTION_ENCR_HASH,
+                                                CRYPT_ALGO_HMAC_RIPEMD160 );
+                    break;
+                   
+                case MACTypes::SHA:
+                    status = cryptSetAttribute( sign_envelope, 
+                                                CRYPT_OPTION_ENCR_HASH,
+                                                CRYPT_ALGO_SHA );
+                    break;
+                   
+                case MACTypes::SHA2:
+                    status = cryptSetAttribute( sign_envelope, 
+                                                CRYPT_OPTION_ENCR_HASH,
+                                                CRYPT_ALGO_SHA2 );
+                    break;
+
+                default:
+                    status = cryptSetAttribute( sign_envelope,
+                                                CRYPT_OPTION_ENCR_HASH,
+                                                CRYPT_ALGO_HMAC_MD5 );
+                    break;
+            }
+            
+            Crypt::assertValidStatus(status, QUICK_CODELOC);
+        }
+                                                           
+        //process the data
+        Crypt::processThroughEnvelope(sign_envelope,
+                                      in_stream, out_stream);
+        
+        cryptDestroyEnvelope(sign_envelope);
+    }
+    catch(...)
+    {
+        cryptDestroyEnvelope(sign_envelope);
         throw;
     }
 }

@@ -19,6 +19,8 @@
 
 #include "PublicKey.pypp.hpp"
 
+#include "SignatureLock.pypp.hpp"
+
 #include "_Sec_enumerations.pypp.hpp"
 
 namespace bp = boost::python;
@@ -46,10 +48,12 @@ BOOST_PYTHON_MODULE(_Sec){
 
     register_PubPriLock_class();
 
+    register_PublicKey_class();
+
     register_SireSec_properties();
 
     bp::implicitly_convertible< SireSec::Key::Option, SireSec::Key::Options >();
 
-    register_PublicKey_class();
+    register_SignatureLock_class();
 }
 
