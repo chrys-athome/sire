@@ -77,6 +77,9 @@ public:
     QByteArray encryptString(const QString &string) const;
     QString decryptString(const QByteArray &string) const;
     
+    void encryptFile(const QString &in_file, const QString &out_file) const;
+    void decryptFile(const QString &in_file, const QString &out_file) const;
+    
     QByteArray encrypt(const QByteArray &data) const;
     QByteArray decrypt(const QByteArray &data) const;
     

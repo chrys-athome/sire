@@ -164,22 +164,34 @@ MACTypes::MACType SignatureLock::macType() const
     return mactype;
 }
 
-static void supply_key(CRYPT_CONTEXT crypt_context,
-                       CRYPT_ENVELOPE crypt_envelope, int ntries)
+void SignatureLock::sign(QDataStream &in_stream, QDataStream &out_stream) const
 {
-    int status = cryptSetAttribute( crypt_envelope, CRYPT_ENVINFO_PRIVATEKEY,
-                                    crypt_context );
-        
-    if (status == CRYPT_OK)
-        return;
+    this->encrypt(in_stream, out_stream);
+}
 
-    else if (status == CRYPT_ERROR_WRONGKEY)
-        throw SireSec::invalid_key( QObject::tr(
-                "The supplied private key is incorrect. Cannot decrypt the data!"),
-                     CODELOC );
-               
-    else if (ntries > 5)
-        Crypt::assertValidStatus(status, QUICK_CODELOC);
+void SignatureLock::verify(QDataStream &in_stream, QDataStream &out_stream) const
+{
+    this->decrypt(in_stream, out_stream);
+}
+
+QByteArray SignatureLock::signString(const QString &string) const
+{
+    return this->encryptString(string);
+}
+
+QString SignatureLock::verifyString(const QByteArray &string) const
+{
+    return this->decryptString(string);
+}
+
+QByteArray SignatureLock::sign(const QByteArray &data) const
+{
+    return this->encrypt(data);
+}
+
+QByteArray SignatureLock::verify(const QByteArray &data) const
+{
+    return this->decrypt(data);
 }
 
 void SignatureLock::decryptStream(QDataStream &in_stream, QDataStream &out_stream,
@@ -206,10 +218,20 @@ void SignatureLock::decryptStream(QDataStream &in_stream, QDataStream &out_strea
 
         //process the data - providing the public signature key when required
         Crypt::processThroughEnvelope(sign_envelope,
-                                      in_stream, out_stream,
-                                      boost::bind(supply_key, 
-                                             public_key.d->crypt_certificate, _1, _2));
+                                      in_stream, out_stream );
 
+        int status = cryptSetAttribute( sign_envelope, CRYPT_ENVINFO_SIGNATURE, 
+                                        public_key.d->crypt_certificate );
+
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+
+        int sig_correct(0);
+        status = cryptGetAttribute( sign_envelope, CRYPT_ENVINFO_SIGNATURE_RESULT,
+                                    &sig_correct );
+
+        Crypt::assertValidStatus(status, QUICK_CODELOC);
+        Crypt::assertValidStatus(sig_correct, QUICK_CODELOC);
+                           
         cryptDestroyEnvelope(sign_envelope);
     }
     catch(...)

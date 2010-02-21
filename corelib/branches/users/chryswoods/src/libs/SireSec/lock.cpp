@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QFile>
+
 #include "lock.h"
 
 #include "SireSec/errors.h"
@@ -221,6 +223,52 @@ QString Lock::decryptString(const QByteArray &data) const
     this->decryptStream(in_stream, out_stream, data.count());
     
     return QString::fromUtf8(decrypted_string);
+}
+
+/** Encrypt the contents of the file 'in_file', writing the output
+    to 'out_file'
+    
+    \throw SireSec::missing_key
+*/
+void Lock::encryptFile(const QString &in_file, const QString &out_file) const
+{
+    QFile in(in_file);
+    
+    if (not in.open(QIODevice::ReadOnly))
+        throw Siren::file_error(in, CODELOC);
+        
+    QFile out(out_file);
+    
+    if (not out.open(QIODevice::WriteOnly))
+        throw Siren::file_error(out, CODELOC);
+        
+    QDataStream in_stream(&in);
+    QDataStream out_stream(&out);
+    
+    this->encryptStream(in_stream, out_stream, -1);
+}
+
+/** Decrypt the contents of the file 'in_file', writing the output
+    to 'out_file'
+    
+    \throw SireSec::missing_key
+*/
+void Lock::decryptFile(const QString &in_file, const QString &out_file) const
+{
+    QFile in(in_file);
+    
+    if (not in.open(QIODevice::ReadOnly))
+        throw Siren::file_error(in, CODELOC);
+        
+    QFile out(out_file);
+    
+    if (not out.open(QIODevice::WriteOnly))
+        throw Siren::file_error(out, CODELOC);
+        
+    QDataStream in_stream(&in);
+    QDataStream out_stream(&out);
+    
+    this->decryptStream(in_stream, out_stream, -1);
 }
 
 /** Encrypt the data in 'data', returning the output.

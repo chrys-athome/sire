@@ -561,7 +561,7 @@ void SignatureLock::encryptStream(QDataStream &in_stream, QDataStream &out_strea
         //set the public key
         int status = cryptSetAttribute( sign_envelope, CRYPT_ENVINFO_SIGNATURE,
                                         context->crypt_context );
-                                              
+
         Crypt::assertValidStatus(status, QUICK_CODELOC);
               
         //if necessary, set the MAC algorithm

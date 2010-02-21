@@ -95,6 +95,39 @@ void register_SignatureLock_class(){
         
         }
         SignatureLock_exposer.def( bp::self == bp::self );
+        { //::SireSec::SignatureLock::sign
+        
+            typedef void ( ::SireSec::SignatureLock::*sign_function_type )( ::QDataStream &,::QDataStream & ) const;
+            sign_function_type sign_function_value( &::SireSec::SignatureLock::sign );
+            
+            SignatureLock_exposer.def( 
+                "sign"
+                , sign_function_value
+                , ( bp::arg("in_stream"), bp::arg("out_stream") ) );
+        
+        }
+        { //::SireSec::SignatureLock::sign
+        
+            typedef ::QByteArray ( ::SireSec::SignatureLock::*sign_function_type )( ::QByteArray const & ) const;
+            sign_function_type sign_function_value( &::SireSec::SignatureLock::sign );
+            
+            SignatureLock_exposer.def( 
+                "sign"
+                , sign_function_value
+                , ( bp::arg("data") ) );
+        
+        }
+        { //::SireSec::SignatureLock::signString
+        
+            typedef ::QByteArray ( ::SireSec::SignatureLock::*signString_function_type )( ::QString const & ) const;
+            signString_function_type signString_function_value( &::SireSec::SignatureLock::signString );
+            
+            SignatureLock_exposer.def( 
+                "signString"
+                , signString_function_value
+                , ( bp::arg("string") ) );
+        
+        }
         { //::SireSec::SignatureLock::stream
         
             typedef void ( ::SireSec::SignatureLock::*stream_function_type )( ::Siren::Stream & ) ;
@@ -114,6 +147,39 @@ void register_SignatureLock_class(){
             SignatureLock_exposer.def( 
                 "toString"
                 , toString_function_value );
+        
+        }
+        { //::SireSec::SignatureLock::verify
+        
+            typedef void ( ::SireSec::SignatureLock::*verify_function_type )( ::QDataStream &,::QDataStream & ) const;
+            verify_function_type verify_function_value( &::SireSec::SignatureLock::verify );
+            
+            SignatureLock_exposer.def( 
+                "verify"
+                , verify_function_value
+                , ( bp::arg("in_stream"), bp::arg("out_stream") ) );
+        
+        }
+        { //::SireSec::SignatureLock::verify
+        
+            typedef ::QByteArray ( ::SireSec::SignatureLock::*verify_function_type )( ::QByteArray const & ) const;
+            verify_function_type verify_function_value( &::SireSec::SignatureLock::verify );
+            
+            SignatureLock_exposer.def( 
+                "verify"
+                , verify_function_value
+                , ( bp::arg("data") ) );
+        
+        }
+        { //::SireSec::SignatureLock::verifyString
+        
+            typedef ::QString ( ::SireSec::SignatureLock::*verifyString_function_type )( ::QByteArray const & ) const;
+            verifyString_function_type verifyString_function_value( &::SireSec::SignatureLock::verifyString );
+            
+            SignatureLock_exposer.def( 
+                "verifyString"
+                , verifyString_function_value
+                , ( bp::arg("string") ) );
         
         }
         SignatureLock_exposer.def( "__copy__", &__copy__);

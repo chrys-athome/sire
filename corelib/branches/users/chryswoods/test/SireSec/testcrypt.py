@@ -13,3 +13,6 @@ encrypted_data = lock.encryptString("Hello World!")
 
 print lock.decryptString(encrypted_data)
 
+lock.encryptFile("test/SireSec/testcrypt.py", "test/SireSec/testcrypt_encrypted")
+lock.decryptFile("test/SireSec/testcrypt_encrypted", "test/SireSec/testcrypt.py")
+

@@ -60,3 +60,9 @@ lock2 = PubPriLock(public3)
 encrypted_data = lock2.encryptString("Hello from streamed key")
 
 print lock.decryptString(encrypted_data)
+
+lock = PubPriLock(public, private)
+
+lock.encryptFile("test/SireSec/testkeys.py", "test/SireSec/testkeys_encrypted")
+lock.decryptFile("test/SireSec/testkeys_encrypted", "test/SireSec/testkeys.py")
+

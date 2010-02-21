@@ -74,6 +74,15 @@ public:
 
     MACTypes::MACType macType() const;
 
+    void sign(QDataStream &in_stream, QDataStream &out_stream) const;
+    void verify(QDataStream &in_stream, QDataStream &out_stream) const;
+    
+    QByteArray signString(const QString &string) const;
+    QString verifyString(const QByteArray &string) const;
+    
+    QByteArray sign(const QByteArray &data) const;
+    QByteArray verify(const QByteArray &data) const;
+
 protected:
     void encryptStream(QDataStream &in_stream, QDataStream &out_stream,
                        int nbytes) const;

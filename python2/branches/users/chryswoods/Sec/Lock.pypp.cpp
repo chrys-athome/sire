@@ -72,6 +72,17 @@ void register_Lock_class(){
                 , ( bp::arg("data") ) );
         
         }
+        { //::SireSec::Lock::decryptFile
+        
+            typedef void ( ::SireSec::Lock::*decryptFile_function_type )( ::QString const &,::QString const & ) const;
+            decryptFile_function_type decryptFile_function_value( &::SireSec::Lock::decryptFile );
+            
+            Lock_exposer.def( 
+                "decryptFile"
+                , decryptFile_function_value
+                , ( bp::arg("in_file"), bp::arg("out_file") ) );
+        
+        }
         { //::SireSec::Lock::decryptString
         
             typedef ::QString ( ::SireSec::Lock::*decryptString_function_type )( ::QByteArray const & ) const;
@@ -103,6 +114,17 @@ void register_Lock_class(){
                 "encrypt"
                 , encrypt_function_value
                 , ( bp::arg("data") ) );
+        
+        }
+        { //::SireSec::Lock::encryptFile
+        
+            typedef void ( ::SireSec::Lock::*encryptFile_function_type )( ::QString const &,::QString const & ) const;
+            encryptFile_function_type encryptFile_function_value( &::SireSec::Lock::encryptFile );
+            
+            Lock_exposer.def( 
+                "encryptFile"
+                , encryptFile_function_value
+                , ( bp::arg("in_file"), bp::arg("out_file") ) );
         
         }
         { //::SireSec::Lock::encryptString
