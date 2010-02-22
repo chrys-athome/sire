@@ -586,6 +586,7 @@ namespace SireSec
                     } while (bytes_copied_out1 > 0);
                     
                     delete[] in_buffer;
+                    delete[] mid_buffer;
                     delete[] out_buffer;
                     
                     return data_type;
@@ -595,6 +596,425 @@ namespace SireSec
             {
                 delete[] in_buffer;
                 delete[] mid_buffer;
+                delete[] out_buffer;
+                throw;
+            }
+            
+            return -1;
+        }
+
+        /** Process the data from 'in_stream' through the passed envelopes,
+            (first through envelope0, then envelope1, then envelope2)
+            writing the output to 'out_stream', and using the passed function
+            'key_function0', 'key_function1' and 'key_function2' to get and 
+            set the key if one is required.
+            
+             key_function is a function that is passed the envelope that
+             needs the key, together with an integer to indicate how many
+             times this function has been called previously in this session.
+             
+            This function returns the cryptlib content type of the 
+            de-enveloped data. This is useful if you are decrypting and
+            there are multiple nested envelopes
+        */
+        int processThroughEnvelopes(CRYPT_ENVELOPE crypt_envelope0,
+                                    CRYPT_ENVELOPE crypt_envelope1,
+                                    CRYPT_ENVELOPE crypt_envelope2,
+                                    QDataStream &input_stream,
+                                    QDataStream &output_stream,
+                        boost::function<void (CRYPT_ENVELOPE, int)> key_function0,
+                        boost::function<void (CRYPT_ENVELOPE, int)> key_function1,
+                        boost::function<void (CRYPT_ENVELOPE, int)> key_function2)
+        {
+            const int BUFFER_SIZE = 4096;
+
+            char *in_buffer = 0;
+            char *mid1_buffer = 0;
+            char *mid2_buffer = 0;
+            char *out_buffer = 0;
+            
+            int n_key_calls0 = 0;
+            int n_key_calls1 = 0;
+            int n_key_calls2 = 0;
+            
+            int n_total_bytes_read = 0;
+            int n_total_bytes_written = 0;
+            
+            try
+            {
+                in_buffer = new char[BUFFER_SIZE];
+                mid1_buffer = new char[BUFFER_SIZE];
+                mid2_buffer = new char[BUFFER_SIZE];
+                out_buffer = new char[BUFFER_SIZE];
+                
+                while (not input_stream.atEnd())
+                {
+                    int bytes_read0 = input_stream.readRawData(in_buffer, BUFFER_SIZE);
+                    
+                    if (bytes_read0 == -1)
+                        throw Siren::io_error( QObject::tr(
+                                "Error occurred while reading in data!"), CODELOC );
+
+                    int offset0 = 0;
+                                
+                    while (bytes_read0 > 0)
+                    {
+                        int bytes_copied_in0 = 0;
+                    
+                        int status = cryptPushData( crypt_envelope0, 
+                                                    in_buffer+offset0, bytes_read0,
+                                                    &bytes_copied_in0 );
+                                       
+                        if (status == CRYPT_ENVELOPE_RESOURCE)
+                        {
+                            //the envelope requires more information to continue
+                            ++n_key_calls0;
+                            key_function0(crypt_envelope0, n_key_calls0);
+                            continue;
+                        }
+                        
+                        assertValidStatus(status, QUICK_CODELOC);
+                        
+                        offset0 += bytes_copied_in0;
+                        bytes_read0 -= bytes_copied_in0;
+                        
+                        n_total_bytes_read += bytes_copied_in0;
+                        
+                        if (bytes_read0 > 0)
+                        {
+                            int bytes_copied_out0 = 0;
+                        
+                            //the envelope was full - we couldn't push more data into it!
+                            status = cryptPopData( crypt_envelope0, 
+                                                   mid1_buffer, BUFFER_SIZE, 
+                                                   &bytes_copied_out0 );
+                                                   
+                            assertValidStatus(status, QUICK_CODELOC);
+                                
+                            n_total_bytes_written += bytes_copied_out0;
+
+                            //immediately write these bytes into the second envelope
+                            int bytes_read1 = bytes_copied_out0;
+                            int offset1 = 0;
+                            
+                            while (bytes_read1 > 0)
+                            {
+                                int bytes_copied_in1 = 0;
+                            
+                                status = cryptPushData( crypt_envelope1,
+                                                        mid1_buffer+offset1,
+                                                        bytes_read1,
+                                                        &bytes_copied_in1 );
+
+                                if (status == CRYPT_ENVELOPE_RESOURCE)
+                                {
+                                    //the second envelope requires 
+                                    //more information to continue
+                                    ++n_key_calls1;
+                                    key_function1(crypt_envelope1, n_key_calls1);
+                                    continue;
+                                }
+                        
+                                assertValidStatus(status, QUICK_CODELOC);
+                        
+                                offset1 += bytes_copied_in1;
+                                bytes_read1 -= bytes_copied_in1;
+
+                                if (bytes_read1 > 0)
+                                {
+                                    int bytes_copied_out1 = 0;
+                        
+                                    //the second envelope was full 
+                                    //- we couldn't push more data into it!
+                                    status = cryptPopData( crypt_envelope1, 
+                                                           mid2_buffer, BUFFER_SIZE, 
+                                                           &bytes_copied_out1 );
+                                                   
+                                    assertValidStatus(status, QUICK_CODELOC);
+
+                                    //immediately write these bytes into 
+                                    //the third envelope
+                                    int bytes_read2 = bytes_copied_out1;
+                                    int offset2 = 0;
+                            
+                                    while (bytes_read2 > 0)
+                                    {
+                                        int bytes_copied_in2 = 0;
+                            
+                                        status = cryptPushData( crypt_envelope2,
+                                                                mid2_buffer+offset2,
+                                                                bytes_read2,
+                                                                &bytes_copied_in2 );
+
+                                        if (status == CRYPT_ENVELOPE_RESOURCE)
+                                        {
+                                            //the third envelope requires 
+                                            //more information to continue
+                                            ++n_key_calls2;
+                                            key_function2(crypt_envelope2, n_key_calls2);
+                                            continue;
+                                        }
+                        
+                                        assertValidStatus(status, QUICK_CODELOC);
+                        
+                                        offset2 += bytes_copied_in2;
+                                        bytes_read2 -= bytes_copied_in2;
+
+                                        if (bytes_read2 > 0)
+                                        {
+                                            int bytes_copied_out2 = 0;
+                        
+                                            //the third envelope was full 
+                                            //- we couldn't push more data into it!
+                                            status = cryptPopData( crypt_envelope2, 
+                                                                   out_buffer, 
+                                                                   BUFFER_SIZE, 
+                                                                   &bytes_copied_out2 );
+                                                   
+                                            assertValidStatus(status, QUICK_CODELOC);
+                                    
+                                            int bytes_written = output_stream.
+                                                                    writeRawData(
+                                                         out_buffer, bytes_copied_out2 );
+
+                                            if (bytes_written != bytes_copied_out2)
+                                                throw Siren::io_error( QObject::tr(
+                                                "Error occurred while writing out data!"),
+                                                    CODELOC );
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    //flush out the remaining data from envelope0
+                    int bytes_copied_out0 = 0;
+
+                    do
+                    {
+                        int status = cryptFlushData( crypt_envelope0 );
+                        
+                        assertValidStatus(status, QUICK_CODELOC);
+                        
+                        status = cryptPopData( crypt_envelope0, mid1_buffer, BUFFER_SIZE,
+                                               &bytes_copied_out0 );
+                                                   
+                        assertValidStatus(status, QUICK_CODELOC);
+                                      
+                        n_total_bytes_written += bytes_copied_out0;
+
+                        //write these bytes into the second envelope
+                        int bytes_read1 = bytes_copied_out0;
+                        int offset1 = 0;
+                            
+                        while (bytes_read1 > 0)
+                        {
+                            int bytes_copied_in1 = 0;
+                            
+                            status = cryptPushData( crypt_envelope1,
+                                                    mid1_buffer+offset1,
+                                                    bytes_read1,
+                                                    &bytes_copied_in1 );
+
+                            if (status == CRYPT_ENVELOPE_RESOURCE)
+                            {
+                                //the second envelope requires 
+                                //more information to continue
+                                ++n_key_calls1;
+                                key_function1(crypt_envelope1, n_key_calls1);
+                                continue;
+                            }
+                        
+                            assertValidStatus(status, QUICK_CODELOC);
+                        
+                            offset1 += bytes_copied_in1;
+                            bytes_read1 -= bytes_copied_in1;
+
+                            if (bytes_read1 > 0)
+                            {
+                                int bytes_copied_out1 = 0;
+                        
+                                //the second envelope was full 
+                                //- we couldn't push more data into it!
+                                status = cryptPopData( crypt_envelope1, 
+                                                       mid2_buffer, BUFFER_SIZE, 
+                                                       &bytes_copied_out1 );
+                                                   
+                                assertValidStatus(status, QUICK_CODELOC);
+
+                                //immediately write these bytes into 
+                                //the third envelope
+                                int bytes_read2 = bytes_copied_out1;
+                                int offset2 = 0;
+                            
+                                while (bytes_read2 > 0)
+                                {
+                                    int bytes_copied_in2 = 0;
+                            
+                                    status = cryptPushData( crypt_envelope2,
+                                                            mid2_buffer+offset2,
+                                                            bytes_read2,
+                                                            &bytes_copied_in2 );
+
+                                    if (status == CRYPT_ENVELOPE_RESOURCE)
+                                    {
+                                        //the third envelope requires 
+                                        //more information to continue
+                                        ++n_key_calls2;
+                                        key_function2(crypt_envelope2, n_key_calls2);
+                                        continue;
+                                    }
+                        
+                                    assertValidStatus(status, QUICK_CODELOC);
+                        
+                                    offset2 += bytes_copied_in2;
+                                    bytes_read2 -= bytes_copied_in2;
+
+                                    if (bytes_read2 > 0)
+                                    {
+                                        int bytes_copied_out2 = 0;
+                        
+                                        //the third envelope was full 
+                                        //- we couldn't push more data into it!
+                                        status = cryptPopData( crypt_envelope2, 
+                                                               out_buffer, 
+                                                               BUFFER_SIZE, 
+                                                               &bytes_copied_out2 );
+                                                   
+                                        assertValidStatus(status, QUICK_CODELOC);
+                                    
+                                        int bytes_written = output_stream.
+                                                                writeRawData(
+                                                     out_buffer, bytes_copied_out2 );
+
+                                        if (bytes_written != bytes_copied_out2)
+                                            throw Siren::io_error( QObject::tr(
+                                                "Error occurred while writing out data!"),
+                                                    CODELOC );
+                                    }
+                                }
+                            }
+                        }
+                    } while (bytes_copied_out0 > 0);
+                                        
+                    //get the type decrypted data
+                    int data_type;
+                    
+                    cryptGetAttribute( crypt_envelope1, CRYPT_ENVINFO_CONTENTTYPE, 
+                                       &data_type );
+
+                    //flush out any remaining data in the mid2 buffer
+                    int bytes_copied_out1 = 0;
+
+                    do
+                    {
+                        int status = cryptFlushData( crypt_envelope1 );
+                        
+                        assertValidStatus(status, QUICK_CODELOC);
+                        
+                        status = cryptPopData( crypt_envelope1, mid2_buffer, BUFFER_SIZE,
+                                               &bytes_copied_out1 );
+                                                   
+                        assertValidStatus(status, QUICK_CODELOC);
+
+                        if (bytes_copied_out1 > 0)
+                        {
+                            //immediately write these bytes into 
+                            //the third envelope
+                            int bytes_read2 = bytes_copied_out1;
+                            int offset2 = 0;
+                            
+                            while (bytes_read2 > 0)
+                            {
+                                int bytes_copied_in2 = 0;
+                            
+                                status = cryptPushData( crypt_envelope2,
+                                                        mid2_buffer+offset2,
+                                                        bytes_read2,
+                                                        &bytes_copied_in2 );
+
+                                if (status == CRYPT_ENVELOPE_RESOURCE)
+                                {
+                                    //the third envelope requires 
+                                    //more information to continue
+                                    ++n_key_calls2;
+                                    key_function2(crypt_envelope2, n_key_calls2);
+                                    continue;
+                                }
+                        
+                                assertValidStatus(status, QUICK_CODELOC);
+                        
+                                offset2 += bytes_copied_in2;
+                                bytes_read2 -= bytes_copied_in2;
+
+                                if (bytes_read2 > 0)
+                                {
+                                    int bytes_copied_out2 = 0;
+                        
+                                    //the third envelope was full 
+                                    //- we couldn't push more data into it!
+                                    status = cryptPopData( crypt_envelope2, 
+                                                           out_buffer, 
+                                                           BUFFER_SIZE, 
+                                                           &bytes_copied_out2 );
+                                                   
+                                    assertValidStatus(status, QUICK_CODELOC);
+                                    
+                                    int bytes_written = output_stream.
+                                                            writeRawData(
+                                                 out_buffer, bytes_copied_out2 );
+
+                                    if (bytes_written != bytes_copied_out2)
+                                        throw Siren::io_error( QObject::tr(
+                                            "Error occurred while writing out data!"),
+                                                CODELOC );
+                                }
+                            }
+                        }
+                    
+                    } while (bytes_copied_out1 > 0);
+
+                    //finally(!) flush out any remaining data in the output buffer
+                    int bytes_copied_out2 = 0;
+
+                    do
+                    {
+                        int status = cryptFlushData( crypt_envelope2 );
+                        
+                        assertValidStatus(status, QUICK_CODELOC);
+                        
+                        status = cryptPopData( crypt_envelope2, out_buffer, BUFFER_SIZE,
+                                               &bytes_copied_out2 );
+                                                   
+                        assertValidStatus(status, QUICK_CODELOC);
+
+                        if (bytes_copied_out2 > 0)
+                        {
+                            int bytes_written = output_stream.writeRawData(
+                                                    out_buffer, bytes_copied_out2 );
+
+                            if (bytes_written != bytes_copied_out2)
+                                throw Siren::io_error( QObject::tr(
+                                        "Error occurred while writing out data!"),
+                                            CODELOC );
+                        }
+                    
+                    } while (bytes_copied_out2 > 0);
+                    
+                    delete[] in_buffer;
+                    delete[] mid1_buffer;
+                    delete[] mid2_buffer;
+                    delete[] out_buffer;
+                    
+                    return data_type;
+                }
+            }
+            catch(...)
+            {
+                delete[] in_buffer;
+                delete[] mid1_buffer;
+                delete[] mid2_buffer;
                 delete[] out_buffer;
                 throw;
             }
@@ -638,6 +1058,31 @@ namespace SireSec
                                            in_stream, out_stream,
                                            key_function,
                                            key_function);
+        }
+
+        int processThroughEnvelopes(CRYPT_ENVELOPE envelope0,
+                                    CRYPT_ENVELOPE envelope1,
+                                    CRYPT_ENVELOPE envelope2,
+                                    QDataStream &in_stream,
+                                    QDataStream &out_stream,
+                                 boost::function<void (CRYPT_ENVELOPE,int)> key_function)
+        {
+            return processThroughEnvelopes(envelope0, envelope1, envelope2,
+                                           in_stream, out_stream,
+                                           key_function, key_function, key_function);
+        }
+
+        int processThroughEnvelopes(CRYPT_ENVELOPE envelope0,
+                                    CRYPT_ENVELOPE envelope1,
+                                    CRYPT_ENVELOPE envelope2,
+                                    QDataStream &in_stream,
+                                    QDataStream &out_stream)
+        {
+            return processThroughEnvelopes(envelope0, envelope1, envelope2,
+                                           in_stream, out_stream,
+                                           &no_resource_available,
+                                           &no_resource_available,
+                                           &no_resource_available);
         }
 
         CRYPT_ENVELOPE createEnvelope(CRYPT_FORMAT_TYPE format)

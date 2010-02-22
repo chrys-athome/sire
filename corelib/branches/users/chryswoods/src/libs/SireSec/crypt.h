@@ -115,6 +115,30 @@ namespace SireSec
                                     QDataStream &out_stream
                                    );
         
+        int processThroughEnvelopes(CRYPT_ENVELOPE envelope0,
+                                    CRYPT_ENVELOPE envelope1,
+                                    CRYPT_ENVELOPE envelope2,
+                                    QDataStream &in_stream,
+                                    QDataStream &out_stream,
+                                boost::function<void (CRYPT_ENVELOPE,int)> key_function0,
+                                boost::function<void (CRYPT_ENVELOPE,int)> key_function1,
+                                boost::function<void (CRYPT_ENVELOPE,int)> key_function2
+                                    );
+        
+        int processThroughEnvelopes(CRYPT_ENVELOPE envelope0,
+                                    CRYPT_ENVELOPE envelope1,
+                                    CRYPT_ENVELOPE envelope2,
+                                    QDataStream &in_stream,
+                                    QDataStream &out_stream,
+                                boost::function<void (CRYPT_ENVELOPE,int)> key_function0
+                                    );
+        
+        int processThroughEnvelopes(CRYPT_ENVELOPE envelope0,
+                                    CRYPT_ENVELOPE envelope1,
+                                    CRYPT_ENVELOPE envelope2,
+                                    QDataStream &in_stream,
+                                    QDataStream &out_stream);
+        
         void assertValidStatus(int status, QUICK_CODELOC_ARGS);
         
         QString getStatusString(int status);
