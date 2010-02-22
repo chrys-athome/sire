@@ -9,6 +9,7 @@ set ( PYPP_SOURCES
        PublicKey.pypp.cpp
        PubPriLock.pypp.cpp
        SignatureLock.pypp.cpp
+       SignedPubPriLock.pypp.cpp
        SireSec_containers.cpp
        SireSec_properties.cpp
     )

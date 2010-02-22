@@ -23,6 +23,8 @@ namespace bp = boost::python;
 
 #include "signaturelock.h"
 
+#include "signedpubprilock.h"
+
 #include <QDebug>
 
 #include <QHash>

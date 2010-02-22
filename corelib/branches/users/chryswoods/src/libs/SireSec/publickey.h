@@ -41,6 +41,7 @@ namespace SireSec
 namespace Crypt{ class CertContext; }
 
 class PubPriLock;
+class SignedPubPriLock;
 class SignatureLock;
 class PrivateKey;
 
@@ -74,6 +75,7 @@ public:
 
 protected:
     friend class PubPriLock;
+    friend class SignedPubPriLock;
     friend class SignatureLock;
     friend class PrivateKey;
     PublicKey(const boost::shared_ptr<Crypt::CertContext> &d);

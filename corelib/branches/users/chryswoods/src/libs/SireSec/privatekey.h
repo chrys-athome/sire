@@ -43,6 +43,7 @@ namespace Crypt{ class KeyContext; }
 namespace detail{ class PrivateKeyData; }
 
 class PubPriLock;
+class SignedPubPriLock;
 class PublicKey;
 
 /** This is a private key, used to decrypt data using
@@ -113,6 +114,7 @@ public:
 
 protected:
     friend class PubPriLock;
+    friend class SignedPubPriLock;
     friend class SignatureLock;
     PrivateKey(const boost::shared_ptr<Crypt::KeyContext> &d,
                const Key::Options &key_options,
