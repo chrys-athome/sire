@@ -8,6 +8,9 @@
 
 #cmakedefine HAVE_LSEEK64 1
 
+#cmakedefine HAVE_BOOST_COMPLEX_HPP 1
+#cmakedefine HAVE_BOOST_GAMMA_HPP 1
+
 #cmakedefine HAVE_MALLOC_MALLOC_H 1
 
 #cmakedefine HAVE_MSTATS 1

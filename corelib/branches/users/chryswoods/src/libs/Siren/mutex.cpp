@@ -38,14 +38,36 @@ Mutex::Mutex( QMutex::RecursionMode mode )
 Mutex::~Mutex()
 {}
 
+#if QT_VERSION < 0x403000
+    static bool tryLock(QMutex &mutex, int ms)
+    {
+        while (not mutex.tryLock())
+        {
+            int wait = qMin(ms, 10);
+            Siren::msleep(wait);
+
+            ms -= wait;
+            if (ms <= 0)
+                return mutex.tryLock();
+        }
+
+        return true;
+    }
+#endif
+
 void Mutex::lock()
 {
     if (not m.tryLock())
     {
         while (for_ages())
         {
-            if (m.tryLock(5000))
-                return;
+            #if QT_VERSION >= 0x403000
+                if (m.tryLock(5000))
+                    return;
+            #else
+                if (::tryLock(m, 5000))
+                    return;
+            #endif
         }
     }
 }
@@ -58,23 +80,41 @@ bool Mutex::tryLock()
 bool Mutex::tryLock(int ms)
 {
     const int block = 5000;
+
+    #if QT_VERSION >= 0x403000
+        if (ms < block)
+            return m.tryLock(ms);
     
-    if (ms < block)
-        return m.tryLock(ms);
-    
-    while (for_ages())
-    {
-        int wait = qMin(ms, block);
+        while (for_ages())
+        {
+            int wait = qMin(ms, block);
         
-        if (m.tryLock(wait))
-            return true;
+            if (m.tryLock(wait))
+                return true;
             
-        ms -= wait;
+            ms -= wait;
         
-        if (ms <= 0)
-            return false;
-    }
-    
+            if (ms <= 0)
+                return false;
+        }
+    #else
+       if (ms < block)
+           return ::tryLock(m, ms);
+
+       while (for_ages())
+       {
+           int wait = qMin(ms, block);
+            
+           if (::tryLock(m, wait))
+               return true;
+
+           ms -= wait;
+
+           if (ms <= 0)
+               return false;
+       }  
+    #endif
+
     return false;
 }
 

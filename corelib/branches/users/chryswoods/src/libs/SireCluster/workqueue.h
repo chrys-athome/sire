@@ -34,6 +34,7 @@
 #include <QHash>
 #include <QQueue>
 #include <QUuid>
+#include <QPair>
 
 #include <boost/noncopyable.hpp>
 

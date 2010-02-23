@@ -30,17 +30,36 @@
 
 #include "gamma.h"
 
-#include <boost/math/special_functions/gamma.hpp>
+#include "Siren/errors.h"
+
+#ifdef HAVE_BOOST_GAMMA_HPP
+    #include <boost/math/special_functions/gamma.hpp>
+#endif
 
 namespace SireMaths
 {
+
+#ifndef HAVE_BOOST_GAMMA_HPP
+    static void throwBoostUnsupported(const QString &codeloc)
+    {
+        throw Siren::unsupported( QObject::tr(
+               "Sire is linked against a version of the boost math libraries "
+               "that does not include the gamma function. Please upgrade to "
+               "a newer version of the boost and recompile Sire."), codeloc );
+    }
+#endif
 
 /** Return the value of the Gamma function 
     \Gamma(\alpha) = \int_0^{\infty} t^{\alpha-1} e^{-t} dt 
 */
 double SIREMATHS_EXPORT Gamma(double alpha)
 {
-    return boost::math::tgamma(alpha);
+    #ifdef HAVE_BOOST_GAMMA_HPP
+        return boost::math::tgamma(alpha);
+    #else
+        throwBoostUnsupported(CODELOC);
+        return 0;
+    #endif
 }
 
 /** Synonym for SireMaths::Gamma */
@@ -53,14 +72,24 @@ double SIREMATHS_EXPORT gamma(double alpha)
     \Gamma(\alpha) = \int_x^{\infty} t^{\alpha-1} e^{-t} dt */
 double SIREMATHS_EXPORT Gamma(double alpha, double x)
 {
-    return boost::math::gamma_q(alpha, x) * boost::math::tgamma(alpha);
+    #ifdef HAVE_BOOST_GAMMA_HPP
+        return boost::math::gamma_q(alpha, x) * boost::math::tgamma(alpha);
+    #else
+        throwBoostUnsupported(CODELOC);
+        return 0;
+    #endif
 }
 
 /** Return the incomplete gamma function
     \Gamma(\alpha) = \int_0^{x} t^{\alpha-1} e^{-t} dt */
 double SIREMATHS_EXPORT gamma(double alpha, double x)
 {
-    return boost::math::gamma_p(alpha, x) * boost::math::tgamma(alpha);
+    #ifdef HAVE_BOOST_GAMMA_HPP
+        return boost::math::gamma_p(alpha, x) * boost::math::tgamma(alpha);
+    #else
+        throwBoostUnsupported(CODELOC);
+        return 0;
+    #endif
 }
 
 /** Synonym for gamma(alpha,x) */

@@ -230,6 +230,9 @@ include (CheckFunctionExists)
 check_include_files( unistd.h HAVE_UNISTD_H )
 check_function_exists( lseek64 HAVE_LSEEK64 )
 
+check_include_files( boost/complex.hpp HAVE_BOOST_COMPLEX_HPP )
+check_include_files( boost/math/special_functions/gamma.hpp HAVE_BOOST_GAMMA_HPP )
+
 check_include_files( malloc/malloc.h HAVE_MALLOC_MALLOC_H )
 check_include_files( emmintrin.h HAVE_EMMINTRIN_H )
 check_include_files( execinfo.h HAVE_EXECINFO_H )

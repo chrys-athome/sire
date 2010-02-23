@@ -29,7 +29,11 @@
 #include "complex.h"
 #include "rational.h"
 
-#include <boost/math/complex.hpp>
+#include "Siren/errors.h"
+
+#ifdef HAVE_BOOST_COMPLEX_HPP
+    #include <boost/math/complex.hpp>
+#endif
 
 using namespace Siren;
 using namespace SireMaths;
@@ -578,12 +582,27 @@ namespace SireMaths
         return 1.0 / tan(z);
     }
 
+    #ifndef HAVE_BOOST_COMPLEX_HPP
+        static void throwBoostComplexUnsupported(const QString &codeloc)
+        {
+            throw Siren::unsupported( QObject::tr(
+                    "This copy of Sire is linked against a version of the boost::math libraries "
+                    "that doesn't support boost::math::complex. Please update to a newer version "
+                    "of the boost libraries and recompile Sire."), codeloc );
+        }
+    #endif
+
     /** This function returns the complex arcsine of the complex number z, 
         \arcsin(z). The branch cuts are on the real axis, less than -1 and greater 
         than 1. */
     Complex SIREMATHS_EXPORT arcsin(const Complex &z)
     {
-        return boost::math::asin(z.toStdComplex());
+        #ifdef HAVE_BOOST_COMPLEX_HPP
+            return boost::math::asin(z.toStdComplex());
+        #else
+            throwBoostComplexUnsupported(CODELOC);
+            return Complex();
+        #endif
     }
 
     /** This function returns the complex arcsine of the real number z, 
@@ -601,7 +620,12 @@ namespace SireMaths
          greater than 1. */
     Complex SIREMATHS_EXPORT arccos(const Complex &z)
     {
-        return boost::math::acos(z.toStdComplex());
+        #ifdef HAVE_BOOST_COMPLEX_HPP
+            return boost::math::acos(z.toStdComplex());
+        #else
+            throwBoostComplexUnsupported(CODELOC);
+            return Complex();
+        #endif
     }
 
     /** This function returns the complex arccosine of the real number z, 
@@ -618,7 +642,12 @@ namespace SireMaths
         \arctan(z). The branch cuts are on the imaginary axis, below -i and above i. */
     Complex SIREMATHS_EXPORT arctan(const Complex &z)
     {
-        return boost::math::atan(z.toStdComplex());
+        #ifdef HAVE_BOOST_COMPLEX_HPP
+            return boost::math::atan(z.toStdComplex());
+        #else
+            throwBoostComplexUnsupported(CODELOC);
+            return Complex();
+        #endif
     }
 
     /** This function returns the complex arcsecant of the complex number z, 
@@ -702,7 +731,12 @@ namespace SireMaths
         \arcsinh(z). The branch cuts are on the imaginary axis, below -i and above i. */
     Complex SIREMATHS_EXPORT arcsinh(const Complex &z)
     {
-        return boost::math::asinh(z.toStdComplex());
+        #ifdef HAVE_BOOST_COMPLEX_HPP
+            return boost::math::asinh(z.toStdComplex());
+        #else
+            throwBoostComplexUnsupported(CODELOC);
+            return Complex();
+        #endif
     }
 
     /** This function returns the complex hyperbolic arccosine of the real number z, 
@@ -716,7 +750,12 @@ namespace SireMaths
         \arccosh(z). The branch cut is on the real axis, less than 1. */
     Complex SIREMATHS_EXPORT arccosh(const Complex &z)
     {
-        return boost::math::acosh(z.toStdComplex());
+        #ifdef HAVE_BOOST_COMPLEX_HPP
+            return boost::math::acosh(z.toStdComplex());
+        #else
+            throwBoostComplexUnsupported(CODELOC);
+            return Complex();
+        #endif
     }
 
     /** This function returns the complex hyperbolic arccosine of the real number z, 
@@ -730,7 +769,12 @@ namespace SireMaths
         \arctanh(z). The branch cuts are on the real axis, less than -1 and greater than 1. */
     Complex SIREMATHS_EXPORT arctanh(const Complex &z)
     {
-        return boost::math::atanh(z.toStdComplex());
+        #ifdef HAVE_BOOST_COMPLEX_HPP
+            return boost::math::atanh(z.toStdComplex());
+        #else
+            throwBoostComplexUnsupported(CODELOC);
+            return Complex();
+        #endif
     }
 
     /** This function returns the complex hyperbolic arctangent of the real number z, 

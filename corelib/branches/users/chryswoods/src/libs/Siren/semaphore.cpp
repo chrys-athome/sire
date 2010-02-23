@@ -39,16 +39,44 @@ Semaphore::~Semaphore()
 
 const int chunk = 5000;
 
+#if QT_VERSION < 0x403000
+    static bool tryAcquire(QSemaphore &s, int n, int ms)
+    {
+        while (not s.tryAcquire(n))
+        {
+            int wait = qMin(ms, 10);
+            Siren::msleep(wait);
+
+            ms -= wait;
+            if (ms <= 0)
+                return s.tryAcquire(n);
+        }
+
+        return true;
+    }
+#endif
+
 void Semaphore::acquire(int n)
 {
-    if (s.tryAcquire(n))
-        return;
+    #if QT_VERSION >= 0x403000
+        if (s.tryAcquire(n))
+            return;
 
-    while (for_ages())
-    {
-        if (s.tryAcquire(n, chunk))
-            break;
-    }
+        while (for_ages())
+        {
+            if (s.tryAcquire(n, chunk))
+                 break;
+        }
+    #else
+        if (s.tryAcquire(n))
+            return;
+
+        while (for_ages())
+        {
+            if (::tryAcquire(s, n, chunk))
+                break;
+        }
+    #endif
 }
 
 int Semaphore::available() const
@@ -70,19 +98,34 @@ bool Semaphore::tryAcquire(int n, int ms)
 {
     if (s.tryAcquire(n))
         return true;
+
+    #if QT_VERSION >= 0x403000
+        while (for_ages())
+        {
+            int wait = qMin(ms, chunk);
         
-    while (for_ages())
-    {
-        int wait = qMin(ms, chunk);
-        
-        if (s.tryAcquire(n, wait))
-            return true;
+            if (s.tryAcquire(n, wait))
+                return true;
             
-        ms -= chunk;
+            ms -= chunk;
         
-        if (ms <= 0)
-            return false;
-    }
+            if (ms <= 0)
+                return false;
+        }
+    #else
+        while (for_ages())
+        {
+            int wait = qMin(ms, chunk);
+    
+            if (::tryAcquire(s, n, wait))
+                return true;
+
+            ms -= chunk;
+
+            if (ms <= 0)
+                return false;
+        }
+    #endif
     
     return false;
 }
