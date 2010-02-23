@@ -17,6 +17,9 @@ set( CRYPTLIB_DIR "${CMAKE_BINARY_DIR}/src/libs/SireSec/third_party/cryptlib" )
 set( CRYPTLIB_HEADER "${CRYPTLIB_DIR}/cryptlib.h" )
 set( CRYPTLIB_LIBRARY "${CRYPTLIB_DIR}/libcl.a" )
 
+set( CRYPTLIB_CCOPTS_SOURCE "${CMAKE_SOURCE_DIR}/src/libs/SireSec/third_party/ccopts.sh" )
+set( CRYPTLIB_CCOPTS_DEST "${CRYPTLIB_DIR}/tools/ccopts.sh" )
+
 set ( SIRESEC_PUBLIC_HEADERS
 
       errors.h
@@ -61,6 +64,7 @@ add_custom_command(
 add_custom_command(
      OUTPUT ${CRYPTLIB_HEADER}
      COMMAND ${UNZIP_COMMAND} ${CRYPTLIB_ZIP}
+     COMMAND ${CMAKE_COMMAND} -E copy ${CRYPTLIB_CCOPTS_SOURCE} ${CRYPTLIB_CCOPTS_DEST}
      DEPENDS ${CRYPTLIB_DIR}
      WORKING_DIRECTORY ${CRYPTLIB_DIR}
      COMMENT "Unzipping cryptlib..."
