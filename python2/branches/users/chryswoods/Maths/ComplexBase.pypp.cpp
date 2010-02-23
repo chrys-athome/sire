@@ -7,11 +7,11 @@
 
 namespace bp = boost::python;
 
+#include "Siren/errors.h"
+
 #include "complex.h"
 
 #include "rational.h"
-
-#include <boost/math/complex.hpp>
 
 #include "complex.h"
 

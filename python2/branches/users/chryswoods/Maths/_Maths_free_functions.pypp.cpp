@@ -7,17 +7,17 @@
 
 namespace bp = boost::python;
 
-#include "gamma.h"
+#include "Siren/errors.h"
 
-#include <boost/math/special_functions/gamma.hpp>
+#include "gamma.h"
 
 #include <cmath>
 
 #include "gamma.h"
 
-#include "gamma.h"
+#include "Siren/errors.h"
 
-#include <boost/math/special_functions/gamma.hpp>
+#include "gamma.h"
 
 #include <cmath>
 
@@ -75,17 +75,17 @@ namespace bp = boost::python;
 
 #include "linearap.h"
 
-#include "gamma.h"
+#include "Siren/errors.h"
 
-#include <boost/math/special_functions/gamma.hpp>
+#include "gamma.h"
 
 #include <cmath>
 
 #include "gamma.h"
 
-#include "gamma.h"
+#include "Siren/errors.h"
 
-#include <boost/math/special_functions/gamma.hpp>
+#include "gamma.h"
 
 #include <cmath>
 
@@ -105,17 +105,17 @@ namespace bp = boost::python;
 
 #include "linearap.h"
 
-#include "gamma.h"
+#include "Siren/errors.h"
 
-#include <boost/math/special_functions/gamma.hpp>
+#include "gamma.h"
 
 #include <cmath>
 
 #include "gamma.h"
 
-#include "gamma.h"
+#include "Siren/errors.h"
 
-#include <boost/math/special_functions/gamma.hpp>
+#include "gamma.h"
 
 #include <cmath>
 
