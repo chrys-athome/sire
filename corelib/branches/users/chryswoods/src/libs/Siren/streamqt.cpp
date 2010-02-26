@@ -26,36 +26,169 @@
   *
 \*********************************************/
 
+#include <QDateTime>
+#include <QUuid>
+
 #include "streamqt.h"
 
 #include "Siren/errors.h"
 
-Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QDateTime &d)
+using namespace Siren;
+
+namespace Siren
 {
-    throw Siren::incomplete_code( QObject::tr("NEED TO WRITE!!!"), CODELOC );
-    return s;
+    namespace detail
+    {
+        template<>
+        struct StreamHelper<QUuid>
+        {
+            static QString typeName(){ return "QUuid"; }
+            
+            static const void* getKey(const QUuid &object)
+            {
+                return &object;
+            }
+            
+            static QUuid null(){ return QUuid(); }
+        };
+
+        template<>
+        struct StreamHelper<QDateTime>
+        {
+            static QString typeName(){ return "QDateTime"; }
+            
+            static const void* getKey(const QDateTime &object)
+            {
+                return &object;
+            }
+            
+            static QDateTime null(){ return QDateTime(); }
+        };
+
+        template<>
+        struct StreamHelper<QDate>
+        {
+            static QString typeName(){ return "QDate"; }
+            
+            static const void* getKey(const QDate &object)
+            {
+                return &object;
+            }
+            
+            static QDate null(){ return QDate(); }
+        };
+
+        template<>
+        struct StreamHelper<QTime>
+        {
+            static QString typeName(){ return "QTime"; }
+            
+            static const void* getKey(const QTime &object)
+            {
+                return &object;
+            }
+            
+            static QTime null(){ return QTime(); }
+        };
+    }
 }
 
 Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QDate &d)
 {
-    throw Siren::incomplete_code( QObject::tr("NEED TO WRITE!!!"), CODELOC );
+    s.assertVersion<QDate>(1);
+    
+    Schema schema = s.item<QDate>();
+    
+    quint32 julian_day;
+    
+    if (s.isSaving())
+    {
+        julian_day = d.toJulianDay();
+    }
+    
+    schema.data("julian_day") & julian_day;
+    
+    if (s.isLoading())
+    {
+        d = QDate::fromJulianDay(julian_day);
+    }
+
     return s;
 }
+
+static const QTime midnight(0,0,0,0);
 
 Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QTime &t)
 {
-    throw Siren::incomplete_code( QObject::tr("NEED TO WRITE!!!"), CODELOC );
+    s.assertVersion<QTime>(1);
+    
+    Schema schema = s.item<QTime>();
+    
+    quint32 ms;
+    
+    if (s.isSaving())
+    {
+        ms = midnight.msecsTo(t);
+    }
+    
+    schema.data("msecs") & ms;
+    
+    if (s.isLoading())
+    {
+        t = midnight.addMSecs(ms);
+    }
+
     return s;
 }
 
-Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QLocale &l)
+Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QDateTime &d)
 {
-    throw Siren::incomplete_code( QObject::tr("NEED TO WRITE!!!"), CODELOC );
+    s.assertVersion<QDateTime>(1);
+    
+    Schema schema = s.item<QDateTime>();
+    
+    QDate date;
+    QTime time;
+    quint8 timespec;
+    
+    if (s.isSaving())
+    {
+        date = d.date();
+        time = d.time();
+        timespec = d.timeSpec();
+    }
+
+    schema.data("date") & date;
+    schema.data("time") & time;
+    schema.data("timespec") & timespec;
+    
+    if (s.isLoading())
+    {
+        d = QDateTime(date, time, (Qt::TimeSpec)(timespec));
+    }
+
     return s;
 }
 
 Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QUuid &uid)
 {
-    throw Siren::incomplete_code( QObject::tr("NEED TO WRITE!!!"), CODELOC );
+    s.assertVersion<QUuid>(1);
+    
+    Schema schema = s.item<QUuid>();
+    
+    QString uid_string;
+    
+    if (s.isSaving())
+    {
+        uid_string = uid.toString();
+    }
+    
+    schema.data("uid") & uid_string;
+    
+    if (s.isLoading())
+    {
+        uid = QUuid(uid_string);
+    }
+
     return s;
 }

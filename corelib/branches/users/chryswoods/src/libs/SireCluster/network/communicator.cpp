@@ -106,7 +106,7 @@ public:
 
 static CommunicatorData *global_d(0);
 
-Q_GLOBAL_STATIC( Mutex, commMutex );
+Q_GLOBAL_STATIC_WITH_ARGS( Mutex, commMutex, (QMutex::Recursive) );
 
 static CommunicatorData* data()
 {
@@ -116,23 +116,22 @@ static CommunicatorData* data()
     {
         global_d = new CommunicatorData();
 
-        //get the hostname
-        QString hostname = Cluster::hostName();
-
         //create the keys for signing and encryption
         boost::tuple<PublicKey,PrivateKey> encrypt_keys
-                    = PrivateKey::generate(QString("%1:encrypt").arg(hostname), 
-                                           KeyTypes::RSA, 4096);
-                                           
+                    = PrivateKey::generate("encrypt");
+
         boost::tuple<PublicKey,PrivateKey> sign_keys
-                    = PrivateKey::generate(QString("%1:sign").arg(hostname),
-                                           KeyTypes::RSA, 4096);
+                    = PrivateKey::generate("sign");
                                            
         //create the hostinfo object
-        HostInfo hostinfo(QUuid::createUuid(), hostname, 
+        HostInfo hostinfo(QUuid::createUuid(), "unknown", // hostname, 
                           encrypt_keys.get<0>(),
                           sign_keys.get<0>());
-                          
+
+        qDebug() << "HOST" << hostinfo.UID() << "created...";
+
+        qDebug() << Siren::getProcessString();
+
         global_d->localhost = hostinfo;
         global_d->encrypt_privkey = encrypt_keys.get<1>();
         global_d->sign_privkey = sign_keys.get<1>();

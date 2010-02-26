@@ -85,19 +85,10 @@ void Thread::start()
     start_waiter.wait( &start_mutex );
 }
 
-void Thread::run()
+namespace Siren
 {
-    start_mutex.lock();
-
-    int ID = register_this_thread();
-
-    try
+    void SIREN_EXPORT init_rand(int ID)
     {
-        if (thread_name.isEmpty())
-            setThreadString( QObject::tr("Thread{%1}").arg(ID) );
-        else
-            setThreadString( QString("%1{%2}").arg(thread_name).arg(ID) );
-
         #ifdef Q_OS_UNIX
             //QUuid *very annoyingly* calls qsrand using the current time.
             // THIS IS REALLY ANNOYING WHEN USING QUuid IN AN MPI PROGRAM!!!!
@@ -136,6 +127,23 @@ void Thread::run()
             //lets dispose of another QUuid while we're at it
             QUuid::createUuid();
         #endif
+    }
+}
+
+void Thread::run()
+{
+    start_mutex.lock();
+
+    int ID = register_this_thread();
+
+    try
+    {
+        if (thread_name.isEmpty())
+            setThreadString( QObject::tr("Thread{%1}").arg(ID) );
+        else
+            setThreadString( QString("%1{%2}").arg(thread_name).arg(ID) );
+
+        Siren::init_rand(ID);
     
         this->threadMain();
     }

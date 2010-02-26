@@ -41,6 +41,8 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 
+void init_rand(int ID=0);
+
 /** This is a thin wrapper around QThread that provides
     automatic registration of Siren functions, and also
     provides a catch for any uncaught exceptions from

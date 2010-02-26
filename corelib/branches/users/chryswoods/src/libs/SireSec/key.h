@@ -41,6 +41,9 @@ SIRE_BEGIN_HEADER
 namespace SireSec
 {
 
+void SireSec_init();
+void SireSec_end();
+
 /** All of the (still secure, non-patented) Ciphers supported by 
     cryptlib, and hence supported in SireSec */
 namespace Ciphers

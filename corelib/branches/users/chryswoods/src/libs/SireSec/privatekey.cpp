@@ -309,7 +309,7 @@ PrivateKey::generate(Key::Options keyoptions, const QDateTime &expiry,
     
     try
     {
-        Crypt::SireSec_init();
+        SireSec_init();
     
         int status;
     
@@ -338,7 +338,7 @@ PrivateKey::generate(Key::Options keyoptions, const QDateTime &expiry,
         //key can be retrieved from a keyset
         if (label.isEmpty())
             label = "unnamed";
-        
+
         QByteArray utf8_label = label.toUtf8();
         
         status = cryptSetAttributeString( crypt_context, CRYPT_CTXINFO_LABEL,

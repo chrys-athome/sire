@@ -45,93 +45,93 @@ using namespace Siren;
 
 namespace SireSec
 {
+    #if QT_VERSION >= 0x404000
+        static QAtomicInt init_int(0);
+
+        /** Initialise SireSec */
+        void SIRESEC_EXPORT SireSec_init()
+        {
+            if (init_int.testAndSetOrdered(0, 1))
+            {
+                const int status = cryptInit();
+
+                if (status != CRYPT_OK)
+                {
+                    init_int = 0;
+    
+                    throw Siren::unsupported( QObject::tr(
+                           "cryptlib could not be initialised - "
+                           "encryption not supported!"),
+                                CODELOC );
+                }
+
+                //initiate randomness poll to collect entropy for random number generation
+                //(this is a slow process that will run asynchronously)
+                cryptAddRandom( 0, CRYPT_RANDOM_SLOWPOLL );
+            }
+        }
+
+        /** Finalise SireSec */
+        void SIRESEC_EXPORT SireSec_end()
+        {
+            if (init_int.testAndSetOrdered(1,0))
+            {
+                int status = cryptEnd();
+    
+                if (status != CRYPT_OK)
+                {
+                    qDebug() << "cryptlib shutdown error!";
+                }
+            }
+        }
+    #else
+        Q_GLOBAL_STATIC( QMutex, initMutex );
+        static bool is_init(false);
+
+        void SIRESEC_EXPORT SireSec_init()
+        {
+             QMutexLocker lkr( initMutex() );
+
+             if (not is_init)
+             {
+                const int status = cryptInit();
+
+                if (status != CRYPT_OK)
+                {
+                    throw Siren::unsupported( QObject::tr(
+                           "cryptlib could not be initialised - "
+                           "encryption not supported!"),
+                                CODELOC );
+                }
+
+                is_init = true;
+
+                //initiate randomness poll to collect entropy for random number generation
+                //(this is a slow process that will run asynchronously)
+                cryptAddRandom( 0, CRYPT_RANDOM_SLOWPOLL );
+             }
+        }
+
+        void SIRESEC_EXPORT SireSec_end()
+        {
+            QMutexLocker lkr( initMutex() );
+
+            if (is_init)
+            {
+                int status = cryptEnd();
+
+                if (status != CRYPT_OK)
+                {
+                    qDebug() << "cryptlib shutdown error!";
+                }
+                
+                is_init = false;
+            }
+        }
+    #endif
+
     namespace Crypt
     {
-        #if QT_VERSION >= 0x404000
-            static QAtomicInt init_int(0);
-
-            /** Initialise SireSec */
-            void SireSec_init()
-            {
-                if (init_int.testAndSetOrdered(0, 1))
-                {
-                    const int status = cryptInit();
-    
-                    if (status != CRYPT_OK)
-                    {
-                        init_int = 0;
-        
-                        throw Siren::unsupported( QObject::tr(
-                               "cryptlib could not be initialised - "
-                               "encryption not supported!"),
-                                    CODELOC );
-                    }
-
-                    //initiate randomness poll to collect entropy for random number generation
-                    //(this is a slow process that will run asynchronously)
-                    cryptAddRandom( 0, CRYPT_RANDOM_SLOWPOLL );
-                }
-            }
-
-            /** Finalise SireSec */
-            void SireSec_end()
-            {
-                if (init_int.testAndSetOrdered(1,0))
-                {
-                    int status = cryptEnd();
-        
-                    if (status != CRYPT_OK)
-                    {
-                        qDebug() << "cryptlib shutdown error!";
-                    }
-                }
-            }
-        #else
-            Q_GLOBAL_STATIC( QMutex, initMutex );
-            static bool is_init(false);
-
-            void SireSec_init()
-            {
-                 QMutexLocker lkr( initMutex() );
-
-                 if (not is_init)
-                 {
-                    const int status = cryptInit();
-
-                    if (status != CRYPT_OK)
-                    {
-                        throw Siren::unsupported( QObject::tr(
-                               "cryptlib could not be initialised - "
-                               "encryption not supported!"),
-                                    CODELOC );
-                    }
-
-                    is_init = true;
-
-                    //initiate randomness poll to collect entropy for random number generation
-                    //(this is a slow process that will run asynchronously)
-                    cryptAddRandom( 0, CRYPT_RANDOM_SLOWPOLL );
-                 }
-            }
-
-            void SireSec_end()
-            {
-                QMutexLocker lkr( initMutex() );
-
-                if (is_init)
-                {
-                    int status = cryptEnd();
-
-                    if (status != CRYPT_OK)
-                    {
-                        qDebug() << "cryptlib shutdown error!";
-                    }
-                    
-                    is_init = false;
-                }
-            }
-        #endif
-        
         /** Return the status string corresponding to the cryptlib
             status 'status' */
         QString getStatusString(int status)

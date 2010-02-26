@@ -39,6 +39,7 @@ set_target_properties (sire_python
 		       
 target_link_libraries (sire_python
                        SIRE_SireCluster
+                       SIRE_SireSec
                        SIRE_SireBase
                        SIRE_Siren
                        ${SIRECLUSTER_EXTRA_LIBRARIES}

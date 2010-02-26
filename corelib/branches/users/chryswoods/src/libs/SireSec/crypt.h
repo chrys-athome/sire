@@ -75,9 +75,6 @@ namespace SireSec
             CRYPT_CERTIFICATE crypt_certificate;
         };
     
-        void SireSec_init();
-        void SireSec_end();
-    
         CRYPT_ENVELOPE createEnvelope(CRYPT_FORMAT_TYPE format);
         CRYPT_ENVELOPE createDefaultEnvelope();
         CRYPT_ENVELOPE createAutoFormatEnvelope();

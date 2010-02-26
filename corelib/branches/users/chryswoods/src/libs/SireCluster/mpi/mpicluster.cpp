@@ -514,20 +514,33 @@ void MPIClusterData::exec(int argc, char **argv)
         {
             if (i == mpi_rank)
             {
-                //serialise the HostInfo for this process...
                 QByteArray hostinfo;
+ 
+                try
                 {
-                    DataStream ds(hostinfo);
-                    ds << Communicator::getLocalInfo();
+                    //serialise the HostInfo for this process...
+                    {
+                        DataStream ds(&hostinfo, QIODevice::WriteOnly);
+                        ds << Communicator::getLocalInfo();
+                    }
+
+                    //broadcast the size of the hostinfo object
+                    int size = hostinfo.count();
+                    mpierr = MPI_Bcast(&size, 1, MPI_INT, i, global_comm);
+                    assertMPIOK(mpierr, QUICK_CODELOC);
+                }
+                catch(...)
+                {
+                    //something went wrong - tell the other nodes by
+                    //broadcasting 0
+                    int err = 0;
+                    MPI_Bcast(&err, 1, MPI_INT, i, global_comm);
+                    throw;
                 }
                 
-                //broadcast the size of the hostinfo object
-                int size = hostinfo.count();
-                mpierr = MPI_Bcast(&size, 1, MPI_INT, i, global_comm);
-                assertMPIOK(mpierr, QUICK_CODELOC);
-                
                 //now broadcast the data
-                mpierr = MPI_Bcast(hostinfo.data(), size, MPI_CHAR, i, global_comm);
+                mpierr = MPI_Bcast(hostinfo.data(), hostinfo.count(), 
+                                   MPI_CHAR, i, global_comm);
                 assertMPIOK(mpierr, QUICK_CODELOC);
             }
             else
@@ -536,6 +549,14 @@ void MPIClusterData::exec(int argc, char **argv)
                 int size;
                 mpierr = MPI_Bcast(&size, 1, MPI_INT, i, global_comm);
                 assertMPIOK(mpierr, QUICK_CODELOC);
+                
+                if (size == 0)
+                {
+                    //something went wrong on another process - take the error!
+                    throw SireCluster::network_error( QObject::tr(
+                            "There was a problem initialising the MPI process "
+                            "with rank %1.").arg(i), CODELOC );
+                }
                 
                 QByteArray hostinfo_data;
                 hostinfo_data.resize(size);
@@ -550,6 +571,9 @@ void MPIClusterData::exec(int argc, char **argv)
                 
                 Communicator::addNeighbour(hostinfo,
                                            boost::bind(MPICluster::send, i, _1));
+
+                qDebug() << mpi_rank << Communicator::getLocalInfo().toString()
+                         << "sees" << i << hostinfo.toString();
             }
         }
 
@@ -631,7 +655,9 @@ void MPICluster::exec(int argc, char **argv)
     
     if (not global_cluster)
     {
-        global_cluster = new MPIClusterData();        
+        global_cluster = new MPIClusterData();
+        lkr.unlock();
+            
         global_cluster->exec(argc, argv);
     }
 }
@@ -643,6 +669,8 @@ void MPICluster::start(int argc, char **argv)
     if (not global_cluster)
     {
         global_cluster = new MPIClusterData();
+        lkr.unlock();
+        
         global_cluster->start(argc, argv);
     }
 }

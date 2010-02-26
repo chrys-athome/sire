@@ -14,12 +14,16 @@
 #include "SireBase/process.h"
 
 #include "Siren/forages.h"
+#include "Siren/thread.h"
+
+#include "SireSec/key.h"
 
 #include "pythonpacket.h"
 
 using std::printf;
 
 using namespace SireCluster;
+using namespace SireSec;
 using namespace Siren;
 
 #include <QDebug>
@@ -70,6 +74,10 @@ void fatal_error_signal (int sig)
 
 int main(int argc, char **argv)
 {
+    //initialise Siren and SireSec - this starts the entropy collection
+    Siren::init_rand();
+    SireSec_init();
+
     #ifdef Q_OS_UNIX
         signal(SIGINT, fatal_error_signal);
         signal(SIGTERM, fatal_error_signal);
@@ -182,6 +190,8 @@ int main(int argc, char **argv)
 
         status = -1;
     }
+
+    SireSec_end();
 
     return status;
 }
