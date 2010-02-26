@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "Siren/mutex.h"
 
+#include "Siren/thread.h"
+
 #include "Siren/waitcondition.h"
 
 #include "frontend.h"
@@ -25,7 +27,7 @@ namespace bp = boost::python;
 
 #include "workpacket.h"
 
-#include <QThread>
+#include <QDebug>
 
 #include "promise.h"
 

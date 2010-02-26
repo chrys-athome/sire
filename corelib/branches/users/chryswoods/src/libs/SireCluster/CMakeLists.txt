@@ -25,29 +25,11 @@ if ( SIRE_USE_MPI )
   save_sire_variable( "SIRE_MPI_DEFINITIONS" "-DSIRE_USE_MPI ${MPI_DEFINITIONS}" )
 
   set ( SIRECLUSTER_MPI_HEADERS
-
-        mpi/messages.h
         mpi/mpicluster.h
-        mpi/mpifrontend.h
-        mpi/p2pcomm.h
-        mpi/receivequeue.h
-        mpi/reply.h
-        mpi/reservationmanager.h
-        mpi/sendqueue.h
-
       )
 
   set ( SIRECLUSTER_MPI_SOURCES
-
-        mpi/messages.cpp
         mpi/mpicluster.cpp
-        mpi/mpifrontend.cpp
-        mpi/p2pcomm.cpp
-        mpi/receivequeue.cpp
-        mpi/reply.cpp
-        mpi/reservationmanager.cpp
-        mpi/sendqueue.cpp
-
       )
 
 else()
@@ -62,6 +44,7 @@ set ( SIRECLUSTER_HEADERS
 
       backend.h
       cluster.h
+      errors.h
       frontend.h
       node.h
       nodes.h
@@ -72,6 +55,8 @@ set ( SIRECLUSTER_HEADERS
       workqueue.h
 
       network/communicator.h
+      network/envelope.h
+      network/hostinfo.h
       network/message.h
       network/receivequeue.h
       network/sendqueue.h
@@ -82,6 +67,7 @@ set ( SIRECLUSTER_SOURCES
 
       backend.cpp
       cluster.cpp
+      errors.cpp
       frontend.cpp
       node.cpp
       nodes.cpp
@@ -92,6 +78,8 @@ set ( SIRECLUSTER_SOURCES
       workqueue.cpp 
 
       network/communicator.cpp
+      network/envelope.cpp
+      network/hostinfo.cpp
       network/message.cpp
       network/receivequeue.cpp
       network/sendqueue.cpp

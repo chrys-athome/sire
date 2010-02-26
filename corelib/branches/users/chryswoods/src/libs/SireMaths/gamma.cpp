@@ -33,7 +33,7 @@
 #include "Siren/errors.h"
 
 #ifdef HAVE_BOOST_GAMMA_HPP
-    #include <boost/math/special_functions/gamma.hpp>
+    #include <boost/math/special_functions/gamma.hpp>   // CONDITIONAL_INCLUDE
 #endif
 
 namespace SireMaths

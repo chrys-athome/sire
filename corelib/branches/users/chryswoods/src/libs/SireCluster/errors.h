@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2008  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,70 +26,40 @@
   *
 \*********************************************/
 
-#ifndef SIRECLUSTER_MPI_MPIFRONTEND_H
-#define SIRECLUSTER_MPI_MPIFRONTEND_H
+#ifndef SIRECLUSTER_ERRORS_H
+#define SIRECLUSTER_ERRORS_H
 
-#ifdef SIRE_USE_MPI
+#include "Siren/exception.h"
 
-#include <QMutex>
-
-#include "p2pcomm.h"
-
-#include "SireCluster/frontend.h"
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
 {
-namespace MPI
-{
 
-/** This is a Frontend that is specialised to communicate with 
-    a backend over an MPI connection
-    
+/** This exception is thrown when there is an error
+    with something to do with the network
+
     @author Christopher Woods
 */
-class MPIFrontend : public FrontendBase
+class SIRECLUSTER_EXPORT network_error
+        : public Siren::ImplementsException<network_error,Siren::exception>
 {
 public:
-    MPIFrontend();
-    MPIFrontend(const P2PComm &p2pcomm);
-    
-    ~MPIFrontend();
-    
-    bool isLocal() const;
-    
-    QUuid UID();
-    
-    void startJob(const WorkPacket &workpacket);
-    
-    void stopJob();
-    void abortJob();
-    
-    void wait();
-    bool wait(int timeout);
-    
-    float progress();
-    WorkPacket interimResult();
-    
-    WorkPacket result();
+    network_error();
 
-private:
-    /** A mutex used to protect access to the communicator */
-    QMutex datamutex;
+    network_error(QString err, QString place = QString::null);
 
-    /** The cached QUuid */
-    QUuid cached_uid;
+    network_error(const network_error &other);
 
-    /** The point-to-point communicator used to communicate
-        with the remote backend */
-    P2PComm p2p;
+    ~network_error() throw();
 };
 
-} // end of namespace MPI
-} // end of namespace SireCluster
+}
+
+Q_DECLARE_METATYPE(SireCluster::network_error)
 
 SIRE_END_HEADER
 
-#endif // SIRE_USE_MPI
 #endif

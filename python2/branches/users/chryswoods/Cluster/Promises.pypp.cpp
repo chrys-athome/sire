@@ -19,6 +19,8 @@ namespace bp = boost::python;
 
 #include "workpacket.h"
 
+#include <QDebug>
+
 #include <QTime>
 
 #include <QVector>

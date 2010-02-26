@@ -27,3 +27,35 @@
 \*********************************************/
 
 #include "streamqt.h"
+
+#include "Siren/errors.h"
+
+Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QDateTime &d)
+{
+    throw Siren::incomplete_code( QObject::tr("NEED TO WRITE!!!"), CODELOC );
+    return s;
+}
+
+Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QDate &d)
+{
+    throw Siren::incomplete_code( QObject::tr("NEED TO WRITE!!!"), CODELOC );
+    return s;
+}
+
+Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QTime &t)
+{
+    throw Siren::incomplete_code( QObject::tr("NEED TO WRITE!!!"), CODELOC );
+    return s;
+}
+
+Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QLocale &l)
+{
+    throw Siren::incomplete_code( QObject::tr("NEED TO WRITE!!!"), CODELOC );
+    return s;
+}
+
+Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QUuid &uid)
+{
+    throw Siren::incomplete_code( QObject::tr("NEED TO WRITE!!!"), CODELOC );
+    return s;
+}

@@ -33,6 +33,9 @@
 
 #include "sirenglobal.h"
 
+#include "mutex.h"
+#include "waitcondition.h"
+
 SIREN_BEGIN_HEADER
 
 namespace Siren
@@ -57,14 +60,26 @@ public:
     Thread(QString name, QObject *parent=0);
     virtual ~Thread();
 
+    void start();
+
 protected:
     void run();
+
+    void signalStarted();
     
     virtual void threadMain()=0;
 
 private:
     /** The name of this thread */
     QString thread_name;
+    
+    /** Mutex used to wait for the thread to start */
+    Mutex start_mutex;
+    
+    /** Waitcondition used to wait for the thread to start */
+    WaitCondition start_waiter;
+    
+    bool thread_is_starting;
 };
 
 }

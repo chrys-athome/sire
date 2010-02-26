@@ -1212,7 +1212,7 @@ Stream& Stream::operator<<(const T &data)
     if (not this->is_saving)
         this->throwNotSavingError();
 
-    return this->operator&( const_cast<T&>(data) );
+    return (*this) & ( const_cast<T&>(data) );
 }
 
 /** Explicitly request loading of an object */
@@ -1223,7 +1223,7 @@ Stream& Stream::operator>>(T &data)
     if (this->is_saving)
         this->throwNotLoadingError();
 
-    return this->operator&( data );
+    return (*this) & data;
 }
 
 #endif // SIREN_SKIP_INLINE_FUNCTIONS

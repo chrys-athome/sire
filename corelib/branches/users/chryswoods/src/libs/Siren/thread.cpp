@@ -40,12 +40,13 @@
 
 using namespace Siren;
 
-Thread::Thread(QObject *parent) : QThread(parent)
+Thread::Thread(QObject *parent) : QThread(parent), thread_is_starting(false)
 {
     this->setTerminationEnabled(false);
 }
 
-Thread::Thread(QString name, QObject *parent) : QThread(parent), thread_name(name)
+Thread::Thread(QString name, QObject *parent)
+       : QThread(parent), thread_name(name), thread_is_starting(false)
 {
     this->setTerminationEnabled(false);
 }
@@ -66,8 +67,28 @@ Thread::~Thread()
     }
 }
 
+/** Start this thread - this blocks until the thread
+    calls the 'signalStarted()' function - this ensures
+    that the thread has fully initialised before control
+    is resumed */
+void Thread::start()
+{
+    MutexLocker lkr( &start_mutex );
+    
+    if (QThread::isRunning())
+        return;
+        
+    thread_is_starting = true;
+        
+    QThread::start();
+    
+    start_waiter.wait( &start_mutex );
+}
+
 void Thread::run()
 {
+    start_mutex.lock();
+
     int ID = register_this_thread();
 
     try
@@ -134,4 +155,22 @@ void Thread::run()
     }
     
     unregister_this_thread();
+    
+    if (thread_is_starting)
+    {
+        thread_is_starting = false;
+        start_waiter.wakeAll();
+        start_mutex.unlock();
+    }
+}
+
+/** Call this function to signal that this thread has now fully started */
+void Thread::signalStarted()
+{
+    if (thread_is_starting)
+    {
+        thread_is_starting = false;
+        start_waiter.wakeAll();
+        start_mutex.unlock();
+    }
 }

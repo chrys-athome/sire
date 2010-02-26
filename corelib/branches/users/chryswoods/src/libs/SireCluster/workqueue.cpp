@@ -243,6 +243,8 @@ bool SimpleQueue::checkForFinishedNodes()
 
 void SimpleQueue::threadMain()
 {
+    Thread::signalStarted();
+
     MutexLocker lkr( &datamutex );
     
     try

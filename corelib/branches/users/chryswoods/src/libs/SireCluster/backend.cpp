@@ -245,7 +245,7 @@ void ThreadBackend::startJob(const WorkPacket &workpacket)
     while (job_is_starting)
     {
         //another thread is trying to start a job - we have to wait
-        startwaiter.wait( &startmutex );
+        Siren::msleep(100);
     }
     
     //set the flag to say that *we* are starting a job
@@ -262,7 +262,7 @@ void ThreadBackend::startJob(const WorkPacket &workpacket)
         while (not resultpacket.isNull())
         {
             //the user has not retrieved the results of the last job!
-            startwaiter.wait( &datamutex, 250 );
+            Siren::msleep( 250 );
         }
 
         job_in_progress = workpacket;
@@ -272,9 +272,6 @@ void ThreadBackend::startJob(const WorkPacket &workpacket)
     
     //start the job
     this->start();
-    
-    //wait until the job has started
-    startwaiter.wait( &startmutex );
 }
 
 /** Return if this backend is busy */
@@ -360,23 +357,18 @@ WorkPacketPtr ThreadBackend::result()
 /** Function run by the backend thread */
 void ThreadBackend::threadMain()
 {
-    //wake the thread that told us to run the job
-    startmutex.lock();
-    
     if (not job_is_starting)
     {
         qDebug() << Siren::getPIDString() << "How have we been started???"
                  << "job_is_started is false in BackendPvt::run()";
+
+        Thread::signalStarted();
                  
-        startwaiter.wakeAll();
-        startmutex.unlock();
         return;
     }
     
     job_is_starting = false;
-    
-    startwaiter.wakeAll();
-    startmutex.unlock();
+    Thread::signalStarted();
     
     while (true)
     {

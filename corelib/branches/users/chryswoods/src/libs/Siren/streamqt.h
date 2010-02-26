@@ -34,6 +34,7 @@
 #include <QSet>
 #include <QMap>
 #include <QVarLengthArray>
+#include <QUuid>
 
 #include "stream.h"
 
@@ -43,6 +44,7 @@ Siren::Stream& operator&(Siren::Stream&, QDateTime&);
 Siren::Stream& operator&(Siren::Stream&, QDate&);
 Siren::Stream& operator&(Siren::Stream&, QTime&);
 Siren::Stream& operator&(Siren::Stream&, QLocale&);
+Siren::Stream& operator&(Siren::Stream&, QUuid&);
 
 namespace Siren
 {
@@ -59,6 +61,19 @@ namespace Siren
             }
             
             static QString null(){ return QString::null; }
+        };
+        
+        template<>
+        struct StreamHelper<QUuid>
+        {
+            static QUuid typeName(){ return "QUuid"; }
+            
+            static const void* getKey(const QUuid &object)
+            {
+                return &object;
+            }
+            
+            static QUuid null(){ return QUuid(); }
         };
         
         template<class T>

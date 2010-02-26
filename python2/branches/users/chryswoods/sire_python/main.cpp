@@ -1,9 +1,4 @@
 
-#ifdef SIRE_USE_MPI
-    //mpich requires that mpi.h is included first
-    #include <mpi.h>
-#endif
-
 #include <Python.h>
 
 #include <cstdio>
@@ -97,37 +92,17 @@ int main(int argc, char **argv)
  
     try
     {
-        int mpi_rank = 0;
-        int mpi_count = 1;
-
-        #ifdef SIRE_USE_MPI
-            //start MPI - ABSOLUTELY must use multi-threaded MPI
-            ::MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
-            mpi_rank = ::MPI::Get_rank();
-            mpi_count = ::MPI_Get_count();
-        #endif
+        Cluster::start();
 
         //are we the first node in the cluster?
-        if (mpi_rank == 0)
+        if (Cluster::isInitProcess())
         {
-            printf("Starting master node (%d of %d)\n", 
-                       mpi_rank, mpi_rank);
+            printf("Starting master node (%s)\n",
+                      Cluster::hostName().toAscii().constData());
 
             //name this process and thread
-            Siren::setProcessString("master");
+            Siren::setProcessString( QString("master_%1").arg(Cluster::hostName()) );
             Siren::setThreadString("main");
-
-            //start the cluster - on the master we need one extra
-            //thread for the Python interpreter
-            #ifdef SIRE_USE_MPI
-                //::MPI::COMM_WORLD.Barrier();
-            #endif
-
-            Cluster::start();
-
-            #ifdef SIRE_USE_MPI
-                //::MPI::COMM_WORLD.Barrier();
-            #endif
 
             //run python - each argument is a python script
             if (argc >= 2)
@@ -136,7 +111,7 @@ int main(int argc, char **argv)
 
                 printf("Running %d python script(s)...\n", nscripts);
 
-                Nodes nodes = Cluster::getNodes(nscripts, 500);
+                Nodes nodes = Cluster::getNodes(nscripts);
 
                 QVector<WorkPacketPtr> workpackets;
                 workpackets.reserve(nscripts);
@@ -170,30 +145,23 @@ int main(int argc, char **argv)
                     }
                 }
             }
+
+            printf("Shutting down the cluster...\n");
+            Cluster::shutdown();
+            status = 0;
         }
         else
         {
             //this is one of the compute nodes...
-            printf("Starting one of the compute nodes (%d of %d)\n", 
-                        mpi_rank, mpi_count);
+            printf("Starting one of the compute nodes (%s)\n", 
+                    Cluster::hostName().toAscii().constData()); 
 
             //name this process
-            Siren::setProcessString( QString("compute%1").arg(mpi_rank) );
+            Siren::setProcessString( QString("compute_%1").arg(Cluster::hostName()) );
             Siren::setThreadString( "main" );
 
-            //exec the Cluster - this starts the cluster and then
-            //blocks while it is running
-            #ifdef SIRE_USE_MPI
-                //::MPI::COMM_WORLD.Barrier();
-            #endif
- 
-            Cluster::start();
-
-            #ifdef SIRE_USE_MPI
-                //::MPI::COMM_WORLD.Barrier();
-            #endif
-
             Cluster::wait();
+            Cluster::shutdown();
             status = 0;
         }
     }
@@ -214,34 +182,6 @@ int main(int argc, char **argv)
 
         status = -1;
     }
-
-    //shutdown the cluster
-    #ifdef SIRE_USE_MPI
-        if (::MPI::COMM_WORLD.Get_rank() == 0)
-        {
-            printf("Shutting down the cluster...\n");
-            Cluster::shutdown();
-        }
-
-        //wait for all of the MPI jobs to finish
-        ::MPI::COMM_WORLD.Barrier();
-
-        if (::MPI::COMM_WORLD.Get_rank() == 0)
-        {
-            printf("The entire cluster has now shutdown.\n");
-        }
-
-        ::MPI::Finalize();
-    #else
-        printf("Shutting down the cluster...\n");
-        Cluster::shutdown();
-        printf("The entire cluster has now shutdown.\n");
-    #endif
-
-    //now shutdown Python - currently commented out
-    //as calling these functions causes a bus error...
-    //PyEval_AcquireLock();
-    //Py_Finalize();
 
     return status;
 }

@@ -30,8 +30,9 @@
 #define SIRECLUSTER_NETWORK_COMMUNICATOR_H
 
 #include <QUuid>
+#include <QList>
 
-#include <boost/noncopyable.hpp>
+#include <boost/function.hpp>
 
 #include "sireglobal.h"
 
@@ -42,50 +43,37 @@ namespace SireCluster
 namespace network
 {
 
+class HostInfo;
 class Message;
+class Envelope;
 
-/** This is the virtual base class of all Communicator
-    objects. A Communicator provides the ability to 
-    send "Message" objects to another process. Each
-    communicator is either a parent or a child;
-    
-    (1) If it is a child, then it can only send messages
-        to the parent. If it needs to send messages to 
-        anyone else, then it sends those messages up to
-        the parent who will re-route them to their correct
-        destination
-        
-    (2) If it is a parent, then it can only send messages
-        to any of its children. If it needs to send messages
-        to anyone else, then it passes the message back
-        to the Cluster, which will then see if this process
-        is a Child in another communicator. If it is, then
-        it will pass the message to the parent in the other
-        communicator for it to forward on
-        
-    Note that a single process may contain many communicators,
-    so may be both a parent and a child. To identify processes,
-    each process has a unique UID. To route a message, a process
-    will select the communicator that has the lowest number of
-    jumps to the process that matches that UID.
-    
-    Broadcasts are possible from parent down to child, e.g.
-    a parent can broadcast a message to all children, or a child
-    can forward a message to the parent that is then broadcast
-    to all children
+/** A Communicator provides the ability to 
+    send "Message" objects to another process.
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Communicator : public boost::noncopyable
+class SIRECLUSTER_EXPORT Communicator
 {
 public:
-    Communicator();
-    virtual ~Communicator();
+    static const HostInfo& getLocalInfo();
+    static HostInfo getHostInfo(const QUuid &host_uid);
+
+    static void send(const Message &message, const QUuid &recipient);
+    static void send(const Message &message, const QList<QUuid> &recipients);
     
-    virtual void send(const Message &message, const QUuid &recipient)=0;
-    virtual void send(const Message &message, const QList<QUuid> &recipients)=0;
-    
-    virtual void broadcast(const Message &message)=0;
+    static void broadcast(const Message &message);
+  
+    static void received(const Envelope &message);  
+    static void received(const Message &message);
+    static void received(const QByteArray &message);
+
+    static void addNeighbour(const HostInfo &hostinfo,
+                             boost::function<void(const QByteArray&)> send_function);
+
+    static void addNeighbour(const HostInfo &hostinfo,
+                             const QUuid &router,
+                             boost::function<void(const QByteArray&)> send_function,
+                             int njumps=1);
 };
 
 } // end of namespace network

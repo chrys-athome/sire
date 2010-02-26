@@ -32,7 +32,7 @@
 #include "Siren/errors.h"
 
 #ifdef HAVE_BOOST_COMPLEX_HPP
-    #include <boost/math/complex.hpp>
+    #include <boost/math/complex.hpp>  // CONDITIONAL_INCLUDE
 #endif
 
 using namespace Siren;

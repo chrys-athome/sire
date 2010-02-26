@@ -106,6 +106,8 @@ namespace SireCluster
         protected:
             void threadMain()
             {
+                Thread::signalStarted();
+            
                 if (promise.isNull())
                     return;
 

@@ -43,6 +43,10 @@
     #include "SireCluster/mpi/mpicluster.h" // CONDITIONAL_INCLUDE
 #endif
 
+#ifdef Q_OS_UNIX
+    #include <unistd.h>
+#endif
+
 #include <QDebug>
 
 using namespace SireCluster;
@@ -94,10 +98,39 @@ void Cluster::start()
     // start the different means of communication with
     // other nodes
     #ifdef SIRE_USE_MPI
-        SireCluster::MPI::MPICluster::start();
+        SireCluster::MPI::MPICluster::start(0,0);
     #endif
     
     data->cluster_is_running = true;
+}
+
+/** Return whether or not this is the initial process 
+    (and should be used to initialise jobs) */
+bool Cluster::isInitProcess()
+{
+    #ifdef SIRE_USE_MPI
+        return SireCluster::MPI::MPICluster::rank() == 0;
+    #else
+        return true;
+    #endif
+}
+
+/** Return the hostname of the host running this process */
+QString Cluster::hostName()
+{
+    #ifdef SIRE_USE_MPI
+        return SireCluster::MPI::MPICluster::hostName();
+
+    #elif Q_OS_UNIX
+        QByteArray buffer;
+        buffer.resize(256);
+    
+        ::gethostname(buffer.data(), buffer.length());
+    
+        return QLatin1String(buffer.constData());
+    #else
+        return "localhost";
+    #endif
 }
 
 /** Return whether or not the cluster is running */

@@ -186,10 +186,6 @@ private:
     /** This mutex is used to ensure that only one 
         thread can try to start a job at a time */
     Siren::Mutex startmutex;
-    
-    /** WaitCondition used to signal that the backend thread 
-        has started */
-    Siren::WaitCondition startwaiter;
 
     /** The current state of the job */
     WorkPacketPtr job_in_progress;

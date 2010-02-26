@@ -56,6 +56,10 @@ class SIRECLUSTER_EXPORT Cluster
 public:
     static void start();
 
+    static bool isInitProcess();
+
+    static QString hostName();
+
     static void addThread();
 
     static void shutdown();

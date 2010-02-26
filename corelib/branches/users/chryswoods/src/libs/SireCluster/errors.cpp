@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2008  Christopher Woods
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,48 +26,28 @@
   *
 \*********************************************/
 
-#ifndef SIRECLUSTER_MPI_MPICLUSTER_H
-#define SIRECLUSTER_MPI_MPICLUSTER_H
+#include "SireCluster/errors.h"
 
-#ifdef SIRE_USE_MPI
+using namespace SireCluster;
+using namespace Siren;
 
-#include "sireglobal.h"
+//////////
+////////// Implementation of network_error
+//////////
 
-SIRE_BEGIN_HEADER
+static const RegisterObject<network_error> r_network_error;
 
-namespace SireCluster
-{
-    namespace MPI
-    {
+network_error::network_error() 
+              : ImplementsException<network_error, exception>()
+{}
 
-        /** This class provides the global interface that abstracts
-            the sending of messages between nodes using MPI
-    
-            This is a private class which is only available internally
-            to SireCluster if MPI is available
+network_error::network_error(QString err, QString place)
+              : ImplementsException<network_error,exception>(err, place)
+{}
 
-            @author Christopher Woods
-        */
-        class MPICluster
-        {
-        public:
-            static void send(int rank, const QByteArray &message);
+network_error::network_error(const network_error &other)
+              : ImplementsException<network_error,exception>(other)
+{}
 
-            static void exec(int argc, char **argv);
-    
-            static void start(int argc, char **argv);
-            static void shutdown();
-            
-            static int rank();
-            static QString hostName();
-        };
-
-    } // end of namespace MPI
-
-} // end of namespace SireCluster
-
-SIRE_END_HEADER
-
-#endif // SIRE_USE_MPI
-
-#endif
+network_error::~network_error() throw()
+{}

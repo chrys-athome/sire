@@ -78,53 +78,6 @@ protected:
     
 };
 
-/** Messages are sent by putting them into envelopes,
-    which hold information about where the message
-    is sent from, how the message has been routed,
-    and where the message should be sent to
-    
-    @author Christopher Woods
-*/
-class SIRECLUSTER_EXPORT Envelope : public Siren::Implements<Envelope,Siren::Object>
-{
-public:
-    Envelope();
-    Envelope(const Envelope &other);
-    
-    ~Envelope();
-    
-    Envelope& operator=(const Envelope &other);
-    
-    bool operator==(const Envelope &other) const;
-    bool operator!=(const Envelope &other) const;
-    
-    QString toString() const;
-    uint hashCode() const;
-    void stream(Siren::Stream &s);
-    
-    static Envelope send(const Message &message, const QUuid &destination);
-    static Envelope send(const Message &message, const QSet<QUuid> &destinations);
-
-    static Envelope broadcast(const Message &message);
-    
-    static Envelope routedVia(const Envelope &message, const QUuid &router);
-    
-private:
-    /** The message being sent */
-    Siren::ObjPtr<Message> msg;
-    
-    /** The source of the message */
-    QUuid sender_uid;
-    
-    /** The UIDs of processes through which this message
-        has been routed */
-    QSet<QUuid> routed_uids;
-    
-    /** The UIDs of processes to which this message should
-        be sent */
-    QSet<QUuid> destination_uids;
-};
-
 } // end of namespace network
 } // end of namespace SireCluster
 

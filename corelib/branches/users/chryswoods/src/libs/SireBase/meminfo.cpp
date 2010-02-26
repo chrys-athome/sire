@@ -26,12 +26,11 @@
   *
 \*********************************************/
 
-#include <QThread>
-
 #include <QFile>
 #include <QTextStream>
 
 #include "Siren/mutex.h"
+#include "Siren/thread.h"
 
 #include "sire_config.h"
 #include "meminfo.h"
@@ -473,7 +472,7 @@ quint64 MemInfo::usedVirtualMemory() const
         return resource().usedVirtualMemory();
 }
 
-class MemoryMonitor : public QThread
+class MemoryMonitor : public Siren::Thread
 {
 public:
     MemoryMonitor(int ms);
@@ -484,7 +483,7 @@ public:
     void stop();
     
 protected:
-    void run();
+    void threadMain();
 
 private:
     QString filename;
@@ -492,11 +491,11 @@ private:
 };
 
 MemoryMonitor::MemoryMonitor(int time_ms)
-              : QThread(), ms(time_ms)
+              : Siren::Thread("MemoryMonitor"), ms(time_ms)
 {}
 
 MemoryMonitor::MemoryMonitor(const QString &file, int time_ms)
-              : QThread(), filename(file), ms(time_ms)
+              : Thread("MemoryMonitor"), filename(file), ms(time_ms)
 {}
 
 MemoryMonitor::~MemoryMonitor()
@@ -526,8 +525,10 @@ static void openFile(const QString &filename, QFile &file)
     }
 }
 
-void MemoryMonitor::run()
+void MemoryMonitor::threadMain()
 {
+    signalStarted();
+
     if (ms == -1)
         return;
         

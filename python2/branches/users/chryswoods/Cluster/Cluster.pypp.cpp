@@ -229,6 +229,26 @@ void register_Cluster_class(){
                 , ( bp::arg("description"), bp::arg("nnodes"), bp::arg("timeout") ) );
         
         }
+        { //::SireCluster::Cluster::hostName
+        
+            typedef ::QString ( *hostName_function_type )(  );
+            hostName_function_type hostName_function_value( &::SireCluster::Cluster::hostName );
+            
+            Cluster_exposer.def( 
+                "hostName"
+                , hostName_function_value );
+        
+        }
+        { //::SireCluster::Cluster::isInitProcess
+        
+            typedef bool ( *isInitProcess_function_type )(  );
+            isInitProcess_function_type isInitProcess_function_value( &::SireCluster::Cluster::isInitProcess );
+            
+            Cluster_exposer.def( 
+                "isInitProcess"
+                , isInitProcess_function_value );
+        
+        }
         { //::SireCluster::Cluster::isRunning
         
             typedef bool ( *isRunning_function_type )(  );
@@ -274,6 +294,8 @@ void register_Cluster_class(){
         Cluster_exposer.staticmethod( "getLocalNodes" );
         Cluster_exposer.staticmethod( "getNode" );
         Cluster_exposer.staticmethod( "getNodes" );
+        Cluster_exposer.staticmethod( "hostName" );
+        Cluster_exposer.staticmethod( "isInitProcess" );
         Cluster_exposer.staticmethod( "isRunning" );
         Cluster_exposer.staticmethod( "shutdown" );
         Cluster_exposer.staticmethod( "start" );
