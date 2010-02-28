@@ -44,11 +44,10 @@ HostInfo::HostInfo() : Implements<HostInfo,Object>()
 
 /** Construct specifying the host's unique ID, hostname, and
     public encryption and signature keys */
-HostInfo::HostInfo(const QUuid &u, const QString &h,
+HostInfo::HostInfo(const QUuid &u,
                    const PublicKey &encrypt, const PublicKey &sign)
          : Implements<HostInfo,Object>(),
-           uid(u), hostname(h),
-           encrypt_key(encrypt), sign_key(sign)
+           uid(u), encrypt_key(encrypt), sign_key(sign)
 {
     if (uid.isNull())
         this->operator=( HostInfo() );
@@ -57,8 +56,8 @@ HostInfo::HostInfo(const QUuid &u, const QString &h,
 /** Copy constructor */
 HostInfo::HostInfo(const HostInfo &other)
          : Implements<HostInfo,Object>(other),
-           uid(other.uid), hostname(other.hostname),
-           encrypt_key(other.encrypt_key), sign_key(other.sign_key)
+           uid(other.uid), encrypt_key(other.encrypt_key), 
+           sign_key(other.sign_key)
 {}
 
 /** Destructor */
@@ -71,7 +70,6 @@ HostInfo& HostInfo::operator=(const HostInfo &other)
     if (this != &other)
     {
         uid = other.uid;
-        hostname = other.hostname;
         encrypt_key = other.encrypt_key;
         sign_key = other.sign_key;
         super::operator=(other);
@@ -102,7 +100,7 @@ QString HostInfo::toString() const
     if (uid.isNull())
         return QObject::tr("HostInfo::null");
     else
-        return QString("%1:%2").arg(hostname).arg(uid.toString());
+        return QString("HostInfo( UID = %1 )").arg(uid.toString());
 }
 
 void HostInfo::stream(Siren::Stream &s)
@@ -111,7 +109,6 @@ void HostInfo::stream(Siren::Stream &s)
     
     Schema schema = s.item<HostInfo>();
     
-    schema.data("hostname") & hostname;
     schema.data("UID") & uid;
     schema.data("encrypt_key") & encrypt_key;
     schema.data("sign_key") & sign_key;
@@ -129,12 +126,6 @@ bool HostInfo::isNull() const
 const QUuid& HostInfo::UID() const
 {
     return uid;
-}
-
-/** Return the human-friendly hostname of the host */
-const QString& HostInfo::hostName() const
-{
-    return hostname;
 }
 
 /** Return the public key used to encrypt data to be sent to

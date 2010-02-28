@@ -39,23 +39,37 @@ using namespace Siren;
 
 static const RegisterObject<Envelope> r_envelope;
 
+Q_GLOBAL_STATIC( Mutex, idMutex );
+
+static quint64 last_msg_id = 0;
+
+static quint64 getNewMessageID()
+{
+    MutexLocker lkr( idMutex() );
+    ++last_msg_id;
+    return last_msg_id;
+}
+
 /** Null constructor */
-Envelope::Envelope() : Implements<Envelope,Object>()
+Envelope::Envelope() : Implements<Envelope,Object>(), msg_id(0)
 {}
 
 /** Construct to envelope the message held in 'message_data',
     which is sent by 'sender', and should be recieved by 
     'recipient' */
 Envelope::Envelope(const QUuid &sender, const QUuid &recipient,
-                   const QByteArray &data)
+                   const QByteArray &data, bool acknowledge)
          : Implements<Envelope,Object>(),
            message_data(data), sender_uid(sender),
-           recipient_uid(recipient)
+           recipient_uid(recipient),
+           acknowledge_receipt(acknowledge)
 {
     if (sender.isNull() or recipient.isNull() or message_data.isEmpty())
     {
         this->operator=( Envelope() );
     }
+    
+    msg_id = ::getNewMessageID();
 }
                 
 /** Copy constructor */
@@ -64,7 +78,9 @@ Envelope::Envelope(const Envelope &other)
            message_data(other.message_data),
            sender_uid(other.sender_uid),
            routed_uids(other.routed_uids),
-           recipient_uid(other.recipient_uid)
+           recipient_uid(other.recipient_uid),
+           msg_id(other.msg_id),
+           acknowledge_receipt(other.acknowledge_receipt)
 {}
 
 /** Destructor */
@@ -80,6 +96,8 @@ Envelope& Envelope::operator=(const Envelope &other)
         sender_uid = other.sender_uid;
         routed_uids = other.routed_uids;
         recipient_uid = other.recipient_uid;
+        msg_id = other.msg_id;
+        acknowledge_receipt = other.acknowledge_receipt;
         super::operator=(other);
     }
     
@@ -94,6 +112,8 @@ bool Envelope::operator==(const Envelope &other) const
             recipient_uid == other.recipient_uid and
             routed_uids == other.routed_uids and
             message_data == other.message_data and
+            msg_id == other.msg_id and
+            acknowledge_receipt == other.acknowledge_receipt and
             super::operator==(other));
 }
 
@@ -111,17 +131,20 @@ QString Envelope::toString() const
     {
         if (routed_uids.isEmpty())
             return QObject::tr("Envelope( sender = %1, recipient = %2, "
-                               "message size = %3 bytes )")
+                               "message size = %3 bytes, ID = %4 )")
                             .arg(sender_uid.toString())
                             .arg(recipient_uid.toString())
-                            .arg(message_data.count());
+                            .arg(message_data.count())
+                            .arg(msg_id);
         else
             return QObject::tr("Envelope( sender = %1, recipient = %2, "
-                               "routed via %3, message size = %4 bytes )")
+                               "routed via %3, message size = %4 bytes, "
+                               "ID = %5 )")
                             .arg(sender_uid.toString())
                             .arg(recipient_uid.toString())
                             .arg( Siren::toString(routed_uids) )
-                            .arg(message_data.count());
+                            .arg(message_data.count())
+                            .arg(msg_id);
     }
 }
 
@@ -140,6 +163,8 @@ void Envelope::stream(Siren::Stream &s)
     schema.data("recipient_uid") & recipient_uid;
     schema.data("routed_uids") & routed_uids;
     schema.data("message_data") & message_data;
+    schema.data("message_id") & msg_id;
+    schema.data("acknowlede") & acknowledge_receipt;
     
     super::stream( schema.base() );
 }
@@ -154,6 +179,21 @@ bool Envelope::isNull() const
 const QByteArray& Envelope::message() const
 {
     return message_data;
+}
+
+/** Return the ID number of this message - this is guaranteed
+    to be unique for each enveloped message, and will increase
+    with each new enveloped message */
+quint64 Envelope::messageID() const
+{
+    return msg_id;
+}
+
+/** Return whether or not acknowledgement of receipt of this
+    message is required */
+bool Envelope::mustAcknowledgeReceipt() const
+{
+    return acknowledge_receipt;
 }
 
 /** Return the UID of the process that sent the message */

@@ -35,6 +35,7 @@
 #include <QMap>
 #include <QVarLengthArray>
 #include <QUuid>
+#include <QDateTime>
 
 #include "stream.h"
 
@@ -60,6 +61,58 @@ namespace Siren
             }
             
             static QString null(){ return QString::null; }
+        };
+
+        template<>
+        struct StreamHelper<QUuid>
+        {
+            static QString typeName(){ return "QUuid"; }
+            
+            static const void* getKey(const QUuid &object)
+            {
+                return &object;
+            }
+            
+            static QUuid null(){ return QUuid(); }
+        };
+
+        template<>
+        struct StreamHelper<QDateTime>
+        {
+            static QString typeName(){ return "QDateTime"; }
+            
+            static const void* getKey(const QDateTime &object)
+            {
+                return &object;
+            }
+            
+            static QDateTime null(){ return QDateTime(); }
+        };
+
+        template<>
+        struct StreamHelper<QDate>
+        {
+            static QString typeName(){ return "QDate"; }
+            
+            static const void* getKey(const QDate &object)
+            {
+                return &object;
+            }
+            
+            static QDate null(){ return QDate(); }
+        };
+
+        template<>
+        struct StreamHelper<QTime>
+        {
+            static QString typeName(){ return "QTime"; }
+            
+            static const void* getKey(const QTime &object)
+            {
+                return &object;
+            }
+            
+            static QTime null(){ return QTime(); }
         };
         
         template<class T>

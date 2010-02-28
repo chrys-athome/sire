@@ -107,11 +107,14 @@ namespace Siren
             
             if (f.open( QIODevice::ReadOnly ))
             {
-                QDataStream ds;
                 quint32 seed;
-                ds >> seed;
-        
+                int err = f.read((char*)(&seed), 4);
                 f.close();
+        
+                if (err != 4)
+                    throw Siren::io_error( QObject::tr(
+                            "There was a problem reading from /dev/urandom (%1)")
+                                .arg(err), CODELOC );
         
                 if (ID > 1 and ID < 10000)
                     qsrand(ID * seed);

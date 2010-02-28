@@ -58,7 +58,10 @@ public:
                      const PrivateKey &signing_private_key,
                      Ciphers::Cipher cipher = Ciphers::DEFAULT,
                      MACTypes::MACType mactype = MACTypes::DEFAULT);
-                     
+         
+    SignedPubPriLock(const PrivateKey &encryption_private_key,
+                     const PublicKey &signing_public_key);                     
+                                             
     SignedPubPriLock(const PublicKey &encryption_public_key, 
                      const PrivateKey &signing_private_key,
                      const PrivateKey &encryption_private_key,

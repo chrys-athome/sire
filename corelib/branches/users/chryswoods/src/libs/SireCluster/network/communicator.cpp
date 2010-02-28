@@ -27,6 +27,8 @@
 \*********************************************/
 
 #include <QReadWriteLock>
+#include <QQueue>
+#include <QPair>
 
 #include "communicator.h"
 #include "hostinfo.h"
@@ -38,6 +40,10 @@
 
 #include "Siren/mutex.h"
 #include "Siren/errors.h"
+#include "Siren/thread.h"
+#include "Siren/forages.h"
+#include "Siren/datastream.h"
+#include "Siren/tostring.h"
 
 #include "SireSec/publickey.h"
 #include "SireSec/privatekey.h"
@@ -124,11 +130,9 @@ static CommunicatorData* data()
                     = PrivateKey::generate("sign");
                                            
         //create the hostinfo object
-        HostInfo hostinfo(QUuid::createUuid(), "unknown", // hostname, 
+        HostInfo hostinfo(QUuid::createUuid(),
                           encrypt_keys.get<0>(),
                           sign_keys.get<0>());
-
-        qDebug() << "HOST" << hostinfo.UID() << "created...";
 
         qDebug() << Siren::getProcessString();
 
@@ -209,10 +213,11 @@ void Communicator::addNeighbour(const HostInfo &hostinfo,
     d->routes.insert(hostinfo.UID(), Route(send_function, router, njumps));
 }
 
-static QByteArray pack(const Message &message, 
-                       const QUuid &sender, const QUuid &recipient,
-                       const PublicKey &encrypt_key,
-                       const PrivateKey &sign_key)
+static QPair<QByteArray,quint64> pack(const Message &message, 
+                                      const QUuid &sender, const QUuid &recipient,
+                                      const PublicKey &encrypt_key,
+                                      const PrivateKey &sign_key,
+                                      bool acknowledge_receipt)
 {
     QByteArray message_data;
     {
@@ -224,23 +229,80 @@ static QByteArray pack(const Message &message,
     message_data = lock.encrypt(message_data);
     
     QByteArray enveloped_message;
+    quint64 msg_id;
     {
-        Envelope envelope(sender, recipient, message_data);
+        Envelope envelope(sender, recipient, message_data, acknowledge_receipt);
+        
+        msg_id = envelope.messageID();
     
         DataStream ds(&enveloped_message, QIODevice::WriteOnly);
         ds << envelope;
     }
     
-    return enveloped_message;
+    return QPair<QByteArray,quint64>(enveloped_message, msg_id);
 }
 
-void Communicator::send(const Message &message, const QUuid &recipient)
+static ObjRef unpack(const QByteArray &data,
+                     const PrivateKey &decrypt_key,
+                     const PublicKey &sign_key)
+{
+    SignedPubPriLock lock(decrypt_key, sign_key);
+    
+    QByteArray message_data = lock.decrypt(data);
+    
+    DataStream ds(message_data);
+    return ds.loadNextObject();
+}
+
+void Communicator::received(const Message &message)
+{
+    qDebug() << "Received a message!";
+    message.read(QUuid(), 0);
+}
+
+void Communicator::reroute(const Envelope &envelope)
+{
+    CommunicatorData *d = data();
+
+    HostInfo hostinfo = resolveHost(envelope.destination());
+
+    if (hostinfo.isNull())
+        throw SireCluster::network_error( QObject::tr(
+                "Do not know how to re-route a message from %1 to %2.")
+                    .arg(envelope.sender().toString())
+                    .arg(envelope.destination().toString()), CODELOC );
+
+    Route route = d->routes.value(envelope.destination());
+    
+    if (route.send_function.empty())
+        throw SireCluster::network_error( QObject::tr(
+                "Cannot route the message %1 to the process with UID %2 "
+                "despite this recipient being in the resolver list...")
+                    .arg(global_d->localhost.toString())
+                    .arg(envelope.destination().toString()), CODELOC );
+
+    qDebug() << "reroute" << envelope.toString() << "on" 
+             << d->localhost.UID() << "from" << envelope.sender().toString()
+             << "to" << envelope.destination().toString();
+
+    QByteArray message_data;
+    {
+        DataStream ds(&message_data, QIODevice::WriteOnly);
+        ds << envelope.addRouter(d->localhost.UID());
+    }
+
+    route.send_function(message_data);
+}
+
+quint64 Communicator::send(const Message &message, const QUuid &recipient,
+                           bool acknowledge_receipt)
 {
     CommunicatorData *d = data();
 
     if ( d->localhost.UID() == recipient )
     {
         Communicator::received(message);
+        return 0;
     }
     else
     {
@@ -261,28 +323,238 @@ void Communicator::send(const Message &message, const QUuid &recipient)
                         .arg(global_d->localhost.toString())
                         .arg(recipient.toString()), CODELOC );
 
-        route.send_function( ::pack(message, d->localhost.UID(),
-                                    recipient, hostinfo.encryptKey(),
-                                    d->sign_privkey) );
+        qDebug() << "send" << message.toString() << "from" 
+                 << d->localhost.UID() << "to" << recipient;
+
+        QPair<QByteArray,quint64> p = ::pack(message, d->localhost.UID(),
+                                             recipient, hostinfo.encryptKey(),
+                                             d->sign_privkey, acknowledge_receipt);
+
+        route.send_function(p.first);
+
+        return p.second;
     }
 }
 
-void Communicator::received(const Message &message)
+QHash<QUuid,quint64> Communicator::send(const Message &message, 
+                                        const QList<QUuid> &recipients,
+                                        bool acknowledge_receipt)
 {
-    qDebug() << "Received a message!";
+    CommunicatorData *d = data();
+    
+    {
+        QReadLocker lkr( &(d->resolver_lock) );
+        QList<QUuid> unknown_recipients;
+        
+        foreach (QUuid recipient, recipients)
+        {
+            if (not d->resolver.contains(recipient))
+                unknown_recipients.append(recipient);
+        }
+        
+        throw SireCluster::network_error( QObject::tr(
+                "Cannot find a route to some of the recipients of the message. "
+                "The message should be sent to %1, but routes for the following "
+                "destinations cannot be found: %2.")
+                    .arg(Siren::toString(recipients), 
+                         Siren::toString(unknown_recipients)), CODELOC );
+    }
+    
+    QHash<QUuid,quint64> ids;
+    
+    ids.reserve(recipients.count());
+    
+    foreach (QUuid recipient, recipients)
+    {
+        quint64 id = Communicator::send(message, recipient, acknowledge_receipt);
+        ids.insert(recipient, id);
+    }
+    
+    return ids;
 }
+
+QHash<QUuid,quint64> Communicator::broadcast(const Message &message,
+                                             bool acknowledge_receipt)
+{
+    //send the message to all known processes
+    CommunicatorData *d = data();
+    
+    QList<QUuid> uids;
+    {
+        QReadLocker lkr( &(d->resolver_lock) );
+        uids = d->resolver.keys();
+    }
+    
+    QHash<QUuid,quint64> ids;
+    ids.reserve(uids.count());
+    
+    foreach (QUuid uid, uids)
+    {
+        quint64 id = Communicator::send(message, uid, acknowledge_receipt);
+        ids.insert(uid, id);
+    }
+    
+    return ids;
+}
+
+static void received(const Envelope &envelope)
+{
+    if (envelope.destination() != Communicator::getLocalInfo().UID())
+    {
+        qDebug() << Communicator::getLocalInfo().UID().toString()
+                 << "must reroute message from" << envelope.sender().toString()
+                 << "to" << envelope.destination().toString();
+               
+        Communicator::reroute(envelope);
+                     
+        return;
+    }
+    
+    //get the public key for the sender
+    CommunicatorData *d = data();
+
+    PublicKey sign_key;
+    {
+        QReadLocker lkr( &(d->resolver_lock) );
+        sign_key = d->resolver.value(envelope.sender()).signatureKey();
+    }
+    
+    if (not sign_key.isValid())
+        throw SireCluster::network_error( QObject::tr(
+                "Process %1 does not have a signature verification key for the "
+                "process with UID %2.")
+                    .arg( d->localhost.UID().toString() )
+                    .arg(envelope.sender().toString()), CODELOC );
+                    
+    ObjRef message = ::unpack(envelope.message(), d->encrypt_privkey, sign_key);
+    
+    //read and act on the message
+    message.asA<Message>().read(envelope.sender(), envelope.messageID());
+}
+
+/** Thread-pool used to process received messages */
+class ReceivePool
+{
+    class ReceiveThread : public Siren::Thread
+    {
+        Mutex *datamutex;
+        WaitCondition *job_waiter;
+        QQueue< QPair<Envelope,QByteArray> > *jobs;
+    
+    public:
+        ReceiveThread(int n, Mutex *dm, WaitCondition *jw,
+                      QQueue< QPair<Envelope,QByteArray> > *j)
+                : Thread( QString("ReceiveThread-%1").arg(n) ),
+                  datamutex(dm), job_waiter(jw), jobs(j)
+        {
+            this->start();
+        }
+        
+        ~ReceiveThread()
+        {}
+        
+    protected:
+        void threadMain()
+        {
+            Thread::signalStarted();
+            
+            try
+            {
+                MutexLocker lkr(datamutex);
+
+                while (for_ages())
+                {
+                    while (jobs->isEmpty())
+                    {
+                        job_waiter->wait(datamutex);
+                    }
+                    
+                    QPair<Envelope,QByteArray> job = jobs->dequeue();
+                    
+                    lkr.unlock();
+                    
+                    Envelope envelope;
+                    
+                    if (job.second.isEmpty())
+                    {
+                        envelope = job.first;
+                    }
+                    else
+                    {
+                        DataStream ds(job.second);
+                        ds >> envelope;
+                    }
+
+                    ::received(envelope);
+                    
+                    lkr.relock();
+                }
+            }
+            catch(const Siren::interupted&)
+            {}
+        }
+    };
+
+public:
+    ReceivePool()
+    {
+        for (int i=0; i<4; ++i)
+        {
+            threads.append( new ReceiveThread(i+1, &datamutex, &job_waiter, &jobs) );
+        }
+    }
+    
+    ~ReceivePool()
+    {
+        foreach (ReceiveThread *thread, threads)
+        {
+            if (thread->isRunning())
+            {
+                end_for_ages(thread);
+                thread->wait();
+            }
+            
+            delete thread;
+        }
+    }
+    
+    void receive(const Envelope &envelope)
+    {
+        MutexLocker lkr( &datamutex );
+        jobs.enqueue( QPair<Envelope,QByteArray>(envelope,QByteArray()) );
+        job_waiter.wakeOne();
+    }
+    
+    void receive(const QByteArray &envelope)
+    {
+        MutexLocker lkr( &datamutex );
+        jobs.enqueue( QPair<Envelope,QByteArray>(Envelope(),envelope) );
+        job_waiter.wakeOne();
+    }
+    
+private:
+    Mutex datamutex;
+    WaitCondition job_waiter;
+
+    QQueue< QPair<Envelope,QByteArray> > jobs;
+    
+    QList<ReceiveThread*> threads;
+};
+
+Q_GLOBAL_STATIC( ReceivePool, receivePool );
 
 void Communicator::received(const Envelope &envelope)
 {
-    qDebug() << "Received an envelope from" << envelope.sender().toString();
+    receivePool()->receive(envelope);
 }
 
 void Communicator::received(const QByteArray &data)
 {
-    DataStream ds(data);
-    
-    Envelope envelope;
-    ds >> envelope;
-    
-    Communicator::received(envelope);
+    receivePool()->receive(data);
+}
+
+void Communicator::awaitAcknowledgement(const QHash<QUuid,quint64> &messages)
+{
+    //just sleep for a second for the moment...
+    Siren::msleep(1000);
 }

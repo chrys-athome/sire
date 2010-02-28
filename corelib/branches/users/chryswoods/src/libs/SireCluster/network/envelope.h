@@ -56,7 +56,8 @@ class SIRECLUSTER_EXPORT Envelope : public Siren::Implements<Envelope,Siren::Obj
 public:
     Envelope();
     Envelope(const QUuid &sender, const QUuid &recipient,
-             const QByteArray &message_data);
+             const QByteArray &message_data,
+             bool acknowledge_receipt = false);
 
     Envelope(const Envelope &other);
     
@@ -77,6 +78,9 @@ public:
     
     const QUuid& sender() const;
     const QUuid& destination() const;
+    
+    quint64 messageID() const;
+    bool mustAcknowledgeReceipt() const;
     
     bool isRecipient(const QUuid &uid) const;
     bool wasRoutedBy(const QUuid &uid) const;
@@ -99,6 +103,15 @@ private:
     
     /** The UIDs of the process that should receive this message */
     QUuid recipient_uid;
+    
+    /** The ID of the message - this uniquely identifies a sent
+        message, and can be used to order messages (as this
+        is guaranteed to increase as each message is sent) */
+    quint64 msg_id;
+    
+    /** Whether or not an acknowledgement should be sent back
+        to the sender to indicate that the message has been received */
+    bool acknowledge_receipt;
 };
 
 } // end of namespace network

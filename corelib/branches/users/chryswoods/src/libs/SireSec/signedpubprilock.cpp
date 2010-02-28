@@ -61,6 +61,17 @@ SignedPubPriLock::SignedPubPriLock(const PublicKey &pubkey,
                    cphr(cipher), mactype(mac)
 {}
 
+/** Construct with just a private key (for decryption) and
+    public key (for signature verification) - this lock can
+    only be used to decrypt data */
+SignedPubPriLock::SignedPubPriLock(const PrivateKey &privkey,
+                                   const PublicKey &pubkey)
+                 : Implements<SignedPubPriLock,Lock>(privkey),
+                   sign_public_key(pubkey),
+                   cphr( Ciphers::DEFAULT ),
+                   mactype( MACTypes::DEFAULT )
+{}
+
 /** Construct with both a public and private key (for encryption and 
     decryption - note that these don't have to match!) */
 SignedPubPriLock::SignedPubPriLock(const PublicKey &encrypt_pub_key, 

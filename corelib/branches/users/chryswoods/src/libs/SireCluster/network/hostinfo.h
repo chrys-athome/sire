@@ -58,7 +58,7 @@ class SIRECLUSTER_EXPORT HostInfo : public Siren::Implements<HostInfo,Siren::Obj
 public:
     HostInfo();
 
-    HostInfo(const QUuid &uid, const QString &hostname,
+    HostInfo(const QUuid &uid,
              const PublicKey &encrypt_key,
              const PublicKey &sign_key);
 
@@ -78,7 +78,6 @@ public:
     bool isNull() const;
     
     const QUuid& UID() const;
-    const QString& hostName() const;
     
     const PublicKey& encryptKey() const;
     const PublicKey& signatureKey() const;
@@ -86,9 +85,6 @@ public:
 private:
     /** Unique ID used to identify the process in the network */
     QUuid uid;
-    
-    /** Friendly human name of the host (not necessarily unique) */
-    QString hostname;
     
     /** Encryption keys used to encrypt messages sent to the host,
         and to verify the signature of message received from the host */

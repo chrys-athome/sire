@@ -58,14 +58,23 @@ public:
     static const HostInfo& getLocalInfo();
     static HostInfo getHostInfo(const QUuid &host_uid);
 
-    static void send(const Message &message, const QUuid &recipient);
-    static void send(const Message &message, const QList<QUuid> &recipients);
+    static quint64 send(const Message &message, const QUuid &recipient,
+                        bool acknowledge_receipt = false);
+                        
+    static QHash<QUuid,quint64> send(const Message &message, 
+                                     const QList<QUuid> &recipients,
+                                     bool acknowledge_receipt = false);
     
-    static void broadcast(const Message &message);
+    static void reroute(const Envelope &envelope);
+    
+    static QHash<QUuid,quint64> broadcast(const Message &message,
+                                          bool acknowedge_receipt = false);
   
     static void received(const Envelope &message);  
     static void received(const Message &message);
     static void received(const QByteArray &message);
+
+    static void awaitAcknowledgement(const QHash<QUuid,quint64> &messages);
 
     static void addNeighbour(const HostInfo &hostinfo,
                              boost::function<void(const QByteArray&)> send_function);

@@ -63,6 +63,7 @@ public:
     static void addThread();
 
     static void shutdown();
+    static void shutdownCluster();
 
     static void wait();
     

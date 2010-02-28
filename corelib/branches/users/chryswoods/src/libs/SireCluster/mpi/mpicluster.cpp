@@ -117,7 +117,7 @@ public:
     
     void send(const QByteArray &message)
     {
-        send_queue.enqueue(message);
+        send_queue.push_back(message);
     }
     
     bool process();
@@ -126,11 +126,14 @@ public:
     int send_rank;
     
     /** The queue of messages to send to the recipient */
-    QQueue<QByteArray> send_queue;
+    QList<QByteArray> send_queue;
     
     /** The size of the data - this acts as a buffer for the 
         size during transmission */
-    int send_buffer;
+    int send_size_buffer;
+    
+    /** The buffer holding the message being transmitted */
+    QByteArray send_buffer;
     
     /** The communicator used to communicate with the recipient */
     MPI_Comm *global_comm;
@@ -169,7 +172,7 @@ public:
     
     void receive(int message_size)
     {
-        recv_queue.enqueue(message_size);
+        recv_queue.push_back(message_size);
     }
     
     bool process();
@@ -179,7 +182,10 @@ public:
     int recv_rank;
     
     /** Queue of messages to receive (their expected sizes) */
-    QQueue<int> recv_queue;
+    QList<int> recv_queue;
+    
+    /** Buffer holding the size of the message to receive */
+    int recv_size_buffer;
     
     /** Buffer in which to receive the message */
     QByteArray recv_buffer;
@@ -317,7 +323,110 @@ Q_GLOBAL_STATIC( QMutex, mpiMutex );
 
 bool MPISendQueue::process()
 {
-    return false;
+    if (send_state == IDLE)
+    {
+        //see if there is a new message to de-queue
+        if (send_queue.isEmpty())
+            return false;
+
+        send_size_buffer = 0;
+        
+        while (send_size_buffer == 0)
+        {
+            if (send_queue.isEmpty())
+                return false;
+        
+            send_buffer = send_queue.at(0);
+            send_queue.pop_front();
+            send_size_buffer = send_buffer.length();
+        }
+        
+        try
+        {
+            int mpierr = MPI_Isend(&send_size_buffer, 1, MPI_INT, 
+                                   send_rank, size_tag, *global_comm, &send_request);
+            assertMPIOK(mpierr, QUICK_CODELOC);
+            
+            send_state = SENDING_SIZE;
+            send_timer.start();
+        }
+        catch(...)
+        {
+            send_state = IDLE;
+            send_queue.push_front(send_buffer);
+            throw;
+        }
+    }
+
+    if (send_state == SENDING_SIZE)
+    {
+        try
+        {
+            //has the send completed?
+            MPI_Status status;
+            int message_size_sent;
+    
+            int mpierr = MPI_Test(&send_request, &message_size_sent, &status);
+            assertMPIOK(mpierr, QUICK_CODELOC);
+            
+            if (message_size_sent)
+            {
+                MPI_Request_free( &send_request );
+            
+                //ok - send the message itself
+                mpierr = MPI_Isend(const_cast<char*>(send_buffer.constData()), 
+                                   send_size_buffer, MPI_CHAR,
+                                   send_rank, msg_tag, *global_comm, &send_request);
+                assertMPIOK(mpierr, QUICK_CODELOC);
+                
+                send_state = SENDING_BUFFER;
+                send_timer.start();
+            }
+            else if (send_timer.elapsed() > 5000)
+            {
+                qDebug() << "SENT SIZE HAS TAKEN A LONG TIME" << send_timer.elapsed();
+            }
+        }
+        catch(...)
+        {
+            send_state = IDLE;
+            send_queue.push_front(send_buffer);
+            throw;
+        }
+    }
+
+    if (send_state == SENDING_BUFFER)
+    {
+        try
+        {
+            //has the send completed?
+            MPI_Status status;
+            int message_sent;
+    
+            int mpierr = MPI_Test(&send_request, &message_sent, &status);
+            assertMPIOK(mpierr, QUICK_CODELOC);
+            
+            if (message_sent)
+            {
+                MPI_Request_free( &send_request );
+                send_state = IDLE;
+                send_size_buffer = 0;
+                send_buffer = QByteArray();
+            }
+            else if (send_timer.elapsed() > 5000)
+            {
+                qDebug() << "SENT MESSAGE HAS TAKEN A LONG TIME" << send_timer.elapsed();
+            }
+        }
+        catch(...)
+        {
+            send_state = IDLE;
+            send_queue.push_front(send_buffer);
+            throw;
+        }
+    }
+
+    return true;
 }
 
 ////////
@@ -326,7 +435,69 @@ bool MPISendQueue::process()
 
 bool MPIRecvQueue::process()
 {
-    return false;
+    if (recv_state == IDLE)
+    {
+        recv_size_buffer = 0;
+        
+        while (recv_size_buffer == 0)
+        {
+            if (recv_queue.isEmpty())
+                return false;
+                
+            recv_size_buffer = recv_queue.at(0);
+            recv_queue.pop_front();
+        }
+
+        try
+        {
+            recv_buffer.resize(recv_size_buffer);
+            int mpierr = MPI_Irecv(recv_buffer.data(), recv_size_buffer, MPI_CHAR,
+                                   recv_rank, msg_tag, *global_comm, &recv_request);
+            assertMPIOK(mpierr, QUICK_CODELOC);
+            
+            recv_state = RECEIVING;
+            recv_timer.start();
+        }
+        catch(...)
+        {
+            recv_queue.push_front(recv_size_buffer);
+            recv_state = IDLE;
+            throw;
+        }
+    }
+        
+    if (recv_state == RECEIVING)
+    {
+        try
+        {
+            //has the recv completed?
+            MPI_Status status;
+            int message_recv;
+    
+            int mpierr = MPI_Test(&recv_request, &message_recv, &status);
+            assertMPIOK(mpierr, QUICK_CODELOC);
+            
+            if (message_recv)
+            {
+                MPI_Request_free( &recv_request );
+                Communicator::received(recv_buffer);
+                recv_state = IDLE;
+            }
+            else if (recv_timer.elapsed() > 5000)
+            {
+                qDebug() << "receive buffer taking a while"
+                         << recv_timer.elapsed();
+            }
+        }
+        catch(...)
+        {
+            recv_queue.push_front(recv_size_buffer);
+            recv_state = IDLE;
+            throw;
+        }
+    }
+
+    return true;
 }
 
 ////////
@@ -335,6 +506,8 @@ bool MPIRecvQueue::process()
 
 bool MPIClusterData::checkForSend()
 {
+    MutexLocker lkr( &send_mutex );
+
     if (active_senders.isEmpty())
         return false;
 
@@ -342,6 +515,8 @@ bool MPIClusterData::checkForSend()
     
     while (it.hasNext())
     {
+        it.next();
+    
         if (not send_queue[it.value()].process())
         {
             it.remove();
@@ -408,6 +583,8 @@ bool MPIClusterData::checkForReceive()
     
     while (it.hasNext())
     {
+        it.next();
+    
         if (not recv_queue[it.value()].process())
             it.remove();
     }
@@ -599,9 +776,13 @@ void MPIClusterData::exec(int argc, char **argv)
         }
     }
     catch(const Siren::interupted&)
-    {}
+    {
+        qDebug() << "MPI rank" << mpi_rank << "was interupted...";
+    }
     catch(...)
     {
+        qDebug() << "Error on process with MPI rank" << mpi_rank;
+    
         if (this_initialised_mpi)
             MPI_Finalize();
             

@@ -27,7 +27,114 @@
 \*********************************************/
 
 #include "message.h"
+#include "SireCluster/cluster.h"
+
+#include <QDebug>
 
 using namespace SireCluster;
 using namespace SireCluster::network;
+using namespace Siren;
 
+//////
+////// Implementation of Message
+//////
+
+static const RegisterObject<Message> r_message( VIRTUAL_CLASS );
+
+/** Constructor */
+Message::Message() : Extends<Message,Object>()
+{}
+
+/** Copy constructor */
+Message::Message(const Message &other) : Extends<Message,Object>(other)
+{}
+
+/** Destructor */
+Message::~Message()
+{}
+
+/** Copy assignment */
+Message& Message::operator=(const Message &other)
+{
+    super::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool Message::operator==(const Message &other) const
+{
+    return super::operator==(other);
+}
+
+/** Comparison operator */
+bool Message::operator!=(const Message &other) const
+{
+    return super::operator!=(other);
+}
+
+QString Message::typeName()
+{
+    return "SireCluster::network::Message";
+}
+
+//////
+////// Implementation of Shutdown
+//////
+
+static const RegisterObject<Shutdown> r_shutdown;
+
+/** Constructor */
+Shutdown::Shutdown() : Implements<Shutdown,Message>()
+{}
+
+/** Copy constructor */
+Shutdown::Shutdown(const Shutdown &other) : Implements<Shutdown,Message>(other)
+{}
+
+/** Destructor */
+Shutdown::~Shutdown()
+{}
+
+/** Copy assignment operator */
+Shutdown& Shutdown::operator=(const Shutdown &other)
+{
+    super::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool Shutdown::operator==(const Shutdown &other) const
+{
+    return super::operator==(other);
+}
+
+/** Comparison operator */
+bool Shutdown::operator!=(const Shutdown &other) const
+{
+    return super::operator!=(other);
+}
+
+uint Shutdown::hashCode() const
+{
+    return qHash(Shutdown::typeName());
+}
+
+QString Shutdown::toString() const
+{
+    return "Shutdown()";
+}
+
+void Shutdown::stream(Siren::Stream &s)
+{
+    s.assertVersion<Shutdown>(1);
+    
+    Schema schema = s.item<Shutdown>();
+    
+    super::stream(schema.base());
+}
+
+/** This just calls Cluster::shutdown() */
+void Shutdown::read(const QUuid &sender, quint64 msg_id) const
+{
+    Cluster::shutdown();
+}

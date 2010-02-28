@@ -57,7 +57,7 @@ void fatal_error_signal (int sig)
     Siren::end_for_ages();
 
     // Now do the clean up actions:
-    Cluster::shutdown();
+    Cluster::shutdownCluster();
 
     printf("\nI, and all of my children are now dead. Adieu...\n");
 
@@ -155,7 +155,7 @@ int main(int argc, char **argv)
             }
 
             printf("Shutting down the cluster...\n");
-            Cluster::shutdown();
+            Cluster::shutdownCluster();
             status = 0;
         }
         else

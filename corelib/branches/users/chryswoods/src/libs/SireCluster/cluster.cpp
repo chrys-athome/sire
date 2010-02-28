@@ -34,6 +34,9 @@
 #include "backend.h"
 #include "workqueue.h"
 
+#include "network/communicator.h" // CONDITIONAL_INCLUDE
+#include "network/message.h"      // CONDITIONAL_INCLUDE
+
 #include "Siren/mutex.h"
 #include "Siren/waitcondition.h"
 #include "Siren/forages.h"
@@ -50,6 +53,7 @@
 #include <QDebug>
 
 using namespace SireCluster;
+using namespace SireCluster::network;
 using namespace Siren;
 
 class ClusterData
@@ -159,13 +163,18 @@ void Cluster::wait()
     }
 }
 
-/** Shutdown this cluster */
+/** Shutdown this cluster (on this process only) */
 void Cluster::shutdown()
 {
+    qDebug() << "Cluster::shutdown() on" << Cluster::hostName() << "started...";
+
     MutexLocker lkr( &(clusterData()->datamutex) );
     
     if (not clusterData()->cluster_is_running)
+    {
+        qDebug() << "Cluster on" << Cluster::hostName() << "has already shut down?";
         return;
+    }
 
     #ifdef SIRE_USE_MPI
         SireCluster::MPI::MPICluster::shutdown();
@@ -175,8 +184,23 @@ void Cluster::shutdown()
     
     MutexLocker lkr2( &(clusterData()->run_waiter_mutex) );
 
+    qDebug() << "Cluster::shutdown() on" << Cluster::hostName() << "complete!";
+
     //wake all threads waiting for the cluster to be shutdown
     clusterData()->run_waiter.wakeAll();
+}
+
+/** Tell the entire cluster to shutdown */
+void Cluster::shutdownCluster()
+{
+    //broadcast a shutdown message
+    QHash<QUuid,quint64> messages = Communicator::broadcast( network::Shutdown(), true );
+    
+    //wait for all of the shutdown messages to be acknowledged
+    Communicator::awaitAcknowledgement(messages);
+    
+    //now shutdown ourself
+    Cluster::shutdown();
 }
 
 /** Internal function used to get the node associated with the passed reservation */

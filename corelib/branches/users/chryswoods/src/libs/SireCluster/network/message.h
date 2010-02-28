@@ -59,7 +59,7 @@ namespace network
         
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Message : public Siren::Object
+class Message : public Siren::Extends<Message,Siren::Object>
 {
 public:
     Message();
@@ -69,17 +69,39 @@ public:
     
     static QString typeName();
     
-    virtual void read() const=0;
+    virtual void read(const QUuid &sender, quint64 message_id) const=0;
     
 protected:
     Message& operator=(const Message &other);
     bool operator==(const Message &other) const;
     bool operator!=(const Message &other) const;
+};
+
+/** This message is used to tell a node in the cluster to shutdown */
+class Shutdown : public Siren::Implements<Shutdown,Message>
+{
+public:
+    Shutdown();
+    Shutdown(const Shutdown &other);
     
+    ~Shutdown();
+    
+    Shutdown& operator=(const Shutdown &other);
+    
+    bool operator==(const Shutdown &other) const;
+    bool operator!=(const Shutdown &other) const;
+    
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
+    
+    void read(const QUuid &sender, quint64 message_id) const;
 };
 
 } // end of namespace network
 } // end of namespace SireCluster
+
+Q_DECLARE_METATYPE( SireCluster::network::Shutdown )
 
 SIRE_END_HEADER
 
