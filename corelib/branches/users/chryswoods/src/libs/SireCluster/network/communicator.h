@@ -74,15 +74,31 @@ public:
     static void received(const Message &message);
     static void received(const QByteArray &message);
 
+    static bool messageAcknowledged(quint64 message);
+    static bool allMessagesAcknowledged(const QHash<QUuid,quint64> &messages);
+
+    static void awaitAcknowledgement(quint64 message);
     static void awaitAcknowledgement(const QHash<QUuid,quint64> &messages);
 
-    static void addNeighbour(const HostInfo &hostinfo,
-                             boost::function<void(const QByteArray&)> send_function);
+    static bool awaitAcknowledgement(quint64 message, int ms);
+    static bool awaitAcknowledgement(const QHash<QUuid,quint64> &messages, int ms);
+
+    static bool messageSent(quint64 message);
+    static bool allMessagesSent(const QHash<QUuid,quint64> &messages);
+    
+    static void awaitSent(quint64 message);
+    static void awaitSent(const QHash<QUuid,quint64> &messages);
+    
+    static bool awaitSent(quint64 message, int ms);
+    static bool awaitSent(const QHash<QUuid,quint64> &messages, int ms);
 
     static void addNeighbour(const HostInfo &hostinfo,
-                             const QUuid &router,
-                             boost::function<void(const QByteArray&)> send_function,
-                             int njumps=1);
+         boost::function<void(const QByteArray&, boost::function<void ()>)> send_function);
+
+    static void addNeighbour(const HostInfo &hostinfo,
+         const QUuid &router,
+         boost::function<void(const QByteArray&, boost::function<void ()>)> send_function,
+         int njumps=1);
 };
 
 } // end of namespace network

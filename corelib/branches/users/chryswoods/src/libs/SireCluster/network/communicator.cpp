@@ -30,6 +30,9 @@
 #include <QQueue>
 #include <QPair>
 
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+
 #include "communicator.h"
 #include "hostinfo.h"
 #include "envelope.h"
@@ -62,11 +65,11 @@ public:
     Route() : nhops(0)
     {}
     
-    Route(const boost::function<void (const QByteArray&)> &func)
+    Route(const boost::function<void (const QByteArray&, boost::function<void ()>)> &func)
             : send_function(func), nhops(0)
     {}
     
-    Route(const boost::function<void (const QByteArray&)> &func,
+    Route(const boost::function<void (const QByteArray&, boost::function<void ()>)> &func,
           const QUuid &r, int n)
             : send_function(func), router(r), nhops(n)
     {}
@@ -74,7 +77,7 @@ public:
     ~Route()
     {}
     
-    boost::function<void (const QByteArray&)> send_function;
+    boost::function<void (const QByteArray&, boost::function<void ()>)> send_function;
     QUuid router;
     int nhops;
 };
@@ -108,7 +111,60 @@ public:
     /** All of the routes available to all of the hosts
         that can be communicated with by this communicator */
     QMultiHash<QUuid,Route> routes;
+
+    /** The IDs of enveloped messages that have not been 
+        acknowledged */
+    QSet<quint64> unacknowledged_envelopes;
+    
+    /** The IDs of envelopes that have not yet been sent */
+    QSet<quint64> unsent_envelopes;
+    
+    /** Mutex used to lock access to the list of unacknowledged messages */
+    Mutex acknowledge_mutex;
+    
+    /** Wait condition used to wait until messages have been acknowledged */
+    WaitCondition acknowledge_waiter;
 };
+
+namespace SireCluster
+{
+    namespace network
+    {
+
+        /** Private message used by CommunicatorData to acknowledge message receipt */
+        class AcknowledgeReceipt : public Implements<AcknowledgeReceipt,Message>
+        {
+        public:
+            AcknowledgeReceipt();
+            AcknowledgeReceipt(quint64 message_id);
+    
+            AcknowledgeReceipt(const AcknowledgeReceipt &other);
+    
+            ~AcknowledgeReceipt();
+    
+            AcknowledgeReceipt& operator=(const AcknowledgeReceipt &other);
+    
+            bool operator==(const AcknowledgeReceipt &other) const;
+            bool operator!=(const AcknowledgeReceipt &other) const;
+    
+            QString toString() const;
+            uint hashCode() const;
+            void stream(Stream &s);
+    
+            void read(const QUuid &sender, quint64) const;
+
+        private:
+            /** The ID of the message to acknowledge */
+            quint64 acknowledge_message_id;
+        };
+    }
+}
+
+Q_DECLARE_METATYPE( SireCluster::network::AcknowledgeReceipt )
+
+/////////
+///////// Implementation of CommunicatorData
+/////////
 
 static CommunicatorData *global_d(0);
 
@@ -143,6 +199,87 @@ static CommunicatorData* data()
     
     return global_d;
 }
+
+/////////
+///////// Implementation of AcknowledgeReceipt
+/////////
+
+static const RegisterObject<AcknowledgeReceipt> r_ackrec;
+
+AcknowledgeReceipt::AcknowledgeReceipt()
+                   : Implements<AcknowledgeReceipt,Message>(),
+                     acknowledge_message_id(0)
+{}
+
+AcknowledgeReceipt::AcknowledgeReceipt(quint64 message_id)
+                   : Implements<AcknowledgeReceipt,Message>(),
+                     acknowledge_message_id(message_id)
+{}
+
+AcknowledgeReceipt::AcknowledgeReceipt(const AcknowledgeReceipt &other)
+                   : Implements<AcknowledgeReceipt,Message>(other),
+                     acknowledge_message_id(other.acknowledge_message_id)
+{}
+
+AcknowledgeReceipt::~AcknowledgeReceipt()
+{}
+
+AcknowledgeReceipt& AcknowledgeReceipt::operator=(const AcknowledgeReceipt &other)
+{
+    acknowledge_message_id = other.acknowledge_message_id;
+    super::operator=(other);
+    return *this;
+}
+
+bool AcknowledgeReceipt::operator==(const AcknowledgeReceipt &other) const
+{
+    return acknowledge_message_id == other.acknowledge_message_id and
+           super::operator==(other);
+}
+
+bool AcknowledgeReceipt::operator!=(const AcknowledgeReceipt &other) const
+{
+    return not AcknowledgeReceipt::operator==(other);
+}
+
+QString AcknowledgeReceipt::toString() const
+{
+    return QString("AcknowledgeReceipt( %1 )").arg(acknowledge_message_id);
+}
+
+uint AcknowledgeReceipt::hashCode() const
+{
+    return qHash( AcknowledgeReceipt::typeName() ) + qHash(acknowledge_message_id);
+}
+
+void AcknowledgeReceipt::stream(Stream &s)
+{
+    s.assertVersion<AcknowledgeReceipt>(1);
+    
+    Schema schema = s.item<AcknowledgeReceipt>();
+    
+    schema.data("acknowledge_id") & acknowledge_message_id;
+    
+    super::stream( schema.base() );
+}
+
+void AcknowledgeReceipt::read(const QUuid&, quint64) const
+{
+    if (acknowledge_message_id != 0)
+    {
+        CommunicatorData *d = data();
+        
+        MutexLocker lkr( &(d->acknowledge_mutex) );
+        d->unacknowledged_envelopes.remove(acknowledge_message_id);
+        
+        //wait everyone who is waiting for message acknowledgement
+        d->acknowledge_waiter.wakeAll();
+    }
+}
+
+/////////
+///////// Implementation of Communicator
+/////////
 
 /** Get the HostInfo object for this process */
 const HostInfo& Communicator::getLocalInfo()
@@ -179,7 +316,7 @@ HostInfo Communicator::getHostInfo(const QUuid &uid)
 /** Add a neighbour process to this process, which can be communicated
     with by calling 'send_function' */
 void Communicator::addNeighbour(const HostInfo &hostinfo,
-                             boost::function<void(const QByteArray&)> send_function)
+        boost::function<void(const QByteArray&, boost::function<void ()>)> send_function)
 {
     if (hostinfo.isNull() or send_function.empty())
         return;
@@ -197,9 +334,9 @@ void Communicator::addNeighbour(const HostInfo &hostinfo,
     with by calling 'send_function' (which will route via 'router',
     requiring 'njumps' jumps to reach the process) */
 void Communicator::addNeighbour(const HostInfo &hostinfo,
-                             const QUuid &router,
-                             boost::function<void(const QByteArray&)> send_function,
-                             int njumps)
+        const QUuid &router,
+        boost::function<void(const QByteArray&, boost::function<void ()>)> send_function,
+        int njumps)
 {
     if (hostinfo.isNull() or send_function.empty())
         return;
@@ -213,25 +350,19 @@ void Communicator::addNeighbour(const HostInfo &hostinfo,
     d->routes.insert(hostinfo.UID(), Route(send_function, router, njumps));
 }
 
-static QPair<QByteArray,quint64> pack(const Message &message, 
+static QPair<QByteArray,quint64> pack(const QByteArray &message_data, 
                                       const QUuid &sender, const QUuid &recipient,
                                       const PublicKey &encrypt_key,
                                       const PrivateKey &sign_key,
                                       bool acknowledge_receipt)
 {
-    QByteArray message_data;
-    {
-        DataStream ds(&message_data, QIODevice::WriteOnly);
-        ds << message;
-    }
-    
     SignedPubPriLock lock(encrypt_key, sign_key);
-    message_data = lock.encrypt(message_data);
+    QByteArray encrypted_data = lock.encrypt(message_data);
     
     QByteArray enveloped_message;
     quint64 msg_id;
     {
-        Envelope envelope(sender, recipient, message_data, acknowledge_receipt);
+        Envelope envelope(sender, recipient, encrypted_data, acknowledge_receipt);
         
         msg_id = envelope.messageID();
     
@@ -259,6 +390,9 @@ void Communicator::received(const Message &message)
     qDebug() << "Received a message!";
     message.read(QUuid(), 0);
 }
+
+static void no_need_to_acknowledge_send()
+{}
 
 void Communicator::reroute(const Envelope &envelope)
 {
@@ -291,13 +425,80 @@ void Communicator::reroute(const Envelope &envelope)
         ds << envelope.addRouter(d->localhost.UID());
     }
 
-    route.send_function(message_data);
+    route.send_function(message_data, no_need_to_acknowledge_send);
+}
+
+static void message_sent(quint64 message_id)
+{
+    if (message_id != 0)
+    {
+        CommunicatorData *d = data();
+        
+        MutexLocker lkr( &(d->acknowledge_mutex) );
+        d->unsent_envelopes.remove(message_id);
+        d->acknowledge_waiter.wakeAll();
+    }
+}
+
+static quint64 send(const QByteArray &message_data, const QUuid &recipient,
+                    bool acknowledge_receipt)
+{
+    CommunicatorData *d = data();
+
+    HostInfo hostinfo = resolveHost(recipient);
+
+    if (hostinfo.isNull())
+        throw SireCluster::network_error( QObject::tr(
+                "Do not know how to route a message from %1 to %2.")
+                    .arg(d->localhost.toString())
+                    .arg(recipient.toString()), CODELOC );
+
+    Route route = d->routes.value(recipient);
+    
+    if (route.send_function.empty())
+        throw SireCluster::network_error( QObject::tr(
+                "Cannot route the message from %1 to the process with UID %2 "
+                "despite this recipient being in the resolver list...")
+                    .arg(global_d->localhost.toString())
+                    .arg(recipient.toString()), CODELOC );
+
+    QPair<QByteArray,quint64> p = ::pack(message_data, d->localhost.UID(),
+                                         recipient, hostinfo.encryptKey(),
+                                         d->sign_privkey, acknowledge_receipt);
+
+    try
+    {
+        //record this message as unsent (and unacknowledged if necessary)
+        {
+            MutexLocker lkr( &(d->acknowledge_mutex) );
+        
+            if (acknowledge_receipt)
+                d->unacknowledged_envelopes.insert(p.second);
+                
+            d->unsent_envelopes.insert(p.second);
+        }
+        
+        route.send_function(p.first, boost::bind(message_sent, p.second));
+    }
+    catch(...)
+    {
+        MutexLocker lkr( &(d->acknowledge_mutex) );
+        d->unacknowledged_envelopes.remove(p.second);
+        throw;
+    }
+
+    qDebug() << d->localhost.UID().toString() << "SEND COMPLETE!";
+
+    return p.second;
 }
 
 quint64 Communicator::send(const Message &message, const QUuid &recipient,
                            bool acknowledge_receipt)
 {
     CommunicatorData *d = data();
+
+    qDebug() << d->localhost.UID().toString() << "SENDING" << message.toString()
+             << "TO" << recipient.toString() << acknowledge_receipt;
 
     if ( d->localhost.UID() == recipient )
     {
@@ -306,33 +507,13 @@ quint64 Communicator::send(const Message &message, const QUuid &recipient,
     }
     else
     {
-        HostInfo hostinfo = resolveHost(recipient);
-    
-        if (hostinfo.isNull())
-            throw SireCluster::network_error( QObject::tr(
-                    "Do not know how to route a message from %1 to %2.")
-                        .arg(d->localhost.toString())
-                        .arg(recipient.toString()), CODELOC );
-
-        Route route = d->routes.value(recipient);
+        QByteArray message_data;
+        {
+            DataStream ds( &message_data, QIODevice::WriteOnly );
+            ds << message;
+        }
         
-        if (route.send_function.empty())
-            throw SireCluster::network_error( QObject::tr(
-                    "Cannot route the message %1 to the process with UID %2 "
-                    "despite this recipient being in the resolver list...")
-                        .arg(global_d->localhost.toString())
-                        .arg(recipient.toString()), CODELOC );
-
-        qDebug() << "send" << message.toString() << "from" 
-                 << d->localhost.UID() << "to" << recipient;
-
-        QPair<QByteArray,quint64> p = ::pack(message, d->localhost.UID(),
-                                             recipient, hostinfo.encryptKey(),
-                                             d->sign_privkey, acknowledge_receipt);
-
-        route.send_function(p.first);
-
-        return p.second;
+        return ::send(message_data, recipient, acknowledge_receipt);
     }
 }
 
@@ -341,6 +522,9 @@ QHash<QUuid,quint64> Communicator::send(const Message &message,
                                         bool acknowledge_receipt)
 {
     CommunicatorData *d = data();
+
+    qDebug() << d->localhost.UID().toString() << "SENDING" << message.toString()
+             << "TO" << Siren::toString(recipients) << acknowledge_receipt;
     
     {
         QReadLocker lkr( &(d->resolver_lock) );
@@ -364,10 +548,30 @@ QHash<QUuid,quint64> Communicator::send(const Message &message,
     
     ids.reserve(recipients.count());
     
+    QByteArray message_data;
+    {
+        DataStream ds( &message_data, QIODevice::WriteOnly );
+        ds << message;
+    }
+
+    bool message_this_process = false;
+    
     foreach (QUuid recipient, recipients)
     {
-        quint64 id = Communicator::send(message, recipient, acknowledge_receipt);
-        ids.insert(recipient, id);
+        if ( recipient != d->localhost.UID() )
+        {
+            quint64 id = ::send(message_data, recipient, acknowledge_receipt);
+            ids.insert(recipient, id);
+        }
+        else
+        {
+            message_this_process = true;
+        }
+    }
+    
+    if (message_this_process)
+    {
+        Communicator::received(message);
     }
     
     return ids;
@@ -384,13 +588,22 @@ QHash<QUuid,quint64> Communicator::broadcast(const Message &message,
         QReadLocker lkr( &(d->resolver_lock) );
         uids = d->resolver.keys();
     }
+
+    qDebug() << d->localhost.UID().toString() << "SENDING" << message.toString()
+             << "TO ALL" << Siren::toString(uids) << acknowledge_receipt;
     
     QHash<QUuid,quint64> ids;
     ids.reserve(uids.count());
     
+    QByteArray message_data;
+    {
+        DataStream ds( &message_data, QIODevice::WriteOnly );
+        ds << message;
+    }
+    
     foreach (QUuid uid, uids)
     {
-        quint64 id = Communicator::send(message, uid, acknowledge_receipt);
+        quint64 id = ::send(message_data, uid, acknowledge_receipt);
         ids.insert(uid, id);
     }
     
@@ -427,6 +640,14 @@ static void received(const Envelope &envelope)
                     .arg(envelope.sender().toString()), CODELOC );
                     
     ObjRef message = ::unpack(envelope.message(), d->encrypt_privkey, sign_key);
+
+    qDebug() << d->localhost.UID().toString() << "RECEIVED" << message.toString()
+             << "FROM" << envelope.sender().toString();
+    
+    //acknowledge receipt of the message (if that has been requested)
+    if (envelope.mustAcknowledgeReceipt())
+        Communicator::send( AcknowledgeReceipt(envelope.messageID()),
+                            envelope.sender(), false );
     
     //read and act on the message
     message.asA<Message>().read(envelope.sender(), envelope.messageID());
@@ -498,6 +719,8 @@ class ReceivePool
 public:
     ReceivePool()
     {
+        qDebug() << "STARTING RECEIVE POOL ON" << Cluster::hostName();
+
         for (int i=0; i<4; ++i)
         {
             threads.append( new ReceiveThread(i+1, &datamutex, &job_waiter, &jobs) );
@@ -553,8 +776,276 @@ void Communicator::received(const QByteArray &data)
     receivePool()->receive(data);
 }
 
+bool Communicator::messageAcknowledged(quint64 message)
+{
+    CommunicatorData *d = data();
+    
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+    return not d->unacknowledged_envelopes.contains(message);
+}
+
+bool Communicator::allMessagesAcknowledged(const QHash<QUuid,quint64> &messages)
+{
+    CommunicatorData *d = data();
+    
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+    
+    for (QHash<QUuid,quint64>::const_iterator it = messages.constBegin();
+         it != messages.constEnd();
+         ++it)
+    {
+        if (d->unacknowledged_envelopes.contains(it.value()))
+            return false;
+    }
+    
+    return true;
+}
+
+void Communicator::awaitAcknowledgement(quint64 message)
+{
+    CommunicatorData *d = data();
+
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+    
+    while (d->unacknowledged_envelopes.contains(message))
+    {
+        d->acknowledge_waiter.wait( &(d->acknowledge_mutex) );
+    }
+}
+
 void Communicator::awaitAcknowledgement(const QHash<QUuid,quint64> &messages)
 {
-    //just sleep for a second for the moment...
-    Siren::msleep(1000);
+    qDebug() << CODELOC;
+
+    CommunicatorData *d = data();
+
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+
+    while (for_ages())
+    {
+        bool any_unacknowledged = false;
+    
+        for (QHash<QUuid,quint64>::const_iterator it = messages.constBegin();
+             it != messages.constEnd();
+             ++it)
+        {
+            if (d->unacknowledged_envelopes.contains(it.value()))
+            {
+                any_unacknowledged = true;
+                break;
+            }
+        }
+
+        if (any_unacknowledged)
+            d->acknowledge_waiter.wait( &(d->acknowledge_mutex) );
+        else
+            return;
+    }
+}
+
+bool Communicator::awaitAcknowledgement(quint64 message, int ms)
+{
+    if (ms < 0)
+    {
+        Communicator::awaitAcknowledgement(message);
+        return true;
+    }
+
+    QTime t;
+    t.start();
+
+    CommunicatorData *d = data();
+
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+    
+    while (d->unacknowledged_envelopes.contains(message))
+    {
+        if (t.elapsed() > ms)
+            return false;
+    
+        d->acknowledge_waiter.wait( &(d->acknowledge_mutex) );
+    }
+    
+    return true;
+}
+
+bool Communicator::awaitAcknowledgement(const QHash<QUuid,quint64> &messages, int ms)
+{
+    if (ms < 0)
+    {
+        Communicator::awaitAcknowledgement(messages);
+        return true;
+    }
+
+    QTime t;
+    t.start();
+
+    CommunicatorData *d = data();
+
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+
+    while (for_ages())
+    {
+        bool any_unacknowledged = false;
+    
+        for (QHash<QUuid,quint64>::const_iterator it = messages.constBegin();
+             it != messages.constEnd();
+             ++it)
+        {
+            if (d->unacknowledged_envelopes.contains(it.value()))
+            {
+                any_unacknowledged = true;
+                break;
+            }
+        }
+
+        if (any_unacknowledged)
+        {
+            if (t.elapsed() > ms)
+                return false;
+            
+            d->acknowledge_waiter.wait( &(d->acknowledge_mutex) );
+        }
+        else
+            return true;
+    }
+    
+    return true;
+}
+
+bool Communicator::messageSent(quint64 message)
+{
+    CommunicatorData *d = data();
+    
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+    return not d->unsent_envelopes.contains(message);
+}
+
+bool Communicator::allMessagesSent(const QHash<QUuid,quint64> &messages)
+{
+    CommunicatorData *d = data();
+    
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+    
+    for (QHash<QUuid,quint64>::const_iterator it = messages.constBegin();
+         it != messages.constEnd();
+         ++it)
+    {
+        if (d->unsent_envelopes.contains(it.value()))
+            return false;
+    }
+    
+    return true;
+}
+
+void Communicator::awaitSent(quint64 message)
+{
+    CommunicatorData *d = data();
+
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+    
+    while (d->unsent_envelopes.contains(message))
+    {
+        d->acknowledge_waiter.wait( &(d->acknowledge_mutex) );
+    }
+}
+
+void Communicator::awaitSent(const QHash<QUuid,quint64> &messages)
+{
+    qDebug() << CODELOC;
+
+    CommunicatorData *d = data();
+
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+
+    while (for_ages())
+    {
+        bool any_unsent = false;
+    
+        for (QHash<QUuid,quint64>::const_iterator it = messages.constBegin();
+             it != messages.constEnd();
+             ++it)
+        {
+            if (d->unsent_envelopes.contains(it.value()))
+            {
+                any_unsent = true;
+                break;
+            }
+        }
+
+        if (any_unsent)
+            d->acknowledge_waiter.wait( &(d->acknowledge_mutex) );
+        else
+            return;
+    }
+}
+
+bool Communicator::awaitSent(quint64 message, int ms)
+{
+    if (ms < 0)
+    {
+        Communicator::awaitSent(message);
+        return true;
+    }
+
+    QTime t;
+    t.start();
+
+    CommunicatorData *d = data();
+
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+    
+    while (d->unsent_envelopes.contains(message))
+    {
+        if (t.elapsed() > ms)
+            return false;
+    
+        d->acknowledge_waiter.wait( &(d->acknowledge_mutex) );
+    }
+    
+    return true;
+}
+
+bool Communicator::awaitSent(const QHash<QUuid,quint64> &messages, int ms)
+{
+    if (ms < 0)
+    {
+        Communicator::awaitSent(messages);
+        return true;
+    }
+
+    QTime t;
+    t.start();
+
+    CommunicatorData *d = data();
+
+    MutexLocker lkr( &(d->acknowledge_mutex) );
+
+    while (for_ages())
+    {
+        bool any_unsent = false;
+    
+        for (QHash<QUuid,quint64>::const_iterator it = messages.constBegin();
+             it != messages.constEnd();
+             ++it)
+        {
+            if (d->unsent_envelopes.contains(it.value()))
+            {
+                any_unsent = true;
+                break;
+            }
+        }
+
+        if (any_unsent)
+        {
+            if (t.elapsed() > ms)
+                return false;
+            
+            d->acknowledge_waiter.wait( &(d->acknowledge_mutex) );
+        }
+        else
+            return true;
+    }
+    
+    return true;
 }

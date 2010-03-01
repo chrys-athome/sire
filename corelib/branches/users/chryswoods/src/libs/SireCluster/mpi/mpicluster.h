@@ -31,6 +31,8 @@
 
 #ifdef SIRE_USE_MPI
 
+#include <boost/function.hpp>
+
 #include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
@@ -51,7 +53,8 @@ namespace SireCluster
         class MPICluster
         {
         public:
-            static void send(int rank, const QByteArray &message);
+            static void send(int rank, const QByteArray &message,
+                             boost::function<void ()> acknowledge_send_function);
 
             static void exec(int argc, char **argv);
     

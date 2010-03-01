@@ -115,9 +115,11 @@ public:
         global_comm = &comm;
     }
     
-    void send(const QByteArray &message)
+    void send(const QByteArray &message,
+              boost::function<void ()> acknowledge_send_function)
     {
-        send_queue.push_back(message);
+        send_queue.push_back( QPair< QByteArray, boost::function<void ()> > (
+                                    message, acknowledge_send_function) );
     }
     
     bool process();
@@ -126,7 +128,7 @@ public:
     int send_rank;
     
     /** The queue of messages to send to the recipient */
-    QList<QByteArray> send_queue;
+    QList< QPair< QByteArray, boost::function<void ()> > > send_queue;
     
     /** The size of the data - this acts as a buffer for the 
         size during transmission */
@@ -134,6 +136,9 @@ public:
     
     /** The buffer holding the message being transmitted */
     QByteArray send_buffer;
+    
+    /** The function to call once the message has been sent */
+    boost::function<void ()> acknowledge_sent;
     
     /** The communicator used to communicate with the recipient */
     MPI_Comm *global_comm;
@@ -228,7 +233,8 @@ public:
     
     void shutdown();
     
-    void send(int rank, const QByteArray &data);
+    void send(int rank, const QByteArray &data,
+              boost::function<void ()> acknowledge_send_function);
     
     int rank() const
     {
@@ -336,7 +342,8 @@ bool MPISendQueue::process()
             if (send_queue.isEmpty())
                 return false;
         
-            send_buffer = send_queue.at(0);
+            send_buffer = send_queue.at(0).first;
+            acknowledge_sent = send_queue.at(0).second;
             send_queue.pop_front();
             send_size_buffer = send_buffer.length();
         }
@@ -353,7 +360,8 @@ bool MPISendQueue::process()
         catch(...)
         {
             send_state = IDLE;
-            send_queue.push_front(send_buffer);
+            send_queue.push_front( QPair< QByteArray, boost::function<void ()> >(
+                                        send_buffer, acknowledge_sent) );
             throw;
         }
     }
@@ -374,6 +382,7 @@ bool MPISendQueue::process()
                 MPI_Request_free( &send_request );
             
                 //ok - send the message itself
+                qDebug() << "MPI_Isend(" << send_size_buffer << send_rank << ")";
                 mpierr = MPI_Isend(const_cast<char*>(send_buffer.constData()), 
                                    send_size_buffer, MPI_CHAR,
                                    send_rank, msg_tag, *global_comm, &send_request);
@@ -390,7 +399,8 @@ bool MPISendQueue::process()
         catch(...)
         {
             send_state = IDLE;
-            send_queue.push_front(send_buffer);
+            send_queue.push_front( QPair< QByteArray, boost::function<void ()> >(
+                                        send_buffer, acknowledge_sent) );
             throw;
         }
     }
@@ -412,6 +422,7 @@ bool MPISendQueue::process()
                 send_state = IDLE;
                 send_size_buffer = 0;
                 send_buffer = QByteArray();
+                acknowledge_sent();
             }
             else if (send_timer.elapsed() > 5000)
             {
@@ -421,7 +432,8 @@ bool MPISendQueue::process()
         catch(...)
         {
             send_state = IDLE;
-            send_queue.push_front(send_buffer);
+            send_queue.push_front( QPair< QByteArray, boost::function<void ()> >(
+                                        send_buffer, acknowledge_sent) );
             throw;
         }
     }
@@ -450,6 +462,7 @@ bool MPIRecvQueue::process()
 
         try
         {
+            qDebug() << "MPI_Irecv(" << recv_size_buffer << recv_rank << ")";
             recv_buffer.resize(recv_size_buffer);
             int mpierr = MPI_Irecv(recv_buffer.data(), recv_size_buffer, MPI_CHAR,
                                    recv_rank, msg_tag, *global_comm, &recv_request);
@@ -747,7 +760,7 @@ void MPIClusterData::exec(int argc, char **argv)
                 ds >> hostinfo;
                 
                 Communicator::addNeighbour(hostinfo,
-                                           boost::bind(MPICluster::send, i, _1));
+                                           boost::bind(MPICluster::send, i, _1, _2));
 
                 qDebug() << mpi_rank << Communicator::getLocalInfo().toString()
                          << "sees" << i << hostinfo.toString();
@@ -756,6 +769,9 @@ void MPIClusterData::exec(int argc, char **argv)
 
         //ok - signal that the MPI thread has now fully started
         Thread::signalStarted();
+    
+        qDebug() << Communicator::getLocalInfo().toString() 
+                 << "entering MPI event loop...";
     
         while (for_ages())
         {
@@ -800,7 +816,8 @@ void MPIClusterData::shutdown()
     end_for_ages(this);
 }
 
-void MPIClusterData::send(int rank, const QByteArray &data)
+void MPIClusterData::send(int rank, const QByteArray &data,
+                          boost::function<void ()> acknowledge_send_function)
 {
     if (data.isEmpty())
         return;
@@ -815,11 +832,12 @@ void MPIClusterData::send(int rank, const QByteArray &data)
     {
         //we are sending the message to ourselves :-)
         Communicator::received(data);
+        acknowledge_send_function();
     }
     else
     {
         MutexLocker lkr( &send_mutex );
-        send_queue[rank].send(data);
+        send_queue[rank].send(data, acknowledge_send_function);
         active_senders.insert(rank);
     }
 }
@@ -856,7 +874,8 @@ void MPICluster::start(int argc, char **argv)
     }
 }
 
-void MPICluster::send(int rank, const QByteArray &message)
+void MPICluster::send(int rank, const QByteArray &message,
+                      boost::function<void ()> acknowledge_send_function)
 {
     QMutexLocker lkr( mpiMutex() );
     
@@ -867,7 +886,7 @@ void MPICluster::send(int rank, const QByteArray &message)
     
     lkr.unlock();
     
-    global_cluster->send( rank, message );
+    global_cluster->send( rank, message, acknowledge_send_function );
 }
 
 int MPICluster::rank()

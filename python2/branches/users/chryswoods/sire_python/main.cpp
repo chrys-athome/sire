@@ -76,6 +76,7 @@ int main(int argc, char **argv)
 {
     //initialise Siren and SireSec - this starts the entropy collection
     Siren::init_rand();
+
     SireSec_init();
 
     #ifdef Q_OS_UNIX
@@ -97,6 +98,8 @@ int main(int argc, char **argv)
 
     //release the global python lock
     PyEval_ReleaseLock();
+
+    QString hostname;
  
     try
     {
@@ -105,6 +108,8 @@ int main(int argc, char **argv)
         //are we the first node in the cluster?
         if (Cluster::isInitProcess())
         {
+            hostname = Cluster::hostName();
+
             printf("Starting master node (%s)\n",
                       Cluster::hostName().toAscii().constData());
 
@@ -160,6 +165,8 @@ int main(int argc, char **argv)
         }
         else
         {
+            hostname = Cluster::hostName();
+
             //this is one of the compute nodes...
             printf("Starting one of the compute nodes (%s)\n", 
                     Cluster::hostName().toAscii().constData()); 
@@ -169,7 +176,6 @@ int main(int argc, char **argv)
             Siren::setThreadString( "main" );
 
             Cluster::wait();
-            Cluster::shutdown();
             status = 0;
         }
     }
@@ -192,6 +198,8 @@ int main(int argc, char **argv)
     }
 
     SireSec_end();
+
+    printf("Exiting node (%s)... Goodbye!\n", hostname.toAscii().constData());    
 
     return status;
 }

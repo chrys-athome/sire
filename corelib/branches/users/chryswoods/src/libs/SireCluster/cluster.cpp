@@ -194,10 +194,10 @@ void Cluster::shutdown()
 void Cluster::shutdownCluster()
 {
     //broadcast a shutdown message
-    QHash<QUuid,quint64> messages = Communicator::broadcast( network::Shutdown(), true );
+    QHash<QUuid,quint64> messages = Communicator::broadcast( network::Shutdown() );
     
     //wait for all of the shutdown messages to be acknowledged
-    Communicator::awaitAcknowledgement(messages);
+    Communicator::awaitSent(messages);
     
     //now shutdown ourself
     Cluster::shutdown();
