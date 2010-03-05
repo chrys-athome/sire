@@ -19,8 +19,6 @@ namespace bp = boost::python;
 
 #include "Siren/waitcondition.h"
 
-#include "frontend.h"
-
 #include "node.h"
 
 #include "promise.h"

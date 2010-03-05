@@ -41,6 +41,7 @@
 #include <QDebug>
 
 using namespace SireCluster;
+using namespace SireCluster::resources;
 using namespace SireID;
 using namespace Siren;
 

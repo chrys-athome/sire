@@ -7,6 +7,8 @@
 
 namespace bp = boost::python;
 
+#include <QVector>
+
 #include "Siren/errors.h"
 
 #include "node.h"
@@ -19,9 +21,8 @@ namespace bp = boost::python;
 
 #include "workpacket.h"
 
-#include "workqueue.h"
-
 #include "nodes.h"
+#include "Siren/objptr.hpp"
 
 #include "Siren/logger.h"
 

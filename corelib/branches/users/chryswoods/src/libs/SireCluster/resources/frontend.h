@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIRECLUSTER_FRONTEND_H
-#define SIRECLUSTER_FRONTEND_H
+#ifndef SIRECLUSTER_RESOURCES_FRONTEND_H
+#define SIRECLUSTER_RESOURCES_FRONTEND_H
 
 #include "Siren/handle.h"
 #include "Siren/mutex.h"
@@ -43,10 +43,13 @@ SIRE_BEGIN_HEADER
 namespace SireCluster
 {
 
+class WorkPacket;
+
+namespace resources
+{
+
 class Frontend;
 class Backend;
-
-class WorkPacket;
 
 /** This is the base class of all Frontends - a Frontend is an object
     that you can use locally that can control a Backend that is either
@@ -66,7 +69,7 @@ class WorkPacket;
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Frontend : public boost::noncopyable
+class Frontend : public boost::noncopyable
 {
 public:
     Frontend();
@@ -116,7 +119,7 @@ private:
 /** This is a local front end - this is a front end that communicates
     with a backend that is in this address space (i.e. a backend 
     that is running in the same process as this frontend) */
-class SIRECLUSTER_EXPORT LocalFrontend : public Frontend
+class LocalFrontend : public Frontend
 {
 public:
     LocalFrontend();
@@ -151,7 +154,7 @@ class ActiveFrontend;
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT DormantFrontend 
+class DormantFrontend 
     : public Siren::ImplementsHandle< DormantFrontend, Siren::Handles<Frontend> >
 {
 public:
@@ -185,7 +188,7 @@ public:
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT ActiveFrontend
+class ActiveFrontend
         : public Siren::ImplementsHandle< ActiveFrontend,Siren::Handles<Frontend> >
 {
 public:
@@ -239,10 +242,11 @@ private:
     boost::shared_ptr<ActiveToken> active_token;
 };
 
-}
+} // end of namespace resources
+} // end of namespace SireCluster
 
-Q_DECLARE_METATYPE( SireCluster::DormantFrontend )
-Q_DECLARE_METATYPE( SireCluster::ActiveFrontend )
+Q_DECLARE_METATYPE( SireCluster::resources::DormantFrontend )
+Q_DECLARE_METATYPE( SireCluster::resources::ActiveFrontend )
 
 SIRE_END_HEADER
 

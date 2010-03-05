@@ -15,21 +15,15 @@ namespace bp = boost::python;
 
 #include "Siren/waitcondition.h"
 
-#include "backend.h"
-
 #include "cluster.h"
-
-#include "frontend.h"
 
 #include "node.h"
 
 #include "nodes.h"
 
-#include "resourcemanager.h"
-
-#include "workqueue.h"
-
 #include <QDebug>
+
+#include <unistd.h>
 
 #include "cluster.h"
 
@@ -269,6 +263,16 @@ void register_Cluster_class(){
                 , shutdown_function_value );
         
         }
+        { //::SireCluster::Cluster::shutdownCluster
+        
+            typedef void ( *shutdownCluster_function_type )(  );
+            shutdownCluster_function_type shutdownCluster_function_value( &::SireCluster::Cluster::shutdownCluster );
+            
+            Cluster_exposer.def( 
+                "shutdownCluster"
+                , shutdownCluster_function_value );
+        
+        }
         { //::SireCluster::Cluster::start
         
             typedef void ( *start_function_type )(  );
@@ -298,6 +302,7 @@ void register_Cluster_class(){
         Cluster_exposer.staticmethod( "isInitProcess" );
         Cluster_exposer.staticmethod( "isRunning" );
         Cluster_exposer.staticmethod( "shutdown" );
+        Cluster_exposer.staticmethod( "shutdownCluster" );
         Cluster_exposer.staticmethod( "start" );
         Cluster_exposer.staticmethod( "wait" );
         Cluster_exposer.def( "__copy__", &__copy__);

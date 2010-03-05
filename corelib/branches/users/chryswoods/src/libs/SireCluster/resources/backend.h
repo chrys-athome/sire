@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIRECLUSTER_BACKEND_H
-#define SIRECLUSTER_BACKEND_H
+#ifndef SIRECLUSTER_RESOURCES_BACKEND_H
+#define SIRECLUSTER_RESOURCES_BACKEND_H
 
 #include <boost/shared_ptr.hpp>
 
@@ -38,11 +38,13 @@
 #include "Siren/waitcondition.h"
 #include "Siren/semaphore.h"
 
-#include "workpacket.h"
+#include "SireCluster/workpacket.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
+{
+namespace resources
 {
 
 class ResourceManager;
@@ -68,7 +70,7 @@ class ResourceManager;
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Backend : public boost::noncopyable
+class Backend : public boost::noncopyable
 {
 public:
     Backend(const QString &description);
@@ -124,7 +126,7 @@ private:
 };
 
 /** This is a backend that runs in the current thread */
-class SIRECLUSTER_EXPORT LocalBackend : public Backend
+class LocalBackend : public Backend
 {
 public:
     LocalBackend();
@@ -153,7 +155,7 @@ private:
 };
 
 /** This is a backend that runs the job in its own thread */
-class SIRECLUSTER_EXPORT ThreadBackend : public Backend, private Siren::Thread
+class ThreadBackend : public Backend, private Siren::Thread
 {
 public:
     ThreadBackend();
@@ -203,8 +205,8 @@ private:
 class ActiveBackend;
 
 /** This class holds a backend while it is not in use */
-class SIRECLUSTER_EXPORT DormantBackend
-      : public Siren::ImplementsHandle< DormantBackend, Siren::Handles<Backend> >
+class DormantBackend
+        : public Siren::ImplementsHandle< DormantBackend, Siren::Handles<Backend> >
 {
 public:
     DormantBackend();
@@ -237,7 +239,7 @@ protected:
 };
 
 /** This class holds a backend that has been activate for use */
-class SIRECLUSTER_EXPORT ActiveBackend
+class ActiveBackend
       : public Siren::ImplementsHandle< ActiveBackend, Siren::Handles<Backend> >
 {
 public:
@@ -288,10 +290,11 @@ private:
     boost::shared_ptr<ActiveToken> active_token;
 };
 
-}
+} // end of namespace resources
+} // end of namespace SireCluster
 
-Q_DECLARE_METATYPE( SireCluster::DormantBackend )
-Q_DECLARE_METATYPE( SireCluster::ActiveBackend )
+Q_DECLARE_METATYPE( SireCluster::resources::DormantBackend )
+Q_DECLARE_METATYPE( SireCluster::resources::ActiveBackend )
 
 SIRE_END_HEADER
 

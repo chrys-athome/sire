@@ -216,7 +216,8 @@ public:
         : Thread("MPIClusterData"),
           sleep_time(1),
           mpi_rank(-1), mpi_count(-1),
-          global_recv_in_progress(false)
+          global_recv_in_progress(false),
+          we_are_exiting(false)
     {}
     
     ~MPIClusterData()
@@ -301,6 +302,9 @@ private:
 
     /** Whether or not the global receive is in progress */
     bool global_recv_in_progress;
+    
+    /** Whether or not we are exiting */
+    bool we_are_exiting;
 };
 
 static char err_buffer[MPI_MAX_ERROR_STRING];
@@ -657,6 +661,10 @@ void MPIClusterData::exec(int argc, char **argv)
             return;
         }
 
+        QTextStream stderr_str(stderr);
+        stderr_str << QObject::tr("Starting node (%1)\n").arg(mpi_hostname);
+        stderr_str.flush();
+
         //copy the global communicator
         {
             MPI_Group mpigroup;
@@ -698,6 +706,8 @@ void MPIClusterData::exec(int argc, char **argv)
         //in the cluster - this will be acheived via mpi_count
         //broadcasts - we assume that the MPI network is 
         //secure and that man-in-the-middle is not possible...
+        MPI_Barrier( global_comm );
+        
         for (int i=0; i<mpi_count; ++i)
         {
             if (i == mpi_rank)
@@ -762,6 +772,8 @@ void MPIClusterData::exec(int argc, char **argv)
             }
         }
 
+        MPI_Barrier( global_comm );
+
         //ok - signal that the MPI thread has now fully started
         Thread::signalStarted();
     
@@ -785,7 +797,8 @@ void MPIClusterData::exec(int argc, char **argv)
     }
     catch(const Siren::interupted&)
     {
-        qDebug() << "MPI rank" << mpi_rank << "was interupted...";
+        if (not we_are_exiting)
+            qDebug() << "MPI rank" << mpi_rank << "was interupted...";
     }
     catch(...)
     {
@@ -805,6 +818,7 @@ void MPIClusterData::exec(int argc, char **argv)
 
 void MPIClusterData::shutdown()
 {
+    we_are_exiting = true;
     end_for_ages(this);
 }
 
@@ -889,6 +903,16 @@ int MPICluster::rank()
         return global_cluster->rank();
     else
         return 0;
+}
+
+int MPICluster::count()
+{
+    QMutexLocker lkr( mpiMutex() );
+    
+    if (global_cluster)
+        return global_cluster->count();
+    else
+        return 1;
 }
 
 QString MPICluster::hostName()

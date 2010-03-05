@@ -27,11 +27,13 @@
 \*********************************************/
 
 #include "frontend.h"
-#include "workpacket.h"
+
+#include "SireCluster/workpacket.h"
 
 #include <QDebug>
 
 using namespace SireCluster;
+using namespace SireCluster::resources;
 using namespace Siren;
 
 /////////

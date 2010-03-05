@@ -75,7 +75,7 @@ public:
     static Promises runLocal(const QVector<WorkPacketPtr> &workpackets);
 
 protected:
-    friend class WorkQueue;
+    friend class resources::WorkQueue;
     Promises(const QVector<Promise> &promises);
 };
 

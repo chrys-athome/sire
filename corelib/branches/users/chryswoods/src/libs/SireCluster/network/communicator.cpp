@@ -279,6 +279,19 @@ void AcknowledgeReceipt::read(const QUuid&, quint64) const
 ///////// Implementation of Communicator
 /////////
 
+void Communicator::init()
+{
+    data();
+}
+
+void Communicator::end()
+{
+    MutexLocker lkr( commMutex() );
+    
+    delete global_d;
+    global_d = 0;
+}
+
 /** Get the HostInfo object for this process */
 const HostInfo& Communicator::getLocalInfo()
 {
@@ -644,12 +657,14 @@ class ReceivePool
         Mutex *datamutex;
         WaitCondition *job_waiter;
         QQueue< QPair<Envelope,QByteArray> > *jobs;
+        bool *exit_now;
     
     public:
         ReceiveThread(int n, Mutex *dm, WaitCondition *jw,
-                      QQueue< QPair<Envelope,QByteArray> > *j)
+                      QQueue< QPair<Envelope,QByteArray> > *j,
+                      bool *exit)
                 : Thread( QString("ReceiveThread-%1").arg(n) ),
-                  datamutex(dm), job_waiter(jw), jobs(j)
+                  datamutex(dm), job_waiter(jw), jobs(j), exit_now(exit)
         {
             this->start();
         }
@@ -670,8 +685,14 @@ class ReceivePool
                 {
                     while (jobs->isEmpty())
                     {
+                        if (*exit_now)
+                            return;
+                    
                         job_waiter->wait(datamutex);
                     }
+                    
+                    if (*exit_now)
+                        return;
                     
                     QPair<Envelope,QByteArray> job = jobs->dequeue();
                     
@@ -700,24 +721,29 @@ class ReceivePool
     };
 
 public:
-    ReceivePool()
+    ReceivePool() : exit_now(false)
     {
         for (int i=0; i<4; ++i)
         {
-            threads.append( new ReceiveThread(i+1, &datamutex, &job_waiter, &jobs) );
+            threads.append( new ReceiveThread(i+1, &datamutex, &job_waiter, 
+                                              &jobs, &exit_now) );
         }
     }
     
     ~ReceivePool()
     {
+        exit_now = true;
+
+        job_waiter.wakeAll();
+        
         foreach (ReceiveThread *thread, threads)
         {
             if (thread->isRunning())
             {
-                end_for_ages(thread);
+                job_waiter.wakeAll();
                 thread->wait();
             }
-            
+
             delete thread;
         }
     }
@@ -743,6 +769,8 @@ private:
     QQueue< QPair<Envelope,QByteArray> > jobs;
     
     QList<ReceiveThread*> threads;
+    
+    bool exit_now;
 };
 
 Q_GLOBAL_STATIC( ReceivePool, receivePool );

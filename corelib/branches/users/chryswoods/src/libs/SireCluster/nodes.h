@@ -29,12 +29,13 @@
 #ifndef SIRECLUSTER_NODES_H
 #define SIRECLUSTER_NODES_H
 
+#include <QVector>
+#include <QUuid>
+#include <QPair>
+
 #include "Siren/handle.h"
 
 #include "sireglobal.h"
-
-#include <QUuid>
-#include <QPair>
 
 SIRE_BEGIN_HEADER
 
@@ -43,7 +44,8 @@ namespace Siren{ template<class T> class ObjPtr; }
 namespace SireCluster
 {
 
-class WorkQueue;
+namespace resources{ class WorkQueue; }
+
 class WorkPacket;
 typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
 
@@ -61,7 +63,7 @@ class Node;
     @author Christopher Woods
 */
 class SIRECLUSTER_EXPORT Nodes 
-        : public Siren::ImplementsHandle< Nodes,Siren::Handles<WorkQueue> >
+        : public Siren::ImplementsHandle< Nodes,Siren::Handles<resources::WorkQueue> >
 {
 public:
     Nodes();
@@ -99,7 +101,7 @@ public:
 
 protected:
     friend class Cluster;
-    Nodes( WorkQueue *workqueue );
+    Nodes( resources::WorkQueue *workqueue );
 };
 
 }

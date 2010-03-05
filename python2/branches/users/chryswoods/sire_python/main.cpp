@@ -1,7 +1,7 @@
 
 #include <Python.h>
 
-#include <cstdio>
+#include <QTextStream>
 
 #include "Siren/errors.h"
 
@@ -19,8 +19,6 @@
 #include "SireSec/key.h"
 
 #include "pythonpacket.h"
-
-using std::printf;
 
 using namespace SireCluster;
 using namespace SireSec;
@@ -48,7 +46,8 @@ void fatal_error_signal (int sig)
  
     fatal_error_in_progress = 1;
 
-    printf("You're killing me!!!\n");
+    QTextStream stderr_str(stderr);
+    stderr_str << QObject::tr("You're killing me!!!\n");
      
     // Kill any child processes
     SireBase::Process::killAll();
@@ -59,7 +58,7 @@ void fatal_error_signal (int sig)
     // Now do the clean up actions:
     Cluster::shutdownCluster();
 
-    printf("\nI, and all of my children are now dead. Adieu...\n");
+    stderr_str << QObject::tr("\nI, and all of my children are now dead. Adieu...\n");
 
     // Now reraise the signal.  We reactivate the signal's
     // default handling, which is to terminate the process.
@@ -74,6 +73,9 @@ void fatal_error_signal (int sig)
 
 int main(int argc, char **argv)
 {
+    QTextStream stdout_str(stdout);
+    QTextStream stderr_str(stderr);
+
     //initialise Siren and SireSec - this starts the entropy collection
     Siren::init_rand();
 
@@ -105,13 +107,13 @@ int main(int argc, char **argv)
     {
         Cluster::start();
 
+        stdout_str.flush();
+        stderr_str.flush();
+
         //are we the first node in the cluster?
         if (Cluster::isInitProcess())
         {
             hostname = Cluster::hostName();
-
-            printf("Starting master node (%s)\n",
-                      Cluster::hostName().toAscii().constData());
 
             //name this process and thread
             Siren::setProcessString( QString("master_%1").arg(Cluster::hostName()) );
@@ -122,7 +124,7 @@ int main(int argc, char **argv)
             {
                 int nscripts = argc - 1;
 
-                printf("Running %d python script(s)...\n", nscripts);
+                stdout_str << QObject::tr("Running %1 python script(s)...\n").arg(nscripts);
 
                 Nodes nodes = Cluster::getNodes(nscripts);
 
@@ -145,7 +147,8 @@ int main(int argc, char **argv)
                 {
                     if (promises[i].isError())
                     {
-                        printf("\nThere was a problem when running %s.\n", argv[i+1]);
+                        stdout_str << QObject::tr("\nThere was a problem when running %1.\n")
+                                               .arg(argv[i+1]);
                         
                         try
                         {
@@ -159,17 +162,14 @@ int main(int argc, char **argv)
                 }
             }
 
-            printf("Shutting down the cluster...\n");
+            stdout_str << QObject::tr("Shutting down the cluster...\n");
+            stdout_str.flush();
             Cluster::shutdownCluster();
             status = 0;
         }
         else
         {
             hostname = Cluster::hostName();
-
-            //this is one of the compute nodes...
-            printf("Starting one of the compute nodes (%s)\n", 
-                    Cluster::hostName().toAscii().constData()); 
 
             //name this process
             Siren::setProcessString( QString("compute_%1").arg(Cluster::hostName()) );
@@ -197,9 +197,13 @@ int main(int argc, char **argv)
         status = -1;
     }
 
+    //kill all threads
+    Siren::end_for_ages();
+
     SireSec_end();
 
-    printf("Exiting node (%s)... Goodbye!\n", hostname.toAscii().constData());    
+    stdout_str << QObject::tr("Exiting node (%1)... Goodbye!\n").arg(hostname);
+    stdout_str.flush();    
 
     return status;
 }

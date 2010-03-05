@@ -39,6 +39,7 @@
 #include <QDebug>
 
 using namespace SireCluster;
+using namespace SireCluster::resources;
 using namespace Siren;
 
 class ResourceManagerData
@@ -73,14 +74,28 @@ ResourceManagerData::ResourceManagerData()
 ResourceManagerData::~ResourceManagerData()
 {}
 
-Q_GLOBAL_STATIC( ResourceManagerData, data );
+static ResourceManagerData *d(0);
+
+void ResourceManager::init()
+{
+    if (not d)
+    {
+        d = new ResourceManagerData();
+    }
+}
+
+void ResourceManager::end()
+{
+    delete d;
+    d = 0;
+}
 
 /** Call this function to register a backend with this resource manager */
 void ResourceManager::registerResource(const DormantBackend &backend)
 {
-    MutexLocker lkr( &(data()->datamutex) );
+    MutexLocker lkr( &(d->datamutex) );
 
-    if (not data()->resources.contains(backend.UID()))
+    if (not d->resources.contains(backend.UID()))
     {
         if (not backend.UID().isNull())
             throw Siren::program_bug( QObject::tr(
@@ -91,9 +106,9 @@ void ResourceManager::registerResource(const DormantBackend &backend)
 
         backend.setUID( QUuid::createUuid() );
 
-        data()->resources.insert(backend.UID(),backend);
-        data()->free_resources.append(backend.UID());
-        data()->resource_version += 1;
+        d->resources.insert(backend.UID(),backend);
+        d->free_resources.append(backend.UID());
+        d->resource_version += 1;
     }
 }
 
@@ -101,15 +116,15 @@ void ResourceManager::registerResource(const DormantBackend &backend)
     from being available to anyone else and will deactivate it */
 void ResourceManager::unregisterResource(ActiveBackend &backend)
 {
-    MutexLocker lkr( &(data()->datamutex) );
+    MutexLocker lkr( &(d->datamutex) );
 
-    if (data()->resources.contains(backend.UID()))
+    if (d->resources.contains(backend.UID()))
     {
-        data()->resources.remove(backend.UID());
-        data()->free_resources.removeAll(backend.UID());
+        d->resources.remove(backend.UID());
+        d->free_resources.removeAll(backend.UID());
         
         QMutableHashIterator< QUuid,QPair<QDateTime,ActiveBackend> >
-                        it( data()->reservations );
+                        it( d->reservations );
                         
         while (it.hasNext())
         {
@@ -119,7 +134,7 @@ void ResourceManager::unregisterResource(ActiveBackend &backend)
                 it.remove();
         }
         
-        data()->resource_version += 1;
+        d->resource_version += 1;
     }
     
     lkr.unlock();
@@ -139,9 +154,9 @@ static ActiveBackend reserveResource(const QList<QUuid> &backends,
     else if (backends.count() == 1)
     {
         if (ms <= 0)
-            return data()->resources.value( backends.at(0) ).tryActivate();
+            return d->resources.value( backends.at(0) ).tryActivate();
         else
-            return data()->resources.value( backends.at(0) ).tryActivate(ms);
+            return d->resources.value( backends.at(0) ).tryActivate(ms);
     }
     else
     {
@@ -151,7 +166,7 @@ static ActiveBackend reserveResource(const QList<QUuid> &backends,
         {
             foreach (QUuid backend, backends)
             {
-                ActiveBackend active = data()->resources.value(backend).tryActivate();
+                ActiveBackend active = d->resources.value(backend).tryActivate();
                 
                 if (not active.isNull())
                     return active;
@@ -161,8 +176,8 @@ static ActiveBackend reserveResource(const QList<QUuid> &backends,
         {
             foreach (QUuid backend, backends)
             {
-                ActiveBackend active = data()->resources.value(backend)
-                                                        .tryActivate(wait_ms);
+                ActiveBackend active = d->resources.value(backend)
+                                                   .tryActivate(wait_ms);
                 
                 if (not active.isNull())
                     return active;
@@ -177,10 +192,10 @@ static ActiveBackend reserveResource(const QList<QUuid> &backends,
     up to be made available for other uses */
 static void clearExpiredReservations()
 {
-    MutexLocker lkr( &(data()->datamutex) );
+    MutexLocker lkr( &(d->datamutex) );
 
     QMutableHashIterator< QUuid,QPair<QDateTime,ActiveBackend> > 
-            it( data()->reservations );
+            it( d->reservations );
     
     QDateTime now = QDateTime::currentDateTime();
     
@@ -191,18 +206,18 @@ static void clearExpiredReservations()
         if (it.value().first > now)
         {
             //the reservation has expired
-            data()->free_resources.append( it.value().second.UID() );
+            d->free_resources.append( it.value().second.UID() );
             it.remove();
         }
     }
     
     //also check for any backends that are now free
-    foreach (DormantBackend backend, data()->resources)
+    foreach (DormantBackend backend, d->resources)
     {
-        if (not data()->free_resources.contains(backend.UID()))
+        if (not d->free_resources.contains(backend.UID()))
         {
             if (not backend.isActivated())
-                data()->free_resources.append( backend.UID() );
+                d->free_resources.append( backend.UID() );
         }
     }
 }
@@ -230,15 +245,15 @@ static QUuid pvt_reserveResource(int expires,
             //slip which will expire 'expires' milliseconds from now
             QUuid reservation_uid = QUuid::createUuid();
             
-            MutexLocker lkr( &(data()->datamutex) );
+            MutexLocker lkr( &(d->datamutex) );
             
-            data()->reservations.insert( reservation_uid,
+            d->reservations.insert( reservation_uid,
                                          QPair<QDateTime,ActiveBackend>(
                                             QDateTime::currentDateTime()
                                                     .addMSecs(expires),
                                             active ) );
                                
-            data()->free_resources.removeAll(active.UID());
+            d->free_resources.removeAll(active.UID());
                                           
             return reservation_uid;
         }
@@ -249,9 +264,9 @@ static QUuid pvt_reserveResource(int expires,
 
 static QList<QUuid> getAllResources()
 {
-    MutexLocker lkr( &(data()->datamutex) );
+    MutexLocker lkr( &(d->datamutex) );
     
-    return data()->free_resources;
+    return d->free_resources;
 }
 
 /** Reserve a backend. This blocks until a backend is available (although
@@ -269,11 +284,11 @@ static QList<QUuid> getResource(const QString &description)
 {
     QList<QUuid> backends;
     
-    MutexLocker lkr( &(data()->datamutex) );
+    MutexLocker lkr( &(d->datamutex) );
     
-    foreach (QUuid uid, data()->free_resources)
+    foreach (QUuid uid, d->free_resources)
     {
-        if (data()->resources.value(uid).description().contains(description))
+        if (d->resources.value(uid).description().contains(description))
             backends.append(uid);
     }
     
@@ -322,8 +337,8 @@ static QList<QUuid> pvt_reserveResources(int n, int expires,
             actives.append(active);
 
             {
-                MutexLocker lkr( &(data()->datamutex) );
-                data()->free_resources.removeAll(active.UID());
+                MutexLocker lkr( &(d->datamutex) );
+                d->free_resources.removeAll(active.UID());
             }
             
             if (actives.count() >= n)
@@ -336,7 +351,7 @@ static QList<QUuid> pvt_reserveResources(int n, int expires,
     if (actives.isEmpty())
         return uids;
         
-    MutexLocker lkr( &(data()->datamutex) );
+    MutexLocker lkr( &(d->datamutex) );
     
     QDateTime expire_time = QDateTime::currentDateTime().addMSecs(expires);
     
@@ -346,7 +361,7 @@ static QList<QUuid> pvt_reserveResources(int n, int expires,
         //slip which will expire 'expires' milliseconds from now
         QUuid reservation_uid = QUuid::createUuid();
         
-        data()->reservations.insert( reservation_uid,
+        d->reservations.insert( reservation_uid,
                                      QPair<QDateTime,ActiveBackend>(
                                         expire_time,
                                         active ) );
@@ -395,15 +410,15 @@ static QUuid pvt_tryReserveResource(int ms, int expires,
             //slip which will expire 'expires' milliseconds from now
             QUuid reservation_uid = QUuid::createUuid();
             
-            MutexLocker lkr( &(data()->datamutex) );
+            MutexLocker lkr( &(d->datamutex) );
             
-            data()->reservations.insert( reservation_uid,
+            d->reservations.insert( reservation_uid,
                                          QPair<QDateTime,ActiveBackend>(
                                             QDateTime::currentDateTime()
                                                     .addMSecs(expires),
                                             active ) );
                                
-            data()->free_resources.removeAll(active.UID());
+            d->free_resources.removeAll(active.UID());
                                                                       
             return reservation_uid;
         }
@@ -447,15 +462,15 @@ static QUuid pvt_tryReserveResource(int ms, int expires,
                 //slip which will expire 'expires' milliseconds from now
                 QUuid reservation_uid = QUuid::createUuid();
                 
-                MutexLocker lkr( &(data()->datamutex) );
+                MutexLocker lkr( &(d->datamutex) );
                 
-                data()->reservations.insert( reservation_uid,
+                d->reservations.insert( reservation_uid,
                                              QPair<QDateTime,ActiveBackend>(
                                                 QDateTime::currentDateTime()
                                                         .addMSecs(expires),
                                                 active ) );
                                    
-                data()->free_resources.removeAll(active.UID());
+                d->free_resources.removeAll(active.UID());
                                                                           
                 return reservation_uid;
             }
@@ -516,7 +531,7 @@ static QList<QUuid> pvt_tryReserveResources(int n, int ms, int expires,
         if (actives.isEmpty())
             return uids;
             
-        MutexLocker lkr( &(data()->datamutex) );
+        MutexLocker lkr( &(d->datamutex) );
         
         QDateTime expire_time = QDateTime::currentDateTime().addMSecs(expires);
         
@@ -526,7 +541,7 @@ static QList<QUuid> pvt_tryReserveResources(int n, int ms, int expires,
             //slip which will expire 'expires' milliseconds from now
             QUuid reservation_uid = QUuid::createUuid();
             
-            data()->reservations.insert( reservation_uid,
+            d->reservations.insert( reservation_uid,
                                          QPair<QDateTime,ActiveBackend>(
                                             expire_time,
                                             active ) );
@@ -569,8 +584,8 @@ static QList<QUuid> pvt_tryReserveResources(int n, int ms, int expires,
                 actives.append(active);
 
                 {
-                    MutexLocker lkr( &(data()->datamutex) );
-                    data()->free_resources.removeAll(active.UID());
+                    MutexLocker lkr( &(d->datamutex) );
+                    d->free_resources.removeAll(active.UID());
                 }
                 
                 if (actives.count() >= n)
@@ -583,7 +598,7 @@ static QList<QUuid> pvt_tryReserveResources(int n, int ms, int expires,
         if (actives.isEmpty())
             return uids;
             
-        MutexLocker lkr( &(data()->datamutex) );
+        MutexLocker lkr( &(d->datamutex) );
         
         QDateTime expire_time = QDateTime::currentDateTime().addMSecs(expires);
         
@@ -593,7 +608,7 @@ static QList<QUuid> pvt_tryReserveResources(int n, int ms, int expires,
             //slip which will expire 'expires' milliseconds from now
             QUuid reservation_uid = QUuid::createUuid();
             
-            data()->reservations.insert( reservation_uid,
+            d->reservations.insert( reservation_uid,
                                          QPair<QDateTime,ActiveBackend>(
                                             expire_time,
                                             active ) );
@@ -627,9 +642,9 @@ QList<QUuid> ResourceManager::tryReserveResources(const QString &description,
     if this reservation doesn't exist or has expired */
 ActiveBackend ResourceManager::collectReservation(const QUuid &uid)
 {
-    MutexLocker lkr( &(data()->datamutex) );
+    MutexLocker lkr( &(d->datamutex) );
     
-    QPair<QDateTime,ActiveBackend> reservation = data()->reservations.take(uid);
+    QPair<QDateTime,ActiveBackend> reservation = d->reservations.take(uid);
     
     if (reservation.first > QDateTime::currentDateTime())
         return reservation.second;
@@ -646,13 +661,13 @@ QHash<QUuid,ActiveBackend> ResourceManager::collectReservation(const QList<QUuid
 {
     QHash<QUuid,ActiveBackend> backends;
     
-    MutexLocker lkr( &(data()->datamutex) );
+    MutexLocker lkr( &(d->datamutex) );
     
     QDateTime now = QDateTime::currentDateTime();
     
     foreach (QUuid uid, uids)
     {
-        QPair<QDateTime,ActiveBackend> reservation = data()->reservations.take(uid);
+        QPair<QDateTime,ActiveBackend> reservation = d->reservations.take(uid);
         
         if (reservation.first > now)
             backends.insert( uid, reservation.second );
@@ -666,17 +681,17 @@ QHash<QUuid,ActiveBackend> ResourceManager::collectReservation(const QList<QUuid
 /** Release the reservation with UID 'uid' */
 void ResourceManager::releaseReservation(const QUuid &uid)
 {
-    MutexLocker lkr( &(data()->datamutex) );
-    data()->reservations.remove(uid);
+    MutexLocker lkr( &(d->datamutex) );
+    d->reservations.remove(uid);
 }
 
 /** Release the reservations with UIDs in 'uids' */
 void ResourceManager::releaseReservation(const QList<QUuid> &uids)
 {
-    MutexLocker lkr( &(data()->datamutex) );
+    MutexLocker lkr( &(d->datamutex) );
     
     foreach (QUuid uid, uids)
     {
-        data()->reservations.remove(uid);
+        d->reservations.remove(uid);
     }
 }

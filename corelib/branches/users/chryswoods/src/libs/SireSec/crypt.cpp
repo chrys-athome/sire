@@ -28,7 +28,7 @@
 
 #include "cryptlib.h" // CONDITIONAL_INCLUDE
 
-#if QT_VERSION >= 0x403000
+#if QT_VERSION >= 0x040400
     #include <QAtomicInt>
 #endif
 
@@ -45,7 +45,12 @@ using namespace Siren;
 
 namespace SireSec
 {
-    #if QT_VERSION >= 0x404000
+    namespace Crypt
+    {
+        QString getStatusString(int crypt_error);
+    }
+
+    #if QT_VERSION >= 0x040400
         static QAtomicInt init_int(0);
 
         /** Initialise SireSec */
@@ -75,14 +80,7 @@ namespace SireSec
         void SIRESEC_EXPORT SireSec_end()
         {
             if (init_int.testAndSetOrdered(1,0))
-            {
-                int status = cryptEnd();
-    
-                if (status != CRYPT_OK)
-                {
-                    qDebug() << "cryptlib shutdown error!";
-                }
-            }
+                cryptEnd();
         }
     #else
         Q_GLOBAL_STATIC( QMutex, initMutex );
@@ -118,13 +116,7 @@ namespace SireSec
 
             if (is_init)
             {
-                int status = cryptEnd();
-
-                if (status != CRYPT_OK)
-                {
-                    qDebug() << "cryptlib shutdown error!";
-                }
-                
+                cryptEnd();
                 is_init = false;
             }
         }

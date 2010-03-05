@@ -55,6 +55,9 @@ class Envelope;
 class SIRECLUSTER_EXPORT Communicator
 {
 public:
+    static void init();
+    static void end();
+
     static const HostInfo& getLocalInfo();
     static HostInfo getHostInfo(const QUuid &host_uid);
 

@@ -31,8 +31,9 @@
 #include <boost/weak_ptr.hpp>
 
 #include "backend.h"
-#include "cluster.h"
-#include "workpacket.h"
+
+#include "SireCluster/cluster.h"
+#include "SireCluster/workpacket.h"
 
 #include "SireMaths/rangenerator.h"
 
@@ -42,6 +43,7 @@
 #include <QDebug>
 
 using namespace SireCluster;
+using namespace SireCluster::resources;
 using namespace Siren;
 
 //////

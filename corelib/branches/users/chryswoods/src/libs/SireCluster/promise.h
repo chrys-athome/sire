@@ -41,11 +41,14 @@ SIRE_BEGIN_HEADER
 namespace SireCluster
 {
 
-class ActiveFrontend;
 class WorkPacket;
-class WorkQueue;
-
 typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
+
+namespace resources
+{
+class ActiveFrontend;
+class WorkQueue;
+}
 
 namespace detail
 {
@@ -101,12 +104,12 @@ public:
     static Promise runLocal(const WorkPacket &workpacket);
     
 protected:
-    friend class WorkQueue;
+    friend class resources::WorkQueue;
     friend class Promises;
     friend class detail::PromiseWatcher;
 
     bool runLocal();
-    bool runRemote(ActiveFrontend frontend);
+    bool runRemote(resources::ActiveFrontend frontend);
 
     Promise(const WorkPacket &workpacket, bool forbid_local=false);
 };

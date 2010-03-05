@@ -42,55 +42,57 @@ save_sire_variable( "SIRE_USE_MPI" "${MPI_FOUND}" )
 # Define the headers in SireCluster
 set ( SIRECLUSTER_HEADERS
 
-      backend.h
       cluster.h
       errors.h
-      frontend.h
       node.h
       nodes.h
       promise.h      
       promises.h
-      remotebackend.h
-      remotefrontend.h
-      resourcemanager.h
       workpacket.h
-      workqueue.h
 
       network/communicator.h
       network/envelope.h
       network/hostinfo.h
       network/message.h
+      network/netbackend.h
+      network/netfrontend.h
       network/netresourcemanager.h
       network/nodemessages.h
       network/receivequeue.h
       network/sendqueue.h
+
+      resources/backend.h
+      resources/frontend.h
+      resources/resourcemanager.h
+      resources/workqueue.h
     )
 
 # Define the sources in SireCluster
 set ( SIRECLUSTER_SOURCES
 
-      backend.cpp
       cluster.cpp
       errors.cpp
-      frontend.cpp
       node.cpp
       nodes.cpp
       promise.cpp
       promises.cpp
-      remotebackend.cpp
-      remotefrontend.cpp
-      resourcemanager.cpp
       workpacket.cpp
-      workqueue.cpp 
 
       network/communicator.cpp
       network/envelope.cpp
       network/hostinfo.cpp
       network/message.cpp
+      network/netbackend.cpp
+      network/netfrontend.cpp
       network/netresourcemanager.cpp
       network/nodemessages.cpp
       network/receivequeue.cpp
       network/sendqueue.cpp
+
+      resources/backend.cpp
+      resources/frontend.cpp
+      resources/resourcemanager.cpp
+      resources/workqueue.cpp
 
       ${SIRECLUSTER_MPI_SOURCES}
       ${SIRECLUSTER_MPI_HEADERS}

@@ -27,16 +27,18 @@
 \*********************************************/
 
 #include "workqueue.h"
-#include "workpacket.h"
-#include "promise.h"
-#include "promises.h"
 #include "frontend.h"
+
+#include "SireCluster/workpacket.h"
+#include "SireCluster/promise.h"
+#include "SireCluster/promises.h"
 
 #include "Siren/forages.h"
 
 #include <QDebug>
 
 using namespace SireCluster;
+using namespace SireCluster::resources;
 using namespace Siren;
 
 /////////

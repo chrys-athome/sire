@@ -29,7 +29,8 @@
 #include "promise.h"
 #include "workpacket.h"
 #include "node.h"
-#include "frontend.h"
+
+#include "resources/frontend.h"   // CONDITIONAL_INCLUDE
 
 #include "SireMaths/rangenerator.h"
 
@@ -42,6 +43,7 @@
 #include <QDebug>
 
 using namespace SireCluster;
+using namespace SireCluster::resources;
 using namespace Siren;
 
 namespace SireCluster

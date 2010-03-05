@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIRECLUSTER_WORKQUEUE_H
-#define SIRECLUSTER_WORKQUEUE_H
+#ifndef SIRECLUSTER_RESOURCES_WORKQUEUE_H
+#define SIRECLUSTER_RESOURCES_WORKQUEUE_H
 
 #include <QVector>
 #include <QList>
@@ -51,12 +51,16 @@ namespace Siren{ template<class T> class ObjPtr; }
 namespace SireCluster
 {
 
-class ActiveFrontend;
-class DormantFrontend;
 class Promise;
 class Promises;
 class WorkPacket;
 typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
+
+namespace resources
+{
+
+class ActiveFrontend;
+class DormantFrontend;
 
 /** This is the base class of all WorkQueues. A WorkQueue
     is a scheduler that schedules WorkPackets to be run
@@ -65,7 +69,7 @@ typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT WorkQueue : public boost::noncopyable
+class WorkQueue : public boost::noncopyable
 {
 public:
     WorkQueue();
@@ -102,7 +106,7 @@ protected:
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT SimpleQueue : public WorkQueue, private Siren::Thread
+class SimpleQueue : public WorkQueue, private Siren::Thread
 {
 public:
     SimpleQueue();
@@ -154,7 +158,8 @@ private:
     bool kill_queue;
 };
 
-}
+} // end of namespace resources
+} // end of namespace SireCluster
 
 SIRE_END_HEADER
 

@@ -220,8 +220,6 @@ namespace Siren
         
         if (s)
         {
-            qDebug() << "Siren::end_for_ages()";
-
             QMutexLocker lkr( &(s->pause_mutex) );
             
             s->global_state.is_interupted = true;

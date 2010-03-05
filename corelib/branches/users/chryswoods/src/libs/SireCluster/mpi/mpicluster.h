@@ -61,8 +61,13 @@ namespace SireCluster
             static void start(int argc, char **argv);
             static void shutdown();
             
+            static void sync();
+            
             static int rank();
+            static int count();
+
             static QString hostName();
+            
         };
 
     } // end of namespace MPI

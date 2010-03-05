@@ -27,12 +27,13 @@
 \*********************************************/
 
 #include "cluster.h"
-#include "resourcemanager.h"
 #include "node.h"
 #include "nodes.h"
-#include "frontend.h"
-#include "backend.h"
-#include "workqueue.h"
+
+#include "resources/resourcemanager.h" // CONDITIONAL_INCLUDE
+#include "resources/frontend.h"        // CONDITIONAL_INCLUDE
+#include "resources/backend.h"         // CONDITIONAL_INCLUDE
+#include "resources/workqueue.h"       // CONDITIONAL_INCLUDE
 
 #include "network/communicator.h" // CONDITIONAL_INCLUDE
 #include "network/message.h"      // CONDITIONAL_INCLUDE
@@ -53,6 +54,7 @@
 #include <QDebug>
 
 using namespace SireCluster;
+using namespace SireCluster::resources;
 using namespace SireCluster::network;
 using namespace Siren;
 
@@ -99,10 +101,15 @@ void Cluster::start()
         //this has already been started
         return;
     
+    ResourceManager::init();
+    
     // start the different means of communication with
     // other nodes
     #ifdef SIRE_USE_MPI
         SireCluster::MPI::MPICluster::start(0,0);
+        
+        if (SireCluster::MPI::MPICluster::count() > 1)
+            Communicator::init();
     #endif
     
     data->cluster_is_running = true;
@@ -112,6 +119,8 @@ void Cluster::start()
     (and should be used to initialise jobs) */
 bool Cluster::isInitProcess()
 {
+    Cluster::start();
+
     #ifdef SIRE_USE_MPI
         return SireCluster::MPI::MPICluster::rank() == 0;
     #else
@@ -122,6 +131,8 @@ bool Cluster::isInitProcess()
 /** Return the hostname of the host running this process */
 QString Cluster::hostName()
 {
+    Cluster::start();
+
     #ifdef SIRE_USE_MPI
         return SireCluster::MPI::MPICluster::hostName();
 
@@ -147,6 +158,7 @@ bool Cluster::isRunning()
 /** Add a new ThreadBackend to the current process */
 void Cluster::addThread()
 {
+    Cluster::start();
     ResourceManager::registerResource( DormantBackend( new ThreadBackend() ) );
 }
 
@@ -172,8 +184,13 @@ void Cluster::shutdown()
         return;
 
     #ifdef SIRE_USE_MPI
+        if (SireCluster::MPI::MPICluster::count() > 1)
+            Communicator::end();
+            
         SireCluster::MPI::MPICluster::shutdown();
     #endif
+
+    ResourceManager::end();
 
     clusterData()->cluster_is_running = false;
     
@@ -186,14 +203,39 @@ void Cluster::shutdown()
 /** Tell the entire cluster to shutdown */
 void Cluster::shutdownCluster()
 {
-    //broadcast a shutdown message
-    QHash<QUuid,quint64> messages = Communicator::broadcast( network::Shutdown() );
+    MutexLocker lkr( &(clusterData()->datamutex) );
     
-    //wait for all of the shutdown messages to be acknowledged
-    Communicator::awaitSent(messages);
+    if (not clusterData()->cluster_is_running)
+        return;
+
+    #ifdef SIRE_USE_MPI
+    if (SireCluster::MPI::MPICluster::count() > 1)
+    {
+        //broadcast a shutdown message
+        QHash<QUuid,quint64> messages = Communicator::broadcast( network::Shutdown() );
+
+        //wait for all of the shutdown messages to be acknowledged
+        Communicator::awaitSent(messages);
+    }
+    #endif
     
     //now shutdown ourself
-    Cluster::shutdown();
+
+    #ifdef SIRE_USE_MPI
+        if (SireCluster::MPI::MPICluster::count() > 1)
+            Communicator::end();
+            
+        SireCluster::MPI::MPICluster::shutdown();
+    #endif
+
+    ResourceManager::end();
+
+    clusterData()->cluster_is_running = false;
+    
+    MutexLocker lkr2( &(clusterData()->run_waiter_mutex) );
+
+    //wake all threads waiting for the cluster to be shutdown
+    clusterData()->run_waiter.wakeAll();
 }
 
 /** Internal function used to get the node associated with the passed reservation */
@@ -201,6 +243,8 @@ Node Cluster::getReservedLocalNode(const QUuid &reservation)
 {
     if (reservation.isNull())
         return Node();
+
+    Cluster::start();
 
     ActiveBackend resource = ResourceManager::collectReservation(reservation);
     
@@ -218,6 +262,8 @@ Nodes Cluster::getReservedLocalNodes(const QList<QUuid> &reservations)
 {
     if (reservations.isEmpty())
         return Nodes();
+
+    Cluster::start();
         
     QHash<QUuid,ActiveBackend> resources 
                      = ResourceManager::collectReservation(reservations);
@@ -241,6 +287,8 @@ Nodes Cluster::getReservedLocalNodes(const QList<QUuid> &reservations)
 /** Return any local node - this returns a null Node if no node is available */
 Node Cluster::getLocalNode()
 {
+    Cluster::start();
+
     QUuid reservation = ResourceManager::tryReserveResource(0);
 
     Node node = Cluster::getReservedLocalNode(reservation);
@@ -252,6 +300,8 @@ Node Cluster::getLocalNode()
     If no local node is available, then this returns an empty (local-thread) Node */
 Node Cluster::getLocalNode(int ms)
 {
+    Cluster::start();
+
     QTime t;
     t.start();
     
@@ -276,6 +326,7 @@ Node Cluster::getLocalNode(int ms)
 /** Return any node - this returns a null Node if no node is available */
 Node Cluster::getNode()
 {
+    Cluster::start();
     
 
     return getLocalNode();
@@ -285,11 +336,14 @@ Node Cluster::getNode()
     This returns a null Node if no node is available */
 Node Cluster::getNode(int timeout)
 {
+    Cluster::start();
     return getLocalNode(timeout);
 }
 
 Node Cluster::getLocalNode(const QString &description)
 {
+    Cluster::start();
+
     QUuid reservation = ResourceManager::tryReserveResource(0, description);
 
     Node node = Cluster::getReservedLocalNode(reservation);
@@ -299,6 +353,8 @@ Node Cluster::getLocalNode(const QString &description)
 
 Node Cluster::getLocalNode(const QString &description, int ms)
 {
+    Cluster::start();
+
     QTime t;
     t.start();
     
@@ -322,16 +378,20 @@ Node Cluster::getLocalNode(const QString &description, int ms)
 
 Node Cluster::getNode(const QString &description)
 {
+    Cluster::start();
     return getLocalNode(description);
 }
 
 Node Cluster::getNode(const QString &description, int timeout)
 {
+    Cluster::start();
     return getLocalNode(description, timeout);
 }
 
 Nodes Cluster::getLocalNodes(int nnodes)
 {
+    Cluster::start();
+
     QList<QUuid> reservations = ResourceManager::tryReserveResources(nnodes, 0);
 
     Nodes nodes = Cluster::getReservedLocalNodes(reservations);
@@ -341,6 +401,8 @@ Nodes Cluster::getLocalNodes(int nnodes)
 
 Nodes Cluster::getLocalNodes(int nnodes, int ms)
 {
+    Cluster::start();
+
     QTime t;
     t.start();
     
@@ -367,16 +429,20 @@ Nodes Cluster::getLocalNodes(int nnodes, int ms)
 
 Nodes Cluster::getNodes(int nnodes)
 {
+    Cluster::start();
     return getLocalNodes(nnodes);
 }
 
 Nodes Cluster::getNodes(int nnodes, int timeout)
 {
+    Cluster::start();
     return getLocalNodes(nnodes, timeout);
 }
 
 Nodes Cluster::getLocalNodes(const QString &description, int nnodes)
 {
+    Cluster::start();
+
     QList<QUuid> reservations = ResourceManager::tryReserveResources(description,
                                                                      nnodes, 0);
 
@@ -387,6 +453,8 @@ Nodes Cluster::getLocalNodes(const QString &description, int nnodes)
 
 Nodes Cluster::getLocalNodes(const QString &description, int nnodes, int ms)
 {
+    Cluster::start();
+
     QTime t;
     t.start();
     
@@ -415,10 +483,14 @@ Nodes Cluster::getLocalNodes(const QString &description, int nnodes, int ms)
 
 Nodes Cluster::getNodes(const QString &description, int nnodes)
 {
+    Cluster::start();
+
     return getLocalNodes(description, nnodes);
 }
 
 Nodes Cluster::getNodes(const QString &description, int nnodes, int timeout)
 {
+    Cluster::start();
+
     return getLocalNodes(description, nnodes, timeout);
 }

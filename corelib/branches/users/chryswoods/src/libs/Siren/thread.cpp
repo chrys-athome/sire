@@ -81,7 +81,6 @@ void Thread::start()
     thread_is_starting = true;
         
     QThread::start();
-    
     start_waiter.wait( &start_mutex );
 }
 

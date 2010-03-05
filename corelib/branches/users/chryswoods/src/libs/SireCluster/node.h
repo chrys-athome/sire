@@ -45,7 +45,8 @@ namespace Siren{ template<class T> class ObjPtr; }
 namespace SireCluster
 {
 
-class WorkQueue;
+namespace resources{ class WorkQueue; }
+
 class WorkPacket;
 typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
 
@@ -63,7 +64,7 @@ class Nodes;
     @author Christopher Woods
 */
 class SIRECLUSTER_EXPORT Node 
-        : public Siren::ImplementsHandle< Node,Siren::Handles<WorkQueue> >
+        : public Siren::ImplementsHandle< Node,Siren::Handles<resources::WorkQueue> >
 {
 public:
     Node();
@@ -94,7 +95,7 @@ public:
 
 protected:
     friend class Cluster;
-    Node(WorkQueue *workqueue);
+    Node(resources::WorkQueue *workqueue);
 };
 
 }

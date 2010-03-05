@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIRECLUSTER_RESOURCEMANAGER_H
-#define SIRECLUSTER_RESOURCEMANAGER_H
+#ifndef SIRECLUSTER_RESOURCES_RESOURCEMANAGER_H
+#define SIRECLUSTER_RESOURCES_RESOURCEMANAGER_H
 
 #include <QList>
 #include <QHash>
@@ -40,6 +40,8 @@
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
+{
+namespace resources
 {
 
 class ActiveBackend;
@@ -59,6 +61,9 @@ class SIRECLUSTER_EXPORT ResourceManager
     static const int DEFAULT_TIMEOUT = 25000;
 
 public:
+    static void init();
+    static void end();
+
     static void registerResource(const DormantBackend &backend);
     static void unregisterResource(ActiveBackend &backend);
 
@@ -86,7 +91,8 @@ public:
     static void releaseReservation(const QList<QUuid> &uids);
 };
 
-}
+} // end of namespace resources
+} // end of namespace SireCluster
 
 SIRE_END_HEADER
 

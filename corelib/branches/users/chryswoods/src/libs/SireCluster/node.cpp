@@ -30,12 +30,15 @@
 #include "nodes.h"
 #include "promise.h"
 #include "promises.h"
-#include "workqueue.h"
 #include "workpacket.h"
 
+#include "resources/workqueue.h"  // CONDITIONAL_INCLUDE
+
+#include "Siren/objptr.hpp"
 #include "Siren/errors.h"
 
 using namespace SireCluster;
+using namespace SireCluster::resources;
 using namespace Siren;
 
 static const RegisterHandle<Node> r_node;

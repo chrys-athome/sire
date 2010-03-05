@@ -26,16 +26,21 @@
   *
 \*********************************************/
 
+#include <QVector>
+
 #include "nodes.h"
 #include "node.h"
-#include "workqueue.h"
 #include "workpacket.h"
 #include "promise.h"
 #include "promises.h"
 
+#include "resources/workqueue.h"  // CONDITIONAL_INCLUDE
+
+#include "Siren/objptr.hpp"
 #include "Siren/errors.h"
 
 using namespace SireCluster;
+using namespace SireCluster::resources;
 using namespace Siren;
 
 static const RegisterHandle<Nodes> r_nodes;
