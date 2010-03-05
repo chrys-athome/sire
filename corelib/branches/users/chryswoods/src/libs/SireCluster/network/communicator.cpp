@@ -190,8 +190,6 @@ static CommunicatorData* data()
                           encrypt_keys.get<0>(),
                           sign_keys.get<0>());
 
-        qDebug() << Siren::getProcessString();
-
         global_d->localhost = hostinfo;
         global_d->encrypt_privkey = encrypt_keys.get<1>();
         global_d->sign_privkey = sign_keys.get<1>();
@@ -387,7 +385,6 @@ static ObjRef unpack(const QByteArray &data,
 
 void Communicator::received(const Message &message)
 {
-    qDebug() << "Received a message!";
     message.read(QUuid(), 0);
 }
 
@@ -487,8 +484,6 @@ static quint64 send(const QByteArray &message_data, const QUuid &recipient,
         throw;
     }
 
-    qDebug() << d->localhost.UID().toString() << "SEND COMPLETE!";
-
     return p.second;
 }
 
@@ -496,9 +491,6 @@ quint64 Communicator::send(const Message &message, const QUuid &recipient,
                            bool acknowledge_receipt)
 {
     CommunicatorData *d = data();
-
-    qDebug() << d->localhost.UID().toString() << "SENDING" << message.toString()
-             << "TO" << recipient.toString() << acknowledge_receipt;
 
     if ( d->localhost.UID() == recipient )
     {
@@ -523,9 +515,6 @@ QHash<QUuid,quint64> Communicator::send(const Message &message,
 {
     CommunicatorData *d = data();
 
-    qDebug() << d->localhost.UID().toString() << "SENDING" << message.toString()
-             << "TO" << Siren::toString(recipients) << acknowledge_receipt;
-    
     {
         QReadLocker lkr( &(d->resolver_lock) );
         QList<QUuid> unknown_recipients;
@@ -589,9 +578,6 @@ QHash<QUuid,quint64> Communicator::broadcast(const Message &message,
         uids = d->resolver.keys();
     }
 
-    qDebug() << d->localhost.UID().toString() << "SENDING" << message.toString()
-             << "TO ALL" << Siren::toString(uids) << acknowledge_receipt;
-    
     QHash<QUuid,quint64> ids;
     ids.reserve(uids.count());
     
@@ -641,9 +627,6 @@ static void received(const Envelope &envelope)
                     
     ObjRef message = ::unpack(envelope.message(), d->encrypt_privkey, sign_key);
 
-    qDebug() << d->localhost.UID().toString() << "RECEIVED" << message.toString()
-             << "FROM" << envelope.sender().toString();
-    
     //acknowledge receipt of the message (if that has been requested)
     if (envelope.mustAcknowledgeReceipt())
         Communicator::send( AcknowledgeReceipt(envelope.messageID()),
@@ -719,8 +702,6 @@ class ReceivePool
 public:
     ReceivePool()
     {
-        qDebug() << "STARTING RECEIVE POOL ON" << Cluster::hostName();
-
         for (int i=0; i<4; ++i)
         {
             threads.append( new ReceiveThread(i+1, &datamutex, &job_waiter, &jobs) );
@@ -815,8 +796,6 @@ void Communicator::awaitAcknowledgement(quint64 message)
 
 void Communicator::awaitAcknowledgement(const QHash<QUuid,quint64> &messages)
 {
-    qDebug() << CODELOC;
-
     CommunicatorData *d = data();
 
     MutexLocker lkr( &(d->acknowledge_mutex) );
@@ -952,8 +931,6 @@ void Communicator::awaitSent(quint64 message)
 
 void Communicator::awaitSent(const QHash<QUuid,quint64> &messages)
 {
-    qDebug() << CODELOC;
-
     CommunicatorData *d = data();
 
     MutexLocker lkr( &(d->acknowledge_mutex) );

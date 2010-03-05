@@ -108,7 +108,7 @@ namespace SireSec
 
                 //initiate randomness poll to collect entropy for random number generation
                 //(this is a slow process that will run asynchronously)
-                cryptAddRandom( 0, CRYPT_RANDOM_FASTPOLL );
+                cryptAddRandom( 0, CRYPT_RANDOM_SLOWPOLL );
              }
         }
 

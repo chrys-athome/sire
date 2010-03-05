@@ -382,7 +382,6 @@ bool MPISendQueue::process()
                 MPI_Request_free( &send_request );
             
                 //ok - send the message itself
-                qDebug() << "MPI_Isend(" << send_size_buffer << send_rank << ")";
                 mpierr = MPI_Isend(const_cast<char*>(send_buffer.constData()), 
                                    send_size_buffer, MPI_CHAR,
                                    send_rank, msg_tag, *global_comm, &send_request);
@@ -462,7 +461,6 @@ bool MPIRecvQueue::process()
 
         try
         {
-            qDebug() << "MPI_Irecv(" << recv_size_buffer << recv_rank << ")";
             recv_buffer.resize(recv_size_buffer);
             int mpierr = MPI_Irecv(recv_buffer.data(), recv_size_buffer, MPI_CHAR,
                                    recv_rank, msg_tag, *global_comm, &recv_request);
@@ -761,17 +759,11 @@ void MPIClusterData::exec(int argc, char **argv)
                 
                 Communicator::addNeighbour(hostinfo,
                                            boost::bind(MPICluster::send, i, _1, _2));
-
-                qDebug() << mpi_rank << Communicator::getLocalInfo().toString()
-                         << "sees" << i << hostinfo.toString();
             }
         }
 
         //ok - signal that the MPI thread has now fully started
         Thread::signalStarted();
-    
-        qDebug() << Communicator::getLocalInfo().toString() 
-                 << "entering MPI event loop...";
     
         while (for_ages())
         {

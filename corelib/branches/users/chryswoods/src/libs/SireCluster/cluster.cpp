@@ -166,15 +166,10 @@ void Cluster::wait()
 /** Shutdown this cluster (on this process only) */
 void Cluster::shutdown()
 {
-    qDebug() << "Cluster::shutdown() on" << Cluster::hostName() << "started...";
-
     MutexLocker lkr( &(clusterData()->datamutex) );
     
     if (not clusterData()->cluster_is_running)
-    {
-        qDebug() << "Cluster on" << Cluster::hostName() << "has already shut down?";
         return;
-    }
 
     #ifdef SIRE_USE_MPI
         SireCluster::MPI::MPICluster::shutdown();
@@ -183,8 +178,6 @@ void Cluster::shutdown()
     clusterData()->cluster_is_running = false;
     
     MutexLocker lkr2( &(clusterData()->run_waiter_mutex) );
-
-    qDebug() << "Cluster::shutdown() on" << Cluster::hostName() << "complete!";
 
     //wake all threads waiting for the cluster to be shutdown
     clusterData()->run_waiter.wakeAll();
@@ -283,6 +276,8 @@ Node Cluster::getLocalNode(int ms)
 /** Return any node - this returns a null Node if no node is available */
 Node Cluster::getNode()
 {
+    
+
     return getLocalNode();
 }
 

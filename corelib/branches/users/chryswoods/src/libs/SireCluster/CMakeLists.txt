@@ -50,6 +50,8 @@ set ( SIRECLUSTER_HEADERS
       nodes.h
       promise.h      
       promises.h
+      remotebackend.h
+      remotefrontend.h
       resourcemanager.h
       workpacket.h
       workqueue.h
@@ -58,6 +60,8 @@ set ( SIRECLUSTER_HEADERS
       network/envelope.h
       network/hostinfo.h
       network/message.h
+      network/netresourcemanager.h
+      network/nodemessages.h
       network/receivequeue.h
       network/sendqueue.h
     )
@@ -73,6 +77,8 @@ set ( SIRECLUSTER_SOURCES
       nodes.cpp
       promise.cpp
       promises.cpp
+      remotebackend.cpp
+      remotefrontend.cpp
       resourcemanager.cpp
       workpacket.cpp
       workqueue.cpp 
@@ -81,6 +87,8 @@ set ( SIRECLUSTER_SOURCES
       network/envelope.cpp
       network/hostinfo.cpp
       network/message.cpp
+      network/netresourcemanager.cpp
+      network/nodemessages.cpp
       network/receivequeue.cpp
       network/sendqueue.cpp
 
