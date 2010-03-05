@@ -26,3 +26,60 @@
   *
 \*********************************************/
 
+#include "netresourcemanager.h"
+#include "communicator.h"
+#include "nodemessages.h"
+
+#include "SireCluster/resources/backend.h"
+
+using namespace SireCluster;
+using namespace SireCluster::network;
+using namespace SireCluster::resources;
+
+void NetResourceManager::init()
+{}
+
+void NetResourceManager::end()
+{}
+
+QUuid NetResourceManager::reserveResource(int expires)
+{
+    QHash<QUuid,quint64> msgs = Communicator::broadcast( ReserveRequest() );
+    Communicator::awaitSent(msgs);
+
+    return QUuid();
+}
+
+QUuid NetResourceManager::reserveResource(const QString &description,
+                                          int expires)
+{
+    return QUuid();
+}
+
+QList<QUuid> NetResourceManager::reserveResources(int n, int expires)
+{
+    return QList<QUuid>();
+}
+
+QList<QUuid> NetResourceManager::reserveResources(const QString &description,
+                                                  int n, int expires)
+{
+    return QList<QUuid>();
+}
+
+ActiveBackend NetResourceManager::collectReservation(const QUuid &uid)
+{
+    return ActiveBackend();
+}
+
+QHash<QUuid,ActiveBackend>
+NetResourceManager::collectReservation(const QList<QUuid> &uids)
+{
+    return QHash<QUuid,ActiveBackend>();
+}
+
+void NetResourceManager::releaseReservation(const QUuid &uid)
+{}
+
+void NetResourceManager::releaseReservation(const QList<QUuid> &uids)
+{}

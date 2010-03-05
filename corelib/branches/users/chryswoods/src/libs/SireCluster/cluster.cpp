@@ -35,8 +35,9 @@
 #include "resources/backend.h"         // CONDITIONAL_INCLUDE
 #include "resources/workqueue.h"       // CONDITIONAL_INCLUDE
 
-#include "network/communicator.h" // CONDITIONAL_INCLUDE
-#include "network/message.h"      // CONDITIONAL_INCLUDE
+#include "network/communicator.h"       // CONDITIONAL_INCLUDE
+#include "network/message.h"            // CONDITIONAL_INCLUDE
+#include "network/netresourcemanager.h" // CONDITIONAL_INCLUDE
 
 #include "Siren/mutex.h"
 #include "Siren/waitcondition.h"
@@ -106,10 +107,18 @@ void Cluster::start()
     // start the different means of communication with
     // other nodes
     #ifdef SIRE_USE_MPI
+        Communicator::init();
         SireCluster::MPI::MPICluster::start(0,0);
         
         if (SireCluster::MPI::MPICluster::count() > 1)
-            Communicator::init();
+        {
+            NetResourceManager::init();
+        }
+        else
+        {
+            //no further need for the communicator
+            Communicator::end();
+        }
     #endif
     
     data->cluster_is_running = true;
@@ -123,6 +132,18 @@ bool Cluster::isInitProcess()
 
     #ifdef SIRE_USE_MPI
         return SireCluster::MPI::MPICluster::rank() == 0;
+    #else
+        return true;
+    #endif
+}
+
+/** Return whether this cluster is a single local process only */
+bool Cluster::isLocalOnly()
+{
+    Cluster::start();
+
+    #ifdef SIRE_USE_MPI
+        return SireCluster::MPI::MPICluster::count() <= 1;
     #else
         return true;
     #endif
@@ -185,7 +206,10 @@ void Cluster::shutdown()
 
     #ifdef SIRE_USE_MPI
         if (SireCluster::MPI::MPICluster::count() > 1)
+        {
             Communicator::end();
+            NetResourceManager::end();
+        }
             
         SireCluster::MPI::MPICluster::shutdown();
     #endif
@@ -326,8 +350,10 @@ Node Cluster::getLocalNode(int ms)
 /** Return any node - this returns a null Node if no node is available */
 Node Cluster::getNode()
 {
-    Cluster::start();
+    if (isLocalOnly())
+        return getLocalNode();
     
+    NetResourceManager::reserveResource();
 
     return getLocalNode();
 }
@@ -336,7 +362,9 @@ Node Cluster::getNode()
     This returns a null Node if no node is available */
 Node Cluster::getNode(int timeout)
 {
-    Cluster::start();
+    if (isLocalOnly())
+        return getLocalNode(timeout);
+
     return getLocalNode(timeout);
 }
 
@@ -378,13 +406,17 @@ Node Cluster::getLocalNode(const QString &description, int ms)
 
 Node Cluster::getNode(const QString &description)
 {
-    Cluster::start();
+    if (isLocalOnly())
+        return getLocalNode(description);
+
     return getLocalNode(description);
 }
 
 Node Cluster::getNode(const QString &description, int timeout)
 {
-    Cluster::start();
+    if (isLocalOnly())
+        return getLocalNode(description, timeout);
+
     return getLocalNode(description, timeout);
 }
 
@@ -429,13 +461,17 @@ Nodes Cluster::getLocalNodes(int nnodes, int ms)
 
 Nodes Cluster::getNodes(int nnodes)
 {
-    Cluster::start();
+    if (isLocalOnly())
+        return getLocalNodes(nnodes);
+
     return getLocalNodes(nnodes);
 }
 
 Nodes Cluster::getNodes(int nnodes, int timeout)
 {
-    Cluster::start();
+    if (isLocalOnly())
+        return getLocalNodes(nnodes, timeout);
+
     return getLocalNodes(nnodes, timeout);
 }
 
@@ -483,14 +519,16 @@ Nodes Cluster::getLocalNodes(const QString &description, int nnodes, int ms)
 
 Nodes Cluster::getNodes(const QString &description, int nnodes)
 {
-    Cluster::start();
+    if (isLocalOnly())
+        return getLocalNodes(description, nnodes);
 
     return getLocalNodes(description, nnodes);
 }
 
 Nodes Cluster::getNodes(const QString &description, int nnodes, int timeout)
 {
-    Cluster::start();
+    if (isLocalOnly())
+        return getLocalNodes(description, nnodes, timeout);
 
     return getLocalNodes(description, nnodes, timeout);
 }

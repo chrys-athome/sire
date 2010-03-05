@@ -29,7 +29,52 @@
 #ifndef SIRECLUSTER_NETWORK_NETRESOURCEMANAGER_H
 #define SIRECLUSTER_NETWORK_NETRESOURCEMANAGER_H
 
+#include <QList>
+#include <QUuid>
+
+#include "sireglobal.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireCluster
+{
+
+namespace resources{ class ActiveBackend; }
+
+namespace network
+{
+
+/** This static class, not part of the public API, is used
+    to reserve resources over the network */
+class NetResourceManager
+{
+    static const int DEFAULT_TIMEOUT = 25000;
+
+public:
+    static void init();
+    static void end();
+    
+    static QUuid reserveResource(int expires=DEFAULT_TIMEOUT);
+    static QUuid reserveResource(const QString &description,
+                                 int expires=DEFAULT_TIMEOUT);
+
+    static QList<QUuid> reserveResources(int n, int expires=DEFAULT_TIMEOUT);
+    static QList<QUuid> reserveResources(const QString &description,
+                                         int n, int expires=DEFAULT_TIMEOUT);
+
+    static resources::ActiveBackend collectReservation(const QUuid &uid);
+    static QHash<QUuid,resources::ActiveBackend> 
+                        collectReservation(const QList<QUuid> &uids);
+    
+    static void releaseReservation(const QUuid &uid);
+    static void releaseReservation(const QList<QUuid> &uids);
+
+};
 
 
+} // end of namespace network
+} // end of namespace SireCluster
+
+SIRE_END_HEADER
 
 #endif

@@ -648,6 +648,8 @@ void MPIClusterData::exec(int argc, char **argv)
                                     .arg(mpi_rank+1)
                                     .arg(mpi_count);
             }
+            
+            Siren::setProcessString(mpi_hostname);
         }
         
         if (mpi_count == 1)

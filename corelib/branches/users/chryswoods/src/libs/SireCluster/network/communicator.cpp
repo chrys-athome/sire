@@ -166,36 +166,23 @@ Q_DECLARE_METATYPE( SireCluster::network::AcknowledgeReceipt )
 ///////// Implementation of CommunicatorData
 /////////
 
-static CommunicatorData *global_d(0);
-
 Q_GLOBAL_STATIC_WITH_ARGS( Mutex, commMutex, (QMutex::Recursive) );
 
-static CommunicatorData* data()
-{
+static boost::shared_ptr<CommunicatorData> global_d;
+
+static boost::shared_ptr<CommunicatorData> data()
+{    
     MutexLocker lkr( commMutex() );
+    boost::shared_ptr<CommunicatorData> d( global_d );
+
+    lkr.unlock();
     
-    if (not global_d)
-    {
-        global_d = new CommunicatorData();
-
-        //create the keys for signing and encryption
-        boost::tuple<PublicKey,PrivateKey> encrypt_keys
-                    = PrivateKey::generate("encrypt");
-
-        boost::tuple<PublicKey,PrivateKey> sign_keys
-                    = PrivateKey::generate("sign");
-                                           
-        //create the hostinfo object
-        HostInfo hostinfo(QUuid::createUuid(),
-                          encrypt_keys.get<0>(),
-                          sign_keys.get<0>());
-
-        global_d->localhost = hostinfo;
-        global_d->encrypt_privkey = encrypt_keys.get<1>();
-        global_d->sign_privkey = sign_keys.get<1>();
-    }
+    if (d.get() == 0)
+        throw Siren::program_bug( QObject::tr(
+                "You cannot use Communicator before init() has been called, "
+                "or after end() has been called!"), CODELOC );
     
-    return global_d;
+    return d;
 }
 
 /////////
@@ -265,7 +252,7 @@ void AcknowledgeReceipt::read(const QUuid&, quint64) const
 {
     if (acknowledge_message_id != 0)
     {
-        CommunicatorData *d = data();
+        boost::shared_ptr<CommunicatorData> d = data();
         
         MutexLocker lkr( &(d->acknowledge_mutex) );
         d->unacknowledged_envelopes.remove(acknowledge_message_id);
@@ -281,15 +268,34 @@ void AcknowledgeReceipt::read(const QUuid&, quint64) const
 
 void Communicator::init()
 {
-    data();
+    MutexLocker lkr( commMutex() );
+
+    if (global_d.get() == 0)
+    {
+        global_d.reset( new CommunicatorData() );
+
+        //create the keys for signing and encryption
+        boost::tuple<PublicKey,PrivateKey> encrypt_keys
+                    = PrivateKey::generate("encrypt");
+
+        boost::tuple<PublicKey,PrivateKey> sign_keys
+                    = PrivateKey::generate("sign");
+                                           
+        //create the hostinfo object
+        HostInfo hostinfo(QUuid::createUuid(),
+                          encrypt_keys.get<0>(),
+                          sign_keys.get<0>());
+
+        global_d->localhost = hostinfo;
+        global_d->encrypt_privkey = encrypt_keys.get<1>();
+        global_d->sign_privkey = sign_keys.get<1>();
+    }
 }
 
 void Communicator::end()
 {
     MutexLocker lkr( commMutex() );
-    
-    delete global_d;
-    global_d = 0;
+    global_d.reset();
 }
 
 /** Get the HostInfo object for this process */
@@ -300,7 +306,7 @@ const HostInfo& Communicator::getLocalInfo()
 
 static HostInfo resolveHost(const QUuid &uid)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
     
     QReadLocker lkr( &(d->resolver_lock) );
     return d->resolver.value(uid);
@@ -309,7 +315,7 @@ static HostInfo resolveHost(const QUuid &uid)
 /** Return the HostInfo object for the process with UID 'uid' */
 HostInfo Communicator::getHostInfo(const QUuid &uid)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
     
     QReadLocker lkr( &(d->resolver_lock) );
     
@@ -332,7 +338,7 @@ void Communicator::addNeighbour(const HostInfo &hostinfo,
     if (hostinfo.isNull() or send_function.empty())
         return;
 
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
     
     QWriteLocker lkr( &(d->resolver_lock) );
     
@@ -352,7 +358,7 @@ void Communicator::addNeighbour(const HostInfo &hostinfo,
     if (hostinfo.isNull() or send_function.empty())
         return;
 
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
     
     QWriteLocker lkr( &(d->resolver_lock) );
     
@@ -406,7 +412,7 @@ static void no_need_to_acknowledge_send()
 
 void Communicator::reroute(const Envelope &envelope)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     HostInfo hostinfo = resolveHost(envelope.destination());
 
@@ -442,7 +448,7 @@ static void message_sent(quint64 message_id)
 {
     if (message_id != 0)
     {
-        CommunicatorData *d = data();
+        boost::shared_ptr<CommunicatorData> d = data();
         
         MutexLocker lkr( &(d->acknowledge_mutex) );
         d->unsent_envelopes.remove(message_id);
@@ -453,7 +459,7 @@ static void message_sent(quint64 message_id)
 static quint64 send(const QByteArray &message_data, const QUuid &recipient,
                     bool acknowledge_receipt)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     HostInfo hostinfo = resolveHost(recipient);
 
@@ -503,7 +509,7 @@ static quint64 send(const QByteArray &message_data, const QUuid &recipient,
 quint64 Communicator::send(const Message &message, const QUuid &recipient,
                            bool acknowledge_receipt)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     if ( d->localhost.UID() == recipient )
     {
@@ -526,7 +532,7 @@ QHash<QUuid,quint64> Communicator::send(const Message &message,
                                         const QList<QUuid> &recipients,
                                         bool acknowledge_receipt)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     {
         QReadLocker lkr( &(d->resolver_lock) );
@@ -583,7 +589,7 @@ QHash<QUuid,quint64> Communicator::broadcast(const Message &message,
                                              bool acknowledge_receipt)
 {
     //send the message to all known processes
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
     
     QList<QUuid> uids;
     {
@@ -623,7 +629,7 @@ static void received(const Envelope &envelope)
     }
     
     //get the public key for the sender
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     PublicKey sign_key;
     {
@@ -746,6 +752,8 @@ public:
 
             delete thread;
         }
+        
+        threads.clear();
     }
     
     void receive(const Envelope &envelope)
@@ -777,17 +785,24 @@ Q_GLOBAL_STATIC( ReceivePool, receivePool );
 
 void Communicator::received(const Envelope &envelope)
 {
+    //::received(envelope);
+    
     receivePool()->receive(envelope);
 }
 
 void Communicator::received(const QByteArray &data)
 {
+    //DataStream ds(data);
+    //Envelope envelope;
+    //ds >> envelope;
+    //::received(envelope);
+    
     receivePool()->receive(data);
 }
 
 bool Communicator::messageAcknowledged(quint64 message)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
     
     MutexLocker lkr( &(d->acknowledge_mutex) );
     return not d->unacknowledged_envelopes.contains(message);
@@ -795,7 +810,7 @@ bool Communicator::messageAcknowledged(quint64 message)
 
 bool Communicator::allMessagesAcknowledged(const QHash<QUuid,quint64> &messages)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
     
     MutexLocker lkr( &(d->acknowledge_mutex) );
     
@@ -812,7 +827,7 @@ bool Communicator::allMessagesAcknowledged(const QHash<QUuid,quint64> &messages)
 
 void Communicator::awaitAcknowledgement(quint64 message)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     MutexLocker lkr( &(d->acknowledge_mutex) );
     
@@ -824,7 +839,7 @@ void Communicator::awaitAcknowledgement(quint64 message)
 
 void Communicator::awaitAcknowledgement(const QHash<QUuid,quint64> &messages)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     MutexLocker lkr( &(d->acknowledge_mutex) );
 
@@ -861,7 +876,7 @@ bool Communicator::awaitAcknowledgement(quint64 message, int ms)
     QTime t;
     t.start();
 
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     MutexLocker lkr( &(d->acknowledge_mutex) );
     
@@ -887,7 +902,7 @@ bool Communicator::awaitAcknowledgement(const QHash<QUuid,quint64> &messages, in
     QTime t;
     t.start();
 
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     MutexLocker lkr( &(d->acknowledge_mutex) );
 
@@ -922,7 +937,7 @@ bool Communicator::awaitAcknowledgement(const QHash<QUuid,quint64> &messages, in
 
 bool Communicator::messageSent(quint64 message)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
     
     MutexLocker lkr( &(d->acknowledge_mutex) );
     return not d->unsent_envelopes.contains(message);
@@ -930,7 +945,7 @@ bool Communicator::messageSent(quint64 message)
 
 bool Communicator::allMessagesSent(const QHash<QUuid,quint64> &messages)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
     
     MutexLocker lkr( &(d->acknowledge_mutex) );
     
@@ -947,7 +962,7 @@ bool Communicator::allMessagesSent(const QHash<QUuid,quint64> &messages)
 
 void Communicator::awaitSent(quint64 message)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     MutexLocker lkr( &(d->acknowledge_mutex) );
     
@@ -959,7 +974,7 @@ void Communicator::awaitSent(quint64 message)
 
 void Communicator::awaitSent(const QHash<QUuid,quint64> &messages)
 {
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     MutexLocker lkr( &(d->acknowledge_mutex) );
 
@@ -996,7 +1011,7 @@ bool Communicator::awaitSent(quint64 message, int ms)
     QTime t;
     t.start();
 
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     MutexLocker lkr( &(d->acknowledge_mutex) );
     
@@ -1022,7 +1037,7 @@ bool Communicator::awaitSent(const QHash<QUuid,quint64> &messages, int ms)
     QTime t;
     t.start();
 
-    CommunicatorData *d = data();
+    boost::shared_ptr<CommunicatorData> d = data();
 
     MutexLocker lkr( &(d->acknowledge_mutex) );
 

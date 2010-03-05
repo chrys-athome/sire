@@ -58,6 +58,8 @@ public:
 
     static bool isInitProcess();
 
+    static bool isLocalOnly();
+
     static QString hostName();
 
     static void addThread();
