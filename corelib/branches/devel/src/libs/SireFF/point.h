@@ -136,6 +136,11 @@ public:
     virtual bool update(const MoleculeGroup &molgroup)=0;
     virtual bool update(const MolGroupsBase &molgroups)=0;
     
+    virtual bool wouldUpdate(const MoleculeData &moldata) const=0;
+    virtual bool wouldUpdate(const Molecules &molecules) const=0;
+    virtual bool wouldUpdate(const MoleculeGroup &molgroup) const=0;
+    virtual bool wouldUpdate(const MolGroupsBase &molgroups) const=0;
+    
     virtual Molecules molecules() const=0;
     
     virtual int nMolecules() const=0;
@@ -239,6 +244,11 @@ public:
     bool update(const MoleculeGroup &molgroup);
     bool update(const MolGroupsBase &molgroups);
     
+    bool wouldUpdate(const MoleculeData &moldata) const;
+    bool wouldUpdate(const Molecules &molecules) const;
+    bool wouldUpdate(const MoleculeGroup &molgroup) const;
+    bool wouldUpdate(const MolGroupsBase &molgroups) const;
+    
     Molecules molecules() const;
     
     int nMolecules() const;
@@ -293,6 +303,11 @@ public:
     bool update(const MoleculeGroup &molgroup);
     bool update(const MolGroupsBase &molgroups);
     
+    bool wouldUpdate(const MoleculeData &moldata) const;
+    bool wouldUpdate(const Molecules &molecules) const;
+    bool wouldUpdate(const MoleculeGroup &molgroup) const;
+    bool wouldUpdate(const MolGroupsBase &molgroups) const;
+    
     Molecules molecules() const;
     
     int nMolecules() const;
@@ -341,6 +356,11 @@ public:
     bool update(const Molecules &molecules);
     bool update(const MoleculeGroup &molgroup);
     bool update(const MolGroupsBase &molgroups);
+    
+    bool wouldUpdate(const MoleculeData &moldata) const;
+    bool wouldUpdate(const Molecules &molecules) const;
+    bool wouldUpdate(const MoleculeGroup &molgroup) const;
+    bool wouldUpdate(const MolGroupsBase &molgroups) const;
     
     Molecules molecules() const;
     
@@ -403,6 +423,11 @@ public:
     bool update(const MoleculeGroup &molgroup);
     bool update(const MolGroupsBase &molgroups);
     
+    bool wouldUpdate(const MoleculeData &moldata) const;
+    bool wouldUpdate(const Molecules &molecules) const;
+    bool wouldUpdate(const MoleculeGroup &molgroup) const;
+    bool wouldUpdate(const MolGroupsBase &molgroups) const;
+    
     Molecules molecules() const;
     
     int nMolecules() const;
@@ -463,6 +488,11 @@ public:
     bool update(const Molecules &molecules);
     bool update(const MoleculeGroup &molgroup);
     bool update(const MolGroupsBase &molgroups);
+    
+    bool wouldUpdate(const MoleculeData &moldata) const;
+    bool wouldUpdate(const Molecules &molecules) const;
+    bool wouldUpdate(const MoleculeGroup &molgroup) const;
+    bool wouldUpdate(const MolGroupsBase &molgroups) const;
     
     Molecules molecules() const;
     

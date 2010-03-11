@@ -234,6 +234,50 @@ void register_VectorPoint_class(){
                 , ( bp::arg("molgroups") ) );
         
         }
+        { //::SireFF::VectorPoint::wouldUpdate
+        
+            typedef bool ( ::SireFF::VectorPoint::*wouldUpdate_function_type )( ::SireMol::MoleculeData const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::VectorPoint::wouldUpdate );
+            
+            VectorPoint_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("moldata") ) );
+        
+        }
+        { //::SireFF::VectorPoint::wouldUpdate
+        
+            typedef bool ( ::SireFF::VectorPoint::*wouldUpdate_function_type )( ::SireMol::Molecules const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::VectorPoint::wouldUpdate );
+            
+            VectorPoint_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molecules") ) );
+        
+        }
+        { //::SireFF::VectorPoint::wouldUpdate
+        
+            typedef bool ( ::SireFF::VectorPoint::*wouldUpdate_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::VectorPoint::wouldUpdate );
+            
+            VectorPoint_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroup") ) );
+        
+        }
+        { //::SireFF::VectorPoint::wouldUpdate
+        
+            typedef bool ( ::SireFF::VectorPoint::*wouldUpdate_function_type )( ::SireMol::MolGroupsBase const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::VectorPoint::wouldUpdate );
+            
+            VectorPoint_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroups") ) );
+        
+        }
         VectorPoint_exposer.staticmethod( "typeName" );
         VectorPoint_exposer.def( "__copy__", &__copy__);
         VectorPoint_exposer.def( "__deepcopy__", &__copy__);

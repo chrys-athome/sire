@@ -358,6 +358,77 @@ bool AtomPoint::update(const MolGroupsBase &molgroups)
         return false;
 }
 
+/** Return whether or not this changes
+    the location of this point 
+
+    \throw SireBase::missing_property
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+*/
+bool AtomPoint::wouldUpdate(const MoleculeData &moldata) const
+{
+    if (atm.data().number() == moldata.number())
+    {
+        Atom new_atm(atm);
+        new_atm.update(moldata);
+        
+        return new_atm.property<Vector>(coords_property) != this->point();
+    }
+    else
+        return false;
+}
+                    
+/** Return whether or not this changes
+    the location of this point 
+
+    \throw SireBase::missing_property
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+*/
+bool AtomPoint::wouldUpdate(const Molecules &molecules) const
+{
+    if (molecules.contains(atm.data().number()))
+    {
+        return this->wouldUpdate( molecules[atm.data().number()].data() );
+    }
+    else
+        return false;
+}
+                    
+/** Return whether or not this changes
+    the location of this point 
+
+    \throw SireBase::missing_property
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+*/
+bool AtomPoint::wouldUpdate(const MoleculeGroup &molgroup) const
+{
+    if (molgroup.contains(atm.data().number()))
+    {
+        return this->wouldUpdate( molgroup[atm.data().number()].data() );
+    }
+    else
+        return false;
+}
+                    
+/** Return whether or not this changes
+    the location of this point 
+
+    \throw SireBase::missing_property
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+*/
+bool AtomPoint::wouldUpdate(const MolGroupsBase &molgroups) const
+{
+    if (molgroups.contains(atm.data().number()))
+    {
+        return this->wouldUpdate( molgroups[atm.data().number()].data() );
+    }
+    else
+        return false;
+}
+
 /** Return the molecules needed to get this point */
 Molecules AtomPoint::molecules() const
 {
@@ -566,6 +637,30 @@ bool VectorPoint::update(const MoleculeGroup&)
                     
 /** A VectorPoint is not updatable */
 bool VectorPoint::update(const MolGroupsBase&)
+{
+    return false;
+}
+
+/** A VectorPoint is not updatable */
+bool VectorPoint::wouldUpdate(const MoleculeData&) const
+{
+    return false;
+}
+                    
+/** A VectorPoint is not updatable */
+bool VectorPoint::wouldUpdate(const Molecules&) const
+{
+    return false;
+}
+
+/** A VectorPoint is not updatable */
+bool VectorPoint::wouldUpdate(const MoleculeGroup&) const
+{
+    return false;
+}
+                    
+/** A VectorPoint is not updatable */
+bool VectorPoint::wouldUpdate(const MolGroupsBase&) const
 {
     return false;
 }
@@ -818,6 +913,42 @@ bool Center::update(const MoleculeGroup &molgroup)
 bool Center::update(const MolGroupsBase &molgroups)
 {
     return this->update(molgroups.molecules());
+}
+
+/** Return whether or not the passed molecule would change this point */
+bool Center::wouldUpdate(const MoleculeData &moldata) const
+{
+    if (mols.contains(moldata.number()))
+    {
+        Center new_cent(*this);
+        return new_cent.update(moldata);
+    }
+    
+    return false;
+}
+                    
+/** Return whether or not the passed molecules would change this point */
+bool Center::wouldUpdate(const Molecules &molecules) const
+{
+    if (mols.intersects(molecules))
+    {
+        Center new_cent(*this);
+        return new_cent.update(molecules);
+    }
+    
+    return false;
+}
+                    
+/** Return whether or not the passed molecules would change this point */
+bool Center::wouldUpdate(const MoleculeGroup &molgroup) const
+{
+    return this->wouldUpdate(molgroup.molecules());
+}
+
+/** Return whether or not the passed molecules would change this point */
+bool Center::wouldUpdate(const MolGroupsBase &molgroups) const
+{
+    return this->wouldUpdate(molgroups.molecules());
 }
 
 /** Return all of the molecules used to generate this point */
@@ -1148,6 +1279,42 @@ bool CenterOfGeometry::update(const MolGroupsBase &molgroups)
     return this->update(molgroups.molecules());
 }
 
+/** Return whether or not the passed molecule would change this point */
+bool CenterOfGeometry::wouldUpdate(const MoleculeData &moldata) const
+{
+    if (mols.contains(moldata.number()))
+    {
+        CenterOfGeometry new_cent(*this);
+        return new_cent.update(moldata);
+    }
+    
+    return false;
+}
+                    
+/** Return whether or not the passed molecules would change this point */
+bool CenterOfGeometry::wouldUpdate(const Molecules &molecules) const
+{
+    if (mols.intersects(molecules))
+    {
+        CenterOfGeometry new_cent(*this);
+        return new_cent.update(molecules);
+    }
+    
+    return false;
+}
+                    
+/** Return whether or not the passed molecules would change this point */
+bool CenterOfGeometry::wouldUpdate(const MoleculeGroup &molgroup) const
+{
+    return this->wouldUpdate(molgroup.molecules());
+}
+
+/** Return whether or not the passed molecules would change this point */
+bool CenterOfGeometry::wouldUpdate(const MolGroupsBase &molgroups) const
+{
+    return this->wouldUpdate(molgroups.molecules());
+}
+
 /** Return all of the molecules used to generate this point */
 Molecules CenterOfGeometry::molecules() const
 {
@@ -1451,6 +1618,42 @@ bool CenterOfMass::update(const MoleculeGroup &molgroup)
 bool CenterOfMass::update(const MolGroupsBase &molgroups)
 {
     return this->update(molgroups.molecules());
+}
+
+/** Return whether or not the passed molecule would change this point */
+bool CenterOfMass::wouldUpdate(const MoleculeData &moldata) const
+{
+    if (mols.contains(moldata.number()))
+    {
+        CenterOfMass new_cent(*this);
+        return new_cent.update(moldata);
+    }
+    
+    return false;
+}
+                    
+/** Return whether or not the passed molecules would change this point */
+bool CenterOfMass::wouldUpdate(const Molecules &molecules) const
+{
+    if (mols.intersects(molecules))
+    {
+        CenterOfMass new_cent(*this);
+        return new_cent.update(molecules);
+    }
+    
+    return false;
+}
+                    
+/** Return whether or not the passed molecules would change this point */
+bool CenterOfMass::wouldUpdate(const MoleculeGroup &molgroup) const
+{
+    return this->wouldUpdate(molgroup.molecules());
+}
+
+/** Return whether or not the passed molecules would change this point */
+bool CenterOfMass::wouldUpdate(const MolGroupsBase &molgroups) const
+{
+    return this->wouldUpdate(molgroups.molecules());
 }
 
 /** Return all of the molecules used to generate this point */

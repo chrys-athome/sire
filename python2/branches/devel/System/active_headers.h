@@ -8,6 +8,8 @@
 #include "closemols.h"
 #include "constraint.h"
 #include "constraints.h"
+#include "distancecomponent.h"
+#include "geometrycomponent.h"
 #include "identityconstraint.h"
 #include "moleculeconstraint.h"
 #include "monitorcomponent.h"

@@ -246,6 +246,50 @@ void register_Center_class(){
                 , ( bp::arg("molgroups") ) );
         
         }
+        { //::SireFF::Center::wouldUpdate
+        
+            typedef bool ( ::SireFF::Center::*wouldUpdate_function_type )( ::SireMol::MoleculeData const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::Center::wouldUpdate );
+            
+            Center_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("moldata") ) );
+        
+        }
+        { //::SireFF::Center::wouldUpdate
+        
+            typedef bool ( ::SireFF::Center::*wouldUpdate_function_type )( ::SireMol::Molecules const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::Center::wouldUpdate );
+            
+            Center_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molecules") ) );
+        
+        }
+        { //::SireFF::Center::wouldUpdate
+        
+            typedef bool ( ::SireFF::Center::*wouldUpdate_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::Center::wouldUpdate );
+            
+            Center_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroup") ) );
+        
+        }
+        { //::SireFF::Center::wouldUpdate
+        
+            typedef bool ( ::SireFF::Center::*wouldUpdate_function_type )( ::SireMol::MolGroupsBase const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::Center::wouldUpdate );
+            
+            Center_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroups") ) );
+        
+        }
         Center_exposer.staticmethod( "typeName" );
         Center_exposer.def( "__copy__", &__copy__);
         Center_exposer.def( "__deepcopy__", &__copy__);

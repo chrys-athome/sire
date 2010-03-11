@@ -246,6 +246,50 @@ void register_AtomPoint_class(){
                 , ( bp::arg("molgroups") ) );
         
         }
+        { //::SireFF::AtomPoint::wouldUpdate
+        
+            typedef bool ( ::SireFF::AtomPoint::*wouldUpdate_function_type )( ::SireMol::MoleculeData const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::AtomPoint::wouldUpdate );
+            
+            AtomPoint_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("moldata") ) );
+        
+        }
+        { //::SireFF::AtomPoint::wouldUpdate
+        
+            typedef bool ( ::SireFF::AtomPoint::*wouldUpdate_function_type )( ::SireMol::Molecules const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::AtomPoint::wouldUpdate );
+            
+            AtomPoint_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molecules") ) );
+        
+        }
+        { //::SireFF::AtomPoint::wouldUpdate
+        
+            typedef bool ( ::SireFF::AtomPoint::*wouldUpdate_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::AtomPoint::wouldUpdate );
+            
+            AtomPoint_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroup") ) );
+        
+        }
+        { //::SireFF::AtomPoint::wouldUpdate
+        
+            typedef bool ( ::SireFF::AtomPoint::*wouldUpdate_function_type )( ::SireMol::MolGroupsBase const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::AtomPoint::wouldUpdate );
+            
+            AtomPoint_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroups") ) );
+        
+        }
         AtomPoint_exposer.staticmethod( "typeName" );
         AtomPoint_exposer.def( "__copy__", &__copy__);
         AtomPoint_exposer.def( "__deepcopy__", &__copy__);

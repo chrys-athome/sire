@@ -6,6 +6,8 @@ set ( PYPP_SOURCES
        ComponentConstraint.pypp.cpp
        Constraint.pypp.cpp
        Constraints.pypp.cpp
+       DistanceComponent.pypp.cpp
+       GeometryComponent.pypp.cpp
        IDAndSet_MonitorID_.pypp.cpp
        IDAndSet_SysID_.pypp.cpp
        IdentityConstraint.pypp.cpp

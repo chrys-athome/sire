@@ -246,6 +246,50 @@ void register_CenterOfMass_class(){
                 , ( bp::arg("molgroups") ) );
         
         }
+        { //::SireFF::CenterOfMass::wouldUpdate
+        
+            typedef bool ( ::SireFF::CenterOfMass::*wouldUpdate_function_type )( ::SireMol::MoleculeData const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::CenterOfMass::wouldUpdate );
+            
+            CenterOfMass_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("moldata") ) );
+        
+        }
+        { //::SireFF::CenterOfMass::wouldUpdate
+        
+            typedef bool ( ::SireFF::CenterOfMass::*wouldUpdate_function_type )( ::SireMol::Molecules const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::CenterOfMass::wouldUpdate );
+            
+            CenterOfMass_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molecules") ) );
+        
+        }
+        { //::SireFF::CenterOfMass::wouldUpdate
+        
+            typedef bool ( ::SireFF::CenterOfMass::*wouldUpdate_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::CenterOfMass::wouldUpdate );
+            
+            CenterOfMass_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroup") ) );
+        
+        }
+        { //::SireFF::CenterOfMass::wouldUpdate
+        
+            typedef bool ( ::SireFF::CenterOfMass::*wouldUpdate_function_type )( ::SireMol::MolGroupsBase const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::CenterOfMass::wouldUpdate );
+            
+            CenterOfMass_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroups") ) );
+        
+        }
         CenterOfMass_exposer.staticmethod( "typeName" );
         CenterOfMass_exposer.def( "__copy__", &__copy__);
         CenterOfMass_exposer.def( "__deepcopy__", &__copy__);

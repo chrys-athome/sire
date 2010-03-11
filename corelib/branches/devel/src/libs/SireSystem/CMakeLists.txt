@@ -16,7 +16,9 @@ set ( SIRESYSTEM_HEADERS
       constraint.h
       constraints.h
       checkpoint.h
+      distancecomponent.h
       errors.h
+      geometrycomponent.h
       identityconstraint.h
       moleculeconstraint.h
       monitorcomponent.h
@@ -48,7 +50,9 @@ set ( SIRESYSTEM_SOURCES
       constraint.cpp
       constraints.cpp
       checkpoint.cpp
+      distancecomponent.cpp
       errors.cpp
+      geometrycomponent.cpp
       identityconstraint.cpp
       moleculeconstraint.cpp
       monitorcomponent.cpp

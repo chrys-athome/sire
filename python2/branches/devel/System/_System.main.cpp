@@ -19,6 +19,10 @@
 
 #include "Constraints.pypp.hpp"
 
+#include "DistanceComponent.pypp.hpp"
+
+#include "GeometryComponent.pypp.hpp"
+
 #include "IDAndSet_MonitorID_.pypp.hpp"
 
 #include "IDAndSet_SysID_.pypp.hpp"
@@ -117,6 +121,10 @@ BOOST_PYTHON_MODULE(_System){
     register_ComponentConstraint_class();
 
     register_Constraints_class();
+
+    register_GeometryComponent_class();
+
+    register_DistanceComponent_class();
 
     register_IdentityConstraint_class();
 

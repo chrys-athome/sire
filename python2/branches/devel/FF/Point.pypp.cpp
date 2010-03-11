@@ -272,6 +272,50 @@ void register_Point_class(){
                 , ( bp::arg("molgroups") ) );
         
         }
+        { //::SireFF::Point::wouldUpdate
+        
+            typedef bool ( ::SireFF::Point::*wouldUpdate_function_type )( ::SireMol::MoleculeData const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::Point::wouldUpdate );
+            
+            Point_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("moldata") ) );
+        
+        }
+        { //::SireFF::Point::wouldUpdate
+        
+            typedef bool ( ::SireFF::Point::*wouldUpdate_function_type )( ::SireMol::Molecules const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::Point::wouldUpdate );
+            
+            Point_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molecules") ) );
+        
+        }
+        { //::SireFF::Point::wouldUpdate
+        
+            typedef bool ( ::SireFF::Point::*wouldUpdate_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::Point::wouldUpdate );
+            
+            Point_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroup") ) );
+        
+        }
+        { //::SireFF::Point::wouldUpdate
+        
+            typedef bool ( ::SireFF::Point::*wouldUpdate_function_type )( ::SireMol::MolGroupsBase const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::Point::wouldUpdate );
+            
+            Point_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroups") ) );
+        
+        }
         Point_exposer.staticmethod( "areIntraMoleculePoints" );
         Point_exposer.staticmethod( "null" );
         Point_exposer.staticmethod( "typeName" );

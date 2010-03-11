@@ -246,6 +246,50 @@ void register_CenterOfGeometry_class(){
                 , ( bp::arg("molgroups") ) );
         
         }
+        { //::SireFF::CenterOfGeometry::wouldUpdate
+        
+            typedef bool ( ::SireFF::CenterOfGeometry::*wouldUpdate_function_type )( ::SireMol::MoleculeData const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::CenterOfGeometry::wouldUpdate );
+            
+            CenterOfGeometry_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("moldata") ) );
+        
+        }
+        { //::SireFF::CenterOfGeometry::wouldUpdate
+        
+            typedef bool ( ::SireFF::CenterOfGeometry::*wouldUpdate_function_type )( ::SireMol::Molecules const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::CenterOfGeometry::wouldUpdate );
+            
+            CenterOfGeometry_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molecules") ) );
+        
+        }
+        { //::SireFF::CenterOfGeometry::wouldUpdate
+        
+            typedef bool ( ::SireFF::CenterOfGeometry::*wouldUpdate_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::CenterOfGeometry::wouldUpdate );
+            
+            CenterOfGeometry_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroup") ) );
+        
+        }
+        { //::SireFF::CenterOfGeometry::wouldUpdate
+        
+            typedef bool ( ::SireFF::CenterOfGeometry::*wouldUpdate_function_type )( ::SireMol::MolGroupsBase const & ) const;
+            wouldUpdate_function_type wouldUpdate_function_value( &::SireFF::CenterOfGeometry::wouldUpdate );
+            
+            CenterOfGeometry_exposer.def( 
+                "wouldUpdate"
+                , wouldUpdate_function_value
+                , ( bp::arg("molgroups") ) );
+        
+        }
         CenterOfGeometry_exposer.staticmethod( "typeName" );
         CenterOfGeometry_exposer.def( "__copy__", &__copy__);
         CenterOfGeometry_exposer.def( "__deepcopy__", &__copy__);

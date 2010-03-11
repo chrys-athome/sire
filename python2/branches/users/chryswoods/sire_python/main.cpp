@@ -125,6 +125,7 @@ int main(int argc, char **argv)
                 int nscripts = argc - 1;
 
                 stdout_str << QObject::tr("Running %1 python script(s)...\n").arg(nscripts);
+                stdout_str.flush();
 
                 Nodes nodes = Cluster::getNodes(nscripts);
 
