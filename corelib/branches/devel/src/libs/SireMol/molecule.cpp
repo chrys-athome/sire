@@ -609,7 +609,12 @@ void Molecule::setProperty(const QString &key, const Property &value)
 {
     if (value.isA<MolViewProperty>())
     {
-        value.asA<MolViewProperty>().assertCompatibleWith(this->data().info());
+        if (not value.asA<MolViewProperty>().isCompatibleWith(this->data().info()))
+        {
+            this->setProperty(key, value.asA<MolViewProperty>()
+                                        .makeCompatibleWith(this->data().info()));
+            return;
+        }
     }
         
     d->setProperty(key, value);

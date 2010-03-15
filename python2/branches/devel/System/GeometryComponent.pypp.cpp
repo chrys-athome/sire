@@ -39,6 +39,28 @@ void register_GeometryComponent_class(){
                 , ( bp::arg("system") ) );
         
         }
+        { //::SireSystem::GeometryComponent::apply
+        
+            typedef bool ( ::SireSystem::GeometryComponent::*apply_function_type )( ::SireSystem::System &,::SireMol::MolNum ) const;
+            apply_function_type apply_function_value( &::SireSystem::GeometryComponent::apply );
+            
+            GeometryComponent_exposer.def( 
+                "apply"
+                , apply_function_value
+                , ( bp::arg("system"), bp::arg("molnum") ) );
+        
+        }
+        { //::SireSystem::GeometryComponent::apply
+        
+            typedef bool ( ::SireSystem::GeometryComponent::*apply_function_type )( ::SireSystem::System &,::SireMol::Molecules const & ) const;
+            apply_function_type apply_function_value( &::SireSystem::GeometryComponent::apply );
+            
+            GeometryComponent_exposer.def( 
+                "apply"
+                , apply_function_value
+                , ( bp::arg("system"), bp::arg("molecules") ) );
+        
+        }
         { //::SireSystem::GeometryComponent::component
         
             typedef ::SireCAS::Symbol const & ( ::SireSystem::GeometryComponent::*component_function_type )(  ) const;
@@ -48,6 +70,16 @@ void register_GeometryComponent_class(){
                 "component"
                 , component_function_value
                 , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireSystem::GeometryComponent::dependsOnMolecules
+        
+            typedef bool ( ::SireSystem::GeometryComponent::*dependsOnMolecules_function_type )(  ) const;
+            dependsOnMolecules_function_type dependsOnMolecules_function_value( &::SireSystem::GeometryComponent::dependsOnMolecules );
+            
+            GeometryComponent_exposer.def( 
+                "dependsOnMolecules"
+                , dependsOnMolecules_function_value );
         
         }
         { //::SireSystem::GeometryComponent::expression

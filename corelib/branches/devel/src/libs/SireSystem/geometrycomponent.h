@@ -84,7 +84,11 @@ public:
     
     bool isSatisfied(const System &system) const;
     
+    bool dependsOnMolecules() const;
+    
     bool apply(System &system) const;
+    bool apply(System &system, SireMol::MolNum molnum) const;
+    bool apply(System &system, const SireMol::Molecules &molecules) const;
     
     virtual void setSpace(const SireVol::Space &space);
 

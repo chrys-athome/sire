@@ -31,6 +31,8 @@
 
 #include <QList>
 #include <QUuid>
+#include <QMultiHash>
+#include <QPair>
 
 #include "sireglobal.h"
 
@@ -54,20 +56,26 @@ public:
     static void init();
     static void end();
     
-    static QUuid reserveResource(int expires=DEFAULT_TIMEOUT);
-    static QUuid reserveResource(const QString &description,
-                                 int expires=DEFAULT_TIMEOUT);
+    static QPair<QUuid,QUuid> reserveResource(int expires=DEFAULT_TIMEOUT);
+    static QPair<QUuid,QUuid> reserveResource(const QString &description,
+                                              int expires=DEFAULT_TIMEOUT);
 
-    static QList<QUuid> reserveResources(int n, int expires=DEFAULT_TIMEOUT);
-    static QList<QUuid> reserveResources(const QString &description,
-                                         int n, int expires=DEFAULT_TIMEOUT);
+    static QMultiHash<QUuid,QUuid> reserveResources(int n, int expires=DEFAULT_TIMEOUT);
+    static QMultiHash<QUuid,QUuid> reserveResources(const QString &description,
+                                                    int n, int expires=DEFAULT_TIMEOUT);
 
-    static resources::ActiveBackend collectReservation(const QUuid &uid);
+    static void receivedReservation(const QUuid &sender,
+                                    QList<QUuid> reservation_uids,
+                                    const QUuid &request_uid);
+
+    static resources::ActiveBackend 
+                collectReservation(const QPair<QUuid,QUuid> &uid);
+                
     static QHash<QUuid,resources::ActiveBackend> 
-                        collectReservation(const QList<QUuid> &uids);
+                        collectReservation(const QMultiHash<QUuid,QUuid> &uids);
     
-    static void releaseReservation(const QUuid &uid);
-    static void releaseReservation(const QList<QUuid> &uids);
+    static void releaseReservation(const QPair<QUuid,QUuid> &uid);
+    static void releaseReservation(const QMultiHash<QUuid,QUuid> &uids);
 
 };
 

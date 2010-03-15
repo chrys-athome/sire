@@ -33,6 +33,8 @@
 
 #include "Siren/errors.h"
 
+#include <QDebug>
+
 using namespace Siren;
 using namespace Siren::detail;
 
@@ -635,7 +637,12 @@ Stream& Stream::operator&(QString &text)
     {
         int id = this->readStringReference();
         
-        if (resource().strings_by_id.contains(id))
+        if (id == 0)
+        {
+            //null string
+            text = QString::null;
+        }
+        else if (resource().strings_by_id.contains(id))
         {
             text = resource().strings_by_id.value(id);
         }

@@ -47,6 +47,28 @@ void register_Constraint_class(){
                 , ( bp::arg("system") ) );
         
         }
+        { //::SireSystem::Constraint::apply
+        
+            typedef bool ( ::SireSystem::Constraint::*apply_function_type )( ::SireSystem::System &,::SireMol::MolNum ) const;
+            apply_function_type apply_function_value( &::SireSystem::Constraint::apply );
+            
+            Constraint_exposer.def( 
+                "apply"
+                , apply_function_value
+                , ( bp::arg("system"), bp::arg("molnum") ) );
+        
+        }
+        { //::SireSystem::Constraint::apply
+        
+            typedef bool ( ::SireSystem::Constraint::*apply_function_type )( ::SireSystem::System &,::SireMol::Molecules const & ) const;
+            apply_function_type apply_function_value( &::SireSystem::Constraint::apply );
+            
+            Constraint_exposer.def( 
+                "apply"
+                , apply_function_value
+                , ( bp::arg("system"), bp::arg("molecules") ) );
+        
+        }
         { //::SireSystem::Constraint::assertSatisfied
         
             typedef void ( ::SireSystem::Constraint::*assertSatisfied_function_type )( ::SireSystem::System const & ) const;
@@ -56,6 +78,16 @@ void register_Constraint_class(){
                 "assertSatisfied"
                 , assertSatisfied_function_value
                 , ( bp::arg("system") ) );
+        
+        }
+        { //::SireSystem::Constraint::dependsOnMolecules
+        
+            typedef bool ( ::SireSystem::Constraint::*dependsOnMolecules_function_type )(  ) const;
+            dependsOnMolecules_function_type dependsOnMolecules_function_value( &::SireSystem::Constraint::dependsOnMolecules );
+            
+            Constraint_exposer.def( 
+                "dependsOnMolecules"
+                , dependsOnMolecules_function_value );
         
         }
         { //::SireSystem::Constraint::isSatisfied

@@ -62,6 +62,12 @@ QDataStream& operator>>(QDataStream&, SireSystem::ComponentConstraint&);
 QDataStream& operator<<(QDataStream&, const SireSystem::WindowedComponent&);
 QDataStream& operator>>(QDataStream&, SireSystem::WindowedComponent&);
 
+namespace SireMol
+{
+class MolNum;
+class Molecules;
+}
+
 namespace SireSystem
 {
 
@@ -99,6 +105,11 @@ public:
     virtual Constraint* clone() const=0;
     
     virtual bool apply(System &system) const=0;
+
+    virtual bool apply(System &system, SireMol::MolNum molnum) const;
+    virtual bool apply(System &system, const SireMol::Molecules &molecules) const;
+
+    virtual bool dependsOnMolecules() const;
 
     virtual bool isSatisfied(const System &system) const=0;
     

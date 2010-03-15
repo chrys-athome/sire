@@ -98,6 +98,9 @@ public:
 protected:
     static Node getReservedLocalNode(const QUuid &uid);
     static Nodes getReservedLocalNodes(const QList<QUuid> &uids);
+    
+    static Node getReservedRemoteNode(const QPair<QUuid,QUuid> &uid);
+    static Nodes getReservedRemoteNodes(const QMultiHash<QUuid,QUuid> &uids);
 };
 
 }

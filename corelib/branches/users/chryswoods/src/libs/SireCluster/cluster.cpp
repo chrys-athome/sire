@@ -38,6 +38,7 @@
 #include "network/communicator.h"       // CONDITIONAL_INCLUDE
 #include "network/message.h"            // CONDITIONAL_INCLUDE
 #include "network/netresourcemanager.h" // CONDITIONAL_INCLUDE
+#include "network/nodemessages.h"       // CONDITIONAL_INCLUDE
 
 #include "Siren/mutex.h"
 #include "Siren/waitcondition.h"
@@ -308,6 +309,32 @@ Nodes Cluster::getReservedLocalNodes(const QList<QUuid> &reservations)
     }
 }
 
+/** Internal function used to get the node associated with the passed reservation */
+Node Cluster::getReservedRemoteNode(const QPair<QUuid,QUuid> &reservation)
+{
+    if (reservation.first.isNull())
+        return Node();
+        
+    qDebug() << "COLLECT" << reservation.first << "FROM" << reservation.second;
+    
+    Communicator::send( CollectReservation(reservation.second), reservation.first );
+    
+    Siren::msleep(5000);
+    
+    qDebug() << "honestly, we've collected the node!";
+    
+    return Node();
+}
+
+/** Internal function used to get the node associated with the passed reservations */
+Nodes Cluster::getReservedRemoteNodes(const QMultiHash<QUuid,QUuid> &reservations)
+{
+    if (reservations.isEmpty())
+        return Nodes();
+        
+    return Nodes();
+}
+
 /** Return any local node - this returns a null Node if no node is available */
 Node Cluster::getLocalNode()
 {
@@ -353,9 +380,35 @@ Node Cluster::getNode()
     if (isLocalOnly())
         return getLocalNode();
     
-    NetResourceManager::reserveResource();
+    while (for_ages())
+    {
+        //always try to get a local node first...
+        QUuid reservation = ResourceManager::tryReserveResource(0);
+    
+        if (not reservation.isNull())
+        {
+            Node node = Cluster::getReservedLocalNode(reservation);
+    
+            if (not node.isNull())
+                return node;
+        }
+    
+        //no local node available - try to get a remote node
+        QPair<QUuid,QUuid> remote_res = NetResourceManager::reserveResource();
 
-    return getLocalNode();
+        if (not remote_res.first.isNull())
+        {
+            Node node = Cluster::getReservedRemoteNode(remote_res);
+            
+            if (not node.isNull())
+                return node;
+        }
+        else
+            //no nodes available (we couldn't reserve a node)
+            return Node();
+    }
+    
+    return Node();
 }
 
 /** Return any node - keep trying for up to 'timeout' milliseconds.

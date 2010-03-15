@@ -94,6 +94,29 @@ Constraint& Constraint::operator=(const Constraint &other)
     return *this;
 }
 
+/** Apply this constraint to the passed system, providing the information
+    that only the molecule with number 'molnum' has changed. This returns
+    whether or not this changes the system */
+bool Constraint::apply(System &system, MolNum) const
+{
+    return this->apply(system);
+}
+
+/** Apply this constraint to the passed system, providing the information
+    that only the passed molecules have changed. This returns
+    whether or not this changes the system */
+bool Constraint::apply(System &system, const Molecules&) const
+{
+    return this->apply(system);
+}
+
+/** Return whether or not this constraint depends on molecules
+    (most constraints don't) */
+bool Constraint::dependsOnMolecules() const
+{
+    return false;
+}
+
 /** Assert that the constraint is satisfied in the passed system 
 
     \throw SireSystem::constraint_error

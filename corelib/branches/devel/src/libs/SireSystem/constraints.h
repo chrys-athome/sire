@@ -144,6 +144,10 @@ private:
         applied to the system - these are constraints that change
         the coordinates or properties of molecules in the system */
     QVector<ConstraintPtr> molcons;
+    
+    /** The indicies of component constraints that may need to be
+        reapplied if molecules change */
+    QSet<int> mol_dependent_cons;
 };
 
 /** Return whether or not this set has any molecule constraints */

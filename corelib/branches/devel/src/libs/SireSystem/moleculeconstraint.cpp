@@ -163,6 +163,41 @@ bool MoleculeConstraint::isSatisfied(const System &system) const
     }
 }
 
+bool MoleculeConstraint::apply(System &system, MolNum molnum) const
+{
+    boost::shared_ptr<MoleculeConstraint> c( this->clone() );
+    
+    Molecules changed_mols = c->update(system, molnum);
+    
+    if (not changed_mols.isEmpty())
+    {
+        system.update(changed_mols);
+        return true;
+    }
+    else
+        return false;
+}
+
+bool MoleculeConstraint::apply(System &system, const Molecules &molecules) const
+{
+    boost::shared_ptr<MoleculeConstraint> c( this->clone() );
+    
+    Molecules changed_mols = c->update(system, molecules);
+    
+    if (not changed_mols.isEmpty())
+    {
+        system.update(changed_mols);
+        return true;
+    }
+    else
+        return false;
+}
+
+bool MoleculeConstraint::dependsOnMolecules() const
+{
+    return true;
+}
+
 /** Return the UID of the system from which this constraint was
     last updated */
 const QUuid& MoleculeConstraint::sysUID() const

@@ -785,18 +785,11 @@ Q_GLOBAL_STATIC( ReceivePool, receivePool );
 
 void Communicator::received(const Envelope &envelope)
 {
-    //::received(envelope);
-    
     receivePool()->receive(envelope);
 }
 
 void Communicator::received(const QByteArray &data)
 {
-    //DataStream ds(data);
-    //Envelope envelope;
-    //ds >> envelope;
-    //::received(envelope);
-    
     receivePool()->receive(data);
 }
 

@@ -184,6 +184,11 @@ bool GeometryComponent::isSatisfied(const System &system) const
 }
 
 Q_GLOBAL_STATIC( QMutex, applyMutex )
+    
+bool GeometryComponent::dependsOnMolecules() const
+{
+    return true;
+}
 
 /** Apply this constraint to the passed system, returning whether
     or not this changes the system */
@@ -237,3 +242,14 @@ bool GeometryComponent::apply(System &system) const
         return true;
     }
 }
+    
+bool GeometryComponent::apply(System &system, MolNum) const
+{
+    return this->apply(system);
+}
+
+bool GeometryComponent::apply(System &system, const Molecules&) const
+{
+    return this->apply(system);
+}
+

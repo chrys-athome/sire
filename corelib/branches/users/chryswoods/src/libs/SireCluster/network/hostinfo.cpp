@@ -31,6 +31,8 @@
 #include "Siren/stream.h"
 #include "Siren/streamqt.h"
 
+#include <QDebug>
+
 using namespace SireCluster;
 using namespace SireCluster::network;
 using namespace SireSec;

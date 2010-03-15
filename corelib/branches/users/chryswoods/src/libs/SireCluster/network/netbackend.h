@@ -26,3 +26,60 @@
   *
 \*********************************************/
 
+#ifndef SIRECLUSTER_NETWORK_NETBACKEND_H
+#define SIRECLUSTER_NETWORK_NETBACKEND_H
+
+#include "SireCluster/resources/backend.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireCluster
+{
+namespace network
+{
+
+using SireCluster::resources::ActiveBackend;
+
+/** This static class is used to pass on network requests
+    for a resource to the local backend
+    
+    @author Christopher Woods
+*/
+class NetBackend
+{
+public:    
+    static void init();
+    static void end();
+    
+    static QList<QUuid> registerBackends(const QUuid &sender, 
+                                         const QList<ActiveBackend> &backends);
+
+    static QString toString(const QUuid &sender, const QUuid &netkey);
+    
+    static QUuid UID(const QUuid &sender, const QUuid &netkey);
+    static QString description(const QUuid &sender, const QUuid &netkey);
+    
+    static void startJob(const QUuid &sender, const QUuid &netkey, 
+                         const WorkPacket &workpacket);
+    
+    static void stopJob(const QUuid &sender, const QUuid &netkey);
+    static void abortJob(const QUuid &sender, const QUuid &netkey);
+    
+    static void wait(const QUuid &sender, const QUuid &netkey);
+    static bool wait(const QUuid &sender, const QUuid &netkey, int timeout);
+    
+    static float progress(const QUuid &sender, const QUuid &netkey);
+    static WorkPacketPtr interimResult(const QUuid &sender, const QUuid &netkey);
+    
+    static WorkPacketPtr result(const QUuid &sender, const QUuid &netkey);
+    
+    static void disconnect(const QUuid &sender, const QUuid &netkey);
+    static void disconnect(const QUuid &sender);
+};
+
+} // end of namespace network
+} // end of namespace SireCluster
+
+SIRE_END_HEADER
+
+#endif

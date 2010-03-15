@@ -91,6 +91,10 @@ public:
     virtual Molecules update(const System &system, const Molecules &molecules)=0;
 
     bool apply(System &system) const;
+    bool apply(System &system, MolNum molnum) const;
+    bool apply(System &system, const Molecules &molecules) const;
+    
+    bool dependsOnMolecules() const;
 
     bool isSatisfied(const System &system) const;
 

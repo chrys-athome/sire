@@ -21,6 +21,8 @@
 
 #include "DistanceComponent.pypp.hpp"
 
+#include "DoubleDistanceComponent.pypp.hpp"
+
 #include "GeometryComponent.pypp.hpp"
 
 #include "IDAndSet_MonitorID_.pypp.hpp"
@@ -77,6 +79,8 @@
 
 #include "SystemMonitors.pypp.hpp"
 
+#include "TripleDistanceComponent.pypp.hpp"
+
 #include "WindowedComponent.pypp.hpp"
 
 namespace bp = boost::python;
@@ -126,6 +130,8 @@ BOOST_PYTHON_MODULE(_System){
 
     register_DistanceComponent_class();
 
+    register_DoubleDistanceComponent_class();
+
     register_IdentityConstraint_class();
 
     register_SystemMonitor_class();
@@ -161,6 +167,8 @@ BOOST_PYTHON_MODULE(_System){
     register_System_class();
 
     register_SystemMonitors_class();
+
+    register_TripleDistanceComponent_class();
 
     register_SireSystem_properties();
 

@@ -176,6 +176,9 @@ int main(int argc, char **argv)
             Siren::setProcessString( QString("compute_%1").arg(Cluster::hostName()) );
             Siren::setThreadString( "main" );
 
+            //create the resource for this process
+            Cluster::addThread();
+
             Cluster::wait();
             status = 0;
         }

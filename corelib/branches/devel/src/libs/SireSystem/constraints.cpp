@@ -90,6 +90,16 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, Constraints &constrai
     }
     else
         throw version_error(v, "1", r_constraints, CODELOC);
+    
+    constraints.mol_dependent_cons = QSet<int>();
+
+    for (int i=0; i<constraints.cons.count(); ++i)
+    {
+        if (constraints.cons.at(i).read().dependsOnMolecules())
+        {
+            constraints.mol_dependent_cons.insert(i);
+        }
+    }
         
     return ds;
 }
@@ -105,7 +115,12 @@ Constraints::Constraints(const Constraint &constraint)
     if (constraint.isA<MoleculeConstraint>())
         molcons.append(constraint);
     else
+    {
         cons.append( constraint );
+        
+        if (constraint.dependsOnMolecules())
+            mol_dependent_cons.insert(0);
+    }
 }
 
 /** Construct from the passed list of constraints */
@@ -131,7 +146,8 @@ Constraints::Constraints(const QList<ConstraintPtr> &constraints)
 /** Copy constructor */
 Constraints::Constraints(const Constraints &other)
             : ConcreteProperty<Constraints,Property>(other),
-              cons(other.cons), molcons(other.molcons)
+              cons(other.cons), molcons(other.molcons),
+              mol_dependent_cons(other.mol_dependent_cons)
 {}
 
 /** Destructor */
@@ -145,6 +161,7 @@ Constraints& Constraints::operator=(const Constraints &other)
     {
         cons = other.cons;
         molcons = other.molcons;
+        mol_dependent_cons = other.mol_dependent_cons;
         Property::operator=(other);
     }
     
@@ -263,6 +280,9 @@ void Constraints::add(const Constraint &constraint)
         
         cons.append(constraint);
         cons.squeeze();
+        
+        if (constraint.dependsOnMolecules())
+            mol_dependent_cons.insert( cons.count() - 1 );
     }
 }
 
@@ -316,6 +336,14 @@ void Constraints::remove(const Constraint &constraint)
         }
 
         cons.squeeze();
+        
+        mol_dependent_cons.clear();
+        
+        for (int i=0; i<cons.count(); ++i)
+        {
+            if (cons.at(i).read().dependsOnMolecules())
+                mol_dependent_cons.insert(i);
+        }
     }
 }
 
@@ -352,6 +380,14 @@ void Constraints::removeAt(int i)
     {
         cons.remove(i);
         cons.squeeze();
+        
+        mol_dependent_cons.clear();
+        
+        for (int i=0; i<cons.count(); ++i)
+        {
+            if (cons.at(i).read().dependsOnMolecules())
+                mol_dependent_cons.insert(i);
+        }
     }
 }
 
@@ -571,6 +607,19 @@ void Constraints::applyMoleculeConstraints(System &system)
             system.update(changed_mols);
             this->resolveMoleculeConstraints(system, changed_mols);
         }
+        
+        bool some_changed = false;
+        
+        for (QSet<int>::const_iterator it = mol_dependent_cons.constBegin();
+             it != mol_dependent_cons.constEnd();
+             ++it)
+        {
+            bool this_changed = cons.at(*it).read().apply(system);
+            some_changed = some_changed or this_changed;
+        }
+        
+        if (some_changed)
+            this->apply(system);
     }
     catch(...)
     {
@@ -610,6 +659,19 @@ void Constraints::applyMoleculeConstraints(System &system, MolNum molnum)
             system.update(changed_mols);
             this->resolveMoleculeConstraints(system, changed_mols);
         }
+
+        bool some_changed = false;
+        
+        for (QSet<int>::const_iterator it = mol_dependent_cons.constBegin();
+             it != mol_dependent_cons.constEnd();
+             ++it)
+        {
+            bool this_changed = cons.at(*it).read().apply(system);
+            some_changed = some_changed or this_changed;
+        }
+        
+        if (some_changed)
+            this->apply(system);
     }
     catch(...)
     {
@@ -649,6 +711,19 @@ void Constraints::applyMoleculeConstraints(System &system, const Molecules &mole
             system.update(changed_mols);
             this->resolveMoleculeConstraints(system, changed_mols);
         }
+
+        bool some_changed = false;
+        
+        for (QSet<int>::const_iterator it = mol_dependent_cons.constBegin();
+             it != mol_dependent_cons.constEnd();
+             ++it)
+        {
+            bool this_changed = cons.at(*it).read().apply(system);
+            some_changed = some_changed or this_changed;
+        }
+        
+        if (some_changed)
+            this->apply(system);
     }
     catch(...)
     {

@@ -37,6 +37,8 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::RDF >();
     ObjectRegistry::registerConverterFor< SireSystem::RDFMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::DistanceComponent >();
+    ObjectRegistry::registerConverterFor< SireSystem::DoubleDistanceComponent >();
+    ObjectRegistry::registerConverterFor< SireSystem::TripleDistanceComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::SpaceWrapper >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorIdx >();
