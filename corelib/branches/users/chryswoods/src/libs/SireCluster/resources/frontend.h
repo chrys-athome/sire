@@ -60,12 +60,10 @@ class Backend;
     in a cluster. Frontends provide the means by which to 
     communicate with those resources.
     
-    A Frontend can either be active or dormant. An dormant 
+    A Frontend can either be active or dormant. A dormant 
     frontend is connected to an active backend, but this frontend
-    is currently not in use, and so is available (dormant frontends
-    are held in the 'Nodes' object). An active frontend is in active
-    use, and can be given jobs (an active frontend is held by a 
-    'Node' object)
+    is currently not in use, and so is available. An active frontend 
+    is in active use, and can be given jobs
     
     @author Christopher Woods
 */

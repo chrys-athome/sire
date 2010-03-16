@@ -30,6 +30,7 @@
 #define SIRECLUSTER_NETWORK_MESSAGE_H
 
 #include <QUuid>
+#include <QByteArray>
 
 #include "Siren/object.h"
 #include "Siren/objptr.hpp"
@@ -37,6 +38,8 @@
 #include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
+
+namespace Siren{ class exception; }
 
 namespace SireCluster
 {
@@ -77,6 +80,54 @@ protected:
     bool operator!=(const Message &other) const;
 };
 
+/** This message is used to send a reply back to the sender of a message */
+class Reply : public Siren::Implements<Reply,Message>
+{
+public:
+    Reply();
+    Reply(const QUuid &host, quint64 msgid, const QByteArray &contents);
+    Reply(const QUuid &host, quint64 msgid, const Siren::exception &error);
+    
+    Reply(const Reply &other);
+    
+    ~Reply();
+    
+    Reply& operator=(const Reply &other);
+    
+    bool operator==(const Reply &other) const;
+    bool operator!=(const Reply &other) const;
+    
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
+    
+    void read(const QUuid &sender, quint64 message_id) const;
+    
+    bool isNull() const;
+    
+    bool isError() const;
+    void throwError() const;
+    
+    bool isEmpty() const;
+    
+    const QUuid& sender() const;
+    
+    const QByteArray& contents() const;
+    
+private:
+    /** The contents of this reply */
+    QByteArray reply_contents;
+    
+    /** The UID of the host that sent this reply */
+    QUuid sender_uid;
+    
+    /** The ID of the message that this is in reply to */
+    quint64 msgid;
+    
+    /** Whether or not this reply is an error */
+    bool is_error;
+};
+
 /** This message is used to tell a node in the cluster to shutdown */
 class Shutdown : public Siren::Implements<Shutdown,Message>
 {
@@ -101,6 +152,7 @@ public:
 } // end of namespace network
 } // end of namespace SireCluster
 
+Q_DECLARE_METATYPE( SireCluster::network::Reply )
 Q_DECLARE_METATYPE( SireCluster::network::Shutdown )
 
 SIRE_END_HEADER

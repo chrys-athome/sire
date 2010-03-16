@@ -26,3 +26,58 @@
   *
 \*********************************************/
 
+#ifndef SIRECLUSTER_NETWORK_NETFRONTEND_H
+#define SIRECLUSTER_NETWORK_NETFRONTEND_H
+
+#include "SireCluster/resources/frontend.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireCluster
+{
+namespace network
+{
+
+using SireCluster::resources::Frontend;
+
+/** This is a Frontend that can communicate with the 
+    remote NetBackend backend 
+    
+    @author Christopher Woods
+*/
+class NetFrontend : public Frontend
+{
+public:
+    NetFrontend(const QUuid &host, const QUuid &netkey);
+    ~NetFrontend();
+    
+    bool isLocal() const;
+    
+    void startJob(const WorkPacket &workpacket);
+    
+    void stopJob();
+    void abortJob();
+
+    void wait();
+    bool wait(int timeout);
+    
+    float progress();
+    WorkPacketPtr interimResult();
+    
+    WorkPacketPtr result();
+
+private:
+    /** The UID of the node that holds the resource */
+    QUuid host;
+
+    /** The key used to identify the backend */
+    QUuid netkey;
+};
+
+} // end of namespace network
+} // end of namespace SireCluster
+
+
+SIRE_END_HEADER
+
+#endif

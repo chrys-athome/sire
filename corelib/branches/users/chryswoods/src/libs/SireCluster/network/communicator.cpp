@@ -119,11 +119,20 @@ public:
     /** The IDs of envelopes that have not yet been sent */
     QSet<quint64> unsent_envelopes;
     
+    /** The set of replies that have been received by this communicator */
+    QHash<quint64, Reply> received_replies;
+    
     /** Mutex used to lock access to the list of unacknowledged messages */
     Mutex acknowledge_mutex;
     
     /** Wait condition used to wait until messages have been acknowledged */
     WaitCondition acknowledge_waiter;
+    
+    /** Mutex used to lock access to the hash of replies */
+    Mutex reply_mutex;
+    
+    /** Wait condition used to wait until a reply has been received */
+    WaitCondition reply_waiter;
 };
 
 namespace SireCluster
@@ -1061,4 +1070,101 @@ bool Communicator::awaitSent(const QHash<QUuid,quint64> &messages, int ms)
     }
     
     return true;
+}
+
+/** This function is called to deliver a reply that has been received
+    by in response to a message sent by this node */
+void Communicator::deliverReply(quint64 message_id, const Reply &reply)
+{
+    boost::shared_ptr<CommunicatorData> d = data();
+
+    MutexLocker lkr( &(d->reply_mutex) );
+    
+    d->received_replies.insert(message_id, reply);
+    
+    d->reply_waiter.wakeAll();
+}
+
+/** Wait until a reply to the message with ID 'message_id' has been 
+    received, and then take that reply. Note that this will take the 
+    reply, so will cause any other thread that is waiting for the 
+    reply to wait forages - so don't wait for the same reply in two
+    different threads! */
+Reply Communicator::awaitReply(const QUuid &host, quint64 message_id)
+{
+    boost::shared_ptr<CommunicatorData> d = data();
+
+    MutexLocker lkr( &(d->reply_mutex) );
+
+    QHash<quint64,Reply>::const_iterator it = d->received_replies.constFind(message_id);
+    
+    while (it != d->received_replies.constEnd())
+    {
+        d->reply_waiter.sleep( &(d->reply_mutex) );
+        
+        it = d->received_replies.constFind(message_id);
+    }
+    
+    if (it.value().sender() != host)
+        throw SireCluster::network_error( QObject::tr(
+                "Strange - we are waiting for the reply to message %1 from "
+                "host %2, but the received reply to this message is from "
+                "host %3.")
+                    .arg(message_id).arg(host.toString(), it.value().sender().toString()),
+                        CODELOC );
+
+    Reply reply = it.value();
+    
+    d->received_replies.remove(message_id);
+    
+    return reply;
+}
+
+/** Wait until a reply to the message with ID 'message_id' has been 
+    received, or 'timeout' milliseconds have passed, and then take that reply. 
+    A null Reply will be returned if a reply is not available. Note that this 
+    will take the reply, so will cause any other thread that is waiting for the 
+    reply to wait forages - so don't wait for the same reply in two
+    different threads! */
+Reply Communicator::tryAwaitReply(const QUuid &host, quint64 message_id, int timeout)
+{
+    if (timeout < 0)
+        return Communicator::awaitReply(host, message_id);
+
+    QTime t;
+    t.start();
+
+    boost::shared_ptr<CommunicatorData> d = data();
+
+    MutexLocker lkr( &(d->reply_mutex) );
+
+    QHash<quint64,Reply>::const_iterator it = d->received_replies.constFind(message_id);
+    
+    timeout -= t.restart();
+    
+    while (it != d->received_replies.constEnd())
+    {
+        d->reply_waiter.sleep( &(d->reply_mutex), timeout );
+        
+        it = d->received_replies.constFind(message_id);
+        
+        timeout -= t.restart();
+        
+        if (timeout <= 0 and it == d->received_replies.constEnd())
+            return Reply();
+    }
+    
+    if (it.value().sender() != host)
+        throw SireCluster::network_error( QObject::tr(
+                "Strange - we are waiting for the reply to message %1 from "
+                "host %2, but the received reply to this message is from "
+                "host %3.")
+                    .arg(message_id).arg(host.toString(), it.value().sender().toString()),
+                        CODELOC );
+
+    Reply reply = it.value();
+    
+    d->received_replies.remove(message_id);
+    
+    return reply;
 }

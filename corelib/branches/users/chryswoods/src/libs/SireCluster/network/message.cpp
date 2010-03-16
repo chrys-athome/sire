@@ -27,7 +27,12 @@
 \*********************************************/
 
 #include "message.h"
+
 #include "SireCluster/cluster.h"
+
+#include "Siren/datastream.h"
+
+#include "Siren/exception.h"
 
 #include <QDebug>
 
@@ -75,6 +80,164 @@ bool Message::operator!=(const Message &other) const
 QString Message::typeName()
 {
     return "SireCluster::network::Message";
+}
+
+//////
+////// Implementation of Reply
+//////
+
+static const RegisterObject<Reply> r_reply;
+
+/** Null constructor */
+Reply::Reply() : Implements<Reply,Message>(), msgid(0), is_error(false)
+{}
+
+/** Construct to reply to the message with ID 'msgid', with contents
+    'contents */
+Reply::Reply(const QUuid &sender, quint64 mid, const QByteArray &conts)
+      : Implements<Reply,Message>(), reply_contents(conts), 
+        sender_uid(sender), msgid(mid), is_error(false)
+{}
+
+/** Construct to send an error in response to the message with ID 'msgid' */
+Reply::Reply(const QUuid &sender, quint64 mid, const Siren::exception &error)
+      : Implement<Reply,Message>(), sender_uid(sender), msgid(mid), is_error(true)
+{
+    DataStream ds( &reply_contents, QIODevice::WriteOnly );
+    ds << error;
+}
+        
+/** Copy constructor */
+Reply::Reply(const Reply &other)
+      : Implements<Reply,Message(other), 
+        reply_contents(other.reply_contents),
+        sender_uid(other.sender_uid),
+        msgid(other.msgid), is_error(other.is_error)
+{}
+
+/** Destructor */
+Reply::~Reply()
+{}
+
+/** Copy assignment operator */
+Reply& Reply::operator=(const Reply &other)
+{
+    if (this != &other)
+    {
+        reply_contents = other.reply_contents;
+        sender_uid = other.sender_uid;
+        msgid = other.msgid;
+        is_error = other.is_error;
+        super::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool Reply::operator==(const Reply &other) const
+{
+    return reply_contents == other.reply_contents and 
+           sender_uid == other.sender_uid and msgid == other.msgid and
+           is_error == other.is_error and super::operator==(other);
+}
+
+/** Comparison operator */
+bool Reply::operator!=(const Reply &other) const
+{
+    return not Reply::operator==(other);
+}
+
+uint Reply::hashCode() const
+{
+    return qHash( Reply::typeName() ) + msgid + qHash(is_error);
+}
+
+QString Reply::toString() const
+{
+    if (is_error)
+        return QObject::tr("Reply( %1, ERROR )").arg(msgid);
+    
+    else if (msgid == 0)
+        return QObject::tr("Reply::null");
+    
+    else if (reply_contents.isEmpty())
+        return QObject::tr("Reply( %1, empty )").arg(msgid);
+        
+    else
+        return QObject::tr("Reply( %1, contents size %2 bytes )")
+                        .arg(msgid).arg(reply_contents.count());
+}
+
+void Reply::stream(Siren::Stream &s)
+{
+    s.assertVersion<Reply>(1);
+    
+    Schema schema = s.item<Reply>();
+    
+    schema.data("sender") & sender_uid;
+    schema.data("message_id") & msgid;
+    schema.data("contents") & reply_contents;
+    schema.data("is_error") & is_error;
+    
+    super::stream(schema.base());
+}
+
+/** Read this message - this posts a copy of this reply in the 
+    hash of replies in the Communicator */
+void Reply::read(const QUuid &sender, quint64) const
+{
+    if (sender != sender_uid)
+        throw SireCluster::network_error( QObject::tr(
+                "Something is weird with this reply (%1). The reply should have "
+                "been sent by node %2, but has actually been sent by the "
+                "node %3. This is either a program bug or an attempt to "
+                "spoof the reply.")
+                    .arg(this->toString())
+                    .arg(sender_uid.toString(), sender.toString()), CODELOC );
+
+    Communicator::deliverReply(msgid, *this);
+}
+
+/** Return the UID of the node that sent this reply */
+const QUuid& Reply::sender() const
+{
+    return sender_uid;
+}
+
+/** Return whehter or not this is the null reply */
+bool Reply::isNull() const
+{
+    return msgid == 0;
+}
+
+/** Return whether or not this message is an error */
+bool Reply::isError() const
+{
+    return is_error;
+}
+
+/** Throw the error if this reply is an error */
+void Reply::throwError() const
+{
+    if (is_error)
+    {
+        DataStream ds(reply_contents);
+        
+        ds.loadNextObject().asA<Siren::exception>().throwSelf();
+    }
+}
+
+/** Return whether or not this reply is empty */
+bool Reply::isEmpty() const
+{
+    return reply_contents.isEmpty();
+}
+
+/** Return the contents of this reply */
+const QByteArray& Reply::contents() const
+{
+    return reply_contents;
 }
 
 //////

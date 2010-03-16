@@ -77,6 +77,11 @@ public:
     static void received(const Message &message);
     static void received(const QByteArray &message);
 
+    static Reply awaitReply(const QUuid &host, quint64 message_id);
+    static Reply tryAwaitReply(const QUuid &host, quint64 message_id, int ms);
+
+    static void deliverReply(quint64 message_id, const Reply &reply);
+
     static bool messageAcknowledged(quint64 message);
     static bool allMessagesAcknowledged(const QHash<QUuid,quint64> &messages);
 
