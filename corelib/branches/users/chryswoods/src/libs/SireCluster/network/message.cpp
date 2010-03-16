@@ -27,12 +27,16 @@
 \*********************************************/
 
 #include "message.h"
+#include "communicator.h"
 
 #include "SireCluster/cluster.h"
 
 #include "Siren/datastream.h"
+#include "Siren/streamqt.h"
 
 #include "Siren/exception.h"
+
+#include "SireCluster/errors.h"
 
 #include <QDebug>
 
@@ -101,7 +105,7 @@ Reply::Reply(const QUuid &sender, quint64 mid, const QByteArray &conts)
 
 /** Construct to send an error in response to the message with ID 'msgid' */
 Reply::Reply(const QUuid &sender, quint64 mid, const Siren::exception &error)
-      : Implement<Reply,Message>(), sender_uid(sender), msgid(mid), is_error(true)
+      : Implements<Reply,Message>(), sender_uid(sender), msgid(mid), is_error(true)
 {
     DataStream ds( &reply_contents, QIODevice::WriteOnly );
     ds << error;
@@ -109,7 +113,7 @@ Reply::Reply(const QUuid &sender, quint64 mid, const Siren::exception &error)
         
 /** Copy constructor */
 Reply::Reply(const Reply &other)
-      : Implements<Reply,Message(other), 
+      : Implements<Reply,Message>(other), 
         reply_contents(other.reply_contents),
         sender_uid(other.sender_uid),
         msgid(other.msgid), is_error(other.is_error)

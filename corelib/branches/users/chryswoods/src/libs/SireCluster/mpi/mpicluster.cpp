@@ -59,6 +59,8 @@
 #include "Siren/errors.h"
 #include "Siren/datastream.h"
 
+#include "sire_config.h"
+
 #include <QDebug>
 
 using namespace SireCluster;
@@ -383,7 +385,7 @@ bool MPISendQueue::process()
             
             if (message_size_sent)
             {
-                MPI_Request_free( &send_request );
+                //MPI_Request_free( &send_request );
             
                 //ok - send the message itself
                 mpierr = MPI_Isend(const_cast<char*>(send_buffer.constData()), 
@@ -421,7 +423,7 @@ bool MPISendQueue::process()
             
             if (message_sent)
             {
-                MPI_Request_free( &send_request );
+                //MPI_Request_free( &send_request );
                 send_state = IDLE;
                 send_size_buffer = 0;
                 send_buffer = QByteArray();
@@ -494,7 +496,7 @@ bool MPIRecvQueue::process()
             
             if (message_recv)
             {
-                MPI_Request_free( &recv_request );
+                //MPI_Request_free( &recv_request );
                 Communicator::received(recv_buffer);
                 recv_state = IDLE;
             }
@@ -564,7 +566,7 @@ bool MPIClusterData::checkForReceive()
         //it has, it will be an integer giving the size of the buffer that
         //has been sent and should be received here and now
         global_recv_in_progress = false;
-        MPI_Request_free( &global_request );
+        //MPI_Request_free( &global_request );
 
         //who sent the message?
         int sender = status.MPI_SOURCE;

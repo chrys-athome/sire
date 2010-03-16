@@ -30,6 +30,7 @@
 #define SIRECLUSTER_NETWORK_NODEMESSAGES_H
 
 #include <QMultiHash>
+#include <QPair>
 
 #include "message.h"
 

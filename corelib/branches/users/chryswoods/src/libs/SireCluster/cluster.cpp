@@ -158,15 +158,17 @@ QString Cluster::hostName()
     #ifdef SIRE_USE_MPI
         return SireCluster::MPI::MPICluster::hostName();
 
-    #elif Q_OS_UNIX
-        QByteArray buffer;
-        buffer.resize(256);
-    
-        ::gethostname(buffer.data(), buffer.length());
-    
-        return QLatin1String(buffer.constData());
     #else
-        return "localhost";
+        #ifdef  Q_OS_UNIX
+            QByteArray buffer;
+            buffer.resize(256);
+    
+            ::gethostname(buffer.data(), buffer.length());
+    
+            return QLatin1String(buffer.constData());
+        #else
+            return "localhost";
+        #endif
     #endif
 }
 

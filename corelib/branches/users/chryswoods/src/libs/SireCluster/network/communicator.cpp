@@ -1100,7 +1100,7 @@ Reply Communicator::awaitReply(const QUuid &host, quint64 message_id)
     
     while (it != d->received_replies.constEnd())
     {
-        d->reply_waiter.sleep( &(d->reply_mutex) );
+        d->reply_waiter.wait( &(d->reply_mutex) );
         
         it = d->received_replies.constFind(message_id);
     }
@@ -1144,7 +1144,7 @@ Reply Communicator::tryAwaitReply(const QUuid &host, quint64 message_id, int tim
     
     while (it != d->received_replies.constEnd())
     {
-        d->reply_waiter.sleep( &(d->reply_mutex), timeout );
+        d->reply_waiter.wait( &(d->reply_mutex), timeout );
         
         it = d->received_replies.constFind(message_id);
         

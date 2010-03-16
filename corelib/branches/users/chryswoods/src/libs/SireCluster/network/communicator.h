@@ -46,6 +46,7 @@ namespace network
 class HostInfo;
 class Message;
 class Envelope;
+class Reply;
 
 /** A Communicator provides the ability to 
     send "Message" objects to another process.

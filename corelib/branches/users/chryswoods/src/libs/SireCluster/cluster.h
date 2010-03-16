@@ -32,6 +32,7 @@
 #include <QList>
 #include <QHash>
 #include <QUuid>
+#include <QPair>
 
 #include "sireglobal.h"
 
