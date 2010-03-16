@@ -41,7 +41,7 @@ SIRE_BEGIN_HEADER
 namespace SireCluster
 {
 
-namespace resources{ class ActiveBackend; }
+namespace resources{ class DormantFrontend; }
 
 namespace network
 {
@@ -68,10 +68,10 @@ public:
                                     QList<QUuid> reservation_uids,
                                     const QUuid &request_uid);
 
-    static resources::ActiveBackend 
+    static resources::DormantFrontend 
                 collectReservation(const QPair<QUuid,QUuid> &uid);
                 
-    static QHash<QUuid,resources::ActiveBackend> 
+    static QHash<QUuid,resources::DormantFrontend> 
                         collectReservation(const QMultiHash<QUuid,QUuid> &uids);
     
     static void releaseReservation(const QPair<QUuid,QUuid> &uid);

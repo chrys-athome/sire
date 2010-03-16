@@ -28,6 +28,7 @@
 
 #include "message.h"
 #include "communicator.h"
+#include "hostinfo.h"
 
 #include "SireCluster/cluster.h"
 
@@ -96,16 +97,27 @@ static const RegisterObject<Reply> r_reply;
 Reply::Reply() : Implements<Reply,Message>(), msgid(0), is_error(false)
 {}
 
+/** Construct to send an empty reply back in response to the 
+    message with ID 'msid' - this can be used to send back
+    a void (e.g. OK, finished) message */
+Reply::Reply(quint64 mid) : Implements<Reply,Message>(),
+         sender_uid( Communicator::getLocalInfo().UID() ),
+         msgid(mid), is_error(false)
+{}
+
 /** Construct to reply to the message with ID 'msgid', with contents
     'contents */
-Reply::Reply(const QUuid &sender, quint64 mid, const QByteArray &conts)
+Reply::Reply(quint64 mid, const QByteArray &conts)
       : Implements<Reply,Message>(), reply_contents(conts), 
-        sender_uid(sender), msgid(mid), is_error(false)
+        sender_uid( Communicator::getLocalInfo().UID() ), 
+        msgid(mid), is_error(false)
 {}
 
 /** Construct to send an error in response to the message with ID 'msgid' */
-Reply::Reply(const QUuid &sender, quint64 mid, const Siren::exception &error)
-      : Implements<Reply,Message>(), sender_uid(sender), msgid(mid), is_error(true)
+Reply::Reply(quint64 mid, const Siren::exception &error)
+      : Implements<Reply,Message>(), 
+        sender_uid( Communicator::getLocalInfo().UID() ), 
+        msgid(mid), is_error(true)
 {
     DataStream ds( &reply_contents, QIODevice::WriteOnly );
     ds << error;

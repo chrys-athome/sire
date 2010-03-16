@@ -31,6 +31,7 @@
 #include "netresourcemanager.h"
 #include "netbackend.h"
 #include "netfrontend.h"
+#include "hostinfo.h"
 
 #include "SireCluster/resources/resourcemanager.h"
 #include "SireCluster/resources/backend.h"
@@ -39,6 +40,7 @@
 #include "Siren/streamqt.h"
 #include "Siren/tostring.h"
 #include "Siren/forages.h"
+#include "Siren/errors.h"
 
 #include <QDebug>
 
@@ -162,12 +164,6 @@ void ReserveRequest::stream(Siren::Stream &s)
 /** Read and act on this message */
 void ReserveRequest::read(const QUuid &sender, quint64 message_id) const
 {
-    qDebug() << "RECEIVE A RESERVEREQUEST FROM" << sender.toString() << message_id;
-    qDebug() << "DESCRIPTION" << desc << "NRESOURCES" << nresources
-             << "EXPIRE_TIME" << expire_time;
-             
-    qDebug() << "UID ==" << request_uid;
-    
     //reserve a node - this tries to get a node as quickly as
     //possible, but may block while other nodes are reserved
     QUuid reservation = ResourceManager::reserveResource(expire_time);
@@ -175,7 +171,6 @@ void ReserveRequest::read(const QUuid &sender, quint64 message_id) const
     //send a response back with the reservation UID
     ReserveResponse response(request_uid, reservation);
     
-    qDebug() << "SENDING RESPONSE" << response.toString();
     Communicator::send( response, sender );
 }
 
@@ -281,7 +276,6 @@ void ReserveResponse::stream(Siren::Stream &s)
     the original ReserveRequest message */
 void ReserveResponse::read(const QUuid &sender, quint64 message_id) const
 {
-    qDebug() << "RECEIVED RESPONSE FROM" << sender << this->toString();
     NetResourceManager::receivedReservation(sender, reservation_uids, request_uid);
 }
 
@@ -459,62 +453,180 @@ void CollectReservation::stream(Siren::Stream &s)
 }
 
 /** Read the message - this cancels the contained reservations */
-void CollectReservation::read(const QUuid &sender, quint64) const
+void CollectReservation::read(const QUuid &sender, quint64 message_id) const
 {
     if (not collect_uids.isEmpty())
     {
         QHash<QUuid,ActiveBackend> resources 
                     = ResourceManager::collectReservation(collect_uids);
                     
-        qDebug() << "COLLECTED RESERVATIONS" << collect_uids << resources.count();
-                    
         //put these resources into the NetBackend holder
         QList<QUuid> netkeys = NetBackend::registerBackends(sender, resources.values());
         
-        qDebug() << "REGISTERED NETBACKENDS" << netkeys;
-        
         //send the netkeys back to the sender (the sender will use
         //the netkey together with the NetFrontend to control the resource)
-        Communicator::send( CollectResponse(netkeys), sender );
+        QByteArray data;
+        {
+            DataStream ds(&data, QIODevice::WriteOnly);
+            ds << netkeys;
+        }
+        
+        Communicator::send( Reply(message_id, data), sender );
     }
 }
 
 ////////
-//////// Implementation of CollectResponse
+//////// Implementation of GetResourceInfo
 ////////
 
-static const RegisterObject<CollectResponse> r_collect_response;
+static const RegisterObject<GetResourceInfo> r_get_resource_info;
 
 /** Null constructor */
-CollectResponse::CollectResponse() : Implements<CollectResponse,Message>()
+GetResourceInfo::GetResourceInfo() : Implements<GetResourceInfo,Message>()
 {}
 
-/** Construct to return the net key to a single resource */
-CollectResponse::CollectResponse(const QUuid &netkey)
-                : Implements<CollectResponse,Message>()
-{
-    if (not netkey.isNull())
-        netkeys.append(netkey);
-}
-
-/** Construct to return the net keys to several resources */
-CollectResponse::CollectResponse(const QList<QUuid> &keys)
-                : Implements<CollectResponse,Message>(),
-                  netkeys(keys)
+/** Construct to target the resource with netkey 'netkey' */
+GetResourceInfo::GetResourceInfo(const QUuid &n)
+                : Implements<GetResourceInfo,Message>(),
+                  netkey(n)
 {}
 
 /** Copy constructor */
-CollectResponse::CollectResponse(const CollectResponse &other)
-                : Implements<CollectResponse,Message>(other),
+GetResourceInfo::GetResourceInfo(const GetResourceInfo &other)
+                : Implements<GetResourceInfo,Message>(other),
+                  netkey(other.netkey)
+{}
+
+/** Destructor */
+GetResourceInfo::~GetResourceInfo()
+{}
+
+/** Copy assignment operator */
+GetResourceInfo& GetResourceInfo::operator=(const GetResourceInfo &other)
+{
+    if (this != &other)
+    {
+        super::operator=(other);
+        netkey = other.netkey;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool GetResourceInfo::operator==(const GetResourceInfo &other) const
+{
+    return netkey == other.netkey and super::operator==(other);
+}
+
+/** Comparison operator */
+bool GetResourceInfo::operator!=(const GetResourceInfo &other) const
+{
+    return not GetResourceInfo::operator==(other);
+}
+
+uint GetResourceInfo::hashCode() const
+{
+    return qHash( GetResourceInfo::typeName() ) + qHash(netkey);
+}
+
+QString GetResourceInfo::toString() const
+{
+    if (netkey.isNull())
+        return QObject::tr("GetResourceInfo::null");
+    else
+        return QObject::tr("GetResourceInfo( %1 )").arg(netkey.toString());
+}
+
+void GetResourceInfo::stream(Siren::Stream &s)
+{
+    s.assertVersion<GetResourceInfo>(1);
+    
+    Schema schema = s.item<GetResourceInfo>();
+    
+    schema.data("netkey") & netkey;
+    
+    super::stream(schema.base());
+}
+
+/** Read the message - this calls '' on the NetBackend identified by 
+    the netkey of this message */
+void GetResourceInfo::read(const QUuid &sender, quint64 message_id) const
+{
+    try
+    {
+        if (netkey.isNull())
+            throw Siren::program_bug( QObject::tr(
+                    "Somehow we are reading a %1 with a null netkey...!")
+                        .arg(this->what()), CODELOC );
+    
+        QUuid resource_uid = NetBackend::UID(sender, netkey);
+        QString resource_desc = NetBackend::description(sender, netkey);
+    
+        QByteArray data;
+        {
+            DataStream ds( &data, QIODevice::WriteOnly );
+            
+            ds << resource_uid << resource_desc;
+        }
+        
+        Communicator::send( Reply(message_id, data), sender );
+    }
+    catch(const Siren::exception &e)
+    {
+        Communicator::send( Reply(message_id, e), sender );
+    }
+    catch(const std::exception &e)
+    {
+        Communicator::send( Reply(message_id, Siren::std_exception(e,CODELOC)),
+                            sender );
+    }
+    catch(...)
+    {
+        Communicator::send( Reply(message_id, Siren::unknown_error( QObject::tr(
+                "Unknown error occurred while processing %1 from %2 on %3.")
+                    .arg(this->toString())
+                    .arg(sender.toString())
+                    .arg(Communicator::getLocalInfo().UID().toString()), CODELOC )),
+                            sender );
+    }
+}
+
+////////
+//////// Implementation of DisconnectResource
+////////
+
+static const RegisterObject<DisconnectResource> r_disconnect_resource;
+
+/** Null constructor */
+DisconnectResource::DisconnectResource() : Implements<DisconnectResource,Message>()
+{}
+
+/** Construct to target the resource with netkey 'netkey' */
+DisconnectResource::DisconnectResource(const QUuid &n)
+                : Implements<DisconnectResource,Message>()
+{
+    if (not n.isNull())
+        netkeys.append(n);
+}
+
+/** Construct to target the resource with netkey 'netkey' */
+DisconnectResource::DisconnectResource(const QList<QUuid> &n)
+                : Implements<DisconnectResource,Message>(), netkeys(n)
+{}
+
+/** Copy constructor */
+DisconnectResource::DisconnectResource(const DisconnectResource &other)
+                : Implements<DisconnectResource,Message>(other),
                   netkeys(other.netkeys)
 {}
 
 /** Destructor */
-CollectResponse::~CollectResponse()
+DisconnectResource::~DisconnectResource()
 {}
 
 /** Copy assignment operator */
-CollectResponse& CollectResponse::operator=(const CollectResponse &other)
+DisconnectResource& DisconnectResource::operator=(const DisconnectResource &other)
 {
     if (this != &other)
     {
@@ -526,45 +638,719 @@ CollectResponse& CollectResponse::operator=(const CollectResponse &other)
 }
 
 /** Comparison operator */
-bool CollectResponse::operator==(const CollectResponse &other) const
+bool DisconnectResource::operator==(const DisconnectResource &other) const
 {
     return netkeys == other.netkeys and super::operator==(other);
 }
 
 /** Comparison operator */
-bool CollectResponse::operator!=(const CollectResponse &other) const
+bool DisconnectResource::operator!=(const DisconnectResource &other) const
 {
-    return not CollectResponse::operator==(other);
+    return not DisconnectResource::operator==(other);
 }
 
-uint CollectResponse::hashCode() const
+uint DisconnectResource::hashCode() const
 {
-    return qHash(CollectResponse::typeName()) + netkeys.count();
+    return qHash( DisconnectResource::typeName() ) + qHash(netkeys.count());
 }
 
-QString CollectResponse::toString() const
+QString DisconnectResource::toString() const
 {
     if (netkeys.isEmpty())
-        return QObject::tr("CollectResponse::null");
+        return QObject::tr("DisconnectResource::null");
     else
-        return QObject::tr("CollectResponse( %1 )")
-                        .arg( Siren::toString(netkeys) );
+        return QObject::tr("DisconnectResource( %1 )")
+                .arg( Siren::toString(netkeys) );
 }
 
-void CollectResponse::stream(Siren::Stream &s)
+void DisconnectResource::stream(Siren::Stream &s)
 {
-    s.assertVersion<CollectResponse>(1);
+    s.assertVersion<DisconnectResource>(1);
     
-    Schema schema = s.item<CollectResponse>();
+    Schema schema = s.item<DisconnectResource>();
     
     schema.data("netkeys") & netkeys;
     
-    super::stream( schema.base() );
+    super::stream(schema.base());
 }
 
-/** Read this message - this creates and posts NetFrontends that communicate
-    with the backends using the contained netkeys */
-void CollectResponse::read(const QUuid &sender, quint64) const
+/** Read the message - this calls '' on the NetBackend identified by 
+    the netkey of this message */
+void DisconnectResource::read(const QUuid &sender, quint64) const
 {
-    qDebug() << "CREATING NETFRONTENDS TO" << netkeys << "FROM" << sender;
+    try
+    {
+        foreach (const QUuid &netkey, netkeys)
+        {
+            NetBackend::disconnect(sender, netkey);
+        }
+    }
+    catch(...)
+    {}
+}
+
+////////
+//////// Implementation of StartJob
+////////
+
+static const RegisterObject<StartJob> r_start_job;
+
+/** Null constructor */
+StartJob::StartJob() : Implements<StartJob,Message>()
+{}
+
+/** Construct to target the resource with netkey 'netkey' */
+StartJob::StartJob(const QUuid &n, const WorkPacket &workpacket)
+                : Implements<StartJob,Message>(),
+                  netkey(n), packet(workpacket)
+{}
+
+/** Copy constructor */
+StartJob::StartJob(const StartJob &other)
+                : Implements<StartJob,Message>(other),
+                  netkey(other.netkey), packet(other.packet)
+{}
+
+/** Destructor */
+StartJob::~StartJob()
+{}
+
+/** Copy assignment operator */
+StartJob& StartJob::operator=(const StartJob &other)
+{
+    if (this != &other)
+    {
+        super::operator=(other);
+        netkey = other.netkey;
+        packet = other.packet;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool StartJob::operator==(const StartJob &other) const
+{
+    return netkey == other.netkey and packet == other.packet and
+           super::operator==(other);
+}
+
+/** Comparison operator */
+bool StartJob::operator!=(const StartJob &other) const
+{
+    return not StartJob::operator==(other);
+}
+
+uint StartJob::hashCode() const
+{
+    return qHash( StartJob::typeName() ) + qHash(netkey);
+}
+
+QString StartJob::toString() const
+{
+    if (netkey.isNull() or packet.isNull())
+        return QObject::tr("StartJob::null");
+    else
+        return QObject::tr("StartJob( %1, %2 )")
+                .arg(netkey.toString(), packet.read().toString());
+}
+
+void StartJob::stream(Siren::Stream &s)
+{
+    s.assertVersion<StartJob>(1);
+    
+    Schema schema = s.item<StartJob>();
+    
+    schema.data("netkey") & netkey;
+    schema.data("workpacket") & packet;
+    
+    super::stream(schema.base());
+}
+
+/** Read the message - this calls '' on the NetBackend identified by 
+    the netkey of this message */
+void StartJob::read(const QUuid &sender, quint64 message_id) const
+{
+    try
+    {
+        if (netkey.isNull())
+            throw Siren::program_bug( QObject::tr(
+                    "Somehow we are reading a %1 with a null netkey...!")
+                        .arg(this->what()), CODELOC );
+    
+        NetBackend::startJob(sender, netkey, packet);
+        
+        Communicator::send( Reply(message_id), sender );
+    }
+    catch(const Siren::exception &e)
+    {
+        Communicator::send( Reply(message_id, e), sender );
+    }
+    catch(const std::exception &e)
+    {
+        Communicator::send( Reply(message_id, Siren::std_exception(e,CODELOC)),
+                            sender );
+    }
+    catch(...)
+    {
+        Communicator::send( Reply(message_id, Siren::unknown_error( QObject::tr(
+                "Unknown error occurred while processing %1 from %2 on %3.")
+                    .arg(this->toString())
+                    .arg(sender.toString())
+                    .arg(Communicator::getLocalInfo().UID().toString()), CODELOC )),
+                            sender );
+    }
+}
+
+////////
+//////// Implementation of StopJob
+////////
+
+static const RegisterObject<StopJob> r_stop_job;
+
+/** Null constructor */
+StopJob::StopJob() : Implements<StopJob,Message>()
+{}
+
+/** Construct to target the resource with netkey 'netkey' */
+StopJob::StopJob(const QUuid &n)
+                : Implements<StopJob,Message>(),
+                  netkey(n)
+{}
+
+/** Copy constructor */
+StopJob::StopJob(const StopJob &other)
+                : Implements<StopJob,Message>(other),
+                  netkey(other.netkey)
+{}
+
+/** Destructor */
+StopJob::~StopJob()
+{}
+
+/** Copy assignment operator */
+StopJob& StopJob::operator=(const StopJob &other)
+{
+    if (this != &other)
+    {
+        super::operator=(other);
+        netkey = other.netkey;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool StopJob::operator==(const StopJob &other) const
+{
+    return netkey == other.netkey and super::operator==(other);
+}
+
+/** Comparison operator */
+bool StopJob::operator!=(const StopJob &other) const
+{
+    return not StopJob::operator==(other);
+}
+
+uint StopJob::hashCode() const
+{
+    return qHash( StopJob::typeName() ) + qHash(netkey);
+}
+
+QString StopJob::toString() const
+{
+    if (netkey.isNull())
+        return QObject::tr("StopJob::null");
+    else
+        return QObject::tr("StopJob( %1 )").arg(netkey.toString());
+}
+
+void StopJob::stream(Siren::Stream &s)
+{
+    s.assertVersion<StopJob>(1);
+    
+    Schema schema = s.item<StopJob>();
+    
+    schema.data("netkey") & netkey;
+    
+    super::stream(schema.base());
+}
+
+/** Read the message - this calls '' on the NetBackend identified by 
+    the netkey of this message */
+void StopJob::read(const QUuid &sender, quint64 message_id) const
+{
+    try
+    {
+        if (not netkey.isNull())
+            NetBackend::stopJob(sender, netkey);
+    }
+    catch(...)
+    {}
+}
+
+////////
+//////// Implementation of AbortJob
+////////
+
+static const RegisterObject<AbortJob> r_abort_job;
+
+/** Null constructor */
+AbortJob::AbortJob() : Implements<AbortJob,Message>()
+{}
+
+/** Construct to target the resource with netkey 'netkey' */
+AbortJob::AbortJob(const QUuid &n)
+                : Implements<AbortJob,Message>(),
+                  netkey(n)
+{}
+
+/** Copy constructor */
+AbortJob::AbortJob(const AbortJob &other)
+                : Implements<AbortJob,Message>(other),
+                  netkey(other.netkey)
+{}
+
+/** Destructor */
+AbortJob::~AbortJob()
+{}
+
+/** Copy assignment operator */
+AbortJob& AbortJob::operator=(const AbortJob &other)
+{
+    if (this != &other)
+    {
+        super::operator=(other);
+        netkey = other.netkey;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool AbortJob::operator==(const AbortJob &other) const
+{
+    return netkey == other.netkey and super::operator==(other);
+}
+
+/** Comparison operator */
+bool AbortJob::operator!=(const AbortJob &other) const
+{
+    return not AbortJob::operator==(other);
+}
+
+uint AbortJob::hashCode() const
+{
+    return qHash( AbortJob::typeName() ) + qHash(netkey);
+}
+
+QString AbortJob::toString() const
+{
+    if (netkey.isNull())
+        return QObject::tr("AbortJob::null");
+    else
+        return QObject::tr("AbortJob( %1 )").arg(netkey.toString());
+}
+
+void AbortJob::stream(Siren::Stream &s)
+{
+    s.assertVersion<AbortJob>(1);
+    
+    Schema schema = s.item<AbortJob>();
+    
+    schema.data("netkey") & netkey;
+    
+    super::stream(schema.base());
+}
+
+/** Read the message - this calls '' on the NetBackend identified by 
+    the netkey of this message */
+void AbortJob::read(const QUuid &sender, quint64 message_id) const
+{
+    try
+    {
+        if (not netkey.isNull())
+            NetBackend::abortJob(sender, netkey);
+    }
+    catch(...)
+    {}
+}
+
+////////
+//////// Implementation of WaitForJob
+////////
+
+static const RegisterObject<WaitForJob> r_wait_for_job;
+
+/** Null constructor */
+WaitForJob::WaitForJob() : Implements<WaitForJob,Message>()
+{}
+
+/** Construct to wait until the job has finished */
+WaitForJob::WaitForJob(const QUuid &n)
+                : Implements<WaitForJob,Message>(),
+                  netkey(n), ms(-1)
+{}
+
+/** Construct to wait until the job has finished, or ms milliseconds
+    have elapsed */
+WaitForJob::WaitForJob(const QUuid &n, int m)
+                : Implements<WaitForJob,Message>(),
+                  netkey(n), ms(m)
+{}
+
+/** Copy constructor */
+WaitForJob::WaitForJob(const WaitForJob &other)
+                : Implements<WaitForJob,Message>(other),
+                  netkey(other.netkey), ms(other.ms)
+{}
+
+/** Destructor */
+WaitForJob::~WaitForJob()
+{}
+
+/** Copy assignment operator */
+WaitForJob& WaitForJob::operator=(const WaitForJob &other)
+{
+    if (this != &other)
+    {
+        super::operator=(other);
+        netkey = other.netkey;
+        ms = other.ms;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool WaitForJob::operator==(const WaitForJob &other) const
+{
+    return netkey == other.netkey and ms == other.ms and super::operator==(other);
+}
+
+/** Comparison operator */
+bool WaitForJob::operator!=(const WaitForJob &other) const
+{
+    return not WaitForJob::operator==(other);
+}
+
+uint WaitForJob::hashCode() const
+{
+    return qHash( WaitForJob::typeName() ) + qHash(netkey) + qHash(ms);
+}
+
+QString WaitForJob::toString() const
+{
+    if (netkey.isNull())
+        return QObject::tr("WaitForJob::null");
+    else if (ms < 0)
+        return QObject::tr("WaitForJob( %1 )").arg(netkey.toString());
+    else
+        return QObject::tr("WaitForJob( %1, wait <= %2 ms )")
+                    .arg(netkey.toString()).arg(ms);
+}
+
+void WaitForJob::stream(Siren::Stream &s)
+{
+    s.assertVersion<WaitForJob>(1);
+    
+    Schema schema = s.item<WaitForJob>();
+    
+    schema.data("netkey") & netkey;
+    schema.data("timeout") & ms;
+    
+    super::stream(schema.base());
+}
+
+/** Read the message - this calls '' on the NetBackend identified by 
+    the netkey of this message */
+void WaitForJob::read(const QUuid &sender, quint64 message_id) const
+{
+    try
+    {
+        if (netkey.isNull())
+            throw Siren::program_bug( QObject::tr(
+                    "Somehow we are reading a %1 with a null netkey...!")
+                        .arg(this->what()), CODELOC );
+
+        QByteArray data;
+
+        if (ms < 0)
+        {
+            NetBackend::wait(sender, netkey);
+        }
+        else
+        {
+            bool finished = NetBackend::wait(sender, netkey, ms);
+            
+            DataStream ds( &data, QIODevice::WriteOnly );
+            ds << finished;
+        }
+        
+        Communicator::send( Reply(message_id, data), sender );
+    }
+    catch(const Siren::exception &e)
+    {
+        Communicator::send( Reply(message_id, e), sender );
+    }
+    catch(const std::exception &e)
+    {
+        Communicator::send( Reply(message_id, Siren::std_exception(e,CODELOC)),
+                            sender );
+    }
+    catch(...)
+    {
+        Communicator::send( Reply(message_id, Siren::unknown_error( QObject::tr(
+                "Unknown error occurred while processing %1 from %2 on %3.")
+                    .arg(this->toString())
+                    .arg(sender.toString())
+                    .arg(Communicator::getLocalInfo().UID().toString()), CODELOC )),
+                            sender );
+    }
+}
+
+////////
+//////// Implementation of GetProgress
+////////
+
+static const RegisterObject<GetProgress> r_get_progress;
+
+/** Null constructor */
+GetProgress::GetProgress() : Implements<GetProgress,Message>()
+{}
+
+/** Construct to target the resource with netkey 'netkey' */
+GetProgress::GetProgress(const QUuid &n)
+                : Implements<GetProgress,Message>(),
+                  netkey(n)
+{}
+
+/** Copy constructor */
+GetProgress::GetProgress(const GetProgress &other)
+                : Implements<GetProgress,Message>(other),
+                  netkey(other.netkey)
+{}
+
+/** Destructor */
+GetProgress::~GetProgress()
+{}
+
+/** Copy assignment operator */
+GetProgress& GetProgress::operator=(const GetProgress &other)
+{
+    if (this != &other)
+    {
+        super::operator=(other);
+        netkey = other.netkey;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool GetProgress::operator==(const GetProgress &other) const
+{
+    return netkey == other.netkey and super::operator==(other);
+}
+
+/** Comparison operator */
+bool GetProgress::operator!=(const GetProgress &other) const
+{
+    return not GetProgress::operator==(other);
+}
+
+uint GetProgress::hashCode() const
+{
+    return qHash( GetProgress::typeName() ) + qHash(netkey);
+}
+
+QString GetProgress::toString() const
+{
+    if (netkey.isNull())
+        return QObject::tr("GetProgress::null");
+    else
+        return QObject::tr("GetProgress( %1 )").arg(netkey.toString());
+}
+
+void GetProgress::stream(Siren::Stream &s)
+{
+    s.assertVersion<GetProgress>(1);
+    
+    Schema schema = s.item<GetProgress>();
+    
+    schema.data("netkey") & netkey;
+    
+    super::stream(schema.base());
+}
+
+/** Read the message - this calls '' on the NetBackend identified by 
+    the netkey of this message */
+void GetProgress::read(const QUuid &sender, quint64 message_id) const
+{
+    try
+    {
+        if (netkey.isNull())
+            throw Siren::program_bug( QObject::tr(
+                    "Somehow we are reading a %1 with a null netkey...!")
+                        .arg(this->what()), CODELOC );
+    
+        QByteArray data;
+        {
+            float progress = NetBackend::progress(sender, netkey);
+        
+            DataStream ds( &data, QIODevice::WriteOnly );
+            
+            ds << progress;
+        }
+        
+        Communicator::send( Reply(message_id, data), sender );
+    }
+    catch(const Siren::exception &e)
+    {
+        Communicator::send( Reply(message_id, e), sender );
+    }
+    catch(const std::exception &e)
+    {
+        Communicator::send( Reply(message_id, Siren::std_exception(e,CODELOC)),
+                            sender );
+    }
+    catch(...)
+    {
+        Communicator::send( Reply(message_id, Siren::unknown_error( QObject::tr(
+                "Unknown error occurred while processing %1 from %2 on %3.")
+                    .arg(this->toString())
+                    .arg(sender.toString())
+                    .arg(Communicator::getLocalInfo().UID().toString()), CODELOC )),
+                            sender );
+    }
+}
+
+////////
+//////// Implementation of GetResult
+////////
+
+static const RegisterObject<GetResult> r_get_result;
+
+/** Null constructor */
+GetResult::GetResult() : Implements<GetResult,Message>()
+{}
+
+/** Construct to target the resource with netkey 'netkey' */
+GetResult::GetResult(const QUuid &n, bool wait)
+                : Implements<GetResult,Message>(),
+                  netkey(n), wait_for_final(wait)
+{}
+
+/** Copy constructor */
+GetResult::GetResult(const GetResult &other)
+                : Implements<GetResult,Message>(other),
+                  netkey(other.netkey), wait_for_final(other.wait_for_final)
+{}
+
+/** Destructor */
+GetResult::~GetResult()
+{}
+
+/** Copy assignment operator */
+GetResult& GetResult::operator=(const GetResult &other)
+{
+    if (this != &other)
+    {
+        super::operator=(other);
+        netkey = other.netkey;
+        wait_for_final = other.wait_for_final;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool GetResult::operator==(const GetResult &other) const
+{
+    return netkey == other.netkey and 
+           wait_for_final == other.wait_for_final and
+           super::operator==(other);
+}
+
+/** Comparison operator */
+bool GetResult::operator!=(const GetResult &other) const
+{
+    return not GetResult::operator==(other);
+}
+
+uint GetResult::hashCode() const
+{
+    return qHash( GetResult::typeName() ) + qHash(netkey)
+                + qHash(wait_for_final);
+}
+
+QString GetResult::toString() const
+{
+    if (netkey.isNull())
+        return QObject::tr("GetResult::null");
+    else if (wait_for_final)
+        return QObject::tr("GetResult( %1 : final result )").arg(netkey.toString());
+    else
+        return QObject::tr("GetResult( %1 : interim result )").arg(netkey.toString());
+}
+
+void GetResult::stream(Siren::Stream &s)
+{
+    s.assertVersion<GetResult>(1);
+    
+    Schema schema = s.item<GetResult>();
+    
+    schema.data("netkey") & netkey;
+    schema.data("wait") & wait_for_final;
+    
+    super::stream(schema.base());
+}
+
+/** Read the message - this calls '' on the NetBackend identified by 
+    the netkey of this message */
+void GetResult::read(const QUuid &sender, quint64 message_id) const
+{
+    try
+    {
+        if (netkey.isNull())
+            throw Siren::program_bug( QObject::tr(
+                    "Somehow we are reading a %1 with a null netkey...!")
+                        .arg(this->what()), CODELOC );
+    
+        QByteArray data;
+        {
+            DataStream ds( &data, QIODevice::WriteOnly );
+        
+            if (wait_for_final)
+            {
+                WorkPacketPtr result = NetBackend::result(sender, netkey);
+                ds << result;
+            }
+            else
+            {
+                WorkPacketPtr result = NetBackend::interimResult(sender, netkey);
+                ds << result;
+            }
+        }
+        
+        Communicator::send( Reply(message_id, data), sender );
+    }
+    catch(const Siren::exception &e)
+    {
+        Communicator::send( Reply(message_id, e), sender );
+    }
+    catch(const std::exception &e)
+    {
+        Communicator::send( Reply(message_id, Siren::std_exception(e,CODELOC)),
+                            sender );
+    }
+    catch(...)
+    {
+        Communicator::send( Reply(message_id, Siren::unknown_error( QObject::tr(
+                "Unknown error occurred while processing %1 from %2 on %3.")
+                    .arg(this->toString())
+                    .arg(sender.toString())
+                    .arg(Communicator::getLocalInfo().UID().toString()), CODELOC )),
+                            sender );
+    }
 }

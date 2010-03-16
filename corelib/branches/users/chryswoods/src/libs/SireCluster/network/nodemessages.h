@@ -32,12 +32,19 @@
 #include <QMultiHash>
 #include <QPair>
 
+#include "Siren/objptr.hpp"
+
 #include "message.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
 {
+
+class WorkPacket;
+
+typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
+
 namespace network
 {
 
@@ -193,25 +200,25 @@ private:
     QList<QUuid> collect_uids;
 };
 
-/** The message containing the response to a collection request 
+/** This is a message sent from NetFrontend to NetBackend to
+    get information about the resource connected to by the backend  
 
     @author Christopher Woods
 */
-class CollectResponse : public Siren::Implements<CollectResponse,Message>
+class GetResourceInfo : public Siren::Implements<GetResourceInfo,Message>
 {
 public:
-    CollectResponse();
-    CollectResponse(const QUuid &netkey);
-    CollectResponse(const QList<QUuid> &netkeys);
+    GetResourceInfo();
+    GetResourceInfo(const QUuid &netkey);
+
+    GetResourceInfo(const GetResourceInfo &other);
     
-    CollectResponse(const CollectResponse &other);
+    ~GetResourceInfo();
     
-    ~CollectResponse();
+    GetResourceInfo& operator=(const GetResourceInfo &other);
     
-    CollectResponse& operator=(const CollectResponse &other);
-    
-    bool operator==(const CollectResponse &other) const;
-    bool operator!=(const CollectResponse &other) const;
+    bool operator==(const GetResourceInfo &other) const;
+    bool operator!=(const GetResourceInfo &other) const;
     
     uint hashCode() const;
     QString toString() const;
@@ -220,9 +227,383 @@ public:
     void read(const QUuid &sender, quint64 message_id) const;
 
 private:
-    /** The keys used to talk to the nodes */
+    /** The key for the resource */
+    QUuid netkey;
+};
+
+/** This is a message sent by NetFrontend to NetBackend to tell the
+    backend that the frontend is disconnecting from the backend  
+
+    @author Christopher Woods
+*/
+class DisconnectResource : public Siren::Implements<DisconnectResource,Message>
+{
+public:
+    DisconnectResource();
+    DisconnectResource(const QUuid &netkey);
+    DisconnectResource(const QList<QUuid> &netkeys);
+    
+    DisconnectResource(const DisconnectResource &other);
+    
+    ~DisconnectResource();
+    
+    DisconnectResource& operator=(const DisconnectResource &other);
+    
+    bool operator==(const DisconnectResource &other) const;
+    bool operator!=(const DisconnectResource &other) const;
+    
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
+    
+    void read(const QUuid &sender, quint64 message_id) const;
+
+private:
+    /** The keys of the resources to be disconnected */
     QList<QUuid> netkeys;
 };
+
+/** This is a message sent from NetFrontend to NetBackend to  
+    start a new job on the backend  
+
+    @author Christopher Woods
+*/
+class StartJob : public Siren::Implements<StartJob,Message>
+{
+public:
+    StartJob();
+    StartJob(const QUuid &netkey, const WorkPacket &workpacket);
+    
+    StartJob(const StartJob &other);
+    
+    ~StartJob();
+    
+    StartJob& operator=(const StartJob &other);
+    
+    bool operator==(const StartJob &other) const;
+    bool operator!=(const StartJob &other) const;
+    
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
+    
+    void read(const QUuid &sender, quint64 message_id) const;
+
+private:
+    /** The key for the resource */
+    QUuid netkey;
+    
+    /** The workpacket to process */
+    WorkPacketPtr packet;
+};
+
+/** This is a message sent from NetFrontend to NetBackend to stop
+    any job currently running on the backend  
+
+    @author Christopher Woods
+*/
+class StopJob : public Siren::Implements<StopJob,Message>
+{
+public:
+    StopJob();
+    StopJob(const QUuid &netkey);
+    
+    StopJob(const StopJob &other);
+    
+    ~StopJob();
+    
+    StopJob& operator=(const StopJob &other);
+    
+    bool operator==(const StopJob &other) const;
+    bool operator!=(const StopJob &other) const;
+    
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
+    
+    void read(const QUuid &sender, quint64 message_id) const;
+
+private:
+    /** The key for the resource */
+    QUuid netkey;
+};
+
+/** This is a message sent from NetFrontend to NetBackend to abort
+    any job currently running on the backend  
+
+    @author Christopher Woods
+*/
+class AbortJob : public Siren::Implements<AbortJob,Message>
+{
+public:
+    AbortJob();
+    AbortJob(const QUuid &netkey);
+    
+    AbortJob(const AbortJob &other);
+    
+    ~AbortJob();
+    
+    AbortJob& operator=(const AbortJob &other);
+    
+    bool operator==(const AbortJob &other) const;
+    bool operator!=(const AbortJob &other) const;
+    
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
+    
+    void read(const QUuid &sender, quint64 message_id) const;
+
+private:
+    /** The key for the resource */
+    QUuid netkey;
+};
+
+/** This is a message sent from NetFrontend to NetBackend to wait
+    for any job currently running on the backend to finish  
+
+    @author Christopher Woods
+*/
+class WaitForJob : public Siren::Implements<WaitForJob,Message>
+{
+public:
+    WaitForJob();
+    WaitForJob(const QUuid &netkey);
+    WaitForJob(const QUuid &netkey, int ms);
+    
+    WaitForJob(const WaitForJob &other);
+    
+    ~WaitForJob();
+    
+    WaitForJob& operator=(const WaitForJob &other);
+    
+    bool operator==(const WaitForJob &other) const;
+    bool operator!=(const WaitForJob &other) const;
+    
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
+    
+    void read(const QUuid &sender, quint64 message_id) const;
+
+private:
+    /** The key for the resource */
+    QUuid netkey;
+    
+    /** The maximum amount of time to wait for the job
+        (forever if this is less than 0) */
+    qint32 ms;
+};
+
+/** This is a message sent from NetFrontend to NetBackend to get
+    the progress of the job currently running on the backend  
+
+    @author Christopher Woods
+*/
+class GetProgress : public Siren::Implements<GetProgress,Message>
+{
+public:
+    GetProgress();
+    GetProgress(const QUuid &netkey);
+    
+    GetProgress(const GetProgress &other);
+    
+    ~GetProgress();
+    
+    GetProgress& operator=(const GetProgress &other);
+    
+    bool operator==(const GetProgress &other) const;
+    bool operator!=(const GetProgress &other) const;
+    
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
+    
+    void read(const QUuid &sender, quint64 message_id) const;
+
+private:
+    /** The key for the resource */
+    QUuid netkey;
+};
+
+/** This is a message sent from NetFrontend to NetBackend to get
+    the result of the job currently running on the backend  
+
+    @author Christopher Woods
+*/
+class GetResult : public Siren::Implements<GetResult,Message>
+{
+public:
+    GetResult();
+    GetResult(const QUuid &netkey, bool wait_for_final=true);
+    
+    GetResult(const GetResult &other);
+    
+    ~GetResult();
+    
+    GetResult& operator=(const GetResult &other);
+    
+    bool operator==(const GetResult &other) const;
+    bool operator!=(const GetResult &other) const;
+    
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
+    
+    void read(const QUuid &sender, quint64 message_id) const;
+
+private:
+    /** The key for the resource */
+    QUuid netkey;
+    
+    /** Whether or not to wait for the final result */
+    bool wait_for_final;
+};
+
+//
+///** This is a template for the messages sent from the 
+//    NetFrontend to the NetBackend (resource identified
+//    by UID 'netkey'
+//
+//    @author Christopher Woods
+//*/
+//class MessageTemplate : public Siren::Implements<MessageTemplate,Message>
+//{
+//public:
+//    MessageTemplate();
+//    MessageTemplate(const QUuid &netkey);
+//
+//    MessageTemplate(const MessageTemplate &other);
+//    
+//    ~MessageTemplate();
+//    
+//    MessageTemplate& operator=(const MessageTemplate &other);
+//    
+//    bool operator==(const MessageTemplate &other) const;
+//    bool operator!=(const MessageTemplate &other) const;
+//    
+//    uint hashCode() const;
+//    QString toString() const;
+//    void stream(Siren::Stream &s);
+//    
+//    void read(const QUuid &sender, quint64 message_id) const;
+//
+//private:
+//    /** The key for the resource */
+//    QUuid netkey;
+//};
+//
+//////////
+////////// Implementation of MessageTemplate
+//////////
+//
+//static const RegisterObject<MessageTemplate> r_message_template;
+//
+///** Null constructor */
+//MessageTemplate::MessageTemplate() : Implements<MessageTemplate,Message>()
+//{}
+//
+///** Construct to target the resource with netkey 'netkey' */
+//MessageTemplate::MessageTemplate(const QUuid &n)
+//                : Implements<MessageTemplate,Message>(),
+//                  netkey(n)
+//{}
+//
+///** Copy constructor */
+//MessageTemplate::MessageTemplate(const MessageTemplate &other)
+//                : Implements<MessageTemplate,Message>(other),
+//                  netkey(other.netkey)
+//{}
+//
+///** Destructor */
+//MessageTemplate::~MessageTemplate()
+//{}
+//
+///** Copy assignment operator */
+//MessageTemplate& MessageTemplate::operator=(const MessageTemplate &other)
+//{
+//    if (this != &other)
+//    {
+//        super::operator=(other);
+//        netkey = other.netkey;
+//    }
+//    
+//    return *this;
+//}
+//
+///** Comparison operator */
+//bool MessageTemplate::operator==(const MessageTemplate &other) const
+//{
+//    return netkey == other.netkey and super::operator==(other);
+//}
+//
+///** Comparison operator */
+//bool MessageTemplate::operator!=(const MessageTemplate &other) const
+//{
+//    return not MessageTemplate::operator==(other);
+//}
+//
+//uint MessageTemplate::hashCode() const
+//{
+//    return qHash( MessageTemplate::typeName() ) + qHash(netkey);
+//}
+//
+//QString MessageTemplate::toString() const
+//{
+//    if (netkey.isNull())
+//        return QObject::tr("MessageTemplate::null");
+//    else
+//        return QObject::tr("MessageTemplate( %1 )").arg(netkey.toString());
+//}
+//
+//void MessageTemplate::stream(Siren::Stream &s)
+//{
+//    s.assertVersion<MessageTemplate>(1);
+//    
+//    Schema schema = s.item<MessageTemplate>();
+//    
+//    schema.data("netkey") & netkey;
+//    
+//    super::stream(schema.base());
+//}
+//
+///** Read the message - this calls '' on the NetBackend identified by 
+//    the netkey of this message */
+//void MessageTemplate::read(const QUuid &sender, quint64 message_id) const
+//{
+//    try
+//    {
+//        if (netkey.isNull())
+//            throw Siren::program_bug( QObject::tr(
+//                    "Somehow we are reading a %1 with a null netkey...!")
+//                        .arg(this->what()), CODELOC );
+//    
+//        QByteArray data;
+//        {
+//            DataStream ds( &data, QIODevice::WriteOnly );
+//        }
+//        
+//        Communicator::send( Reply(message_id, data), sender );
+//    }
+//    catch(const Siren::exception &e)
+//    {
+//        Communicator::send( Reply(message_id, e), sender );
+//    }
+//    catch(const std::exception &e)
+//    {
+//        Communicator::send( Reply(message_id, Siren::std_exception(e,CODELOC)),
+//                            sender );
+//    }
+//    catch(...)
+//    {
+//        Communicator::send( Reply(message_id, Siren::unknown_error( QObject::tr(
+//                "Unknown error occurred while processing %1 from %2 on %3.")
+//                    .arg(this->toString())
+//                    .arg(sender.toString())
+//                    .arg(Communicator::getLocalInfo().UID().toString()), CODELOC )),
+//                            sender );
+//    }
+//}
 
 } // end of namespace network
 } // end of namespace SireCluster
@@ -231,7 +612,14 @@ Q_DECLARE_METATYPE( SireCluster::network::ReserveRequest )
 Q_DECLARE_METATYPE( SireCluster::network::ReserveResponse )
 Q_DECLARE_METATYPE( SireCluster::network::CancelReservation )
 Q_DECLARE_METATYPE( SireCluster::network::CollectReservation )
-Q_DECLARE_METATYPE( SireCluster::network::CollectResponse )
+Q_DECLARE_METATYPE( SireCluster::network::GetResourceInfo )
+Q_DECLARE_METATYPE( SireCluster::network::DisconnectResource )
+Q_DECLARE_METATYPE( SireCluster::network::StartJob )
+Q_DECLARE_METATYPE( SireCluster::network::StopJob )
+Q_DECLARE_METATYPE( SireCluster::network::AbortJob )
+Q_DECLARE_METATYPE( SireCluster::network::WaitForJob )
+Q_DECLARE_METATYPE( SireCluster::network::GetProgress )
+Q_DECLARE_METATYPE( SireCluster::network::GetResult )
 
 SIRE_END_HEADER
 

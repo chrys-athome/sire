@@ -85,8 +85,9 @@ class Reply : public Siren::Implements<Reply,Message>
 {
 public:
     Reply();
-    Reply(const QUuid &host, quint64 msgid, const QByteArray &contents);
-    Reply(const QUuid &host, quint64 msgid, const Siren::exception &error);
+    Reply(quint64 msgid);
+    Reply(quint64 msgid, const QByteArray &contents);
+    Reply(quint64 msgid, const Siren::exception &error);
     
     Reply(const Reply &other);
     

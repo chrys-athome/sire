@@ -30,11 +30,16 @@
 #include "communicator.h"
 #include "nodemessages.h"
 #include "netbackend.h"
+#include "netfrontend.h"
 
 #include "Siren/mutex.h"
 #include "Siren/waitcondition.h"
+#include "Siren/datastream.h"
+#include "Siren/streamqt.h"
 
-#include "SireCluster/resources/backend.h"
+#include "SireCluster/resources/frontend.h"
+
+#include "Siren/errors.h"
 
 #include <QDebug>
 
@@ -134,14 +139,11 @@ QPair<QUuid,QUuid> reservationUID(const QUuid &request_uid,
         {
             //this request is no longer being serviced
             // - nothing is available
-            qDebug() << "NOTHING IS AVAILABLE!!!";
             return QPair<QUuid,QUuid>();
         }
             
         if (reservations->nresponses >= nrequests)
         {
-            qDebug() << "EVERYONE RESPONDED NEGATIVELY!";
-        
             //everyone who was contacted has already responded
             //in the negative
             MutexLocker lkr2( requestMutex() );
@@ -151,8 +153,6 @@ QPair<QUuid,QUuid> reservationUID(const QUuid &request_uid,
                 
             return QPair<QUuid,QUuid>();
         }
-
-        qDebug() << "WAITING FOR A RESERVATION TO BECOME AVAILABLE...";
             
         reservations->waiter.wait( &(reservations->datamutex) );
     }
@@ -220,7 +220,6 @@ void NetResourceManager::receivedReservation(const QUuid &sender,
     {
         //we no longer want these reservations - send back cancel
         //reservation response to the sender
-        qDebug() << "Cancelling" << reservation_uids;
         Communicator::send( CancelReservation(reservation_uids), sender );
         return;
     }
@@ -245,7 +244,6 @@ void NetResourceManager::receivedReservation(const QUuid &sender,
     {
         //we no longer want these reservations - send back cancel
         //reservation response to the sender
-        qDebug() << "Cancelling" << reservation_uids;
         Communicator::send( CancelReservation(reservation_uids), sender );
     }
 }
@@ -261,10 +259,8 @@ QPair<QUuid,QUuid> NetResourceManager::reserveResource(int expires)
     
     ReserveRequest request(request_uid, expires);
 
-    qDebug() << "SENDING RESERVE MESSAGES" << request.toString();
     QHash<QUuid,quint64> msgs = Communicator::broadcast(request);
     Communicator::awaitSent(msgs);
-    qDebug() << "MESSAGES HAVE BEEN SENT";
 
     //see get the UUID of the (hopefully) successful reservation
     return ::reservationUID(request_uid, r, msgs.count());
@@ -287,19 +283,65 @@ QMultiHash<QUuid,QUuid> NetResourceManager::reserveResources(const QString &desc
     return QMultiHash<QUuid,QUuid>();
 }
 
-ActiveBackend NetResourceManager::collectReservation(const QPair<QUuid,QUuid> &uid)
+/** Collect the reservation QPair( host_uid, reservation_uid ), returning
+    a dormant frontend to the resource. This returns an invalid DormantFrontend
+    if the resource is no longer available (e.g. if the reservation expired) */
+DormantFrontend 
+NetResourceManager::collectReservation(const QPair<QUuid,QUuid> &reservation)
 {
-    return ActiveBackend();
+    if (reservation.first.isNull() or reservation.second.isNull())
+        return DormantFrontend();
+        
+    quint64 msgid = Communicator::send( 
+                        CollectReservation(reservation.second), reservation.first );
+    
+    Reply reply = Communicator::awaitReply(reservation.first, msgid);
+    
+    if (reply.isError())
+        reply.throwError();
+        
+    else if (reply.isEmpty())
+        //the resource must have disappeared before we got it!
+        return DormantFrontend();
+        
+    QList<QUuid> netkeys;
+    {
+        DataStream ds(reply.contents());
+        ds >> netkeys;
+    }
+
+    try
+    {
+        if (netkeys.isEmpty())
+            return DormantFrontend();
+        
+        else if (netkeys.count() > 1)
+            throw Siren::program_bug( QObject::tr(
+                  "We only collected one reservation, but got back multiple resources?"),
+                      CODELOC );
+                        
+        return DormantFrontend( new NetFrontend(reservation.first, netkeys.at(0)) );
+    }
+    catch(...)
+    {
+        Communicator::send( DisconnectResource(netkeys), reservation.first );
+        throw;
+    }
+    
+    return DormantFrontend();
 }
 
-QHash<QUuid,ActiveBackend>
+QHash<QUuid,DormantFrontend>
 NetResourceManager::collectReservation(const QMultiHash<QUuid,QUuid> &uids)
 {
-    return QHash<QUuid,ActiveBackend>();
+    return QHash<QUuid,DormantFrontend>();
 }
 
+/** Cancel the reservation in QPair( host_uid, reservation_uid ) */
 void NetResourceManager::releaseReservation(const QPair<QUuid,QUuid> &uid)
-{}
+{
+    
+}
 
 void NetResourceManager::releaseReservation(const QMultiHash<QUuid,QUuid> &uids)
 {}

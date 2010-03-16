@@ -31,6 +31,7 @@
 #include "nodemessages.h"
 
 #include "Siren/datastream.h"
+#include "Siren/streamqt.h"
 
 #include "SireCluster/errors.h"
 #include "Siren/errors.h"
@@ -45,7 +46,7 @@ using namespace Siren;
 NetFrontend::NetFrontend(const QUuid &h, const QUuid &n)
             : Frontend(), host(h), netkey(n)
 {
-/*    quint64 msgid = Communicator::send( GetResourceInfo(netkey), host );
+    quint64 msgid = Communicator::send( GetResourceInfo(netkey), host );
     Reply reply = Communicator::awaitReply(host, msgid);
 
     if (reply.isError())
@@ -65,13 +66,12 @@ NetFrontend::NetFrontend(const QUuid &h, const QUuid &n)
     
     Frontend::setUID(resource_uid);
     Frontend::setDescription(resource_description);
-*/
 }
 
 /** Destructor - this blocks while the resource is disconnected */
 NetFrontend::~NetFrontend()
 {
-//    Communicator::send( DisconnectResource(netkey), host );
+    Communicator::send( DisconnectResource(netkey), host );
 }
 
 /** This is not a local resource! */
@@ -83,38 +83,36 @@ bool NetFrontend::isLocal() const
 /** Start the job contained in the passed workpacket */
 void NetFrontend::startJob(const WorkPacket &workpacket)
 {
-/*    quint64 msgid = Communicator::send( StartJob(netkey,workpacket), host );
-    
+    quint64 msgid = Communicator::send( StartJob(netkey,workpacket), host );
+     
     Reply reply = Communicator::awaitReply(host, msgid);
     
     if (reply.isError())
         reply.throwError();
-*/
 }
 
 /** Stop any running job on the resource */
 void NetFrontend::stopJob()
 {
-//    Communicator::send( StopJob(netkey), host );
+    Communicator::send( StopJob(netkey), host );
 }
 
 /** Abort any running job on the resource */
 void NetFrontend::abortJob()
 {
-//    Communicator::send( AbortJob(netkey), host );
+    Communicator::send( AbortJob(netkey), host );
 }
 
 /** Wait until the job currently running on the resource
     has finished */
 void NetFrontend::wait()
 {
-/*    quint64 msgid = Communicator::send( WaitForJob(netkey), host );
+    quint64 msgid = Communicator::send( WaitForJob(netkey), host );
     
     Reply reply = Communicator::awaitReply(host, msgid);
     
     if (reply.isError())
         reply.throwError();
-*/
 }
 
 /** Wait until the job currently running on the resource 
@@ -122,7 +120,7 @@ void NetFrontend::wait()
     This returns whether or not the job has finished */
 bool NetFrontend::wait(int timeout)
 {
-/*    quint64 msgid = Communicator::send( WaitForJob(netkey,timeout), host );
+    quint64 msgid = Communicator::send( WaitForJob(netkey,timeout), host );
     
     Reply reply = Communicator::awaitReply(host, msgid);
     
@@ -139,14 +137,12 @@ bool NetFrontend::wait(int timeout)
     ds >> finished;
     
     return finished;
-*/
-    return false;
 }
 
 /** Return the progress made on the current job */
 float NetFrontend::progress()
 {
-/*    quint64 msgid = Communicator::send( GetProgress(netkey), host );
+    quint64 msgid = Communicator::send( GetProgress(netkey), host );
     
     Reply reply = Communicator::awaitReply(host, msgid);
     
@@ -163,14 +159,12 @@ float NetFrontend::progress()
     ds >> p;
     
     return p;
-*/
-    return 0;
 }
 
 /** Return the current state of the job */
 WorkPacketPtr NetFrontend::interimResult()
 {
-/*    quint64 msgid = Communicator::send( GetResult(netkey,false), host );
+    quint64 msgid = Communicator::send( GetResult(netkey,false), host );
     
     Reply reply = Communicator::awaitReply(host, msgid);
     
@@ -183,15 +177,12 @@ WorkPacketPtr NetFrontend::interimResult()
     DataStream ds(reply.contents());
     
     return ds.loadNextObject().asA<WorkPacket>();
-*/
-    return WorkPacketPtr();
 }
 
 /** Return the final result of the currently running job 
      - this blocks until the job has finished running */
 WorkPacketPtr NetFrontend::result()
 {
-/*
     quint64 msgid = Communicator::send( GetResult(netkey,true), host );
     
     Reply reply = Communicator::awaitReply(host, msgid);
@@ -205,6 +196,4 @@ WorkPacketPtr NetFrontend::result()
     DataStream ds(reply.contents());
     
     return ds.loadNextObject().asA<WorkPacket>();
-*/
-    return WorkPacketPtr();
 }

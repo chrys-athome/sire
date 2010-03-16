@@ -1098,7 +1098,7 @@ Reply Communicator::awaitReply(const QUuid &host, quint64 message_id)
 
     QHash<quint64,Reply>::const_iterator it = d->received_replies.constFind(message_id);
     
-    while (it != d->received_replies.constEnd())
+    while (it == d->received_replies.constEnd())
     {
         d->reply_waiter.wait( &(d->reply_mutex) );
         
@@ -1142,7 +1142,7 @@ Reply Communicator::tryAwaitReply(const QUuid &host, quint64 message_id, int tim
     
     timeout -= t.restart();
     
-    while (it != d->received_replies.constEnd())
+    while (it == d->received_replies.constEnd())
     {
         d->reply_waiter.wait( &(d->reply_mutex), timeout );
         

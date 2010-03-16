@@ -316,16 +316,14 @@ Node Cluster::getReservedRemoteNode(const QPair<QUuid,QUuid> &reservation)
 {
     if (reservation.first.isNull())
         return Node();
-        
-    qDebug() << "COLLECT" << reservation.first << "FROM" << reservation.second;
+
+    DormantFrontend frontend = NetResourceManager::collectReservation(reservation);
     
-    Communicator::send( CollectReservation(reservation.second), reservation.first );
+    if (frontend.isNull())
+        return Node();
     
-    Siren::msleep(5000);
-    
-    qDebug() << "honestly, we've collected the node!";
-    
-    return Node();
+    else
+        return Node( SimpleQueue().create(frontend) );
 }
 
 /** Internal function used to get the node associated with the passed reservations */
