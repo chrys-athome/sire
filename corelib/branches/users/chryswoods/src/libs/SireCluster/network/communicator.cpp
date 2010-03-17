@@ -652,7 +652,7 @@ static void received(const Envelope &envelope)
                 "process with UID %2.")
                     .arg( d->localhost.UID().toString() )
                     .arg(envelope.sender().toString()), CODELOC );
-                    
+
     ObjRef message = ::unpack(envelope.message(), d->encrypt_privkey, sign_key);
 
     //acknowledge receipt of the message (if that has been requested)
@@ -692,11 +692,11 @@ class ReceivePool
         {
             Thread::signalStarted();
             
-            try
-            {
-                MutexLocker lkr(datamutex);
+            MutexLocker lkr(datamutex);
 
-                while (for_ages())
+            while (for_ages())
+            {
+                try
                 {
                     while (jobs->isEmpty())
                     {
@@ -729,9 +729,27 @@ class ReceivePool
                     
                     lkr.relock();
                 }
+                catch(const Siren::interupted&)
+                {
+                    break;
+                }
+                catch(const Siren::exception &e)
+                {
+                    qDebug() << CODELOC;
+                    Siren::printError(e);
+                }
+                catch(const std::exception &e)
+                {
+                    qDebug() << CODELOC;
+                    Siren::printError(Siren::std_exception(e,CODELOC));
+                }
+                catch(...)
+                {
+                    qDebug() << CODELOC;
+                    Siren::printError(Siren::unknown_error(QObject::tr(
+                            "Unknown error in ReceiveThread"), CODELOC ));
+                }
             }
-            catch(const Siren::interupted&)
-            {}
         }
     };
 

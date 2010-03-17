@@ -576,9 +576,10 @@ int DataStream::readClassID(const QString &type_name, int &version)
                     "Something has gone wrong with the mapping of ID numbers "
                     "to class names in this stream. The stream says that the "
                     "class associated with ID %1 (version %2) is %3, but the "
-                    "code expects it to be class %4.")
+                    "code expects it to be class %4.\n%5")
                         .arg(class_id).arg(class_version)
-                        .arg(loaded_type, type_name), CODELOC );
+                        .arg(loaded_type, type_name)
+                        .arg(Siren::toString(resource().types_by_name)), CODELOC );
             
             version = class_version;
             return class_id;

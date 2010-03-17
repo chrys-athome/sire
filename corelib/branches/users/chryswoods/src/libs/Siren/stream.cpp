@@ -29,6 +29,7 @@
 #include "stream.h"
 #include "class.h"
 #include "objref.h"
+#include "objptr.hpp"
 #include "detail/sharestrings.h"
 
 #include "Siren/errors.h"
@@ -589,17 +590,32 @@ ObjRef Stream::loadNextObject()
 {
     //get the type name of the next object
     QString next_type = this->peekNextType();
-    
-    //create a Class for this type
-    Class c( next_type );
-    
-    //now create an object of this type...
-    ObjRef obj = c.createObject();
-    
-    //now read this object
-    const_cast<Object&>(*obj).stream(*this);
-    
-    return obj;
+
+    if (next_type == QLatin1String("Siren::ObjPtr"))
+    {
+        ObjPtr<Object> objptr;
+        *this >> objptr;
+        return objptr;
+    }
+    else if (next_type == QLatin1String("Siren::ObjRef"))
+    {
+        ObjRef objref;
+        *this >> objref;
+        return objref;
+    }
+    else
+    {
+        //create a Class for this type
+        Class c( next_type );
+
+        //now create an object of this type...
+        ObjRef obj = c.createObject();
+        
+        //now read this object
+        const_cast<Object&>(*obj).stream(*this);
+        
+        return obj;
+    }
 }
 
 /** Stream the passed string */
@@ -691,7 +707,11 @@ Stream& Stream::operator&(QByteArray &blob)
     {
         int id = this->readBlobReference();
         
-        if (resource().blobs_by_id.contains(id))
+        if (id == 0)
+        {
+            blob = QByteArray();
+        }
+        else if (resource().blobs_by_id.contains(id))
         {
             blob = resource().blobs_by_id.value(id);
         }

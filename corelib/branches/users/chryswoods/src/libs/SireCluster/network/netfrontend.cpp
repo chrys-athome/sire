@@ -36,6 +36,8 @@
 #include "SireCluster/errors.h"
 #include "Siren/errors.h"
 
+#include <QDebug>
+
 using namespace SireCluster;
 using namespace SireCluster::network;
 using namespace SireCluster::resources;
@@ -84,11 +86,13 @@ bool NetFrontend::isLocal() const
 void NetFrontend::startJob(const WorkPacket &workpacket)
 {
     quint64 msgid = Communicator::send( StartJob(netkey,workpacket), host );
-     
+
     Reply reply = Communicator::awaitReply(host, msgid);
     
     if (reply.isError())
+    {
         reply.throwError();
+    }
 }
 
 /** Stop any running job on the resource */

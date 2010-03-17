@@ -215,7 +215,10 @@ struct StreamHelper<ObjRef>
     
     static const void* getKey(const ObjRef &object)
     {
-        return object.d.constData();
+        if (dynamic_cast<const None*>(object.d.constData()) != 0)
+            return 0;
+        else
+            return object.d.constData();
     }
     
     static ObjRef null()
@@ -243,7 +246,7 @@ void ObjRef::stream(Stream &s)
         else
         {
             ObjRef new_obj = s.loadNextObject();
-            
+
             d = new_obj.d;
         }
     }

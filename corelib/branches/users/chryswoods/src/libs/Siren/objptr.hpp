@@ -453,14 +453,13 @@ Siren::Stream& Siren::Stream::operator&(Siren::ObjPtr<T> &object)
     if (this->isLoading())
     {
         Siren::ObjRef objref;
-        *this >> objref;
-        
+        objref.stream(*this);
         object = objref;
     }
     else
     {
         Siren::ObjRef objref = object;
-        *this << objref;
+        objref.stream(*this);
     }
 
     return *this;
