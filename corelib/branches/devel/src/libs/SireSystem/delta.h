@@ -31,6 +31,11 @@
 
 #include "constraint.h"
 
+#include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
+
+#include "SireCAS/values.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireSystem
@@ -43,6 +48,18 @@ QDataStream& operator>>(QDataStream&, SireSystem::Delta&);
 
 namespace SireSystem
 {
+
+using SireBase::Property;
+using SireBase::Properties;
+
+using SireCAS::Symbol;
+using SireCAS::Values;
+
+using SireMol::Molecule;
+using SireMol::Molecules;
+using SireMol::MolNum;
+
+using SireFF::FFIdx;
 
 /** This class records what has changed in a system between moves,
     or between applications of a constraint. This records changes
@@ -63,7 +80,7 @@ friend QDataStream& ::operator>>(QDataStream&, Delta&);
 public:
     Delta();
     Delta(const Molecule &old_molecule, const Molecule &new_molecule);
-    Delta(const Molecules &old_molecules, const Molecules &new_molecules)
+    Delta(const Molecules &old_molecules, const Molecules &new_molecules);
     Delta(const Symbol &component, double old_value, double new_value);
     Delta(const QString &name, 
           const Property &old_value, const Property &new_value);
@@ -99,8 +116,8 @@ public:
     bool involves(const QString &property, const FFIdx &ffidx) const;
     bool involves(const QString &property, const QList<FFIdx> &ffidxs) const;
     
-    const Molecules& oldMolecules() const;
-    const Molecules& newMolecules() const;
+    Molecules oldMolecules() const;
+    Molecules newMolecules() const;
     
     Molecule oldMolecule(MolNum molnum) const;
     Molecule newMolecule(MolNum molnum) const;
@@ -117,17 +134,14 @@ public:
     const Property& oldProperty(const QString &property) const;
     const Property& newProperty(const QString &property) const;
     
-    Properties oldProperties(const QString &property, const FFIdx &ffidx) const;
-    Properties newProperties(const QString &property, const FFIdx &ffidx) const;
+    Properties oldProperties(const FFIdx &ffidx) const;
+    Properties newProperties(const FFIdx &ffidx) const;
     
     const Property& oldProperty(const QString &property, const FFIdx &ffidx) const;
     const Property& newProperty(const QString &property, const FFIdx &ffidx) const;
     
-    Properties oldProperties(const QString &property,
-                             const QList<FFIdx> &ffidxs) const;
-                             
-    Properties newProperties(const QString &property,
-                             const QList<FFIdx> &ffidxs) const;
+    Properties oldProperties(const QList<FFIdx> &ffidxs) const;
+    Properties newProperties(const QList<FFIdx> &ffidxs) const;
                              
     const Property& oldProperty(const QString &property,
                                 const QList<FFIdx> &ffidxs) const;
@@ -136,6 +150,14 @@ public:
                                 const QList<FFIdx> &ffidxs) const;
     
 private:
+    /** A single changed molecule before the delta - this is used when this
+        delta involves only a single molecule */
+    Molecule old_mol;
+    
+    /** A single changed molecule after the delta - this is used when this
+        delta involves only a single molecule */
+    Molecule new_mol;
+
     /** All of the changed molecules before the delta */
     Molecules old_mols;
     
@@ -164,8 +186,11 @@ private:
         after the delta, indexed by FFIdx (in the System) */
     QHash<FFIdx,Properties> new_ff_properties;
 
-    /** Whether or not this is empty */
-    bool is_empty;
+    /** An integer that is incremented whenever
+        deltas are combined - this can be used to quickly
+        tell if two deltas are different. This is equal
+        to zero for an empty delta */
+    quint32 merge_count;
 };
 
 }

@@ -164,7 +164,7 @@ void Envelope::stream(Siren::Stream &s)
     schema.data("routed_uids") & routed_uids;
     schema.data("message_data") & message_data;
     schema.data("message_id") & msg_id;
-    schema.data("acknowlede") & acknowledge_receipt;
+    schema.data("acknowledge") & acknowledge_receipt;
     
     super::stream( schema.base() );
 }

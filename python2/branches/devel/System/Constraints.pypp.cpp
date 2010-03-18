@@ -82,6 +82,39 @@ void register_Constraints_class(){
                 , ( bp::arg("system") ) );
         
         }
+        { //::SireSystem::Constraints::applyMolDependentConstraints
+        
+            typedef void ( ::SireSystem::Constraints::*applyMolDependentConstraints_function_type )( ::SireSystem::System & ) ;
+            applyMolDependentConstraints_function_type applyMolDependentConstraints_function_value( &::SireSystem::Constraints::applyMolDependentConstraints );
+            
+            Constraints_exposer.def( 
+                "applyMolDependentConstraints"
+                , applyMolDependentConstraints_function_value
+                , ( bp::arg("system") ) );
+        
+        }
+        { //::SireSystem::Constraints::applyMolDependentConstraints
+        
+            typedef void ( ::SireSystem::Constraints::*applyMolDependentConstraints_function_type )( ::SireSystem::System &,::SireMol::MolNum ) ;
+            applyMolDependentConstraints_function_type applyMolDependentConstraints_function_value( &::SireSystem::Constraints::applyMolDependentConstraints );
+            
+            Constraints_exposer.def( 
+                "applyMolDependentConstraints"
+                , applyMolDependentConstraints_function_value
+                , ( bp::arg("system"), bp::arg("molnum") ) );
+        
+        }
+        { //::SireSystem::Constraints::applyMolDependentConstraints
+        
+            typedef void ( ::SireSystem::Constraints::*applyMolDependentConstraints_function_type )( ::SireSystem::System &,::SireMol::Molecules const & ) ;
+            applyMolDependentConstraints_function_type applyMolDependentConstraints_function_value( &::SireSystem::Constraints::applyMolDependentConstraints );
+            
+            Constraints_exposer.def( 
+                "applyMolDependentConstraints"
+                , applyMolDependentConstraints_function_value
+                , ( bp::arg("system"), bp::arg("molecules") ) );
+        
+        }
         { //::SireSystem::Constraints::applyMoleculeConstraints
         
             typedef void ( ::SireSystem::Constraints::*applyMoleculeConstraints_function_type )( ::SireSystem::System & ) ;
@@ -176,6 +209,16 @@ void register_Constraints_class(){
             Constraints_exposer.def( 
                 "count"
                 , count_function_value );
+        
+        }
+        { //::SireSystem::Constraints::hasMolDependentConstraints
+        
+            typedef bool ( ::SireSystem::Constraints::*hasMolDependentConstraints_function_type )(  ) const;
+            hasMolDependentConstraints_function_type hasMolDependentConstraints_function_value( &::SireSystem::Constraints::hasMolDependentConstraints );
+            
+            Constraints_exposer.def( 
+                "hasMolDependentConstraints"
+                , hasMolDependentConstraints_function_value );
         
         }
         { //::SireSystem::Constraints::hasMoleculeConstraints

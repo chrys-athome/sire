@@ -293,21 +293,7 @@ void XMLStream::Document::writeBlob(int id, const QByteArray &blob)
         document_root.appendChild(blobs);
     }
     
-    //we need to encode the binary data as a base64 string
-    //(thanks to chris.venter@gmail.com for providing a 
-    // fast public domain base64 encoder).
-    
-    // The encoded string only uses the characters [A-Za-z0-9+/=]
-    // so can safely be placed into an XML document
-    
-    // base64 encoded data is 1/3 larger than raw blob
-    QByteArray encoded_blob( 1 + blob.count() + (blob.count() / 3), '\0' );
-        
-    base64::encoder encoder;
-    
-    encoder.encode(blob.constData(), blob.count(), encoded_blob.data());
-    
-    QDomText text = dom.createTextNode( QLatin1String(encoded_blob.constData()) );
+    QDomText text = dom.createTextNode( QLatin1String(blob.toBase64().constData()) );
     
     QDomElement b = dom.createElement("bindata");
     b.setAttribute("id", id);
@@ -358,17 +344,13 @@ QByteArray XMLStream::Document::readBlob(int id)
                 "become corrupted.").arg(decoded_size).arg(encoded_blob.size()),
                 binary );
 
-    QByteArray blob;
+    QByteArray blob = QByteArray::fromBase64(encoded_blob);
     
-    //ensure that there is enough space in case the buffer overruns
-    blob.reserve(encoded_blob.size());
-    
-    //but we will only return as many bytes as the attribute claims...
-    blob.resize(decoded_size);
-    
-    base64::decoder decoder;
-    
-    decoder.decode( encoded_blob.constData(), encoded_blob.size(), blob.data() );
+    if (decoded_size != blob.count())
+        this->corrupted_data( QObject::tr(
+                "The size of the decoded blob (%1) is not equal to the expected "
+                "size (%2). This implies that the blob has been corrupted!")
+                    .arg(blob.count()).arg(decoded_size), binary );
 
     return blob;
 }

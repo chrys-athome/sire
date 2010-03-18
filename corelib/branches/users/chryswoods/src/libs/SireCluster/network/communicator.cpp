@@ -46,6 +46,7 @@
 #include "Siren/thread.h"
 #include "Siren/forages.h"
 #include "Siren/datastream.h"
+#include "Siren/xmlstream.h"
 #include "Siren/tostring.h"
 
 #include "SireSec/publickey.h"
@@ -690,65 +691,72 @@ class ReceivePool
     protected:
         void threadMain()
         {
-            Thread::signalStarted();
-            
-            MutexLocker lkr(datamutex);
-
-            while (for_ages())
+            try
             {
-                try
+                Thread::signalStarted();
+                
+                MutexLocker lkr(datamutex);
+
+                while (for_ages())
                 {
-                    while (jobs->isEmpty())
+                    try
                     {
+                        while (jobs->isEmpty())
+                        {
+                            if (*exit_now)
+                                return;
+                        
+                            job_waiter->wait(datamutex);
+                        }
+                        
                         if (*exit_now)
                             return;
-                    
-                        job_waiter->wait(datamutex);
-                    }
-                    
-                    if (*exit_now)
-                        return;
-                    
-                    QPair<Envelope,QByteArray> job = jobs->dequeue();
-                    
-                    lkr.unlock();
-                    
-                    Envelope envelope;
-                    
-                    if (job.second.isEmpty())
-                    {
-                        envelope = job.first;
-                    }
-                    else
-                    {
-                        DataStream ds(job.second);
-                        ds >> envelope;
-                    }
+                        
+                        QPair<Envelope,QByteArray> job = jobs->dequeue();
+                        
+                        lkr.unlock();
+                        
+                        Envelope envelope;
+                        
+                        if (job.second.isEmpty())
+                        {
+                            envelope = job.first;
+                        }
+                        else
+                        {
+                            DataStream ds(job.second);
+                            ds >> envelope;
+                        }
 
-                    ::received(envelope);
-                    
-                    lkr.relock();
+                        ::received(envelope);
+                        
+                        lkr.relock();
+                    }
+                    catch(const Siren::interupted&)
+                    {
+                        break;
+                    }
+                    catch(const Siren::exception &e)
+                    {
+                        qDebug() << CODELOC;
+                        Siren::printError(e);
+                    }
+                    catch(const std::exception &e)
+                    {
+                        qDebug() << CODELOC;
+                        Siren::printError(Siren::std_exception(e,CODELOC));
+                    }
+                    catch(...)
+                    {
+                        qDebug() << CODELOC;
+                        Siren::printError(Siren::unknown_error(QObject::tr(
+                                "Unknown error in ReceiveThread"), CODELOC ));
+                    }
                 }
-                catch(const Siren::interupted&)
-                {
-                    break;
-                }
-                catch(const Siren::exception &e)
-                {
-                    qDebug() << CODELOC;
-                    Siren::printError(e);
-                }
-                catch(const std::exception &e)
-                {
-                    qDebug() << CODELOC;
-                    Siren::printError(Siren::std_exception(e,CODELOC));
-                }
-                catch(...)
-                {
-                    qDebug() << CODELOC;
-                    Siren::printError(Siren::unknown_error(QObject::tr(
-                            "Unknown error in ReceiveThread"), CODELOC ));
-                }
+            }
+            catch(const Siren::interupted&)
+            {
+                return;
             }
         }
     };

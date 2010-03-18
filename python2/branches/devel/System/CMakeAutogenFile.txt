@@ -6,6 +6,7 @@ set ( PYPP_SOURCES
        ComponentConstraint.pypp.cpp
        Constraint.pypp.cpp
        Constraints.pypp.cpp
+       Delta.pypp.cpp
        DistanceComponent.pypp.cpp
        DoubleDistanceComponent.pypp.cpp
        GeometryComponent.pypp.cpp

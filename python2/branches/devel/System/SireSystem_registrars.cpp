@@ -19,6 +19,7 @@
 #include "constraint.h"
 #include "checkpoint.h"
 #include "closemols.h"
+#include "delta.h"
 #include "monitoridentifier.h"
 #include "systemmonitors.h"
 #include "system.h"
@@ -56,6 +57,7 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::WindowedComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::CheckPoint >();
     ObjectRegistry::registerConverterFor< SireSystem::CloseMols >();
+    ObjectRegistry::registerConverterFor< SireSystem::Delta >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorIdentifier >();
     ObjectRegistry::registerConverterFor< SireSystem::SystemMonitors >();
     ObjectRegistry::registerConverterFor< SireSystem::System >();
