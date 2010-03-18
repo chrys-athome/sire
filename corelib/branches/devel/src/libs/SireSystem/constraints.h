@@ -111,6 +111,7 @@ public:
     QVector<ConstraintPtr> moleculeConstraints() const;
     
     bool hasMoleculeConstraints() const;
+    bool hasMolDependentConstraints() const;
     
     void add(const Constraint &constraint);
     void add(const Constraints &constraints);
@@ -132,6 +133,10 @@ public:
     void applyMoleculeConstraints(System &system, MolNum molnum);
     void applyMoleculeConstraints(System &system, const Molecules &molecules);
 
+    void applyMolDependentConstraints(System &system);
+    void applyMolDependentConstraints(System &system, MolNum molnum);
+    void applyMolDependentConstraints(System &system, const Molecules &molecules);
+
 private:
     void resolveMoleculeConstraints(System &system, Molecules changed_mols);
 
@@ -149,12 +154,6 @@ private:
         reapplied if molecules change */
     QSet<int> mol_dependent_cons;
 };
-
-/** Return whether or not this set has any molecule constraints */
-inline bool Constraints::hasMoleculeConstraints() const
-{
-    return not molcons.isEmpty();
-}
 
 }
 

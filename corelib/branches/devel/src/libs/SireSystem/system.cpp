@@ -1287,7 +1287,8 @@ void System::setMonitors(const SystemMonitors &monitors, int frequency)
     any of the molecules have changed */
 void System::_pvt_applyMoleculeConstraints()
 {
-    if (cons.hasMoleculeConstraints() and not applying_constraints)
+    if ( (cons.hasMoleculeConstraints() or cons.hasMolDependentConstraints()) and 
+            not applying_constraints)
     {
         Constraints constraints = cons;
         applying_constraints = true;
@@ -1301,7 +1302,8 @@ void System::_pvt_applyMoleculeConstraints()
     the molecule with number 'molnum' has changed */
 void System::_pvt_applyMoleculeConstraints(MolNum molnum)
 {
-    if (cons.hasMoleculeConstraints() and not applying_constraints)
+    if ( (cons.hasMoleculeConstraints() or cons.hasMolDependentConstraints()) and 
+            not applying_constraints)
     {
         Constraints constraints = cons;
         applying_constraints = true;
@@ -1315,7 +1317,8 @@ void System::_pvt_applyMoleculeConstraints(MolNum molnum)
     the molecules in 'molecules' have changed */
 void System::_pvt_applyMoleculeConstraints(const Molecules &molecules)
 {
-    if (cons.hasMoleculeConstraints() and not applying_constraints)
+    if ( (cons.hasMoleculeConstraints() or cons.hasMolDependentConstraints()) and 
+            not applying_constraints)
     {
         Constraints constraints = cons;
         applying_constraints = true;

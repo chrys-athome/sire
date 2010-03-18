@@ -16,6 +16,7 @@ set ( SIRESYSTEM_HEADERS
       constraint.h
       constraints.h
       checkpoint.h
+      delta.h
       distancecomponent.h
       errors.h
       geometrycomponent.h
@@ -50,6 +51,7 @@ set ( SIRESYSTEM_SOURCES
       constraint.cpp
       constraints.cpp
       checkpoint.cpp
+      delta.cpp
       distancecomponent.cpp
       errors.cpp
       geometrycomponent.cpp
