@@ -420,6 +420,68 @@ Values& Values::operator+=(const Values &other)
     }
 }
 
+/** Return an iterator to the first symbol/value pair */
+Values::const_iterator Values::begin() const
+{
+    return vals.constBegin();
+}
+
+/** Return an iterator pointing to one past the last
+    symbol/value pair */
+Values::const_iterator Values::end() const
+{
+    return vals.constEnd();
+}
+
+/** Return an iterator to the first symbol/value pair */
+Values::const_iterator Values::constBegin() const
+{
+    return vals.constBegin();
+}
+
+/** Return an iterator pointing to one past the last
+    symbol/value pair */
+Values::const_iterator Values::constEnd() const
+{
+    return vals.constEnd();
+}
+
+/** Return an iterator pointing to the symbol/value pair
+    with symbol with ID 'symbolid' - or Values::end() if
+    there is no matching symbol */
+Values::const_iterator Values::constFind(SymbolID symbolid) const
+{
+    return vals.constFind(symbolid);
+}
+
+/** Return an iterator pointing to the symbol/value pair
+    with symbol 'symbol' - or Values::end() if
+    there is no matching symbol */
+Values::const_iterator Values::constFind(const Symbol &symbol) const
+{
+    return vals.constFind(symbol.ID());
+}
+
+/** Set the value of the symbol/value pair pointed to by the   
+    iterator 'it' in this set */
+void Values::set(const Values::const_iterator &it)
+{
+    if (it != vals.constEnd())
+        vals.insert( it.key(), it.value() );
+}
+
+/** Remove the value for the symbol 'symbol' */
+void Values::remove(const Symbol &symbol)
+{
+    vals.remove(symbol.ID());
+}
+
+/** Remove the value for the symbol with ID 'symbolid' */
+void Values::remove(const SymbolID &symbolid)
+{
+    vals.remove(symbolid);
+}
+
 const char* Values::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Values>() );

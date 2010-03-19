@@ -64,6 +64,8 @@ friend QDataStream& ::operator<<(QDataStream&, const Values&);
 friend QDataStream& ::operator>>(QDataStream&, Values&);
 
 public:
+    typedef QHash<SymbolID,double>::const_iterator const_iterator;
+
     Values();
     Values(const QList<SymbolValue> &values);
     Values(const QHash<Symbol,double> &values);
@@ -104,7 +106,21 @@ public:
     bool operator==(const Values &other) const;
     bool operator!=(const Values &other) const;
 
+    const_iterator begin() const;
+    const_iterator end() const;
+
+    const_iterator constBegin() const;
+    const_iterator constEnd() const;
+    
+    const_iterator constFind(SymbolID symbolid) const;
+    const_iterator constFind(const Symbol &symbol) const;
+
     void set(const Symbol &symbol, double value);
+
+    void set(const const_iterator &it);
+
+    void remove(const Symbol &symbol);
+    void remove(const SymbolID &symbolid);
 
     void add(const SymbolValue &symval0);
     void add(const SymbolValue &symval0, const SymbolValue &symval1);

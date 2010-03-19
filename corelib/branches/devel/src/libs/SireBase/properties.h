@@ -123,6 +123,10 @@ public:
     const_iterator end() const;
     const_iterator constEnd() const;
 
+    int count() const;
+    int size() const;
+    int nProperties() const;
+
     const Property& property(const PropertyName &key) const;
     const Property& property(const PropertyName &key,
                              const Property &default_value) const;

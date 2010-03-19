@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "SireStream/datastream.h"
 
+#include "SireStream/shareddatastream.h"
+
 #include "function.h"
 
 #include "identities.h"
@@ -21,7 +23,7 @@ SireCAS::Identities __copy__(const SireCAS::Identities &other){ return SireCAS::
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireCAS::Identities&){ return "SireCAS::Identities";}
+#include "Helpers/str.hpp"
 
 void register_Identities_class(){
 
@@ -197,6 +199,19 @@ void register_Identities_class(){
                 , ( bp::arg("func") ) );
         
         }
+        Identities_exposer.def( bp::self != bp::self );
+        Identities_exposer.def( bp::self == bp::self );
+        { //::SireCAS::Identities::operator[]
+        
+            typedef ::SireCAS::Expression ( ::SireCAS::Identities::*__getitem___function_type )( ::SireCAS::Symbol const & ) const;
+            __getitem___function_type __getitem___function_value( &::SireCAS::Identities::operator[] );
+            
+            Identities_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("sym") ) );
+        
+        }
         { //::SireCAS::Identities::set
         
             typedef void ( ::SireCAS::Identities::*set_function_type )( ::SireCAS::Symbol const &,::SireCAS::Expression const & ) ;
@@ -206,6 +221,26 @@ void register_Identities_class(){
                 "set"
                 , set_function_value
                 , ( bp::arg("symbol"), bp::arg("expression") ) );
+        
+        }
+        { //::SireCAS::Identities::symbols
+        
+            typedef ::QList< SireCAS::Symbol > ( ::SireCAS::Identities::*symbols_function_type )(  ) const;
+            symbols_function_type symbols_function_value( &::SireCAS::Identities::symbols );
+            
+            Identities_exposer.def( 
+                "symbols"
+                , symbols_function_value );
+        
+        }
+        { //::SireCAS::Identities::toString
+        
+            typedef ::QString ( ::SireCAS::Identities::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireCAS::Identities::toString );
+            
+            Identities_exposer.def( 
+                "toString"
+                , toString_function_value );
         
         }
         { //::SireCAS::Identities::typeName
@@ -236,8 +271,8 @@ void register_Identities_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Identities_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireCAS::Identities >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        Identities_exposer.def( "__str__", &pvt_get_name);
-        Identities_exposer.def( "__repr__", &pvt_get_name);
+        Identities_exposer.def( "__str__", &__str__< ::SireCAS::Identities > );
+        Identities_exposer.def( "__repr__", &__str__< ::SireCAS::Identities > );
     }
 
 }

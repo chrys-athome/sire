@@ -145,6 +145,16 @@ void register_Properties_class(){
                 , ( bp::arg("key") ) );
         
         }
+        { //::SireBase::Properties::count
+        
+            typedef int ( ::SireBase::Properties::*count_function_type )(  ) const;
+            count_function_type count_function_value( &::SireBase::Properties::count );
+            
+            Properties_exposer.def( 
+                "count"
+                , count_function_value );
+        
+        }
         { //::SireBase::Properties::end
         
             typedef ::QHash< QString, SireBase::PropPtr< SireBase::Property > >::const_iterator ( ::SireBase::Properties::*end_function_type )(  ) const;
@@ -298,6 +308,16 @@ void register_Properties_class(){
                 "metadataType"
                 , metadataType_function_value
                 , ( bp::arg("key"), bp::arg("metakey") ) );
+        
+        }
+        { //::SireBase::Properties::nProperties
+        
+            typedef int ( ::SireBase::Properties::*nProperties_function_type )(  ) const;
+            nProperties_function_type nProperties_function_value( &::SireBase::Properties::nProperties );
+            
+            Properties_exposer.def( 
+                "nProperties"
+                , nProperties_function_value );
         
         }
         Properties_exposer.def( bp::self != bp::self );
@@ -467,6 +487,16 @@ void register_Properties_class(){
                 "setProperty"
                 , setProperty_function_value
                 , ( bp::arg("key"), bp::arg("value"), bp::arg("clear_metadata") ) );
+        
+        }
+        { //::SireBase::Properties::size
+        
+            typedef int ( ::SireBase::Properties::*size_function_type )(  ) const;
+            size_function_type size_function_value( &::SireBase::Properties::size );
+            
+            Properties_exposer.def( 
+                "size"
+                , size_function_value );
         
         }
         { //::SireBase::Properties::typeName

@@ -715,3 +715,21 @@ const char* Properties::metadataType(const PropertyName &key,
 {
     return this->metadata(key, metakey).what();
 }
+
+/** Return the number of properties in this set */
+int Properties::count() const
+{
+    return d->properties.count();
+}
+
+/** Return the number of properties in this set */
+int Properties::size() const
+{
+    return d->properties.count();
+}
+
+/** Return the number of properties in this set */
+int Properties::nProperties() const
+{
+    return d->properties.count();
+}

@@ -24,7 +24,7 @@ SireSystem::Delta __copy__(const SireSystem::Delta &other){ return SireSystem::D
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireSystem::Delta&){ return "SireSystem::Delta";}
+#include "Helpers/str.hpp"
 
 void register_Delta_class(){
 
@@ -386,7 +386,28 @@ void register_Delta_class(){
         
         }
         Delta_exposer.def( bp::self == bp::self );
+        { //::SireSystem::Delta::toString
+        
+            typedef ::QString ( ::SireSystem::Delta::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireSystem::Delta::toString );
+            
+            Delta_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
+        { //::SireSystem::Delta::typeName
+        
+            typedef char const * ( *typeName_function_type )(  );
+            typeName_function_type typeName_function_value( &::SireSystem::Delta::typeName );
+            
+            Delta_exposer.def( 
+                "typeName"
+                , typeName_function_value );
+        
+        }
         Delta_exposer.staticmethod( "combine" );
+        Delta_exposer.staticmethod( "typeName" );
         Delta_exposer.def( "__copy__", &__copy__);
         Delta_exposer.def( "__deepcopy__", &__copy__);
         Delta_exposer.def( "clone", &__copy__);
@@ -394,8 +415,8 @@ void register_Delta_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Delta_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireSystem::Delta >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        Delta_exposer.def( "__str__", &pvt_get_name);
-        Delta_exposer.def( "__repr__", &pvt_get_name);
+        Delta_exposer.def( "__str__", &__str__< ::SireSystem::Delta > );
+        Delta_exposer.def( "__repr__", &__str__< ::SireSystem::Delta > );
     }
 
 }

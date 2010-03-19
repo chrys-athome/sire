@@ -102,6 +102,10 @@ public:
     
     Delta operator+(const Delta &other) const;
 
+    static const char* typeName();
+
+    QString toString() const;
+
     bool isEmpty() const;
     bool isNull() const;
     
@@ -150,6 +154,20 @@ public:
                                 const QList<FFIdx> &ffidxs) const;
     
 private:
+    void mergeOld(const Delta &delta0, const Delta &delta1);
+    void mergeNew(const Delta &delta0, const Delta &delta1);
+    
+    void removeNullChange();
+    
+    void mergeOldComponents(const Values &comps0, const Values &comps1);
+    void mergeNewComponents(const Values &comps0, const Values &comps1);
+
+    void mergeOldMolecules(const Molecule &mol0, const Molecules &mols0,
+                           const Molecule &mol1, const Molecules &mols1);
+                           
+    void mergeNewMolecules(const Molecule &mol0, const Molecules &mols0,
+                           const Molecule &mol1, const Molecules &mols1);
+
     /** A single changed molecule before the delta - this is used when this
         delta involves only a single molecule */
     Molecule old_mol;
