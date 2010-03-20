@@ -111,9 +111,10 @@ Molecule& Molecule::operator=(const Molecule &other)
 /** Return a string representation of this molecule */
 QString Molecule::toString() const
 {
-    return QObject::tr( "Molecule( %1 : %2 : UID == %3 )" )
+    return QObject::tr( "Molecule( %1 : %2 : %3 : UID == %4 )" )
                 .arg(this->name())
                 .arg(this->number())
+                .arg(this->version())
                 .arg(this->data().info().UID().toString());
 }
 

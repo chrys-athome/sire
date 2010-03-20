@@ -100,6 +100,8 @@ public:
 
     bool isEmpty() const;
 
+    QString toString() const;
+
     QStringList propertyKeys() const;
     
     QStringList metadataKeys() const;

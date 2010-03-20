@@ -76,6 +76,17 @@ void register_Delta_class(){
         }
         { //::SireSystem::Delta::involves
         
+            typedef bool ( ::SireSystem::Delta::*involves_function_type )( ::SireMol::MoleculeView const & ) const;
+            involves_function_type involves_function_value( &::SireSystem::Delta::involves );
+            
+            Delta_exposer.def( 
+                "involves"
+                , involves_function_value
+                , ( bp::arg("molview") ) );
+        
+        }
+        { //::SireSystem::Delta::involves
+        
             typedef bool ( ::SireSystem::Delta::*involves_function_type )( ::SireMol::Molecules const & ) const;
             involves_function_type involves_function_value( &::SireSystem::Delta::involves );
             

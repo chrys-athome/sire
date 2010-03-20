@@ -58,6 +58,7 @@ using SireCAS::Values;
 using SireMol::Molecule;
 using SireMol::Molecules;
 using SireMol::MolNum;
+using SireMol::MoleculeView;
 
 using SireFF::FFIdx;
 
@@ -114,6 +115,7 @@ public:
     static Delta combine(const Delta &delta0, const Delta &delta1);
     
     bool involves(MolNum molnum) const;
+    bool involves(const MoleculeView &molview) const;
     bool involves(const Molecules &molecules) const;
     bool involves(const Symbol &component) const;
     bool involves(const QString &property) const;
@@ -157,8 +159,6 @@ private:
     void mergeOld(const Delta &delta0, const Delta &delta1);
     void mergeNew(const Delta &delta0, const Delta &delta1);
     
-    void removeNullChange();
-    
     void mergeOldComponents(const Values &comps0, const Values &comps1);
     void mergeNewComponents(const Values &comps0, const Values &comps1);
 
@@ -167,6 +167,12 @@ private:
                            
     void mergeNewMolecules(const Molecule &mol0, const Molecules &mols0,
                            const Molecule &mol1, const Molecules &mols1);
+
+    void mergeOldProperties(Properties &props,
+                            const Properties &props0, const Properties &props1) const;
+
+    void mergeNewProperties(Properties &props,
+                            const Properties &props0, const Properties &props1) const;
 
     /** A single changed molecule before the delta - this is used when this
         delta involves only a single molecule */

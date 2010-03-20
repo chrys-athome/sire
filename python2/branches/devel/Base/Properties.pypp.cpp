@@ -499,6 +499,16 @@ void register_Properties_class(){
                 , size_function_value );
         
         }
+        { //::SireBase::Properties::toString
+        
+            typedef ::QString ( ::SireBase::Properties::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireBase::Properties::toString );
+            
+            Properties_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
         { //::SireBase::Properties::typeName
         
             typedef char const * ( *typeName_function_type )(  );

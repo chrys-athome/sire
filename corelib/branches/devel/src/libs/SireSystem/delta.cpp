@@ -118,14 +118,7 @@ Delta::Delta(const Molecule &old_molecule, const Molecule &new_molecule)
         old_mol = old_molecule;
         merge_count = 1;
     }
-    else if (old_molecule.number() != new_molecule.number())
-    {
-        throw SireError::incompatible_error( QObject::tr(
-                "You cannot create a delta between two different numbered molecules! "
-                "(%1 and %2)").arg(old_molecule.toString(), new_molecule.toString()),
-                    CODELOC );
-    }
-    else if (old_molecule.version() != new_molecule.version())
+    else
     {
         old_mol = old_molecule;
         new_mol = new_molecule;
@@ -138,47 +131,26 @@ Delta::Delta(const Molecule &old_molecule, const Molecule &new_molecule)
 Delta::Delta(const Molecules &old_molecules, const Molecules &new_molecules)
       : old_mols(old_molecules), new_mols(new_molecules), merge_count(0)
 {
-    if (old_molecules.nMolecules() <= new_molecules.nMolecules())
+    if (old_mols.isEmpty() and new_mols.isEmpty())
     {
-        for (Molecules::const_iterator it = old_molecules.constBegin();
-             it != old_molecules.constEnd();
-             ++it)
-        {
-            Molecules::const_iterator it2 = new_molecules.constFind(it.key());
-            
-            if (it2 != new_molecules.constEnd())
-            {
-                if (it.value().version() == it2.value().version())
-                {
-                    //the molecules are the same - no delta!
-                    old_mols.remove(it.key());
-                    new_mols.remove(it.key());
-                }
-            }
-        }
+        merge_count = 0;
     }
     else
     {
-        for (Molecules::const_iterator it = new_molecules.constBegin();
-             it != new_molecules.constEnd();
-             ++it)
+        merge_count = 1;
+
+        if (old_mols.count() == 1)
         {
-            Molecules::const_iterator it2 = old_molecules.constFind(it.key());
-            
-            if (it2 != old_molecules.constEnd())
-            {
-                if (it.value().version() == it2.value().version())
-                {
-                    //the molecules are the same - no delta!
-                    old_mols.remove(it.key());
-                    new_mols.remove(it.key());
-                }
-            }
+            old_mol = old_mols.constBegin().value().molecule();
+            old_mols = Molecules();
+        }
+    
+        if (new_mols.count() == 1)
+        {
+            new_mol = new_mols.constBegin().value().molecule();
+            new_mols = Molecules();
         }
     }
-    
-    if (old_mols.isEmpty() and new_mols.isEmpty())
-        merge_count = 1;
 }
 
 /** Construct to record the change in the system non-energy-dependent
@@ -186,12 +158,9 @@ Delta::Delta(const Molecules &old_molecules, const Molecules &new_molecules)
 Delta::Delta(const Symbol &component, double old_value, double new_value)
       : merge_count(0)
 {
-    if (old_value != new_value)
-    {
-        old_components.set(component, old_value);
-        new_components.set(component, new_value);
-        merge_count = 1;
-    }
+    old_components.set(component, old_value);
+    new_components.set(component, new_value);
+    merge_count = 1;
 }
 
 /** Construct to record the change in the system from the global
@@ -199,12 +168,9 @@ Delta::Delta(const Symbol &component, double old_value, double new_value)
 Delta::Delta(const QString &name, const Property &old_value, const Property &new_value)
       : merge_count(0)
 {
-    if (not old_value.equals(new_value))
-    {
-        old_properties.setProperty(name, old_value);
-        new_properties.setProperty(name, new_value);
-        merge_count = 1;
-    }
+    old_properties.setProperty(name, old_value);
+    new_properties.setProperty(name, new_value);
+    merge_count = 1;
 }
 
 /** Construct to record the change in the forcefield property for
@@ -214,7 +180,28 @@ Delta::Delta(const QString &name, const FFIdx &ffidx,
              const Property &old_value, const Property &new_value)
       : merge_count(0)
 {
-    if (not old_value.equals(new_value))
+    if (ffidx.isNull())
+    {
+        old_properties.setProperty(name, old_value);
+        new_properties.setProperty(name, new_value);
+    }
+    else
+    {
+        old_ff_properties[ffidx].setProperty(name, old_value);
+        new_ff_properties[ffidx].setProperty(name, new_value);
+    }
+        
+    merge_count = 1;
+}
+
+/** Construct to record the change in the forcefield property for
+    the forcefields with indicies in 'ffidxs' in the system from 
+    'old_value' to 'new_value' */
+Delta::Delta(const QString &name, const QList<FFIdx> &ffidxs,
+             const Property &old_value, const Property &new_value)
+      : merge_count(0)
+{
+    foreach (FFIdx ffidx, ffidxs)
     {
         if (ffidx.isNull())
         {
@@ -226,36 +213,9 @@ Delta::Delta(const QString &name, const FFIdx &ffidx,
             old_ff_properties[ffidx].setProperty(name, old_value);
             new_ff_properties[ffidx].setProperty(name, new_value);
         }
-        
-        merge_count = 1;
     }
-}
-
-/** Construct to record the change in the forcefield property for
-    the forcefields with indicies in 'ffidxs' in the system from 
-    'old_value' to 'new_value' */
-Delta::Delta(const QString &name, const QList<FFIdx> &ffidxs,
-             const Property &old_value, const Property &new_value)
-      : merge_count(0)
-{
-    if (not old_value.equals(new_value))
-    {
-        foreach (FFIdx ffidx, ffidxs)
-        {
-            if (ffidx.isNull())
-            {
-                old_properties.setProperty(name, old_value);
-                new_properties.setProperty(name, new_value);
-            }
-            else
-            {
-                old_ff_properties[ffidx].setProperty(name, old_value);
-                new_ff_properties[ffidx].setProperty(name, new_value);
-            }
-        }
-        
-        merge_count = 1;
-    }
+    
+   merge_count = 1;
 }
 
 /** Merge the components of comps1 into comps0 - note that any
@@ -291,11 +251,13 @@ void Delta::mergeOldComponents(const Values &comps0, const Values &comps1)
             if (it2 != comps1.constEnd())
             {
                 if (it.value() != it2.value())
+                {
                     throw SireError::incompatible_error( QObject::tr(
                             "Cannot combine the deltas as the values of "
                             "the pre-delta component %1 are different (%2 vs. %3)")
                                 .arg( Symbol(it.key()).toString() )
                                 .arg(it.value()).arg(it2.value()), CODELOC );
+                }
             }
             else
             {
@@ -485,7 +447,9 @@ void Delta::mergeOldMolecules(const Molecule &mol0, const Molecules &mols0,
         }
         
         old_mols = mols0;
-        old_mols.add(mol1);
+
+        if (it == mols0.constEnd())
+            old_mols.add(mol1);
     }
     else if (mol1.isEmpty())
     {
@@ -504,7 +468,9 @@ void Delta::mergeOldMolecules(const Molecule &mol0, const Molecules &mols0,
         }
         
         old_mols = mols1;
-        old_mols.add(mol0);
+        
+        if (it == mols1.constEnd())
+            old_mols.add(mol0);
     }
 }
 
@@ -523,29 +489,21 @@ void Delta::mergeNewMolecules(const Molecule &mol0, const Molecules &mols0,
         {
             new_mol = mol0;
         }
-        else if (mol0.number() == mol1.number() and mol0.version() == mol1.version())
+        else if (mol0.number() == mol1.number())
         {
-            new_mol = mol0;
-        }
-        else if (mol0.number() != mol1.number())
-        { 
-#warning HERE
-            old_mols.add(mol0);
-            old_mols.add(mol1);
+            new_mol = mol1;
         }
         else
-        {
-            throw SireError::incompatible_error( QObject::tr(
-                        "Cannot merge the delta because the pre-delta molecule "
-                        "is different - %1 vs. %2.")
-                            .arg(mol0.toString(), mol1.toString()), CODELOC );
+        { 
+            new_mols.add(mol0);
+            new_mols.add(mol1);
         }
     }
     else if (mol0.isEmpty() and mol1.isEmpty())
     {
         if (mols0.nMolecules() <= mols1.nMolecules())
         {
-            old_mols = mols1;
+            new_mols = mols1;
             
             for (Molecules::const_iterator it = mols0.constBegin();
                  it != mols1.constBegin();
@@ -553,23 +511,13 @@ void Delta::mergeNewMolecules(const Molecule &mol0, const Molecules &mols0,
             {
                 Molecules::const_iterator it2 = mols1.constFind(it.key());
                 
-                if (it2 != mols1.constEnd())
-                {
-                    if (it.value().version() != it2.value().version())
-                        throw SireError::incompatible_error( QObject::tr(
-                                "Cannot merge the delta as the molecule with number "
-                                "%1 is different (%2 vs. %3)")
-                                    .arg(it.key().toString())
-                                    .arg(it.value().toString(), it2.value().toString()),
-                                        CODELOC );
-                }
-                else 
-                    old_mols.add(it.value().molecule());
+                if (it2 == mols1.constEnd())
+                    new_mols.add(it.value().molecule());
             }
         }
         else
         {
-            old_mols = mols0;
+            new_mols = mols0;
             
             for (Molecules::const_iterator it = mols1.constBegin();
                  it != mols1.constEnd();
@@ -579,66 +527,158 @@ void Delta::mergeNewMolecules(const Molecule &mol0, const Molecules &mols0,
                 
                 if (it2 != mols0.constEnd())
                 {
-                    if (it.value().version() != it2.value().version())
-                        throw SireError::incompatible_error( QObject::tr(
-                                "Cannot merge the delta as the molecule with number "
-                                "%1 is different (%2 vs. %3)")
-                                    .arg(it.key().toString())
-                                    .arg(it.value().toString(), it2.value().toString()),
-                                        CODELOC );
+                    new_mols.update( it2.value() );
                 }
                 else 
-                    old_mols.add(it.value().molecule());
+                    new_mols.add(it.value().molecule());
             }
         }
     }
     else if (mol0.isEmpty() and mols0.isEmpty())
     {
-        old_mol = mol1;
-        old_mols = mols1;
+        new_mol = mol1;
+        new_mols = mols1;
     }
     else if (mol1.isEmpty() and mols1.isEmpty())
     {
-        old_mol = mol0;
-        old_mols = mols0;
+        new_mol = mol0;
+        new_mols = mols0;
     }
     else if (mol0.isEmpty())
     {
         //implies mols0 is not empty and mol1 is not empty
         Molecules::const_iterator it = mols0.constFind(mol1.number());
         
-        if (it != mols0.constEnd())
-        {
-            if (it.value().version() != mol1.version())
-                throw SireError::incompatible_error( QObject::tr(
-                        "Cannot merge the delta as the molecule with number "
-                        "%1 is different (%2 vs. %3)")
-                            .arg(it.key().toString())
-                            .arg(it.value().toString(), mol1.toString()),
-                                CODELOC );
-        }
+        new_mols = mols0;
         
-        old_mols = mols0;
-        old_mols.add(mol1);
+        if (it != mols0.constEnd())
+            new_mols.update(mol1);
+        else
+            new_mols.add(mol1);
     }
     else if (mol1.isEmpty())
     {
         //implies mols1 is not empty and mol0 is not empty
         Molecules::const_iterator it = mols1.constFind(mol0.number());
+
+        new_mols = mols1;
         
-        if (it != mols1.constEnd())
+        if (it == mols1.constEnd())
+            new_mols.add(mol0);
+    }
+}
+
+/** Merge the pre-delta properties into 'props' - any duplicate
+    properties in props0 and props1 must be identical!
+    
+    \throw SireError::incompatible_error
+*/
+void Delta::mergeOldProperties(Properties &props,
+                               const Properties &props0, 
+                               const Properties &props1) const
+{
+    if (props0.isEmpty())
+        props = props1;
+        
+    else if (props1.isEmpty())
+        props = props0;
+    
+    else
+    {
+        if (props0.count() <= props1.count())
         {
-            if (it.value().version() != mol1.version())
-                throw SireError::incompatible_error( QObject::tr(
-                        "Cannot merge the delta as the molecule with number "
-                        "%1 is different (%2 vs. %3)")
-                            .arg(it.key().toString())
-                            .arg(it.value().toString(), mol0.toString()),
-                                CODELOC );
+            props = props1;
+            
+            for (Properties::const_iterator it = props0.constBegin();
+                 it != props0.constEnd();
+                 ++it)
+            {
+                Properties::const_iterator it2 = props1.constFind(it.key());
+                
+                if (it2 != props1.constEnd())
+                {
+                    if (not it.value().read().equals(it2.value().read()))
+                        throw SireError::incompatible_error( QObject::tr(
+                            "Cannot merge the two deltas as the values of the "
+                            "pre-delta properties for %1 are not equal - %2 vs. %3")
+                                .arg(it.key())
+                                .arg(it.value().read().toString(),
+                                     it2.value().read().toString()), CODELOC );
+                }
+                else
+                {
+                    props.setProperty(it.key(), it.value());
+                }
+            }
         }
+        else
+        {
+            props = props0;
+            
+            for (Properties::const_iterator it = props1.constBegin();
+                 it != props1.constEnd();
+                 ++it)
+            {
+                Properties::const_iterator it2 = props0.constFind(it.key());
+                
+                if (it2 != props0.constEnd())
+                {
+                    if (not it.value().read().equals(it2.value().read()))
+                        throw SireError::incompatible_error( QObject::tr(
+                            "Cannot merge the two deltas as the values of the "
+                            "pre-delta properties for %1 are not equal - %2 vs. %3")
+                                .arg(it.key())
+                                .arg(it.value().read().toString(),
+                                     it2.value().read().toString()), CODELOC );
+                }
+                else
+                {
+                    props.setProperty(it.key(), it.value());
+                }
+            }
+        }
+    }
+}
+
+/** Merge the post-delta properties into 'props' - any duplicate
+    properties in props0 are overwritten by those in props1 */
+void Delta::mergeNewProperties(Properties &props,
+                               const Properties &props0, 
+                               const Properties &props1) const
+{
+    if (props0.isEmpty())
+        props = props1;
         
-        old_mols = mols1;
-        old_mols.add(mol0);
+    else if (props1.isEmpty())
+        props = props0;
+    
+    else
+    {
+        if (props0.count() <= props1.count())
+        {
+            props = props1;
+            
+            for (Properties::const_iterator it = props0.constBegin();
+                 it != props0.constEnd();
+                 ++it)
+            {
+                Properties::const_iterator it2 = props1.constFind(it.key());
+                
+                if (it2 == props1.constEnd())
+                    props.setProperty(it.key(), it.value());
+            }
+        }
+        else
+        {
+            props = props0;
+            
+            for (Properties::const_iterator it = props1.constBegin();
+                 it != props1.constEnd();
+                 ++it)
+            {
+                props.setProperty(it.key(), it.value());
+            }
+        }
     }
 }
 
@@ -647,6 +687,49 @@ void Delta::mergeOld(const Delta &delta0, const Delta &delta1)
     mergeOldComponents(delta0.old_components, delta1.old_components);
     mergeOldMolecules(delta0.old_mol, delta0.old_mols,
                       delta1.old_mol, delta1.old_mols);
+    mergeOldProperties(old_properties, delta0.old_properties,
+                                       delta1.old_properties);
+
+    if (delta0.old_ff_properties.isEmpty())
+    {
+        old_ff_properties = delta1.old_ff_properties;
+    }
+    else if (delta1.old_ff_properties.isEmpty())
+    {
+        old_ff_properties = delta0.old_ff_properties;
+    }
+    else
+    {
+        for (QHash<FFIdx,Properties>::const_iterator 
+                                    it = delta0.old_ff_properties.constBegin();
+             it != delta0.old_ff_properties.constEnd();
+             ++it)
+        {
+            QHash<FFIdx,Properties>::const_iterator 
+                                    it2 = delta1.old_ff_properties.constFind(it.key());
+                                    
+            if (it2 == delta1.old_ff_properties.constEnd())
+            {
+                old_ff_properties.insert(it.key(), it.value());
+            }
+            else
+            {
+                mergeOldProperties(old_ff_properties[it.key()],
+                                   it.value(), it2.value());
+            }
+        }
+        
+        for (QHash<FFIdx,Properties>::const_iterator
+                                    it = delta1.old_ff_properties.constBegin();
+             it != delta1.old_ff_properties.constEnd();
+             ++it)
+        {
+            if (not delta0.old_ff_properties.contains(it.key()))
+            {
+                old_ff_properties.insert(it.key(), it.value());
+            }
+        }
+    }
 }
 
 void Delta::mergeNew(const Delta &delta0, const Delta &delta1)
@@ -654,223 +737,46 @@ void Delta::mergeNew(const Delta &delta0, const Delta &delta1)
     mergeNewComponents(delta0.new_components, delta1.new_components);
     mergeNewMolecules(delta0.new_mol, delta0.new_mols,
                       delta1.new_mol, delta1.new_mols);
-}
+    mergeNewProperties(new_properties, delta0.new_properties,
+                                       delta1.new_properties);
 
-void Delta::removeNullChange()
-{
-    if (not old_mol.isEmpty())
+    if (delta0.new_ff_properties.isEmpty())
     {
-        if (old_mol.number() == new_mol.number() and 
-            old_mol.version() == new_mol.version())
-        {
-            old_mol = Molecule();
-            new_mol = Molecule();
-        }
+        new_ff_properties = delta1.new_ff_properties;
     }
-    
-    if (not old_mols.isEmpty())
+    else if (delta1.new_ff_properties.isEmpty())
     {
-        QSet<MolNum> same_mols;
-            
-        if (old_mols.count() <= new_mols.count())
-        {
-            for (Molecules::const_iterator it = old_mols.constBegin();
-                 it != old_mols.constEnd();
-                 ++it)
-            {
-                Molecules::const_iterator it2 = new_mols.constFind(it.key());
-                
-                if (it2 != new_mols.constEnd())
-                {
-                    if (it.value().version() == it2.value().version())
-                        same_mols.insert(it.key());
-                }
-            }
-        }
-        else
-        {
-            for (Molecules::const_iterator it = new_mols.constBegin();
-                 it != new_mols.constEnd();
-                 ++it)
-            {
-                Molecules::const_iterator it2 = old_mols.constFind(it.key());
-                
-                if (it2 != old_mols.constEnd())
-                {
-                    if (it.value().version() == it2.value().version())
-                        same_mols.insert(it.key());
-                }
-            }
-        }
-        
-        if (not same_mols.isEmpty())
-        {
-            foreach (MolNum same_mol, same_mols)
-            {
-                old_mols.remove(same_mol);
-                new_mols.remove(same_mol);
-            }
-        
-            if (old_mols.count() == 1 and new_mols.count() == 1)
-            {
-                if (old_mols.constBegin().key() == new_mols.constBegin().key())
-                {
-                    old_mol = old_mols.constBegin().value().molecule();
-                    new_mol = new_mols.constBegin().value().molecule();
-                    
-                    old_mols = Molecules();
-                    new_mols = Molecules();
-                }
-            }
-        }
+        new_ff_properties = delta0.new_ff_properties;
     }
-    
-    if (not old_components.isEmpty())
+    else
     {
-        QSet<SymbolID> same_comps;
-        
-        if (old_components.count() <= new_components.count())
+        for (QHash<FFIdx,Properties>::const_iterator 
+                                    it = delta0.new_ff_properties.constBegin();
+             it != delta0.new_ff_properties.constEnd();
+             ++it)
         {
-            for (Values::const_iterator it = old_components.constBegin();
-                 it != old_components.constEnd();
-                 ++it)
-            {
-                Values::const_iterator it2 = new_components.constFind(it.key());
-                
-                if (it2 != new_components.constEnd())
-                {
-                    if (it.value() == it2.value())
-                        same_comps.insert(it.key());
-                }
-            }
-        }
-        else
-        {
-            for (Values::const_iterator it = new_components.constBegin();
-                 it != new_components.constEnd();
-                 ++it)
-            {
-                Values::const_iterator it2 = old_components.constFind(it.key());
-                
-                if (it2 != old_components.constEnd())
-                {
-                    if (it.value() == it2.value())
-                        same_comps.insert(it.key());
-                }
-            }
-        }
-        
-        foreach (SymbolID same_comp, same_comps)
-        {
-            old_components.remove(same_comp);
-            new_components.remove(same_comp);
-        }
-    }
-    
-    if (not old_properties.isEmpty())
-    {
-        QSet<QString> same_props;
-        
-        if (old_properties.count() <= new_properties.count())
-        {
-            for (Properties::const_iterator it = old_properties.constBegin();
-                 it != old_properties.constEnd();
-                 ++it)
-            {
-                Properties::const_iterator it2 = new_properties.constFind(it.key());
-                
-                if (it2 != new_properties.constEnd())
-                {
-                    if (it.value().read().equals(it2.value().read()))
-                        same_props.insert(it.key());
-                }
-            }
-        }
-        else
-        {
-            for (Properties::const_iterator it = new_properties.constBegin();
-                 it != new_properties.constEnd();
-                 ++it)
-            {
-                Properties::const_iterator it2 = old_properties.constFind(it.key());
-                
-                if (it2 != old_properties.constEnd())
-                {
-                    if (it.value().read().equals(it2.value().read()))
-                        same_props.insert(it.key());
-                }
-            }
-        }
-        
-        foreach (QString same_prop, same_props)
-        {
-            old_properties.removeProperty(same_prop);
-            new_properties.removeProperty(same_prop);
-        }
-    }
-    
-    if (not old_ff_properties.isEmpty())
-    {
-        for (QHash<FFIdx,Properties>::const_iterator idx = old_ff_properties.constBegin();
-             idx != old_ff_properties.constEnd();
-             ++idx)
-        {
-            const Properties &old_props = idx.value();
-            
             QHash<FFIdx,Properties>::const_iterator 
-                        idx2 = new_ff_properties.constFind(idx.key());
-                        
-            if (idx2 != new_ff_properties.constEnd())
+                                    it2 = delta1.new_ff_properties.constFind(it.key());
+                                    
+            if (it2 == delta1.new_ff_properties.constEnd())
             {
-                const Properties &new_props = idx2.value();
-                
-                QSet<QString> same_props;
-                
-                if (old_props.count() <= new_props.count())
-                {
-                    for (Properties::const_iterator it = old_props.constBegin();
-                         it != old_props.constEnd();
-                         ++it)
-                    {
-                        Properties::const_iterator it2 = new_props.constFind(it.key());
-                        
-                        if (it2 != new_props.constEnd())
-                        {
-                            if (it.value().read().equals(it2.value().read()))
-                                same_props.insert(it.key());
-                        }
-                    }
-                }
-                else
-                {
-                    for (Properties::const_iterator it = new_props.constBegin();
-                         it != new_props.constEnd();
-                         ++it)
-                    {
-                        Properties::const_iterator it2 = old_props.constFind(it.key());
-                        
-                        if (it2 != old_props.constEnd())
-                        {
-                            if (it.value().read().equals(it2.value().read()))
-                                same_props.insert(it.key());
-                        }
-                    }
-                }
-                
-                if (not same_props.isEmpty())
-                {
-                    foreach (QString same_prop, same_props)
-                    {
-                        old_ff_properties[idx.key()].removeProperty(same_prop);
-                        new_ff_properties[idx.key()].removeProperty(same_prop);
-                    }
-                    
-                    if (old_ff_properties[idx.key()].isEmpty())
-                        old_ff_properties.remove(idx.key());
-                        
-                    if (new_ff_properties[idx.key()].isEmpty())
-                        new_ff_properties.remove(idx.key());
-                }
+                new_ff_properties.insert(it.key(), it.value());
+            }
+            else
+            {
+                mergeNewProperties(new_ff_properties[it.key()],
+                                   it.value(), it2.value());
+            }
+        }
+        
+        for (QHash<FFIdx,Properties>::const_iterator
+                                    it = delta1.new_ff_properties.constBegin();
+             it != delta1.new_ff_properties.constEnd();
+             ++it)
+        {
+            if (not delta0.new_ff_properties.contains(it.key()))
+            {
+                new_ff_properties.insert(it.key(), it.value());
             }
         }
     }
@@ -887,12 +793,12 @@ void Delta::removeNullChange()
 */
 Delta::Delta(const Delta &delta0, const Delta &delta1) : merge_count(0)
 {
-    if (delta0.isEmpty())
+    if (delta0.isNull())
     {
-        if (not delta1.isEmpty())
+        if (not delta1.isNull())
             this->operator=(delta1);
     }
-    else if (delta1.isEmpty())
+    else if (delta1.isNull())
     {
         this->operator=(delta0);
     }
@@ -901,10 +807,16 @@ Delta::Delta(const Delta &delta0, const Delta &delta1) : merge_count(0)
         this->mergeOld(delta0, delta1);
         this->mergeNew(delta0, delta1);
     
-        //remove any deltas where we have changed, then changed back
-        this->removeNullChange();
-    
-        merge_count = qMax(delta0.merge_count, delta1.merge_count) + 1;
+        if (old_components.isEmpty() and new_components.isEmpty() and
+            old_mol.isEmpty() and new_mol.isEmpty() and
+            old_mols.isEmpty() and new_mols.isEmpty() and
+            old_properties.isEmpty() and new_properties.isEmpty() and
+            old_ff_properties.isEmpty() and new_ff_properties.isEmpty())
+        {
+            this->operator=( Delta() );
+        }
+        else
+            merge_count = qMax(delta0.merge_count, delta1.merge_count) + 1;
     }
 }
        
@@ -987,21 +899,54 @@ Delta Delta::operator+(const Delta &other) const
 /** Return a string representation of this delta */
 QString Delta::toString() const
 {
-    if (isEmpty())
+    if (merge_count == 0)
         return QObject::tr("Delta::null");
         
     QStringList parts;
     
-    if ( not (old_mol.isEmpty() and new_mol.isEmpty()) )
+    if ( not (old_mol.isEmpty() and new_mol.isEmpty() and 
+              old_mols.isEmpty() and new_mols.isEmpty()) )
     {
-        parts.append( QObject::tr("    %1 => %2")
-                            .arg(old_mol.toString(), new_mol.toString()) );
-    }
-    else if ( not (old_mols.isEmpty() and new_mols.isEmpty()) )
-    {
-        parts.append( QObject::tr("    %1 => %2")
-                        .arg( Sire::toString(old_mols.molNums()),
-                              Sire::toString(new_mols.molNums()) ) );
+        QStringList oldmols, newmols;
+
+        if (not old_mol.isEmpty())
+            oldmols.append( QString("%1:%2")
+                                .arg(old_mol.number().value())
+                                .arg(old_mol.version()) );
+        
+        if (not new_mol.isEmpty())
+            newmols.append( QString("%1:%2")
+                                .arg(new_mol.number().value())
+                                .arg(new_mol.version()) );
+        
+        if (not old_mols.isEmpty())
+        {
+            foreach (MolNum molnum, old_mols.molNums())
+            {
+                oldmols.append( QString("%1:%2")
+                                    .arg(old_mols.at(molnum).number().value())
+                                    .arg(old_mols.at(molnum).version()) );
+            }
+        }
+        
+        if (not new_mols.isEmpty())
+        {
+            foreach (MolNum molnum, new_mols.molNums())
+            {
+                newmols.append( QString("%1:%2")
+                                    .arg(new_mols.at(molnum).number().value())
+                                    .arg(new_mols.at(molnum).version()) );
+            }
+        }
+        
+        if (newmols == oldmols)
+            parts.append( QObject::tr("    MolNums{ %1 } => MolNums{ %2 } (null)")
+                            .arg( oldmols.join(", "),
+                                newmols.join(", ") ) );
+        else
+            parts.append( QObject::tr("    MolNums{ %1 } => MolNums{ %2 }")
+                            .arg( oldmols.join(", "),
+                                newmols.join(", ") ) );
     }
     
     if ( not (old_components.isEmpty() and new_components.isEmpty()) )
@@ -1033,16 +978,144 @@ QString Delta::toString() const
     }
 }
 
-/** Return whether or not this delta is empty (represents no change) */
+/** Return whether or not this delta is empty (represents no change).
+    Note that even though it is empty, it can still be non-null. This
+    is because an empty change can still specify things that should
+    stay the same (e.g. lambda = 0.5 => 0.5). This is necessary to 
+    allow changes to be reversed, e.g.
+    
+    Delta( lambda, 0.1, 0.5 ) + Delta( lambda, 0.1, 0.1 )
+           == Delta( lambda, 0.1, 0.1 )
+           ==  isEmpty()
+           !=  isNull()
+*/
 bool Delta::isEmpty() const
 {
-    return merge_count == 0;
+    if (merge_count == 0)
+        return true;
+
+    else
+    {
+        if (old_mol.number() != new_mol.number() or
+            old_mol.version() != new_mol.version())
+        {
+            return false;
+        }
+        
+        if (old_mols.count() != new_mols.count())
+        {
+            return false;
+        }
+        else if (not old_mols.isEmpty())
+        {
+            for (Molecules::const_iterator it = old_mols.constBegin();
+                 it != old_mols.constEnd();
+                 ++it)
+            {
+                Molecules::const_iterator it2 = new_mols.constFind(it.key());
+                
+                if (it2 == new_mols.constEnd())
+                    return false;
+                
+                else if (it.value().version() != it2.value().version())
+                    return false;
+            }
+        }
+        
+        if (old_components.count() != new_components.count())
+        {
+            return false;
+        }
+        else if (not old_components.isEmpty())
+        {
+            for (Values::const_iterator it = old_components.constBegin();
+                 it != old_components.constEnd();
+                 ++it)
+            {
+                Values::const_iterator it2 = new_components.constFind(it.key());
+                
+                if (it2 == new_components.constEnd())
+                    return false;
+                    
+                else if (it.value() != it2.value())
+                    return false;
+            }
+        }
+        
+        if (old_properties.count() != new_properties.count())
+        {
+            return false;
+        }
+        else if (not old_properties.isEmpty())
+        {
+            for (Properties::const_iterator it = old_properties.constBegin();
+                 it != old_properties.constEnd();
+                 ++it)
+            {
+                Properties::const_iterator it2 = new_properties.constFind(it.key());
+                
+                if (it2 == new_properties.constEnd())
+                    return false;
+                
+                else if (not it.value().read().equals( it2.value().read() ))
+                    return false;
+            }
+        }
+        
+        if (old_ff_properties.count() != new_ff_properties.count())
+        {
+            return false;
+        }
+        else if (not old_ff_properties.isEmpty())
+        {
+            for (QHash<FFIdx,Properties>::const_iterator 
+                                        idx = old_ff_properties.constBegin();
+                 idx != old_ff_properties.constEnd();
+                 ++idx)
+            {
+                QHash<FFIdx,Properties>::const_iterator 
+                                        idx2 = new_ff_properties.constFind(idx.key());
+                                        
+                if (idx2 == new_ff_properties.constEnd())
+                    return false;
+                
+                else
+                {
+                    const Properties &oldprops = idx.value();
+                    const Properties &newprops = idx2.value();
+                    
+                    if (oldprops.count() != newprops.count())
+                        return false;
+                        
+                    else if (not oldprops.isEmpty())
+                    {
+                        for (Properties::const_iterator it = oldprops.constBegin();
+                             it != oldprops.constEnd();
+                             ++it)
+                        {
+                            Properties::const_iterator it2 = newprops.constFind(it.key());
+                            
+                            if (it2 == newprops.constEnd())
+                                return false;
+                                
+                            else if (not it.value().read().equals(it2.value().read()))
+                                return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 }
 
-/** Return whether or not this delta is null (represents no change) */
+/** Return whether or not this delta is null (represents no change
+    and contains no information) - see isEmpty() for a description
+    of the difference between isEmpty() and isNull() */
 bool Delta::isNull() const
 {
-    return isEmpty();
+    return merge_count == 0;
 }
 
 /** Return the combination of this delta with 'other'
@@ -1069,9 +1142,32 @@ bool Delta::involves(MolNum molnum) const
 {
     if (isEmpty())
         return false;
+
+    else if (old_mol.number() == molnum or new_mol.number() == molnum)
+    {
+        if (old_mol.number() == new_mol.number())
+            return old_mol.version() != new_mol.version();
+        else
+            return true;
+    }
+    else if (old_mols.contains(molnum) or new_mols.contains(molnum))
+    {
+        if (old_mols.contains(molnum) and new_mols.contains(molnum))
+        {
+            return old_mols[molnum].version() != new_mols[molnum].version();
+        }
+        else
+            return true;
+    }
     else
-        return old_mol.number() == molnum or new_mol.number() == molnum or
-               old_mols.contains(molnum) or new_mols.contains(molnum);
+        return false;
+}
+
+/** Return whether or not this delta involves the molecule viewed
+    in 'molview' */
+bool Delta::involves(const MoleculeView &molview) const
+{
+    return this->involves(molview.data().number());
 }
 
 /** Return whether or not this delta involves any of the molecules
@@ -1091,7 +1187,15 @@ bool Delta::involves(const Molecules &molecules) const
                  ++it)
             {
                 if (molecules.contains(it.key()))
+                {
+                    if (new_mols.contains(it.key()))
+                    {
+                        if (new_mols[it.key()].version() == old_mols[it.key()].version())
+                            continue;
+                    }
+                    
                     return true;
+                }
             }
             
             for (Molecules::const_iterator it = new_mols.constBegin();
@@ -1111,7 +1215,18 @@ bool Delta::involves(const Molecules &molecules) const
                  ++it)
             {
                 if (old_mols.contains(it.key()) or new_mols.contains(it.key()))
+                {
+                    if (old_mols.contains(it.key()) and new_mols.contains(it.key()))
+                    {
+                        if (old_mols[it.key()].version() ==
+                            new_mols[it.key()].version())
+                        {
+                            continue;
+                        }
+                    }
+                
                     return true;
+                }
             }
 
             return false;
@@ -1127,8 +1242,14 @@ bool Delta::involves(const Molecules &molecules) const
     }
     else 
     {
-        return molecules.contains(old_mol.number()) or 
-               molecules.contains(new_mol.number());
+        if (old_mol.number() == new_mol.number() and
+            old_mol.version() == new_mol.version())
+        {
+            return false;
+        }
+        else
+            return molecules.contains(old_mol.number()) or 
+                   molecules.contains(new_mol.number());
     }
 }
 
@@ -1138,8 +1259,18 @@ bool Delta::involves(const Symbol &component) const
 {
     if (isEmpty())
         return false;
+
+    else if (old_components.contains(component) or new_components.contains(component))
+    {
+        if (old_components.contains(component) and new_components.contains(component))
+        {
+            return old_components[component] != new_components[component];
+        }
+        else
+            return true;
+    }
     else
-        return old_components.contains(component) or new_components.contains(component);
+        return false;
 }
 
 /** Return whether or not this delta involves a change in the 
@@ -1148,9 +1279,19 @@ bool Delta::involves(const QString &property) const
 {
     if (isEmpty())
         return false;
+
+    else if (old_properties.hasProperty(property) or new_properties.hasProperty(property))
+    {
+        if (old_properties.hasProperty(property) and new_properties.hasProperty(property))
+        {
+            return not old_properties.property(property).equals(
+                                        new_properties.property(property));
+        }
+        else
+            return true;
+    }
     else
-        return old_properties.hasProperty(property) or 
-               new_properties.hasProperty(property);
+        return false;
 }
 
 /** Return whether or not this delta involves a change in the forcefield
@@ -1160,9 +1301,27 @@ bool Delta::involves(const QString &property, const FFIdx &ffidx) const
 {
     if (isEmpty())
         return false;
+
+    else if (old_ff_properties.contains(ffidx) or new_ff_properties.contains(ffidx))
+    {
+        Properties old_props = old_ff_properties.value(ffidx);
+        Properties new_props = new_ff_properties.value(ffidx);
+        
+        if (old_props.hasProperty(property) or new_props.hasProperty(property))
+        {
+            if (old_props.hasProperty(property) and new_props.hasProperty(property))
+            {
+                return not old_props.property(property).equals(
+                                            new_props.property(property) );
+            }
+            else
+                return true;
+        }
+        else
+            return false;
+    }
     else
-        return old_ff_properties.value(ffidx).hasProperty(property) or
-               new_ff_properties.value(ffidx).hasProperty(property);
+        return false;
 }
 
 /** Return whether or not this delta involves a change in the forcefield

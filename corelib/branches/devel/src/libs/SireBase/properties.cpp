@@ -733,3 +733,27 @@ int Properties::nProperties() const
 {
     return d->properties.count();
 }
+
+/** Return a string representation of this set of properties */
+QString Properties::toString() const
+{
+    if (this->isEmpty())
+        return QObject::tr("Properties::null");
+        
+    QStringList props;
+    
+    for (Properties::const_iterator it = this->constBegin();
+         it != this->constEnd();
+         ++it)
+    {
+        props.append( QObject::tr("    %1 => %2")
+                            .arg(it.key(), it.value().read().toString()) );
+    }
+    
+    if (props.count() == 1)
+        return QObject::tr("Properties( %1 )")
+                    .arg( props.at(0).simplified() );
+    else
+        return QObject::tr("Properties(\n%1\n)")
+                    .arg( props.join(",\n") );
+}
