@@ -30,7 +30,7 @@
 #include <QMutex>
 
 #include "system.h"
-
+#include "delta.h"
 #include "monitorname.h"
 
 #include "SireFF/ffidx.h"
@@ -703,7 +703,7 @@ MolarEnergy System::energy()
 }
 
 /** Return the total energy of the energy component in this system
-    that is identified by the symbol 'component'
+    that is identified by the energy component 'component'
     
     \throw SireFF::missing_component
 */
@@ -712,7 +712,7 @@ MolarEnergy System::energy(const Symbol &component)
     return this->_pvt_forceFields().energy(component);
 }
 
-/** Return the energies of the components of this system whose
+/** Return the energies of the energy components of this system whose
     symbols are in 'components'
     
     \throw SireFF::missing_component
@@ -722,78 +722,280 @@ Values System::energies(const QSet<Symbol> &components)
     return this->_pvt_forceFields().energies(components);
 }
 
-/** Return the energies of all energy components, constants and 
-    expressions in this system */
+/** Return the energies of all energy components in this system */
 Values System::energies()
 {
     return this->_pvt_forceFields().energies();
 }
 
-/** Return the value of the component in this system
-    that is identified by the symbol 'component'
+/** Return whether or not the component 'component' is an energy component
+
+    \throw SireFF::missing_component
+*/
+bool System::isEnergyComponent(const Symbol &component) const
+{
+    return this->_pvt_forceFields().isEnergyComponent(component);
+}
+
+/** Return whether or not this system has an energy component 'component' */
+bool System::hasEnergyComponent(const Symbol &component) const
+{
+    return this->_pvt_forceFields().hasEnergyComponent(component);
+}
+
+/** Set the energy component 'symbol' equal to the expression 'expression' */
+void System::setEnergyComponent(const Symbol &symbol, 
+                                const Expression &expression)
+{
+    if (this->hasConstantComponent(symbol))
+    {
+        //there may be a constraint attached to this constant component
+        // - we must first remove the constant component!
+        throw SireError::incomplete_code( QObject::tr(
+                "It is not yet possible to remove or replace constant components "
+                "of a system... (cannot replace %1 == %2 with %1 == %3)")
+                    .arg(symbol.toString(), 
+                         constantExpression(symbol).toString(),
+                         expression.toString()), CODELOC );
+    }
+    else if (this->hasEnergyComponent(symbol))
+    {
+        if (this->energyExpression(symbol) != expression)
+        {
+            this->_pvt_forceFields().setEnergyComponent(symbol, expression);
+            sysversion.incrementMajor();
+        }
+    }
+}
+
+/** Return the symbols that represent the energy expressions of this system */
+QSet<Symbol> System::energySymbols() const
+{
+    return this->_pvt_forceFields().energySymbols();
+}
+
+/** Return all of the energy components of this system */
+Values System::energyComponents()
+{
+    return this->_pvt_forceFields().energyComponents();
+}
+                        
+/** Return the energy expression for the energy component 'component' 
+
+    \throw SireFF::missing_component
+*/
+Expression System::energyExpression(const Symbol &component) const
+{
+    return this->_pvt_forceFields().energyExpression(component);
+}
+
+/** Return the energy expressions for the energy components whose
+    symbols are in 'symbols'
     
     \throw SireFF::missing_component
 */
-double System::componentValue(const Symbol &component)
+QHash<Symbol,Expression> System::energyExpressions(const QSet<Symbol> &symbols) const
 {
-    return this->energy(component);
+    return this->_pvt_forceFields().energyExpressions(symbols);
 }
 
-/** Return the values of the components of this system whose
-    symbols are in 'components'
+/** Return all of the energy expressions in this system */
+QHash<Symbol,Expression> System::energyExpressions() const
+{
+    return this->_pvt_forceFields().energyExpressions();
+}
+                        
+/** Return the constant value for the constant component 'component'
+
+    \throw SireFF::missing_component
+*/
+double System::constant(const Symbol &component) const
+{
+    return this->_pvt_forceFields().constant(component);
+}
+
+/** Return the values of all constant components in this system */
+Values System::constants() const
+{
+    return this->_pvt_forceFields().constants();
+}
+
+/** Return the values of the constant components whose symbols
+    are in 'components'
     
     \throw SireFF::missing_component
 */
-Values System::componentValues(const QSet<Symbol> &components)
+Values System::constants(const QSet<Symbol> &components) const
 {
-    return this->energies(components);
+    return this->_pvt_forceFields().constants(components);
 }
 
-/** Return the values of all components, constants and 
-    expressions in this system */
-Values System::componentValues()
-{
-    return this->energies();
-}
+/** Return whether or not the system component 'component'
+    is a constant component
     
-/** Return the symbols of all constants in the forcefield
-    expressions in this system */
+    \throw SireFF::missing_component
+*/
+bool System::isConstantComponent(const Symbol &component) const
+{
+    return this->_pvt_forceFields().isConstantComponent(component);
+}
+
+/** Return whether or not this system has a constant
+    component with symbol 'component' */
+bool System::hasConstantComponent(const Symbol &component) const
+{
+    return this->_pvt_forceFields().hasConstantComponent(component);
+}
+
+/** Set the constant component 'symbol' to the value 'value'
+
+    \throw SireError::incompatible_error
+*/
+void System::setConstantComponent(const Symbol &symbol, double value)
+{
+    if (this->hasConstantComponent(symbol))
+    {
+        double old_value = this->constant(symbol);
+    
+        if (old_value != value)
+        {
+            Delta delta(symbol, old_value, value);
+            
+            if (cons.involves(delta))
+            {
+                throw SireError::incomplete_code( QObject::tr(
+                    "Not yet implemented changing a constant component "
+                    "that is connected to a constraint... "
+                    "Changing %1 from %2 to %3.")
+                        .arg(symbol.toString())
+                        .arg(old_value).arg(value), CODELOC );
+                
+                //need to process delta through constraints, and then
+                //have to check that this hasn't changed 'symbol'
+                //(if this is a constant expression!)
+            }
+        }
+    }
+    
+    this->_pvt_forceFields().setConstantComponent(symbol, value);
+    sysversion.incrementMajor();
+}
+
+/** Set the constant component 'symbol' to the 'expression'
+
+    \throw SireError::incompatible_error
+*/
+void System::setConstantComponent(const Symbol &symbol,
+                                  const Expression &expression)
+{
+    if (this->hasConstantComponent(symbol))
+    {
+        Expression ex = this->constantExpression(symbol);
+        
+        if (ex != expression)
+        {
+            throw SireError::incomplete_code( QObject::tr(
+                    "The code to replace one constant expression with another "
+                    "has yet to be written! Cannot change %1 == %2 to %1 == %3.")
+                        .arg(symbol.toString(), ex.toString(), expression.toString()),
+                            CODELOC );
+        }
+    }
+    
+    this->_pvt_forceFields().setConstantComponent(symbol, expression);
+    sysversion.incrementMajor();
+}
+
+/** Return the symbols that represent constant components of this system */
 QSet<Symbol> System::constantSymbols() const
 {
     return this->_pvt_forceFields().constantSymbols();
 }
 
-/** Return whether or not this system has a constant value in 
-    a forcefield expression with symbol 'component' */
-bool System::hasConstant(const Symbol &component) const
+/** Return the values of all constant components of this system */
+Values System::constantComponents() const
 {
-    return this->_pvt_forceFields().hasConstant(component);
+    return this->_pvt_forceFields().constantComponents();
 }
 
-/** Return the value of the constant associated with the symbol
-    'component'
+/** Return the expression that defines the constant component with 
+    symbol 'symbol'
     
     \throw SireFF::missing_component
 */
-double System::getConstant(const Symbol &component) const
+Expression System::constantExpression(const Symbol &symbol) const
 {
-    return this->_pvt_forceFields().constant(component);
+    return this->_pvt_forceFields().constantExpression(symbol);
 }
 
-/** Return the values of the constants associated with the symbols
-    in 'components'
+/** Return the expressions that define the constant components
+    whose symbols are in 'symbols'
     
     \throw SireFF::missing_component
 */
-Values System::getConstants(const QSet<Symbol> &components) const
+QHash<Symbol,Expression> System::constantExpressions(const QSet<Symbol> &symbols) const
 {
-    return this->_pvt_forceFields().constants(components);
+    return this->_pvt_forceFields().constantExpressions(symbols);
 }
 
-/** Return the values of all constants attached to this forcefield */
-Values System::getConstants() const
+/** Return all of the expressions that define the constant components
+    of this system */
+QHash<Symbol,Expression> System::constantExpressions() const
 {
-    return this->_pvt_forceFields().constants();
+    return this->_pvt_forceFields().constantExpressions();
+}
+
+/** Synonym for System::setConstantComponent(symbol, value) */
+void System::setComponent(const Symbol &symbol, double value)
+{
+    this->setConstantComponent(symbol, value);
+}
+
+/** Synonym for System::setEnergyComponent(symbol, expression) */
+void System::setComponent(const Symbol &symbol, const SireCAS::Expression &expression)
+{
+    this->setEnergyComponent(symbol, expression);
+}
+
+/** Return all of the symbols that represent the constant and
+    energy components of this system */
+QSet<Symbol> System::componentSymbols() const
+{
+    return this->_pvt_forceFields().componentSymbols();
+}
+
+/** Return whether or not this system has a constant or energy
+    component represented by the symbol 'symbol' */
+bool System::hasComponent(const Symbol &symbol) const
+{
+    return this->_pvt_forceFields().hasComponent(symbol);
+}
+
+/** Return the expression that defines the component represented
+    by the symbol 'symbol'
+    
+    \throw SireFF::missing_component
+*/
+Expression System::componentExpression(const Symbol &symbol) const
+{
+    return this->_pvt_forceFields().componentExpression(symbol);
+}
+
+/** Return the expressions that define the components whose
+    symbols are in 'symbols'
+    
+    \throw SireFF::missing_component
+*/
+QHash<Symbol,Expression> System::componentExpressions(const QSet<Symbol> &symbols) const
+{
+    return this->_pvt_forceFields().componentExpressions(symbols);
+}
+
+/** Return all of the expressions that define all of the components
+    of this system */
+QHash<Symbol,Expression> System::componentExpressions() const
+{
+    return this->_pvt_forceFields().componentExpressions();
 }
 
 /** Add the forces acting on the molecules in the forcetable 'forcetable'
@@ -979,100 +1181,6 @@ void System::applyMoleculeConstraints()
 bool System::moleculeConstraintsAreSatisfied() const
 {
     return cons.moleculeConstraintsAreSatisfied(*this);
-}
-
-/** Set the energy component equal to the constant value 'value'. This will
-    replace any existing component with this value, although it is an error
-    to try to replace an energy component of one of the constituent forcefields
-    
-    \throw SireFF::duplicate_component
-*/
-void System::setComponent(const Symbol &symbol, double value)
-{
-    SaveState old_state = SaveState::save(*this);
-        
-    try
-    {
-        if (this->hasConstant(symbol))
-        {
-            if (this->getConstant(symbol) == value)
-                return;
-        }
-    
-        _pvt_forceFields().setComponent(symbol, value);
-        sysversion.incrementMajor();
-
-        this->applyConstraints();
-    }
-    catch(...)
-    {
-        old_state.restore(*this);
-        throw;
-    }
-}
-
-/** Set the constant value represented by the symbol 'component' to 
-    the value 'value'. This will replace any existing component with this value, 
-    although it is an error to try to replace an energy component of one of the
-    constituent forcefields
-    
-    \throw SireFF::duplicate_component
-*/
-void System::setConstant(const Symbol &component, double value)
-{
-    this->setComponent(component, value);
-}
-
-/** Set the energy component equal to the expression 'expression'. This will
-    replace any existing component with this expression, although it is an error
-    to try to replace an energy component of one of the constituent forcefields
-    
-    \throw SireFF::duplicate_component
-*/
-void System::setComponent(const Symbol &symbol, const SireCAS::Expression &expression)
-{
-    if (expression.isConstant())
-    {
-        this->setConstant(symbol, expression.evaluate(Values()) );
-        return;
-    }
-
-    SaveState old_state = SaveState::save(*this);
-
-    try
-    {
-        _pvt_forceFields().setComponent(symbol, expression);
-        this->applyConstraints();
-        sysversion.incrementMajor();
-    }
-    catch(...)
-    {
-        old_state.restore(*this);
-        throw;
-    }
-}
-
-/** Return the energy component represented by the symbol 'symbol'
-
-    \throw SireFF::missing_component
-*/
-Expression System::getComponent(const Symbol &symbol) const
-{
-    return this->_pvt_forceFields().getComponent(symbol);
-}
-
-/** Return whether or not this system has an energy component represented
-    by the symbol 'symbol' */
-bool System::hasComponent(const Symbol &symbol) const
-{
-    return this->_pvt_forceFields().hasComponent(symbol);
-}
-
-/** Return the symbols representing all of the energy components of
-    the system */
-Symbols System::components() const
-{
-    return this->_pvt_forceFields().components();
 }
 
 /** Return the values of the property called 'name' in all of the 

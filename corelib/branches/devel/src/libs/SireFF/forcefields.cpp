@@ -95,7 +95,14 @@ public:
     
     virtual Expression toExpression() const=0;
     
-    virtual double value() const=0;
+    virtual bool isConstant() const=0;
+
+    bool isEnergy() const
+    {
+        return not this->isConstant();
+    }
+    
+    virtual double value(const QHash<Symbol,FFSymbolPtr> &ffsymbols) const=0;
     
     virtual MolarEnergy energy(QVector<FFPtr> &forcefields,
                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -132,27 +139,29 @@ private:
 };
 
 /** This is an FFSymbol that holds just a single value */
-class FFSymbolValue : public FFSymbol
+class FFConstantValue : public FFSymbol
 {
 public:
-    FFSymbolValue();
-    FFSymbolValue(const Symbol &symbol, double value);
+    FFConstantValue();
+    FFConstantValue(const Symbol &symbol, double value);
     
-    FFSymbolValue(const FFSymbolValue &other);
+    FFConstantValue(const FFConstantValue &other);
     
-    ~FFSymbolValue();
+    ~FFConstantValue();
     
     const char* what() const
     {
-        return "SireFF::FFSymbolValue";
+        return "SireFF::FFConstantValue";
     }
     
     void load(QDataStream &ds);
     void save(QDataStream &ds) const;
     
+    bool isConstant() const { return true; }
+    
     Expression toExpression() const;
     
-    double value() const;
+    double value(const QHash<Symbol,FFSymbolPtr> &ffsymbols) const;
     
     MolarEnergy energy(QVector<FFPtr> &forcefields,
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -166,6 +175,47 @@ public:
 private:
     /** The value of this symbol */
     double v;
+};
+
+/** This is an FFSymbol that holds a constant expression */
+class FFConstantExpression : public FFSymbol
+{
+public:
+    FFConstantExpression();
+    FFConstantExpression(const Symbol &symbol, const Expression &expression);
+    
+    FFConstantExpression(const FFConstantExpression &other);
+    
+    ~FFConstantExpression();
+    
+    const char* what() const
+    {
+        return "SireFF::FFConstantExpression";
+    }
+    
+    void load(QDataStream &ds);
+    void save(QDataStream &ds) const;
+
+    bool isConstant() const { return true; }
+    
+    Expression toExpression() const;
+    
+    void assertNotDepends(const QSet<Symbol> &ffsymbols) const;
+    
+    double value(const QHash<Symbol,FFSymbolPtr> &ffsymbols) const;
+    
+    MolarEnergy energy(QVector<FFPtr> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_energy=1) const;
+    
+    void force(ForceTable &forcetable,
+               QVector<FFPtr> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_force=1) const;
+
+private:
+    Expression expression;
+    Symbols syms;
 };
 
 /** This is an FFSymbol that holds a single forcefield component */
@@ -183,6 +233,8 @@ public:
     {
         return "SireFF::FFSymbolFF";
     }
+
+    bool isConstant() const { return false; }
     
     void load(QDataStream &ds);
     void save(QDataStream &ds) const;
@@ -191,7 +243,7 @@ public:
     
     FFIdx ffIdx() const;
     
-    double value() const;
+    double value(const QHash<Symbol,FFSymbolPtr> &ffsymbols) const;
     
     MolarEnergy energy(QVector<FFPtr> &forcefields,
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -225,13 +277,15 @@ public:
     void load(QDataStream &ds);
     void save(QDataStream &ds) const;
 
+    bool isConstant() const { return false; }
+
     Expression toExpression() const;
     
     const Expression& expression() const;
     
     void expandInTermsOf(const QSet<Symbol> &ffsymbols);
     
-    double value() const;
+    double value(const QHash<Symbol,FFSymbolPtr> &ffsymbols) const;
     
     MolarEnergy energy(QVector<FFPtr> &forcefields,
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -297,10 +351,12 @@ public:
     
     void load(QDataStream &ds);
     void save(QDataStream &ds) const;
+
+    bool isConstant() const { return false; }
     
     Expression toExpression() const;
 
-    double value() const;
+    double value(const QHash<Symbol,FFSymbolPtr> &ffsymbols) const;
     
     MolarEnergy energy(QVector<FFPtr> &forcefields,
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -350,9 +406,14 @@ QDataStream& operator>>(QDataStream &ds, FFSymbolPtr &ffsymbol)
         {
             ffsymbol.reset( new FFSymbolFF() );
         }
-        else if (type_name == QLatin1String("SireFF::FFSymbolValue"))
+        else if (type_name == QLatin1String("SireFF::FFConstantValue") or
+                 type_name == QLatin1String("SireFF::FFSymbolValue"))
         {
-            ffsymbol.reset( new FFSymbolValue() );
+            ffsymbol.reset( new FFConstantValue() );
+        }
+        else if (type_name == QLatin1String("SireFF::FFConstantExpression"))
+        {
+            ffsymbol.reset( new FFConstantExpression() );
         }
         else if (type_name == QLatin1String("SireFF::FFSymbolExpression"))
         {
@@ -407,58 +468,175 @@ void FFSymbol::save(QDataStream &ds) const
 }
 
 ///////////
-/////////// Implementation of FFSymbolValue
+/////////// Implementation of FFConstantValue
 ///////////
 
-FFSymbolValue::FFSymbolValue() : FFSymbol(), v(0)
+FFConstantValue::FFConstantValue() : FFSymbol(), v(0)
 {}
 
-FFSymbolValue::FFSymbolValue(const Symbol &symbol, double value) 
+FFConstantValue::FFConstantValue(const Symbol &symbol, double value) 
               : FFSymbol(symbol), v(value)
 {}
 
-FFSymbolValue::FFSymbolValue(const FFSymbolValue &other)
+FFConstantValue::FFConstantValue(const FFConstantValue &other)
                : FFSymbol(other), v(other.v)
 {}
 
-FFSymbolValue::~FFSymbolValue()
+FFConstantValue::~FFConstantValue()
 {}
 
-void FFSymbolValue::load(QDataStream &ds)
+void FFConstantValue::load(QDataStream &ds)
 {
     ds >> v;
     FFSymbol::load(ds);
 }
 
-void FFSymbolValue::save(QDataStream &ds) const
+void FFConstantValue::save(QDataStream &ds) const
 {
     ds << v;
     FFSymbol::save(ds);
 }
 
-Expression FFSymbolValue::toExpression() const
+Expression FFConstantValue::toExpression() const
 {
     return Expression(v);
 }
 
-double FFSymbolValue::value() const
+double FFConstantValue::value(const QHash<Symbol,FFSymbolPtr>&) const
 {
     return v;
 }
 
-MolarEnergy FFSymbolValue::energy(QVector<FFPtr> &forcefields,
+MolarEnergy FFConstantValue::energy(QVector<FFPtr> &forcefields,
                                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                                   double scale_energy) const
 {
-    return MolarEnergy(scale_energy * v);
+    throw SireError::program_bug( QObject::tr(
+            "Constant values or expressions do not have an energy, and should "
+            "not be called as if they have an energy! %1 == %2")
+                .arg(this->symbol().toString()).arg(v), CODELOC );
+                
+    return MolarEnergy();
 }
 
-void FFSymbolValue::force(ForceTable &forcetable,
+void FFConstantValue::force(ForceTable &forcetable,
                           QVector<FFPtr> &forcefields,
                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                           double scale_force) const
 {
-    return;
+    throw SireError::program_bug( QObject::tr(
+            "Constant values or expressions do not cause a force, and should "
+            "not be called as if they could cause a force! %1 == %2")
+                .arg(this->symbol().toString()).arg(v), CODELOC );
+}
+
+///////////
+/////////// Implementation of FFConstantExpression
+///////////
+
+FFConstantExpression::FFConstantExpression() : FFSymbol()
+{}
+
+FFConstantExpression::FFConstantExpression(const Symbol &symbol,
+                                           const Expression &e) 
+                     : FFSymbol(symbol), expression(e), syms(e.symbols())
+{}
+
+FFConstantExpression::FFConstantExpression(const FFConstantExpression &other)
+                     : FFSymbol(other), expression(other.expression),
+                       syms(other.syms)
+{}
+
+FFConstantExpression::~FFConstantExpression()
+{}
+
+void FFConstantExpression::load(QDataStream &ds)
+{
+    ds >> expression;
+    FFSymbol::load(ds);
+    
+    syms = expression.symbols();
+}
+
+void FFConstantExpression::save(QDataStream &ds) const
+{
+    ds << expression;
+    FFSymbol::save(ds);
+}
+
+Expression FFConstantExpression::toExpression() const
+{
+    return expression;
+}
+
+void FFConstantExpression::assertNotDepends(const QSet<Symbol> &ffsyms) const
+{
+    if (ffsyms.count() <= syms.count())
+    {
+        foreach (const Symbol &ffsym, ffsyms)
+        {
+            if (syms.contains(ffsym))
+                throw SireError::incompatible_error( QObject::tr(
+                    "The constant expression %1 == %2 is not really constant as it "
+                    "depends on the energy expression with symbol %3.")
+                        .arg(this->symbol().toString(), expression.toString())
+                        .arg(ffsym.toString()), CODELOC );
+        }
+    }
+    else
+    {
+        foreach (const Symbol &sym, syms)
+        {
+            if (ffsyms.contains(sym))
+                throw SireError::incompatible_error( QObject::tr(
+                    "The constant expression %1 == %2 is not really constant as it "
+                    "depends on the energy expression with symbol %3.")
+                        .arg(this->symbol().toString(), expression.toString())
+                        .arg(sym.toString()), CODELOC );
+        }
+    }
+}
+
+double FFConstantExpression::value(const QHash<Symbol,FFSymbolPtr> &ffsymbols) const
+{
+    if (not syms.isEmpty())
+    {
+        Values vals;
+        vals.reserve(syms.count());
+        
+        foreach (const Symbol &symbol, syms)
+        {
+            if (ffsymbols.contains(symbol))
+                vals.set(symbol, ffsymbols[symbol]->value(ffsymbols));
+        }
+        
+        return expression(vals);
+    }
+    else
+        return expression( Values() );
+}
+
+MolarEnergy FFConstantExpression::energy(QVector<FFPtr> &forcefields,
+                                         const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                         double scale_energy) const
+{
+    throw SireError::program_bug( QObject::tr(
+            "Constant values or expressions do not have an energy, and should "
+            "not be called as if they have an energy! %1 == %2")
+                .arg(this->symbol().toString(), expression.toString()), CODELOC );
+                
+    return MolarEnergy();
+}
+
+void FFConstantExpression::force(ForceTable &forcetable,
+                                 QVector<FFPtr> &forcefields,
+                                 const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                 double scale_force) const
+{
+    throw SireError::program_bug( QObject::tr(
+            "Constant values or expressions do not cause a force, and should "
+            "not be called as if they could cause a force! %1 == %2")
+                .arg(this->symbol().toString(), expression.toString()), CODELOC );
 }
 
 ///////////
@@ -501,10 +679,10 @@ Expression FFSymbolFF::toExpression() const
     return Expression(this->symbol());
 }
 
-double FFSymbolFF::value() const
+double FFSymbolFF::value(const QHash<Symbol,FFSymbolPtr>&) const
 {
     throw SireError::program_bug( QObject::tr(
-        "There is no value associated with a forcefield (%1, %2)")
+        "There is no constant value associated with a forcefield (%1, %2)")
             .arg(ffidx).arg(this->symbol().toString()), CODELOC );
             
     return 0;
@@ -638,6 +816,8 @@ void FFSymbolExpression::expandInTermsOf(const QSet<Symbol> &ffsymbols)
     QSet<Symbol> symbols = ffexpression.symbols();
     symbols.intersect(ffsymbols);
     
+    Expression remainder = ffexpression;
+    
     foreach (const Symbol &symbol, symbols)
     {
         QList<Factor> factors = ffexpression.expand(symbol);
@@ -654,10 +834,30 @@ void FFSymbolExpression::expandInTermsOf(const QSet<Symbol> &ffsymbols)
                     "dimensionally correct.")
                         .arg(symbol.toString(), factor.power().toString()),
                             CODELOC );
+
+            foreach (const Symbol &fac_symbol, factor.factor().symbols())
+            {
+                if (ffsymbols.contains(fac_symbol))
+                    throw SireError::incompatible_error( QObject::tr(
+                        "You cannot multiply or divide one forcefield energy "
+                        "component by another (%1 by %2), as this is not "
+                        "dimensionally correct.")
+                            .arg(symbol.toString(), fac_symbol.toString()), CODELOC );
+            }
                 
             components.append( Component(factor.factor(), symbol) );
+            
+            remainder -= (symbol * factor.factor());
         }
     }
+    
+    if (not remainder.isZero())
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot have a forcefield expression that contains a free "
+                "term (%1) that is not dependent on a forcefield component. "
+                "This is because each term must have dimensions of energy, and "
+                "the addition of a constant dimensionless value is not "
+                "dimensionally correct.").arg(remainder.toString()), CODELOC );
 }
 
 Expression FFSymbolExpression::toExpression() const
@@ -665,9 +865,10 @@ Expression FFSymbolExpression::toExpression() const
     return ffexpression;
 }
 
-double FFSymbolExpression::value() const
+double FFSymbolExpression::value(const QHash<Symbol,FFSymbolPtr>&) const
 {
     throw SireError::incompatible_error( QObject::tr(
+        "There is no constant value associated with an energy expression. "
         "You cannot multiply one forcefield component (%1) by another in "
         "the forcefield expression %2.")
             .arg(symbol().toString(), ffexpression.toString()), CODELOC );
@@ -704,7 +905,7 @@ MolarEnergy FFSymbolExpression::energy(QVector<FFPtr> &forcefields,
 
             if (not values.contains(symbol))
             {
-                values.set( symbol, ffsymbols[symbol]->value() );
+                values.set( symbol, ffsymbols[symbol]->value(ffsymbols) );
             }
         }
         
@@ -738,7 +939,7 @@ void FFSymbolExpression::force(ForceTable &forcetable,
             const Symbol &symbol = deps_array[j];
 
             if (not values.contains(symbol))
-                values.set( symbol, ffsymbols[symbol]->value() );
+                values.set( symbol, ffsymbols[symbol]->value(ffsymbols) );
         }
         
         //now evaluate the scaling factor...
@@ -782,11 +983,12 @@ Expression FFTotalExpression::toExpression() const
     return Expression(this->symbol());
 }
 
-double FFTotalExpression::value() const
+double FFTotalExpression::value(const QHash<Symbol,FFSymbolPtr>&) const
 {
     throw SireError::program_bug( QObject::tr(
-        "An FFTotalExpression should never be used in a situation where "
-        "its value must be determined..."), CODELOC );
+        "An FFTotalExpression does not have a constant value and should never "
+        "be used in a situation where its constant value must be determined..."), 
+            CODELOC );
         
     return 0;
 }
@@ -1040,7 +1242,7 @@ void ForceFields::rebuildIndex()
 
     //first copy in all of the symbols representing all of the forcefield
     //components
-    QSet<Symbol> all_symbols;
+    QSet<Symbol> all_ff_symbols;
     
     for (FFIdx i(0); i<nffields; ++i)
     {
@@ -1055,7 +1257,7 @@ void ForceFields::rebuildIndex()
                         .arg(symbol.toString()), CODELOC );
         
             new_symbols.insert( symbol, FFSymbolPtr(new FFSymbolFF(i, symbol)) );
-            all_symbols.insert(symbol);
+            all_ff_symbols.insert(symbol);
         }
     }
 
@@ -1078,6 +1280,24 @@ void ForceFields::rebuildIndex()
         }
     }
     
+    //if there isn't a total energy component, then add the default one
+    if (not new_symbols.contains( this->totalComponent() ))
+    {
+        new_symbols.insert(this->totalComponent(),
+                           FFSymbolPtr(new FFTotalExpression()));
+    }
+
+    for (QHash<Symbol,FFSymbolPtr>::iterator it = new_symbols.begin();
+         it != new_symbols.end();
+         ++it)
+    {
+        if (it.value()->isA<FFSymbolExpression>() or
+            it.value()->isA<FFTotalExpression>())
+        {
+            all_ff_symbols.insert(it.key());
+        }
+    }
+    
     //now process each forcefield expression...
     for (QHash<Symbol,FFSymbolPtr>::iterator it = new_symbols.begin();
          it != new_symbols.end();
@@ -1085,15 +1305,20 @@ void ForceFields::rebuildIndex()
     {
         if (it.value()->isA<FFSymbolExpression>())
         {
-            it.value()->asA<FFSymbolExpression>().expandInTermsOf(all_symbols);
+            it.value()->asA<FFSymbolExpression>().expandInTermsOf(all_ff_symbols);
         }
     }
     
-    //if there isn't a total energy component, then add the default one
-    if (not new_symbols.contains( this->totalComponent() ))
+    //now loop through the constant expressions and make sure
+    //that they really are constant!
+    for (QHash<Symbol,FFSymbolPtr>::iterator it = new_symbols.begin();
+         it != new_symbols.end();
+         ++it)
     {
-        new_symbols.insert(this->totalComponent(),
-                           FFSymbolPtr(new FFTotalExpression()));
+        if (it.value()->isA<FFConstantExpression>())
+        {
+            it.value()->asA<FFConstantExpression>().assertNotDepends(all_ff_symbols);
+        }
     }
     
     ffsymbols = new_symbols;
@@ -1498,46 +1723,125 @@ QString ForceFields::toString() const
 {
     return QObject::tr("FFPtr( nForceFields() == %1 )").arg(this->nForceFields());
 }
-
-/** Set the component represented by the symbol 'symbol' equal to the 
-    value 'value'. This replaces any existing component with this value.
-    Note that an exception will be raised if you try to replace a component
-    that exists in one of the constituent forcefields.
     
-    \throw SireFF::duplicate_component
+/** Return the energy associated with the symbol 'component'. This component 
+    may either be a component of one of the constituent forcefields,
+    or it may represent a function of the forcefield components
+    
+    \throw SireFF::missing_component
 */
-void ForceFields::setComponent(const Symbol &symbol, double value)
+SireUnits::Dimension::MolarEnergy ForceFields::energy(const Symbol &component)
 {
-    ForceFields old_state( *this );
+    FFSymbolPtr comp = ffsymbols.value(component);
 
-    try
+    if (comp.get() == 0)
+        throw SireFF::missing_component( QObject::tr(   
+            "There is no component of the energy represented by the "
+            "symbol %1. Available components are %2.")
+                .arg(component.toString(), Sire::toString(energySymbols())),
+                    CODELOC );
+
+    if (comp->isConstant())
+        throw SireFF::missing_component( QObject::tr(
+                "The component %1 is a constant component (it is not an energy "
+                "component). Available energy components are %2.")
+                    .arg(component.toString(),
+                         Sire::toString(energySymbols())), CODELOC );
+
+    return comp->energy(ffields_by_idx, ffsymbols);
+}
+
+/** Return the energy of this set of forcefields. This uses the supplied
+    total energy function to calculate the energy, if one exists,
+    or it just calculates the sum of the total energies of all of the
+    contained forcefields */
+SireUnits::Dimension::MolarEnergy ForceFields::energy()
+{
+    return this->energy( this->totalComponent() );
+}
+
+/** Return the energies of all of the energy components of all of the forcefields,
+    constants and expressions */
+Values ForceFields::energies()
+{
+    Values vals;
+    
+    for (QHash<Symbol,FFSymbolPtr>::const_iterator it = ffsymbols.constBegin();
+         it != ffsymbols.constEnd();
+         ++it)
     {
-        ffsymbols.insert( symbol, 
-                          FFSymbolPtr(new FFSymbolValue(symbol, value)) );
-        this->rebuildIndex();
+        if ( (*it)->isEnergy() )
+            vals.set(it.key(), this->energy(it.key()).value());
     }
-    catch(...)
+
+    return vals;
+}
+
+/** Return the energies of all of the energy components whose symbols are 
+    listed in 'components'
+    
+    \throw SireFF::missing_component
+*/
+Values ForceFields::energies(const QSet<Symbol> &components)
+{
+    Values vals;
+    vals.reserve(components.count());
+    
+    foreach (const Symbol &component, components)
     {
-        this->operator=(old_state);
-        throw;
+        vals.set(component, this->energy(component).value());
     }
+    
+    return vals;
+}
+
+/** Return whether or not the forcefield component 'component'
+    is an energy component
+    
+    \throw SireFF::missing_component
+*/
+bool ForceFields::isEnergyComponent(const Symbol &component) const
+{
+    FFSymbolPtr comp = ffsymbols.value(component);
+
+    if (comp.get() == 0)
+        throw SireFF::missing_component( QObject::tr(   
+            "There is no component of the energy represented by the "
+            "symbol %1. Available components are %2.")
+                .arg(component.toString(), Sire::toString(energySymbols())),
+                    CODELOC );
+
+    return comp->isEnergy();
+}
+
+/** Return whether or not the forcefields have an energy component
+    with symbol 'component' */
+bool ForceFields::hasEnergyComponent(const Symbol &component) const
+{
+    FFSymbolPtr comp = ffsymbols.value(component);
+
+    if (comp.get() != 0)
+        return comp->isEnergy();
+    else
+        return false;
 }
 
 /** Set the component represented by the symbol 'symbol' equal to the expression
-    contained in 'expression'. This replaces any existing component with 
-    this expression. Note that an exception will be raised if you try to 
-    replace a component that exists in one of the constituent forcefields
+    contained in 'expression'. This replaces any existing constant or
+    energy component with this expression. 
+    
+    Note that this expression must only involve terms that are linear in 
+    forcefield components, and there may be no products of forcefield
+    components (i.e. each term of the expression must have dimensions
+    of energy)
+    
+    Note that an exception will be raised if you try to replace a 
+    component that exists in one of the constituent forcefields
     
     \throw SireFF::duplicate_component
 */
-void ForceFields::setComponent(const Symbol &symbol, const Expression &expression)
+void ForceFields::setEnergyComponent(const Symbol &symbol, const Expression &expression)
 {
-    if (expression.isConstant())
-    {
-        this->setComponent(symbol, expression.evaluate(Values()));
-        return;
-    }
-
     ForceFields old_state( *this );
     
     try
@@ -1553,50 +1857,89 @@ void ForceFields::setComponent(const Symbol &symbol, const Expression &expressio
     }
 }
 
-/** Return the symbols representing all of the energy components */
-Symbols ForceFields::components() const
+/** Return all of the symbols that represent energy components */
+QSet<Symbol> ForceFields::energySymbols() const
 {
-    return ffsymbols.keys().toSet();
-}
-
-/** Return whether or not there is a forcefield component with symbol 'symbol' */
-bool ForceFields::hasComponent(const Symbol &symbol) const
-{
-    return ffsymbols.contains(symbol);
-}
-
-/** Return the symbols representing the constants in the forcefield
-    expressions */
-QSet<Symbol> ForceFields::constantSymbols() const
-{
-    QSet<Symbol> constant_symbols;
-
+    QSet<Symbol> syms;
+    
     for (QHash<Symbol,FFSymbolPtr>::const_iterator it = ffsymbols.constBegin();
          it != ffsymbols.constEnd();
          ++it)
     {
-        if ((*it)->isA<FFSymbolValue>())
-        {
-            constant_symbols.insert(it.key());
-        }
+        if ( (*it)->isEnergy() )
+            syms.insert( it.key() );
+    }
+
+    return syms;
+}
+
+/** Synonym for ForceFields::energies() */
+Values ForceFields::energyComponents()
+{
+    return this->energies();
+}
+
+/** Return the energy expression for the symbol 'component'
+
+    \throw SireFF::missing_component
+*/
+Expression ForceFields::energyExpression(const Symbol &component) const
+{
+    FFSymbolPtr comp = ffsymbols.value(component);
+
+    if (comp.get() == 0)
+        throw SireFF::missing_component( QObject::tr(   
+            "There is no component of the energy represented by the "
+            "symbol %1. Available components are %2.")
+                .arg(component.toString(), Sire::toString(energySymbols())),
+                    CODELOC );
+
+    if (comp->isConstant())
+        throw SireFF::missing_component( QObject::tr(
+                "The component %1 is a constant component (it is not an energy "
+                "component). Available energy components are %2.")
+                    .arg(component.toString(),
+                         Sire::toString(energySymbols())), CODELOC );
+
+    return comp->toExpression();
+}
+
+/** Return the energy expressions for the components whose
+    symbols are in 'symbols'
+    
+    \throw SireFF::missing_component
+*/
+QHash<Symbol,Expression> ForceFields::energyExpressions(
+                                        const QSet<Symbol> &symbols) const
+{
+    QHash<Symbol,Expression> exps;
+    exps.reserve( symbols.count() );
+    
+    foreach (const Symbol &symbol, symbols)
+    {
+        exps.insert( symbol, this->energyExpression(symbol) );
     }
     
-    return constant_symbols;
+    return exps;
 }
 
-/** Return whether or not there is a constant value in the 
-    forcefield expressions with symbol 'component' */
-bool ForceFields::hasConstant(const Symbol &component) const
+/** Return all of the energy expressions in this forcefield */
+QHash<Symbol,Expression> ForceFields::energyExpressions() const
 {
-    if (ffsymbols.contains(component))
+    QHash<Symbol,Expression> exps;
+    
+    for (QHash<Symbol,FFSymbolPtr>::const_iterator it = ffsymbols.constBegin();
+         it != ffsymbols.constEnd();
+         ++it)
     {
-        return ffsymbols.value(component)->isA<FFSymbolValue>();
+        if ( (*it)->isEnergy() )
+            exps.insert( it.key(), (*it)->toExpression() );
     }
-    else
-        return false;
-}
 
-/** Return the constant value associated with the symbol 'component'
+    return exps;
+}
+                        
+/** Return the value associated with the constant component 'component'
 
     \throw SireFF::missing_component
 */
@@ -1614,34 +1957,39 @@ double ForceFields::constant(const Symbol &component) const
     
     FFSymbolPtr val = ffsymbols.value(component);
     
-    if (not val->isA<FFSymbolValue>())
+    if (not val->isConstant())
     {
-        if (val->isA<FFSymbolFF>())
+        throw SireFF::missing_component( QObject::tr(
+            "There is no constant represented by the symbol %1. There is an "
+            "energy component with this symbol, but this is not constant! "
+            "Available constants are %2.")
+                .arg(component.toString(), 
+                     Sire::toString(this->constantSymbols())),
+                        CODELOC );
+    }
+    
+    return val->value(ffsymbols);
+}
+
+/** Return the values of all constant components in the forcefields */
+Values ForceFields::constants() const
+{
+    Values constant_values;
+
+    for (QHash<Symbol,FFSymbolPtr>::const_iterator it = ffsymbols.constBegin();
+         it != ffsymbols.constEnd();
+         ++it)
+    {
+        if ((*it)->isConstant())
         {
-            throw SireFF::missing_component( QObject::tr(
-                "There is no constant represented by the symbol %1. There is a "
-                "forcefield component with this symbol, but this is not constant! "
-                "Available constants are %2.")
-                    .arg(component.toString(), 
-                        Sire::toString(this->constantSymbols())),
-                            CODELOC );
-        }
-        else
-        {
-            throw SireFF::missing_component( QObject::tr(
-                "There is no constant represented by the symbol %1. There is a "
-                "forcefield expression with this symbol, but this is not constant! "
-                "Available constants are %2.")
-                    .arg(component.toString(), 
-                        Sire::toString(this->constantSymbols())),
-                            CODELOC );
+            constant_values.set(it.key(), (*it)->value(ffsymbols));
         }
     }
     
-    return val->asA<FFSymbolValue>().value();
+    return constant_values;
 }
 
-/** Return the constant values associated with the symbols
+/** Return the constant values associated with the constant components
     in 'components'
 
     \throw SireFF::missing_component
@@ -1660,91 +2008,274 @@ Values ForceFields::constants(const QSet<Symbol> &components) const
     return constant_values;
 }
 
-/** Return the values of all constant values in the forcefield 
-    expressions */
-Values ForceFields::constants() const
+/** Return whether or not the forcefield component 'component'
+    is a constant component
+    
+    \throw SireFF::missing_component
+*/
+bool ForceFields::isConstantComponent(const Symbol &component) const
 {
-    Values constant_values;
+    if (not ffsymbols.contains(component))
+        throw SireFF::missing_component( QObject::tr(
+                "There is no forcefield component %1 (constant or otherwise!). "
+                "Available constant components are %2.")
+                    .arg(component.toString(),
+                         Sire::toString(constantSymbols())), CODELOC);
+                         
+    return this->hasConstantComponent(component);
+}
+
+/** Return whether or not there is a constant component in the 
+    forcefield expressions with symbol 'component' */
+bool ForceFields::hasConstantComponent(const Symbol &component) const
+{
+    if (ffsymbols.contains(component))
+    {
+        return ffsymbols.value(component)->isConstant();
+    }
+    else
+        return false;
+}
+
+/** Set the constant component represented by the symbol 'symbol' equal to the 
+    value 'value'. This replaces any existing constant or energy component with 
+    this value. Note that an exception will be raised if you try to replace a component
+    that exists in one of the constituent forcefields.
+    
+    \throw SireFF::duplicate_component
+*/
+void ForceFields::setConstantComponent(const Symbol &symbol, double value)
+{
+    ForceFields old_state( *this );
+
+    try
+    {
+        ffsymbols.insert( symbol, 
+                          FFSymbolPtr(new FFConstantValue(symbol, value)) );
+        this->rebuildIndex();
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Set the constant component represented by the symbol 'symbol' equal to the 
+    expression 'expression'. This replaces any existing constant or energy component with 
+    this value. 
+    
+    Note that this expression must only involve constants, or other constant
+    components. A constant expression may not depend on a forcefield energy
+    
+    Note that an exception will be raised if you try to replace a component
+    that exists in one of the constituent forcefields.
+    
+    \throw SireFF::duplicate_component
+*/
+void ForceFields::setConstantComponent(const Symbol &symbol,
+                                       const Expression &expression)
+{
+    ForceFields old_state( *this );
+
+    try
+    {
+        ffsymbols.insert( symbol, 
+                          FFSymbolPtr(new FFConstantExpression(symbol, expression)) );
+        this->rebuildIndex();
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Return the symbols representing the constant forcefield components */
+QSet<Symbol> ForceFields::constantSymbols() const
+{
+    QSet<Symbol> constant_symbols;
 
     for (QHash<Symbol,FFSymbolPtr>::const_iterator it = ffsymbols.constBegin();
          it != ffsymbols.constEnd();
          ++it)
     {
-        if ((*it)->isA<FFSymbolValue>())
+        if ((*it)->isConstant())
         {
-            constant_values.set(it.key(), (*it)->asA<FFSymbolValue>().value());
+            constant_symbols.insert(it.key());
         }
     }
     
-    return constant_values;
+    return constant_symbols;
 }
 
-/** Return the forcefield component symbol, value or expression that matches
-    the component represented by the symbol 'symbol'
-    
-    \throw SireFF::missing_component
-*/
-Expression ForceFields::getComponent(const Symbol &symbol) const
+/** Synonym for ForceFields::constants() */
+Values ForceFields::constantComponents() const
 {
-    if (not ffsymbols.contains(symbol))
-        throw SireFF::missing_component( QObject::tr(
-            "There is no component represented by the symbol %1. "
-            "Available components are %2.")
-                .arg(symbol.toString(), Sire::toString(ffsymbols.keys())),
-                    CODELOC );
-                    
-    return ffsymbols[symbol]->toExpression();
+    return this->constants();
 }
 
-/** Return the energy associated with the symbol 'component'. This component 
-    may either be a component of one of the constituent forcefields,
-    or it may represent a function of the forcefield components
-    
+/** Return the expression for the constant component 'symbol'
+
     \throw SireFF::missing_component
 */
-SireUnits::Dimension::MolarEnergy ForceFields::energy(const Symbol &component)
+Expression ForceFields::constantExpression(const Symbol &component) const
 {
     if (not ffsymbols.contains(component))
-        throw SireFF::missing_component( QObject::tr(   
-            "There is no component of the energy represented by the "
-            "symbol %1. Available components are %2.")
-                .arg(component.toString(), Sire::toString(ffsymbols.keys())),
-                    CODELOC );
+        throw SireFF::missing_component( QObject::tr(
+                "There is no forcefield component %1 (constant or otherwise!). "
+                "Available constant components are %2.")
+                    .arg(component.toString(),
+                         Sire::toString(constantSymbols())), CODELOC);
 
-    return ffsymbols.value(component)->energy(ffields_by_idx, ffsymbols);
+    FFSymbolPtr val = ffsymbols.value(component);
+    
+    if (not val->isConstant())
+        throw SireFF::missing_component( QObject::tr(
+                "The component %1 is not a constant component. Available constant "
+                "components are %2.")
+                    .arg(component.toString(),
+                         Sire::toString(constantSymbols())), CODELOC );
+
+    return val->toExpression();
 }
 
-/** Return the energy of this set of forcefields. This uses the supplied
-    total energy function to calculate the energy, if one exists,
-    or it just calculates the sum of the total energies of all of the
-    contained forcefields */
-SireUnits::Dimension::MolarEnergy ForceFields::energy()
+/** Return the expressions for the constant components in 'symbols'
+
+    \throw SireFF::missing_component
+*/
+QHash<Symbol,Expression> ForceFields::constantExpressions(
+                                            const QSet<Symbol> &symbols) const
 {
-    return this->energy( this->totalComponent() );
+    QHash<Symbol,Expression> exps;
+    exps.reserve( symbols.count() );
+    
+    foreach (const Symbol &symbol, symbols )
+    {
+        exps.insert( symbol, this->constantExpression(symbol) );
+    }
+    
+    return exps;
 }
 
-/** Return the energies of all of the components whose symbols are 
-    listed in 'components'
+/** Return all of the constant expressions in the forcefields */
+QHash<Symbol,Expression> ForceFields::constantExpressions() const
+{
+    QHash<Symbol,Expression> exps;
+
+    for (QHash<Symbol,FFSymbolPtr>::const_iterator it = ffsymbols.constBegin();
+         it != ffsymbols.constEnd();
+         ++it)
+    {
+        if ((*it)->isConstant())
+        {
+            exps.insert(it.key(), it.value()->toExpression());
+        }
+    }
+    
+    return exps;
+}
+
+/** Set the component represented by the symbol 'symbol' equal to the 
+    value 'value'. This replaces any existing component with this value.
+    Note that an exception will be raised if you try to replace a component
+    that exists in one of the constituent forcefields.
+    
+    This is a convenient shorthand for ForceFields::setConstantComponent(symbol, value)
+    
+    \throw SireFF::duplicate_component
+*/
+void ForceFields::setComponent(const Symbol &symbol, double value)
+{
+    this->setConstantComponent(symbol, value);
+}
+
+/** Set the component represented by the symbol 'symbol' equal to the expression
+    contained in 'expression'. This replaces any existing constant or
+    energy component with this expression. 
+    
+    Note that this expression must only involve terms that are linear in 
+    forcefield components, and there may be no products of forcefield
+    components (i.e. each term of the expression must have dimensions
+    of energy)
+    
+    Note that an exception will be raised if you try to replace a 
+    component that exists in one of the constituent forcefields
+    
+    This is a convenient short-hand for 
+    ForceFields::setEnergyComponent(symbol,expression)
+    
+    \throw SireFF::duplicate_component
+*/
+void ForceFields::setComponent(const Symbol &symbol, const Expression &expression)
+{
+    this->setEnergyComponent(symbol, expression);
+}
+
+/** Return the symbols representing all of the constant and energy components */
+QSet<Symbol> ForceFields::componentSymbols() const
+{
+    return ffsymbols.keys().toSet();
+}
+
+/** Return whether or not there is a constant or energy component with symbol 'symbol' */
+bool ForceFields::hasComponent(const Symbol &symbol) const
+{
+    return ffsymbols.contains(symbol);
+}
+
+/** Return the expression for the constant or energy component 
+    represented by 'symbol'
     
     \throw SireFF::missing_component
 */
-Values ForceFields::energies(const QSet<Symbol> &components)
+Expression ForceFields::componentExpression(const Symbol &symbol) const
 {
-    Values vals;
+    FFSymbolPtr sym = ffsymbols.value(symbol);
     
-    foreach (const Symbol &component, components)
-    {
-        vals.set(component, this->energy(component).value());
-    }
-    
-    return vals;
+    if (sym.get() == 0)
+        throw SireFF::missing_component( QObject::tr(
+                "There is no energy or constant component %1. Available "
+                "components are %2.")
+                    .arg(symbol.toString(),
+                         Sire::toString(ffsymbols.keys())), CODELOC );
+                         
+    return sym->toExpression();
 }
 
-/** Return the energies of all of the components of all of the forcefields,
-    constants and expressions */
-Values ForceFields::energies()
+/** Return all of the expressions for the constant or energy
+    components whose symbols are in 'symbols'
+    
+    \throw SireFF::missing_component
+*/
+QHash<Symbol,Expression> ForceFields::componentExpressions(
+                                        const QSet<Symbol> &symbols) const
 {
-    return this->energies( ffsymbols.keys().toSet() );
+    QHash<Symbol,Expression> exps;
+    exps.reserve(symbols.count());
+    
+    foreach (const Symbol &symbol, symbols)
+    {
+        exps.insert( symbol, this->componentExpression(symbol) );
+    }
+    
+    return exps;
+}
+
+/** Return all of the constant and energy expressions attached
+    to these forcefields */
+QHash<Symbol,Expression> ForceFields::componentExpressions() const
+{
+    QHash<Symbol,Expression> exps;
+    
+    for (QHash<Symbol,FFSymbolPtr>::const_iterator it = ffsymbols.constBegin();
+         it != ffsymbols.constEnd();
+         ++it)
+    {
+        exps.insert(it.key(), it.value()->toExpression());
+    }
+    
+    return exps;
 }
 
 /** Add the force due to the component 'component' to the molecules
@@ -1755,15 +2286,24 @@ Values ForceFields::energies()
 void ForceFields::force(ForceTable &forcetable, const Symbol &component,
                         double scale_force)
 {
-    if (not ffsymbols.contains(component))
+    FFSymbolPtr comp = ffsymbols.value(component);
+
+    if (comp.get() == 0)
         throw SireFF::missing_component( QObject::tr(   
             "There is no component of the energy represented by the "
             "symbol %1. Available components are %2.")
-                .arg(component.toString(), Sire::toString(ffsymbols.keys())),
+                .arg(component.toString(), Sire::toString(energySymbols())),
                     CODELOC );
 
-    ffsymbols.value(component)->force(forcetable, ffields_by_idx, 
-                                      ffsymbols, scale_force);
+    if (comp->isConstant())
+        throw SireFF::missing_component( QObject::tr(
+                "The component %1 is a constant component (it is not an energy "
+                "component). Available energy components are %2.")
+                    .arg(component.toString(),
+                         Sire::toString(energySymbols())), CODELOC );
+
+    comp->force(forcetable, ffields_by_idx, 
+                ffsymbols, scale_force);
 }
 
 /** Add the forces due to the forcefields in this set to the molecules

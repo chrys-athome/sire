@@ -187,19 +187,54 @@ public:
     SireUnits::Dimension::MolarEnergy energy();
     SireUnits::Dimension::MolarEnergy energy(const Symbol &component);
     
-    Values energies(const QSet<Symbol> &components);
     Values energies();
+    Values energies(const QSet<Symbol> &components);
+    
+    bool isEnergyComponent(const Symbol &component) const;
+    bool hasEnergyComponent(const Symbol &component) const;
+    
+    void setEnergyComponent(const Symbol &symbol, 
+                            const SireCAS::Expression &expression);
 
-    double componentValue(const Symbol &component);
-    Values componentValues(const QSet<Symbol> &components);
-    Values componentValues();
+    QSet<Symbol> energySymbols() const;
+    Values energyComponents();
+                            
+    SireCAS::Expression energyExpression(const Symbol &expression) const;
+    QHash<Symbol,SireCAS::Expression> energyExpressions(
+                                            const QSet<Symbol> &symbols) const;
+    QHash<Symbol,SireCAS::Expression> energyExpressions() const;
+                            
+    double constant(const Symbol &component) const;
+    
+    Values constants() const;
+    Values constants(const QSet<Symbol> &components) const;
+    
+    bool isConstantComponent(const Symbol &component) const;
+    bool hasConstantComponent(const Symbol &component) const;
+    
+    void setConstantComponent(const Symbol &symbol, double value);
+    void setConstantComponent(const Symbol &symbol,
+                              const SireCAS::Expression &expression);
 
     QSet<Symbol> constantSymbols() const;
-    bool hasConstant(const Symbol &component) const;
+    Values constantComponents() const;
     
-    double getConstant(const Symbol &component) const;
-    Values getConstants() const;
-    Values getConstants(const QSet<Symbol> &components) const;
+    SireCAS::Expression constantExpression(const Symbol &symbol) const;
+    QHash<Symbol,SireCAS::Expression> constantExpressions(
+                                            const QSet<Symbol> &symbols) const;
+    QHash<Symbol,SireCAS::Expression> constantExpressions() const;
+    
+    void setComponent(const Symbol &symbol, double value);
+    void setComponent(const Symbol &symbol, const SireCAS::Expression &expression);
+    
+    QSet<Symbol> componentSymbols() const;
+    
+    bool hasComponent(const Symbol &symbol) const;
+    
+    SireCAS::Expression componentExpression(const Symbol &symbol) const;
+    QHash<Symbol,SireCAS::Expression> componentExpressions(
+                                            const QSet<Symbol> &symbols) const;
+    QHash<Symbol,SireCAS::Expression> componentExpressions() const;
     
     void force(ForceTable &forcetable, double scale_force=1);
     void force(ForceTable &forcetable, const Symbol &component,
@@ -217,17 +252,6 @@ public:
     const Property& compoundProperty(const QString &name) const;
     const Property& userProperty(const QString &name) const;
     const Property& builtinProperty(const QString &name) const;
-    
-    void setComponent(const Symbol &symbol, double value);
-    void setComponent(const Symbol &symbol, const SireCAS::Expression &expression);
-    
-    void setConstant(const Symbol &symbol, double value);
-    
-    Symbols components() const;
-    
-    SireCAS::Expression getComponent(const Symbol &symbol) const;
-    
-    bool hasComponent(const Symbol &symbol) const;
     
     const Property& property(const PropertyName &name) const;
 

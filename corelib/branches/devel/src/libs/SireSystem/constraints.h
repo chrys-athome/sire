@@ -54,6 +54,8 @@ class Molecules;
 namespace SireSystem
 {
 
+class Delta;
+
 using SireMol::MolNum;
 using SireMol::Molecules;
 
@@ -109,6 +111,8 @@ public:
     
     QVector<ConstraintPtr> componentConstraints() const;
     QVector<ConstraintPtr> moleculeConstraints() const;
+    
+    bool involves(const Delta &delta) const;
     
     bool hasMoleculeConstraints() const;
     bool hasMolDependentConstraints() const;

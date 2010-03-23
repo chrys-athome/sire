@@ -29,12 +29,16 @@
 #ifndef SIRESYSTEM_CONSTRAINT_H
 #define SIRESYSTEM_CONSTRAINT_H
 
+#include <QUuid>
+
 #include "SireBase/property.h"
+#include "SireBase/majorminorversion.h"
 
 #include "SireFF/ffidentifier.h"
 
 #include "SireCAS/expression.h"
 #include "SireCAS/symbol.h"
+#include "SireCAS/values.h"
 
 SIRE_BEGIN_HEADER
 
@@ -72,6 +76,7 @@ namespace SireSystem
 {
 
 class System;
+class Delta;
 
 /** This is the base class of all constraints. A constraint is an object
     that is added to a System that tries to ensure that a condition is
@@ -104,12 +109,11 @@ public:
     
     virtual Constraint* clone() const=0;
     
-    virtual bool apply(System &system) const=0;
+    virtual Delta apply(const System &system)=0;
+    virtual Delta apply(const System &system, const Delta &delta)=0;
 
-    virtual bool apply(System &system, SireMol::MolNum molnum) const;
-    virtual bool apply(System &system, const SireMol::Molecules &molecules) const;
-
-    virtual bool dependsOnMolecules() const;
+    virtual bool wouldBeAffectedBy(const System &system,    
+                                   const Delta &delta) const=0;
 
     virtual bool isSatisfied(const System &system) const=0;
     
@@ -118,7 +122,36 @@ public:
     static const NullConstraint& null();
     
 protected:
+    friend class System;        // so can call accept()
+    friend class Constraints;   // so can call accept()
+
     Constraint& operator=(const Constraint &other);
+
+    const QUuid& lastUID() const;
+    const SireBase::Version& lastVersion() const;
+
+    virtual void accept(const System &system, const Delta &delta)=0;
+
+    void setSatisfied(const System &system);
+    void setUnsatisfied(const System &system);
+    
+    void clearLastSystem();
+    
+    bool wasLastSystem(const System &system) const;
+    bool wasLastSatisfied() const;
+
+private:
+    /** The UID of the last system on which this constraint
+        was applied */
+    QUuid last_sysuid;
+    
+    /** The version of the system on which this constraint
+        was last applied */
+    SireBase::Version last_sysversion;
+    
+    /** Whether or not this constraint was satisfied for the 
+        last system on which it was applied */
+    bool last_was_satisfied;
 };
 
 /** The null constraint */
@@ -146,10 +179,16 @@ public:
     NullConstraint* clone() const;
     
     QString toString() const;
+
+    Delta apply(const System &system);
+    Delta apply(const System &system, const Delta &delta);
+
+    bool wouldBeAffectedBy(const System &system, const Delta &delta) const;
     
     bool isSatisfied(const System &system) const;
-    
-    bool apply(System &system) const;
+
+protected:
+    void accept(const System &system, const Delta &delta);
 };
 
 /** This constraint is used to constrain the value of a
@@ -187,20 +226,52 @@ public:
     static const char* typeName();
     
     QString toString() const;
+
+    Delta apply(const System &system);
+    Delta apply(const System &system, const Delta &delta);
+
+    bool wouldBeAffectedBy(const System &system, const Delta &delta) const;
     
     bool isSatisfied(const System &system) const;
-    
-    bool apply(System &system) const;
+
+protected:
+    void accept(const System &system, const Delta &delta);
 
 private:
+    void setSystem(const System &system);
+
     /** The ID of the forcefields whose properties are being constrained */
     SireFF::FFIdentifier ffid;
+    
+    /** The indexes of the forcefields that matched this ID the last
+        time this constraint was applied to a system */
+    QList<SireFF::FFIdx> ffidxs;
     
     /** The name of the property to constrain */
     QString propname;
     
     /** The expression used to calculate the value of the constraint */
     SireCAS::Expression eqn;
+    
+    /** The symbols representing the constant components needed
+        by the expression */
+    QSet<SireCAS::Symbol> syms;
+    
+    /** The values of the constant components the last time
+        this constraint was applied */
+    SireCAS::Values last_vals;
+    
+    /** The last value of the property */
+    SireBase::PropertyPtr old_property;
+    
+    /** The last (numerical) value of the property */
+    double old_value;
+    
+    /** The new value of the equation */
+    double new_value;
+    
+    /** Whether or not there is an old value */
+    bool has_old_value;
 };
 
 /** This constraint is used to constrain the value of a
@@ -240,10 +311,13 @@ public:
     const SireCAS::Symbol& component() const;
     
     const SireCAS::Expression& expression() const;
+
+    Delta apply(const System &system);
+    Delta apply(const System &system, const Delta &delta);
+
+    bool wouldBeAffectedBy(const System &system, const Delta &delta) const;
     
     bool isSatisfied(const System &system) const;
-    
-    bool apply(System &system) const;
 
 private:
     /** The component whose value is constrained */
@@ -251,6 +325,10 @@ private:
     
     /** The expression used to calculate the value of the constraint */
     SireCAS::Expression eqn;
+    
+    /** The symbols representing the constant components that
+        are used in the constraint expression */
+    QSet<SireCAS::Symbol> syms;
 };
 
 /** This constraint is used to constrain a component to adopt one of the values
@@ -292,10 +370,13 @@ public:
     const QVector<double>& windowValues() const;
     
     int stepSize() const;
+
+    Delta apply(const System &system);
+    Delta apply(const System &system, const Delta &delta);
+
+    bool wouldBeAffectedBy(const System &system, const Delta &delta) const;
     
     bool isSatisfied(const System &system) const;
-    
-    bool apply(System &system) const;
 
 private:
     /** The component whose value is being constrained */

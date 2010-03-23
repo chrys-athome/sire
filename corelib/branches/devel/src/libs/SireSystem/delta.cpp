@@ -1253,6 +1253,66 @@ bool Delta::involves(const Molecules &molecules) const
     }
 }
 
+/** Update passed set of molecules so that any molecules that
+    are affected by the delta are updated to the newest values */
+Molecules Delta::update(const Molecules &molecules) const
+{
+    if (isEmpty() or (new_mol.isEmpty() and new_mols.isEmpty()))
+    {
+        return molecules;
+    }
+    else if (new_mols.isEmpty())
+    {
+        Molecules::const_iterator it = molecules.constFind(new_mol.number());
+        
+        if (it != molecules.constEnd() and it.value().version() != new_mol.version())
+        {
+            Molecules updated_molecules(molecules);
+            updated_molecules.update(new_mol);
+            return updated_molecules;
+        }
+        else
+            return molecules;
+    }
+    else
+    {
+        Molecules updated_molecules(molecules);
+        
+        if (new_mols.nMolecules() <= molecules.nMolecules())
+        {
+            for (Molecules::const_iterator it = new_mols.constBegin();
+                 it != new_mols.constEnd();
+                 ++it)
+            {
+                Molecules::const_iterator it2 = molecules.constFind(it.key());
+                
+                if (it2 != molecules.constEnd() and 
+                    it.value().version() != it2.value().version())
+                {
+                    updated_molecules.update(it.value());
+                }
+            }
+        }
+        else
+        {
+            for (Molecules::const_iterator it = molecules.constBegin();
+                 it != molecules.constEnd();
+                 ++it)
+            {
+                Molecules::const_iterator it2 = new_mols.constFind(it.key());
+                
+                if (it2 != new_mols.constEnd() and
+                    it.value().version() != it2.value().version())
+                {
+                    updated_molecules.update(it2.value());
+                }
+            }
+        }
+        
+        return updated_molecules;
+    }
+}
+
 /** Return whether or not this delta involves a change in the
     non-energy-dependent system component 'component' */
 bool Delta::involves(const Symbol &component) const
@@ -1271,6 +1331,47 @@ bool Delta::involves(const Symbol &component) const
     }
     else
         return false;
+}
+
+/** Update the passed set of values so that they any components
+    affected by the delta are updated to the post-delta values */
+Values Delta::update(const Values &values) const
+{
+    if (isEmpty() or new_components.isEmpty())
+        return values;
+        
+    else if (values.count() <= new_components.count())
+    {
+        Values updated_values(values);
+        
+        for (Values::const_iterator it = values.constBegin();
+             it != values.constEnd();
+             ++it)
+        {
+            Values::const_iterator it2 = new_components.constFind(it);
+            
+            if (it2 != new_components.constEnd() and it2.value() != it.value())
+                updated_values.set(it);
+        }
+        
+        return updated_values;
+    }
+    else
+    {
+        Values updated_values(values);
+    
+        for (Values::const_iterator it = new_components.constBegin();
+             it != new_components.constEnd();
+             ++it)
+        {
+            Values::const_iterator it2 = values.constFind(it);
+            
+            if (it2 != values.constEnd() and it2.value() != it.value())
+                updated_values.set(it);
+        }
+        
+        return updated_values;
+    }
 }
 
 /** Return whether or not this delta involves a change in the 

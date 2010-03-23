@@ -28,6 +28,7 @@
 
 #include "constraint.h"
 #include "system.h"
+#include "delta.h"
 
 #include "SireMaths/maths.h"
 
@@ -68,6 +69,10 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, Constraint &constrain
     if (v == 1)
     {
         ds >> static_cast<Property&>(constraint);
+        
+        constraint.last_sysuid = QUuid();
+        constraint.last_sysversion = Version();
+        constraint.last_was_satisfied = false;
     }
     else
         throw version_error( v, "1", r_constraint, CODELOC );
@@ -76,11 +81,15 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, Constraint &constrain
 }
 
 /** Constructor */
-Constraint::Constraint() : Property()
+Constraint::Constraint() : Property(), last_was_satisfied(false)
 {}
 
 /** Copy constructor */
-Constraint::Constraint(const Constraint &other) : Property(other)
+Constraint::Constraint(const Constraint &other) 
+           : Property(other),
+             last_sysuid(other.last_sysuid), 
+             last_sysversion(other.last_sysversion),
+             last_was_satisfied(other.last_was_satisfied)
 {}
 
 /** Destructor */
@@ -90,31 +99,67 @@ Constraint::~Constraint()
 /** Copy assignment operator */
 Constraint& Constraint::operator=(const Constraint &other)
 {
-    Property::operator=(other);
+    if (this != &other)
+    {
+        Property::operator=(other);
+        last_sysuid = other.last_sysuid;
+        last_sysversion = other.last_sysversion;
+        last_was_satisfied = other.last_was_satisfied;
+    }
+    
     return *this;
 }
 
-/** Apply this constraint to the passed system, providing the information
-    that only the molecule with number 'molnum' has changed. This returns
-    whether or not this changes the system */
-bool Constraint::apply(System &system, MolNum) const
+/** Return the UID of the last system applied to the constraint */
+const QUuid& Constraint::lastUID() const
 {
-    return this->apply(system);
+    return last_sysuid;
 }
 
-/** Apply this constraint to the passed system, providing the information
-    that only the passed molecules have changed. This returns
-    whether or not this changes the system */
-bool Constraint::apply(System &system, const Molecules&) const
+/** Return the version of the last system applied to the constraint */
+const Version& Constraint::lastVersion() const
 {
-    return this->apply(system);
+    return last_sysversion;
 }
 
-/** Return whether or not this constraint depends on molecules
-    (most constraints don't) */
-bool Constraint::dependsOnMolecules() const
+/** Internal function called by the constraint to say 
+    that it is satisfied on the passed system */
+void Constraint::setSatisfied(const System &system)
 {
-    return false;
+    last_was_satisfied = true;
+    last_sysuid = system.UID();
+    last_sysversion = system.version();
+}
+
+/** Internal function called by the constraint to say 
+    that it is not satisfied on the passed system */
+void Constraint::setUnsatisfied(const System &system)
+{
+    last_was_satisfied = false;
+    last_sysuid = system.UID();
+    last_sysversion = system.version();
+}
+
+/** Clear the cache for the last system */
+void Constraint::clearLastSystem()
+{
+    last_was_satisfied = false;
+    last_sysuid = QUuid();
+    last_sysversion = Version();
+}
+
+/** Return whether or not the passed system was the last one
+    on which this constraint was applied */
+bool Constraint::wasLastSystem(const System &system) const
+{
+    return system.UID() == last_sysuid and
+           system.version() == last_sysversion;
+}
+
+/** Return whether or not the last system satisfied this constraint */
+bool Constraint::wasLastSatisfied() const
+{
+    return last_was_satisfied;
 }
 
 /** Assert that the constraint is satisfied in the passed system 
@@ -207,12 +252,35 @@ bool NullConstraint::isSatisfied(const System&) const
     return true;
 }
 
-/** Apply this constraint - return whether or not this
-    changes the system */
-bool NullConstraint::apply(System&) const
+/** Apply this constraint on the passed system - this returns
+    the Delta that would have to be applied to the system
+    to maintain the constraint */
+Delta NullConstraint::apply(const System&)
+{
+    return Delta();
+}
+
+/** Apply this constraint on the passed system, given
+    that the change contained in 'Delta' will be performed.
+    This returns a new delta that is a modification of the
+    passed delta, that changes it so that this constraint
+    will be maintained */
+Delta NullConstraint::apply(const System&, const Delta &delta)
+{
+    return delta;
+}
+
+/** Return whether or not this constraint would be affected
+    by the passed delta on the passed system */
+bool NullConstraint::wouldBeAffectedBy(const System&, const Delta&) const
 {
     return false;
 }
+
+/** Accept the new system, which was created from the last system  
+    processed by this constraint using the passed delta */
+void NullConstraint::accept(const System&, const Delta&)
+{}
 
 static SharedPolyPointer<NullConstraint> shared_null;
 
@@ -264,10 +332,15 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
+
+        //completely clear any cached data
+        constraint = PropertyConstraint();
         
         sds >> constraint.ffid >> constraint.propname
             >> constraint.eqn
             >> static_cast<Constraint&>(constraint);
+            
+        constraint.syms = constraint.eqn.symbols();
     }
     else
         throw version_error(v, "1", r_propconstraint, CODELOC);
@@ -277,7 +350,8 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
 
 /** Null constructor */
 PropertyConstraint::PropertyConstraint()
-                   : ConcreteProperty<PropertyConstraint,Constraint>()
+                   : ConcreteProperty<PropertyConstraint,Constraint>(),
+                     old_value(0), new_value(0), has_old_value(false)
 {}
 
 /** Construct to constrain the property with name 'name' in all forcefields
@@ -285,7 +359,8 @@ PropertyConstraint::PropertyConstraint()
 PropertyConstraint::PropertyConstraint(const QString &name, 
                                        const SireCAS::Expression &expression)
                    : ConcreteProperty<PropertyConstraint,Constraint>(),
-                     propname(name), eqn(expression)
+                     propname(name), eqn(expression), syms(expression.symbols()),
+                     old_value(0), new_value(0), has_old_value(false)
 {}
 
 /** Construct to constrain the property with name 'name' in the forcefield(s)
@@ -294,13 +369,20 @@ PropertyConstraint::PropertyConstraint(const QString &name,
 PropertyConstraint::PropertyConstraint(const QString &name, const SireFF::FFID &id,
                                        const SireCAS::Expression &expression)
                    : ConcreteProperty<PropertyConstraint,Constraint>(),
-                     ffid(id), propname(name), eqn(expression)
+                     ffid(id), propname(name), eqn(expression),
+                     syms(expression.symbols()),
+                     old_value(0), new_value(0), has_old_value(false)
 {}
 
 /** Copy constructor */
 PropertyConstraint::PropertyConstraint(const PropertyConstraint &other)
                    : ConcreteProperty<PropertyConstraint,Constraint>(other),
-                     ffid(other.ffid), propname(other.propname), eqn(other.eqn)
+                     ffid(other.ffid), ffidxs(other.ffidxs),
+                     propname(other.propname), eqn(other.eqn),
+                     syms(other.syms),
+                     last_vals(other.last_vals), old_property(other.old_property),
+                     old_value(other.old_value), new_value(other.new_value),
+                     has_old_value(other.has_old_value)
 {}
 
 /** Destructor */
@@ -314,8 +396,15 @@ PropertyConstraint& PropertyConstraint::operator=(const PropertyConstraint &othe
     {
         Constraint::operator=(other);
         ffid = other.ffid;
+        ffidxs = other.ffidxs;
         propname = other.propname;
         eqn = other.eqn;
+        syms = other.syms;
+        last_vals = other.last_vals;
+        old_property = other.old_property;
+        old_value = other.old_value;
+        new_value = other.new_value;
+        has_old_value = other.has_old_value;
     }
     
     return *this;
@@ -341,52 +430,332 @@ QString PropertyConstraint::toString() const
                 .arg(ffid.toString(), propname, eqn.toString());
 }
 
+/** Internal function used to update this constraint so that it is applied
+    to the passed system */
+void PropertyConstraint::setSystem(const System &system)
+{
+    if (Constraint::wasLastSystem(system))
+        return;
+    
+    Constraint::clearLastSystem();
+    
+    if (not ffid.isNull())
+        ffidxs = ffid.map(system.forceFields());
+        
+    has_old_value = false;
+    old_value = 0;
+    old_property = PropertyPtr();
+    
+    if (not ffidxs.isEmpty())
+    {
+        bool no_prop = false;
+    
+        foreach (FFIdx ffidx, ffidxs)
+        {
+            if (system.containsProperty(ffidx, propname))
+            {
+                const Property &prop = system.property(ffidx, propname);
+                
+                if (old_property.isNull())
+                {
+                    old_property = prop;
+                }
+                else if (not old_property.read().equals(prop))
+                {
+                    //some of the forcefield properties are different
+                    old_property = PropertyPtr();
+                    break;
+                }
+            }
+            else 
+            {
+                //this property doesn't exist in at least one of the forcefields
+                old_property = PropertyPtr();
+                break;
+            }
+
+        }
+    }
+    else 
+    {
+        if (system.containsProperty(propname))
+            old_property = system.property(propname);
+    }
+
+    if (not old_property.isNull())
+    {
+        if (old_property.read().isA<VariantProperty>())
+        {
+            const VariantProperty &var = old_property.read().asA<VariantProperty>();
+            
+            if (var.canConvert<double>())
+            {
+                has_old_value = true;
+                old_value = var.convertTo<double>();
+            }
+        }
+    }
+    
+    last_vals = system.constants(syms);
+    
+    new_value = eqn(last_vals);
+    
+    if (new_value == old_value)
+        Constraint::setSatisfied(system);
+
+    else
+        Constraint::setUnsatisfied(system);
+}
+
 /** Return whether or not this constraint is satisfied in the passed system */
 bool PropertyConstraint::isSatisfied(const System &system) const
 {
-	try
-    {
-	    //does the system have a property with the right value?
-	    double current_val = system.property(ffid, propname).asA<VariantProperty>()
-    	                                                    .convertTo<double>();
+    if (Constraint::wasLastSystem(system))
+        return Constraint::wasLastSatisfied();
 
-	    //evaluate the equation
-	    System system_copy(system);
+    else
+    {
+        std::auto_ptr<PropertyConstraint> copy( this->clone() );
         
-	    Values vals = system_copy.componentValues( eqn.symbols() );
-
-	    return current_val == eqn.evaluate(vals);
-    }
-    catch(...)
-    {
-    	return false;
+        copy->setSystem(system);
+        
+        return copy->isSatisfied();
     }
 }
 
-/** Apply this constraint to the system */
-bool PropertyConstraint::apply(System &system) const
+/** Return whether or not this constraint would be affected by the 
+    change 'delta' applied to the passed system 'system' */
+bool PropertyConstraint::wouldBeAffectedBy(const System &system, 
+                                           const Delta &delta) const
 {
-    //evaluate the equation
-    Values vals = system.componentValues( eqn.symbols() );
-    double val = eqn.evaluate(vals);
-
-	try
+    if ( not Constraint::wasLastSystem(system) )
     {
-	    if (system.containsProperty(ffid, propname))
-	    {
-        	double current_val = system.property(ffid, propname).asA<VariantProperty>()
-            													.convertTo<double>();
-
-			if (val == current_val)
-            	return false; 
+        std::auto_ptr<PropertyConstraint> copy(this->clone());
+        copy->setSystem(system);
+        return copy->wouldBeAffectedBy(system, delta);
+    }
+    
+    double delta_new_value = new_value;
+    double delta_old_value = old_value;
+    bool delta_has_old_value = has_old_value;
+    
+    if (ffidxs.isEmpty())
+    {
+        if (delta.involves(propname))
+        {
+            const Property &prop = delta.newProperty(propname);
+        
+            delta_has_old_value = false;
+            
+            if (prop.isA<VariantProperty>())
+            {
+                const VariantProperty &var = prop.asA<VariantProperty>();
+            
+                if (var.canConvert<double>())
+                {
+                    delta_old_value = var.convertTo<double>();
+                    delta_has_old_value = true;
+                }
+            }
         }
     }
-	catch(...)
-    {}
-    
-    system.setProperty(ffid, propname, VariantProperty(val));
+    else
+    {
+        if (delta.involves(propname, ffidxs))
+        {
+            delta_has_old_value = false;
+            
+            const Property *delta_prop = 0;
 
-    return true;
+            bool first_prop = true;
+
+            foreach (FFIdx ffidx, ffidxs)
+            {
+                const Property &property = delta.newProperty(propname, ffidx);
+                
+                if (first_prop)
+                {
+                    delta_prop = &property;
+                }
+                else if (not delta_prop->equals(property))
+                {
+                    //there are some changes in property
+                    delta_prop = 0;
+                    break;
+                }
+            }
+            
+            if (delta_prop)
+            {
+                if (delta_prop->isA<VariantProperty>())
+                {
+                    const VariantProperty &var = delta_prop->asA<VariantProperty>();
+            
+                    if (var.canConvert<double>())
+                    {
+                        delta_old_value = var.convertTo<double>();
+                        delta_has_old_value = true;
+                    }
+                }
+            }
+        }
+    }
+
+    if (not delta_has_old_value)
+        return true;
+    
+    if (delta.involves(syms))
+    {
+        delta_new_value = eqn( delta.update(last_vals) );
+    }
+    
+    return delta_old_value != delta_new_value;
+}
+
+/** Apply this constraint on the passed system - this returns
+    the Delta that would have to be applied to the system
+    to maintain the constraint */
+Delta PropertyConstraint::apply(const System &system)
+{
+    this->setSystem(system);
+    
+    if ( Constrant::wasLastSatisfied() )
+        return Delta();
+        
+    else
+        return Delta( propname, old_property.read(), VariantProperty(new_value) );
+}
+
+/** Apply this constraint on the passed system, given
+    that the change contained in 'Delta' will be performed.
+    This returns a new delta that is a modification of the
+    passed delta, that changes it so that this constraint
+    will be maintained. */
+Delta PropertyConstraint::apply(const System &system, const Delta &delta)
+{
+    this->setSystem(system);
+    
+    double delta_new_value = new_value;
+    double delta_old_value = old_value;
+    bool delta_has_old_value = has_old_value;
+    
+    if (ffidxs.isEmpty())
+    {
+        if (delta.involves(propname))
+        {
+            const Property &prop = delta.newProperty(propname);
+        
+            delta_has_old_value = false;
+            
+            if (prop.isA<VariantProperty>())
+            {
+                const VariantProperty &var = prop.asA<VariantProperty>();
+            
+                if (var.canConvert<double>())
+                {
+                    delta_old_value = var.convertTo<double>();
+                    delta_has_old_value = true;
+                }
+            }
+        }
+    }
+    else
+    {
+        if (delta.involves(propname, ffidxs))
+        {
+            NEED TO WRITE FUNCTION TO PROCESS FFIDXS INDEPENDENTLY
+        
+            const Property &prop = delta.newProperty(propname, ffidxs);
+        
+            delta_has_old_value = false;
+            
+            if (prop.isA<VariantProperty>())
+            {
+                const VariantProperty &var = prop.asA<VariantProperty>();
+            
+                if (var.canConvert<double>())
+                {
+                    delta_old_value = var.convertTo<double>();
+                    delta_has_old_value = true;
+                }
+            }
+        }
+    }
+
+    if (delta.involves(syms))
+    {
+        delta_new_value = eqn( delta.update(last_vals) );
+    }
+
+    if (delta_has_old_value and (delta_old_value == delta_new_value))
+    {
+        return delta;
+    }
+    else if (ffidxs.isEmpty())
+        return delta + Delta(propname, old_property,
+                             VariantProperty(delta_new_value));
+    else
+        return delta + Delta(propname, ffidxs, 
+                             old_property, VariantProperty(delta_new_value));
+}
+
+void PropertyConstraint::accept(const System &system, const Delta &delta)
+{
+    //copy the new system into this one - absolutely assumes that
+    //'delta' represents the only change since the last setSystem() call
+    if ( lastUID() != system.UID() )
+    {
+        this->setSystem(system);
+        return;
+    }
+    
+    if (delta.involves(syms))
+    {
+        last_vals = delta.update(last_vals);
+        new_value = eqn(last_vals);
+    }
+
+    bool must_update = false;
+    
+    if (ffidxs.isEmpty())
+    {
+        if (delta.involves(propname))
+        {
+            old_property = delta.newProperty(propname);
+            must_update = true;
+        }
+    }
+    else
+    {
+        if (delta.involves(propname, ffidxs))
+        {
+            old_property = delta.newProperty(propname, ffidxs);
+            must_update = true;
+        }
+    }
+    
+    if (must_update)
+    {
+        has_old_value = false;
+        old_value = 0;
+    
+        if (old_property.read().isA<VariantProperty>())
+        {
+            const VariantProperty &var = old_property.read().asA<VariantProperty>();
+            
+            if (var.canConvert<double>())
+            {
+                has_old_value = true;
+                old_value = var.convertTo<double>();
+            }
+        }
+    }
+    
+    if (has_old_value and (new_value == old_value))
+        Constraint::setSatisfied(system);
+
+    else
+        Constraint::setUnsatisfied(system);
 }
 
 const char* PropertyConstraint::typeName()
@@ -428,6 +797,8 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
         sds >> constraint.constrained_component
             >> constraint.eqn
             >> static_cast<Constraint&>(constraint);
+            
+        constraint.syms = constraint.eqn.symbols();
     }
     else
         throw version_error(v, "1", r_compconstraint, CODELOC);
@@ -445,13 +816,15 @@ ComponentConstraint::ComponentConstraint()
 ComponentConstraint::ComponentConstraint(const Symbol &component,
                                          const SireCAS::Expression &expression)
                    : ConcreteProperty<ComponentConstraint,Constraint>(),
-                     constrained_component(component), eqn(expression)
+                     constrained_component(component), eqn(expression),
+                     syms(expression.symbols())
 {}
 
 /** Copy constructor */
 ComponentConstraint::ComponentConstraint(const ComponentConstraint &other)
                    : ConcreteProperty<ComponentConstraint,Constraint>(other),
-                     constrained_component(other.constrained_component), eqn(other.eqn)
+                     constrained_component(other.constrained_component), eqn(other.eqn),
+                     syms(other.syms)
 {}
 
 /** Destructor */
@@ -466,6 +839,7 @@ ComponentConstraint& ComponentConstraint::operator=(const ComponentConstraint &o
         Constraint::operator=(other);
         constrained_component = other.constrained_component;
         eqn = other.eqn;
+        syms = other.syms;
     }
     
     return *this;
@@ -503,50 +877,55 @@ const Expression& ComponentConstraint::expression() const
     return eqn;
 }
 
-/** Return whether or not this constraint is satisfied in the passed system */
+/** Return whether this constraint is satisfied */
 bool ComponentConstraint::isSatisfied(const System &system) const
 {
-	try
-    {
-	    //evaluate the equation
-	    System copy_system(system);
-	    Values vals = copy_system.componentValues( eqn.symbols() );
-	    double val = eqn.evaluate(vals);
-
-	    //does the system have a component with the right value?
-	    double sysval = copy_system.componentValue(constrained_component);
-
-	    return val == sysval;
-    }
-    catch(...)
-    {
-    	return false;
-    }
+    //get the values of all of the contains components
+    Values constants = system.constants(syms);
+    
+    double old_value = system.constant(constrained_component);
+    
+    double new_value = eqn(constants);
+    
+    return (old_value == new_value);
 }
 
-/** Apply this constraint to the system */
-bool ComponentConstraint::apply(System &system) const
+/** Apply this constraint on the passed system - this returns
+    the Delta that would have to be applied to the system
+    to maintain the constraint */
+Delta ComponentConstraint::apply(const System &system)
 {
-    //evaluate the equation
-    Values vals = system.componentValues( eqn.symbols() );
-    double val = eqn.evaluate(vals);
-
-	try
-    {
-		if (system.hasComponent(constrained_component))
-        {
-			double current_val = system.componentValue(constrained_component);
-        
-    	    if (val == current_val)
-            	return false;
-    	}
-    }
-    catch(...)
-    {}
+    //get the values of all of the contains components
+    Values constants = system.constants(syms);
     
-    system.setComponent(constrained_component, val);
+    double old_value = system.constant(constrained_component);
+    
+    double new_value = eqn(constants);
+    
+    if (old_value == new_value)
+        return Delta();
+    else
+        return Delta(constrained_component, old_value, new_value);
+}
 
-	return true;
+/** Apply this constraint on the passed system, given
+    that the change contained in 'Delta' will be performed.
+    This returns a new delta that is a modification of the
+    passed delta, that changes it so that this constraint
+    will be maintained. Note that this assumes that the system
+    satisfies the constraints before the delta is applied */
+Delta ComponentConstraint::apply(const System &system, const Delta &delta)
+{
+    
+}
+
+/** Return whether or not this constraint would be affected
+    by the passed delta on the passed system */
+bool ComponentConstraint::wouldBeAffectedBy(const System &system, 
+                                            const Delta &delta) const
+{
+    return delta.involves(constrained_component) or
+           delta.involves(syms);
 }
 
 const char* ComponentConstraint::typeName()

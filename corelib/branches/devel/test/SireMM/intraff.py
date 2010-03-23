@@ -7,6 +7,7 @@ from Sire.MM import *
 from Sire.System import *
 from Sire.Vol import *
 from Sire.Maths import *
+from Sire.CAS import *
 from Sire.Units import *
 
 protodir = "/Users/chris/Work/ProtoMS"
@@ -59,4 +60,52 @@ intraclj.mustNowRecalculateFromScratch()
 print "IntraCLJ = %f" % intraclj.energy().to(kcal_per_mol)
 print "Intra Coul = %f" % intraclj.energy( intraclj.components().coulomb() ).to(kcal_per_mol)
 print "Intra LJ   = %f" % intraclj.energy( intraclj.components().lj() ).to(kcal_per_mol)
+
+print "\nTesting energy expressions..."
+system = System()
+system.add(intraclj)
+
+print system.energy()
+
+try:
+    system.setComponent( system.totalComponent(), 2 + intraclj.components().total() )
+    assert(False)
+except:
+    print "Cannot have free terms in expressions - expected :-)"
+
+print system.energy()
+
+system.setComponent( system.totalComponent(), 2 * intraclj.components().total() )
+print system.energy()
+
+try:
+    system.setComponent( system.totalComponent(), Cos(intraclj.components().total()) )
+    assert(False)
+except:
+    print "Cannot use Cos(energy) expression - expected :-)"
+
+print system.energy()
+
+try:
+    system.setComponent( system.totalComponent(), intraclj.components().coulomb() * 
+                                                  intraclj.components().lj() )
+    assert(False)
+except:
+    print "Cannot use coulomb * LJ energy expression - expected :-)"
+
+print system.energy()
+
+lam = Symbol("lambda")
+
+try:
+    system.setComponent( system.totalComponent(), intraclj.components().total() + lam )
+    assert(False)
+except:
+    print "Cannot have free symbols in expressions - expected :-)"
+
+system.setConstant(lam, 2.0)
+print system.energy()
+
+system.setComponent( system.totalComponent(), intraclj.components().total() * lam )
+print system.energy()
 

@@ -122,6 +122,9 @@ public:
     bool involves(const QString &property, const FFIdx &ffidx) const;
     bool involves(const QString &property, const QList<FFIdx> &ffidxs) const;
     
+    Molecule update(const Molecule &molecule) const;
+    Molecules update(const Molecules &molecules) const;
+    
     Molecules oldMolecules() const;
     Molecules newMolecules() const;
     
