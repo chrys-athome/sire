@@ -320,6 +320,8 @@ public:
     bool isSatisfied(const System &system) const;
 
 private:
+    void setSystem(const System &system);
+
     /** The component whose value is constrained */
     SireCAS::Symbol constrained_component;
     
@@ -329,6 +331,19 @@ private:
     /** The symbols representing the constant components that
         are used in the constraint expression */
     QSet<SireCAS::Symbol> syms;
+    
+    /** The values of the constant components the last time
+        this constraint was applied */
+    SireCAS::Values last_vals;
+    
+    /** The last value of the component */
+    double old_value;
+    
+    /** The new value of the equation */
+    double new_value;
+    
+    /** Whether or not there is an old value */
+    bool has_old_value;
 };
 
 /** This constraint is used to constrain a component to adopt one of the values

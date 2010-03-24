@@ -430,6 +430,99 @@ QString PropertyConstraint::toString() const
                 .arg(ffid.toString(), propname, eqn.toString());
 }
 
+static PropertyPtr getProperty(const System &system, const QString &propname,
+                               const QList<FFIdx> &ffidxs)
+{
+    bool is_first = true;
+    
+    PropertyPtr property;
+    
+    foreach (FFIdx ffidx, ffidxs)
+    {
+        if (system.hasProperty(propname, ffidx))
+        {
+            const Property &p = system.property(propname, ffidx);
+            
+            if (is_first)
+            {
+                property = p;
+                is_first = false;
+            }
+            else
+            {
+                if (property.isNull())
+                    return PropertyPtr();
+                
+                else if (not property.read().equals(p))
+                    return PropertyPtr();
+            }
+        }
+        else if (not is_first)
+        {
+            if (not property.isNull())
+                return PropertyPtr();
+        }
+    }
+    
+    return property;
+}
+
+static PropertyPtr getProperty(const System &system, const Delta &delta,
+                               const QString &propname,
+                               const QList<FFIdx> &ffidxs)
+{
+    bool is_first = true;
+    
+    PropertyPtr property;
+    
+    foreach (FFIdx ffidx, ffidxs)
+    {
+        if (delta.involves(propname, ffidx))
+        {
+            const Property &p = delta.newProperty(propname, ffidx);
+            
+            if (is_first)
+            {
+                property = p;
+                is_first = false;
+            }
+            else
+            {
+                if (property.isNull())
+                    return PropertyPtr();
+                
+                else if (not property.read().equals(p))
+                    return PropertyPtr();
+            }
+        }
+        else if (system.hasProperty(propname, ffidx))
+        {
+            const Property &p = system.property(propname, ffidx);
+            
+            if (is_first)
+            {
+                property = p;
+                is_first = false;
+            }
+            else
+            {
+                if (property.isNull())
+                    return PropertyPtr();
+                
+                else if (not property.read().equals(p))
+                    return PropertyPtr();
+            }
+        }
+        else if (not is_first)
+        {
+            if (not property.isNull())
+                return PropertyPtr();
+        }
+    }
+    
+    return property;
+}
+
 /** Internal function used to update this constraint so that it is applied
     to the passed system */
 void PropertyConstraint::setSystem(const System &system)
@@ -448,33 +541,7 @@ void PropertyConstraint::setSystem(const System &system)
     
     if (not ffidxs.isEmpty())
     {
-        bool no_prop = false;
-    
-        foreach (FFIdx ffidx, ffidxs)
-        {
-            if (system.containsProperty(ffidx, propname))
-            {
-                const Property &prop = system.property(ffidx, propname);
-                
-                if (old_property.isNull())
-                {
-                    old_property = prop;
-                }
-                else if (not old_property.read().equals(prop))
-                {
-                    //some of the forcefield properties are different
-                    old_property = PropertyPtr();
-                    break;
-                }
-            }
-            else 
-            {
-                //this property doesn't exist in at least one of the forcefields
-                old_property = PropertyPtr();
-                break;
-            }
-
-        }
+        old_property = ::getProperty(system, propname, ffidxs);
     }
     else 
     {
@@ -563,33 +630,16 @@ bool PropertyConstraint::wouldBeAffectedBy(const System &system,
     {
         if (delta.involves(propname, ffidxs))
         {
+            PropertyPtr delta_property = ::getProperty(system, delta, propname, ffidxs);
+            
             delta_has_old_value = false;
             
-            const Property *delta_prop = 0;
-
-            bool first_prop = true;
-
-            foreach (FFIdx ffidx, ffidxs)
+            if (not delta_property.isNull())
             {
-                const Property &property = delta.newProperty(propname, ffidx);
-                
-                if (first_prop)
+                if (delta_property.read().isA<VariantProperty>())
                 {
-                    delta_prop = &property;
-                }
-                else if (not delta_prop->equals(property))
-                {
-                    //there are some changes in property
-                    delta_prop = 0;
-                    break;
-                }
-            }
-            
-            if (delta_prop)
-            {
-                if (delta_prop->isA<VariantProperty>())
-                {
-                    const VariantProperty &var = delta_prop->asA<VariantProperty>();
+                    const VariantProperty &var
+                                = delta_property.read().asA<VariantProperty>();
             
                     if (var.canConvert<double>())
                     {
@@ -663,20 +713,22 @@ Delta PropertyConstraint::apply(const System &system, const Delta &delta)
     {
         if (delta.involves(propname, ffidxs))
         {
-            NEED TO WRITE FUNCTION TO PROCESS FFIDXS INDEPENDENTLY
-        
-            const Property &prop = delta.newProperty(propname, ffidxs);
-        
+            PropertyPtr delta_property = ::getProperty(system, delta, propname, ffidxs);
+
             delta_has_old_value = false;
             
-            if (prop.isA<VariantProperty>())
+            if (not delta_property.isNull())
             {
-                const VariantProperty &var = prop.asA<VariantProperty>();
-            
-                if (var.canConvert<double>())
+                if (delta_property.read().isA<VariantProperty>())
                 {
-                    delta_old_value = var.convertTo<double>();
-                    delta_has_old_value = true;
+                    const VariantProperty &var 
+                                = delta_property.read().asA<VariantProperty>();
+            
+                    if (var.canConvert<double>())
+                    {
+                        delta_old_value = var.convertTo<double>();
+                        delta_has_old_value = true;
+                    }
                 }
             }
         }
@@ -729,7 +781,7 @@ void PropertyConstraint::accept(const System &system, const Delta &delta)
     {
         if (delta.involves(propname, ffidxs))
         {
-            old_property = delta.newProperty(propname, ffidxs);
+            old_property = ::getProperty(system, propname, ffidxs);
             must_update = true;
         }
     }
@@ -808,7 +860,8 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
 
 /** Null constructor */
 ComponentConstraint::ComponentConstraint()
-                    : ConcreteProperty<ComponentConstraint,Constraint>()
+                    : ConcreteProperty<ComponentConstraint,Constraint>(),
+                      old_value(0), new_value(0), has_old_value(false)
 {}
 
 /** Construct to constrain the component with symbol 'component'
@@ -817,14 +870,17 @@ ComponentConstraint::ComponentConstraint(const Symbol &component,
                                          const SireCAS::Expression &expression)
                    : ConcreteProperty<ComponentConstraint,Constraint>(),
                      constrained_component(component), eqn(expression),
-                     syms(expression.symbols())
+                     syms(expression.symbols()),
+                     old_value(0), new_value(0), has_old_value(false)
 {}
 
 /** Copy constructor */
 ComponentConstraint::ComponentConstraint(const ComponentConstraint &other)
                    : ConcreteProperty<ComponentConstraint,Constraint>(other),
                      constrained_component(other.constrained_component), eqn(other.eqn),
-                     syms(other.syms)
+                     syms(other.syms), old_value(other.old_value),
+                     new_value(other.new_value),
+                     has_old_value(other.has_old_value)
 {}
 
 /** Destructor */
@@ -840,6 +896,9 @@ ComponentConstraint& ComponentConstraint::operator=(const ComponentConstraint &o
         constrained_component = other.constrained_component;
         eqn = other.eqn;
         syms = other.syms;
+        old_value = other.old_value;
+        new_value = other.new_value;
+        has_old_value = other.has_old_value;
     }
     
     return *this;
@@ -877,17 +936,47 @@ const Expression& ComponentConstraint::expression() const
     return eqn;
 }
 
+void ComponentConstraint::setSystem(const System &system)
+{
+    if ( Constraint::wasLastSystem(system) )
+        return;
+    
+    has_old_value = false;
+    old_value = 0;
+    Constraint::clearLastSystem();
+        
+    last_vals = system.constants(syms);
+
+    if (system.hasConstantComponent(constrained_component))
+    {
+        old_value = system.constant(constrained_component);
+        has_old_value = true;
+    }
+    
+    new_value = eqn(last_vals);
+    
+    if (has_old_value and (old_value == new_value))
+        Constraint::setSatisfied(system);
+    
+    else
+        Constraint::setUnsatisfied(system);
+}
+
 /** Return whether this constraint is satisfied */
 bool ComponentConstraint::isSatisfied(const System &system) const
 {
-    //get the values of all of the contains components
-    Values constants = system.constants(syms);
-    
-    double old_value = system.constant(constrained_component);
-    
-    double new_value = eqn(constants);
-    
-    return (old_value == new_value);
+    if (Constraint::wasLastSystem(system))
+    {
+        return Constraint::wasLastSatisfied();
+    }
+    else
+    {
+        std::auto_ptr<ComponentConstraint> copy( this->clone() );
+        
+        copy->setSystem(system);
+        
+        return copy->isSatisfied();
+    }
 }
 
 /** Apply this constraint on the passed system - this returns
