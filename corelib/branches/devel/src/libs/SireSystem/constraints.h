@@ -109,13 +109,7 @@ public:
 
     QVector<ConstraintPtr> constraints() const;
     
-    QVector<ConstraintPtr> componentConstraints() const;
-    QVector<ConstraintPtr> moleculeConstraints() const;
-    
-    bool involves(const Delta &delta) const;
-    
-    bool hasMoleculeConstraints() const;
-    bool hasMolDependentConstraints() const;
+    bool wouldBeAffectedBy(const System &system, const Delta &delta) const;
     
     void add(const Constraint &constraint);
     void add(const Constraints &constraints);
@@ -128,35 +122,19 @@ public:
     bool areSatisfied(const System &system) const;
     void assertSatisfied(const System &system) const;
     
-    bool moleculeConstraintsAreSatisfied(const System &system) const;
-    void assertMoleculeConstraintsAreSatisfied(const System &system) const;
-    
-    void apply(System &system);
-    
-    void applyMoleculeConstraints(System &system);
-    void applyMoleculeConstraints(System &system, MolNum molnum);
-    void applyMoleculeConstraints(System &system, const Molecules &molecules);
+    System apply(const System &system);
 
-    void applyMolDependentConstraints(System &system);
-    void applyMolDependentConstraints(System &system, MolNum molnum);
-    void applyMolDependentConstraints(System &system, const Molecules &molecules);
+protected:
+    friend class Delta; // so can call apply(delta)
+    bool apply(Delta &delta);
+    
+    friend class System; // so can call committed(system)
+    void committed(const System &system);
 
 private:
-    void resolveMoleculeConstraints(System &system, Molecules changed_mols);
-
-    /** The list of all component constraints that are to be 
-        applied to the system - these are constraints that change
-        the values of components or properties of the system */
+    /** The list of all constraints that are to be 
+        applied to the system */
     QVector<ConstraintPtr> cons;
-    
-    /** The list of all molecule constraints that are to be 
-        applied to the system - these are constraints that change
-        the coordinates or properties of molecules in the system */
-    QVector<ConstraintPtr> molcons;
-    
-    /** The indicies of component constraints that may need to be
-        reapplied if molecules change */
-    QSet<int> mol_dependent_cons;
 };
 
 }

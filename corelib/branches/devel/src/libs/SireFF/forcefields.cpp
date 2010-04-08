@@ -3061,6 +3061,34 @@ bool ForceFields::containsProperty(const FFID &ffid, const QString &name) const
     return false;
 }
 
+/** Return whether or not any of the forcefields contain the property
+    with name 'name' */
+bool ForceFields::containsProperty(const PropertyName &name) const
+{
+    if (name.hasValue())
+        return true;
+    else
+        return this->containsProperty(name.source());
+}
+
+/** Return whether or not any of the forcefields that match the ID 'ffid'
+    contain the property with name 'name'
+    
+    Note that because this operates on the level of individual forcefields,
+    it can only return built-in properties, and ignores any 
+    user-supplied properties
+    
+    \throw SireFF::missing_forcefield
+    \throw SireError::invalid_index
+*/
+bool ForceFields::containsProperty(const FFID &ffid, const PropertyName &name) const
+{
+    if (name.hasValue())
+        return true;
+    else
+        return this->containsProperty(ffid, name.source());
+}
+
 /** Return the names of all of the properties in all of the forcefields */
 QStringList ForceFields::propertyKeys() const
 {

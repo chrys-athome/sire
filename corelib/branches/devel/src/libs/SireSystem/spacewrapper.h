@@ -48,10 +48,13 @@ namespace SireSystem
 {
 
 using SireBase::PropertyMap;
+using SireBase::PropertyName;
 
 using SireMol::MoleculeGroup;
 
 using SireFF::Point;
+
+using SireVol::SpacePtr;
 
 /** This is a molecule constraint that constrains
     a group of molecules to lie within the same 
@@ -88,19 +91,15 @@ public:
     const Point& point() const;
     const MoleculeGroup& moleculeGroup() const;
     const PropertyMap& propertyMap() const;
-    
-    bool involvesMolecule(MolNum molnum) const;
-    bool involvesMoleculesFrom(const Molecules &molecules) const;
-    
-    Molecules update(const System &system);
-    Molecules update(const System &system, MolNum molnum);
-    Molecules update(const System &system, const Molecules &molecules);
+
+protected:
+    void setSystem(const System &system);
+    bool mayChange(const Delta &delta, quint32 last_subversion) const;
+
+    bool fullApply(Delta &delta);
+    bool deltaApply(Delta &delta, quint32 last_subversion);
 
 private:
-    Molecules updateAll(const System &system);
-    Molecules updateMol(const System &system, MolNum molnum);
-    Molecules updateMols(const System &system, const Molecules &molecules);
-
     /** The point that defines the center of the box */
     SireFF::PointPtr wrap_point;
 
@@ -110,6 +109,18 @@ private:
     /** The property map specifying the locations of the space
         and coordinates properties */
     PropertyMap map;
+    
+    /** The location of the space property */
+    PropertyName space_property;
+    
+    /** The location of the coordinates property */
+    PropertyName coords_property;
+    
+    /** The space property itself */
+    SpacePtr spce;
+    
+    /** The molecules that need to change */
+    Molecules changed_mols;
 };
 
 }

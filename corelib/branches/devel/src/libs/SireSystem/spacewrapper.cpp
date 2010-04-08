@@ -28,6 +28,7 @@
 
 #include "spacewrapper.h"
 #include "system.h"
+#include "delta.h"
 
 #include "SireMol/molecule.h"
 #include "SireMol/molecules.h"
@@ -70,9 +71,14 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, SpaceWrapper &spacewr
     {
         SharedDataStream sds(ds);
         
+        spacewrapper = SpaceWrapper();
+        
         sds >> spacewrapper.wrap_point >> spacewrapper.molgroup
             >> spacewrapper.map
             >> static_cast<MoleculeConstraint&>(spacewrapper);
+            
+        spacewrapper.space_property = spacewrapper.map["space"];
+        spacewrapper.coords_property = spacewrapper.map["coordinates"];
     }
     else
         throw version_error(v, "1", r_spacewrapper, CODELOC);
@@ -91,14 +97,18 @@ SpaceWrapper::SpaceWrapper(const PointRef &point,
                            const MoleculeGroup &wrap_group,
                            const PropertyMap &wrap_map)
              : ConcreteProperty<SpaceWrapper,MoleculeConstraint>(),
-               wrap_point(point), molgroup(wrap_group), map(wrap_map)
+               wrap_point(point), molgroup(wrap_group), map(wrap_map),
+               space_property(wrap_map["space"]),
+               coords_property(wrap_map["coordinates"])
 {}
 
 /** Copy constructor */
 SpaceWrapper::SpaceWrapper(const SpaceWrapper &other)
              : ConcreteProperty<SpaceWrapper,MoleculeConstraint>(other),
                wrap_point(other.wrap_point), molgroup(other.molgroup),
-               map(other.map)
+               map(other.map), space_property(other.space_property),
+               coords_property(other.coords_property),
+               spce(other.spce), changed_mols(other.changed_mols)
 {}
 
 /** Destructor */
@@ -113,6 +123,10 @@ SpaceWrapper& SpaceWrapper::operator=(const SpaceWrapper &other)
         wrap_point = other.wrap_point;
         molgroup = other.molgroup;
         map = other.map;
+        space_property = other.space_property;
+        coords_property = other.coords_property;
+        spce = other.spce;
+        changed_mols = other.changed_mols;
         MoleculeConstraint::operator=(other);
     }
     
@@ -161,115 +175,66 @@ const PropertyMap& SpaceWrapper::propertyMap() const
     return map;
 }
 
-/** Return whether or not this constraint affects or is based
-    on information from the molecule with number 'molnum' */
-bool SpaceWrapper::involvesMolecule(MolNum molnum) const
+/** Set the baseline system for the constraint - this is 
+    used to pre-calculate everything for the system
+    and to check if the constraint is satisfied */
+void SpaceWrapper::setSystem(const System &system)
 {
-    return wrap_point.read().contains(molnum) or molgroup.read().contains(molnum);
-}
+    if (Constraint::wasLastSystem(system) and Constraint::wasLastSubVersion(system))
+        return;
 
-/** Return whether or not this constraint affects or is based
-    on information from the molecules in 'molecules' */
-bool SpaceWrapper::involvesMoleculesFrom(const Molecules &molecules) const
-{
-    if (wrap_point.read().usesMoleculesIn(molecules))
-        return true;
-        
+    if (not wrap_point.isNull())
+    {
+        if (wrap_point.read().usesMoleculesIn(system))
+            wrap_point.edit().update(system);
+    }
+
+    if (not molgroup.isNull())
+    {
+        if (system.contains(molgroup.read().number()))
+            molgroup = system[molgroup.read().number()];
+        else
+            molgroup.edit().update(system.molecules());
+    }
+
+    if (not system.containsProperty(space_property))
+        spce = SpacePtr();
+    else
+    {
+        const Property &new_space = system.property(space_property);
+
+        if (not new_space.isA<Space>())
+            throw SireError::incompatible_error( QObject::tr(
+                    "You cannot use a SpaceWrapper constraint with a "
+                    "system property (%1) that is not derived from "
+                    "Space (%2).")
+                        .arg(space_property.toString())
+                        .arg(new_space.toString()), CODELOC );
+    
+        spce = new_space.asA<Space>();
+    }
+
+    if (molgroup.isNull() or molgroup.read().isEmpty() or 
+        wrap_point.isNull() or spce.isNull() or spce.read().isPeriodic())
+    {
+        Constraint::setSatisfied(system, true);
+        return;
+    }
+
+    const Vector &center_point = wrap_point.read().point();
+    
+    const Molecules &molecules = molgroup.read().molecules();
+    
+    const Space &space = spce.read();
+
+    changed_mols = Molecules();
+    
     for (Molecules::const_iterator it = molecules.constBegin();
          it != molecules.constEnd();
          ++it)
     {
-        if (molgroup.read().contains(it.key()))
-            return true;
-    }
+        Molecule molecule = it->molecule();
     
-    return false;
-}
-
-/** Internal function that checks and updates all of the 
-    molecules from the system 'system' */
-Molecules SpaceWrapper::updateAll(const System &system)
-{
-    SpaceWrapper old_state(*this);
-    
-    try
-    {
-        if (wrap_point.read().usesMoleculesIn(system))
-            wrap_point.edit().update(system);
-    
-        molgroup = system[ molgroup.read().number() ];
-
-        const Space &space = system.property( map["space"] ).asA<Space>();
-    
-        if (not space.isPeriodic())
-            return Molecules();
-
-        Molecules changed_mols;
-        
-        const Vector &center_point = wrap_point.read().point();
-        
-        const Molecules &molecules = molgroup.read().molecules();
-        
-        const PropertyName &coords_property = map["coordinates"];
-        
-        for (Molecules::const_iterator it = molecules.constBegin();
-             it != molecules.constEnd();
-             ++it)
-        {
-            Molecule molecule = it->molecule();
-        
-            const AtomCoords &coords = molecule.property(coords_property)
-                                               .asA<AtomCoords>();
-                                                     
-            //translate the molecule as a single entity (we don't want
-            //molecules splitting over two sides of the box)
-            CoordGroupArray new_coords = space.getMinimumImage(coords.array(),
-                                                               center_point, true);
-                                                               
-            if (new_coords.constData() != coords.constData())
-            {
-                //the molecule has moved
-                molecule = molecule.edit().setProperty(coords_property,
-                                                       AtomCoords(new_coords))
-                                          .commit();
-                                          
-                changed_mols.add(molecule);
-            }
-        }
-        
-        return changed_mols;
-    }
-    catch(...)
-    {
-        SpaceWrapper::operator=(old_state);
-        throw;
-    }
-}
-
-/** Internal function that checks and updates the molecule with 
-    number 'molnum' */
-Molecules SpaceWrapper::updateMol(const System &system, MolNum molnum)
-{
-    const MoleculeGroup &newgroup = system[ molgroup.read().number() ];
-    
-    if (not newgroup.contains(molnum))
-    {
-        //the group has changed, but it is not the expected molecule
-        return this->updateAll(system);
-    }
-    
-    Molecule molecule = newgroup[molnum].molecule();
-    
-    const Space &space = system.property( map["space"] ).asA<Space>();
-    
-    Molecules changed_mols;
-    
-    if (space.isPeriodic())
-    {
-        const Vector &center_point = wrap_point.read().point();
-        
-        const PropertyName &coords_property = map["coordinates"];
-
         const AtomCoords &coords = molecule.property(coords_property)
                                            .asA<AtomCoords>();
                                                  
@@ -288,35 +253,130 @@ Molecules SpaceWrapper::updateMol(const System &system, MolNum molnum)
             changed_mols.add(molecule);
         }
     }
-    
-    molgroup = newgroup;
-    
-    return changed_mols;
+
+    Constraint::setSatisfied(system, not changed_mols.isEmpty());
 }
 
-/** Internal function that checks and updates the molecules 
-    in 'molecules' */
-Molecules SpaceWrapper::updateMols(const System &system, const Molecules &molecules)
+/** Return whether or not the changes in the passed
+    delta *may* have changed the system since the last
+    subversion 'subversion' */
+bool SpaceWrapper::mayChange(const Delta &delta, quint32 last_subversion) const
 {
-    const MoleculeGroup &newgroup = system[ molgroup.read().number() ];
+    if (molgroup.isNull() or wrap_point.isNull())
+        return false;
 
-    const Space &space = system.property( map["space"] ).asA<Space>();
-
-    Molecules changed_mols;
-
-    if (space.isPeriodic())
+    if (delta.sinceChanged(space_property, last_subversion))
     {
-        const Vector &center_point = wrap_point.read().point();
-        const PropertyName &coords_property = map["coordinates"];
-
-        for (Molecules::const_iterator it = molecules.constBegin();
-             it != molecules.constEnd();
-             ++it)
+        if (delta.deltaSystem().containsProperty(space_property))
         {
-            if (newgroup.contains(it.key()))
-            {
-                Molecule molecule = newgroup[it.key()].molecule();
+            const Property &new_space = delta.deltaSystem().property(space_property);
+            
+            if (not new_space.isA<Space>())
+                throw SireError::incompatible_error( QObject::tr(
+                        "You cannot use a SpaceWrapper constraint with a "
+                        "system property (%1) that is not derived from "
+                        "Space (%2).")
+                            .arg(space_property.toString())
+                            .arg(new_space.toString()), CODELOC );
+                            
+            if (spce.isNull())
+                return true;
 
+            else if (not spce.read().equals(new_space))
+                return true;
+        }
+    }
+    
+    return delta.sinceChanged(molgroup.read().molecules(), last_subversion) or
+           delta.sinceChanged(wrap_point.read(), last_subversion);
+}
+
+/** Fully apply this constraint on the passed delta - this returns
+    whether or not this constraint affects the delta */
+bool SpaceWrapper::fullApply(Delta &delta)
+{
+    this->setSystem(delta.deltaSystem());
+
+    if (changed_mols.isEmpty())
+        return false;
+    else
+    {
+        bool changed = delta.update(changed_mols);
+        changed_mols = Molecules();
+        return changed;
+    }
+}
+
+/** Apply this constraint based on the delta, knowing that the 
+    last application of this constraint was on this system, 
+    at subversion number last_subversion */
+bool SpaceWrapper::deltaApply(Delta &delta, quint32 last_subversion)
+{
+    const System &system = delta.deltaSystem();
+
+    if (delta.sinceChanged(space_property, last_subversion))
+    {
+        if (system.containsProperty(space_property))
+        {
+            const Property &new_space = system.property(space_property);
+        
+            if (new_space.isA<Space>())
+            {
+                if (spce.isNull())
+                    return this->fullApply(delta);
+                
+                else if (not spce.read().equals(new_space))
+                    return this->fullApply(delta);
+            }
+            else
+                throw SireError::incompatible_error( QObject::tr(
+                        "You cannot use a SpaceWrapper constraint with a "
+                        "system property (%1) that is not derived from "
+                        "Space (%2).")
+                            .arg(space_property.toString())
+                            .arg(new_space.toString()), CODELOC );
+        }
+        else if (not spce.isNull())
+        {
+            return this->fullApply(delta);
+        }
+    }
+    
+    if (molgroup.isNull() or wrap_point.isNull() or spce.isNull() or
+        not spce.read().isPeriodic())
+    {
+        return false;
+    }
+    
+    if (delta.sinceChanged(wrap_point.read(), last_subversion))
+        return this->fullApply(delta);
+
+    const Space &space = spce.read();
+    const Vector &center_point = wrap_point.read().point();
+
+    if (delta.hasMoleculeChangeSince(last_subversion))
+    {
+        QList<MolNum> changed_molnums = delta.changedMoleculesSince(
+                                                    molgroup.read().molecules(),
+                                                    last_subversion);
+
+        if (not changed_molnums.isEmpty())
+        {
+            if (system.contains(molgroup.read().number()))
+                molgroup = system[molgroup.read().number()];
+            else
+                molgroup.edit().update(system.molecules());
+
+            //some of the molecules have changed - see if they need
+            //further changes to maintain the constraint
+            const Molecules &molecules = molgroup.read().molecules();
+
+            changed_mols = Molecules();
+        
+            foreach (MolNum molnum, changed_molnums)
+            {
+                Molecule molecule = molecules[molnum].molecule();
+    
                 const AtomCoords &coords = molecule.property(coords_property)
                                                    .asA<AtomCoords>();
                                                  
@@ -335,132 +395,19 @@ Molecules SpaceWrapper::updateMols(const System &system, const Molecules &molecu
                     changed_mols.add(molecule);
                 }
             }
-        }
-    }
     
-    molgroup = newgroup;
-    
-    return changed_mols;
-}
-
-/** Update this constraint from the passed system and return the molecules
-    that need to change to maintain this constraint */
-Molecules SpaceWrapper::update(const System &system)
-{
-    Molecules changed_mols;
-
-    if (system.UID() == this->sysUID() and system.version() == this->sysVersion())
-        return changed_mols;
-        
-    else if (system.UID() != this->sysUID() or
-             system.version().majorVersion() != this->sysVersion().majorVersion())
-    {
-        //the space may have changed
-        changed_mols = this->updateAll(system);
-    }
-    else
-    {
-        const MoleculeGroup &newgroup = system[ molgroup.read().number() ];
-    
-        if (molgroup.read().version() != newgroup.version())
-            changed_mols = this->updateAll(system);
-    }
-
-    this->updatedFrom(system);
-    
-    return changed_mols;
-}
-
-/** Update this constraint from the passed system, returning the 
-    molecules that need to be changed to maintain this constraint, and
-    also supplying the hint that *only* the molecule with number 'molnum'
-    has changed since this constraint was last updated */
-Molecules SpaceWrapper::update(const System &system, MolNum molnum)
-{
-    Molecules changed_mols;
-
-    if (system.UID() == this->sysUID() and system.version() == this->sysVersion())
-        return changed_mols;
-        
-    else if (system.UID() != this->sysUID() or
-             system.version().majorVersion() != this->sysVersion().majorVersion())
-    {
-        //the space may have changed
-        changed_mols = this->updateAll(system);
-    }
-    else if (wrap_point.read().contains(molnum))
-    {
-        //everything may have changed as the wrap point has changed
-        changed_mols = this->updateAll(system);
-    }
-    else
-    {
-        const MoleculeGroup &newgroup = system[ molgroup.read().number() ];
-    
-        if (molgroup.read().version() != newgroup.version())
-        {
-            if (molgroup.read().version().majorVersion() != 
-                newgroup.version().majorVersion())
+            if (not changed_mols.isEmpty())
             {
-                //more than just a molecule has changed
-                changed_mols = this->updateAll(system);
-            }
-            else
-            {
-                //only the specified molecule has changed (supposedly!)
-                changed_mols = this->updateMol(system, molnum);
+                bool changed = delta.update(changed_mols);
+        
+                if (delta.deltaSystem().contains(molgroup.read().number()))
+                    molgroup = delta.deltaSystem()[molgroup.read().number()];
+        
+                changed_mols = Molecules();
+                return changed;
             }
         }
     }
 
-    this->updatedFrom(system);
-    
-    return changed_mols;
-}
-
-/** Update this constraint from the passed system, returning the 
-    molecules that need to be changed to maintain this constraint, and
-    also supplying the hint that *only* the molecules in 'molecules'
-    have changed since this constraint was last updated */
-Molecules SpaceWrapper::update(const System &system, const Molecules &molecules)
-{
-    Molecules changed_mols;
-
-    if (system.UID() == this->sysUID() and system.version() == this->sysVersion())
-        return changed_mols;
-        
-    else if (system.UID() != this->sysUID() or
-             system.version().majorVersion() != this->sysVersion().majorVersion())
-    {
-        //the space may have changed
-        changed_mols = this->updateAll(system);
-    }
-    else if (wrap_point.read().usesMoleculesIn(molecules))
-    {
-        //everything may have changed as the wrap point has changed
-        changed_mols = this->updateAll(system);
-    }
-    else
-    {
-        const MoleculeGroup &newgroup = system[ molgroup.read().number() ];
-    
-        if (molgroup.read().version() != newgroup.version())
-        {
-            if (molgroup.read().version().majorVersion() != 
-                newgroup.version().majorVersion())
-            {
-                //more than just a molecule has changed
-                changed_mols = this->updateAll(system);
-            }
-            else
-            {
-                //only the specified molecule has changed (supposedly!)
-                changed_mols = this->updateMols(system, molecules);
-            }
-        }
-    }
-
-    this->updatedFrom(system);
-    
-    return changed_mols;
+    return false;
 }

@@ -28,6 +28,7 @@
 
 #include "moleculeconstraint.h"
 #include "system.h"
+#include "delta.h"
 
 #include "SireMol/molecules.h"
 
@@ -50,10 +51,9 @@ static const RegisterMetaType<MoleculeConstraint> r_molconstraint( MAGIC_ONLY,
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
                                           const MoleculeConstraint &molconstraint)
 {
-    writeHeader(ds, r_molconstraint, 1);
+    writeHeader(ds, r_molconstraint, 2);
     
-    ds << molconstraint.sysuid
-       << static_cast<const Constraint&>(molconstraint);
+    ds << static_cast<const Constraint&>(molconstraint);
        
     return ds;
 }
@@ -64,15 +64,19 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
 {
     VersionID v = readHeader(ds, r_molconstraint);
     
-    if (v == 1)
+    if (v == 2)
     {
-        ds >> molconstraint.sysuid
+        ds >> static_cast<Constraint&>(molconstraint);
+    }
+    else if (v == 1)
+    {
+        QUuid sysuid;
+    
+        ds >> sysuid
            >> static_cast<Constraint&>(molconstraint);
-           
-        molconstraint.sysversion = Version();
     }
     else
-        throw version_error( v, "1", r_molconstraint, CODELOC );
+        throw version_error( v, "1,2", r_molconstraint, CODELOC );
 
     return ds;
 }
@@ -83,8 +87,7 @@ MoleculeConstraint::MoleculeConstraint() : Constraint()
 
 /** Copy constructor */
 MoleculeConstraint::MoleculeConstraint(const MoleculeConstraint &other)
-                   : Constraint(other),
-                     sysuid(other.sysuid), sysversion(other.sysversion)
+                   : Constraint(other)
 {}
 
 /** Destructor */
@@ -100,11 +103,7 @@ const char* MoleculeConstraint::typeName()
 MoleculeConstraint& MoleculeConstraint::operator=(const MoleculeConstraint &other)
 {
     if (this != &other)
-    {
-        sysuid = other.sysuid;
-        sysversion = other.sysversion;
         Constraint::operator=(other);
-    }
     
     return *this;
 }
@@ -112,102 +111,11 @@ MoleculeConstraint& MoleculeConstraint::operator=(const MoleculeConstraint &othe
 /** Comparison operator */
 bool MoleculeConstraint::operator==(const MoleculeConstraint &other) const
 {
-    return sysuid == other.sysuid and sysversion == other.sysversion and
-           Constraint::operator==(other);
+    return Constraint::operator==(other);
 }
 
 /** Comparison operator */
 bool MoleculeConstraint::operator!=(const MoleculeConstraint &other) const
 {
     return not this->operator==(other);
-}
-
-/** Internal function called to record the UID and version of the 
-    system from which this constraint has been updated */
-void MoleculeConstraint::updatedFrom(const System &system)
-{
-    sysuid = system.UID();
-    sysversion = system.version();
-}
-
-/** Apply this constraint to the system 'system' - this returns whether
-    or not this changes the system */
-bool MoleculeConstraint::apply(System &system) const
-{
-    boost::shared_ptr<MoleculeConstraint> c( this->clone() );
-    
-    Molecules changed_mols = c->update(system);
-    
-    if (not changed_mols.isEmpty())
-    {
-        system.update(changed_mols);
-        return true;
-    }
-    else
-        return false;
-}
-
-/** Return whether or not this constraint is satisfied in the 
-    passed system */
-bool MoleculeConstraint::isSatisfied(const System &system) const
-{
-    if (sysuid == system.UID() and sysversion == system.version())
-        return true;
-    else
-    {
-        boost::shared_ptr<MoleculeConstraint> c( this->clone() );
-    
-        Molecules changed_mols = c->update(system);
-        
-        return changed_mols.isEmpty();
-    }
-}
-
-bool MoleculeConstraint::apply(System &system, MolNum molnum) const
-{
-    boost::shared_ptr<MoleculeConstraint> c( this->clone() );
-    
-    Molecules changed_mols = c->update(system, molnum);
-    
-    if (not changed_mols.isEmpty())
-    {
-        system.update(changed_mols);
-        return true;
-    }
-    else
-        return false;
-}
-
-bool MoleculeConstraint::apply(System &system, const Molecules &molecules) const
-{
-    boost::shared_ptr<MoleculeConstraint> c( this->clone() );
-    
-    Molecules changed_mols = c->update(system, molecules);
-    
-    if (not changed_mols.isEmpty())
-    {
-        system.update(changed_mols);
-        return true;
-    }
-    else
-        return false;
-}
-
-bool MoleculeConstraint::dependsOnMolecules() const
-{
-    return true;
-}
-
-/** Return the UID of the system from which this constraint was
-    last updated */
-const QUuid& MoleculeConstraint::sysUID() const
-{
-    return sysuid;
-}
-
-/** Return the version of the system from which this constraint
-    was last updated */
-const Version& MoleculeConstraint::sysVersion() const
-{
-    return sysversion;
 }

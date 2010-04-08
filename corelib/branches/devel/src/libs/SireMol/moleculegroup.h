@@ -148,6 +148,9 @@ public:
     
     MoleculeGroup& operator+=(const Molecules &molecules);
     MoleculeGroup& operator-=(const Molecules &molecules);
+
+    quint64 getMoleculeVersion(MolNum molnum) const;
+    quint64 getMoleculeVersion(const MolID &molid) const;
     
     const ViewsOfMol& at(MolNum molnum) const;
     const ViewsOfMol& at(MolIdx molidx) const;

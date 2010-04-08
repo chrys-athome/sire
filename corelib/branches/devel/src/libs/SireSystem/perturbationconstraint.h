@@ -123,24 +123,16 @@ public:
     const MoleculeGroup& moleculeGroup() const;
 
     SireBase::PropertyName perturbationProperty() const;
-    
-    bool involvesMolecule(MolNum molnum) const;
-    bool involvesMoleculesFrom(const Molecules &molecules) const;
-    
-    Molecules update(const System &system);
-    Molecules update(const System &system, MolNum changed_mol);
-    Molecules update(const System &system, const Molecules &molecules);
 
-    bool isSatisfied(const System &system) const;
+protected:
+    void setSystem(const System &system);
+    bool mayChange(const Delta &delta, quint32 last_subversion) const;
+
+    bool fullApply(Delta &delta);
+    bool deltaApply(Delta &delta, quint32 last_subversion);
 
 private:
-    void pvt_update(const Molecule &molecule, const System &system, bool is_new_system);
-
-    void pvt_update(const System &system, MolNum molnum);
-    void pvt_update(const System &system, const Molecules &changed_mols);
-    void pvt_update(const System &system, bool is_new_system);
-    
-    Molecules applyConstraint() const;
+    bool pvt_update(Molecule &molecule, const SireCAS::Values &values);
 
     /** The molecule group containing the molecules that are affected
         by these perturbations */
@@ -156,14 +148,15 @@ private:
     /** Information about all of the perturbations about each molecule */
     PertDataHash pertdata;
 
-    /** Copies of the perturbed molecules - these are 
-        molecules that must be changed in the molecule group
-        to maintain the constraint */
-    QHash<MolNum,Molecule> perturbed_mols;
+    /** All of the symbols of components used by all of the perturbations */
+    QSet<SireCAS::Symbol> all_pert_syms;
 
     /** The symbols used by the perturbations for each molecule, 
         and their current values */
-    QHash<MolNum,Values> pert_vals;
+    QHash< MolNum,QSet<SireCAS::Symbol> > pert_syms;
+
+    /** The molecules that must change to maintain the constraint */
+    Molecules changed_mols;
 };
 
 }

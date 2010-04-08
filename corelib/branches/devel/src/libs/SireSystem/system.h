@@ -147,6 +147,7 @@ public:
     const QUuid& UID() const;
     const SysName& name() const;
     const Version& version() const;
+    quint32 subVersion() const;
 
     void setName(const QString &newname);
 
@@ -262,6 +263,9 @@ public:
 
     bool containsProperty(const QString &name) const;
     bool containsProperty(const FFID &ffid, const QString &name) const;
+
+    bool containsProperty(const PropertyName &name) const;
+    bool containsProperty(const FFID &ffid, const PropertyName &name) const;
     
     Properties properties() const;
     Properties properties(const FFID &ffid) const;
@@ -400,6 +404,23 @@ protected:
 
     void reindex();
 
+    friend class Delta; // so can call below functions
+    bool deltaUpdate(const MoleculeData &moldata);
+    QList<MolNum> deltaUpdate(const Molecules &molecules);
+
+    void applyAllConstraints();
+
+    bool deltaUpdate(const Symbol &component, double value);
+    bool deltaUpdate(const QString &property, const Property &value);
+    bool deltaUpdate(const QString &property, const FFID &ffid,
+                     const Property &value); 
+    bool deltaUpdate(const QString &property, const QList<FFIdx> &ffidxs,
+                     const Property &value);
+
+    void commitDelta(const Constraints &constraints, 
+                     bool is_minor_change,
+                     bool is_major_change);
+
 private:
     void rebuildIndex();
 
@@ -449,11 +470,11 @@ private:
     /** The index of which of the two set of MoleculeGroups each
         individual molecule group in this set is in */
     QHash<MGNum,int> mgroups_by_num;
-    
-    /** This flag indicates whether or not constraints
-        are in the process of being applied - this prevents
-        infinite recursion */
-    bool applying_constraints;
+
+    /** The subversion of this system - this is incremented when
+        delta updates are being applied. A system with non-zero
+        subversion is not guaranteed to be in a valid state */
+    quint32 subversion;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS

@@ -490,6 +490,32 @@ MolNum MolGroupsBase::getMoleculeNumber(const MolID &molid) const
     return molnums.first();
 }
 
+/** Return the version number of the molecule with number 'molnum' 
+
+    \throw SireMol::missing_molecule
+*/
+quint64 MolGroupsBase::getMoleculeVersion(MolNum molnum) const
+{
+    QHash< MolNum, QList<MGNum> >::const_iterator it = molnum_to_mgnum.constFind(molnum);
+    
+    if (it == molnum_to_mgnum.constEnd())
+        throw SireMol::missing_molecule( QObject::tr(
+                "There is no molecule with number %1 available in this set of groups.")
+                    .arg(molnum.toString()), CODELOC );
+                    
+    return this->getGroup( it.value().at(0) ).getMoleculeVersion(molnum);
+}
+
+/** Return the version number of the molecule with ID 'molid' 
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+*/
+quint64 MolGroupsBase::getMoleculeVersion(const MolID &molid) const
+{
+    return this->getMoleculeVersion( this->getMoleculeNumber(molid) );
+}
+
 /** Simple function that provides a shortcut for map(const MolID&)
 
     \throw SireMol::missing_molecule

@@ -56,6 +56,7 @@ using SireMol::ViewsOfMol;
 using SireMol::MoleculeView;
 
 using SireBase::PropertyPtr;
+using SireBase::PropertyName;
 
 using SireCAS::Symbols;
 
@@ -207,6 +208,9 @@ public:
 
     bool containsProperty(const QString &name) const;
     bool containsProperty(const FFID &ffid, const QString &name) const;
+    
+    bool containsProperty(const PropertyName &name) const;
+    bool containsProperty(const FFID &ffid, const PropertyName &name) const;
     
     Properties properties() const;
     Properties properties(const FFID &ffid) const;

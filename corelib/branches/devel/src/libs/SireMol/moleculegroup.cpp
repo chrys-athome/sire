@@ -522,6 +522,25 @@ const ViewsOfMol& MoleculeGroup::at(MolNum molnum) const
     return d->molecules.at(molnum);
 }
 
+/** Return the version number of the molecule with number 'molnum'
+
+    \throw SireMol::missing_molecule
+*/
+quint64 MoleculeGroup::getMoleculeVersion(MolNum molnum) const
+{
+    return d->molecules.at(molnum).version();
+}
+
+/** Return the version number of the molecule with ID 'molid' 
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+*/
+quint64 MoleculeGroup::getMoleculeVersion(const MolID &molid) const
+{
+    return d->molecules.at( this->getMoleculeNumber(molid) ).version();
+}
+
 /** Return the views of the molecule at index 'molidx'
 
     \throw SireError::invalid_index

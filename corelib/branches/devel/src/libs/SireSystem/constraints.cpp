@@ -29,6 +29,7 @@
 #include "constraints.h"
 #include "moleculeconstraint.h"
 #include "system.h"
+#include "delta.h"
 
 #include "SireMol/molecules.h"
 
@@ -56,11 +57,11 @@ static const RegisterMetaType<Constraints> r_constraints;
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
                                           const Constraints &constraints)
 {
-    writeHeader(ds, r_constraints, 2);
+    writeHeader(ds, r_constraints, 3);
     
     SharedDataStream sds(ds);
     
-    sds << constraints.cons << constraints.molcons
+    sds << constraints.cons
         << static_cast<const Property&>(constraints);
     
     return ds;
@@ -71,11 +72,22 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, Constraints &constrai
 {
     VersionID v = readHeader(ds, r_constraints);
     
-    if (v == 2)
+    if (v == 3)
     {
         SharedDataStream sds(ds);
-        sds >> constraints.cons >> constraints.molcons
+        
+        sds >> constraints.cons >> static_cast<Property&>(constraints);
+    }
+    else if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        QVector<ConstraintPtr> molcons;
+        
+        sds >> constraints.cons >> molcons
             >> static_cast<Property&>(constraints);
+            
+        constraints.cons += molcons;
     }
     else if (v == 1)
     {
@@ -86,20 +98,9 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, Constraints &constrai
         sds >> cons;
         
         constraints.cons = cons.toVector();
-        constraints.molcons = QVector<ConstraintPtr>();
     }
     else
-        throw version_error(v, "1", r_constraints, CODELOC);
-    
-    constraints.mol_dependent_cons = QSet<int>();
-
-    for (int i=0; i<constraints.cons.count(); ++i)
-    {
-        if (constraints.cons.at(i).read().dependsOnMolecules())
-        {
-            constraints.mol_dependent_cons.insert(i);
-        }
-    }
+        throw version_error(v, "1,2,3", r_constraints, CODELOC);
         
     return ds;
 }
@@ -112,15 +113,7 @@ Constraints::Constraints() : ConcreteProperty<Constraints,Property>()
 Constraints::Constraints(const Constraint &constraint)
             : ConcreteProperty<Constraints,Property>()
 {
-    if (constraint.isA<MoleculeConstraint>())
-        molcons.append(constraint);
-    else
-    {
-        cons.append( constraint );
-        
-        if (constraint.dependsOnMolecules())
-            mol_dependent_cons.insert(0);
-    }
+    this->add(constraint);
 }
 
 /** Construct from the passed list of constraints */
@@ -129,7 +122,7 @@ Constraints::Constraints(const QVector<ConstraintPtr> &constraints)
 {
     foreach (const ConstraintPtr constraint, constraints)
     {
-        this->add( *constraint );
+        cons.append(constraint);
     }
 }
 
@@ -139,15 +132,14 @@ Constraints::Constraints(const QList<ConstraintPtr> &constraints)
 {
     foreach (const ConstraintPtr constraint, constraints)
     {
-        this->add( *constraint );
+        cons.append(constraint);
     }
 }
 
 /** Copy constructor */
 Constraints::Constraints(const Constraints &other)
             : ConcreteProperty<Constraints,Property>(other),
-              cons(other.cons), molcons(other.molcons),
-              mol_dependent_cons(other.mol_dependent_cons)
+              cons(other.cons)
 {}
 
 /** Destructor */
@@ -160,8 +152,6 @@ Constraints& Constraints::operator=(const Constraints &other)
     if (this != &other)
     {
         cons = other.cons;
-        molcons = other.molcons;
-        mol_dependent_cons = other.mol_dependent_cons;
         Property::operator=(other);
     }
     
@@ -171,7 +161,7 @@ Constraints& Constraints::operator=(const Constraints &other)
 /** Comparison operator */
 bool Constraints::operator==(const Constraints &other) const
 {
-    return cons == other.cons and molcons == other.molcons;
+    return cons == other.cons;
 }
 
 /** Comparison operator */
@@ -188,10 +178,7 @@ const Constraint& Constraints::operator[](int i) const
 {
     i = Index(i).map( this->nConstraints() );
     
-    if (i >= cons.count())
-        return molcons.at( i - cons.count() ).read();
-    else
-        return cons.at( i ).read();
+    return cons.at( i ).read();
 }
 
 /** Syntactic sugar for Constraints::add */
@@ -225,7 +212,7 @@ Constraints& Constraints::operator-=(const Constraints &constraints)
 /** Return the number of constraints in this set */
 int Constraints::nConstraints() const
 {
-    return cons.count() + molcons.count();
+    return cons.count();
 }
 
 /** Return the number of constraints in this set */
@@ -243,47 +230,21 @@ int Constraints::size() const
 /** Return the list of all of the constraints in this set */
 QVector<ConstraintPtr> Constraints::constraints() const
 {
-    return cons + molcons;
-}
-  
-/** Return the list of all of the constraints that affect
-    just the components and properties of the system */
-QVector<ConstraintPtr> Constraints::componentConstraints() const
-{
     return cons;
-}
-
-/** Return the list of all of the constraints that affect
-    just the coordinates or properties of the molecules 
-    of the system */
-QVector<ConstraintPtr> Constraints::moleculeConstraints() const
-{
-    return molcons;
 }
 
 /** Add the passed constraint to this set - this is only added
     if it does not exist in this set */
 void Constraints::add(const Constraint &constraint)
 {
-    if (constraint.isA<MoleculeConstraint>())
+    foreach (const ConstraintPtr con, cons)
     {
-        molcons.append(constraint);
-        molcons.squeeze();
+        if (con->equals(constraint))
+           return;
     }
-    else
-    {
-        foreach (const ConstraintPtr con, cons)
-        {
-            if (con->equals(constraint))
-                return;
-        }
         
-        cons.append(constraint);
-        cons.squeeze();
-        
-        if (constraint.dependsOnMolecules())
-            mol_dependent_cons.insert( cons.count() - 1 );
-    }
+    cons.append(constraint);
+    cons.squeeze();
 }
 
 /** Add all of the passed constraints to this set. This only
@@ -296,55 +257,23 @@ void Constraints::add(const Constraints &constraints)
     {
         this->add(it->read());
     }
-
-    for (QVector<ConstraintPtr>::const_iterator it = constraints.molcons.constBegin();
-         it != constraints.molcons.constEnd();
-         ++it)
-    {
-        this->add(it->read());
-    }
 }
 
 /** Remove the constraint 'constraint' from this set - this
     does nothing if this constraint is not part of this set */
 void Constraints::remove(const Constraint &constraint)
 {
-    if (constraint.isA<MoleculeConstraint>())
-    {
-        QMutableVectorIterator<ConstraintPtr> it(molcons);
-    
-        while (it.hasNext())
-        {
-            it.next();
-        
-            if (it.value()->equals(constraint))
-                it.remove();
-        }
-        
-        molcons.squeeze();
-    }
-    else
-    {
-        QMutableVectorIterator<ConstraintPtr> it(cons);
-    
-        while (it.hasNext())
-        {
-            it.next();
-        
-            if (it.value()->equals(constraint))
-                it.remove();
-        }
+    QMutableVectorIterator<ConstraintPtr> it(cons);
 
-        cons.squeeze();
-        
-        mol_dependent_cons.clear();
-        
-        for (int i=0; i<cons.count(); ++i)
-        {
-            if (cons.at(i).read().dependsOnMolecules())
-                mol_dependent_cons.insert(i);
-        }
+    while (it.hasNext())
+    {
+        it.next();
+    
+        if (it.value()->equals(constraint))
+            it.remove();
     }
+
+    cons.squeeze();
 }
 
 /** Remove all of the constraints in 'constraints' from this
@@ -357,13 +286,6 @@ void Constraints::remove(const Constraints &constraints)
     {
         this->remove( it->read() );
     }
-
-    for (QVector<ConstraintPtr>::const_iterator it = constraints.molcons.constBegin();
-         it != constraints.molcons.constEnd();
-         ++it)
-    {
-        this->remove( it->read() );
-    }
 }
 
 /** Remove the constraint at index 'i' */
@@ -371,24 +293,8 @@ void Constraints::removeAt(int i)
 {
     i = Index(i).map( this->nConstraints() );
     
-    if (i >= cons.count())
-    {
-        molcons.remove( i - cons.count() );
-        molcons.squeeze();
-    }
-    else
-    {
-        cons.remove(i);
-        cons.squeeze();
-        
-        mol_dependent_cons.clear();
-        
-        for (int i=0; i<cons.count(); ++i)
-        {
-            if (cons.at(i).read().dependsOnMolecules())
-                mol_dependent_cons.insert(i);
-        }
-    }
+    cons.remove(i);
+    cons.squeeze();
 }
 
 /** Return whether or not all of the constraints in this set are
@@ -397,14 +303,6 @@ bool Constraints::areSatisfied(const System &system) const
 {
     for (QVector<ConstraintPtr>::const_iterator it = cons.constBegin();
          it != cons.constEnd();
-         ++it)
-    {
-        if (not it->read().isSatisfied(system))
-            return false;
-    }
-
-    for (QVector<ConstraintPtr>::const_iterator it = molcons.constBegin();
-         it != molcons.constEnd();
          ++it)
     {
         if (not it->read().isSatisfied(system))
@@ -435,18 +333,6 @@ void Constraints::assertSatisfied(const System &system) const
         }
     }
     
-    for (QVector<ConstraintPtr>::const_iterator it = molcons.constBegin();
-         it != molcons.constEnd();
-         ++it)
-    {
-        if (not it->read().isSatisfied(system))
-        {
-            broken_constraints.append( QObject::tr("%1 : %2")
-                        .arg(broken_constraints.count() + 1)
-                        .arg(it->read().toString()) );
-        }
-    }
-    
     if (not broken_constraints.isEmpty())
     {
         throw SireSystem::constraint_error( QObject::tr(
@@ -458,430 +344,107 @@ void Constraints::assertSatisfied(const System &system) const
     }
 }
 
-/** Return whether or not this set has any molecule constraints */
-bool Constraints::hasMoleculeConstraints() const
+/** Apply all of the constraints to the passed system. This
+    returns a system that satisfies all of the constraints */
+System Constraints::apply(const System &system)
 {
-    return not molcons.isEmpty();
-}
-
-/** Return whether or not this has any (non-molecule) constraints that
-    are dependent on the molecules */
-bool Constraints::hasMolDependentConstraints() const
-{
-    return not mol_dependent_cons.isEmpty();
-}
-
-/** Return whether or not all of the molecule constraints in this set are
-    satisfied in the passed system */
-bool Constraints::moleculeConstraintsAreSatisfied(const System &system) const
-{
-    for (QVector<ConstraintPtr>::const_iterator it = molcons.constBegin();
-         it != molcons.constEnd();
-         ++it)
-    {
-        if (not it->read().isSatisfied(system))
-            return false;
-    }
+    Delta delta(system);
     
-    return true;
-}
-
-/** Assert that all of the molecule constraints in this set are satisfied
-    in the passed system
+    System new_system(system);
     
-    \throw SireSystem::constraint_error
-*/
-void Constraints::assertMoleculeConstraintsAreSatisfied(const System &system) const
-{
-    QStringList broken_constraints;
-
-    for (QVector<ConstraintPtr>::const_iterator it = molcons.constBegin();
-         it != molcons.constEnd();
-         ++it)
+    for (int i=0; i<10; ++i)
     {
-        if (not it->read().isSatisfied(system))
+        if (this->apply(delta))
         {
-            broken_constraints.append( QObject::tr("%1 : %2")
-                        .arg(broken_constraints.count() + 1)
-                        .arg(it->read().toString()) );
-        }
-    }
-    
-    if (not broken_constraints.isEmpty())
-    {
-        throw SireSystem::constraint_error( QObject::tr(
-            "Some of the molecule constraints are not satisfied in the system %1. "
-            "The number of unsatisfied constraints in %2. Here they are;\n%3")
-                .arg(system.name())
-                .arg(broken_constraints.count())
-                .arg(broken_constraints.join("\n")), CODELOC );
-    }
-}
-
-/** Internal function used to resolve clashes between molecule constraints */
-void Constraints::resolveMoleculeConstraints(System &system,
-                                             Molecules old_changed_mols)
-{
-    const int max_loops = 10;
-    
-    for (int i=0; i<max_loops; ++i)
-    {
-        Molecules changed_mols;
-
-        if (old_changed_mols.isEmpty())
-            return;
-            
-        else if (old_changed_mols.count() == 1)
-        {
-            MolNum changed_molnum = old_changed_mols.constBegin()->data().number();
-            
-            for (QVector<ConstraintPtr>::iterator it = molcons.begin();
-                 it != molcons.end();
-                 ++it)
-            {
-                changed_mols += it->edit()
-                                    .asA<MoleculeConstraint>().update(system, 
-                                                                      changed_molnum);
-            }
+            new_system = delta.apply();
         }
         else
-        {
-            for (QVector<ConstraintPtr>::iterator it = molcons.begin();
-                 it != molcons.end();
-                 ++it)
-            {
-                changed_mols += it->edit()
-                                    .asA<MoleculeConstraint>().update(system, 
-                                                                      old_changed_mols);
-            }
-        }
-        
-        if (changed_mols.isEmpty())
-            //nothing needs changing - all constraints must be satisfied
-            return;
-    
-        //update the system with the new molecules
-        system.update(changed_mols);
-        
-        //apply any molecule dependent constraints
-        this->applyMolDependentConstraints(system, changed_mols);
-        
-        //save the changed molecules as a hint for the next pass
-        old_changed_mols = changed_mols;
+            return new_system;
     }
     
-    //we only get here if the constraints are still not satisfied
-    QStringList broken_constraints;
-
-    for (QVector<ConstraintPtr>::const_iterator it = molcons.constBegin();
-         it != molcons.constEnd();
-         ++it)
-    {
-        if (not it->read().isSatisfied(system))
-        {
-            broken_constraints.append( QObject::tr("%1 : %2")
-                        .arg(broken_constraints.count() + 1)
-                        .arg(it->read().toString()) );
-        }
-    }
-
-    if (not broken_constraints.isEmpty())
-        throw SireSystem::constraint_error( QObject::tr(
-            "Some of the molecule constraints are still not satisfied, despite "
-            "%1 passes, in the system %2. "
-            "The number of unsatisfied constraints in %3. Here they are;\n%4")
-                .arg(max_loops)
-                .arg(system.name())
-                .arg(broken_constraints.count())
-                .arg(broken_constraints.join("\n")), CODELOC );
+    throw SireSystem::constraint_error( QObject::tr(
+            "The constraints %1 cannot be satisfied in connection with "
+            "the constraints in the system %2, %3.")
+                .arg(this->toString(), system.toString(), 
+                     system.constraints().toString()), CODELOC );
+                     
+    return System();
 }
 
-/** Apply all of the molecule-dependent constraints to the system 'system' */
-void Constraints::applyMolDependentConstraints(System &system)
+/** Internal function used to apply all of the constraints in this system to 
+    the passed delta - this returns whether or not any of the constraints
+    changed the system */
+bool Constraints::apply(Delta &delta)
 {
-    if (mol_dependent_cons.isEmpty())
-        return;
+    if (cons.isEmpty())
+        return false;
         
-    SaveState old_system = SaveState::save(system);
-    
-    try
+    else if (cons.count() == 1)
     {
-        foreach (int mol_dependent_con, mol_dependent_cons)
-        {
-            cons.at(mol_dependent_con).read().apply(system);
-        }
+        if (cons.at(0).read().mayAffect(delta))
+            return cons[0].edit().apply(delta);
+        else
+            return false;
     }
-    catch(...)
+    else
     {
-        old_system.restore(system);
-        throw;
-    }
-}
-
-/** Apply all of the molecule-dependent constraints to the system 'system'
-    assuming that only the molecule with number 'molnum' has changed */
-void Constraints::applyMolDependentConstraints(System &system, MolNum molnum)
-{
-    if (mol_dependent_cons.isEmpty())
-        return;
-    
-    else if (molnum.isNull())
-    {
-        this->applyMolDependentConstraints(system);
-        return;
-    }
+        bool system_changed = false;
         
-    SaveState old_system = SaveState::save(system);
-    
-    try
-    {
-        foreach (int mol_dependent_con, mol_dependent_cons)
-        {
-            cons.at(mol_dependent_con).read().apply(system, molnum);
-        }
-    }
-    catch(...)
-    {
-        old_system.restore(system);
-        throw;
-    }
-}
-
-/** Apply all of the molecule-dependent constraints to the system 'system'
-    assuming that only the molecules in 'molecules' have changed */
-void Constraints::applyMolDependentConstraints(System &system, const Molecules &molecules)
-{
-    if (mol_dependent_cons.isEmpty())
-        return;
-
-    else if (molecules.isEmpty())
-    {
-        this->applyMolDependentConstraints(system);
-        return;
-    }
-        
-    SaveState old_system = SaveState::save(system);
-    
-    try
-    {
-        foreach (int mol_dependent_con, mol_dependent_cons)
-        {
-            cons.at(mol_dependent_con).read().apply(system, molecules);
-        }
-    }
-    catch(...)
-    {
-        old_system.restore(system);
-        throw;
-    }
-}
-
-/** Apply all of the molecule constraints to the system 'system' */
-void Constraints::applyMoleculeConstraints(System &system)
-{
-    if (molcons.isEmpty())
-    {
-        this->applyMolDependentConstraints(system);
-        return;
-    }
-    
-    SaveState old_system = SaveState::save(system);
-    QVector<ConstraintPtr> old_molcons( molcons );
-
-    //apply the molecule dependent constraints first
-    this->applyMolDependentConstraints(system);
-    
-    try
-    {
-        //now perform a first pass through the molecule constraints
-        Molecules changed_mols;
-    
-        for (QVector<ConstraintPtr>::iterator it = molcons.begin();
-             it != molcons.end();
-             ++it)
-        {
-            changed_mols += it->edit()
-                                .asA<MoleculeConstraint>().update(system);
-        }
-        
-        //apply any necessary changes
-        if (not changed_mols.isEmpty())
-        {
-            system.update(changed_mols);
-            this->applyMolDependentConstraints(system, changed_mols);
-            this->resolveMoleculeConstraints(system, changed_mols);
-        }
-    }
-    catch(...)
-    {
-        molcons = old_molcons;
-        old_system.restore(system);
-        throw;
-    }
-}
-
-/** Apply all of the molecule constraints to the system 'system',
-    providing the hint that only the molecule with number 'molnum'
-    has changed since the last application. It is a very bad idea
-    to provide a hint that is not true! */
-void Constraints::applyMoleculeConstraints(System &system, MolNum molnum)
-{
-    if (molcons.isEmpty())
-    {
-        this->applyMolDependentConstraints(system, molnum);
-        return;
-    }
-
-    SaveState old_system = SaveState::save(system);
-    QVector<ConstraintPtr> old_molcons( molcons );
-
-    //apply the molecule dependent constraints first
-    this->applyMolDependentConstraints(system, molnum);
-    
-    try
-    {
-        //perform a first pass through the constraints
-        Molecules changed_mols;
-    
-        for (QVector<ConstraintPtr>::iterator it = molcons.begin();
-             it != molcons.end();
-             ++it)
-        {
-            changed_mols += it->edit()
-                                .asA<MoleculeConstraint>().update(system, molnum);
-        }
-        
-        if (not changed_mols.isEmpty())
-        {
-            system.update(changed_mols);
-            this->applyMolDependentConstraints(system, changed_mols);
-            this->resolveMoleculeConstraints(system, changed_mols);
-        }
-    }
-    catch(...)
-    {
-        molcons = old_molcons;
-        old_system.restore(system);
-        throw;
-    }
-}
-
-/** Apply all of the molecule constraints to the system 'system',
-    providing the hint that only the molecules in 'molecules'
-    have changed since the last application. It is a very bad idea
-    to provide a hint that is not true! */
-void Constraints::applyMoleculeConstraints(System &system, const Molecules &molecules)
-{
-    if (molcons.isEmpty())
-    {
-        this->applyMolDependentConstraints(system, molecules);
-        return;
-    }
-
-    SaveState old_system = SaveState::save(system);
-    QVector<ConstraintPtr> old_molcons( molcons );
-
-    //apply the molecule dependent constraints first
-    this->applyMolDependentConstraints(system, molecules);
-    
-    try
-    {
-        //perform a first pass through the constraints
-        Molecules changed_mols;
-    
-        for (QVector<ConstraintPtr>::iterator it = molcons.begin();
-             it != molcons.end();
-             ++it)
-        {
-            changed_mols += it->edit()
-                                .asA<MoleculeConstraint>().update(system, molecules);
-        }
-        
-        if (not changed_mols.isEmpty())
-        {
-            system.update(changed_mols);
-            this->applyMolDependentConstraints(system, molecules);
-            this->resolveMoleculeConstraints(system, changed_mols);
-        }
-    }
-    catch(...)
-    {
-        molcons = old_molcons;
-        old_system.restore(system);
-        throw;
-    }
-}
-
-/** Apply all of the contained constraints to the system 'system' */
-void Constraints::apply(System &system)
-{
-    if (cons.count() == 0)
-    {
-        this->applyMoleculeConstraints(system);
-        return;
-    }
-
-    SaveState old_system = SaveState::save(system);
-    
-    try
-    {
-        //first apply all of the component constraints - we take multiple
-        //sweeps as changing one component may then change the value of 
-        //another constraint
-        const int max_loops = 10;
-        
-        for (int i=0; i<max_loops; ++i)
+        for (int i=0; i<10; ++i)
         {
             bool something_changed = false;
-
-            for (QVector<ConstraintPtr>::const_iterator it = cons.constBegin();
-                 it != cons.constEnd();
-                 ++it)
+        
+            for (int j=0; j<cons.count(); ++j)
             {
-                bool this_changed = it->read().apply(system);
-                something_changed = something_changed or this_changed;
+                if (cons.at(j).read().mayAffect(delta))
+                {
+                    bool this_changed = cons[j].edit().apply(delta);
+                    something_changed = something_changed or this_changed;
+                    system_changed = system_changed or this_changed;
+                }
             }
             
             if (not something_changed)
+                return system_changed;
+        }
+    
+        //the constraints couldn't be satisfied - get the list
+        //of unsatisfied constraints
+        QStringList unsatisfied_constraints;
+        
+        for (int j=0; j<cons.count(); ++j)
+        {
+            if (cons.at(j).read().mayAffect(delta))
             {
-                //the components are ok - we can now apply
-                //the molecule constraints
-                this->applyMoleculeConstraints(system);
-                return;
+                if (cons[j].edit().apply(delta))
+                {
+                    unsatisfied_constraints.append(cons[j].read().toString());
+                }
             }
         }
         
-        //we only get here if we have exceeded max_loops attempts
-        // - get a list of the broken constraints
-        QStringList broken_constraints;
+        throw SireSystem::constraint_error( QObject::tr(
+                "Cannot simultaneously satisfy the following constraints "
+                "on the system %1\n%2")
+                    .arg(delta.deltaSystem().toString(), 
+                         unsatisfied_constraints.join("\n")),
+                            CODELOC );
     
-        for (QVector<ConstraintPtr>::const_iterator it = cons.constBegin();
-             it != cons.constEnd();
-             ++it)
-        {
-            if (not it->read().isSatisfied(system))
-            {
-                broken_constraints.append( QObject::tr("%1 : %2")
-                                  .arg(broken_constraints.count() + 1)
-                                  .arg(it->read().toString()) );
-            }
-        }
-                
-        if (not broken_constraints.isEmpty())
-            throw SireSystem::constraint_error( QObject::tr(
-                        "Despite %1 attempts, some of the constraints in the system "
-                        "cannot be satisfied:\n%2")
-                            .arg(max_loops)
-                            .arg(broken_constraints.join("\n")), CODELOC );
-
-		//we got here, but there were no broken constraints - we must
-        //now apply the molecule constraints
-        this->applyMoleculeConstraints(system);
+        return true;
     }
-    catch(...)
+}
+
+void Constraints::committed(const System &system)
+{
+    if (cons.isEmpty())
+        return;
+    
+    else
     {
-        old_system.restore(system);
-        throw;
+        for (int i=0; i<cons.count(); ++i)
+        {
+            cons[i].edit().committed(system);
+        }
     }
 }
 

@@ -109,38 +109,53 @@ public:
     
     virtual Constraint* clone() const=0;
     
-    virtual Delta apply(const System &system)=0;
-    virtual Delta apply(const System &system, const Delta &delta)=0;
+    System apply(const System &system);
 
-    virtual bool wouldBeAffectedBy(const System &system,    
-                                   const Delta &delta) const=0;
-
-    virtual bool isSatisfied(const System &system) const=0;
+    bool isSatisfied(const System &system) const;
+    
+    bool mayAffect(const Delta &delta) const;
     
     void assertSatisfied(const System &system) const;
     
     static const NullConstraint& null();
     
 protected:
-    friend class System;        // so can call accept()
-    friend class Constraints;   // so can call accept()
-
     Constraint& operator=(const Constraint &other);
 
-    const QUuid& lastUID() const;
-    const SireBase::Version& lastVersion() const;
-
-    virtual void accept(const System &system, const Delta &delta)=0;
-
-    void setSatisfied(const System &system);
-    void setUnsatisfied(const System &system);
-    
-    void clearLastSystem();
+    void setSatisfied(const System &system, bool is_satisfied);
     
     bool wasLastSystem(const System &system) const;
+    bool wasLastSubVersion(const System &system) const;
     bool wasLastSatisfied() const;
 
+    void clearLastSystem();
+
+    friend class Delta; // friend to call 'apply' and 'committed'
+    friend class Constraints;  // friend to call 'apply' and 'committed'
+    bool apply(Delta &delta);
+    void committed(const System &system);
+
+    /** Set the baseline system for the constraint - this is 
+        used to pre-calculate everything for the system
+        and to check if the constraint is satisfied */
+    virtual void setSystem(const System &system)=0;
+
+    /** Return whether or not the changes in the passed
+        delta *may* have changed the system since the last
+        subversion 'subversion' */
+    virtual bool mayChange(const Delta &delta, quint32 last_subversion) const=0;
+
+    /** Fully apply this constraint on the passed delta - this returns
+        whether or not this constraint affects the delta */
+    virtual bool fullApply(Delta &delta)=0;
+
+    /** Apply this constraint based on the delta, knowing that the 
+        last application of this constraint was on this system, 
+        at subversion number last_subversion */
+    virtual bool deltaApply(Delta &delta, quint32 last_subversion)=0;
+
 private:
+
     /** The UID of the last system on which this constraint
         was applied */
     QUuid last_sysuid;
@@ -148,6 +163,10 @@ private:
     /** The version of the system on which this constraint
         was last applied */
     SireBase::Version last_sysversion;
+
+    /** The subversion of the system on which this constraint
+        was last applied */
+    quint32 last_subversion;
     
     /** Whether or not this constraint was satisfied for the 
         last system on which it was applied */
@@ -180,15 +199,13 @@ public:
     
     QString toString() const;
 
-    Delta apply(const System &system);
-    Delta apply(const System &system, const Delta &delta);
-
-    bool wouldBeAffectedBy(const System &system, const Delta &delta) const;
-    
-    bool isSatisfied(const System &system) const;
-
 protected:
-    void accept(const System &system, const Delta &delta);
+    void setSystem(const System &system);
+
+    bool mayChange(const Delta &delta, quint32 last_subversion) const;
+    
+    bool fullApply(Delta &delta);
+    bool deltaApply(Delta &delta, quint32 last_subversion);
 };
 
 /** This constraint is used to constrain the value of a
@@ -227,19 +244,15 @@ public:
     
     QString toString() const;
 
-    Delta apply(const System &system);
-    Delta apply(const System &system, const Delta &delta);
-
-    bool wouldBeAffectedBy(const System &system, const Delta &delta) const;
-    
-    bool isSatisfied(const System &system) const;
-
 protected:
-    void accept(const System &system, const Delta &delta);
-
-private:
     void setSystem(const System &system);
 
+    bool mayChange(const Delta &delta, quint32 last_subversion) const;
+    
+    bool fullApply(Delta &delta);
+    bool deltaApply(Delta &delta, quint32 last_subversion);
+    
+private:
     /** The ID of the forcefields whose properties are being constrained */
     SireFF::FFIdentifier ffid;
     
@@ -259,19 +272,15 @@ private:
     
     /** The values of the constant components the last time
         this constraint was applied */
-    SireCAS::Values last_vals;
+    SireCAS::Values component_vals;
     
-    /** The last value of the property */
-    SireBase::PropertyPtr old_property;
+    /** The value of the constrained property the last time
+        this constraint was applied */
+    SireBase::PropertyPtr constrained_value;
     
-    /** The last (numerical) value of the property */
-    double old_value;
-    
-    /** The new value of the equation */
-    double new_value;
-    
-    /** Whether or not there is an old value */
-    bool has_old_value;
+    /** The target value of the constraint the last time it 
+        was applied */
+    double target_value;
 };
 
 /** This constraint is used to constrain the value of a
@@ -312,16 +321,15 @@ public:
     
     const SireCAS::Expression& expression() const;
 
-    Delta apply(const System &system);
-    Delta apply(const System &system, const Delta &delta);
-
-    bool wouldBeAffectedBy(const System &system, const Delta &delta) const;
-    
-    bool isSatisfied(const System &system) const;
-
-private:
+protected:
     void setSystem(const System &system);
 
+    bool mayChange(const Delta &delta, quint32 last_subversion) const;
+    
+    bool fullApply(Delta &delta);
+    bool deltaApply(Delta &delta, quint32 last_subversion);
+
+private:
     /** The component whose value is constrained */
     SireCAS::Symbol constrained_component;
     
@@ -334,16 +342,16 @@ private:
     
     /** The values of the constant components the last time
         this constraint was applied */
-    SireCAS::Values last_vals;
+    SireCAS::Values component_vals;
     
-    /** The last value of the component */
-    double old_value;
+    /** The last value of the constrained component */
+    double constrained_value;
     
-    /** The new value of the equation */
-    double new_value;
+    /** The target value of the equation */
+    double target_value;
     
-    /** Whether or not there is an old value */
-    bool has_old_value;
+    /** Whether or not the last system had the constrained component */
+    bool has_constrained_value;
 };
 
 /** This constraint is used to constrain a component to adopt one of the values
@@ -386,12 +394,13 @@ public:
     
     int stepSize() const;
 
-    Delta apply(const System &system);
-    Delta apply(const System &system, const Delta &delta);
+protected:
+    void setSystem(const System &system);
 
-    bool wouldBeAffectedBy(const System &system, const Delta &delta) const;
+    bool mayChange(const Delta &delta, quint32 last_subversion) const;
     
-    bool isSatisfied(const System &system) const;
+    bool fullApply(Delta &delta);
+    bool deltaApply(Delta &delta, quint32 last_subversion);
 
 private:
     /** The component whose value is being constrained */
@@ -406,6 +415,19 @@ private:
     /** The step size - this allows us to be set to a window that
         is 'step_size' windows away from the reference */
     qint32 step_size;
+    
+    /** The value of the constant component the last time
+        this constraint was applied */
+    double component_val;
+    
+    /** The last value of the constrained component */
+    double constrained_value;
+    
+    /** The target value of the equation */
+    double target_value;
+    
+    /** Whether or not the last system had the constrained component */
+    bool has_constrained_value;
 };
 
 typedef SireBase::PropPtr<Constraint> ConstraintPtr;

@@ -35,6 +35,8 @@
 
 #include "SireBase/majorminorversion.h"
 
+#include "SireMol/molecules.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireSystem
@@ -82,39 +84,12 @@ public:
     static const char* typeName();
     
     virtual MoleculeConstraint* clone() const=0;
-    
-    virtual bool involvesMolecule(MolNum molnum) const=0;
-    virtual bool involvesMoleculesFrom(const Molecules &molecules) const=0;
-    
-    virtual Molecules update(const System &system)=0;
-    virtual Molecules update(const System &system, MolNum molnum)=0;
-    virtual Molecules update(const System &system, const Molecules &molecules)=0;
-
-    bool apply(System &system) const;
-    bool apply(System &system, MolNum molnum) const;
-    bool apply(System &system, const Molecules &molecules) const;
-    
-    bool dependsOnMolecules() const;
-
-    bool isSatisfied(const System &system) const;
-
-    const QUuid& sysUID() const;
-    const Version& sysVersion() const;
 
 protected:
     MoleculeConstraint& operator=(const MoleculeConstraint &other);
     
     bool operator==(const MoleculeConstraint &other) const;
     bool operator!=(const MoleculeConstraint &other) const;
-    
-    void updatedFrom(const System &system);
-    
-private:
-    /** The UID of the system to which this constraint was last applied */
-    QUuid sysuid;
-    
-    /** The version of the system the last time it was applied */
-    Version sysversion;
 };
 
 }

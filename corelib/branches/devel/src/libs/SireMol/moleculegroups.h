@@ -143,6 +143,9 @@ public:
     MolNum getMoleculeNumber(const MolName &molname) const;
     MolNum getMoleculeNumber(const MolID &molid) const;
     
+    quint64 getMoleculeVersion(MolNum molnum) const;
+    quint64 getMoleculeVersion(const MolID &molid) const;
+    
     QList<MolNum> molNums() const;
     QList<MolNum> getMoleculeNumbers() const;
     

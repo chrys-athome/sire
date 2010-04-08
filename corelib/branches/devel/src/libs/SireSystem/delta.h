@@ -30,6 +30,7 @@
 #define SIRESYSTEM_DELTA_H
 
 #include "constraint.h"
+#include "system.h"
 
 #include "SireMol/molecule.h"
 #include "SireMol/molecules.h"
@@ -38,13 +39,10 @@
 
 SIRE_BEGIN_HEADER
 
-namespace SireSystem
+namespace SireFF
 {
-class Delta;
+class Point;
 }
-
-QDataStream& operator<<(QDataStream&, const SireSystem::Delta&);
-QDataStream& operator>>(QDataStream&, SireSystem::Delta&);
 
 namespace SireSystem
 {
@@ -61,36 +59,23 @@ using SireMol::MolNum;
 using SireMol::MoleculeView;
 
 using SireFF::FFIdx;
+using SireFF::FFID;
+using SireFF::Point;
 
-/** This class records what has changed in a system between moves,
-    or between applications of a constraint. This records changes
-    in molecules, changes in properties and changes in 
-    System components. However, it does not record changes
-    in energy-dependent components (e.g. energies of components
-    of forcefields, or results of expressions that involve
-    energy components).
+/** This class records and can apply a change from one system
+    state to another. The purpose is to allow the state of 
+    the system to be changed in small steps, and then
+    committed as a chunk. This allows changes to be aggregated
+    before constaints are applied or major/minor version
+    numbers are incremented
     
     @author Christopher Woods
 */
 class SIRESYSTEM_EXPORT Delta
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Delta&);
-friend QDataStream& ::operator>>(QDataStream&, Delta&);
-
 public:
     Delta();
-    Delta(const Molecule &old_molecule, const Molecule &new_molecule);
-    Delta(const Molecules &old_molecules, const Molecules &new_molecules);
-    Delta(const Symbol &component, double old_value, double new_value);
-    Delta(const QString &name, 
-          const Property &old_value, const Property &new_value);
-    Delta(const QString &name, const FFIdx &ffidx,
-          const Property &old_value, const Property &new_value);
-    Delta(const QString &name, const QList<FFIdx> &ffidxs,
-          const Property &old_value, const Property &new_value);
-
-    Delta(const Delta &delta0, const Delta &delta1);
+    Delta(const System &system);
           
     Delta(const Delta &other);
     
@@ -100,132 +85,128 @@ public:
     
     bool operator==(const Delta &other) const;
     bool operator!=(const Delta &other) const;
-    
-    Delta operator+(const Delta &other) const;
-
-    static const char* typeName();
 
     QString toString() const;
 
     bool isEmpty() const;
     bool isNull() const;
+
+    const System& deltaSystem() const;
     
-    Delta add(const Delta &other) const;
+    bool hasChange() const;
     
-    static Delta combine(const Delta &delta0, const Delta &delta1);
+    bool hasMajorChange() const;
+    bool hasMinorChange() const;
     
-    bool involves(MolNum molnum) const;
-    bool involves(const MoleculeView &molview) const;
-    bool involves(const Molecules &molecules) const;
-    bool involves(const Symbol &component) const;
-    bool involves(const QString &property) const;
-    bool involves(const QString &property, const FFIdx &ffidx) const;
-    bool involves(const QString &property, const QList<FFIdx> &ffidxs) const;
+    bool hasMoleculeChange() const;
+    bool hasComponentChange() const;
+    bool hasPropertyChange() const;
     
-    Molecule update(const Molecule &molecule) const;
-    Molecules update(const Molecules &molecules) const;
+    bool hasChangeSince(quint32 subversion) const;
     
-    Molecules oldMolecules() const;
-    Molecules newMolecules() const;
+    bool hasMajorChangeSince(quint32 subversion) const;
+    bool hasMinorChangeSince(quint32 subversion) const;
     
-    Molecule oldMolecule(MolNum molnum) const;
-    Molecule newMolecule(MolNum molnum) const;
+    bool hasMoleculeChangeSince(quint32 subversion) const;
+    bool hasComponentChangeSince(quint32 subversion) const;
+    bool hasPropertyChangeSince(quint32 subversion) const;
     
-    const Values& oldValues() const;
-    const Values& newValues() const;
+    bool changed(MolNum molnum) const;
+    bool changed(const MoleculeView &molview) const;
+    bool changed(const Molecules &molecules) const;
     
-    double oldValue(const Symbol &component) const;
-    double newValue(const Symbol &component) const;
+    bool changed(const Symbol &component) const;
+    bool changed(const QSet<Symbol> &symbols) const;
+    bool changed(const Values &values) const;
     
-    Properties oldProperties() const;
-    Properties newProperties() const;
+    bool changed(const QString &property) const;
+    bool changed(const PropertyName &property) const;
+    bool changed(const QSet<QString> &properties) const;
+    bool changed(const QList<PropertyName> &properties) const;
+    bool changed(const Properties &properties) const;
     
-    const Property& oldProperty(const QString &property) const;
-    const Property& newProperty(const QString &property) const;
+    bool changed(const Point &point) const;
     
-    Properties oldProperties(const FFIdx &ffidx) const;
-    Properties newProperties(const FFIdx &ffidx) const;
+    bool sinceChanged(MolNum molnum, quint32 subversion) const;
+    bool sinceChanged(const MoleculeView &molview, quint32 subversion) const;
+    bool sinceChanged(const Molecules &molecules, quint32 subversion) const;
+
+    bool sinceChanged(const Symbol &component, quint32 subversion) const;
+    bool sinceChanged(const QSet<Symbol> &symbols, quint32 subversion) const;
+    bool sinceChanged(const Values &values, quint32 subversion) const;
+
+    bool sinceChanged(const QString &property, quint32 subversion) const;
+    bool sinceChanged(const PropertyName &property, quint32 subversion) const;
+    bool sinceChanged(const QSet<QString> &properties, quint32 subversion) const;
+    bool sinceChanged(const QList<PropertyName> &properties, quint32 subversion) const;
+    bool sinceChanged(const Properties &properties, quint32 subversion) const;
     
-    const Property& oldProperty(const QString &property, const FFIdx &ffidx) const;
-    const Property& newProperty(const QString &property, const FFIdx &ffidx) const;
+    bool sinceChanged(const Point &point, quint32 subversion) const;
     
-    Properties oldProperties(const QList<FFIdx> &ffidxs) const;
-    Properties newProperties(const QList<FFIdx> &ffidxs) const;
-                             
-    const Property& oldProperty(const QString &property,
-                                const QList<FFIdx> &ffidxs) const;
-                                
-    const Property& newProperty(const QString &property,
-                                const QList<FFIdx> &ffidxs) const;
+    QList<MolNum> changedMolecules() const;
+    QList<MolNum> changedMoleculesSince(quint32 subversion) const;
+    
+    QList<MolNum> changedMolecules(const Molecules &molecules) const;
+    QList<MolNum> changedMoleculesSince(const Molecules &molecules,
+                                        quint32 subversion) const;
+    
+    QList<Symbol> changedComponents() const;
+    QList<Symbol> changedComponentsSince(quint32 subversion) const;
+    
+    QList<QString> changedProperties() const;
+    QList<QString> changedPropertiesSince(quint32 subversion) const;
+    
+    bool update(const MoleculeView &molview);
+    bool update(const MoleculeData &moldata);
+    bool update(const Molecules &molecules);
+
+    bool update(const Symbol &component, double value);
+
+    bool update(const QString &property, const Property &value);
+    bool update(const QString &property, const FFID &ffid, const Property &value);
+    bool update(const QString &property, const QList<FFIdx> &ffidxs,
+                const Property &value);
+    
+    bool update(const PropertyName &property, const Property &value);
+    bool update(const PropertyName &property, const FFID &ffid,
+                const Property &value);
+    bool update(const PropertyName &property, const QList<FFIdx> &ffidxs,
+                const Property &value);
+    
+    System apply();
     
 private:
-    void mergeOld(const Delta &delta0, const Delta &delta1);
-    void mergeNew(const Delta &delta0, const Delta &delta1);
+    /** The system being changed */
+    System delta_system;
     
-    void mergeOldComponents(const Values &comps0, const Values &comps1);
-    void mergeNewComponents(const Values &comps0, const Values &comps1);
-
-    void mergeOldMolecules(const Molecule &mol0, const Molecules &mols0,
-                           const Molecule &mol1, const Molecules &mols1);
-                           
-    void mergeNewMolecules(const Molecule &mol0, const Molecules &mols0,
-                           const Molecule &mol1, const Molecules &mols1);
-
-    void mergeOldProperties(Properties &props,
-                            const Properties &props0, const Properties &props1) const;
-
-    void mergeNewProperties(Properties &props,
-                            const Properties &props0, const Properties &props1) const;
-
-    /** A single changed molecule before the delta - this is used when this
-        delta involves only a single molecule */
-    Molecule old_mol;
+    /** Numbers of all of the changed molecules, together with 
+        the subversion number when they were changed */
+    QHash<MolNum,quint32> changed_mols;
     
-    /** A single changed molecule after the delta - this is used when this
-        delta involves only a single molecule */
-    Molecule new_mol;
-
-    /** All of the changed molecules before the delta */
-    Molecules old_mols;
+    /** Symbols of all of the changed components, together with
+        the subversion number when they were changed */
+    QHash<Symbol,quint32> changed_comps;
     
-    /** All of the changed molecules after the delta */
-    Molecules new_mols;
+    /** Names of all of the changed properties, together with
+        the subversion number when they were changed */
+    QHash<QString,quint32> changed_props;
     
-    /** All of the changed (non-energy-dependent) system 
-        components before the delta */
-    Values old_components;
+    /** The subversion of the last change (0 for no change) */
+    quint32 last_change;
     
-    /** All of the changed (non-energy-dependent) system
-        components after the delta */
-    Values new_components;
+    /** The subversion of the last molecule change (0 for no change) */
+    quint32 last_mol_change;
     
-    /** All of the changed system properties before the delta */
-    Properties old_properties;
+    /** The subversion of the last component change (0 for no change) */
+    quint32 last_comp_change;
     
-    /** All of the changed system properties after the delta */
-    Properties new_properties;
-    
-    /** All of the changed forcefield-specific properties
-        before the delta, indexed by FFIdx (in the System) */
-    QHash<FFIdx,Properties> old_ff_properties;
-    
-    /** All of the changed forcefield-specific properties
-        after the delta, indexed by FFIdx (in the System) */
-    QHash<FFIdx,Properties> new_ff_properties;
-
-    /** An integer that is incremented whenever
-        deltas are combined - this can be used to quickly
-        tell if two deltas are different. This is equal
-        to zero for an empty delta */
-    quint32 merge_count;
+    /** The subversion of the last property change (0 for no change) */
+    quint32 last_prop_change;
 };
 
 }
 
-Q_DECLARE_METATYPE( SireSystem::Delta )
-
-SIRE_EXPOSE_CLASS( SireSystem::Delta )
-
 SIRE_END_HEADER
 
 #endif
+ 
