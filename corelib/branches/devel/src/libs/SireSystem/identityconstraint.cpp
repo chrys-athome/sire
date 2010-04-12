@@ -2559,15 +2559,18 @@ const PropertyMap& IdentityConstraint::propertyMap() const
 /** Update this constraint so that it is applied to the system 'system' */
 void IdentityConstraint::setSystem(const System &system)
 {
-    if ( (Constraint::wasLastSystem(system) and Constraint::wasLastSubVersion(system)) or
-          d.constData() == 0 )
+    if ( Constraint::wasLastSystem(system) and Constraint::wasLastSubVersion(system) )
+        return;
+
+    else if (d.constData() == 0)
     {
+        Constraint::setSatisfied(system, true);
         return;
     }
 
     changed_mols = d->update(system, true);
     
-    Constraint::setSatisfied(system, not changed_mols.isEmpty());
+    Constraint::setSatisfied(system, changed_mols.isEmpty());
 }
 
 bool IdentityConstraint::mayChange(const Delta &delta, quint32 last_subversion) const

@@ -898,6 +898,16 @@ void System::setConstantComponent(const Symbol &symbol,
     }
 }
 
+void System::setConstant(const Symbol &symbol, double value)
+{
+    this->setConstantComponent(symbol, value);
+}
+
+void System::setConstant(const Symbol &symbol, const Expression &expression)
+{
+    this->setConstantComponent(symbol, expression);
+}
+
 /** Return the symbols that represent constant components of this system */
 QSet<Symbol> System::constantSymbols() const
 {
@@ -2921,12 +2931,14 @@ void System::setContents(const MGID &mgid, const MoleculeGroup &molgroup)
 bool System::deltaUpdate(const Symbol &component, double value)
 {
     this->_pvt_forceFields().setConstantComponent(component, value);
+    ++subversion;
     return true;
 }
 
 bool System::deltaUpdate(const QString &property, const Property &value)
 {
     this->_pvt_forceFields().setProperty(property, value);
+    ++subversion;
     return true;
 }
 
@@ -2934,6 +2946,7 @@ bool System::deltaUpdate(const QString &property, const FFID &ffid,
                          const Property &value)
 {
     this->_pvt_forceFields().setProperty(ffid, property, value);
+    ++subversion;
     return true;
 }
 
@@ -2946,6 +2959,7 @@ bool System::deltaUpdate(const QString &property, const QList<FFIdx> &ffidxs,
     else if (ffidxs.count() == 1)
     {
         this->_pvt_forceFields().setProperty(ffidxs.at(0), property, value);
+        ++subversion;
         return true;
     }
     else
@@ -2958,6 +2972,8 @@ bool System::deltaUpdate(const QString &property, const QList<FFIdx> &ffidxs,
             {
                 this->_pvt_forceFields().setProperty(ffidx, property, value);
             }
+
+            ++subversion;
         }
         catch(...)
         {
@@ -2990,6 +3006,8 @@ bool System::deltaUpdate(const MoleculeData &moldata)
         {
             old_state.restore(*this);
         }
+
+        ++subversion;
         
         return true;
     }
@@ -3048,6 +3066,8 @@ QList<MolNum> System::deltaUpdate(const Molecules &molecules)
             old_state.restore(*this);
             throw;
         }
+
+        ++subversion;
         
         return changed_mols;
     }

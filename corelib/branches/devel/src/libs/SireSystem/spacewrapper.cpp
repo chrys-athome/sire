@@ -254,7 +254,7 @@ void SpaceWrapper::setSystem(const System &system)
         }
     }
 
-    Constraint::setSatisfied(system, not changed_mols.isEmpty());
+    Constraint::setSatisfied(system, changed_mols.isEmpty());
 }
 
 /** Return whether or not the changes in the passed

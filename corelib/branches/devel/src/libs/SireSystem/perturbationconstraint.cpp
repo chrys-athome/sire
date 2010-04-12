@@ -363,7 +363,7 @@ void PerturbationConstraint::setSystem(const System &system)
             changed_mols.add(perturbed_mol);
     }
     
-    Constraint::setSatisfied(system, not changed_mols.isEmpty());
+    Constraint::setSatisfied(system, changed_mols.isEmpty());
 }
 
 bool PerturbationConstraint::mayChange(const Delta &delta, quint32 last_subversion) const

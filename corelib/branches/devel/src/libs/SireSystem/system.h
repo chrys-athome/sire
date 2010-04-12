@@ -210,6 +210,9 @@ public:
     bool isConstantComponent(const Symbol &component) const;
     bool hasConstantComponent(const Symbol &component) const;
     
+    void setConstant(const Symbol &symbol, double value);
+    void setConstant(const Symbol &symbol, const SireCAS::Expression &expression);
+    
     void setConstantComponent(const Symbol &symbol, double value);
     void setConstantComponent(const Symbol &symbol,
                               const SireCAS::Expression &expression);

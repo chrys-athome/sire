@@ -178,7 +178,7 @@ const Space& GeometryComponent::space() const
 
 void GeometryComponent::setSystem(const System &system)
 {
-    if (Constraint::wasLastSystem(system) or Constraint::wasLastSubVersion(system))
+    if (Constraint::wasLastSystem(system) and Constraint::wasLastSubVersion(system))
         return;
 
     if (system.containsProperty(space_property))

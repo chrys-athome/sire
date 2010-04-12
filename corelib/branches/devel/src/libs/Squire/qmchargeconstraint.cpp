@@ -235,6 +235,8 @@ void QMChargeConstraint::setSystem(const System &system)
     }
         
     must_recalc_from_scratch = false;
+
+    Constraint::setSatisfied(system, mols_to_change.isEmpty());
 }
 
 bool QMChargeConstraint::mayChange(const Delta &delta, quint32 last_subversion) const

@@ -306,7 +306,9 @@ bool Constraints::areSatisfied(const System &system) const
          ++it)
     {
         if (not it->read().isSatisfied(system))
+        {
             return false;
+        }
     }
     
     return true;
@@ -359,7 +361,9 @@ System Constraints::apply(const System &system)
             new_system = delta.apply();
         }
         else
+        {
             return new_system;
+        }
     }
     
     throw SireSystem::constraint_error( QObject::tr(

@@ -222,8 +222,26 @@ bool Constraint::isSatisfied(const System &system) const
     else
     {
         std::auto_ptr<Constraint> copy( this->clone() );
+        
         copy->setSystem(system);
-        return copy->isSatisfied(system);
+        
+        if (not (copy->wasLastSystem(system) and copy->wasLastSubVersion(system)))
+        {
+            throw SireError::program_bug( QObject::tr(
+                    "Error with setSystem for constraint %1. This should "
+                    "set the last system to %2:%3.%4, but is has instead "
+                    "set it to %5:%6.%7 (%8).")
+                        .arg(copy->toString())
+                        .arg(system.UID().toString())
+                        .arg(system.version().toString())
+                        .arg(system.subVersion())
+                        .arg(copy->last_sysuid.toString())
+                        .arg(copy->last_sysversion.toString())
+                        .arg(copy->last_subversion)
+                        .arg(copy->last_was_satisfied), CODELOC );
+        }
+                 
+        return last_was_satisfied;
     }
 }
 

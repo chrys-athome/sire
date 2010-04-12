@@ -1473,6 +1473,28 @@ void register_System_class(){
                 , ( bp::arg("symbol"), bp::arg("expression") ) );
         
         }
+        { //::SireSystem::System::setConstant
+        
+            typedef void ( ::SireSystem::System::*setConstant_function_type )( ::SireCAS::Symbol const &,double ) ;
+            setConstant_function_type setConstant_function_value( &::SireSystem::System::setConstant );
+            
+            System_exposer.def( 
+                "setConstant"
+                , setConstant_function_value
+                , ( bp::arg("symbol"), bp::arg("value") ) );
+        
+        }
+        { //::SireSystem::System::setConstant
+        
+            typedef void ( ::SireSystem::System::*setConstant_function_type )( ::SireCAS::Symbol const &,::SireCAS::Expression const & ) ;
+            setConstant_function_type setConstant_function_value( &::SireSystem::System::setConstant );
+            
+            System_exposer.def( 
+                "setConstant"
+                , setConstant_function_value
+                , ( bp::arg("symbol"), bp::arg("expression") ) );
+        
+        }
         { //::SireSystem::System::setConstantComponent
         
             typedef void ( ::SireSystem::System::*setConstantComponent_function_type )( ::SireCAS::Symbol const &,double ) ;

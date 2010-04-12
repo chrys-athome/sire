@@ -174,8 +174,12 @@ private:
 /** Copy assignment operator */
 inline Version& Version::operator=(const Version &other)
 {
-    maj = other.maj;
-    min = other.min;
+    if (this != &other)
+    {
+        maj = other.maj;
+        min = other.min;
+    }
+    
     return *this;
 }
 
