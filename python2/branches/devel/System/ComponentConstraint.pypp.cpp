@@ -20,6 +20,8 @@ namespace bp = boost::python;
 
 #include "constraint.h"
 
+#include "delta.h"
+
 #include "system.h"
 
 #include <QDebug>
@@ -41,17 +43,6 @@ void register_ComponentConstraint_class(){
         ComponentConstraint_exposer.def( bp::init< >() );
         ComponentConstraint_exposer.def( bp::init< SireCAS::Symbol const &, SireCAS::Expression const & >(( bp::arg("component"), bp::arg("expression") )) );
         ComponentConstraint_exposer.def( bp::init< SireSystem::ComponentConstraint const & >(( bp::arg("other") )) );
-        { //::SireSystem::ComponentConstraint::apply
-        
-            typedef bool ( ::SireSystem::ComponentConstraint::*apply_function_type )( ::SireSystem::System & ) const;
-            apply_function_type apply_function_value( &::SireSystem::ComponentConstraint::apply );
-            
-            ComponentConstraint_exposer.def( 
-                "apply"
-                , apply_function_value
-                , ( bp::arg("system") ) );
-        
-        }
         { //::SireSystem::ComponentConstraint::component
         
             typedef ::SireCAS::Symbol const & ( ::SireSystem::ComponentConstraint::*component_function_type )(  ) const;
@@ -72,17 +63,6 @@ void register_ComponentConstraint_class(){
                 "expression"
                 , expression_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
-        
-        }
-        { //::SireSystem::ComponentConstraint::isSatisfied
-        
-            typedef bool ( ::SireSystem::ComponentConstraint::*isSatisfied_function_type )( ::SireSystem::System const & ) const;
-            isSatisfied_function_type isSatisfied_function_value( &::SireSystem::ComponentConstraint::isSatisfied );
-            
-            ComponentConstraint_exposer.def( 
-                "isSatisfied"
-                , isSatisfied_function_value
-                , ( bp::arg("system") ) );
         
         }
         ComponentConstraint_exposer.def( bp::self != bp::self );

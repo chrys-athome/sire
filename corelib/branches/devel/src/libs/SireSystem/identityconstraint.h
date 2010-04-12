@@ -160,18 +160,9 @@ public:
 
     const PropertyMap& propertyMap() const;
     
-    bool involvesMolecule(MolNum molnum) const;
-    bool involvesMoleculesFrom(const Molecules &molecules) const;
-    
     void useManyPointsAlgorithm();
     void useFewPointsAlgorithm();
     void useSinglePointAlgorithm();
-    
-    Molecules update(const System &system);
-    Molecules update(const System &system, MolNum changed_mol);
-    Molecules update(const System &system, const Molecules &molecules);
-
-    bool isSatisfied(const System &system) const;
 
     static SireMol::MolGroupPtr constrain(const MoleculeGroup &molgroup,
                                           const SireFF::PointRef &point,
@@ -185,9 +176,22 @@ public:
                                           const QList<SireFF::PointPtr> &points,
                                           const PropertyMap &map = PropertyMap());
 
+protected:
+    void setSystem(const System &system);
+    bool mayChange(const Delta &delta, quint32 last_subversion) const;
+
+    bool fullApply(Delta &delta);
+    bool deltaApply(Delta &delta, quint32 last_subversion);
+
 private:
     /** The helper class that is used to implement the constraint */
     SireBase::SharedPolyPointer<detail::IdentityConstraintPvt> d;
+
+    /** The space property used by the identity points */
+    SireBase::PropertyName space_property;
+
+    /** The molecules that need to change to maintain the constraint */
+    Molecules changed_mols;
 };
 
 }

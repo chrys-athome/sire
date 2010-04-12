@@ -93,6 +93,36 @@ void register_Center_class(){
                 , ( bp::arg("molid") ) );
         
         }
+        { //::SireFF::Center::isExtraMoleculePoint
+        
+            typedef bool ( ::SireFF::Center::*isExtraMoleculePoint_function_type )(  ) const;
+            isExtraMoleculePoint_function_type isExtraMoleculePoint_function_value( &::SireFF::Center::isExtraMoleculePoint );
+            
+            Center_exposer.def( 
+                "isExtraMoleculePoint"
+                , isExtraMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::Center::isInterMoleculePoint
+        
+            typedef bool ( ::SireFF::Center::*isInterMoleculePoint_function_type )(  ) const;
+            isInterMoleculePoint_function_type isInterMoleculePoint_function_value( &::SireFF::Center::isInterMoleculePoint );
+            
+            Center_exposer.def( 
+                "isInterMoleculePoint"
+                , isInterMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::Center::isIntraMoleculePoint
+        
+            typedef bool ( ::SireFF::Center::*isIntraMoleculePoint_function_type )(  ) const;
+            isIntraMoleculePoint_function_type isIntraMoleculePoint_function_value( &::SireFF::Center::isIntraMoleculePoint );
+            
+            Center_exposer.def( 
+                "isIntraMoleculePoint"
+                , isIntraMoleculePoint_function_value );
+        
+        }
         { //::SireFF::Center::molecules
         
             typedef ::SireMol::Molecules ( ::SireFF::Center::*molecules_function_type )(  ) const;

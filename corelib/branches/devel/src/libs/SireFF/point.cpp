@@ -176,15 +176,89 @@ void Point::setSpace(const Space &space)
     both within the same molecule (so together are intra-molecule points) */
 bool Point::areIntraMoleculePoints(const Point &point0, const Point &point1)
 {
-    if (point0.nMolecules() != 1 or point1.nMolecules() != 1)
-    {
-        return false;
-    }
-    else
+    if (point0.isIntraMoleculePoint() and point1.isIntraMoleculePoint())
     {
         return point0.molecules().constBegin()->number() ==
                point1.molecules().constBegin()->number();
     }
+    else
+        return false;
+}
+
+/** Return whether or not the points 'point0', 'point1' and 'point2' are
+    within the same molecule (so together are intra-molecule points) */
+bool Point::areIntraMoleculePoints(const Point &point0, const Point &point1,
+                                   const Point &point2)
+{
+    if (point0.isIntraMoleculePoint() and point1.isIntraMoleculePoint() and
+        point2.isIntraMoleculePoint())
+    {
+        MolNum mol0 = point0.molecules().constBegin()->number();
+    
+        return point1.molecules().constBegin()->number() == mol0 and
+               point2.molecules().constBegin()->number() == mol0;
+    }
+    else
+        return false;
+}
+
+/** Return whether or not the points 'point0', 'point1', 'point2' and 'point3' are
+    within the same molecule (so together are intra-molecule points) */
+bool Point::areIntraMoleculePoints(const Point &point0, const Point &point1,
+                                   const Point &point2, const Point &point3)
+{
+    if (point0.isIntraMoleculePoint() and point1.isIntraMoleculePoint() and
+        point2.isIntraMoleculePoint() and point3.isIntraMoleculePoint())
+    {
+        MolNum mol0 = point0.molecules().constBegin()->number();
+    
+        return point1.molecules().constBegin()->number() == mol0 and
+               point2.molecules().constBegin()->number() == mol0 and
+               point3.molecules().constBegin()->number() == mol0;
+    }
+    else
+        return false;
+}
+
+/** Return whether or not the points in 'points' are all
+    within the same molecule (so together are intra-molecule points) */
+bool Point::areIntraMoleculePoints(const QVector<PointPtr> &points)
+{
+    if (points.isEmpty())
+        return false;
+
+    QVector<PointPtr>::const_iterator it = points.constBegin();
+    
+    MolNum mol0;
+    
+    for ( ; it != points.constEnd(); ++it )
+    {
+        if (not it->isNull())
+        {
+            if (it->read().isIntraMoleculePoint())
+                mol0 = it->read().molecules().constBegin()->number();
+            else
+                return false;
+                
+            break;
+        }
+    }
+
+    for ( ; it != points.constEnd(); ++it )
+    {
+        if (not it->isNull())
+        {
+            if (it->read().isIntraMoleculePoint())
+            {
+                if (it->read().molecules().constBegin()->number() != mol0)
+                    return false;
+            }
+            else
+                return false;
+        }
+    }
+    
+    return true;
 }
 
 Q_GLOBAL_STATIC( VectorPoint, vectorPoint )
@@ -538,6 +612,27 @@ bool AtomPoint::addForce(ForceTable &forces, const Vector &force) const
         return false;
 }
 
+/** Return whether this is an intramolecular point (it depends on coordinates
+    of atoms in just one molecule) */
+bool AtomPoint::isIntraMoleculePoint() const
+{
+    return not atm.isEmpty();
+}
+
+/** Return whether or not this is an intermolecular point (it depends on
+    coordinates of atoms from than one molecule) */
+bool AtomPoint::isInterMoleculePoint() const
+{
+    return false;
+}
+
+/** Return whether or not this is an extramolecular point (it is independent
+    of the coordinates of atoms in any molecule, i.e. it is just a point in space) */
+bool AtomPoint::isExtraMoleculePoint() const
+{
+    return atm.isEmpty();
+}
+
 //////////////
 ////////////// Implementation of VectorPoint
 //////////////
@@ -723,6 +818,27 @@ bool VectorPoint::addForce(MolForceTable&, const Vector&) const
 bool VectorPoint::addForce(ForceTable&, const Vector&) const
 {
     return false;
+}
+
+/** Return whether this is an intramolecular point (it depends on coordinates
+    of atoms in just one molecule) */
+bool VectorPoint::isIntraMoleculePoint() const
+{
+    return false;
+}
+
+/** Return whether or not this is an intermolecular point (it depends on
+    coordinates of atoms from than one molecule) */
+bool VectorPoint::isInterMoleculePoint() const
+{
+    return false;
+}
+
+/** Return whether or not this is an extramolecular point (it is independent
+    of the coordinates of atoms in any molecule, i.e. it is just a point in space) */
+bool VectorPoint::isExtraMoleculePoint() const
+{
+    return true;
 }
 
 //////////////
@@ -1054,6 +1170,27 @@ bool Center::addForce(ForceTable &forces, const Vector &force) const
             "Need to work out how to decompose forces..."), CODELOC );
             
     return false;
+}
+
+/** Return whether this is an intramolecular point (it depends on coordinates
+    of atoms in just one molecule) */
+bool Center::isIntraMoleculePoint() const
+{
+    return mols.nMolecules() == 1;
+}
+
+/** Return whether or not this is an intermolecular point (it depends on
+    coordinates of atoms from than one molecule) */
+bool Center::isInterMoleculePoint() const
+{
+    return mols.nMolecules() == 2;
+}
+
+/** Return whether or not this is an extramolecular point (it is independent
+    of the coordinates of atoms in any molecule, i.e. it is just a point in space) */
+bool Center::isExtraMoleculePoint() const
+{
+    return mols.isEmpty();
 }
 
 //////////////
@@ -1420,6 +1557,27 @@ bool CenterOfGeometry::addForce(ForceTable &forces, const Vector &force) const
     return false;
 }
 
+/** Return whether this is an intramolecular point (it depends on coordinates
+    of atoms in just one molecule) */
+bool CenterOfGeometry::isIntraMoleculePoint() const
+{
+    return mols.nMolecules() == 1;
+}
+
+/** Return whether or not this is an intermolecular point (it depends on
+    coordinates of atoms from than one molecule) */
+bool CenterOfGeometry::isInterMoleculePoint() const
+{
+    return mols.nMolecules() == 2;
+}
+
+/** Return whether or not this is an extramolecular point (it is independent
+    of the coordinates of atoms in any molecule, i.e. it is just a point in space) */
+bool CenterOfGeometry::isExtraMoleculePoint() const
+{
+    return mols.isEmpty();
+}
+
 //////////////
 ////////////// Implementation of CenterOfMass
 //////////////
@@ -1759,6 +1917,27 @@ bool CenterOfMass::addForce(ForceTable &forces, const Vector &force) const
             "Need to work out how to decompose forces..."), CODELOC );
             
     return false;
+}
+
+/** Return whether this is an intramolecular point (it depends on coordinates
+    of atoms in just one molecule) */
+bool CenterOfMass::isIntraMoleculePoint() const
+{
+    return mols.nMolecules() == 1;
+}
+
+/** Return whether or not this is an intermolecular point (it depends on
+    coordinates of atoms from than one molecule) */
+bool CenterOfMass::isInterMoleculePoint() const
+{
+    return mols.nMolecules() == 2;
+}
+
+/** Return whether or not this is an extramolecular point (it is independent
+    of the coordinates of atoms in any molecule, i.e. it is just a point in space) */
+bool CenterOfMass::isExtraMoleculePoint() const
+{
+    return mols.isEmpty();
 }
 
 //////////////

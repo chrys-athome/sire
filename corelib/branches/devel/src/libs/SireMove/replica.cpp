@@ -502,7 +502,7 @@ void Replica::setEnergyComponent(const Symbol &symbol)
                 "as this system (%2) doesn't have such a component. Available energy "
                 "components are %3.")
                     .arg(symbol.toString(), subSystem().toString(),
-                         Sire::toString(subSystem().components())), CODELOC );
+                         Sire::toString(subSystem().componentSymbols())), CODELOC );
 
         MovesPtr mvs = SupraSubSystem::subMoves();
         mvs.edit().setEnergyComponent(symbol);

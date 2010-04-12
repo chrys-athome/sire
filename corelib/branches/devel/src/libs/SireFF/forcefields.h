@@ -165,6 +165,10 @@ public:
     QSet<Symbol> constantSymbols() const;
     Values constantComponents() const;
     
+    double componentValue(const Symbol &symbol);
+    Values componentValues(const QSet<Symbol> &symbols);
+    Values componentValues();
+    
     SireCAS::Expression constantExpression(const Symbol &symbol) const;
     QHash<Symbol,SireCAS::Expression> constantExpressions(
                                             const QSet<Symbol> &symbols) const;

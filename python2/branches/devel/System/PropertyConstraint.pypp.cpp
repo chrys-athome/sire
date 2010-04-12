@@ -19,6 +19,8 @@ namespace bp = boost::python;
 
 #include "constraint.h"
 
+#include "delta.h"
+
 #include "system.h"
 
 #include <QDebug>
@@ -41,28 +43,6 @@ void register_PropertyConstraint_class(){
         PropertyConstraint_exposer.def( bp::init< QString const &, SireCAS::Expression const & >(( bp::arg("name"), bp::arg("expression") )) );
         PropertyConstraint_exposer.def( bp::init< QString const &, SireFF::FFID const &, SireCAS::Expression const & >(( bp::arg("name"), bp::arg("ffid"), bp::arg("expression") )) );
         PropertyConstraint_exposer.def( bp::init< SireSystem::PropertyConstraint const & >(( bp::arg("other") )) );
-        { //::SireSystem::PropertyConstraint::apply
-        
-            typedef bool ( ::SireSystem::PropertyConstraint::*apply_function_type )( ::SireSystem::System & ) const;
-            apply_function_type apply_function_value( &::SireSystem::PropertyConstraint::apply );
-            
-            PropertyConstraint_exposer.def( 
-                "apply"
-                , apply_function_value
-                , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::PropertyConstraint::isSatisfied
-        
-            typedef bool ( ::SireSystem::PropertyConstraint::*isSatisfied_function_type )( ::SireSystem::System const & ) const;
-            isSatisfied_function_type isSatisfied_function_value( &::SireSystem::PropertyConstraint::isSatisfied );
-            
-            PropertyConstraint_exposer.def( 
-                "isSatisfied"
-                , isSatisfied_function_value
-                , ( bp::arg("system") ) );
-        
-        }
         PropertyConstraint_exposer.def( bp::self != bp::self );
         { //::SireSystem::PropertyConstraint::operator=
         

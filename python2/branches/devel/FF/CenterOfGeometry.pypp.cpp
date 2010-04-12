@@ -93,6 +93,36 @@ void register_CenterOfGeometry_class(){
                 , ( bp::arg("molid") ) );
         
         }
+        { //::SireFF::CenterOfGeometry::isExtraMoleculePoint
+        
+            typedef bool ( ::SireFF::CenterOfGeometry::*isExtraMoleculePoint_function_type )(  ) const;
+            isExtraMoleculePoint_function_type isExtraMoleculePoint_function_value( &::SireFF::CenterOfGeometry::isExtraMoleculePoint );
+            
+            CenterOfGeometry_exposer.def( 
+                "isExtraMoleculePoint"
+                , isExtraMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::CenterOfGeometry::isInterMoleculePoint
+        
+            typedef bool ( ::SireFF::CenterOfGeometry::*isInterMoleculePoint_function_type )(  ) const;
+            isInterMoleculePoint_function_type isInterMoleculePoint_function_value( &::SireFF::CenterOfGeometry::isInterMoleculePoint );
+            
+            CenterOfGeometry_exposer.def( 
+                "isInterMoleculePoint"
+                , isInterMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::CenterOfGeometry::isIntraMoleculePoint
+        
+            typedef bool ( ::SireFF::CenterOfGeometry::*isIntraMoleculePoint_function_type )(  ) const;
+            isIntraMoleculePoint_function_type isIntraMoleculePoint_function_value( &::SireFF::CenterOfGeometry::isIntraMoleculePoint );
+            
+            CenterOfGeometry_exposer.def( 
+                "isIntraMoleculePoint"
+                , isIntraMoleculePoint_function_value );
+        
+        }
         { //::SireFF::CenterOfGeometry::molecules
         
             typedef ::SireMol::Molecules ( ::SireFF::CenterOfGeometry::*molecules_function_type )(  ) const;

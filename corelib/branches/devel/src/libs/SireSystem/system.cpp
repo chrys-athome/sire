@@ -956,6 +956,33 @@ QSet<Symbol> System::componentSymbols() const
     return this->_pvt_forceFields().componentSymbols();
 }
 
+/** Return the values of all components of this system
+    (constant components and energies) */
+Values System::componentValues()
+{
+    return this->_pvt_forceFields().componentValues();
+}
+
+/** Return the value of the energy or constant component
+    with symbol 'symbol' 
+
+    \throw SireFF::missing_component
+*/
+double System::componentValue(const Symbol &symbol)
+{
+    return this->_pvt_forceFields().componentValue(symbol);
+}
+
+/** Retunr the value of the energy or constant component values
+    whose symbols are in 'symbols'
+    
+    \throw SireFF::missing_component
+*/
+Values System::componentValues(const QSet<Symbol> &symbols)
+{
+    return this->_pvt_forceFields().componentValues(symbols);
+}
+
 /** Return whether or not this system has a constant or energy
     component represented by the symbol 'symbol' */
 bool System::hasComponent(const Symbol &symbol) const

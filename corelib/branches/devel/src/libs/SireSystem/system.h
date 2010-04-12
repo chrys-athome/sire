@@ -155,9 +155,6 @@ public:
 
     void applyConstraints();
     bool constraintsSatisfied() const;
-    
-    void applyMoleculeConstraints();
-    bool moleculeConstraintsAreSatisfied() const;
 
     using SireMol::MolGroupsBase::at;
     
@@ -229,8 +226,11 @@ public:
     void setComponent(const Symbol &symbol, const SireCAS::Expression &expression);
     
     QSet<Symbol> componentSymbols() const;
+    Values componentValues();
+    Values componentValues(const QSet<Symbol> &symbols);
     
     bool hasComponent(const Symbol &symbol) const;
+    double componentValue(const Symbol &symbol);
     
     SireCAS::Expression componentExpression(const Symbol &symbol) const;
     QHash<Symbol,SireCAS::Expression> componentExpressions(
@@ -495,6 +495,12 @@ inline const SysName& System::name() const
 inline const Version& System::version() const
 {
     return sysversion.version();
+}
+
+/** Return the subversion number of this system */
+inline quint32 System::subVersion() const
+{
+    return subversion;
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

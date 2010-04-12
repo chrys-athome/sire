@@ -69,10 +69,12 @@ friend QDataStream& ::operator>>(QDataStream&, DistanceComponent&);
 public:
     DistanceComponent();
     DistanceComponent(const SireCAS::Symbol &constrained_symbol,
-                      const SireFF::PointRef &point0, const SireFF::PointRef &point1);
+                      const SireFF::PointRef &point0, const SireFF::PointRef &point1,
+                      const PropertyMap &map = PropertyMap());
     DistanceComponent(const SireCAS::Symbol &constrained_symbol,
                       const SireFF::PointRef &point0, const SireFF::PointRef &point1,
-                      const SireCAS::Expression &geometry_expression);
+                      const SireCAS::Expression &geometry_expression,
+                      const PropertyMap &map = PropertyMap());
                       
     DistanceComponent(const DistanceComponent &other);
     
@@ -87,8 +89,6 @@ public:
     
     QString toString() const;
     
-    void setSpace(const SireVol::Space &space);
-    
     const SireFF::Point& point(int i) const;
     
     const SireFF::Point& point0() const;
@@ -99,8 +99,10 @@ public:
     static const SireCAS::Symbol& r();
     
 protected:
-    bool wouldChange(const System &system, const SireCAS::Values &values) const;
+    bool wouldChange(const Delta &delta, quint32 last_subversion) const;
     SireCAS::Values getValues(const System &system);
+    
+    void setSpace(const SireVol::Space &space);
 
 private:
     double getDistance() const;
@@ -129,11 +131,13 @@ public:
     DoubleDistanceComponent();
     DoubleDistanceComponent(const SireCAS::Symbol &constrained_symbol,
                         const SireFF::PointRef &point0, const SireFF::PointRef &point1,
-                        const SireFF::PointRef &point2, const SireFF::PointRef &point3);
+                        const SireFF::PointRef &point2, const SireFF::PointRef &point3,
+                        const PropertyMap &map = PropertyMap());
     DoubleDistanceComponent(const SireCAS::Symbol &constrained_symbol,
                         const SireFF::PointRef &point0, const SireFF::PointRef &point1,
                         const SireFF::PointRef &point2, const SireFF::PointRef &point3,
-                        const SireCAS::Expression &geometry_expression);
+                        const SireCAS::Expression &geometry_expression,
+                        const PropertyMap &map = PropertyMap());
                       
     DoubleDistanceComponent(const DoubleDistanceComponent &other);
     
@@ -148,8 +152,6 @@ public:
     
     QString toString() const;
     
-    void setSpace(const SireVol::Space &space);
-    
     const SireFF::Point& point(int i) const;
     
     const SireFF::Point& point0() const;
@@ -163,8 +165,10 @@ public:
     static const SireCAS::Symbol& r23();
     
 protected:
-    bool wouldChange(const System &system, const SireCAS::Values &values) const;
+    bool wouldChange(const Delta &delta, quint32 last_subversion) const;
     SireCAS::Values getValues(const System &system);
+    
+    void setSpace(const SireVol::Space &space);
 
 private:
     double getDistance01() const;
@@ -195,12 +199,14 @@ public:
     TripleDistanceComponent(const SireCAS::Symbol &constrained_symbol,
                        const SireFF::PointRef &point0, const SireFF::PointRef &point1,
                        const SireFF::PointRef &point2, const SireFF::PointRef &point3,
-                       const SireFF::PointRef &point4, const SireFF::PointRef &point5);
+                       const SireFF::PointRef &point4, const SireFF::PointRef &point5,
+                       const PropertyMap &map = PropertyMap());
     TripleDistanceComponent(const SireCAS::Symbol &constrained_symbol,
                        const SireFF::PointRef &point0, const SireFF::PointRef &point1,
                        const SireFF::PointRef &point2, const SireFF::PointRef &point3,
                        const SireFF::PointRef &point4, const SireFF::PointRef &point5,
-                       const SireCAS::Expression &geometry_expression);
+                       const SireCAS::Expression &geometry_expression,
+                       const PropertyMap &map = PropertyMap());
                       
     TripleDistanceComponent(const TripleDistanceComponent &other);
     
@@ -214,8 +220,6 @@ public:
     static const char* typeName();
     
     QString toString() const;
-    
-    void setSpace(const SireVol::Space &space);
     
     const SireFF::Point& point(int i) const;
     
@@ -233,8 +237,10 @@ public:
     static const SireCAS::Symbol& r45();
     
 protected:
-    bool wouldChange(const System &system, const SireCAS::Values &values) const;
+    bool wouldChange(const Delta &delta, quint32 last_subversion) const;
     SireCAS::Values getValues(const System &system);
+    
+    void setSpace(const SireVol::Space &space);
 
 private:
     double getDistance01() const;

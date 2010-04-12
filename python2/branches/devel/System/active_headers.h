@@ -8,7 +8,6 @@
 #include "closemols.h"
 #include "constraint.h"
 #include "constraints.h"
-#include "delta.h"
 #include "distancecomponent.h"
 #include "geometrycomponent.h"
 #include "identityconstraint.h"

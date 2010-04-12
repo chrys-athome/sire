@@ -59,17 +59,6 @@ void register_QMChargeConstraint_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
-        { //::Squire::QMChargeConstraint::isSatisfied
-        
-            typedef bool ( ::Squire::QMChargeConstraint::*isSatisfied_function_type )( ::SireSystem::System const & ) const;
-            isSatisfied_function_type isSatisfied_function_value( &::Squire::QMChargeConstraint::isSatisfied );
-            
-            QMChargeConstraint_exposer.def( 
-                "isSatisfied"
-                , isSatisfied_function_value
-                , ( bp::arg("system") ) );
-        
-        }
         QMChargeConstraint_exposer.def( bp::self != bp::self );
         { //::Squire::QMChargeConstraint::operator=
         
@@ -113,39 +102,6 @@ void register_QMChargeConstraint_class(){
             QMChargeConstraint_exposer.def( 
                 "typeName"
                 , typeName_function_value );
-        
-        }
-        { //::Squire::QMChargeConstraint::update
-        
-            typedef ::SireMol::Molecules ( ::Squire::QMChargeConstraint::*update_function_type )( ::SireSystem::System const & ) ;
-            update_function_type update_function_value( &::Squire::QMChargeConstraint::update );
-            
-            QMChargeConstraint_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system") ) );
-        
-        }
-        { //::Squire::QMChargeConstraint::update
-        
-            typedef ::SireMol::Molecules ( ::Squire::QMChargeConstraint::*update_function_type )( ::SireSystem::System const &,::SireMol::MolNum ) ;
-            update_function_type update_function_value( &::Squire::QMChargeConstraint::update );
-            
-            QMChargeConstraint_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system"), bp::arg("changed_mol") ) );
-        
-        }
-        { //::Squire::QMChargeConstraint::update
-        
-            typedef ::SireMol::Molecules ( ::Squire::QMChargeConstraint::*update_function_type )( ::SireSystem::System const &,::SireMol::Molecules const & ) ;
-            update_function_type update_function_value( &::Squire::QMChargeConstraint::update );
-            
-            QMChargeConstraint_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system"), bp::arg("molecules") ) );
         
         }
         QMChargeConstraint_exposer.staticmethod( "typeName" );

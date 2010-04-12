@@ -51,6 +51,8 @@ namespace bp = boost::python;
 
 #include "SireMol/errors.h"
 
+#include "SireUnits/units.h"
+
 #include "SireVol/coordgroup.h"
 
 #include "SireVol/space.h"

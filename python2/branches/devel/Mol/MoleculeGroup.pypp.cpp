@@ -522,6 +522,28 @@ void register_MoleculeGroup_class(){
                 , ( bp::arg("molid") ) );
         
         }
+        { //::SireMol::MoleculeGroup::getMoleculeVersion
+        
+            typedef ::quint64 ( ::SireMol::MoleculeGroup::*getMoleculeVersion_function_type )( ::SireMol::MolNum ) const;
+            getMoleculeVersion_function_type getMoleculeVersion_function_value( &::SireMol::MoleculeGroup::getMoleculeVersion );
+            
+            MoleculeGroup_exposer.def( 
+                "getMoleculeVersion"
+                , getMoleculeVersion_function_value
+                , ( bp::arg("molnum") ) );
+        
+        }
+        { //::SireMol::MoleculeGroup::getMoleculeVersion
+        
+            typedef ::quint64 ( ::SireMol::MoleculeGroup::*getMoleculeVersion_function_type )( ::SireMol::MolID const & ) const;
+            getMoleculeVersion_function_type getMoleculeVersion_function_value( &::SireMol::MoleculeGroup::getMoleculeVersion );
+            
+            MoleculeGroup_exposer.def( 
+                "getMoleculeVersion"
+                , getMoleculeVersion_function_value
+                , ( bp::arg("molid") ) );
+        
+        }
         { //::SireMol::MoleculeGroup::indexOf
         
             typedef int ( ::SireMol::MoleculeGroup::*indexOf_function_type )( ::SireMol::MoleculeView const & ) const;

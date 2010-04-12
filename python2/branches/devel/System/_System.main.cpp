@@ -19,8 +19,6 @@
 
 #include "Constraints.pypp.hpp"
 
-#include "Delta.pypp.hpp"
-
 #include "DistanceComponent.pypp.hpp"
 
 #include "DoubleDistanceComponent.pypp.hpp"
@@ -127,8 +125,6 @@ BOOST_PYTHON_MODULE(_System){
     register_ComponentConstraint_class();
 
     register_Constraints_class();
-
-    register_Delta_class();
 
     register_GeometryComponent_class();
 

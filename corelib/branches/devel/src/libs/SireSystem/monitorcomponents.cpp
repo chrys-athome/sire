@@ -247,15 +247,15 @@ void MonitorComponents::monitor(System &system)
         else
         {
             Symbols available_components = include_symbols;
-            available_components.intersect( system.components() );
+            available_components.intersect( system.componentSymbols() );
             
             if (not available_components.isEmpty())
-                vals = system.energies(available_components);
+                vals = system.componentValues(available_components);
         }
     }
     else
     {
-        Symbols available_components = system.components();
+        Symbols available_components = system.componentSymbols();
         
         if (not include_symbols.isEmpty())
             available_components.intersect(include_symbols);

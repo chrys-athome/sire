@@ -92,6 +92,36 @@ void register_VectorPoint_class(){
                 , ( bp::arg("molid") ) );
         
         }
+        { //::SireFF::VectorPoint::isExtraMoleculePoint
+        
+            typedef bool ( ::SireFF::VectorPoint::*isExtraMoleculePoint_function_type )(  ) const;
+            isExtraMoleculePoint_function_type isExtraMoleculePoint_function_value( &::SireFF::VectorPoint::isExtraMoleculePoint );
+            
+            VectorPoint_exposer.def( 
+                "isExtraMoleculePoint"
+                , isExtraMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::VectorPoint::isInterMoleculePoint
+        
+            typedef bool ( ::SireFF::VectorPoint::*isInterMoleculePoint_function_type )(  ) const;
+            isInterMoleculePoint_function_type isInterMoleculePoint_function_value( &::SireFF::VectorPoint::isInterMoleculePoint );
+            
+            VectorPoint_exposer.def( 
+                "isInterMoleculePoint"
+                , isInterMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::VectorPoint::isIntraMoleculePoint
+        
+            typedef bool ( ::SireFF::VectorPoint::*isIntraMoleculePoint_function_type )(  ) const;
+            isIntraMoleculePoint_function_type isIntraMoleculePoint_function_value( &::SireFF::VectorPoint::isIntraMoleculePoint );
+            
+            VectorPoint_exposer.def( 
+                "isIntraMoleculePoint"
+                , isIntraMoleculePoint_function_value );
+        
+        }
         { //::SireFF::VectorPoint::molecules
         
             typedef ::SireMol::Molecules ( ::SireFF::VectorPoint::*molecules_function_type )(  ) const;

@@ -31,6 +31,9 @@
 #include "identityconstraint.h"
 #include "system.h"
 #include "closemols.h"
+#include "delta.h"
+
+#include "SireSystem/errors.h"
 
 #include "SireMaths/linearap.h"
 #include "SireMaths/nmatrix.h"
@@ -100,6 +103,8 @@ public:
                              bool new_system)=0;
     virtual Molecules update(const System &system, const Molecules &molecules,
                              bool new_system)=0;
+    Molecules update(const System &system, const QList<MolNum> &changed_mols,
+                     bool new_system);
 
     virtual Molecules applyConstraint() const=0;
 
@@ -115,12 +120,19 @@ public:
 
     static const NullIdentityConstraintHelper& null();
 
+    virtual bool isNull() const
+    {
+        return false;
+    }
+
 protected:
     bool updatePoints(const System &system);
     bool updateGroup(const System &system);
     bool updateSpace(const System &system);
 
     void validateGroup(const MoleculeGroup &new_group) const;
+
+    void validatePoints(const QVector<PointPtr> &points) const;
 
     /** The molecule group containing the molecules whose identities
         are being constrained */
@@ -167,8 +179,15 @@ public:
     Molecules update(const System &system, bool new_system);
     Molecules update(const System &system, MolNum changed_mol, bool new_system);
     Molecules update(const System &system, const Molecules &molecules, bool new_system);
+    Molecules update(const System &system, const QList<MolNum> &changed_mols, 
+                     bool new_system);
 
     Molecules applyConstraint() const;
+    
+    bool isNull() const
+    {
+        return true;
+    }
 };
 
 /** This is the IdentityConstraint helper class that is used
@@ -208,6 +227,8 @@ public:
     Molecules update(const System &system, bool new_system);
     Molecules update(const System &system, MolNum changed_mol, bool new_system);
     Molecules update(const System &system, const Molecules &molecules, bool new_system);
+    Molecules update(const System &system, const QList<MolNum> &changed_mols, 
+                     bool new_system);
 
     Molecules applyConstraint() const;
 
@@ -261,6 +282,8 @@ public:
     Molecules update(const System &system, bool new_system);
     Molecules update(const System &system, MolNum changed_mol, bool new_system);
     Molecules update(const System &system, const Molecules &molecules, bool new_system);
+    Molecules update(const System &system, const QList<MolNum> &changed_mols, 
+                     bool new_system);
     
     Molecules applyConstraint() const;
 
@@ -330,6 +353,8 @@ public:
     Molecules update(const System &system, bool new_system);
     Molecules update(const System &system, MolNum changed_mol, bool new_system);
     Molecules update(const System &system, const Molecules &molecules, bool new_system);
+    Molecules update(const System &system, const QList<MolNum> &changed_mols, 
+                     bool new_system);
     
     Molecules applyConstraint() const;
 
@@ -354,6 +379,28 @@ using namespace SireSystem::detail;
 /////////
 ///////// Implementation of IdentityConstraintPvt
 /////////
+
+void IdentityConstraintPvt::validatePoints(const QVector<PointPtr> &points) const
+{
+    for (QVector<PointPtr>::const_iterator it = points.constBegin();
+         it != points.constEnd();
+         ++it)
+    {
+        if (it->isNull())
+            throw SireError::incompatible_error( QObject::tr(
+                    "You cannot create an identity constraint with "
+                    "null identity points!"), CODELOC );
+                    
+        else if ( not (it->read().isIntraMoleculePoint() or
+                       it->read().isExtraMoleculePoint()) )
+        {
+            throw SireError::incompatible_error( QObject::tr(
+                    "The identity constraint can only be used with "
+                    "intramolecular or extramolecular identity points."),
+                        CODELOC );
+        }
+    }
+}
 
 void IdentityConstraintPvt::validateGroup(const MoleculeGroup &new_group) const
 {
@@ -398,6 +445,7 @@ IdentityConstraintPvt::IdentityConstraintPvt(const MoleculeGroup &group,
                         molgroup(group), identity_points(points), map(property_map)
 {
     this->validateGroup(group);
+    this->validatePoints(points);
     identity_points.squeeze();
 }
 
@@ -410,6 +458,7 @@ IdentityConstraintPvt::IdentityConstraintPvt(const MoleculeGroup &group,
 {
     this->validateGroup(group);
     identity_points.append( PointPtr(point) );
+    this->validatePoints(identity_points);
     identity_points.squeeze();
 }
 
@@ -431,10 +480,15 @@ const MolGroupPtr& IdentityConstraintPvt::molGroupPtr() const
     return molgroup;
 }
 
+Q_GLOBAL_STATIC( MoleculeGroup, nullMoleculeGroup );
+
 /** Return the molecule group operated on by this constraint */
 const MoleculeGroup& IdentityConstraintPvt::moleculeGroup() const
 {
-    return molgroup.read();
+    if (molgroup.isNull())
+        return *(nullMoleculeGroup());
+    else
+        return molgroup.read();
 }
 
 /** Return the points used to identify the molecules */
@@ -520,7 +574,10 @@ bool IdentityConstraintPvt::updateGroup(const System &system)
     const MoleculeGroup &old_group = molgroup.read();
 
     if (not system.contains(old_group.number()))
-        return false;
+    {
+        molgroup.edit().update(system.molecules());
+        return true;
+    }
         
     const MoleculeGroup &new_group = system[old_group.number()];
     
@@ -536,6 +593,32 @@ bool IdentityConstraintPvt::updateGroup(const System &system)
     
     molgroup = new_group;
     return true;
+}
+
+Molecules IdentityConstraintPvt::update(const System &system, 
+                                        const QList<MolNum> &changed_mols,
+                                        bool new_system)
+{
+    if (new_system)
+        return this->update(system, true);
+
+    else if (changed_mols.isEmpty())
+        return Molecules();
+    
+    else if (changed_mols.count() == 1)
+        return this->update(system, changed_mols.at(0), false);
+    
+    else
+    {
+        Molecules mols;
+        
+        foreach (MolNum molnum, changed_mols)
+        {
+            mols.add( system[molnum].molecule() );
+        }
+        
+        return this->update(system, mols, false);
+    }
 }
 
 /////////
@@ -578,6 +661,11 @@ Molecules NullIdentityConstraintHelper::update(const System&, MolNum, bool)
 }
 
 Molecules NullIdentityConstraintHelper::update(const System&, const Molecules&, bool)
+{
+    return Molecules();
+}
+
+Molecules NullIdentityConstraintHelper::update(const System&, const QList<MolNum>&, bool)
 {
     return Molecules();
 }
@@ -2259,7 +2347,8 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
 /** Constructor */
 IdentityConstraint::IdentityConstraint()
                    : ConcreteProperty<IdentityConstraint,MoleculeConstraint>(),
-                     d( IdentityConstraintPvt::null() )
+                     d( IdentityConstraintPvt::null() ),
+                     space_property("space")
 {}
 
 /** Construct the constraint that constrains the identities of all
@@ -2272,7 +2361,9 @@ IdentityConstraint::IdentityConstraint(const MoleculeGroup &molgroup,
                    : ConcreteProperty<IdentityConstraint,MoleculeConstraint>(),
                      d( static_cast<IdentityConstraintPvt*>(
                                 new ManyPointsHelper(molgroup, map) ) )
-{}
+{
+    space_property = map["space"];
+}
 
 /** Construct the constraint that constrains the identity of a single
     molecule in the passed molecule group - this sets the identity 
@@ -2285,7 +2376,9 @@ IdentityConstraint::IdentityConstraint(const PointRef &point,
                    : ConcreteProperty<IdentityConstraint,MoleculeConstraint>(),
                      d( static_cast<IdentityConstraintPvt*>(
                                 new SinglePointHelper(molgroup, point, map) ) )
-{}
+{
+    space_property = map["space"];
+}
 
 /** Construct the constraint that constrains the identities of the 
     points.count() molecules from the passed molecule group so that
@@ -2312,6 +2405,8 @@ IdentityConstraint::IdentityConstraint(const QVector<PointPtr> &points,
     else
         d = static_cast<IdentityConstraintPvt*>(
                     new FewPointsHelper(molgroup, points, map) );
+
+    space_property = map["space"];
 }                  
 
 /** Function used for debugging that switches this object over
@@ -2323,7 +2418,7 @@ void IdentityConstraint::useManyPointsAlgorithm()
                                       this->points(),
                                       this->propertyMap() ) );
 
-    this->updatedFrom( System() );
+    this->setSystem( System() );
 }
 
 /** Function used for debugging that switches this object over
@@ -2335,7 +2430,7 @@ void IdentityConstraint::useFewPointsAlgorithm()
                                      this->points(),
                                      this->propertyMap() ) );
 
-    this->updatedFrom( System() );
+    this->setSystem( System() );
 }
 
 /** Function used for debugging that switches this object over
@@ -2356,7 +2451,7 @@ void IdentityConstraint::useSinglePointAlgorithm()
                                                this->points().first(),
                                                this->propertyMap() ) );
 
-    this->updatedFrom( System() );
+    this->setSystem( System() );
 }
   
 /** Construct the constraint that constrains the identities of the 
@@ -2382,12 +2477,16 @@ IdentityConstraint::IdentityConstraint(const QList<PointPtr> &points,
         IdentityConstraint::operator=( IdentityConstraint(points.toVector(),
                                                           molgroup, map) );
     }
+    
+    space_property = map["space"];
 }
 
 /** Copy constructor */
 IdentityConstraint::IdentityConstraint(const IdentityConstraint &other)
                    : ConcreteProperty<IdentityConstraint,MoleculeConstraint>(other),
-                     d(other.d)
+                     d(other.d), 
+                     space_property(other.space_property),
+                     changed_mols(other.changed_mols)
 {}
 
 /** Destructor */
@@ -2397,8 +2496,13 @@ IdentityConstraint::~IdentityConstraint()
 /** Copy assignment operator */
 IdentityConstraint& IdentityConstraint::operator=(const IdentityConstraint &other)
 {
-    MoleculeConstraint::operator=(other);
-    d = other.d;
+    if (this != &other)
+    {
+        MoleculeConstraint::operator=(other);
+        d = other.d;
+        space_property = other.space_property;
+        changed_mols = other.changed_mols;
+    }
     
     return *this;
 }
@@ -2452,164 +2556,117 @@ const PropertyMap& IdentityConstraint::propertyMap() const
     return d->propertyMap();
 }
 
-/** Return whether or not this constraint affects or uses information
-    from the molecule with number 'molnum' */
-bool IdentityConstraint::involvesMolecule(MolNum molnum) const
+/** Update this constraint so that it is applied to the system 'system' */
+void IdentityConstraint::setSystem(const System &system)
 {
-    const int npoints = d->points().count();
-    const PointPtr *points_array = d->points().constData();
+    if ( (Constraint::wasLastSystem(system) and Constraint::wasLastSubVersion(system)) or
+          d.constData() == 0 )
+    {
+        return;
+    }
+
+    changed_mols = d->update(system, true);
     
-    for (int i=0; i<npoints; ++i)
-    {
-        if (points_array[i].read().contains(molnum))
-            return true;
-    }
-    
-    return d->moleculeGroup().contains(molnum);
+    Constraint::setSatisfied(system, not changed_mols.isEmpty());
 }
 
-/** Return whether or not this constraint affects or uses information
-    from any of the molecules in 'molecules' */
-bool IdentityConstraint::involvesMoleculesFrom(const Molecules &molecules) const
+bool IdentityConstraint::mayChange(const Delta &delta, quint32 last_subversion) const
 {
-    const int npoints = d->points().count();
-    const PointPtr *points_array = d->points().constData();
-    
-    for (int i=0; i<npoints; ++i)
+    if ( d.constData() == 0 or d->isNull() )
+        return false;
+        
+    else if ( delta.sinceChanged(space_property, last_subversion) or
+         delta.sinceChanged(moleculeGroup().molecules(), last_subversion) )
     {
-        if (points_array[i].read().usesMoleculesIn(molecules))
-            return true;
-    }
-
-    const MoleculeGroup &molgroup = d->moleculeGroup();
-
-    for (Molecules::const_iterator it = molecules.constBegin();
-         it != molecules.constEnd();
-         ++it)
-    {
-        if (molgroup.contains(it.key()))
-            return true;
-    }
-    
-    return false;
-}
-
-/** Update this constraint so that it is applied to the system 'system'
-    and return the molecules from system that need to change to 
-    ensure that this constraint is maintained */
-Molecules IdentityConstraint::update(const System &system)
-{
-    Molecules mols_to_change;
-	
-    if (system.UID() != this->sysUID() or
-        system.version() != this->sysVersion())
-    {
-        IdentityConstraint old_state(*this);
-        
-        bool new_system = (system.UID() != this->sysUID() or
-                           system.version().majorVersion() 
-                                            != this->sysVersion().majorVersion());
-        
-        try
-        {
-            this->updatedFrom(system);
-            mols_to_change = d->update(system, new_system);
-        }
-        catch(...)
-        {
-            IdentityConstraint::operator=(old_state);
-            throw;
-        }
-    }
-    else
-        mols_to_change = d.constData()->applyConstraint();
-
-    return mols_to_change;
-}
-
-/** Update this constraint so that it is applied to the system 'system'
-    and return the molecules from system that need to change to 
-    ensure that this constraint is maintained. This provides the
-    hint that only the molecule with number 'changed_mol' has changed
-    since the last update. */
-Molecules IdentityConstraint::update(const System &system, MolNum changed_mol)
-{
-    Molecules mols_to_change;
-
-    if (system.UID() != this->sysUID() or
-        system.version() != this->sysVersion())
-    {
-        IdentityConstraint old_state(*this);
-        
-        bool new_system = (system.UID() != this->sysUID() or
-                           system.version().majorVersion() 
-                                            != this->sysVersion().majorVersion());
-        
-        try
-        {
-            this->updatedFrom(system);
-            mols_to_change = d->update(system, changed_mol, new_system);
-        }
-        catch(...)
-        {
-            IdentityConstraint::operator=(old_state);
-            throw;
-        }
-    }
-    else
-        mols_to_change = d.constData()->applyConstraint();
-        
-    return mols_to_change;
-}
-
-/** Update this constraint so that it is applied to the system 'system'
-    and return the molecules from system that need to change to 
-    ensure that this constraint is maintained. This provides the
-    hint that only the molecules in 'molecules' have changed
-    since the last update. */
-Molecules IdentityConstraint::update(const System &system, const Molecules &molecules)
-{
-    Molecules mols_to_change;
-
-    if (system.UID() != this->sysUID() or
-        system.version() != this->sysVersion())
-    {
-        IdentityConstraint old_state(*this);
-        
-        bool new_system = (system.UID() != this->sysUID() or
-                           system.version().majorVersion() 
-                                            != this->sysVersion().majorVersion());
-        
-        try
-        {
-            this->updatedFrom(system);
-            mols_to_change = d->update(system, molecules, new_system);
-        }
-        catch(...)
-        {
-            IdentityConstraint::operator=(old_state);
-            throw;
-        }
-    }
-    else
-        mols_to_change = d.constData()->applyConstraint();
-        
-    return mols_to_change;
-}
-
-/** Return whether or not this constraint is satisfied for 
-    the passed system */
-bool IdentityConstraint::isSatisfied(const System &system) const
-{
-    if (this->sysUID() == system.UID() and
-        this->sysVersion() == system.version())
-    {
-        return d->applyConstraint().isEmpty();
+        return true;
     }
     else
     {
-        IdentityConstraint c(*this);
-        return c.update(system).isEmpty();
+        for (QVector<PointPtr>::const_iterator it = d->points().constBegin();
+             it != d->points().constEnd();
+             ++it)
+        {
+            if (delta.sinceChanged(it->read(), last_subversion))
+                return true;
+        }
+        
+        return false;
+    }
+}
+
+bool IdentityConstraint::fullApply(Delta &delta)
+{
+    this->setSystem(delta.deltaSystem());
+
+    bool changed = false;
+    
+    int i = 0;
+    while (not changed_mols.isEmpty())
+    {
+        bool this_changed = delta.update(changed_mols);
+        changed = changed or this_changed;
+        
+        changed_mols = d->update(delta.deltaSystem(), changed_mols, false);
+        
+        ++i;
+        
+        if (i > 10)
+            throw SireSystem::constraint_error( QObject::tr(
+                    "The identity constraint could not be solved self-consistently!"),
+                        CODELOC );
+    }
+
+    return changed;
+}
+
+bool IdentityConstraint::deltaApply(Delta &delta, quint32 last_subversion)
+{
+    if (d.constData() == 0)
+        return false;
+
+    else if ( (not changed_mols.isEmpty() ) or
+               delta.sinceChanged(space_property, last_subversion))
+    {
+        return this->fullApply(delta);
+    }
+    else
+    {
+        QList<MolNum> changed_molnums = delta.changedMoleculesSince(
+                                                moleculeGroup().molecules(),
+                                                last_subversion);
+
+        if (changed_molnums.isEmpty())
+            return false;
+    
+        else if (changed_molnums.count() == 1)
+        {
+            changed_mols = d->update(delta.deltaSystem(), changed_molnums.at(0),
+                                     false);
+        }
+        else
+        {
+            changed_mols = d->update(delta.deltaSystem(), changed_molnums, false);
+        }
+        
+        bool changed = false;
+        int i = 0;
+        
+        while (not changed_mols.isEmpty())
+        {
+            bool this_changed = delta.update(changed_mols);
+            changed = changed or this_changed;
+        
+            changed_mols = d->update(delta.deltaSystem(), changed_mols, false);
+        
+            ++i;
+        
+            if (i > 10)
+                throw SireSystem::constraint_error( QObject::tr(
+                        "The identity constraint could not be solved self-consistently!"),
+                            CODELOC );
+        }
+        
+        return changed;
     }
 }
 
@@ -2623,10 +2680,10 @@ static MolGroupPtr constrain(const MoleculeGroup &molgroup,
     if (not map["space"].hasValue())
         tmp_system.setProperty("space", Cartesian());
     
-    Molecules changed_mols = constraint.update(tmp_system);
+    tmp_system = constraint.apply(tmp_system);
     
     MolGroupPtr new_molgroup( molgroup );
-    new_molgroup.edit().update(changed_mols);
+    new_molgroup.edit().update(tmp_system.molecules());
     
     return new_molgroup;
 }

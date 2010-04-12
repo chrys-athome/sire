@@ -149,75 +149,18 @@ const PropertyMap& ChargeConstraint::propertyMap() const
     return prop_map;
 }
 
-/** Return the location of the coordinates property */
-const PropertyName ChargeConstraint::coordsProperty() const
+/** Internal function used to match the molecule group help in this
+    constraint so that it has the same version of the molecules
+    is 'system' */
+void ChargeConstraint::updateGroup(const System &system)
 {
-    return prop_map["coordinates"];
-}
-
-/** Return the location of the charge property */
-const PropertyName ChargeConstraint::chargeProperty() const
-{
-    return prop_map["charge"];
-}
-
-/** Return whether or not this constraint involves the molecule
-    with number 'molnum' */
-bool ChargeConstraint::involvesMolecule(MolNum molnum) const
-{
-    return molgroup.read().contains(molnum);
-}
-
-/** Return whether or not this constraint involves any of the molecules
-    in 'molecules' */
-bool ChargeConstraint::involvesMoleculesFrom(const Molecules &molecules) const
-{
-    const MoleculeGroup &mgroup = molgroup.read();
-
-    for (Molecules::const_iterator it = molecules.constBegin();
-         it != molecules.constEnd();
-         ++it)
-    {
-        if (mgroup.contains(it.key()))
-            return true;
-    }
-    
-    return false;
-}
-
-/** Internal function used to see if this system changes
-    the molecule group */
-bool ChargeConstraint::changesGroup(const System &system) const
-{
-    const MoleculeGroup &old_group = molgroup.read();
-    
-    if (not system.contains(old_group.number()))
-        return false;
+    if (molgroup.isNull())
+        return;
         
+    MGNum mgnum = molgroup.read().number();
+    
+    if (system.contains(mgnum))
+        molgroup = system[mgnum];
     else
-    {
-        const MoleculeGroup &new_group = system[old_group.number()];
-    
-        return new_group.version() != old_group.version();
-    }
-}
-
-/** Internal function used by derived classes to update the molecule
-    group to match that in the passed system - this returns whether
-    or not this changes the molecule group */
-bool ChargeConstraint::updateGroup(const System &system)
-{
-    const MoleculeGroup &old_group = molgroup.read();
-
-    if (not system.contains(old_group.number()))
-        return false;
-        
-    const MoleculeGroup &new_group = system[old_group.number()];
-    
-    if (new_group.version() == old_group.version())
-        return false;
-        
-    molgroup = new_group;
-
-    return true;
+        molgroup.edit().update(system.molecules());
 }

@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "distancecomponent.h"
+#include "delta.h"
 
 #include "SireVol/space.h"
 
@@ -102,9 +103,11 @@ const Symbol& DistanceComponent::r()
 /** Construct to set the value of 'constrained_symbol' equal to the 
     distance between the two points 'point0' and 'point1' */
 DistanceComponent::DistanceComponent(const Symbol &constrained_symbol,
-                                     const PointRef &point0, const PointRef &point1)
+                                     const PointRef &point0, const PointRef &point1,
+                                     const PropertyMap &map)
        : ConcreteProperty<DistanceComponent,GeometryComponent>(constrained_symbol,
-                                                               DistanceComponent::r()),
+                                                               DistanceComponent::r(),
+                                                               map),
          p0(point0), p1(point1)
 {
     intra_molecule_points = Point::areIntraMoleculePoints(p0,p1);
@@ -115,9 +118,11 @@ DistanceComponent::DistanceComponent(const Symbol &constrained_symbol,
     'point0' and 'point1' */
 DistanceComponent::DistanceComponent(const Symbol &constrained_symbol,
                                      const PointRef &point0, const PointRef &point1,
-                                     const Expression &geometry_expression)
+                                     const Expression &geometry_expression,
+                                     const PropertyMap &map)
        : ConcreteProperty<DistanceComponent,GeometryComponent>(constrained_symbol,
-                                                               geometry_expression),
+                                                               geometry_expression,
+                                                               map),
          p0(point0), p1(point1)
 {
     intra_molecule_points = Point::areIntraMoleculePoints(p0,p1);
@@ -177,7 +182,7 @@ QString DistanceComponent::toString() const
 /** Set the space used by the points and distance calculation */
 void DistanceComponent::setSpace(const Space &new_space)
 {
-    if (space().equals(new_space))
+    if (space().equals(new_space) or intra_molecule_points)
         return;
 
     DistanceComponent old_state(*this);
@@ -235,15 +240,15 @@ double DistanceComponent::getDistance() const
         return space().calcDist(p0.read().point(), p1.read().point());
 }
 
-bool DistanceComponent::wouldChange(const System &system, const Values &values) const
+bool DistanceComponent::wouldChange(const Delta &delta, quint32 last_subversion) const
 {
-    if (p0.read().wouldUpdate(system) or p1.read().wouldUpdate(system))
+    if (delta.hasMoleculeChangeSince(last_subversion))
     {
-        DistanceComponent n(*this);
-        return values != n.getValues(system);
+        return delta.sinceChanged(p0.read(), last_subversion) or
+               delta.sinceChanged(p1.read(), last_subversion);
     }
     else
-        return values[r()] != getDistance();
+        return false;
 }
 
 Values DistanceComponent::getValues(const System &system)
@@ -328,9 +333,11 @@ const Symbol& DoubleDistanceComponent::r23()
     distance between the two points 'point0' and 'point1' */
 DoubleDistanceComponent::DoubleDistanceComponent(const Symbol &constrained_symbol,
                                       const PointRef &point0, const PointRef &point1,
-                                      const PointRef &point2, const PointRef &point3)
+                                      const PointRef &point2, const PointRef &point3,
+                                      const PropertyMap &map)
        : ConcreteProperty<DoubleDistanceComponent,GeometryComponent>(constrained_symbol,
-                        DoubleDistanceComponent::r01() + DoubleDistanceComponent::r23()),
+                        DoubleDistanceComponent::r01() + DoubleDistanceComponent::r23(),
+                        map),
          p0(point0), p1(point1), p2(point2), p3(point3)
 {
     intra_molecule_points01 = Point::areIntraMoleculePoints(p0,p1);
@@ -343,9 +350,10 @@ DoubleDistanceComponent::DoubleDistanceComponent(const Symbol &constrained_symbo
 DoubleDistanceComponent::DoubleDistanceComponent(const Symbol &constrained_symbol,
                                      const PointRef &point0, const PointRef &point1,
                                      const PointRef &point2, const PointRef &point3,
-                                     const Expression &geometry_expression)
+                                     const Expression &geometry_expression,
+                                     const PropertyMap &map)
        : ConcreteProperty<DoubleDistanceComponent,GeometryComponent>(constrained_symbol,
-                                                               geometry_expression),
+                                                               geometry_expression, map),
          p0(point0), p1(point1), p2(point2), p3(point3)
 {
     intra_molecule_points01 = Point::areIntraMoleculePoints(p0,p1);
@@ -413,8 +421,11 @@ QString DoubleDistanceComponent::toString() const
 /** Set the space used by the points and distance calculation */
 void DoubleDistanceComponent::setSpace(const Space &new_space)
 {
-    if (space().equals(new_space))
+    if (space().equals(new_space) or 
+        (intra_molecule_points01 and intra_molecule_points23) )
+    {
         return;
+    }
 
     DoubleDistanceComponent old_state(*this);
     
@@ -500,17 +511,18 @@ double DoubleDistanceComponent::getDistance23() const
         return space().calcDist(p2.read().point(), p3.read().point());
 }
 
-bool DoubleDistanceComponent::wouldChange(const System &system, const Values &values) const
+bool DoubleDistanceComponent::wouldChange(const Delta &delta, 
+                                          quint32 last_subversion) const
 {
-    if (p0.read().wouldUpdate(system) or p1.read().wouldUpdate(system) or
-        p2.read().wouldUpdate(system) or p3.read().wouldUpdate(system))
+    if (delta.hasMoleculeChangeSince(last_subversion))
     {
-        DoubleDistanceComponent n(*this);
-        return values != n.getValues(system);
+        return delta.sinceChanged(p0.read(), last_subversion) or
+               delta.sinceChanged(p1.read(), last_subversion) or
+               delta.sinceChanged(p2.read(), last_subversion) or
+               delta.sinceChanged(p3.read(), last_subversion);
     }
     else
-        return values[r01()] != getDistance01() or 
-               values[r23()] != getDistance23();
+        return false;
 }
 
 Values DoubleDistanceComponent::getValues(const System &system)
@@ -618,9 +630,11 @@ const Symbol& TripleDistanceComponent::r45()
 TripleDistanceComponent::TripleDistanceComponent(const Symbol &constrained_symbol,
                                       const PointRef &point0, const PointRef &point1,
                                       const PointRef &point2, const PointRef &point3,
-                                      const PointRef &point4, const PointRef &point5)
+                                      const PointRef &point4, const PointRef &point5,
+                                      const PropertyMap &map)
        : ConcreteProperty<TripleDistanceComponent,GeometryComponent>(constrained_symbol,
-                        TripleDistanceComponent::r01() + TripleDistanceComponent::r23()),
+                        TripleDistanceComponent::r01() + TripleDistanceComponent::r23(),
+                        map),
          p0(point0), p1(point1), p2(point2), p3(point3),
          p4(point4), p5(point5)
 {
@@ -636,9 +650,10 @@ TripleDistanceComponent::TripleDistanceComponent(const Symbol &constrained_symbo
                                      const PointRef &point0, const PointRef &point1,
                                      const PointRef &point2, const PointRef &point3,
                                      const PointRef &point4, const PointRef &point5,
-                                     const Expression &geometry_expression)
+                                     const Expression &geometry_expression,
+                                     const PropertyMap &map)
        : ConcreteProperty<TripleDistanceComponent,GeometryComponent>(constrained_symbol,
-                                                               geometry_expression),
+                                                               geometry_expression, map),
          p0(point0), p1(point1), p2(point2), p3(point3),
          p4(point4), p5(point5)
 {
@@ -715,8 +730,11 @@ QString TripleDistanceComponent::toString() const
 /** Set the space used by the points and distance calculation */
 void TripleDistanceComponent::setSpace(const Space &new_space)
 {
-    if (space().equals(new_space))
+    if (space().equals(new_space) or 
+        (intra_molecule_points01 and intra_molecule_points23 and intra_molecule_points45))
+    {
         return;
+    }
 
     TripleDistanceComponent old_state(*this);
     
@@ -828,19 +846,18 @@ double TripleDistanceComponent::getDistance45() const
         return space().calcDist(p4.read().point(), p5.read().point());
 }
 
-bool TripleDistanceComponent::wouldChange(const System &system, const Values &values) const
+bool TripleDistanceComponent::wouldChange(const Delta &delta,
+                                          quint32 last_subversion) const
 {
-    if (p0.read().wouldUpdate(system) or p1.read().wouldUpdate(system) or
-        p2.read().wouldUpdate(system) or p3.read().wouldUpdate(system) or
-        p4.read().wouldUpdate(system) or p4.read().wouldUpdate(system))
+    if (delta.hasMoleculeChangeSince(last_subversion))
     {
-        TripleDistanceComponent n(*this);
-        return values != n.getValues(system);
+        return delta.sinceChanged(p0.read(), last_subversion) or
+               delta.sinceChanged(p1.read(), last_subversion) or
+               delta.sinceChanged(p2.read(), last_subversion) or
+               delta.sinceChanged(p3.read(), last_subversion);
     }
     else
-        return values[r01()] != getDistance01() or 
-               values[r23()] != getDistance23() or
-               values[r45()] != getDistance45();
+        return false;
 }
 
 Values TripleDistanceComponent::getValues(const System &system)

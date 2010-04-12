@@ -104,6 +104,36 @@ void register_AtomPoint_class(){
                 , ( bp::arg("molid") ) );
         
         }
+        { //::SireFF::AtomPoint::isExtraMoleculePoint
+        
+            typedef bool ( ::SireFF::AtomPoint::*isExtraMoleculePoint_function_type )(  ) const;
+            isExtraMoleculePoint_function_type isExtraMoleculePoint_function_value( &::SireFF::AtomPoint::isExtraMoleculePoint );
+            
+            AtomPoint_exposer.def( 
+                "isExtraMoleculePoint"
+                , isExtraMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::AtomPoint::isInterMoleculePoint
+        
+            typedef bool ( ::SireFF::AtomPoint::*isInterMoleculePoint_function_type )(  ) const;
+            isInterMoleculePoint_function_type isInterMoleculePoint_function_value( &::SireFF::AtomPoint::isInterMoleculePoint );
+            
+            AtomPoint_exposer.def( 
+                "isInterMoleculePoint"
+                , isInterMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::AtomPoint::isIntraMoleculePoint
+        
+            typedef bool ( ::SireFF::AtomPoint::*isIntraMoleculePoint_function_type )(  ) const;
+            isIntraMoleculePoint_function_type isIntraMoleculePoint_function_value( &::SireFF::AtomPoint::isIntraMoleculePoint );
+            
+            AtomPoint_exposer.def( 
+                "isIntraMoleculePoint"
+                , isIntraMoleculePoint_function_value );
+        
+        }
         { //::SireFF::AtomPoint::molecules
         
             typedef ::SireMol::Molecules ( ::SireFF::AtomPoint::*molecules_function_type )(  ) const;

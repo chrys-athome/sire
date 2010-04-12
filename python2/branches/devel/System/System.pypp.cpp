@@ -36,6 +36,8 @@ namespace bp = boost::python;
 
 #include "SireStream/shareddatastream.h"
 
+#include "delta.h"
+
 #include "monitorname.h"
 
 #include "system.h"
@@ -339,16 +341,6 @@ void register_System_class(){
                 , applyConstraints_function_value );
         
         }
-        { //::SireSystem::System::applyMoleculeConstraints
-        
-            typedef void ( ::SireSystem::System::*applyMoleculeConstraints_function_type )(  ) ;
-            applyMoleculeConstraints_function_type applyMoleculeConstraints_function_value( &::SireSystem::System::applyMoleculeConstraints );
-            
-            System_exposer.def( 
-                "applyMoleculeConstraints"
-                , applyMoleculeConstraints_function_value );
-        
-        }
         { //::SireSystem::System::at
         
             typedef ::SireFF::FF const & ( ::SireSystem::System::*at_function_type )( ::SireFF::FFID const & ) const;
@@ -438,6 +430,48 @@ void register_System_class(){
                 , collectStats_function_value );
         
         }
+        { //::SireSystem::System::componentExpression
+        
+            typedef ::SireCAS::Expression ( ::SireSystem::System::*componentExpression_function_type )( ::SireCAS::Symbol const & ) const;
+            componentExpression_function_type componentExpression_function_value( &::SireSystem::System::componentExpression );
+            
+            System_exposer.def( 
+                "componentExpression"
+                , componentExpression_function_value
+                , ( bp::arg("symbol") ) );
+        
+        }
+        { //::SireSystem::System::componentExpressions
+        
+            typedef ::QHash< SireCAS::Symbol, SireCAS::Expression > ( ::SireSystem::System::*componentExpressions_function_type )( ::QSet< SireCAS::Symbol > const & ) const;
+            componentExpressions_function_type componentExpressions_function_value( &::SireSystem::System::componentExpressions );
+            
+            System_exposer.def( 
+                "componentExpressions"
+                , componentExpressions_function_value
+                , ( bp::arg("symbols") ) );
+        
+        }
+        { //::SireSystem::System::componentExpressions
+        
+            typedef ::QHash< SireCAS::Symbol, SireCAS::Expression > ( ::SireSystem::System::*componentExpressions_function_type )(  ) const;
+            componentExpressions_function_type componentExpressions_function_value( &::SireSystem::System::componentExpressions );
+            
+            System_exposer.def( 
+                "componentExpressions"
+                , componentExpressions_function_value );
+        
+        }
+        { //::SireSystem::System::componentSymbols
+        
+            typedef ::QSet< SireCAS::Symbol > ( ::SireSystem::System::*componentSymbols_function_type )(  ) const;
+            componentSymbols_function_type componentSymbols_function_value( &::SireSystem::System::componentSymbols );
+            
+            System_exposer.def( 
+                "componentSymbols"
+                , componentSymbols_function_value );
+        
+        }
         { //::SireSystem::System::componentValue
         
             typedef double ( ::SireSystem::System::*componentValue_function_type )( ::SireCAS::Symbol const & ) ;
@@ -446,18 +480,7 @@ void register_System_class(){
             System_exposer.def( 
                 "componentValue"
                 , componentValue_function_value
-                , ( bp::arg("component") ) );
-        
-        }
-        { //::SireSystem::System::componentValues
-        
-            typedef ::SireCAS::Values ( ::SireSystem::System::*componentValues_function_type )( ::QSet< SireCAS::Symbol > const & ) ;
-            componentValues_function_type componentValues_function_value( &::SireSystem::System::componentValues );
-            
-            System_exposer.def( 
-                "componentValues"
-                , componentValues_function_value
-                , ( bp::arg("components") ) );
+                , ( bp::arg("symbol") ) );
         
         }
         { //::SireSystem::System::componentValues
@@ -470,14 +493,15 @@ void register_System_class(){
                 , componentValues_function_value );
         
         }
-        { //::SireSystem::System::components
+        { //::SireSystem::System::componentValues
         
-            typedef ::SireCAS::Symbols ( ::SireSystem::System::*components_function_type )(  ) const;
-            components_function_type components_function_value( &::SireSystem::System::components );
+            typedef ::SireCAS::Values ( ::SireSystem::System::*componentValues_function_type )( ::QSet< SireCAS::Symbol > const & ) ;
+            componentValues_function_type componentValues_function_value( &::SireSystem::System::componentValues );
             
             System_exposer.def( 
-                "components"
-                , components_function_value );
+                "componentValues"
+                , componentValues_function_value
+                , ( bp::arg("symbols") ) );
         
         }
         { //::SireSystem::System::compoundProperty
@@ -492,6 +516,59 @@ void register_System_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireSystem::System::constant
+        
+            typedef double ( ::SireSystem::System::*constant_function_type )( ::SireCAS::Symbol const & ) const;
+            constant_function_type constant_function_value( &::SireSystem::System::constant );
+            
+            System_exposer.def( 
+                "constant"
+                , constant_function_value
+                , ( bp::arg("component") ) );
+        
+        }
+        { //::SireSystem::System::constantComponents
+        
+            typedef ::SireCAS::Values ( ::SireSystem::System::*constantComponents_function_type )(  ) const;
+            constantComponents_function_type constantComponents_function_value( &::SireSystem::System::constantComponents );
+            
+            System_exposer.def( 
+                "constantComponents"
+                , constantComponents_function_value );
+        
+        }
+        { //::SireSystem::System::constantExpression
+        
+            typedef ::SireCAS::Expression ( ::SireSystem::System::*constantExpression_function_type )( ::SireCAS::Symbol const & ) const;
+            constantExpression_function_type constantExpression_function_value( &::SireSystem::System::constantExpression );
+            
+            System_exposer.def( 
+                "constantExpression"
+                , constantExpression_function_value
+                , ( bp::arg("symbol") ) );
+        
+        }
+        { //::SireSystem::System::constantExpressions
+        
+            typedef ::QHash< SireCAS::Symbol, SireCAS::Expression > ( ::SireSystem::System::*constantExpressions_function_type )( ::QSet< SireCAS::Symbol > const & ) const;
+            constantExpressions_function_type constantExpressions_function_value( &::SireSystem::System::constantExpressions );
+            
+            System_exposer.def( 
+                "constantExpressions"
+                , constantExpressions_function_value
+                , ( bp::arg("symbols") ) );
+        
+        }
+        { //::SireSystem::System::constantExpressions
+        
+            typedef ::QHash< SireCAS::Symbol, SireCAS::Expression > ( ::SireSystem::System::*constantExpressions_function_type )(  ) const;
+            constantExpressions_function_type constantExpressions_function_value( &::SireSystem::System::constantExpressions );
+            
+            System_exposer.def( 
+                "constantExpressions"
+                , constantExpressions_function_value );
+        
+        }
         { //::SireSystem::System::constantSymbols
         
             typedef ::QSet< SireCAS::Symbol > ( ::SireSystem::System::*constantSymbols_function_type )(  ) const;
@@ -500,6 +577,27 @@ void register_System_class(){
             System_exposer.def( 
                 "constantSymbols"
                 , constantSymbols_function_value );
+        
+        }
+        { //::SireSystem::System::constants
+        
+            typedef ::SireCAS::Values ( ::SireSystem::System::*constants_function_type )(  ) const;
+            constants_function_type constants_function_value( &::SireSystem::System::constants );
+            
+            System_exposer.def( 
+                "constants"
+                , constants_function_value );
+        
+        }
+        { //::SireSystem::System::constants
+        
+            typedef ::SireCAS::Values ( ::SireSystem::System::*constants_function_type )( ::QSet< SireCAS::Symbol > const & ) const;
+            constants_function_type constants_function_value( &::SireSystem::System::constants );
+            
+            System_exposer.def( 
+                "constants"
+                , constants_function_value
+                , ( bp::arg("components") ) );
         
         }
         { //::SireSystem::System::constraints
@@ -545,15 +643,26 @@ void register_System_class(){
                 , ( bp::arg("ffid"), bp::arg("name") ) );
         
         }
-        { //::SireSystem::System::energies
+        { //::SireSystem::System::containsProperty
         
-            typedef ::SireCAS::Values ( ::SireSystem::System::*energies_function_type )( ::QSet< SireCAS::Symbol > const & ) ;
-            energies_function_type energies_function_value( &::SireSystem::System::energies );
+            typedef bool ( ::SireSystem::System::*containsProperty_function_type )( ::SireBase::PropertyName const & ) const;
+            containsProperty_function_type containsProperty_function_value( &::SireSystem::System::containsProperty );
             
             System_exposer.def( 
-                "energies"
-                , energies_function_value
-                , ( bp::arg("components") ) );
+                "containsProperty"
+                , containsProperty_function_value
+                , ( bp::arg("name") ) );
+        
+        }
+        { //::SireSystem::System::containsProperty
+        
+            typedef bool ( ::SireSystem::System::*containsProperty_function_type )( ::SireFF::FFID const &,::SireBase::PropertyName const & ) const;
+            containsProperty_function_type containsProperty_function_value( &::SireSystem::System::containsProperty );
+            
+            System_exposer.def( 
+                "containsProperty"
+                , containsProperty_function_value
+                , ( bp::arg("ffid"), bp::arg("name") ) );
         
         }
         { //::SireSystem::System::energies
@@ -564,6 +673,17 @@ void register_System_class(){
             System_exposer.def( 
                 "energies"
                 , energies_function_value );
+        
+        }
+        { //::SireSystem::System::energies
+        
+            typedef ::SireCAS::Values ( ::SireSystem::System::*energies_function_type )( ::QSet< SireCAS::Symbol > const & ) ;
+            energies_function_type energies_function_value( &::SireSystem::System::energies );
+            
+            System_exposer.def( 
+                "energies"
+                , energies_function_value
+                , ( bp::arg("components") ) );
         
         }
         { //::SireSystem::System::energy
@@ -585,6 +705,58 @@ void register_System_class(){
                 "energy"
                 , energy_function_value
                 , ( bp::arg("component") ) );
+        
+        }
+        { //::SireSystem::System::energyComponents
+        
+            typedef ::SireCAS::Values ( ::SireSystem::System::*energyComponents_function_type )(  ) ;
+            energyComponents_function_type energyComponents_function_value( &::SireSystem::System::energyComponents );
+            
+            System_exposer.def( 
+                "energyComponents"
+                , energyComponents_function_value );
+        
+        }
+        { //::SireSystem::System::energyExpression
+        
+            typedef ::SireCAS::Expression ( ::SireSystem::System::*energyExpression_function_type )( ::SireCAS::Symbol const & ) const;
+            energyExpression_function_type energyExpression_function_value( &::SireSystem::System::energyExpression );
+            
+            System_exposer.def( 
+                "energyExpression"
+                , energyExpression_function_value
+                , ( bp::arg("expression") ) );
+        
+        }
+        { //::SireSystem::System::energyExpressions
+        
+            typedef ::QHash< SireCAS::Symbol, SireCAS::Expression > ( ::SireSystem::System::*energyExpressions_function_type )( ::QSet< SireCAS::Symbol > const & ) const;
+            energyExpressions_function_type energyExpressions_function_value( &::SireSystem::System::energyExpressions );
+            
+            System_exposer.def( 
+                "energyExpressions"
+                , energyExpressions_function_value
+                , ( bp::arg("symbols") ) );
+        
+        }
+        { //::SireSystem::System::energyExpressions
+        
+            typedef ::QHash< SireCAS::Symbol, SireCAS::Expression > ( ::SireSystem::System::*energyExpressions_function_type )(  ) const;
+            energyExpressions_function_type energyExpressions_function_value( &::SireSystem::System::energyExpressions );
+            
+            System_exposer.def( 
+                "energyExpressions"
+                , energyExpressions_function_value );
+        
+        }
+        { //::SireSystem::System::energySymbols
+        
+            typedef ::QSet< SireCAS::Symbol > ( ::SireSystem::System::*energySymbols_function_type )(  ) const;
+            energySymbols_function_type energySymbols_function_value( &::SireSystem::System::energySymbols );
+            
+            System_exposer.def( 
+                "energySymbols"
+                , energySymbols_function_value );
         
         }
         { //::SireSystem::System::extraGroups
@@ -678,49 +850,6 @@ void register_System_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireSystem::System::getComponent
-        
-            typedef ::SireCAS::Expression ( ::SireSystem::System::*getComponent_function_type )( ::SireCAS::Symbol const & ) const;
-            getComponent_function_type getComponent_function_value( &::SireSystem::System::getComponent );
-            
-            System_exposer.def( 
-                "getComponent"
-                , getComponent_function_value
-                , ( bp::arg("symbol") ) );
-        
-        }
-        { //::SireSystem::System::getConstant
-        
-            typedef double ( ::SireSystem::System::*getConstant_function_type )( ::SireCAS::Symbol const & ) const;
-            getConstant_function_type getConstant_function_value( &::SireSystem::System::getConstant );
-            
-            System_exposer.def( 
-                "getConstant"
-                , getConstant_function_value
-                , ( bp::arg("component") ) );
-        
-        }
-        { //::SireSystem::System::getConstants
-        
-            typedef ::SireCAS::Values ( ::SireSystem::System::*getConstants_function_type )(  ) const;
-            getConstants_function_type getConstants_function_value( &::SireSystem::System::getConstants );
-            
-            System_exposer.def( 
-                "getConstants"
-                , getConstants_function_value );
-        
-        }
-        { //::SireSystem::System::getConstants
-        
-            typedef ::SireCAS::Values ( ::SireSystem::System::*getConstants_function_type )( ::QSet< SireCAS::Symbol > const & ) const;
-            getConstants_function_type getConstants_function_value( &::SireSystem::System::getConstants );
-            
-            System_exposer.def( 
-                "getConstants"
-                , getConstants_function_value
-                , ( bp::arg("components") ) );
-        
-        }
         { //::SireSystem::System::hasComponent
         
             typedef bool ( ::SireSystem::System::*hasComponent_function_type )( ::SireCAS::Symbol const & ) const;
@@ -732,14 +861,25 @@ void register_System_class(){
                 , ( bp::arg("symbol") ) );
         
         }
-        { //::SireSystem::System::hasConstant
+        { //::SireSystem::System::hasConstantComponent
         
-            typedef bool ( ::SireSystem::System::*hasConstant_function_type )( ::SireCAS::Symbol const & ) const;
-            hasConstant_function_type hasConstant_function_value( &::SireSystem::System::hasConstant );
+            typedef bool ( ::SireSystem::System::*hasConstantComponent_function_type )( ::SireCAS::Symbol const & ) const;
+            hasConstantComponent_function_type hasConstantComponent_function_value( &::SireSystem::System::hasConstantComponent );
             
             System_exposer.def( 
-                "hasConstant"
-                , hasConstant_function_value
+                "hasConstantComponent"
+                , hasConstantComponent_function_value
+                , ( bp::arg("component") ) );
+        
+        }
+        { //::SireSystem::System::hasEnergyComponent
+        
+            typedef bool ( ::SireSystem::System::*hasEnergyComponent_function_type )( ::SireCAS::Symbol const & ) const;
+            hasEnergyComponent_function_type hasEnergyComponent_function_value( &::SireSystem::System::hasEnergyComponent );
+            
+            System_exposer.def( 
+                "hasEnergyComponent"
+                , hasEnergyComponent_function_value
                 , ( bp::arg("component") ) );
         
         }
@@ -775,6 +915,17 @@ void register_System_class(){
                 , ( bp::arg("name") ) );
         
         }
+        { //::SireSystem::System::isConstantComponent
+        
+            typedef bool ( ::SireSystem::System::*isConstantComponent_function_type )( ::SireCAS::Symbol const & ) const;
+            isConstantComponent_function_type isConstantComponent_function_value( &::SireSystem::System::isConstantComponent );
+            
+            System_exposer.def( 
+                "isConstantComponent"
+                , isConstantComponent_function_value
+                , ( bp::arg("component") ) );
+        
+        }
         { //::SireSystem::System::isDirty
         
             typedef bool ( ::SireSystem::System::*isDirty_function_type )(  ) const;
@@ -783,6 +934,17 @@ void register_System_class(){
             System_exposer.def( 
                 "isDirty"
                 , isDirty_function_value );
+        
+        }
+        { //::SireSystem::System::isEnergyComponent
+        
+            typedef bool ( ::SireSystem::System::*isEnergyComponent_function_type )( ::SireCAS::Symbol const & ) const;
+            isEnergyComponent_function_type isEnergyComponent_function_value( &::SireSystem::System::isEnergyComponent );
+            
+            System_exposer.def( 
+                "isEnergyComponent"
+                , isEnergyComponent_function_value
+                , ( bp::arg("component") ) );
         
         }
         { //::SireSystem::System::isUserProperty
@@ -794,16 +956,6 @@ void register_System_class(){
                 "isUserProperty"
                 , isUserProperty_function_value
                 , ( bp::arg("name") ) );
-        
-        }
-        { //::SireSystem::System::moleculeConstraintsAreSatisfied
-        
-            typedef bool ( ::SireSystem::System::*moleculeConstraintsAreSatisfied_function_type )(  ) const;
-            moleculeConstraintsAreSatisfied_function_type moleculeConstraintsAreSatisfied_function_value( &::SireSystem::System::moleculeConstraintsAreSatisfied );
-            
-            System_exposer.def( 
-                "moleculeConstraintsAreSatisfied"
-                , moleculeConstraintsAreSatisfied_function_value );
         
         }
         { //::SireSystem::System::monitor
@@ -1321,15 +1473,26 @@ void register_System_class(){
                 , ( bp::arg("symbol"), bp::arg("expression") ) );
         
         }
-        { //::SireSystem::System::setConstant
+        { //::SireSystem::System::setConstantComponent
         
-            typedef void ( ::SireSystem::System::*setConstant_function_type )( ::SireCAS::Symbol const &,double ) ;
-            setConstant_function_type setConstant_function_value( &::SireSystem::System::setConstant );
+            typedef void ( ::SireSystem::System::*setConstantComponent_function_type )( ::SireCAS::Symbol const &,double ) ;
+            setConstantComponent_function_type setConstantComponent_function_value( &::SireSystem::System::setConstantComponent );
             
             System_exposer.def( 
-                "setConstant"
-                , setConstant_function_value
+                "setConstantComponent"
+                , setConstantComponent_function_value
                 , ( bp::arg("symbol"), bp::arg("value") ) );
+        
+        }
+        { //::SireSystem::System::setConstantComponent
+        
+            typedef void ( ::SireSystem::System::*setConstantComponent_function_type )( ::SireCAS::Symbol const &,::SireCAS::Expression const & ) ;
+            setConstantComponent_function_type setConstantComponent_function_value( &::SireSystem::System::setConstantComponent );
+            
+            System_exposer.def( 
+                "setConstantComponent"
+                , setConstantComponent_function_value
+                , ( bp::arg("symbol"), bp::arg("expression") ) );
         
         }
         { //::SireSystem::System::setConstraints
@@ -1431,6 +1594,17 @@ void register_System_class(){
                 , ( bp::arg("mgid"), bp::arg("molgroup") ) );
         
         }
+        { //::SireSystem::System::setEnergyComponent
+        
+            typedef void ( ::SireSystem::System::*setEnergyComponent_function_type )( ::SireCAS::Symbol const &,::SireCAS::Expression const & ) ;
+            setEnergyComponent_function_type setEnergyComponent_function_value( &::SireSystem::System::setEnergyComponent );
+            
+            System_exposer.def( 
+                "setEnergyComponent"
+                , setEnergyComponent_function_value
+                , ( bp::arg("symbol"), bp::arg("expression") ) );
+        
+        }
         { //::SireSystem::System::setMonitors
         
             typedef void ( ::SireSystem::System::*setMonitors_function_type )( ::SireSystem::SystemMonitors const & ) ;
@@ -1484,6 +1658,16 @@ void register_System_class(){
                 "setProperty"
                 , setProperty_function_value
                 , ( bp::arg("ffid"), bp::arg("name"), bp::arg("value") ) );
+        
+        }
+        { //::SireSystem::System::subVersion
+        
+            typedef ::quint32 ( ::SireSystem::System::*subVersion_function_type )(  ) const;
+            subVersion_function_type subVersion_function_value( &::SireSystem::System::subVersion );
+            
+            System_exposer.def( 
+                "subVersion"
+                , subVersion_function_value );
         
         }
         { //::SireSystem::System::toString

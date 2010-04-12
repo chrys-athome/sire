@@ -19,6 +19,8 @@ namespace bp = boost::python;
 
 #include "constraint.h"
 
+#include "delta.h"
+
 #include "system.h"
 
 #include <QDebug>
@@ -39,28 +41,6 @@ void register_NullConstraint_class(){
         bp::scope NullConstraint_scope( NullConstraint_exposer );
         NullConstraint_exposer.def( bp::init< >() );
         NullConstraint_exposer.def( bp::init< SireSystem::NullConstraint const & >(( bp::arg("other") )) );
-        { //::SireSystem::NullConstraint::apply
-        
-            typedef bool ( ::SireSystem::NullConstraint::*apply_function_type )( ::SireSystem::System & ) const;
-            apply_function_type apply_function_value( &::SireSystem::NullConstraint::apply );
-            
-            NullConstraint_exposer.def( 
-                "apply"
-                , apply_function_value
-                , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::NullConstraint::isSatisfied
-        
-            typedef bool ( ::SireSystem::NullConstraint::*isSatisfied_function_type )( ::SireSystem::System const & ) const;
-            isSatisfied_function_type isSatisfied_function_value( &::SireSystem::NullConstraint::isSatisfied );
-            
-            NullConstraint_exposer.def( 
-                "isSatisfied"
-                , isSatisfied_function_value
-                , ( bp::arg("system") ) );
-        
-        }
         NullConstraint_exposer.def( bp::self != bp::self );
         { //::SireSystem::NullConstraint::operator=
         

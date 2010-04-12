@@ -109,8 +109,6 @@ public:
 
     QVector<ConstraintPtr> constraints() const;
     
-    bool wouldBeAffectedBy(const System &system, const Delta &delta) const;
-    
     void add(const Constraint &constraint);
     void add(const Constraints &constraints);
     

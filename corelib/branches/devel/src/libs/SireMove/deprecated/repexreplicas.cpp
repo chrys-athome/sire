@@ -411,7 +411,7 @@ void RepExReplica::setSystem(const System &system)
             "component for this replica (%2). Available energy "
             "components are %3.")
                 .arg(system.toString(), nrg_component.toString(),
-                     Sire::toString(system.components())), CODELOC );
+                     Sire::toString(system.componentSymbols())), CODELOC );
     }
 
     System new_system(system);
@@ -504,7 +504,7 @@ void RepExReplica::setEnergyComponent(const Symbol &symbol)
                 "as this system (%2) doesn't have such a component. Available energy "
                 "components are %3.")
                     .arg(symbol.toString(), system().toString(),
-                         Sire::toString(system().components())), CODELOC );
+                         Sire::toString(system().componentSymbols())), CODELOC );
 
         MovesPtr mvs = Replica::moves();
     

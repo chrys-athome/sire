@@ -27,6 +27,9 @@
 \*********************************************/
 
 #include "geometrycomponent.h"
+#include "delta.h"
+
+#include "SireVol/cartesian.h"
 
 #include "SireSystem/system.h"
 
@@ -35,6 +38,7 @@
 
 using namespace SireSystem;
 using namespace SireCAS;
+using namespace SireVol;
 using namespace SireStream;
 
 static const RegisterMetaType<GeometryComponent> r_geomcomp( MAGIC_ONLY,
@@ -46,9 +50,12 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_geomcomp, 1);
     
     SharedDataStream sds(ds);
+
+    PropertyMap map;
+    map["space"] = geomcomp.space_property;
     
     sds << geomcomp.constrained_symbol << geomcomp.geometry_expression
-        << geomcomp.spce
+        << map
         << static_cast<const Constraint&>(geomcomp);
         
     return ds;
@@ -61,13 +68,18 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, GeometryComponent &ge
     if (v == 1)
     {
         SharedDataStream sds(ds);
+
+        geomcomp.clearLastSystem();
+        
+        PropertyMap map;
         
         sds >> geomcomp.constrained_symbol >> geomcomp.geometry_expression
-            >> geomcomp.spce
-            >> static_cast<Constraint&>(geomcomp);
+            >> map >> static_cast<Constraint&>(geomcomp);
             
         geomcomp.expected_value = 0;
         geomcomp.current_values = Values();
+        geomcomp.spce = Cartesian();
+        geomcomp.space_property = map["space"];
     }
     else
         throw version_error(v, "1", r_geomcomp, CODELOC);
@@ -76,13 +88,16 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, GeometryComponent &ge
 }
 
 /** Null constructor */
-GeometryComponent::GeometryComponent() : Constraint(), expected_value(0)
+GeometryComponent::GeometryComponent(const PropertyMap &map) 
+                  : Constraint(), expected_value(0), space_property( map["space"] )
 {}
 
 /** Internal constructor */
-GeometryComponent::GeometryComponent(const Symbol &symbol, const Expression &expression)
+GeometryComponent::GeometryComponent(const Symbol &symbol, const Expression &expression,
+                                     const PropertyMap &map)
                   : Constraint(), constrained_symbol(symbol),
-                    expected_value(0), geometry_expression(expression)
+                    expected_value(0), geometry_expression(expression),
+                    space_property( map["space"] )
 {}
 
 /** Copy constructor */
@@ -92,7 +107,7 @@ GeometryComponent::GeometryComponent(const GeometryComponent &other)
                     expected_value(other.expected_value),
                     current_values(other.current_values),
                     geometry_expression(other.geometry_expression),
-                    spce(other.spce)
+                    space_property(other.space_property), spce(other.spce)
 {}
 
 /** Destructor */
@@ -109,6 +124,7 @@ GeometryComponent& GeometryComponent::operator=(const GeometryComponent &other)
         expected_value = other.expected_value;
         current_values = other.current_values;
         geometry_expression = other.geometry_expression;
+        space_property = other.space_property;
         spce = other.spce;
     }
     
@@ -122,7 +138,7 @@ bool GeometryComponent::operator==(const GeometryComponent &other) const
            (Constraint::operator==(other) and
             constrained_symbol == other.constrained_symbol and 
             geometry_expression == other.geometry_expression and
-            spce == other.spce);
+            space_property == other.space_property);
 }
 
 /** Comparison operator */
@@ -149,107 +165,77 @@ const Expression& GeometryComponent::expression() const
     return geometry_expression;
 }
 
-/** Return the space used to evaluate the geometry */
-const Space& GeometryComponent::space() const
-{
-    return spce.read();
-}
-
-/** Set the space used to evaluate the geometry */
+/** Internal function used to set the space used to evaluate the geometry */
 void GeometryComponent::setSpace(const Space &space)
 {
     spce = space;
 }
 
-/** Return whether or not this constraint is satisfied for
-    the passed system */
-bool GeometryComponent::isSatisfied(const System &system) const
+const Space& GeometryComponent::space() const
 {
-    if (not system.hasConstant(constrained_symbol))
+    return spce.read();
+}
+
+void GeometryComponent::setSystem(const System &system)
+{
+    if (Constraint::wasLastSystem(system) or Constraint::wasLastSubVersion(system))
+        return;
+
+    if (system.containsProperty(space_property))
+        this->setSpace( system.property(space_property).asA<Space>() );
+    else
+        this->setSpace( Cartesian() );
+    
+    Values vals = this->getValues(system);
+    expected_value = geometry_expression(vals);
+    
+    if (system.hasConstantComponent(constrained_symbol))
+    {
+        Constraint::setSatisfied( system, system.constant(constrained_symbol) == 
+                                                                     expected_value );
+    }
+    else
+        Constraint::setSatisfied( system, false );
+}
+
+bool GeometryComponent::mayChange(const Delta &delta, quint32 last_subversion) const
+{
+    return delta.sinceChanged(space_property, last_subversion) or
+           delta.sinceChanged(constrained_symbol, last_subversion) or
+           this->wouldChange(delta, last_subversion);
+}
+
+bool GeometryComponent::fullApply(Delta &delta)
+{
+    this->setSystem(delta.deltaSystem());
+    
+    if (not Constraint::wasLastSatisfied())
+    {
+        return delta.update(constrained_symbol, expected_value);
+    }
+    else
+    {
         return false;
+    }
+}
 
-    else if (this->wouldChange(system, current_values))
+bool GeometryComponent::deltaApply(Delta &delta, quint32 last_subversion)
+{
+    if ( delta.sinceChanged(space_property, last_subversion) )
     {
-        std::auto_ptr<GeometryComponent> new_geomcomp( 
-                                            (GeometryComponent*)(this->clone()) );
+        return this->fullApply(delta);
+    }
+    else if (this->wouldChange(delta, last_subversion))
+    {
+        Values vals = this->getValues( delta.deltaSystem() );
+        expected_value = geometry_expression(vals);
         
-        Values vals = new_geomcomp->getValues(system);
-        
-        return geometry_expression(vals) == system.getConstant(constrained_symbol);
+        return delta.update( constrained_symbol, expected_value );
+    }
+    else if ( delta.sinceChanged(constrained_symbol, last_subversion) )
+    {
+        return delta.update( constrained_symbol, expected_value );
     }
     else
-    {
-        return system.getConstant(constrained_symbol) == expected_value;
-    }
+        return false;
 }
-
-Q_GLOBAL_STATIC( QMutex, applyMutex )
-    
-bool GeometryComponent::dependsOnMolecules() const
-{
-    return true;
-}
-
-/** Apply this constraint to the passed system, returning whether
-    or not this changes the system */
-bool GeometryComponent::apply(System &system) const
-{
-    if (this->wouldChange(system, current_values))
-    {
-        std::auto_ptr<GeometryComponent> d( (GeometryComponent*)(this->clone()) );
-    
-        Values vals = d->getValues(system);
-        
-        double new_value = geometry_expression(vals);
-        
-        bool changed = false;
-
-        if (system.hasConstant(constrained_symbol))
-        {
-            if (system.getConstant(constrained_symbol) != new_value)
-            {
-                system.setConstant(constrained_symbol, new_value);
-                changed = true;
-            }
-        }
-        else
-        {
-            system.setConstant(constrained_symbol, new_value);
-            changed = true;
-        }
-            
-        d->current_values = vals;
-        d->expected_value = new_value;
-
-        QMutexLocker lkr( applyMutex() );
-        const_cast<GeometryComponent*>(this)->copy(*d);
-
-        return changed;
-    }
-    else if (system.hasConstant(constrained_symbol))
-    {
-        if (system.getConstant(constrained_symbol) != expected_value)
-        {
-            system.setConstant(constrained_symbol, expected_value);
-            return true;
-        }
-        else
-            return false;
-    }
-    else
-    {
-        system.setConstant(constrained_symbol, expected_value);
-        return true;
-    }
-}
-    
-bool GeometryComponent::apply(System &system, MolNum) const
-{
-    return this->apply(system);
-}
-
-bool GeometryComponent::apply(System &system, const Molecules&) const
-{
-    return this->apply(system);
-}
-

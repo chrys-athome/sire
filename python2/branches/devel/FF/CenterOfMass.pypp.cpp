@@ -93,6 +93,36 @@ void register_CenterOfMass_class(){
                 , ( bp::arg("molid") ) );
         
         }
+        { //::SireFF::CenterOfMass::isExtraMoleculePoint
+        
+            typedef bool ( ::SireFF::CenterOfMass::*isExtraMoleculePoint_function_type )(  ) const;
+            isExtraMoleculePoint_function_type isExtraMoleculePoint_function_value( &::SireFF::CenterOfMass::isExtraMoleculePoint );
+            
+            CenterOfMass_exposer.def( 
+                "isExtraMoleculePoint"
+                , isExtraMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::CenterOfMass::isInterMoleculePoint
+        
+            typedef bool ( ::SireFF::CenterOfMass::*isInterMoleculePoint_function_type )(  ) const;
+            isInterMoleculePoint_function_type isInterMoleculePoint_function_value( &::SireFF::CenterOfMass::isInterMoleculePoint );
+            
+            CenterOfMass_exposer.def( 
+                "isInterMoleculePoint"
+                , isInterMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::CenterOfMass::isIntraMoleculePoint
+        
+            typedef bool ( ::SireFF::CenterOfMass::*isIntraMoleculePoint_function_type )(  ) const;
+            isIntraMoleculePoint_function_type isIntraMoleculePoint_function_value( &::SireFF::CenterOfMass::isIntraMoleculePoint );
+            
+            CenterOfMass_exposer.def( 
+                "isIntraMoleculePoint"
+                , isIntraMoleculePoint_function_value );
+        
+        }
         { //::SireFF::CenterOfMass::molecules
         
             typedef ::SireMol::Molecules ( ::SireFF::CenterOfMass::*molecules_function_type )(  ) const;

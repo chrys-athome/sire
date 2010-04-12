@@ -18,6 +18,8 @@ namespace bp = boost::python;
 
 #include "SireVol/space.h"
 
+#include "delta.h"
+
 #include "distancecomponent.h"
 
 #include "distancecomponent.h"
@@ -35,8 +37,8 @@ void register_TripleDistanceComponent_class(){
         TripleDistanceComponent_exposer_t TripleDistanceComponent_exposer = TripleDistanceComponent_exposer_t( "TripleDistanceComponent" );
         bp::scope TripleDistanceComponent_scope( TripleDistanceComponent_exposer );
         TripleDistanceComponent_exposer.def( bp::init< >() );
-        TripleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const & >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("point4"), bp::arg("point5") )) );
-        TripleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const & >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("point4"), bp::arg("point5"), bp::arg("geometry_expression") )) );
+        TripleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("point4"), bp::arg("point5"), bp::arg("map")=SireBase::PropertyMap() )) );
+        TripleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("point4"), bp::arg("point5"), bp::arg("geometry_expression"), bp::arg("map")=SireBase::PropertyMap() )) );
         TripleDistanceComponent_exposer.def( bp::init< SireSystem::TripleDistanceComponent const & >(( bp::arg("other") )) );
         { //::SireSystem::TripleDistanceComponent::nPoints
         
@@ -171,17 +173,6 @@ void register_TripleDistanceComponent_class(){
                 "r45"
                 , r45_function_value
                 , bp::return_value_policy<bp::clone_const_reference>() );
-        
-        }
-        { //::SireSystem::TripleDistanceComponent::setSpace
-        
-            typedef void ( ::SireSystem::TripleDistanceComponent::*setSpace_function_type )( ::SireVol::Space const & ) ;
-            setSpace_function_type setSpace_function_value( &::SireSystem::TripleDistanceComponent::setSpace );
-            
-            TripleDistanceComponent_exposer.def( 
-                "setSpace"
-                , setSpace_function_value
-                , ( bp::arg("space") ) );
         
         }
         { //::SireSystem::TripleDistanceComponent::toString

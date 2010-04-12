@@ -20,6 +20,8 @@ namespace bp = boost::python;
 
 #include "SireVol/space.h"
 
+#include "delta.h"
+
 #include "spacewrapper.h"
 
 #include "system.h"
@@ -41,28 +43,6 @@ void register_SpaceWrapper_class(){
         SpaceWrapper_exposer.def( bp::init< >() );
         SpaceWrapper_exposer.def( bp::init< SireFF::PointRef const &, SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("point"), bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         SpaceWrapper_exposer.def( bp::init< SireSystem::SpaceWrapper const & >(( bp::arg("other") )) );
-        { //::SireSystem::SpaceWrapper::involvesMolecule
-        
-            typedef bool ( ::SireSystem::SpaceWrapper::*involvesMolecule_function_type )( ::SireMol::MolNum ) const;
-            involvesMolecule_function_type involvesMolecule_function_value( &::SireSystem::SpaceWrapper::involvesMolecule );
-            
-            SpaceWrapper_exposer.def( 
-                "involvesMolecule"
-                , involvesMolecule_function_value
-                , ( bp::arg("molnum") ) );
-        
-        }
-        { //::SireSystem::SpaceWrapper::involvesMoleculesFrom
-        
-            typedef bool ( ::SireSystem::SpaceWrapper::*involvesMoleculesFrom_function_type )( ::SireMol::Molecules const & ) const;
-            involvesMoleculesFrom_function_type involvesMoleculesFrom_function_value( &::SireSystem::SpaceWrapper::involvesMoleculesFrom );
-            
-            SpaceWrapper_exposer.def( 
-                "involvesMoleculesFrom"
-                , involvesMoleculesFrom_function_value
-                , ( bp::arg("molecules") ) );
-        
-        }
         { //::SireSystem::SpaceWrapper::moleculeGroup
         
             typedef ::SireMol::MoleculeGroup const & ( ::SireSystem::SpaceWrapper::*moleculeGroup_function_type )(  ) const;
@@ -118,39 +98,6 @@ void register_SpaceWrapper_class(){
             SpaceWrapper_exposer.def( 
                 "typeName"
                 , typeName_function_value );
-        
-        }
-        { //::SireSystem::SpaceWrapper::update
-        
-            typedef ::SireMol::Molecules ( ::SireSystem::SpaceWrapper::*update_function_type )( ::SireSystem::System const & ) ;
-            update_function_type update_function_value( &::SireSystem::SpaceWrapper::update );
-            
-            SpaceWrapper_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::SpaceWrapper::update
-        
-            typedef ::SireMol::Molecules ( ::SireSystem::SpaceWrapper::*update_function_type )( ::SireSystem::System const &,::SireMol::MolNum ) ;
-            update_function_type update_function_value( &::SireSystem::SpaceWrapper::update );
-            
-            SpaceWrapper_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system"), bp::arg("molnum") ) );
-        
-        }
-        { //::SireSystem::SpaceWrapper::update
-        
-            typedef ::SireMol::Molecules ( ::SireSystem::SpaceWrapper::*update_function_type )( ::SireSystem::System const &,::SireMol::Molecules const & ) ;
-            update_function_type update_function_value( &::SireSystem::SpaceWrapper::update );
-            
-            SpaceWrapper_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system"), bp::arg("molecules") ) );
         
         }
         SpaceWrapper_exposer.staticmethod( "typeName" );

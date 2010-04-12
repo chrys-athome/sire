@@ -77,6 +77,39 @@ void register_Point_class(){
                 , ( bp::arg("point0"), bp::arg("point1") ) );
         
         }
+        { //::SireFF::Point::areIntraMoleculePoints
+        
+            typedef bool ( *areIntraMoleculePoints_function_type )( ::SireFF::Point const &,::SireFF::Point const &,::SireFF::Point const & );
+            areIntraMoleculePoints_function_type areIntraMoleculePoints_function_value( &::SireFF::Point::areIntraMoleculePoints );
+            
+            Point_exposer.def( 
+                "areIntraMoleculePoints"
+                , areIntraMoleculePoints_function_value
+                , ( bp::arg("point0"), bp::arg("point1"), bp::arg("point2") ) );
+        
+        }
+        { //::SireFF::Point::areIntraMoleculePoints
+        
+            typedef bool ( *areIntraMoleculePoints_function_type )( ::SireFF::Point const &,::SireFF::Point const &,::SireFF::Point const &,::SireFF::Point const & );
+            areIntraMoleculePoints_function_type areIntraMoleculePoints_function_value( &::SireFF::Point::areIntraMoleculePoints );
+            
+            Point_exposer.def( 
+                "areIntraMoleculePoints"
+                , areIntraMoleculePoints_function_value
+                , ( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3") ) );
+        
+        }
+        { //::SireFF::Point::areIntraMoleculePoints
+        
+            typedef bool ( *areIntraMoleculePoints_function_type )( ::QVector< SireBase::PropPtr< SireFF::Point > > const & );
+            areIntraMoleculePoints_function_type areIntraMoleculePoints_function_value( &::SireFF::Point::areIntraMoleculePoints );
+            
+            Point_exposer.def( 
+                "areIntraMoleculePoints"
+                , areIntraMoleculePoints_function_value
+                , ( bp::arg("points") ) );
+        
+        }
         { //::SireFF::Point::contains
         
             typedef bool ( ::SireFF::Point::*contains_function_type )( ::SireMol::MolNum ) const;
@@ -97,6 +130,36 @@ void register_Point_class(){
                 "contains"
                 , contains_function_value
                 , ( bp::arg("molid") ) );
+        
+        }
+        { //::SireFF::Point::isExtraMoleculePoint
+        
+            typedef bool ( ::SireFF::Point::*isExtraMoleculePoint_function_type )(  ) const;
+            isExtraMoleculePoint_function_type isExtraMoleculePoint_function_value( &::SireFF::Point::isExtraMoleculePoint );
+            
+            Point_exposer.def( 
+                "isExtraMoleculePoint"
+                , isExtraMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::Point::isInterMoleculePoint
+        
+            typedef bool ( ::SireFF::Point::*isInterMoleculePoint_function_type )(  ) const;
+            isInterMoleculePoint_function_type isInterMoleculePoint_function_value( &::SireFF::Point::isInterMoleculePoint );
+            
+            Point_exposer.def( 
+                "isInterMoleculePoint"
+                , isInterMoleculePoint_function_value );
+        
+        }
+        { //::SireFF::Point::isIntraMoleculePoint
+        
+            typedef bool ( ::SireFF::Point::*isIntraMoleculePoint_function_type )(  ) const;
+            isIntraMoleculePoint_function_type isIntraMoleculePoint_function_value( &::SireFF::Point::isIntraMoleculePoint );
+            
+            Point_exposer.def( 
+                "isIntraMoleculePoint"
+                , isIntraMoleculePoint_function_value );
         
         }
         { //::SireFF::Point::molecules

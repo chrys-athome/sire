@@ -568,6 +568,28 @@ void register_MolGroupsBase_class(){
                 , getMoleculeNumbers_function_value );
         
         }
+        { //::SireMol::MolGroupsBase::getMoleculeVersion
+        
+            typedef ::quint64 ( ::SireMol::MolGroupsBase::*getMoleculeVersion_function_type )( ::SireMol::MolNum ) const;
+            getMoleculeVersion_function_type getMoleculeVersion_function_value( &::SireMol::MolGroupsBase::getMoleculeVersion );
+            
+            MolGroupsBase_exposer.def( 
+                "getMoleculeVersion"
+                , getMoleculeVersion_function_value
+                , ( bp::arg("molnum") ) );
+        
+        }
+        { //::SireMol::MolGroupsBase::getMoleculeVersion
+        
+            typedef ::quint64 ( ::SireMol::MolGroupsBase::*getMoleculeVersion_function_type )( ::SireMol::MolID const & ) const;
+            getMoleculeVersion_function_type getMoleculeVersion_function_value( &::SireMol::MolGroupsBase::getMoleculeVersion );
+            
+            MolGroupsBase_exposer.def( 
+                "getMoleculeVersion"
+                , getMoleculeVersion_function_value
+                , ( bp::arg("molid") ) );
+        
+        }
         { //::SireMol::MolGroupsBase::group
         
             typedef ::SireMol::MoleculeGroup const & ( ::SireMol::MolGroupsBase::*group_function_type )( ::SireMol::MGNum ) const;

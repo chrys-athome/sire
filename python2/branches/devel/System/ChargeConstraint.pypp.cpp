@@ -36,48 +36,6 @@ void register_ChargeConstraint_class(){
         typedef bp::class_< SireSystem::ChargeConstraint, bp::bases< SireSystem::MoleculeConstraint, SireSystem::Constraint, SireBase::Property >, boost::noncopyable > ChargeConstraint_exposer_t;
         ChargeConstraint_exposer_t ChargeConstraint_exposer = ChargeConstraint_exposer_t( "ChargeConstraint", bp::no_init );
         bp::scope ChargeConstraint_scope( ChargeConstraint_exposer );
-        { //::SireSystem::ChargeConstraint::chargeProperty
-        
-            typedef ::SireBase::PropertyName const ( ::SireSystem::ChargeConstraint::*chargeProperty_function_type )(  ) const;
-            chargeProperty_function_type chargeProperty_function_value( &::SireSystem::ChargeConstraint::chargeProperty );
-            
-            ChargeConstraint_exposer.def( 
-                "chargeProperty"
-                , chargeProperty_function_value );
-        
-        }
-        { //::SireSystem::ChargeConstraint::coordsProperty
-        
-            typedef ::SireBase::PropertyName const ( ::SireSystem::ChargeConstraint::*coordsProperty_function_type )(  ) const;
-            coordsProperty_function_type coordsProperty_function_value( &::SireSystem::ChargeConstraint::coordsProperty );
-            
-            ChargeConstraint_exposer.def( 
-                "coordsProperty"
-                , coordsProperty_function_value );
-        
-        }
-        { //::SireSystem::ChargeConstraint::involvesMolecule
-        
-            typedef bool ( ::SireSystem::ChargeConstraint::*involvesMolecule_function_type )( ::SireMol::MolNum ) const;
-            involvesMolecule_function_type involvesMolecule_function_value( &::SireSystem::ChargeConstraint::involvesMolecule );
-            
-            ChargeConstraint_exposer.def( 
-                "involvesMolecule"
-                , involvesMolecule_function_value
-                , ( bp::arg("molnum") ) );
-        
-        }
-        { //::SireSystem::ChargeConstraint::involvesMoleculesFrom
-        
-            typedef bool ( ::SireSystem::ChargeConstraint::*involvesMoleculesFrom_function_type )( ::SireMol::Molecules const & ) const;
-            involvesMoleculesFrom_function_type involvesMoleculesFrom_function_value( &::SireSystem::ChargeConstraint::involvesMoleculesFrom );
-            
-            ChargeConstraint_exposer.def( 
-                "involvesMoleculesFrom"
-                , involvesMoleculesFrom_function_value
-                , ( bp::arg("molecules") ) );
-        
-        }
         { //::SireSystem::ChargeConstraint::moleculeGroup
         
             typedef ::SireMol::MoleculeGroup const & ( ::SireSystem::ChargeConstraint::*moleculeGroup_function_type )(  ) const;

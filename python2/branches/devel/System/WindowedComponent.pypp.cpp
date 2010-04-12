@@ -20,6 +20,8 @@ namespace bp = boost::python;
 
 #include "constraint.h"
 
+#include "delta.h"
+
 #include "system.h"
 
 #include <QDebug>
@@ -41,17 +43,6 @@ void register_WindowedComponent_class(){
         WindowedComponent_exposer.def( bp::init< >() );
         WindowedComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireCAS::Symbol const &, QVector< double > const &, bp::optional< int > >(( bp::arg("component"), bp::arg("reference"), bp::arg("values"), bp::arg("step_size")=(int)(1) )) );
         WindowedComponent_exposer.def( bp::init< SireSystem::WindowedComponent const & >(( bp::arg("other") )) );
-        { //::SireSystem::WindowedComponent::apply
-        
-            typedef bool ( ::SireSystem::WindowedComponent::*apply_function_type )( ::SireSystem::System & ) const;
-            apply_function_type apply_function_value( &::SireSystem::WindowedComponent::apply );
-            
-            WindowedComponent_exposer.def( 
-                "apply"
-                , apply_function_value
-                , ( bp::arg("system") ) );
-        
-        }
         { //::SireSystem::WindowedComponent::component
         
             typedef ::SireCAS::Symbol const & ( ::SireSystem::WindowedComponent::*component_function_type )(  ) const;
@@ -61,17 +52,6 @@ void register_WindowedComponent_class(){
                 "component"
                 , component_function_value
                 , bp::return_value_policy<bp::clone_const_reference>() );
-        
-        }
-        { //::SireSystem::WindowedComponent::isSatisfied
-        
-            typedef bool ( ::SireSystem::WindowedComponent::*isSatisfied_function_type )( ::SireSystem::System const & ) const;
-            isSatisfied_function_type isSatisfied_function_value( &::SireSystem::WindowedComponent::isSatisfied );
-            
-            WindowedComponent_exposer.def( 
-                "isSatisfied"
-                , isSatisfied_function_value
-                , ( bp::arg("system") ) );
         
         }
         WindowedComponent_exposer.def( bp::self != bp::self );

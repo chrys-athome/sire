@@ -20,6 +20,8 @@ namespace bp = boost::python;
 
 #include "constraint.h"
 
+#include "delta.h"
+
 #include "system.h"
 
 #include <QDebug>
@@ -38,35 +40,13 @@ void register_Constraint_class(){
         bp::scope Constraint_scope( Constraint_exposer );
         { //::SireSystem::Constraint::apply
         
-            typedef bool ( ::SireSystem::Constraint::*apply_function_type )( ::SireSystem::System & ) const;
+            typedef ::SireSystem::System ( ::SireSystem::Constraint::*apply_function_type )( ::SireSystem::System const & ) ;
             apply_function_type apply_function_value( &::SireSystem::Constraint::apply );
             
             Constraint_exposer.def( 
                 "apply"
                 , apply_function_value
                 , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::Constraint::apply
-        
-            typedef bool ( ::SireSystem::Constraint::*apply_function_type )( ::SireSystem::System &,::SireMol::MolNum ) const;
-            apply_function_type apply_function_value( &::SireSystem::Constraint::apply );
-            
-            Constraint_exposer.def( 
-                "apply"
-                , apply_function_value
-                , ( bp::arg("system"), bp::arg("molnum") ) );
-        
-        }
-        { //::SireSystem::Constraint::apply
-        
-            typedef bool ( ::SireSystem::Constraint::*apply_function_type )( ::SireSystem::System &,::SireMol::Molecules const & ) const;
-            apply_function_type apply_function_value( &::SireSystem::Constraint::apply );
-            
-            Constraint_exposer.def( 
-                "apply"
-                , apply_function_value
-                , ( bp::arg("system"), bp::arg("molecules") ) );
         
         }
         { //::SireSystem::Constraint::assertSatisfied
@@ -80,16 +60,6 @@ void register_Constraint_class(){
                 , ( bp::arg("system") ) );
         
         }
-        { //::SireSystem::Constraint::dependsOnMolecules
-        
-            typedef bool ( ::SireSystem::Constraint::*dependsOnMolecules_function_type )(  ) const;
-            dependsOnMolecules_function_type dependsOnMolecules_function_value( &::SireSystem::Constraint::dependsOnMolecules );
-            
-            Constraint_exposer.def( 
-                "dependsOnMolecules"
-                , dependsOnMolecules_function_value );
-        
-        }
         { //::SireSystem::Constraint::isSatisfied
         
             typedef bool ( ::SireSystem::Constraint::*isSatisfied_function_type )( ::SireSystem::System const & ) const;
@@ -99,6 +69,17 @@ void register_Constraint_class(){
                 "isSatisfied"
                 , isSatisfied_function_value
                 , ( bp::arg("system") ) );
+        
+        }
+        { //::SireSystem::Constraint::mayAffect
+        
+            typedef bool ( ::SireSystem::Constraint::*mayAffect_function_type )( ::SireSystem::Delta const & ) const;
+            mayAffect_function_type mayAffect_function_value( &::SireSystem::Constraint::mayAffect );
+            
+            Constraint_exposer.def( 
+                "mayAffect"
+                , mayAffect_function_value
+                , ( bp::arg("delta") ) );
         
         }
         { //::SireSystem::Constraint::null

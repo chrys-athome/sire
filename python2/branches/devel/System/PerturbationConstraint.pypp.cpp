@@ -26,6 +26,8 @@ namespace bp = boost::python;
 
 #include "SireStream/shareddatastream.h"
 
+#include "SireSystem/delta.h"
+
 #include "SireSystem/system.h"
 
 #include "perturbationconstraint.h"
@@ -47,39 +49,6 @@ void register_PerturbationConstraint_class(){
         PerturbationConstraint_exposer.def( bp::init< >() );
         PerturbationConstraint_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         PerturbationConstraint_exposer.def( bp::init< SireSystem::PerturbationConstraint const & >(( bp::arg("other") )) );
-        { //::SireSystem::PerturbationConstraint::involvesMolecule
-        
-            typedef bool ( ::SireSystem::PerturbationConstraint::*involvesMolecule_function_type )( ::SireMol::MolNum ) const;
-            involvesMolecule_function_type involvesMolecule_function_value( &::SireSystem::PerturbationConstraint::involvesMolecule );
-            
-            PerturbationConstraint_exposer.def( 
-                "involvesMolecule"
-                , involvesMolecule_function_value
-                , ( bp::arg("molnum") ) );
-        
-        }
-        { //::SireSystem::PerturbationConstraint::involvesMoleculesFrom
-        
-            typedef bool ( ::SireSystem::PerturbationConstraint::*involvesMoleculesFrom_function_type )( ::SireMol::Molecules const & ) const;
-            involvesMoleculesFrom_function_type involvesMoleculesFrom_function_value( &::SireSystem::PerturbationConstraint::involvesMoleculesFrom );
-            
-            PerturbationConstraint_exposer.def( 
-                "involvesMoleculesFrom"
-                , involvesMoleculesFrom_function_value
-                , ( bp::arg("molecules") ) );
-        
-        }
-        { //::SireSystem::PerturbationConstraint::isSatisfied
-        
-            typedef bool ( ::SireSystem::PerturbationConstraint::*isSatisfied_function_type )( ::SireSystem::System const & ) const;
-            isSatisfied_function_type isSatisfied_function_value( &::SireSystem::PerturbationConstraint::isSatisfied );
-            
-            PerturbationConstraint_exposer.def( 
-                "isSatisfied"
-                , isSatisfied_function_value
-                , ( bp::arg("system") ) );
-        
-        }
         { //::SireSystem::PerturbationConstraint::moleculeGroup
         
             typedef ::SireMol::MoleculeGroup const & ( ::SireSystem::PerturbationConstraint::*moleculeGroup_function_type )(  ) const;
@@ -133,39 +102,6 @@ void register_PerturbationConstraint_class(){
             PerturbationConstraint_exposer.def( 
                 "typeName"
                 , typeName_function_value );
-        
-        }
-        { //::SireSystem::PerturbationConstraint::update
-        
-            typedef ::SireMol::Molecules ( ::SireSystem::PerturbationConstraint::*update_function_type )( ::SireSystem::System const & ) ;
-            update_function_type update_function_value( &::SireSystem::PerturbationConstraint::update );
-            
-            PerturbationConstraint_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::PerturbationConstraint::update
-        
-            typedef ::SireMol::Molecules ( ::SireSystem::PerturbationConstraint::*update_function_type )( ::SireSystem::System const &,::SireMol::MolNum ) ;
-            update_function_type update_function_value( &::SireSystem::PerturbationConstraint::update );
-            
-            PerturbationConstraint_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system"), bp::arg("changed_mol") ) );
-        
-        }
-        { //::SireSystem::PerturbationConstraint::update
-        
-            typedef ::SireMol::Molecules ( ::SireSystem::PerturbationConstraint::*update_function_type )( ::SireSystem::System const &,::SireMol::Molecules const & ) ;
-            update_function_type update_function_value( &::SireSystem::PerturbationConstraint::update );
-            
-            PerturbationConstraint_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system"), bp::arg("molecules") ) );
         
         }
         PerturbationConstraint_exposer.staticmethod( "typeName" );

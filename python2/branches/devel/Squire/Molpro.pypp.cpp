@@ -33,6 +33,8 @@ namespace bp = boost::python;
 
 #include <QDebug>
 
+#include <QTime>
+
 #include "molpro.h"
 
 Squire::Molpro __copy__(const Squire::Molpro &other){ return Squire::Molpro(other); }

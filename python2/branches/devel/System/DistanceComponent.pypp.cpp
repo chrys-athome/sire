@@ -18,6 +18,8 @@ namespace bp = boost::python;
 
 #include "SireVol/space.h"
 
+#include "delta.h"
+
 #include "distancecomponent.h"
 
 #include "distancecomponent.h"
@@ -35,8 +37,8 @@ void register_DistanceComponent_class(){
         DistanceComponent_exposer_t DistanceComponent_exposer = DistanceComponent_exposer_t( "DistanceComponent" );
         bp::scope DistanceComponent_scope( DistanceComponent_exposer );
         DistanceComponent_exposer.def( bp::init< >() );
-        DistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const & >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1") )) );
-        DistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const & >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("geometry_expression") )) );
+        DistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("map")=SireBase::PropertyMap() )) );
+        DistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("geometry_expression"), bp::arg("map")=SireBase::PropertyMap() )) );
         DistanceComponent_exposer.def( bp::init< SireSystem::DistanceComponent const & >(( bp::arg("other") )) );
         { //::SireSystem::DistanceComponent::nPoints
         
@@ -105,17 +107,6 @@ void register_DistanceComponent_class(){
                 "r"
                 , r_function_value
                 , bp::return_value_policy<bp::clone_const_reference>() );
-        
-        }
-        { //::SireSystem::DistanceComponent::setSpace
-        
-            typedef void ( ::SireSystem::DistanceComponent::*setSpace_function_type )( ::SireVol::Space const & ) ;
-            setSpace_function_type setSpace_function_value( &::SireSystem::DistanceComponent::setSpace );
-            
-            DistanceComponent_exposer.def( 
-                "setSpace"
-                , setSpace_function_value
-                , ( bp::arg("space") ) );
         
         }
         { //::SireSystem::DistanceComponent::toString

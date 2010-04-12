@@ -37,6 +37,8 @@
 
 #include "SireVol/space.h"
 
+#include "SireBase/propertymap.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireSystem
@@ -55,6 +57,8 @@ class Space;
 namespace SireSystem
 {
 
+using SireBase::PropertyMap;
+
 /** This is the base class of constraints that constrains the value 
     of a system component
     to be equal to a geometric expression. For example, you could
@@ -71,7 +75,7 @@ friend QDataStream& ::operator<<(QDataStream&, const GeometryComponent&);
 friend QDataStream& ::operator>>(QDataStream&, GeometryComponent&);
 
 public:
-    GeometryComponent();
+    GeometryComponent(const PropertyMap &map = PropertyMap());
     GeometryComponent(const GeometryComponent &other);
     
     ~GeometryComponent();
@@ -82,28 +86,26 @@ public:
     
     const SireCAS::Expression& expression() const;
     
-    bool isSatisfied(const System &system) const;
-    
-    bool dependsOnMolecules() const;
-    
-    bool apply(System &system) const;
-    bool apply(System &system, SireMol::MolNum molnum) const;
-    bool apply(System &system, const SireMol::Molecules &molecules) const;
-    
-    virtual void setSpace(const SireVol::Space &space);
-
-    const SireVol::Space& space() const;
-    
 protected:
     GeometryComponent(const SireCAS::Symbol &constrained_symbol,
-                      const SireCAS::Expression &geometry_expression);
+                      const SireCAS::Expression &geometry_expression,
+                      const PropertyMap &map = PropertyMap());
 
     GeometryComponent& operator=(const GeometryComponent &other);
     bool operator==(const GeometryComponent &other) const;
     bool operator!=(const GeometryComponent &other) const;
 
-    virtual bool wouldChange(const System &system, const SireCAS::Values &values) const=0;
+    void setSystem(const System &system);
+    bool mayChange(const Delta &delta, quint32 last_subversion) const;
+
+    bool fullApply(Delta &delta);
+    bool deltaApply(Delta &delta, quint32 last_subversion);
+
+    virtual bool wouldChange(const Delta &delta, quint32 last_subversion) const=0;
     virtual SireCAS::Values getValues(const System &system)=0;
+
+    const SireVol::Space& space() const;
+    virtual void setSpace(const SireVol::Space &space);
 
 private:
     /** The symbol that is constrained to match the geometry expression */
@@ -117,6 +119,9 @@ private:
     
     /** The geometry expression that is used to constrain the symbol */
     SireCAS::Expression geometry_expression;
+    
+    /** The property used to get the space */
+    SireBase::PropertyName space_property;
     
     /** The space within which the geometry is evaluated */
     SireVol::SpacePtr spce;

@@ -28,9 +28,13 @@ namespace bp = boost::python;
 
 #include "SireStream/shareddatastream.h"
 
+#include "SireSystem/errors.h"
+
 #include "SireVol/space.h"
 
 #include "closemols.h"
+
+#include "delta.h"
 
 #include "identityconstraint.h"
 
@@ -93,39 +97,6 @@ void register_IdentityConstraint_class(){
                 "constrain"
                 , constrain_function_value
                 , ( bp::arg("molgroup"), bp::arg("points"), bp::arg("map")=SireBase::PropertyMap() ) );
-        
-        }
-        { //::SireSystem::IdentityConstraint::involvesMolecule
-        
-            typedef bool ( ::SireSystem::IdentityConstraint::*involvesMolecule_function_type )( ::SireMol::MolNum ) const;
-            involvesMolecule_function_type involvesMolecule_function_value( &::SireSystem::IdentityConstraint::involvesMolecule );
-            
-            IdentityConstraint_exposer.def( 
-                "involvesMolecule"
-                , involvesMolecule_function_value
-                , ( bp::arg("molnum") ) );
-        
-        }
-        { //::SireSystem::IdentityConstraint::involvesMoleculesFrom
-        
-            typedef bool ( ::SireSystem::IdentityConstraint::*involvesMoleculesFrom_function_type )( ::SireMol::Molecules const & ) const;
-            involvesMoleculesFrom_function_type involvesMoleculesFrom_function_value( &::SireSystem::IdentityConstraint::involvesMoleculesFrom );
-            
-            IdentityConstraint_exposer.def( 
-                "involvesMoleculesFrom"
-                , involvesMoleculesFrom_function_value
-                , ( bp::arg("molecules") ) );
-        
-        }
-        { //::SireSystem::IdentityConstraint::isSatisfied
-        
-            typedef bool ( ::SireSystem::IdentityConstraint::*isSatisfied_function_type )( ::SireSystem::System const & ) const;
-            isSatisfied_function_type isSatisfied_function_value( &::SireSystem::IdentityConstraint::isSatisfied );
-            
-            IdentityConstraint_exposer.def( 
-                "isSatisfied"
-                , isSatisfied_function_value
-                , ( bp::arg("system") ) );
         
         }
         { //::SireSystem::IdentityConstraint::moleculeGroup
@@ -192,39 +163,6 @@ void register_IdentityConstraint_class(){
             IdentityConstraint_exposer.def( 
                 "typeName"
                 , typeName_function_value );
-        
-        }
-        { //::SireSystem::IdentityConstraint::update
-        
-            typedef ::SireMol::Molecules ( ::SireSystem::IdentityConstraint::*update_function_type )( ::SireSystem::System const & ) ;
-            update_function_type update_function_value( &::SireSystem::IdentityConstraint::update );
-            
-            IdentityConstraint_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::IdentityConstraint::update
-        
-            typedef ::SireMol::Molecules ( ::SireSystem::IdentityConstraint::*update_function_type )( ::SireSystem::System const &,::SireMol::MolNum ) ;
-            update_function_type update_function_value( &::SireSystem::IdentityConstraint::update );
-            
-            IdentityConstraint_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system"), bp::arg("changed_mol") ) );
-        
-        }
-        { //::SireSystem::IdentityConstraint::update
-        
-            typedef ::SireMol::Molecules ( ::SireSystem::IdentityConstraint::*update_function_type )( ::SireSystem::System const &,::SireMol::Molecules const & ) ;
-            update_function_type update_function_value( &::SireSystem::IdentityConstraint::update );
-            
-            IdentityConstraint_exposer.def( 
-                "update"
-                , update_function_value
-                , ( bp::arg("system"), bp::arg("molecules") ) );
         
         }
         { //::SireSystem::IdentityConstraint::useFewPointsAlgorithm

@@ -24,6 +24,8 @@ namespace bp = boost::python;
 
 #include "constraints.h"
 
+#include "delta.h"
+
 #include "moleculeconstraint.h"
 
 #include "system.h"
@@ -73,79 +75,13 @@ void register_Constraints_class(){
         }
         { //::SireSystem::Constraints::apply
         
-            typedef void ( ::SireSystem::Constraints::*apply_function_type )( ::SireSystem::System & ) ;
+            typedef ::SireSystem::System ( ::SireSystem::Constraints::*apply_function_type )( ::SireSystem::System const & ) ;
             apply_function_type apply_function_value( &::SireSystem::Constraints::apply );
             
             Constraints_exposer.def( 
                 "apply"
                 , apply_function_value
                 , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::Constraints::applyMolDependentConstraints
-        
-            typedef void ( ::SireSystem::Constraints::*applyMolDependentConstraints_function_type )( ::SireSystem::System & ) ;
-            applyMolDependentConstraints_function_type applyMolDependentConstraints_function_value( &::SireSystem::Constraints::applyMolDependentConstraints );
-            
-            Constraints_exposer.def( 
-                "applyMolDependentConstraints"
-                , applyMolDependentConstraints_function_value
-                , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::Constraints::applyMolDependentConstraints
-        
-            typedef void ( ::SireSystem::Constraints::*applyMolDependentConstraints_function_type )( ::SireSystem::System &,::SireMol::MolNum ) ;
-            applyMolDependentConstraints_function_type applyMolDependentConstraints_function_value( &::SireSystem::Constraints::applyMolDependentConstraints );
-            
-            Constraints_exposer.def( 
-                "applyMolDependentConstraints"
-                , applyMolDependentConstraints_function_value
-                , ( bp::arg("system"), bp::arg("molnum") ) );
-        
-        }
-        { //::SireSystem::Constraints::applyMolDependentConstraints
-        
-            typedef void ( ::SireSystem::Constraints::*applyMolDependentConstraints_function_type )( ::SireSystem::System &,::SireMol::Molecules const & ) ;
-            applyMolDependentConstraints_function_type applyMolDependentConstraints_function_value( &::SireSystem::Constraints::applyMolDependentConstraints );
-            
-            Constraints_exposer.def( 
-                "applyMolDependentConstraints"
-                , applyMolDependentConstraints_function_value
-                , ( bp::arg("system"), bp::arg("molecules") ) );
-        
-        }
-        { //::SireSystem::Constraints::applyMoleculeConstraints
-        
-            typedef void ( ::SireSystem::Constraints::*applyMoleculeConstraints_function_type )( ::SireSystem::System & ) ;
-            applyMoleculeConstraints_function_type applyMoleculeConstraints_function_value( &::SireSystem::Constraints::applyMoleculeConstraints );
-            
-            Constraints_exposer.def( 
-                "applyMoleculeConstraints"
-                , applyMoleculeConstraints_function_value
-                , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::Constraints::applyMoleculeConstraints
-        
-            typedef void ( ::SireSystem::Constraints::*applyMoleculeConstraints_function_type )( ::SireSystem::System &,::SireMol::MolNum ) ;
-            applyMoleculeConstraints_function_type applyMoleculeConstraints_function_value( &::SireSystem::Constraints::applyMoleculeConstraints );
-            
-            Constraints_exposer.def( 
-                "applyMoleculeConstraints"
-                , applyMoleculeConstraints_function_value
-                , ( bp::arg("system"), bp::arg("molnum") ) );
-        
-        }
-        { //::SireSystem::Constraints::applyMoleculeConstraints
-        
-            typedef void ( ::SireSystem::Constraints::*applyMoleculeConstraints_function_type )( ::SireSystem::System &,::SireMol::Molecules const & ) ;
-            applyMoleculeConstraints_function_type applyMoleculeConstraints_function_value( &::SireSystem::Constraints::applyMoleculeConstraints );
-            
-            Constraints_exposer.def( 
-                "applyMoleculeConstraints"
-                , applyMoleculeConstraints_function_value
-                , ( bp::arg("system"), bp::arg("molecules") ) );
         
         }
         { //::SireSystem::Constraints::areSatisfied
@@ -159,17 +95,6 @@ void register_Constraints_class(){
                 , ( bp::arg("system") ) );
         
         }
-        { //::SireSystem::Constraints::assertMoleculeConstraintsAreSatisfied
-        
-            typedef void ( ::SireSystem::Constraints::*assertMoleculeConstraintsAreSatisfied_function_type )( ::SireSystem::System const & ) const;
-            assertMoleculeConstraintsAreSatisfied_function_type assertMoleculeConstraintsAreSatisfied_function_value( &::SireSystem::Constraints::assertMoleculeConstraintsAreSatisfied );
-            
-            Constraints_exposer.def( 
-                "assertMoleculeConstraintsAreSatisfied"
-                , assertMoleculeConstraintsAreSatisfied_function_value
-                , ( bp::arg("system") ) );
-        
-        }
         { //::SireSystem::Constraints::assertSatisfied
         
             typedef void ( ::SireSystem::Constraints::*assertSatisfied_function_type )( ::SireSystem::System const & ) const;
@@ -179,16 +104,6 @@ void register_Constraints_class(){
                 "assertSatisfied"
                 , assertSatisfied_function_value
                 , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::Constraints::componentConstraints
-        
-            typedef ::QVector< SireBase::PropPtr< SireSystem::Constraint > > ( ::SireSystem::Constraints::*componentConstraints_function_type )(  ) const;
-            componentConstraints_function_type componentConstraints_function_value( &::SireSystem::Constraints::componentConstraints );
-            
-            Constraints_exposer.def( 
-                "componentConstraints"
-                , componentConstraints_function_value );
         
         }
         { //::SireSystem::Constraints::constraints
@@ -209,47 +124,6 @@ void register_Constraints_class(){
             Constraints_exposer.def( 
                 "count"
                 , count_function_value );
-        
-        }
-        { //::SireSystem::Constraints::hasMolDependentConstraints
-        
-            typedef bool ( ::SireSystem::Constraints::*hasMolDependentConstraints_function_type )(  ) const;
-            hasMolDependentConstraints_function_type hasMolDependentConstraints_function_value( &::SireSystem::Constraints::hasMolDependentConstraints );
-            
-            Constraints_exposer.def( 
-                "hasMolDependentConstraints"
-                , hasMolDependentConstraints_function_value );
-        
-        }
-        { //::SireSystem::Constraints::hasMoleculeConstraints
-        
-            typedef bool ( ::SireSystem::Constraints::*hasMoleculeConstraints_function_type )(  ) const;
-            hasMoleculeConstraints_function_type hasMoleculeConstraints_function_value( &::SireSystem::Constraints::hasMoleculeConstraints );
-            
-            Constraints_exposer.def( 
-                "hasMoleculeConstraints"
-                , hasMoleculeConstraints_function_value );
-        
-        }
-        { //::SireSystem::Constraints::moleculeConstraints
-        
-            typedef ::QVector< SireBase::PropPtr< SireSystem::Constraint > > ( ::SireSystem::Constraints::*moleculeConstraints_function_type )(  ) const;
-            moleculeConstraints_function_type moleculeConstraints_function_value( &::SireSystem::Constraints::moleculeConstraints );
-            
-            Constraints_exposer.def( 
-                "moleculeConstraints"
-                , moleculeConstraints_function_value );
-        
-        }
-        { //::SireSystem::Constraints::moleculeConstraintsAreSatisfied
-        
-            typedef bool ( ::SireSystem::Constraints::*moleculeConstraintsAreSatisfied_function_type )( ::SireSystem::System const & ) const;
-            moleculeConstraintsAreSatisfied_function_type moleculeConstraintsAreSatisfied_function_value( &::SireSystem::Constraints::moleculeConstraintsAreSatisfied );
-            
-            Constraints_exposer.def( 
-                "moleculeConstraintsAreSatisfied"
-                , moleculeConstraintsAreSatisfied_function_value
-                , ( bp::arg("system") ) );
         
         }
         { //::SireSystem::Constraints::nConstraints

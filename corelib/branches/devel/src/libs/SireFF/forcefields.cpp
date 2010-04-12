@@ -1751,6 +1751,66 @@ SireUnits::Dimension::MolarEnergy ForceFields::energy(const Symbol &component)
     return comp->energy(ffields_by_idx, ffsymbols);
 }
 
+/** Return the energy or constant component associated with the symbol 'symbol'
+
+    \throw SireFF::missing_component
+*/
+double ForceFields::componentValue(const Symbol &component)
+{
+    FFSymbolPtr comp = ffsymbols.value(component);
+
+    if (comp.get() == 0)
+        throw SireFF::missing_component( QObject::tr(   
+            "There is no component of the energy represented by the "
+            "symbol %1. Available components are %2.")
+                .arg(component.toString(), Sire::toString(componentSymbols())),
+                    CODELOC );
+
+    if (comp->isConstant())
+        return comp->value(ffsymbols);
+    else
+        return comp->energy(ffields_by_idx, ffsymbols).value();
+    
+}
+
+/** Return the values of the energy or constant components whose
+    symbols are in 'symbols'
+    
+    \throw SireFF::missing_component
+*/
+Values ForceFields::componentValues(const QSet<Symbol> &components)
+{
+    Values vals;
+    
+    foreach (const Symbol &component, components)
+    {
+        vals.set( component, this->componentValue(component) );
+    }
+    
+    return vals;
+}
+
+/** Return the values of all energy and constant components */
+Values ForceFields::componentValues()
+{
+    Values vals;
+    vals.reserve(ffsymbols.count());
+    
+    QHashIterator<Symbol,FFSymbolPtr> it( ffsymbols );
+    
+    while (it.hasNext())
+    {
+        it.next();
+        
+        if (it.value()->isConstant())
+            vals.set(it.key(), it.value()->value(ffsymbols));
+        else
+            vals.set(it.key(), it.value()->energy(ffields_by_idx, ffsymbols).value());
+    }
+    
+    return vals;
+}
+
 /** Return the energy of this set of forcefields. This uses the supplied
     total energy function to calculate the energy, if one exists,
     or it just calculates the sum of the total energies of all of the

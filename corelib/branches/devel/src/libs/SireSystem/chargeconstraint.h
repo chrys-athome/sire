@@ -83,23 +83,14 @@ public:
 
     const PropertyMap& propertyMap() const;
 
-	const PropertyName coordsProperty() const;
-	const PropertyName chargeProperty() const;
-
-    bool involvesMolecule(MolNum molnum) const;
-    bool involvesMoleculesFrom(const Molecules &molecules) const;
-
 protected:    
     ChargeConstraint& operator=(const ChargeConstraint &other);
     
     bool operator==(const ChargeConstraint &other) const;
     bool operator!=(const ChargeConstraint &other) const;
 
-    bool changesGroup(const System &system) const;
+    void updateGroup(const System &system);
 
-    bool updateGroup(const System &system);
-
-private:
 	/** The molecule group that contains the molecules
         whose charges are being constrained */
     SireMol::MolGroupPtr molgroup;

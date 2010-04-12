@@ -18,6 +18,8 @@ namespace bp = boost::python;
 
 #include "SireVol/space.h"
 
+#include "delta.h"
+
 #include "distancecomponent.h"
 
 #include "distancecomponent.h"
@@ -35,8 +37,8 @@ void register_DoubleDistanceComponent_class(){
         DoubleDistanceComponent_exposer_t DoubleDistanceComponent_exposer = DoubleDistanceComponent_exposer_t( "DoubleDistanceComponent" );
         bp::scope DoubleDistanceComponent_scope( DoubleDistanceComponent_exposer );
         DoubleDistanceComponent_exposer.def( bp::init< >() );
-        DoubleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const & >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3") )) );
-        DoubleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const & >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("geometry_expression") )) );
+        DoubleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("map")=SireBase::PropertyMap() )) );
+        DoubleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("geometry_expression"), bp::arg("map")=SireBase::PropertyMap() )) );
         DoubleDistanceComponent_exposer.def( bp::init< SireSystem::DoubleDistanceComponent const & >(( bp::arg("other") )) );
         { //::SireSystem::DoubleDistanceComponent::nPoints
         
@@ -138,17 +140,6 @@ void register_DoubleDistanceComponent_class(){
                 "r23"
                 , r23_function_value
                 , bp::return_value_policy<bp::clone_const_reference>() );
-        
-        }
-        { //::SireSystem::DoubleDistanceComponent::setSpace
-        
-            typedef void ( ::SireSystem::DoubleDistanceComponent::*setSpace_function_type )( ::SireVol::Space const & ) ;
-            setSpace_function_type setSpace_function_value( &::SireSystem::DoubleDistanceComponent::setSpace );
-            
-            DoubleDistanceComponent_exposer.def( 
-                "setSpace"
-                , setSpace_function_value
-                , ( bp::arg("space") ) );
         
         }
         { //::SireSystem::DoubleDistanceComponent::toString

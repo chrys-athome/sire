@@ -96,6 +96,9 @@ using SireVol::Space;
 
 using SireMaths::Vector;
 
+class Point;
+typedef SireBase::PropPtr<Point> PointPtr;
+
 /** This is the base class of all Points. A Point is a class that 
     allows a view of a molecule (or molecules) to be turned
     into a 3D point. This 3D point can then be used within a restraint
@@ -158,7 +161,17 @@ public:
     
     static const VectorPoint& null();
 
+    virtual bool isExtraMoleculePoint() const=0;
+    virtual bool isIntraMoleculePoint() const=0;
+    virtual bool isInterMoleculePoint() const=0;
+
     static bool areIntraMoleculePoints(const Point &point0, const Point &point1);
+    static bool areIntraMoleculePoints(const Point &point0, const Point &point1,
+                                       const Point &point2);
+    static bool areIntraMoleculePoints(const Point &point0, const Point &point1,
+                                       const Point &point2, const Point &point3);
+                                       
+    static bool areIntraMoleculePoints(const QVector<PointPtr> &points);
     
 protected:
     Point(const Vector &point);
@@ -178,8 +191,6 @@ private:
     /** The 3D space in which this point is calculated and exists */
     SireVol::SpacePtr spce;
 };
-
-typedef SireBase::PropPtr<Point> PointPtr;
 
 /** This is a small class used to help convert different molecule
     views into a Point class in function signatures, e.g.
@@ -266,6 +277,10 @@ public:
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
 
+    bool isExtraMoleculePoint() const;
+    bool isIntraMoleculePoint() const;
+    bool isInterMoleculePoint() const;
+
 private:
     /** The actual atom! */
     Atom atm;
@@ -322,6 +337,10 @@ public:
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
+
+    bool isExtraMoleculePoint() const;
+    bool isIntraMoleculePoint() const;
+    bool isInterMoleculePoint() const;
 };
 
 /** This point returns the center of a view of a molecule, or group
@@ -376,6 +395,10 @@ public:
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
+
+    bool isExtraMoleculePoint() const;
+    bool isIntraMoleculePoint() const;
+    bool isInterMoleculePoint() const;
 
 private:
     bool recalculatePoint();
@@ -443,6 +466,10 @@ public:
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
 
+    bool isExtraMoleculePoint() const;
+    bool isIntraMoleculePoint() const;
+    bool isInterMoleculePoint() const;
+
 private:
     bool recalculatePoint();
 
@@ -508,6 +535,10 @@ public:
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
+
+    bool isExtraMoleculePoint() const;
+    bool isIntraMoleculePoint() const;
+    bool isInterMoleculePoint() const;
 
 private:
     bool recalculatePoint();

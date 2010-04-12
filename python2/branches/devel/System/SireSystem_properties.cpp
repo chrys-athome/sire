@@ -16,6 +16,7 @@
 #include "SireStream/shareddatastream.h"
 #include "SireSystem/errors.h"
 #include "constraint.h"
+#include "delta.h"
 #include "system.h"
 #include <QDebug>
 #include "constraint.h"

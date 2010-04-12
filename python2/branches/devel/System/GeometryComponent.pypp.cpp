@@ -14,6 +14,10 @@ namespace bp = boost::python;
 
 #include "SireSystem/system.h"
 
+#include "SireVol/cartesian.h"
+
+#include "delta.h"
+
 #include "geometrycomponent.h"
 
 #include "geometrycomponent.h"
@@ -28,39 +32,6 @@ void register_GeometryComponent_class(){
         typedef bp::class_< SireSystem::GeometryComponent, bp::bases< SireSystem::Constraint, SireBase::Property >, boost::noncopyable > GeometryComponent_exposer_t;
         GeometryComponent_exposer_t GeometryComponent_exposer = GeometryComponent_exposer_t( "GeometryComponent", bp::no_init );
         bp::scope GeometryComponent_scope( GeometryComponent_exposer );
-        { //::SireSystem::GeometryComponent::apply
-        
-            typedef bool ( ::SireSystem::GeometryComponent::*apply_function_type )( ::SireSystem::System & ) const;
-            apply_function_type apply_function_value( &::SireSystem::GeometryComponent::apply );
-            
-            GeometryComponent_exposer.def( 
-                "apply"
-                , apply_function_value
-                , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::GeometryComponent::apply
-        
-            typedef bool ( ::SireSystem::GeometryComponent::*apply_function_type )( ::SireSystem::System &,::SireMol::MolNum ) const;
-            apply_function_type apply_function_value( &::SireSystem::GeometryComponent::apply );
-            
-            GeometryComponent_exposer.def( 
-                "apply"
-                , apply_function_value
-                , ( bp::arg("system"), bp::arg("molnum") ) );
-        
-        }
-        { //::SireSystem::GeometryComponent::apply
-        
-            typedef bool ( ::SireSystem::GeometryComponent::*apply_function_type )( ::SireSystem::System &,::SireMol::Molecules const & ) const;
-            apply_function_type apply_function_value( &::SireSystem::GeometryComponent::apply );
-            
-            GeometryComponent_exposer.def( 
-                "apply"
-                , apply_function_value
-                , ( bp::arg("system"), bp::arg("molecules") ) );
-        
-        }
         { //::SireSystem::GeometryComponent::component
         
             typedef ::SireCAS::Symbol const & ( ::SireSystem::GeometryComponent::*component_function_type )(  ) const;
@@ -72,16 +43,6 @@ void register_GeometryComponent_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
-        { //::SireSystem::GeometryComponent::dependsOnMolecules
-        
-            typedef bool ( ::SireSystem::GeometryComponent::*dependsOnMolecules_function_type )(  ) const;
-            dependsOnMolecules_function_type dependsOnMolecules_function_value( &::SireSystem::GeometryComponent::dependsOnMolecules );
-            
-            GeometryComponent_exposer.def( 
-                "dependsOnMolecules"
-                , dependsOnMolecules_function_value );
-        
-        }
         { //::SireSystem::GeometryComponent::expression
         
             typedef ::SireCAS::Expression const & ( ::SireSystem::GeometryComponent::*expression_function_type )(  ) const;
@@ -91,39 +52,6 @@ void register_GeometryComponent_class(){
                 "expression"
                 , expression_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
-        
-        }
-        { //::SireSystem::GeometryComponent::isSatisfied
-        
-            typedef bool ( ::SireSystem::GeometryComponent::*isSatisfied_function_type )( ::SireSystem::System const & ) const;
-            isSatisfied_function_type isSatisfied_function_value( &::SireSystem::GeometryComponent::isSatisfied );
-            
-            GeometryComponent_exposer.def( 
-                "isSatisfied"
-                , isSatisfied_function_value
-                , ( bp::arg("system") ) );
-        
-        }
-        { //::SireSystem::GeometryComponent::setSpace
-        
-            typedef void ( ::SireSystem::GeometryComponent::*setSpace_function_type )( ::SireVol::Space const & ) ;
-            setSpace_function_type setSpace_function_value( &::SireSystem::GeometryComponent::setSpace );
-            
-            GeometryComponent_exposer.def( 
-                "setSpace"
-                , setSpace_function_value
-                , ( bp::arg("space") ) );
-        
-        }
-        { //::SireSystem::GeometryComponent::space
-        
-            typedef ::SireVol::Space const & ( ::SireSystem::GeometryComponent::*space_function_type )(  ) const;
-            space_function_type space_function_value( &::SireSystem::GeometryComponent::space );
-            
-            GeometryComponent_exposer.def( 
-                "space"
-                , space_function_value
-                , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
         { //::SireSystem::GeometryComponent::typeName

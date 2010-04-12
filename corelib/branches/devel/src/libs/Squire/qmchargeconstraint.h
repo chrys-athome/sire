@@ -48,6 +48,7 @@ namespace Squire
 
 using SireSystem::ChargeConstraint;
 using SireSystem::System;
+using SireSystem::Delta;
 
 using SireMol::MoleculeGroup;
 using SireMol::Molecules;
@@ -95,15 +96,15 @@ public:
     const QMChargeCalculator& chargeCalculator() const;
     
     void setChargeCalculator(const QMChargeCalculator &chargecalculator);
-    
-    Molecules update(const System &system);
-    Molecules update(const System &system, MolNum changed_mol);
-    Molecules update(const System &system, const Molecules &molecules);
 
-    bool isSatisfied(const System &system) const;
+protected:
+    void setSystem(const System &system);
+    bool mayChange(const Delta &delta, quint32 last_subversion) const;
+
+    bool fullApply(Delta &delta);
+    bool deltaApply(Delta &delta, quint32 last_subversion);
 
 private:
-    void _pvt_update(const System &system);
     Molecule _pvt_calculateCharges(const PartialMolecule &molecule) const;
 
     /** The charge calculator used to calculate the charges */
