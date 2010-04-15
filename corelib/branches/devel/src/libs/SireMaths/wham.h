@@ -29,6 +29,10 @@
 #ifndef SIREMATHS_WHAM_H
 #define SIREMATHS_WHAM_H
 
+#include "histogram.h"
+
+#include "SireCAS/symbol.h"
+
 #include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
@@ -43,6 +47,9 @@ QDataStream& operator>>(QDataStream&, SireMaths::WHAM&);
 
 namespace SireMaths
 {
+
+using SireCAS::Symbol;
+using SireCAS::Values;
 
 /** This class applies the WHAM equations
     (weighted histogram analysis method) to unbias
@@ -64,17 +71,15 @@ friend QDataStream& ::operator>>(QDataStream&, WHAM&);
 
 public:
     WHAM();
-    WHAM(const Symbol &coordinate, const Symbol &umbrella);
-    WHAM(const Symbol &coordinate, const Symbol &umbrella,
+    WHAM(const Symbol &coordinate);
+    WHAM(const Symbol &coordinate, SireUnits::Dimension::Temperature temperature);
+    
+    WHAM(const QVector<Symbol> &coordinates);
+    WHAM(const QVector<Symbol> &coordinates,
          SireUnits::Dimension::Temperature temperature);
     
-    WHAM(const QVector<Symbol> &coordinates, const Symbol &umbrella);
-    WHAM(const QVector<Symbol> &coordinates, const Symbol &umbrella,
-         SireUnits::Dimension::Temperature temperature);
-    
-    WHAM(const QSet<Symbol> &coordinates, const Symbol &umbrella);
-    WHAM(const QSet<Symbol> &coordinates, const Symbol &umbrella,
-         SireUnits::Dimension::Temperature temperature);
+    WHAM(const QSet<Symbol> &coordinates);
+    WHAM(const QSet<Symbol> &coordinates, SireUnits::Dimension::Temperature temperature);
          
     WHAM(const WHAM &other);
     
@@ -107,43 +112,82 @@ public:
     
     QVector<double> coordinateTrajectory() const;
     QVector<double> coordinateTrajectory(const Symbol &coordinate) const;
-    QVector<double> umbrellaTrajectory() const;
+    QVector<SireUnits::Dimension::Energy> umbrellaTrajectory() const;
     
     QVector<double> coordinateTrajectory(int i) const;
     QVector<double> coordinateTrajectory(const Symbol &coordinate, int i) const;
-    QVector<double> umbrellaTrajectory(int i) const;
+    QVector<SireUnits::Dimension::MolarEnergy> umbrellaTrajectory(int i) const;
     
     WHAM& add(const QVector<double> &coord_values,
-              const QVector<double> &umbrella_values,
+              const QVector<SireUnits::Dimension::MolarEnergy> &umbrella_values,
               bool new_trajectory=false);
 
-    WHAM& add(double coord_value, double umbrella_value,
+    WHAM& add(double coord_value, SireUnits::Dimension::MolarEnergy umbrella_value,
               bool new_trajectory=false);
 
     WHAM& add(const QHash< Symbol,QVector<double> > &coord_values,
-              const QVector<double> &umbrella_values,
+              const QVector<SireUnits::Dimension::MolarEnergy> &umbrella_values,
               bool new_trajectory=false);
 
-    WHAM& add(const Values &coord_values, double umbrella_value,
+    WHAM& add(const Values &coord_values, 
+              SireUnits::Dimension::MolarEnergy umbrella_value,
               bool new_trajectory=false);
 
-    WHAM& add(const WHAM &other);
+    WHAM& add(const WHAM &other, bool new_trajectory=false);
 
     QVector< QPair<QVector<double>,double> > solve(
                                     const QHash<Symbol,HistogramRange> &range) const;
     
-    QVector< QPair<double,double> > solve(const HistogramRange &range) const;
+    Histogram solve(const HistogramRange &range) const;
 
 private:
+    class Trajectory
+    {
+    public:
+        Trajectory();
+        Trajectory(double value);
+        Trajectory(SireUnits::Dimension::MolarEnergy value);
+        Trajectory(const QVector<double> &values);
+        Trajectory(const QVector<SireUnits::Dimension::MolarEnergy> &values);
+        Trajectory(const Trajectory &other);
+        
+        ~Trajectory();
+        
+        Trajectory& operator=(const Trajectory &other);
+        
+        bool operator==(const Trajectory &other) const;
+        bool operator!=(const Trajectory &other) const;
+        
+        void add(double value);
+        void add(const SireUnits::Dimension::MolarEnergy &value);
+        
+        void add(const QVector<double> &values);
+        void add(const QVector<SireUnits::Dimension::MolarEnergy> &values);
+        
+        QVector<double> toVector() const;
+        QVector<SireUnits::Dimension::MolarEnergy> toEnergyVector() const;
+        
+        quint64 count() const;
+        quint64 size() const;
+        
+        typedef QVector< QPair<quint64,double> >::const_iterator const_iterator;
+        
+        const_iterator constBegin() const;
+        const_iterator constEnd() const;
+        
+        /** The values, arranged in order, with the number of repeats */
+        QVector< QPair<quint64,double> > values;
+        
+        /** The total size of the trajectory */
+        quint64 sz;
+    };
+
     /** The trajectories for each reaction coordinate */
-    QVector< QHash< Symbol,QMap<quint64,double> > > coords_values;
+    QHash< Symbol,QVector<Trajectory> > coords_values;
     
     /** The value of the umbrella potential at each step
         for each of the trajectories */
-    QVector< QMap<quint64,double> > umbrella_values;
-    
-    /** The total number of steps in each trajectory */
-    QVector<quint64> nsteps;
+    QVector<Trajectory> umbrella_values;
     
     /** The symbols representing each of the reaction coordinates */
     QVector<Symbol> reaction_coords;
