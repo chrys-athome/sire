@@ -311,6 +311,7 @@ if __name__ == "__main__":
                 "Mol" : "SireMol",
                 "Move" : "SireMove",
                 "Siren" : "Siren",
+                "Soiree" : "Soiree",
                 "Spier" : "Spier",
                 "Squire" : "Squire",
                 "Stream" : "SireStream",

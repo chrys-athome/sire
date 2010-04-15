@@ -12,6 +12,7 @@ dirs = [ "Base", \
          "Maths", \
          "Mol", \
          "Move", \
+         "Soiree", \
          "Spier", \
          "Squire", \
          "Stream", \

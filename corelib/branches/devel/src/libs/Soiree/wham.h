@@ -26,27 +26,28 @@
   *
 \*********************************************/
 
-#ifndef SIREMATHS_WHAM_H
-#define SIREMATHS_WHAM_H
+#ifndef SOIREE_WHAM_H
+#define SOIREE_WHAM_H
 
-#include "histogram.h"
-
+#include "SireMaths/histogram.h"
 #include "SireCAS/symbol.h"
-
 #include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireMaths
+namespace Soiree
 {
 class WHAM;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMaths::WHAM&);
-QDataStream& operator>>(QDataStream&, SireMaths::WHAM&);
+QDataStream& operator<<(QDataStream&, const Soiree::WHAM&);
+QDataStream& operator>>(QDataStream&, Soiree::WHAM&);
 
-namespace SireMaths
+namespace Soiree
 {
+
+using SireMaths::HistogramRange;
+using SireMaths::Histogram;
 
 using SireCAS::Symbol;
 using SireCAS::Values;
@@ -63,7 +64,7 @@ using SireCAS::Values;
     
     @author Christopher Woods
 */
-class SIREMATHS_EXPORT WHAM
+class SOIREE_EXPORT WHAM
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const WHAM&);
@@ -198,9 +199,9 @@ private:
 
 }
 
-Q_DECLARE_METATYPE( SireMaths::WHAM )
+Q_DECLARE_METATYPE( Soiree::WHAM )
 
-SIRE_EXPOSE_CLASS( SireMaths::WHAM )
+SIRE_EXPOSE_CLASS( Soiree::WHAM )
 
 SIRE_END_HEADER
 

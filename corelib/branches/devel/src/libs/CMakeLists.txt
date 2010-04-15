@@ -23,6 +23,7 @@ set ( SUBDIRS SireBase
               SireUnits
               SireVol
               Siren
+#              Soiree
               Spier
               Squire
             )

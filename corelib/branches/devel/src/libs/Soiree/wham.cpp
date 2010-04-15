@@ -37,6 +37,7 @@
 
 #include "SireError/errors.h"
 
+using namespace Soiree;
 using namespace SireMaths;
 using namespace SireCAS;
 using namespace SireUnits::Dimension;
