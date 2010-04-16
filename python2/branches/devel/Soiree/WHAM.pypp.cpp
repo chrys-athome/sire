@@ -12,9 +12,15 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireID/index.h"
+
+#include "SireMaths/maths.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
+
+#include "SireUnits/temperature.h"
 
 #include "SireUnits/units.h"
 
@@ -44,62 +50,57 @@ void register_WHAM_class(){
         WHAM_exposer.def( bp::init< Soiree::WHAM const & >(( bp::arg("other") )) );
         { //::Soiree::WHAM::add
         
-            typedef ::Soiree::WHAM & ( ::Soiree::WHAM::*add_function_type )( ::QVector< double > const &,::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > const &,bool ) ;
+            typedef void ( ::Soiree::WHAM::*add_function_type )( ::QVector< double > const &,::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > const &,bool ) ;
             add_function_type add_function_value( &::Soiree::WHAM::add );
             
             WHAM_exposer.def( 
                 "add"
                 , add_function_value
-                , ( bp::arg("coord_values"), bp::arg("umbrella_values"), bp::arg("new_trajectory")=(bool)(false) )
-                    /* undefined call policies */ );
+                , ( bp::arg("coord_values"), bp::arg("umbrella_values"), bp::arg("new_trajectory")=(bool)(false) ) );
         
         }
         { //::Soiree::WHAM::add
         
-            typedef ::Soiree::WHAM & ( ::Soiree::WHAM::*add_function_type )( double,::SireUnits::Dimension::MolarEnergy,bool ) ;
+            typedef void ( ::Soiree::WHAM::*add_function_type )( double,::SireUnits::Dimension::MolarEnergy,bool ) ;
             add_function_type add_function_value( &::Soiree::WHAM::add );
             
             WHAM_exposer.def( 
                 "add"
                 , add_function_value
-                , ( bp::arg("coord_value"), bp::arg("umbrella_value"), bp::arg("new_trajectory")=(bool)(false) )
-                    /* undefined call policies */ );
+                , ( bp::arg("coord_value"), bp::arg("umbrella_value"), bp::arg("new_trajectory")=(bool)(false) ) );
         
         }
         { //::Soiree::WHAM::add
         
-            typedef ::Soiree::WHAM & ( ::Soiree::WHAM::*add_function_type )( ::QHash< SireCAS::Symbol, QVector< double > > const &,::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > const &,bool ) ;
+            typedef void ( ::Soiree::WHAM::*add_function_type )( ::QHash< SireCAS::Symbol, QVector< double > > const &,::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > const &,bool ) ;
             add_function_type add_function_value( &::Soiree::WHAM::add );
             
             WHAM_exposer.def( 
                 "add"
                 , add_function_value
-                , ( bp::arg("coord_values"), bp::arg("umbrella_values"), bp::arg("new_trajectory")=(bool)(false) )
-                    /* undefined call policies */ );
+                , ( bp::arg("coord_values"), bp::arg("umbrella_values"), bp::arg("new_trajectory")=(bool)(false) ) );
         
         }
         { //::Soiree::WHAM::add
         
-            typedef ::Soiree::WHAM & ( ::Soiree::WHAM::*add_function_type )( ::SireCAS::Values const &,::SireUnits::Dimension::MolarEnergy,bool ) ;
+            typedef void ( ::Soiree::WHAM::*add_function_type )( ::SireCAS::Values const &,::SireUnits::Dimension::MolarEnergy,bool ) ;
             add_function_type add_function_value( &::Soiree::WHAM::add );
             
             WHAM_exposer.def( 
                 "add"
                 , add_function_value
-                , ( bp::arg("coord_values"), bp::arg("umbrella_value"), bp::arg("new_trajectory")=(bool)(false) )
-                    /* undefined call policies */ );
+                , ( bp::arg("coord_values"), bp::arg("umbrella_value"), bp::arg("new_trajectory")=(bool)(false) ) );
         
         }
         { //::Soiree::WHAM::add
         
-            typedef ::Soiree::WHAM & ( ::Soiree::WHAM::*add_function_type )( ::Soiree::WHAM const &,bool ) ;
+            typedef void ( ::Soiree::WHAM::*add_function_type )( ::Soiree::WHAM const &,bool ) ;
             add_function_type add_function_value( &::Soiree::WHAM::add );
             
             WHAM_exposer.def( 
                 "add"
                 , add_function_value
-                , ( bp::arg("other"), bp::arg("new_trajectory")=(bool)(false) )
-                    /* undefined call policies */ );
+                , ( bp::arg("other"), bp::arg("new_trajectory")=(bool)(false) ) );
         
         }
         { //::Soiree::WHAM::coordinateTrajectory
@@ -225,24 +226,24 @@ void register_WHAM_class(){
         }
         { //::Soiree::WHAM::solve
         
-            typedef ::QVector< QPair< QVector< double >, double > > ( ::Soiree::WHAM::*solve_function_type )( ::QHash< SireCAS::Symbol, SireMaths::HistogramRange > const & ) const;
+            typedef ::QVector< QPair< QVector< double >, double > > ( ::Soiree::WHAM::*solve_function_type )( ::QHash< SireCAS::Symbol, SireMaths::HistogramRange > const &,double,int ) const;
             solve_function_type solve_function_value( &::Soiree::WHAM::solve );
             
             WHAM_exposer.def( 
                 "solve"
                 , solve_function_value
-                , ( bp::arg("range") ) );
+                , ( bp::arg("range"), bp::arg("tolerance")=1.00000000000000003643219731549774157916554706559963960899e-10, bp::arg("maxiter")=(int)(100000) ) );
         
         }
         { //::Soiree::WHAM::solve
         
-            typedef ::SireMaths::Histogram ( ::Soiree::WHAM::*solve_function_type )( ::SireMaths::HistogramRange const & ) const;
+            typedef ::SireMaths::Histogram ( ::Soiree::WHAM::*solve_function_type )( ::SireMaths::HistogramRange const &,double,int ) const;
             solve_function_type solve_function_value( &::Soiree::WHAM::solve );
             
             WHAM_exposer.def( 
                 "solve"
                 , solve_function_value
-                , ( bp::arg("range") ) );
+                , ( bp::arg("range"), bp::arg("tolerance")=1.00000000000000003643219731549774157916554706559963960899e-10, bp::arg("maxiter")=(int)(100000) ) );
         
         }
         { //::Soiree::WHAM::temperature
@@ -267,7 +268,7 @@ void register_WHAM_class(){
         }
         { //::Soiree::WHAM::umbrellaTrajectory
         
-            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > ( ::Soiree::WHAM::*umbrellaTrajectory_function_type )(  ) const;
+            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > ( ::Soiree::WHAM::*umbrellaTrajectory_function_type )(  ) const;
             umbrellaTrajectory_function_type umbrellaTrajectory_function_value( &::Soiree::WHAM::umbrellaTrajectory );
             
             WHAM_exposer.def( 

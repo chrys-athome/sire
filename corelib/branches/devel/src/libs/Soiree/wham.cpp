@@ -28,9 +28,14 @@
 
 #include "wham.h"
 
+#include "SireMaths/maths.h"
+
+#include "SireID/index.h"
+
 #include "SireCAS/values.h"
 
 #include "SireUnits/units.h"
+#include "SireUnits/temperature.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -39,6 +44,7 @@
 
 using namespace Soiree;
 using namespace SireMaths;
+using namespace SireID;
 using namespace SireCAS;
 using namespace SireUnits::Dimension;
 using namespace SireUnits;
@@ -46,37 +52,88 @@ using namespace SireStream;
 
 static const RegisterMetaType<WHAM> r_wham;
 
-WHAM::Trajectory::Trajectory() : sz(0)
+namespace Soiree
+{
+namespace detail
+{
+    class Trajectory
+    {
+    public:
+        Trajectory();
+        Trajectory(double value);
+        Trajectory(SireUnits::Dimension::MolarEnergy value);
+        Trajectory(const QVector<double> &values);
+        Trajectory(const QVector<SireUnits::Dimension::MolarEnergy> &values);
+        Trajectory(const Trajectory &other);
+        
+        ~Trajectory();
+        
+        Trajectory& operator=(const Trajectory &other);
+        
+        bool operator==(const Trajectory &other) const;
+        bool operator!=(const Trajectory &other) const;
+        
+        void add(double value);
+        void add(const SireUnits::Dimension::MolarEnergy &value);
+        
+        void add(const QVector<double> &values);
+        void add(const QVector<SireUnits::Dimension::MolarEnergy> &values);
+        
+        void add(const Trajectory &other);
+        
+        QVector<double> toVector() const;
+        QVector<SireUnits::Dimension::MolarEnergy> toEnergyVector() const;
+        
+        quint64 count() const;
+        quint64 size() const;
+        
+        typedef QVector< QPair<quint64,double> >::const_iterator const_iterator;
+        
+        const_iterator constBegin() const;
+        const_iterator constEnd() const;
+        
+        /** The values, arranged in order, with the number of repeats */
+        QVector< QPair<quint64,double> > values;
+        
+        /** The total size of the trajectory */
+        quint64 sz;
+    };
+} // end of namespace detail
+} // end of namespace Soiree
+
+using namespace Soiree::detail;
+
+Trajectory::Trajectory() : sz(0)
 {}
 
-WHAM::Trajectory::Trajectory(double value) : sz(0)
+Trajectory::Trajectory(double value) : sz(0)
 {
     this->add(value);
 }
 
-WHAM::Trajectory::Trajectory(MolarEnergy value) : sz(0)
+Trajectory::Trajectory(MolarEnergy value) : sz(0)
 {
     this->add(value);
 }
 
-WHAM::Trajectory::Trajectory(const QVector<double> &values) : sz(0)
+Trajectory::Trajectory(const QVector<double> &values) : sz(0)
 {
     this->add(values);
 }
 
-WHAM::Trajectory::Trajectory(const QVector<MolarEnergy> &values) : sz(0)
+Trajectory::Trajectory(const QVector<MolarEnergy> &values) : sz(0)
 {
     this->add(values);
 }
 
-WHAM::Trajectory::Trajectory(const Trajectory &other) 
+Trajectory::Trajectory(const Trajectory &other) 
      : values(other.values), sz(other.sz)
 {}
 
-WHAM::Trajectory::~Trajectory()
+Trajectory::~Trajectory()
 {}
 
-WHAM::Trajectory& WHAM::Trajectory::operator=(const Trajectory &other)
+Trajectory& Trajectory::operator=(const Trajectory &other)
 {
     if (this != &other)
     {
@@ -87,17 +144,17 @@ WHAM::Trajectory& WHAM::Trajectory::operator=(const Trajectory &other)
     return *this;
 }
 
-bool WHAM::Trajectory::operator==(const Trajectory &other) const
+bool Trajectory::operator==(const Trajectory &other) const
 {
     return sz == other.sz and values == other.values;
 }
 
-bool WHAM::Trajectory::operator!=(const Trajectory &other) const
+bool Trajectory::operator!=(const Trajectory &other) const
 {
     return sz != other.sz or values != other.values;
 }
 
-void WHAM::Trajectory::add(double value)
+void Trajectory::add(double value)
 {
     if (values.isEmpty() or values.at(values.count()-1).second != value)
     {
@@ -111,12 +168,12 @@ void WHAM::Trajectory::add(double value)
     sz += 1;
 }
 
-void WHAM::Trajectory::add(const MolarEnergy &value)
+void Trajectory::add(const MolarEnergy &value)
 {
     this->add( value.value() );
 }
 
-void WHAM::Trajectory::add(const QVector<double> &vals)
+void Trajectory::add(const QVector<double> &vals)
 {
     for (QVector<double>::const_iterator it = vals.constBegin();
          it != vals.constEnd();
@@ -135,7 +192,7 @@ void WHAM::Trajectory::add(const QVector<double> &vals)
     sz += vals.count();
 }
 
-void WHAM::Trajectory::add(const QVector<MolarEnergy> &vals)
+void Trajectory::add(const QVector<MolarEnergy> &vals)
 {
     for (QVector<MolarEnergy>::const_iterator it = vals.constBegin();
          it != vals.constEnd();
@@ -154,7 +211,49 @@ void WHAM::Trajectory::add(const QVector<MolarEnergy> &vals)
     sz += vals.count();
 }
 
-QVector<double> WHAM::Trajectory::toVector() const
+void Trajectory::add(const Trajectory &other)
+{
+    if (this == &other)
+    {
+        this->add( Trajectory(other) );
+        return;
+    }
+    
+    if (sz == 0)
+    {
+        this->operator=(other);
+        return;
+    }
+    else if (other.sz == 0)
+        return;
+        
+        QVector< QPair<quint64,double> > values;
+
+    bool first = true;
+
+    values.reserve( values.count() + other.values.count() );
+
+    for (QVector< QPair<quint64,double> >::const_iterator it = values.constBegin();
+         it != values.constEnd();
+         ++it)
+    {
+        if (first)
+        {
+            first = false; 
+            
+            if (it->second == values.last().second)
+                values.last().first += it->first;
+            else
+                values.append( *it );
+        }
+        else
+            values.append(*it);
+    }
+    
+    sz += other.sz;
+}
+
+QVector<double> Trajectory::toVector() const
 {
     QVector<double> vec( sz );
     double *vecdata = vec.data();
@@ -175,7 +274,7 @@ QVector<double> WHAM::Trajectory::toVector() const
     return vec;
 }
 
-QVector<MolarEnergy> WHAM::Trajectory::toEnergyVector() const
+QVector<MolarEnergy> Trajectory::toEnergyVector() const
 {
     QVector<MolarEnergy> vec( sz );
     MolarEnergy *vecdata = vec.data();
@@ -196,33 +295,33 @@ QVector<MolarEnergy> WHAM::Trajectory::toEnergyVector() const
     return vec;
 }
 
-quint64 WHAM::Trajectory::count() const
+quint64 Trajectory::count() const
 {
     return sz;
 }
 
-quint64 WHAM::Trajectory::size() const
+quint64 Trajectory::size() const
 {
     return sz;
 }
 
-WHAM::Trajectory::const_iterator WHAM::Trajectory::constBegin() const
+Trajectory::const_iterator Trajectory::constBegin() const
 {
     return values.constBegin();
 }
 
-WHAM::Trajectory::const_iterator WHAM::Trajectory::constEnd() const
+Trajectory::const_iterator Trajectory::constEnd() const
 {
     return values.constEnd();
 }
 
-QDataStream& operator<<(QDataStream &ds, const WHAM::Trajectory &traj)
+QDataStream& operator<<(QDataStream &ds, const Trajectory &traj)
 {
     ds << traj.values << traj.sz;
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, WHAM::Trajectory &traj)
+QDataStream& operator>>(QDataStream &ds, Trajectory &traj)
 {
     ds >> traj.values >> traj.sz;
     return ds;
@@ -340,14 +439,14 @@ WHAM::WHAM(const QVector<Symbol> &coordinates, Temperature temperature)
     The umbrella simulation will be assumed to have been run at
     a temperature of 25 C */
 WHAM::WHAM(const QSet<Symbol> &coordinates)
-     : reaction_coords( coordinates.toVector() ), temp(25 * celsius)
+     : reaction_coords( coordinates.toList().toVector() ), temp(25 * celsius)
 {}
 
 /** Construct to perform a WHAM analysis for an N-dimensional umbrella
     simulation along the reaction coordinates in 'coordinates'.
     The umbrella simulation will have been run at the specified temperature */
 WHAM::WHAM(const QSet<Symbol> &coordinates, Temperature temperature)
-     : reaction_coords( coordinates.toVector() ), temp(temperature)
+     : reaction_coords( coordinates.toList().toVector() ), temp(temperature)
 {}
 
 /** Copy constructor */
@@ -405,6 +504,19 @@ bool WHAM::operator!=(const WHAM &other) const
     return not WHAM::operator==(other);
 }
 
+WHAM& WHAM::operator+=(const WHAM &other)
+{
+    this->add(other);
+    return *this;
+}
+
+WHAM WHAM::operator+(const WHAM &other) const
+{
+    WHAM ret(*this);
+    ret += other;
+    return ret;
+}
+
 /** Return the number of dimensions (reaction coordinates) of the 
     umbrella, and thus output PMF */
 int WHAM::nReactionCoordinates() const
@@ -456,7 +568,7 @@ int WHAM::nTrajectories() const
 */
 quint64 WHAM::nSteps(int i) const
 {
-    return umbrella_values.at( Index(i).map( umbrella_values.count() ).count();
+    return umbrella_values.at( Index(i).map( umbrella_values.count() ) ).count();
 }
 
 /** Return the temperature of the trajectories (needed for the WHAM analysis) */
@@ -535,7 +647,7 @@ QVector<double> WHAM::coordinateTrajectory(int i) const
 
     QVector<Trajectory> traj = coords_values.constBegin().value();
 
-    return traj.at( Index(i).map(traj.count()) ).last().toVector();
+    return traj.at( Index(i).map(traj.count()) ).toVector();
 }
 
 /** Return the ith coordinate trajectory for the reaction coordinate
@@ -558,14 +670,14 @@ QVector<double> WHAM::coordinateTrajectory(const Symbol &coordinate, int i) cons
 
     const QVector<Trajectory> traj = coords_values.value(coordinate);
     
-    return traj.at( Index(i).map(traj.count()) ).last().toVector();
+    return traj.at( Index(i).map(traj.count()) ).toVector();
 }
 
 /** Return the ith umbrella potential trajectory */
 QVector<MolarEnergy> WHAM::umbrellaTrajectory(int i) const
 {
     return umbrella_values.at( Index(i).map(umbrella_values.count()) )
-                          .last().toEnergyVector();
+                          .toEnergyVector();
 }
 
 /** Add the passed reaction coordinate trajectory with associated umbrella
@@ -576,9 +688,9 @@ QVector<MolarEnergy> WHAM::umbrellaTrajectory(int i) const
     
     \throw SireError::incompatible_error
 */
-WHAM& WHAM::add(const QVector<double> &coords,
-                const QVector<MolarEnergy> &umbrella,
-                bool new_trajectory)
+void WHAM::add(const QVector<double> &coords,
+               const QVector<MolarEnergy> &umbrella,
+               bool new_trajectory)
 {
     if (reaction_coords.count() != 1)
         throw SireError::incompatible_error( QObject::tr(
@@ -605,8 +717,6 @@ WHAM& WHAM::add(const QVector<double> &coords,
         coords_values[reaction_coords.at(0)].last().add(coords);
         umbrella_values.last().add(umbrella);
     }
-    
-    return *this;
 }
 
 /** Add the passed reaction coordinate value with corresponding 
@@ -618,7 +728,7 @@ WHAM& WHAM::add(const QVector<double> &coords,
     
     \throw SireError::incompatible_error
 */    
-WHAM& WHAM::add(double coords_value, MolarEnergy umbrella_value, bool new_trajectory)
+void WHAM::add(double coords_value, MolarEnergy umbrella_value, bool new_trajectory)
 {
     if (reaction_coords.count() != 1)
         throw SireError::incompatible_error( QObject::tr(
@@ -638,8 +748,6 @@ WHAM& WHAM::add(double coords_value, MolarEnergy umbrella_value, bool new_trajec
         coords_values[reaction_coords.at(0)].last().add(coords_value);
         umbrella_values.last().add(umbrella_value);
     }
-    
-    return *this;
 }
 
 /** Add the passed reaction coordinate values together with the 
@@ -654,12 +762,12 @@ WHAM& WHAM::add(double coords_value, MolarEnergy umbrella_value, bool new_trajec
     \throw SireError::invalid_arg
     \throw SireError::incompatible_error
 */
-WHAM& WHAM::add(const QHash< Symbol,QVector<double> > &rc,
-                const QVector<MolarEnergy> &umbrella,
-                bool new_trajectory)
+void WHAM::add(const QHash< Symbol,QVector<double> > &rc,
+               const QVector<MolarEnergy> &umbrella,
+               bool new_trajectory)
 {
     if (rc.isEmpty() and umbrella.isEmpty())
-        return *this;
+        return;
         
     //make sure that the reaction coordinates are compatible
     if (rc.count() != reaction_coords.count())
@@ -748,8 +856,6 @@ WHAM& WHAM::add(const QHash< Symbol,QVector<double> > &rc,
         
         umbrella_values.last().add(umbrella);
     }
-    
-    return *this;
 }
 
 /** Add the passed reaction coordinate values together with the 
@@ -763,7 +869,7 @@ WHAM& WHAM::add(const QHash< Symbol,QVector<double> > &rc,
     \throw SireError::invalid_arg
     \throw SireError::incompatible_error
 */
-WHAM& WHAM::add(const Values &rc, MolarEnergy umbrella, bool new_trajectory)
+void WHAM::add(const Values &rc, MolarEnergy umbrella, bool new_trajectory)
 {
     //make sure that the reaction coordinates are compatible
     if (rc.count() != reaction_coords.count())
@@ -824,8 +930,6 @@ WHAM& WHAM::add(const Values &rc, MolarEnergy umbrella, bool new_trajectory)
         
         umbrella_values.last().add(umbrella);
     }
-    
-    return *this;
 }
 
 /** Add the contents of another WHAM analysis onto this analysis. This
@@ -838,15 +942,15 @@ WHAM& WHAM::add(const Values &rc, MolarEnergy umbrella, bool new_trajectory)
     
     \throw SireError::incompatible_error
 */
-WHAM& WHAM::add(const WHAM &other, bool new_trajectory)
+void WHAM::add(const WHAM &other, bool new_trajectory)
 {
     if (other.reaction_coords.isEmpty())
-        return *this;
+        return;
     
     else if (reaction_coords.isEmpty())
     {
         this->operator=(other);
-        return *this;
+        return;
     }
     
     if (temp != other.temp)
@@ -882,13 +986,13 @@ WHAM& WHAM::add(const WHAM &other, bool new_trajectory)
     
     if (other.umbrella_values.isEmpty())
     {
-        return *this;
+        return;
     }
-    else (umbrella_values.isEmpty())
+    else if (umbrella_values.isEmpty())
     {
         umbrella_values = other.umbrella_values;
         coords_values = other.coords_values;
-        return *this;
+        return;
     }
     
     if (new_trajectory)
@@ -938,26 +1042,206 @@ WHAM& WHAM::add(const WHAM &other, bool new_trajectory)
             }
         }
     }
-    
-    return *this;
 }
 
 /** Solve the (possibly multi-dimensional) WHAM equations, returning
     the potential of mean force along the reaction coordinate(s) according
     to the passed histogram ranges */
 QVector< QPair<QVector<double>,double> > WHAM::solve(
-                                const QHash<Symbol,HistogramRange> &range) const
+                                const QHash<Symbol,HistogramRange> &range,
+                                double tolerance, int maxiter) const
 {
     return QVector< QPair<QVector<double>,double> >();
 }                                
 
-/** Solve the single dimensional WHAM equations, returning the potential
-    of mean force along the reaction coordinate according to the passed
+static void addToHistogram(const Trajectory &trajectory, Histogram &histogram)
+{
+    for (Trajectory::const_iterator it = trajectory.constBegin();
+         it != trajectory.constEnd();
+         ++it)
+    {
+        histogram.accumulate(it->second, it->first);
+    }
+}
+
+/** Solve the single dimensional WHAM equations, returning the unbiased
+    probability distribution along the reaction coordinate according to the passed
     histogram range
     
     \throw SireError::incompatible_error
 */
-Histogram WHAM::solve(const HistogramRange &range) const
+Histogram WHAM::solve(const HistogramRange &range, double tolerance, int maxiter) const
 {
-    return Histogram();
+    if (reaction_coords.count() != 1)
+        throw SireError::incompatible_error( QObject::tr(
+            "This function is only compatible with an umbrella composed "
+            "from a single reaction coordinate. The number of reaction "
+            "coordinates for this WHAM analysis is %1 (%2).")
+                .arg(reaction_coords.count())
+                .arg(Sire::toString(reaction_coords)), CODELOC );
+
+
+    if (umbrella_values.isEmpty())
+        return Histogram(range);
+    
+    else if (range.nBins() == 0)
+        return Histogram();
+
+    //populate the initial histograms
+    int ntraj = umbrella_values.count();
+    int nbins = range.nBins();
+    
+    //for the definition of the variables, see J Chem Phys, 111, 8048, 1999
+    Histogram p(range, 1.0);
+    Histogram beta(range);
+    QVector<Histogram> n(ntraj, Histogram(range));
+    Histogram n_sum(range);
+    QVector<Histogram> c(ntraj, Histogram(range));
+    QVector<double> f(ntraj);
+    QVector<double> N(ntraj);
+
+    //populate n
+    Histogram *n_data = n.data();
+    double *n_sum_data = n_sum.data();
+    const Trajectory *coords_data = coords_values.constBegin().value().constData();
+    
+    for (int i=0; i<ntraj; ++i)
+    {
+        addToHistogram(coords_data[i], n_data[i]);
+        N[i] = n_data[i].sumOverBins();
+        
+        const double *ni_data = n_data[i].constData();
+        
+        for (int j=0; j<nbins; ++j)
+        {
+            n_sum_data[j] += ni_data[j];
+        }
+    }
+
+    //now calculate the average umbrella potential sampled in each bin
+    // - we will use this to calculate CK{sim,bin} = exp( -U{sim,bin} / kT )
+    {
+        QVector<double> avgumb(nbins);
+        QVector<int> avgcount(nbins);
+        
+        double *avgumb_data = avgumb.data();
+        int *avgcount_data = avgcount.data();
+        
+        const double one_over_kT = 1 / (temp * k_boltz);
+        
+        for (int i=0; i<ntraj; ++i)
+        {
+            for (int j=0; j<nbins; ++j)
+            {
+                avgumb_data[j] = 0;
+                avgcount_data[j] = 0;
+            }
+            
+            const QVector<double> umbrella = umbrella_values.at(i).toVector();
+            const QVector<double> coords = coords_values.constBegin()
+                                                        .value().at(i).toVector();
+            
+            BOOST_ASSERT(umbrella.count() == coords.count());
+            
+            int nsteps = umbrella.count();
+            const double *umbrella_data = umbrella.constData();
+            const double *coords_data = coords.constData();
+            
+            for (int j=0; j<nsteps; ++j)
+            {
+                int bin = range.bin(coords_data[j]);
+                
+                if (bin != -1)
+                {
+                    avgumb_data[bin] += umbrella_data[j];
+                    avgcount_data[bin] += 1;
+                }
+            }
+            
+            double *c_data = c[i].data();
+            
+            for (int j=0; j<nbins; ++j)
+            {
+                c_data[j] = exp( -one_over_kT * (avgumb_data[j]/avgcount_data[j]) );
+            }
+        }
+    }
+
+    //WHAM iteration
+    bool converged = false;
+    int niter = 0;
+    
+    while (not converged)
+    {
+        niter += 1;
+        
+        if (maxiter > 0 and niter > maxiter)
+            throw SireMaths::math_error( QObject::tr(
+                    "The WHAM equations have failed to converge."), CODELOC );
+    
+        //get f{sim} = 1 / SUM_OVER_BINS(c{sim,bin} * p{bin})
+        for (int i=0; i<ntraj; ++i)
+        {
+            double fsum = 0;
+            
+            const double *p_data = p.constData();
+            const double *c_data = c[i].constData();
+            
+            for (int j=0; j<nbins; ++j)
+            {
+                fsum += c_data[j] * p_data[j];
+            }
+            
+            if (fsum == 0)
+                f[i] = 0;
+            else
+                f[i] = 1 / fsum;
+        }
+        
+        //get beta{bin} = 1 / SUM_OVER_SIMS(N{sim}*f{sim}*c{sim,bin})
+        {
+            double *beta_data = beta.data();
+            
+            for (int i=0; i<nbins; ++i)
+            {
+                const double *N_data = N.constData();
+                const double *f_data = f.constData();
+                
+                double beta_sum = 0;
+                
+                for (int j=0; j<ntraj; ++j)
+                {
+                    const double *c_data = c.constData()[j].constData();
+                    beta_sum += N_data[j] * f_data[j] * c_data[i];
+                }
+                
+                if (beta_sum == 0)
+                    beta_data[i] = 0;
+                else
+                    beta_data[i] = 1 / beta_sum;
+            }
+        }
+        
+        //get p{bin} = beta{bin} * SUM_OVER_SIMS(n{sim,bin})
+        {
+            const double *beta_data = beta.constData();
+            const double *n_sum_data = n_sum.constData();
+            double *p_data = p.data();
+
+            double convergence = 0;
+
+            for (int i=0; i<nbins; ++i)
+            {
+                double newP0 = beta_data[i] * n_sum_data[i];
+                convergence += pow_2(p_data[i] - newP0);
+                p_data[i] = newP0;
+            }
+            
+            convergence /= nbins;
+            
+            converged = (convergence < tolerance);
+        }
+    }
+
+    return p;
 }

@@ -439,6 +439,12 @@ Histogram::Histogram(const HistogramRange &range)
           : HistogramRange(range), binvals( ::create(range) )
 {}
 
+/** Construct a histogram using the passed range, initially assigning
+    all bins with the value 'value' */
+Histogram::Histogram(const HistogramRange &range, double value)
+          : HistogramRange(range), binvals(range.nBins(), value)
+{}
+
 /** Construct a histogram using the passed range and values 
 
     \throw SireError::incompatible_error
@@ -497,6 +503,12 @@ HistogramValue Histogram::operator[](int i) const
 }
 
 /** Return a raw pointer to the values in this histogram */
+double* Histogram::data()
+{
+    return binvals.data();
+}
+
+/** Return a raw pointer to the values in this histogram */
 const double* Histogram::data() const
 {
     return binvals.constData();
@@ -506,6 +518,30 @@ const double* Histogram::data() const
 const double* Histogram::constData() const
 {
     return binvals.constData();
+}
+
+/** Return the sum over all bins */
+double Histogram::sumOverBins() const
+{
+    double sum = 0;
+    
+    for (QVector<double>::const_iterator it = binvals.constData();
+         it != binvals.constEnd();
+         ++it)
+    {
+        sum += *it;
+    }
+    
+    return sum;
+}
+
+/** Add 'weight' to the histogram bin 'i'
+    
+    \throw SireError::invalid_index
+*/
+void Histogram::add(int i, double weight)
+{
+    binvals.data()[ Index(i).map(binvals.count()) ] += weight;
 }
 
 /** Accumulate the value 'value' (with a weight of 'weight') */

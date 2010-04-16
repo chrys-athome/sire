@@ -191,6 +191,8 @@ public:
 
     Histogram(const HistogramRange &range);
 
+    Histogram(const HistogramRange &range, double value);
+
     Histogram(const HistogramRange &range,
               const QVector<double> &values);
     
@@ -215,14 +217,19 @@ public:
     QString toString() const;
     
     HistogramValue operator[](int i) const;
-    
+
+    double* data();
     const double* data() const;
     const double* constData() const;
+    
+    void add(int i, double weight);
     
     void accumulate(double value);
     void accumulate(double value, double weight);
     
     void accumulate(const Histogram &other);
+
+    double sumOverBins() const;
 
 private:
     /** The values in each of the bins */
