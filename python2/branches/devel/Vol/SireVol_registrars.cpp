@@ -7,6 +7,7 @@
 #include "combinespaces.h"
 #include "combinedspace.h"
 #include "cartesian.h"
+#include "grid.h"
 #include "coordgroup.h"
 #include "aabox.h"
 
@@ -19,6 +20,8 @@ void register_SireVol_objects()
     ObjectRegistry::registerConverterFor< SireVol::CombineSpaces >();
     ObjectRegistry::registerConverterFor< SireVol::CombinedSpace >();
     ObjectRegistry::registerConverterFor< SireVol::Cartesian >();
+    ObjectRegistry::registerConverterFor< SireVol::NullGrid >();
+    ObjectRegistry::registerConverterFor< SireVol::RegularGrid >();
     ObjectRegistry::registerConverterFor< SireVol::CoordGroup >();
     ObjectRegistry::registerConverterFor< SireVol::CoordGroupEditor >();
     ObjectRegistry::registerConverterFor< SireVol::CoordGroupArray >();

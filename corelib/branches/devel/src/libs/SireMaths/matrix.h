@@ -142,11 +142,8 @@ public:
     static Matrix identity();
     static Matrix zero();
 
-    bool operator==(const Matrix& m);
-    bool operator!=(const Matrix& m);
-
-    friend bool operator==(const Matrix &m1, const Matrix &m2);
-    friend bool operator!=(const Matrix &m1, const Matrix &m2);
+    bool operator==(const Matrix& m) const;
+    bool operator!=(const Matrix& m) const;
 
     Matrix& operator+=(const Matrix &m);
     Matrix& operator-=(const Matrix &m);

@@ -64,6 +64,9 @@ QDataStream& operator>>(QDataStream &ds, SireMove::ZMatrixCoordsLine&);
 namespace SireMol
 {
 class PartialMolecule;
+class BondID;
+class AngleID;
+class DihedralID;
 }
 
 namespace SireMove
@@ -77,6 +80,9 @@ using SireUnits::Dimension::Angle;
 using SireMol::AtomCoords;
 using SireMol::AtomIdx;
 using SireMol::AtomID;
+using SireMol::BondID;
+using SireMol::AngleID;
+using SireMol::DihedralID;
 using SireMol::PartialMolecule;
 using SireMol::Molecule;
 using SireMol::MoleculeInfoData;
@@ -235,22 +241,43 @@ public:
                  const AtomID &angle) const;
     int getIndex(const AtomID &atom, const AtomID &bond,
                  const AtomID &angle, const AtomID &dihedral) const;
+
+    int getIndex(const BondID &bond) const;
+    int getIndex(const AngleID &angle) const;
+    int getIndex(const DihedralID &dihedral) const;
     
     QString toString() const;
     
     const SireMol::MoleculeInfoData& info() const;
     
     bool contains(const AtomID &atom) const;
+    bool contains(const AtomID &atom, const AtomID &bond) const;
+    bool contains(const AtomID &atom, const AtomID &bond,
+                  const AtomID &angle) const;
+    bool contains(const AtomID &atom, const AtomID &bond,
+                  const AtomID &angle, const AtomID &dihedral) const;
+    
+    bool contains(const BondID &bond) const;
+    bool contains(const AngleID &angle) const;
+    bool contains(const DihedralID &dihedral) const;
     
     void add(const AtomID &atom, const AtomID &bond, 
              const AtomID &angle, const AtomID &dihedral);
+    
+    void add(const DihedralID &dihedral);
     
     void remove(const AtomID &atom);
     void remove(const AtomID &atom, const AtomID &bond,
                 const AtomID &angle, const AtomID &dihedral);
 
+    void remove(const DihedralID &dihedral);
+
     void add(const ZMatrixLine &zmatline);
     void remove(const ZMatrixLine &zmatline);
+    
+    void setDelta(const BondID &bond, const Length &delta);
+    void setDelta(const AngleID &angle, const Angle &delta);
+    void setDelta(const DihedralID &dihedral, const Angle &delta);
     
     void setBondDelta(const AtomID &atom, const Length &delta);
     void setAngleDelta(const AtomID &atom, const Angle &delta);
@@ -265,6 +292,10 @@ public:
     void setDihedralDelta(const AtomID &atom, const AtomID &bond,
                           const AtomID &angle, const AtomID &dihedral,
                           const Angle &delta);
+
+    Length delta(const BondID &bond) const;
+    Angle delta(const AngleID &angle) const;
+    Angle delta(const DihedralID &dihedral) const;
 
     Length bondDelta(const AtomID &atom) const;
     Angle angleDelta(const AtomID &atom) const;
@@ -344,6 +375,10 @@ public:
                  const AtomID &angle) const;
     int getIndex(const AtomID &atom, const AtomID &bond,
                  const AtomID &angle, const AtomID &dihedral) const;
+
+    int getIndex(const BondID &bond) const;
+    int getIndex(const AngleID &angle) const;
+    int getIndex(const DihedralID &dihedral) const;
     
     QString toString() const;
 
@@ -353,8 +388,20 @@ public:
     
     bool contains(const AtomID &atom) const;
 
+    bool contains(const AtomID &atom, const AtomID &bond) const;
+    bool contains(const AtomID &atom, const AtomID &bond, 
+                  const AtomID &angle) const;
+    bool contains(const AtomID &atom, const AtomID &bond,
+                  const AtomID &angle, const AtomID &dihedral) const;
+
+    bool contains(const BondID &bond) const;
+    bool contains(const AngleID &angle) const;
+    bool contains(const DihedralID &dihedral) const;
+
     void add(const AtomID &atom, const AtomID &bond, 
              const AtomID &angle, const AtomID &dihedral);
+
+    void add(const DihedralID &dihedral);
 
     void add(const AtomID &atom,
              const Length &bondlength, const AtomID &bond,
@@ -364,6 +411,8 @@ public:
     void remove(const AtomID &atom);
     void remove(const AtomID &atom, const AtomID &bond,
                 const AtomID &angle, const AtomID &dihedral);
+
+    void remove(const DihedralID &dihedral);
 
     void add(const ZMatrixLine &zmatline);
     void remove(const ZMatrixLine &zmatline);
@@ -375,6 +424,10 @@ public:
     const AtomCoords& toCartesian() const;
     
     const QVector<Vector>& internalCoordinates() const;
+    
+    void move(const BondID &bond, const Length &delta);
+    void move(const AngleID &angle, const Angle &delta);
+    void move(const DihedralID &dihedral, const Angle &delta);
     
     void moveBond(const AtomID &atom, const Length &delta);
     void moveAngle(const AtomID &atom, const Angle &delta);
@@ -389,6 +442,10 @@ public:
     void moveDihedral(const AtomID &atom0, const AtomID &atom1,
                       const AtomID &atom2, const AtomID &atom3,
                       const Angle &delta);
+
+    void set(const BondID &bond, const Length &length);
+    void set(const AngleID &angle, const Angle &size);
+    void set(const DihedralID &dihedral, const Angle &size);
 
     void setBond(const AtomID &atom, const Length &length);
     void setAngle(const AtomID &atom, const Angle &size);
@@ -408,11 +465,19 @@ public:
     Angle angleSize(const AtomID &atom) const;
     Angle dihedralSize(const AtomID &atom) const;
     
+    Length length(const BondID &bond) const;
+    Angle size(const AngleID &angle) const;
+    Angle size(const DihedralID &dihedral) const;
+    
     Length bondLength(const AtomID &atom, const AtomID &bond) const;
     Angle angleSize(const AtomID &atom, const AtomID &bond,  
                     const AtomID &angle) const;
     Angle dihedralSize(const AtomID &atom, const AtomID &bond,
                        const AtomID &angle, const AtomID &dihedral) const;
+    
+    void setDelta(const BondID &bond, const Length &delta);
+    void setDelta(const AngleID &angle, const Angle &delta);
+    void setDelta(const DihedralID &dihedral, const Angle &delta);
     
     void setBondDelta(const AtomID &atom, const Length &delta);
     void setAngleDelta(const AtomID &atom, const Angle &delta);
@@ -427,6 +492,10 @@ public:
     void setDihedralDelta(const AtomID &atom, const AtomID &bond,
                           const AtomID &angle, const AtomID &dihedral,
                           const Angle &delta);
+    
+    Length delta(const BondID &bond) const;
+    Angle delta(const AngleID &angle) const;
+    Angle delta(const DihedralID &angle) const;
 
     Length bondDelta(const AtomID &atom) const;
     Angle angleDelta(const AtomID &atom) const;

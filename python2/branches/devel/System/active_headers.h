@@ -20,6 +20,7 @@
 #include "monitormonitor.h"
 #include "monitorname.h"
 #include "perturbationconstraint.h"
+#include "polarisecharges.h"
 #include "rdfmonitor.h"
 #include "spacewrapper.h"
 #include "sysid.h"

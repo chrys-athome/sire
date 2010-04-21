@@ -17,6 +17,7 @@ set ( SIREVOL_HEADERS
       combinespaces.h
       coordgroup.h
       errors.h
+      grid.h
       periodicbox.h
       space.h
     )
@@ -32,6 +33,7 @@ set ( SIREVOL_SOURCES
       combinespaces.cpp
       coordgroup.cpp
       errors.cpp
+      grid.cpp
       periodicbox.cpp
       space.cpp
     

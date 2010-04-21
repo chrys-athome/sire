@@ -106,6 +106,12 @@ public:
     bool operator==(const MolForceTable &other) const;
     bool operator!=(const MolForceTable &other) const;
 
+    MolForceTable& operator+=(const MolForceTable &other);
+    MolForceTable& operator-=(const MolForceTable &other);
+    
+    MolForceTable operator+(const MolForceTable &other) const;
+    MolForceTable operator-(const MolForceTable &other) const;
+
     static const char* typeName();
     
     const char* what() const
@@ -136,6 +142,9 @@ public:
 
     bool add(const AtomSelection &selected_atoms, const Vector &force);
     bool subtract(const AtomSelection &selected_atoms, const Vector &force);
+
+    bool add(const MolForceTable &other);
+    bool subtract(const MolForceTable &other);
 
 private:
     void assertCompatibleWith(const AtomSelection &selection) const;
@@ -199,6 +208,12 @@ public:
 
     bool operator==(const ForceTable &other) const;
     bool operator!=(const ForceTable &other) const;
+
+    ForceTable& operator+=(const ForceTable &other);
+    ForceTable& operator-=(const ForceTable &other);
+    
+    ForceTable operator+(const ForceTable &other) const;
+    ForceTable operator-(const ForceTable &other) const;
 
     bool containsTable(MolNum molnum) const;
 

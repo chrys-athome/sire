@@ -1162,7 +1162,10 @@ Histogram WHAM::solve(const HistogramRange &range, double tolerance, int maxiter
             
             for (int j=0; j<nbins; ++j)
             {
-                c_data[j] = exp( -one_over_kT * (avgumb_data[j]/avgcount_data[j]) );
+                if (avgcount_data[j] != 0)
+                    c_data[j] = exp( -one_over_kT * (avgumb_data[j]/avgcount_data[j]) );
+                else
+                    c_data[j] = 1;
             }
         }
     }
@@ -1242,6 +1245,9 @@ Histogram WHAM::solve(const HistogramRange &range, double tolerance, int maxiter
             converged = (convergence < tolerance);
         }
     }
+
+    //normalise the histogram
+    p.normalise();
 
     return p;
 }

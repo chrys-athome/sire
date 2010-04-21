@@ -11,6 +11,7 @@
 #include "ffidx.h"
 #include "ffmolgroup.h"
 #include "ffname.h"
+#include "fieldtable.h"
 #include "forcefield.h"
 #include "forcefields.h"
 #include "forcetable.h"

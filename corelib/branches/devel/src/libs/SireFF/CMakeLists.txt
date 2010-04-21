@@ -18,6 +18,7 @@ set ( SIREFF_HEADERS
       ffidx.h
       ffmolgroup.h
       ffname.h
+      fieldtable.h
       forcefield.h
       forcefields.h
       forcetable.h
@@ -32,6 +33,7 @@ set ( SIREFF_HEADERS
       intra2b3dff.hpp
       intra2b2g3dff.hpp
       point.h
+      potentialtable.h
     )
 
 set ( SIREFF_DETAIL_HEADERS
@@ -54,12 +56,14 @@ set ( SIREFF_SOURCES
       ffid.cpp
       ffidentifier.cpp
       ffmolgroup.cpp
+      fieldtable.cpp
       forcefield.cpp
       forcefields.cpp
       forcetable.cpp
       g1ff.cpp
       g2ff.cpp
       point.cpp
+      potentialtable.cpp
 
       detail/atomiccoords3d.cpp
       detail/ffmolecules.cpp

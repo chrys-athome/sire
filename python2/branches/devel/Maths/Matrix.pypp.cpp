@@ -378,14 +378,12 @@ void register_Matrix_class(){
         Matrix_exposer.staticmethod( "identity" );
         Matrix_exposer.staticmethod( "typeName" );
         Matrix_exposer.staticmethod( "zero" );
-        Matrix_exposer.def( bp::self != bp::self );
         Matrix_exposer.def( bp::other< double >() * bp::self );
         Matrix_exposer.def( bp::self * bp::other< double >() );
         Matrix_exposer.def( bp::self * bp::self );
         Matrix_exposer.def( bp::self * bp::other< SireMaths::Vector >() );
         Matrix_exposer.def( bp::self + bp::self );
         Matrix_exposer.def( bp::self - bp::self );
-        Matrix_exposer.def( bp::self == bp::self );
         Matrix_exposer.def( "__copy__", &__copy__);
         Matrix_exposer.def( "__deepcopy__", &__copy__);
         Matrix_exposer.def( "clone", &__copy__);

@@ -30,6 +30,7 @@ set ( SIRESYSTEM_HEADERS
       monitormonitor.h
       monitorname.h
       perturbationconstraint.h
+      polarisecharges.h
       rdfmonitor.h
       spacewrapper.h
       sysid.h
@@ -63,6 +64,7 @@ set ( SIRESYSTEM_SOURCES
       monitoridentifier.cpp
       monitormonitor.cpp
       perturbationconstraint.cpp
+      polarisecharges.cpp
       rdfmonitor.cpp
       spacewrapper.cpp
       sysid.cpp

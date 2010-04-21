@@ -25,7 +25,13 @@
 
 #include "CoordGroupEditor.pypp.hpp"
 
+#include "Grid.pypp.hpp"
+
+#include "NullGrid.pypp.hpp"
+
 #include "PeriodicBox.pypp.hpp"
+
+#include "RegularGrid.pypp.hpp"
 
 #include "Space.pypp.hpp"
 
@@ -68,10 +74,16 @@ BOOST_PYTHON_MODULE(_Vol){
 
     register_CoordGroupEditor_class();
 
+    register_Grid_class();
+
+    register_NullGrid_class();
+
+    register_PeriodicBox_class();
+
     register_SireVol_properties();
 
     bp::implicitly_convertible< QVector<SireMaths::Vector>, SireVol::CoordGroup >();
 
-    register_PeriodicBox_class();
+    register_RegularGrid_class();
 }
 

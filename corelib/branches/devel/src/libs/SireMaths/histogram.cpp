@@ -600,11 +600,42 @@ void Histogram::accumulate(const Histogram &other)
     }
 }
 
+HistogramValue Histogram::at(int i) const
+{
+    return this->operator[](i);
+}
+
 /** Return a string representation */
 QString Histogram::toString() const
 {
-    return QObject::tr("Histogram[ %1 <= x < %2 : nBins() == %3 ]")
-                    .arg( minimum() ).arg( maximum() ).arg( nBins() );
+    QStringList lines;
+    lines.append( QString("#Histogram[ %1 <= x < %2 : nBins() == %3 ]")
+                    .arg( minimum() ).arg( maximum() ).arg( nBins() ) );
+
+    for (int i=0; i<nBins(); ++i)
+    {
+        HistogramValue bin = this->at(i);
+        
+        lines.append( QString("%1  %2").arg(bin.middle()).arg(bin.value()) );
+    }
+    
+    return lines.join("\n");
+}
+
+/** Normalise this histogram (scale so that the sum of bins is 1) */
+void Histogram::normalise()
+{
+    double sum = this->sumOverBins();
+    
+    if (sum != 0)
+    {
+        for (QVector<double>::iterator it = binvals.begin();
+             it != binvals.end();
+             ++it)
+        {
+            *it /= sum;
+        }
+    }
 }
 
 const char* Histogram::typeName()

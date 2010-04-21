@@ -35,6 +35,7 @@ void register_Histogram_class(){
         Histogram_exposer.def( bp::init< double, double, bp::optional< int > >(( bp::arg("min"), bp::arg("max"), bp::arg("nbins")=(int)(101) )) );
         Histogram_exposer.def( bp::init< double, double, double >(( bp::arg("min"), bp::arg("max"), bp::arg("binwidth") )) );
         Histogram_exposer.def( bp::init< SireMaths::HistogramRange const & >(( bp::arg("range") )) );
+        Histogram_exposer.def( bp::init< SireMaths::HistogramRange const &, double >(( bp::arg("range"), bp::arg("value") )) );
         Histogram_exposer.def( bp::init< SireMaths::HistogramRange const &, QVector< double > const & >(( bp::arg("range"), bp::arg("values") )) );
         Histogram_exposer.def( bp::init< SireMaths::Histogram const & >(( bp::arg("other") )) );
         { //::SireMaths::Histogram::accumulate
@@ -70,6 +71,38 @@ void register_Histogram_class(){
                 , ( bp::arg("other") ) );
         
         }
+        { //::SireMaths::Histogram::add
+        
+            typedef void ( ::SireMaths::Histogram::*add_function_type )( int,double ) ;
+            add_function_type add_function_value( &::SireMaths::Histogram::add );
+            
+            Histogram_exposer.def( 
+                "add"
+                , add_function_value
+                , ( bp::arg("i"), bp::arg("weight") ) );
+        
+        }
+        { //::SireMaths::Histogram::at
+        
+            typedef ::SireMaths::HistogramValue ( ::SireMaths::Histogram::*at_function_type )( int ) const;
+            at_function_type at_function_value( &::SireMaths::Histogram::at );
+            
+            Histogram_exposer.def( 
+                "at"
+                , at_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMaths::Histogram::normalise
+        
+            typedef void ( ::SireMaths::Histogram::*normalise_function_type )(  ) ;
+            normalise_function_type normalise_function_value( &::SireMaths::Histogram::normalise );
+            
+            Histogram_exposer.def( 
+                "normalise"
+                , normalise_function_value );
+        
+        }
         Histogram_exposer.def( bp::self != bp::self );
         { //::SireMaths::Histogram::operator=
         
@@ -93,6 +126,16 @@ void register_Histogram_class(){
                 "__getitem__"
                 , __getitem___function_value
                 , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMaths::Histogram::sumOverBins
+        
+            typedef double ( ::SireMaths::Histogram::*sumOverBins_function_type )(  ) const;
+            sumOverBins_function_type sumOverBins_function_value( &::SireMaths::Histogram::sumOverBins );
+            
+            Histogram_exposer.def( 
+                "sumOverBins"
+                , sumOverBins_function_value );
         
         }
         { //::SireMaths::Histogram::toString

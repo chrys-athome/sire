@@ -218,6 +218,8 @@ public:
     
     HistogramValue operator[](int i) const;
 
+    HistogramValue at(int i) const;
+
     double* data();
     const double* data() const;
     const double* constData() const;
@@ -230,6 +232,8 @@ public:
     void accumulate(const Histogram &other);
 
     double sumOverBins() const;
+
+    void normalise();
 
 private:
     /** The values in each of the bins */

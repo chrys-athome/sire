@@ -294,7 +294,7 @@ bool Matrix::isIdentity() const
 
 }
 
-bool Matrix::operator==(const Matrix& m)
+bool Matrix::operator==(const Matrix& m) const
 {
     for (int i=0; i<9; ++i)
     {
@@ -305,7 +305,7 @@ bool Matrix::operator==(const Matrix& m)
     return true;
 }
 
-bool Matrix::operator!=(const Matrix& m)
+bool Matrix::operator!=(const Matrix& m) const
 {
     return not this->operator==(m);
 }
