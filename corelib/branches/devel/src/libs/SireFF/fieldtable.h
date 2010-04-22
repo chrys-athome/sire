@@ -47,11 +47,15 @@ SIRE_BEGIN_HEADER
 namespace SireFF
 {
 class MolFieldTable;
+class GridFieldTable;
 class FieldTable;
 }
 
 QDataStream& operator<<(QDataStream&, const SireFF::MolFieldTable&);
 QDataStream& operator>>(QDataStream&, SireFF::MolFieldTable&);
+
+QDataStream& operator<<(QDataStream&, const SireFF::GridFieldTable&);
+QDataStream& operator>>(QDataStream&, SireFF::GridFieldTable&);
 
 QDataStream& operator<<(QDataStream&, const SireFF::FieldTable&);
 QDataStream& operator>>(QDataStream&, SireFF::FieldTable&);
@@ -75,6 +79,7 @@ using SireMol::AtomSelection;
 using SireMaths::Vector;
 
 using SireVol::Grid;
+using SireVol::GridPtr;
 
 /** This class holds the field at the points of all of the atoms of 
     selected CutGroups in a molecule. The MolFieldTable is used
@@ -107,6 +112,7 @@ public:
     ~MolFieldTable();
     
     MolFieldTable& operator=(const MolFieldTable &other);
+    MolFieldTable& operator=(const Vector &field);
 
     bool operator==(const MolFieldTable &other) const;
     bool operator!=(const MolFieldTable &other) const;
@@ -116,6 +122,18 @@ public:
     
     MolFieldTable operator+(const MolFieldTable &other) const;
     MolFieldTable operator-(const MolFieldTable &other) const;
+
+    MolFieldTable& operator+=(const Vector &field);
+    MolFieldTable& operator-=(const Vector &field);
+    
+    MolFieldTable operator+(const Vector &field) const;
+    MolFieldTable operator-(const Vector &field) const;
+
+    MolFieldTable& operator*=(double value);
+    MolFieldTable& operator/=(double value);
+
+    MolFieldTable operator*(double value) const;
+    MolFieldTable operator/(double value) const;
 
     static const char* typeName();
     
@@ -151,6 +169,14 @@ public:
     void add(const MolFieldTable &other);
     void subtract(const MolFieldTable &other);
 
+    void add(const Vector &field);
+    void subtract(const Vector &field);
+    
+    void setAll(const Vector &value);
+    
+    void multiply(double value);
+    void divide(double value);
+
 private:
     void assertCompatibleWith(const AtomSelection &selection) const;
 
@@ -185,6 +211,7 @@ public:
     ~GridFieldTable();
     
     GridFieldTable& operator=(const GridFieldTable &other);
+    GridFieldTable& operator=(const Vector &field);
     
     bool operator==(const GridFieldTable &other) const;
     bool operator!=(const GridFieldTable &other) const;
@@ -194,6 +221,18 @@ public:
     
     GridFieldTable operator+(const GridFieldTable &other) const;
     GridFieldTable operator-(const GridFieldTable &other) const;
+    
+    GridFieldTable& operator+=(const Vector &field);
+    GridFieldTable& operator-=(const Vector &field);
+    
+    GridFieldTable operator+(const Vector &field) const;
+    GridFieldTable operator-(const Vector &field) const;
+    
+    GridFieldTable& operator*=(double value);
+    GridFieldTable& operator/=(double value);
+    
+    GridFieldTable operator*(double value) const;
+    GridFieldTable operator/(double value) const;
     
     static const char* typeName();
     
@@ -210,6 +249,14 @@ public:
     
     void add(const GridFieldTable &other);
     void subtract(const GridFieldTable &other);
+    
+    void add(const Vector &field);
+    void subtract(const Vector &field);
+    
+    void setAll(const Vector &field);
+    
+    void multiply(double value);
+    void divide(double value);
 };
 
 /** A FieldTable is a workspace within which all of the fields acting 
@@ -262,6 +309,7 @@ public:
     }
 
     FieldTable& operator=(const FieldTable &other);
+    FieldTable& operator=(const Vector &field);
 
     bool operator==(const FieldTable &other) const;
     bool operator!=(const FieldTable &other) const;
@@ -271,6 +319,18 @@ public:
     
     FieldTable operator+(const FieldTable &other) const;
     FieldTable operator-(const FieldTable &other) const;
+
+    FieldTable& operator+=(const Vector &field);
+    FieldTable& operator-=(const Vector &field);
+    
+    FieldTable operator+(const Vector &field) const;
+    FieldTable operator-(const Vector &field) const;
+    
+    FieldTable& operator*=(double value);
+    FieldTable& operator/=(double value);
+    
+    FieldTable operator*(double value) const;
+    FieldTable operator/(double value) const;
 
     bool containsTable(MolNum molnum) const;
     bool containsGrid(const Grid &grid) const;
@@ -310,6 +370,17 @@ public:
 
     void assertContainsTableFor(MolNum molnum) const;
     void assertContainsTableFor(const Grid &grid) const;
+    
+    void add(const FieldTable &other);
+    void subtract(const FieldTable &other);
+    
+    void add(const Vector &field);
+    void subtract(const Vector &field);
+    
+    void setAll(const Vector &field);
+    
+    void multiply(double value);
+    void divide(double value);
 
 private:
     /** All of the molecule tables */
@@ -412,7 +483,7 @@ inline MolFieldTable& FieldTable::getTable(MolNum molnum)
     if (it == molnum_to_idx.constEnd())
         this->assertContainsTableFor(molnum);
         
-    return tables_by_idx.data()[ it.value() ];
+    return moltables_by_idx.data()[ it.value() ];
 }
 
 /** Return the table for the molecule with number 'molnum'
@@ -426,7 +497,7 @@ inline const MolFieldTable& FieldTable::getTable(MolNum molnum) const
     if (it == molnum_to_idx.constEnd())
         this->assertContainsTableFor(molnum);
         
-    return tables_by_idx.constData()[ it.value() ];
+    return moltables_by_idx.constData()[ it.value() ];
 }
 
 /** Return the table for the molecule with number 'molnum'
@@ -441,7 +512,7 @@ inline const MolFieldTable& FieldTable::constGetTable(MolNum molnum) const
 /** Return the number of molecule tables in this object */
 inline int FieldTable::nMolecules() const
 {
-    return tables_by_idx.count();
+    return moltables_by_idx.count();
 }
 
 /** Return the number of grid tables in this object */
@@ -467,24 +538,36 @@ inline QList<MolNum> FieldTable::molNums() const
 /** Return a raw point to the array of field tables for each molecule */
 inline MolFieldTable* FieldTable::moleculeData()
 {
-    return tables_by_idx.data();
+    return moltables_by_idx.data();
 }
 
 /** Return a raw point to the array of field tables for each molecule */
 inline const MolFieldTable* FieldTable::moleculeData() const
 {
-    return tables_by_idx.constData();
+    return moltables_by_idx.constData();
 }
 
 /** Return a raw point to the array of field tables for each molecule */
 inline const MolFieldTable* FieldTable::constMoleculeData() const
 {
-    return tables_by_idx.constData();
+    return moltables_by_idx.constData();
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
+
+SireFF::MolFieldTable operator+(const SireMaths::Vector &force,
+                                const SireFF::MolFieldTable &table);
+
+
+SireFF::MolFieldTable operator*(double value, const SireFF::MolFieldTable &table);
+
+SireFF::FieldTable operator+(const SireMaths::Vector &force,
+                             const SireFF::FieldTable &table);
+
+
+SireFF::FieldTable operator*(double value, const SireFF::FieldTable &table);
 
 Q_DECLARE_METATYPE(SireFF::FieldTable);
 Q_DECLARE_METATYPE(SireFF::MolFieldTable);

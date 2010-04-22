@@ -102,6 +102,7 @@ public:
     ~MolForceTable();
     
     MolForceTable& operator=(const MolForceTable &other);
+    MolForceTable& operator=(const Vector &force);
 
     bool operator==(const MolForceTable &other) const;
     bool operator!=(const MolForceTable &other) const;
@@ -111,6 +112,18 @@ public:
     
     MolForceTable operator+(const MolForceTable &other) const;
     MolForceTable operator-(const MolForceTable &other) const;
+
+    MolForceTable& operator+=(const Vector &force);
+    MolForceTable& operator-=(const Vector &force);
+    
+    MolForceTable operator+(const Vector &force) const;
+    MolForceTable operator-(const Vector &force) const;
+    
+    MolForceTable& operator*=(double value);
+    MolForceTable& operator/=(double value);
+    
+    MolForceTable operator*(double value) const;
+    MolForceTable operator/(double value) const;
 
     static const char* typeName();
     
@@ -145,6 +158,14 @@ public:
 
     bool add(const MolForceTable &other);
     bool subtract(const MolForceTable &other);
+    
+    void add(const Vector &force);
+    void subtract(const Vector &force);
+    
+    void setAll(const Vector &force);
+    
+    void multiply(double value);
+    void divide(double value);
 
 private:
     void assertCompatibleWith(const AtomSelection &selection) const;
@@ -205,6 +226,7 @@ public:
     }
 
     ForceTable& operator=(const ForceTable &other);
+    ForceTable& operator=(const Vector &force);
 
     bool operator==(const ForceTable &other) const;
     bool operator!=(const ForceTable &other) const;
@@ -215,6 +237,18 @@ public:
     ForceTable operator+(const ForceTable &other) const;
     ForceTable operator-(const ForceTable &other) const;
 
+    ForceTable& operator+=(const Vector &force);
+    ForceTable& operator-=(const Vector &force);
+    
+    ForceTable operator+(const Vector &force) const;
+    ForceTable operator-(const Vector &force) const;
+    
+    ForceTable& operator*=(double value);
+    ForceTable& operator/=(double value);
+    
+    ForceTable operator*(double value) const;
+    ForceTable operator/(double value) const;
+    
     bool containsTable(MolNum molnum) const;
 
     void initialiseTables();
@@ -240,6 +274,17 @@ public:
     const MolForceTable* constData() const;
 
     void assertContainsTableFor(MolNum molnum) const;
+
+    void add(const ForceTable &other);
+    void subtract(const ForceTable &other);
+    
+    void add(const Vector &force);
+    void subtract(const Vector &force);
+    
+    void setAll(const Vector &force);
+    
+    void multiply(double value);
+    void divide(double value);
 
 private:
     /** All of the tables */
@@ -406,6 +451,18 @@ inline const MolForceTable* ForceTable::constData() const
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
+
+SireFF::MolForceTable operator+(const SireMaths::Vector &force,
+                                const SireFF::MolForceTable &table);
+
+
+SireFF::MolForceTable operator*(double value, const SireFF::MolForceTable &table);
+
+SireFF::ForceTable operator+(const SireMaths::Vector &force,
+                             const SireFF::ForceTable &table);
+
+
+SireFF::ForceTable operator*(double value, const SireFF::ForceTable &table);
 
 Q_DECLARE_METATYPE(SireFF::ForceTable);
 Q_DECLARE_METATYPE(SireFF::MolForceTable);
