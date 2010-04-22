@@ -34,6 +34,8 @@
 
 #include "SireMol/mover.hpp"
 
+#include "SireID/index.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -44,6 +46,7 @@ using namespace SireFF;
 using namespace SireMol;
 using namespace SireMaths;
 using namespace SireBase;
+using namespace SireID;
 using namespace SireStream;
 
 /////////
@@ -157,6 +160,13 @@ MolFieldTable& MolFieldTable::operator=(const MolFieldTable &other)
     return *this;
 }
 
+/** Set the field at all points equal to 'field' */
+MolFieldTable& MolFieldTable::operator=(const Vector &field)
+{
+    this->setAll(field);
+    return *this;
+}
+
 /** Comparison operator */
 bool MolFieldTable::operator==(const MolFieldTable &other) const
 {
@@ -200,6 +210,85 @@ MolFieldTable MolFieldTable::operator-(const MolFieldTable &other) const
     MolFieldTable ret(*this);
     ret -= other;
     return *this;
+}
+
+/** Add 'field' to all of the points in this table */
+MolFieldTable& MolFieldTable::operator+=(const Vector &field)
+{
+    this->add(field);
+    return *this;
+}
+
+/** Subtract 'field' from all of the points in this table */
+MolFieldTable& MolFieldTable::operator-=(const Vector &field)
+{
+    this->subtract(field);
+    return *this;
+}
+
+/** Return a table that has 'field' added to all of the points */
+MolFieldTable MolFieldTable::operator+(const Vector &field) const
+{
+    MolFieldTable ret(*this);
+    ret += field;
+    return ret;
+}
+
+MolFieldTable SIREFF_EXPORT operator+(const Vector &field, const MolFieldTable &table)
+{
+    return table + field;
+}
+
+/** Return a table that has 'field' subtracted from all of the points */
+MolFieldTable MolFieldTable::operator-(const Vector &field) const
+{
+    MolFieldTable ret(*this);
+    ret -= field;
+    return ret;
+}
+
+/** Multiply the field at all points by the scalar 'value' */
+MolFieldTable& MolFieldTable::operator*=(double value)
+{
+    this->multiply(value);
+    return *this;
+}
+
+/** Divide the field at all points by the scalar 'value' */
+MolFieldTable& MolFieldTable::operator/=(double value)
+{
+    this->divide(value);
+    return *this;
+}
+
+/** Return the field that has been multiplied by 'value' */
+MolFieldTable MolFieldTable::operator*(double value) const
+{
+    MolFieldTable ret(*this);
+    ret *= value;
+    return ret;
+}
+
+/** Return the field that has been multiplied by 'value' */
+MolFieldTable SIREFF_EXPORT operator*(double value, const MolFieldTable &table)
+{
+    return table * value;
+}
+
+/** Return the field that has been divided by 'value' */
+MolFieldTable MolFieldTable::operator/(double value) const
+{
+    MolFieldTable ret(*this);
+    ret /= value;
+    return ret;
+}
+
+/** Return the negative of this table */
+MolFieldTable MolFieldTable::operator-() const
+{
+    MolFieldTable ret(*this);
+    ret *= -1;
+    return ret;
 }
 
 const char* MolFieldTable::typeName()
@@ -363,7 +452,7 @@ QVector<Vector> MolFieldTable::toVector(const AtomSelection &selection) const
     
     \throw SireError::invalid_index
 */
-bool MolForceTable::add(const CGAtomIdx &cgatomidx, const Vector &field)
+bool MolFieldTable::add(const CGAtomIdx &cgatomidx, const Vector &field)
 {
     CGIdx cgidx( cgatomidx.cutGroup().map(this->nCutGroups()) );
     
@@ -396,7 +485,7 @@ bool MolForceTable::add(const CGAtomIdx &cgatomidx, const Vector &field)
 */
 bool MolFieldTable::subtract(const CGAtomIdx &cgatomidx, const Vector &field)
 {
-    return this->add( cgatomidx, -force );
+    return this->add( cgatomidx, -field );
 }
 
 static void addField(const Vector &field, Vector *fields, const int nats)
@@ -519,7 +608,7 @@ bool MolFieldTable::add(const AtomSelection &selected_atoms, const Vector &field
                     foreach (Index idx, idxs)
                     {
                         BOOST_ASSERT( idx >= 0 and idx < nats );
-                        atomfields[idx] += force;
+                        atomfields[idx] += field;
                     }
                 }
                 
@@ -550,7 +639,7 @@ bool MolFieldTable::add(const AtomSelection &selected_atoms, const Vector &field
                     foreach (Index idx, idxs)
                     {
                         BOOST_ASSERT( idx >= 0 and idx < nats );
-                        atomfields[idx] += force;
+                        atomfields[idx] += field;
                     }
                     
                     changed_atoms = true;
@@ -570,7 +659,67 @@ bool MolFieldTable::add(const AtomSelection &selected_atoms, const Vector &field
 */
 bool MolFieldTable::subtract(const AtomSelection &selected_atoms, const Vector &field)
 {
-    return MolForceTable::add( selected_atoms, -field );
+    return MolFieldTable::add( selected_atoms, -field );
+}
+
+/** Add the field 'field' onto all of the atom points in this table */
+void MolFieldTable::add(const Vector &field)
+{
+    int nvals = PackedArray2D<Vector>::nValues();
+
+    if (nvals > 0)
+    {
+        Vector *vals = PackedArray2D<Vector>::valueData();
+        
+        for (int i=0; i<nvals; ++i)
+        {
+            vals[i] += field;
+        }
+    }
+}
+
+/** Subtract the field 'field' from all of the atom points in this table */
+void MolFieldTable::subtract(const Vector &field)
+{
+    this->add( -field );
+}
+
+/** Multiply the field at all atom points by 'value' */
+void MolFieldTable::multiply(double value)
+{
+    int nvals = PackedArray2D<Vector>::nValues();
+
+    if (nvals > 0)
+    {
+        Vector *vals = PackedArray2D<Vector>::valueData();
+        
+        for (int i=0; i<nvals; ++i)
+        {
+            vals[i] *= value;
+        }
+    }
+}
+
+/** Divide the field at all atom points by 'value' */
+void MolFieldTable::divide(double value)
+{
+    this->multiply( 1.0 / value );
+}
+
+/** Set all of the fields at the atom points equal to 'field' */
+void MolFieldTable::setAll(const Vector &field)
+{
+    int nvals = PackedArray2D<Vector>::nValues();
+
+    if (nvals > 0)
+    {
+        Vector *vals = PackedArray2D<Vector>::valueData();
+        
+        for (int i=0; i<nvals; ++i)
+        {
+            vals[i] = field;
+        }
+    }
 }
 
 void MolFieldTable::assertCompatibleWith(const AtomSelection &selection) const
@@ -627,7 +776,526 @@ void MolFieldTable::add(const MolFieldTable &other)
     if (this == &other)
     {
         //just double everything
+        this->operator*=(2);
+        return;
+    }
+    
+    if (molnum != other.molnum)
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot combine the field table for molecule %1 with the "
+                "field table for molecule %2. The molecules must be the same.")
+                    .arg(molnum).arg(other.molnum), CODELOC );
+                    
+    if (moluid != other.moluid)
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot combine together the tables for molecule %1 as the "
+                "layout UIDs are different (%2 vs. %3). They must be the same.")
+                    .arg(molnum).arg(moluid.toString(), other.moluid.toString()),
+                        CODELOC );
+
+    if (this->selectedAll() and other.selectedAll())
+    {
+        int nvals = PackedArray2D<Vector>::nValues();
+
+        BOOST_ASSERT( nvals == other.nValues() );
+
+        if (nvals > 0)
+        {
+            Vector *vals = PackedArray2D<Vector>::valueData();
+            const Vector *other_vals = other.constValueData();
+        
+            for (int i=0; i<nvals; ++i)
+            {
+                vals[i] += other_vals[i];
+            }
+        }
+    }
+    else if (this->selectedAll())
+    {
+        for (CGIdx i(0); i<ncgroups; ++i)
+        {
+            int idx = other.map(i);
+                
+            if (idx != -1)
+            {
+                int nvals = this->nValues(i);
+                BOOST_ASSERT( nvals == other.nValues(idx) );
+                
+                Vector *vals = PackedArray2D<Vector>::data(i);
+                const Vector *other_vals = other.constData(idx);
+                
+                for (int j=0; j<nvals; ++j)
+                {
+                    vals[j] += other_vals[j];
+                }
+            }
+        }
+    }
+    else
+    {
+        for (QHash<CGIdx,qint32>::const_iterator it = cgidx_to_idx.constBegin();
+             it != cgidx_to_idx.constEnd();
+             ++it)
+        {
+            int idx = other.map(it.key());
+            
+            if (idx != -1)
+            {
+                int nvals = this->nValues(it.value());
+                BOOST_ASSERT( nvals == other.nValues(idx) );
+                
+                Vector *vals = PackedArray2D<Vector>::data(it.key());
+                const Vector *other_vals = other.constData(idx);
+                
+                for (int j=0; j<nvals; ++j)
+                {
+                    vals[j] += other_vals[j];
+                }
+            }
+        }
     }
 }
 
-void MolFieldTable::subtract(const MolFieldTable &other);
+/** Subtract the fields contained in 'other' from this field table. This will only
+    subtract the fields for CutGroups that are in both tables */
+void MolFieldTable::subtract(const MolFieldTable &other)
+{
+    if (this == &other)
+    {
+        this->setAll( Vector(0) );
+        return;
+    }
+    
+    return this->add( -other );
+}
+
+/////////
+///////// Implementation of GridFieldTable
+/////////
+
+static const RegisterMetaType<GridFieldTable> r_gridtable;
+
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const GridFieldTable &gridtable)
+{
+    writeHeader(ds, r_gridtable, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << gridtable.grd << gridtable.fieldvals;
+    
+    return ds;
+}
+
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, GridFieldTable &gridtable)
+{
+    VersionID v = readHeader(ds, r_gridtable);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> gridtable.grd >> gridtable.fieldvals;
+    }
+    else
+        throw version_error(v, "1", r_gridtable, CODELOC);
+        
+    return ds;
+}
+
+/** Null constructor */
+GridFieldTable::GridFieldTable()
+{}
+
+/** Construct to hold the field at each of the points of the passed grid */
+GridFieldTable::GridFieldTable(const Grid &grid) : grd(grid)
+{
+    if (grd.read().nPoints() > 0)
+    {
+        fieldvals = QVector<Vector>(grd.read().nPoints(), Vector(0));
+        fieldvals.squeeze();
+    }
+}
+
+/** Copy constructor */
+GridFieldTable::GridFieldTable(const GridFieldTable &other)
+               : grd(other.grd), fieldvals(other.fieldvals)
+{}
+
+/** Destructor */
+GridFieldTable::~GridFieldTable()
+{}
+
+/** Copy assignment operator */
+GridFieldTable& GridFieldTable::operator=(const GridFieldTable &other)
+{
+    if (this != &other)
+    {
+        grd = other.grd;
+        fieldvals = other.fieldvals;
+    }
+    
+    return *this;
+}
+
+/** Set the field at each of the grid points equal to 'field' */
+GridFieldTable& GridFieldTable::operator=(const Vector &field)
+{
+    this->setAll(field);
+    return *this;
+}
+
+/** Comparison operator */
+bool GridFieldTable::operator==(const GridFieldTable &other) const
+{
+    return this == &other or 
+           (grd == other.grd and fieldvals == other.fieldvals);
+}
+
+/** Comparison operator */
+bool GridFieldTable::operator!=(const GridFieldTable &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Add the fields on the passed table onto this table. Note that this
+    only adds the fields if both tables use the same grid points */
+GridFieldTable& GridFieldTable::operator+=(const GridFieldTable &other)
+{
+    this->add(other);
+    return *this;
+}
+
+/** Subtract the fields of 'other' from this table. Note that this 
+    only subtracts the fields if both tables use the same grid points */
+GridFieldTable& GridFieldTable::operator-=(const GridFieldTable &other)
+{
+    this->subtract(other);
+    return *this;
+}
+
+/** Return the sum of the fields of this table and 'other' - note that 
+    this returns the first table if the two tables use different grids */
+GridFieldTable GridFieldTable::operator+(const GridFieldTable &other) const
+{
+    GridFieldTable ret(*this);
+    ret += other;
+    return ret;
+}
+
+/** Return the difference of the fields of this table and 'other' - note that 
+    this returns the first table if the two tables use different grids */
+GridFieldTable GridFieldTable::operator-(const GridFieldTable &other) const
+{
+    GridFieldTable ret(*this);
+    ret -= other;
+    return ret;
+}
+
+/** Add the field 'field' to all of the grid points */
+GridFieldTable& GridFieldTable::operator+=(const Vector &field)
+{
+    this->add(field);
+    return *this;
+}
+
+/** Subtract the field 'field' from all of the grid points */
+GridFieldTable& GridFieldTable::operator-=(const Vector &field)
+{
+    this->subtract(field);
+    return *this;
+}
+
+/** Return the table where 'field' has been added to all of the grid points */
+GridFieldTable GridFieldTable::operator+(const Vector &field) const
+{
+    GridFieldTable ret(*this);
+    ret += field;
+    return ret;
+}
+
+/** Return the table where 'field' has been subtracted from all of the grid points */
+GridFieldTable GridFieldTable::operator-(const Vector &field) const
+{
+    GridFieldTable ret(*this);
+    ret -= field;
+    return ret;
+}
+
+/** Multiply the field at all grid points by 'value' */
+GridFieldTable& GridFieldTable::operator*=(double value)
+{
+    this->multiply(value);
+    return *this;
+}
+
+/** Divide the field at all grid points by 'value' */
+GridFieldTable& GridFieldTable::operator/=(double value)
+{
+    this->divide(value);
+    return *this;
+}
+
+/** Return the table where the field at all grid points has been
+    multiplied by 'value' */
+GridFieldTable GridFieldTable::operator*(double value) const
+{
+    GridFieldTable ret(*this);
+    ret *= value;
+    return ret;
+}
+
+/** Return the table where the field at all grid points has been
+    divided by 'value' */
+GridFieldTable GridFieldTable::operator/(double value) const
+{
+    GridFieldTable ret(*this);
+    ret /= value;
+    return ret;
+}
+
+/** Return the table where the field at all grid points is negated */
+GridFieldTable GridFieldTable::operator-() const
+{
+    GridFieldTable ret(*this);
+
+    for (QVector<Vector>::iterator it = ret.fieldvals.begin();
+         it != ret.fieldvals.end();
+         ++it)
+    {
+        *it = -(*it);
+    }
+    
+    return ret;
+}
+    
+/** Return a modifiable reference to the ith grid point's field value
+
+    \throw SireError::invalid_index
+*/
+Vector& GridFieldTable::operator[](int i)
+{
+    return fieldvals[ Index(i).map(fieldvals.count()) ];
+}
+
+/** Return the field value of the ith grid point
+
+    \throw SireError::invalid_index
+*/
+const Vector& GridFieldTable::operator[](int i) const
+{
+    return fieldvals.at( Index(i).map(fieldvals.count()) );
+}
+    
+/** Return the field value of the ith grid point
+
+    \throw SireError::invalid_index
+*/
+const Vector& GridFieldTable::at(int i) const
+{
+    return this->operator[](i);
+}
+
+const char* GridFieldTable::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<GridFieldTable>() );
+}
+
+/** Initialise the field at each grid point to equal 0 */
+void GridFieldTable::initialise()
+{
+    for (QVector<Vector>::iterator it = fieldvals.begin(); 
+         it != fieldvals.end();
+         ++it)
+    {
+        *it = Vector(0);
+    }
+}
+
+/** Return the number of grid points (and thus field values) */
+int GridFieldTable::nPoints() const
+{
+    return fieldvals.count();
+}
+
+/** Return the number of grid points (and thus field values) */
+int GridFieldTable::count() const
+{
+    return fieldvals.count();
+}
+
+/** Return the grid that contains the points at which the field is
+    evaluated - the order of points in the grid is the same as the order
+    of field values in this table */
+const Grid& GridFieldTable::grid() const
+{
+    if (grd.constData() == 0)
+        return Grid::null();
+    else
+        return grd.read();
+}
+
+/** Return the array of field values - the order is the same
+    as the order of points in the grid */
+QVector<Vector> GridFieldTable::toVector() const
+{
+    return fieldvals;
+}
+
+/** Add the field 'field' onto the field for the ipoint'th grid point
+
+    \throw SireError::invalid_index
+*/
+void GridFieldTable::add(int ipoint, const Vector &field)
+{
+    fieldvals[ Index(ipoint).map(fieldvals.count()) ] += field;
+}
+
+/** Subtract the field 'field' from the field for the ipoint'th grid point
+
+    \throw SireError::invalid_index
+*/
+void GridFieldTable::subtract(int ipoint, const Vector &field)
+{
+    fieldvals[ Index(ipoint).map(fieldvals.count()) ] -= field;
+}
+
+/** Add the field in 'other' onto that for this table - this only
+    adds the field if the two grids are identical */
+void GridFieldTable::add(const GridFieldTable &other)
+{
+    if (grd == other.grd)
+    {
+        int nvals = fieldvals.count();
+        BOOST_ASSERT( nvals == other.fieldvals.count() );
+        
+        if (nvals > 0)
+        {
+            Vector *data = fieldvals.data();
+            const Vector *other_data = other.fieldvals.constData();
+            
+            for (int i=0; i<nvals; ++i)
+            {
+                data[i] += other_data[i];
+            }
+        }
+    }
+}
+
+/** Subtract the field in 'other' from that for this table - this only
+    subtracts the field if the two grids are identical */
+void GridFieldTable::subtract(const GridFieldTable &other)
+{
+    if (grd == other.grd)
+    {
+        int nvals = fieldvals.count();
+        BOOST_ASSERT( nvals == other.fieldvals.count() );
+        
+        if (nvals > 0)
+        {
+            Vector *data = fieldvals.data();
+            const Vector *other_data = other.fieldvals.constData();
+            
+            for (int i=0; i<nvals; ++i)
+            {
+                data[i] -= other_data[i];
+            }
+        }
+    }
+}
+
+/** Add the field 'field' to all of the points in this table */
+void GridFieldTable::add(const Vector &field)
+{
+    for (QVector<Vector>::iterator it = fieldvals.begin();
+         it != fieldvals.end();
+         ++it)
+    {
+        *it += field;
+    }
+}
+
+/** Subtract the field 'field' from all of the points in this table */
+void GridFieldTable::subtract(const Vector &field)
+{
+    for (QVector<Vector>::iterator it = fieldvals.begin();
+         it != fieldvals.end();
+         ++it)
+    {
+        *it -= field;
+    }
+}
+
+/** Set the field at all of the points in this table equal to 'field' */
+void GridFieldTable::setAll(const Vector &field)
+{
+    for (QVector<Vector>::iterator it = fieldvals.begin();
+         it != fieldvals.end();
+         ++it)
+    {
+        *it = field;
+    }
+}
+
+/** Multiply the field at all of the points in this table by 'value' */
+void GridFieldTable::multiply(double value)
+{
+    for (QVector<Vector>::iterator it = fieldvals.begin();
+         it != fieldvals.end();
+         ++it)
+    {
+        *it *= value;
+    }
+}
+
+/** Divide the field at all of the points in this table by 'value' */
+void GridFieldTable::divide(double value)
+{
+    this->multiply( 1 / value );
+}
+
+/** Return a raw pointer to the array of field values */
+Vector* GridFieldTable::data()
+{
+    return fieldvals.data();
+}
+
+/** Return a raw pointer to the array of field values */
+const Vector* GridFieldTable::data() const
+{
+    return fieldvals.constData();
+}
+
+/** Return a raw pointer to the array of field values */
+const Vector* GridFieldTable::constData() const
+{
+    return fieldvals.constData();
+}
+
+GridFieldTable::iterator GridFieldTable::begin()
+{
+    return fieldvals.begin();
+}
+
+GridFieldTable::iterator GridFieldTable::end()
+{
+    return fieldvals.end();
+}
+    
+GridFieldTable::const_iterator GridFieldTable::begin() const
+{
+    return fieldvals.constBegin();
+}
+
+GridFieldTable::const_iterator GridFieldTable::end() const
+{
+    return fieldvals.constEnd();
+}
+    
+GridFieldTable::const_iterator GridFieldTable::constBegin() const
+{
+    return fieldvals.constBegin();
+}
+
+GridFieldTable::const_iterator GridFieldTable::constEnd() const
+{
+    return fieldvals.constEnd();
+}

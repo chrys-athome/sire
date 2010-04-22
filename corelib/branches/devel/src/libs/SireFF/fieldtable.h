@@ -135,6 +135,8 @@ public:
     MolFieldTable operator*(double value) const;
     MolFieldTable operator/(double value) const;
 
+    MolFieldTable operator-() const;
+
     static const char* typeName();
     
     const char* what() const
@@ -197,13 +199,16 @@ private:
 };
 
 /** A GridFieldTable contains the fields at point specified by a grid */
-class SIREFF_EXPORT GridFieldTable : public QVector<Vector>
+class SIREFF_EXPORT GridFieldTable
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const GridFieldTable&);
 friend QDataStream& ::operator>>(QDataStream&, GridFieldTable&);
 
 public:
+    typedef QVector<Vector>::const_iterator const_iterator;
+    typedef QVector<Vector>::iterator iterator;
+
     GridFieldTable();
     GridFieldTable(const Grid &grid);
     GridFieldTable(const GridFieldTable &other);
@@ -234,11 +239,19 @@ public:
     GridFieldTable operator*(double value) const;
     GridFieldTable operator/(double value) const;
     
+    GridFieldTable operator-() const;
+    
+    Vector& operator[](int i);
+    const Vector& operator[](int i) const;
+    
+    const Vector& at(int i) const;
+    
     static const char* typeName();
     
     void initialise();
     
     int nPoints() const;
+    int count() const;
     
     const Grid& grid() const;
     
@@ -257,6 +270,27 @@ public:
     
     void multiply(double value);
     void divide(double value);
+
+    Vector* data();
+    const Vector* data() const;
+
+    const Vector* constData() const;
+
+    iterator begin();
+    iterator end();
+    
+    const_iterator begin() const;
+    const_iterator end() const;
+    
+    const_iterator constBegin() const;
+    const_iterator constEnd() const;
+
+private:
+    /** The grid that contains the points at which the field is evaluated */
+    GridPtr grd;
+    
+    /** The potential at each of the grid points */
+    QVector<Vector> fieldvals;
 };
 
 /** A FieldTable is a workspace within which all of the fields acting 
@@ -331,6 +365,8 @@ public:
     
     FieldTable operator*(double value) const;
     FieldTable operator/(double value) const;
+
+    FieldTable operator-() const;
 
     bool containsTable(MolNum molnum) const;
     bool containsGrid(const Grid &grid) const;
@@ -570,9 +606,11 @@ SireFF::FieldTable operator+(const SireMaths::Vector &force,
 SireFF::FieldTable operator*(double value, const SireFF::FieldTable &table);
 
 Q_DECLARE_METATYPE(SireFF::FieldTable);
+Q_DECLARE_METATYPE(SireFF::GridFieldTable);
 Q_DECLARE_METATYPE(SireFF::MolFieldTable);
 
 SIRE_EXPOSE_CLASS( SireFF::FieldTable )
+SIRE_EXPOSE_CLASS( SireFF::GridFieldTable )
 SIRE_EXPOSE_CLASS( SireFF::MolFieldTable )
 
 SIRE_END_HEADER
