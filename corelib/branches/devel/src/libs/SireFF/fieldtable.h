@@ -368,25 +368,26 @@ public:
 
     FieldTable operator-() const;
 
-    bool containsTable(MolNum molnum) const;
-    bool containsGrid(const Grid &grid) const;
+    bool contains(MolNum molnum) const;
+    bool contains(const Grid &grid) const;
 
     void initialiseTables();
 
     void initialiseTable(MolNum molnum);
+    void initialiseTable(const Grid &grid);
 
     MolFieldTable& getTable(MolNum molnum);
     GridFieldTable& getTable(const Grid &grid);
 
     const MolFieldTable& getTable(MolNum molnum) const;
-    const GridFieldTable& getGridTable(const Grid &grid) const;
+    const GridFieldTable& getTable(const Grid &grid) const;
 
     const MolFieldTable& constGetTable(MolNum molnum) const;
-    const GridFieldTable& constGetGridTable(const Grid &grid) const;
+    const GridFieldTable& constGetTable(const Grid &grid) const;
 
     bool isEmpty() const;
 
-    const QHash<MolNum,quint32>& index() const;
+    const QHash<MolNum,qint32>& index() const;
     
     int indexOf(MolNum molnum) const;
     
@@ -419,6 +420,8 @@ public:
     void divide(double value);
 
 private:
+    void setGroup(const MoleculeGroup &molgroup);
+
     /** All of the molecule tables */
     QVector<MolFieldTable> moltables_by_idx;
 
@@ -427,7 +430,7 @@ private:
 
     /** Index mapping from the number of the Molecule to 
         the index of its force table in the above array */
-    QHash<MolNum,quint32> molnum_to_idx;
+    QHash<MolNum,qint32> molnum_to_idx;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -503,7 +506,7 @@ inline int MolFieldTable::map(CGIdx cgidx) const
 
 /** Return whether or not this contains a table for the 
     molecule with number 'molnum' */
-inline bool FieldTable::containsTable(MolNum molnum) const
+inline bool FieldTable::contains(MolNum molnum) const
 {
     return molnum_to_idx.contains(molnum);
 }
@@ -514,7 +517,7 @@ inline bool FieldTable::containsTable(MolNum molnum) const
 */
 inline MolFieldTable& FieldTable::getTable(MolNum molnum)
 {
-    QHash<MolNum,quint32>::const_iterator it = molnum_to_idx.constFind(molnum);
+    QHash<MolNum,qint32>::const_iterator it = molnum_to_idx.constFind(molnum);
     
     if (it == molnum_to_idx.constEnd())
         this->assertContainsTableFor(molnum);
@@ -528,7 +531,7 @@ inline MolFieldTable& FieldTable::getTable(MolNum molnum)
 */
 inline const MolFieldTable& FieldTable::getTable(MolNum molnum) const
 {
-    QHash<MolNum,quint32>::const_iterator it = molnum_to_idx.constFind(molnum);
+    QHash<MolNum,qint32>::const_iterator it = molnum_to_idx.constFind(molnum);
     
     if (it == molnum_to_idx.constEnd())
         this->assertContainsTableFor(molnum);
@@ -559,7 +562,7 @@ inline int FieldTable::nGrids() const
 
 /** Return the index used to find the index into the field tables array 
     for the field table for the molecule with a specified number */
-inline const QHash<MolNum,quint32>& FieldTable::index() const
+inline const QHash<MolNum,qint32>& FieldTable::index() const
 {
     return molnum_to_idx;
 }
@@ -587,6 +590,24 @@ inline const MolFieldTable* FieldTable::moleculeData() const
 inline const MolFieldTable* FieldTable::constMoleculeData() const
 {
     return moltables_by_idx.constData();
+}
+
+/** Return a raw pointer to the array of field tables for each grid */
+inline GridFieldTable* FieldTable::gridData()
+{
+    return gridtables.data();
+}
+
+/** Return a raw pointer to the array of field tables for each grid */
+inline const GridFieldTable* FieldTable::gridData() const
+{
+    return gridtables.constData();
+}
+
+/** Return a raw pointer to the array of field tables for each grid */
+inline const GridFieldTable* FieldTable::constGridData() const
+{
+    return gridtables.constData();
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

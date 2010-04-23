@@ -11,13 +11,16 @@ def fix_FFID(c):
    c.add_declaration_code("#include \"forcefields.h\"")
    c.add_declaration_code("#include \"ffidx.h\"")
 
-def fix_ForceTable(c):
-   c.decls( "getTable" )[0].exclude()
+def fix_Table(c):
+   for f in c.decls( "getTable" ):
+       if str(f.return_type).find("const") == -1:
+           f.exclude()
 
 def fix_ForceFields(c):
    c.add_declaration_code("#include \"forcetable.h\"")
 
-special_code = { "SireFF::ForceTable" : fix_ForceTable,
+special_code = { "SireFF::ForceTable" : fix_Table,
+                 "SireFF::FieldTable" : fix_Table,
                  "SireFF::FFID" : fix_FFID,
                  "SireFF::FFIdx" : fix_FFID,
                  "SireFF::FFName" : fix_FFID,

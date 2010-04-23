@@ -1299,3 +1299,618 @@ GridFieldTable::const_iterator GridFieldTable::constEnd() const
 {
     return fieldvals.constEnd();
 }
+
+/////////
+///////// Implementation of FieldTable
+/////////
+
+static const RegisterMetaType<FieldTable> r_fieldtable;
+
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FieldTable &fieldtable)
+{
+    writeHeader(ds, r_fieldtable, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << fieldtable.moltables_by_idx << fieldtable.gridtables;
+    
+    return ds;
+}
+
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FieldTable &fieldtable)
+{
+    VersionID v = readHeader(ds, r_fieldtable);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> fieldtable.moltables_by_idx >> fieldtable.gridtables;
+        
+        QHash<MolNum,qint32> molnum_to_idx;
+        molnum_to_idx.reserve(fieldtable.moltables_by_idx.count());
+        
+        quint32 i = 0;
+        
+        for (QVector<MolFieldTable>::const_iterator 
+                                    it = fieldtable.moltables_by_idx.constBegin();
+             it != fieldtable.moltables_by_idx.constEnd();
+             ++it)
+        {
+            molnum_to_idx.insert( it->molNum(), i );
+            i += 1;
+        }
+        
+        fieldtable.molnum_to_idx = molnum_to_idx;
+    }
+    else
+        throw version_error( v, "1", r_fieldtable, CODELOC );
+        
+    return ds;
+}
+
+/** Null constructor */
+FieldTable::FieldTable()
+{}
+
+void FieldTable::setGroup(const MoleculeGroup &molgroup)
+{
+    if (molgroup.isEmpty())
+        return;
+        
+    int nmols = molgroup.nMolecules();
+    
+    moltables_by_idx = QVector<MolFieldTable>(nmols);
+    moltables_by_idx.squeeze();
+
+    molnum_to_idx = QHash<MolNum,qint32>();
+    molnum_to_idx.reserve(nmols);
+    
+    MolFieldTable *moltables_by_idx_array = moltables_by_idx.data();
+    
+    quint32 i = 0;
+    
+    for (MoleculeGroup::const_iterator it = molgroup.constBegin();
+         it != molgroup.constEnd();
+         ++it)
+    {
+        moltables_by_idx_array[i] = MolFieldTable(*it);
+        molnum_to_idx.insert(it->data().number(), i);
+        ++i;
+    }
+}
+
+/** Construct the table to hold the fields at the points of all
+    of the atoms in the CutGroups that are viewed in the molecules
+    in 'molgroup' */
+FieldTable::FieldTable(const MoleculeGroup &molgroup)
+{
+    this->setGroup(molgroup);
+}
+         
+/** Construct the table to hold the fields at all of the points
+    in the passed grid */
+FieldTable::FieldTable(const Grid &grid)
+{
+    gridtables.append( GridFieldTable(grid) );
+    gridtables.squeeze();
+}
+
+/** Construct the table to hold the fields at all of the points
+    of all of the passed grids */
+FieldTable::FieldTable(const QVector<GridPtr> &grids)
+{
+    for (QVector<GridPtr>::const_iterator it = grids.constBegin();
+         it != grids.constEnd();
+         ++it)
+    {
+        if (it->constData() != 0)
+        {
+            if (not this->contains(it->read()))
+                gridtables.append( GridFieldTable(it->read()) );
+        }
+    }
+    
+    gridtables.squeeze();
+}
+
+/** Construct the table to hold the fields at the points of all
+    of the atoms in the CutGroups that are viewed in the molecules
+    in 'molgroup', and all of the grid points in the passed grid */
+FieldTable::FieldTable(const MoleculeGroup &molgroup, const Grid &grid)
+{
+    this->setGroup(molgroup);
+    gridtables.append( GridFieldTable(grid) );
+    gridtables.squeeze();
+}
+
+/** Construct the table to hold the fields at the points of all
+    of the atoms in the CutGroups that are viewed in the molecules
+    in 'molgroup', and all of the grid points in the passed grids */
+FieldTable::FieldTable(const MoleculeGroup &molgroup, const QVector<GridPtr> &grids)
+{
+    this->setGroup(molgroup);
+
+    for (QVector<GridPtr>::const_iterator it = grids.constBegin();
+         it != grids.constEnd();
+         ++it)
+    {
+        if (it->constData() != 0)
+        {
+            if (not this->contains(it->read()))
+                gridtables.append( GridFieldTable(it->read()) );
+        }
+    }
+    
+    gridtables.squeeze();
+}
+
+/** Copy constructor */
+FieldTable::FieldTable(const FieldTable &other)
+           : moltables_by_idx(other.moltables_by_idx),
+             gridtables(other.gridtables),
+             molnum_to_idx(other.molnum_to_idx)
+{}
+
+/** Destructor */
+FieldTable::~FieldTable()
+{}
+
+const char* FieldTable::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<FieldTable>() );
+}
+
+/** Copy assignment operator */
+FieldTable& FieldTable::operator=(const FieldTable &other)
+{
+    if (this != &other)
+    {
+        moltables_by_idx = other.moltables_by_idx;
+        gridtables = other.gridtables;
+        molnum_to_idx = other.molnum_to_idx;
+    }
+    
+    return *this;
+}
+
+/** Set the field at all points in this table equal to 'field' */
+FieldTable& FieldTable::operator=(const Vector &field)
+{
+    this->setAll(field);
+    return *this;
+}
+
+/** Comparison operator */
+bool FieldTable::operator==(const FieldTable &other) const
+{
+    return this == &other or
+           (moltables_by_idx == other.moltables_by_idx and 
+            gridtables == other.gridtables);
+}
+
+/** Comparison operator */
+bool FieldTable::operator!=(const FieldTable &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Add the fields from 'other' onto this table. This only adds the fields
+    for molecules / grids that are in both tables */
+FieldTable& FieldTable::operator+=(const FieldTable &other)
+{
+    this->add(other);
+    return *this;
+}
+
+/** Subtract the fields from 'other' from this table. This only subtracts
+    the fields for molecules / grids that are in both tables */
+FieldTable& FieldTable::operator-=(const FieldTable &other)
+{
+    this->subtract(other);
+    return *this;
+}
+
+/** Return the sum of this table with 'other' - this only adds the
+    fields from 'other' to this table for molecules / grids that are
+    in both tables */
+FieldTable FieldTable::operator+(const FieldTable &other) const
+{
+    FieldTable ret(*this);
+    ret += other;
+    return ret;
+}
+
+/** Return the difference of this table with 'other' - this only subtracts the
+    fields from 'other' to this table for molecules / grids that are
+    in both tables */
+FieldTable FieldTable::operator-(const FieldTable &other) const
+{
+    FieldTable ret(*this);
+    ret -= other;
+    return ret;
+}
+
+/** Add the field 'field' to all of the atom and grid points in this table */
+FieldTable& FieldTable::operator+=(const Vector &field)
+{
+    this->add(field);
+    return *this;
+}
+
+/** Substract the field 'field' from all of the atom and grid 
+    points in this table */
+FieldTable& FieldTable::operator-=(const Vector &field)
+{
+    this->subtract(field);
+    return *this;
+}
+
+/** Return the result of adding 'field' onto all of the atom
+    and grid points in this table */
+FieldTable FieldTable::operator+(const Vector &field) const
+{
+    FieldTable ret(*this);
+    ret += field;
+    return ret;
+}
+
+/** Return the result of subtracting 'field' from all of the atom
+    and grid points in this table */
+FieldTable FieldTable::operator-(const Vector &field) const
+{
+    FieldTable ret(*this);
+    ret -= field;
+    return ret;
+}
+
+/** Multiply the fields at all points in this table by 'value' */
+FieldTable& FieldTable::operator*=(double value)
+{
+    this->multiply(value);
+    return *this;
+}
+
+/** Divide the fields at all points in this table by 'value' */
+FieldTable& FieldTable::operator/=(double value)
+{
+    this->divide(value);
+    return *this;
+}
+
+/** Return the result of multiplying the fields at all points by 'value' */
+FieldTable FieldTable::operator*(double value) const
+{
+    FieldTable ret(*this);
+    ret *= value;
+    return ret;
+}
+
+/** Return the result of dividing the fields at all points by 'value' */
+FieldTable FieldTable::operator/(double value) const
+{
+    FieldTable ret(*this);
+    ret /= value;
+    return ret;
+}
+
+/** Return the result of negating the field at all points */
+FieldTable FieldTable::operator-() const
+{
+    FieldTable ret(*this);
+
+    for (QVector<MolFieldTable>::iterator it = ret.moltables_by_idx.begin();
+         it != ret.moltables_by_idx.end();
+         ++it)
+    {
+        *it = -(*it);
+    }
+    
+    for (QVector<GridFieldTable>::iterator it = ret.gridtables.begin();
+         it != ret.gridtables.end();
+         ++it)
+    {
+        *it = -(*it);
+    }
+    
+    return ret;
+}
+
+/** Return whether or not this contains a table for the passed grid */
+bool FieldTable::contains(const Grid &grid) const
+{
+    for (QVector<GridFieldTable>::const_iterator it = gridtables.constBegin(); 
+         it != gridtables.constEnd();
+         ++it)
+    {
+        if (it->grid().equals(grid))
+            return true;
+    }
+    
+    return false;
+}
+
+/** Initialise all of the tables to have a zero field */
+void FieldTable::initialiseTables()
+{
+    for (QVector<MolFieldTable>::iterator it = moltables_by_idx.begin();
+         it != moltables_by_idx.end();
+         ++it)
+    {
+        it->initialise();
+    }
+    
+    for (QVector<GridFieldTable>::iterator it = gridtables.begin();
+         it != gridtables.end();
+         ++it)
+    {
+        it->initialise();
+    }
+}
+
+/** Initialise the table for the molecule with number 'molnum' */
+void FieldTable::initialiseTable(MolNum molnum)
+{
+    int idx = molnum_to_idx.value(molnum, -1);
+    
+    if (idx == -1)
+        assertContainsTableFor(molnum);
+        
+    moltables_by_idx[idx].initialise();
+}
+
+/** Initialise the table for the grid 'grid' */
+void FieldTable::initialiseTable(const Grid &grid)
+{
+    assertContainsTableFor(grid);
+    
+    for (QVector<GridFieldTable>::iterator it = gridtables.begin();
+         it != gridtables.end();
+         ++it)
+    {
+        if (it->grid().equals(grid))
+        {
+            it->initialise();
+            return;
+        }
+    }
+}
+
+/** Return the field table for the passed grid
+
+    \throw SireError::unavailable_resource
+*/
+GridFieldTable& FieldTable::getTable(const Grid &grid)
+{
+    this->assertContainsTableFor(grid);
+    
+    for (QVector<GridFieldTable>::iterator it = gridtables.begin();
+         it != gridtables.end();
+         ++it)
+    {
+        if (it->grid().equals(grid))
+            return *it;
+    }
+    
+    BOOST_ASSERT( false );
+    
+    //this line needed to remove warning about lack of return value
+    return *( (GridFieldTable*) 0 );
+}
+
+/** Return the field table for the passed grid
+
+    \throw SireError::unavailable_resource
+*/
+const GridFieldTable& FieldTable::getTable(const Grid &grid) const
+{
+    this->assertContainsTableFor(grid);
+    
+    for (QVector<GridFieldTable>::const_iterator it = gridtables.constBegin();
+         it != gridtables.constEnd();
+         ++it)
+    {
+        if (it->grid().equals(grid))
+            return *it;
+    }
+    
+    BOOST_ASSERT( false );
+    
+    //this line needed to remove warning about lack of return value
+    return *( (GridFieldTable*) 0 );
+}
+
+/** Return the field table for the passed grid
+
+    \throw SireError::unavailable_resource
+*/
+const GridFieldTable& FieldTable::constGetTable(const Grid &grid) const
+{
+    return this->getTable(grid);
+}
+
+/** Return whether or not this table is empty */
+bool FieldTable::isEmpty() const
+{
+    return moltables_by_idx.isEmpty() and gridtables.isEmpty();
+}
+
+/** Assert that this contains a table for the molecule with number 'molnum'
+
+    \throw SireError::unavailable_resource
+*/
+void FieldTable::assertContainsTableFor(MolNum molnum) const
+{
+    if (not molnum_to_idx.contains(molnum))
+        throw SireError::unavailable_resource( QObject::tr(
+                "This FieldTable does not contain an entry for the molecule "
+                "with number %1.")
+                    .arg(molnum), CODELOC );
+}
+
+/** Assert that this contains a table for the passed grid
+
+    \throw SireError::unavailable_resource
+*/
+void FieldTable::assertContainsTableFor(const Grid &grid) const
+{
+    for (QVector<GridFieldTable>::const_iterator it = gridtables.constBegin();
+         it != gridtables.constEnd();
+         ++it)
+    {
+        if (it->grid().equals(grid))
+            return;
+    }
+    
+    throw SireError::unavailable_resource( QObject::tr(
+            "This field table does not contain an entry for the grid %1.")
+                .arg(grid.toString()), CODELOC );
+}
+
+/** Add the contents of the table 'other' onto this table. This will only
+    add the fields for the molecules / grids that are in both tables */
+void FieldTable::add(const FieldTable &other)
+{
+    for (QHash<MolNum,qint32>::const_iterator it = other.molnum_to_idx.constBegin();
+         it != other.molnum_to_idx.constEnd();
+         ++it)
+    {
+        int idx = molnum_to_idx.value(it.key(), -1);
+        
+        if (idx != -1)
+            moltables_by_idx[idx] += other.moltables_by_idx[it.value()];
+    }
+    
+    for (QVector<GridFieldTable>::const_iterator it = other.gridtables.constBegin();
+         it != other.gridtables.constEnd();
+         ++it)
+    {
+        for (int i=0; i<gridtables.count(); ++i)
+        {
+            if (gridtables.at(i).grid().equals(it->grid()))
+            {
+                gridtables[i] += *it;
+                continue;
+            }
+        }
+    }
+}
+
+/** Subtract the contents of the table 'other' from this table. This will only
+    subtract the fields for the molecules / grids that are in both tables */
+void FieldTable::subtract(const FieldTable &other)
+{
+    for (QHash<MolNum,qint32>::const_iterator it = other.molnum_to_idx.constBegin();
+         it != other.molnum_to_idx.constEnd();
+         ++it)
+    {
+        int idx = molnum_to_idx.value(it.key(), -1);
+        
+        if (idx != -1)
+            moltables_by_idx[idx] -= other.moltables_by_idx[it.value()];
+    }
+    
+    for (QVector<GridFieldTable>::const_iterator it = other.gridtables.constBegin();
+         it != other.gridtables.constEnd();
+         ++it)
+    {
+        for (int i=0; i<gridtables.count(); ++i)
+        {
+            if (gridtables.at(i).grid().equals(it->grid()))
+            {
+                gridtables[i] -= *it;
+                continue;
+            }
+        }
+    }
+}
+
+/** Add the field 'field' onto all of the atom / grid points in this table */
+void FieldTable::add(const Vector &field)
+{
+    for (QVector<MolFieldTable>::iterator it = moltables_by_idx.begin();
+         it != moltables_by_idx.end();
+         ++it)
+    {
+        it->add(field);
+    }
+    
+    for (QVector<GridFieldTable>::iterator it = gridtables.begin();
+         it != gridtables.end();
+         ++it)
+    {
+        it->add(field);
+    }
+}
+
+/** Subtract the field 'field' from all of the atom / grid points in this table */
+void FieldTable::subtract(const Vector &field)
+{
+    for (QVector<MolFieldTable>::iterator it = moltables_by_idx.begin();
+         it != moltables_by_idx.end();
+         ++it)
+    {
+        it->subtract(field);
+    }
+    
+    for (QVector<GridFieldTable>::iterator it = gridtables.begin();
+         it != gridtables.end();
+         ++it)
+    {
+        it->subtract(field);
+    }
+}
+
+/** Set the field at all atom and grid points equal to 'field' */
+void FieldTable::setAll(const Vector &field)
+{
+    for (QVector<MolFieldTable>::iterator it = moltables_by_idx.begin();
+         it != moltables_by_idx.end();
+         ++it)
+    {
+        it->setAll(field);
+    }
+    
+    for (QVector<GridFieldTable>::iterator it = gridtables.begin();
+         it != gridtables.end();
+         ++it)
+    {
+        it->setAll(field);
+    }
+}
+
+/** Multiply the field at all atom and grid points by 'value' */
+void FieldTable::multiply(double value)
+{
+    for (QVector<MolFieldTable>::iterator it = moltables_by_idx.begin();
+         it != moltables_by_idx.end();
+         ++it)
+    {
+        it->multiply(value);
+    }
+    
+    for (QVector<GridFieldTable>::iterator it = gridtables.begin();
+         it != gridtables.end();
+         ++it)
+    {
+        it->multiply(value);
+    }
+}
+
+/** Divide the field at all atom and grid points by 'value' */
+void FieldTable::divide(double value)
+{
+    for (QVector<MolFieldTable>::iterator it = moltables_by_idx.begin();
+         it != moltables_by_idx.end();
+         ++it)
+    {
+        it->divide(value);
+    }
+    
+    for (QVector<GridFieldTable>::iterator it = gridtables.begin();
+         it != gridtables.end();
+         ++it)
+    {
+        it->divide(value);
+    }
+}

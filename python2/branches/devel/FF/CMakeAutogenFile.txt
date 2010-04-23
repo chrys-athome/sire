@@ -11,12 +11,15 @@ set ( PYPP_SOURCES
        FFIdx.pypp.cpp
        FFMolGroup.pypp.cpp
        FFName.pypp.cpp
+       FieldTable.pypp.cpp
        ForceFields.pypp.cpp
        ForceTable.pypp.cpp
        G1FF.pypp.cpp
        G2FF.pypp.cpp
+       GridFieldTable.pypp.cpp
        IDAndSet_FFID_.pypp.cpp
        IDOrSet_FFID_.pypp.cpp
+       MolFieldTable.pypp.cpp
        MolForceTable.pypp.cpp
        NullFF.pypp.cpp
        Point.pypp.cpp

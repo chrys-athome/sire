@@ -29,6 +29,8 @@
 
 #include "FFName.pypp.hpp"
 
+#include "FieldTable.pypp.hpp"
+
 #include "ForceFields.pypp.hpp"
 
 #include "ForceTable.pypp.hpp"
@@ -37,9 +39,13 @@
 
 #include "G2FF.pypp.hpp"
 
+#include "GridFieldTable.pypp.hpp"
+
 #include "IDAndSet_FFID_.pypp.hpp"
 
 #include "IDOrSet_FFID_.pypp.hpp"
+
+#include "MolFieldTable.pypp.hpp"
 
 #include "MolForceTable.pypp.hpp"
 
@@ -98,6 +104,8 @@ BOOST_PYTHON_MODULE(_FF){
 
     register_FFName_class();
 
+    register_FieldTable_class();
+
     register_ForceFields_class();
 
     register_ForceTable_class();
@@ -105,6 +113,10 @@ BOOST_PYTHON_MODULE(_FF){
     register_G1FF_class();
 
     register_G2FF_class();
+
+    register_GridFieldTable_class();
+
+    register_MolFieldTable_class();
 
     register_MolForceTable_class();
 

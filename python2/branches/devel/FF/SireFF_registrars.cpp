@@ -7,6 +7,7 @@
 #include "ffidentifier.h"
 #include "forcefields.h"
 #include "ffmolgroup.h"
+#include "fieldtable.h"
 #include "ffidx.h"
 #include "ffid.h"
 #include "point.h"
@@ -22,6 +23,9 @@ void register_SireFF_objects()
     ObjectRegistry::registerConverterFor< SireFF::FFIdentifier >();
     ObjectRegistry::registerConverterFor< SireFF::ForceFields >();
     ObjectRegistry::registerConverterFor< SireFF::FFMolGroup >();
+    ObjectRegistry::registerConverterFor< SireFF::FieldTable >();
+    ObjectRegistry::registerConverterFor< SireFF::GridFieldTable >();
+    ObjectRegistry::registerConverterFor< SireFF::MolFieldTable >();
     ObjectRegistry::registerConverterFor< SireFF::FFIdx >();
     ObjectRegistry::registerConverterFor< SireID::Specify<SireFF::FFID> >();
     ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireFF::FFID> >();

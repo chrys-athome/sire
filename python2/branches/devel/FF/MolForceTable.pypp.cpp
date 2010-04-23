@@ -64,6 +64,39 @@ void register_MolForceTable_class(){
                 , ( bp::arg("selected_atoms"), bp::arg("force") ) );
         
         }
+        { //::SireFF::MolForceTable::add
+        
+            typedef bool ( ::SireFF::MolForceTable::*add_function_type )( ::SireFF::MolForceTable const & ) ;
+            add_function_type add_function_value( &::SireFF::MolForceTable::add );
+            
+            MolForceTable_exposer.def( 
+                "add"
+                , add_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::SireFF::MolForceTable::add
+        
+            typedef void ( ::SireFF::MolForceTable::*add_function_type )( ::SireMaths::Vector const & ) ;
+            add_function_type add_function_value( &::SireFF::MolForceTable::add );
+            
+            MolForceTable_exposer.def( 
+                "add"
+                , add_function_value
+                , ( bp::arg("force") ) );
+        
+        }
+        { //::SireFF::MolForceTable::divide
+        
+            typedef void ( ::SireFF::MolForceTable::*divide_function_type )( double ) ;
+            divide_function_type divide_function_value( &::SireFF::MolForceTable::divide );
+            
+            MolForceTable_exposer.def( 
+                "divide"
+                , divide_function_value
+                , ( bp::arg("value") ) );
+        
+        }
         { //::SireFF::MolForceTable::initialise
         
             typedef void ( ::SireFF::MolForceTable::*initialise_function_type )(  ) ;
@@ -106,6 +139,17 @@ void register_MolForceTable_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireFF::MolForceTable::multiply
+        
+            typedef void ( ::SireFF::MolForceTable::*multiply_function_type )( double ) ;
+            multiply_function_type multiply_function_value( &::SireFF::MolForceTable::multiply );
+            
+            MolForceTable_exposer.def( 
+                "multiply"
+                , multiply_function_value
+                , ( bp::arg("value") ) );
+        
+        }
         { //::SireFF::MolForceTable::nCutGroups
         
             typedef int ( ::SireFF::MolForceTable::*nCutGroups_function_type )(  ) const;
@@ -127,6 +171,12 @@ void register_MolForceTable_class(){
         
         }
         MolForceTable_exposer.def( bp::self != bp::self );
+        MolForceTable_exposer.def( bp::self * bp::other< double >() );
+        MolForceTable_exposer.def( bp::self + bp::self );
+        MolForceTable_exposer.def( bp::self + bp::other< SireMaths::Vector >() );
+        MolForceTable_exposer.def( bp::self - bp::self );
+        MolForceTable_exposer.def( bp::self - bp::other< SireMaths::Vector >() );
+        MolForceTable_exposer.def( bp::self / bp::other< double >() );
         { //::SireFF::MolForceTable::operator=
         
             typedef ::SireFF::MolForceTable & ( ::SireFF::MolForceTable::*assign_function_type )( ::SireFF::MolForceTable const & ) ;
@@ -136,6 +186,18 @@ void register_MolForceTable_class(){
                 "assign"
                 , assign_function_value
                 , ( bp::arg("other") )
+                , bp::return_self< >() );
+        
+        }
+        { //::SireFF::MolForceTable::operator=
+        
+            typedef ::SireFF::MolForceTable & ( ::SireFF::MolForceTable::*assign_function_type )( ::SireMaths::Vector const & ) ;
+            assign_function_type assign_function_value( &::SireFF::MolForceTable::operator= );
+            
+            MolForceTable_exposer.def( 
+                "assign"
+                , assign_function_value
+                , ( bp::arg("force") )
                 , bp::return_self< >() );
         
         }
@@ -161,6 +223,17 @@ void register_MolForceTable_class(){
                 , selectedAll_function_value );
         
         }
+        { //::SireFF::MolForceTable::setAll
+        
+            typedef void ( ::SireFF::MolForceTable::*setAll_function_type )( ::SireMaths::Vector const & ) ;
+            setAll_function_type setAll_function_value( &::SireFF::MolForceTable::setAll );
+            
+            MolForceTable_exposer.def( 
+                "setAll"
+                , setAll_function_value
+                , ( bp::arg("force") ) );
+        
+        }
         { //::SireFF::MolForceTable::subtract
         
             typedef bool ( ::SireFF::MolForceTable::*subtract_function_type )( ::SireMol::CGAtomIdx const &,::SireMaths::Vector const & ) ;
@@ -181,6 +254,28 @@ void register_MolForceTable_class(){
                 "subtract"
                 , subtract_function_value
                 , ( bp::arg("selected_atoms"), bp::arg("force") ) );
+        
+        }
+        { //::SireFF::MolForceTable::subtract
+        
+            typedef bool ( ::SireFF::MolForceTable::*subtract_function_type )( ::SireFF::MolForceTable const & ) ;
+            subtract_function_type subtract_function_value( &::SireFF::MolForceTable::subtract );
+            
+            MolForceTable_exposer.def( 
+                "subtract"
+                , subtract_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::SireFF::MolForceTable::subtract
+        
+            typedef void ( ::SireFF::MolForceTable::*subtract_function_type )( ::SireMaths::Vector const & ) ;
+            subtract_function_type subtract_function_value( &::SireFF::MolForceTable::subtract );
+            
+            MolForceTable_exposer.def( 
+                "subtract"
+                , subtract_function_value
+                , ( bp::arg("force") ) );
         
         }
         { //::SireFF::MolForceTable::toVector

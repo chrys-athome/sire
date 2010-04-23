@@ -42,6 +42,28 @@ void register_ForceTable_class(){
         ForceTable_exposer.def( bp::init< >() );
         ForceTable_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         ForceTable_exposer.def( bp::init< SireFF::ForceTable const & >(( bp::arg("other") )) );
+        { //::SireFF::ForceTable::add
+        
+            typedef void ( ::SireFF::ForceTable::*add_function_type )( ::SireFF::ForceTable const & ) ;
+            add_function_type add_function_value( &::SireFF::ForceTable::add );
+            
+            ForceTable_exposer.def( 
+                "add"
+                , add_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::SireFF::ForceTable::add
+        
+            typedef void ( ::SireFF::ForceTable::*add_function_type )( ::SireMaths::Vector const & ) ;
+            add_function_type add_function_value( &::SireFF::ForceTable::add );
+            
+            ForceTable_exposer.def( 
+                "add"
+                , add_function_value
+                , ( bp::arg("force") ) );
+        
+        }
         { //::SireFF::ForceTable::assertContainsTableFor
         
             typedef void ( ::SireFF::ForceTable::*assertContainsTableFor_function_type )( ::SireMol::MolNum ) const;
@@ -84,6 +106,17 @@ void register_ForceTable_class(){
             ForceTable_exposer.def( 
                 "count"
                 , count_function_value );
+        
+        }
+        { //::SireFF::ForceTable::divide
+        
+            typedef void ( ::SireFF::ForceTable::*divide_function_type )( double ) ;
+            divide_function_type divide_function_value( &::SireFF::ForceTable::divide );
+            
+            ForceTable_exposer.def( 
+                "divide"
+                , divide_function_value
+                , ( bp::arg("value") ) );
         
         }
         { //::SireFF::ForceTable::getTable
@@ -151,7 +184,24 @@ void register_ForceTable_class(){
                 , molNums_function_value );
         
         }
+        { //::SireFF::ForceTable::multiply
+        
+            typedef void ( ::SireFF::ForceTable::*multiply_function_type )( double ) ;
+            multiply_function_type multiply_function_value( &::SireFF::ForceTable::multiply );
+            
+            ForceTable_exposer.def( 
+                "multiply"
+                , multiply_function_value
+                , ( bp::arg("value") ) );
+        
+        }
         ForceTable_exposer.def( bp::self != bp::self );
+        ForceTable_exposer.def( bp::self * bp::other< double >() );
+        ForceTable_exposer.def( bp::self + bp::self );
+        ForceTable_exposer.def( bp::self + bp::other< SireMaths::Vector >() );
+        ForceTable_exposer.def( bp::self - bp::self );
+        ForceTable_exposer.def( bp::self - bp::other< SireMaths::Vector >() );
+        ForceTable_exposer.def( bp::self / bp::other< double >() );
         { //::SireFF::ForceTable::operator=
         
             typedef ::SireFF::ForceTable & ( ::SireFF::ForceTable::*assign_function_type )( ::SireFF::ForceTable const & ) ;
@@ -164,7 +214,52 @@ void register_ForceTable_class(){
                 , bp::return_self< >() );
         
         }
+        { //::SireFF::ForceTable::operator=
+        
+            typedef ::SireFF::ForceTable & ( ::SireFF::ForceTable::*assign_function_type )( ::SireMaths::Vector const & ) ;
+            assign_function_type assign_function_value( &::SireFF::ForceTable::operator= );
+            
+            ForceTable_exposer.def( 
+                "assign"
+                , assign_function_value
+                , ( bp::arg("force") )
+                , bp::return_self< >() );
+        
+        }
         ForceTable_exposer.def( bp::self == bp::self );
+        { //::SireFF::ForceTable::setAll
+        
+            typedef void ( ::SireFF::ForceTable::*setAll_function_type )( ::SireMaths::Vector const & ) ;
+            setAll_function_type setAll_function_value( &::SireFF::ForceTable::setAll );
+            
+            ForceTable_exposer.def( 
+                "setAll"
+                , setAll_function_value
+                , ( bp::arg("force") ) );
+        
+        }
+        { //::SireFF::ForceTable::subtract
+        
+            typedef void ( ::SireFF::ForceTable::*subtract_function_type )( ::SireFF::ForceTable const & ) ;
+            subtract_function_type subtract_function_value( &::SireFF::ForceTable::subtract );
+            
+            ForceTable_exposer.def( 
+                "subtract"
+                , subtract_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::SireFF::ForceTable::subtract
+        
+            typedef void ( ::SireFF::ForceTable::*subtract_function_type )( ::SireMaths::Vector const & ) ;
+            subtract_function_type subtract_function_value( &::SireFF::ForceTable::subtract );
+            
+            ForceTable_exposer.def( 
+                "subtract"
+                , subtract_function_value
+                , ( bp::arg("force") ) );
+        
+        }
         { //::SireFF::ForceTable::typeName
         
             typedef char const * ( *typeName_function_type )(  );
