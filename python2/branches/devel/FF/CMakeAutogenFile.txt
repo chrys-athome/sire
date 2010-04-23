@@ -17,13 +17,16 @@ set ( PYPP_SOURCES
        G1FF.pypp.cpp
        G2FF.pypp.cpp
        GridFieldTable.pypp.cpp
+       GridPotentialTable.pypp.cpp
        IDAndSet_FFID_.pypp.cpp
        IDOrSet_FFID_.pypp.cpp
        MolFieldTable.pypp.cpp
        MolForceTable.pypp.cpp
+       MolPotentialTable.pypp.cpp
        NullFF.pypp.cpp
        Point.pypp.cpp
        PointRef.pypp.cpp
+       PotentialTable.pypp.cpp
        Specify_FFID_.pypp.cpp
        VectorPoint.pypp.cpp
        SireFF_containers.cpp

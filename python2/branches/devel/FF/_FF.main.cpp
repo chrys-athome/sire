@@ -41,6 +41,8 @@
 
 #include "GridFieldTable.pypp.hpp"
 
+#include "GridPotentialTable.pypp.hpp"
+
 #include "IDAndSet_FFID_.pypp.hpp"
 
 #include "IDOrSet_FFID_.pypp.hpp"
@@ -49,11 +51,15 @@
 
 #include "MolForceTable.pypp.hpp"
 
+#include "MolPotentialTable.pypp.hpp"
+
 #include "NullFF.pypp.hpp"
 
 #include "Point.pypp.hpp"
 
 #include "PointRef.pypp.hpp"
+
+#include "PotentialTable.pypp.hpp"
 
 #include "Specify_FFID_.pypp.hpp"
 
@@ -116,13 +122,19 @@ BOOST_PYTHON_MODULE(_FF){
 
     register_GridFieldTable_class();
 
+    register_GridPotentialTable_class();
+
     register_MolFieldTable_class();
 
     register_MolForceTable_class();
 
+    register_MolPotentialTable_class();
+
     register_NullFF_class();
 
     register_PointRef_class();
+
+    register_PotentialTable_class();
 
     register_VectorPoint_class();
 

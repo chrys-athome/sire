@@ -18,6 +18,7 @@
 #include "g1ff.h"
 #include "g2ff.h"
 #include "point.h"
+#include "potentialtable.h"
 
 #endif
 

@@ -212,6 +212,30 @@ public:
         return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() * val);
     }
 
+    PhysUnit<M,L,T,C,t,Q,A>& operator*=(double val)
+    {
+        Unit::setScale( scaleFactor() * val );
+        return *this;
+    }
+
+    PhysUnit<M,L,T,C,t,Q,A>& operator/=(double val)
+    {
+        Unit::setScale( scaleFactor() / val );
+        return *this;
+    }
+
+    PhysUnit<M,L,T,C,t,Q,A>& operator*=(int val)
+    {
+        Unit::setScale( scaleFactor() * val );
+        return *this;
+    }
+
+    PhysUnit<M,L,T,C,t,Q,A>& operator/=(int val)
+    {
+        Unit::setScale( scaleFactor() / val );
+        return *this;
+    }
+
     PhysUnit<M,L,T,C,t,Q,A> operator/(double val) const
     {
         return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() / val);
