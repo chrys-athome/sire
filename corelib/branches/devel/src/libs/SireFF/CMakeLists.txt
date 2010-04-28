@@ -34,6 +34,7 @@ set ( SIREFF_HEADERS
       intra2b2g3dff.hpp
       point.h
       potentialtable.h
+      probe.h
     )
 
 set ( SIREFF_DETAIL_HEADERS
@@ -64,6 +65,7 @@ set ( SIREFF_SOURCES
       g2ff.cpp
       point.cpp
       potentialtable.cpp
+      probe.cpp
 
       detail/atomiccoords3d.cpp
       detail/ffmolecules.cpp

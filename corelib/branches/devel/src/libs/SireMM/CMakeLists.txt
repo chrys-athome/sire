@@ -15,6 +15,7 @@ set ( SIREMM_HEADERS
       atompairs.hpp
       cljcomponent.h
       cljpotential.h
+      cljprobe.h
       cljnbpairs.h
       coulombpotential.h
       dihedralrestraint.h
@@ -61,6 +62,7 @@ set ( SIREMM_SOURCES
       atomljs.cpp
       cljcomponent.cpp
       cljpotential.cpp
+      cljprobe.cpp
       cljnbpairs.cpp
       coulombpotential.cpp
       dihedralrestraint.cpp

@@ -30,6 +30,9 @@
 #define SIREFF_FF3D_H
 
 #include "forcetable.h"
+#include "fieldtable.h"
+#include "potentialtable.h"
+#include "probe.h"
 
 SIRE_BEGIN_HEADER
 
@@ -73,6 +76,51 @@ public:
         this forcefield */
     virtual void force(ForceTable &forcetable, const SireCAS::Symbol &component,
                        double scale_force=1)=0;
+                       
+    /** Calculate the fields acting at all of the points
+        in 'fieldtable' due to the molecules in this forcefield */
+    virtual void field(FieldTable &fieldtable, double scale_field=1)=0;
+    
+    /** Calculate the fields acting at all of the points
+        in 'fieldtable' due to the specified component 'component'
+        from the molecules in this forcefield */
+    virtual void field(FieldTable &fieldtable, const SireCAS::Symbol &component,
+                       double scale_field=1)=0;
+                       
+    /** Calculate the fields acting at all of the points
+        in 'fieldtable' due to the molecules in this forcefield */
+    virtual void field(FieldTable &fieldtable, const Probe &probe,
+                       double scale_field=1)=0;
+    
+    /** Calculate the fields acting at all of the points
+        in 'fieldtable' due to the specified component 'component'
+        from the molecules in this forcefield */
+    virtual void field(FieldTable &fieldtable, const SireCAS::Symbol &component,
+                       const Probe &probe, double scale_field=1)=0;
+                       
+    /** Calculate the potential acting at the points in 'potentialtable'
+        due to the molecules in this forcefield */
+    virtual void potential(PotentialTable &potentialtable, double scale_potential=1)=0;
+                       
+    /** Calculate the potential acting at the points in 'potentialtable'
+        due to the molecules in this forcefield */
+    virtual void potential(PotentialTable &potentialtable, const Probe &probe,
+                           double scale_potential=1)=0;
+    
+    /** Calculate the potential acting at the points in 'potentialtable'
+        due to the specified component 'component' from the molecules in 
+        this table */
+    virtual void potential(PotentialTable &potentialtable, 
+                           const SireCAS::Symbol &component,
+                           double scale_potential=1)=0;
+    
+    /** Calculate the potential acting at the points in 'potentialtable'
+        due to the specified component 'component' from the molecules in 
+        this table */
+    virtual void potential(PotentialTable &potentialtable, 
+                           const SireCAS::Symbol &component,
+                           const Probe &probe,
+                           double scale_potential=1)=0;
 };
 
 }
