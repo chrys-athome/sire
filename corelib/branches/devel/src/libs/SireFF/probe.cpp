@@ -28,6 +28,8 @@
 
 #include "probe.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireFF;
@@ -92,6 +94,13 @@ bool Probe::operator==(const Probe &other) const
 bool Probe::operator!=(const Probe &other) const
 {
     return Property::operator!=(other);
+}
+
+void Probe::throwCastError(const char *desired_name) const
+{
+    throw SireError::invalid_cast( QObject::tr(
+            "Cannot convert a Probe of type %1 to a Probe of type %2.")
+                .arg(this->what()).arg(desired_name), CODELOC );
 }
 
 const char* Probe::typeName()

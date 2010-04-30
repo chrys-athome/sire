@@ -30,6 +30,7 @@
 #define SIREMM_LJPAIR_H
 
 #include "ljparameter.h"
+#include "ljparameterdb.h"
 
 SIRE_BEGIN_HEADER
 
@@ -64,6 +65,8 @@ public:
     LJPair();
     LJPair(double sigma, double epsilon);
     LJPair(const LJParameter &ljparam);
+    LJPair(const LJParameter &lj0, const LJParameter &lj1,
+           LJParameterDB::CombiningRules combining_rules);       
 
     LJPair(const LJPair &other);
 

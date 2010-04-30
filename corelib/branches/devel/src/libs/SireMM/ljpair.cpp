@@ -88,6 +88,23 @@ LJPair::LJPair(double sigma, double epsilon)
     }
 }
 
+/** Construct a LJPair that is the combination of lj0 and lj1 
+    using the passed specified combining rules */
+LJPair::LJPair(const LJParameter &lj0, const LJParameter &lj1,
+               LJParameterDB::CombiningRules rules) : sig(0), eps(0)
+{
+    switch(rules)
+    {
+        case LJParameterDB::ARITHMETIC:
+            this->operator=( LJPair::arithmetic(lj0, lj1) );
+            break;
+        
+        case LJParameterDB::GEOMETRIC:
+            this->operator=( LJPair::geometric(lj0, lj1) );
+            break;
+    }
+}
+
 /** Destructor */
 LJPair::~LJPair()
 {}

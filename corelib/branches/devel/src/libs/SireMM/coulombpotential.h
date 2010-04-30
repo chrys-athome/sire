@@ -43,12 +43,15 @@
 
 #include "cljcomponent.h"
 #include "cljnbpairs.h"
+#include "cljprobe.h"
 
 #include "detail/intrascaledatomicparameters.hpp"
 
 #include "switchingfunction.h"
 
 #include "SireFF/forcetable.h"
+#include "SireFF/fieldtable.h"
+#include "SireFF/potentialtable.h"
 #include "SireFF/detail/ffmolecules3d.h"
 
 SIRE_BEGIN_HEADER
@@ -109,6 +112,10 @@ using SireMol::PartialMolecule;
 using SireMol::MoleculeGroup;
 
 using SireFF::MolForceTable;
+using SireFF::MolFieldTable;
+using SireFF::MolPotentialTable;
+using SireFF::GridFieldTable;
+using SireFF::GridPotentialTable;
 
 using SireMol::AtomCharges;
 
@@ -295,6 +302,10 @@ public:
     
     typedef SireBase::PairMatrix<double> EnergyWorkspace;
     typedef SireBase::PairMatrix<SireMaths::DistVector> ForceWorkspace;
+    typedef SireBase::PairMatrix<SireMaths::DistVector> FieldWorkspace;
+    typedef SireBase::PairMatrix<double> PotentialWorkspace;
+
+    typedef CoulombProbe Probe;
 
     typedef SireFF::detail::FFMolecule3D<InterCoulombPotential> Molecule;
     typedef SireFF::detail::FFMolecules3D<InterCoulombPotential> Molecules;
@@ -374,6 +385,92 @@ public:
                                InterCoulombPotential::ForceWorkspace &workspace,
                                double scale_force=1) const;
 
+    void calculateField(const InterCoulombPotential::Molecule &mol0, 
+                        const InterCoulombPotential::Molecule &mol1,
+                        const CoulombProbe &probe,
+                        MolFieldTable &forces0,
+                        InterCoulombPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const InterCoulombPotential::Molecule &mol0,
+                        const InterCoulombPotential::Molecule &mol1,
+                        const CoulombProbe &probe,
+                        MolFieldTable &forces0,
+                        const Symbol &symbol,
+                        const Components &components,
+                        InterCoulombPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const InterCoulombPotential::Molecule &mol0,
+                        const CoulombProbe &probe,
+                        GridFieldTable &fields,
+                        InterCoulombPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const InterCoulombPotential::Molecule &mol0,
+                        const CoulombProbe &probe,
+                        GridFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        InterCoulombPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateCoulombField(const InterCoulombPotential::Molecule &mol0, 
+                               const InterCoulombPotential::Molecule &mol1,
+                               const CoulombProbe &probe,
+                               MolFieldTable &fields0,
+                               InterCoulombPotential::FieldWorkspace &workspace,
+                               double scale_field=1) const;
+
+    void calculateCoulombField(const InterCoulombPotential::Molecule &mol0, 
+                               const CoulombProbe &probe,
+                               GridFieldTable &fields,
+                               InterCoulombPotential::FieldWorkspace &workspace,
+                               double scale_field=1) const;
+
+    void calculatePotential(const InterCoulombPotential::Molecule &mol0, 
+                            const InterCoulombPotential::Molecule &mol1,
+                            const CoulombProbe &probe,
+                            MolPotentialTable &pots0,
+                            InterCoulombPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const InterCoulombPotential::Molecule &mol0,
+                            const InterCoulombPotential::Molecule &mol1,
+                            const CoulombProbe &probe,
+                            MolPotentialTable &pots0,
+                            const Symbol &symbol,
+                            const Components &components,
+                            InterCoulombPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const InterCoulombPotential::Molecule &mol0,
+                            const CoulombProbe &probe,
+                            GridPotentialTable &pots,
+                            InterCoulombPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const InterCoulombPotential::Molecule &mol0,
+                            const CoulombProbe &probe,
+                            GridPotentialTable &pots,
+                            const Symbol &symbol,
+                            const Components &components,
+                            InterCoulombPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculateCoulombPotential(const InterCoulombPotential::Molecule &mol0, 
+                                   const InterCoulombPotential::Molecule &mol1,
+                                   const CoulombProbe &probe,
+                                   MolPotentialTable &pots0,
+                                   InterCoulombPotential::PotentialWorkspace &workspace,
+                                   double scale_potential=1) const;
+
+    void calculateCoulombPotential(const InterCoulombPotential::Molecule &mol0, 
+                                   const CoulombProbe &probe,
+                                   GridPotentialTable &pots,
+                                   InterCoulombPotential::PotentialWorkspace &workspace,
+                                   double scale_potential=1) const;
+
 private:
     double totalCharge(const InterCoulombPotential::Parameters::Array &params) const;
 
@@ -444,6 +541,10 @@ public:
         
     typedef SireBase::PairMatrix<double> EnergyWorkspace;
     typedef SireBase::PairMatrix<SireMaths::DistVector> ForceWorkspace;
+    typedef SireBase::PairMatrix<SireMaths::DistVector> FieldWorkspace;
+    typedef SireBase::PairMatrix<double> PotentialWorkspace;
+
+    typedef CoulombProbe Probe;
 
     typedef SireFF::detail::FFMolecule3D<IntraCoulombPotential> Molecule;
     typedef SireFF::detail::FFMolecules3D<IntraCoulombPotential> Molecules;
@@ -544,6 +645,132 @@ public:
                                MolForceTable &forces,
                                IntraCoulombPotential::ForceWorkspace &workspace,
                                double scale_force=1) const;
+
+    void calculateField(const IntraCoulombPotential::Molecule &mol, 
+                        const CoulombProbe &probe,
+                        MolFieldTable &fields,
+                        IntraCoulombPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraCoulombPotential::Molecule &mol,
+                        const IntraCoulombPotential::Molecule &rest_of_mol,
+                        const CoulombProbe &probe,
+                        MolFieldTable &fields,
+                        IntraCoulombPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraCoulombPotential::Molecule &mol, 
+                        const CoulombProbe &probe,
+                        MolFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCoulombPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraCoulombPotential::Molecule &mol,
+                        const IntraCoulombPotential::Molecule &rest_of_mol,
+                        const CoulombProbe &probe,
+                        MolFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCoulombPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraCoulombPotential::Molecule &mol, 
+                        const CoulombProbe &probe,
+                        GridFieldTable &fields,
+                        IntraCoulombPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraCoulombPotential::Molecule &mol, 
+                        const CoulombProbe &probe,
+                        GridFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCoulombPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculatePotential(const IntraCoulombPotential::Molecule &mol, 
+                            const CoulombProbe &probe,
+                            MolPotentialTable &potentials,
+                            IntraCoulombPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraCoulombPotential::Molecule &mol,
+                            const IntraCoulombPotential::Molecule &rest_of_mol,
+                            const CoulombProbe &probe,
+                            MolPotentialTable &potentials,
+                            IntraCoulombPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraCoulombPotential::Molecule &mol, 
+                            const CoulombProbe &probe,
+                            MolPotentialTable &potentials,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraCoulombPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraCoulombPotential::Molecule &mol,
+                            const IntraCoulombPotential::Molecule &rest_of_mol,
+                            const CoulombProbe &probe,
+                            MolPotentialTable &potentials,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraCoulombPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraCoulombPotential::Molecule &mol, 
+                            const CoulombProbe &probe,
+                            GridPotentialTable &potentials,
+                            IntraCoulombPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraCoulombPotential::Molecule &mol, 
+                            const CoulombProbe &probe,
+                            GridPotentialTable &potentials,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraCoulombPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculateCoulombField(const IntraCoulombPotential::Molecule &mol,
+                               const CoulombProbe &probe,
+                               MolFieldTable &fields,
+                               IntraCoulombPotential::FieldWorkspace &workspace,
+                               double scale_field=1) const;
+
+    void calculateCoulombField(const IntraCoulombPotential::Molecule &mol,
+                               const CoulombProbe &probe,
+                               GridFieldTable &fields,
+                               IntraCoulombPotential::FieldWorkspace &workspace,
+                               double scale_field=1) const;
+
+    void calculateCoulombField(const IntraCoulombPotential::Molecule &mol,
+                               const IntraCoulombPotential::Molecule &rest_of_mol,
+                               const CoulombProbe &probe,
+                               MolFieldTable &fields,
+                               IntraCoulombPotential::FieldWorkspace &workspace,
+                               double scale_field=1) const;
+
+    void calculateCoulombPotential(const IntraCoulombPotential::Molecule &mol,
+                                   const CoulombProbe &probe,
+                                   MolPotentialTable &potentials,
+                                   IntraCoulombPotential::PotentialWorkspace &workspace,
+                                   double scale_potential=1) const;
+
+    void calculateCoulombPotential(const IntraCoulombPotential::Molecule &mol,
+                                   const CoulombProbe &probe,
+                                   GridPotentialTable &fields,
+                                   IntraCoulombPotential::PotentialWorkspace &workspace,
+                                   double scale_potential=1) const;
+
+    void calculateCoulombPotential(const IntraCoulombPotential::Molecule &mol,
+                                   const IntraCoulombPotential::Molecule &rest_of_mol,
+                                   const CoulombProbe &probe,
+                                   MolPotentialTable &potentials,
+                                   IntraCoulombPotential::PotentialWorkspace &workspace,
+                                   double scale_potential=1) const;
                                
 private:
     double totalCharge(const IntraCoulombPotential::Parameters::Array &params) const;

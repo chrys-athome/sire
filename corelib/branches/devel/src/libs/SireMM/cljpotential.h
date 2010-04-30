@@ -90,6 +90,10 @@ using SireMol::PartialMolecule;
 using SireMol::MoleculeGroup;
 
 using SireFF::MolForceTable;
+using SireFF::MolFieldTable;
+using SireFF::MolPotentialTable;
+using SireFF::GridFieldTable;
+using SireFF::GridPotentialTable;
 
 using SireMol::AtomCharges;
 
@@ -442,11 +446,71 @@ public:
                           InterCLJPotential::ForceWorkspace &workspace,
                           double scale_field=1) const;
 
+    void calculatePotential(const InterCLJPotential::Molecule &mol0, 
+                            const InterCLJPotential::Molecule &mol1,
+                            const CLJProbe &probe,
+                            MolPotentialTable &pots0,
+                            InterCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const InterCLJPotential::Molecule &mol0,
+                            const InterCLJPotential::Molecule &mol1,
+                            const CLJProbe &probe,
+                            MolPotentialTable &pots0,
+                            const Symbol &symbol,
+                            const Components &components,
+                            InterCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const InterCLJPotential::Molecule &mol0,
+                            const CLJProbe &probe,
+                            GridPotentialTable &pots,
+                            InterCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const InterCLJPotential::Molecule &mol0,
+                            const CLJProbe &probe,
+                            GridPotentialTable &pots,
+                            const Symbol &symbol,
+                            const Components &components,
+                            InterCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculateCoulombPotential(const InterCLJPotential::Molecule &mol0, 
+                                   const InterCLJPotential::Molecule &mol1,
+                                   const CLJProbe &probe,
+                                   MolPotentialTable &pots0,
+                                   InterCLJPotential::PotentialWorkspace &workspace,
+                                   double scale_potential=1) const;
+
+    void calculateCoulombPotential(const InterCLJPotential::Molecule &mol0, 
+                                   const CLJProbe &probe,
+                                   GridPotentialTable &pots,
+                                   InterCLJPotential::PotentialWorkspace &workspace,
+                                   double scale_potential=1) const;
+
+    void calculateLJPotential(const InterCLJPotential::Molecule &mol0, 
+                              const InterCLJPotential::Molecule &mol1,
+                              const CLJProbe &probe,
+                              MolPotentialTable &pots0,
+                              InterCLJPotential::PotentialWorkspace &workspace,
+                              double scale_potential=1) const;
+
+    void calculateLJPotential(const InterCLJPotential::Molecule &mol0, 
+                              const CLJProbe &probe,
+                              GridPotentialTable &pots,
+                              InterCLJPotential::PotentialWorkspace &workspace,
+                              double scale_potential=1) const;
+
 private:
     double totalCharge(const InterCLJPotential::Parameters::Array &params) const;
 
     void throwMissingForceComponent(const Symbol &symbol,
                                     const Components &components) const;
+    void throwMissingFieldComponent(const Symbol &symbol,
+                                    const Components &components) const;
+    void throwMissingPotentialComponent(const Symbol &symbol,
+                                        const Components &components) const;
 
     void _pvt_calculateEnergy(const InterCLJPotential::Molecule &mol0, 
                               const InterCLJPotential::Molecule &mol1,
@@ -479,10 +543,22 @@ private:
                              InterCLJPotential::FieldWorkspace &workspace,
                              double scale_field) const;
 
+    void _pvt_calculateField(const InterCLJPotential::Molecule &mol,
+                             const CLJProbe &probe,
+                             GridFieldTable &fields,
+                             InterCLJPotential::FieldWorkspace &workspace,
+                             double scale_field) const;
+
     void _pvt_calculateCoulombField(const InterCLJPotential::Molecule &mol0, 
                                     const InterCLJPotential::Molecule &mol1,
                                     const CLJProbe &probe,
                                     MolFieldTable &fields0, 
+                                    InterCLJPotential::FieldWorkspace &workspace,
+                                    double scale_field) const;
+
+    void _pvt_calculateCoulombField(const InterCLJPotential::Molecule &mol,
+                                    const CLJProbe &probe,
+                                    GridFieldTable &fields,
                                     InterCLJPotential::FieldWorkspace &workspace,
                                     double scale_field) const;
 
@@ -492,6 +568,51 @@ private:
                                MolFieldTable &fields0, 
                                InterCLJPotential::FieldWorkspace &workspace,
                                double scale_field) const;
+
+    void _pvt_calculateLJField(const InterCLJPotential::Molecule &mol,
+                               const CLJProbe &probe,
+                               GridFieldTable &fields,
+                               InterCLJPotential::FieldWorkspace &workspace,
+                               double scale_field) const;
+
+    void _pvt_calculatePotential(const InterCLJPotential::Molecule &mol0, 
+                                 const InterCLJPotential::Molecule &mol1,
+                                 const CLJProbe &probe,
+                                 MolPotentialTable &pots0, 
+                                 InterCLJPotential::PotentialWorkspace &workspace,
+                                 double scale_potential) const;
+
+    void _pvt_calculatePotential(const InterCLJPotential::Molecule &mol,
+                                 const CLJProbe &probe,
+                                 GridPotentialTable &fields,
+                                 InterCLJPotential::PotentialWorkspace &workspace,
+                                 double scale_potential) const;
+
+    void _pvt_calculateCoulombPotential(const InterCLJPotential::Molecule &mol0, 
+                                        const InterCLJPotential::Molecule &mol1,
+                                        const CLJProbe &probe,
+                                        MolPotentialTable &pots0, 
+                                        InterCLJPotential::PotentialWorkspace &workspace,
+                                        double scale_potential) const;
+
+    void _pvt_calculateCoulombPotential(const InterCLJPotential::Molecule &mol,
+                                        const CLJProbe &probe,
+                                        GridPotentialTable &fields,
+                                        InterCLJPotential::PotentialWorkspace &workspace,
+                                        double scale_potential) const;
+
+    void _pvt_calculateLJPotential(const InterCLJPotential::Molecule &mol0, 
+                                   const InterCLJPotential::Molecule &mol1,
+                                   const CLJProbe &probe,
+                                   MolPotentialTable &pots0, 
+                                   InterCLJPotential::PotentialWorkspace &workspace,
+                                   double scale_potential) const;
+
+    void _pvt_calculateLJPotential(const InterCLJPotential::Molecule &mol,
+                                   const CLJProbe &probe,
+                                   GridPotentialTable &fields,
+                                   InterCLJPotential::PotentialWorkspace &workspace,
+                                   double scale_potential) const;
 };
 
 /** This class provides all of the functions and containers  
@@ -549,6 +670,10 @@ public:
         
     typedef SireBase::PairMatrix<double> EnergyWorkspace;
     typedef SireBase::PairMatrix<SireMaths::DistVector> ForceWorkspace;
+    typedef SireBase::PairMatrix<SireMaths::DistVector> FieldWorkspace;
+    typedef SireBase::PairMatrix<double> PotentialWorkspace;
+
+    typedef CLJProbe Probe;
 
     typedef SireFF::detail::FFMolecule3D<IntraCLJPotential> Molecule;
     typedef SireFF::detail::FFMolecules3D<IntraCLJPotential> Molecules;
@@ -639,6 +764,94 @@ public:
                         IntraCLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
+    void calculateField(const IntraCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        MolFieldTable &fields,
+                        IntraCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraCLJPotential::Molecule &mol,
+                        const IntraCLJPotential::Molecule &rest_of_mol,
+                        const CLJProbe &probe,
+                        MolFieldTable &fields,
+                        IntraCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        MolFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraCLJPotential::Molecule &mol,
+                        const IntraCLJPotential::Molecule &rest_of_mol,
+                        const CLJProbe &probe,
+                        MolFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        GridFieldTable &fields,
+                        IntraCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        GridFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculatePotential(const IntraCLJPotential::Molecule &mol, 
+                            const CLJProbe &probe,
+                            MolPotentialTable &potentials,
+                            IntraCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraCLJPotential::Molecule &mol,
+                            const IntraCLJPotential::Molecule &rest_of_mol,
+                            const CLJProbe &probe,
+                            MolPotentialTable &potentials,
+                            IntraCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraCLJPotential::Molecule &mol, 
+                            const CLJProbe &probe,
+                            MolPotentialTable &potentials,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraCLJPotential::Molecule &mol,
+                            const IntraCLJPotential::Molecule &rest_of_mol,
+                            const CLJProbe &probe,
+                            MolPotentialTable &potentials,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraCLJPotential::Molecule &mol, 
+                            const CLJProbe &probe,
+                            GridPotentialTable &potentials,
+                            IntraCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraCLJPotential::Molecule &mol, 
+                            const CLJProbe &probe,
+                            GridPotentialTable &potentials,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
     void calculateCoulombForce(const IntraCLJPotential::Molecule &mol,
                                MolForceTable &forces,
                                IntraCLJPotential::ForceWorkspace &workspace,
@@ -660,6 +873,82 @@ public:
                           MolForceTable &forces,
                           IntraCLJPotential::ForceWorkspace &workspace,
                           double scale_force=1) const;
+
+    void calculateCoulombField(const IntraCLJPotential::Molecule &mol,
+                               const CLJProbe &probe,
+                               MolFieldTable &fields,
+                               IntraCLJPotential::FieldWorkspace &workspace,
+                               double scale_field=1) const;
+
+    void calculateCoulombField(const IntraCLJPotential::Molecule &mol,
+                               const CLJProbe &probe,
+                               GridFieldTable &fields,
+                               IntraCLJPotential::FieldWorkspace &workspace,
+                               double scale_field=1) const;
+
+    void calculateCoulombField(const IntraCLJPotential::Molecule &mol,
+                               const IntraCLJPotential::Molecule &rest_of_mol,
+                               const CLJProbe &probe,
+                               MolFieldTable &fields,
+                               IntraCLJPotential::FieldWorkspace &workspace,
+                               double scale_field=1) const;
+                               
+    void calculateLJField(const IntraCLJPotential::Molecule &mol,
+                          const CLJProbe &probe,
+                          MolFieldTable &fields,
+                          IntraCLJPotential::FieldWorkspace &workspace,
+                          double scale_field=1) const;
+                               
+    void calculateLJField(const IntraCLJPotential::Molecule &mol,
+                          const CLJProbe &probe,
+                          GridFieldTable &fields,
+                          IntraCLJPotential::FieldWorkspace &workspace,
+                          double scale_field=1) const;
+                               
+    void calculateLJField(const IntraCLJPotential::Molecule &mol,
+                          const IntraCLJPotential::Molecule &rest_of_mol,
+                          const CLJProbe &probe,
+                          MolFieldTable &fields,
+                          IntraCLJPotential::FieldWorkspace &workspace,
+                          double scale_field=1) const;
+
+    void calculateCoulombPotential(const IntraCLJPotential::Molecule &mol,
+                                   const CLJProbe &probe,
+                                   MolPotentialTable &potentials,
+                                   IntraCLJPotential::PotentialWorkspace &workspace,
+                                   double scale_potential=1) const;
+
+    void calculateCoulombPotential(const IntraCLJPotential::Molecule &mol,
+                                   const CLJProbe &probe,
+                                   GridPotentialTable &fields,
+                                   IntraCLJPotential::PotentialWorkspace &workspace,
+                                   double scale_potential=1) const;
+
+    void calculateCoulombPotential(const IntraCLJPotential::Molecule &mol,
+                                   const IntraCLJPotential::Molecule &rest_of_mol,
+                                   const CLJProbe &probe,
+                                   MolPotentialTable &potentials,
+                                   IntraCLJPotential::PotentialWorkspace &workspace,
+                                   double scale_potential=1) const;
+                               
+    void calculateLJPotential(const IntraCLJPotential::Molecule &mol,
+                              const CLJProbe &probe,
+                              MolPotentialTable &potentials,
+                              IntraCLJPotential::PotentialWorkspace &workspace,
+                              double scale_potential=1) const;
+                               
+    void calculateLJPotential(const IntraCLJPotential::Molecule &mol,
+                              const CLJProbe &probe,
+                              GridPotentialTable &potentials,
+                              IntraCLJPotential::PotentialWorkspace &workspace,
+                              double scale_potential=1) const;
+                               
+    void calculateLJPotential(const IntraCLJPotential::Molecule &mol,
+                              const IntraCLJPotential::Molecule &rest_of_mol,
+                              const CLJProbe &probe,
+                              MolPotentialTable &potentials,
+                              IntraCLJPotential::PotentialWorkspace &workspace,
+                              double scale_potential=1) const;
                                
 private:
     double totalCharge(const IntraCLJPotential::Parameters::Array &params) const;
@@ -1051,6 +1340,27 @@ InterCLJPotential::calculateField(const InterCLJPotential::Molecule &mol0,
     }
 }
 
+/** Calculate the coulomb and LJ fields from the passed molecule
+    on the grid points of the passed GridFieldTable. This uses
+    the passed workspace to perform the calculation. The fields
+    are scaled by the optional 'scaled_fields' */
+inline void 
+InterCLJPotential::calculateField(const InterCLJPotential::Molecule &mol, 
+                                  const CLJProbe &probe,
+                                  GridFieldTable &fields, 
+                                  InterCLJPotential::FieldWorkspace &workspace,
+                                  double scale_field) const
+{
+    if ( scale_field != 0 and 
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol.aaBox(), fields.grid().aaBox()) )
+    {
+        this->_pvt_calculateField(mol, probe, fields,
+                                  workspace, scale_field);
+    }
+}
+
 /** Calculate the coulomb fields on the atoms between the passed pair
     of molecules and add the fields on 'mol0' onto 'fields'. This uses
     the passed workspace to perform the calculation. The fields
@@ -1059,7 +1369,7 @@ inline void
 InterCLJPotential::calculateCoulombField(const InterCLJPotential::Molecule &mol0, 
                                          const InterCLJPotential::Molecule &mol1,
                                          const CLJProbe &probe,
-                                         MolForceTable &fields0, 
+                                         MolFieldTable &fields0, 
                                          InterCLJPotential::FieldWorkspace &workspace,
                                          double scale_field) const
 {
@@ -1069,6 +1379,27 @@ InterCLJPotential::calculateCoulombField(const InterCLJPotential::Molecule &mol0
                           mol0.aaBox(), mol1.aaBox()) )
     {
         this->_pvt_calculateCoulombField(mol0, mol1, probe, fields0,
+                                         workspace, scale_field);
+    }
+}
+
+/** Calculate the coulomb field from the passed molecule
+    on the grid points of the passed GridFieldTable. This uses
+    the passed workspace to perform the calculation. The fields
+    are scaled by the optional 'scaled_fields' */
+inline void 
+InterCLJPotential::calculateCoulombField(const InterCLJPotential::Molecule &mol, 
+                                         const CLJProbe &probe,
+                                         GridFieldTable &fields, 
+                                         InterCLJPotential::FieldWorkspace &workspace,
+                                         double scale_field) const
+{
+    if ( scale_field != 0 and 
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol.aaBox(), fields.grid().aaBox()) )
+    {
+        this->_pvt_calculateCoulombField(mol, probe, fields,
                                          workspace, scale_field);
     }
 }
@@ -1095,6 +1426,27 @@ InterCLJPotential::calculateLJField(const InterCLJPotential::Molecule &mol0,
     }
 }
 
+/** Calculate the LJ field from the passed molecule
+    on the grid points of the passed GridFieldTable. This uses
+    the passed workspace to perform the calculation. The fields
+    are scaled by the optional 'scaled_fields' */
+inline void 
+InterCLJPotential::calculateLJField(const InterCLJPotential::Molecule &mol, 
+                                    const CLJProbe &probe,
+                                    GridFieldTable &fields, 
+                                    InterCLJPotential::FieldWorkspace &workspace,
+                                    double scale_field) const
+{
+    if ( scale_field != 0 and 
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol.aaBox(), fields.grid().aaBox()) )
+    {
+        this->_pvt_calculateLJField(mol, probe, fields,
+                                    workspace, scale_field);
+    }
+}
+
 /** Calculate the component of the field represented by 'symbol' between the 
     passed pair of molecules, and add the fields on 'mol0' onto 'fields0'.
     This uses the passed workspace to perform the calculation. The fields
@@ -1117,6 +1469,220 @@ InterCLJPotential::calculateField(const InterCLJPotential::Molecule &mol0,
         
     else if (symbol == components.lj())
         this->calculateLJField(mol0, mol1, probe, fields0, workspace, scale_field);
+        
+    else
+        throwMissingFieldComponent(symbol, components);
+}
+
+/** Calculate the component of the field represented by 'symbol' between the 
+    passed molecule, and the grid points in 'fields'.
+    This uses the passed workspace to perform the calculation. The fields
+    are scaled by the optional 'scaled_fields' */
+inline void 
+InterCLJPotential::calculateField(const InterCLJPotential::Molecule &mol,
+                                  const CLJProbe &probe,
+                                  GridFieldTable &fields,
+                                  const Symbol &symbol,
+                                  const InterCLJPotential::Components &components,
+                                  InterCLJPotential::FieldWorkspace &workspace,
+                                  double scale_field) const
+{
+    if (symbol == components.total())
+        this->calculateField(mol, probe, fields, workspace, scale_field);
+       
+    else if (symbol == components.coulomb())
+        this->calculateCoulombField(mol, probe, fields, workspace, scale_field);
+        
+    else if (symbol == components.lj())
+        this->calculateLJField(mol, probe, fields, workspace, scale_field);
+        
+    else
+        throwMissingFieldComponent(symbol, components);
+}
+
+/** Calculate the coulomb and LJ potentials on the atoms between the passed pair
+    of molecules and add the potentials on 'mol0' onto 'potentials'. This uses
+    the passed workspace to perform the calculation. The potentials
+    are scaled by the optional 'scaled_potential' */
+inline void 
+InterCLJPotential::calculatePotential(const InterCLJPotential::Molecule &mol0, 
+                                      const InterCLJPotential::Molecule &mol1,
+                                      const CLJProbe &probe,
+                                      MolPotentialTable &pots0, 
+                                      InterCLJPotential::PotentialWorkspace &workspace,
+                                      double scale_potential) const
+{
+    if ( scale_potential != 0 and 
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol0.aaBox(), mol1.aaBox()) )
+    {
+        this->_pvt_calculatePotential(mol0, mol1, probe, pots0,
+                                      workspace, scale_potential);
+    }
+}
+
+/** Calculate the coulomb and LJ potentials from the passed molecule
+    on the grid points of the passed GridPotentialTable. This uses
+    the passed workspace to perform the calculation. The potentials
+    are scaled by the optional 'scaled_potential' */
+inline void 
+InterCLJPotential::calculatePotential(const InterCLJPotential::Molecule &mol, 
+                                      const CLJProbe &probe,
+                                      GridPotentialTable &pots, 
+                                      InterCLJPotential::PotentialWorkspace &workspace,
+                                      double scale_potential) const
+{
+    if ( scale_potential != 0 and 
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol.aaBox(), pots.grid().aaBox()) )
+    {
+        this->_pvt_calculatePotential(mol, probe, pots,
+                                      workspace, scale_potential);
+    }
+}
+
+/** Calculate the coulomb potential on the atoms between the passed pair
+    of molecules and add the fields on 'mol0' onto 'pots'. This uses
+    the passed workspace to perform the calculation. The potentials
+    are scaled by the optional 'scaled_potential' */
+inline void 
+InterCLJPotential::calculateCoulombPotential(
+                                         const InterCLJPotential::Molecule &mol0, 
+                                         const InterCLJPotential::Molecule &mol1,
+                                         const CLJProbe &probe,
+                                         MolPotentialTable &pots, 
+                                         InterCLJPotential::PotentialWorkspace &workspace,
+                                         double scale_potential) const
+{
+    if ( scale_potential != 0 and 
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol0.aaBox(), mol1.aaBox()) )
+    {
+        this->_pvt_calculateCoulombPotential(mol0, mol1, probe, pots,
+                                             workspace, scale_potential);
+    }
+}
+
+/** Calculate the coulomb potential from the passed molecule
+    on the grid points of the passed GridPotentialTable. This uses
+    the passed workspace to perform the calculation. The potentials
+    are scaled by the optional 'scaled_potential' */
+inline void 
+InterCLJPotential::calculateCoulombPotential(
+                                      const InterCLJPotential::Molecule &mol, 
+                                      const CLJProbe &probe,
+                                      GridPotentialTable &pots, 
+                                      InterCLJPotential::PotentialWorkspace &workspace,
+                                      double scale_potential) const
+{
+    if ( scale_potential != 0 and 
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol.aaBox(), pots.grid().aaBox()) )
+    {
+        this->_pvt_calculateCoulombPotential(mol, probe, pots,
+                                             workspace, scale_potential);
+    }
+}
+
+/** Calculate the LJ potentials on the atoms between the passed pair
+    of molecules and add the potentials on 'mol0' onto 'pots'. This uses
+    the passed workspace to perform the calculation. The potentials
+    are scaled by the optional 'scaled_potential' */
+inline void 
+InterCLJPotential::calculateLJPotential(const InterCLJPotential::Molecule &mol0, 
+                                        const InterCLJPotential::Molecule &mol1,
+                                        const CLJProbe &probe,
+                                        MolPotentialTable &pots, 
+                                        InterCLJPotential::PotentialWorkspace &workspace,
+                                        double scale_potential) const
+{
+    if ( scale_potential != 0 and 
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol0.aaBox(), mol1.aaBox()) )
+    {
+        this->_pvt_calculateLJPotential(mol0, mol1, probe, pots,
+                                        workspace, scale_potential);
+    }
+}
+
+/** Calculate the LJ potential from the passed molecule
+    on the grid points of the passed GridPotentialTable. This uses
+    the passed workspace to perform the calculation. The potentials
+    are scaled by the optional 'scaled_potential' */
+inline void 
+InterCLJPotential::calculateLJPotential(const InterCLJPotential::Molecule &mol, 
+                                        const CLJProbe &probe,
+                                        GridPotentialTable &pots, 
+                                        InterCLJPotential::PotentialWorkspace &workspace,
+                                        double scale_potential) const
+{
+    if ( scale_potential != 0 and 
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol.aaBox(), pots.grid().aaBox()) )
+    {
+        this->_pvt_calculateLJPotential(mol, probe, pots,
+                                        workspace, scale_potential);
+    }
+}
+
+/** Calculate the component of the potential represented by 'symbol' between the 
+    passed pair of molecules, and add the potentials on 'mol0' onto 'pots'.
+    This uses the passed workspace to perform the calculation. The potentials
+    are scaled by the optional 'scaled_potential' */
+inline void 
+InterCLJPotential::calculatePotential(
+                                  const InterCLJPotential::Molecule &mol0,
+                                  const InterCLJPotential::Molecule &mol1,
+                                  const CLJProbe &probe,
+                                  MolPotentialTable &pots,
+                                  const Symbol &symbol,
+                                  const InterCLJPotential::Components &components,
+                                  InterCLJPotential::PotentialWorkspace &workspace,
+                                  double scale_potential) const
+{
+    if (symbol == components.total())
+        this->calculatePotential(mol0, mol1, probe, pots, workspace, scale_potential);
+       
+    else if (symbol == components.coulomb())
+        this->calculateCoulombPotential(mol0, mol1, probe, pots, 
+                                        workspace, scale_potential);
+        
+    else if (symbol == components.lj())
+        this->calculateLJPotential(mol0, mol1, probe, pots, workspace, scale_potential);
+        
+    else
+        throwMissingFieldComponent(symbol, components);
+}
+
+/** Calculate the component of the potential represented by 'symbol' between the 
+    passed molecule, and the grid points in 'pots'.
+    This uses the passed workspace to perform the calculation. The potentials
+    are scaled by the optional 'scaled_potential' */
+inline void 
+InterCLJPotential::calculatePotential(
+                                  const InterCLJPotential::Molecule &mol,
+                                  const CLJProbe &probe,
+                                  GridPotentialTable &pots,
+                                  const Symbol &symbol,
+                                  const InterCLJPotential::Components &components,
+                                  InterCLJPotential::PotentialWorkspace &workspace,
+                                  double scale_potential) const
+{
+    if (symbol == components.total())
+        this->calculatePotential(mol, probe, pots, workspace, scale_potential);
+       
+    else if (symbol == components.coulomb())
+        this->calculateCoulombPotential(mol, probe, pots, 
+                                        workspace, scale_potential);
+        
+    else if (symbol == components.lj())
+        this->calculateLJPotential(mol, probe, pots, workspace, scale_potential);
         
     else
         throwMissingFieldComponent(symbol, components);

@@ -73,11 +73,17 @@ public:
     
     static const Probe& null();
 
+    template<class T>
+    const T& assertAsA() const;
+
 protected:
     Probe& operator=(const Probe &other);
     
     bool operator==(const Probe &other) const;
     bool operator!=(const Probe &other) const;
+
+private:
+    void throwCastError(const char *desired_name) const;
 };
 
 /** This is a null Probe */
@@ -102,6 +108,21 @@ public:
 };
 
 typedef SireBase::PropPtr<Probe> ProbePtr;
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+template<class T>
+const T& Probe::assertAsA() const
+{
+    const T *as_t = dynamic_cast<const T*>(this);
+    
+    if (as_t == 0)
+        this->throwCastError( T::typeName() );
+        
+    return *as_t;
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

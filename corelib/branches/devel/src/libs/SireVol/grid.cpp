@@ -72,6 +72,8 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, Grid &grid)
         
         sds >> grid.grid_points >> grid.grid_weights
             >> static_cast<Property&>(grid);
+            
+        grid.aabox = AABox(grid.grid_points);
     }
     else
         throw version_error(v, "1", r_grid, CODELOC);
@@ -86,7 +88,7 @@ Grid::Grid() : Property()
 /** Copy constructor */
 Grid::Grid(const Grid &other) 
      : Property(other), grid_points(other.grid_points),
-       grid_weights(other.grid_weights)
+       grid_weights(other.grid_weights), aabox(other.aabox)
 {}
 
 /** Destructor */
@@ -105,6 +107,7 @@ Grid& Grid::operator=(const Grid &other)
     {
         grid_points = other.grid_points;
         grid_weights = other.grid_weights;
+        aabox = other.aabox;
         
         Property::operator=(other);
     }
@@ -131,6 +134,7 @@ void Grid::setGrid(const QVector<Vector> &gridpoints)
 {
     grid_points = gridpoints;
     grid_weights = QVector<double>();
+    aabox = AABox(grid_points);
 }
 
 /** Internal function used to set the grid points and grid weights */
@@ -149,6 +153,7 @@ void Grid::setGrid(const QVector<Vector> &gridpoints, const QVector<double> &wei
                     
     grid_points = gridpoints;
     grid_weights = weights;
+    aabox = AABox(grid_points);
 }
 
 /** Return the array of grid points */
@@ -170,49 +175,22 @@ bool Grid::isEmpty() const
     return grid_points.isEmpty();
 }
 
-/** Return the maximum coordinates of the grid */
+/** Return the minimum coordinates of the grid */
 Vector Grid::minCoords() const
 {
-    if (grid_points.isEmpty())
-        return Vector(0);
-
-    QVector<Vector>::const_iterator it = grid_points.constBegin();
-    
-    Vector mincoords = *it;
-
-    for ( ; it != grid_points.constEnd(); ++it )
-    {
-        mincoords.setMin(*it);
-    }
-    
-    return mincoords;
+    return aabox.minCoords();
 }
 
 /** Return the maximum coordinates of the grid */
 Vector Grid::maxCoords() const
 {
-    if (grid_points.isEmpty())
-        return Vector(0);
-
-    QVector<Vector>::const_iterator it = grid_points.constBegin();
-    
-    Vector maxcoords = *it;
-
-    for ( ; it != grid_points.constEnd(); ++it )
-    {
-        maxcoords.setMax(*it);
-    }
-    
-    return maxcoords;
+    return aabox.maxCoords();
 }
 
 /** Return the center of the grid */
 Vector Grid::center() const
 {
-    Vector mincoords = minCoords();
-    Vector maxcoords = maxCoords();
-
-    return mincoords + 0.5*(maxcoords-mincoords);
+    return aabox.center();
 }
 
 /** Return whether or not the grid points have weights

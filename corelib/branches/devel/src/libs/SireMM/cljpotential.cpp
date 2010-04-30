@@ -1010,7 +1010,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     //energy += Energy(scale_energy * cnrg, 4 * scale_energy * ljnrg);
     energy = energy + cljnrg;
     
-    
     #ifdef SIRE_TIME_ROUTINES
     nflops += 5;
     ADD_FLOPS(nflops);
@@ -1682,6 +1681,996 @@ void InterCLJPotential::_pvt_calculateLJForce(
     } // end of loop over igroup CutGroups
 }
 
+/** Add to the potentials in 'pots0' the LJ potential acting on 'mol0' caused
+    by 'mol1' */
+void InterCLJPotential::_pvt_calculateLJPotential(
+                                        const InterCLJPotential::Molecule &mol0, 
+                                        const InterCLJPotential::Molecule &mol1,
+                                        const CLJProbe &probe,
+                                        MolPotentialTable &pots0, 
+                                        InterCLJPotential::PotentialWorkspace &distmat,
+                                        double scale_potential) const
+{
+    if (probe.lj().isDummy())
+        return;
+
+    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == pots0.nCutGroups() );
+    BOOST_ASSERT( mol0.molecule().data().number() == pots0.molNum() );
+
+    const quint32 ngroups0 = mol0.nCutGroups();
+    const quint32 ngroups1 = mol1.nCutGroups();
+    
+    const CoordGroup *groups0_array = mol0.coordinates().constData();
+    const CoordGroup *groups1_array = mol1.coordinates().constData();
+    
+    const Parameters::Array *molparams1_array
+                                    = mol1.parameters().atomicParameters().constData();
+    
+    //loop over all pairs of CutGroups in the two molecules
+    for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+    {
+        //get the CGIdx of this group
+        CGIdx cgidx_igroup = mol0.cgIdx(igroup);
+
+        //get the index of this CutGroup in the fields array
+        int pot0_idx = pots0.map(cgidx_igroup);
+        
+        if (pot0_idx == -1)
+            //there is no space for the potentials on this CutGroup in 
+            //the potentialtable - were are therefore not interested in
+            //this CutGroup
+            continue;
+
+        const CoordGroup &group0 = groups0_array[igroup];
+        const AABox &aabox0 = group0.aaBox();
+        const quint32 nats0 = group0.count();
+    
+        //get the table that holds the potentials acting at all of the
+        //atoms of this CutGroup (tables are indexed by CGIdx)
+        MolarEnergy *group_pots0_array = pots0.data(pot0_idx);
+
+        //ok, we are interested in the potentials acting on this CutGroup
+        // - calculate all of the potentials on this group interacting
+        //   with all of the CutGroups in mol1 
+        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        {
+            const CoordGroup &group1 = groups1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
+
+            //check first that these two CoordGroups could be within cutoff
+            //(if there is only one CutGroup in both molecules then this
+            //test has already been performed and passed)
+            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox0, group1.aaBox());
+            
+            if (not within_cutoff)
+                //this CutGroup is beyond the cutoff distance
+                continue;
+            
+            //calculate all of the interatomic distances
+            const double mindist = spce->calcDist2(group0, group1, distmat);
+            
+            if (mindist > switchfunc->cutoffDistance())
+                //all of the atoms are definitely beyond cutoff
+                continue;
+
+            const quint32 nats1 = group1.count();
+            
+            //loop over all interatomic pairs and calculate the energies
+            const Parameter *params1_array = params1.constData();
+
+            if (mindist > switchfunc->featherDistance())
+            {
+                //calculate the switching scale factors
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
+
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    distmat.setOuterIndex(i);
+                
+                    double total_potential = 0;
+                
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        
+                        if (param1.ljid != 0)
+                        {
+                            LJPair ljpair( ljpairs.constData()[
+                                                ljpairs.map(param1.ljid,
+                                                            param1.ljid)],
+                                           probe.lj(),
+                                           combining_rules );
+                        
+                            double sig_over_dist6 = pow_3(ljpair.sigma()*ljpair.sigma()*
+                                                            distmat[j]);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            //calculate the energy
+                            const double ljnrg = 4 * ljpair.epsilon() *
+                                                  (sig_over_dist12 - sig_over_dist6);
+
+                            total_potential += (ljnrg * scl_lj);
+                        }
+                    }
+
+                    //update the fields array
+                    group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                        total_potential);
+                }
+            }
+            else
+            {
+                //not in the feather region, so can calculate the potential
+                //directly
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    double total_potential = 0;
+                        
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        
+                        if (param1.ljid != 0)
+                        {
+                            LJPair ljpair( ljpairs.constData()[
+                                                    ljpairs.map(param1.ljid,
+                                                                param1.ljid)],
+                                           probe.lj(),
+                                           combining_rules );
+                       
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*
+                                                          ljpair.sigma() / distmat[j]);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            total_potential += (4 * ljpair.epsilon() * (
+                                                          12.0*sig_over_dist12 -
+                                                           6.0*sig_over_dist6) ); 
+                        }
+                    }
+
+                    group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                        total_potential);
+                } // end of loop over i atoms
+
+            } // end of if within feather
+
+        } // end of loop over jgroup CutGroups
+
+    } // end of loop over igroup CutGroups
+}
+
+/** Add to the potentials in 'pots0' the coulomb potential acting on 'mol0' caused
+    by 'mol1' */
+void InterCLJPotential::_pvt_calculateCoulombPotential(
+                                        const InterCLJPotential::Molecule &mol0, 
+                                        const InterCLJPotential::Molecule &mol1,
+                                        const CLJProbe &probe,
+                                        MolPotentialTable &pots0, 
+                                        InterCLJPotential::PotentialWorkspace &distmat,
+                                        double scale_potential) const
+{
+    if (probe.reducedCharge() == 0)
+        return;
+
+    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == pots0.nCutGroups() );
+    BOOST_ASSERT( mol0.molecule().data().number() == pots0.molNum() );
+
+    const quint32 ngroups0 = mol0.nCutGroups();
+    const quint32 ngroups1 = mol1.nCutGroups();
+    
+    const CoordGroup *groups0_array = mol0.coordinates().constData();
+    const CoordGroup *groups1_array = mol1.coordinates().constData();
+    
+    const Parameters::Array *molparams1_array
+                                    = mol1.parameters().atomicParameters().constData();
+    
+    //loop over all pairs of CutGroups in the two molecules
+    for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+    {
+        //get the CGIdx of this group
+        CGIdx cgidx_igroup = mol0.cgIdx(igroup);
+
+        //get the index of this CutGroup in the fields array
+        int pot0_idx = pots0.map(cgidx_igroup);
+        
+        if (pot0_idx == -1)
+            //there is no space for the potentials on this CutGroup in 
+            //the potentialtable - were are therefore not interested in
+            //this CutGroup
+            continue;
+
+        const CoordGroup &group0 = groups0_array[igroup];
+        const AABox &aabox0 = group0.aaBox();
+        const quint32 nats0 = group0.count();
+    
+        //get the table that holds the potentials acting at all of the
+        //atoms of this CutGroup (tables are indexed by CGIdx)
+        MolarEnergy *group_pots0_array = pots0.data(pot0_idx);
+
+        //ok, we are interested in the potentials acting on this CutGroup
+        // - calculate all of the potentials on this group interacting
+        //   with all of the CutGroups in mol1 
+        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        {
+            const CoordGroup &group1 = groups1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
+
+            //check first that these two CoordGroups could be within cutoff
+            //(if there is only one CutGroup in both molecules then this
+            //test has already been performed and passed)
+            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox0, group1.aaBox());
+            
+            if (not within_cutoff)
+                //this CutGroup is beyond the cutoff distance
+                continue;
+            
+            //calculate all of the interatomic distances
+            const double mindist = spce->calcDist(group0, group1, distmat);
+            
+            if (mindist > switchfunc->cutoffDistance())
+                //all of the atoms are definitely beyond cutoff
+                continue;
+
+            const quint32 nats1 = group1.count();
+            
+            //loop over all interatomic pairs and calculate the energies
+            const Parameter *params1_array = params1.constData();
+
+            double shift_coul = 0;
+
+            if (use_electrostatic_shifting)
+                shift_coul = probe.charge() * this->totalCharge(params1)
+                                / switchfunc->electrostaticCutoffDistance();
+
+            if (mindist > switchfunc->featherDistance())
+            {
+                //calculate the switching scale factors
+                const double scl_coul = switchfunc->electrostaticScaleFactor( 
+                                                                        Length(mindist) );
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    distmat.setOuterIndex(i);
+                        
+                    double total_potential = 0;
+                        
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const double q2 = probe.reducedCharge() *
+                                          params1_array[j].reduced_charge;
+                            
+                        if (q2 != 0)
+                        {
+                            //calculate the coulomb energy
+                            const double cnrg = q2 / distmat[j];
+                                               
+                            total_potential += scl_coul * (cnrg - shift_coul);
+                        }
+                    }
+
+                    //update the fields array
+                    group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                        total_potential);
+                }
+            }
+            else
+            {
+                //not in the feather region, so can calculate the potentials
+                //directly
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    double total_potential = 0;
+                      
+                    distmat.setOuterIndex(i);
+
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const double q2 = probe.reducedCharge() * 
+                                          params1_array[j].reduced_charge;
+                        
+                        //calculate the coulomb potential
+                        if (q2 != 0)
+                            total_potential += (q2 / distmat[j]) - shift_coul;
+                    }
+
+                    group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                            total_potential);
+                }
+
+            } // end of if within feather
+
+        } // end of loop over jgroup CutGroups
+
+    } // end of loop over igroup CutGroups
+}
+
+/** Add to the potentials in 'pots0' the fields acting on 'mol0' caused
+    by 'mol1' */
+void InterCLJPotential::_pvt_calculatePotential(
+                                        const InterCLJPotential::Molecule &mol0, 
+                                        const InterCLJPotential::Molecule &mol1,
+                                        const CLJProbe &probe,
+                                        MolPotentialTable &pots0, 
+                                        InterCLJPotential::PotentialWorkspace &distmat,
+                                        double scale_potential) const
+{
+    if (probe.lj().isDummy())
+    {
+        this->_pvt_calculateCoulombPotential(mol0, mol1, probe, pots0,
+                                             distmat, scale_potential);
+        return;
+    }
+    else if (probe.reducedCharge() == 0)
+    {
+        this->_pvt_calculateLJPotential(mol0, mol1, probe, pots0,
+                                        distmat, scale_potential);
+        return;
+    }
+
+
+    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == pots0.nCutGroups() );
+    BOOST_ASSERT( mol0.molecule().data().number() == pots0.molNum() );
+
+    const quint32 ngroups0 = mol0.nCutGroups();
+    const quint32 ngroups1 = mol1.nCutGroups();
+    
+    const CoordGroup *groups0_array = mol0.coordinates().constData();
+    const CoordGroup *groups1_array = mol1.coordinates().constData();
+    
+    const Parameters::Array *molparams1_array
+                                    = mol1.parameters().atomicParameters().constData();
+    
+    //loop over all pairs of CutGroups in the two molecules
+    for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+    {
+        //get the CGIdx of this group
+        CGIdx cgidx_igroup = mol0.cgIdx(igroup);
+
+        //get the index of this CutGroup in the fields array
+        int pot0_idx = pots0.map(cgidx_igroup);
+        
+        if (pot0_idx == -1)
+            //there is no space for the potentials on this CutGroup in 
+            //the potentialtable - were are therefore not interested in
+            //this CutGroup
+            continue;
+
+        const CoordGroup &group0 = groups0_array[igroup];
+        const AABox &aabox0 = group0.aaBox();
+        const quint32 nats0 = group0.count();
+    
+        //get the table that holds the potentials acting at all of the
+        //atoms of this CutGroup (tables are indexed by CGIdx)
+        MolarEnergy *group_pots0_array = pots0.data(pot0_idx);
+
+        //ok, we are interested in the potentials acting on this CutGroup
+        // - calculate all of the potentials on this group interacting
+        //   with all of the CutGroups in mol1 
+        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        {
+            const CoordGroup &group1 = groups1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
+
+            //check first that these two CoordGroups could be within cutoff
+            //(if there is only one CutGroup in both molecules then this
+            //test has already been performed and passed)
+            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox0, group1.aaBox());
+            
+            if (not within_cutoff)
+                //this CutGroup is beyond the cutoff distance
+                continue;
+            
+            //calculate all of the interatomic distances
+            const double mindist = spce->calcDist(group0, group1, distmat);
+            
+            if (mindist > switchfunc->cutoffDistance())
+                //all of the atoms are definitely beyond cutoff
+                continue;
+
+            const quint32 nats1 = group1.count();
+            
+            //loop over all interatomic pairs and calculate the energies
+            const Parameter *params1_array = params1.constData();
+
+            double shift_coul = 0;
+
+            if (use_electrostatic_shifting)
+                shift_coul = probe.charge() * this->totalCharge(params1)
+                                / switchfunc->electrostaticCutoffDistance();
+
+            if (mindist > switchfunc->featherDistance())
+            {
+                //calculate the switching scale factors
+                const double scl_coul = switchfunc->electrostaticScaleFactor( 
+                                                                        Length(mindist) );
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
+
+                if (probe.lj().isDummy())
+                {
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        
+                        double total_potential = 0;
+                        
+                        //null LJ probe - only add on the coulomb field
+                        for (quint32 j=0; j<nats1; ++j)
+                        {
+                            const double q2 = probe.reducedCharge() *
+                                              params1_array[j].reduced_charge;
+                            
+                            if (q2 != 0)
+                            {
+                                //calculate the coulomb energy
+                                const double cnrg = q2 / distmat[j];
+                                               
+                                total_potential += scl_coul * (cnrg - shift_coul);
+                            }
+                        }
+
+                        //update the fields array
+                        group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                            total_potential);
+                    }
+                }
+                else
+                {
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                
+                        double total_potential = 0;
+                
+                        for (quint32 j=0; j<nats1; ++j)
+                        {
+                            //do both coulomb and LJ
+                            const Parameter &param1 = params1_array[j];
+                        
+                            const double invdist = double(1) / distmat[j];
+                        
+                            double potential = 0;
+                            
+                            const double q2 = probe.reducedCharge() * 
+                                              param1.reduced_charge;
+                                              
+                            if (q2 != 0)
+                                potential += scl_coul * (q2 * invdist - shift_coul);
+                              
+                            if (param1.ljid != 0)
+                            {
+                                LJPair ljpair( ljpairs.constData()[
+                                                    ljpairs.map(param1.ljid,
+                                                                param1.ljid)],
+                                               probe.lj(),
+                                               combining_rules );
+                        
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                //calculate the energy
+                                const double ljnrg = 4 * ljpair.epsilon() *
+                                                      (sig_over_dist12 - sig_over_dist6);
+
+                                potential += (ljnrg * scl_lj);
+                            }
+
+                            total_potential += potential;
+                        }
+                    
+                        //update the fields array
+                        group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                            total_potential);
+                    }
+                }
+            }
+            else
+            {
+                //not in the feather region, so can calculate the potentials
+                //directly
+
+                if (probe.lj().isDummy())
+                {
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        double total_potential = 0;
+                        
+                        distmat.setOuterIndex(i);
+
+                        //null LJ probe - only add on the coulomb field
+                        for (quint32 j=0; j<nats1; ++j)
+                        {
+                            const double q2 = probe.reducedCharge() * 
+                                              params1_array[j].reduced_charge;
+                        
+                            //calculate the coulomb potential
+                            if (q2 != 0)
+                                total_potential += (q2 / distmat[j]) - shift_coul;
+                        }
+
+                        group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                            total_potential);
+                    }
+                }
+                else
+                {
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        double total_potential = 0;
+                        
+                        for (quint32 j=0; j<nats1; ++j)
+                        {
+                            //do both coulomb and LJ
+                            const Parameter &param1 = params1_array[j];
+                        
+                            const double invdist = double(1) / distmat[j];
+                        
+                            //calculate the potential
+                            double potential = 0;
+                            
+                            const double q2 = probe.reducedCharge() * 
+                                              param1.reduced_charge;
+                                              
+                            if (q2 != 0)
+                                potential += (q2 * invdist) - shift_coul;
+                              
+                            if (param1.ljid != 0)
+                            {
+                                LJPair ljpair( ljpairs.constData()[
+                                                        ljpairs.map(param1.ljid,
+                                                                    param1.ljid)],
+                                               probe.lj(),
+                                               combining_rules );
+                        
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                potential += (4 * ljpair.epsilon() * (
+                                                              12.0*sig_over_dist12 -
+                                                               6.0*sig_over_dist6) ); 
+                            }
+                        
+                            total_potential += potential;
+                        }
+
+                        group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                            total_potential);
+                    }
+
+                } // end of loop over i atoms
+
+            } // end of if within feather
+
+        } // end of loop over jgroup CutGroups
+
+    } // end of loop over igroup CutGroups
+}
+
+/** Add to the potentials in 'pots0' the potential on the passed  
+    grid caused by 'mol' */
+void InterCLJPotential::_pvt_calculateLJPotential(
+                                        const InterCLJPotential::Molecule &mol, 
+                                        const CLJProbe &probe,
+                                        GridPotentialTable &pots, 
+                                        InterCLJPotential::PotentialWorkspace &distmat,
+                                        double scale_potential) const
+{
+    if (probe.lj().isDummy())
+        return;
+
+    const int ngroups = mol.nCutGroups();
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    const Parameters::Array *molparams_array
+                                    = mol.parameters().atomicParameters().constData();
+
+    const Grid &grid = pots.grid();
+    const int npoints = grid.nPoints();
+    const Vector *gridpoints_array = grid.constData();
+    
+    if (npoints == 0 or ngroups == 0)
+        return;
+
+    MolarEnergy *grid_pot_array = pots.data();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const CoordGroup &group = groups_array[i];
+        const AABox &aabox = group.aaBox();
+        const int nats = group.count();
+        
+        //check first that these two CoordGroups could be within cutoff
+        //(if there is only one CutGroup in both molecules then this
+        //test has already been performed and passed)
+        const bool within_cutoff = (ngroups == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox, grid.aaBox());
+            
+        if (not within_cutoff)
+            //this CutGroup is beyond the cutoff distance
+            continue;
+
+        const Parameters::Array &params = molparams_array[i];
+        const Parameter *params_array = params.constData();
+        
+        for (int j=0; j<npoints; ++j)
+        {
+            const Vector &gridpoint = gridpoints_array[j];
+            
+            const double mindist = spce->calcDist2(group, gridpoint, distmat);
+
+            double total_potential = 0;
+            
+            if (mindist > switchfunc->cutoffDistance())
+                continue;
+                
+            else if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the field taking into account
+                //the derivative of the switching function!
+            
+                //calculate the switching scale factors and their 
+                //derivatives
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
+            
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param = params_array[k];
+                
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                            ljpairs.map(param.ljid,
+                                                        param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_3(ljpair.sigma()*
+                                                      ljpair.sigma() / 
+                                                      distmat[j]);
+                                                      
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        //calculate the energy
+                        total_potential +=  scl_lj * 4 * ljpair.epsilon() *
+                                                    (sig_over_dist12 - sig_over_dist6);
+                    }
+                
+                } // end of loop over atoms
+            }
+            else
+            {
+                //no need to worry about the switching function :-)
+                distmat.setOuterIndex(0);
+            
+                for (int k=0; k<nats; ++k)
+                {
+                    const Parameter &param = params_array[k];
+                
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                                ljpairs.map(param.ljid,
+                                                            param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_3(ljpair.sigma()*
+                                                      ljpair.sigma()/
+                                                      distmat[j]);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        total_potential += 4 * ljpair.epsilon() * (
+                                                   12.0*sig_over_dist12 -
+                                                    6.0*sig_over_dist6 );
+                    }
+
+                } // end of loop over atoms
+            }
+            
+            grid_pot_array[j] += MolarEnergy(scale_potential * total_potential);
+
+        } // end of loop over grid points
+    } // end of loop over CutGroups
+}
+
+/** Add to the potentials in 'pots0' the coulomb potential on the passed  
+    grid caused by 'mol' */
+void InterCLJPotential::_pvt_calculateCoulombPotential(
+                                        const InterCLJPotential::Molecule &mol, 
+                                        const CLJProbe &probe,
+                                        GridPotentialTable &pots, 
+                                        InterCLJPotential::PotentialWorkspace &distmat,
+                                        double scale_potential) const
+{
+    if (probe.reducedCharge() == 0)
+        return;
+
+    const int ngroups = mol.nCutGroups();
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    const Parameters::Array *molparams_array
+                                    = mol.parameters().atomicParameters().constData();
+
+    const Grid &grid = pots.grid();
+    const int npoints = grid.nPoints();
+    const Vector *gridpoints_array = grid.constData();
+    
+    if (npoints == 0 or ngroups == 0)
+        return;
+
+    MolarEnergy *grid_pot_array = pots.data();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const CoordGroup &group = groups_array[i];
+        const AABox &aabox = group.aaBox();
+        const int nats = group.count();
+        
+        //check first that these two CoordGroups could be within cutoff
+        //(if there is only one CutGroup in both molecules then this
+        //test has already been performed and passed)
+        const bool within_cutoff = (ngroups == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox, grid.aaBox());
+            
+        if (not within_cutoff)
+            //this CutGroup is beyond the cutoff distance
+            continue;
+
+        const Parameters::Array &params = molparams_array[i];
+        const Parameter *params_array = params.constData();
+        
+        for (int j=0; j<npoints; ++j)
+        {
+            const Vector &gridpoint = gridpoints_array[j];
+            
+            const double mindist = spce->calcDist(group, gridpoint, distmat);
+
+            double total_potential = 0;
+            
+            if (mindist > switchfunc->cutoffDistance())
+                continue;
+                
+            else if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the field taking into account
+                //the derivative of the switching function!
+            
+                //calculate the switching scale factors
+                const double scl_coul = switchfunc->electrostaticScaleFactor( 
+                                                                    Length(mindist) );
+            
+                double shift_coul = 0;
+
+                if (use_electrostatic_shifting)
+                    shift_coul = probe.charge() * this->totalCharge(params)
+                                    / switchfunc->electrostaticCutoffDistance();
+
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k];
+                
+                    const double q2 = probe.reducedCharge() *
+                                      param.reduced_charge;
+                
+                    if (q2 != 0)
+                        total_potential += scl_coul * (q2 * invdist - shift_coul);
+                      
+                } // end of loop over atoms
+            }
+            else
+            {
+                //no need to worry about the switching function :-)
+                distmat.setOuterIndex(0);
+            
+                double shift_coul = 0;
+
+                if (use_electrostatic_shifting)
+                    shift_coul = probe.charge() * this->totalCharge(params)
+                                    / switchfunc->electrostaticCutoffDistance();
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k];
+                
+                    const double q2 = probe.reducedCharge() * param.reduced_charge;
+                    
+                    if (q2 != 0)
+                        total_potential += q2 * invdist - shift_coul;
+
+                } // end of loop over atoms
+            }
+            
+            grid_pot_array[j] += MolarEnergy(scale_potential * total_potential);
+
+        } // end of loop over grid points
+    } // end of loop over CutGroups
+}
+
+/** Add to the potentials in 'pots0' the potential on the passed  
+    grid caused by 'mol' */
+void InterCLJPotential::_pvt_calculatePotential(
+                                        const InterCLJPotential::Molecule &mol, 
+                                        const CLJProbe &probe,
+                                        GridPotentialTable &pots, 
+                                        InterCLJPotential::PotentialWorkspace &distmat,
+                                        double scale_potential) const
+{
+    if (probe.lj().isDummy())
+    {
+        this->_pvt_calculateCoulombPotential(mol, probe, pots, distmat, scale_potential);
+        return;
+    }
+    else if (probe.reducedCharge() == 0)
+    {
+        this->_pvt_calculateLJPotential(mol, probe, pots, distmat, scale_potential);
+        return;
+    }
+
+    const int ngroups = mol.nCutGroups();
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    const Parameters::Array *molparams_array
+                                    = mol.parameters().atomicParameters().constData();
+
+    const Grid &grid = pots.grid();
+    const int npoints = grid.nPoints();
+    const Vector *gridpoints_array = grid.constData();
+    
+    if (npoints == 0 or ngroups == 0)
+        return;
+
+    MolarEnergy *grid_pot_array = pots.data();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const CoordGroup &group = groups_array[i];
+        const AABox &aabox = group.aaBox();
+        const int nats = group.count();
+        
+        //check first that these two CoordGroups could be within cutoff
+        //(if there is only one CutGroup in both molecules then this
+        //test has already been performed and passed)
+        const bool within_cutoff = (ngroups == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox, grid.aaBox());
+            
+        if (not within_cutoff)
+            //this CutGroup is beyond the cutoff distance
+            continue;
+
+        const Parameters::Array &params = molparams_array[i];
+        const Parameter *params_array = params.constData();
+        
+        for (int j=0; j<npoints; ++j)
+        {
+            const Vector &gridpoint = gridpoints_array[j];
+            
+            const double mindist = spce->calcDist(group, gridpoint, distmat);
+
+            double total_potential = 0;
+            
+            if (mindist > switchfunc->cutoffDistance())
+                continue;
+                
+            else if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the field taking into account
+                //the derivative of the switching function!
+            
+                //calculate the switching scale factors and their 
+                //derivatives
+                const double scl_coul = switchfunc->electrostaticScaleFactor( 
+                                                                    Length(mindist) );
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
+            
+                double shift_coul = 0;
+
+                if (use_electrostatic_shifting)
+                    shift_coul = probe.charge() * this->totalCharge(params)
+                                    / switchfunc->electrostaticCutoffDistance();
+
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k];
+                
+                    double potential = 0;
+                    
+                    const double q2 = probe.reducedCharge() *
+                                      param.reduced_charge;
+                
+                    if (q2 != 0)
+                        potential += scl_coul * (q2 * invdist - shift_coul);
+                      
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                            ljpairs.map(param.ljid,
+                                                        param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        //calculate the energy
+                        potential +=  scl_lj * 4 * ljpair.epsilon() *
+                                              (sig_over_dist12 - sig_over_dist6);
+                    }
+
+                    total_potential += potential;
+                
+                } // end of loop over atoms
+            }
+            else
+            {
+                //no need to worry about the switching function :-)
+                distmat.setOuterIndex(0);
+            
+                double shift_coul = 0;
+
+                if (use_electrostatic_shifting)
+                    shift_coul = probe.charge() * this->totalCharge(params)
+                                    / switchfunc->electrostaticCutoffDistance();
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k];
+                
+                    //calculate the potential
+                    double potential = 0;
+                    
+                    const double q2 = probe.reducedCharge() * param.reduced_charge;
+                    
+                    if (q2 != 0)
+                        potential += q2 * invdist - shift_coul;
+                      
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                                ljpairs.map(param.ljid,
+                                                            param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        potential += 4 * ljpair.epsilon() * (
+                                                12.0*sig_over_dist12 -
+                                                 6.0*sig_over_dist6 );
+                    }
+
+                    total_potential += potential;
+
+                } // end of loop over atoms
+            }
+            
+            grid_pot_array[j] += MolarEnergy(scale_potential * total_potential);
+
+        } // end of loop over grid points
+    } // end of loop over CutGroups
+}
+
 /** Add to the fields in 'fields0' the fields acting on 'mol0' caused
     by 'mol1' */
 void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &mol0, 
@@ -1856,7 +2845,7 @@ void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &m
                             if (param1.ljid != 0)
                             {
                                 LJPair ljpair( ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
+                                                    ljpairs.map(param1.ljid,
                                                                 param1.ljid)],
                                                probe.lj(),
                                                combining_rules );
@@ -1881,10 +2870,10 @@ void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &m
 
                             total_field -= field;
                         }
-                    }
                     
-                    //update the fields array
-                    group_fields0_array[i] += scale_field * total_field;
+                        //update the fields array
+                        group_fields0_array[i] += scale_field * total_field;
+                    }
                 }
             }
             else
@@ -1958,9 +2947,9 @@ void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &m
                         
                             total_field -= field;
                         }
-                    }
                     
-                    group_fields0_array[i] += scale_field * total_field;
+                        group_fields0_array[i] += scale_field * total_field;
+                    }
 
                 } // end of loop over i atoms
 
@@ -1971,18 +2960,497 @@ void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &m
     } // end of loop over igroup CutGroups
 }
 
+/** Calculate the field caused by the molecule 'mol' on the grid points in 
+    'fields' */
+void InterCLJPotential::_pvt_calculateLJField(const InterCLJPotential::Molecule &mol,
+                                              const CLJProbe &probe,
+                                              GridFieldTable &fields,
+                                              InterCLJPotential::FieldWorkspace &distmat,
+                                              double scale_field) const
+{
+    if (probe.lj().isDummy())
+        return;
+
+    const int ngroups = mol.nCutGroups();
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    const Parameters::Array *molparams_array
+                                    = mol.parameters().atomicParameters().constData();
+
+    const Grid &grid = fields.grid();
+    const int npoints = grid.nPoints();
+    const Vector *gridpoints_array = grid.constData();
+    Vector *grid_field_array = fields.data();
+    
+    if (npoints == 0 or ngroups == 0)
+        return;
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const CoordGroup &group = groups_array[i];
+        const AABox &aabox = group.aaBox();
+        const int nats = group.count();
+        
+        //check first that these two CoordGroups could be within cutoff
+        //(if there is only one CutGroup in both molecules then this
+        //test has already been performed and passed)
+        const bool within_cutoff = (ngroups == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox, grid.aaBox());
+            
+        if (not within_cutoff)
+            //this CutGroup is beyond the cutoff distance
+            continue;
+
+        const Parameters::Array &params = molparams_array[i];
+        const Parameter *params_array = params.constData();
+        
+        for (int j=0; j<npoints; ++j)
+        {
+            const Vector &gridpoint = gridpoints_array[j];
+            
+            const double mindist = spce->calcDistVectors(group, gridpoint, distmat);
+
+            Vector total_field;
+            
+            if (mindist > switchfunc->cutoffDistance())
+                continue;
+                
+            else if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the field taking into account
+                //the derivative of the switching function!
+            
+                //calculate the switching scale factors and their 
+                //derivatives
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
+            
+                Vector group_sep = (group.aaBox().center() - gridpoint).normalise();
+
+                Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
+                                                    * group_sep;
+
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k].length();
+                
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                            ljpairs.map(param.ljid,
+                                                        param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        //calculate the energy
+                        const double ljnrg = 4 * ljpair.epsilon() *
+                                              (sig_over_dist12 - sig_over_dist6);
+
+                        // dU/dr requires an extra power of r
+                        sig_over_dist6 *= invdist;
+                        sig_over_dist12 *= invdist;
+
+                        Vector field = ((scl_lj * ljpair.epsilon() * 
+                                        (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
+                                        * distmat[j].direction())
+                                     
+                                        + (ljnrg * dscl_lj);
+
+                        total_field -= field;
+                    }
+                
+                } // end of loop over atoms
+            }
+            else
+            {
+                //no need to worry about the switching function :-)
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k].length();
+                
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                                ljpairs.map(param.ljid,
+                                                            param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        // dU/dr requires an extra power of r
+                        sig_over_dist6 *= invdist;
+                        sig_over_dist12 *= invdist;
+
+                        Vector field = (4 * ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                               12.0*sig_over_dist12))
+                                          * distmat[j].direction();
+                        
+                        total_field -= field;
+                    }
+
+                } // end of loop over atoms
+            }
+            
+            grid_field_array[j] += scale_field * total_field;
+
+        } // end of loop over grid points
+    } // end of loop over CutGroups
+}
+
+/** Calculate the coulomb field caused by the molecule 'mol' on the grid points in 
+    'fields' */
+void InterCLJPotential::_pvt_calculateCoulombField(
+                                            const InterCLJPotential::Molecule &mol,
+                                            const CLJProbe &probe,
+                                            GridFieldTable &fields,
+                                            InterCLJPotential::FieldWorkspace &distmat,
+                                            double scale_field) const
+{
+    if (probe.reducedCharge() == 0)
+        return;
+
+    const int ngroups = mol.nCutGroups();
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    const Parameters::Array *molparams_array
+                                    = mol.parameters().atomicParameters().constData();
+
+    const Grid &grid = fields.grid();
+    const int npoints = grid.nPoints();
+    const Vector *gridpoints_array = grid.constData();
+    Vector *grid_field_array = fields.data();
+    
+    if (npoints == 0 or ngroups == 0)
+        return;
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const CoordGroup &group = groups_array[i];
+        const AABox &aabox = group.aaBox();
+        const int nats = group.count();
+        
+        //check first that these two CoordGroups could be within cutoff
+        //(if there is only one CutGroup in both molecules then this
+        //test has already been performed and passed)
+        const bool within_cutoff = (ngroups == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox, grid.aaBox());
+            
+        if (not within_cutoff)
+            //this CutGroup is beyond the cutoff distance
+            continue;
+
+        const Parameters::Array &params = molparams_array[i];
+        const Parameter *params_array = params.constData();
+        
+        for (int j=0; j<npoints; ++j)
+        {
+            const Vector &gridpoint = gridpoints_array[j];
+            
+            const double mindist = spce->calcDistVectors(group, gridpoint, distmat);
+
+            Vector total_field;
+            
+            if (mindist > switchfunc->cutoffDistance())
+                continue;
+                
+            else if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the field taking into account
+                //the derivative of the switching function!
+            
+                //calculate the switching scale factors and their 
+                //derivatives
+                const double scl_coul = switchfunc->electrostaticScaleFactor( 
+                                                                    Length(mindist) );
+            
+                Vector group_sep = (group.aaBox().center() - gridpoint).normalise();
+
+                Vector dscl_coul = switchfunc->dElectrostaticScaleFactor( 
+                                                                    Length(mindist) ) 
+                                                * group_sep;
+                                 
+                double shift_coul = 0;
+
+                if (use_electrostatic_shifting)
+                    shift_coul = probe.charge() * this->totalCharge(params)
+                                    / switchfunc->electrostaticCutoffDistance();
+
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k].length();
+                
+                    const double q2 = probe.reducedCharge() *
+                                      param.reduced_charge;
+                
+                    if (q2 != 0)
+                    {
+                        //calculate the energy
+                        const double cnrg = q2 * invdist;
+                
+                        //calculate the field
+                        Vector field = (scl_coul * -cnrg / distmat[j].length() *
+                                        distmat[j].direction()) +
+                                     
+                                       ((cnrg-shift_coul) * dscl_coul);
+
+                        total_field -= field;
+                    }
+                
+                } // end of loop over atoms
+            }
+            else
+            {
+                //no need to worry about the switching function :-)
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k].length();
+                    const double invdist2 = pow_2(invdist);
+                
+                    //calculate the field
+                    Vector field = -(probe.reducedCharge() * 
+                                     param.reduced_charge * invdist2) 
+                                    
+                                    * distmat[j].direction();
+
+                    total_field -= field;
+
+                } // end of loop over atoms
+            }
+            
+            grid_field_array[j] += scale_field * total_field;
+
+        } // end of loop over grid points
+    } // end of loop over CutGroups
+}
+
+/** Calculate the field caused by the molecule 'mol' on the grid points in 
+    'fields' */
+void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &mol,
+                                            const CLJProbe &probe,
+                                            GridFieldTable &fields,
+                                            InterCLJPotential::FieldWorkspace &distmat,
+                                            double scale_field) const
+{
+    if (probe.lj().isDummy())
+    {
+        this->_pvt_calculateCoulombField(mol, probe, fields, distmat, scale_field);
+        return;
+    }
+    else if (probe.reducedCharge() == 0)
+    {
+        this->_pvt_calculateLJField(mol, probe, fields, distmat, scale_field);
+        return;
+    }
+
+    const int ngroups = mol.nCutGroups();
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    const Parameters::Array *molparams_array
+                                    = mol.parameters().atomicParameters().constData();
+
+    const Grid &grid = fields.grid();
+    const int npoints = grid.nPoints();
+    const Vector *gridpoints_array = grid.constData();
+    Vector *grid_field_array = fields.data();
+    
+    if (npoints == 0 or ngroups == 0)
+        return;
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const CoordGroup &group = groups_array[i];
+        const AABox &aabox = group.aaBox();
+        const int nats = group.count();
+        
+        //check first that these two CoordGroups could be within cutoff
+        //(if there is only one CutGroup in both molecules then this
+        //test has already been performed and passed)
+        const bool within_cutoff = (ngroups == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox, grid.aaBox());
+            
+        if (not within_cutoff)
+            //this CutGroup is beyond the cutoff distance
+            continue;
+
+        const Parameters::Array &params = molparams_array[i];
+        const Parameter *params_array = params.constData();
+        
+        for (int j=0; j<npoints; ++j)
+        {
+            const Vector &gridpoint = gridpoints_array[j];
+            
+            const double mindist = spce->calcDistVectors(group, gridpoint, distmat);
+
+            Vector total_field;
+            
+            if (mindist > switchfunc->cutoffDistance())
+                continue;
+                
+            else if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the field taking into account
+                //the derivative of the switching function!
+            
+                //calculate the switching scale factors and their 
+                //derivatives
+                const double scl_coul = switchfunc->electrostaticScaleFactor( 
+                                                                    Length(mindist) );
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
+            
+                Vector group_sep = (group.aaBox().center() - gridpoint).normalise();
+
+                Vector dscl_coul = switchfunc->dElectrostaticScaleFactor( 
+                                                                    Length(mindist) ) 
+                                                * group_sep;
+                                 
+                Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
+                                                    * group_sep;
+            
+                double shift_coul = 0;
+
+                if (use_electrostatic_shifting)
+                    shift_coul = probe.charge() * this->totalCharge(params)
+                                    / switchfunc->electrostaticCutoffDistance();
+
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k].length();
+                
+                    Vector field;
+                    
+                    const double q2 = probe.reducedCharge() *
+                                      param.reduced_charge;
+                
+                    if (q2 != 0)
+                    {
+                        //calculate the energy
+                        const double cnrg = q2 * invdist;
+                
+                        //calculate the field
+                        field = (scl_coul * -cnrg / distmat[j].length() *
+                                 distmat[j].direction()) +
+                                     
+                                 ((cnrg-shift_coul) * dscl_coul);
+                    }
+                      
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                            ljpairs.map(param.ljid,
+                                                        param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        //calculate the energy
+                        const double ljnrg = 4 * ljpair.epsilon() *
+                                              (sig_over_dist12 - sig_over_dist6);
+
+                        // dU/dr requires an extra power of r
+                        sig_over_dist6 *= invdist;
+                        sig_over_dist12 *= invdist;
+
+                        field += ((scl_lj * ljpair.epsilon() * 
+                                    (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
+                                    * distmat[j].direction())
+                                    
+                                  + (ljnrg * dscl_lj);
+                    }
+
+                    total_field -= field;
+                
+                } // end of loop over atoms
+            }
+            else
+            {
+                //no need to worry about the switching function :-)
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k].length();
+                    const double invdist2 = pow_2(invdist);
+                
+                    //calculate the field
+                    Vector field = -(probe.reducedCharge() * 
+                                     param.reduced_charge * invdist2) 
+                                    
+                                    * distmat[j].direction();
+                      
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                                ljpairs.map(param.ljid,
+                                                            param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        // dU/dr requires an extra power of r
+                        sig_over_dist6 *= invdist;
+                        sig_over_dist12 *= invdist;
+
+                        field += (4 * ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                      12.0*sig_over_dist12))
+                                * distmat[j].direction();
+                    }
+
+                    total_field -= field;
+
+                } // end of loop over atoms
+            }
+            
+            grid_field_array[j] += scale_field * total_field;
+
+        } // end of loop over grid points
+    } // end of loop over CutGroups
+}
+
 /** Add to the fields in 'fields0' the fields acting on the passed probe
     at the atom points in 'mol0' caused by 'mol1' */
 void InterCLJPotential::_pvt_calculateCoulombField(
                                             const InterCLJPotential::Molecule &mol0, 
                                             const InterCLJPotential::Molecule &mol1,
                                             const CLJProbe &probe,
-                                            MolForceTable &fields0, 
-                                            InterCLJPotential::ForceWorkspace &distmat,
+                                            MolFieldTable &fields0, 
+                                            InterCLJPotential::FieldWorkspace &distmat,
                                             double scale_field) const
 {
-    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == forces0.nCutGroups() );
-    BOOST_ASSERT( mol0.molecule().data().number() == forces0.molNum() );
+    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == fields0.nCutGroups() );
+    BOOST_ASSERT( mol0.molecule().data().number() == fields0.molNum() );
 
     if (probe.reducedCharge() == 0)
         return;
@@ -2129,10 +3597,8 @@ void InterCLJPotential::_pvt_calculateCoulombField(
                         //calculate the coulomb force
                         if (q2 != 0)
                         {
-                            Vector cforce = -(q2 / distmat[j].length2()) *
+                            total_field -= (q2 / distmat[j].length2()) *
                                                 distmat[j].direction();
-                        
-                            total_field -= cfield;
                         }
                     }
                     
@@ -2158,8 +3624,8 @@ void InterCLJPotential::_pvt_calculateLJField(
                                             InterCLJPotential::FieldWorkspace &distmat,
                                             double scale_field) const
 {
-    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == forces0.nCutGroups() );
-    BOOST_ASSERT( mol0.molecule().data().number() == forces0.molNum() );
+    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == fields0.nCutGroups() );
+    BOOST_ASSERT( mol0.molecule().data().number() == fields0.molNum() );
 
     if (probe.lj().isDummy())
         return;
@@ -2252,7 +3718,7 @@ void InterCLJPotential::_pvt_calculateLJField(
                 {
                     distmat.setOuterIndex(i);
 
-                    Vector total_force;
+                    Vector total_field;
                 
                     for (quint32 j=0; j<nats1; ++j)
                     {
@@ -2263,7 +3729,7 @@ void InterCLJPotential::_pvt_calculateLJField(
                             const double invdist = double(1) / distmat[j].length();
 
                             LJPair ljpair( ljpairs.constData()[
-                                                   ljpairs.map(param0.ljid,
+                                                   ljpairs.map(param1.ljid,
                                                                param1.ljid)],
                                            probe.lj(), combining_rules );
                         

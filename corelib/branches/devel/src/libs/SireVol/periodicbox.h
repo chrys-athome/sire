@@ -101,6 +101,12 @@ public:
     double calcDist(const CoordGroup &group1, const CoordGroup &group2,
                     DistMatrix &distmat) const;
 
+    double calcDist(const CoordGroup &group, const Vector &point,
+                    DistMatrix &mat) const;
+
+    double calcDist2(const CoordGroup &group, const Vector &point,
+                     DistMatrix &mat) const;
+
     double calcDist2(const CoordGroup &group1, const CoordGroup &group2,
                      DistMatrix &distmat) const;
 
@@ -113,6 +119,9 @@ public:
     DistVector calcDistVector(const Vector &point0, const Vector &point1) const;
     
     double calcDistVectors(const CoordGroup &group1, const CoordGroup &group2,
+                           DistVectorMatrix &distmat) const;
+
+    double calcDistVectors(const CoordGroup &group, const Vector &point,
                            DistVectorMatrix &distmat) const;
 
     SireUnits::Dimension::Angle calcAngle(const Vector &point0,

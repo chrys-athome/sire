@@ -314,7 +314,7 @@ void Inter2B2G3DFF<Potential>::field(FieldTable &fieldtable, const Probe &prob,
     if (scale_field == 0)
         return;
 
-    const typename Potential::Probe &probe = prob.assertAsA<Potential::Probe>();
+    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
 
     const int ngrids = fieldtable.nGrids();
     const int nfieldmols = fieldtable.nMolecules();
@@ -409,7 +409,7 @@ void Inter2B2G3DFF<Potential>::field(FieldTable &fieldtable, const Symbol &compo
     if (scale_field == 0)
         return;
 
-    const typename Potential::Probe &probe = prob.assertAsA<Potential::Probe>();
+    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
 
     const int nfieldmols = fieldtable.nMolecules();
     const int ngrids = fieldtable.nGrids();
@@ -461,7 +461,7 @@ void Inter2B2G3DFF<Potential>::field(FieldTable &fieldtable, const Symbol &compo
                 
                     Potential::calculateField(mol0, mol1, probe, moltable,
                                               component, this->components(),
-                                              workspace, scale_force);
+                                              workspace, scale_field);
                 }
             }
         }
@@ -506,7 +506,7 @@ void Inter2B2G3DFF<Potential>::potential(PotentialTable &potentialtable,
     if (scale_potential == 0)
         return;
 
-    const typename Potential::Probe &probe = prob.assertAsA<Potential::Probe>();
+    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
 
     const int ngrids = potentialtable.nGrids();
     const int npotmols = potentialtable.nMolecules();
@@ -564,11 +564,11 @@ void Inter2B2G3DFF<Potential>::potential(PotentialTable &potentialtable,
     
     if (ngrids > 0)
     {
-        GridFieldTable *gridtable_array = potentialtable.gridData();
+        GridPotentialTable *gridtable_array = potentialtable.gridData();
         
         for (int i=0; i<ngrids; ++i)
         {
-            GridFieldTable &gridtable = gridtable_array[i];
+            GridPotentialTable &gridtable = gridtable_array[i];
             
             for (int j=0; j<nmols0; ++j)
             {
@@ -597,11 +597,13 @@ void Inter2B2G3DFF<Potential>::potential(PotentialTable &potentialtable,
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 void Inter2B2G3DFF<Potential>::potential(PotentialTable &potentialtable, 
-                                         const Symbol &component, const Probe &probe,
+                                         const Symbol &component, const Probe &prob,
                                          double scale_potential)
 {
     if (scale_potential == 0)
         return;
+
+    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
 
     const int npotmols = potentialtable.nMolecules();
     const int ngrids = potentialtable.nGrids();
@@ -615,13 +617,13 @@ void Inter2B2G3DFF<Potential>::potential(PotentialTable &potentialtable,
     const ChunkedVector<typename Potential::Molecule> &mols1_array
                             = this->mols[1].moleculesByIndex();
     
-    if (nfieldmols > 0)
+    if (npotmols > 0)
     {
         MolPotentialTable *pottable_array = potentialtable.moleculeData();
 
-        for (int i=0; i<nfieldmols; ++i)
+        for (int i=0; i<npotmols; ++i)
         {
-            MolFieldTable &moltable = pottable_array[i];
+            MolPotentialTable &moltable = pottable_array[i];
         
             MolNum molnum = moltable.molNum();
         
@@ -709,8 +711,8 @@ void Inter2B2G3DFF<Potential>::field(FieldTable &fieldtable, const Symbol &compo
                                      double scale_field)
 {
     typename Potential::Probe default_probe;
-    Inter2B2G3DFF<Potential>::field(fieldtable, default_probe,
-                                    component, scale_field);
+    Inter2B2G3DFF<Potential>::field(fieldtable, component,
+                                    default_probe, scale_field);
 }
 
 /** Calculate the potential acting at the points in the passed potentialtable
@@ -735,8 +737,8 @@ void Inter2B2G3DFF<Potential>::potential(PotentialTable &potentialtable,
                                          const Symbol &component, double scale_potential)
 {
     typename Potential::Probe default_probe;
-    Inter2B2G3DFF<Potential>::potential( potentialtable, default_probe, 
-                                         component, scale_potential );
+    Inter2B2G3DFF<Potential>::potential( potentialtable, component, 
+                                         default_probe, scale_potential );
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

@@ -30,7 +30,6 @@
 #define SIREMM_LJPARAMETERDB_H
 
 #include "ljparameter.h"
-#include "ljpair.h"
 
 #include "SireBase/array2d.hpp"
 
@@ -43,6 +42,7 @@ SIRE_BEGIN_HEADER
 namespace SireMM
 {
 
+class LJPair;
 typedef SireBase::Array2D<LJPair> LJPairMatrix;
 
 /** This static singleton class holds a complete database of 
@@ -113,6 +113,13 @@ private:
     
     static LJParameterDBData ljdb;
 };
+
+} // end of namespace SireMM
+
+#include "ljpair.h"
+
+namespace SireMM
+{
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 

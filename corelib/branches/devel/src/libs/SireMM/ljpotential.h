@@ -42,6 +42,7 @@
 
 #include "cljcomponent.h"
 #include "cljnbpairs.h"
+#include "cljprobe.h"
 
 #include "ljparameter.h"
 #include "atomljs.h"
@@ -52,6 +53,8 @@
 #include "switchingfunction.h"
 
 #include "SireFF/forcetable.h"
+#include "SireFF/fieldtable.h"
+#include "SireFF/potentialtable.h"
 #include "SireFF/detail/ffmolecules3d.h"
 
 SIRE_BEGIN_HEADER
@@ -112,6 +115,10 @@ using SireMol::PartialMolecule;
 using SireMol::MoleculeGroup;
 
 using SireFF::MolForceTable;
+using SireFF::MolFieldTable;
+using SireFF::MolPotentialTable;
+using SireFF::GridFieldTable;
+using SireFF::GridPotentialTable;
 
 /** This class provides the default name of the 
     property that contains the LJ parameters */
@@ -301,6 +308,10 @@ public:
     
     typedef SireBase::PairMatrix<double> EnergyWorkspace;
     typedef SireBase::PairMatrix<SireMaths::DistVector> ForceWorkspace;
+    typedef SireBase::PairMatrix<SireMaths::DistVector> FieldWorkspace;
+    typedef SireBase::PairMatrix<double> PotentialWorkspace;
+
+    typedef LJProbe Probe;
 
     typedef SireFF::detail::FFMolecule3D<InterLJPotential> Molecule;
     typedef SireFF::detail::FFMolecules3D<InterLJPotential> Molecules;
@@ -380,6 +391,92 @@ public:
                           InterLJPotential::ForceWorkspace &workspace,
                           double scale_force=1) const;
 
+    void calculateField(const InterLJPotential::Molecule &mol0, 
+                        const InterLJPotential::Molecule &mol1,
+                        const LJProbe &probe,
+                        MolFieldTable &forces0,
+                        InterLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const InterLJPotential::Molecule &mol0,
+                        const InterLJPotential::Molecule &mol1,
+                        const LJProbe &probe,
+                        MolFieldTable &forces0,
+                        const Symbol &symbol,
+                        const Components &components,
+                        InterLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const InterLJPotential::Molecule &mol0,
+                        const LJProbe &probe,
+                        GridFieldTable &fields,
+                        InterLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const InterLJPotential::Molecule &mol0,
+                        const LJProbe &probe,
+                        GridFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        InterLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateLJField(const InterLJPotential::Molecule &mol0, 
+                          const InterLJPotential::Molecule &mol1,
+                          const LJProbe &probe,
+                          MolFieldTable &fields0,
+                          InterLJPotential::ForceWorkspace &workspace,
+                          double scale_field=1) const;
+
+    void calculateLJField(const InterLJPotential::Molecule &mol0, 
+                          const LJProbe &probe,
+                          GridFieldTable &fields,
+                          InterLJPotential::ForceWorkspace &workspace,
+                          double scale_field=1) const;
+
+    void calculatePotential(const InterLJPotential::Molecule &mol0, 
+                            const InterLJPotential::Molecule &mol1,
+                            const LJProbe &probe,
+                            MolPotentialTable &pots0,
+                            InterLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const InterLJPotential::Molecule &mol0,
+                            const InterLJPotential::Molecule &mol1,
+                            const LJProbe &probe,
+                            MolPotentialTable &pots0,
+                            const Symbol &symbol,
+                            const Components &components,
+                            InterLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const InterLJPotential::Molecule &mol0,
+                            const LJProbe &probe,
+                            GridPotentialTable &pots,
+                            InterLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const InterLJPotential::Molecule &mol0,
+                            const LJProbe &probe,
+                            GridPotentialTable &pots,
+                            const Symbol &symbol,
+                            const Components &components,
+                            InterLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculateLJPotential(const InterLJPotential::Molecule &mol0, 
+                              const InterLJPotential::Molecule &mol1,
+                              const LJProbe &probe,
+                              MolPotentialTable &pots0,
+                              InterLJPotential::PotentialWorkspace &workspace,
+                              double scale_potential=1) const;
+
+    void calculateLJPotential(const InterLJPotential::Molecule &mol0, 
+                              const LJProbe &probe,
+                              GridPotentialTable &pots,
+                              InterLJPotential::PotentialWorkspace &workspace,
+                              double scale_potential=1) const;
+
 private:
     void throwMissingForceComponent(const Symbol &symbol,
                                     const Components &components) const;
@@ -448,6 +545,10 @@ public:
         
     typedef SireBase::PairMatrix<double> EnergyWorkspace;
     typedef SireBase::PairMatrix<SireMaths::DistVector> ForceWorkspace;
+    typedef SireBase::PairMatrix<SireMaths::DistVector> FieldWorkspace;
+    typedef SireBase::PairMatrix<double> PotentialWorkspace;
+
+    typedef LJProbe Probe;
 
     typedef SireFF::detail::FFMolecule3D<IntraLJPotential> Molecule;
     typedef SireFF::detail::FFMolecules3D<IntraLJPotential> Molecules;
@@ -548,6 +649,120 @@ public:
                           MolForceTable &forces,
                           IntraLJPotential::ForceWorkspace &workspace,
                           double scale_force=1) const;
+
+    void calculateField(const IntraLJPotential::Molecule &mol, 
+                        const LJProbe &probe,
+                        MolFieldTable &fields,
+                        IntraLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraLJPotential::Molecule &mol, 
+                        const LJProbe &probe,
+                        MolFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraLJPotential::Molecule &mol0, 
+                        const IntraLJPotential::Molecule &mol1,
+                        const LJProbe &probe,
+                        MolFieldTable &forces0,
+                        IntraLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraLJPotential::Molecule &mol0,
+                        const IntraLJPotential::Molecule &mol1,
+                        const LJProbe &probe,
+                        MolFieldTable &forces0,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraLJPotential::Molecule &mol0,
+                        const LJProbe &probe,
+                        GridFieldTable &fields,
+                        IntraLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraLJPotential::Molecule &mol0,
+                        const LJProbe &probe,
+                        GridFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateLJField(const IntraLJPotential::Molecule &mol0, 
+                          const IntraLJPotential::Molecule &mol1,
+                          const LJProbe &probe,
+                          MolFieldTable &fields0,
+                          IntraLJPotential::ForceWorkspace &workspace,
+                          double scale_field=1) const;
+
+    void calculateLJField(const IntraLJPotential::Molecule &mol0, 
+                          const LJProbe &probe,
+                          GridFieldTable &fields,
+                          IntraLJPotential::ForceWorkspace &workspace,
+                          double scale_field=1) const;
+
+    void calculatePotential(const IntraLJPotential::Molecule &mol, 
+                            const LJProbe &probe,
+                            MolPotentialTable &potentials,
+                            IntraLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraLJPotential::Molecule &mol, 
+                            const LJProbe &probe,
+                            MolPotentialTable &potentials,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraLJPotential::Molecule &mol0, 
+                            const IntraLJPotential::Molecule &mol1,
+                            const LJProbe &probe,
+                            MolPotentialTable &pots0,
+                            IntraLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraLJPotential::Molecule &mol0,
+                            const IntraLJPotential::Molecule &mol1,
+                            const LJProbe &probe,
+                            MolPotentialTable &pots0,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraLJPotential::Molecule &mol0,
+                            const LJProbe &probe,
+                            GridPotentialTable &pots,
+                            IntraLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraLJPotential::Molecule &mol0,
+                            const LJProbe &probe,
+                            GridPotentialTable &pots,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculateLJPotential(const IntraLJPotential::Molecule &mol0, 
+                              const IntraLJPotential::Molecule &mol1,
+                              const LJProbe &probe,
+                              MolPotentialTable &pots0,
+                              IntraLJPotential::PotentialWorkspace &workspace,
+                              double scale_potential=1) const;
+
+    void calculateLJPotential(const IntraLJPotential::Molecule &mol0, 
+                              const LJProbe &probe,
+                              GridPotentialTable &pots,
+                              IntraLJPotential::PotentialWorkspace &workspace,
+                              double scale_potential=1) const;
                                
 private:
     void assertCompatible(const IntraLJPotential::Molecule &mol,

@@ -411,6 +411,20 @@ double CombinedSpace::calcDist(const CoordGroup &group0, const CoordGroup &group
     return spces.at(0).read().calcDist(group0, group1, mat);
 }
 
+double CombinedSpace::calcDist(const CoordGroup &group, const Vector &point,
+                               DistMatrix &mat) const
+{
+    this->assertSameSpace("Cannot calculate distances", CODELOC);
+    return spces.at(0).read().calcDist(group, point, mat);
+}
+
+double CombinedSpace::calcDist2(const CoordGroup &group, const Vector &point,
+                               DistMatrix &mat) const
+{
+    this->assertSameSpace("Cannot calculate distances", CODELOC);
+    return spces.at(0).read().calcDist2(group, point, mat);
+}
+
 /** Populate the matrix 'mat' with the distances^2 between all of the
     points of the two CoordGroups. Return the shortest distance between the
     two CoordGroups. */
@@ -470,6 +484,13 @@ double CombinedSpace::calcDistVectors(const CoordGroup &group0, const CoordGroup
 {
     this->assertSameSpace("Cannot calculate distances", CODELOC);
     return spces.at(0).read().calcDistVectors(group0, group1, mat);
+}
+
+double CombinedSpace::calcDistVectors(const CoordGroup &group, const Vector &point,
+                                      DistVectorMatrix &mat) const
+{
+    this->assertSameSpace("Cannot calculate distances", CODELOC);
+    return spces.at(0).read().calcDistVectors(group, point, mat);
 }
 
 /** Calculate the angle between the passed three points. This should return

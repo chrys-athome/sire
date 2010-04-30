@@ -185,6 +185,18 @@ public:
     virtual double calcDist(const CoordGroup &group1, const CoordGroup &group2,
                             DistMatrix &distmat) const=0;
 
+    /** Populate the matrix 'distmat' with the distances between all of the 
+        points in 'group' to the point 'point'. This returns the shortest 
+        distance between the group points and 'point' */
+    virtual double calcDist(const CoordGroup &group, const Vector &point,
+                            DistMatrix &distmat) const=0;
+
+    /** Populate the matrix 'distmat' with the distances squared between all of the 
+        points in 'group' to the point 'point'. This returns the shortest 
+        distance between the group points and 'point' */
+    virtual double calcDist2(const CoordGroup &group, const Vector &point,
+                             DistMatrix &distmat) const=0;
+
     /** Populate the matrix 'mat' with the distances^2 between all of the
         points of the two CoordGroups. Return the shortest distance^2 between the
         two CoordGroups. */
@@ -221,6 +233,12 @@ public:
         the shortest distance between two points in the group */
     virtual double calcDistVectors(const CoordGroup &group1,
                                    const CoordGroup &group2,
+                                   DistVectorMatrix &distmat) const=0;
+
+    /** Populate the matrix 'distmat' with the distances between all of the 
+        points in 'group' to the point 'point'. This returns the shortest 
+        distance between the group points and 'point' */
+    virtual double calcDistVectors(const CoordGroup &group, const Vector &point,
                                    DistVectorMatrix &distmat) const=0;
 
     /** Calculate the angle between the passed three points. This should return

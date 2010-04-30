@@ -451,6 +451,264 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
     return mindist;
 }
 
+/** Populate the matrix 'mat' with the distances between all of the
+    atoms of the passed CoordGroup to the passed point. Return the shortest 
+    distance. */
+double PeriodicBox::calcDist(const CoordGroup &group, const Vector &point,
+                             DistMatrix &mat) const
+{
+    double mindist(std::numeric_limits<double>::max());
+
+    const int n = group.count();
+
+    #ifdef SIRE_TIME_ROUTINES
+    int nflops = 0;
+    #endif
+
+    //redimension the matrix to hold all of the pairs
+    mat.redimension(1, n);
+
+    //see if we need to wrap the coordinates...
+    Vector wrapdelta = this->wrapDelta(group.aaBox().center(), point);
+
+    #ifdef SIRE_TIME_ROUTINES
+    nflops += 3;  // above is at least three operations, sometimes more!
+    #endif
+
+    //get raw pointer to the array - this provides more efficient access
+    const Vector *array = group.constData();
+
+    #ifdef SIRE_USE_SSE
+    {
+        //version of the algorithm suitable for use with SSE2 or above
+        const int remainder = n % 2;
+    
+        #ifdef SIRE_TIME_ROUTINES
+        nflops += 3;
+        #endif
+            
+        mat.setOuterIndex(0);
+    
+        Vector wrapped_point = point + wrapdelta;
+ 
+        const double *p = wrapped_point.constData();
+
+        __m128d sse_x0 = _mm_load1_pd( p );
+        __m128d sse_y0 = _mm_load1_pd( p+1 );
+        __m128d sse_z0 = _mm_load1_pd( p+2 );
+
+        __m128d sse_mindist = _mm_load1_pd(&mindist);
+    
+        //process the other points, two at a time
+        for (int j=0; j < n-remainder; j+=2)
+        {
+            const Vector &point1 = array[j];
+            const Vector &point2 = array[j+1];
+        
+            __m128d sse_x1 = _mm_setr_pd( point1.x(), point2.x() );
+            __m128d sse_y1 = _mm_setr_pd( point1.y(), point2.y() );
+            __m128d sse_z1 = _mm_setr_pd( point1.z(), point2.z() );
+            
+            __m128d dx = _mm_sub_pd(sse_x0, sse_x1);    // 2 flops
+            __m128d tmpdist = _mm_mul_pd(dx, dx);       // 2 flops
+            
+            dx = _mm_sub_pd(sse_y0, sse_y1);            // 2 flops
+            dx = _mm_mul_pd(dx, dx);                    // 2 flops
+            tmpdist = _mm_add_pd(tmpdist, dx);          // 2 flops
+          
+            dx = _mm_sub_pd(sse_z0, sse_z1);            // 2 flops
+            dx = _mm_mul_pd(dx, dx);                    // 2 flops
+            tmpdist = _mm_add_pd(tmpdist, dx);          // 2 flops
+
+            tmpdist = _mm_sqrt_pd(tmpdist);  // 2 flops
+
+            #ifdef SIRE_TIME_ROUTINES
+            nflops += 18;
+            #endif
+
+            sse_mindist = _mm_min_pd( sse_mindist, tmpdist );
+
+            //place this distance into the matrix
+            mat[j] = *((const double*)&tmpdist);
+            mat[j+1] = *( ((const double*)&tmpdist) + 1 );
+        }
+        
+        mindist = qMin( *((const double*)&sse_mindist),
+                        *( ((const double*)&sse_mindist) + 1 ) );
+        
+        if (remainder == 1)
+        {
+            const double tmpdist = Vector::distance(point, array[n-1]);
+               
+            #ifdef SIRE_TIME_ROUTINES
+            nflops += 9;
+            #endif
+                
+            mindist = qMin(tmpdist,mindist);
+            mat[n-1] = tmpdist;
+        }
+    }
+    #else
+    {
+        //add the delta to the coordinates of atom0
+        Vector wrapped_point = point + wrapdelta;
+            
+        #ifdef SIRE_TIME_ROUTINES
+        nflops += 3;
+        #endif
+            
+        mat.setOuterIndex(0);
+
+        for (int j=0; j<n; ++j)
+        {
+            const double dist = Vector::distance(wrapped_point, array[j]);
+                
+            #ifdef SIRE_TIME_ROUTINES
+            nflops += 9;
+            #endif
+                
+            mindist = qMin(mindist, dist);
+            mat[j] = dist;
+        }
+    }
+    #endif
+
+    #ifdef SIRE_TIME_ROUTINES
+    ADD_FLOPS(nflops);
+    #endif
+
+    //return the minimum distance
+    return mindist;
+}
+
+/** Populate the matrix 'mat' with the distances squared between all of the
+    atoms of the passed CoordGroup to the passed point. Return the shortest 
+    distance. */
+double PeriodicBox::calcDist2(const CoordGroup &group, const Vector &point,
+                              DistMatrix &mat) const
+{
+    double mindist2(std::numeric_limits<double>::max());
+
+    const int n = group.count();
+
+    #ifdef SIRE_TIME_ROUTINES
+    int nflops = 0;
+    #endif
+
+    //redimension the matrix to hold all of the pairs
+    mat.redimension(1, n);
+
+    //see if we need to wrap the coordinates...
+    Vector wrapdelta = this->wrapDelta(group.aaBox().center(), point);
+
+    #ifdef SIRE_TIME_ROUTINES
+    nflops += 3;  // above is at least three operations, sometimes more!
+    #endif
+
+    //get raw pointer to the array - this provides more efficient access
+    const Vector *array = group.constData();
+
+    #ifdef SIRE_USE_SSE
+    {
+        //version of the algorithm suitable for use with SSE2 or above
+        const int remainder = n % 2;
+    
+        #ifdef SIRE_TIME_ROUTINES
+        nflops += 3;
+        #endif
+            
+        mat.setOuterIndex(0);
+    
+        Vector wrapped_point = point + wrapdelta;
+ 
+        const double *p = wrapped_point.constData();
+
+        __m128d sse_x0 = _mm_load1_pd( p );
+        __m128d sse_y0 = _mm_load1_pd( p+1 );
+        __m128d sse_z0 = _mm_load1_pd( p+2 );
+
+        __m128d sse_mindist2 = _mm_load1_pd(&mindist2);
+    
+        //process the other points, two at a time
+        for (int j=0; j < n-remainder; j+=2)
+        {
+            const Vector &point1 = array[j];
+            const Vector &point2 = array[j+1];
+        
+            __m128d sse_x1 = _mm_setr_pd( point1.x(), point2.x() );
+            __m128d sse_y1 = _mm_setr_pd( point1.y(), point2.y() );
+            __m128d sse_z1 = _mm_setr_pd( point1.z(), point2.z() );
+            
+            __m128d dx = _mm_sub_pd(sse_x0, sse_x1);    // 2 flops
+            __m128d tmpdist2 = _mm_mul_pd(dx, dx);      // 2 flops
+            
+            dx = _mm_sub_pd(sse_y0, sse_y1);            // 2 flops
+            dx = _mm_mul_pd(dx, dx);                    // 2 flops
+            tmpdist2 = _mm_add_pd(tmpdist2, dx);        // 2 flops
+          
+            dx = _mm_sub_pd(sse_z0, sse_z1);            // 2 flops
+            dx = _mm_mul_pd(dx, dx);                    // 2 flops
+            tmpdist2 = _mm_add_pd(tmpdist2, dx);        // 2 flops
+
+            #ifdef SIRE_TIME_ROUTINES
+            nflops += 16;
+            #endif
+
+            sse_mindist2 = _mm_min_pd( sse_mindist2, tmpdist2 );
+
+            //place this distance into the matrix
+            mat[j] = *((const double*)&tmpdist2);
+            mat[j+1] = *( ((const double*)&tmpdist2) + 1 );
+        }
+        
+        mindist2 = qMin( *((const double*)&sse_mindist2),
+                         *( ((const double*)&sse_mindist2) + 1 ) );
+        
+        if (remainder == 1)
+        {
+            const double tmpdist2 = Vector::distance2(point, array[n-1]);
+               
+            #ifdef SIRE_TIME_ROUTINES
+            nflops += 8;
+            #endif
+                
+            mindist2 = qMin(tmpdist2,mindist2);
+            mat[n-1] = tmpdist2;
+        }
+    }
+    #else
+    {
+        //add the delta to the coordinates of atom0
+        Vector wrapped_point = point + wrapdelta;
+            
+        #ifdef SIRE_TIME_ROUTINES
+        nflops += 3;
+        #endif
+            
+        mat.setOuterIndex(0);
+
+        for (int j=0; j<n; ++j)
+        {
+            const double dist = Vector::distance2(wrapped_point, array[j]);
+                
+            #ifdef SIRE_TIME_ROUTINES
+            nflops += 8;
+            #endif
+                
+            mindist2 = qMin(mindist2, dist2);
+            mat[j] = dist2;
+        }
+    }
+    #endif
+
+    #ifdef SIRE_TIME_ROUTINES
+    ADD_FLOPS(nflops);
+    #endif
+
+    //return the minimum distance
+    return sqrt(mindist2);
+}
+
 /** Populate the matrix 'mat' with the distances^2 between all of the
     atoms of the two CoordGroups. Return the shortest distance between the
     two CoordGroups. */
@@ -632,6 +890,43 @@ double PeriodicBox::calcDistVectors(const CoordGroup &group0, const CoordGroup &
             //value is most efficiently placed as the second argument
             mindist = qMin(mat[j].length(),mindist);
         }
+    }
+
+    //return the minimum distance
+    return mindist;
+}
+
+/** Populate the matrix 'distmat' between all the points passed CoordGroup
+    to the point 'point' - the returned matrix has the vectors pointing
+    from the point to each point in 'group'. This returns
+    the shortest distance. */
+double PeriodicBox::calcDistVectors(const CoordGroup &group, const Vector &point,
+                                    DistVectorMatrix &mat) const
+{
+    double mindist(std::numeric_limits<double>::max());
+
+    const int n = group.count();
+
+    //redimension the matrix to hold all of the pairs
+    mat.redimension(1, n);
+
+    //see if we need to wrap the coordinates...
+    Vector wrapdelta = this->wrapDelta(group.aaBox().center(), point);
+
+    //get raw pointers to the arrays - this provides more efficient access
+    const Vector *array = group.constData();
+
+    //add the delta to the coordinates of atom0
+    Vector wrapped_point = point + wrapdelta;
+    mat.setOuterIndex(0);
+
+    for (int j=0; j<n; ++j)
+    {
+        mat[j] = (array[j] - wrapped_point);
+
+        //store the minimum distance, the value expected to be the minimum
+        //value is most efficiently placed as the second argument
+        mindist = qMin(mat[j].length(),mindist);
     }
 
     //return the minimum distance

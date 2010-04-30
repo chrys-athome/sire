@@ -37,6 +37,8 @@
 
 #include "SireUnits/dimensions.h"
 
+#include "aabox.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireVol
@@ -96,6 +98,8 @@ public:
     Vector maxCoords() const;
     Vector center() const;
     
+    const AABox& aaBox() const;
+    
     bool hasWeights() const;
     
     int nPoints() const;
@@ -138,6 +142,9 @@ private:
     /** The weights of all of the points - this is empty
         if all of the points are equally weighted */
     QVector<double> grid_weights;
+    
+    /** The axis-aligned box that encompasses all of the grid points */
+    AABox aabox;
 };
 
 /** This is the null (empty) grid */
@@ -228,6 +235,16 @@ private:
     /** The distance between nearest neighbour grid points */
     SireUnits::Dimension::Length grid_spacing;
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Return the axis-aligned box that just encompasses the grid points */
+inline const AABox& Grid::aaBox() const
+{
+    return aabox;
+}
+
+#endif
 
 }
 

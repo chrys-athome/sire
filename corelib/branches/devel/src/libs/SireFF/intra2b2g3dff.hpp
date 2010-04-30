@@ -78,6 +78,27 @@ public:
     
     void force(ForceTable &forcetable, const Symbol &symbol,
                double scale_force=1);
+               
+    void field(FieldTable &fieldtable, double scale_field=1);
+    
+    void field(FieldTable &fieldtable, const Symbol &component,
+               double scale_field=1);
+
+    void potential(PotentialTable &potentialtable, double scale_potential=1);
+    
+    void potential(PotentialTable &potentialtable, const Symbol &component,
+                   double scale_potential=1);
+
+    void field(FieldTable &fieldtable, const Probe &probe, double scale_field=1);
+    
+    void field(FieldTable &fieldtable, const Symbol &component,
+               const Probe &probe, double scale_field=1);
+               
+    void potential(PotentialTable &potentialtable, const Probe &probe,
+                   double scale_potential=1);
+    
+    void potential(PotentialTable &potentialtable, const Symbol &component,
+                   const Probe &probe, double scale_potential=1);
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -253,6 +274,378 @@ void Intra2B2G3DFF<Potential>::force(ForceTable &forcetable, const Symbol &symbo
                                       workspace, scale_force);
         }
     }
+}
+
+/** Calculate the fields acting at the points in the passed fieldtable
+    that arise from this forcefield, and add them onto the fields present
+    in the field table, multiplied by the passed (optional) scaling factor */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Intra2B2G3DFF<Potential>::field(FieldTable &fieldtable, const Probe &prob, 
+                                     double scale_field)
+{
+    if (scale_field == 0)
+        return;
+
+    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
+
+    const int nfieldmols = fieldtable.nMolecules();
+    const int nmols0 = this->mols[0].count();
+    const int nmols1 = this->mols[1].count();
+    const int ngrids = fieldtable.nGrids();
+    
+    typename Potential::FieldWorkspace workspace;
+    
+    MolFieldTable *fieldtable_array = fieldtable.moleculeData();
+    const ChunkedVector<typename Potential::Molecule> &mols0_array 
+                            = this->mols[0].moleculesByIndex();
+    const ChunkedVector<typename Potential::Molecule> &mols1_array
+                            = this->mols[1].moleculesByIndex();
+    
+    for (int i=0; i<nfieldmols; ++i)
+    {
+        MolFieldTable &moltable = fieldtable_array[i];
+        
+        MolNum molnum = moltable.molNum();
+        
+        if (this->mols[0].contains(molnum) and this->mols[1].contains(molnum))
+        {
+            int imol0 = this->mols[0].indexOf(molnum);
+            int imol1 = this->mols[1].indexOf(molnum);
+            
+            const typename Potential::Molecule &mol0 = mols0_array[imol0];
+            const typename Potential::Molecule &mol1 = mols1_array[imol1];
+
+            //calculate the field on mols[0] caused by mols[1]
+            Potential::calculateField(mol0, mol1, probe, moltable, 
+                                      workspace, scale_field);
+                                      
+            //now add on the forces on mols[1] caused by mols[0]
+            Potential::calculateField(mol1, mol0, probe, moltable,
+                                      workspace, scale_field);
+        }
+    }
+
+    if (ngrids > 0)
+    {
+        GridFieldTable *gridtable_array = fieldtable.gridData();
+        
+        for (int i=0; i<ngrids; ++i)
+        {
+            GridFieldTable &gridtable = gridtable_array[i];
+            
+            for (int j=0; j<nmols0; ++j)
+            {
+                const typename Potential::Molecule &mol = mols0_array[j];
+                    
+                Potential::calculateField(mol, probe, gridtable,
+                                          workspace, scale_field);
+            }
+            
+            for (int j=0; j<nmols1; ++j)
+            {
+                const typename Potential::Molecule &mol = mols1_array[j];
+                    
+                Potential::calculateField(mol, probe, gridtable,
+                                          workspace, scale_field);
+            }
+        }
+    }
+}
+    
+/** Calculate the field acting on the points in the passed forcetable  
+    caused by the component of this forcefield represented by 'component',
+    adding this field onto the existing fields in the forcetable (optionally
+    multiplied by 'scale_field' */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Intra2B2G3DFF<Potential>::field(FieldTable &fieldtable, const Symbol &component,
+                                     const Probe &prob, double scale_field)
+{
+    if (scale_field == 0)
+        return;
+
+    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
+
+    const int nfieldmols = fieldtable.nMolecules();
+    const int nmols0 = this->mols[0].count();
+    const int nmols1 = this->mols[1].count();
+    const int ngrids = fieldtable.nGrids();
+    
+    typename Potential::FieldWorkspace workspace;
+    
+    MolFieldTable *fieldtable_array = fieldtable.moleculeData();
+    const ChunkedVector<typename Potential::Molecule> &mols0_array 
+                            = this->mols[0].moleculesByIndex();
+    const ChunkedVector<typename Potential::Molecule> &mols1_array
+                            = this->mols[1].moleculesByIndex();
+    
+    for (int i=0; i<nfieldmols; ++i)
+    {
+        MolFieldTable &moltable = fieldtable_array[i];
+        
+        MolNum molnum = moltable.molNum();
+        
+        if (this->mols[0].contains(molnum) and this->mols[1].contains(molnum))
+        {
+            int imol0 = this->mols[0].indexOf(molnum);
+            int imol1 = this->mols[1].indexOf(molnum);
+            
+            const typename Potential::Molecule &mol0 = mols0_array[imol0];
+            const typename Potential::Molecule &mol1 = mols1_array[imol1];
+
+            //calculate the field on mols[0] caused by mols[1]
+            Potential::calculateField(mol0, mol1, probe, moltable, 
+                                      component, this->components(),
+                                      workspace, scale_field);
+                                      
+            //now add on the forces on mols[1] caused by mols[0]
+            Potential::calculateField(mol1, mol0, probe, moltable,
+                                      component, this->components(),
+                                      workspace, scale_field);
+        }
+    }
+
+    if (ngrids > 0)
+    {
+        GridFieldTable *gridtable_array = fieldtable.gridData();
+        
+        for (int i=0; i<ngrids; ++i)
+        {
+            GridFieldTable &gridtable = gridtable_array[i];
+            
+            for (int j=0; j<nmols0; ++j)
+            {
+                const typename Potential::Molecule &mol = mols0_array[j];
+                    
+                Potential::calculateField(mol, probe, gridtable,
+                                          component, this->components(),
+                                          workspace, scale_field);
+            }
+            
+            for (int j=0; j<nmols1; ++j)
+            {
+                const typename Potential::Molecule &mol = mols1_array[j];
+                    
+                Potential::calculateField(mol, probe, gridtable,
+                                          component, this->components(),
+                                          workspace, scale_field);
+            }
+        }
+    }
+}
+               
+/** Calculate the potential of the passed probe acting at the points in 
+    the passed potentialtable
+    that arise from this forcefield, and add them onto the potentials present
+    in the potential table, multiplied by the passed (optional) scaling factor */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Intra2B2G3DFF<Potential>::potential(PotentialTable &potentialtable, 
+                                         const Probe &prob,
+                                         double scale_potential)
+{
+    if (scale_potential == 0)
+        return;
+
+    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
+
+    const int npotentialmols = potentialtable.nMolecules();
+    const int nmols0 = this->mols[0].count();
+    const int nmols1 = this->mols[1].count();
+    const int ngrids = potentialtable.nGrids();
+    
+    typename Potential::PotentialWorkspace workspace;
+    
+    MolPotentialTable *potentialtable_array = potentialtable.moleculeData();
+    const ChunkedVector<typename Potential::Molecule> &mols0_array 
+                            = this->mols[0].moleculesByIndex();
+    const ChunkedVector<typename Potential::Molecule> &mols1_array
+                            = this->mols[1].moleculesByIndex();
+    
+    for (int i=0; i<npotentialmols; ++i)
+    {
+        MolPotentialTable &moltable = potentialtable_array[i];
+        
+        MolNum molnum = moltable.molNum();
+        
+        if (this->mols[0].contains(molnum) and this->mols[1].contains(molnum))
+        {
+            int imol0 = this->mols[0].indexOf(molnum);
+            int imol1 = this->mols[1].indexOf(molnum);
+            
+            const typename Potential::Molecule &mol0 = mols0_array[imol0];
+            const typename Potential::Molecule &mol1 = mols1_array[imol1];
+
+            //calculate the potential on mols[0] caused by mols[1]
+            Potential::calculatePotential(mol0, mol1, probe, moltable, 
+                                          workspace, scale_potential);
+                                      
+            //now add on the potential on mols[1] caused by mols[0]
+            Potential::calculatePotential(mol1, mol0, probe, moltable,
+                                          workspace, scale_potential);
+        }
+    }
+
+    if (ngrids > 0)
+    {
+        GridPotentialTable *gridtable_array = potentialtable.gridData();
+        
+        for (int i=0; i<ngrids; ++i)
+        {
+            GridPotentialTable &gridtable = gridtable_array[i];
+            
+            for (int j=0; j<nmols0; ++j)
+            {
+                const typename Potential::Molecule &mol = mols0_array[j];
+                    
+                Potential::calculatePotential(mol, probe, gridtable,
+                                              workspace, scale_potential);
+            }
+            
+            for (int j=0; j<nmols1; ++j)
+            {
+                const typename Potential::Molecule &mol = mols1_array[j];
+                    
+                Potential::calculatePotential(mol, probe, gridtable,
+                                              workspace, scale_potential);
+            }
+        }
+    }
+}
+    
+/** Calculate the potential on the passed probe acting on the points in 
+    the passed potential table  
+    caused by the component of this forcefield represented by 'component',
+    adding this potential onto the existing potentials in the potential table (optionally
+    multiplied by 'scale_potential' */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Intra2B2G3DFF<Potential>::potential(PotentialTable &potentialtable, 
+                                         const Symbol &component,
+                                         const Probe &prob, double scale_potential)
+{
+    if (scale_potential == 0)
+        return;
+
+    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
+
+    const int npotentialmols = potentialtable.nMolecules();
+    const int nmols0 = this->mols[0].count();
+    const int nmols1 = this->mols[1].count();
+    const int ngrids = potentialtable.nGrids();
+    
+    typename Potential::PotentialWorkspace workspace;
+    
+    MolPotentialTable *potentialtable_array = potentialtable.moleculeData();
+    const ChunkedVector<typename Potential::Molecule> &mols0_array 
+                            = this->mols[0].moleculesByIndex();
+    const ChunkedVector<typename Potential::Molecule> &mols1_array
+                            = this->mols[1].moleculesByIndex();
+    
+    for (int i=0; i<npotentialmols; ++i)
+    {
+        MolPotentialTable &moltable = potentialtable_array[i];
+        
+        MolNum molnum = moltable.molNum();
+        
+        if (this->mols[0].contains(molnum) and this->mols[1].contains(molnum))
+        {
+            int imol0 = this->mols[0].indexOf(molnum);
+            int imol1 = this->mols[1].indexOf(molnum);
+            
+            const typename Potential::Molecule &mol0 = mols0_array[imol0];
+            const typename Potential::Molecule &mol1 = mols1_array[imol1];
+
+            //calculate the potential on mols[0] caused by mols[1]
+            Potential::calculatePotential(mol0, mol1, probe, moltable, 
+                                          component, this->components(),
+                                          workspace, scale_potential);
+                                      
+            //now add on the potential on mols[1] caused by mols[0]
+            Potential::calculatePotential(mol1, mol0, probe, moltable,
+                                          component, this->components(),
+                                          workspace, scale_potential);
+        }
+    }
+
+    if (ngrids > 0)
+    {
+        GridPotentialTable *gridtable_array = potentialtable.gridData();
+        
+        for (int i=0; i<ngrids; ++i)
+        {
+            GridPotentialTable &gridtable = gridtable_array[i];
+            
+            for (int j=0; j<nmols0; ++j)
+            {
+                const typename Potential::Molecule &mol = mols0_array[j];
+                    
+                Potential::calculatePotential(mol, probe, gridtable,
+                                              component, this->components(),
+                                              workspace, scale_potential);
+            }
+            
+            for (int j=0; j<nmols1; ++j)
+            {
+                const typename Potential::Molecule &mol = mols1_array[j];
+                    
+                Potential::calculatePotential(mol, probe, gridtable,
+                                              component, this->components(),
+                                              workspace, scale_potential);
+            }
+        }
+    }
+}
+
+/** Calculate the fields acting at the points in the passed fieldtable
+    that arise from this forcefield, and add them onto the fields present
+    in the field table, multiplied by the passed (optional) scaling factor */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Intra2B2G3DFF<Potential>::field(FieldTable &fieldtable, double scale_field)
+{
+    typename Potential::Probe default_probe;
+    Intra2B2G3DFF<Potential>::field(fieldtable, default_probe, scale_field);
+}
+
+/** Calculate the field acting on the points in the passed forcetable  
+    caused by the component of this forcefield represented by 'component',
+    adding this field onto the existing fields in the forcetable (optionally
+    multiplied by 'scale_field' */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Intra2B2G3DFF<Potential>::field(FieldTable &fieldtable, const Symbol &component,
+                                     double scale_field)
+{
+    typename Potential::Probe default_probe;
+    Intra2B2G3DFF<Potential>::field(fieldtable, component, default_probe, scale_field);
+}
+
+/** Calculate the potential acting at the points in the passed potentialtable
+    that arise from this forcefield, and add them onto the potentials present
+    in the potential table, multiplied by the passed (optional) scaling factor */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Intra2B2G3DFF<Potential>::potential(PotentialTable &potentialtable, 
+                                         double scale_potential)
+{
+    typename Potential::Probe default_probe;
+    Intra2B2G3DFF<Potential>::potential(potentialtable, default_probe, scale_potential);
+}
+
+/** Calculate the potential acting on the points in the passed potential table  
+    caused by the component of this forcefield represented by 'component',
+    adding this potential onto the existing potentials in the potential table (optionally
+    multiplied by 'scale_potential' */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Intra2B2G3DFF<Potential>::potential(PotentialTable &potentialtable, 
+                                         const Symbol &component, double scale_potential)
+{
+    typename Potential::Probe default_probe;
+    Intra2B2G3DFF<Potential>::potential(potentialtable, component,
+                                        default_probe, scale_potential);
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
