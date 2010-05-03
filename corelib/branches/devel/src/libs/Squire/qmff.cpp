@@ -380,3 +380,65 @@ const char* QMFF::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<QMFF>() );
 }
+
+
+void QMFF::field(FieldTable &fieldtable, double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "The code to calculate QM fields has yet to be written."),
+                CODELOC );
+}
+
+void QMFF::field(FieldTable &fieldtable, const Symbol &component,
+                 double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "The code to calculate QM fields has yet to be written."),
+                CODELOC );
+}
+           
+void QMFF::potential(PotentialTable &potentialtable, double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "The code to calculate QM potentials has yet to be written."),
+                CODELOC );
+}
+
+void QMFF::potential(PotentialTable &potentialtable, const Symbol &component,
+                     double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "The code to calculate QM potentials has yet to be written."),
+                CODELOC );
+}
+
+void QMFF::field(FieldTable &fieldtable, const Probe &probe, double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "The code to calculate QM fields has yet to be written."),
+                CODELOC );
+}
+
+void QMFF::field(FieldTable &fieldtable, const Symbol &component,
+                 const Probe &probe, double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "The code to calculate QM fields has yet to be written."),
+                CODELOC );
+}
+
+void QMFF::potential(PotentialTable &potentialtable, const Probe &probe,
+                     double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "The code to calculate QM potentials has yet to be written."),
+                CODELOC );
+}
+
+void QMFF::potential(PotentialTable &potentialtable, const Symbol &component,
+                     const Probe &probe, double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "The code to calculate QM potentials has yet to be written."),
+                CODELOC );
+}

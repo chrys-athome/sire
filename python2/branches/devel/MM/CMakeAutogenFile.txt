@@ -26,11 +26,13 @@ set ( PYPP_SOURCES
        CLJPotentialInterface_InterCLJPotential_.pypp.cpp
        CLJPotentialInterface_InterSoftCLJPotential_.pypp.cpp
        CLJPotentialInterface_IntraCLJPotential_.pypp.cpp
+       CLJProbe.pypp.cpp
        CLJScaleFactor.pypp.cpp
        CoulombComponent.pypp.cpp
        CoulombNBPairs.pypp.cpp
        CoulombPotentialInterface_InterCoulombPotential_.pypp.cpp
        CoulombPotentialInterface_IntraCoulombPotential_.pypp.cpp
+       CoulombProbe.pypp.cpp
        CoulombScaleFactor.pypp.cpp
        DihedralComponent.pypp.cpp
        DihedralParameterName.pypp.cpp
@@ -91,6 +93,7 @@ set ( PYPP_SOURCES
        LJPerturbation.pypp.cpp
        LJPotentialInterface_InterLJPotential_.pypp.cpp
        LJPotentialInterface_IntraLJPotential_.pypp.cpp
+       LJProbe.pypp.cpp
        LJScaleFactor.pypp.cpp
        NoCutoff.pypp.cpp
        NullRestraint.pypp.cpp

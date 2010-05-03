@@ -570,6 +570,28 @@ void InterCLJPotential::throwMissingForceComponent(const Symbol &symbol,
                  components.lj().toString()), CODELOC );
 }
 
+void InterCLJPotential::throwMissingFieldComponent(const Symbol &symbol,
+                              const InterCLJPotential::Components &components) const
+{
+    throw SireFF::missing_component( QObject::tr(
+        "There is no field component in potential %1 - available "
+        "components are %2, %3 and %4.")
+            .arg(this->what())
+            .arg(components.total().toString(), components.coulomb().toString(),
+                 components.lj().toString()), CODELOC );
+}
+
+void InterCLJPotential::throwMissingPotentialComponent(const Symbol &symbol,
+                              const InterCLJPotential::Components &components) const
+{
+    throw SireFF::missing_component( QObject::tr(
+        "There is no potential component in potential %1 - available "
+        "components are %2, %3 and %4.")
+            .arg(this->what())
+            .arg(components.total().toString(), components.coulomb().toString(),
+                 components.lj().toString()), CODELOC );
+}
+
 /** Return all of the parameters needed by this potential for 
     the molecule 'molecule', using the supplied property map to
     find the properties that contain those parameters
@@ -7000,4 +7022,288 @@ void IntraCLJPotential::calculateLJForce(
             }
         }
     }
+}
+
+void IntraCLJPotential::calculateField(const IntraCLJPotential::Molecule &mol, 
+                    const CLJProbe &probe,
+                    MolFieldTable &fields,
+                    IntraCLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateField(const IntraCLJPotential::Molecule &mol,
+                    const IntraCLJPotential::Molecule &rest_of_mol,
+                    const CLJProbe &probe,
+                    MolFieldTable &fields,
+                    IntraCLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateField(const IntraCLJPotential::Molecule &mol, 
+                    const CLJProbe &probe,
+                    MolFieldTable &fields,
+                    const Symbol &symbol,
+                    const Components &components,
+                    IntraCLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateField(const IntraCLJPotential::Molecule &mol,
+                    const IntraCLJPotential::Molecule &rest_of_mol,
+                    const CLJProbe &probe,
+                    MolFieldTable &fields,
+                    const Symbol &symbol,
+                    const Components &components,
+                    IntraCLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateField(const IntraCLJPotential::Molecule &mol, 
+                    const CLJProbe &probe,
+                    GridFieldTable &fields,
+                    IntraCLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateField(const IntraCLJPotential::Molecule &mol, 
+                    const CLJProbe &probe,
+                    GridFieldTable &fields,
+                    const Symbol &symbol,
+                    const Components &components,
+                    IntraCLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculatePotential(const IntraCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        MolPotentialTable &potentials,
+                        IntraCLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculatePotential(const IntraCLJPotential::Molecule &mol,
+                        const IntraCLJPotential::Molecule &rest_of_mol,
+                        const CLJProbe &probe,
+                        MolPotentialTable &potentials,
+                        IntraCLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculatePotential(const IntraCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        MolPotentialTable &potentials,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculatePotential(const IntraCLJPotential::Molecule &mol,
+                        const IntraCLJPotential::Molecule &rest_of_mol,
+                        const CLJProbe &probe,
+                        MolPotentialTable &potentials,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculatePotential(const IntraCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        GridPotentialTable &potentials,
+                        IntraCLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculatePotential(const IntraCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        GridPotentialTable &potentials,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateCoulombField(const IntraCLJPotential::Molecule &mol,
+                           const CLJProbe &probe,
+                           MolFieldTable &fields,
+                           IntraCLJPotential::FieldWorkspace &workspace,
+                           double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateCoulombField(const IntraCLJPotential::Molecule &mol,
+                           const CLJProbe &probe,
+                           GridFieldTable &fields,
+                           IntraCLJPotential::FieldWorkspace &workspace,
+                           double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateCoulombField(const IntraCLJPotential::Molecule &mol,
+                           const IntraCLJPotential::Molecule &rest_of_mol,
+                           const CLJProbe &probe,
+                           MolFieldTable &fields,
+                           IntraCLJPotential::FieldWorkspace &workspace,
+                           double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateLJField(const IntraCLJPotential::Molecule &mol,
+                      const CLJProbe &probe,
+                      MolFieldTable &fields,
+                      IntraCLJPotential::FieldWorkspace &workspace,
+                      double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateLJField(const IntraCLJPotential::Molecule &mol,
+                      const CLJProbe &probe,
+                      GridFieldTable &fields,
+                      IntraCLJPotential::FieldWorkspace &workspace,
+                      double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateLJField(const IntraCLJPotential::Molecule &mol,
+                      const IntraCLJPotential::Molecule &rest_of_mol,
+                      const CLJProbe &probe,
+                      MolFieldTable &fields,
+                      IntraCLJPotential::FieldWorkspace &workspace,
+                      double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateCoulombPotential(const IntraCLJPotential::Molecule &mol,
+                               const CLJProbe &probe,
+                               MolPotentialTable &potentials,
+                               IntraCLJPotential::PotentialWorkspace &workspace,
+                               double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateCoulombPotential(const IntraCLJPotential::Molecule &mol,
+                               const CLJProbe &probe,
+                               GridPotentialTable &fields,
+                               IntraCLJPotential::PotentialWorkspace &workspace,
+                               double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateCoulombPotential(const IntraCLJPotential::Molecule &mol,
+                               const IntraCLJPotential::Molecule &rest_of_mol,
+                               const CLJProbe &probe,
+                               MolPotentialTable &potentials,
+                               IntraCLJPotential::PotentialWorkspace &workspace,
+                               double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateLJPotential(const IntraCLJPotential::Molecule &mol,
+                          const CLJProbe &probe,
+                          MolPotentialTable &potentials,
+                          IntraCLJPotential::PotentialWorkspace &workspace,
+                          double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateLJPotential(const IntraCLJPotential::Molecule &mol,
+                          const CLJProbe &probe,
+                          GridPotentialTable &potentials,
+                          IntraCLJPotential::PotentialWorkspace &workspace,
+                          double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraCLJPotential::calculateLJPotential(const IntraCLJPotential::Molecule &mol,
+                          const IntraCLJPotential::Molecule &rest_of_mol,
+                          const CLJProbe &probe,
+                          MolPotentialTable &potentials,
+                          IntraCLJPotential::PotentialWorkspace &workspace,
+                          double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
 }

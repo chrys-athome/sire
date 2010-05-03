@@ -68,6 +68,17 @@ void register_ZMatrix_class(){
         }
         { //::SireMove::ZMatrix::add
         
+            typedef void ( ::SireMove::ZMatrix::*add_function_type )( ::SireMol::DihedralID const & ) ;
+            add_function_type add_function_value( &::SireMove::ZMatrix::add );
+            
+            ZMatrix_exposer.def( 
+                "add"
+                , add_function_value
+                , ( bp::arg("dihedral") ) );
+        
+        }
+        { //::SireMove::ZMatrix::add
+        
             typedef void ( ::SireMove::ZMatrix::*add_function_type )( ::SireMove::ZMatrixLine const & ) ;
             add_function_type add_function_value( &::SireMove::ZMatrix::add );
             
@@ -144,6 +155,105 @@ void register_ZMatrix_class(){
                 , ( bp::arg("atom") ) );
         
         }
+        { //::SireMove::ZMatrix::contains
+        
+            typedef bool ( ::SireMove::ZMatrix::*contains_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            contains_function_type contains_function_value( &::SireMove::ZMatrix::contains );
+            
+            ZMatrix_exposer.def( 
+                "contains"
+                , contains_function_value
+                , ( bp::arg("atom"), bp::arg("bond") ) );
+        
+        }
+        { //::SireMove::ZMatrix::contains
+        
+            typedef bool ( ::SireMove::ZMatrix::*contains_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            contains_function_type contains_function_value( &::SireMove::ZMatrix::contains );
+            
+            ZMatrix_exposer.def( 
+                "contains"
+                , contains_function_value
+                , ( bp::arg("atom"), bp::arg("bond"), bp::arg("angle") ) );
+        
+        }
+        { //::SireMove::ZMatrix::contains
+        
+            typedef bool ( ::SireMove::ZMatrix::*contains_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const &,::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            contains_function_type contains_function_value( &::SireMove::ZMatrix::contains );
+            
+            ZMatrix_exposer.def( 
+                "contains"
+                , contains_function_value
+                , ( bp::arg("atom"), bp::arg("bond"), bp::arg("angle"), bp::arg("dihedral") ) );
+        
+        }
+        { //::SireMove::ZMatrix::contains
+        
+            typedef bool ( ::SireMove::ZMatrix::*contains_function_type )( ::SireMol::BondID const & ) const;
+            contains_function_type contains_function_value( &::SireMove::ZMatrix::contains );
+            
+            ZMatrix_exposer.def( 
+                "contains"
+                , contains_function_value
+                , ( bp::arg("bond") ) );
+        
+        }
+        { //::SireMove::ZMatrix::contains
+        
+            typedef bool ( ::SireMove::ZMatrix::*contains_function_type )( ::SireMol::AngleID const & ) const;
+            contains_function_type contains_function_value( &::SireMove::ZMatrix::contains );
+            
+            ZMatrix_exposer.def( 
+                "contains"
+                , contains_function_value
+                , ( bp::arg("angle") ) );
+        
+        }
+        { //::SireMove::ZMatrix::contains
+        
+            typedef bool ( ::SireMove::ZMatrix::*contains_function_type )( ::SireMol::DihedralID const & ) const;
+            contains_function_type contains_function_value( &::SireMove::ZMatrix::contains );
+            
+            ZMatrix_exposer.def( 
+                "contains"
+                , contains_function_value
+                , ( bp::arg("dihedral") ) );
+        
+        }
+        { //::SireMove::ZMatrix::delta
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMove::ZMatrix::*delta_function_type )( ::SireMol::BondID const & ) const;
+            delta_function_type delta_function_value( &::SireMove::ZMatrix::delta );
+            
+            ZMatrix_exposer.def( 
+                "delta"
+                , delta_function_value
+                , ( bp::arg("bond") ) );
+        
+        }
+        { //::SireMove::ZMatrix::delta
+        
+            typedef ::SireUnits::Dimension::Angle ( ::SireMove::ZMatrix::*delta_function_type )( ::SireMol::AngleID const & ) const;
+            delta_function_type delta_function_value( &::SireMove::ZMatrix::delta );
+            
+            ZMatrix_exposer.def( 
+                "delta"
+                , delta_function_value
+                , ( bp::arg("angle") ) );
+        
+        }
+        { //::SireMove::ZMatrix::delta
+        
+            typedef ::SireUnits::Dimension::Angle ( ::SireMove::ZMatrix::*delta_function_type )( ::SireMol::DihedralID const & ) const;
+            delta_function_type delta_function_value( &::SireMove::ZMatrix::delta );
+            
+            ZMatrix_exposer.def( 
+                "delta"
+                , delta_function_value
+                , ( bp::arg("dihedral") ) );
+        
+        }
         { //::SireMove::ZMatrix::dihedralDelta
         
             typedef ::SireUnits::Dimension::Angle ( ::SireMove::ZMatrix::*dihedralDelta_function_type )( ::SireMol::AtomID const & ) const;
@@ -208,6 +318,39 @@ void register_ZMatrix_class(){
                 "getIndex"
                 , getIndex_function_value
                 , ( bp::arg("atom"), bp::arg("bond"), bp::arg("angle"), bp::arg("dihedral") ) );
+        
+        }
+        { //::SireMove::ZMatrix::getIndex
+        
+            typedef int ( ::SireMove::ZMatrix::*getIndex_function_type )( ::SireMol::BondID const & ) const;
+            getIndex_function_type getIndex_function_value( &::SireMove::ZMatrix::getIndex );
+            
+            ZMatrix_exposer.def( 
+                "getIndex"
+                , getIndex_function_value
+                , ( bp::arg("bond") ) );
+        
+        }
+        { //::SireMove::ZMatrix::getIndex
+        
+            typedef int ( ::SireMove::ZMatrix::*getIndex_function_type )( ::SireMol::AngleID const & ) const;
+            getIndex_function_type getIndex_function_value( &::SireMove::ZMatrix::getIndex );
+            
+            ZMatrix_exposer.def( 
+                "getIndex"
+                , getIndex_function_value
+                , ( bp::arg("angle") ) );
+        
+        }
+        { //::SireMove::ZMatrix::getIndex
+        
+            typedef int ( ::SireMove::ZMatrix::*getIndex_function_type )( ::SireMol::DihedralID const & ) const;
+            getIndex_function_type getIndex_function_value( &::SireMove::ZMatrix::getIndex );
+            
+            ZMatrix_exposer.def( 
+                "getIndex"
+                , getIndex_function_value
+                , ( bp::arg("dihedral") ) );
         
         }
         { //::SireMove::ZMatrix::index
@@ -325,6 +468,17 @@ void register_ZMatrix_class(){
         }
         { //::SireMove::ZMatrix::remove
         
+            typedef void ( ::SireMove::ZMatrix::*remove_function_type )( ::SireMol::DihedralID const & ) ;
+            remove_function_type remove_function_value( &::SireMove::ZMatrix::remove );
+            
+            ZMatrix_exposer.def( 
+                "remove"
+                , remove_function_value
+                , ( bp::arg("dihedral") ) );
+        
+        }
+        { //::SireMove::ZMatrix::remove
+        
             typedef void ( ::SireMove::ZMatrix::*remove_function_type )( ::SireMove::ZMatrixLine const & ) ;
             remove_function_type remove_function_value( &::SireMove::ZMatrix::remove );
             
@@ -376,6 +530,39 @@ void register_ZMatrix_class(){
                 "setBondDelta"
                 , setBondDelta_function_value
                 , ( bp::arg("atom"), bp::arg("bond"), bp::arg("delta") ) );
+        
+        }
+        { //::SireMove::ZMatrix::setDelta
+        
+            typedef void ( ::SireMove::ZMatrix::*setDelta_function_type )( ::SireMol::BondID const &,::SireUnits::Dimension::Length const & ) ;
+            setDelta_function_type setDelta_function_value( &::SireMove::ZMatrix::setDelta );
+            
+            ZMatrix_exposer.def( 
+                "setDelta"
+                , setDelta_function_value
+                , ( bp::arg("bond"), bp::arg("delta") ) );
+        
+        }
+        { //::SireMove::ZMatrix::setDelta
+        
+            typedef void ( ::SireMove::ZMatrix::*setDelta_function_type )( ::SireMol::AngleID const &,::SireUnits::Dimension::Angle const & ) ;
+            setDelta_function_type setDelta_function_value( &::SireMove::ZMatrix::setDelta );
+            
+            ZMatrix_exposer.def( 
+                "setDelta"
+                , setDelta_function_value
+                , ( bp::arg("angle"), bp::arg("delta") ) );
+        
+        }
+        { //::SireMove::ZMatrix::setDelta
+        
+            typedef void ( ::SireMove::ZMatrix::*setDelta_function_type )( ::SireMol::DihedralID const &,::SireUnits::Dimension::Angle const & ) ;
+            setDelta_function_type setDelta_function_value( &::SireMove::ZMatrix::setDelta );
+            
+            ZMatrix_exposer.def( 
+                "setDelta"
+                , setDelta_function_value
+                , ( bp::arg("dihedral"), bp::arg("delta") ) );
         
         }
         { //::SireMove::ZMatrix::setDihedralDelta

@@ -55,6 +55,8 @@
 
 #include "CLJPotentialInterface_IntraCLJPotential_.pypp.hpp"
 
+#include "CLJProbe.pypp.hpp"
+
 #include "CLJScaleFactor.pypp.hpp"
 
 #include "ChargeParameterName.pypp.hpp"
@@ -68,6 +70,8 @@
 #include "CoulombPotentialInterface_InterCoulombPotential_.pypp.hpp"
 
 #include "CoulombPotentialInterface_IntraCoulombPotential_.pypp.hpp"
+
+#include "CoulombProbe.pypp.hpp"
 
 #include "CoulombScaleFactor.pypp.hpp"
 
@@ -188,6 +192,8 @@
 #include "LJPotentialInterface_InterLJPotential_.pypp.hpp"
 
 #include "LJPotentialInterface_IntraLJPotential_.pypp.hpp"
+
+#include "LJProbe.pypp.hpp"
 
 #include "LJScaleFactor.pypp.hpp"
 
@@ -394,11 +400,15 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_CLJParameterNames3D_class();
 
+    register_CLJProbe_class();
+
     register_ChargeParameterName3D_class();
 
     register_CoulombComponent_class();
 
     register_CoulombNBPairs_class();
+
+    register_CoulombProbe_class();
 
     register_DihedralComponent_class();
 
@@ -461,6 +471,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_LJParameterName3D_class();
 
     register_LJPerturbation_class();
+
+    register_LJProbe_class();
 
     register_NoCutoff_class();
 

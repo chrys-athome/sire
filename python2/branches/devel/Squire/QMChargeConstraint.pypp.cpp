@@ -26,6 +26,8 @@ namespace bp = boost::python;
 
 #include "SireStream/shareddatastream.h"
 
+#include "SireSystem/delta.h"
+
 #include "SireSystem/system.h"
 
 #include "qmchargeconstraint.h"

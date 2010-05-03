@@ -9,6 +9,7 @@
 #include "cljcomponent.h"
 #include "cljnbpairs.h"
 #include "cljpotential.h"
+#include "cljprobe.h"
 #include "coulombpotential.h"
 #include "dihedralrestraint.h"
 #include "distancerestraint.h"

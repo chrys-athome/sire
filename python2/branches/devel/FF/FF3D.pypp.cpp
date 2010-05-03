@@ -21,6 +21,50 @@ void register_FF3D_class(){
         typedef bp::class_< SireFF::FF3D, boost::noncopyable > FF3D_exposer_t;
         FF3D_exposer_t FF3D_exposer = FF3D_exposer_t( "FF3D", bp::no_init );
         bp::scope FF3D_scope( FF3D_exposer );
+        { //::SireFF::FF3D::field
+        
+            typedef void ( ::SireFF::FF3D::*field_function_type )( ::SireFF::FieldTable &,double ) ;
+            field_function_type field_function_value( &::SireFF::FF3D::field );
+            
+            FF3D_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireFF::FF3D::field
+        
+            typedef void ( ::SireFF::FF3D::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,double ) ;
+            field_function_type field_function_value( &::SireFF::FF3D::field );
+            
+            FF3D_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireFF::FF3D::field
+        
+            typedef void ( ::SireFF::FF3D::*field_function_type )( ::SireFF::FieldTable &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::SireFF::FF3D::field );
+            
+            FF3D_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireFF::FF3D::field
+        
+            typedef void ( ::SireFF::FF3D::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::SireFF::FF3D::field );
+            
+            FF3D_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
         { //::SireFF::FF3D::force
         
             typedef void ( ::SireFF::FF3D::*force_function_type )( ::SireFF::ForceTable &,double ) ;
@@ -41,6 +85,50 @@ void register_FF3D_class(){
                 "force"
                 , force_function_value
                 , ( bp::arg("forcetable"), bp::arg("component"), bp::arg("scale_force")=1 ) );
+        
+        }
+        { //::SireFF::FF3D::potential
+        
+            typedef void ( ::SireFF::FF3D::*potential_function_type )( ::SireFF::PotentialTable &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::FF3D::potential );
+            
+            FF3D_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireFF::FF3D::potential
+        
+            typedef void ( ::SireFF::FF3D::*potential_function_type )( ::SireFF::PotentialTable &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::FF3D::potential );
+            
+            FF3D_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireFF::FF3D::potential
+        
+            typedef void ( ::SireFF::FF3D::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::FF3D::potential );
+            
+            FF3D_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("component"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireFF::FF3D::potential
+        
+            typedef void ( ::SireFF::FF3D::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::FF3D::potential );
+            
+            FF3D_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
         
         }
         { //::SireFF::FF3D::typeName

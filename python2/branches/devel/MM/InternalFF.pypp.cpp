@@ -81,6 +81,50 @@ void register_InternalFF_class(){
                 , ( bp::arg("name") ) );
         
         }
+        { //::SireMM::InternalFF::field
+        
+            typedef void ( ::SireMM::InternalFF::*field_function_type )( ::SireFF::FieldTable &,double ) ;
+            field_function_type field_function_value( &::SireMM::InternalFF::field );
+            
+            InternalFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireMM::InternalFF::field
+        
+            typedef void ( ::SireMM::InternalFF::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,double ) ;
+            field_function_type field_function_value( &::SireMM::InternalFF::field );
+            
+            InternalFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireMM::InternalFF::field
+        
+            typedef void ( ::SireMM::InternalFF::*field_function_type )( ::SireFF::FieldTable &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::SireMM::InternalFF::field );
+            
+            InternalFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireMM::InternalFF::field
+        
+            typedef void ( ::SireMM::InternalFF::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::SireMM::InternalFF::field );
+            
+            InternalFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
         { //::SireMM::InternalFF::force
         
             typedef void ( ::SireMM::InternalFF::*force_function_type )( ::SireFF::ForceTable &,double ) ;
@@ -146,6 +190,50 @@ void register_InternalFF_class(){
                 "parameters"
                 , parameters_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireMM::InternalFF::potential
+        
+            typedef void ( ::SireMM::InternalFF::*potential_function_type )( ::SireFF::PotentialTable &,double ) ;
+            potential_function_type potential_function_value( &::SireMM::InternalFF::potential );
+            
+            InternalFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireMM::InternalFF::potential
+        
+            typedef void ( ::SireMM::InternalFF::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,double ) ;
+            potential_function_type potential_function_value( &::SireMM::InternalFF::potential );
+            
+            InternalFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("component"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireMM::InternalFF::potential
+        
+            typedef void ( ::SireMM::InternalFF::*potential_function_type )( ::SireFF::PotentialTable &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::SireMM::InternalFF::potential );
+            
+            InternalFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireMM::InternalFF::potential
+        
+            typedef void ( ::SireMM::InternalFF::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::SireMM::InternalFF::potential );
+            
+            InternalFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
         
         }
         { //::SireMM::InternalFF::properties

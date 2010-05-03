@@ -29,10 +29,10 @@
 #ifndef SQUIRE_QMMMFF_H
 #define SQUIRE_QMMMFF_H
 
+#include "qmmmelecembedpotential.h"
+
 #include "SireFF/g2ff.h"
 #include "SireFF/ff3d.h"
-
-#include "qmmmelecembedpotential.h"
 
 SIRE_BEGIN_HEADER
 
@@ -51,6 +51,9 @@ using SireBase::Property;
 using SireBase::Properties;
 
 using SireFF::ForceTable;
+using SireFF::FieldTable;
+using SireFF::PotentialTable;
+using SireFF::Probe;
 
 using SireCAS::Symbol;
 
@@ -139,6 +142,27 @@ public:
     
     void force(ForceTable &forcetable, const Symbol &symbol,
                double scale_force=1);
+
+    void field(FieldTable &fieldtable, double scale_field=1);
+    
+    void field(FieldTable &fieldtable, const Symbol &component,
+               double scale_field=1);
+               
+    void potential(PotentialTable &potentialtable, double scale_potential=1);
+    
+    void potential(PotentialTable &potentialtable, const Symbol &component,
+                   double scale_potential=1);
+
+    void field(FieldTable &fieldtable, const SireFF::Probe &probe, double scale_field=1);
+    
+    void field(FieldTable &fieldtable, const Symbol &component,
+               const SireFF::Probe &probe, double scale_field=1);
+               
+    void potential(PotentialTable &potentialtable, const SireFF::Probe &probe,
+                   double scale_potential=1);
+    
+    void potential(PotentialTable &potentialtable, const Symbol &component,
+                   const SireFF::Probe &probe, double scale_potential=1);
 
     QString energyCommandFile() const;
     QString forceCommandFile() const;

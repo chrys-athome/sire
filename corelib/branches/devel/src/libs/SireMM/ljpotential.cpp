@@ -520,6 +520,26 @@ void InterLJPotential::throwMissingForceComponent(const Symbol &symbol,
             .arg(components.total().toString()), CODELOC );
 }
 
+void InterLJPotential::throwMissingFieldComponent(const Symbol &symbol,
+                              const IntraLJPotential::Components &components) const
+{
+    throw SireFF::missing_component( QObject::tr(
+        "There is no field component in potential %1 - available "
+        "components are %2.")
+            .arg(this->what())
+            .arg(components.total().toString()), CODELOC );
+}
+
+void InterLJPotential::throwMissingPotentialComponent(const Symbol &symbol,
+                              const IntraLJPotential::Components &components) const
+{
+    throw SireFF::missing_component( QObject::tr(
+        "There is no potential component in potential %1 - available "
+        "components are %2.")
+            .arg(this->what())
+            .arg(components.total().toString()), CODELOC );
+}
+
 /** Return all of the parameters needed by this potential for 
     the molecule 'molecule', using the supplied property map to
     find the properties that contain those parameters
@@ -1077,6 +1097,640 @@ void InterLJPotential::_pvt_calculateLJForce(
                     }
                     
                     group_forces0_array[i] += scale_force * total_force;
+
+                } // end of loop over i atoms
+
+            } // end of if within feather
+
+        } // end of loop over jgroup CutGroups
+
+    } // end of loop over igroup CutGroups
+}
+
+/** Add to the potentials in 'pots0' the LJ potential acting on 'mol0' caused
+    by 'mol1' */
+void InterLJPotential::_pvt_calculateLJPotential(
+                                        const InterLJPotential::Molecule &mol0, 
+                                        const InterLJPotential::Molecule &mol1,
+                                        const LJProbe &probe,
+                                        MolPotentialTable &pots0, 
+                                        InterLJPotential::PotentialWorkspace &distmat,
+                                        double scale_potential) const
+{
+    if (probe.lj().isDummy())
+        return;
+
+    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == pots0.nCutGroups() );
+    BOOST_ASSERT( mol0.molecule().data().number() == pots0.molNum() );
+
+    const quint32 ngroups0 = mol0.nCutGroups();
+    const quint32 ngroups1 = mol1.nCutGroups();
+    
+    const CoordGroup *groups0_array = mol0.coordinates().constData();
+    const CoordGroup *groups1_array = mol1.coordinates().constData();
+    
+    const Parameters::Array *molparams1_array
+                                    = mol1.parameters().atomicParameters().constData();
+    
+    //loop over all pairs of CutGroups in the two molecules
+    for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+    {
+        //get the CGIdx of this group
+        CGIdx cgidx_igroup = mol0.cgIdx(igroup);
+
+        //get the index of this CutGroup in the fields array
+        int pot0_idx = pots0.map(cgidx_igroup);
+        
+        if (pot0_idx == -1)
+            //there is no space for the potentials on this CutGroup in 
+            //the potentialtable - were are therefore not interested in
+            //this CutGroup
+            continue;
+
+        const CoordGroup &group0 = groups0_array[igroup];
+        const AABox &aabox0 = group0.aaBox();
+        const quint32 nats0 = group0.count();
+    
+        //get the table that holds the potentials acting at all of the
+        //atoms of this CutGroup (tables are indexed by CGIdx)
+        MolarEnergy *group_pots0_array = pots0.data(pot0_idx);
+
+        //ok, we are interested in the potentials acting on this CutGroup
+        // - calculate all of the potentials on this group interacting
+        //   with all of the CutGroups in mol1 
+        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        {
+            const CoordGroup &group1 = groups1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
+
+            //check first that these two CoordGroups could be within cutoff
+            //(if there is only one CutGroup in both molecules then this
+            //test has already been performed and passed)
+            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox0, group1.aaBox());
+            
+            if (not within_cutoff)
+                //this CutGroup is beyond the cutoff distance
+                continue;
+            
+            //calculate all of the interatomic distances
+            const double mindist = spce->calcDist2(group0, group1, distmat);
+            
+            if (mindist > switchfunc->cutoffDistance())
+                //all of the atoms are definitely beyond cutoff
+                continue;
+
+            const quint32 nats1 = group1.count();
+            
+            //loop over all interatomic pairs and calculate the energies
+            const Parameter *params1_array = params1.constData();
+
+            if (mindist > switchfunc->featherDistance())
+            {
+                //calculate the switching scale factors
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
+
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    distmat.setOuterIndex(i);
+                
+                    double total_potential = 0;
+                
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        
+                        if (param1.ljid != 0)
+                        {
+                            LJPair ljpair( ljpairs.constData()[
+                                                ljpairs.map(param1.ljid,
+                                                            param1.ljid)],
+                                           probe.lj(),
+                                           combining_rules );
+                        
+                            double sig_over_dist6 = pow_3(ljpair.sigma()*ljpair.sigma()*
+                                                            distmat[j]);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            //calculate the energy
+                            const double ljnrg = 4 * ljpair.epsilon() *
+                                                  (sig_over_dist12 - sig_over_dist6);
+
+                            total_potential += (ljnrg * scl_lj);
+                        }
+                    }
+
+                    //update the fields array
+                    group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                        total_potential);
+                }
+            }
+            else
+            {
+                //not in the feather region, so can calculate the potential
+                //directly
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    double total_potential = 0;
+                        
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        
+                        if (param1.ljid != 0)
+                        {
+                            LJPair ljpair( ljpairs.constData()[
+                                                    ljpairs.map(param1.ljid,
+                                                                param1.ljid)],
+                                           probe.lj(),
+                                           combining_rules );
+                       
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*
+                                                          ljpair.sigma() / distmat[j]);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            total_potential += (4 * ljpair.epsilon() * (
+                                                          12.0*sig_over_dist12 -
+                                                           6.0*sig_over_dist6) ); 
+                        }
+                    }
+
+                    group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                        total_potential);
+                } // end of loop over i atoms
+
+            } // end of if within feather
+
+        } // end of loop over jgroup CutGroups
+
+    } // end of loop over igroup CutGroups
+}
+
+/** Add to the potentials in 'pots0' the potential on the passed  
+    grid caused by 'mol' */
+void InterLJPotential::_pvt_calculateLJPotential(
+                                        const InterLJPotential::Molecule &mol, 
+                                        const LJProbe &probe,
+                                        GridPotentialTable &pots, 
+                                        InterLJPotential::PotentialWorkspace &distmat,
+                                        double scale_potential) const
+{
+    if (probe.lj().isDummy())
+        return;
+
+    const int ngroups = mol.nCutGroups();
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    const Parameters::Array *molparams_array
+                                    = mol.parameters().atomicParameters().constData();
+
+    const Grid &grid = pots.grid();
+    const int npoints = grid.nPoints();
+    const Vector *gridpoints_array = grid.constData();
+    
+    if (npoints == 0 or ngroups == 0)
+        return;
+
+    MolarEnergy *grid_pot_array = pots.data();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const CoordGroup &group = groups_array[i];
+        const AABox &aabox = group.aaBox();
+        const int nats = group.count();
+        
+        //check first that these two CoordGroups could be within cutoff
+        //(if there is only one CutGroup in both molecules then this
+        //test has already been performed and passed)
+        const bool within_cutoff = (ngroups == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox, grid.aaBox());
+            
+        if (not within_cutoff)
+            //this CutGroup is beyond the cutoff distance
+            continue;
+
+        const Parameters::Array &params = molparams_array[i];
+        const Parameter *params_array = params.constData();
+        
+        for (int j=0; j<npoints; ++j)
+        {
+            const Vector &gridpoint = gridpoints_array[j];
+            
+            const double mindist = spce->calcDist2(group, gridpoint, distmat);
+
+            double total_potential = 0;
+            
+            if (mindist > switchfunc->cutoffDistance())
+                continue;
+                
+            else if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the field taking into account
+                //the derivative of the switching function!
+            
+                //calculate the switching scale factors and their 
+                //derivatives
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
+            
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param = params_array[k];
+                
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                            ljpairs.map(param.ljid,
+                                                        param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_3(ljpair.sigma()*
+                                                      ljpair.sigma() / 
+                                                      distmat[j]);
+                                                      
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        //calculate the energy
+                        total_potential +=  scl_lj * 4 * ljpair.epsilon() *
+                                                    (sig_over_dist12 - sig_over_dist6);
+                    }
+                
+                } // end of loop over atoms
+            }
+            else
+            {
+                //no need to worry about the switching function :-)
+                distmat.setOuterIndex(0);
+            
+                for (int k=0; k<nats; ++k)
+                {
+                    const Parameter &param = params_array[k];
+                
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                                ljpairs.map(param.ljid,
+                                                            param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_3(ljpair.sigma()*
+                                                      ljpair.sigma()/
+                                                      distmat[j]);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        total_potential += 4 * ljpair.epsilon() * (
+                                                   12.0*sig_over_dist12 -
+                                                    6.0*sig_over_dist6 );
+                    }
+
+                } // end of loop over atoms
+            }
+            
+            grid_pot_array[j] += MolarEnergy(scale_potential * total_potential);
+
+        } // end of loop over grid points
+    } // end of loop over CutGroups
+}
+
+/** Calculate the field caused by the molecule 'mol' on the grid points in 
+    'fields' */
+void InterLJPotential::_pvt_calculateLJField(const InterLJPotential::Molecule &mol,
+                                             const LJProbe &probe,
+                                             GridFieldTable &fields,
+                                             InterLJPotential::FieldWorkspace &distmat,
+                                             double scale_field) const
+{
+    if (probe.lj().isDummy())
+        return;
+
+    const int ngroups = mol.nCutGroups();
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    const Parameters::Array *molparams_array
+                                    = mol.parameters().atomicParameters().constData();
+
+    const Grid &grid = fields.grid();
+    const int npoints = grid.nPoints();
+    const Vector *gridpoints_array = grid.constData();
+    Vector *grid_field_array = fields.data();
+    
+    if (npoints == 0 or ngroups == 0)
+        return;
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const CoordGroup &group = groups_array[i];
+        const AABox &aabox = group.aaBox();
+        const int nats = group.count();
+        
+        //check first that these two CoordGroups could be within cutoff
+        //(if there is only one CutGroup in both molecules then this
+        //test has already been performed and passed)
+        const bool within_cutoff = (ngroups == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox, grid.aaBox());
+            
+        if (not within_cutoff)
+            //this CutGroup is beyond the cutoff distance
+            continue;
+
+        const Parameters::Array &params = molparams_array[i];
+        const Parameter *params_array = params.constData();
+        
+        for (int j=0; j<npoints; ++j)
+        {
+            const Vector &gridpoint = gridpoints_array[j];
+            
+            const double mindist = spce->calcDistVectors(group, gridpoint, distmat);
+
+            Vector total_field;
+            
+            if (mindist > switchfunc->cutoffDistance())
+                continue;
+                
+            else if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the field taking into account
+                //the derivative of the switching function!
+            
+                //calculate the switching scale factors and their 
+                //derivatives
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
+            
+                Vector group_sep = (group.aaBox().center() - gridpoint).normalise();
+
+                Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
+                                                    * group_sep;
+
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k].length();
+                
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                            ljpairs.map(param.ljid,
+                                                        param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        //calculate the energy
+                        const double ljnrg = 4 * ljpair.epsilon() *
+                                              (sig_over_dist12 - sig_over_dist6);
+
+                        // dU/dr requires an extra power of r
+                        sig_over_dist6 *= invdist;
+                        sig_over_dist12 *= invdist;
+
+                        Vector field = ((scl_lj * ljpair.epsilon() * 
+                                        (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
+                                        * distmat[j].direction())
+                                     
+                                        + (ljnrg * dscl_lj);
+
+                        total_field -= field;
+                    }
+                
+                } // end of loop over atoms
+            }
+            else
+            {
+                //no need to worry about the switching function :-)
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k].length();
+                
+                    if (param.ljid != 0)
+                    {
+                        LJPair ljpair( ljpairs.constData()[
+                                                ljpairs.map(param.ljid,
+                                                            param.ljid)],
+                                       probe.lj(),
+                                       combining_rules );
+                
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        // dU/dr requires an extra power of r
+                        sig_over_dist6 *= invdist;
+                        sig_over_dist12 *= invdist;
+
+                        Vector field = (4 * ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                               12.0*sig_over_dist12))
+                                          * distmat[j].direction();
+                        
+                        total_field -= field;
+                    }
+
+                } // end of loop over atoms
+            }
+            
+            grid_field_array[j] += scale_field * total_field;
+
+        } // end of loop over grid points
+    } // end of loop over CutGroups
+}
+
+/** Add to the fields in 'fields0' the fields acting on the probe
+    at all of the atoms sites of 'mol0' caused by 'mol1' */
+void InterLJPotential::_pvt_calculateLJField(
+                                            const InterLJPotential::Molecule &mol0, 
+                                            const InterLJPotential::Molecule &mol1,
+                                            const LJProbe &probe,
+                                            MolFieldTable &fields0, 
+                                            InterLJPotential::FieldWorkspace &distmat,
+                                            double scale_field) const
+{
+    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == fields0.nCutGroups() );
+    BOOST_ASSERT( mol0.molecule().data().number() == fields0.molNum() );
+
+    if (probe.lj().isDummy())
+        return;
+
+    const quint32 ngroups0 = mol0.nCutGroups();
+    const quint32 ngroups1 = mol1.nCutGroups();
+    
+    const CoordGroup *groups0_array = mol0.coordinates().constData();
+    const CoordGroup *groups1_array = mol1.coordinates().constData();
+    
+    BOOST_ASSERT(mol1.parameters().atomicParameters().count() == int(ngroups1));
+    
+    const Parameters::Array *molparams1_array
+                                    = mol1.parameters().atomicParameters().constData();
+    
+    const MolFieldTable::Array *fields0_array = fields0.constData();
+    
+    //loop over all pairs of CutGroups in the two molecules
+    for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+    {
+        //get the CGIdx of this group
+        CGIdx cgidx_igroup = mol0.cgIdx(igroup);
+
+        //get the index of this CutGroup in the forces array
+        int field0_idx = fields0.map(cgidx_igroup);
+        
+        if (field0_idx == -1)
+            //there is no space for the fields on this CutGroup in 
+            //the fieldtable - were are therefore not interested in
+            //this CutGroup
+            continue;
+
+        const CoordGroup &group0 = groups0_array[igroup];
+        const AABox &aabox0 = group0.aaBox();
+        const quint32 nats0 = group0.count();
+    
+        //get the table that holds the fields acting on all of the
+        //atoms of this CutGroup (tables are indexed by CGIdx)
+        BOOST_ASSERT(fields0_array[field0_idx].count() == int(nats0));
+    
+        Vector *group_fields0_array = fields0.data(field0_idx);
+
+        //ok, we are interested in the fields acting on this CutGroup
+        // - calculate all of the fields on this group interacting
+        //   with all of the CutGroups in mol1 
+        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        {
+            const CoordGroup &group1 = groups1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
+
+            //check first that these two CoordGroups could be within cutoff
+            //(if there is only one CutGroup in both molecules then this
+            //test has already been performed and passed)
+            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox0, group1.aaBox());
+            
+            if (not within_cutoff)
+                //this CutGroup is beyond the cutoff distance
+                continue;
+            
+            //calculate all of the interatomic distances
+            const double mindist = spce->calcDistVectors(group0, group1, distmat);
+            
+            if (mindist > switchfunc->cutoffDistance())
+                //all of the atoms are definitely beyond cutoff
+                continue;
+
+            const quint32 nats1 = group1.count();
+            
+            //loop over all interatomic pairs and calculate the energies
+            const Parameter *params1_array = params1.constData();
+
+            if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the forces taking into account
+                //the derivative of the switching function!
+                
+                //calculate the switching scale factors and their 
+                //derivatives
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
+                
+                Vector group_sep = (group1.aaBox().center() - aabox0.center())
+                                        .normalise();
+                
+                Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
+                                     * group_sep;
+                
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    distmat.setOuterIndex(i);
+
+                    Vector total_field;
+                
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const Parameter &param1 = params1_array[j];
+
+                        if (param1.ljid != 0)
+                        {
+                            const double invdist = double(1) / distmat[j].length();
+
+                            LJPair ljpair( ljpairs.constData()[
+                                                   ljpairs.map(param1.ljid,
+                                                               param1.ljid)],
+                                           probe.lj(), combining_rules );
+                        
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            //calculate the energy
+                            const double ljnrg = 4 * ljpair.epsilon() *
+                                                  (sig_over_dist12 - sig_over_dist6);
+
+                            // dU/dr requires an extra power of r
+                            sig_over_dist6 *= invdist;
+                            sig_over_dist12 *= invdist;
+
+                            Vector field = ((scl_lj * 4 * ljpair.epsilon() * 
+                                            (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
+                                               * distmat[j].direction())
+                                            
+                                             + (ljnrg * dscl_lj);
+
+                            total_field -= field;
+                        }
+                    }
+                    
+                    //update the fields array
+                    group_fields0_array[i] += scale_field * total_field;
+                }
+            }
+            else
+            {
+                //not in the feather region, so can calculate the fields
+                //directly
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    distmat.setOuterIndex(i);
+
+                    Vector total_field;
+                
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                              
+                        if (param1.ljid != 0)
+                        {
+                            const double invdist = double(1) / distmat[j].length();
+
+                            LJPair ljpair( ljpairs.constData()[
+                                                     ljpairs.map(param1.ljid,
+                                                                 param1.ljid)],
+                                           probe.lj(), combining_rules );
+                        
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            // dU/dr requires an extra power of r
+                            sig_over_dist6 *= invdist;
+                            sig_over_dist12 *= invdist;
+
+                            Vector field = (4 * ljpair.epsilon() * 
+                                                       (6.0*sig_over_dist6 - 
+                                                       12.0*sig_over_dist12))
+                                        * distmat[j].direction();
+
+                            total_field -= field;
+                        }
+                    }
+                    
+                    group_fields0_array[i] += scale_field * total_field;
 
                 } // end of loop over i atoms
 
@@ -2470,4 +3124,198 @@ void IntraLJPotential::calculateForce(const IntraLJPotential::Molecule &mol,
                                       double scale_force) const
 {
     this->calculateLJForce(mol, rest_of_mol, forces, distmat, scale_force);
+}
+
+void IntraLJPotential::calculateField(const IntraLJPotential::Molecule &mol, 
+                    const LJProbe &probe,
+                    MolFieldTable &fields,
+                    IntraLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ fields "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculateField(const IntraLJPotential::Molecule &mol, 
+                    const LJProbe &probe,
+                    MolFieldTable &fields,
+                    const Symbol &symbol,
+                    const Components &components,
+                    IntraLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ fields "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculateField(const IntraLJPotential::Molecule &mol0, 
+                    const IntraLJPotential::Molecule &mol1,
+                    const LJProbe &probe,
+                    MolFieldTable &forces0,
+                    IntraLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ fields "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculateField(const IntraLJPotential::Molecule &mol0,
+                    const IntraLJPotential::Molecule &mol1,
+                    const LJProbe &probe,
+                    MolFieldTable &forces0,
+                    const Symbol &symbol,
+                    const Components &components,
+                    IntraLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ fields "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculateField(const IntraLJPotential::Molecule &mol0,
+                    const LJProbe &probe,
+                    GridFieldTable &fields,
+                    IntraLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ fields "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculateField(const IntraLJPotential::Molecule &mol0,
+                    const LJProbe &probe,
+                    GridFieldTable &fields,
+                    const Symbol &symbol,
+                    const Components &components,
+                    IntraLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ fields "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculateLJField(const IntraLJPotential::Molecule &mol0, 
+                      const IntraLJPotential::Molecule &mol1,
+                      const LJProbe &probe,
+                      MolFieldTable &fields0,
+                      IntraLJPotential::ForceWorkspace &workspace,
+                      double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ fields "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculateLJField(const IntraLJPotential::Molecule &mol0, 
+                      const LJProbe &probe,
+                      GridFieldTable &fields,
+                      IntraLJPotential::ForceWorkspace &workspace,
+                      double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ fields "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculatePotential(const IntraLJPotential::Molecule &mol, 
+                        const LJProbe &probe,
+                        MolPotentialTable &potentials,
+                        IntraLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ potentials "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculatePotential(const IntraLJPotential::Molecule &mol, 
+                        const LJProbe &probe,
+                        MolPotentialTable &potentials,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ potentials "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculatePotential(const IntraLJPotential::Molecule &mol0, 
+                        const IntraLJPotential::Molecule &mol1,
+                        const LJProbe &probe,
+                        MolPotentialTable &pots0,
+                        IntraLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ potentials "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculatePotential(const IntraLJPotential::Molecule &mol0,
+                        const IntraLJPotential::Molecule &mol1,
+                        const LJProbe &probe,
+                        MolPotentialTable &pots0,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ potentials "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculatePotential(const IntraLJPotential::Molecule &mol0,
+                        const LJProbe &probe,
+                        GridPotentialTable &pots,
+                        IntraLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ potentials "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculatePotential(const IntraLJPotential::Molecule &mol0,
+                        const LJProbe &probe,
+                        GridPotentialTable &pots,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ potentials "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculateLJPotential(const IntraLJPotential::Molecule &mol0, 
+                          const IntraLJPotential::Molecule &mol1,
+                          const LJProbe &probe,
+                          MolPotentialTable &pots0,
+                          IntraLJPotential::PotentialWorkspace &workspace,
+                          double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ potentials "
+                "has yet to be written..."), CODELOC );
+}
+
+void IntraLJPotential::calculateLJPotential(const IntraLJPotential::Molecule &mol0, 
+                          const LJProbe &probe,
+                          GridPotentialTable &pots,
+                          IntraLJPotential::PotentialWorkspace &workspace,
+                          double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate intramolecular LJ potentials "
+                "has yet to be written..."), CODELOC );
 }

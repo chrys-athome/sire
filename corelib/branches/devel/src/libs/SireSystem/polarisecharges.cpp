@@ -25,7 +25,7 @@
   *  at http://siremol.org
   *
 \*********************************************/
-
+/*
 #include "polarisecharges.h"
 
 #include "SireStream/datastream.h"
@@ -46,9 +46,9 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
 {
     return ds;
 }
-
+*/
 /** Null constructor */
-PolariseCharges::PolariseCharges() 
+/*PolariseCharges::PolariseCharges() 
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>()
 {}
 
@@ -80,3 +80,4 @@ bool PolariseCharges::mayChange(const Delta &delta, quint32 last_subversion) con
 
 bool PolariseCharges::fullApply(Delta &delta);
 bool PolariseCharges::deltaApply(Delta &delta, quint32 last_subversion);
+*/

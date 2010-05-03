@@ -49,6 +49,14 @@ class RestraintFF;
 QDataStream& operator<<(QDataStream&, const SireMM::RestraintFF&);
 QDataStream& operator>>(QDataStream&, SireMM::RestraintFF&);
 
+namespace SireFF
+{
+class ForceTable;
+class FieldTable;
+class PotentialTable;
+class Probe;
+}
+
 namespace SireMM
 {
 
@@ -59,6 +67,11 @@ using SireMol::MoleculeData;
 using SireMol::PartialMolecule;
 using SireMol::ViewsOfMol;
 using SireMol::Molecules;
+
+using SireFF::ForceTable;
+using SireFF::FieldTable;
+using SireFF::PotentialTable;
+using SireFF::Probe;
 
 using SireVol::Space;
 
@@ -143,6 +156,27 @@ public:
     
     void force(ForceTable &forcetable, const Symbol &symbol,
                double scale_force=1);
+               
+    void field(FieldTable &fieldtable, double scale_field=1);
+    
+    void field(FieldTable &fieldtable, const Symbol &component,
+               double scale_field=1);
+               
+    void potential(PotentialTable &potentialtable, double scale_potential=1);
+    
+    void potential(PotentialTable &potentialtable, const Symbol &component,
+                   double scale_potential=1);
+
+    void field(FieldTable &fieldtable, const Probe &probe, double scale_field=1);
+    
+    void field(FieldTable &fieldtable, const Symbol &component,
+               const Probe &probe, double scale_field=1);
+               
+    void potential(PotentialTable &potentialtable, const Probe &probe,
+                   double scale_potential=1);
+    
+    void potential(PotentialTable &potentialtable, const Symbol &component,
+                   const Probe &probe, double scale_potential=1);
 
 protected:
 

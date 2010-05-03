@@ -120,6 +120,17 @@ void register_Cartesian_class(){
                 , ( bp::arg("group1"), bp::arg("group2"), bp::arg("mat") ) );
         
         }
+        { //::SireVol::Cartesian::calcDist
+        
+            typedef double ( ::SireVol::Cartesian::*calcDist_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistMatrix & ) const;
+            calcDist_function_type calcDist_function_value( &::SireVol::Cartesian::calcDist );
+            
+            Cartesian_exposer.def( 
+                "calcDist"
+                , calcDist_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("mat") ) );
+        
+        }
         { //::SireVol::Cartesian::calcDist2
         
             typedef double ( ::SireVol::Cartesian::*calcDist2_function_type )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) const;
@@ -140,6 +151,17 @@ void register_Cartesian_class(){
                 "calcDist2"
                 , calcDist2_function_value
                 , ( bp::arg("group"), bp::arg("mat") ) );
+        
+        }
+        { //::SireVol::Cartesian::calcDist2
+        
+            typedef double ( ::SireVol::Cartesian::*calcDist2_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistMatrix & ) const;
+            calcDist2_function_type calcDist2_function_value( &::SireVol::Cartesian::calcDist2 );
+            
+            Cartesian_exposer.def( 
+                "calcDist2"
+                , calcDist2_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("mat") ) );
         
         }
         { //::SireVol::Cartesian::calcDist2
@@ -184,6 +206,17 @@ void register_Cartesian_class(){
                 "calcDistVectors"
                 , calcDistVectors_function_value
                 , ( bp::arg("group1"), bp::arg("group2"), bp::arg("distmat") ) );
+        
+        }
+        { //::SireVol::Cartesian::calcDistVectors
+        
+            typedef double ( ::SireVol::Cartesian::*calcDistVectors_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistVectorMatrix & ) const;
+            calcDistVectors_function_type calcDistVectors_function_value( &::SireVol::Cartesian::calcDistVectors );
+            
+            Cartesian_exposer.def( 
+                "calcDistVectors"
+                , calcDistVectors_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("distmat") ) );
         
         }
         { //::SireVol::Cartesian::calcInvDist

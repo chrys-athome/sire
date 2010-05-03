@@ -31,6 +31,17 @@ void register_Grid_class(){
         typedef bp::class_< SireVol::Grid, bp::bases< SireBase::Property >, boost::noncopyable > Grid_exposer_t;
         Grid_exposer_t Grid_exposer = Grid_exposer_t( "Grid", bp::no_init );
         bp::scope Grid_scope( Grid_exposer );
+        { //::SireVol::Grid::aaBox
+        
+            typedef ::SireVol::AABox const & ( ::SireVol::Grid::*aaBox_function_type )(  ) const;
+            aaBox_function_type aaBox_function_value( &::SireVol::Grid::aaBox );
+            
+            Grid_exposer.def( 
+                "aaBox"
+                , aaBox_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::SireVol::Grid::center
         
             typedef ::SireMaths::Vector ( ::SireVol::Grid::*center_function_type )(  ) const;

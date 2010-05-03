@@ -23,7 +23,11 @@ namespace bp = boost::python;
 
 #include "SireMM/internalff.h"
 
+#include "SireMM/internalperturbation.h"
+
 #include "SireMM/ljparameter.h"
+
+#include "SireMM/ljperturbation.h"
 
 #include "SireMol/atomcharges.h"
 
@@ -31,7 +35,15 @@ namespace bp = boost::python;
 
 #include "SireMol/atomname.h"
 
+#include "SireMol/cgeditor.h"
+
+#include "SireMol/chargeperturbation.h"
+
+#include "SireMol/connectivity.h"
+
 #include "SireMol/errors.h"
+
+#include "SireMol/geometryperturbation.h"
 
 #include "SireMol/groupatomids.h"
 
@@ -121,6 +133,28 @@ void register_ProtoMSParameters_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireIO::ProtoMSParameters::connectivity
+        
+            typedef ::SireBase::PropertyName const & ( ::SireIO::ProtoMSParameters::*connectivity_function_type )(  ) const;
+            connectivity_function_type connectivity_function_value( &::SireIO::ProtoMSParameters::connectivity );
+            
+            ProtoMSParameters_exposer.def( 
+                "connectivity"
+                , connectivity_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireIO::ProtoMSParameters::coordinates
+        
+            typedef ::SireBase::PropertyName const & ( ::SireIO::ProtoMSParameters::*coordinates_function_type )(  ) const;
+            coordinates_function_type coordinates_function_value( &::SireIO::ProtoMSParameters::coordinates );
+            
+            ProtoMSParameters_exposer.def( 
+                "coordinates"
+                , coordinates_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::SireIO::ProtoMSParameters::dihedral
         
             typedef ::SireBase::PropertyName const & ( ::SireIO::ProtoMSParameters::*dihedral_function_type )(  ) const;
@@ -129,6 +163,50 @@ void register_ProtoMSParameters_class(){
             ProtoMSParameters_exposer.def( 
                 "dihedral"
                 , dihedral_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireIO::ProtoMSParameters::finalCharge
+        
+            typedef ::SireBase::PropertyName const & ( ::SireIO::ProtoMSParameters::*finalCharge_function_type )(  ) const;
+            finalCharge_function_type finalCharge_function_value( &::SireIO::ProtoMSParameters::finalCharge );
+            
+            ProtoMSParameters_exposer.def( 
+                "finalCharge"
+                , finalCharge_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireIO::ProtoMSParameters::finalLJ
+        
+            typedef ::SireBase::PropertyName const & ( ::SireIO::ProtoMSParameters::*finalLJ_function_type )(  ) const;
+            finalLJ_function_type finalLJ_function_value( &::SireIO::ProtoMSParameters::finalLJ );
+            
+            ProtoMSParameters_exposer.def( 
+                "finalLJ"
+                , finalLJ_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireIO::ProtoMSParameters::initialCharge
+        
+            typedef ::SireBase::PropertyName const & ( ::SireIO::ProtoMSParameters::*initialCharge_function_type )(  ) const;
+            initialCharge_function_type initialCharge_function_value( &::SireIO::ProtoMSParameters::initialCharge );
+            
+            ProtoMSParameters_exposer.def( 
+                "initialCharge"
+                , initialCharge_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireIO::ProtoMSParameters::initialLJ
+        
+            typedef ::SireBase::PropertyName const & ( ::SireIO::ProtoMSParameters::*initialLJ_function_type )(  ) const;
+            initialLJ_function_type initialLJ_function_value( &::SireIO::ProtoMSParameters::initialLJ );
+            
+            ProtoMSParameters_exposer.def( 
+                "initialLJ"
+                , initialLJ_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
@@ -151,6 +229,17 @@ void register_ProtoMSParameters_class(){
             ProtoMSParameters_exposer.def( 
                 "nonBonded"
                 , nonBonded_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireIO::ProtoMSParameters::perturbations
+        
+            typedef ::SireBase::PropertyName const & ( ::SireIO::ProtoMSParameters::*perturbations_function_type )(  ) const;
+            perturbations_function_type perturbations_function_value( &::SireIO::ProtoMSParameters::perturbations );
+            
+            ProtoMSParameters_exposer.def( 
+                "perturbations"
+                , perturbations_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }

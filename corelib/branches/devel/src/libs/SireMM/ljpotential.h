@@ -480,6 +480,10 @@ public:
 private:
     void throwMissingForceComponent(const Symbol &symbol,
                                     const Components &components) const;
+    void throwMissingFieldComponent(const Symbol &symbol,
+                                    const Components &components) const;
+    void throwMissingPotentialComponent(const Symbol &symbol,
+                                        const Components &components) const;
 
     void _pvt_calculateEnergy(const InterLJPotential::Molecule &mol0, 
                               const InterLJPotential::Molecule &mol1,
@@ -492,6 +496,32 @@ private:
                                MolForceTable &forces0, 
                                InterLJPotential::ForceWorkspace &workspace,
                                double scale_force) const;
+
+    void _pvt_calculateLJField(const InterLJPotential::Molecule &mol0, 
+                               const InterLJPotential::Molecule &mol1,
+                               const LJProbe &probe,
+                               MolFieldTable &forces0, 
+                               InterLJPotential::ForceWorkspace &workspace,
+                               double scale_force) const;
+
+    void _pvt_calculateLJField(const InterLJPotential::Molecule &mol, 
+                               const LJProbe &probe,
+                               GridFieldTable &forces0, 
+                               InterLJPotential::ForceWorkspace &workspace,
+                               double scale_force) const;
+
+    void _pvt_calculateLJPotential(const InterLJPotential::Molecule &mol0, 
+                                   const InterLJPotential::Molecule &mol1,
+                                   const LJProbe &probe,
+                                   MolPotentialTable &pots0, 
+                                   InterLJPotential::PotentialWorkspace &workspace,
+                                   double scale_potential) const;
+
+    void _pvt_calculateLJPotential(const InterLJPotential::Molecule &mol, 
+                                   const LJProbe &probe,
+                                   GridPotentialTable &pots, 
+                                   InterLJPotential::PotentialWorkspace &workspace,
+                                   double scale_potential) const;
 };
 
 /** This class provides all of the functions and containers  
@@ -986,6 +1016,190 @@ InterLJPotential::calculateForce(const InterLJPotential::Molecule &mol0,
         
     else
         throwMissingForceComponent(symbol, components);
+}
+
+inline void 
+InterLJPotential::calculateLJField(const InterLJPotential::Molecule &mol0, 
+                                   const InterLJPotential::Molecule &mol1,
+                                   const LJProbe &probe,
+                                   MolFieldTable &fields0, 
+                                   InterLJPotential::FieldWorkspace &workspace,
+                                   double scale_field) const
+{
+    if ( scale_field != 0 and 
+         not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol0.aaBox(), mol1.aaBox()) )
+    {
+        this->_pvt_calculateLJField(mol0, mol1, probe, fields0,
+                                         workspace, scale_field);
+    }
+}
+
+inline void 
+InterLJPotential::calculateField(const InterLJPotential::Molecule &mol0, 
+                                 const InterLJPotential::Molecule &mol1,
+                                 const LJProbe &probe,
+                                 MolFieldTable &fields0, 
+                                 InterLJPotential::FieldWorkspace &workspace,
+                                 double scale_field) const
+{
+    this->calculateLJField(mol0, mol1, probe, fields0, workspace, scale_field);
+}
+
+inline void 
+InterLJPotential::calculateField(const InterLJPotential::Molecule &mol0,
+                                 const InterLJPotential::Molecule &mol1,
+                                 const LJProbe &probe,
+                                 MolFieldTable &fields0,
+                                 const Symbol &symbol,
+                                 const InterLJPotential::Components &components,
+                                 InterLJPotential::FieldWorkspace &workspace,
+                                 double scale_field) const
+{
+    if (symbol == components.total())
+        this->calculateField(mol0, mol1, probe, fields0, workspace, scale_field);
+        
+    else
+        throwMissingFieldComponent(symbol, components);
+}
+
+inline void 
+InterLJPotential::calculateLJField(const InterLJPotential::Molecule &mol, 
+                                   const LJProbe &probe,
+                                   GridFieldTable &fields, 
+                                   InterLJPotential::FieldWorkspace &workspace,
+                                   double scale_field) const
+{
+    if ( scale_field != 0 and 
+         not (mol.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol.aaBox(), fields.grid().aaBox()) )
+    {
+        this->_pvt_calculateLJField(mol, probe, fields,
+                                         workspace, scale_field);
+    }
+}
+
+inline void 
+InterLJPotential::calculateField(const InterLJPotential::Molecule &mol, 
+                                 const LJProbe &probe,
+                                 GridFieldTable &fields0, 
+                                 InterLJPotential::FieldWorkspace &workspace,
+                                 double scale_field) const
+{
+    this->calculateLJField(mol, probe, fields0, workspace, scale_field);
+}
+
+inline void 
+InterLJPotential::calculateField(const InterLJPotential::Molecule &mol,
+                                 const LJProbe &probe,
+                                 GridFieldTable &fields0,
+                                 const Symbol &symbol,
+                                 const InterLJPotential::Components &components,
+                                 InterLJPotential::FieldWorkspace &workspace,
+                                 double scale_field) const
+{
+    if (symbol == components.total())
+        this->calculateField(mol, probe, fields0, workspace, scale_field);
+        
+    else
+        throwMissingFieldComponent(symbol, components);
+}
+
+inline void 
+InterLJPotential::calculateLJPotential(
+                                    const InterLJPotential::Molecule &mol0, 
+                                    const InterLJPotential::Molecule &mol1,
+                                    const LJProbe &probe,
+                                    MolPotentialTable &pots0, 
+                                    InterLJPotential::PotentialWorkspace &workspace,
+                                    double scale_potential) const
+{
+    if ( scale_potential != 0 and 
+         not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol0.aaBox(), mol1.aaBox()) )
+    {
+        this->_pvt_calculateLJPotential(mol0, mol1, probe, pots0,
+                                             workspace, scale_potential);
+    }
+}
+
+inline void 
+InterLJPotential::calculatePotential(
+                                   const InterLJPotential::Molecule &mol0, 
+                                   const InterLJPotential::Molecule &mol1,
+                                   const LJProbe &probe,
+                                   MolPotentialTable &pots0, 
+                                   InterLJPotential::PotentialWorkspace &workspace,
+                                   double scale_potential) const
+{
+    this->calculateLJPotential(mol0, mol1, probe, pots0, workspace, scale_potential);
+}
+
+inline void 
+InterLJPotential::calculatePotential(
+                                const InterLJPotential::Molecule &mol0,
+                                const InterLJPotential::Molecule &mol1,
+                                const LJProbe &probe,
+                                MolPotentialTable &pots0,
+                                const Symbol &symbol,
+                                const InterLJPotential::Components &components,
+                                InterLJPotential::PotentialWorkspace &workspace,
+                                double scale_potential) const
+{
+    if (symbol == components.total())
+        this->calculatePotential(mol0, mol1, probe, pots0, workspace, scale_potential);
+        
+    else
+        throwMissingFieldComponent(symbol, components);
+}
+
+inline void 
+InterLJPotential::calculateLJPotential(
+                                   const InterLJPotential::Molecule &mol, 
+                                   const LJProbe &probe,
+                                   GridPotentialTable &pots, 
+                                   InterLJPotential::PotentialWorkspace &workspace,
+                                   double scale_potential) const
+{
+    if ( scale_potential != 0 and 
+         not (mol.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol.aaBox(), pots.grid().aaBox()) )
+    {
+        this->_pvt_calculateLJPotential(mol, probe, pots,
+                                             workspace, scale_potential);
+    }
+}
+
+inline void 
+InterLJPotential::calculatePotential(
+                                const InterLJPotential::Molecule &mol, 
+                                const LJProbe &probe,
+                                GridPotentialTable &pots, 
+                                InterLJPotential::PotentialWorkspace &workspace,
+                                double scale_potential) const
+{
+    this->calculateLJPotential(mol, probe, pots, workspace, scale_potential);
+}
+
+inline void 
+InterLJPotential::calculatePotential(
+                                const InterLJPotential::Molecule &mol,
+                                const LJProbe &probe,
+                                GridPotentialTable &pots,
+                                const Symbol &symbol,
+                                const InterLJPotential::Components &components,
+                                InterLJPotential::PotentialWorkspace &workspace,
+                                double scale_potential) const
+{
+    if (symbol == components.total())
+        this->calculatePotential(mol, probe, pots, workspace, scale_potential);
+        
+    else
+        throwMissingFieldComponent(symbol, components);
 }
 
 //////

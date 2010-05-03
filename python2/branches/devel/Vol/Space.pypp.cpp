@@ -110,6 +110,17 @@ void register_Space_class(){
                 , ( bp::arg("group1"), bp::arg("group2"), bp::arg("distmat") ) );
         
         }
+        { //::SireVol::Space::calcDist
+        
+            typedef double ( ::SireVol::Space::*calcDist_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistMatrix & ) const;
+            calcDist_function_type calcDist_function_value( &::SireVol::Space::calcDist );
+            
+            Space_exposer.def( 
+                "calcDist"
+                , calcDist_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("distmat") ) );
+        
+        }
         { //::SireVol::Space::calcDist2
         
             typedef double ( ::SireVol::Space::*calcDist2_function_type )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) const;
@@ -130,6 +141,17 @@ void register_Space_class(){
                 "calcDist2"
                 , calcDist2_function_value
                 , ( bp::arg("group"), bp::arg("distmat") ) );
+        
+        }
+        { //::SireVol::Space::calcDist2
+        
+            typedef double ( ::SireVol::Space::*calcDist2_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistMatrix & ) const;
+            calcDist2_function_type calcDist2_function_value( &::SireVol::Space::calcDist2 );
+            
+            Space_exposer.def( 
+                "calcDist2"
+                , calcDist2_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("distmat") ) );
         
         }
         { //::SireVol::Space::calcDist2
@@ -174,6 +196,17 @@ void register_Space_class(){
                 "calcDistVectors"
                 , calcDistVectors_function_value
                 , ( bp::arg("group1"), bp::arg("group2"), bp::arg("distmat") ) );
+        
+        }
+        { //::SireVol::Space::calcDistVectors
+        
+            typedef double ( ::SireVol::Space::*calcDistVectors_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistVectorMatrix & ) const;
+            calcDistVectors_function_type calcDistVectors_function_value( &::SireVol::Space::calcDistVectors );
+            
+            Space_exposer.def( 
+                "calcDistVectors"
+                , calcDistVectors_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("distmat") ) );
         
         }
         { //::SireVol::Space::calcInvDist

@@ -638,6 +638,28 @@ void InterSoftCLJPotential::throwMissingForceComponent(const Symbol &symbol,
                  components.lj().toString()), CODELOC );
 }
 
+void InterSoftCLJPotential::throwMissingFieldComponent(const Symbol &symbol,
+                              const InterSoftCLJPotential::Components &components) const
+{
+    throw SireFF::missing_component( QObject::tr(
+        "There is no field component in potential %1 - available "
+        "components are %2, %3 and %4.")
+            .arg(this->what())
+            .arg(components.total().toString(), components.coulomb().toString(),
+                 components.lj().toString()), CODELOC );
+}
+
+void InterSoftCLJPotential::throwMissingPotentialComponent(const Symbol &symbol,
+                              const InterSoftCLJPotential::Components &components) const
+{
+    throw SireFF::missing_component( QObject::tr(
+        "There is no potential component in potential %1 - available "
+        "components are %2, %3 and %4.")
+            .arg(this->what())
+            .arg(components.total().toString(), components.coulomb().toString(),
+                 components.lj().toString()), CODELOC );
+}
+
 /** Return all of the parameters needed by this potential for 
     the molecule 'molecule', using the supplied property map to
     find the properties that contain those parameters
@@ -1888,4 +1910,143 @@ void InterSoftCLJPotential::_pvt_calculateLJForce(
         } // end of loop over jgroup CutGroups
 
     } // end of loop over igroup CutGroups
+}
+
+void InterSoftCLJPotential::_pvt_calculateField(
+                         const InterSoftCLJPotential::Molecule &mol0, 
+                         const InterSoftCLJPotential::Molecule &mol1,
+                         const CLJProbe &probe,
+                         MolFieldTable &fields0, 
+                         InterSoftCLJPotential::FieldWorkspace &workspace,
+                         double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
+}
+
+void InterSoftCLJPotential::_pvt_calculateField(const InterSoftCLJPotential::Molecule &mol,
+                         const CLJProbe &probe,
+                         GridFieldTable &fields,
+                         InterSoftCLJPotential::FieldWorkspace &workspace,
+                         double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
+}
+
+void InterSoftCLJPotential::_pvt_calculateCoulombField(const InterSoftCLJPotential::Molecule &mol0, 
+                                const InterSoftCLJPotential::Molecule &mol1,
+                                const CLJProbe &probe,
+                                MolFieldTable &fields0, 
+                                InterSoftCLJPotential::FieldWorkspace &workspace,
+                                double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
+}
+
+void InterSoftCLJPotential::_pvt_calculateCoulombField(const InterSoftCLJPotential::Molecule &mol,
+                                const CLJProbe &probe,
+                                GridFieldTable &fields,
+                                InterSoftCLJPotential::FieldWorkspace &workspace,
+                                double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
+}
+
+void InterSoftCLJPotential::_pvt_calculateLJField(const InterSoftCLJPotential::Molecule &mol0, 
+                           const InterSoftCLJPotential::Molecule &mol1,
+                           const CLJProbe &probe,
+                           MolFieldTable &fields0, 
+                           InterSoftCLJPotential::FieldWorkspace &workspace,
+                           double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
+}
+
+void InterSoftCLJPotential::_pvt_calculateLJField(const InterSoftCLJPotential::Molecule &mol,
+                           const CLJProbe &probe,
+                           GridFieldTable &fields,
+                           InterSoftCLJPotential::FieldWorkspace &workspace,
+                           double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
+}
+
+void InterSoftCLJPotential::_pvt_calculatePotential(const InterSoftCLJPotential::Molecule &mol0, 
+                             const InterSoftCLJPotential::Molecule &mol1,
+                             const CLJProbe &probe,
+                             MolPotentialTable &pots0, 
+                             InterSoftCLJPotential::PotentialWorkspace &workspace,
+                             double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
+}
+
+void InterSoftCLJPotential::_pvt_calculatePotential(const InterSoftCLJPotential::Molecule &mol,
+                             const CLJProbe &probe,
+                             GridPotentialTable &fields,
+                             InterSoftCLJPotential::PotentialWorkspace &workspace,
+                             double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
+}
+
+void InterSoftCLJPotential::_pvt_calculateCoulombPotential(const InterSoftCLJPotential::Molecule &mol0, 
+                                    const InterSoftCLJPotential::Molecule &mol1,
+                                    const CLJProbe &probe,
+                                    MolPotentialTable &pots0, 
+                                    InterSoftCLJPotential::PotentialWorkspace &workspace,
+                                    double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
+}
+
+void InterSoftCLJPotential::_pvt_calculateCoulombPotential(const InterSoftCLJPotential::Molecule &mol,
+                                    const CLJProbe &probe,
+                                    GridPotentialTable &fields,
+                                    InterSoftCLJPotential::PotentialWorkspace &workspace,
+                                    double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
+}
+
+void InterSoftCLJPotential::_pvt_calculateLJPotential(const InterSoftCLJPotential::Molecule &mol0, 
+                               const InterSoftCLJPotential::Molecule &mol1,
+                               const CLJProbe &probe,
+                               MolPotentialTable &pots0, 
+                               InterSoftCLJPotential::PotentialWorkspace &workspace,
+                               double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
+}
+
+void InterSoftCLJPotential::_pvt_calculateLJPotential(const InterSoftCLJPotential::Molecule &mol,
+                               const CLJProbe &probe,
+                               GridPotentialTable &fields,
+                               InterSoftCLJPotential::PotentialWorkspace &workspace,
+                               double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate soft coulomb and LJ fields has not "
+                "yet been written..."), CODELOC );
 }

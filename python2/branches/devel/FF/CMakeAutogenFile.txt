@@ -24,9 +24,11 @@ set ( PYPP_SOURCES
        MolForceTable.pypp.cpp
        MolPotentialTable.pypp.cpp
        NullFF.pypp.cpp
+       NullProbe.pypp.cpp
        Point.pypp.cpp
        PointRef.pypp.cpp
        PotentialTable.pypp.cpp
+       Probe.pypp.cpp
        Specify_FFID_.pypp.cpp
        VectorPoint.pypp.cpp
        SireFF_containers.cpp

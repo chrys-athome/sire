@@ -135,6 +135,17 @@ void register_CombinedSpace_class(){
                 , ( bp::arg("group1"), bp::arg("group2"), bp::arg("distmat") ) );
         
         }
+        { //::SireVol::CombinedSpace::calcDist
+        
+            typedef double ( ::SireVol::CombinedSpace::*calcDist_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistMatrix & ) const;
+            calcDist_function_type calcDist_function_value( &::SireVol::CombinedSpace::calcDist );
+            
+            CombinedSpace_exposer.def( 
+                "calcDist"
+                , calcDist_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("distmat") ) );
+        
+        }
         { //::SireVol::CombinedSpace::calcDist2
         
             typedef double ( ::SireVol::CombinedSpace::*calcDist2_function_type )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) const;
@@ -168,6 +179,17 @@ void register_CombinedSpace_class(){
                 , ( bp::arg("group1"), bp::arg("group2"), bp::arg("distmat") ) );
         
         }
+        { //::SireVol::CombinedSpace::calcDist2
+        
+            typedef double ( ::SireVol::CombinedSpace::*calcDist2_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistMatrix & ) const;
+            calcDist2_function_type calcDist2_function_value( &::SireVol::CombinedSpace::calcDist2 );
+            
+            CombinedSpace_exposer.def( 
+                "calcDist2"
+                , calcDist2_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("distmat") ) );
+        
+        }
         { //::SireVol::CombinedSpace::calcDistVector
         
             typedef ::SireMaths::DistVector ( ::SireVol::CombinedSpace::*calcDistVector_function_type )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) const;
@@ -199,6 +221,17 @@ void register_CombinedSpace_class(){
                 "calcDistVectors"
                 , calcDistVectors_function_value
                 , ( bp::arg("group1"), bp::arg("group2"), bp::arg("distmat") ) );
+        
+        }
+        { //::SireVol::CombinedSpace::calcDistVectors
+        
+            typedef double ( ::SireVol::CombinedSpace::*calcDistVectors_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistVectorMatrix & ) const;
+            calcDistVectors_function_type calcDistVectors_function_value( &::SireVol::CombinedSpace::calcDistVectors );
+            
+            CombinedSpace_exposer.def( 
+                "calcDistVectors"
+                , calcDistVectors_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("distmat") ) );
         
         }
         { //::SireVol::CombinedSpace::calcInvDist

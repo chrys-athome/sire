@@ -111,6 +111,17 @@ void register_PeriodicBox_class(){
                 , ( bp::arg("group1"), bp::arg("group2"), bp::arg("distmat") ) );
         
         }
+        { //::SireVol::PeriodicBox::calcDist
+        
+            typedef double ( ::SireVol::PeriodicBox::*calcDist_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistMatrix & ) const;
+            calcDist_function_type calcDist_function_value( &::SireVol::PeriodicBox::calcDist );
+            
+            PeriodicBox_exposer.def( 
+                "calcDist"
+                , calcDist_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("mat") ) );
+        
+        }
         { //::SireVol::PeriodicBox::calcDist2
         
             typedef double ( ::SireVol::PeriodicBox::*calcDist2_function_type )( ::SireMaths::Vector const &,::SireMaths::Vector const & ) const;
@@ -120,6 +131,17 @@ void register_PeriodicBox_class(){
                 "calcDist2"
                 , calcDist2_function_value
                 , ( bp::arg("point0"), bp::arg("point1") ) );
+        
+        }
+        { //::SireVol::PeriodicBox::calcDist2
+        
+            typedef double ( ::SireVol::PeriodicBox::*calcDist2_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistMatrix & ) const;
+            calcDist2_function_type calcDist2_function_value( &::SireVol::PeriodicBox::calcDist2 );
+            
+            PeriodicBox_exposer.def( 
+                "calcDist2"
+                , calcDist2_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("mat") ) );
         
         }
         { //::SireVol::PeriodicBox::calcDist2
@@ -153,6 +175,17 @@ void register_PeriodicBox_class(){
                 "calcDistVectors"
                 , calcDistVectors_function_value
                 , ( bp::arg("group1"), bp::arg("group2"), bp::arg("distmat") ) );
+        
+        }
+        { //::SireVol::PeriodicBox::calcDistVectors
+        
+            typedef double ( ::SireVol::PeriodicBox::*calcDistVectors_function_type )( ::SireVol::CoordGroup const &,::SireMaths::Vector const &,::SireVol::DistVectorMatrix & ) const;
+            calcDistVectors_function_type calcDistVectors_function_value( &::SireVol::PeriodicBox::calcDistVectors );
+            
+            PeriodicBox_exposer.def( 
+                "calcDistVectors"
+                , calcDistVectors_function_value
+                , ( bp::arg("group"), bp::arg("point"), bp::arg("distmat") ) );
         
         }
         { //::SireVol::PeriodicBox::calcInvDist

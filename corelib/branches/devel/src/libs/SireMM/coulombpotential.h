@@ -476,6 +476,10 @@ private:
 
     void throwMissingForceComponent(const Symbol &symbol,
                                     const Components &components) const;
+    void throwMissingFieldComponent(const Symbol &symbol,
+                                    const Components &components) const;
+    void throwMissingPotentialComponent(const Symbol &symbol,
+                                        const Components &components) const;
 
     void _pvt_calculateEnergy(const InterCoulombPotential::Molecule &mol0, 
                               const InterCoulombPotential::Molecule &mol1,
@@ -488,6 +492,34 @@ private:
                                     MolForceTable &forces0, 
                                     InterCoulombPotential::ForceWorkspace &workspace,
                                     double scale_force) const;
+
+    void _pvt_calculateCoulombField(const InterCoulombPotential::Molecule &mol0, 
+                                    const InterCoulombPotential::Molecule &mol1,
+                                    const CoulombProbe &probe,
+                                    MolFieldTable &forces0, 
+                                    InterCoulombPotential::ForceWorkspace &workspace,
+                                    double scale_force) const;
+
+    void _pvt_calculateCoulombField(const InterCoulombPotential::Molecule &mol, 
+                                    const CoulombProbe &probe,
+                                    GridFieldTable &forces0, 
+                                    InterCoulombPotential::ForceWorkspace &workspace,
+                                    double scale_force) const;
+
+    void _pvt_calculateCoulombPotential(
+                                    const InterCoulombPotential::Molecule &mol0, 
+                                    const InterCoulombPotential::Molecule &mol1,
+                                    const CoulombProbe &probe,
+                                    MolPotentialTable &pots0, 
+                                    InterCoulombPotential::PotentialWorkspace &workspace,
+                                    double scale_potential) const;
+
+    void _pvt_calculateCoulombPotential(
+                                    const InterCoulombPotential::Molecule &mol, 
+                                    const CoulombProbe &probe,
+                                    GridPotentialTable &pots, 
+                                    InterCoulombPotential::PotentialWorkspace &workspace,
+                                    double scale_potential) const;
 };
 
 /** This class provides all of the functions and containers  
@@ -1001,6 +1033,191 @@ InterCoulombPotential::calculateForce(const InterCoulombPotential::Molecule &mol
         
     else
         throwMissingForceComponent(symbol, components);
+}
+
+inline void 
+InterCoulombPotential::calculateCoulombField(const InterCoulombPotential::Molecule &mol0, 
+                                      const InterCoulombPotential::Molecule &mol1,
+                                      const CoulombProbe &probe,
+                                      MolFieldTable &fields0, 
+                                      InterCoulombPotential::FieldWorkspace &workspace,
+                                      double scale_field) const
+{
+    if ( scale_field != 0 and 
+         not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol0.aaBox(), mol1.aaBox()) )
+    {
+        this->_pvt_calculateCoulombField(mol0, mol1, probe, fields0,
+                                         workspace, scale_field);
+    }
+}
+
+inline void 
+InterCoulombPotential::calculateField(const InterCoulombPotential::Molecule &mol0, 
+                                      const InterCoulombPotential::Molecule &mol1,
+                                      const CoulombProbe &probe,
+                                      MolFieldTable &fields0, 
+                                      InterCoulombPotential::FieldWorkspace &workspace,
+                                      double scale_field) const
+{
+    this->calculateCoulombField(mol0, mol1, probe, fields0, workspace, scale_field);
+}
+
+inline void 
+InterCoulombPotential::calculateField(const InterCoulombPotential::Molecule &mol0,
+                                      const InterCoulombPotential::Molecule &mol1,
+                                      const CoulombProbe &probe,
+                                      MolFieldTable &fields0,
+                                      const Symbol &symbol,
+                                      const InterCoulombPotential::Components &components,
+                                      InterCoulombPotential::FieldWorkspace &workspace,
+                                      double scale_field) const
+{
+    if (symbol == components.total())
+        this->calculateField(mol0, mol1, probe, fields0, workspace, scale_field);
+        
+    else
+        throwMissingFieldComponent(symbol, components);
+}
+
+inline void 
+InterCoulombPotential::calculateCoulombField(
+                                      const InterCoulombPotential::Molecule &mol, 
+                                      const CoulombProbe &probe,
+                                      GridFieldTable &fields, 
+                                      InterCoulombPotential::FieldWorkspace &workspace,
+                                      double scale_field) const
+{
+    if ( scale_field != 0 and 
+         not (mol.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol.aaBox(), fields.grid().aaBox()) )
+    {
+        this->_pvt_calculateCoulombField(mol, probe, fields,
+                                         workspace, scale_field);
+    }
+}
+
+inline void 
+InterCoulombPotential::calculateField(const InterCoulombPotential::Molecule &mol, 
+                                      const CoulombProbe &probe,
+                                      GridFieldTable &fields0, 
+                                      InterCoulombPotential::FieldWorkspace &workspace,
+                                      double scale_field) const
+{
+    this->calculateCoulombField(mol, probe, fields0, workspace, scale_field);
+}
+
+inline void 
+InterCoulombPotential::calculateField(const InterCoulombPotential::Molecule &mol,
+                                      const CoulombProbe &probe,
+                                      GridFieldTable &fields0,
+                                      const Symbol &symbol,
+                                      const InterCoulombPotential::Components &components,
+                                      InterCoulombPotential::FieldWorkspace &workspace,
+                                      double scale_field) const
+{
+    if (symbol == components.total())
+        this->calculateField(mol, probe, fields0, workspace, scale_field);
+        
+    else
+        throwMissingFieldComponent(symbol, components);
+}
+
+inline void 
+InterCoulombPotential::calculateCoulombPotential(
+                                    const InterCoulombPotential::Molecule &mol0, 
+                                    const InterCoulombPotential::Molecule &mol1,
+                                    const CoulombProbe &probe,
+                                    MolPotentialTable &pots0, 
+                                    InterCoulombPotential::PotentialWorkspace &workspace,
+                                    double scale_potential) const
+{
+    if ( scale_potential != 0 and 
+         not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol0.aaBox(), mol1.aaBox()) )
+    {
+        this->_pvt_calculateCoulombPotential(mol0, mol1, probe, pots0,
+                                             workspace, scale_potential);
+    }
+}
+
+inline void 
+InterCoulombPotential::calculatePotential(
+                                   const InterCoulombPotential::Molecule &mol0, 
+                                   const InterCoulombPotential::Molecule &mol1,
+                                   const CoulombProbe &probe,
+                                   MolPotentialTable &pots0, 
+                                   InterCoulombPotential::PotentialWorkspace &workspace,
+                                   double scale_potential) const
+{
+    this->calculateCoulombPotential(mol0, mol1, probe, pots0, workspace, scale_potential);
+}
+
+inline void 
+InterCoulombPotential::calculatePotential(
+                                const InterCoulombPotential::Molecule &mol0,
+                                const InterCoulombPotential::Molecule &mol1,
+                                const CoulombProbe &probe,
+                                MolPotentialTable &pots0,
+                                const Symbol &symbol,
+                                const InterCoulombPotential::Components &components,
+                                InterCoulombPotential::PotentialWorkspace &workspace,
+                                double scale_potential) const
+{
+    if (symbol == components.total())
+        this->calculatePotential(mol0, mol1, probe, pots0, workspace, scale_potential);
+        
+    else
+        throwMissingFieldComponent(symbol, components);
+}
+
+inline void 
+InterCoulombPotential::calculateCoulombPotential(
+                                   const InterCoulombPotential::Molecule &mol, 
+                                   const CoulombProbe &probe,
+                                   GridPotentialTable &pots, 
+                                   InterCoulombPotential::PotentialWorkspace &workspace,
+                                   double scale_potential) const
+{
+    if ( scale_potential != 0 and 
+         not (mol.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol.aaBox(), pots.grid().aaBox()) )
+    {
+        this->_pvt_calculateCoulombPotential(mol, probe, pots,
+                                             workspace, scale_potential);
+    }
+}
+
+inline void 
+InterCoulombPotential::calculatePotential(
+                                const InterCoulombPotential::Molecule &mol, 
+                                const CoulombProbe &probe,
+                                GridPotentialTable &pots, 
+                                InterCoulombPotential::PotentialWorkspace &workspace,
+                                double scale_potential) const
+{
+    this->calculateCoulombPotential(mol, probe, pots, workspace, scale_potential);
+}
+
+inline void 
+InterCoulombPotential::calculatePotential(
+                                const InterCoulombPotential::Molecule &mol,
+                                const CoulombProbe &probe,
+                                GridPotentialTable &pots,
+                                const Symbol &symbol,
+                                const InterCoulombPotential::Components &components,
+                                InterCoulombPotential::PotentialWorkspace &workspace,
+                                double scale_potential) const
+{
+    if (symbol == components.total())
+        this->calculatePotential(mol, probe, pots, workspace, scale_potential);
+        
+    else
+        throwMissingFieldComponent(symbol, components);
 }
 
 //////

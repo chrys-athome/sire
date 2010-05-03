@@ -28,6 +28,54 @@ void register_IntraGroupCoulombFF_class(){
         IntraGroupCoulombFF_exposer.def( bp::init< >() );
         IntraGroupCoulombFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         IntraGroupCoulombFF_exposer.def( bp::init< SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > const & >(( bp::arg("other") )) );
+        { //::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::field
+        
+            typedef SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > exported_class_t;
+            typedef void ( ::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::*field_function_type )( ::SireFF::FieldTable &,double ) ;
+            field_function_type field_function_value( &::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::field );
+            
+            IntraGroupCoulombFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::field
+        
+            typedef SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > exported_class_t;
+            typedef void ( ::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,double ) ;
+            field_function_type field_function_value( &::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::field );
+            
+            IntraGroupCoulombFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::field
+        
+            typedef SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > exported_class_t;
+            typedef void ( ::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::*field_function_type )( ::SireFF::FieldTable &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::field );
+            
+            IntraGroupCoulombFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::field
+        
+            typedef SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > exported_class_t;
+            typedef void ( ::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::field );
+            
+            IntraGroupCoulombFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
         { //::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::force
         
             typedef SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > exported_class_t;
@@ -67,6 +115,54 @@ void register_IntraGroupCoulombFF_class(){
         
         }
         IntraGroupCoulombFF_exposer.def( bp::self == bp::self );
+        { //::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::potential
+        
+            typedef SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > exported_class_t;
+            typedef void ( ::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::*potential_function_type )( ::SireFF::PotentialTable &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::potential );
+            
+            IntraGroupCoulombFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::potential
+        
+            typedef SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > exported_class_t;
+            typedef void ( ::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::potential );
+            
+            IntraGroupCoulombFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("component"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::potential
+        
+            typedef SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > exported_class_t;
+            typedef void ( ::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::*potential_function_type )( ::SireFF::PotentialTable &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::potential );
+            
+            IntraGroupCoulombFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::potential
+        
+            typedef SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > exported_class_t;
+            typedef void ( ::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::potential );
+            
+            IntraGroupCoulombFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
+        
+        }
         { //::SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::typeName
         
             typedef SireFF::Intra2B2G3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > exported_class_t;

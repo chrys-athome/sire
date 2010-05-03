@@ -19,6 +19,7 @@
 #include "g2ff.h"
 #include "point.h"
 #include "potentialtable.h"
+#include "probe.h"
 
 #endif
 

@@ -488,6 +488,26 @@ void InterCoulombPotential::throwMissingForceComponent(const Symbol &symbol,
             .arg(components.total().toString()), CODELOC );
 }
 
+void InterCoulombPotential::throwMissingFieldComponent(const Symbol &symbol,
+                              const IntraCoulombPotential::Components &components) const
+{
+    throw SireFF::missing_component( QObject::tr(
+        "There is no field component in potential %1 - available "
+        "components are %2.")
+            .arg(this->what())
+            .arg(components.total().toString()), CODELOC );
+}
+
+void InterCoulombPotential::throwMissingPotentialComponent(const Symbol &symbol,
+                              const IntraCoulombPotential::Components &components) const
+{
+    throw SireFF::missing_component( QObject::tr(
+        "There is no potential component in potential %1 - available "
+        "components are %2.")
+            .arg(this->what())
+            .arg(components.total().toString()), CODELOC );
+}
+
 /** Return all of the parameters needed by this potential for 
     the molecule 'molecule', using the supplied property map to
     find the properties that contain those parameters
@@ -1012,6 +1032,582 @@ void InterCoulombPotential::_pvt_calculateCoulombForce(
                     }
                     
                     group_forces0_array[i] += scale_force * total_force;
+
+                } // end of loop over i atoms
+
+            } // end of if within feather
+
+        } // end of loop over jgroup CutGroups
+
+    } // end of loop over igroup CutGroups
+}
+
+/** Add to the potentials in 'pots0' the coulomb potential acting on 'mol0' caused
+    by 'mol1' */
+void InterCoulombPotential::_pvt_calculateCoulombPotential(
+                                   const InterCoulombPotential::Molecule &mol0, 
+                                   const InterCoulombPotential::Molecule &mol1,
+                                   const CoulombProbe &probe,
+                                   MolPotentialTable &pots0, 
+                                   InterCoulombPotential::PotentialWorkspace &distmat,
+                                   double scale_potential) const
+{
+    if (probe.reducedCharge() == 0)
+        return;
+
+    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == pots0.nCutGroups() );
+    BOOST_ASSERT( mol0.molecule().data().number() == pots0.molNum() );
+
+    const quint32 ngroups0 = mol0.nCutGroups();
+    const quint32 ngroups1 = mol1.nCutGroups();
+    
+    const CoordGroup *groups0_array = mol0.coordinates().constData();
+    const CoordGroup *groups1_array = mol1.coordinates().constData();
+    
+    const Parameters::Array *molparams1_array
+                                    = mol1.parameters().atomicParameters().constData();
+    
+    //loop over all pairs of CutGroups in the two molecules
+    for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+    {
+        //get the CGIdx of this group
+        CGIdx cgidx_igroup = mol0.cgIdx(igroup);
+
+        //get the index of this CutGroup in the fields array
+        int pot0_idx = pots0.map(cgidx_igroup);
+        
+        if (pot0_idx == -1)
+            //there is no space for the potentials on this CutGroup in 
+            //the potentialtable - were are therefore not interested in
+            //this CutGroup
+            continue;
+
+        const CoordGroup &group0 = groups0_array[igroup];
+        const AABox &aabox0 = group0.aaBox();
+        const quint32 nats0 = group0.count();
+    
+        //get the table that holds the potentials acting at all of the
+        //atoms of this CutGroup (tables are indexed by CGIdx)
+        MolarEnergy *group_pots0_array = pots0.data(pot0_idx);
+
+        //ok, we are interested in the potentials acting on this CutGroup
+        // - calculate all of the potentials on this group interacting
+        //   with all of the CutGroups in mol1 
+        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        {
+            const CoordGroup &group1 = groups1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
+
+            //check first that these two CoordGroups could be within cutoff
+            //(if there is only one CutGroup in both molecules then this
+            //test has already been performed and passed)
+            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox0, group1.aaBox());
+            
+            if (not within_cutoff)
+                //this CutGroup is beyond the cutoff distance
+                continue;
+            
+            //calculate all of the interatomic distances
+            const double mindist = spce->calcDist(group0, group1, distmat);
+            
+            if (mindist > switchfunc->cutoffDistance())
+                //all of the atoms are definitely beyond cutoff
+                continue;
+
+            const quint32 nats1 = group1.count();
+            
+            //loop over all interatomic pairs and calculate the energies
+            const Parameter *params1_array = params1.constData();
+
+            double shift_coul = 0;
+
+            if (use_electrostatic_shifting)
+                shift_coul = probe.charge() * this->totalCharge(params1)
+                                / switchfunc->electrostaticCutoffDistance();
+
+            if (mindist > switchfunc->featherDistance())
+            {
+                //calculate the switching scale factors
+                const double scl_coul = switchfunc->electrostaticScaleFactor( 
+                                                                        Length(mindist) );
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    distmat.setOuterIndex(i);
+                        
+                    double total_potential = 0;
+                        
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const double q2 = probe.reducedCharge() *
+                                          params1_array[j].reduced_charge;
+                            
+                        if (q2 != 0)
+                        {
+                            //calculate the coulomb energy
+                            const double cnrg = q2 / distmat[j];
+                                               
+                            total_potential += scl_coul * (cnrg - shift_coul);
+                        }
+                    }
+
+                    //update the fields array
+                    group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                        total_potential);
+                }
+            }
+            else
+            {
+                //not in the feather region, so can calculate the potentials
+                //directly
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    double total_potential = 0;
+                      
+                    distmat.setOuterIndex(i);
+
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const double q2 = probe.reducedCharge() * 
+                                          params1_array[j].reduced_charge;
+                        
+                        //calculate the coulomb potential
+                        if (q2 != 0)
+                            total_potential += (q2 / distmat[j]) - shift_coul;
+                    }
+
+                    group_pots0_array[i] += MolarEnergy(scale_potential * 
+                                                            total_potential);
+                }
+
+            } // end of if within feather
+
+        } // end of loop over jgroup CutGroups
+
+    } // end of loop over igroup CutGroups
+}
+
+/** Add to the potentials in 'pots0' the coulomb potential on the passed  
+    grid caused by 'mol' */
+void InterCoulombPotential::_pvt_calculateCoulombPotential(
+                                    const InterCoulombPotential::Molecule &mol, 
+                                    const CoulombProbe &probe,
+                                    GridPotentialTable &pots, 
+                                    InterCoulombPotential::PotentialWorkspace &distmat,
+                                    double scale_potential) const
+{
+    if (probe.reducedCharge() == 0)
+        return;
+
+    const int ngroups = mol.nCutGroups();
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    const Parameters::Array *molparams_array
+                                    = mol.parameters().atomicParameters().constData();
+
+    const Grid &grid = pots.grid();
+    const int npoints = grid.nPoints();
+    const Vector *gridpoints_array = grid.constData();
+    
+    if (npoints == 0 or ngroups == 0)
+        return;
+
+    MolarEnergy *grid_pot_array = pots.data();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const CoordGroup &group = groups_array[i];
+        const AABox &aabox = group.aaBox();
+        const int nats = group.count();
+        
+        //check first that these two CoordGroups could be within cutoff
+        //(if there is only one CutGroup in both molecules then this
+        //test has already been performed and passed)
+        const bool within_cutoff = (ngroups == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox, grid.aaBox());
+            
+        if (not within_cutoff)
+            //this CutGroup is beyond the cutoff distance
+            continue;
+
+        const Parameters::Array &params = molparams_array[i];
+        const Parameter *params_array = params.constData();
+        
+        for (int j=0; j<npoints; ++j)
+        {
+            const Vector &gridpoint = gridpoints_array[j];
+            
+            const double mindist = spce->calcDist(group, gridpoint, distmat);
+
+            double total_potential = 0;
+            
+            if (mindist > switchfunc->cutoffDistance())
+                continue;
+                
+            else if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the field taking into account
+                //the derivative of the switching function!
+            
+                //calculate the switching scale factors
+                const double scl_coul = switchfunc->electrostaticScaleFactor( 
+                                                                    Length(mindist) );
+            
+                double shift_coul = 0;
+
+                if (use_electrostatic_shifting)
+                    shift_coul = probe.charge() * this->totalCharge(params)
+                                    / switchfunc->electrostaticCutoffDistance();
+
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k];
+                
+                    const double q2 = probe.reducedCharge() *
+                                      param.reduced_charge;
+                
+                    if (q2 != 0)
+                        total_potential += scl_coul * (q2 * invdist - shift_coul);
+                      
+                } // end of loop over atoms
+            }
+            else
+            {
+                //no need to worry about the switching function :-)
+                distmat.setOuterIndex(0);
+            
+                double shift_coul = 0;
+
+                if (use_electrostatic_shifting)
+                    shift_coul = probe.charge() * this->totalCharge(params)
+                                    / switchfunc->electrostaticCutoffDistance();
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k];
+                
+                    const double q2 = probe.reducedCharge() * param.reduced_charge;
+                    
+                    if (q2 != 0)
+                        total_potential += q2 * invdist - shift_coul;
+
+                } // end of loop over atoms
+            }
+            
+            grid_pot_array[j] += MolarEnergy(scale_potential * total_potential);
+
+        } // end of loop over grid points
+    } // end of loop over CutGroups
+}
+
+/** Calculate the coulomb field caused by the molecule 'mol' on the grid points in 
+    'fields' */
+void InterCoulombPotential::_pvt_calculateCoulombField(
+                                        const InterCoulombPotential::Molecule &mol,
+                                        const CoulombProbe &probe,
+                                        GridFieldTable &fields,
+                                        InterCoulombPotential::FieldWorkspace &distmat,
+                                        double scale_field) const
+{
+    if (probe.reducedCharge() == 0)
+        return;
+
+    const int ngroups = mol.nCutGroups();
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    const Parameters::Array *molparams_array
+                                    = mol.parameters().atomicParameters().constData();
+
+    const Grid &grid = fields.grid();
+    const int npoints = grid.nPoints();
+    const Vector *gridpoints_array = grid.constData();
+    Vector *grid_field_array = fields.data();
+    
+    if (npoints == 0 or ngroups == 0)
+        return;
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const CoordGroup &group = groups_array[i];
+        const AABox &aabox = group.aaBox();
+        const int nats = group.count();
+        
+        //check first that these two CoordGroups could be within cutoff
+        //(if there is only one CutGroup in both molecules then this
+        //test has already been performed and passed)
+        const bool within_cutoff = (ngroups == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox, grid.aaBox());
+            
+        if (not within_cutoff)
+            //this CutGroup is beyond the cutoff distance
+            continue;
+
+        const Parameters::Array &params = molparams_array[i];
+        const Parameter *params_array = params.constData();
+        
+        for (int j=0; j<npoints; ++j)
+        {
+            const Vector &gridpoint = gridpoints_array[j];
+            
+            const double mindist = spce->calcDistVectors(group, gridpoint, distmat);
+
+            Vector total_field;
+            
+            if (mindist > switchfunc->cutoffDistance())
+                continue;
+                
+            else if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the field taking into account
+                //the derivative of the switching function!
+            
+                //calculate the switching scale factors and their 
+                //derivatives
+                const double scl_coul = switchfunc->electrostaticScaleFactor( 
+                                                                    Length(mindist) );
+            
+                Vector group_sep = (group.aaBox().center() - gridpoint).normalise();
+
+                Vector dscl_coul = switchfunc->dElectrostaticScaleFactor( 
+                                                                    Length(mindist) ) 
+                                                * group_sep;
+                                 
+                double shift_coul = 0;
+
+                if (use_electrostatic_shifting)
+                    shift_coul = probe.charge() * this->totalCharge(params)
+                                    / switchfunc->electrostaticCutoffDistance();
+
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k].length();
+                
+                    const double q2 = probe.reducedCharge() *
+                                      param.reduced_charge;
+                
+                    if (q2 != 0)
+                    {
+                        //calculate the energy
+                        const double cnrg = q2 * invdist;
+                
+                        //calculate the field
+                        Vector field = (scl_coul * -cnrg / distmat[j].length() *
+                                        distmat[j].direction()) +
+                                     
+                                       ((cnrg-shift_coul) * dscl_coul);
+
+                        total_field -= field;
+                    }
+                
+                } // end of loop over atoms
+            }
+            else
+            {
+                //no need to worry about the switching function :-)
+                distmat.setOuterIndex(0);
+        
+                for (int k=0; k<nats; ++k)
+                {
+                    const Parameter &param = params_array[k];
+                
+                    const double invdist = double(1) / distmat[k].length();
+                    const double invdist2 = pow_2(invdist);
+                
+                    //calculate the field
+                    Vector field = -(probe.reducedCharge() * 
+                                     param.reduced_charge * invdist2) 
+                                    
+                                    * distmat[j].direction();
+
+                    total_field -= field;
+
+                } // end of loop over atoms
+            }
+            
+            grid_field_array[j] += scale_field * total_field;
+
+        } // end of loop over grid points
+    } // end of loop over CutGroups
+}
+
+/** Add to the fields in 'fields0' the fields acting on the passed probe
+    at the atom points in 'mol0' caused by 'mol1' */
+void InterCoulombPotential::_pvt_calculateCoulombField(
+                                       const InterCoulombPotential::Molecule &mol0, 
+                                       const InterCoulombPotential::Molecule &mol1,
+                                       const CoulombProbe &probe,
+                                       MolFieldTable &fields0, 
+                                       InterCoulombPotential::FieldWorkspace &distmat,
+                                       double scale_field) const
+{
+    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == fields0.nCutGroups() );
+    BOOST_ASSERT( mol0.molecule().data().number() == fields0.molNum() );
+
+    if (probe.reducedCharge() == 0)
+        return;
+
+    const quint32 ngroups0 = mol0.nCutGroups();
+    const quint32 ngroups1 = mol1.nCutGroups();
+    
+    const CoordGroup *groups0_array = mol0.coordinates().constData();
+    const CoordGroup *groups1_array = mol1.coordinates().constData();
+    
+    BOOST_ASSERT(mol1.parameters().atomicParameters().count() == int(ngroups1));
+    
+    const Parameters::Array *molparams1_array
+                                    = mol1.parameters().atomicParameters().constData();
+    
+    const MolFieldTable::Array *fields0_array = fields0.constData();
+    
+    //loop over all pairs of CutGroups in the two molecules
+    for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+    {
+        //get the CGIdx of this group
+        CGIdx cgidx_igroup = mol0.cgIdx(igroup);
+
+        //get the index of this CutGroup in the fields array
+        int field0_idx = fields0.map(cgidx_igroup);
+        
+        if (field0_idx == -1)
+            //there is no space for the fields on this CutGroup in 
+            //the fieldtable - were are therefore not interested in
+            //this CutGroup
+            continue;
+
+        const CoordGroup &group0 = groups0_array[igroup];
+        const AABox &aabox0 = group0.aaBox();
+        const quint32 nats0 = group0.count();
+    
+        //get the table that holds the fields acting on all of the
+        //atoms of this CutGroup (tables are indexed by CGIdx)
+        BOOST_ASSERT(fields0_array[field0_idx].count() == int(nats0));
+    
+        Vector *group_fields0_array = fields0.data(field0_idx);
+
+        //ok, we are interested in the fields acting on this CutGroup
+        // - calculate all of the fieldss on this group interacting
+        //   with all of the CutGroups in mol1 
+        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        {
+            const CoordGroup &group1 = groups1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
+
+            //check first that these two CoordGroups could be within cutoff
+            //(if there is only one CutGroup in both molecules then this
+            //test has already been performed and passed)
+            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox0, group1.aaBox());
+            
+            if (not within_cutoff)
+                //this CutGroup is beyond the cutoff distance
+                continue;
+            
+            //calculate all of the interatomic distances
+            const double mindist = spce->calcDistVectors(group0, group1, distmat);
+            
+            if (mindist > switchfunc->cutoffDistance())
+                //all of the atoms are definitely beyond cutoff
+                continue;
+
+            const quint32 nats1 = group1.count();
+            
+            //loop over all interatomic pairs and calculate the energies
+            const Parameter *params1_array = params1.constData();
+
+            if (mindist > switchfunc->featherDistance())
+            {
+                //we need to calculate the fields taking into account
+                //the derivative of the switching function!
+                
+                //calculate the switching scale factors and their 
+                //derivatives
+                const double scl_coul = switchfunc->electrostaticScaleFactor(
+                                                                    Length(mindist) );
+                
+                Vector group_sep = (group1.aaBox().center() - aabox0.center())
+                                        .normalise();
+                
+                Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(
+                                                                    Length(mindist) ) 
+                                     * group_sep;
+                
+                double shift_coul = 0;
+
+                if (use_electrostatic_shifting)
+                    shift_coul = probe.charge() * this->totalCharge(params1)
+                                    / switchfunc->electrostaticCutoffDistance();
+                
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    distmat.setOuterIndex(i);
+                
+                    Vector total_field;
+                
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const double q2 = probe.reducedCharge() *
+                                          params1_array[j].reduced_charge;
+                          
+                        if (q2 != 0)
+                        {
+                            //calculate the coulomb energy
+                            const double cnrg = q2 / distmat[j].length();
+                                               
+                            //calculate the coulomb force
+                            Vector cfield = (scl_coul * -cnrg / distmat[j].length() *
+                                             distmat[j].direction()) +
+                                             
+                                            ((cnrg-shift_coul) * dscl_coul);
+                        
+                            total_field -= cfield;
+                        }
+                    }
+                    
+                    //update the fields array
+                    group_fields0_array[i] += scale_field * total_field;
+                }
+            }
+            else
+            {
+                //not in the feather region, so can calculate the fields
+                //directly (also, no need to calculate shift, as 
+                //the shifting function is constant, so does not
+                //affect the gradient)
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    distmat.setOuterIndex(i);
+
+                    Vector total_field;
+                
+                    //null LJ parameter - only add on the coulomb energy
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const double q2 = params1_array[j].reduced_charge;
+                        
+                        //calculate the coulomb force
+                        if (q2 != 0)
+                        {
+                            total_field -= (q2 / distmat[j].length2()) *
+                                                distmat[j].direction();
+                        }
+                    }
+                    
+                    group_fields0_array[i] += (scale_field * probe.reducedCharge()) *
+                                                            total_field;
 
                 } // end of loop over i atoms
 
@@ -2319,4 +2915,220 @@ void IntraCoulombPotential::calculateForce(
                                         double scale_force) const
 {
     this->calculateCoulombForce(mol, rest_of_mol, forces, distmat, scale_force);
+}
+
+void IntraCoulombPotential::calculateField(const IntraCoulombPotential::Molecule &mol, 
+                                      const CoulombProbe &probe,
+                                      MolFieldTable &fields,
+                                      IntraCoulombPotential::FieldWorkspace &workspace,
+                                      double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb field has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculateField(const IntraCoulombPotential::Molecule &mol,
+                    const IntraCoulombPotential::Molecule &rest_of_mol,
+                    const CoulombProbe &probe,
+                    MolFieldTable &fields,
+                    IntraCoulombPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb field has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculateField(const IntraCoulombPotential::Molecule &mol, 
+                    const CoulombProbe &probe,
+                    MolFieldTable &fields,
+                    const Symbol &symbol,
+                    const Components &components,
+                    IntraCoulombPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb field has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculateField(const IntraCoulombPotential::Molecule &mol,
+                    const IntraCoulombPotential::Molecule &rest_of_mol,
+                    const CoulombProbe &probe,
+                    MolFieldTable &fields,
+                    const Symbol &symbol,
+                    const Components &components,
+                    IntraCoulombPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb field has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculateField(const IntraCoulombPotential::Molecule &mol, 
+                    const CoulombProbe &probe,
+                    GridFieldTable &fields,
+                    IntraCoulombPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb field has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculateField(const IntraCoulombPotential::Molecule &mol, 
+                    const CoulombProbe &probe,
+                    GridFieldTable &fields,
+                    const Symbol &symbol,
+                    const Components &components,
+                    IntraCoulombPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb field has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculatePotential(const IntraCoulombPotential::Molecule &mol, 
+                        const CoulombProbe &probe,
+                        MolPotentialTable &potentials,
+                        IntraCoulombPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb potential has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculatePotential(const IntraCoulombPotential::Molecule &mol,
+                        const IntraCoulombPotential::Molecule &rest_of_mol,
+                        const CoulombProbe &probe,
+                        MolPotentialTable &potentials,
+                        IntraCoulombPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb potential has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculatePotential(const IntraCoulombPotential::Molecule &mol, 
+                        const CoulombProbe &probe,
+                        MolPotentialTable &potentials,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCoulombPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb potential has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculatePotential(const IntraCoulombPotential::Molecule &mol,
+                        const IntraCoulombPotential::Molecule &rest_of_mol,
+                        const CoulombProbe &probe,
+                        MolPotentialTable &potentials,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCoulombPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb potential has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculatePotential(const IntraCoulombPotential::Molecule &mol, 
+                        const CoulombProbe &probe,
+                        GridPotentialTable &potentials,
+                        IntraCoulombPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb potential has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculatePotential(const IntraCoulombPotential::Molecule &mol, 
+                        const CoulombProbe &probe,
+                        GridPotentialTable &potentials,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCoulombPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb potential has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculateCoulombField(const IntraCoulombPotential::Molecule &mol,
+                           const CoulombProbe &probe,
+                           MolFieldTable &fields,
+                           IntraCoulombPotential::FieldWorkspace &workspace,
+                           double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb field has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculateCoulombField(const IntraCoulombPotential::Molecule &mol,
+                           const CoulombProbe &probe,
+                           GridFieldTable &fields,
+                           IntraCoulombPotential::FieldWorkspace &workspace,
+                           double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb field has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculateCoulombField(const IntraCoulombPotential::Molecule &mol,
+                           const IntraCoulombPotential::Molecule &rest_of_mol,
+                           const CoulombProbe &probe,
+                           MolFieldTable &fields,
+                           IntraCoulombPotential::FieldWorkspace &workspace,
+                           double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb field has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculateCoulombPotential(const IntraCoulombPotential::Molecule &mol,
+                               const CoulombProbe &probe,
+                               MolPotentialTable &potentials,
+                               IntraCoulombPotential::PotentialWorkspace &workspace,
+                               double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb potential has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculateCoulombPotential(const IntraCoulombPotential::Molecule &mol,
+                               const CoulombProbe &probe,
+                               GridPotentialTable &fields,
+                               IntraCoulombPotential::PotentialWorkspace &workspace,
+                               double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb potential has not "
+                "yet been implemented."), CODELOC );
+}
+
+void IntraCoulombPotential::calculateCoulombPotential(const IntraCoulombPotential::Molecule &mol,
+                               const IntraCoulombPotential::Molecule &rest_of_mol,
+                               const CoulombProbe &probe,
+                               MolPotentialTable &potentials,
+                               IntraCoulombPotential::PotentialWorkspace &workspace,
+                               double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the intramolecular coulomb potential has not "
+                "yet been implemented."), CODELOC );
 }

@@ -940,3 +940,64 @@ RestraintFF* RestraintFF::clone() const
 {
     return new RestraintFF(*this);
 }
+               
+void RestraintFF::field(FieldTable &fieldtable, double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate the field of a restraint has not "
+                "been written."), CODELOC );
+}
+
+void RestraintFF::field(FieldTable &fieldtable, const Symbol &component,
+                        double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate the field of a restraint has not "
+                "been written."), CODELOC );
+}
+
+void RestraintFF::potential(PotentialTable &potentialtable, double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate the field of a restraint has not "
+                "been written."), CODELOC );
+}
+
+void RestraintFF::potential(PotentialTable &potentialtable, const Symbol &component,
+                            double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate the field of a restraint has not "
+                "been written."), CODELOC );
+}
+
+void RestraintFF::field(FieldTable &fieldtable, const Probe &probe, double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate the field of a restraint has not "
+                "been written."), CODELOC );
+}
+
+void RestraintFF::field(FieldTable &fieldtable, const Symbol &component,
+                        const Probe &probe, double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate the field of a restraint has not "
+                "been written."), CODELOC );
+}
+
+void RestraintFF::potential(PotentialTable &potentialtable, const Probe &probe,
+                            double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate the field of a restraint has not "
+                "been written."), CODELOC );
+}
+
+void RestraintFF::potential(PotentialTable &potentialtable, const Symbol &component,
+                            const Probe &probe, double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code to calculate the field of a restraint has not "
+                "been written."), CODELOC );
+}

@@ -55,11 +55,15 @@
 
 #include "NullFF.pypp.hpp"
 
+#include "NullProbe.pypp.hpp"
+
 #include "Point.pypp.hpp"
 
 #include "PointRef.pypp.hpp"
 
 #include "PotentialTable.pypp.hpp"
+
+#include "Probe.pypp.hpp"
 
 #include "Specify_FFID_.pypp.hpp"
 
@@ -131,6 +135,10 @@ BOOST_PYTHON_MODULE(_FF){
     register_MolPotentialTable_class();
 
     register_NullFF_class();
+
+    register_Probe_class();
+
+    register_NullProbe_class();
 
     register_PointRef_class();
 

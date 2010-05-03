@@ -27,6 +27,8 @@ namespace bp = boost::python;
 
 #include "SireMol/chaineditor.h"
 
+#include "SireMol/connectivity.h"
+
 #include "SireMol/cuttingfunction.h"
 
 #include "SireMol/element.h"

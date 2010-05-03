@@ -73,6 +73,50 @@ void register_QMFF_class(){
                 , energyCommandFile_function_value );
         
         }
+        { //::Squire::QMFF::field
+        
+            typedef void ( ::Squire::QMFF::*field_function_type )( ::SireFF::FieldTable &,double ) ;
+            field_function_type field_function_value( &::Squire::QMFF::field );
+            
+            QMFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::Squire::QMFF::field
+        
+            typedef void ( ::Squire::QMFF::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,double ) ;
+            field_function_type field_function_value( &::Squire::QMFF::field );
+            
+            QMFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::Squire::QMFF::field
+        
+            typedef void ( ::Squire::QMFF::*field_function_type )( ::SireFF::FieldTable &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::Squire::QMFF::field );
+            
+            QMFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::Squire::QMFF::field
+        
+            typedef void ( ::Squire::QMFF::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::Squire::QMFF::field );
+            
+            QMFF_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
         { //::Squire::QMFF::force
         
             typedef void ( ::Squire::QMFF::*force_function_type )( ::SireFF::ForceTable &,double ) ;
@@ -137,6 +181,50 @@ void register_QMFF_class(){
             QMFF_exposer.def( 
                 "parameters"
                 , parameters_function_value );
+        
+        }
+        { //::Squire::QMFF::potential
+        
+            typedef void ( ::Squire::QMFF::*potential_function_type )( ::SireFF::PotentialTable &,double ) ;
+            potential_function_type potential_function_value( &::Squire::QMFF::potential );
+            
+            QMFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::Squire::QMFF::potential
+        
+            typedef void ( ::Squire::QMFF::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,double ) ;
+            potential_function_type potential_function_value( &::Squire::QMFF::potential );
+            
+            QMFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("component"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::Squire::QMFF::potential
+        
+            typedef void ( ::Squire::QMFF::*potential_function_type )( ::SireFF::PotentialTable &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::Squire::QMFF::potential );
+            
+            QMFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::Squire::QMFF::potential
+        
+            typedef void ( ::Squire::QMFF::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::Squire::QMFF::potential );
+            
+            QMFF_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("potentialtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
         
         }
         { //::Squire::QMFF::properties

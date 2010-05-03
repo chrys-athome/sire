@@ -51,6 +51,9 @@ using SireBase::Property;
 using SireBase::Properties;
 
 using SireFF::ForceTable;
+using SireFF::FieldTable;
+using SireFF::PotentialTable;
+using SireFF::Probe;
 
 using SireCAS::Symbol;
 
@@ -116,6 +119,27 @@ public:
     
     void force(ForceTable &forcetable, const Symbol &symbol,
                double scale_force=1);
+
+    void field(FieldTable &fieldtable, double scale_field=1);
+    
+    void field(FieldTable &fieldtable, const Symbol &component,
+               double scale_field=1);
+               
+    void potential(PotentialTable &potentialtable, double scale_potential=1);
+    
+    void potential(PotentialTable &potentialtable, const Symbol &component,
+                   double scale_potential=1);
+
+    void field(FieldTable &fieldtable, const Probe &probe, double scale_field=1);
+    
+    void field(FieldTable &fieldtable, const Symbol &component,
+               const Probe &probe, double scale_field=1);
+               
+    void potential(PotentialTable &potentialtable, const Probe &probe,
+                   double scale_potential=1);
+    
+    void potential(PotentialTable &potentialtable, const Symbol &component,
+                   const Probe &probe, double scale_potential=1);
 
     QString energyCommandFile() const;
     QString forceCommandFile() const;

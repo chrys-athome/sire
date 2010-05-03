@@ -92,9 +92,9 @@ protected:
 
 }
 
-Q_DECLARE_METATYPE( SireSystem::PolariseCharges )
+//Q_DECLARE_METATYPE( SireSystem::PolariseCharges )
 
-SIRE_EXPOSE_CLASS( SireSystem::PolariseCharges )
+//SIRE_EXP O SE_CLASS( SireSystem::PolariseCharges )
 
 SIRE_END_HEADER
 

@@ -23,7 +23,11 @@ namespace bp = boost::python;
 
 #include "SireMM/internalff.h"
 
+#include "SireMM/internalperturbation.h"
+
 #include "SireMM/ljparameter.h"
+
+#include "SireMM/ljperturbation.h"
 
 #include "SireMol/atomcharges.h"
 
@@ -31,7 +35,15 @@ namespace bp = boost::python;
 
 #include "SireMol/atomname.h"
 
+#include "SireMol/cgeditor.h"
+
+#include "SireMol/chargeperturbation.h"
+
+#include "SireMol/connectivity.h"
+
 #include "SireMol/errors.h"
+
+#include "SireMol/geometryperturbation.h"
 
 #include "SireMol/groupatomids.h"
 

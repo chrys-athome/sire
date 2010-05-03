@@ -2700,3 +2700,64 @@ InternalFF* InternalFF::clone() const
 {
     return new InternalFF(*this);
 }
+
+void InternalFF::field(FieldTable &fieldtable, double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the field of an InternalFF has yet to "
+                "be implemented."), CODELOC );
+}
+
+void InternalFF::field(FieldTable &fieldtable, const Symbol &component,
+                       double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the field of an InternalFF has yet to "
+                "be implemented."), CODELOC );
+}
+           
+void InternalFF::potential(PotentialTable &potentialtable, double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the field of an InternalFF has yet to "
+                "be implemented."), CODELOC );
+}
+
+void InternalFF::potential(PotentialTable &potentialtable, const Symbol &component,
+                          double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the field of an InternalFF has yet to "
+                "be implemented."), CODELOC );
+}
+
+void InternalFF::field(FieldTable &fieldtable, const Probe &probe, double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the field of an InternalFF has yet to "
+                "be implemented."), CODELOC );
+}
+
+void InternalFF::field(FieldTable &fieldtable, const Symbol &component,
+                       const Probe &probe, double scale_field)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the field of an InternalFF has yet to "
+                "be implemented."), CODELOC );
+}
+
+void InternalFF::potential(PotentialTable &potentialtable, const Probe &probe,
+                           double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the field of an InternalFF has yet to "
+                "be implemented."), CODELOC );
+}
+
+void InternalFF::potential(PotentialTable &potentialtable, const Symbol &component,
+                           const Probe &probe, double scale_potential)
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "Calculating the field of an InternalFF has yet to "
+                "be implemented."), CODELOC );
+}

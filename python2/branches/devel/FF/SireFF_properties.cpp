@@ -4,6 +4,10 @@
 #include "Base/convertproperty.hpp"
 #include "SireFF_properties.h"
 
+#include "SireError/errors.h"
+#include "SireStream/datastream.h"
+#include "probe.h"
+#include "probe.h"
 #include "SireMol/evaluator.h"
 #include "SireMol/mgidx.h"
 #include "SireMol/molecule.h"
@@ -33,6 +37,7 @@
 #include "forcefield.h"
 void register_SireFF_properties()
 {
+    register_property_container< SireFF::PropePtr, SireFF::Probe >();
     register_property_container< SireFF::PointPtr, SireFF::Point >();
     register_property_container< SireFF::FFPtr, SireFF::FF >();
 }
