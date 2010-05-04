@@ -434,7 +434,7 @@ public:
     void moveDihedral(const AtomID &atom, const Angle &delta);
     
     void moveBond(const AtomID &atom0, const AtomID &atom1, 
-                  Length &delta);
+                  const Length &delta);
                   
     void moveAngle(const AtomID &atom0, const AtomID &atom1,
                    const AtomID &atom2, const Angle &delta);

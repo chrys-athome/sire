@@ -34,6 +34,9 @@
 #include "SireMol/partialmolecule.h"
 #include "SireMol/mover.hpp"
 #include "SireMol/atommatcher.h"
+#include "SireMol/bondid.h"
+#include "SireMol/angleid.h"
+#include "SireMol/dihedralid.h"
 
 #include "SireUnits/convert.h"
 #include "SireUnits/units.h"
@@ -647,6 +650,21 @@ void ZMatrix::add(const AtomID &atom, const AtomID &bond,
     }
 }
 
+/** Add a line to the z-matrix that gives the coordinates of the 
+    passed dihedral
+    
+    An exception is raised if adding this line would lead
+    to a circular reference
+    
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrix::add(const DihedralID &dihedral)
+{
+    this->add( dihedral.atom0(), dihedral.atom1(),
+               dihedral.atom2(), dihedral.atom3() );
+}
+
 /** Remove the z-matrix line that gives the coordinates of the 
     atom 'atom'. This does nothing if there is no z-matrix
     line for this atom - note this removes the lines for
@@ -701,6 +719,20 @@ void ZMatrix::remove(const AtomID &atom, const AtomID &bond,
             this->reindex();
         }
     }
+}
+
+/** Remove the z-matrix line involving the specified dihedral. 
+    This matches only a single line, and
+    will do nothing if this line is not in this z-matrix
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+void ZMatrix::remove(const DihedralID &dihedral)
+{
+    this->remove( dihedral.atom0(), dihedral.atom1(),
+                  dihedral.atom2(), dihedral.atom3() );
 }
 
 /** Add the z-matrix line 'zmatline'.
@@ -869,6 +901,179 @@ int ZMatrix::getIndex(const AtomID &atom, const AtomID &bond,
     
     return -1;
 }
+
+/** Return whether or not this z-matrix contains the bond between
+    atoms 'atom'-'bond' 
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrix::contains(const AtomID &atom, const AtomID &bond) const
+{
+    AtomIdx atomidx = info().atomIdx(atom);
+    AtomIdx bondidx = info().atomIdx(bond);
+    
+    if (atomidx_to_zmat.contains(atomidx))
+    {
+        if ( zmat.at(atomidx_to_zmat.value(atomidx)).bond() == bondidx )
+            return true;;
+    }
+    
+    if (atomidx_to_zmat.contains(bondidx))
+    {
+        if ( zmat.at(atomidx_to_zmat.value(bondidx)).bond() == atomidx )
+            return true;
+    }
+
+    return false;
+}
+
+/** Return whether or not this z-matrix contains the angle
+    'atom'-'bond'-'angle'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrix::contains(const AtomID &atom, const AtomID &bond, const AtomID &angle) const
+{
+    AtomIdx atomidx = info().atomIdx(atom);
+    AtomIdx bondidx = info().atomIdx(bond);
+    AtomIdx angleidx = info().atomIdx(angle);
+    
+    if (atomidx_to_zmat.contains(atomidx))
+    {
+        int idx = atomidx_to_zmat.value(atomidx);
+        const ZMatrixLine &line = zmat.at(idx);
+        
+        if (line.bond() == bondidx and line.angle() == angleidx)
+            return true;
+    }
+    
+    if (atomidx_to_zmat.contains(angleidx))
+    {
+        int idx = atomidx_to_zmat.value(angleidx);
+        const ZMatrixLine &line = zmat.at(idx);
+        
+        if (line.bond() == bondidx and line.angle() == atomidx)
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return whether or not this z-matrix contains the dihedral
+    'atom'-'bond'-'angle'-'dihedral'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrix::contains(const AtomID &atom, const AtomID &bond,
+                       const AtomID &angle, const AtomID &dihedral) const
+{
+    AtomIdx atomidx = info().atomIdx(atom);
+    AtomIdx bondidx = info().atomIdx(bond);
+    AtomIdx angleidx = info().atomIdx(angle);
+    AtomIdx dihedralidx = info().atomIdx(dihedral);
+    
+    if (atomidx_to_zmat.contains(atomidx))
+    {
+        int idx = atomidx_to_zmat.value(atomidx);
+        const ZMatrixLine &line = zmat.at(idx);
+        
+        if (line.bond() == bondidx and line.angle() == angleidx and
+            line.dihedral() == dihedralidx)
+            return true;
+    }
+    
+    if (atomidx_to_zmat.contains(dihedralidx))
+    {
+        int idx = atomidx_to_zmat.value(dihedralidx);
+        const ZMatrixLine &line = zmat.at(idx);
+        
+        if (line.bond() == angleidx and line.angle() == bondidx and
+            line.dihedral() == atomidx)
+            return true;
+    }
+
+    return false;
+}
+
+/** Return whether or not this z-matrix contains 'bond' 
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrix::contains(const BondID &bond) const
+{
+    return this->contains(bond.atom0(), bond.atom1());
+}
+
+/** Return whether or not this z-matrix contains 'angle' 
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrix::contains(const AngleID &angle) const
+{
+    return this->contains(angle.atom0(), angle.atom1(), angle.atom2());
+}
+
+/** Return whether or not this z-matrix contains 'dihedral' 
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrix::contains(const DihedralID &dihedral) const
+{
+    return this->contains(dihedral.atom0(), dihedral.atom1(),
+                          dihedral.atom2(), dihedral.atom3());
+}
+
+/** Return the index of the z-matrix line that defines the 
+    bond 'bond'
+   
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+int ZMatrix::getIndex(const BondID &bond) const
+{
+    return this->getIndex(bond.atom0(), bond.atom1());
+}
+
+/** Return the index of the z-matrix line that defines the 
+    angle 'angle'
+   
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+int ZMatrix::getIndex(const AngleID &angle) const
+{
+    return this->getIndex(angle.atom0(), angle.atom1(), angle.atom2());
+}
+
+/** Return the index of the z-matrix line that defines the 
+    dihedral 'dihedral'
+   
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+int ZMatrix::getIndex(const DihedralID &dihedral) const
+{
+    return this->getIndex(dihedral.atom0(), dihedral.atom1(), 
+                          dihedral.atom2(), dihedral.atom3());
+}
           
 /** Set the maximum amount that the bond for the atom 'atom'
     can be moved to 'delta'
@@ -958,6 +1163,46 @@ void ZMatrix::setDihedralDelta(const AtomID &atom, const AtomID &bond,
     zmat[idx].setDihedralDelta(delta);
 }
 
+/** Set the maximum amount that the bond 'bond'
+    can be changed by to 'delta'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrix::setDelta(const BondID &bond, const Length &delta)
+{
+    this->setBondDelta( bond.atom0(), bond.atom1(), delta );
+}
+
+/** Set the maximum amount that the angle 'angle'
+    can be changed by to 'delta'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrix::setDelta(const AngleID &angle, const Angle &delta)
+{
+    this->setAngleDelta( angle.atom0(), angle.atom1(), angle.atom2(), delta );
+}
+
+/** Set the maximum amount that the dihedral 'dihedral' 
+    can be changed by to 'delta'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrix::setDelta(const DihedralID &dihedral, const Angle &delta)
+{
+    this->setDihedralDelta( dihedral.atom0(), dihedral.atom1(),
+                            dihedral.atom2(), dihedral.atom3(), delta );
+}
+
 /** Return the maximum amount that the bond to atom 'atom'
     should be changed
     
@@ -1036,6 +1281,43 @@ Angle ZMatrix::dihedralDelta(const AtomID &atom, const AtomID &bond,
                              const AtomID &angle, const AtomID &dihedral) const
 {
     return zmat[getIndex(atom,bond,angle,dihedral)].dihedralDelta();
+}
+
+/** Return the maximum amount that 'bond' should be changed
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+Length ZMatrix::delta(const BondID &bond) const
+{
+    return this->bondDelta( bond.atom0(), bond.atom1() );
+}
+
+/** Return the maximum amount that 'angle' should be changed
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+Angle ZMatrix::delta(const AngleID &angle) const
+{
+    return this->angleDelta( angle.atom0(), angle.atom1(), angle.atom2() );
+}
+
+/** Return the maximum amount that 'dihedral' should be changed
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+Angle ZMatrix::delta(const DihedralID &dihedral) const
+{
+    return this->dihedralDelta( dihedral.atom0(), dihedral.atom1(),
+                                dihedral.atom2(), dihedral.atom3() );
 }
 
 /** Return whether or not this z-matrix is compatible with the 
@@ -1524,6 +1806,46 @@ int ZMatrixCoords::getIndex(const AtomID &atom, const AtomID &bond,
     return zmat.getIndex(atom, bond, angle, dihedral);
 }
 
+/** Return the index of the z-matrix line that 
+    defines the bond 'bond'
+   
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+int ZMatrixCoords::getIndex(const BondID &bond) const
+{
+    return this->getIndex( bond.atom0(), bond.atom1() );
+}
+
+/** Return the index of the z-matrix line that 
+    defines the angle 'angle'
+   
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+int ZMatrixCoords::getIndex(const AngleID &angle) const
+{
+    return this->getIndex( angle.atom0(), angle.atom1(), angle.atom2() );
+}
+
+/** Return the index of the z-matrix line that 
+    defines the dihedral 'dihedral'
+   
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+int ZMatrixCoords::getIndex(const DihedralID &dihedral) const
+{
+    return this->getIndex( dihedral.atom0(), dihedral.atom1(), 
+                           dihedral.atom2(), dihedral.atom3() );
+}
+
 /** Return the layout of the molecule whose z-matrix is contained
     in this object */
 const MoleculeInfoData& ZMatrixCoords::info() const
@@ -1585,6 +1907,80 @@ QString ZMatrixCoords::toString() const
 bool ZMatrixCoords::contains(const AtomID &atom) const
 {
     return zmat.contains(atom);
+}
+
+/** Return whether or not the z-matrix defines
+    the bond 'atom'-'bond'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrixCoords::contains(const AtomID &atom, const AtomID &bond) const
+{
+    return zmat.contains(atom, bond);
+}
+
+/** Return whether or not the z-matrix defines
+    the angle 'atom'-'bond'-'angle'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrixCoords::contains(const AtomID &atom, const AtomID &bond, 
+                             const AtomID &angle) const
+{
+    return zmat.contains(atom, bond, angle);
+}
+
+/** Return whether or not the z-matrix defines
+    the dihedral 'atom'-'bond'-'angle'-'dihedral'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrixCoords::contains(const AtomID &atom, const AtomID &bond,
+                             const AtomID &angle, const AtomID &dihedral) const
+{
+    return zmat.contains(atom, bond, angle, dihedral);
+}
+
+/** Return whether or not the z-matrix defines
+    the bond 'bond'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrixCoords::contains(const BondID &bond) const
+{
+    return zmat.contains(bond);
+}
+
+/** Return whether or not the z-matrix defines
+    the angle 'angle'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrixCoords::contains(const AngleID &angle) const
+{
+    return zmat.contains(angle);
+}
+
+/** Return whether or not the z-matrix defines
+    the dihedral 'dihedral'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrixCoords::contains(const DihedralID &dihedral) const
+{
+    return zmat.contains(dihedral);
 }
 
 /** Internal function used to add a single set of internal
@@ -1651,6 +2047,21 @@ void ZMatrixCoords::add(const AtomID &atom, const AtomID &bond,
     }
 }
 
+/** Add the z-matrix line containing the passed dihedral. The internal
+    coordinates of this line are set from the current cartesian coordinates
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::add(const DihedralID &dihedral)
+{
+    this->add( dihedral.atom0(), dihedral.atom1(),
+               dihedral.atom2(), dihedral.atom3() );
+}
+
 /** Add the z-matrix line using the supplied atoms and internal coordinates
 
     \throw SireMol::missing_atom
@@ -1714,6 +2125,13 @@ void ZMatrixCoords::remove(const AtomID &atom, const AtomID &bond,
     {
         this->rebuildInternals();
     }
+}
+
+/** Remove the z-matrix line that builds 'dihedral' */
+void ZMatrixCoords::remove(const DihedralID &dihedral)
+{
+    this->remove( dihedral.atom0(), dihedral.atom1(),
+                  dihedral.atom2(), dihedral.atom3() );
 }
 
 /** Add the z-matrix line 'zmatline'
@@ -1848,7 +2266,7 @@ void ZMatrixCoords::moveDihedral(const AtomID &atom, const Angle &delta)
     \throw SireMove::zmatrix_error
 */
 void ZMatrixCoords::moveBond(const AtomID &atom0, const AtomID &atom1, 
-                             Length &delta)
+                             const Length &delta)
 {
     int idx = zmat.getIndex(atom0, atom1);
     internal_coords[idx].setX( internal_coords[idx].x() + delta.value() );
@@ -1884,6 +2302,44 @@ void ZMatrixCoords::moveDihedral(const AtomID &atom0, const AtomID &atom1,
     int idx = zmat.getIndex(atom0, atom1, atom2, atom3);
     internal_coords[idx].setZ( internal_coords[idx].z() + delta.value() );
     need_rebuild = true;
+}
+
+/** Change the bond 'bond' by 'delta'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::move(const BondID &bond, const Length &delta)
+{
+    this->moveBond( bond.atom0(), bond.atom1(), delta );
+}
+
+/** Change the angle 'angle' by 'delta'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::move(const AngleID &angle, const Angle &delta)
+{
+    this->moveAngle( angle.atom0(), angle.atom1(),
+                     angle.atom2(), delta );
+}
+
+/** Change the dihedral 'dihedral' by 'delta'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::move(const DihedralID &dihedral, const Angle &delta)
+{
+    this->moveDihedral( dihedral.atom0(), dihedral.atom1(),
+                        dihedral.atom2(), dihedral.atom3(), delta );
 }
 
 /** Set the bond to atom 'atom' to 'length'
@@ -1977,6 +2433,43 @@ void ZMatrixCoords::setDihedral(const AtomID &atom0, const AtomID &atom1,
     need_rebuild = true;
 }
 
+/** Set the bond 'bond' to have the length 'length'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::set(const BondID &bond, const Length &length)
+{
+    this->setBond( bond.atom0(), bond.atom1(), length );
+}
+
+/** Set the angle 'angle' to have the size 'size'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::set(const AngleID &angle, const Angle &size)
+{
+    this->setAngle( angle.atom0(), angle.atom1(), angle.atom2(), size );
+}
+
+/** Set the dihedral 'dihedral' to have the size 'size'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::set(const DihedralID &dihedral, const Angle &size)
+{
+    this->setDihedral( dihedral.atom0(), dihedral.atom1(),
+                       dihedral.atom2(), dihedral.atom3(), size );
+}
+
 /** Return the length of the bond to the atom 'atom'
 
     \throw SireMol::missing_atom
@@ -2052,6 +2545,43 @@ Angle ZMatrixCoords::dihedralSize(const AtomID &atom, const AtomID &bond,
                                   const AtomID &angle, const AtomID &dihedral) const
 {
     return Angle(internal_coords[zmat.getIndex(atom,bond,angle,dihedral)].z());
+}
+
+/** Return the length of the bond 'bond'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+Length ZMatrixCoords::length(const BondID &bond) const
+{
+    return this->bondLength( bond.atom0(), bond.atom1() );
+}
+
+/** Return the size of the angle 'angle'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+Angle ZMatrixCoords::size(const AngleID &angle) const
+{
+    return this->angleSize( angle.atom0(), angle.atom1(), angle.atom2() );
+}
+
+/** Return the size of the angle 'angle'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+Angle ZMatrixCoords::size(const DihedralID &dihedral) const
+{
+    return this->dihedralSize( dihedral.atom0(), dihedral.atom1(),
+                               dihedral.atom2(), dihedral.atom3() );
 }
 
 /** Set the maximum amount that the bond for the atom 'atom'
@@ -2136,6 +2666,46 @@ void ZMatrixCoords::setDihedralDelta(const AtomID &atom, const AtomID &bond,
     zmat.setDihedralDelta(atom, bond, angle, dihedral, delta);
 }
 
+/** Set the maximum amount that the bond 'bond'
+    can be changed by to 'delta'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::setDelta(const BondID &bond, const Length &delta)
+{
+    this->setBondDelta( bond.atom0(), bond.atom1(), delta );
+}
+
+/** Set the maximum amount that the angle 'angle'
+    can be changed by to 'delta'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::setDelta(const AngleID &angle, const Angle &delta)
+{
+    this->setAngleDelta( angle.atom0(), angle.atom1(), angle.atom2(), delta );
+}
+
+/** Set the maximum amount that the dihedral 'dihedral'
+    can be changed by to 'delta'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::setDelta(const DihedralID &dihedral, const Angle &delta)
+{
+    this->setDihedralDelta( dihedral.atom0(), dihedral.atom1(),
+                            dihedral.atom2(), dihedral.atom3(), delta );
+}
+
 /** Return the maximum amount that the bond to atom 'atom'
     should be changed
     
@@ -2214,6 +2784,43 @@ Angle ZMatrixCoords::dihedralDelta(const AtomID &atom, const AtomID &bond,
                                    const AtomID &angle, const AtomID &dihedral) const
 {
     return zmat.dihedralDelta(atom, bond, angle, dihedral);
+}
+
+/** Return the maximum amount that the bond 'bond' should be changed
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+Length ZMatrixCoords::delta(const BondID &bond) const
+{
+    return this->bondDelta( bond.atom0(), bond.atom1() );
+}
+
+/** Return the maximum amount that the angle 'angle' should be changed
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+Angle ZMatrixCoords::delta(const AngleID &angle) const
+{
+    return this->angleDelta( angle.atom0(), angle.atom1(), angle.atom2() );
+}
+
+/** Return the maximum amount that the dihedral 'dihedral' should be changed
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+Angle ZMatrixCoords::delta(const DihedralID &dihedral) const
+{
+    return this->dihedralDelta( dihedral.atom0(), dihedral.atom1(),
+                                dihedral.atom2(), dihedral.atom3() );
 }
 
 /** Return a z-matrix that only contains lines that involve the atoms

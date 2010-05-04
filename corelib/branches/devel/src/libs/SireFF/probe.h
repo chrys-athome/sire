@@ -87,7 +87,7 @@ private:
 };
 
 /** This is a null Probe */
-class NullProbe : public SireBase::ConcreteProperty<NullProbe,Probe>
+class SIREFF_EXPORT NullProbe : public SireBase::ConcreteProperty<NullProbe,Probe>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const NullProbe&);
@@ -131,7 +131,7 @@ Q_DECLARE_METATYPE( SireFF::NullProbe )
 SIRE_EXPOSE_CLASS( SireFF::Probe )
 SIRE_EXPOSE_CLASS( SireFF::NullProbe )
 
-SIRE_EXPOSE_PROPERTY( SireFF::PropePtr, SireFF::Probe )
+SIRE_EXPOSE_PROPERTY( SireFF::ProbePtr, SireFF::Probe )
 
 SIRE_END_HEADER
 

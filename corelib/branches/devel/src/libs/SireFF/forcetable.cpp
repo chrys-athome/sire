@@ -194,6 +194,131 @@ bool MolForceTable::operator!=(const MolForceTable &other) const
     return not this->operator==(other);
 }
 
+/** Set the force at all points in this table equal to 'force' */
+MolForceTable& MolForceTable::operator=(const Vector &force)
+{
+    this->setAll(force);
+    return *this;
+}
+
+/** Add the forces in 'other' onto this table - this only adds forces
+    to atoms that are in this table
+    
+    \throw SireError::incompatible_error
+*/
+MolForceTable& MolForceTable::operator+=(const MolForceTable &other)
+{
+    this->add(other);
+    return *this;
+}
+
+/** Subtract the forces in 'other' from this table - this only subtracts forces
+    from atoms that are in this table
+    
+    \throw SireError::incompatible_error
+*/
+MolForceTable& MolForceTable::operator-=(const MolForceTable &other)
+{
+    this->subtract(other);
+    return *this;
+}
+
+/** Return the table where the forces in 'other' have been added to the 
+    forces on the atoms in this table 
+    
+    \throw SireError::incompatible_error
+*/
+MolForceTable MolForceTable::operator+(const MolForceTable &other) const
+{
+    MolForceTable ret(*this);
+    ret += other;
+    return ret;
+}
+
+/** Return the table where the forces in 'other' have been subtracted from the 
+    forces on the atoms in this table 
+    
+    \throw SireError::incompatible_error
+*/
+MolForceTable MolForceTable::operator-(const MolForceTable &other) const
+{
+    MolForceTable ret(*this);
+    ret -= other;
+    return ret;
+}
+
+/** Add 'force' to all of the points in this table */
+MolForceTable& MolForceTable::operator+=(const Vector &force)
+{
+    this->add(force);
+    return *this;
+}
+
+/** Subtract 'force' from all of the points in this table */
+MolForceTable& MolForceTable::operator-=(const Vector &force)
+{
+    this->subtract(force);
+    return *this;
+}
+
+/** Return the table where 'force' has been added to all of the 
+    points in this table */
+MolForceTable MolForceTable::operator+(const Vector &force) const
+{
+    MolForceTable ret(*this);
+    ret += force;
+    return ret;
+}
+
+/** Return the table where 'force' has been subtracted from all of the 
+    points in this table */
+MolForceTable MolForceTable::operator-(const Vector &force) const
+{
+    MolForceTable ret(*this);
+    ret -= force;
+    return ret;
+}
+
+/** Multiply the force at each point in this table by 'value' */
+MolForceTable& MolForceTable::operator*=(double value)
+{
+    this->multiply(value);
+    return *this;
+}
+
+/** Divide the force at each point in this table by 'value' */
+MolForceTable& MolForceTable::operator/=(double value)
+{
+    this->divide(value);
+    return *this;
+}
+
+/** Return the table where the force at each point has been 
+    mulitiplied by 'value' */
+MolForceTable MolForceTable::operator*(double value) const
+{
+    MolForceTable ret(*this);
+    ret *= value;
+    return ret;
+}
+
+/** Return the table where the force at each point has been 
+    divided by 'value' */
+MolForceTable MolForceTable::operator/(double value) const
+{
+    MolForceTable ret(*this);
+    ret /= value;
+    return ret;
+}
+
+/** Return the negative of this table */
+MolForceTable MolForceTable::operator-() const
+{
+    MolForceTable ret(*this);
+    ret *= -1;
+    return ret;
+}
+
 /** Initialise this table - this resets all of the forces back to zero */
 void MolForceTable::initialise()
 {
@@ -437,6 +562,166 @@ bool MolForceTable::subtract(const AtomSelection &selected_atoms, const Vector &
     return MolForceTable::add( selected_atoms, -force );
 }
 
+/** Add the forces contained in 'other' onto this force table. This will only
+    add the forces for CutGroups that are in both tables */
+void MolForceTable::add(const MolForceTable &other)
+{
+    if (this == &other)
+    {
+        //just double everything
+        this->operator*=(2);
+        return;
+    }
+    
+    if (molnum != other.molnum)
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot combine the force table for molecule %1 with the "
+                "force table for molecule %2. The molecules must be the same.")
+                    .arg(molnum).arg(other.molnum), CODELOC );
+                    
+    if (moluid != other.moluid)
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot combine together the tables for molecule %1 as the "
+                "layout UIDs are different (%2 vs. %3). They must be the same.")
+                    .arg(molnum).arg(moluid.toString(), other.moluid.toString()),
+                        CODELOC );
+
+    if (this->selectedAll() and other.selectedAll())
+    {
+        int nvals = PackedArray2D<Vector>::nValues();
+
+        BOOST_ASSERT( nvals == other.nValues() );
+
+        if (nvals > 0)
+        {
+            Vector *vals = PackedArray2D<Vector>::valueData();
+            const Vector *other_vals = other.constValueData();
+        
+            for (int i=0; i<nvals; ++i)
+            {
+                vals[i] += other_vals[i];
+            }
+        }
+    }
+    else if (this->selectedAll())
+    {
+        for (CGIdx i(0); i<ncgroups; ++i)
+        {
+            int idx = other.map(i);
+                
+            if (idx != -1)
+            {
+                int nvals = this->nValues(i);
+                BOOST_ASSERT( nvals == other.nValues(idx) );
+                
+                Vector *vals = PackedArray2D<Vector>::data(i);
+                const Vector *other_vals = other.constData(idx);
+                
+                for (int j=0; j<nvals; ++j)
+                {
+                    vals[j] += other_vals[j];
+                }
+            }
+        }
+    }
+    else
+    {
+        for (QHash<CGIdx,qint32>::const_iterator it = cgidx_to_idx.constBegin();
+             it != cgidx_to_idx.constEnd();
+             ++it)
+        {
+            int idx = other.map(it.key());
+            
+            if (idx != -1)
+            {
+                int nvals = this->nValues(it.value());
+                BOOST_ASSERT( nvals == other.nValues(idx) );
+                
+                Vector *vals = PackedArray2D<Vector>::data(it.key());
+                const Vector *other_vals = other.constData(idx);
+                
+                for (int j=0; j<nvals; ++j)
+                {
+                    vals[j] += other_vals[j];
+                }
+            }
+        }
+    }
+}
+
+/** Subtract the forces contained in 'other' from this force table. This will only
+    subtract the forces for CutGroups that are in both tables */
+void MolForceTable::subtract(const MolForceTable &other)
+{
+    if (this == &other)
+    {
+        this->setAll( Vector(0) );
+        return;
+    }
+    
+    this->add( -other );
+}
+
+/** Add the force 'force' onto all of the atom points in this table */
+void MolForceTable::add(const Vector &force)
+{
+    int nvals = PackedArray2D<Vector>::nValues();
+
+    if (nvals > 0)
+    {
+        Vector *vals = PackedArray2D<Vector>::valueData();
+        
+        for (int i=0; i<nvals; ++i)
+        {
+            vals[i] += force;
+        }
+    }
+}
+
+/** Subtract the force 'force' from all of the atom points in this table */
+void MolForceTable::subtract(const Vector &force)
+{
+    this->add( -force );
+}
+
+/** Set all of the forces at the atom points equal to 'force' */
+void MolForceTable::setAll(const Vector &force)
+{
+    int nvals = PackedArray2D<Vector>::nValues();
+
+    if (nvals > 0)
+    {
+        Vector *vals = PackedArray2D<Vector>::valueData();
+        
+        for (int i=0; i<nvals; ++i)
+        {
+            vals[i] = force;
+        }
+    }
+}
+
+/** Multiply the force at all atom points by 'value' */
+void MolForceTable::multiply(double value)
+{
+    int nvals = PackedArray2D<Vector>::nValues();
+
+    if (nvals > 0)
+    {
+        Vector *vals = PackedArray2D<Vector>::valueData();
+        
+        for (int i=0; i<nvals; ++i)
+        {
+            vals[i] *= value;
+        }
+    }
+}
+
+/** Divide the force at all atom points by 'value' */
+void MolForceTable::divide(double value)
+{
+    this->multiply( 1.0 / value );
+}
+
 void MolForceTable::assertCompatibleWith(const AtomSelection &selection) const
 {
     if (not selection.selectedAll())
@@ -672,7 +957,7 @@ ForceTable::ForceTable(const MoleculeGroup &molgroup)
     
     MolForceTable *tables_by_idx_array = tables_by_idx.data();
     
-    quint32 i = 0;
+    qint32 i = 0;
     
     for (MoleculeGroup::const_iterator it = molgroup.constBegin();
          it != molgroup.constEnd();
@@ -703,6 +988,13 @@ ForceTable& ForceTable::operator=(const ForceTable &other)
     return *this;
 }
 
+/** Set all of the forces at all of the points in this table equal to 'force' */
+ForceTable& ForceTable::operator=(const Vector &force)
+{
+    this->setAll(force);
+    return *this;
+}
+
 /** Comparison operator */
 bool ForceTable::operator==(const ForceTable &other) const
 {
@@ -713,6 +1005,205 @@ bool ForceTable::operator==(const ForceTable &other) const
 bool ForceTable::operator!=(const ForceTable &other) const
 {
     return tables_by_idx != other.tables_by_idx;
+}
+
+/** Add the forces from 'other' onto this table. This only adds the forces
+    for molecules / grids that are in both tables */
+ForceTable& ForceTable::operator+=(const ForceTable &other)
+{
+    this->add(other);
+    return *this;
+}
+
+/** Subtract the forces from 'other' from this table. This only subtracts
+    the forces for molecules / grids that are in both tables */
+ForceTable& ForceTable::operator-=(const ForceTable &other)
+{
+    this->subtract(other);
+    return *this;
+}
+
+/** Return the sum of this table with 'other' - this only adds the
+    forces from 'other' to this table for molecules / grids that are
+    in both tables */
+ForceTable ForceTable::operator+(const ForceTable &other) const
+{
+    ForceTable ret(*this);
+    ret += other;
+    return ret;
+}
+
+/** Return the difference of this table with 'other' - this only subtracts the
+    forces from 'other' to this table for molecules / grids that are
+    in both tables */
+ForceTable ForceTable::operator-(const ForceTable &other) const
+{
+    ForceTable ret(*this);
+    ret -= other;
+    return ret;
+}
+
+/** Add the force 'force' to all of the atom and grid points in this table */
+ForceTable& ForceTable::operator+=(const Vector &force)
+{
+    this->add(force);
+    return *this;
+}
+
+/** Substract the force 'force' from all of the atom and grid 
+    points in this table */
+ForceTable& ForceTable::operator-=(const Vector &force)
+{
+    this->subtract(force);
+    return *this;
+}
+
+/** Return the result of adding 'force' onto all of the atom
+    and grid points in this table */
+ForceTable ForceTable::operator+(const Vector &force) const
+{
+    ForceTable ret(*this);
+    ret += force;
+    return ret;
+}
+
+/** Return the result of subtracting 'force' from all of the atom
+    and grid points in this table */
+ForceTable ForceTable::operator-(const Vector &force) const
+{
+    ForceTable ret(*this);
+    ret -= force;
+    return ret;
+}
+
+/** Multiply the forces at all points in this table by 'value' */
+ForceTable& ForceTable::operator*=(double value)
+{
+    this->multiply(value);
+    return *this;
+}
+
+/** Divide the forces at all points in this table by 'value' */
+ForceTable& ForceTable::operator/=(double value)
+{
+    this->divide(value);
+    return *this;
+}
+
+/** Return the result of multiplying the forces at all points by 'value' */
+ForceTable ForceTable::operator*(double value) const
+{
+    ForceTable ret(*this);
+    ret *= value;
+    return ret;
+}
+
+/** Return the result of dividing the forces at all points by 'value' */
+ForceTable ForceTable::operator/(double value) const
+{
+    ForceTable ret(*this);
+    ret /= value;
+    return ret;
+}
+
+/** Return the result of negating the force at all points */
+ForceTable ForceTable::operator-() const
+{
+    ForceTable ret(*this);
+
+    for (QVector<MolForceTable>::iterator it = ret.tables_by_idx.begin();
+         it != ret.tables_by_idx.end();
+         ++it)
+    {
+        *it = -(*it);
+    }
+    
+    return ret;
+}
+
+/** Add the contents of the table 'other' onto this table. This will only
+    add the forces for the molecules / grids that are in both tables */
+void ForceTable::add(const ForceTable &other)
+{
+    for (QHash<MolNum,qint32>::const_iterator it = other.molnum_to_idx.constBegin();
+         it != other.molnum_to_idx.constEnd();
+         ++it)
+    {
+        int idx = molnum_to_idx.value(it.key(), -1);
+        
+        if (idx != -1)
+            tables_by_idx[idx] += other.tables_by_idx[it.value()];
+    }
+}
+
+/** Subtract the contents of the table 'other' from this table. This will only
+    subtract the forces for the molecules / grids that are in both tables */
+void ForceTable::subtract(const ForceTable &other)
+{
+    for (QHash<MolNum,qint32>::const_iterator it = other.molnum_to_idx.constBegin();
+         it != other.molnum_to_idx.constEnd();
+         ++it)
+    {
+        int idx = molnum_to_idx.value(it.key(), -1);
+        
+        if (idx != -1)
+            tables_by_idx[idx] -= other.tables_by_idx[it.value()];
+    }
+}
+
+/** Add the force 'force' onto all of the atom / grid points in this table */
+void ForceTable::add(const Vector &force)
+{
+    for (QVector<MolForceTable>::iterator it = tables_by_idx.begin();
+         it != tables_by_idx.end();
+         ++it)
+    {
+        it->add(force);
+    }
+}
+
+/** Subtract the force 'force' from all of the atom / grid points in this table */
+void ForceTable::subtract(const Vector &force)
+{
+    for (QVector<MolForceTable>::iterator it = tables_by_idx.begin();
+         it != tables_by_idx.end();
+         ++it)
+    {
+        it->subtract(force);
+    }
+}
+
+/** Set the force at all atom and grid points equal to 'force' */
+void ForceTable::setAll(const Vector &force)
+{
+    for (QVector<MolForceTable>::iterator it = tables_by_idx.begin();
+         it != tables_by_idx.end();
+         ++it)
+    {
+        it->setAll(force);
+    }
+}
+
+/** Multiply the force at all atom and grid points by 'value' */
+void ForceTable::multiply(double value)
+{
+    for (QVector<MolForceTable>::iterator it = tables_by_idx.begin();
+         it != tables_by_idx.end();
+         ++it)
+    {
+        it->multiply(value);
+    }
+}
+
+/** Divide the force at all atom and grid points by 'value' */
+void ForceTable::divide(double value)
+{
+    for (QVector<MolForceTable>::iterator it = tables_by_idx.begin();
+         it != tables_by_idx.end();
+         ++it)
+    {
+        it->divide(value);
+    }
 }
 
 /** Initialise all of the tables - this resets all of the forces 
@@ -748,7 +1239,7 @@ void ForceTable::initialiseTable(MolNum molnum)
 */
 int ForceTable::indexOf(MolNum molnum) const
 {
-    QHash<MolNum,quint32>::const_iterator it = molnum_to_idx.constFind(molnum);
+    QHash<MolNum,qint32>::const_iterator it = molnum_to_idx.constFind(molnum);
     
     if (it == molnum_to_idx.constEnd())
         throw SireMol::missing_molecule( QObject::tr(

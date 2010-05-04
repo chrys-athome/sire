@@ -133,7 +133,7 @@ void register_ForceTable_class(){
         }
         { //::SireFF::ForceTable::index
         
-            typedef ::QHash< SireMol::MolNum, unsigned int > const & ( ::SireFF::ForceTable::*index_function_type )(  ) const;
+            typedef ::QHash< SireMol::MolNum, int > const & ( ::SireFF::ForceTable::*index_function_type )(  ) const;
             index_function_type index_function_value( &::SireFF::ForceTable::index );
             
             ForceTable_exposer.def( 
@@ -201,6 +201,7 @@ void register_ForceTable_class(){
         ForceTable_exposer.def( bp::self + bp::other< SireMaths::Vector >() );
         ForceTable_exposer.def( bp::self - bp::self );
         ForceTable_exposer.def( bp::self - bp::other< SireMaths::Vector >() );
+        ForceTable_exposer.def( -bp::self );
         ForceTable_exposer.def( bp::self / bp::other< double >() );
         { //::SireFF::ForceTable::operator=
         

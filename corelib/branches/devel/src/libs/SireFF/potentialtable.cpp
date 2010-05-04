@@ -1922,3 +1922,19 @@ void PotentialTable::divide(double value)
         it->divide(value);
     }
 }
+
+/** Return the index of the molecule with number 'molnum' in this table 
+
+    \throw SireMol::missing_molecule
+*/
+int PotentialTable::indexOf(MolNum molnum) const
+{
+    QHash<MolNum,qint32>::const_iterator it = molnum_to_idx.constFind(molnum);
+    
+    if (it == molnum_to_idx.constEnd())
+        throw SireMol::missing_molecule( QObject::tr(
+            "There is no molecule with number %1 in this potential table.")
+                .arg(molnum), CODELOC );
+                
+    return it.value();
+}

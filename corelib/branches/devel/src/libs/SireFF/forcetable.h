@@ -125,6 +125,8 @@ public:
     MolForceTable operator*(double value) const;
     MolForceTable operator/(double value) const;
 
+    MolForceTable operator-() const;
+
     static const char* typeName();
     
     const char* what() const
@@ -156,8 +158,8 @@ public:
     bool add(const AtomSelection &selected_atoms, const Vector &force);
     bool subtract(const AtomSelection &selected_atoms, const Vector &force);
 
-    bool add(const MolForceTable &other);
-    bool subtract(const MolForceTable &other);
+    void add(const MolForceTable &other);
+    void subtract(const MolForceTable &other);
     
     void add(const Vector &force);
     void subtract(const Vector &force);
@@ -249,6 +251,8 @@ public:
     ForceTable operator*(double value) const;
     ForceTable operator/(double value) const;
     
+    ForceTable operator-() const;
+    
     bool containsTable(MolNum molnum) const;
 
     void initialiseTables();
@@ -263,7 +267,7 @@ public:
 
     int count() const;
 
-    const QHash<MolNum,quint32>& index() const;
+    const QHash<MolNum,qint32>& index() const;
     
     int indexOf(MolNum molnum) const;
     
@@ -292,7 +296,7 @@ private:
 
     /** Index mapping from the number of the Molecule to 
         the index of its force table in the above array */
-    QHash<MolNum,quint32> molnum_to_idx;
+    QHash<MolNum,qint32> molnum_to_idx;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -379,7 +383,7 @@ inline bool ForceTable::containsTable(MolNum molnum) const
 */
 inline MolForceTable& ForceTable::getTable(MolNum molnum)
 {
-    QHash<MolNum,quint32>::const_iterator it = molnum_to_idx.constFind(molnum);
+    QHash<MolNum,qint32>::const_iterator it = molnum_to_idx.constFind(molnum);
     
     if (it == molnum_to_idx.constEnd())
         this->assertContainsTableFor(molnum);
@@ -393,7 +397,7 @@ inline MolForceTable& ForceTable::getTable(MolNum molnum)
 */
 inline const MolForceTable& ForceTable::getTable(MolNum molnum) const
 {
-    QHash<MolNum,quint32>::const_iterator it = molnum_to_idx.constFind(molnum);
+    QHash<MolNum,qint32>::const_iterator it = molnum_to_idx.constFind(molnum);
     
     if (it == molnum_to_idx.constEnd())
         this->assertContainsTableFor(molnum);
@@ -418,7 +422,7 @@ inline int ForceTable::count() const
 
 /** Return the index used to find the index into the force tables array 
     for the force table for the molecule with a specified number */
-inline const QHash<MolNum,quint32>& ForceTable::index() const
+inline const QHash<MolNum,qint32>& ForceTable::index() const
 {
     return molnum_to_idx;
 }

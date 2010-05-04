@@ -66,7 +66,7 @@ void register_MolForceTable_class(){
         }
         { //::SireFF::MolForceTable::add
         
-            typedef bool ( ::SireFF::MolForceTable::*add_function_type )( ::SireFF::MolForceTable const & ) ;
+            typedef void ( ::SireFF::MolForceTable::*add_function_type )( ::SireFF::MolForceTable const & ) ;
             add_function_type add_function_value( &::SireFF::MolForceTable::add );
             
             MolForceTable_exposer.def( 
@@ -176,6 +176,7 @@ void register_MolForceTable_class(){
         MolForceTable_exposer.def( bp::self + bp::other< SireMaths::Vector >() );
         MolForceTable_exposer.def( bp::self - bp::self );
         MolForceTable_exposer.def( bp::self - bp::other< SireMaths::Vector >() );
+        MolForceTable_exposer.def( -bp::self );
         MolForceTable_exposer.def( bp::self / bp::other< double >() );
         { //::SireFF::MolForceTable::operator=
         
@@ -258,7 +259,7 @@ void register_MolForceTable_class(){
         }
         { //::SireFF::MolForceTable::subtract
         
-            typedef bool ( ::SireFF::MolForceTable::*subtract_function_type )( ::SireFF::MolForceTable const & ) ;
+            typedef void ( ::SireFF::MolForceTable::*subtract_function_type )( ::SireFF::MolForceTable const & ) ;
             subtract_function_type subtract_function_value( &::SireFF::MolForceTable::subtract );
             
             MolForceTable_exposer.def( 

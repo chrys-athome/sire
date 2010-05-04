@@ -11,7 +11,13 @@ namespace bp = boost::python;
 
 #include "SireID/index.h"
 
+#include "SireMol/angleid.h"
+
 #include "SireMol/atommatcher.h"
+
+#include "SireMol/bondid.h"
+
+#include "SireMol/dihedralid.h"
 
 #include "SireMol/errors.h"
 

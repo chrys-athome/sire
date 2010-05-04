@@ -37,7 +37,7 @@
 #include "forcefield.h"
 void register_SireFF_properties()
 {
-    register_property_container< SireFF::PropePtr, SireFF::Probe >();
+    register_property_container< SireFF::ProbePtr, SireFF::Probe >();
     register_property_container< SireFF::PointPtr, SireFF::Point >();
     register_property_container< SireFF::FFPtr, SireFF::FF >();
 }

@@ -11,7 +11,13 @@ namespace bp = boost::python;
 
 #include "SireID/index.h"
 
+#include "SireMol/angleid.h"
+
 #include "SireMol/atommatcher.h"
+
+#include "SireMol/bondid.h"
+
+#include "SireMol/dihedralid.h"
 
 #include "SireMol/errors.h"
 
@@ -585,7 +591,7 @@ void register_ZMatrixCoords_class(){
         }
         { //::SireMove::ZMatrixCoords::moveBond
         
-            typedef void ( ::SireMove::ZMatrixCoords::*moveBond_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const &,::SireUnits::Dimension::Length & ) ;
+            typedef void ( ::SireMove::ZMatrixCoords::*moveBond_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const &,::SireUnits::Dimension::Length const & ) ;
             moveBond_function_type moveBond_function_value( &::SireMove::ZMatrixCoords::moveBond );
             
             ZMatrixCoords_exposer.def( 
