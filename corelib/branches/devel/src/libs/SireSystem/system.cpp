@@ -956,7 +956,10 @@ void System::setComponent(const Symbol &symbol, double value)
 /** Synonym for System::setEnergyComponent(symbol, expression) */
 void System::setComponent(const Symbol &symbol, const SireCAS::Expression &expression)
 {
-    this->setEnergyComponent(symbol, expression);
+    if (expression.isConstant())
+        this->setConstantComponent(symbol, expression);
+    else
+        this->setEnergyComponent(symbol, expression);
 }
 
 /** Return all of the symbols that represent the constant and

@@ -47,6 +47,8 @@ QDataStream& operator>>(QDataStream&, SireCAS::Sum&);
 namespace SireCAS
 {
 
+class Product;
+
 /**
 This class holds a collection of expressions that are to be added (or subtracted) from one another
 
@@ -109,6 +111,7 @@ public:
     QList<Factor> expand(const Symbol &symbol) const;
 
 private:
+    friend class Product;
 
     void add(const Expression &ex);
 

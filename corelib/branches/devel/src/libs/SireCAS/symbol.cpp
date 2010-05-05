@@ -100,7 +100,8 @@ static QString get_string(const Expression &expression)
 
 QString Factor::toString() const
 {
-    return QString("%1 %2^%3").arg(::get_string(f), s.toString(), ::get_string(p));
+    return QString("%1 times { %2 }^%3")
+                    .arg(::get_string(f), s.toString(), ::get_string(p));
 }
 
 ////////

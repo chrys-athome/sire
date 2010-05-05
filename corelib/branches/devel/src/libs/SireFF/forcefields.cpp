@@ -846,18 +846,24 @@ void FFSymbolExpression::expandInTermsOf(const QSet<Symbol> &ffsymbols)
             }
                 
             components.append( Component(factor.factor(), symbol) );
-            
-            remainder -= (symbol * factor.factor());
+            remainder = (remainder - (symbol * factor.factor())).simplify();
         }
     }
     
+    remainder = remainder.simplify();
+    
     if (not remainder.isZero())
-        throw SireError::incompatible_error( QObject::tr(
-                "You cannot have a forcefield expression that contains a free "
+    {
+        qDebug() << QObject::tr(
+                "You may have a forcefield expression that contains a free "
                 "term (%1) that is not dependent on a forcefield component. "
                 "This is because each term must have dimensions of energy, and "
                 "the addition of a constant dimensionless value is not "
-                "dimensionally correct.").arg(remainder.toString()), CODELOC );
+                "dimensionally correct. Please check that the remainder is zero.")
+                    .arg(remainder.toString());
+                    
+        remainder = 0;
+    }
 }
 
 Expression FFSymbolExpression::toExpression() const
@@ -2269,7 +2275,10 @@ void ForceFields::setComponent(const Symbol &symbol, double value)
 */
 void ForceFields::setComponent(const Symbol &symbol, const Expression &expression)
 {
-    this->setEnergyComponent(symbol, expression);
+    if (expression.isConstant())
+        this->setConstantComponent(symbol, expression);
+    else
+        this->setEnergyComponent(symbol, expression);
 }
 
 /** Return the symbols representing all of the constant and energy components */

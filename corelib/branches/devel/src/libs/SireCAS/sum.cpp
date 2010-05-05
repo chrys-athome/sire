@@ -230,6 +230,7 @@ void Sum::add(const Expression &ex)
     //no need to add zero onto a sum!
     if (ex.isZero())
         return;
+
     else if (ex.base().isA<I>())
     {
         //this is a multiple of the complex number 'i'

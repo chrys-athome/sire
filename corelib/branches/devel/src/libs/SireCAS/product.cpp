@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "product.h"
+#include "sum.h"
 #include "expression.h"
 #include "expressions.h"
 #include "symbol.h"
@@ -43,6 +44,8 @@
 #include "SireStream/datastream.h"
 
 #include <boost/assert.hpp>
+
+#include <QDebug>
 
 using namespace SireStream;
 using namespace SireCAS;
@@ -973,24 +976,88 @@ Expression Product::series(const Symbol &symbol, int n) const
 /** Try to simplify this product */
 Expression Product::simplify(int options) const
 {
-    Product ret;
-    ret.strtval = strtval;
+    Expression ret(strtval);
 
     for (QHash<Expression,Expression>::const_iterator it = numparts.begin();
         it != numparts.end();
         ++it)
     {
-        ret.multiply( it->simplify(options) );
+        if (it->base().isA<Sum>())
+        {
+            const Sum &sum = it->base().asA<Sum>();
+            
+            Expression part = ret;
+            ret = ((it->factor() * sum.strtval) 
+                        * part.simplify(options))
+                                .simplify(options);
+            
+            for (QHash<ExpressionBase, Expression>::const_iterator
+                                                        it2 = sum.posparts.constBegin();
+                 it2 != sum.posparts.constEnd();
+                 ++it2)
+            {
+                ret += (part.simplify(options) * 
+                            ( it->factor() * it2.value().simplify(options) ))
+                                    .simplify(options);
+            }
+
+            for (QHash<ExpressionBase, Expression>::const_iterator
+                                                        it2 = sum.negparts.constBegin();
+                 it2 != sum.negparts.constEnd();
+                 ++it2)
+            {
+                ret -= (part.simplify(options) * 
+                            ( it->factor() * it2.value().simplify(options) ))
+                                    .simplify(options);
+            }
+        }
+        else if (ret.base().isA<Sum>())
+        {
+            Expression old_ret = ret;
+            const Sum &sum = old_ret.base().asA<Sum>();
+            
+            Expression part = it.value();
+            ret = ((old_ret.factor() * sum.strtval) 
+                        * part.simplify(options))
+                                .simplify(options);
+            
+            for (QHash<ExpressionBase, Expression>::const_iterator
+                                                        it2 = sum.posparts.constBegin();
+                 it2 != sum.posparts.constEnd();
+                 ++it2)
+            {
+                ret += (part.simplify(options) * 
+                            ( it->factor() * it2.value().simplify(options) ))
+                                    .simplify(options);
+            }
+
+            for (QHash<ExpressionBase, Expression>::const_iterator
+                                                        it2 = sum.negparts.constBegin();
+                 it2 != sum.negparts.constEnd();
+                 ++it2)
+            {
+                ret -= (part.simplify(options) * 
+                            ( it->factor() * it2.value().simplify(options) ))
+                                    .simplify(options);
+            }
+        }
+        else
+        {
+            ret *= it->simplify(options);
+        }
     }
 
     for (QHash<Expression,Expression>::const_iterator it = denomparts.begin();
         it != denomparts.end();
         ++it)
     {
-        ret.multiply( pow(it->simplify(options),-1) );
+        ret *= pow(it->simplify(options),-1);
     }
 
-    return ret.reduce();
+    if (ret.base().isA<Product>())
+        return ret.factor() * ret.base().asA<Product>().reduce();
+    else
+        return ret;
 }
 
 /** Return the complex conjugate of this product */
