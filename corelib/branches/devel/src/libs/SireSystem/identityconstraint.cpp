@@ -1527,11 +1527,13 @@ static Molecule swapCoordinatesTo(const Molecules &molecules,
     Molecule molecule = molecules[molnum].molecule();
     
     if (molnum != mol_with_coords)
+    {
         return molecule.edit()
                        .setProperty(coords_property,
                                     molecules[mol_with_coords].data()
                                                               .property(coords_property)
                                    ).commit();
+    }
     else
         return molecule;
 }
@@ -2610,7 +2612,7 @@ bool IdentityConstraint::fullApply(Delta &delta)
         changed = changed or this_changed;
         
         changed_mols = d->update(delta.deltaSystem(), changed_mols, false);
-        
+
         ++i;
         
         if (i > 10)

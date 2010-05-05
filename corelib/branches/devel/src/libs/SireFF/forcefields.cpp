@@ -3050,6 +3050,8 @@ const Property& ForceFields::property(const FFID &ffid, const QString &name) con
 
     const Property *p = &(Property::null());
 
+    bool has_property = false;
+
     foreach (FFIdx ffidx, ffidxs)
     {
         const FF &ff = this->_pvt_forceField(ffidx);
@@ -3059,6 +3061,7 @@ const Property& ForceFields::property(const FFID &ffid, const QString &name) con
             if ( p->equals(Property::null()) )
             {
                 p = &(ff.property(name));
+                has_property = true;
             }
             else if ( not p->equals(ff.property(name)) )
             {
@@ -3074,7 +3077,7 @@ const Property& ForceFields::property(const FFID &ffid, const QString &name) con
         }
     }
     
-    if ( p->equals(Property::null()) )
+    if (not has_property)
         throw SireBase::missing_property( QObject::tr(
             "None of the forcefields that match the ID '%1' contain "
             "a property called %2.")
