@@ -2685,7 +2685,11 @@ static MolGroupPtr constrain(const MoleculeGroup &molgroup,
     if (not map["space"].hasValue())
         tmp_system.setProperty("space", Cartesian());
     
-    tmp_system = constraint.apply(tmp_system);
+    tmp_system.add(constraint);
+    tmp_system.applyConstraints();
+    
+    if (not tmp_system.constraintsSatisfied())
+        qDebug() << "WARNING - constraints not satisfied!";
     
     MolGroupPtr new_molgroup( molgroup );
     new_molgroup.edit().update(tmp_system.molecules());
