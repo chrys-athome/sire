@@ -217,6 +217,10 @@ public:
     
     const Matrix& basis() const;
     
+    int dimX() const;
+    int dimY() const;
+    int dimZ() const;
+    
     SireUnits::Dimension::Length gridSpacing() const;
     
     GridPtr translate(const Vector &delta) const;
@@ -234,6 +238,9 @@ private:
     
     /** The distance between nearest neighbour grid points */
     SireUnits::Dimension::Length grid_spacing;
+    
+    /** The number of points in the x, y and z dimensions */
+    quint32 dimx, dimy, dimz;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS

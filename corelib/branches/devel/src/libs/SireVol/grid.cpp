@@ -351,6 +351,7 @@ QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const RegularGrid &grid)
     writeHeader(ds, r_reggrid, 1);
     
     ds << grid.basis_vectors << grid.grid_spacing
+       << grid.dimx << grid.dimy << grid.dimz
        << static_cast<const Grid&>(grid);
        
     return ds;
@@ -363,6 +364,7 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, RegularGrid &grid)
     if (v == 1)
     {
         ds >> grid.basis_vectors >> grid.grid_spacing
+           >> grid.dimx >> grid.dimy >> grid.dimz
            >> static_cast<Grid&>(grid);
     }
     else
@@ -375,7 +377,7 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, RegularGrid &grid)
 RegularGrid::RegularGrid()
             : ConcreteProperty<RegularGrid,Grid>(),
               basis_vectors( Matrix::identity() ),
-              grid_spacing(0)
+              grid_spacing(0), dimx(0), dimy(0), dimz(0)
 {}
 
 /** Construct a regular grid that spans from 'min' to 'max' using the
@@ -402,6 +404,10 @@ RegularGrid::RegularGrid(const Vector &min, const Vector &max,
     int nz = 1 + ((maxcoords.z() - mincoords.z()) / spacing.value());
 
     int n = nx * ny * nz;
+    
+    dimx = nx;
+    dimy = ny;
+    dimz = nz;
     
     if (nx > 1500 or ny > 1500 or nz > 1500 or n > (320*320*320))
         throw SireError::unavailable_resource( QObject::tr(
@@ -495,6 +501,10 @@ RegularGrid::RegularGrid(const Vector &center, const Quaternion &basis, int npoi
         
         int n = npoints * npoints * npoints;
         
+        dimx = npoints;
+        dimy = npoints;
+        dimz = npoints;
+        
         QVector<Vector> grid_points(n);
         grid_points.squeeze();
         Vector *grid_point = grid_points.data();
@@ -548,7 +558,8 @@ RegularGrid::RegularGrid(const Vector &center, const Matrix &basis, int npoints,
 /** Copy constructor */
 RegularGrid::RegularGrid(const RegularGrid &other)
             : ConcreteProperty<RegularGrid,Grid>(other),
-              basis_vectors(other.basis_vectors), grid_spacing(other.grid_spacing)
+              basis_vectors(other.basis_vectors), grid_spacing(other.grid_spacing),
+              dimx(other.dimx), dimy(other.dimy), dimz(other.dimz)
 {}
 
 /** Destructor */
@@ -562,6 +573,9 @@ RegularGrid& RegularGrid::operator=(const RegularGrid &other)
     {
         basis_vectors = other.basis_vectors;
         grid_spacing = other.grid_spacing;
+        dimx = other.dimx;
+        dimy = other.dimy;
+        dimz = other.dimz;
         Grid::operator=(other);
     }
     
@@ -573,7 +587,8 @@ bool RegularGrid::operator==(const RegularGrid &other) const
 {
     return basis_vectors == other.basis_vectors and
            grid_spacing == other.grid_spacing and
-           Grid::operator==(other);
+           dimx == other.dimx and dimy == other.dimy and
+           dimz == other.dimz and Grid::operator==(other);
 }
 
 /** Comparison operator */
@@ -600,6 +615,24 @@ const Matrix& RegularGrid::basis() const
 Length RegularGrid::gridSpacing() const
 {
     return grid_spacing;
+}
+
+/** Return the number of points in the x dimension */
+int RegularGrid::dimX() const
+{
+    return dimx;
+}
+
+/** Return the number of points in the y dimension */
+int RegularGrid::dimY() const
+{
+    return dimy;
+}
+
+/** Return the number of points in the z dimension */
+int RegularGrid::dimZ() const
+{
+    return dimz;
 }
 
 /** Return a copy of this grid that has been translated by 'delta' */

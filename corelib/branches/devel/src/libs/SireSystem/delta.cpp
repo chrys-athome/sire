@@ -252,7 +252,7 @@ bool Delta::changed(const Molecules &molecules) const
              it != molecules.constEnd();
              ++it)
         {
-            if (this->changed(it.value()))
+            if (changed_mols.contains(it.key()))
                 return true;
         }
         
@@ -264,9 +264,9 @@ bool Delta::changed(const Molecules &molecules) const
              it != changed_mols.constEnd();
              ++it)
         {
-            Molecules::const_iterator it = molecules.constFind(it.key());
+            Molecules::const_iterator it2 = molecules.constFind(it.key());
             
-            if (it != molecules.constEnd())
+            if (it2 != molecules.constEnd())
                 return true;
         }
         

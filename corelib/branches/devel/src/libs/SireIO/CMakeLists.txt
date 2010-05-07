@@ -9,6 +9,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireIO
 set ( SIREIO_HEADERS
+      cube.h
       errors.h
       iobase.h
       pdb.h
@@ -22,6 +23,7 @@ set ( SIREIO_SOURCES
 
       register_sireio.cpp
 
+      cube.cpp
       errors.cpp
       iobase.cpp
       pdb.cpp
