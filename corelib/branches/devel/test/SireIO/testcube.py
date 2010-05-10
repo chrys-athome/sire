@@ -32,6 +32,6 @@ print grid.minCoords(), grid.maxCoords(), grid.gridSpacing()
 
 table = PotentialTable( cljff[MGIdx(0)], grid )
 
-cljff.potential(table)
+cljff.potential(table, CLJProbe(1*mod_electron))
 
 Cube().write(table, cljff, "test.cube")

@@ -409,7 +409,9 @@ bool Constraints::apply(Delta &delta)
             }
             
             if (not something_changed)
+            {
                 return system_changed;
+            }
         }
     
         //the constraints couldn't be satisfied - get the list

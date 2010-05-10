@@ -568,7 +568,8 @@ void System::setName(const QString &newname)
 void System::collectStats()
 {
     sysmonitors.monitor(*this);
-    sysversion.incrementMinor();
+    sysversion.incrementMajor();
+    cons.committed(*this);
 }
 
 /** Return the forcefield with ID 'ffid' in this system
@@ -769,7 +770,7 @@ void System::setEnergyComponent(const Symbol &symbol,
     {
         this->_pvt_forceFields().setEnergyComponent(symbol, expression);
         sysversion.incrementMajor();
-        this->applyAllConstraints();
+        this->applyConstraints();
     }
     catch(...)
     {
@@ -889,7 +890,7 @@ void System::setConstantComponent(const Symbol &symbol,
     {
         this->_pvt_forceFields().setConstantComponent(symbol, expression);
         sysversion.incrementMajor();
-        this->applyAllConstraints();
+        this->applyConstraints();
     }
     catch(...)
     {
@@ -1058,6 +1059,7 @@ void System::setProperty(const QString &name, const Property &value)
 {
     this->_pvt_forceFields().setProperty(name, value);
     sysversion.incrementMajor();
+    this->applyConstraints();
 }
 
 /** Set the value of the property called 'name' in the forcefields identified
@@ -1071,6 +1073,7 @@ void System::setProperty(const FFID &ffid, const QString &name, const Property &
 {
     this->_pvt_forceFields().setProperty(ffid, name, value);
     sysversion.incrementMajor();
+    this->applyConstraints();
 }
     
 /** Remove the property with name 'name'. Note that this can only
@@ -1081,6 +1084,7 @@ void System::removeProperty(const QString &name)
 {
     this->_pvt_forceFields().removeProperty(name);
     sysversion.incrementMajor();
+    this->applyConstraints();
 }
 
 /** Return whether or not the property 'name' exists and is a compound 

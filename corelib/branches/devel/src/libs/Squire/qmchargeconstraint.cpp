@@ -207,7 +207,6 @@ Molecule QMChargeConstraint::_pvt_calculateCharges(const PartialMolecule &molecu
     return molecule.molecule().edit()
                               .setProperty(charge_property, new_chgs)
                               .commit();
-                                
 }
 
 void QMChargeConstraint::setSystem(const System &system)

@@ -561,11 +561,15 @@ bool AM1BCC::mayChangeCharges(const PartialMolecule &oldmol,
 
     //the charges won't change if the molecule hasn't changed!
     if (olddata.version() == newdata.version())
+    {
         return false;
+    }
         
     //if atoms have been added or removed, then the charges will change
     if (olddata.info() != newdata.info())
+    {
         return true;
+    }
 
     //the charges won't change if the elements or coordinates
     //properties haven't changed

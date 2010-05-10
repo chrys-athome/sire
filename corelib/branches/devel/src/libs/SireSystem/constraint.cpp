@@ -122,7 +122,9 @@ bool Constraint::mayAffect(const Delta &delta) const
             return this->mayChange(delta, last_subversion);
     }
     else
+    {
         return true;
+    }
 }
 
 /** Internal function to apply this constraint to the passed delta,
