@@ -24,6 +24,7 @@ set ( PYPP_SOURCES
        NullConstraint.pypp.cpp
        NullMonitor.pypp.cpp
        PerturbationConstraint.pypp.cpp
+       PolariseCharges.pypp.cpp
        PropertyConstraint.pypp.cpp
        RDF.pypp.cpp
        RDFMonitor.pypp.cpp

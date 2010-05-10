@@ -27,6 +27,7 @@ set ( SIREMOL_HEADERS
       atommatcher.h
       atomname.h
       atomnum.h
+      atompolarisabilities.h
       atomproperty.hpp
       atomselection.h
       atomsin.hpp

@@ -67,9 +67,11 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "atomforces.h"
+
 #include "atomcoords.h"
 
-#include "atomforces.h"
+#include "atompolarisabilities.h"
 
 #include "atomvelocities.h"
 
@@ -134,6 +136,16 @@ SireMol::AtomEditorBase& set_Metadata_SireMol_AtomMasses_function2(
                                   SireMol::AtomEditorBase &molview,
                                    const QString &key, const QString &metakey, const SireUnits::Dimension::MolarMass &p)
                                    { return molview.setMetadata< SireUnits::Dimension::MolarMass >(key, metakey, p); }
+
+SireMol::AtomEditorBase& set_Metadata_SireMol_AtomPolarisabilities_function1(
+                                  SireMol::AtomEditorBase &molview,
+                                   const QString &metakey, const SireUnits::Dimension::Volume &p)
+                                   { return molview.setMetadata< SireUnits::Dimension::Volume >(metakey, p); }
+
+SireMol::AtomEditorBase& set_Metadata_SireMol_AtomPolarisabilities_function2(
+                                  SireMol::AtomEditorBase &molview,
+                                   const QString &key, const QString &metakey, const SireUnits::Dimension::Volume &p)
+                                   { return molview.setMetadata< SireUnits::Dimension::Volume >(key, metakey, p); }
 
 SireMol::AtomEditorBase& set_Metadata_SireMol_AtomVelocities_function1(
                                   SireMol::AtomEditorBase &molview,
@@ -282,6 +294,10 @@ void register_AtomEditorBase_class(){
                                            &SireMol::AtomEditorBase::setProperty< SireUnits::Dimension::MolarMass >, bp::return_self< >() );
         AtomEditorBase_exposer.def( "_set_metadata_SireUnits_Dimension_MolarMass", &set_Metadata_SireMol_AtomMasses_function1, bp::return_self< >());
         AtomEditorBase_exposer.def( "_set_metadata_SireUnits_Dimension_MolarMass", &set_Metadata_SireMol_AtomMasses_function2, bp::return_self< >());
+        AtomEditorBase_exposer.def( "_set_property_SireUnits_Dimension_Volume", 
+                                           &SireMol::AtomEditorBase::setProperty< SireUnits::Dimension::Volume >, bp::return_self< >() );
+        AtomEditorBase_exposer.def( "_set_metadata_SireUnits_Dimension_Volume", &set_Metadata_SireMol_AtomPolarisabilities_function1, bp::return_self< >());
+        AtomEditorBase_exposer.def( "_set_metadata_SireUnits_Dimension_Volume", &set_Metadata_SireMol_AtomPolarisabilities_function2, bp::return_self< >());
         AtomEditorBase_exposer.def( "_set_property_SireBase_Vector3D_SireUnits_Dimension_Velocity_", 
                                            &SireMol::AtomEditorBase::setProperty< SireBase::Vector3D<SireUnits::Dimension::Velocity> >, bp::return_self< >() );
         AtomEditorBase_exposer.def( "_set_metadata_SireBase_Vector3D_SireUnits_Dimension_Velocity_", &set_Metadata_SireMol_AtomVelocities_function1, bp::return_self< >());

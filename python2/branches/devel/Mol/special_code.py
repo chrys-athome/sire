@@ -384,6 +384,7 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "AtomForces" : fix_MolViewProperty,                
                  "AtomMasses"  : fix_MolViewProperty,
                  "AtomVelocities" : fix_MolViewProperty,
+                 "AtomPolarisabilities" : fix_MolViewProperty,
 
                  "SireMol::ConnectivityEditor" : fix_ConnectivityEditor,
                  "SireMol::MGName" : fix_MGName,

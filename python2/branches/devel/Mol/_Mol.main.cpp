@@ -49,6 +49,8 @@
 
 #include "AtomNum.pypp.hpp"
 
+#include "AtomPolarisabilities.pypp.hpp"
+
 #include "AtomProp.pypp.hpp"
 
 #include "AtomSelection.pypp.hpp"
@@ -509,6 +511,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_AtomElements_class();
 
     register_AtomCharges_class();
+
+    register_AtomPolarisabilities_class();
 
     register_AtomMasses_class();
 

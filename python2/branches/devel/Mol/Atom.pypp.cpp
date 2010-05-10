@@ -62,9 +62,11 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "atomforces.h"
+
 #include "atomcoords.h"
 
-#include "atomforces.h"
+#include "atompolarisabilities.h"
 
 #include "atomvelocities.h"
 
@@ -111,6 +113,13 @@ const SireUnits::Dimension::MolarMass& get_Metadata_SireMol_AtomMasses_function1
 const SireUnits::Dimension::MolarMass& get_Metadata_SireMol_AtomMasses_function2(const SireMol::Atom &atom,
                                    const QString &key, const QString &metakey){
                                         return atom.metadata< SireUnits::Dimension::MolarMass >(key, metakey); }
+
+const SireUnits::Dimension::Volume& get_Metadata_SireMol_AtomPolarisabilities_function1(const SireMol::Atom &atom,
+                                   const QString &metakey){ return atom.metadata< SireUnits::Dimension::Volume >(metakey); }
+
+const SireUnits::Dimension::Volume& get_Metadata_SireMol_AtomPolarisabilities_function2(const SireMol::Atom &atom,
+                                   const QString &key, const QString &metakey){
+                                        return atom.metadata< SireUnits::Dimension::Volume >(key, metakey); }
 
 const SireBase::Vector3D<SireUnits::Dimension::Velocity>& get_Metadata_SireMol_AtomVelocities_function1(const SireMol::Atom &atom,
                                    const QString &metakey){ return atom.metadata< SireBase::Vector3D<SireUnits::Dimension::Velocity> >(metakey); }
@@ -526,6 +535,9 @@ void register_Atom_class(){
         Atom_exposer.def( "_get_property_SireMol_AtomMasses", &SireMol::Atom::property< SireUnits::Dimension::MolarMass >, bp::return_value_policy<bp::copy_const_reference>());
         Atom_exposer.def( "_get_metadata_SireMol_AtomMasses", get_Metadata_SireMol_AtomMasses_function1, bp::return_value_policy<bp::copy_const_reference>());
         Atom_exposer.def( "_get_metadata_SireMol_AtomMasses", &get_Metadata_SireMol_AtomMasses_function2, bp::return_value_policy<bp::copy_const_reference>());
+        Atom_exposer.def( "_get_property_SireMol_AtomPolarisabilities", &SireMol::Atom::property< SireUnits::Dimension::Volume >, bp::return_value_policy<bp::copy_const_reference>());
+        Atom_exposer.def( "_get_metadata_SireMol_AtomPolarisabilities", get_Metadata_SireMol_AtomPolarisabilities_function1, bp::return_value_policy<bp::copy_const_reference>());
+        Atom_exposer.def( "_get_metadata_SireMol_AtomPolarisabilities", &get_Metadata_SireMol_AtomPolarisabilities_function2, bp::return_value_policy<bp::copy_const_reference>());
         Atom_exposer.def( "_get_property_SireMol_AtomVelocities", &SireMol::Atom::property< SireBase::Vector3D<SireUnits::Dimension::Velocity> >, bp::return_value_policy<bp::copy_const_reference>());
         Atom_exposer.def( "_get_metadata_SireMol_AtomVelocities", get_Metadata_SireMol_AtomVelocities_function1, bp::return_value_policy<bp::copy_const_reference>());
         Atom_exposer.def( "_get_metadata_SireMol_AtomVelocities", &get_Metadata_SireMol_AtomVelocities_function2, bp::return_value_policy<bp::copy_const_reference>());

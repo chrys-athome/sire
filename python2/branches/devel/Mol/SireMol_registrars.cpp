@@ -31,6 +31,7 @@
 #include "chainname.h"
 #include "chargeperturbation.h"
 #include "partialmolecule.h"
+#include "atompolarisabilities.h"
 #include "mgidx.h"
 #include "viewsofmol.h"
 #include "residentifier.h"
@@ -145,6 +146,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::ChargePerturbation >();
     ObjectRegistry::registerConverterFor< SireMol::PartialMolecule >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::PartialMolecule> >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomPolarisabilities >();
     ObjectRegistry::registerConverterFor< SireMol::MGIdx >();
     ObjectRegistry::registerConverterFor< SireMol::ViewsOfMol >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::ViewsOfMol> >();

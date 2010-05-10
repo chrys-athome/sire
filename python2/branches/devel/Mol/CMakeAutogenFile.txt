@@ -21,6 +21,7 @@ set ( PYPP_SOURCES
        AtomName.pypp.cpp
        AtomNameMatcher.pypp.cpp
        AtomNum.pypp.cpp
+       AtomPolarisabilities.pypp.cpp
        AtomProp.pypp.cpp
        AtomSelection.pypp.cpp
        AtomsIn_CGID_.pypp.cpp

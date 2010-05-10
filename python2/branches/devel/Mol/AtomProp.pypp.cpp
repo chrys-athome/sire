@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "atommasses.h"
 
+#include "atompolarisabilities.h"
+
 #include "atomproperty.hpp"
 
 #include "atomvelocities.h"

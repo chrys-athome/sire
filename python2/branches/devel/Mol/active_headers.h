@@ -17,6 +17,7 @@
 #include "atommatcher.h"
 #include "atomname.h"
 #include "atomnum.h"
+#include "atompolarisabilities.h"
 #include "atomproperty.hpp"
 #include "atomselection.h"
 #include "atomvelocities.h"

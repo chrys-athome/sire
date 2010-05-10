@@ -3,10 +3,10 @@
 
 #include "SireSystem_registrars.h"
 
-#include "sysidentifier.h"
+#include "distancecomponent.h"
 #include "perturbationconstraint.h"
 #include "rdfmonitor.h"
-#include "distancecomponent.h"
+#include "polarisecharges.h"
 #include "monitormonitor.h"
 #include "spacewrapper.h"
 #include "monitoridx.h"
@@ -23,6 +23,7 @@
 #include "systemmonitors.h"
 #include "system.h"
 #include "monitorcomponents.h"
+#include "sysidentifier.h"
 #include "identityconstraint.h"
 #include "sysname.h"
 #include "monitorid.h"
@@ -32,13 +33,13 @@
 void register_SireSystem_objects()
 {
 
-    ObjectRegistry::registerConverterFor< SireSystem::SysIdentifier >();
-    ObjectRegistry::registerConverterFor< SireSystem::PerturbationConstraint >();
-    ObjectRegistry::registerConverterFor< SireSystem::RDF >();
-    ObjectRegistry::registerConverterFor< SireSystem::RDFMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::DistanceComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::DoubleDistanceComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::TripleDistanceComponent >();
+    ObjectRegistry::registerConverterFor< SireSystem::PerturbationConstraint >();
+    ObjectRegistry::registerConverterFor< SireSystem::RDF >();
+    ObjectRegistry::registerConverterFor< SireSystem::RDFMonitor >();
+    ObjectRegistry::registerConverterFor< SireSystem::PolariseCharges >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::SpaceWrapper >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorIdx >();
@@ -60,6 +61,7 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::SystemMonitors >();
     ObjectRegistry::registerConverterFor< SireSystem::System >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorComponents >();
+    ObjectRegistry::registerConverterFor< SireSystem::SysIdentifier >();
     ObjectRegistry::registerConverterFor< SireSystem::IdentityConstraint >();
     ObjectRegistry::registerConverterFor< SireSystem::SysName >();
     ObjectRegistry::registerConverterFor< SireID::Specify<SireSystem::MonitorID> >();

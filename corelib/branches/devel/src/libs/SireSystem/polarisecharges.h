@@ -31,6 +31,9 @@
 
 #include "chargeconstraint.h"
 
+#include "SireFF/probe.h"
+#include "SireCAS/symbol.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireSystem
@@ -63,7 +66,15 @@ public:
     PolariseCharges(const MoleculeGroup &molgroup,
                     const PropertyMap &map = PropertyMap());
     PolariseCharges(const MoleculeGroup &molgroup,
-                    const MoleculeGroup &chargegroup,
+                    const SireFF::Probe &probe,
+                    const PropertyMap &map = PropertyMap());
+
+    PolariseCharges(const MoleculeGroup &molgroup,
+                    const SireCAS::Symbol &field_component,
+                    const PropertyMap &map = PropertyMap());
+    PolariseCharges(const MoleculeGroup &molgroup,
+                    const SireCAS::Symbol &field_component,
+                    const SireFF::Probe &probe,
                     const PropertyMap &map = PropertyMap());
     
     PolariseCharges(const PolariseCharges &other);
@@ -75,11 +86,15 @@ public:
     bool operator==(const PolariseCharges &other) const;
     bool operator!=(const PolariseCharges &other) const;
     
-    static const char* typeName() const;
+    static const char* typeName();
     
     PolariseCharges* clone() const;
     
     QString toString() const;
+
+    const SireCAS::Symbol& fieldComponent() const;
+
+    const SireFF::Probe& probe() const;
 
 protected:
     void setSystem(const System &system);
@@ -88,13 +103,24 @@ protected:
     
     bool fullApply(Delta &delta);
     bool deltaApply(Delta &delta, quint32 last_subversion);
+
+private:
+    /** The forcefield component that is used to calculate 
+        the potential on the atoms to be polarised */
+    SireCAS::Symbol field_component;
+    
+    /** The probe used to calculate the potential on the atoms */
+    SireFF::ProbePtr field_probe;
+    
+    /** The charge on the probe (in mod_electrons) */
+    double probe_charge;
 };
 
 }
 
-//Q_DECLARE_METATYPE( SireSystem::PolariseCharges )
+Q_DECLARE_METATYPE( SireSystem::PolariseCharges )
 
-//SIRE_EXP O SE_CLASS( SireSystem::PolariseCharges )
+SIRE_EXPOSE_CLASS( SireSystem::PolariseCharges )
 
 SIRE_END_HEADER
 

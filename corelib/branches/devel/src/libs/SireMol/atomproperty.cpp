@@ -33,6 +33,7 @@
 #include "atommasses.h"
 #include "atomforces.h"
 #include "atomvelocities.h"
+#include "atompolarisabilities.h"
 
 #include "SireError/errors.h"
 
@@ -101,6 +102,8 @@ namespace SireMol
     template class AtomProperty<SireMol::Velocity3D>;
 
     template class AtomProperty<SireMol::Force3D>;
+    
+    template class AtomProperty<SireUnits::Dimension::Volume>;
 }
 
 static const RegisterMetaType<AtomStringProperty> r_atomstring;
@@ -112,3 +115,4 @@ static const RegisterMetaType<AtomMasses> r_atommasses;
 static const RegisterMetaType<AtomForces> r_atomforces;
 static const RegisterMetaType<AtomVelocities> r_atomvelocities;
 static const RegisterMetaType<AtomElements> r_atomelements;
+static const RegisterMetaType<AtomPolarisabilities> r_atompols;

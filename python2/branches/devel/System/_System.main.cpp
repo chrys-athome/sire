@@ -55,6 +55,8 @@
 
 #include "PerturbationConstraint.pypp.hpp"
 
+#include "PolariseCharges.pypp.hpp"
+
 #include "PropertyConstraint.pypp.hpp"
 
 #include "RDF.pypp.hpp"
@@ -151,6 +153,8 @@ BOOST_PYTHON_MODULE(_System){
     register_NullMonitor_class();
 
     register_PerturbationConstraint_class();
+
+    register_PolariseCharges_class();
 
     register_PropertyConstraint_class();
 

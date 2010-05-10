@@ -25,7 +25,7 @@ cljff.add(tip4p)
 
 print cljff.energy()
 
-grid = RegularGrid(tip4p.evaluate().center(), 50, 0.2*angstrom)
+grid = RegularGrid(tip4p.evaluate().center(), 100, 0.1*angstrom)
 
 print grid
 print grid.minCoords(), grid.maxCoords(), grid.gridSpacing()
