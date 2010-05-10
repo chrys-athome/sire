@@ -890,6 +890,8 @@ bool ComponentConstraint::mayChange(const Delta &delta, quint32 last_subversion)
 {
     BOOST_ASSERT( Constraint::wasLastSystem(delta.deltaSystem()) );
 
+    return true;
+
     return (not Constraint::wasLastSatisfied()) or
            delta.sinceChanged(constrained_component, last_subversion) or
            delta.sinceChanged(syms, last_subversion);
@@ -980,12 +982,12 @@ bool ComponentConstraint::deltaApply(Delta &delta, quint32 last_subversion)
                 constrained_value = 0;
                 changed_comp = true;
             }
+        }
 
-            if ( (changed_target or changed_comp) and not 
-                 (has_constrained_value and (constrained_value == target_value)) )
-            {
-                return delta.update(constrained_component, target_value);
-            }
+        if ( (changed_target or changed_comp) and not 
+             (has_constrained_value and (constrained_value == target_value)) )
+        {
+            return delta.update(constrained_component, target_value);
         }
     }
     

@@ -79,8 +79,11 @@ inline QString toString(const SireMaths::Rational &val)
     fractional power 'power' */
 inline double pow_pvt(double x, const Rational &power)
 {
-    if ( x > 0.0 or SireMaths::isEven(power.numerator()) or 
-         SireMaths::isOdd(power.denominator()) )
+    if ( x == 0 )
+        return 0;
+        
+    else if ( x > 0.0 or SireMaths::isEven(power.numerator()) or 
+              SireMaths::isOdd(power.denominator()) )
     {
         switch(power.denominator())
         {
