@@ -52,6 +52,36 @@ void register_RegularGrid_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireVol::RegularGrid::dimX
+        
+            typedef int ( ::SireVol::RegularGrid::*dimX_function_type )(  ) const;
+            dimX_function_type dimX_function_value( &::SireVol::RegularGrid::dimX );
+            
+            RegularGrid_exposer.def( 
+                "dimX"
+                , dimX_function_value );
+        
+        }
+        { //::SireVol::RegularGrid::dimY
+        
+            typedef int ( ::SireVol::RegularGrid::*dimY_function_type )(  ) const;
+            dimY_function_type dimY_function_value( &::SireVol::RegularGrid::dimY );
+            
+            RegularGrid_exposer.def( 
+                "dimY"
+                , dimY_function_value );
+        
+        }
+        { //::SireVol::RegularGrid::dimZ
+        
+            typedef int ( ::SireVol::RegularGrid::*dimZ_function_type )(  ) const;
+            dimZ_function_type dimZ_function_value( &::SireVol::RegularGrid::dimZ );
+            
+            RegularGrid_exposer.def( 
+                "dimZ"
+                , dimZ_function_value );
+        
+        }
         { //::SireVol::RegularGrid::gridSpacing
         
             typedef ::SireUnits::Dimension::Length ( ::SireVol::RegularGrid::*gridSpacing_function_type )(  ) const;
