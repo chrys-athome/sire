@@ -85,6 +85,7 @@ set_target_properties (SireSystem PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireSystem
+                       SireMM
                        SireFF
                        SireMol
                        SireCAS

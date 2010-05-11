@@ -282,12 +282,12 @@ void SimStore::_pvt_moveFromDiskToMemory()
     {
         throw SireError::file_error(f, CODELOC);
     }
-    
+
     //now read all of the data
     compressed_data = f.readAll();
     
     f.close();
-    
+
     //lose the file (this will auto-delete the temporary file
     //if no other SimStores are using it)
     packed_file.reset();
@@ -380,6 +380,7 @@ void SimStore::packToDisk(const QString &tempdir)
     
     //now write the data to disk
     qint64 nbytes = tmp->write(compressed_data);
+    tmp->close();
     
     if (nbytes == -1)
     {

@@ -3,6 +3,7 @@
 // (C) Christopher Woods, GPL >= 2 License
 
 #include "boost/python.hpp"
+#include "Helpers/clone_const_reference.hpp"
 #include "PolariseCharges.pypp.hpp"
 
 namespace bp = boost::python;
@@ -29,8 +30,21 @@ void register_PolariseCharges_class(){
         bp::scope PolariseCharges_scope( PolariseCharges_exposer );
         PolariseCharges_exposer.def( bp::init< >() );
         PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
-        PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("chargegroup"), bp::arg("map")=SireBase::PropertyMap() )) );
+        PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireFF::Probe const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("probe"), bp::arg("map")=SireBase::PropertyMap() )) );
+        PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireCAS::Symbol const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("field_component"), bp::arg("map")=SireBase::PropertyMap() )) );
+        PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireCAS::Symbol const &, SireFF::Probe const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("field_component"), bp::arg("probe"), bp::arg("map")=SireBase::PropertyMap() )) );
         PolariseCharges_exposer.def( bp::init< SireSystem::PolariseCharges const & >(( bp::arg("other") )) );
+        { //::SireSystem::PolariseCharges::fieldComponent
+        
+            typedef ::SireCAS::Symbol const & ( ::SireSystem::PolariseCharges::*fieldComponent_function_type )(  ) const;
+            fieldComponent_function_type fieldComponent_function_value( &::SireSystem::PolariseCharges::fieldComponent );
+            
+            PolariseCharges_exposer.def( 
+                "fieldComponent"
+                , fieldComponent_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
         PolariseCharges_exposer.def( bp::self != bp::self );
         { //::SireSystem::PolariseCharges::operator=
         
@@ -45,6 +59,17 @@ void register_PolariseCharges_class(){
         
         }
         PolariseCharges_exposer.def( bp::self == bp::self );
+        { //::SireSystem::PolariseCharges::probe
+        
+            typedef ::SireFF::Probe const & ( ::SireSystem::PolariseCharges::*probe_function_type )(  ) const;
+            probe_function_type probe_function_value( &::SireSystem::PolariseCharges::probe );
+            
+            PolariseCharges_exposer.def( 
+                "probe"
+                , probe_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
         { //::SireSystem::PolariseCharges::toString
         
             typedef ::QString ( ::SireSystem::PolariseCharges::*toString_function_type )(  ) const;

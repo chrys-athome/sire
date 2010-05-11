@@ -47,6 +47,11 @@ QDataStream& operator>>(QDataStream&, SireSystem::PolariseCharges&);
 namespace SireSystem
 {
 
+namespace detail
+{
+class PolariseChargesData;
+}
+
 /** This charge constraint adjusts the partial charges of contained
     molecules to give the impression that the molecule contains
     polarisable dipoles. This is based on the method developed
@@ -105,6 +110,8 @@ protected:
     bool deltaApply(Delta &delta, quint32 last_subversion);
 
 private:
+    void setProbe(const SireFF::Probe &probe);
+
     /** The forcefield component that is used to calculate 
         the potential on the atoms to be polarised */
     SireCAS::Symbol field_component;
@@ -114,6 +121,10 @@ private:
     
     /** The charge on the probe (in mod_electrons) */
     double probe_charge;
+
+    /** The information about each molecule that is needed
+        to calculate the polarisability */
+    QHash<SireMol::MolNum,detail::PolariseChargesData> moldata;
 };
 
 }

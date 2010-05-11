@@ -133,6 +133,8 @@ static boost::shared_ptr<QTemporaryFile> writeToDisk(const QByteArray &data,
                 .arg(save_dir), CODELOC );
     }
     
+    tmp->close();
+    
     return tmp;
 }
 
@@ -369,6 +371,10 @@ void TrajectoryMonitor::writeToDisk(const QString &file_template) const
     {
         //read the file
         QByteArray data = ::readFromDisk( *(*it) );
+        
+        if (data.isEmpty())
+            continue;
+        
         data = qUncompress(data);
     
         QString filename = file_template;

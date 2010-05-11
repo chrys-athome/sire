@@ -51,7 +51,7 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const SystemMonitors 
     writeHeader(ds, r_sysmons, 1);
     
     SharedDataStream sds(ds);
-    
+
     sds << sysmons.mons_by_name << sysmons.mons_by_idx
         << sysmons.mons_by_frequency << sysmons.stepnum;
 

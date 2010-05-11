@@ -28,12 +28,118 @@
 
 #include "polarisecharges.h"
 
+#include "SireMaths/nmatrix.h"
+
+#include "SireMol/connectivity.h"
+#include "SireMol/atomcoords.h"
+#include "SireMol/atomcharges.h"
+#include "SireMol/atompolarisabilities.h"
+#include "SireMol/molecule.h"
+#include "SireMol/moleculedata.h"
+
+#include "SireFF/probe.h"
+
+#include "SireMM/cljprobe.h"
+
+#include "SireSystem/system.h"
+
+#include "SireUnits/units.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireSystem;
 using namespace SireMol;
+using namespace SireFF;
+using namespace SireMM;
+using namespace SireUnits;
+using namespace SireMaths;
+using namespace SireBase;
 using namespace SireStream;
+
+/////////////
+///////////// Implementation of PolariseChargesData
+/////////////
+
+namespace SireSystem
+{
+    namespace detail
+    {
+        class PolariseChargesData
+        {
+        public:
+            PolariseChargesData()
+            {}
+            
+            PolariseChargesData(const MoleculeView &molview,
+                                const PropertyName &coords_property,
+                                const PropertyName &connectivity_property,
+                                const PropertyName &polarise_property);
+            
+            PolariseChargesData(const PolariseChargesData &other)
+                  : alpha_inv_xx(other.alpha_inv_xx)
+            {}
+            
+            ~PolariseChargesData()
+            {}
+            
+            PolariseChargesData& operator=(const PolariseChargesData &other)
+            {
+                if (this != &other)
+                {
+                    alpha_inv_xx = other.alpha_inv_xx;
+                }
+                
+                return *this;
+            }
+            
+            /** The matrix holding alpha * (X X^T)**-1 */
+            NMatrix alpha_inv_xx;
+            
+            /** The connectivity of the molecule */
+            Connectivity connectivity;
+            
+            /** The selection of atoms to be polarised - this
+                is empty if all of the atoms are selected */
+            AtomSelection selected_atoms;
+            
+            /** The polarised charges */
+            AtomCharges polarised_charges;
+        };
+    }
+}
+
+using namespace SireSystem::detail;
+
+PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
+                                         const PropertyName &coords_property,
+                                         const PropertyName &connectivity_property,
+                                         const PropertyName &polarise_property)
+{
+    const AtomCoords &coords = molview.data().property(coords_property)
+                                             .asA<AtomCoords>();
+                                            
+    connectivity = molview.data().property(connectivity_property)
+                                 .asA<Connectivity>();
+                                 
+    const AtomPolarisabilities &polarise = molview.data().property(polarise_property)
+                                                         .asA<AtomPolarisabilities>();
+
+    polarised_charges = AtomCharges(molview.data().info());
+
+    if (molview.selectedAll())
+    {
+        //loop over all of the atoms
+    }
+    else
+    {
+        selected_atoms = molview.selection();
+    }
+}
+
+/////////////
+///////////// Implementation of PolariseCharges
+/////////////
 
 static const RegisterMetaType<PolariseCharges> r_polarise_charges;
 
@@ -74,6 +180,9 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
     return ds;
 }
 
+void PolariseCharges::setProbe(const Probe &probe)
+{}
+
 /** Null constructor */
 PolariseCharges::PolariseCharges() 
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>(),
@@ -85,7 +194,7 @@ PolariseCharges::PolariseCharges()
 PolariseCharges::PolariseCharges(const MoleculeGroup &molgroup,
                                  const PropertyMap &map)
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>(molgroup, map),
-                  field_component(System::totalComponent())
+                  field_component(ForceFields::totalComponent())
 {
     this->setProbe( CoulombProbe( 1*mod_electron ) );
 }
@@ -95,7 +204,7 @@ PolariseCharges::PolariseCharges(const MoleculeGroup &molgroup,
 PolariseCharges::PolariseCharges(const MoleculeGroup &molgroup,
                                  const Probe &probe, const PropertyMap &map)
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>(molgroup, map),
-                  field_component(System::totalComponent())
+                  field_component(ForceFields::totalComponent())
 {
     this->setProbe(probe);
 }
@@ -125,7 +234,8 @@ PolariseCharges::PolariseCharges(const MoleculeGroup &molgroup,
 PolariseCharges::PolariseCharges(const PolariseCharges &other)
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>(other),
                   field_component(other.field_component),
-                  field_probe(other.field_probe), probe_charge(other.probe_charge)
+                  field_probe(other.field_probe), probe_charge(other.probe_charge),
+                  moldata(other.moldata)
 {}
 
 /** Destructor */
@@ -139,7 +249,8 @@ PolariseCharges& PolariseCharges::operator=(const PolariseCharges &other)
     {
         field_component = other.field_component;
         field_probe = other.field_probe;
-        probe_charge = other.field_charge;
+        probe_charge = other.probe_charge;
+        moldata = other.moldata;
     
         ChargeConstraint::operator=(other);
     }
@@ -175,6 +286,21 @@ PolariseCharges* PolariseCharges::clone() const
 QString PolariseCharges::toString() const
 {
     return "SireSystem::PolariseCharges";
+}
+
+/** Return the component of the forcefield that is used to 
+    calculate the electrostatic field on the atoms to be
+    polarised */
+const Symbol& PolariseCharges::fieldComponent() const
+{
+    return field_component;
+}
+
+/** Return the probe that is used to calculate the electrostatic
+    field on the atoms to be polarised */
+const Probe& PolariseCharges::probe() const
+{
+    return field_probe.read();
 }
 
 /** Set the baseline system for the constraint - this is 
