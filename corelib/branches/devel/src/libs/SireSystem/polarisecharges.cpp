@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "polarisecharges.h"
+#include "delta.h"
 
 #include "SireMaths/nmatrix.h"
 
@@ -44,6 +45,7 @@
 #include "SireSystem/system.h"
 
 #include "SireUnits/units.h"
+#include "SireUnits/convert.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -53,6 +55,7 @@ using namespace SireMol;
 using namespace SireFF;
 using namespace SireMM;
 using namespace SireUnits;
+using namespace SireUnits::Dimension;
 using namespace SireMaths;
 using namespace SireBase;
 using namespace SireStream;
@@ -65,10 +68,10 @@ namespace SireSystem
 {
     namespace detail
     {
-        class PolariseChargesData
+        class PolariseChargesData : public QSharedData
         {
         public:
-            PolariseChargesData()
+            PolariseChargesData() : QSharedData()
             {}
             
             PolariseChargesData(const MoleculeView &molview,
@@ -77,7 +80,7 @@ namespace SireSystem
                                 const PropertyName &polarise_property);
             
             PolariseChargesData(const PolariseChargesData &other)
-                  : alpha_inv_xx(other.alpha_inv_xx)
+                  : QSharedData()
             {}
             
             ~PolariseChargesData()
@@ -87,14 +90,19 @@ namespace SireSystem
             {
                 if (this != &other)
                 {
-                    alpha_inv_xx = other.alpha_inv_xx;
+                    
                 }
                 
                 return *this;
             }
             
+            void update(const MoleculeView &molview,
+                        const PropertyName &coords_property,
+                        const PropertyName &connectivity_property,
+                        const PropertyName &polarise_property);
+            
             /** The matrix holding alpha * (X X^T)**-1 */
-            NMatrix alpha_inv_xx;
+            QVector<NMatrix> inv_xx_matricies;
             
             /** The connectivity of the molecule */
             Connectivity connectivity;
@@ -105,6 +113,10 @@ namespace SireSystem
             
             /** The polarised charges */
             AtomCharges polarised_charges;
+            
+            /** The version number of the molecule for which this
+                data has been calculated */
+            quint64 molversion;
         };
     }
 }
@@ -115,6 +127,7 @@ PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
                                          const PropertyName &coords_property,
                                          const PropertyName &connectivity_property,
                                          const PropertyName &polarise_property)
+                    : QSharedData()
 {
     const AtomCoords &coords = molview.data().property(coords_property)
                                              .asA<AtomCoords>();
@@ -126,15 +139,84 @@ PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
                                                          .asA<AtomPolarisabilities>();
 
     polarised_charges = AtomCharges(molview.data().info());
+    inv_xx_matricies = QVector<NMatrix>(coords.nAtoms());
+    inv_xx_matricies.squeeze();
+
+    //this is the matrix of r vectors
+    QVarLengthArray<Vector,10> X;
 
     if (molview.selectedAll())
     {
         //loop over all of the atoms
+        int nats = coords.nAtoms();
+        
+        const Vector *coords_array = coords.array().coordsData();
+        const Volume *polarise_array = polarise.array().valueData();
+        
+        for (AtomIdx i(0); i<nats; ++i)
+        {
+            //get the atoms bonded to this atom
+            const QSet<AtomIdx> &bonded_atoms = connectivity.connectionsTo(i);
+            
+            if (bonded_atoms.isEmpty())
+                continue;
+
+            const int nbonded = bonded_atoms.count();
+
+            //construct the X matrix (matrix of vectors from connected 
+            //atoms to the this atom
+            X.resize(nbonded);
+            
+            if (polarise_array[i].value() == 0)
+                continue;
+            
+            const Vector &i_coords = coords_array[i];
+            
+            int j = 0;
+            foreach (AtomIdx bonded_atom, bonded_atoms)
+            {
+                X[j] = coords_array[bonded_atom] - i_coords;
+                
+                X[j] = Vector( SireUnits::convertTo( X[j][0], bohr_radii ),
+                               SireUnits::convertTo( X[j][1], bohr_radii ),
+                               SireUnits::convertTo( X[j][2], bohr_radii ) );
+                
+                X[j] /= polarise_array[i].value();
+                
+                ++j;
+            }
+            
+            //now construct ( X X^T )                        
+            NMatrix &inv_xx = inv_xx_matricies[i];
+            inv_xx = NMatrix(nbonded, nbonded);
+
+            for (int j=0; j<nbonded; ++j)
+            {
+                inv_xx(j,j) = Vector::dot(X[j], X[j]);
+            
+                for (int k=j+1; k<nbonded; ++k)
+                {
+                    const double j_dot_k = Vector::dot(X[j], X[k]);
+                    inv_xx(j,k) = j_dot_k;
+                    inv_xx(k,j) = j_dot_k;
+                }
+            }
+
+            //now construct alpha * ( X X^T )**-1
+            inv_xx = inv_xx.inverse();
+        }
     }
     else
     {
         selected_atoms = molview.selection();
     }
+}
+
+void PolariseChargesData::update(const MoleculeView &molview,
+                                 const PropertyName &coords_property,
+                                 const PropertyName &connectivity_property,
+                                 const PropertyName &polarise_property)
+{
 }
 
 /////////////
@@ -308,6 +390,56 @@ const Probe& PolariseCharges::probe() const
     and to check if the constraint is satisfied */
 void PolariseCharges::setSystem(const System &system)
 {
+    if (Constraint::wasLastSystem(system) and Constraint::wasLastSubVersion(system))
+        return;
+    
+    Constraint::clearLastSystem();
+
+    //update the molecule group - clear the current list of molecules
+    //if molecules have been added or removed from the group]
+    {
+        Version old_version = this->moleculeGroup().version();
+
+        this->updateGroup(system);
+    
+        if (old_version.majorVersion() != this->moleculeGroup().version().majorVersion())
+            moldata.clear();
+    }
+
+    const Molecules &molecules = this->moleculeGroup().molecules();
+
+    const PropertyMap &map = this->propertyMap();
+    const PropertyName coords_property = map["coordinates"];
+    const PropertyName connectivity_property = map["connectivity"];
+    const PropertyName polarise_property = map["polarisability"];
+
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
+         ++it)
+    {
+        QHash< MolNum,QSharedDataPointer<PolariseChargesData> >::const_iterator
+                                        it2 = moldata.constFind(it.key());
+                                        
+        if (it2 == moldata.constEnd())
+        {
+            moldata.insert( it.key(), QSharedDataPointer<PolariseChargesData>(
+                                            new PolariseChargesData(
+                                                    it.value(),
+                                                    coords_property, 
+                                                    connectivity_property,
+                                                    polarise_property) ) );
+        }
+        else
+        {
+            if (it2.value()->molversion != it.value().version())
+            {
+                //this molecule has changed and needs updating
+                moldata[it.key()]->update(it.value(), coords_property,
+                                          connectivity_property, polarise_property);
+            }
+        }
+    }
+
     //loop over each molecule
     //{
         //if this molecule has moves
@@ -328,6 +460,8 @@ void PolariseCharges::setSystem(const System &system)
         
         //calculate the polarised charges
     //}
+
+    Constraint::setSatisfied(system, false);
 }
 
 /** Return whether or not the changes in the passed
@@ -335,13 +469,14 @@ void PolariseCharges::setSystem(const System &system)
     subversion 'subversion' */
 bool PolariseCharges::mayChange(const Delta &delta, quint32 last_subversion) const
 {
-    return false;
+    return true;
 }
 
 /** Fully apply this constraint on the passed delta - this returns
     whether or not this constraint affects the delta */
 bool PolariseCharges::fullApply(Delta &delta)
 {
+    this->setSystem(delta.deltaSystem());
     return false;
 }
 
@@ -350,5 +485,6 @@ bool PolariseCharges::fullApply(Delta &delta)
     at subversion number last_subversion */
 bool PolariseCharges::deltaApply(Delta &delta, quint32 last_subversion)
 {
+    this->setSystem(delta.deltaSystem());
     return false;
 }

@@ -124,7 +124,8 @@ private:
 
     /** The information about each molecule that is needed
         to calculate the polarisability */
-    QHash<SireMol::MolNum,detail::PolariseChargesData> moldata;
+    QHash<SireMol::MolNum,
+            QSharedDataPointer<detail::PolariseChargesData> > moldata;
 };
 
 }

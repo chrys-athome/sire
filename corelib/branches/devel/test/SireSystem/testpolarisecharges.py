@@ -24,13 +24,36 @@ protoms.addParameterFile("%s/parameter/solvents.ff" % protoms_dir)
 
 tip4p = protoms.parameterise(tip4p, ProtoMS.SOLVENT)
 
+# set the polarisability of the atoms
+tip4p = tip4p.edit() \
+             .atom( AtomName("O00") ) \
+                  .setProperty("polarisability", 2.0*angstrom3) \
+                  .molecule() \
+             .atom( AtomName("H01") ) \
+                  .setProperty("polarisability", 0.5*angstrom3) \
+                  .molecule() \
+             .atom( AtomName("H02") ) \
+                  .setProperty("polarisability", 0.5*angstrom3) \
+                  .molecule() \
+             .commit()
+
+# Connect the atoms together...
+connectivity = Connectivity(tip4p)
+connectivity = connectivity.edit() \
+                           .connect(AtomName("O00"), AtomName("H01")) \
+                           .connect(AtomName("O00"), AtomName("H02")) \
+                           .commit()
+
 tip4p_chgs = tip4p.property("charge")
 tip4p_ljs = tip4p.property("LJ")
+tip4p_pol = tip4p.property("polarisability")
 
 for i in range(0, waters.nMolecules()):
     water = waters.moleculeAt(i).molecule()
     water = water.edit().setProperty("charge", tip4p_chgs) \
                         .setProperty("LJ", tip4p_ljs) \
+                        .setProperty("polarisability", tip4p_pol) \
+                        .setProperty("connectivity", connectivity) \
                  .commit()
 
     waters.update(water)
