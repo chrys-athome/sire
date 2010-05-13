@@ -38,6 +38,9 @@
 #include "SireFF/ff.h"
 #include "SireFF/ffmolgroup.h"
 #include "SireFF/forcetable.h"
+#include "SireFF/fieldtable.h"
+#include "SireFF/potentialtable.h"
+#include "SireFF/probe.h"
 
 #include "SireMol/partialmolecule.h"
 #include "SireMol/molecule.h"
@@ -1046,6 +1049,76 @@ void System::force(ForceTable &forcetable, const Symbol &component,
                    double scale_force)
 {
     this->_pvt_forceFields().force(forcetable, component, scale_force);
+}
+
+/** Add the fields acting on the molecules in the fieldtable 'fieldtable'
+    from this system onto this fieldtable, scaled by the optionally 
+    supplied 'scale_field' */
+void System::field(FieldTable &fieldtable, double scale_field)
+{
+    this->_pvt_forceFields().field(fieldtable, scale_field);
+}
+
+/** Add the fields acting on the molecules in the fieldtable 'fieldtable'
+    from the component of this system identified by 'component' onto 
+    this fieldtable, scaled by the optionally supplied 'scale_field' */
+void System::field(FieldTable &fieldtable, const Symbol &component,
+                   double scale_field)
+{
+    this->_pvt_forceFields().field(fieldtable, component, scale_field);
+}
+
+/** Add the fields acting on the molecules in the fieldtable 'fieldtable'
+    from this system onto this fieldtable, scaled by the optionally 
+    supplied 'scale_field' */
+void System::field(FieldTable &fieldtable, const Probe &probe, double scale_field)
+{
+    this->_pvt_forceFields().field(fieldtable, probe, scale_field);
+}
+
+/** Add the fields acting on the molecules in the fieldtable 'fieldtable'
+    from the component of this system identified by 'component' onto 
+    this fieldtable, scaled by the optionally supplied 'scale_field' */
+void System::field(FieldTable &fieldtable, const Symbol &component,
+                   const Probe &probe, double scale_field)
+{
+    this->_pvt_forceFields().field(fieldtable, component, probe, scale_field);
+}
+
+/** Add the potentials acting on the molecules in the potential table 'pottable'
+    from this system onto this potential table, scaled by the optionally 
+    supplied 'scale_potential' */
+void System::potential(PotentialTable &pottable, double scale_potential)
+{
+    this->_pvt_forceFields().potential(pottable, scale_potential);
+}
+
+/** Add the potentials acting on the molecules in the potential table 'pottable'
+    from the component of this system identified by 'component' onto 
+    this potential table, scaled by the optionally supplied 'scale_potential' */
+void System::potential(PotentialTable &pottable, const Symbol &component,
+                   double scale_potential)
+{
+    this->_pvt_forceFields().potential(pottable, component, scale_potential);
+}
+
+/** Add the potentials acting on the molecules in the potential table 'pottable'
+    from this system onto this potential table, scaled by the optionally 
+    supplied 'scale_potential' */
+void System::potential(PotentialTable &pottable, const Probe &probe,
+                       double scale_potential)
+{
+    this->_pvt_forceFields().potential(pottable, probe, scale_potential);
+}
+
+/** Add the potentials acting on the molecules in the potential table 'pottable'
+    from the component of this system identified by 'component' onto 
+    this potential table, scaled by the optionally supplied 'scale_potential' */
+void System::potential(PotentialTable &pottable, const Symbol &component,
+                       const Probe &probe, double scale_potential)
+{
+    this->_pvt_forceFields().potential(pottable, component, 
+                                       probe, scale_potential);
 }
 
 /** Set the value of the property called 'name' to the value 'value' in 

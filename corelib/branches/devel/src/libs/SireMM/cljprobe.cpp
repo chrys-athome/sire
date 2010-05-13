@@ -104,6 +104,19 @@ CoulombProbe::CoulombProbe(const CLJProbe &cljprobe)
     reduced_chg = ::getCharge(chg);
 }
 
+/** Construct from the passed probe */
+CoulombProbe::CoulombProbe(const Probe &probe)
+             : ConcreteProperty<CoulombProbe,Probe>(), chg(0)
+{
+    if (probe.isA<CoulombProbe>())
+        chg = probe.asA<CoulombProbe>().chg;
+
+    else if (probe.isA<CLJProbe>())
+        chg = probe.asA<CLJProbe>().charge();
+        
+    reduced_chg = ::getCharge(chg);
+}
+
 /** Copy constructor */
 CoulombProbe::CoulombProbe(const CoulombProbe &other)
              : ConcreteProperty<CoulombProbe,Probe>(other),
@@ -189,6 +202,17 @@ LJProbe::LJProbe(const LJParameter &lj)
 LJProbe::LJProbe(const CLJProbe &cljprobe)
         : ConcreteProperty<LJProbe,Probe>(), ljparam(cljprobe.lj())
 {}
+
+/** Construct from the passed probe */
+LJProbe::LJProbe(const Probe &probe)
+        : ConcreteProperty<LJProbe,Probe>()
+{
+    if (probe.isA<LJProbe>())
+        ljparam = probe.asA<LJProbe>().ljparam;
+
+    else if (probe.isA<CLJProbe>())
+        ljparam = probe.asA<CLJProbe>().lj();
+}
 
 /** Copy constructor */
 LJProbe::LJProbe(const LJProbe &other)
@@ -317,6 +341,20 @@ CLJProbe::CLJProbe(const CLJProbe &other)
 /** Destructor */
 CLJProbe::~CLJProbe()
 {}
+
+/** Construct from the passed probe */
+CLJProbe::CLJProbe(const Probe &other)
+         : ConcreteProperty<CLJProbe,Probe>(), chg(0), reduced_chg(0)
+{
+    if (other.isA<CLJProbe>())
+        this->operator=(other.asA<CLJProbe>());
+        
+    else if (other.isA<CoulombProbe>())
+        this->operator=(other.asA<CoulombProbe>());
+        
+    else if (other.isA<LJProbe>())
+        this->operator=(other.asA<LJProbe>());
+}
 
 /** Copy assignment operator */
 CLJProbe& CLJProbe::operator=(const CLJProbe &other)

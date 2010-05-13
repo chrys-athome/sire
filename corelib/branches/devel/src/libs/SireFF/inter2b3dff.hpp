@@ -581,7 +581,7 @@ void Inter2B3DFF<Potential>::field(FieldTable &fieldtable, const Probe &prob,
     if (scale_field == 0)
         return;
 
-    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
+    const typename Potential::Probe probe = prob.convertTo<typename Potential::Probe>();
 
     const int ngrids = fieldtable.nGrids();
     const int nfieldmols = fieldtable.nMolecules();
@@ -653,7 +653,7 @@ void Inter2B3DFF<Potential>::field(FieldTable &fieldtable, const Symbol &compone
     if (scale_field == 0)
         return;
 
-    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
+    const typename Potential::Probe probe = prob.convertTo<typename Potential::Probe>();
 
     const int ngrids = fieldtable.nGrids();
     const int nfieldmols = fieldtable.nMolecules();
@@ -727,7 +727,7 @@ void Inter2B3DFF<Potential>::potential(PotentialTable &potentialtable,
     if (scale_potential == 0)
         return;
 
-    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
+    const typename Potential::Probe probe = prob.convertTo<typename Potential::Probe>();
 
     const int ngrids = potentialtable.nGrids();
     const int npotentialmols = potentialtable.nMolecules();
@@ -801,7 +801,7 @@ void Inter2B3DFF<Potential>::potential(PotentialTable &potentialtable,
     if (scale_potential == 0)
         return;
 
-    const typename Potential::Probe &probe = prob.assertAsA<typename Potential::Probe>();
+    const typename Potential::Probe probe = prob.convertTo<typename Potential::Probe>();
 
     const int ngrids = potentialtable.nGrids();
     const int npotentialmols = potentialtable.nMolecules();

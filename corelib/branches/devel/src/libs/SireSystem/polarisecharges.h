@@ -31,7 +31,7 @@
 
 #include "chargeconstraint.h"
 
-#include "SireFF/probe.h"
+#include "SireMM/cljprobe.h"
 #include "SireCAS/symbol.h"
 
 SIRE_BEGIN_HEADER
@@ -99,7 +99,7 @@ public:
 
     const SireCAS::Symbol& fieldComponent() const;
 
-    const SireFF::Probe& probe() const;
+    const SireMM::CoulombProbe& probe() const;
 
 protected:
     void setSystem(const System &system);
@@ -117,11 +117,8 @@ private:
     SireCAS::Symbol field_component;
     
     /** The probe used to calculate the potential on the atoms */
-    SireFF::ProbePtr field_probe;
+    SireMM::CoulombProbe field_probe;
     
-    /** The charge on the probe (in mod_electrons) */
-    double probe_charge;
-
     /** The information about each molecule that is needed
         to calculate the polarisability */
     QHash<SireMol::MolNum,

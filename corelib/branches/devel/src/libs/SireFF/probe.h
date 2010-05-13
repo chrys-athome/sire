@@ -74,7 +74,7 @@ public:
     static const Probe& null();
 
     template<class T>
-    const T& assertAsA() const;
+    T convertTo() const;
 
 protected:
     Probe& operator=(const Probe &other);
@@ -112,14 +112,14 @@ typedef SireBase::PropPtr<Probe> ProbePtr;
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 template<class T>
-const T& Probe::assertAsA() const
+T Probe::convertTo() const
 {
     const T *as_t = dynamic_cast<const T*>(this);
     
     if (as_t == 0)
-        this->throwCastError( T::typeName() );
-        
-    return *as_t;
+        return T(*this);
+    else
+        return *as_t;
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS

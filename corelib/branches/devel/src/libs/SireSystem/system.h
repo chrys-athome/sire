@@ -65,6 +65,9 @@ using SireFF::FFID;
 using SireFF::FFIdx;
 using SireFF::FFName;
 using SireFF::ForceTable;
+using SireFF::FieldTable;
+using SireFF::PotentialTable;
+using SireFF::Probe;
 
 using SireMol::MolGroupsBase;
 using SireMol::MoleculeGroup;
@@ -243,6 +246,23 @@ public:
     void force(ForceTable &forcetable, double scale_force=1);
     void force(ForceTable &forcetable, const Symbol &component,
                double scale_force=1);
+                   
+    void field(FieldTable &fieldtable, double scale_field=1);
+    void field(FieldTable &fieldtable, const Symbol &component,
+               double scale_field=1);
+                   
+    void field(FieldTable &fieldtable, const Probe &probe, double scale_field=1);
+    void field(FieldTable &fieldtable, const Symbol &component,
+               const Probe &probe, double scale_field=1);
+    
+    void potential(PotentialTable &pottable, const Probe &probe, 
+                   double scale_potential=1);
+    void potential(PotentialTable &pottable, const Symbol &component,
+                   const Probe &probe, double scale_potential=1);
+    
+    void potential(PotentialTable &pottable, double scale_potential=1);
+    void potential(PotentialTable &pottable, const Symbol &component,
+                   double scale_potential=1);
     
     void setProperty(const QString &name, const Property &value);
     void setProperty(const FFID &ffid, const QString &name, const Property &value);

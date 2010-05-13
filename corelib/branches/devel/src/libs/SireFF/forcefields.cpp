@@ -33,6 +33,10 @@
 #include "ffidx.h"
 #include "ffname.h"
 #include "ff3d.h"
+#include "forcetable.h"
+#include "fieldtable.h"
+#include "potentialtable.h"
+#include "probe.h"
 
 #include "SireMol/mgnum.h"
 #include "SireMol/mgidx.h"
@@ -112,6 +116,28 @@ public:
                        QVector<FFPtr> &forcefields,
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                        double scale_force=1) const=0;
+                          
+    virtual void field(FieldTable &fieldtable,
+                       QVector<FFPtr> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_field=1) const=0;
+                          
+    virtual void field(FieldTable &fieldtable,
+                       const Probe &probe,
+                       QVector<FFPtr> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_field=1) const=0;
+                          
+    virtual void potential(PotentialTable &pottable,
+                           QVector<FFPtr> &forcefields,
+                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                           double scale_potential=1) const=0;
+                          
+    virtual void potential(PotentialTable &pottable,
+                           const Probe &probe,
+                           QVector<FFPtr> &forcefields,
+                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                           double scale_potential=1) const=0;
 
     const Symbol& symbol() const;
 
@@ -172,6 +198,28 @@ public:
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
     
+    void field(FieldTable &fieldtable,
+               QVector<FFPtr> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_field=1) const;
+    
+    void field(FieldTable &fieldtable,
+               const Probe &probe,
+               QVector<FFPtr> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_field=1) const;
+    
+    void potential(PotentialTable &pottable,
+                   QVector<FFPtr> &forcefields,
+                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                   double scale_potential=1) const;
+    
+    void potential(PotentialTable &pottable,
+                   const Probe &probe,
+                   QVector<FFPtr> &forcefields,
+                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                   double scale_potential=1) const;
+    
 private:
     /** The value of this symbol */
     double v;
@@ -212,6 +260,28 @@ public:
                QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
+    
+    void field(FieldTable &fieldtable,
+               QVector<FFPtr> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_field=1) const;
+    
+    void field(FieldTable &fieldtable,
+               const Probe &probe,
+               QVector<FFPtr> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_field=1) const;
+    
+    void potential(PotentialTable &pottable,
+                   QVector<FFPtr> &forcefields,
+                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                   double scale_potential=1) const;
+    
+    void potential(PotentialTable &pottable,
+                   const Probe &probe,
+                   QVector<FFPtr> &forcefields,
+                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                   double scale_potential=1) const;
 
 private:
     Expression expression;
@@ -252,6 +322,28 @@ public:
     void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
+    
+    void field(FieldTable &fieldtable,
+               QVector<FFPtr> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_field=1) const;
+    
+    void field(FieldTable &fieldtable,
+               const Probe &probe,
+               QVector<FFPtr> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_field=1) const;
+    
+    void potential(PotentialTable &pottable,
+                   QVector<FFPtr> &forcefields,
+                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                   double scale_potential=1) const;
+    
+    void potential(PotentialTable &pottable,
+                   const Probe &probe,
+                   QVector<FFPtr> &forcefields,
+                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                   double scale_potential=1) const;
 
 private:
     /** The index of the forcefield that contains this component */
@@ -294,6 +386,28 @@ public:
     void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
+    
+    void field(FieldTable &fieldtable,
+               QVector<FFPtr> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_field=1) const;
+    
+    void field(FieldTable &fieldtable,
+               const Probe &probe,
+               QVector<FFPtr> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_field=1) const;
+    
+    void potential(PotentialTable &pottable,
+                   QVector<FFPtr> &forcefields,
+                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                   double scale_potential=1) const;
+    
+    void potential(PotentialTable &pottable,
+                   const Probe &probe,
+                   QVector<FFPtr> &forcefields,
+                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                   double scale_potential=1) const;
 
 private:
     class Component
@@ -365,6 +479,29 @@ public:
     void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
+
+    
+    void field(FieldTable &fieldtable,
+               QVector<FFPtr> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_field=1) const;
+    
+    void field(FieldTable &fieldtable,
+               const Probe &probe,
+               QVector<FFPtr> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_field=1) const;
+    
+    void potential(PotentialTable &pottable,
+                   QVector<FFPtr> &forcefields,
+                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                   double scale_potential=1) const;
+    
+    void potential(PotentialTable &pottable,
+                   const Probe &probe,
+                   QVector<FFPtr> &forcefields,
+                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                   double scale_potential=1) const;
 };
 
 } // end of namespace detail
@@ -530,6 +667,46 @@ void FFConstantValue::force(ForceTable &forcetable,
                 .arg(this->symbol().toString()).arg(v), CODELOC );
 }
 
+void FFConstantValue::field(FieldTable &fieldtable,
+                            QVector<FFPtr> &forcefields,
+                            const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                            double scale_field) const
+{
+    throw SireError::program_bug( QObject::tr(
+            "Constant values or expressions do not cause a field, and should "
+            "not be called as if they could cause a field! %1 == %2")
+                .arg(this->symbol().toString()).arg(v), CODELOC );
+}
+
+void FFConstantValue::field(FieldTable &fieldtable,
+                            const Probe &probe,
+                            QVector<FFPtr> &forcefields,
+                            const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                            double scale_field) const
+{
+    FFConstantValue::field(fieldtable, forcefields, ffsymbols, scale_field);
+}
+
+void FFConstantValue::potential(PotentialTable &pottable,
+                                QVector<FFPtr> &forcefields,
+                                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                double scale_potential) const
+{
+    throw SireError::program_bug( QObject::tr(
+            "Constant values or expressions do not cause a field, and should "
+            "not be called as if they could cause a field! %1 == %2")
+                .arg(this->symbol().toString()).arg(v), CODELOC );
+}
+
+void FFConstantValue::potential(PotentialTable &pottable,
+                                const Probe &probe,
+                                QVector<FFPtr> &forcefields,
+                                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                double scale_potential) const
+{
+    FFConstantValue::potential(pottable, forcefields, ffsymbols, scale_potential);
+}
+
 ///////////
 /////////// Implementation of FFConstantExpression
 ///////////
@@ -639,6 +816,46 @@ void FFConstantExpression::force(ForceTable &forcetable,
                 .arg(this->symbol().toString(), expression.toString()), CODELOC );
 }
 
+void FFConstantExpression::field(FieldTable &fieldtable,
+                                 QVector<FFPtr> &forcefields,
+                                 const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                 double scale_field) const
+{
+    throw SireError::program_bug( QObject::tr(
+            "Constant values or expressions do not cause a field, and should "
+            "not be called as if they could cause a field! %1 == %2")
+                .arg(this->symbol().toString()).arg(expression.toString()), CODELOC );
+}
+
+void FFConstantExpression::field(FieldTable &fieldtable,
+                                 const Probe &probe,
+                                 QVector<FFPtr> &forcefields,
+                                 const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                 double scale_field) const
+{
+    FFConstantExpression::field(fieldtable, forcefields, ffsymbols, scale_field);
+}
+
+void FFConstantExpression::potential(PotentialTable &pottable,
+                                     QVector<FFPtr> &forcefields,
+                                     const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                     double scale_potential) const
+{
+    throw SireError::program_bug( QObject::tr(
+            "Constant values or expressions do not cause a field, and should "
+            "not be called as if they could cause a field! %1 == %2")
+                .arg(this->symbol().toString()).arg(expression.toString()), CODELOC );
+}
+
+void FFConstantExpression::potential(PotentialTable &pottable,
+                                     const Probe &probe,
+                                     QVector<FFPtr> &forcefields,
+                                     const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                     double scale_potential) const
+{
+    FFConstantExpression::potential(pottable, forcefields, ffsymbols, scale_potential);
+}
+
 ///////////
 /////////// Implementation of FFSymbolFF
 ///////////
@@ -711,6 +928,69 @@ void FFSymbolFF::force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                 .arg(ffield->what()), CODELOC );
 
     ffield.edit().asA<FF3D>().force(forcetable, this->symbol(), scale_force);
+}
+
+void FFSymbolFF::field(FieldTable &fieldtable, QVector<FFPtr> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_field) const
+{
+    FFPtr &ffield = forcefields[ffidx];
+    
+    if (not ffield->isA<FF3D>())
+        throw SireFF::missing_derivative( QObject::tr(
+            "The forcefield of type %1 does not inherit from FF3D so does "
+            "not provide a force function.")
+                .arg(ffield->what()), CODELOC );
+
+    ffield.edit().asA<FF3D>().field(fieldtable, this->symbol(), scale_field);
+}
+
+void FFSymbolFF::field(FieldTable &fieldtable, const Probe &probe, 
+                       QVector<FFPtr> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_field) const
+{
+    FFPtr &ffield = forcefields[ffidx];
+    
+    if (not ffield->isA<FF3D>())
+        throw SireFF::missing_derivative( QObject::tr(
+            "The forcefield of type %1 does not inherit from FF3D so does "
+            "not provide a force function.")
+                .arg(ffield->what()), CODELOC );
+
+    ffield.edit().asA<FF3D>().field(fieldtable, this->symbol(), probe, scale_field);
+}
+
+void FFSymbolFF::potential(PotentialTable &pottable, QVector<FFPtr> &forcefields,
+                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                           double scale_potential) const
+{
+    FFPtr &ffield = forcefields[ffidx];
+    
+    if (not ffield->isA<FF3D>())
+        throw SireFF::missing_derivative( QObject::tr(
+            "The forcefield of type %1 does not inherit from FF3D so does "
+            "not provide a force function.")
+                .arg(ffield->what()), CODELOC );
+
+    ffield.edit().asA<FF3D>().potential(pottable, this->symbol(), scale_potential);
+}
+
+void FFSymbolFF::potential(PotentialTable &pottable, const Probe &probe,
+                           QVector<FFPtr> &forcefields,
+                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                           double scale_potential) const
+{
+    FFPtr &ffield = forcefields[ffidx];
+    
+    if (not ffield->isA<FF3D>())
+        throw SireFF::missing_derivative( QObject::tr(
+            "The forcefield of type %1 does not inherit from FF3D so does "
+            "not provide a force function.")
+                .arg(ffield->what()), CODELOC );
+
+    ffield.edit().asA<FF3D>().potential(pottable, this->symbol(), 
+                                        probe, scale_potential);
 }
 
 ///////////
@@ -949,10 +1229,148 @@ void FFSymbolExpression::force(ForceTable &forcetable,
         }
         
         //now evaluate the scaling factor...
-        scale_force *= component.scalingFactor(values);
+        double scale = scale_force * component.scalingFactor(values);
         
         ffsymbols[component.symbol()]->force(forcetable, forcefields, 
-                                             ffsymbols, scale_force);
+                                             ffsymbols, scale);
+    }
+}
+
+void FFSymbolExpression::field(FieldTable &fieldtable,
+                               QVector<FFPtr> &forcefields,
+                               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                               double scale_field) const
+{
+    int ncomponents = 0;
+    const Component *components_array = components.constData();
+    
+    Values values;
+    
+    for (int i=0; i<ncomponents; ++i)
+    {
+        const Component &component = components_array[i];
+        
+        //evaluate all of the dependent symbols...
+        int ndeps = component.nDependents();
+        const Symbol *deps_array = component.dependents().constData();
+        
+        for (int j=0; j<ndeps; ++j)
+        {
+            const Symbol &symbol = deps_array[j];
+
+            if (not values.contains(symbol))
+                values.set( symbol, ffsymbols[symbol]->value(ffsymbols) );
+        }
+        
+        //now evaluate the scaling factor...
+        double scale = scale_field * component.scalingFactor(values);
+        
+        ffsymbols[component.symbol()]->field(fieldtable, forcefields, 
+                                             ffsymbols, scale);
+    }
+}
+
+void FFSymbolExpression::field(FieldTable &fieldtable,
+                               const Probe &probe,
+                               QVector<FFPtr> &forcefields,
+                               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                               double scale_field) const
+{
+    int ncomponents = 0;
+    const Component *components_array = components.constData();
+    
+    Values values;
+    
+    for (int i=0; i<ncomponents; ++i)
+    {
+        const Component &component = components_array[i];
+        
+        //evaluate all of the dependent symbols...
+        int ndeps = component.nDependents();
+        const Symbol *deps_array = component.dependents().constData();
+        
+        for (int j=0; j<ndeps; ++j)
+        {
+            const Symbol &symbol = deps_array[j];
+
+            if (not values.contains(symbol))
+                values.set( symbol, ffsymbols[symbol]->value(ffsymbols) );
+        }
+        
+        //now evaluate the scaling factor...
+        double scale = scale_field * component.scalingFactor(values);
+        
+        ffsymbols[component.symbol()]->field(fieldtable, probe, forcefields, 
+                                             ffsymbols, scale);
+    }
+}
+
+void FFSymbolExpression::potential(PotentialTable &pottable,
+                                   QVector<FFPtr> &forcefields,
+                                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                   double scale_potential) const
+{
+    int ncomponents = 0;
+    const Component *components_array = components.constData();
+    
+    Values values;
+    
+    for (int i=0; i<ncomponents; ++i)
+    {
+        const Component &component = components_array[i];
+        
+        //evaluate all of the dependent symbols...
+        int ndeps = component.nDependents();
+        const Symbol *deps_array = component.dependents().constData();
+        
+        for (int j=0; j<ndeps; ++j)
+        {
+            const Symbol &symbol = deps_array[j];
+
+            if (not values.contains(symbol))
+                values.set( symbol, ffsymbols[symbol]->value(ffsymbols) );
+        }
+        
+        //now evaluate the scaling factor...
+        double scale = scale_potential * component.scalingFactor(values);
+        
+        ffsymbols[component.symbol()]->potential(pottable, forcefields, 
+                                                 ffsymbols, scale);
+    }
+}
+
+void FFSymbolExpression::potential(PotentialTable &pottable,
+                                   const Probe &probe,
+                                   QVector<FFPtr> &forcefields,
+                                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                   double scale_potential) const
+{
+    int ncomponents = 0;
+    const Component *components_array = components.constData();
+    
+    Values values;
+    
+    for (int i=0; i<ncomponents; ++i)
+    {
+        const Component &component = components_array[i];
+        
+        //evaluate all of the dependent symbols...
+        int ndeps = component.nDependents();
+        const Symbol *deps_array = component.dependents().constData();
+        
+        for (int j=0; j<ndeps; ++j)
+        {
+            const Symbol &symbol = deps_array[j];
+
+            if (not values.contains(symbol))
+                values.set( symbol, ffsymbols[symbol]->value(ffsymbols) );
+        }
+        
+        //now evaluate the scaling factor...
+        double scale = scale_potential * component.scalingFactor(values);
+        
+        ffsymbols[component.symbol()]->potential(pottable, probe, forcefields, 
+                                                 ffsymbols, scale);
     }
 }
 
@@ -1031,6 +1449,76 @@ void FFTotalExpression::force(ForceTable &forcetable,
         
         if (ffield->isA<FF3D>())
             ffield.edit().asA<FF3D>().force(forcetable, scale_force);
+    }
+}
+
+void FFTotalExpression::field(FieldTable &fieldtable,
+                              QVector<FFPtr> &forcefields,
+                              const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                              double scale_field) const
+{
+    int nffields = forcefields.count();
+    FFPtr *ffields_array = forcefields.data();
+    
+    for (int i=0; i<nffields; ++i)
+    {
+        FFPtr &ffield = ffields_array[i];
+        
+        if (ffield->isA<FF3D>())
+            ffield.edit().asA<FF3D>().field(fieldtable, scale_field);
+    }
+}
+
+void FFTotalExpression::field(FieldTable &fieldtable,
+                              const Probe &probe,
+                              QVector<FFPtr> &forcefields,
+                              const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                              double scale_field) const
+{
+    int nffields = forcefields.count();
+    FFPtr *ffields_array = forcefields.data();
+    
+    for (int i=0; i<nffields; ++i)
+    {
+        FFPtr &ffield = ffields_array[i];
+        
+        if (ffield->isA<FF3D>())
+            ffield.edit().asA<FF3D>().field(fieldtable, probe, scale_field);
+    }
+}
+
+void FFTotalExpression::potential(PotentialTable &pottable,
+                                  QVector<FFPtr> &forcefields,
+                                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                  double scale_potential) const
+{
+    int nffields = forcefields.count();
+    FFPtr *ffields_array = forcefields.data();
+    
+    for (int i=0; i<nffields; ++i)
+    {
+        FFPtr &ffield = ffields_array[i];
+        
+        if (ffield->isA<FF3D>())
+            ffield.edit().asA<FF3D>().potential(pottable, scale_potential);
+    }
+}
+
+void FFTotalExpression::potential(PotentialTable &pottable,
+                                  const Probe &probe,
+                                  QVector<FFPtr> &forcefields,
+                                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                  double scale_potential) const
+{
+    int nffields = forcefields.count();
+    FFPtr *ffields_array = forcefields.data();
+    
+    for (int i=0; i<nffields; ++i)
+    {
+        FFPtr &ffield = ffields_array[i];
+        
+        if (ffield->isA<FF3D>())
+            ffield.edit().asA<FF3D>().potential(pottable, probe, scale_potential);
     }
 }
 
@@ -2380,6 +2868,147 @@ void ForceFields::force(ForceTable &forcetable, const Symbol &component,
 void ForceFields::force(ForceTable &forcetable, double scale_force)
 {
     this->force(forcetable, this->totalComponent(), scale_force);
+}
+
+/** Add the field due to the component 'component' to the molecules
+    in the field table 'fieldtable', scaled by 'scale_field'
+    
+    \throw SireFF::missing_component
+*/
+void ForceFields::field(FieldTable &fieldtable, const Symbol &component,
+                        double scale_field)
+{
+    FFSymbolPtr comp = ffsymbols.value(component);
+
+    if (comp.get() == 0)
+        throw SireFF::missing_component( QObject::tr(   
+            "There is no component of the energy represented by the "
+            "symbol %1. Available components are %2.")
+                .arg(component.toString(), Sire::toString(energySymbols())),
+                    CODELOC );
+
+    if (comp->isConstant())
+        throw SireFF::missing_component( QObject::tr(
+                "The component %1 is a constant component (it is not an energy "
+                "component). Available energy components are %2.")
+                    .arg(component.toString(),
+                         Sire::toString(energySymbols())), CODELOC );
+
+    comp->field(fieldtable, ffields_by_idx, 
+                ffsymbols, scale_field);
+}
+
+/** Add the fields due to the forcefields in this set to the molecules
+    in the field table 'fieldtable', scaled by 'scale_field' */
+void ForceFields::field(FieldTable &fieldtable, double scale_field)
+{
+    this->field(fieldtable, this->totalComponent(), scale_field);
+}
+
+/** Add the field due to the component 'component' to the molecules
+    in the field table 'fieldtable', scaled by 'scale_field'
+    
+    \throw SireFF::missing_component
+*/
+void ForceFields::field(FieldTable &fieldtable, const Symbol &component,
+                        const Probe &probe, double scale_field)
+{
+    FFSymbolPtr comp = ffsymbols.value(component);
+
+    if (comp.get() == 0)
+        throw SireFF::missing_component( QObject::tr(   
+            "There is no component of the energy represented by the "
+            "symbol %1. Available components are %2.")
+                .arg(component.toString(), Sire::toString(energySymbols())),
+                    CODELOC );
+
+    if (comp->isConstant())
+        throw SireFF::missing_component( QObject::tr(
+                "The component %1 is a constant component (it is not an energy "
+                "component). Available energy components are %2.")
+                    .arg(component.toString(),
+                         Sire::toString(energySymbols())), CODELOC );
+
+    comp->field(fieldtable, probe, ffields_by_idx, 
+                ffsymbols, scale_field);
+}
+
+/** Add the fields due to the forcefields in this set to the molecules
+    in the field table 'fieldtable', scaled by 'scale_field' */
+void ForceFields::field(FieldTable &fieldtable, const Probe &probe, double scale_field)
+{
+    this->field(fieldtable, this->totalComponent(), probe, scale_field);
+}
+
+/** Add the potential due to the component 'component' to the molecules
+    in the potential table 'pottable', scaled by 'scale_potential'
+    
+    \throw SireFF::missing_component
+*/
+void ForceFields::potential(PotentialTable &pottable, const Symbol &component,
+                            double scale_potential)
+{
+    FFSymbolPtr comp = ffsymbols.value(component);
+
+    if (comp.get() == 0)
+        throw SireFF::missing_component( QObject::tr(   
+            "There is no component of the energy represented by the "
+            "symbol %1. Available components are %2.")
+                .arg(component.toString(), Sire::toString(energySymbols())),
+                    CODELOC );
+
+    if (comp->isConstant())
+        throw SireFF::missing_component( QObject::tr(
+                "The component %1 is a constant component (it is not an energy "
+                "component). Available energy components are %2.")
+                    .arg(component.toString(),
+                         Sire::toString(energySymbols())), CODELOC );
+
+    comp->potential(pottable, ffields_by_idx, 
+                    ffsymbols, scale_potential);
+}
+
+/** Add the potential due to the forcefields in this set to the molecules
+    in the potential table 'pottable', scaled by 'scale_potential' */
+void ForceFields::potential(PotentialTable &pottable, double scale_potential)
+{
+    this->potential(pottable, this->totalComponent(), scale_potential);
+}
+
+/** Add the potential due to the component 'component' to the molecules
+    in the potential table 'pottable', scaled by 'scale_potential'
+    
+    \throw SireFF::missing_component
+*/
+void ForceFields::potential(PotentialTable &pottable, const Symbol &component,
+                            const Probe &probe, double scale_potential)
+{
+    FFSymbolPtr comp = ffsymbols.value(component);
+
+    if (comp.get() == 0)
+        throw SireFF::missing_component( QObject::tr(   
+            "There is no component of the energy represented by the "
+            "symbol %1. Available components are %2.")
+                .arg(component.toString(), Sire::toString(energySymbols())),
+                    CODELOC );
+
+    if (comp->isConstant())
+        throw SireFF::missing_component( QObject::tr(
+                "The component %1 is a constant component (it is not an energy "
+                "component). Available energy components are %2.")
+                    .arg(component.toString(),
+                         Sire::toString(energySymbols())), CODELOC );
+
+    comp->potential(pottable, probe, ffields_by_idx, 
+                    ffsymbols, scale_potential);
+}
+
+/** Add the potential due to the forcefields in this set to the molecules
+    in the potential table 'pottable', scaled by 'scale_potential' */
+void ForceFields::potential(PotentialTable &pottable, 
+                            const Probe &probe, double scale_potential)
+{
+    this->potential(pottable, this->totalComponent(), probe, scale_potential);
 }
 
 /** Sanitise the user properties. This removes dangling links,

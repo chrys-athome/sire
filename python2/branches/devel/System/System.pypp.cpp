@@ -18,9 +18,15 @@ namespace bp = boost::python;
 
 #include "SireFF/ffmolgroup.h"
 
+#include "SireFF/fieldtable.h"
+
 #include "SireFF/forcefield.h"
 
 #include "SireFF/forcetable.h"
+
+#include "SireFF/potentialtable.h"
+
+#include "SireFF/probe.h"
 
 #include "SireMol/errors.h"
 
@@ -793,6 +799,50 @@ void register_System_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireSystem::System::field
+        
+            typedef void ( ::SireSystem::System::*field_function_type )( ::SireFF::FieldTable &,double ) ;
+            field_function_type field_function_value( &::SireSystem::System::field );
+            
+            System_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireSystem::System::field
+        
+            typedef void ( ::SireSystem::System::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,double ) ;
+            field_function_type field_function_value( &::SireSystem::System::field );
+            
+            System_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireSystem::System::field
+        
+            typedef void ( ::SireSystem::System::*field_function_type )( ::SireFF::FieldTable &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::SireSystem::System::field );
+            
+            System_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireSystem::System::field
+        
+            typedef void ( ::SireSystem::System::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::SireSystem::System::field );
+            
+            System_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
         { //::SireSystem::System::force
         
             typedef void ( ::SireSystem::System::*force_function_type )( ::SireFF::ForceTable &,double ) ;
@@ -1113,6 +1163,50 @@ void register_System_class(){
                 , __getitem___function_value
                 , ( bp::arg("mgid") )
                 , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireSystem::System::potential
+        
+            typedef void ( ::SireSystem::System::*potential_function_type )( ::SireFF::PotentialTable &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::SireSystem::System::potential );
+            
+            System_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("pottable"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireSystem::System::potential
+        
+            typedef void ( ::SireSystem::System::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::SireSystem::System::potential );
+            
+            System_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("pottable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireSystem::System::potential
+        
+            typedef void ( ::SireSystem::System::*potential_function_type )( ::SireFF::PotentialTable &,double ) ;
+            potential_function_type potential_function_value( &::SireSystem::System::potential );
+            
+            System_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("pottable"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireSystem::System::potential
+        
+            typedef void ( ::SireSystem::System::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,double ) ;
+            potential_function_type potential_function_value( &::SireSystem::System::potential );
+            
+            System_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("pottable"), bp::arg("component"), bp::arg("scale_potential")=1 ) );
         
         }
         { //::SireSystem::System::properties

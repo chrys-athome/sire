@@ -69,6 +69,7 @@ public:
     CoulombProbe();
     CoulombProbe(SireUnits::Dimension::Charge charge);
     CoulombProbe(const CLJProbe &cljprobe);
+    CoulombProbe(const SireFF::Probe &probe);
     
     CoulombProbe(const CoulombProbe &other);
     
@@ -105,6 +106,7 @@ public:
     LJProbe();
     LJProbe(const LJParameter &ljparam);
     LJProbe(const CLJProbe &cljprobe);
+    LJProbe(const SireFF::Probe &probe);
     
     LJProbe(const LJProbe &other);
     
@@ -141,6 +143,7 @@ public:
 
     CLJProbe(const CoulombProbe &probe);
     CLJProbe(const LJProbe &probe);
+    CLJProbe(const SireFF::Probe &probe);
     
     CLJProbe(const CLJProbe &cljprobe);
     

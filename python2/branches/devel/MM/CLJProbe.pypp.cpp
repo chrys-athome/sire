@@ -33,6 +33,7 @@ void register_CLJProbe_class(){
         CLJProbe_exposer.def( bp::init< SireUnits::Dimension::Charge, SireMM::LJParameter const & >(( bp::arg("charge"), bp::arg("ljparam") )) );
         CLJProbe_exposer.def( bp::init< SireMM::CoulombProbe const & >(( bp::arg("probe") )) );
         CLJProbe_exposer.def( bp::init< SireMM::LJProbe const & >(( bp::arg("probe") )) );
+        CLJProbe_exposer.def( bp::init< SireFF::Probe const & >(( bp::arg("probe") )) );
         CLJProbe_exposer.def( bp::init< SireMM::CLJProbe const & >(( bp::arg("cljprobe") )) );
         { //::SireMM::CLJProbe::charge
         

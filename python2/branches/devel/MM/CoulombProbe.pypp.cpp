@@ -30,6 +30,7 @@ void register_CoulombProbe_class(){
         CoulombProbe_exposer.def( bp::init< >() );
         CoulombProbe_exposer.def( bp::init< SireUnits::Dimension::Charge >(( bp::arg("charge") )) );
         CoulombProbe_exposer.def( bp::init< SireMM::CLJProbe const & >(( bp::arg("cljprobe") )) );
+        CoulombProbe_exposer.def( bp::init< SireFF::Probe const & >(( bp::arg("probe") )) );
         CoulombProbe_exposer.def( bp::init< SireMM::CoulombProbe const & >(( bp::arg("other") )) );
         { //::SireMM::CoulombProbe::charge
         

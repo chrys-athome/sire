@@ -30,6 +30,7 @@ void register_LJProbe_class(){
         LJProbe_exposer.def( bp::init< >() );
         LJProbe_exposer.def( bp::init< SireMM::LJParameter const & >(( bp::arg("ljparam") )) );
         LJProbe_exposer.def( bp::init< SireMM::CLJProbe const & >(( bp::arg("cljprobe") )) );
+        LJProbe_exposer.def( bp::init< SireFF::Probe const & >(( bp::arg("probe") )) );
         LJProbe_exposer.def( bp::init< SireMM::LJProbe const & >(( bp::arg("other") )) );
         { //::SireMM::LJProbe::lj
         

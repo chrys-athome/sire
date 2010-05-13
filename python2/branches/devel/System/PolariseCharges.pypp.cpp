@@ -8,9 +8,39 @@
 
 namespace bp = boost::python;
 
+#include "SireFF/potentialtable.h"
+
+#include "SireFF/probe.h"
+
+#include "SireMM/cljprobe.h"
+
+#include "SireMaths/nmatrix.h"
+
+#include "SireMol/atomcharges.h"
+
+#include "SireMol/atomcoords.h"
+
+#include "SireMol/atompolarisabilities.h"
+
+#include "SireMol/atomselection.h"
+
+#include "SireMol/connectivity.h"
+
+#include "SireMol/molecule.h"
+
+#include "SireMol/moleculedata.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
+
+#include "SireSystem/system.h"
+
+#include "SireUnits/convert.h"
+
+#include "SireUnits/units.h"
+
+#include "delta.h"
 
 #include "polarisecharges.h"
 
@@ -61,13 +91,13 @@ void register_PolariseCharges_class(){
         PolariseCharges_exposer.def( bp::self == bp::self );
         { //::SireSystem::PolariseCharges::probe
         
-            typedef ::SireFF::Probe const & ( ::SireSystem::PolariseCharges::*probe_function_type )(  ) const;
+            typedef ::SireMM::CoulombProbe const & ( ::SireSystem::PolariseCharges::*probe_function_type )(  ) const;
             probe_function_type probe_function_value( &::SireSystem::PolariseCharges::probe );
             
             PolariseCharges_exposer.def( 
                 "probe"
                 , probe_function_value
-                , bp::return_value_policy<bp::clone_const_reference>() );
+                , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
         { //::SireSystem::PolariseCharges::toString

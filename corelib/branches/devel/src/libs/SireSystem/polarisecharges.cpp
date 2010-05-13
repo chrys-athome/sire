@@ -30,6 +30,7 @@
 #include "delta.h"
 
 #include "SireMaths/nmatrix.h"
+#include "SireMaths/nvector.h"
 
 #include "SireMol/connectivity.h"
 #include "SireMol/atomcoords.h"
@@ -37,8 +38,10 @@
 #include "SireMol/atompolarisabilities.h"
 #include "SireMol/molecule.h"
 #include "SireMol/moleculedata.h"
+#include "SireMol/atomselection.h"
 
 #include "SireFF/probe.h"
+#include "SireFF/potentialtable.h"
 
 #include "SireMM/cljprobe.h"
 
@@ -96,11 +99,6 @@ namespace SireSystem
                 return *this;
             }
             
-            void update(const MoleculeView &molview,
-                        const PropertyName &coords_property,
-                        const PropertyName &connectivity_property,
-                        const PropertyName &polarise_property);
-            
             /** The matrix holding alpha * (X X^T)**-1 */
             QVector<NMatrix> inv_xx_matricies;
             
@@ -111,9 +109,6 @@ namespace SireSystem
                 is empty if all of the atoms are selected */
             AtomSelection selected_atoms;
             
-            /** The polarised charges */
-            AtomCharges polarised_charges;
-            
             /** The version number of the molecule for which this
                 data has been calculated */
             quint64 molversion;
@@ -123,6 +118,62 @@ namespace SireSystem
 
 using namespace SireSystem::detail;
 
+static void calculateAtomMatrix(AtomIdx atomidx, const AtomCoords &coords,
+                                const Volume &polarisability,
+                                const Connectivity &connectivity,
+                                const MoleculeInfoData &molinfo,
+                                QVarLengthArray<Vector,10> &X,
+                                NMatrix &inv_xx)
+{
+    //get the atoms bonded to this atom
+    const QSet<AtomIdx> &bonded_atoms = connectivity.connectionsTo(atomidx);
+
+    const int nbonded = bonded_atoms.count();
+    
+    const double alpha = four_pi_eps0 * polarisability.value();
+    
+    if (nbonded == 0 or alpha < 1e-6)
+        return;
+
+    //construct the X matrix (matrix of vectors from connected 
+    //atoms to the this atom
+    {
+        X.resize(nbonded);
+
+        const Vector &atom_coords = coords[ molinfo.cgAtomIdx(atomidx) ];
+
+        int i = 0;
+        foreach (AtomIdx bonded_atom, bonded_atoms)
+        {
+            X[i] = coords[ molinfo.cgAtomIdx(bonded_atom) ] - atom_coords;
+        
+            ++i;
+        }
+    }
+    
+    //now construct (1/alpha) ( X X^T )                        
+    inv_xx = NMatrix(nbonded, nbonded);
+
+    const double one_over_alpha = 1 / alpha;
+
+    for (int i=0; i<nbonded; ++i)
+    {
+        inv_xx(i,i) = one_over_alpha * Vector::dot(X[i], X[i]);
+    
+        for (int j=i+1; j<nbonded; ++j)
+        {
+            const double i_dot_j = Vector::dot(X[i], X[j]);
+            inv_xx(i,j) = i_dot_j;
+            inv_xx(j,i) = i_dot_j;
+        }
+    }
+
+    qDebug() << inv_xx.toString();
+
+    //now construct alpha * ( X X^T )**-1
+    inv_xx = inv_xx.inverse();
+}
+
 PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
                                          const PropertyName &coords_property,
                                          const PropertyName &connectivity_property,
@@ -131,6 +182,8 @@ PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
 {
     const AtomCoords &coords = molview.data().property(coords_property)
                                              .asA<AtomCoords>();
+
+    const MoleculeInfoData &molinfo = molview.data().info();
                                             
     connectivity = molview.data().property(connectivity_property)
                                  .asA<Connectivity>();
@@ -138,85 +191,63 @@ PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
     const AtomPolarisabilities &polarise = molview.data().property(polarise_property)
                                                          .asA<AtomPolarisabilities>();
 
-    polarised_charges = AtomCharges(molview.data().info());
     inv_xx_matricies = QVector<NMatrix>(coords.nAtoms());
     inv_xx_matricies.squeeze();
 
     //this is the matrix of r vectors
     QVarLengthArray<Vector,10> X;
-
+        
     if (molview.selectedAll())
     {
         //loop over all of the atoms
         int nats = coords.nAtoms();
         
-        const Vector *coords_array = coords.array().coordsData();
-        const Volume *polarise_array = polarise.array().valueData();
-        
         for (AtomIdx i(0); i<nats; ++i)
         {
-            //get the atoms bonded to this atom
-            const QSet<AtomIdx> &bonded_atoms = connectivity.connectionsTo(i);
-            
-            if (bonded_atoms.isEmpty())
-                continue;
-
-            const int nbonded = bonded_atoms.count();
-
-            //construct the X matrix (matrix of vectors from connected 
-            //atoms to the this atom
-            X.resize(nbonded);
-            
-            if (polarise_array[i].value() == 0)
-                continue;
-            
-            const Vector &i_coords = coords_array[i];
-            
-            int j = 0;
-            foreach (AtomIdx bonded_atom, bonded_atoms)
-            {
-                X[j] = coords_array[bonded_atom] - i_coords;
-                
-                X[j] = Vector( SireUnits::convertTo( X[j][0], bohr_radii ),
-                               SireUnits::convertTo( X[j][1], bohr_radii ),
-                               SireUnits::convertTo( X[j][2], bohr_radii ) );
-                
-                X[j] /= polarise_array[i].value();
-                
-                ++j;
-            }
-            
-            //now construct ( X X^T )                        
-            NMatrix &inv_xx = inv_xx_matricies[i];
-            inv_xx = NMatrix(nbonded, nbonded);
-
-            for (int j=0; j<nbonded; ++j)
-            {
-                inv_xx(j,j) = Vector::dot(X[j], X[j]);
-            
-                for (int k=j+1; k<nbonded; ++k)
-                {
-                    const double j_dot_k = Vector::dot(X[j], X[k]);
-                    inv_xx(j,k) = j_dot_k;
-                    inv_xx(k,j) = j_dot_k;
-                }
-            }
-
-            //now construct alpha * ( X X^T )**-1
-            inv_xx = inv_xx.inverse();
+            calculateAtomMatrix(i, coords, polarise[molinfo.cgAtomIdx(i)],
+                                connectivity, molinfo, X, inv_xx_matricies[i]);
         }
     }
     else
     {
         selected_atoms = molview.selection();
-    }
-}
+        
+        int ncgroups = selected_atoms.nCutGroups();
+        
+        const MoleculeInfoData &molinfo = molview.data().info();
+        
+        for (CGIdx i(0); i<ncgroups; ++i)
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                int nats = molinfo.nAtoms(i);
+                
+                for (Index j(0); j<nats; ++j)
+                {
+                    CGAtomIdx cgatomidx(i,j);
+                
+                    AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
+                    
+                    calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
+                                        connectivity, molinfo, X, 
+                                        inv_xx_matricies[atomidx]);
+                }
+            }
+            else
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    CGAtomIdx cgatomidx(i,j);
 
-void PolariseChargesData::update(const MoleculeView &molview,
-                                 const PropertyName &coords_property,
-                                 const PropertyName &connectivity_property,
-                                 const PropertyName &polarise_property)
-{
+                    AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
+
+                    calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
+                                        connectivity, molinfo, X, 
+                                        inv_xx_matricies[atomidx]);
+                }
+            }
+        }
+    }
 }
 
 /////////////
@@ -247,14 +278,10 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
     {
         SharedDataStream sds(ds);
         
-        ProbePtr probe;
-    
         polchgs = PolariseCharges();
         
-        sds >> polchgs.field_component >> probe 
+        sds >> polchgs.field_component >> polchgs.field_probe 
             >> static_cast<ChargeConstraint&>(polchgs);
-            
-        polchgs.setProbe(probe);
     }
     else
         throw version_error( v, "1", r_polarise_charges, CODELOC );
@@ -263,12 +290,25 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
 }
 
 void PolariseCharges::setProbe(const Probe &probe)
-{}
+{
+    if (probe.isA<CoulombProbe>())
+    {
+        field_probe = probe.asA<CoulombProbe>();
+    }
+    else if (probe.isA<CLJProbe>())
+    {
+        field_probe = CoulombProbe( probe.asA<CLJProbe>() );
+    }
+    else
+        throw SireError::incompatible_error( QObject::tr(
+                "You can only use a CoulombProbe or CLJProbe with "
+                "the PolariseCharges constraint - you cannot use %1.")
+                    .arg(probe.toString()), CODELOC );
+}
 
 /** Null constructor */
 PolariseCharges::PolariseCharges() 
-                : ConcreteProperty<PolariseCharges,ChargeConstraint>(),
-                  probe_charge(0)
+                : ConcreteProperty<PolariseCharges,ChargeConstraint>()
 {}
 
 /** Construct a constraint that uses the total energy field and a 
@@ -316,7 +356,7 @@ PolariseCharges::PolariseCharges(const MoleculeGroup &molgroup,
 PolariseCharges::PolariseCharges(const PolariseCharges &other)
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>(other),
                   field_component(other.field_component),
-                  field_probe(other.field_probe), probe_charge(other.probe_charge),
+                  field_probe(other.field_probe),
                   moldata(other.moldata)
 {}
 
@@ -331,7 +371,6 @@ PolariseCharges& PolariseCharges::operator=(const PolariseCharges &other)
     {
         field_component = other.field_component;
         field_probe = other.field_probe;
-        probe_charge = other.probe_charge;
         moldata = other.moldata;
     
         ChargeConstraint::operator=(other);
@@ -380,9 +419,74 @@ const Symbol& PolariseCharges::fieldComponent() const
 
 /** Return the probe that is used to calculate the electrostatic
     field on the atoms to be polarised */
-const Probe& PolariseCharges::probe() const
+const CoulombProbe& PolariseCharges::probe() const
 {
-    return field_probe.read();
+    return field_probe;
+}
+
+static AtomCharges calculateCharges(const MoleculeView &molview,
+                                    const PolariseChargesData &poldata,
+                                    const MolPotentialTable &moltable)
+{
+    const AtomSelection &selected_atoms = poldata.selected_atoms;
+    const NMatrix *inv_xx_mat_array = poldata.inv_xx_matricies.constData();
+    const MoleculeInfoData &molinfo = molview.data().info();
+    const Connectivity &connectivity = poldata.connectivity;
+    
+    AtomCharges induced_charges(molinfo);
+    
+    if (selected_atoms.isEmpty())
+    {
+        //all of the atoms have been selected
+        int nats = moltable.nValues();
+        BOOST_ASSERT( nats == poldata.inv_xx_matricies.count() );
+        
+        for (AtomIdx atomidx(0); atomidx<nats; ++atomidx)
+        {
+            const NMatrix &alpha_inv_XX = inv_xx_mat_array[atomidx];
+
+            if (alpha_inv_XX.nRows() == 0)
+                //this atom has a zero polarisability, or no bonded atoms
+                continue;
+
+            CGAtomIdx cgatomidx = molinfo.cgAtomIdx(atomidx);
+            
+            const QSet<AtomIdx> &bonded_atoms = connectivity.connectionsTo(atomidx);
+            
+            int nbonded = bonded_atoms.count();
+            
+            BOOST_ASSERT(nbonded == alpha_inv_XX.nRows());
+            
+            if (nbonded <= 1 or alpha_inv_XX.nRows() <= 1)
+                //not enough bonded atoms to take the charge
+                continue;
+                
+            double phi_a = moltable[cgatomidx.cutGroup()][cgatomidx.atom()].value();
+            
+            NVector delta_phi(nbonded);
+            {
+                int i = 0;
+                foreach (AtomIdx bonded_atom, bonded_atoms)
+                {
+                    CGAtomIdx bonded_cgatom = molinfo.cgAtomIdx(bonded_atom);
+                
+                    delta_phi[i] = phi_a - moltable[bonded_cgatom.cutGroup()]
+                                                   [bonded_cgatom.atom()].value();
+                    ++i;
+                }
+            }
+            
+            NVector delta_q = alpha_inv_XX * delta_phi;
+            
+            induced_charges[cgatomidx] = Charge( -(delta_q.sum()) );
+            //
+        }
+    }
+    else
+    {
+    }
+
+    return AtomCharges();
 }
 
 /** Set the baseline system for the constraint - this is 
@@ -413,6 +517,12 @@ void PolariseCharges::setSystem(const System &system)
     const PropertyName connectivity_property = map["connectivity"];
     const PropertyName polarise_property = map["polarisability"];
 
+    //now calculate the potential on each molecule
+    PotentialTable potentials(this->moleculeGroup());
+    System new_system(system);
+    new_system.potential(potentials, field_probe);
+
+    //now calculate the induced charges
     for (Molecules::const_iterator it = molecules.constBegin();
          it != molecules.constEnd();
          ++it)
@@ -434,32 +544,19 @@ void PolariseCharges::setSystem(const System &system)
             if (it2.value()->molversion != it.value().version())
             {
                 //this molecule has changed and needs updating
-                moldata[it.key()]->update(it.value(), coords_property,
-                                          connectivity_property, polarise_property);
+                *(moldata[it.key()]) = PolariseChargesData(it.value(), coords_property,
+                                                           connectivity_property,
+                                                           polarise_property);
             }
         }
+        
+        it2 = moldata.constFind(it.key());
+        
+        const MolPotentialTable &moltable = potentials.getTable(it.key());
+        
+        AtomCharges new_charges = calculateCharges(it.value(), *(it2.value().constData()),
+                                                   moltable);
     }
-
-    //loop over each molecule
-    //{
-        //if this molecule has moves
-        //{
-            //loop over each selected atom
-    
-            //if the connectivity has changed
-                //find the atoms bonded to this atom
-    
-            //calculate the distance vector matrix to each atom
-    
-            //invert this matrix
-        //}
-
-        //calculate the potential on the atoms
-        
-        //calculate the potential difference
-        
-        //calculate the polarised charges
-    //}
 
     Constraint::setSatisfied(system, false);
 }

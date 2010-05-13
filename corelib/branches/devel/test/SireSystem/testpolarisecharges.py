@@ -27,13 +27,16 @@ tip4p = protoms.parameterise(tip4p, ProtoMS.SOLVENT)
 # set the polarisability of the atoms
 tip4p = tip4p.edit() \
              .atom( AtomName("O00") ) \
-                  .setProperty("polarisability", 2.0*angstrom3) \
+                  .setProperty("polarisability", 0.0*angstrom3) \
                   .molecule() \
              .atom( AtomName("H01") ) \
-                  .setProperty("polarisability", 0.5*angstrom3) \
+                  .setProperty("polarisability", 0.0*angstrom3) \
                   .molecule() \
              .atom( AtomName("H02") ) \
-                  .setProperty("polarisability", 0.5*angstrom3) \
+                  .setProperty("polarisability", 0.0*angstrom3) \
+                  .molecule() \
+             .atom( AtomName("M03") ) \
+                  .setProperty("polarisability", 1.45*angstrom3) \
                   .molecule() \
              .commit()
 
@@ -42,6 +45,9 @@ connectivity = Connectivity(tip4p)
 connectivity = connectivity.edit() \
                            .connect(AtomName("O00"), AtomName("H01")) \
                            .connect(AtomName("O00"), AtomName("H02")) \
+                           .connect(AtomName("O00"), AtomName("M03")) \
+                           .connect(AtomName("M03"), AtomName("H01")) \
+                           .connect(AtomName("M03"), AtomName("H02")) \
                            .commit()
 
 tip4p_chgs = tip4p.property("charge")

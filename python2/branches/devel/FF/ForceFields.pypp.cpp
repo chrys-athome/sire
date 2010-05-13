@@ -46,7 +46,15 @@ namespace bp = boost::python;
 
 #include "ffname.h"
 
+#include "fieldtable.h"
+
 #include "forcefields.h"
+
+#include "forcetable.h"
+
+#include "potentialtable.h"
+
+#include "probe.h"
 
 #include "tostring.h"
 
@@ -734,6 +742,50 @@ void register_ForceFields_class(){
                 , ( bp::arg("ffid") ) );
         
         }
+        { //::SireFF::ForceFields::field
+        
+            typedef void ( ::SireFF::ForceFields::*field_function_type )( ::SireFF::FieldTable &,double ) ;
+            field_function_type field_function_value( &::SireFF::ForceFields::field );
+            
+            ForceFields_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireFF::ForceFields::field
+        
+            typedef void ( ::SireFF::ForceFields::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,double ) ;
+            field_function_type field_function_value( &::SireFF::ForceFields::field );
+            
+            ForceFields_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireFF::ForceFields::field
+        
+            typedef void ( ::SireFF::ForceFields::*field_function_type )( ::SireFF::FieldTable &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::SireFF::ForceFields::field );
+            
+            ForceFields_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
+        { //::SireFF::ForceFields::field
+        
+            typedef void ( ::SireFF::ForceFields::*field_function_type )( ::SireFF::FieldTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            field_function_type field_function_value( &::SireFF::ForceFields::field );
+            
+            ForceFields_exposer.def( 
+                "field"
+                , field_function_value
+                , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
+        
+        }
         { //::SireFF::ForceFields::force
         
             typedef void ( ::SireFF::ForceFields::*force_function_type )( ::SireFF::ForceTable &,double ) ;
@@ -1078,6 +1130,50 @@ void register_ForceFields_class(){
                 , __getitem___function_value
                 , ( bp::arg("ffid") )
                 , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireFF::ForceFields::potential
+        
+            typedef void ( ::SireFF::ForceFields::*potential_function_type )( ::SireFF::PotentialTable &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::ForceFields::potential );
+            
+            ForceFields_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("pottable"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireFF::ForceFields::potential
+        
+            typedef void ( ::SireFF::ForceFields::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,::SireFF::Probe const &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::ForceFields::potential );
+            
+            ForceFields_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("pottable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireFF::ForceFields::potential
+        
+            typedef void ( ::SireFF::ForceFields::*potential_function_type )( ::SireFF::PotentialTable &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::ForceFields::potential );
+            
+            ForceFields_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("pottable"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::SireFF::ForceFields::potential
+        
+            typedef void ( ::SireFF::ForceFields::*potential_function_type )( ::SireFF::PotentialTable &,::SireCAS::Symbol const &,double ) ;
+            potential_function_type potential_function_value( &::SireFF::ForceFields::potential );
+            
+            ForceFields_exposer.def( 
+                "potential"
+                , potential_function_value
+                , ( bp::arg("pottable"), bp::arg("component"), bp::arg("scale_potential")=1 ) );
         
         }
         { //::SireFF::ForceFields::properties
