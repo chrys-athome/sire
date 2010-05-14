@@ -3,11 +3,13 @@
 
 #ifdef GCCXML_PARSE
 
+#include "anglecomponent.h"
 #include "chargeconstraint.h"
 #include "checkpoint.h"
 #include "closemols.h"
 #include "constraint.h"
 #include "constraints.h"
+#include "dihedralcomponent.h"
 #include "distancecomponent.h"
 #include "geometrycomponent.h"
 #include "identityconstraint.h"

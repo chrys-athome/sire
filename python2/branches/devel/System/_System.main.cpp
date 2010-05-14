@@ -7,6 +7,8 @@
 
 #include "Helpers/clone_const_reference.hpp"
 
+#include "AngleComponent.pypp.hpp"
+
 #include "ChargeConstraint.pypp.hpp"
 
 #include "CheckPoint.pypp.hpp"
@@ -18,6 +20,8 @@
 #include "Constraint.pypp.hpp"
 
 #include "Constraints.pypp.hpp"
+
+#include "DihedralComponent.pypp.hpp"
 
 #include "DistanceComponent.pypp.hpp"
 
@@ -116,6 +120,10 @@ BOOST_PYTHON_MODULE(_System){
 
     register_Constraint_class();
 
+    register_GeometryComponent_class();
+
+    register_AngleComponent_class();
+
     register_MoleculeConstraint_class();
 
     register_ChargeConstraint_class();
@@ -128,7 +136,7 @@ BOOST_PYTHON_MODULE(_System){
 
     register_Constraints_class();
 
-    register_GeometryComponent_class();
+    register_DihedralComponent_class();
 
     register_DistanceComponent_class();
 

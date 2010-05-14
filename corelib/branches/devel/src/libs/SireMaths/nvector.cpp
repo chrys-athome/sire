@@ -504,6 +504,23 @@ NVector NVector::normalise() const
     return *this * l;
 }
 
+/** Return the sum of the elements of this vector */
+double NVector::sum() const
+{
+    const double *d = array.constData();
+    
+    int sz = array.count();
+    
+    double total = 0;
+    
+    for (int i=0; i<sz; ++i)
+    {
+        total += d[i];
+    }
+    
+    return total;
+}
+
 /** Return whether or not this is a zero vector */
 bool NVector::isZero() const
 {

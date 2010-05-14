@@ -123,6 +123,8 @@ public:
     
     NVector normalise() const;
     
+    double sum() const;
+    
     int nRows() const;
     int nColumns() const;
     

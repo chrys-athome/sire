@@ -123,6 +123,9 @@ private:
         to calculate the polarisability */
     QHash<SireMol::MolNum,
             QSharedDataPointer<detail::PolariseChargesData> > moldata;
+
+    /** The collection of molecules that have been changed by this constraint */
+    Molecules changed_mols;
 };
 
 }

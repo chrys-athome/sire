@@ -664,8 +664,8 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
             moldata.property(map["weight function"],
                              WeightFunction::null()).asA<WeightFunction>();
 
-        weight0 = weightfunc(moldata, group0, group1, map);
-        weight1 = weightfunc(moldata, group1, group0, map);
+        weight0 = 1 - weightfunc(moldata, group0, group1, map);
+        weight1 = 1 - weightfunc(moldata, group1, group0, map);
     }
 
     //now get property containing the coordinates of the atoms
@@ -788,8 +788,8 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
                 moldata.property(map["weight function"],
                                  WeightFunction::null()).asA<WeightFunction>();
 
-        weight0 = weightfunc(moldata, group0, group1, map);
-        weight1 = weightfunc(moldata, group1, group0, map);
+        weight0 = 1 - weightfunc(moldata, group0, group1, map);
+        weight1 = 1 - weightfunc(moldata, group1, group0, map);
     }
 
     //get the coordinates that are to be changed
@@ -908,8 +908,8 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
                       moldata.property(map["weight function"],
                                        WeightFunction::null()).asA<WeightFunction>();
 
-        weight0 = weightfunc(moldata, group0, group1, map);
-        weight1 = weightfunc(moldata, group1, group0, map);
+        weight0 = 1 - weightfunc(moldata, group0, group1, map);
+        weight1 = 1 - weightfunc(moldata, group1, group0, map);
     }
 
     //get the coordinates to be moved
@@ -1020,8 +1020,8 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
                      moldata.property(map["weight function"],
                                       WeightFunction::null()).asA<WeightFunction>();
 
-        weight0 = weightfunc(moldata, group0, group1, map);
-        weight1 = weightfunc(moldata, group1, group0, map);
+        weight0 = 1 - weightfunc(moldata, group0, group1, map);
+        weight1 = 1 - weightfunc(moldata, group1, group0, map);
     }
 
     //get the coordinates to be moved
@@ -1141,8 +1141,8 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
                    moldata.property(map["weight function"],
                                     WeightFunction::null()).asA<WeightFunction>();
 
-        weight0 = weightfunc(moldata, group0, group1, map);
-        weight1 = weightfunc(moldata, group1, group0, map);
+        weight0 = 1 - weightfunc(moldata, group0, group1, map);
+        weight1 = 1 - weightfunc(moldata, group1, group0, map);
     }
 
     //get the coordinates to be moved

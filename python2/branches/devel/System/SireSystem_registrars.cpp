@@ -11,9 +11,11 @@
 #include "spacewrapper.h"
 #include "monitoridx.h"
 #include "constraints.h"
+#include "anglecomponent.h"
 #include "monitorname.h"
 #include "sysidx.h"
 #include "monitorcomponent.h"
+#include "dihedralcomponent.h"
 #include "systemmonitor.h"
 #include "sysid.h"
 #include "constraint.h"
@@ -44,9 +46,11 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::SpaceWrapper >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorIdx >();
     ObjectRegistry::registerConverterFor< SireSystem::Constraints >();
+    ObjectRegistry::registerConverterFor< SireSystem::AngleComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorName >();
     ObjectRegistry::registerConverterFor< SireSystem::SysIdx >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorComponent >();
+    ObjectRegistry::registerConverterFor< SireSystem::DihedralComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::NullMonitor >();
     ObjectRegistry::registerConverterFor< SireID::Specify<SireSystem::SysID> >();
     ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireSystem::SysID> >();

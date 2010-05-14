@@ -32,13 +32,20 @@
 #include "atomcharges.h"
 #include "atomelements.h"
 #include "atommatcher.h"
+#include "bondid.h"
+#include "angleid.h"
+#include "dihedralid.h"
 
 #include "SireVol/coordgroup.h"
 
 #include "SireMaths/sphere.h"
 #include "SireMaths/axisset.h"
+#include "SireMaths/line.h"
+#include "SireMaths/triangle.h"
+#include "SireMaths/torsion.h"
 
 #include "SireBase/errors.h"
+#include "SireMol/errors.h"
 
 #include "SireUnits/dimensions.h"
 
@@ -875,6 +882,122 @@ AxisSet Evaluator::alignmentAxes(const MoleculeView &other,
 {
     throw SireError::incomplete_code(CODELOC);
     return AxisSet();
+}
+
+static CGAtomIdx selectOnly(const AtomID &atom, const MoleculeInfoData &molinfo,
+                            const AtomSelection &selected_atoms)
+{
+    QList<AtomIdx> atomidxs = molinfo.map(atom);
+    
+    QMutableListIterator<AtomIdx> it(atomidxs);
+    
+    while (it.hasNext())
+    {
+        if (not selected_atoms.selected(it.next()))
+            it.remove();
+    }
+    
+    if (atomidxs.isEmpty())
+        throw SireMol::missing_atom( QObject::tr(
+                "None of the selected atoms match the ID \"%1\".")
+                    .arg(atom.toString()), CODELOC );
+                    
+    else if (atomidxs.count() > 1)
+        throw SireMol::duplicate_atom( QObject::tr(
+                "More than one selected atom matches the ID \"%1\".")
+                    .arg(atom.toString()), CODELOC );
+                    
+    return molinfo.cgAtomIdx(atomidxs.at(0));
+}
+
+/** Measure the distance between the atoms 'atom0' and 'atom1'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+Length Evaluator::measure(const AtomID &atom0, const AtomID &atom1,
+                          const PropertyMap &map) const
+{
+    const AtomCoords &coords = data().property(map["coordinates"])
+                                     .asA<AtomCoords>();
+                                      
+    return Length( Line( coords[::selectOnly(atom0, data().info(), selected_atoms)], 
+                         coords[::selectOnly(atom1, data().info(), selected_atoms)] )
+                            .length()
+                 );
+}
+
+/** Measure the angle between the atoms 'atom0', 'atom1' and 'atom2'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+Angle Evaluator::measure(const AtomID &atom0, const AtomID &atom1,
+                         const AtomID &atom2, const PropertyMap &map) const
+{
+    const AtomCoords &coords = data().property(map["coordinates"])
+                                     .asA<AtomCoords>();
+                                      
+    return Triangle( coords[::selectOnly(atom0, data().info(), selected_atoms)], 
+                     coords[::selectOnly(atom1, data().info(), selected_atoms)],
+                     coords[::selectOnly(atom2, data().info(), selected_atoms)] 
+                   ).angle();
+}
+
+/** Measure the dihedral between the atoms 'atom0', 'atom1', 'atom2' and 'atom3'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+Angle Evaluator::measure(const AtomID &atom0, const AtomID &atom1,
+                         const AtomID &atom2, const AtomID &atom3,
+                         const PropertyMap &map) const
+{
+    const AtomCoords &coords = data().property(map["coordinates"])
+                                     .asA<AtomCoords>();
+                                      
+    return Torsion( coords[::selectOnly(atom0, data().info(), selected_atoms)], 
+                    coords[::selectOnly(atom1, data().info(), selected_atoms)],
+                    coords[::selectOnly(atom2, data().info(), selected_atoms)],
+                    coords[::selectOnly(atom3, data().info(), selected_atoms)] 
+                  ).angle();
+}
+
+/** Measure the length of the bond 'bond' 
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+Length Evaluator::measure(const BondID &bond, const PropertyMap &map) const
+{
+    return measure(bond.atom0(), bond.atom1(), map);
+}
+
+/** Measure the size of the angle 'angle'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+Angle Evaluator::measure(const AngleID &angle, const PropertyMap &map) const
+{
+    return measure(angle.atom0(), angle.atom1(), angle.atom2(), map);
+}
+
+/** Measure the size of the dihedral 'dihedral'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+Angle Evaluator::measure(const DihedralID &dihedral, const PropertyMap &map) const
+{
+    return measure(dihedral.atom0(), dihedral.atom1(), 
+                   dihedral.atom2(), dihedral.atom3(), map);
 }
 
 const char* Evaluator::typeName()

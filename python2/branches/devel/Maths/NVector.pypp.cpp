@@ -287,6 +287,16 @@ void register_NVector_class(){
                 , size_function_value );
         
         }
+        { //::SireMaths::NVector::sum
+        
+            typedef double ( ::SireMaths::NVector::*sum_function_type )(  ) const;
+            sum_function_type sum_function_value( &::SireMaths::NVector::sum );
+            
+            NVector_exposer.def( 
+                "sum"
+                , sum_function_value );
+        
+        }
         { //::SireMaths::NVector::toString
         
             typedef ::QString ( ::SireMaths::NVector::*toString_function_type )(  ) const;

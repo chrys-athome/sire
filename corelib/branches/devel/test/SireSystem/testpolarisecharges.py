@@ -4,6 +4,7 @@ from Sire.Mol import *
 from Sire.System import *
 from Sire.MM import *
 from Sire.FF import *
+from Sire.Vol import *
 from Sire.Base import *
 from Sire.Units import *
 
@@ -28,12 +29,15 @@ tip4p = protoms.parameterise(tip4p, ProtoMS.SOLVENT)
 tip4p = tip4p.edit() \
              .atom( AtomName("O00") ) \
                   .setProperty("polarisability", 0.0*angstrom3) \
+                  .setProperty("fixed_charge", -0.8*mod_electron) \
                   .molecule() \
              .atom( AtomName("H01") ) \
                   .setProperty("polarisability", 0.0*angstrom3) \
+                  .setProperty("fixed_charge", 0.4*mod_electron) \
                   .molecule() \
              .atom( AtomName("H02") ) \
                   .setProperty("polarisability", 0.0*angstrom3) \
+                  .setProperty("fixed_charge", 0.4*mod_electron) \
                   .molecule() \
              .atom( AtomName("M03") ) \
                   .setProperty("polarisability", 1.45*angstrom3) \
@@ -51,12 +55,14 @@ connectivity = connectivity.edit() \
                            .commit()
 
 tip4p_chgs = tip4p.property("charge")
+tip4p_fix = tip4p.property("fixed_charge")
 tip4p_ljs = tip4p.property("LJ")
 tip4p_pol = tip4p.property("polarisability")
 
 for i in range(0, waters.nMolecules()):
     water = waters.moleculeAt(i).molecule()
     water = water.edit().setProperty("charge", tip4p_chgs) \
+                        .setProperty("fixed_charge", tip4p_fix) \
                         .setProperty("LJ", tip4p_ljs) \
                         .setProperty("polarisability", tip4p_pol) \
                         .setProperty("connectivity", connectivity) \
@@ -89,4 +95,30 @@ print "Applying the polarisation constraint..."
 system.applyConstraints()
 
 print system.energy()
+
+pol_tip4p = system[MGIdx(0)][pol_tip4p.number()].molecule()
+
+print "MM charges\n",tip4p.property("charge"), \
+                     tip4p.evaluate().charge({"charge":"charge"})
+print "Fixed charges\n",pol_tip4p.property("fixed_charge"), \
+                        pol_tip4p.evaluate().charge({"charge":"fixed_charge"})
+print "Induced charges\n",pol_tip4p.property("induced_charge"), \
+                          pol_tip4p.evaluate().charge({"charge":"induced_charge"})
+print "New charges\n",pol_tip4p.property("charge"), \
+                      pol_tip4p.evaluate().charge({"charge":"charge"})
+
+grid = RegularGrid(tip4p.evaluate().center(), 100, 0.1*angstrom)
+
+def writePotential(molecule, filename):
+    cljff = InterCLJFF()
+    cljff.add(molecule)
+
+    table = PotentialTable( cljff[MGIdx(0)], grid )
+
+    cljff.potential(table, CoulombProbe(1*mod_electron))
+
+    Cube(100*kcal_per_mol).write(table, cljff[MGIdx(0)], filename)
+
+writePotential(tip4p, "tip4p.cube")
+writePotential(pol_tip4p, "pol_tip4p.cube")
 

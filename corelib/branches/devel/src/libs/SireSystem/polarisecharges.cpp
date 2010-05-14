@@ -37,6 +37,7 @@
 #include "SireMol/atomcharges.h"
 #include "SireMol/atompolarisabilities.h"
 #include "SireMol/molecule.h"
+#include "SireMol/moleditor.h"
 #include "SireMol/moleculedata.h"
 #include "SireMol/atomselection.h"
 
@@ -168,8 +169,6 @@ static void calculateAtomMatrix(AtomIdx atomidx, const AtomCoords &coords,
         }
     }
 
-    qDebug() << inv_xx.toString();
-
     //now construct alpha * ( X X^T )**-1
     inv_xx = inv_xx.inverse();
 }
@@ -216,34 +215,67 @@ PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
         
         const MoleculeInfoData &molinfo = molview.data().info();
         
-        for (CGIdx i(0); i<ncgroups; ++i)
+        if (selected_atoms.selectedAllCutGroups())
         {
-            if (selected_atoms.selectedAll(i))
+            for (CGIdx i(0); i<ncgroups; ++i)
             {
-                int nats = molinfo.nAtoms(i);
-                
-                for (Index j(0); j<nats; ++j)
+                if (selected_atoms.selectedAll(i))
                 {
-                    CGAtomIdx cgatomidx(i,j);
-                
-                    AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
+                    for (Index j(0); j<molinfo.nAtoms(i); ++j)
+                    {
+                        CGAtomIdx cgatomidx(i,j);
                     
-                    calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
-                                        connectivity, molinfo, X, 
-                                        inv_xx_matricies[atomidx]);
+                        AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
+                        
+                        calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
+                                            connectivity, molinfo, X, 
+                                            inv_xx_matricies[atomidx]);
+                    }
+                }
+                else
+                {
+                    foreach (Index j, selected_atoms.selectedAtoms(i))
+                    {
+                        CGAtomIdx cgatomidx(i,j);
+
+                        AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
+
+                        calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
+                                            connectivity, molinfo, X, 
+                                            inv_xx_matricies[atomidx]);
+                    }
                 }
             }
-            else
+        }
+        else
+        {
+            foreach (CGIdx i, selected_atoms.selectedCutGroups())
             {
-                foreach (Index j, selected_atoms.selectedAtoms(i))
+                if (selected_atoms.selectedAll(i))
                 {
-                    CGAtomIdx cgatomidx(i,j);
+                    for (Index j(0); j<molinfo.nAtoms(i); ++j)
+                    {
+                        CGAtomIdx cgatomidx(i,j);
+                    
+                        AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
+                        
+                        calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
+                                            connectivity, molinfo, X, 
+                                            inv_xx_matricies[atomidx]);
+                    }
+                }
+                else
+                {
+                    foreach (Index j, selected_atoms.selectedAtoms(i))
+                    {
+                        CGAtomIdx cgatomidx(i,j);
 
-                    AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
+                        AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
 
-                    calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
-                                        connectivity, molinfo, X, 
-                                        inv_xx_matricies[atomidx]);
+                        calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
+                                            connectivity, molinfo, X, 
+                                            inv_xx_matricies[atomidx]);
+                    }
                 }
             }
         }
@@ -357,7 +389,7 @@ PolariseCharges::PolariseCharges(const PolariseCharges &other)
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>(other),
                   field_component(other.field_component),
                   field_probe(other.field_probe),
-                  moldata(other.moldata)
+                  moldata(other.moldata), changed_mols(other.changed_mols)
 {}
 
 /** Destructor */
@@ -372,6 +404,7 @@ PolariseCharges& PolariseCharges::operator=(const PolariseCharges &other)
         field_component = other.field_component;
         field_probe = other.field_probe;
         moldata = other.moldata;
+        changed_mols = other.changed_mols;
     
         ChargeConstraint::operator=(other);
     }
@@ -424,6 +457,62 @@ const CoulombProbe& PolariseCharges::probe() const
     return field_probe;
 }
 
+static void calculateCharges(AtomIdx atomidx,
+                             const MolPotentialTable &moltable,
+                             const NMatrix &alpha_inv_XX,
+                             const Connectivity &connectivity,
+                             const MoleculeInfoData &molinfo,
+                             AtomCharges &induced_charges)
+{
+    if (alpha_inv_XX.nRows() == 0)
+        //this atom has a zero polarisability, or no bonded atoms
+        return;
+
+    CGAtomIdx cgatomidx = molinfo.cgAtomIdx(atomidx);
+    
+    const QSet<AtomIdx> &bonded_atoms = connectivity.connectionsTo(atomidx);
+    
+    int nbonded = bonded_atoms.count();
+    
+    BOOST_ASSERT(nbonded == alpha_inv_XX.nRows());
+    
+    if (nbonded <= 1 or alpha_inv_XX.nRows() <= 1)
+        //not enough bonded atoms to take the charge
+        return;
+        
+    double phi_a = moltable[cgatomidx.cutGroup()][cgatomidx.atom()].value();
+    
+    NVector delta_phi(nbonded);
+    {
+        int i = 0;
+        foreach (AtomIdx bonded_atom, bonded_atoms)
+        {
+            CGAtomIdx bonded_cgatom = molinfo.cgAtomIdx(bonded_atom);
+        
+            delta_phi[i] = phi_a - moltable[bonded_cgatom.cutGroup()]
+                                           [bonded_cgatom.atom()].value();
+            ++i;
+        }
+    }
+    
+    NVector delta_q = alpha_inv_XX * delta_phi;
+    
+    induced_charges.set(cgatomidx, 
+                        induced_charges[cgatomidx] + Charge( -(delta_q.sum()) ) );
+    {
+        int i = 0;
+        
+        foreach (AtomIdx bonded_atom, bonded_atoms)
+        {
+            CGAtomIdx bonded_cgatom = molinfo.cgAtomIdx(bonded_atom);
+            induced_charges.set( bonded_cgatom, 
+                                  induced_charges[bonded_cgatom] + 
+                                                Charge( delta_q[i] ) );
+            ++i;
+        }
+    }
+}
+
 static AtomCharges calculateCharges(const MoleculeView &molview,
                                     const PolariseChargesData &poldata,
                                     const MolPotentialTable &moltable)
@@ -441,52 +530,70 @@ static AtomCharges calculateCharges(const MoleculeView &molview,
         int nats = moltable.nValues();
         BOOST_ASSERT( nats == poldata.inv_xx_matricies.count() );
         
-        for (AtomIdx atomidx(0); atomidx<nats; ++atomidx)
+        for (AtomIdx i(0); i<nats; ++i)
         {
-            const NMatrix &alpha_inv_XX = inv_xx_mat_array[atomidx];
-
-            if (alpha_inv_XX.nRows() == 0)
-                //this atom has a zero polarisability, or no bonded atoms
-                continue;
-
-            CGAtomIdx cgatomidx = molinfo.cgAtomIdx(atomidx);
-            
-            const QSet<AtomIdx> &bonded_atoms = connectivity.connectionsTo(atomidx);
-            
-            int nbonded = bonded_atoms.count();
-            
-            BOOST_ASSERT(nbonded == alpha_inv_XX.nRows());
-            
-            if (nbonded <= 1 or alpha_inv_XX.nRows() <= 1)
-                //not enough bonded atoms to take the charge
-                continue;
-                
-            double phi_a = moltable[cgatomidx.cutGroup()][cgatomidx.atom()].value();
-            
-            NVector delta_phi(nbonded);
+            calculateCharges(i, moltable, inv_xx_mat_array[i],
+                             connectivity, molinfo, induced_charges);
+        }
+    }
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        for (CGIdx i(0); i<molinfo.nCutGroups(); ++i)
+        {
+            if (selected_atoms.selectedAll(i))
             {
-                int i = 0;
-                foreach (AtomIdx bonded_atom, bonded_atoms)
+                for (Index j(0); j<molinfo.nAtoms(i); ++j)
                 {
-                    CGAtomIdx bonded_cgatom = molinfo.cgAtomIdx(bonded_atom);
-                
-                    delta_phi[i] = phi_a - moltable[bonded_cgatom.cutGroup()]
-                                                   [bonded_cgatom.atom()].value();
-                    ++i;
+                    CGAtomIdx cgatomidx(i,j);
+                    AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
+                    
+                    calculateCharges(atomidx, moltable, inv_xx_mat_array[atomidx],
+                                     connectivity, molinfo, induced_charges);
                 }
             }
-            
-            NVector delta_q = alpha_inv_XX * delta_phi;
-            
-            induced_charges[cgatomidx] = Charge( -(delta_q.sum()) );
-            //
+            else
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    CGAtomIdx cgatomidx(i,j);
+                    AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
+                    
+                    calculateCharges(atomidx, moltable, inv_xx_mat_array[atomidx],
+                                     connectivity, molinfo, induced_charges);
+                }
+            }
         }
     }
     else
     {
+        foreach (CGIdx i, selected_atoms.selectedCutGroups())
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                for (Index j(0); j<molinfo.nAtoms(i); ++j)
+                {
+                    CGAtomIdx cgatomidx(i,j);
+                    AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
+                    
+                    calculateCharges(atomidx, moltable, inv_xx_mat_array[atomidx],
+                                     connectivity, molinfo, induced_charges);
+                }
+            }
+            else
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    CGAtomIdx cgatomidx(i,j);
+                    AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
+                    
+                    calculateCharges(atomidx, moltable, inv_xx_mat_array[atomidx],
+                                     connectivity, molinfo, induced_charges);
+                }
+            }
+        }
     }
 
-    return AtomCharges();
+    return induced_charges;
 }
 
 /** Set the baseline system for the constraint - this is 
@@ -498,6 +605,7 @@ void PolariseCharges::setSystem(const System &system)
         return;
     
     Constraint::clearLastSystem();
+    changed_mols = Molecules();
 
     //update the molecule group - clear the current list of molecules
     //if molecules have been added or removed from the group]
@@ -516,6 +624,9 @@ void PolariseCharges::setSystem(const System &system)
     const PropertyName coords_property = map["coordinates"];
     const PropertyName connectivity_property = map["connectivity"];
     const PropertyName polarise_property = map["polarisability"];
+    const PropertyName induced_charges_property = map["induced_charge"];
+    const PropertyName fixed_charges_property = map["fixed_charge"];
+    const PropertyName charges_property = map["charge"];
 
     //now calculate the potential on each molecule
     PotentialTable potentials(this->moleculeGroup());
@@ -556,9 +667,56 @@ void PolariseCharges::setSystem(const System &system)
         
         AtomCharges new_charges = calculateCharges(it.value(), *(it2.value().constData()),
                                                    moltable);
+        
+        if (not new_charges.isEmpty())
+        {
+            Molecule new_mol(it.value());
+                                                                                                                                         
+            if (new_mol.hasProperty(charges_property))
+            {
+                const Property &p = new_mol.property(charges_property);
+            
+                if (p.isA<AtomCharges>())
+                {
+                    if (new_charges == p.asA<AtomCharges>())
+                        //the induced charges haven't changed
+                        continue;
+                }
+            }
+
+            if (new_mol.hasProperty(fixed_charges_property))
+            {
+                PackedArray2D<Charge> charges = new_mol.property(fixed_charges_property)
+                                                       .asA<AtomCharges>()
+                                                       .array();
+                                         
+                Charge *charges_array = charges.valueData();
+                const Charge *new_charges_array = new_charges.array().constValueData();
+                
+                BOOST_ASSERT( charges.nValues() == new_charges.array().nValues() );
+                
+                for (int i=0; i<charges.nValues(); ++i)
+                {
+                    charges_array[i] += new_charges_array[i];
+                }
+                
+                new_mol = new_mol.edit()
+                                 .setProperty(induced_charges_property, new_charges)
+                                 .setProperty(charges_property, AtomCharges(charges))
+                                 .commit();
+            }
+            else
+            {
+                new_mol = new_mol.edit()
+                                 .setProperty(induced_charges_property, new_charges)
+                                 .commit();
+            }
+        
+            changed_mols.add(new_mol);
+        }
     }
 
-    Constraint::setSatisfied(system, false);
+    Constraint::setSatisfied(system, changed_mols.isEmpty());
 }
 
 /** Return whether or not the changes in the passed
@@ -566,6 +724,11 @@ void PolariseCharges::setSystem(const System &system)
     subversion 'subversion' */
 bool PolariseCharges::mayChange(const Delta &delta, quint32 last_subversion) const
 {
+    //this constraint will need to be applied if we change any molecule
+    //in the system, or if we change properties that are used to calculate
+    //the energy, or if we change components used in energy expressions.
+    // This is too complex to work out, so we will just say that this constraint
+    // has to be applied after *any* change.
     return true;
 }
 
@@ -574,6 +737,34 @@ bool PolariseCharges::mayChange(const Delta &delta, quint32 last_subversion) con
 bool PolariseCharges::fullApply(Delta &delta)
 {
     this->setSystem(delta.deltaSystem());
+    
+    if (not changed_mols.isEmpty())
+    {
+        bool changed = delta.update(changed_mols);
+
+        if (changed)
+        {
+            if (this->moleculeGroup().nMolecules() > 1)
+            {
+                //we have to iterate to ensure self-consistent polarisation
+                int n_iterations = 1;
+            
+                while (changed and n_iterations < 10)
+                {
+                    changed = false;
+                    ++n_iterations;
+                
+                    this->setSystem(delta.deltaSystem());
+                
+                    if (not changed_mols.isEmpty())
+                        changed = delta.update(changed_mols);
+                }
+            }
+            
+            return true;
+        }
+    }
+    
     return false;
 }
 
@@ -582,6 +773,5 @@ bool PolariseCharges::fullApply(Delta &delta)
     at subversion number last_subversion */
 bool PolariseCharges::deltaApply(Delta &delta, quint32 last_subversion)
 {
-    this->setSystem(delta.deltaSystem());
-    return false;
+    return this->fullApply(delta);
 }

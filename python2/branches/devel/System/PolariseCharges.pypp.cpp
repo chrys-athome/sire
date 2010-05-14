@@ -16,6 +16,8 @@ namespace bp = boost::python;
 
 #include "SireMaths/nmatrix.h"
 
+#include "SireMaths/nvector.h"
+
 #include "SireMol/atomcharges.h"
 
 #include "SireMol/atomcoords.h"
@@ -29,6 +31,8 @@ namespace bp = boost::python;
 #include "SireMol/molecule.h"
 
 #include "SireMol/moleculedata.h"
+
+#include "SireMol/moleditor.h"
 
 #include "SireStream/datastream.h"
 

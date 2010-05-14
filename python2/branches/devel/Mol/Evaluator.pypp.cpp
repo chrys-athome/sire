@@ -11,13 +11,23 @@ namespace bp = boost::python;
 
 #include "SireMaths/axisset.h"
 
+#include "SireMaths/line.h"
+
 #include "SireMaths/sphere.h"
+
+#include "SireMaths/torsion.h"
+
+#include "SireMaths/triangle.h"
+
+#include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
 
 #include "SireUnits/dimensions.h"
 
 #include "SireVol/coordgroup.h"
+
+#include "angleid.h"
 
 #include "atomcharges.h"
 
@@ -28,6 +38,10 @@ namespace bp = boost::python;
 #include "atommasses.h"
 
 #include "atommatcher.h"
+
+#include "bondid.h"
+
+#include "dihedralid.h"
 
 #include "evaluator.h"
 
@@ -193,6 +207,72 @@ void register_Evaluator_class(){
                 "mass"
                 , mass_function_value
                 , ( bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::measure
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMol::Evaluator::*measure_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const &,::SireBase::PropertyMap const & ) const;
+            measure_function_type measure_function_value( &::SireMol::Evaluator::measure );
+            
+            Evaluator_exposer.def( 
+                "measure"
+                , measure_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::measure
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMol::Evaluator::*measure_function_type )( ::SireMol::BondID const &,::SireBase::PropertyMap const & ) const;
+            measure_function_type measure_function_value( &::SireMol::Evaluator::measure );
+            
+            Evaluator_exposer.def( 
+                "measure"
+                , measure_function_value
+                , ( bp::arg("bond"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::measure
+        
+            typedef ::SireUnits::Dimension::Angle ( ::SireMol::Evaluator::*measure_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const &,::SireMol::AtomID const &,::SireBase::PropertyMap const & ) const;
+            measure_function_type measure_function_value( &::SireMol::Evaluator::measure );
+            
+            Evaluator_exposer.def( 
+                "measure"
+                , measure_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::measure
+        
+            typedef ::SireUnits::Dimension::Angle ( ::SireMol::Evaluator::*measure_function_type )( ::SireMol::AngleID const &,::SireBase::PropertyMap const & ) const;
+            measure_function_type measure_function_value( &::SireMol::Evaluator::measure );
+            
+            Evaluator_exposer.def( 
+                "measure"
+                , measure_function_value
+                , ( bp::arg("angle"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::measure
+        
+            typedef ::SireUnits::Dimension::Angle ( ::SireMol::Evaluator::*measure_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const &,::SireMol::AtomID const &,::SireMol::AtomID const &,::SireBase::PropertyMap const & ) const;
+            measure_function_type measure_function_value( &::SireMol::Evaluator::measure );
+            
+            Evaluator_exposer.def( 
+                "measure"
+                , measure_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::measure
+        
+            typedef ::SireUnits::Dimension::Angle ( ::SireMol::Evaluator::*measure_function_type )( ::SireMol::DihedralID const &,::SireBase::PropertyMap const & ) const;
+            measure_function_type measure_function_value( &::SireMol::Evaluator::measure );
+            
+            Evaluator_exposer.def( 
+                "measure"
+                , measure_function_value
+                , ( bp::arg("dihedral"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::Evaluator::metadataKeys

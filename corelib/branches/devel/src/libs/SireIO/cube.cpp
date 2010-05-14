@@ -49,28 +49,33 @@ using namespace SireVol;
 using namespace SireBase;
 using namespace SireUnits;
 
-Cube::Cube()
+Cube::Cube() : cutoff(10000)
 {}
 
-Cube::Cube(const Cube&)
+Cube::Cube(SireUnits::Dimension::MolarEnergy c) 
+     : cutoff( convertTo(c.value(), kcal_per_mol) )
+{}
+
+Cube::Cube(const Cube &other) : cutoff(other.cutoff)
 {}
 
 Cube::~Cube()
 {}
 
-Cube& Cube::operator=(const Cube&)
+Cube& Cube::operator=(const Cube &other)
 {
+    cutoff = other.cutoff;
     return *this;
 }
 
-bool Cube::operator==(const Cube&) const
+bool Cube::operator==(const Cube &other) const
 {
-    return true;
+    return cutoff == other.cutoff;
 }
 
-bool Cube::operator!=(const Cube&) const
+bool Cube::operator!=(const Cube &other) const
 {
-    return false;
+    return not Cube::operator==(other);
 }
 
 static void assertValidGrid(const PotentialTable &table)
@@ -142,7 +147,7 @@ void Cube::write(const PotentialTable &table,
 
 template<class T>
 static void writeTable(QTextStream &ts, const MolPotentialTable &moltable,
-                       const T &molgroup, const PropertyMap &map)
+                       const T &molgroup, const PropertyMap &map, double cutoff)
 {
     MolNum molnum = moltable.molNum();
     
@@ -173,8 +178,14 @@ static void writeTable(QTextStream &ts, const MolPotentialTable &moltable,
                     ts << e[j].nProtons();
                     
                     ts.setFieldWidth(12);
+
+                    double val = convertTo( nrg[j], kcal_per_mol );
+                    if (val > cutoff)
+                        val = cutoff;
+                    else if (val < -cutoff)
+                        val = -cutoff;
                     
-                    ts << SireUnits::convertTo(nrg[j], hartree)
+                    ts << SireUnits::convertTo(nrg[j], kcal_per_mol)
                        << SireUnits::convertTo(c[j].x(), bohr_radii)
                        << SireUnits::convertTo(c[j].y(), bohr_radii)
                        << SireUnits::convertTo(c[j].z(), bohr_radii) << "\n";
@@ -184,7 +195,8 @@ static void writeTable(QTextStream &ts, const MolPotentialTable &moltable,
     }
 }
 
-static void writeGrid(QTextStream &ts, const GridPotentialTable &gridtable)
+static void writeGrid(QTextStream &ts, const GridPotentialTable &gridtable,
+                      double cutoff)
 {
     const RegularGrid &grid = gridtable.grid().asA<RegularGrid>();
     
@@ -200,10 +212,12 @@ static void writeGrid(QTextStream &ts, const GridPotentialTable &gridtable)
         {
             for (int k=0; k<grid.dimZ(); ++k)
             {
-                double val = convertTo( data->value(), hartree );
+                double val = convertTo( data->value(), kcal_per_mol );
             
-                if (val > 10000)
-                    ts << 10000 << " ";
+                if (val > cutoff)
+                    ts << cutoff << " ";
+                else if (val < -cutoff)
+                    ts << -cutoff << " ";
                 else
                     ts << val << " ";
                     
@@ -265,10 +279,10 @@ void Cube::write(const PotentialTable &table, const MoleculeGroup &molgroup,
     
     for (int i=0; i<table.nMolecules(); ++i)
     {
-        writeTable( ts, table.moleculeData()[i], molgroup, map );
+        writeTable( ts, table.moleculeData()[i], molgroup, map, cutoff );
     }
 
-    writeGrid( ts, table.gridData()[0] );
+    writeGrid( ts, table.gridData()[0], cutoff );
         
     f.close();
 }
@@ -306,10 +320,10 @@ void Cube::write(const PotentialTable &table, const MolGroupsBase &molgroups,
     
     for (int i=0; i<table.nMolecules(); ++i)
     {
-        writeTable( ts, table.moleculeData()[i], molgroups, map );
+        writeTable( ts, table.moleculeData()[i], molgroups, map, cutoff );
     }
 
-    writeGrid( ts, table.gridData()[0] );
+    writeGrid( ts, table.gridData()[0], cutoff );
         
     f.close();
 }

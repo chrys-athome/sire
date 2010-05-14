@@ -64,6 +64,9 @@ namespace SireMol
 
 class AtomMatcher;
 class AtomSelection;
+class BondID;
+class AngleID;
+class DihedralID;
 
 using SireBase::Property;
 using SireBase::PropertyMap;
@@ -170,6 +173,27 @@ public:
                           const AtomMatcher &matcher,
                           const PropertyMap &map0,
                           const PropertyMap &map1) const;
+
+    SireUnits::Dimension::Length measure(const AtomID &atom0,
+                                         const AtomID &atom1,
+                                         const PropertyMap &map=PropertyMap()) const;
+
+    SireUnits::Dimension::Length measure(const BondID &bond,
+                                         const PropertyMap &map=PropertyMap()) const;
+
+    SireUnits::Dimension::Angle measure(const AtomID &atom0, const AtomID &atom1,
+                                        const AtomID &atom2,
+                                        const PropertyMap &map=PropertyMap()) const;
+
+    SireUnits::Dimension::Angle measure(const AngleID &angle,
+                                        const PropertyMap &map=PropertyMap()) const;
+
+    SireUnits::Dimension::Angle measure(const AtomID &atom0, const AtomID &atom1,
+                                        const AtomID &atom2, const AtomID &atom3,
+                                        const PropertyMap &map=PropertyMap()) const;
+
+    SireUnits::Dimension::Angle measure(const DihedralID &dihedral,
+                                        const PropertyMap &map=PropertyMap()) const;
 
 private:
 

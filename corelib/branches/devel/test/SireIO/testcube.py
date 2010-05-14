@@ -34,4 +34,4 @@ table = PotentialTable( cljff[MGIdx(0)], grid )
 
 cljff.potential(table, CLJProbe(1*mod_electron))
 
-Cube().write(table, cljff, "test.cube")
+Cube( 10*kcal_per_mol ).write(table, cljff, "test.cube")

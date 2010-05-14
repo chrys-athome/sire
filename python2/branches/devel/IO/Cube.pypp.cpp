@@ -7,6 +7,20 @@
 
 namespace bp = boost::python;
 
+#include "SireError/errors.h"
+
+#include "SireMol/atomcoords.h"
+
+#include "SireMol/atomelements.h"
+
+#include "SireMol/molecule.h"
+
+#include "SireUnits/convert.h"
+
+#include "SireUnits/units.h"
+
+#include "SireVol/grid.h"
+
 #include "cube.h"
 
 #include <QFile>
@@ -26,6 +40,7 @@ void register_Cube_class(){
         Cube_exposer_t Cube_exposer = Cube_exposer_t( "Cube" );
         bp::scope Cube_scope( Cube_exposer );
         Cube_exposer.def( bp::init< >() );
+        Cube_exposer.def( bp::init< SireUnits::Dimension::MolarEnergy >(( bp::arg("cutoff") )) );
         Cube_exposer.def( bp::init< SireIO::Cube const & >(( bp::arg("other") )) );
         Cube_exposer.def( bp::self != bp::self );
         { //::SireIO::Cube::operator=

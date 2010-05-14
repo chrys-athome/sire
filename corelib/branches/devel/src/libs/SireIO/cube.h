@@ -33,6 +33,8 @@
 #include "SireMol/moleculegroups.h"
 #include "SireMol/moleculegroup.h"
 
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireIO
@@ -52,6 +54,7 @@ class SIREIO_EXPORT Cube
 {
 public:
     Cube();
+    Cube(SireUnits::Dimension::MolarEnergy cutoff);
     Cube(const Cube &other);
     
     ~Cube();
@@ -69,6 +72,9 @@ public:
     
     void write(const PotentialTable &table, const MolGroupsBase &molecules,
                const QString &filename, const PropertyMap &map = PropertyMap()) const;
+
+private:
+    double cutoff;
 };
 
 }
