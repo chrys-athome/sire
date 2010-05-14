@@ -152,7 +152,6 @@ public:
     
     QVector<MolNum> molidx_to_num;
     QVector< tuple<MolNum,Index> > molviewidx_to_num;
-    QHash< MolName,QList<MolNum> > molname_to_num;
     
     MGName name;
     MGNum number;
@@ -171,10 +170,12 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 {
     SharedDataStream sds(ds);
     
+    QHash< MolNum,QList<MolNum> > molname_to_num;
+    
     sds << molgrouppvt.molecules
         << molgrouppvt.molidx_to_num
         << molgrouppvt.molviewidx_to_num
-        << molgrouppvt.molname_to_num
+        << molname_to_num
         << molgrouppvt.name
         << molgrouppvt.number;
 
@@ -186,11 +187,13 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
                                        MolGroupPvt &molgrouppvt)
 {
     SharedDataStream sds(ds);
-    
+
+    QHash< MolNum,QList<MolNum> > molname_to_num;
+       
     sds >> molgrouppvt.molecules
         >> molgrouppvt.molidx_to_num
         >> molgrouppvt.molviewidx_to_num
-        >> molgrouppvt.molname_to_num
+        >> molname_to_num
         >> molgrouppvt.name
         >> molgrouppvt.number;
 
@@ -237,7 +240,6 @@ MolGroupPvt::MolGroupPvt(const QString &nme,
               molecules(other.molecules),
               molidx_to_num(other.molidx_to_num),
               molviewidx_to_num(other.molviewidx_to_num),
-              molname_to_num(other.molname_to_num),
               name(nme),
               number( MGNum::getUniqueNumber() ),
               version(1,0)
@@ -249,7 +251,6 @@ MolGroupPvt::MolGroupPvt(const MolGroupPvt &other)
               molecules(other.molecules),
               molidx_to_num(other.molidx_to_num),
               molviewidx_to_num(other.molviewidx_to_num),
-              molname_to_num(other.molname_to_num),
               name(other.name),
               number(other.number),
               version(other.version)
@@ -267,7 +268,6 @@ MolGroupPvt& MolGroupPvt::operator=(const MolGroupPvt &other)
         molecules = other.molecules;
         molidx_to_num = other.molidx_to_num;
         molviewidx_to_num = other.molviewidx_to_num;
-        molname_to_num = other.molname_to_num;
         name = other.name;
         number = other.number;
         version = other.version;
@@ -850,24 +850,7 @@ QList<MolNum> MoleculeGroup::map(MolIdx molidx) const
 */
 QList<MolNum> MoleculeGroup::map(const MolName &molname) const
 {
-    if (molname.isCaseSensitive())
-    {
-        QHash< MolName,QList<MolNum> >::const_iterator 
-                                            it = d->molname_to_num.find(molname);
-                                        
-        if (it == d->molname_to_num.end())
-            throw SireMol::missing_molecule( QObject::tr(
-                "There are no molecules called \"%1\" in this group. "
-                "Use the MoleculeGroup::molNames() function to get the set "
-                "of the names of molecules in this group.")
-                    .arg(molname), CODELOC );
-    
-        return *it;
-    }
-    else
-    {
-        return molname.map( this->molecules() );
-    }
+    return molname.map( this->molecules() );
 }
 
 /** Return the numbers of the molecules that match the ID 'molid'
@@ -905,7 +888,15 @@ bool MoleculeGroup::contains(MolIdx molidx) const
 /** Return whether or not this group contains any molecules called 'molname' */
 bool MoleculeGroup::contains(const MolName &molname) const
 {
-    return d->molname_to_num.contains(molname);
+    for (Molecules::const_iterator it = d->molecules.constBegin();
+         it != d->molecules.constEnd();
+         ++it)
+    {
+        if (it->data().name() == molname)
+            return true;
+    }
+
+    return false;
 }
 
 /** Return whether or not this group contains any molecules that
@@ -1160,7 +1151,16 @@ const QVector< tuple<MolNum,Index> >& MoleculeGroup::molViewIndicies() const
 /** Return the set of all names of the molecules in this group */
 QSet<MolName> MoleculeGroup::molNames() const
 {
-    return d->molname_to_num.keys().toSet();
+    QSet<MolName> molnames;
+    
+    for (Molecules::const_iterator it = d->molecules.constBegin();
+         it != d->molecules.constEnd();
+         ++it)
+    {
+        molnames.insert( it->data().name() );
+    }
+
+    return molnames;
 }
 
 /** Assert that this group contains a view of any part of the 
@@ -1179,7 +1179,7 @@ void MoleculeGroup::assertContains(MolNum molnum) const
 */
 void MoleculeGroup::assertContains(const MolName &molname) const
 {
-    if (not d->molname_to_num.contains(molname))
+    if (not this->contains(molname))
         throw SireMol::missing_molecule( QObject::tr(
             "There is no molecule called \"%1\" in this group. Use "
             "MoleculeGroup::molNames() to get the set of names of molecules "

@@ -689,7 +689,7 @@ double PeriodicBox::calcDist2(const CoordGroup &group, const Vector &point,
 
         for (int j=0; j<n; ++j)
         {
-            const double dist = Vector::distance2(wrapped_point, array[j]);
+            const double dist2 = Vector::distance2(wrapped_point, array[j]);
                 
             #ifdef SIRE_TIME_ROUTINES
             nflops += 8;
