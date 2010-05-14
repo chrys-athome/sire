@@ -133,6 +133,9 @@ public:
     const FF& operator[](const FFID &ffid) const;
     const SystemMonitor& operator[](const MonitorID &monid) const;
     const MoleculeGroup& operator[](const MGID &mgid) const;
+
+    ViewsOfMol operator[](MolNum molnum) const;
+    ViewsOfMol operator[](const MolID &molid) const;
     
     System& operator+=(const FF &forcefield);
     System& operator+=(const MoleculeGroup &molgroup);

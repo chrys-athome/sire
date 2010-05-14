@@ -1165,6 +1165,28 @@ void register_System_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireSystem::System::operator[]
+        
+            typedef ::SireMol::ViewsOfMol ( ::SireSystem::System::*__getitem___function_type )( ::SireMol::MolNum ) const;
+            __getitem___function_type __getitem___function_value( &::SireSystem::System::operator[] );
+            
+            System_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("molnum") ) );
+        
+        }
+        { //::SireSystem::System::operator[]
+        
+            typedef ::SireMol::ViewsOfMol ( ::SireSystem::System::*__getitem___function_type )( ::SireMol::MolID const & ) const;
+            __getitem___function_type __getitem___function_value( &::SireSystem::System::operator[] );
+            
+            System_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("molid") ) );
+        
+        }
         { //::SireSystem::System::potential
         
             typedef void ( ::SireSystem::System::*potential_function_type )( ::SireFF::PotentialTable &,::SireFF::Probe const &,double ) ;

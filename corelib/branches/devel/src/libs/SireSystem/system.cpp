@@ -480,6 +480,27 @@ const MoleculeGroup& System::operator[](const MGID &mgid) const
     return MolGroupsBase::operator[](mgid);
 }
 
+/** Return the molecule with number 'molnum'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+*/
+ViewsOfMol System::operator[](MolNum molnum) const
+{
+    return MolGroupsBase::operator[](molnum);
+}
+
+/** Return the molecule with ID 'molid'
+
+    \throw SireMol::missing_molecule
+    \throw SireMol::duplicate_molecule
+    \throw SireError::invalid_index
+*/
+ViewsOfMol System::operator[](const MolID &molid) const
+{
+    return MolGroupsBase::operator[](molid);
+}
+
 /** Convienient syntax for System::add */
 System& System::operator+=(const FF &forcefield)
 {
