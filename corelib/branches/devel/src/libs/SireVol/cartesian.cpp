@@ -528,7 +528,7 @@ double Cartesian::calcDist(const CoordGroup &group, const Vector &point,
         //version suitable for all processors
         mat.setOuterIndex(0);
             
-        for (int j=0; j<n1; ++j)
+        for (int j=0; j<n; ++j)
         {
             const double tmpdist = Vector::distance(point, array[j]);
                 
