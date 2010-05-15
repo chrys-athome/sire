@@ -227,6 +227,12 @@ int Constraints::size() const
     return this->nConstraints();
 }
 
+/** Return whether this is empty (contains no constraints) */
+bool Constraints::isEmpty() const
+{
+    return cons.isEmpty();
+}
+
 /** Return the list of all of the constraints in this set */
 QVector<ConstraintPtr> Constraints::constraints() const
 {
@@ -350,6 +356,9 @@ void Constraints::assertSatisfied(const System &system) const
     returns a system that satisfies all of the constraints */
 System Constraints::apply(const System &system)
 {
+    if (cons.isEmpty())
+        return system;
+
     Delta delta(system);
     
     System new_system(system);

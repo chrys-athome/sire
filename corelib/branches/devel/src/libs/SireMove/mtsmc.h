@@ -32,6 +32,8 @@
 #include "montecarlo.h"
 #include "moves.h"
 
+#include "SireSystem/constraints.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -44,6 +46,9 @@ QDataStream& operator>>(QDataStream&, SireMove::MTSMC&);
 
 namespace SireMove
 {
+
+using SireSystem::Constraint;
+using SireSystem::Constraints;
 
 /** This is a multiple-time-step Monte Carlo moves. This uses
     the Metropolis-Hamilton acceptance test to perform
@@ -72,6 +77,12 @@ public:
     MTSMC(const Moves &fastmoves, const Symbol &fastcomponent, 
           int nfastmoves=1);
     
+    MTSMC(const Moves &fastmoves, const Constraints &slow_constraints,
+          int nfastmoves=1);
+          
+    MTSMC(const Moves &fastmoves, const Symbol &fastcomponent,
+          const Constraints &slow_constraints, int nfastmoves=1);
+    
     MTSMC(const MTSMC &other);
     
     ~MTSMC();
@@ -91,6 +102,13 @@ public:
     void setFastEnergyComponent(const Symbol &component);
     void setSlowEnergyComponent(const Symbol &component);
 
+    void addSlowConstraint(const Constraint &constraint);
+    void setSlowConstraints(const Constraints &constraints);
+
+    void removeSlowConstraints();
+    
+    const Constraints& slowConstraints() const;
+
     const Moves& fastMoves() const;
     int nFastMoves() const;
     
@@ -106,6 +124,10 @@ public:
 private:
     /** The collection of fast moves that will be applied to the system */
     MovesPtr fastmoves;
+    
+    /** The constraints that are applied to the system after each 
+        block of fast moves */
+    Constraints slow_constraints;
     
     /** The energy component on which the fast moves will operate */
     Symbol fastcomponent;

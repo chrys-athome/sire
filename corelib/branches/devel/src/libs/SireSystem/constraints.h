@@ -105,6 +105,8 @@ public:
     int count() const;
     int size() const;
     
+    bool isEmpty() const;
+    
     int nConstraints() const;
 
     QVector<ConstraintPtr> constraints() const;
