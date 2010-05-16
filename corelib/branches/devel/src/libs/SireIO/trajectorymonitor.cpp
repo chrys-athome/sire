@@ -46,6 +46,8 @@
 
 #include <QDebug>
 
+using boost::shared_ptr;
+
 using namespace SireIO;
 using namespace SireSystem;
 using namespace SireMol;
@@ -55,10 +57,10 @@ using namespace SireStream;
 
 static const RegisterMetaType<TrajectoryMonitor> r_trajmon;
 
-static QByteArray readFromDisk(const QTemporaryFile &tmpfile)
+static QByteArray readFromDisk(const QPair< QString,shared_ptr<QTemporaryFile> > &tmpfile)
 {
     //open the packed data file using a separate file handle
-    QFile f( tmpfile.fileName() );
+    QFile f( tmpfile.first );
     
     if (not f.open(QIODevice::ReadOnly | QIODevice::Unbuffered))
     {
@@ -78,8 +80,8 @@ static QString getUserName()
     #endif
 }
 
-static boost::shared_ptr<QTemporaryFile> writeToDisk(const QByteArray &data,
-                                                     const QString &temp_dir)
+static QPair< QString,shared_ptr<QTemporaryFile> > 
+                writeToDisk(const QByteArray &data, const QString &temp_dir)
 {
     QString save_dir;
 
@@ -98,12 +100,12 @@ static boost::shared_ptr<QTemporaryFile> writeToDisk(const QByteArray &data,
             save_dir = QDir::tempPath();
     }
     
-    boost::shared_ptr<QTemporaryFile> tmp;
+    QPair< QString,shared_ptr<QTemporaryFile> > tmp;
     
-    tmp.reset( new QTemporaryFile( QString("%1/%2_sire_trajmonitor_XXXXXX.data")
-                            .arg(save_dir, getUserName()) ) );
-                            
-    if (not tmp->open())
+    tmp.second.reset( new QTemporaryFile(QString("%1/%2_sire_trajmonitor_XXXXXX.data")
+                                    .arg(save_dir, getUserName()) ) );
+
+    if (not tmp.second->open())
     {
         throw SireError::file_error( QObject::tr(
             "Cannot save the trajectory to disk as the temporary directory "
@@ -112,7 +114,7 @@ static boost::shared_ptr<QTemporaryFile> writeToDisk(const QByteArray &data,
                 .arg(save_dir), CODELOC );
     }
 
-    qint64 nbytes = tmp->write(data);
+    qint64 nbytes = tmp.second->write(data);
 
     if (nbytes == -1)
     {
@@ -133,7 +135,11 @@ static boost::shared_ptr<QTemporaryFile> writeToDisk(const QByteArray &data,
                 .arg(save_dir), CODELOC );
     }
     
-    tmp->close();
+    //need to save the filename as some Qt versions lose it when
+    //the file is closed
+    tmp.first = tmp.second->fileName();
+    
+    tmp.second->close();
     
     return tmp;
 }
@@ -152,12 +158,12 @@ QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds,
     //now write all of the frames
     sds << quint32( trajmon.traj_frames.count() );
     
-    for (QList< boost::shared_ptr<QTemporaryFile> >::const_iterator it 
-                                                   = trajmon.traj_frames.constBegin();
+    for (QList< QPair< QString,shared_ptr<QTemporaryFile> > >::const_iterator 
+                                                 it = trajmon.traj_frames.constBegin();
          it != trajmon.traj_frames.constEnd();
          ++it)
     {
-        QByteArray data = ::readFromDisk( *(*it) );
+        QByteArray data = ::readFromDisk( *it );
 
         //don't shared-stream as this data cannot be shared, and 
         //pointer re-use may lead to fake shared streaming
@@ -364,13 +370,13 @@ void TrajectoryMonitor::writeToDisk(const QString &file_template) const
     int i = 0;
     int n = nColumns(nframes);
 
-    for (QList< boost::shared_ptr<QTemporaryFile> >::const_iterator
+    for (QList< QPair< QString,shared_ptr<QTemporaryFile> > >::const_iterator
                             it = traj_frames.constBegin();
          it != traj_frames.constEnd();
          ++it)
     {
         //read the file
-        QByteArray data = ::readFromDisk( *(*it) );
+        QByteArray data = ::readFromDisk( *it );
         
         if (data.isEmpty())
             continue;
