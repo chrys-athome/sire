@@ -208,6 +208,7 @@ SimStore::SimStore(const SimStore &other)
            compressed_data(other.compressed_data),
            packed_dir(other.packed_dir),
            packed_file(other.packed_file),
+           packed_filename(other.packed_filename),
            last_packing_state(other.last_packing_state)
 {}
 
@@ -226,6 +227,7 @@ SimStore& SimStore::operator=(const SimStore &other)
     compressed_data = other.compressed_data;
     packed_dir = other.packed_dir;
     packed_file = other.packed_file;
+    packed_filename = other.packed_filename;
     last_packing_state = other.last_packing_state;
        
     return *this;
@@ -274,9 +276,10 @@ bool SimStore::isPacked() const
 void SimStore::_pvt_moveFromDiskToMemory()
 {
     BOOST_ASSERT( packed_file.get() != 0 );
+    BOOST_ASSERT( not packed_filename.isEmpty() );
 
     //open the packed data file using a separate file handle
-    QFile f( packed_file->fileName() );
+    QFile f( packed_filename );
     
     if (not f.open(QIODevice::ReadOnly | QIODevice::Unbuffered))
     {
@@ -291,6 +294,7 @@ void SimStore::_pvt_moveFromDiskToMemory()
     //lose the file (this will auto-delete the temporary file
     //if no other SimStores are using it)
     packed_file.reset();
+    packed_filename = QString::null;
 }
 
 /** Pack the system and moves to memory - this will compress
@@ -327,6 +331,7 @@ void SimStore::packToMemory()
         compressed_data = qCompress(data);
         
         packed_file.reset();
+        packed_filename = QString::null;
     }
     
     last_packing_state = TO_MEMORY;
@@ -374,6 +379,8 @@ void SimStore::packToDisk(const QString &tempdir)
         this->packToDisk();
         return;
     }
+    
+    packed_filename = tmp->fileName();
     
     //pack the data to memory (if it isn't already)
     this->packToMemory();

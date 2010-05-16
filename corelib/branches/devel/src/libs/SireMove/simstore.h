@@ -132,6 +132,9 @@ private:
         is packed to disk */
     boost::shared_ptr<QTemporaryFile> packed_file;
     
+    /** The name of the temporary file */
+    QString packed_filename;
+    
     /** The last packed state for this store (this will be restored
         using the "pack" function) */
     PackedState last_packing_state;
