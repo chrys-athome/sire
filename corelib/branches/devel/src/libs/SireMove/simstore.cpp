@@ -162,6 +162,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimStore &simstore)
         sds >> new_store.sim_system >> new_store.sim_moves >> new_store.compressed_data;
         
         new_store.packed_file.reset();
+        new_store.packed_filename = QString::null;
     }
     else if (v == 2)
     {
@@ -170,6 +171,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimStore &simstore)
         sds >> new_store.compressed_data;
         
         new_store.packed_file.reset();
+        new_store.packed_filename = QString::null;
     }
     else if (v == 1)
     {
@@ -179,6 +181,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimStore &simstore)
         
         new_store.compressed_data = QByteArray();
         new_store.packed_file.reset();
+        new_store.packed_filename = QString::null;
     }
     else
         throw version_error( v, "1-5", r_simstore, CODELOC );
@@ -380,13 +383,16 @@ void SimStore::packToDisk(const QString &tempdir)
         return;
     }
     
-    packed_filename = tmp->fileName();
-    
     //pack the data to memory (if it isn't already)
     this->packToMemory();
-    
+
     //now write the data to disk
     qint64 nbytes = tmp->write(compressed_data);
+
+    //save the filename as some Qt versions lose the
+    //filename when the QTemporaryFile is closed
+    packed_filename = tmp->fileName();
+
     tmp->close();
     
     if (nbytes == -1)
@@ -472,6 +478,7 @@ void SimStore::unpack()
         sim_system = new_system;
         sim_moves = new_moves;
         packed_file.reset();
+        packed_filename = QString::null;
     }
 }
 
