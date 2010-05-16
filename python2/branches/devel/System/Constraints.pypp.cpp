@@ -126,6 +126,16 @@ void register_Constraints_class(){
                 , count_function_value );
         
         }
+        { //::SireSystem::Constraints::isEmpty
+        
+            typedef bool ( ::SireSystem::Constraints::*isEmpty_function_type )(  ) const;
+            isEmpty_function_type isEmpty_function_value( &::SireSystem::Constraints::isEmpty );
+            
+            Constraints_exposer.def( 
+                "isEmpty"
+                , isEmpty_function_value );
+        
+        }
         { //::SireSystem::Constraints::nConstraints
         
             typedef int ( ::SireSystem::Constraints::*nConstraints_function_type )(  ) const;

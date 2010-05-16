@@ -78,10 +78,10 @@ public:
     Molecules(const ViewsOfMol &molviews);
 
     template<class T>
-    Molecules(const QList<T> &molecules);
+    explicit Molecules(const QList<T> &molecules);
 
     template<class T>
-    Molecules(const QVector<T> &molecules);
+    explicit Molecules(const QVector<T> &molecules);
 
     Molecules(const Molecules &other);
 

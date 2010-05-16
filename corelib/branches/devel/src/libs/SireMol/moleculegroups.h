@@ -226,7 +226,10 @@ public:
     QHash< MolNum,Selector<Atom> > atoms(const AtomID &atomid) const;
 
     bool contains(MGNum mgnum) const;
+
     bool contains(MolNum molnum) const;
+    bool contains(const QList<MolNum> &molnums) const;
+    
     bool contains(const MoleculeView &molview) const;
     bool contains(const ViewsOfMol &molviews) const;
     bool contains(const Molecules &molecules) const;

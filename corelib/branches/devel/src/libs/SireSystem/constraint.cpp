@@ -243,7 +243,7 @@ bool Constraint::isSatisfied(const System &system) const
                         .arg(copy->last_was_satisfied), CODELOC );
         }
                  
-        return last_was_satisfied;
+        return copy->last_was_satisfied;
     }
 }
 
@@ -298,9 +298,9 @@ void Constraint::assertSatisfied(const System &system) const
 {
     if (not this->isSatisfied(system))
         throw SireSystem::constraint_error( QObject::tr(
-            "The constraint %1 is not valid in the system %2.")
+            "The constraint %1 is not maintained in the system %2.")
                 .arg(this->toString())
-                .arg(system.name()), CODELOC );
+                .arg(system.toString()), CODELOC );
 }
 
 //////////

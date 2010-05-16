@@ -407,6 +407,17 @@ void register_MolGroupsBase_class(){
         }
         { //::SireMol::MolGroupsBase::contains
         
+            typedef bool ( ::SireMol::MolGroupsBase::*contains_function_type )( ::QList< SireMol::MolNum > const & ) const;
+            contains_function_type contains_function_value( &::SireMol::MolGroupsBase::contains );
+            
+            MolGroupsBase_exposer.def( 
+                "contains"
+                , contains_function_value
+                , ( bp::arg("molnums") ) );
+        
+        }
+        { //::SireMol::MolGroupsBase::contains
+        
             typedef bool ( ::SireMol::MolGroupsBase::*contains_function_type )( ::SireMol::MoleculeView const & ) const;
             contains_function_type contains_function_value( &::SireMol::MolGroupsBase::contains );
             

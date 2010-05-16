@@ -1271,6 +1271,24 @@ bool MolGroupsBase::contains(MolNum molnum) const
     return molnum_to_mgnum.contains(molnum);
 }
 
+/** Return whether any of the groups contains any of the molecules whose
+    numbers are in 'molnums' */
+bool MolGroupsBase::contains(const QList<MolNum> &molnums) const
+{
+    if (molnum_to_mgnum.isEmpty())
+        return false;
+
+    for (QList<MolNum>::const_iterator it = molnums.constBegin();
+         it != molnums.constEnd();
+         ++it)
+    {
+        if (molnum_to_mgnum.contains(*it))
+            return true;
+    }
+    
+    return false;
+}
+
 /** Return whether or not any of the groups contains the view 'molview' */
 bool MolGroupsBase::contains(const MoleculeView &molview) const
 {

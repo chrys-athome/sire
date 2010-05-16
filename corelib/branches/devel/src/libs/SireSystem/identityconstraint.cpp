@@ -1576,12 +1576,11 @@ Molecules FewPointsHelper::applyConstraint() const
         {
             //we need to swap coordinates so that the ith candidate molecule is 
             //associated with the ith point
+            //qDebug() << "Giving coordinates of" << new_i << "to molecule" << i;
             changed_mols.add( ::swapCoordinatesTo(molecules,
                                                   mol_to_molnum_array[i],
                                                   mol_to_molnum_array[new_i],
                                                   coords_property) );
-            
-            //qDebug() << "Giving coordinates of" << new_i << "to molecule" << i;
 
             if (new_i >= n_to_match)
                 //molecule at 'new_i' will not get new coordinates

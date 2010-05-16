@@ -46,6 +46,7 @@
 #include "SireMol/molecule.h"
 #include "SireMol/molecules.h"
 #include "SireMol/moleculegroup.h"
+#include "SireMol/atomcoords.h"
 
 #include "SireBase/savestate.h"
 
@@ -3147,8 +3148,8 @@ QList<MolNum> System::deltaUpdate(const Molecules &molecules)
     if (changed_mols.isEmpty())
         return changed_mols;
     
-    bool in_molgroup = not this->_pvt_constMoleculeGroups().isEmpty();
-    bool in_ffields = not this->_pvt_constForceFields().isEmpty();
+    bool in_molgroup = this->_pvt_constMoleculeGroups().contains(changed_mols);
+    bool in_ffields = this->_pvt_constForceFields().contains(changed_mols);
     
     if (in_molgroup or in_ffields)
     {
