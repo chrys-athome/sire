@@ -41,7 +41,7 @@
 using namespace SireCluster::MPI;
 
 /** Construct a queue that listens for messages using 'recv_comm' */
-ReceiveQueue::ReceiveQueue(::MPI::Intracomm comm)
+ReceiveQueue::ReceiveQueue(MPI_Comm comm)
              : QThread(), boost::noncopyable(),
                recv_comm(comm), been_stopped(false)
 {
@@ -66,7 +66,7 @@ ReceiveQueue::~ReceiveQueue()
     
     delete secondthread;
     
-    recv_comm.Free();
+    MPI_Comm_free(&recv_comm);
 }
 
 /** Start the two background event loops */
@@ -215,24 +215,28 @@ void ReceiveQueue::run2()
 
     if (MPICluster::isMaster())
     {
-        ::MPI::Status status;
+        MPI_Status status;
 
         while (keep_listening)
         {        
             //the master listens for messages from anyone
-            if (recv_comm.Iprobe(MPI_ANY_SOURCE, 1, status))
+            int found_message;
+            MPI_Iprobe(MPI_ANY_SOURCE, 1, recv_comm, &found_message, &status);
+            
+            if (found_message)
             {
                 //there is a message from one of the slaves
-                int slave_rank = status.Get_source();
-                int count = status.Get_count(::MPI::BYTE);
+                int slave_rank = status.MPI_SOURCE;
+                int count;
+                MPI_Get_count(&status, MPI_BYTE, &count);
                 
                 //receive the message
                 message_data.resize(count + 1);
                 
                 //perhaps change this to use Irecv so that we can kill
                 //the communication if 'keep_listening' is set to false
-                recv_comm.Recv(message_data.data(), count, ::MPI::BYTE,
-                               slave_rank, 1);
+                MPI_Recv(message_data.data(), count, MPI_BYTE,
+                         slave_rank, 1, recv_comm, &status);
 
                 //unpack the message
                 Message message = this->unpackMessage(message_data, slave_rank);
@@ -258,20 +262,25 @@ void ReceiveQueue::run2()
     else
     {
         //everyone else listens to messages from the master
-        ::MPI::Status status;
+        MPI_Status status;
         
         while (true)
         {
-            if (recv_comm.Iprobe(MPICluster::master(), 1, status))
+            int found_message;
+            MPI_Iprobe(MPICluster::master(), 1, recv_comm, &found_message, &status);
+        
+            if (found_message)
             {
                 //there is a message from the master - it should be a
                 //single integer giving the size of the broadcast
-                int count = status.Get_count(::MPI::INT);
+                int count;
+                MPI_Get_count(&status, MPI_INT, &count);
                 
                 if (count != 1)
                     qDebug() << "HAVE NOT GOT AN INTEGER?";
-                    
-                recv_comm.Recv( &count, 1, ::MPI::INT, MPICluster::master(), 1 );
+
+                MPI_Recv( &count, 1, MPI_INT, MPICluster::master(), 1,
+                          recv_comm, &status );
         
                 if (count == 0)
                     //we've just been told to quit
@@ -280,8 +289,8 @@ void ReceiveQueue::run2()
                 //receive the message
                 message_data.resize(count + 1);
         
-                recv_comm.Recv( message_data.data(), count, 
-                                 ::MPI::BYTE, MPICluster::master(), 1 );
+                MPI_Recv( message_data.data(), count, MPI_BYTE,
+                          MPICluster::master(), 1, recv_comm, &status );
 
                 Message message = this->unpackMessage( message_data,
                                                        MPICluster::master() );
@@ -299,8 +308,8 @@ void ReceiveQueue::run2()
                             //the master will send a zero size message to signal
                             //that it has also quit - wait for that message now
                             //recv_comm->Barrier();
-                            recv_comm.Recv( &count, 1, ::MPI::INT, 
-                                            MPICluster::master(), 1 );
+                            MPI_Recv(&count, 1, MPI_INT, MPICluster::master(), 1,
+                                     recv_comm, &status);
                         
                             if (count != 0)
                                 qDebug() << "Shutdown has not been followed by a zero "
@@ -323,7 +332,7 @@ void ReceiveQueue::run2()
     }
 
     //release the resources held by this communicator
-    recv_comm.Free();
+    MPI_Comm_free(&recv_comm);
 }
 
 #endif // SIRE_USE_MPI

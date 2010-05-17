@@ -121,7 +121,7 @@ public:
     
 protected:
     static P2PComm createLocal();
-    static P2PComm create(::MPI::Intracomm private_comm, 
+    static P2PComm create(MPI_Comm private_comm, 
                           int master_rank, int slave_rank);
     
 private:

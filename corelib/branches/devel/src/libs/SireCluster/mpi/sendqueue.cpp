@@ -45,7 +45,7 @@ using namespace SireCluster::MPI::Messages;
 
 /** Construct, using the passed MPI communicator to send the 
     messages */
-SendQueue::SendQueue(::MPI::Intracomm comm)
+SendQueue::SendQueue(MPI_Comm comm)
           : QThread(), boost::noncopyable(),
             send_comm(comm), been_stopped(false)
 {}
@@ -63,7 +63,7 @@ SendQueue::~SendQueue()
         waiter.wakeAll();
     }
 
-    send_comm.Free();
+    MPI_Comm_free( &send_comm );
 }
 
 /** Start the event loop in a background thread */
@@ -170,7 +170,9 @@ void SendQueue::run()
                     {
                         if (recipient != MPICluster::master())
                         {
-                            send_comm.Isend( &size, 1, ::MPI::INT, recipient, 1 );
+                            MPI_Request request;
+                            MPI_Isend(&size, 1, MPI_INT, recipient, 1, 
+                                      send_comm, &request);
                         }
                     }
                     
@@ -178,8 +180,8 @@ void SendQueue::run()
                     {
                         if (recipient != MPICluster::master())
                         {
-                            send_comm.Send( message_data.data(), message_data.count(),
-                                            ::MPI::BYTE, recipient, 1 );
+                            MPI_Send(message_data.data(), message_data.count(),
+                                     MPI_BYTE, recipient, 1, send_comm);
                         }
                     }
 
@@ -202,9 +204,10 @@ void SendQueue::run()
                     
                     if (recipient != MPICluster::master())
                     {
-                        send_comm.Isend( &size, 1, ::MPI::INT, recipient, 1 );
-                        send_comm.Send( message_data.data(), message_data.count(),
-                                        ::MPI::BYTE, recipient, 1 );
+                        MPI_Request request;
+                        MPI_Isend(&size, 1, MPI_INT, recipient, 1, send_comm, &request);
+                        MPI_Send(message_data.data(), message_data.count(),
+                                 MPI_BYTE, recipient, 1, send_comm);
                     }
                 }
             }
@@ -227,8 +230,8 @@ void SendQueue::run()
                 
                 //maybe change to Isend so that we can kill the send if
                 //'been_stopped' is true
-                send_comm.Send( message_data.constData(), message_data.count(), 
-                                ::MPI::BYTE, MPICluster::master(), 1 );
+                MPI_Send(message_data.data(), message_data.count(),
+                         MPI_BYTE, MPICluster::master(), 1, send_comm);
             }
         }
         catch(const SireError::exception &e)
@@ -262,13 +265,13 @@ void SendQueue::run()
         for (int i=0; i<MPICluster::getCount(); ++i)
         {
             if (i != MPICluster::master())
-                send_comm.Send( &quit, 1, ::MPI::INT, i, 1 );
+                MPI_Send(&quit, 1, MPI_INT, i, 1, send_comm);
         }
     }
     
     //we're not sending any more messages, so release the resources
     //held by the communicator
-    send_comm.Free();
+    MPI_Comm_free(&send_comm);
 }
 
 #endif // SIRE_USE_MPI

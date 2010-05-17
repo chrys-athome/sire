@@ -103,7 +103,7 @@ public:
     QHash<QUuid,ReplyPtr> reply_registry;
 
     /** The global (private) MPI communicator */
-    ::MPI::Intracomm global_comm;
+    MPI_Comm global_comm;
 
     /** The send message event loop */
     SendQueue *send_queue;
@@ -134,13 +134,27 @@ static MPIClusterPvt* globalCluster()
 
 static void ensureMPIStarted()
 {
-    if (not ::MPI::Is_initialized())
+    int initialized;
+    MPI_Initialized(&initialized);
+
+    if (not initialized)
     {
         int argc = 0;
         char **argv = 0;
         
         //Absolutely must use multi-threaded MPI
-        ::MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
+        int level;
+        int mpierr = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &level);
+        
+        if (mpierr != MPI_SUCCESS)
+            throw SireError::unavailable_resource( QObject::tr(
+                    "Unable to start multi-threaded MPI! MPI Error code %1.")
+                        .arg(mpierr), CODELOC );
+                        
+        if (level != MPI_THREAD_MULTIPLE)
+            throw SireError::unavailable_resource( QObject::tr(
+                    "Multi-threaded MPI not available. MPI level %1.")
+                        .arg(level), CODELOC );
     }
 }
 
@@ -153,7 +167,8 @@ MPIClusterPvt::MPIClusterPvt() : send_queue(0), receive_queue(0),
 
     //now make sure that we are using a version of MPI that
     //has multi-thread support
-    int thread_level = ::MPI::Query_thread();
+    int thread_level;
+    MPI_Query_thread(&thread_level);
     
     if (thread_level != MPI_THREAD_MULTIPLE)
     {
@@ -171,34 +186,37 @@ MPIClusterPvt::MPIClusterPvt() : send_queue(0), receive_queue(0),
         }
         
         //stop MPI and exit
-        ::MPI::COMM_WORLD.Barrier();
-        ::MPI::Finalize();
+        MPI_Barrier( MPI_COMM_WORLD );
+        MPI_Finalize();
         
         //kill the program
         std::exit(-1);
     }
         
     //get the global MPI communicator
-    ::MPI::Group mpigroup = ::MPI::COMM_WORLD.Get_group();
-    global_comm = ::MPI::COMM_WORLD.Create(mpigroup);
+    MPI_Group mpigroup;
+    MPI_Comm_group(MPI_COMM_WORLD, &mpigroup);
 
-    ::MPI::Intracomm send_comm, recv_comm;
+    //create a new communicator that is just used by SireCluster
+    MPI_Comm_create(MPI_COMM_WORLD, mpigroup, &global_comm);
+
+    MPI_Comm send_comm, recv_comm;
         
     if ( MPICluster::isMaster() )
     {
         //create the send, then receive communicators
-        send_comm = global_comm.Create(mpigroup);
-        recv_comm = global_comm.Create(mpigroup);
+        MPI_Comm_create(global_comm, mpigroup, &send_comm);
+        MPI_Comm_create(global_comm, mpigroup, &recv_comm);
     }
     else
     {
         //must be the other way around (as all other nodes
         //listen to the master)
-        recv_comm = global_comm.Create(mpigroup);
-        send_comm = global_comm.Create(mpigroup);
+        MPI_Comm_create(global_comm, mpigroup, &recv_comm);
+        MPI_Comm_create(global_comm, mpigroup, &send_comm);
     }
-    
-    mpigroup.Free();
+
+    MPI_Group_free(&mpigroup);
     
     //create and start the reservation manager
     ReservationManager::start();
@@ -211,7 +229,7 @@ MPIClusterPvt::MPIClusterPvt() : send_queue(0), receive_queue(0),
     receive_queue->start();
 
     //wait for everyone to get here
-    global_comm.Barrier();
+    MPI_Barrier(global_comm);
     
     already_shutting_down = false;
 }
@@ -222,7 +240,7 @@ MPIClusterPvt::~MPIClusterPvt()
     //stop the reservation manager
     ReservationManager::shutdown();
 
-    global_comm.Free();
+    MPI_Comm_free(&global_comm);
 
     if (send_queue)
     {
@@ -255,8 +273,11 @@ void MPICluster::sync()
 {
     ::ensureMPIStarted();
 
-    if (not ::MPI::Is_finalized())
-        globalCluster()->global_comm.Barrier();
+    int is_finalized;
+    MPI_Finalized(&is_finalized);
+
+    if (not is_finalized)
+        MPI_Barrier(globalCluster()->global_comm);
 }
 
 /** Create a new P2P communicator that allow for direct and
@@ -286,7 +307,9 @@ P2PComm MPICluster::createP2P(int master_rank, int slave_rank)
         // - this requires a collective operation
         QMutexLocker lkr( &(globalCluster()->datamutex) );
         
-        if (::MPI::Is_finalized())
+        int is_finalized;
+        MPI_Finalized(&is_finalized);
+        if (is_finalized)
             return P2PComm();
         
         int rank = 0;
@@ -294,9 +317,9 @@ P2PComm MPICluster::createP2P(int master_rank, int slave_rank)
         if (is_slave)
             rank = 1;
         
-        ::MPI::Intracomm private_comm = 
-                    globalCluster()->global_comm.Split( (is_master or is_slave),
-                                                         is_slave );
+        MPI_Comm private_comm;
+        MPI_Comm_split(globalCluster()->global_comm, 
+                       (is_master or is_slave), is_slave, &private_comm);
         
         return P2PComm::create(private_comm, master_rank, slave_rank);
     }
@@ -307,8 +330,14 @@ int MPICluster::getRank()
 {
     ::ensureMPIStarted();
 
-    if (not ::MPI::Is_finalized())
-        return ::MPI::COMM_WORLD.Get_rank();
+    int finalized, rank;
+    MPI_Finalized(&finalized);
+
+    if (not finalized)
+    {
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        return rank;
+    }
     else
         //MPI has finalized
         return -1;
@@ -319,8 +348,14 @@ int MPICluster::getCount()
 {
     ::ensureMPIStarted();
     
-    if (not ::MPI::Is_finalized())
-        return ::MPI::COMM_WORLD.Get_size();
+    int finalized, size;
+    MPI_Finalized(&finalized);
+    
+    if (not finalized)
+    {
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+        return size;
+    }
     else
         //MPI has shut down
         return 0;
@@ -702,7 +737,10 @@ bool MPICluster::hasBackend(const QUuid &uid)
 /** Return whether or not the MPICluster is running */
 bool MPICluster::isRunning()
 {
-    if (not ::MPI::Is_initialized())
+    int initialized;
+    MPI_Initialized(&initialized);
+
+    if (not initialized)
         return false;
         
     else
@@ -757,8 +795,8 @@ void MPICluster::informedShutdown()
         globalCluster()->backend_registry.clear();
 
         //finally, get rid of the global communicator
-        globalCluster()->global_comm.Barrier();
-        globalCluster()->global_comm.Free();
+        MPI_Barrier( globalCluster()->global_comm );
+        MPI_Comm_free( &(globalCluster()->global_comm) );
     }
     
     //shut down the cluster - this will call MPICluster::shutdown,

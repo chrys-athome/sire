@@ -70,7 +70,7 @@ class SecondThread;
 friend class ReceiveQueue::SecondThread;
 
 public:
-    ReceiveQueue(::MPI::Intracomm recv_comm);
+    ReceiveQueue(MPI_Comm recv_comm);
     ~ReceiveQueue();
     
     void start();
@@ -122,7 +122,7 @@ private:
     QWaitCondition waiter;
     
     /** The communicator to use to receive messages */
-    ::MPI::Intracomm recv_comm;
+    MPI_Comm recv_comm;
     
     /** The list of received messages */
     QQueue<Message> message_queue;

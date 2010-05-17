@@ -887,7 +887,8 @@ int main(int argc, char **argv)
     {
         #ifdef SIRE_USE_MPI
             //start MPI - ABSOLUTELY must use multi-threaded MPI
-            ::MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
+            int level;
+            MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &level);
         #endif
 
         //are we the first node in the cluster?
@@ -919,13 +920,13 @@ int main(int argc, char **argv)
             //start the cluster - on the master we need one extra
             //thread for the Python interpreter
             #ifdef SIRE_USE_MPI
-                ::MPI::COMM_WORLD.Barrier();
+                MPI_Barrier( MPI_COMM_WORLD );
             #endif
 
             Cluster::start(ppn);
 
             #ifdef SIRE_USE_MPI
-                ::MPI::COMM_WORLD.Barrier();
+                MPI_Barrier( MPI_COMM_WORLD );
             #endif
 
             int time, repeat;
@@ -1160,7 +1161,7 @@ int main(int argc, char **argv)
                                 .arg(Cluster::getRank()) );
                                 
             #ifdef SIRE_USE_MPI
-                ::MPI::COMM_WORLD.Barrier();
+                MPI_Barrier( MPI_COMM_WORLD );
             #endif
  
             printOut( QObject::tr("compute%1 starting...").arg(Cluster::getRank()) );
@@ -1171,7 +1172,7 @@ int main(int argc, char **argv)
                                 .arg(Cluster::getRank()) );
 
             #ifdef SIRE_USE_MPI
-                ::MPI::COMM_WORLD.Barrier();
+                MPI_Barrier( MPI_COMM_WORLD );
             #endif
 
             printOut( QObject::tr("compute%1 waiting...").arg(Cluster::getRank()) );
@@ -1202,21 +1203,24 @@ int main(int argc, char **argv)
 
     //shutdown the cluster
     #ifdef SIRE_USE_MPI
-        if (::MPI::COMM_WORLD.Get_rank() == 0)
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    
+        if (rank == 0)
         {
             printOut( QObject::tr("Shutting down the cluster...") );
             Cluster::shutdown();
         }
 
         //wait for all of the MPI jobs to finish
-        ::MPI::COMM_WORLD.Barrier();
+        MPI_Barrier( MPI_COMM_WORLD );
 
-        if (::MPI::COMM_WORLD.Get_rank() == 0)
+        if (rank == 0)
         {
             printOut( QObject::tr("The entire cluster has now shutdown.") );
         }
 
-        ::MPI::Finalize();
+        MPI_Finalize();
     #else
         printOut( QObject::tr("Shutting down the cluster...") );
         Cluster::shutdown();

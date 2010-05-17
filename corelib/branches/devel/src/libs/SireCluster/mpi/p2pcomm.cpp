@@ -69,13 +69,13 @@ public:
         is_slave = true;
     }
     
-    P2PCommPvt(::MPI::Intracomm comm, int master, int slave)
+    P2PCommPvt(MPI_Comm comm, int master, int slave)
             : private_comm(comm), master_rank(master), slave_rank(slave),
               keep_running(false)
     {
         int my_rank = MPICluster::getRank();
 
-        if (private_comm == ::MPI::COMM_NULL)
+        if (private_comm == MPI_COMM_NULL)
         {
             throw SireError::program_bug( QObject::tr(
                 "You cannot create a P2PComm with a null communicator!"),   
@@ -98,9 +98,12 @@ public:
         this->wait();
     
         //free the communicator
-        if (not ::MPI::Is_finalized())
+        int finalized;
+        MPI_Finalized(&finalized);
+        
+        if (not finalized)
         {
-            if (private_comm != ::MPI::COMM_NULL)
+            if (private_comm != MPI_COMM_NULL)
             {
                 if (is_master)
                 {
@@ -109,21 +112,27 @@ public:
                     envelope[0] = P2PComm::EXIT;
                     envelope[1] = 0;
                     
-                    private_comm.Send(envelope, 2, ::MPI::INT, P2PComm::SLAVE, 1);
+                    MPI_Send(envelope, 2, MPI_INT, P2PComm::SLAVE, 1, private_comm);
                 }
             
                 //private_comm.Barrier();
-                private_comm.Free();
+                MPI_Comm_free(&private_comm);
             }
         }
     }
     
     void waitForResponse(int rank, int tag)
     {
-        ::MPI::Status status;
+        MPI_Status status;
         
-        while (not private_comm.Iprobe(rank, tag))
+        int received_message;
+        MPI_Iprobe(rank, tag, private_comm, &received_message, &status);
+        
+        while (not received_message)
+        {
             QThread::msleep(5);
+            MPI_Iprobe(rank, tag, private_comm, &received_message, &status);
+        }
     }
     
     /** Mutex to protect access to this communicator */
@@ -134,7 +143,7 @@ public:
     Frontend local_backend;
     
     /** The private MPI communicator for this backend */
-    ::MPI::Intracomm private_comm;
+    MPI_Comm private_comm;
     
     /** The rank of the master process in this communicator */
     int master_rank;
@@ -182,25 +191,24 @@ void P2PCommPvt::sendResponse(const T &response)
     //send this to the master
     int size = data.count();
     
-    private_comm.Send( &size, 1, ::MPI::INT, P2PComm::MASTER, 1 );
+    MPI_Send(&size, 1, MPI_INT, P2PComm::MASTER, 1, private_comm);
     
     if (size > 0)
     {
-        private_comm.Send( data.constData(), size, ::MPI::BYTE,
-                           P2PComm::MASTER, 1 );
+        MPI_Send(data.data(), size, MPI_BYTE, P2PComm::MASTER, 1, private_comm);
     }
 }
 
 /** This just sends a quick integer response back to the master */
 void P2PCommPvt::sendIntegerResponse(int response)
 {
-    private_comm.Send( &response, 1, ::MPI::INT, P2PComm::MASTER, 1 );
+    MPI_Send(&response, 1, MPI_INT, P2PComm::MASTER, 1, private_comm);
 }
 
 /** This just sends a quick float response back to the master */
 void P2PCommPvt::sendFloatResponse(float response)
 {
-    private_comm.Send( &response, 1, ::MPI::FLOAT, P2PComm::MASTER, 1 );
+    MPI_Send(&response, 1, MPI_FLOAT, P2PComm::MASTER, 1, private_comm);
 }
 
 template<class T>
@@ -228,19 +236,22 @@ void P2PCommPvt::run()
     int message;
     QByteArray message_data;
     
+    MPI_Status status;
+    
     while (keep_running)
     {
         lkr.unlock();
 
         //wait for a message from the master
         this->waitForResponse(P2PComm::MASTER, 1);
-        private_comm.Recv(envelope, 2, ::MPI::INT, P2PComm::MASTER, 1);
+        
+        MPI_Recv(envelope, 2, MPI_INT, P2PComm::MASTER, 1, private_comm, &status);
 
         if (envelope[1] > 0)
         {
             message_data.resize(envelope[1]+1);
-            private_comm.Recv(message_data.data(), envelope[1], ::MPI::BYTE, 
-                              P2PComm::MASTER, 1);
+            MPI_Recv(message_data.data(), envelope[1], MPI_BYTE,
+                     P2PComm::MASTER, 1, private_comm, &status);
         }
         
         lkr.relock();
@@ -300,8 +311,8 @@ void P2PCommPvt::run()
     }
 
     //private_comm.Barrier();
-    private_comm.Free();
-    private_comm = ::MPI::COMM_NULL;
+    MPI_Comm_free(&private_comm);
+    private_comm = MPI_COMM_NULL;
     
     //return the backend to the pool
     local_backend = Frontend();
@@ -405,7 +416,7 @@ P2PComm P2PComm::createLocal()
     point-to-point communicator that works using the provided
     communicator, with this as the master process if 'is_master'
     is true */
-P2PComm P2PComm::create(::MPI::Intracomm private_comm,
+P2PComm P2PComm::create(MPI_Comm private_comm,
                         int master_rank, int slave_rank)
 {
     P2PComm p2p;
@@ -419,10 +430,11 @@ P2PComm P2PComm::create(::MPI::Intracomm private_comm,
     else
     {
         //we are not involved
-        if (private_comm != ::MPI::COMM_NULL)
+        if (private_comm != MPI_COMM_NULL)
         {
             //private_comm.Barrier();
-            private_comm.Free();
+            MPI_Comm_free(&private_comm);
+            private_comm = MPI_COMM_NULL;
         }
     }
     
@@ -457,7 +469,10 @@ void P2PComm::sendMessage(int message)
     some additional data */
 void P2PComm::_pvt_sendMessage(int message, const QByteArray &data)
 {
-    if (::MPI::Is_finalized())
+    int finalized;
+    MPI_Finalized(&finalized);
+
+    if (finalized)
         return;
 
     QMutexLocker lkr( &(d->datamutex) );
@@ -465,26 +480,29 @@ void P2PComm::_pvt_sendMessage(int message, const QByteArray &data)
     if (not d->is_master)
         return;
     
-    if (d->private_comm == ::MPI::COMM_NULL)
+    if (d->private_comm == MPI_COMM_NULL)
         return;
         
     int envelope[2];
     envelope[0] = message;
     envelope[1] = data.count();
     
-    d->private_comm.Send( envelope, 2, ::MPI::INT, P2PComm::SLAVE, 1 );
+    MPI_Send(envelope, 2, MPI_INT, P2PComm::SLAVE, 1, d->private_comm);
 
     if (not data.isEmpty())
     {
-        d->private_comm.Send( data.constData(), data.count(), ::MPI::BYTE,
-                              P2PComm::SLAVE, 1 );
+        MPI_Send(const_cast<char*>(data.data()), data.count(), 
+                 MPI_BYTE, P2PComm::SLAVE, 1, d->private_comm);
     }
 }
 
 /** Await an integer response from the slave */
 int P2PComm::awaitIntegerResponse(bool urgent)
 {
-    if (::MPI::Is_finalized())
+    int finalized;
+    MPI_Finalized(&finalized);
+
+    if (finalized)
         return -1;
 
     QMutexLocker lkr( &(d->datamutex) );
@@ -492,7 +510,7 @@ int P2PComm::awaitIntegerResponse(bool urgent)
     if (not d->is_master)
         return -1;
     
-    if (d->private_comm == ::MPI::COMM_NULL)
+    if (d->private_comm == MPI_COMM_NULL)
         return -1;
 
     int message;
@@ -500,7 +518,8 @@ int P2PComm::awaitIntegerResponse(bool urgent)
     if (not urgent)
         d->waitForResponse(P2PComm::SLAVE, 1);
 
-    d->private_comm.Recv(&message, 1, ::MPI::INT, P2PComm::SLAVE, 1);
+    MPI_Status status;
+    MPI_Recv(&message, 1, MPI_INT, P2PComm::SLAVE, 1, d->private_comm, &status);
 
     return message;
 }
@@ -508,7 +527,10 @@ int P2PComm::awaitIntegerResponse(bool urgent)
 /** Await a float response from the slave */
 float P2PComm::awaitFloatResponse(bool urgent)
 {
-    if (::MPI::Is_finalized())
+    int finalized;
+    MPI_Finalized(&finalized);
+
+    if (finalized)
         return 0;
 
     QMutexLocker lkr( &(d->datamutex) );
@@ -516,7 +538,7 @@ float P2PComm::awaitFloatResponse(bool urgent)
     if (not d->is_master)
         return 0;
     
-    if (d->private_comm == ::MPI::COMM_NULL)
+    if (d->private_comm == MPI_COMM_NULL)
         return 0;
 
     float message;
@@ -524,7 +546,8 @@ float P2PComm::awaitFloatResponse(bool urgent)
     if (not urgent)
         d->waitForResponse(P2PComm::SLAVE, 1);
 
-    d->private_comm.Recv(&message, 1, ::MPI::FLOAT, P2PComm::SLAVE, 1);
+    MPI_Status status;
+    MPI_Recv(&message, 1, MPI_FLOAT, P2PComm::SLAVE, 1, d->private_comm, &status);
 
     return message;
 }
@@ -532,7 +555,10 @@ float P2PComm::awaitFloatResponse(bool urgent)
 /** Internal function used to wait for a response from the slave */
 QByteArray P2PComm::_pvt_awaitResponse(bool urgent)
 {
-    if (::MPI::Is_finalized())
+    int finalized;
+    MPI_Finalized(&finalized);
+
+    if (finalized)
         return QByteArray();
 
     QMutexLocker lkr( &(d->datamutex) );
@@ -540,7 +566,7 @@ QByteArray P2PComm::_pvt_awaitResponse(bool urgent)
     if (not d->is_master)
         return QByteArray();
     
-    if (d->private_comm == ::MPI::COMM_NULL)
+    if (d->private_comm == MPI_COMM_NULL)
         return QByteArray();
 
     int size;
@@ -548,14 +574,15 @@ QByteArray P2PComm::_pvt_awaitResponse(bool urgent)
     if (not urgent)
         d->waitForResponse(P2PComm::SLAVE, 1);
 
-    d->private_comm.Recv(&size, 1, ::MPI::INT, P2PComm::SLAVE, 1);
+    MPI_Status status;
+    MPI_Recv(&size, 1, MPI_INT, P2PComm::SLAVE, 1, d->private_comm, &status);
     
     if (size <= 0)
         return QByteArray();
         
     QByteArray data( size+1, ' ' );
-    
-    d->private_comm.Recv( data.data(), size, ::MPI::BYTE, P2PComm::SLAVE, 1);
+
+    MPI_Recv(data.data(), size, MPI_BYTE, P2PComm::SLAVE, 1, d->private_comm, &status);
     
     return data;
 }
