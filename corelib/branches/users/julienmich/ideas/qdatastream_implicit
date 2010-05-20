@@ -1,0 +1,54 @@
+need to preserve implicit sharing on dump/reload
+
+Do;
+
+QDataStream& operator<<(QDataStream &ds, const &obj)
+{
+
+    shared_ptr<helper> helper = ImplicitStore::start(ds);
+    
+    ds << non_shared_data << helper->shared_object(shared_data)
+                          << more_non_shared_data;
+                          
+    return ds;
+
+}
+
+helper is a class that holds a register of implicitly shared data
+objects. Use shared pointer so that this stays in scope throughout
+the entire stream of a single, self-consistent object dump.
+
+Object is dumped the first time it is seen, but if it has already
+been seen then just dump a reference to the object in the 
+object store.
+
+Can then do;
+
+QDataStream& operator>>(QDataStream &ds, &obj)
+{
+    shared_ptr<helper> helper = ImplicitStore::start(ds);
+    
+    ds >> non_shared_data >> helper->shared_object(shared_data)
+                          >> more_non_shared_data;
+                          
+    return ds;
+}
+
+maybe only work on QSharedDataPointer objects?
+
+e.g.
+
+template<class T>
+helper_stream_obj shared_object( QSharedDataPointer<T> &shared_data )
+{
+    ...
+}
+
+This would not work with Qt implicitly shared types (e.g. QVector). Shame.
+
+However, would work with Molecule, which is the main one I want to do to
+prevent over-streaming! Would also work with any parameter table classes
+(as long as I make them implicitly shared myself. This would be transparent
+to the rest of the code as well :-)
+
+

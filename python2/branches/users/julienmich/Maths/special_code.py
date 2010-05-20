@@ -1,0 +1,47 @@
+
+import re
+
+def findGlobals():
+    #read in the information about this module
+    lines = open("module_info", "r").readlines()
+    root = lines[2].split()[1]
+    sourcedir = lines[1].split()[1]
+
+    lines = open("%s/%s/constants.h" % (root,sourcedir), "r").readlines()
+    
+    FILE = open("_Maths_global_variables.pyman.hpp", "w")
+    
+    print >>FILE, "#ifndef _Maths_global_variables_hpp"
+    print >>FILE, "#define _Maths_global_variables_hpp"
+    print >>FILE, "\nvoid register_man_global_variables();\n"
+    print >>FILE, "#endif"
+     
+    FILE.close()
+
+    FILE = open("_Maths_global_variables.pyman.cpp", "w")
+    
+    print >>FILE, "\n#include \"_Maths_global_variables.pyman.hpp\""
+    print >>FILE, "#include <boost/python.hpp>"
+    print >>FILE, "#include \"SireMaths/constants.h\""
+    print >>FILE, "\nusing namespace boost::python;"
+    print >>FILE, "using namespace SireMaths;\n"
+    
+    print >>FILE, "void register_man_global_variables()"
+    print >>FILE, "{"
+    
+    
+    for line in lines:
+        match = re.search(r"const (double|int)\s+(\w+)\s*=", line)
+    
+        if match:
+            name = match.group(2)
+            print >>FILE, "    scope().attr(\"%s\") = %s;\n" % (name,name)
+
+    print >>FILE, "}\n"
+
+def fixMB(mb):
+   mb.add_declaration_code("#include \"_Maths_global_variables.pyman.hpp\"")
+   mb.add_registration_code("register_man_global_variables();")
+
+   #add all of the global physical constants to the module
+   findGlobals()

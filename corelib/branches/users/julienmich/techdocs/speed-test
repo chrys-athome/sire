@@ -1,0 +1,33 @@
+80A cutoff
+
+ProtoMS3:        -14468.3,  2683 ms
+
+Vanilla code:    -14468.7,  3600 ms
+No sphere test:  -14468.7,  3507 ms
+No CLJ lookup:   -14468.7,  3015 ms
+No pmat redim:   -14468.7,  3581 ms
+No Energy addn:  -14468.7,  3567 ms
+double return:              3375 ms
+double + no clj:            2746 ms
+
+new lookup:      -14468.7   3242 ms
+double return    -14468.7   3039 ms
+member function  -14468.7   2866 ms
+ref return       -14468.7   2537 ms
+
+15A cutoff
+
+ProtoMS3:        -14467.1    600 ms
+
+Vanilla code:    -14467.3   1200 ms
+No sphere test:  -14467.3   1930 ms
+No CLJ lookup:   -14467.3    690 ms
+No group.ID():   -14467.3   1067 ms
+double + no clj:             653 ms
+
+new CLJWindows:  -14467.3    808 ms
+only 1 lookup:   -14467.3    701 ms
+new lookup:      -14467.3    734 ms
+double return:   -14467.3    687 ms
+member function: -14467.3    651 ms
+ref return       -14467.3    598 ms
