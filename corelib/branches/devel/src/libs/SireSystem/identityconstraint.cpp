@@ -2574,32 +2574,39 @@ void IdentityConstraint::setSystem(const System &system)
     Constraint::setSatisfied(system, changed_mols.isEmpty());
 }
 
+static bool pointsChanged(const QVector<PointPtr> &points, 
+                          const Delta &delta, quint32 last_subversion)
+{
+    for (QVector<PointPtr>::const_iterator it = points.constBegin();
+         it != points.constEnd();
+         ++it)
+    {
+        if (delta.sinceChanged(it->read(), last_subversion))
+            return true;
+    }
+
+    return false;
+}
+
 bool IdentityConstraint::mayChange(const Delta &delta, quint32 last_subversion) const
 {
     if ( d.constData() == 0 or d->isNull() )
         return false;
-        
-    else if ( delta.sinceChanged(space_property, last_subversion) or
-         delta.sinceChanged(moleculeGroup().molecules(), last_subversion) )
-    {
+
+    else if (not changed_mols.isEmpty())
         return true;
-    }
-    else
-    {
-        for (QVector<PointPtr>::const_iterator it = d->points().constBegin();
-             it != d->points().constEnd();
-             ++it)
-        {
-            if (delta.sinceChanged(it->read(), last_subversion))
-                return true;
-        }
         
-        return false;
-    }
+    else
+        return delta.sinceChanged(space_property, last_subversion) or
+               delta.sinceChanged(moleculeGroup().molecules(), last_subversion) or
+               ::pointsChanged(d->points(), delta, last_subversion);
 }
 
 bool IdentityConstraint::fullApply(Delta &delta)
 {
+    if (d.constData() == 0)
+        return false;
+
     this->setSystem(delta.deltaSystem());
 
     bool changed = false;
@@ -2609,7 +2616,6 @@ bool IdentityConstraint::fullApply(Delta &delta)
     {
         bool this_changed = delta.update(changed_mols);
         changed = changed or this_changed;
-        
         changed_mols = d->update(delta.deltaSystem(), changed_mols, false);
 
         ++i;
@@ -2629,12 +2635,16 @@ bool IdentityConstraint::deltaApply(Delta &delta, quint32 last_subversion)
         return false;
 
     else if ( (not changed_mols.isEmpty() ) or
-               delta.sinceChanged(space_property, last_subversion))
+               delta.sinceChanged(space_property, last_subversion) or
+               ::pointsChanged(d->points(), delta, last_subversion) )
     {
         return this->fullApply(delta);
     }
     else
     {
+        QTime t;
+        t.start();
+
         QList<MolNum> changed_molnums = delta.changedMoleculesSince(
                                                 moleculeGroup().molecules(),
                                                 last_subversion);
@@ -2659,7 +2669,6 @@ bool IdentityConstraint::deltaApply(Delta &delta, quint32 last_subversion)
         {
             bool this_changed = delta.update(changed_mols);
             changed = changed or this_changed;
-        
             changed_mols = d->update(delta.deltaSystem(), changed_mols, false);
         
             ++i;

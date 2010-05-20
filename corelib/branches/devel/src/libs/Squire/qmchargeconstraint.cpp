@@ -277,10 +277,10 @@ bool QMChargeConstraint::deltaApply(Delta &delta, quint32 last_subversion)
     
     const Molecules &mols = moleculeGroup().molecules();
     
-    mols_to_change = Molecules();
-    
     foreach (MolNum changed_mol, changed_mols)
     {
+        mols_to_change.remove(changed_mol);
+
         Molecules::const_iterator it = mols.constFind(changed_mol);
         
         if (it != mols.constEnd())

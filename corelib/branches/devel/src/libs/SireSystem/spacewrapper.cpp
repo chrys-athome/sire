@@ -183,11 +183,8 @@ void SpaceWrapper::setSystem(const System &system)
     if (Constraint::wasLastSystem(system) and Constraint::wasLastSubVersion(system))
         return;
 
-    if (not wrap_point.isNull())
-    {
-        if (wrap_point.read().usesMoleculesIn(system))
-            wrap_point.edit().update(system);
-    }
+    if (wrap_point.read().usesMoleculesIn(system))
+        wrap_point.edit().update(system);
 
     if (not molgroup.isNull())
     {
@@ -215,7 +212,7 @@ void SpaceWrapper::setSystem(const System &system)
     }
 
     if (molgroup.isNull() or molgroup.read().isEmpty() or 
-        wrap_point.isNull() or spce.isNull() or spce.read().isPeriodic())
+        spce.isNull() or (not spce.read().isPeriodic()))
     {
         Constraint::setSatisfied(system, true);
         return;
@@ -262,10 +259,13 @@ void SpaceWrapper::setSystem(const System &system)
     subversion 'subversion' */
 bool SpaceWrapper::mayChange(const Delta &delta, quint32 last_subversion) const
 {
-    if (molgroup.isNull() or wrap_point.isNull())
+    if (molgroup.isNull())
         return false;
 
-    if (delta.sinceChanged(space_property, last_subversion))
+    else if (not changed_mols.isEmpty())
+        return true;
+
+    else if (delta.sinceChanged(space_property, last_subversion))
     {
         if (delta.deltaSystem().containsProperty(space_property))
         {
@@ -302,6 +302,10 @@ bool SpaceWrapper::fullApply(Delta &delta)
     else
     {
         bool changed = delta.update(changed_mols);
+        
+        if (delta.deltaSystem().contains(molgroup.read().number()))
+            molgroup = delta.deltaSystem()[molgroup.read().number()];
+        
         changed_mols = Molecules();
         return changed;
     }
@@ -342,8 +346,7 @@ bool SpaceWrapper::deltaApply(Delta &delta, quint32 last_subversion)
         }
     }
     
-    if (molgroup.isNull() or wrap_point.isNull() or spce.isNull() or
-        not spce.read().isPeriodic())
+    if (molgroup.isNull() or spce.isNull() or (not spce.read().isPeriodic()))
     {
         return false;
     }

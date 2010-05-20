@@ -593,8 +593,8 @@ void System::setName(const QString &newname)
 void System::collectStats()
 {
     sysmonitors.monitor(*this);
-    sysversion.incrementMajor();
-    cons.committed(*this);
+    //sysversion.incrementMajor();
+    //cons.committed(*this);
 }
 
 /** Return the forcefield with ID 'ffid' in this system

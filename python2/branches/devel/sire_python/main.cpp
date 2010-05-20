@@ -100,7 +100,8 @@ int main(int argc, char **argv)
 
         #ifdef SIRE_USE_MPI
             //start MPI - ABSOLUTELY must use multi-threaded MPI
-            ::MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
+            int level;
+            MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &level);
         #endif
 
         //are we the first node in the cluster?
@@ -116,13 +117,13 @@ int main(int argc, char **argv)
             //start the cluster - on the master we need one extra
             //thread for the Python interpreter
             #ifdef SIRE_USE_MPI
-                //::MPI::COMM_WORLD.Barrier();
+                //MPI_Barrier( MPI_COMM_WORLD );
             #endif
 
             Cluster::start(ppn);
 
             #ifdef SIRE_USE_MPI
-                //::MPI::COMM_WORLD.Barrier();
+                //MPI_Barrier( MPI_COMM_WORLD );
             #endif
 
             //run python - each argument is a python script
@@ -182,13 +183,13 @@ int main(int argc, char **argv)
             //exec the Cluster - this starts the cluster and then
             //blocks while it is running
             #ifdef SIRE_USE_MPI
-                //::MPI::COMM_WORLD.Barrier();
+                //MPI_Barrier( MPI_COMM_WORLD );
             #endif
  
             Cluster::start(ppn);
 
             #ifdef SIRE_USE_MPI
-                //::MPI::COMM_WORLD.Barrier();
+                //MPI_Barrier( MPI_COMM_WORLD );
             #endif
 
             Cluster::wait();
@@ -215,21 +216,23 @@ int main(int argc, char **argv)
 
     //shutdown the cluster
     #ifdef SIRE_USE_MPI
-        if (::MPI::COMM_WORLD.Get_rank() == 0)
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        if (rank == 0)
         {
             printf("Shutting down the cluster...\n");
             Cluster::shutdown();
         }
 
         //wait for all of the MPI jobs to finish
-        ::MPI::COMM_WORLD.Barrier();
+        MPI_Barrier( MPI_COMM_WORLD );
 
-        if (::MPI::COMM_WORLD.Get_rank() == 0)
+        if (rank == 0)
         {
             printf("The entire cluster has now shutdown.\n");
         }
 
-        ::MPI::Finalize();
+        MPI_Finalize();
     #else
         printf("Shutting down the cluster...\n");
         Cluster::shutdown();

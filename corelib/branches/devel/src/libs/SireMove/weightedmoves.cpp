@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QTime>
+
 #include "weightedmoves.h"
 #include "move.h"
 
@@ -295,13 +297,12 @@ System WeightedMoves::move(const System &system, int nmoves, bool record_stats)
             //  this move, else go back to the beginning and try again...
             while (true)
             {
-                quint32 i = generator().randInt(n-1);
+                quint32 idx = generator().randInt(n-1);
     
-                tuple<MovePtr,double> &move = mvs_array[i];
+                tuple<MovePtr,double> &move = mvs_array[idx];
     
                 if ( generator().rand(maxweight) <= move.get<1>() )
                 {
-                    //use this move
                     move.get<0>().edit().move(run_system, 1, record_stats);
                     break;
                 }

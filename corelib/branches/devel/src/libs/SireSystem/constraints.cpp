@@ -366,13 +366,9 @@ System Constraints::apply(const System &system)
     for (int i=0; i<10; ++i)
     {
         if (this->apply(delta))
-        {
             new_system = delta.apply();
-        }
         else
-        {
             return new_system;
-        }
     }
     
     throw SireSystem::constraint_error( QObject::tr(
@@ -413,6 +409,7 @@ bool Constraints::apply(Delta &delta)
                 {
                     bool this_changed = cons[j].edit().apply(delta);
                     something_changed = something_changed or this_changed;
+                    
                     system_changed = system_changed or this_changed;
                 }
             }

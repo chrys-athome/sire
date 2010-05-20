@@ -160,6 +160,8 @@ bool Constraint::apply(Delta &delta)
     
         //the above function *MUST* have set the system to satisfy the constraint
         setSatisfied(delta.deltaSystem(), true);
+        
+        return changed;
     }
     catch(...)
     {

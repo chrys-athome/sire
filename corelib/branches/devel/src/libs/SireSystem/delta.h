@@ -209,4 +209,3 @@ private:
 SIRE_END_HEADER
 
 #endif
- 
