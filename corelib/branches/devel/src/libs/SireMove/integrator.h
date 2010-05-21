@@ -131,7 +131,8 @@ public:
                            SireUnits::Dimension::Time timestep,
                            int nmoves, bool record_stats) const=0;
     
-    virtual IntegratorWorkspacePtr createWorkspace() const=0;
+    virtual IntegratorWorkspacePtr createWorkspace(
+                                        const PropertyMap &map = PropertyMap()) const=0;
     
     virtual IntegratorWorkspacePtr 
                         createWorkspace(const MoleculeGroup &molgroup,
@@ -175,7 +176,7 @@ public:
                    SireUnits::Dimension::Time timestep, 
                    int nmoves, bool record_stats) const;
     
-    IntegratorWorkspacePtr createWorkspace() const;
+    IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
     
     IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,
                                            const PropertyMap &map = PropertyMap()) const;

@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include "SireMaths/vector.h"
+
 #include "atomproperty.hpp"
 
 #include "atomcharges.h"

@@ -107,11 +107,14 @@ public:
     QString toString() const;
     
     int nMoves() const;
+    SireUnits::Dimension::Time totalTime() const;
     
     const MoleculeGroup& moleculeGroup() const;
     const Integrator& integrator() const;
     
     void setMoleculeGroup(const MoleculeGroup &molgroup);
+    void setMoleculeGroup(const MoleculeGroup &molgroup,
+                          const PropertyMap &map);
 
     void setIntegrator(const Integrator &integrator);
     
@@ -121,12 +124,12 @@ public:
 
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
     
-    void setCoordinatesProperty(const QString &property, const PropertyName &value);
-    void setSpaceProperty(const QString &property, const PropertyName &value);
+    void setCoordinatesProperty(const PropertyName &value);
+    void setSpaceProperty(const PropertyName &value);
 
-    void setVelocitiesProperty(const QString &property, const PropertyName &value);
-    void setMassesProperty(const QString &property, const PropertyName &value);
-    void setElementProperty(const QString &property, const PropertyName &value);
+    void setVelocitiesProperty(const PropertyName &value);
+    void setMassesProperty(const PropertyName &value);
+    void setElementProperty(const PropertyName &value);
     
     void move(System &system, int nmoves, bool record_stats=true);
 
@@ -141,8 +144,14 @@ private:
     /** The workspace used to store the intermediates of integration */
     IntegratorWorkspacePtr wspace;
     
+    /** The timestep to use for the integration */
+    SireUnits::Dimension::Time timestep;
+    
     /** The number of moves performed using this object */
     quint32 num_moves;
+    
+    /** The total amount of time simulated using this move */
+    SireUnits::Dimension::Time total_time;
 };
 
 }

@@ -66,8 +66,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const VelocityVerlet &v
     
     SharedDataStream sds(ds);
     
-    sds << velver.timestep << velver.vel_generator
-        << static_cast<const Integrator&>(velver);
+    sds << static_cast<const Integrator&>(velver);
         
     return ds;
 }
@@ -81,8 +80,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, VelocityVerlet &velver)
     {
         SharedDataStream sds(ds);
         
-        sds >> velver.timestep >> velver.vel_generator
-            >> static_cast<Integrator&>(velver);
+        sds >> static_cast<Integrator&>(velver);
     }
     else
         throw version_error(v, "1", r_velver, CODELOC);
@@ -91,23 +89,12 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, VelocityVerlet &velver)
 }
 
 /** Constructor */
-VelocityVerlet::VelocityVerlet()
-               : ConcreteProperty<VelocityVerlet,Integrator>(), timestep(0)
+VelocityVerlet::VelocityVerlet() : ConcreteProperty<VelocityVerlet,Integrator>()
 {}
-
-/** Construct, specifying the timestep */
-VelocityVerlet::VelocityVerlet(const Time &dt)
-               : ConcreteProperty<VelocityVerlet,Integrator>(),
-                 timestep(dt)
-{
-    if (timestep < 0)
-        timestep = Time(0);
-}
 
 /** Copy constructor */
 VelocityVerlet::VelocityVerlet(const VelocityVerlet &other)
-               : ConcreteProperty<VelocityVerlet,Integrator>(other),
-                 timestep(other.timestep), vel_generator(other.vel_generator)
+               : ConcreteProperty<VelocityVerlet,Integrator>(other)
 {}
 
 /** Destructor */
@@ -117,45 +104,28 @@ VelocityVerlet::~VelocityVerlet()
 /** Copy assignment operator */
 VelocityVerlet& VelocityVerlet::operator=(const VelocityVerlet &other)
 {
-    if (this != &other)
-    {
-        Integrator::operator=(other);
-    
-        timestep = other.timestep;
-        vel_generator = other.vel_generator;
-    }
-    
+    Integrator::operator=(other);
     return *this;
 }
 
 /** Comparison operator */
 bool VelocityVerlet::operator==(const VelocityVerlet &other) const
 {
-    return Integrator::operator==(other) and
-           timestep == other.timestep and
-           vel_generator == other.vel_generator;
+    return Integrator::operator==(other);
 }
 
 /** Comparison operator */
 bool VelocityVerlet::operator!=(const VelocityVerlet &other) const
 {
-    return Integrator::operator!=(other);
+    return not VelocityVerlet::operator==(other);
 }
 
 /** Return a string representation of this integrator */
 QString VelocityVerlet::toString() const
 {
-    return QObject::tr("VelocityVerlet( timestep == %1 fs )")
-                .arg( this->timeStep().to(femtosecond) );
+    return QObject::tr("VelocityVerlet()");
 }
-
-/** Set the random number generator used to generate new velocities */
-void VelocityVerlet::setGenerator(const RanGenerator &rangenerator)
-{
-    if (vel_generator->isA<RandomVelocities>())
-        vel_generator.edit().asA<RandomVelocities>().setGenerator(rangenerator);
-}
-                                                        
+                                                       
 /** Integrate the coordinates of the atoms in the molecules in 'molgroup'
     using the forces in 'forcetable', using the optionally supplied 
     property map to find the necessary molecular properties 
@@ -166,14 +136,15 @@ void VelocityVerlet::setGenerator(const RanGenerator &rangenerator)
     \throw SireError::incompatible_error
 */
 void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
-                               const Symbol &nrg_component, 
+                               const Symbol &nrg_component,
+                               SireUnits::Dimension::Time timestep,
                                int nmoves, bool record_stats) const
 {
     AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
     
-    const double dt = timestep;
+    const double dt = timestep.value();
 
-    const int nmols = ws.count();
+    const int nmols = ws.nMolecules();
     
     for (int imove=0; imove<nmoves; ++imove)
     {
@@ -184,9 +155,9 @@ void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
         {
             const int nats = ws.nAtoms(i);
         
-            Vector *dx = ws.deltaCoordsArray(i);
+            Vector *x = ws.coordsArray(i);
             const Vector *forces = ws.forceArray(i);
-            Vector *vels = ws.velocityArray(i);
+            Velocity3D *vels = ws.velocityArray(i);
             const double *inv_masses = ws.reciprocalMassArray(i);
 
             for (int j=0; j<nats; ++j)
@@ -195,11 +166,11 @@ void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
                 const Vector half_a_t_dt = (-0.5*inv_masses[j]*dt) * forces[j];
                 
                 // v(t + dt/2) = v(t) + (1/2) a(t) dt
-                vels[j] += half_a_t_dt;
+                vels[j] += Velocity3D(half_a_t_dt);
 
                 // r(t + dt) = r(t) + v(t) dt + (1/2) a(t) dt^2
                 //           = r(t) + dt [ v(t) + (1/2) a(t) dt ]
-                dx[j] = dt * (vels[j] + half_a_t_dt);
+                x[j] += dt * (vels[j].value() + half_a_t_dt);
             }
         }
 
@@ -212,7 +183,7 @@ void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
             const int nats = ws.nAtoms(i);
         
             const Vector *forces = ws.forceArray(i);
-            Vector *vels = ws.velocityArray(i);
+            Velocity3D *vels = ws.velocityArray(i);
             const double *inv_masses = ws.reciprocalMassArray(i);
 
             for (int j=0; j<nats; ++j)
@@ -220,7 +191,7 @@ void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
                 // a(t + dt) = -(1/m) f( r(t+dt) )
 
                 // v(t + dt) = v(t + dt/2) + (1/2) a(t + dt) dt
-                vels[j] -= (0.5 * dt * inv_masses[j]) * forces[j];
+                vels[j] -= Velocity3D( (0.5 * dt * inv_masses[j]) * forces[j] );
             }
         }
         
@@ -231,26 +202,19 @@ void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
     }
 }
 
-/** Set the timestep for integration */
-void VelocityVerlet::setTimeStep(const Time &new_timestep)
+/** Create an empty workspace */
+IntegratorWorkspacePtr VelocityVerlet::createWorkspace(
+                                                const PropertyMap &map) const
 {
-    timestep = new_timestep;
-    
-    if (timestep < 0)
-        timestep = Time(0);
-}
-
-/** Return the timestep of integration */
-Time VelocityVerlet::timeStep() const
-{
-    return timestep;
+    return IntegratorWorkspacePtr( new AtomicVelocityWorkspace(map) );
 }
 
 /** Create a workspace for this integrator for the molecule group 'molgroup' */
 IntegratorWorkspacePtr VelocityVerlet::createWorkspace(
-                                                const MoleculeGroup &molgroup) const
+                                                const MoleculeGroup &molgroup,
+                                                const PropertyMap &map) const
 {
-    return IntegratorWorkspacePtr( new AtomicVelocityWorkspace(molgroup) );
+    return IntegratorWorkspacePtr( new AtomicVelocityWorkspace(molgroup,map) );
 }
 
 const char* VelocityVerlet::typeName()

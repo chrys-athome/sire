@@ -96,6 +96,7 @@ using SireMaths::Vector;
 using SireCAS::Symbol;
 
 using SireBase::PropertyMap;
+using SireBase::PropertyName;
 
 /** This is the base class of the workspaces which are used to 
     hold the intermediate values used when integrating the 
@@ -132,6 +133,18 @@ public:
     virtual void setSystem(const System &system);
 
     const System& system() const;
+
+    const PropertyMap& propertyMap() const;
+    
+    virtual void setPropertyMap(const PropertyMap &map);
+    
+    virtual void setGenerator(const RanGenerator &generator);
+
+    virtual void setCoordinatesProperty(const PropertyName &source);
+    virtual void setSpaceProperty(const PropertyName &source);
+    virtual void setVelocitiesProperty(const PropertyName &source);
+    virtual void setMassesProperty(const PropertyName &source);
+    virtual void setElementsProperty(const PropertyName &source);
 
     void calculateForces(const Symbol &nrg_component);
 
@@ -205,7 +218,7 @@ friend QDataStream& ::operator<<(QDataStream&, const AtomicVelocityWorkspace&);
 friend QDataStream& ::operator>>(QDataStream&, AtomicVelocityWorkspace&);
 
 public:
-    AtomicVelocityWorkspace();
+    AtomicVelocityWorkspace(const PropertyMap &map = PropertyMap());
     AtomicVelocityWorkspace(const MoleculeGroup &molgroup,
                             const PropertyMap &map = PropertyMap());
     
@@ -227,16 +240,16 @@ public:
 
     int nAtoms(int i) const;
     
-    Vector* deltaCoordsArray(int i);
+    Vector* coordsArray(int i);
     Velocity3D* velocityArray(int i);
 
-    const Vector* deltaCoordsArray(int i) const;
+    const Vector* coordsArray(int i) const;
     const Vector* forceArray(int i) const;
     const Velocity3D* velocityArray(int i) const;
 
     const double* reciprocalMassArray(int i) const;
     
-    const Vector* constDeltaCoordsArray(int i) const;
+    const Vector* constCoordsArray(int i) const;
     const Vector* constForceArray(int i) const;
     const Vector* constVelocityArray(int i) const;
     
@@ -249,9 +262,11 @@ public:
     
     void commitCoordinatesAndVelocities();
 
+    void collectStatistics();
+
 private:
-    /** The change in coordinates for each step */
-    QVector< QVector<Vector> > delta_atom_coords;
+    /** All of the atomic coordinates */
+    QVector< QVector<Vector> > atom_coords;
     
     /** All of the atomic velocities */
     QVector< QVector<Velocity3D> > atom_velocities;

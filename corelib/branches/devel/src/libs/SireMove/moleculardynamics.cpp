@@ -37,6 +37,8 @@
 
 #include "SireMaths/rangenerator.h"
 
+#include "SireUnits/units.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -45,6 +47,7 @@ using namespace SireMol;
 using namespace SireVol;
 using namespace SireBase;
 using namespace SireStream;
+using namespace SireUnits;
 using namespace SireUnits::Dimension;
 
 static const RegisterMetaType<MolecularDynamics> r_moldyn;
@@ -57,7 +60,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
     
-    sds << moldyn.intgrator << moldyn.wspace << moldyn.num_moves
+    sds << moldyn.intgrator << moldyn.wspace << moldyn.timestep << moldyn.num_moves
+        << moldyn.total_time
         << static_cast<const Dynamics&>(moldyn);
         
     return ds;
@@ -73,7 +77,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
     {
         SharedDataStream sds(ds);
     
-        sds >> moldyn.intgrator >> moldyn.wspace >> moldyn.num_moves
+        sds >> moldyn.intgrator >> moldyn.wspace >> moldyn.timestep 
+            >> moldyn.num_moves >> moldyn.total_time
             >> static_cast<Dynamics&>(moldyn);
              
     }
@@ -88,7 +93,8 @@ MolecularDynamics::MolecularDynamics(const PropertyMap &map)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(map),
                     intgrator( Integrator::null() ), 
                     wspace( IntegratorWorkspace::null() ),
-                    num_moves(0)
+                    timestep(1*femtosecond),
+                    num_moves(0), total_time(0)
 {}
 
 /** Construct to perform moves on the molecules in the group 'molgroup'. This
@@ -96,7 +102,8 @@ MolecularDynamics::MolecularDynamics(const PropertyMap &map)
 MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup,
                                      const PropertyMap &map)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(map),
-                    intgrator( VelocityVerlet() ), num_moves(0)
+                    intgrator( VelocityVerlet() ), timestep(1*femtosecond), 
+                    num_moves(0), total_time(0)
 {
     wspace = intgrator.read().createWorkspace(moleculegroup, map);
 }
@@ -105,7 +112,8 @@ MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup,
 MolecularDynamics::MolecularDynamics(const Integrator &integrator,
                                      const PropertyMap &map)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(map),
-                    intgrator(integrator), num_moves(0)
+                    intgrator(integrator), timestep(1*femtosecond), num_moves(0),
+                    total_time(0)
 {
     wspace = intgrator.read().createWorkspace(map);
 }
@@ -116,7 +124,8 @@ MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup,
                                      const Integrator &integrator,
                                      const PropertyMap &map)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(map),
-                    intgrator(integrator), num_moves(0)
+                    intgrator(integrator), timestep(1*femtosecond), num_moves(0),
+                    total_time(0)
 {
     wspace = intgrator.read().createWorkspace(moleculegroup, map);
 }
@@ -127,7 +136,8 @@ MolecularDynamics::MolecularDynamics(const Integrator &integrator,
                                      const MoleculeGroup &moleculegroup,
                                      const PropertyMap &map)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(map),
-                    intgrator(integrator), num_moves(0)
+                    intgrator(integrator), timestep(1*femtosecond), num_moves(0),
+                    total_time(0)
 {
     wspace = intgrator.read().createWorkspace(moleculegroup, map);
 }
@@ -136,7 +146,8 @@ MolecularDynamics::MolecularDynamics(const Integrator &integrator,
 MolecularDynamics::MolecularDynamics(const MolecularDynamics &other)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(other),
                     intgrator(other.intgrator), wspace(other.wspace),
-                    num_moves(other.num_moves)
+                    timestep(other.timestep), num_moves(other.num_moves),
+                    total_time(other.total_time)
 {}
 
 /** Destructor */
@@ -146,11 +157,16 @@ MolecularDynamics::~MolecularDynamics()
 /** Copy assignment operator */
 MolecularDynamics& MolecularDynamics::operator=(const MolecularDynamics &other)
 {
-    intgrator = other.intgrator;
-    wspace = other.wspace;
-    num_moves = other.num_moves;
+    if (this != &other)
+    {
+        intgrator = other.intgrator;
+        wspace = other.wspace;
+        timestep = other.timestep;
+        num_moves = other.num_moves;
+        total_time = other.total_time;
     
-    Dynamics::operator=(other);
+        Dynamics::operator=(other);
+    }
     
     return *this;
 }
@@ -160,30 +176,37 @@ bool MolecularDynamics::operator==(const MolecularDynamics &other) const
 {
     return intgrator == other.intgrator and
            wspace == other.wspace and
+           timestep == other.timestep and
            num_moves == other.num_moves and 
+           total_time == other.total_time and
            Dynamics::operator==(other);
 }
 
 /** Comparison operator */
 bool MolecularDynamics::operator!=(const MolecularDynamics &other) const
 {
-    return intgrator != other.intgrator or
-           wspace != other.wspace or
-           num_moves != other.num_moves or
-           Dynamics::operator!=(other);
+    return not MolecularDynamics::operator==(other);
 }
 
 /** Return a string representation of this move */
 QString MolecularDynamics::toString() const
 {
-    return QObject::tr("MolecularDynamics( %1, nMoves() == %2 )")
-                .arg(intgrator->toString()).arg(num_moves);
+    return QObject::tr("MolecularDynamics( %1, timeStep() == %2 fs, nMoves() == %3 )")
+                .arg(intgrator->toString())
+                .arg(timestep.to(femtosecond))
+                .arg(num_moves);
 }
     
 /** Return the number of moves completed using this object */
 int MolecularDynamics::nMoves() const
 {
     return num_moves;
+}
+    
+/** Return the total amount of time simulated using these moves */
+SireUnits::Dimension::Time MolecularDynamics::totalTime() const
+{
+    return total_time;
 }
     
 /** Return the molecule group on which this move operates */
@@ -199,18 +222,27 @@ const Integrator& MolecularDynamics::integrator() const
     return intgrator.read();
 }
 
-/** Return the workspace used while integrating the system */
-const IntegratorWorkspace& MolecularDynamics::workspace() const
-{
-    return wspace.read();
-}
-
 /** Set the molecule group containing the molecules to be moved */
 void MolecularDynamics::setMoleculeGroup(const MoleculeGroup &new_molgroup)
 {
     if (new_molgroup.number() != this->moleculeGroup().number())
     {
-        wspace = intgrator.read().createWorkspace(new_molgroup);
+        wspace = intgrator.read().createWorkspace(new_molgroup,
+                                                  wspace.read().propertyMap());
+    }
+}
+
+/** Set the molecule group containing the molecules to be moved */
+void MolecularDynamics::setMoleculeGroup(const MoleculeGroup &new_molgroup,
+                                         const PropertyMap &map)
+{
+    if (new_molgroup.number() != this->moleculeGroup().number())
+    {
+        wspace = intgrator.read().createWorkspace(new_molgroup, map);
+    }
+    else
+    {
+        wspace.edit().setPropertyMap(map);
     }
 }
 
@@ -221,37 +253,33 @@ void MolecularDynamics::setIntegrator(const Integrator &integrator)
     if (intgrator != integrator)
     {
         intgrator = integrator;
-        wspace = intgrator.read().createWorkspace( this->moleculeGroup() );
+        wspace = intgrator.read().createWorkspace( this->moleculeGroup(),
+                                                   wspace.read().propertyMap() );
     }
 }
 
-void MolecularDynamics::setCoordinatesProperty(const QString &property,
-                                               const PropertyName &value)
+void MolecularDynamics::setCoordinatesProperty(const PropertyName &value)
 {
-    wspace.edit().setCoordinatesProperty(property, value);
-    Move::setCoordinatesProperty(property, value);
+    wspace.edit().setCoordinatesProperty(value);
+    Move::setCoordinatesProperty(value);
 }
 
-void MolecularDynamics::setSpaceProperty(const QString &property,
-                                         const PropertyName &value)
+void MolecularDynamics::setSpaceProperty(const PropertyName &value)
 {
-    wspace.edit().setSpaceProperty(property, value);
-    Move::setSpaceProperty(property, value);
+    wspace.edit().setSpaceProperty(value);
+    Move::setSpaceProperty(value);
 }
 
 /** Return the timestep for the integration */
 Time MolecularDynamics::timeStep() const
 {
-    return intgrator.read().timeStep();
+    return timestep;
 }
 
 /** Set the timestep for the dynamics integration */
-void MolecularDynamics::setTimeStep(const Time &timestep)
+void MolecularDynamics::setTimeStep(const Time &t)
 {
-    if (this->timeStep() != timestep)
-    {
-        intgrator.edit().setTimeStep(timestep);
-    }
+    timestep = t;
 }
 
 /** Return the kinetic energy of the system at the last move. */
@@ -264,8 +292,10 @@ MolarEnergy MolecularDynamics::kineticEnergy() const
     velocities */
 void MolecularDynamics::clearStatistics()
 {
-    wspace = intgrator.read().createWorkspace(this->moleculeGroup());
+    wspace = intgrator.read().createWorkspace(this->moleculeGroup(),
+                                              wspace.read().propertyMap());
     num_moves = 0;
+    total_time = Time(0);
 }
 
 /** Set the random number generator used by this move
@@ -274,7 +304,6 @@ void MolecularDynamics::clearStatistics()
 void MolecularDynamics::setGenerator(const RanGenerator &generator)
 {
     wspace.edit().setGenerator(generator);
-    intgrator.edit().setGenerator(generator);
 }
 
 /** Perform this move on the System 'system' - perform the move
@@ -294,11 +323,12 @@ void MolecularDynamics::move(System &system, int nmoves, bool record_stats)
         wspace.edit().setSystem(system);
     
         intgrator.read().integrate(wspace.edit(), this->energyComponent(),
-                                   nmoves, record_stats);
+                                   timestep, nmoves, record_stats);
 
         system = wspace.read().system();
 
         num_moves += nmoves;
+        total_time += nmoves*timestep;
     }
     catch(...)
     {

@@ -198,7 +198,7 @@ void NullIntegrator::integrate(IntegratorWorkspace&,
 {}
 
 /** This returns a null workspace */
-IntegratorWorkspacePtr NullIntegrator::createWorkspace() const
+IntegratorWorkspacePtr NullIntegrator::createWorkspace(const PropertyMap&) const
 {
     return IntegratorWorkspacePtr();
 }
