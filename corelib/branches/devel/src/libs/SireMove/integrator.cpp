@@ -113,22 +113,6 @@ bool Integrator::operator!=(const Integrator &other) const
     return false;
 }
 
-/** Integrate the system 'system', using the default energy component,
-    coordinates and space property */
-void Integrator::integrate(System &system, IntegratorWorkspace &workspace) const
-{
-    this->integrate(system, workspace, ForceFields::totalComponent(), PropertyMap());
-}
-
-/** Integrate the system 'system', using the Hamiltonian represented
-    by the symbol 'nrg_component', and using the default coordinate
-    and space properties */
-void Integrator::integrate(System &system, IntegratorWorkspace &workspace,
-                           const Symbol &nrg_component) const
-{
-    this->integrate(system, workspace, nrg_component, PropertyMap());
-}
-
 Q_GLOBAL_STATIC( NullIntegrator, getNullIntegrator );
 
 /** Return a NullIntegrator */
@@ -207,22 +191,10 @@ QString NullIntegrator::toString() const
 }
 
 /** The null integrator does nothing */
-void NullIntegrator::integrate(System&, IntegratorWorkspace&, 
-                               const Symbol&, const PropertyMap&) const
-{}
-
-/** The null integrator will ignore any timestep */
-void NullIntegrator::setTimeStep(const Time &timestep)
-{}
-
-/** There is no timestep */
-Time NullIntegrator::timeStep() const
-{
-    return Time(0);
-}
-
-/** There is no random number generator */
-void NullIntegrator::setGenerator(const RanGenerator&)
+void NullIntegrator::integrate(IntegratorWorkspace&, 
+                               const Symbol&, 
+                               SireUnits::Dimension::Time,
+                               int, bool) const
 {}
 
 /** This returns a null workspace */
@@ -232,7 +204,8 @@ IntegratorWorkspacePtr NullIntegrator::createWorkspace() const
 }
 
 /** This returns a null workspace */
-IntegratorWorkspacePtr NullIntegrator::createWorkspace(const MoleculeGroup&) const
+IntegratorWorkspacePtr NullIntegrator::createWorkspace(const MoleculeGroup&,
+                                                       const PropertyMap&) const
 {
     return IntegratorWorkspacePtr();
 }

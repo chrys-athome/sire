@@ -125,19 +125,17 @@ public:
     static const NullIntegrator& null();
     
     virtual QString toString() const=0;
-
-    virtual void setTimeStep(const SireUnits::Dimension::Time &timestep)=0;
-
-    virtual SireUnits::Dimension::Time timeStep() const=0;
     
-    virtual void setGenerator(const RanGenerator &generator)=0;
-    
-    virtual void integrate(IntegratorWorkSpace &workspace, 
+    virtual void integrate(IntegratorWorkspace &workspace, 
                            const Symbol &nrg_component,
+                           SireUnits::Dimension::Time timestep,
                            int nmoves, bool record_stats) const=0;
     
+    virtual IntegratorWorkspacePtr createWorkspace() const=0;
+    
     virtual IntegratorWorkspacePtr 
-                        createWorkspace(const MoleculeGroup &molgroup) const=0;
+                        createWorkspace(const MoleculeGroup &molgroup,
+                                        const PropertyMap &map = PropertyMap()) const=0;
     
 protected:
     Integrator& operator=(const Integrator &other);
@@ -174,15 +172,13 @@ public:
     QString toString() const;
     
     void integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, 
+                   SireUnits::Dimension::Time timestep, 
                    int nmoves, bool record_stats) const;
-
-    void setTimeStep(const SireUnits::Dimension::Time &timestep);
-
-    SireUnits::Dimension::Time timeStep() const;
-
-    void setGenerator(const RanGenerator &generator);
     
-    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup) const;
+    IntegratorWorkspacePtr createWorkspace() const;
+    
+    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,
+                                           const PropertyMap &map = PropertyMap()) const;
 };
 
 typedef SireBase::PropPtr<Integrator> IntegratorPtr;

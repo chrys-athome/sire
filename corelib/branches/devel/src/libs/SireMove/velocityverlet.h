@@ -30,17 +30,6 @@
 #define SIREMOVE_VELOCITYVERLET_H
 
 #include "integrator.h"
-#include "velocitygenerator.h"
-
-#include "SireMol/atomvelocities.h"
-#include "SireMol/atomforces.h"
-
-#include "SireFF/forcetable.h"
-
-#include "SireCAS/symbol.h"
-
-#include "SireBase/majorminorversion.h"
-#include "SireBase/packedarray2d.h"
 
 SIRE_BEGIN_HEADER
 
@@ -55,16 +44,6 @@ QDataStream& operator>>(QDataStream&, SireMove::VelocityVerlet&);
 namespace SireMove
 {
 
-using SireBase::PackedArray2D;
-using SireBase::Properties;
-
-using SireMaths::Vector;
-
-using SireMol::AtomVelocities;
-using SireMol::AtomForces;
-using SireMol::MolID;
-using SireMol::MolNum;
-
 /** This class implements an atomistic velocity verlet dynamics integrator
  
     @author Christopher Woods
@@ -78,11 +57,6 @@ friend QDataStream& ::operator>>(QDataStream&, VelocityVerlet&);
 
 public:
     VelocityVerlet();
-    VelocityVerlet(const SireUnits::Dimension::Time &timestep);
-
-    VelocityVerlet(const VelocityGenerator &velocity_generator);
-    VelocityVerlet(const SireUnits::Dimension::Time &timestep,
-                   const VelocityGenerator &velocity_generator);
     
     VelocityVerlet(const VelocityVerlet &other);
     
@@ -99,26 +73,12 @@ public:
     
     void integrate(IntegratorWorkspace &workspace,
                    const Symbol &nrg_component, 
+                   SireUnits::Dimension::Time timestep,
                    bool record_stats) const;
 
-    void setTimeStep(const SireUnits::Dimension::Time &timestep);
-
-    SireUnits::Dimension::Time timeStep() const;
-    
-    void setGenerator(const RanGenerator &generator);
-
-    const VelocityGenerator& velocityGenerator() const;
-    void setVelocityGenerator(const VelocityGenerator &generator);
-
     IntegratorWorkspacePtr createWorkspace() const;
-    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup) const;
-
-private:
-    /** The timestep of integration */
-    SireUnits::Dimension::Time timestep;
-
-    /** The generator used to generate new velocities */
-    VelGenPtr vel_generator;
+    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,
+                                           const PropertyMap &map = PropertyMap()) const;
 };
 
 }

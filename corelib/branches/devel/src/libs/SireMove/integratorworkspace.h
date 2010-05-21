@@ -44,6 +44,10 @@
 
 #include "SireFF/forcetable.h"
 
+#include "SireSystem/system.h"
+
+#include "velocitygenerator.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -65,11 +69,6 @@ QDataStream& operator>>(QDataStream&, SireMove::AtomicVelocityWorkspace&);
 namespace SireMol
 {
 class MoleculeView;
-}
-
-namespace SireSystem
-{
-class System;
 }
 
 namespace SireMove
@@ -112,7 +111,8 @@ friend QDataStream& ::operator>>(QDataStream&, IntegratorWorkspace&);
 
 public:
     IntegratorWorkspace();
-    IntegratorWorkspace(const MoleculeGroup &molgroup);
+    IntegratorWorkspace(const MoleculeGroup &molgroup,
+                        const PropertyMap &map = PropertyMap());
     
     IntegratorWorkspace(const IntegratorWorkspace &other);
     
@@ -157,13 +157,13 @@ private:
     /** The current forces acting on the molecules */
     ForceTable molforces;
     
-    /** The energy component used to get the forces */
+    /** The energy component used when we last got the forces */
     SireCAS::Symbol last_nrg_component;
     
-    /** The ID of the system used to get the forces */
+    /** The ID of the system used when we last got the forces */
     QUuid last_system_uid;
     
-    /** The version of the system when we got the forces */
+    /** The version of the system when we last got the forces */
     SireBase::Version last_system_version;
 };
 
@@ -206,9 +206,8 @@ friend QDataStream& ::operator>>(QDataStream&, AtomicVelocityWorkspace&);
 
 public:
     AtomicVelocityWorkspace();
-    AtomicVelocityWorkspace(const MoleculeGroup &molgroup);
     AtomicVelocityWorkspace(const MoleculeGroup &molgroup,
-                            const VelocityGenerator &generator);
+                            const PropertyMap &map = PropertyMap());
     
     AtomicVelocityWorkspace(const AtomicVelocityWorkspace &other);
     
@@ -264,8 +263,8 @@ private:
     /** All of the inverse atom masses */
     QVector< QVector<double> > inv_atom_masses;
     
-    /** The generator used to get (and set) the velocities */
-    VelocityGeneratorPtr vel_generator;
+    /** The generator used to get the initial velocities */
+    VelGenPtr vel_generator;
 };
 
 typedef SireBase::PropPtr<IntegratorWorkspace> IntegratorWorkspacePtr;
