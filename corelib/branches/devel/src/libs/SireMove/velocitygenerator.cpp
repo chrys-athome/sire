@@ -28,6 +28,10 @@
 
 #include "velocitygenerator.h"
 
+#include "SireMol/moleculeview.h"
+#include "SireMol/moleculedata.h"
+#include "SireMol/moleculeinfodata.h"
+
 #include "SireCAS/symbol.h"
 
 #include "SireStream/datastream.h"
@@ -103,6 +107,11 @@ bool VelocityGenerator::operator!=(const VelocityGenerator&) const
     return false;
 }
 
+/** Set the random number generator that may be used to help
+    generate the initial velocities */
+void VelocityGenerator::setGenerator(const RanGenerator&)
+{}
+
 Q_GLOBAL_STATIC( NullVelocityGenerator, nullVelocityGenerator )
 
 /** Return the global null generator */
@@ -176,6 +185,13 @@ bool NullVelocityGenerator::operator==(const NullVelocityGenerator &other) const
 bool NullVelocityGenerator::operator!=(const NullVelocityGenerator &other) const
 {
     return VelocityGenerator::operator!=(other);
+}
+
+/** Zero velocities are generated */
+AtomVelocities NullVelocityGenerator::generate(const MoleculeView &molview,
+                                               const PropertyMap &map) const
+{
+    return AtomVelocities( molview.data().info() );
 }
 
 const char* NullVelocityGenerator::typeName()
@@ -264,6 +280,13 @@ bool VelocitiesFromProperty::operator!=(const VelocitiesFromProperty &other) con
 {
     return vel_property != other.vel_property or
            VelocityGenerator::operator!=(other);
+}
+
+/** Return the velocities from the specified property */
+AtomVelocities VelocitiesFromProperty::generate(const MoleculeView &molview,
+                                                const PropertyMap&) const
+{
+    return molview.data().property(vel_property).asA<AtomVelocities>();
 }
 
 const char* VelocitiesFromProperty::typeName()
@@ -371,6 +394,13 @@ void RandomVelocities::setGenerator(const RanGenerator &rangenerator)
 const RanGenerator& RandomVelocities::generator() const
 {
     return ran_generator;
+}
+
+/** Generate completely random velocities */
+AtomVelocities RandomVelocities::generate(const MoleculeView &molview,
+                                          const PropertyMap &map) const
+{
+    return AtomVelocities( molview.data().info() );
 }
 
 const char* RandomVelocities::typeName()

@@ -62,6 +62,9 @@
 #include <QMutex>
 #include "moves.h"
 #include "SireCAS/symbol.h"
+#include "SireMol/moleculedata.h"
+#include "SireMol/moleculeinfodata.h"
+#include "SireMol/moleculeview.h"
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 #include "velocitygenerator.h"
@@ -92,19 +95,6 @@
 #include "SireVol/space.h"
 #include "molinserter.h"
 #include "molinserter.h"
-#include "SireBase/quickcopy.hpp"
-#include "SireMol/atomcoords.h"
-#include "SireMol/errors.h"
-#include "SireMol/molecule.h"
-#include "SireMol/moleculeview.h"
-#include "SireMol/moleditor.h"
-#include "SireMol/partialmolecule.h"
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
-#include "SireSystem/system.h"
-#include "integratorworkspace.h"
-#include "velocitygenerator.h"
-#include "integratorworkspace.h"
 #include "SireError/errors.h"
 #include "SireMaths/rangenerator.h"
 #include "SireStream/datastream.h"
@@ -137,7 +127,6 @@ void register_SireMove_properties()
     register_property_container< SireMove::SupraMovesPtr, SireMove::SupraMoves >();
     register_property_container< SireMove::SamplerPtr, SireMove::Sampler >();
     register_property_container< SireMove::MolInserterPtr, SireMove::MolInserter >();
-    register_property_container< SireMove::IntegratorWorkspacePtr, SireMove::IntegratorWorkspace >();
     register_property_container< SireMove::MovePtr, SireMove::Move >();
     register_property_container< SireMove::MolDeleterPtr, SireMove::MolDeleter >();
 }

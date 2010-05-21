@@ -9,6 +9,12 @@ namespace bp = boost::python;
 
 #include "SireCAS/symbol.h"
 
+#include "SireMol/moleculedata.h"
+
+#include "SireMol/moleculeinfodata.h"
+
+#include "SireMol/moleculeview.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
@@ -32,6 +38,17 @@ void register_VelocitiesFromProperty_class(){
         VelocitiesFromProperty_exposer.def( bp::init< >() );
         VelocitiesFromProperty_exposer.def( bp::init< SireBase::PropertyName const & >(( bp::arg("property") )) );
         VelocitiesFromProperty_exposer.def( bp::init< SireMove::VelocitiesFromProperty const & >(( bp::arg("other") )) );
+        { //::SireMove::VelocitiesFromProperty::generate
+        
+            typedef ::SireMol::AtomVelocities ( ::SireMove::VelocitiesFromProperty::*generate_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            generate_function_type generate_function_value( &::SireMove::VelocitiesFromProperty::generate );
+            
+            VelocitiesFromProperty_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
         VelocitiesFromProperty_exposer.def( bp::self != bp::self );
         { //::SireMove::VelocitiesFromProperty::operator=
         

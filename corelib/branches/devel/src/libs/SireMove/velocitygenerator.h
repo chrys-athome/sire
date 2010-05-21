@@ -37,6 +37,9 @@
 
 #include "SireMaths/rangenerator.h"
 
+#include "SireMaths/vector.h"
+#include "SireMol/atomvelocities.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -68,9 +71,14 @@ class Symbol;
 namespace SireMove
 {
 
+using SireBase::PropertyMap;
+
 using SireMaths::RanGenerator;
 
 using SireCAS::Symbol;
+
+using SireMol::AtomVelocities;
+using SireMol::MoleculeView;
 
 /** This is the base class of generators that are used
     to get velocities for molecules
@@ -98,6 +106,9 @@ public:
     virtual VelocityGenerator* clone() const=0;
     
     virtual void setGenerator(const RanGenerator &generator);
+
+    virtual AtomVelocities generate(const MoleculeView &molview, 
+                                    const PropertyMap &map = PropertyMap()) const=0;
     
     static const NullVelocityGenerator& null();
     
@@ -132,6 +143,9 @@ public:
     bool operator==(const NullVelocityGenerator &other) const;
     bool operator!=(const NullVelocityGenerator &other) const;
     
+    AtomVelocities generate(const MoleculeView &molview, 
+                            const PropertyMap &map = PropertyMap()) const;
+    
     static const char* typeName();
 };
 
@@ -162,6 +176,9 @@ public:
     bool operator!=(const VelocitiesFromProperty &other) const;
     
     static const char* typeName();
+
+    AtomVelocities generate(const MoleculeView &molview, 
+                            const PropertyMap &map = PropertyMap()) const;
 
 private:
     /** The name of the property from which the velocities will be obtained */
@@ -202,6 +219,9 @@ public:
     void setGenerator(const RanGenerator &rangenerator);
     
     const RanGenerator& generator() const;
+
+    AtomVelocities generate(const MoleculeView &molview, 
+                            const PropertyMap &map = PropertyMap()) const;
 
 private:
     /** The expression used to generate the random velocity */

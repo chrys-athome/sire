@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "segproperty.hpp"
 
+#include "SireMaths/vector.h"
+
 SireMol::SegProperty<double> __copy__(const SireMol::SegProperty<double> &other){ return SireMol::SegProperty<double>(other); }
 
 #include "Qt/qdatastream.hpp"

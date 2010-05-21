@@ -9,6 +9,12 @@ namespace bp = boost::python;
 
 #include "SireCAS/symbol.h"
 
+#include "SireMol/moleculedata.h"
+
+#include "SireMol/moleculeinfodata.h"
+
+#include "SireMol/moleculeview.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
@@ -27,6 +33,17 @@ void register_VelocityGenerator_class(){
         typedef bp::class_< SireMove::VelocityGenerator, bp::bases< SireBase::Property >, boost::noncopyable > VelocityGenerator_exposer_t;
         VelocityGenerator_exposer_t VelocityGenerator_exposer = VelocityGenerator_exposer_t( "VelocityGenerator", bp::no_init );
         bp::scope VelocityGenerator_scope( VelocityGenerator_exposer );
+        { //::SireMove::VelocityGenerator::generate
+        
+            typedef ::SireMol::AtomVelocities ( ::SireMove::VelocityGenerator::*generate_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            generate_function_type generate_function_value( &::SireMove::VelocityGenerator::generate );
+            
+            VelocityGenerator_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
         { //::SireMove::VelocityGenerator::null
         
             typedef ::SireMove::NullVelocityGenerator const & ( *null_function_type )(  );
@@ -36,6 +53,17 @@ void register_VelocityGenerator_class(){
                 "null"
                 , null_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireMove::VelocityGenerator::setGenerator
+        
+            typedef void ( ::SireMove::VelocityGenerator::*setGenerator_function_type )( ::SireMaths::RanGenerator const & ) ;
+            setGenerator_function_type setGenerator_function_value( &::SireMove::VelocityGenerator::setGenerator );
+            
+            VelocityGenerator_exposer.def( 
+                "setGenerator"
+                , setGenerator_function_value
+                , ( bp::arg("generator") ) );
         
         }
         { //::SireMove::VelocityGenerator::typeName

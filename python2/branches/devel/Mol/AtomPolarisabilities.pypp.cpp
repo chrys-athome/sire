@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "atompolarisabilities.h"
 
+#include "SireMaths/vector.h"
+
 SireMol::AtomProperty<SireUnits::Dimension::PhysUnit<0, 3, 0, 0, 0, 0, 0> > __copy__(const SireMol::AtomProperty<SireUnits::Dimension::PhysUnit<0, 3, 0, 0, 0, 0, 0> > &other){ return SireMol::AtomProperty<SireUnits::Dimension::PhysUnit<0, 3, 0, 0, 0, 0, 0> >(other); }
 
 #include "Qt/qdatastream.hpp"

@@ -402,10 +402,6 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_SireMol_containers();
 
-    register_Velocity3D_class();
-
-    register_Force3D_class();
-
     register_AtomID_class();
 
     register_IDAndSet_AtomID__class();
@@ -459,6 +455,10 @@ BOOST_PYTHON_MODULE(_Mol){
     register_Specify_ResID__class();
 
     register_Specify_SegID__class();
+
+    register_Velocity3D_class();
+
+    register_Force3D_class();
 
     register_WeightFunction_class();
 

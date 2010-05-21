@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "cgproperty.hpp"
 
+#include "SireMaths/vector.h"
+
 SireMol::CGProperty<long long> __copy__(const SireMol::CGProperty<long long> &other){ return SireMol::CGProperty<long long>(other); }
 
 #include "Qt/qdatastream.hpp"

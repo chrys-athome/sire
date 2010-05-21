@@ -26,31 +26,27 @@
   *
 \*********************************************/
 
-#ifndef SIREBASE_VECTOR3D_HPP
-#define SIREBASE_VECTOR3D_HPP
+#ifndef SIREMATHS_VECTOR3D_HPP
+#define SIREMATHS_VECTOR3D_HPP
 
 #include "tostring.h"
+#include "vector.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireBase
+namespace SireMaths
 {
 template<class T>
 class Vector3D;
 }
 
 template<class T>
-QDataStream& operator<<(QDataStream&, const SireBase::Vector3D<T>&);
+QDataStream& operator<<(QDataStream&, const SireMaths::Vector3D<T>&);
 
 template<class T>
-QDataStream& operator>>(QDataStream&, SireBase::Vector3D<T>&);
+QDataStream& operator>>(QDataStream&, SireMaths::Vector3D<T>&);
 
 namespace SireMaths
-{
-class Vector;  // note that SireMaths depends on SireBase...
-}
-
-namespace SireBase
 {
 
 /** This is a simple small class that holds 3D value
@@ -71,7 +67,7 @@ public:
     Vector3D();
     Vector3D(const T &val);
     Vector3D(const T &x, const T &y, const T &z);
-    Vector3D(const SireMaths::Vector &v);
+    Vector3D(const Vector &v);
     
     Vector3D(const Vector3D<T> &other);
     
@@ -108,7 +104,7 @@ public:
     
     const T& at(int i) const;
     
-    SireMaths::Vector value() const;
+    Vector value() const;
     
     QString toString() const;
 
@@ -149,7 +145,7 @@ Vector3D<T>::Vector3D(const T &x, const T &y, const T &z)
     the vector is already in internal units */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Vector3D<T>::Vector3D(const SireMaths::Vector &v)
+Vector3D<T>::Vector3D(const Vector &v)
 {
     sc[0] = T(v.x());
     sc[1] = T(v.y());
@@ -247,9 +243,9 @@ const T& Vector3D<T>::z() const
 /** Return this vector in internal units */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-SireMaths::Vector Vector3D<T>::value() const
+Vector Vector3D<T>::value() const
 {
-    return SireMaths::Vector( sc[0].value(), sc[1].value(), sc[2].value() );
+    return Vector( sc[0].value(), sc[1].value(), sc[2].value() );
 }
 
 /** Set the ith component equal to 'value' */
@@ -394,7 +390,7 @@ Vector3D<T> Vector3D<T>::operator/(double scale) const
 
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const SireBase::Vector3D<T> &vec)
+QDataStream& operator<<(QDataStream &ds, const SireMaths::Vector3D<T> &vec)
 {
     ds << vec.sc[0] << vec.sc[1] << vec.sc[2];
     return ds;
@@ -402,7 +398,7 @@ QDataStream& operator<<(QDataStream &ds, const SireBase::Vector3D<T> &vec)
 
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, SireBase::Vector3D<T> &vec)
+QDataStream& operator>>(QDataStream &ds, SireMaths::Vector3D<T> &vec)
 {
     ds >> vec.sc[0] >> vec.sc[1] >> vec.sc[2];
     return ds;

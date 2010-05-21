@@ -205,6 +205,7 @@ set ( SIREMATHS_HEADERS
       triangle.h
       trigmatrix.h
       vector.h
+      vector3d.hpp
 
       sire_blas.h
       sire_lapack.h

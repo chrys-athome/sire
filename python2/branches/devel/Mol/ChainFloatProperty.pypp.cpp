@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "chainproperty.hpp"
 
+#include "SireMaths/vector.h"
+
 SireMol::ChainProperty<double> __copy__(const SireMol::ChainProperty<double> &other){ return SireMol::ChainProperty<double>(other); }
 
 #include "Qt/qdatastream.hpp"

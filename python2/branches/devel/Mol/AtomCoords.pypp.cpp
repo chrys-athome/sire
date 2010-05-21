@@ -19,6 +19,8 @@ namespace bp = boost::python;
 
 #include "atomcoords.h"
 
+#include "SireMaths/vector.h"
+
 #include "SireMaths/quaternion.h"
 
 #include "SireMaths/matrix.h"

@@ -7,15 +7,11 @@
 
 #include "Helpers/clone_const_reference.hpp"
 
-#include "AtomicVelocityWorkspace.pypp.hpp"
-
 #include "Dynamics.pypp.hpp"
 
 #include "Ensemble.pypp.hpp"
 
 #include "Integrator.pypp.hpp"
-
-#include "IntegratorWorkspace.pypp.hpp"
 
 #include "MTSMC.pypp.hpp"
 
@@ -36,8 +32,6 @@
 #include "NullInserter.pypp.hpp"
 
 #include "NullIntegrator.pypp.hpp"
-
-#include "NullIntegratorWorkspace.pypp.hpp"
 
 #include "NullMove.pypp.hpp"
 
@@ -142,10 +136,6 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_SireMove_containers();
 
-    register_IntegratorWorkspace_class();
-
-    register_AtomicVelocityWorkspace_class();
-
     register_Move_class();
 
     register_Dynamics_class();
@@ -171,8 +161,6 @@ BOOST_PYTHON_MODULE(_Move){
     register_NullInserter_class();
 
     register_NullIntegrator_class();
-
-    register_NullIntegratorWorkspace_class();
 
     register_NullMove_class();
 

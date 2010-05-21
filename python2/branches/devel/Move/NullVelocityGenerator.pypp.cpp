@@ -9,6 +9,12 @@ namespace bp = boost::python;
 
 #include "SireCAS/symbol.h"
 
+#include "SireMol/moleculedata.h"
+
+#include "SireMol/moleculeinfodata.h"
+
+#include "SireMol/moleculeview.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
@@ -31,6 +37,17 @@ void register_NullVelocityGenerator_class(){
         bp::scope NullVelocityGenerator_scope( NullVelocityGenerator_exposer );
         NullVelocityGenerator_exposer.def( bp::init< >() );
         NullVelocityGenerator_exposer.def( bp::init< SireMove::NullVelocityGenerator const & >(( bp::arg("other") )) );
+        { //::SireMove::NullVelocityGenerator::generate
+        
+            typedef ::SireMol::AtomVelocities ( ::SireMove::NullVelocityGenerator::*generate_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            generate_function_type generate_function_value( &::SireMove::NullVelocityGenerator::generate );
+            
+            NullVelocityGenerator_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
         NullVelocityGenerator_exposer.def( bp::self != bp::self );
         { //::SireMove::NullVelocityGenerator::operator=
         

@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireMaths/vector.h"
+
 #include "atomcharges.h"
 
 #include "atomelements.h"
@@ -24,6 +26,8 @@ namespace bp = boost::python;
 #include "atomvelocities.h"
 
 #include "atomproperty.hpp"
+
+#include "SireMaths/vector.h"
 
 SireMol::AtomProperty<QString> __copy__(const SireMol::AtomProperty<QString> &other){ return SireMol::AtomProperty<QString>(other); }
 

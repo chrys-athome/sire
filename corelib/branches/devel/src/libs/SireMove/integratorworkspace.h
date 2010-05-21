@@ -111,7 +111,7 @@ friend QDataStream& ::operator<<(QDataStream&, const IntegratorWorkspace&);
 friend QDataStream& ::operator>>(QDataStream&, IntegratorWorkspace&);
 
 public:
-    IntegratorWorkspace();
+    IntegratorWorkspace(const PropertyMap &map = PropertyMap());
     IntegratorWorkspace(const MoleculeGroup &molgroup,
                         const PropertyMap &map = PropertyMap());
     
@@ -146,9 +146,26 @@ public:
     virtual void setMassesProperty(const PropertyName &source);
     virtual void setElementsProperty(const PropertyName &source);
 
+    virtual void setVelocityGeneratorProperty(const PropertyName &source);
+
+    PropertyName coordinatesProperty() const;
+    PropertyName spaceProperty() const;
+    PropertyName velocitiesProperty() const;
+    PropertyName massesProperty() const;
+    PropertyName elementsProperty() const;
+    PropertyName velocityGeneratorProperty() const;
+
     void calculateForces(const Symbol &nrg_component);
 
+    bool forcesNeedCalculating(const Symbol &nrg_component) const;
+    
+    void mustNowRecalculateFromScratch();
+
+    void collectStatistics();
+
     virtual SireUnits::Dimension::MolarEnergy kineticEnergy() const=0;
+    virtual SireUnits::Dimension::MolarEnergy
+                            kineticEnergy(MolNum molnum) const=0;
     virtual SireUnits::Dimension::MolarEnergy 
                             kineticEnergy(const MoleculeView &molview) const=0;
     
@@ -172,12 +189,12 @@ private:
     
     /** The energy component used when we last got the forces */
     SireCAS::Symbol last_nrg_component;
-    
-    /** The ID of the system used when we last got the forces */
-    QUuid last_system_uid;
-    
-    /** The version of the system when we last got the forces */
-    SireBase::Version last_system_version;
+
+    /** The property map used to find the sources of required properties */
+    PropertyMap map;
+
+    /** Whether or not the forces need to be recalculated */
+    bool need_new_forces;
 };
 
 /** This is the null integrator workspace */
@@ -202,6 +219,7 @@ public:
     static const char* typeName();
 
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
+    SireUnits::Dimension::MolarEnergy kineticEnergy(MolNum molnum) const;
     SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
 };
 
@@ -234,6 +252,7 @@ public:
     static const char* typeName();
     
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
+    SireUnits::Dimension::MolarEnergy kineticEnergy(MolNum molnum) const;
     SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
 
     int nMolecules() const;
@@ -251,7 +270,7 @@ public:
     
     const Vector* constCoordsArray(int i) const;
     const Vector* constForceArray(int i) const;
-    const Vector* constVelocityArray(int i) const;
+    const Velocity3D* constVelocityArray(int i) const;
     
     const double* constReciprocalMassArray(int i) const;
     
@@ -262,9 +281,9 @@ public:
     
     void commitCoordinatesAndVelocities();
 
-    void collectStatistics();
-
 private:
+    void rebuildFromScratch();
+
     /** All of the atomic coordinates */
     QVector< QVector<Vector> > atom_coords;
     

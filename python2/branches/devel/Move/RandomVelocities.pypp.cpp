@@ -9,6 +9,12 @@ namespace bp = boost::python;
 
 #include "SireCAS/symbol.h"
 
+#include "SireMol/moleculedata.h"
+
+#include "SireMol/moleculeinfodata.h"
+
+#include "SireMol/moleculeview.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
@@ -32,6 +38,17 @@ void register_RandomVelocities_class(){
         RandomVelocities_exposer.def( bp::init< >() );
         RandomVelocities_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ranfunction") )) );
         RandomVelocities_exposer.def( bp::init< SireMove::RandomVelocities const & >(( bp::arg("other") )) );
+        { //::SireMove::RandomVelocities::generate
+        
+            typedef ::SireMol::AtomVelocities ( ::SireMove::RandomVelocities::*generate_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            generate_function_type generate_function_value( &::SireMove::RandomVelocities::generate );
+            
+            RandomVelocities_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
         { //::SireMove::RandomVelocities::generator
         
             typedef ::SireMaths::RanGenerator const & ( ::SireMove::RandomVelocities::*generator_function_type )(  ) const;

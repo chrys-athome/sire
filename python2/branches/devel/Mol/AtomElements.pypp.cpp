@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "atomelements.h"
 
+#include "SireMaths/vector.h"
+
 SireMol::AtomProperty<SireMol::Element> __copy__(const SireMol::AtomProperty<SireMol::Element> &other){ return SireMol::AtomProperty<SireMol::Element>(other); }
 
 #include "Qt/qdatastream.hpp"

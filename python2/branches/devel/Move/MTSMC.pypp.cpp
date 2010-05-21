@@ -34,13 +34,16 @@ void register_MTSMC_class(){
 
     { //::SireMove::MTSMC
         typedef bp::class_< SireMove::MTSMC, bp::bases< SireMove::MonteCarlo, SireMove::Move, SireBase::Property > > MTSMC_exposer_t;
-        MTSMC_exposer_t MTSMC_exposer = MTSMC_exposer_t( "MTSMC" );
+        MTSMC_exposer_t MTSMC_exposer = MTSMC_exposer_t( "MTSMC", bp::init< bp::optional< SireBase::PropertyMap const & > >(( bp::arg("map")=SireBase::PropertyMap() )) );
         bp::scope MTSMC_scope( MTSMC_exposer );
-        MTSMC_exposer.def( bp::init< >() );
-        MTSMC_exposer.def( bp::init< SireMove::Moves const &, bp::optional< int > >(( bp::arg("fastmoves"), bp::arg("nfastmoves")=(int)(1) )) );
-        MTSMC_exposer.def( bp::init< SireMove::Moves const &, SireCAS::Symbol const &, bp::optional< int > >(( bp::arg("fastmoves"), bp::arg("fastcomponent"), bp::arg("nfastmoves")=(int)(1) )) );
-        MTSMC_exposer.def( bp::init< SireMove::Moves const &, SireSystem::Constraints const &, bp::optional< int > >(( bp::arg("fastmoves"), bp::arg("slow_constraints"), bp::arg("nfastmoves")=(int)(1) )) );
-        MTSMC_exposer.def( bp::init< SireMove::Moves const &, SireCAS::Symbol const &, SireSystem::Constraints const &, bp::optional< int > >(( bp::arg("fastmoves"), bp::arg("fastcomponent"), bp::arg("slow_constraints"), bp::arg("nfastmoves")=(int)(1) )) );
+        MTSMC_exposer.def( bp::init< SireMove::Moves const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("fastmoves"), bp::arg("map")=SireBase::PropertyMap() )) );
+        MTSMC_exposer.def( bp::init< SireMove::Moves const &, int, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("fastmoves"), bp::arg("nfastmoves"), bp::arg("map")=SireBase::PropertyMap() )) );
+        MTSMC_exposer.def( bp::init< SireMove::Moves const &, SireCAS::Symbol const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("fastmoves"), bp::arg("fastcomponent"), bp::arg("map")=SireBase::PropertyMap() )) );
+        MTSMC_exposer.def( bp::init< SireMove::Moves const &, SireCAS::Symbol const &, int, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("fastmoves"), bp::arg("fastcomponent"), bp::arg("nfastmoves"), bp::arg("map")=SireBase::PropertyMap() )) );
+        MTSMC_exposer.def( bp::init< SireMove::Moves const &, SireSystem::Constraints const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("fastmoves"), bp::arg("slow_constraints"), bp::arg("map")=SireBase::PropertyMap() )) );
+        MTSMC_exposer.def( bp::init< SireMove::Moves const &, SireSystem::Constraints const &, int, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("fastmoves"), bp::arg("slow_constraints"), bp::arg("nfastmoves"), bp::arg("map")=SireBase::PropertyMap() )) );
+        MTSMC_exposer.def( bp::init< SireMove::Moves const &, SireCAS::Symbol const &, SireSystem::Constraints const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("fastmoves"), bp::arg("fastcomponent"), bp::arg("slow_constraints"), bp::arg("map")=SireBase::PropertyMap() )) );
+        MTSMC_exposer.def( bp::init< SireMove::Moves const &, SireCAS::Symbol const &, SireSystem::Constraints const &, int, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("fastmoves"), bp::arg("fastcomponent"), bp::arg("slow_constraints"), bp::arg("nfastmoves"), bp::arg("map")=SireBase::PropertyMap() )) );
         MTSMC_exposer.def( bp::init< SireMove::MTSMC const & >(( bp::arg("other") )) );
         { //::SireMove::MTSMC::addSlowConstraint
         

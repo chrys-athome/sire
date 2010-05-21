@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireMaths/vector.h"
+
 #include "atomcharges.h"
 
 #include "atomelements.h"

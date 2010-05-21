@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "atomcharges.h"
 
+#include "SireMaths/vector.h"
+
 SireMol::AtomProperty<SireUnits::Dimension::PhysUnit<0, 0, 0, 1, 0, 0, 0> > __copy__(const SireMol::AtomProperty<SireUnits::Dimension::PhysUnit<0, 0, 0, 1, 0, 0, 0> > &other){ return SireMol::AtomProperty<SireUnits::Dimension::PhysUnit<0, 0, 0, 1, 0, 0, 0> >(other); }
 
 #include "Qt/qdatastream.hpp"

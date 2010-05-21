@@ -50,11 +50,10 @@ void register_ZMatMove_class(){
 
     { //::SireMove::ZMatMove
         typedef bp::class_< SireMove::ZMatMove, bp::bases< SireMove::MonteCarlo, SireMove::Move, SireBase::Property > > ZMatMove_exposer_t;
-        ZMatMove_exposer_t ZMatMove_exposer = ZMatMove_exposer_t( "ZMatMove" );
+        ZMatMove_exposer_t ZMatMove_exposer = ZMatMove_exposer_t( "ZMatMove", bp::init< bp::optional< SireBase::PropertyMap const & > >(( bp::arg("map")=SireBase::PropertyMap() )) );
         bp::scope ZMatMove_scope( ZMatMove_exposer );
-        ZMatMove_exposer.def( bp::init< >() );
-        ZMatMove_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
-        ZMatMove_exposer.def( bp::init< SireMove::Sampler const & >(( bp::arg("sampler") )) );
+        ZMatMove_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
+        ZMatMove_exposer.def( bp::init< SireMove::Sampler const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("sampler"), bp::arg("map")=SireBase::PropertyMap() )) );
         ZMatMove_exposer.def( bp::init< SireMove::ZMatMove const & >(( bp::arg("other") )) );
         { //::SireMove::ZMatMove::moleculeGroup
         
