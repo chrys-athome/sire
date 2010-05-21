@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include <QTime>
-
 #include "weightedmoves.h"
 #include "move.h"
 
@@ -303,6 +301,7 @@ System WeightedMoves::move(const System &system, int nmoves, bool record_stats)
     
                 if ( generator().rand(maxweight) <= move.get<1>() )
                 {
+                    //use this move
                     move.get<0>().edit().move(run_system, 1, record_stats);
                     break;
                 }

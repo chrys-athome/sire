@@ -78,14 +78,18 @@ friend QDataStream& ::operator<<(QDataStream&, const MolecularDynamics&);
 friend QDataStream& ::operator>>(QDataStream&, MolecularDynamics&);
 
 public:
-    MolecularDynamics();
+    MolecularDynamics(const PropertyMap &map = PropertyMap());
     
-    MolecularDynamics(const MoleculeGroup &molgroup);
+    MolecularDynamics(const MoleculeGroup &molgroup, 
+                      const PropertyMap &map = PropertyMap());
     
-    MolecularDynamics(const Integrator &integrator);
+    MolecularDynamics(const Integrator &integrator,
+                      const PropertyMap &map = PropertyMap());
     
-    MolecularDynamics(const MoleculeGroup &molgroup, const Integrator &integrator);
-    MolecularDynamics(const Integrator &integrator, const MoleculeGroup &molgroup);
+    MolecularDynamics(const MoleculeGroup &molgroup, const Integrator &integrator,
+                      const PropertyMap &map = PropertyMap());
+    MolecularDynamics(const Integrator &integrator, const MoleculeGroup &molgroup,
+                      const PropertyMap &map = PropertyMap());
     
     MolecularDynamics(const MolecularDynamics &other);
     
@@ -106,8 +110,6 @@ public:
     
     const MoleculeGroup& moleculeGroup() const;
     const Integrator& integrator() const;
-
-    const IntegratorWorkspace& workspace() const;
     
     void setMoleculeGroup(const MoleculeGroup &molgroup);
 
@@ -118,6 +120,13 @@ public:
     SireUnits::Dimension::Time timeStep() const;
 
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
+    
+    void setCoordinatesProperty(const QString &property, const PropertyName &value);
+    void setSpaceProperty(const QString &property, const PropertyName &value);
+
+    void setVelocitiesProperty(const QString &property, const PropertyName &value);
+    void setMassesProperty(const QString &property, const PropertyName &value);
+    void setElementProperty(const QString &property, const PropertyName &value);
     
     void move(System &system, int nmoves, bool record_stats=true);
 

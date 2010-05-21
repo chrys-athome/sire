@@ -104,36 +104,36 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, ZMatMove &zmatmove)
 }
 
 /** Null constructor */
-ZMatMove::ZMatMove() 
-         : ConcreteProperty<ZMatMove,MonteCarlo>(),
-           zmatrix_property( "z-matrix" ),
+ZMatMove::ZMatMove(const PropertyMap &map) 
+         : ConcreteProperty<ZMatMove,MonteCarlo>(map),
            sync_bonds(false), sync_angles(false),
            sync_dihedrals(false)
 {
+    zmatrix_property = map["z-matrix"];
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
 }
 
 /** Construct the z-matrix move for the passed group of molecules */
-ZMatMove::ZMatMove(const MoleculeGroup &molgroup)
+ZMatMove::ZMatMove(const MoleculeGroup &molgroup, const PropertyMap &map)
          : ConcreteProperty<ZMatMove,MonteCarlo>(),
            smplr( UniformSampler(molgroup) ),
-           zmatrix_property( "z-matrix" ),
            sync_bonds(false), sync_angles(false),
            sync_dihedrals(false)
 {
+    zmatrix_property = map["z-matrix"];
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
     smplr.edit().setGenerator( this->generator() );
 }
 
 /** Construct the z-matrix move that samples molecules from the
     passed sampler */
-ZMatMove::ZMatMove(const Sampler &sampler)
+ZMatMove::ZMatMove(const Sampler &sampler, const PropertyMap &map)
          : ConcreteProperty<ZMatMove,MonteCarlo>(),
            smplr(sampler),
-           zmatrix_property( "z-matrix" ),
            sync_bonds(false), sync_angles(false),
            sync_dihedrals(false)
 {
+    zmatrix_property = map["z-matrix"];
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
     smplr.edit().setGenerator( this->generator() );
 }
@@ -226,6 +226,7 @@ const PropertyName& ZMatMove::zmatrixProperty() const
 void ZMatMove::setZMatrixProperty(const PropertyName &property)
 {
     zmatrix_property = property;
+    Move::setProperty("z-matrix", zmatrix_property);
 }
 
 /** Set whether or not to synchronise all motion for all molecules 
@@ -416,9 +417,7 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
     
     try
     {
-        PropertyMap map;
-        map.set("coordinates", this->coordinatesProperty());
-        map.set("z-matrix", this->zmatrixProperty());
+        const PropertyMap &map = Move::propertyMap();
         
         for (int i=0; i<nmoves; ++i)
         {

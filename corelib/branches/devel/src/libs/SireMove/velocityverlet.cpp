@@ -165,79 +165,69 @@ void VelocityVerlet::setGenerator(const RanGenerator &rangenerator)
     \throw SireError:invalid_cast
     \throw SireError::incompatible_error
 */
-void VelocityVerlet::integrate(System &system, IntegratorWorkspace &workspace,
-                               const Symbol &nrg_component, const PropertyMap &map) const
+void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
+                               const Symbol &nrg_component, 
+                               int nmoves, bool record_stats) const
 {
     AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
-    
-    //update the workspace with the current state of the system 
-    // - this calculates new forces if necessary
-    ws.updateFrom(system, nrg_component, vel_generator, map);
     
     const double dt = timestep;
 
     const int nmols = ws.count();
     
-    //first integrate the coordinates - loop over all molecules
-    for (int i=0; i<nmols; ++i)
+    for (int imove=0; imove<nmoves; ++imove)
     {
-        QVector<Vector> coords = ws.coordinateArray(i);
-        const QVector<Vector> &forces = ws.forceArray(i);
-        QVector<Vector> vels = ws.velocityArray(i);
-        const QVector<double> &inv_masses = ws.reciprocalMassArray(i);
+        ws.calculateForces(nrg_component);
         
-        const int nats = coords.count();
-
-        BOOST_ASSERT(vels.count() == nats);
-        BOOST_ASSERT(forces.count() == nats);
-        BOOST_ASSERT(inv_masses.count() == nats);
-
-        Vector *r = coords.data();
-        const Vector *f = forces.constData();
-        Vector *v = vels.data();
-        const double *inv_m = inv_masses.constData();
-        
-        for (int j=0; j<nats; ++j)
+        //first integrate the coordinates - loop over all molecules
+        for (int i=0; i<nmols; ++i)
         {
-            // (1/2) a(t) dt = (1/2) -(1/m) f( r(t) ) dt
-            const Vector half_a_t_dt = (-0.5*inv_m[j]*dt) * f[j];
-            
-            // v(t + dt/2) = v(t) + (1/2) a(t) dt
-            v[j] += half_a_t_dt;
+            const int nats = ws.nAtoms(i);
+        
+            Vector *dx = ws.deltaCoordsArray(i);
+            const Vector *forces = ws.forceArray(i);
+            Vector *vels = ws.velocityArray(i);
+            const double *inv_masses = ws.reciprocalMassArray(i);
 
-            // r(t + dt) = r(t) + v(t) dt + (1/2) a(t) dt^2
-            r[j] += dt * v[j];
+            for (int j=0; j<nats; ++j)
+            {
+                // (1/2) a(t) dt = (1/2) -(1/m) f( r(t) ) dt
+                const Vector half_a_t_dt = (-0.5*inv_masses[j]*dt) * forces[j];
+                
+                // v(t + dt/2) = v(t) + (1/2) a(t) dt
+                vels[j] += half_a_t_dt;
+
+                // r(t + dt) = r(t) + v(t) dt + (1/2) a(t) dt^2
+                //           = r(t) + dt [ v(t) + (1/2) a(t) dt ]
+                dx[j] = dt * (vels[j] + half_a_t_dt);
+            }
+        }
+
+        ws.commitCoordinates();
+        ws.calculateForces(nrg_component);
+        
+        //now need to integrate the velocities
+        for (int i=0; i<nmols; ++i)
+        {
+            const int nats = ws.nAtoms(i);
+        
+            const Vector *forces = ws.forceArray(i);
+            Vector *vels = ws.velocityArray(i);
+            const double *inv_masses = ws.reciprocalMassArray(i);
+
+            for (int j=0; j<nats; ++j)
+            {
+                // a(t + dt) = -(1/m) f( r(t+dt) )
+
+                // v(t + dt) = v(t + dt/2) + (1/2) a(t + dt) dt
+                vels[j] -= (0.5 * dt * inv_masses[j]) * forces[j];
+            }
         }
         
-        ws.setCoordinates(i, coords);
-        ws.setVelocities(i, vels);
-    }
-    
-    //now update the system with the new coordinates
-    ws.updateSystem(system, nrg_component, map);
-    
-    //now need to integrate the velocities
-    for (int i=0; i<nmols; ++i)
-    {
-        const QVector<Vector> &forces = ws.forceArray(i);
-        QVector<Vector> vels = ws.velocityArray(i);
-        const QVector<double> &inv_masses = ws.reciprocalMassArray(i);
+        ws.commitVelocities();
         
-        const int nats = forces.count();
-
-        const Vector *f = forces.constData();
-        Vector *v = vels.data();
-        const double *inv_m = inv_masses.constData();
-
-        for (int j=0; j<nats; ++j)
-        {
-            // a(t + dt) = -(1/m) f( r(t+dt) )
-
-            // v(t + dt) = v(t + dt/2) + (1/2) a(t + dt) dt
-            v[j] -= (0.5 * dt * inv_m[j]) * f[j];
-        }
-        
-        ws.setVelocities(i, vels);
+        if (record_stats)
+            ws.collectStatistics();
     }
 }
 
@@ -254,12 +244,6 @@ void VelocityVerlet::setTimeStep(const Time &new_timestep)
 Time VelocityVerlet::timeStep() const
 {
     return timestep;
-}
-
-/** Create an empty workspace for this integrator */
-IntegratorWorkspacePtr VelocityVerlet::createWorkspace() const
-{
-    return IntegratorWorkspacePtr( new AtomicVelocityWorkspace() );
 }
 
 /** Create a workspace for this integrator for the molecule group 'molgroup' */

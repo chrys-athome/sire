@@ -68,7 +68,7 @@ friend QDataStream& ::operator<<(QDataStream&, const MonteCarlo&);
 friend QDataStream& ::operator>>(QDataStream&, MonteCarlo&);
 
 public:
-    MonteCarlo();
+    MonteCarlo(const PropertyMap &map = PropertyMap());
     
     MonteCarlo(const MonteCarlo &other);
 

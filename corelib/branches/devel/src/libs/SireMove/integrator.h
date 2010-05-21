@@ -125,13 +125,6 @@ public:
     static const NullIntegrator& null();
     
     virtual QString toString() const=0;
-    
-    virtual void integrate(System &system, IntegratorWorkspace &workspace,
-                           const Symbol &nrg_component, const PropertyMap &map) const=0;
-
-    void integrate(System &system, IntegratorWorkspace &workspace) const;
-    void integrate(System &system, IntegratorWorkspace &workspace, 
-                   const Symbol &nrg_component) const;
 
     virtual void setTimeStep(const SireUnits::Dimension::Time &timestep)=0;
 
@@ -139,7 +132,10 @@ public:
     
     virtual void setGenerator(const RanGenerator &generator)=0;
     
-    virtual IntegratorWorkspacePtr createWorkspace() const=0;
+    virtual void integrate(IntegratorWorkSpace &workspace, 
+                           const Symbol &nrg_component,
+                           int nmoves, bool record_stats) const=0;
+    
     virtual IntegratorWorkspacePtr 
                         createWorkspace(const MoleculeGroup &molgroup) const=0;
     
@@ -177,8 +173,8 @@ public:
     
     QString toString() const;
     
-    void integrate(System &system, IntegratorWorkspace &workspace,
-                   const Symbol &nrg_component, const PropertyMap &map) const;
+    void integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, 
+                   int nmoves, bool record_stats) const;
 
     void setTimeStep(const SireUnits::Dimension::Time &timestep);
 
@@ -186,7 +182,6 @@ public:
 
     void setGenerator(const RanGenerator &generator);
     
-    IntegratorWorkspacePtr createWorkspace() const;
     IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup) const;
 };
 

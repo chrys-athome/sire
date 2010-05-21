@@ -97,6 +97,8 @@ public:
     
     virtual VelocityGenerator* clone() const=0;
     
+    virtual void setGenerator(const RanGenerator &generator);
+    
     static const NullVelocityGenerator& null();
     
 protected:

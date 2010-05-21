@@ -61,12 +61,14 @@ friend QDataStream& ::operator<<(QDataStream&, const VolumeMove&);
 friend QDataStream& ::operator>>(QDataStream&, VolumeMove&);
 
 public:
-    VolumeMove();
+    VolumeMove(const PropertyMap &map = PropertyMap());
 
-    VolumeMove(const MGID &mgid);
-    VolumeMove(const MoleculeGroup &molgroup);
+    VolumeMove(const MGID &mgid, const PropertyMap &map = PropertyMap());
+    VolumeMove(const MoleculeGroup &molgroup,
+               const PropertyMap &map = PropertyMap());
     
-    VolumeMove(const VolumeChanger &volchanger);
+    VolumeMove(const VolumeChanger &volchanger,
+               const PropertyMap &map = PropertyMap());
     
     VolumeMove(const VolumeMove &other);
     

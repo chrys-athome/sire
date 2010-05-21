@@ -79,6 +79,10 @@ friend QDataStream& ::operator>>(QDataStream&, VelocityVerlet&);
 public:
     VelocityVerlet();
     VelocityVerlet(const SireUnits::Dimension::Time &timestep);
+
+    VelocityVerlet(const VelocityGenerator &velocity_generator);
+    VelocityVerlet(const SireUnits::Dimension::Time &timestep,
+                   const VelocityGenerator &velocity_generator);
     
     VelocityVerlet(const VelocityVerlet &other);
     
@@ -93,14 +97,18 @@ public:
     
     QString toString() const;
     
-    void integrate(System &system, IntegratorWorkspace &workspace,
-                   const Symbol &nrg_component, const PropertyMap &map) const;
+    void integrate(IntegratorWorkspace &workspace,
+                   const Symbol &nrg_component, 
+                   bool record_stats) const;
 
     void setTimeStep(const SireUnits::Dimension::Time &timestep);
 
     SireUnits::Dimension::Time timeStep() const;
     
     void setGenerator(const RanGenerator &generator);
+
+    const VelocityGenerator& velocityGenerator() const;
+    void setVelocityGenerator(const VelocityGenerator &generator);
 
     IntegratorWorkspacePtr createWorkspace() const;
     IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup) const;

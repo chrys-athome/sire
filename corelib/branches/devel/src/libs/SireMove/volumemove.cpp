@@ -98,8 +98,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, VolumeMove &volmove)
 }
 
 /** Null constructor */
-VolumeMove::VolumeMove()
-           : ConcreteProperty<VolumeMove,MonteCarlo>(), maxchange(0)
+VolumeMove::VolumeMove(const PropertyMap &map)
+           : ConcreteProperty<VolumeMove,MonteCarlo>(map), maxchange(0)
 {
     MonteCarlo::setEnsemble( Ensemble::NPT( 25 * celsius, 1 * atm ) );
 }
@@ -109,8 +109,8 @@ VolumeMove::VolumeMove()
     change of 100 A^3 by moving the molecules in the
     molecule groups that match the ID 'mgid' 
     using a ScaleVolumeFromCenter centered on the origin */
-VolumeMove::VolumeMove(const MGID &mgid)
-           : ConcreteProperty<VolumeMove,MonteCarlo>(),
+VolumeMove::VolumeMove(const MGID &mgid, const PropertyMap &map)
+           : ConcreteProperty<VolumeMove,MonteCarlo>(map),
              volchanger( ScaleVolumeFromCenter(mgid) ),
              maxchange(100*angstrom3)
 {
@@ -121,8 +121,9 @@ VolumeMove::VolumeMove(const MGID &mgid)
     for a temperature of 25 C, pressure of 1 atm, and with a maximum 
     change of 100 A^3 by moving the molecules in 'molgroup' 
     using a ScaleVolumeFromCenter centered on the origin */
-VolumeMove::VolumeMove(const MoleculeGroup &molgroup)
-           : ConcreteProperty<VolumeMove,MonteCarlo>(),
+VolumeMove::VolumeMove(const MoleculeGroup &molgroup,
+                       const PropertyMap &map)
+           : ConcreteProperty<VolumeMove,MonteCarlo>(map),
              volchanger( ScaleVolumeFromCenter(molgroup) ),
              maxchange(100*angstrom3)
 {
@@ -132,8 +133,9 @@ VolumeMove::VolumeMove(const MoleculeGroup &molgroup)
 /** Construct a volume move that can be used to generate the ensemble
     for a temperature of 25 C, pressure of 1 atm, and with a maximum 
     change of 100 A^3 using the passed volume changer */
-VolumeMove::VolumeMove(const VolumeChanger &volumechanger)
-           : ConcreteProperty<VolumeMove,MonteCarlo>(),
+VolumeMove::VolumeMove(const VolumeChanger &volumechanger,
+                       const PropertyMap &map)
+           : ConcreteProperty<VolumeMove,MonteCarlo>(map),
              volchanger(volumechanger),
              maxchange(100*angstrom3)
 {
@@ -258,9 +260,7 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
     
     try
     {
-        PropertyMap map;
-        map.set("coordinates", this->coordinatesProperty());
-        map.set("space", this->spaceProperty());
+        const PropertyMap &map = this->propertyMap();
 
         for (int i=0; i<nmoves; ++i)
         {

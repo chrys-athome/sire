@@ -62,7 +62,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Dynamics &dynamics)
 }
 
 /** Constructor */
-Dynamics::Dynamics() : Move()
+Dynamics::Dynamics(const PropertyMap &map) : Move(map)
 {}
 
 /** Copy constructor */

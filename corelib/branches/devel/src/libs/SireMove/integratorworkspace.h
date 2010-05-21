@@ -86,6 +86,7 @@ using SireMol::MolID;
 using SireMol::AtomForces;
 using SireMol::AtomMasses;
 using SireMol::AtomVelocities;
+using SireMol::Velocity3D;
 
 using SireSystem::System;
 
@@ -128,6 +129,12 @@ public:
 
     const ForceTable& forceTable() const;
 
+    virtual void setSystem(const System &system);
+
+    const System& system() const;
+
+    void calculateForces(const Symbol &nrg_component);
+
     virtual SireUnits::Dimension::MolarEnergy kineticEnergy() const=0;
     virtual SireUnits::Dimension::MolarEnergy 
                             kineticEnergy(const MoleculeView &molview) const=0;
@@ -140,9 +147,10 @@ protected:
     bool operator==(const IntegratorWorkspace &other) const;
     bool operator!=(const IntegratorWorkspace &other) const;
 
-    void updateFrom(SireSystem::System &system, const SireCAS::Symbol &nrg_component);
-
 private:
+    /** The system being integrated */
+    System sys;
+
     /** The molecule group containing the molecules being integrated */
     MolGroupPtr molgroup;
 
@@ -199,6 +207,8 @@ friend QDataStream& ::operator>>(QDataStream&, AtomicVelocityWorkspace&);
 public:
     AtomicVelocityWorkspace();
     AtomicVelocityWorkspace(const MoleculeGroup &molgroup);
+    AtomicVelocityWorkspace(const MoleculeGroup &molgroup,
+                            const VelocityGenerator &generator);
     
     AtomicVelocityWorkspace(const AtomicVelocityWorkspace &other);
     
@@ -214,51 +224,48 @@ public:
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
     SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
 
-    QHash<MolNum,AtomForces> forces() const;
-    QHash<MolNum,AtomVelocities> velocities() const;
-    QHash<MolNum,AtomMasses> masses() const;
-
-    AtomForces forces(const MolID &molid) const;
-    AtomVelocities velocities(const MolID &molid) const;
-    AtomMasses masses(const MolID &molid) const;
-
     int nMolecules() const;
-    int count() const;
-    int size() const;
 
-    const QVector<Vector>& forceArray(int i) const;
-    const QVector<Vector>& coordinateArray(int i) const;
-    const QVector<Vector>& velocityArray(int i) const;
-    const QVector<double>& reciprocalMassArray(int i) const;
+    int nAtoms(int i) const;
+    
+    Vector* deltaCoordsArray(int i);
+    Velocity3D* velocityArray(int i);
 
-    void setCoordinates(int i, const QVector<Vector> &new_coords);
-    void setVelocities(int i, const QVector<Vector> &new_velocities);
+    const Vector* deltaCoordsArray(int i) const;
+    const Vector* forceArray(int i) const;
+    const Velocity3D* velocityArray(int i) const;
 
-    void updateFrom(System &system, const Symbol &nrg_component,
-                    const VelocityGenerator &velgen,
-                    const PropertyMap &map = PropertyMap());
-
-    void updateSystem(System &system, const Symbol &nrg_component,
-                      const PropertyMap &map = PropertyMap());
+    const double* reciprocalMassArray(int i) const;
+    
+    const Vector* constDeltaCoordsArray(int i) const;
+    const Vector* constForceArray(int i) const;
+    const Vector* constVelocityArray(int i) const;
+    
+    const double* constReciprocalMassArray(int i) const;
+    
+    void setSystem(const System &system);
+    
+    void commitCoordinates();
+    void commitVelocities();
+    
+    void commitCoordinatesAndVelocities();
 
 private:
-    void assertValidIndex(int i) const;
-
-    /** The array of atomic forces in internal units */
-    QVector< QVector<Vector> > forces_array;
+    /** The change in coordinates for each step */
+    QVector< QVector<Vector> > delta_atom_coords;
     
-    /** The array of atomic coordinates, mapped to infinite space
-        cartesian */
-    QVector< QVector<Vector> > coords_array;
+    /** All of the atomic velocities */
+    QVector< QVector<Velocity3D> > atom_velocities;
     
-    /** The array of atomic velocities in internal units */
-    QVector< QVector<Vector> > vels_array;
+    /** All of the forces for molecules that are not 
+        fully selected */
+    QVector< QVector<Vector> > atom_forces; 
     
-    /** The array of atomic masses (reciprocal of the mass) in internal units */
-    QVector< QVector<double> > inv_masses_array;
+    /** All of the inverse atom masses */
+    QVector< QVector<double> > inv_atom_masses;
     
-    /** The property names used to get and set the properties */
-    PropertyMap propnames;
+    /** The generator used to get (and set) the velocities */
+    VelocityGeneratorPtr vel_generator;
 };
 
 typedef SireBase::PropPtr<IntegratorWorkspace> IntegratorWorkspacePtr;
@@ -267,13 +274,6 @@ typedef SireBase::PropPtr<IntegratorWorkspace> IntegratorWorkspacePtr;
 
 Q_DECLARE_METATYPE( SireMove::NullIntegratorWorkspace )
 Q_DECLARE_METATYPE( SireMove::AtomicVelocityWorkspace )
-
-SIRE_EXPOSE_CLASS( SireMove::IntegratorWorkspace )
-SIRE_EXPOSE_CLASS( SireMove::NullIntegratorWorkspace )
-SIRE_EXPOSE_CLASS( SireMove::AtomicVelocityWorkspace )
-
-SIRE_EXPOSE_PROPERTY( SireMove::IntegratorWorkspacePtr,
-                      SireMove::IntegratorWorkspace )
 
 SIRE_END_HEADER
 

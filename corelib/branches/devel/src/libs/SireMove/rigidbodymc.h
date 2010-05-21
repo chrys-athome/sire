@@ -69,10 +69,12 @@ friend QDataStream& ::operator<<(QDataStream&, const RigidBodyMC&);
 friend QDataStream& ::operator>>(QDataStream&, RigidBodyMC&);
 
 public:
-    RigidBodyMC();
+    RigidBodyMC(const PropertyMap &map = PropertyMap());
 
-    RigidBodyMC(const MoleculeGroup &molgroup);
-    RigidBodyMC(const Sampler &sampler);
+    RigidBodyMC(const MoleculeGroup &molgroup,
+                const PropertyMap &map = PropertyMap());
+    RigidBodyMC(const Sampler &sampler,
+                const PropertyMap &map = PropertyMap());
 
     RigidBodyMC(const RigidBodyMC &other);
 

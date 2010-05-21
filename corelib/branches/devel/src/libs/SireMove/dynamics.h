@@ -61,7 +61,7 @@ friend QDataStream& ::operator<<(QDataStream&, const Dynamics&);
 friend QDataStream& ::operator>>(QDataStream&, Dynamics&);
 
 public:
-    Dynamics();
+    Dynamics(const PropertyMap &map = PropertyMap());
     
     Dynamics(const Dynamics &other);
     

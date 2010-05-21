@@ -59,12 +59,13 @@ static const RegisterMetaType<Move> r_move( MAGIC_ONLY, "SireMove::Move" );
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Move &move)
 {
-    writeHeader(ds, r_move, 1);
+    writeHeader(ds, r_move, 2);
     
     SharedDataStream sds(ds);
     
     sds << move.nrgcomponent
         << move.coordsproperty << move.spaceproperty
+        << move.map
         << static_cast<const Property&>(move);
     
     return ds;
@@ -75,30 +76,44 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Move &move)
 {
     VersionID v = readHeader(ds, r_move);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+    
+        sds >> move.nrgcomponent
+            >> move.coordsproperty >> move.spaceproperty
+            >> move.map
+            >> static_cast<Property&>(move);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
     
         sds >> move.nrgcomponent
             >> move.coordsproperty >> move.spaceproperty
             >> static_cast<Property&>(move);
+            
+        move.map = PropertyMap();
     }
     else
-        throw version_error(v, "1", r_move, CODELOC);
+        throw version_error(v, "1,2", r_move, CODELOC);
         
     return ds;
 }
 
 /** Constructor */
-Move::Move() : Property(), 
-               nrgcomponent(ForceFields::totalComponent()),
-               coordsproperty("coordinates"), spaceproperty("space")
-{}
+Move::Move(const PropertyMap &map) 
+     : Property(), nrgcomponent(ForceFields::totalComponent())
+{
+    coordsproperty = map["coordinates"];
+    spaceproperty = map["space"];
+}
 
 /** Copy constructor */
 Move::Move(const Move &other) 
      : Property(other), nrgcomponent(other.nrgcomponent),
-       coordsproperty(other.coordsproperty), spaceproperty(other.spaceproperty)
+       coordsproperty(other.coordsproperty), spaceproperty(other.spaceproperty),
+       map(other.map)
 {}
 
 /** Destructor */
@@ -111,6 +126,7 @@ Move& Move::operator=(const Move &other)
     nrgcomponent = other.nrgcomponent;
     coordsproperty = other.coordsproperty;
     spaceproperty = other.spaceproperty;
+    map = other.map;
     
     Property::operator=(other);
     
@@ -122,15 +138,14 @@ bool Move::operator==(const Move &other) const
 {
     return nrgcomponent == other.nrgcomponent and
            coordsproperty == other.coordsproperty and
-           spaceproperty == other.spaceproperty;
+           spaceproperty == other.spaceproperty and
+           map == other.map;
 }
 
 /** Comparison operator */
 bool Move::operator!=(const Move &other) const
 {
-    return nrgcomponent != other.nrgcomponent or
-           coordsproperty != other.coordsproperty or
-           spaceproperty != other.spaceproperty;
+    return not Move::operator==(other);
 }
 
 /** Perform a single move on the system 'system' without 
@@ -168,6 +183,7 @@ const Symbol& Move::energyComponent() const
 void Move::setSpaceProperty(const PropertyName &space_property)
 {
     spaceproperty = space_property;
+    map.set("space", spaceproperty);
 }
 
 /** Return the property used to find the simulation space (box) 
@@ -182,12 +198,25 @@ const PropertyName& Move::spaceProperty() const
 void Move::setCoordinatesProperty(const PropertyName &coords_property)
 {
     coordsproperty = coords_property;
+    map.set("coordinates", coordsproperty);
 }
 
 /** Return the property used to find the molecule coordinates to be moves */
 const PropertyName& Move::coordinatesProperty() const
 {
     return coordsproperty;
+}
+
+/** Return the property map used to perform this move */
+const PropertyMap& Move::propertyMap() const
+{
+    return map;
+}
+
+/** Internal function used to update the value of a property */
+void Move::setProperty(const QString &property, const PropertyName &value)
+{
+    map.set(property, value);
 }
 
 /** Return the energy of the system 'system' - this is the energy
