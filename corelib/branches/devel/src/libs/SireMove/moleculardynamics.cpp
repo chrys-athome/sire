@@ -227,8 +227,7 @@ void MolecularDynamics::setMoleculeGroup(const MoleculeGroup &new_molgroup)
 {
     if (new_molgroup.number() != this->moleculeGroup().number())
     {
-        wspace = intgrator.read().createWorkspace(new_molgroup,
-                                                  wspace.read().propertyMap());
+        wspace = intgrator.read().createWorkspace(new_molgroup, propertyMap());
     }
 }
 
@@ -253,21 +252,88 @@ void MolecularDynamics::setIntegrator(const Integrator &integrator)
     if (intgrator != integrator)
     {
         intgrator = integrator;
-        wspace = intgrator.read().createWorkspace( this->moleculeGroup(),
-                                                   wspace.read().propertyMap() );
+        wspace = intgrator.read().createWorkspace( moleculeGroup(), propertyMap() );
     }
 }
 
+/** Set the property used to find the coordinates of the molecules */
 void MolecularDynamics::setCoordinatesProperty(const PropertyName &value)
 {
     wspace.edit().setCoordinatesProperty(value);
     Move::setCoordinatesProperty(value);
 }
 
+/** Set the property used to find the system space */
 void MolecularDynamics::setSpaceProperty(const PropertyName &value)
 {
     wspace.edit().setSpaceProperty(value);
     Move::setSpaceProperty(value);
+}
+
+/** Set the property used to find the molecular velocities */
+void MolecularDynamics::setVelocitiesProperty(const PropertyName &value)
+{
+    wspace.edit().setVelocitiesProperty(value);
+    Move::setProperty("velocity", value);
+}
+
+/** Set the property used to find the molecular masses */
+void MolecularDynamics::setMassesProperty(const PropertyName &value)
+{
+    wspace.edit().setMassesProperty(value);
+    Move::setProperty("mass", value);
+}
+
+/** Set the property used to find the elements of the atoms */
+void MolecularDynamics::setElementsProperty(const PropertyName &value)
+{
+    wspace.edit().setElementsProperty(value);
+    Move::setProperty("element", value);
+}
+
+/** Set the property used to find the generator used to
+    generate velocities when they are missing */
+void MolecularDynamics::setVelocityGeneratorProperty(const PropertyName &value)
+{
+    wspace.edit().setVelocityGeneratorProperty(value);
+    Move::setProperty("velocity generator", value);
+}
+
+/** Return the property used to find the molecular coordinates */
+PropertyName MolecularDynamics::coordinatesProperty() const
+{
+    return propertyMap()["coordinates"];
+}
+
+/** Return the property used to find the system space */
+PropertyName MolecularDynamics::spaceProperty() const
+{
+    return propertyMap()["space"];
+}
+
+/** Return the property used to find the molecular velocities */
+PropertyName MolecularDynamics::velocitiesProperty() const
+{
+    return propertyMap()["velocity"];
+}
+
+/** Return the property used to find the molecular masses */
+PropertyName MolecularDynamics::massesProperty() const
+{
+    return propertyMap()["mass"];
+}
+
+/** Return the property used to find the atomic elements */
+PropertyName MolecularDynamics::elementsProperty() const
+{
+    return propertyMap()["element"];
+}
+
+/** Return the property used to find the generator for 
+    missing velocities */
+PropertyName MolecularDynamics::velocityGeneratorProperty() const
+{
+    return propertyMap()["velocity generator"];
 }
 
 /** Return the timestep for the integration */
@@ -292,8 +358,7 @@ MolarEnergy MolecularDynamics::kineticEnergy() const
     velocities */
 void MolecularDynamics::clearStatistics()
 {
-    wspace = intgrator.read().createWorkspace(this->moleculeGroup(),
-                                              wspace.read().propertyMap());
+    wspace = intgrator.read().createWorkspace( moleculeGroup(), propertyMap() );
     num_moves = 0;
     total_time = Time(0);
 }

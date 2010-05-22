@@ -86,6 +86,7 @@ using SireMol::AtomForces;
 using SireMol::AtomMasses;
 using SireMol::AtomVelocities;
 using SireMol::Velocity3D;
+using SireMol::Molecules;
 
 using SireSystem::System;
 
@@ -176,6 +177,10 @@ protected:
     
     bool operator==(const IntegratorWorkspace &other) const;
     bool operator!=(const IntegratorWorkspace &other) const;
+
+    virtual void changedProperty(const QString &property);
+
+    void pvt_update(const Molecules &changed_mols);
 
 private:
     /** The system being integrated */
@@ -280,6 +285,9 @@ public:
     void commitVelocities();
     
     void commitCoordinatesAndVelocities();
+
+protected:
+    void changedProperty(const QString &property);
 
 private:
     void rebuildFromScratch();

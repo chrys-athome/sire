@@ -437,6 +437,13 @@ bool Molecules::update(const MoleculeData &moldata)
         return false;
 }
 
+/** Reserve enough space for 'nmolecules' molecules. This
+    will reserve the memory so that reallocations are minimised */
+void Molecules::reserve(int nmolecules)
+{
+    mols.reserve(nmolecules);
+}
+
 /** Update the views of the molecule viewed by 'molview' 
     in this set so that they have the same molecule version
     as 'molview'. This returns whether or not the molecule

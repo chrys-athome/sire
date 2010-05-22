@@ -182,6 +182,8 @@ public:
     bool uniteViews();
     bool removeDuplicates();
 
+    void reserve(int nmolecules);
+
     bool update(const MoleculeData &moldata);
     bool update(const MoleculeView &molview);
     QList<Molecule> update(const Molecules &molecules);

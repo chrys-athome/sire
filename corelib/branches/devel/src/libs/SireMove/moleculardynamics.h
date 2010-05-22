@@ -129,7 +129,16 @@ public:
 
     void setVelocitiesProperty(const PropertyName &value);
     void setMassesProperty(const PropertyName &value);
-    void setElementProperty(const PropertyName &value);
+    void setElementsProperty(const PropertyName &value);
+    void setVelocityGeneratorProperty(const PropertyName &value);
+    
+    PropertyName coordinatesProperty() const;
+    PropertyName spaceProperty() const;
+    
+    PropertyName velocitiesProperty() const;
+    PropertyName massesProperty() const;
+    PropertyName elementsProperty() const;
+    PropertyName velocityGeneratorProperty() const;
     
     void move(System &system, int nmoves, bool record_stats=true);
 

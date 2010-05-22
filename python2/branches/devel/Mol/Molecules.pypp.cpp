@@ -566,6 +566,17 @@ void register_Molecules_class(){
                 , removeDuplicates_function_value );
         
         }
+        { //::SireMol::Molecules::reserve
+        
+            typedef void ( ::SireMol::Molecules::*reserve_function_type )( int ) ;
+            reserve_function_type reserve_function_value( &::SireMol::Molecules::reserve );
+            
+            Molecules_exposer.def( 
+                "reserve"
+                , reserve_function_value
+                , ( bp::arg("nmolecules") ) );
+        
+        }
         { //::SireMol::Molecules::toString
         
             typedef ::QString ( ::SireMol::Molecules::*toString_function_type )(  ) const;

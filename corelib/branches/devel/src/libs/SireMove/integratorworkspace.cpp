@@ -259,40 +259,68 @@ void IntegratorWorkspace::setPropertyMap(const PropertyMap &m)
 void IntegratorWorkspace::setGenerator(const RanGenerator&)
 {}
 
+/** Function called when a property is changed */
+void IntegratorWorkspace::changedProperty(const QString&)
+{}
+
 /** Set the property used to find the coordinates of the molecules */
 void IntegratorWorkspace::setCoordinatesProperty(const PropertyName &source)
 {
-    map.set("coordinates", source);
+    if (map["coordinates"] != source)
+    {
+        map.set("coordinates", source);
+        this->changedProperty("coordinates");
+    }
 }
 
 /** Set the property used to find the system space */
 void IntegratorWorkspace::setSpaceProperty(const PropertyName &source)
 {
-    map.set("space", source);
+    if (map["space"] != source)
+    {
+        map.set("space", source);
+        this->changedProperty("space");
+    }
 }
 
 /** Set the property used to find the velocities of the molecules */
 void IntegratorWorkspace::setVelocitiesProperty(const PropertyName &source)
 {
-    map.set("velocity", source);
+    if (map["velocity"] != source)
+    {
+        map.set("velocity", source);
+        this->changedProperty("velocity");
+    }
 }
 
 /** Set the property used to find the masses of the molecules */
 void IntegratorWorkspace::setMassesProperty(const PropertyName &source)
 {
-    map.set("mass", source);
+    if (map["mass"] != source)
+    {
+        map.set("mass", source);
+        this->changedProperty("mass");
+    }
 }
 
 /** Set the property used to find the elements of the atoms in the molecule */
 void IntegratorWorkspace::setElementsProperty(const PropertyName &source)
 {
-    map.set("element", source);
+    if (map["element"] != source)
+    {
+        map.set("element", source);
+        this->changedProperty("element");
+    }
 }
 
 /** Set the property used to generate new velocities */
 void IntegratorWorkspace::setVelocityGeneratorProperty(const PropertyName &source)
 {
-    map.set("velocity generator", source);
+    if (map["velocity generator"] != source)
+    {
+        map.set("velocity generator", source);
+        this->changedProperty("velocity generator");
+    }
 }
 
 /** Return the property that contains the molecule coordinates */
@@ -356,6 +384,22 @@ void IntegratorWorkspace::mustNowRecalculateFromScratch()
 {
     need_new_forces = true;
     last_nrg_component = Symbol();
+}
+
+/** Internal function used to update the system and molecule group with
+    changed molecules */
+void IntegratorWorkspace::pvt_update(const Molecules &changed_mols)
+{
+    sys.update(changed_mols);
+    
+    if (sys.contains(molgroup.read().number()))
+    {
+        molgroup = sys[molgroup.read().number()];
+    }
+    else
+    {
+        molgroup.edit().update(changed_mols);
+    }
 }
 
 /** Tell the contained system to collect statistics */
@@ -720,6 +764,12 @@ const char* AtomicVelocityWorkspace::typeName()
     return QMetaType::typeName( qMetaTypeId<AtomicVelocityWorkspace>() );
 }
 
+/** This is called whenever a property is changed */
+void AtomicVelocityWorkspace::changedProperty(const QString&)
+{
+    this->rebuildFromScratch();
+}
+
 static double getKineticEnergy(const QVector<double> &inv_masses,
                                const QVector<Velocity3D> &velocities)
 {
@@ -900,12 +950,147 @@ void AtomicVelocityWorkspace::setSystem(const System &new_system)
 
 /** Save the coordinates back to the system */
 void AtomicVelocityWorkspace::commitCoordinates()
-{}
+{
+    int nmols = atom_coords.count();
+    
+    const MoleculeGroup &molgroup = moleculeGroup();
+    const Molecules &molecules = molgroup.molecules();
+    
+    BOOST_ASSERT( molgroup.nMolecules() == nmols );
+    
+    const QVector<Vector> *coords_array = atom_coords.constData();
+    
+    PropertyName coords_property = coordinatesProperty();
+    
+    Molecules changed_mols;
+    changed_mols.reserve(nmols);
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        MolNum molnum = molgroup.molNumAt(i);
+        
+        const ViewsOfMol &mol = molecules[molnum];
+        
+        AtomCoords coords = mol.data().property(coords_property)
+                                      .asA<AtomCoords>();
+                                          
+        if (mol.selectedAll())
+            coords.copyFrom(coords_array[i]);
+        else
+            coords.copyFrom(coords_array[i], mol.selection());
+
+        changed_mols.add( mol.molecule().edit()
+                             .setProperty(coords_property, coords)
+                             .commit() );
+    }
+    
+    IntegratorWorkspace::pvt_update(changed_mols);
+}
 
 /** Save the velocities back to the system */
 void AtomicVelocityWorkspace::commitVelocities()
-{}
+{
+    int nmols = atom_coords.count();
+    
+    const MoleculeGroup &molgroup = moleculeGroup();
+    const Molecules &molecules = molgroup.molecules();
+    
+    BOOST_ASSERT( molgroup.nMolecules() == nmols );
+    
+    const QVector<Velocity3D> *vels_array = atom_velocities.constData();
+    
+    PropertyName vels_property = velocitiesProperty();
+    
+    Molecules changed_mols;
+    changed_mols.reserve(nmols);
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        MolNum molnum = molgroup.molNumAt(i);
+        
+        const ViewsOfMol &mol = molecules[molnum];
+        
+        AtomVelocities vels;
+        
+        if (mol.data().hasProperty(vels_property))
+        {
+            vels = mol.data().property(vels_property)
+                             .asA<AtomVelocities>();
+        }
+        else
+        {
+            vels = AtomVelocities(mol.data().info());
+        }
+                                          
+        if (mol.selectedAll())
+            vels.copyFrom(vels_array[i]);
+        else
+            vels.copyFrom(vels_array[i], mol.selection());
+
+        changed_mols.add( mol.molecule().edit()
+                             .setProperty(vels_property, vels)
+                             .commit() );
+    }
+    
+    IntegratorWorkspace::pvt_update(changed_mols);
+}
 
 /** Save both the coordinates and velocities back to the system */
 void AtomicVelocityWorkspace::commitCoordinatesAndVelocities()
-{}
+{
+    int nmols = atom_coords.count();
+    
+    const MoleculeGroup &molgroup = moleculeGroup();
+    const Molecules &molecules = molgroup.molecules();
+    
+    BOOST_ASSERT( molgroup.nMolecules() == nmols );
+    
+    const QVector<Vector> *coords_array = atom_coords.constData();
+    const QVector<Velocity3D> *vels_array = atom_velocities.constData();
+    
+    PropertyName coords_property = coordinatesProperty();
+    PropertyName vels_property = velocitiesProperty();
+    
+    Molecules changed_mols;
+    changed_mols.reserve(nmols);
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        MolNum molnum = molgroup.molNumAt(i);
+        
+        const ViewsOfMol &mol = molecules[molnum];
+        
+        AtomCoords coords = mol.data().property(coords_property)
+                                      .asA<AtomCoords>();
+
+        AtomVelocities vels;
+        
+        if (mol.data().hasProperty(vels_property))
+        {
+            vels = mol.data().property(vels_property)
+                             .asA<AtomVelocities>();
+        }
+        else
+        {
+            vels = AtomVelocities(mol.data().info());
+        }
+                                          
+        if (mol.selectedAll())
+        {
+            coords.copyFrom(coords_array[i]);
+            vels.copyFrom(vels_array[i]);
+        }
+        else
+        {
+            coords.copyFrom(coords_array[i], mol.selection());
+            vels.copyFrom(vels_array[i], mol.selection());
+        }
+
+        changed_mols.add( mol.molecule().edit()
+                             .setProperty(coords_property, coords)
+                             .setProperty(vels_property, vels)
+                             .commit() );
+    }
+    
+    IntegratorWorkspace::pvt_update(changed_mols);
+}

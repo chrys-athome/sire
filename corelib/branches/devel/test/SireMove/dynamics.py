@@ -52,11 +52,15 @@ t.start()
 print "Initial energy = %s" % system.energy()
 print "(took %d ms)" % t.elapsed()
 
-mdmove = MolecularDynamics( neon, VelocityVerlet(1*femtosecond) )
+mdmove = MolecularDynamics( neon, VelocityVerlet(), 
+                            {"velocity generator":RandomVelocities()} )
+mdmove.setTimeStep(2*femtosecond)
+
+print system.property("space")
 
 for i in range(0,10):
     print "\nmove %d" % (i+1)
-    mdmove.move(system, 10)
+    mdmove.move(system, 100)
 
     print system.energy()
     print mdmove.kineticEnergy()
