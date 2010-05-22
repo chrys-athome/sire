@@ -23,6 +23,8 @@ namespace bp = boost::python;
 
 #include "SireSystem/system.h"
 
+#include "ensemble.h"
+
 #include "integrator.h"
 
 #include "integratorworkspace.h"
@@ -65,6 +67,16 @@ void register_NullIntegrator_class(){
                 , ( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
+        { //::SireMove::NullIntegrator::ensemble
+        
+            typedef ::SireMove::Ensemble ( ::SireMove::NullIntegrator::*ensemble_function_type )(  ) const;
+            ensemble_function_type ensemble_function_value( &::SireMove::NullIntegrator::ensemble );
+            
+            NullIntegrator_exposer.def( 
+                "ensemble"
+                , ensemble_function_value );
+        
+        }
         { //::SireMove::NullIntegrator::integrate
         
             typedef void ( ::SireMove::NullIntegrator::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
@@ -74,6 +86,16 @@ void register_NullIntegrator_class(){
                 "integrate"
                 , integrate_function_value
                 , ( bp::arg("workspace"), bp::arg("nrg_component"), bp::arg("timestep"), bp::arg("nmoves"), bp::arg("record_stats") ) );
+        
+        }
+        { //::SireMove::NullIntegrator::isTimeReversible
+        
+            typedef bool ( ::SireMove::NullIntegrator::*isTimeReversible_function_type )(  ) const;
+            isTimeReversible_function_type isTimeReversible_function_value( &::SireMove::NullIntegrator::isTimeReversible );
+            
+            NullIntegrator_exposer.def( 
+                "isTimeReversible"
+                , isTimeReversible_function_value );
         
         }
         NullIntegrator_exposer.def( bp::self != bp::self );

@@ -56,7 +56,7 @@ friend QDataStream& ::operator<<(QDataStream&, const VelocityVerlet&);
 friend QDataStream& ::operator>>(QDataStream&, VelocityVerlet&);
 
 public:
-    VelocityVerlet();
+    VelocityVerlet(bool frequent_save_velocities = false);
     
     VelocityVerlet(const VelocityVerlet &other);
     
@@ -71,6 +71,10 @@ public:
     
     QString toString() const;
     
+    Ensemble ensemble() const;
+    
+    bool isTimeReversible() const;
+    
     void integrate(IntegratorWorkspace &workspace,
                    const Symbol &nrg_component, 
                    SireUnits::Dimension::Time timestep,
@@ -79,6 +83,11 @@ public:
     IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
     IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,
                                            const PropertyMap &map = PropertyMap()) const;
+
+private:
+    /** Whether or not to save the velocities after every step, 
+        or to save them at the end of all of the steps */
+    bool frequent_save_velocities;
 };
 
 }

@@ -28,6 +28,7 @@
 
 #include "integrator.h"
 #include "integratorworkspace.h"
+#include "ensemble.h"
 
 #include "SireFF/forcetable.h"
 #include "SireFF/forcefields.h"
@@ -188,6 +189,18 @@ bool NullIntegrator::operator!=(const NullIntegrator &other) const
 QString NullIntegrator::toString() const
 {
     return QObject::tr("NullIntegrator");
+}
+
+/** Return the ensemble of this integrator */
+Ensemble NullIntegrator::ensemble() const
+{
+    return Ensemble::NVE();
+}
+
+/** Return whether or not this integrator is time-reversible */
+bool NullIntegrator::isTimeReversible() const
+{
+    return true;
 }
 
 /** The null integrator does nothing */

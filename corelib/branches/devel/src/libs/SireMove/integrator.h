@@ -126,6 +126,10 @@ public:
     
     virtual QString toString() const=0;
     
+    virtual Ensemble ensemble() const=0;
+    
+    virtual bool isTimeReversible() const=0;
+    
     virtual void integrate(IntegratorWorkspace &workspace, 
                            const Symbol &nrg_component,
                            SireUnits::Dimension::Time timestep,
@@ -169,6 +173,10 @@ public:
     
     bool operator==(const NullIntegrator &other) const;
     bool operator!=(const NullIntegrator &other) const;
+    
+    Ensemble ensemble() const;
+    
+    bool isTimeReversible() const;
     
     QString toString() const;
     

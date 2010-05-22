@@ -2,7 +2,11 @@
 set ( PYPP_SOURCES
        Dynamics.pypp.cpp
        Ensemble.pypp.cpp
+       HMCGenerator.pypp.cpp
+       HMCVelGen.pypp.cpp
+       HybridMC.pypp.cpp
        Integrator.pypp.cpp
+       MaxwellBoltzmann.pypp.cpp
        MolDeleter.pypp.cpp
        MolecularDynamics.pypp.cpp
        MolInserter.pypp.cpp
@@ -19,7 +23,6 @@ set ( PYPP_SOURCES
        NullVelocityGenerator.pypp.cpp
        NullVolumeChanger.pypp.cpp
        PrefSampler.pypp.cpp
-       RandomVelocities.pypp.cpp
        RepExMove.pypp.cpp
        RepExSubMove.pypp.cpp
        Replica.pypp.cpp

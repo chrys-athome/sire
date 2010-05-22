@@ -11,9 +11,17 @@
 
 #include "Ensemble.pypp.hpp"
 
+#include "HMCGenerator.pypp.hpp"
+
+#include "HMCVelGen.pypp.hpp"
+
+#include "HybridMC.pypp.hpp"
+
 #include "Integrator.pypp.hpp"
 
 #include "MTSMC.pypp.hpp"
+
+#include "MaxwellBoltzmann.pypp.hpp"
 
 #include "MolDeleter.pypp.hpp"
 
@@ -44,8 +52,6 @@
 #include "NullVolumeChanger.pypp.hpp"
 
 #include "PrefSampler.pypp.hpp"
-
-#include "RandomVelocities.pypp.hpp"
 
 #include "RepExMove.pypp.hpp"
 
@@ -142,11 +148,21 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_Ensemble_class();
 
-    register_Integrator_class();
+    register_VelocityGenerator_class();
+
+    register_HMCVelGen_class();
+
+    register_HMCGenerator_class();
 
     register_MonteCarlo_class();
 
+    register_HybridMC_class();
+
+    register_Integrator_class();
+
     register_MTSMC_class();
+
+    register_MaxwellBoltzmann_class();
 
     register_MolDeleter_class();
 
@@ -172,8 +188,6 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_NullSupraSubMove_class();
 
-    register_VelocityGenerator_class();
-
     register_NullVelocityGenerator_class();
 
     register_VolumeChanger_class();
@@ -183,8 +197,6 @@ BOOST_PYTHON_MODULE(_Move){
     register_Sampler_class();
 
     register_PrefSampler_class();
-
-    register_RandomVelocities_class();
 
     register_RepExMove_class();
 

@@ -40,13 +40,15 @@
 #include "SireMaths/vector.h"
 #include "SireMol/atomvelocities.h"
 
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
 class VelocityGenerator;
 class VelocitiesFromProperty;
-class RandomVelocities;
+class MaxwellBoltzmann;
 
 class NullVelocityGenerator;
 }
@@ -60,8 +62,8 @@ QDataStream& operator>>(QDataStream&, SireMove::NullVelocityGenerator&);
 QDataStream& operator<<(QDataStream&, const SireMove::VelocitiesFromProperty&);
 QDataStream& operator>>(QDataStream&, SireMove::VelocitiesFromProperty&);
 
-QDataStream& operator<<(QDataStream&, const SireMove::RandomVelocities&);
-QDataStream& operator>>(QDataStream&, SireMove::RandomVelocities&);
+QDataStream& operator<<(QDataStream&, const SireMove::MaxwellBoltzmann&);
+QDataStream& operator>>(QDataStream&, SireMove::MaxwellBoltzmann&);
 
 namespace SireCAS
 {
@@ -186,51 +188,49 @@ private:
 };
 
 /** This is a velocity generator that generates random velocities 
-    according to a specified equation (where the symbol 'x' represents
-    a random number on [0,1], 
+    according to the Maxwell-Boltzmann distribution
     
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT RandomVelocities
-          : public SireBase::ConcreteProperty<RandomVelocities,VelocityGenerator>
+class SIREMOVE_EXPORT MaxwellBoltzmann
+          : public SireBase::ConcreteProperty<MaxwellBoltzmann,VelocityGenerator>
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const RandomVelocities&);
-friend QDataStream& ::operator>>(QDataStream&, RandomVelocities&);
+friend QDataStream& ::operator<<(QDataStream&, const MaxwellBoltzmann&);
+friend QDataStream& ::operator>>(QDataStream&, MaxwellBoltzmann&);
 
 public:
-    RandomVelocities();
+    MaxwellBoltzmann();
     
-    RandomVelocities(const SireCAS::Expression &ranfunction);
+    MaxwellBoltzmann(SireUnits::Dimension::Temperature temperature);
     
-    RandomVelocities(const RandomVelocities &other);
+    MaxwellBoltzmann(const MaxwellBoltzmann &other);
     
-    ~RandomVelocities();
+    ~MaxwellBoltzmann();
     
-    RandomVelocities& operator=(const RandomVelocities &other);
+    MaxwellBoltzmann& operator=(const MaxwellBoltzmann &other);
     
-    bool operator==(const RandomVelocities &other) const;
-    bool operator!=(const RandomVelocities &other) const;
+    bool operator==(const MaxwellBoltzmann &other) const;
+    bool operator!=(const MaxwellBoltzmann &other) const;
     
     static const char* typeName();
 
-    static Symbol x();
+    SireUnits::Dimension::Temperature temperature() const;
+    void setTemperature(SireUnits::Dimension::Temperature temperature);
 
     void setGenerator(const RanGenerator &rangenerator);
-    
     const RanGenerator& generator() const;
 
     AtomVelocities generate(const MoleculeView &molview, 
                             const PropertyMap &map = PropertyMap()) const;
 
 private:
-    /** The expression used to generate the random velocity */
-    SireCAS::Expression rand_func;
-    
     /** The random number generator */
     RanGenerator ran_generator;
-};
 
+    /** The temperature for which to generate the velocities */
+    SireUnits::Dimension::Temperature temp;
+};
 
 typedef SireBase::PropPtr<VelocityGenerator> VelGenPtr;
 
@@ -238,12 +238,12 @@ typedef SireBase::PropPtr<VelocityGenerator> VelGenPtr;
 
 Q_DECLARE_METATYPE( SireMove::NullVelocityGenerator )
 Q_DECLARE_METATYPE( SireMove::VelocitiesFromProperty )
-Q_DECLARE_METATYPE( SireMove::RandomVelocities )
+Q_DECLARE_METATYPE( SireMove::MaxwellBoltzmann )
 
 SIRE_EXPOSE_CLASS( SireMove::VelocityGenerator )
 SIRE_EXPOSE_CLASS( SireMove::NullVelocityGenerator )
 SIRE_EXPOSE_CLASS( SireMove::VelocitiesFromProperty )
-SIRE_EXPOSE_CLASS( SireMove::RandomVelocities )
+SIRE_EXPOSE_CLASS( SireMove::MaxwellBoltzmann )
 
 SIRE_EXPOSE_PROPERTY( SireMove::VelGenPtr, SireMove::VelocityGenerator )
 

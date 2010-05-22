@@ -15,6 +15,7 @@ set ( SIREMOVE_HEADERS
       ensemble.h
       errors.h
       gibbsmove.h
+      hybridmc.h
       integrator.h
       integratorworkspace.h
       moldeleter.h
@@ -68,6 +69,7 @@ set ( SIREMOVE_SOURCES
       ensemble.cpp
       errors.cpp
       gibbsmove.cpp
+      hybridmc.cpp
       integrator.cpp
       integratorworkspace.cpp
       moldeleter.cpp

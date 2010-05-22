@@ -76,9 +76,12 @@ t.start()
 print "Initial energy = %s" % system.energy()
 print "(took %d ms)" % t.elapsed()
 
-mdmove = MolecularDynamics( salt, VelocityVerlet(), 
-                            {"velocity generator":RandomVelocities()} )
-mdmove.setTimeStep(2*femtosecond)
+#mdmove = MolecularDynamics( salt, VelocityVerlet(), 
+#                            {"velocity generator":MaxwellBoltzmann(25*celsius)} )
+
+mdmove = MolecularDynamics(salt)
+
+mdmove.setTimeStep(1*femtosecond)
 
 print system.property("space")
 

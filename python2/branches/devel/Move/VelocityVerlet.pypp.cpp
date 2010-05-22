@@ -31,6 +31,8 @@ namespace bp = boost::python;
 
 #include "SireUnits/units.h"
 
+#include "ensemble.h"
+
 #include "velocityverlet.h"
 
 #include "velocityverlet.h"
@@ -45,9 +47,8 @@ void register_VelocityVerlet_class(){
 
     { //::SireMove::VelocityVerlet
         typedef bp::class_< SireMove::VelocityVerlet, bp::bases< SireMove::Integrator, SireBase::Property > > VelocityVerlet_exposer_t;
-        VelocityVerlet_exposer_t VelocityVerlet_exposer = VelocityVerlet_exposer_t( "VelocityVerlet" );
+        VelocityVerlet_exposer_t VelocityVerlet_exposer = VelocityVerlet_exposer_t( "VelocityVerlet", bp::init< bp::optional< bool > >(( bp::arg("frequent_save_velocities")=(bool)(false) )) );
         bp::scope VelocityVerlet_scope( VelocityVerlet_exposer );
-        VelocityVerlet_exposer.def( bp::init< >() );
         VelocityVerlet_exposer.def( bp::init< SireMove::VelocityVerlet const & >(( bp::arg("other") )) );
         { //::SireMove::VelocityVerlet::createWorkspace
         
@@ -71,6 +72,16 @@ void register_VelocityVerlet_class(){
                 , ( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
+        { //::SireMove::VelocityVerlet::ensemble
+        
+            typedef ::SireMove::Ensemble ( ::SireMove::VelocityVerlet::*ensemble_function_type )(  ) const;
+            ensemble_function_type ensemble_function_value( &::SireMove::VelocityVerlet::ensemble );
+            
+            VelocityVerlet_exposer.def( 
+                "ensemble"
+                , ensemble_function_value );
+        
+        }
         { //::SireMove::VelocityVerlet::integrate
         
             typedef void ( ::SireMove::VelocityVerlet::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
@@ -80,6 +91,16 @@ void register_VelocityVerlet_class(){
                 "integrate"
                 , integrate_function_value
                 , ( bp::arg("workspace"), bp::arg("nrg_component"), bp::arg("timestep"), bp::arg("nmoves"), bp::arg("record_stats") ) );
+        
+        }
+        { //::SireMove::VelocityVerlet::isTimeReversible
+        
+            typedef bool ( ::SireMove::VelocityVerlet::*isTimeReversible_function_type )(  ) const;
+            isTimeReversible_function_type isTimeReversible_function_value( &::SireMove::VelocityVerlet::isTimeReversible );
+            
+            VelocityVerlet_exposer.def( 
+                "isTimeReversible"
+                , isTimeReversible_function_value );
         
         }
         VelocityVerlet_exposer.def( bp::self != bp::self );

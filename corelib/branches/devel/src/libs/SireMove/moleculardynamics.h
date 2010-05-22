@@ -65,8 +65,7 @@ using SireMol::MolGroupPtr;
 
 using SireFF::ForceTable;
 
-/** This class implements a molecular dynamics move. Note that
-    presently only NVE (microcanonical) moves are supported.
+/** This class implements a molecular dynamics move.
 
     @author Christopher Woods
 */
@@ -83,12 +82,17 @@ public:
     MolecularDynamics(const MoleculeGroup &molgroup, 
                       const PropertyMap &map = PropertyMap());
     
-    MolecularDynamics(const Integrator &integrator,
+    MolecularDynamics(const MoleculeGroup &molgroup,
+                      const Integrator &integrator,
                       const PropertyMap &map = PropertyMap());
     
-    MolecularDynamics(const MoleculeGroup &molgroup, const Integrator &integrator,
+    MolecularDynamics(const MoleculeGroup &molgroup, 
+                      SireUnits::Dimension::Time timestep,
                       const PropertyMap &map = PropertyMap());
-    MolecularDynamics(const Integrator &integrator, const MoleculeGroup &molgroup,
+    
+    MolecularDynamics(const MoleculeGroup &molgroup,
+                      const Integrator &integrator,
+                      SireUnits::Dimension::Time timestep,
                       const PropertyMap &map = PropertyMap());
     
     MolecularDynamics(const MolecularDynamics &other);
@@ -139,6 +143,8 @@ public:
     PropertyName massesProperty() const;
     PropertyName elementsProperty() const;
     PropertyName velocityGeneratorProperty() const;
+    
+    void regenerateVelocities(const VelocityGenerator &generator);
     
     void move(System &system, int nmoves, bool record_stats=true);
 

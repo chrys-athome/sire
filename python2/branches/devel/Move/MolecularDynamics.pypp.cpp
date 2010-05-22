@@ -41,9 +41,9 @@ void register_MolecularDynamics_class(){
         MolecularDynamics_exposer_t MolecularDynamics_exposer = MolecularDynamics_exposer_t( "MolecularDynamics", bp::init< bp::optional< SireBase::PropertyMap const & > >(( bp::arg("map")=SireBase::PropertyMap() )) );
         bp::scope MolecularDynamics_scope( MolecularDynamics_exposer );
         MolecularDynamics_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
-        MolecularDynamics_exposer.def( bp::init< SireMove::Integrator const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("integrator"), bp::arg("map")=SireBase::PropertyMap() )) );
         MolecularDynamics_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireMove::Integrator const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("integrator"), bp::arg("map")=SireBase::PropertyMap() )) );
-        MolecularDynamics_exposer.def( bp::init< SireMove::Integrator const &, SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("integrator"), bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
+        MolecularDynamics_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireUnits::Dimension::Time, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("timestep"), bp::arg("map")=SireBase::PropertyMap() )) );
+        MolecularDynamics_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireMove::Integrator const &, SireUnits::Dimension::Time, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("integrator"), bp::arg("timestep"), bp::arg("map")=SireBase::PropertyMap() )) );
         MolecularDynamics_exposer.def( bp::init< SireMove::MolecularDynamics const & >(( bp::arg("other") )) );
         { //::SireMove::MolecularDynamics::clearStatistics
         
@@ -152,6 +152,17 @@ void register_MolecularDynamics_class(){
         
         }
         MolecularDynamics_exposer.def( bp::self == bp::self );
+        { //::SireMove::MolecularDynamics::regenerateVelocities
+        
+            typedef void ( ::SireMove::MolecularDynamics::*regenerateVelocities_function_type )( ::SireMove::VelocityGenerator const & ) ;
+            regenerateVelocities_function_type regenerateVelocities_function_value( &::SireMove::MolecularDynamics::regenerateVelocities );
+            
+            MolecularDynamics_exposer.def( 
+                "regenerateVelocities"
+                , regenerateVelocities_function_value
+                , ( bp::arg("generator") ) );
+        
+        }
         { //::SireMove::MolecularDynamics::setCoordinatesProperty
         
             typedef void ( ::SireMove::MolecularDynamics::*setCoordinatesProperty_function_type )( ::SireBase::PropertyName const & ) ;

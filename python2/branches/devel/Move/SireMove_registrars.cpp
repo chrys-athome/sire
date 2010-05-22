@@ -7,6 +7,7 @@
 #include "suprasimpacket.h"
 #include "replica.h"
 #include "suprasubmove.h"
+#include "hybridmc.h"
 #include "mtsmc.h"
 #include "integrator.h"
 #include "suprasubsystem.h"
@@ -45,6 +46,8 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::SupraSimPacket >();
     ObjectRegistry::registerConverterFor< SireMove::Replica >();
     ObjectRegistry::registerConverterFor< SireMove::NullSupraSubMove >();
+    ObjectRegistry::registerConverterFor< SireMove::HybridMC >();
+    ObjectRegistry::registerConverterFor< SireMove::HMCGenerator >();
     ObjectRegistry::registerConverterFor< SireMove::MTSMC >();
     ObjectRegistry::registerConverterFor< SireMove::NullIntegrator >();
     ObjectRegistry::registerConverterFor< SireMove::SupraSubSystem >();
@@ -61,7 +64,7 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::SameMoves >();
     ObjectRegistry::registerConverterFor< SireMove::NullVelocityGenerator >();
     ObjectRegistry::registerConverterFor< SireMove::VelocitiesFromProperty >();
-    ObjectRegistry::registerConverterFor< SireMove::RandomVelocities >();
+    ObjectRegistry::registerConverterFor< SireMove::MaxwellBoltzmann >();
     ObjectRegistry::registerConverterFor< SireMove::SameSupraMoves >();
     ObjectRegistry::registerConverterFor< SireMove::RigidBodyMC >();
     ObjectRegistry::registerConverterFor< SireMove::WeightedMoves >();

@@ -5,6 +5,7 @@
 
 #include "dynamics.h"
 #include "ensemble.h"
+#include "hybridmc.h"
 #include "integrator.h"
 #include "integratorworkspace.h"
 #include "moldeleter.h"

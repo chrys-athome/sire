@@ -164,6 +164,8 @@ public:
 
     void collectStatistics();
 
+    virtual void regenerateVelocities(const VelocityGenerator &generator)=0;
+
     virtual SireUnits::Dimension::MolarEnergy kineticEnergy() const=0;
     virtual SireUnits::Dimension::MolarEnergy
                             kineticEnergy(MolNum molnum) const=0;
@@ -223,6 +225,8 @@ public:
 
     static const char* typeName();
 
+    void regenerateVelocities(const VelocityGenerator &generator);
+
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
     SireUnits::Dimension::MolarEnergy kineticEnergy(MolNum molnum) const;
     SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
@@ -280,6 +284,8 @@ public:
     const double* constReciprocalMassArray(int i) const;
     
     void setSystem(const System &system);
+
+    void regenerateVelocities(const VelocityGenerator &generator);
     
     void commitCoordinates();
     void commitVelocities();

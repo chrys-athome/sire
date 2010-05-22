@@ -95,7 +95,9 @@ MolecularDynamics::MolecularDynamics(const PropertyMap &map)
                     wspace( IntegratorWorkspace::null() ),
                     timestep(1*femtosecond),
                     num_moves(0), total_time(0)
-{}
+{
+    Dynamics::setEnsemble( Ensemble::NVE() );
+}
 
 /** Construct to perform moves on the molecules in the group 'molgroup'. This
     defaults to an all-atom velocity-verlet integrator */
@@ -106,16 +108,7 @@ MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup,
                     num_moves(0), total_time(0)
 {
     wspace = intgrator.read().createWorkspace(moleculegroup, map);
-}
-
-/** Construct using the supplied integrator */
-MolecularDynamics::MolecularDynamics(const Integrator &integrator,
-                                     const PropertyMap &map)
-                  : ConcreteProperty<MolecularDynamics,Dynamics>(map),
-                    intgrator(integrator), timestep(1*femtosecond), num_moves(0),
-                    total_time(0)
-{
-    wspace = intgrator.read().createWorkspace(map);
+    Dynamics::setEnsemble( intgrator.read().ensemble() );
 }
     
 /** Construct a move for the passed molecule group, integrated
@@ -128,18 +121,32 @@ MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup,
                     total_time(0)
 {
     wspace = intgrator.read().createWorkspace(moleculegroup, map);
+    Dynamics::setEnsemble( intgrator.read().ensemble() );
+}
+
+/** Construct a move for the passed molecule group, integrated with 
+    the passed timestep */
+MolecularDynamics::MolecularDynamics(const MoleculeGroup &molgroup, 
+                                     Time t, const PropertyMap &map)
+                  : ConcreteProperty<MolecularDynamics,Dynamics>(map),
+                    intgrator( VelocityVerlet() ), timestep(t), num_moves(0),
+                    total_time(0)
+{
+    wspace = intgrator.read().createWorkspace(molgroup, map);
+    Dynamics::setEnsemble( intgrator.read().ensemble() );
 }
 
 /** Construct a move for the passed molecule group, integrated
-    using the supplied integrator */
-MolecularDynamics::MolecularDynamics(const Integrator &integrator, 
-                                     const MoleculeGroup &moleculegroup,
-                                     const PropertyMap &map)
+    using the passed integrator using the passed timestep */
+MolecularDynamics::MolecularDynamics(const MoleculeGroup &molgroup,
+                                     const Integrator &integrator,
+                                     Time t, const PropertyMap &map)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(map),
-                    intgrator(integrator), timestep(1*femtosecond), num_moves(0),
+                    intgrator(integrator), timestep(t), num_moves(0),
                     total_time(0)
 {
-    wspace = intgrator.read().createWorkspace(moleculegroup, map);
+    wspace = intgrator.read().createWorkspace(molgroup, map);
+    Dynamics::setEnsemble( intgrator.read().ensemble() );
 }
 
 /** Copy constructor */
@@ -253,6 +260,7 @@ void MolecularDynamics::setIntegrator(const Integrator &integrator)
     {
         intgrator = integrator;
         wspace = intgrator.read().createWorkspace( moleculeGroup(), propertyMap() );
+        Dynamics::setEnsemble( intgrator.read().ensemble() );
     }
 }
 
@@ -369,6 +377,12 @@ void MolecularDynamics::clearStatistics()
 void MolecularDynamics::setGenerator(const RanGenerator &generator)
 {
     wspace.edit().setGenerator(generator);
+}
+
+/** Regenerate all of the velocities using the passed velocity generator */
+void MolecularDynamics::regenerateVelocities(const VelocityGenerator &generator)
+{
+    wspace.edit().regenerateVelocities(generator);
 }
 
 /** Perform this move on the System 'system' - perform the move

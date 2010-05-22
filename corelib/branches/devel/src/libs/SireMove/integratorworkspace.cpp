@@ -486,6 +486,10 @@ bool NullIntegratorWorkspace::operator!=(const NullIntegratorWorkspace &) const
     return false;
 }
 
+/** Regenerate the velocities using the passed generator */
+void NullIntegratorWorkspace::regenerateVelocities(const VelocityGenerator&)
+{}
+
 /** Zero kinetic energy */
 MolarEnergy NullIntegratorWorkspace::kineticEnergy() const
 {
@@ -577,7 +581,10 @@ static QVector<double> getInvMasses(const QVector<MolarMass> &masses)
     
     for (int i=0; i<sz; ++i)
     {
-        inv_masses_array[i] = 1.0 / masses_array[i].value();
+        if (masses_array[i].value() == 0)
+            inv_masses_array[i] = 0;
+        else
+            inv_masses_array[i] = 1.0 / masses_array[i].value();
     }
     
     return inv_masses;
@@ -594,7 +601,10 @@ static QVector<double> getInvMasses(const QVector<Element> &elements)
     
     for (int i=0; i<sz; ++i)
     {
-        inv_masses_array[i] = 1.0 / elements_array[i].mass().value();
+        if (elements_array[i].nProtons() == 0)
+            inv_masses_array[i] = 0;
+        else
+            inv_masses_array[i] = 1.0 / elements_array[i].mass().value();
     }
     
     return inv_masses;
@@ -632,7 +642,10 @@ void AtomicVelocityWorkspace::rebuildFromScratch()
     QVector<Vector> *atom_forces_array = atom_forces.data();
     QVector<double> *atom_masses_array = inv_atom_masses.data();
     
-    vel_generator = sys.property(velgen_property).asA<VelocityGenerator>();
+    if (sys.containsProperty(velgen_property))
+        vel_generator = sys.property(velgen_property).asA<VelocityGenerator>();
+    else
+        vel_generator = NullVelocityGenerator();
     
     for (int i=0; i<nmols; ++i)
     {
@@ -704,6 +717,34 @@ void AtomicVelocityWorkspace::rebuildFromScratch()
             }
             
             atom_forces_array[i] = forcetable.getTable(molnum).toVector(selected_atoms);
+        }
+    }
+}
+
+/** Regenerate the velocities using the passed generator */
+void AtomicVelocityWorkspace::regenerateVelocities(const VelocityGenerator &generator)
+{
+    const MoleculeGroup &molgroup = moleculeGroup();
+    
+    int nmols = molgroup.nMolecules();
+
+    QVector<Velocity3D> *atom_vels_array = atom_velocities.data();
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        MolNum molnum = molgroup.molNumAt(i);
+        const ViewsOfMol &mol = molgroup[molnum].data();
+        
+        if (mol.selectedAll())
+        {
+            atom_vels_array[i] = generator.generate(mol, propertyMap()).toVector();
+        }
+        else
+        {
+            AtomSelection selected_atoms = mol.selection();
+
+            atom_vels_array[i] = generator.generate(mol, propertyMap())
+                                                     .toVector(mol.selection());
         }
     }
 }
@@ -793,6 +834,10 @@ static double getKineticEnergy(const QVector<double> &inv_masses,
     for (int i=0; i<nats; ++i)
     {
         const Velocity3D &vel = vels_array[i];
+    
+        if (inv_masses_array[i] == 0)
+            //this is a dummy atom
+            continue;
     
         nrg += ( SireMaths::pow_2(vel.x().value()) +
                  SireMaths::pow_2(vel.y().value()) +

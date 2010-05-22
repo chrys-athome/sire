@@ -9,6 +9,12 @@ namespace bp = boost::python;
 
 #include "SireCAS/symbol.h"
 
+#include "SireMol/atomelements.h"
+
+#include "SireMol/atommasses.h"
+
+#include "SireMol/atomvelocities.h"
+
 #include "SireMol/moleculedata.h"
 
 #include "SireMol/moleculeinfodata.h"
@@ -18,6 +24,12 @@ namespace bp = boost::python;
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
+
+#include "SireUnits/dimensions.h"
+
+#include "SireUnits/temperature.h"
+
+#include "SireUnits/units.h"
 
 #include "velocitygenerator.h"
 
