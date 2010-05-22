@@ -162,15 +162,15 @@ void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
 
             for (int j=0; j<nats; ++j)
             {
-                // (1/2) a(t) dt = (1/2) -(1/m) f( r(t) ) dt
-                const Vector half_a_t_dt = (-0.5*inv_masses[j]*dt) * forces[j];
-                
-                // v(t + dt/2) = v(t) + (1/2) a(t) dt
-                vels[j] += Velocity3D(half_a_t_dt);
+                // (1/2) a(t) dt = (1/2) (1/m) f( r(t) ) dt
+                const Vector half_a_t_dt = (0.5*inv_masses[j]*dt) * forces[j];
 
                 // r(t + dt) = r(t) + v(t) dt + (1/2) a(t) dt^2
                 //           = r(t) + dt [ v(t) + (1/2) a(t) dt ]
                 x[j] += dt * (vels[j].value() + half_a_t_dt);
+                
+                // v(t + dt/2) = v(t) + (1/2) a(t) dt
+                vels[j] += Velocity3D(half_a_t_dt);
             }
         }
 
@@ -188,10 +188,10 @@ void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
 
             for (int j=0; j<nats; ++j)
             {
-                // a(t + dt) = -(1/m) f( r(t+dt) )
+                // a(t + dt) = (1/m) f( r(t+dt) )
 
                 // v(t + dt) = v(t + dt/2) + (1/2) a(t + dt) dt
-                vels[j] -= Velocity3D( (0.5 * dt * inv_masses[j]) * forces[j] );
+                vels[j] += Velocity3D( (0.5 * dt * inv_masses[j]) * forces[j] );
             }
         }
         

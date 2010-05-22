@@ -194,8 +194,8 @@ QString SIREUNITS_EXPORT getUnitString(double value, int M, int L, int T, int C,
         strings->insert( DimensionKey(atm),
                          QPair<double,QString>( atm, "atm" ) );
                          
-        strings->insert( DimensionKey(angstrom/picosecond),
-                         QPair<double,QString>( angstrom/picosecond, "angstrom ps-1" ) );
+        strings->insert( DimensionKey(angstrom/femtosecond),
+                         QPair<double,QString>( angstrom/femtosecond, "angstrom fs-1" ) );
                         
         default_strings = strings;
     }

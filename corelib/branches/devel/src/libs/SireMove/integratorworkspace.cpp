@@ -400,6 +400,9 @@ void IntegratorWorkspace::pvt_update(const Molecules &changed_mols)
     {
         molgroup.edit().update(changed_mols);
     }
+    
+    need_new_forces = true;
+    last_nrg_component = Symbol();
 }
 
 /** Tell the contained system to collect statistics */

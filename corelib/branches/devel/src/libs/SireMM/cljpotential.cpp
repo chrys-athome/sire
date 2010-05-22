@@ -1177,7 +1177,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                              
                                                 ((cnrg-shift_coul) * dscl_coul);
                         
-                                total_force -= cforce;
+                                total_force += cforce;
                             }
                         }
                     }
@@ -1231,7 +1231,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                           + (ljnrg * dscl_lj);
                             }
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                     
@@ -1266,7 +1266,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                 Vector cforce = -(q2 / distmat[j].length2()) *
                                                     distmat[j].direction();
                         
-                                total_force -= cforce;
+                                total_force += cforce;
                             }
                         }
                     }
@@ -1304,7 +1304,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                         * distmat[j].direction();
                             }
                         
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                     
@@ -1452,7 +1452,7 @@ void InterCLJPotential::_pvt_calculateCoulombForce(
                                              
                                             ((cnrg-shift_coul) * dscl_coul);
                         
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                     
@@ -1485,7 +1485,7 @@ void InterCLJPotential::_pvt_calculateCoulombForce(
                             Vector cforce = -(q2 / distmat[j].length2()) *
                                                 distmat[j].direction();
                         
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                     
@@ -1640,7 +1640,7 @@ void InterCLJPotential::_pvt_calculateLJForce(
                                             
                                              + (ljnrg * dscl_lj);
 
-                                total_force -= force;
+                                total_force += force;
                             }
                         }
                     }
@@ -1687,7 +1687,7 @@ void InterCLJPotential::_pvt_calculateLJForce(
                                                                 12.0*sig_over_dist12))
                                                 * distmat[j].direction();
 
-                                total_force -= force;
+                                total_force += force;
                             }
                         }
                     }
@@ -2827,7 +2827,7 @@ void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &m
                                              
                                                 ((cnrg-shift_coul) * dscl_coul);
                         
-                                field -= cfield;
+                                field += cfield;
                             }
                         }
                     }
@@ -2890,7 +2890,7 @@ void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &m
                                           + (ljnrg * dscl_lj);
                             }
 
-                            total_field -= field;
+                            total_field += field;
                         }
                     
                         //update the fields array
@@ -2924,7 +2924,7 @@ void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &m
                                 Vector cfield = -(q2 / distmat[j].length2()) *
                                                     distmat[j].direction();
                         
-                                total_field -= cfield;
+                                total_field += cfield;
                             }
                         }
                     }
@@ -2967,7 +2967,7 @@ void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &m
                                         * distmat[j].direction();
                             }
                         
-                            total_field -= field;
+                            total_field += field;
                         }
                     
                         group_fields0_array[i] += scale_field * total_field;
@@ -3085,7 +3085,7 @@ void InterCLJPotential::_pvt_calculateLJField(const InterCLJPotential::Molecule 
                                      
                                         + (ljnrg * dscl_lj);
 
-                        total_field -= field;
+                        total_field += field;
                     }
                 
                 } // end of loop over atoms
@@ -3120,7 +3120,7 @@ void InterCLJPotential::_pvt_calculateLJField(const InterCLJPotential::Molecule 
                                                                12.0*sig_over_dist12))
                                           * distmat[j].direction();
                         
-                        total_field -= field;
+                        total_field += field;
                     }
 
                 } // end of loop over atoms
@@ -3233,7 +3233,7 @@ void InterCLJPotential::_pvt_calculateCoulombField(
                                      
                                        ((cnrg-shift_coul) * dscl_coul);
 
-                        total_field -= field;
+                        total_field += field;
                     }
                 
                 } // end of loop over atoms
@@ -3256,7 +3256,7 @@ void InterCLJPotential::_pvt_calculateCoulombField(
                                     
                                     * distmat[j].direction();
 
-                    total_field -= field;
+                    total_field += field;
 
                 } // end of loop over atoms
             }
@@ -3408,7 +3408,7 @@ void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &m
                                   + (ljnrg * dscl_lj);
                     }
 
-                    total_field -= field;
+                    total_field += field;
                 
                 } // end of loop over atoms
             }
@@ -3450,7 +3450,7 @@ void InterCLJPotential::_pvt_calculateField(const InterCLJPotential::Molecule &m
                                 * distmat[j].direction();
                     }
 
-                    total_field -= field;
+                    total_field += field;
 
                 } // end of loop over atoms
             }
@@ -3591,7 +3591,7 @@ void InterCLJPotential::_pvt_calculateCoulombField(
                                              
                                             ((cnrg-shift_coul) * dscl_coul);
                         
-                            total_field -= cfield;
+                            total_field += cfield;
                         }
                     }
                     
@@ -3619,8 +3619,8 @@ void InterCLJPotential::_pvt_calculateCoulombField(
                         //calculate the coulomb force
                         if (q2 != 0)
                         {
-                            total_field -= (q2 / distmat[j].length2()) *
-                                                distmat[j].direction();
+                            total_field += (-q2 / distmat[j].length2()) *
+                                                  distmat[j].direction();
                         }
                     }
                     
@@ -3772,7 +3772,7 @@ void InterCLJPotential::_pvt_calculateLJField(
                                             
                                              + (ljnrg * dscl_lj);
 
-                            total_field -= field;
+                            total_field += field;
                         }
                     }
                     
@@ -3815,7 +3815,7 @@ void InterCLJPotential::_pvt_calculateLJField(
                                                        12.0*sig_over_dist12))
                                         * distmat[j].direction();
 
-                            total_field -= field;
+                            total_field += field;
                         }
                     }
                     

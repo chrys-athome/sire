@@ -18,49 +18,73 @@ t = QTime()
 
 cljff = InterCLJFF("cljff")
 
-ne = Molecule("Neon")
-ne = ne.edit().add( CGName("1") ).add( AtomName("Ne") ).molecule().commit()
+na = Molecule("Sodium")
+na = na.edit().add( CGName("1") ).add( AtomName("Na") ).molecule().commit()
 
-ne = ne.edit().atom(AtomName("Ne")) \
+na = na.edit().atom(AtomName("Na")) \
               .setProperty("coordinates", Vector(0,0,0)) \
-              .setProperty("element", Element("Neon")) \
-              .setProperty("charge", 0*mod_electron) \
-              .setProperty("LJ", LJParameter.fromRMinAndEpsilon(3.06*angstrom,-0.086*kcal_per_mol)) \
+              .setProperty("element", Element("Sodium")) \
+              .setProperty("charge", 1*mod_electron) \
+              .setProperty("LJ", LJParameter(3.0522*angstrom,0.4598*kcal_per_mol)) \
               .molecule() \
               .commit()
 
-neon = MoleculeGroup("neon")
+cl = Molecule("Chloride")
+cl = cl.edit().add( CGName("1") ).add( AtomName("Cl") ).molecule().commit()
 
-# create a box of neon
-for i in range(0,6):
-    for j in range(0,6):
-        for k in range(0,6):
-            ne = ne.edit().renumber() \
-                   .setProperty("coordinates", AtomCoords([Vector(i*3.06,j*3.06,k*3.06)]) ) \
-                   .commit()
+cl = cl.edit().atom(AtomName("Cl")) \
+              .setProperty("coordinates", Vector(0,0,0)) \
+              .setProperty("element", Element("Chlorine")) \
+              .setProperty("charge", -1*mod_electron) \
+              .setProperty("LJ", LJParameter(4.4124*angstrom,0.11779*kcal_per_mol)) \
+              .molecule() \
+              .commit()
 
-            neon.add(ne)
+salt = MoleculeGroup("salt")
 
-cljff = InterCLJFF("neon-neon")
-cljff.add(neon)
+# create a box of salt
+add_cl = False
+
+for i in range(0,5):
+    for j in range(0,5):
+        for k in range(0,5):
+            coords = Vector(i*3.06, j*3.06, k*3.06)
+
+            if add_cl:
+                cl = cl.edit().renumber() \
+                       .setProperty("coordinates", AtomCoords([coords]) ) \
+                       .commit()
+
+                salt.add(cl)
+                add_cl = False
+            else:
+                na = na.edit().renumber() \
+                       .setProperty("coordinates", AtomCoords([coords]) ) \
+                       .commit()
+
+                salt.add(na)
+                add_cl = True
+
+cljff = InterCLJFF("salt-salt")
+cljff.add(salt)
 
 system = System()
-system.add(neon)
+system.add(salt)
 system.add(cljff)
 
 t.start()                                       
 print "Initial energy = %s" % system.energy()
 print "(took %d ms)" % t.elapsed()
 
-mdmove = MolecularDynamics( neon, VelocityVerlet(), 
+mdmove = MolecularDynamics( salt, VelocityVerlet(), 
                             {"velocity generator":RandomVelocities()} )
 mdmove.setTimeStep(2*femtosecond)
 
 print system.property("space")
 
-for i in range(0,10):
+for i in range(0,250):
     print "\nmove %d" % (i+1)
-    mdmove.move(system, 100)
+    mdmove.move(system, 20)
 
     print system.energy()
     print mdmove.kineticEnergy()
