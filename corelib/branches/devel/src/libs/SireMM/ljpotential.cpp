@@ -1044,7 +1044,7 @@ void InterLJPotential::_pvt_calculateLJForce(
                                             
                                              + (ljnrg * dscl_lj);
 
-                                total_force -= force;
+                                total_force += force;
                             }
                         }
                     }
@@ -1091,7 +1091,7 @@ void InterLJPotential::_pvt_calculateLJForce(
                                                                 12.0*sig_over_dist12))
                                                 * distmat[j].direction();
 
-                                total_force -= force;
+                                total_force += force;
                             }
                         }
                     }
@@ -1500,7 +1500,7 @@ void InterLJPotential::_pvt_calculateLJField(const InterLJPotential::Molecule &m
                                      
                                         + (ljnrg * dscl_lj);
 
-                        total_field -= field;
+                        total_field += field;
                     }
                 
                 } // end of loop over atoms
@@ -1535,7 +1535,7 @@ void InterLJPotential::_pvt_calculateLJField(const InterLJPotential::Molecule &m
                                                                12.0*sig_over_dist12))
                                           * distmat[j].direction();
                         
-                        total_field -= field;
+                        total_field += field;
                     }
 
                 } // end of loop over atoms
@@ -1683,7 +1683,7 @@ void InterLJPotential::_pvt_calculateLJField(
                                             
                                              + (ljnrg * dscl_lj);
 
-                            total_field -= field;
+                            total_field += field;
                         }
                     }
                     
@@ -1726,7 +1726,7 @@ void InterLJPotential::_pvt_calculateLJField(
                                                        12.0*sig_over_dist12))
                                         * distmat[j].direction();
 
-                            total_field -= field;
+                            total_field += field;
                         }
                     }
                     
@@ -2462,7 +2462,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                                     
                                     + (ljnrg * dscl_lj);
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -2517,7 +2517,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                                    
                                    + (ljnrg * dscl_lj);
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -2566,7 +2566,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                                                      12.0*sig_over_dist12))
                                  * distmat[j].direction();
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -2614,7 +2614,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                                                        12.0*sig_over_dist12))
                                    * distmat[j].direction();
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -2699,7 +2699,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                                     
                                     + (ljnrg * dscl_lj);
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -2754,7 +2754,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                                    
                                    + (ljnrg * dscl_lj);
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -2803,7 +2803,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                                                      12.0*sig_over_dist12))
                                  * distmat[j].direction();
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -2851,7 +2851,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                                                        12.0*sig_over_dist12))
                                    * distmat[j].direction();
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }

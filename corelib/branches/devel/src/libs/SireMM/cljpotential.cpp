@@ -4689,7 +4689,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                              
                                                     ((cnrg-shift_coul) * dscl_coul);
 
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                 }
@@ -4743,7 +4743,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                      + (ljnrg * dscl_lj);
                         }
                         
-                        total_force -= force;
+                        total_force += force;
                     }
                 }
                         
@@ -4788,7 +4788,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                              
                                                   ((cnrg-shift_coul) * dscl_coul);
                             
-                                total_force -= cforce;
+                                total_force += cforce;
                             }
                         }
                     }
@@ -4851,7 +4851,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                           + (ljnrg * dscl_lj);
                             }
                         
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -4889,7 +4889,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                              
                                           distmat[j].direction();
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                 else
@@ -4926,7 +4926,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                       * distmat[j].direction();
                         }
 
-                        total_force -= force;
+                        total_force += force;
                     }
                 }
                         
@@ -4961,7 +4961,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                              
                                               distmat[j].direction();
 
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                 }
@@ -5006,7 +5006,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                            * distmat[j].direction();
                             }
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -5083,7 +5083,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                              
                                                     ((cnrg-shift_coul) * dscl_coul);
 
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                 }
@@ -5137,7 +5137,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                      + (ljnrg * dscl_lj);
                         }
                         
-                        total_force -= force;
+                        total_force += force;
                     }
                 }
                         
@@ -5182,7 +5182,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                              
                                                   ((cnrg-shift_coul) * dscl_coul);
                             
-                                total_force -= cforce;
+                                total_force += cforce;
                             }
                         }
                     }
@@ -5245,7 +5245,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                           + (ljnrg * dscl_lj);
                             }
                         
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -5283,7 +5283,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                              
                                           distmat[j].direction();
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                 else
@@ -5320,7 +5320,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                       * distmat[j].direction();
                         }
 
-                        total_force -= force;
+                        total_force += force;
                     }
                 }
                         
@@ -5355,7 +5355,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                              
                                               distmat[j].direction();
 
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                 }
@@ -5400,7 +5400,7 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                                            * distmat[j].direction();
                             }
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -5728,7 +5728,7 @@ void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_p
                                              
                                                 ((cnrg-shift_coul) * dscl_coul);
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         
@@ -5774,7 +5774,7 @@ void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_p
                                              
                                               ((cnrg-shift_coul) * dscl_coul);
                             
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                 }
@@ -5815,7 +5815,7 @@ void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_p
                                              
                                           distmat[j].direction();
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         
@@ -5853,7 +5853,7 @@ void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_p
                                              
                                           distmat[j].direction();
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         
@@ -5924,7 +5924,7 @@ void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_p
                                              
                                                 ((cnrg-shift_coul) * dscl_coul);
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         
@@ -5970,7 +5970,7 @@ void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_p
                                              
                                               ((cnrg-shift_coul) * dscl_coul);
                             
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                 }
@@ -6011,7 +6011,7 @@ void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_p
                                              
                                           distmat[j].direction();
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         
@@ -6049,7 +6049,7 @@ void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_p
                                              
                                           distmat[j].direction();
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         
@@ -6386,7 +6386,7 @@ void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
                                     
                                     + (ljnrg * dscl_lj);
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -6441,7 +6441,7 @@ void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
                                    
                                    + (ljnrg * dscl_lj);
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -6490,7 +6490,7 @@ void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
                                                      12.0*sig_over_dist12))
                                  * distmat[j].direction();
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -6538,7 +6538,7 @@ void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
                                                        12.0*sig_over_dist12))
                                    * distmat[j].direction();
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -6623,7 +6623,7 @@ void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
                                     
                                     + (ljnrg * dscl_lj);
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -6678,7 +6678,7 @@ void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
                                    
                                    + (ljnrg * dscl_lj);
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -6727,7 +6727,7 @@ void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
                                                      12.0*sig_over_dist12))
                                  * distmat[j].direction();
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
@@ -6775,7 +6775,7 @@ void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
                                                        12.0*sig_over_dist12))
                                    * distmat[j].direction();
 
-                            total_force -= force;
+                            total_force += force;
                         }
                     }
                 }
