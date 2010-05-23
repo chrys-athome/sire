@@ -210,6 +210,8 @@ set ( SIREMATHS_HEADERS
       sire_blas.h
       sire_lapack.h
       sire_linpack.h
+
+      third_party/eig3/eig3.cpp
     )
 
 # Define the sources in SireMaths

@@ -31,6 +31,8 @@
 
 #include <QString>
 
+#include <utility>
+
 #include "vector.h"
 
 SIRE_BEGIN_HEADER
@@ -48,6 +50,7 @@ namespace SireMaths
 {
 
 class Vector;
+class NMatrix;
 
 const Matrix operator+(const Matrix &m1, const Matrix &m2);
 const Matrix operator-(const Matrix &m1, const Matrix &m2);
@@ -81,6 +84,8 @@ public:
     Matrix(const Vector& r1, const Vector& r2, const Vector& r3);
     Matrix(const tuple<Vector,Vector,Vector> &rows);
 
+    Matrix(const NMatrix &m);
+
     Matrix(const Matrix& m);
 
     ~Matrix();
@@ -112,6 +117,8 @@ public:
     bool isSymmetric() const;
     void enforceSymmetric();
     Matrix getPrincipalAxes() const;
+
+    std::pair<Vector,Matrix> diagonalise() const;
 
     double xx() const;
     double xy() const;

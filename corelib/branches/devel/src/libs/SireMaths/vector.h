@@ -58,6 +58,7 @@ namespace SireMaths
 
 class Quaternion;
 class Matrix;
+class NVector;
 
 using boost::tuple;
 
@@ -123,6 +124,8 @@ public:
     Vector( const tuple<double,double,double> &pos );
     
     Vector( const QString &str );
+    
+    Vector(const NVector &other);
     
     Vector(const Vector &other);
     

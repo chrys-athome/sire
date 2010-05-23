@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "matrix.h"
 
+#include "nvector.h"
+
 #include "quaternion.h"
 
 #include "vector.h"
@@ -44,6 +46,7 @@ void register_Vector_class(){
         Vector_exposer.def( bp::init< double, double, double >(( bp::arg("xpos"), bp::arg("ypos"), bp::arg("zpos") )) );
         Vector_exposer.def( bp::init< boost::tuples::tuple< double, double, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > const & >(( bp::arg("pos") )) );
         Vector_exposer.def( bp::init< QString const & >(( bp::arg("str") )) );
+        Vector_exposer.def( bp::init< SireMaths::NVector const & >(( bp::arg("other") )) );
         Vector_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("other") )) );
         { //::SireMaths::Vector::angle
         

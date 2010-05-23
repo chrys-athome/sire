@@ -99,6 +99,10 @@ protected:
 private:
     void rebuildFromScratch();
 
+    /** The coordinates of the atoms in the center of
+        mass / principle inertia tensor frame */
+    QVector< QVector<Vector> > atom_coordinates;
+
     /** The center of mass coordinates of each bead */
     QVector<Vector> bead_coordinates;
     

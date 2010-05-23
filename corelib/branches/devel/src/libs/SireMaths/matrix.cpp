@@ -31,11 +31,15 @@
 #include "matrix.h"
 #include "vector.h"
 #include "maths.h"
+#include "nmatrix.h"
+#include "nvector.h"
 
 #include "SireMaths/errors.h"
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
+
+#include "third_party/eig3/eig3.h" // CONDITIONAL_INCLUDE
 
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_vector.h>
@@ -123,6 +127,30 @@ Matrix::Matrix(double xx, double xy, double xz,
     array[6] = zx;
     array[7] = zy;
     array[8] = zz;
+}
+
+/** Construct from an NMatrix */
+Matrix::Matrix(const NMatrix &m)
+{
+    if (m.nRows() != 3 or m.nColumns() != 3)
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot construct a 3x3 matrix from an NMatrix of dimension "
+                "%1x%2.")
+                    .arg(m.nRows()).arg(m.nColumns()), CODELOC );
+
+    const double *d = m.constData();
+
+    if (m.isTransposed())
+    {
+        array[0] = d[0]; array[3] = d[1]; array[6] = d[2];
+        array[1] = d[3]; array[4] = d[4]; array[7] = d[5];
+        array[2] = d[6]; array[5] = d[7]; array[8] = d[8];
+    }
+    else
+    {
+        for (int i=0; i<9; ++i)
+            array[i] = d[i];
+    }
 }
 
 /** Copy constructor */
@@ -218,7 +246,7 @@ double Matrix::determinant() const
 /** Return a QString representation of the matrix */
 QString Matrix::toString() const
 {
-    return QObject::tr("( %1, %2, %3 | %4, %5, %6 | %7, %8, %9 )")
+    return QObject::tr("/ %1, %2, %3 \\\n| %4, %5, %6 |\n\\ %7, %8, %9 /")
                   .arg(xx()).arg(xy()).arg(xz())
                   .arg(yx()).arg(yy()).arg(yz())
                   .arg(zx()).arg(zy()).arg(zz());
@@ -536,6 +564,41 @@ Matrix Matrix::getPrincipalAxes() const
 
     //finally, return the matrix of principal components
     return ret;
+}
+
+/** Return the eigenvectors and eigenvalues of this matrix */
+std::pair<Vector,Matrix> Matrix::diagonalise() const
+{
+    if (this->isSymmetric())
+    {
+        //we can use the quick eig3 code
+        double A[3][3], V[3][3], d[3];
+        
+        A[0][0] = array[0];
+        A[0][1] = array[1];
+        A[0][2] = array[2];
+        A[1][0] = array[3];
+        A[1][1] = array[4];
+        A[1][2] = array[5];
+        A[2][0] = array[6];
+        A[2][1] = array[7];
+        A[2][2] = array[8];
+        
+        eigen_decomposition(A, V, d);
+        
+        return std::pair<Vector,Matrix>(
+                    Vector(d[0], d[1], d[2]),
+                    Matrix(A[0][0], A[0][1], A[0][2],
+                           A[1][0], A[1][1], A[1][2],
+                           A[2][0], A[2][1], A[2][2]) );
+    }
+    else
+    {
+        //we need to use BLAS - via NMatrix
+        std::pair<NVector,NMatrix> eigs = NMatrix(*this).diagonalise();
+        
+        return std::pair<Vector,Matrix>( Vector(eigs.first), Matrix(eigs.second) );
+    }
 }
 
 const char* Matrix::typeName()
