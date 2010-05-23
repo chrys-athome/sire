@@ -83,7 +83,7 @@ public:
 
     /** Generate the velocites in the passed MD object, 
         returning the biasing factor for the HMC algorithm */
-    virtual double generate(MolecularDynamics &md)=0;
+    virtual double generate(const System &system, MolecularDynamics &md)=0;
     
     /** Return the bias for the velocities in the passed MD object */
     virtual double getBias(const MolecularDynamics &md)=0;
@@ -131,7 +131,7 @@ public:
     bool operator==(const HMCGenerator &other) const;
     bool operator!=(const HMCGenerator &other) const;
     
-    double generate(MolecularDynamics &md);
+    double generate(const System &system, MolecularDynamics &md);
     double getBias(const MolecularDynamics &md);
     
     AtomVelocities generate(const MoleculeView &molview, 

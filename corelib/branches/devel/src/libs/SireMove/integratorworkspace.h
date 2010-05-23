@@ -131,7 +131,7 @@ public:
 
     const ForceTable& forceTable() const;
 
-    virtual void setSystem(const System &system);
+    virtual bool setSystem(const System &system);
 
     const System& system() const;
 
@@ -283,7 +283,7 @@ public:
     
     const double* constReciprocalMassArray(int i) const;
     
-    void setSystem(const System &system);
+    bool setSystem(const System &system);
 
     void regenerateVelocities(const VelocityGenerator &generator);
     

@@ -41,13 +41,13 @@ void register_HMCGenerator_class(){
         HMCGenerator_exposer.def( bp::init< SireMove::HMCGenerator const & >(( bp::arg("other") )) );
         { //::SireMove::HMCGenerator::generate
         
-            typedef double ( ::SireMove::HMCGenerator::*generate_function_type )( ::SireMove::MolecularDynamics & ) ;
+            typedef double ( ::SireMove::HMCGenerator::*generate_function_type )( ::SireSystem::System const &,::SireMove::MolecularDynamics & ) ;
             generate_function_type generate_function_value( &::SireMove::HMCGenerator::generate );
             
             HMCGenerator_exposer.def( 
                 "generate"
                 , generate_function_value
-                , ( bp::arg("md") ) );
+                , ( bp::arg("system"), bp::arg("md") ) );
         
         }
         { //::SireMove::HMCGenerator::generate

@@ -38,6 +38,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireMol;
 using namespace SireBase;
@@ -214,9 +216,9 @@ double HMCGenerator::getBias(const MolecularDynamics &md)
 
 /** Generate the velocities for the passed MD move, returning
     the biasing factor */
-double HMCGenerator::generate(MolecularDynamics &md)
+double HMCGenerator::generate(const System &system, MolecularDynamics &md)
 {
-    md.regenerateVelocities(*this);
+    md.regenerateVelocities(system, *this);
     return HMCGenerator::getBias(md);
 }
 
@@ -649,12 +651,17 @@ void HybridMC::move(System &system, int nmoves, bool record_stats)
 
             //get the old total energy of the system
             double old_nrg = system.energy( this->energyComponent() );
-        
-            //regenerate random velocities for this temperature
-            double old_bias = gen.generate(md);
 
             //save the old system
             System old_system(system);
+        
+            //regenerate random velocities for this temperature
+            double old_bias = gen.generate(system, md);
+        
+            qDebug() << old_nrg << md.kineticEnergy().value()
+                     << (old_nrg + md.kineticEnergy().value());
+
+            qDebug() << old_bias;
 
             //run the dynamics moves (we don't record statistics
             //during the MD moves)
@@ -665,6 +672,11 @@ void HybridMC::move(System &system, int nmoves, bool record_stats)
             
             //calculate the new kinetic energy
             double new_bias = gen.getBias(md);
+
+            qDebug() << new_nrg << md.kineticEnergy().value()
+                     << (new_nrg + md.kineticEnergy().value());
+
+            qDebug() << new_bias;
 
             //accept or reject the move
             if (not this->test(new_nrg, old_nrg, new_bias, old_bias))

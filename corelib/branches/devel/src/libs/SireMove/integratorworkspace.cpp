@@ -199,8 +199,9 @@ const ForceTable& IntegratorWorkspace::forceTable() const
 }
 
 /** Set the system to be integrated - this updates the molecules in 
-    the passed molecule group */
-void IntegratorWorkspace::setSystem(const System &system)
+    the passed molecule group - this returns whether or not the
+    system has changed */
+bool IntegratorWorkspace::setSystem(const System &system)
 {
     if (system.subVersion() != 0)
         throw SireError::incompatible_error( QObject::tr(
@@ -210,7 +211,7 @@ void IntegratorWorkspace::setSystem(const System &system)
 
     if (sys.UID() == system.UID() and sys.version() == system.version())
         //nothing needs to change
-        return;
+        return false;
     
     if (system.contains(molgroup.read().number()))
     {
@@ -233,6 +234,8 @@ void IntegratorWorkspace::setSystem(const System &system)
     need_new_forces = true;
     last_nrg_component = Symbol();
     sys = system;
+    
+    return true;
 }
 
 /** Return the system being integrated */
@@ -990,10 +993,15 @@ const double* AtomicVelocityWorkspace::constReciprocalMassArray(int i) const
 }
 
 /** Set the system that is being integrated */
-void AtomicVelocityWorkspace::setSystem(const System &new_system)
+bool AtomicVelocityWorkspace::setSystem(const System &new_system)
 {
-    IntegratorWorkspace::setSystem(new_system);
-    this->rebuildFromScratch();
+    if (IntegratorWorkspace::setSystem(new_system))
+    {
+        this->rebuildFromScratch();
+        return true;
+    }
+    else
+        return false;
 }
 
 /** Save the coordinates back to the system */

@@ -144,7 +144,8 @@ public:
     PropertyName elementsProperty() const;
     PropertyName velocityGeneratorProperty() const;
     
-    void regenerateVelocities(const VelocityGenerator &generator);
+    void regenerateVelocities(const System &system,
+                              const VelocityGenerator &generator);
     
     void move(System &system, int nmoves, bool record_stats=true);
 

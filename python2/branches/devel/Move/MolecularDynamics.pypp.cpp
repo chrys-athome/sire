@@ -154,13 +154,13 @@ void register_MolecularDynamics_class(){
         MolecularDynamics_exposer.def( bp::self == bp::self );
         { //::SireMove::MolecularDynamics::regenerateVelocities
         
-            typedef void ( ::SireMove::MolecularDynamics::*regenerateVelocities_function_type )( ::SireMove::VelocityGenerator const & ) ;
+            typedef void ( ::SireMove::MolecularDynamics::*regenerateVelocities_function_type )( ::SireSystem::System const &,::SireMove::VelocityGenerator const & ) ;
             regenerateVelocities_function_type regenerateVelocities_function_value( &::SireMove::MolecularDynamics::regenerateVelocities );
             
             MolecularDynamics_exposer.def( 
                 "regenerateVelocities"
                 , regenerateVelocities_function_value
-                , ( bp::arg("generator") ) );
+                , ( bp::arg("system"), bp::arg("generator") ) );
         
         }
         { //::SireMove::MolecularDynamics::setCoordinatesProperty

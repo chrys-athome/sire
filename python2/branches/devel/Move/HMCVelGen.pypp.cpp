@@ -37,13 +37,13 @@ void register_HMCVelGen_class(){
         bp::scope HMCVelGen_scope( HMCVelGen_exposer );
         { //::SireMove::HMCVelGen::generate
         
-            typedef double ( ::SireMove::HMCVelGen::*generate_function_type )( ::SireMove::MolecularDynamics & ) ;
+            typedef double ( ::SireMove::HMCVelGen::*generate_function_type )( ::SireSystem::System const &,::SireMove::MolecularDynamics & ) ;
             generate_function_type generate_function_value( &::SireMove::HMCVelGen::generate );
             
             HMCVelGen_exposer.def( 
                 "generate"
                 , generate_function_value
-                , ( bp::arg("md") ) );
+                , ( bp::arg("system"), bp::arg("md") ) );
         
         }
         { //::SireMove::HMCVelGen::getBias
