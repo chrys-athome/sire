@@ -24,6 +24,8 @@ namespace bp = boost::python;
 
 #include "hybridmc.h"
 
+#include <QDebug>
+
 #include "hybridmc.h"
 
 SireMove::HybridMC __copy__(const SireMove::HybridMC &other){ return SireMove::HybridMC(other); }

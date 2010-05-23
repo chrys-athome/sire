@@ -27,6 +27,7 @@
 #include "repexmove.h"
 #include "volumemove.h"
 #include "uniformsampler.h"
+#include "rbworkspace.h"
 #include "molinserter.h"
 #include "simpacket.h"
 #include "integratorworkspace.h"
@@ -36,6 +37,7 @@
 #include "ensemble.h"
 #include "moldeleter.h"
 #include "simstore.h"
+#include "dlmrigidbody.h"
 
 #include "Helpers/objectregistry.hpp"
 
@@ -74,6 +76,7 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::RepExSubMove >();
     ObjectRegistry::registerConverterFor< SireMove::VolumeMove >();
     ObjectRegistry::registerConverterFor< SireMove::UniformSampler >();
+    ObjectRegistry::registerConverterFor< SireMove::RBWorkspace >();
     ObjectRegistry::registerConverterFor< SireMove::NullInserter >();
     ObjectRegistry::registerConverterFor< SireMove::UniformInserter >();
     ObjectRegistry::registerConverterFor< SireMove::SimPacket >();
@@ -87,6 +90,7 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::SpecifiedGroupsDeleter >();
     ObjectRegistry::registerConverterFor< SireMove::SystemWideDeleter >();
     ObjectRegistry::registerConverterFor< SireMove::SimStore >();
+    ObjectRegistry::registerConverterFor< SireMove::DLMRigidBody >();
 
 }
 

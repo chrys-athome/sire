@@ -401,16 +401,10 @@ void MolecularDynamics::move(System &system, int nmoves, bool record_stats)
     
     try
     {
-        qDebug() << "KINETIC ENERGY(1)" << wspace.read().kineticEnergy();
-    
         wspace.edit().setSystem(system);
 
-        qDebug() << "KINETIC ENERGY(2)" << wspace.read().kineticEnergy();
-    
         intgrator.read().integrate(wspace.edit(), this->energyComponent(),
                                    timestep, nmoves, record_stats);
-
-        qDebug() << "KINETIC ENERGY(3)" << wspace.read().kineticEnergy();
 
         system = wspace.read().system();
 

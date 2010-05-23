@@ -7,6 +7,8 @@
 
 #include "Helpers/clone_const_reference.hpp"
 
+#include "DLMRigidBody.pypp.hpp"
+
 #include "Dynamics.pypp.hpp"
 
 #include "Ensemble.pypp.hpp"
@@ -142,6 +144,10 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_SireMove_containers();
 
+    register_Integrator_class();
+
+    register_DLMRigidBody_class();
+
     register_Move_class();
 
     register_Dynamics_class();
@@ -157,8 +163,6 @@ BOOST_PYTHON_MODULE(_Move){
     register_MonteCarlo_class();
 
     register_HybridMC_class();
-
-    register_Integrator_class();
 
     register_MTSMC_class();
 

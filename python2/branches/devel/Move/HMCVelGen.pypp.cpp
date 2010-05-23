@@ -23,6 +23,8 @@ namespace bp = boost::python;
 
 #include "hybridmc.h"
 
+#include <QDebug>
+
 #include "hybridmc.h"
 
 #include "Qt/qdatastream.hpp"

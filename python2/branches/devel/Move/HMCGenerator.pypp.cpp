@@ -23,6 +23,8 @@ namespace bp = boost::python;
 
 #include "hybridmc.h"
 
+#include <QDebug>
+
 #include "hybridmc.h"
 
 SireMove::HMCGenerator __copy__(const SireMove::HMCGenerator &other){ return SireMove::HMCGenerator(other); }
