@@ -30,6 +30,11 @@
 #include "ensemble.h"
 #include "rbworkspace.h"
 
+#include "SireMaths/quaternion.h"
+
+#include "SireUnits/dimensions.h"
+#include "SireUnits/units.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireMove;
@@ -37,6 +42,7 @@ using namespace SireMol;
 using namespace SireSystem;
 using namespace SireFF;
 using namespace SireMaths;
+using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireBase;
 using namespace SireStream;
@@ -139,14 +145,20 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
     RBWorkspace &ws = workspace.asA<RBWorkspace>();
     
     const double dt = timestep.value();
+    const double half_dt = 0.5 * dt;
 
     const int nbeads = ws.nBeads();
+    
+    const Vector X(1,0,0);
+    const Vector Y(0,1,0);
+    const Vector Z(0,0,1);
     
     for (int imove=0; imove<nmoves; ++imove)
     {
         ws.calculateForces(nrg_component);
         
         Vector *bead_coords = ws.beadCoordsArray();
+        Matrix *bead_orient = ws.beadOrientationArray();
         Vector *bead_lin_momenta = ws.beadLinearMomentaArray();
         Vector *bead_ang_momenta = ws.beadAngularMomentaArray();
         const double *bead_masses = ws.beadMassesArray();
@@ -159,7 +171,9 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
         for (int i=0; i<nbeads; ++i)
         {
             Vector &x = bead_coords[i];
+            Matrix &q = bead_orient[i];
             Vector &p = bead_lin_momenta[i];
+            Vector &ap = bead_ang_momenta[i];
             double mass = bead_masses[i];
             const Vector &inertia = bead_inertia[i];
             const Vector &force = bead_forces[i];
@@ -171,10 +185,42 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
 
             // use velocity verlet to integrate the position of the bead
             // v(t + dt/2) = v(t) + (1/2) a(t) dt
-            p += ((0.5*dt) * force);
+            p += (half_dt * force);
 
             // r(t + dt) = r(t) + v(t + dt/2) dt
             x += (dt * mass) * p;
+            
+            //now update the orientation / angular momenta using the DLM algorithm
+            ap += (half_dt * torque);
+            
+            Matrix R1 = Quaternion( (half_dt * ap[0] / inertia[0])*radian, X )
+                          .toMatrix();
+            
+            ap = R1 * ap;
+            q = R1.transpose() * q;
+            
+            Matrix R2 = Quaternion( (half_dt * ap[1] / inertia[1])*radian, Y )
+                           .toMatrix();
+                           
+            ap = R2 * ap;
+            q = R2.transpose() * q;
+            
+            Matrix R3 = Quaternion( (dt * ap[2] / inertia[2])*radian, Z ).toMatrix();
+            
+            ap = R3 * ap;
+            q = R3.transpose() * q;
+            
+            Matrix R4 = Quaternion( (half_dt * ap[1] / inertia[1])*radian, Y )
+                            .toMatrix();
+                
+            ap = R4 * ap;
+            q = R4.transpose() * q;
+            
+            Matrix R5 = Quaternion( (half_dt * ap[0] / inertia[0])*radian, X )
+                            .toMatrix();
+                            
+            ap = R5 * ap;
+            q = R5.transpose() * q;
         }
 
         ws.commitCoordinates();
@@ -192,12 +238,12 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
         for (int i=0; i<nbeads; ++i)
         {
             Vector &p = bead_lin_momenta[i];
-            double mass = bead_masses[i];
-            const Vector &inertia = bead_inertia[i];
+            Vector &ap = bead_ang_momenta[i];
             const Vector &force = bead_forces[i];
             const Vector &torque = bead_torques[i];
 
-            p += ( (0.5*dt) * force );
+            p += ( half_dt * force );
+            ap += ( half_dt * torque );
         }
         
         if (frequent_save_velocities)
