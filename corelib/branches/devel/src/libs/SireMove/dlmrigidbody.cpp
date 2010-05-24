@@ -146,13 +146,59 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
     {
         ws.calculateForces(nrg_component);
         
+        Vector *bead_coords = ws.beadCoordsArray();
+        Vector *bead_lin_momenta = ws.beadLinearMomentaArray();
+        Vector *bead_ang_momenta = ws.beadAngularMomentaArray();
+        const double *bead_masses = ws.beadMassesArray();
+        const Vector *bead_inertia = ws.beadInertiasArray();
+        
+        const Vector *bead_forces = ws.beadForcesArray();
+        const Vector *bead_torques = ws.beadTorquesArray();
+        
         //first integrate the coordinates - loop over all beads
         for (int i=0; i<nbeads; ++i)
         {
-            //...
+            Vector &x = bead_coords[i];
+            Vector &p = bead_lin_momenta[i];
+            double mass = bead_masses[i];
+            const Vector &inertia = bead_inertia[i];
+            const Vector &force = bead_forces[i];
+            const Vector &torque = bead_torques[i];
+
+            if (mass == 0)
+                //this is a dummy atom
+                continue;
+
+            // use velocity verlet to integrate the position of the bead
+            // v(t + dt/2) = v(t) + (1/2) a(t) dt
+            p += ((0.5*dt) * force);
+
+            // r(t + dt) = r(t) + v(t + dt/2) dt
+            x += (dt * mass) * p;
         }
 
         ws.commitCoordinates();
+        ws.calculateForces(nrg_component);
+
+        bead_lin_momenta = ws.beadLinearMomentaArray();
+        bead_ang_momenta = ws.beadAngularMomentaArray();
+        bead_masses = ws.beadMassesArray();
+        bead_inertia = ws.beadInertiasArray();
+        
+        bead_forces = ws.beadForcesArray();
+        bead_torques = ws.beadTorquesArray();
+        
+        //now need to integrate the momenta
+        for (int i=0; i<nbeads; ++i)
+        {
+            Vector &p = bead_lin_momenta[i];
+            double mass = bead_masses[i];
+            const Vector &inertia = bead_inertia[i];
+            const Vector &force = bead_forces[i];
+            const Vector &torque = bead_torques[i];
+
+            p += ( (0.5*dt) * force );
+        }
         
         if (frequent_save_velocities)
             ws.commitVelocities();

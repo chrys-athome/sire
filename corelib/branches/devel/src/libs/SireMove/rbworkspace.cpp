@@ -31,6 +31,8 @@
 #include "SireMol/atomelements.h"
 #include "SireMol/atommasses.h"
 #include "SireMol/atomcoords.h"
+#include "SireMol/molecule.h"
+#include "SireMol/moleditor.h"
 
 #include "SireError/errors.h"
 
@@ -190,23 +192,26 @@ void RBWorkspace::rebuildFromScratch()
 
     int ibead = 0;
     
-    atom_coordinates = QVector< QVector<Vector> >(nbeads);
+    atom_int_coords = QVector< QVector<Vector> >(nbeads);
     bead_coordinates = QVector<Vector>(nbeads);
     bead_orientations = QVector<Matrix>(nbeads);
     bead_masses = QVector<double>(nbeads);
     bead_inertia = QVector<Vector>(nbeads);
     
-    atom_coordinates.squeeze();
+    atom_int_coords.squeeze();
     bead_coordinates.squeeze();
     bead_orientations.squeeze();
     bead_masses.squeeze();
     bead_inertia.squeeze();
     
-    QVector<Vector> *atom_coords_array = atom_coordinates.data();
+    QVector<Vector> *atom_int_coords_array = atom_int_coords.data();
     Vector *bead_coords_array = bead_coordinates.data();
     Matrix *bead_orients_array = bead_orientations.data();
     double *bead_masses_array = bead_masses.data();
     Vector *bead_inertia_array = bead_inertia.data();
+    
+    atom_forces = QVector< QVector<Vector> >();
+    QVector<Vector> *atom_forces_array = 0;
     
     for (int i=0; i<nmols; ++i)
     {
@@ -253,19 +258,146 @@ void RBWorkspace::rebuildFromScratch()
                                              .asA<AtomElements>()
                                              .toVector(selected_atoms) );
             }
+            
+            if (atom_forces_array == 0)
+            {
+                atom_forces = QVector< QVector<Vector> >(nbeads);
+                atom_forces.squeeze();
+                atom_forces_array = atom_forces.data();
+            }
+            
+            atom_forces_array[i] = forcetable.getTable(molnum).toVector(selected_atoms);
         }
         
-        atom_coords_array[ibead] = ::getCOMPlusInertia(coords, masses,
-                                       bead_coords_array[ibead],
-                                       bead_masses_array[ibead],
-                                       bead_inertia_array[ibead],
-                                       bead_orients_array[ibead]);
+        atom_int_coords_array[ibead] = ::getCOMPlusInertia(coords, masses,
+                                            bead_coords_array[ibead],
+                                            bead_masses_array[ibead],
+                                            bead_inertia_array[ibead],
+                                            bead_orients_array[ibead]);
     
         ++ibead;
     }
     
-    //for now, set initial momenta to 0
+    //create space for the forces, torques and momenta
+    bead_forces = QVector<Vector>(nbeads, Vector(0));
+    bead_torques = QVector<Vector>(nbeads, Vector(0));
+    bead_linear_momenta = QVector<Vector>(nbeads, Vector(0));
+    bead_angular_momenta = QVector<Vector>(nbeads, Vector(0));
     
+    bead_forces.squeeze();
+    bead_torques.squeeze();
+    bead_linear_momenta.squeeze();
+    bead_angular_momenta.squeeze();
+}
+
+/** Return the array of forces of the ith bead. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+const Vector* RBWorkspace::atomForceArray(int i) const
+{
+    if (atom_forces.isEmpty())
+        return forceTable().getTable( moleculeGroup().molNumAt(i) ).constValueData();
+
+    const QVector<Vector> &forces = atom_forces.constData()[i];
+    
+    if (forces.isEmpty())
+        //we can get the forces straight from the forcetable
+        return forceTable().getTable( moleculeGroup().molNumAt(i) ).constValueData();
+
+    else
+        return forces.constData();
+}
+
+static Vector cross(const Vector &v0, const Vector &v1)
+{
+    return Vector( v0.y()*v1.z() - v0.z()*v1.y(),
+                   v0.z()*v1.x() - v0.x()*v1.z(),
+                   v0.x()*v1.y() - v0.y()*v1.z() );
+}
+
+/** Calculate the forces and torques */
+bool RBWorkspace::calculateForces(const Symbol &nrg_component)
+{
+    if (not IntegratorWorkspace::calculateForces(nrg_component))
+        return false;
+
+    else if (not atom_forces.isEmpty())
+    {
+        //we need to update the arrays of forces for partial molecules
+        int nmols = atom_forces.count();
+        QVector<Vector> *atom_forces_array = atom_forces.data();
+        
+        const MoleculeGroup &molgroup = moleculeGroup();
+        const ForceTable &forcetable = forceTable();
+        
+        for (int i=0; i<nmols; ++i)
+        {
+            MolNum molnum = molgroup.molNumAt(i);
+            const ViewsOfMol &mol = molgroup[molnum].data();
+        
+            if (mol.selectedAll())
+                atom_forces_array[i] = QVector<Vector>();
+
+            else
+                atom_forces_array[i] = forcetable.getTable(molnum)
+                                                 .toVector(mol.selection());
+        }
+    }
+
+    const MoleculeGroup &molgroup = moleculeGroup();
+    int nmols = molgroup.nMolecules();
+    
+    //for the moment, we'll make one bead per molecule
+    int nbeads = nmols;
+    
+    Vector *bead_forces_array = bead_forces.data();
+    Vector *bead_torques_array = bead_torques.data();
+    const QVector<Vector> *atom_int_coords_array = atom_int_coords.constData();
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        int ibead = i;
+
+        MolNum molnum = molgroup.molNumAt(i);
+
+        //now calculate the forces and torques on each bead
+        const Vector *atomforces = this->atomForceArray(ibead);
+        int nats = this->nAtoms(ibead);
+        
+        BOOST_ASSERT( nats != 0 );
+        
+        if (nats == 1)
+        {
+            //only a force - no torque
+            bead_forces_array[ibead] = atomforces[0];
+            bead_torques_array[ibead] = Vector(0);
+        }
+        else
+        {
+            Vector &bead_force = bead_forces_array[ibead];
+            Vector &bead_torque = bead_torques_array[ibead];
+        
+            bead_force = Vector(0);
+            bead_torque = Vector(0);
+            
+            const Matrix &orient = bead_orientations.constData()[ibead];
+            const Vector *atomcoords = atom_int_coords_array[ibead].constData();
+            
+            for (int j=0; j<nats; ++j)
+            {
+                bead_force += atomforces[j];
+                
+                //calculate the vector from the center of mass to 
+                //the atom, in the world cartesian frame
+                Vector r = orient * atomcoords[j];
+                
+                //the torque is r cross force (need unnormalised cross product)
+                bead_torque += ::cross(r, atomforces[j]);
+            }
+        }
+    }
+    
+    return true;
 }
 
 /** Construct an empty workspace */
@@ -283,6 +415,8 @@ RBWorkspace::RBWorkspace(const MoleculeGroup &molgroup, const PropertyMap &map)
 /** Copy constructor */
 RBWorkspace::RBWorkspace(const RBWorkspace &other)
             : ConcreteProperty<RBWorkspace,IntegratorWorkspace>(other),
+              atom_int_coords(other.atom_int_coords),
+              atom_forces(other.atom_forces),
               bead_coordinates(other.bead_coordinates),
               bead_orientations(other.bead_orientations),
               bead_linear_momenta(other.bead_linear_momenta),
@@ -305,6 +439,8 @@ RBWorkspace& RBWorkspace::operator=(const RBWorkspace &other)
     {
         IntegratorWorkspace::operator=(other);
         
+        atom_int_coords = other.atom_int_coords;
+        atom_forces = other.atom_forces;
         bead_coordinates = other.bead_coordinates;
         bead_orientations = other.bead_orientations;
         bead_linear_momenta = other.bead_linear_momenta;
@@ -383,8 +519,7 @@ int RBWorkspace::nBeads() const
 /** Return the number of atoms in the ith bead */
 int RBWorkspace::nAtoms(int i) const
 {
-    throw SireError::incomplete_code( QObject::tr("Need to write!"), CODELOC );
-    return 0;
+    return atom_int_coords.constData()[i].count();
 }
 
 /** Set the system to be integrated */
@@ -399,6 +534,56 @@ bool RBWorkspace::setSystem(const System &system)
         return false;
 }
 
+/** Return the array of coordinates of the center of masses of the beads */
+Vector* RBWorkspace::beadCoordsArray()
+{
+    return bead_coordinates.data();
+}
+
+/** Return the array of orientations of the beads (maps from internal
+    bead coordinates to world cartesian coordinates) */
+Matrix* RBWorkspace::beadOrientationArray()
+{
+    return bead_orientations.data();
+}
+
+/** Return the array of bead linear momenta */
+Vector* RBWorkspace::beadLinearMomentaArray()
+{
+    return bead_linear_momenta.data();
+}
+
+/** Return the array of bead angular momenta */
+Vector* RBWorkspace::beadAngularMomentaArray()
+{
+    return bead_angular_momenta.data();
+}
+
+/** Return the array of bead masses */
+const double* RBWorkspace::beadMassesArray() const
+{
+    return bead_masses.constData();
+}
+
+/** Retunr the array of bead inertia */
+const Vector* RBWorkspace::beadInertiasArray() const
+{
+    return bead_inertia.constData();
+}
+    
+/** Return the array of forces acting on the center of mass
+    of each bead */
+const Vector* RBWorkspace::beadForcesArray() const
+{
+    return bead_forces.data();
+}
+
+/** Return the array of bead torques */
+const Vector* RBWorkspace::beadTorquesArray() const
+{
+    return bead_torques.data();
+}
+
 /** Regenerate all of the linear and angular velocities using the passed generator */
 void RBWorkspace::regenerateVelocities(const VelocityGenerator &generator)
 {
@@ -410,14 +595,68 @@ void RBWorkspace::regenerateVelocities(const VelocityGenerator &generator)
     updates the system with these */
 void RBWorkspace::commitCoordinates()
 {
-    throw SireError::incomplete_code( QObject::tr("Need to write!"), CODELOC );
+    int nmols = atom_int_coords.count();
+    
+    const MoleculeGroup &molgroup = moleculeGroup();
+    const Molecules &molecules = molgroup.molecules();
+    
+    BOOST_ASSERT( molgroup.nMolecules() == nmols );
+    
+    const QVector<Vector> *atom_intcoords_array = atom_int_coords.constData();
+    
+    PropertyName coords_property = coordinatesProperty();
+    
+    Molecules changed_mols;
+    changed_mols.reserve(nmols);
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        //currently assume one bead per molecule
+        int ibead = i;
+    
+        MolNum molnum = molgroup.molNumAt(i);
+        
+        const ViewsOfMol &mol = molecules[molnum];
+        
+        AtomCoords coords = mol.data().property(coords_property)
+                                      .asA<AtomCoords>();
+
+        //calculate the world-cartesian coordinates of the beads
+        //from the current orientation and internal coordinates
+        const QVector<Vector> &int_coords = atom_intcoords_array[ibead];
+        QVector<Vector> new_coords = int_coords;
+        
+        const Vector &com = bead_coordinates.constData()[ibead];
+        const Matrix &orient = bead_orientations.constData()[ibead];
+        
+        int nats = int_coords.count();
+        const Vector *int_coords_array = int_coords.constData();
+        Vector *new_coords_array = new_coords.data();
+        
+        for (int j=0; j<nats; ++j)
+        {
+            new_coords_array[j] = com + (orient * int_coords_array[j]);
+        }
+        
+                                          
+        if (mol.selectedAll())
+            coords.copyFrom(new_coords);
+        else
+            coords.copyFrom(new_coords, mol.selection());
+
+        changed_mols.add( mol.molecule().edit()
+                             .setProperty(coords_property, coords)
+                             .commit() );
+    }
+    
+    IntegratorWorkspace::pvt_update(changed_mols);
 }
 
 /** Commit the linear and angular velocities back to the system. This saves
     the velocities as bead properties */
 void RBWorkspace::commitVelocities()
 {
-    throw SireError::incomplete_code( QObject::tr("Need to write!"), CODELOC );
+    //throw SireError::incomplete_code( QObject::tr("Need to write!"), CODELOC );
 }
 
 /** Commit both the coordinates and velocities - this performs the 
@@ -425,7 +664,8 @@ void RBWorkspace::commitVelocities()
     a single call */
 void RBWorkspace::commitCoordinatesAndVelocities()
 {
-    throw SireError::incomplete_code( QObject::tr("Need to write!"), CODELOC );
+    RBWorkspace::commitCoordinates();
+    //throw SireError::incomplete_code( QObject::tr("Need to write!"), CODELOC );
 }
 
 /** This internal function is called whenever a property is changed. 

@@ -156,7 +156,7 @@ public:
     PropertyName elementsProperty() const;
     PropertyName velocityGeneratorProperty() const;
 
-    void calculateForces(const Symbol &nrg_component);
+    virtual bool calculateForces(const Symbol &nrg_component);
 
     bool forcesNeedCalculating(const Symbol &nrg_component) const;
     
@@ -282,6 +282,8 @@ public:
     const Velocity3D* constVelocityArray(int i) const;
     
     const double* constReciprocalMassArray(int i) const;
+    
+    bool calculateForces(const Symbol &nrg_component);
     
     bool setSystem(const System &system);
 

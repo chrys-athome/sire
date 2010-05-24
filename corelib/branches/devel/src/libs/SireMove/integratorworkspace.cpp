@@ -364,7 +364,7 @@ PropertyName IntegratorWorkspace::velocityGeneratorProperty() const
 
 /** Calculate the current forces on the molecules in the molecule
     group using the energy component 'nrg_component' */
-void IntegratorWorkspace::calculateForces(const Symbol &nrg_component)
+bool IntegratorWorkspace::calculateForces(const Symbol &nrg_component)
 {
     if (need_new_forces or last_nrg_component != nrg_component)
     {
@@ -372,7 +372,11 @@ void IntegratorWorkspace::calculateForces(const Symbol &nrg_component)
         sys.force(molforces, nrg_component);
         last_nrg_component = nrg_component;
         need_new_forces = false;
+        
+        return true;
     }
+    else
+        return false;
 }
 
 /** Return whether or not the forces need calculating for the energy
@@ -632,18 +636,18 @@ void AtomicVelocityWorkspace::rebuildFromScratch()
     
     atom_coords = QVector< QVector<Vector> >(nmols);
     atom_velocities = QVector< QVector<Velocity3D> >(nmols);
-    atom_forces = QVector< QVector<Vector> >(nmols);
     inv_atom_masses = QVector< QVector<double> >(nmols);
     
     atom_coords.squeeze();
     atom_velocities.squeeze();
-    atom_forces.squeeze();
     inv_atom_masses.squeeze();
     
     QVector<Vector> *atom_coords_array = atom_coords.data();
     QVector<Velocity3D> *atom_vels_array = atom_velocities.data();
-    QVector<Vector> *atom_forces_array = atom_forces.data();
     QVector<double> *atom_masses_array = inv_atom_masses.data();
+
+    atom_forces = QVector< QVector<Vector> >();
+    QVector<Vector> *atom_forces_array = 0;
     
     if (sys.containsProperty(velgen_property))
         vel_generator = sys.property(velgen_property).asA<VelocityGenerator>();
@@ -719,8 +723,52 @@ void AtomicVelocityWorkspace::rebuildFromScratch()
                                                    .toVector(selected_atoms));
             }
             
+            if (atom_forces_array == 0)
+            {
+                atom_forces = QVector< QVector<Vector> >(nmols);
+                atom_forces.squeeze();
+                atom_forces_array = atom_forces.data();
+            }
+            
             atom_forces_array[i] = forcetable.getTable(molnum).toVector(selected_atoms);
         }
+    }
+}
+
+/** Calculate the forces caused by the passed energy component */
+bool AtomicVelocityWorkspace::calculateForces(const Symbol &nrg_component)
+{
+    if (not IntegratorWorkspace::calculateForces(nrg_component))
+        return false;
+        
+    else if (atom_forces.isEmpty())
+    {
+        //there is nothing to do, as we have no partial molecules,
+        //so all of the forces can be obtained direct from the forcetable
+        return true;
+    }
+    else
+    {
+        int nmols = atom_forces.count();
+        QVector<Vector> *atom_forces_array = atom_forces.data();
+        
+        const MoleculeGroup &molgroup = moleculeGroup();
+        const ForceTable &forcetable = forceTable();
+        
+        for (int i=0; i<nmols; ++i)
+        {
+            MolNum molnum = molgroup.molNumAt(i);
+            const ViewsOfMol &mol = molgroup[molnum].data();
+        
+            if (mol.selectedAll())
+                atom_forces_array[i] = QVector<Vector>();
+
+            else
+                atom_forces_array[i] = forcetable.getTable(molnum)
+                                                 .toVector(mol.selection());
+        }
+        
+        return true;
     }
 }
 
@@ -934,6 +982,9 @@ const Vector* AtomicVelocityWorkspace::coordsArray(int i) const
     will lead to undefined results (e.g. crash or worse) */
 const Vector* AtomicVelocityWorkspace::forceArray(int i) const
 {
+    if (atom_forces.isEmpty())
+        return forceTable().getTable( moleculeGroup().molNumAt(i) ).constValueData();
+
     const QVector<Vector> &forces = atom_forces.constData()[i];
     
     if (forces.isEmpty())

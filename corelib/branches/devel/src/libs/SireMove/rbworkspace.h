@@ -82,9 +82,11 @@ public:
 
     int nBeads() const;
 
-    int nAtoms(int i) const;    
+    int nAtoms(int ibead) const;    
     
     bool setSystem(const System &system);
+
+    bool calculateForces(const Symbol &nrg_component);
 
     void regenerateVelocities(const VelocityGenerator &generator);
     
@@ -93,6 +95,20 @@ public:
     
     void commitCoordinatesAndVelocities();
 
+    const Vector* atomForceArray(int ibead) const;
+
+    Vector* beadCoordsArray();
+    Matrix* beadOrientationArray();
+    
+    Vector* beadLinearMomentaArray();
+    Vector* beadAngularMomentaArray();
+
+    const double* beadMassesArray() const;
+    const Vector* beadInertiasArray() const;
+        
+    const Vector* beadForcesArray() const;
+    const Vector* beadTorquesArray() const;
+
 protected:
     void changedProperty(const QString &property);
 
@@ -100,8 +116,16 @@ private:
     void rebuildFromScratch();
 
     /** The coordinates of the atoms in the center of
-        mass / principle inertia tensor frame */
-    QVector< QVector<Vector> > atom_coordinates;
+        mass / principle inertia tensor frame. These
+        will be constant, as the atoms don't move relative
+        to the center of mass / inertia frame - they 
+        are used to convert from that frame to the
+        world cartesian frame */
+    QVector< QVector<Vector> > atom_int_coords;
+
+    /** The forces on the atoms in molecules that are
+        not fully in this workspace (partial molecules) */
+    QVector< QVector<Vector> > atom_forces;
 
     /** The center of mass coordinates of each bead */
     QVector<Vector> bead_coordinates;
@@ -110,16 +134,16 @@ private:
     QVector<Matrix> bead_orientations;
     
     /** All of the beads' linear momenta */
-    QVector<Velocity3D> bead_linear_momenta;
+    QVector<Vector> bead_linear_momenta;
     
     /** All of the beads' angular momenta */
-    QVector<Matrix> bead_angular_momenta;
+    QVector<Vector> bead_angular_momenta;
     
     /** All of the forces for all of the beads */
     QVector<Vector> bead_forces;
     
     /** All of the torques acting on all of the beads */
-    QVector<Matrix> bead_torques;
+    QVector<Vector> bead_torques;
     
     /** The mass of each bead */
     QVector<double> bead_masses;
