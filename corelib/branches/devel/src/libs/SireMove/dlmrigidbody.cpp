@@ -171,7 +171,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
         for (int i=0; i<nbeads; ++i)
         {
             Vector &x = bead_coords[i];
-            Matrix &q = bead_orient[i];
+            Quaternion q(bead_orient[i]);
             Vector &p = bead_lin_momenta[i];
             Vector &ap = bead_ang_momenta[i];
             double mass = bead_masses[i];
@@ -193,34 +193,35 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
             //now update the orientation / angular momenta using the DLM algorithm
             ap += (half_dt * torque);
             
-            Matrix R1 = Quaternion( (half_dt * ap[0] / inertia[0])*radian, X )
-                          .toMatrix();
+            if (not ap.isZero())
+            {
+                Quaternion R1( (half_dt * ap[0] / inertia[0])*radian, X );
             
-            ap = R1 * ap;
-            q = R1.transpose() * q;
+                ap = R1.toMatrix() * ap;
+                q = q * R1.conjugate();
             
-            Matrix R2 = Quaternion( (half_dt * ap[1] / inertia[1])*radian, Y )
-                           .toMatrix();
+                Quaternion R2( (half_dt * ap[1] / inertia[1])*radian, Y );
                            
-            ap = R2 * ap;
-            q = R2.transpose() * q;
+                ap = R2.toMatrix() * ap;
+                q = q * R2.conjugate();
             
-            Matrix R3 = Quaternion( (dt * ap[2] / inertia[2])*radian, Z ).toMatrix();
+                Quaternion R3( (dt * ap[2] / inertia[2])*radian, Z );
             
-            ap = R3 * ap;
-            q = R3.transpose() * q;
+                ap = R3.toMatrix() * ap;
+                q = q * R3.conjugate();
             
-            Matrix R4 = Quaternion( (half_dt * ap[1] / inertia[1])*radian, Y )
-                            .toMatrix();
+                Quaternion R4( (half_dt * ap[1] / inertia[1])*radian, Y );
                 
-            ap = R4 * ap;
-            q = R4.transpose() * q;
+                ap = R4.toMatrix() * ap;
+                q = q * R4.conjugate();
             
-            Matrix R5 = Quaternion( (half_dt * ap[0] / inertia[0])*radian, X )
-                            .toMatrix();
+                Quaternion R5( (half_dt * ap[0] / inertia[0])*radian, X );
                             
-            ap = R5 * ap;
-            q = R5.transpose() * q;
+                ap = R5.toMatrix() * ap;
+                q = q * R5.conjugate();
+            
+                bead_orient[i] = q.toMatrix();
+            }
         }
 
         ws.commitCoordinates();
