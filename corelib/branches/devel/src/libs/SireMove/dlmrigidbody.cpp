@@ -158,7 +158,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
         ws.calculateForces(nrg_component);
         
         Vector *bead_coords = ws.beadCoordsArray();
-        Matrix *bead_orient = ws.beadOrientationArray();
+        Quaternion *bead_orient = ws.beadOrientationArray();
         Vector *bead_lin_momenta = ws.beadLinearMomentaArray();
         Vector *bead_ang_momenta = ws.beadAngularMomentaArray();
         const double *bead_masses = ws.beadMassesArray();
@@ -171,7 +171,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
         for (int i=0; i<nbeads; ++i)
         {
             Vector &x = bead_coords[i];
-            Quaternion q(bead_orient[i]);
+            Quaternion &q = bead_orient[i];
             Vector &p = bead_lin_momenta[i];
             Vector &ap = bead_ang_momenta[i];
             double mass = bead_masses[i];
@@ -219,8 +219,6 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
                             
                 ap = R5.toMatrix() * ap;
                 q = q * R5.conjugate();
-            
-                bead_orient[i] = q.toMatrix();
             }
         }
 

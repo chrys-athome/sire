@@ -79,7 +79,7 @@ print "(took %d ms)" % t.elapsed()
 #mdmove = MolecularDynamics( salt, VelocityVerlet(), 
 #                            {"velocity generator":MaxwellBoltzmann(25*celsius)} )
 
-mdmove = MolecularDynamics(salt)
+mdmove = MolecularDynamics(salt, DLMRigidBody())
 
 mdmove.setTimeStep(1*femtosecond)
 
@@ -87,7 +87,7 @@ print system.property("space")
 
 for i in range(0,250):
     print "\nmove %d" % (i+1)
-    mdmove.move(system, 20)
+    mdmove.move(system, 1)
 
     print system.energy()
     print mdmove.kineticEnergy()

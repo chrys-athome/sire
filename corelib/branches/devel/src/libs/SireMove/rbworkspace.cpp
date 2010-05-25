@@ -103,7 +103,7 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
                                          const QVector<MolarMass> &masses,
                                          Vector &com, double &mass, 
                                          Vector &principle_inertia,
-                                         Matrix &orientation)
+                                         Quaternion &orientation)
 {
     int nats = coords.count();
     BOOST_ASSERT( masses.count() == nats );
@@ -150,9 +150,9 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
     std::pair<Vector,Matrix> eigs = inertia.diagonalise();
 
     principle_inertia = eigs.first;
-    orientation = eigs.second;
+    orientation = Quaternion(eigs.second);
     
-    Matrix inv = orientation.inverse();
+    Matrix inv = orientation.inverse().toMatrix();
     
     //now calculate the coordinates of all of the atoms in terms
     //of the center of mass / orientaton frame
@@ -194,7 +194,7 @@ void RBWorkspace::rebuildFromScratch()
     
     atom_int_coords = QVector< QVector<Vector> >(nbeads);
     bead_coordinates = QVector<Vector>(nbeads);
-    bead_orientations = QVector<Matrix>(nbeads);
+    bead_orientations = QVector<Quaternion>(nbeads);
     bead_masses = QVector<double>(nbeads);
     bead_inertia = QVector<Vector>(nbeads);
     
@@ -206,7 +206,7 @@ void RBWorkspace::rebuildFromScratch()
     
     QVector<Vector> *atom_int_coords_array = atom_int_coords.data();
     Vector *bead_coords_array = bead_coordinates.data();
-    Matrix *bead_orients_array = bead_orientations.data();
+    Quaternion *bead_orients_array = bead_orientations.data();
     double *bead_masses_array = bead_masses.data();
     Vector *bead_inertia_array = bead_inertia.data();
     
@@ -380,7 +380,7 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
             bead_force = Vector(0);
             bead_torque = Vector(0);
             
-            const Matrix &orient = bead_orientations.constData()[ibead];
+            Matrix orient = bead_orientations.constData()[ibead].toMatrix();
             const Vector *atomcoords = atom_int_coords_array[ibead].constData();
             
             for (int j=0; j<nats; ++j)
@@ -486,8 +486,31 @@ const char* RBWorkspace::typeName()
 /** Return the kinetic energy of all of the molecules being integrated */
 MolarEnergy RBWorkspace::kineticEnergy() const
 {
-    throw SireError::incomplete_code( QObject::tr("Need to write!"), CODELOC );
-    return MolarEnergy(0);
+    //sum together the linear kinetic energy of the beads...
+    double nrg = 0;
+    
+    int nbeads = bead_linear_momenta.count();
+    
+    const Vector *p = bead_linear_momenta.constData();
+    const double *m = bead_masses.constData();
+    
+    for (int i=0; i<nbeads; ++i)
+    {
+        nrg += p[i].length2() / (2 * m[i]);
+    }
+    
+    //now the angular kinetic energy
+    const Vector *q = bead_angular_momenta.constData();
+    const Vector *I = bead_inertia.constData();
+    
+    for (int i=0; i<nbeads; ++i)
+    {
+        nrg += (q[i].x()*q[i].x() / 2*I[i].x()) +
+               (q[i].y()*q[i].y() / 2*I[i].y()) +
+               (q[i].z()*q[i].z() / 2*I[i].z());
+    }
+    
+    return MolarEnergy(nrg);
 }
 
 /** Return the kinetic energy of the molecule with number 'molnum'
@@ -542,7 +565,7 @@ Vector* RBWorkspace::beadCoordsArray()
 
 /** Return the array of orientations of the beads (maps from internal
     bead coordinates to world cartesian coordinates) */
-Matrix* RBWorkspace::beadOrientationArray()
+Quaternion* RBWorkspace::beadOrientationArray()
 {
     return bead_orientations.data();
 }
@@ -627,7 +650,7 @@ void RBWorkspace::commitCoordinates()
         QVector<Vector> new_coords = int_coords;
         
         const Vector &com = bead_coordinates.constData()[ibead];
-        const Matrix &orient = bead_orientations.constData()[ibead];
+        Matrix orient = bead_orientations.constData()[ibead].toMatrix();
         
         int nats = int_coords.count();
         const Vector *int_coords_array = int_coords.constData();
