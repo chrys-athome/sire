@@ -62,8 +62,10 @@ rbmove = MolecularDynamics( solvent, DLMRigidBody(), 0.5*femtosecond )
 
 #rbmove.setEnergyComponent( cljff.components().coulomb() )
 
-for i in range(0,500):
-    rbmove.move(system, 1)
+PDB().write(system.molecules(), "test0000.pdb")
+
+for i in range(1,250):
+    rbmove.move(system, 20)
     print i, system.energy()
     print rbmove.kineticEnergy(), (system.energy() + rbmove.kineticEnergy())
 

@@ -577,44 +577,83 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
     return ds;
 }
 
-static QVector<double> getInvMasses(const QVector<MolarMass> &masses)
+static QVector<double> getMasses(const QVector<MolarMass> &masses)
 {
     int sz = masses.count();
-    QVector<double> inv_masses(sz);
-    inv_masses.squeeze();
+    QVector<double> atom_masses(sz);
+    atom_masses.squeeze();
     
     const MolarMass *masses_array = masses.constData();
-    double *inv_masses_array = inv_masses.data();
+    double *atom_masses_array = atom_masses.data();
     
     for (int i=0; i<sz; ++i)
     {
-        if (masses_array[i].value() == 0)
-            inv_masses_array[i] = 0;
-        else
-            inv_masses_array[i] = 1.0 / masses_array[i].value();
+        atom_masses_array[i] = masses_array[i].value();
     }
     
-    return inv_masses;
+    return atom_masses;
 }
 
-static QVector<double> getInvMasses(const QVector<Element> &elements)
+static QVector<double> getMasses(const QVector<Element> &elements)
 {
     int sz = elements.count();
-    QVector<double> inv_masses(sz);
-    inv_masses.squeeze();
+    QVector<double> atom_masses(sz);
+    atom_masses.squeeze();
     
     const Element *elements_array = elements.constData();
-    double *inv_masses_array = inv_masses.data();
+    double *atom_masses_array = atom_masses.data();
     
     for (int i=0; i<sz; ++i)
     {
-        if (elements_array[i].nProtons() == 0)
-            inv_masses_array[i] = 0;
-        else
-            inv_masses_array[i] = 1.0 / elements_array[i].mass().value();
+        atom_masses_array[i] = elements_array[i].mass().value();
     }
     
-    return inv_masses;
+    return atom_masses;
+}
+
+static QVector<Vector> getMomenta(const QVector<Velocity3D> &velocities,
+                                  const QVector<double> &masses)
+{
+    int nats = velocities.count();
+    
+    QVector<Vector> momenta(nats);
+    momenta.squeeze();
+    
+    const Velocity3D *vel_array = velocities.constData();
+    const double *mass_array = masses.constData();
+    
+    Vector *mom_array = momenta.data();
+    
+    for (int i=0; i<nats; ++i)
+    {
+        mom_array[i] = vel_array[i].value() * mass_array[i];
+    }
+    
+    return momenta;
+}
+
+static QVector<Velocity3D> getVelocities(const QVector<Vector> &momenta,
+                                         const QVector<double> &masses)
+{
+    int nats = momenta.count();
+    
+    QVector<Velocity3D> velocities(nats);
+    velocities.squeeze();
+    
+    const Vector *mom_array = momenta.constData();
+    const double *mass_array = masses.constData();
+    
+    Velocity3D *vel_array = velocities.data();
+    
+    for (int i=0; i<nats; ++i)
+    {
+        if (mass_array[i] != 0)
+            vel_array[i] = Velocity3D(mom_array[i] / mass_array[i]);
+        else
+            vel_array[i] = Velocity3D(0);
+    }
+    
+    return velocities;
 }
 
 /** Internal function used to rebuild all of the arrays from the
@@ -635,16 +674,16 @@ void AtomicVelocityWorkspace::rebuildFromScratch()
     int nmols = molgroup.nMolecules();
     
     atom_coords = QVector< QVector<Vector> >(nmols);
-    atom_velocities = QVector< QVector<Velocity3D> >(nmols);
-    inv_atom_masses = QVector< QVector<double> >(nmols);
+    atom_momenta = QVector< QVector<Vector> >(nmols);
+    atom_masses = QVector< QVector<double> >(nmols);
     
     atom_coords.squeeze();
-    atom_velocities.squeeze();
-    inv_atom_masses.squeeze();
+    atom_momenta.squeeze();
+    atom_masses.squeeze();
     
     QVector<Vector> *atom_coords_array = atom_coords.data();
-    QVector<Velocity3D> *atom_vels_array = atom_velocities.data();
-    QVector<double> *atom_masses_array = inv_atom_masses.data();
+    QVector<Vector> *atom_mom_array = atom_momenta.data();
+    QVector<double> *atom_masses_array = atom_masses.data();
 
     atom_forces = QVector< QVector<Vector> >();
     QVector<Vector> *atom_forces_array = 0;
@@ -665,29 +704,33 @@ void AtomicVelocityWorkspace::rebuildFromScratch()
         {
             atom_coords_array[i] = moldata.property(coords_property)
                                           .asA<AtomCoords>().toVector();
-                                          
-            if (moldata.hasProperty(velocity_property))
-            {
-                atom_vels_array[i] = moldata.property(velocity_property)
-                                            .asA<AtomVelocities>().toVector();
-            }
-            else
-            {
-                atom_vels_array[i] = vel_generator.read().generate(mol, propertyMap())
-                                                         .toVector();
-            }
-            
+
             if (moldata.hasProperty(mass_property))
             {
-                atom_masses_array[i] = ::getInvMasses(
+                atom_masses_array[i] = ::getMasses(
                                             moldata.property(mass_property)
                                                    .asA<AtomMasses>().toVector());
             }
             else
             {
-                atom_masses_array[i] = ::getInvMasses(
+                atom_masses_array[i] = ::getMasses(
                                             moldata.property(element_property)
                                                    .asA<AtomElements>().toVector());
+            }
+                                          
+            if (moldata.hasProperty(velocity_property))
+            {
+                atom_mom_array[i] = ::getMomenta(
+                                        moldata.property(velocity_property)
+                                               .asA<AtomVelocities>().toVector(),
+                                        atom_masses_array[i]);
+            }
+            else
+            {
+                atom_mom_array[i] = ::getMomenta(
+                                        vel_generator.read().generate(mol, propertyMap())
+                                                     .toVector(),
+                                        atom_masses_array[i]);
             }
         }
         else
@@ -696,31 +739,36 @@ void AtomicVelocityWorkspace::rebuildFromScratch()
             
             atom_coords_array[i] = moldata.property(coords_property)
                                           .asA<AtomCoords>().toVector(selected_atoms);
-                                          
-            if (moldata.hasProperty(velocity_property))
-            {
-                atom_vels_array[i] = moldata.property(velocity_property)
-                                         .asA<AtomVelocities>().toVector(selected_atoms);
-            }
-            else
-            {
-                atom_vels_array[i] = vel_generator.read().generate(mol, propertyMap())
-                                                         .toVector(selected_atoms);
-            }
             
             if (moldata.hasProperty(mass_property))
             {
-                atom_masses_array[i] = ::getInvMasses(
+                atom_masses_array[i] = ::getMasses(
                                             moldata.property(mass_property)
                                                    .asA<AtomMasses>()
                                                    .toVector(selected_atoms));
             }
             else
             {
-                atom_masses_array[i] = ::getInvMasses(
+                atom_masses_array[i] = ::getMasses(
                                             moldata.property(element_property)
                                                    .asA<AtomElements>()
                                                    .toVector(selected_atoms));
+            }
+                                          
+            if (moldata.hasProperty(velocity_property))
+            {
+                atom_mom_array[i] = ::getMomenta(
+                                        moldata.property(velocity_property)
+                                         .asA<AtomVelocities>().toVector(selected_atoms),
+                                            atom_masses_array[i]);
+            }
+            else
+            {
+                atom_mom_array[i] = ::getMomenta(
+                                        vel_generator.read().generate(mol, propertyMap())
+                                                         .toVector(selected_atoms),
+                                            atom_masses_array[i]);
+                                                         
             }
             
             if (atom_forces_array == 0)
@@ -779,7 +827,9 @@ void AtomicVelocityWorkspace::regenerateVelocities(const VelocityGenerator &gene
     
     int nmols = molgroup.nMolecules();
 
-    QVector<Velocity3D> *atom_vels_array = atom_velocities.data();
+    QVector<Vector> *atom_mom_array = atom_momenta.data();
+    
+    const QVector<double> *atom_masses_array = atom_masses.constData();
     
     for (int i=0; i<nmols; ++i)
     {
@@ -788,14 +838,18 @@ void AtomicVelocityWorkspace::regenerateVelocities(const VelocityGenerator &gene
         
         if (mol.selectedAll())
         {
-            atom_vels_array[i] = generator.generate(mol, propertyMap()).toVector();
+            atom_mom_array[i] = ::getMomenta(
+                                        generator.generate(mol, propertyMap()).toVector(),
+                                            atom_masses_array[i]);
         }
         else
         {
             AtomSelection selected_atoms = mol.selection();
 
-            atom_vels_array[i] = generator.generate(mol, propertyMap())
-                                                     .toVector(mol.selection());
+            atom_mom_array[i] = ::getMomenta(
+                                        generator.generate(mol, propertyMap())
+                                                     .toVector(mol.selection()),
+                                            atom_masses_array[i]);
         }
     }
 }
@@ -816,8 +870,8 @@ AtomicVelocityWorkspace::AtomicVelocityWorkspace(const MoleculeGroup &molgroup,
 /** Copy constructor */
 AtomicVelocityWorkspace::AtomicVelocityWorkspace(const AtomicVelocityWorkspace &other)
        : ConcreteProperty<AtomicVelocityWorkspace,IntegratorWorkspace>(other),
-         atom_coords(other.atom_coords), atom_velocities(other.atom_velocities),
-         atom_forces(other.atom_forces), inv_atom_masses(other.inv_atom_masses),
+         atom_coords(other.atom_coords), atom_momenta(other.atom_momenta),
+         atom_forces(other.atom_forces), atom_masses(other.atom_masses),
          vel_generator(other.vel_generator)
 {}
 
@@ -832,9 +886,9 @@ AtomicVelocityWorkspace::operator=(const AtomicVelocityWorkspace &other)
     if (this != &other)
     {
         atom_coords = other.atom_coords;
-        atom_velocities = other.atom_velocities;
+        atom_momenta = other.atom_momenta;
         atom_forces = other.atom_forces;
-        inv_atom_masses = other.inv_atom_masses;
+        atom_masses = other.atom_masses;
         vel_generator = other.vel_generator;
         IntegratorWorkspace::operator=(other);
     }
@@ -865,18 +919,18 @@ void AtomicVelocityWorkspace::changedProperty(const QString&)
     this->rebuildFromScratch();
 }
 
-static double getKineticEnergy(const QVector<double> &inv_masses,
-                               const QVector<Velocity3D> &velocities)
+static double getKineticEnergy(const QVector<double> &masses,
+                               const QVector<Vector> &momenta)
 {
-    int nats = inv_masses.count();
-    BOOST_ASSERT( velocities.count() == nats );
+    int nats = masses.count();
+    BOOST_ASSERT( momenta.count() == nats );
     
-    const double *inv_masses_array = inv_masses.constData();
-    const Velocity3D *vels_array = velocities.constData();
+    const double *masses_array = masses.constData();
+    const Vector *mom_array = momenta.constData();
     
     double nrg = 0;
     
-    // Kinetic energy is 1/2 m v^2
+    // Kinetic energy is p**2 / 2m
     //
     // Internal units are self-consistent 
     // (Angstrom / AKMA, and g mol-1, which give
@@ -884,34 +938,27 @@ static double getKineticEnergy(const QVector<double> &inv_masses,
     
     for (int i=0; i<nats; ++i)
     {
-        const Velocity3D &vel = vels_array[i];
-    
-        if (inv_masses_array[i] == 0)
-            //this is a dummy atom
-            continue;
-    
-        nrg += ( SireMaths::pow_2(vel.x().value()) +
-                 SireMaths::pow_2(vel.y().value()) +
-                 SireMaths::pow_2(vel.z().value()) ) / inv_masses_array[i];
+        if (masses_array[i] != 0)
+            nrg += mom_array[i].length2() / masses_array[i];
     }
     
-    return 0.5*nrg;
+    return 0.5 * nrg;
 }
 
 /** Return the total kinetic energy of the molecules in the molecule group */
 MolarEnergy AtomicVelocityWorkspace::kineticEnergy() const
 {
-    int nmols = atom_velocities.count();
-    BOOST_ASSERT( inv_atom_masses.count() == nmols );
+    int nmols = atom_momenta.count();
+    BOOST_ASSERT( atom_masses.count() == nmols );
     
-    const QVector<double> *inv_masses_array = inv_atom_masses.constData();
-    const QVector<Velocity3D> *vels_array = atom_velocities.constData();
+    const QVector<double> *masses_array = atom_masses.constData();
+    const QVector<Vector> *mom_array = atom_momenta.constData();
     
     double nrg = 0;
     
     for (int i=0; i<nmols; ++i)
     {
-        nrg += ::getKineticEnergy(inv_masses_array[i], vels_array[i]);
+        nrg += ::getKineticEnergy(masses_array[i], mom_array[i]);
     }
     
     return MolarEnergy(nrg);
@@ -925,7 +972,7 @@ MolarEnergy AtomicVelocityWorkspace::kineticEnergy(MolNum molnum) const
 {
     int i = this->moleculeGroup().indexOf(molnum);
     
-    return MolarEnergy( ::getKineticEnergy(inv_atom_masses[i], atom_velocities[i]) );
+    return MolarEnergy( ::getKineticEnergy(atom_masses[i], atom_momenta[i]) );
 }
 
 /** Return the total kinetic energy of the atoms in the the molecule viewed
@@ -942,7 +989,7 @@ MolarEnergy AtomicVelocityWorkspace::kineticEnergy(const MoleculeView &molview) 
 /** Return the number of molecules that are being integrated */
 int AtomicVelocityWorkspace::nMolecules() const
 {
-    return inv_atom_masses.count();
+    return atom_masses.count();
 }
 
 /** Return the number of atoms of the ith molecule. This does not
@@ -950,7 +997,7 @@ int AtomicVelocityWorkspace::nMolecules() const
     will lead to undefined results (e.g. crash or worse) */
 int AtomicVelocityWorkspace::nAtoms(int i) const
 {
-    return inv_atom_masses.constData()[i].count();
+    return atom_masses.constData()[i].count();
 }
 
 /** Return the array of the coordinates of the ith molecule. This does not
@@ -961,12 +1008,12 @@ Vector* AtomicVelocityWorkspace::coordsArray(int i)
     return atom_coords.data()[i].data();
 }
 
-/** Return the array of velocities of the ith molecule. This does not
+/** Return the array of momenta of the ith molecule. This does not
     check that 'i' is a valid index - use of an invalid index
     will lead to undefined results (e.g. crash or worse) */
-Velocity3D* AtomicVelocityWorkspace::velocityArray(int i)
+Vector* AtomicVelocityWorkspace::momentaArray(int i)
 {
-    return atom_velocities.data()[i].data();
+    return atom_momenta.data()[i].data();
 }
 
 /** Return the array of coordinates of the ith molecule. This does not
@@ -995,20 +1042,20 @@ const Vector* AtomicVelocityWorkspace::forceArray(int i) const
         return forces.constData();
 }
 
-/** Return the array of velocities of the ith molecule. This does not
+/** Return the array of momenta of the ith molecule. This does not
     check that 'i' is a valid index - use of an invalid index
     will lead to undefined results (e.g. crash or worse) */
-const Velocity3D* AtomicVelocityWorkspace::velocityArray(int i) const
+const Vector* AtomicVelocityWorkspace::momentaArray(int i) const
 {
-    return atom_velocities.constData()[i].constData();
+    return atom_momenta.constData()[i].constData();
 }
 
-/** Return the array of inverse masses of the ith molecule. This does not
+/** Return the array of masses of the ith molecule. This does not
     check that 'i' is a valid index - use of an invalid index
     will lead to undefined results (e.g. crash or worse) */
-const double* AtomicVelocityWorkspace::reciprocalMassArray(int i) const
+const double* AtomicVelocityWorkspace::massArray(int i) const
 {
-    return inv_atom_masses.constData()[i].constData();
+    return atom_masses.constData()[i].constData();
 }
 
 /** Return the array of coordinates of the ith molecule. This does not
@@ -1027,20 +1074,20 @@ const Vector* AtomicVelocityWorkspace::constForceArray(int i) const
     return AtomicVelocityWorkspace::forceArray(i);
 }
 
-/** Return the array of velocities of the ith molecule. This does not
+/** Return the array of momenta of the ith molecule. This does not
     check that 'i' is a valid index - use of an invalid index
     will lead to undefined results (e.g. crash or worse) */
-const Velocity3D* AtomicVelocityWorkspace::constVelocityArray(int i) const
+const Vector* AtomicVelocityWorkspace::constMomentaArray(int i) const
 {
-    return AtomicVelocityWorkspace::velocityArray(i);
+    return AtomicVelocityWorkspace::momentaArray(i);
 }
 
-/** Return the array of inverse masses of the ith molecule. This does not
+/** Return the array of masses of the ith molecule. This does not
     check that 'i' is a valid index - use of an invalid index
     will lead to undefined results (e.g. crash or worse) */
-const double* AtomicVelocityWorkspace::constReciprocalMassArray(int i) const
+const double* AtomicVelocityWorkspace::constMassArray(int i) const
 {
-    return AtomicVelocityWorkspace::reciprocalMassArray(i);
+    return AtomicVelocityWorkspace::massArray(i);
 }
 
 /** Set the system that is being integrated */
@@ -1104,7 +1151,8 @@ void AtomicVelocityWorkspace::commitVelocities()
     
     BOOST_ASSERT( molgroup.nMolecules() == nmols );
     
-    const QVector<Velocity3D> *vels_array = atom_velocities.constData();
+    const QVector<Vector> *mom_array = atom_momenta.constData();
+    const QVector<double> *mass_array = atom_masses.constData();
     
     PropertyName vels_property = velocitiesProperty();
     
@@ -1130,9 +1178,10 @@ void AtomicVelocityWorkspace::commitVelocities()
         }
                                           
         if (mol.selectedAll())
-            vels.copyFrom(vels_array[i]);
+            vels.copyFrom( ::getVelocities(mom_array[i], mass_array[i]) );
         else
-            vels.copyFrom(vels_array[i], mol.selection());
+            vels.copyFrom( ::getVelocities(mom_array[i], mass_array[i]), 
+                           mol.selection() );
 
         changed_mols.add( mol.molecule().edit()
                              .setProperty(vels_property, vels)
@@ -1153,7 +1202,8 @@ void AtomicVelocityWorkspace::commitCoordinatesAndVelocities()
     BOOST_ASSERT( molgroup.nMolecules() == nmols );
     
     const QVector<Vector> *coords_array = atom_coords.constData();
-    const QVector<Velocity3D> *vels_array = atom_velocities.constData();
+    const QVector<Vector> *mom_array = atom_momenta.constData();
+    const QVector<double> *mass_array = atom_masses.constData();
     
     PropertyName coords_property = coordinatesProperty();
     PropertyName vels_property = velocitiesProperty();
@@ -1185,12 +1235,13 @@ void AtomicVelocityWorkspace::commitCoordinatesAndVelocities()
         if (mol.selectedAll())
         {
             coords.copyFrom(coords_array[i]);
-            vels.copyFrom(vels_array[i]);
+            vels.copyFrom( ::getVelocities(mom_array[i],mass_array[i]) );
         }
         else
         {
             coords.copyFrom(coords_array[i], mol.selection());
-            vels.copyFrom(vels_array[i], mol.selection());
+            vels.copyFrom( ::getVelocities(mom_array[i],mass_array[i]), 
+                           mol.selection() );
         }
 
         changed_mols.add( mol.molecule().edit()

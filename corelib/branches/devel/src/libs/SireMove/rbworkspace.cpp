@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include "stdio.h"
+
 #include "rbworkspace.h"
 
 #include "SireMol/atomelements.h"
@@ -99,11 +101,17 @@ static QVector<MolarMass> getMasses(const QVector<Element> &elements)
     return masses;
 }
 
+static void printPDBLine(int i, const Vector &vector)
+{
+    printf("ATOM   %4d  H   AXES    1    %8.3f%8.3f%8.3f\n",  
+             i, vector.x(), vector.y(), vector.z());
+}
+
 static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
                                          const QVector<MolarMass> &masses,
                                          Vector &com, double &mass, 
                                          Vector &principle_inertia,
-                                         Quaternion &orientation)
+                                         Matrix &orientation)
 {
     int nats = coords.count();
     BOOST_ASSERT( masses.count() == nats );
@@ -134,9 +142,9 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
         
         double m = masses_array[i].value();
         
-        inertia_array[ inertia.offset(0,0) ] += m * (d.x()*d.x() + d.z()*d.z());
-        inertia_array[ inertia.offset(1,1) ] += m * (d.x()*d.x() + d.y()*d.y());
-        inertia_array[ inertia.offset(2,2) ] += m * (d.y()*d.y() + d.z()*d.z());
+        inertia_array[ inertia.offset(0,0) ] += m * (d.y()*d.y() + d.z()*d.z());
+        inertia_array[ inertia.offset(1,1) ] += m * (d.x()*d.x() + d.z()*d.z());
+        inertia_array[ inertia.offset(2,2) ] += m * (d.x()*d.x() + d.y()*d.y());
         
         inertia_array[ inertia.offset(0,1) ] -= m * d.x() * d.y();
         inertia_array[ inertia.offset(0,2) ] -= m * d.x() * d.z();
@@ -149,10 +157,17 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
 
     std::pair<Vector,Matrix> eigs = inertia.diagonalise();
 
-    principle_inertia = eigs.first;
-    orientation = Quaternion(eigs.second);
+    #warning ARTIFICIALLY SCALED UP INERTIA WHILE TESTING CODE!!!
+    principle_inertia = 50 * eigs.first;
     
-    Matrix inv = orientation.inverse().toMatrix();
+    printPDBLine(0, com);
+    printPDBLine(1, com + eigs.second.column0());
+    printPDBLine(2, com + eigs.second.column1());
+    printPDBLine(3, com + eigs.second.column2());
+    
+    orientation = eigs.second;
+    
+    Matrix inv = orientation.inverse();
     
     //now calculate the coordinates of all of the atoms in terms
     //of the center of mass / orientaton frame
@@ -194,7 +209,7 @@ void RBWorkspace::rebuildFromScratch()
     
     atom_int_coords = QVector< QVector<Vector> >(nbeads);
     bead_coordinates = QVector<Vector>(nbeads);
-    bead_orientations = QVector<Quaternion>(nbeads);
+    bead_orientations = QVector<Matrix>(nbeads);
     bead_masses = QVector<double>(nbeads);
     bead_inertia = QVector<Vector>(nbeads);
     
@@ -206,7 +221,7 @@ void RBWorkspace::rebuildFromScratch()
     
     QVector<Vector> *atom_int_coords_array = atom_int_coords.data();
     Vector *bead_coords_array = bead_coordinates.data();
-    Quaternion *bead_orients_array = bead_orientations.data();
+    Matrix *bead_orients_array = bead_orientations.data();
     double *bead_masses_array = bead_masses.data();
     Vector *bead_inertia_array = bead_inertia.data();
     
@@ -380,7 +395,7 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
             bead_force = Vector(0);
             bead_torque = Vector(0);
             
-            Matrix orient = bead_orientations.constData()[ibead].toMatrix();
+            Matrix orient = bead_orientations.constData()[ibead].inverse();
             const Vector *atomcoords = atom_int_coords_array[ibead].constData();
             
             for (int j=0; j<nats; ++j)
@@ -389,11 +404,19 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
                 
                 //calculate the vector from the center of mass to 
                 //the atom, in the world cartesian frame
-                Vector r = orient * atomcoords[j];
+                //Vector r = orient * atomcoords[j];
                 
                 //the torque is r cross force (need unnormalised cross product)
-                bead_torque += ::cross(r, atomforces[j]);
+                //bead_torque += ::cross(atomcoords[i], atomforces[i]);// orient*atomforces[j]);
+                bead_torque += ::cross(atomcoords[j], orient*atomforces[j]);
             }
+            
+            //qDebug() << "TORQUE";
+            //printPDBLine(19, bead_coordinates.constData()[ibead]);
+            //printPDBLine(20, bead_coordinates.constData()[ibead] + bead_torque);
+            
+            //bead_torque = orient.inverse() * bead_torque;
+            //printPDBLine(21, bead_torque);
         }
     }
     
@@ -496,7 +519,8 @@ MolarEnergy RBWorkspace::kineticEnergy() const
     
     for (int i=0; i<nbeads; ++i)
     {
-        nrg += p[i].length2() / (2 * m[i]);
+        if (m[i] != 0)
+            nrg += p[i].length2() / (2 * m[i]);
     }
     
     //now the angular kinetic energy
@@ -505,9 +529,14 @@ MolarEnergy RBWorkspace::kineticEnergy() const
     
     for (int i=0; i<nbeads; ++i)
     {
-        nrg += (q[i].x()*q[i].x() / 2*I[i].x()) +
-               (q[i].y()*q[i].y() / 2*I[i].y()) +
-               (q[i].z()*q[i].z() / 2*I[i].z());
+        if (I[i].x() != 0)
+            nrg += pow_2(q[i].x()) / (2 * I[i].x());
+            
+        if (I[i].y() != 0)
+            nrg += pow_2(q[i].y()) / (2 * I[i].y());
+            
+        if (I[i].z() != 0)
+            nrg += pow_2(q[i].z()) / (2 * I[i].z());
     }
     
     return MolarEnergy(nrg);
@@ -565,7 +594,7 @@ Vector* RBWorkspace::beadCoordsArray()
 
 /** Return the array of orientations of the beads (maps from internal
     bead coordinates to world cartesian coordinates) */
-Quaternion* RBWorkspace::beadOrientationArray()
+Matrix* RBWorkspace::beadOrientationArray()
 {
     return bead_orientations.data();
 }
@@ -650,7 +679,7 @@ void RBWorkspace::commitCoordinates()
         QVector<Vector> new_coords = int_coords;
         
         const Vector &com = bead_coordinates.constData()[ibead];
-        Matrix orient = bead_orientations.constData()[ibead].toMatrix();
+        const Matrix &orient = bead_orientations.constData()[ibead];
         
         int nats = int_coords.count();
         const Vector *int_coords_array = int_coords.constData();

@@ -45,6 +45,8 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
+#include <QDebug>
+
 using namespace SireMaths;
 using namespace SireStream;
 
@@ -588,9 +590,9 @@ std::pair<Vector,Matrix> Matrix::diagonalise() const
         
         return std::pair<Vector,Matrix>(
                     Vector(d[0], d[1], d[2]),
-                    Matrix(A[0][0], A[0][1], A[0][2],
-                           A[1][0], A[1][1], A[1][2],
-                           A[2][0], A[2][1], A[2][2]) );
+                    Matrix(V[0][0], V[1][0], V[2][0],
+                           V[0][1], V[1][1], V[2][1],
+                           V[0][2], V[1][2], V[2][2]) );
     }
     else
     {

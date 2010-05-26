@@ -163,21 +163,20 @@ void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
             const int nats = ws.nAtoms(i);
         
             Vector *x = ws.coordsArray(i);
-            const Vector *forces = ws.forceArray(i);
-            Velocity3D *vels = ws.velocityArray(i);
-            const double *inv_masses = ws.reciprocalMassArray(i);
+            const Vector *f = ws.forceArray(i);
+            Vector *p = ws.momentaArray(i);
+            const double *m = ws.massArray(i);
 
             for (int j=0; j<nats; ++j)
             {
-                if (inv_masses[j] == 0)
-                    //this is a dummy atom
-                    continue;
-            
-                // v(t + dt/2) = v(t) + (1/2) a(t) dt
-                vels[j] += Velocity3D((0.5*inv_masses[j]*dt) * forces[j]);
+                if (m[j] != 0)
+                {
+                    // v(t + dt/2) = v(t) + (1/2) a(t) dt
+                    p[j] += ((0.5*dt) * f[j]);
 
-                // r(t + dt) = r(t) + v(t + dt/2) dt
-                x[j] += dt * (vels[j].value());
+                    // r(t + dt) = r(t) + v(t + dt/2) dt
+                    x[j] += (dt / m[j]) * p[j];
+                }
             }
         }
 
@@ -189,19 +188,14 @@ void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
         {
             const int nats = ws.nAtoms(i);
         
-            const Vector *forces = ws.forceArray(i);
-            Velocity3D *vels = ws.velocityArray(i);
-            const double *inv_masses = ws.reciprocalMassArray(i);
+            const Vector *f = ws.forceArray(i);
+            Vector *p = ws.momentaArray(i);
+            const double *m = ws.massArray(i);
 
             for (int j=0; j<nats; ++j)
             {
-                if (inv_masses[j] == 0)
-                    continue;
-            
-                // a(t + dt) = (1/m) f( r(t+dt) )
-
-                // v(t + dt) = v(t + dt/2) + (1/2) a(t + dt) dt
-                vels[j] += Velocity3D( (0.5 * dt * inv_masses[j]) * forces[j] );
+                if (m[j] != 0)
+                    p[j] += ((0.5*dt) * f[j]);
             }
         }
         

@@ -135,6 +135,27 @@ bool DLMRigidBody::isTimeReversible() const
     return true;
 }
 
+static Matrix getRX(double phi)
+{
+    return Matrix( 1, 0, 0,
+                   0, cos(phi), -sin(phi),
+                   0, sin(phi), cos(phi) );
+}
+
+static Matrix getRY(double phi)
+{
+    return Matrix( cos(phi), 0, sin(phi),
+                   0, 1, 0,
+                   -sin(phi), 0, cos(phi) );
+}
+
+static Matrix getRZ(double phi)
+{
+    return Matrix( cos(phi), -sin(phi), 0,
+                   sin(phi), cos(phi), 0,
+                   0, 0, 1 );
+}
+
 /** Integrate using the passed workspace, the energy component 'nrg_component',
     performing 'nmoves' moves using the specified timestep, recording
     statistics of every move if 'record_stats' is true */
@@ -158,7 +179,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
         ws.calculateForces(nrg_component);
         
         Vector *bead_coords = ws.beadCoordsArray();
-        Quaternion *bead_orient = ws.beadOrientationArray();
+        Matrix *bead_orient = ws.beadOrientationArray();
         Vector *bead_lin_momenta = ws.beadLinearMomentaArray();
         Vector *bead_ang_momenta = ws.beadAngularMomentaArray();
         const double *bead_masses = ws.beadMassesArray();
@@ -171,7 +192,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
         for (int i=0; i<nbeads; ++i)
         {
             Vector &x = bead_coords[i];
-            Quaternion &q = bead_orient[i];
+            Matrix &q = bead_orient[i];
             Vector &p = bead_lin_momenta[i];
             Vector &ap = bead_ang_momenta[i];
             double mass = bead_masses[i];
@@ -188,37 +209,66 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
             p += (half_dt * force);
 
             // r(t + dt) = r(t) + v(t + dt/2) dt
-            x += (dt * mass) * p;
+            x += (dt / mass) * p;
             
             //now update the orientation / angular momenta using the DLM algorithm
             ap += (half_dt * torque);
             
             if (not ap.isZero())
             {
-                Quaternion R1( (half_dt * ap[0] / inertia[0])*radian, X );
+                if (inertia[0] != 0)
+                {
+                    //Matrix R1 = Quaternion( (half_dt * ap[0] / inertia[0])*radian, X )
+                    //                .toMatrix();
+                    Matrix R1 = ::getRX(half_dt * ap[0] / inertia[0]);
             
-                ap = R1.toMatrix() * ap;
-                q = q * R1.conjugate();
+                    ap = R1 * ap;
+                    q = q * R1.transpose();
+                }
             
-                Quaternion R2( (half_dt * ap[1] / inertia[1])*radian, Y );
-                           
-                ap = R2.toMatrix() * ap;
-                q = q * R2.conjugate();
+                if (inertia[1] != 0)
+                {
+                    //Matrix R2 = Quaternion( (half_dt * ap[1] / inertia[1])*radian, Y )
+                    //                 .toMatrix();
+                    Matrix R2 = ::getRY(half_dt * ap[1] / inertia[1]);
+                                
+                    ap = R2 * ap;
+                    //q = q * R2.conjugate();
+                    q = q * R2.transpose();
+                }
             
-                Quaternion R3( (dt * ap[2] / inertia[2])*radian, Z );
+                if (inertia[2] != 0)
+                {
+                    //Matrix R3 = Quaternion( (dt * ap[2] / inertia[2])*radian, Z )
+                    //                    .toMatrix();
+                    Matrix R3 = ::getRZ(dt * ap[2] / inertia[2]);
             
-                ap = R3.toMatrix() * ap;
-                q = q * R3.conjugate();
-            
-                Quaternion R4( (half_dt * ap[1] / inertia[1])*radian, Y );
+                    ap = R3 * ap;
+                    //q = q * R3.conjugate();
+                    q = q * R3.transpose();
+                }
                 
-                ap = R4.toMatrix() * ap;
-                q = q * R4.conjugate();
+                if (inertia[1] != 0)
+                {
+                    //Matrix R4 = Quaternion( (half_dt * ap[1] / inertia[1])*radian, Y )
+                    //                    .toMatrix();
+                    Matrix R4 = ::getRY(half_dt * ap[1] / inertia[1]);
+                
+                    ap = R4 * ap;
+                    //q = q * R4.conjugate();
+                    q = q * R4.transpose();
+                }
             
-                Quaternion R5( (half_dt * ap[0] / inertia[0])*radian, X );
-                            
-                ap = R5.toMatrix() * ap;
-                q = q * R5.conjugate();
+                if (inertia[0] != 0)
+                {
+                    //Matrix R5 = Quaternion( (half_dt * ap[0] / inertia[0])*radian, X )
+                    //                    .toMatrix();
+                    Matrix R5 = ::getRX(half_dt * ap[0] / inertia[0]);
+                                  
+                    ap = R5 * ap;
+                    //q = q * R5.conjugate();
+                    q = q * R5.transpose();
+                }
             }
         }
 
@@ -236,6 +286,9 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
         //now need to integrate the momenta
         for (int i=0; i<nbeads; ++i)
         {
+            if (bead_masses[i] == 0)
+                continue;
+        
             Vector &p = bead_lin_momenta[i];
             Vector &ap = bead_ang_momenta[i];
             const Vector &force = bead_forces[i];

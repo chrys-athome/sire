@@ -269,19 +269,19 @@ public:
     int nAtoms(int i) const;
     
     Vector* coordsArray(int i);
-    Velocity3D* velocityArray(int i);
+    Vector* momentaArray(int i);
 
     const Vector* coordsArray(int i) const;
     const Vector* forceArray(int i) const;
-    const Velocity3D* velocityArray(int i) const;
+    const Vector* momentaArray(int i) const;
 
-    const double* reciprocalMassArray(int i) const;
+    const double* massArray(int i) const;
     
     const Vector* constCoordsArray(int i) const;
     const Vector* constForceArray(int i) const;
-    const Velocity3D* constVelocityArray(int i) const;
+    const Vector* constMomentaArray(int i) const;
     
-    const double* constReciprocalMassArray(int i) const;
+    const double* constMassArray(int i) const;
     
     bool calculateForces(const Symbol &nrg_component);
     
@@ -303,15 +303,15 @@ private:
     /** All of the atomic coordinates */
     QVector< QVector<Vector> > atom_coords;
     
-    /** All of the atomic velocities */
-    QVector< QVector<Velocity3D> > atom_velocities;
+    /** All of the atomic momenta */
+    QVector< QVector<Vector> > atom_momenta;
     
     /** All of the forces for molecules that are not 
         fully selected */
     QVector< QVector<Vector> > atom_forces; 
     
-    /** All of the inverse atom masses */
-    QVector< QVector<double> > inv_atom_masses;
+    /** All of the atom masses */
+    QVector< QVector<double> > atom_masses;
     
     /** The generator used to get the initial velocities */
     VelGenPtr vel_generator;
