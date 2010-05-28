@@ -202,8 +202,6 @@ bool MonteCarlo::test(double new_energy, double old_energy,
 
     double x = (new_bias / old_bias) * std::exp( beta*(new_energy - old_energy) );
 
-    qDebug() << x;
-
     if (x > 1 or x > rangenerator.rand())
     {
         ++naccept;

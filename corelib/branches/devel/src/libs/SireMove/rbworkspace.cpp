@@ -157,8 +157,7 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
 
     std::pair<Vector,Matrix> eigs = inertia.diagonalise();
 
-    #warning ARTIFICIALLY SCALED UP INERTIA WHILE TESTING CODE!!!
-    principle_inertia = 50 * eigs.first;
+    principle_inertia = eigs.first;
     
     printPDBLine(0, com);
     printPDBLine(1, com + eigs.second.column0());
@@ -303,6 +302,9 @@ void RBWorkspace::rebuildFromScratch()
     bead_torques.squeeze();
     bead_linear_momenta.squeeze();
     bead_angular_momenta.squeeze();
+    
+    test_torque = QVector<double>(nbeads, 100);
+    test_delta_torque = QVector<double>(nbeads, 0);
 }
 
 /** Return the array of forces of the ith bead. This does not
@@ -418,6 +420,18 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
             //bead_torque = orient.inverse() * bead_torque;
             //printPDBLine(21, bead_torque);
         }
+        
+        bead_forces_array[i] = Vector(0);
+        
+        test_delta_torque[i] += 1;
+        
+        if (test_delta_torque[i] > 50)
+        {
+            test_delta_torque[i] = 0;
+            test_torque[i] *= -1;
+        }
+        
+        bead_torques_array[i] = test_torque[i] * Vector(0,0,1);
     }
     
     return true;
@@ -448,6 +462,8 @@ RBWorkspace::RBWorkspace(const RBWorkspace &other)
               bead_torques(other.bead_torques),
               bead_masses(other.bead_masses),
               bead_inertia(other.bead_inertia),
+              test_torque(other.test_torque),
+              test_delta_torque(other.test_delta_torque),
               vel_generator(other.vel_generator)
 {}
 
@@ -472,6 +488,8 @@ RBWorkspace& RBWorkspace::operator=(const RBWorkspace &other)
         bead_torques = other.bead_torques;
         bead_masses = other.bead_masses;
         bead_inertia = other.bead_inertia;
+        test_torque = other.test_torque;
+        test_delta_torque = other.test_delta_torque;
         vel_generator = other.vel_generator;
     }
     

@@ -151,6 +151,9 @@ private:
     /** The diagonals of the inertia tensor for each bead */
     QVector<Vector> bead_inertia;
     
+    QVector<double> test_torque;
+    QVector<double> test_delta_torque;
+    
     /** The generator used to get the initial 
         linear and angular velocities */
     VelGenPtr vel_generator;

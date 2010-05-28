@@ -84,7 +84,7 @@ print "(took %d ms)" % t.elapsed()
 
 mdmove = MolecularDynamics(salt, DLMRigidBody())
 
-mdmove.setTimeStep(0.1*femtosecond)
+mdmove.setTimeStep(1*femtosecond)
 
 print system.property("space")
 
@@ -96,7 +96,7 @@ PDB().write(system.molecules(), "test%0004d.pdb" % 0)
 
 for i in range(1,250):
     print "\nmove %d" % (i)
-    mdmove.move(system, 600)
+    mdmove.move(system, 1)
 
     print system.energy()
     print mdmove.kineticEnergy()

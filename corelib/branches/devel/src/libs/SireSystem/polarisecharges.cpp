@@ -672,9 +672,9 @@ void PolariseCharges::setSystem(const System &system)
         {
             Molecule new_mol(it.value());
                                                                                                                                          
-            if (new_mol.hasProperty(charges_property))
+            if (new_mol.hasProperty(induced_charges_property))
             {
-                const Property &p = new_mol.property(charges_property);
+                const Property &p = new_mol.property(induced_charges_property);
             
                 if (p.isA<AtomCharges>())
                 {

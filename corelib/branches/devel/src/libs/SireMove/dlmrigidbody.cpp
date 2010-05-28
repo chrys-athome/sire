@@ -216,11 +216,13 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
             
             if (not ap.isZero())
             {
+                Vector old_ap = ap;
+            
                 if (inertia[0] != 0)
                 {
                     //Matrix R1 = Quaternion( (half_dt * ap[0] / inertia[0])*radian, X )
                     //                .toMatrix();
-                    Matrix R1 = ::getRX(half_dt * ap[0] / inertia[0]);
+                    Matrix R1 = ::getRX(half_dt * old_ap[0] / inertia[0]);
             
                     ap = R1 * ap;
                     q = q * R1.transpose();
@@ -230,7 +232,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
                 {
                     //Matrix R2 = Quaternion( (half_dt * ap[1] / inertia[1])*radian, Y )
                     //                 .toMatrix();
-                    Matrix R2 = ::getRY(half_dt * ap[1] / inertia[1]);
+                    Matrix R2 = ::getRY(half_dt * old_ap[1] / inertia[1]);
                                 
                     ap = R2 * ap;
                     //q = q * R2.conjugate();
@@ -241,7 +243,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
                 {
                     //Matrix R3 = Quaternion( (dt * ap[2] / inertia[2])*radian, Z )
                     //                    .toMatrix();
-                    Matrix R3 = ::getRZ(dt * ap[2] / inertia[2]);
+                    Matrix R3 = ::getRZ(dt * old_ap[2] / inertia[2]);
             
                     ap = R3 * ap;
                     //q = q * R3.conjugate();
@@ -252,7 +254,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
                 {
                     //Matrix R4 = Quaternion( (half_dt * ap[1] / inertia[1])*radian, Y )
                     //                    .toMatrix();
-                    Matrix R4 = ::getRY(half_dt * ap[1] / inertia[1]);
+                    Matrix R4 = ::getRY(half_dt * old_ap[1] / inertia[1]);
                 
                     ap = R4 * ap;
                     //q = q * R4.conjugate();
@@ -263,7 +265,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
                 {
                     //Matrix R5 = Quaternion( (half_dt * ap[0] / inertia[0])*radian, X )
                     //                    .toMatrix();
-                    Matrix R5 = ::getRX(half_dt * ap[0] / inertia[0]);
+                    Matrix R5 = ::getRX(half_dt * old_ap[0] / inertia[0]);
                                   
                     ap = R5 * ap;
                     //q = q * R5.conjugate();
