@@ -25,7 +25,7 @@ SireMM::StretchStretchComponent __copy__(const SireMM::StretchStretchComponent &
 void register_StretchStretchComponent_class(){
 
     { //::SireMM::StretchStretchComponent
-        typedef bp::class_< SireMM::StretchStretchComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > StretchStretchComponent_exposer_t;
+        typedef bp::class_< SireMM::StretchStretchComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > StretchStretchComponent_exposer_t;
         StretchStretchComponent_exposer_t StretchStretchComponent_exposer = StretchStretchComponent_exposer_t( "StretchStretchComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope StretchStretchComponent_scope( StretchStretchComponent_exposer );
         StretchStretchComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );

@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireBase/errors.h"
+
+#include "SireError/errors.h"
+
 #include "SireFF/potentialtable.h"
 
 #include "SireFF/probe.h"
@@ -21,6 +25,8 @@ namespace bp = boost::python;
 #include "SireMol/atomcharges.h"
 
 #include "SireMol/atomcoords.h"
+
+#include "SireMol/atomenergies.h"
 
 #include "SireMol/atompolarisabilities.h"
 
@@ -102,6 +108,16 @@ void register_PolariseCharges_class(){
                 "probe"
                 , probe_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireSystem::PolariseCharges::selfEnergyFF
+        
+            typedef ::SireSystem::PolariseChargesFF ( ::SireSystem::PolariseCharges::*selfEnergyFF_function_type )(  ) const;
+            selfEnergyFF_function_type selfEnergyFF_function_value( &::SireSystem::PolariseCharges::selfEnergyFF );
+            
+            PolariseCharges_exposer.def( 
+                "selfEnergyFF"
+                , selfEnergyFF_function_value );
         
         }
         { //::SireSystem::PolariseCharges::toString

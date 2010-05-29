@@ -25,7 +25,7 @@ SireMM::BendBendComponent __copy__(const SireMM::BendBendComponent &other){ retu
 void register_BendBendComponent_class(){
 
     { //::SireMM::BendBendComponent
-        typedef bp::class_< SireMM::BendBendComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > BendBendComponent_exposer_t;
+        typedef bp::class_< SireMM::BendBendComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > BendBendComponent_exposer_t;
         BendBendComponent_exposer_t BendBendComponent_exposer = BendBendComponent_exposer_t( "BendBendComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope BendBendComponent_scope( BendBendComponent_exposer );
         BendBendComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );

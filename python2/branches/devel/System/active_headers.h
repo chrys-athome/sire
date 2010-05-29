@@ -21,6 +21,7 @@
 #include "monitoridx.h"
 #include "monitormonitor.h"
 #include "monitorname.h"
+#include "monitorproperty.h"
 #include "perturbationconstraint.h"
 #include "polarisecharges.h"
 #include "rdfmonitor.h"

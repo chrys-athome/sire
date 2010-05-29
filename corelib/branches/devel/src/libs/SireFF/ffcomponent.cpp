@@ -150,3 +150,76 @@ void FFComponent::changeEnergy(FF &ff, const Symbol &symbol, double delta) const
 {
     ff.changeComponent(symbol, delta);
 }
+
+//////
+////// Implementation of SingleComponent
+//////
+
+static const RegisterMetaType<SingleComponent> r_single;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const SingleComponent &single)
+{
+    writeHeader(ds, r_single, 1);
+    ds << static_cast<const FFComponent&>(single);
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, SingleComponent &single)
+{
+    VersionID v = readHeader(ds, r_single);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(single);
+    }
+    else
+        throw version_error(v, "1", r_single, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+SingleComponent::SingleComponent(const FFName &ffname)
+                : FFComponent(ffname, QLatin1String("total"))
+{}
+
+/** Construct using the passed forcefield name and suffix */
+SingleComponent::SingleComponent(const FFName &ffname, const QString &suffix)
+                 : FFComponent(ffname, QString("total_{%1}").arg(suffix))
+{}
+
+/** Construct from a symbol
+
+    \throw SireError::incompatible_error
+*/
+SingleComponent::SingleComponent(const SireCAS::Symbol &symbol)
+                 : FFComponent(symbol, QLatin1String("total"))
+{}
+
+/** Copy constructor */  
+SingleComponent::SingleComponent(const SingleComponent &other)
+                 : FFComponent(other)
+{}
+  
+/** Destructor */  
+SingleComponent::~SingleComponent()
+{}
+
+/** Set the energy in the forcefield 'ff' to equal to the passed SingleEnergy */
+void SingleComponent::setEnergy(FF &ff, const SingleEnergy &nrg) const
+{
+    FFComponent::setEnergy(ff, this->total(), nrg);
+}
+
+/** Change the energy in the forcefield 'ff' by 'delta' */
+void SingleComponent::changeEnergy(FF &ff, const SingleEnergy &delta) const
+{
+    FFComponent::changeEnergy(ff, this->total(), delta);
+}
+
+const char* SingleComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SingleComponent>() );
+}

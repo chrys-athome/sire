@@ -25,7 +25,7 @@ SireMM::AngleComponent __copy__(const SireMM::AngleComponent &other){ return Sir
 void register_AngleComponent_class(){
 
     { //::SireMM::AngleComponent
-        typedef bp::class_< SireMM::AngleComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > AngleComponent_exposer_t;
+        typedef bp::class_< SireMM::AngleComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > AngleComponent_exposer_t;
         AngleComponent_exposer_t AngleComponent_exposer = AngleComponent_exposer_t( "AngleComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope AngleComponent_scope( AngleComponent_exposer );
         AngleComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );

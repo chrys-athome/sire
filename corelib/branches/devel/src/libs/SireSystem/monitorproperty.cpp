@@ -26,7 +26,19 @@
   *
 \*********************************************/
 
+#include <QFile>
+#include <QTextStream>
+
 #include "monitorproperty.h"
+
+#include "SireMol/moleculegroup.h"
+
+#include "SireFF/ff.h"
+
+#include "system.h"
+
+#include "SireError/errors.h"
+#include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -49,14 +61,13 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
     
     switch( monprop.what_is_monitored )
     {
-    case:
-        SYSTEM_PROPERTY:
+        case MonitorProperty::SYSTEM_PROPERTY:
             sds << monprop.prop << monprop.props;
             break;
-        FORCEFIELD_PROPERTY:
+        case MonitorProperty::FORCEFIELD_PROPERTY:
             sds << monprop.prop << monprop.ffid << monprop.props;
             break;
-        MOLECULE_PROPERTY:
+        case MonitorProperty::MOLECULE_PROPERTY:
             sds << monprop.prop << monprop.mgid << monprop.molprops;
             break;
     }
@@ -80,13 +91,13 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
         
         switch(mon.what_is_monitored)
         {
-        case SYSTEM_PROPERTY:
+        case MonitorProperty::SYSTEM_PROPERTY:
             sds >> mon.prop >> mon.props;
             break;
-        case FORCEFIELD_PROPERTY:
+        case MonitorProperty::FORCEFIELD_PROPERTY:
             sds >> mon.prop >> mon.ffid >> mon.props;
             break;
-        case MOLECULE_PROPERTY:
+        case MonitorProperty::MOLECULE_PROPERTY:
             sds >> mon.prop >> mon.mgid >> mon.molprops;
             break;
         }
@@ -244,7 +255,7 @@ QString MonitorProperty::toString() const
 
 /** Return the ID of the molecule group(s) whose molecules
     are being monitored */
-const MGID& MonitorProperty::moleculeGroup() const
+const MGID& MonitorProperty::mgID() const
 {
     if (not monitoringMoleculeProperty())
         throw SireError::incompatible_error( QObject::tr(
@@ -256,7 +267,7 @@ const MGID& MonitorProperty::moleculeGroup() const
 }
 
 /** Return the ID of the forcefield(s) that are being monitored */
-const FFID& MonitorProperty::forceField() const
+const FFID& MonitorProperty::ffID() const
 {
     if (not monitoringForceFieldProperty())
         throw SireError::incompatible_error( QObject::tr(
@@ -390,11 +401,9 @@ void MonitorProperty::monitor(const Molecules &molecules)
     
     if (not molprops.isEmpty())
         nsteps = molprops.constBegin()->count();
-
-    const Molecules &mols = system[mgnum].molecules();
     
-    for (Molecules::const_iterator it = mols.constBegin();
-         it != mols.constEnd();
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
          ++it)
     {
         if (nsteps > 0)

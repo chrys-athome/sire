@@ -23,10 +23,12 @@ set ( PYPP_SOURCES
        MonitorIdx.pypp.cpp
        MonitorMonitor.pypp.cpp
        MonitorName.pypp.cpp
+       MonitorProperty.pypp.cpp
        NullConstraint.pypp.cpp
        NullMonitor.pypp.cpp
        PerturbationConstraint.pypp.cpp
        PolariseCharges.pypp.cpp
+       PolariseChargesFF.pypp.cpp
        PropertyConstraint.pypp.cpp
        RDF.pypp.cpp
        RDFMonitor.pypp.cpp

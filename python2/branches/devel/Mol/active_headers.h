@@ -9,6 +9,7 @@
 #include "atomcoords.h"
 #include "atomeditor.h"
 #include "atomelements.h"
+#include "atomenergies.h"
 #include "atomforces.h"
 #include "atomid.h"
 #include "atomidentifier.h"

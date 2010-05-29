@@ -25,7 +25,7 @@ SireMM::ImproperComponent __copy__(const SireMM::ImproperComponent &other){ retu
 void register_ImproperComponent_class(){
 
     { //::SireMM::ImproperComponent
-        typedef bp::class_< SireMM::ImproperComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > ImproperComponent_exposer_t;
+        typedef bp::class_< SireMM::ImproperComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > ImproperComponent_exposer_t;
         ImproperComponent_exposer_t ImproperComponent_exposer = ImproperComponent_exposer_t( "ImproperComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope ImproperComponent_scope( ImproperComponent_exposer );
         ImproperComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );

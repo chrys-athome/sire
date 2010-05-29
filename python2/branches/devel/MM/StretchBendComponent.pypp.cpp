@@ -25,7 +25,7 @@ SireMM::StretchBendComponent __copy__(const SireMM::StretchBendComponent &other)
 void register_StretchBendComponent_class(){
 
     { //::SireMM::StretchBendComponent
-        typedef bp::class_< SireMM::StretchBendComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > StretchBendComponent_exposer_t;
+        typedef bp::class_< SireMM::StretchBendComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > StretchBendComponent_exposer_t;
         StretchBendComponent_exposer_t StretchBendComponent_exposer = StretchBendComponent_exposer_t( "StretchBendComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope StretchBendComponent_scope( StretchBendComponent_exposer );
         StretchBendComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );

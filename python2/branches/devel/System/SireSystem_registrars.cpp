@@ -12,6 +12,7 @@
 #include "monitoridx.h"
 #include "constraints.h"
 #include "anglecomponent.h"
+#include "monitorproperty.h"
 #include "monitorname.h"
 #include "sysidx.h"
 #include "monitorcomponent.h"
@@ -42,11 +43,13 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::RDF >();
     ObjectRegistry::registerConverterFor< SireSystem::RDFMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::PolariseCharges >();
+    ObjectRegistry::registerConverterFor< SireSystem::PolariseChargesFF >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::SpaceWrapper >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorIdx >();
     ObjectRegistry::registerConverterFor< SireSystem::Constraints >();
     ObjectRegistry::registerConverterFor< SireSystem::AngleComponent >();
+    ObjectRegistry::registerConverterFor< SireSystem::MonitorProperty >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorName >();
     ObjectRegistry::registerConverterFor< SireSystem::SysIdx >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorComponent >();

@@ -28,6 +28,8 @@ namespace bp = boost::python;
 
 #include "SireFF/probe.h"
 
+#include "SireMol/atomcoords.h"
+
 #include "SireMol/errors.h"
 
 #include "SireMol/molecule.h"

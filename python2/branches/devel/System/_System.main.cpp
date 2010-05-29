@@ -53,6 +53,8 @@
 
 #include "MonitorName.pypp.hpp"
 
+#include "MonitorProperty.pypp.hpp"
+
 #include "NullConstraint.pypp.hpp"
 
 #include "NullMonitor.pypp.hpp"
@@ -60,6 +62,8 @@
 #include "PerturbationConstraint.pypp.hpp"
 
 #include "PolariseCharges.pypp.hpp"
+
+#include "PolariseChargesFF.pypp.hpp"
 
 #include "PropertyConstraint.pypp.hpp"
 
@@ -156,6 +160,8 @@ BOOST_PYTHON_MODULE(_System){
 
     register_MonitorName_class();
 
+    register_MonitorProperty_class();
+
     register_NullConstraint_class();
 
     register_NullMonitor_class();
@@ -163,6 +169,8 @@ BOOST_PYTHON_MODULE(_System){
     register_PerturbationConstraint_class();
 
     register_PolariseCharges_class();
+
+    register_PolariseChargesFF_class();
 
     register_PropertyConstraint_class();
 

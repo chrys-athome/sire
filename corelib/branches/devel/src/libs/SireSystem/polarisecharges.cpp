@@ -35,6 +35,7 @@
 #include "SireMol/connectivity.h"
 #include "SireMol/atomcoords.h"
 #include "SireMol/atomcharges.h"
+#include "SireMol/atomenergies.h"
 #include "SireMol/atompolarisabilities.h"
 #include "SireMol/molecule.h"
 #include "SireMol/moleditor.h"
@@ -50,6 +51,9 @@
 
 #include "SireUnits/units.h"
 #include "SireUnits/convert.h"
+
+#include "SireBase/errors.h"
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -84,7 +88,12 @@ namespace SireSystem
                                 const PropertyName &polarise_property);
             
             PolariseChargesData(const PolariseChargesData &other)
-                  : QSharedData()
+                  : QSharedData(),
+                    xx_matricies(other.xx_matricies),
+                    inv_xx_matricies(other.inv_xx_matricies),
+                    connectivity(other.connectivity),
+                    selected_atoms(other.selected_atoms),
+                    molversion(other.molversion)
             {}
             
             ~PolariseChargesData()
@@ -94,11 +103,18 @@ namespace SireSystem
             {
                 if (this != &other)
                 {
-                    
+                    xx_matricies = other.xx_matricies;
+                    inv_xx_matricies = other.inv_xx_matricies;
+                    connectivity = other.connectivity;
+                    selected_atoms = other.selected_atoms;
+                    molversion = other.molversion;
                 }
                 
                 return *this;
             }
+            
+            /** The matrix holding (1/alpha) * (X X^T) */
+            QVector<NMatrix> xx_matricies;
             
             /** The matrix holding alpha * (X X^T)**-1 */
             QVector<NMatrix> inv_xx_matricies;
@@ -124,7 +140,7 @@ static void calculateAtomMatrix(AtomIdx atomidx, const AtomCoords &coords,
                                 const Connectivity &connectivity,
                                 const MoleculeInfoData &molinfo,
                                 QVarLengthArray<Vector,10> &X,
-                                NMatrix &inv_xx)
+                                NMatrix &xx, NMatrix &inv_xx)
 {
     //get the atoms bonded to this atom
     const QSet<AtomIdx> &bonded_atoms = connectivity.connectionsTo(atomidx);
@@ -153,24 +169,24 @@ static void calculateAtomMatrix(AtomIdx atomidx, const AtomCoords &coords,
     }
     
     //now construct (1/alpha) ( X X^T )                        
-    inv_xx = NMatrix(nbonded, nbonded);
+    xx = NMatrix(nbonded, nbonded);
 
     const double one_over_alpha = 1 / alpha;
 
     for (int i=0; i<nbonded; ++i)
     {
-        inv_xx(i,i) = one_over_alpha * Vector::dot(X[i], X[i]);
+        xx(i,i) = one_over_alpha * Vector::dot(X[i], X[i]);
     
         for (int j=i+1; j<nbonded; ++j)
         {
             const double i_dot_j = Vector::dot(X[i], X[j]);
-            inv_xx(i,j) = i_dot_j;
-            inv_xx(j,i) = i_dot_j;
+            xx(i,j) = i_dot_j;
+            xx(j,i) = i_dot_j;
         }
     }
 
     //now construct alpha * ( X X^T )**-1
-    inv_xx = inv_xx.inverse();
+    inv_xx = xx.inverse();
 }
 
 PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
@@ -190,7 +206,9 @@ PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
     const AtomPolarisabilities &polarise = molview.data().property(polarise_property)
                                                          .asA<AtomPolarisabilities>();
 
+    xx_matricies = QVector<NMatrix>(coords.nAtoms());
     inv_xx_matricies = QVector<NMatrix>(coords.nAtoms());
+    xx_matricies.squeeze();
     inv_xx_matricies.squeeze();
 
     //this is the matrix of r vectors
@@ -204,7 +222,8 @@ PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
         for (AtomIdx i(0); i<nats; ++i)
         {
             calculateAtomMatrix(i, coords, polarise[molinfo.cgAtomIdx(i)],
-                                connectivity, molinfo, X, inv_xx_matricies[i]);
+                                connectivity, molinfo, X, 
+                                xx_matricies[i], inv_xx_matricies[i]);
         }
     }
     else
@@ -229,6 +248,7 @@ PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
                         
                         calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
                                             connectivity, molinfo, X, 
+                                            xx_matricies[atomidx],
                                             inv_xx_matricies[atomidx]);
                     }
                 }
@@ -242,6 +262,7 @@ PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
 
                         calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
                                             connectivity, molinfo, X, 
+                                            xx_matricies[atomidx],
                                             inv_xx_matricies[atomidx]);
                     }
                 }
@@ -261,6 +282,7 @@ PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
                         
                         calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
                                             connectivity, molinfo, X, 
+                                            xx_matricies[atomidx],
                                             inv_xx_matricies[atomidx]);
                     }
                 }
@@ -274,6 +296,7 @@ PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
 
                         calculateAtomMatrix(atomidx, coords, polarise[cgatomidx],
                                             connectivity, molinfo, X, 
+                                            xx_matricies[atomidx],
                                             inv_xx_matricies[atomidx]);
                     }
                 }
@@ -459,10 +482,12 @@ const CoulombProbe& PolariseCharges::probe() const
 
 static void calculateCharges(AtomIdx atomidx,
                              const MolPotentialTable &moltable,
+                             const NMatrix &inv_alpha_XX,
                              const NMatrix &alpha_inv_XX,
                              const Connectivity &connectivity,
                              const MoleculeInfoData &molinfo,
-                             AtomCharges &induced_charges)
+                             AtomCharges &induced_charges,
+                             AtomEnergies &selfpol_nrgs)
 {
     if (alpha_inv_XX.nRows() == 0)
         //this atom has a zero polarisability, or no bonded atoms
@@ -497,8 +522,14 @@ static void calculateCharges(AtomIdx atomidx,
     
     NVector delta_q = alpha_inv_XX * delta_phi;
     
+    //calculate the self energy - this is (1 / 2 alpha) p^T X X^T p
+    MolarEnergy self_nrg( 0.5 * delta_q.dot( inv_alpha_XX * delta_q ) );
+    
     induced_charges.set(cgatomidx, 
                         induced_charges[cgatomidx] + Charge( -(delta_q.sum()) ) );
+
+    selfpol_nrgs.set(cgatomidx, self_nrg);
+
     {
         int i = 0;
         
@@ -513,16 +544,18 @@ static void calculateCharges(AtomIdx atomidx,
     }
 }
 
-static AtomCharges calculateCharges(const MoleculeView &molview,
-                                    const PolariseChargesData &poldata,
-                                    const MolPotentialTable &moltable)
+static QPair<AtomCharges,AtomEnergies> 
+calculateCharges(const MoleculeView &molview, const PolariseChargesData &poldata,
+                 const MolPotentialTable &moltable)
 {
     const AtomSelection &selected_atoms = poldata.selected_atoms;
+    const NMatrix *xx_mat_array = poldata.xx_matricies.constData();
     const NMatrix *inv_xx_mat_array = poldata.inv_xx_matricies.constData();
     const MoleculeInfoData &molinfo = molview.data().info();
     const Connectivity &connectivity = poldata.connectivity;
     
     AtomCharges induced_charges(molinfo);
+    AtomEnergies selfpol_nrgs(molinfo);
     
     if (selected_atoms.isEmpty())
     {
@@ -532,8 +565,11 @@ static AtomCharges calculateCharges(const MoleculeView &molview,
         
         for (AtomIdx i(0); i<nats; ++i)
         {
-            calculateCharges(i, moltable, inv_xx_mat_array[i],
-                             connectivity, molinfo, induced_charges);
+            calculateCharges(i, moltable, xx_mat_array[i], 
+                             inv_xx_mat_array[i], connectivity, 
+                             molinfo, induced_charges, selfpol_nrgs);
+                                               
+            
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
@@ -547,8 +583,11 @@ static AtomCharges calculateCharges(const MoleculeView &molview,
                     CGAtomIdx cgatomidx(i,j);
                     AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
                     
-                    calculateCharges(atomidx, moltable, inv_xx_mat_array[atomidx],
-                                     connectivity, molinfo, induced_charges);
+                    calculateCharges(atomidx, moltable, 
+                                     xx_mat_array[atomidx],
+                                     inv_xx_mat_array[atomidx],
+                                     connectivity, molinfo, induced_charges,
+                                     selfpol_nrgs);
                 }
             }
             else
@@ -558,8 +597,11 @@ static AtomCharges calculateCharges(const MoleculeView &molview,
                     CGAtomIdx cgatomidx(i,j);
                     AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
                     
-                    calculateCharges(atomidx, moltable, inv_xx_mat_array[atomidx],
-                                     connectivity, molinfo, induced_charges);
+                    calculateCharges(atomidx, moltable, 
+                                     xx_mat_array[atomidx],
+                                     inv_xx_mat_array[atomidx],
+                                     connectivity, molinfo, induced_charges,
+                                     selfpol_nrgs);
                 }
             }
         }
@@ -575,8 +617,11 @@ static AtomCharges calculateCharges(const MoleculeView &molview,
                     CGAtomIdx cgatomidx(i,j);
                     AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
                     
-                    calculateCharges(atomidx, moltable, inv_xx_mat_array[atomidx],
-                                     connectivity, molinfo, induced_charges);
+                    calculateCharges(atomidx, moltable, 
+                                     xx_mat_array[atomidx],
+                                     inv_xx_mat_array[atomidx],
+                                     connectivity, molinfo, induced_charges,
+                                     selfpol_nrgs);
                 }
             }
             else
@@ -586,14 +631,17 @@ static AtomCharges calculateCharges(const MoleculeView &molview,
                     CGAtomIdx cgatomidx(i,j);
                     AtomIdx atomidx = molinfo.atomIdx(cgatomidx);
                     
-                    calculateCharges(atomidx, moltable, inv_xx_mat_array[atomidx],
-                                     connectivity, molinfo, induced_charges);
+                    calculateCharges(atomidx, moltable, 
+                                     xx_mat_array[atomidx],
+                                     inv_xx_mat_array[atomidx],
+                                     connectivity, molinfo, induced_charges,
+                                     selfpol_nrgs);
                 }
             }
         }
     }
 
-    return induced_charges;
+    return QPair<AtomCharges,AtomEnergies>(induced_charges, selfpol_nrgs);
 }
 
 /** Set the baseline system for the constraint - this is 
@@ -627,6 +675,7 @@ void PolariseCharges::setSystem(const System &system)
     const PropertyName induced_charges_property = map["induced_charge"];
     const PropertyName fixed_charges_property = map["fixed_charge"];
     const PropertyName charges_property = map["charge"];
+    const PropertyName energies_property = map["self_polnrg"];
 
     //now calculate the potential on each molecule
     PotentialTable potentials(this->moleculeGroup());
@@ -665,8 +714,12 @@ void PolariseCharges::setSystem(const System &system)
         
         const MolPotentialTable &moltable = potentials.getTable(it.key());
         
-        AtomCharges new_charges = calculateCharges(it.value(), *(it2.value().constData()),
+        QPair<AtomCharges,AtomEnergies> result 
+                                = calculateCharges(it.value(), *(it2.value().constData()),
                                                    moltable);
+
+        const AtomCharges &new_charges = result.first;
+        const AtomEnergies &selfpol_nrgs = result.second;
         
         if (not new_charges.isEmpty())
         {
@@ -703,12 +756,14 @@ void PolariseCharges::setSystem(const System &system)
                 new_mol = new_mol.edit()
                                  .setProperty(induced_charges_property, new_charges)
                                  .setProperty(charges_property, AtomCharges(charges))
+                                 .setProperty(energies_property, selfpol_nrgs)
                                  .commit();
             }
             else
             {
                 new_mol = new_mol.edit()
                                  .setProperty(induced_charges_property, new_charges)
+                                 .setProperty(energies_property, selfpol_nrgs)
                                  .commit();
             }
         
@@ -774,4 +829,343 @@ bool PolariseCharges::fullApply(Delta &delta)
 bool PolariseCharges::deltaApply(Delta &delta, quint32 last_subversion)
 {
     return this->fullApply(delta);
+}
+
+/** Return the forcefield that is used to calculate the self-energy of
+    polarising the charges. This must be added to any system to which
+    this constraint is applied, as maintaining the constraint
+    (by polarising the charges) costs energy, which must be part
+    of the system Hamiltonian */
+PolariseChargesFF PolariseCharges::selfEnergyFF() const
+{
+    return PolariseChargesFF(*this);
+}
+
+/////////////
+///////////// Implementation of PolariseChargesFF
+/////////////
+
+static const RegisterMetaType<PolariseChargesFF> r_polchgff;
+
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
+                                          const PolariseChargesFF &polchgff)
+{
+    writeHeader(ds, r_polchgff, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << polchgff.energy_property << static_cast<const G1FF&>(polchgff);
+    
+    return ds;
+}
+
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
+                                          PolariseChargesFF &polchgff)
+{
+    VersionID v = readHeader(ds, r_polchgff);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> polchgff.energy_property >> static_cast<G1FF&>(polchgff);
+
+        polchgff.molnrg = QHash<MolNum,MolarEnergy>();
+        
+        polchgff._pvt_updateName();
+    }
+    else
+        throw version_error(v, "1", r_polchgff, CODELOC);
+        
+    return ds;
+}
+
+/** Null constructor */
+PolariseChargesFF::PolariseChargesFF() : ConcreteProperty<PolariseChargesFF,G1FF>(true)
+{
+    this->_pvt_updateName();
+}
+
+/** Construct to calculate the self energy of the molecules affected
+    by the passed constraint - note that this forcefield won't notice
+    if molecules are added or removed from the constraint, so you must
+    make sure that you add or remove molecules from this forcefield whenever
+    you add or remove molecules from this constraint */
+PolariseChargesFF::PolariseChargesFF(const PolariseCharges &constraint)
+                  : ConcreteProperty<PolariseChargesFF,G1FF>(true)
+{
+    this->_pvt_updateName();
+    energy_property = constraint.propertyMap()["self_polnrg"];
+    this->add( constraint.moleculeGroup() );
+}
+
+/** Construct to calculate the self energy of the molecules affected
+    by the passed constraint - note that this forcefield won't notice
+    if molecules are added or removed from the constraint, so you must
+    make sure that you add or remove molecules from this forcefield whenever
+    you add or remove molecules from this constraint */
+PolariseChargesFF::PolariseChargesFF(const QString &name, 
+                                     const PolariseCharges &constraint)
+                  : ConcreteProperty<PolariseChargesFF,G1FF>(true)
+{
+    FF::setName(name);
+    energy_property = constraint.propertyMap()["self_polnrg"];
+    this->add( constraint.moleculeGroup() );
+}
+
+/** Copy constructor */
+PolariseChargesFF::PolariseChargesFF(const PolariseChargesFF &other)
+                  : ConcreteProperty<PolariseChargesFF,G1FF>(other),
+                    ffcomponent(other.ffcomponent),
+                    energy_property(other.energy_property),
+                    molnrg(other.molnrg)
+{}
+
+/** Destructor */
+PolariseChargesFF::~PolariseChargesFF()
+{}
+
+const char* PolariseChargesFF::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<PolariseChargesFF>() );
+}
+
+/** Copy assignment operator */
+PolariseChargesFF& PolariseChargesFF::operator=(const PolariseChargesFF &other)
+{
+    if (this != &other)
+    {
+        G1FF::operator=(other);
+        ffcomponent = other.ffcomponent;
+        energy_property = other.energy_property;
+        molnrg = other.molnrg;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool PolariseChargesFF::operator==(const PolariseChargesFF &other) const
+{
+    return this == &other or
+           (energy_property == other.energy_property and
+            G1FF::operator==(other));
+}
+
+/** Comparison operator */
+bool PolariseChargesFF::operator!=(const PolariseChargesFF &other) const
+{
+    return not PolariseChargesFF::operator==(other);
+}
+
+PolariseChargesFF* PolariseChargesFF::clone() const
+{
+    return new PolariseChargesFF(*this);
+}
+
+/** Return the components of this forcefield */
+const SingleComponent& PolariseChargesFF::components() const
+{
+    return ffcomponent;
+}
+
+/** You cannot set any properties of this forcefield
+
+    \throw SireError::incompatible_error
+*/
+bool PolariseChargesFF::setProperty(const QString &name, const Property &property)
+{
+    throw SireError::incompatible_error( QObject::tr(
+                "The PolariseChargesFF forcefield cannot have any properties "
+                "set, so you cannot set the property \"%1\" to the "
+                "value %2.")
+                    .arg(name, property.toString()), CODELOC );
+                    
+    return false;
+}
+
+/** This forcefield doesn't contain any properties */
+bool PolariseChargesFF::containsProperty(const QString &name) const
+{
+    return false;
+}
+
+Q_GLOBAL_STATIC( Properties, nullProperties );
+
+/** This forcefield doesn't contain any properties */
+const Properties& PolariseChargesFF::properties() const
+{
+    return *(nullProperties());
+}
+
+/** This forcefield doesn't contain any properties 
+
+    \throw SireBase::missing_property
+*/
+const Property& PolariseChargesFF::property(const QString &name) const
+{
+    throw SireBase::missing_property( QObject::tr(
+            "The PolariseChargesFF does not contain any properties, so "
+            "it definitely doesn't contain the property \"%1\".")
+                .arg(name), CODELOC );
+                
+    return Property::null();
+}
+
+/** Tell the forcefield that the energy must now be recalculated
+    from scratch */
+void PolariseChargesFF::mustNowRecalculateFromScratch()
+{
+    molnrg.clear();
+}
+
+/** Return the components of this forcefield */
+const SingleComponent& PolariseChargesFF::_pvt_components() const
+{
+    return ffcomponent;
+}
+
+/** Calculate the energy of this forcefield */
+void PolariseChargesFF::recalculateEnergy()
+{
+    MolarEnergy nrg(0);
+
+    //loop over all of the molecules in this forcefield
+    Molecules mols = this->molecules();
+    
+    for (Molecules::const_iterator it = mols.constBegin();
+         it != mols.constEnd();
+         ++it)
+    {
+        QHash<MolNum,MolarEnergy>::const_iterator it2 = molnrg.constFind(it.key());
+        
+        if (it2 != molnrg.constEnd())
+        {
+            nrg += it2.value();
+        }
+        else
+        {
+            //need to calculate this energy
+            const AtomEnergies &selfpol = it.value().data()
+                                            .property(energy_property)
+                                            .asA<AtomEnergies>();
+                                            
+            if (it->selectedAll())
+            {
+                const MolarEnergy *nrgs_array = selfpol.array().constValueData();
+                int nats = selfpol.nAtoms();
+                
+                MolarEnergy this_molnrg(0);
+                
+                for (int i=0; i<nats; ++i)
+                {
+                    this_molnrg += nrgs_array[i];
+                }
+                
+                nrg += this_molnrg;
+                molnrg.insert(it.key(), this_molnrg);
+            }
+            else
+            {
+                QVector<MolarEnergy> nrgs = selfpol.toVector(it->selection());
+                
+                const MolarEnergy *nrgs_array = nrgs.constData();
+                int nats = nrgs.count();
+                
+                MolarEnergy this_molnrg(0);
+                
+                for (int i=0; i<nats; ++i)
+                {
+                    this_molnrg += nrgs_array[i];
+                }
+                
+                nrg += this_molnrg;
+                molnrg.insert(it.key(), this_molnrg);
+            }
+        }
+    }
+    
+    this->components().setEnergy(*this, SingleEnergy(nrg));
+}
+
+/** Update from the changed name of this forcefield */
+void PolariseChargesFF::_pvt_updateName()
+{
+    ffcomponent = SingleComponent(this->name());
+    G1FF::_pvt_updateName();
+}
+
+/** Called when a molecule is added to this forcefield */
+void PolariseChargesFF::_pvt_added(const PartialMolecule&, const PropertyMap&)
+{
+    this->mustNowRecalculateFromScratch();
+}
+                
+/** Called when a molecule is remove from this forcefield */
+void PolariseChargesFF::_pvt_removed(const PartialMolecule&)
+{
+    this->mustNowRecalculateFromScratch();
+}
+
+/** Called when a molecule is changed in this forcefield */
+void PolariseChargesFF::_pvt_changed(const Molecule &mol)
+{
+    molnrg.remove(mol.number());
+}
+
+/** Called when a molecule is changed in this forcefield */
+void PolariseChargesFF::_pvt_changed(const QList<Molecule> &mols)
+{
+    if (2*mols.count() > molnrg.count())
+    {
+        molnrg.clear();
+    }
+    else
+    {
+        for (QList<Molecule>::const_iterator it = mols.constBegin();
+             it != mols.constEnd();
+             ++it)
+        {
+            molnrg.remove(it->number());
+        }
+    }
+}
+
+/** Called when all molecules are removed from this forcefield */
+void PolariseChargesFF::_pvt_removedAll()
+{
+    molnrg.clear();
+}
+
+/** Called to test if the passed property map would change the 
+    properties used for the passed molecule - in this case
+    it wouldn't, as the properties are fixed */
+bool PolariseChargesFF::_pvt_wouldChangeProperties(SireMol::MolNum, 
+                                                   const PropertyMap &map) const
+{
+    return false;
+}
+
+/** Called when a molecule is added to this forcefield */
+void PolariseChargesFF::_pvt_added(const ViewsOfMol&, const PropertyMap&)
+{
+    this->mustNowRecalculateFromScratch();
+}
+                        
+/** Called when a molecule is removed from this forcefield */
+void PolariseChargesFF::_pvt_removed(const ViewsOfMol&)
+{
+    this->mustNowRecalculateFromScratch();
+}
+
+/** Called when a molecule is removed from this forcefield */
+void PolariseChargesFF::_pvt_removedAll(const PartialMolecule&)
+{
+    this->mustNowRecalculateFromScratch();
+}
+
+/** Called when a molecule is removed from this forcefield */
+void PolariseChargesFF::_pvt_removedAll(const ViewsOfMol&)
+{
+    this->mustNowRecalculateFromScratch();
 }

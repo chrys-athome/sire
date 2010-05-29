@@ -10,6 +10,7 @@ set ( PYPP_SOURCES
        AtomEditor.pypp.cpp
        AtomEditorBase.pypp.cpp
        AtomElements.pypp.cpp
+       AtomEnergies.pypp.cpp
        AtomFloatProperty.pypp.cpp
        AtomForces.pypp.cpp
        AtomID.pypp.cpp

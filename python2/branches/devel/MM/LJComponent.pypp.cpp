@@ -23,7 +23,7 @@ SireMM::LJComponent __copy__(const SireMM::LJComponent &other){ return SireMM::L
 void register_LJComponent_class(){
 
     { //::SireMM::LJComponent
-        typedef bp::class_< SireMM::LJComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > LJComponent_exposer_t;
+        typedef bp::class_< SireMM::LJComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > LJComponent_exposer_t;
         LJComponent_exposer_t LJComponent_exposer = LJComponent_exposer_t( "LJComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope LJComponent_scope( LJComponent_exposer );
         LJComponent_exposer.def( bp::init< SireFF::FFName const &, QString const & >(( bp::arg("ffname"), bp::arg("suffix") )) );

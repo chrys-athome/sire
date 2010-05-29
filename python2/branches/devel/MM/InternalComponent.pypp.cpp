@@ -25,7 +25,7 @@ SireMM::InternalComponent __copy__(const SireMM::InternalComponent &other){ retu
 void register_InternalComponent_class(){
 
     { //::SireMM::InternalComponent
-        typedef bp::class_< SireMM::InternalComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > InternalComponent_exposer_t;
+        typedef bp::class_< SireMM::InternalComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > InternalComponent_exposer_t;
         InternalComponent_exposer_t InternalComponent_exposer = InternalComponent_exposer_t( "InternalComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("name")=SireFF::FFName() )) );
         bp::scope InternalComponent_scope( InternalComponent_exposer );
         InternalComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );

@@ -32,6 +32,7 @@
 
 #include "atomcharges.h"
 #include "atomelements.h"
+#include "atomenergies.h"
 #include "atommasses.h"
 #include "atomforces.h"
 #include "atomvelocities.h"
@@ -98,6 +99,7 @@ namespace SireMol
     template class AtomProperty<QVariant>;
     
     template class AtomProperty<SireUnits::Dimension::MolarMass>;
+    template class AtomProperty<SireUnits::Dimension::MolarEnergy>;
     template class AtomProperty<Element>;
     template class AtomProperty<SireUnits::Dimension::Charge>;
 
@@ -113,6 +115,7 @@ static const RegisterMetaType<AtomIntProperty> r_atomint;
 static const RegisterMetaType<AtomFloatProperty> r_atomfloat;
 static const RegisterMetaType<AtomVariantProperty> r_atomvariant;
 static const RegisterMetaType<AtomCharges> r_atomcharges;
+static const RegisterMetaType<AtomEnergies> r_atomenergies;
 static const RegisterMetaType<AtomMasses> r_atommasses;
 static const RegisterMetaType<AtomForces> r_atomforces;
 static const RegisterMetaType<AtomVelocities> r_atomvelocities;

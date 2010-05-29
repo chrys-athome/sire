@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "atomelements.h"
 
+#include "atomenergies.h"
+
 #include "atomforces.h"
 
 #include "atommasses.h"

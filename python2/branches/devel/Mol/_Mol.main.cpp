@@ -27,6 +27,8 @@
 
 #include "AtomElements.pypp.hpp"
 
+#include "AtomEnergies.pypp.hpp"
+
 #include "AtomFloatProperty.pypp.hpp"
 
 #include "AtomForces.pypp.hpp"
@@ -515,6 +517,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_AtomPolarisabilities_class();
 
     register_AtomMasses_class();
+
+    register_AtomEnergies_class();
 
     register_AtomFloatProperty_class();
 
