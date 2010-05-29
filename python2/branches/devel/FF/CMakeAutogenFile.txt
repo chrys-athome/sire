@@ -29,6 +29,7 @@ set ( PYPP_SOURCES
        PointRef.pypp.cpp
        PotentialTable.pypp.cpp
        Probe.pypp.cpp
+       SingleComponent.pypp.cpp
        Specify_FFID_.pypp.cpp
        VectorPoint.pypp.cpp
        SireFF_containers.cpp

@@ -65,6 +65,8 @@
 
 #include "Probe.pypp.hpp"
 
+#include "SingleComponent.pypp.hpp"
+
 #include "Specify_FFID_.pypp.hpp"
 
 #include "VectorPoint.pypp.hpp"
@@ -143,6 +145,8 @@ BOOST_PYTHON_MODULE(_FF){
     register_PointRef_class();
 
     register_PotentialTable_class();
+
+    register_SingleComponent_class();
 
     register_VectorPoint_class();
 

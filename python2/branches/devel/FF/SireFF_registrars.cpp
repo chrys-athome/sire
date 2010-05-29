@@ -13,6 +13,7 @@
 #include "ffidx.h"
 #include "probe.h"
 #include "point.h"
+#include "ffcomponent.h"
 #include "forcefield.h"
 #include "ffid.h"
 
@@ -40,6 +41,7 @@ void register_SireFF_objects()
     ObjectRegistry::registerConverterFor< SireFF::Center >();
     ObjectRegistry::registerConverterFor< SireFF::CenterOfGeometry >();
     ObjectRegistry::registerConverterFor< SireFF::CenterOfMass >();
+    ObjectRegistry::registerConverterFor< SireFF::SingleComponent >();
     ObjectRegistry::registerConverterFor< SireFF::NullFF >();
     ObjectRegistry::registerConverterFor< SireID::Specify<SireFF::FFID> >();
     ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireFF::FFID> >();
