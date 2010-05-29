@@ -1119,7 +1119,7 @@ void System::potential(PotentialTable &pottable, double scale_potential)
     from the component of this system identified by 'component' onto 
     this potential table, scaled by the optionally supplied 'scale_potential' */
 void System::potential(PotentialTable &pottable, const Symbol &component,
-                   double scale_potential)
+                       double scale_potential)
 {
     this->_pvt_forceFields().potential(pottable, component, scale_potential);
 }

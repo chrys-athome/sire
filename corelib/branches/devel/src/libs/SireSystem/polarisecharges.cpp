@@ -41,6 +41,7 @@
 #include "SireMol/moleditor.h"
 #include "SireMol/moleculedata.h"
 #include "SireMol/atomselection.h"
+#include "SireMol/mgname.h"
 
 #include "SireFF/probe.h"
 #include "SireFF/potentialtable.h"
@@ -516,6 +517,7 @@ static void calculateCharges(AtomIdx atomidx,
         
             delta_phi[i] = phi_a - moltable[bonded_cgatom.cutGroup()]
                                            [bonded_cgatom.atom()].value();
+                                           
             ++i;
         }
     }
@@ -680,7 +682,7 @@ void PolariseCharges::setSystem(const System &system)
     //now calculate the potential on each molecule
     PotentialTable potentials(this->moleculeGroup());
     System new_system(system);
-    new_system.potential(potentials, field_probe);
+    new_system.potential(potentials, field_component, field_probe);
 
     //now calculate the induced charges
     for (Molecules::const_iterator it = molecules.constBegin();
@@ -838,7 +840,8 @@ bool PolariseCharges::deltaApply(Delta &delta, quint32 last_subversion)
     of the system Hamiltonian */
 PolariseChargesFF PolariseCharges::selfEnergyFF() const
 {
-    return PolariseChargesFF(*this);
+    return PolariseChargesFF(QObject::tr("self_polarise_%1")
+                               .arg(this->moleculeGroup().name().value()), *this);
 }
 
 /////////////
@@ -1045,6 +1048,12 @@ void PolariseChargesFF::recalculateEnergy()
         }
         else
         {
+            if (not it.value().data().hasProperty(energy_property))
+            {
+                molnrg.insert(it.key(), MolarEnergy(0));
+                continue;
+            }
+
             //need to calculate this energy
             const AtomEnergies &selfpol = it.value().data()
                                             .property(energy_property)
