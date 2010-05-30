@@ -188,6 +188,11 @@ public:
     split(const ImproperID &improper,
           const AtomSelection &selected_atoms) const;
 
+    QList<BondID> getBonds() const;
+    QList<BondID> getBonds(const AtomID &atom) const;
+    QList<AngleID> getAngles() const;
+    QList<AngleID> getAngles(const AtomID &atom0, const AtomID &atom1) const;
+
 protected:
     ConnectivityBase();
     ConnectivityBase(const MoleculeData &moldata);
