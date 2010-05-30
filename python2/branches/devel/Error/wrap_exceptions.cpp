@@ -31,11 +31,17 @@
 #include <QObject>
 
 #include "SireError/exception.h"
+#include "SireError/errors.h"
 
 using namespace boost::python;
 
 namespace SireError
 {
+
+void out_of_range( const SireError::invalid_index &ex )
+{
+    PyErr_SetString(PyExc_StopIteration,ex.toString().toAscii());
+}
 
 void exception_translator( const SireError::exception &ex )
 {
@@ -45,6 +51,7 @@ void exception_translator( const SireError::exception &ex )
 void SIREERROR_EXPORT export_exceptions()
 {
     register_exception_translator<SireError::exception>(&exception_translator);
+    register_exception_translator<SireError::invalid_index>(&out_of_range);
 }
 
 }
