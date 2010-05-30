@@ -25,9 +25,8 @@ void register_GradientBackground_class(){
 
     { //::Spier::GradientBackground
         typedef bp::class_< Spier::GradientBackground, bp::bases< Spier::GLBackground, Spier::GLRenderFunction, SireBase::Property > > GradientBackground_exposer_t;
-        GradientBackground_exposer_t GradientBackground_exposer = GradientBackground_exposer_t( "GradientBackground" );
+        GradientBackground_exposer_t GradientBackground_exposer = GradientBackground_exposer_t( "GradientBackground", bp::init< >() );
         bp::scope GradientBackground_scope( GradientBackground_exposer );
-        GradientBackground_exposer.def( bp::init< >() );
         GradientBackground_exposer.def( bp::init< Spier::GradientBackground const & >(( bp::arg("other") )) );
         GradientBackground_exposer.def( bp::self != bp::self );
         { //::Spier::GradientBackground::operator()

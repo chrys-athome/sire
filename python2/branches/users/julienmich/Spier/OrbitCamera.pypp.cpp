@@ -27,9 +27,8 @@ void register_OrbitCamera_class(){
 
     { //::Spier::OrbitCamera
         typedef bp::class_< Spier::OrbitCamera, bp::bases< Spier::Camera, SireBase::Property > > OrbitCamera_exposer_t;
-        OrbitCamera_exposer_t OrbitCamera_exposer = OrbitCamera_exposer_t( "OrbitCamera" );
+        OrbitCamera_exposer_t OrbitCamera_exposer = OrbitCamera_exposer_t( "OrbitCamera", bp::init< >() );
         bp::scope OrbitCamera_scope( OrbitCamera_exposer );
-        OrbitCamera_exposer.def( bp::init< >() );
         OrbitCamera_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("lookat") )) );
         OrbitCamera_exposer.def( bp::init< Spier::OrbitCamera const & >(( bp::arg("other") )) );
         { //::Spier::OrbitCamera::lookAt

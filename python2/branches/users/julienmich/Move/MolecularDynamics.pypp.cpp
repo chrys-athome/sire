@@ -36,9 +36,8 @@ void register_MolecularDynamics_class(){
 
     { //::SireMove::MolecularDynamics
         typedef bp::class_< SireMove::MolecularDynamics, bp::bases< SireMove::Dynamics, SireMove::Move, SireBase::Property > > MolecularDynamics_exposer_t;
-        MolecularDynamics_exposer_t MolecularDynamics_exposer = MolecularDynamics_exposer_t( "MolecularDynamics" );
+        MolecularDynamics_exposer_t MolecularDynamics_exposer = MolecularDynamics_exposer_t( "MolecularDynamics", bp::init< >() );
         bp::scope MolecularDynamics_scope( MolecularDynamics_exposer );
-        MolecularDynamics_exposer.def( bp::init< >() );
         MolecularDynamics_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         MolecularDynamics_exposer.def( bp::init< SireMove::Integrator const & >(( bp::arg("integrator") )) );
         MolecularDynamics_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireMove::Integrator const & >(( bp::arg("molgroup"), bp::arg("integrator") )) );

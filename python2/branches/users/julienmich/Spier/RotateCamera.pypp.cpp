@@ -29,9 +29,8 @@ void register_RotateCamera_class(){
 
     { //::Spier::RotateCamera
         typedef bp::class_< Spier::RotateCamera, bp::bases< Spier::CameraCommand, Spier::RenderViewCommand, Spier::Command, SireBase::Property > > RotateCamera_exposer_t;
-        RotateCamera_exposer_t RotateCamera_exposer = RotateCamera_exposer_t( "RotateCamera" );
+        RotateCamera_exposer_t RotateCamera_exposer = RotateCamera_exposer_t( "RotateCamera", bp::init< >() );
         bp::scope RotateCamera_scope( RotateCamera_exposer );
-        RotateCamera_exposer.def( bp::init< >() );
         RotateCamera_exposer.def( bp::init< SireUnits::Dimension::Angle const &, SireUnits::Dimension::Angle const &, SireUnits::Dimension::Angle const & >(( bp::arg("rotate_x"), bp::arg("rotate_y"), bp::arg("rotate_z") )) );
         RotateCamera_exposer.def( bp::init< Spier::RotateCamera const & >(( bp::arg("other") )) );
         { //::Spier::RotateCamera::mergeWith

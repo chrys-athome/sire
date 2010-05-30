@@ -37,9 +37,8 @@ void register_AtomCoords_class(){
 
     { //::SireMol::AtomProperty< SireMaths::Vector >
         typedef bp::class_< SireMol::AtomProperty< SireMaths::Vector >, bp::bases< SireMol::AtomProp, SireMol::MolViewProperty, SireBase::Property > > AtomCoords_exposer_t;
-        AtomCoords_exposer_t AtomCoords_exposer = AtomCoords_exposer_t( "AtomCoords" );
+        AtomCoords_exposer_t AtomCoords_exposer = AtomCoords_exposer_t( "AtomCoords", bp::init< >() );
         bp::scope AtomCoords_scope( AtomCoords_exposer );
-        AtomCoords_exposer.def( bp::init< >() );
         AtomCoords_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         AtomCoords_exposer.def( bp::init< SireVol::CoordGroup const & >(( bp::arg("cgroup") )) );
         AtomCoords_exposer.def( bp::init< SireVol::CoordGroupArray const & >(( bp::arg("cgroups") )) );

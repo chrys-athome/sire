@@ -38,9 +38,8 @@ void register_ImproperID_class(){
 
     { //::SireMol::ImproperID
         typedef bp::class_< SireMol::ImproperID, bp::bases< SireID::ID > > ImproperID_exposer_t;
-        ImproperID_exposer_t ImproperID_exposer = ImproperID_exposer_t( "ImproperID" );
+        ImproperID_exposer_t ImproperID_exposer = ImproperID_exposer_t( "ImproperID", bp::init< >() );
         bp::scope ImproperID_scope( ImproperID_exposer );
-        ImproperID_exposer.def( bp::init< >() );
         ImproperID_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3") )) );
         ImproperID_exposer.def( bp::init< SireMol::ImproperID const & >(( bp::arg("other") )) );
         { //::SireMol::ImproperID::atom0

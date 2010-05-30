@@ -33,9 +33,8 @@ void register_SS_GTOs_class(){
 
     { //::Squire::SS_GTOs
         typedef bp::class_< Squire::SS_GTOs > SS_GTOs_exposer_t;
-        SS_GTOs_exposer_t SS_GTOs_exposer = SS_GTOs_exposer_t( "SS_GTOs" );
+        SS_GTOs_exposer_t SS_GTOs_exposer = SS_GTOs_exposer_t( "SS_GTOs", bp::init< >() );
         bp::scope SS_GTOs_scope( SS_GTOs_exposer );
-        SS_GTOs_exposer.def( bp::init< >() );
         SS_GTOs_exposer.def( bp::init< QVector< Squire::S_GTO > const &, QVector< SireMaths::Vector > const & >(( bp::arg("s_gtos"), bp::arg("centers") )) );
         SS_GTOs_exposer.def( bp::init< Squire::SS_GTOs const & >(( bp::arg("other") )) );
         { //::Squire::SS_GTOs::coulomb_integral

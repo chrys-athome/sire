@@ -27,9 +27,8 @@ void register_RandomVelocities_class(){
 
     { //::SireMove::RandomVelocities
         typedef bp::class_< SireMove::RandomVelocities, bp::bases< SireMove::VelocityGenerator, SireBase::Property > > RandomVelocities_exposer_t;
-        RandomVelocities_exposer_t RandomVelocities_exposer = RandomVelocities_exposer_t( "RandomVelocities" );
+        RandomVelocities_exposer_t RandomVelocities_exposer = RandomVelocities_exposer_t( "RandomVelocities", bp::init< >() );
         bp::scope RandomVelocities_scope( RandomVelocities_exposer );
-        RandomVelocities_exposer.def( bp::init< >() );
         RandomVelocities_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ranfunction") )) );
         RandomVelocities_exposer.def( bp::init< SireMove::RandomVelocities const & >(( bp::arg("other") )) );
         { //::SireMove::RandomVelocities::generator

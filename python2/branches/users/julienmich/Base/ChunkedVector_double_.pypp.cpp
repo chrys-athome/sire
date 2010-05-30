@@ -23,9 +23,8 @@ void register_ChunkedVector_double__class(){
 
     { //::SireBase::ChunkedVector< double, 100 >
         typedef bp::class_< SireBase::ChunkedVector< double, 100 > > ChunkedVector_double__exposer_t;
-        ChunkedVector_double__exposer_t ChunkedVector_double__exposer = ChunkedVector_double__exposer_t( "ChunkedVector_double_" );
+        ChunkedVector_double__exposer_t ChunkedVector_double__exposer = ChunkedVector_double__exposer_t( "ChunkedVector_double_", bp::init< >() );
         bp::scope ChunkedVector_double__scope( ChunkedVector_double__exposer );
-        ChunkedVector_double__exposer.def( bp::init< >() );
         ChunkedVector_double__exposer.def( bp::init< int >(( bp::arg("size") )) );
         ChunkedVector_double__exposer.def( bp::init< int, double const & >(( bp::arg("size"), bp::arg("value") )) );
         ChunkedVector_double__exposer.def( bp::init< SireBase::ChunkedVector< double, 100 > const & >(( bp::arg("other") )) );

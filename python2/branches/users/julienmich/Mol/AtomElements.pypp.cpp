@@ -21,9 +21,8 @@ void register_AtomElements_class(){
 
     { //::SireMol::AtomProperty< SireMol::Element >
         typedef bp::class_< SireMol::AtomProperty< SireMol::Element >, bp::bases< SireMol::AtomProp, SireMol::MolViewProperty, SireBase::Property > > AtomElements_exposer_t;
-        AtomElements_exposer_t AtomElements_exposer = AtomElements_exposer_t( "AtomElements" );
+        AtomElements_exposer_t AtomElements_exposer = AtomElements_exposer_t( "AtomElements", bp::init< >() );
         bp::scope AtomElements_scope( AtomElements_exposer );
-        AtomElements_exposer.def( bp::init< >() );
         AtomElements_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         AtomElements_exposer.def( bp::init< SireMol::Element const & >(( bp::arg("value") )) );
         AtomElements_exposer.def( bp::init< SireBase::PackedArray2D< SireMol::Element > const & >(( bp::arg("values") )) );

@@ -38,9 +38,8 @@ void register_WindowedComponent_class(){
 
     { //::SireSystem::WindowedComponent
         typedef bp::class_< SireSystem::WindowedComponent, bp::bases< SireSystem::Constraint, SireBase::Property > > WindowedComponent_exposer_t;
-        WindowedComponent_exposer_t WindowedComponent_exposer = WindowedComponent_exposer_t( "WindowedComponent" );
+        WindowedComponent_exposer_t WindowedComponent_exposer = WindowedComponent_exposer_t( "WindowedComponent", bp::init< >() );
         bp::scope WindowedComponent_scope( WindowedComponent_exposer );
-        WindowedComponent_exposer.def( bp::init< >() );
         WindowedComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireCAS::Symbol const &, QVector< double > const &, bp::optional< int > >(( bp::arg("component"), bp::arg("reference"), bp::arg("values"), bp::arg("step_size")=(int)(1) )) );
         WindowedComponent_exposer.def( bp::init< SireSystem::WindowedComponent const & >(( bp::arg("other") )) );
         { //::SireSystem::WindowedComponent::component

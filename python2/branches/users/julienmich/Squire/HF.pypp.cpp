@@ -37,17 +37,14 @@ namespace bp = boost::python;
 
 #include "hf.h"
 
-Squire::HF __copy__(const Squire::HF &other){ return Squire::HF(other); }
-
 const char* pvt_get_name(const Squire::HF&){ return "Squire::HF";}
 
 void register_HF_class(){
 
     { //::Squire::HF
-        typedef bp::class_< Squire::HF > HF_exposer_t;
+        typedef bp::class_< Squire::HF, boost::noncopyable > HF_exposer_t;
         HF_exposer_t HF_exposer = HF_exposer_t( "HF" );
         bp::scope HF_scope( HF_exposer );
-        HF_exposer.def( bp::init< >() );
         { //::Squire::HF::add
         
             typedef void ( ::Squire::HF::*add_function_type )( ::Squire::Orbital const & ) ;
@@ -102,9 +99,6 @@ void register_HF_class(){
                 , solve_function_value );
         
         }
-        HF_exposer.def( "__copy__", &__copy__);
-        HF_exposer.def( "__deepcopy__", &__copy__);
-        HF_exposer.def( "clone", &__copy__);
         HF_exposer.def( "__str__", &pvt_get_name);
         HF_exposer.def( "__repr__", &pvt_get_name);
     }

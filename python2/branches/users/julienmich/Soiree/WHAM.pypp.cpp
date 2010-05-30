@@ -38,9 +38,8 @@ void register_WHAM_class(){
 
     { //::Soiree::WHAM
         typedef bp::class_< Soiree::WHAM > WHAM_exposer_t;
-        WHAM_exposer_t WHAM_exposer = WHAM_exposer_t( "WHAM" );
+        WHAM_exposer_t WHAM_exposer = WHAM_exposer_t( "WHAM", bp::init< >() );
         bp::scope WHAM_scope( WHAM_exposer );
-        WHAM_exposer.def( bp::init< >() );
         WHAM_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("coordinate") )) );
         WHAM_exposer.def( bp::init< SireCAS::Symbol const &, SireUnits::Dimension::Temperature >(( bp::arg("coordinate"), bp::arg("temperature") )) );
         WHAM_exposer.def( bp::init< QVector< SireCAS::Symbol > const & >(( bp::arg("coordinates") )) );
@@ -50,7 +49,7 @@ void register_WHAM_class(){
         WHAM_exposer.def( bp::init< Soiree::WHAM const & >(( bp::arg("other") )) );
         { //::Soiree::WHAM::add
         
-            typedef void ( ::Soiree::WHAM::*add_function_type )( ::QVector< double > const &,::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > const &,bool ) ;
+            typedef void ( ::Soiree::WHAM::*add_function_type )( ::QVector< double > const &,::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x000000002, 0, 0, -0x000000001, 0 > > const &,bool ) ;
             add_function_type add_function_value( &::Soiree::WHAM::add );
             
             WHAM_exposer.def( 
@@ -72,7 +71,7 @@ void register_WHAM_class(){
         }
         { //::Soiree::WHAM::add
         
-            typedef void ( ::Soiree::WHAM::*add_function_type )( ::QHash< SireCAS::Symbol, QVector< double > > const &,::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > const &,bool ) ;
+            typedef void ( ::Soiree::WHAM::*add_function_type )( ::QHash< SireCAS::Symbol, QVector< double > > const &,::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x000000002, 0, 0, -0x000000001, 0 > > const &,bool ) ;
             add_function_type add_function_value( &::Soiree::WHAM::add );
             
             WHAM_exposer.def( 
@@ -232,7 +231,7 @@ void register_WHAM_class(){
             WHAM_exposer.def( 
                 "solve"
                 , solve_function_value
-                , ( bp::arg("range"), bp::arg("tolerance")=1.00000000000000003643219731549774157916554706559963960899e-10, bp::arg("maxiter")=(int)(100000) ) );
+                , ( bp::arg("range"), bp::arg("tolerance")=1.0000000000000000364321973154977415791655470656e-10, bp::arg("maxiter")=(int)(100000) ) );
         
         }
         { //::Soiree::WHAM::solve
@@ -243,7 +242,7 @@ void register_WHAM_class(){
             WHAM_exposer.def( 
                 "solve"
                 , solve_function_value
-                , ( bp::arg("range"), bp::arg("tolerance")=1.00000000000000003643219731549774157916554706559963960899e-10, bp::arg("maxiter")=(int)(100000) ) );
+                , ( bp::arg("range"), bp::arg("tolerance")=1.0000000000000000364321973154977415791655470656e-10, bp::arg("maxiter")=(int)(100000) ) );
         
         }
         { //::Soiree::WHAM::temperature
@@ -268,7 +267,7 @@ void register_WHAM_class(){
         }
         { //::Soiree::WHAM::umbrellaTrajectory
         
-            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > ( ::Soiree::WHAM::*umbrellaTrajectory_function_type )(  ) const;
+            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x000000002, 0, 0, -0x000000001, 0 > > ( ::Soiree::WHAM::*umbrellaTrajectory_function_type )(  ) const;
             umbrellaTrajectory_function_type umbrellaTrajectory_function_value( &::Soiree::WHAM::umbrellaTrajectory );
             
             WHAM_exposer.def( 
@@ -278,7 +277,7 @@ void register_WHAM_class(){
         }
         { //::Soiree::WHAM::umbrellaTrajectory
         
-            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > ( ::Soiree::WHAM::*umbrellaTrajectory_function_type )( int ) const;
+            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x000000002, 0, 0, -0x000000001, 0 > > ( ::Soiree::WHAM::*umbrellaTrajectory_function_type )( int ) const;
             umbrellaTrajectory_function_type umbrellaTrajectory_function_value( &::Soiree::WHAM::umbrellaTrajectory );
             
             WHAM_exposer.def( 

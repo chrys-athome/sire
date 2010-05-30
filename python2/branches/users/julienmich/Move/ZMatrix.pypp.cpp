@@ -55,9 +55,8 @@ void register_ZMatrix_class(){
 
     { //::SireMove::ZMatrix
         typedef bp::class_< SireMove::ZMatrix, bp::bases< SireMol::MoleculeProperty, SireMol::MolViewProperty, SireBase::Property > > ZMatrix_exposer_t;
-        ZMatrix_exposer_t ZMatrix_exposer = ZMatrix_exposer_t( "ZMatrix" );
+        ZMatrix_exposer_t ZMatrix_exposer = ZMatrix_exposer_t( "ZMatrix", bp::init< >() );
         bp::scope ZMatrix_scope( ZMatrix_exposer );
-        ZMatrix_exposer.def( bp::init< >() );
         ZMatrix_exposer.def( bp::init< SireMol::Molecule const & >(( bp::arg("molecule") )) );
         ZMatrix_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         ZMatrix_exposer.def( bp::init< SireMove::ZMatrix const & >(( bp::arg("other") )) );

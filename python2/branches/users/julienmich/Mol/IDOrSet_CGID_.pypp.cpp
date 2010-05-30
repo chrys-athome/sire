@@ -59,9 +59,8 @@ void register_IDOrSet_CGID__class(){
 
     { //::SireID::IDOrSet< SireMol::CGID >
         typedef bp::class_< SireID::IDOrSet< SireMol::CGID >, bp::bases< SireMol::CGID, SireID::ID > > IDOrSet_CGID__exposer_t;
-        IDOrSet_CGID__exposer_t IDOrSet_CGID__exposer = IDOrSet_CGID__exposer_t( "IDOrSet_CGID_" );
+        IDOrSet_CGID__exposer_t IDOrSet_CGID__exposer = IDOrSet_CGID__exposer_t( "IDOrSet_CGID_", bp::init< >() );
         bp::scope IDOrSet_CGID__scope( IDOrSet_CGID__exposer );
-        IDOrSet_CGID__exposer.def( bp::init< >() );
         IDOrSet_CGID__exposer.def( bp::init< SireMol::CGID const & >(( bp::arg("id") )) );
         IDOrSet_CGID__exposer.def( bp::init< SireMol::CGID const &, SireMol::CGID const & >(( bp::arg("id0"), bp::arg("id1") )) );
         IDOrSet_CGID__exposer.def( bp::init< QList< SireMol::CGIdentifier > const & >(( bp::arg("ids") )) );

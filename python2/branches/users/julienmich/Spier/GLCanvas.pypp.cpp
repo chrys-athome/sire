@@ -35,7 +35,7 @@ void register_GLCanvas_class(){
 
     { //::Spier::GLCanvas
         typedef bp::class_< Spier::GLCanvas, bp::bases< SireBase::Property > > GLCanvas_exposer_t;
-        GLCanvas_exposer_t GLCanvas_exposer = GLCanvas_exposer_t( "GLCanvas" );
+        GLCanvas_exposer_t GLCanvas_exposer = GLCanvas_exposer_t( "GLCanvas", bp::no_init );
         bp::scope GLCanvas_scope( GLCanvas_exposer );
         GLCanvas_exposer.def( bp::init< >() );
         GLCanvas_exposer.def( bp::init< Spier::GLCanvas const & >(( bp::arg("other") )) );

@@ -50,9 +50,8 @@ void register_SameMoves_class(){
 
     { //::SireMove::SameMoves
         typedef bp::class_< SireMove::SameMoves, bp::bases< SireMove::Moves, SireBase::Property > > SameMoves_exposer_t;
-        SameMoves_exposer_t SameMoves_exposer = SameMoves_exposer_t( "SameMoves" );
+        SameMoves_exposer_t SameMoves_exposer = SameMoves_exposer_t( "SameMoves", bp::init< >() );
         bp::scope SameMoves_scope( SameMoves_exposer );
-        SameMoves_exposer.def( bp::init< >() );
         SameMoves_exposer.def( bp::init< SireMove::Move const & >(( bp::arg("move") )) );
         SameMoves_exposer.def( bp::init< SireMove::SameMoves const & >(( bp::arg("other") )) );
         { //::SireMove::SameMoves::clearStatistics

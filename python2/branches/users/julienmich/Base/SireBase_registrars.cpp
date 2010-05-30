@@ -3,8 +3,8 @@
 
 #include "SireBase_registrars.h"
 
-#include "property.h"
 #include "properties.h"
+#include "property.h"
 #include "propertymap.h"
 #include "majorminorversion.h"
 #include "stringmangler.h"
@@ -15,9 +15,9 @@
 void register_SireBase_objects()
 {
 
+    ObjectRegistry::registerConverterFor< SireBase::Properties >();
     ObjectRegistry::registerConverterFor< SireBase::NullProperty >();
     ObjectRegistry::registerConverterFor< SireBase::VariantProperty >();
-    ObjectRegistry::registerConverterFor< SireBase::Properties >();
     ObjectRegistry::registerConverterFor< SireBase::PropertyName >();
     ObjectRegistry::registerConverterFor< SireBase::PropertyMap >();
     ObjectRegistry::registerConverterFor< SireBase::MajorMinorVersion >();

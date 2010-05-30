@@ -51,9 +51,8 @@ void register_StretchBendTorsionParameterName_class(){
 
     { //::SireMM::StretchBendTorsionParameterName
         typedef bp::class_< SireMM::StretchBendTorsionParameterName > StretchBendTorsionParameterName_exposer_t;
-        StretchBendTorsionParameterName_exposer_t StretchBendTorsionParameterName_exposer = StretchBendTorsionParameterName_exposer_t( "StretchBendTorsionParameterName" );
+        StretchBendTorsionParameterName_exposer_t StretchBendTorsionParameterName_exposer = StretchBendTorsionParameterName_exposer_t( "StretchBendTorsionParameterName", bp::init< >() );
         bp::scope StretchBendTorsionParameterName_scope( StretchBendTorsionParameterName_exposer );
-        StretchBendTorsionParameterName_exposer.def( bp::init< >() );
         { //::SireMM::StretchBendTorsionParameterName::stretchBendTorsion
         
             typedef ::SireBase::PropertyName const & ( ::SireMM::StretchBendTorsionParameterName::*stretchBendTorsion_function_type )(  ) const;

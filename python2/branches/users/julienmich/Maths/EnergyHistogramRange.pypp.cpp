@@ -25,20 +25,19 @@ SireMaths::HistogramRangeT<SireUnits::Dimension::PhysUnit<1, 2, -2, 0, 0, 0, 0> 
 
 void register_EnergyHistogramRange_class(){
 
-    { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >
-        typedef bp::class_< SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >, bp::bases< SireMaths::HistogramRange > > EnergyHistogramRange_exposer_t;
-        EnergyHistogramRange_exposer_t EnergyHistogramRange_exposer = EnergyHistogramRange_exposer_t( "EnergyHistogramRange" );
+    { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >
+        typedef bp::class_< SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >, bp::bases< SireMaths::HistogramRange > > EnergyHistogramRange_exposer_t;
+        EnergyHistogramRange_exposer_t EnergyHistogramRange_exposer = EnergyHistogramRange_exposer_t( "EnergyHistogramRange", bp::init< >() );
         bp::scope EnergyHistogramRange_scope( EnergyHistogramRange_exposer );
-        EnergyHistogramRange_exposer.def( bp::init< >() );
-        EnergyHistogramRange_exposer.def( bp::init< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 >, SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 >, bp::optional< int > >(( bp::arg("min"), bp::arg("max"), bp::arg("nbins")=(int)(101) )) );
-        EnergyHistogramRange_exposer.def( bp::init< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 >, SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 >, SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >(( bp::arg("min"), bp::arg("max"), bp::arg("binwidth") )) );
+        EnergyHistogramRange_exposer.def( bp::init< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 >, SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 >, bp::optional< int > >(( bp::arg("min"), bp::arg("max"), bp::arg("nbins")=(int)(101) )) );
+        EnergyHistogramRange_exposer.def( bp::init< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 >, SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 >, SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >(( bp::arg("min"), bp::arg("max"), bp::arg("binwidth") )) );
         EnergyHistogramRange_exposer.def( bp::init< SireMaths::HistogramRange const & >(( bp::arg("other") )) );
-        EnergyHistogramRange_exposer.def( bp::init< SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > const & >(( bp::arg("other") )) );
-        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::bin
+        EnergyHistogramRange_exposer.def( bp::init< SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > const & >(( bp::arg("other") )) );
+        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::bin
         
-            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
-            typedef int ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*bin_function_type )( ::SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > ) const;
-            bin_function_type bin_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::bin );
+            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
+            typedef int ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*bin_function_type )( ::SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > ) const;
+            bin_function_type bin_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::bin );
             
             EnergyHistogramRange_exposer.def( 
                 "bin"
@@ -46,44 +45,44 @@ void register_EnergyHistogramRange_class(){
                 , ( bp::arg("value") ) );
         
         }
-        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::binWidth
+        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::binWidth
         
-            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*binWidth_function_type )(  ) const;
-            binWidth_function_type binWidth_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::binWidth );
+            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*binWidth_function_type )(  ) const;
+            binWidth_function_type binWidth_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::binWidth );
             
             EnergyHistogramRange_exposer.def( 
                 "binWidth"
                 , binWidth_function_value );
         
         }
-        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::maximum
+        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::maximum
         
-            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*maximum_function_type )(  ) const;
-            maximum_function_type maximum_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::maximum );
+            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*maximum_function_type )(  ) const;
+            maximum_function_type maximum_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::maximum );
             
             EnergyHistogramRange_exposer.def( 
                 "maximum"
                 , maximum_function_value );
         
         }
-        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::middle
+        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::middle
         
-            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*middle_function_type )(  ) const;
-            middle_function_type middle_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::middle );
+            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*middle_function_type )(  ) const;
+            middle_function_type middle_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::middle );
             
             EnergyHistogramRange_exposer.def( 
                 "middle"
                 , middle_function_value );
         
         }
-        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::minimum
+        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::minimum
         
-            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*minimum_function_type )(  ) const;
-            minimum_function_type minimum_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::minimum );
+            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*minimum_function_type )(  ) const;
+            minimum_function_type minimum_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::minimum );
             
             EnergyHistogramRange_exposer.def( 
                 "minimum"
@@ -91,11 +90,11 @@ void register_EnergyHistogramRange_class(){
         
         }
         EnergyHistogramRange_exposer.def( bp::self != bp::self );
-        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::operator=
+        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::operator=
         
-            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > & ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*assign_function_type )( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > const & ) ;
-            assign_function_type assign_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::operator= );
+            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > & ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*assign_function_type )( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > const & ) ;
+            assign_function_type assign_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::operator= );
             
             EnergyHistogramRange_exposer.def( 
                 "assign"
@@ -105,11 +104,11 @@ void register_EnergyHistogramRange_class(){
         
         }
         EnergyHistogramRange_exposer.def( bp::self == bp::self );
-        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::operator[]
+        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::operator[]
         
-            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::SireMaths::HistogramBinT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*__getitem___function_type )( int ) const;
-            __getitem___function_type __getitem___function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::operator[] );
+            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::SireMaths::HistogramBinT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*__getitem___function_type )( int ) const;
+            __getitem___function_type __getitem___function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::operator[] );
             
             EnergyHistogramRange_exposer.def( 
                 "__getitem__"
@@ -117,11 +116,11 @@ void register_EnergyHistogramRange_class(){
                 , ( bp::arg("i") ) );
         
         }
-        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::toString
+        { //::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::toString
         
-            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::QString ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*toString_function_type )(  ) const;
-            toString_function_type toString_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::toString );
+            typedef SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::QString ( ::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::toString );
             
             EnergyHistogramRange_exposer.def( 
                 "toString"

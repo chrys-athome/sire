@@ -51,9 +51,8 @@ void register_ChainEditor_class(){
 
     { //::SireMol::ChainEditor
         typedef bp::class_< SireMol::ChainEditor, bp::bases< SireMol::Editor<SireMol::ChainEditor, SireMol::Chain>, SireMol::Chain, SireMol::MoleculeView, SireBase::Property > > ChainEditor_exposer_t;
-        ChainEditor_exposer_t ChainEditor_exposer = ChainEditor_exposer_t( "ChainEditor" );
+        ChainEditor_exposer_t ChainEditor_exposer = ChainEditor_exposer_t( "ChainEditor", bp::init< >() );
         bp::scope ChainEditor_scope( ChainEditor_exposer );
-        ChainEditor_exposer.def( bp::init< >() );
         ChainEditor_exposer.def( bp::init< SireMol::Chain const & >(( bp::arg("chain") )) );
         ChainEditor_exposer.def( bp::init< SireMol::ChainEditor const & >(( bp::arg("other") )) );
         { //::SireMol::ChainEditor::add

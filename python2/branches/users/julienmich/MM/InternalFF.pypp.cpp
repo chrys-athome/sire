@@ -54,9 +54,8 @@ void register_InternalFF_class(){
 
     { //::SireMM::InternalFF
         typedef bp::class_< SireMM::InternalFF, bp::bases< SireFF::FF3D, SireFF::G1FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > InternalFF_exposer_t;
-        InternalFF_exposer_t InternalFF_exposer = InternalFF_exposer_t( "InternalFF" );
+        InternalFF_exposer_t InternalFF_exposer = InternalFF_exposer_t( "InternalFF", bp::init< >() );
         bp::scope InternalFF_scope( InternalFF_exposer );
-        InternalFF_exposer.def( bp::init< >() );
         InternalFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         InternalFF_exposer.def( bp::init< SireMM::InternalFF const & >(( bp::arg("other") )) );
         { //::SireMM::InternalFF::components

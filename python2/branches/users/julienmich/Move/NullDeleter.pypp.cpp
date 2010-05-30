@@ -33,9 +33,8 @@ void register_NullDeleter_class(){
 
     { //::SireMove::NullDeleter
         typedef bp::class_< SireMove::NullDeleter, bp::bases< SireMove::MolDeleter, SireBase::Property > > NullDeleter_exposer_t;
-        NullDeleter_exposer_t NullDeleter_exposer = NullDeleter_exposer_t( "NullDeleter" );
+        NullDeleter_exposer_t NullDeleter_exposer = NullDeleter_exposer_t( "NullDeleter", bp::init< >() );
         bp::scope NullDeleter_scope( NullDeleter_exposer );
-        NullDeleter_exposer.def( bp::init< >() );
         NullDeleter_exposer.def( bp::init< SireMove::NullDeleter const & >(( bp::arg("other") )) );
         { //::SireMove::NullDeleter::deleteFrom
         

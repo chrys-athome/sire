@@ -27,9 +27,8 @@ void register_VelocitiesFromProperty_class(){
 
     { //::SireMove::VelocitiesFromProperty
         typedef bp::class_< SireMove::VelocitiesFromProperty, bp::bases< SireMove::VelocityGenerator, SireBase::Property > > VelocitiesFromProperty_exposer_t;
-        VelocitiesFromProperty_exposer_t VelocitiesFromProperty_exposer = VelocitiesFromProperty_exposer_t( "VelocitiesFromProperty" );
+        VelocitiesFromProperty_exposer_t VelocitiesFromProperty_exposer = VelocitiesFromProperty_exposer_t( "VelocitiesFromProperty", bp::init< >() );
         bp::scope VelocitiesFromProperty_scope( VelocitiesFromProperty_exposer );
-        VelocitiesFromProperty_exposer.def( bp::init< >() );
         VelocitiesFromProperty_exposer.def( bp::init< SireBase::PropertyName const & >(( bp::arg("property") )) );
         VelocitiesFromProperty_exposer.def( bp::init< SireMove::VelocitiesFromProperty const & >(( bp::arg("other") )) );
         VelocitiesFromProperty_exposer.def( bp::self != bp::self );

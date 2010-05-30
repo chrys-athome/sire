@@ -51,9 +51,8 @@ void register_UreyBradleyParameterName_class(){
 
     { //::SireMM::UreyBradleyParameterName
         typedef bp::class_< SireMM::UreyBradleyParameterName > UreyBradleyParameterName_exposer_t;
-        UreyBradleyParameterName_exposer_t UreyBradleyParameterName_exposer = UreyBradleyParameterName_exposer_t( "UreyBradleyParameterName" );
+        UreyBradleyParameterName_exposer_t UreyBradleyParameterName_exposer = UreyBradleyParameterName_exposer_t( "UreyBradleyParameterName", bp::init< >() );
         bp::scope UreyBradleyParameterName_scope( UreyBradleyParameterName_exposer );
-        UreyBradleyParameterName_exposer.def( bp::init< >() );
         { //::SireMM::UreyBradleyParameterName::ureyBradley
         
             typedef ::SireBase::PropertyName const & ( ::SireMM::UreyBradleyParameterName::*ureyBradley_function_type )(  ) const;

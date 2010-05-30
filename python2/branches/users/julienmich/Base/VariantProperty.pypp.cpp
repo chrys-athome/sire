@@ -33,9 +33,8 @@ void register_VariantProperty_class(){
 
     { //::SireBase::VariantProperty
         typedef bp::class_< SireBase::VariantProperty, bp::bases< SireBase::Property > > VariantProperty_exposer_t;
-        VariantProperty_exposer_t VariantProperty_exposer = VariantProperty_exposer_t( "VariantProperty" );
+        VariantProperty_exposer_t VariantProperty_exposer = VariantProperty_exposer_t( "VariantProperty", bp::init< >() );
         bp::scope VariantProperty_scope( VariantProperty_exposer );
-        VariantProperty_exposer.def( bp::init< >() );
         VariantProperty_exposer.def( bp::init< QVariant const & >(( bp::arg("value") )) );
         VariantProperty_exposer.def( bp::init< SireBase::Property const & >(( bp::arg("other") )) );
         VariantProperty_exposer.def( bp::init< SireBase::VariantProperty const & >(( bp::arg("other") )) );

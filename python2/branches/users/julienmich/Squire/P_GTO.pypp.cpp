@@ -35,9 +35,8 @@ void register_P_GTO_class(){
 
     { //::Squire::P_GTO
         typedef bp::class_< Squire::P_GTO, bp::bases< Squire::GTO, Squire::OrbitalShell, Squire::Orbital, SireBase::Property > > P_GTO_exposer_t;
-        P_GTO_exposer_t P_GTO_exposer = P_GTO_exposer_t( "P_GTO" );
+        P_GTO_exposer_t P_GTO_exposer = P_GTO_exposer_t( "P_GTO", bp::init< >() );
         bp::scope P_GTO_scope( P_GTO_exposer );
-        P_GTO_exposer.def( bp::init< >() );
         P_GTO_exposer.def( bp::init< double, bp::optional< double > >(( bp::arg("alpha"), bp::arg("scale")=1 )) );
         P_GTO_exposer.def( bp::init< Squire::P_GTO const & >(( bp::arg("other") )) );
         { //::Squire::P_GTO::angularMomentum

@@ -50,9 +50,8 @@ void register_ZMatMove_class(){
 
     { //::SireMove::ZMatMove
         typedef bp::class_< SireMove::ZMatMove, bp::bases< SireMove::MonteCarlo, SireMove::Move, SireBase::Property > > ZMatMove_exposer_t;
-        ZMatMove_exposer_t ZMatMove_exposer = ZMatMove_exposer_t( "ZMatMove" );
+        ZMatMove_exposer_t ZMatMove_exposer = ZMatMove_exposer_t( "ZMatMove", bp::init< >() );
         bp::scope ZMatMove_scope( ZMatMove_exposer );
-        ZMatMove_exposer.def( bp::init< >() );
         ZMatMove_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         ZMatMove_exposer.def( bp::init< SireMove::Sampler const & >(( bp::arg("sampler") )) );
         ZMatMove_exposer.def( bp::init< SireMove::ZMatMove const & >(( bp::arg("other") )) );

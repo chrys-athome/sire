@@ -21,9 +21,8 @@ void register_SegFloatProperty_class(){
 
     { //::SireMol::SegProperty< double >
         typedef bp::class_< SireMol::SegProperty< double >, bp::bases< SireMol::SegProp, SireMol::MolViewProperty, SireBase::Property > > SegFloatProperty_exposer_t;
-        SegFloatProperty_exposer_t SegFloatProperty_exposer = SegFloatProperty_exposer_t( "SegFloatProperty" );
+        SegFloatProperty_exposer_t SegFloatProperty_exposer = SegFloatProperty_exposer_t( "SegFloatProperty", bp::init< >() );
         bp::scope SegFloatProperty_scope( SegFloatProperty_exposer );
-        SegFloatProperty_exposer.def( bp::init< >() );
         SegFloatProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         SegFloatProperty_exposer.def( bp::init< QVector< double > const & >(( bp::arg("values") )) );
         SegFloatProperty_exposer.def( bp::init< SireMol::SegProperty< double > const & >(( bp::arg("other") )) );

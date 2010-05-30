@@ -31,9 +31,8 @@ void register_GLSphereRenderFunction_class(){
 
     { //::Spier::GLSphereRenderFunction
         typedef bp::class_< Spier::GLSphereRenderFunction, bp::bases< Spier::GLRenderFunction, SireBase::Property > > GLSphereRenderFunction_exposer_t;
-        GLSphereRenderFunction_exposer_t GLSphereRenderFunction_exposer = GLSphereRenderFunction_exposer_t( "GLSphereRenderFunction" );
+        GLSphereRenderFunction_exposer_t GLSphereRenderFunction_exposer = GLSphereRenderFunction_exposer_t( "GLSphereRenderFunction", bp::init< >() );
         bp::scope GLSphereRenderFunction_scope( GLSphereRenderFunction_exposer );
-        GLSphereRenderFunction_exposer.def( bp::init< >() );
         GLSphereRenderFunction_exposer.def( bp::init< int >(( bp::arg("resolution") )) );
         GLSphereRenderFunction_exposer.def( bp::init< Spier::GLSphereRenderFunction const & >(( bp::arg("other") )) );
         GLSphereRenderFunction_exposer.def( bp::self != bp::self );

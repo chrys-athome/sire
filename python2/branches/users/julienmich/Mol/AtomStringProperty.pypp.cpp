@@ -35,9 +35,8 @@ void register_AtomStringProperty_class(){
 
     { //::SireMol::AtomProperty< QString >
         typedef bp::class_< SireMol::AtomProperty< QString >, bp::bases< SireMol::AtomProp, SireMol::MolViewProperty, SireBase::Property > > AtomStringProperty_exposer_t;
-        AtomStringProperty_exposer_t AtomStringProperty_exposer = AtomStringProperty_exposer_t( "AtomStringProperty" );
+        AtomStringProperty_exposer_t AtomStringProperty_exposer = AtomStringProperty_exposer_t( "AtomStringProperty", bp::init< >() );
         bp::scope AtomStringProperty_scope( AtomStringProperty_exposer );
-        AtomStringProperty_exposer.def( bp::init< >() );
         AtomStringProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         AtomStringProperty_exposer.def( bp::init< QString const & >(( bp::arg("value") )) );
         AtomStringProperty_exposer.def( bp::init< SireBase::PackedArray2D< QString > const & >(( bp::arg("values") )) );

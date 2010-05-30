@@ -45,9 +45,8 @@ void register_Array2D_Vector__class(){
 
     { //::SireBase::Array2D< SireMaths::Vector >
         typedef bp::class_< SireBase::Array2D< SireMaths::Vector >, bp::bases< SireBase::Array2DBase > > Array2D_Vector__exposer_t;
-        Array2D_Vector__exposer_t Array2D_Vector__exposer = Array2D_Vector__exposer_t( "Array2D_Vector_" );
+        Array2D_Vector__exposer_t Array2D_Vector__exposer = Array2D_Vector__exposer_t( "Array2D_Vector_", bp::init< >() );
         bp::scope Array2D_Vector__scope( Array2D_Vector__exposer );
-        Array2D_Vector__exposer.def( bp::init< >() );
         Array2D_Vector__exposer.def( bp::init< int, int >(( bp::arg("nrows"), bp::arg("ncolumns") )) );
         Array2D_Vector__exposer.def( bp::init< int, int, SireMaths::Vector const & >(( bp::arg("nrows"), bp::arg("ncolumns"), bp::arg("default_value") )) );
         Array2D_Vector__exposer.def( bp::init< SireBase::Array2D< SireMaths::Vector > const & >(( bp::arg("other") )) );

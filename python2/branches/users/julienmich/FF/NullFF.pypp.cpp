@@ -46,9 +46,8 @@ void register_NullFF_class(){
 
     { //::SireFF::NullFF
         typedef bp::class_< SireFF::NullFF, bp::bases< SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > NullFF_exposer_t;
-        NullFF_exposer_t NullFF_exposer = NullFF_exposer_t( "NullFF" );
+        NullFF_exposer_t NullFF_exposer = NullFF_exposer_t( "NullFF", bp::init< >() );
         bp::scope NullFF_scope( NullFF_exposer );
-        NullFF_exposer.def( bp::init< >() );
         NullFF_exposer.def( bp::init< SireFF::NullFF const & >(( bp::arg("other") )) );
         { //::SireFF::NullFF::at
         

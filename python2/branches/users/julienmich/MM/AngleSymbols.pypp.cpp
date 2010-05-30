@@ -32,17 +32,14 @@ namespace bp = boost::python;
 
 #include "internalparameters.h"
 
-SireMM::AngleSymbols __copy__(const SireMM::AngleSymbols &other){ return SireMM::AngleSymbols(other); }
-
 const char* pvt_get_name(const SireMM::AngleSymbols&){ return "SireMM::AngleSymbols";}
 
 void register_AngleSymbols_class(){
 
     { //::SireMM::AngleSymbols
-        typedef bp::class_< SireMM::AngleSymbols, bp::bases< SireMM::InternalSymbolsBase > > AngleSymbols_exposer_t;
+        typedef bp::class_< SireMM::AngleSymbols, bp::bases< SireMM::InternalSymbolsBase >, boost::noncopyable > AngleSymbols_exposer_t;
         AngleSymbols_exposer_t AngleSymbols_exposer = AngleSymbols_exposer_t( "AngleSymbols" );
         bp::scope AngleSymbols_scope( AngleSymbols_exposer );
-        AngleSymbols_exposer.def( bp::init< >() );
         { //::SireMM::AngleSymbols::theta
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::AngleSymbols::*theta_function_type )(  ) const;
@@ -54,9 +51,6 @@ void register_AngleSymbols_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
-        AngleSymbols_exposer.def( "__copy__", &__copy__);
-        AngleSymbols_exposer.def( "__deepcopy__", &__copy__);
-        AngleSymbols_exposer.def( "clone", &__copy__);
         AngleSymbols_exposer.def( "__str__", &pvt_get_name);
         AngleSymbols_exposer.def( "__repr__", &pvt_get_name);
     }

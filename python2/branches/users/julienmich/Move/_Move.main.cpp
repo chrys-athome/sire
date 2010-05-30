@@ -29,6 +29,8 @@
 
 #include "Move.pypp.hpp"
 
+#include "MoverMove.pypp.hpp"
+
 #include "Moves.pypp.hpp"
 
 #include "NullDeleter.pypp.hpp"
@@ -163,6 +165,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_MolInserter_class();
 
     register_MolecularDynamics_class();
+
+    register_MoverMove_class();
 
     register_Moves_class();
 

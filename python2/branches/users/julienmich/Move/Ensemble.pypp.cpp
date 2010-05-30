@@ -35,9 +35,8 @@ void register_Ensemble_class(){
 
     { //::SireMove::Ensemble
         typedef bp::class_< SireMove::Ensemble, bp::bases< SireBase::Property > > Ensemble_exposer_t;
-        Ensemble_exposer_t Ensemble_exposer = Ensemble_exposer_t( "Ensemble" );
+        Ensemble_exposer_t Ensemble_exposer = Ensemble_exposer_t( "Ensemble", bp::init< >() );
         bp::scope Ensemble_scope( Ensemble_exposer );
-        Ensemble_exposer.def( bp::init< >() );
         Ensemble_exposer.def( bp::init< SireMove::Ensemble const & >(( bp::arg("other") )) );
         { //::SireMove::Ensemble::MuVT
         

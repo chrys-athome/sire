@@ -61,9 +61,8 @@ void register_IDAndSet_AtomID__class(){
 
     { //::SireID::IDAndSet< SireMol::AtomID >
         typedef bp::class_< SireID::IDAndSet< SireMol::AtomID >, bp::bases< SireMol::AtomID, SireID::ID > > IDAndSet_AtomID__exposer_t;
-        IDAndSet_AtomID__exposer_t IDAndSet_AtomID__exposer = IDAndSet_AtomID__exposer_t( "IDAndSet_AtomID_" );
+        IDAndSet_AtomID__exposer_t IDAndSet_AtomID__exposer = IDAndSet_AtomID__exposer_t( "IDAndSet_AtomID_", bp::init< >() );
         bp::scope IDAndSet_AtomID__scope( IDAndSet_AtomID__exposer );
-        IDAndSet_AtomID__exposer.def( bp::init< >() );
         IDAndSet_AtomID__exposer.def( bp::init< SireMol::AtomID const & >(( bp::arg("id") )) );
         IDAndSet_AtomID__exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("id0"), bp::arg("id1") )) );
         IDAndSet_AtomID__exposer.def( bp::init< QList< SireMol::AtomIdentifier > const & >(( bp::arg("ids") )) );

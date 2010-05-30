@@ -75,9 +75,8 @@ void register_Mover_Selector_Segment__class(){
 
     { //::SireMol::Mover< SireMol::Selector< SireMol::Segment > >
         typedef bp::class_< SireMol::Mover< SireMol::Selector< SireMol::Segment > >, bp::bases< SireMol::MoverBase, SireMol::Selector<SireMol::Segment>, SireMol::MoleculeView, SireBase::Property > > Mover_Selector_Segment__exposer_t;
-        Mover_Selector_Segment__exposer_t Mover_Selector_Segment__exposer = Mover_Selector_Segment__exposer_t( "Mover_Selector_Segment_" );
+        Mover_Selector_Segment__exposer_t Mover_Selector_Segment__exposer = Mover_Selector_Segment__exposer_t( "Mover_Selector_Segment_", bp::init< >() );
         bp::scope Mover_Selector_Segment__scope( Mover_Selector_Segment__exposer );
-        Mover_Selector_Segment__exposer.def( bp::init< >() );
         Mover_Selector_Segment__exposer.def( bp::init< SireMol::Selector< SireMol::Segment > const & >(( bp::arg("view") )) );
         Mover_Selector_Segment__exposer.def( bp::init< SireMol::Selector< SireMol::Segment > const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Selector_Segment__exposer.def( bp::init< SireMol::Mover< SireMol::Selector< SireMol::Segment > > const & >(( bp::arg("other") )) );

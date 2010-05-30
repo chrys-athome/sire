@@ -33,19 +33,14 @@ namespace bp = boost::python;
 
 #include "point.h"
 
-SireFF::PointRef __copy__(const SireFF::PointRef &other){ return SireFF::PointRef(other); }
-
 const char* pvt_get_name(const SireFF::PointRef&){ return "SireFF::PointRef";}
 
 void register_PointRef_class(){
 
     { //::SireFF::PointRef
-        typedef bp::class_< SireFF::PointRef > PointRef_exposer_t;
-        PointRef_exposer_t PointRef_exposer = PointRef_exposer_t( "PointRef", bp::init< SireMol::Atom const & >(( bp::arg("atom") )) );
+        typedef bp::class_< SireFF::PointRef, boost::noncopyable > PointRef_exposer_t;
+        PointRef_exposer_t PointRef_exposer = PointRef_exposer_t( "PointRef", bp::no_init );
         bp::scope PointRef_scope( PointRef_exposer );
-        PointRef_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("point") )) );
-        PointRef_exposer.def( bp::init< SireFF::Point const & >(( bp::arg("point") )) );
-        PointRef_exposer.def( bp::init< SireFF::PointPtr const & >(( bp::arg("point") )) );
         { //::SireFF::PointRef::addForce
         
             typedef bool ( ::SireFF::PointRef::*addForce_function_type )( ::SireFF::MolForceTable &,::SireMaths::Vector const & ) const;
@@ -90,9 +85,6 @@ void register_PointRef_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        PointRef_exposer.def( "__copy__", &__copy__);
-        PointRef_exposer.def( "__deepcopy__", &__copy__);
-        PointRef_exposer.def( "clone", &__copy__);
         PointRef_exposer.def( "__str__", &pvt_get_name);
         PointRef_exposer.def( "__repr__", &pvt_get_name);
     }

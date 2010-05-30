@@ -43,9 +43,8 @@ void register_GreaterThan_class(){
 
     { //::SireCAS::GreaterThan
         typedef bp::class_< SireCAS::GreaterThan, bp::bases< SireCAS::Condition, SireCAS::ExBase > > GreaterThan_exposer_t;
-        GreaterThan_exposer_t GreaterThan_exposer = GreaterThan_exposer_t( "GreaterThan" );
+        GreaterThan_exposer_t GreaterThan_exposer = GreaterThan_exposer_t( "GreaterThan", bp::init< >() );
         bp::scope GreaterThan_scope( GreaterThan_exposer );
-        GreaterThan_exposer.def( bp::init< >() );
         GreaterThan_exposer.def( bp::init< SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("left_hand_side"), bp::arg("right_hand_side") )) );
         GreaterThan_exposer.def( bp::init< SireCAS::GreaterThan const & >(( bp::arg("other") )) );
         { //::SireCAS::GreaterThan::alwaysFalse

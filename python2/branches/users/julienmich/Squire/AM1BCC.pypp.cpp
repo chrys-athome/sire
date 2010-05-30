@@ -49,9 +49,8 @@ void register_AM1BCC_class(){
 
     { //::Squire::AM1BCC
         typedef bp::class_< Squire::AM1BCC, bp::bases< Squire::QMChargeCalculator, SireBase::Property > > AM1BCC_exposer_t;
-        AM1BCC_exposer_t AM1BCC_exposer = AM1BCC_exposer_t( "AM1BCC" );
+        AM1BCC_exposer_t AM1BCC_exposer = AM1BCC_exposer_t( "AM1BCC", bp::init< >() );
         bp::scope AM1BCC_scope( AM1BCC_exposer );
-        AM1BCC_exposer.def( bp::init< >() );
         AM1BCC_exposer.def( bp::init< Squire::AM1BCC const & >(( bp::arg("other") )) );
         { //::Squire::AM1BCC::environment
         

@@ -31,9 +31,8 @@ void register_AtomNameMatcher_class(){
 
     { //::SireMol::AtomNameMatcher
         typedef bp::class_< SireMol::AtomNameMatcher, bp::bases< SireMol::AtomMatcher, SireBase::Property > > AtomNameMatcher_exposer_t;
-        AtomNameMatcher_exposer_t AtomNameMatcher_exposer = AtomNameMatcher_exposer_t( "AtomNameMatcher" );
+        AtomNameMatcher_exposer_t AtomNameMatcher_exposer = AtomNameMatcher_exposer_t( "AtomNameMatcher", bp::init< >() );
         bp::scope AtomNameMatcher_scope( AtomNameMatcher_exposer );
-        AtomNameMatcher_exposer.def( bp::init< >() );
         AtomNameMatcher_exposer.def( bp::init< SireMol::AtomNameMatcher const & >(( bp::arg("arg0") )) );
         { //::SireMol::AtomNameMatcher::match
         

@@ -36,9 +36,8 @@ void register_SimStore_class(){
 
     { //::SireMove::SimStore
         typedef bp::class_< SireMove::SimStore > SimStore_exposer_t;
-        SimStore_exposer_t SimStore_exposer = SimStore_exposer_t( "SimStore" );
+        SimStore_exposer_t SimStore_exposer = SimStore_exposer_t( "SimStore", bp::init< >() );
         bp::scope SimStore_scope( SimStore_exposer );
-        SimStore_exposer.def( bp::init< >() );
         SimStore_exposer.def( bp::init< SireSystem::System const &, SireMove::Moves const &, bp::optional< bool > >(( bp::arg("system"), bp::arg("moves"), bp::arg("compress")=(bool)(false) )) );
         SimStore_exposer.def( bp::init< SireMove::SimStore const & >(( bp::arg("other") )) );
         { //::SireMove::SimStore::isPacked

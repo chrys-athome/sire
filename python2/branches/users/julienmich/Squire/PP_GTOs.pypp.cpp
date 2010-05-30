@@ -33,9 +33,8 @@ void register_PP_GTOs_class(){
 
     { //::Squire::PP_GTOs
         typedef bp::class_< Squire::PP_GTOs > PP_GTOs_exposer_t;
-        PP_GTOs_exposer_t PP_GTOs_exposer = PP_GTOs_exposer_t( "PP_GTOs" );
+        PP_GTOs_exposer_t PP_GTOs_exposer = PP_GTOs_exposer_t( "PP_GTOs", bp::init< >() );
         bp::scope PP_GTOs_scope( PP_GTOs_exposer );
-        PP_GTOs_exposer.def( bp::init< >() );
         PP_GTOs_exposer.def( bp::init< QVector< Squire::P_GTO > const &, QVector< SireMaths::Vector > const & >(( bp::arg("p_gtos"), bp::arg("p_centers") )) );
         PP_GTOs_exposer.def( bp::init< Squire::PP_GTOs const & >(( bp::arg("other") )) );
         { //::Squire::PP_GTOs::kinetic_integral

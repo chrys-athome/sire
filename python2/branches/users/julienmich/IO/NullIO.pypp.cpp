@@ -37,9 +37,8 @@ void register_NullIO_class(){
 
     { //::SireIO::NullIO
         typedef bp::class_< SireIO::NullIO, bp::bases< SireIO::IOBase, SireBase::Property > > NullIO_exposer_t;
-        NullIO_exposer_t NullIO_exposer = NullIO_exposer_t( "NullIO" );
+        NullIO_exposer_t NullIO_exposer = NullIO_exposer_t( "NullIO", bp::init< >() );
         bp::scope NullIO_scope( NullIO_exposer );
-        NullIO_exposer.def( bp::init< >() );
         NullIO_exposer.def( bp::init< SireIO::NullIO const & >(( bp::arg("other") )) );
         NullIO_exposer.def( bp::self != bp::self );
         { //::SireIO::NullIO::operator=

@@ -81,17 +81,14 @@ namespace bp = boost::python;
 
 #include "pdb.h"
 
-SireIO::PDBParameters __copy__(const SireIO::PDBParameters &other){ return SireIO::PDBParameters(other); }
-
 const char* pvt_get_name(const SireIO::PDBParameters&){ return "SireIO::PDBParameters";}
 
 void register_PDBParameters_class(){
 
     { //::SireIO::PDBParameters
-        typedef bp::class_< SireIO::PDBParameters, bp::bases< SireIO::IOParametersBase > > PDBParameters_exposer_t;
+        typedef bp::class_< SireIO::PDBParameters, bp::bases< SireIO::IOParametersBase >, boost::noncopyable > PDBParameters_exposer_t;
         PDBParameters_exposer_t PDBParameters_exposer = PDBParameters_exposer_t( "PDBParameters" );
         bp::scope PDBParameters_scope( PDBParameters_exposer );
-        PDBParameters_exposer.def( bp::init< >() );
         { //::SireIO::PDBParameters::alternatives
         
             typedef ::SireBase::PropertyName const & ( ::SireIO::PDBParameters::*alternatives_function_type )(  ) const;
@@ -246,9 +243,6 @@ void register_PDBParameters_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        PDBParameters_exposer.def( "__copy__", &__copy__);
-        PDBParameters_exposer.def( "__deepcopy__", &__copy__);
-        PDBParameters_exposer.def( "clone", &__copy__);
         PDBParameters_exposer.def( "__str__", &pvt_get_name);
         PDBParameters_exposer.def( "__repr__", &pvt_get_name);
     }

@@ -27,9 +27,8 @@ void register_LengthHistogram_class(){
 
     { //::SireMaths::HistogramT< SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > >
         typedef bp::class_< SireMaths::HistogramT< SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > >, bp::bases< SireMaths::Histogram, SireMaths::HistogramRange > > LengthHistogram_exposer_t;
-        LengthHistogram_exposer_t LengthHistogram_exposer = LengthHistogram_exposer_t( "LengthHistogram" );
+        LengthHistogram_exposer_t LengthHistogram_exposer = LengthHistogram_exposer_t( "LengthHistogram", bp::init< >() );
         bp::scope LengthHistogram_scope( LengthHistogram_exposer );
-        LengthHistogram_exposer.def( bp::init< >() );
         LengthHistogram_exposer.def( bp::init< SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 >, SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 >, bp::optional< int > >(( bp::arg("min"), bp::arg("max"), bp::arg("nbins")=(int)(101) )) );
         LengthHistogram_exposer.def( bp::init< SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 >, SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 >, SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > >(( bp::arg("min"), bp::arg("max"), bp::arg("binwidth") )) );
         LengthHistogram_exposer.def( bp::init< SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > > const & >(( bp::arg("range") )) );

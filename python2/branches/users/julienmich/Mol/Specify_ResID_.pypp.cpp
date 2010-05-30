@@ -61,9 +61,8 @@ void register_Specify_ResID__class(){
 
     { //::SireID::Specify< SireMol::ResID >
         typedef bp::class_< SireID::Specify< SireMol::ResID >, bp::bases< SireMol::ResID, SireID::ID > > Specify_ResID__exposer_t;
-        Specify_ResID__exposer_t Specify_ResID__exposer = Specify_ResID__exposer_t( "Specify_ResID_" );
+        Specify_ResID__exposer_t Specify_ResID__exposer = Specify_ResID__exposer_t( "Specify_ResID_", bp::init< >() );
         bp::scope Specify_ResID__scope( Specify_ResID__exposer );
-        Specify_ResID__exposer.def( bp::init< >() );
         Specify_ResID__exposer.def( bp::init< SireMol::ResID const &, qint32 >(( bp::arg("id"), bp::arg("i") )) );
         Specify_ResID__exposer.def( bp::init< SireMol::ResID const &, qint32, qint32 >(( bp::arg("id"), bp::arg("i"), bp::arg("j") )) );
         Specify_ResID__exposer.def( bp::init< SireID::Specify< SireMol::ResID > const & >(( bp::arg("other") )) );

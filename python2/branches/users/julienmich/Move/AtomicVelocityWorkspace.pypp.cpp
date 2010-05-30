@@ -43,9 +43,8 @@ void register_AtomicVelocityWorkspace_class(){
 
     { //::SireMove::AtomicVelocityWorkspace
         typedef bp::class_< SireMove::AtomicVelocityWorkspace, bp::bases< SireMove::IntegratorWorkspace, SireBase::Property > > AtomicVelocityWorkspace_exposer_t;
-        AtomicVelocityWorkspace_exposer_t AtomicVelocityWorkspace_exposer = AtomicVelocityWorkspace_exposer_t( "AtomicVelocityWorkspace" );
+        AtomicVelocityWorkspace_exposer_t AtomicVelocityWorkspace_exposer = AtomicVelocityWorkspace_exposer_t( "AtomicVelocityWorkspace", bp::init< >() );
         bp::scope AtomicVelocityWorkspace_scope( AtomicVelocityWorkspace_exposer );
-        AtomicVelocityWorkspace_exposer.def( bp::init< >() );
         AtomicVelocityWorkspace_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         AtomicVelocityWorkspace_exposer.def( bp::init< SireMove::AtomicVelocityWorkspace const & >(( bp::arg("other") )) );
         { //::SireMove::AtomicVelocityWorkspace::coordinateArray
@@ -84,7 +83,7 @@ void register_AtomicVelocityWorkspace_class(){
         }
         { //::SireMove::AtomicVelocityWorkspace::forces
         
-            typedef ::QHash< SireMol::MolNum, SireMol::AtomProperty< SireBase::Vector3D< SireUnits::Dimension::PhysUnit< 1, 1, -0x00000000000000002, 0, 0, 0, 0 > > > > ( ::SireMove::AtomicVelocityWorkspace::*forces_function_type )(  ) const;
+            typedef ::QHash< SireMol::MolNum, SireMol::AtomProperty< SireBase::Vector3D< SireUnits::Dimension::PhysUnit< 1, 1, -0x000000002, 0, 0, 0, 0 > > > > ( ::SireMove::AtomicVelocityWorkspace::*forces_function_type )(  ) const;
             forces_function_type forces_function_value( &::SireMove::AtomicVelocityWorkspace::forces );
             
             AtomicVelocityWorkspace_exposer.def( 
@@ -126,7 +125,7 @@ void register_AtomicVelocityWorkspace_class(){
         }
         { //::SireMove::AtomicVelocityWorkspace::masses
         
-            typedef ::QHash< SireMol::MolNum, SireMol::AtomProperty< SireUnits::Dimension::PhysUnit< 1, 0, 0, 0, 0, -0x00000000000000001, 0 > > > ( ::SireMove::AtomicVelocityWorkspace::*masses_function_type )(  ) const;
+            typedef ::QHash< SireMol::MolNum, SireMol::AtomProperty< SireUnits::Dimension::PhysUnit< 1, 0, 0, 0, 0, -0x000000001, 0 > > > ( ::SireMove::AtomicVelocityWorkspace::*masses_function_type )(  ) const;
             masses_function_type masses_function_value( &::SireMove::AtomicVelocityWorkspace::masses );
             
             AtomicVelocityWorkspace_exposer.def( 
@@ -247,7 +246,7 @@ void register_AtomicVelocityWorkspace_class(){
         }
         { //::SireMove::AtomicVelocityWorkspace::velocities
         
-            typedef ::QHash< SireMol::MolNum, SireMol::AtomProperty< SireBase::Vector3D< SireUnits::Dimension::PhysUnit< 0, 1, -0x00000000000000001, 0, 0, 0, 0 > > > > ( ::SireMove::AtomicVelocityWorkspace::*velocities_function_type )(  ) const;
+            typedef ::QHash< SireMol::MolNum, SireMol::AtomProperty< SireBase::Vector3D< SireUnits::Dimension::PhysUnit< 0, 1, -0x000000001, 0, 0, 0, 0 > > > > ( ::SireMove::AtomicVelocityWorkspace::*velocities_function_type )(  ) const;
             velocities_function_type velocities_function_value( &::SireMove::AtomicVelocityWorkspace::velocities );
             
             AtomicVelocityWorkspace_exposer.def( 

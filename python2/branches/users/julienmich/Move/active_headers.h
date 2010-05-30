@@ -12,6 +12,7 @@
 #include "molinserter.h"
 #include "montecarlo.h"
 #include "move.h"
+#include "movermove.h"
 #include "moves.h"
 #include "mtsmc.h"
 #include "prefsampler.h"

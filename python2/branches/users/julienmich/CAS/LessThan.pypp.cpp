@@ -43,9 +43,8 @@ void register_LessThan_class(){
 
     { //::SireCAS::LessThan
         typedef bp::class_< SireCAS::LessThan, bp::bases< SireCAS::Condition, SireCAS::ExBase > > LessThan_exposer_t;
-        LessThan_exposer_t LessThan_exposer = LessThan_exposer_t( "LessThan" );
+        LessThan_exposer_t LessThan_exposer = LessThan_exposer_t( "LessThan", bp::init< >() );
         bp::scope LessThan_scope( LessThan_exposer );
-        LessThan_exposer.def( bp::init< >() );
         LessThan_exposer.def( bp::init< SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("left_hand_side"), bp::arg("right_hand_side") )) );
         LessThan_exposer.def( bp::init< SireCAS::LessThan const & >(( bp::arg("other") )) );
         { //::SireCAS::LessThan::alwaysFalse

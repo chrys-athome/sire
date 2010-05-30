@@ -43,9 +43,8 @@ void register_Selector_Chain__class(){
 
     { //::SireMol::Selector< SireMol::Chain >
         typedef bp::class_< SireMol::Selector< SireMol::Chain >, bp::bases< SireMol::MoleculeView, SireBase::Property > > Selector_Chain__exposer_t;
-        Selector_Chain__exposer_t Selector_Chain__exposer = Selector_Chain__exposer_t( "Selector_Chain_" );
+        Selector_Chain__exposer_t Selector_Chain__exposer = Selector_Chain__exposer_t( "Selector_Chain_", bp::init< >() );
         bp::scope Selector_Chain__scope( Selector_Chain__exposer );
-        Selector_Chain__exposer.def( bp::init< >() );
         Selector_Chain__exposer.def( bp::init< SireMol::Chain const & >(( bp::arg("view") )) );
         Selector_Chain__exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         Selector_Chain__exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::AtomSelection const & >(( bp::arg("moldata"), bp::arg("selected_atoms") )) );

@@ -43,9 +43,8 @@ void register_NullIntegratorWorkspace_class(){
 
     { //::SireMove::NullIntegratorWorkspace
         typedef bp::class_< SireMove::NullIntegratorWorkspace, bp::bases< SireMove::IntegratorWorkspace, SireBase::Property > > NullIntegratorWorkspace_exposer_t;
-        NullIntegratorWorkspace_exposer_t NullIntegratorWorkspace_exposer = NullIntegratorWorkspace_exposer_t( "NullIntegratorWorkspace" );
+        NullIntegratorWorkspace_exposer_t NullIntegratorWorkspace_exposer = NullIntegratorWorkspace_exposer_t( "NullIntegratorWorkspace", bp::init< >() );
         bp::scope NullIntegratorWorkspace_scope( NullIntegratorWorkspace_exposer );
-        NullIntegratorWorkspace_exposer.def( bp::init< >() );
         NullIntegratorWorkspace_exposer.def( bp::init< SireMove::NullIntegratorWorkspace const & >(( bp::arg("other") )) );
         { //::SireMove::NullIntegratorWorkspace::kineticEnergy
         

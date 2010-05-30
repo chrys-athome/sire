@@ -46,9 +46,8 @@ void register_RigidBodyMC_class(){
 
     { //::SireMove::RigidBodyMC
         typedef bp::class_< SireMove::RigidBodyMC, bp::bases< SireMove::MonteCarlo, SireMove::Move, SireBase::Property > > RigidBodyMC_exposer_t;
-        RigidBodyMC_exposer_t RigidBodyMC_exposer = RigidBodyMC_exposer_t( "RigidBodyMC" );
+        RigidBodyMC_exposer_t RigidBodyMC_exposer = RigidBodyMC_exposer_t( "RigidBodyMC", bp::init< >() );
         bp::scope RigidBodyMC_scope( RigidBodyMC_exposer );
-        RigidBodyMC_exposer.def( bp::init< >() );
         RigidBodyMC_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         RigidBodyMC_exposer.def( bp::init< SireMove::Sampler const & >(( bp::arg("sampler") )) );
         RigidBodyMC_exposer.def( bp::init< SireMove::RigidBodyMC const & >(( bp::arg("other") )) );

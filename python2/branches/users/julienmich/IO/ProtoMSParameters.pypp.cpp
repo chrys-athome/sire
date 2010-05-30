@@ -89,17 +89,14 @@ namespace bp = boost::python;
 
 #include "protoms.h"
 
-SireIO::ProtoMSParameters __copy__(const SireIO::ProtoMSParameters &other){ return SireIO::ProtoMSParameters(other); }
-
 const char* pvt_get_name(const SireIO::ProtoMSParameters&){ return "SireIO::ProtoMSParameters";}
 
 void register_ProtoMSParameters_class(){
 
     { //::SireIO::ProtoMSParameters
-        typedef bp::class_< SireIO::ProtoMSParameters > ProtoMSParameters_exposer_t;
+        typedef bp::class_< SireIO::ProtoMSParameters, boost::noncopyable > ProtoMSParameters_exposer_t;
         ProtoMSParameters_exposer_t ProtoMSParameters_exposer = ProtoMSParameters_exposer_t( "ProtoMSParameters" );
         bp::scope ProtoMSParameters_scope( ProtoMSParameters_exposer );
-        ProtoMSParameters_exposer.def( bp::init< >() );
         { //::SireIO::ProtoMSParameters::angle
         
             typedef ::SireBase::PropertyName const & ( ::SireIO::ProtoMSParameters::*angle_function_type )(  ) const;
@@ -265,9 +262,6 @@ void register_ProtoMSParameters_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        ProtoMSParameters_exposer.def( "__copy__", &__copy__);
-        ProtoMSParameters_exposer.def( "__deepcopy__", &__copy__);
-        ProtoMSParameters_exposer.def( "clone", &__copy__);
         ProtoMSParameters_exposer.def( "__str__", &pvt_get_name);
         ProtoMSParameters_exposer.def( "__repr__", &pvt_get_name);
     }

@@ -19,19 +19,18 @@ SireMol::ResProperty<long long> __copy__(const SireMol::ResProperty<long long> &
 
 void register_ResIntProperty_class(){
 
-    { //::SireMol::ResProperty< long long int >
-        typedef bp::class_< SireMol::ResProperty< long long int >, bp::bases< SireMol::ResProp, SireMol::MolViewProperty, SireBase::Property > > ResIntProperty_exposer_t;
-        ResIntProperty_exposer_t ResIntProperty_exposer = ResIntProperty_exposer_t( "ResIntProperty" );
+    { //::SireMol::ResProperty< long long >
+        typedef bp::class_< SireMol::ResProperty< long long >, bp::bases< SireMol::ResProp, SireMol::MolViewProperty, SireBase::Property > > ResIntProperty_exposer_t;
+        ResIntProperty_exposer_t ResIntProperty_exposer = ResIntProperty_exposer_t( "ResIntProperty", bp::init< >() );
         bp::scope ResIntProperty_scope( ResIntProperty_exposer );
-        ResIntProperty_exposer.def( bp::init< >() );
         ResIntProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
-        ResIntProperty_exposer.def( bp::init< QVector< long long int > const & >(( bp::arg("values") )) );
-        ResIntProperty_exposer.def( bp::init< SireMol::ResProperty< long long int > const & >(( bp::arg("other") )) );
-        { //::SireMol::ResProperty< long long int >::array
+        ResIntProperty_exposer.def( bp::init< QVector< long long > const & >(( bp::arg("values") )) );
+        ResIntProperty_exposer.def( bp::init< SireMol::ResProperty< long long > const & >(( bp::arg("other") )) );
+        { //::SireMol::ResProperty< long long >::array
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef ::QVector< long long int > const & ( ::SireMol::ResProperty< long long int >::*array_function_type )(  ) const;
-            array_function_type array_function_value( &::SireMol::ResProperty< long long int >::array );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef ::QVector< long long > const & ( ::SireMol::ResProperty< long long >::*array_function_type )(  ) const;
+            array_function_type array_function_value( &::SireMol::ResProperty< long long >::array );
             
             ResIntProperty_exposer.def( 
                 "array"
@@ -39,11 +38,11 @@ void register_ResIntProperty_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMol::ResProperty< long long int >::assertCanConvert
+        { //::SireMol::ResProperty< long long >::assertCanConvert
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef void ( ::SireMol::ResProperty< long long int >::*assertCanConvert_function_type )( ::QVariant const & ) const;
-            assertCanConvert_function_type assertCanConvert_function_value( &::SireMol::ResProperty< long long int >::assertCanConvert );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef void ( ::SireMol::ResProperty< long long >::*assertCanConvert_function_type )( ::QVariant const & ) const;
+            assertCanConvert_function_type assertCanConvert_function_value( &::SireMol::ResProperty< long long >::assertCanConvert );
             
             ResIntProperty_exposer.def( 
                 "assertCanConvert"
@@ -51,11 +50,11 @@ void register_ResIntProperty_class(){
                 , ( bp::arg("value") ) );
         
         }
-        { //::SireMol::ResProperty< long long int >::assignFrom
+        { //::SireMol::ResProperty< long long >::assignFrom
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef void ( ::SireMol::ResProperty< long long int >::*assignFrom_function_type )( ::SireMol::ResProperty< QVariant > const & ) ;
-            assignFrom_function_type assignFrom_function_value( &::SireMol::ResProperty< long long int >::assignFrom );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef void ( ::SireMol::ResProperty< long long >::*assignFrom_function_type )( ::SireMol::ResProperty< QVariant > const & ) ;
+            assignFrom_function_type assignFrom_function_value( &::SireMol::ResProperty< long long >::assignFrom );
             
             ResIntProperty_exposer.def( 
                 "assignFrom"
@@ -63,11 +62,11 @@ void register_ResIntProperty_class(){
                 , ( bp::arg("values") ) );
         
         }
-        { //::SireMol::ResProperty< long long int >::at
+        { //::SireMol::ResProperty< long long >::at
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef long long int const & ( ::SireMol::ResProperty< long long int >::*at_function_type )( ::SireMol::ResIdx const & ) const;
-            at_function_type at_function_value( &::SireMol::ResProperty< long long int >::at );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef long long int const & ( ::SireMol::ResProperty< long long >::*at_function_type )( ::SireMol::ResIdx const & ) const;
+            at_function_type at_function_value( &::SireMol::ResProperty< long long >::at );
             
             ResIntProperty_exposer.def( 
                 "at"
@@ -76,11 +75,11 @@ void register_ResIntProperty_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMol::ResProperty< long long int >::canConvert
+        { //::SireMol::ResProperty< long long >::canConvert
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef bool ( ::SireMol::ResProperty< long long int >::*canConvert_function_type )( ::QVariant const & ) const;
-            canConvert_function_type canConvert_function_value( &::SireMol::ResProperty< long long int >::canConvert );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef bool ( ::SireMol::ResProperty< long long >::*canConvert_function_type )( ::QVariant const & ) const;
+            canConvert_function_type canConvert_function_value( &::SireMol::ResProperty< long long >::canConvert );
             
             ResIntProperty_exposer.def( 
                 "canConvert"
@@ -88,22 +87,22 @@ void register_ResIntProperty_class(){
                 , ( bp::arg("value") ) );
         
         }
-        { //::SireMol::ResProperty< long long int >::count
+        { //::SireMol::ResProperty< long long >::count
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef int ( ::SireMol::ResProperty< long long int >::*count_function_type )(  ) const;
-            count_function_type count_function_value( &::SireMol::ResProperty< long long int >::count );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef int ( ::SireMol::ResProperty< long long >::*count_function_type )(  ) const;
+            count_function_type count_function_value( &::SireMol::ResProperty< long long >::count );
             
             ResIntProperty_exposer.def( 
                 "count"
                 , count_function_value );
         
         }
-        { //::SireMol::ResProperty< long long int >::fromVariant
+        { //::SireMol::ResProperty< long long >::fromVariant
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef ::SireMol::ResProperty< long long int > ( *fromVariant_function_type )( ::SireMol::ResProperty< QVariant > const & );
-            fromVariant_function_type fromVariant_function_value( &::SireMol::ResProperty< long long int >::fromVariant );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef ::SireMol::ResProperty< long long > ( *fromVariant_function_type )( ::SireMol::ResProperty< QVariant > const & );
+            fromVariant_function_type fromVariant_function_value( &::SireMol::ResProperty< long long >::fromVariant );
             
             ResIntProperty_exposer.def( 
                 "fromVariant"
@@ -111,11 +110,11 @@ void register_ResIntProperty_class(){
                 , ( bp::arg("values") ) );
         
         }
-        { //::SireMol::ResProperty< long long int >::get
+        { //::SireMol::ResProperty< long long >::get
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef long long int const & ( ::SireMol::ResProperty< long long int >::*get_function_type )( ::SireMol::ResIdx const & ) const;
-            get_function_type get_function_value( &::SireMol::ResProperty< long long int >::get );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef long long int const & ( ::SireMol::ResProperty< long long >::*get_function_type )( ::SireMol::ResIdx const & ) const;
+            get_function_type get_function_value( &::SireMol::ResProperty< long long >::get );
             
             ResIntProperty_exposer.def( 
                 "get"
@@ -124,11 +123,11 @@ void register_ResIntProperty_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMol::ResProperty< long long int >::isCompatibleWith
+        { //::SireMol::ResProperty< long long >::isCompatibleWith
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef bool ( ::SireMol::ResProperty< long long int >::*isCompatibleWith_function_type )( ::SireMol::MoleculeInfoData const & ) const;
-            isCompatibleWith_function_type isCompatibleWith_function_value( &::SireMol::ResProperty< long long int >::isCompatibleWith );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef bool ( ::SireMol::ResProperty< long long >::*isCompatibleWith_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            isCompatibleWith_function_type isCompatibleWith_function_value( &::SireMol::ResProperty< long long >::isCompatibleWith );
             
             ResIntProperty_exposer.def( 
                 "isCompatibleWith"
@@ -136,22 +135,22 @@ void register_ResIntProperty_class(){
                 , ( bp::arg("molinfo") ) );
         
         }
-        { //::SireMol::ResProperty< long long int >::isEmpty
+        { //::SireMol::ResProperty< long long >::isEmpty
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef bool ( ::SireMol::ResProperty< long long int >::*isEmpty_function_type )(  ) const;
-            isEmpty_function_type isEmpty_function_value( &::SireMol::ResProperty< long long int >::isEmpty );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef bool ( ::SireMol::ResProperty< long long >::*isEmpty_function_type )(  ) const;
+            isEmpty_function_type isEmpty_function_value( &::SireMol::ResProperty< long long >::isEmpty );
             
             ResIntProperty_exposer.def( 
                 "isEmpty"
                 , isEmpty_function_value );
         
         }
-        { //::SireMol::ResProperty< long long int >::nResidues
+        { //::SireMol::ResProperty< long long >::nResidues
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef int ( ::SireMol::ResProperty< long long int >::*nResidues_function_type )(  ) const;
-            nResidues_function_type nResidues_function_value( &::SireMol::ResProperty< long long int >::nResidues );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef int ( ::SireMol::ResProperty< long long >::*nResidues_function_type )(  ) const;
+            nResidues_function_type nResidues_function_value( &::SireMol::ResProperty< long long >::nResidues );
             
             ResIntProperty_exposer.def( 
                 "nResidues"
@@ -159,11 +158,11 @@ void register_ResIntProperty_class(){
         
         }
         ResIntProperty_exposer.def( bp::self != bp::self );
-        { //::SireMol::ResProperty< long long int >::operator=
+        { //::SireMol::ResProperty< long long >::operator=
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef ::SireMol::ResProperty< long long int > & ( ::SireMol::ResProperty< long long int >::*assign_function_type )( ::SireMol::ResProperty< long long int > const & ) ;
-            assign_function_type assign_function_value( &::SireMol::ResProperty< long long int >::operator= );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef ::SireMol::ResProperty< long long > & ( ::SireMol::ResProperty< long long >::*assign_function_type )( ::SireMol::ResProperty< long long > const & ) ;
+            assign_function_type assign_function_value( &::SireMol::ResProperty< long long >::operator= );
             
             ResIntProperty_exposer.def( 
                 "assign"
@@ -173,11 +172,11 @@ void register_ResIntProperty_class(){
         
         }
         ResIntProperty_exposer.def( bp::self == bp::self );
-        { //::SireMol::ResProperty< long long int >::operator[]
+        { //::SireMol::ResProperty< long long >::operator[]
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef long long int const & ( ::SireMol::ResProperty< long long int >::*__getitem___function_type )( ::SireMol::ResIdx const & ) const;
-            __getitem___function_type __getitem___function_value( &::SireMol::ResProperty< long long int >::operator[] );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef long long int const & ( ::SireMol::ResProperty< long long >::*__getitem___function_type )( ::SireMol::ResIdx const & ) const;
+            __getitem___function_type __getitem___function_value( &::SireMol::ResProperty< long long >::operator[] );
             
             ResIntProperty_exposer.def( 
                 "__getitem__"
@@ -186,11 +185,11 @@ void register_ResIntProperty_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMol::ResProperty< long long int >::set
+        { //::SireMol::ResProperty< long long >::set
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef ::SireMol::ResProperty< long long int > & ( ::SireMol::ResProperty< long long int >::*set_function_type )( ::SireMol::ResIdx,long long int const & ) ;
-            set_function_type set_function_value( &::SireMol::ResProperty< long long int >::set );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef ::SireMol::ResProperty< long long > & ( ::SireMol::ResProperty< long long >::*set_function_type )( ::SireMol::ResIdx,long long int const & ) ;
+            set_function_type set_function_value( &::SireMol::ResProperty< long long >::set );
             
             ResIntProperty_exposer.def( 
                 "set"
@@ -199,44 +198,44 @@ void register_ResIntProperty_class(){
                 , bp::return_self< >() );
         
         }
-        { //::SireMol::ResProperty< long long int >::size
+        { //::SireMol::ResProperty< long long >::size
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef int ( ::SireMol::ResProperty< long long int >::*size_function_type )(  ) const;
-            size_function_type size_function_value( &::SireMol::ResProperty< long long int >::size );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef int ( ::SireMol::ResProperty< long long >::*size_function_type )(  ) const;
+            size_function_type size_function_value( &::SireMol::ResProperty< long long >::size );
             
             ResIntProperty_exposer.def( 
                 "size"
                 , size_function_value );
         
         }
-        { //::SireMol::ResProperty< long long int >::toString
+        { //::SireMol::ResProperty< long long >::toString
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef ::QString ( ::SireMol::ResProperty< long long int >::*toString_function_type )(  ) const;
-            toString_function_type toString_function_value( &::SireMol::ResProperty< long long int >::toString );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef ::QString ( ::SireMol::ResProperty< long long >::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMol::ResProperty< long long >::toString );
             
             ResIntProperty_exposer.def( 
                 "toString"
                 , toString_function_value );
         
         }
-        { //::SireMol::ResProperty< long long int >::toVariant
+        { //::SireMol::ResProperty< long long >::toVariant
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
-            typedef ::SireMol::ResProperty< QVariant > ( ::SireMol::ResProperty< long long int >::*toVariant_function_type )(  ) const;
-            toVariant_function_type toVariant_function_value( &::SireMol::ResProperty< long long int >::toVariant );
+            typedef SireMol::ResProperty< long long > exported_class_t;
+            typedef ::SireMol::ResProperty< QVariant > ( ::SireMol::ResProperty< long long >::*toVariant_function_type )(  ) const;
+            toVariant_function_type toVariant_function_value( &::SireMol::ResProperty< long long >::toVariant );
             
             ResIntProperty_exposer.def( 
                 "toVariant"
                 , toVariant_function_value );
         
         }
-        { //::SireMol::ResProperty< long long int >::typeName
+        { //::SireMol::ResProperty< long long >::typeName
         
-            typedef SireMol::ResProperty< long long int > exported_class_t;
+            typedef SireMol::ResProperty< long long > exported_class_t;
             typedef char const * ( *typeName_function_type )(  );
-            typeName_function_type typeName_function_value( &::SireMol::ResProperty< long long int >::typeName );
+            typeName_function_type typeName_function_value( &::SireMol::ResProperty< long long >::typeName );
             
             ResIntProperty_exposer.def( 
                 "typeName"

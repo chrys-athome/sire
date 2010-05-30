@@ -25,9 +25,8 @@ void register_CoulombProbe_class(){
 
     { //::SireMM::CoulombProbe
         typedef bp::class_< SireMM::CoulombProbe, bp::bases< SireFF::Probe, SireBase::Property > > CoulombProbe_exposer_t;
-        CoulombProbe_exposer_t CoulombProbe_exposer = CoulombProbe_exposer_t( "CoulombProbe" );
+        CoulombProbe_exposer_t CoulombProbe_exposer = CoulombProbe_exposer_t( "CoulombProbe", bp::init< >() );
         bp::scope CoulombProbe_scope( CoulombProbe_exposer );
-        CoulombProbe_exposer.def( bp::init< >() );
         CoulombProbe_exposer.def( bp::init< SireUnits::Dimension::Charge >(( bp::arg("charge") )) );
         CoulombProbe_exposer.def( bp::init< SireMM::CLJProbe const & >(( bp::arg("cljprobe") )) );
         CoulombProbe_exposer.def( bp::init< SireFF::Probe const & >(( bp::arg("probe") )) );

@@ -37,9 +37,8 @@ void register_DistVector_class(){
 
     { //::SireMaths::DistVector
         typedef bp::class_< SireMaths::DistVector > DistVector_exposer_t;
-        DistVector_exposer_t DistVector_exposer = DistVector_exposer_t( "DistVector" );
+        DistVector_exposer_t DistVector_exposer = DistVector_exposer_t( "DistVector", bp::init< >() );
         bp::scope DistVector_scope( DistVector_exposer );
-        DistVector_exposer.def( bp::init< >() );
         DistVector_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("vec") )) );
         DistVector_exposer.def( bp::init< SireMaths::DistVector const & >(( bp::arg("other") )) );
         { //::SireMaths::DistVector::angle

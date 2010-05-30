@@ -31,9 +31,8 @@ void register_Sin_class(){
 
     { //::SireCAS::Sin
         typedef bp::class_< SireCAS::Sin, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Sin_exposer_t;
-        Sin_exposer_t Sin_exposer = Sin_exposer_t( "Sin" );
+        Sin_exposer_t Sin_exposer = Sin_exposer_t( "Sin", bp::init< >() );
         bp::scope Sin_scope( Sin_exposer );
-        Sin_exposer.def( bp::init< >() );
         Sin_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Sin_exposer.def( bp::init< SireCAS::Sin const & >(( bp::arg("other") )) );
         { //::SireCAS::Sin::evaluate

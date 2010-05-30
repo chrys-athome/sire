@@ -33,7 +33,7 @@ void register_MemInfo_class(){
 
     { //::SireBase::MemInfo
         typedef bp::class_< SireBase::MemInfo > MemInfo_exposer_t;
-        MemInfo_exposer_t MemInfo_exposer = MemInfo_exposer_t( "MemInfo" );
+        MemInfo_exposer_t MemInfo_exposer = MemInfo_exposer_t( "MemInfo", bp::no_init );
         bp::scope MemInfo_scope( MemInfo_exposer );
         MemInfo_exposer.def( bp::init< >() );
         MemInfo_exposer.def( bp::init< SireBase::MemInfo const & >(( bp::arg("other") )) );

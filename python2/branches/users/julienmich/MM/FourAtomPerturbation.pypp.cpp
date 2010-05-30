@@ -40,9 +40,8 @@ void register_FourAtomPerturbation_class(){
 
     { //::SireMM::FourAtomPerturbation
         typedef bp::class_< SireMM::FourAtomPerturbation, bp::bases< SireMM::InternalPerturbation, SireMol::Perturbation, SireBase::Property > > FourAtomPerturbation_exposer_t;
-        FourAtomPerturbation_exposer_t FourAtomPerturbation_exposer = FourAtomPerturbation_exposer_t( "FourAtomPerturbation" );
+        FourAtomPerturbation_exposer_t FourAtomPerturbation_exposer = FourAtomPerturbation_exposer_t( "FourAtomPerturbation", bp::init< >() );
         bp::scope FourAtomPerturbation_scope( FourAtomPerturbation_exposer );
-        FourAtomPerturbation_exposer.def( bp::init< >() );
         FourAtomPerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireCAS::Expression const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3"), bp::arg("initial_form"), bp::arg("final_form"), bp::arg("map")=SireBase::PropertyMap() )) );
         FourAtomPerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireCAS::Expression const &, SireCAS::Expression const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3"), bp::arg("initial_form"), bp::arg("final_form"), bp::arg("mapping_function"), bp::arg("map")=SireBase::PropertyMap() )) );
         FourAtomPerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireCAS::Expression const &, SireCAS::Identities const &, SireCAS::Identities const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3"), bp::arg("base_expression"), bp::arg("initial_forms"), bp::arg("final_forms"), bp::arg("map")=SireBase::PropertyMap() )) );

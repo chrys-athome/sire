@@ -29,9 +29,8 @@ void register_TranslateCamera_class(){
 
     { //::Spier::TranslateCamera
         typedef bp::class_< Spier::TranslateCamera, bp::bases< Spier::CameraCommand, Spier::RenderViewCommand, Spier::Command, SireBase::Property > > TranslateCamera_exposer_t;
-        TranslateCamera_exposer_t TranslateCamera_exposer = TranslateCamera_exposer_t( "TranslateCamera" );
+        TranslateCamera_exposer_t TranslateCamera_exposer = TranslateCamera_exposer_t( "TranslateCamera", bp::init< >() );
         bp::scope TranslateCamera_scope( TranslateCamera_exposer );
-        TranslateCamera_exposer.def( bp::init< >() );
         TranslateCamera_exposer.def( bp::init< SireUnits::Dimension::Length const &, SireUnits::Dimension::Length const &, SireUnits::Dimension::Length const & >(( bp::arg("translate_x"), bp::arg("translate_y"), bp::arg("translate_z") )) );
         TranslateCamera_exposer.def( bp::init< Spier::TranslateCamera const & >(( bp::arg("other") )) );
         { //::Spier::TranslateCamera::mergeWith

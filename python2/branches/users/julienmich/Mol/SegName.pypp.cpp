@@ -63,9 +63,8 @@ void register_SegName_class(){
 
     { //::SireMol::SegName
         typedef bp::class_< SireMol::SegName, bp::bases< SireMol::SegID, SireID::ID, SireID::Name > > SegName_exposer_t;
-        SegName_exposer_t SegName_exposer = SegName_exposer_t( "SegName" );
+        SegName_exposer_t SegName_exposer = SegName_exposer_t( "SegName", bp::init< >() );
         bp::scope SegName_scope( SegName_exposer );
-        SegName_exposer.def( bp::init< >() );
         SegName_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         SegName_exposer.def( bp::init< QString const &, SireID::CaseSensitivity >(( bp::arg("name"), bp::arg("case_sensitivity") )) );
         SegName_exposer.def( bp::init< SireMol::SegName const & >(( bp::arg("other") )) );

@@ -41,9 +41,8 @@ void register_PowerConstant_class(){
 
     { //::SireCAS::PowerConstant
         typedef bp::class_< SireCAS::PowerConstant, bp::bases< SireCAS::PowerFunction, SireCAS::ExBase > > PowerConstant_exposer_t;
-        PowerConstant_exposer_t PowerConstant_exposer = PowerConstant_exposer_t( "PowerConstant" );
+        PowerConstant_exposer_t PowerConstant_exposer = PowerConstant_exposer_t( "PowerConstant", bp::init< >() );
         bp::scope PowerConstant_scope( PowerConstant_exposer );
-        PowerConstant_exposer.def( bp::init< >() );
         PowerConstant_exposer.def( bp::init< double, SireCAS::Expression const & >(( bp::arg("val"), bp::arg("power") )) );
         PowerConstant_exposer.def( bp::init< SireCAS::PowerConstant const & >(( bp::arg("other") )) );
         { //::SireCAS::PowerConstant::core

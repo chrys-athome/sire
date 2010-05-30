@@ -15,8 +15,6 @@ namespace bp = boost::python;
 
 #include "torsion.h"
 
-SireMaths::Torsion __copy__(const SireMaths::Torsion &other){ return SireMaths::Torsion(other); }
-
 #include "Qt/qdatastream.hpp"
 
 #include "Helpers/str.hpp"
@@ -24,11 +22,9 @@ SireMaths::Torsion __copy__(const SireMaths::Torsion &other){ return SireMaths::
 void register_Torsion_class(){
 
     { //::SireMaths::Torsion
-        typedef bp::class_< SireMaths::Torsion > Torsion_exposer_t;
+        typedef bp::class_< SireMaths::Torsion, boost::noncopyable > Torsion_exposer_t;
         Torsion_exposer_t Torsion_exposer = Torsion_exposer_t( "Torsion" );
         bp::scope Torsion_scope( Torsion_exposer );
-        Torsion_exposer.def( bp::init< >() );
-        Torsion_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3") )) );
         { //::SireMaths::Torsion::angle
         
             typedef ::SireUnits::Dimension::Angle ( ::SireMaths::Torsion::*angle_function_type )(  ) const;
@@ -186,9 +182,6 @@ void register_Torsion_class(){
         
         }
         Torsion_exposer.staticmethod( "typeName" );
-        Torsion_exposer.def( "__copy__", &__copy__);
-        Torsion_exposer.def( "__deepcopy__", &__copy__);
-        Torsion_exposer.def( "clone", &__copy__);
         Torsion_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireMaths::Torsion >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Torsion_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireMaths::Torsion >,

@@ -31,9 +31,8 @@ void register_MGName_class(){
 
     { //::SireMol::MGName
         typedef bp::class_< SireMol::MGName, bp::bases< SireMol::MGID, SireID::ID, SireID::Name > > MGName_exposer_t;
-        MGName_exposer_t MGName_exposer = MGName_exposer_t( "MGName" );
+        MGName_exposer_t MGName_exposer = MGName_exposer_t( "MGName", bp::init< >() );
         bp::scope MGName_scope( MGName_exposer );
-        MGName_exposer.def( bp::init< >() );
         MGName_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         MGName_exposer.def( bp::init< QString const &, SireID::CaseSensitivity >(( bp::arg("name"), bp::arg("case_sensitivity") )) );
         MGName_exposer.def( bp::init< SireMol::MGName const & >(( bp::arg("other") )) );

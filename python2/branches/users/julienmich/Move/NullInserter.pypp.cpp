@@ -39,9 +39,8 @@ void register_NullInserter_class(){
 
     { //::SireMove::NullInserter
         typedef bp::class_< SireMove::NullInserter, bp::bases< SireMove::MolInserter, SireBase::Property > > NullInserter_exposer_t;
-        NullInserter_exposer_t NullInserter_exposer = NullInserter_exposer_t( "NullInserter" );
+        NullInserter_exposer_t NullInserter_exposer = NullInserter_exposer_t( "NullInserter", bp::init< >() );
         bp::scope NullInserter_scope( NullInserter_exposer );
-        NullInserter_exposer.def( bp::init< >() );
         NullInserter_exposer.def( bp::init< SireMove::NullInserter const & >(( bp::arg("other") )) );
         { //::SireMove::NullInserter::insert
         

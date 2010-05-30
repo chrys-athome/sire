@@ -35,9 +35,8 @@ void register_AtomVariantProperty_class(){
 
     { //::SireMol::AtomProperty< QVariant >
         typedef bp::class_< SireMol::AtomProperty< QVariant >, bp::bases< SireMol::AtomProp, SireMol::MolViewProperty, SireBase::Property > > AtomVariantProperty_exposer_t;
-        AtomVariantProperty_exposer_t AtomVariantProperty_exposer = AtomVariantProperty_exposer_t( "AtomVariantProperty" );
+        AtomVariantProperty_exposer_t AtomVariantProperty_exposer = AtomVariantProperty_exposer_t( "AtomVariantProperty", bp::init< >() );
         bp::scope AtomVariantProperty_scope( AtomVariantProperty_exposer );
-        AtomVariantProperty_exposer.def( bp::init< >() );
         AtomVariantProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         AtomVariantProperty_exposer.def( bp::init< QVariant const & >(( bp::arg("value") )) );
         AtomVariantProperty_exposer.def( bp::init< SireBase::PackedArray2D< QVariant > const & >(( bp::arg("values") )) );

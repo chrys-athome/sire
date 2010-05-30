@@ -25,9 +25,8 @@ void register_NullGLMesh_class(){
 
     { //::Spier::NullGLMesh
         typedef bp::class_< Spier::NullGLMesh, bp::bases< Spier::GLMesh, SireBase::Property > > NullGLMesh_exposer_t;
-        NullGLMesh_exposer_t NullGLMesh_exposer = NullGLMesh_exposer_t( "NullGLMesh" );
+        NullGLMesh_exposer_t NullGLMesh_exposer = NullGLMesh_exposer_t( "NullGLMesh", bp::init< >() );
         bp::scope NullGLMesh_scope( NullGLMesh_exposer );
-        NullGLMesh_exposer.def( bp::init< >() );
         NullGLMesh_exposer.def( bp::init< Spier::NullGLMesh const & >(( bp::arg("other") )) );
         NullGLMesh_exposer.def( bp::self != bp::self );
         { //::Spier::NullGLMesh::operator=

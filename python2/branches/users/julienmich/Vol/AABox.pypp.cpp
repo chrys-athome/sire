@@ -19,8 +19,6 @@ namespace bp = boost::python;
 
 #include "aabox.h"
 
-SireVol::AABox __copy__(const SireVol::AABox &other){ return SireVol::AABox(other); }
-
 #include "Qt/qdatastream.hpp"
 
 #include "Helpers/str.hpp"
@@ -28,17 +26,9 @@ SireVol::AABox __copy__(const SireVol::AABox &other){ return SireVol::AABox(othe
 void register_AABox_class(){
 
     { //::SireVol::AABox
-        typedef bp::class_< SireVol::AABox > AABox_exposer_t;
+        typedef bp::class_< SireVol::AABox, boost::noncopyable > AABox_exposer_t;
         AABox_exposer_t AABox_exposer = AABox_exposer_t( "AABox" );
         bp::scope AABox_scope( AABox_exposer );
-        AABox_exposer.def( bp::init< >() );
-        AABox_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("point") )) );
-        AABox_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("cent"), bp::arg("extents") )) );
-        AABox_exposer.def( bp::init< QVector< SireMaths::Vector > const & >(( bp::arg("coordinates") )) );
-        AABox_exposer.def( bp::init< SireMaths::Vector const *, int >(( bp::arg("coords"), bp::arg("ncoords") )) );
-        AABox_exposer.def( bp::init< SireVol::CoordGroupBase const & >(( bp::arg("coordgroup") )) );
-        AABox_exposer.def( bp::init< SireVol::CoordGroupArray const & >(( bp::arg("cgarray") )) );
-        AABox_exposer.def( bp::init< SireVol::CoordGroupArrayArray const & >(( bp::arg("cgarrays") )) );
         { //::SireVol::AABox::add
         
             typedef void ( ::SireVol::AABox::*add_function_type )( ::SireVol::AABox const & ) ;
@@ -346,9 +336,6 @@ void register_AABox_class(){
         }
         AABox_exposer.staticmethod( "from" );
         AABox_exposer.staticmethod( "typeName" );
-        AABox_exposer.def( "__copy__", &__copy__);
-        AABox_exposer.def( "__deepcopy__", &__copy__);
-        AABox_exposer.def( "clone", &__copy__);
         AABox_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireVol::AABox >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         AABox_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireVol::AABox >,

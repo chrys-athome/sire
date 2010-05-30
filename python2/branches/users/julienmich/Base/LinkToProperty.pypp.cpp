@@ -26,9 +26,8 @@ void register_LinkToProperty_class(){
 
     { //::SireBase::LinkToProperty
         typedef bp::class_< SireBase::LinkToProperty, bp::bases< SireBase::Property > > LinkToProperty_exposer_t;
-        LinkToProperty_exposer_t LinkToProperty_exposer = LinkToProperty_exposer_t( "LinkToProperty" );
+        LinkToProperty_exposer_t LinkToProperty_exposer = LinkToProperty_exposer_t( "LinkToProperty", bp::init< >() );
         bp::scope LinkToProperty_scope( LinkToProperty_exposer );
-        LinkToProperty_exposer.def( bp::init< >() );
         LinkToProperty_exposer.def( bp::init< SireBase::PropertyName const & >(( bp::arg("source") )) );
         LinkToProperty_exposer.def( bp::init< SireBase::PropertyName const &, SireID::ID const & >(( bp::arg("source"), bp::arg("filter") )) );
         LinkToProperty_exposer.def( bp::init< SireBase::LinkToProperty const & >(( bp::arg("other") )) );

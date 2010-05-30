@@ -40,9 +40,8 @@ void register_DistanceRestraint_class(){
 
     { //::SireMM::DistanceRestraint
         typedef bp::class_< SireMM::DistanceRestraint, bp::bases< SireMM::Restraint3D, SireMM::Restraint, SireBase::Property > > DistanceRestraint_exposer_t;
-        DistanceRestraint_exposer_t DistanceRestraint_exposer = DistanceRestraint_exposer_t( "DistanceRestraint" );
+        DistanceRestraint_exposer_t DistanceRestraint_exposer = DistanceRestraint_exposer_t( "DistanceRestraint", bp::init< >() );
         bp::scope DistanceRestraint_scope( DistanceRestraint_exposer );
-        DistanceRestraint_exposer.def( bp::init< >() );
         DistanceRestraint_exposer.def( bp::init< SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("restraint") )) );
         DistanceRestraint_exposer.def( bp::init< SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, SireCAS::Values const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("restraint"), bp::arg("values") )) );
         DistanceRestraint_exposer.def( bp::init< SireMM::DistanceRestraint const & >(( bp::arg("other") )) );

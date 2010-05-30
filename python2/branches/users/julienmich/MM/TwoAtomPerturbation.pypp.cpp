@@ -40,9 +40,8 @@ void register_TwoAtomPerturbation_class(){
 
     { //::SireMM::TwoAtomPerturbation
         typedef bp::class_< SireMM::TwoAtomPerturbation, bp::bases< SireMM::InternalPerturbation, SireMol::Perturbation, SireBase::Property > > TwoAtomPerturbation_exposer_t;
-        TwoAtomPerturbation_exposer_t TwoAtomPerturbation_exposer = TwoAtomPerturbation_exposer_t( "TwoAtomPerturbation" );
+        TwoAtomPerturbation_exposer_t TwoAtomPerturbation_exposer = TwoAtomPerturbation_exposer_t( "TwoAtomPerturbation", bp::init< >() );
         bp::scope TwoAtomPerturbation_scope( TwoAtomPerturbation_exposer );
-        TwoAtomPerturbation_exposer.def( bp::init< >() );
         TwoAtomPerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireCAS::Expression const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("initial_form"), bp::arg("final_form"), bp::arg("map")=SireBase::PropertyMap() )) );
         TwoAtomPerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireCAS::Expression const &, SireCAS::Expression const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("initial_form"), bp::arg("final_form"), bp::arg("mapping_function"), bp::arg("map")=SireBase::PropertyMap() )) );
         TwoAtomPerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireCAS::Expression const &, SireCAS::Identities const &, SireCAS::Identities const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("base_expression"), bp::arg("initial_forms"), bp::arg("final_forms"), bp::arg("map")=SireBase::PropertyMap() )) );

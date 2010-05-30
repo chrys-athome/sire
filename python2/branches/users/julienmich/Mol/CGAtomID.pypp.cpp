@@ -35,9 +35,8 @@ void register_CGAtomID_class(){
 
     { //::SireMol::GroupAtomID< SireMol::CGID, SireMol::AtomID >
         typedef bp::class_< SireMol::GroupAtomID< SireMol::CGID, SireMol::AtomID >, bp::bases< SireMol::GroupAtomIDBase, SireMol::AtomID, SireID::ID > > CGAtomID_exposer_t;
-        CGAtomID_exposer_t CGAtomID_exposer = CGAtomID_exposer_t( "CGAtomID" );
+        CGAtomID_exposer_t CGAtomID_exposer = CGAtomID_exposer_t( "CGAtomID", bp::init< >() );
         bp::scope CGAtomID_scope( CGAtomID_exposer );
-        CGAtomID_exposer.def( bp::init< >() );
         CGAtomID_exposer.def( bp::init< SireMol::CGID const &, SireMol::AtomID const & >(( bp::arg("group"), bp::arg("atom") )) );
         CGAtomID_exposer.def( bp::init< SireMol::GroupAtomID< SireMol::CGID, SireMol::AtomID > const & >(( bp::arg("other") )) );
         { //::SireMol::GroupAtomID< SireMol::CGID, SireMol::AtomID >::hash

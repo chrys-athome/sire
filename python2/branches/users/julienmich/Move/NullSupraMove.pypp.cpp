@@ -27,9 +27,8 @@ void register_NullSupraMove_class(){
 
     { //::SireMove::NullSupraMove
         typedef bp::class_< SireMove::NullSupraMove, bp::bases< SireMove::SupraMove, SireBase::Property > > NullSupraMove_exposer_t;
-        NullSupraMove_exposer_t NullSupraMove_exposer = NullSupraMove_exposer_t( "NullSupraMove" );
+        NullSupraMove_exposer_t NullSupraMove_exposer = NullSupraMove_exposer_t( "NullSupraMove", bp::init< >() );
         bp::scope NullSupraMove_scope( NullSupraMove_exposer );
-        NullSupraMove_exposer.def( bp::init< >() );
         NullSupraMove_exposer.def( bp::init< SireMove::NullSupraMove const & >(( bp::arg("other") )) );
         { //::SireMove::NullSupraMove::move
         

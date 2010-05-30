@@ -65,9 +65,8 @@ void register_ResNum_class(){
 
     { //::SireMol::ResNum
         typedef bp::class_< SireMol::ResNum, bp::bases< SireMol::ResID, SireID::ID, SireID::Number > > ResNum_exposer_t;
-        ResNum_exposer_t ResNum_exposer = ResNum_exposer_t( "ResNum" );
+        ResNum_exposer_t ResNum_exposer = ResNum_exposer_t( "ResNum", bp::init< >() );
         bp::scope ResNum_scope( ResNum_exposer );
-        ResNum_exposer.def( bp::init< >() );
         ResNum_exposer.def( bp::init< quint32 >(( bp::arg("num") )) );
         ResNum_exposer.def( bp::init< SireMol::ResNum const & >(( bp::arg("other") )) );
         { //::SireMol::ResNum::hash

@@ -39,9 +39,8 @@ void register_PeriodicBox_class(){
 
     { //::SireVol::PeriodicBox
         typedef bp::class_< SireVol::PeriodicBox, bp::bases< SireVol::Cartesian, SireVol::Space, SireBase::Property > > PeriodicBox_exposer_t;
-        PeriodicBox_exposer_t PeriodicBox_exposer = PeriodicBox_exposer_t( "PeriodicBox" );
+        PeriodicBox_exposer_t PeriodicBox_exposer = PeriodicBox_exposer_t( "PeriodicBox", bp::init< >() );
         bp::scope PeriodicBox_scope( PeriodicBox_exposer );
-        PeriodicBox_exposer.def( bp::init< >() );
         PeriodicBox_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("extents") )) );
         PeriodicBox_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("min"), bp::arg("max") )) );
         PeriodicBox_exposer.def( bp::init< SireVol::PeriodicBox const & >(( bp::arg("other") )) );

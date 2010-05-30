@@ -3,8 +3,8 @@
 
 #include "SireCAS_registrars.h"
 
-#include "expression.h"
 #include "function.h"
+#include "expression.h"
 #include "complexvalues.h"
 #include "values.h"
 #include "powerconstant.h"
@@ -14,14 +14,14 @@
 #include "identities.h"
 #include "minmax.h"
 #include "trigfuncs.h"
-#include "exp.h"
+#include "symbol.h"
 #include "product.h"
 #include "invhyperbolicfuncs.h"
 #include "i.h"
 #include "abs.h"
 #include "power.h"
 #include "conditional.h"
-#include "symbol.h"
+#include "exp.h"
 #include "integrationconstant.h"
 #include "constant.h"
 #include "functionsignature.h"
@@ -31,8 +31,8 @@
 void register_SireCAS_objects()
 {
 
-    ObjectRegistry::registerConverterFor< SireCAS::Expression >();
     ObjectRegistry::registerConverterFor< SireCAS::Function >();
+    ObjectRegistry::registerConverterFor< SireCAS::Expression >();
     ObjectRegistry::registerConverterFor< SireCAS::ComplexValues >();
     ObjectRegistry::registerConverterFor< SireCAS::Values >();
     ObjectRegistry::registerConverterFor< SireCAS::PowerConstant >();
@@ -62,8 +62,7 @@ void register_SireCAS_objects()
     ObjectRegistry::registerConverterFor< SireCAS::Csc >();
     ObjectRegistry::registerConverterFor< SireCAS::Sec >();
     ObjectRegistry::registerConverterFor< SireCAS::Cot >();
-    ObjectRegistry::registerConverterFor< SireCAS::Exp >();
-    ObjectRegistry::registerConverterFor< SireCAS::Ln >();
+    ObjectRegistry::registerConverterFor< SireCAS::Symbol >();
     ObjectRegistry::registerConverterFor< SireCAS::Product >();
     ObjectRegistry::registerConverterFor< SireCAS::ArcCosh >();
     ObjectRegistry::registerConverterFor< SireCAS::ArcSinh >();
@@ -83,7 +82,8 @@ void register_SireCAS_objects()
     ObjectRegistry::registerConverterFor< SireCAS::NotEqualTo >();
     ObjectRegistry::registerConverterFor< SireCAS::AlwaysTrue >();
     ObjectRegistry::registerConverterFor< SireCAS::AlwaysFalse >();
-    ObjectRegistry::registerConverterFor< SireCAS::Symbol >();
+    ObjectRegistry::registerConverterFor< SireCAS::Exp >();
+    ObjectRegistry::registerConverterFor< SireCAS::Ln >();
     ObjectRegistry::registerConverterFor< SireCAS::IntegrationConstant >();
     ObjectRegistry::registerConverterFor< SireCAS::Constant >();
     ObjectRegistry::registerConverterFor< SireCAS::FunctionSignature >();

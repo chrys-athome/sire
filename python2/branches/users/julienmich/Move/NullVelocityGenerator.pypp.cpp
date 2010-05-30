@@ -27,9 +27,8 @@ void register_NullVelocityGenerator_class(){
 
     { //::SireMove::NullVelocityGenerator
         typedef bp::class_< SireMove::NullVelocityGenerator, bp::bases< SireMove::VelocityGenerator, SireBase::Property > > NullVelocityGenerator_exposer_t;
-        NullVelocityGenerator_exposer_t NullVelocityGenerator_exposer = NullVelocityGenerator_exposer_t( "NullVelocityGenerator" );
+        NullVelocityGenerator_exposer_t NullVelocityGenerator_exposer = NullVelocityGenerator_exposer_t( "NullVelocityGenerator", bp::init< >() );
         bp::scope NullVelocityGenerator_scope( NullVelocityGenerator_exposer );
-        NullVelocityGenerator_exposer.def( bp::init< >() );
         NullVelocityGenerator_exposer.def( bp::init< SireMove::NullVelocityGenerator const & >(( bp::arg("other") )) );
         NullVelocityGenerator_exposer.def( bp::self != bp::self );
         { //::SireMove::NullVelocityGenerator::operator=

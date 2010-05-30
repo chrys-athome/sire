@@ -31,17 +31,14 @@ namespace bp = boost::python;
 
 #include "internalparameters.h"
 
-SireMM::InternalSymbols __copy__(const SireMM::InternalSymbols &other){ return SireMM::InternalSymbols(other); }
-
 const char* pvt_get_name(const SireMM::InternalSymbols&){ return "SireMM::InternalSymbols";}
 
 void register_InternalSymbols_class(){
 
     { //::SireMM::InternalSymbols
-        typedef bp::class_< SireMM::InternalSymbols, bp::bases< SireMM::InternalSymbolsBase > > InternalSymbols_exposer_t;
-        InternalSymbols_exposer_t InternalSymbols_exposer = InternalSymbols_exposer_t( "InternalSymbols" );
+        typedef bp::class_< SireMM::InternalSymbols, bp::bases< SireMM::InternalSymbolsBase >, boost::noncopyable > InternalSymbols_exposer_t;
+        InternalSymbols_exposer_t InternalSymbols_exposer = InternalSymbols_exposer_t( "InternalSymbols", bp::no_init );
         bp::scope InternalSymbols_scope( InternalSymbols_exposer );
-        InternalSymbols_exposer.def( bp::init< >() );
         { //::SireMM::InternalSymbols::angle
         
             typedef ::SireMM::AngleSymbols const & ( ::SireMM::InternalSymbols::*angle_function_type )(  ) const;
@@ -141,9 +138,6 @@ void register_InternalSymbols_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        InternalSymbols_exposer.def( "__copy__", &__copy__);
-        InternalSymbols_exposer.def( "__deepcopy__", &__copy__);
-        InternalSymbols_exposer.def( "clone", &__copy__);
         InternalSymbols_exposer.def( "__str__", &pvt_get_name);
         InternalSymbols_exposer.def( "__repr__", &pvt_get_name);
     }

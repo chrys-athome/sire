@@ -34,9 +34,8 @@ void register_MTSMC_class(){
 
     { //::SireMove::MTSMC
         typedef bp::class_< SireMove::MTSMC, bp::bases< SireMove::MonteCarlo, SireMove::Move, SireBase::Property > > MTSMC_exposer_t;
-        MTSMC_exposer_t MTSMC_exposer = MTSMC_exposer_t( "MTSMC" );
+        MTSMC_exposer_t MTSMC_exposer = MTSMC_exposer_t( "MTSMC", bp::init< >() );
         bp::scope MTSMC_scope( MTSMC_exposer );
-        MTSMC_exposer.def( bp::init< >() );
         MTSMC_exposer.def( bp::init< SireMove::Moves const &, bp::optional< int > >(( bp::arg("fastmoves"), bp::arg("nfastmoves")=(int)(1) )) );
         MTSMC_exposer.def( bp::init< SireMove::Moves const &, SireCAS::Symbol const &, bp::optional< int > >(( bp::arg("fastmoves"), bp::arg("fastcomponent"), bp::arg("nfastmoves")=(int)(1) )) );
         MTSMC_exposer.def( bp::init< SireMove::Moves const &, SireSystem::Constraints const &, bp::optional< int > >(( bp::arg("fastmoves"), bp::arg("slow_constraints"), bp::arg("nfastmoves")=(int)(1) )) );

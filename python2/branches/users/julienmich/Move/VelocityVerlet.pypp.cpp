@@ -45,9 +45,8 @@ void register_VelocityVerlet_class(){
 
     { //::SireMove::VelocityVerlet
         typedef bp::class_< SireMove::VelocityVerlet, bp::bases< SireMove::Integrator, SireBase::Property > > VelocityVerlet_exposer_t;
-        VelocityVerlet_exposer_t VelocityVerlet_exposer = VelocityVerlet_exposer_t( "VelocityVerlet" );
+        VelocityVerlet_exposer_t VelocityVerlet_exposer = VelocityVerlet_exposer_t( "VelocityVerlet", bp::init< >() );
         bp::scope VelocityVerlet_scope( VelocityVerlet_exposer );
-        VelocityVerlet_exposer.def( bp::init< >() );
         VelocityVerlet_exposer.def( bp::init< SireUnits::Dimension::Time const & >(( bp::arg("timestep") )) );
         VelocityVerlet_exposer.def( bp::init< SireMove::VelocityVerlet const & >(( bp::arg("other") )) );
         { //::SireMove::VelocityVerlet::createWorkspace

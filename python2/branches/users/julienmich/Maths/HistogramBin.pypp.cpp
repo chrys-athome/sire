@@ -29,9 +29,8 @@ void register_HistogramBin_class(){
 
     { //::SireMaths::HistogramBin
         typedef bp::class_< SireMaths::HistogramBin > HistogramBin_exposer_t;
-        HistogramBin_exposer_t HistogramBin_exposer = HistogramBin_exposer_t( "HistogramBin" );
+        HistogramBin_exposer_t HistogramBin_exposer = HistogramBin_exposer_t( "HistogramBin", bp::init< >() );
         bp::scope HistogramBin_scope( HistogramBin_exposer );
-        HistogramBin_exposer.def( bp::init< >() );
         HistogramBin_exposer.def( bp::init< double, double >(( bp::arg("minval"), bp::arg("maxval") )) );
         HistogramBin_exposer.def( bp::init< SireMaths::HistogramBin const & >(( bp::arg("other") )) );
         { //::SireMaths::HistogramBin::maximum

@@ -39,9 +39,8 @@ void register_MolFieldTable_class(){
 
     { //::SireFF::MolFieldTable
         typedef bp::class_< SireFF::MolFieldTable > MolFieldTable_exposer_t;
-        MolFieldTable_exposer_t MolFieldTable_exposer = MolFieldTable_exposer_t( "MolFieldTable" );
+        MolFieldTable_exposer_t MolFieldTable_exposer = MolFieldTable_exposer_t( "MolFieldTable", bp::init< >() );
         bp::scope MolFieldTable_scope( MolFieldTable_exposer );
-        MolFieldTable_exposer.def( bp::init< >() );
         MolFieldTable_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molview") )) );
         MolFieldTable_exposer.def( bp::init< SireFF::MolFieldTable const & >(( bp::arg("other") )) );
         { //::SireFF::MolFieldTable::add

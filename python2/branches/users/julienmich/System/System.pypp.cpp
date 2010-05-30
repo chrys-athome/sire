@@ -28,6 +28,8 @@ namespace bp = boost::python;
 
 #include "SireFF/probe.h"
 
+#include "SireMol/atomcoords.h"
+
 #include "SireMol/errors.h"
 
 #include "SireMol/molecule.h"
@@ -68,9 +70,8 @@ void register_System_class(){
 
     { //::SireSystem::System
         typedef bp::class_< SireSystem::System, bp::bases< SireMol::MolGroupsBase, SireBase::Property > > System_exposer_t;
-        System_exposer_t System_exposer = System_exposer_t( "System" );
+        System_exposer_t System_exposer = System_exposer_t( "System", bp::init< >() );
         bp::scope System_scope( System_exposer );
-        System_exposer.def( bp::init< >() );
         System_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         System_exposer.def( bp::init< SireSystem::System const & >(( bp::arg("other") )) );
         { //::SireSystem::System::UID

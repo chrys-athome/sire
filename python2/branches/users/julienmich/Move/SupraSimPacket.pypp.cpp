@@ -26,9 +26,8 @@ void register_SupraSimPacket_class(){
 
     { //::SireMove::SupraSimPacket
         typedef bp::class_< SireMove::SupraSimPacket, bp::bases< SireCluster::WorkPacketBase > > SupraSimPacket_exposer_t;
-        SupraSimPacket_exposer_t SupraSimPacket_exposer = SupraSimPacket_exposer_t( "SupraSimPacket" );
+        SupraSimPacket_exposer_t SupraSimPacket_exposer = SupraSimPacket_exposer_t( "SupraSimPacket", bp::init< >() );
         bp::scope SupraSimPacket_scope( SupraSimPacket_exposer );
-        SupraSimPacket_exposer.def( bp::init< >() );
         SupraSimPacket_exposer.def( bp::init< SireMove::SupraSystem const &, SireMove::SupraMoves const &, int, bool >(( bp::arg("suprasystem"), bp::arg("supramoves"), bp::arg("nmoves"), bp::arg("record_stats") )) );
         SupraSimPacket_exposer.def( bp::init< SireMove::SupraSimPacket const & >(( bp::arg("other") )) );
         { //::SireMove::SupraSimPacket::approximatePacketSize
