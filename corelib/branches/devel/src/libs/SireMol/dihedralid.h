@@ -108,6 +108,8 @@ public:
     bool operator==(const DihedralID &other) const;
     bool operator!=(const DihedralID &other) const;
     
+    DihedralID mirror() const;
+    
     tuple<AtomIdx,AtomIdx,AtomIdx,AtomIdx> 
     map(const MoleculeInfoData &molinfo) const;
     

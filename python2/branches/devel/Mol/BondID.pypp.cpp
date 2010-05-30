@@ -138,6 +138,16 @@ void register_BondID_class(){
                 , ( bp::arg("mol0info"), bp::arg("mol1info") ) );
         
         }
+        { //::SireMol::BondID::mirror
+        
+            typedef ::SireMol::BondID ( ::SireMol::BondID::*mirror_function_type )(  ) const;
+            mirror_function_type mirror_function_value( &::SireMol::BondID::mirror );
+            
+            BondID_exposer.def( 
+                "mirror"
+                , mirror_function_value );
+        
+        }
         BondID_exposer.def( bp::self != bp::self );
         { //::SireMol::BondID::operator=
         

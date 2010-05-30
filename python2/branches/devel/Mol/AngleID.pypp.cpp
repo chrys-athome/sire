@@ -118,6 +118,16 @@ void register_AngleID_class(){
                 , ( bp::arg("mol0info"), bp::arg("mol1info"), bp::arg("mol2info") ) );
         
         }
+        { //::SireMol::AngleID::mirror
+        
+            typedef ::SireMol::AngleID ( ::SireMol::AngleID::*mirror_function_type )(  ) const;
+            mirror_function_type mirror_function_value( &::SireMol::AngleID::mirror );
+            
+            AngleID_exposer.def( 
+                "mirror"
+                , mirror_function_value );
+        
+        }
         AngleID_exposer.def( bp::self != bp::self );
         { //::SireMol::AngleID::operator=
         

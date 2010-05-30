@@ -126,6 +126,30 @@ bool AngleID::operator!=(const AngleID &other) const
            atm2 != other.atm2;
 }
 
+/** Return the mirror of this AngleID - i.e. if this is 
+    AngleID(atom0, atom1, atom2), this returns 
+    AngleID(atom2, atom1, atom0).
+    
+    This is useful if you know that AngleID(atom0,atom1,atom2) equals
+    AngleID(atom2,atom1,atom0), e.g. you can now write;
+    
+    if (not (angles.contains(angle) or angles.contains(angle.mirror())) )
+    {
+        angles.insert(angle);
+    }
+    
+    or
+    
+    if (angle == other_angle or angle.mirror() == other.angle())
+    {
+        //this is the same angle
+    }
+*/
+AngleID AngleID::mirror() const
+{
+    return AngleID(atm2, atm1, atm0);
+}
+
 /** Return a hash for this ID */
 uint AngleID::hash() const
 {

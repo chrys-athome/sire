@@ -129,6 +129,16 @@ void register_DihedralID_class(){
                 , ( bp::arg("mol0info"), bp::arg("mol1info"), bp::arg("mol2info"), bp::arg("mol3info") ) );
         
         }
+        { //::SireMol::DihedralID::mirror
+        
+            typedef ::SireMol::DihedralID ( ::SireMol::DihedralID::*mirror_function_type )(  ) const;
+            mirror_function_type mirror_function_value( &::SireMol::DihedralID::mirror );
+            
+            DihedralID_exposer.def( 
+                "mirror"
+                , mirror_function_value );
+        
+        }
         DihedralID_exposer.def( bp::self != bp::self );
         { //::SireMol::DihedralID::operator=
         

@@ -61,6 +61,10 @@
 #include "Base/convertpackedarray.hpp"
 #include "SireBase/packedarray2d.hpp"
 
+#include "SireMol/bondid.h"
+#include "SireMol/angleid.h"
+#include "SireMol/dihedralid.h"
+
 using namespace SireMol;
 
 using boost::python::register_tuple;
@@ -70,6 +74,9 @@ void register_SireMol_containers()
     register_list< QList<AtomIdx> >();
     register_list< QVector<AtomIdx> >();
 
+    register_list< QList<BondID> >(); 
+    register_list< QList<AngleID> >();
+    register_list< QList<DihedralID> >();
     register_list< QList<CGIdx> >();
     register_list< QList<ResIdx> >();
     register_list< QList<ChainIdx> >();
