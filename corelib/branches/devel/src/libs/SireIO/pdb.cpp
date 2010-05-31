@@ -1566,6 +1566,62 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
         ts << pdbatom.writeToLine() << "\n";
     }
     
+    if (mol.hasProperty("axis"))
+    {
+        const Property &axes_prop = mol.property("axis");
+        
+        if (axes_prop.isA<VariantProperty>())
+        {
+            AxisSet axes = axes_prop.asA<VariantProperty>().convertTo<AxisSet>();
+            
+            Vector v = axes.fromIdentity( Vector(0,0,0) );
+            
+            ++atomnum;
+            PDBAtom pdbatom;
+            pdbatom.serial = atomnum;
+            pdbatom.name = "ORI";
+            pdbatom.element = "Xx";
+            pdbatom.x = v.x();
+            pdbatom.y = v.y();
+            pdbatom.z = v.z();
+            
+            ts << pdbatom.writeToLine() << "\n";
+            
+            v = axes.fromIdentity( Vector(1,0,0) );
+            
+            ++atomnum;
+            pdbatom.serial = atomnum;
+            pdbatom.name = "X";
+            pdbatom.x = v.x();
+            pdbatom.y = v.y();
+            pdbatom.z = v.z();
+
+            ts << pdbatom.writeToLine() << "\n";
+            
+            v = axes.fromIdentity( Vector(0,1,0) );
+            
+            ++atomnum;
+            pdbatom.serial = atomnum;
+            pdbatom.name = "Y";
+            pdbatom.x = v.x();
+            pdbatom.y = v.y();
+            pdbatom.z = v.z();
+
+            ts << pdbatom.writeToLine() << "\n";
+            
+            v = axes.fromIdentity( Vector(0,0,1) );
+            
+            ++atomnum;
+            pdbatom.serial = atomnum;
+            pdbatom.name = "Z";
+            pdbatom.x = v.x();
+            pdbatom.y = v.y();
+            pdbatom.z = v.z();
+
+            ts << pdbatom.writeToLine() << "\n";
+        }
+    }
+    
     if (mol.hasProperty(connectivity_property))
     {
         const Connectivity &connectivity = mol.property(connectivity_property)

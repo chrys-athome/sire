@@ -108,9 +108,9 @@ salt = salt.edit().atom(AtomName("Na")) \
 m0 = salt
 m1 = salt.edit().renumber() \
          .atom(AtomName("Na")) \
-         .setProperty("coordinates", Vector(5,2,0)) \
+         .setProperty("coordinates", Vector(-5,2,5)) \
          .molecule().atom(AtomName("Cl")) \
-         .setProperty("coordinates", Vector(9,2,0)) \
+         .setProperty("coordinates", Vector(-5,2,9)) \
          .molecule().commit()
 
 m2 = salt.edit().renumber() \
@@ -123,7 +123,7 @@ m2 = salt.edit().renumber() \
 salt = MoleculeGroup("salt")
 salt.add(m0)
 salt.add(m1)
-#salt.add(m2)
+salt.add(m2)
 #salt.add(c)
 #salt.add(c2)
 

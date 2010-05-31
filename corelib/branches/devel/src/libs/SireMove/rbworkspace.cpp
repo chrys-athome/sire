@@ -36,6 +36,8 @@
 #include "SireMol/molecule.h"
 #include "SireMol/moleditor.h"
 
+#include "SireMaths/axisset.h"
+
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -196,32 +198,41 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
         }
         else if (n_zeroes == 1)
         {
-            Vector c0 = orientation.column0();
-            Vector c1 = orientation.column1();
-            Vector c2 = orientation.column2();
+            Vector r0 = orientation.row0();
+            Vector r1 = orientation.row1();
+            Vector r2 = orientation.row2();
             
             if (zero_x)
             {
-                qDebug() << "ZERO X" << c0.toString();
-                c0 = Vector::cross(c1,c2);
-                qDebug() << "becomes" << c0.toString();
+                qDebug() << "ZERO X" << r0.toString();
+                r0 = Vector::cross(r1,r2);
+                qDebug() << "becomes" << r0.toString();
             }
             else if (zero_y)
             {
-                qDebug() << "ZERO Y" << c1.toString();
-                c1 = Vector::cross(c2,c0);
-                qDebug() << "becomes" << c1.toString();
+                qDebug() << "ZERO Y" << r1.toString();
+                r1 = Vector::cross(r2,r0);
+                qDebug() << "becomes" << r1.toString();
             }
             else if (zero_z)
             {
-                qDebug() << "ZERO X" << c2.toString();
-                c2 = Vector::cross(c0,c1);
-                qDebug() << "becomes" << c2.toString();
+                qDebug() << "ZERO X" << r2.toString();
+                r2 = Vector::cross(r0,r1);
+                qDebug() << "becomes" << r2.toString();
             }
             
-            orientation = Matrix( c0.x(), c1.x(), c2.x(),
-                                  c0.y(), c1.y(), c2.y(),
-                                  c0.z(), c1.z(), c2.z() );
+            orientation = Matrix(r0, r1, r2);
+        }
+        else
+        {
+            Vector r0 = orientation.row0();
+            Vector r1 = orientation.row1();
+            Vector r2 = orientation.row2();
+            
+            qDebug() << "BEFORE ROW" << r2.toString()
+                     << "AFTER" << Vector::cross(r0,r1).toString();
+                     
+            orientation = Matrix( r0, r1, Vector::cross(r0,r1) );
         }
     }
     
@@ -482,7 +493,7 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
                 //         << atomforces[j].toString() << ::cross(r, atomforces[j]).toString();
 
                 //the torque is r cross force (need unnormalised cross product)
-                bead_torque += ::cross(r, atomforces[j]);
+                bead_torque -= ::cross(r, atomforces[j]);
                 
                 //qDebug() << "TORQUE" << ::cross(r, atomforces[j]).toString();
             }
@@ -495,10 +506,9 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
 
             //map the torque back from the cartesian frame to the 
             //internal frame
-            //qDebug() << "inverse_product\n" << orient.inverse().toString();
             bead_torque = orient.inverse() * bead_torque;
             
-            //bead_torque = Vector(0,0,20);  // should rotate anticlockwise around z
+            //bead_torque = Vector(0,10,0);  // should rotate anticlockwise around z
             
             //qDebug() << "MAPPED TOTAL TORQUE" << bead_torque.toString();
             
@@ -781,6 +791,7 @@ void RBWorkspace::commitCoordinates()
             new_coords_array[j] = com + (orient * int_coords_array[j]);
         }
         
+        AxisSet axes = AxisSet( orient, com );
                                           
         if (mol.selectedAll())
             coords.copyFrom(new_coords);
@@ -789,6 +800,7 @@ void RBWorkspace::commitCoordinates()
 
         changed_mols.add( mol.molecule().edit()
                              .setProperty(coords_property, coords)
+                             .setProperty("axis", VariantProperty(QVariant::fromValue(axes)))
                              .commit() );
     }
     
