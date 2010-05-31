@@ -108,6 +108,8 @@ public:
     bool operator==(const AngleID &other) const;
     bool operator!=(const AngleID &other) const;
     
+    AngleID mirror() const;
+    
     tuple<AtomIdx,AtomIdx,AtomIdx> map(const MoleculeInfoData &molinfo) const;
     tuple<AtomIdx,AtomIdx,AtomIdx> map(const MoleculeInfoData &mol0info,
                                        const MoleculeInfoData &mol1info,

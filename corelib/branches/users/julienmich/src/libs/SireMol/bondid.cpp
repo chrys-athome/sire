@@ -118,6 +118,29 @@ bool BondID::operator!=(const BondID &other) const
     return atm0 != other.atm0 or atm1 != other.atm1;
 }
 
+/** Return the mirror of this BondID - i.e. if this is 
+    Bond(atom0, atom1), this returns Bond(atom1, atom0).
+    
+    This is useful if you know that Bond(atom0,atom1) equals
+    Bond(atom1,atom0), e.g. you can now write;
+    
+    if (not (bonds.contains(bond) or bonds.contains(bond.mirror())) )
+    {
+        bonds.insert(bond);
+    }
+    
+    or
+    
+    if (bond == other_bond or bond.mirror() == other.bond())
+    {
+        //this is the same bond
+    }
+*/
+BondID BondID::mirror() const
+{
+    return BondID(atm1, atm0);
+}
+
 /** Return a hash for this ID */
 uint BondID::hash() const
 {

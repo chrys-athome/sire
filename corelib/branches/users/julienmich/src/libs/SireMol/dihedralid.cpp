@@ -129,6 +129,30 @@ bool DihedralID::operator!=(const DihedralID &other) const
            atm2 != other.atm2 or atm3 != other.atm3;
 }
 
+/** Return the mirror of this DihedralID - i.e. if this is 
+    DihedralID(atom0, atom1, atom2, atom3), this returns 
+    DihedralID(atom3, atom2, atom1, atom0).
+    
+    This is useful if you know that DihedralID(atom0,atom1,atom2,atom3) equals
+    DihedralID(atom3,atom2,atom1,atom0), e.g. you can now write;
+    
+    if (not (dihedrals.contains(dihedral) or dihedrals.contains(dihedral.mirror())) )
+    {
+        dihedrals.insert(dihedral);
+    }
+    
+    or
+    
+    if (dihedral == other_dihedral or dihedral.mirror() == other.dihedral())
+    {
+        //this is the same dihedral
+    }
+*/
+DihedralID DihedralID::mirror() const
+{
+    return DihedralID(atm3, atm2, atm1, atm0);
+}
+
 /** Return a hash for this ID */
 uint DihedralID::hash() const
 {

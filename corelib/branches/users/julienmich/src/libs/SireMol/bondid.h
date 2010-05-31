@@ -104,6 +104,8 @@ public:
     bool operator==(const BondID &other) const;
     bool operator!=(const BondID &other) const;
     
+    BondID mirror() const;
+    
     tuple<AtomIdx,AtomIdx> map(const MoleculeInfoData &molinfo) const;
     tuple<AtomIdx,AtomIdx> map(const MoleculeInfoData &mol0info,
                                const MoleculeInfoData &mol1info) const;
