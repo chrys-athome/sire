@@ -191,7 +191,12 @@ public:
     QList<BondID> getBonds() const;
     QList<BondID> getBonds(const AtomID &atom) const;
     QList<AngleID> getAngles() const;
+    QList<AngleID> getAngles(const AtomID &atom0) const;
     QList<AngleID> getAngles(const AtomID &atom0, const AtomID &atom1) const;
+    QList<DihedralID> getDihedrals() const;
+    QList<DihedralID> getDihedrals(const AtomID &atom0) const;
+    QList<DihedralID> getDihedrals(const AtomID &atom0, const AtomID &atom1) const;
+    QList<DihedralID> getDihedrals(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2) const;
 
 protected:
     ConnectivityBase();
