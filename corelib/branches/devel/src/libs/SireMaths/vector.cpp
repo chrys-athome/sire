@@ -543,7 +543,7 @@ Vector Vector::cross(const Vector &v0, const Vector &v1)
         }
     }
     else
-        return Vector(nx,ny,nz).normalise();
+        return vec.normalise();
 }
 
 /** Return the manhattan length of the vector */

@@ -41,7 +41,7 @@ cljff.add(mol)
 solvent = MoleculeGroup("solvent")
 solvent.add(mol)
 
-for i in range(1, 5):
+for i in range(47,49):
     mol = mols.moleculeAt(i).molecule()
 
     mol = mol.edit().rename("T4P") \

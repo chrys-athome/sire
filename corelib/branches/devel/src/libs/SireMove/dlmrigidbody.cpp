@@ -230,7 +230,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
                     Quaternion R1( (half_dt*ap[0] / inertia[0]) * radian, Vector(1,0,0) );
             
                     ap = R1.rotate(ap);
-                    q = q * R1.conjugate();
+                    q = R1 * q; //q * R1.conjugate();
                 }
             
                 if (ap[1] != 0 and inertia[1] != 0)
@@ -241,7 +241,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
                     Quaternion R2( (half_dt*ap[1] / inertia[1]) * radian, Vector(0,1,0) );
                                           
                     ap = R2.rotate(ap);
-                    q = q * R2.conjugate();
+                    q = R2 * q; //q * R2.conjugate();
                 }
             
                 if (ap[2] != 0 and inertia[2] != 0)
@@ -252,7 +252,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
                     Quaternion R3( (dt*ap[2] / inertia[2]) * radian, Vector(0,0,1) );
             
                     ap = R3.rotate(ap);
-                    q = q * R3.conjugate();
+                    q = R3 * q; // q * R3.conjugate();
                 }
                 
                 if (ap[1] != 0 and inertia[1] != 0)
@@ -263,7 +263,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
                     Quaternion R4( (half_dt*ap[1] / inertia[1]) * radian, Vector(0,1,0) );
             
                     ap = R4.rotate(ap);
-                    q = q * R4.conjugate();
+                    q = R4 * q; //q * R4.conjugate();
                 }
             
                 if (ap[0] != 0 and inertia[0] != 0)
@@ -274,7 +274,7 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
                     Quaternion R5( (half_dt*ap[0] / inertia[0]) * radian, Vector(1,0,0) );
                                   
                     ap = R5.rotate(ap);
-                    q = q * R5.conjugate();
+                    q = R5 * q; //q * R5.conjugate();
                 }
             }
         }

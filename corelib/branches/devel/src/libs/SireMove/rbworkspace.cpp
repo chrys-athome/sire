@@ -167,6 +167,64 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
     
     orientation = eigs.second;
     
+    qDebug() << "eigs" << eigs.first.toString() << "\n" << eigs.second.toString();
+    
+    //if one or more of the eigenvalues is zero then we may have a problem
+    //because the wrong eigenvector direction may be chosen - in this case,
+    //we will build this eigenvector using a cross product to ensure that 
+    //the right-hand-rule definition of our axes is maintained
+    {
+        bool zero_x = std::abs(principle_inertia[0]) < 1e-6;
+        bool zero_y = std::abs(principle_inertia[1]) < 1e-6;
+        bool zero_z = std::abs(principle_inertia[2]) < 1e-6;
+        
+        int n_zeroes = int(zero_x) + int(zero_y) + int(zero_z);
+        
+        if (n_zeroes == 3)
+        {
+            //no axes!
+            orientation = Matrix(1);
+        }
+        else if (n_zeroes == 2)
+        {
+            //just one well-defined axis - I don't know how to handle this...
+            throw SireError::incompatible_error( QObject::tr(
+                    "Sire cannot yet handle rigid body systems with only "
+                    "a single non-zero eigenvalue - %1, moment of interia equals\n%2")
+                        .arg(principle_inertia.toString(),
+                             orientation.toString()), CODELOC );
+        }
+        else if (n_zeroes == 1)
+        {
+            Vector c0 = orientation.column0();
+            Vector c1 = orientation.column1();
+            Vector c2 = orientation.column2();
+            
+            if (zero_x)
+            {
+                qDebug() << "ZERO X" << c0.toString();
+                c0 = Vector::cross(c1,c2);
+                qDebug() << "becomes" << c0.toString();
+            }
+            else if (zero_y)
+            {
+                qDebug() << "ZERO Y" << c1.toString();
+                c1 = Vector::cross(c2,c0);
+                qDebug() << "becomes" << c1.toString();
+            }
+            else if (zero_z)
+            {
+                qDebug() << "ZERO X" << c2.toString();
+                c2 = Vector::cross(c0,c1);
+                qDebug() << "becomes" << c2.toString();
+            }
+            
+            orientation = Matrix( c0.x(), c1.x(), c2.x(),
+                                  c0.y(), c1.y(), c2.y(),
+                                  c0.z(), c1.z(), c2.z() );
+        }
+    }
+    
     Matrix inv = orientation.inverse();
     
     //now calculate the coordinates of all of the atoms in terms
@@ -419,11 +477,9 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
                 //calculate the vector from the center of mass to 
                 //the atom, in the World cartesian frame
                 Vector r = orient * int_coords[j];
-
+                
                 //qDebug() << "ATOM" << i << j << r.toString()
                 //         << atomforces[j].toString() << ::cross(r, atomforces[j]).toString();
-
-                //qDebug() << "ATOM" << j << r.toString();
 
                 //the torque is r cross force (need unnormalised cross product)
                 bead_torque += ::cross(r, atomforces[j]);
@@ -431,8 +487,9 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
                 //qDebug() << "TORQUE" << ::cross(r, atomforces[j]).toString();
             }
 
-            if (i % 2 != 0)
-                bead_torque = -bead_torque;
+            //qDebug() << "X=" << (orient*Vector(1,0,0)).toString();
+            //qDebug() << "Y=" << (orient*Vector(0,1,0)).toString();
+            //qDebug() << "Z=" << (orient*Vector(0,0,1)).toString();
 
             //qDebug() << "TOTAL TORQUE" << bead_torque.toString();
 
@@ -440,7 +497,8 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
             //internal frame
             //qDebug() << "inverse_product\n" << orient.inverse().toString();
             bead_torque = orient.inverse() * bead_torque;
-            //bead_torque = Vector(0);
+            
+            //bead_torque = Vector(0,0,20);  // should rotate anticlockwise around z
             
             //qDebug() << "MAPPED TOTAL TORQUE" << bead_torque.toString();
             
