@@ -354,17 +354,24 @@ Matrix Matrix::zero()
 
 Matrix& Matrix::operator*=(const Matrix &m)
 {
-    double sxx = m.xx()*xx() + m.yx()*xy() + m.zx()*xz();
-    double syx = m.xx()*yx() + m.yx()*yy() + m.zx()*yz();
-    double szx = m.xx()*zx() + m.yx()*zy() + m.zx()*zz();
+    //  xx xy xz    0 1 2
+    //  yx yy yz    3 4 5
+    //  zx zy zz    6 7 8
 
-    double sxy = m.xy()*xx() + m.yy()*xy() + m.zy()*xz();
-    double syy = m.xy()*yx() + m.yy()*yy() + m.zy()*yz();
-    double szy = m.xy()*zx() + m.yy()*zy() + m.zy()*zz();
+    const double *a = array;
+    const double *o = m.array;
 
-    double sxz = m.zx()*xx() + m.yz()*xy() + m.zz()*xz();
-    double syz = m.zx()*yx() + m.yz()*yy() + m.zz()*yz();
-    double szz = m.zx()*zx() + m.yz()*zy() + m.zz()*zz();
+    const double sxx = a[0]*o[0] + a[1]*o[3] + a[2]*o[6];
+    const double sxy = a[0]*o[1] + a[1]*o[4] + a[2]*o[7];
+    const double sxz = a[0]*o[2] + a[1]*o[5] + a[2]*o[8];
+
+    const double syx = a[3]*o[0] + a[4]*o[3] + a[5]*o[6];
+    const double syy = a[3]*o[1] + a[4]*o[4] + a[5]*o[7];
+    const double syz = a[3]*o[2] + a[4]*o[5] + a[5]*o[8];
+
+    const double szx = a[6]*o[0] + a[7]*o[3] + a[8]*o[6];
+    const double szy = a[6]*o[1] + a[7]*o[4] + a[8]*o[7];
+    const double szz = a[6]*o[2] + a[7]*o[5] + a[8]*o[8];
 
     array[0] = sxx;
     array[1] = sxy;

@@ -150,6 +150,12 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
         inertia_array[ inertia.offset(0,2) ] -= m * d.x() * d.z();
         inertia_array[ inertia.offset(1,2) ] -= m * d.y() * d.z();
     }
+
+    for (int i=0; i<9; ++i)
+    {
+        if (inertia_array[i] < 1e-6 and inertia_array[i] > -1e-6)
+            inertia_array[i] = 0;
+    }
     
     inertia_array[ inertia.offset(1,0) ] = inertia_array[ inertia.offset(0,1) ];
     inertia_array[ inertia.offset(2,0) ] = inertia_array[ inertia.offset(0,2) ];
@@ -158,11 +164,6 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
     std::pair<Vector,Matrix> eigs = inertia.diagonalise();
 
     principle_inertia = eigs.first;
-    
-    printPDBLine(0, com);
-    printPDBLine(1, com + eigs.second.column0());
-    printPDBLine(2, com + eigs.second.column1());
-    printPDBLine(3, com + eigs.second.column2());
     
     orientation = eigs.second;
     
@@ -208,19 +209,22 @@ void RBWorkspace::rebuildFromScratch()
     
     atom_int_coords = QVector< QVector<Vector> >(nbeads);
     bead_coordinates = QVector<Vector>(nbeads);
-    bead_orientations = QVector<Matrix>(nbeads);
+    bead_orientations = QVector<Quaternion>(nbeads);
+    bead_to_world = QVector<Matrix>(nbeads);
     bead_masses = QVector<double>(nbeads);
     bead_inertia = QVector<Vector>(nbeads);
     
     atom_int_coords.squeeze();
     bead_coordinates.squeeze();
     bead_orientations.squeeze();
+    bead_to_world.squeeze();
     bead_masses.squeeze();
     bead_inertia.squeeze();
     
     QVector<Vector> *atom_int_coords_array = atom_int_coords.data();
     Vector *bead_coords_array = bead_coordinates.data();
-    Matrix *bead_orients_array = bead_orientations.data();
+    Matrix *bead_to_world_array = bead_to_world.data();
+    Quaternion *bead_orients_array = bead_orientations.data();
     double *bead_masses_array = bead_masses.data();
     Vector *bead_inertia_array = bead_inertia.data();
     
@@ -287,7 +291,9 @@ void RBWorkspace::rebuildFromScratch()
                                             bead_coords_array[ibead],
                                             bead_masses_array[ibead],
                                             bead_inertia_array[ibead],
-                                            bead_orients_array[ibead]);
+                                            bead_to_world_array[ibead]);
+    
+        bead_orients_array[ibead] = Quaternion(); // equals identity matrix
     
         ++ibead;
     }
@@ -302,9 +308,6 @@ void RBWorkspace::rebuildFromScratch()
     bead_torques.squeeze();
     bead_linear_momenta.squeeze();
     bead_angular_momenta.squeeze();
-    
-    test_torque = QVector<double>(nbeads, 100);
-    test_delta_torque = QVector<double>(nbeads, 0);
 }
 
 /** Return the array of forces of the ith bead. This does not
@@ -397,7 +400,8 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
             bead_force = Vector(0);
             bead_torque = Vector(0);
             
-            Matrix orient = bead_orientations.constData()[ibead].inverse();
+            //Matrix orient = bead_orientations.constData()[ibead];
+                             
             const Vector *atomcoords = atom_int_coords_array[ibead].constData();
             
             for (int j=0; j<nats; ++j)
@@ -405,33 +409,15 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
                 bead_force += atomforces[j];
                 
                 //calculate the vector from the center of mass to 
-                //the atom, in the world cartesian frame
-                //Vector r = orient * atomcoords[j];
-                
+                //the atom, in the internal frame
+
                 //the torque is r cross force (need unnormalised cross product)
-                //bead_torque += ::cross(atomcoords[i], atomforces[i]);// orient*atomforces[j]);
-                bead_torque += ::cross(atomcoords[j], orient*atomforces[j]);
+                bead_torque += ::cross(atomcoords[j], atomforces[j]);
             }
             
-            //qDebug() << "TORQUE";
-            //printPDBLine(19, bead_coordinates.constData()[ibead]);
-            //printPDBLine(20, bead_coordinates.constData()[ibead] + bead_torque);
-            
-            //bead_torque = orient.inverse() * bead_torque;
-            //printPDBLine(21, bead_torque);
+            bead_force = Vector(0);
+            bead_torque = Vector(0,0,-1);
         }
-        
-        bead_forces_array[i] = Vector(0);
-        
-        test_delta_torque[i] += 1;
-        
-        if (test_delta_torque[i] > 50)
-        {
-            test_delta_torque[i] = 0;
-            test_torque[i] *= -1;
-        }
-        
-        bead_torques_array[i] = test_torque[i] * Vector(0,0,1);
     }
     
     return true;
@@ -455,6 +441,7 @@ RBWorkspace::RBWorkspace(const RBWorkspace &other)
               atom_int_coords(other.atom_int_coords),
               atom_forces(other.atom_forces),
               bead_coordinates(other.bead_coordinates),
+              bead_to_world(other.bead_to_world),
               bead_orientations(other.bead_orientations),
               bead_linear_momenta(other.bead_linear_momenta),
               bead_angular_momenta(other.bead_angular_momenta),
@@ -462,8 +449,6 @@ RBWorkspace::RBWorkspace(const RBWorkspace &other)
               bead_torques(other.bead_torques),
               bead_masses(other.bead_masses),
               bead_inertia(other.bead_inertia),
-              test_torque(other.test_torque),
-              test_delta_torque(other.test_delta_torque),
               vel_generator(other.vel_generator)
 {}
 
@@ -481,6 +466,7 @@ RBWorkspace& RBWorkspace::operator=(const RBWorkspace &other)
         atom_int_coords = other.atom_int_coords;
         atom_forces = other.atom_forces;
         bead_coordinates = other.bead_coordinates;
+        bead_to_world = other.bead_to_world;
         bead_orientations = other.bead_orientations;
         bead_linear_momenta = other.bead_linear_momenta;
         bead_angular_momenta = other.bead_angular_momenta;
@@ -488,8 +474,6 @@ RBWorkspace& RBWorkspace::operator=(const RBWorkspace &other)
         bead_torques = other.bead_torques;
         bead_masses = other.bead_masses;
         bead_inertia = other.bead_inertia;
-        test_torque = other.test_torque;
-        test_delta_torque = other.test_delta_torque;
         vel_generator = other.vel_generator;
     }
     
@@ -502,6 +486,7 @@ bool RBWorkspace::operator==(const RBWorkspace &other) const
     return this == &other or 
            (IntegratorWorkspace::operator==(other) and
             bead_coordinates == other.bead_coordinates and
+            bead_to_world == other.bead_to_world and
             bead_orientations == other.bead_orientations and
             bead_linear_momenta == other.bead_linear_momenta and
             bead_angular_momenta == other.bead_angular_momenta and
@@ -610,9 +595,10 @@ Vector* RBWorkspace::beadCoordsArray()
     return bead_coordinates.data();
 }
 
-/** Return the array of orientations of the beads (maps from internal
-    bead coordinates to world cartesian coordinates) */
-Matrix* RBWorkspace::beadOrientationArray()
+/** Return the array of orientations of the beads (this is the rotation
+    to be applied to the matrix that maps from the cartesian frame
+    to the internal principle inertia frame) */
+Quaternion* RBWorkspace::beadOrientationArray()
 {
     return bead_orientations.data();
 }
@@ -697,7 +683,8 @@ void RBWorkspace::commitCoordinates()
         QVector<Vector> new_coords = int_coords;
         
         const Vector &com = bead_coordinates.constData()[ibead];
-        const Matrix &orient = bead_orientations.constData()[ibead];
+        Matrix orient = bead_orientations.constData()[ibead].toMatrix() * 
+                        bead_to_world.constData()[ibead];
         
         int nats = int_coords.count();
         const Vector *int_coords_array = int_coords.constData();

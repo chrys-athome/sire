@@ -32,6 +32,7 @@
 #include "integratorworkspace.h"
 
 #include "SireMaths/matrix.h"
+#include "SireMaths/quaternion.h"
 
 SIRE_BEGIN_HEADER
 
@@ -47,6 +48,7 @@ namespace SireMove
 {
 
 using SireMaths::Matrix;
+using SireMaths::Quaternion;
 
 /** This class provides a workspace for integrators that perform
     rigid body integration of atomic velocities and coordinates
@@ -98,7 +100,7 @@ public:
     const Vector* atomForceArray(int ibead) const;
 
     Vector* beadCoordsArray();
-    Matrix* beadOrientationArray();
+    Quaternion* beadOrientationArray();
     
     Vector* beadLinearMomentaArray();
     Vector* beadAngularMomentaArray();
@@ -130,8 +132,12 @@ private:
     /** The center of mass coordinates of each bead */
     QVector<Vector> bead_coordinates;
     
-    /** The orientation matrix for each bead */
-    QVector<Matrix> bead_orientations;
+    /** The matrix to map from bead internal coordinates
+        to World cartesian coordinates */
+    QVector<Matrix> bead_to_world;
+    
+    /** The orientation quaternion for each bead */
+    QVector<Quaternion> bead_orientations;
     
     /** All of the beads' linear momenta */
     QVector<Vector> bead_linear_momenta;
@@ -150,9 +156,6 @@ private:
     
     /** The diagonals of the inertia tensor for each bead */
     QVector<Vector> bead_inertia;
-    
-    QVector<double> test_torque;
-    QVector<double> test_delta_torque;
     
     /** The generator used to get the initial 
         linear and angular velocities */

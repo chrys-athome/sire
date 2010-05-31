@@ -18,6 +18,63 @@ t = QTime()
 
 cljff = InterCLJFF("cljff")
 
+c = Molecule("axes")
+c = c.edit().add( CGName("1") ) \
+            .add( AtomName("O") ).cutGroup() \
+            .add( AtomName("+X") ).cutGroup() \
+            .add( AtomName("-X") ).cutGroup() \
+            .add( AtomName("+Y") ).cutGroup() \
+            .add( AtomName("-Y") ).cutGroup() \
+            .add( AtomName("+Z") ).cutGroup() \
+            .add( AtomName("-Z") ).cutGroup() \
+            .molecule().commit()
+
+c = c.edit().atom( AtomName("O") ) \
+            .setProperty("coordinates", Vector(0,0,0)) \
+            .setProperty("element", Element("Oxygen")) \
+            .setProperty("charge", 1*mod_electron) \
+            .setProperty("LJ", LJParameter(3*angstrom,0.5*kcal_per_mol)) \
+            .molecule().atom( AtomName("+X") ) \
+            .setProperty("coordinates", Vector(1,0,0)) \
+            .setProperty("element", Element("Oxygen")) \
+            .setProperty("charge", 1*mod_electron) \
+            .setProperty("LJ", LJParameter(3*angstrom,0.5*kcal_per_mol)) \
+            .molecule().atom( AtomName("-X") ) \
+            .setProperty("coordinates", Vector(-1,0,0)) \
+            .setProperty("element", Element("Oxygen")) \
+            .setProperty("charge", 1*mod_electron) \
+            .setProperty("LJ", LJParameter(3*angstrom,0.5*kcal_per_mol)) \
+            .molecule().atom( AtomName("+Y") ) \
+            .setProperty("coordinates", Vector(0,1,0)) \
+            .setProperty("element", Element("Oxygen")) \
+            .setProperty("charge", 1*mod_electron) \
+            .setProperty("LJ", LJParameter(3*angstrom,0.5*kcal_per_mol)) \
+            .molecule().atom( AtomName("-Y") ) \
+            .setProperty("coordinates", Vector(0,-1,0)) \
+            .setProperty("element", Element("Oxygen")) \
+            .setProperty("charge", 1*mod_electron) \
+            .setProperty("LJ", LJParameter(3*angstrom,0.5*kcal_per_mol)) \
+            .molecule().atom( AtomName("+Z") ) \
+            .setProperty("coordinates", Vector(0,0,1)) \
+            .setProperty("element", Element("Oxygen")) \
+            .setProperty("charge", 1*mod_electron) \
+            .setProperty("LJ", LJParameter(3*angstrom,0.5*kcal_per_mol)) \
+            .molecule().atom( AtomName("-Z") ) \
+            .setProperty("coordinates", Vector(0,0,-1)) \
+            .setProperty("element", Element("Oxygen")) \
+            .setProperty("charge", 1*mod_electron) \
+            .setProperty("LJ", LJParameter(3*angstrom,0.5*kcal_per_mol)) \
+            .molecule().commit()
+
+c2 = c.edit().renumber().commit()
+
+c2 = c2.edit().setProperty("charge", \
+        AtomCharges( [ -1*mod_electron, -1*mod_electron, -1*mod_electron, \
+          -1*mod_electron, -1*mod_electron, -1*mod_electron, \
+          -1*mod_electron ] ) ).commit()
+
+c2 = c2.move().translate( Vector(4,1,0) ).commit()
+
 ion = Molecule("ion")
 ion = ion.edit().add( CGName("1") ) \
                 .add( AtomName("Na") ).molecule().commit()
@@ -58,15 +115,17 @@ m1 = salt.edit().renumber() \
 
 m2 = salt.edit().renumber() \
          .atom(AtomName("Na")) \
-         .setProperty("coordinates", Vector(-6,4.1,0)) \
+         .setProperty("coordinates", Vector(-6,4,0)) \
          .molecule().atom(AtomName("Cl")) \
-         .setProperty("coordinates", Vector(-6,0.1,0)) \
+         .setProperty("coordinates", Vector(-6,0,0)) \
          .molecule().commit()
 
 salt = MoleculeGroup("salt")
-salt.add(m0)
-salt.add(m1)
-salt.add(m2)
+#salt.add(m0)
+#salt.add(m1)
+#salt.add(m2)
+salt.add(c)
+salt.add(c2)
 
 cljff = InterCLJFF("salt-salt")
 cljff.add(salt)
@@ -96,7 +155,7 @@ PDB().write(system.molecules(), "test%0004d.pdb" % 0)
 
 for i in range(1,250):
     print "\nmove %d" % (i)
-    mdmove.move(system, 1)
+    mdmove.move(system, 20)
 
     print system.energy()
     print mdmove.kineticEnergy()
