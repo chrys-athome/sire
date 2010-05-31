@@ -73,7 +73,7 @@ c2 = c2.edit().setProperty("charge", \
           -1*mod_electron, -1*mod_electron, -1*mod_electron, \
           -1*mod_electron ] ) ).commit()
 
-c2 = c2.move().translate( Vector(4,1,0) ).commit()
+c2 = c2.move().translate( Vector(4,2,0) ).commit()
 
 ion = Molecule("ion")
 ion = ion.edit().add( CGName("1") ) \
@@ -121,11 +121,11 @@ m2 = salt.edit().renumber() \
          .molecule().commit()
 
 salt = MoleculeGroup("salt")
-#salt.add(m0)
-#salt.add(m1)
+salt.add(m0)
+salt.add(m1)
 #salt.add(m2)
-salt.add(c)
-salt.add(c2)
+#salt.add(c)
+#salt.add(c2)
 
 cljff = InterCLJFF("salt-salt")
 cljff.add(salt)
@@ -143,7 +143,7 @@ print "(took %d ms)" % t.elapsed()
 
 mdmove = MolecularDynamics(salt, DLMRigidBody())
 
-mdmove.setTimeStep(1*femtosecond)
+mdmove.setTimeStep(0.5*femtosecond)
 
 print system.property("space")
 
@@ -153,9 +153,9 @@ print mdmove.kineticEnergy()
 print system.energy() + mdmove.kineticEnergy()
 PDB().write(system.molecules(), "test%0004d.pdb" % 0)
 
-for i in range(1,250):
+for i in range(1,500):
     print "\nmove %d" % (i)
-    mdmove.move(system, 20)
+    mdmove.move(system, 150)
 
     print system.energy()
     print mdmove.kineticEnergy()

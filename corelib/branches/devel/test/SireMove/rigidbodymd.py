@@ -41,7 +41,7 @@ cljff.add(mol)
 solvent = MoleculeGroup("solvent")
 solvent.add(mol)
 
-for i in range(47,48):
+for i in range(1, 5):
     mol = mols.moleculeAt(i).molecule()
 
     mol = mol.edit().rename("T4P") \
@@ -58,7 +58,7 @@ system.add(cljff)
 
 print system.energy()
 
-rbmove = MolecularDynamics( solvent, DLMRigidBody(), 0.5*femtosecond )
+rbmove = MolecularDynamics( solvent, DLMRigidBody(), 1*femtosecond )
 
 #rbmove.setEnergyComponent( cljff.components().coulomb() )
 

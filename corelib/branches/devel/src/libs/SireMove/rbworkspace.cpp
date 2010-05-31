@@ -332,7 +332,7 @@ static Vector cross(const Vector &v0, const Vector &v1)
 {
     return Vector( v0.y()*v1.z() - v0.z()*v1.y(),
                    v0.z()*v1.x() - v0.x()*v1.z(),
-                   v0.x()*v1.y() - v0.y()*v1.z() );
+                   v0.x()*v1.y() - v0.y()*v1.x() );
 }
 
 /** Calculate the forces and torques */
@@ -400,23 +400,51 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
             bead_force = Vector(0);
             bead_torque = Vector(0);
             
-            //Matrix orient = bead_orientations.constData()[ibead];
-                             
-            const Vector *atomcoords = atom_int_coords_array[ibead].constData();
+            Matrix orient = bead_orientations.constData()[ibead].toMatrix() * 
+                            bead_to_world.constData()[ibead];
+            
+            const Vector &com = bead_coordinates.constData()[ibead];
+            
+            //qDebug() << "BEAD" << i;
+            //qDebug() << "bead_orient\n" << bead_orientations[ibead].toMatrix().toString();
+            //qDebug() << "bead_to_world\n" << bead_to_world[ibead].toString();
+            //qDebug() << "product\n" << orient.toString();
+                                                               
+            const Vector *int_coords = atom_int_coords_array[ibead].constData();
             
             for (int j=0; j<nats; ++j)
             {
                 bead_force += atomforces[j];
                 
                 //calculate the vector from the center of mass to 
-                //the atom, in the internal frame
+                //the atom, in the World cartesian frame
+                Vector r = orient * int_coords[j];
+
+                //qDebug() << "ATOM" << i << j << r.toString()
+                //         << atomforces[j].toString() << ::cross(r, atomforces[j]).toString();
+
+                //qDebug() << "ATOM" << j << r.toString();
 
                 //the torque is r cross force (need unnormalised cross product)
-                bead_torque += ::cross(atomcoords[j], atomforces[j]);
+                bead_torque += ::cross(r, atomforces[j]);
+                
+                //qDebug() << "TORQUE" << ::cross(r, atomforces[j]).toString();
             }
+
+            if (i % 2 != 0)
+                bead_torque = -bead_torque;
+
+            //qDebug() << "TOTAL TORQUE" << bead_torque.toString();
+
+            //map the torque back from the cartesian frame to the 
+            //internal frame
+            //qDebug() << "inverse_product\n" << orient.inverse().toString();
+            bead_torque = orient.inverse() * bead_torque;
+            //bead_torque = Vector(0);
             
-            bead_force = Vector(0);
-            bead_torque = Vector(0,0,-1);
+            //qDebug() << "MAPPED TOTAL TORQUE" << bead_torque.toString();
+            
+            //bead_force = Vector(0);
         }
     }
     
