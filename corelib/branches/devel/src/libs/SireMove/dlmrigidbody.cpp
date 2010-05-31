@@ -135,33 +135,6 @@ bool DLMRigidBody::isTimeReversible() const
     return true;
 }
 
-static Matrix getRX(double phi)
-{
-    return Quaternion( phi*radian, Vector(1,0,0) ).toMatrix();
-
-    return Matrix( 1, 0, 0,
-                   0, cos(phi), -sin(phi),
-                   0, sin(phi), cos(phi) );
-}
-
-static Matrix getRY(double phi)
-{
-    return Quaternion( phi*radian, Vector(0,1,0) ).toMatrix();
-
-    return Matrix( cos(phi), 0, sin(phi),
-                   0, 1, 0,
-                   -sin(phi), 0, cos(phi) );
-}
-
-static Matrix getRZ(double phi)
-{
-    return Quaternion( phi*radian, Vector(0,0,1) ).toMatrix();
-
-    return Matrix( cos(phi), -sin(phi), 0,
-                   sin(phi), cos(phi), 0,
-                   0, 0, 1 );
-}
-
 /** Integrate using the passed workspace, the energy component 'nrg_component',
     performing 'nmoves' moves using the specified timestep, recording
     statistics of every move if 'record_stats' is true */
@@ -175,10 +148,6 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
     const double half_dt = 0.5 * dt;
 
     const int nbeads = ws.nBeads();
-    
-    const Vector X(1,0,0);
-    const Vector Y(0,1,0);
-    const Vector Z(0,0,1);
     
     for (int imove=0; imove<nmoves; ++imove)
     {
@@ -224,57 +193,42 @@ void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
             {
                 if (ap[0] != 0 and inertia[0] != 0)
                 {
-                    //Matrix R1 = Quaternion( (half_dt * ap[0] / inertia[0])*radian, X )
-                    //                .toMatrix();
-                    //Matrix R1 = ::getRX(half_dt * ap[0] / inertia[0]);
                     Quaternion R1( (half_dt*ap[0] / inertia[0]) * radian, Vector(1,0,0) );
             
                     ap = R1.rotate(ap);
-                    q = q * R1.conjugate(); //R1 * q; //q * R1.conjugate();
+                    q = q * R1.conjugate();
                 }
             
                 if (ap[1] != 0 and inertia[1] != 0)
                 {
-                    //Matrix R2 = Quaternion( (half_dt * ap[1] / inertia[1])*radian, Y )
-                    //                 .toMatrix();
-                    //Matrix R2 = ::getRY(half_dt * ap[1] / inertia[1]);
                     Quaternion R2( (half_dt*ap[1] / inertia[1]) * radian, Vector(0,1,0) );
                                           
                     ap = R2.rotate(ap);
-                    q = q * R2.conjugate(); //R2 * q; //q * R2.conjugate();
+                    q = q * R2.conjugate();
                 }
             
                 if (ap[2] != 0 and inertia[2] != 0)
                 {
-                    //Matrix R3 = Quaternion( (dt * ap[2] / inertia[2])*radian, Z )
-                    //                    .toMatrix();
-                    //Matrix R3 = ::getRZ(dt * ap[2] / inertia[2]);
                     Quaternion R3( (dt*ap[2] / inertia[2]) * radian, Vector(0,0,1) );
             
                     ap = R3.rotate(ap);
-                    q = q * R3.conjugate(); //R3 * q; // q * R3.conjugate();
+                    q = q * R3.conjugate();
                 }
                 
                 if (ap[1] != 0 and inertia[1] != 0)
                 {
-                    //Matrix R4 = Quaternion( (half_dt * ap[1] / inertia[1])*radian, Y )
-                    //                    .toMatrix();
-                    //Matrix R4 = ::getRY(half_dt * ap[1] / inertia[1]);
                     Quaternion R4( (half_dt*ap[1] / inertia[1]) * radian, Vector(0,1,0) );
             
                     ap = R4.rotate(ap);
-                    q = q * R4.conjugate(); //R4 * q; //q * R4.conjugate();
+                    q = q * R4.conjugate();
                 }
             
                 if (ap[0] != 0 and inertia[0] != 0)
                 {
-                    //Matrix R5 = Quaternion( (half_dt * ap[0] / inertia[0])*radian, X )
-                    //                    .toMatrix();
-                    //Matrix R5 = ::getRX(half_dt * ap[0] / inertia[0]);
                     Quaternion R5( (half_dt*ap[0] / inertia[0]) * radian, Vector(1,0,0) );
                                   
                     ap = R5.rotate(ap);
-                    q = q * R5.conjugate(); //R5 * q; //q * R5.conjugate();
+                    q = q * R5.conjugate();
                 }
             }
         }

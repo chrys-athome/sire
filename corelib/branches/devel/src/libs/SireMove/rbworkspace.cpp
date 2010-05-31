@@ -103,12 +103,6 @@ static QVector<MolarMass> getMasses(const QVector<Element> &elements)
     return masses;
 }
 
-static void printPDBLine(int i, const Vector &vector)
-{
-    printf("ATOM   %4d  H   AXES    1    %8.3f%8.3f%8.3f\n",  
-             i, vector.x(), vector.y(), vector.z());
-}
-
 static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
                                          const QVector<MolarMass> &masses,
                                          Vector &com, double &mass, 
@@ -169,12 +163,13 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
     
     orientation = eigs.second;
     
-    qDebug() << "eigs" << eigs.first.toString() << "\n" << eigs.second.toString();
-    
     //if one or more of the eigenvalues is zero then we may have a problem
     //because the wrong eigenvector direction may be chosen - in this case,
     //we will build this eigenvector using a cross product to ensure that 
     //the right-hand-rule definition of our axes is maintained
+    //
+    // Also, even if we have three eigenvalues, we still need to make sure
+    // that a right-hand-rule set is chosen, rather than the left-hand set
     {
         bool zero_x = std::abs(principle_inertia[0]) < 1e-6;
         bool zero_y = std::abs(principle_inertia[1]) < 1e-6;
@@ -203,23 +198,11 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
             Vector r2 = orientation.row2();
             
             if (zero_x)
-            {
-                qDebug() << "ZERO X" << r0.toString();
                 r0 = Vector::cross(r1,r2);
-                qDebug() << "becomes" << r0.toString();
-            }
             else if (zero_y)
-            {
-                qDebug() << "ZERO Y" << r1.toString();
                 r1 = Vector::cross(r2,r0);
-                qDebug() << "becomes" << r1.toString();
-            }
             else if (zero_z)
-            {
-                qDebug() << "ZERO X" << r2.toString();
                 r2 = Vector::cross(r0,r1);
-                qDebug() << "becomes" << r2.toString();
-            }
             
             orientation = Matrix(r0, r1, r2);
         }
@@ -228,9 +211,6 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
             Vector r0 = orientation.row0();
             Vector r1 = orientation.row1();
             Vector r2 = orientation.row2();
-            
-            qDebug() << "BEFORE ROW" << r2.toString()
-                     << "AFTER" << Vector::cross(r0,r1).toString();
                      
             orientation = Matrix( r0, r1, Vector::cross(r0,r1) );
         }
@@ -473,11 +453,6 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
                             bead_to_world.constData()[ibead];
             
             const Vector &com = bead_coordinates.constData()[ibead];
-            
-            //qDebug() << "BEAD" << i;
-            //qDebug() << "bead_orient\n" << bead_orientations[ibead].toMatrix().toString();
-            //qDebug() << "bead_to_world\n" << bead_to_world[ibead].toString();
-            //qDebug() << "product\n" << orient.toString();
                                                                
             const Vector *int_coords = atom_int_coords_array[ibead].constData();
             
@@ -488,31 +463,14 @@ bool RBWorkspace::calculateForces(const Symbol &nrg_component)
                 //calculate the vector from the center of mass to 
                 //the atom, in the World cartesian frame
                 Vector r = orient * int_coords[j];
-                
-                //qDebug() << "ATOM" << i << j << r.toString()
-                //         << atomforces[j].toString() << ::cross(r, atomforces[j]).toString();
 
                 //the torque is r cross force (need unnormalised cross product)
                 bead_torque -= ::cross(r, atomforces[j]);
-                
-                //qDebug() << "TORQUE" << ::cross(r, atomforces[j]).toString();
             }
-
-            //qDebug() << "X=" << (orient*Vector(1,0,0)).toString();
-            //qDebug() << "Y=" << (orient*Vector(0,1,0)).toString();
-            //qDebug() << "Z=" << (orient*Vector(0,0,1)).toString();
-
-            //qDebug() << "TOTAL TORQUE" << bead_torque.toString();
 
             //map the torque back from the cartesian frame to the 
             //internal frame
             bead_torque = orient.inverse() * bead_torque;
-            
-            //bead_torque = Vector(0,10,0);  // should rotate anticlockwise around z
-            
-            //qDebug() << "MAPPED TOTAL TORQUE" << bead_torque.toString();
-            
-            //bead_force = Vector(0);
         }
     }
     
@@ -790,8 +748,6 @@ void RBWorkspace::commitCoordinates()
         {
             new_coords_array[j] = com + (orient * int_coords_array[j]);
         }
-        
-        AxisSet axes = AxisSet( orient, com );
                                           
         if (mol.selectedAll())
             coords.copyFrom(new_coords);
@@ -800,7 +756,6 @@ void RBWorkspace::commitCoordinates()
 
         changed_mols.add( mol.molecule().edit()
                              .setProperty(coords_property, coords)
-                             .setProperty("axis", VariantProperty(QVariant::fromValue(axes)))
                              .commit() );
     }
     
