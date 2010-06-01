@@ -125,6 +125,43 @@ protected:
     virtual double calculateEnergy(const QMPotential::Molecules &molecules,
                                    const LatticeCharges &lattice_charges,
                                    int ntries=5) const;
+
+    virtual void calculateForce(const QMPotential::Molecules &molecules,
+                                ForceTable &forcetable,
+                                double scale_force,
+                                int ntries=5) const;
+
+    virtual QVector<Vector> calculateForce(const QMPotential::Molecules &molecules,
+                                           const LatticeCharges &lattice_charges,
+                                           ForceTable &forcetable,
+                                           double scale_force,
+                                           int ntries=5) const;
+
+    virtual void calculateField(const QMPotential::Molecules &molecules,
+                                FieldTable &fieldtable,
+                                const SireFF::Probe &probe,
+                                double scale_field,
+                                int ntries=5) const;
+
+    virtual QVector<Vector> calculateField(const QMPotential::Molecules &molecules,
+                                           const LatticeCharges &lattice_charges,
+                                           FieldTable &fieldtable,
+                                           const SireFF::Probe &probe,
+                                           double scale_field,
+                                           int ntries=5) const;
+
+    virtual void calculatePotential(const QMPotential::Molecules &molecules,
+                                    PotentialTable &pottable,
+                                    const SireFF::Probe &probe,
+                                    double scale_potential,
+                                    int ntries=5) const;
+
+    virtual QVector<Vector> calculatePotential(const QMPotential::Molecules &molecules,
+                                               const LatticeCharges &lattice_charges,
+                                               PotentialTable &pottable,
+                                               const SireFF::Probe &probe,
+                                               double scale_potential,
+                                               int ntries=5) const;
     
     /** Return the contents of the command file that would be used
         to run the QM program to calculate energies */

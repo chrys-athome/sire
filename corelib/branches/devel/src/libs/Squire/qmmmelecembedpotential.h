@@ -67,6 +67,8 @@ public:
     typedef QMEnergy Energy;
     typedef Energy::Components Components;
 
+    typedef SireMM::CoulombProbe Probe;
+
     QMMMElecEmbedPotential();
     QMMMElecEmbedPotential(const QMMMElecEmbedPotential &other);
     
@@ -111,6 +113,34 @@ public:
                         const Components &components,
                         double scale_force=1) const;
     
+    void calculateField(const QMMolecules &qmmols,
+                        const MMMolecules &mmmols,
+                        FieldTable &fieldtable,
+                        const SireFF::Probe &probe,
+                        double scale_field=1) const;
+    
+    void calculateField(const QMMolecules &qmmols,
+                        const MMMolecules &mmmols,
+                        FieldTable &fieldtable,
+                        const SireFF::Probe &probe,
+                        const Symbol &symbol,
+                        const Components &components,
+                        double scale_field=1) const;
+    
+    void calculatePotential(const QMMolecules &qmmols,
+                            const MMMolecules &mmmols,
+                            PotentialTable &pottable,
+                            const SireFF::Probe &probe,
+                            double scale_potential=1) const;
+    
+    void calculatePotential(const QMMolecules &qmmols,
+                            const MMMolecules &mmmols,
+                            PotentialTable &pottable,
+                            const SireFF::Probe &probe,
+                            const Symbol &symbol,
+                            const Components &components,
+                            double scale_potential=1) const;
+    
     void calculateEnergy(const QMMolecules &qmmols, 
                          const MMMolecules &mmmols,
                          Energy &nrg, double scale_energy=1) const;
@@ -120,6 +150,16 @@ public:
                               
     QString forceCommandFile(const QMMolecules &qmmols,
                              const MMMolecules &mmmols) const;
+
+    QString fieldCommandFile(const QMMolecules &qmmols,
+                             const MMMolecules &mmmols,
+                             const FieldTable &fieldtable,
+                             const SireFF::Probe &probe) const;
+
+    QString potentialCommandFile(const QMMolecules &qmmols,
+                                 const MMMolecules &mmmols,
+                                 const PotentialTable &pottable,
+                                 const SireFF::Probe &probe) const;
 
 private:
     LatticeCharges getLatticeCharges(const QMMolecules &qmmols,

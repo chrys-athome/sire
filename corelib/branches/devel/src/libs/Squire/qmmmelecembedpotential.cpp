@@ -399,8 +399,21 @@ void QMMMElecEmbedPotential::calculateForce(const QMMolecules &qmmols,
                                             ForceTable &forcetable, 
                                             double scale_force) const
 {
-    throw SireError::incomplete_code( QObject::tr(
-        "Need to write the code to calculate QM forces!!!"), CODELOC );
+    if (scale_force == 0)
+        return;
+
+    //map all of the molecules so that they are in this space
+    QMMolecules mapped_qmmols = QMPotential::mapIntoSpace(qmmols);
+
+    LatticeCharges charges = this->getLatticeCharges(mapped_qmmols, mmmols);
+    
+    QVector<Vector> lattice_forces = quantumProgram().calculateForce(
+                                                    mapped_qmmols, charges,
+                                                    forcetable, scale_force);
+
+    //map the lattice forces back to the forces on the molecules
+    qDebug() << "WARNING - NEED TO MAP LATTICE FORCES BACK TO MM ATOMS";
+    qDebug() << "YOUR SIMULATION IS BROKEN!!!";
 }
                     
 /** Calculate the QM forces on the molecules in 'molecules' and add them 
@@ -413,8 +426,15 @@ void QMMMElecEmbedPotential::calculateForce(const QMMolecules &qmmols,
                                             const Components &components,
                                             double scale_force) const
 {
-    throw SireError::incomplete_code( QObject::tr(
-        "Need to write the code to calculate QM forces!!!"), CODELOC );
+    if (symbol == components.total())
+        this->calculateForce(qmmols, mmmols, forcetable, scale_force);
+        
+    else
+        throw SireFF::missing_component( QObject::tr(
+            "There is no force component in potential %1 - available "
+            "components are %2.")
+                .arg(this->what())
+                .arg(components.total().toString()), CODELOC );
 }
 
 /** Calculate the QM energy of the molecules in 'qmmols' in the electrostatic
@@ -467,3 +487,35 @@ QString QMMMElecEmbedPotential::forceCommandFile(
 
     return this->quantumProgram().forceCommandFile(mapped_qmmols, charges);
 }
+
+/** Calculate the QM potential at the points in the passed potential table */
+void QMMMElecEmbedPotential::calculatePotential(const QMMolecules &qmmols, 
+                                                const MMMolecules &mmmols,
+                                                PotentialTable &pottable,
+                                                const SireFF::Probe &probe,
+                                                double scale_potential) const
+{
+    if (scale_potential == 0)
+        return;
+
+    //map all of the molecules so that they are in this space
+    QMMolecules mapped_qmmols = QMPotential::mapIntoSpace(qmmols);
+
+    LatticeCharges charges = this->getLatticeCharges(mapped_qmmols, mmmols);
+    
+    QVector<MolarEnergy> lattice_potentials = quantumProgram().calculatePotential(
+                                                    mapped_qmmols, charges, pottable, 
+                                                    probe, scale_potential);
+
+    //map the lattice potentials back to the potentials on the molecules
+    qDebug() << "WARNING - NEED TO MAP LATTICE POTENTIALS BACK TO MM ATOMS";
+    qDebug() << "YOUR SIMULATION IS BROKEN!!!";
+}
+    
+    void calculatePotential(const QMMolecules &qmmols,
+                            const MMMolecules &mmmols,
+                            PotentialTable &pottable,
+                            const SireFF::Probe &probe,
+                            const Symbol &symbol,
+                            const Components &components,
+                            double scale_potential=1) const;
