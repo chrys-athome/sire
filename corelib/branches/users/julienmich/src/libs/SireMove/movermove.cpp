@@ -38,6 +38,8 @@
 #include "SireMol/moleditor.h"
 #include "SireMol/mover.hpp"
 #include "SireMol/atomidx.h"
+#include "SireMol/connectivity.h"
+#include "SireMol/bondid.h"
 
 #include "SireUnits/dimensions.h"
 #include "SireUnits/temperature.h"
@@ -334,21 +336,17 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	  
 	  const PartialMolecule &oldmol = mol_and_bias.get<0>();
 	  old_bias = mol_and_bias.get<1>();
-	  
+	
+	  const Connectivity &connectivity = oldmol.property( map["connectivity"] ).asA<Connectivity>();
 	  // select the bonds in one molecule and move them 
-	  /** JM working on this 
-	      const Connectivity &connectivity = oldmol.property( map["connectivity"]
-							      ).asA<Connectivity>(); 
-	  QList<BondID> bonds = connectivity.getBonds(); 
-	  // will have to remove bonds that are in rings
-	  bond_delta = 0.1*angstrom
+	  QList<BondID> bonds = connectivity.getBonds();
+	  Length bond_delta = 0.1*angstrom;
 	  foreach (const BondID &bond, bonds)
 	    {
-	      mol = mol.move().change(bond, bond_delta).commit();
-	    } 
+	      oldmol = oldmol.move().change(bond,bond_delta).commit();
+	    }
+	  Molecule newmol = oldmol.molecule();
 	  //update the system with the new coordinates
-
-	 
 	  system.update(newmol);
 	  //get the new bias on this molecule
 	  smplr.edit().updateFrom(system);
@@ -371,7 +369,6 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	    {
 	      system.collectStats();
 	    }
-	  JM working on this */
 	}
   }
   catch(...)

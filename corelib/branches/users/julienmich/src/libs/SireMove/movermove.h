@@ -47,6 +47,15 @@ namespace SireMol
 class MoleculeGroup;
 class PartialMolecule;
 class AtomIdx;
+class Connectivity;
+class bondid;
+}
+namespace SireUnits
+{
+namespace Dimension
+{
+class Unit;
+}
 }
 
 namespace SireMove
@@ -57,6 +66,9 @@ class ZMatrixCoords;
 
 using SireMol::MoleculeGroup;
 using SireMol::PartialMolecule;
+using SireMol::Connectivity;
+using SireMol::bondid;
+using SireUnits::Dimension::Unit;
 
 /** This class implements an intramolecular Monte Carlo move that uses 
     the mover() method to perturb intramoleculer degrees of freedom and 
