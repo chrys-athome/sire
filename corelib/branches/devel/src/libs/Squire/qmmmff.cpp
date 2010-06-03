@@ -35,6 +35,7 @@
 #include "SireFF/fieldtable.h"
 #include "SireFF/potentialtable.h"
 
+#include "SireFF/errors.h"
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"

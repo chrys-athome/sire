@@ -512,9 +512,36 @@ QString Mopac::energyCommandFile(const QMPotential::Molecules &molecules) const
 
 /** Return the command files that will be used to calculate the forces on the  
     atoms of the molecules in 'molecules' */
-QString Mopac::forceCommandFile(const QMPotential::Molecules &molecules) const
+QString Mopac::forceCommandFile(const QMPotential::Molecules &molecules,
+                                const ForceTable&) const
 {
     return createCommandFile(force_template, molecules);
+}
+
+/** Return the command files that will be used to calculate the fields on the  
+    atoms of the molecules in 'molecules' */
+QString Mopac::fieldCommandFile(const QMPotential::Molecules &molecules,
+                                const FieldTable &fieldtable,
+                                const SireFF::Probe &probe) const
+{
+    throw SireError::unsupported( QObject::tr(
+            "Calculating QM fields using the Mopac() interface is not yet "
+            "supported."), CODELOC );
+            
+    return QString::null;
+}
+
+/** Return the command files that will be used to calculate the potentials on the  
+    atoms of the molecules in 'molecules' */
+QString Mopac::potentialCommandFile(const QMPotential::Molecules &molecules,
+                                    const PotentialTable &pottable,
+                                    const SireFF::Probe &probe) const
+{
+    throw SireError::unsupported( QObject::tr(
+            "Calculating QM potentials using the Mopac() interface is not yet "
+            "supported."), CODELOC );
+            
+    return QString::null;
 }
 
 /** Extract the energy from the mopac output in 'mopac_output' */

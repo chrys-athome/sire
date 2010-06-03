@@ -147,8 +147,35 @@ QString QMProgram::energyCommandFile(const QMPotential::Molecules &molecules,
 /** Return the command file that would be used to calculate the forces
     of the molecules in 'molecules' in the field of point charges in
     'lattice_charges' (and the forces on the charges themselves) */
-QString QMProgram::forceCommandFile(const QMPotential::Molecules &molecules,
-                                 const LatticeCharges &lattice_charges) const
+QString QMProgram::forceCommandFile(const QMPotential::Molecules&,
+                                    const LatticeCharges&,
+                                    const ForceTable&) const
+{
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the use of point lattice charges.")
+            .arg(this->what()), CODELOC );
+}
+
+/** Return the command file that would be used to calculate the fields
+    of the molecules in 'molecules' in the field of point charges in
+    'lattice_charges' */
+QString QMProgram::fieldCommandFile(const QMPotential::Molecules&,
+                                    const LatticeCharges&,
+                                    const FieldTable&,
+                                    const SireFF::Probe&) const
+{
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the use of point lattice charges.")
+            .arg(this->what()), CODELOC );
+}
+
+/** Return the command file that would be used to calculate the fields
+    of the molecules in 'molecules' in the field of point charges in
+    'lattice_charges' */
+QString QMProgram::potentialCommandFile(const QMPotential::Molecules&,
+                                        const LatticeCharges&,
+                                        const PotentialTable&,
+                                        const SireFF::Probe&) const
 {
     throw SireError::unsupported( QObject::tr(
         "This QM program (%1) does not support the use of point lattice charges.")
@@ -256,11 +283,27 @@ QString NullQM::energyCommandFile(const QMPotential::Molecules&) const
 
 /** Return the command file that would be used to calculate the forces on
     the molecules in 'molecules' */
-QString NullQM::forceCommandFile(const QMPotential::Molecules&) const
+QString NullQM::forceCommandFile(const QMPotential::Molecules&,
+                                 const ForceTable&) const
 {
     return QString::null;
 }
 
+/** Return the command file that would be used to calculate the fields on
+    the molecules in 'molecules' */
+QString NullQM::fieldCommandFile(const QMPotential::Molecules&,
+                                 const FieldTable&, const SireFF::Probe&) const
+{
+    return QString::null;
+}
+
+/** Return the command file that would be used to calculate the fields on
+    the molecules in 'molecules' */
+QString NullQM::potentialCommandFile(const QMPotential::Molecules&,
+                                     const PotentialTable&, const SireFF::Probe&) const
+{
+    return QString::null;
+}
 
 /** Return the command file that would be used to calculate the energy
     of the molecules in 'molecules' in the field of point charges in
@@ -275,7 +318,28 @@ QString NullQM::energyCommandFile(const QMPotential::Molecules&,
     of the molecules in 'molecules' in the field of point charges in
     'lattice_charges' (and the forces on the charges themselves) */
 QString NullQM::forceCommandFile(const QMPotential::Molecules&,
-                                 const LatticeCharges&) const
+                                 const LatticeCharges&,
+                                 const ForceTable&) const
+{
+    return QString::null;
+}
+
+/** Return the command file that would be used to calculate the fields
+    of the molecules in 'molecules' in the field of point charges in
+    'lattice_charges' (and the fields on the charges themselves) */
+QString NullQM::fieldCommandFile(const QMPotential::Molecules&,
+                                 const LatticeCharges&,
+                                 const FieldTable&, const SireFF::Probe&) const
+{
+    return QString::null;
+}
+
+/** Return the command file that would be used to calculate the potentials
+    of the molecules in 'molecules' in the field of point charges in
+    'lattice_charges' (and the potentials on the charges themselves) */
+QString NullQM::potentialCommandFile(const QMPotential::Molecules&,
+                                     const LatticeCharges&,
+                                     const PotentialTable&, const SireFF::Probe&) const
 {
     return QString::null;
 }

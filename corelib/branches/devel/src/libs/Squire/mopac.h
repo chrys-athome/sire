@@ -127,7 +127,18 @@ protected:
                            int ntries = 5) const;
 
     QString energyCommandFile(const QMPotential::Molecules &molecules) const;
-    QString forceCommandFile(const QMPotential::Molecules &molecules) const;
+
+    QString forceCommandFile(const QMPotential::Molecules &molecules,
+                             const ForceTable &forcetable) const;
+
+    QString fieldCommandFile(const QMPotential::Molecules &molecules,
+                             const FieldTable &fieldtable,
+                             const SireFF::Probe &probe) const;
+
+    QString potentialCommandFile(const QMPotential::Molecules &molecules,
+                                 const PotentialTable &pottable,
+                                 const SireFF::Probe &probe) const;
+
     QString chargeCommandFile(const Molecule &molecule,
                               const PropertyMap &map) const;
 

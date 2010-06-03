@@ -747,10 +747,12 @@ static const RegisterMetaType<RecordValues> r_recval;
 /** Serialise to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const RecordValues &recval)
 {
-    writeHeader(ds, r_recval, 1);
+    writeHeader(ds, r_recval, 2);
     
-    ds << recval.vals
-       << static_cast<const Accumulator&>(recval);
+    SharedDataStream sds(ds);
+    
+    sds << recval.vals
+        << static_cast<const Accumulator&>(recval);
     
     return ds;
 }
@@ -760,10 +762,21 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, RecordValues &recval)
 {
     VersionID v = readHeader(ds, r_recval);
     
-    if (v == 1)
+    if (v == 2)
     {
-        ds >> recval.vals
+        SharedDataStream sds(ds);
+    
+        sds >> recval.vals
+            >> static_cast<Accumulator&>(recval);
+    }
+    else if (v == 1)
+    {
+        QVector<double> vals;
+    
+        ds >> vals
            >> static_cast<Accumulator&>(recval);
+           
+        recval.vals = ChunkedVector<double,2048>::fromVector(vals);
     }
     else
         throw version_error(v, "1", r_recval, CODELOC);
@@ -854,12 +867,10 @@ double RecordValues::max() const
         
     double maxval = -(std::numeric_limits<double>::max());
     
-    const double *vals_array = vals.constData();
-    
     for (int i=0; i<nvals; ++i)
     {
-        if (vals_array[i] > maxval)
-            maxval = vals_array[i];
+        if (vals[i] > maxval)
+            maxval = vals[i];
     }
     
     return maxval;
@@ -881,12 +892,10 @@ double RecordValues::min() const
         
     double minval = std::numeric_limits<double>::max();
     
-    const double *vals_array = vals.constData();
-    
     for (int i=0; i<nvals; ++i)
     {
-        if (vals_array[i] < minval)
-            minval = vals_array[i];
+        if (vals[i] < minval)
+            minval = vals[i];
     }
     
     return minval;
@@ -902,13 +911,12 @@ double RecordValues::minimum() const
 double RecordValues::sum() const
 {
     int nvals = vals.count();
-    const double *vals_array = vals.constData();
     
     double sum = 0;
     
     for (int i=0; i<nvals; ++i)
     {
-        sum += vals_array[i];
+        sum += vals[i];
     }
     
     return sum;
@@ -918,13 +926,12 @@ double RecordValues::sum() const
 double RecordValues::sum2() const
 {
     int nvals = vals.count();
-    const double *vals_array = vals.constData();
     
     double sum2 = 0;
     
     for (int i=0; i<nvals; ++i)
     {
-        sum2 += pow_2( vals_array[i] );
+        sum2 += pow_2( vals[i] );
     }
     
     return sum2;
@@ -978,7 +985,7 @@ RecordValues::operator double() const
 /** Return the array of all accumulated values */
 QVector<double> RecordValues::values() const
 {
-    return vals;
+    return vals.toVector();
 }
 
 const char* RecordValues::typeName()

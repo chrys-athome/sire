@@ -30,6 +30,7 @@
 #define SIREMATHS_ACCUMULATOR_H
 
 #include "SireBase/property.h"
+#include "SireBase/chunkedvector.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -382,7 +383,7 @@ public:
 
 private:
     /** The record of all values */
-    QVector<double> vals;
+    SireBase::ChunkedVector<double,2048> vals;
 };
 
 typedef SireBase::PropPtr<Accumulator> AccumulatorPtr;

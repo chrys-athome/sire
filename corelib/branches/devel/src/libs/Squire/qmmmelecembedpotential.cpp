@@ -33,6 +33,7 @@
 
 #include "SireUnits/units.h"
 
+#include "SireFF/errors.h"
 #include "SireBase/errors.h"
 
 #include "SireStream/datastream.h"
@@ -488,6 +489,50 @@ QString QMMMElecEmbedPotential::forceCommandFile(
     return this->quantumProgram().forceCommandFile(mapped_qmmols, charges);
 }
 
+/** Calculate the QM field at the points in the passed potential table */
+void QMMMElecEmbedPotential::calculateField(const QMMolecules &qmmols, 
+                                            const MMMolecules &mmmols,
+                                            FieldTable &fieldtable,
+                                            const SireFF::Probe &probe,
+                                            double scale_field) const
+{
+    if (scale_field == 0)
+        return;
+
+    //map all of the molecules so that they are in this space
+    QMMolecules mapped_qmmols = QMPotential::mapIntoSpace(qmmols);
+
+    LatticeCharges charges = this->getLatticeCharges(mapped_qmmols, mmmols);
+    
+    QVector<Vector> lattice_fields = quantumProgram().calculateField(
+                                                    mapped_qmmols, charges, fieldtable, 
+                                                    probe, scale_field);
+
+    //map the lattice potentials back to the potentials on the molecules
+    qDebug() << "WARNING - NEED TO MAP LATTICE FIELDS BACK TO MM ATOMS";
+    qDebug() << "YOUR SIMULATION IS BROKEN!!!";
+}
+    
+/** Calculate the QM field at the points in the passed potential table */
+void QMMMElecEmbedPotential::calculateField(const QMMolecules &qmmols,
+                                            const MMMolecules &mmmols,
+                                            FieldTable &fieldtable,
+                                            const SireFF::Probe &probe,
+                                            const Symbol &symbol,
+                                            const Components &components,
+                                            double scale_field) const
+{
+    if (symbol == components.total())
+        this->calculateField(qmmols, mmmols, fieldtable, probe, scale_field);
+        
+    else
+        throw SireFF::missing_component( QObject::tr(
+            "There is no field component in potential %1 - available "
+            "components are %2.")
+                .arg(this->what())
+                .arg(components.total().toString()), CODELOC );
+}
+
 /** Calculate the QM potential at the points in the passed potential table */
 void QMMMElecEmbedPotential::calculatePotential(const QMMolecules &qmmols, 
                                                 const MMMolecules &mmmols,
@@ -512,10 +557,22 @@ void QMMMElecEmbedPotential::calculatePotential(const QMMolecules &qmmols,
     qDebug() << "YOUR SIMULATION IS BROKEN!!!";
 }
     
-    void calculatePotential(const QMMolecules &qmmols,
-                            const MMMolecules &mmmols,
-                            PotentialTable &pottable,
-                            const SireFF::Probe &probe,
-                            const Symbol &symbol,
-                            const Components &components,
-                            double scale_potential=1) const;
+/** Calculate the QM potential at the points in the passed potential table */
+void QMMMElecEmbedPotential::calculatePotential(const QMMolecules &qmmols,
+                                                const MMMolecules &mmmols,
+                                                PotentialTable &pottable,
+                                                const SireFF::Probe &probe,
+                                                const Symbol &symbol,
+                                                const Components &components,
+                                                double scale_potential) const
+{
+    if (symbol == components.total())
+        this->calculatePotential(qmmols, mmmols, pottable, probe, scale_potential);
+        
+    else
+        throw SireFF::missing_component( QObject::tr(
+            "There is no potential component in potential %1 - available "
+            "components are %2.")
+                .arg(this->what())
+                .arg(components.total().toString()), CODELOC );
+}

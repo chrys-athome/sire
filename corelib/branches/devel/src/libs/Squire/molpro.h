@@ -134,9 +134,27 @@ protected:
     QString energyCommandFile(const QMPotential::Molecules &molecules,
                               const LatticeCharges &lattice_charges) const;
     
-    QString forceCommandFile(const QMPotential::Molecules &molecules) const;
     QString forceCommandFile(const QMPotential::Molecules &molecules,
-                             const LatticeCharges &lattice_charges) const;
+                             const ForceTable &forcetable) const;
+    QString forceCommandFile(const QMPotential::Molecules &molecules,
+                             const LatticeCharges &lattice_charges,
+                             const ForceTable &forcetable) const;
+    
+    QString fieldCommandFile(const QMPotential::Molecules &molecules,
+                             const FieldTable &fieldtable,
+                             const SireFF::Probe &probe) const;
+    QString fieldCommandFile(const QMPotential::Molecules &molecules,
+                             const LatticeCharges &lattice_charges,
+                             const FieldTable &fieldtable,
+                             const SireFF::Probe &probe) const;
+    
+    QString potentialCommandFile(const QMPotential::Molecules &molecules,
+                                 const PotentialTable &pottable,
+                                 const SireFF::Probe &probe) const;
+    QString potentialCommandFile(const QMPotential::Molecules &molecules,
+                                 const LatticeCharges &lattice_charges,
+                                 const PotentialTable &pottable,
+                                 const SireFF::Probe &probe) const;
 
 private:
     QString createCommandFile(QString cmd_template,
