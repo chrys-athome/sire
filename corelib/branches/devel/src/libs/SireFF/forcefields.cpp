@@ -186,6 +186,8 @@ public:
     bool isConstant() const { return true; }
     
     Expression toExpression() const;
+
+    double value() const;
     
     double value(const QHash<Symbol,FFSymbolPtr> &ffsymbols) const;
     
@@ -637,6 +639,11 @@ void FFConstantValue::save(QDataStream &ds) const
 Expression FFConstantValue::toExpression() const
 {
     return Expression(v);
+}
+
+double FFConstantValue::value() const
+{
+    return v;
 }
 
 double FFConstantValue::value(const QHash<Symbol,FFSymbolPtr>&) const
@@ -2600,6 +2607,24 @@ bool ForceFields::hasConstantComponent(const Symbol &component) const
 */
 void ForceFields::setConstantComponent(const Symbol &symbol, double value)
 {
+    if (ffsymbols.contains(symbol))
+    {
+        //if we are just changing the value then we can short-cut the process
+        const FFSymbolPtr &ffsym = ffsymbols.constFind(symbol).value();
+        
+        if (ffsym->isA<FFConstantValue>())
+        {
+            if (ffsym->asA<FFConstantValue>().value() == value)
+                //no need to change anything
+                return;
+            else
+            {
+                ffsymbols[symbol] = FFSymbolPtr( new FFConstantValue(symbol,value) );
+                return;
+            }
+        }
+    }
+
     ForceFields old_state( *this );
 
     try
@@ -2630,6 +2655,12 @@ void ForceFields::setConstantComponent(const Symbol &symbol, double value)
 void ForceFields::setConstantComponent(const Symbol &symbol,
                                        const Expression &expression)
 {
+    if (expression.isConstant())
+    {
+        this->setConstantComponent(symbol, expression.evaluate(Values()));
+        return;
+    }
+
     ForceFields old_state( *this );
 
     try

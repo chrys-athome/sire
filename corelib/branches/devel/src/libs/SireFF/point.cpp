@@ -426,7 +426,12 @@ bool AtomPoint::update(const MolGroupsBase &molgroups)
 {
     if (molgroups.contains(atm.data().number()))
     {
-        return this->update( molgroups[atm.data().number()].data() );
+        const QList<MGNum> &mgnums = molgroups.groupsContaining(atm.data().number());
+        
+        if (mgnums.isEmpty())
+            return false;
+        
+        return this->update( molgroups[mgnums.first()][atm.data().number()].data() );
     }
     else
         return false;
@@ -443,10 +448,8 @@ bool AtomPoint::wouldUpdate(const MoleculeData &moldata) const
 {
     if (atm.data().number() == moldata.number())
     {
-        Atom new_atm(atm);
-        new_atm.update(moldata);
-        
-        return new_atm.property<Vector>(coords_property) != this->point();
+        return moldata.property(coords_property)
+                      .asA<AtomCoords>()[atm.cgAtomIdx()] != this->point();
     }
     else
         return false;
@@ -497,7 +500,12 @@ bool AtomPoint::wouldUpdate(const MolGroupsBase &molgroups) const
 {
     if (molgroups.contains(atm.data().number()))
     {
-        return this->wouldUpdate( molgroups[atm.data().number()].data() );
+        const QList<MGNum> &mgnums = molgroups.groupsContaining(atm.data().number());
+        
+        if (mgnums.isEmpty())
+            return false;
+        
+        return this->wouldUpdate( molgroups[mgnums.first()][atm.data().number()].data() );
     }
     else
         return false;

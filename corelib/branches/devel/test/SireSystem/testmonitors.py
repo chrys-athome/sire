@@ -107,7 +107,7 @@ moves = SameMoves(solute_intra_moves)
 
 r12 = Symbol("r12")
 system.add( DistanceComponent( r12, solute.atom(AtomName("A1")),
-solute.atom(AtomName("A2")) ) )
+                                    solute.atom(AtomName("A2")) ) )
 system.add( "bond12", MonitorComponent(r12, RecordValues()), 5)
 
 r23 = Symbol("r23")
