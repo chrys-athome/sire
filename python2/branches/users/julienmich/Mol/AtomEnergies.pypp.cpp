@@ -295,7 +295,7 @@ void register_AtomEnergies_class(){
                 "set"
                 , set_function_value
                 , ( bp::arg("cgatomidx"), bp::arg("value") )
-                    /* undefined call policies */ );
+                , bp::return_self< >() );
         
         }
         { //::SireMol::AtomProperty< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > >::set
@@ -308,7 +308,7 @@ void register_AtomEnergies_class(){
                 "set"
                 , set_function_value
                 , ( bp::arg("cgidx"), bp::arg("values") )
-                    /* undefined call policies */ );
+                , bp::return_self< >() );
         
         }
         { //::SireMol::AtomProperty< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > >::size
