@@ -21,8 +21,9 @@ void register_AtomPolarisabilities_class(){
 
     { //::SireMol::AtomProperty< SireUnits::Dimension::PhysUnit< 0, 3, 0, 0, 0, 0, 0 > >
         typedef bp::class_< SireMol::AtomProperty< SireUnits::Dimension::PhysUnit< 0, 3, 0, 0, 0, 0, 0 > >, bp::bases< SireMol::AtomProp, SireMol::MolViewProperty, SireBase::Property > > AtomPolarisabilities_exposer_t;
-        AtomPolarisabilities_exposer_t AtomPolarisabilities_exposer = AtomPolarisabilities_exposer_t( "AtomPolarisabilities", bp::init< >() );
+        AtomPolarisabilities_exposer_t AtomPolarisabilities_exposer = AtomPolarisabilities_exposer_t( "AtomPolarisabilities" );
         bp::scope AtomPolarisabilities_scope( AtomPolarisabilities_exposer );
+        AtomPolarisabilities_exposer.def( bp::init< >() );
         AtomPolarisabilities_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         AtomPolarisabilities_exposer.def( bp::init< SireUnits::Dimension::PhysUnit< 0, 3, 0, 0, 0, 0, 0 > const & >(( bp::arg("value") )) );
         AtomPolarisabilities_exposer.def( bp::init< SireBase::PackedArray2D< SireUnits::Dimension::PhysUnit< 0, 3, 0, 0, 0, 0, 0 > > const & >(( bp::arg("values") )) );

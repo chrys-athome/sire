@@ -47,8 +47,9 @@ void register_RepExMove_class(){
 
     { //::SireMove::RepExMove
         typedef bp::class_< SireMove::RepExMove, bp::bases< SireMove::SupraMove, SireBase::Property > > RepExMove_exposer_t;
-        RepExMove_exposer_t RepExMove_exposer = RepExMove_exposer_t( "RepExMove", bp::init< >() );
+        RepExMove_exposer_t RepExMove_exposer = RepExMove_exposer_t( "RepExMove" );
         bp::scope RepExMove_scope( RepExMove_exposer );
+        RepExMove_exposer.def( bp::init< >() );
         RepExMove_exposer.def( bp::init< SireMove::RepExMove const & >(( bp::arg("other") )) );
         { //::SireMove::RepExMove::acceptanceRatio
         

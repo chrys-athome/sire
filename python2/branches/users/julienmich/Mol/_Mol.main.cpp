@@ -27,6 +27,8 @@
 
 #include "AtomElements.pypp.hpp"
 
+#include "AtomEnergies.pypp.hpp"
+
 #include "AtomFloatProperty.pypp.hpp"
 
 #include "AtomForces.pypp.hpp"
@@ -402,10 +404,6 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_SireMol_containers();
 
-    register_Velocity3D_class();
-
-    register_Force3D_class();
-
     register_AtomID_class();
 
     register_IDAndSet_AtomID__class();
@@ -459,6 +457,10 @@ BOOST_PYTHON_MODULE(_Mol){
     register_Specify_ResID__class();
 
     register_Specify_SegID__class();
+
+    register_Velocity3D_class();
+
+    register_Force3D_class();
 
     register_WeightFunction_class();
 
@@ -515,6 +517,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_AtomPolarisabilities_class();
 
     register_AtomMasses_class();
+
+    register_AtomEnergies_class();
 
     register_AtomFloatProperty_class();
 

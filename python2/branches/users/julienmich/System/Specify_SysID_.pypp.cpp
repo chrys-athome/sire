@@ -29,8 +29,9 @@ void register_Specify_SysID__class(){
 
     { //::SireID::Specify< SireSystem::SysID >
         typedef bp::class_< SireID::Specify< SireSystem::SysID >, bp::bases< SireSystem::SysID, SireID::ID > > Specify_SysID__exposer_t;
-        Specify_SysID__exposer_t Specify_SysID__exposer = Specify_SysID__exposer_t( "Specify_SysID_", bp::init< >() );
+        Specify_SysID__exposer_t Specify_SysID__exposer = Specify_SysID__exposer_t( "Specify_SysID_" );
         bp::scope Specify_SysID__scope( Specify_SysID__exposer );
+        Specify_SysID__exposer.def( bp::init< >() );
         Specify_SysID__exposer.def( bp::init< SireSystem::SysID const &, qint32 >(( bp::arg("id"), bp::arg("i") )) );
         Specify_SysID__exposer.def( bp::init< SireSystem::SysID const &, qint32, qint32 >(( bp::arg("id"), bp::arg("i"), bp::arg("j") )) );
         Specify_SysID__exposer.def( bp::init< SireID::Specify< SireSystem::SysID > const & >(( bp::arg("other") )) );

@@ -33,8 +33,9 @@ void register_Tanh_class(){
 
     { //::SireCAS::Tanh
         typedef bp::class_< SireCAS::Tanh, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Tanh_exposer_t;
-        Tanh_exposer_t Tanh_exposer = Tanh_exposer_t( "Tanh", bp::init< >() );
+        Tanh_exposer_t Tanh_exposer = Tanh_exposer_t( "Tanh" );
         bp::scope Tanh_scope( Tanh_exposer );
+        Tanh_exposer.def( bp::init< >() );
         Tanh_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Tanh_exposer.def( bp::init< SireCAS::Tanh const & >(( bp::arg("other") )) );
         { //::SireCAS::Tanh::evaluate

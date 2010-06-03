@@ -9,6 +9,16 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireFF/errors.h"
+
+#include "SireFF/fieldtable.h"
+
+#include "SireFF/forcetable.h"
+
+#include "SireFF/potentialtable.h"
+
+#include "SireMM/cljprobe.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
@@ -29,8 +39,9 @@ void register_ChargeElementParameterNames3D_class(){
 
     { //::Squire::ChargeElementParameterNames3D
         typedef bp::class_< Squire::ChargeElementParameterNames3D, bp::bases< SireMM::ChargeParameterName, Squire::ElementParameterName > > ChargeElementParameterNames3D_exposer_t;
-        ChargeElementParameterNames3D_exposer_t ChargeElementParameterNames3D_exposer = ChargeElementParameterNames3D_exposer_t( "ChargeElementParameterNames3D", bp::init< >() );
+        ChargeElementParameterNames3D_exposer_t ChargeElementParameterNames3D_exposer = ChargeElementParameterNames3D_exposer_t( "ChargeElementParameterNames3D" );
         bp::scope ChargeElementParameterNames3D_scope( ChargeElementParameterNames3D_exposer );
+        ChargeElementParameterNames3D_exposer.def( bp::init< >() );
         ChargeElementParameterNames3D_exposer.def( "__copy__", &__copy__);
         ChargeElementParameterNames3D_exposer.def( "__deepcopy__", &__copy__);
         ChargeElementParameterNames3D_exposer.def( "clone", &__copy__);

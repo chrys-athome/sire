@@ -35,8 +35,9 @@ void register_PS_GTO_class(){
 
     { //::Squire::PS_GTO
         typedef bp::class_< Squire::PS_GTO, bp::bases< Squire::GTOPair, Squire::ShellPair, SireBase::Property > > PS_GTO_exposer_t;
-        PS_GTO_exposer_t PS_GTO_exposer = PS_GTO_exposer_t( "PS_GTO", bp::init< >() );
+        PS_GTO_exposer_t PS_GTO_exposer = PS_GTO_exposer_t( "PS_GTO" );
         bp::scope PS_GTO_scope( PS_GTO_exposer );
+        PS_GTO_exposer.def( bp::init< >() );
         PS_GTO_exposer.def( bp::init< SireMaths::Vector const &, Squire::S_GTO const &, SireMaths::Vector const &, Squire::P_GTO const & >(( bp::arg("A"), bp::arg("a"), bp::arg("B"), bp::arg("b") )) );
         PS_GTO_exposer.def( bp::init< SireMaths::Vector const &, Squire::P_GTO const &, SireMaths::Vector const &, Squire::S_GTO const & >(( bp::arg("A"), bp::arg("a"), bp::arg("B"), bp::arg("b") )) );
         PS_GTO_exposer.def( bp::init< Squire::PS_GTO const & >(( bp::arg("other") )) );

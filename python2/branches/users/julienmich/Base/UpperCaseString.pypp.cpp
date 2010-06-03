@@ -27,8 +27,9 @@ void register_UpperCaseString_class(){
 
     { //::SireBase::UpperCaseString
         typedef bp::class_< SireBase::UpperCaseString, bp::bases< SireBase::StringMangler, SireBase::Property > > UpperCaseString_exposer_t;
-        UpperCaseString_exposer_t UpperCaseString_exposer = UpperCaseString_exposer_t( "UpperCaseString", bp::init< >() );
+        UpperCaseString_exposer_t UpperCaseString_exposer = UpperCaseString_exposer_t( "UpperCaseString" );
         bp::scope UpperCaseString_scope( UpperCaseString_exposer );
+        UpperCaseString_exposer.def( bp::init< >() );
         UpperCaseString_exposer.def( bp::init< SireBase::UpperCaseString const & >(( bp::arg("other") )) );
         { //::SireBase::UpperCaseString::mangle
         

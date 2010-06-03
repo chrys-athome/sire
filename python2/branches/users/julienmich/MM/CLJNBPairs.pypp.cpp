@@ -23,8 +23,9 @@ void register_CLJNBPairs_class(){
 
     { //::SireMM::CLJNBPairs
         typedef bp::class_< SireMM::CLJNBPairs, bp::bases< SireMM::AtomPairs<SireMM::CLJScaleFactor>, SireMol::MoleculeProperty, SireMol::MolViewProperty, SireBase::Property > > CLJNBPairs_exposer_t;
-        CLJNBPairs_exposer_t CLJNBPairs_exposer = CLJNBPairs_exposer_t( "CLJNBPairs", bp::init< >() );
+        CLJNBPairs_exposer_t CLJNBPairs_exposer = CLJNBPairs_exposer_t( "CLJNBPairs" );
         bp::scope CLJNBPairs_scope( CLJNBPairs_exposer );
+        CLJNBPairs_exposer.def( bp::init< >() );
         CLJNBPairs_exposer.def( bp::init< SireMol::MoleculeInfoData const &, bp::optional< SireMM::CLJScaleFactor const & > >(( bp::arg("molinfo"), bp::arg("default_scale")=SireMM::CLJScaleFactor(1.0e+0, 1.0e+0) )) );
         CLJNBPairs_exposer.def( bp::init< SireMM::CLJNBPairs const & >(( bp::arg("other") )) );
         CLJNBPairs_exposer.def( bp::self != bp::self );

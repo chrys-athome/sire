@@ -33,8 +33,9 @@ void register_Cosh_class(){
 
     { //::SireCAS::Cosh
         typedef bp::class_< SireCAS::Cosh, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Cosh_exposer_t;
-        Cosh_exposer_t Cosh_exposer = Cosh_exposer_t( "Cosh", bp::init< >() );
+        Cosh_exposer_t Cosh_exposer = Cosh_exposer_t( "Cosh" );
         bp::scope Cosh_scope( Cosh_exposer );
+        Cosh_exposer.def( bp::init< >() );
         Cosh_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Cosh_exposer.def( bp::init< SireCAS::Cosh const & >(( bp::arg("other") )) );
         { //::SireCAS::Cosh::evaluate

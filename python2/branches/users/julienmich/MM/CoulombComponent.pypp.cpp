@@ -23,7 +23,7 @@ SireMM::CoulombComponent __copy__(const SireMM::CoulombComponent &other){ return
 void register_CoulombComponent_class(){
 
     { //::SireMM::CoulombComponent
-        typedef bp::class_< SireMM::CoulombComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > CoulombComponent_exposer_t;
+        typedef bp::class_< SireMM::CoulombComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > CoulombComponent_exposer_t;
         CoulombComponent_exposer_t CoulombComponent_exposer = CoulombComponent_exposer_t( "CoulombComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope CoulombComponent_scope( CoulombComponent_exposer );
         CoulombComponent_exposer.def( bp::init< SireFF::FFName const &, QString const & >(( bp::arg("ffname"), bp::arg("suffix") )) );

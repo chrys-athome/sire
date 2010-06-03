@@ -25,7 +25,7 @@ SireMM::UreyBradleyComponent __copy__(const SireMM::UreyBradleyComponent &other)
 void register_UreyBradleyComponent_class(){
 
     { //::SireMM::UreyBradleyComponent
-        typedef bp::class_< SireMM::UreyBradleyComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > UreyBradleyComponent_exposer_t;
+        typedef bp::class_< SireMM::UreyBradleyComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > UreyBradleyComponent_exposer_t;
         UreyBradleyComponent_exposer_t UreyBradleyComponent_exposer = UreyBradleyComponent_exposer_t( "UreyBradleyComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope UreyBradleyComponent_scope( UreyBradleyComponent_exposer );
         UreyBradleyComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );

@@ -39,8 +39,9 @@ void register_ArcTanh_class(){
 
     { //::SireCAS::ArcTanh
         typedef bp::class_< SireCAS::ArcTanh, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > ArcTanh_exposer_t;
-        ArcTanh_exposer_t ArcTanh_exposer = ArcTanh_exposer_t( "ArcTanh", bp::init< >() );
+        ArcTanh_exposer_t ArcTanh_exposer = ArcTanh_exposer_t( "ArcTanh" );
         bp::scope ArcTanh_scope( ArcTanh_exposer );
+        ArcTanh_exposer.def( bp::init< >() );
         ArcTanh_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         ArcTanh_exposer.def( bp::init< SireCAS::ArcTanh const & >(( bp::arg("other") )) );
         { //::SireCAS::ArcTanh::evaluate

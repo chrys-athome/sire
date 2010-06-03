@@ -59,8 +59,9 @@ void register_IDOrSet_ChainID__class(){
 
     { //::SireID::IDOrSet< SireMol::ChainID >
         typedef bp::class_< SireID::IDOrSet< SireMol::ChainID >, bp::bases< SireMol::ChainID, SireID::ID > > IDOrSet_ChainID__exposer_t;
-        IDOrSet_ChainID__exposer_t IDOrSet_ChainID__exposer = IDOrSet_ChainID__exposer_t( "IDOrSet_ChainID_", bp::init< >() );
+        IDOrSet_ChainID__exposer_t IDOrSet_ChainID__exposer = IDOrSet_ChainID__exposer_t( "IDOrSet_ChainID_" );
         bp::scope IDOrSet_ChainID__scope( IDOrSet_ChainID__exposer );
+        IDOrSet_ChainID__exposer.def( bp::init< >() );
         IDOrSet_ChainID__exposer.def( bp::init< SireMol::ChainID const & >(( bp::arg("id") )) );
         IDOrSet_ChainID__exposer.def( bp::init< SireMol::ChainID const &, SireMol::ChainID const & >(( bp::arg("id0"), bp::arg("id1") )) );
         IDOrSet_ChainID__exposer.def( bp::init< QList< SireMol::ChainIdentifier > const & >(( bp::arg("ids") )) );

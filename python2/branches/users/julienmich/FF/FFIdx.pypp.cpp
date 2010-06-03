@@ -25,8 +25,9 @@ void register_FFIdx_class(){
 
     { //::SireFF::FFIdx
         typedef bp::class_< SireFF::FFIdx, bp::bases< SireFF::FFID, SireID::ID, SireID::IndexBase > > FFIdx_exposer_t;
-        FFIdx_exposer_t FFIdx_exposer = FFIdx_exposer_t( "FFIdx", bp::init< >() );
+        FFIdx_exposer_t FFIdx_exposer = FFIdx_exposer_t( "FFIdx" );
         bp::scope FFIdx_scope( FFIdx_exposer );
+        FFIdx_exposer.def( bp::init< >() );
         FFIdx_exposer.def( bp::init< qint32 >(( bp::arg("idx") )) );
         FFIdx_exposer.def( bp::init< SireFF::FFIdx const & >(( bp::arg("other") )) );
         { //::SireFF::FFIdx::hash

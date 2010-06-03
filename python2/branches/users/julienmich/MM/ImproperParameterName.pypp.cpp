@@ -51,8 +51,9 @@ void register_ImproperParameterName_class(){
 
     { //::SireMM::ImproperParameterName
         typedef bp::class_< SireMM::ImproperParameterName > ImproperParameterName_exposer_t;
-        ImproperParameterName_exposer_t ImproperParameterName_exposer = ImproperParameterName_exposer_t( "ImproperParameterName", bp::init< >() );
+        ImproperParameterName_exposer_t ImproperParameterName_exposer = ImproperParameterName_exposer_t( "ImproperParameterName" );
         bp::scope ImproperParameterName_scope( ImproperParameterName_exposer );
+        ImproperParameterName_exposer.def( bp::init< >() );
         { //::SireMM::ImproperParameterName::improper
         
             typedef ::SireBase::PropertyName const & ( ::SireMM::ImproperParameterName::*improper_function_type )(  ) const;

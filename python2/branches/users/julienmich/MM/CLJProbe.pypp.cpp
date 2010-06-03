@@ -25,8 +25,9 @@ void register_CLJProbe_class(){
 
     { //::SireMM::CLJProbe
         typedef bp::class_< SireMM::CLJProbe, bp::bases< SireFF::Probe, SireBase::Property > > CLJProbe_exposer_t;
-        CLJProbe_exposer_t CLJProbe_exposer = CLJProbe_exposer_t( "CLJProbe", bp::init< >() );
+        CLJProbe_exposer_t CLJProbe_exposer = CLJProbe_exposer_t( "CLJProbe" );
         bp::scope CLJProbe_scope( CLJProbe_exposer );
+        CLJProbe_exposer.def( bp::init< >() );
         CLJProbe_exposer.def( bp::init< SireUnits::Dimension::Charge >(( bp::arg("charge") )) );
         CLJProbe_exposer.def( bp::init< SireMM::LJParameter const & >(( bp::arg("ljparam") )) );
         CLJProbe_exposer.def( bp::init< SireUnits::Dimension::Charge, SireMM::LJParameter const & >(( bp::arg("charge"), bp::arg("ljparam") )) );

@@ -65,8 +65,9 @@ void register_AtomName_class(){
 
     { //::SireMol::AtomName
         typedef bp::class_< SireMol::AtomName, bp::bases< SireMol::AtomID, SireID::ID, SireID::Name > > AtomName_exposer_t;
-        AtomName_exposer_t AtomName_exposer = AtomName_exposer_t( "AtomName", bp::init< >() );
+        AtomName_exposer_t AtomName_exposer = AtomName_exposer_t( "AtomName" );
         bp::scope AtomName_scope( AtomName_exposer );
+        AtomName_exposer.def( bp::init< >() );
         AtomName_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         AtomName_exposer.def( bp::init< QString const &, SireID::CaseSensitivity >(( bp::arg("name"), bp::arg("case_sensitivity") )) );
         AtomName_exposer.def( bp::init< SireMol::AtomName const & >(( bp::arg("other") )) );

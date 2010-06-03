@@ -29,8 +29,9 @@ void register_Identities_class(){
 
     { //::SireCAS::Identities
         typedef bp::class_< SireCAS::Identities > Identities_exposer_t;
-        Identities_exposer_t Identities_exposer = Identities_exposer_t( "Identities", bp::init< >() );
+        Identities_exposer_t Identities_exposer = Identities_exposer_t( "Identities" );
         bp::scope Identities_scope( Identities_exposer );
+        Identities_exposer.def( bp::init< >() );
         Identities_exposer.def( bp::init< QList< SireCAS::SymbolExpression > const & >(( bp::arg("expressions") )) );
         Identities_exposer.def( bp::init< QHash< SireCAS::Symbol, SireCAS::Expression > const & >(( bp::arg("expressions") )) );
         Identities_exposer.def( bp::init< SireCAS::SymbolExpression const & >(( bp::arg("symex0") )) );

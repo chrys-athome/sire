@@ -59,7 +59,7 @@
 
 #include "_Base_free_functions.pypp.hpp"
 
-#include "vector_less__double__greater_.pypp.hpp"
+#include "vector_less__double__grate_.pypp.hpp"
 
 namespace bp = boost::python;
 
@@ -78,7 +78,7 @@ BOOST_PYTHON_MODULE(_Base){
 
     register_SireBase_containers();
 
-    register_vector_less__double__greater__class();
+    register_vector_less__double__grate__class();
 
     register_Array2DBase_class();
 

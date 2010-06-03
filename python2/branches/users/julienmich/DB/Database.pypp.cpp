@@ -29,8 +29,9 @@ void register_Database_class(){
 
     { //::SireDB::Database
         typedef bp::class_< SireDB::Database, bp::bases< SireBase::Property > > Database_exposer_t;
-        Database_exposer_t Database_exposer = Database_exposer_t( "Database", bp::init< >() );
+        Database_exposer_t Database_exposer = Database_exposer_t( "Database" );
         bp::scope Database_scope( Database_exposer );
+        Database_exposer.def( bp::init< >() );
         Database_exposer.def( bp::init< QString const & >(( bp::arg("sql") )) );
         Database_exposer.def( bp::init< SireDB::Database const & >(( bp::arg("other") )) );
         { //::SireDB::Database::dumpSql

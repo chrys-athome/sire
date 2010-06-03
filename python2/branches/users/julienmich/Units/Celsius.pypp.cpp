@@ -19,8 +19,9 @@ void register_Celsius_class(){
 
     { //::SireUnits::Celsius
         typedef bp::class_< SireUnits::Celsius, bp::bases< SireUnits::Dimension::TempBase > > Celsius_exposer_t;
-        Celsius_exposer_t Celsius_exposer = Celsius_exposer_t( "Celsius", bp::init< >() );
+        Celsius_exposer_t Celsius_exposer = Celsius_exposer_t( "Celsius" );
         bp::scope Celsius_scope( Celsius_exposer );
+        Celsius_exposer.def( bp::init< >() );
         Celsius_exposer.def( bp::init< double >(( bp::arg("value") )) );
         Celsius_exposer.def( bp::init< SireUnits::Dimension::Temperature const & >(( bp::arg("temp") )) );
         Celsius_exposer.def( bp::init< SireUnits::Dimension::TempBase const & >(( bp::arg("other") )) );

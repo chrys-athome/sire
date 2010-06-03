@@ -23,7 +23,7 @@ SireMM::RestraintComponent __copy__(const SireMM::RestraintComponent &other){ re
 void register_RestraintComponent_class(){
 
     { //::SireMM::RestraintComponent
-        typedef bp::class_< SireMM::RestraintComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > RestraintComponent_exposer_t;
+        typedef bp::class_< SireMM::RestraintComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > RestraintComponent_exposer_t;
         RestraintComponent_exposer_t RestraintComponent_exposer = RestraintComponent_exposer_t( "RestraintComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope RestraintComponent_scope( RestraintComponent_exposer );
         RestraintComponent_exposer.def( bp::init< SireFF::FFName const &, QString const & >(( bp::arg("ffname"), bp::arg("suffix") )) );

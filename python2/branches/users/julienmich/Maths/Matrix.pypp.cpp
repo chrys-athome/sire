@@ -17,7 +17,13 @@ namespace bp = boost::python;
 
 #include "matrix.h"
 
+#include "nmatrix.h"
+
+#include "nvector.h"
+
 #include "vector.h"
+
+#include <QDebug>
 
 #include <QString>
 
@@ -41,12 +47,14 @@ void register_Matrix_class(){
 
     { //::SireMaths::Matrix
         typedef bp::class_< SireMaths::Matrix > Matrix_exposer_t;
-        Matrix_exposer_t Matrix_exposer = Matrix_exposer_t( "Matrix", bp::init< >() );
+        Matrix_exposer_t Matrix_exposer = Matrix_exposer_t( "Matrix" );
         bp::scope Matrix_scope( Matrix_exposer );
+        Matrix_exposer.def( bp::init< >() );
         Matrix_exposer.def( bp::init< double >(( bp::arg("diagonal_value") )) );
         Matrix_exposer.def( bp::init< double, double, double, double, double, double, double, double, double >(( bp::arg("xx"), bp::arg("xy"), bp::arg("xz"), bp::arg("yx"), bp::arg("yy"), bp::arg("yz"), bp::arg("zx"), bp::arg("zy"), bp::arg("zz") )) );
         Matrix_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("r1"), bp::arg("r2"), bp::arg("r3") )) );
         Matrix_exposer.def( bp::init< boost::tuples::tuple< SireMaths::Vector, SireMaths::Vector, SireMaths::Vector, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > const & >(( bp::arg("rows") )) );
+        Matrix_exposer.def( bp::init< SireMaths::NMatrix const & >(( bp::arg("m") )) );
         Matrix_exposer.def( bp::init< SireMaths::Matrix const & >(( bp::arg("m") )) );
         { //::SireMaths::Matrix::checkedOffset
         
@@ -97,6 +105,16 @@ void register_Matrix_class(){
             Matrix_exposer.def( 
                 "determinant"
                 , determinant_function_value );
+        
+        }
+        { //::SireMaths::Matrix::diagonalise
+        
+            typedef ::std::pair< SireMaths::Vector, SireMaths::Matrix > ( ::SireMaths::Matrix::*diagonalise_function_type )(  ) const;
+            diagonalise_function_type diagonalise_function_value( &::SireMaths::Matrix::diagonalise );
+            
+            Matrix_exposer.def( 
+                "diagonalise"
+                , diagonalise_function_value );
         
         }
         { //::SireMaths::Matrix::enforceSymmetric

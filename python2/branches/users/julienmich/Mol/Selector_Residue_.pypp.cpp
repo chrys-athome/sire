@@ -45,8 +45,9 @@ void register_Selector_Residue__class(){
 
     { //::SireMol::Selector< SireMol::Residue >
         typedef bp::class_< SireMol::Selector< SireMol::Residue >, bp::bases< SireMol::MoleculeView, SireBase::Property > > Selector_Residue__exposer_t;
-        Selector_Residue__exposer_t Selector_Residue__exposer = Selector_Residue__exposer_t( "Selector_Residue_", bp::init< >() );
+        Selector_Residue__exposer_t Selector_Residue__exposer = Selector_Residue__exposer_t( "Selector_Residue_" );
         bp::scope Selector_Residue__scope( Selector_Residue__exposer );
+        Selector_Residue__exposer.def( bp::init< >() );
         Selector_Residue__exposer.def( bp::init< SireMol::Residue const & >(( bp::arg("view") )) );
         Selector_Residue__exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         Selector_Residue__exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::AtomSelection const & >(( bp::arg("moldata"), bp::arg("selected_atoms") )) );

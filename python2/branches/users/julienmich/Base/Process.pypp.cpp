@@ -43,7 +43,7 @@ void register_Process_class(){
 
     { //::SireBase::Process
         typedef bp::class_< SireBase::Process > Process_exposer_t;
-        Process_exposer_t Process_exposer = Process_exposer_t( "Process", bp::no_init );
+        Process_exposer_t Process_exposer = Process_exposer_t( "Process" );
         bp::scope Process_scope( Process_exposer );
         Process_exposer.def( bp::init< >() );
         Process_exposer.def( bp::init< SireBase::Process const & >(( bp::arg("other") )) );

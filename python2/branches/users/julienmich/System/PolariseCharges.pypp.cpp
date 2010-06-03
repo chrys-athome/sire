@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireBase/errors.h"
+
+#include "SireError/errors.h"
+
 #include "SireFF/potentialtable.h"
 
 #include "SireFF/probe.h"
@@ -22,11 +26,15 @@ namespace bp = boost::python;
 
 #include "SireMol/atomcoords.h"
 
+#include "SireMol/atomenergies.h"
+
 #include "SireMol/atompolarisabilities.h"
 
 #include "SireMol/atomselection.h"
 
 #include "SireMol/connectivity.h"
+
+#include "SireMol/mgname.h"
 
 #include "SireMol/molecule.h"
 
@@ -60,8 +68,9 @@ void register_PolariseCharges_class(){
 
     { //::SireSystem::PolariseCharges
         typedef bp::class_< SireSystem::PolariseCharges, bp::bases< SireSystem::ChargeConstraint, SireSystem::MoleculeConstraint, SireSystem::Constraint, SireBase::Property > > PolariseCharges_exposer_t;
-        PolariseCharges_exposer_t PolariseCharges_exposer = PolariseCharges_exposer_t( "PolariseCharges", bp::init< >() );
+        PolariseCharges_exposer_t PolariseCharges_exposer = PolariseCharges_exposer_t( "PolariseCharges" );
         bp::scope PolariseCharges_scope( PolariseCharges_exposer );
+        PolariseCharges_exposer.def( bp::init< >() );
         PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireFF::Probe const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("probe"), bp::arg("map")=SireBase::PropertyMap() )) );
         PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireCAS::Symbol const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("field_component"), bp::arg("map")=SireBase::PropertyMap() )) );
@@ -101,6 +110,16 @@ void register_PolariseCharges_class(){
                 "probe"
                 , probe_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireSystem::PolariseCharges::selfEnergyFF
+        
+            typedef ::SireSystem::PolariseChargesFF ( ::SireSystem::PolariseCharges::*selfEnergyFF_function_type )(  ) const;
+            selfEnergyFF_function_type selfEnergyFF_function_value( &::SireSystem::PolariseCharges::selfEnergyFF );
+            
+            PolariseCharges_exposer.def( 
+                "selfEnergyFF"
+                , selfEnergyFF_function_value );
         
         }
         { //::SireSystem::PolariseCharges::toString

@@ -59,8 +59,9 @@ void register_Specify_SegID__class(){
 
     { //::SireID::Specify< SireMol::SegID >
         typedef bp::class_< SireID::Specify< SireMol::SegID >, bp::bases< SireMol::SegID, SireID::ID > > Specify_SegID__exposer_t;
-        Specify_SegID__exposer_t Specify_SegID__exposer = Specify_SegID__exposer_t( "Specify_SegID_", bp::init< >() );
+        Specify_SegID__exposer_t Specify_SegID__exposer = Specify_SegID__exposer_t( "Specify_SegID_" );
         bp::scope Specify_SegID__scope( Specify_SegID__exposer );
+        Specify_SegID__exposer.def( bp::init< >() );
         Specify_SegID__exposer.def( bp::init< SireMol::SegID const &, qint32 >(( bp::arg("id"), bp::arg("i") )) );
         Specify_SegID__exposer.def( bp::init< SireMol::SegID const &, qint32, qint32 >(( bp::arg("id"), bp::arg("i"), bp::arg("j") )) );
         Specify_SegID__exposer.def( bp::init< SireID::Specify< SireMol::SegID > const & >(( bp::arg("other") )) );

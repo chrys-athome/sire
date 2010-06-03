@@ -41,8 +41,9 @@ void register_GroupInternalParameters_class(){
 
     { //::SireMM::GroupInternalParameters
         typedef bp::class_< SireMM::GroupInternalParameters > GroupInternalParameters_exposer_t;
-        GroupInternalParameters_exposer_t GroupInternalParameters_exposer = GroupInternalParameters_exposer_t( "GroupInternalParameters", bp::init< >() );
+        GroupInternalParameters_exposer_t GroupInternalParameters_exposer = GroupInternalParameters_exposer_t( "GroupInternalParameters" );
         bp::scope GroupInternalParameters_scope( GroupInternalParameters_exposer );
+        GroupInternalParameters_exposer.def( bp::init< >() );
         GroupInternalParameters_exposer.def( bp::init< SireMM::GroupInternalParameters const & >(( bp::arg("other") )) );
         { //::SireMM::GroupInternalParameters::angleForces
         

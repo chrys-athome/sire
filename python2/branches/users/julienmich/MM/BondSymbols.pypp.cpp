@@ -32,14 +32,17 @@ namespace bp = boost::python;
 
 #include "internalparameters.h"
 
+SireMM::BondSymbols __copy__(const SireMM::BondSymbols &other){ return SireMM::BondSymbols(other); }
+
 const char* pvt_get_name(const SireMM::BondSymbols&){ return "SireMM::BondSymbols";}
 
 void register_BondSymbols_class(){
 
     { //::SireMM::BondSymbols
-        typedef bp::class_< SireMM::BondSymbols, bp::bases< SireMM::InternalSymbolsBase >, boost::noncopyable > BondSymbols_exposer_t;
+        typedef bp::class_< SireMM::BondSymbols, bp::bases< SireMM::InternalSymbolsBase > > BondSymbols_exposer_t;
         BondSymbols_exposer_t BondSymbols_exposer = BondSymbols_exposer_t( "BondSymbols" );
         bp::scope BondSymbols_scope( BondSymbols_exposer );
+        BondSymbols_exposer.def( bp::init< >() );
         { //::SireMM::BondSymbols::r
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::BondSymbols::*r_function_type )(  ) const;
@@ -51,6 +54,9 @@ void register_BondSymbols_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        BondSymbols_exposer.def( "__copy__", &__copy__);
+        BondSymbols_exposer.def( "__deepcopy__", &__copy__);
+        BondSymbols_exposer.def( "clone", &__copy__);
         BondSymbols_exposer.def( "__str__", &pvt_get_name);
         BondSymbols_exposer.def( "__repr__", &pvt_get_name);
     }

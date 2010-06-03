@@ -153,6 +153,17 @@ void register_ConnectivityBase_class(){
         }
         { //::SireMol::ConnectivityBase::getAngles
         
+            typedef ::QList< SireMol::AngleID > ( ::SireMol::ConnectivityBase::*getAngles_function_type )( ::SireMol::AtomID const & ) const;
+            getAngles_function_type getAngles_function_value( &::SireMol::ConnectivityBase::getAngles );
+            
+            ConnectivityBase_exposer.def( 
+                "getAngles"
+                , getAngles_function_value
+                , ( bp::arg("atom0") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::getAngles
+        
             typedef ::QList< SireMol::AngleID > ( ::SireMol::ConnectivityBase::*getAngles_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
             getAngles_function_type getAngles_function_value( &::SireMol::ConnectivityBase::getAngles );
             
@@ -181,6 +192,49 @@ void register_ConnectivityBase_class(){
                 "getBonds"
                 , getBonds_function_value
                 , ( bp::arg("atom") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::getDihedrals
+        
+            typedef ::QList< SireMol::DihedralID > ( ::SireMol::ConnectivityBase::*getDihedrals_function_type )(  ) const;
+            getDihedrals_function_type getDihedrals_function_value( &::SireMol::ConnectivityBase::getDihedrals );
+            
+            ConnectivityBase_exposer.def( 
+                "getDihedrals"
+                , getDihedrals_function_value );
+        
+        }
+        { //::SireMol::ConnectivityBase::getDihedrals
+        
+            typedef ::QList< SireMol::DihedralID > ( ::SireMol::ConnectivityBase::*getDihedrals_function_type )( ::SireMol::AtomID const & ) const;
+            getDihedrals_function_type getDihedrals_function_value( &::SireMol::ConnectivityBase::getDihedrals );
+            
+            ConnectivityBase_exposer.def( 
+                "getDihedrals"
+                , getDihedrals_function_value
+                , ( bp::arg("atom0") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::getDihedrals
+        
+            typedef ::QList< SireMol::DihedralID > ( ::SireMol::ConnectivityBase::*getDihedrals_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            getDihedrals_function_type getDihedrals_function_value( &::SireMol::ConnectivityBase::getDihedrals );
+            
+            ConnectivityBase_exposer.def( 
+                "getDihedrals"
+                , getDihedrals_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::getDihedrals
+        
+            typedef ::QList< SireMol::DihedralID > ( ::SireMol::ConnectivityBase::*getDihedrals_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            getDihedrals_function_type getDihedrals_function_value( &::SireMol::ConnectivityBase::getDihedrals );
+            
+            ConnectivityBase_exposer.def( 
+                "getDihedrals"
+                , getDihedrals_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2") ) );
         
         }
         { //::SireMol::ConnectivityBase::nConnections

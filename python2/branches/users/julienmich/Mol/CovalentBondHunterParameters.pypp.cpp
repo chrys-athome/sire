@@ -43,14 +43,17 @@ namespace bp = boost::python;
 
 #include "bondhunter.h"
 
+SireMol::CovalentBondHunterParameters __copy__(const SireMol::CovalentBondHunterParameters &other){ return SireMol::CovalentBondHunterParameters(other); }
+
 const char* pvt_get_name(const SireMol::CovalentBondHunterParameters&){ return "SireMol::CovalentBondHunterParameters";}
 
 void register_CovalentBondHunterParameters_class(){
 
     { //::SireMol::CovalentBondHunterParameters
-        typedef bp::class_< SireMol::CovalentBondHunterParameters, boost::noncopyable > CovalentBondHunterParameters_exposer_t;
+        typedef bp::class_< SireMol::CovalentBondHunterParameters > CovalentBondHunterParameters_exposer_t;
         CovalentBondHunterParameters_exposer_t CovalentBondHunterParameters_exposer = CovalentBondHunterParameters_exposer_t( "CovalentBondHunterParameters" );
         bp::scope CovalentBondHunterParameters_scope( CovalentBondHunterParameters_exposer );
+        CovalentBondHunterParameters_exposer.def( bp::init< >() );
         { //::SireMol::CovalentBondHunterParameters::coordinates
         
             typedef ::SireBase::PropertyName const & ( *coordinates_function_type )(  );
@@ -75,6 +78,9 @@ void register_CovalentBondHunterParameters_class(){
         }
         CovalentBondHunterParameters_exposer.staticmethod( "coordinates" );
         CovalentBondHunterParameters_exposer.staticmethod( "element" );
+        CovalentBondHunterParameters_exposer.def( "__copy__", &__copy__);
+        CovalentBondHunterParameters_exposer.def( "__deepcopy__", &__copy__);
+        CovalentBondHunterParameters_exposer.def( "clone", &__copy__);
         CovalentBondHunterParameters_exposer.def( "__str__", &pvt_get_name);
         CovalentBondHunterParameters_exposer.def( "__repr__", &pvt_get_name);
     }

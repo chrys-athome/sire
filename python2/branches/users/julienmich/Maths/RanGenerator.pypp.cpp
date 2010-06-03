@@ -43,8 +43,9 @@ void register_RanGenerator_class(){
 
     { //::SireMaths::RanGenerator
         typedef bp::class_< SireMaths::RanGenerator > RanGenerator_exposer_t;
-        RanGenerator_exposer_t RanGenerator_exposer = RanGenerator_exposer_t( "RanGenerator", bp::init< >() );
+        RanGenerator_exposer_t RanGenerator_exposer = RanGenerator_exposer_t( "RanGenerator" );
         bp::scope RanGenerator_scope( RanGenerator_exposer );
+        RanGenerator_exposer.def( bp::init< >() );
         RanGenerator_exposer.def( bp::init< quint32 >(( bp::arg("seed") )) );
         RanGenerator_exposer.def( bp::init< QVector< unsigned int > const & >(( bp::arg("seed") )) );
         RanGenerator_exposer.def( bp::init< SireMaths::RanGenerator const & >(( bp::arg("other") )) );

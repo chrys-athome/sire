@@ -29,9 +29,10 @@ SireMM::SoftCLJComponent __copy__(const SireMM::SoftCLJComponent &other){ return
 void register_SoftCLJComponent_class(){
 
     { //::SireMM::SoftCLJComponent
-        typedef bp::class_< SireMM::SoftCLJComponent, bp::bases< SireMM::CLJComponent, SireCAS::Symbol, SireCAS::ExBase > > SoftCLJComponent_exposer_t;
-        SoftCLJComponent_exposer_t SoftCLJComponent_exposer = SoftCLJComponent_exposer_t( "SoftCLJComponent", bp::init< >() );
+        typedef bp::class_< SireMM::SoftCLJComponent, bp::bases< SireMM::CLJComponent, SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > SoftCLJComponent_exposer_t;
+        SoftCLJComponent_exposer_t SoftCLJComponent_exposer = SoftCLJComponent_exposer_t( "SoftCLJComponent" );
         bp::scope SoftCLJComponent_scope( SoftCLJComponent_exposer );
+        SoftCLJComponent_exposer.def( bp::init< >() );
         SoftCLJComponent_exposer.def( bp::init< SireFF::FFName const & >(( bp::arg("name") )) );
         SoftCLJComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );
         SoftCLJComponent_exposer.def( bp::init< SireMM::SoftCLJComponent const & >(( bp::arg("other") )) );

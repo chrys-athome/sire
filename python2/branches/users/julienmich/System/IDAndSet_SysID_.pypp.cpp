@@ -29,8 +29,9 @@ void register_IDAndSet_SysID__class(){
 
     { //::SireID::IDAndSet< SireSystem::SysID >
         typedef bp::class_< SireID::IDAndSet< SireSystem::SysID >, bp::bases< SireSystem::SysID, SireID::ID > > IDAndSet_SysID__exposer_t;
-        IDAndSet_SysID__exposer_t IDAndSet_SysID__exposer = IDAndSet_SysID__exposer_t( "IDAndSet_SysID_", bp::init< >() );
+        IDAndSet_SysID__exposer_t IDAndSet_SysID__exposer = IDAndSet_SysID__exposer_t( "IDAndSet_SysID_" );
         bp::scope IDAndSet_SysID__scope( IDAndSet_SysID__exposer );
+        IDAndSet_SysID__exposer.def( bp::init< >() );
         IDAndSet_SysID__exposer.def( bp::init< SireSystem::SysID const & >(( bp::arg("id") )) );
         IDAndSet_SysID__exposer.def( bp::init< SireSystem::SysID const &, SireSystem::SysID const & >(( bp::arg("id0"), bp::arg("id1") )) );
         IDAndSet_SysID__exposer.def( bp::init< QList< SireSystem::SysIdentifier > const & >(( bp::arg("ids") )) );

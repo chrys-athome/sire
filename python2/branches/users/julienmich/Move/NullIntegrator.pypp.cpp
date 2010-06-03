@@ -23,6 +23,8 @@ namespace bp = boost::python;
 
 #include "SireSystem/system.h"
 
+#include "ensemble.h"
+
 #include "integrator.h"
 
 #include "integratorworkspace.h"
@@ -39,39 +41,61 @@ void register_NullIntegrator_class(){
 
     { //::SireMove::NullIntegrator
         typedef bp::class_< SireMove::NullIntegrator, bp::bases< SireMove::Integrator, SireBase::Property > > NullIntegrator_exposer_t;
-        NullIntegrator_exposer_t NullIntegrator_exposer = NullIntegrator_exposer_t( "NullIntegrator", bp::init< >() );
+        NullIntegrator_exposer_t NullIntegrator_exposer = NullIntegrator_exposer_t( "NullIntegrator" );
         bp::scope NullIntegrator_scope( NullIntegrator_exposer );
+        NullIntegrator_exposer.def( bp::init< >() );
         NullIntegrator_exposer.def( bp::init< SireMove::NullIntegrator const & >(( bp::arg("other") )) );
         { //::SireMove::NullIntegrator::createWorkspace
         
-            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::NullIntegrator::*createWorkspace_function_type )(  ) const;
-            createWorkspace_function_type createWorkspace_function_value( &::SireMove::NullIntegrator::createWorkspace );
-            
-            NullIntegrator_exposer.def( 
-                "createWorkspace"
-                , createWorkspace_function_value );
-        
-        }
-        { //::SireMove::NullIntegrator::createWorkspace
-        
-            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::NullIntegrator::*createWorkspace_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::NullIntegrator::*createWorkspace_function_type )( ::SireBase::PropertyMap const & ) const;
             createWorkspace_function_type createWorkspace_function_value( &::SireMove::NullIntegrator::createWorkspace );
             
             NullIntegrator_exposer.def( 
                 "createWorkspace"
                 , createWorkspace_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMove::NullIntegrator::createWorkspace
+        
+            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::NullIntegrator::*createWorkspace_function_type )( ::SireMol::MoleculeGroup const &,::SireBase::PropertyMap const & ) const;
+            createWorkspace_function_type createWorkspace_function_value( &::SireMove::NullIntegrator::createWorkspace );
+            
+            NullIntegrator_exposer.def( 
+                "createWorkspace"
+                , createWorkspace_function_value
+                , ( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMove::NullIntegrator::ensemble
+        
+            typedef ::SireMove::Ensemble ( ::SireMove::NullIntegrator::*ensemble_function_type )(  ) const;
+            ensemble_function_type ensemble_function_value( &::SireMove::NullIntegrator::ensemble );
+            
+            NullIntegrator_exposer.def( 
+                "ensemble"
+                , ensemble_function_value );
         
         }
         { //::SireMove::NullIntegrator::integrate
         
-            typedef void ( ::SireMove::NullIntegrator::*integrate_function_type )( ::SireSystem::System &,::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireBase::PropertyMap const & ) const;
+            typedef void ( ::SireMove::NullIntegrator::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
             integrate_function_type integrate_function_value( &::SireMove::NullIntegrator::integrate );
             
             NullIntegrator_exposer.def( 
                 "integrate"
                 , integrate_function_value
-                , ( bp::arg("system"), bp::arg("workspace"), bp::arg("nrg_component"), bp::arg("map") ) );
+                , ( bp::arg("workspace"), bp::arg("nrg_component"), bp::arg("timestep"), bp::arg("nmoves"), bp::arg("record_stats") ) );
+        
+        }
+        { //::SireMove::NullIntegrator::isTimeReversible
+        
+            typedef bool ( ::SireMove::NullIntegrator::*isTimeReversible_function_type )(  ) const;
+            isTimeReversible_function_type isTimeReversible_function_value( &::SireMove::NullIntegrator::isTimeReversible );
+            
+            NullIntegrator_exposer.def( 
+                "isTimeReversible"
+                , isTimeReversible_function_value );
         
         }
         NullIntegrator_exposer.def( bp::self != bp::self );
@@ -88,38 +112,6 @@ void register_NullIntegrator_class(){
         
         }
         NullIntegrator_exposer.def( bp::self == bp::self );
-        { //::SireMove::NullIntegrator::setGenerator
-        
-            typedef void ( ::SireMove::NullIntegrator::*setGenerator_function_type )( ::SireMaths::RanGenerator const & ) ;
-            setGenerator_function_type setGenerator_function_value( &::SireMove::NullIntegrator::setGenerator );
-            
-            NullIntegrator_exposer.def( 
-                "setGenerator"
-                , setGenerator_function_value
-                , ( bp::arg("generator") ) );
-        
-        }
-        { //::SireMove::NullIntegrator::setTimeStep
-        
-            typedef void ( ::SireMove::NullIntegrator::*setTimeStep_function_type )( ::SireUnits::Dimension::Time const & ) ;
-            setTimeStep_function_type setTimeStep_function_value( &::SireMove::NullIntegrator::setTimeStep );
-            
-            NullIntegrator_exposer.def( 
-                "setTimeStep"
-                , setTimeStep_function_value
-                , ( bp::arg("timestep") ) );
-        
-        }
-        { //::SireMove::NullIntegrator::timeStep
-        
-            typedef ::SireUnits::Dimension::Time ( ::SireMove::NullIntegrator::*timeStep_function_type )(  ) const;
-            timeStep_function_type timeStep_function_value( &::SireMove::NullIntegrator::timeStep );
-            
-            NullIntegrator_exposer.def( 
-                "timeStep"
-                , timeStep_function_value );
-        
-        }
         { //::SireMove::NullIntegrator::toString
         
             typedef ::QString ( ::SireMove::NullIntegrator::*toString_function_type )(  ) const;

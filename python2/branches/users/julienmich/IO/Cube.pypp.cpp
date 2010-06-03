@@ -37,8 +37,9 @@ void register_Cube_class(){
 
     { //::SireIO::Cube
         typedef bp::class_< SireIO::Cube > Cube_exposer_t;
-        Cube_exposer_t Cube_exposer = Cube_exposer_t( "Cube", bp::init< >() );
+        Cube_exposer_t Cube_exposer = Cube_exposer_t( "Cube" );
         bp::scope Cube_scope( Cube_exposer );
+        Cube_exposer.def( bp::init< >() );
         Cube_exposer.def( bp::init< SireUnits::Dimension::MolarEnergy >(( bp::arg("cutoff") )) );
         Cube_exposer.def( bp::init< SireIO::Cube const & >(( bp::arg("other") )) );
         Cube_exposer.def( bp::self != bp::self );

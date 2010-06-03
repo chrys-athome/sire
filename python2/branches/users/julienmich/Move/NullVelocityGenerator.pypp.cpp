@@ -9,9 +9,27 @@ namespace bp = boost::python;
 
 #include "SireCAS/symbol.h"
 
+#include "SireMol/atomelements.h"
+
+#include "SireMol/atommasses.h"
+
+#include "SireMol/atomvelocities.h"
+
+#include "SireMol/moleculedata.h"
+
+#include "SireMol/moleculeinfodata.h"
+
+#include "SireMol/moleculeview.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
+
+#include "SireUnits/dimensions.h"
+
+#include "SireUnits/temperature.h"
+
+#include "SireUnits/units.h"
 
 #include "velocitygenerator.h"
 
@@ -27,9 +45,21 @@ void register_NullVelocityGenerator_class(){
 
     { //::SireMove::NullVelocityGenerator
         typedef bp::class_< SireMove::NullVelocityGenerator, bp::bases< SireMove::VelocityGenerator, SireBase::Property > > NullVelocityGenerator_exposer_t;
-        NullVelocityGenerator_exposer_t NullVelocityGenerator_exposer = NullVelocityGenerator_exposer_t( "NullVelocityGenerator", bp::init< >() );
+        NullVelocityGenerator_exposer_t NullVelocityGenerator_exposer = NullVelocityGenerator_exposer_t( "NullVelocityGenerator" );
         bp::scope NullVelocityGenerator_scope( NullVelocityGenerator_exposer );
+        NullVelocityGenerator_exposer.def( bp::init< >() );
         NullVelocityGenerator_exposer.def( bp::init< SireMove::NullVelocityGenerator const & >(( bp::arg("other") )) );
+        { //::SireMove::NullVelocityGenerator::generate
+        
+            typedef ::SireMol::AtomVelocities ( ::SireMove::NullVelocityGenerator::*generate_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            generate_function_type generate_function_value( &::SireMove::NullVelocityGenerator::generate );
+            
+            NullVelocityGenerator_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
         NullVelocityGenerator_exposer.def( bp::self != bp::self );
         { //::SireMove::NullVelocityGenerator::operator=
         

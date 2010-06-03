@@ -23,6 +23,8 @@ namespace bp = boost::python;
 
 #include "SireSystem/system.h"
 
+#include "ensemble.h"
+
 #include "integrator.h"
 
 #include "integratorworkspace.h"
@@ -41,56 +43,55 @@ void register_Integrator_class(){
         bp::scope Integrator_scope( Integrator_exposer );
         { //::SireMove::Integrator::createWorkspace
         
-            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::Integrator::*createWorkspace_function_type )(  ) const;
-            createWorkspace_function_type createWorkspace_function_value( &::SireMove::Integrator::createWorkspace );
-            
-            Integrator_exposer.def( 
-                "createWorkspace"
-                , createWorkspace_function_value );
-        
-        }
-        { //::SireMove::Integrator::createWorkspace
-        
-            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::Integrator::*createWorkspace_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::Integrator::*createWorkspace_function_type )( ::SireBase::PropertyMap const & ) const;
             createWorkspace_function_type createWorkspace_function_value( &::SireMove::Integrator::createWorkspace );
             
             Integrator_exposer.def( 
                 "createWorkspace"
                 , createWorkspace_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMove::Integrator::createWorkspace
+        
+            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::Integrator::*createWorkspace_function_type )( ::SireMol::MoleculeGroup const &,::SireBase::PropertyMap const & ) const;
+            createWorkspace_function_type createWorkspace_function_value( &::SireMove::Integrator::createWorkspace );
+            
+            Integrator_exposer.def( 
+                "createWorkspace"
+                , createWorkspace_function_value
+                , ( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMove::Integrator::ensemble
+        
+            typedef ::SireMove::Ensemble ( ::SireMove::Integrator::*ensemble_function_type )(  ) const;
+            ensemble_function_type ensemble_function_value( &::SireMove::Integrator::ensemble );
+            
+            Integrator_exposer.def( 
+                "ensemble"
+                , ensemble_function_value );
         
         }
         { //::SireMove::Integrator::integrate
         
-            typedef void ( ::SireMove::Integrator::*integrate_function_type )( ::SireSystem::System &,::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireBase::PropertyMap const & ) const;
+            typedef void ( ::SireMove::Integrator::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
             integrate_function_type integrate_function_value( &::SireMove::Integrator::integrate );
             
             Integrator_exposer.def( 
                 "integrate"
                 , integrate_function_value
-                , ( bp::arg("system"), bp::arg("workspace"), bp::arg("nrg_component"), bp::arg("map") ) );
+                , ( bp::arg("workspace"), bp::arg("nrg_component"), bp::arg("timestep"), bp::arg("nmoves"), bp::arg("record_stats") ) );
         
         }
-        { //::SireMove::Integrator::integrate
+        { //::SireMove::Integrator::isTimeReversible
         
-            typedef void ( ::SireMove::Integrator::*integrate_function_type )( ::SireSystem::System &,::SireMove::IntegratorWorkspace & ) const;
-            integrate_function_type integrate_function_value( &::SireMove::Integrator::integrate );
+            typedef bool ( ::SireMove::Integrator::*isTimeReversible_function_type )(  ) const;
+            isTimeReversible_function_type isTimeReversible_function_value( &::SireMove::Integrator::isTimeReversible );
             
             Integrator_exposer.def( 
-                "integrate"
-                , integrate_function_value
-                , ( bp::arg("system"), bp::arg("workspace") ) );
-        
-        }
-        { //::SireMove::Integrator::integrate
-        
-            typedef void ( ::SireMove::Integrator::*integrate_function_type )( ::SireSystem::System &,::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const & ) const;
-            integrate_function_type integrate_function_value( &::SireMove::Integrator::integrate );
-            
-            Integrator_exposer.def( 
-                "integrate"
-                , integrate_function_value
-                , ( bp::arg("system"), bp::arg("workspace"), bp::arg("nrg_component") ) );
+                "isTimeReversible"
+                , isTimeReversible_function_value );
         
         }
         { //::SireMove::Integrator::null
@@ -102,38 +103,6 @@ void register_Integrator_class(){
                 "null"
                 , null_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
-        
-        }
-        { //::SireMove::Integrator::setGenerator
-        
-            typedef void ( ::SireMove::Integrator::*setGenerator_function_type )( ::SireMaths::RanGenerator const & ) ;
-            setGenerator_function_type setGenerator_function_value( &::SireMove::Integrator::setGenerator );
-            
-            Integrator_exposer.def( 
-                "setGenerator"
-                , setGenerator_function_value
-                , ( bp::arg("generator") ) );
-        
-        }
-        { //::SireMove::Integrator::setTimeStep
-        
-            typedef void ( ::SireMove::Integrator::*setTimeStep_function_type )( ::SireUnits::Dimension::Time const & ) ;
-            setTimeStep_function_type setTimeStep_function_value( &::SireMove::Integrator::setTimeStep );
-            
-            Integrator_exposer.def( 
-                "setTimeStep"
-                , setTimeStep_function_value
-                , ( bp::arg("timestep") ) );
-        
-        }
-        { //::SireMove::Integrator::timeStep
-        
-            typedef ::SireUnits::Dimension::Time ( ::SireMove::Integrator::*timeStep_function_type )(  ) const;
-            timeStep_function_type timeStep_function_value( &::SireMove::Integrator::timeStep );
-            
-            Integrator_exposer.def( 
-                "timeStep"
-                , timeStep_function_value );
         
         }
         { //::SireMove::Integrator::toString

@@ -43,8 +43,9 @@ void register_CenterOfGeometry_class(){
 
     { //::SireFF::CenterOfGeometry
         typedef bp::class_< SireFF::CenterOfGeometry, bp::bases< SireFF::Point, SireBase::Property > > CenterOfGeometry_exposer_t;
-        CenterOfGeometry_exposer_t CenterOfGeometry_exposer = CenterOfGeometry_exposer_t( "CenterOfGeometry", bp::init< >() );
+        CenterOfGeometry_exposer_t CenterOfGeometry_exposer = CenterOfGeometry_exposer_t( "CenterOfGeometry" );
         bp::scope CenterOfGeometry_scope( CenterOfGeometry_exposer );
+        CenterOfGeometry_exposer.def( bp::init< >() );
         CenterOfGeometry_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() )) );
         CenterOfGeometry_exposer.def( bp::init< SireMol::Molecules const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() )) );
         CenterOfGeometry_exposer.def( bp::init< SireFF::CenterOfGeometry const & >(( bp::arg("other") )) );

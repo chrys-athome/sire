@@ -32,14 +32,17 @@ namespace bp = boost::python;
 
 #include "internalparameters.h"
 
+SireMM::BendBendSymbols __copy__(const SireMM::BendBendSymbols &other){ return SireMM::BendBendSymbols(other); }
+
 const char* pvt_get_name(const SireMM::BendBendSymbols&){ return "SireMM::BendBendSymbols";}
 
 void register_BendBendSymbols_class(){
 
     { //::SireMM::BendBendSymbols
-        typedef bp::class_< SireMM::BendBendSymbols, bp::bases< SireMM::InternalSymbolsBase >, boost::noncopyable > BendBendSymbols_exposer_t;
+        typedef bp::class_< SireMM::BendBendSymbols, bp::bases< SireMM::InternalSymbolsBase > > BendBendSymbols_exposer_t;
         BendBendSymbols_exposer_t BendBendSymbols_exposer = BendBendSymbols_exposer_t( "BendBendSymbols" );
         bp::scope BendBendSymbols_scope( BendBendSymbols_exposer );
+        BendBendSymbols_exposer.def( bp::init< >() );
         { //::SireMM::BendBendSymbols::theta012
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::BendBendSymbols::*theta012_function_type )(  ) const;
@@ -73,6 +76,9 @@ void register_BendBendSymbols_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        BendBendSymbols_exposer.def( "__copy__", &__copy__);
+        BendBendSymbols_exposer.def( "__deepcopy__", &__copy__);
+        BendBendSymbols_exposer.def( "clone", &__copy__);
         BendBendSymbols_exposer.def( "__str__", &pvt_get_name);
         BendBendSymbols_exposer.def( "__repr__", &pvt_get_name);
     }

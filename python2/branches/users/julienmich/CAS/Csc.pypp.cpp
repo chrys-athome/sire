@@ -31,8 +31,9 @@ void register_Csc_class(){
 
     { //::SireCAS::Csc
         typedef bp::class_< SireCAS::Csc, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Csc_exposer_t;
-        Csc_exposer_t Csc_exposer = Csc_exposer_t( "Csc", bp::init< >() );
+        Csc_exposer_t Csc_exposer = Csc_exposer_t( "Csc" );
         bp::scope Csc_scope( Csc_exposer );
+        Csc_exposer.def( bp::init< >() );
         Csc_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Csc_exposer.def( bp::init< SireCAS::Csc const & >(( bp::arg("other") )) );
         { //::SireCAS::Csc::evaluate

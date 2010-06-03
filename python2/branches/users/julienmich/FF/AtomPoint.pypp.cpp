@@ -44,8 +44,9 @@ void register_AtomPoint_class(){
 
     { //::SireFF::AtomPoint
         typedef bp::class_< SireFF::AtomPoint, bp::bases< SireFF::Point, SireBase::Property > > AtomPoint_exposer_t;
-        AtomPoint_exposer_t AtomPoint_exposer = AtomPoint_exposer_t( "AtomPoint", bp::init< >() );
+        AtomPoint_exposer_t AtomPoint_exposer = AtomPoint_exposer_t( "AtomPoint" );
         bp::scope AtomPoint_scope( AtomPoint_exposer );
+        AtomPoint_exposer.def( bp::init< >() );
         AtomPoint_exposer.def( bp::init< SireMol::Atom const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom"), bp::arg("map")=SireBase::PropertyMap() )) );
         AtomPoint_exposer.def( bp::init< SireFF::AtomPoint const & >(( bp::arg("other") )) );
         { //::SireFF::AtomPoint::addForce

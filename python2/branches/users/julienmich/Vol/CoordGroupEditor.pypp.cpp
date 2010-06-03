@@ -37,8 +37,9 @@ void register_CoordGroupEditor_class(){
 
     { //::SireVol::CoordGroupEditor
         typedef bp::class_< SireVol::CoordGroupEditor, bp::bases< SireVol::CoordGroupBase > > CoordGroupEditor_exposer_t;
-        CoordGroupEditor_exposer_t CoordGroupEditor_exposer = CoordGroupEditor_exposer_t( "CoordGroupEditor", bp::init< >() );
+        CoordGroupEditor_exposer_t CoordGroupEditor_exposer = CoordGroupEditor_exposer_t( "CoordGroupEditor" );
         bp::scope CoordGroupEditor_scope( CoordGroupEditor_exposer );
+        CoordGroupEditor_exposer.def( bp::init< >() );
         CoordGroupEditor_exposer.def( bp::init< SireVol::CoordGroup const & >(( bp::arg("other") )) );
         CoordGroupEditor_exposer.def( bp::init< SireVol::CoordGroupEditor const & >(( bp::arg("other") )) );
         { //::SireVol::CoordGroupEditor::changeFrame

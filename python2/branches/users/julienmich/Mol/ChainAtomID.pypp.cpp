@@ -35,8 +35,9 @@ void register_ChainAtomID_class(){
 
     { //::SireMol::GroupAtomID< SireMol::ChainID, SireMol::AtomID >
         typedef bp::class_< SireMol::GroupAtomID< SireMol::ChainID, SireMol::AtomID >, bp::bases< SireMol::GroupAtomIDBase, SireMol::AtomID, SireID::ID > > ChainAtomID_exposer_t;
-        ChainAtomID_exposer_t ChainAtomID_exposer = ChainAtomID_exposer_t( "ChainAtomID", bp::init< >() );
+        ChainAtomID_exposer_t ChainAtomID_exposer = ChainAtomID_exposer_t( "ChainAtomID" );
         bp::scope ChainAtomID_scope( ChainAtomID_exposer );
+        ChainAtomID_exposer.def( bp::init< >() );
         ChainAtomID_exposer.def( bp::init< SireMol::ChainID const &, SireMol::AtomID const & >(( bp::arg("group"), bp::arg("atom") )) );
         ChainAtomID_exposer.def( bp::init< SireMol::GroupAtomID< SireMol::ChainID, SireMol::AtomID > const & >(( bp::arg("other") )) );
         { //::SireMol::GroupAtomID< SireMol::ChainID, SireMol::AtomID >::hash

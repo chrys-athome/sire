@@ -37,8 +37,9 @@ void register_GeometryPerturbations_class(){
 
     { //::SireMol::GeometryPerturbations
         typedef bp::class_< SireMol::GeometryPerturbations, bp::bases< SireMol::GeometryPerturbation, SireMol::Perturbation, SireBase::Property > > GeometryPerturbations_exposer_t;
-        GeometryPerturbations_exposer_t GeometryPerturbations_exposer = GeometryPerturbations_exposer_t( "GeometryPerturbations", bp::init< >() );
+        GeometryPerturbations_exposer_t GeometryPerturbations_exposer = GeometryPerturbations_exposer_t( "GeometryPerturbations" );
         bp::scope GeometryPerturbations_scope( GeometryPerturbations_exposer );
+        GeometryPerturbations_exposer.def( bp::init< >() );
         GeometryPerturbations_exposer.def( bp::init< SireMol::GeometryPerturbation const & >(( bp::arg("perturbation") )) );
         GeometryPerturbations_exposer.def( bp::init< QList< SireBase::PropPtr< SireMol::GeometryPerturbation > > const & >(( bp::arg("perturbations") )) );
         GeometryPerturbations_exposer.def( bp::init< SireMol::GeometryPerturbations const & >(( bp::arg("other") )) );

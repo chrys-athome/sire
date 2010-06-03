@@ -50,8 +50,9 @@ void register_MolStructureEditor_class(){
 
     { //::SireMol::MolStructureEditor
         typedef bp::class_< SireMol::MolStructureEditor > MolStructureEditor_exposer_t;
-        MolStructureEditor_exposer_t MolStructureEditor_exposer = MolStructureEditor_exposer_t( "MolStructureEditor", bp::init< >() );
+        MolStructureEditor_exposer_t MolStructureEditor_exposer = MolStructureEditor_exposer_t( "MolStructureEditor" );
         bp::scope MolStructureEditor_scope( MolStructureEditor_exposer );
+        MolStructureEditor_exposer.def( bp::init< >() );
         MolStructureEditor_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molview") )) );
         MolStructureEditor_exposer.def( bp::init< SireMol::StructureEditor const & >(( bp::arg("other") )) );
         MolStructureEditor_exposer.def( bp::init< SireMol::MolStructureEditor const & >(( bp::arg("other") )) );

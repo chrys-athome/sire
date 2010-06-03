@@ -25,8 +25,9 @@ void register_FFName_class(){
 
     { //::SireFF::FFName
         typedef bp::class_< SireFF::FFName, bp::bases< SireFF::FFID, SireID::ID, SireID::Name > > FFName_exposer_t;
-        FFName_exposer_t FFName_exposer = FFName_exposer_t( "FFName", bp::init< >() );
+        FFName_exposer_t FFName_exposer = FFName_exposer_t( "FFName" );
         bp::scope FFName_scope( FFName_exposer );
+        FFName_exposer.def( bp::init< >() );
         FFName_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         FFName_exposer.def( bp::init< QString const &, SireID::CaseSensitivity >(( bp::arg("name"), bp::arg("case_sensitivity") )) );
         FFName_exposer.def( bp::init< SireFF::FFName const & >(( bp::arg("other") )) );

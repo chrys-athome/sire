@@ -77,8 +77,9 @@ void register_Residue_class(){
 
     { //::SireMol::Residue
         typedef bp::class_< SireMol::Residue, bp::bases< SireMol::MoleculeView, SireBase::Property > > Residue_exposer_t;
-        Residue_exposer_t Residue_exposer = Residue_exposer_t( "Residue", bp::init< >() );
+        Residue_exposer_t Residue_exposer = Residue_exposer_t( "Residue" );
         bp::scope Residue_scope( Residue_exposer );
+        Residue_exposer.def( bp::init< >() );
         Residue_exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::ResID const & >(( bp::arg("moldata"), bp::arg("resid") )) );
         Residue_exposer.def( bp::init< SireMol::Residue const & >(( bp::arg("other") )) );
         { //::SireMol::Residue::assertContainsMetadata

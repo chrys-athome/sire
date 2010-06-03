@@ -36,8 +36,9 @@ void register_CloseMols_class(){
 
     { //::SireSystem::CloseMols
         typedef bp::class_< SireSystem::CloseMols > CloseMols_exposer_t;
-        CloseMols_exposer_t CloseMols_exposer = CloseMols_exposer_t( "CloseMols", bp::init< >() );
+        CloseMols_exposer_t CloseMols_exposer = CloseMols_exposer_t( "CloseMols" );
         bp::scope CloseMols_scope( CloseMols_exposer );
+        CloseMols_exposer.def( bp::init< >() );
         CloseMols_exposer.def( bp::init< SireFF::PointRef const &, SireMol::MoleculeGroup const &, bp::optional< int, SireBase::PropertyMap const & > >(( bp::arg("point"), bp::arg("molgroup"), bp::arg("nclosest")=(int)(1), bp::arg("map")=SireBase::PropertyMap() )) );
         CloseMols_exposer.def( bp::init< SireFF::PointRef const &, SireMol::MoleculeGroup const &, SireVol::Space const &, bp::optional< int, SireBase::PropertyMap const & > >(( bp::arg("point"), bp::arg("molgroup"), bp::arg("space"), bp::arg("nclosest")=(int)(1), bp::arg("map")=SireBase::PropertyMap() )) );
         CloseMols_exposer.def( bp::init< SireSystem::CloseMols const & >(( bp::arg("other") )) );

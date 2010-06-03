@@ -58,8 +58,9 @@ void register_IdentityConstraint_class(){
 
     { //::SireSystem::IdentityConstraint
         typedef bp::class_< SireSystem::IdentityConstraint, bp::bases< SireSystem::MoleculeConstraint, SireSystem::Constraint, SireBase::Property > > IdentityConstraint_exposer_t;
-        IdentityConstraint_exposer_t IdentityConstraint_exposer = IdentityConstraint_exposer_t( "IdentityConstraint", bp::init< >() );
+        IdentityConstraint_exposer_t IdentityConstraint_exposer = IdentityConstraint_exposer_t( "IdentityConstraint" );
         bp::scope IdentityConstraint_scope( IdentityConstraint_exposer );
+        IdentityConstraint_exposer.def( bp::init< >() );
         IdentityConstraint_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         IdentityConstraint_exposer.def( bp::init< SireFF::PointRef const &, SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("point"), bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         IdentityConstraint_exposer.def( bp::init< QList< SireBase::PropPtr< SireFF::Point > > const &, SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("points"), bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );

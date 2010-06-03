@@ -29,8 +29,9 @@ void register_HistogramRange_class(){
 
     { //::SireMaths::HistogramRange
         typedef bp::class_< SireMaths::HistogramRange > HistogramRange_exposer_t;
-        HistogramRange_exposer_t HistogramRange_exposer = HistogramRange_exposer_t( "HistogramRange", bp::init< >() );
+        HistogramRange_exposer_t HistogramRange_exposer = HistogramRange_exposer_t( "HistogramRange" );
         bp::scope HistogramRange_scope( HistogramRange_exposer );
+        HistogramRange_exposer.def( bp::init< >() );
         HistogramRange_exposer.def( bp::init< double, double, bp::optional< int > >(( bp::arg("min"), bp::arg("max"), bp::arg("nbins")=(int)(101) )) );
         HistogramRange_exposer.def( bp::init< double, double, double >(( bp::arg("min"), bp::arg("max"), bp::arg("binwidth") )) );
         HistogramRange_exposer.def( bp::init< SireMaths::HistogramRange const & >(( bp::arg("other") )) );

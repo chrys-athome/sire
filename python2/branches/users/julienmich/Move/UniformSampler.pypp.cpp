@@ -33,8 +33,9 @@ void register_UniformSampler_class(){
 
     { //::SireMove::UniformSampler
         typedef bp::class_< SireMove::UniformSampler, bp::bases< SireMove::Sampler, SireBase::Property > > UniformSampler_exposer_t;
-        UniformSampler_exposer_t UniformSampler_exposer = UniformSampler_exposer_t( "UniformSampler", bp::init< >() );
+        UniformSampler_exposer_t UniformSampler_exposer = UniformSampler_exposer_t( "UniformSampler" );
         bp::scope UniformSampler_scope( UniformSampler_exposer );
+        UniformSampler_exposer.def( bp::init< >() );
         UniformSampler_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         UniformSampler_exposer.def( bp::init< SireMove::UniformSampler const & >(( bp::arg("other") )) );
         { //::SireMove::UniformSampler::operator=

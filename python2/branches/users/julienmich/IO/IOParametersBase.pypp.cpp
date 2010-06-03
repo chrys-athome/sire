@@ -27,14 +27,17 @@ namespace bp = boost::python;
 
 #include "iobase.h"
 
+SireIO::IOParametersBase __copy__(const SireIO::IOParametersBase &other){ return SireIO::IOParametersBase(other); }
+
 const char* pvt_get_name(const SireIO::IOParametersBase&){ return "SireIO::IOParametersBase";}
 
 void register_IOParametersBase_class(){
 
     { //::SireIO::IOParametersBase
-        typedef bp::class_< SireIO::IOParametersBase, boost::noncopyable > IOParametersBase_exposer_t;
+        typedef bp::class_< SireIO::IOParametersBase > IOParametersBase_exposer_t;
         IOParametersBase_exposer_t IOParametersBase_exposer = IOParametersBase_exposer_t( "IOParametersBase" );
         bp::scope IOParametersBase_scope( IOParametersBase_exposer );
+        IOParametersBase_exposer.def( bp::init< >() );
         { //::SireIO::IOParametersBase::coordinates
         
             typedef ::SireBase::PropertyName const & ( ::SireIO::IOParametersBase::*coordinates_function_type )(  ) const;
@@ -68,6 +71,9 @@ void register_IOParametersBase_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        IOParametersBase_exposer.def( "__copy__", &__copy__);
+        IOParametersBase_exposer.def( "__deepcopy__", &__copy__);
+        IOParametersBase_exposer.def( "clone", &__copy__);
         IOParametersBase_exposer.def( "__str__", &pvt_get_name);
         IOParametersBase_exposer.def( "__repr__", &pvt_get_name);
     }

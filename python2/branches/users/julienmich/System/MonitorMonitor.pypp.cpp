@@ -30,8 +30,9 @@ void register_MonitorMonitor_class(){
 
     { //::SireSystem::MonitorMonitor
         typedef bp::class_< SireSystem::MonitorMonitor, bp::bases< SireSystem::SystemMonitor, SireBase::Property > > MonitorMonitor_exposer_t;
-        MonitorMonitor_exposer_t MonitorMonitor_exposer = MonitorMonitor_exposer_t( "MonitorMonitor", bp::init< >() );
+        MonitorMonitor_exposer_t MonitorMonitor_exposer = MonitorMonitor_exposer_t( "MonitorMonitor" );
         bp::scope MonitorMonitor_scope( MonitorMonitor_exposer );
+        MonitorMonitor_exposer.def( bp::init< >() );
         MonitorMonitor_exposer.def( bp::init< SireSystem::MonitorID const &, bp::optional< bool, bool > >(( bp::arg("id"), bp::arg("clear_original")=(bool)(false), bp::arg("remove_original")=(bool)(false) )) );
         MonitorMonitor_exposer.def( bp::init< SireSystem::MonitorMonitor const & >(( bp::arg("other") )) );
         { //::SireSystem::MonitorMonitor::at

@@ -7,17 +7,23 @@
 
 #include "Helpers/clone_const_reference.hpp"
 
-#include "AtomicVelocityWorkspace.pypp.hpp"
+#include "DLMRigidBody.pypp.hpp"
 
 #include "Dynamics.pypp.hpp"
 
 #include "Ensemble.pypp.hpp"
 
+#include "HMCGenerator.pypp.hpp"
+
+#include "HMCVelGen.pypp.hpp"
+
+#include "HybridMC.pypp.hpp"
+
 #include "Integrator.pypp.hpp"
 
-#include "IntegratorWorkspace.pypp.hpp"
-
 #include "MTSMC.pypp.hpp"
+
+#include "MaxwellBoltzmann.pypp.hpp"
 
 #include "MolDeleter.pypp.hpp"
 
@@ -39,8 +45,6 @@
 
 #include "NullIntegrator.pypp.hpp"
 
-#include "NullIntegratorWorkspace.pypp.hpp"
-
 #include "NullMove.pypp.hpp"
 
 #include "NullSupraMove.pypp.hpp"
@@ -52,8 +56,6 @@
 #include "NullVolumeChanger.pypp.hpp"
 
 #include "PrefSampler.pypp.hpp"
-
-#include "RandomVelocities.pypp.hpp"
 
 #include "RepExMove.pypp.hpp"
 
@@ -144,9 +146,9 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_SireMove_containers();
 
-    register_IntegratorWorkspace_class();
+    register_Integrator_class();
 
-    register_AtomicVelocityWorkspace_class();
+    register_DLMRigidBody_class();
 
     register_Move_class();
 
@@ -154,11 +156,19 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_Ensemble_class();
 
-    register_Integrator_class();
+    register_VelocityGenerator_class();
+
+    register_HMCVelGen_class();
+
+    register_HMCGenerator_class();
 
     register_MonteCarlo_class();
 
+    register_HybridMC_class();
+
     register_MTSMC_class();
+
+    register_MaxwellBoltzmann_class();
 
     register_MolDeleter_class();
 
@@ -176,8 +186,6 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_NullIntegrator_class();
 
-    register_NullIntegratorWorkspace_class();
-
     register_NullMove_class();
 
     register_SupraMove_class();
@@ -188,8 +196,6 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_NullSupraSubMove_class();
 
-    register_VelocityGenerator_class();
-
     register_NullVelocityGenerator_class();
 
     register_VolumeChanger_class();
@@ -199,8 +205,6 @@ BOOST_PYTHON_MODULE(_Move){
     register_Sampler_class();
 
     register_PrefSampler_class();
-
-    register_RandomVelocities_class();
 
     register_RepExMove_class();
 

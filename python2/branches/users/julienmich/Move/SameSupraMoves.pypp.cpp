@@ -31,8 +31,9 @@ void register_SameSupraMoves_class(){
 
     { //::SireMove::SameSupraMoves
         typedef bp::class_< SireMove::SameSupraMoves, bp::bases< SireMove::SupraMoves, SireBase::Property > > SameSupraMoves_exposer_t;
-        SameSupraMoves_exposer_t SameSupraMoves_exposer = SameSupraMoves_exposer_t( "SameSupraMoves", bp::init< >() );
+        SameSupraMoves_exposer_t SameSupraMoves_exposer = SameSupraMoves_exposer_t( "SameSupraMoves" );
         bp::scope SameSupraMoves_scope( SameSupraMoves_exposer );
+        SameSupraMoves_exposer.def( bp::init< >() );
         SameSupraMoves_exposer.def( bp::init< SireMove::SupraMove const & >(( bp::arg("move") )) );
         SameSupraMoves_exposer.def( bp::init< SireMove::SameSupraMoves const & >(( bp::arg("other") )) );
         { //::SireMove::SameSupraMoves::clearStatistics

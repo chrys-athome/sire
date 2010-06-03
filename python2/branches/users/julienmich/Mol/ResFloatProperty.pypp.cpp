@@ -21,8 +21,9 @@ void register_ResFloatProperty_class(){
 
     { //::SireMol::ResProperty< double >
         typedef bp::class_< SireMol::ResProperty< double >, bp::bases< SireMol::ResProp, SireMol::MolViewProperty, SireBase::Property > > ResFloatProperty_exposer_t;
-        ResFloatProperty_exposer_t ResFloatProperty_exposer = ResFloatProperty_exposer_t( "ResFloatProperty", bp::init< >() );
+        ResFloatProperty_exposer_t ResFloatProperty_exposer = ResFloatProperty_exposer_t( "ResFloatProperty" );
         bp::scope ResFloatProperty_scope( ResFloatProperty_exposer );
+        ResFloatProperty_exposer.def( bp::init< >() );
         ResFloatProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         ResFloatProperty_exposer.def( bp::init< QVector< double > const & >(( bp::arg("values") )) );
         ResFloatProperty_exposer.def( bp::init< SireMol::ResProperty< double > const & >(( bp::arg("other") )) );

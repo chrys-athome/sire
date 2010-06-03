@@ -21,8 +21,9 @@ void register_ChainStringProperty_class(){
 
     { //::SireMol::ChainProperty< QString >
         typedef bp::class_< SireMol::ChainProperty< QString >, bp::bases< SireMol::ChainProp, SireMol::MolViewProperty, SireBase::Property > > ChainStringProperty_exposer_t;
-        ChainStringProperty_exposer_t ChainStringProperty_exposer = ChainStringProperty_exposer_t( "ChainStringProperty", bp::init< >() );
+        ChainStringProperty_exposer_t ChainStringProperty_exposer = ChainStringProperty_exposer_t( "ChainStringProperty" );
         bp::scope ChainStringProperty_scope( ChainStringProperty_exposer );
+        ChainStringProperty_exposer.def( bp::init< >() );
         ChainStringProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         ChainStringProperty_exposer.def( bp::init< QVector< QString > const & >(( bp::arg("values") )) );
         ChainStringProperty_exposer.def( bp::init< SireMol::ChainProperty< QString > const & >(( bp::arg("other") )) );

@@ -41,8 +41,9 @@ void register_ComplexPower_class(){
 
     { //::SireCAS::ComplexPower
         typedef bp::class_< SireCAS::ComplexPower, bp::bases< SireCAS::PowerFunction, SireCAS::ExBase > > ComplexPower_exposer_t;
-        ComplexPower_exposer_t ComplexPower_exposer = ComplexPower_exposer_t( "ComplexPower", bp::init< >() );
+        ComplexPower_exposer_t ComplexPower_exposer = ComplexPower_exposer_t( "ComplexPower" );
         bp::scope ComplexPower_scope( ComplexPower_exposer );
+        ComplexPower_exposer.def( bp::init< >() );
         ComplexPower_exposer.def( bp::init< SireCAS::Expression const &, SireMaths::Complex const & >(( bp::arg("expression"), bp::arg("power") )) );
         ComplexPower_exposer.def( bp::init< SireCAS::ComplexPower const & >(( bp::arg("other") )) );
         { //::SireCAS::ComplexPower::evaluate

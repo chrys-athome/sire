@@ -40,8 +40,9 @@ void register_ThreeAtomPerturbation_class(){
 
     { //::SireMM::ThreeAtomPerturbation
         typedef bp::class_< SireMM::ThreeAtomPerturbation, bp::bases< SireMM::InternalPerturbation, SireMol::Perturbation, SireBase::Property > > ThreeAtomPerturbation_exposer_t;
-        ThreeAtomPerturbation_exposer_t ThreeAtomPerturbation_exposer = ThreeAtomPerturbation_exposer_t( "ThreeAtomPerturbation", bp::init< >() );
+        ThreeAtomPerturbation_exposer_t ThreeAtomPerturbation_exposer = ThreeAtomPerturbation_exposer_t( "ThreeAtomPerturbation" );
         bp::scope ThreeAtomPerturbation_scope( ThreeAtomPerturbation_exposer );
+        ThreeAtomPerturbation_exposer.def( bp::init< >() );
         ThreeAtomPerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireCAS::Expression const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("initial_form"), bp::arg("final_form"), bp::arg("map")=SireBase::PropertyMap() )) );
         ThreeAtomPerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireCAS::Expression const &, SireCAS::Expression const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("initial_form"), bp::arg("final_form"), bp::arg("mapping_function"), bp::arg("map")=SireBase::PropertyMap() )) );
         ThreeAtomPerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireCAS::Expression const &, SireCAS::Identities const &, SireCAS::Identities const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("base_expression"), bp::arg("initial_forms"), bp::arg("final_forms"), bp::arg("map")=SireBase::PropertyMap() )) );

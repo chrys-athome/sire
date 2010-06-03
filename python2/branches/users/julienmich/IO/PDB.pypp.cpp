@@ -91,8 +91,9 @@ void register_PDB_class(){
 
     { //::SireIO::PDB
         typedef bp::class_< SireIO::PDB, bp::bases< SireIO::IOBase, SireBase::Property > > PDB_exposer_t;
-        PDB_exposer_t PDB_exposer = PDB_exposer_t( "PDB", bp::init< >() );
+        PDB_exposer_t PDB_exposer = PDB_exposer_t( "PDB" );
         bp::scope PDB_scope( PDB_exposer );
+        PDB_exposer.def( bp::init< >() );
         PDB_exposer.def( bp::init< SireIO::PDB const & >(( bp::arg("other") )) );
         PDB_exposer.def( bp::self != bp::self );
         { //::SireIO::PDB::operator=

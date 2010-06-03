@@ -60,6 +60,8 @@ void register_man_global_variables()
 
     scope().attr("angstrom") = angstrom;
 
+    scope().attr("angstroms") = angstroms;
+
     scope().attr("picometer") = picometer;
 
     scope().attr("nanometer") = nanometer;
@@ -74,6 +76,20 @@ void register_man_global_variables()
 
     scope().attr("kilometer") = kilometer;
 
+    scope().attr("picometers") = picometers;
+
+    scope().attr("nanometers") = nanometers;
+
+    scope().attr("micrometers") = micrometers;
+
+    scope().attr("millimeters") = millimeters;
+
+    scope().attr("centimeters") = centimeters;
+
+    scope().attr("meters") = meters;
+
+    scope().attr("kilometers") = kilometers;
+
     scope().attr("bohr_radii") = bohr_radii;
 
     scope().attr("inch") = inch;
@@ -83,6 +99,14 @@ void register_man_global_variables()
     scope().attr("yard") = yard;
 
     scope().attr("mile") = mile;
+
+    scope().attr("inches") = inches;
+
+    scope().attr("feet") = feet;
+
+    scope().attr("yards") = yards;
+
+    scope().attr("miles") = miles;
 
     scope().attr("angstrom2") = angstrom2;
 
@@ -195,6 +219,20 @@ void register_man_global_variables()
     scope().attr("week") = week;
 
     scope().attr("fortnight") = fortnight;
+
+    scope().attr("akma_velocity") = akma_velocity;
+
+    scope().attr("angstroms_per_fs") = angstroms_per_fs;
+
+    scope().attr("meters_per_second") = meters_per_second;
+
+    scope().attr("kilometers_per_hour") = kilometers_per_hour;
+
+    scope().attr("miles_per_hour") = miles_per_hour;
+
+    scope().attr("mph") = mph;
+
+    scope().attr("kph") = kph;
 
     scope().attr("newton") = newton;
 

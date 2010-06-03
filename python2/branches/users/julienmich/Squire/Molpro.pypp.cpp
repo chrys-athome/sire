@@ -47,8 +47,9 @@ void register_Molpro_class(){
 
     { //::Squire::Molpro
         typedef bp::class_< Squire::Molpro, bp::bases< Squire::QMProgram, SireBase::Property > > Molpro_exposer_t;
-        Molpro_exposer_t Molpro_exposer = Molpro_exposer_t( "Molpro", bp::init< >() );
+        Molpro_exposer_t Molpro_exposer = Molpro_exposer_t( "Molpro" );
         bp::scope Molpro_scope( Molpro_exposer );
+        Molpro_exposer.def( bp::init< >() );
         Molpro_exposer.def( bp::init< QString const & >(( bp::arg("molpro") )) );
         Molpro_exposer.def( bp::init< Squire::Molpro const & >(( bp::arg("other") )) );
         { //::Squire::Molpro::basisSet

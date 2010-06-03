@@ -81,8 +81,9 @@ void register_Mover_Residue__class(){
 
     { //::SireMol::Mover< SireMol::Residue >
         typedef bp::class_< SireMol::Mover< SireMol::Residue >, bp::bases< SireMol::MoverBase, SireMol::Residue, SireMol::MoleculeView, SireBase::Property > > Mover_Residue__exposer_t;
-        Mover_Residue__exposer_t Mover_Residue__exposer = Mover_Residue__exposer_t( "Mover_Residue_", bp::init< >() );
+        Mover_Residue__exposer_t Mover_Residue__exposer = Mover_Residue__exposer_t( "Mover_Residue_" );
         bp::scope Mover_Residue__scope( Mover_Residue__exposer );
+        Mover_Residue__exposer.def( bp::init< >() );
         Mover_Residue__exposer.def( bp::init< SireMol::Residue const & >(( bp::arg("view") )) );
         Mover_Residue__exposer.def( bp::init< SireMol::Residue const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Residue__exposer.def( bp::init< SireMol::Mover< SireMol::Residue > const & >(( bp::arg("other") )) );

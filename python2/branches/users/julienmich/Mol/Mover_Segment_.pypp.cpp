@@ -75,8 +75,9 @@ void register_Mover_Segment__class(){
 
     { //::SireMol::Mover< SireMol::Segment >
         typedef bp::class_< SireMol::Mover< SireMol::Segment >, bp::bases< SireMol::MoverBase, SireMol::Segment, SireMol::MoleculeView, SireBase::Property > > Mover_Segment__exposer_t;
-        Mover_Segment__exposer_t Mover_Segment__exposer = Mover_Segment__exposer_t( "Mover_Segment_", bp::init< >() );
+        Mover_Segment__exposer_t Mover_Segment__exposer = Mover_Segment__exposer_t( "Mover_Segment_" );
         bp::scope Mover_Segment__scope( Mover_Segment__exposer );
+        Mover_Segment__exposer.def( bp::init< >() );
         Mover_Segment__exposer.def( bp::init< SireMol::Segment const & >(( bp::arg("view") )) );
         Mover_Segment__exposer.def( bp::init< SireMol::Segment const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Segment__exposer.def( bp::init< SireMol::Mover< SireMol::Segment > const & >(( bp::arg("other") )) );

@@ -32,14 +32,17 @@ namespace bp = boost::python;
 
 #include "internalparameters.h"
 
+SireMM::ImproperSymbols __copy__(const SireMM::ImproperSymbols &other){ return SireMM::ImproperSymbols(other); }
+
 const char* pvt_get_name(const SireMM::ImproperSymbols&){ return "SireMM::ImproperSymbols";}
 
 void register_ImproperSymbols_class(){
 
     { //::SireMM::ImproperSymbols
-        typedef bp::class_< SireMM::ImproperSymbols, bp::bases< SireMM::InternalSymbolsBase >, boost::noncopyable > ImproperSymbols_exposer_t;
+        typedef bp::class_< SireMM::ImproperSymbols, bp::bases< SireMM::InternalSymbolsBase > > ImproperSymbols_exposer_t;
         ImproperSymbols_exposer_t ImproperSymbols_exposer = ImproperSymbols_exposer_t( "ImproperSymbols" );
         bp::scope ImproperSymbols_scope( ImproperSymbols_exposer );
+        ImproperSymbols_exposer.def( bp::init< >() );
         { //::SireMM::ImproperSymbols::phi
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::ImproperSymbols::*phi_function_type )(  ) const;
@@ -62,6 +65,9 @@ void register_ImproperSymbols_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        ImproperSymbols_exposer.def( "__copy__", &__copy__);
+        ImproperSymbols_exposer.def( "__deepcopy__", &__copy__);
+        ImproperSymbols_exposer.def( "clone", &__copy__);
         ImproperSymbols_exposer.def( "__str__", &pvt_get_name);
         ImproperSymbols_exposer.def( "__repr__", &pvt_get_name);
     }

@@ -25,7 +25,7 @@ SireMM::StretchBendTorsionComponent __copy__(const SireMM::StretchBendTorsionCom
 void register_StretchBendTorsionComponent_class(){
 
     { //::SireMM::StretchBendTorsionComponent
-        typedef bp::class_< SireMM::StretchBendTorsionComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > StretchBendTorsionComponent_exposer_t;
+        typedef bp::class_< SireMM::StretchBendTorsionComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > StretchBendTorsionComponent_exposer_t;
         StretchBendTorsionComponent_exposer_t StretchBendTorsionComponent_exposer = StretchBendTorsionComponent_exposer_t( "StretchBendTorsionComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope StretchBendTorsionComponent_scope( StretchBendTorsionComponent_exposer );
         StretchBendTorsionComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );

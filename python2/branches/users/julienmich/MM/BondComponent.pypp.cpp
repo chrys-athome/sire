@@ -25,7 +25,7 @@ SireMM::BondComponent __copy__(const SireMM::BondComponent &other){ return SireM
 void register_BondComponent_class(){
 
     { //::SireMM::BondComponent
-        typedef bp::class_< SireMM::BondComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > BondComponent_exposer_t;
+        typedef bp::class_< SireMM::BondComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > BondComponent_exposer_t;
         BondComponent_exposer_t BondComponent_exposer = BondComponent_exposer_t( "BondComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope BondComponent_scope( BondComponent_exposer );
         BondComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );

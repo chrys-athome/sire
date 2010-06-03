@@ -33,8 +33,9 @@ void register_Replicas_class(){
 
     { //::SireMove::Replicas
         typedef bp::class_< SireMove::Replicas, bp::bases< SireMove::SupraSystem, SireBase::Property > > Replicas_exposer_t;
-        Replicas_exposer_t Replicas_exposer = Replicas_exposer_t( "Replicas", bp::init< >() );
+        Replicas_exposer_t Replicas_exposer = Replicas_exposer_t( "Replicas" );
         bp::scope Replicas_scope( Replicas_exposer );
+        Replicas_exposer.def( bp::init< >() );
         Replicas_exposer.def( bp::init< int >(( bp::arg("n") )) );
         Replicas_exposer.def( bp::init< SireSystem::System const &, bp::optional< int > >(( bp::arg("system"), bp::arg("n")=(int)(1) )) );
         Replicas_exposer.def( bp::init< QVector< SireSystem::System > const & >(( bp::arg("systems") )) );

@@ -31,8 +31,9 @@ void register_AtomIdxMatcher_class(){
 
     { //::SireMol::AtomIdxMatcher
         typedef bp::class_< SireMol::AtomIdxMatcher, bp::bases< SireMol::AtomMatcher, SireBase::Property > > AtomIdxMatcher_exposer_t;
-        AtomIdxMatcher_exposer_t AtomIdxMatcher_exposer = AtomIdxMatcher_exposer_t( "AtomIdxMatcher", bp::init< >() );
+        AtomIdxMatcher_exposer_t AtomIdxMatcher_exposer = AtomIdxMatcher_exposer_t( "AtomIdxMatcher" );
         bp::scope AtomIdxMatcher_scope( AtomIdxMatcher_exposer );
+        AtomIdxMatcher_exposer.def( bp::init< >() );
         AtomIdxMatcher_exposer.def( bp::init< SireMol::AtomIdxMatcher const & >(( bp::arg("arg0") )) );
         { //::SireMol::AtomIdxMatcher::match
         

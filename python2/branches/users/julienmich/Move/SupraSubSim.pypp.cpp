@@ -25,8 +25,9 @@ void register_SupraSubSim_class(){
 
     { //::SireMove::SupraSubSim
         typedef bp::class_< SireMove::SupraSubSim > SupraSubSim_exposer_t;
-        SupraSubSim_exposer_t SupraSubSim_exposer = SupraSubSim_exposer_t( "SupraSubSim", bp::init< >() );
+        SupraSubSim_exposer_t SupraSubSim_exposer = SupraSubSim_exposer_t( "SupraSubSim" );
         bp::scope SupraSubSim_scope( SupraSubSim_exposer );
+        SupraSubSim_exposer.def( bp::init< >() );
         SupraSubSim_exposer.def( bp::init< SireMove::SupraSubSim const & >(( bp::arg("other") )) );
         { //::SireMove::SupraSubSim::abort
         

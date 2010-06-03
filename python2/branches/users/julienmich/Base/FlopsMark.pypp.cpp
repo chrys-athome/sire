@@ -25,8 +25,9 @@ void register_FlopsMark_class(){
 
     { //::SireBase::FlopsMark
         typedef bp::class_< SireBase::FlopsMark > FlopsMark_exposer_t;
-        FlopsMark_exposer_t FlopsMark_exposer = FlopsMark_exposer_t( "FlopsMark", bp::init< >() );
+        FlopsMark_exposer_t FlopsMark_exposer = FlopsMark_exposer_t( "FlopsMark" );
         bp::scope FlopsMark_scope( FlopsMark_exposer );
+        FlopsMark_exposer.def( bp::init< >() );
         FlopsMark_exposer.def( bp::init< SireBase::FlopsMark const & >(( bp::arg("other") )) );
         { //::SireBase::FlopsMark::benchmark
         

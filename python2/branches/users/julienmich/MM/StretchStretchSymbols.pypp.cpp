@@ -32,14 +32,17 @@ namespace bp = boost::python;
 
 #include "internalparameters.h"
 
+SireMM::StretchStretchSymbols __copy__(const SireMM::StretchStretchSymbols &other){ return SireMM::StretchStretchSymbols(other); }
+
 const char* pvt_get_name(const SireMM::StretchStretchSymbols&){ return "SireMM::StretchStretchSymbols";}
 
 void register_StretchStretchSymbols_class(){
 
     { //::SireMM::StretchStretchSymbols
-        typedef bp::class_< SireMM::StretchStretchSymbols, bp::bases< SireMM::InternalSymbolsBase >, boost::noncopyable > StretchStretchSymbols_exposer_t;
+        typedef bp::class_< SireMM::StretchStretchSymbols, bp::bases< SireMM::InternalSymbolsBase > > StretchStretchSymbols_exposer_t;
         StretchStretchSymbols_exposer_t StretchStretchSymbols_exposer = StretchStretchSymbols_exposer_t( "StretchStretchSymbols" );
         bp::scope StretchStretchSymbols_scope( StretchStretchSymbols_exposer );
+        StretchStretchSymbols_exposer.def( bp::init< >() );
         { //::SireMM::StretchStretchSymbols::r01
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::StretchStretchSymbols::*r01_function_type )(  ) const;
@@ -73,6 +76,9 @@ void register_StretchStretchSymbols_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        StretchStretchSymbols_exposer.def( "__copy__", &__copy__);
+        StretchStretchSymbols_exposer.def( "__deepcopy__", &__copy__);
+        StretchStretchSymbols_exposer.def( "clone", &__copy__);
         StretchStretchSymbols_exposer.def( "__str__", &pvt_get_name);
         StretchStretchSymbols_exposer.def( "__repr__", &pvt_get_name);
     }

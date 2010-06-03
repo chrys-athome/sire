@@ -43,8 +43,9 @@ void register_VectorPoint_class(){
 
     { //::SireFF::VectorPoint
         typedef bp::class_< SireFF::VectorPoint, bp::bases< SireFF::Point, SireBase::Property > > VectorPoint_exposer_t;
-        VectorPoint_exposer_t VectorPoint_exposer = VectorPoint_exposer_t( "VectorPoint", bp::init< >() );
+        VectorPoint_exposer_t VectorPoint_exposer = VectorPoint_exposer_t( "VectorPoint" );
         bp::scope VectorPoint_scope( VectorPoint_exposer );
+        VectorPoint_exposer.def( bp::init< >() );
         VectorPoint_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("point") )) );
         VectorPoint_exposer.def( bp::init< SireFF::VectorPoint const & >(( bp::arg("other") )) );
         { //::SireFF::VectorPoint::addForce

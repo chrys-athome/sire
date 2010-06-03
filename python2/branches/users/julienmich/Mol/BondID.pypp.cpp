@@ -36,8 +36,9 @@ void register_BondID_class(){
 
     { //::SireMol::BondID
         typedef bp::class_< SireMol::BondID, bp::bases< SireID::ID > > BondID_exposer_t;
-        BondID_exposer_t BondID_exposer = BondID_exposer_t( "BondID", bp::init< >() );
+        BondID_exposer_t BondID_exposer = BondID_exposer_t( "BondID" );
         bp::scope BondID_scope( BondID_exposer );
+        BondID_exposer.def( bp::init< >() );
         BondID_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("atom0"), bp::arg("atom1") )) );
         BondID_exposer.def( bp::init< SireMol::BondID const & >(( bp::arg("other") )) );
         { //::SireMol::BondID::atom0
@@ -135,6 +136,16 @@ void register_BondID_class(){
                 "map"
                 , map_function_value
                 , ( bp::arg("mol0info"), bp::arg("mol1info") ) );
+        
+        }
+        { //::SireMol::BondID::mirror
+        
+            typedef ::SireMol::BondID ( ::SireMol::BondID::*mirror_function_type )(  ) const;
+            mirror_function_type mirror_function_value( &::SireMol::BondID::mirror );
+            
+            BondID_exposer.def( 
+                "mirror"
+                , mirror_function_value );
         
         }
         BondID_exposer.def( bp::self != bp::self );

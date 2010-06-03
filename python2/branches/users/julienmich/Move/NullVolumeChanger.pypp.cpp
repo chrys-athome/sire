@@ -41,8 +41,9 @@ void register_NullVolumeChanger_class(){
 
     { //::SireMove::NullVolumeChanger
         typedef bp::class_< SireMove::NullVolumeChanger, bp::bases< SireMove::VolumeChanger, SireBase::Property > > NullVolumeChanger_exposer_t;
-        NullVolumeChanger_exposer_t NullVolumeChanger_exposer = NullVolumeChanger_exposer_t( "NullVolumeChanger", bp::init< >() );
+        NullVolumeChanger_exposer_t NullVolumeChanger_exposer = NullVolumeChanger_exposer_t( "NullVolumeChanger" );
         bp::scope NullVolumeChanger_scope( NullVolumeChanger_exposer );
+        NullVolumeChanger_exposer.def( bp::init< >() );
         NullVolumeChanger_exposer.def( bp::init< SireMove::NullVolumeChanger const & >(( bp::arg("other") )) );
         NullVolumeChanger_exposer.def( bp::self != bp::self );
         { //::SireMove::NullVolumeChanger::operator=

@@ -65,8 +65,9 @@ void register_ResName_class(){
 
     { //::SireMol::ResName
         typedef bp::class_< SireMol::ResName, bp::bases< SireMol::ResID, SireID::ID, SireID::Name > > ResName_exposer_t;
-        ResName_exposer_t ResName_exposer = ResName_exposer_t( "ResName", bp::init< >() );
+        ResName_exposer_t ResName_exposer = ResName_exposer_t( "ResName" );
         bp::scope ResName_scope( ResName_exposer );
+        ResName_exposer.def( bp::init< >() );
         ResName_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         ResName_exposer.def( bp::init< QString const &, SireID::CaseSensitivity >(( bp::arg("name"), bp::arg("case_sensitivity") )) );
         ResName_exposer.def( bp::init< SireMol::ResName const & >(( bp::arg("other") )) );

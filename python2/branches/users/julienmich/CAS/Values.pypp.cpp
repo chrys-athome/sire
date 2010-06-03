@@ -27,8 +27,9 @@ void register_Values_class(){
 
     { //::SireCAS::Values
         typedef bp::class_< SireCAS::Values > Values_exposer_t;
-        Values_exposer_t Values_exposer = Values_exposer_t( "Values", bp::init< >() );
+        Values_exposer_t Values_exposer = Values_exposer_t( "Values" );
         bp::scope Values_scope( Values_exposer );
+        Values_exposer.def( bp::init< >() );
         Values_exposer.def( bp::init< QList< SireCAS::SymbolValue > const & >(( bp::arg("values") )) );
         Values_exposer.def( bp::init< QHash< SireCAS::Symbol, double > const & >(( bp::arg("values") )) );
         Values_exposer.def( bp::init< SireCAS::SymbolValue const & >(( bp::arg("symval0") )) );

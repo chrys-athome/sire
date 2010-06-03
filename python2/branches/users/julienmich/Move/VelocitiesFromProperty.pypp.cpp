@@ -9,9 +9,27 @@ namespace bp = boost::python;
 
 #include "SireCAS/symbol.h"
 
+#include "SireMol/atomelements.h"
+
+#include "SireMol/atommasses.h"
+
+#include "SireMol/atomvelocities.h"
+
+#include "SireMol/moleculedata.h"
+
+#include "SireMol/moleculeinfodata.h"
+
+#include "SireMol/moleculeview.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
+
+#include "SireUnits/dimensions.h"
+
+#include "SireUnits/temperature.h"
+
+#include "SireUnits/units.h"
 
 #include "velocitygenerator.h"
 
@@ -27,10 +45,22 @@ void register_VelocitiesFromProperty_class(){
 
     { //::SireMove::VelocitiesFromProperty
         typedef bp::class_< SireMove::VelocitiesFromProperty, bp::bases< SireMove::VelocityGenerator, SireBase::Property > > VelocitiesFromProperty_exposer_t;
-        VelocitiesFromProperty_exposer_t VelocitiesFromProperty_exposer = VelocitiesFromProperty_exposer_t( "VelocitiesFromProperty", bp::init< >() );
+        VelocitiesFromProperty_exposer_t VelocitiesFromProperty_exposer = VelocitiesFromProperty_exposer_t( "VelocitiesFromProperty" );
         bp::scope VelocitiesFromProperty_scope( VelocitiesFromProperty_exposer );
+        VelocitiesFromProperty_exposer.def( bp::init< >() );
         VelocitiesFromProperty_exposer.def( bp::init< SireBase::PropertyName const & >(( bp::arg("property") )) );
         VelocitiesFromProperty_exposer.def( bp::init< SireMove::VelocitiesFromProperty const & >(( bp::arg("other") )) );
+        { //::SireMove::VelocitiesFromProperty::generate
+        
+            typedef ::SireMol::AtomVelocities ( ::SireMove::VelocitiesFromProperty::*generate_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            generate_function_type generate_function_value( &::SireMove::VelocitiesFromProperty::generate );
+            
+            VelocitiesFromProperty_exposer.def( 
+                "generate"
+                , generate_function_value
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
         VelocitiesFromProperty_exposer.def( bp::self != bp::self );
         { //::SireMove::VelocitiesFromProperty::operator=
         

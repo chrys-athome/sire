@@ -28,8 +28,9 @@ void register_MonitorComponent_class(){
 
     { //::SireSystem::MonitorComponent
         typedef bp::class_< SireSystem::MonitorComponent, bp::bases< SireSystem::SystemMonitor, SireBase::Property > > MonitorComponent_exposer_t;
-        MonitorComponent_exposer_t MonitorComponent_exposer = MonitorComponent_exposer_t( "MonitorComponent", bp::init< >() );
+        MonitorComponent_exposer_t MonitorComponent_exposer = MonitorComponent_exposer_t( "MonitorComponent" );
         bp::scope MonitorComponent_scope( MonitorComponent_exposer );
+        MonitorComponent_exposer.def( bp::init< >() );
         MonitorComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("component") )) );
         MonitorComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireMaths::Accumulator const & >(( bp::arg("component"), bp::arg("accumulator") )) );
         MonitorComponent_exposer.def( bp::init< SireSystem::MonitorComponent const & >(( bp::arg("other") )) );

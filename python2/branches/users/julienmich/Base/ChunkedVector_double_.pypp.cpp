@@ -23,8 +23,9 @@ void register_ChunkedVector_double__class(){
 
     { //::SireBase::ChunkedVector< double, 100 >
         typedef bp::class_< SireBase::ChunkedVector< double, 100 > > ChunkedVector_double__exposer_t;
-        ChunkedVector_double__exposer_t ChunkedVector_double__exposer = ChunkedVector_double__exposer_t( "ChunkedVector_double_", bp::init< >() );
+        ChunkedVector_double__exposer_t ChunkedVector_double__exposer = ChunkedVector_double__exposer_t( "ChunkedVector_double_" );
         bp::scope ChunkedVector_double__scope( ChunkedVector_double__exposer );
+        ChunkedVector_double__exposer.def( bp::init< >() );
         ChunkedVector_double__exposer.def( bp::init< int >(( bp::arg("size") )) );
         ChunkedVector_double__exposer.def( bp::init< int, double const & >(( bp::arg("size"), bp::arg("value") )) );
         ChunkedVector_double__exposer.def( bp::init< SireBase::ChunkedVector< double, 100 > const & >(( bp::arg("other") )) );
@@ -132,6 +133,17 @@ void register_ChunkedVector_double__class(){
                 "fromVector"
                 , fromVector_function_value
                 , ( bp::arg("vector") ) );
+        
+        }
+        { //::SireBase::ChunkedVector< double, 100 >::isEmpty
+        
+            typedef SireBase::ChunkedVector< double, 100 > exported_class_t;
+            typedef bool ( ::SireBase::ChunkedVector< double, 100 >::*isEmpty_function_type )(  ) const;
+            isEmpty_function_type isEmpty_function_value( &::SireBase::ChunkedVector< double, 100 >::isEmpty );
+            
+            ChunkedVector_double__exposer.def( 
+                "isEmpty"
+                , isEmpty_function_value );
         
         }
         ChunkedVector_double__exposer.def( bp::self != bp::self );

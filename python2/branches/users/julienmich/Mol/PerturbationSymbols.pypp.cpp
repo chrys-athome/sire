@@ -28,14 +28,17 @@ namespace bp = boost::python;
 
 #include "perturbation.h"
 
+SireMol::PerturbationSymbols __copy__(const SireMol::PerturbationSymbols &other){ return SireMol::PerturbationSymbols(other); }
+
 const char* pvt_get_name(const SireMol::PerturbationSymbols&){ return "SireMol::PerturbationSymbols";}
 
 void register_PerturbationSymbols_class(){
 
     { //::SireMol::PerturbationSymbols
-        typedef bp::class_< SireMol::PerturbationSymbols, boost::noncopyable > PerturbationSymbols_exposer_t;
+        typedef bp::class_< SireMol::PerturbationSymbols > PerturbationSymbols_exposer_t;
         PerturbationSymbols_exposer_t PerturbationSymbols_exposer = PerturbationSymbols_exposer_t( "PerturbationSymbols" );
         bp::scope PerturbationSymbols_scope( PerturbationSymbols_exposer );
+        PerturbationSymbols_exposer.def( bp::init< >() );
         { //::SireMol::PerturbationSymbols::final
         
             typedef ::SireCAS::Symbol const & ( ::SireMol::PerturbationSymbols::*final_function_type )(  ) const;
@@ -69,6 +72,9 @@ void register_PerturbationSymbols_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        PerturbationSymbols_exposer.def( "__copy__", &__copy__);
+        PerturbationSymbols_exposer.def( "__deepcopy__", &__copy__);
+        PerturbationSymbols_exposer.def( "clone", &__copy__);
         PerturbationSymbols_exposer.def( "__str__", &pvt_get_name);
         PerturbationSymbols_exposer.def( "__repr__", &pvt_get_name);
     }

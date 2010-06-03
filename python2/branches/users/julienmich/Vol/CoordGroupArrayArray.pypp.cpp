@@ -39,8 +39,9 @@ void register_CoordGroupArrayArray_class(){
 
     { //::SireVol::CoordGroupArrayArray
         typedef bp::class_< SireVol::CoordGroupArrayArray > CoordGroupArrayArray_exposer_t;
-        CoordGroupArrayArray_exposer_t CoordGroupArrayArray_exposer = CoordGroupArrayArray_exposer_t( "CoordGroupArrayArray", bp::init< >() );
+        CoordGroupArrayArray_exposer_t CoordGroupArrayArray_exposer = CoordGroupArrayArray_exposer_t( "CoordGroupArrayArray" );
         bp::scope CoordGroupArrayArray_scope( CoordGroupArrayArray_exposer );
+        CoordGroupArrayArray_exposer.def( bp::init< >() );
         CoordGroupArrayArray_exposer.def( bp::init< SireVol::CoordGroup const & >(( bp::arg("cgroup") )) );
         CoordGroupArrayArray_exposer.def( bp::init< SireVol::CoordGroupArray const & >(( bp::arg("cgarray") )) );
         CoordGroupArrayArray_exposer.def( bp::init< QVector< SireVol::CoordGroupArray > const & >(( bp::arg("cgarrays") )) );

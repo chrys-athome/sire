@@ -44,8 +44,9 @@ void register_Constraints_class(){
 
     { //::SireSystem::Constraints
         typedef bp::class_< SireSystem::Constraints, bp::bases< SireBase::Property > > Constraints_exposer_t;
-        Constraints_exposer_t Constraints_exposer = Constraints_exposer_t( "Constraints", bp::init< >() );
+        Constraints_exposer_t Constraints_exposer = Constraints_exposer_t( "Constraints" );
         bp::scope Constraints_scope( Constraints_exposer );
+        Constraints_exposer.def( bp::init< >() );
         Constraints_exposer.def( bp::init< SireSystem::Constraint const & >(( bp::arg("constraint") )) );
         Constraints_exposer.def( bp::init< QVector< SireBase::PropPtr< SireSystem::Constraint > > const & >(( bp::arg("constraints") )) );
         Constraints_exposer.def( bp::init< QList< SireBase::PropPtr< SireSystem::Constraint > > const & >(( bp::arg("constraints") )) );

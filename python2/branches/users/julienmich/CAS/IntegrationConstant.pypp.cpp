@@ -25,8 +25,9 @@ void register_IntegrationConstant_class(){
 
     { //::SireCAS::IntegrationConstant
         typedef bp::class_< SireCAS::IntegrationConstant, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > IntegrationConstant_exposer_t;
-        IntegrationConstant_exposer_t IntegrationConstant_exposer = IntegrationConstant_exposer_t( "IntegrationConstant", bp::init< >() );
+        IntegrationConstant_exposer_t IntegrationConstant_exposer = IntegrationConstant_exposer_t( "IntegrationConstant" );
         bp::scope IntegrationConstant_scope( IntegrationConstant_exposer );
+        IntegrationConstant_exposer.def( bp::init< >() );
         IntegrationConstant_exposer.def( bp::init< SireCAS::IntegrationConstant const & >(( bp::arg("other") )) );
         { //::SireCAS::IntegrationConstant::hash
         

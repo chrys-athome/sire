@@ -43,8 +43,9 @@ void register_AlwaysTrue_class(){
 
     { //::SireCAS::AlwaysTrue
         typedef bp::class_< SireCAS::AlwaysTrue, bp::bases< SireCAS::Condition, SireCAS::ExBase > > AlwaysTrue_exposer_t;
-        AlwaysTrue_exposer_t AlwaysTrue_exposer = AlwaysTrue_exposer_t( "AlwaysTrue", bp::init< >() );
+        AlwaysTrue_exposer_t AlwaysTrue_exposer = AlwaysTrue_exposer_t( "AlwaysTrue" );
         bp::scope AlwaysTrue_scope( AlwaysTrue_exposer );
+        AlwaysTrue_exposer.def( bp::init< >() );
         AlwaysTrue_exposer.def( bp::init< SireCAS::AlwaysTrue const & >(( bp::arg("other") )) );
         { //::SireCAS::AlwaysTrue::alwaysFalse
         

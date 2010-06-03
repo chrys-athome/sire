@@ -28,8 +28,9 @@ void register_PropertyName_class(){
 
     { //::SireBase::PropertyName
         typedef bp::class_< SireBase::PropertyName > PropertyName_exposer_t;
-        PropertyName_exposer_t PropertyName_exposer = PropertyName_exposer_t( "PropertyName", bp::init< >() );
+        PropertyName_exposer_t PropertyName_exposer = PropertyName_exposer_t( "PropertyName" );
         bp::scope PropertyName_scope( PropertyName_exposer );
+        PropertyName_exposer.def( bp::init< >() );
         PropertyName_exposer.def( bp::init< char const * >(( bp::arg("source") )) );
         PropertyName_exposer.def( bp::init< QString const & >(( bp::arg("source") )) );
         PropertyName_exposer.def( bp::init< QString const &, SireBase::Property const & >(( bp::arg("source"), bp::arg("default_value") )) );

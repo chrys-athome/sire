@@ -49,8 +49,9 @@ void register_MolEditor_class(){
 
     { //::SireMol::MolEditor
         typedef bp::class_< SireMol::MolEditor, bp::bases< SireMol::Editor<SireMol::MolEditor, SireMol::Molecule>, SireMol::Molecule, SireMol::MoleculeView, SireBase::Property > > MolEditor_exposer_t;
-        MolEditor_exposer_t MolEditor_exposer = MolEditor_exposer_t( "MolEditor", bp::init< >() );
+        MolEditor_exposer_t MolEditor_exposer = MolEditor_exposer_t( "MolEditor" );
         bp::scope MolEditor_scope( MolEditor_exposer );
+        MolEditor_exposer.def( bp::init< >() );
         MolEditor_exposer.def( bp::init< SireMol::Molecule const & >(( bp::arg("molecule") )) );
         MolEditor_exposer.def( bp::init< SireMol::MolEditor const & >(( bp::arg("other") )) );
         { //::SireMol::MolEditor::add

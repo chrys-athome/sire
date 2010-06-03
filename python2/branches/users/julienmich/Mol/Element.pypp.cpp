@@ -21,8 +21,9 @@ void register_Element_class(){
 
     { //::SireMol::Element
         typedef bp::class_< SireMol::Element > Element_exposer_t;
-        Element_exposer_t Element_exposer = Element_exposer_t( "Element", bp::init< >() );
+        Element_exposer_t Element_exposer = Element_exposer_t( "Element" );
         bp::scope Element_scope( Element_exposer );
+        Element_exposer.def( bp::init< >() );
         Element_exposer.def( bp::init< QString >(( bp::arg("element") )) );
         Element_exposer.def( bp::init< char const * >(( bp::arg("element") )) );
         Element_exposer.def( bp::init< unsigned int >(( bp::arg("nprotons") )) );

@@ -37,7 +37,7 @@ Squire::QMComponent __copy__(const Squire::QMComponent &other){ return Squire::Q
 void register_QMComponent_class(){
 
     { //::Squire::QMComponent
-        typedef bp::class_< Squire::QMComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > QMComponent_exposer_t;
+        typedef bp::class_< Squire::QMComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > QMComponent_exposer_t;
         QMComponent_exposer_t QMComponent_exposer = QMComponent_exposer_t( "QMComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope QMComponent_scope( QMComponent_exposer );
         QMComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );

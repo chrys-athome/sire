@@ -38,8 +38,9 @@ void register_DihedralComponent_class(){
 
     { //::SireSystem::DihedralComponent
         typedef bp::class_< SireSystem::DihedralComponent, bp::bases< SireSystem::GeometryComponent, SireSystem::Constraint, SireBase::Property > > DihedralComponent_exposer_t;
-        DihedralComponent_exposer_t DihedralComponent_exposer = DihedralComponent_exposer_t( "DihedralComponent", bp::init< >() );
+        DihedralComponent_exposer_t DihedralComponent_exposer = DihedralComponent_exposer_t( "DihedralComponent" );
         bp::scope DihedralComponent_scope( DihedralComponent_exposer );
+        DihedralComponent_exposer.def( bp::init< >() );
         DihedralComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("map")=SireBase::PropertyMap() )) );
         DihedralComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("geometry_expression"), bp::arg("map")=SireBase::PropertyMap() )) );
         DihedralComponent_exposer.def( bp::init< SireSystem::DihedralComponent const & >(( bp::arg("other") )) );

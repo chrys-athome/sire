@@ -37,14 +37,20 @@ namespace bp = boost::python;
 
 #include "tinker.h"
 
+SireIO::TinkerParameters __copy__(const SireIO::TinkerParameters &other){ return SireIO::TinkerParameters(other); }
+
 const char* pvt_get_name(const SireIO::TinkerParameters&){ return "SireIO::TinkerParameters";}
 
 void register_TinkerParameters_class(){
 
     { //::SireIO::TinkerParameters
-        typedef bp::class_< SireIO::TinkerParameters, bp::bases< SireIO::IOParametersBase >, boost::noncopyable > TinkerParameters_exposer_t;
+        typedef bp::class_< SireIO::TinkerParameters, bp::bases< SireIO::IOParametersBase > > TinkerParameters_exposer_t;
         TinkerParameters_exposer_t TinkerParameters_exposer = TinkerParameters_exposer_t( "TinkerParameters" );
         bp::scope TinkerParameters_scope( TinkerParameters_exposer );
+        TinkerParameters_exposer.def( bp::init< >() );
+        TinkerParameters_exposer.def( "__copy__", &__copy__);
+        TinkerParameters_exposer.def( "__deepcopy__", &__copy__);
+        TinkerParameters_exposer.def( "clone", &__copy__);
         TinkerParameters_exposer.def( "__str__", &pvt_get_name);
         TinkerParameters_exposer.def( "__repr__", &pvt_get_name);
     }

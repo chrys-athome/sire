@@ -51,8 +51,9 @@ void register_DihedralParameterName_class(){
 
     { //::SireMM::DihedralParameterName
         typedef bp::class_< SireMM::DihedralParameterName > DihedralParameterName_exposer_t;
-        DihedralParameterName_exposer_t DihedralParameterName_exposer = DihedralParameterName_exposer_t( "DihedralParameterName", bp::init< >() );
+        DihedralParameterName_exposer_t DihedralParameterName_exposer = DihedralParameterName_exposer_t( "DihedralParameterName" );
         bp::scope DihedralParameterName_scope( DihedralParameterName_exposer );
+        DihedralParameterName_exposer.def( bp::init< >() );
         { //::SireMM::DihedralParameterName::dihedral
         
             typedef ::SireBase::PropertyName const & ( ::SireMM::DihedralParameterName::*dihedral_function_type )(  ) const;

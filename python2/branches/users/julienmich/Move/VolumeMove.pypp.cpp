@@ -48,11 +48,11 @@ void register_VolumeMove_class(){
 
     { //::SireMove::VolumeMove
         typedef bp::class_< SireMove::VolumeMove, bp::bases< SireMove::MonteCarlo, SireMove::Move, SireBase::Property > > VolumeMove_exposer_t;
-        VolumeMove_exposer_t VolumeMove_exposer = VolumeMove_exposer_t( "VolumeMove", bp::init< >() );
+        VolumeMove_exposer_t VolumeMove_exposer = VolumeMove_exposer_t( "VolumeMove", bp::init< bp::optional< SireBase::PropertyMap const & > >(( bp::arg("map")=SireBase::PropertyMap() )) );
         bp::scope VolumeMove_scope( VolumeMove_exposer );
-        VolumeMove_exposer.def( bp::init< SireMol::MGID const & >(( bp::arg("mgid") )) );
-        VolumeMove_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
-        VolumeMove_exposer.def( bp::init< SireMove::VolumeChanger const & >(( bp::arg("volchanger") )) );
+        VolumeMove_exposer.def( bp::init< SireMol::MGID const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("mgid"), bp::arg("map")=SireBase::PropertyMap() )) );
+        VolumeMove_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
+        VolumeMove_exposer.def( bp::init< SireMove::VolumeChanger const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("volchanger"), bp::arg("map")=SireBase::PropertyMap() )) );
         VolumeMove_exposer.def( bp::init< SireMove::VolumeMove const & >(( bp::arg("other") )) );
         { //::SireMove::VolumeMove::groupID
         

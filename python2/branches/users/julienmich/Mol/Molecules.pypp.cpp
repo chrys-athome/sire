@@ -58,8 +58,9 @@ void register_Molecules_class(){
 
     { //::SireMol::Molecules
         typedef bp::class_< SireMol::Molecules, bp::bases< SireBase::Property > > Molecules_exposer_t;
-        Molecules_exposer_t Molecules_exposer = Molecules_exposer_t( "Molecules", bp::init< >() );
+        Molecules_exposer_t Molecules_exposer = Molecules_exposer_t( "Molecules" );
         bp::scope Molecules_scope( Molecules_exposer );
+        Molecules_exposer.def( bp::init< >() );
         Molecules_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molecule") )) );
         Molecules_exposer.def( bp::init< SireMol::ViewsOfMol const & >(( bp::arg("molviews") )) );
         Molecules_exposer.def( bp::init< SireMol::Molecules const & >(( bp::arg("other") )) );
@@ -563,6 +564,17 @@ void register_Molecules_class(){
             Molecules_exposer.def( 
                 "removeDuplicates"
                 , removeDuplicates_function_value );
+        
+        }
+        { //::SireMol::Molecules::reserve
+        
+            typedef void ( ::SireMol::Molecules::*reserve_function_type )( int ) ;
+            reserve_function_type reserve_function_value( &::SireMol::Molecules::reserve );
+            
+            Molecules_exposer.def( 
+                "reserve"
+                , reserve_function_value
+                , ( bp::arg("nmolecules") ) );
         
         }
         { //::SireMol::Molecules::toString

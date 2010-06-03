@@ -27,8 +27,9 @@ void register_CGAtomIdx_class(){
 
     { //::SireMol::CGAtomIdx
         typedef bp::class_< SireMol::CGAtomIdx, bp::bases< SireMol::AtomID, SireID::ID > > CGAtomIdx_exposer_t;
-        CGAtomIdx_exposer_t CGAtomIdx_exposer = CGAtomIdx_exposer_t( "CGAtomIdx", bp::init< >() );
+        CGAtomIdx_exposer_t CGAtomIdx_exposer = CGAtomIdx_exposer_t( "CGAtomIdx" );
         bp::scope CGAtomIdx_scope( CGAtomIdx_exposer );
+        CGAtomIdx_exposer.def( bp::init< >() );
         CGAtomIdx_exposer.def( bp::init< SireMol::CGIdx, SireID::Index >(( bp::arg("cgid"), bp::arg("atomid") )) );
         CGAtomIdx_exposer.def( bp::init< SireMol::CGAtomIdx const & >(( bp::arg("other") )) );
         { //::SireMol::CGAtomIdx::atom

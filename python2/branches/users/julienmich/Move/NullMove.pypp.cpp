@@ -39,8 +39,9 @@ void register_NullMove_class(){
 
     { //::SireMove::NullMove
         typedef bp::class_< SireMove::NullMove, bp::bases< SireMove::Move, SireBase::Property > > NullMove_exposer_t;
-        NullMove_exposer_t NullMove_exposer = NullMove_exposer_t( "NullMove", bp::init< >() );
+        NullMove_exposer_t NullMove_exposer = NullMove_exposer_t( "NullMove" );
         bp::scope NullMove_scope( NullMove_exposer );
+        NullMove_exposer.def( bp::init< >() );
         NullMove_exposer.def( bp::init< SireMove::NullMove const & >(( bp::arg("other") )) );
         { //::SireMove::NullMove::clearStatistics
         

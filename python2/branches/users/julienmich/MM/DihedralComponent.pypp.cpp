@@ -25,7 +25,7 @@ SireMM::DihedralComponent __copy__(const SireMM::DihedralComponent &other){ retu
 void register_DihedralComponent_class(){
 
     { //::SireMM::DihedralComponent
-        typedef bp::class_< SireMM::DihedralComponent, bp::bases< SireCAS::Symbol, SireCAS::ExBase > > DihedralComponent_exposer_t;
+        typedef bp::class_< SireMM::DihedralComponent, bp::bases< SireFF::FFComponent, SireCAS::Symbol, SireCAS::ExBase > > DihedralComponent_exposer_t;
         DihedralComponent_exposer_t DihedralComponent_exposer = DihedralComponent_exposer_t( "DihedralComponent", bp::init< bp::optional< SireFF::FFName const & > >(( bp::arg("ffname")=SireFF::FFName() )) );
         bp::scope DihedralComponent_scope( DihedralComponent_exposer );
         DihedralComponent_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("symbol") )) );

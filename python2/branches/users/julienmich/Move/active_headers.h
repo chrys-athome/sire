@@ -3,8 +3,10 @@
 
 #ifdef GCCXML_PARSE
 
+#include "dlmrigidbody.h"
 #include "dynamics.h"
 #include "ensemble.h"
+#include "hybridmc.h"
 #include "integrator.h"
 #include "integratorworkspace.h"
 #include "moldeleter.h"
@@ -16,6 +18,7 @@
 #include "moves.h"
 #include "mtsmc.h"
 #include "prefsampler.h"
+#include "rbworkspace.h"
 #include "repexmove.h"
 #include "replica.h"
 #include "replicas.h"

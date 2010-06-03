@@ -49,8 +49,9 @@ void register_ConnectivityEditor_class(){
 
     { //::SireMol::ConnectivityEditor
         typedef bp::class_< SireMol::ConnectivityEditor, bp::bases< SireMol::ConnectivityBase, SireBase::Property > > ConnectivityEditor_exposer_t;
-        ConnectivityEditor_exposer_t ConnectivityEditor_exposer = ConnectivityEditor_exposer_t( "ConnectivityEditor", bp::init< >() );
+        ConnectivityEditor_exposer_t ConnectivityEditor_exposer = ConnectivityEditor_exposer_t( "ConnectivityEditor" );
         bp::scope ConnectivityEditor_scope( ConnectivityEditor_exposer );
+        ConnectivityEditor_exposer.def( bp::init< >() );
         ConnectivityEditor_exposer.def( bp::init< SireMol::Connectivity const & >(( bp::arg("connectivity") )) );
         ConnectivityEditor_exposer.def( bp::init< SireMol::ConnectivityEditor const & >(( bp::arg("other") )) );
         { //::SireMol::ConnectivityEditor::commit

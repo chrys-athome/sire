@@ -29,8 +29,9 @@ void register_HistogramValue_class(){
 
     { //::SireMaths::HistogramValue
         typedef bp::class_< SireMaths::HistogramValue, bp::bases< SireMaths::HistogramBin > > HistogramValue_exposer_t;
-        HistogramValue_exposer_t HistogramValue_exposer = HistogramValue_exposer_t( "HistogramValue", bp::init< >() );
+        HistogramValue_exposer_t HistogramValue_exposer = HistogramValue_exposer_t( "HistogramValue" );
         bp::scope HistogramValue_scope( HistogramValue_exposer );
+        HistogramValue_exposer.def( bp::init< >() );
         HistogramValue_exposer.def( bp::init< SireMaths::HistogramBin const &, double >(( bp::arg("bin"), bp::arg("value") )) );
         HistogramValue_exposer.def( bp::init< SireMaths::HistogramValue const & >(( bp::arg("other") )) );
         HistogramValue_exposer.def( bp::self != bp::self );

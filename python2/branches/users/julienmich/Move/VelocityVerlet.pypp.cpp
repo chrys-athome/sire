@@ -31,6 +31,8 @@ namespace bp = boost::python;
 
 #include "SireUnits/units.h"
 
+#include "ensemble.h"
+
 #include "velocityverlet.h"
 
 #include "velocityverlet.h"
@@ -45,40 +47,60 @@ void register_VelocityVerlet_class(){
 
     { //::SireMove::VelocityVerlet
         typedef bp::class_< SireMove::VelocityVerlet, bp::bases< SireMove::Integrator, SireBase::Property > > VelocityVerlet_exposer_t;
-        VelocityVerlet_exposer_t VelocityVerlet_exposer = VelocityVerlet_exposer_t( "VelocityVerlet", bp::init< >() );
+        VelocityVerlet_exposer_t VelocityVerlet_exposer = VelocityVerlet_exposer_t( "VelocityVerlet", bp::init< bp::optional< bool > >(( bp::arg("frequent_save_velocities")=(bool)(false) )) );
         bp::scope VelocityVerlet_scope( VelocityVerlet_exposer );
-        VelocityVerlet_exposer.def( bp::init< SireUnits::Dimension::Time const & >(( bp::arg("timestep") )) );
         VelocityVerlet_exposer.def( bp::init< SireMove::VelocityVerlet const & >(( bp::arg("other") )) );
         { //::SireMove::VelocityVerlet::createWorkspace
         
-            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::VelocityVerlet::*createWorkspace_function_type )(  ) const;
-            createWorkspace_function_type createWorkspace_function_value( &::SireMove::VelocityVerlet::createWorkspace );
-            
-            VelocityVerlet_exposer.def( 
-                "createWorkspace"
-                , createWorkspace_function_value );
-        
-        }
-        { //::SireMove::VelocityVerlet::createWorkspace
-        
-            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::VelocityVerlet::*createWorkspace_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::VelocityVerlet::*createWorkspace_function_type )( ::SireBase::PropertyMap const & ) const;
             createWorkspace_function_type createWorkspace_function_value( &::SireMove::VelocityVerlet::createWorkspace );
             
             VelocityVerlet_exposer.def( 
                 "createWorkspace"
                 , createWorkspace_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMove::VelocityVerlet::createWorkspace
+        
+            typedef ::SireMove::IntegratorWorkspacePtr ( ::SireMove::VelocityVerlet::*createWorkspace_function_type )( ::SireMol::MoleculeGroup const &,::SireBase::PropertyMap const & ) const;
+            createWorkspace_function_type createWorkspace_function_value( &::SireMove::VelocityVerlet::createWorkspace );
+            
+            VelocityVerlet_exposer.def( 
+                "createWorkspace"
+                , createWorkspace_function_value
+                , ( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMove::VelocityVerlet::ensemble
+        
+            typedef ::SireMove::Ensemble ( ::SireMove::VelocityVerlet::*ensemble_function_type )(  ) const;
+            ensemble_function_type ensemble_function_value( &::SireMove::VelocityVerlet::ensemble );
+            
+            VelocityVerlet_exposer.def( 
+                "ensemble"
+                , ensemble_function_value );
         
         }
         { //::SireMove::VelocityVerlet::integrate
         
-            typedef void ( ::SireMove::VelocityVerlet::*integrate_function_type )( ::SireSystem::System &,::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireBase::PropertyMap const & ) const;
+            typedef void ( ::SireMove::VelocityVerlet::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
             integrate_function_type integrate_function_value( &::SireMove::VelocityVerlet::integrate );
             
             VelocityVerlet_exposer.def( 
                 "integrate"
                 , integrate_function_value
-                , ( bp::arg("system"), bp::arg("workspace"), bp::arg("nrg_component"), bp::arg("map") ) );
+                , ( bp::arg("workspace"), bp::arg("nrg_component"), bp::arg("timestep"), bp::arg("nmoves"), bp::arg("record_stats") ) );
+        
+        }
+        { //::SireMove::VelocityVerlet::isTimeReversible
+        
+            typedef bool ( ::SireMove::VelocityVerlet::*isTimeReversible_function_type )(  ) const;
+            isTimeReversible_function_type isTimeReversible_function_value( &::SireMove::VelocityVerlet::isTimeReversible );
+            
+            VelocityVerlet_exposer.def( 
+                "isTimeReversible"
+                , isTimeReversible_function_value );
         
         }
         VelocityVerlet_exposer.def( bp::self != bp::self );
@@ -95,38 +117,6 @@ void register_VelocityVerlet_class(){
         
         }
         VelocityVerlet_exposer.def( bp::self == bp::self );
-        { //::SireMove::VelocityVerlet::setGenerator
-        
-            typedef void ( ::SireMove::VelocityVerlet::*setGenerator_function_type )( ::SireMaths::RanGenerator const & ) ;
-            setGenerator_function_type setGenerator_function_value( &::SireMove::VelocityVerlet::setGenerator );
-            
-            VelocityVerlet_exposer.def( 
-                "setGenerator"
-                , setGenerator_function_value
-                , ( bp::arg("generator") ) );
-        
-        }
-        { //::SireMove::VelocityVerlet::setTimeStep
-        
-            typedef void ( ::SireMove::VelocityVerlet::*setTimeStep_function_type )( ::SireUnits::Dimension::Time const & ) ;
-            setTimeStep_function_type setTimeStep_function_value( &::SireMove::VelocityVerlet::setTimeStep );
-            
-            VelocityVerlet_exposer.def( 
-                "setTimeStep"
-                , setTimeStep_function_value
-                , ( bp::arg("timestep") ) );
-        
-        }
-        { //::SireMove::VelocityVerlet::timeStep
-        
-            typedef ::SireUnits::Dimension::Time ( ::SireMove::VelocityVerlet::*timeStep_function_type )(  ) const;
-            timeStep_function_type timeStep_function_value( &::SireMove::VelocityVerlet::timeStep );
-            
-            VelocityVerlet_exposer.def( 
-                "timeStep"
-                , timeStep_function_value );
-        
-        }
         { //::SireMove::VelocityVerlet::toString
         
             typedef ::QString ( ::SireMove::VelocityVerlet::*toString_function_type )(  ) const;

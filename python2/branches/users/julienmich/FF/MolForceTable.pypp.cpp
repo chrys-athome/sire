@@ -37,8 +37,9 @@ void register_MolForceTable_class(){
 
     { //::SireFF::MolForceTable
         typedef bp::class_< SireFF::MolForceTable > MolForceTable_exposer_t;
-        MolForceTable_exposer_t MolForceTable_exposer = MolForceTable_exposer_t( "MolForceTable", bp::init< >() );
+        MolForceTable_exposer_t MolForceTable_exposer = MolForceTable_exposer_t( "MolForceTable" );
         bp::scope MolForceTable_scope( MolForceTable_exposer );
+        MolForceTable_exposer.def( bp::init< >() );
         MolForceTable_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molview") )) );
         MolForceTable_exposer.def( bp::init< SireFF::MolForceTable const & >(( bp::arg("other") )) );
         { //::SireFF::MolForceTable::add

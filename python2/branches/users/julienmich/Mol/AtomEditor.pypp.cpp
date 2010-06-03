@@ -59,8 +59,9 @@ void register_AtomEditor_class(){
 
     { //::SireMol::AtomEditor
         typedef bp::class_< SireMol::AtomEditor, bp::bases< SireMol::Editor<SireMol::AtomEditor, SireMol::Atom>, SireMol::Atom, SireMol::MoleculeView, SireBase::Property > > AtomEditor_exposer_t;
-        AtomEditor_exposer_t AtomEditor_exposer = AtomEditor_exposer_t( "AtomEditor", bp::init< >() );
+        AtomEditor_exposer_t AtomEditor_exposer = AtomEditor_exposer_t( "AtomEditor" );
         bp::scope AtomEditor_scope( AtomEditor_exposer );
+        AtomEditor_exposer.def( bp::init< >() );
         AtomEditor_exposer.def( bp::init< SireMol::Atom const & >(( bp::arg("atom") )) );
         AtomEditor_exposer.def( bp::init< SireMol::AtomEditor const & >(( bp::arg("other") )) );
         { //::SireMol::AtomEditor::chain

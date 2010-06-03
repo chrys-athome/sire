@@ -45,8 +45,9 @@ void register_NMatrix_class(){
 
     { //::SireMaths::NMatrix
         typedef bp::class_< SireMaths::NMatrix > NMatrix_exposer_t;
-        NMatrix_exposer_t NMatrix_exposer = NMatrix_exposer_t( "NMatrix", bp::init< >() );
+        NMatrix_exposer_t NMatrix_exposer = NMatrix_exposer_t( "NMatrix" );
         bp::scope NMatrix_scope( NMatrix_exposer );
+        NMatrix_exposer.def( bp::init< >() );
         NMatrix_exposer.def( bp::init< int, int >(( bp::arg("nrows"), bp::arg("ncolumns") )) );
         NMatrix_exposer.def( bp::init< int, int, double >(( bp::arg("nrows"), bp::arg("ncolumns"), bp::arg("initial_value") )) );
         NMatrix_exposer.def( bp::init< SireMaths::Matrix const & >(( bp::arg("matrix") )) );

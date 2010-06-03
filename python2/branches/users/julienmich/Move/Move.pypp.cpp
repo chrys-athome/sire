@@ -248,6 +248,17 @@ void register_Move_class(){
                 , pressure_function_value );
         
         }
+        { //::SireMove::Move::propertyMap
+        
+            typedef ::SireBase::PropertyMap const & ( ::SireMove::Move::*propertyMap_function_type )(  ) const;
+            propertyMap_function_type propertyMap_function_value( &::SireMove::Move::propertyMap );
+            
+            Move_exposer.def( 
+                "propertyMap"
+                , propertyMap_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::SireMove::Move::setChemicalPotential
         
             typedef void ( ::SireMove::Move::*setChemicalPotential_function_type )( ::SireUnits::Dimension::MolarEnergy const & ) ;
@@ -267,7 +278,7 @@ void register_Move_class(){
             Move_exposer.def( 
                 "setCoordinatesProperty"
                 , setCoordinatesProperty_function_value
-                , ( bp::arg("coordsproperty") ) );
+                , ( bp::arg("coords_property") ) );
         
         }
         { //::SireMove::Move::setEnergyComponent
@@ -322,7 +333,7 @@ void register_Move_class(){
             Move_exposer.def( 
                 "setSpaceProperty"
                 , setSpaceProperty_function_value
-                , ( bp::arg("spaceproperty") ) );
+                , ( bp::arg("space_property") ) );
         
         }
         { //::SireMove::Move::setTemperature

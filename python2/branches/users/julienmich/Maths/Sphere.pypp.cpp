@@ -23,8 +23,9 @@ void register_Sphere_class(){
 
     { //::SireMaths::Sphere
         typedef bp::class_< SireMaths::Sphere > Sphere_exposer_t;
-        Sphere_exposer_t Sphere_exposer = Sphere_exposer_t( "Sphere", bp::init< >() );
+        Sphere_exposer_t Sphere_exposer = Sphere_exposer_t( "Sphere" );
         bp::scope Sphere_scope( Sphere_exposer );
+        Sphere_exposer.def( bp::init< >() );
         Sphere_exposer.def( bp::init< double const & >(( bp::arg("radius") )) );
         Sphere_exposer.def( bp::init< SireMaths::Vector const &, double const & >(( bp::arg("position"), bp::arg("radius") )) );
         Sphere_exposer.def( bp::init< SireMaths::Sphere const & >(( bp::arg("other") )) );

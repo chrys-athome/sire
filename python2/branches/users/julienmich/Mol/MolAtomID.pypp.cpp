@@ -40,8 +40,9 @@ void register_MolAtomID_class(){
 
     { //::SireMol::MolAtomID
         typedef bp::class_< SireMol::MolAtomID, bp::bases< SireMol::AtomID, SireID::ID > > MolAtomID_exposer_t;
-        MolAtomID_exposer_t MolAtomID_exposer = MolAtomID_exposer_t( "MolAtomID", bp::init< >() );
+        MolAtomID_exposer_t MolAtomID_exposer = MolAtomID_exposer_t( "MolAtomID" );
         bp::scope MolAtomID_scope( MolAtomID_exposer );
+        MolAtomID_exposer.def( bp::init< >() );
         MolAtomID_exposer.def( bp::init< SireMol::MolID const &, SireMol::AtomID const & >(( bp::arg("molid"), bp::arg("atomid") )) );
         MolAtomID_exposer.def( bp::init< SireMol::AtomID const &, SireMol::MolID const & >(( bp::arg("atomid"), bp::arg("molid") )) );
         MolAtomID_exposer.def( bp::init< boost::tuples::tuple< SireMol::MolIdentifier, SireMol::AtomIdentifier, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > const & >(( bp::arg("molatomid") )) );

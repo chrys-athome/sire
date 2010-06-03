@@ -31,8 +31,9 @@ void register_Sec_class(){
 
     { //::SireCAS::Sec
         typedef bp::class_< SireCAS::Sec, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Sec_exposer_t;
-        Sec_exposer_t Sec_exposer = Sec_exposer_t( "Sec", bp::init< >() );
+        Sec_exposer_t Sec_exposer = Sec_exposer_t( "Sec" );
         bp::scope Sec_scope( Sec_exposer );
+        Sec_exposer.def( bp::init< >() );
         Sec_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Sec_exposer.def( bp::init< SireCAS::Sec const & >(( bp::arg("other") )) );
         { //::SireCAS::Sec::evaluate

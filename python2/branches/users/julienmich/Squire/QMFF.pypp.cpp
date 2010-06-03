@@ -8,7 +8,13 @@
 
 namespace bp = boost::python;
 
+#include "SireFF/fieldtable.h"
+
 #include "SireFF/forcetable.h"
+
+#include "SireFF/potentialtable.h"
+
+#include "SireMM/cljprobe.h"
 
 #include "SireMol/moleculegroup.h"
 
@@ -36,8 +42,9 @@ void register_QMFF_class(){
 
     { //::Squire::QMFF
         typedef bp::class_< Squire::QMFF, bp::bases< SireFF::FF3D, SireFF::G1FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > QMFF_exposer_t;
-        QMFF_exposer_t QMFF_exposer = QMFF_exposer_t( "QMFF", bp::init< >() );
+        QMFF_exposer_t QMFF_exposer = QMFF_exposer_t( "QMFF" );
         bp::scope QMFF_scope( QMFF_exposer );
+        QMFF_exposer.def( bp::init< >() );
         QMFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         QMFF_exposer.def( bp::init< Squire::QMFF const & >(( bp::arg("other") )) );
         { //::Squire::QMFF::components
@@ -116,6 +123,28 @@ void register_QMFF_class(){
                 , ( bp::arg("fieldtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_field")=1 ) );
         
         }
+        { //::Squire::QMFF::fieldCommandFile
+        
+            typedef ::QString ( ::Squire::QMFF::*fieldCommandFile_function_type )( ::SireFF::FieldTable const & ) const;
+            fieldCommandFile_function_type fieldCommandFile_function_value( &::Squire::QMFF::fieldCommandFile );
+            
+            QMFF_exposer.def( 
+                "fieldCommandFile"
+                , fieldCommandFile_function_value
+                , ( bp::arg("fieldtable") ) );
+        
+        }
+        { //::Squire::QMFF::fieldCommandFile
+        
+            typedef ::QString ( ::Squire::QMFF::*fieldCommandFile_function_type )( ::SireFF::FieldTable const &,::SireFF::Probe const & ) const;
+            fieldCommandFile_function_type fieldCommandFile_function_value( &::Squire::QMFF::fieldCommandFile );
+            
+            QMFF_exposer.def( 
+                "fieldCommandFile"
+                , fieldCommandFile_function_value
+                , ( bp::arg("fieldtable"), bp::arg("probe") ) );
+        
+        }
         { //::Squire::QMFF::force
         
             typedef void ( ::Squire::QMFF::*force_function_type )( ::SireFF::ForceTable &,double ) ;
@@ -140,12 +169,13 @@ void register_QMFF_class(){
         }
         { //::Squire::QMFF::forceCommandFile
         
-            typedef ::QString ( ::Squire::QMFF::*forceCommandFile_function_type )(  ) const;
+            typedef ::QString ( ::Squire::QMFF::*forceCommandFile_function_type )( ::SireFF::ForceTable const & ) const;
             forceCommandFile_function_type forceCommandFile_function_value( &::Squire::QMFF::forceCommandFile );
             
             QMFF_exposer.def( 
                 "forceCommandFile"
-                , forceCommandFile_function_value );
+                , forceCommandFile_function_value
+                , ( bp::arg("forcetable") ) );
         
         }
         { //::Squire::QMFF::mustNowRecalculateFromScratch
@@ -224,6 +254,28 @@ void register_QMFF_class(){
                 "potential"
                 , potential_function_value
                 , ( bp::arg("potentialtable"), bp::arg("component"), bp::arg("probe"), bp::arg("scale_potential")=1 ) );
+        
+        }
+        { //::Squire::QMFF::potentialCommandFile
+        
+            typedef ::QString ( ::Squire::QMFF::*potentialCommandFile_function_type )( ::SireFF::PotentialTable const & ) const;
+            potentialCommandFile_function_type potentialCommandFile_function_value( &::Squire::QMFF::potentialCommandFile );
+            
+            QMFF_exposer.def( 
+                "potentialCommandFile"
+                , potentialCommandFile_function_value
+                , ( bp::arg("pottable") ) );
+        
+        }
+        { //::Squire::QMFF::potentialCommandFile
+        
+            typedef ::QString ( ::Squire::QMFF::*potentialCommandFile_function_type )( ::SireFF::PotentialTable const &,::SireFF::Probe const & ) const;
+            potentialCommandFile_function_type potentialCommandFile_function_value( &::Squire::QMFF::potentialCommandFile );
+            
+            QMFF_exposer.def( 
+                "potentialCommandFile"
+                , potentialCommandFile_function_value
+                , ( bp::arg("pottable"), bp::arg("probe") ) );
         
         }
         { //::Squire::QMFF::properties

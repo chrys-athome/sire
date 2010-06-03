@@ -32,14 +32,17 @@ namespace bp = boost::python;
 
 #include "internalparameters.h"
 
+SireMM::DihedralSymbols __copy__(const SireMM::DihedralSymbols &other){ return SireMM::DihedralSymbols(other); }
+
 const char* pvt_get_name(const SireMM::DihedralSymbols&){ return "SireMM::DihedralSymbols";}
 
 void register_DihedralSymbols_class(){
 
     { //::SireMM::DihedralSymbols
-        typedef bp::class_< SireMM::DihedralSymbols, bp::bases< SireMM::InternalSymbolsBase >, boost::noncopyable > DihedralSymbols_exposer_t;
+        typedef bp::class_< SireMM::DihedralSymbols, bp::bases< SireMM::InternalSymbolsBase > > DihedralSymbols_exposer_t;
         DihedralSymbols_exposer_t DihedralSymbols_exposer = DihedralSymbols_exposer_t( "DihedralSymbols" );
         bp::scope DihedralSymbols_scope( DihedralSymbols_exposer );
+        DihedralSymbols_exposer.def( bp::init< >() );
         { //::SireMM::DihedralSymbols::phi
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::DihedralSymbols::*phi_function_type )(  ) const;
@@ -51,6 +54,9 @@ void register_DihedralSymbols_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        DihedralSymbols_exposer.def( "__copy__", &__copy__);
+        DihedralSymbols_exposer.def( "__deepcopy__", &__copy__);
+        DihedralSymbols_exposer.def( "clone", &__copy__);
         DihedralSymbols_exposer.def( "__str__", &pvt_get_name);
         DihedralSymbols_exposer.def( "__repr__", &pvt_get_name);
     }

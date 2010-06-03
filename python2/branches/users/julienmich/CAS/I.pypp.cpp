@@ -29,8 +29,9 @@ void register_I_class(){
 
     { //::SireCAS::I
         typedef bp::class_< SireCAS::I, bp::bases< SireCAS::Constant, SireCAS::ExBase > > I_exposer_t;
-        I_exposer_t I_exposer = I_exposer_t( "I", bp::init< >() );
+        I_exposer_t I_exposer = I_exposer_t( "I" );
         bp::scope I_scope( I_exposer );
+        I_exposer.def( bp::init< >() );
         I_exposer.def( bp::init< SireCAS::I const & >(( bp::arg("other") )) );
         { //::SireCAS::I::conjugate
         

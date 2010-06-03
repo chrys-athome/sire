@@ -39,8 +39,9 @@ void register_RelFromNumber_class(){
 
     { //::SireMol::RelFromNumber
         typedef bp::class_< SireMol::RelFromNumber, bp::bases< SireMol::WeightFunction, SireBase::Property > > RelFromNumber_exposer_t;
-        RelFromNumber_exposer_t RelFromNumber_exposer = RelFromNumber_exposer_t( "RelFromNumber", bp::init< >() );
+        RelFromNumber_exposer_t RelFromNumber_exposer = RelFromNumber_exposer_t( "RelFromNumber" );
         bp::scope RelFromNumber_scope( RelFromNumber_exposer );
+        RelFromNumber_exposer.def( bp::init< >() );
         RelFromNumber_exposer.def( bp::init< SireMol::RelFromNumber const & >(( bp::arg("other") )) );
         RelFromNumber_exposer.def( bp::self != bp::self );
         { //::SireMol::RelFromNumber::operator()

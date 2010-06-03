@@ -38,8 +38,9 @@ void register_AngleComponent_class(){
 
     { //::SireSystem::AngleComponent
         typedef bp::class_< SireSystem::AngleComponent, bp::bases< SireSystem::GeometryComponent, SireSystem::Constraint, SireBase::Property > > AngleComponent_exposer_t;
-        AngleComponent_exposer_t AngleComponent_exposer = AngleComponent_exposer_t( "AngleComponent", bp::init< >() );
+        AngleComponent_exposer_t AngleComponent_exposer = AngleComponent_exposer_t( "AngleComponent" );
         bp::scope AngleComponent_scope( AngleComponent_exposer );
+        AngleComponent_exposer.def( bp::init< >() );
         AngleComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("map")=SireBase::PropertyMap() )) );
         AngleComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("geometry_expression"), bp::arg("map")=SireBase::PropertyMap() )) );
         AngleComponent_exposer.def( bp::init< SireSystem::AngleComponent const & >(( bp::arg("other") )) );

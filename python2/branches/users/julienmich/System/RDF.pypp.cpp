@@ -37,8 +37,9 @@ void register_RDF_class(){
 
     { //::SireSystem::RDF
         typedef bp::class_< SireSystem::RDF, bp::bases< SireMaths::HistogramRange > > RDF_exposer_t;
-        RDF_exposer_t RDF_exposer = RDF_exposer_t( "RDF", bp::init< >() );
+        RDF_exposer_t RDF_exposer = RDF_exposer_t( "RDF" );
         bp::scope RDF_scope( RDF_exposer );
+        RDF_exposer.def( bp::init< >() );
         RDF_exposer.def( bp::init< SireUnits::Dimension::Length const &, SireUnits::Dimension::Length const &, bp::optional< int > >(( bp::arg("min"), bp::arg("max"), bp::arg("nbins")=(int)(100) )) );
         RDF_exposer.def( bp::init< SireUnits::Dimension::Length const &, SireUnits::Dimension::Length const &, SireUnits::Dimension::Length const & >(( bp::arg("min"), bp::arg("max"), bp::arg("binwidth") )) );
         RDF_exposer.def( bp::init< SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > > const & >(( bp::arg("range") )) );

@@ -34,8 +34,9 @@ void register_MonitorComponents_class(){
 
     { //::SireSystem::MonitorComponents
         typedef bp::class_< SireSystem::MonitorComponents, bp::bases< SireSystem::SystemMonitor, SireBase::Property > > MonitorComponents_exposer_t;
-        MonitorComponents_exposer_t MonitorComponents_exposer = MonitorComponents_exposer_t( "MonitorComponents", bp::init< >() );
+        MonitorComponents_exposer_t MonitorComponents_exposer = MonitorComponents_exposer_t( "MonitorComponents" );
         bp::scope MonitorComponents_scope( MonitorComponents_exposer );
+        MonitorComponents_exposer.def( bp::init< >() );
         MonitorComponents_exposer.def( bp::init< SireMaths::Accumulator const & >(( bp::arg("accumulator") )) );
         MonitorComponents_exposer.def( bp::init< SireCAS::Symbol const &, bp::optional< SireMaths::Accumulator const & > >(( bp::arg("component"), bp::arg("accumulator")=SireMaths::Average() )) );
         MonitorComponents_exposer.def( bp::init< SireCAS::Symbols const &, bp::optional< SireMaths::Accumulator const & > >(( bp::arg("components"), bp::arg("accumulator")=SireMaths::Average() )) );

@@ -39,8 +39,9 @@ void register_ArcCoth_class(){
 
     { //::SireCAS::ArcCoth
         typedef bp::class_< SireCAS::ArcCoth, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > ArcCoth_exposer_t;
-        ArcCoth_exposer_t ArcCoth_exposer = ArcCoth_exposer_t( "ArcCoth", bp::init< >() );
+        ArcCoth_exposer_t ArcCoth_exposer = ArcCoth_exposer_t( "ArcCoth" );
         bp::scope ArcCoth_scope( ArcCoth_exposer );
+        ArcCoth_exposer.def( bp::init< >() );
         ArcCoth_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         ArcCoth_exposer.def( bp::init< SireCAS::ArcCoth const & >(( bp::arg("other") )) );
         { //::SireCAS::ArcCoth::evaluate
