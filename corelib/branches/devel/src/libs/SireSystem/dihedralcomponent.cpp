@@ -219,7 +219,7 @@ DihedralComponent& DihedralComponent::operator=(const DihedralComponent &other)
 /** Comparison operator */
 bool DihedralComponent::operator==(const DihedralComponent &other) const
 {
-    return this != &other or
+    return this == &other or
            (p0 == other.p0 and p1 == other.p1 and p2 == other.p2 and p3 == other.p3 and
             GeometryComponent::operator==(other));
 }

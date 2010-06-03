@@ -53,7 +53,7 @@ static const RegisterMetaType<MonitorProperty> r_monprop;
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
                                           const MonitorProperty &monprop)
 {
-    writeHeader(ds, r_monprop, 1);
+    writeHeader(ds, r_monprop, 2);
     
     SharedDataStream sds(ds);
     
@@ -82,7 +82,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
 {
     VersionID v = readHeader(ds, r_monprop);
     
-    if (v == 1)
+    if (v == 2)
     {
         SharedDataStream sds(ds);
         
@@ -99,6 +99,47 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
             break;
         case MonitorProperty::MOLECULE_PROPERTY:
             sds >> mon.prop >> mon.mgid >> mon.molprops;
+            break;
+        }
+        
+        sds >> static_cast<SystemMonitor&>(mon);
+        
+        monprop = mon;
+    }
+    else if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        MonitorProperty mon;
+        sds >> mon.what_is_monitored;
+        
+        QVector<PropertyPtr> props;
+        QHash< MolNum,QVector<PropertyPtr> > molprops;
+        
+        switch(mon.what_is_monitored)
+        {
+        case MonitorProperty::SYSTEM_PROPERTY:
+            sds >> mon.prop >> props;
+            mon.props = ChunkedVector<PropertyPtr,2048>::fromVector(props);
+            break;
+        case MonitorProperty::FORCEFIELD_PROPERTY:
+            sds >> mon.prop >> mon.ffid >> props;
+            mon.props = ChunkedVector<PropertyPtr,2048>::fromVector(props);
+            break;
+        case MonitorProperty::MOLECULE_PROPERTY:
+            sds >> mon.prop >> mon.mgid >> molprops;
+        
+            mon.molprops.reserve(molprops.count());
+        
+            for (QHash< MolNum,QVector<PropertyPtr> >::const_iterator
+                                                it = molprops.constBegin();
+                 it != molprops.constEnd();
+                 ++it)
+            {
+                mon.molprops.insert(it.key(), 
+                                    ChunkedVector<PropertyPtr,2048>::fromVector(*it));
+            }
+
             break;
         }
         
@@ -286,7 +327,7 @@ void MonitorProperty::clearStatistics()
 }
 
 /** Return the values of the monitored system or forcefield properties */
-const QVector<PropertyPtr>& MonitorProperty::properties() const
+QVector<PropertyPtr> MonitorProperty::properties() const
 {
     if (not (monitoringSystemProperty() or monitoringForceFieldProperty()))
         throw SireError::incompatible_error( QObject::tr(
@@ -294,14 +335,14 @@ const QVector<PropertyPtr>& MonitorProperty::properties() const
                 "of the system or forcefield(s).")
                     .arg( this->toString() ), CODELOC );
     
-    return props;
+    return props.toVector();
 }
 
 /** Return the values of the monitored molecule properties for molecule 'molnum'.
 
     \throw SireMol::missing_molecule
 */
-const QVector<PropertyPtr>& MonitorProperty::properties(MolNum molnum) const
+QVector<PropertyPtr> MonitorProperty::properties(MolNum molnum) const
 {
     if (not monitoringMoleculeProperty())
         throw SireError::incompatible_error( QObject::tr(
@@ -309,7 +350,8 @@ const QVector<PropertyPtr>& MonitorProperty::properties(MolNum molnum) const
                 "of molecules in molecule group(s).")
                     .arg( this->toString() ), CODELOC );
 
-    QHash< MolNum,QVector<PropertyPtr> >::const_iterator it = molprops.constFind(molnum);
+    QHash< MolNum,ChunkedVector<PropertyPtr,2048> >::const_iterator 
+                                                    it = molprops.constFind(molnum);
     
     if (it == molprops.constEnd())
         throw SireMol::missing_molecule( QObject::tr(
@@ -318,7 +360,7 @@ const QVector<PropertyPtr>& MonitorProperty::properties(MolNum molnum) const
                 "monitored molecule numbers.")
                     .arg(molnum.toString()), CODELOC );
 
-    return it.value();
+    return it.value().toVector();
 }
 
 /** Return the numbers of molecules whose properties have been monitored */
@@ -375,7 +417,7 @@ void MonitorProperty::writeToDisk(const QString &filename)
     }
     else if (not molprops.isEmpty())
     {
-        for (QHash< MolNum,QVector<PropertyPtr> >::const_iterator
+        for (QHash< MolNum,ChunkedVector<PropertyPtr,2048> >::const_iterator
                                     it = molprops.constBegin();
              it != molprops.constEnd();
              ++it)
@@ -383,7 +425,7 @@ void MonitorProperty::writeToDisk(const QString &filename)
             ts << QObject::tr("\n ---- Molecule %1 ----\n")
                         .arg(it.key());
                         
-            const QVector<PropertyPtr> &p = *it;
+            const ChunkedVector<PropertyPtr,2048> &p = *it;
             
             for (int i=0; i<p.count(); ++i)
             {
@@ -409,7 +451,7 @@ void MonitorProperty::monitor(const Molecules &molecules)
         if (nsteps > 0)
         {
             if (not molprops.contains(it.key()))
-                molprops.insert(it.key(), QVector<PropertyPtr>(nsteps));
+                molprops.insert(it.key(), ChunkedVector<PropertyPtr,2048>(nsteps));
         }
 
         const MoleculeData &moldata = it->data();

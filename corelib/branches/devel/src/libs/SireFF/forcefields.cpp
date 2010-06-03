@@ -2255,7 +2255,7 @@ double ForceFields::componentValue(const Symbol &component)
 
     if (comp.get() == 0)
         throw SireFF::missing_component( QObject::tr(   
-            "There is no component of the energy represented by the "
+            "There is no available component represented by the "
             "symbol %1. Available components are %2.")
                 .arg(component.toString(), Sire::toString(componentSymbols())),
                     CODELOC );

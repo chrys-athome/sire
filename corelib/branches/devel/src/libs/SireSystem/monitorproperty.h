@@ -36,6 +36,8 @@
 #include "SireMol/mgidentifier.h"
 #include "SireMol/molnum.h"
 
+#include "SireBase/chunkedvector.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace SireSystem
@@ -115,8 +117,8 @@ public:
 
     void clearStatistics();
 
-    const QVector<PropertyPtr>& properties() const;
-    const QVector<PropertyPtr>& properties(MolNum molnum) const;
+    QVector<PropertyPtr> properties() const;
+    QVector<PropertyPtr> properties(MolNum molnum) const;
 
     QList<MolNum> monitoredMolecules() const;
 
@@ -146,10 +148,10 @@ private:
     quint32 what_is_monitored;
     
     /** The system or forcefield properties */
-    QVector<PropertyPtr> props;
+    SireBase::ChunkedVector<PropertyPtr,2048> props;
     
     /** The molecule properties */
-    QHash< MolNum,QVector<PropertyPtr> > molprops;
+    QHash< MolNum,SireBase::ChunkedVector<PropertyPtr,2048> > molprops;
 };
 
 }

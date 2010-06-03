@@ -15,7 +15,7 @@ import os,sys
 import shutil
 
 temperature = 25*celsius
-nmoves = 100000
+nmoves = 10000
 nblocks = 10
 
 solute_file = "test/io/triatomic.pdb"
@@ -110,9 +110,9 @@ system.add( DistanceComponent( r12, solute.atom(AtomName("A1")),
 solute.atom(AtomName("A2")) ) )
 system.add( "bond12", MonitorComponent(r12, RecordValues()), 5)
 
-#r23 = Symbol("r23")
-#system.add( DistanceComponent( r23, solute.atom(AtomName("A2")), solute.atom(AtomName("A3")) ) )
-#system.add( "bond23", MonitorComponent(r23, RecordValues()), 5)
+r23 = Symbol("r23")
+system.add( DistanceComponent( r23, solute.atom(AtomName("A2")), solute.atom(AtomName("A3")) ) )
+system.add( "bond23", MonitorComponent(r23, RecordValues()), 5)
 
 theta123 = Symbol("theta123")
 system.add( AngleComponent( theta123, solute.atom(AtomName("A1")),
@@ -141,10 +141,10 @@ histoAnalysis(nbins=nbins,
               mode="bond",
               output="BOND-A1A2.dat")
 
-#histoAnalysis(nbins=nbins,
-#              values=system.monitor( MonitorName("bond23") ).accumulator().values(),
-#              mode="bond",
-#              output="BOND-A2A3.dat")
+histoAnalysis(nbins=nbins,
+              values=system.monitor( MonitorName("bond23") ).accumulator().values(),
+              mode="bond",
+              output="BOND-A2A3.dat")
 
 histoAnalysis(nbins=nbins,
               values=system.monitor( MonitorName("angle123") ).accumulator().values(),
