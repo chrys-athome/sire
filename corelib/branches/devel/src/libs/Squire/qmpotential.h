@@ -305,8 +305,10 @@ public:
     void calculateEnergy(const Molecules &molecules, Energy &nrg,
                          double scale_energy=1) const;
 
-    QString forceCommandFile(const Molecules &molecules) const;
     QString energyCommandFile(const Molecules &molecules) const;
+
+    QString forceCommandFile(const Molecules &molecules,
+                             const ForceTable &forcetable) const;
     
     QString fieldCommandFile(const Molecules &molecules,
                              const FieldTable &fieldtable,

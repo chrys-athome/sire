@@ -148,25 +148,23 @@ void register_MonitorProperty_class(){
         MonitorProperty_exposer.def( bp::self == bp::self );
         { //::SireSystem::MonitorProperty::properties
         
-            typedef ::QVector< SireBase::PropPtr< SireBase::Property > > const & ( ::SireSystem::MonitorProperty::*properties_function_type )(  ) const;
+            typedef ::QVector< SireBase::PropPtr< SireBase::Property > > ( ::SireSystem::MonitorProperty::*properties_function_type )(  ) const;
             properties_function_type properties_function_value( &::SireSystem::MonitorProperty::properties );
             
             MonitorProperty_exposer.def( 
                 "properties"
-                , properties_function_value
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , properties_function_value );
         
         }
         { //::SireSystem::MonitorProperty::properties
         
-            typedef ::QVector< SireBase::PropPtr< SireBase::Property > > const & ( ::SireSystem::MonitorProperty::*properties_function_type )( ::SireMol::MolNum ) const;
+            typedef ::QVector< SireBase::PropPtr< SireBase::Property > > ( ::SireSystem::MonitorProperty::*properties_function_type )( ::SireMol::MolNum ) const;
             properties_function_type properties_function_value( &::SireSystem::MonitorProperty::properties );
             
             MonitorProperty_exposer.def( 
                 "properties"
                 , properties_function_value
-                , ( bp::arg("molnum") )
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , ( bp::arg("molnum") ) );
         
         }
         { //::SireSystem::MonitorProperty::property

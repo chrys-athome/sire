@@ -686,12 +686,13 @@ void QMPotential::calculatePotential(const QMPotential::Molecules &molecules,
 
 /** Return the command file that would be used to calculate the forces on
     the molecules in 'molecules' */
-QString QMPotential::forceCommandFile(const QMPotential::Molecules &molecules) const
+QString QMPotential::forceCommandFile(const QMPotential::Molecules &molecules,
+                                      const ForceTable &forcetable) const
 {
     //map all of the molecules so that they are in this space
     Molecules mapped_mols = this->mapIntoSpace(molecules);
 
-    return qmprog->forceCommandFile(mapped_mols);
+    return qmprog->forceCommandFile(mapped_mols, forcetable);
 }
 
 /** Return the command file that would be used to calculate the energy of

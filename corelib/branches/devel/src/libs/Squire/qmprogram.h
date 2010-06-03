@@ -33,6 +33,8 @@
 
 #include "SireMol/atomcharges.h"
 
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace Squire

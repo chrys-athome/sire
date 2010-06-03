@@ -142,7 +142,7 @@ public:
                    const SireFF::Probe &probe, double scale_potential=1);
 
     QString energyCommandFile() const;
-    QString forceCommandFile() const;
+    QString forceCommandFile(const ForceTable &forcetable) const;
 
     QString fieldCommandFile(const FieldTable &fieldtable) const;
     QString fieldCommandFile(const FieldTable &fieldtable, 

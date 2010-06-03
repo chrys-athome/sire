@@ -40,6 +40,7 @@
 
 using namespace Squire;
 using namespace SireBase;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 ///////
@@ -113,6 +114,83 @@ double QMProgram::calculateEnergy(const QMPotential::Molecules &molecules,
     throw SireError::unsupported( QObject::tr(
         "This QM program (%1) does not support the use of point lattice charges.")
             .arg(this->what()), CODELOC );
+}
+
+/** Calculate the forces on the passed molecules, and place them into the passed
+    force table, optionally scaled by 'scale_force' */
+void QMProgram::calculateForce(const QMPotential::Molecules&, ForceTable &,
+                               double, int) const
+{
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the calculation of forces.")
+            .arg(this->what()), CODELOC );
+}
+
+/** Calculate the forces on the passed molecules, and place them into the passed
+    force table, optionally scaled by 'scale_force', and return the accompanying
+    forces on the passed lattice points, also scaled by 'scale_force' */
+QVector<Vector> QMProgram::calculateForce(const QMPotential::Molecules&,
+                                          const LatticeCharges&, ForceTable&,
+                                          double, int) const
+{
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the calculation of forces with "
+        "associated lattice charges.")
+            .arg(this->what()), CODELOC );
+    
+    return QVector<Vector>();
+}
+
+/** Calculate the field around the passed molecules, and place them into the passed
+    field table, optionally scaled by 'scale_field' */
+void QMProgram::calculateField(const QMPotential::Molecules&, FieldTable&,
+                               const SireFF::Probe&, double, int) const
+{
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the calculation of fields.")
+            .arg(this->what()), CODELOC );
+}
+
+/** Calculate the fields around the passed molecules, and place them into the passed
+    field table, optionally scaled by 'scale_field', and return the accompanying
+    fields on the passed lattice points, also scaled by 'scale_field' */
+QVector<Vector> QMProgram::calculateField(const QMPotential::Molecules&,
+                                          const LatticeCharges&, FieldTable&,
+                                          const SireFF::Probe&, double, int) const
+{
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the calculation of fields with "
+        "associated lattice charges.")
+            .arg(this->what()), CODELOC );
+    
+    return QVector<Vector>();
+}
+
+/** Calculate the potential around the passed molecules, and place them into the passed
+    potential table, optionally scaled by 'scale_potential' */
+void QMProgram::calculatePotential(const QMPotential::Molecules&, PotentialTable&,
+                                   const SireFF::Probe&, double, int) const
+{
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the calculation of potentials.")
+            .arg(this->what()), CODELOC );
+}
+
+/** Calculate the potentials around the passed molecules, and place them into the passed
+    potential table, optionally scaled by 'scale_potential', and return the accompanying
+    potentials on the passed lattice points, also scaled by 'scale_potential' */
+QVector<MolarEnergy> QMProgram::calculatePotential(const QMPotential::Molecules&,
+                                                   const LatticeCharges&, 
+                                                   PotentialTable&,
+                                                   const SireFF::Probe&, 
+                                                   double, int) const
+{
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the calculation of potentials with "
+        "associated lattice charges.")
+            .arg(this->what()), CODELOC );
+    
+    return QVector<MolarEnergy>();
 }
 
 /** Return the command file that would be used to calculate the atomic

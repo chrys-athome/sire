@@ -15,7 +15,7 @@ import os,sys
 import shutil
 
 temperature = 25*celsius
-nmoves = 10000
+nmoves = 100000
 nblocks = 10
 
 solute_file = "test/io/triatomic.pdb"

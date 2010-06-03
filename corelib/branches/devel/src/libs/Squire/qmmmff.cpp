@@ -477,9 +477,9 @@ QString QMMMFF::energyCommandFile() const
 
 /** Return the command file that would be used to calculate the forces
     on the molecules in this forcefield */
-QString QMMMFF::forceCommandFile() const
+QString QMMMFF::forceCommandFile(const ForceTable &forcetable) const
 {
-    return QMMMElecEmbedPotential::forceCommandFile(qmmols, mmmols);
+    return QMMMElecEmbedPotential::forceCommandFile(qmmols, mmmols, forcetable);
 }
 
 /** Return the command file that would be used to calculate the potential

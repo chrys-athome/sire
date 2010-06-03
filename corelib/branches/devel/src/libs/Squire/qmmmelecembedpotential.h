@@ -149,7 +149,8 @@ public:
                               const MMMolecules &mmmols) const;
                               
     QString forceCommandFile(const QMMolecules &qmmols,
-                             const MMMolecules &mmmols) const;
+                             const MMMolecules &mmmols,
+                             const ForceTable &forcetable) const;
 
     QString fieldCommandFile(const QMMolecules &qmmols,
                              const MMMolecules &mmmols,

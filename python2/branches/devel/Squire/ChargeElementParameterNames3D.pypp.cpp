@@ -9,6 +9,16 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireFF/errors.h"
+
+#include "SireFF/fieldtable.h"
+
+#include "SireFF/forcetable.h"
+
+#include "SireFF/potentialtable.h"
+
+#include "SireMM/cljprobe.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"

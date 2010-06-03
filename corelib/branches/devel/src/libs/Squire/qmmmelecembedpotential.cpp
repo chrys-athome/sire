@@ -479,14 +479,53 @@ QString QMMMElecEmbedPotential::energyCommandFile(
     in the field of the MM molecules 'mmmols' */
 QString QMMMElecEmbedPotential::forceCommandFile(
                           const QMMMElecEmbedPotential::QMMolecules &qmmols,
-                          const QMMMElecEmbedPotential::MMMolecules &mmmols) const
+                          const QMMMElecEmbedPotential::MMMolecules &mmmols,
+                          const ForceTable &forcetable) const
 {
     //map all of the molecules so that they are in this space
     QMMolecules mapped_qmmols = QMPotential::mapIntoSpace(qmmols);
 
     LatticeCharges charges = this->getLatticeCharges(mapped_qmmols, mmmols);
 
-    return this->quantumProgram().forceCommandFile(mapped_qmmols, charges);
+    return this->quantumProgram().forceCommandFile(mapped_qmmols, charges, forcetable);
+}
+
+/** Return the contents of the QM program command file that will be used
+    to calculate the QM fields around the molecules 'qmmols', and on the 
+    molecules 'mmols', where 'qmmols' are the QM molecules that are
+    in the field of the MM molecules 'mmmols' */
+QString QMMMElecEmbedPotential::fieldCommandFile(
+                          const QMMMElecEmbedPotential::QMMolecules &qmmols,
+                          const QMMMElecEmbedPotential::MMMolecules &mmmols,
+                          const FieldTable &fieldtable,
+                          const SireFF::Probe &probe) const
+{
+    //map all of the molecules so that they are in this space
+    QMMolecules mapped_qmmols = QMPotential::mapIntoSpace(qmmols);
+
+    LatticeCharges charges = this->getLatticeCharges(mapped_qmmols, mmmols);
+
+    return this->quantumProgram().fieldCommandFile(mapped_qmmols, charges, 
+                                                   fieldtable, probe);
+}
+
+/** Return the contents of the QM program command file that will be used
+    to calculate the QM potentials around the molecules 'qmmols', and on the 
+    molecules 'mmols', where 'qmmols' are the QM molecules that are
+    in the field of the MM molecules 'mmmols' */
+QString QMMMElecEmbedPotential::potentialCommandFile(
+                          const QMMMElecEmbedPotential::QMMolecules &qmmols,
+                          const QMMMElecEmbedPotential::MMMolecules &mmmols,
+                          const PotentialTable &pottable,
+                          const SireFF::Probe &probe) const
+{
+    //map all of the molecules so that they are in this space
+    QMMolecules mapped_qmmols = QMPotential::mapIntoSpace(qmmols);
+
+    LatticeCharges charges = this->getLatticeCharges(mapped_qmmols, mmmols);
+
+    return this->quantumProgram().potentialCommandFile(mapped_qmmols, charges, 
+                                                       pottable, probe);
 }
 
 /** Calculate the QM field at the points in the passed potential table */
