@@ -44,7 +44,7 @@ set ( SIREBASE_HEADERS
       tempdir.h
       trigarray2d.h
       trigarray2d.hpp
-      vector3d.hpp
+
     )
 
 # Define the sources in SireBase

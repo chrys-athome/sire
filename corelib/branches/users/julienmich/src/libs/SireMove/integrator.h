@@ -126,22 +126,21 @@ public:
     
     virtual QString toString() const=0;
     
-    virtual void integrate(System &system, IntegratorWorkspace &workspace,
-                           const Symbol &nrg_component, const PropertyMap &map) const=0;
-
-    void integrate(System &system, IntegratorWorkspace &workspace) const;
-    void integrate(System &system, IntegratorWorkspace &workspace, 
-                   const Symbol &nrg_component) const;
-
-    virtual void setTimeStep(const SireUnits::Dimension::Time &timestep)=0;
-
-    virtual SireUnits::Dimension::Time timeStep() const=0;
+    virtual Ensemble ensemble() const=0;
     
-    virtual void setGenerator(const RanGenerator &generator)=0;
+    virtual bool isTimeReversible() const=0;
     
-    virtual IntegratorWorkspacePtr createWorkspace() const=0;
+    virtual void integrate(IntegratorWorkspace &workspace, 
+                           const Symbol &nrg_component,
+                           SireUnits::Dimension::Time timestep,
+                           int nmoves, bool record_stats) const=0;
+    
+    virtual IntegratorWorkspacePtr createWorkspace(
+                                        const PropertyMap &map = PropertyMap()) const=0;
+    
     virtual IntegratorWorkspacePtr 
-                        createWorkspace(const MoleculeGroup &molgroup) const=0;
+                        createWorkspace(const MoleculeGroup &molgroup,
+                                        const PropertyMap &map = PropertyMap()) const=0;
     
 protected:
     Integrator& operator=(const Integrator &other);
@@ -175,19 +174,20 @@ public:
     bool operator==(const NullIntegrator &other) const;
     bool operator!=(const NullIntegrator &other) const;
     
+    Ensemble ensemble() const;
+    
+    bool isTimeReversible() const;
+    
     QString toString() const;
     
-    void integrate(System &system, IntegratorWorkspace &workspace,
-                   const Symbol &nrg_component, const PropertyMap &map) const;
-
-    void setTimeStep(const SireUnits::Dimension::Time &timestep);
-
-    SireUnits::Dimension::Time timeStep() const;
-
-    void setGenerator(const RanGenerator &generator);
+    void integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, 
+                   SireUnits::Dimension::Time timestep, 
+                   int nmoves, bool record_stats) const;
     
-    IntegratorWorkspacePtr createWorkspace() const;
-    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup) const;
+    IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
+    
+    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,
+                                           const PropertyMap &map = PropertyMap()) const;
 };
 
 typedef SireBase::PropPtr<Integrator> IntegratorPtr;

@@ -32,6 +32,9 @@
 #include "chargeconstraint.h"
 
 #include "SireMM/cljprobe.h"
+
+#include "SireFF/g1ff.h"
+
 #include "SireCAS/symbol.h"
 
 SIRE_BEGIN_HEADER
@@ -39,10 +42,14 @@ SIRE_BEGIN_HEADER
 namespace SireSystem
 {
 class PolariseCharges;
+class PolariseChargesFF;
 }
 
 QDataStream& operator<<(QDataStream&, const SireSystem::PolariseCharges&);
 QDataStream& operator>>(QDataStream&, SireSystem::PolariseCharges&);
+
+QDataStream& operator<<(QDataStream&, const SireSystem::PolariseChargesFF&);
+QDataStream& operator>>(QDataStream&, SireSystem::PolariseChargesFF&);
 
 namespace SireSystem
 {
@@ -51,6 +58,13 @@ namespace detail
 {
 class PolariseChargesData;
 }
+
+using SireFF::SingleComponent;
+
+using SireMol::ViewsOfMol;
+using SireMol::PartialMolecule;
+
+using SireBase::Properties;
 
 /** This charge constraint adjusts the partial charges of contained
     molecules to give the impression that the molecule contains
@@ -101,6 +115,8 @@ public:
 
     const SireMM::CoulombProbe& probe() const;
 
+    PolariseChargesFF selfEnergyFF() const;
+
 protected:
     void setSystem(const System &system);
 
@@ -128,11 +144,109 @@ private:
     Molecules changed_mols;
 };
 
+/** This class implements the forcefield that is used to calculate
+    the self-energy of polarising the charges. This is a companion
+    forcefield to the PolariseCharges constraint and is not
+    designed to be used on its own
+    
+    @author Christopher Woods
+*/
+class SIRESYSTEM_EXPORT PolariseChargesFF
+            : public SireBase::ConcreteProperty<PolariseChargesFF,SireFF::G1FF>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const PolariseChargesFF&);
+friend QDataStream& ::operator>>(QDataStream&, PolariseChargesFF&);
+
+public:
+    PolariseChargesFF();
+    PolariseChargesFF(const PolariseCharges &constraint);
+    PolariseChargesFF(const QString &name, const PolariseCharges &constraint);
+    
+    PolariseChargesFF(const PolariseChargesFF &other);
+    
+    ~PolariseChargesFF();
+    
+    static const char* typeName();
+    
+    PolariseChargesFF& operator=(const PolariseChargesFF &other);
+    
+    bool operator==(const PolariseChargesFF &other) const;
+    bool operator!=(const PolariseChargesFF &other) const;
+    
+    PolariseChargesFF* clone() const;
+    
+    const SingleComponent& components() const;
+    
+    bool setProperty(const QString &name, const Property &property);
+    const Property& property(const QString &name) const;
+    bool containsProperty(const QString &name) const;
+    const Properties& properties() const;
+
+    using G1FF::add;
+    using G1FF::remove;
+    using G1FF::contains;
+
+    void mustNowRecalculateFromScratch();    
+
+protected:
+
+    ////
+    //// Virtual functions from SireFF::FF
+    ////
+
+    const SingleComponent& _pvt_components() const;
+    
+    void recalculateEnergy();
+    
+    void _pvt_updateName();
+    
+    ////
+    //// Virtual functions from SireFF::G1FF
+    ////
+
+    void _pvt_added(const SireMol::PartialMolecule &mol, 
+                    const SireBase::PropertyMap&);
+                    
+    void _pvt_removed(const SireMol::PartialMolecule &mol);
+    
+    void _pvt_changed(const SireMol::Molecule &mol);
+    
+    void _pvt_changed(const QList<SireMol::Molecule> &mols);
+    
+    void _pvt_removedAll();
+    
+    bool _pvt_wouldChangeProperties(SireMol::MolNum molnum, 
+                                    const SireBase::PropertyMap &map) const;
+
+    void _pvt_added(const ViewsOfMol &mol, const PropertyMap &map);
+                            
+    void _pvt_removed(const ViewsOfMol &mol);
+
+    void _pvt_removedAll(const PartialMolecule &mol);
+    void _pvt_removedAll(const ViewsOfMol &mol);
+
+private:
+    /** The symbol for the single component of the energy */
+    SingleComponent ffcomponent;
+    
+    /** The location of the self polarisation energy property - the
+        constraint adds this energy as a property of the polarised molecules
+        so that this forcefield can then extract the property to calculate
+        the total self-polarisation energy */
+    PropertyName energy_property;
+    
+    /** The cache of the energy for each molecule in the forcefield */
+    QHash<MolNum,SireUnits::Dimension::MolarEnergy> molnrg;
+};
+
 }
 
 Q_DECLARE_METATYPE( SireSystem::PolariseCharges )
+Q_DECLARE_METATYPE( SireSystem::PolariseChargesFF )
 
 SIRE_EXPOSE_CLASS( SireSystem::PolariseCharges )
+SIRE_EXPOSE_CLASS( SireSystem::PolariseChargesFF )
 
 SIRE_END_HEADER
 

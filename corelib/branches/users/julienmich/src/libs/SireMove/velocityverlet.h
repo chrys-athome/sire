@@ -30,17 +30,6 @@
 #define SIREMOVE_VELOCITYVERLET_H
 
 #include "integrator.h"
-#include "velocitygenerator.h"
-
-#include "SireMol/atomvelocities.h"
-#include "SireMol/atomforces.h"
-
-#include "SireFF/forcetable.h"
-
-#include "SireCAS/symbol.h"
-
-#include "SireBase/majorminorversion.h"
-#include "SireBase/packedarray2d.h"
 
 SIRE_BEGIN_HEADER
 
@@ -55,16 +44,6 @@ QDataStream& operator>>(QDataStream&, SireMove::VelocityVerlet&);
 namespace SireMove
 {
 
-using SireBase::PackedArray2D;
-using SireBase::Properties;
-
-using SireMaths::Vector;
-
-using SireMol::AtomVelocities;
-using SireMol::AtomForces;
-using SireMol::MolID;
-using SireMol::MolNum;
-
 /** This class implements an atomistic velocity verlet dynamics integrator
  
     @author Christopher Woods
@@ -77,8 +56,7 @@ friend QDataStream& ::operator<<(QDataStream&, const VelocityVerlet&);
 friend QDataStream& ::operator>>(QDataStream&, VelocityVerlet&);
 
 public:
-    VelocityVerlet();
-    VelocityVerlet(const SireUnits::Dimension::Time &timestep);
+    VelocityVerlet(bool frequent_save_velocities = false);
     
     VelocityVerlet(const VelocityVerlet &other);
     
@@ -93,24 +71,23 @@ public:
     
     QString toString() const;
     
-    void integrate(System &system, IntegratorWorkspace &workspace,
-                   const Symbol &nrg_component, const PropertyMap &map) const;
-
-    void setTimeStep(const SireUnits::Dimension::Time &timestep);
-
-    SireUnits::Dimension::Time timeStep() const;
+    Ensemble ensemble() const;
     
-    void setGenerator(const RanGenerator &generator);
+    bool isTimeReversible() const;
+    
+    void integrate(IntegratorWorkspace &workspace,
+                   const Symbol &nrg_component, 
+                   SireUnits::Dimension::Time timestep,
+                   int nmoves, bool record_stats) const;
 
-    IntegratorWorkspacePtr createWorkspace() const;
-    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup) const;
+    IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
+    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,
+                                           const PropertyMap &map = PropertyMap()) const;
 
 private:
-    /** The timestep of integration */
-    SireUnits::Dimension::Time timestep;
-
-    /** The generator used to generate new velocities */
-    VelGenPtr vel_generator;
+    /** Whether or not to save the velocities after every step, 
+        or to save them at the end of all of the steps */
+    bool frequent_save_velocities;
 };
 
 }

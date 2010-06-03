@@ -36,6 +36,11 @@
 #include "SireMol/partialmolecule.h"
 #include "SireMol/moleditor.h"
 #include "SireMol/atomcoords.h"
+#include "SireMol/atomelements.h"
+#include "SireMol/atomvelocities.h"
+#include "SireMol/atommasses.h"
+#include "SireMol/atomcoords.h"
+#include "SireMol/molidx.h"
 
 #include "SireBase/quickcopy.hpp"
 
@@ -68,8 +73,17 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
     
-    sds << intws.molgroup << intws.molforces
-        << static_cast<const Property&>(intws);
+    if (intws.need_new_forces)
+    {
+        sds << true << intws.sys << intws.molgroup << intws.map
+            << static_cast<const Property&>(intws);
+    }
+    else
+    {
+        sds << false << intws.sys << intws.molgroup << intws.map
+            << intws.molforces << intws.last_nrg_component
+            << static_cast<const Property&>(intws);
+    }
         
     return ds;
 }
@@ -82,13 +96,26 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, IntegratorWorkspace &in
     if (v == 1)
     {
         SharedDataStream sds(ds);
+
+        bool need_new_forces;
         
-        sds >> intws.molgroup >> intws.molforces
-            >> static_cast<Property&>(intws);
+        sds >> need_new_forces;
+        
+        if (need_new_forces)
+        {
+            intws.need_new_forces = true;
+        
+            sds >> intws.sys >> intws.molgroup >> intws.map
+                >> static_cast<Property&>(intws);
+        }
+        else
+        {
+            intws.need_new_forces = false;
             
-        intws.last_nrg_component = Symbol();
-        intws.last_system_uid = QUuid();
-        intws.last_system_version = Version();
+            sds >> intws.sys >> intws.molgroup >> intws.map
+                >> intws.molforces >> intws.last_nrg_component
+                >> static_cast<Property&>(intws);
+        }
     }
     else
         throw version_error( v, "1", r_intws, CODELOC );
@@ -97,21 +124,26 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, IntegratorWorkspace &in
 }
 
 /** Constructor */
-IntegratorWorkspace::IntegratorWorkspace() : Property()
+IntegratorWorkspace::IntegratorWorkspace(const PropertyMap &m) 
+                    : Property(), map(m), need_new_forces(true)
 {}
 
 /** Construct to hold the variables used to integrate the molecules in 'molgroup' */
-IntegratorWorkspace::IntegratorWorkspace(const MoleculeGroup &molecule_group)
-                    : Property(), molgroup(molecule_group)
+IntegratorWorkspace::IntegratorWorkspace(const MoleculeGroup &molecule_group,
+                                         const PropertyMap &m)
+                    : Property(), molgroup(molecule_group), 
+                      molforces(molecule_group), map(m), need_new_forces(true)
 {}
 
 /** Copy constructor */
 IntegratorWorkspace::IntegratorWorkspace(const IntegratorWorkspace &other)
-                    : Property(other), molgroup(other.molgroup),
+                    : Property(other), 
+                      sys(other.sys),
+                      molgroup(other.molgroup),
                       molforces(other.molforces),
                       last_nrg_component(other.last_nrg_component),
-                      last_system_uid(other.last_system_uid),
-                      last_system_version(other.last_system_version)
+                      map(other.map),
+                      need_new_forces(other.need_new_forces)
 {}
 
 /** Destructor */
@@ -124,11 +156,12 @@ IntegratorWorkspace& IntegratorWorkspace::operator=(const IntegratorWorkspace &o
     if (this != &other)
     {
         Property::operator=(other);
+        sys = other.sys;
         molgroup = other.molgroup;
         molforces = other.molforces;
         last_nrg_component = other.last_nrg_component;
-        last_system_uid = other.last_system_uid;
-        last_system_version = other.last_system_version;
+        map = other.map;
+        need_new_forces = other.need_new_forces;
     }
     
     return *this;
@@ -138,10 +171,11 @@ IntegratorWorkspace& IntegratorWorkspace::operator=(const IntegratorWorkspace &o
 bool IntegratorWorkspace::operator==(const IntegratorWorkspace &other) const
 {
     return (this == &other) or
-           (molgroup == other.molgroup and 
+           (sys == other.sys and
+            molgroup == other.molgroup and 
             last_nrg_component == other.last_nrg_component and
-            last_system_uid == other.last_system_uid and
-            last_system_version == other.last_system_version and
+            need_new_forces == other.need_new_forces and 
+            map == other.map and
             molforces == other.molforces);
 }
 
@@ -151,50 +185,237 @@ bool IntegratorWorkspace::operator!=(const IntegratorWorkspace &other) const
     return not this->operator==(other);
 }
 
-/** Update this workspace using the passed system, calculating forces using
-    the Hamiltonian described by the passed energy component */
-void IntegratorWorkspace::updateFrom(System &system, const Symbol &nrg_component)
-{
-    if (last_system_uid == system.UID() and
-        last_system_version == system.version() and
-        last_nrg_component == nrg_component)
-    {
-        //nothing has changed - no need to update anything
-        return;
-    }
-    
-    MolGroupPtr new_molgroup = system.at( molgroup.read().number() );
-    
-    ForceTable new_forces = molforces;
-    
-    if (new_molgroup.read().version().majorVersion() 
-                        != molgroup.read().version().majorVersion())
-    {
-        //the molecules in the group may have changed - get a new forcetable
-        new_forces = ForceTable(new_molgroup);
-    }
-    
-    system.force(new_forces, nrg_component);
-
-    molforces = new_forces;
-    molgroup = new_molgroup;
-    
-    last_system_uid = system.UID();
-    last_system_version = system.version();
-    last_nrg_component = nrg_component;
-}
-
-/** Return the molecule group being integrated */
+/** Return the molecule group whose molecules will be moved by this
+    integrator */
 const MoleculeGroup& IntegratorWorkspace::moleculeGroup() const
 {
     return molgroup.read();
 }
 
-/** Return the current forces on the molecules in the molecule
-    group being integrated */
+/** Return the force table containing the forces on the molecule */
 const ForceTable& IntegratorWorkspace::forceTable() const
 {
     return molforces;
+}
+
+/** Set the system to be integrated - this updates the molecules in 
+    the passed molecule group - this returns whether or not the
+    system has changed */
+bool IntegratorWorkspace::setSystem(const System &system)
+{
+    if (system.subVersion() != 0)
+        throw SireError::incompatible_error( QObject::tr(
+                    "You can not give an integrator workspace (%1) a System "
+                    "which is in a subversion state (%2).")
+                        .arg(this->toString()).arg(system.toString()), CODELOC );
+
+    if (sys.UID() == system.UID() and sys.version() == system.version())
+        //nothing needs to change
+        return false;
+    
+    if (system.contains(molgroup.read().number()))
+    {
+        MolGroupPtr new_molgroup = system[molgroup.read().number()];
+        
+        if (new_molgroup.read().version().majorVersion() 
+                    != molgroup.read().version().majorVersion())
+        {
+            //we need to reallocate new space for the forces
+            molforces = ForceTable(new_molgroup.read());
+        }
+        
+        molgroup = new_molgroup;
+    }
+    else
+    {
+        molgroup.edit().update(system.molecules());
+    }
+                
+    need_new_forces = true;
+    last_nrg_component = Symbol();
+    sys = system;
+    
+    return true;
+}
+
+/** Return the system being integrated */
+const System& IntegratorWorkspace::system() const
+{
+    return sys;
+}
+
+/** Return the property map used to find the properties that are
+    required for integration */
+const PropertyMap& IntegratorWorkspace::propertyMap() const
+{
+    return map;
+}
+
+/** Set the property map that is used to find the properties
+    that are used for integration */
+void IntegratorWorkspace::setPropertyMap(const PropertyMap &m)
+{
+    map = m;
+}
+
+/** Set the random number generator that is used during integration */
+void IntegratorWorkspace::setGenerator(const RanGenerator&)
+{}
+
+/** Function called when a property is changed */
+void IntegratorWorkspace::changedProperty(const QString&)
+{}
+
+/** Set the property used to find the coordinates of the molecules */
+void IntegratorWorkspace::setCoordinatesProperty(const PropertyName &source)
+{
+    if (map["coordinates"] != source)
+    {
+        map.set("coordinates", source);
+        this->changedProperty("coordinates");
+    }
+}
+
+/** Set the property used to find the system space */
+void IntegratorWorkspace::setSpaceProperty(const PropertyName &source)
+{
+    if (map["space"] != source)
+    {
+        map.set("space", source);
+        this->changedProperty("space");
+    }
+}
+
+/** Set the property used to find the velocities of the molecules */
+void IntegratorWorkspace::setVelocitiesProperty(const PropertyName &source)
+{
+    if (map["velocity"] != source)
+    {
+        map.set("velocity", source);
+        this->changedProperty("velocity");
+    }
+}
+
+/** Set the property used to find the masses of the molecules */
+void IntegratorWorkspace::setMassesProperty(const PropertyName &source)
+{
+    if (map["mass"] != source)
+    {
+        map.set("mass", source);
+        this->changedProperty("mass");
+    }
+}
+
+/** Set the property used to find the elements of the atoms in the molecule */
+void IntegratorWorkspace::setElementsProperty(const PropertyName &source)
+{
+    if (map["element"] != source)
+    {
+        map.set("element", source);
+        this->changedProperty("element");
+    }
+}
+
+/** Set the property used to generate new velocities */
+void IntegratorWorkspace::setVelocityGeneratorProperty(const PropertyName &source)
+{
+    if (map["velocity generator"] != source)
+    {
+        map.set("velocity generator", source);
+        this->changedProperty("velocity generator");
+    }
+}
+
+/** Return the property that contains the molecule coordinates */
+PropertyName IntegratorWorkspace::coordinatesProperty() const
+{
+    return map["coordinates"];
+}
+
+/** Return the property that contains the system space */
+PropertyName IntegratorWorkspace::spaceProperty() const
+{
+    return map["space"];
+}
+
+/** Return the property that contains the molecule velocities */
+PropertyName IntegratorWorkspace::velocitiesProperty() const
+{
+    return map["velocity"];
+}
+
+/** Return the property that contains the molecule masses */
+PropertyName IntegratorWorkspace::massesProperty() const
+{
+    return map["mass"];
+}
+
+/** Return the property that contains the molecule elements */
+PropertyName IntegratorWorkspace::elementsProperty() const
+{
+    return map["element"];
+}
+
+/** Return the property used to generate missing velocities */
+PropertyName IntegratorWorkspace::velocityGeneratorProperty() const
+{
+    return map["velocity generator"];
+}
+
+/** Calculate the current forces on the molecules in the molecule
+    group using the energy component 'nrg_component' */
+bool IntegratorWorkspace::calculateForces(const Symbol &nrg_component)
+{
+    if (need_new_forces or last_nrg_component != nrg_component)
+    {
+        molforces.initialiseTables();
+        sys.force(molforces, nrg_component);
+        last_nrg_component = nrg_component;
+        need_new_forces = false;
+        
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Return whether or not the forces need calculating for the energy
+    component 'nrg_component' */
+bool IntegratorWorkspace::forcesNeedCalculating(const Symbol &nrg_component) const
+{
+    return need_new_forces or nrg_component != last_nrg_component;
+}
+
+/** Set it so that the forces must now be recalculated from scratch */
+void IntegratorWorkspace::mustNowRecalculateFromScratch()
+{
+    need_new_forces = true;
+    last_nrg_component = Symbol();
+}
+
+/** Internal function used to update the system and molecule group with
+    changed molecules */
+void IntegratorWorkspace::pvt_update(const Molecules &changed_mols)
+{
+    sys.update(changed_mols);
+    
+    if (sys.contains(molgroup.read().number()))
+    {
+        molgroup = sys[molgroup.read().number()];
+    }
+    else
+    {
+        molgroup.edit().update(changed_mols);
+    }
+    
+    need_new_forces = true;
+    last_nrg_component = Symbol();
+}
+
+/** Tell the contained system to collect statistics */
+void IntegratorWorkspace::collectStatistics()
+{
+    sys.collectStats();
 }
 
 Q_GLOBAL_STATIC( NullIntegratorWorkspace, nullIntegratorWorkspace );
@@ -272,9 +493,27 @@ bool NullIntegratorWorkspace::operator!=(const NullIntegratorWorkspace &) const
     return false;
 }
 
+/** Regenerate the velocities using the passed generator */
+void NullIntegratorWorkspace::regenerateVelocities(const VelocityGenerator&)
+{}
+
 /** Zero kinetic energy */
 MolarEnergy NullIntegratorWorkspace::kineticEnergy() const
 {
+    return MolarEnergy(0);
+}
+
+/** This contains no molecules 
+
+    \throw SireMol::missing_molecule
+*/
+MolarEnergy NullIntegratorWorkspace::kineticEnergy(MolNum molnum) const
+{
+    throw SireMol::missing_molecule( QObject::tr(
+        "The null integrator workspace does not contain any molecules, so it "
+        "definitely does not contain %1.")
+            .arg(molnum.toString()), CODELOC );
+            
     return MolarEnergy(0);
 }
 
@@ -301,60 +540,339 @@ const char* NullIntegratorWorkspace::typeName()
 ////////// Implementation of AtomicVelocityWorkspace
 //////////
 
-static const RegisterMetaType<AtomicVelocityWorkspace> r_avws;
+static const RegisterMetaType<AtomicVelocityWorkspace> r_atvelws;
 
-/** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 
-                                        const AtomicVelocityWorkspace &avws)
+                                        const AtomicVelocityWorkspace &atvelws)
 {
-    writeHeader(ds, r_avws, 1);
+    writeHeader(ds, r_atvelws, 1);
     
     SharedDataStream sds(ds);
     
-    sds << avws.forces_array << avws.coords_array << avws.vels_array
-        << avws.inv_masses_array << avws.propnames
-        << static_cast<const IntegratorWorkspace&>(avws);
-        
+    sds << static_cast<const IntegratorWorkspace&>(atvelws);
+    
     return ds;
 }
 
-/** Extract from a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, AtomicVelocityWorkspace &avws)
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
+                                        AtomicVelocityWorkspace &atvelws)
 {
-    VersionID v = readHeader(ds, r_avws);
+    VersionID v = readHeader(ds, r_atvelws);
     
     if (v == 1)
     {
         SharedDataStream sds(ds);
         
-        sds >> avws.forces_array >> avws.coords_array >> avws.vels_array
-            >> avws.inv_masses_array >> avws.propnames
-            >> static_cast<IntegratorWorkspace&>(avws);
+        AtomicVelocityWorkspace ws;
+        
+        sds >> static_cast<IntegratorWorkspace&>(ws);
+        
+        ws.rebuildFromScratch();
+        
+        atvelws = ws;
     }
     else
-        throw version_error( v, "1", r_avws, CODELOC );
+        throw version_error(v, "1", r_atvelws, CODELOC);
         
     return ds;
 }
 
-/** Constructor */
-AtomicVelocityWorkspace::AtomicVelocityWorkspace()
-                        : ConcreteProperty<AtomicVelocityWorkspace,IntegratorWorkspace>()
+static QVector<double> getMasses(const QVector<MolarMass> &masses)
+{
+    int sz = masses.count();
+    QVector<double> atom_masses(sz);
+    atom_masses.squeeze();
+    
+    const MolarMass *masses_array = masses.constData();
+    double *atom_masses_array = atom_masses.data();
+    
+    for (int i=0; i<sz; ++i)
+    {
+        atom_masses_array[i] = masses_array[i].value();
+    }
+    
+    return atom_masses;
+}
+
+static QVector<double> getMasses(const QVector<Element> &elements)
+{
+    int sz = elements.count();
+    QVector<double> atom_masses(sz);
+    atom_masses.squeeze();
+    
+    const Element *elements_array = elements.constData();
+    double *atom_masses_array = atom_masses.data();
+    
+    for (int i=0; i<sz; ++i)
+    {
+        atom_masses_array[i] = elements_array[i].mass().value();
+    }
+    
+    return atom_masses;
+}
+
+static QVector<Vector> getMomenta(const QVector<Velocity3D> &velocities,
+                                  const QVector<double> &masses)
+{
+    int nats = velocities.count();
+    
+    QVector<Vector> momenta(nats);
+    momenta.squeeze();
+    
+    const Velocity3D *vel_array = velocities.constData();
+    const double *mass_array = masses.constData();
+    
+    Vector *mom_array = momenta.data();
+    
+    for (int i=0; i<nats; ++i)
+    {
+        mom_array[i] = vel_array[i].value() * mass_array[i];
+    }
+    
+    return momenta;
+}
+
+static QVector<Velocity3D> getVelocities(const QVector<Vector> &momenta,
+                                         const QVector<double> &masses)
+{
+    int nats = momenta.count();
+    
+    QVector<Velocity3D> velocities(nats);
+    velocities.squeeze();
+    
+    const Vector *mom_array = momenta.constData();
+    const double *mass_array = masses.constData();
+    
+    Velocity3D *vel_array = velocities.data();
+    
+    for (int i=0; i<nats; ++i)
+    {
+        if (mass_array[i] != 0)
+            vel_array[i] = Velocity3D(mom_array[i] / mass_array[i]);
+        else
+            vel_array[i] = Velocity3D(0);
+    }
+    
+    return velocities;
+}
+
+/** Internal function used to rebuild all of the arrays from the
+    current properties and current system */
+void AtomicVelocityWorkspace::rebuildFromScratch()
+{
+    const System &sys = this->system();
+    
+    PropertyName coords_property = this->coordinatesProperty();
+    PropertyName mass_property = this->massesProperty();
+    PropertyName element_property = this->elementsProperty();
+    PropertyName velocity_property = this->velocitiesProperty();
+    PropertyName velgen_property = this->velocityGeneratorProperty();
+    
+    const MoleculeGroup &molgroup = this->moleculeGroup();
+    const ForceTable &forcetable = this->forceTable();
+    
+    int nmols = molgroup.nMolecules();
+    
+    atom_coords = QVector< QVector<Vector> >(nmols);
+    atom_momenta = QVector< QVector<Vector> >(nmols);
+    atom_masses = QVector< QVector<double> >(nmols);
+    
+    atom_coords.squeeze();
+    atom_momenta.squeeze();
+    atom_masses.squeeze();
+    
+    QVector<Vector> *atom_coords_array = atom_coords.data();
+    QVector<Vector> *atom_mom_array = atom_momenta.data();
+    QVector<double> *atom_masses_array = atom_masses.data();
+
+    atom_forces = QVector< QVector<Vector> >();
+    QVector<Vector> *atom_forces_array = 0;
+    
+    if (sys.containsProperty(velgen_property))
+        vel_generator = sys.property(velgen_property).asA<VelocityGenerator>();
+    else
+        vel_generator = NullVelocityGenerator();
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        MolNum molnum = molgroup.molNumAt(i);
+        const ViewsOfMol &mol = molgroup[molnum].data();
+        
+        const MoleculeData &moldata = mol.data();
+        
+        if (mol.selectedAll())
+        {
+            atom_coords_array[i] = moldata.property(coords_property)
+                                          .asA<AtomCoords>().toVector();
+
+            if (moldata.hasProperty(mass_property))
+            {
+                atom_masses_array[i] = ::getMasses(
+                                            moldata.property(mass_property)
+                                                   .asA<AtomMasses>().toVector());
+            }
+            else
+            {
+                atom_masses_array[i] = ::getMasses(
+                                            moldata.property(element_property)
+                                                   .asA<AtomElements>().toVector());
+            }
+                                          
+            if (moldata.hasProperty(velocity_property))
+            {
+                atom_mom_array[i] = ::getMomenta(
+                                        moldata.property(velocity_property)
+                                               .asA<AtomVelocities>().toVector(),
+                                        atom_masses_array[i]);
+            }
+            else
+            {
+                atom_mom_array[i] = ::getMomenta(
+                                        vel_generator.read().generate(mol, propertyMap())
+                                                     .toVector(),
+                                        atom_masses_array[i]);
+            }
+        }
+        else
+        {
+            AtomSelection selected_atoms = mol.selection();
+            
+            atom_coords_array[i] = moldata.property(coords_property)
+                                          .asA<AtomCoords>().toVector(selected_atoms);
+            
+            if (moldata.hasProperty(mass_property))
+            {
+                atom_masses_array[i] = ::getMasses(
+                                            moldata.property(mass_property)
+                                                   .asA<AtomMasses>()
+                                                   .toVector(selected_atoms));
+            }
+            else
+            {
+                atom_masses_array[i] = ::getMasses(
+                                            moldata.property(element_property)
+                                                   .asA<AtomElements>()
+                                                   .toVector(selected_atoms));
+            }
+                                          
+            if (moldata.hasProperty(velocity_property))
+            {
+                atom_mom_array[i] = ::getMomenta(
+                                        moldata.property(velocity_property)
+                                         .asA<AtomVelocities>().toVector(selected_atoms),
+                                            atom_masses_array[i]);
+            }
+            else
+            {
+                atom_mom_array[i] = ::getMomenta(
+                                        vel_generator.read().generate(mol, propertyMap())
+                                                         .toVector(selected_atoms),
+                                            atom_masses_array[i]);
+                                                         
+            }
+            
+            if (atom_forces_array == 0)
+            {
+                atom_forces = QVector< QVector<Vector> >(nmols);
+                atom_forces.squeeze();
+                atom_forces_array = atom_forces.data();
+            }
+            
+            atom_forces_array[i] = forcetable.getTable(molnum).toVector(selected_atoms);
+        }
+    }
+}
+
+/** Calculate the forces caused by the passed energy component */
+bool AtomicVelocityWorkspace::calculateForces(const Symbol &nrg_component)
+{
+    if (not IntegratorWorkspace::calculateForces(nrg_component))
+        return false;
+        
+    else if (atom_forces.isEmpty())
+    {
+        //there is nothing to do, as we have no partial molecules,
+        //so all of the forces can be obtained direct from the forcetable
+        return true;
+    }
+    else
+    {
+        int nmols = atom_forces.count();
+        QVector<Vector> *atom_forces_array = atom_forces.data();
+        
+        const MoleculeGroup &molgroup = moleculeGroup();
+        const ForceTable &forcetable = forceTable();
+        
+        for (int i=0; i<nmols; ++i)
+        {
+            MolNum molnum = molgroup.molNumAt(i);
+            const ViewsOfMol &mol = molgroup[molnum].data();
+        
+            if (mol.selectedAll())
+                atom_forces_array[i] = QVector<Vector>();
+
+            else
+                atom_forces_array[i] = forcetable.getTable(molnum)
+                                                 .toVector(mol.selection());
+        }
+        
+        return true;
+    }
+}
+
+/** Regenerate the velocities using the passed generator */
+void AtomicVelocityWorkspace::regenerateVelocities(const VelocityGenerator &generator)
+{
+    const MoleculeGroup &molgroup = moleculeGroup();
+    
+    int nmols = molgroup.nMolecules();
+
+    QVector<Vector> *atom_mom_array = atom_momenta.data();
+    
+    const QVector<double> *atom_masses_array = atom_masses.constData();
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        MolNum molnum = molgroup.molNumAt(i);
+        const ViewsOfMol &mol = molgroup[molnum].data();
+        
+        if (mol.selectedAll())
+        {
+            atom_mom_array[i] = ::getMomenta(
+                                        generator.generate(mol, propertyMap()).toVector(),
+                                            atom_masses_array[i]);
+        }
+        else
+        {
+            AtomSelection selected_atoms = mol.selection();
+
+            atom_mom_array[i] = ::getMomenta(
+                                        generator.generate(mol, propertyMap())
+                                                     .toVector(mol.selection()),
+                                            atom_masses_array[i]);
+        }
+    }
+}
+
+/** Construct an empty workspace */
+AtomicVelocityWorkspace::AtomicVelocityWorkspace(const PropertyMap &map)
+       : ConcreteProperty<AtomicVelocityWorkspace,IntegratorWorkspace>(map)
 {}
 
-/** Construct to hold the variables used to integrate the molecule group 'molgroup' */
-AtomicVelocityWorkspace::AtomicVelocityWorkspace(const MoleculeGroup &molgroup)
-         : ConcreteProperty<AtomicVelocityWorkspace,IntegratorWorkspace>(molgroup)
-{}
+/** Construct a workspace to operate on the passed molecule group */
+AtomicVelocityWorkspace::AtomicVelocityWorkspace(const MoleculeGroup &molgroup,
+                                                 const PropertyMap &map)
+       : ConcreteProperty<AtomicVelocityWorkspace,IntegratorWorkspace>(molgroup, map)
+{
+    this->rebuildFromScratch();
+}
 
 /** Copy constructor */
 AtomicVelocityWorkspace::AtomicVelocityWorkspace(const AtomicVelocityWorkspace &other)
-         : ConcreteProperty<AtomicVelocityWorkspace,IntegratorWorkspace>(other),
-           forces_array(other.forces_array),
-           coords_array(other.coords_array),
-           vels_array(other.vels_array),
-           inv_masses_array(other.inv_masses_array),
-           propnames(other.propnames)
+       : ConcreteProperty<AtomicVelocityWorkspace,IntegratorWorkspace>(other),
+         atom_coords(other.atom_coords), atom_momenta(other.atom_momenta),
+         atom_forces(other.atom_forces), atom_masses(other.atom_masses),
+         vel_generator(other.vel_generator)
 {}
 
 /** Destructor */
@@ -362,18 +880,17 @@ AtomicVelocityWorkspace::~AtomicVelocityWorkspace()
 {}
 
 /** Copy assignment operator */
-AtomicVelocityWorkspace& AtomicVelocityWorkspace::operator=(
-                                                const AtomicVelocityWorkspace &other)
+AtomicVelocityWorkspace& 
+AtomicVelocityWorkspace::operator=(const AtomicVelocityWorkspace &other)
 {
     if (this != &other)
     {
+        atom_coords = other.atom_coords;
+        atom_momenta = other.atom_momenta;
+        atom_forces = other.atom_forces;
+        atom_masses = other.atom_masses;
+        vel_generator = other.vel_generator;
         IntegratorWorkspace::operator=(other);
-        
-        forces_array = other.forces_array;
-        coords_array = other.coords_array;
-        vels_array = other.vels_array;
-        inv_masses_array = other.inv_masses_array;
-        propnames = other.propnames;
     }
     
     return *this;
@@ -382,300 +899,356 @@ AtomicVelocityWorkspace& AtomicVelocityWorkspace::operator=(
 /** Comparison operator */
 bool AtomicVelocityWorkspace::operator==(const AtomicVelocityWorkspace &other) const
 {
-    return (this == &other) or
-           (forces_array == other.forces_array and 
-            coords_array == other.coords_array and
-            vels_array == other.vels_array and
-            inv_masses_array == other.inv_masses_array and
-            propnames == other.propnames and
-            IntegratorWorkspace::operator==(other) );
+    return IntegratorWorkspace::operator==(other);
 }
 
 /** Comparison operator */
 bool AtomicVelocityWorkspace::operator!=(const AtomicVelocityWorkspace &other) const
 {
-    return not this->operator==(other);
-}
-
-/** Return the total kinetic energy of the system when it was last integrated */
-MolarEnergy AtomicVelocityWorkspace::kineticEnergy() const
-{
-    double nrg = 0;
-    
-    const int nmols = vels_array.count();
-    BOOST_ASSERT( inv_masses_array.count() == nmols );
-    
-    const QVector<Vector> *molvels = vels_array.constData();
-    const QVector<double> *molmasses = inv_masses_array.constData();
-    
-    for (int i=0; i<nmols; ++i)
-    {
-        const int nats = molvels[i].count();
-        BOOST_ASSERT( molmasses[i].count() == nats );
-    
-        const Vector *vels = molvels[i].constData();
-        const double *inv_mass = molmasses[i].constData();
-    
-        for (int i=0; i<nats; ++i)
-        {
-            nrg += (0.5 / inv_mass[i]) * vels[i].length2();
-        }
-    }
-    
-    return MolarEnergy(nrg);
-}
-
-/** Return the kinetic energy of the atoms in the view of the molecule in 
-    'molview' */
-MolarEnergy AtomicVelocityWorkspace::kineticEnergy(const MoleculeView &molview) const
-{
-    return MolarEnergy(0);
-}
-
-/** Return all of the forces on all of the molecules in this workspace */
-QHash<MolNum,AtomForces> AtomicVelocityWorkspace::forces() const
-{
-    return QHash<MolNum,AtomForces>();
-}
-
-/** Return all of the velocities of all of the molecules in this workspace */
-QHash<MolNum,AtomVelocities> AtomicVelocityWorkspace::velocities() const
-{
-    return QHash<MolNum,AtomVelocities>();
-}
-
-/** Return all of the masses of the molecules in this workspace */
-QHash<MolNum,AtomMasses> AtomicVelocityWorkspace::masses() const
-{
-    return QHash<MolNum,AtomMasses>();
-}
-
-/** Return the forces on the atoms in the molecule matching the ID 'molid'
-
-    \throw SireMol::missing_molecule
-    \throw SireMol::duplicate_molecule
-    \throw SireError::invalid_index
-*/
-AtomForces AtomicVelocityWorkspace::forces(const MolID &molid) const
-{
-    return AtomForces();
-}
-
-/** Return the velocities of the atoms in the molecule matching the ID 'molid'
-
-    \throw SireMol::missing_molecule
-    \throw SireMol::duplicate_molecule
-    \throw SireError::invalid_index
-*/
-AtomVelocities AtomicVelocityWorkspace::velocities(const MolID &molid) const
-{
-    return AtomVelocities();
-}
-
-/** Return the masses of the atoms in the molecule matching the ID 'molid'
-
-    \throw SireMol::missing_molecule
-    \throw SireMol::duplicate_molecule
-    \throw SireError::invalid_index
-*/
-AtomMasses AtomicVelocityWorkspace::masses(const MolID &molid) const
-{
-    return AtomMasses();
-}
-
-/** Return the number of molecules in this workspace */
-int AtomicVelocityWorkspace::nMolecules() const
-{
-    return forces_array.count();
-}
-
-/** Return the number of molecules in this workspace */
-int AtomicVelocityWorkspace::count() const
-{
-    return this->nMolecules();
-}
-
-/** Return the number of molecules in this workspace */
-int AtomicVelocityWorkspace::size() const
-{
-    return this->nMolecules();
-}
-
-void AtomicVelocityWorkspace::assertValidIndex(const int i) const
-{
-    if (i < 0 or i >= forces_array.count())
-        throw SireError::invalid_index( QObject::tr(
-            "Invalid index (%1). Number of molecules == %2.")
-                .arg(i).arg(forces_array.count()), CODELOC );
-}
-
-/** Return the array of forces on the ith molecule in the workspace 
-
-    \throw SireError::invalid_index
-*/
-const QVector<Vector>& AtomicVelocityWorkspace::forceArray(int i) const
-{
-    assertValidIndex(i);
-    return forces_array.constData()[i];
-}
-
-/** Return the array of coordinates on the ith molecule in the workspace
-
-    \throw SireError::invalid_index
-*/
-const QVector<Vector>& AtomicVelocityWorkspace::coordinateArray(int i) const
-{
-    assertValidIndex(i);
-    return coords_array.constData()[i];
-}
-
-/** Return the array of velocities on the ith molecule in the workspace 
-
-    \throw SireError::invalid_index
-*/
-const QVector<Vector>& AtomicVelocityWorkspace::velocityArray(int i) const
-{
-    assertValidIndex(i);
-    return vels_array.constData()[i];
-}
-
-/** Return the array of reciprocal masses on the ith molecule in the workspace 
-
-    \throw SireError::invalid_index
-*/
-const QVector<double>& AtomicVelocityWorkspace::reciprocalMassArray(int i) const
-{
-    assertValidIndex(i);
-    return inv_masses_array.constData()[i];
-}
-
-/** Set the coordinates of the ith molecule to 'new_coords'. The number
-    of coordinates must be the same as the current number of coordinates
-    
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
-*/
-void AtomicVelocityWorkspace::setCoordinates(int i, const QVector<Vector> &new_coords)
-{
-    if (this->coordinateArray(i).count() != new_coords.count())
-        throw SireError::incompatible_error( QObject::tr(
-            "Cannot set the coordinates of molecule %1 as the number "
-            "of coordinates (%2) is different (%3).")
-                .arg(i).arg(this->coordinateArray(i).count()).arg(new_coords.count()),
-                    CODELOC );
-                    
-    coords_array.data()[i] = new_coords;
-}
-
-/** Set the velocities of the ith molecule to 'new_velocities'. The number
-    of velocities must be the same as the current number of velocities
-    
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
-*/
-void AtomicVelocityWorkspace::setVelocities(int i, const QVector<Vector> &new_velocities)
-{
-    if (this->velocityArray(i).count() != new_velocities.count())
-        throw SireError::incompatible_error( QObject::tr(
-            "Cannot set the velocities of molecule %1 as the number "
-            "of velocities (%2) is different (%3).")
-                .arg(i).arg(this->velocityArray(i).count()).arg(new_velocities.count()),
-                    CODELOC );
-                    
-    vels_array.data()[i] = new_velocities;
-}
-
-/** Initialise this workspace from the passed system, using the specified
-    energy component represented by 'nrg_component' to calculate the forces,
-    the passed velocity generator to generate any missing velocities,
-    and the (optional) property map to obtain the names of properties
-    that are necessary for this workspace 
-    
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::incompatible_error    
-*/
-void AtomicVelocityWorkspace::updateFrom(System &system, const Symbol &nrg_component,
-                                         const VelocityGenerator &velgen,
-                                         const PropertyMap &map)
-{
-    //update the molecule group and force table
-    IntegratorWorkspace::updateFrom(system, nrg_component);
-    
-    //now get the coordinate, force and velocity arrays
-    const int nmols = this->forceTable().count();
-    
-    const MolForceTable *molforces_array = this->forceTable().constData();
-
-    QVector< QVector<Vector> > new_forces_array( nmols );
-    QVector< QVector<Vector> > new_coords_array( nmols );
-    QVector< QVector<Vector> > new_vels_array( nmols );
-    QVector< QVector<double> > new_inv_masses_array( nmols );
-    
-    #warning NEED TO WRITE CODE TO UPDATE ARRAYS
-    
-    //copy the result
-    forces_array = new_forces_array;
-    coords_array = new_coords_array;
-    vels_array = new_vels_array;
-    inv_masses_array = new_inv_masses_array;
-}
-
-/** Update the system with the new coordinates - this also recalculates 
-    the force using the energy component represented by 'nrg_component' */
-void AtomicVelocityWorkspace::updateSystem(System &system, 
-                                           const Symbol &nrg_component,
-                                           const PropertyMap &map)
-{
-    Molecules molecules = this->moleculeGroup().molecules();
-
-    const PropertyName &coords_property = map["coordinates"];
-
-    //loop over each molecule in the forcetable
-    const int nmols = this->forceTable().count();
-    
-    const MolForceTable *molforces_array = this->forceTable().constData();
-    const QVector<Vector> *coords_array = this->coords_array.constData();
-    
-    //update the coordinates in each molecule
-    for (int i=0; i<nmols; ++i)
-    {
-        const MolForceTable &molforces = molforces_array[i];
-        MolNum molnum = molforces.molNum();
-        
-        PartialMolecule new_mol = molecules[molnum];
-        
-        AtomCoords coords = new_mol.molecule()
-                                   .property(coords_property).asA<AtomCoords>();
-        
-        coords.copyFrom( coords_array[i], new_mol.selection() );
-
-        molecules.update( new_mol.molecule().edit()
-                                            .setProperty(coords_property, coords)
-                                            .commit() );
-    }
-    
-    //update the system with the new molecules
-    system.update(molecules);
-    
-    //update this workspace from the new system
-    IntegratorWorkspace::updateFrom(system, nrg_component);
-    
-    //collect all of the forces
-    QVector<Vector> *local_forces_array = forces_array.data();
-    
-    molforces_array = this->forceTable().constData();
-    
-    for (int i=0; i<nmols; ++i)
-    {
-        const MolForceTable &molforces = molforces_array[i];
-        MolNum molnum = molforces.molNum();
-
-        local_forces_array[i] = molforces.toVector(molecules[molnum].selection());
-    }
+    return not AtomicVelocityWorkspace::operator==(other);
 }
 
 const char* AtomicVelocityWorkspace::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<AtomicVelocityWorkspace>() );
+}
+
+/** This is called whenever a property is changed */
+void AtomicVelocityWorkspace::changedProperty(const QString&)
+{
+    this->rebuildFromScratch();
+}
+
+static double getKineticEnergy(const QVector<double> &masses,
+                               const QVector<Vector> &momenta)
+{
+    int nats = masses.count();
+    BOOST_ASSERT( momenta.count() == nats );
+    
+    const double *masses_array = masses.constData();
+    const Vector *mom_array = momenta.constData();
+    
+    double nrg = 0;
+    
+    // Kinetic energy is p**2 / 2m
+    //
+    // Internal units are self-consistent 
+    // (Angstrom / AKMA, and g mol-1, which give
+    // energies in kcal mol-1
+    
+    for (int i=0; i<nats; ++i)
+    {
+        if (masses_array[i] != 0)
+            nrg += mom_array[i].length2() / masses_array[i];
+    }
+    
+    return 0.5 * nrg;
+}
+
+/** Return the total kinetic energy of the molecules in the molecule group */
+MolarEnergy AtomicVelocityWorkspace::kineticEnergy() const
+{
+    int nmols = atom_momenta.count();
+    BOOST_ASSERT( atom_masses.count() == nmols );
+    
+    const QVector<double> *masses_array = atom_masses.constData();
+    const QVector<Vector> *mom_array = atom_momenta.constData();
+    
+    double nrg = 0;
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        nrg += ::getKineticEnergy(masses_array[i], mom_array[i]);
+    }
+    
+    return MolarEnergy(nrg);
+}
+
+/** Return the total kinetic energy of the molecule with number 'molnum'
+
+    \throw SireMol::missing_molecule
+*/
+MolarEnergy AtomicVelocityWorkspace::kineticEnergy(MolNum molnum) const
+{
+    int i = this->moleculeGroup().indexOf(molnum);
+    
+    return MolarEnergy( ::getKineticEnergy(atom_masses[i], atom_momenta[i]) );
+}
+
+/** Return the total kinetic energy of the atoms in the the molecule viewed
+    in 'molview'
+    
+    \throw SireMol::missing_molecule
+*/
+MolarEnergy AtomicVelocityWorkspace::kineticEnergy(const MoleculeView &molview) const
+{
+    throw SireError::incomplete_code( QObject::tr("This needs writing!"), CODELOC );
+    return MolarEnergy(0);
+}
+
+/** Return the number of molecules that are being integrated */
+int AtomicVelocityWorkspace::nMolecules() const
+{
+    return atom_masses.count();
+}
+
+/** Return the number of atoms of the ith molecule. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+int AtomicVelocityWorkspace::nAtoms(int i) const
+{
+    return atom_masses.constData()[i].count();
+}
+
+/** Return the array of the coordinates of the ith molecule. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+Vector* AtomicVelocityWorkspace::coordsArray(int i)
+{
+    return atom_coords.data()[i].data();
+}
+
+/** Return the array of momenta of the ith molecule. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+Vector* AtomicVelocityWorkspace::momentaArray(int i)
+{
+    return atom_momenta.data()[i].data();
+}
+
+/** Return the array of coordinates of the ith molecule. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+const Vector* AtomicVelocityWorkspace::coordsArray(int i) const
+{
+    return atom_coords.constData()[i].constData();
+}
+
+/** Return the array of forces of the ith molecule. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+const Vector* AtomicVelocityWorkspace::forceArray(int i) const
+{
+    if (atom_forces.isEmpty())
+        return forceTable().getTable( moleculeGroup().molNumAt(i) ).constValueData();
+
+    const QVector<Vector> &forces = atom_forces.constData()[i];
+    
+    if (forces.isEmpty())
+        //we can get the forces straight from the forcetable
+        return forceTable().getTable( moleculeGroup().molNumAt(i) ).constValueData();
+
+    else
+        return forces.constData();
+}
+
+/** Return the array of momenta of the ith molecule. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+const Vector* AtomicVelocityWorkspace::momentaArray(int i) const
+{
+    return atom_momenta.constData()[i].constData();
+}
+
+/** Return the array of masses of the ith molecule. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+const double* AtomicVelocityWorkspace::massArray(int i) const
+{
+    return atom_masses.constData()[i].constData();
+}
+
+/** Return the array of coordinates of the ith molecule. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+const Vector* AtomicVelocityWorkspace::constCoordsArray(int i) const
+{
+    return AtomicVelocityWorkspace::coordsArray(i);
+}
+
+/** Return the array of forces of the ith molecule. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+const Vector* AtomicVelocityWorkspace::constForceArray(int i) const
+{
+    return AtomicVelocityWorkspace::forceArray(i);
+}
+
+/** Return the array of momenta of the ith molecule. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+const Vector* AtomicVelocityWorkspace::constMomentaArray(int i) const
+{
+    return AtomicVelocityWorkspace::momentaArray(i);
+}
+
+/** Return the array of masses of the ith molecule. This does not
+    check that 'i' is a valid index - use of an invalid index
+    will lead to undefined results (e.g. crash or worse) */
+const double* AtomicVelocityWorkspace::constMassArray(int i) const
+{
+    return AtomicVelocityWorkspace::massArray(i);
+}
+
+/** Set the system that is being integrated */
+bool AtomicVelocityWorkspace::setSystem(const System &new_system)
+{
+    if (IntegratorWorkspace::setSystem(new_system))
+    {
+        this->rebuildFromScratch();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Save the coordinates back to the system */
+void AtomicVelocityWorkspace::commitCoordinates()
+{
+    int nmols = atom_coords.count();
+    
+    const MoleculeGroup &molgroup = moleculeGroup();
+    const Molecules &molecules = molgroup.molecules();
+    
+    BOOST_ASSERT( molgroup.nMolecules() == nmols );
+    
+    const QVector<Vector> *coords_array = atom_coords.constData();
+    
+    PropertyName coords_property = coordinatesProperty();
+    
+    Molecules changed_mols;
+    changed_mols.reserve(nmols);
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        MolNum molnum = molgroup.molNumAt(i);
+        
+        const ViewsOfMol &mol = molecules[molnum];
+        
+        AtomCoords coords = mol.data().property(coords_property)
+                                      .asA<AtomCoords>();
+                                          
+        if (mol.selectedAll())
+            coords.copyFrom(coords_array[i]);
+        else
+            coords.copyFrom(coords_array[i], mol.selection());
+
+        changed_mols.add( mol.molecule().edit()
+                             .setProperty(coords_property, coords)
+                             .commit() );
+    }
+    
+    IntegratorWorkspace::pvt_update(changed_mols);
+}
+
+/** Save the velocities back to the system */
+void AtomicVelocityWorkspace::commitVelocities()
+{
+    int nmols = atom_coords.count();
+    
+    const MoleculeGroup &molgroup = moleculeGroup();
+    const Molecules &molecules = molgroup.molecules();
+    
+    BOOST_ASSERT( molgroup.nMolecules() == nmols );
+    
+    const QVector<Vector> *mom_array = atom_momenta.constData();
+    const QVector<double> *mass_array = atom_masses.constData();
+    
+    PropertyName vels_property = velocitiesProperty();
+    
+    Molecules changed_mols;
+    changed_mols.reserve(nmols);
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        MolNum molnum = molgroup.molNumAt(i);
+        
+        const ViewsOfMol &mol = molecules[molnum];
+        
+        AtomVelocities vels;
+        
+        if (mol.data().hasProperty(vels_property))
+        {
+            vels = mol.data().property(vels_property)
+                             .asA<AtomVelocities>();
+        }
+        else
+        {
+            vels = AtomVelocities(mol.data().info());
+        }
+                                          
+        if (mol.selectedAll())
+            vels.copyFrom( ::getVelocities(mom_array[i], mass_array[i]) );
+        else
+            vels.copyFrom( ::getVelocities(mom_array[i], mass_array[i]), 
+                           mol.selection() );
+
+        changed_mols.add( mol.molecule().edit()
+                             .setProperty(vels_property, vels)
+                             .commit() );
+    }
+    
+    IntegratorWorkspace::pvt_update(changed_mols);
+}
+
+/** Save both the coordinates and velocities back to the system */
+void AtomicVelocityWorkspace::commitCoordinatesAndVelocities()
+{
+    int nmols = atom_coords.count();
+    
+    const MoleculeGroup &molgroup = moleculeGroup();
+    const Molecules &molecules = molgroup.molecules();
+    
+    BOOST_ASSERT( molgroup.nMolecules() == nmols );
+    
+    const QVector<Vector> *coords_array = atom_coords.constData();
+    const QVector<Vector> *mom_array = atom_momenta.constData();
+    const QVector<double> *mass_array = atom_masses.constData();
+    
+    PropertyName coords_property = coordinatesProperty();
+    PropertyName vels_property = velocitiesProperty();
+    
+    Molecules changed_mols;
+    changed_mols.reserve(nmols);
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        MolNum molnum = molgroup.molNumAt(i);
+        
+        const ViewsOfMol &mol = molecules[molnum];
+        
+        AtomCoords coords = mol.data().property(coords_property)
+                                      .asA<AtomCoords>();
+
+        AtomVelocities vels;
+        
+        if (mol.data().hasProperty(vels_property))
+        {
+            vels = mol.data().property(vels_property)
+                             .asA<AtomVelocities>();
+        }
+        else
+        {
+            vels = AtomVelocities(mol.data().info());
+        }
+                                          
+        if (mol.selectedAll())
+        {
+            coords.copyFrom(coords_array[i]);
+            vels.copyFrom( ::getVelocities(mom_array[i],mass_array[i]) );
+        }
+        else
+        {
+            coords.copyFrom(coords_array[i], mol.selection());
+            vels.copyFrom( ::getVelocities(mom_array[i],mass_array[i]), 
+                           mol.selection() );
+        }
+
+        changed_mols.add( mol.molecule().edit()
+                             .setProperty(coords_property, coords)
+                             .setProperty(vels_property, vels)
+                             .commit() );
+    }
+    
+    IntegratorWorkspace::pvt_update(changed_mols);
 }

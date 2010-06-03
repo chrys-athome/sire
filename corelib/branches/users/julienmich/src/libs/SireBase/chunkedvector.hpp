@@ -108,6 +108,8 @@ public:
     int count() const;
     int count(const T &value) const;
     
+    bool isEmpty() const;
+    
     int size() const;
     
     int capacity() const;
@@ -420,6 +422,14 @@ int ChunkedVector<T,N>::count() const
     int nremainder = this->nRemainder();
     
     return (nfullchunks * N) + nremainder;
+}
+
+/** Return whether or not this vector is empty */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+bool ChunkedVector<T,N>::isEmpty() const
+{
+    return this->_chunks.isEmpty();
 }
 
 /** Return the number of items in this vector that are equal to 'value' */

@@ -130,19 +130,27 @@ public:
     void potential(PotentialTable &potentialtable, const Symbol &component,
                    double scale_potential=1);
 
-    void field(FieldTable &fieldtable, const Probe &probe, double scale_field=1);
+    void field(FieldTable &fieldtable, const SireFF::Probe &probe, double scale_field=1);
     
     void field(FieldTable &fieldtable, const Symbol &component,
-               const Probe &probe, double scale_field=1);
+               const SireFF::Probe &probe, double scale_field=1);
                
-    void potential(PotentialTable &potentialtable, const Probe &probe,
+    void potential(PotentialTable &potentialtable, const SireFF::Probe &probe,
                    double scale_potential=1);
     
     void potential(PotentialTable &potentialtable, const Symbol &component,
-                   const Probe &probe, double scale_potential=1);
+                   const SireFF::Probe &probe, double scale_potential=1);
 
     QString energyCommandFile() const;
-    QString forceCommandFile() const;
+    QString forceCommandFile(const ForceTable &forcetable) const;
+
+    QString fieldCommandFile(const FieldTable &fieldtable) const;
+    QString fieldCommandFile(const FieldTable &fieldtable, 
+                             const SireFF::Probe &probe) const;
+
+    QString potentialCommandFile(const PotentialTable &pottable) const;
+    QString potentialCommandFile(const PotentialTable &pottable,
+                                 const SireFF::Probe &probe) const;
 
 protected:
 

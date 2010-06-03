@@ -31,7 +31,7 @@
 
 #include "atomproperty.hpp"
 
-#include "SireBase/vector3d.hpp"
+#include "SireMaths/vector3d.hpp"
 
 #include "SireUnits/dimensions.h"
 
@@ -42,24 +42,24 @@ namespace SireMol
 
 using SireUnits::Dimension::Force;
 
-typedef SireBase::Vector3D<Force> Force3D;
+typedef SireMaths::Vector3D<Force> Force3D;
 
 typedef AtomProperty<Force3D> AtomForces;
 
 }
 
 SIRE_EXPOSE_ALIAS( 
-        (SireBase::Vector3D<SireUnits::Dimension::PhysUnit<1, 1, -2, 0, 0, 0, 0> >),
+        (SireMaths::Vector3D<SireUnits::Dimension::PhysUnit<1, 1, -2, 0, 0, 0, 0> >),
         SireMol::Force3D )
                    
 Q_DECLARE_METATYPE( SireMol::AtomForces );
 Q_DECLARE_METATYPE( SireMol::Force3D );
 
-SIRE_EXPOSE_ATOM_PROPERTY( SireBase::Vector3D<SireUnits::Dimension::Force>,
+SIRE_EXPOSE_ATOM_PROPERTY( SireMaths::Vector3D<SireUnits::Dimension::Force>,
                            SireMol::AtomForces )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireBase::Vector3D<SireUnits::Dimension::Force>;
+template class SireMaths::Vector3D<SireUnits::Dimension::Force>;
 template class SireMol::AtomProperty<SireMol::Force3D>;
 #endif
 

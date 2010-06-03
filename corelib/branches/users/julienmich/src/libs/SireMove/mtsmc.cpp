@@ -88,13 +88,24 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MTSMC &mtsmc)
 }
 
 /** Null constructor */
-MTSMC::MTSMC() : ConcreteProperty<MTSMC,MonteCarlo>(), nfastmoves(0)
+MTSMC::MTSMC(const PropertyMap &map) 
+      : ConcreteProperty<MTSMC,MonteCarlo>(map), nfastmoves(0)
 {}
 
 /** Construct a multiple time step Monte Carlo move that performs
+    1 move using 'fastmoves' for every slow move */
+MTSMC::MTSMC(const Moves &fast_moves, const PropertyMap &map)
+      : ConcreteProperty<MTSMC,MonteCarlo>(map),
+        fastmoves(fast_moves), nfastmoves(1)
+{
+    fastmoves.edit().setGenerator( MonteCarlo::generator() );
+    MonteCarlo::setEnsemble( fast_moves.ensemble() );
+}
+
+/** Construct a multiple time step Monte Carlo move that performs
     'nfastmoves' moves using 'fastmoves' for every slow move */
-MTSMC::MTSMC(const Moves &fast_moves, int nfast_moves)
-      : ConcreteProperty<MTSMC,MonteCarlo>(),
+MTSMC::MTSMC(const Moves &fast_moves, int nfast_moves, const PropertyMap &map)
+      : ConcreteProperty<MTSMC,MonteCarlo>(map),
         fastmoves(fast_moves), nfastmoves(0)
 {
     if (nfast_moves > 0)
@@ -107,11 +118,23 @@ MTSMC::MTSMC(const Moves &fast_moves, int nfast_moves)
 }
 
 /** Construct a multiple time step Monte Carlo move that performs
+    1 move using 'fastmoves', then applies the constraints
+    in 'slow_constraints' for each slow move */
+MTSMC::MTSMC(const Moves &fast_moves, const Constraints &constraints, 
+             const PropertyMap &map)
+      : ConcreteProperty<MTSMC,MonteCarlo>(map),
+        fastmoves(fast_moves), slow_constraints(constraints), nfastmoves(1)
+{
+    fastmoves.edit().setGenerator( MonteCarlo::generator() );
+    MonteCarlo::setEnsemble( fast_moves.ensemble() );
+}
+
+/** Construct a multiple time step Monte Carlo move that performs
     'nfastmoves' moves using 'fastmoves', then applies the constraints
     in 'slow_constraints' for each slow move */
 MTSMC::MTSMC(const Moves &fast_moves, const Constraints &constraints, 
-             int nfast_moves)
-      : ConcreteProperty<MTSMC,MonteCarlo>(),
+             int nfast_moves, const PropertyMap &map)
+      : ConcreteProperty<MTSMC,MonteCarlo>(map),
         fastmoves(fast_moves), slow_constraints(constraints), nfastmoves(0)
 {
     if (nfast_moves > 0)
@@ -124,12 +147,27 @@ MTSMC::MTSMC(const Moves &fast_moves, const Constraints &constraints,
 }
 
 /** Construct a multiple time step Monte Carlo move that performs
+    1 move using 'fastmoves', using the energy component
+    'fastcomponent', then applies the constraints
+    in 'slow_constraints' for each slow move */
+MTSMC::MTSMC(const Moves &fast_moves, const Symbol &fast_component,
+             const Constraints &constraints, const PropertyMap &map)
+      : ConcreteProperty<MTSMC,MonteCarlo>(map),
+        fastmoves(fast_moves), slow_constraints(constraints), 
+        fastcomponent(fast_component), nfastmoves(1)
+{
+    fastmoves.edit().setGenerator( MonteCarlo::generator() );
+    MonteCarlo::setEnsemble( fast_moves.ensemble() );
+}
+
+/** Construct a multiple time step Monte Carlo move that performs
     'nfastmoves' moves using 'fastmoves', using the energy component
     'fastcomponent', then applies the constraints
     in 'slow_constraints' for each slow move */
 MTSMC::MTSMC(const Moves &fast_moves, const Symbol &fast_component,
-             const Constraints &constraints, int nfast_moves)
-      : ConcreteProperty<MTSMC,MonteCarlo>(),
+             const Constraints &constraints, int nfast_moves,
+             const PropertyMap &map)
+      : ConcreteProperty<MTSMC,MonteCarlo>(map),
         fastmoves(fast_moves), slow_constraints(constraints), 
         fastcomponent(fast_component), nfastmoves(0)
 {
@@ -143,11 +181,24 @@ MTSMC::MTSMC(const Moves &fast_moves, const Symbol &fast_component,
 }
 
 /** Construct a multiple time step Monte Carlo move that performs
+    1 move using 'fastmoves' operating on 
+    the energy component 'fastcomponent' for every slow move */
+MTSMC::MTSMC(const Moves &fast_moves, const Symbol &fast_component, 
+             const PropertyMap &map)
+      : ConcreteProperty<MTSMC,MonteCarlo>(map),
+        fastmoves(fast_moves), fastcomponent(fast_component),
+        nfastmoves(1)
+{
+    MonteCarlo::setEnsemble( fast_moves.ensemble() );
+    fastmoves.edit().setGenerator( MonteCarlo::generator() );
+}
+
+/** Construct a multiple time step Monte Carlo move that performs
     'nfastmoves' moves using 'fastmoves' operating on 
     the energy component 'fastcomponent' for every slow move */
 MTSMC::MTSMC(const Moves &fast_moves, const Symbol &fast_component, 
-             int nfast_moves)
-      : ConcreteProperty<MTSMC,MonteCarlo>(),
+             int nfast_moves, const PropertyMap &map)
+      : ConcreteProperty<MTSMC,MonteCarlo>(map),
         fastmoves(fast_moves), fastcomponent(fast_component),
         nfastmoves(0)
 {

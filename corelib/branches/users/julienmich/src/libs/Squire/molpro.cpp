@@ -502,7 +502,8 @@ QString Molpro::energyCommandFile(const QMPotential::Molecules &molecules,
 
 /** Return the command files that will be used to calculate the forces on the  
     atoms of the molecules in 'molecules' */
-QString Molpro::forceCommandFile(const QMPotential::Molecules &molecules) const
+QString Molpro::forceCommandFile(const QMPotential::Molecules &molecules,
+                                 const ForceTable&) const
 {
     return this->createCommandFile(force_template, molecules);
 }
@@ -512,9 +513,64 @@ QString Molpro::forceCommandFile(const QMPotential::Molecules &molecules) const
     in 'lattice_charges' - this also calculates the forces on those
     point charges */
 QString Molpro::forceCommandFile(const QMPotential::Molecules &molecules,
-                                 const LatticeCharges &lattice_charges) const
+                                 const LatticeCharges &lattice_charges,
+                                 const ForceTable&) const
 {
     return this->createCommandFile(force_template, molecules, lattice_charges);
+}
+
+/** Return the command files that will be used to calculate the fields on the  
+    atoms of the molecules in 'molecules' */
+QString Molpro::fieldCommandFile(const QMPotential::Molecules &molecules,
+                                 const FieldTable &fieldtable,
+                                 const SireFF::Probe &probe) const
+{
+    throw SireError::unsupported( QObject::tr(
+            "Calculating QM fields using the Molpro() interface is "
+            "currently not supported."), CODELOC );
+            
+    return QString::null;
+}
+
+/** Return the command files that will be used to calculate the fields on the  
+    atoms of the molecules in 'molecules' */
+QString Molpro::fieldCommandFile(const QMPotential::Molecules &molecules,
+                                 const LatticeCharges &lattice_charges,
+                                 const FieldTable &fieldtable,
+                                 const SireFF::Probe &probe) const
+{
+    throw SireError::unsupported( QObject::tr(
+            "Calculating QM fields using the Molpro() interface is "
+            "currently not supported."), CODELOC );
+            
+    return QString::null;
+}
+
+/** Return the command files that will be used to calculate the potentials on the  
+    atoms of the molecules in 'molecules' */
+QString Molpro::potentialCommandFile(const QMPotential::Molecules &molecules,
+                                     const PotentialTable &pottable,
+                                     const SireFF::Probe &probe) const
+{
+    throw SireError::unsupported( QObject::tr(
+            "Calculating QM potentials using the Molpro() interface is "
+            "currently not supported."), CODELOC );
+            
+    return QString::null;
+}
+
+/** Return the command files that will be used to calculate the potentials on the  
+    atoms of the molecules in 'molecules' */
+QString Molpro::potentialCommandFile(const QMPotential::Molecules &molecules,
+                                     const LatticeCharges &lattice_charges,
+                                     const PotentialTable &pottable,
+                                     const SireFF::Probe &probe) const
+{
+    throw SireError::unsupported( QObject::tr(
+            "Calculating QM potentials using the Molpro() interface is "
+            "currently not supported."), CODELOC );
+            
+    return QString::null;
 }
 
 /** Extract the energy from the molpro output in 'molpro_output' */

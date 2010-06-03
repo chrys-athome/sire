@@ -994,7 +994,7 @@ void InterCoulombPotential::_pvt_calculateCoulombForce(
                                              
                                             ((cnrg-shift_coul) * dscl_coul);
                         
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                     
@@ -1027,7 +1027,7 @@ void InterCoulombPotential::_pvt_calculateCoulombForce(
                             Vector cforce = -(q2 / distmat[j].length2()) *
                                                 distmat[j].direction();
                         
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                     
@@ -1409,7 +1409,7 @@ void InterCoulombPotential::_pvt_calculateCoulombField(
                                      
                                        ((cnrg-shift_coul) * dscl_coul);
 
-                        total_field -= field;
+                        total_field += field;
                     }
                 
                 } // end of loop over atoms
@@ -1432,7 +1432,7 @@ void InterCoulombPotential::_pvt_calculateCoulombField(
                                     
                                     * distmat[j].direction();
 
-                    total_field -= field;
+                    total_field += field;
 
                 } // end of loop over atoms
             }
@@ -1573,7 +1573,7 @@ void InterCoulombPotential::_pvt_calculateCoulombField(
                                              
                                             ((cnrg-shift_coul) * dscl_coul);
                         
-                            total_field -= cfield;
+                            total_field += cfield;
                         }
                     }
                     
@@ -2297,7 +2297,7 @@ void IntraCoulombPotential::calculateCoulombForce(
                                              
                                                 ((cnrg-shift_coul) * dscl_coul);
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         
@@ -2343,7 +2343,7 @@ void IntraCoulombPotential::calculateCoulombForce(
                                              
                                               ((cnrg-shift_coul) * dscl_coul);
                             
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                 }
@@ -2384,7 +2384,7 @@ void IntraCoulombPotential::calculateCoulombForce(
                                              
                                           distmat[j].direction();
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         
@@ -2422,7 +2422,7 @@ void IntraCoulombPotential::calculateCoulombForce(
                                              
                                           distmat[j].direction();
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         
@@ -2494,7 +2494,7 @@ void IntraCoulombPotential::calculateCoulombForce(
                                              
                                                 ((cnrg-shift_coul) * dscl_coul);
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         
@@ -2540,7 +2540,7 @@ void IntraCoulombPotential::calculateCoulombForce(
                                              
                                               ((cnrg-shift_coul) * dscl_coul);
                             
-                            total_force -= cforce;
+                            total_force += cforce;
                         }
                     }
                 }
@@ -2581,7 +2581,7 @@ void IntraCoulombPotential::calculateCoulombForce(
                                              
                                           distmat[j].direction();
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         
@@ -2619,7 +2619,7 @@ void IntraCoulombPotential::calculateCoulombForce(
                                              
                                           distmat[j].direction();
 
-                        total_force -= cforce;
+                        total_force += cforce;
                     }
                 }
                         

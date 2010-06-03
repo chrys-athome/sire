@@ -118,8 +118,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 }
 
 /** Null constructor */
-RigidBodyMC::RigidBodyMC() 
-            : ConcreteProperty<RigidBodyMC,MonteCarlo>(),
+RigidBodyMC::RigidBodyMC(const PropertyMap &map) 
+            : ConcreteProperty<RigidBodyMC,MonteCarlo>(map),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
               sync_trans(false), sync_rot(false), common_center(false)
 {
@@ -127,8 +127,8 @@ RigidBodyMC::RigidBodyMC()
 }
 
 /** Construct a move that moves molecules returned by the sampler 'sampler' */
-RigidBodyMC::RigidBodyMC(const Sampler &sampler)
-            : ConcreteProperty<RigidBodyMC,MonteCarlo>(), 
+RigidBodyMC::RigidBodyMC(const Sampler &sampler, const PropertyMap &map)
+            : ConcreteProperty<RigidBodyMC,MonteCarlo>(map), 
               smplr(sampler),
               adel( 0.15 * angstrom ),
               rdel( 15 * degrees ),
@@ -141,8 +141,9 @@ RigidBodyMC::RigidBodyMC(const Sampler &sampler)
 /** Construct a move that moves molecule views from the molecule group 'molgroup',
     selecting views randomly, with each view having an equal chance of
     being chosen */
-RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup)
-            : ConcreteProperty<RigidBodyMC,MonteCarlo>(), 
+RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup, 
+                         const PropertyMap &map)
+            : ConcreteProperty<RigidBodyMC,MonteCarlo>(map), 
               smplr( UniformSampler(molgroup) ),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
               sync_trans(false), sync_rot(false), common_center(false)
@@ -547,8 +548,7 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
     
     try
     {
-        PropertyMap map;
-        map.set("coordinates", this->coordinatesProperty());
+        const PropertyMap &map = Move::propertyMap();
             
         for (int i=0; i<nmoves; ++i)
         {

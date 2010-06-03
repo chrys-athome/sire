@@ -572,8 +572,13 @@ void QMPotential::calculateForce(const QMPotential::Molecules &molecules,
                                  ForceTable &forcetable, 
                                  double scale_force) const
 {
-    throw SireError::incomplete_code( QObject::tr(
-        "Need to write the code to calculate QM forces!!!"), CODELOC );
+    if (scale_force == 0)
+        return;
+
+    //map all of the molecules so that they are in this space
+    QMPotential::Molecules mapped_qmmols = QMPotential::mapIntoSpace(molecules);
+    
+    quantumProgram().calculateForce(mapped_qmmols, forcetable, scale_force);
 }
                     
 /** Calculate the QM forces on the molecules in 'molecules' and add them 
@@ -581,9 +586,9 @@ void QMPotential::calculateForce(const QMPotential::Molecules &molecules,
     scaling constant 'scale_force') */
 void QMPotential::calculateForce(const QMPotential::Molecules &molecules, 
                                  ForceTable &forcetable,
-                                 const Symbol &symbol, 
+                                 const Symbol &symbol,
                                  const QMPotential::Components &components,
-                                 double scale_force)
+                                 double scale_force) const
 {
     if (symbol == components.total())
         this->calculateForce(molecules, forcetable, scale_force);
@@ -613,14 +618,81 @@ void QMPotential::calculateEnergy(const QMPotential::Molecules &molecules,
     nrg += Energy( scale_energy * (qmnrg - zero_energy) );
 }
 
+/** Calculate the fields on the atoms */
+void QMPotential::calculateField(const QMPotential::Molecules &molecules,
+                                 FieldTable &fieldtable, const SireFF::Probe &probe,
+                                 double scale_field) const
+{
+    if (scale_field == 0)
+        return;
+
+    //map all of the molecules so that they are in this space
+    QMPotential::Molecules mapped_qmmols = QMPotential::mapIntoSpace(molecules);
+    
+    quantumProgram().calculateField(mapped_qmmols, fieldtable, probe, scale_field);
+}
+
+/** Calculate the fields on the atoms */
+void QMPotential::calculateField(const QMPotential::Molecules &molecules,
+                                 FieldTable &fieldtable, const SireFF::Probe &probe,
+                                 const Symbol &symbol, 
+                                 const QMPotential::Components &components,
+                                 double scale_field) const
+{
+    if (symbol == components.total())
+        this->calculateField(molecules, fieldtable, probe, scale_field);
+        
+    else
+        throw SireFF::missing_component( QObject::tr(
+            "There is no field component in potential %1 - available "
+            "components are %2.")
+                .arg(this->what())
+                .arg(components.total().toString()), CODELOC );
+}
+
+/** Calculate the potentials on the atoms */
+void QMPotential::calculatePotential(const QMPotential::Molecules &molecules,
+                                     PotentialTable &pottable, 
+                                     const SireFF::Probe &probe,
+                                     double scale_potential) const
+{
+    if (scale_potential == 0)
+        return;
+
+    //map all of the molecules so that they are in this space
+    QMPotential::Molecules mapped_qmmols = QMPotential::mapIntoSpace(molecules);
+    
+    quantumProgram().calculatePotential(mapped_qmmols, pottable, probe, scale_potential);
+}
+
+/** Calculate the potentials on the atoms */
+void QMPotential::calculatePotential(const QMPotential::Molecules &molecules,
+                                     PotentialTable &pottable, 
+                                     const SireFF::Probe &probe,
+                                     const Symbol &symbol, 
+                                     const QMPotential::Components &components,
+                                     double scale_potential) const
+{
+    if (symbol == components.total())
+        this->calculatePotential(molecules, pottable, probe, scale_potential);
+        
+    else
+        throw SireFF::missing_component( QObject::tr(
+            "There is no potential component in potential %1 - available "
+            "components are %2.")
+                .arg(this->what())
+                .arg(components.total().toString()), CODELOC );
+}
+
 /** Return the command file that would be used to calculate the forces on
     the molecules in 'molecules' */
-QString QMPotential::forceCommandFile(const QMPotential::Molecules &molecules) const
+QString QMPotential::forceCommandFile(const QMPotential::Molecules &molecules,
+                                      const ForceTable &forcetable) const
 {
     //map all of the molecules so that they are in this space
     Molecules mapped_mols = this->mapIntoSpace(molecules);
 
-    return qmprog->forceCommandFile(mapped_mols);
+    return qmprog->forceCommandFile(mapped_mols, forcetable);
 }
 
 /** Return the command file that would be used to calculate the energy of
@@ -631,4 +703,26 @@ QString QMPotential::energyCommandFile(const QMPotential::Molecules &molecules) 
     Molecules mapped_mols = this->mapIntoSpace(molecules);
 
     return qmprog->energyCommandFile(mapped_mols);
+}
+    
+/** Return the command file that would be used to calculate the field
+    for the passed molecules, if they are in the passed fieldtable */
+QString QMPotential::fieldCommandFile(const Molecules &molecules,
+                                      const FieldTable &fieldtable,
+                                      const SireFF::Probe &probe) const
+{
+    Molecules mapped_mols = this->mapIntoSpace(molecules);
+    
+    return qmprog->fieldCommandFile(mapped_mols, fieldtable, probe);
+}
+
+/** Return the command file that would be used to calculate the potential
+    for the passed molecules, if they are in the passed potential table */
+QString QMPotential::potentialCommandFile(const Molecules &molecules,
+                                          const PotentialTable &pottable,
+                                          const SireFF::Probe &probe) const
+{
+    Molecules mapped_mols = this->mapIntoSpace(molecules);
+    
+    return qmprog->potentialCommandFile(mapped_mols, pottable, probe);
 }

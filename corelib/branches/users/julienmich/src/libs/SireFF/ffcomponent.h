@@ -43,10 +43,14 @@ SIRE_BEGIN_HEADER
 namespace SireFF
 {
 class FFComponent;
+class SingleComponent;
 }
 
 QDataStream& operator<<(QDataStream&, const SireFF::FFComponent&);
 QDataStream& operator>>(QDataStream&, SireFF::FFComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireFF::SingleComponent&);
+QDataStream& operator>>(QDataStream&, SireFF::SingleComponent&);
 
 namespace SireFF
 {
@@ -169,9 +173,58 @@ private:
     double nrg;
 };
 
+typedef ComponentEnergy<SingleComponent> SingleEnergy;
+
+/** This class represents the single component of a single component forcefield.
+    This is provides a simple default class for simple, single-component
+    forcefields
+    
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT SingleComponent : public FFComponent
+{
+public:
+    SingleComponent(const FFName &ffname = FFName());
+    SingleComponent(const FFName &ffname, const QString &suffix);
+    
+    SingleComponent(const SireCAS::Symbol &symbol);
+    
+    SingleComponent(const SingleComponent &other);
+    
+    ~SingleComponent();
+    
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return SingleComponent::typeName();
+    }
+    
+    SingleComponent* clone() const
+    {
+        return new SingleComponent(*this);
+    }
+    
+    const SingleComponent& total() const
+    {
+        return *this;
+    }
+
+    void setEnergy(FF &ff, const SingleEnergy &nrg) const;
+    void changeEnergy(FF &ff, const SingleEnergy &nrg) const;
+    
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
+};
+
 } // end of namespace SireFF
 
-SIRE_EXPOSE_CLASS( FFComponent )
+Q_DECLARE_METATYPE( SireFF::SingleComponent )
+
+SIRE_EXPOSE_CLASS( SireFF::FFComponent )
+SIRE_EXPOSE_CLASS( SireFF::SingleComponent )
 
 SIRE_END_HEADER
 

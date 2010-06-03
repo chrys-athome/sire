@@ -42,6 +42,7 @@
 #include "SireMol/bondid.h"
 
 #include "SireUnits/dimensions.h"
+#include "SireUnits/units.h"
 #include "SireUnits/temperature.h"
 
 #include "SireStream/datastream.h"
@@ -334,7 +335,7 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	  //this will randomly select one molecule
 	  tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
 	  
-	  const PartialMolecule &oldmol = mol_and_bias.get<0>();
+	  PartialMolecule oldmol = mol_and_bias.get<0>();
 	  old_bias = mol_and_bias.get<1>();
 	
 	  const Connectivity &connectivity = oldmol.property( map["connectivity"] ).asA<Connectivity>();

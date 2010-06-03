@@ -84,7 +84,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
 }
 
 /** Construct using the supplied random number generator */
-MonteCarlo::MonteCarlo() : Move(), naccept(0), nreject(0)
+MonteCarlo::MonteCarlo(const PropertyMap &map) : Move(map), naccept(0), nreject(0)
 {}
 
 /** Copy constructor */

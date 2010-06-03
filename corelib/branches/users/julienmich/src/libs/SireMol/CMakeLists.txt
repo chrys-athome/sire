@@ -18,6 +18,7 @@ set ( SIREMOL_HEADERS
       atomcutting.h
       atomeditor.h
       atomelements.h
+      atomenergies.h
       atomforces.h
       atomid.h
       atomidcombos.h

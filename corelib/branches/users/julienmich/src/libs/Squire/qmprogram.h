@@ -33,6 +33,8 @@
 
 #include "SireMol/atomcharges.h"
 
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace Squire
@@ -57,6 +59,8 @@ namespace Squire
 
 using SireMol::AtomCharges;
 using SireMol::Molecule;
+
+using SireMaths::Vector;
 
 class LatticeCharges;
 
@@ -125,6 +129,44 @@ protected:
     virtual double calculateEnergy(const QMPotential::Molecules &molecules,
                                    const LatticeCharges &lattice_charges,
                                    int ntries=5) const;
+
+    virtual void calculateForce(const QMPotential::Molecules &molecules,
+                                ForceTable &forcetable,
+                                double scale_force,
+                                int ntries=5) const;
+
+    virtual QVector<Vector> calculateForce(const QMPotential::Molecules &molecules,
+                                           const LatticeCharges &lattice_charges,
+                                           ForceTable &forcetable,
+                                           double scale_force,
+                                           int ntries=5) const;
+
+    virtual void calculateField(const QMPotential::Molecules &molecules,
+                                FieldTable &fieldtable,
+                                const SireFF::Probe &probe,
+                                double scale_field,
+                                int ntries=5) const;
+
+    virtual QVector<Vector> calculateField(const QMPotential::Molecules &molecules,
+                                           const LatticeCharges &lattice_charges,
+                                           FieldTable &fieldtable,
+                                           const SireFF::Probe &probe,
+                                           double scale_field,
+                                           int ntries=5) const;
+
+    virtual void calculatePotential(const QMPotential::Molecules &molecules,
+                                    PotentialTable &pottable,
+                                    const SireFF::Probe &probe,
+                                    double scale_potential,
+                                    int ntries=5) const;
+
+    virtual QVector<SireUnits::Dimension::MolarEnergy> 
+                            calculatePotential(const QMPotential::Molecules &molecules,
+                                               const LatticeCharges &lattice_charges,
+                                               PotentialTable &pottable,
+                                               const SireFF::Probe &probe,
+                                               double scale_potential,
+                                               int ntries=5) const;
     
     /** Return the contents of the command file that would be used
         to run the QM program to calculate energies */
@@ -135,10 +177,34 @@ protected:
     
     /** Return the contents of the command file that would be used
         to run the QM program to calculate forces */
-    virtual QString forceCommandFile(const QMPotential::Molecules &molecules) const=0;
+    virtual QString forceCommandFile(const QMPotential::Molecules &molecules,
+                                     const ForceTable &forcetable) const=0;
 
     virtual QString forceCommandFile(const QMPotential::Molecules &molecules,
-                                     const LatticeCharges &lattice_charges) const;
+                                     const LatticeCharges &lattice_charges,
+                                     const ForceTable &forcetable) const;
+
+    /** Return the contents of the command file that would be used
+        to run the QM program to calculate fields */
+    virtual QString fieldCommandFile(const QMPotential::Molecules &molecules,
+                                     const FieldTable &fieldtable,
+                                     const SireFF::Probe &probe) const=0;
+
+    virtual QString fieldCommandFile(const QMPotential::Molecules &molecules,
+                                     const LatticeCharges &lattice_charges,
+                                     const FieldTable &fieldtable,
+                                     const SireFF::Probe &probe) const;
+
+    /** Return the contents of the command file that would be used
+        to run the QM program to calculate potentials */
+    virtual QString potentialCommandFile(const QMPotential::Molecules &molecules,
+                                         const PotentialTable &pottable,
+                                         const SireFF::Probe &probe) const=0;
+
+    virtual QString potentialCommandFile(const QMPotential::Molecules &molecules,
+                                         const LatticeCharges &lattice_charges,
+                                         const PotentialTable &pottable,
+                                         const SireFF::Probe &probe) const;
 };
 
 /** This is the null QM program that returns zero energy and force */
@@ -179,13 +245,29 @@ protected:
                            int ntries=5) const;
     
     QString energyCommandFile(const QMPotential::Molecules &molecules) const;
-    QString forceCommandFile(const QMPotential::Molecules &molecules) const;
+    QString forceCommandFile(const QMPotential::Molecules &molecules,
+                             const ForceTable &forcetable) const;
+    QString fieldCommandFile(const QMPotential::Molecules &molecules,
+                             const FieldTable &fieldtable,
+                             const SireFF::Probe &probe) const;
+    QString potentialCommandFile(const QMPotential::Molecules &molecules,
+                                 const PotentialTable &pottable,
+                                 const SireFF::Probe &probe) const;
 
     QString energyCommandFile(const QMPotential::Molecules &molecules,
                               const LatticeCharges &lattice_charges) const;
 
     QString forceCommandFile(const QMPotential::Molecules &molecules,
-                             const LatticeCharges &lattice_charges) const;
+                             const LatticeCharges &lattice_charges,
+                             const ForceTable &forcetable) const;
+    QString fieldCommandFile(const QMPotential::Molecules &molecules,
+                             const LatticeCharges &lattice_charges,
+                             const FieldTable &fieldtable,
+                             const SireFF::Probe &probe) const;
+    QString potentialCommandFile(const QMPotential::Molecules &molecules,
+                                 const LatticeCharges &lattice_charges,
+                                 const PotentialTable &pottable,
+                                 const SireFF::Probe &probe) const;
 };
 
 typedef SireBase::PropPtr<QMProgram> QMProgPtr;

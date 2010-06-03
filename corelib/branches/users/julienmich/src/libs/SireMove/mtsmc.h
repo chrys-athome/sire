@@ -71,17 +71,28 @@ friend QDataStream& ::operator<<(QDataStream&, const MTSMC&);
 friend QDataStream& ::operator>>(QDataStream&, MTSMC&);
 
 public:
-    MTSMC();
+    MTSMC(const PropertyMap &map = PropertyMap());
 
-    MTSMC(const Moves &fastmoves, int nfastmoves=1);
-    MTSMC(const Moves &fastmoves, const Symbol &fastcomponent, 
-          int nfastmoves=1);
-    
-    MTSMC(const Moves &fastmoves, const Constraints &slow_constraints,
-          int nfastmoves=1);
+    MTSMC(const Moves &fastmoves, const PropertyMap &map = PropertyMap());
+    MTSMC(const Moves &fastmoves, int nfastmoves,
+          const PropertyMap &map = PropertyMap());
           
     MTSMC(const Moves &fastmoves, const Symbol &fastcomponent,
-          const Constraints &slow_constraints, int nfastmoves=1);
+          const PropertyMap &map = PropertyMap());
+    MTSMC(const Moves &fastmoves, const Symbol &fastcomponent, 
+          int nfastmoves, const PropertyMap &map = PropertyMap());
+    
+    MTSMC(const Moves &fastmoves, const Constraints &slow_constraints,
+          const PropertyMap &map = PropertyMap());
+    MTSMC(const Moves &fastmoves, const Constraints &slow_constraints,
+          int nfastmoves, const PropertyMap &map = PropertyMap());
+          
+    MTSMC(const Moves &fastmoves, const Symbol &fastcomponent,
+          const Constraints &slow_constraints,
+          const PropertyMap &map = PropertyMap());
+    MTSMC(const Moves &fastmoves, const Symbol &fastcomponent,
+          const Constraints &slow_constraints, int nfastmoves,
+          const PropertyMap &map = PropertyMap());
     
     MTSMC(const MTSMC &other);
     

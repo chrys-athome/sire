@@ -156,7 +156,7 @@ DistanceComponent& DistanceComponent::operator=(const DistanceComponent &other)
 /** Comparison operator */
 bool DistanceComponent::operator==(const DistanceComponent &other) const
 {
-    return this != &other or
+    return this == &other or
            (p0 == other.p0 and p1 == other.p1 and 
             GeometryComponent::operator==(other));
 }
@@ -393,7 +393,7 @@ DoubleDistanceComponent::operator=(const DoubleDistanceComponent &other)
 /** Comparison operator */
 bool DoubleDistanceComponent::operator==(const DoubleDistanceComponent &other) const
 {
-    return this != &other or
+    return this == &other or
            (p0 == other.p0 and p1 == other.p1 and 
             p2 == other.p2 and p3 == other.p3 and
             GeometryComponent::operator==(other));
@@ -700,7 +700,7 @@ TripleDistanceComponent::operator=(const TripleDistanceComponent &other)
 /** Comparison operator */
 bool TripleDistanceComponent::operator==(const TripleDistanceComponent &other) const
 {
-    return this != &other or
+    return this == &other or
            (p0 == other.p0 and p1 == other.p1 and 
             p2 == other.p2 and p3 == other.p3 and
             p4 == other.p4 and p5 == other.p5 and

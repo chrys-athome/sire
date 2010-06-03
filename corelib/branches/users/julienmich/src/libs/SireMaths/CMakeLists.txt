@@ -205,10 +205,13 @@ set ( SIREMATHS_HEADERS
       triangle.h
       trigmatrix.h
       vector.h
+      vector3d.hpp
 
       sire_blas.h
       sire_lapack.h
       sire_linpack.h
+
+      third_party/eig3/eig3.cpp
     )
 
 # Define the sources in SireMaths

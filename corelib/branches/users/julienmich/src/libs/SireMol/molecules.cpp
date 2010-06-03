@@ -196,11 +196,22 @@ ViewsOfMol Molecules::addIfUnique(const ViewsOfMol &molviews)
     exist in this set */
 void Molecules::add(const Molecules &molecules)
 {
-    for (Molecules::const_iterator it = molecules.mols.constBegin();
-         it != molecules.mols.constEnd();
-         ++it)
+    if (this->isEmpty())
     {
-        this->add(it.value());
+        this->operator=(molecules);
+    }
+    else if (molecules.isEmpty())
+    {
+        return;
+    }
+    else
+    {
+        for (Molecules::const_iterator it = molecules.mols.constBegin();
+             it != molecules.mols.constEnd();
+             ++it)
+        {
+            this->add(it.value());
+        }
     }
 }
 
@@ -435,6 +446,13 @@ bool Molecules::update(const MoleculeData &moldata)
     }
     else
         return false;
+}
+
+/** Reserve enough space for 'nmolecules' molecules. This
+    will reserve the memory so that reallocations are minimised */
+void Molecules::reserve(int nmolecules)
+{
+    mols.reserve(nmolecules);
 }
 
 /** Update the views of the molecule viewed by 'molview' 

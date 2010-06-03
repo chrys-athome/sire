@@ -78,6 +78,7 @@ using SireMaths::RanGenerator;
 using SireSystem::System;
 
 using SireBase::PropertyName;
+using SireBase::PropertyMap;
 
 using SireMol::PartialMolecule;
 using SireMol::Molecules;
@@ -93,7 +94,7 @@ friend QDataStream& ::operator<<(QDataStream&, const Move&);
 friend QDataStream& ::operator>>(QDataStream&, Move&);
 
 public:
-    Move();
+    Move(const PropertyMap &map = PropertyMap());
     
     Move(const Move &other);
     
@@ -126,10 +127,12 @@ public:
     virtual void setEnergyComponent(const Symbol &component);
 
     const PropertyName& coordinatesProperty() const;
-    void setCoordinatesProperty(const PropertyName &coordsproperty);
-
     const PropertyName& spaceProperty() const;
-    void setSpaceProperty(const PropertyName &spaceproperty);
+
+    virtual void setCoordinatesProperty(const PropertyName &coords_property);
+    virtual void setSpaceProperty(const PropertyName &space_property);
+
+    const PropertyMap& propertyMap() const;
 
     virtual Ensemble ensemble() const=0;
 
@@ -161,6 +164,8 @@ protected:
     bool operator==(const Move &other) const;
     bool operator!=(const Move &other) const;
     
+    void setProperty(const QString &property, const PropertyName &value);
+    
     virtual void _pvt_setTemperature(
                             const SireUnits::Dimension::Temperature &temperature);
                             
@@ -184,6 +189,9 @@ private:
         This is necessary as we may have to map the molecules back into
         the space at the end of the move */
     PropertyName spaceproperty;
+
+    /** The property map used for this move */
+    PropertyMap map;
 };
 
 /** This is a null move - it doesn't change the system at all! */

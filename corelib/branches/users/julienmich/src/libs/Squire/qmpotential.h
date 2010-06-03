@@ -64,6 +64,14 @@ QDataStream& operator>>(QDataStream&, Squire::QMComponent&);
 namespace SireFF
 {
 class ForceTable;
+class FieldTable;
+class PotentialTable;
+class Probe;
+}
+
+namespace SireMM
+{
+class CoulombProbe;
 }
 
 namespace SireCAS
@@ -88,6 +96,9 @@ using SireVol::Space;
 using SireVol::SpacePtr;
 
 using SireFF::ForceTable;
+using SireFF::FieldTable;
+using SireFF::PotentialTable;
+using SireFF::Probe;
 
 class QMComponent;
 class QMProgram;
@@ -188,6 +199,8 @@ public:
     typedef Energy::Components Components;
     typedef ElementParameterName3D ParameterNames;
     
+    typedef SireMM::CoulombProbe Probe;
+    
     typedef SireMol::Element Parameter;
     typedef SireFF::detail::AtomicParameters3D<Parameter> Parameters;
     
@@ -263,13 +276,47 @@ public:
                         ForceTable &forcetable,
                         const Symbol &symbol, 
                         const Components &components,
-                        double scale_force=1);
+                        double scale_force=1) const;
+
+    void calculatePotential(const Molecules &molecules,
+                            PotentialTable &pottable,
+                            const SireFF::Probe &probe,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const Molecules &molecules,
+                            PotentialTable &pottable,
+                            const SireFF::Probe &probe,
+                            const Symbol &symbol,
+                            const Components &components,
+                            double scale_potential=1) const;
+
+    void calculateField(const Molecules &molecules,
+                        FieldTable &fieldtable,
+                        const SireFF::Probe &probe,
+                        double scale_field=1) const;
+
+    void calculateField(const Molecules &molecules,
+                        FieldTable &fieldtable,
+                        const SireFF::Probe &probe,
+                        const Symbol &symbol,
+                        const Components &components,
+                        double scale_field=1) const;
     
     void calculateEnergy(const Molecules &molecules, Energy &nrg,
                          double scale_energy=1) const;
 
-    QString forceCommandFile(const Molecules &molecules) const;
     QString energyCommandFile(const Molecules &molecules) const;
+
+    QString forceCommandFile(const Molecules &molecules,
+                             const ForceTable &forcetable) const;
+    
+    QString fieldCommandFile(const Molecules &molecules,
+                             const FieldTable &fieldtable,
+                             const SireFF::Probe &probe) const;
+
+    QString potentialCommandFile(const Molecules &molecules,
+                                 const PotentialTable &pottable,
+                                 const SireFF::Probe &probe) const;
 
 protected:
     virtual void changedPotential()=0;

@@ -106,6 +106,7 @@ const Dimension::Angle circumference = revolution;
 /////////////////////////////////////////////////
 
 const Dimension::Length angstrom(1);
+const Dimension::Length angstroms = angstrom;
 
 const Dimension::Length picometer( 0.01 * angstrom );
 const Dimension::Length nanometer( 1000 * picometer );
@@ -115,6 +116,14 @@ const Dimension::Length centimeter( 10 * millimeter );
 const Dimension::Length meter( 100 * centimeter );
 const Dimension::Length kilometer( 1000 * meter );
 
+const Dimension::Length picometers = picometer;
+const Dimension::Length nanometers = nanometer;
+const Dimension::Length micrometers = micrometer;
+const Dimension::Length millimeters = millimeter;
+const Dimension::Length centimeters = centimeter;
+const Dimension::Length meters = meter;
+const Dimension::Length kilometers = kilometer;
+
 //http://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0|search_for=bohr
 const Dimension::Length bohr_radii( 0.52917720859 * angstrom );
 
@@ -122,6 +131,11 @@ const Dimension::Length inch( 2.54 * centimeter );
 const Dimension::Length foot( 12 * inch );
 const Dimension::Length yard( 3 * foot );
 const Dimension::Length mile( 1760 * yard );
+
+const Dimension::Length inches = inch;
+const Dimension::Length feet = foot;
+const Dimension::Length yards = yard;
+const Dimension::Length miles = mile;
 
 /////////////////////////////////////////////////
 // Units of area. Internal unit = Angstroms^2  //
@@ -227,6 +241,19 @@ const Dimension::Time hour( 60 * minute );
 const Dimension::Time day( 24 * hour );
 const Dimension::Time week( 7 * day );
 const Dimension::Time fortnight( 2 * week );
+
+/////////////////////////////////////////////////////////////
+// Units of velocity. Internal unit = Angstrom / AKMA time //
+/////////////////////////////////////////////////////////////
+
+const Dimension::Velocity akma_velocity(1);
+
+const Dimension::Velocity angstroms_per_fs( angstrom / femtosecond );
+const Dimension::Velocity meters_per_second( meter / second );
+const Dimension::Velocity kilometers_per_hour( kilometer / hour );
+const Dimension::Velocity miles_per_hour( mile / hour );
+const Dimension::Velocity mph = miles_per_hour;
+const Dimension::Velocity kph = kilometers_per_hour;
 
 //////////////////////////////////////////////////////////
 // Units of force. Internal units = kcal mol-1 A-1      //

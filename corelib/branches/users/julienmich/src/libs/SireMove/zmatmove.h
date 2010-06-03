@@ -72,10 +72,12 @@ friend QDataStream& ::operator<<(QDataStream&, const ZMatMove&);
 friend QDataStream& ::operator>>(QDataStream&, ZMatMove&);
 
 public:
-    ZMatMove();
+    ZMatMove(const PropertyMap &map = PropertyMap());
     
-    ZMatMove(const MoleculeGroup &molgroup);
-    ZMatMove(const Sampler &sampler);
+    ZMatMove(const MoleculeGroup &molgroup,
+             const PropertyMap &map = PropertyMap());
+    ZMatMove(const Sampler &sampler,
+             const PropertyMap &map = PropertyMap());
     
     ZMatMove(const ZMatMove &other);
     
@@ -97,6 +99,7 @@ public:
     const MoleculeGroup& moleculeGroup() const;
 
     const PropertyName& zmatrixProperty() const;
+
     void setZMatrixProperty(const PropertyName &property);
 
     void setSynchronisedMotion(bool on);

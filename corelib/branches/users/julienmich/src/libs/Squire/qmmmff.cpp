@@ -29,6 +29,13 @@
 #include "qmmmff.h"
 #include "qmprogram.h"
 
+#include "SireMM/cljprobe.h"
+
+#include "SireFF/forcetable.h"
+#include "SireFF/fieldtable.h"
+#include "SireFF/potentialtable.h"
+
+#include "SireFF/errors.h"
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -470,74 +477,108 @@ QString QMMMFF::energyCommandFile() const
 
 /** Return the command file that would be used to calculate the forces
     on the molecules in this forcefield */
-QString QMMMFF::forceCommandFile() const
+QString QMMMFF::forceCommandFile(const ForceTable &forcetable) const
 {
-    return QMMMElecEmbedPotential::forceCommandFile(qmmols, mmmols);
+    return QMMMElecEmbedPotential::forceCommandFile(qmmols, mmmols, forcetable);
+}
+
+/** Return the command file that would be used to calculate the potential
+    of the molecules in this forcefield */
+QString QMMMFF::potentialCommandFile(const PotentialTable &potentialtable,
+                                     const SireFF::Probe &probe) const
+{
+    return QMMMElecEmbedPotential::potentialCommandFile(qmmols, mmmols, 
+                                                        potentialtable, probe);
+}
+
+/** Return the command file that would be used to calculate the potential
+    of the molecules in this forcefield */
+QString QMMMFF::potentialCommandFile(const PotentialTable &potentialtable) const
+{
+    return QMMMFF::potentialCommandFile(potentialtable, QMMMElecEmbedPotential::Probe());
+}
+
+/** Return the command file that would be used to calculate the fields
+    of the molecules in this forcefield */
+QString QMMMFF::fieldCommandFile(const FieldTable &fieldtable,
+                                 const SireFF::Probe &probe) const
+{
+    return QMMMElecEmbedPotential::fieldCommandFile(qmmols, mmmols, fieldtable, probe);
+}
+
+/** Return the command file that would be used to calculate the fields
+    of the molecules in this forcefield */
+QString QMMMFF::fieldCommandFile(const FieldTable &fieldtable) const
+{
+    return QMMMFF::fieldCommandFile(fieldtable, QMMMElecEmbedPotential::Probe());
+}
+
+/** Calculate the field from this forcefield in the passed fieldtable */
+void QMMMFF::field(FieldTable &fieldtable, const SireFF::Probe &probe, double scale_field)
+{
+    if (scale_field != 0)
+        QMMMElecEmbedPotential::calculateField(qmmols, mmmols, fieldtable, 
+                                               probe, scale_field);
+}
+
+/** Calculate the field from this forcefield in the passed fieldtable */
+void QMMMFF::field(FieldTable &fieldtable, const Symbol &component,
+                   const SireFF::Probe &probe, double scale_field)
+{
+    if (scale_field != 0)
+        QMMMElecEmbedPotential::calculateField(qmmols, mmmols, fieldtable, probe,
+                                               component, this->components(),
+                                               scale_field);
+}
+
+/** Calculate the potential from this forcefield in the passed potentialtable */
+void QMMMFF::potential(PotentialTable &potentialtable, const SireFF::Probe &probe,
+                       double scale_potential)
+{
+    if (scale_potential != 0)
+        QMMMElecEmbedPotential::calculatePotential(qmmols, mmmols, potentialtable, 
+                                                   probe, scale_potential);
+}
+
+/** Calculate the potential from this forcefield in the passed potentialtable */
+void QMMMFF::potential(PotentialTable &potentialtable, const Symbol &component,
+                       const SireFF::Probe &probe, double scale_potential)
+{
+    if (scale_potential != 0)
+        QMMMElecEmbedPotential::calculatePotential(qmmols, mmmols, potentialtable, 
+                                                   probe, component, 
+                                                   this->components(), scale_potential);
+}
+
+/** Calculate the field from this forcefield in the passed fieldtable */
+void QMMMFF::field(FieldTable &fieldtable, double scale_field)
+{
+    QMMMFF::field(fieldtable, QMMMElecEmbedPotential::Probe(), scale_field);
+}
+
+/** Calculate the field from this forcefield in the passed fieldtable */
+void QMMMFF::field(FieldTable &fieldtable, const Symbol &component,
+                   double scale_field)
+{
+    QMMMFF::field(fieldtable, component, QMMMElecEmbedPotential::Probe(), 
+                  scale_field);
+}
+           
+/** Calculate the potential from this forcefield in the passed potentialtable */
+void QMMMFF::potential(PotentialTable &potentialtable, double scale_potential)
+{
+    QMMMFF::potential(potentialtable, QMMMElecEmbedPotential::Probe(), scale_potential);
+}
+
+/** Calculate the potential from this forcefield in the passed potentialtable */
+void QMMMFF::potential(PotentialTable &potentialtable, const Symbol &component,
+                       double scale_potential)
+{
+    QMMMFF::potential(potentialtable, component, QMMMElecEmbedPotential::Probe(), 
+                      scale_potential);
 }
 
 const char* QMMMFF::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<QMMMFF>() );
-}
-
-void QMMMFF::field(FieldTable &fieldtable, double scale_field)
-{
-    throw SireError::incomplete_code( QObject::tr(
-                "The code to calculate QM/MM fields has yet to be written..."),
-                    CODELOC );
-}
-
-void QMMMFF::field(FieldTable &fieldtable, const Symbol &component,
-                   double scale_field)
-{
-    throw SireError::incomplete_code( QObject::tr(
-                "The code to calculate QM/MM fields has yet to be written..."),
-                    CODELOC );
-}
-           
-void QMMMFF::potential(PotentialTable &potentialtable, double scale_potential)
-{
-    throw SireError::incomplete_code( QObject::tr(
-                "The code to calculate QM/MM potentials has yet to be written..."),
-                    CODELOC );
-}
-
-void QMMMFF::potential(PotentialTable &potentialtable, const Symbol &component,
-                       double scale_potential)
-{
-    throw SireError::incomplete_code( QObject::tr(
-                "The code to calculate QM/MM potentials has yet to be written..."),
-                    CODELOC );
-}
-
-void QMMMFF::field(FieldTable &fieldtable, const SireFF::Probe &probe, 
-                   double scale_field)
-{
-    throw SireError::incomplete_code( QObject::tr(
-                "The code to calculate QM/MM fields has yet to be written..."),
-                    CODELOC );
-}
-
-void QMMMFF::field(FieldTable &fieldtable, const Symbol &component,
-                   const SireFF::Probe &probe, double scale_field)
-{
-    throw SireError::incomplete_code( QObject::tr(
-                "The code to calculate QM/MM fields has yet to be written..."),
-                    CODELOC );
-}
-
-void QMMMFF::potential(PotentialTable &potentialtable, const SireFF::Probe &probe,
-                       double scale_potential)
-{
-    throw SireError::incomplete_code( QObject::tr(
-                "The code to calculate QM/MM potentials has yet to be written..."),
-                    CODELOC );
-}
-
-void QMMMFF::potential(PotentialTable &potentialtable, const Symbol &component,
-                       const SireFF::Probe &probe, double scale_potential)
-{
-    throw SireError::incomplete_code( QObject::tr(
-                "The code to calculate QM/MM potentials has yet to be written..."),
-                    CODELOC );
 }

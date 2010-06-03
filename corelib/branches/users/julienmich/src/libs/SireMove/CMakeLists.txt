@@ -11,10 +11,12 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMove
 set ( SIREMOVE_HEADERS
+      dlmrigidbody.h
       dynamics.h
       ensemble.h
       errors.h
       gibbsmove.h
+      hybridmc.h
       integrator.h
       integratorworkspace.h
       moldeleter.h
@@ -26,6 +28,7 @@ set ( SIREMOVE_HEADERS
       moves.h
       mtsmc.h
       prefsampler.h
+      rbworkspace.h
       repexmove.h
       replica.h
       replicas.h
@@ -65,10 +68,12 @@ set ( SIREMOVE_SOURCES
 
       register_siremove.cpp
 
+      dlmrigidbody.cpp
       dynamics.cpp
       ensemble.cpp
       errors.cpp
       gibbsmove.cpp
+      hybridmc.cpp
       integrator.cpp
       integratorworkspace.cpp
       moldeleter.cpp
@@ -80,6 +85,7 @@ set ( SIREMOVE_SOURCES
       moves.cpp
       mtsmc.cpp
       prefsampler.cpp
+      rbworkspace.cpp
       repexmove.cpp
       replica.cpp
       replicas.cpp

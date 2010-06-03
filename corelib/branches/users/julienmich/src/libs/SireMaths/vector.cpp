@@ -29,6 +29,7 @@
 #include "vector.h"
 #include "quaternion.h"
 #include "matrix.h"
+#include "nvector.h"
 
 #include "SireBase/quickcopy.hpp"
 
@@ -78,6 +79,21 @@ Vector::Vector( const tuple<double,double,double> &pos )
     sc[0] = pos.get<0>();
     sc[1] = pos.get<1>();
     sc[2] = pos.get<2>();
+}
+
+/** Construct from an NVector */
+Vector::Vector(const NVector &v)
+{
+    if (v.count() != 3)
+        throw SireError::incompatible_error( QObject::tr(
+                "Cannot create a 3D vector from a NVector of size %1.")
+                    .arg(v.count()), CODELOC );
+    
+    const double *d = v.constData();
+                                                    
+    sc[0] = d[0];
+    sc[1] = d[1];
+    sc[2] = d[2];
 }
 
 /** Copy constructor */
@@ -527,7 +543,7 @@ Vector Vector::cross(const Vector &v0, const Vector &v1)
         }
     }
     else
-        return Vector(nx,ny,nz).normalise();
+        return vec.normalise();
 }
 
 /** Return the manhattan length of the vector */

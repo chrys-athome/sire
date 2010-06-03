@@ -78,9 +78,10 @@ friend QDataStream& ::operator<<(QDataStream&, const GibbsMove&);
 friend QDataStream& ::operator>>(QDataStream&, GibbsMove&);
 
 public:
-    GibbsMove();
+    GibbsMove(const PropertyMap &map = PropertyMap());
     
-    GibbsMove(const MGIDsAndMaps &group0, const MGIDsAndMaps &group1);
+    GibbsMove(const MGIDsAndMaps &group0, const MGIDsAndMaps &group1,
+              const PropertyMap &map = PropertyMap());
               
 	GibbsMove(const GibbsMove &other);
     
