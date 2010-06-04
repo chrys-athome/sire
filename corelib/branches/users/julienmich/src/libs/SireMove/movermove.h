@@ -48,14 +48,9 @@ class MoleculeGroup;
 class PartialMolecule;
 class AtomIdx;
 class Connectivity;
-class bondid;
-}
-namespace SireUnits
-{
-namespace Dimension
-{
-class Unit;
-}
+class BondID;
+class AngleID;
+class DihedralID;
 }
 
 namespace SireMove
@@ -67,11 +62,12 @@ class ZMatrixCoords;
 using SireMol::MoleculeGroup;
 using SireMol::PartialMolecule;
 using SireMol::Connectivity;
-using SireMol::bondid;
-using SireUnits::Dimension::Unit;
+using SireMol::BondID;
+using SireMol::AngleID;
+using SireMol::DihedralID;
 
 /** This class implements an intramolecular Monte Carlo move that uses 
-    the mover() method to perturb intramoleculer degrees of freedom and 
+    the mover() method to perturb intramolecular degrees of freedom and 
     that may be applied to a random molecule (or part of a molecule)
     within a MoleculeGroup. It is based on the ZMatMove class.
     
@@ -109,52 +105,30 @@ public:
     const Sampler& sampler() const;
     const MoleculeGroup& moleculeGroup() const;
     
-    /* const PropertyName& zmatrixProperty() const; */
-    /* void setZMatrixProperty(const PropertyName &property);*/
-
-    void setSynchronisedMotion(bool on);
-    void setSynchronisedBonds(bool on);
-    void setSynchronisedAngles(bool on);
-    void setSynchronisedDihedrals(bool on);
-    
-    bool synchronisedMotion() const;
-    bool synchronisedBonds() const;
-    bool synchronisedAngles() const;
-    bool synchronisedDihedrals() const;
-    
     void setGenerator(const RanGenerator &rangenerator);
 
     void move(System &system, int nmoves, bool record_stats=true);
+
+    void setBonds(const QList<BondID> &bonds);
+    void setAngles(const QList<AngleID> &angles);
+    void setDihedrals(const QList<DihedralID> &dihedrals);    
+
+    const QList<BondID>& getBonds(); 
+    const QList<AngleID>& getAngles(); 
+    const QList<DihedralID>& getDihedrals(); 
 
 protected:
     void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
 
 private:
-    /*void move(SireMol::AtomIdx atom, ZMatrixCoords &zmatrix,
-              QHash< SireMol::AtomIdx, boost::tuple<SireUnits::Dimension::Length,
-	      SireUnits::Dimension::Angle,SireUnits::Dimension::Angle> > &deltas);*/
-    void move(SireMol::AtomIdx atom, 
-	      QHash< SireMol::AtomIdx, boost::tuple<SireUnits::Dimension::Length,
-	      SireUnits::Dimension::Angle,SireUnits::Dimension::Angle> > &deltas);    
-
     /** The sampler used to select random molecules for the move */
     SamplerPtr smplr;
-    
-    /** The name of the property that contains the z-matrix */
-    /*PropertyName zmatrix_property;*/
-    
-    /** Whether or not to move equivalent bonds in different
-        molecules by the same amount (equivalent is judged by 
-        AtomIdx) */
-    bool sync_bonds;
-    
-    /** Whether or not to move equivalent angles in different
-        molecules by the same amount */
-    bool sync_angles;
-    
-    /** Whether or not to move equivalent dihedrals in different
-        molecules by the same amount */
-    bool sync_dihedrals;
+    /** The bonds that can be moved */;
+    QList<BondID> bonds;
+    /** The angles that can be moved */;
+    QList<AngleID> angles;
+    /** The dihedrals that can be moved */;
+    QList<DihedralID> dihedrals;    
 };
 
 }

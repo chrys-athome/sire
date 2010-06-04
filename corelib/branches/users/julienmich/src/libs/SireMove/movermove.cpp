@@ -28,7 +28,6 @@
 
 #include "movermove.h"
 
-/*#include "zmatrix.h"*/
 #include "ensemble.h"
 
 #include "SireSystem/system.h"
@@ -40,10 +39,13 @@
 #include "SireMol/atomidx.h"
 #include "SireMol/connectivity.h"
 #include "SireMol/bondid.h"
+#include "SireMol/angleid.h"
+#include "SireMol/dihedralid.h"
 
 #include "SireUnits/dimensions.h"
 #include "SireUnits/units.h"
 #include "SireUnits/temperature.h"
+#include "SireUnits/units.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -67,10 +69,9 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MoverMove &moverm
     
     SharedDataStream sds(ds);
     
-    sds << movermove.smplr << movermove.sync_bonds 
-	<< movermove.sync_angles
-        << movermove.sync_dihedrals
-        << static_cast<const MonteCarlo&>(movermove);
+    sds << movermove.smplr 
+	<< movermove.bonds << movermove.angles << movermove.dihedrals
+	<< static_cast<const MonteCarlo&>(movermove);
     
     return ds;
 }
@@ -78,39 +79,18 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MoverMove &moverm
 /** Extract from a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MoverMove &movermove)
 {
-    VersionID v = readHeader(ds, r_movermove);
-    /*JM I probably do not need multple versions...*/
-    if (v == 2)
-    {
-        SharedDataStream sds(ds);
-        
-        sds >> movermove.smplr >> movermove.sync_bonds 
-	    >> movermove.sync_angles
-            >> movermove.sync_dihedrals
-            >> static_cast<MonteCarlo&>(movermove);
-    }
-    else if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        sds >> movermove.smplr >> static_cast<MonteCarlo&>(movermove);
-            
-        movermove.sync_bonds = false;
-        movermove.sync_angles = false;
-        movermove.sync_dihedrals = false;
-    }
-    else
-        throw version_error(v, "1", r_movermove, CODELOC);
+    SharedDataStream sds(ds);
+    
+    sds >> movermove.smplr 
+	    >> movermove.bonds >> movermove.angles >> movermove.dihedrals 
+	    >> static_cast<MonteCarlo&>(movermove);
         
     return ds;
 }
 
 /** Null constructor */
 MoverMove::MoverMove() 
-         : ConcreteProperty<MoverMove,MonteCarlo>(),
-           /*zmatrix_property( "z-matrix" ),*/
-           sync_bonds(false), sync_angles(false),
-           sync_dihedrals(false)
+         : ConcreteProperty<MoverMove,MonteCarlo>()
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
 }
@@ -118,10 +98,7 @@ MoverMove::MoverMove()
 /** Construct the mover move for the passed group of molecules */
 MoverMove::MoverMove(const MoleculeGroup &molgroup)
          : ConcreteProperty<MoverMove,MonteCarlo>(),
-           smplr( UniformSampler(molgroup) ),
-           /*zmatrix_property( "z-matrix" ),*/
-           sync_bonds(false), sync_angles(false),
-           sync_dihedrals(false)
+           smplr( UniformSampler(molgroup) )
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
     smplr.edit().setGenerator( this->generator() );
@@ -131,10 +108,7 @@ MoverMove::MoverMove(const MoleculeGroup &molgroup)
     passed sampler */
 MoverMove::MoverMove(const Sampler &sampler)
          : ConcreteProperty<MoverMove,MonteCarlo>(),
-           smplr(sampler),
-           /*zmatrix_property( "z-matrix" ),*/
-           sync_bonds(false), sync_angles(false),
-           sync_dihedrals(false)
+           smplr(sampler)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
     smplr.edit().setGenerator( this->generator() );
@@ -144,9 +118,7 @@ MoverMove::MoverMove(const Sampler &sampler)
 MoverMove::MoverMove(const MoverMove &other)
          : ConcreteProperty<MoverMove,MonteCarlo>(other),
            smplr(other.smplr),
-           /*zmatrix_property(other.zmatrix_property),*/
-           sync_bonds(other.sync_bonds), sync_angles(other.sync_angles),
-           sync_dihedrals(other.sync_dihedrals)
+	   bonds(other.bonds),angles(other.angles),dihedrals(other.dihedrals)
 {}
 
 /** Destructor */
@@ -160,10 +132,9 @@ MoverMove& MoverMove::operator=(const MoverMove &other)
     {
         MonteCarlo::operator=(other);
         smplr = other.smplr;
-        /*zmatrix_property = other.zmatrix_property;*/
-        sync_bonds = other.sync_bonds;
-        sync_angles = other.sync_angles;
-        sync_dihedrals = other.sync_dihedrals;
+	bonds = other.bonds;
+	angles = other.angles;
+	dihedrals = other.dihedrals;
     }
     
     return *this;
@@ -172,16 +143,14 @@ MoverMove& MoverMove::operator=(const MoverMove &other)
 /** Comparison operator */
 bool MoverMove::operator==(const MoverMove &other) const
 {
-    return MonteCarlo::operator==(other) and smplr == other.smplr and
-           sync_bonds == other.sync_bonds and sync_angles == other.sync_angles and
-      sync_dihedrals == other.sync_dihedrals ; 
-    /*and zmatrix_property == other.zmatrix_property;*/
+  return MonteCarlo::operator==(other) and smplr == other.smplr 
+    and bonds == other.bonds and angles == other.angles and dihedrals == other.dihedrals;
 }
 
 /** Comparison operator */
 bool MoverMove::operator!=(const MoverMove &other) const
 {
-    return not MoverMove::operator==(other);
+  return not MoverMove::operator==(other);
 }
 
 /** Return a string representation of this move */
@@ -218,72 +187,6 @@ const MoleculeGroup& MoverMove::moleculeGroup() const
     return smplr->group();
 }
 
-/** Return the property used to find the z-matrix of each molecule */
-/*const PropertyName& MoverMove::zmatrixProperty() const
-{
-    return zmatrix_property;
-    }*/
-    
-/** Set the name of the property used to find the z-matrix of each molecule */
- /*void ZMatMove::setZMatrixProperty(const PropertyName &property)
-{
-    zmatrix_property = property;
-}*/
-
-/** Set whether or not to synchronise all motion for all molecules 
-    in the group */
-void MoverMove::setSynchronisedMotion(bool on)
-{
-    sync_bonds = on;
-    sync_angles = on;
-    sync_dihedrals = on;
-}
-
-/** Set whether or not to synchronise all bond moves for all molecules */
-void MoverMove::setSynchronisedBonds(bool on)
-{
-    sync_bonds = on;
-}
-
-/** Set whether or not to synchronise all angle moves for all molecules */
-void MoverMove::setSynchronisedAngles(bool on)
-{
-    sync_angles = on;
-}
-
-/** Set whether or not to synchronise all dihedral moves for all molecules */
-void MoverMove::setSynchronisedDihedrals(bool on)
-{
-    sync_dihedrals = on;
-}
-
-/** Return whether or not all moves for all molecules are synchronised */
-bool MoverMove::synchronisedMotion() const
-{
-    return sync_bonds and sync_angles and sync_dihedrals;
-}
-
-/** Return whether or not all bond moves for all molecules
-    are synchronised */
-bool MoverMove::synchronisedBonds() const
-{
-    return sync_bonds;
-}
-
-/** Return whether or not all angle moves for all molecules
-    are synchronised */
-bool MoverMove::synchronisedAngles() const
-{
-    return sync_angles;
-}
-
-/** Return whether or not all dihedral moves for all molecules
-    are synchronised */
-bool MoverMove::synchronisedDihedrals() const
-{
-    return sync_dihedrals;
-}
-
 /** Set the random number generator used to generate the random
     number used for this move */
 void MoverMove::setGenerator(const RanGenerator &rangenerator)
@@ -299,11 +202,37 @@ void MoverMove::_pvt_setTemperature(const Temperature &temperature)
     MonteCarlo::setEnsemble( Ensemble::NVT(temperature) );
 }
 
-/* Internal function. not yet implemented */
-void MoverMove::move(AtomIdx atom,
-                    QHash< AtomIdx, tuple<Length,Angle,Angle> > &saved_deltas)
+void MoverMove::setBonds(const QList<BondID> &bonds)
 {
+  this->bonds = bonds;
 }
+
+void MoverMove::setAngles(const QList<AngleID> &angles)
+{
+  this->angles = angles;
+}
+
+void MoverMove::setDihedrals(const QList<DihedralID> &dihedrals)
+{
+  this->dihedrals = dihedrals;
+}
+
+const QList<BondID>& MoverMove::getBonds()
+{
+  return this->bonds;
+}
+
+const QList<AngleID>& MoverMove::getAngles()
+{
+  return this->angles;
+}
+
+const QList<DihedralID>& MoverMove::getDihedrals()
+{
+  return this->dihedrals;
+}
+
+
 /** Actually perform 'nmoves' moves of the molecules in the 
     system 'system', optionally recording simulation statistics
     if 'record_stats' is true */
@@ -338,16 +267,57 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	  PartialMolecule oldmol = mol_and_bias.get<0>();
 	  old_bias = mol_and_bias.get<1>();
 	
-	  const Connectivity &connectivity = oldmol.property( map["connectivity"] ).asA<Connectivity>();
-	  // select the bonds in one molecule and move them 
-	  QList<BondID> bonds = connectivity.getBonds();
-	  Length bond_delta = 0.1*angstrom;
-	  foreach (const BondID &bond, bonds)
+	  //const Connectivity &connectivity = oldmol.property( map["connectivity"] ).asA<Connectivity>();
+	  Mover<Molecule> mol_mover = oldmol.molecule().move();
+
+	  /**TODO 
+	     - TEST ON MODEL MOLECULES THAT DETAILED BALANCE HOLDS
+	       ongoing...
+
+	     - CACHE THE BONDS/ANGLES/DIHEDRALS FOR SPEED 
+             - ADD OPTIONS TO NOT SAMPLE BONDS OR ANGLES OR TORSIONS
+             - ADD ABILITY TO FREEZE SELECTED DOFS
+	         For the time being, the last three options are done by letting the user set 
+		 the bonds/angles/dihedrals to be sampled. 
+		 This concept however does not seem very general because it basically assumes 
+                 that MoverMove operates on only one molecule
+
+	     - CORRELATE TORSION CHANGES AROUND A BOND FOR EFFICIENCY
+	     will do that when testing ethane, benzene and indole
+
+	     - PASS A DICTIONARY OF DELTA VALUES TO THE CONSTRUCTOR FOR THE BONDS, ANGLES, DIHEDRALS
+	       will do that in a while, when everything else is working and I want to optimize the 
+	       acceptance rate
+	  */
+
+	  // move the bonds 
+	  //QList<BondID> bonds = connectivity.getBonds();
+	  Length bond_delta;
+	  foreach (const BondID &bond, this->bonds)
 	    {
-	      oldmol = oldmol.move().change(bond,bond_delta).commit();
+	      bond_delta = Length( this->generator().rand(-0.10*angstrom, 0.10*angstrom ) );
+	      mol_mover.change(bond,bond_delta);
 	    }
-	  Molecule newmol = oldmol.molecule();
+
+	  // and the angles
+	  //QList<AngleID> angles = connectivity.getAngles();
+	  Angle angle_delta;
+	  foreach (const AngleID &angle,this->angles)
+	    {
+	      angle_delta = Angle( this->generator().rand(-5.0*degrees,5.0*degrees) );	      
+	      mol_mover.change(angle,angle_delta);
+	    }
+	    // and the torsions
+	  //QList<DihedralID> dihedrals = connectivity.getDihedrals();
+	  Angle dihedral_delta;
+ 	  foreach (const DihedralID &dihedral,this->dihedrals)
+	    {
+	      dihedral_delta = Angle( this->generator().rand(-15.0*degrees,15.0*degrees) );	 	      
+	      mol_mover.change(dihedral,dihedral_delta);
+	    }
+
 	  //update the system with the new coordinates
+	  Molecule newmol = mol_mover.commit();
 	  system.update(newmol);
 	  //get the new bias on this molecule
 	  smplr.edit().updateFrom(system);
