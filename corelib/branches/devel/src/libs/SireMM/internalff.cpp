@@ -748,77 +748,17 @@ void InternalPotential::calculateBondForce(const InternalPotential::Molecule &mo
             vals.set( r, dist );
 
             //evaluate the force vector
-            Vector force = scale_force * bond.function().evaluate(vals) * v01;
+            Vector force = -scale_force * bond.function().evaluate(vals) * v01;
 
             //add the force onto the forces array
-            addForce(force, bond.atom0(), forces);
-            addForce(-force, bond.atom1(), forces);
+            addForce(-force, bond.atom0(), forces);
+            addForce(force, bond.atom1(), forces);
         }
     }
 }
 
 /** Calculate d theta / d r_i, d theta / d r_j and d theta / d r_k for 
     the passed r_i, r_j and r_k  (three points that make up an angle)
-
-    Atoms at coords  r_i, r_j, r_k  => r  (9 element vector)
-    
-    Force = - d V / d r      but V is a function of theta, not r
-    
-          d V / d r  = d V / d theta  *  d theta / d r
-          
-    d V / d theta is straightforward (Sire can do this automatically)
-          
-    So need to calculate d theta / d r
-    
-    Can do this via cos(theta), as
-    
-    d theta / d r = d cos(theta) / d r  * d theta / d cos(theta)
-    
-    d theta / d cos(theta) = -1 / sin(theta)
-   
-    so  d theta / d r = -1 / sin(theta)  * d cos(theta) / d r
-      
-    We can construct two vectors, A = (r_i - r_j) and B = (r_k - r_j)
-      
-    cos(theta) = A dot B / ( |A| * |B| )
-    
-    then
-    
-    d cos(theta) / dr  = d cos(theta) / d A B  *  d A B / dr
-    
-    now following the derivation in Blondel and Karplus, J. Comp. Chem. 1996
-    
-    d cos(theta) / d A = ( B / (|A| |B|)) + ( (A.B/|B|).(d(1/|A|) d A) )
-    
-    introducing d |A| / d A  =  A / |A|
-    
-    d cos(theta) / d A = (1 / |A|^3 |B|) * (A^2 B - (A.B) A)
-   
-    d theta / d A  =  d theta / d cos(theta)  *  d cos(theta) / d A
-    
-    d theta / d A  = (-1 / sin(theta)) * (1 / |A|^3 |B|) * (A^2 B - (A.B) A)
-    
-    from symmetry
-    
-    d theta / d B = (-1 / sin(theta)) * (1 / |B|^3 |A|) * (B^2 A - (B.A) B)
-    
-    as
-    
-    d theta / r_?  = (d theta / d A * d A / d r_?) + (d theta / d B * d B / d r_?)
-    
-    and
-    
-    d A / d r_i  = 1    d A / d r_j  = -1    d A / d r_k  = 0
-    d B / d r_i  = 0    d B / d r_j  = -1    d B / d r_k  = 1
-    
-    then
-    
-    d theta / d r_i = (-1 / sin(theta)) * (1 / |A|^3 |B|) * (A^2 B - (A.B) A)
-    
-    d theta / d r_j = (1 / sin(theta)) * (1 / |A|^3 |B|) * (A^2 B - (A.B) A) +
-                      (1 / sin(theta)) * (1 / |B|^3 |A|) * (B^2 A - (B.A) B)
-    
-    d theta / d r_k = (-1 / sin(theta)) * (1 / |B|^3 |A|) * (B^2 A - (B.A) B)  
 */
 static void d_theta_by_dr(const Vector &ri, const Vector &rj,
                           const Vector &rk,
@@ -828,77 +768,54 @@ static void d_theta_by_dr(const Vector &ri, const Vector &rj,
                           
                           Angle &theta, double &dist_ij, double &dist_kj)
 {
-    //get the vector A, from j -> i
-    const Vector A = ri - rj;
+    Vector A = ri - rj;
+    Vector B = rk - rj;
     
-    //B goes from j -> k
-    const Vector B = rk - rj;
+    double rA = A.length();
+    double rB = B.length();
     
-    //get the lengths of these vectors
-    const double a2 = A.length2();
-    const double a = std::sqrt(a2);
+    dist_ij = rA;
+    dist_kj = rB;
     
-    const double b2 = B.length2();
-    const double b = std::sqrt(b2);
-
-    const double ab = a*b;
-
-    if (ab == 0)
+    if (rA * rB == 0)
     {
-        //there is no force if the atoms are on top of one another!
-        dtheta_by_dri.set(0,0,0);
-        dtheta_by_drj.set(0,0,0);
-        dtheta_by_drk.set(0,0,0);
+        //one of the bonds has zero length - cannot calculate angle force
+        dtheta_by_dri = Vector(0);
+        dtheta_by_drj = Vector(0);
+        dtheta_by_drk = Vector(0);
+        
         theta = Angle(0);
-        dist_ij = a;
-        dist_kj = b;
-        
         return;
     }
-    
-    //get A.B and B.A
-    const double A_dot_B = Vector::dot(A,B);
-    const double B_dot_A = A_dot_B;
-    
-    //calculate the angle between A and B
-    double AB_over_ab = A_dot_B / ab;
-    
-    if (AB_over_ab > 1)
-        AB_over_ab = 1;
-    else if (AB_over_ab < -1)
-        AB_over_ab = -1;
-    
-    const double thta = std::acos(AB_over_ab);
-    
-    const double sin_theta = std::sin(thta);
-    
-    if (sin_theta == 0)
-    {
-        //the atoms lie on a line - there is no way to calculate the force now
-        dtheta_by_dri.set(0,0,0);
-        dtheta_by_drj.set(0,0,0);
-        dtheta_by_drk.set(0,0,0);
-        
-        theta = Angle(thta);
-        dist_ij = a;
-        dist_kj = b;
-        
-        return;
-    }
-    
-    const double one_over_sin_theta = 1.0 / sin_theta;
-    
-    dtheta_by_dri = -one_over_sin_theta * (1.0 / (a2*ab)) * 
-                                     ( (a2 * B) - (A_dot_B * A) ); 
 
-    dtheta_by_drk = -one_over_sin_theta * (1.0 / (b2*ab)) *
-                                     ( (b2 * A) - (B_dot_A * B) );
-                                     
-    dtheta_by_drj = -(dtheta_by_dri + dtheta_by_drk);
+    rA = 1 / rA;
+    rB = 1 / rB;
     
-    theta = Angle(thta);
-    dist_ij = a;
-    dist_kj = b;
+    //work with normalised vectors to prevent numerical error
+    A *= rA;
+    B *= rB;
+    
+    const double A_B = Vector::dot(A,B);
+    
+    if (A_B == 0)
+    {
+        //bonds are parallel - cannot calculate an angle force
+        dtheta_by_dri = Vector(0);
+        dtheta_by_drj = Vector(0);
+        dtheta_by_drk = Vector(0);
+        
+        theta = Angle(0);
+        return;
+    }
+
+    dtheta_by_dri = rA * (B + A_B*A);
+    dtheta_by_drk = rB * (A + A_B*B);
+    
+    dtheta_by_drj = -(dtheta_by_dri+dtheta_by_drk);
+    
+    theta = Angle( std::acos(A_B) );
+
+    return;
 }
                    
 /** Calculate the total angle force acting on the molecule 'molecule', and add it
@@ -950,7 +867,7 @@ void InternalPotential::calculateAngleForce(const InternalPotential::Molecule &m
             const Vector &atom1 = getCoords(angle.atom1(), cgroup_array);
             const Vector &atom2 = getCoords(angle.atom2(), cgroup_array);
 
-            //d V(theta) / dr  = d V(theta) / dtheta  *  dtheta / dr
+            //-d V(theta) / dr  = -d V(theta) / dtheta  *  dtheta / dr
             
             //so first calculate d theta / dr
             Vector dtheta_by_d0, dtheta_by_d1, dtheta_by_d2;
@@ -961,9 +878,9 @@ void InternalPotential::calculateAngleForce(const InternalPotential::Molecule &m
                           dtheta_by_d0, dtheta_by_d1, dtheta_by_d2,
                           t, r01, r21);
                           
-            //now calcualte d V(theta) / d theta
+            //now calcualte -d V(theta) / d theta
             vals.set(theta, t);
-            double dv_by_dtheta = scale_force * angle.function().evaluate(vals);
+            const double dv_by_dtheta = -scale_force * angle.function().evaluate(vals);
 
             //add the force onto the forces array
             addForce(dv_by_dtheta * dtheta_by_d0, angle.atom0(), forces);
@@ -972,44 +889,20 @@ void InternalPotential::calculateAngleForce(const InternalPotential::Molecule &m
         }
     }
 }
-                         
+
+static Vector cross(const Vector &v0, const Vector &v1)
+{
+    return Vector( v0.y()*v1.z() - v0.z()*v1.y(),
+                   v0.z()*v1.x() - v0.x()*v1.z(),
+                   v0.x()*v1.y() - v0.y()*v1.x() );
+}
+
 /** Calculate d phi / d r_i, d phi / d r_j, d phi / d r_k and d phi / d r_l.
 
     This uses the algorithm presented in Blondel and Karplus, J. Comp. Chem.
     Vol. 17, No. 9, 1132-1141, 1996, which shows how to calculate the derivative
     avoiding the singularity at phi = 0 (where sin(phi) = 0, so 1 / sin(phi) is
     undefined).
-    
-    Four points, ri, rj, rk and rl form the torsion. 
-    
-    Three inter-point vectors,
-    
-    F = ri - rj
-    G = rj - rk
-    H = rl - rk
-    
-    Also second set of intermediate vectors,
-    
-    A = F cross G
-    B = H cross G
-    
-    A and B define the two planes of the torsion, and the angle
-    between these vectors, (based on A dot B) is the torsion angle.
-    
-    cos(phi) = A.B / |A||B|
-    
-    sin(phi) = B cross A.G / |A||B||G|
-    
-    From equation 27 from this paper, we get;
-    
-    d phi / d F  =  - (|G| / A^2) A
-    d phi / d H  =  (|G| / B^2) B
-    d phi / d G  =  ( F.G / A^2|G| ) A - ( H.G / B^2|G| ) B
-    
-    d phi / d r_i  =  d phi / d F
-    d phi / d r_j  =  -d phi / d F + d phi / d G
-    d phi / d r_k  =  -d phi / d H - d phi / d G
-    d phi / d r_l  =  d phi / dH
 */
 static void d_phi_by_dr(const Vector &ri, const Vector &rj,
                         const Vector &rk, const Vector &rl,
@@ -1017,51 +910,64 @@ static void d_phi_by_dr(const Vector &ri, const Vector &rj,
                         Vector &dphi_by_dri, Vector &dphi_by_drj,
                         Vector &dphi_by_drk, Vector &dphi_by_drl)
 {
-    const Vector F = ri - rj;
-    const Vector G = rj - rk;
-    const Vector H = rl - rk;
-    
-    const double g = G.length();
-    
-    const double F_dot_G = Vector::dot(F,G);
-    const double H_dot_G = Vector::dot(H,G);
-    
-    const Vector A( F.y()*G.z() - F.z()*G.y(),
-                    F.z()*G.x() - F.x()*G.z(),
-                    F.x()*G.y() - F.y()*G.x() );
-                    
-    const Vector B( H.y()*G.z() - H.z()*G.y(),
-                    H.z()*G.x() - H.x()*G.z(),
-                    H.x()*G.y() - H.y()*G.x() );
+    Vector F = ri - rj;
+    Vector G = rj - rk;
+    Vector H = rl - rk;
 
-    //get the lengths of A and B
-    const double a2 = A.length2();
-    const double a = std::sqrt(a2);
+    double rF = F.length();
+    double rG = G.length();
+    double rH = H.length();
     
-    const double b2 = B.length2();
-    const double b = std::sqrt(b2);
-    
-    if (a*b == 0)
+    if (rF * rG * rH == 0)
     {
-        //ijk or jkl are on a straight line - we cannot calculate
-        //a valid force!
-        dphi_by_dri.set(0,0,0);
-        dphi_by_drj.set(0,0,0);
-        dphi_by_drk.set(0,0,0);
-        dphi_by_drl.set(0,0,0);
-        
+        //one of the bonds has zero length - cannot calculate
+        //the dihedral force
+        dphi_by_dri = Vector(0);
+        dphi_by_drj = Vector(0);
+        dphi_by_drk = Vector(0);
+        dphi_by_drl = Vector(0);
         return;
     }
     
-    const Vector dphi_by_dF = -( g / a2 ) * A;
-    const Vector dphi_by_dH = ( g / b2 ) * B;
+    //work with normalised vectors to prevent build-up of numerical error
+    rF = 1 / rF;
+    rG = 1 / rG;
+    rH = 1 / rH;
     
-    const Vector dphi_by_dG = ( (F_dot_G / (a2 * g)) * A ) -
-                              ( (H_dot_G / (b2 * g)) * B );
+    F *= rF;
+    G *= rG;
+    H *= rH;
+    
+    const double F_G = Vector::dot(F,G);
+    const double H_G = Vector::dot(H,G);
+    
+    Vector A = ::cross(F, G);
+    Vector B = ::cross(H, G);
+    
+    const double rA = A.length();
+    const double rB = B.length();
+    
+    if (rA * rB == 0)
+    {
+        //atoms lie in a plane - cannot calculate the dihedral
+        dphi_by_dri = Vector(0);
+        dphi_by_drj = Vector(0);
+        dphi_by_drk = Vector(0);
+        dphi_by_drl = Vector(0);
+        return;
+    }
+
+    A *= (1/rA);
+    B *= (1/rB);
+    
+    const Vector dphi_by_dF = -rF * A;
+    const Vector dphi_by_dH = rH * B;
+    
+    const Vector dphi_by_dG = rG * (F_G * A - H_G * B);
 
     dphi_by_dri = dphi_by_dF;
     dphi_by_drj = dphi_by_dG - dphi_by_dF;
-    dphi_by_drk = -(dphi_by_dH+dphi_by_dG);
+    dphi_by_drk = -dphi_by_dG - dphi_by_dH;
     dphi_by_drl = dphi_by_dH;
 }
 
@@ -1075,57 +981,6 @@ static void d_phi_by_dr(const Vector &ri, const Vector &rj,
                                                   
     The theta angle is that between the vector ri-rj and the
     vector perpendicular to the plane rj, rk, rl
-    
-    define extra vectors;
-    
-    A = ri - rj
-    
-    F = rk - rj;
-    G = rl - rj
-    
-    B = F cross G
-    
-    Then;
-    
-    define sigma = angle between A and B  =  arccos( A.B /  |A||B| )
-    
-    theta = pi - sigma
-    
-    d theta / dr  =  d theta / d sigma  *  d sigma / d r
-                  =  - d sigma / dr
-                  
-    d sigma / dr  = d sigma / d cos(sigma)   *  d cos(sigma) / d r
-                  =  - 1 / sin(sigma)  * d cos(sigma) / d r
-                  
-    from analogy with the angle case;
-    
-    d cos(sigma) / dr = d cos(sigma) / d A B  * d A B / dr
-
-    d sigma / d A  =  d sigma / d cos(sigma)  *  d cos(sigma) / d A
-    
-    d sigma / d A  = (-1 / sin(sigma)) * (1 / |A|^3 |B|) * (A^2 B - (A.B) A)
-    
-    from symmetry
-    
-    d sigma / d B = (-1 / sin(sigma)) * (1 / |B|^3 |A|) * (B^2 A - (B.A) B)
-    
-    since A = ri - rj,  dA / dri = +1,  dA / drj = -1,  dA / drk = dA / drl = 0
-    
-    B = F cross G
-    
-    d B / d F  =  d (F cross G) / d F  =  I cross G
-    
-                (where I cross defined such that (I cross G).V  = V cross G
-                 for arbitrary V)
-                 
-    d sigma / d F  = d B / d F . d sigma / d B
-                   = (I cross G) . ((-1 / sin(sigma)) * 
-                                        (1 / |B|^3 |A|) * (B^2 A - (B.A) B))
-                                        
-                   = ((-1 / sin(sigma)) * (1 / |B|^3 |A|) * (B^2 A - (B.A) B))
-                          cross G
-                          
-    etc.   To be derived at another time!
 */
 static void d_theta_by_dr(const Vector &ri, const Vector &rj,
                           const Vector &rk, const Vector &rl,
@@ -1190,7 +1045,7 @@ void InternalPotential::calculateDihedralForce(
             const Vector &atom2 = getCoords(dihedral.atom2(), cgroup_array);
             const Vector &atom3 = getCoords(dihedral.atom3(), cgroup_array);
 
-            //d V(phi) / dr  = d V(phi) / dphi  *  dphi / dr
+            //-d V(phi) / dr  = -d V(phi) / dphi  *  dphi / dr
             
             //so first calculate d phi / dr
             Vector dphi_by_d0, dphi_by_d1, dphi_by_d2, dphi_by_d3;
@@ -1198,9 +1053,9 @@ void InternalPotential::calculateDihedralForce(
             d_phi_by_dr(atom0, atom1, atom2, atom3,
                         dphi_by_d0, dphi_by_d1, dphi_by_d2, dphi_by_d3);
                           
-            //now calcualte d V(phi) / d phi
-            vals.set(phi, Vector::dihedral(atom0, atom1, atom2, atom2));
-            double dv_by_dphi = scale_force * dihedral.function().evaluate(vals);
+            //now calcualte -d V(phi) / d phi
+            vals.set(phi, Vector::dihedral(atom0,atom1,atom2,atom3).to(radians));
+            double dv_by_dphi = -scale_force * dihedral.function().evaluate(vals);
 
             //add the force onto the forces array
             addForce(dv_by_dphi * dphi_by_d0, dihedral.atom0(), forces);

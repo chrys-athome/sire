@@ -130,6 +130,20 @@ protected:
                            const LatticeCharges &lattice_charges,
                            int ntries = 5) const;
 
+    void calculatePotential(const QMPotential::Molecules &molecules,
+                            PotentialTable &pottable,
+                            const SireFF::Probe &probe,
+                            double scale_potential=1, 
+                            int ntries=5) const;
+
+    QVector<SireUnits::Dimension::MolarEnergy> 
+                    calculatePotential(const QMPotential::Molecules &molecules,
+                                       const LatticeCharges &lattice_charges,
+                                       PotentialTable &pottable,
+                                       const SireFF::Probe &probe,
+                                       double scale_potential=1, 
+                                       int ntries=5) const;
+
     QString energyCommandFile(const QMPotential::Molecules &molecules) const;
     QString energyCommandFile(const QMPotential::Molecules &molecules,
                               const LatticeCharges &lattice_charges) const;

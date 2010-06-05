@@ -54,6 +54,7 @@ using namespace SireMol;
 using namespace SireVol;
 using namespace SireBase;
 using namespace SireUnits;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 using namespace SireStream;
 
@@ -873,6 +874,34 @@ double Molpro::calculateEnergy(const QMPotential::Molecules &molecules,
     QString cmdfile = this->energyCommandFile(molecules, lattice_charges);
     
     return this->calculateEnergy(cmdfile, ntries);
+}
+
+/** Calculate the potential around the passed molecules, and place them into the passed
+    potential table, optionally scaled by 'scale_potential' */
+void Molpro::calculatePotential(const QMPotential::Molecules &molecules,
+                                PotentialTable &pottable,
+                                const SireFF::Probe &probe,
+                                double scale_potential, int ntries) const
+{
+    if (molecules.count() == 0)
+        return 0;
+        
+    QString cmdfile = this->potentialCommandFile(molecules, pottable, probe);
+    
+    return this->calculatePotential(cmdfile, pottable, scale_potential, ntries);
+} 
+
+/** Calculate the potentials around the passed molecules, and place them into the passed
+    potential table, optionally scaled by 'scale_potential', and return the accompanying
+    potentials on the passed lattice points, also scaled by 'scale_potential' */
+QVector<MolarEnergy> Molpro::calculatePotential(const QMPotential::Molecules &molecules,
+                                                const LatticeCharges &lattice_charges,
+                                                PotentialTable &pottable,
+                                                const SireFF::Probe &probe,
+                                                double scale_potential, int ntries) const 
+{
+    qDebug() << CODELOC;
+    return QVector<MolarEnergy>();
 }
 
 const char* Molpro::typeName()
