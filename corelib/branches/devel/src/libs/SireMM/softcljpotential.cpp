@@ -880,6 +880,8 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
     //  V_{LJ}(r) = 4 epsilon [ ( sigma^12 / (delta*sigma + r^2)^6 ) - 
     //                          ( sigma^6  / (delta*sigma + r^2)^3 ) ]
     //
+    //  delta = shift_delta * alpha
+    //
     //  V_{coul}(r) = (1-alpha)^n q_i q_j / 4 pi eps_0 (alpha+r^2)^(1/2)
     //
     // This contrasts to Rich T's LJ softcore function, which was;

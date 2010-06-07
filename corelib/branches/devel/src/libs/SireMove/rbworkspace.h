@@ -50,6 +50,8 @@ namespace SireMove
 using SireMaths::Matrix;
 using SireMaths::Quaternion;
 
+using SireMol::ViewsOfMol;
+
 /** This class provides a workspace for integrators that perform
     rigid body integration of atomic velocities and coordinates
     
@@ -81,6 +83,8 @@ public:
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
     SireUnits::Dimension::MolarEnergy kineticEnergy(MolNum molnum) const;
     SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
+
+    PropertyName beadingProperty() const;
 
     int nBeads() const;
 
@@ -117,7 +121,44 @@ protected:
 private:
     void rebuildFromScratch();
 
-    /** The coordinates of the atoms in the center of
+    class Beading
+    {
+    public:
+        Beading();
+        Beading(MolNum molnum, int start, int count);
+        
+        ~Beading();
+        
+        bool operator==(const Beading &other) const;
+        
+        bool atomsAreConsecutive() const;
+        
+        static QVector<Beading> createBeads(const ViewsOfMol &mols,
+                                            const PropertyName &beading_property);
+        
+        /** The number of the molecule from which this
+            bead is built */
+        MolNum molnum;
+        
+        /** The index of the first atom in the bead */
+        quint32 start;
+        
+        /** The number of atoms in the bead */
+        quint32 count;
+        
+        /** The indicies of each of the atoms in the bead.
+            This is empty if the atoms are in order (i.e.
+            are from 'start' to 'start+count-1') */
+        QVector<quint32> bead_to_atom;
+    };
+
+    /** The mapping of beads back to atoms in molecules */
+    QVector<Beading> beads_to_atoms;
+
+    /** The mapping back from molecules to beads */
+    QHash< MolNum,QPair<quint32,quint32> > mols_to_beads;
+
+    /** The coordinates of the atoms of each bead in the center of
         mass / principle inertia tensor frame. These
         will be constant, as the atoms don't move relative
         to the center of mass / inertia frame - they 
@@ -125,8 +166,10 @@ private:
         world cartesian frame */
     QVector< QVector<Vector> > atom_int_coords;
 
-    /** The forces on the atoms in molecules that are
-        not fully in this workspace (partial molecules) */
+    /** The forces on the atoms in beads that cannot be taken
+        directly from the forcetable (e.g. molecules that are
+        not fully in this workspace (partial molecules), or
+        beads that use atoms out-of-order in the molecule) */
     QVector< QVector<Vector> > atom_forces;
 
     /** The center of mass coordinates of each bead */

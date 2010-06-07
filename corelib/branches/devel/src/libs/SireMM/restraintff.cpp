@@ -623,6 +623,8 @@ bool RestraintFF::setValue(const Symbol &symbol, double value)
                 new_restraints[i].edit().setValue(symbol, value);
         }
         
+        user_values.set(symbol, value);
+        
         restraints_by_idx = new_restraints;
         
         props.setProperty( symbol.toString(), VariantProperty(value) );

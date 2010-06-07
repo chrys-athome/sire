@@ -51,6 +51,47 @@ using namespace SireBase;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
+////////
+//////// Implementation of RBWorkspace::Beading
+////////
+
+RBWorkspace::Beading::Beading() : start(0), count(0)
+{}
+
+RBWorkspace::Beading::Beading(MolNum m, int s, int c) 
+            : molnum(m), start(s), count(c)
+{}
+
+RBWorkspace::Beading::~Beading()
+{}
+
+bool RBWorkspace::Beading::operator==(const RBWorkspace::Beading &other) const
+{
+    return molnum == other.molnum and
+           start == other.start and count == other.count and
+           bead_to_atom == other.bead_to_atom;
+}
+
+bool RBWorkspace::Beading::atomsAreConsecutive() const
+{
+    return bead_to_atom.isEmpty();
+}
+
+QVector<RBWorkspace::Beading> 
+RBWorkspace::Beading::createBeads(const ViewsOfMol &mol, 
+                                  const PropertyName &beading_property)
+{
+    QVector<Beading> beads;
+    
+    beads.append( Beading(mol.number(),0,mol.selection().nAtoms()) );
+    
+    return beads;
+}
+
+////////
+//////// Implementation of RBWorkspace
+////////
+
 static const RegisterMetaType<RBWorkspace> r_rbws;
 
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const RBWorkspace &rbws)
@@ -231,6 +272,12 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
     return internal_coords;
 }
 
+/** Return the property used to bead up a molecule */
+PropertyName RBWorkspace::beadingProperty() const
+{
+    return propertyMap()["beading"];
+}
+
 /** Rebuild all of the data array from the current state of the system */
 void RBWorkspace::rebuildFromScratch()
 {
@@ -240,14 +287,39 @@ void RBWorkspace::rebuildFromScratch()
     PropertyName mass_property = this->massesProperty();
     PropertyName element_property = this->elementsProperty();
     PropertyName velgen_property = this->velocityGeneratorProperty();
+    PropertyName beading_property = this->beadingProperty();
     
     const MoleculeGroup &molgroup = this->moleculeGroup();
     const ForceTable &forcetable = this->forceTable();
     
     int nmols = molgroup.nMolecules();
     
+    beads_to_atoms = QVector<Beading>();
+    mols_to_beads = QHash< MolNum,QPair<quint32,quint32> >();
+    beads_to_atoms.reserve(nmols);
+    mols_to_beads.reserve(nmols);
+    
+    //loop through each molecule and bead it up
+    for (int i=0; i<nmols; ++i)
+    {
+        MolNum molnum = molgroup.molNumAt(i);
+        
+        QVector<Beading> beads = Beading::createBeads(molgroup[molnum], beading_property);
+        
+        if (not beads.isEmpty())
+        {
+            mols_to_beads.insert( molnum, 
+                    QPair<quint32,quint32>(beads_to_atoms.count(), beads.count()) );
+                    
+            beads_to_atoms += beads;
+        }
+    }
+    
+    beads_to_atoms.squeeze();
+    mols_to_beads.squeeze();
+    
     //for the moment, we'll make one bead per molecule
-    int nbeads = nmols;
+    int nbeads = beads_to_atoms.count();
     
     if (sys.containsProperty(velgen_property))
         vel_generator = sys.property(velgen_property).asA<VelocityGenerator>();
@@ -276,6 +348,7 @@ void RBWorkspace::rebuildFromScratch()
     Quaternion *bead_orients_array = bead_orientations.data();
     double *bead_masses_array = bead_masses.data();
     Vector *bead_inertia_array = bead_inertia.data();
+    const Beading *beading_array = beads_to_atoms.constData();
     
     atom_forces = QVector< QVector<Vector> >();
     QVector<Vector> *atom_forces_array = 0;
@@ -283,7 +356,16 @@ void RBWorkspace::rebuildFromScratch()
     for (int i=0; i<nmols; ++i)
     {
         MolNum molnum = molgroup.molNumAt(i);
-        const ViewsOfMol &mol = molgroup[molnum].data();
+        
+        if (not mols_to_beads.contains(molnum))
+            continue;
+            
+        QPair<quint32,quint32> bead_info = mols_to_beads.value(molnum);
+        
+        int bead_idx = bead_info.first;
+        int nmolbeads = bead_info.second;
+        
+        const ViewsOfMol &mol = molgroup[molnum];
         
         const MoleculeData &moldata = mol.data();
         
@@ -492,6 +574,8 @@ RBWorkspace::RBWorkspace(const MoleculeGroup &molgroup, const PropertyMap &map)
 /** Copy constructor */
 RBWorkspace::RBWorkspace(const RBWorkspace &other)
             : ConcreteProperty<RBWorkspace,IntegratorWorkspace>(other),
+              beads_to_atoms(other.beads_to_atoms),
+              mols_to_beads(other.mols_to_beads),
               atom_int_coords(other.atom_int_coords),
               atom_forces(other.atom_forces),
               bead_coordinates(other.bead_coordinates),
@@ -516,7 +600,9 @@ RBWorkspace& RBWorkspace::operator=(const RBWorkspace &other)
     if (this != &other)
     {
         IntegratorWorkspace::operator=(other);
-        
+     
+        beads_to_atoms = other.beads_to_atoms;
+        mols_to_beads = other.mols_to_beads;
         atom_int_coords = other.atom_int_coords;
         atom_forces = other.atom_forces;
         bead_coordinates = other.bead_coordinates;
@@ -539,6 +625,7 @@ bool RBWorkspace::operator==(const RBWorkspace &other) const
 {
     return this == &other or 
            (IntegratorWorkspace::operator==(other) and
+            beads_to_atoms == other.beads_to_atoms and
             bead_coordinates == other.bead_coordinates and
             bead_to_world == other.bead_to_world and
             bead_orientations == other.bead_orientations and
