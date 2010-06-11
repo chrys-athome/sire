@@ -65,7 +65,7 @@ rbmove = MolecularDynamics( solvent, DLMRigidBody(), 1*femtosecond )
 PDB().write(system.molecules(), "test0000.pdb")
 
 for i in range(1,250):
-    rbmove.move(system, 10)
+    rbmove.move(system, 50)
     print i, system.energy()
     print rbmove.kineticEnergy(), (system.energy() + rbmove.kineticEnergy())
 

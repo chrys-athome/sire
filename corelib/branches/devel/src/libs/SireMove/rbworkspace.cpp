@@ -217,23 +217,27 @@ static QVector<Vector> buildBead(const ViewsOfMol &mol,
             bead_com /= bead_mass;
             bead_orients[0] = Quaternion();
             
+            bead_to_world = Matrix(0);
+            
             //now calculate moments of inertia
             for (int i=0; i<nats; ++i)
             {
                 double *inertia_array = bead_to_world.data();
 
                 Vector d = coords_array[i] - bead_com;
+
+                const double mass = ::getMass(masses_array[i]);
         
                 inertia_array[ bead_to_world.offset(0,0) ] += 
-                                                bead_mass * (d.y()*d.y() + d.z()*d.z());
+                                                mass * (d.y()*d.y() + d.z()*d.z());
                 inertia_array[ bead_to_world.offset(1,1) ] += 
-                                                bead_mass * (d.x()*d.x() + d.z()*d.z());
+                                                mass * (d.x()*d.x() + d.z()*d.z());
                 inertia_array[ bead_to_world.offset(2,2) ] += 
-                                                bead_mass * (d.x()*d.x() + d.y()*d.y());
+                                                mass * (d.x()*d.x() + d.y()*d.y());
         
-                inertia_array[ bead_to_world.offset(0,1) ] -= bead_mass * d.x() * d.y();
-                inertia_array[ bead_to_world.offset(0,2) ] -= bead_mass * d.x() * d.z();
-                inertia_array[ bead_to_world.offset(1,2) ] -= bead_mass * d.y() * d.z();
+                inertia_array[ bead_to_world.offset(0,1) ] -= mass * d.x() * d.y();
+                inertia_array[ bead_to_world.offset(0,2) ] -= mass * d.x() * d.z();
+                inertia_array[ bead_to_world.offset(1,2) ] -= mass * d.y() * d.z();
             }
 
             bead_inertia = ::getPrincipalAxes(bead_to_world);
@@ -294,18 +298,18 @@ static QVector<Vector> buildBead(const ViewsOfMol &mol,
 
                 Vector d = coords_array[i] - bead_coords[bead_idx];
         
-                const double bead_mass = bead_masses[bead_idx];
+                const double mass = ::getMass(masses_array[i]);
         
                 inertia_array[ bead_to_world.offset(0,0) ] += 
-                                                bead_mass * (d.y()*d.y() + d.z()*d.z());
+                                                mass * (d.y()*d.y() + d.z()*d.z());
                 inertia_array[ bead_to_world.offset(1,1) ] += 
-                                                bead_mass * (d.x()*d.x() + d.z()*d.z());
+                                                mass * (d.x()*d.x() + d.z()*d.z());
                 inertia_array[ bead_to_world.offset(2,2) ] += 
-                                                bead_mass * (d.x()*d.x() + d.y()*d.y());
+                                                mass * (d.x()*d.x() + d.y()*d.y());
         
-                inertia_array[ bead_to_world.offset(0,1) ] -= bead_mass * d.x() * d.y();
-                inertia_array[ bead_to_world.offset(0,2) ] -= bead_mass * d.x() * d.z();
-                inertia_array[ bead_to_world.offset(1,2) ] -= bead_mass * d.y() * d.z();
+                inertia_array[ bead_to_world.offset(0,1) ] -= mass * d.x() * d.y();
+                inertia_array[ bead_to_world.offset(0,2) ] -= mass * d.x() * d.z();
+                inertia_array[ bead_to_world.offset(1,2) ] -= mass * d.y() * d.z();
             }
 
             for (int i=0; i<nbeads; ++i)
@@ -453,7 +457,7 @@ void RBWorkspace::rebuildFromScratch()
     //now build all of the beads
     bead_coordinates = QVector<Vector>(nbeads, Vector(0));
     bead_orientations = QVector<Quaternion>(nbeads);
-    bead_to_world = QVector<Matrix>(nbeads);
+    bead_to_world = QVector<Matrix>(nbeads, Matrix(0));
     bead_masses = QVector<double>(nbeads, 0.0);
     bead_inertia = QVector<Vector>(nbeads, Vector(0));
     
