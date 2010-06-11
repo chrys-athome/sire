@@ -149,6 +149,8 @@ public:
     static Matrix identity();
     static Matrix zero();
 
+    Matrix& operator=(const Matrix &other);
+
     bool operator==(const Matrix& m) const;
     bool operator!=(const Matrix& m) const;
 

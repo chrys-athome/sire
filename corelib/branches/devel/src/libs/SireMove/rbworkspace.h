@@ -128,7 +128,7 @@ private:
     QVector< QVector<Vector> > atom_int_coords;
 
     /** The index of the bead in which each atom exists */
-    QVector< QPair< qint32,QVector<qint32> > > atom_to_beads;
+    QVector< QPair< qint32,QVector<qint32> > > atoms_to_beads;
 
     /** The center of mass coordinates of each bead */
     QVector<Vector> bead_coordinates;

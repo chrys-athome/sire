@@ -324,6 +324,17 @@ bool Matrix::isIdentity() const
 
 }
 
+/** Copy assignment operator */
+Matrix& Matrix::operator=(const Matrix &other)
+{
+    if (this != &other)
+    {
+        qMemCopy(array, other.array, 9*sizeof(double));
+    }
+    
+    return *this;
+}
+
 bool Matrix::operator==(const Matrix& m) const
 {
     for (int i=0; i<9; ++i)
