@@ -51,47 +51,6 @@ using namespace SireBase;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
-////////
-//////// Implementation of RBWorkspace::Beading
-////////
-
-RBWorkspace::Beading::Beading() : start(0), count(0)
-{}
-
-RBWorkspace::Beading::Beading(MolNum m, int s, int c) 
-            : molnum(m), start(s), count(c)
-{}
-
-RBWorkspace::Beading::~Beading()
-{}
-
-bool RBWorkspace::Beading::operator==(const RBWorkspace::Beading &other) const
-{
-    return molnum == other.molnum and
-           start == other.start and count == other.count and
-           bead_to_atom == other.bead_to_atom;
-}
-
-bool RBWorkspace::Beading::atomsAreConsecutive() const
-{
-    return bead_to_atom.isEmpty();
-}
-
-QVector<RBWorkspace::Beading> 
-RBWorkspace::Beading::createBeads(const ViewsOfMol &mol, 
-                                  const PropertyName &beading_property)
-{
-    QVector<Beading> beads;
-    
-    beads.append( Beading(mol.number(),0,mol.selection().nAtoms()) );
-    
-    return beads;
-}
-
-////////
-//////// Implementation of RBWorkspace
-////////
-
 static const RegisterMetaType<RBWorkspace> r_rbws;
 
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const RBWorkspace &rbws)
@@ -146,36 +105,65 @@ static QVector<MolarMass> getMasses(const QVector<Element> &elements)
 
 static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
                                          const QVector<MolarMass> &masses,
-                                         Vector &com, double &mass, 
-                                         Vector &principle_inertia,
-                                         Matrix &orientation)
+                                         const QVector<qint32> &bead_idxs,
+                                         QVector<Vector> &bead_coms, 
+                                         QVector<double> &bead_masses, 
+                                         QVector<Vector> &principle_inertias,
+                                         QVector<Matrix> &orientations
+                                        )
 {
     int nats = coords.count();
-    BOOST_ASSERT( masses.count() == nats );
     
+    BOOST_ASSERT( masses.count() == nats );
+    BOOST_ASSERT( beadidxs.count() == nats );
+
+    QHash<qint32,Matrix> inertia;
+    
+    const qint32 *bead_idxs_array = bead_idxs.constData();
     const Vector *coords_array = coords.constData();
     const MolarMass *masses_array = masses.constData();
     
-    // Calculate the center of mass
-    com = Vector(0);
-    mass = 0;
+    Vector *bead_coms_array = bead_coms.data();
+    double *bead_masses_array = bead_masses.data();
     
+    // Calculate the center(s) of mass
     for (int i=0; i<nats; ++i)
     {
-        com += coords_array[i] * masses_array[i].value();
-        mass += masses_array[i].value();
+        qint32 bead_idx = bead_idxs_array[i];
+        
+        if (bead_idx == -1)
+            continue;
+    
+        if (not mats.contains(bead_idx))
+        {
+            inertia.insert( bead_idx, Matrix(0) );
+            bead_coms_array[bead_idx] = Vector(0);
+            bead_masses_array[bead_idx] = 0;
+        }
+        
+        bead_coms_array[bead_idx] += coords_array[i] * masses_array[i].value();
+        bead_masses_array[bead_idx] += masses_array[i].value();
     }
-    
-    com /= mass;
-    
+
+    for (QHash<qint32,Matrix>::const_iterator it = inertia.constBegin();
+         it != inertia.constEnd();
+         ++it)
+    {
+        bead_coms_array[it.key()] /= bead_masses_array[it.key()];
+    }
+
     // Now calculate the moment of inertia tensor in the cartesian frame
     // (calculate from the center of mass)
-    Matrix inertia(0);
-    double *inertia_array = inertia.data();
-    
     for (int i=0; i<nats; ++i)
     {
-        Vector d = coords_array[i] - com;
+        qint32 bead_idx = bead_idxs_array[i];
+        
+        if (bead_idx == -1)
+            continue;
+
+        double *inertia_array = inertia[bead_idx].data();
+
+        Vector d = coords_array[i] - bead_coms_array[bead_idx];
         
         double m = masses_array[i].value();
         
@@ -188,85 +176,98 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
         inertia_array[ inertia.offset(1,2) ] -= m * d.y() * d.z();
     }
 
-    for (int i=0; i<9; ++i)
+    for (QHash<qint32,Matrix>::iterator it = inertia.begin();
+         it != inertia.end();
+         ++it)
     {
-        if (inertia_array[i] < 1e-6 and inertia_array[i] > -1e-6)
-            inertia_array[i] = 0;
-    }
-    
-    inertia_array[ inertia.offset(1,0) ] = inertia_array[ inertia.offset(0,1) ];
-    inertia_array[ inertia.offset(2,0) ] = inertia_array[ inertia.offset(0,2) ];
-    inertia_array[ inertia.offset(2,1) ] = inertia_array[ inertia.offset(1,2) ];
+        double *inertia_array = it->data();
 
-    std::pair<Vector,Matrix> eigs = inertia.diagonalise();
+        for (int i=0; i<9; ++i)
+        {
+            if (inertia_array[i] < 1e-6 and inertia_array[i] > -1e-6)
+                inertia_array[i] = 0;
+        }
+    
+        inertia_array[ inertia.offset(1,0) ] = inertia_array[ inertia.offset(0,1) ];
+        inertia_array[ inertia.offset(2,0) ] = inertia_array[ inertia.offset(0,2) ];
+        inertia_array[ inertia.offset(2,1) ] = inertia_array[ inertia.offset(1,2) ];
 
-    principle_inertia = eigs.first;
+        std::pair<Vector,Matrix> eigs = it->diagonalise();
+
+        Vector &principle_inertia = eigs.first;
+        Matrix &orientation = eigs.second;
     
-    orientation = eigs.second;
-    
-    //if one or more of the eigenvalues is zero then we may have a problem
-    //because the wrong eigenvector direction may be chosen - in this case,
-    //we will build this eigenvector using a cross product to ensure that 
-    //the right-hand-rule definition of our axes is maintained
-    //
-    // Also, even if we have three eigenvalues, we still need to make sure
-    // that a right-hand-rule set is chosen, rather than the left-hand set
-    {
-        bool zero_x = std::abs(principle_inertia[0]) < 1e-6;
-        bool zero_y = std::abs(principle_inertia[1]) < 1e-6;
-        bool zero_z = std::abs(principle_inertia[2]) < 1e-6;
+        //if one or more of the eigenvalues is zero then we may have a problem
+        //because the wrong eigenvector direction may be chosen - in this case,
+        //we will build this eigenvector using a cross product to ensure that 
+        //the right-hand-rule definition of our axes is maintained
+        //
+        // Also, even if we have three eigenvalues, we still need to make sure
+        // that a right-hand-rule set is chosen, rather than the left-hand set
+        {
+            bool zero_x = std::abs(principle_inertia[0]) < 1e-6;
+            bool zero_y = std::abs(principle_inertia[1]) < 1e-6;
+            bool zero_z = std::abs(principle_inertia[2]) < 1e-6;
         
-        int n_zeroes = int(zero_x) + int(zero_y) + int(zero_z);
+            int n_zeroes = int(zero_x) + int(zero_y) + int(zero_z);
         
-        if (n_zeroes == 3)
-        {
-            //no axes!
-            orientation = Matrix(1);
-        }
-        else if (n_zeroes == 2)
-        {
-            //just one well-defined axis - I don't know how to handle this...
-            throw SireError::incompatible_error( QObject::tr(
-                    "Sire cannot yet handle rigid body systems with only "
-                    "a single non-zero eigenvalue - %1, moment of interia equals\n%2")
-                        .arg(principle_inertia.toString(),
-                             orientation.toString()), CODELOC );
-        }
-        else if (n_zeroes == 1)
-        {
-            Vector r0 = orientation.row0();
-            Vector r1 = orientation.row1();
-            Vector r2 = orientation.row2();
+            if (n_zeroes == 3)
+            {
+                //no axes!
+                orientation = Matrix(1);
+            }
+            else if (n_zeroes == 2)
+            {
+                //just one well-defined axis - I don't know how to handle this...
+                throw SireError::incompatible_error( QObject::tr(
+                        "Sire cannot yet handle rigid body systems with only "
+                        "a single non-zero eigenvalue - %1, moment of interia equals\n%2")
+                            .arg(principle_inertia.toString(),
+                                 orientation.toString()), CODELOC );
+            }
+            else if (n_zeroes == 1)
+            {
+                Vector r0 = orientation.row0();
+                Vector r1 = orientation.row1();
+                Vector r2 = orientation.row2();
             
-            if (zero_x)
-                r0 = Vector::cross(r1,r2);
-            else if (zero_y)
-                r1 = Vector::cross(r2,r0);
-            else if (zero_z)
-                r2 = Vector::cross(r0,r1);
+                if (zero_x)
+                    r0 = Vector::cross(r1,r2);
+                else if (zero_y)
+                    r1 = Vector::cross(r2,r0);
+                else if (zero_z)
+                    r2 = Vector::cross(r0,r1);
             
-            orientation = Matrix(r0, r1, r2);
-        }
-        else
-        {
-            Vector r0 = orientation.row0();
-            Vector r1 = orientation.row1();
-            Vector r2 = orientation.row2();
+                orientation = Matrix(r0, r1, r2);
+            }
+            else
+            {
+                Vector r0 = orientation.row0();
+                Vector r1 = orientation.row1();
                      
-            orientation = Matrix( r0, r1, Vector::cross(r0,r1) );
+                orientation = Matrix( r0, r1, Vector::cross(r0,r1) );
+            }
         }
+
+        *it = orientation.inverse();
+        orientations[bead_idx] = orientation;
+        principle_inertias[bead_idx] = principle_inertia;
     }
-    
-    Matrix inv = orientation.inverse();
-    
+
     //now calculate the coordinates of all of the atoms in terms
     //of the center of mass / orientaton frame
-    QVector<Vector> internal_coords(coords);
+    QVector<Vector> internal_coords(nats);
     Vector *internal_coords_array = internal_coords.data();
 
     for (int i=0; i<nats; ++i)
     {
-        internal_coords_array[i] = inv * (coords_array[i] - com);
+        qint32 bead_idx = bead_idxs_array[i];
+        
+        if (bead_idx == -1)
+            continue;
+    
+        internal_coords_array[i] = inv.value(bead_idx) 
+                                        * (coords_array[i] - bead_coms_array[bead_idx]);
     }
 
     return internal_coords;
@@ -276,6 +277,14 @@ static QVector<Vector> getCOMPlusInertia(const QVector<Vector> &coords,
 PropertyName RBWorkspace::beadingProperty() const
 {
     return propertyMap()["beading"];
+}
+
+static void getBeading(const ViewsOfMol &mol, const PropertyName &beading_property,
+                       QPair< qint32,QVector<qint32> > &beading, qint32 &nbeads)
+{
+    beading.first = nbeads;
+    beading.second = QVector<qint32>();
+    nbeads += 1;
 }
 
 /** Rebuild all of the data array from the current state of the system */
@@ -290,59 +299,71 @@ void RBWorkspace::rebuildFromScratch()
     PropertyName beading_property = this->beadingProperty();
     
     const MoleculeGroup &molgroup = this->moleculeGroup();
-    const ForceTable &forcetable = this->forceTable();
     
     int nmols = molgroup.nMolecules();
-    
-    beads_to_atoms = QVector<Beading>();
-    mols_to_beads = QHash< MolNum,QPair<quint32,quint32> >();
-    beads_to_atoms.reserve(nmols);
-    mols_to_beads.reserve(nmols);
-    
-    //loop through each molecule and bead it up
-    for (int i=0; i<nmols; ++i)
-    {
-        MolNum molnum = molgroup.molNumAt(i);
-        
-        QVector<Beading> beads = Beading::createBeads(molgroup[molnum], beading_property);
-        
-        if (not beads.isEmpty())
-        {
-            mols_to_beads.insert( molnum, 
-                    QPair<quint32,quint32>(beads_to_atoms.count(), beads.count()) );
-                    
-            beads_to_atoms += beads;
-        }
-    }
-    
-    beads_to_atoms.squeeze();
-    mols_to_beads.squeeze();
-    
-    //for the moment, we'll make one bead per molecule
-    int nbeads = beads_to_atoms.count();
     
     if (sys.containsProperty(velgen_property))
         vel_generator = sys.property(velgen_property).asA<VelocityGenerator>();
     else
         vel_generator = NullVelocityGenerator();
-
-    int ibead = 0;
     
-    atom_int_coords = QVector< QVector<Vector> >(nbeads);
+    atom_int_coords = QVector< QVector<Vector> >(nmols);
+    atoms_to_beads = QVector< QVector<qint32> >(nmols);
+    
+    atom_int_coords.squeeze();
+    atoms_to_beads.squeeze();
+    
+    QVector<Vector> *atom_int_coords_array = atom_int_coords.data();
+    QPair< qint32,QVector<qint32> > *atoms_to_beads_array = atoms_to_beads.data();
+
+    //bead up the molecules
+    qint32 nbeads = 0;
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        MolNum molnum = molgroup.molNumAt(i);
+        
+        const ViewsOfMol &mol = molgroup[molnum];
+        
+        const MoleculeData &moldata = mol.data();
+        
+        if (moldata.hasProperty(beading_property))
+        {
+            //use the beading property to generate the beading for this molecule
+            ::getBeading(mol, beading_property, atoms_to_beads_array[i], nbeads);
+        }
+        else
+        {
+            //the entire molecule is a single bead
+            atoms_to_beads_array[i].first = nbeads;
+            atoms_to_beads_array[i].second = QVector<qint32>();
+            
+            ++nbeads;
+        }
+    }
+    
+    if (nbeads == 0)
+    {
+        bead_coordinates.clear();
+        bead_orientations.clear();
+        bead_to_world.clear();
+        bead_masses.clear();
+        bead_inertia.clear();
+        return;
+    }
+
     bead_coordinates = QVector<Vector>(nbeads);
     bead_orientations = QVector<Quaternion>(nbeads);
     bead_to_world = QVector<Matrix>(nbeads);
     bead_masses = QVector<double>(nbeads);
     bead_inertia = QVector<Vector>(nbeads);
     
-    atom_int_coords.squeeze();
     bead_coordinates.squeeze();
     bead_orientations.squeeze();
     bead_to_world.squeeze();
     bead_masses.squeeze();
     bead_inertia.squeeze();
     
-    QVector<Vector> *atom_int_coords_array = atom_int_coords.data();
     Vector *bead_coords_array = bead_coordinates.data();
     Matrix *bead_to_world_array = bead_to_world.data();
     Quaternion *bead_orients_array = bead_orientations.data();
@@ -350,28 +371,25 @@ void RBWorkspace::rebuildFromScratch()
     Vector *bead_inertia_array = bead_inertia.data();
     const Beading *beading_array = beads_to_atoms.constData();
     
-    atom_forces = QVector< QVector<Vector> >();
-    QVector<Vector> *atom_forces_array = 0;
-    
     for (int i=0; i<nmols; ++i)
     {
         MolNum molnum = molgroup.molNumAt(i);
-        
-        if (not mols_to_beads.contains(molnum))
-            continue;
-            
-        QPair<quint32,quint32> bead_info = mols_to_beads.value(molnum);
-        
-        int bead_idx = bead_info.first;
-        int nmolbeads = bead_info.second;
         
         const ViewsOfMol &mol = molgroup[molnum];
         
         const MoleculeData &moldata = mol.data();
         
-        QVector<Vector> coords;
-        QVector<MolarMass> masses;
-        
+        if (moldata.hasProperty(beading_property))
+        {
+            //use the beading property to generate the beading for this molecule
+            
+        }
+        else
+        {
+            //the entire molecule is a single bead
+            atoms_to_beads_array[i] = QVector<qint32>();
+        }
+
         if (mol.selectedAll())
         {
             coords = moldata.property(coords_property)
@@ -407,26 +425,25 @@ void RBWorkspace::rebuildFromScratch()
                                              .asA<AtomElements>()
                                              .toVector(selected_atoms) );
             }
-            
-            if (atom_forces_array == 0)
-            {
-                atom_forces = QVector< QVector<Vector> >(nbeads);
-                atom_forces.squeeze();
-                atom_forces_array = atom_forces.data();
-            }
-            
-            atom_forces_array[i] = forcetable.getTable(molnum).toVector(selected_atoms);
         }
         
-        atom_int_coords_array[ibead] = ::getCOMPlusInertia(coords, masses,
-                                            bead_coords_array[ibead],
-                                            bead_masses_array[ibead],
-                                            bead_inertia_array[ibead],
-                                            bead_to_world_array[ibead]);
-    
-        bead_orients_array[ibead] = Quaternion(); // equals identity matrix
-    
-        ++ibead;
+        //we now have arrays of the coords and masses for the atoms in each
+        //molecule - the next step is to arrange these arrays so that they
+        //can be used to generate the data for each bead
+        for (int ibead=bead_idx; ibead <= bead_idx+nmolbeads; ++ibead)
+        {
+            const Beading &beading = beading_array[ibead];
+        
+            atom_int_coords_array[ibead] = ::getCOMPlusInertia(
+                                                coords.constData() + beading.start,
+                                                masses.constData() + beading.start,
+                                                beading.count,
+                                                bead_masses_array[ibead],
+                                                bead_inertia_array[ibead],
+                                                bead_to_world_array[ibead]);
+                                                
+            bead_orients_array[ibead] = Quaternion(); // equals identity matrix
+        }
     }
     
     //create space for the forces, torques and momenta

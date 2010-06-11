@@ -549,7 +549,7 @@ NMatrix& NMatrix::operator*=(double scale)
     {
         for (int i=0; i<sz; ++i)
         {
-            data[i] *= sz;
+            data[i] *= scale;
         }
     }
     

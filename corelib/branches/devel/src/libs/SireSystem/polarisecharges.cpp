@@ -148,10 +148,15 @@ static void calculateAtomMatrix(AtomIdx atomidx, const AtomCoords &coords,
 
     const int nbonded = bonded_atoms.count();
     
+    //qDebug() << atomidx << "Bonded" << bonded_atoms;
+    
     const double alpha = four_pi_eps0 * polarisability.value();
     
     if (nbonded == 0 or alpha < 1e-6)
         return;
+
+    //qDebug() << "coords" << coords[ molinfo.cgAtomIdx(atomidx) ].toString();
+    //qDebug() << "alpha" << polarisability.toString() << four_pi_eps0 << alpha;
 
     //construct the X matrix (matrix of vectors from connected 
     //atoms to the this atom
@@ -168,8 +173,14 @@ static void calculateAtomMatrix(AtomIdx atomidx, const AtomCoords &coords,
             ++i;
         }
     }
+
+    //qDebug() << "X";
+    //for (int i=0; i<X.count(); ++i)
+    //{
+    //    qDebug() << i << X[i].toString();
+    //}
     
-    //now construct (1/alpha) ( X X^T )                        
+    //now construct (1/alpha)( X^T X )                        
     xx = NMatrix(nbonded, nbonded);
 
     const double one_over_alpha = 1 / alpha;
@@ -180,14 +191,20 @@ static void calculateAtomMatrix(AtomIdx atomidx, const AtomCoords &coords,
     
         for (int j=i+1; j<nbonded; ++j)
         {
-            const double i_dot_j = Vector::dot(X[i], X[j]);
+            const double i_dot_j = one_over_alpha * Vector::dot(X[i], X[j]);
             xx(i,j) = i_dot_j;
             xx(j,i) = i_dot_j;
         }
     }
 
-    //now construct alpha * ( X X^T )**-1
+    //qDebug() << "(1/alpha) * X^T X\n" << xx.toString();
+    //qDebug() << "(X^T X)-1\n" << xx.inverse().toString();
+
+    //now construct alpha ( X^T X )**-1
     inv_xx = xx.inverse();
+    
+    //qDebug() << "1/alpha (X^T X)\n" << xx.toString();
+    //qDebug() << "alpha (X^T X)-1\n" << inv_xx.toString();
 }
 
 PolariseChargesData::PolariseChargesData(const MoleculeView &molview,
@@ -502,11 +519,13 @@ static void calculateCharges(AtomIdx atomidx,
     
     BOOST_ASSERT(nbonded == alpha_inv_XX.nRows());
     
-    if (nbonded <= 1 or alpha_inv_XX.nRows() <= 1)
-        //not enough bonded atoms to take the charge
-        return;
+    //if (nbonded <= 1 or alpha_inv_XX.nRows() <= 1)
+    //    //not enough bonded atoms to take the charge
+    //    return;
         
     double phi_a = moltable[cgatomidx.cutGroup()][cgatomidx.atom()].value();
+    
+    //qDebug() << "atom" << atomidx << "phi" << phi_a;
     
     NVector delta_phi(nbonded);
     {
@@ -521,14 +540,22 @@ static void calculateCharges(AtomIdx atomidx,
             ++i;
         }
     }
+
+    //qDebug() << "delta_phi\n" << delta_phi.toString();
     
     NVector delta_q = alpha_inv_XX * delta_phi;
+    
+    //qDebug() << "delta_q\n" << delta_q.toString();
     
     //calculate the self energy - this is (1 / 2 alpha) p^T X X^T p
     MolarEnergy self_nrg( 0.5 * delta_q.dot( inv_alpha_XX * delta_q ) );
     
+    //qDebug() << "self_nrg" << self_nrg.toString();
+    
     induced_charges.set(cgatomidx, 
                         induced_charges[cgatomidx] + Charge( -(delta_q.sum()) ) );
+
+    //qDebug() << "SUM charges" << delta_q.sum() << induced_charges[cgatomidx];
 
     selfpol_nrgs.set(cgatomidx, self_nrg);
 

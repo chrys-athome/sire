@@ -28,19 +28,19 @@ tip4p = protoms.parameterise(tip4p, ProtoMS.SOLVENT)
 # set the polarisability of the atoms
 tip4p = tip4p.edit() \
              .atom( AtomName("O00") ) \
-                  .setProperty("polarisability", 0.0*angstrom3) \
-                  .setProperty("fixed_charge", -0.8*mod_electron) \
+                  .setProperty("polarisability", 0.465*angstrom3) \
+                  .setProperty("fixed_charge", -0.656*mod_electron) \
                   .molecule() \
              .atom( AtomName("H01") ) \
-                  .setProperty("polarisability", 0.0*angstrom3) \
-                  .setProperty("fixed_charge", 0.4*mod_electron) \
+                  .setProperty("polarisability", 0.135*angstrom3) \
+                  .setProperty("fixed_charge", 0.328*mod_electron) \
                   .molecule() \
              .atom( AtomName("H02") ) \
-                  .setProperty("polarisability", 0.0*angstrom3) \
-                  .setProperty("fixed_charge", 0.4*mod_electron) \
+                  .setProperty("polarisability", 0.135*angstrom3) \
+                  .setProperty("fixed_charge", 0.328*mod_electron) \
                   .molecule() \
              .atom( AtomName("M03") ) \
-                  .setProperty("polarisability", 1.45*angstrom3) \
+                  .setProperty("polarisability", 0.465*angstrom3) \
                   .molecule() \
              .commit()
 
@@ -49,10 +49,12 @@ connectivity = Connectivity(tip4p)
 connectivity = connectivity.edit() \
                            .connect(AtomName("O00"), AtomName("H01")) \
                            .connect(AtomName("O00"), AtomName("H02")) \
-                           .connect(AtomName("O00"), AtomName("M03")) \
-                           .connect(AtomName("M03"), AtomName("H01")) \
-                           .connect(AtomName("M03"), AtomName("H02")) \
+                           .disconnect(AtomName("O00"), AtomName("M03")) \
+                           .disconnect(AtomName("M03"), AtomName("H01")) \
+                           .disconnect(AtomName("M03"), AtomName("H02")) \
                            .commit()
+
+print connectivity
 
 tip4p_chgs = tip4p.property("charge")
 tip4p_fix = tip4p.property("fixed_charge")
@@ -79,22 +81,21 @@ cljff = InterGroupCLJFF("pol_tip4p-water")
 cljff.add(pol_tip4p, MGIdx(0))
 cljff.add(waters, MGIdx(1))
 
-print cljff.energy()
-
 system = System()
 system.add(cljff)
 
-print system.energy()
+print system.energies()
 
 polchgs = PolariseCharges(cljff[MGIdx(0)], cljff.components().coulomb(),
                           CoulombProbe(1*mod_electron))
 
 system.add(polchgs)
+system.add(polchgs.selfEnergyFF())
 
 print "Applying the polarisation constraint..."
 system.applyConstraints()
 
-print system.energy()
+print system.energies()
 
 pol_tip4p = system[MGIdx(0)][pol_tip4p.number()].molecule()
 
@@ -107,7 +108,7 @@ print "Induced charges\n",pol_tip4p.property("induced_charge"), \
 print "New charges\n",pol_tip4p.property("charge"), \
                       pol_tip4p.evaluate().charge({"charge":"charge"})
 
-grid = RegularGrid(tip4p.evaluate().center(), 100, 0.1*angstrom)
+grid = RegularGrid(tip4p.evaluate().center(), 10, 1.0*angstrom)
 
 def writePotential(molecule, filename):
     cljff = InterCLJFF()

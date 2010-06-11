@@ -16,9 +16,9 @@ coords = "test/io/Bound_ligand1.pdb"
 ff = "test/io/ligand1.template"
 name = "dana"
 
-#coords = "test/io/ethane.pdb"
-#ff = "test/io/ethane.ff"
-#name = "ethane"
+coords = "test/io/ethane.pdb"
+ff = "test/io/ethane.ff"
+name = "ethane"
 
 ethane = PDB().readMolecule(coords)
 

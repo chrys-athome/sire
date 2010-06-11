@@ -884,11 +884,11 @@ void Molpro::calculatePotential(const QMPotential::Molecules &molecules,
                                 double scale_potential, int ntries) const
 {
     if (molecules.count() == 0)
-        return 0;
+        return;
         
     QString cmdfile = this->potentialCommandFile(molecules, pottable, probe);
     
-    return this->calculatePotential(cmdfile, pottable, scale_potential, ntries);
+    //this->calculatePotential(cmdfile, pottable, scale_potential, ntries);
 } 
 
 /** Calculate the potentials around the passed molecules, and place them into the passed
