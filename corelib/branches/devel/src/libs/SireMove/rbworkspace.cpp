@@ -200,7 +200,7 @@ static QVector<Vector> buildBead(const ViewsOfMol &mol,
         if (beading.isEmpty())
         {
             //all atoms are part of the same bead
-            Vector &bead_coord = bead_coords[0];
+            Vector &bead_com = bead_coords[0];
             double &bead_mass = bead_masses[0];
             Matrix &bead_to_world = beads_to_world[0];
             Vector &bead_inertia = bead_inertias[0];
@@ -210,11 +210,11 @@ static QVector<Vector> buildBead(const ViewsOfMol &mol,
             {
                 const double mass = ::getMass(masses_array[i]);
             
-                bead_coord += mass * coords_array[i];
+                bead_com += mass * coords_array[i];
                 bead_mass += mass;
             }
             
-            bead_coord /= bead_mass;
+            bead_com /= bead_mass;
             bead_orients[0] = Quaternion();
             
             //now calculate moments of inertia
@@ -222,7 +222,7 @@ static QVector<Vector> buildBead(const ViewsOfMol &mol,
             {
                 double *inertia_array = bead_to_world.data();
 
-                Vector d = coords_array[i] - bead_coord;
+                Vector d = coords_array[i] - bead_com;
         
                 inertia_array[ bead_to_world.offset(0,0) ] += 
                                                 bead_mass * (d.y()*d.y() + d.z()*d.z());
@@ -244,7 +244,7 @@ static QVector<Vector> buildBead(const ViewsOfMol &mol,
 
             for (int i=0; i<nats; ++i)
             {
-                int_coords_array[i] = inv_matrix * (coords_array[i] - bead_coord);
+                int_coords_array[i] = inv_matrix * (coords_array[i] - bead_com);
             }
         }
         else
@@ -971,8 +971,6 @@ static AtomCoords updateCoordinates(const ViewsOfMol &mol,
     updates the system with these */
 void RBWorkspace::commitCoordinates()
 {
-    #warning I've broken the rigid body dynamics again...
-
     int nmols = atom_int_coords.count();
     
     const MoleculeGroup &molgroup = moleculeGroup();
