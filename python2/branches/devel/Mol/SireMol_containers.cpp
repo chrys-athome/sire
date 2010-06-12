@@ -41,6 +41,7 @@
 #include "Base/convertpackedarray.hpp"
 
 #include "SireMol/atom.h"
+#include "SireMol/beadnum.h"
 #include "SireMol/element.h"
 #include "SireMol/atomidentifier.h"
 #include "SireMol/cutgroup.h"
@@ -129,6 +130,7 @@ void register_SireMol_containers()
     register_tuple< boost::tuple<QList<MolGroupPtr>,SireBase::PropertyMap> >();
 
     register_PackedArray< SireBase::PackedArray2D<Element> >();
+    register_PackedArray< SireBase::PackedArray2D<BeadNum> >();
 
     #if QT_VERSION >= 0x402000
     register_dict< QHash<MolNum,Selector<Atom> >();

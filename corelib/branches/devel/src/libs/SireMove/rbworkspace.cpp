@@ -389,6 +389,8 @@ static void getBeading(const ViewsOfMol &mol, const PropertyName &beading_proper
     
     if (moldata.hasProperty(beading_property))
     {
+        qDebug() << CODELOC;
+    
         if (mol.selectedAll())
         {
             const AtomBeading &beadprop = moldata.property(beading_property)
@@ -401,7 +403,7 @@ static void getBeading(const ViewsOfMol &mol, const PropertyName &beading_proper
             QVector<qint32> beads(nats);
             beads.squeeze();
             
-            int nbeads = 0;
+            int num_beads = 0;
             
             const BeadNum *beading_array = beadprop.array().constValueData();
             
@@ -417,11 +419,18 @@ static void getBeading(const ViewsOfMol &mol, const PropertyName &beading_proper
                 
                 if (not have_bead.contains(beadnum))
                 {
-                    have_bead.insert(beadnum,nbeads);
-                    nbeads += 1;
+                    have_bead.insert(beadnum,num_beads);
+                    num_beads += 1;
                 }
                     
                 beads[i] = have_bead[beadnum];
+            }
+            
+            if (num_beads > 0)
+            {
+                beading.first = nbeads;
+                beading.second = beads;
+                nbeads += num_beads;
             }
         }
         else
