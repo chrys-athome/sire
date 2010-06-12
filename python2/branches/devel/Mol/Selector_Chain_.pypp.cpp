@@ -50,6 +50,7 @@ void register_Selector_Chain__class(){
         Selector_Chain__exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         Selector_Chain__exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::AtomSelection const & >(( bp::arg("moldata"), bp::arg("selected_atoms") )) );
         Selector_Chain__exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::ChainID const & >(( bp::arg("moldata"), bp::arg("viewid") )) );
+        Selector_Chain__exposer.def( bp::init< SireMol::MoleculeData const &, QList< SireMol::ChainIdx > const & >(( bp::arg("moldata"), bp::arg("idxs") )) );
         Selector_Chain__exposer.def( bp::init< SireMol::Selector< SireMol::Chain > const & >(( bp::arg("other") )) );
         { //::SireMol::Selector< SireMol::Chain >::add
         

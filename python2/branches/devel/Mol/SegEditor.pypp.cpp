@@ -76,28 +76,6 @@ void register_SegEditor_class(){
                 , ( bp::arg("atomnum") ) );
         
         }
-        { //::SireMol::SegEditor::atom
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::SegEditor::*atom_function_type )( int ) const;
-            atom_function_type atom_function_value( &::SireMol::SegEditor::atom );
-            
-            SegEditor_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::SireMol::SegEditor::atom
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::SegEditor::*atom_function_type )( ::SireMol::AtomID const & ) const;
-            atom_function_type atom_function_value( &::SireMol::SegEditor::atom );
-            
-            SegEditor_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
         { //::SireMol::SegEditor::commit
         
             typedef ::SireMol::Segment ( ::SireMol::SegEditor::*commit_function_type )(  ) const;
@@ -106,16 +84,6 @@ void register_SegEditor_class(){
             SegEditor_exposer.def( 
                 "commit"
                 , commit_function_value );
-        
-        }
-        { //::SireMol::SegEditor::molecule
-        
-            typedef ::SireMol::MolEditor ( ::SireMol::SegEditor::*molecule_function_type )(  ) const;
-            molecule_function_type molecule_function_value( &::SireMol::SegEditor::molecule );
-            
-            SegEditor_exposer.def( 
-                "molecule"
-                , molecule_function_value );
         
         }
         { //::SireMol::SegEditor::operator=
@@ -195,28 +163,6 @@ void register_SegEditor_class(){
                 , rename_function_value
                 , ( bp::arg("name") )
                 , bp::return_self< >() );
-        
-        }
-        { //::SireMol::SegEditor::select
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::SegEditor::*select_function_type )( ::SireMol::AtomID const & ) const;
-            select_function_type select_function_value( &::SireMol::SegEditor::select );
-            
-            SegEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::SegEditor::select
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::SegEditor::*select_function_type )( int ) const;
-            select_function_type select_function_value( &::SireMol::SegEditor::select );
-            
-            SegEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("i") ) );
         
         }
         { //::SireMol::SegEditor::toString

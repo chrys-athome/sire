@@ -290,159 +290,434 @@ Sphere Evaluator::boundingSphere(const PropertyMap &map) const
     return this->aaBox(map).boundingSphere();
 }
 
-double calc_mass(const PackedArray2D<SireUnits::Dimension::MolarMass>::Array &masses)
+inline double getMass(const MolarMass &mass)
 {
-    const SireUnits::Dimension::MolarMass *masses_array = masses.constData();
-    int nmasses = masses.count();
-    
-    double m = 0;
-    
-    for (int i=0; i<nmasses; ++i)
-    {
-        m += masses_array[i];
-    }
-    
-    return m;
+    return mass.value();
 }
 
-static double 
-calc_mass(const PackedArray2D<SireUnits::Dimension::MolarMass>::Array &masses,
-          const QSet<Index> &idxs)
+inline double getMass(const Element &element)
 {
-    const SireUnits::Dimension::MolarMass *masses_array = masses.constData();
-    
-    double m = 0;
-    
-    foreach (Index i, idxs)
-    {
-        m += masses_array[i];
-    }
-    
-    return m;
+    return element.mass().value();
 }
 
-static double get_mass(const AtomMasses &masses,
-                       const AtomSelection &selected_atoms)
+inline double getCharge(const Charge &charge)
 {
-    double m = 0;
-    
-    const PackedArray2D<SireUnits::Dimension::MolarMass>::Array *masses_array 
-                                            = masses.constData();
-    int ncg = masses.count();
+    return charge.value();
+}
 
+/** Internal function used to calculate the center of mass of the selected atoms */
+template<class T>
+static Vector getCOM(const AtomCoords &coords, const AtomProperty<T> &masses,
+                     const AtomSelection &selected_atoms)
+{
+    if (selected_atoms.selectedNone())
+        return Vector(0);
+
+    //calculate the center of mass
+    Vector com(0);
+    double mass(0);
+    
     if (selected_atoms.selectedAll())
     {
-        for (int i=0; i<ncg; ++i)
+        const Vector *coords_array = coords.array().constCoordsData();
+        const T *masses_array = masses.array().constValueData();
+        
+        const int nats = coords.nAtoms();
+        
+        for (int i=0; i<nats; ++i)
         {
-            m += calc_mass( masses_array[i] );
+            const double m = ::getMass(masses_array[i]);
+            com += m*coords_array[i];
+            mass += m;
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
     {
-        for (CGIdx i(0); i<ncg; ++i)
+        for (CGIdx i(0); i<coords.nCutGroups(); ++i)
         {
+            const Vector *coords_array = coords.constData(i);
+            const T *masses_array = masses.constData(i);
+
             if (selected_atoms.selectedAll(i))
-                m += calc_mass( masses_array[i] );
+            {
+                const int nats = coords.nAtoms(i);
+                
+                for (int j=0; j<nats; ++j)
+                {
+                    const double m = ::getMass(masses_array[j]);
+                    com += m*coords_array[j];
+                    mass += m;
+                }
+            }
             else
-                m += calc_mass( masses_array[i], selected_atoms.selectedAtoms(i) );
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    const double m = ::getMass(masses_array[j]);
+                    com += m*coords_array[j];
+                    mass += m;
+                }
+            }
         }
     }
     else
     {
         foreach (CGIdx i, selected_atoms.selectedCutGroups())
         {
+            const Vector *coords_array = coords.constData(i);
+            const T *masses_array = masses.constData(i);
+
             if (selected_atoms.selectedAll(i))
-                m += calc_mass( masses_array[i] );
+            {
+                const int nats = coords.nAtoms(i);
+                
+                for (int j=0; j<nats; ++j)
+                {
+                    const double m = ::getMass(masses_array[j]);
+                    com += m*coords_array[j];
+                    mass += m;
+                }
+            }
             else
-                m += calc_mass( masses_array[i], selected_atoms.selectedAtoms(i) );
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    const double m = ::getMass(masses_array[j]);
+                    com += m*coords_array[j];
+                    mass += m;
+                }
+            }
         }
     }
     
-    return m;
+    return com / mass;
 }
 
-static double calc_mass(const PackedArray2D<Element>::Array &elements)
+static void addToInertia(const Vector &d, double m, Matrix &inertia)
 {
-    const Element *elements_array = elements.constData();
-    int nelements = elements.count();
-    
-    double m = 0;
-    
-    for (int i=0; i<nelements; ++i)
+    double *inertia_array = inertia.data();
+
+    inertia_array[0] += m * (d.y()*d.y() + d.z()*d.z());
+    inertia_array[4] += m * (d.x()*d.x() + d.z()*d.z());
+    inertia_array[8] += m * (d.x()*d.x() + d.y()*d.y());
+
+    inertia_array[1] -= m * d.x() * d.y();
+    inertia_array[2] -= m * d.x() * d.z();
+    inertia_array[5] -= m * d.y() * d.z();
+}
+
+static void getPrincipalAxes(Matrix &inertia, Vector principal_moments)
+{
+    double *inertia_array = inertia.data();
+
+    //remove near-zero elements
+    for (int i=0; i<9; ++i)
     {
-        m += elements_array[i].mass();
+        if (inertia_array[i] < 1e-6 and inertia_array[i] > -1e-6)
+            inertia_array[i] = 0;
     }
     
-    return m;
-}
+    //symmetric matrix
+    //
+    //   0 1 2
+    //   3 4 5
+    //   6 7 8
+    //
+    inertia_array[3] = inertia_array[1];
+    inertia_array[6] = inertia_array[2];
+    inertia_array[7] = inertia_array[5];
 
-static double calc_mass(const PackedArray2D<Element>::Array &elements, 
-                        const QSet<Index> &idxs)
-{
-    const Element *elements_array = elements.constData();
+    std::pair<Vector,Matrix> eigs = inertia.diagonalise();
+
+    principal_moments = eigs.first;
+    inertia = eigs.second;
     
-    double m = 0;
+    //if one or more of the eigenvalues is zero then we may have a problem
+    //because the wrong eigenvector direction may be chosen - in this case,
+    //we will build this eigenvector using a cross product to ensure that 
+    //the right-hand-rule definition of our axes is maintained
+    //
+    // Also, even if we have three eigenvalues, we still need to make sure
+    // that a right-hand-rule set is chosen, rather than the left-hand set
+    bool zero_x = std::abs(principal_moments[0]) < 1e-6;
+    bool zero_y = std::abs(principal_moments[1]) < 1e-6;
+    bool zero_z = std::abs(principal_moments[2]) < 1e-6;
     
-    foreach (Index i, idxs)
+    if (zero_x){ principal_moments.setX(0); }
+    if (zero_y){ principal_moments.setY(0); }
+    if (zero_z){ principal_moments.setZ(0); }
+    
+    int n_zeroes = int(zero_x) + int(zero_y) + int(zero_z);
+    
+    if (n_zeroes == 3)
     {
-        m += elements_array[i].mass();
+        //no axes!
+        inertia = Matrix(1);
     }
-    
-    return m;
+    else if (n_zeroes == 2)
+    {
+        //just one well-defined axis - I don't know how to handle this...
+        throw SireError::incomplete_code( QObject::tr(
+                "The code to get principal axes for molecules with only a single "
+                "eigenvalue has yet to be written... (%1 and %2)")
+                    .arg(principal_moments.toString(),
+                         inertia.toString()), CODELOC );
+    }
+    else if (n_zeroes == 1)
+    {
+        Vector r0 = inertia.row0();
+        Vector r1 = inertia.row1();
+        Vector r2 = inertia.row2();
+        
+        if (zero_x)
+            r0 = Vector::cross(r1,r2);
+        else if (zero_y)
+            r1 = Vector::cross(r2,r0);
+        else if (zero_z)
+            r2 = Vector::cross(r0,r1);
+        
+        inertia = Matrix(r0, r1, r2);
+    }
+    else
+    {
+        Vector r0 = inertia.row0();
+        Vector r1 = inertia.row1();
+                 
+        inertia = Matrix( r0, r1, Vector::cross(r0,r1) );
+    }
 }
 
-static double get_mass(const AtomElements &elements,
-                       const AtomSelection &selected_atoms)
+/** Internal function used to get the principal axes of the selected atoms */
+template<class T>
+static AxisSet getPrincipalAxes(const AtomCoords &coords, 
+                                const AtomProperty<T> &masses,
+                                const AtomSelection &selected_atoms,
+                                Vector &principal_moments)
 {
-    double m = 0;
-    
-    const PackedArray2D<Element>::Array *elements_array = elements.constData();
-    int ncg = elements.count();
+    if (selected_atoms.selectedNone())
+        return AxisSet();
+        
+    Vector com = ::getCOM(coords, masses, selected_atoms);
 
+    Matrix inertia(0);
+    
     if (selected_atoms.selectedAll())
     {
-        for (int i=0; i<ncg; ++i)
+        const Vector *coords_array = coords.array().constCoordsData();
+        const T *masses_array = masses.array().constValueData();
+        
+        const int nats = coords.nAtoms();
+        
+        for (int i=0; i<nats; ++i)
         {
-            m += calc_mass( elements_array[i] );
+            ::addToInertia(coords_array[i]-com, ::getMass(masses_array[i]), inertia);
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
     {
-        for (CGIdx i(0); i<ncg; ++i)
+        for (CGIdx i(0); i<coords.nCutGroups(); ++i)
         {
+            const Vector *coords_array = coords.constData(i);
+            const T *masses_array = masses.constData(i);
+
             if (selected_atoms.selectedAll(i))
-                m += calc_mass( elements_array[i] );
+            {
+                const int nats = coords.nAtoms(i);
+                
+                for (int j=0; j<nats; ++j)
+                {
+                    ::addToInertia(coords_array[j]-com, ::getMass(masses_array[j]),
+                                   inertia);
+                }
+            }
             else
-                m += calc_mass( elements_array[i], selected_atoms.selectedAtoms(i) );
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    ::addToInertia(coords_array[j]-com, ::getMass(masses_array[j]),
+                                   inertia);
+                }
+            }
         }
     }
     else
     {
         foreach (CGIdx i, selected_atoms.selectedCutGroups())
         {
+            const Vector *coords_array = coords.constData(i);
+            const T *masses_array = masses.constData(i);
+
             if (selected_atoms.selectedAll(i))
-                m += calc_mass( elements_array[i] );
+            {
+                const int nats = coords.nAtoms(i);
+                
+                for (int j=0; j<nats; ++j)
+                {
+                    ::addToInertia(coords_array[j]-com, ::getMass(masses_array[j]),
+                                   inertia);
+                }
+            }
             else
-                m += calc_mass( elements_array[i], selected_atoms.selectedAtoms(i) );
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    ::addToInertia(coords_array[j]-com, ::getMass(masses_array[j]),
+                                   inertia);
+                }
+            }
+        }
+    }
+
+    ::getPrincipalAxes(inertia, principal_moments);
+    
+    return AxisSet(inertia, com);
+}
+
+/** Internal function used to calculate the total mass of the selected atoms */
+template<class T>
+static MolarMass getMass(const AtomProperty<T> &masses,
+                         const AtomSelection &selected_atoms)
+{
+    if (selected_atoms.selectedNone())
+        return MolarMass(0);
+
+    double mass(0);
+    
+    if (selected_atoms.selectedAll())
+    {
+        const T *masses_array = masses.array().constValueData();
+        
+        const int nats = masses.nAtoms();
+        
+        for (int i=0; i<nats; ++i)
+        {
+            mass += ::getMass(masses_array[i]);
+        }
+    }
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        for (CGIdx i(0); i<masses.nCutGroups(); ++i)
+        {
+            const T *masses_array = masses.constData(i);
+
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = masses.nAtoms(i);
+                
+                for (int j=0; j<nats; ++j)
+                {
+                    mass += ::getMass(masses_array[i]);
+                }
+            }
+            else
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    mass += ::getMass(masses_array[i]);
+                }
+            }
+        }
+    }
+    else
+    {
+        foreach (CGIdx i, selected_atoms.selectedCutGroups())
+        {
+            const T *masses_array = masses.constData(i);
+
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = masses.nAtoms(i);
+                
+                for (int j=0; j<nats; ++j)
+                {
+                    mass += ::getMass(masses_array[i]);
+                }
+            }
+            else
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    mass += ::getMass(masses_array[i]);
+                }
+            }
         }
     }
     
-    return m;
+    return MolarMass(mass);
 }
 
-static const Property& get_mass_property(const MoleculeData &moldata,
-                                         const PropertyMap &map)
+/** Internal function used to calculate the total charge of the selected atoms */
+template<class T>
+static Charge getCharge(const AtomProperty<T> &charges,
+                        const AtomSelection &selected_atoms)
 {
-    try
+    if (selected_atoms.selectedNone())
+        return Charge(0);
+
+    double charge(0);
+    
+    if (selected_atoms.selectedAll())
     {
-        return moldata.property( map["mass"] );
+        const T *charges_array = charges.array().constValueData();
+        
+        const int nats = charges.nAtoms();
+        
+        for (int i=0; i<nats; ++i)
+        {
+            charge += ::getCharge(charges_array[i]);
+        }
     }
-    catch(const SireBase::missing_property&)
+    else if (selected_atoms.selectedAllCutGroups())
     {
-        return moldata.property( map["element"] );
+        for (CGIdx i(0); i<charges.nCutGroups(); ++i)
+        {
+            const T *charges_array = charges.constData(i);
+
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = charges.nAtoms(i);
+                
+                for (int j=0; j<nats; ++j)
+                {
+                    charge += ::getCharge(charges_array[j]);
+                }
+            }
+            else
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    charge += ::getCharge(charges_array[j]);
+                }
+            }
+        }
     }
+    else
+    {
+        foreach (CGIdx i, selected_atoms.selectedCutGroups())
+        {
+            const T *charges_array = charges.constData(i);
+
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = charges.nAtoms(i);
+                
+                for (int j=0; j<nats; ++j)
+                {
+                    charge += ::getCharge(charges_array[j]);
+                }
+            }
+            else
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    charge += ::getCharge(charges_array[j]);
+                }
+            }
+        }
+    }
+    
+    return Charge(charge);
 }
-                                    
 
 /** Return the mass of the selected part of this molecule, using 
     the supplied map to find either the mass property, or if that
@@ -453,58 +728,20 @@ static const Property& get_mass_property(const MoleculeData &moldata,
 */
 MolarMass Evaluator::mass(const PropertyMap &map) const
 {
-    if (selected_atoms.selectedNone())
-        return MolarMass(0);
-
-    const Property &p = get_mass_property(*d, map);
+    const PropertyName mass_property = map["mass"];
     
-    if (p.isA<AtomMasses>())
+    if (d->hasProperty(mass_property))
     {
-        return MolarMass( get_mass(p.asA<AtomMasses>(), selected_atoms) );
-    }
-    else if (p.isA<AtomElements>())
-    {
-        return MolarMass( get_mass(p.asA<AtomElements>(), selected_atoms) );
+        const AtomMasses &masses = d->property(mass_property).asA<AtomMasses>();
+        
+        return ::getMass(masses, selected_atoms);
     }
     else
-        throw SireError::invalid_cast( QObject::tr(
-            "Cannot cast the property of type %1 into either an "
-            "AtomMasses or AtomElements property!")
-                .arg(p.what()), CODELOC );
-
-    return MolarMass(0);
-}
-
-static double 
-calc_charge(const PackedArray2D<SireUnits::Dimension::Charge>::Array &charges)
-{
-    const SireUnits::Dimension::Charge *charges_array = charges.constData();
-    int ncharges = charges.count();
-    
-    double c = 0;
-    
-    for (int i=0; i<ncharges; ++i)
     {
-        c += charges_array[i];
+        const AtomElements &elements = d->property(map["element"]).asA<AtomElements>();
+        
+        return ::getMass(elements, selected_atoms);
     }
-    
-    return c;
-}
-
-static double 
-calc_charge(const PackedArray2D<SireUnits::Dimension::Charge>::Array &charges,
-            const QSet<Index> &idxs)
-{
-    const SireUnits::Dimension::Charge *charges_array = charges.constData();
-    
-    double c = 0;
-    
-    foreach (Index i, idxs)
-    {
-        c += charges_array[i];
-    }
-    
-    return c;
 }
 
 /** Return the total charge of the selected part of the molecule, using
@@ -515,115 +752,143 @@ calc_charge(const PackedArray2D<SireUnits::Dimension::Charge>::Array &charges,
 */
 Charge Evaluator::charge(const PropertyMap &map) const
 {
-    const AtomCharges &charges = d->property( map["charge"] )
-                                        .asA<AtomCharges>();
-                                        
-    if (selected_atoms.selectedNone())
-        return Charge(0);
+    const AtomCharges &charges = d->property(map["charge"]).asA<AtomCharges>();
+        
+    return ::getCharge(charges, selected_atoms);
+}
 
-    double c = 0;
+/** Return the centroid of these atoms - this is the average
+    of the coordinates
     
-    const PackedArray2D<SireUnits::Dimension::Charge>::Array *charges_array 
-                                            = charges.constData();
-    int ncg = charges.count();
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+Vector Evaluator::centroid(const PropertyMap &map) const
+{
+    const AtomCoords &coords = d->property(map["coordinates"]).asA<AtomCoords>();
+    
+    if (selected_atoms.selectedNone())
+        return Vector(0);
+    
+    if (selected_atoms.selectedNone())
+        return Vector(0);
 
+    Vector cent(0);
+    int natoms(0);
+    
     if (selected_atoms.selectedAll())
     {
-        for (int i=0; i<ncg; ++i)
+        const Vector *coords_array = coords.array().constCoordsData();
+        
+        for (int i=0; i<coords.nAtoms(); ++i)
         {
-            c += calc_charge( charges_array[i] );
+            cent += coords_array[i];
+            ++natoms;
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
     {
-        for (CGIdx i(0); i<ncg; ++i)
+        for (CGIdx i(0); i<coords.nCutGroups(); ++i)
         {
+            const Vector *coords_array = coords.constData(i);
+
             if (selected_atoms.selectedAll(i))
-                c += calc_charge( charges_array[i] );
+            {
+                for (int j=0; j<coords.nAtoms(i); ++j)
+                {
+                    cent += coords_array[j];
+                    ++natoms;
+                }
+            }
             else
-                c += calc_charge( charges_array[i], selected_atoms.selectedAtoms(i) );
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    cent += coords_array[j];
+                    ++natoms;
+                }
+            }
         }
     }
     else
     {
         foreach (CGIdx i, selected_atoms.selectedCutGroups())
         {
+            const Vector *coords_array = coords.constData(i);
+
             if (selected_atoms.selectedAll(i))
-                c += calc_charge( charges_array[i] );
+            {
+                for (int j=0; j<coords.nAtoms(i); ++j)
+                {
+                    cent += coords_array[j];
+                    ++natoms;
+                }
+            }
             else
-                c += calc_charge( charges_array[i], selected_atoms.selectedAtoms(i) );
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    cent += coords_array[j];
+                    ++natoms;
+                }
+            }
         }
     }
     
-    return Charge(c);
+    return cent / natoms;
 }
 
-int addToAvg(const CoordGroup &coords, Vector &avg)
-{
-    const Vector *coords_array = coords.constData();
-    int nats = coords.count();
-    
-    for (int i=0; i<nats; ++i)
-    {
-        avg += coords_array[i];
-    }
-    
-    return nats;
-}
-
-int addToAvg(const CoordGroup &coords, const QSet<Index> &indicies,
-             Vector &avg)
-{
-    const Vector *coords_array = coords.constData();
-
-    foreach (Index i, indicies)
-    {
-       avg += coords_array[i];
-    }
-    
-    return indicies.count();
-} 
-
-/** Return the center of geometry of this part of the molecule
+/** Return the center of geometry of this part of the molecule.
+    This is the mid-point between the maximum coordinates and
+    minimum coordinates
 
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
 Vector Evaluator::centerOfGeometry(const PropertyMap &map) const
 {
+    const AtomCoords &coords = d->property(map["coordinates"]).asA<AtomCoords>();
+    
     if (selected_atoms.selectedNone())
         return Vector(0);
+    
+    if (selected_atoms.selectedNone())
+        return Vector(0);
+
+    Vector mincoords( std::numeric_limits<double>::max() );
+    Vector maxcoords( -std::numeric_limits<double>::max() );
+    
+    if (selected_atoms.selectedAll())
+    {
+        const Vector *coords_array = coords.array().constCoordsData();
         
-    const Property &prop = d->property( map["coordinates"] );
-    const AtomCoords &coords = prop.asA<AtomCoords>();
-    
-    const CoordGroup *coords_array = coords.constData();
-    int ncg = coords.count();
-    
-    //calculate the average coordinates
-    Vector avg(0);
-    
-    int navg = 0;
-    
-    if (selected_atoms.selectedAll())
-    {
-        for (int i=0; i<ncg; ++i)
-        { 
-            navg += addToAvg(coords_array[i], avg);
+        for (int i=0; i<coords.nAtoms(); ++i)
+        {
+            mincoords.setMin(coords_array[i]);
+            maxcoords.setMax(coords_array[i]);
         }
     }
     else if (selected_atoms.selectedAllCutGroups())
     {
-        for (CGIdx i(0); i<ncg; ++i)
+        for (CGIdx i(0); i<coords.nCutGroups(); ++i)
         {
+            const Vector *coords_array = coords.constData(i);
+
             if (selected_atoms.selectedAll(i))
             {
-                navg += addToAvg(coords_array[i], avg);
+                for (int j=0; j<coords.nAtoms(i); ++j)
+                {
+                    mincoords.setMin(coords_array[j]);
+                    maxcoords.setMax(coords_array[j]);
+                }
             }
             else
             {
-                navg += addToAvg(coords_array[i], selected_atoms.selectedAtoms(i),
-                                 avg);
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    mincoords.setMin(coords_array[j]);
+                    maxcoords.setMax(coords_array[j]);
+                }
             }
         }
     }
@@ -631,210 +896,28 @@ Vector Evaluator::centerOfGeometry(const PropertyMap &map) const
     {
         foreach (CGIdx i, selected_atoms.selectedCutGroups())
         {
+            const Vector *coords_array = coords.constData(i);
+
             if (selected_atoms.selectedAll(i))
             {
-                navg += addToAvg(coords_array[i], avg);
+                for (int j=0; j<coords.nAtoms(i); ++j)
+                {
+                    mincoords.setMin(coords_array[j]);
+                    maxcoords.setMax(coords_array[j]);
+                }
             }
             else
             {
-                navg += addToAvg(coords_array[i], selected_atoms.selectedAtoms(i),
-                                 avg);
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    mincoords.setMin(coords_array[j]);
+                    maxcoords.setMax(coords_array[j]);
+                }
             }
         }
     }
     
-    //form the average
-    return avg / navg;
-}
-
-static double 
-addToAvg(const CoordGroup &coords, 
-         const PackedArray2D<SireUnits::Dimension::MolarMass>::Array &masses, 
-         Vector &avg)
-{
-    const Vector *coords_array = coords.constData();
-    const SireUnits::Dimension::MolarMass *masses_array = masses.constData();
-    
-    int nats = coords.count();
-    
-    double mass = 0;
-    
-    for (int i=0; i<nats; ++i)
-    {
-        avg += masses_array[i] * coords_array[i];
-        mass += masses_array[i];
-    }
-    
-    return mass;
-}
-
-double addToAvg(const CoordGroup &coords, 
-                const PackedArray2D<SireUnits::Dimension::MolarMass>::Array &masses,
-                const QSet<Index> &indicies, Vector &avg)
-{
-    const Vector *coords_array = coords.constData();
-    const SireUnits::Dimension::MolarMass *masses_array = masses.constData();
-
-    double mass = 0;
-
-    foreach (Index i, indicies)
-    {
-       avg += masses_array[i] * coords_array[i];
-       mass += masses_array[i];
-    }
-    
-    return mass;
-}
-
-static Vector get_com(const AtomCoords &coords,
-                      const AtomMasses &masses,
-                      const AtomSelection &selected_atoms)
-{
-    const CoordGroup *coords_array = coords.constData();
-    const PackedArray2D<SireUnits::Dimension::MolarMass>::Array *masses_array 
-                                                            = masses.constData();
-    
-    int ncg = coords.count();
-    
-    //calculate the average mass position
-    Vector avg(0);
-    
-    double total_mass = 0;
-    
-    if (selected_atoms.selectedAll())
-    {
-        for (int i=0; i<ncg; ++i)
-        { 
-            total_mass += addToAvg(coords_array[i], masses_array[i], avg);
-        }
-    }
-    else if (selected_atoms.selectedAllCutGroups())
-    {
-        for (CGIdx i(0); i<ncg; ++i)
-        {
-            if (selected_atoms.selectedAll(i))
-            {
-                total_mass += addToAvg(coords_array[i], masses_array[i], avg);
-            }
-            else
-            {
-                total_mass += addToAvg(coords_array[i], masses_array[i],
-                                       selected_atoms.selectedAtoms(i), avg);
-            }
-        }
-    }
-    else
-    {
-        foreach (CGIdx i, selected_atoms.selectedCutGroups())
-        {
-            if (selected_atoms.selectedAll(i))
-            {
-                total_mass += addToAvg(coords_array[i], masses_array[i], avg);
-            }
-            else
-            {
-                total_mass += addToAvg(coords_array[i], masses_array[i],
-                                       selected_atoms.selectedAtoms(i), avg);
-            }
-        }
-    }
-    
-    //form the average
-    return avg / total_mass;
-}
-
-double addToAvg(const CoordGroup &coords, 
-                const PackedArray2D<Element>::Array &elements, 
-                Vector &avg)
-{
-    const Vector *coords_array = coords.constData();
-    const Element *elements_array = elements.constData();
-    
-    int nats = coords.count();
-    
-    double mass = 0;
-    
-    for (int i=0; i<nats; ++i)
-    {
-        avg += elements_array[i].mass() * coords_array[i];
-        mass += elements_array[i].mass();
-    }
-    
-    return mass;
-}
-
-double addToAvg(const CoordGroup &coords, 
-                const PackedArray2D<Element>::Array &elements,
-                const QSet<Index> &indicies, Vector &avg)
-{
-    const Vector *coords_array = coords.constData();
-    const Element *elements_array = elements.constData();
-
-    double mass = 0;
-
-    foreach (Index i, indicies)
-    {
-       avg += elements_array[i].mass() * coords_array[i];
-       mass += elements_array[i].mass();
-    }
-    
-    return mass;
-}
-
-static Vector get_com(const AtomCoords &coords,
-                      const AtomElements &elements,
-                      const AtomSelection &selected_atoms)
-{
-    const CoordGroup *coords_array = coords.constData();
-    const PackedArray2D<Element>::Array *elements_array = elements.constData();
-    
-    int ncg = coords.count();
-    
-    //calculate the average mass position
-    Vector avg(0);
-    
-    double total_mass = 0;
-    
-    if (selected_atoms.selectedAll())
-    {
-        for (int i=0; i<ncg; ++i)
-        { 
-            total_mass += addToAvg(coords_array[i], elements_array[i], avg);
-        }
-    }
-    else if (selected_atoms.selectedAllCutGroups())
-    {
-        for (CGIdx i(0); i<ncg; ++i)
-        {
-            if (selected_atoms.selectedAll(i))
-            {
-                total_mass += addToAvg(coords_array[i], elements_array[i], avg);
-            }
-            else
-            {
-                total_mass += addToAvg(coords_array[i], elements_array[i],
-                                       selected_atoms.selectedAtoms(i), avg);
-            }
-        }
-    }
-    else
-    {
-        foreach (CGIdx i, selected_atoms.selectedCutGroups())
-        {
-            if (selected_atoms.selectedAll(i))
-            {
-                total_mass += addToAvg(coords_array[i], elements_array[i], avg);
-            }
-            else
-            {
-                total_mass += addToAvg(coords_array[i], elements_array[i],
-                                       selected_atoms.selectedAtoms(i), avg);
-            }
-        }
-    }
-    
-    //form the average
-    return avg / total_mass;
+    return mincoords + 0.5*(maxcoords-mincoords);
 }
 
 /** Return the center of mass of this part of the molecule
@@ -844,27 +927,67 @@ static Vector get_com(const AtomCoords &coords,
 */
 Vector Evaluator::centerOfMass(const PropertyMap &map) const
 {
-    if (selected_atoms.selectedNone())
-        return Vector(0);
-        
-    const Property &prop = d->property( map["coordinates"] );
-    const AtomCoords &coords = prop.asA<AtomCoords>();
+    const AtomCoords &coords = d->property(map["coordinates"]).asA<AtomCoords>();
 
-    const Property &p = get_mass_property(*d,map);
+    const PropertyName mass_property = map["mass"];
     
-    if (p.isA<AtomMasses>())
+    if (d->hasProperty(mass_property))
     {
-        return get_com(coords, p.asA<AtomMasses>(), selected_atoms);
-    }
-    else if (p.isA<AtomElements>())
-    {
-        return get_com(coords, p.asA<AtomElements>(), selected_atoms);
+        const AtomMasses &masses = d->property(mass_property).asA<AtomMasses>();
+        
+        return ::getCOM(coords, masses, selected_atoms);
     }
     else
-        throw SireError::invalid_cast( QObject::tr(
-            "Cannot cast the property of type %1 into either an "
-            "AtomMasses or AtomElements property!")
-                .arg(p.what()), CODELOC );
+    {
+        const AtomElements &elements = d->property(map["element"]).asA<AtomElements>();
+        
+        return ::getCOM(coords, elements, selected_atoms);
+    }
+}
+
+/** Return the principal axes of this view - this uses
+    the "coordinates", and "mass" or "element" properties 
+    to find the moment of inertia tensor for this view, and
+    then diagonalises that to obtain the principal axes. These
+    axes are constructed to follow the right-hand-rule.
+    This returns the principal moments of inertia in
+    'principal_moments' */
+AxisSet Evaluator::principalAxes(Vector &principal_moments, 
+                                 const PropertyMap &map) const
+{
+    const PropertyName coords_property = map["coordinates"];
+    const PropertyName mass_property = map["mass"];
+    
+    const AtomCoords &coords = d->property(map["coordinates"])
+                                    .asA<AtomCoords>();
+    
+    if (d->hasProperty(mass_property))
+    {
+        const AtomMasses &masses = d->property(mass_property).asA<AtomMasses>();
+        
+        return ::getPrincipalAxes(coords, masses, selected_atoms,
+                                  principal_moments);
+    }
+    else
+    {
+        const AtomElements &elements = d->property(map["element"]).asA<AtomElements>();
+        
+        return ::getPrincipalAxes(coords, elements, selected_atoms,
+                                  principal_moments);
+    }
+
+}
+
+/** Return the principal axes of this view - this uses
+    the "coordinates", and "mass" or "element" properties 
+    to find the moment of inertia tensor for this view, and
+    then diagonalises that to obtain the principal axes. These
+    axes are constructed to follow the right-hand-rule.
+*/
+AxisSet Evaluator::principalAxes(const PropertyMap &map) const
+{
+    Vector principal_moments;
+    return this->principalAxes(principal_moments,map);
 }
 
 AxisSet Evaluator::alignmentAxes(const MoleculeView &other, 

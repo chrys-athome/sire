@@ -126,17 +126,35 @@ public:
         within the molecule described by the info in 'molinfo' */
     virtual QList<CGIdx> map(const MolInfo &molinfo) const=0;
 
-    virtual CutGroup selectFrom(const Molecules &molecules) const;
-    virtual QHash< MolNum,Selector<CutGroup> >
-                selectAllFrom(const Molecules &molecules) const;
 
-    virtual CutGroup selectFrom(const MoleculeGroup &molgroup) const;
-    virtual QHash< MolNum,Selector<CutGroup> >
-                selectAllFrom(const MoleculeGroup &molgroup) const;
+    virtual QList<CGIdx> map(const MoleculeView &molview,
+                             const PropertyMap &map = PropertyMap()) const;
     
-    virtual CutGroup selectFrom(const MolGroupsBase &molgroups) const;
+    virtual CutGroup selectFrom(const MoleculeView &molview,
+                                const PropertyMap &map = PropertyMap()) const;
+    
+    virtual Selector<CutGroup> selectAllFrom(const MoleculeView &molview,
+                                         const PropertyMap &map = PropertyMap()) const;
+    
+    virtual CutGroup selectFrom(const Molecules &molecules,
+                                const PropertyMap &map = PropertyMap()) const;
+                            
+    virtual QHash< MolNum,Selector<CutGroup> >
+                selectAllFrom(const Molecules &molecules,
+                              const PropertyMap &map = PropertyMap()) const;
+
+    virtual CutGroup selectFrom(const MoleculeGroup &molgroup,
+                                const PropertyMap &map = PropertyMap()) const;
+                            
+    virtual QHash< MolNum,Selector<CutGroup> >
+                selectAllFrom(const MoleculeGroup &molgroup,
+                              const PropertyMap &map = PropertyMap()) const;
+    
+    virtual CutGroup selectFrom(const MolGroupsBase &molgroups,
+                               const PropertyMap &map = PropertyMap()) const;
     virtual QHash< MolNum,Selector<CutGroup> > 
-                selectAllFrom(const MolGroupsBase &molgroups) const;
+                selectAllFrom(const MolGroupsBase &molgroups,
+                              const PropertyMap &map = PropertyMap()) const;
 
 protected:
     void processMatches(QList<CGIdx> &matches, const MolInfo &molinfo) const;

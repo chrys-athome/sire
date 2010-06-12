@@ -141,20 +141,6 @@ public:
     bool contains(AtomIdx atomidx) const;
     bool intersects(const AtomID &atomid) const;
     
-    Atom select(const AtomID &atomid) const;
-    Atom select(int i) const;
-    
-    Selector<Atom> selectAll(const AtomID &atomid) const;
-    Selector<Atom> selectAll() const;
-    
-    Atom atom(const AtomID &atomid) const;
-    Atom atom(int i) const;
-    
-    Selector<Atom> atoms(const AtomID &atomid) const;
-    Selector<Atom> atoms() const;
-    
-    Molecule molecule() const;
-
     void assertContainsProperty(const PropertyName &key) const;
     
     void assertContainsMetadata(const PropertyName &metakey) const;

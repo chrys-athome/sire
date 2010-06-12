@@ -272,6 +272,7 @@ public:
     EditSegData& segment(quint32 uid);
     
     CGAtomIdx cgAtomIdx(quint32 atomuid, const EditAtomData &atom) const;
+    CGIdx cgIdx(const EditAtomData &atom) const;
     ResIdx resIdx(const EditAtomData &atom) const;
     SegIdx segIdx(const EditAtomData &atom) const;
     
@@ -2666,6 +2667,152 @@ QList<AtomIdx> EditMolInfo::getAtomsIn(const SegID &segid) const
     return atomidxs;
 }
 
+/** Return the index of the chain that contains the passed residue
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_chain
+*/
+ChainIdx EditMolInfo::parentChain(ResIdx residx) const
+{
+    const EditResData &residue = d->residue( getUID(residx) );
+
+    ChainIdx chainidx = d->chainIdx(residue);
+    
+    if (chainidx.isNull())
+        throw SireMol::missing_residue( QObject::tr(
+                "The residue %1:%2 is not part of any chain.")
+                    .arg(residue.name).arg(residue.number), CODELOC );
+                    
+    return chainidx;
+}
+
+/** Return the index of the chain that contains the passed residue
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireMol::missing_chain
+*/
+ChainIdx EditMolInfo::parentChain(const ResID &resid) const
+{
+    return this->parentChain( this->resIdx(resid) );
+}
+
+/** Return the index of the residue that contains the passed atom
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_residue
+*/
+ResIdx EditMolInfo::parentResidue(AtomIdx atomidx) const
+{
+    const EditAtomData &atom = d->atom( getUID(atomidx) );
+
+    ResIdx residx = d->resIdx(atom);
+    
+    if (residx.isNull())
+        throw SireMol::missing_residue( QObject::tr(
+                "The atom %1:%2 is not part of any residue.")
+                    .arg(atom.name).arg(atom.number), CODELOC );
+                    
+    return residx;
+}
+
+/** Return the index of the chain that contains the passed atom
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_chain
+*/
+ChainIdx EditMolInfo::parentChain(AtomIdx atomidx) const
+{
+    return this->parentChain( this->parentResidue(atomidx) );
+}
+
+/** Return the index of the CutGroup that contains the passed atom
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_cutgroup
+*/
+CGIdx EditMolInfo::parentCutGroup(AtomIdx atomidx) const
+{
+    const EditAtomData &atom = d->atom( getUID(atomidx) );
+
+    CGIdx cgidx = d->cgIdx(atom);
+    
+    if (cgidx.isNull())
+        throw SireMol::missing_cutgroup( QObject::tr(
+                "The atom %1:%2 is not part of any CutGroup.")
+                    .arg(atom.name).arg(atom.number), CODELOC );
+                    
+    return cgidx;
+}
+
+/** Return the index of the segment that contains the passed atom
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_segment
+*/
+SegIdx EditMolInfo::parentSegment(AtomIdx atomidx) const
+{
+    const EditAtomData &atom = d->atom( getUID(atomidx) );
+
+    SegIdx segidx = d->segIdx(atom);
+    
+    if (segidx.isNull())
+        throw SireMol::missing_segment( QObject::tr(
+                "The atom %1:%2 is not part of any segment.")
+                    .arg(atom.name).arg(atom.number), CODELOC );
+                    
+    return segidx;
+}
+
+/** Return the index of the chain that contains the passed atom
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireMol::missing_chain
+*/
+ChainIdx EditMolInfo::parentChain(const AtomID &atomid) const
+{
+    return this->parentChain( this->atomIdx(atomid) );
+}
+
+/** Return the index of the residue that contains the passed atom
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireMol::missing_residue
+*/
+ResIdx EditMolInfo::parentResidue(const AtomID &atomid) const
+{
+    return this->parentResidue( this->atomIdx(atomid) );
+}
+
+/** Return the index of the CutGroup that contains the passed atom
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireMol::missing_cutgroup
+*/
+CGIdx EditMolInfo::parentCutGroup(const AtomID &atomid) const
+{
+    return this->parentCutGroup( this->atomIdx(atomid) );
+}
+
+/** Return the index of the segment that contains the passed atom
+
+    \throw SireError::invalid_index
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireMol::missing_segment
+*/
+SegIdx EditMolInfo::parentSegment(const AtomID &atomid) const
+{
+    return this->parentSegment( this->atomIdx(atomid) );
+}
+
 /** Return the indicies of all of the residues in this molecule */
 QList<ResIdx> EditMolInfo::getResidues() const
 {
@@ -2904,6 +3051,14 @@ CGAtomIdx EditMolData::cgAtomIdx(quint32 atomuid, const EditAtomData &atom) cons
     else
         return CGAtomIdx( CGIdx(cg_by_index.indexOf(atom.cg_parent)), 
                           Index(cutGroup(atom.cg_parent).atoms.indexOf(atomuid) ) );
+}
+
+CGIdx EditMolData::cgIdx(const EditAtomData &atom) const
+{
+    if (atom.cg_parent == 0)
+        return CGIdx::null();
+    else
+        return CGIdx( cg_by_index.indexOf(atom.cg_parent) );
 }
 
 ResIdx EditMolData::resIdx(const EditAtomData &atom) const

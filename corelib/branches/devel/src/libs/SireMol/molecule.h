@@ -142,50 +142,6 @@ public:
     
     void update(const MoleculeData &moldata);
     
-    Atom select(const AtomID &atomid) const;
-    Residue select(const ResID &resid) const;
-    Chain select(const ChainID &chainid) const;
-    CutGroup select(const CGID &cgid) const;
-    Segment select(const SegID &segid) const;
-    
-    Selector<Atom> selectAll(const AtomID &atomid) const;
-    Selector<Residue> selectAll(const ResID &resid) const;
-    Selector<Chain> selectAll(const ChainID &chainid) const;
-    Selector<CutGroup> selectAll(const CGID &cgid) const;
-    Selector<Segment> selectAll(const SegID &segid) const;
-    
-    Selector<Atom> selectAllAtoms() const;
-    Selector<CutGroup> selectAllCutGroups() const;
-    Selector<Residue> selectAllResidues() const;
-    Selector<Chain> selectAllChains() const;
-    Selector<Segment> selectAllSegments() const;
-    
-    Atom atom(const AtomID &atomid) const;
-    Residue residue(const ResID &resid) const;
-    Chain chain(const ChainID &chainid) const;
-    CutGroup cutGroup(const CGID &cgid) const;
-    Segment segment(const SegID &segid) const;
-    
-    Selector<Atom> atoms(const AtomID &atomid) const;
-    Selector<Atom> atoms(const ResID &resid) const;
-    Selector<Atom> atoms(const ChainID &chainid) const;
-    Selector<Atom> atoms(const CGID &cgid) const;
-    Selector<Atom> atoms(const SegID &segid) const;
-    Selector<Atom> atoms() const;
-    
-    Selector<Residue> residues(const ResID &resid) const;
-    Selector<Residue> residues(const ChainID &chainid) const;
-    Selector<Residue> residues() const;
-    
-    Selector<Chain> chains(const ChainID &chainid) const;
-    Selector<Chain> chains();
-    
-    Selector<CutGroup> cutGroups(const CGID &cgid) const;
-    Selector<CutGroup> cutGroups();
-    
-    Selector<Segment> segments(const SegID &segid) const;
-    Selector<Segment> segments();
-
     bool hasProperty(const PropertyName &key) const;
     bool hasMetadata(const PropertyName &metakey) const;
     bool hasMetadata(const PropertyName &key,

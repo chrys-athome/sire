@@ -46,6 +46,7 @@ void register_Selector_Segment__class(){
         Selector_Segment__exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         Selector_Segment__exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::AtomSelection const & >(( bp::arg("moldata"), bp::arg("selected_atoms") )) );
         Selector_Segment__exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::SegID const & >(( bp::arg("moldata"), bp::arg("viewid") )) );
+        Selector_Segment__exposer.def( bp::init< SireMol::MoleculeData const &, QList< SireMol::SegIdx > const & >(( bp::arg("moldata"), bp::arg("idxs") )) );
         Selector_Segment__exposer.def( bp::init< SireMol::Selector< SireMol::Segment > const & >(( bp::arg("other") )) );
         { //::SireMol::Selector< SireMol::Segment >::add
         

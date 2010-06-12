@@ -146,30 +146,6 @@ public:
     bool contains(ResIdx residx) const;
     bool contains(const ResID &resid) const;
     bool intersects(const ResID &resid) const;
-    
-    Molecule molecule() const;
-    
-    Atom select(const AtomID &atomid) const;
-    
-    Selector<Atom> selectAll(const AtomID &atomid) const;
-    Selector<Atom> selectAllAtoms() const;
-    
-    Atom atom(const AtomID &atomid) const;
-    
-    Selector<Atom> atoms(const AtomID &atomid) const;
-    Selector<Atom> atoms() const;
-
-    Residue select(const ResID &resid) const;
-    Residue select(int i) const;
-    
-    Selector<Residue> selectAll(const ResID &resid) const;
-    Selector<Residue> selectAllResidues() const;
-    
-    Residue residue(const ResID &resid) const;
-    Residue residue(int i) const;
-    
-    Selector<Residue> residues(const ResID &resid) const;
-    Selector<Residue> residues() const;
 
     void assertContainsProperty(const PropertyName &key) const;
     

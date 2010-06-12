@@ -133,17 +133,35 @@ public:
         using the passed MoleculeInfo to do the mapping */
     virtual QList<ChainIdx> map(const MolInfo &molinfo) const=0;
 
-    virtual Chain selectFrom(const Molecules &molecules) const;
-    virtual QHash< MolNum,Selector<Chain> >
-                    selectAllFrom(const Molecules &molecules) const;
 
-    virtual Chain selectFrom(const MoleculeGroup &molgroup) const;
-    virtual QHash< MolNum,Selector<Chain> >
-                    selectAllFrom(const MoleculeGroup &molgroup) const;
+    virtual QList<ChainIdx> map(const MoleculeView &molview,
+                                const PropertyMap &map = PropertyMap()) const;
     
-    virtual Chain selectFrom(const MolGroupsBase &molgroups) const;
+    virtual Chain selectFrom(const MoleculeView &molview,
+                             const PropertyMap &map = PropertyMap()) const;
+    
+    virtual Selector<Chain> selectAllFrom(const MoleculeView &molview,
+                                          const PropertyMap &map = PropertyMap()) const;
+    
+    virtual Chain selectFrom(const Molecules &molecules,
+                             const PropertyMap &map = PropertyMap()) const;
+                            
+    virtual QHash< MolNum,Selector<Chain> >
+                selectAllFrom(const Molecules &molecules,
+                              const PropertyMap &map = PropertyMap()) const;
+
+    virtual Chain selectFrom(const MoleculeGroup &molgroup,
+                             const PropertyMap &map = PropertyMap()) const;
+                            
+    virtual QHash< MolNum,Selector<Chain> >
+                selectAllFrom(const MoleculeGroup &molgroup,
+                              const PropertyMap &map = PropertyMap()) const;
+    
+    virtual Chain selectFrom(const MolGroupsBase &molgroups,
+                             const PropertyMap &map = PropertyMap()) const;
     virtual QHash< MolNum,Selector<Chain> > 
-                    selectAllFrom(const MolGroupsBase &molgroups) const;
+                selectAllFrom(const MolGroupsBase &molgroups,
+                              const PropertyMap &map = PropertyMap()) const;
 
 protected:
     void processMatches(QList<ChainIdx> &matches, const MolInfo &molinfo) const;

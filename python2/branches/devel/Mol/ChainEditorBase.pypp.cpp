@@ -91,6 +91,86 @@ void register_ChainEditorBase_class(){
         typedef bp::class_< SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >, bp::bases< SireMol::Chain, SireMol::MoleculeView, SireBase::Property >, boost::noncopyable > ChainEditorBase_exposer_t;
         ChainEditorBase_exposer_t ChainEditorBase_exposer = ChainEditorBase_exposer_t( "ChainEditorBase", bp::no_init );
         bp::scope ChainEditorBase_scope( ChainEditorBase_exposer );
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::atom
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::AtomEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*atom_function_type )(  ) ;
+            atom_function_type atom_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::atom );
+            
+            ChainEditorBase_exposer.def( 
+                "atom"
+                , atom_function_value );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::atom
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::AtomEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*atom_function_type )( ::SireMol::AtomID const &,::SireBase::PropertyMap const & ) ;
+            atom_function_type atom_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::atom );
+            
+            ChainEditorBase_exposer.def( 
+                "atom"
+                , atom_function_value
+                , ( bp::arg("atomid"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::chain
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::ChainEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*chain_function_type )(  ) ;
+            chain_function_type chain_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::chain );
+            
+            ChainEditorBase_exposer.def( 
+                "chain"
+                , chain_function_value );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::chain
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::ChainEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*chain_function_type )( ::SireMol::ChainID const &,::SireBase::PropertyMap const & ) ;
+            chain_function_type chain_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::chain );
+            
+            ChainEditorBase_exposer.def( 
+                "chain"
+                , chain_function_value
+                , ( bp::arg("chainid"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::cutGroup
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::CGEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*cutGroup_function_type )(  ) ;
+            cutGroup_function_type cutGroup_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::cutGroup );
+            
+            ChainEditorBase_exposer.def( 
+                "cutGroup"
+                , cutGroup_function_value );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::cutGroup
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::CGEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*cutGroup_function_type )( ::SireMol::CGID const &,::SireBase::PropertyMap const & ) ;
+            cutGroup_function_type cutGroup_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::cutGroup );
+            
+            ChainEditorBase_exposer.def( 
+                "cutGroup"
+                , cutGroup_function_value
+                , ( bp::arg("cgid"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::molecule
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::MolEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*molecule_function_type )(  ) ;
+            molecule_function_type molecule_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::molecule );
+            
+            ChainEditorBase_exposer.def( 
+                "molecule"
+                , molecule_function_value );
+        
+        }
         { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::operator=
         
             typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
@@ -154,6 +234,112 @@ void register_ChainEditorBase_class(){
                 , removeProperty_function_value
                 , ( bp::arg("key") )
                 , bp::return_self< >() );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::residue
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::ResEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*residue_function_type )(  ) ;
+            residue_function_type residue_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::residue );
+            
+            ChainEditorBase_exposer.def( 
+                "residue"
+                , residue_function_value );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::residue
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::ResEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*residue_function_type )( ::SireMol::ResID const &,::SireBase::PropertyMap const & ) ;
+            residue_function_type residue_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::residue );
+            
+            ChainEditorBase_exposer.def( 
+                "residue"
+                , residue_function_value
+                , ( bp::arg("resid"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::segment
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::SegEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*segment_function_type )(  ) ;
+            segment_function_type segment_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::segment );
+            
+            ChainEditorBase_exposer.def( 
+                "segment"
+                , segment_function_value );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::segment
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::SegEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*segment_function_type )( ::SireMol::SegID const &,::SireBase::PropertyMap const & ) ;
+            segment_function_type segment_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::segment );
+            
+            ChainEditorBase_exposer.def( 
+                "segment"
+                , segment_function_value
+                , ( bp::arg("segid"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::select
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::AtomEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*select_function_type )( ::SireMol::AtomID const &,::SireBase::PropertyMap const & ) ;
+            select_function_type select_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::select );
+            
+            ChainEditorBase_exposer.def( 
+                "select"
+                , select_function_value
+                , ( bp::arg("atomid"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::select
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::CGEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*select_function_type )( ::SireMol::CGID const &,::SireBase::PropertyMap const & ) ;
+            select_function_type select_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::select );
+            
+            ChainEditorBase_exposer.def( 
+                "select"
+                , select_function_value
+                , ( bp::arg("cgid"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::select
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::ResEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*select_function_type )( ::SireMol::ResID const &,::SireBase::PropertyMap const & ) ;
+            select_function_type select_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::select );
+            
+            ChainEditorBase_exposer.def( 
+                "select"
+                , select_function_value
+                , ( bp::arg("resid"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::select
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::ChainEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*select_function_type )( ::SireMol::ChainID const &,::SireBase::PropertyMap const & ) ;
+            select_function_type select_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::select );
+            
+            ChainEditorBase_exposer.def( 
+                "select"
+                , select_function_value
+                , ( bp::arg("chainid"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::select
+        
+            typedef SireMol::Editor< SireMol::ChainEditor, SireMol::Chain > exported_class_t;
+            typedef ::SireMol::SegEditor ( ::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::*select_function_type )( ::SireMol::SegID const &,::SireBase::PropertyMap const & ) ;
+            select_function_type select_function_value( &::SireMol::Editor< SireMol::ChainEditor, SireMol::Chain >::select );
+            
+            ChainEditorBase_exposer.def( 
+                "select"
+                , select_function_value
+                , ( bp::arg("segid"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         ChainEditorBase_exposer.def( "_set_property_QString", 

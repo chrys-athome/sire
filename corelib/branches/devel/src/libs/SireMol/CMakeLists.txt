@@ -117,6 +117,8 @@ set ( SIREMOL_HEADERS
       structureeditor.h
       viewsofmol.h
       weightfunction.h
+      withatoms.h
+      withres.h
     )
 
 # Define the sources in SireMol
@@ -194,7 +196,9 @@ set ( SIREMOL_SOURCES
       structureeditor.cpp
       viewsofmol.cpp
       weightfunction.cpp
-    
+      withatoms.cpp
+      withres.cpp    
+
       ${SIREMOL_HEADERS}
     )
 

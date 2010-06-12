@@ -119,6 +119,21 @@ public:
     virtual QList<CGIdx> getCutGroups() const=0;
     virtual QList<ChainIdx> getChains() const=0;
     virtual QList<SegIdx> getSegments() const=0;
+
+    virtual ChainIdx parentChain(ResIdx residx) const=0;
+    virtual ChainIdx parentChain(const ResID &resid) const=0;
+    
+    virtual ChainIdx parentChain(AtomIdx atomidx) const=0;
+    virtual ChainIdx parentChain(const AtomID &atomid) const=0;
+    
+    virtual ResIdx parentResidue(AtomIdx atomidx) const=0;
+    virtual ResIdx parentResidue(const AtomID &atomid) const=0;
+    
+    virtual SegIdx parentSegment(AtomIdx atomidx) const=0;
+    virtual SegIdx parentSegment(const AtomID &atomid) const=0;
+    
+    virtual CGIdx parentCutGroup(AtomIdx atomidx) const=0;
+    virtual CGIdx parentCutGroup(const AtomID &atomid) const=0;
     
     virtual AtomIdx atomIdx(const AtomID &atomid) const=0;
     virtual CGIdx cgIdx(const CGID &cgid) const=0;

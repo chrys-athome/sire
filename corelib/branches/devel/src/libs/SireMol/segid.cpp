@@ -226,15 +226,82 @@ void SegID::processMatches(QList<SegIdx> &matches, const MolInfo &molinfo) const
     qSort(matches);
 }
 
-/** Return all of the segments from the 'molecules' that match
+/** Map this SegID to the atoms in the passed molecule view
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+*/
+QList<SegIdx> SegID::map(const MoleculeView &molview, const PropertyMap&) const
+{
+    QList<SegIdx> segidxs = this->map( molview.data().info() );
+    
+    if (molview.selectedAll())
+        return segidxs;
+    else 
+    {
+        QMutableListIterator<SegIdx> it(segidxs);
+        
+        const AtomSelection selected_atoms = molview.selection();
+        
+        while (it.hasNext())
+        {
+            it.next();
+            
+            if (not selected_atoms.selected(it.value()))
+                it.remove();
+        }
+        
+        if (segidxs.isEmpty())
+            throw SireMol::missing_segment( QObject::tr(
+                    "No atoms matching %1 can be found in the passed molecule.")
+                        .arg(this->toString()), CODELOC );
+                        
+        return segidxs;
+    }
+}
+
+/** Select the atom from the passed view that matches this ID
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_segment
+*/
+Segment SegID::selectFrom(const MoleculeView &molview, const PropertyMap &map) const
+{
+    QList<SegIdx> segidxs = this->map(molview, map);
+    
+    if (segidxs.count() > 1)
+        throw SireMol::duplicate_segment( QObject::tr(
+                "More than one atom matches the ID %1 (atoms %2).")
+                    .arg(this->toString()).arg(Sire::toString(segidxs)),
+                        CODELOC );
+                        
+    return Segment(molview.data(), segidxs.at(0)); 
+}
+
+/** Select all the atoms from the passed view that match this ID
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_segment
+*/
+Selector<Segment> SegID::selectAllFrom(const MoleculeView &molview, 
+                                     const PropertyMap &map) const
+{
+    QList<SegIdx> segidxs = this->map(molview, map);
+                        
+    return Selector<Segment>(molview.data(), segidxs); 
+}
+
+/** Return all of the atoms from the 'molecules' that match
     this ID
     
     \throw SireMol::missing_segment
 */
 QHash< MolNum,Selector<Segment> >
-SegID::selectAllFrom(const Molecules &molecules) const
+SegID::selectAllFrom(const Molecules &molecules, const PropertyMap &map) const
 {
-    QHash< MolNum,Selector<Segment> > selected_segments;
+    QHash< MolNum,Selector<Segment> > selected_atoms;
     
     //loop over all molecules...
     for (Molecules::const_iterator it = molecules.constBegin();
@@ -243,95 +310,98 @@ SegID::selectAllFrom(const Molecules &molecules) const
     {
         try
         {
-            //try to find this segment in this molecule
-            selected_segments.insert( it.key(),
-                                      it->all().selectAll(*this) );
+            //try to find this atom in this molecule
+            selected_atoms.insert( it.key(), this->selectAllFrom(*it,map) );
         }
         catch(...)
         {}
     }
     
-    if (selected_segments.isEmpty())
+    if (selected_atoms.isEmpty())
         throw SireMol::missing_segment( QObject::tr(
-            "There was no segment matching the ID \"%1\" in "
+            "There was no atom matching the ID \"%1\" in "
             "the set of molecules.")
                 .arg(this->toString()), CODELOC );
 
-    return selected_segments;
+    return selected_atoms;
 }
 
-/** Return the segment from the molecules 'molecules' that matches
+/** Return the atom from the molecules 'molecules' that matches
     this ID
     
     \throw SireMol::missing_segment
     \throw SireMol::duplicate_segment
 */
-Segment SegID::selectFrom(const Molecules &molecules) const
+Segment SegID::selectFrom(const Molecules &molecules, const PropertyMap &map) const
 {
-    QHash< MolNum,Selector<Segment> > mols = this->selectAllFrom(molecules);
+    QHash< MolNum,Selector<Segment> > mols = this->selectAllFrom(molecules, map);
     
     if (mols.count() > 1)
         throw SireMol::duplicate_segment( QObject::tr(
-            "More than one molecule contains a segment that "
+            "More than one molecule contains an atom that "
             "matches this ID (%1). These molecules have numbers %2.")
                 .arg(this->toString()).arg(Sire::toString(mols.keys())),
                     CODELOC );
                     
-    const Selector<Segment> &segments = *(mols.constBegin());
+    const Selector<Segment> &atoms = *(mols.constBegin());
     
-    if (segments.count() > 1)
+    if (atoms.count() > 1)
         throw SireMol::duplicate_segment( QObject::tr(
             "While only one molecule (MolNum == %1) "
-            "contains a segment that matches this ID (%2), it contains "
-            "more than one segment that matches.")
-                .arg(segments.data().number()).arg(this->toString()),
+            "contains an atom that matches this ID (%2), it contains "
+            "more than one atom that matches.")
+                .arg(atoms.data().number()).arg(this->toString()),
                     CODELOC );
                     
-    return segments[0];
+    return atoms[0];
 }
 
-/** Return the segment from the molecule group 'molgroup' that matches
+/** Return the atom from the molecule group 'molgroup' that matches
     this ID
     
     \throw SireMol::missing_segment
     \throw SireMol::duplicate_segment
 */
-Segment SegID::selectFrom(const MoleculeGroup &molgroup) const
+Segment SegID::selectFrom(const MoleculeGroup &molgroup, 
+                        const PropertyMap &map) const
 {
-    return SegID::selectFrom(molgroup.molecules());
+    return this->selectFrom(molgroup.molecules(), map);
 }
 
-/** Return the segments from the molecule group 'molgroup' that match
+/** Return the atoms from the molecule group 'molgroup' that match
     this ID
     
     \throw SireMol::missing_segment
 */
 QHash< MolNum,Selector<Segment> >
-SegID::selectAllFrom(const MoleculeGroup &molgroup) const
+SegID::selectAllFrom(const MoleculeGroup &molgroup,
+                      const PropertyMap &map) const
 {
-    return SegID::selectAllFrom(molgroup.molecules());
+    return this->selectAllFrom(molgroup.molecules(), map);
 }
 
-/** Return the segment from the molecule groups 'molgroups' that matches 
+/** Return the atom from the molecule groups 'molgroups' that matches 
     this ID
     
     \throw SireMol::missing_segment
     \throw SireMol::duplicate_segment
 */
-Segment SegID::selectFrom(const MolGroupsBase &molgroups) const
+Segment SegID::selectFrom(const MolGroupsBase &molgroups,
+                        const PropertyMap &map) const
 {
-    return SegID::selectFrom(molgroups.molecules());
+    return this->selectFrom(molgroups.molecules(), map);
 }
 
-/** Return the set of segments that match this ID in the molecule groups
+/** Return the set of atoms that match this ID in the molecule groups
     set 'molgroups' 
     
     \throw SireMol::missing_segment
 */
 QHash< MolNum,Selector<Segment> >
-SegID::selectAllFrom(const MolGroupsBase &molgroups) const
+SegID::selectAllFrom(const MolGroupsBase &molgroups,
+                      const PropertyMap &map) const
 {
-    return SegID::selectAllFrom(molgroups.molecules());
+    return this->selectAllFrom(molgroups.molecules(), map);
 }
 
 //fully instantiate template classes

@@ -144,6 +144,17 @@ void register_Evaluator_class(){
                 , ( bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
+        { //::SireMol::Evaluator::centroid
+        
+            typedef ::SireMaths::Vector ( ::SireMol::Evaluator::*centroid_function_type )( ::SireBase::PropertyMap const & ) const;
+            centroid_function_type centroid_function_value( &::SireMol::Evaluator::centroid );
+            
+            Evaluator_exposer.def( 
+                "centroid"
+                , centroid_function_value
+                , ( bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
         { //::SireMol::Evaluator::charge
         
             typedef ::SireUnits::Dimension::Charge ( ::SireMol::Evaluator::*charge_function_type )( ::SireBase::PropertyMap const & ) const;
@@ -318,6 +329,28 @@ void register_Evaluator_class(){
                 , assign_function_value
                 , ( bp::arg("other") )
                 , bp::return_self< >() );
+        
+        }
+        { //::SireMol::Evaluator::principalAxes
+        
+            typedef ::SireMaths::AxisSet ( ::SireMol::Evaluator::*principalAxes_function_type )( ::SireBase::PropertyMap const & ) const;
+            principalAxes_function_type principalAxes_function_value( &::SireMol::Evaluator::principalAxes );
+            
+            Evaluator_exposer.def( 
+                "principalAxes"
+                , principalAxes_function_value
+                , ( bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::Evaluator::principalAxes
+        
+            typedef ::SireMaths::AxisSet ( ::SireMol::Evaluator::*principalAxes_function_type )( ::SireMaths::Vector &,::SireBase::PropertyMap const & ) const;
+            principalAxes_function_type principalAxes_function_value( &::SireMol::Evaluator::principalAxes );
+            
+            Evaluator_exposer.def( 
+                "principalAxes"
+                , principalAxes_function_value
+                , ( bp::arg("principal_moments"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::Evaluator::propertyKeys

@@ -110,6 +110,8 @@ public:
     
     Selector(const MoleculeData &moldata, const typename T::ID &viewid);
 
+    Selector(const MoleculeData &moldata, const QList<typename T::Index> &idxs);
+
     Selector(const Selector<T> &other);
     
     ~Selector();
@@ -256,6 +258,26 @@ Selector<T>::Selector(const MoleculeData &moldata)
             : SireBase::ConcreteProperty<Selector<T>,MoleculeView>(moldata)
 {
     idxs = detail::getAll<T>(moldata.info());
+    idxs_set = idxs.toSet();
+}
+
+/** Construct the set of all groups for the molecule whose data is in 'moldata'
+    and with the specfied groups selected */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Selector<T>::Selector(const MoleculeData &moldata,
+                      const QList<typename T::Index> &indexes)
+            : SireBase::ConcreteProperty<Selector<T>,MoleculeView>(moldata)
+{
+    int nats = moldata.info().nAtoms();
+    
+    //ensure all of the indexes are valid!
+    foreach (typename T::Index idx, indexes)
+    {
+        idx.map(nats);
+    }
+
+    idxs = indexes;
     idxs_set = idxs.toSet();
 }
 

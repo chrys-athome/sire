@@ -47,6 +47,8 @@ namespace bp = boost::python;
 
 #include "tostring.h"
 
+#include "withatoms.h"
+
 #include <QDebug>
 
 #include "atomid.h"

@@ -28,6 +28,13 @@
 
 #include "moleculeview.h"
 #include "atomselection.h"
+#include "atom.h"
+#include "cutgroup.h"
+#include "residue.h"
+#include "chain.h"
+#include "segment.h"
+#include "selector.hpp"
+#include "molecule.h"
 
 #include "SireBase/errors.h"
 #include "SireError/errors.h"
@@ -267,4 +274,493 @@ void MoleculeView::assertHasMetadata(const PropertyName &key,
                 .arg(this->what())
                 .arg(metakey.toString())
                 .arg(key.toString()), CODELOC );
+}
+
+/** Return the atom in this view that matches the ID 'atomid'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_atom
+*/
+Atom MoleculeView::atom(const AtomID &atomid, const PropertyMap &map) const
+{
+    return atomid.selectFrom(*this, map);
+}
+
+/** Return the atoms from this view that match the ID 'atomid'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+Selector<Atom> MoleculeView::atoms(const AtomID &atomid,
+                                   const PropertyMap &map) const
+{
+    return atomid.selectAllFrom(*this, map);
+}
+
+/** Return this view as a Atom - this will only work if
+    this view contains only a single atom
+    
+    \throw SireMol::duplicate_atom
+*/
+Atom MoleculeView::atom() const
+{
+    QVector<AtomIdx> selected_atoms = this->selection().selectedAtoms();
+    
+    if (selected_atoms.isEmpty())
+        throw SireMol::missing_atom( QObject::tr(
+                "This view does not contain any atoms."), CODELOC );
+    
+    else if (selected_atoms.count() != 1)
+        throw SireMol::duplicate_atom( QObject::tr(
+                "Cannot convert this view (%1) into an Atom as "
+                "we can only do this is just one atom is selected. "
+                "These atoms are selected ; %2.")
+                    .arg(this->toString(), Sire::toString(selected_atoms)), 
+                        CODELOC );
+    
+    return Atom(this->data(), selected_atoms.at(0));
+}
+
+/** Return all of the atoms in this view 
+
+    \throw SireMol::missing_atom
+*/
+Selector<Atom> MoleculeView::atoms() const
+{
+    AtomSelection selected_atoms = this->selection();
+    
+    if (selected_atoms.selectedNone())
+        throw SireMol::missing_atom( QObject::tr(
+                "No atoms are available in this view (%1).")
+                    .arg(this->toString()), CODELOC );
+
+    return Selector<Atom>(this->data(), this->selection());
+}
+
+/** Return the CutGroup whose atoms are in this view that matches
+    the ID in 'cgid'
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_cutgroup
+*/
+CutGroup MoleculeView::cutGroup(const CGID &cgid, const PropertyMap &map) const
+{
+    return cgid.selectFrom(*this, map);
+}
+
+/** Return the CutGroups whose atoms are in this view that match
+    the ID in 'cgid'
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+Selector<CutGroup> MoleculeView::cutGroups(const CGID &cgid,
+                                           const PropertyMap &map) const
+{
+    return cgid.selectAllFrom(*this, map);
+}
+
+/** Return the CutGroup that contains the atom(s) in this view
+
+    \throw SireMol::missing_cutgroup
+    \throw SireMol::duplicate_cutgroup
+*/
+CutGroup MoleculeView::cutGroup() const
+{
+    QList<CGIdx> selected_cgs = this->selection().selectedCutGroups();
+    
+    if (selected_cgs.isEmpty())
+        throw SireMol::missing_cutgroup( QObject::tr(
+                "This view does not contain any CutGroups."), CODELOC );
+    
+    else if (selected_cgs.count() != 1)
+        throw SireMol::duplicate_cutgroup( QObject::tr(
+                "Cannot convert this view (%1) into a CutGroup as "
+                "we can only do this is just one CutGroup is selected. "
+                "These CutGroups are selected ; %2.")
+                    .arg(this->toString(), Sire::toString(selected_cgs)), 
+                        CODELOC );
+    
+    return CutGroup(this->data(), selected_cgs.at(0));
+}
+
+/** Return all of the CutGroups that are involved in this view
+
+    \throw SireMol::missing_cutgroup
+*/
+Selector<CutGroup> MoleculeView::cutGroups() const
+{
+    QList<CGIdx> selected_cgs = this->selection().selectedCutGroups();
+    
+    if (selected_cgs.isEmpty())
+        throw SireMol::missing_cutgroup( QObject::tr(
+                "This view does not contain any CutGroups."), CODELOC );
+
+    return Selector<CutGroup>(this->data(), selected_cgs);
+}
+
+/** Return the residue from this view that matches the ID 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_residue
+*/
+Residue MoleculeView::residue(const ResID &resid, const PropertyMap &map) const
+{
+    return resid.selectFrom(*this, map);
+}
+
+/** Return the residues from this view that match the ID 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+Selector<Residue> MoleculeView::residues(const ResID &resid,
+                                         const PropertyMap &map) const
+{
+    return resid.selectAllFrom(*this, map);
+}
+
+/** Return the residue that is part of this view
+
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+*/
+Residue MoleculeView::residue() const
+{
+    QList<ResIdx> selected_res = this->selection().selectedResidues();
+    
+    if (selected_res.isEmpty())
+        throw SireMol::missing_residue( QObject::tr(
+                "This view does not contain any residues."), CODELOC );
+    
+    else if (selected_res.count() != 1)
+        throw SireMol::duplicate_residue( QObject::tr(
+                "Cannot convert this view (%1) into a Residue as "
+                "we can only do this is just one Residue is selected. "
+                "These Residues are selected ; %2.")
+                    .arg(this->toString(), Sire::toString(selected_res)), 
+                        CODELOC );
+    
+    return Residue(this->data(), selected_res.at(0));
+}
+
+/** Return all of the residues that are involved with this view
+
+    \throw SireMol::missing_residue
+*/
+Selector<Residue> MoleculeView::residues() const
+{
+    QList<ResIdx> selected_res = this->selection().selectedResidues();
+    
+    if (selected_res.isEmpty())
+        throw SireMol::missing_residue( QObject::tr(
+                "This view does not contain any residues."), CODELOC );
+    
+    return Selector<Residue>(this->data(), selected_res);
+}
+
+/** Return the chain that is involved with this view that matches
+    the ID 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_chain
+*/
+Chain MoleculeView::chain(const ChainID &chainid, const PropertyMap &map) const
+{
+    return chainid.selectFrom(*this, map);
+}
+
+/** Return the chains that are involved with this view that match
+    the ID 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_chain
+*/
+Selector<Chain> MoleculeView::chains(const ChainID &chainid,
+                                     const PropertyMap &map) const
+{
+    return chainid.selectAllFrom(*this, map);
+}
+
+/** Return the chain that is involved with this view
+
+    \throw SireMol::missing_chain
+    \throw SireMol::duplicate_chain
+*/
+Chain MoleculeView::chain() const
+{
+    QList<ChainIdx> selected_chn = this->selection().selectedChains();
+    
+    if (selected_chn.isEmpty())
+        throw SireMol::missing_chain( QObject::tr(
+                "This view does not contain any chains."), CODELOC );
+    
+    else if (selected_chn.count() != 1)
+        throw SireMol::duplicate_chain( QObject::tr(
+                "Cannot convert this view (%1) into a Chain as "
+                "we can only do this is just one Chain is selected. "
+                "These Chains are selected ; %2.")
+                    .arg(this->toString(), Sire::toString(selected_chn)), 
+                        CODELOC );
+    
+    return Chain(this->data(), selected_chn.at(0));
+}
+
+/** Return the chains that are involved with this view
+
+    \throw SireMol::missing_chain
+*/
+Selector<Chain> MoleculeView::chains() const
+{
+    QList<ChainIdx> selected_chn = this->selection().selectedChains();
+    
+    if (selected_chn.isEmpty())
+        throw SireMol::missing_chain( QObject::tr(
+                "This view does not contain any chains."), CODELOC );
+    
+    return Selector<Chain>(this->data(), selected_chn);
+}
+
+/** Return the segment that is involved with this view that matches
+    the ID 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_segment
+*/
+Segment MoleculeView::segment(const SegID &segid, const PropertyMap &map) const
+{
+    return segid.selectFrom(*this, map);
+}
+
+/** Return the segments that are involved with this view that match
+    the ID 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+*/
+Selector<Segment> MoleculeView::segments(const SegID &segid, const PropertyMap &map) const
+{
+    return segid.selectAllFrom(*this, map);
+}
+
+/** Return the segment that is involved with this view
+
+    \throw SireMol::missing_segment
+    \throw SireMol::duplicate_segment
+*/
+Segment MoleculeView::segment() const
+{
+    QList<SegIdx> selected_seg = this->selection().selectedSegments();
+    
+    if (selected_seg.isEmpty())
+        throw SireMol::missing_segment( QObject::tr(
+                "This view does not contain any segments."), CODELOC );
+    
+    else if (selected_seg.count() != 1)
+        throw SireMol::duplicate_segment( QObject::tr(
+                "Cannot convert this view (%1) into a Segment as "
+                "we can only do this is just one Segment is selected. "
+                "These Segments are selected ; %2.")
+                    .arg(this->toString(), Sire::toString(selected_seg)), 
+                        CODELOC );
+    
+    return Segment(this->data(), selected_seg.at(0));
+}
+
+/** Return the segments that are involved with this view
+
+    \throw SireMol::missing_segment
+*/
+Selector<Segment> MoleculeView::segments() const
+{
+    QList<SegIdx> selected_seg = this->selection().selectedSegments();
+    
+    if (selected_seg.isEmpty())
+        throw SireMol::missing_segment( QObject::tr(
+                "This view does not contain any segments."), CODELOC );
+    
+    return Selector<Segment>(this->data(), selected_seg);
+}
+
+/** Return the molecule involved with this view */
+Molecule MoleculeView::molecule() const
+{
+    return Molecule(this->data());
+}
+
+/** Return the CutGroup whose atoms are in this view that matches
+    the ID in 'cgid'
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_cutgroup
+*/
+CutGroup MoleculeView::select(const CGID &cgid, const PropertyMap &map) const
+{
+    return this->cutGroup(cgid, map);
+}
+
+/** Return the residue from this view that matches the ID 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_residue
+*/
+Residue MoleculeView::select(const ResID &resid, const PropertyMap &map) const
+{
+    return this->residue(resid, map);
+}
+
+/** Return the chain that is involved with this view that matches
+    the ID 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_chain
+*/
+Chain MoleculeView::select(const ChainID &chainid, const PropertyMap &map) const
+{
+    return this->chain(chainid, map);
+}
+
+/** Return the segment that is involved with this view that matches
+    the ID 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_segment
+*/
+Segment MoleculeView::select(const SegID &segid, const PropertyMap &map) const
+{
+    return this->segment(segid, map);
+}
+
+/** Return the atom in this view that matches the ID 'atomid'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_atom
+*/
+Atom MoleculeView::select(const AtomID &atomid, const PropertyMap &map) const
+{
+    return this->atom(atomid, map);
+}
+
+/** Return the atoms from this view that match the ID 'atomid'
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+Selector<Atom> MoleculeView::selectAll(const AtomID &atomid,
+                                       const PropertyMap &map) const
+{
+    return this->atoms(atomid, map);
+}
+
+/** Return all of the atoms in this view 
+
+    \throw SireMol::missing_atom
+*/
+Selector<Atom> MoleculeView::selectAll() const
+{
+    return this->atoms();
+}
+
+/** Return all of the atoms in this view 
+
+    \throw SireMol::missing_atom
+*/
+Selector<Atom> MoleculeView::selectAllAtoms() const
+{
+    return this->atoms();
+}
+
+/** Return the CutGroups whose atoms are in this view that match
+    the ID in 'cgid'
+    
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+Selector<CutGroup> MoleculeView::selectAll(const CGID &cgid,
+                                           const PropertyMap &map) const
+{
+    return this->cutGroups(cgid, map);
+}
+
+/** Return all of the CutGroups that are involved in this view
+
+    \throw SireMol::missing_cutgroup
+*/
+Selector<CutGroup> MoleculeView::selectAllCutGroups() const
+{
+    return this->cutGroups();
+}
+
+/** Return the residues from this view that match the ID 'resid'
+
+    \throw SireMol::missing_residue
+    \throw SireError::invalid_index
+*/
+Selector<Residue> MoleculeView::selectAll(const ResID &resid,
+                                          const PropertyMap &map) const
+{
+    return this->residues(resid, map);
+}
+
+/** Return all of the residues that are involved with this view
+
+    \throw SireMol::missing_residue
+*/
+Selector<Residue> MoleculeView::selectAllResidues() const
+{
+    return this->residues();
+}
+
+/** Return the chains that are involved with this view that match
+    the ID 'chainid'
+
+    \throw SireMol::missing_chain
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_chain
+*/
+Selector<Chain> MoleculeView::selectAll(const ChainID &chainid,
+                                        const PropertyMap &map) const
+{
+    return this->chains(chainid, map);
+}
+
+/** Return the chains that are involved with this view
+
+    \throw SireMol::missing_chain
+*/
+Selector<Chain> MoleculeView::selectAllChains() const
+{
+    return this->chains();
+}
+
+/** Return the segments that are involved with this view that match
+    the ID 'segid'
+
+    \throw SireMol::missing_segment
+    \throw SireError::invalid_index
+*/
+Selector<Segment> MoleculeView::selectAll(const SegID &segid,
+                                          const PropertyMap &map) const
+{
+    return this->segments(segid, map);
+}
+
+/** Return the segments that are involved with this view
+
+    \throw SireMol::missing_segment
+*/
+Selector<Segment> MoleculeView::selectAllSegments() const
+{
+    return this->segments();
 }

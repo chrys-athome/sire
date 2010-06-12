@@ -408,13 +408,13 @@ static AtomIdx getProteinAtom(const Molecule &molecule,
     return AtomIdx();
 }
 
-static AtomEditor getSolventAtom(const MolEditor &molecule, const QString &atomname,
+static AtomEditor getSolventAtom(MolEditor &molecule, const QString &atomname,
                                  ProtoMSWorkspace &workspace)
 {
     return molecule.atom( AtomName(atomname, CaseInsensitive) );
 }
 
-static AtomEditor getSoluteAtom(const MolEditor &molecule,
+static AtomEditor getSoluteAtom(MolEditor &molecule,
                                 const QString &atomname, const QString &resname,
                                  ProtoMSWorkspace &workspace)
 {
@@ -424,7 +424,7 @@ static AtomEditor getSoluteAtom(const MolEditor &molecule,
     return molecule.atom(atomidx);
 }
 
-static AtomEditor getProteinAtom(const MolEditor &molecule,
+static AtomEditor getProteinAtom(MolEditor &molecule,
                                  const QString &atomname, const QString &resnum,
                                  ProtoMSWorkspace &workspace)
 {
@@ -1293,18 +1293,20 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
         {
             Residue residue = editmol.residue(i);
         
-            int nats = residue.nAtoms();
+            Selector<Atom> atoms = residue.atoms();
+        
+            int nats = atoms.count();
             
-            for (Index j(0); j<nats-1; ++j)
+            for (int j=0; j<nats; ++j)
             {
-                Atom atom0 = residue.atom(j);
+                Atom atom0 = atoms[j];
                 
                 nbpairs.set( atom0.cgAtomIdx(), atom0.cgAtomIdx(), 
                              CLJScaleFactor(0,0) );
                 
-                for (Index k(j+1); k<nats; ++k)
+                for (int k=j+1; k<nats; ++k)
                 {
-                    Atom atom1 = residue.atom(k);
+                    Atom atom1 = atoms[k];
                 
                     nbpairs.set( atom0.cgAtomIdx(), atom1.cgAtomIdx(), 
                                  CLJScaleFactor(0,0) );

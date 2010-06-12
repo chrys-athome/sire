@@ -130,54 +130,6 @@ QString SegEditor::toString() const
                 .arg( Segment::toString() );
 }
 
-/** Return an editor for the molecule that contains this Segment */
-MolEditor SegEditor::molecule() const
-{
-    return MolEditor( Segment::molecule() );
-}
-
-/** Return an editor for the ith atom of this Segment
-
-    \throw SireError::invalid_index
-*/
-AtomEditor SegEditor::atom(int i) const
-{
-    return AtomEditor( Segment::atom(i) );
-}
-
-/** Return an editor for the atom that matches the ID 'atomid' in
-    this Segment
-    
-    \throw SireMol::missing_atom
-    \throw SireMol::duplicate_atom
-    \throw SireError::invalid_index
-*/
-AtomEditor SegEditor::atom(const AtomID &atomid) const
-{
-    return AtomEditor( Segment::atom(atomid) );
-}
-
-/** Return an editor for the ith atom of this Segment
-
-    \throw SireError::invalid_index
-*/
-AtomEditor SegEditor::select(const AtomID &atomid) const
-{
-    return AtomEditor( Segment::select(atomid) );
-}
-
-/** Return an editor for the atom that matches the ID 'atomid' in
-    this Segment
-    
-    \throw SireMol::missing_atom
-    \throw SireMol::duplicate_atom
-    \throw SireError::invalid_index
-*/
-AtomEditor SegEditor::select(int i) const
-{
-    return AtomEditor( Segment::select(i) );
-}
-
 /** Rename this Segment to 'newname' */
 SegEditor& SegEditor::rename(const SegName &newname)
 {

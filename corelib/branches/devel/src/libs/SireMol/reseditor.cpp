@@ -128,60 +128,6 @@ QString ResEditor::toString() const
     return QObject::tr( "Editor{ %1 }" ).arg(Residue::toString());
 }
 
-/** Return an editor for the chain that contains this residue */
-ChainEditor ResEditor::chain() const
-{
-    return ChainEditor( Residue::chain() );
-}
-
-/** Return an editor for the molecule that contains this residue */
-MolEditor ResEditor::molecule() const
-{
-    return MolEditor( Residue::molecule() );
-}
-
-/** Return an editor for the ith atom in this residue 
-    
-    \throw SireError::invalid_index
-*/
-AtomEditor ResEditor::atom(int i) const
-{
-    return AtomEditor( Residue::atom(i) );
-}
-
-/** Return an editor for the atom with ID == 'atomid' in 
-    this residue
-    
-    \throw SireMol::missing_atom
-    \throw SireMol::duplicate_atom
-    \throw SireError::invalid_index
-*/
-AtomEditor ResEditor::atom(const AtomID &atomid) const
-{
-    return AtomEditor( Residue::atom(atomid) );
-}
-
-/** Return an editor for the ith atom in this residue 
-    
-    \throw SireError::invalid_index
-*/
-AtomEditor ResEditor::select(int i) const
-{
-    return AtomEditor( Residue::select(i) );
-}
-
-/** Return an editor for the atom with ID == 'atomid' in 
-    this residue
-    
-    \throw SireMol::missing_atom
-    \throw SireMol::duplicate_atom
-    \throw SireError::invalid_index
-*/
-AtomEditor ResEditor::select(const AtomID &atomid) const
-{
-    return AtomEditor( Residue::select(atomid) );
-}
-
 /** Rename this residue to 'newname' */
 ResEditor& ResEditor::rename(const ResName &newname)
 {

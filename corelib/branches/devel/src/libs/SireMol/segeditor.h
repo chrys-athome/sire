@@ -26,12 +26,13 @@
   *
 \*********************************************/
 
+#include "editor.hpp"
+
 #ifndef SIREMOL_SEGEDITOR_H
 #define SIREMOL_SEGEDITOR_H
 
 #include "structureeditor.h"
 #include "segment.h"
-#include "editor.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -98,14 +99,6 @@ public:
     static const char* typeName();
 
     QString toString() const;
-    
-    MolEditor molecule() const;
-    
-    AtomEditor atom(int i) const;
-    AtomEditor atom(const AtomID &atomid) const;
-    
-    AtomEditor select(const AtomID &atomid) const;
-    AtomEditor select(int i) const;
     
     SegEditor& rename(const SegName &name);
     SegStructureEditor reindex(SegIdx index) const;

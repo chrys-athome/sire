@@ -131,28 +131,6 @@ void register_MolEditor_class(){
                 , ( bp::arg("segment") ) );
         
         }
-        { //::SireMol::MolEditor::atom
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::MolEditor::*atom_function_type )( ::SireMol::AtomID const & ) const;
-            atom_function_type atom_function_value( &::SireMol::MolEditor::atom );
-            
-            MolEditor_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::MolEditor::chain
-        
-            typedef ::SireMol::ChainEditor ( ::SireMol::MolEditor::*chain_function_type )( ::SireMol::ChainID const & ) const;
-            chain_function_type chain_function_value( &::SireMol::MolEditor::chain );
-            
-            MolEditor_exposer.def( 
-                "chain"
-                , chain_function_value
-                , ( bp::arg("chainid") ) );
-        
-        }
         { //::SireMol::MolEditor::commit
         
             typedef ::SireMol::Molecule ( ::SireMol::MolEditor::*commit_function_type )(  ) const;
@@ -161,17 +139,6 @@ void register_MolEditor_class(){
             MolEditor_exposer.def( 
                 "commit"
                 , commit_function_value );
-        
-        }
-        { //::SireMol::MolEditor::cutGroup
-        
-            typedef ::SireMol::CGEditor ( ::SireMol::MolEditor::*cutGroup_function_type )( ::SireMol::CGID const & ) const;
-            cutGroup_function_type cutGroup_function_value( &::SireMol::MolEditor::cutGroup );
-            
-            MolEditor_exposer.def( 
-                "cutGroup"
-                , cutGroup_function_value
-                , ( bp::arg("cgid") ) );
         
         }
         { //::SireMol::MolEditor::operator=
@@ -336,83 +303,6 @@ void register_MolEditor_class(){
                 , renumber_function_value
                 , ( bp::arg("newnum") )
                 , bp::return_self< >() );
-        
-        }
-        { //::SireMol::MolEditor::residue
-        
-            typedef ::SireMol::ResEditor ( ::SireMol::MolEditor::*residue_function_type )( ::SireMol::ResID const & ) const;
-            residue_function_type residue_function_value( &::SireMol::MolEditor::residue );
-            
-            MolEditor_exposer.def( 
-                "residue"
-                , residue_function_value
-                , ( bp::arg("resid") ) );
-        
-        }
-        { //::SireMol::MolEditor::segment
-        
-            typedef ::SireMol::SegEditor ( ::SireMol::MolEditor::*segment_function_type )( ::SireMol::SegID const & ) const;
-            segment_function_type segment_function_value( &::SireMol::MolEditor::segment );
-            
-            MolEditor_exposer.def( 
-                "segment"
-                , segment_function_value
-                , ( bp::arg("segid") ) );
-        
-        }
-        { //::SireMol::MolEditor::select
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::MolEditor::*select_function_type )( ::SireMol::AtomID const & ) const;
-            select_function_type select_function_value( &::SireMol::MolEditor::select );
-            
-            MolEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::MolEditor::select
-        
-            typedef ::SireMol::CGEditor ( ::SireMol::MolEditor::*select_function_type )( ::SireMol::CGID const & ) const;
-            select_function_type select_function_value( &::SireMol::MolEditor::select );
-            
-            MolEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("cgid") ) );
-        
-        }
-        { //::SireMol::MolEditor::select
-        
-            typedef ::SireMol::ResEditor ( ::SireMol::MolEditor::*select_function_type )( ::SireMol::ResID const & ) const;
-            select_function_type select_function_value( &::SireMol::MolEditor::select );
-            
-            MolEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("resid") ) );
-        
-        }
-        { //::SireMol::MolEditor::select
-        
-            typedef ::SireMol::ChainEditor ( ::SireMol::MolEditor::*select_function_type )( ::SireMol::ChainID const & ) const;
-            select_function_type select_function_value( &::SireMol::MolEditor::select );
-            
-            MolEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("chainid") ) );
-        
-        }
-        { //::SireMol::MolEditor::select
-        
-            typedef ::SireMol::SegEditor ( ::SireMol::MolEditor::*select_function_type )( ::SireMol::SegID const & ) const;
-            select_function_type select_function_value( &::SireMol::MolEditor::select );
-            
-            MolEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("segid") ) );
         
         }
         { //::SireMol::MolEditor::toString

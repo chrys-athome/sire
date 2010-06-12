@@ -227,15 +227,82 @@ void CGID::processMatches(QList<CGIdx> &matches, const MolInfo&) const
     qSort(matches);
 }
 
+/** Map this CGICutGroupD to the CutGroups in the passed molecule view
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+*/
+QList<CGIdx> CGID::map(const MoleculeView &molview, const PropertyMap&) const
+{
+    QList<CGIdx> cgidxs = this->map( molview.data().info() );
+    
+    if (molview.selectedAll())
+        return cgidxs;
+    else 
+    {
+        QMutableListIterator<CGIdx> it(cgidxs);
+        
+        const AtomSelection selected_cgs = molview.selection();
+        
+        while (it.hasNext())
+        {
+            it.next();
+            
+            if (not selected_cgs.selected(it.value()))
+                it.remove();
+        }
+        
+        if (cgidxs.isEmpty())
+            throw SireMol::missing_cutgroup( QObject::tr(
+                    "No CutGroups matching %1 can be found in the passed molecule.")
+                        .arg(this->toString()), CODELOC );
+                        
+        return cgidxs;
+    }
+}
+
+/** Select the CutGroup from the passed view that matches this ID
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_cutgroup
+*/
+CutGroup CGID::selectFrom(const MoleculeView &molview, const PropertyMap &map) const
+{
+    QList<CGIdx> cgidxs = this->map(molview, map);
+    
+    if (cgidxs.count() > 1)
+        throw SireMol::duplicate_cutgroup( QObject::tr(
+                "More than one CutGroup matches the ID %1 (CutGroups %2).")
+                    .arg(this->toString()).arg(Sire::toString(cgidxs)),
+                        CODELOC );
+                        
+    return CutGroup(molview.data(), cgidxs.at(0)); 
+}
+
+/** Select all the CutGroups from the passed view that match this ID
+
+    \throw SireMol::missing_cutgroup
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_cutgroup
+*/
+Selector<CutGroup> CGID::selectAllFrom(const MoleculeView &molview, 
+                                       const PropertyMap &map) const
+{
+    QList<CGIdx> cgidxs = this->map(molview, map);
+                        
+    return Selector<CutGroup>(molview.data(), cgidxs); 
+}
+
 /** Return all of the CutGroups from the 'molecules' that match
     this ID
     
     \throw SireMol::missing_cutgroup
 */
 QHash< MolNum,Selector<CutGroup> >
-CGID::selectAllFrom(const Molecules &molecules) const
+CGID::selectAllFrom(const Molecules &molecules, const PropertyMap &map) const
 {
-    QHash< MolNum,Selector<CutGroup> > selected_cutgroups;
+    QHash< MolNum,Selector<CutGroup> > selected_cgs;
     
     //loop over all molecules...
     for (Molecules::const_iterator it = molecules.constBegin();
@@ -244,95 +311,98 @@ CGID::selectAllFrom(const Molecules &molecules) const
     {
         try
         {
-            //try to find this atom in this molecule
-            selected_cutgroups.insert( it.key(),
-                                       it->all().selectAll(*this) );
+            //try to find this CutGroup in this molecule
+            selected_cgs.insert( it.key(), this->selectAllFrom(*it,map) );
         }
         catch(...)
         {}
     }
     
-    if (selected_cutgroups.isEmpty())
+    if (selected_cgs.isEmpty())
         throw SireMol::missing_cutgroup( QObject::tr(
-            "There was no CutGroup matching the ID \"%1\" in "
+            "There was no atom matching the ID \"%1\" in "
             "the set of molecules.")
                 .arg(this->toString()), CODELOC );
 
-    return selected_cutgroups;
+    return selected_cgs;
 }
 
-/** Return the CutGroup from the molecules 'molecules' that matches
+/** Return the atom from the molecules 'molecules' that matches
     this ID
     
     \throw SireMol::missing_cutgroup
     \throw SireMol::duplicate_cutgroup
 */
-CutGroup CGID::selectFrom(const Molecules &molecules) const
+CutGroup CGID::selectFrom(const Molecules &molecules, const PropertyMap &map) const
 {
-    QHash< MolNum,Selector<CutGroup> > mols = this->selectAllFrom(molecules);
+    QHash< MolNum,Selector<CutGroup> > mols = this->selectAllFrom(molecules, map);
     
     if (mols.count() > 1)
         throw SireMol::duplicate_cutgroup( QObject::tr(
-            "More than one molecule contains a CutGroup that "
+            "More than one molecule contains an atom that "
             "matches this ID (%1). These molecules have numbers %2.")
                 .arg(this->toString()).arg(Sire::toString(mols.keys())),
                     CODELOC );
                     
-    const Selector<CutGroup> &cutgroups = *(mols.constBegin());
+    const Selector<CutGroup> &atoms = *(mols.constBegin());
     
-    if (cutgroups.count() > 1)
+    if (atoms.count() > 1)
         throw SireMol::duplicate_cutgroup( QObject::tr(
             "While only one molecule (MolNum == %1) "
-            "contains a CutGroup that matches this ID (%2), it contains "
-            "more than one CutGroup that matches.")
-                .arg(cutgroups.data().number()).arg(this->toString()),
+            "contains an atom that matches this ID (%2), it contains "
+            "more than one atom that matches.")
+                .arg(atoms.data().number()).arg(this->toString()),
                     CODELOC );
                     
-    return cutgroups[0];
+    return atoms[0];
 }
 
-/** Return the CutGroup from the molecule group 'molgroup' that matches
+/** Return the atom from the molecule group 'molgroup' that matches
     this ID
     
     \throw SireMol::missing_cutgroup
     \throw SireMol::duplicate_cutgroup
 */
-CutGroup CGID::selectFrom(const MoleculeGroup &molgroup) const
+CutGroup CGID::selectFrom(const MoleculeGroup &molgroup, 
+                        const PropertyMap &map) const
 {
-    return CGID::selectFrom(molgroup.molecules());
+    return this->selectFrom(molgroup.molecules(), map);
 }
 
-/** Return the CutGroups from the molecule group 'molgroup' that match
+/** Return the atoms from the molecule group 'molgroup' that match
     this ID
     
     \throw SireMol::missing_cutgroup
 */
 QHash< MolNum,Selector<CutGroup> >
-CGID::selectAllFrom(const MoleculeGroup &molgroup) const
+CGID::selectAllFrom(const MoleculeGroup &molgroup,
+                      const PropertyMap &map) const
 {
-    return CGID::selectAllFrom(molgroup.molecules());
+    return this->selectAllFrom(molgroup.molecules(), map);
 }
 
-/** Return the CutGroup from the molecule groups 'molgroups' that matches 
+/** Return the atom from the molecule groups 'molgroups' that matches 
     this ID
     
     \throw SireMol::missing_cutgroup
     \throw SireMol::duplicate_cutgroup
 */
-CutGroup CGID::selectFrom(const MolGroupsBase &molgroups) const
+CutGroup CGID::selectFrom(const MolGroupsBase &molgroups,
+                        const PropertyMap &map) const
 {
-    return CGID::selectFrom(molgroups.molecules());
+    return this->selectFrom(molgroups.molecules(), map);
 }
 
-/** Return the set of CutGroups that match this ID in the molecule groups
+/** Return the set of atoms that match this ID in the molecule groups
     set 'molgroups' 
     
     \throw SireMol::missing_cutgroup
 */
 QHash< MolNum,Selector<CutGroup> >
-CGID::selectAllFrom(const MolGroupsBase &molgroups) const
+CGID::selectAllFrom(const MolGroupsBase &molgroups,
+                      const PropertyMap &map) const
 {
-    return CGID::selectAllFrom(molgroups.molecules());
+    return this->selectAllFrom(molgroups.molecules(), map);
 }
 
 //fully instantiate Specify<CGID> and AtomsIn<CGID>

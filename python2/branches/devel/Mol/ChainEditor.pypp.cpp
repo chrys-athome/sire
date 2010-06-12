@@ -78,17 +78,6 @@ void register_ChainEditor_class(){
                 , ( bp::arg("atomnum") ) );
         
         }
-        { //::SireMol::ChainEditor::atom
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::ChainEditor::*atom_function_type )( ::SireMol::AtomID const & ) const;
-            atom_function_type atom_function_value( &::SireMol::ChainEditor::atom );
-            
-            ChainEditor_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
         { //::SireMol::ChainEditor::commit
         
             typedef ::SireMol::Chain ( ::SireMol::ChainEditor::*commit_function_type )(  ) const;
@@ -97,16 +86,6 @@ void register_ChainEditor_class(){
             ChainEditor_exposer.def( 
                 "commit"
                 , commit_function_value );
-        
-        }
-        { //::SireMol::ChainEditor::molecule
-        
-            typedef ::SireMol::MolEditor ( ::SireMol::ChainEditor::*molecule_function_type )(  ) const;
-            molecule_function_type molecule_function_value( &::SireMol::ChainEditor::molecule );
-            
-            ChainEditor_exposer.def( 
-                "molecule"
-                , molecule_function_value );
         
         }
         { //::SireMol::ChainEditor::operator=
@@ -197,61 +176,6 @@ void register_ChainEditor_class(){
                 , rename_function_value
                 , ( bp::arg("name") )
                 , bp::return_self< >() );
-        
-        }
-        { //::SireMol::ChainEditor::residue
-        
-            typedef ::SireMol::ResEditor ( ::SireMol::ChainEditor::*residue_function_type )( int ) const;
-            residue_function_type residue_function_value( &::SireMol::ChainEditor::residue );
-            
-            ChainEditor_exposer.def( 
-                "residue"
-                , residue_function_value
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::SireMol::ChainEditor::residue
-        
-            typedef ::SireMol::ResEditor ( ::SireMol::ChainEditor::*residue_function_type )( ::SireMol::ResID const & ) const;
-            residue_function_type residue_function_value( &::SireMol::ChainEditor::residue );
-            
-            ChainEditor_exposer.def( 
-                "residue"
-                , residue_function_value
-                , ( bp::arg("resid") ) );
-        
-        }
-        { //::SireMol::ChainEditor::select
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::ChainEditor::*select_function_type )( ::SireMol::AtomID const & ) const;
-            select_function_type select_function_value( &::SireMol::ChainEditor::select );
-            
-            ChainEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::ChainEditor::select
-        
-            typedef ::SireMol::ResEditor ( ::SireMol::ChainEditor::*select_function_type )( int ) const;
-            select_function_type select_function_value( &::SireMol::ChainEditor::select );
-            
-            ChainEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::SireMol::ChainEditor::select
-        
-            typedef ::SireMol::ResEditor ( ::SireMol::ChainEditor::*select_function_type )( ::SireMol::ResID const & ) const;
-            select_function_type select_function_value( &::SireMol::ChainEditor::select );
-            
-            ChainEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("resid") ) );
         
         }
         { //::SireMol::ChainEditor::toString

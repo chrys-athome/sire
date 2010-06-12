@@ -49,6 +49,8 @@
 #include "moleculegroup.h"
 #include "moleculegroups.h"
 
+#include "withatoms.h"
+
 #include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
@@ -232,13 +234,80 @@ void AtomID::processMatches(QList<AtomIdx> &matches, const MolInfo&) const
     qSort(matches);
 }
 
+/** Map this AtomID to the atoms in the passed molecule view
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+QList<AtomIdx> AtomID::map(const MoleculeView &molview, const PropertyMap&) const
+{
+    QList<AtomIdx> atomidxs = this->map( molview.data().info() );
+    
+    if (molview.selectedAll())
+        return atomidxs;
+    else 
+    {
+        QMutableListIterator<AtomIdx> it(atomidxs);
+        
+        const AtomSelection selected_atoms = molview.selection();
+        
+        while (it.hasNext())
+        {
+            it.next();
+            
+            if (not selected_atoms.selected(it.value()))
+                it.remove();
+        }
+        
+        if (atomidxs.isEmpty())
+            throw SireMol::missing_atom( QObject::tr(
+                    "No atoms matching %1 can be found in the passed molecule.")
+                        .arg(this->toString()), CODELOC );
+                        
+        return atomidxs;
+    }
+}
+
+/** Select the atom from the passed view that matches this ID
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_atom
+*/
+Atom AtomID::selectFrom(const MoleculeView &molview, const PropertyMap &map) const
+{
+    QList<AtomIdx> atomidxs = this->map(molview, map);
+    
+    if (atomidxs.count() > 1)
+        throw SireMol::duplicate_atom( QObject::tr(
+                "More than one atom matches the ID %1 (atoms %2).")
+                    .arg(this->toString()).arg(Sire::toString(atomidxs)),
+                        CODELOC );
+                        
+    return Atom(molview.data(), atomidxs.at(0)); 
+}
+
+/** Select all the atoms from the passed view that match this ID
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+    \throw SireMol::duplicate_atom
+*/
+Selector<Atom> AtomID::selectAllFrom(const MoleculeView &molview, 
+                                     const PropertyMap &map) const
+{
+    QList<AtomIdx> atomidxs = this->map(molview, map);
+                        
+    return Selector<Atom>(molview.data(), atomidxs); 
+}
+
 /** Return all of the atoms from the 'molecules' that match
     this ID
     
     \throw SireMol::missing_atom
 */
 QHash< MolNum,Selector<Atom> >
-AtomID::selectAllFrom(const Molecules &molecules) const
+AtomID::selectAllFrom(const Molecules &molecules, const PropertyMap &map) const
 {
     QHash< MolNum,Selector<Atom> > selected_atoms;
     
@@ -250,8 +319,7 @@ AtomID::selectAllFrom(const Molecules &molecules) const
         try
         {
             //try to find this atom in this molecule
-            selected_atoms.insert( it.key(),
-                                   it->selectAll(*this) );
+            selected_atoms.insert( it.key(), this->selectAllFrom(*it,map) );
         }
         catch(...)
         {}
@@ -272,9 +340,9 @@ AtomID::selectAllFrom(const Molecules &molecules) const
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom
 */
-Atom AtomID::selectFrom(const Molecules &molecules) const
+Atom AtomID::selectFrom(const Molecules &molecules, const PropertyMap &map) const
 {
-    QHash< MolNum,Selector<Atom> > mols = this->selectAllFrom(molecules);
+    QHash< MolNum,Selector<Atom> > mols = this->selectAllFrom(molecules, map);
     
     if (mols.count() > 1)
         throw SireMol::duplicate_atom( QObject::tr(
@@ -302,28 +370,10 @@ Atom AtomID::selectFrom(const Molecules &molecules) const
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom
 */
-Atom AtomID::selectFrom(const MoleculeGroup &molgroup) const
+Atom AtomID::selectFrom(const MoleculeGroup &molgroup, 
+                        const PropertyMap &map) const
 {
-    QHash< MolNum,Selector<Atom> > mols = this->selectAllFrom(molgroup);
-    
-    if (mols.count() > 1)
-        throw SireMol::duplicate_atom( QObject::tr(
-            "More than one molecule contains an atom that "
-            "matches this ID (%1). These molecules have numbers %2.")
-                .arg(this->toString()).arg(Sire::toString(mols.keys())),
-                    CODELOC );
-                    
-    const Selector<Atom> &atoms = *(mols.constBegin());
-    
-    if (atoms.count() > 1)
-        throw SireMol::duplicate_atom( QObject::tr(
-            "While only one molecule (MolNum == %1) "
-            "contains an atom that matches this ID (%2), it contains "
-            "more than one atom that matches.")
-                .arg(atoms.data().number()).arg(this->toString()),
-                    CODELOC );
-                    
-    return atoms[0];
+    return this->selectFrom(molgroup.molecules(), map);
 }
 
 /** Return the atoms from the molecule group 'molgroup' that match
@@ -332,9 +382,10 @@ Atom AtomID::selectFrom(const MoleculeGroup &molgroup) const
     \throw SireMol::missing_atom
 */
 QHash< MolNum,Selector<Atom> >
-AtomID::selectAllFrom(const MoleculeGroup &molgroup) const
+AtomID::selectAllFrom(const MoleculeGroup &molgroup,
+                      const PropertyMap &map) const
 {
-    return AtomID::selectAllFrom(molgroup.molecules());
+    return this->selectAllFrom(molgroup.molecules(), map);
 }
 
 /** Return the atom from the molecule groups 'molgroups' that matches 
@@ -343,28 +394,10 @@ AtomID::selectAllFrom(const MoleculeGroup &molgroup) const
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom
 */
-Atom AtomID::selectFrom(const MolGroupsBase &molgroups) const
+Atom AtomID::selectFrom(const MolGroupsBase &molgroups,
+                        const PropertyMap &map) const
 {
-    QHash< MolNum,Selector<Atom> > mols = this->selectAllFrom(molgroups);
-    
-    if (mols.count() > 1)
-        throw SireMol::duplicate_atom( QObject::tr(
-            "More than one molecule contains an atom that "
-            "matches this ID (%1). These molecules have numbers %2.")
-                .arg(this->toString()).arg(Sire::toString(mols.keys())),
-                    CODELOC );
-                    
-    const Selector<Atom> &atoms = *(mols.constBegin());
-    
-    if (atoms.count() > 1)
-        throw SireMol::duplicate_atom( QObject::tr(
-            "While only one molecule (MolNum == %1) "
-            "contains an atom that matches this ID (%2), it contains "
-            "more than one atom that matches.")
-                .arg(atoms.data().number()).arg(this->toString()),
-                    CODELOC );
-                    
-    return atoms[0];
+    return this->selectFrom(molgroups.molecules(), map);
 }
 
 /** Return the set of atoms that match this ID in the molecule groups
@@ -373,9 +406,38 @@ Atom AtomID::selectFrom(const MolGroupsBase &molgroups) const
     \throw SireMol::missing_atom
 */
 QHash< MolNum,Selector<Atom> >
-AtomID::selectAllFrom(const MolGroupsBase &molgroups) const
+AtomID::selectAllFrom(const MolGroupsBase &molgroups,
+                      const PropertyMap &map) const
 {
-    return AtomID::selectAllFrom(molgroups.molecules());
+    return this->selectAllFrom(molgroups.molecules(), map);
+}
+
+/** Return a Residue ID that matches residues that contain atoms
+    that match this Atom ID */
+ResWithAtoms AtomID::residues() const
+{
+    return ResWithAtoms(*this);
+}
+
+/** Return a CutGroup ID that matches CutGroups that contain atoms
+    that match this Atom ID */
+CGsWithAtoms AtomID::cutGroups() const
+{
+    return CGsWithAtoms(*this);
+}
+
+/** Return a Chain ID that matches chains that contain atoms
+    that match this Atom ID */
+ChainsWithAtoms AtomID::chains() const
+{
+    return ChainsWithAtoms(*this);
+}
+
+/** Return a Segment ID that matches segments that contain atoms
+    that match this Atom ID */
+SegsWithAtoms AtomID::segments() const
+{
+    return SegsWithAtoms(*this);
 }
 
 /////////

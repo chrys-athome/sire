@@ -110,28 +110,6 @@ void register_Segment_class(){
                 , ( bp::arg("key") ) );
         
         }
-        { //::SireMol::Segment::atom
-        
-            typedef ::SireMol::Atom ( ::SireMol::Segment::*atom_function_type )( ::SireMol::AtomID const & ) const;
-            atom_function_type atom_function_value( &::SireMol::Segment::atom );
-            
-            Segment_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::Segment::atom
-        
-            typedef ::SireMol::Atom ( ::SireMol::Segment::*atom_function_type )( int ) const;
-            atom_function_type atom_function_value( &::SireMol::Segment::atom );
-            
-            Segment_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("i") ) );
-        
-        }
         { //::SireMol::Segment::atomIdxs
         
             typedef ::QList< SireMol::AtomIdx > const & ( ::SireMol::Segment::*atomIdxs_function_type )(  ) const;
@@ -141,27 +119,6 @@ void register_Segment_class(){
                 "atomIdxs"
                 , atomIdxs_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
-        
-        }
-        { //::SireMol::Segment::atoms
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::Segment::*atoms_function_type )( ::SireMol::AtomID const & ) const;
-            atoms_function_type atoms_function_value( &::SireMol::Segment::atoms );
-            
-            Segment_exposer.def( 
-                "atoms"
-                , atoms_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::Segment::atoms
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::Segment::*atoms_function_type )(  ) const;
-            atoms_function_type atoms_function_value( &::SireMol::Segment::atoms );
-            
-            Segment_exposer.def( 
-                "atoms"
-                , atoms_function_value );
         
         }
         { //::SireMol::Segment::contains
@@ -291,16 +248,6 @@ void register_Segment_class(){
                 , ( bp::arg("key") ) );
         
         }
-        { //::SireMol::Segment::molecule
-        
-            typedef ::SireMol::Molecule ( ::SireMol::Segment::*molecule_function_type )(  ) const;
-            molecule_function_type molecule_function_value( &::SireMol::Segment::molecule );
-            
-            Segment_exposer.def( 
-                "molecule"
-                , molecule_function_value );
-        
-        }
         { //::SireMol::Segment::move
         
             typedef ::SireMol::Mover< SireMol::Segment > ( ::SireMol::Segment::*move_function_type )(  ) const;
@@ -354,49 +301,6 @@ void register_Segment_class(){
             Segment_exposer.def( 
                 "propertyKeys"
                 , propertyKeys_function_value );
-        
-        }
-        { //::SireMol::Segment::select
-        
-            typedef ::SireMol::Atom ( ::SireMol::Segment::*select_function_type )( ::SireMol::AtomID const & ) const;
-            select_function_type select_function_value( &::SireMol::Segment::select );
-            
-            Segment_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::Segment::select
-        
-            typedef ::SireMol::Atom ( ::SireMol::Segment::*select_function_type )( int ) const;
-            select_function_type select_function_value( &::SireMol::Segment::select );
-            
-            Segment_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::SireMol::Segment::selectAll
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::Segment::*selectAll_function_type )( ::SireMol::AtomID const & ) const;
-            selectAll_function_type selectAll_function_value( &::SireMol::Segment::selectAll );
-            
-            Segment_exposer.def( 
-                "selectAll"
-                , selectAll_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::Segment::selectAll
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::Segment::*selectAll_function_type )(  ) const;
-            selectAll_function_type selectAll_function_value( &::SireMol::Segment::selectAll );
-            
-            Segment_exposer.def( 
-                "selectAll"
-                , selectAll_function_value );
         
         }
         { //::SireMol::Segment::selectedAll

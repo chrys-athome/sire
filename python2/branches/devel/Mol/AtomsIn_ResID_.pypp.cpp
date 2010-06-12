@@ -49,6 +49,8 @@ namespace bp = boost::python;
 
 #include "tostring.h"
 
+#include "withres.h"
+
 #include "resid.h"
 
 SireMol::AtomsIn<SireMol::ResID> __copy__(const SireMol::AtomsIn<SireMol::ResID> &other){ return SireMol::AtomsIn<SireMol::ResID>(other); }

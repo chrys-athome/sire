@@ -69,6 +69,8 @@ class MoleculeGroup;
 class MolGroupsBase;
 class MolNum;
 
+class ChainsWithRes;
+
 /** This is the base class of all identifiers that are used 
     to identify a residue within a molecule
 
@@ -118,6 +120,8 @@ public:
     AtomsIn<ResID> atom(int i) const;
     AtomsIn<ResID> atoms(int i, int j) const;
     
+    ChainsWithRes chains() const;
+    
     static const char* typeName()
     {
         return "SireMol::ResID";
@@ -129,17 +133,34 @@ public:
         using the passed MoleculeInfo to do the mapping */
     virtual QList<ResIdx> map(const MolInfo &molinfo) const=0;
 
-    virtual Residue selectFrom(const Molecules &molecules) const;
-    virtual QHash< MolNum,Selector<Residue> >
-                selectAllFrom(const Molecules &molecules) const;
-
-    virtual Residue selectFrom(const MoleculeGroup &molgroup) const;
-    virtual QHash< MolNum,Selector<Residue> >
-                selectAllFrom(const MoleculeGroup &molgroup) const;
+    virtual QList<ResIdx> map(const MoleculeView &molview,
+                              const PropertyMap &map = PropertyMap()) const;
     
-    virtual Residue selectFrom(const MolGroupsBase &molgroups) const;
+    virtual Residue selectFrom(const MoleculeView &molview,
+                               const PropertyMap &map = PropertyMap()) const;
+    
+    virtual Selector<Residue> selectAllFrom(const MoleculeView &molview,
+                                         const PropertyMap &map = PropertyMap()) const;
+    
+    virtual Residue selectFrom(const Molecules &molecules,
+                               const PropertyMap &map = PropertyMap()) const;
+                            
+    virtual QHash< MolNum,Selector<Residue> >
+                selectAllFrom(const Molecules &molecules,
+                              const PropertyMap &map = PropertyMap()) const;
+
+    virtual Residue selectFrom(const MoleculeGroup &molgroup,
+                               const PropertyMap &map = PropertyMap()) const;
+                            
+    virtual QHash< MolNum,Selector<Residue> >
+                selectAllFrom(const MoleculeGroup &molgroup,
+                              const PropertyMap &map = PropertyMap()) const;
+    
+    virtual Residue selectFrom(const MolGroupsBase &molgroups,
+                               const PropertyMap &map = PropertyMap()) const;
     virtual QHash< MolNum,Selector<Residue> > 
-                selectAllFrom(const MolGroupsBase &molgroups) const;
+                selectAllFrom(const MolGroupsBase &molgroups,
+                              const PropertyMap &map = PropertyMap()) const;
 
 protected:
     void processMatches(QList<ResIdx> &matches, const MolInfo &molinfo) const;

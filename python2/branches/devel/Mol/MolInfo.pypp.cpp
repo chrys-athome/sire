@@ -469,6 +469,116 @@ void register_MolInfo_class(){
                 , ( bp::arg("segid") ) );
         
         }
+        { //::SireMol::MolInfo::parentChain
+        
+            typedef ::SireMol::ChainIdx ( ::SireMol::MolInfo::*parentChain_function_type )( ::SireMol::ResIdx ) const;
+            parentChain_function_type parentChain_function_value( &::SireMol::MolInfo::parentChain );
+            
+            MolInfo_exposer.def( 
+                "parentChain"
+                , parentChain_function_value
+                , ( bp::arg("residx") ) );
+        
+        }
+        { //::SireMol::MolInfo::parentChain
+        
+            typedef ::SireMol::ChainIdx ( ::SireMol::MolInfo::*parentChain_function_type )( ::SireMol::ResID const & ) const;
+            parentChain_function_type parentChain_function_value( &::SireMol::MolInfo::parentChain );
+            
+            MolInfo_exposer.def( 
+                "parentChain"
+                , parentChain_function_value
+                , ( bp::arg("resid") ) );
+        
+        }
+        { //::SireMol::MolInfo::parentChain
+        
+            typedef ::SireMol::ChainIdx ( ::SireMol::MolInfo::*parentChain_function_type )( ::SireMol::AtomIdx ) const;
+            parentChain_function_type parentChain_function_value( &::SireMol::MolInfo::parentChain );
+            
+            MolInfo_exposer.def( 
+                "parentChain"
+                , parentChain_function_value
+                , ( bp::arg("atomidx") ) );
+        
+        }
+        { //::SireMol::MolInfo::parentChain
+        
+            typedef ::SireMol::ChainIdx ( ::SireMol::MolInfo::*parentChain_function_type )( ::SireMol::AtomID const & ) const;
+            parentChain_function_type parentChain_function_value( &::SireMol::MolInfo::parentChain );
+            
+            MolInfo_exposer.def( 
+                "parentChain"
+                , parentChain_function_value
+                , ( bp::arg("atomid") ) );
+        
+        }
+        { //::SireMol::MolInfo::parentCutGroup
+        
+            typedef ::SireMol::CGIdx ( ::SireMol::MolInfo::*parentCutGroup_function_type )( ::SireMol::AtomIdx ) const;
+            parentCutGroup_function_type parentCutGroup_function_value( &::SireMol::MolInfo::parentCutGroup );
+            
+            MolInfo_exposer.def( 
+                "parentCutGroup"
+                , parentCutGroup_function_value
+                , ( bp::arg("atomidx") ) );
+        
+        }
+        { //::SireMol::MolInfo::parentCutGroup
+        
+            typedef ::SireMol::CGIdx ( ::SireMol::MolInfo::*parentCutGroup_function_type )( ::SireMol::AtomID const & ) const;
+            parentCutGroup_function_type parentCutGroup_function_value( &::SireMol::MolInfo::parentCutGroup );
+            
+            MolInfo_exposer.def( 
+                "parentCutGroup"
+                , parentCutGroup_function_value
+                , ( bp::arg("atomid") ) );
+        
+        }
+        { //::SireMol::MolInfo::parentResidue
+        
+            typedef ::SireMol::ResIdx ( ::SireMol::MolInfo::*parentResidue_function_type )( ::SireMol::AtomIdx ) const;
+            parentResidue_function_type parentResidue_function_value( &::SireMol::MolInfo::parentResidue );
+            
+            MolInfo_exposer.def( 
+                "parentResidue"
+                , parentResidue_function_value
+                , ( bp::arg("atomidx") ) );
+        
+        }
+        { //::SireMol::MolInfo::parentResidue
+        
+            typedef ::SireMol::ResIdx ( ::SireMol::MolInfo::*parentResidue_function_type )( ::SireMol::AtomID const & ) const;
+            parentResidue_function_type parentResidue_function_value( &::SireMol::MolInfo::parentResidue );
+            
+            MolInfo_exposer.def( 
+                "parentResidue"
+                , parentResidue_function_value
+                , ( bp::arg("atomid") ) );
+        
+        }
+        { //::SireMol::MolInfo::parentSegment
+        
+            typedef ::SireMol::SegIdx ( ::SireMol::MolInfo::*parentSegment_function_type )( ::SireMol::AtomIdx ) const;
+            parentSegment_function_type parentSegment_function_value( &::SireMol::MolInfo::parentSegment );
+            
+            MolInfo_exposer.def( 
+                "parentSegment"
+                , parentSegment_function_value
+                , ( bp::arg("atomidx") ) );
+        
+        }
+        { //::SireMol::MolInfo::parentSegment
+        
+            typedef ::SireMol::SegIdx ( ::SireMol::MolInfo::*parentSegment_function_type )( ::SireMol::AtomID const & ) const;
+            parentSegment_function_type parentSegment_function_value( &::SireMol::MolInfo::parentSegment );
+            
+            MolInfo_exposer.def( 
+                "parentSegment"
+                , parentSegment_function_value
+                , ( bp::arg("atomid") ) );
+        
+        }
         { //::SireMol::MolInfo::resIdx
         
             typedef ::SireMol::ResIdx ( ::SireMol::MolInfo::*resIdx_function_type )( ::SireMol::ResID const & ) const;

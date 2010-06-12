@@ -53,6 +53,8 @@ namespace bp = boost::python;
 
 #include "tostring.h"
 
+#include "withres.h"
+
 #include "resid.h"
 
 SireMol::ResIdx __copy__(const SireMol::ResIdx &other){ return SireMol::ResIdx(other); }

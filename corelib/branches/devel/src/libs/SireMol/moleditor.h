@@ -26,11 +26,12 @@
   *
 \*********************************************/
 
+#include "editor.hpp"
+
 #ifndef SIREMOL_MOLEDITOR_H
 #define SIREMOL_MOLEDITOR_H
 
 #include "structureeditor.h"
-#include "editor.hpp"
 #include "molecule.h"
 
 SIRE_BEGIN_HEADER
@@ -102,18 +103,6 @@ public:
     
     MolEditor& operator=(const Molecule &molecule);
     MolEditor& operator=(const MolEditor &other);
-
-    AtomEditor select(const AtomID &atomid) const;
-    CGEditor select(const CGID &cgid) const;
-    ResEditor select(const ResID &resid) const;
-    ChainEditor select(const ChainID &chainid) const;
-    SegEditor select(const SegID &segid) const;
-    
-    AtomEditor atom(const AtomID &atomid) const;
-    CGEditor cutGroup(const CGID &cgid) const;
-    ResEditor residue(const ResID &resid) const;
-    ChainEditor chain(const ChainID &chainid) const;
-    SegEditor segment(const SegID &segid) const;
     
     MolEditor& rename(const QString &name);
 

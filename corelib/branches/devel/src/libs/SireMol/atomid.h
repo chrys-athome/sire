@@ -29,6 +29,8 @@
 #ifndef SIREMOL_ATOMID_H
 #define SIREMOL_ATOMID_H
 
+#include "SireBase/propertymap.h"
+
 #include "SireID/id.h"
 
 #include "SireID/specify.hpp"
@@ -39,6 +41,8 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+
+using SireBase::PropertyMap;
 
 using SireID::Specify;
 using SireID::IDAndSet;
@@ -65,10 +69,17 @@ class MolNum;
 class MolID;
 class MolAtomID;
 
+class MoleculeView;
+
 class CGID;
 class ResID;
 class ChainID;
 class SegID;
+
+class ResWithAtoms;
+class CGsWithAtoms;
+class ChainsWithAtoms;
+class SegsWithAtoms;
 
 /** This is the base class of all identifiers that are used 
     to identify an atom
@@ -119,6 +130,11 @@ public:
     IDOrSet<AtomID> operator||(const AtomID &other) const;
     IDOrSet<AtomID> operator|(const AtomID &other) const;
 
+    ResWithAtoms residues() const;
+    CGsWithAtoms cutGroups() const;
+    ChainsWithAtoms chains() const;
+    SegsWithAtoms segments() const;
+
     static const char* typeName()
     {
         return "SireMol::AtomID";
@@ -129,18 +145,35 @@ public:
     /** Map this ID back to the indicies of the matching atoms in the molecule, 
         using the passed MoleculeInfo to do the mapping */
     virtual QList<AtomIdx> map(const MolInfo &molinfo) const=0;
-    
-    virtual Atom selectFrom(const Molecules &molecules) const;
-    virtual QHash< MolNum,Selector<Atom> >
-                selectAllFrom(const Molecules &molecules) const;
 
-    virtual Atom selectFrom(const MoleculeGroup &molgroup) const;
-    virtual QHash< MolNum,Selector<Atom> >
-                selectAllFrom(const MoleculeGroup &molgroup) const;
+    virtual QList<AtomIdx> map(const MoleculeView &molview,
+                               const PropertyMap &map = PropertyMap()) const;
     
-    virtual Atom selectFrom(const MolGroupsBase &molgroups) const;
+    virtual Atom selectFrom(const MoleculeView &molview,
+                            const PropertyMap &map = PropertyMap()) const;
+    
+    virtual Selector<Atom> selectAllFrom(const MoleculeView &molview,
+                                         const PropertyMap &map = PropertyMap()) const;
+    
+    virtual Atom selectFrom(const Molecules &molecules,
+                            const PropertyMap &map = PropertyMap()) const;
+                            
+    virtual QHash< MolNum,Selector<Atom> >
+                selectAllFrom(const Molecules &molecules,
+                              const PropertyMap &map = PropertyMap()) const;
+
+    virtual Atom selectFrom(const MoleculeGroup &molgroup,
+                            const PropertyMap &map = PropertyMap()) const;
+                            
+    virtual QHash< MolNum,Selector<Atom> >
+                selectAllFrom(const MoleculeGroup &molgroup,
+                              const PropertyMap &map = PropertyMap()) const;
+    
+    virtual Atom selectFrom(const MolGroupsBase &molgroups,
+                            const PropertyMap &map = PropertyMap()) const;
     virtual QHash< MolNum,Selector<Atom> > 
-                selectAllFrom(const MolGroupsBase &molgroups) const;
+                selectAllFrom(const MolGroupsBase &molgroups,
+                              const PropertyMap &map = PropertyMap()) const;
 
 protected:
     void processMatches(QList<AtomIdx> &matches, const MolInfo &molinfo) const;

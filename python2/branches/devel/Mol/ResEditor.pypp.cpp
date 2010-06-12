@@ -78,38 +78,6 @@ void register_ResEditor_class(){
                 , ( bp::arg("atomnum") ) );
         
         }
-        { //::SireMol::ResEditor::atom
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::ResEditor::*atom_function_type )( int ) const;
-            atom_function_type atom_function_value( &::SireMol::ResEditor::atom );
-            
-            ResEditor_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::SireMol::ResEditor::atom
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::ResEditor::*atom_function_type )( ::SireMol::AtomID const & ) const;
-            atom_function_type atom_function_value( &::SireMol::ResEditor::atom );
-            
-            ResEditor_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::ResEditor::chain
-        
-            typedef ::SireMol::ChainEditor ( ::SireMol::ResEditor::*chain_function_type )(  ) const;
-            chain_function_type chain_function_value( &::SireMol::ResEditor::chain );
-            
-            ResEditor_exposer.def( 
-                "chain"
-                , chain_function_value );
-        
-        }
         { //::SireMol::ResEditor::commit
         
             typedef ::SireMol::Residue ( ::SireMol::ResEditor::*commit_function_type )(  ) const;
@@ -118,16 +86,6 @@ void register_ResEditor_class(){
             ResEditor_exposer.def( 
                 "commit"
                 , commit_function_value );
-        
-        }
-        { //::SireMol::ResEditor::molecule
-        
-            typedef ::SireMol::MolEditor ( ::SireMol::ResEditor::*molecule_function_type )(  ) const;
-            molecule_function_type molecule_function_value( &::SireMol::ResEditor::molecule );
-            
-            ResEditor_exposer.def( 
-                "molecule"
-                , molecule_function_value );
         
         }
         { //::SireMol::ResEditor::operator=
@@ -230,28 +188,6 @@ void register_ResEditor_class(){
                 "reparent"
                 , reparent_function_value
                 , ( bp::arg("chainid") ) );
-        
-        }
-        { //::SireMol::ResEditor::select
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::ResEditor::*select_function_type )( ::SireMol::AtomID const & ) const;
-            select_function_type select_function_value( &::SireMol::ResEditor::select );
-            
-            ResEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::ResEditor::select
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::ResEditor::*select_function_type )( int ) const;
-            select_function_type select_function_value( &::SireMol::ResEditor::select );
-            
-            ResEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("i") ) );
         
         }
         { //::SireMol::ResEditor::toString

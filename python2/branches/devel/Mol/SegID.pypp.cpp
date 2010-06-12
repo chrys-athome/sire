@@ -100,6 +100,17 @@ void register_SegID_class(){
                 , ( bp::arg("molinfo") ) );
         
         }
+        { //::SireMol::SegID::map
+        
+            typedef ::QList< SireMol::SegIdx > ( ::SireMol::SegID::*map_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            map_function_type map_function_value( &::SireMol::SegID::map );
+            
+            SegID_exposer.def( 
+                "map"
+                , map_function_value
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
         SegID_exposer.def( bp::self & bp::self );
         SegID_exposer.def( bp::self & bp::other< SireMol::AtomID >() );
         SegID_exposer.def( bp::self & bp::other< SireMol::CGID >() );
@@ -147,68 +158,90 @@ void register_SegID_class(){
         SegID_exposer.def( bp::self | bp::self );
         { //::SireMol::SegID::selectAllFrom
         
-            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Segment > > ( ::SireMol::SegID::*selectAllFrom_function_type )( ::SireMol::Molecules const & ) const;
+            typedef ::SireMol::Selector< SireMol::Segment > ( ::SireMol::SegID::*selectAllFrom_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
             selectAllFrom_function_type selectAllFrom_function_value( &::SireMol::SegID::selectAllFrom );
             
             SegID_exposer.def( 
                 "selectAllFrom"
                 , selectAllFrom_function_value
-                , ( bp::arg("molecules") ) );
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::SegID::selectAllFrom
         
-            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Segment > > ( ::SireMol::SegID::*selectAllFrom_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Segment > > ( ::SireMol::SegID::*selectAllFrom_function_type )( ::SireMol::Molecules const &,::SireBase::PropertyMap const & ) const;
             selectAllFrom_function_type selectAllFrom_function_value( &::SireMol::SegID::selectAllFrom );
             
             SegID_exposer.def( 
                 "selectAllFrom"
                 , selectAllFrom_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::SegID::selectAllFrom
         
-            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Segment > > ( ::SireMol::SegID::*selectAllFrom_function_type )( ::SireMol::MolGroupsBase const & ) const;
+            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Segment > > ( ::SireMol::SegID::*selectAllFrom_function_type )( ::SireMol::MoleculeGroup const &,::SireBase::PropertyMap const & ) const;
             selectAllFrom_function_type selectAllFrom_function_value( &::SireMol::SegID::selectAllFrom );
             
             SegID_exposer.def( 
                 "selectAllFrom"
                 , selectAllFrom_function_value
-                , ( bp::arg("molgroups") ) );
+                , ( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::SegID::selectAllFrom
+        
+            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Segment > > ( ::SireMol::SegID::*selectAllFrom_function_type )( ::SireMol::MolGroupsBase const &,::SireBase::PropertyMap const & ) const;
+            selectAllFrom_function_type selectAllFrom_function_value( &::SireMol::SegID::selectAllFrom );
+            
+            SegID_exposer.def( 
+                "selectAllFrom"
+                , selectAllFrom_function_value
+                , ( bp::arg("molgroups"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::SegID::selectFrom
         
-            typedef ::SireMol::Segment ( ::SireMol::SegID::*selectFrom_function_type )( ::SireMol::Molecules const & ) const;
+            typedef ::SireMol::Segment ( ::SireMol::SegID::*selectFrom_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
             selectFrom_function_type selectFrom_function_value( &::SireMol::SegID::selectFrom );
             
             SegID_exposer.def( 
                 "selectFrom"
                 , selectFrom_function_value
-                , ( bp::arg("molecules") ) );
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::SegID::selectFrom
         
-            typedef ::SireMol::Segment ( ::SireMol::SegID::*selectFrom_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            typedef ::SireMol::Segment ( ::SireMol::SegID::*selectFrom_function_type )( ::SireMol::Molecules const &,::SireBase::PropertyMap const & ) const;
             selectFrom_function_type selectFrom_function_value( &::SireMol::SegID::selectFrom );
             
             SegID_exposer.def( 
                 "selectFrom"
                 , selectFrom_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::SegID::selectFrom
         
-            typedef ::SireMol::Segment ( ::SireMol::SegID::*selectFrom_function_type )( ::SireMol::MolGroupsBase const & ) const;
+            typedef ::SireMol::Segment ( ::SireMol::SegID::*selectFrom_function_type )( ::SireMol::MoleculeGroup const &,::SireBase::PropertyMap const & ) const;
             selectFrom_function_type selectFrom_function_value( &::SireMol::SegID::selectFrom );
             
             SegID_exposer.def( 
                 "selectFrom"
                 , selectFrom_function_value
-                , ( bp::arg("molgroups") ) );
+                , ( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::SegID::selectFrom
+        
+            typedef ::SireMol::Segment ( ::SireMol::SegID::*selectFrom_function_type )( ::SireMol::MolGroupsBase const &,::SireBase::PropertyMap const & ) const;
+            selectFrom_function_type selectFrom_function_value( &::SireMol::SegID::selectFrom );
+            
+            SegID_exposer.def( 
+                "selectFrom"
+                , selectFrom_function_value
+                , ( bp::arg("molgroups"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::SegID::typeName

@@ -96,6 +96,8 @@
 #include "specifymol.h"
 #include "viewsofmol.h"
 #include "weightfunction.h"
+#include "withatoms.h"
+#include "withres.h"
 
 #endif
 

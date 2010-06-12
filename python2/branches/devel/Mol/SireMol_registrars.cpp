@@ -43,6 +43,7 @@
 #include "mgidentifier.h"
 #include "moleculegroup.h"
 #include "groupatomids.h"
+#include "mgid.h"
 #include "atomvelocities.h"
 #include "molidentifier.h"
 #include "segidx.h"
@@ -68,7 +69,7 @@
 #include "beadnum.h"
 #include "reseditor.h"
 #include "molname.h"
-#include "mgid.h"
+#include "withatoms.h"
 #include "mgidsandmaps.h"
 #include "mgnum.h"
 #include "segid.h"
@@ -91,6 +92,7 @@
 #include "residue.h"
 #include "atommatcher.h"
 #include "atomname.h"
+#include "withres.h"
 
 #include "Helpers/objectregistry.hpp"
 
@@ -166,6 +168,9 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::ChainAtomID >();
     ObjectRegistry::registerConverterFor< SireMol::SegAtomID >();
     ObjectRegistry::registerConverterFor< SireMol::CGAtomID >();
+    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::MGID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::MGID> >();
+    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::MGID> >();
     ObjectRegistry::registerConverterFor< SireMol::AtomVelocities >();
     ObjectRegistry::registerConverterFor< SireMol::Velocity3D >();
     ObjectRegistry::registerConverterFor< SireMol::MolIdentifier >();
@@ -214,9 +219,10 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::ResEditor >();
     ObjectRegistry::registerConverterFor< SireMol::ResStructureEditor >();
     ObjectRegistry::registerConverterFor< SireMol::MolName >();
-    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::MGID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::MGID> >();
-    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::MGID> >();
+    ObjectRegistry::registerConverterFor< SireMol::ResWithAtoms >();
+    ObjectRegistry::registerConverterFor< SireMol::CGsWithAtoms >();
+    ObjectRegistry::registerConverterFor< SireMol::ChainsWithAtoms >();
+    ObjectRegistry::registerConverterFor< SireMol::SegsWithAtoms >();
     ObjectRegistry::registerConverterFor< SireMol::MGIDsAndMaps >();
     ObjectRegistry::registerConverterFor< SireMol::MGNum >();
     ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::SegID> >();
@@ -262,6 +268,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::AtomIdxMatcher >();
     ObjectRegistry::registerConverterFor< SireMol::AtomNameMatcher >();
     ObjectRegistry::registerConverterFor< SireMol::AtomName >();
+    ObjectRegistry::registerConverterFor< SireMol::ChainsWithRes >();
 
 }
 

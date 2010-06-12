@@ -49,6 +49,8 @@ namespace bp = boost::python;
 
 #include "tostring.h"
 
+#include "withres.h"
+
 #include "resid.h"
 
 #include "Helpers/str.hpp"
@@ -91,6 +93,16 @@ void register_ResID_class(){
                 , ( bp::arg("i"), bp::arg("j") ) );
         
         }
+        { //::SireMol::ResID::chains
+        
+            typedef ::SireMol::ChainsWithRes ( ::SireMol::ResID::*chains_function_type )(  ) const;
+            chains_function_type chains_function_value( &::SireMol::ResID::chains );
+            
+            ResID_exposer.def( 
+                "chains"
+                , chains_function_value );
+        
+        }
         { //::SireMol::ResID::map
         
             typedef ::QList< SireMol::ResIdx > ( ::SireMol::ResID::*map_function_type )( ::SireMol::MolInfo const & ) const;
@@ -100,6 +112,17 @@ void register_ResID_class(){
                 "map"
                 , map_function_value
                 , ( bp::arg("molinfo") ) );
+        
+        }
+        { //::SireMol::ResID::map
+        
+            typedef ::QList< SireMol::ResIdx > ( ::SireMol::ResID::*map_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
+            map_function_type map_function_value( &::SireMol::ResID::map );
+            
+            ResID_exposer.def( 
+                "map"
+                , map_function_value
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         ResID_exposer.def( bp::self & bp::self );
@@ -149,68 +172,90 @@ void register_ResID_class(){
         ResID_exposer.def( bp::self | bp::self );
         { //::SireMol::ResID::selectAllFrom
         
-            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Residue > > ( ::SireMol::ResID::*selectAllFrom_function_type )( ::SireMol::Molecules const & ) const;
+            typedef ::SireMol::Selector< SireMol::Residue > ( ::SireMol::ResID::*selectAllFrom_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
             selectAllFrom_function_type selectAllFrom_function_value( &::SireMol::ResID::selectAllFrom );
             
             ResID_exposer.def( 
                 "selectAllFrom"
                 , selectAllFrom_function_value
-                , ( bp::arg("molecules") ) );
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::ResID::selectAllFrom
         
-            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Residue > > ( ::SireMol::ResID::*selectAllFrom_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Residue > > ( ::SireMol::ResID::*selectAllFrom_function_type )( ::SireMol::Molecules const &,::SireBase::PropertyMap const & ) const;
             selectAllFrom_function_type selectAllFrom_function_value( &::SireMol::ResID::selectAllFrom );
             
             ResID_exposer.def( 
                 "selectAllFrom"
                 , selectAllFrom_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::ResID::selectAllFrom
         
-            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Residue > > ( ::SireMol::ResID::*selectAllFrom_function_type )( ::SireMol::MolGroupsBase const & ) const;
+            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Residue > > ( ::SireMol::ResID::*selectAllFrom_function_type )( ::SireMol::MoleculeGroup const &,::SireBase::PropertyMap const & ) const;
             selectAllFrom_function_type selectAllFrom_function_value( &::SireMol::ResID::selectAllFrom );
             
             ResID_exposer.def( 
                 "selectAllFrom"
                 , selectAllFrom_function_value
-                , ( bp::arg("molgroups") ) );
+                , ( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::ResID::selectAllFrom
+        
+            typedef ::QHash< SireMol::MolNum, SireMol::Selector< SireMol::Residue > > ( ::SireMol::ResID::*selectAllFrom_function_type )( ::SireMol::MolGroupsBase const &,::SireBase::PropertyMap const & ) const;
+            selectAllFrom_function_type selectAllFrom_function_value( &::SireMol::ResID::selectAllFrom );
+            
+            ResID_exposer.def( 
+                "selectAllFrom"
+                , selectAllFrom_function_value
+                , ( bp::arg("molgroups"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::ResID::selectFrom
         
-            typedef ::SireMol::Residue ( ::SireMol::ResID::*selectFrom_function_type )( ::SireMol::Molecules const & ) const;
+            typedef ::SireMol::Residue ( ::SireMol::ResID::*selectFrom_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) const;
             selectFrom_function_type selectFrom_function_value( &::SireMol::ResID::selectFrom );
             
             ResID_exposer.def( 
                 "selectFrom"
                 , selectFrom_function_value
-                , ( bp::arg("molecules") ) );
+                , ( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::ResID::selectFrom
         
-            typedef ::SireMol::Residue ( ::SireMol::ResID::*selectFrom_function_type )( ::SireMol::MoleculeGroup const & ) const;
+            typedef ::SireMol::Residue ( ::SireMol::ResID::*selectFrom_function_type )( ::SireMol::Molecules const &,::SireBase::PropertyMap const & ) const;
             selectFrom_function_type selectFrom_function_value( &::SireMol::ResID::selectFrom );
             
             ResID_exposer.def( 
                 "selectFrom"
                 , selectFrom_function_value
-                , ( bp::arg("molgroup") ) );
+                , ( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::ResID::selectFrom
         
-            typedef ::SireMol::Residue ( ::SireMol::ResID::*selectFrom_function_type )( ::SireMol::MolGroupsBase const & ) const;
+            typedef ::SireMol::Residue ( ::SireMol::ResID::*selectFrom_function_type )( ::SireMol::MoleculeGroup const &,::SireBase::PropertyMap const & ) const;
             selectFrom_function_type selectFrom_function_value( &::SireMol::ResID::selectFrom );
             
             ResID_exposer.def( 
                 "selectFrom"
                 , selectFrom_function_value
-                , ( bp::arg("molgroups") ) );
+                , ( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMol::ResID::selectFrom
+        
+            typedef ::SireMol::Residue ( ::SireMol::ResID::*selectFrom_function_type )( ::SireMol::MolGroupsBase const &,::SireBase::PropertyMap const & ) const;
+            selectFrom_function_type selectFrom_function_value( &::SireMol::ResID::selectFrom );
+            
+            ResID_exposer.def( 
+                "selectFrom"
+                , selectFrom_function_value
+                , ( bp::arg("molgroups"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
         { //::SireMol::ResID::typeName

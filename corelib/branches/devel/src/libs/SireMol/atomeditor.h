@@ -26,11 +26,12 @@
   *
 \*********************************************/
 
+#include "editor.hpp"
+
 #ifndef SIREMOL_ATOMEDITOR_H
 #define SIREMOL_ATOMEDITOR_H
 
 #include "structureeditor.h"
-#include "editor.hpp"
 #include "atom.h"
 
 SIRE_BEGIN_HEADER
@@ -106,12 +107,6 @@ public:
     }
 
     QString toString() const;
-
-    ResEditor residue() const;
-    CGEditor cutGroup() const;
-    ChainEditor chain() const;
-    SegEditor segment() const;
-    MolEditor molecule() const;
 
     AtomEditor& rename(const AtomName &name);
     AtomEditor& renumber(AtomNum number);

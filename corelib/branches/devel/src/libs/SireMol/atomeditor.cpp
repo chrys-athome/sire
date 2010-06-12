@@ -134,36 +134,6 @@ QString AtomEditor::toString() const
     return QObject::tr( "Editor{ %1 }" ).arg( Atom::toString() );
 }
 
-/** Return the editor for the residue that contains this atom */
-ResEditor AtomEditor::residue() const
-{
-    return ResEditor( Atom::residue() );
-}
-
-/** Return the editor for the CutGroup that contains this atom */
-CGEditor AtomEditor::cutGroup() const
-{
-    return CGEditor( Atom::cutGroup() );
-}
-
-/** Return the editor for the chain that contains this atom */
-ChainEditor AtomEditor::chain() const
-{
-    return ChainEditor( Atom::chain() );
-}
-
-/** Return the editor for the segment that contains this atom */
-SegEditor AtomEditor::segment() const
-{
-    return SegEditor( Atom::segment() );
-}
-
-/** Return the editor for the molecule that contains this atom */
-MolEditor AtomEditor::molecule() const
-{
-    return MolEditor( Atom::molecule() );
-}
-
 /** Rename this atom so that it is called 'newname' */
 AtomEditor& AtomEditor::rename(const AtomName &newname)
 {

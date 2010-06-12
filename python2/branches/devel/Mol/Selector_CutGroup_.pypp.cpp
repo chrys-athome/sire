@@ -50,6 +50,7 @@ void register_Selector_CutGroup__class(){
         Selector_CutGroup__exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         Selector_CutGroup__exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::AtomSelection const & >(( bp::arg("moldata"), bp::arg("selected_atoms") )) );
         Selector_CutGroup__exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::CGID const & >(( bp::arg("moldata"), bp::arg("viewid") )) );
+        Selector_CutGroup__exposer.def( bp::init< SireMol::MoleculeData const &, QList< SireMol::CGIdx > const & >(( bp::arg("moldata"), bp::arg("idxs") )) );
         Selector_CutGroup__exposer.def( bp::init< SireMol::Selector< SireMol::CutGroup > const & >(( bp::arg("other") )) );
         { //::SireMol::Selector< SireMol::CutGroup >::add
         

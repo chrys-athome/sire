@@ -53,6 +53,16 @@ namespace SireMol
 class MoleculeData;
 class AtomSelection;
 
+class Molecule;
+class Segment;
+class Chain;
+class Residue;
+class CutGroup;
+class Atom;
+
+template<class T>
+class Selector;
+
 /** This is the base class of all views of a Molecule. Derived
     classes include Molecule, Segment, Chain, CutGroup, Residue and Atom.
     
@@ -103,6 +113,78 @@ public:
 
     /** Return the atoms that are selected as part of this view */
     virtual AtomSelection selection() const=0;
+
+    Atom atom(const AtomID &atomid, const PropertyMap &map = PropertyMap()) const;
+    
+    Selector<Atom> atoms(const AtomID &atomid,
+                         const PropertyMap &map = PropertyMap()) const;
+
+    Atom atom() const;
+    Selector<Atom> atoms() const;
+
+    CutGroup cutGroup(const CGID &cgid, const PropertyMap &map = PropertyMap()) const;
+    
+    Selector<CutGroup> cutGroups(const CGID &cgid,
+                                 const PropertyMap &map = PropertyMap()) const;
+
+    CutGroup cutGroup() const;
+    Selector<CutGroup> cutGroups() const;
+    
+    Residue residue(const ResID &resid, const PropertyMap &map = PropertyMap()) const;
+    
+    Selector<Residue> residues(const ResID &resid,
+                               const PropertyMap &map = PropertyMap()) const;
+
+    Residue residue() const;
+    Selector<Residue> residues() const;
+    
+    Chain chain(const ChainID &chainid, const PropertyMap &map = PropertyMap()) const;
+    
+    Selector<Chain> chains(const ChainID &chainid,
+                           const PropertyMap &map = PropertyMap()) const;
+    
+    Chain chain() const;
+    Selector<Chain> chains() const;
+    
+    Segment segment(const SegID &segid, const PropertyMap &map = PropertyMap()) const;
+    
+    Selector<Segment> segments(const SegID &segid,
+                               const PropertyMap &map = PropertyMap()) const;
+    
+    Segment segment() const;
+    Selector<Segment> segments() const;
+    
+    Molecule molecule() const;
+    
+    CutGroup select(const CGID &cgid, const PropertyMap &map = PropertyMap()) const;
+    Residue select(const ResID &resid, const PropertyMap &map = PropertyMap()) const;
+    Chain select(const ChainID &chainid, const PropertyMap &map = PropertyMap()) const;
+    Segment select(const SegID &segid, const PropertyMap &map = PropertyMap()) const;
+
+    Atom select(const AtomID &atomid, const PropertyMap &map = PropertyMap()) const;
+
+    Selector<Atom> selectAll(const AtomID &atomid,
+                             const PropertyMap &map = PropertyMap()) const;
+
+    Selector<Atom> selectAll() const;
+    
+    Selector<Atom> selectAllAtoms() const;
+    
+    Selector<CutGroup> selectAll(const CGID &cgid,
+                                 const PropertyMap &map = PropertyMap()) const;
+    Selector<CutGroup> selectAllCutGroups() const;
+    
+    Selector<Residue> selectAll(const ResID &resid,
+                                const PropertyMap &map = PropertyMap()) const;
+    Selector<Residue> selectAllResidues() const;
+
+    Selector<Chain> selectAll(const ChainID &chainid,
+                              const PropertyMap &map = PropertyMap()) const;
+    Selector<Chain> selectAllChains() const;
+    
+    Selector<Segment> selectAll(const SegID &segid,
+                                const PropertyMap &map = PropertyMap()) const;
+    Selector<Segment> selectAllSegments() const;
 
     virtual void update(const MoleculeData &moldata);
 

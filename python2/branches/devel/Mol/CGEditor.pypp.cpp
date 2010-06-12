@@ -80,28 +80,6 @@ void register_CGEditor_class(){
                 , ( bp::arg("atomnum") ) );
         
         }
-        { //::SireMol::CGEditor::atom
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::CGEditor::*atom_function_type )( int ) const;
-            atom_function_type atom_function_value( &::SireMol::CGEditor::atom );
-            
-            CGEditor_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::SireMol::CGEditor::atom
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::CGEditor::*atom_function_type )( ::SireMol::AtomID const & ) const;
-            atom_function_type atom_function_value( &::SireMol::CGEditor::atom );
-            
-            CGEditor_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
         { //::SireMol::CGEditor::commit
         
             typedef ::SireMol::CutGroup ( ::SireMol::CGEditor::*commit_function_type )(  ) const;
@@ -199,28 +177,6 @@ void register_CGEditor_class(){
                 , rename_function_value
                 , ( bp::arg("name") )
                 , bp::return_self< >() );
-        
-        }
-        { //::SireMol::CGEditor::select
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::CGEditor::*select_function_type )( ::SireMol::AtomID const & ) const;
-            select_function_type select_function_value( &::SireMol::CGEditor::select );
-            
-            CGEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::CGEditor::select
-        
-            typedef ::SireMol::AtomEditor ( ::SireMol::CGEditor::*select_function_type )( int ) const;
-            select_function_type select_function_value( &::SireMol::CGEditor::select );
-            
-            CGEditor_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("i") ) );
         
         }
         { //::SireMol::CGEditor::toString

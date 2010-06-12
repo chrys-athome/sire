@@ -114,28 +114,6 @@ void register_CutGroup_class(){
                 , ( bp::arg("key") ) );
         
         }
-        { //::SireMol::CutGroup::atom
-        
-            typedef ::SireMol::Atom ( ::SireMol::CutGroup::*atom_function_type )( ::SireMol::AtomID const & ) const;
-            atom_function_type atom_function_value( &::SireMol::CutGroup::atom );
-            
-            CutGroup_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::CutGroup::atom
-        
-            typedef ::SireMol::Atom ( ::SireMol::CutGroup::*atom_function_type )( int ) const;
-            atom_function_type atom_function_value( &::SireMol::CutGroup::atom );
-            
-            CutGroup_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("i") ) );
-        
-        }
         { //::SireMol::CutGroup::atomIdxs
         
             typedef ::QList< SireMol::AtomIdx > const & ( ::SireMol::CutGroup::*atomIdxs_function_type )(  ) const;
@@ -145,27 +123,6 @@ void register_CutGroup_class(){
                 "atomIdxs"
                 , atomIdxs_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
-        
-        }
-        { //::SireMol::CutGroup::atoms
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::CutGroup::*atoms_function_type )( ::SireMol::AtomID const & ) const;
-            atoms_function_type atoms_function_value( &::SireMol::CutGroup::atoms );
-            
-            CutGroup_exposer.def( 
-                "atoms"
-                , atoms_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::CutGroup::atoms
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::CutGroup::*atoms_function_type )(  ) const;
-            atoms_function_type atoms_function_value( &::SireMol::CutGroup::atoms );
-            
-            CutGroup_exposer.def( 
-                "atoms"
-                , atoms_function_value );
         
         }
         { //::SireMol::CutGroup::contains
@@ -295,16 +252,6 @@ void register_CutGroup_class(){
                 , ( bp::arg("key") ) );
         
         }
-        { //::SireMol::CutGroup::molecule
-        
-            typedef ::SireMol::Molecule ( ::SireMol::CutGroup::*molecule_function_type )(  ) const;
-            molecule_function_type molecule_function_value( &::SireMol::CutGroup::molecule );
-            
-            CutGroup_exposer.def( 
-                "molecule"
-                , molecule_function_value );
-        
-        }
         { //::SireMol::CutGroup::move
         
             typedef ::SireMol::Mover< SireMol::CutGroup > ( ::SireMol::CutGroup::*move_function_type )(  ) const;
@@ -358,49 +305,6 @@ void register_CutGroup_class(){
             CutGroup_exposer.def( 
                 "propertyKeys"
                 , propertyKeys_function_value );
-        
-        }
-        { //::SireMol::CutGroup::select
-        
-            typedef ::SireMol::Atom ( ::SireMol::CutGroup::*select_function_type )( ::SireMol::AtomID const & ) const;
-            select_function_type select_function_value( &::SireMol::CutGroup::select );
-            
-            CutGroup_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::CutGroup::select
-        
-            typedef ::SireMol::Atom ( ::SireMol::CutGroup::*select_function_type )( int ) const;
-            select_function_type select_function_value( &::SireMol::CutGroup::select );
-            
-            CutGroup_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::SireMol::CutGroup::selectAll
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::CutGroup::*selectAll_function_type )( ::SireMol::AtomID const & ) const;
-            selectAll_function_type selectAll_function_value( &::SireMol::CutGroup::selectAll );
-            
-            CutGroup_exposer.def( 
-                "selectAll"
-                , selectAll_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::CutGroup::selectAll
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::CutGroup::*selectAll_function_type )(  ) const;
-            selectAll_function_type selectAll_function_value( &::SireMol::CutGroup::selectAll );
-            
-            CutGroup_exposer.def( 
-                "selectAll"
-                , selectAll_function_value );
         
         }
         { //::SireMol::CutGroup::selectedAll

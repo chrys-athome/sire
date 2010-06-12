@@ -207,15 +207,6 @@ bool Residue::selectedAll() const
     return d->info().nResidues() == 1;
 }
 
-/** Return the ith atom in this residue
-
-    \throw SireError::invalid_index
-*/
-Atom Residue::atom(int i) const
-{
-    return Atom( *d, d->info().getAtom(residx, i) );
-}
-
 /** Return the identities of the atoms that are selected as
     part of this residue */
 AtomSelection Residue::selection() const
@@ -326,90 +317,10 @@ bool Residue::intersects(const AtomID &atomid) const
     return d->info().intersects(residx, atomid);
 }
 
-/** Return the molecule that contains this residue */
-Molecule Residue::molecule() const
-{
-    return Molecule(*d);
-}
-
 /** Return whether or not this residue is part of a chain */
 bool Residue::isWithinChain() const
 {
     return d->info().isWithinChain(residx);
-}
-
-/** Return the chain that contain this residue - this throws
-    an exception if this residue is not part of a chain
-    
-    \throw SireMol::missing_chain
-*/
-Chain Residue::chain() const
-{
-    return Chain(this->data(), d->info().parentChain(residx));
-}
-
-/** Return the atom that is in this residue *and* also has the 
-    ID 'atomid'
-    
-    \throw SireMol::missing_atom
-    \throw SireMol::dulplicate_atom
-    \throw SireError::invalid_index
-*/
-Atom Residue::atom(const AtomID &atomid) const
-{
-    return Atom(this->data(), residx + atomid);
-}
-
-/** Return the atom(s) that are in this residue *and* also
-    match the ID 'atomid'
-    
-    \throw SireMol::missing_atom
-    \throw SireError::invalid_index
-*/
-Selector<Atom> Residue::atoms(const AtomID &atomid) const
-{
-    return Selector<Atom>(this->data(), residx + atomid);
-}
-
-/** Return all of the atoms that are in this residue */
-Selector<Atom> Residue::atoms() const
-{
-    return Selector<Atom>(this->data(), residx.atoms());
-}
-
-/** Return the ith atom in this residue 
-
-    \throw SireError::invalid_index
-*/
-Atom Residue::select(int i) const
-{
-    return this->atom(i);
-}
-
-/** Return the atom in this residue *and* has the ID 'atomid'
-
-    \throw SireMol::missing_atom
-    \throw SireMol::duplicate_atom
-    \throw SireError::invalid_index
-*/
-Atom Residue::select(const AtomID &atomid) const
-{
-    return this->atom(atomid);
-}
-
-/** Return the atoms in this residue *and* having the ID 'atomid'
-
-    \throw SireMol::missing_atom
-*/
-Selector<Atom> Residue::selectAll(const AtomID &atomid) const
-{
-    return this->atoms(atomid);
-}
-
-/** Return all of the atoms in this residue */
-Selector<Atom> Residue::selectAll() const
-{
-    return this->atoms();
 }
 
 /** Return whether or not there is a ResProperty at key 'key' */

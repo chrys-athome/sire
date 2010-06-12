@@ -52,6 +52,7 @@ set ( PYPP_SOURCES
        CGResID.pypp.cpp
        CGStringProperty.pypp.cpp
        CGStructureEditor.pypp.cpp
+       CGsWithAtoms.pypp.cpp
        CGVariantProperty.pypp.cpp
        Chain.pypp.cpp
        ChainAtomID.pypp.cpp
@@ -66,6 +67,8 @@ set ( PYPP_SOURCES
        ChainResID.pypp.cpp
        ChainStringProperty.pypp.cpp
        ChainStructureEditor.pypp.cpp
+       ChainsWithAtoms.pypp.cpp
+       ChainsWithRes.pypp.cpp
        ChainVariantProperty.pypp.cpp
        ChargePerturbation.pypp.cpp
        ChemicalBondHunter.pypp.cpp
@@ -159,6 +162,7 @@ set ( PYPP_SOURCES
        ResStringProperty.pypp.cpp
        ResStructureEditor.pypp.cpp
        ResVariantProperty.pypp.cpp
+       ResWithAtoms.pypp.cpp
        SegAtomID.pypp.cpp
        SegCGID.pypp.cpp
        SegChainID.pypp.cpp
@@ -174,6 +178,7 @@ set ( PYPP_SOURCES
        SegResID.pypp.cpp
        SegStringProperty.pypp.cpp
        SegStructureEditor.pypp.cpp
+       SegsWithAtoms.pypp.cpp
        SegVariantProperty.pypp.cpp
        Selector_Atom_.pypp.cpp
        Selector_Chain_.pypp.cpp

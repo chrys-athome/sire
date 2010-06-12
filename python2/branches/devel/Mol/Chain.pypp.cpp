@@ -113,17 +113,6 @@ void register_Chain_class(){
                 , ( bp::arg("key") ) );
         
         }
-        { //::SireMol::Chain::atom
-        
-            typedef ::SireMol::Atom ( ::SireMol::Chain::*atom_function_type )( ::SireMol::AtomID const & ) const;
-            atom_function_type atom_function_value( &::SireMol::Chain::atom );
-            
-            Chain_exposer.def( 
-                "atom"
-                , atom_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
         { //::SireMol::Chain::atomIdxs
         
             typedef ::QList< SireMol::AtomIdx > ( ::SireMol::Chain::*atomIdxs_function_type )(  ) const;
@@ -132,27 +121,6 @@ void register_Chain_class(){
             Chain_exposer.def( 
                 "atomIdxs"
                 , atomIdxs_function_value );
-        
-        }
-        { //::SireMol::Chain::atoms
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::Chain::*atoms_function_type )( ::SireMol::AtomID const & ) const;
-            atoms_function_type atoms_function_value( &::SireMol::Chain::atoms );
-            
-            Chain_exposer.def( 
-                "atoms"
-                , atoms_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::Chain::atoms
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::Chain::*atoms_function_type )(  ) const;
-            atoms_function_type atoms_function_value( &::SireMol::Chain::atoms );
-            
-            Chain_exposer.def( 
-                "atoms"
-                , atoms_function_value );
         
         }
         { //::SireMol::Chain::contains
@@ -315,16 +283,6 @@ void register_Chain_class(){
                 , ( bp::arg("key") ) );
         
         }
-        { //::SireMol::Chain::molecule
-        
-            typedef ::SireMol::Molecule ( ::SireMol::Chain::*molecule_function_type )(  ) const;
-            molecule_function_type molecule_function_value( &::SireMol::Chain::molecule );
-            
-            Chain_exposer.def( 
-                "molecule"
-                , molecule_function_value );
-        
-        }
         { //::SireMol::Chain::move
         
             typedef ::SireMol::Mover< SireMol::Chain > ( ::SireMol::Chain::*move_function_type )(  ) const;
@@ -398,124 +356,6 @@ void register_Chain_class(){
                 "resIdxs"
                 , resIdxs_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
-        
-        }
-        { //::SireMol::Chain::residue
-        
-            typedef ::SireMol::Residue ( ::SireMol::Chain::*residue_function_type )( ::SireMol::ResID const & ) const;
-            residue_function_type residue_function_value( &::SireMol::Chain::residue );
-            
-            Chain_exposer.def( 
-                "residue"
-                , residue_function_value
-                , ( bp::arg("resid") ) );
-        
-        }
-        { //::SireMol::Chain::residue
-        
-            typedef ::SireMol::Residue ( ::SireMol::Chain::*residue_function_type )( int ) const;
-            residue_function_type residue_function_value( &::SireMol::Chain::residue );
-            
-            Chain_exposer.def( 
-                "residue"
-                , residue_function_value
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::SireMol::Chain::residues
-        
-            typedef ::SireMol::Selector< SireMol::Residue > ( ::SireMol::Chain::*residues_function_type )( ::SireMol::ResID const & ) const;
-            residues_function_type residues_function_value( &::SireMol::Chain::residues );
-            
-            Chain_exposer.def( 
-                "residues"
-                , residues_function_value
-                , ( bp::arg("resid") ) );
-        
-        }
-        { //::SireMol::Chain::residues
-        
-            typedef ::SireMol::Selector< SireMol::Residue > ( ::SireMol::Chain::*residues_function_type )(  ) const;
-            residues_function_type residues_function_value( &::SireMol::Chain::residues );
-            
-            Chain_exposer.def( 
-                "residues"
-                , residues_function_value );
-        
-        }
-        { //::SireMol::Chain::select
-        
-            typedef ::SireMol::Atom ( ::SireMol::Chain::*select_function_type )( ::SireMol::AtomID const & ) const;
-            select_function_type select_function_value( &::SireMol::Chain::select );
-            
-            Chain_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::Chain::select
-        
-            typedef ::SireMol::Residue ( ::SireMol::Chain::*select_function_type )( ::SireMol::ResID const & ) const;
-            select_function_type select_function_value( &::SireMol::Chain::select );
-            
-            Chain_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("resid") ) );
-        
-        }
-        { //::SireMol::Chain::select
-        
-            typedef ::SireMol::Residue ( ::SireMol::Chain::*select_function_type )( int ) const;
-            select_function_type select_function_value( &::SireMol::Chain::select );
-            
-            Chain_exposer.def( 
-                "select"
-                , select_function_value
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::SireMol::Chain::selectAll
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::Chain::*selectAll_function_type )( ::SireMol::AtomID const & ) const;
-            selectAll_function_type selectAll_function_value( &::SireMol::Chain::selectAll );
-            
-            Chain_exposer.def( 
-                "selectAll"
-                , selectAll_function_value
-                , ( bp::arg("atomid") ) );
-        
-        }
-        { //::SireMol::Chain::selectAll
-        
-            typedef ::SireMol::Selector< SireMol::Residue > ( ::SireMol::Chain::*selectAll_function_type )( ::SireMol::ResID const & ) const;
-            selectAll_function_type selectAll_function_value( &::SireMol::Chain::selectAll );
-            
-            Chain_exposer.def( 
-                "selectAll"
-                , selectAll_function_value
-                , ( bp::arg("resid") ) );
-        
-        }
-        { //::SireMol::Chain::selectAllAtoms
-        
-            typedef ::SireMol::Selector< SireMol::Atom > ( ::SireMol::Chain::*selectAllAtoms_function_type )(  ) const;
-            selectAllAtoms_function_type selectAllAtoms_function_value( &::SireMol::Chain::selectAllAtoms );
-            
-            Chain_exposer.def( 
-                "selectAllAtoms"
-                , selectAllAtoms_function_value );
-        
-        }
-        { //::SireMol::Chain::selectAllResidues
-        
-            typedef ::SireMol::Selector< SireMol::Residue > ( ::SireMol::Chain::*selectAllResidues_function_type )(  ) const;
-            selectAllResidues_function_type selectAllResidues_function_value( &::SireMol::Chain::selectAllResidues );
-            
-            Chain_exposer.def( 
-                "selectAllResidues"
-                , selectAllResidues_function_value );
         
         }
         { //::SireMol::Chain::selectedAll

@@ -64,36 +64,6 @@ void register_AtomEditor_class(){
         AtomEditor_exposer.def( bp::init< >() );
         AtomEditor_exposer.def( bp::init< SireMol::Atom const & >(( bp::arg("atom") )) );
         AtomEditor_exposer.def( bp::init< SireMol::AtomEditor const & >(( bp::arg("other") )) );
-        { //::SireMol::AtomEditor::chain
-        
-            typedef ::SireMol::ChainEditor ( ::SireMol::AtomEditor::*chain_function_type )(  ) const;
-            chain_function_type chain_function_value( &::SireMol::AtomEditor::chain );
-            
-            AtomEditor_exposer.def( 
-                "chain"
-                , chain_function_value );
-        
-        }
-        { //::SireMol::AtomEditor::cutGroup
-        
-            typedef ::SireMol::CGEditor ( ::SireMol::AtomEditor::*cutGroup_function_type )(  ) const;
-            cutGroup_function_type cutGroup_function_value( &::SireMol::AtomEditor::cutGroup );
-            
-            AtomEditor_exposer.def( 
-                "cutGroup"
-                , cutGroup_function_value );
-        
-        }
-        { //::SireMol::AtomEditor::molecule
-        
-            typedef ::SireMol::MolEditor ( ::SireMol::AtomEditor::*molecule_function_type )(  ) const;
-            molecule_function_type molecule_function_value( &::SireMol::AtomEditor::molecule );
-            
-            AtomEditor_exposer.def( 
-                "molecule"
-                , molecule_function_value );
-        
-        }
         { //::SireMol::AtomEditor::operator=
         
             typedef ::SireMol::AtomEditor & ( ::SireMol::AtomEditor::*assign_function_type )( ::SireMol::Atom const & ) ;
@@ -227,26 +197,6 @@ void register_AtomEditor_class(){
                 "reparent"
                 , reparent_function_value
                 , ( bp::arg("segid") ) );
-        
-        }
-        { //::SireMol::AtomEditor::residue
-        
-            typedef ::SireMol::ResEditor ( ::SireMol::AtomEditor::*residue_function_type )(  ) const;
-            residue_function_type residue_function_value( &::SireMol::AtomEditor::residue );
-            
-            AtomEditor_exposer.def( 
-                "residue"
-                , residue_function_value );
-        
-        }
-        { //::SireMol::AtomEditor::segment
-        
-            typedef ::SireMol::SegEditor ( ::SireMol::AtomEditor::*segment_function_type )(  ) const;
-            segment_function_type segment_function_value( &::SireMol::AtomEditor::segment );
-            
-            AtomEditor_exposer.def( 
-                "segment"
-                , segment_function_value );
         
         }
         { //::SireMol::AtomEditor::toString

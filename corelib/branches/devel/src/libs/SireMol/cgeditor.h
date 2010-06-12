@@ -26,12 +26,13 @@
   *
 \*********************************************/
 
+#include "editor.hpp"
+
 #ifndef SIREMOL_CGEDITOR_H
 #define SIREMOL_CGEDITOR_H
 
 #include "structureeditor.h"
 #include "cutgroup.h"
-#include "editor.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -105,12 +106,6 @@ public:
     QString toString() const;
     
     MolEditor molecule() const;
-    
-    AtomEditor atom(int i) const;
-    AtomEditor atom(const AtomID &atomid) const;
-    
-    AtomEditor select(const AtomID &atomid) const;
-    AtomEditor select(int i) const;
     
     CGEditor& rename(const CGName &name);
     CGStructureEditor reindex(CGIdx index) const;

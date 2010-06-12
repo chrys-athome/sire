@@ -162,8 +162,13 @@ public:
     AABox aaBox(const PropertyMap &map = PropertyMap()) const;
     Sphere boundingSphere(const PropertyMap &map = PropertyMap()) const;
 
+    Vector centroid(const PropertyMap &map = PropertyMap()) const;
     Vector centerOfGeometry(const PropertyMap &map = PropertyMap()) const;
     Vector centerOfMass(const PropertyMap &map = PropertyMap()) const;
+
+    AxisSet principalAxes(const PropertyMap &map = PropertyMap()) const;
+    AxisSet principalAxes(Vector &principal_moments,
+                          const PropertyMap &map = PropertyMap()) const;
 
     AxisSet alignmentAxes(const MoleculeView &other, 
                           const AtomMatcher &matcher,

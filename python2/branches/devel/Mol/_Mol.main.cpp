@@ -113,6 +113,8 @@
 
 #include "CGVariantProperty.pypp.hpp"
 
+#include "CGsWithAtoms.pypp.hpp"
+
 #include "Chain.pypp.hpp"
 
 #include "ChainAtomID.pypp.hpp"
@@ -140,6 +142,10 @@
 #include "ChainStructureEditor.pypp.hpp"
 
 #include "ChainVariantProperty.pypp.hpp"
+
+#include "ChainsWithAtoms.pypp.hpp"
+
+#include "ChainsWithRes.pypp.hpp"
 
 #include "ChargePerturbation.pypp.hpp"
 
@@ -321,6 +327,8 @@
 
 #include "ResVariantProperty.pypp.hpp"
 
+#include "ResWithAtoms.pypp.hpp"
+
 #include "Residue.pypp.hpp"
 
 #include "ResidueCutting.pypp.hpp"
@@ -356,6 +364,8 @@
 #include "SegVariantProperty.pypp.hpp"
 
 #include "Segment.pypp.hpp"
+
+#include "SegsWithAtoms.pypp.hpp"
 
 #include "Selector_Atom_.pypp.hpp"
 
@@ -576,6 +586,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_CGStructureEditor_class();
 
+    register_CGsWithAtoms_class();
+
     register_Chain_class();
 
     register_ChainEditorBase_class();
@@ -599,6 +611,10 @@ BOOST_PYTHON_MODULE(_Mol){
     register_ChainResID_class();
 
     register_ChainStructureEditor_class();
+
+    register_ChainsWithAtoms_class();
+
+    register_ChainsWithRes_class();
 
     register_ChargePerturbation_class();
 
@@ -766,6 +782,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_ResStructureEditor_class();
 
+    register_ResWithAtoms_class();
+
     register_ResidueCutting_class();
 
     register_SegEditor_class();
@@ -785,6 +803,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_SegIntProperty_class();
 
     register_SegStructureEditor_class();
+
+    register_SegsWithAtoms_class();
 
     register_SireMol_properties();
 

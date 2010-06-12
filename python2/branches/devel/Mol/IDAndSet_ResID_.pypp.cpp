@@ -49,6 +49,8 @@ namespace bp = boost::python;
 
 #include "tostring.h"
 
+#include "withres.h"
+
 #include "resid.h"
 
 SireID::IDAndSet<SireMol::ResID> __copy__(const SireID::IDAndSet<SireMol::ResID> &other){ return SireID::IDAndSet<SireMol::ResID>(other); }

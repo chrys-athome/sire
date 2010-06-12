@@ -26,12 +26,13 @@
   *
 \*********************************************/
 
+#include "editor.hpp"
+
 #ifndef SIREMOL_RESEDITOR_H
 #define SIREMOL_RESEDITOR_H
 
 #include "structureeditor.h"
 #include "residue.h"
-#include "editor.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -98,15 +99,6 @@ public:
     static const char* typeName();
 
     QString toString() const;
-    
-    ChainEditor chain() const;
-    MolEditor molecule() const;
-    
-    AtomEditor atom(int i) const;
-    AtomEditor atom(const AtomID &atomid) const;
-    
-    AtomEditor select(const AtomID &atomid) const;
-    AtomEditor select(int i) const;
     
     ResEditor& rename(const ResName &name);
     ResEditor& renumber(ResNum number);

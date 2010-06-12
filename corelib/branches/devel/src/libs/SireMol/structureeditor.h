@@ -650,6 +650,21 @@ public:
     QList<CGIdx> getCutGroups() const;
     QList<ChainIdx> getChains() const;
     QList<SegIdx> getSegments() const;
+
+    ChainIdx parentChain(ResIdx residx) const;
+    ChainIdx parentChain(const ResID &resid) const;
+    
+    ChainIdx parentChain(AtomIdx atomidx) const;
+    ChainIdx parentChain(const AtomID &atomid) const;
+    
+    ResIdx parentResidue(AtomIdx atomidx) const;
+    ResIdx parentResidue(const AtomID &atomid) const;
+    
+    SegIdx parentSegment(AtomIdx atomidx) const;
+    SegIdx parentSegment(const AtomID &atomid) const;
+    
+    CGIdx parentCutGroup(AtomIdx atomidx) const;
+    CGIdx parentCutGroup(const AtomID &atomid) const;
     
     AtomIdx atomIdx(const AtomID &atomid) const;
     CGIdx cgIdx(const CGID &cgid) const;

@@ -55,7 +55,7 @@ print dihedrals.potentials()
 intraff = InternalFF("intraff")
 #intraclj = IntraCLJFF("intraclj")
 
-intraff.add(ethane)
+intraff.add(ethane, {"bond" : TwoAtomFunctions(), "angle" : ThreeAtomFunctions()})
 #intraclj.add(ethane)
 
 solute = MoleculeGroup("solute", ethane)

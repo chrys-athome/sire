@@ -58,6 +58,7 @@ void register_Selector_Atom__class(){
         Selector_Atom__exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         Selector_Atom__exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::AtomSelection const & >(( bp::arg("moldata"), bp::arg("selected_atoms") )) );
         Selector_Atom__exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::AtomID const & >(( bp::arg("moldata"), bp::arg("viewid") )) );
+        Selector_Atom__exposer.def( bp::init< SireMol::MoleculeData const &, QList< SireMol::AtomIdx > const & >(( bp::arg("moldata"), bp::arg("idxs") )) );
         Selector_Atom__exposer.def( bp::init< SireMol::Selector< SireMol::Atom > const & >(( bp::arg("other") )) );
         { //::SireMol::Selector< SireMol::Atom >::add
         

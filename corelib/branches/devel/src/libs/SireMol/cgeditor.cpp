@@ -129,54 +129,6 @@ QString CGEditor::toString() const
     return QObject::tr( "Editor{ %1 }" ).arg(CutGroup::toString());
 }
 
-/** Return an editor for the molecule that contains this CutGroup */
-MolEditor CGEditor::molecule() const
-{
-    return MolEditor( CutGroup::molecule() );
-}
-
-/** Return an editor for the ith atom of this CutGroup
-
-    \throw SireError::invalid_index
-*/
-AtomEditor CGEditor::atom(int i) const
-{
-    return AtomEditor( CutGroup::atom(i) );
-}
-
-/** Return an editor for the atom that matches the ID 'atomid' in
-    this CutGroup
-    
-    \throw SireMol::missing_atom
-    \throw SireMol::duplicate_atom
-    \throw SireError::invalid_index
-*/
-AtomEditor CGEditor::atom(const AtomID &atomid) const
-{
-    return AtomEditor( CutGroup::atom(atomid) );
-}
-
-/** Return an editor for the ith atom of this CutGroup
-
-    \throw SireError::invalid_index
-*/
-AtomEditor CGEditor::select(const AtomID &atomid) const
-{
-    return AtomEditor( CutGroup::select(atomid) );
-}
-
-/** Return an editor for the atom that matches the ID 'atomid' in
-    this CutGroup
-    
-    \throw SireMol::missing_atom
-    \throw SireMol::duplicate_atom
-    \throw SireError::invalid_index
-*/
-AtomEditor CGEditor::select(int i) const
-{
-    return AtomEditor( CutGroup::select(i) );
-}
-
 /** Rename this CutGroup to 'newname' */
 CGEditor& CGEditor::rename(const CGName &newname)
 {
