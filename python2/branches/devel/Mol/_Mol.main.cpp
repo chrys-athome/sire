@@ -17,6 +17,8 @@
 
 #include "Atom.pypp.hpp"
 
+#include "AtomBeading.pypp.hpp"
+
 #include "AtomCharges.pypp.hpp"
 
 #include "AtomCoords.pypp.hpp"
@@ -72,6 +74,8 @@
 #include "AtomsIn_ResID_.pypp.hpp"
 
 #include "AtomsIn_SegID_.pypp.hpp"
+
+#include "BeadNum.pypp.hpp"
 
 #include "BondHunter.pypp.hpp"
 
@@ -510,6 +514,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_AtomCoords_class();
 
+    register_AtomBeading_class();
+
     register_AtomElements_class();
 
     register_AtomCharges_class();
@@ -537,6 +543,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_AtomsIn_ResID__class();
 
     register_AtomsIn_SegID__class();
+
+    register_BeadNum_class();
 
     register_BondHunter_class();
 

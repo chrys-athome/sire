@@ -5,6 +5,7 @@
 
 #include "angleid.h"
 #include "atom.h"
+#include "atombeading.h"
 #include "atomcharges.h"
 #include "atomcoords.h"
 #include "atomeditor.h"
@@ -22,6 +23,7 @@
 #include "atomproperty.hpp"
 #include "atomselection.h"
 #include "atomvelocities.h"
+#include "beadnum.h"
 #include "bondhunter.h"
 #include "bondid.h"
 #include "cgatomidx.h"

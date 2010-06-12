@@ -55,6 +55,8 @@ namespace bp = boost::python;
 
 #include "SireMaths/vector.h"
 
+#include "atombeading.h"
+
 #include "atommasses.h"
 
 #include "atomelements.h"
@@ -90,6 +92,16 @@ SireMol::AtomEditorBase& set_Metadata_SireMM_AtomLJs_function2(
                                   SireMol::AtomEditorBase &molview,
                                    const QString &key, const QString &metakey, const SireMM::LJParameter &p)
                                    { return molview.setMetadata< SireMM::LJParameter >(key, metakey, p); }
+
+SireMol::AtomEditorBase& set_Metadata_SireMol_AtomBeading_function1(
+                                  SireMol::AtomEditorBase &molview,
+                                   const QString &metakey, const SireMol::BeadNum &p)
+                                   { return molview.setMetadata< SireMol::BeadNum >(metakey, p); }
+
+SireMol::AtomEditorBase& set_Metadata_SireMol_AtomBeading_function2(
+                                  SireMol::AtomEditorBase &molview,
+                                   const QString &key, const QString &metakey, const SireMol::BeadNum &p)
+                                   { return molview.setMetadata< SireMol::BeadNum >(key, metakey, p); }
 
 SireMol::AtomEditorBase& set_Metadata_SireMol_AtomCharges_function1(
                                   SireMol::AtomEditorBase &molview,
@@ -288,6 +300,10 @@ void register_AtomEditorBase_class(){
                                            &SireMol::AtomEditorBase::setProperty< SireMM::LJParameter >, bp::return_self< >() );
         AtomEditorBase_exposer.def( "_set_metadata_SireMM_LJParameter", &set_Metadata_SireMM_AtomLJs_function1, bp::return_self< >());
         AtomEditorBase_exposer.def( "_set_metadata_SireMM_LJParameter", &set_Metadata_SireMM_AtomLJs_function2, bp::return_self< >());
+        AtomEditorBase_exposer.def( "_set_property_SireMol_BeadNum", 
+                                           &SireMol::AtomEditorBase::setProperty< SireMol::BeadNum >, bp::return_self< >() );
+        AtomEditorBase_exposer.def( "_set_metadata_SireMol_BeadNum", &set_Metadata_SireMol_AtomBeading_function1, bp::return_self< >());
+        AtomEditorBase_exposer.def( "_set_metadata_SireMol_BeadNum", &set_Metadata_SireMol_AtomBeading_function2, bp::return_self< >());
         AtomEditorBase_exposer.def( "_set_property_SireUnits_Dimension_Charge", 
                                            &SireMol::AtomEditorBase::setProperty< SireUnits::Dimension::Charge >, bp::return_self< >() );
         AtomEditorBase_exposer.def( "_set_metadata_SireUnits_Dimension_Charge", &set_Metadata_SireMol_AtomCharges_function1, bp::return_self< >());

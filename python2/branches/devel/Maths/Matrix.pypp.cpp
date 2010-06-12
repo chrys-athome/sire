@@ -23,6 +23,8 @@ namespace bp = boost::python;
 
 #include "vector.h"
 
+#include <QDebug>
+
 #include <QString>
 
 #include <boost/scoped_array.hpp>
@@ -197,6 +199,18 @@ void register_Matrix_class(){
                 , __call___function_value
                 , ( bp::arg("i"), bp::arg("j") )
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireMaths::Matrix::operator=
+        
+            typedef ::SireMaths::Matrix & ( ::SireMaths::Matrix::*assign_function_type )( ::SireMaths::Matrix const & ) ;
+            assign_function_type assign_function_value( &::SireMaths::Matrix::operator= );
+            
+            Matrix_exposer.def( 
+                "assign"
+                , assign_function_value
+                , ( bp::arg("other") )
+                , bp::return_self< >() );
         
         }
         Matrix_exposer.def( bp::self == bp::self );

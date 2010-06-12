@@ -35,6 +35,8 @@
 #include "SireMol/atomcoords.h"
 #include "SireMol/molecule.h"
 #include "SireMol/moleditor.h"
+#include "SireMol/beadnum.h"
+#include "SireMol/atombeading.h"
 
 #include "SireMaths/axisset.h"
 
@@ -383,9 +385,58 @@ PropertyName RBWorkspace::beadingProperty() const
 static void getBeading(const ViewsOfMol &mol, const PropertyName &beading_property,
                        QPair< qint32,QVector<qint32> > &beading, qint32 &nbeads)
 {
-    beading.first = nbeads;
-    beading.second = QVector<qint32>();
-    nbeads += 1;
+    const MoleculeData &moldata = mol.data();
+    
+    if (moldata.hasProperty(beading_property))
+    {
+        if (mol.selectedAll())
+        {
+            const AtomBeading &beadprop = moldata.property(beading_property)
+                                                 .asA<AtomBeading>();
+
+            int nats = beadprop.nAtoms();
+
+            QHash<BeadNum,qint32> have_bead;
+
+            QVector<qint32> beads(nats);
+            beads.squeeze();
+            
+            int nbeads = 0;
+            
+            const BeadNum *beading_array = beadprop.array().constValueData();
+            
+            for (int i=0; i<nats; ++i)
+            {
+                const BeadNum &beadnum = beading_array[i];
+                
+                if (beadnum.isNull())
+                {
+                    beads[i] = -1;
+                    continue;
+                }
+                
+                if (not have_bead.contains(beadnum))
+                {
+                    have_bead.insert(beadnum,nbeads);
+                    nbeads += 1;
+                }
+                    
+                beads[i] = have_bead[beadnum];
+            }
+        }
+        else
+        {
+            throw SireError::unsupported( QObject::tr(
+                    "The code to support rigid body dynamics of partial "
+                    "molecules has yet to be written."), CODELOC );
+        }
+    }
+    else
+    {
+        beading.first = nbeads;
+        beading.second = QVector<qint32>();
+        nbeads += 1;
+    }
 }
 
 /** Rebuild all of the data array from the current state of the system */
@@ -424,24 +475,7 @@ void RBWorkspace::rebuildFromScratch()
     for (int i=0; i<nmols; ++i)
     {
         MolNum molnum = molgroup.molNumAt(i);
-        
-        const ViewsOfMol &mol = molgroup[molnum];
-        
-        const MoleculeData &moldata = mol.data();
-        
-        if (moldata.hasProperty(beading_property))
-        {
-            //use the beading property to generate the beading for this molecule
-            ::getBeading(mol, beading_property, atoms_to_beads_array[i], nbeads);
-        }
-        else
-        {
-            //the entire molecule is a single bead
-            atoms_to_beads_array[i].first = nbeads;
-            atoms_to_beads_array[i].second = QVector<qint32>();
-            
-            ++nbeads;
-        }
+        ::getBeading(molgroup[molnum], beading_property, atoms_to_beads_array[i], nbeads);
     }
     
     if (nbeads == 0)

@@ -379,6 +379,7 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "SegFloatProperty" : fix_MolViewProperty,
                  "SegVariantProperty" : fix_MolViewProperty,
 
+                 "AtomBeading" : fix_MolViewProperty,
                  "AtomCoords" : fix_AtomCoords,
                  "AtomCharges" : fix_MolViewProperty,
                  "AtomElements" : fix_MolViewProperty,

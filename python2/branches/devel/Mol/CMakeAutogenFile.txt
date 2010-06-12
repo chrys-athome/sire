@@ -5,6 +5,7 @@ set ( PYPP_SOURCES
        AngleID.pypp.cpp
        AnglePerturbation.pypp.cpp
        Atom.pypp.cpp
+       AtomBeading.pypp.cpp
        AtomCharges.pypp.cpp
        AtomCoords.pypp.cpp
        AtomEditor.pypp.cpp
@@ -33,6 +34,7 @@ set ( PYPP_SOURCES
        AtomStructureEditor.pypp.cpp
        AtomVariantProperty.pypp.cpp
        AtomVelocities.pypp.cpp
+       BeadNum.pypp.cpp
        BondHunter.pypp.cpp
        BondID.pypp.cpp
        BondPerturbation.pypp.cpp

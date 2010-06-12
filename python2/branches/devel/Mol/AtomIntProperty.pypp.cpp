@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "SireMaths/vector.h"
 
+#include "atombeading.h"
+
 #include "atomcharges.h"
 
 #include "atomelements.h"

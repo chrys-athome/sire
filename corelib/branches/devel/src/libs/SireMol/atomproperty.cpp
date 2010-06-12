@@ -30,6 +30,7 @@
 
 #include "atomproperty.hpp"
 
+#include "atombeading.h"
 #include "atomcharges.h"
 #include "atomelements.h"
 #include "atomenergies.h"
@@ -108,6 +109,8 @@ namespace SireMol
     template class AtomProperty<SireMol::Force3D>;
     
     template class AtomProperty<SireUnits::Dimension::Volume>;
+
+    template class AtomProperty<SireMol::BeadNum>;
 }
 
 static const RegisterMetaType<AtomStringProperty> r_atomstring;
@@ -121,3 +124,4 @@ static const RegisterMetaType<AtomForces> r_atomforces;
 static const RegisterMetaType<AtomVelocities> r_atomvelocities;
 static const RegisterMetaType<AtomElements> r_atomelements;
 static const RegisterMetaType<AtomPolarisabilities> r_atompols;
+static const RegisterMetaType<AtomBeading> r_atombeading;
