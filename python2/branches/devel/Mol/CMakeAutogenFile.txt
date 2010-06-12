@@ -195,6 +195,7 @@ set ( PYPP_SOURCES
        Velocity3D.pypp.cpp
        ViewsOfMol.pypp.cpp
        WeightFunction.pypp.cpp
+       Within.pypp.cpp
        SireMol_containers.cpp
        SireMol_properties.cpp
        SireMol_registrars.cpp

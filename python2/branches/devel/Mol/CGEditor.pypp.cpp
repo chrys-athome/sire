@@ -90,16 +90,6 @@ void register_CGEditor_class(){
                 , commit_function_value );
         
         }
-        { //::SireMol::CGEditor::molecule
-        
-            typedef ::SireMol::MolEditor ( ::SireMol::CGEditor::*molecule_function_type )(  ) const;
-            molecule_function_type molecule_function_value( &::SireMol::CGEditor::molecule );
-            
-            CGEditor_exposer.def( 
-                "molecule"
-                , molecule_function_value );
-        
-        }
         { //::SireMol::CGEditor::operator=
         
             typedef ::SireMol::CGEditor & ( ::SireMol::CGEditor::*assign_function_type )( ::SireMol::CutGroup const & ) ;

@@ -97,6 +97,7 @@
 #include "viewsofmol.h"
 #include "weightfunction.h"
 #include "withatoms.h"
+#include "within.h"
 #include "withres.h"
 
 #endif

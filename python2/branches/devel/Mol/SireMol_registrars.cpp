@@ -68,6 +68,7 @@
 #include "atomforces.h"
 #include "beadnum.h"
 #include "reseditor.h"
+#include "within.h"
 #include "molname.h"
 #include "withatoms.h"
 #include "mgidsandmaps.h"
@@ -218,6 +219,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::BeadNum >();
     ObjectRegistry::registerConverterFor< SireMol::ResEditor >();
     ObjectRegistry::registerConverterFor< SireMol::ResStructureEditor >();
+    ObjectRegistry::registerConverterFor< SireMol::Within >();
     ObjectRegistry::registerConverterFor< SireMol::MolName >();
     ObjectRegistry::registerConverterFor< SireMol::ResWithAtoms >();
     ObjectRegistry::registerConverterFor< SireMol::CGsWithAtoms >();

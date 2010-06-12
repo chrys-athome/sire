@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2010  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,55 +26,63 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMIDENTIFIER_H
-#define SIREMOL_ATOMIDENTIFIER_H
+#ifndef SIREMOL_WITHIN_H
+#define SIREMOL_WITHIN_H
 
 #include "atomid.h"
+#include "atomidentifier.h"
 
-#include <boost/shared_ptr.hpp>
+#include "SireMaths/vector.h"
+
+#include "SireUnits/dimensions.h"
+
+SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class AtomIdentifier;
-class AtomIDSet;
+class Within;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMol::AtomIdentifier&);
-QDataStream& operator>>(QDataStream&, SireMol::AtomIdentifier&);
-
-QDataStream& operator<<(QDataStream&, const SireMol::AtomIDSet&);
-QDataStream& operator>>(QDataStream&, SireMol::AtomIDSet&);
+QDataStream& operator<<(QDataStream&, const SireMol::Within&);
+QDataStream& operator>>(QDataStream&, SireMol::Within&);
 
 namespace SireMol
 {
 
-class AtomIdx;
+using SireMaths::Vector;
 
-/** This is a generic holder for any AtomID class! 
-
+/** This is an atom identifier that identifies atoms
+    based on how far they are from other atoms, or
+    from points in space
+    
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomIdentifier : public AtomID
+class SIREMOL_EXPORT Within : public AtomID
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const AtomIdentifier&);
-friend QDataStream& ::operator>>(QDataStream&, AtomIdentifier&);
+friend QDataStream& ::operator<<(QDataStream&, const Within&);
+friend QDataStream& ::operator>>(QDataStream&, Within&);
 
 public:
-    AtomIdentifier();
-    AtomIdentifier(const AtomID &atomid);
-    AtomIdentifier(const AtomIdentifier &other);
+    Within();
+    Within(SireUnits::Dimension::Length distance, 
+           const Vector &point);
     
-    ~AtomIdentifier();
+    Within(SireUnits::Dimension::Length distance,
+           const AtomID &atomid);
+    
+    Within(const Within &other);
+    
+    ~Within();
     
     static const char* typeName();
     
     const char* what() const
     {
-        return AtomIdentifier::typeName();
+        return Within::typeName();
     }
     
-    AtomIdentifier* clone() const;
+    Within* clone() const;
     
     bool isNull() const;
     
@@ -82,34 +90,35 @@ public:
                 
     QString toString() const;
     
-    const AtomID& base() const;
-    
-    AtomIdentifier& operator=(const AtomIdentifier &other);
-    AtomIdentifier& operator=(const AtomID &other);
+    Within& operator=(const Within &other);
     
     bool operator==(const SireID::ID &other) const;
     using SireID::ID::operator!=;
    
-    bool operator==(const AtomIdentifier &other) const;
-    bool operator!=(const AtomIdentifier &other) const;
-    
-    bool operator==(const AtomID &other) const;
-    bool operator!=(const AtomID &other) const;
+    bool operator==(const Within &other) const;
+    bool operator!=(const Within &other) const;
     
     QList<AtomIdx> map(const MolInfo &molinfo) const;
 
+    QList<AtomIdx> map(const MoleculeView &molview, const PropertyMap &map) const;
+
 private:
-    /** Pointer to the AtomID */
-    boost::shared_ptr<AtomID> d;
+    /** The atom against which distance will be calculated */
+    AtomIdentifier atomid;
+    
+    /** The point in space against which distance will be calculated */
+    Vector point;
+    
+    /** The distance itself */
+    SireUnits::Dimension::Length dist;
 };
 
-inline uint qHash(const AtomIdentifier &atomid)
-{
-    return atomid.hash();
 }
 
-}
+Q_DECLARE_METATYPE( SireMol::Within )
 
-Q_DECLARE_METATYPE(SireMol::AtomIdentifier);
+SIRE_EXPOSE_CLASS( SireMol::Within )
+
+SIRE_END_HEADER
 
 #endif

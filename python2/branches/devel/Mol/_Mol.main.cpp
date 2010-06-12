@@ -397,6 +397,8 @@
 
 #include "WeightFunction.pypp.hpp"
 
+#include "Within.pypp.hpp"
+
 namespace bp = boost::python;
 
 #include "SireMol_containers.h"
@@ -806,12 +808,14 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_SegsWithAtoms_class();
 
+    register_SpecifyMol_class();
+
     register_SireMol_properties();
 
     bp::implicitly_convertible< SireMol::MoleculeView, SireMol::MoleculeData >();
 
     bp::implicitly_convertible< SireMol::MoleculeView, SireMol::PartialMolecule >();
 
-    register_SpecifyMol_class();
+    register_Within_class();
 }
 

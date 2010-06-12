@@ -118,6 +118,7 @@ set ( SIREMOL_HEADERS
       viewsofmol.h
       weightfunction.h
       withatoms.h
+      within.h
       withres.h
     )
 
@@ -197,6 +198,7 @@ set ( SIREMOL_SOURCES
       viewsofmol.cpp
       weightfunction.cpp
       withatoms.cpp
+      within.cpp
       withres.cpp    
 
       ${SIREMOL_HEADERS}

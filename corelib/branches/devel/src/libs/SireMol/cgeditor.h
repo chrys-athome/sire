@@ -105,8 +105,6 @@ public:
     
     QString toString() const;
     
-    MolEditor molecule() const;
-    
     CGEditor& rename(const CGName &name);
     CGStructureEditor reindex(CGIdx index) const;
     
