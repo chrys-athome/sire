@@ -1494,7 +1494,7 @@ void InterLJPotential::_pvt_calculateLJField(const InterLJPotential::Molecule &m
                         sig_over_dist6 *= invdist;
                         sig_over_dist12 *= invdist;
 
-                        Vector field = ((scl_lj * ljpair.epsilon() * 
+                        Vector field = ((scl_lj * 4 * ljpair.epsilon() * 
                                         (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
                                         * distmat[j].direction())
                                      
@@ -2030,8 +2030,8 @@ void IntraLJPotential::calculateEnergy(const LJNBPairs::CGPairs &group_pairs,
                     double sig_over_dist6 = pow_3(ljpair.sigma()*invdist2);
                     double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                    iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                  sig_over_dist6);
+                    iljnrg += 4 * ljpair.epsilon() * (sig_over_dist12 - 
+                                                      sig_over_dist6);
                 }
             }
         }
@@ -2063,7 +2063,7 @@ void IntraLJPotential::calculateEnergy(const LJNBPairs::CGPairs &group_pairs,
                     double sig_over_dist6 = pow_3(ljpair.sigma()*invdist2);
                     double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                    iljnrg += ljscl.lj() * ljpair.epsilon() * 
+                    iljnrg += 4 * ljscl.lj() * ljpair.epsilon() * 
                                (sig_over_dist12 - sig_over_dist6);
                 }
             }
@@ -2106,8 +2106,8 @@ void IntraLJPotential::calculateEnergy(const LJNBPairs::CGPairs &group_pairs,
                     double sig_over_dist6 = pow_6(ljpair.sigma()*invdist2);
                     double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                    iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                  sig_over_dist6);
+                    iljnrg += 4 * ljpair.epsilon() * (sig_over_dist12 - 
+                                                      sig_over_dist6);
                 }
             }
         } 
@@ -2140,7 +2140,7 @@ void IntraLJPotential::calculateEnergy(const LJNBPairs::CGPairs &group_pairs,
                     double sig_over_dist6 = pow_3(ljpair.sigma()*invdist2);
                     double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                    iljnrg += ljscl.lj() * ljpair.epsilon() * 
+                    iljnrg += ljscl.lj() * 4 * ljpair.epsilon() * 
                                (sig_over_dist12 - sig_over_dist6);
                 }
             }
@@ -2243,7 +2243,7 @@ void IntraLJPotential::calculateEnergy(const IntraLJPotential::Molecule &mol,
     }
     
     //add this molecule pair's energy onto the total
-    energy += Energy(4 * scale_energy * ljnrg);
+    energy += Energy(scale_energy * ljnrg);
 }
 
 /** Calculate the intramolecular LJ energy of the passed molecule
@@ -2391,7 +2391,7 @@ void IntraLJPotential::calculateEnergy(const IntraLJPotential::Molecule &mol,
     }
 
     //add the molecule's energy onto the total
-    energy += Energy(4 * scale_energy * ljnrg);
+    energy += Energy(scale_energy * ljnrg);
 }
 
 void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
@@ -2448,7 +2448,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                             double sig_over_dist12 = pow_2(sig_over_dist6);
 
                             //calculate the energy
-                            const double ljnrg = ljpair.epsilon() *
+                            const double ljnrg = 4 * ljpair.epsilon() *
                                               (sig_over_dist12 - sig_over_dist6);
 
                             // dU/dr requires an extra power of r
@@ -2456,7 +2456,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                             sig_over_dist12 *= invdist;
 
                             const Vector force = 
-                                    ((scl_lj * ljpair.epsilon() * 
+                                    ((scl_lj * 4 * ljpair.epsilon() * 
                                     (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
                                     * distmat[j].direction())
                                     
@@ -2503,7 +2503,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
 
                             //calculate the energy
                             const double ljnrg = ljscl.lj() *
-                                                 ljpair.epsilon() *
+                                                 4 * ljpair.epsilon() *
                                           (sig_over_dist12 - sig_over_dist6);
 
                             // dU/dr requires an extra power of r
@@ -2511,7 +2511,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                             sig_over_dist12 *= invdist;
 
                             const Vector force = 
-                                   ((scl_lj * ljpair.epsilon() * 
+                                   ((scl_lj * 4 * ljpair.epsilon() * 
                                     (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
                                    * distmat[j].direction())
                                    
@@ -2562,8 +2562,8 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                             sig_over_dist12 *= invdist;
 
                             const Vector force =
-                                (ljpair.epsilon() * (6.0*sig_over_dist6 - 
-                                                     12.0*sig_over_dist12))
+                                (4 * ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                        12.0*sig_over_dist12))
                                  * distmat[j].direction();
 
                             total_force += force;
@@ -2610,8 +2610,8 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
 
                             const Vector force = 
                                   (ljscl.lj() *
-                                   ljpair.epsilon() * (6.0*sig_over_dist6 - 
-                                                       12.0*sig_over_dist12))
+                                   4 * ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                          12.0*sig_over_dist12))
                                    * distmat[j].direction();
 
                             total_force += force;
@@ -2685,7 +2685,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                             double sig_over_dist12 = pow_2(sig_over_dist6);
 
                             //calculate the energy
-                            const double ljnrg = ljpair.epsilon() *
+                            const double ljnrg = 4 * ljpair.epsilon() *
                                               (sig_over_dist12 - sig_over_dist6);
 
                             // dU/dr requires an extra power of r
@@ -2693,7 +2693,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                             sig_over_dist12 *= invdist;
 
                             const Vector force = 
-                                    ((scl_lj * ljpair.epsilon() * 
+                                    ((scl_lj * 4 * ljpair.epsilon() * 
                                     (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
                                     * distmat[j].direction())
                                     
@@ -2740,7 +2740,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
 
                             //calculate the energy
                             const double ljnrg = ljscl.lj() *
-                                                 ljpair.epsilon() *
+                                                 4 * ljpair.epsilon() *
                                           (sig_over_dist12 - sig_over_dist6);
 
                             // dU/dr requires an extra power of r
@@ -2748,7 +2748,7 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                             sig_over_dist12 *= invdist;
 
                             const Vector force = 
-                                   ((scl_lj * ljpair.epsilon() * 
+                                   ((scl_lj * 4 * ljpair.epsilon() * 
                                     (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
                                    * distmat[j].direction())
                                    
@@ -2799,8 +2799,8 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                             sig_over_dist12 *= invdist;
 
                             const Vector force =
-                                (ljpair.epsilon() * (6.0*sig_over_dist6 - 
-                                                     12.0*sig_over_dist12))
+                                (4 * ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                        12.0*sig_over_dist12))
                                  * distmat[j].direction();
 
                             total_force += force;
@@ -2847,8 +2847,8 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
 
                             const Vector force = 
                                   (ljscl.lj() *
-                                   ljpair.epsilon() * (6.0*sig_over_dist6 - 
-                                                       12.0*sig_over_dist12))
+                                  4 * ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                         12.0*sig_over_dist12))
                                    * distmat[j].direction();
 
                             total_force += force;

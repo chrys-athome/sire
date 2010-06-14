@@ -23,8 +23,6 @@ namespace bp = boost::python;
 
 #include "tester.h"
 
-#include <QMutex>
-
 #include "object.h"
 
 Siren::None __copy__(const Siren::None &other){ return Siren::None(other); }

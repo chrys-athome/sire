@@ -34,6 +34,8 @@ void register_Tester_class(){
         Tester_exposer.def( bp::init< Siren::Object const &, Siren::Logger & >(( bp::arg("object"), bp::arg("logger") )) );
         Tester_exposer.def( bp::init< Siren::Handle const & >(( bp::arg("handle") )) );
         Tester_exposer.def( bp::init< Siren::Handle const &, Siren::Logger & >(( bp::arg("handle"), bp::arg("logger") )) );
+        Tester_exposer.def( bp::init< QString const & >(( bp::arg("type_name") )) );
+        Tester_exposer.def( bp::init< QString const &, Siren::Logger & >(( bp::arg("type_name"), bp::arg("logger") )) );
         Tester_exposer.def( bp::init< Siren::Tester const & >(( bp::arg("other") )) );
         { //::Siren::Tester::allPassed
         
@@ -123,27 +125,6 @@ void register_Tester_class(){
         
         }
         Tester_exposer.def( bp::self == bp::self );
-        { //::Siren::Tester::restoreState
-        
-            typedef void ( ::Siren::Tester::*restoreState_function_type )( ::Siren::Object const & ) ;
-            restoreState_function_type restoreState_function_value( &::Siren::Tester::restoreState );
-            
-            Tester_exposer.def( 
-                "restoreState"
-                , restoreState_function_value
-                , ( bp::arg("old_state") ) );
-        
-        }
-        { //::Siren::Tester::saveState
-        
-            typedef ::Siren::ObjRef ( ::Siren::Tester::*saveState_function_type )(  ) const;
-            saveState_function_type saveState_function_value( &::Siren::Tester::saveState );
-            
-            Tester_exposer.def( 
-                "saveState"
-                , saveState_function_value );
-        
-        }
         { //::Siren::Tester::stream
         
             typedef void ( ::Siren::Tester::*stream_function_type )( ::Siren::Stream & ) ;

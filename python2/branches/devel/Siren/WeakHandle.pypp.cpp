@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "logger.h"
 
+#include "waitcondition.h"
+
 #include "handle.h"
 
 Siren::WeakHandle __copy__(const Siren::WeakHandle &other){ return Siren::WeakHandle(other); }

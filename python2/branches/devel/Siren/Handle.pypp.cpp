@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "logger.h"
 
+#include "waitcondition.h"
+
 #include "handle.h"
 
 #include "Helpers/str.hpp"
@@ -92,7 +94,7 @@ void register_Handle_class(){
         }
         { //::Siren::Handle::lock
         
-            typedef void ( ::Siren::Handle::*lock_function_type )(  ) ;
+            typedef void ( ::Siren::Handle::*lock_function_type )(  ) const;
             lock_function_type lock_function_value( &::Siren::Handle::lock );
             
             Handle_exposer.def( 
@@ -114,6 +116,28 @@ void register_Handle_class(){
         
         }
         Handle_exposer.def( bp::self == bp::self );
+        { //::Siren::Handle::sleep
+        
+            typedef void ( ::Siren::Handle::*sleep_function_type )( ::Siren::WaitCondition & ) const;
+            sleep_function_type sleep_function_value( &::Siren::Handle::sleep );
+            
+            Handle_exposer.def( 
+                "sleep"
+                , sleep_function_value
+                , ( bp::arg("waiter") ) );
+        
+        }
+        { //::Siren::Handle::sleep
+        
+            typedef bool ( ::Siren::Handle::*sleep_function_type )( ::Siren::WaitCondition &,int ) const;
+            sleep_function_type sleep_function_value( &::Siren::Handle::sleep );
+            
+            Handle_exposer.def( 
+                "sleep"
+                , sleep_function_value
+                , ( bp::arg("waiter"), bp::arg("ms") ) );
+        
+        }
         { //::Siren::Handle::test
         
             typedef bool ( ::Siren::Handle::*test_function_type )(  ) const;
@@ -147,7 +171,7 @@ void register_Handle_class(){
         }
         { //::Siren::Handle::tryLock
         
-            typedef bool ( ::Siren::Handle::*tryLock_function_type )(  ) ;
+            typedef bool ( ::Siren::Handle::*tryLock_function_type )(  ) const;
             tryLock_function_type tryLock_function_value( &::Siren::Handle::tryLock );
             
             Handle_exposer.def( 
@@ -157,7 +181,7 @@ void register_Handle_class(){
         }
         { //::Siren::Handle::tryLock
         
-            typedef bool ( ::Siren::Handle::*tryLock_function_type )( int ) ;
+            typedef bool ( ::Siren::Handle::*tryLock_function_type )( int ) const;
             tryLock_function_type tryLock_function_value( &::Siren::Handle::tryLock );
             
             Handle_exposer.def( 
@@ -178,7 +202,7 @@ void register_Handle_class(){
         }
         { //::Siren::Handle::unlock
         
-            typedef void ( ::Siren::Handle::*unlock_function_type )(  ) ;
+            typedef void ( ::Siren::Handle::*unlock_function_type )(  ) const;
             unlock_function_type unlock_function_value( &::Siren::Handle::unlock );
             
             Handle_exposer.def( 

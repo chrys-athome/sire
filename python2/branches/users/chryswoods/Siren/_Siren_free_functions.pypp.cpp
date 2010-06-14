@@ -15,21 +15,7 @@ namespace bp = boost::python;
 
 #include "waitcondition.h"
 
-#include <QHash>
-
-#include <QThread>
-
-#include <QThreadStorage>
-
-#include "forages.h"
-
-#include "Siren/errors.h"
-
-#include "forages.h"
-
-#include "mutex.h"
-
-#include "waitcondition.h"
+#include <QDebug>
 
 #include <QHash>
 
@@ -47,6 +33,8 @@ namespace bp = boost::python;
 
 #include "waitcondition.h"
 
+#include <QDebug>
+
 #include <QHash>
 
 #include <QThread>
@@ -62,6 +50,26 @@ namespace bp = boost::python;
 #include "mutex.h"
 
 #include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
 
 #include <QHash>
 
@@ -89,29 +97,7 @@ namespace bp = boost::python;
 
 #include "class.h"
 
-#include "exception.h"
-
-#include "getbacktrace.h"
-
-#include "logger.h"
-
-#include "stream.h"
-
-#include "streamqt.h"
-
-#include "tester.h"
-
-#include <QTextStream>
-
-#include <QThreadStorage>
-
-#include "exception.h"
-
-#include "Siren/errors.h"
-
-#include "Siren/exception.h"
-
-#include "class.h"
+#include "datastream.h"
 
 #include "exception.h"
 
@@ -137,109 +123,7 @@ namespace bp = boost::python;
 
 #include "class.h"
 
-#include "exception.h"
-
-#include "getbacktrace.h"
-
-#include "logger.h"
-
-#include "stream.h"
-
-#include "streamqt.h"
-
-#include "tester.h"
-
-#include <QTextStream>
-
-#include <QThreadStorage>
-
-#include "exception.h"
-
-#include "Siren/errors.h"
-
-#include "forages.h"
-
-#include "mutex.h"
-
-#include "waitcondition.h"
-
-#include <QHash>
-
-#include <QThread>
-
-#include <QThreadStorage>
-
-#include "forages.h"
-
-#include "Siren/errors.h"
-
-#include "forages.h"
-
-#include "mutex.h"
-
-#include "waitcondition.h"
-
-#include <QHash>
-
-#include <QThread>
-
-#include <QThreadStorage>
-
-#include "forages.h"
-
-#include "Siren/errors.h"
-
-#include "forages.h"
-
-#include "mutex.h"
-
-#include "waitcondition.h"
-
-#include <QHash>
-
-#include <QThread>
-
-#include <QThreadStorage>
-
-#include "forages.h"
-
-#include "Siren/errors.h"
-
-#include "forages.h"
-
-#include "mutex.h"
-
-#include "waitcondition.h"
-
-#include <QHash>
-
-#include <QThread>
-
-#include <QThreadStorage>
-
-#include "forages.h"
-
-#include "Siren/errors.h"
-
-#include "forages.h"
-
-#include "mutex.h"
-
-#include "waitcondition.h"
-
-#include <QHash>
-
-#include <QThread>
-
-#include <QThreadStorage>
-
-#include "forages.h"
-
-#include "Siren/errors.h"
-
-#include "Siren/exception.h"
-
-#include "class.h"
+#include "datastream.h"
 
 #include "exception.h"
 
@@ -265,6 +149,8 @@ namespace bp = boost::python;
 
 #include "class.h"
 
+#include "datastream.h"
+
 #include "exception.h"
 
 #include "getbacktrace.h"
@@ -290,6 +176,150 @@ namespace bp = boost::python;
 #include "mutex.h"
 
 #include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "Siren/exception.h"
+
+#include "class.h"
+
+#include "datastream.h"
+
+#include "exception.h"
+
+#include "getbacktrace.h"
+
+#include "logger.h"
+
+#include "stream.h"
+
+#include "streamqt.h"
+
+#include "tester.h"
+
+#include <QTextStream>
+
+#include <QThreadStorage>
+
+#include "exception.h"
+
+#include "Siren/errors.h"
+
+#include "Siren/exception.h"
+
+#include "class.h"
+
+#include "datastream.h"
+
+#include "exception.h"
+
+#include "getbacktrace.h"
+
+#include "logger.h"
+
+#include "stream.h"
+
+#include "streamqt.h"
+
+#include "tester.h"
+
+#include <QTextStream>
+
+#include <QThreadStorage>
+
+#include "exception.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
 
 #include <QHash>
 

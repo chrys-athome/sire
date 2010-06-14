@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "Siren/errors.h"
 
+#include "hanref.h"
+
 #include "logger.h"
 
 #include "tester.h"
@@ -20,6 +22,8 @@ namespace bp = boost::python;
 #include <QTextCodec>
 
 #include <QTextStream>
+
+#include <limits>
 
 #include "xmlstream.h"
 

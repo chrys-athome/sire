@@ -130,6 +130,9 @@ protected:
                            const LatticeCharges &lattice_charges,
                            int ntries = 5) const;
 
+    QHash<QString,double> calculatePotential(const QString &cmdfile,
+                                            int ntries=5) const;
+
     void calculatePotential(const QMPotential::Molecules &molecules,
                             PotentialTable &pottable,
                             const SireFF::Probe &probe,
@@ -178,6 +181,8 @@ private:
     QString writeShellFile(const SireBase::TempDir &tempdir) const;
 
     double extractEnergy(QFile &molpro_output) const;
+
+    QHash<QString,double> extractPotentials(QFile &molpro_output) const;
 
     double calculateEnergy(const QString &cmd_file, int ntries) const;
 

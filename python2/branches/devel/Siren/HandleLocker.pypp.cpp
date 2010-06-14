@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "logger.h"
 
+#include "waitcondition.h"
+
 #include "handle.h"
 
 const char* pvt_get_name(const Siren::HandleLocker&){ return "Siren::HandleLocker";}

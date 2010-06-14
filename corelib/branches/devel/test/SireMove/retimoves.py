@@ -105,7 +105,7 @@ for i in range(0, 5):
 
 for i in range(0,5):
     print i, replicas[i].lambdaValue(), replicas[i].energy(), \
-             replicas[i].subSystem().energy(lam)
+             replicas[i].subSystem().constant(lam)
 
 data = save(replicas)
 
@@ -126,4 +126,4 @@ print "Accepted ",repmove[0].nAccepted(), "Rejected ",repmove[0].nRejected()
 
 for i in range(0,5):
     print i, replicas[i].lambdaValue(), replicas[i].energy(), \
-             replicas[i].subSystem().energy(lam)
+             replicas[i].subSystem().constant(lam)

@@ -15,6 +15,12 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireFF/potentialtable.h"
+
+#include "SireMM/cljprobe.h"
+
+#include "SireMaths/vector.h"
+
 #include "SireMol/element.h"
 
 #include "SireStream/datastream.h"
@@ -22,6 +28,8 @@ namespace bp = boost::python;
 #include "SireStream/shareddatastream.h"
 
 #include "SireUnits/units.h"
+
+#include "SireVol/grid.h"
 
 #include "latticecharges.h"
 

@@ -53,6 +53,8 @@ class QDataStream;
 QDataStream& operator<<(QDataStream&, const SireMaths::Vector&);
 QDataStream& operator>>(QDataStream&, SireMaths::Vector&);
 
+uint qHash(const SireMaths::Vector&);
+
 namespace SireMaths
 {
 

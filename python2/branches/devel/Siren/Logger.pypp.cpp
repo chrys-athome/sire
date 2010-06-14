@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "Siren/errors.h"
 
+#include "hanref.h"
+
 #include "logger.h"
 
 #include <QBuffer>

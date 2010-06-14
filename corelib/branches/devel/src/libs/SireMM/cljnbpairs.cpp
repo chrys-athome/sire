@@ -278,6 +278,13 @@ CoulombNBPairs::CoulombNBPairs(const MoleculeInfoData &molinfo,
                     AtomPairs<CoulombScaleFactor> >(molinfo, default_scale)
 {}
 
+/** Construct for the molecule viewed in 'molview' */
+CoulombNBPairs::CoulombNBPairs(const MoleculeView &molview,
+                               const CoulombScaleFactor &default_scale)
+               : ConcreteProperty<CoulombNBPairs,
+                    AtomPairs<CoulombScaleFactor> >(molview, default_scale)
+{}
+
 /** Construct from the coulomb scaling factors in 'cljpairs' */
 CoulombNBPairs::CoulombNBPairs(const CLJNBPairs &cljpairs)
                : ConcreteProperty<CoulombNBPairs,
@@ -361,6 +368,13 @@ LJNBPairs::LJNBPairs(const MoleculeInfoData &molinfo,
                    AtomPairs<LJScaleFactor> >(molinfo, default_scale)
 {}
 
+/** Construct for the molecule viewed in 'molview' */
+LJNBPairs::LJNBPairs(const MoleculeView &molview,
+                     const LJScaleFactor &default_scale)
+          : ConcreteProperty<LJNBPairs,
+                    AtomPairs<LJScaleFactor> >(molview, default_scale)
+{}
+
 /** Construct from the LJ scaling factors in 'cljpairs' */
 LJNBPairs::LJNBPairs(const CLJNBPairs &cljpairs)
           : ConcreteProperty<LJNBPairs,
@@ -441,6 +455,13 @@ CLJNBPairs::CLJNBPairs(const MoleculeInfoData &molinfo,
                        const CLJScaleFactor &default_scale)
            : ConcreteProperty<CLJNBPairs,
                    AtomPairs<CLJScaleFactor> >(molinfo, default_scale)
+{}
+
+/** Construct for the molecule viewed in 'molview' */
+CLJNBPairs::CLJNBPairs(const MoleculeView &molview,
+                       const CLJScaleFactor &default_scale)
+           : ConcreteProperty<CLJNBPairs,
+                    AtomPairs<CLJScaleFactor> >(molview, default_scale)
 {}
 
 /** Copy constructor */

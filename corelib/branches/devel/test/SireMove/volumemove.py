@@ -29,7 +29,7 @@ timer = QTime()
 
 mols = []
 
-ljs = AtomicLJs( [ LJParameter(2.0*angstrom, 2.0*kcal_per_mol) ] )
+ljs = AtomLJs( [ LJParameter(2.0*angstrom, 2.0*kcal_per_mol) ] )
 
 for i in range(0,5):
    for j in range(0,5):

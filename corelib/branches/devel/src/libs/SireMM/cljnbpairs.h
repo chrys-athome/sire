@@ -190,6 +190,9 @@ public:
     CoulombNBPairs(const MoleculeInfoData &molinfo,
                    const CoulombScaleFactor &default_scale = CoulombScaleFactor(1));
 
+    CoulombNBPairs(const MoleculeView &molview,
+                   const CoulombScaleFactor &default_scale = CoulombScaleFactor(1));
+
     CoulombNBPairs(const CLJNBPairs &cljpairs);
 
     CoulombNBPairs(const CoulombNBPairs &other);
@@ -227,6 +230,9 @@ public:
     typedef AtomPairs<LJScaleFactor>::CGPairs CGPairs;
 
     LJNBPairs();
+
+    LJNBPairs(const MoleculeView &molview,
+              const LJScaleFactor &default_scale = LJScaleFactor(1));
 
     LJNBPairs(const MoleculeInfoData &molinfo,
               const LJScaleFactor &default_scale = LJScaleFactor(1));
@@ -268,6 +274,9 @@ public:
     typedef AtomPairs<CLJScaleFactor>::CGPairs CGPairs;
 
     CLJNBPairs();
+
+    CLJNBPairs(const MoleculeView &molview,
+               const CLJScaleFactor &default_scale = CLJScaleFactor(1,1));
 
     CLJNBPairs(const MoleculeInfoData &molinfo,
                const CLJScaleFactor &default_scale = CLJScaleFactor(1,1));

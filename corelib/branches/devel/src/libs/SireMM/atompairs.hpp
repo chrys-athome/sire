@@ -36,6 +36,7 @@
 #include "SireMol/moleculeinfodata.h"
 #include "SireMol/molviewproperty.h"
 #include "SireMol/atommatcher.h"
+#include "SireMol/moleculeview.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -71,6 +72,7 @@ using SireMol::AtomIdx;
 using SireMol::CGIdx;
 using SireMol::CGID;
 using SireMol::CGAtomIdx;
+using SireMol::MoleculeView;
 
 using SireMol::MoleculeInfoData;
 using SireMol::AtomMatcher;
@@ -144,6 +146,8 @@ public:
     AtomPairs(const T &default_value = T());
 
     AtomPairs(const MoleculeInfoData &molinfo, const T &default_value = T());
+
+    AtomPairs(const MoleculeView &molview, const T &default_value = T());
 
     template<class U>
     AtomPairs(const AtomPairs<U> &other);
@@ -366,6 +370,24 @@ SIRE_OUTOFLINE_TEMPLATE
 AtomPairs<T>::AtomPairs(const MoleculeInfoData &info, const T &default_value)
              : molinfo(info), cgpairs( CGAtomPairs<T>(default_value) )
 {}
+
+/** Construct a set of AtomPairs for the passed molecule view, using the 
+    provided default value of 'T' for all within this view. This will set
+    a zero value for pairs that involve atoms that are not part of this
+    group */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomPairs<T>::AtomPairs(const MoleculeView &molview, const T &default_value)
+             : molinfo(molview.data().info()), cgpairs( CGAtomPairs<T>(default_value) )
+{
+    if (default_value != T(0) and not molview.selectedAll())
+    {
+        //set the scale factor for pairs of non-selected atoms to 0
+        throw SireError::incomplete_code( QObject::tr(
+                "The code to deal with partial molecule AtomPairs has yet to "
+                "be written."), CODELOC );
+    }
+}
 
 /** Construct by casting from an AtomPairs<U> */
 template<class T>

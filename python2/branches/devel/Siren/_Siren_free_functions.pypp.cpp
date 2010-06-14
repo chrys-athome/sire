@@ -7,6 +7,78 @@
 
 namespace bp = boost::python;
 
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
 #include "getbacktrace.h"
 
 #include <QDebug>
@@ -25,29 +97,7 @@ namespace bp = boost::python;
 
 #include "class.h"
 
-#include "exception.h"
-
-#include "getbacktrace.h"
-
-#include "logger.h"
-
-#include "stream.h"
-
-#include "streamqt.h"
-
-#include "tester.h"
-
-#include <QTextStream>
-
-#include <QThreadStorage>
-
-#include "exception.h"
-
-#include "Siren/errors.h"
-
-#include "Siren/exception.h"
-
-#include "class.h"
+#include "datastream.h"
 
 #include "exception.h"
 
@@ -73,29 +123,7 @@ namespace bp = boost::python;
 
 #include "class.h"
 
-#include "exception.h"
-
-#include "getbacktrace.h"
-
-#include "logger.h"
-
-#include "stream.h"
-
-#include "streamqt.h"
-
-#include "tester.h"
-
-#include <QTextStream>
-
-#include <QThreadStorage>
-
-#include "exception.h"
-
-#include "Siren/errors.h"
-
-#include "Siren/exception.h"
-
-#include "class.h"
+#include "datastream.h"
 
 #include "exception.h"
 
@@ -121,6 +149,8 @@ namespace bp = boost::python;
 
 #include "class.h"
 
+#include "datastream.h"
+
 #include "exception.h"
 
 #include "getbacktrace.h"
@@ -138,8 +168,213 @@ namespace bp = boost::python;
 #include <QThreadStorage>
 
 #include "exception.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
+
+#include "Siren/errors.h"
+
+#include "Siren/exception.h"
+
+#include "class.h"
+
+#include "datastream.h"
+
+#include "exception.h"
+
+#include "getbacktrace.h"
+
+#include "logger.h"
+
+#include "stream.h"
+
+#include "streamqt.h"
+
+#include "tester.h"
+
+#include <QTextStream>
+
+#include <QThreadStorage>
+
+#include "exception.h"
+
+#include "Siren/errors.h"
+
+#include "Siren/exception.h"
+
+#include "class.h"
+
+#include "datastream.h"
+
+#include "exception.h"
+
+#include "getbacktrace.h"
+
+#include "logger.h"
+
+#include "stream.h"
+
+#include "streamqt.h"
+
+#include "tester.h"
+
+#include <QTextStream>
+
+#include <QThreadStorage>
+
+#include "exception.h"
+
+#include "Siren/errors.h"
+
+#include "forages.h"
+
+#include "mutex.h"
+
+#include "waitcondition.h"
+
+#include <QDebug>
+
+#include <QHash>
+
+#include <QThread>
+
+#include <QThreadStorage>
+
+#include "forages.h"
 
 void register_free_functions(){
+
+    { //::Siren::check_for_ages
+    
+        typedef void ( *check_for_ages_function_type )(  );
+        check_for_ages_function_type check_for_ages_function_value( &::Siren::check_for_ages );
+        
+        bp::def( 
+            "check_for_ages"
+            , check_for_ages_function_value );
+    
+    }
+
+    { //::Siren::end_for_ages
+    
+        typedef void ( *end_for_ages_function_type )( ::QThread const * );
+        end_for_ages_function_type end_for_ages_function_value( &::Siren::end_for_ages );
+        
+        bp::def( 
+            "end_for_ages"
+            , end_for_ages_function_value
+            , ( bp::arg("thread") ) );
+    
+    }
+
+    { //::Siren::end_for_ages
+    
+        typedef void ( *end_for_ages_function_type )(  );
+        end_for_ages_function_type end_for_ages_function_value( &::Siren::end_for_ages );
+        
+        bp::def( 
+            "end_for_ages"
+            , end_for_ages_function_value );
+    
+    }
+
+    { //::Siren::for_ages
+    
+        typedef bool ( *for_ages_function_type )(  );
+        for_ages_function_type for_ages_function_value( &::Siren::for_ages );
+        
+        bp::def( 
+            "for_ages"
+            , for_ages_function_value );
+    
+    }
 
     { //::Siren::getBackTrace
     
@@ -185,6 +420,64 @@ void register_free_functions(){
     
     }
 
+    { //::Siren::msleep
+    
+        typedef void ( *msleep_function_type )( int );
+        msleep_function_type msleep_function_value( &::Siren::msleep );
+        
+        bp::def( 
+            "msleep"
+            , msleep_function_value
+            , ( bp::arg("ms") ) );
+    
+    }
+
+    { //::Siren::pause_for_ages
+    
+        typedef void ( *pause_for_ages_function_type )( ::QThread const * );
+        pause_for_ages_function_type pause_for_ages_function_value( &::Siren::pause_for_ages );
+        
+        bp::def( 
+            "pause_for_ages"
+            , pause_for_ages_function_value
+            , ( bp::arg("thread") ) );
+    
+    }
+
+    { //::Siren::pause_for_ages
+    
+        typedef void ( *pause_for_ages_function_type )(  );
+        pause_for_ages_function_type pause_for_ages_function_value( &::Siren::pause_for_ages );
+        
+        bp::def( 
+            "pause_for_ages"
+            , pause_for_ages_function_value );
+    
+    }
+
+    { //::Siren::play_for_ages
+    
+        typedef void ( *play_for_ages_function_type )( ::QThread const * );
+        play_for_ages_function_type play_for_ages_function_value( &::Siren::play_for_ages );
+        
+        bp::def( 
+            "play_for_ages"
+            , play_for_ages_function_value
+            , ( bp::arg("thread") ) );
+    
+    }
+
+    { //::Siren::play_for_ages
+    
+        typedef void ( *play_for_ages_function_type )(  );
+        play_for_ages_function_type play_for_ages_function_value( &::Siren::play_for_ages );
+        
+        bp::def( 
+            "play_for_ages"
+            , play_for_ages_function_value );
+    
+    }
+
     { //::Siren::printError
     
         typedef void ( *printError_function_type )( ::QString const & );
@@ -206,6 +499,18 @@ void register_free_functions(){
             "printError"
             , printError_function_value
             , ( bp::arg("e") ) );
+    
+    }
+
+    { //::Siren::sleep
+    
+        typedef void ( *sleep_function_type )( int );
+        sleep_function_type sleep_function_value( &::Siren::sleep );
+        
+        bp::def( 
+            "sleep"
+            , sleep_function_value
+            , ( bp::arg("secs") ) );
     
     }
 

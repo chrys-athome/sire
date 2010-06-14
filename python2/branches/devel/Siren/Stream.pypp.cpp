@@ -13,9 +13,13 @@ namespace bp = boost::python;
 
 #include "detail/sharestrings.h"
 
+#include "objptr.hpp"
+
 #include "objref.h"
 
 #include "stream.h"
+
+#include <QDebug>
 
 #include "stream.h"
 

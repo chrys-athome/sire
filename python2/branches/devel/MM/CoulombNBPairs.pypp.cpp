@@ -27,6 +27,7 @@ void register_CoulombNBPairs_class(){
         bp::scope CoulombNBPairs_scope( CoulombNBPairs_exposer );
         CoulombNBPairs_exposer.def( bp::init< >() );
         CoulombNBPairs_exposer.def( bp::init< SireMol::MoleculeInfoData const &, bp::optional< SireMM::CoulombScaleFactor const & > >(( bp::arg("molinfo"), bp::arg("default_scale")=SireMM::CoulombScaleFactor(1.0e+0) )) );
+        CoulombNBPairs_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireMM::CoulombScaleFactor const & > >(( bp::arg("molview"), bp::arg("default_scale")=SireMM::CoulombScaleFactor(1.0e+0) )) );
         CoulombNBPairs_exposer.def( bp::init< SireMM::CLJNBPairs const & >(( bp::arg("cljpairs") )) );
         CoulombNBPairs_exposer.def( bp::init< SireMM::CoulombNBPairs const & >(( bp::arg("other") )) );
         CoulombNBPairs_exposer.def( bp::self != bp::self );

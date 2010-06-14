@@ -18,7 +18,7 @@ timer = QTime()
 
 #read in the solute molecule
 print "Loading the tip4p solute..."
-tip4p = PDB().read("test/io/tip4p.pdb")[0]
+tip4p = PDB().readMolecule("test/io/tip4p.pdb")
 
 #specify the space in which the molecules are placed
 space = PeriodicBox( (-18.3854,-18.66855,-18.4445),

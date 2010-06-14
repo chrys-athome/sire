@@ -7,7 +7,13 @@
 
 namespace bp = boost::python;
 
+#include "SireMaths/quaternion.h"
+
 #include "SireStream/datastream.h"
+
+#include "SireUnits/dimensions.h"
+
+#include "SireUnits/units.h"
 
 #include "dlmrigidbody.h"
 

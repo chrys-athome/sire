@@ -31,7 +31,7 @@ qmff.add(tip4p)
 
 print qmff.energy()
 
-grid = RegularGrid(tip4p.evaluate().center(), 4, 2*angstrom)
+grid = RegularGrid(tip4p.evaluate().center(), 40, 0.5*angstrom)
 
 print grid
 print grid.minCoords(), grid.maxCoords(), grid.gridSpacing()
@@ -40,4 +40,4 @@ table = PotentialTable( qmff[MGIdx(0)], grid )
 
 qmff.potential(table, CLJProbe(1*mod_electron))
 
-Cube( 10*kcal_per_mol ).write(table, qmff, "testqm.cube")
+Cube( 700*kcal_per_mol ).write(table, qmff, "testqm.cube")

@@ -9,17 +9,15 @@ set ( PYPP_SOURCES
        Logger.pypp.cpp
        MD5Sum.pypp.cpp
        Mutable.pypp.cpp
+       Mutex.pypp.cpp
+       MutexLocker.pypp.cpp
        None.pypp.cpp
-       Number.pypp.cpp
-       NumberBase.pypp.cpp
-       NumberObject.pypp.cpp
        Object.pypp.cpp
        ObjRef.pypp.cpp
+       Semaphore.pypp.cpp
        Stream.pypp.cpp
-       String.pypp.cpp
-       StringBase.pypp.cpp
-       StringObject.pypp.cpp
        Tester.pypp.cpp
+       WaitCondition.pypp.cpp
        WeakHandle.pypp.cpp
        XMLStream.pypp.cpp
        Siren_registrars.cpp

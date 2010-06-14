@@ -7,6 +7,7 @@
 #include "datastream.h"
 #include "objptr.hpp"
 #include "xmlstream.h"
+#include <QDebug>
 #include "objptr.hpp"
 void register_Siren_properties()
 {

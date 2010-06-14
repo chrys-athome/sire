@@ -34,6 +34,8 @@ namespace bp = boost::python;
 
 #include "SireMol/connectivity.h"
 
+#include "SireMol/mgname.h"
+
 #include "SireMol/molecule.h"
 
 #include "SireMol/moleculedata.h"

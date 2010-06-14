@@ -43,6 +43,8 @@
 
 #include <cmath>
 
+#include <QDebug>
+
 using namespace SireMaths;
 using namespace SireBase;
 using namespace SireUnits;
@@ -603,6 +605,16 @@ const Vector SIREMATHS_EXPORT SireMaths::operator/(const Vector &p1, double c)
             "Cannot divide a vector by zero! %1 / 0 is a error!").arg(p1.toString()),CODELOC);
 
     return Vector(p1.sc[0]/c, p1.sc[1]/c, p1.sc[2]/c);
+}
+
+uint get_hash(double val)
+{
+    return qHash( (quint64)(val) );
+}
+
+uint SIREMATHS_EXPORT qHash(const SireMaths::Vector &vec)
+{
+    return get_hash(vec.x()) + get_hash(vec.y()) + get_hash(vec.z());
 }
 
 const char* Vector::typeName()

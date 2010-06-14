@@ -77,6 +77,16 @@ void register_ObjRef_class(){
                 , hashCode_function_value );
         
         }
+        { //::Siren::ObjRef::isNone
+        
+            typedef bool ( ::Siren::ObjRef::*isNone_function_type )(  ) const;
+            isNone_function_type isNone_function_value( &::Siren::ObjRef::isNone );
+            
+            ObjRef_exposer.def( 
+                "isNone"
+                , isNone_function_value );
+        
+        }
         { //::Siren::ObjRef::load
         
             typedef void ( ::Siren::ObjRef::*load_function_type )( ::Siren::Stream & ) ;
@@ -177,6 +187,16 @@ void register_ObjRef_class(){
             ObjRef_exposer.def( 
                 "typeName"
                 , typeName_function_value );
+        
+        }
+        { //::Siren::ObjRef::unique
+        
+            typedef bool ( ::Siren::ObjRef::*unique_function_type )(  ) const;
+            unique_function_type unique_function_value( &::Siren::ObjRef::unique );
+            
+            ObjRef_exposer.def( 
+                "unique"
+                , unique_function_value );
         
         }
         { //::Siren::ObjRef::what

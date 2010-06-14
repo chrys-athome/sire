@@ -135,6 +135,17 @@ void register_ChunkedVector_double__class(){
                 , ( bp::arg("vector") ) );
         
         }
+        { //::SireBase::ChunkedVector< double, 100 >::isEmpty
+        
+            typedef SireBase::ChunkedVector< double, 100 > exported_class_t;
+            typedef bool ( ::SireBase::ChunkedVector< double, 100 >::*isEmpty_function_type )(  ) const;
+            isEmpty_function_type isEmpty_function_value( &::SireBase::ChunkedVector< double, 100 >::isEmpty );
+            
+            ChunkedVector_double__exposer.def( 
+                "isEmpty"
+                , isEmpty_function_value );
+        
+        }
         ChunkedVector_double__exposer.def( bp::self != bp::self );
         { //::SireBase::ChunkedVector< double, 100 >::operator=
         

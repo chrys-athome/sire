@@ -29,9 +29,13 @@ namespace bp = boost::python;
 
 #include "product.h"
 
+#include "sum.h"
+
 #include "symbol.h"
 
 #include "symbols.h"
+
+#include <QDebug>
 
 #include <boost/assert.hpp>
 

@@ -26,11 +26,19 @@
   *
 \*********************************************/
 
+#include "SireMaths/vector.h"
+
 #include "molpro.h"
 #include "qmpotential.h"
 #include "latticecharges.h"
 
 #include "SireMol/element.h"
+
+#include "SireMM/cljprobe.h"
+
+#include "SireFF/potentialtable.h"
+
+#include "SireVol/grid.h"
 
 #include "SireBase/tempdir.h"
 #include "SireBase/findexe.h"
@@ -49,6 +57,7 @@
 #include <QDebug>
 
 using namespace Squire;
+using namespace SireMM;
 using namespace SireFF;
 using namespace SireMol;
 using namespace SireVol;
@@ -553,11 +562,61 @@ QString Molpro::potentialCommandFile(const QMPotential::Molecules &molecules,
                                      const PotentialTable &pottable,
                                      const SireFF::Probe &probe) const
 {
-    throw SireError::unsupported( QObject::tr(
-            "Calculating QM potentials using the Molpro() interface is "
-            "currently not supported."), CODELOC );
+    if (pottable.nGrids() == 0)
+        //there are no points at which the potential can be calculated
+        return QString::null;
+
+    //first, create the file needed to calculate the energy
+    QString nrgcmd = this->energyCommandFile(molecules);
+
+    QStringList lines;
+    
+    double charge;
+    
+    if (probe.isA<CLJProbe>())
+        charge = probe.asA<CLJProbe>().charge().to(mod_electron);
+    else
+        charge = probe.asA<CoulombProbe>().charge().to(mod_electron);
+    
+    //now add onto the bottom of this the commands needed to calculate
+    //the potential - a limit in the way molpro works means that points
+    //have to be added in batches of 30
+    for (int igrid=0; igrid<pottable.nGrids(); ++igrid) 
+    {
+        const Grid &grid = pottable.constGridData()[igrid].grid();
+        
+        const Vector *grid_data = grid.constData();
+        
+        int idx = 0;
+        
+        for (int i=0; i<grid.nPoints(); ++i)
+        {
+            if (idx == 0)
+            {
+                lines.append("{property\ndensity");
+            }
             
-    return QString::null;
+            const Vector &point = grid_data[i];
+            
+            lines.append( QString("pot,, %1 %2 %3 %4")
+                            .arg(point.x()).arg(point.y()).arg(point.z())
+                            .arg(charge) );
+                            
+            ++idx;
+            
+            if (idx == 30 or i == grid.nPoints()-1)
+            {
+                if (i == grid.nPoints()-1)
+                    lines.append("}");
+                else
+                    lines.append("}\n\nexpec\nint\n");
+                    
+                idx = 0;
+            }
+        }
+    }
+
+    return nrgcmd + lines.join("\n");
 }
 
 /** Return the command files that will be used to calculate the potentials on the  
@@ -876,6 +935,201 @@ double Molpro::calculateEnergy(const QMPotential::Molecules &molecules,
     return this->calculateEnergy(cmdfile, ntries);
 }
 
+inline QString get_key(const Vector &vector)
+{
+    QString key;
+
+    QTextStream ts(&key, QIODevice::WriteOnly);
+    
+    ts.setRealNumberPrecision(3);
+    
+    ts << vector.x() << " " << vector.y() << " " << vector.z();
+    
+    return key;
+}
+
+/** Internal function used to extract the potentials from the passed
+    molpro output file */
+QHash<QString,double> Molpro::extractPotentials(QFile &molpro_output) const
+{
+    QTextStream ts(&molpro_output);
+
+    QRegExp coords_regexp(
+        "OPERATOR POT(.*)COORDINATES:\\s*([-\\d.]+)\\s+([-\\d.]+)\\s+([-\\d.]+)");
+
+    QRegExp nrg_regexp("TOTAL POT\\s+([-\\d.]+)");
+
+    coords_regexp.setCaseSensitivity( Qt::CaseInsensitive );
+    nrg_regexp.setCaseSensitivity( Qt::CaseInsensitive );
+
+    QStringList lines;
+    
+    Vector point;
+    
+    QHash<QString,double> potentials;
+    
+    while (not ts.atEnd())
+    {
+        QString line = ts.readLine();
+        lines.append(line);
+
+        if (coords_regexp.indexIn(line) != -1)
+        {
+            point = Vector(coords_regexp.cap(2).toDouble(),
+                           coords_regexp.cap(3).toDouble(),
+                           coords_regexp.cap(4).toDouble());
+        }
+        else if (nrg_regexp.indexIn(line) != -1)
+        {
+            double nrg = nrg_regexp.cap(1).toDouble();
+            potentials.insert( ::get_key(point), nrg);
+        }
+    }
+    
+    return potentials;
+}
+
+/** Internal function to calculate the potentials specified in the 
+    passed command file, and to return then together with the points
+    at which they were evaluated */
+QHash<QString,double> Molpro::calculatePotential(const QString &cmdfile,
+                                                int ntries) const
+{
+    //create a temporary directory in which to run Molpro
+    QString tmppath = env_variables.value("TMPDIR");
+    
+    if (tmppath.isEmpty())
+        tmppath = QDir::temp().absolutePath();
+
+    TempDir tmpdir(tmppath);
+    //tmpdir.doNotDelete();
+
+    //write the file processed by the shell used to run the job
+    QString shellfile = this->writeShellFile(tmpdir);
+
+    {
+        QFile f( QString("%1/molpro_input").arg(tmpdir.path()) );
+        
+        if (not f.open( QIODevice::WriteOnly ))
+            throw SireError::file_error(f, CODELOC);
+   
+        //write the command file
+        f.write( cmdfile.toAscii() );
+        f.close();
+    }
+
+    //run the shell file...
+    Process p = Process::run( "sh", shellfile );
+
+    //wait until the job has finished
+    if (not p.wait(max_molpro_runtime))
+    {
+        qDebug() << "Maximum molpro runtime was exceeded - has it hung?";
+        p.kill();
+        
+        if (ntries > 0)
+            return this->calculatePotential(cmdfile, ntries-1);
+    }
+    
+    if (p.wasKilled())
+    {
+        throw SireError::process_error( QObject::tr(
+            "The Molpro job was killed."), CODELOC );
+    }
+    
+    if (p.isError())
+    {
+        QByteArray shellcontents = ::readAll(shellfile);
+        QByteArray cmdcontents = ::readAll(QString("%1/molpro_input").arg(tmpdir.path()));
+        QByteArray outputcontents = ::readAll(QString("%1/molpro_output")
+                                                    .arg(tmpdir.path()));
+
+        throw SireError::process_error( QObject::tr(
+            "There was an error running the Molpro job.\n"
+            "The shell script used to run the job was;\n"
+            "*****************************************\n"
+            "%1\n"
+            "*****************************************\n"
+            "The molpro input used to run the job was;\n"
+            "*****************************************\n"
+            "%2\n"
+            "*****************************************\n"
+            "The molpro output was;\n"
+            "*****************************************\n"
+            "%3\n"
+            "*****************************************\n"
+            )
+                .arg( QLatin1String(shellcontents),
+                      QLatin1String(cmdcontents),
+                      QLatin1String(outputcontents) ), CODELOC );
+    }
+
+    //read all of the output
+    QFile f( QString("%1/molpro_output").arg(tmpdir.path()) );
+    
+    if ( not (f.exists() and f.open(QIODevice::ReadOnly)) )
+    {
+        QByteArray shellcontents = ::readAll(shellfile);
+        QByteArray cmdcontents = ::readAll(QString("%1/molpro_input").arg(tmpdir.path()));
+    
+        throw SireError::process_error( QObject::tr(
+            "There was an error running the Molpro job - no output was created.\n"
+            "The shell script used to run the job was;\n"
+            "*****************************************\n"
+            "%1\n"
+            "*****************************************\n"
+            "The molpro input used to run the job was;\n"
+            "*****************************************\n"
+            "%2\n"
+            "*****************************************\n")
+                .arg( QLatin1String(shellcontents),
+                      QLatin1String(cmdcontents) ), CODELOC );
+    }
+
+    try
+    {
+        //parse the output to get the energy
+        return this->extractPotentials(f);
+    }
+    catch(...)
+    {
+        qDebug() << "Molpro process error. Number of remaining attempts = " << ntries;
+
+        //print out the last twenty lines of output
+        const int nlines_to_print = 20;
+
+        qDebug() << "Printing out the last" << nlines_to_print << "lines of output...";
+
+        QFile f( QString("%1/molpro_output").arg(tmpdir.path()) );
+
+        if ( not (f.exists() and f.open(QIODevice::ReadOnly)) )    
+            qDebug() << "Could not read the file" << tmpdir.path() << "/molpro_output";
+        else
+        {
+            QStringList lines;
+ 
+            QTextStream ts(&f);
+
+            while (not ts.atEnd())
+            {
+                lines.append( ts.readLine() );
+
+                if (lines.count() > nlines_to_print)
+                    lines.removeFirst();
+            }
+
+            foreach (QString line, lines){ qDebug() << qPrintable(line); }
+        }
+
+        if (ntries <= 0)
+            //don't bother trying again - it's not going to work!
+            throw;
+            
+        //give it one more go - you never know, it may work
+        return this->calculatePotential(cmdfile, ntries-1);
+    }
+}
+
 /** Calculate the potential around the passed molecules, and place them into the passed
     potential table, optionally scaled by 'scale_potential' */
 void Molpro::calculatePotential(const QMPotential::Molecules &molecules,
@@ -886,9 +1140,37 @@ void Molpro::calculatePotential(const QMPotential::Molecules &molecules,
     if (molecules.count() == 0)
         return;
         
+    //create a command file to calculate the potential at all grid points
     QString cmdfile = this->potentialCommandFile(molecules, pottable, probe);
     
-    //this->calculatePotential(cmdfile, pottable, scale_potential, ntries);
+    if (cmdfile.isEmpty())
+        //there were no grid points at which to calculate the potential
+        return;
+    
+    //call molpro to calculate the potential using the command file
+    // - this returns the points with associated potentials
+    QHash<QString,double> pots = this->calculatePotential(cmdfile, ntries);
+    
+    //now loop through the grid(s) and assign potentials to points
+    GridPotentialTable *grids = pottable.gridData();
+    
+    for (int i=0; i<pottable.nGrids(); ++i)
+    {
+        GridPotentialTable &grid = grids[i];
+        
+        const Vector *points = grid.grid().constData();
+        
+        for (int j=0; j<grid.nPoints(); ++j)
+        {
+            const QString key = ::get_key(points[j]);
+            qDebug() << j << points[j].toString() << pots.value(key);
+            qDebug() << scale_potential
+                     << scale_potential * pots.value(key) * hartree;
+            
+            grid.add( j, MolarEnergy(scale_potential * pots.value(key) 
+                                            * hartree.value()) );
+        }
+    }
 } 
 
 /** Calculate the potentials around the passed molecules, and place them into the passed

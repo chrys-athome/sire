@@ -40,18 +40,18 @@ print bonds.potentials()
 print angles.potentials()
 print dihedrals.potentials()
 
-intraff = InternalFF("intraff")
-#intraclj = IntraCLJFF("intraclj")
+#intraff = InternalFF("intraff")
+intraclj = IntraCLJFF("intraclj")
 
-intraff.add(ethane)
-#intraclj.add(ethane)
+#intraff.add(ethane)
+intraclj.add(ethane)
 
 solute = MoleculeGroup("solute", ethane)
 solute.add(ethane)
 
 system = System()
-system.add(intraff)
-#system.add(intraclj)
+#system.add(intraff)
+system.add(intraclj)
 system.add(solute)
 
 md = MolecularDynamics(solute, VelocityVerlet()) 

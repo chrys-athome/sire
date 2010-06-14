@@ -7,7 +7,11 @@
 
 namespace bp = boost::python;
 
+#include "Siren/errors.h"
+
 #include "mutable.h"
+
+#include "objref.h"
 
 #include "mutable.h"
 
@@ -19,14 +23,17 @@ namespace bp = boost::python;
 
 #include "logger.h"
 
+Siren::Mutable __copy__(const Siren::Mutable &other){ return Siren::Mutable(other); }
+
 const char* pvt_get_name(const Siren::Mutable&){ return "Siren::Mutable";}
 
 void register_Mutable_class(){
 
     { //::Siren::Mutable
-        typedef bp::class_< Siren::Mutable, boost::noncopyable > Mutable_exposer_t;
-        Mutable_exposer_t Mutable_exposer = Mutable_exposer_t( "Mutable", bp::no_init );
+        typedef bp::class_< Siren::Mutable > Mutable_exposer_t;
+        Mutable_exposer_t Mutable_exposer = Mutable_exposer_t( "Mutable" );
         bp::scope Mutable_scope( Mutable_exposer );
+        Mutable_exposer.def( bp::init< >() );
         { //::Siren::Mutable::restoreState
         
             typedef void ( ::Siren::Mutable::*restoreState_function_type )( ::Siren::Object const & ) ;
@@ -59,6 +66,9 @@ void register_Mutable_class(){
         
         }
         Mutable_exposer.staticmethod( "typeName" );
+        Mutable_exposer.def( "__copy__", &__copy__);
+        Mutable_exposer.def( "__deepcopy__", &__copy__);
+        Mutable_exposer.def( "clone", &__copy__);
         Mutable_exposer.def( "__str__", &pvt_get_name);
         Mutable_exposer.def( "__repr__", &pvt_get_name);
     }

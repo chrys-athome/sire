@@ -21,27 +21,23 @@
 
 #include "Mutable.pypp.hpp"
 
+#include "Mutex.pypp.hpp"
+
+#include "MutexLocker.pypp.hpp"
+
 #include "None.pypp.hpp"
-
-#include "Number.pypp.hpp"
-
-#include "NumberBase.pypp.hpp"
-
-#include "NumberObject.pypp.hpp"
 
 #include "ObjRef.pypp.hpp"
 
 #include "Object.pypp.hpp"
 
+#include "Semaphore.pypp.hpp"
+
 #include "Stream.pypp.hpp"
 
-#include "String.pypp.hpp"
-
-#include "StringBase.pypp.hpp"
-
-#include "StringObject.pypp.hpp"
-
 #include "Tester.pypp.hpp"
+
+#include "WaitCondition.pypp.hpp"
 
 #include "WeakHandle.pypp.hpp"
 
@@ -88,23 +84,19 @@ BOOST_PYTHON_MODULE(_Siren){
 
     register_Mutable_class();
 
+    register_Mutex_class();
+
+    register_MutexLocker_class();
+
     register_None_class();
-
-    register_NumberBase_class();
-
-    register_Number_class();
 
     register_ObjRef_class();
 
-    register_StringBase_class();
-
-    register_NumberObject_class();
-
-    register_StringObject_class();
-
-    register_String_class();
+    register_Semaphore_class();
 
     register_Tester_class();
+
+    register_WaitCondition_class();
 
     register_WeakHandle_class();
 
@@ -114,13 +106,13 @@ BOOST_PYTHON_MODULE(_Siren){
 
     bp::implicitly_convertible< Siren::Handle, Siren::HanRef >();
 
-    bp::implicitly_convertible< Siren::Number, Siren::NumberObject >();
+    bp::implicitly_convertible< Siren::Number, Siren::PrimitiveObject<Siren::Number> >();
 
-    bp::implicitly_convertible< Siren::String, Siren::StringObject >();
+    bp::implicitly_convertible< Siren::String, Siren::PrimitiveObject<Siren::String> >();
 
-    bp::implicitly_convertible< Siren::NumberObject, Siren::Number >();
+    bp::implicitly_convertible< Siren::PrimitiveObject<Siren::Number>, Siren::Number >();
 
-    bp::implicitly_convertible< Siren::StringObject, Siren::String >();
+    bp::implicitly_convertible< Siren::PrimitiveObject<Siren::String>, Siren::String >();
 
     Siren::export_exceptions();
 
