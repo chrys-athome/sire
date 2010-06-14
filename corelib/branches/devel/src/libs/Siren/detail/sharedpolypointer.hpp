@@ -163,30 +163,11 @@ public:
 
     SharedPolyPointer(const SharedPolyPointer<T> &o);
 
-    template<class S>
-    SharedPolyPointer(const SharedPolyPointer<S> &o);
-
-    template<class S>
-    explicit SharedPolyPointer(S *data);
-
-    template<class S>
-    SharedPolyPointer(const S &obj);
-
-    SharedPolyPointer<T>& operator=(T *o);
     SharedPolyPointer<T>& operator=(const T &obj);
 
     SharedPolyPointer<T>& operator=(const SharedPolyPointer<T> &o);
 
-    template<class S>
-    SharedPolyPointer<T>& operator=(const SharedPolyPointer<S> &o);
-
     SharedPolyPointer<T>& operator=(int);
-
-    template<class S>
-    SharedPolyPointer<T>& operator=(const S &obj);
-
-    template<class S>
-    SharedPolyPointer<T>& operator=(S *obj);
     
     void detach();
     
@@ -323,97 +304,6 @@ SharedPolyPointer<T>::SharedPolyPointer(const SharedPolyPointer<T> &other)
         d->ref.ref();
 }
 
-/** Copy constructor from a pointer to type 'S'
-
-    \throw SireError::invalid_cast
-*/
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-SharedPolyPointer<T>::SharedPolyPointer(const SharedPolyPointer<S> &other)
-                     : d(0)
-{
-    S *other_ptr = const_cast<S*>(other.constData());
-
-    if (other_ptr)
-    {
-        d = dynamic_cast<T*>(other_ptr);
-    
-        if (d)
-            d->ref.ref();
-        else
-            throwInvalidCast( SharedPolyPointerHelper<S>::what(*other),
-                              SharedPolyPointerHelper<T>::typeName() );
-    }
-}
-
-/** Construct from a raw pointer to an object of type 'S'
-
-    This will take over ownership of the object, and may
-    delete it at any time
-
-    \throw SireError::invalid_cast
-*/
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-SharedPolyPointer<T>::SharedPolyPointer(S *data)
-                     : d( dynamic_cast<T*>(data) )
-{
-    if (data)
-    {
-        if (d)
-            d->ref.ref();
-        else
-            throwInvalidCast( SharedPolyPointerHelper<S>::what(*data),
-                              SharedPolyPointerHelper<T>::typeName() );
-    }
-}
-
-/** Construct from a reference to the object 'obj' - if this 
-    object is already pointed to by a SharedPolyPointer then 
-    this will take another reference to it, otherwise this will
-    clone the object (as we will assume that it is not safe
-    to delete this object!) 
-    
-    \throw SireError::invalid_cast
-*/
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-SharedPolyPointer<T>::SharedPolyPointer(const S &obj)
-{
-    T *obj_ptr = dynamic_cast<T*>( const_cast<S*>(&obj) );
-    
-    if (!obj_ptr)
-        throwInvalidCast( SharedPolyPointerHelper<S>::what(obj),
-                          SharedPolyPointerHelper<T>::typeName() );
-    
-    obj_ptr->ref.ref();
-    
-    //if this object is already pointed to by a SharedPolyPointer
-    //then the reference count of the QSharedData part will now be
-    //greater than one
-    if ( int(obj_ptr->ref) > 1 )
-    {
-        //this is held by another SharedPolyPointer
-        d = obj_ptr;
-    }
-    else
-    {
-        //the reference count was zero - this implies that
-        //this object is not held by another SharedPolyPointer,
-        //(it is probably on the stack) so it is not
-        //safe to use this object directly - point to a clone
-        //of this object.
-        d = SharedPolyPointerHelper<T>::clone(*obj_ptr);
-        d->ref.ref();
-    
-        //reduce the reference count of the original object
-        obj_ptr->ref.deref();
-    }
-}
-
 /** Destructor */
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
@@ -433,26 +323,6 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(int)
         delete d;
         
     d = 0;
-    
-    return *this;
-}
-
-/** Copy assigment operator - this takes over the ownership
-    of 'ptr' and can delete the object at any time. */
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(T *ptr)
-{
-    if (d != ptr)
-    {
-        if (d)
-            qAtomicAssign(d, ptr);
-        else
-        {
-            d = ptr;
-            d->ref.ref();
-        }
-    }
     
     return *this;
 }
@@ -518,146 +388,25 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const SharedPolyPointer<T>
 {
     if (other.d != d)
     {
-        if (d)
-            qAtomicAssign(d, other.d);
-        else
-        {
-            d = other.d;
-            d->ref.ref();
-        }
-    }
-
-    return *this;
-}
-
-/** Copy assignment from a SharedPolyPointer<S> 
-
-    \throw Siren::invalid_cast
-*/
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const SharedPolyPointer<S> &other)
-{
-    S *other_ptr = const_cast<S*>(other.constData());
-
-    if (other_ptr and (void*)d != (void*)other_ptr)
-    {
-        T *obj_ptr = dynamic_cast<T*>(other_ptr);
-    
-        if (obj_ptr)
+        if (other.d)
         {
             if (d)
-                qAtomicAssign(d, obj_ptr);
+                qAtomicAssign(d, other.d);
             else
             {
-                d = obj_ptr;
+                d = other.d;
                 d->ref.ref();
             }
         }
-        else
-            throwInvalidCast( SharedPolyPointerHelper<S>::what(*other),
-                              SharedPolyPointerHelper<T>::typeName() );
-        
-    }
-        
-    return *this;
-}
+        else if (d)
+        {
+            if (!d->ref.deref())
+                delete d;
 
-/** Assign from a pointer to an object of type 'S' - this will take
-    over ownership of this object and may delete it at any time.
-    
-    \throw Siren::invalid_cast
-*/
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(S *ptr)
-{
-    if (ptr and ptr != d)
-    {
-        T *obj_ptr = dynamic_cast<T*>(ptr);
-        
-        if (!obj_ptr)
-            throwInvalidCast( SharedPolyPointerHelper<S>::what(*ptr),
-                              SharedPolyPointerHelper<T>::typeName() );
-        
-        if (d)
-            qAtomicAssign(d, obj_ptr);
-        else
-        {
-            d = obj_ptr;
-            d->ref.ref();
+            d = 0;
         }
     }
-    
-    return *this;
-}
 
-/** Assign from a reference of type 'S' - this will take a new
-    reference to this object if it is already pointed to by
-    another SharedPolyPointer, or will clone it.
-    
-    \throw Siren::invalid_cast
-*/
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
-{
-    if (d != &obj)
-    {
-        //increment the reference count of this object - this 
-        //stops if from being deleted
-        T *obj_ptr = dynamic_cast<T*>( const_cast<S*>(&obj) );
-        
-        if (!obj_ptr)
-            throwInvalidCast( SharedPolyPointerHelper<S>::what(obj),
-                              SharedPolyPointerHelper<T>::typeName() );
-        
-        obj_ptr->ref.ref();
-    
-        //if this object is already pointed to by a SharedPolyPointer
-        //then the reference count of the QSharedData part will now be
-        //greater than one
-        if ( int(obj_ptr->ref) > 1 )
-        {
-            //this is held by another SharedPolyPointer
-            if (d)
-            {
-                qAtomicAssign(d, obj_ptr);
-            
-                //remove the extra reference count
-                d->ref.deref();
-            }
-            else
-            {
-                d = obj_ptr;
-                d->ref.ref();
-            }
-        }
-        else
-        {
-            //the reference count was zero - this implies that
-            //this object is not held by another SharedPolyPointer,
-            //(it is probably on the stack) so it is not
-            //safe to use this object directly - point to a clone
-            //of this object.
-            obj_ptr->ref.deref();
-            obj_ptr = SharedPolyPointerHelper<T>::clone(*obj_ptr);
-            
-            if (d)
-            {
-                qAtomicAssign(d, obj_ptr);
-            }
-            else
-            {
-                d = obj_ptr;
-                d->ref.ref();
-            }
-        }
-    }
-    
     return *this;
 }
 

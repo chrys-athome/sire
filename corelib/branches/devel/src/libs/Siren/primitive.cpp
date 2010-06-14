@@ -37,6 +37,24 @@
 
 using namespace Siren;
 
+namespace Siren { namespace detail {
+
+    void SIREN_EXPORT testNotImplemented(Logger &logger, QString type_name)
+    {
+        logger.write( QObject::tr(
+                "Testing of %1 failed as no unit tests have been written "
+                "for this class. Please ask the author to provide some tests.")
+                    .arg(type_name) );
+    }
+
+    void SIREN_EXPORT testNotImplemented(QString type_name)
+    {
+        Logger logger;
+        testNotImplemented(logger, type_name);
+    }
+
+}}
+
 //////////
 ////////// Implementation of String
 //////////
@@ -227,6 +245,8 @@ bool Number::test(Logger &logger) const
 {
     Tester tester(*this, logger);
     
+    #ifndef SIREN_DISABLE_TESTS
+    
     try
     {
         tester.nextTest();
@@ -239,6 +259,8 @@ bool Number::test(Logger &logger) const
     {
         tester.unexpected_error(e);
     }
+
+    #endif // SIREN_DISABLE_TESTS
 
     return tester.allPassed();;
 }

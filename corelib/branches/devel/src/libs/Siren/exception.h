@@ -43,6 +43,8 @@
 #endif
 
 #include "object.h"
+#include "mutex.h"
+#include "stream.h"
 
 SIREN_BEGIN_HEADER
 
@@ -62,6 +64,8 @@ public:
     exception(const exception &other);
 
     virtual ~exception() throw();
+
+    static QString typeName();
 
     QString error() const throw();
     QString from() const throw();
@@ -150,6 +154,8 @@ public:
 
     const Class& getClass() const;
 
+    void stream(Siren::Stream &s);
+
     void copy(const Object &other);
     bool equals(const Object &other) const;
 
@@ -162,8 +168,7 @@ protected:
     
     bool testException() const;
 
-    Base& super();
-    const Base& super() const;
+    typedef Base super;
 
 private:
     static const Class* class_typeinfo;
@@ -316,7 +321,7 @@ const Class& ImplementsException<Derived,Base>::createTypeInfo()
 {
     if ( ImplementsException<Derived,Base>::class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(Object::globalLock()) );
+        MutexLocker lkr( &(Object::globalLock()) );
         
         if ( ImplementsException<Derived,Base>::class_typeinfo == 0 )
         {
@@ -395,20 +400,14 @@ bool ImplementsException<Derived,Base>::operator!=(const Object &other) const
     return Base::operator!=(other.asA<Derived>());
 }
 
-/** Return the superclass of this type */
+/** Stream this exception */
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-Base& ImplementsException<Derived,Base>::super()
+void ImplementsException<Derived,Base>::stream(Siren::Stream &s)
 {
-    return *this;
-}
-
-/** Return the superclass of this type */
-template<class Derived, class Base>
-SIREN_OUTOFLINE_TEMPLATE
-const Base& ImplementsException<Derived,Base>::super() const
-{
-    return *this;
+    s.assertVersion<Derived>(1);
+    Siren::Schema schema = s.item<Derived>();
+    super::stream( schema.base() );
 }
 
 /** Throw this exception */

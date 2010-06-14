@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include <QMutex>
-
 #include "object.h"
 #include "class.h"
 #include "objref.h"
@@ -72,15 +70,13 @@ Object& Object::operator=(const Object&)
     return *this;
 }
 
-/** Comparison operator - this is blocked by default - use .equals()
-    to do a value comparison of two different objects of unknown type */
+/** Comparison operator */
 bool Object::operator==(const Object&) const
 {
     return true;
 }
 
-/** Comparison operator - this is blocked by default - use .equals()
-    to do a value comparison of two different objects of unknown type */
+/** Comparison operator */
 bool Object::operator!=(const Object&) const
 {
     return false;
@@ -116,18 +112,18 @@ void Object::stream(Stream &s)
     s.item<Object>();
 }
 
-Q_GLOBAL_STATIC_WITH_ARGS( QMutex, objectGlobalMutex, (QMutex::Recursive) );
+Q_GLOBAL_STATIC_WITH_ARGS( Mutex, objectGlobalMutex, (QMutex::Recursive) );
 
-QMutex SIREN_EXPORT &Siren::globalRegistrationLock()
+Mutex SIREN_EXPORT &Siren::globalRegistrationLock()
 {
-    QMutex *m = objectGlobalMutex();
+    Mutex *m = objectGlobalMutex();
     BOOST_ASSERT( m );
     return *m;
 }
 
 /** Return the mutex that can be used as a lock
     on all object registration */
-QMutex& Object::globalLock()
+Mutex& Object::globalLock()
 {
     return globalRegistrationLock();
 }
@@ -145,7 +141,7 @@ void Object::throwUnregisteredMetaTypeError(const QString &type_name)
 {
     throw Siren::program_bug( QObject::tr(
             "Cannot create the Class object for %1 as the programmer does "
-            "not appear to have created a RegisterMetaType<%1> object for "
+            "not appear to have created a RegisterObject<%1> object for "
             "this type.").arg(type_name), CODELOC );
 }
 
@@ -170,7 +166,7 @@ const Class& Object::createTypeInfo()
 {
     if ( class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(globalLock()) );
+        MutexLocker lkr( &(globalLock()) );
         
         if ( class_typeinfo == 0 )
         {
@@ -197,12 +193,20 @@ QString Object::toString() const
     of the tests passed */
 bool Object::test(Logger &logger) const
 {
+    #ifndef SIREN_DISABLE_TESTS
+
     logger.write( QObject::tr(
             "Testing of %1 failed as no unit tests have been written "
             "for this class. Please ask the author to provide some tests.")
                 .arg(this->what()) );
                 
     return false;
+    
+    #else
+    
+    return true;
+    
+    #endif
 }
 
 /** This is an overloaded class provided to run the unit tests
@@ -251,13 +255,13 @@ None& None::operator=(const None &other)
 /** Comparison operator */
 bool None::operator==(const None &other) const
 {
-    return Object::operator==(other);
+    return true;
 }
 
 /** Comparison operator */
 bool None::operator!=(const None &other) const
 {
-    return Object::operator!=(other);
+    return false;
 }
 
 uint None::hashCode() const
@@ -282,6 +286,8 @@ bool None::test(Logger &logger) const
 {
     Tester tester(*this, logger);
 
+    #ifndef SIREN_DISABLE_TESTS
+    
     try
     {
         // Test 1
@@ -332,6 +338,8 @@ bool None::test(Logger &logger) const
     {
         tester.unexpected_error( unknown_error(CODELOC) );
     }
+    
+    #endif // SIREN_DISABLE_TESTS
     
     return tester.allPassed();
 }

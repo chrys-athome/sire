@@ -33,6 +33,8 @@
 #include "SireCAS/symbol.h"
 #include "SireUnits/dimensions.h"
 
+#include <QPair>
+
 SIRE_BEGIN_HEADER
 
 namespace Soiree

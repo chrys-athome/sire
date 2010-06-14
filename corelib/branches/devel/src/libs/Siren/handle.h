@@ -29,19 +29,20 @@
 #ifndef SIREN_HANDLE_H
 #define SIREN_HANDLE_H
 
-#include <QMutex>
 #include <QStringList>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
-#include "sirenglobal.h"
+#include "mutex.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+
+class WaitCondition;
 
 namespace detail{ class HanPtrBase; }
 
@@ -157,11 +158,14 @@ public:
     */
     virtual uint hashCode() const=0;
 
-    void lock();
-    void unlock();
+    void lock() const;
+    void unlock() const;
     
-    bool tryLock();
-    bool tryLock(int ms);
+    void sleep(WaitCondition &waiter) const;
+    bool sleep(WaitCondition &waiter, int ms) const;
+    
+    bool tryLock() const;
+    bool tryLock(int ms) const;
 
     template<class T>
     bool isA() const;
@@ -177,7 +181,7 @@ public:
 protected:
     static const Class& createTypeInfo();
 
-    static QMutex& globalLock();
+    static Mutex& globalLock();
 
     static void throwUnregisteredMetaTypeError(const QString &type_name);
     
@@ -197,7 +201,11 @@ protected:
         not the object being Handled. */
     virtual Handle* ptr_clone() const=0;
 
+    Mutex* resourceLock();
+    Mutex* resourceLock() const;
+
     void setValidResource();
+    void dropResource();
 
     friend class HandleLocker;
     friend class WeakHandle;
@@ -218,7 +226,7 @@ private:
 
     /** Shared pointer to the mutex used to 
         lock access to this resource */
-    boost::shared_ptr<QMutex> resource_lock;
+    boost::shared_ptr<Mutex> resource_lock;
 };
 
 /** Inherit from this class to provide your handle. */
@@ -234,6 +242,8 @@ public:
     
     ~Handles();
     
+    bool unique() const;
+    
 protected:
     Handles<T>& operator=(const Handles<T> &other);
     
@@ -242,6 +252,9 @@ protected:
 
     T& resource();
     const T& resource() const;
+
+    void setResource( T *resource );
+    void dropResource();
 
     const T& constResource() const;
     
@@ -265,7 +278,7 @@ class SIREN_EXPORT HandleLocker : public boost::noncopyable
 {
 public:
     HandleLocker();
-    HandleLocker(Handle &handle);
+    HandleLocker(const Handle &handle);
     
     ~HandleLocker();
     
@@ -274,7 +287,7 @@ public:
 
 private:
     /** Pointer to the mutex being locked */
-    QMutex *resource_mutex;
+    Mutex *resource_mutex;
     
     /** Whether or not the mutex is locked */
     bool is_locked;
@@ -315,7 +328,7 @@ private:
     void *weak_handle;
     
     /** Weak handle to the mutex used to lock this object */
-    boost::weak_ptr<QMutex> weak_lock;
+    boost::weak_ptr<Mutex> weak_lock;
 };
 
 
@@ -573,6 +586,15 @@ T& Handles<T>::resource()
     return *(resource_ptr.get());
 }
 
+/** Drop the resource */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+void Handles<T>::dropResource()
+{
+    resource_ptr.reset();
+    Handle::dropResource();
+}
+
 /** Return a reference to the shared resource - you should
     only access this if you hold this Handle's lock
     
@@ -597,6 +619,22 @@ const T& Handles<T>::constResource() const
 {
     Handle::assertNotNull();
     return *(resource_ptr.get());
+}
+
+/** Internal function used to set the resource of a handle */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+void Handles<T>::setResource( T *resource )
+{
+    resource_ptr.reset(resource);
+}
+
+/** Return whether or not this is the only handle holding the resource */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool Handles<T>::unique() const
+{
+    return resource_ptr.unique();
 }
 
 //////
@@ -700,7 +738,7 @@ const Class& ExtendsHandle<Derived,Base>::createTypeInfo()
 {
     if ( ExtendsHandle<Derived,Base>::class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(Handle::globalLock()) );
+        MutexLocker lkr( &(Handle::globalLock()) );
      
         if ( ExtendsHandle<Derived,Base>::class_typeinfo == 0 )
         {
@@ -850,7 +888,7 @@ const Class& ImplementsHandle<Derived,Base>::createTypeInfo()
 {
     if ( ImplementsHandle<Derived,Base>::class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(Handle::globalLock()) );
+        MutexLocker lkr( &(Handle::globalLock()) );
         
         if ( ImplementsHandle<Derived,Base>::class_typeinfo == 0 )
         {

@@ -38,9 +38,9 @@ namespace Siren
 {
 class ObjRef;
 class Stream;
-}
 
-Siren::Stream& operator&(Siren::Stream &s, Siren::ObjRef &object);
+template<class T> class ObjPtr;
+}
 
 namespace Siren
 {
@@ -49,6 +49,8 @@ namespace detail
 {
 template<class T> struct StreamHelper;
 }
+
+Object* extractPointer(ObjRef &objref);
 
 /** This is a light-weight reference to an object. This class is 
     used when a new object is returned from a function. This class
@@ -61,6 +63,9 @@ public:
     ObjRef();
     ObjRef(const Object &obj);
     ObjRef(Object *obj);
+    
+    template<class T>
+    ObjRef(const ObjPtr<T> &ptr);
     
     ObjRef(const ObjRef &other);
     
@@ -82,6 +87,9 @@ public:
     QString what() const;
 
     ObjRef clone() const;
+    
+    bool unique() const;
+    bool isNone() const;
     
     QString toString() const;
 
@@ -112,11 +120,21 @@ public:
 private:
     friend class detail::StreamHelper<ObjRef>;
 
+    friend Object* extractPointer(ObjRef &objref);
+
     /** The shared pointer to the actual object */
     detail::SharedPolyPointer<Object> d;
 };
 
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+ObjRef::ObjRef( const ObjPtr<T> &ptr )
+{
+    if (not ptr.isNull())
+        this->operator=( *ptr );
+}
 
 /** Return whether or not this object is an object of type 'T' */
 template<class T>

@@ -32,6 +32,7 @@
 #include "logger.h"
 #include "getbacktrace.h"
 #include "streamqt.h"
+#include "datastream.h"
 
 #include "Siren/exception.h"
 #include "Siren/errors.h"
@@ -156,8 +157,7 @@ exception& exception::operator=(const exception &other)
 bool exception::operator==(const exception &other) const
 {
     return err == other.err and plce == other.plce and
-           bt == other.bt and pidstr == other.pidstr and
-           Object::operator==(other);
+           bt == other.bt and pidstr == other.pidstr;
 }
 
 bool exception::operator!=(const exception &other) const
@@ -165,18 +165,23 @@ bool exception::operator!=(const exception &other) const
     return not exception::operator==(other);
 }
 
+QString exception::typeName()
+{
+    return "Siren::exception";
+}
+
 void exception::stream(Stream &s)
 {
     s.assertVersion<exception>(1);
 
-    Schema schema = s.item(this->getClass());
+    Schema schema = s.item<exception>();
     
     schema.data("error") & err;
     schema.data("where") & plce;
     schema.data("backtrace") & bt;
     schema.data("pid") & pidstr;
     
-    Object::stream( schema.base() );
+    super::stream( schema.base() );
 }
 
 /** Return the error message associated with this exception.
@@ -228,11 +233,30 @@ bool exception::test(Logger &logger) const
 {
     Tester tester(*this, logger);
 
+    #ifndef SIREN_DISABLE_TESTS
+
     try
     {
         tester.nextTest( QObject::tr("Test throwing the exception \"%1\".")
                                 .arg(this->what()) );
         this->testException();
+        
+        tester.nextTest( QObject::tr("Test saving and reloading the exception") );
+        
+        QByteArray data;
+        DataStream ds( &data, QIODevice::WriteOnly );
+        
+        this->save(ds);
+        
+        DataStream ds2(data);
+        
+        ObjRef obj = ds2.loadNextObject();
+        
+        tester.expect_true( QObject::tr("Loaded exception is identical"),
+                            CODELOC,
+                            obj.equals(*this) );
+                            
+        obj.asA<exception>().testException();
     }
     catch(const Siren::exception &e)
     {
@@ -246,6 +270,8 @@ bool exception::test(Logger &logger) const
     {
         tester.unexpected_error( unknown_error(CODELOC) );
     }
+    
+    #endif // SIREN_DISABLE_TESTS
     
     return tester.allPassed();
 }

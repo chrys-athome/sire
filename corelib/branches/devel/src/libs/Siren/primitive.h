@@ -45,18 +45,16 @@ template<class T>
 class Primitive;
 }
 
-template<class T>
-Siren::Stream& operator&(Siren::Stream&, Siren::Primitive<T>&);
-
-template<class T>
-QDataStream& operator<<(QDataStream&, const Siren::Primitive<T>&);
-template<class T>
-QDataStream& operator>>(QDataStream&, Siren::Primitive<T>&);
-
 namespace Siren
 {
 
 class Logger;
+
+namespace detail
+{ 
+    void testNotImplemented(QString type_name); 
+    void testNotImplemented(Logger &logger, QString type_name);
+}
 
 /** This is the base class of Primitive types. This just
     provides the functionality to allow automatic
@@ -83,10 +81,19 @@ public:
     
     static QString typeName();
 
+    bool operator!=(const Derived &other) const;
+
+    QString what() const;
+
     Class getClass() const;
+
+    uint hashCode() const;
 
     void load(Stream &s);
     void save(Stream &s) const;
+    
+    bool test() const;
+    bool test(Logger &logger) const;
     
     void stream(Stream &s);
 };
@@ -249,12 +256,29 @@ SIREN_OUTOFLINE_TEMPLATE
 Primitive<T>::~Primitive()
 {}
   
+/** Automatically provide that obvious overload that
+    T != T is not (T == T) */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool Primitive<T>::operator!=(const T &other) const
+{
+    return not static_cast<const T*>(this)->operator==(other);
+}
+  
 /** Return the type name of the primitive type */
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 QString Primitive<T>::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<T>() );
+}
+  
+/** Return the type name of the primitive type */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+QString Primitive<T>::what() const
+{
+    return Primitive<T>::typeName();
 }
   
 /** Allow automatic casting to an Object reference */
@@ -298,6 +322,37 @@ SIREN_OUTOFLINE_TEMPLATE
 void Primitive<T>::stream(Stream &s)
 {
     static_cast<T*>(this)->stream(s);
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+uint Primitive<T>::hashCode() const
+{
+    return static_cast<const T*>(this)->hashCode();
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool Primitive<T>::test(Logger &logger) const
+{
+    #ifndef SIREN_DISABLE_TESTS
+    detail::testNotImplemented(logger, T::typeName());
+    return false;
+    #else
+    return true;
+    #endif
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool Primitive<T>::test() const
+{
+    #ifndef SIREN_DISABLE_TESTS
+    detail::testNotImplemented( T::typeName() );
+    return false;
+    #else
+    return true;
+    #endif
 }
 
 /////////
@@ -445,21 +500,27 @@ const T& primitive_cast( const Object &object )
 
 #endif // SIREN_SKIP_INLINE_FUNCTIONS
 
-typedef PrimitiveObject<String> StringObject;
-typedef PrimitiveObject<Number> NumberObject;
-
 }
 
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS
 
 template<class T>
-Siren::Stream& operator&(Siren::Stream &s, Siren::Primitive<T> &object)
+SIREN_OUTOFLINE_TEMPLATE
+uint qHash(const Siren::Primitive<T> &object)
 {
-    object.stream(s);
-    return s;
+    return object.hashCode();
 }
 
 template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+Siren::Stream& Siren::Stream::operator&(Siren::Primitive<T> &object)
+{
+    object.stream(*this);
+    return *this;
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
 QDataStream& operator<<(QDataStream &ds, const Siren::Primitive<T> &object)
 {
     Siren::DataStream sds(ds);
@@ -468,6 +529,7 @@ QDataStream& operator<<(QDataStream &ds, const Siren::Primitive<T> &object)
 }
 
 template<class T>
+SIREN_OUTOFLINE_TEMPLATE
 QDataStream& operator>>(QDataStream &ds, Siren::Primitive<T> &object)
 {
     Siren::DataStream sds(ds);
@@ -480,22 +542,8 @@ QDataStream& operator>>(QDataStream &ds, Siren::Primitive<T> &object)
 Q_DECLARE_METATYPE( Siren::String );
 Q_DECLARE_METATYPE( Siren::Number );
 
-Q_DECLARE_METATYPE( Siren::StringObject )
-Q_DECLARE_METATYPE( Siren::NumberObject )
-
-SIREN_EXPOSE_CLASS( Siren::String )
-SIREN_EXPOSE_CLASS( Siren::Number )
-
-SIREN_EXPOSE_ALIAS( Siren::Primitive<Siren::String>, Siren::StringBase )
-SIREN_EXPOSE_ALIAS( Siren::Primitive<Siren::Number>, Siren::NumberBase )
-
-SIREN_EXPOSE_ALIAS( Siren::PrimitiveObject<Siren::String>, Siren::StringObject )
-SIREN_EXPOSE_ALIAS( Siren::PrimitiveObject<Siren::Number>, Siren::NumberObject )
-
-#ifdef SIREN_INSTANTIATE_TEMPLATES
-template class Siren::PrimitiveObject<Siren::String>;
-template class Siren::PrimitiveObject<Siren::Number>;
-#endif
+SIREN_EXPOSE_PRIMITIVE( Siren::String )
+SIREN_EXPOSE_PRIMITIVE( Siren::Number )
 
 SIREN_END_HEADER
 

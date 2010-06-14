@@ -178,6 +178,26 @@ program_bug::~program_bug() throw()
 {}
 
 //////////
+////////// Implementation of interupted
+//////////
+
+static const RegisterObject<interupted> r_interupted;
+
+interupted::interupted() : ImplementsException<interupted, exception>()
+{}
+
+interupted::interupted(QString err, QString place)
+            : ImplementsException<interupted,exception>(err, place)
+{}
+
+interupted::interupted(const interupted &other)
+            : ImplementsException<interupted,exception>(other)
+{}
+
+interupted::~interupted() throw()
+{}
+
+//////////
 ////////// Implementation of unsupported
 //////////
 

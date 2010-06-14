@@ -76,6 +76,22 @@ Tester::Tester(const Handle &handle, Logger &log)
          current_test(0), num_current_errors(0), num_errors(0)
 {}
 
+/** Construct the tester for the class with the passed name - this 
+    will write any output to the default logger */
+Tester::Tester(const QString &type_name)
+       : Implements<Tester,Object>(), Interfaces<Tester,Mutable>(),
+         tested_class(type_name),
+         current_test(0), num_current_errors(0), num_errors(0)
+{}
+
+/** Construct the tester for the class with the passed name, writing
+    any output to the passed logger */
+Tester::Tester(const QString &type_name, Logger &log)
+       : Implements<Tester,Object>(), Interfaces<Tester,Mutable>(),
+         logger(log), tested_class(type_name),
+         current_test(0), num_current_errors(0), num_errors(0)
+{}
+
 /** Copy constructor */
 Tester::Tester(const Tester &other)
        : Implements<Tester,Object>(other), Interfaces<Tester,Mutable>(),
@@ -116,8 +132,7 @@ bool Tester::operator==(const Tester &other) const
              tested_class == other.tested_class and
              current_test == other.current_test and
              num_current_errors == other.num_current_errors and 
-             num_errors == other.num_errors and
-             Object::operator==(other) );
+             num_errors == other.num_errors );
 }
 
 /** Comparison operator */
@@ -146,6 +161,8 @@ QString Tester::typeName()
 bool Tester::test(Logger &logger) const
 {
     Tester tester(*this, logger);
+
+    #ifndef SIREN_DISABLE_TESTS    
     
     try
     {
@@ -163,6 +180,8 @@ bool Tester::test(Logger &logger) const
     {
         tester.unexpected_error( unknown_error(CODELOC) );
     }
+    
+    #endif // SIREN_DISABLE_TESTS
     
     return tester.allPassed();
 }
@@ -185,21 +204,6 @@ void Tester::stream(Stream &s)
 bool Tester::allPassed() const
 {
     return num_errors == 0;
-}
-
-/** Save the current state of this tester */
-ObjRef Tester::saveState() const
-{
-    return new Tester(*this);
-}
-
-/** Restore the state of this tester from the passed object
-
-    \throw Siren::invalid_cast
-*/
-void Tester::restoreState(const Object &old_state)
-{
-    Tester::operator=( old_state.asA<Tester>() );
 }
 
 void Tester::testPassed(const QString &description)

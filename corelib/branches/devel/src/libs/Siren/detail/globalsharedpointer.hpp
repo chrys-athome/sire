@@ -158,30 +158,12 @@ public:
 
     GlobalSharedPointer(const GlobalSharedPointer<T> &o);
 
-    template<class S>
-    GlobalSharedPointer(const GlobalSharedPointer<S> &o);
-
-    template<class S>
-    explicit GlobalSharedPointer(S *data);
-
-    template<class S>
-    GlobalSharedPointer(const S &obj);
-
     GlobalSharedPointer<T>& operator=(T *o);
     GlobalSharedPointer<T>& operator=(const T &obj);
 
     GlobalSharedPointer<T>& operator=(const GlobalSharedPointer<T> &o);
 
-    template<class S>
-    GlobalSharedPointer<T>& operator=(const GlobalSharedPointer<S> &o);
-
     GlobalSharedPointer<T>& operator=(int);
-
-    template<class S>
-    GlobalSharedPointer<T>& operator=(const S &obj);
-
-    template<class S>
-    GlobalSharedPointer<T>& operator=(S *obj);
     
     bool unique() const;
     
@@ -248,8 +230,8 @@ void GlobalSharedPointer<T>::registerGlobalPointer(bool auto_detach)
                 this->detach();
         }
 
-        SharedPolyPointer<T>::operator=(
-                    GlobalSharedPointerBase::registerObject<T>(this->constData()) );
+        SharedPolyPointer<T>::operator=( SharedPolyPointer<T>(
+                    GlobalSharedPointerBase::registerObject<T>(this->constData()) ) );
     }
 }
 
@@ -289,36 +271,6 @@ GlobalSharedPointer<T>::GlobalSharedPointer(const GlobalSharedPointer<T> &o)
                  GlobalSharedPointerBase()
 {
     //by definition, 'o' is already global
-}
-
-/** Casting constructor */
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-GlobalSharedPointer<T>::GlobalSharedPointer(const GlobalSharedPointer<S> &o)
-                       : SharedPolyPointer<T>(o), GlobalSharedPointerBase()
-{
-    this->registerGlobalPointer();
-}
-
-/** Copy from the passed pointer - this takes over ownership of the pointer */
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-GlobalSharedPointer<T>::GlobalSharedPointer(S *data)
-                       : SharedPolyPointer<T>(data), GlobalSharedPointerBase()
-{
-    this->registerGlobalPointer();
-}
-
-/** Construct from the passed object */
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-GlobalSharedPointer<T>::GlobalSharedPointer(const S &obj)
-                       : SharedPolyPointer<T>(obj), GlobalSharedPointerBase()
-{
-    this->registerGlobalPointer();
 }
 
 /** Copy assignment from the passed pointer - this takes over ownership of the pointer */
@@ -363,22 +315,6 @@ GlobalSharedPointer<T>& GlobalSharedPointer<T>::operator=(
     return *this;
 }
 
-/** Copy assignment operator */
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-GlobalSharedPointer<T>& GlobalSharedPointer<T>::operator=(
-                                                const GlobalSharedPointer<S> &o)
-{
-    if (SharedPolyPointer<T>::unique())
-        GlobalSharedPointerBase::unregisterObject( this->constData() );
-
-    SharedPolyPointer<T>::operator=(o);
-    this->registerGlobalPointer();
-
-    return *this;
-}
-
 /** This is used to allow "ptr = 0" to reset the pointer */
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
@@ -388,36 +324,6 @@ GlobalSharedPointer<T>& GlobalSharedPointer<T>::operator=(int val)
         GlobalSharedPointerBase::unregisterObject( this->constData() );
 
     SharedPolyPointer<T>::operator=(val);
-    
-    return *this;
-}
-
-/** Copy to point at 'obj' */
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-GlobalSharedPointer<T>& GlobalSharedPointer<T>::operator=(const S &obj)
-{
-    if (SharedPolyPointer<T>::unique())
-        GlobalSharedPointerBase::unregisterObject( this->constData() );
-    
-    SharedPolyPointer<T>::operator=(obj);
-    this->registerGlobalPointer();
-    
-    return *this;
-}
-
-/** Copy to point at 'obj' - this takes over ownership of the object */
-template<class T>
-template<class S>
-SIREN_OUTOFLINE_TEMPLATE
-GlobalSharedPointer<T>& GlobalSharedPointer<T>::operator=(S *obj)
-{
-    if (SharedPolyPointer<T>::unique())
-        GlobalSharedPointerBase::unregisterObject( this->constData() );
-
-    SharedPolyPointer<T>::operator=(obj);
-    this->registerGlobalPointer();
     
     return *this;
 }

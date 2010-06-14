@@ -27,3 +27,107 @@
 \*********************************************/
 
 #include "streamqt.h"
+
+#include "Siren/errors.h"
+
+using namespace Siren;
+
+Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QDate &d)
+{
+    s.assertVersion<QDate>(1);
+    
+    Schema schema = s.item<QDate>();
+    
+    quint32 julian_day;
+    
+    if (s.isSaving())
+    {
+        julian_day = d.toJulianDay();
+    }
+    
+    schema.data("julian_day") & julian_day;
+    
+    if (s.isLoading())
+    {
+        d = QDate::fromJulianDay(julian_day);
+    }
+
+    return s;
+}
+
+static const QTime midnight(0,0,0,0);
+
+Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QTime &t)
+{
+    s.assertVersion<QTime>(1);
+    
+    Schema schema = s.item<QTime>();
+    
+    quint32 ms;
+    
+    if (s.isSaving())
+    {
+        ms = midnight.msecsTo(t);
+    }
+    
+    schema.data("msecs") & ms;
+    
+    if (s.isLoading())
+    {
+        t = midnight.addMSecs(ms);
+    }
+
+    return s;
+}
+
+Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QDateTime &d)
+{
+    s.assertVersion<QDateTime>(1);
+    
+    Schema schema = s.item<QDateTime>();
+    
+    QDate date;
+    QTime time;
+    quint8 timespec;
+    
+    if (s.isSaving())
+    {
+        date = d.date();
+        time = d.time();
+        timespec = d.timeSpec();
+    }
+
+    schema.data("date") & date;
+    schema.data("time") & time;
+    schema.data("timespec") & timespec;
+    
+    if (s.isLoading())
+    {
+        d = QDateTime(date, time, (Qt::TimeSpec)(timespec));
+    }
+
+    return s;
+}
+
+Siren::Stream SIREN_EXPORT &operator&(Siren::Stream &s, QUuid &uid)
+{
+    s.assertVersion<QUuid>(1);
+    
+    Schema schema = s.item<QUuid>();
+    
+    QString uid_string;
+    
+    if (s.isSaving())
+    {
+        uid_string = uid.toString();
+    }
+    
+    schema.data("uid") & uid_string;
+    
+    if (s.isLoading())
+    {
+        uid = QUuid(uid_string);
+    }
+
+    return s;
+}

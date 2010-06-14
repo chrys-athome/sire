@@ -159,6 +159,8 @@ bool MD5Sum::test(Logger &logger) const
 {
     Tester tester(*this, logger);
 
+    #ifndef SIREN_DISABLE_TESTS
+
     try
     {
         // Test 1
@@ -204,6 +206,8 @@ bool MD5Sum::test(Logger &logger) const
     {
         tester.unexpected_error( unknown_error(CODELOC) );
     }
+    
+    #endif // SIREN_DISABLE_TESTS
     
     return tester.allPassed();
 }

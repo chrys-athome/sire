@@ -46,6 +46,10 @@ class Class;
 class ObjRef;
 class Object;
 
+template<class T> class Primitive;
+template<class T> class ObjPtr;
+template<class T> class GlobalObjPtr;
+
 /** This is the base class of all schemas */
 class SIREN_EXPORT SchemaBase
 {
@@ -103,7 +107,7 @@ private:
 };
 
 /** This schema is used to help stream shared data types */
-class SharedSchema : public SchemaBase
+class SIREN_EXPORT SharedSchema : public SchemaBase
 {
 public:
     SharedSchema();
@@ -114,6 +118,9 @@ public:
     SharedSchema& operator=(const SharedSchema &other);
     
     bool mustStream() const;
+
+    Stream& data(const char *data_name);
+    Stream& base();
     
     void end();
 
@@ -129,7 +136,7 @@ private:
 };
 
 /** This is the base class of all container schemas */
-class ContainerSchema : public SchemaBase
+class SIREN_EXPORT ContainerSchema : public SchemaBase
 {
 public:
     ~ContainerSchema();
@@ -161,7 +168,7 @@ protected:
 };
 
 /** This is the schema used to help stream arrays */
-class ArraySchema : public ContainerSchema
+class SIREN_EXPORT ArraySchema : public ContainerSchema
 {
 public:
     ArraySchema();
@@ -183,7 +190,7 @@ private:
 };
 
 /** This is the schema used to help stream sets */
-class SetSchema : public ContainerSchema
+class SIREN_EXPORT SetSchema : public ContainerSchema
 {
 public:
     SetSchema();
@@ -205,7 +212,7 @@ private:
 };
 
 /** This is the schema used to help stream maps */
-class MapSchema : public ContainerSchema
+class SIREN_EXPORT MapSchema : public ContainerSchema
 {
 public:
     MapSchema();
@@ -258,6 +265,81 @@ struct StreamHelper
     static T null()
     {
         return T();
+    }
+};
+
+template<>
+struct StreamHelper<quint8>
+{
+    static QString typeName(){ return "uint8"; }
+    static quint8 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<qint8>
+{
+    static QString typeName(){ return "int8"; }
+    static qint8 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<quint32>
+{
+    static QString typeName(){ return "uint32"; }
+    static quint32 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<qint32>
+{
+    static QString typeName(){ return "int32"; }
+    static qint32 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<quint64>
+{
+    static QString typeName(){ return "uint64"; }
+    static quint64 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<qint64>
+{
+    static QString typeName(){ return "int64"; }
+    static qint64 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<float>
+{
+    static QString typeName(){ return "flaot"; }
+    static float null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<double>
+{
+    static QString typeName(){ return "double"; }
+    static double null(){ return 0; }
+};
+
+template<class T>
+struct StreamHelper< boost::shared_ptr<T> >
+{
+    static QString typeName()
+    {
+        return QString("shared_ptr< %1 >").arg(T::typeName());
+    }
+    
+    static const void* getKey(const boost::shared_ptr<T> &object)
+    {
+        return object.get();
+    }
+    
+    static boost::shared_ptr<T> null()
+    {
+        return boost::shared_ptr<T>();
     }
 };
 
@@ -589,6 +671,16 @@ public:
     Stream& operator&(QByteArray &b);
     
     Stream& operator&(Object &object);
+    Stream& operator&(ObjRef &objref);
+    
+    template<class T>
+    Stream& operator&(ObjPtr<T> &objptr);
+    
+    template<class T>
+    Stream& operator&(GlobalObjPtr<T> &objptr);
+    
+    template<class T>
+    Stream& operator&(Primitive<T> &primitive);
     
     ObjRef loadNextObject();
 
@@ -819,6 +911,26 @@ inline Stream& Schema::base()
 inline bool SharedSchema::mustStream() const
 {
     return must_stream;
+}
+
+/** Tell the stream that the next object will be 
+    a member variable, with name 'name' */
+inline Stream& SharedSchema::data(const char *name)
+{
+    if (needs_decoration)
+        stream->nextData(name);
+        
+    return *stream;
+}
+
+/** Tell the stream that the next object will be
+    a base class of this object */
+inline Stream& SharedSchema::base()
+{
+    if (needs_decoration)
+        stream->nextBase();
+        
+    return *stream;
 }
 
 //////////
@@ -1088,7 +1200,8 @@ MapSchema Stream::map(int count, bool allow_duplicates)
     
     count = this->startMap( key_type, value_type, count, allow_duplicates );
     
-    return MapSchema(this, key_type, value_type, count, this->needs_decoration);
+    return MapSchema(this, key_type, value_type, count, 
+                     allow_duplicates, this->needs_decoration);
 }
 
 /** Explicitly request saving of an object */
@@ -1099,7 +1212,7 @@ Stream& Stream::operator<<(const T &data)
     if (not this->is_saving)
         this->throwNotSavingError();
 
-    return this->operator&( const_cast<T&>(data) );
+    return (*this) & ( const_cast<T&>(data) );
 }
 
 /** Explicitly request loading of an object */
@@ -1110,7 +1223,7 @@ Stream& Stream::operator>>(T &data)
     if (this->is_saving)
         this->throwNotLoadingError();
 
-    return this->operator&( data );
+    return (*this) & data;
 }
 
 #endif // SIREN_SKIP_INLINE_FUNCTIONS

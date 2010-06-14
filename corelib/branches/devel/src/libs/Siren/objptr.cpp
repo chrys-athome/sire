@@ -33,6 +33,8 @@
 
 #include "Siren/errors.h"
 
+#include <QDebug>
+
 using namespace Siren;
 using namespace Siren::detail;
 
@@ -62,6 +64,33 @@ ObjPtrBase& ObjPtrBase::operator=(const ObjPtrBase &other)
 {
     ptr = other.ptr;
     return *this;
+}
+
+/** Value comparison function */
+bool ObjPtrBase::equals(const ObjPtrBase &other) const
+{
+    if (ptr.constData() == 0)
+    {
+        return other.ptr.constData() == 0;
+    }
+    else if (other.ptr.constData() == 0)
+    {
+        return false;
+    }
+    else 
+    {
+        return ptr->equals(*(other.ptr));
+    }
+}
+
+/** Value comparison function */
+bool ObjPtrBase::equals(const Object &other) const
+{
+    if (ptr.constData() == 0)
+        return false;
+        
+    else
+        return ptr->equals(other);
 }
 
 /** Comparison operator - this just performs pointer based

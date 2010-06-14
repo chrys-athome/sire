@@ -33,6 +33,9 @@
 #include <QHash>
 #include <QSet>
 #include <QMap>
+#include <QVarLengthArray>
+#include <QUuid>
+#include <QDateTime>
 
 #include "stream.h"
 
@@ -41,7 +44,7 @@ SIREN_BEGIN_HEADER
 Siren::Stream& operator&(Siren::Stream&, QDateTime&);
 Siren::Stream& operator&(Siren::Stream&, QDate&);
 Siren::Stream& operator&(Siren::Stream&, QTime&);
-Siren::Stream& operator&(Siren::Stream&, QLocale&);
+Siren::Stream& operator&(Siren::Stream&, QUuid&);
 
 namespace Siren
 {
@@ -58,6 +61,58 @@ namespace Siren
             }
             
             static QString null(){ return QString::null; }
+        };
+
+        template<>
+        struct StreamHelper<QUuid>
+        {
+            static QString typeName(){ return "QUuid"; }
+            
+            static const void* getKey(const QUuid &object)
+            {
+                return &object;
+            }
+            
+            static QUuid null(){ return QUuid(); }
+        };
+
+        template<>
+        struct StreamHelper<QDateTime>
+        {
+            static QString typeName(){ return "QDateTime"; }
+            
+            static const void* getKey(const QDateTime &object)
+            {
+                return &object;
+            }
+            
+            static QDateTime null(){ return QDateTime(); }
+        };
+
+        template<>
+        struct StreamHelper<QDate>
+        {
+            static QString typeName(){ return "QDate"; }
+            
+            static const void* getKey(const QDate &object)
+            {
+                return &object;
+            }
+            
+            static QDate null(){ return QDate(); }
+        };
+
+        template<>
+        struct StreamHelper<QTime>
+        {
+            static QString typeName(){ return "QTime"; }
+            
+            static const void* getKey(const QTime &object)
+            {
+                return &object;
+            }
+            
+            static QTime null(){ return QTime(); }
         };
         
         template<class T>
@@ -135,6 +190,39 @@ namespace Siren
             static QHash<Key,Value> null() { return QHash<Key,Value>(); }
         };
     }
+}
+
+/** Streaming operator for QVarLengthArray<T> */
+template<class T, int N>
+SIREN_OUTOFLINE_TEMPLATE
+Siren::Stream& operator&(Siren::Stream &s, QVarLengthArray<T,N> &array)
+{
+    s.assertVersion("QVarLengthArray", 1);
+    
+    Siren::ArraySchema schema = s.array<T>(array.count());
+    
+    if (s.isSaving())
+    {
+        const T *data = array.constData();
+        
+        for (int i=0; i<schema.count(); ++i)
+        {
+            s << data[i];
+        }
+    }
+    else
+    {
+        array.resize(schema.count());
+        
+        T *data = array.data();
+        
+        for (int i=0; i<schema.count(); ++i)
+        {
+            s >> data[i];
+        }
+    }
+    
+    return s;
 }
 
 /** Streaming operator for QVector<T> */

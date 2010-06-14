@@ -26,38 +26,45 @@
   *
 \*********************************************/
 
-#ifndef SIREN_MUTABLE_H
-#define SIREN_MUTABLE_H
+#include "mutable.h"
+#include "objref.h"
 
-#include "interface.h"
+#include "Siren/errors.h"
 
-SIREN_BEGIN_HEADER
+using namespace Siren;
 
-namespace Siren
+Mutable::Mutable()
+{}
+
+Mutable::~Mutable()
+{}
+
+QString Mutable::typeName()
 {
-
-class ObjRef;
-class Object;
-
-/** You must interface with Mutable if you want to make
-    your class mutable (changable/editable) */
-class SIREN_EXPORT Mutable : public virtual Interface
-{
-public:
-    Mutable();
-    virtual ~Mutable();
-
-    static QString typeName();
-
-    virtual ObjRef saveState() const;
-    
-    virtual void restoreState(const Object &object);
-};
-
+    return "Siren::Mutable";
 }
 
-SIREN_EXPOSE_CLASS( Siren::Mutable )
+ObjRef Mutable::saveState() const
+{
+    const Object *obj = dynamic_cast<const Object*>(this);
+    
+    if (not obj)
+        throw Siren::program_bug( QObject::tr(
+            "You must derive Mutable objects from Siren::Object... (%1)")
+                .arg( typeid(*this).name() ), CODELOC );
+                
+    
+    return obj->clone();        
+}
 
-SIREN_END_HEADER
-
-#endif
+void Mutable::restoreState(const Object &object)
+{
+    Object *obj = dynamic_cast<Object*>(this);
+    
+    if (not obj)
+        throw Siren::program_bug( QObject::tr(
+            "You must derive Mutable objects from Siren::Object... (%1)")
+                .arg( typeid(*this).name() ), CODELOC );
+    
+    obj->copy(object);
+}

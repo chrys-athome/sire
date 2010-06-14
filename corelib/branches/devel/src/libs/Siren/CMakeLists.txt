@@ -22,6 +22,12 @@ set ( SIREN_PUBLIC_HEADERS
       exception.h
       errors.h
 
+      forages.h
+      mutex.h
+      semaphore.h
+      thread.h
+      waitcondition.h
+
       logger.h
       tester.h
 
@@ -63,6 +69,12 @@ set ( SIREN_SOURCES
       exception.cpp
       errors.cpp
 
+      forages.cpp
+      mutex.cpp
+      semaphore.cpp
+      thread.cpp
+      waitcondition.cpp
+
       logger.cpp
       tester.cpp
 
@@ -75,6 +87,8 @@ set ( SIREN_SOURCES
       hanref.cpp
       objptr.cpp
       objref.cpp
+
+      mutable.cpp
 
       class.cpp
       handle.cpp

@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2009  Christopher Woods
+  *  Copyright (C) 2010  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,37 +26,48 @@
   *
 \*********************************************/
 
-#ifndef SIREN_MUTABLE_H
-#define SIREN_MUTABLE_H
+#ifndef SIREN_FORAGES_H
+#define SIREN_FORAGES_H
 
-#include "interface.h"
+#include <QMutex>
+
+class QThread;
+
+#include "sirenglobal.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
 
-class ObjRef;
-class Object;
+int register_this_thread();
+void unregister_this_thread();
 
-/** You must interface with Mutable if you want to make
-    your class mutable (changable/editable) */
-class SIREN_EXPORT Mutable : public virtual Interface
-{
-public:
-    Mutable();
-    virtual ~Mutable();
+void msleep(int ms);
+void sleep(int secs);
 
-    static QString typeName();
+bool for_ages();
 
-    virtual ObjRef saveState() const;
-    
-    virtual void restoreState(const Object &object);
-};
+void check_for_ages();
+
+void pause_for_ages();
+void pause_for_ages(const QThread *thread);
+
+void play_for_ages();
+void play_for_ages(const QThread *thread);
+
+void end_for_ages();
+void end_for_ages(const QThread *thread);
 
 }
 
-SIREN_EXPOSE_CLASS( Siren::Mutable )
+SIREN_EXPOSE_FUNCTION( Siren::msleep )
+SIREN_EXPOSE_FUNCTION( Siren::sleep )
+SIREN_EXPOSE_FUNCTION( Siren::for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::check_for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::pause_for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::play_for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::end_for_ages )
 
 SIREN_END_HEADER
 

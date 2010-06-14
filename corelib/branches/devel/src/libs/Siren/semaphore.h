@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2009  Christopher Woods
+  *  Copyright (C) 2010  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,37 +26,48 @@
   *
 \*********************************************/
 
-#ifndef SIREN_MUTABLE_H
-#define SIREN_MUTABLE_H
+#ifndef SIREN_SEMAPHORE_H
+#define SIREN_SEMAPHORE_H
 
-#include "interface.h"
+#include <QSemaphore>
+
+#include "sirenglobal.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
 
-class ObjRef;
-class Object;
-
-/** You must interface with Mutable if you want to make
-    your class mutable (changable/editable) */
-class SIREN_EXPORT Mutable : public virtual Interface
+/** This class provides a Semaphore which respects the end
+    of for_ages (i.e. .acquire() can be interupted
+    by signalling the end of for_ages, in which case it will
+    throw a Siren::interupted exception. In all other
+    respects, this is identical to a QSemaphore
+    
+    @author Christopher Woods
+*/
+class SIREN_EXPORT Semaphore
 {
 public:
-    Mutable();
-    virtual ~Mutable();
-
-    static QString typeName();
-
-    virtual ObjRef saveState() const;
+    Semaphore(int n=0);
     
-    virtual void restoreState(const Object &object);
+    ~Semaphore();
+
+    void acquire(int n=1);
+
+    int available() const;
+  
+    void release(int n=1);
+    bool tryAcquire(int n=1);
+    bool tryAcquire(int n, int timeout);    
+
+private:
+    QSemaphore s;
 };
 
 }
 
-SIREN_EXPOSE_CLASS( Siren::Mutable )
+SIREN_EXPOSE_CLASS( Siren::Semaphore )
 
 SIREN_END_HEADER
 

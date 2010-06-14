@@ -29,13 +29,12 @@
 #ifndef SIREN_OBJECT_H
 #define SIREN_OBJECT_H
 
-#include "sirenglobal.h"
-
 #include <QSharedData>
-#include <QMutex>
 #include <QStringList>
 
 #include <boost/assert.hpp>
+
+#include "sirenglobal.h"
 
 SIREN_BEGIN_HEADER
 
@@ -63,10 +62,16 @@ class ObjRef;
 }
 
 class QDomNode;
-class QMutex;
+
+inline uint qHash(double value)
+{
+    return *( (quint64*)(&value) );
+}
 
 namespace Siren
 {
+
+Object* extractPointer(ObjRef &objref);
 
 namespace detail
 {
@@ -77,7 +82,10 @@ class GlobalSharedPointerBase;
 template<class T> class GlobalSharedPointer;
 }
 
-QMutex& globalRegistrationLock();
+class Mutex;
+class MutexLocker;
+
+Mutex& globalRegistrationLock();
 
 /** This is the base class of all Siren virtual objects.
     
@@ -136,7 +144,7 @@ QMutex& globalRegistrationLock();
 
     obj.getClass();   // Return information about the type of this object
 
-    obj.getClass().super();  // Return information about the superclass type
+    obj.getClass().superClass();  // Return information about the superclass type
     
     obj.getClass().UID();  // Return the unique ID number for this class type
     
@@ -282,10 +290,13 @@ public:
     template<class T>
     const T& asA() const;
 
+    template<class T>
+    T& asA();
+
 protected:
     static const Class& createTypeInfo();
 
-    static QMutex& globalLock();
+    static Mutex& globalLock();
 
     static void throwUnregisteredMetaTypeError(const QString &type_name);
     
@@ -302,7 +313,6 @@ protected:
     static QStringList listInterfaces();
 
     Object& operator=(const Object &other);
-    
     bool operator==(const Object &other) const;
     bool operator!=(const Object &other) const;
 
@@ -316,6 +326,7 @@ private:
     friend class detail::GlobalSharedPointerBase;
 
     friend void qAtomicAssign<Object>(Object *&d, Object *x);
+    friend Object* extractPointer(ObjRef &objref);
 
     bool private_implements(const QString &class_type) const;
     void private_assertCanCast(const QString &class_type) const;
@@ -362,11 +373,15 @@ public:
 
     ~Extends();
 
+    Extends<Derived,Base>& operator=(const Object &other);
+    
+    bool operator==(const Object &other) const;
+    bool operator!=(const Object &other) const;
+
 protected:
     static const Class& createTypeInfo();
 
-    Base& super();
-    const Base& super() const;
+    typedef Base super;
 
 private:
     static const Class* class_typeinfo;
@@ -413,6 +428,9 @@ public:
 
     Implements<Derived,Base>& operator=(const Object &other);
 
+    bool operator==(const Object &other) const;
+    bool operator!=(const Object &other) const;
+
     static QString typeName();
 
     QString what() const;
@@ -427,8 +445,7 @@ protected:
 
     Implements<Derived,Base>* ptr_clone() const;
 
-    Base& super();
-    const Base& super() const;
+    typedef Base super;
 
 private:
     static const Class* class_typeinfo;
@@ -539,16 +556,24 @@ Extends<Derived,Base>::~Extends()
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-Base& Extends<Derived,Base>::super()
+Extends<Derived,Base>& Extends<Derived,Base>::operator=(const Object &other)
 {
+    this->copy(other);
     return *this;
 }
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-const Base& Extends<Derived,Base>::super() const
+bool Extends<Derived,Base>::operator==(const Object &other) const
 {
-    return *this;
+    return this->equals(other);
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool Extends<Derived,Base>::operator!=(const Object &other) const
+{
+    return not this->equals(other);
 }
 
 /** Return the class typeinfo object for 'Derived' */
@@ -558,7 +583,7 @@ const Class& Extends<Derived,Base>::createTypeInfo()
 {
     if ( Extends<Derived,Base>::class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(Object::globalLock()) );
+        MutexLocker lkr( &(Object::globalLock()) );
      
         if ( Extends<Derived,Base>::class_typeinfo == 0 )
         {
@@ -708,7 +733,7 @@ const Class& Implements<Derived,Base>::createTypeInfo()
 {
     if ( Implements<Derived,Base>::class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(Object::globalLock()) );
+        MutexLocker lkr( &(Object::globalLock()) );
         
         if ( Implements<Derived,Base>::class_typeinfo == 0 )
         {
@@ -740,24 +765,24 @@ SIREN_OUTOFLINE_TEMPLATE
 Implements<Derived,Base>&
 Implements<Derived,Base>::operator=(const Object &other)
 {
-    return static_cast<Derived*>(this)->operator=( other.asA<Derived>() );
-}
-
-/** Return the superclass of this type */
-template<class Derived, class Base>
-SIREN_OUTOFLINE_TEMPLATE
-Base& Implements<Derived,Base>::super()
-{
+    this->copy(other);
     return *this;
 }
 
-/** Return the superclass of this type */
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-const Base& Implements<Derived,Base>::super() const
+bool Implements<Derived,Base>::operator==(const Object &other) const
 {
-    return *this;
+    return this->equals(other);
 }
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool Implements<Derived,Base>::operator!=(const Object &other) const
+{
+    return not this->equals(other);
+}
+
 
 //////
 ////// Implementation of 'Object'
@@ -798,6 +823,29 @@ const T& Object::asA() const
         this->private_assertCanCast( T::typeName() );
 
         return *(static_cast<const T*>(this));
+    }
+}
+
+/** Cast this object to type 'T'. This raises a Siren::invalid_cast
+    exception if this cast is not possible 
+    
+    \throw Siren::invalid_cast
+*/
+template<class T>
+SIREN_INLINE_TEMPLATE
+T& Object::asA()
+{
+    T *obj = dynamic_cast<T*>(this);
+    
+    if (obj)
+    {
+        return *obj;
+    }
+    else
+    {
+        this->private_assertCanCast( T::typeName() );
+
+        return *(static_cast<T*>(this));
     }
 }
 

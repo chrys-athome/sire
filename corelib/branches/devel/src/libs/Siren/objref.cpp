@@ -37,13 +37,25 @@
 using namespace Siren;
 using namespace Siren::detail;
 
-Stream SIREN_EXPORT &operator<<(Stream &s, ObjRef &object)
-{
-    object.stream(s);
-    return s;
-}
-
 Q_GLOBAL_STATIC_WITH_ARGS( SharedPolyPointer<Object>, getNone, (None()) );
+
+namespace Siren
+{
+    Object SIREN_EXPORT *extractPointer(ObjRef &objref)
+    {
+        objref.d.detach();
+        
+        Object *ptr = objref.d;
+        
+        //increase the reference count of the pointer so 
+        //that it won't be deleted
+        ptr->ref.ref();
+        
+        objref.d = *(getNone());
+        
+        return ptr;
+    }
+}
 
 /** Construct a null reference - this points to 'None' */
 ObjRef::ObjRef() : d( *(getNone()) )
@@ -114,6 +126,19 @@ bool ObjRef::operator!=(const Object &other) const
 QString ObjRef::typeName()
 {
     return "Siren::ObjRef";
+}
+
+/** Return whether or not this is a unique reference to 
+    the object */
+bool ObjRef::unique() const
+{
+    return d.unique();
+}
+
+/** Return whether or not this is none */
+bool ObjRef::isNone() const
+{
+    return d->isA<None>();
 }
 
 /** Return the Class type for the object */
@@ -190,7 +215,10 @@ struct StreamHelper<ObjRef>
     
     static const void* getKey(const ObjRef &object)
     {
-        return object.d.constData();
+        if (dynamic_cast<const None*>(object.d.constData()) != 0)
+            return 0;
+        else
+            return object.d.constData();
     }
     
     static ObjRef null()
@@ -218,7 +246,7 @@ void ObjRef::stream(Stream &s)
         else
         {
             ObjRef new_obj = s.loadNextObject();
-            
+
             d = new_obj.d;
         }
     }

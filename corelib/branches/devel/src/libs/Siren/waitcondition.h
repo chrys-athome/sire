@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2009  Christopher Woods
+  *  Copyright (C) 2010  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,37 +26,47 @@
   *
 \*********************************************/
 
-#ifndef SIREN_MUTABLE_H
-#define SIREN_MUTABLE_H
+#ifndef SIREN_WAITCONDITION_H
+#define SIREN_WAITCONDITION_H
 
-#include "interface.h"
+#include <QWaitCondition>
+
+#include "sirenglobal.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
 
-class ObjRef;
-class Object;
+class Mutex;
 
-/** You must interface with Mutable if you want to make
-    your class mutable (changable/editable) */
-class SIREN_EXPORT Mutable : public virtual Interface
+/** This class provides a WaitCondition which respects the end
+    of for_ages (i.e. .wait() can be interupted
+    by signalling the end of for_ages, in which case it will
+    throw a Siren::interupted exception. In all other
+    respects, this is identical to a QWaitCondition
+    
+    @author Christopher Woods
+*/
+class SIREN_EXPORT WaitCondition
 {
 public:
-    Mutable();
-    virtual ~Mutable();
-
-    static QString typeName();
-
-    virtual ObjRef saveState() const;
+    WaitCondition();
+    ~WaitCondition();
     
-    virtual void restoreState(const Object &object);
+    bool wait( Mutex *mutex, unsigned long time = ULONG_MAX );
+    bool wait( QMutex *mutex, unsigned long time = ULONG_MAX );
+    
+    void wakeOne();
+    void wakeAll();
+    
+private:
+    QWaitCondition w;
 };
 
 }
 
-SIREN_EXPOSE_CLASS( Siren::Mutable )
+SIREN_EXPOSE_CLASS( Siren::WaitCondition )
 
 SIREN_END_HEADER
 

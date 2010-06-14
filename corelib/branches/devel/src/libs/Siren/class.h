@@ -73,7 +73,7 @@ public:
     
     bool hasSuper() const;
     
-    const Class& super() const;
+    const Class& superClass() const;
     
     bool implements(const QString &type_name) const;
 
