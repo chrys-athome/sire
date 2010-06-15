@@ -32,6 +32,8 @@
 #include "ljparameter.h"
 #include "switchingfunction.h"
 
+#include "ljfunction.h"
+
 #include "SireMol/mover.hpp"
 #include "SireMol/atomcoords.h"
 
@@ -764,22 +766,22 @@ void InterLJPotential::_pvt_calculateEnergy(const InterLJPotential::Molecule &mo
                 const int remainder = nats1 % 2;
                 
                 __m128d sse_ljnrg = { 0, 0 };
-
-                const __m128d sse_one = { 1.0, 1.0 };
                 
                 for (quint32 i=0; i<nats0; ++i)
                 {
                     distmat.setOuterIndex(i);
                     const Parameter &param0 = params0_array[i];
+
+                    if (param0.ljid == 0)
+                        //skip dummy atoms
+                        continue;
                     
                     //process atoms in pairs (so can then use SSE)
                     for (quint32 j=0; j<nats1-1; j += 2)
                     {
                         const Parameter &param10 = params1_array[j];
                         const Parameter &param11 = params1_array[j+1];
-                        
-                        __m128d sse_dist2 = _mm_set_pd( distmat[j], distmat[j+1] );
-                                           
+
                         const LJPair &ljpair0 = ljpairs.constData()[
                                                 ljpairs.map(param0.ljid,
                                                             param10.ljid)];
@@ -787,55 +789,22 @@ void InterLJPotential::_pvt_calculateEnergy(const InterLJPotential::Molecule &mo
                         const LJPair &ljpair1 = ljpairs.constData()[
                                                 ljpairs.map(param0.ljid,
                                                             param11.ljid)];
-                    
-                        __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
-                        __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
-                                                      ljpair1.epsilon() );
+
+                        __m128d sse_nrg = calcLJEnergy(distmat[j], distmat[j+1],
+                                                       ljpair0, ljpair1);
                         
-                        sse_dist2 = _mm_div_pd(sse_one, sse_dist2);
-                        
-                        //calculate (sigma/r)^6 and (sigma/r)^12
-                        __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_dist2);
-                                                     
-                        __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
-                                                                sse_sig_over_dist2);
-                                                                
-                        sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
-                                                        sse_sig_over_dist2);
-                                                     
-                        __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
-                                                                 sse_sig_over_dist6);
-                                              
-                        //calculate LJ energy (the factor of 4 is added later)
-                        __m128d tmp = _mm_sub_pd(sse_sig_over_dist12, sse_sig_over_dist6);
-                        tmp = _mm_mul_pd(sse_eps, tmp);
-                        
-                        sse_ljnrg = _mm_add_pd( sse_ljnrg, tmp );
-                                                
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 14;
-                        #endif
+                        sse_ljnrg = _mm_add_pd( sse_ljnrg, sse_nrg );
                     }
                           
                     if (remainder == 1)
                     {
                         const Parameter &param1 = params1_array[nats1-1];
 
-                        const double invdist2 = double(1) / distmat[nats1-1];
-
                         const LJPair &ljpair = ljpairs.constData()[
                                                 ljpairs.map(param0.ljid,
                                                             param1.ljid)];
-                        
-                        double sig_over_dist6 = pow_3(ljpair.sigma()*invdist2);
-                        double sig_over_dist12 = pow_2(sig_over_dist6);
-    
-                        iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                      sig_over_dist6);
-                                                          
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 7;
-                        #endif
+                    
+                        iljnrg += calcLJEnergy(distmat[nats1-1], ljpair);
                     }
                 }
                          
@@ -848,26 +817,24 @@ void InterLJPotential::_pvt_calculateEnergy(const InterLJPotential::Molecule &mo
                 {
                     distmat.setOuterIndex(i);
                     const Parameter &param0 = params0_array[i];
+                    
+                    if (param0.ljid == 0)
+                        continue;
                 
                     for (quint32 j=0; j<nats1; ++j)
                     {
                         const Parameter &param1 = params1_array[j];
+                        
+                        if (param1.ljid == 0)
+                            continue;
 
                         const double invdist2 = double(1) / distmat[j];
 
                         const LJPair &ljpair = ljpairs.constData()[
                                                 ljpairs.map(param0.ljid,
                                                             param1.ljid)];
-                        
-                        double sig_over_dist6 = pow_3(ljpair.sigma()*invdist2);
-                        double sig_over_dist12 = pow_2(sig_over_dist6);
-    
-                        iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                      sig_over_dist6);
-                                                          
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 7;
-                        #endif
+
+                        iljnrg += calcLJEnergy(distmat[j], ljpair);
                     }
                 }
             }
@@ -878,30 +845,16 @@ void InterLJPotential::_pvt_calculateEnergy(const InterLJPotential::Molecule &mo
             if (mindist > switchfunc->featherDistance())
             {
                 ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
-                
-                #ifdef SIRE_TIME_ROUTINES
-                nflops += 2;
-                #endif
             }
             else
             {
                 ljnrg += iljnrg;
-                
-                #ifdef SIRE_TIME_ROUTINES
-                nflops += 1;
-                #endif
             }
         }
     }
     
     //add this molecule pair's energy onto the total
-    //(also multiply LJ by 4 as it is 4 * epsilon ((sig/r)^12 - (sig/r)^6))
-    energy += Energy(4 * scale_energy * ljnrg);
-    
-    #ifdef SIRE_TIME_ROUTINES
-    nflops += 3;
-    ADD_FLOPS(nflops);
-    #endif
+    energy += Energy(scale_energy * ljnrg);
 }
 
 /** Add to the forces in 'forces0' the forces acting on 'mol0' caused

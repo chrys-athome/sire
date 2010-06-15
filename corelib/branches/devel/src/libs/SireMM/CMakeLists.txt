@@ -33,6 +33,7 @@ set ( SIREMM_HEADERS
       intracljff.h
       intracoulombff.h
       intraljff.h
+      ljfunction.h
       ljpair.h
       ljparameter.h
       ljparameterdb.h

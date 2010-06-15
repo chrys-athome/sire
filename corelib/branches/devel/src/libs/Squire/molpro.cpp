@@ -598,8 +598,10 @@ QString Molpro::potentialCommandFile(const QMPotential::Molecules &molecules,
             
             const Vector &point = grid_data[i];
             
-            lines.append( QString("pot,, %1 %2 %3 %4")
-                            .arg(point.x()).arg(point.y()).arg(point.z())
+            lines.append( QString("pot,,%1,%2,%3,,%4")
+                            .arg(point.x() / bohr_radii.value())
+                            .arg(point.y() / bohr_radii.value())
+                            .arg(point.z() / bohr_radii.value())
                             .arg(charge) );
                             
             ++idx;
@@ -965,6 +967,9 @@ QHash<QString,double> Molpro::extractPotentials(QFile &molpro_output) const
     QStringList lines;
     
     Vector point;
+    double nrg = 0;
+    bool have_point = false;
+    bool have_nrg = false;
     
     QHash<QString,double> potentials;
     
@@ -975,14 +980,21 @@ QHash<QString,double> Molpro::extractPotentials(QFile &molpro_output) const
 
         if (coords_regexp.indexIn(line) != -1)
         {
-            point = Vector(coords_regexp.cap(2).toDouble(),
-                           coords_regexp.cap(3).toDouble(),
-                           coords_regexp.cap(4).toDouble());
+            point = Vector(coords_regexp.cap(2).toDouble() * bohr_radii,
+                           coords_regexp.cap(3).toDouble() * bohr_radii,
+                           coords_regexp.cap(4).toDouble() * bohr_radii);
+                           
+            have_point = true;
         }
         else if (nrg_regexp.indexIn(line) != -1)
         {
-            double nrg = nrg_regexp.cap(1).toDouble();
-            potentials.insert( ::get_key(point), nrg);
+            nrg = nrg_regexp.cap(1).toDouble();
+            have_nrg = true;
+        }
+        
+        if (have_point and have_nrg)
+        {
+            potentials.insert( ::get_key(point), nrg );
         }
     }
     
@@ -1163,10 +1175,7 @@ void Molpro::calculatePotential(const QMPotential::Molecules &molecules,
         for (int j=0; j<grid.nPoints(); ++j)
         {
             const QString key = ::get_key(points[j]);
-            qDebug() << j << points[j].toString() << pots.value(key);
-            qDebug() << scale_potential
-                     << scale_potential * pots.value(key) * hartree;
-            
+
             grid.add( j, MolarEnergy(scale_potential * pots.value(key) 
                                             * hartree.value()) );
         }
@@ -1182,7 +1191,6 @@ QVector<MolarEnergy> Molpro::calculatePotential(const QMPotential::Molecules &mo
                                                 const SireFF::Probe &probe,
                                                 double scale_potential, int ntries) const 
 {
-    qDebug() << CODELOC;
     return QVector<MolarEnergy>();
 }
 
