@@ -628,11 +628,96 @@ QString Molpro::potentialCommandFile(const QMPotential::Molecules &molecules,
                                      const PotentialTable &pottable,
                                      const SireFF::Probe &probe) const
 {
-    throw SireError::unsupported( QObject::tr(
-            "Calculating QM potentials using the Molpro() interface is "
-            "currently not supported."), CODELOC );
+    if (pottable.nGrids() == 0 and lattice_charges.count() == 0)
+        //there are no points at which the potential can be calculated
+        return QString::null;
+
+    //first, create the file needed to calculate the energy
+    QString nrgcmd = this->energyCommandFile(molecules, lattice_charges);
+
+    QStringList lines;
+    
+    double charge;
+    
+    if (probe.isA<CLJProbe>())
+        charge = probe.asA<CLJProbe>().charge().to(mod_electron);
+    else
+        charge = probe.asA<CoulombProbe>().charge().to(mod_electron);
+
+    //now add onto the bottom of this the commands needed to calculate
+    //the potential at the lattice charge atom sites - a limit in the way
+    //molpro works means that points have to be added in batches of 30
+    {
+        int idx = 0;
+    
+        for (int i=0; i<lattice_charges.count(); ++i)
+        {
+            const LatticeCharge &point = lattice_charges.constData()[i];
+        
+            if (idx == 0)
+            {
+                lines.append("{property\ndensity");
+            }
             
-    return QString::null;
+            lines.append( QString("pot,,%1,%2,%3,,%4")
+                            .arg(point.x()).arg(point.y())
+                            .arg(point.z()).arg(charge) );
+                            
+            ++idx;
+            
+            if (idx == 30 or i == lattice_charges.count()-1)
+            {
+                if (i == lattice_charges.count()-1)
+                    lines.append("}");
+                else
+                    lines.append("}\n\nexpec\nint\n");
+                    
+                idx = 0;
+            }
+        }
+    }
+    
+    //now add onto the bottom of this the commands needed to calculate
+    //the potential - a limit in the way molpro works means that points
+    //have to be added in batches of 30
+    for (int igrid=0; igrid<pottable.nGrids(); ++igrid) 
+    {
+        const Grid &grid = pottable.constGridData()[igrid].grid();
+        
+        const Vector *grid_data = grid.constData();
+        
+        int idx = 0;
+        
+        for (int i=0; i<grid.nPoints(); ++i)
+        {
+            if (idx == 0)
+            {
+                lines.append("{property\ndensity");
+            }
+            
+            const Vector &point = grid_data[i];
+            
+            lines.append( QString("pot,,%1,%2,%3,,%4")
+                            .arg(point.x() / bohr_radii.value())
+                            .arg(point.y() / bohr_radii.value())
+                            .arg(point.z() / bohr_radii.value())
+                            .arg(charge) );
+                            
+            ++idx;
+            
+            if (idx == 30 or i == grid.nPoints()-1)
+            {
+                if (i == grid.nPoints()-1)
+                    lines.append("}");
+                else
+                    lines.append("}\n\nexpec\nint\n");
+                    
+                idx = 0;
+            }
+        }
+    }
+
+    return nrgcmd + lines.join("\n");
 }
 
 /** Extract the energy from the molpro output in 'molpro_output' */
@@ -950,6 +1035,21 @@ inline QString get_key(const Vector &vector)
     return key;
 }
 
+inline QString get_key(const LatticeCharge &point)
+{
+    QString key;
+
+    QTextStream ts(&key, QIODevice::WriteOnly);
+    
+    ts.setRealNumberPrecision(3);
+    
+    ts << point.x() * bohr_radii << " " 
+       << point.y() * bohr_radii << " " 
+       << point.z() * bohr_radii;
+    
+    return key;
+}
+
 /** Internal function used to extract the potentials from the passed
     molpro output file */
 QHash<QString,double> Molpro::extractPotentials(QFile &molpro_output) const
@@ -1191,7 +1291,64 @@ QVector<MolarEnergy> Molpro::calculatePotential(const QMPotential::Molecules &mo
                                                 const SireFF::Probe &probe,
                                                 double scale_potential, int ntries) const 
 {
-    return QVector<MolarEnergy>();
+    if (lattice_charges.count() == 0)
+    {
+        this->calculatePotential(molecules, pottable, probe, scale_potential, ntries);
+        return QVector<MolarEnergy>();
+    }
+    else if (molecules.count() == 0)
+        return QVector<MolarEnergy>();
+        
+    //create a command file to calculate the potential at all grid points
+    QString cmdfile = this->potentialCommandFile(molecules, lattice_charges, 
+                                                 pottable, probe);
+    
+    qDebug() << cmdfile;
+    
+    if (cmdfile.isEmpty())
+        //there were no points at which to calculate the potential
+        return QVector<MolarEnergy>();
+    
+    //call molpro to calculate the potential using the command file
+    // - this returns the points with associated potentials
+    QHash<QString,double> pots = this->calculatePotential(cmdfile, ntries);
+    
+    //now loop through all of the lattice charges and assign potentials to points
+    QVector<MolarEnergy> lattice_nrgs( lattice_charges.count() );
+    lattice_nrgs.squeeze();
+    MolarEnergy *lattice_nrgs_array = lattice_nrgs.data();
+    
+    for (int i=0; i<lattice_charges.count(); ++i)
+    {
+        const LatticeCharge &point = lattice_charges.constData()[i];
+        
+        const QString key = ::get_key(point);
+        
+        qDebug() << key << pots.value(key);
+        
+        lattice_nrgs_array[i] = MolarEnergy(scale_potential * pots.value(key)
+                                             * hartree.value() );
+    }
+    
+    //now loop through the grid(s) and assign potentials to points
+    GridPotentialTable *grids = pottable.gridData();
+    
+    for (int i=0; i<pottable.nGrids(); ++i)
+    {
+        GridPotentialTable &grid = grids[i];
+        
+        const Vector *points = grid.grid().constData();
+        
+        for (int j=0; j<grid.nPoints(); ++j)
+        {
+            const QString key = ::get_key(points[j]);
+
+            grid.add( j, MolarEnergy(scale_potential * pots.value(key) 
+                                            * hartree.value()) );
+        }
+    }
+    
+    return lattice_nrgs;
 }
 
 const char* Molpro::typeName()

@@ -25,7 +25,7 @@ cljff.add(tip4p)
 
 print cljff.energy()
 
-grid = RegularGrid(tip4p.evaluate().center(), 100, 0.1*angstrom)
+grid = RegularGrid(tip4p.evaluate().center(), 30, 0.33*angstrom)
 
 print grid
 print grid.minCoords(), grid.maxCoords(), grid.gridSpacing()
@@ -34,4 +34,4 @@ table = PotentialTable( cljff[MGIdx(0)], grid )
 
 cljff.potential(table, CLJProbe(1*mod_electron))
 
-Cube( 10*kcal_per_mol ).write(table, cljff, "test.cube")
+Cube( 200*kcal_per_mol ).write(table, cljff, "test.cube")

@@ -44,6 +44,7 @@ using boost::tuples::tuple;
 
 using namespace Squire;
 using namespace SireMM;
+using namespace SireMol;
 using namespace SireVol;
 using namespace SireBase;
 using namespace SireUnits;
@@ -274,7 +275,8 @@ const Properties& QMMMElecEmbedPotential::properties() const
 /** This converts the MM molecules in 'mmmols' into a set of lattice charges
     that surround the QM molecules in 'qmmols' */
 LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmols,
-                                                         const MMMolecules &mmmols) const
+                                                         const MMMolecules &mmmols,
+                              QHash<MolNum,AtomIntProperty> *lattice_indicies) const
 {
     if (qmmols.isEmpty() or mmmols.isEmpty())
     {
@@ -326,7 +328,14 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
     LatticeCharges lattice_charges;
     lattice_charges.reserve(nats);
 
-    //now place the molecules' charges onto the lattice
+    //now place the molecules' charges onto the lattice, recording
+    //the lattice index of the atoms of the closest CutGroup copy
+    if (lattice_indicies != 0)
+    {
+        *lattice_indicies = QHash<MolNum,AtomIntProperty>();
+        lattice_indicies->reserve(nmols);
+    }
+    
     for (int i=0; i<nmols; ++i)
     {
         const MMMolecule &mmmol = mmmols_array[i];
@@ -338,6 +347,11 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
         
         BOOST_ASSERT( ngroups == mmmol.parameters().atomicParameters().nArrays() );
         
+        AtomIntProperty lattice_idxs;
+        
+        if (lattice_indicies != 0)
+            lattice_idxs = AtomIntProperty(mmmol.molecule().data().info(), -1);
+        
         for (int j=0; j<ngroups; ++j)
         {
             //get all copies of this molecule within the cutoff distance
@@ -348,6 +362,8 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
 
             const MMParameters::Array &group_charges = charge_array[j];
             const ChargeParameter *group_charges_array = group_charges.constData();
+
+            double mindist = std::numeric_limits<double>::max();
 
             for (QList< tuple<double,CoordGroup> >::const_iterator
                                                         it = mapped_groups.constBegin();
@@ -371,6 +387,13 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
                 BOOST_ASSERT(mapped_group.count() == group_charges.count());
                 
                 const Vector *mapped_group_array = mapped_group.constData();
+
+                bool index_this_group = false;
+                if (it->get<0>() < mindist)
+                {
+                    mindist = it->get<0>();
+                    index_this_group = true;
+                }
                 
                 for (int k=0; k<mapped_group.count(); ++k)
                 {
@@ -378,6 +401,10 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
                     
                     if (chg != 0)
                     {
+                        if (index_this_group and (lattice_indicies != 0))
+                            lattice_idxs.set( CGAtomIdx(mmmol.cgIdx(j),Index(k)), 
+                                              lattice_charges.count() );
+                        
                         //lattice charges are electron charges, with coordinates
                         //in bohr
                         lattice_charges.add( 
@@ -387,6 +414,9 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
                 }
             }
         }
+        
+        if (lattice_indicies != 0)
+            lattice_indicies->insert(mmmol.molecule().number(), lattice_idxs);
     }
     
     return lattice_charges;
@@ -405,14 +435,19 @@ void QMMMElecEmbedPotential::calculateForce(const QMMolecules &qmmols,
 
     //map all of the molecules so that they are in this space
     QMMolecules mapped_qmmols = QMPotential::mapIntoSpace(qmmols);
-
-    LatticeCharges charges = this->getLatticeCharges(mapped_qmmols, mmmols);
     
+    QHash<MolNum,AtomIntProperty> lattice_indicies;
+
+    LatticeCharges charges = this->getLatticeCharges(mapped_qmmols, mmmols,
+                                                     &lattice_indicies);
+
     QVector<Vector> lattice_forces = quantumProgram().calculateForce(
                                                     mapped_qmmols, charges,
                                                     forcetable, scale_force);
 
-    //map the lattice forces back to the forces on the molecules
+    //loop over all MMMolecules and see if they are in the forcetable
+
+    //map the lattice forces back to the potentials on the molecules
     qDebug() << "WARNING - NEED TO MAP LATTICE FORCES BACK TO MM ATOMS";
     qDebug() << "YOUR SIMULATION IS BROKEN!!!";
 }
@@ -585,11 +620,17 @@ void QMMMElecEmbedPotential::calculatePotential(const QMMolecules &qmmols,
     //map all of the molecules so that they are in this space
     QMMolecules mapped_qmmols = QMPotential::mapIntoSpace(qmmols);
 
-    LatticeCharges charges = this->getLatticeCharges(mapped_qmmols, mmmols);
+    QHash<MolNum,AtomIntProperty> lattice_indicies;
+
+    LatticeCharges charges = this->getLatticeCharges(mapped_qmmols, mmmols,
+                                                     &lattice_indicies);
     
     QVector<MolarEnergy> lattice_potentials = quantumProgram().calculatePotential(
                                                     mapped_qmmols, charges, pottable, 
                                                     probe, scale_potential);
+
+    //loop over the MMMolecules and see if they are in the potential table
+    
 
     //map the lattice potentials back to the potentials on the molecules
     qDebug() << "WARNING - NEED TO MAP LATTICE POTENTIALS BACK TO MM ATOMS";

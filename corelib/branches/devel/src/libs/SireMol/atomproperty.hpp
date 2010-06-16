@@ -130,6 +130,7 @@ public:
     AtomProperty();
 
     AtomProperty(const MoleculeInfoData &molinfo);
+    AtomProperty(const MoleculeInfoData &molinfo, const T &default_value);
     
     AtomProperty(const T &value);
     AtomProperty(const PackedArray2D<T> &values);
@@ -260,6 +261,34 @@ AtomProperty<T>::AtomProperty(const MoleculeInfoData &molinfo)
         {
             //now create space for all of the atoms
             tmp_props_array[i] = QVector<T>(molinfo.nAtoms(i));
+        }
+
+        //now copy this into the PackedArray
+        props = PackedArray2D<T>(tmp_props);
+    }
+}
+
+/** Create an AtomProperty that holds one value for each 
+    atom described in 'molinfo'. Each atom starts with
+    the value 'default_value' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomProperty<T>::AtomProperty(const MoleculeInfoData &molinfo,
+                              const T &default_value)
+                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>()
+{   
+    int ncg = molinfo.nCutGroups();
+
+    if (ncg > 0)
+    {
+        //create space for each CutGroup
+        QVector< QVector<T> > tmp_props = QVector< QVector<T> >(ncg);
+        QVector<T> *tmp_props_array = tmp_props.data();
+        
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            //now create space for all of the atoms
+            tmp_props_array[i] = QVector<T>(molinfo.nAtoms(i), default_value);
         }
 
         //now copy this into the PackedArray

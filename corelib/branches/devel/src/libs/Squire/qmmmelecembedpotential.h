@@ -33,6 +33,8 @@
 
 #include "qmpotential.h"
 
+#include "SireMol/atomproperty.hpp"
+
 #include "SireMM/coulombpotential.h"
 
 SIRE_BEGIN_HEADER
@@ -164,7 +166,8 @@ public:
 
 private:
     LatticeCharges getLatticeCharges(const QMMolecules &qmmols,
-                                     const MMMolecules &mmmols) const;
+                                     const MMMolecules &mmmols,
+        QHash<SireMol::MolNum,SireMol::AtomIntProperty> *lattice_indicies=0) const;
 
     void mergeProperties();
 

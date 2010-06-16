@@ -23,7 +23,7 @@ tip4p = protoms.parameterise(tip4p, ProtoMS.SOLVENT)
 #tip4p = tip4p.move().translate( -(tip4p.evaluate().center()) ).commit()
 
 molpro = Molpro()
-molpro.setMethod("HF")
+molpro.setMethod("ks,b,lyp")
 molpro.setBasisSet("VDZ")
 
 qmff = QMFF()
