@@ -207,6 +207,51 @@ void ProtoMS::setExecutable(const QString &protoms)
     protoms_exe = protoms;
 }
 
+/** Return the command file used to run ProtoMS on the passed molecule as the passed type */
+QString ProtoMS::parameterisationCommandFile(const Molecule &molecule,
+                                             int type) const
+{
+    QString contents;
+
+    QTextStream ts(&contents, QIODevice::WriteOnly);
+
+    QString name = molecule.name();
+          
+    if (name.isEmpty())
+        name = "molecule";
+    
+    for (int i=0; i<paramfiles.count(); ++i)
+    {
+        ts << QString("parfile%1 %2\n").arg(i+1).arg(paramfiles[i]);
+    }
+    
+    switch (type)
+    {
+    case PROTEIN:
+        ts << "protein1 " << name << "\n";
+        break;
+    case SOLUTE:
+        ts << "solute1 " << name << "\n";
+        break;
+    case SOLVENT:  
+        ts << "solvent1 " << name << "\n";
+        break;
+
+    default:
+        throw SireError::program_bug( QObject::tr(
+                "Unrecognised ProtoMS molecule type (%1)").arg(type), CODELOC );
+    }
+
+    ts << "streamheader off\n"
+          "streaminfo stdout\n"   
+          "streamwarning stdout\n"
+          "streamfatal stdout\n"
+          "streamparameters stdout\n\n"
+          "chunk1 printparameters\n";
+
+    return contents;
+}
+
 /** Internal function used to write the ProtoMS command file */
 QString ProtoMS::writeCommandFile(const TempDir &tmpdir, 
                                   const Molecule &molecule, int type) const
@@ -237,37 +282,8 @@ QString ProtoMS::writeCommandFile(const TempDir &tmpdir,
     
     QTextStream ts(&f);
     
-    for (int i=0; i<paramfiles.count(); ++i)
-    {
-        ts << QString("parfile%1 %2\n").arg(i+1).arg(paramfiles[i]);
-    }
-    
-    switch (type)
-    {
-    case PROTEIN:
-        ts << "protein1 " << name << "\n";
-        break;
-    case SOLUTE:
-        ts << "solute1 " << name << "\n";
-        break;
-    case SOLVENT:
-        ts << "solvent1 " << name << "\n";
-        break;
-    
-    default:
-        throw SireError::program_bug( QObject::tr(
-                "Unrecognised ProtoMS molecule type (%1)").arg(type), CODELOC );
-    }
-    
-    ts << "streamheader off\n"
-          "streaminfo stdout\n" 
-          "streamwarning stdout\n"
-          "streamfatal stdout\n"
-          "streamparameters stdout\n\n"
-          "chunk1 printparameters\n";
-          
-    f.close();
-    
+    ts << this->parameterisationCommandFile(molecule, type);
+
     return cmdfile;
 }
 

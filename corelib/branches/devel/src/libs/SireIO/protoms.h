@@ -350,6 +350,9 @@ public:
     void addParameterFile(const QString &paramfile);
     
     QStringList parameterFiles() const;
+
+    QString parameterisationCommandFile(const Molecule &molecule,
+                                        int type) const;
     
     Molecule parameterise(const Molecule &molecule, int type,
                           const PropertyMap &map = PropertyMap());
