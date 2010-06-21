@@ -111,6 +111,10 @@ public:
     
     QString toString() const;
 
+    void setConvergenceLimit(double limit);
+    
+    double convergenceLimit() const;
+
     const SireCAS::Symbol& fieldComponent() const;
 
     const SireMM::CoulombProbe& probe() const;
@@ -142,6 +146,10 @@ private:
 
     /** The collection of molecules that have been changed by this constraint */
     Molecules changed_mols;
+    
+    /** The convergence limit - charges are only updated if 
+        they change by more than this limit */
+    double convergence_limit;
 };
 
 /** This class implements the forcefield that is used to calculate

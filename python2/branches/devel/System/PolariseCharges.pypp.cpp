@@ -76,6 +76,16 @@ void register_PolariseCharges_class(){
         PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireCAS::Symbol const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("field_component"), bp::arg("map")=SireBase::PropertyMap() )) );
         PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireCAS::Symbol const &, SireFF::Probe const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("field_component"), bp::arg("probe"), bp::arg("map")=SireBase::PropertyMap() )) );
         PolariseCharges_exposer.def( bp::init< SireSystem::PolariseCharges const & >(( bp::arg("other") )) );
+        { //::SireSystem::PolariseCharges::convergenceLimit
+        
+            typedef double ( ::SireSystem::PolariseCharges::*convergenceLimit_function_type )(  ) const;
+            convergenceLimit_function_type convergenceLimit_function_value( &::SireSystem::PolariseCharges::convergenceLimit );
+            
+            PolariseCharges_exposer.def( 
+                "convergenceLimit"
+                , convergenceLimit_function_value );
+        
+        }
         { //::SireSystem::PolariseCharges::fieldComponent
         
             typedef ::SireCAS::Symbol const & ( ::SireSystem::PolariseCharges::*fieldComponent_function_type )(  ) const;
@@ -120,6 +130,17 @@ void register_PolariseCharges_class(){
             PolariseCharges_exposer.def( 
                 "selfEnergyFF"
                 , selfEnergyFF_function_value );
+        
+        }
+        { //::SireSystem::PolariseCharges::setConvergenceLimit
+        
+            typedef void ( ::SireSystem::PolariseCharges::*setConvergenceLimit_function_type )( double ) ;
+            setConvergenceLimit_function_type setConvergenceLimit_function_value( &::SireSystem::PolariseCharges::setConvergenceLimit );
+            
+            PolariseCharges_exposer.def( 
+                "setConvergenceLimit"
+                , setConvergenceLimit_function_value
+                , ( bp::arg("limit") ) );
         
         }
         { //::SireSystem::PolariseCharges::toString

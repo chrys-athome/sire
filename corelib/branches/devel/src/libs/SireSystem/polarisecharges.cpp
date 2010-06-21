@@ -332,11 +332,12 @@ static const RegisterMetaType<PolariseCharges> r_polarise_charges;
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
                                           const PolariseCharges &polchgs)
 {
-    writeHeader(ds, r_polarise_charges, 1);
+    writeHeader(ds, r_polarise_charges, 2);
     
     SharedDataStream sds(ds);
     
     sds << polchgs.field_component << polchgs.field_probe
+        << polchgs.convergence_limit
         << static_cast<const ChargeConstraint&>(polchgs);
 
     return ds;
@@ -346,8 +347,18 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
                                           PolariseCharges &polchgs)
 {
     VersionID v = readHeader(ds, r_polarise_charges);
-    
-    if (v == 1)
+
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        polchgs = PolariseCharges();
+        
+        sds >> polchgs.field_component >> polchgs.field_probe 
+            >> polchgs.convergence_limit
+            >> static_cast<ChargeConstraint&>(polchgs);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
         
@@ -355,6 +366,8 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
         
         sds >> polchgs.field_component >> polchgs.field_probe 
             >> static_cast<ChargeConstraint&>(polchgs);
+            
+        polchgs.convergence_limit = 1e-3;
     }
     else
         throw version_error( v, "1", r_polarise_charges, CODELOC );
@@ -381,7 +394,8 @@ void PolariseCharges::setProbe(const Probe &probe)
 
 /** Null constructor */
 PolariseCharges::PolariseCharges() 
-                : ConcreteProperty<PolariseCharges,ChargeConstraint>()
+                : ConcreteProperty<PolariseCharges,ChargeConstraint>(),
+                  convergence_limit(1e-3)
 {}
 
 /** Construct a constraint that uses the total energy field and a 
@@ -389,7 +403,8 @@ PolariseCharges::PolariseCharges()
 PolariseCharges::PolariseCharges(const MoleculeGroup &molgroup,
                                  const PropertyMap &map)
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>(molgroup, map),
-                  field_component(ForceFields::totalComponent())
+                  field_component(ForceFields::totalComponent()),
+                  convergence_limit(1e-3)
 {
     this->setProbe( CoulombProbe( 1*mod_electron ) );
 }
@@ -399,7 +414,8 @@ PolariseCharges::PolariseCharges(const MoleculeGroup &molgroup,
 PolariseCharges::PolariseCharges(const MoleculeGroup &molgroup,
                                  const Probe &probe, const PropertyMap &map)
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>(molgroup, map),
-                  field_component(ForceFields::totalComponent())
+                  field_component(ForceFields::totalComponent()),
+                  convergence_limit(1e-3)
 {
     this->setProbe(probe);
 }
@@ -409,7 +425,8 @@ PolariseCharges::PolariseCharges(const MoleculeGroup &molgroup,
 PolariseCharges::PolariseCharges(const MoleculeGroup &molgroup,
                                  const Symbol &fieldcomp, const PropertyMap &map)
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>(molgroup, map),
-                  field_component(fieldcomp)
+                  field_component(fieldcomp),
+                  convergence_limit(1e-3)
 {
     this->setProbe( CoulombProbe( 1*mod_electron ) );
 }
@@ -420,7 +437,7 @@ PolariseCharges::PolariseCharges(const MoleculeGroup &molgroup,
                                  const Symbol &fieldcomp, const Probe &probe,
                                  const PropertyMap &map)
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>(molgroup, map),
-                  field_component(fieldcomp)
+                  field_component(fieldcomp), convergence_limit(1e-3)
 {
     this->setProbe(probe);
 }
@@ -430,7 +447,8 @@ PolariseCharges::PolariseCharges(const PolariseCharges &other)
                 : ConcreteProperty<PolariseCharges,ChargeConstraint>(other),
                   field_component(other.field_component),
                   field_probe(other.field_probe),
-                  moldata(other.moldata), changed_mols(other.changed_mols)
+                  moldata(other.moldata), changed_mols(other.changed_mols),
+                  convergence_limit(other.convergence_limit)
 {}
 
 /** Destructor */
@@ -446,6 +464,7 @@ PolariseCharges& PolariseCharges::operator=(const PolariseCharges &other)
         field_probe = other.field_probe;
         moldata = other.moldata;
         changed_mols = other.changed_mols;
+        convergence_limit = other.convergence_limit;
     
         ChargeConstraint::operator=(other);
     }
@@ -458,7 +477,9 @@ bool PolariseCharges::operator==(const PolariseCharges &other) const
 {
     return (this == &other) or
            (field_component == other.field_component and
-            field_probe == other.field_probe and ChargeConstraint::operator==(other));
+            field_probe == other.field_probe and 
+            convergence_limit == other.convergence_limit and
+            ChargeConstraint::operator==(other));
 }
 
 /** Comparison operator */
@@ -496,6 +517,18 @@ const Symbol& PolariseCharges::fieldComponent() const
 const CoulombProbe& PolariseCharges::probe() const
 {
     return field_probe;
+}
+
+/** Set the convergence limit of the calculation */
+void PolariseCharges::setConvergenceLimit(double limit)
+{
+    convergence_limit = limit;
+}
+
+/** Return the convergence limit of the calculation */
+double PolariseCharges::convergenceLimit() const
+{
+    return convergence_limit;
 }
 
 static void calculateCharges(AtomIdx atomidx,
@@ -673,6 +706,29 @@ calculateCharges(const MoleculeView &molview, const PolariseChargesData &poldata
     return QPair<AtomCharges,AtomEnergies>(induced_charges, selfpol_nrgs);
 }
 
+static bool haveConverged(const AtomCharges &new_charges, 
+                          const AtomCharges &old_charges, 
+                          double convergence_limit)
+{
+    //calculate the root mean square change in charge
+    double msd = 0;
+    
+    const int nchgs = new_charges.nAtoms();
+    BOOST_ASSERT( old_charges.nAtoms() == nchgs );
+    
+    const Charge *new_array = new_charges.array().constValueData();
+    const Charge *old_array = old_charges.array().constValueData();
+    
+    for (int i=0; i<nchgs; ++i)
+    {
+        msd += SireMaths::pow_2( new_array[i].value() - old_array[i].value() );
+    }
+    
+    //qDebug() << "Charge RMSD ==" << std::sqrt( msd / nchgs );
+    
+    return (std::sqrt( msd / nchgs ) < convergence_limit);
+}
+
 /** Set the baseline system for the constraint - this is 
     used to pre-calculate everything for the system
     and to check if the constraint is satisfied */
@@ -760,8 +816,9 @@ void PolariseCharges::setSystem(const System &system)
             
                 if (p.isA<AtomCharges>())
                 {
-                    if (new_charges == p.asA<AtomCharges>())
-                        //the induced charges haven't changed
+                    //have the charges converged?
+                    if ( haveConverged(new_charges, p.asA<AtomCharges>(), 
+                                       convergence_limit) )
                         continue;
                 }
             }
@@ -824,6 +881,7 @@ bool PolariseCharges::fullApply(Delta &delta)
     
     if (not changed_mols.isEmpty())
     {
+        //qDebug() << "Iteration 1";
         bool changed = delta.update(changed_mols);
 
         if (changed)
@@ -838,12 +896,15 @@ bool PolariseCharges::fullApply(Delta &delta)
                     changed = false;
                     ++n_iterations;
                 
+                    //qDebug() << "Iteration" << n_iterations;
                     this->setSystem(delta.deltaSystem());
                 
                     if (not changed_mols.isEmpty())
                         changed = delta.update(changed_mols);
                 }
             }
+            
+            //qDebug() << "Complete!";
             
             return true;
         }

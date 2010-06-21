@@ -127,6 +127,17 @@ void register_ProtoMS_class(){
                 , parameterFiles_function_value );
         
         }
+        { //::SireIO::ProtoMS::parameterisationCommandFile
+        
+            typedef ::QString ( ::SireIO::ProtoMS::*parameterisationCommandFile_function_type )( ::SireMol::Molecule const &,int ) const;
+            parameterisationCommandFile_function_type parameterisationCommandFile_function_value( &::SireIO::ProtoMS::parameterisationCommandFile );
+            
+            ProtoMS_exposer.def( 
+                "parameterisationCommandFile"
+                , parameterisationCommandFile_function_value
+                , ( bp::arg("molecule"), bp::arg("type") ) );
+        
+        }
         { //::SireIO::ProtoMS::parameterise
         
             typedef ::SireMol::Molecule ( ::SireIO::ProtoMS::*parameterise_function_type )( ::SireMol::Molecule const &,int,::SireBase::PropertyMap const & ) ;
