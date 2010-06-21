@@ -104,7 +104,7 @@ polchgs = PolariseCharges(waters, qmff.components().total(),
                           CoulombProbe(1*mod_electron))
 
 system.add(polchgs)
-#system.add(polchgs.selfEnergyFF())
+system.add(polchgs.selfEnergyFF())
 
 print "Applying the polarisation constraint..."
 system.applyConstraints()

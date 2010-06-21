@@ -1328,10 +1328,13 @@ void MoleculeGroup::add(const Molecules &molecules)
     {
         MolNum molnum = it.key();
         
+        quint32 nviews = 0;
+        
         if (not dref.molecules.contains(molnum))
             dref.molidx_to_num.append(molnum);
-            
-        quint32 nviews = dref.molecules.nViews(molnum);
+        else
+            nviews = dref.molecules.nViews(molnum);
+
         quint32 n_newviews = it->nViews();
         
         for (quint32 i=nviews; i<nviews + n_newviews; ++i)
