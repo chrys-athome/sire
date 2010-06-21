@@ -630,11 +630,36 @@ void QMMMElecEmbedPotential::calculatePotential(const QMMolecules &qmmols,
                                                     probe, scale_potential);
 
     //loop over the MMMolecules and see if they are in the potential table
+    int nmols = mmmols.count();
+    const ChunkedVector<MMMolecule> &mmmols_array = mmmols.moleculesByIndex();
+                      
+    const MolarEnergy *potentials_array = lattice_potentials.constData();
+                                        
+    for (int i=0; i<nmols; ++i)
+    {
+        const MMMolecule &mmmol = mmmols_array[i];
+        MolNum molnum = mmmol.number();
     
-
-    //map the lattice potentials back to the potentials on the molecules
-    qDebug() << "WARNING - NEED TO MAP LATTICE POTENTIALS BACK TO MM ATOMS";
-    qDebug() << "YOUR SIMULATION IS BROKEN!!!";
+        if (lattice_indicies.contains(molnum) and pottable.contains(molnum))
+        {
+            const AtomIntProperty &indicies = *(lattice_indicies.constFind(molnum));
+            
+            MolPotentialTable &moltable = pottable.getTable(molnum);
+            
+            for (CGIdx cgidx(0); cgidx<indicies.nCutGroups(); ++cgidx)
+            {
+                for (Index atomidx(0); atomidx<indicies.nAtoms(cgidx); ++atomidx)
+                {
+                    CGAtomIdx cgatomidx(cgidx, atomidx);
+                    
+                    int idx = indicies.at(cgatomidx);
+                    
+                    if (idx >= 0)
+                        moltable.add(cgatomidx, potentials_array[idx]);
+                }
+            }
+        }
+    }
 }
     
 /** Calculate the QM potential at the points in the passed potential table */

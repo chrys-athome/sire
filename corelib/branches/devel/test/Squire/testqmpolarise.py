@@ -76,7 +76,7 @@ for i in range(0, waters.nMolecules()):
 
 print "Constructing the forcefields..."
 
-switchfunc = HarmonicSwitchingFunction( 5*angstrom, 4.5*angstrom )
+switchfunc = HarmonicSwitchingFunction( 15*angstrom, 14.5*angstrom )
 words = open("test/io/water.xsc", "r").readline().split()
 space = PeriodicBox( Vector( float(words[0]), float(words[1]), float(words[2]) ),
                      Vector( float(words[3]), float(words[4]), float(words[5]) ) )
@@ -113,8 +113,6 @@ print "Recalculating the energies..."
 print system.energies()
 
 waters = system[qmff[MGIdx(1)].number()].molecules()
-
-sys.exit(0)
 
 for molnum in waters.molNums():
     water = waters[molnum].molecule()
