@@ -1303,8 +1303,6 @@ QVector<MolarEnergy> Molpro::calculatePotential(const QMPotential::Molecules &mo
     QString cmdfile = this->potentialCommandFile(molecules, lattice_charges, 
                                                  pottable, probe);
     
-    qDebug() << cmdfile;
-    
     if (cmdfile.isEmpty())
         //there were no points at which to calculate the potential
         return QVector<MolarEnergy>();
@@ -1323,8 +1321,6 @@ QVector<MolarEnergy> Molpro::calculatePotential(const QMPotential::Molecules &mo
         const LatticeCharge &point = lattice_charges.constData()[i];
         
         const QString key = ::get_key(point);
-        
-        qDebug() << key << pots.value(key);
         
         lattice_nrgs_array[i] = MolarEnergy(scale_potential * pots.value(key)
                                              * hartree.value() );
