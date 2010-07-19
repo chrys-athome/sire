@@ -1214,7 +1214,7 @@ void FFSymbolExpression::force(ForceTable &forcetable,
                                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                                double scale_force) const
 {
-    int ncomponents = 0;
+    int ncomponents = components.count();
     const Component *components_array = components.constData();
     
     Values values;
@@ -1248,7 +1248,7 @@ void FFSymbolExpression::field(FieldTable &fieldtable,
                                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                                double scale_field) const
 {
-    int ncomponents = 0;
+    int ncomponents = components.count();
     const Component *components_array = components.constData();
     
     Values values;
@@ -1283,7 +1283,7 @@ void FFSymbolExpression::field(FieldTable &fieldtable,
                                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                                double scale_field) const
 {
-    int ncomponents = 0;
+    int ncomponents = components.count();
     const Component *components_array = components.constData();
     
     Values values;
@@ -1317,7 +1317,7 @@ void FFSymbolExpression::potential(PotentialTable &pottable,
                                    const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                                    double scale_potential) const
 {
-    int ncomponents = 0;
+    int ncomponents = components.count();
     const Component *components_array = components.constData();
     
     Values values;
@@ -1352,7 +1352,7 @@ void FFSymbolExpression::potential(PotentialTable &pottable,
                                    const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                                    double scale_potential) const
 {
-    int ncomponents = 0;
+    int ncomponents = components.count();
     const Component *components_array = components.constData();
     
     Values values;

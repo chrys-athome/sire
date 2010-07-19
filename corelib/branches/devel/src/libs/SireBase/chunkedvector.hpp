@@ -79,6 +79,238 @@ friend const void*
 SireBase::detail::get_shared_container_pointer<>(const ChunkedVector<T,N>&);
 
 public:
+    class iterator
+    {
+    public:
+        iterator() : end_chunk(0), current_chunk(0),
+                     end_item(0), current_item(0)
+        {}
+        
+        iterator(const iterator &other)
+             : end_chunk(other.end_chunk), current_chunk(other.current_chunk),
+               end_item(other.end_item), current_item(other.current_item)
+        {}
+        
+        ~iterator()
+        {}
+        
+        iterator& operator=(const iterator &other)
+        {
+            if (this != &other)
+            {
+                end_chunk = other.end_chunk;
+                current_chunk = other.current_chunk;
+                end_item = other.end_item;
+                current_item = other.current_item;
+            }
+            
+            return *this;
+        }
+        
+        iterator& operator++()
+        {
+            if (current_item != 0)
+            {
+                ++current_item;
+                
+                if (current_item == end_item)
+                {
+                    //move to the next chunk
+                    ++current_chunk;
+                    
+                    if (current_chunk == end_chunk)
+                    {
+                        //we've reached the end
+                        current_item = 0;
+                        end_item = 0;
+                        current_chunk = 0;
+                        end_chunk = 0;
+                    }
+                    else
+                    {
+                        current_item = current_chunk.data();
+                        end_item = current_item + current_chunk.count();
+                    }
+                }
+            }
+            
+            return *this;
+        }
+        
+        iterator& operator+=(int val)
+        {
+            for (int i=0; i<val; ++i)
+            {
+                this->operator++();
+            }
+            
+            return *this;
+        }
+        
+        bool operator==(const iterator &other) const
+        {
+            return current_item == other.current_item;
+        }
+        
+        bool operator!=(const iterator &other) const
+        {
+            return not iterator::operator==(other);
+        }
+        
+        T& operator*()
+        {
+            return *current_item;
+        }
+        
+        const T& operator*() const
+        {
+            return *current_item;
+        }
+        
+    private:
+        friend class ChunkedVector;
+
+        iterator(QVector<T> *chunks, int nchunks)
+        {
+            if (nchunks > 0)
+            {
+                current_chunk = chunks;
+                end_chunk = chunks + nchunks;
+                
+                current_item = current_chunk->data();
+                end_item = current_item + current_chunk->count();
+            }
+        }
+    
+        /** Pointer to one past the last chunk */
+        const QVector<T> *end_chunk;
+            
+        /** Pointer to the current chunk */
+        QVector<T> *current_chunk;
+        
+        /** Pointer to one past the last item of this chunk */
+        const T *end_item;
+        
+        /** Pointer to the current item */
+        T *current_item;
+    };
+    
+    class const_iterator
+    {
+    public:
+        const_iterator() : end_chunk(0), current_chunk(0),
+                           end_item(0), current_item(0)
+        {}
+        
+        const_iterator(const const_iterator &other)
+             : end_chunk(other.end_chunk), current_chunk(other.current_chunk),
+               end_item(other.end_item), current_item(other.current_item)
+        {}
+        
+        ~const_iterator()
+        {}
+        
+        const_iterator& operator=(const const_iterator &other)
+        {
+            if (this != &other)
+            {
+                end_chunk = other.end_chunk;
+                current_chunk = other.current_chunk;
+                end_item = other.end_item;
+                current_item = other.current_item;
+            }
+            
+            return *this;
+        }
+        
+        const_iterator& operator++()
+        {
+            if (current_item != 0)
+            {
+                ++current_item;
+                
+                if (current_item == end_item)
+                {
+                    //move to the next chunk
+                    ++current_chunk;
+                    
+                    if (current_chunk == end_chunk)
+                    {
+                        //we've reached the end
+                        current_item = 0;
+                        end_item = 0;
+                        current_chunk = 0;
+                        end_chunk = 0;
+                    }
+                    else
+                    {
+                        current_item = current_chunk.constData();
+                        end_item = current_item + current_chunk.count();
+                    }
+                }
+            }
+            
+            return *this;
+        }
+        
+        const_iterator& operator+=(int val)
+        {
+            for (int i=0; i<val; ++i)
+            {
+                this->operator++();
+            }
+            
+            return *this;
+        }
+        
+        bool operator==(const const_iterator &other) const
+        {
+            return current_item == other.current_item;
+        }
+        
+        bool operator!=(const const_iterator &other) const
+        {
+            return not const_iterator::operator==(other);
+        }
+        
+        T& operator*()
+        {
+            return *current_item;
+        }
+        
+        const T& operator*() const
+        {
+            return *current_item;
+        }
+        
+    private:
+        friend class ChunkedVector;
+
+        const_iterator(const QVector<T> *chunks, int nchunks)
+        {
+            if (nchunks > 0)
+            {
+                current_chunk = chunks;
+                end_chunk = chunks + nchunks;
+                
+                current_item = current_chunk->constData();
+                end_item = current_item + current_chunk->count();
+            }
+        }
+
+        /** Pointer to one past the last chunk */
+        const QVector<T> *end_chunk;
+            
+        /** Pointer to the current chunk */
+        const QVector<T> *current_chunk;
+        
+        /** Pointer to one past the last item of this chunk */
+        const T *end_item;
+        
+        /** Pointer to the current item */
+        const T *current_item;
+    };
+
     ChunkedVector();
     ChunkedVector(int size);
     ChunkedVector(int size, const T &value);
@@ -99,6 +331,36 @@ public:
     
     T value(int i) const;
     T value(int i, const T &default_value) const;
+    
+    iterator begin()
+    {
+        return iterator(_chunks.data(), _chunks.count());
+    }
+    
+    iterator end()
+    {
+        return iterator();
+    }
+    
+    const_iterator begin() const
+    {
+        return const_iterator(_chunks.constData(), _chunks.count());
+    }
+    
+    const_iterator end() const
+    {
+        return const_iterator();
+    }
+
+    const_iterator constBegin() const
+    {
+        return this->begin();
+    }
+    
+    const_iterator constEnd() const
+    {
+        return this->end();
+    }
     
     void append(const T &value);
 

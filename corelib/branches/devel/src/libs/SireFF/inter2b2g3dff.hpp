@@ -96,6 +96,17 @@ public:
     
     void potential(PotentialTable &potentialtable, const Symbol &component,
                    const Probe &probe, double scale_potential=1);
+
+protected:
+    typedef typename Inter2B2GFF<Potential>::Energy Energy;
+    typedef typename Inter2B2GFF<Potential>::EnergyWorkspace EnergyWorkspace;
+
+    typedef typename Inter2B2GFF<Potential>::Molecules Molecules;
+    typedef typename Inter2B2GFF<Potential>::Molecule Molecule;
+
+    typedef typename Inter2B2GFF<Potential>::ChangedMolecule ChangedMolecule;
+
+    void recalculateEnergy();
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -177,6 +188,272 @@ SIRE_OUTOFLINE_TEMPLATE
 Inter2B2G3DFF<Potential>* Inter2B2G3DFF<Potential>::clone() const
 {
     return new Inter2B2G3DFF<Potential>(*this);
+}
+
+/** Recalculate the energy of the current state of this forcefield. This
+    will recalculate the energy using the quickest possible route, e.g.
+    if will only recalculate the energies of molecules that have changed
+    since the last evaluation */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Inter2B2G3DFF<Potential>::recalculateEnergy()
+{
+    int nmols0 = this->mols[0].count();
+    const ChunkedVector<typename Potential::Molecule> &mols0_array 
+                            = this->mols[0].moleculesByIndex();
+
+    int nmols1 = this->mols[1].count();
+    const ChunkedVector<typename Potential::Molecule> &mols1_array
+                            = this->mols[1].moleculesByIndex();
+
+    //tell the potential that we are starting an evaluation
+    Potential::startEvaluation();
+
+    try
+    {
+
+    const ChunkedVector<SireVol::AABox> &aaboxes0_array 
+                                         = this->mols[0].aaBoxesByIndex();
+
+    const ChunkedVector<SireVol::AABox> &aaboxes1_array 
+                                         = this->mols[1].aaBoxesByIndex();
+
+    const SireVol::Space &spce = this->space();
+    const double cutoff = this->switchingFunction().cutoffDistance();
+
+    if (this->changed_mols[0].isEmpty() and this->changed_mols[1].isEmpty())
+    {
+        //we are not recording changes, so we have to assume that
+        //everything has changed. Recalculate the total energy from scratch
+        EnergyWorkspace workspace;
+        Energy total_nrg;
+
+        //loop over all pairs of molecules
+        for (int i=0; i<nmols0; ++i)
+        {
+            const typename Potential::Molecule &mol0 = mols0_array[i];
+            const SireVol::AABox &aabox0 = aaboxes0_array[i];
+        
+            for (int j=0; j<nmols1; ++j)
+            {
+                if (not spce.beyond(cutoff, aabox0, aaboxes1_array[j]))
+                {                
+                    const typename Potential::Molecule &mol1 = mols1_array[j];
+                    Potential::calculateEnergy(mol0, mol1, total_nrg, workspace);
+                }
+            }
+        }
+        
+        //set the energy
+        this->components().setEnergy(*this, total_nrg);
+    }
+    else
+    {
+        //just calculate the changes in energy
+        Energy old_nrg;
+        Energy new_nrg;
+
+        EnergyWorkspace old_workspace;
+        EnergyWorkspace new_workspace;
+        
+        if (this->changed_mols[0].count() == 1 and this->changed_mols[1].isEmpty())
+        {
+            //only need to calculate the energy of changed_mol0 with changed_mols1
+            const typename Potential::ChangedMolecule &changed_mol = 
+                                            *(this->changed_mols[0].constBegin());
+                         
+            int idx = this->mols[0].indexOf(changed_mol.number());
+
+            const SireVol::AABox &new_box = changed_mol.newMolecule().aaBox();
+            const SireVol::AABox &old_box = changed_mol.oldMolecule().aaBox();
+
+            for (int i=0; i<nmols1; ++i)
+            {
+                if (idx != i)
+                {
+                    const typename Potential::Molecule &mol = mols1_array[i];
+                    const SireVol::AABox &aabox = aaboxes1_array[i];
+                    
+                    if (not spce.beyond(cutoff, old_box, aabox))
+                    {
+                        Potential::calculateEnergy(mol, changed_mol.oldParts(),
+                                                   old_nrg, old_workspace);
+                    }
+
+                    if (not spce.beyond(cutoff, new_box, aabox))
+                    {
+                        Potential::calculateEnergy(mol, changed_mol.newParts(),
+                                                   new_nrg, new_workspace);
+                    }
+                }
+            }
+        }
+        else if (this->changed_mols[0].isEmpty() and this->changed_mols[1].count() == 1)
+        {
+            //only need to calculate the energy of changed_mol0 with changed_mols1
+            const typename Potential::ChangedMolecule &changed_mol = 
+                                            *(this->changed_mols[1].constBegin());
+                         
+            int idx = this->mols[1].indexOf(changed_mol.number());
+
+            const SireVol::AABox &new_box = changed_mol.newMolecule().aaBox();
+            const SireVol::AABox &old_box = changed_mol.oldMolecule().aaBox();
+
+            for (int i=0; i<nmols0; ++i)
+            {
+                if (idx != i)
+                {
+                    const typename Potential::Molecule &mol = mols0_array[i];
+                    const SireVol::AABox &aabox = aaboxes0_array[i];
+                    
+                    if (not spce.beyond(cutoff, old_box, aabox))
+                    {
+                        Potential::calculateEnergy(mol, changed_mol.oldParts(),
+                                                   old_nrg, old_workspace);
+                    }
+
+                    if (not spce.beyond(cutoff, new_box, aabox))
+                    {
+                        Potential::calculateEnergy(mol, changed_mol.newParts(),
+                                                   new_nrg, new_workspace);
+                    }
+                }
+            }
+        }
+        else 
+        {
+            if (not this->changed_mols[1].isEmpty())
+            {
+                for (int i=0; i<nmols0; ++i)
+                {
+                    const typename Potential::Molecule &mol0 = mols0_array[i];
+                    
+                    if (this->changed_mols[0].contains(mol0.number()))
+                        //this molecule has changed as well - deal with 
+                        //this later...
+                        continue;
+                        
+                    for (typename QHash<MolNum,ChangedMolecule>::const_iterator
+                                                  it = this->changed_mols[1].constBegin();
+                         it != this->changed_mols[1].constEnd();
+                         ++it)
+                    {
+                        Potential::calculateEnergy(mol0, it->oldParts(),
+                                                   old_nrg, old_workspace);
+                                                   
+                        Potential::calculateEnergy(mol0, it->newParts(),
+                                                   new_nrg, new_workspace);
+                    }
+                }
+            }
+            
+            if (not this->changed_mols[0].isEmpty())
+            {
+                for (int i=0; i<nmols1; ++i)
+                {
+                    const typename Potential::Molecule &mol1 = mols1_array[i];
+                    
+                    if (this->changed_mols[1].contains(mol1.number()))
+                        //this molecule has changed as well - deal with
+                        //this later...
+                        continue;
+                        
+                    for (typename QHash<MolNum,ChangedMolecule>::const_iterator it
+                                                  = this->changed_mols[0].constBegin();
+                         it != this->changed_mols[0].constEnd();
+                         ++it)
+                    {
+                        Potential::calculateEnergy(mol1, it->oldParts(),
+                                                   old_nrg, old_workspace);
+                                                   
+                        Potential::calculateEnergy(mol1, it->newParts(),
+                                                   new_nrg, new_workspace);
+                    }
+                }
+            }
+            
+            //now calculate the energy change between the changed molecules
+            //of group0 and the changed molecules of group1
+            if ( not (this->changed_mols[0].isEmpty() and 
+                      this->changed_mols[1].isEmpty()) )
+            {
+                for (typename QHash<MolNum,ChangedMolecule>::const_iterator it0
+                                                   = this->changed_mols[0].constBegin();
+                     it0 != this->changed_mols[0].constEnd();
+                     ++it0)
+                {
+                    bool changed_all_0 = it0->changedAll();
+                
+                    for (typename QHash<MolNum,ChangedMolecule>::const_iterator it1
+                                                   = this->changed_mols[1].constBegin();
+                         it1 != this->changed_mols[1].constEnd();
+                         ++it1)
+                    {
+                        if (changed_all_0 or it1->changedAll())
+                        {
+                            //need to do the whole molecule calculation
+                            Potential::calculateEnergy( it0->oldMolecule(),
+                                                        it1->oldMolecule(),
+                                                        old_nrg, old_workspace );
+                                                        
+                            Potential::calculateEnergy( it0->newMolecule(),
+                                                        it1->newMolecule(),
+                                                        new_nrg, new_workspace );
+                        }
+                        else
+                        {
+                            //part of mol0 has changed and part of mol1 has changed
+                            // - calculate the energies of the changes with 
+                            //   the whole of the other molecule...
+                            Potential::calculateEnergy( it0->oldParts(),
+                                                        it1->oldMolecule(),
+                                                        old_nrg, old_workspace );
+                                                        
+                            Potential::calculateEnergy( it0->newParts(),
+                                                        it1->newMolecule(),
+                                                        new_nrg, new_workspace );
+                                                        
+                            Potential::calculateEnergy( it1->oldParts(),
+                                                        it0->oldMolecule(),
+                                                        old_nrg, old_workspace );
+                                                        
+                            Potential::calculateEnergy( it1->newParts(),
+                                                        it0->newMolecule(),
+                                                        new_nrg, new_workspace );
+                                                        
+                            //now we need to subtract the double counted changed
+                            //parts of mol0 with changed parts of mol1
+                            Potential::calculateEnergy( it0->oldParts(),
+                                                        it1->oldParts(),
+                                                        old_nrg, old_workspace, -1 );
+                                                        
+                            Potential::calculateEnergy( it0->newParts(),
+                                                        it1->newParts(),
+                                                        new_nrg, new_workspace, -1 );
+                        }
+                    }
+                }
+            }
+        }
+         
+        //change the energy
+        this->components().changeEnergy(*this, new_nrg - old_nrg);
+        
+        //clear the changed molecules
+        this->changed_mols[0].clear();
+        this->changed_mols[1].clear();
+    }
+
+    Potential::finishedEvaluation();
+    
+    this->setClean();
+    
+    }
+    catch(...)
+    {
+        Potential::finishedEvaluation();
+        throw;
+    }
 }
 
 /** Calculate the forces acting on the molecules in the passed forcetable

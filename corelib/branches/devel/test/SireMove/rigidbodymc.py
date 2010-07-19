@@ -107,10 +107,10 @@ system2.add(cljff_a_b)
 
 print system.groupNumbers()
 print system.groupNames()
-print system.components()
+print system.energies()
 print system2.groupNumbers()
 print system2.groupNames()
-print system2.components()
+print system2.energies()
 
 data = save(system2)
 
@@ -160,11 +160,11 @@ ms = t.elapsed()
 
 print "Done! - took %d ms" % ms
 
-print "Final energy = %s" % system2.energy()
+print "Final energy (2) = %s" % system2.energy()
 
 system2.mustNowRecalculateFromScratch();
 
-print "Are we sure? = %s" % system2.energy()
+print "Are we sure? (2) = %s" % system2.energy()
 
 mc = moves.moves()[0]
 
@@ -172,7 +172,7 @@ print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
                             mc.nRejected(), 100 * mc.acceptanceRatio())
 
 system3 = load(data)
-print system3.components()
+print system3.energies()
 
 moves = SameMoves(mc)
 moves.clearStatistics()

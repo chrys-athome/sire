@@ -551,10 +551,6 @@ static void calculateCharges(AtomIdx atomidx,
     int nbonded = bonded_atoms.count();
     
     BOOST_ASSERT(nbonded == alpha_inv_XX.nRows());
-    
-    //if (nbonded <= 1 or alpha_inv_XX.nRows() <= 1)
-    //    //not enough bonded atoms to take the charge
-    //    return;
         
     double phi_a = moltable[cgatomidx.cutGroup()][cgatomidx.atom()].value();
     

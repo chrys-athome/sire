@@ -585,113 +585,160 @@ void Inter2B2GFF<Potential>::recalculateEnergy()
         EnergyWorkspace old_workspace;
         EnergyWorkspace new_workspace;
         
-        if (not changed_mols[1].isEmpty())
+        if (changed_mols[0].count() == 1 and changed_mols[1].isEmpty())
         {
-            for (int i=0; i<nmols0; ++i)
-            {
-                const typename Potential::Molecule &mol0 = mols0_array[i];
-                
-                if (changed_mols[0].contains(mol0.number()))
-                    //this molecule has changed as well - deal with 
-                    //this later...
-                    continue;
-                    
-                for (typename QHash<MolNum,ChangedMolecule>::const_iterator it
-                                               = changed_mols[1].constBegin();
-                     it != changed_mols[1].constEnd();
-                     ++it)
-                {
-                    Potential::calculateEnergy(mol0, it->oldParts(),
-                                               old_nrg, old_workspace);
-                                               
-                    Potential::calculateEnergy(mol0, it->newParts(),
-                                               new_nrg, new_workspace);
-                }
-            }
-        }
-        
-        if (not changed_mols[0].isEmpty())
-        {
+            //only need to calculate the energy of changed_mol0 with changed_mols1
+            const typename Potential::ChangedMolecule &changed_mol = 
+                                            *(changed_mols[0].constBegin());
+                         
+            int idx = this->mols[0].indexOf(changed_mol.number());
+
             for (int i=0; i<nmols1; ++i)
             {
-                const typename Potential::Molecule &mol1 = mols1_array[i];
-                
-                if (changed_mols[1].contains(mol1.number()))
-                    //this molecule has changed as well - deal with
-                    //this later...
-                    continue;
-                    
-                for (typename QHash<MolNum,ChangedMolecule>::const_iterator it
-                                              = changed_mols[0].constBegin();
-                     it != changed_mols[0].constEnd();
-                     ++it)
+                if (idx != i)
                 {
-                    Potential::calculateEnergy(mol1, it->oldParts(),
+                    const typename Potential::Molecule &mol = mols1_array[i];
+
+                    Potential::calculateEnergy(mol, changed_mol.oldParts(),
                                                old_nrg, old_workspace);
-                                               
-                    Potential::calculateEnergy(mol1, it->newParts(),
+
+                    Potential::calculateEnergy(mol, changed_mol.newParts(),
                                                new_nrg, new_workspace);
                 }
             }
         }
-        
-        //now calculate the energy change between the changed molecules
-        //of group0 and the changed molecules of group1
-        if ( not (changed_mols[0].isEmpty() and changed_mols[1].isEmpty()) )
+        else if (changed_mols[0].isEmpty() and changed_mols[1].count() == 1)
         {
-            for (typename QHash<MolNum,ChangedMolecule>::const_iterator it0
-                                               = changed_mols[0].constBegin();
-                 it0 != changed_mols[0].constEnd();
-                 ++it0)
+            //only need to calculate the energy of changed_mol0 with changed_mols1
+            const typename Potential::ChangedMolecule &changed_mol = 
+                                            *(changed_mols[1].constBegin());
+                         
+            int idx = this->mols[1].indexOf(changed_mol.number());
+
+            for (int i=0; i<nmols0; ++i)
             {
-                bool changed_all_0 = it0->changedAll();
-            
-                for (typename QHash<MolNum,ChangedMolecule>::const_iterator it1
-                                               = changed_mols[1].constBegin();
-                     it1 != changed_mols[1].constEnd();
-                     ++it1)
+                if (idx != i)
                 {
-                    if (changed_all_0 or it1->changedAll())
+                    const typename Potential::Molecule &mol = mols0_array[i];
+
+                    Potential::calculateEnergy(mol, changed_mol.oldParts(),
+                                               old_nrg, old_workspace);
+
+                    Potential::calculateEnergy(mol, changed_mol.newParts(),
+                                               new_nrg, new_workspace);
+                }
+            }
+        }
+        else 
+        {
+            if (not changed_mols[1].isEmpty())
+            {
+                for (int i=0; i<nmols0; ++i)
+                {
+                    const typename Potential::Molecule &mol0 = mols0_array[i];
+                    
+                    if (changed_mols[0].contains(mol0.number()))
+                        //this molecule has changed as well - deal with 
+                        //this later...
+                        continue;
+                        
+                    for (typename QHash<MolNum,ChangedMolecule>::const_iterator it
+                                                   = changed_mols[1].constBegin();
+                         it != changed_mols[1].constEnd();
+                         ++it)
                     {
-                        //need to do the whole molecule calculation
-                        Potential::calculateEnergy( it0->oldMolecule(),
-                                                    it1->oldMolecule(),
-                                                    old_nrg, old_workspace );
-                                                    
-                        Potential::calculateEnergy( it0->newMolecule(),
-                                                    it1->newMolecule(),
-                                                    new_nrg, new_workspace );
+                        Potential::calculateEnergy(mol0, it->oldParts(),
+                                                   old_nrg, old_workspace);
+                                                   
+                        Potential::calculateEnergy(mol0, it->newParts(),
+                                                   new_nrg, new_workspace);
                     }
-                    else
+                }
+            }
+            
+            if (not changed_mols[0].isEmpty())
+            {
+                for (int i=0; i<nmols1; ++i)
+                {
+                    const typename Potential::Molecule &mol1 = mols1_array[i];
+                    
+                    if (changed_mols[1].contains(mol1.number()))
+                        //this molecule has changed as well - deal with
+                        //this later...
+                        continue;
+                        
+                    for (typename QHash<MolNum,ChangedMolecule>::const_iterator it
+                                                  = changed_mols[0].constBegin();
+                         it != changed_mols[0].constEnd();
+                         ++it)
                     {
-                        //part of mol0 has changed and part of mol1 has changed
-                        // - calculate the energies of the changes with 
-                        //   the whole of the other molecule...
-                        Potential::calculateEnergy( it0->oldParts(),
-                                                    it1->oldMolecule(),
-                                                    old_nrg, old_workspace );
-                                                    
-                        Potential::calculateEnergy( it0->newParts(),
-                                                    it1->newMolecule(),
-                                                    new_nrg, new_workspace );
-                                                    
-                        Potential::calculateEnergy( it1->oldParts(),
-                                                    it0->oldMolecule(),
-                                                    old_nrg, old_workspace );
-                                                    
-                        Potential::calculateEnergy( it1->newParts(),
-                                                    it0->newMolecule(),
-                                                    new_nrg, new_workspace );
-                                                    
-                        //now we need to subtract the double counted changed
-                        //parts of mol0 with changed parts of mol1
-                        Potential::calculateEnergy( it0->oldParts(),
-                                                    it1->oldParts(),
-                                                    old_nrg, old_workspace, -1 );
-                                                    
-                        Potential::calculateEnergy( it0->newParts(),
-                                                    it1->newParts(),
-                                                    new_nrg, new_workspace, -1 );
+                        Potential::calculateEnergy(mol1, it->oldParts(),
+                                                   old_nrg, old_workspace);
+                                                   
+                        Potential::calculateEnergy(mol1, it->newParts(),
+                                                   new_nrg, new_workspace);
+                    }
+                }
+            }
+            
+            //now calculate the energy change between the changed molecules
+            //of group0 and the changed molecules of group1
+            if ( not (changed_mols[0].isEmpty() and changed_mols[1].isEmpty()) )
+            {
+                for (typename QHash<MolNum,ChangedMolecule>::const_iterator it0
+                                                   = changed_mols[0].constBegin();
+                     it0 != changed_mols[0].constEnd();
+                     ++it0)
+                {
+                    bool changed_all_0 = it0->changedAll();
+                
+                    for (typename QHash<MolNum,ChangedMolecule>::const_iterator it1
+                                                   = changed_mols[1].constBegin();
+                         it1 != changed_mols[1].constEnd();
+                         ++it1)
+                    {
+                        if (changed_all_0 or it1->changedAll())
+                        {
+                            //need to do the whole molecule calculation
+                            Potential::calculateEnergy( it0->oldMolecule(),
+                                                        it1->oldMolecule(),
+                                                        old_nrg, old_workspace );
+                                                        
+                            Potential::calculateEnergy( it0->newMolecule(),
+                                                        it1->newMolecule(),
+                                                        new_nrg, new_workspace );
+                        }
+                        else
+                        {
+                            //part of mol0 has changed and part of mol1 has changed
+                            // - calculate the energies of the changes with 
+                            //   the whole of the other molecule...
+                            Potential::calculateEnergy( it0->oldParts(),
+                                                        it1->oldMolecule(),
+                                                        old_nrg, old_workspace );
+                                                        
+                            Potential::calculateEnergy( it0->newParts(),
+                                                        it1->newMolecule(),
+                                                        new_nrg, new_workspace );
+                                                        
+                            Potential::calculateEnergy( it1->oldParts(),
+                                                        it0->oldMolecule(),
+                                                        old_nrg, old_workspace );
+                                                        
+                            Potential::calculateEnergy( it1->newParts(),
+                                                        it0->newMolecule(),
+                                                        new_nrg, new_workspace );
+                                                        
+                            //now we need to subtract the double counted changed
+                            //parts of mol0 with changed parts of mol1
+                            Potential::calculateEnergy( it0->oldParts(),
+                                                        it1->oldParts(),
+                                                        old_nrg, old_workspace, -1 );
+                                                        
+                            Potential::calculateEnergy( it0->newParts(),
+                                                        it1->newParts(),
+                                                        new_nrg, new_workspace, -1 );
+                        }
                     }
                 }
             }

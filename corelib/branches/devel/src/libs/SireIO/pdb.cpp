@@ -448,9 +448,19 @@ QString PDBAtom::writeToLine() const
     char line[83];
     line[82] = '\0';
     
+    int num = serial;
+    
+    if (num < 0)
+        num = 0;
+        
+    while (num >= 100000)
+    {
+        num -= 100000;
+    }
+    
     qsnprintf(line, 82,
      "%-6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s%2s",
-            qPrintable(record_name), serial, qPrintable(name),
+            qPrintable(record_name), num, qPrintable(name),
             qPrintable(altloc), qPrintable(resname), qPrintable(chainid),
             resseq, qPrintable(icode), x, y, z, occupancy, tempfactor,
             qPrintable(segid), qPrintable(element), qPrintable(chg));
