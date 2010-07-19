@@ -933,6 +933,12 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
         MoverBase::rotate(coords, group1,
                           Quaternion(weight1*delta, dihvec), coords2);
 
+    // See if there are dihedrals whose rotation should be synchronized to this dihedral
+    // (improper torsions)
+    // Get the list from the property map
+    // For each dihedral, find the atom that must be rotated and with which point/axis/weight
+    // Call MoverBase::rotate accordingly
+
     //save the new coordinates
     if (coord_property.hasSource())
         moldata.setProperty(coord_property.source(), coords);

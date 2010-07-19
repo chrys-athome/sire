@@ -82,8 +82,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MoverMove &movermove)
     SharedDataStream sds(ds);
     
     sds >> movermove.smplr 
-	    >> movermove.bonds >> movermove.angles >> movermove.dihedrals 
-	    >> static_cast<MonteCarlo&>(movermove);
+	>> movermove.bonds >> movermove.angles >> movermove.dihedrals 
+	>> static_cast<MonteCarlo&>(movermove);
         
     return ds;
 }
@@ -144,7 +144,8 @@ MoverMove& MoverMove::operator=(const MoverMove &other)
 bool MoverMove::operator==(const MoverMove &other) const
 {
   return MonteCarlo::operator==(other) and smplr == other.smplr 
-    and bonds == other.bonds and angles == other.angles and dihedrals == other.dihedrals;
+    and bonds == other.bonds and angles == other.angles and 
+    dihedrals == other.dihedrals;
 }
 
 /** Comparison operator */
@@ -201,37 +202,36 @@ void MoverMove::_pvt_setTemperature(const Temperature &temperature)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(temperature) );
 }
-
+/* Set the list of variable bonds */
 void MoverMove::setBonds(const QList<BondID> &bonds)
 {
   this->bonds = bonds;
 }
-
+/* Set the list of variable angles */
 void MoverMove::setAngles(const QList<AngleID> &angles)
 {
   this->angles = angles;
 }
-
+/* Set the list of variable dihedrals */
 void MoverMove::setDihedrals(const QList<DihedralID> &dihedrals)
 {
   this->dihedrals = dihedrals;
 }
-
+/* Return the list of variable bonds */
 const QList<BondID>& MoverMove::getBonds()
 {
   return this->bonds;
 }
-
+/* Return the list of variable angles*/
 const QList<AngleID>& MoverMove::getAngles()
 {
   return this->angles;
 }
-
+/* Return the list of variable dihedrals */
 const QList<DihedralID>& MoverMove::getDihedrals()
 {
   return this->dihedrals;
 }
-
 
 /** Actually perform 'nmoves' moves of the molecules in the 
     system 'system', optionally recording simulation statistics
@@ -295,7 +295,7 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	  Length bond_delta;
 	  foreach (const BondID &bond, this->bonds)
 	    {
-	      bond_delta = Length( this->generator().rand(-0.10*angstrom, 0.10*angstrom ) );
+	      bond_delta = Length( this->generator().rand(-0.02*angstrom, 0.02*angstrom ) );
 	      mol_mover.change(bond,bond_delta);
 	    }
 
@@ -304,7 +304,7 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	  Angle angle_delta;
 	  foreach (const AngleID &angle,this->angles)
 	    {
-	      angle_delta = Angle( this->generator().rand(-5.0*degrees,5.0*degrees) );	      
+	      angle_delta = Angle( this->generator().rand(-0.5*degrees,0.5*degrees) );	      
 	      mol_mover.change(angle,angle_delta);
 	    }
 	    // and the torsions
@@ -312,8 +312,12 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	  Angle dihedral_delta;
  	  foreach (const DihedralID &dihedral,this->dihedrals)
 	    {
-	      dihedral_delta = Angle( this->generator().rand(-15.0*degrees,15.0*degrees) );	 	      
-	      mol_mover.change(dihedral,dihedral_delta);
+	      //dihedral_delta = Angle( this->generator().rand(-15.0*degrees,15.0*degrees) );
+	      // We rotate by picking the central bond of the dihedral to handle concerted motions
+	      BondID centralbond;
+	      centralbond = BondID(dihedral.atom1(), dihedral.atom2());
+	      dihedral_delta = Angle (15.0*degrees);
+	      mol_mover.change(centralbond,dihedral_delta);
 	    }
 
 	  //update the system with the new coordinates

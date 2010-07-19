@@ -112,7 +112,7 @@ public:
     void setBonds(const QList<BondID> &bonds);
     void setAngles(const QList<AngleID> &angles);
     void setDihedrals(const QList<DihedralID> &dihedrals);    
-
+ 
     const QList<BondID>& getBonds(); 
     const QList<AngleID>& getAngles(); 
     const QList<DihedralID>& getDihedrals(); 
