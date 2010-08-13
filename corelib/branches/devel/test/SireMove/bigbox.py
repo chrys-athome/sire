@@ -85,9 +85,9 @@ print system.energy()
 delta = space.dimensions()
 print "Space == %s" % delta
 
-for i in range(-1,2):
-    for j in range(-1,2):
-        for k in range(-1,2):
+for i in range(-1,1):
+    for j in range(-1,1):
+        for k in range(-1,1):
             if i == 0 and j == 0 and k == 0:
                 continue
 

@@ -150,6 +150,7 @@ RestraintFF::RestraintFF() : ConcreteProperty<RestraintFF,G1FF>(true), FF3D(),
                              recalc_from_scratch(true)
 {
     this->_pvt_updateName();
+    this->rebuildProperties();
 }
 
 /** Construct, giving the forcefield the specified name */
@@ -158,6 +159,7 @@ RestraintFF::RestraintFF(const QString &name)
               recalc_from_scratch(true)
 {
     FF::setName(name);
+    this->rebuildProperties();
 }
 
 /** Copy constructor */
@@ -167,6 +169,7 @@ RestraintFF::RestraintFF(const RestraintFF &other)
               restraints_by_idx(other.restraints_by_idx),
               old_restraints_by_idx(other.old_restraints_by_idx),
               restraints_by_molnum(other.restraints_by_molnum),
+              spce(other.spce),
               user_values(other.user_values),
               builtin_symbols(other.builtin_symbols),
               props(other.props),
@@ -193,6 +196,7 @@ RestraintFF& RestraintFF::operator=(const RestraintFF &other)
         restraints_by_molnum = other.restraints_by_molnum;
         user_values = other.user_values;
         builtin_symbols = other.builtin_symbols;
+        spce = other.spce;
         props = other.props;
         recalc_from_scratch = other.recalc_from_scratch;
         
@@ -622,6 +626,8 @@ bool RestraintFF::setValue(const Symbol &symbol, double value)
             if (new_restraints.at(i).read().hasValue(symbol))
                 new_restraints[i].edit().setValue(symbol, value);
         }
+        
+        user_values.set(symbol, value);
         
         restraints_by_idx = new_restraints;
         
