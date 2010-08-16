@@ -59,6 +59,8 @@
     #endif
 #endif
 
+#undef SIRE_USE_SSE
+
 #include <QDebug>
 
 using namespace SireMM;
@@ -828,13 +830,9 @@ void InterLJPotential::_pvt_calculateEnergy(const InterLJPotential::Molecule &mo
                         if (param1.ljid == 0)
                             continue;
 
-                        const double invdist2 = double(1) / distmat[j];
-
-                        const LJPair &ljpair = ljpairs.constData()[
-                                                ljpairs.map(param0.ljid,
-                                                            param1.ljid)];
-
-                        iljnrg += calcLJEnergy(distmat[j], ljpair);
+                        iljnrg += calcLJEnergy(distmat[j], ljpairs.constData()[
+                                                                ljpairs.map(param0.ljid,
+                                                                        param1.ljid)]);
                     }
                 }
             }
@@ -1968,23 +1966,18 @@ void IntraLJPotential::calculateEnergy(const LJNBPairs::CGPairs &group_pairs,
             distmat.setOuterIndex(i);
             const Parameter &param0 = params0_array[i];
                 
+            if (param0.ljid == 0)
+                continue;
+                
             for (quint32 j=0; j<nats1; ++j)
             {
                 const Parameter &param1 = params1_array[j];
                     
-                const double invdist2 = double(1) / distmat[j];
-                    
                 if (param1.ljid != 0)
                 {
-                    const LJPair &ljpair = ljpairs.constData()[
-                                              ljpairs.map(param0.ljid,
-                                                          param1.ljid)];
-                    
-                    double sig_over_dist6 = pow_3(ljpair.sigma()*invdist2);
-                    double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                    iljnrg += 4 * ljpair.epsilon() * (sig_over_dist12 - 
-                                                      sig_over_dist6);
+                    iljnrg += calcLJEnergy(distmat[j], ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                    param1.ljid)]);
                 }
             }
         }
@@ -1999,25 +1992,21 @@ void IntraLJPotential::calculateEnergy(const LJNBPairs::CGPairs &group_pairs,
             distmat.setOuterIndex(i);
             const Parameter &param0 = params0_array[i];
                 
+            if (param0.ljid == 0)
+                continue;
+                
             for (quint32 j=0; j<nats1; ++j)
             {
                 const LJScaleFactor &ljscl = group_pairs(i,j);
 
                 const Parameter &param1 = params1_array[j];
                 
-                const double invdist2 = double(1) / distmat[j];
-                
                 if (ljscl.lj() != 0 and param1.ljid != 0)
                 {
-                    const LJPair &ljpair = ljpairs.constData()[
-                                             ljpairs.map(param0.ljid,
-                                                         param1.ljid)];
-                
-                    double sig_over_dist6 = pow_3(ljpair.sigma()*invdist2);
-                    double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                    iljnrg += 4 * ljscl.lj() * ljpair.epsilon() * 
-                               (sig_over_dist12 - sig_over_dist6);
+                    iljnrg += ljscl.lj() * 
+                                calcLJEnergy(distmat[j], ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                    param1.ljid)]);
                 }
             }
         }
@@ -2042,25 +2031,20 @@ void IntraLJPotential::calculateEnergy(const LJNBPairs::CGPairs &group_pairs,
         {
             distmat.setOuterIndex(i);
             const Parameter &param0 = params0_array[i];
+
+            if (param0.ljid == 0)
+                continue;
                 
             foreach (Index j, atoms1)
             {
                 //do both coulomb and LJ
                 const Parameter &param1 = params1_array[j];
                     
-                const double invdist2 = double(1) / distmat[j];
-                    
                 if (param1.ljid != 0)
                 {
-                    const LJPair &ljpair = ljpairs.constData()[
-                                              ljpairs.map(param0.ljid,
-                                                          param1.ljid)];
-                    
-                    double sig_over_dist6 = pow_6(ljpair.sigma()*invdist2);
-                    double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                    iljnrg += 4 * ljpair.epsilon() * (sig_over_dist12 - 
-                                                      sig_over_dist6);
+                    iljnrg += calcLJEnergy(distmat[j], ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                    param1.ljid)]);
                 }
             }
         } 
@@ -2075,6 +2059,9 @@ void IntraLJPotential::calculateEnergy(const LJNBPairs::CGPairs &group_pairs,
             distmat.setOuterIndex(i);
             const Parameter &param0 = params0_array[i];
                 
+            if (param0.ljid == 0)
+                continue;
+                
             foreach (Index j, atoms1)
             {
                 //do both coulomb and LJ
@@ -2082,19 +2069,12 @@ void IntraLJPotential::calculateEnergy(const LJNBPairs::CGPairs &group_pairs,
 
                 const Parameter &param1 = params1_array[j];
                 
-                const double invdist2 = double(1) / distmat[j];
-                
                 if (ljscl.lj() != 0 and param1.ljid != 0)
                 {
-                    const LJPair &ljpair = ljpairs.constData()[
-                                             ljpairs.map(param0.ljid,
-                                                         param1.ljid)];
-                
-                    double sig_over_dist6 = pow_3(ljpair.sigma()*invdist2);
-                    double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                    iljnrg += ljscl.lj() * 4 * ljpair.epsilon() * 
-                               (sig_over_dist12 - sig_over_dist6);
+                    iljnrg += ljscl.lj() * 
+                                calcLJEnergy(distmat[j], ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                    param1.ljid)]);
                 }
             }
         }

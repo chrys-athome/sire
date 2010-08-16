@@ -62,7 +62,7 @@ inline double calcLJEnergy(const double r2, const LJPair &ljpair)
     {
         const double inv_r2 = 1 / r2;
 
-        double sig_over_r6 = SireMaths::pow_3(ljpair.sigma()*inv_r2);
+        double sig_over_r6 = SireMaths::pow_3(ljpair.sigma()*ljpair.sigma()*inv_r2);
         double sig_over_r12 = SireMaths::pow_2(sig_over_r6);
 
         return 4 * ljpair.epsilon() * (sig_over_r12 - sig_over_r6);
@@ -146,7 +146,8 @@ inline Vector calcLJForce(const DistVector &r, const LJPair &ljpair,
             const __m128d sse_inv_r2 = _mm_div_pd(sse_one, sse_r2);
             
             //calculate (sigma/r)^6 and (sigma/r)^12
-            const __m128d sse_sig_over_r2 = _mm_mul_pd(sse_sig, sse_inv_r2);
+            const __m128d sse_sig2 = _mm_mul_pd(sse_sig,sse_sig);
+            const __m128d sse_sig_over_r2 = _mm_mul_pd(sse_sig2, sse_inv_r2);
                                          
             __m128d sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r2,
                                                  sse_sig_over_r2);
