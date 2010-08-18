@@ -231,14 +231,14 @@ void Inter2B2G3DFF<Potential>::recalculateEnergy()
         //loop over all pairs of molecules
         for (int i=0; i<nmols0; ++i)
         {
-            const typename Potential::Molecule &mol0 = mols0_array[i];
-            const SireVol::AABox &aabox0 = aaboxes0_array[i];
+            const typename Potential::Molecule &mol0 = mols0_array.at(i);
+            const SireVol::AABox &aabox0 = aaboxes0_array.at(i);
         
             for (int j=0; j<nmols1; ++j)
             {
-                if (not spce.beyond(cutoff, aabox0, aaboxes1_array[j]))
+                if (not spce.beyond(cutoff, aabox0, aaboxes1_array.at(j)))
                 {                
-                    const typename Potential::Molecule &mol1 = mols1_array[j];
+                    const typename Potential::Molecule &mol1 = mols1_array.at(j);
                     Potential::calculateEnergy(mol0, mol1, total_nrg, workspace);
                 }
             }
@@ -271,8 +271,8 @@ void Inter2B2G3DFF<Potential>::recalculateEnergy()
             {
                 if (idx != i)
                 {
-                    const typename Potential::Molecule &mol = mols1_array[i];
-                    const SireVol::AABox &aabox = aaboxes1_array[i];
+                    const typename Potential::Molecule &mol = mols1_array.at(i);
+                    const SireVol::AABox &aabox = aaboxes1_array.at(i);
                     
                     if (not spce.beyond(cutoff, old_box, aabox))
                     {
@@ -303,8 +303,8 @@ void Inter2B2G3DFF<Potential>::recalculateEnergy()
             {
                 if (idx != i)
                 {
-                    const typename Potential::Molecule &mol = mols0_array[i];
-                    const SireVol::AABox &aabox = aaboxes0_array[i];
+                    const typename Potential::Molecule &mol = mols0_array.at(i);
+                    const SireVol::AABox &aabox = aaboxes0_array.at(i);
                     
                     if (not spce.beyond(cutoff, old_box, aabox))
                     {
@@ -326,7 +326,7 @@ void Inter2B2G3DFF<Potential>::recalculateEnergy()
             {
                 for (int i=0; i<nmols0; ++i)
                 {
-                    const typename Potential::Molecule &mol0 = mols0_array[i];
+                    const typename Potential::Molecule &mol0 = mols0_array.at(i);
                     
                     if (this->changed_mols[0].contains(mol0.number()))
                         //this molecule has changed as well - deal with 
@@ -351,7 +351,7 @@ void Inter2B2G3DFF<Potential>::recalculateEnergy()
             {
                 for (int i=0; i<nmols1; ++i)
                 {
-                    const typename Potential::Molecule &mol1 = mols1_array[i];
+                    const typename Potential::Molecule &mol1 = mols1_array.at(i);
                     
                     if (this->changed_mols[1].contains(mol1.number()))
                         //this molecule has changed as well - deal with

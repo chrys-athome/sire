@@ -532,12 +532,13 @@ const T& ChunkedVector<T,N>::operator[](int i) const
     return this->_chunks[ i / N ][ i % N ];
 }
 
-/** Return a const reference to the ith element */
+/** Return a const reference to the ith element. This performs 
+    no bounds checking and is optimised for speed */
 template<class T, int N>
-SIRE_OUTOFLINE_TEMPLATE
+SIRE_INLINE_TEMPLATE
 const T& ChunkedVector<T,N>::at(int i) const
 {
-    return this->operator[](i);
+    return this->_chunks[ i / N ][ i % N ];
 }
 
 /** Return the ith element - if i is out of bounds, then it returns

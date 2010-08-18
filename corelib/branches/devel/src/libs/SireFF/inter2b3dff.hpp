@@ -249,14 +249,14 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
             #pragma omp for schedule(dynamic)
             for (int i=0; i<my_nmols-1; ++i)
             {
-                const typename Potential::Molecule &mol0 = my_mols_array[i];
-                const SireVol::AABox &aabox0 = aaboxes_array[i];
+                const typename Potential::Molecule &mol0 = my_mols_array.at(i);
+                const SireVol::AABox &aabox0 = aaboxes_array.at(i);
         
                 for (int j=i+1; j<my_nmols; ++j)
                 {
-                    if (not spce.beyond(cutoff, aabox0, aaboxes_array[j]))
+                    if (not spce.beyond(cutoff, aabox0, aaboxes_array.at(j)))
                     {
-                        const typename Potential::Molecule &mol1 = my_mols_array[j];
+                        const typename Potential::Molecule &mol1 = my_mols_array.at(j);
                         Potential::calculateEnergy(mol0, mol1, my_total_nrg, workspace);
                     }
                 }
@@ -309,8 +309,8 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
                 {
                     if (idx != i)
                     {
-                        const typename Potential::Molecule &mol = my_mols_array[i];
-                        const SireVol::AABox &aabox = aaboxes_array[i];
+                        const typename Potential::Molecule &mol = my_mols_array.at(i);
+                        const SireVol::AABox &aabox = aaboxes_array.at(i);
                     
                         if (not spce.beyond(cutoff, old_box, aabox))
                         {
@@ -331,13 +331,13 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
                 #pragma omp for schedule(static)
                 for (int i=0; i<my_nmols; ++i)
                 {
-                    const typename Potential::Molecule &mol0 = my_mols_array[i];
+                    const typename Potential::Molecule &mol0 = my_mols_array.at(i);
                 
                     typename QHash<MolNum,ChangedMolecule>::const_iterator it
                                              = my_changed_mols.constFind(mol0.number());
                     
                     //get the bounding box for this molecule
-                    const SireVol::AABox &aabox0 = aaboxes_array[i];
+                    const SireVol::AABox &aabox0 = aaboxes_array.at(i);
                                                                                                                  
                     if (it == my_changed_mols.constEnd())
                     {

@@ -122,3 +122,8 @@ print system.energy(),t.elapsed()
 
 run(system, mc, 100)
 run(system, mc, 100)
+
+print system.energy()
+system.mustNowRecalculateFromScratch()
+print system.energy()
+
