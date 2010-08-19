@@ -279,11 +279,6 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
              - ADD ABILITY TO FREEZE SELECTED DOFS
 	         For the time being, the last three options are done by letting the user set 
 		 the bonds/angles/dihedrals to be sampled. 
-		 This concept however does not seem very general because it basically assumes 
-                 that MoverMove operates on only one molecule
-
-	     - CORRELATE TORSION CHANGES AROUND A BOND FOR EFFICIENCY
-	     will do that when testing ethane, benzene and indole
 
 	     - PASS A DICTIONARY OF DELTA VALUES TO THE CONSTRUCTOR FOR THE BONDS, ANGLES, DIHEDRALS
 	       will do that in a while, when everything else is working and I want to optimize the 
@@ -291,7 +286,6 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	  */
 
 	  // move the bonds 
-	  //QList<BondID> bonds = connectivity.getBonds();
 	  Length bond_delta;
 	  foreach (const BondID &bond, this->bonds)
 	    {
@@ -300,7 +294,6 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	    }
 
 	  // and the angles
-	  //QList<AngleID> angles = connectivity.getAngles();
 	  Angle angle_delta;
 	  foreach (const AngleID &angle,this->angles)
 	    {
@@ -308,18 +301,15 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	      mol_mover.change(angle,angle_delta);
 	    }
 	    // and the torsions
-	  //QList<DihedralID> dihedrals = connectivity.getDihedrals();
 	  Angle dihedral_delta;
  	  foreach (const DihedralID &dihedral,this->dihedrals)
 	    {
-	      //dihedral_delta = Angle( this->generator().rand(-15.0*degrees,15.0*degrees) );
 	      // We rotate by picking the central bond of the dihedral to handle concerted motions
 	      BondID centralbond;
 	      centralbond = BondID(dihedral.atom1(), dihedral.atom2());
-	      dihedral_delta = Angle (15.0*degrees);
+	      dihedral_delta =  Angle( this->generator().rand(-15.0*degrees,15.0*degrees) );
 	      mol_mover.change(centralbond,dihedral_delta);
 	    }
-
 	  //update the system with the new coordinates
 	  Molecule newmol = mol_mover.commit();
 	  system.update(newmol);
@@ -358,3 +348,58 @@ const char* MoverMove::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<MoverMove>() );
 }
+
+//////
+////// Implementation of detail::DofID
+//////
+
+QDataStream& operator<<(QDataStream &ds, const DofID &dofid)
+{
+    ds << dofid.idx0 << dofid.idx1
+       << dofid.idx2 << dofid.idx3;
+       
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds, DofID &dofid)
+{
+    ds >> dofid.idx0 >> dofid.idx1
+       >> dofid.idx2 >> dofid.idx3;
+       
+    return ds;
+}
+
+DofID::DofID(qint32 index0, qint32 index1, qint32 index2, qint32 index3) 
+  : idx0(index0), idx1(index1), idx2(index2), idx3(index3)
+{}
+
+DofID::DofID(const DofID &other)
+       : idx0(other.idx0), idx1(other.idx1), 
+         idx2(other.idx2), idx3(other.idx3)
+{}
+
+DofID::~DofID()
+{}
+
+DofID& DofID::operator=(const DofID &other)
+{
+    idx0 = other.idx0;
+    idx1 = other.idx1;
+    idx2 = other.idx2;
+    idx3 = other.idx3;
+    
+    return *this;
+}
+
+bool DofID::operator==(const DofID &other) const
+{
+    return idx0 == other.idx0 and idx1 == other.idx1 and
+           idx2 == other.idx2 and idx3 == other.idx3;
+}
+
+bool DofID::operator!=(const DofID &other) const
+{
+    return idx0 != other.idx0 or idx1 != other.idx1 or
+           idx2 != other.idx2 or idx3 != other.idx3;
+}
+

@@ -188,12 +188,12 @@ void addAllIntraBonds(ConnectivityEditor &connectivity, CGIdx cgidx,
     for (Index i(0); i<nats-1; ++i)
     {
         const Vector &v0 = coords_array[i];
-        double r0 = elements_array[i].covalentRadius();
+        double r0 = elements_array[i].bondOrderRadius();
         
         for (Index j(i+1); j<nats; ++j)
         {
             const Vector &v1 = coords_array[j];
-            double r1 = elements_array[j].covalentRadius();
+            double r1 = elements_array[j].bondOrderRadius();
             
             if ( SireMaths::pow_2( tolerance*(r0+r1) ) > Vector::distance2(v0,v1) )
             {
@@ -217,14 +217,14 @@ void addSomeIntraBonds(ConnectivityEditor &connectivity, CGIdx cgidx,
          ++it0)
     {
         const Vector &v0 = coords_array[*it0];
-        double r0 = elements_array[*it0].covalentRadius();
+        double r0 = elements_array[*it0].bondOrderRadius();
         
         for (QSet<Index>::const_iterator it1 = it0 + 1;
              it1 != selected_atoms.constEnd();
              ++it1)
         {
             const Vector &v1 = coords_array[*it1];
-            double r1 = elements_array[*it1].covalentRadius();
+            double r1 = elements_array[*it1].bondOrderRadius();
             
             if ( SireMaths::pow_2(tolerance*(r0+r1)) > Vector::distance2(v0,v1) )
             {
@@ -266,12 +266,12 @@ void addAllInterBonds(ConnectivityEditor &connectivity,
     for (Index i(0); i<nats0; ++i)
     {
         const Vector &v0 = coords0_array[i];
-        double r0 = elements0_array[i].covalentRadius();
+        double r0 = elements0_array[i].bondOrderRadius();
         
         for (Index j(0); j<nats1; ++j)
         {
             const Vector &v1 = coords1_array[j];
-            double r1 = elements1_array[j].covalentRadius();
+            double r1 = elements1_array[j].bondOrderRadius();
             
             if ( SireMaths::pow_2( tolerance * (r0+r1) ) > Vector::distance2(v0,v1) )
             {
@@ -301,12 +301,12 @@ void addSomeInterBonds(ConnectivityEditor &connectivity, CGIdx cgidx0, CGIdx cgi
          ++it)
     {
         const Vector &v1 = coords1_array[*it];
-        double r1 = elements1_array[*it].covalentRadius();
+        double r1 = elements1_array[*it].bondOrderRadius();
         
         for (Index i(0); i<nats0; ++i)
         {
             const Vector &v0 = coords0_array[i];
-            double r0 = elements0_array[i].covalentRadius();
+            double r0 = elements0_array[i].bondOrderRadius();
             
             if ( SireMaths::pow_2(tolerance*(r0+r1)) > Vector::distance2(v0,v1) )
             {
@@ -336,14 +336,14 @@ void addSomeInterBonds(ConnectivityEditor &connectivity, CGIdx cgidx0, CGIdx cgi
          ++it0)
     {
         const Vector &v0 = coords0_array[*it0];
-        double r0 = elements0_array[*it0].covalentRadius();
+        double r0 = elements0_array[*it0].bondOrderRadius();
         
         for (QSet<Index>::const_iterator it1 = selected_atoms1.constBegin();
              it1 != selected_atoms1.constEnd();
              ++it1)
         {
             const Vector &v1 = coords1_array[*it1];
-            double r1 = elements1_array[*it1].covalentRadius();
+            double r1 = elements1_array[*it1].bondOrderRadius();
             
             if ( SireMaths::pow_2(tolerance*(r0+r1)) > Vector::distance2(v0,v1) )
             {

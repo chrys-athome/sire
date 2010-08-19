@@ -37,6 +37,7 @@ SIRE_BEGIN_HEADER
 namespace SireMove
 {
 class MoverMove;
+class DofID;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMove::MoverMove&);
@@ -129,13 +130,51 @@ private:
     QList<AngleID> angles;
     /** The dihedrals that can be moved */;
     QList<DihedralID> dihedrals;    
+    /** The list of delta values for bonds**/
+    QHash<DofID,SireUnits::Dimension::Length> bond_deltas;
+ };
+/** This class implements an unique label of degrees of freedom based 
+    on atomic indices. It is based on the IDQuad class from SireMM/fouratomfunctions.h
+    
+    @author Julien Michel
+*/
+class DofID
+{
+public:
+    DofID(qint32 idx0=-1, qint32 idx1=-1, 
+	  qint32 idx2=-1, qint32 idx3=-1);
+           
+    DofID(const DofID &other);
+    
+    ~DofID();
+    
+    DofID& operator=(const DofID &other);
+    
+    bool operator==(const DofID &other) const;
+    bool operator!=(const DofID &other) const;
+    
+    qint32 idx0;
+    qint32 idx1;
+    qint32 idx2;
+    qint32 idx3;
 };
+
+inline uint qHash(const DofID &dofid)
+{
+    return (dofid.idx0 << 24) | 
+           ( (dofid.idx1 << 16) & 0x00FF0000) |
+           ( (dofid.idx2 << 8)  & 0x0000FF00) |
+           (dofid.idx3 & 0x000000FF);
+}
+
 
 }
 
 Q_DECLARE_METATYPE( SireMove::MoverMove )
+Q_DECLARE_METATYPE( SireMove::DofID )
 
 SIRE_EXPOSE_CLASS( SireMove::MoverMove )
+SIRE_EXPOSE_CLASS( SireMove::DofID )
 
 SIRE_END_HEADER
 
