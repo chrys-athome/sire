@@ -30,8 +30,9 @@ void register_GLDisplayList_class(){
 
     { //::Spier::GLDisplayList
         typedef bp::class_< Spier::GLDisplayList > GLDisplayList_exposer_t;
-        GLDisplayList_exposer_t GLDisplayList_exposer = GLDisplayList_exposer_t( "GLDisplayList", bp::init< >() );
+        GLDisplayList_exposer_t GLDisplayList_exposer = GLDisplayList_exposer_t( "GLDisplayList" );
         bp::scope GLDisplayList_scope( GLDisplayList_exposer );
+        GLDisplayList_exposer.def( bp::init< >() );
         GLDisplayList_exposer.def( bp::init< Spier::GLRenderFunction const & >(( bp::arg("renderfunc") )) );
         GLDisplayList_exposer.def( bp::init< Spier::GLDisplayList const & >(( bp::arg("other") )) );
         { //::Spier::GLDisplayList::isEmpty

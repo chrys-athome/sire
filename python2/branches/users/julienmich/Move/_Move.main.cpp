@@ -9,6 +9,8 @@
 
 #include "DLMRigidBody.pypp.hpp"
 
+#include "DofID.pypp.hpp"
+
 #include "Dynamics.pypp.hpp"
 
 #include "Ensemble.pypp.hpp"
@@ -149,6 +151,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_Integrator_class();
 
     register_DLMRigidBody_class();
+
+    register_DofID_class();
 
     register_Move_class();
 

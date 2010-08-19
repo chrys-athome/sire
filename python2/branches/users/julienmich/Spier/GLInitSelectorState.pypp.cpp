@@ -25,8 +25,9 @@ void register_GLInitSelectorState_class(){
 
     { //::Spier::GLInitSelectorState
         typedef bp::class_< Spier::GLInitSelectorState, bp::bases< Spier::GLInitState, Spier::GLRenderFunction, SireBase::Property > > GLInitSelectorState_exposer_t;
-        GLInitSelectorState_exposer_t GLInitSelectorState_exposer = GLInitSelectorState_exposer_t( "GLInitSelectorState", bp::init< >() );
+        GLInitSelectorState_exposer_t GLInitSelectorState_exposer = GLInitSelectorState_exposer_t( "GLInitSelectorState" );
         bp::scope GLInitSelectorState_scope( GLInitSelectorState_exposer );
+        GLInitSelectorState_exposer.def( bp::init< >() );
         GLInitSelectorState_exposer.def( bp::init< Spier::GLInitSelectorState const & >(( bp::arg("other") )) );
         GLInitSelectorState_exposer.def( bp::self != bp::self );
         { //::Spier::GLInitSelectorState::operator()

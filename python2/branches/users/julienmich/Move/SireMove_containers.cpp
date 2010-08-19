@@ -41,6 +41,7 @@
 #include "Base/convertpackedarray.hpp"
 
 #include "SireMove/move.h"
+#include "SireMove/movermove.h"
 #include "SireMove/zmatrix.h"
 
 using namespace SireMove;
@@ -53,5 +54,11 @@ void register_SireMove_containers()
 
     register_list< QVector<ZMatrixLine> >();
     register_list< QVector<ZMatrixCoordsLine> >();
+
+    #if QT_VERSION >= 0x402000
+    register_dict< QHash<DofID, Length> >();
+    #else
+    register_dict< QHash< DofID, Length>, DofID, Length>();
+    #endif
 }
 

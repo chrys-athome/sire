@@ -25,8 +25,9 @@ void register_GLInitRenderState_class(){
 
     { //::Spier::GLInitRenderState
         typedef bp::class_< Spier::GLInitRenderState, bp::bases< Spier::GLInitState, Spier::GLRenderFunction, SireBase::Property > > GLInitRenderState_exposer_t;
-        GLInitRenderState_exposer_t GLInitRenderState_exposer = GLInitRenderState_exposer_t( "GLInitRenderState", bp::init< >() );
+        GLInitRenderState_exposer_t GLInitRenderState_exposer = GLInitRenderState_exposer_t( "GLInitRenderState" );
         bp::scope GLInitRenderState_scope( GLInitRenderState_exposer );
+        GLInitRenderState_exposer.def( bp::init< >() );
         GLInitRenderState_exposer.def( bp::init< Spier::GLInitRenderState const & >(( bp::arg("other") )) );
         GLInitRenderState_exposer.def( bp::self != bp::self );
         { //::Spier::GLInitRenderState::operator()

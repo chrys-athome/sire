@@ -25,8 +25,9 @@ void register_NullCommand_class(){
 
     { //::Spier::NullCommand
         typedef bp::class_< Spier::NullCommand, bp::bases< Spier::Command, SireBase::Property > > NullCommand_exposer_t;
-        NullCommand_exposer_t NullCommand_exposer = NullCommand_exposer_t( "NullCommand", bp::init< >() );
+        NullCommand_exposer_t NullCommand_exposer = NullCommand_exposer_t( "NullCommand" );
         bp::scope NullCommand_scope( NullCommand_exposer );
+        NullCommand_exposer.def( bp::init< >() );
         NullCommand_exposer.def( bp::init< Spier::NullCommand const & >(( bp::arg("other") )) );
         { //::Spier::NullCommand::mergeWith
         

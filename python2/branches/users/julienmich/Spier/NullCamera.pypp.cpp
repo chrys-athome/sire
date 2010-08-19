@@ -27,8 +27,9 @@ void register_NullCamera_class(){
 
     { //::Spier::NullCamera
         typedef bp::class_< Spier::NullCamera, bp::bases< Spier::Camera, SireBase::Property > > NullCamera_exposer_t;
-        NullCamera_exposer_t NullCamera_exposer = NullCamera_exposer_t( "NullCamera", bp::init< >() );
+        NullCamera_exposer_t NullCamera_exposer = NullCamera_exposer_t( "NullCamera" );
         bp::scope NullCamera_scope( NullCamera_exposer );
+        NullCamera_exposer.def( bp::init< >() );
         NullCamera_exposer.def( bp::init< Spier::NullCamera const & >(( bp::arg("other") )) );
         { //::Spier::NullCamera::lookAt
         

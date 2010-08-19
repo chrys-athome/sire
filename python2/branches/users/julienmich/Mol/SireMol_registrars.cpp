@@ -24,7 +24,7 @@
 #include "cgproperty.hpp"
 #include "perturbation.h"
 #include "molid.h"
-#include "atomenergies.h"
+#include "mgid.h"
 #include "weightfunction.h"
 #include "cgeditor.h"
 #include "atomeditor.h"
@@ -66,7 +66,7 @@
 #include "atomforces.h"
 #include "reseditor.h"
 #include "molname.h"
-#include "mgid.h"
+#include "atomenergies.h"
 #include "mgidsandmaps.h"
 #include "mgnum.h"
 #include "segid.h"
@@ -135,7 +135,9 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::Perturbations >();
     ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::MolID> >();
     ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::MolID> >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomEnergies >();
+    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::MGID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::MGID> >();
+    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::MGID> >();
     ObjectRegistry::registerConverterFor< SireMol::RelFromMass >();
     ObjectRegistry::registerConverterFor< SireMol::RelFromNumber >();
     ObjectRegistry::registerConverterFor< SireMol::AbsFromMass >();
@@ -206,9 +208,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::ResEditor >();
     ObjectRegistry::registerConverterFor< SireMol::ResStructureEditor >();
     ObjectRegistry::registerConverterFor< SireMol::MolName >();
-    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::MGID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::MGID> >();
-    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::MGID> >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomEnergies >();
     ObjectRegistry::registerConverterFor< SireMol::MGIDsAndMaps >();
     ObjectRegistry::registerConverterFor< SireMol::MGNum >();
     ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::SegID> >();

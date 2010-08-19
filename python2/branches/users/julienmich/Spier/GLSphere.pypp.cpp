@@ -31,8 +31,9 @@ void register_GLSphere_class(){
 
     { //::Spier::GLSphere
         typedef bp::class_< Spier::GLSphere, bp::bases< Spier::GLMesh, SireBase::Property > > GLSphere_exposer_t;
-        GLSphere_exposer_t GLSphere_exposer = GLSphere_exposer_t( "GLSphere", bp::init< >() );
+        GLSphere_exposer_t GLSphere_exposer = GLSphere_exposer_t( "GLSphere" );
         bp::scope GLSphere_scope( GLSphere_exposer );
+        GLSphere_exposer.def( bp::init< >() );
         GLSphere_exposer.def( bp::init< double >(( bp::arg("radius") )) );
         GLSphere_exposer.def( bp::init< double, int, int, int >(( bp::arg("radius"), bp::arg("hires"), bp::arg("midres"), bp::arg("lowres") )) );
         GLSphere_exposer.def( bp::init< Spier::GLSphere const & >(( bp::arg("other") )) );

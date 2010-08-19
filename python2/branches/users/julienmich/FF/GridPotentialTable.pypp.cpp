@@ -156,9 +156,9 @@ void register_GridPotentialTable_class(){
         GridPotentialTable_exposer.def( bp::self != bp::self );
         GridPotentialTable_exposer.def( bp::self * bp::other< double >() );
         GridPotentialTable_exposer.def( bp::self + bp::self );
-        GridPotentialTable_exposer.def( bp::self + bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > >() );
+        GridPotentialTable_exposer.def( bp::self + bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -0x000000002, 0, 0, -0x000000001, 0 > >() );
         GridPotentialTable_exposer.def( bp::self - bp::self );
-        GridPotentialTable_exposer.def( bp::self - bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > >() );
+        GridPotentialTable_exposer.def( bp::self - bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -0x000000002, 0, 0, -0x000000001, 0 > >() );
         GridPotentialTable_exposer.def( -bp::self );
         GridPotentialTable_exposer.def( bp::self / bp::other< double >() );
         { //::SireFF::GridPotentialTable::operator=
@@ -256,7 +256,7 @@ void register_GridPotentialTable_class(){
         }
         { //::SireFF::GridPotentialTable::toVector
         
-            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > ( ::SireFF::GridPotentialTable::*toVector_function_type )(  ) const;
+            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x000000002, 0, 0, -0x000000001, 0 > > ( ::SireFF::GridPotentialTable::*toVector_function_type )(  ) const;
             toVector_function_type toVector_function_value( &::SireFF::GridPotentialTable::toVector );
             
             GridPotentialTable_exposer.def( 

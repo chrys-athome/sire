@@ -25,8 +25,9 @@ void register_NullGLRenderFunction_class(){
 
     { //::Spier::NullGLRenderFunction
         typedef bp::class_< Spier::NullGLRenderFunction, bp::bases< Spier::GLRenderFunction, SireBase::Property > > NullGLRenderFunction_exposer_t;
-        NullGLRenderFunction_exposer_t NullGLRenderFunction_exposer = NullGLRenderFunction_exposer_t( "NullGLRenderFunction", bp::init< >() );
+        NullGLRenderFunction_exposer_t NullGLRenderFunction_exposer = NullGLRenderFunction_exposer_t( "NullGLRenderFunction" );
         bp::scope NullGLRenderFunction_scope( NullGLRenderFunction_exposer );
+        NullGLRenderFunction_exposer.def( bp::init< >() );
         NullGLRenderFunction_exposer.def( bp::init< Spier::NullGLRenderFunction const & >(( bp::arg("other") )) );
         NullGLRenderFunction_exposer.def( bp::self != bp::self );
         { //::Spier::NullGLRenderFunction::operator()

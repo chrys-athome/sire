@@ -8,11 +8,15 @@
 
 namespace bp = boost::python;
 
+#include "SireMol/angleid.h"
+
 #include "SireMol/atomidx.h"
 
 #include "SireMol/bondid.h"
 
 #include "SireMol/connectivity.h"
+
+#include "SireMol/dihedralid.h"
 
 #include "SireMol/molecule.h"
 
@@ -32,11 +36,11 @@ namespace bp = boost::python;
 
 #include "SireUnits/temperature.h"
 
+#include "SireUnits/units.h"
+
 #include "ensemble.h"
 
 #include "movermove.h"
-
-#include "zmatrix.h"
 
 #include <QDebug>
 
@@ -60,6 +64,39 @@ void register_MoverMove_class(){
         MoverMove_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         MoverMove_exposer.def( bp::init< SireMove::Sampler const & >(( bp::arg("sampler") )) );
         MoverMove_exposer.def( bp::init< SireMove::MoverMove const & >(( bp::arg("other") )) );
+        { //::SireMove::MoverMove::getAngles
+        
+            typedef ::QList< SireMol::AngleID > const & ( ::SireMove::MoverMove::*getAngles_function_type )(  ) ;
+            getAngles_function_type getAngles_function_value( &::SireMove::MoverMove::getAngles );
+            
+            MoverMove_exposer.def( 
+                "getAngles"
+                , getAngles_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireMove::MoverMove::getBonds
+        
+            typedef ::QList< SireMol::BondID > const & ( ::SireMove::MoverMove::*getBonds_function_type )(  ) ;
+            getBonds_function_type getBonds_function_value( &::SireMove::MoverMove::getBonds );
+            
+            MoverMove_exposer.def( 
+                "getBonds"
+                , getBonds_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireMove::MoverMove::getDihedrals
+        
+            typedef ::QList< SireMol::DihedralID > const & ( ::SireMove::MoverMove::*getDihedrals_function_type )(  ) ;
+            getDihedrals_function_type getDihedrals_function_value( &::SireMove::MoverMove::getDihedrals );
+            
+            MoverMove_exposer.def( 
+                "getDihedrals"
+                , getDihedrals_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::SireMove::MoverMove::moleculeGroup
         
             typedef ::SireMol::MoleculeGroup const & ( ::SireMove::MoverMove::*moleculeGroup_function_type )(  ) const;
@@ -107,6 +144,39 @@ void register_MoverMove_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMove::MoverMove::setAngles
+        
+            typedef void ( ::SireMove::MoverMove::*setAngles_function_type )( ::QList< SireMol::AngleID > const & ) ;
+            setAngles_function_type setAngles_function_value( &::SireMove::MoverMove::setAngles );
+            
+            MoverMove_exposer.def( 
+                "setAngles"
+                , setAngles_function_value
+                , ( bp::arg("angles") ) );
+        
+        }
+        { //::SireMove::MoverMove::setBonds
+        
+            typedef void ( ::SireMove::MoverMove::*setBonds_function_type )( ::QList< SireMol::BondID > const & ) ;
+            setBonds_function_type setBonds_function_value( &::SireMove::MoverMove::setBonds );
+            
+            MoverMove_exposer.def( 
+                "setBonds"
+                , setBonds_function_value
+                , ( bp::arg("bonds") ) );
+        
+        }
+        { //::SireMove::MoverMove::setDihedrals
+        
+            typedef void ( ::SireMove::MoverMove::*setDihedrals_function_type )( ::QList< SireMol::DihedralID > const & ) ;
+            setDihedrals_function_type setDihedrals_function_value( &::SireMove::MoverMove::setDihedrals );
+            
+            MoverMove_exposer.def( 
+                "setDihedrals"
+                , setDihedrals_function_value
+                , ( bp::arg("dihedrals") ) );
+        
+        }
         { //::SireMove::MoverMove::setGenerator
         
             typedef void ( ::SireMove::MoverMove::*setGenerator_function_type )( ::SireMaths::RanGenerator const & ) ;
@@ -138,90 +208,6 @@ void register_MoverMove_class(){
                 "setSampler"
                 , setSampler_function_value
                 , ( bp::arg("molgroup") ) );
-        
-        }
-        { //::SireMove::MoverMove::setSynchronisedAngles
-        
-            typedef void ( ::SireMove::MoverMove::*setSynchronisedAngles_function_type )( bool ) ;
-            setSynchronisedAngles_function_type setSynchronisedAngles_function_value( &::SireMove::MoverMove::setSynchronisedAngles );
-            
-            MoverMove_exposer.def( 
-                "setSynchronisedAngles"
-                , setSynchronisedAngles_function_value
-                , ( bp::arg("on") ) );
-        
-        }
-        { //::SireMove::MoverMove::setSynchronisedBonds
-        
-            typedef void ( ::SireMove::MoverMove::*setSynchronisedBonds_function_type )( bool ) ;
-            setSynchronisedBonds_function_type setSynchronisedBonds_function_value( &::SireMove::MoverMove::setSynchronisedBonds );
-            
-            MoverMove_exposer.def( 
-                "setSynchronisedBonds"
-                , setSynchronisedBonds_function_value
-                , ( bp::arg("on") ) );
-        
-        }
-        { //::SireMove::MoverMove::setSynchronisedDihedrals
-        
-            typedef void ( ::SireMove::MoverMove::*setSynchronisedDihedrals_function_type )( bool ) ;
-            setSynchronisedDihedrals_function_type setSynchronisedDihedrals_function_value( &::SireMove::MoverMove::setSynchronisedDihedrals );
-            
-            MoverMove_exposer.def( 
-                "setSynchronisedDihedrals"
-                , setSynchronisedDihedrals_function_value
-                , ( bp::arg("on") ) );
-        
-        }
-        { //::SireMove::MoverMove::setSynchronisedMotion
-        
-            typedef void ( ::SireMove::MoverMove::*setSynchronisedMotion_function_type )( bool ) ;
-            setSynchronisedMotion_function_type setSynchronisedMotion_function_value( &::SireMove::MoverMove::setSynchronisedMotion );
-            
-            MoverMove_exposer.def( 
-                "setSynchronisedMotion"
-                , setSynchronisedMotion_function_value
-                , ( bp::arg("on") ) );
-        
-        }
-        { //::SireMove::MoverMove::synchronisedAngles
-        
-            typedef bool ( ::SireMove::MoverMove::*synchronisedAngles_function_type )(  ) const;
-            synchronisedAngles_function_type synchronisedAngles_function_value( &::SireMove::MoverMove::synchronisedAngles );
-            
-            MoverMove_exposer.def( 
-                "synchronisedAngles"
-                , synchronisedAngles_function_value );
-        
-        }
-        { //::SireMove::MoverMove::synchronisedBonds
-        
-            typedef bool ( ::SireMove::MoverMove::*synchronisedBonds_function_type )(  ) const;
-            synchronisedBonds_function_type synchronisedBonds_function_value( &::SireMove::MoverMove::synchronisedBonds );
-            
-            MoverMove_exposer.def( 
-                "synchronisedBonds"
-                , synchronisedBonds_function_value );
-        
-        }
-        { //::SireMove::MoverMove::synchronisedDihedrals
-        
-            typedef bool ( ::SireMove::MoverMove::*synchronisedDihedrals_function_type )(  ) const;
-            synchronisedDihedrals_function_type synchronisedDihedrals_function_value( &::SireMove::MoverMove::synchronisedDihedrals );
-            
-            MoverMove_exposer.def( 
-                "synchronisedDihedrals"
-                , synchronisedDihedrals_function_value );
-        
-        }
-        { //::SireMove::MoverMove::synchronisedMotion
-        
-            typedef bool ( ::SireMove::MoverMove::*synchronisedMotion_function_type )(  ) const;
-            synchronisedMotion_function_type synchronisedMotion_function_value( &::SireMove::MoverMove::synchronisedMotion );
-            
-            MoverMove_exposer.def( 
-                "synchronisedMotion"
-                , synchronisedMotion_function_value );
         
         }
         { //::SireMove::MoverMove::toString

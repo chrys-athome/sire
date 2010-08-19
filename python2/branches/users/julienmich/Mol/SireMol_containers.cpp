@@ -63,6 +63,7 @@
 
 #include "SireMol/bondid.h"
 #include "SireMol/angleid.h"
+#include "SireMol/dihedralid.h"
 
 using namespace SireMol;
 
@@ -75,6 +76,7 @@ void register_SireMol_containers()
 
     register_list< QList<BondID> >(); 
     register_list< QList<AngleID> >();
+    register_list< QList<DihedralID> >();
     register_list< QList<CGIdx> >();
     register_list< QList<ResIdx> >();
     register_list< QList<ChainIdx> >();
@@ -129,6 +131,7 @@ void register_SireMol_containers()
     register_PackedArray< SireBase::PackedArray2D<Element> >();
 
     #if QT_VERSION >= 0x402000
+    /**register_dict< QHash<DihedralID, QList<DihedralID> > >();*/
     register_dict< QHash<MolNum,Selector<Atom> >();
     register_dict< QHash<MolNum,Selector<CutGroup> >();
     register_dict< QHash<MolNum,Selector<Residue> >();

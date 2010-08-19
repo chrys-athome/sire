@@ -83,6 +83,17 @@
 #include "supramoves.h"
 #include "suprasystem.h"
 #include "supramoves.h"
+#include "SireError/errors.h"
+#include "SireMaths/rangenerator.h"
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+#include "SireSystem/system.h"
+#include "SireUnits/temperature.h"
+#include "SireUnits/units.h"
+#include "ensemble.h"
+#include "move.h"
+#include <QMutex>
+#include "move.h"
 #include "SireMol/molecule.h"
 #include "SireMol/partialmolecule.h"
 #include "SireStream/datastream.h"
@@ -102,17 +113,6 @@
 #include "SireVol/space.h"
 #include "molinserter.h"
 #include "molinserter.h"
-#include "SireError/errors.h"
-#include "SireMaths/rangenerator.h"
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
-#include "SireSystem/system.h"
-#include "SireUnits/temperature.h"
-#include "SireUnits/units.h"
-#include "ensemble.h"
-#include "move.h"
-#include <QMutex>
-#include "move.h"
 #include "SireMol/molecule.h"
 #include "SireMol/moleculegroup.h"
 #include "SireStream/datastream.h"
@@ -132,8 +132,8 @@ void register_SireMove_properties()
     register_property_container< SireMove::MovesPtr, SireMove::Moves >();
     register_property_container< SireMove::VelGenPtr, SireMove::VelocityGenerator >();
     register_property_container< SireMove::SupraMovesPtr, SireMove::SupraMoves >();
+    register_property_container< SireMove::MovePtr, SireMove::Move >();
     register_property_container< SireMove::SamplerPtr, SireMove::Sampler >();
     register_property_container< SireMove::MolInserterPtr, SireMove::MolInserter >();
-    register_property_container< SireMove::MovePtr, SireMove::Move >();
     register_property_container< SireMove::MolDeleterPtr, SireMove::MolDeleter >();
 }
