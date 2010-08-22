@@ -15,8 +15,8 @@ import os,sys,re
 import shutil
 
 temperature = 250*celsius
-nmoves = 10000
-nblocks = 10
+nmoves = 1000
+nblocks = 1
 
 solute_file = "test/io/DIMfree.pdb"
 solute_name = "DIM"
@@ -175,8 +175,7 @@ def MoverInspector(solute=None):
                 # re-throw the exception
                 raise error 
         var_bonds.append(bond)
-        bondid = DofID(bond.atom0().value(), bond.atom1().value())
-        bond_deltas[bondid] = 0.01*angstrom
+        bond_deltas[bond] = 0.01*angstrom
 
     return var_bonds, var_angles, var_dihedrals, bond_deltas, angle_deltas
 
@@ -211,25 +210,15 @@ solute_mover_moves = MoverMove(solutemolecules)
 solute_mover_moves.setTemperature(temperature)
 
 var_bonds, var_angles, var_dihedrals, bond_deltas, angle_deltas = MoverInspector(solute=solute)
-var_angles = []
-var_dihedrals = []
+#var_angles = []
+#var_dihedrals = []
 
 solute_mover_moves.setBonds(var_bonds)
 solute_mover_moves.setBondDeltas(bond_deltas)
-newbond_deltas = solute_mover_moves.getBondDeltas()
-anewbond = newbond_deltas.keys()[0]
-aoldbond = bond_deltas.keys()[0]
 
-for bond in bond_deltas.keys():
-    if anewbond == bond:
-        print "Found my bond"
-print anewbond.__hash__()
-print aoldbond.__hash__()
-print bond_deltas[aoldbond]
-print bond_deltas[anewbond]
 solute_mover_moves.setAngles(var_angles)
 solute_mover_moves.setDihedrals(var_dihedrals)
-
+solute_mover_moves.setAngleDeltas(angle_deltas)
 sys.exit(-1)
 
 moves = SameMoves(solute_mover_moves)
@@ -285,7 +274,7 @@ for dihedral in var_dihedrals:
 e_total = system.totalComponent()
 system.add( "total_energy", MonitorComponent(e_total, Average()) )
 
-#system.add( "trajectory", TrajectoryMonitor(system[MGIdx(0)]), 1 )
+system.add( "trajectory", TrajectoryMonitor(system[MGIdx(0)]), 10 )
 
 # Run the simulation
 for i in range(0,nblocks):
@@ -328,4 +317,4 @@ for dihedral in var_dihedrals:
 
 print moves[0]
 #**  Output the trajectory
-#system.monitor( MonitorName("trajectory") ).writeToDisk("outputXXXXXX.pdb")
+system.monitor( MonitorName("trajectory") ).writeToDisk("outputXXXXXX.pdb")

@@ -42,6 +42,9 @@ class DofID;
 
 QDataStream& operator<<(QDataStream&, const SireMove::MoverMove&);
 QDataStream& operator>>(QDataStream&, SireMove::MoverMove&);
+QDataStream& operator<<(QDataStream&, const SireMove::DofID&);
+QDataStream& operator>>(QDataStream&, SireMove::DofID&);
+
 
 namespace SireMol
 {
@@ -49,6 +52,7 @@ class MoleculeGroup;
 class PartialMolecule;
 class AtomIdx;
 class Connectivity;
+class AtomID;
 class BondID;
 class AngleID;
 class DihedralID;
@@ -63,6 +67,8 @@ class ZMatrixCoords;
 using SireMol::MoleculeGroup;
 using SireMol::PartialMolecule;
 using SireMol::Connectivity;
+using SireMol::AtomIdx;
+using SireMol::AtomID;
 using SireMol::BondID;
 using SireMol::AngleID;
 using SireMol::DihedralID;
@@ -113,10 +119,14 @@ public:
     void setBonds(const QList<BondID> &bonds);
     void setAngles(const QList<AngleID> &angles);
     void setDihedrals(const QList<DihedralID> &dihedrals);    
- 
+    void setBondDeltas(const QHash<DofID,SireUnits::Dimension::Length> &bond_deltas);
+    void setAngleDeltas(const QHash<DofID,SireUnits::Dimension::Angle> &angle_deltas);
+
     const QList<BondID>& getBonds(); 
     const QList<AngleID>& getAngles(); 
     const QList<DihedralID>& getDihedrals(); 
+    const QHash<DofID,SireUnits::Dimension::Length>& getBondDeltas();
+    const QHash<DofID,SireUnits::Dimension::Angle>& getAngleDeltas();
 
 protected:
     void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
@@ -124,26 +134,43 @@ protected:
 private:
     /** The sampler used to select random molecules for the move */
     SamplerPtr smplr;
-    /** The bonds that can be moved */;
+    /** The bonds that can be moved */
     QList<BondID> bonds;
-    /** The angles that can be moved */;
+    /** The angles that can be moved */
     QList<AngleID> angles;
-    /** The dihedrals that can be moved */;
+    /** The dihedrals that can be moved */
     QList<DihedralID> dihedrals;    
-    /** The list of delta values for bonds**/
+    /** The list of delta values for bonds*/
     QHash<DofID,SireUnits::Dimension::Length> bond_deltas;
+    /** The list of delta values for angle/dihedrals*/
+    QHash<DofID,SireUnits::Dimension::Angle> angle_deltas;
  };
+
 /** This class implements an unique label of degrees of freedom based 
     on atomic indices. It is based on the IDQuad class from SireMM/fouratomfunctions.h
     
     @author Julien Michel
 */
-class DofID
+class SIREMOVE_EXPORT DofID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const DofID&);
+friend QDataStream& ::operator>>(QDataStream&, DofID&);
+
 public:
-    DofID(qint32 idx0=-1, qint32 idx1=-1, 
-	  qint32 idx2=-1, qint32 idx3=-1);
-           
+    DofID(qint32 index0=-1, qint32 index1=-1, 
+	  qint32 index2=-1, qint32 index3=-1);
+
+    DofID(const AtomID &atom0, const AtomID &atom1);
+    DofID(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2);
+    DofID(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2, const AtomID &atom3);
+    DofID(const AtomIdx &atom0, const AtomIdx &atom1);
+    DofID(const AtomIdx &atom0, const AtomIdx &atom1, const AtomIdx &atom2);
+    DofID(const AtomIdx &atom0, const AtomIdx &atom1, const AtomIdx &atom2, const AtomIdx &atom3);
+    DofID(const BondID &bond);
+    DofID(const AngleID &angle);
+    DofID(const DihedralID &dihedral);
+
     DofID(const DofID &other);
     
     ~DofID();
@@ -153,18 +180,29 @@ public:
     bool operator==(const DofID &other) const;
     bool operator!=(const DofID &other) const;
     
+    //uint hash() const;
+    static const char* typeName();
+
+
+    AtomIdx atom0() const{ return AtomIdx(idx0); }
+    AtomIdx atom1() const{ return AtomIdx(idx1); }
+    AtomIdx atom2() const{ return AtomIdx(idx2); }
+    AtomIdx atom3() const{ return AtomIdx(idx3); } 
+
+private:
     qint32 idx0;
     qint32 idx1;
     qint32 idx2;
-    qint32 idx3;
+    qint32 idx3; 
+
 };
 
 inline uint qHash(const DofID &dofid)
 {
-    return (dofid.idx0 << 24) | 
-           ( (dofid.idx1 << 16) & 0x00FF0000) |
-           ( (dofid.idx2 << 8)  & 0x0000FF00) |
-           (dofid.idx3 & 0x000000FF);
+  return (dofid.atom0().value() << 24) |
+           ( ( dofid.atom1().value() << 16) & 0x00FF0000) |
+           ( ( dofid.atom2().value() << 8)  & 0x0000FF00) |
+           ( dofid.atom3().value() & 0x000000FF); 
 }
 
 

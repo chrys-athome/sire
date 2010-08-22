@@ -71,6 +71,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MoverMove &moverm
     
     sds << movermove.smplr 
 	<< movermove.bonds << movermove.angles << movermove.dihedrals
+	<< movermove.bond_deltas << movermove.angle_deltas
 	<< static_cast<const MonteCarlo&>(movermove);
     
     return ds;
@@ -83,6 +84,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MoverMove &movermove)
     
     sds >> movermove.smplr 
 	>> movermove.bonds >> movermove.angles >> movermove.dihedrals 
+	>> movermove.bond_deltas >> movermove.angle_deltas 
 	>> static_cast<MonteCarlo&>(movermove);
         
     return ds;
@@ -118,7 +120,8 @@ MoverMove::MoverMove(const Sampler &sampler)
 MoverMove::MoverMove(const MoverMove &other)
          : ConcreteProperty<MoverMove,MonteCarlo>(other),
            smplr(other.smplr),
-	   bonds(other.bonds),angles(other.angles),dihedrals(other.dihedrals)
+	   bonds(other.bonds),angles(other.angles),dihedrals(other.dihedrals),
+	   bond_deltas(other.bond_deltas),angle_deltas(other.angle_deltas)
 {}
 
 /** Destructor */
@@ -135,6 +138,8 @@ MoverMove& MoverMove::operator=(const MoverMove &other)
 	bonds = other.bonds;
 	angles = other.angles;
 	dihedrals = other.dihedrals;
+	bond_deltas = other.bond_deltas;
+	angle_deltas = other.angle_deltas;
     }
     
     return *this;
@@ -145,7 +150,8 @@ bool MoverMove::operator==(const MoverMove &other) const
 {
   return MonteCarlo::operator==(other) and smplr == other.smplr 
     and bonds == other.bonds and angles == other.angles and 
-    dihedrals == other.dihedrals;
+    dihedrals == other.dihedrals and bond_deltas == other.bond_deltas
+    and angle_deltas == other.angle_deltas;
 }
 
 /** Comparison operator */
@@ -217,6 +223,17 @@ void MoverMove::setDihedrals(const QList<DihedralID> &dihedrals)
 {
   this->dihedrals = dihedrals;
 }
+/* Set the dictionnary of delta values for bonds*/
+void MoverMove::setBondDeltas(const QHash<DofID, SireUnits::Dimension::Length> &bond_deltas)
+{
+  this->bond_deltas = bond_deltas;
+}
+/* Set the dictionnary of delta values for angles*/
+void MoverMove::setAngleDeltas(const QHash<DofID, SireUnits::Dimension::Angle> &angle_deltas)
+{
+  this->angle_deltas = angle_deltas;
+}
+
 /* Return the list of variable bonds */
 const QList<BondID>& MoverMove::getBonds()
 {
@@ -231,6 +248,16 @@ const QList<AngleID>& MoverMove::getAngles()
 const QList<DihedralID>& MoverMove::getDihedrals()
 {
   return this->dihedrals;
+}
+/* Return the dictionnary of delta values for bonds*/
+const QHash<DofID,SireUnits::Dimension::Length>& MoverMove::getBondDeltas()
+{
+  return this->bond_deltas;
+}
+/* Return the dictionnary of delta values for angles*/
+const QHash<DofID,SireUnits::Dimension::Angle>& MoverMove::getAngleDeltas()
+{
+  return this->angle_deltas;
 }
 
 /** Actually perform 'nmoves' moves of the molecules in the 
@@ -262,34 +289,20 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	  //update the sampler with the latest version of the molecules
 	  smplr.edit().updateFrom(system);
 	  //this will randomly select one molecule
+	  //JM - does this still make sense as we store a collection of dofs?
 	  tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
 	  
 	  PartialMolecule oldmol = mol_and_bias.get<0>();
 	  old_bias = mol_and_bias.get<1>();
 	
-	  //const Connectivity &connectivity = oldmol.property( map["connectivity"] ).asA<Connectivity>();
 	  Mover<Molecule> mol_mover = oldmol.molecule().move();
-
-	  /**TODO 
-	     - TEST ON MODEL MOLECULES THAT DETAILED BALANCE HOLDS
-	       ongoing...
-
-	     - CACHE THE BONDS/ANGLES/DIHEDRALS FOR SPEED 
-             - ADD OPTIONS TO NOT SAMPLE BONDS OR ANGLES OR TORSIONS
-             - ADD ABILITY TO FREEZE SELECTED DOFS
-	         For the time being, the last three options are done by letting the user set 
-		 the bonds/angles/dihedrals to be sampled. 
-
-	     - PASS A DICTIONARY OF DELTA VALUES TO THE CONSTRUCTOR FOR THE BONDS, ANGLES, DIHEDRALS
-	       will do that in a while, when everything else is working and I want to optimize the 
-	       acceptance rate
-	  */
 
 	  // move the bonds 
 	  Length bond_delta;
 	  foreach (const BondID &bond, this->bonds)
 	    {
-	      bond_delta = Length( this->generator().rand(-0.02*angstrom, 0.02*angstrom ) );
+	      const Length bond_delta_value = this->bond_deltas[bond];
+	      bond_delta = Length( this->generator().rand(-bond_delta_value, bond_delta_value) );
 	      mol_mover.change(bond,bond_delta);
 	    }
 
@@ -297,7 +310,8 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	  Angle angle_delta;
 	  foreach (const AngleID &angle,this->angles)
 	    {
-	      angle_delta = Angle( this->generator().rand(-0.5*degrees,0.5*degrees) );	      
+	      const Angle angle_delta_value = this->angle_deltas[angle];
+	      angle_delta = Angle( this->generator().rand(-angle_delta_value,angle_delta_value) );	      
 	      mol_mover.change(angle,angle_delta);
 	    }
 	    // and the torsions
@@ -307,9 +321,11 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	      // We rotate by picking the central bond of the dihedral to handle concerted motions
 	      BondID centralbond;
 	      centralbond = BondID(dihedral.atom1(), dihedral.atom2());
-	      dihedral_delta =  Angle( this->generator().rand(-15.0*degrees,15.0*degrees) );
+	      const Angle angle_delta_value = this->angle_deltas[dihedral];
+	      dihedral_delta =  Angle( this->generator().rand(-angle_delta_value,angle_delta_value) );
 	      mol_mover.change(centralbond,dihedral_delta);
 	    }
+
 	  //update the system with the new coordinates
 	  Molecule newmol = mol_mover.commit();
 	  system.update(newmol);
@@ -353,25 +369,88 @@ const char* MoverMove::typeName()
 ////// Implementation of detail::DofID
 //////
 
-QDataStream& operator<<(QDataStream &ds, const DofID &dofid)
+static const RegisterMetaType<DofID> r_dofid;
+
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const DofID &dofid)
 {
-    ds << dofid.idx0 << dofid.idx1
-       << dofid.idx2 << dofid.idx3;
+
+  writeHeader( ds, r_dofid, 2);
+  SharedDataStream sds(ds);
+  
+  sds << dofid.idx0 << dofid.idx1
+      << dofid.idx2 << dofid.idx3;
        
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, DofID &dofid)
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, DofID &dofid)
 {
-    ds >> dofid.idx0 >> dofid.idx1
+   SharedDataStream sds(ds);
+   
+   sds >> dofid.idx0 >> dofid.idx1
        >> dofid.idx2 >> dofid.idx3;
        
-    return ds;
+   return ds;
 }
 
+//** Constructor from a set of 4 qtin32 atomic indices */
 DofID::DofID(qint32 index0, qint32 index1, qint32 index2, qint32 index3) 
   : idx0(index0), idx1(index1), idx2(index2), idx3(index3)
 {}
+
+//** Constructor for a set of 2 AtomIDs*/
+DofID::DofID(const AtomID &atom0, const AtomID &atom1)
+  : idx0( atom0.asA<AtomIdx>().value() ), idx1(atom1.asA<AtomIdx>().value() ),
+    idx2(-1), idx3(-1)
+    {} 
+
+//** Constructor for a set of 3 AtomIDs*/
+DofID::DofID(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2)
+  : idx0( atom0.asA<AtomIdx>().value() ), idx1(atom1.asA<AtomIdx>().value() ),
+    idx2( atom2.asA<AtomIdx>().value() ), idx3(-1)
+    {} 
+
+//** Constructor for a set of 4 AtomIDs*/
+DofID::DofID(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2, const AtomID &atom3)
+  : idx0( atom0.asA<AtomIdx>().value() ), idx1(atom1.asA<AtomIdx>().value() ),
+    idx2( atom2.asA<AtomIdx>().value() ), idx3(atom3.asA<AtomIdx>().value() )
+    {} 
+//** Constructor for a set of 2 AtomIdxs*/
+DofID::DofID(const AtomIdx &atom0, const AtomIdx &atom1)
+  : idx0( atom0.value() ), idx1(atom1.value() ),
+    idx2(-1), idx3(-1)
+    {} 
+
+//** Constructor for a set of 3 AtomIdxs*/
+DofID::DofID(const AtomIdx &atom0, const AtomIdx &atom1, const AtomIdx &atom2)
+  : idx0( atom0.value() ), idx1(atom1.value() ),
+    idx2( atom2.value() ), idx3(-1)
+    {} 
+
+//** Constructor for a set of 4 AtomIdxs*/
+DofID::DofID(const AtomIdx &atom0, const AtomIdx &atom1, const AtomIdx &atom2, const AtomIdx &atom3)
+  : idx0( atom0.value() ), idx1(atom1.value() ),
+    idx2( atom2.value() ), idx3(atom3.value() )
+    {} 
+
+
+//** Constructor for one BondID*/
+DofID:: DofID(const BondID &bond) 
+  : idx0( bond.atom0().asA<AtomIdx>().value() ), idx1(bond.atom1().asA<AtomIdx>().value() ),
+    idx2(-1), idx3(-1)
+     {} 
+
+//** Constructor for one AngleID*/
+DofID:: DofID(const AngleID &angle) 
+  : idx0( angle.atom0().asA<AtomIdx>().value() ), idx1(angle.atom1().asA<AtomIdx>().value() ),
+    idx2( angle.atom2().asA<AtomIdx>().value() ), idx3(-1)
+     {} 
+
+//** Constructor for one DihedralID*/
+DofID:: DofID(const DihedralID &dihedral) 
+  : idx0( dihedral.atom0().asA<AtomIdx>().value() ), idx1(dihedral.atom1().asA<AtomIdx>().value() ),
+    idx2( dihedral.atom2().asA<AtomIdx>().value() ), idx3(dihedral.atom3().asA<AtomIdx>().value() )
+     {} 
 
 DofID::DofID(const DofID &other)
        : idx0(other.idx0), idx1(other.idx1), 
@@ -403,3 +482,15 @@ bool DofID::operator!=(const DofID &other) const
            idx2 != other.idx2 or idx3 != other.idx3;
 }
 
+/** Return a hash of this identifier */
+//uint DofID::hash() const
+//{
+//  return (idx0 << 24) | 
+//       ( (idx1 << 16) & 0x00FF0000) |
+//       ( (idx2 << 8)  & 0x0000FF00) |
+//       (idx3 & 0x000000FF);
+//}
+const char* DofID::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<DofID>() );
+}
