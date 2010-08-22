@@ -143,6 +143,14 @@ namespace bp = boost::python;
 
 #include "SireMove_properties.h"
 
+#include "SireMol/bondid.h"
+
+#include "SireMol/angleid.h"
+
+#include "SireMol/dihedralid.h"
+
+#include "SireMove/movermove.h"
+
 BOOST_PYTHON_MODULE(_Move){
     register_SireMove_objects();
 
@@ -275,6 +283,12 @@ BOOST_PYTHON_MODULE(_Move){
     register_ZMatrixLine_class();
 
     register_SireMove_properties();
+
+    bp::implicitly_convertible< SireMol::BondID, SireMove::DofID >();
+
+    bp::implicitly_convertible< SireMol::AngleID, SireMove::DofID >();
+
+    bp::implicitly_convertible< SireMol::DihedralID, SireMove::DofID >();
 
     register_ZMatrixCoordsLine_class();
 }

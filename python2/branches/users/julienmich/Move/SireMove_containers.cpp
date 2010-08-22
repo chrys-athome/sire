@@ -43,8 +43,10 @@
 #include "SireMove/move.h"
 #include "SireMove/movermove.h"
 #include "SireMove/zmatrix.h"
+#include "SireUnits/dimensions.h"
 
 using namespace SireMove;
+using namespace SireUnits;
 
 using boost::python::register_tuple;
 
@@ -56,9 +58,11 @@ void register_SireMove_containers()
     register_list< QVector<ZMatrixCoordsLine> >();
 
     #if QT_VERSION >= 0x402000
-    register_dict< QHash<DofID, Length> >();
+    register_dict< QHash<DofID, Dimension::Length> >();
+    register_dict< QHash<DofID, Dimension::Angle> >();
     #else
-    register_dict< QHash< DofID, Length>, DofID, Length>();
+    register_dict< QHash< DofID, Dimension::Length>, DofID, Dimension::Length>();
+    register_dict< QHash< DofID, Dimension::Angle>, DofID, Dimension::Angle>();
     #endif
 }
 

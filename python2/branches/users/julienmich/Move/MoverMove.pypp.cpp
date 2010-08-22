@@ -64,6 +64,17 @@ void register_MoverMove_class(){
         MoverMove_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         MoverMove_exposer.def( bp::init< SireMove::Sampler const & >(( bp::arg("sampler") )) );
         MoverMove_exposer.def( bp::init< SireMove::MoverMove const & >(( bp::arg("other") )) );
+        { //::SireMove::MoverMove::getAngleDeltas
+        
+            typedef ::QHash< SireMove::DofID, SireUnits::Dimension::PhysUnit< 0, 0, 0, 0, 0, 0, 1 > > const & ( ::SireMove::MoverMove::*getAngleDeltas_function_type )(  ) ;
+            getAngleDeltas_function_type getAngleDeltas_function_value( &::SireMove::MoverMove::getAngleDeltas );
+            
+            MoverMove_exposer.def( 
+                "getAngleDeltas"
+                , getAngleDeltas_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::SireMove::MoverMove::getAngles
         
             typedef ::QList< SireMol::AngleID > const & ( ::SireMove::MoverMove::*getAngles_function_type )(  ) ;
@@ -72,6 +83,17 @@ void register_MoverMove_class(){
             MoverMove_exposer.def( 
                 "getAngles"
                 , getAngles_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireMove::MoverMove::getBondDeltas
+        
+            typedef ::QHash< SireMove::DofID, SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > > const & ( ::SireMove::MoverMove::*getBondDeltas_function_type )(  ) ;
+            getBondDeltas_function_type getBondDeltas_function_value( &::SireMove::MoverMove::getBondDeltas );
+            
+            MoverMove_exposer.def( 
+                "getBondDeltas"
+                , getBondDeltas_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
@@ -144,6 +166,17 @@ void register_MoverMove_class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMove::MoverMove::setAngleDeltas
+        
+            typedef void ( ::SireMove::MoverMove::*setAngleDeltas_function_type )( ::QHash< SireMove::DofID, SireUnits::Dimension::PhysUnit< 0, 0, 0, 0, 0, 0, 1 > > const & ) ;
+            setAngleDeltas_function_type setAngleDeltas_function_value( &::SireMove::MoverMove::setAngleDeltas );
+            
+            MoverMove_exposer.def( 
+                "setAngleDeltas"
+                , setAngleDeltas_function_value
+                , ( bp::arg("angle_deltas") ) );
+        
+        }
         { //::SireMove::MoverMove::setAngles
         
             typedef void ( ::SireMove::MoverMove::*setAngles_function_type )( ::QList< SireMol::AngleID > const & ) ;
@@ -153,6 +186,17 @@ void register_MoverMove_class(){
                 "setAngles"
                 , setAngles_function_value
                 , ( bp::arg("angles") ) );
+        
+        }
+        { //::SireMove::MoverMove::setBondDeltas
+        
+            typedef void ( ::SireMove::MoverMove::*setBondDeltas_function_type )( ::QHash< SireMove::DofID, SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > > const & ) ;
+            setBondDeltas_function_type setBondDeltas_function_value( &::SireMove::MoverMove::setBondDeltas );
+            
+            MoverMove_exposer.def( 
+                "setBondDeltas"
+                , setBondDeltas_function_value
+                , ( bp::arg("bond_deltas") ) );
         
         }
         { //::SireMove::MoverMove::setBonds

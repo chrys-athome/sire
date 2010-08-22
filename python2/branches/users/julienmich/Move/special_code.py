@@ -19,7 +19,17 @@ def fix_Moves(c):
         if str(decl).find("SimController") != -1:
             decl.exclude()
 
+def fixMB(mb):
+    mb.add_declaration_code("#include \"SireMol/bondid.h\"")
+    mb.add_declaration_code("#include \"SireMol/angleid.h\"")
+    mb.add_declaration_code("#include \"SireMol/dihedralid.h\"")
+    mb.add_declaration_code("#include \"SireMove/movermove.h\"") 
+
 special_code = { "SireMove::MovesBase" : fix_Moves,
                  "SireMove::SameMoves" : fix_Moves,
                  "SireMove::WeightedMoves" : fix_Moves
                }
+
+implicitly_convertible = [ ("SireMol::BondID",  "SireMove::DofID"),
+                           ("SireMol::AngleID", "SireMove::DofID"),
+                           ("SireMol::DihedralID","SireMove::DofID") ] 
