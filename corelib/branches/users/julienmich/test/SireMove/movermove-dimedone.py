@@ -14,9 +14,14 @@ from Sire.Error import *
 import os,sys,re
 import shutil
 
-temperature = 250*celsius
+temperature = 25*celsius
+
+# Will adjust acceptace ratio using nblocks*nmoves
+nmoves_eq = 500
+nblocks_eq = 25
+# For production
 nmoves = 1000
-nblocks = 1
+nblocks = 10
 
 solute_file = "test/io/DIMfree.pdb"
 solute_name = "DIM"
@@ -72,18 +77,6 @@ def MoverInspector(solute=None):
     1) Inspect a collection of dofs in a solute inferred from its connectivity
     2) Decide how to sample dofs
     """
-    # This could also create a dictionnary of delta values for each dof. 
-    # 1) These could be initially determined by computing how many atoms would move when 
-    # the dof is moved. 
-    # 2) The delta values could be adjusted during the equilibration phase of an advanced script
-    # keep upper & lower bounds on the delta values 
-    # bonds 0.001 / 0.1 angstroms
-    # angles 0.1 / 5.0 degrees
-    # torsions 0.5 / 15.0 degrees
-    # while eq
-    #   run moves
-    #   if acc rate < 50%, randomly decrease a number of delta values
-    #   if acc rate > 50%, randomly increase a number of delta values
     all_bonds = solute.property('connectivity').getBonds()
     all_angles = solute.property('connectivity').getAngles()
     all_dihedrals = solute.property('connectivity').getDihedrals()
@@ -210,8 +203,6 @@ solute_mover_moves = MoverMove(solutemolecules)
 solute_mover_moves.setTemperature(temperature)
 
 var_bonds, var_angles, var_dihedrals, bond_deltas, angle_deltas = MoverInspector(solute=solute)
-#var_angles = []
-#var_dihedrals = []
 
 solute_mover_moves.setBonds(var_bonds)
 solute_mover_moves.setBondDeltas(bond_deltas)
@@ -219,11 +210,10 @@ solute_mover_moves.setBondDeltas(bond_deltas)
 solute_mover_moves.setAngles(var_angles)
 solute_mover_moves.setDihedrals(var_dihedrals)
 solute_mover_moves.setAngleDeltas(angle_deltas)
-sys.exit(-1)
 
 moves = SameMoves(solute_mover_moves)
 
-
+#sys.exit(-1)
 # Create monitors 
 
 for bond in var_bonds:
@@ -274,13 +264,41 @@ for dihedral in var_dihedrals:
 e_total = system.totalComponent()
 system.add( "total_energy", MonitorComponent(e_total, Average()) )
 
-system.add( "trajectory", TrajectoryMonitor(system[MGIdx(0)]), 10 )
+system.add( "trajectory", TrajectoryMonitor(system[MGIdx(0)]), 100 )
 
-# Run the simulation
+# Equilibrate the acceptance rate to lie within 30-50%
+# In a more complex simulation, we should also monitor the acceptance rate of the 
+# translations/rotations of the solute. Statistics should not be recorded during
+# equilibration as changing the delta values breaks detailed balance.
+print "Equilibration"
+for i in range(0,nblocks_eq):
+    print "Running block %d " % i
+    system = moves.move(system, nmoves_eq, False)
+    solute_mover = moves[0]
+    acc_rate = solute_mover.acceptanceRatio()
+    solute_mover.clearStatistics()
+    print acc_rate
+    if (acc_rate > 0.5):
+        print "Increasing deltas..."
+        stability = 0
+        solute_mover.changeDeltas(prob=0.25, scale=1.25)
+    elif (acc_rate < 0.3):
+        print "Decreasing deltas..."
+        stability = 0
+        solute_mover.changeDeltas(prob=0.25, scale=0.75)
+    else:
+        print "Acceptance rate was in range "
+        stability += 1
+        if (stability > 5):
+            print "The acceptance rate is stable."
+            break
+    moves = SameMoves(solute_mover)
+
+print "Production"
 for i in range(0,nblocks):
-    print "Running nmove..."
+    print "Running block %d " % i
     system = moves.move(system, nmoves, True)
-
+#sys.exit(-1)
 print "Analysis..."
 # make an histogram...
 nbins=31
@@ -315,6 +333,6 @@ for dihedral in var_dihedrals:
                   mode="angle",
                   output="DIHEDRAL-%s.dat" % dmonitor)
 
-print moves[0]
+
 #**  Output the trajectory
 system.monitor( MonitorName("trajectory") ).writeToDisk("outputXXXXXX.pdb")

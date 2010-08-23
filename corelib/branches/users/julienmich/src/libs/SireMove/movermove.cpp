@@ -360,6 +360,78 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
   }
 }
 
+/** Loop over all bond, angles and dihedrals. Multiply their delta value by scale 
+with probability prob */
+void MoverMove::changeDeltas(float prob, float scale)
+{
+  /**upper and lower bounds for bond, angle and dihedrals */
+  Length lower_bond = Length(0.001*angstrom);
+  Length upper_bond = Length(0.1*angstrom);
+  Angle lower_angle = Angle(0.01*degree);
+  Angle upper_angle = Angle(5.0*degree);
+  Angle lower_dihedral = Angle(0.5*degree); 
+  Angle upper_dihedral = Angle(15.0*degree);
+
+  const RanGenerator ran;
+ 
+  foreach (const BondID &bond, this->bonds)
+    {
+      if (ran.rand() <= prob) 
+	{
+	  Length newdelta = Length(this->bond_deltas[bond].value()*scale);
+	  if (newdelta < lower_bond)
+	    newdelta = lower_bond;
+	  else if (newdelta > upper_bond)
+	    newdelta = upper_bond;
+	  this->setDelta(bond, newdelta);
+	}
+    }
+  foreach (const AngleID &angle, this->angles)
+    {
+      if (ran.rand() <= prob) 
+	{
+	  Angle newdelta = Angle(this->angle_deltas[angle].value()*scale);
+	  if (newdelta < lower_angle)
+	    newdelta = lower_angle;
+	  else if (newdelta > upper_angle)
+	    newdelta = upper_angle;
+	  this->setDelta(angle, newdelta);
+	}
+    }
+  foreach (const DihedralID &dihedral, this->dihedrals)
+    {
+      if (ran.rand() <= prob) 
+	{
+	  Angle newdelta = Angle(this->angle_deltas[dihedral].value()*scale);
+	  if (newdelta < lower_dihedral)
+	    newdelta = lower_dihedral;
+	  else if (newdelta > upper_dihedral)
+	    newdelta = upper_dihedral;
+	  this->setDelta(dihedral, newdelta);
+	}
+    }
+}
+/** Set the delta value of a bond*/
+void MoverMove::setDelta(const BondID &bond, SireUnits::Dimension::Length delta)
+{
+  //What to do if bond is not in bond_deltas?
+  this->bond_deltas[bond] = delta;
+}
+
+/** Set the delta value of an angle*/
+void MoverMove::setDelta(const AngleID &angle, SireUnits::Dimension::Angle delta)
+{
+  //What to do if angle is not in angle_deltas?
+  this->angle_deltas[angle] = delta;
+}
+
+/** Set the delta value of a dihedral*/
+void MoverMove::setDelta(const DihedralID &dihedral, SireUnits::Dimension::Angle delta)
+{
+  //What to do if dihedral is not in angle_deltas?
+  this->angle_deltas[dihedral] = delta;
+}
+
 const char* MoverMove::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<MoverMove>() );

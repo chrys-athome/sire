@@ -115,6 +115,10 @@ public:
     void setGenerator(const RanGenerator &rangenerator);
 
     void move(System &system, int nmoves, bool record_stats=true);
+    void changeDeltas(float prob, float scale);
+    void setDelta(const BondID &bond, SireUnits::Dimension::Length delta);
+    void setDelta(const AngleID &angle, SireUnits::Dimension::Angle delta);
+    void setDelta(const DihedralID &dihedral, SireUnits::Dimension::Angle delta);
 
     void setBonds(const QList<BondID> &bonds);
     void setAngles(const QList<AngleID> &angles);
