@@ -64,6 +64,17 @@ void register_MoverMove_class(){
         MoverMove_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         MoverMove_exposer.def( bp::init< SireMove::Sampler const & >(( bp::arg("sampler") )) );
         MoverMove_exposer.def( bp::init< SireMove::MoverMove const & >(( bp::arg("other") )) );
+        { //::SireMove::MoverMove::changeDeltas
+        
+            typedef void ( ::SireMove::MoverMove::*changeDeltas_function_type )( float,float ) ;
+            changeDeltas_function_type changeDeltas_function_value( &::SireMove::MoverMove::changeDeltas );
+            
+            MoverMove_exposer.def( 
+                "changeDeltas"
+                , changeDeltas_function_value
+                , ( bp::arg("prob"), bp::arg("scale") ) );
+        
+        }
         { //::SireMove::MoverMove::getAngleDeltas
         
             typedef ::QHash< SireMove::DofID, SireUnits::Dimension::PhysUnit< 0, 0, 0, 0, 0, 0, 1 > > const & ( ::SireMove::MoverMove::*getAngleDeltas_function_type )(  ) ;
@@ -208,6 +219,39 @@ void register_MoverMove_class(){
                 "setBonds"
                 , setBonds_function_value
                 , ( bp::arg("bonds") ) );
+        
+        }
+        { //::SireMove::MoverMove::setDelta
+        
+            typedef void ( ::SireMove::MoverMove::*setDelta_function_type )( ::SireMol::BondID const &,::SireUnits::Dimension::Length ) ;
+            setDelta_function_type setDelta_function_value( &::SireMove::MoverMove::setDelta );
+            
+            MoverMove_exposer.def( 
+                "setDelta"
+                , setDelta_function_value
+                , ( bp::arg("bond"), bp::arg("delta") ) );
+        
+        }
+        { //::SireMove::MoverMove::setDelta
+        
+            typedef void ( ::SireMove::MoverMove::*setDelta_function_type )( ::SireMol::AngleID const &,::SireUnits::Dimension::Angle ) ;
+            setDelta_function_type setDelta_function_value( &::SireMove::MoverMove::setDelta );
+            
+            MoverMove_exposer.def( 
+                "setDelta"
+                , setDelta_function_value
+                , ( bp::arg("angle"), bp::arg("delta") ) );
+        
+        }
+        { //::SireMove::MoverMove::setDelta
+        
+            typedef void ( ::SireMove::MoverMove::*setDelta_function_type )( ::SireMol::DihedralID const &,::SireUnits::Dimension::Angle ) ;
+            setDelta_function_type setDelta_function_value( &::SireMove::MoverMove::setDelta );
+            
+            MoverMove_exposer.def( 
+                "setDelta"
+                , setDelta_function_value
+                , ( bp::arg("dihedral"), bp::arg("delta") ) );
         
         }
         { //::SireMove::MoverMove::setDihedrals
