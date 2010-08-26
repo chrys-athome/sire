@@ -469,11 +469,18 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const DofID &dofid)
 
 QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, DofID &dofid)
 {
-   SharedDataStream sds(ds);
+   VersionID v = readHeader(ds, r_dofid);
+
+   if (v == 2)
+   {
+       SharedDataStream sds(ds);
    
-   sds >> dofid.idx0 >> dofid.idx1
-       >> dofid.idx2 >> dofid.idx3;
-       
+       sds >> dofid.idx0 >> dofid.idx1
+           >> dofid.idx2 >> dofid.idx3;
+   }
+   else
+       throw version_error(v, "2", r_dofid, CODELOC);
+
    return ds;
 }
 
