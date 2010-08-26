@@ -80,21 +80,33 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MoverMove &moverm
 /** Extract from a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MoverMove &movermove)
 {
-    SharedDataStream sds(ds);
+    VersionID v = readHeader(ds, r_movermove);
+
+    if (v == 2)
+      {
+	SharedDataStream sds(ds);
     
-    sds >> movermove.smplr 
-	>> movermove.bonds >> movermove.angles >> movermove.dihedrals 
-	>> movermove.bond_deltas >> movermove.angle_deltas 
-	>> static_cast<MonteCarlo&>(movermove);
-        
+	sds >> movermove.smplr 
+	    >> movermove.bonds >> movermove.angles >> movermove.dihedrals 
+	    >> movermove.bond_deltas >> movermove.angle_deltas 
+	    >> static_cast<MonteCarlo&>(movermove);
+      }
+    else
+      throw version_error(v, "1", r_movermove, CODELOC);
+
     return ds;
 }
 
 /** Null constructor */
 MoverMove::MoverMove() 
-         : ConcreteProperty<MoverMove,MonteCarlo>()
+  : ConcreteProperty<MoverMove,MonteCarlo>(),
+    bonds(QList<BondID>()),
+    angles(QList<AngleID>()),
+    dihedrals(QList<DihedralID>()),
+    bond_deltas(QHash<DofID,SireUnits::Dimension::Length>()),
+    angle_deltas(QHash<DofID,SireUnits::Dimension::Angle>())
 {
-    MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
+  MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
 }
 
 /** Construct the mover move for the passed group of molecules */
