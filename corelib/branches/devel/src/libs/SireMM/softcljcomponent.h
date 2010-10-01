@@ -49,7 +49,7 @@ namespace detail
 {
 /** This is the maximum number of different alpha values that a single
     SoftCLJPotential may use */
-const int MAX_ALPHA_VALUES = 5;
+const int MAX_ALPHA_VALUES = 6;
 }
 
 /** This represents the sum of the coulomb and LJ components

@@ -128,8 +128,8 @@ public:
                     }
                     else
                     {
-                        current_item = current_chunk.data();
-                        end_item = current_item + current_chunk.count();
+                        current_item = current_chunk->data();
+                        end_item = current_item + current_chunk->count();
                     }
                 }
             }
@@ -244,8 +244,8 @@ public:
                     }
                     else
                     {
-                        current_item = current_chunk.constData();
-                        end_item = current_item + current_chunk.count();
+                        current_item = current_chunk->constData();
+                        end_item = current_item + current_chunk->count();
                     }
                 }
             }
@@ -271,11 +271,6 @@ public:
         bool operator!=(const const_iterator &other) const
         {
             return not const_iterator::operator==(other);
-        }
-        
-        T& operator*()
-        {
-            return *current_item;
         }
         
         const T& operator*() const

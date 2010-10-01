@@ -12,6 +12,7 @@ from Sire.Qt import *
 t = QTime()
 
 cljff = InterCLJFF()
+fast_cljff = FastInterCLJFF()
 
 mincoords = Vector(-18.3854, -18.66855, -18.4445)
 maxcoords = Vector( 18.3854,  18.66855,  18.4445)
@@ -21,6 +22,9 @@ switchfunc = HarmonicSwitchingFunction(15*angstrom, 14.5*angstrom)
 
 cljff.setSpace(vol)
 cljff.setSwitchingFunction(switchfunc)
+
+fast_cljff.setSpace(vol)
+fast_cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
 
@@ -46,6 +50,7 @@ charges = mol.property("charge")
 ljs = mol.property("LJ")
 
 cljff.add(mol)
+fast_cljff.add(mol)
 
 for i in range(1, mols.nMolecules()):
     mol = mols.moleculeAt(i).molecule()
@@ -55,7 +60,8 @@ for i in range(1, mols.nMolecules()):
                     .setProperty("LJ", ljs) \
              .commit()
    
-    cljff.add(mol)    
+    cljff.add(mol) 
+    fast_cljff.add(mol)   
 
 ms = t.elapsed()
 print "Parameterised all of the water molecules (in %d ms)!" % ms
@@ -111,6 +117,27 @@ for i in range(0,5):
     print "(This is %.2f %% of the benchmark  (%.2f %%, %.2f %%, %.2f %%))" % \
              ( 100 * (mflops / benchmark), 100 * (mflops / benchmark_quot), \
                100 * (mflops / benchmark_sum), 100 * (mflops / benchmark_prod) )
+
+    t.start()
+    fast_cljff.mustNowRecalculateFromScratch()
+    before_energy = FlopsMark()
+    nrg = fast_cljff.energy()
+    after_energy = FlopsMark()
+    ms = t.elapsed()
+    print nrg
+    print nrg.value()
+
+    mflops = 0.000001 * (after_energy - before_energy)
+
+    print "FastInterCLJFF Took %d ms. " % ms,
+    print "Speed is at least %.1f MFLOPS" % mflops
+
+    for j in range(0,before_energy.nThreads()):
+        mflops_j = 0.000001 * (after_energy[j] - before_energy[j])
+        print "%.1f MFLOPS for thread %d " % (mflops_j, j),
+
+    print "\n",
+    
 
 print "Done!"
 

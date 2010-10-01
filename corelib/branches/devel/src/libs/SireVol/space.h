@@ -49,7 +49,6 @@ SIRE_BEGIN_HEADER
 namespace SireVol
 {
 class Space;
-class Space;
 }
 
 QDataStream& operator<<(QDataStream&, const SireVol::Space&);
