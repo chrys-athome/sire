@@ -87,6 +87,8 @@
 
 #include "DoubleDistanceRestraint.pypp.hpp"
 
+#include "FastInterCLJFF.pypp.hpp"
+
 #include "FourAtomFunction.pypp.hpp"
 
 #include "FourAtomFunctions.pypp.hpp"
@@ -421,6 +423,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_DistanceRestraint_class();
 
     register_DoubleDistanceRestraint_class();
+
+    register_FastInterCLJFF_class();
 
     register_FourAtomFunction_class();
 

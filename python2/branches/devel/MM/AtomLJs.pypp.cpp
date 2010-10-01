@@ -25,6 +25,7 @@ void register_AtomLJs_class(){
         bp::scope AtomLJs_scope( AtomLJs_exposer );
         AtomLJs_exposer.def( bp::init< >() );
         AtomLJs_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
+        AtomLJs_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireMM::LJParameter const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomLJs_exposer.def( bp::init< SireMM::LJParameter const & >(( bp::arg("value") )) );
         AtomLJs_exposer.def( bp::init< SireBase::PackedArray2D< SireMM::LJParameter > const & >(( bp::arg("values") )) );
         AtomLJs_exposer.def( bp::init< SireMol::AtomProperty< SireMM::LJParameter > const & >(( bp::arg("other") )) );

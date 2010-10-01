@@ -40,6 +40,7 @@ set ( PYPP_SOURCES
        DihedralSymbols.pypp.cpp
        DistanceRestraint.pypp.cpp
        DoubleDistanceRestraint.pypp.cpp
+       FastInterCLJFF.pypp.cpp
        FourAtomFunction.pypp.cpp
        FourAtomFunctions.pypp.cpp
        FourAtomPerturbation.pypp.cpp

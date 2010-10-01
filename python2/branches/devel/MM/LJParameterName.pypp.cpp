@@ -29,6 +29,8 @@ namespace bp = boost::python;
 
 #include "SireVol/cartesian.h"
 
+#include "ljfunction.h"
+
 #include "ljparameter.h"
 
 #include "ljpotential.h"
