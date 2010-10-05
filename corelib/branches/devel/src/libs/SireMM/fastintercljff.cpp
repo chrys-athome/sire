@@ -58,7 +58,8 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
     
-    sds << fastcljff.props << static_cast<const G1FF&>(fastcljff);
+    sds << fastcljff.props << fastcljff.molprops
+        << static_cast<const G1FF&>(fastcljff);
     
     return ds;
 }
@@ -72,7 +73,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     {
         SharedDataStream sds(ds);
         
-        sds >> fastcljff.props >> static_cast<G1FF&>(fastcljff);
+        sds >> fastcljff.props >> fastcljff.molprops
+            >> static_cast<G1FF&>(fastcljff);
         
         fastcljff.rebuildAll();
     }
@@ -197,6 +199,19 @@ void FastInterCLJFF::rebuildAll()
                                       .asA<VariantProperty>().convertTo<bool>();
     
     //now rebuild all of the bead groups from the list of molecules
+    const Molecules &mols = this->operator[](MGIdx(0)).molecules();
+    
+    QHash<MolNum,PropertyMap> old_molprops = molprops;
+    
+    molprops = QHash<MolNum,PropertyMap>();
+    //ffmols.clear();
+    
+    for (Molecules::const_iterator it = mols.constBegin();
+         it != mols.constEnd();
+         ++it)
+    {
+        this->_pvt_added( *it, molprops.value(it.key(), PropertyMap()) );
+    }
 
     //the energy almost certainly will need recalculating
     FF::setDirty();

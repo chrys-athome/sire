@@ -18,6 +18,7 @@ set ( SIREVOL_HEADERS
       coordgroup.h
       errors.h
       grid.h
+      patching.h
       periodicbox.h
       space.h
     )
@@ -34,6 +35,7 @@ set ( SIREVOL_SOURCES
       coordgroup.cpp
       errors.cpp
       grid.cpp
+      patching.cpp
       periodicbox.cpp
       space.cpp
     

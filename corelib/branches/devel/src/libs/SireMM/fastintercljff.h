@@ -67,6 +67,7 @@ using SireMol::MoleculeData;
 using SireMol::PartialMolecule;
 using SireMol::ViewsOfMol;
 using SireMol::Molecules;
+using SireMol::MolNum;
 
 using SireFF::ForceTable;
 using SireFF::FieldTable;
@@ -199,6 +200,12 @@ private:
 
     /** All of the properties of this forcefield */
     Properties props;
+
+    /** The property maps for all of the molecules in this forcefield */
+    QHash<MolNum,PropertyMap> molprops;
+
+    /** The mapping of molecule to beadid */
+    QHash< MolNum,QVector<quint32> > mol_to_beadid;
 
     /** The space in which the restraints are evaluated */
     SireVol::SpacePtr spce;
