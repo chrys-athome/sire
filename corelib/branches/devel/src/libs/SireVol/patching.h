@@ -67,8 +67,8 @@ typedef SireBase::PropPtr<Patching> PatchingPtr;
 class SIREVOL_EXPORT Patching : public SireBase::Property
 {
 
-QDataStream& operator<<(QDataStream&, const Patching&);
-QDataStream& operator>>(QDataStream&, Patching&);
+friend QDataStream& ::operator<<(QDataStream&, const Patching&);
+friend QDataStream& ::operator>>(QDataStream&, Patching&);
 
 public:
     Patching();
@@ -185,5 +185,14 @@ private:
 };
 
 }
+
+Q_DECLARE_METATYPE( SireVol::NullPatching )
+Q_DECLARE_METATYPE( SireVol::BoxPatching )
+
+SIRE_EXPOSE_CLASS( SireVol::Patching )
+SIRE_EXPOSE_CLASS( SireVol::NullPatching )
+SIRE_EXPOSE_CLASS( SireVol::BoxPatching )
+
+SIRE_EXPOSE_PROPERTY( SireVol::Patching, SireVol::PatchingPtr )
 
 #endif

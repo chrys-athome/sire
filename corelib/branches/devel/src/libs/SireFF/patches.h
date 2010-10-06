@@ -100,6 +100,12 @@ public:
     QVector<quint32> add(const CoordGroupArray &coords, 
                          const FFParametersArray &params);
     
+    QVector<quint32> add(const QVector<CoordGroup> &coords,
+                         const QVector<FFParametersPtr> &params);
+                         
+    QVector< QVector<quint32> > add(const QVector<CoordGroupArray> &coords,
+                                    const QVector<FFParametersArrayPtr> &params);
+    
     void update(quint32 beadid, const CoordGroup &coords);
     void update(quint32 beadid, const FFParameters &params);
     void update(quint32 beadid, const CoordGroup &coords,
