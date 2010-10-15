@@ -11,7 +11,7 @@ from Sire.Units import *
 
 import Sire.Stream
 
-protodir = "/Users/chris/Work/ProtoMS"
+protodir = "/home/julien/software/protoms/"
 
 print "Parameterising the oscillator..."
 
