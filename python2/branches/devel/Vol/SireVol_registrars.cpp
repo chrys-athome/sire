@@ -3,20 +3,22 @@
 
 #include "SireVol_registrars.h"
 
-#include "periodicbox.h"
+#include "patching.h"
 #include "combinespaces.h"
 #include "combinedspace.h"
 #include "cartesian.h"
 #include "grid.h"
 #include "coordgroup.h"
 #include "aabox.h"
+#include "periodicbox.h"
 
 #include "Helpers/objectregistry.hpp"
 
 void register_SireVol_objects()
 {
 
-    ObjectRegistry::registerConverterFor< SireVol::PeriodicBox >();
+    ObjectRegistry::registerConverterFor< SireVol::NullPatching >();
+    ObjectRegistry::registerConverterFor< SireVol::BoxPatching >();
     ObjectRegistry::registerConverterFor< SireVol::CombineSpaces >();
     ObjectRegistry::registerConverterFor< SireVol::CombinedSpace >();
     ObjectRegistry::registerConverterFor< SireVol::Cartesian >();
@@ -27,6 +29,7 @@ void register_SireVol_objects()
     ObjectRegistry::registerConverterFor< SireVol::CoordGroupArray >();
     ObjectRegistry::registerConverterFor< SireVol::CoordGroupArrayArray >();
     ObjectRegistry::registerConverterFor< SireVol::AABox >();
+    ObjectRegistry::registerConverterFor< SireVol::PeriodicBox >();
 
 }
 

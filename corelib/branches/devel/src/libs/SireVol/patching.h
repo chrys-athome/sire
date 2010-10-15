@@ -153,7 +153,13 @@ friend QDataStream& ::operator>>(QDataStream&, BoxPatching&);
 public:
     BoxPatching();
     BoxPatching(const Space &space);
+    BoxPatching(const Space &space, const Vector &center);
+    
     BoxPatching(const Space &space, SireUnits::Dimension::Length patch_size);
+    BoxPatching(const Space &space, SireUnits::Dimension::Length patch_size,
+                const Vector &center);
+    
+    BoxPatching(const BoxPatching &other);
     
     ~BoxPatching();
     
@@ -163,6 +169,16 @@ public:
     
     bool operator==(const BoxPatching &other) const;
     bool operator!=(const BoxPatching &other) const;
+
+    QString toString() const;
+
+    Vector center() const;
+    SireUnits::Dimension::Length patchSize() const;
+    
+    Vector patchDimension() const;
+    
+    AABox patchBox(int i) const;
+    AABox patchBox(const Vector &point) const;
     
     int nPatches() const;
     
@@ -173,13 +189,18 @@ public:
     PatchingPtr repatch(const Space &new_space) const;
     
 private:
+    int getIndex(const Vector &point) const;
+
     /** The initial dimension used to create the patch */
     SireUnits::Dimension::Length patch_size;
+
+    /** The origin of the 3D grid */
+    Vector orgn;
     
-    /** The unit vector of the 3D grid (the grid is centered
+    /** The inverse unit vector of the 3D grid (the grid is centered
         around (0,0,0) */
-    Vector gridvec;
-    
+    Vector inv_gridvec;
+        
     /** The number of patches in the X, Y and Z dimensions */
     int nx, ny, nz;
 };
@@ -193,6 +214,6 @@ SIRE_EXPOSE_CLASS( SireVol::Patching )
 SIRE_EXPOSE_CLASS( SireVol::NullPatching )
 SIRE_EXPOSE_CLASS( SireVol::BoxPatching )
 
-SIRE_EXPOSE_PROPERTY( SireVol::Patching, SireVol::PatchingPtr )
+SIRE_EXPOSE_PROPERTY( SireVol::PatchingPtr, SireVol::Patching )
 
 #endif

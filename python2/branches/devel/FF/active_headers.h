@@ -17,6 +17,8 @@
 #include "forcetable.h"
 #include "g1ff.h"
 #include "g2ff.h"
+#include "patch.h"
+#include "patches.h"
 #include "point.h"
 #include "potentialtable.h"
 #include "probe.h"

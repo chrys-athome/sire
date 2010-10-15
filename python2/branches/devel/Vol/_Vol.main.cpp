@@ -9,6 +9,8 @@
 
 #include "AABox.pypp.hpp"
 
+#include "BoxPatching.pypp.hpp"
+
 #include "Cartesian.pypp.hpp"
 
 #include "CombineSpaces.pypp.hpp"
@@ -28,6 +30,10 @@
 #include "Grid.pypp.hpp"
 
 #include "NullGrid.pypp.hpp"
+
+#include "NullPatching.pypp.hpp"
+
+#include "Patching.pypp.hpp"
 
 #include "PeriodicBox.pypp.hpp"
 
@@ -56,6 +62,10 @@ BOOST_PYTHON_MODULE(_Vol){
 
     register_AABox_class();
 
+    register_Patching_class();
+
+    register_BoxPatching_class();
+
     register_Space_class();
 
     register_Cartesian_class();
@@ -77,6 +87,8 @@ BOOST_PYTHON_MODULE(_Vol){
     register_Grid_class();
 
     register_NullGrid_class();
+
+    register_NullPatching_class();
 
     register_PeriodicBox_class();
 
