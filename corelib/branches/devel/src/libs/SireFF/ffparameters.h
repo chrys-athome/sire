@@ -127,14 +127,14 @@ public:
     
     static NullFFParametersArray null();
 
-    virtual void append(const FFParameters &params);
-    virtual void append(const FFParametersArray &params);
+    virtual void append(const FFParameters &params)=0;
+    virtual void append(const FFParametersArray &params)=0;
     
-    virtual void update(int idx, const FFParameters &params);
-    virtual void update(const QVector<int> &idxs, const FFParametersArray &params);
+    virtual void update(int idx, const FFParameters &params)=0;
+    virtual void update(const QVector<int> &idxs, const FFParametersArray &params)=0;
 
-    virtual void remove(int idx);
-    virtual void remove(const QVector<int> &idxs);
+    virtual void remove(int idx)=0;
+    virtual void remove(const QVector<int> &idxs)=0;
 
 protected:
     FFParametersArray& operator=(const FFParametersArray &other);
@@ -185,10 +185,21 @@ public:
     
     bool operator==(const NullFFParametersArray &other) const;
     bool operator!=(const NullFFParametersArray &other) const;
+
+    void append(const FFParameters &params);
+    void append(const FFParametersArray &params);
+    
+    void update(int idx, const FFParameters &params);
+    void update(const QVector<int> &idxs, const FFParametersArray &params);
+
+    void remove(int idx);
+    void remove(const QVector<int> &idxs);
 };
 
 } // end of namespace SireFF
 
+Q_DECLARE_METATYPE( SireFF::NullFFParameters )
+Q_DECLARE_METATYPE( SireFF::NullFFParametersArray )
 
 SIRE_END_HEADER
 

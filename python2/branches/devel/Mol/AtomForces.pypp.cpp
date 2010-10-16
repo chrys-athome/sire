@@ -27,6 +27,7 @@ void register_AtomForces_class(){
         bp::scope AtomForces_scope( AtomForces_exposer );
         AtomForces_exposer.def( bp::init< >() );
         AtomForces_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
+        AtomForces_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireMaths::Vector3D< SireUnits::Dimension::PhysUnit< 1, 1, -0x00000000000000002, 0, 0, 0, 0 > > const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomForces_exposer.def( bp::init< SireMaths::Vector3D< SireUnits::Dimension::PhysUnit< 1, 1, -0x00000000000000002, 0, 0, 0, 0 > > const & >(( bp::arg("value") )) );
         AtomForces_exposer.def( bp::init< SireBase::PackedArray2D< SireMaths::Vector3D< SireUnits::Dimension::PhysUnit< 1, 1, -0x00000000000000002, 0, 0, 0, 0 > > > const & >(( bp::arg("values") )) );
         AtomForces_exposer.def( bp::init< SireMol::AtomProperty< SireMaths::Vector3D< SireUnits::Dimension::PhysUnit< 1, 1, -0x00000000000000002, 0, 0, 0, 0 > > > const & >(( bp::arg("other") )) );

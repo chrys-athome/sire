@@ -47,6 +47,7 @@ void register_AtomVariantProperty_class(){
         bp::scope AtomVariantProperty_scope( AtomVariantProperty_exposer );
         AtomVariantProperty_exposer.def( bp::init< >() );
         AtomVariantProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
+        AtomVariantProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const &, QVariant const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomVariantProperty_exposer.def( bp::init< QVariant const & >(( bp::arg("value") )) );
         AtomVariantProperty_exposer.def( bp::init< SireBase::PackedArray2D< QVariant > const & >(( bp::arg("values") )) );
         AtomVariantProperty_exposer.def( bp::init< SireMol::AtomProperty< QVariant > const & >(( bp::arg("other") )) );

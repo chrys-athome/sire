@@ -36,7 +36,11 @@
 #include "packedarray2d.h"
 #include "quickcopy.hpp"
 
+#include "SireError/errors.h"
+
 #include "SireStream/shareddatastream.h"
+
+#include "tostring.h"
 
 #include <boost/assert.hpp>
 
@@ -323,8 +327,6 @@ public:
     
     PackedArray2D_Array(quint32 sz);
     PackedArray2D_Array(quint32 sz, const T &value);
-
-    PackedArray2D_Array(const T &value);
     
     PackedArray2D_Array(const QVector<T> &values);
     
@@ -341,6 +343,8 @@ public:
     T& operator[](quint32 i);
     
     const T& at(quint32 i) const;
+
+    QString toString() const;
 
     int count() const;
     int size() const;
@@ -398,6 +402,8 @@ public:
     PackedArray2D(const QVector<T> &values);
     PackedArray2D(const QVector< QVector<T> > &values);
     
+    PackedArray2D(const PackedArray2D<T> &array0, const PackedArray2D<T> &array1);
+    
     PackedArray2D(const PackedArray2D<T> &other);
     
     ~PackedArray2D();
@@ -423,6 +429,8 @@ public:
     int nValues(quint32 i) const;
 
     bool isEmpty() const;
+    
+    QString toString() const;
 
     const Array* data() const;
     const Array* constData() const;
@@ -441,6 +449,24 @@ public:
     QVector< QVector<T> > toQVectorVector() const;
 
     void update(quint32 i, const Array &array);
+    void update(quint32 i, const QVector<T> &array);
+
+    template<class C>
+    void updateAll(const C &idxs, const PackedArray2D<T> &arrays);
+    
+    template<class C>
+    void updateAll(const C &idxs, const QVector< QVector<T> > &arrays);
+    
+    void append(const Array &array);
+    void append(const PackedArray2D<T> &arrays);
+    
+    void append(const QVector<T> &array);
+    void append(const QVector< QVector<T> > &arrays);
+    
+    void remove(quint32 i);
+    
+    template<class C>
+    void removeAll(const C &idxs);
 
     void assertValidIndex(quint32 i) const;
 
@@ -923,7 +949,11 @@ void PackedArray2DData<T>::close()
         n_assigned_vals += array.nValues();
     }
 
-    BOOST_ASSERT( n_assigned_vals == this->nValues() );
+    if (n_assigned_vals != this->nValues())
+        throw SireError::program_bug( QObject::tr(
+                "Serious program bug - n_assigned_vals (%1) does not equal "
+                "this->nValues() (%2).")
+                    .arg(n_assigned_vals).arg(this->nValues()), CODELOC );
 }
 
 ////////
@@ -1311,6 +1341,14 @@ QVector<T> PackedArray2D_Array<T>::toQVector() const
     return ret;
 }
 
+/** Return a string representation of this array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QString PackedArray2D_Array<T>::toString() const
+{
+    return Sire::toString( PackedArray2D_Array<T>::toQVector() );
+}
+
 /** Update this array so that it has the same contents as 'other'
 
     \throw SireError::incompatible_error
@@ -1517,6 +1555,60 @@ PackedArray2D<T>::PackedArray2D(const QVector< QVector<T> > &values)
         
         values_array += array.count();
     }
+}
+
+/** Construct by merging together the passed two arrays */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PackedArray2D<T>::PackedArray2D(const PackedArray2D<T> &array0,
+                                const PackedArray2D<T> &array1)
+{
+    if (array0.isEmpty())
+    {
+        d = array1.d;
+        return;
+    }
+    else if (array1.isEmpty())
+    {
+        d = array0.d;
+        return;
+    }
+
+    //count the number of values and groups...
+    quint32 nvals = array0.nValues() + array1.nValues();
+    quint32 narrays = array0.nArrays() + array1.nArrays();
+    
+    d = SireBase::detail::createArray<T>(narrays, nvals);
+    
+    detail::PackedArray2DData<T> *dptr = d.data();
+
+    const typename PackedArray2D<T>::Array *array0_data = array0.constData();
+    const typename PackedArray2D<T>::Array *array1_data = array1.constData();
+    
+    //dimension each packed array
+    for (int i=0; i<array0.nArrays(); ++i)
+    {
+        //dimension the array
+        dptr->setNValuesInArray(i, array0_data[i].count());
+    }
+    
+    for (int i=0; i<array1.nArrays(); ++i)
+    {
+        dptr->setNValuesInArray(array0.nArrays() + i, array1_data[i].count());
+    }
+    
+    dptr->close();
+    
+    //now copy all of the data
+    T *values_array = dptr->valueData();
+
+    T *output = quickCopy(values_array, array0.constValueData(), array0.nValues());
+    BOOST_ASSERT( output == values_array );
+    
+    values_array += array0.nValues();
+    
+    output = quickCopy(values_array, array1.constValueData(), array1.nValues());
+    BOOST_ASSERT( output == values_array );
 }
 
 /** Copy constructor */
@@ -1802,6 +1894,14 @@ QVector< QVector<T> > PackedArray2D<T>::toQVectorVector() const
     return ret;
 }
 
+/** Return a string representation of this array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QString PackedArray2D<T>::toString() const
+{
+    return Sire::toString( PackedArray2D<T>::toQVectorVector() );
+}
+
 namespace detail
 {
 
@@ -1955,6 +2055,274 @@ void PackedArray2D<T>::update(quint32 i, const Array &array)
     d->arrayData()[i].update(array);
 }
 
+/** Update the ith array so that it has the same contents as 'array'
+
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::update(quint32 i, const QVector<T> &array)
+{
+    this->assertValidIndex(i);
+    d->arrayData()[i].update(array);
+}
+
+/** Update the arrays whose indicies are in 'idxs' so that they have the
+    same contents as the passed arrays
+    
+    \throw SireError::invalid_index
+    \throw SireError::incompatible_error
+*/
+template<class T>
+template<class C>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::updateAll(const C &idxs, const PackedArray2D<T> &arrays)
+{
+    if (idxs.count() != arrays.count())
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot update the arrays because the number of indicies (%1) "
+                "is not equal to the number of arrays (%2). Indicies are %3.")
+                    .arg(idxs.count()).arg(arrays.count())
+                    .arg(Sire::toString(idxs)), CODELOC );
+                
+    PackedArray2D<T> other(*this);
+    
+    const typename PackedArray2D<T>::Array *array = arrays.constData();
+    int i = 0;
+    
+    for (typename C::const_iterator it = idxs.constBegin();
+         it != idxs.constEnd();
+         ++it)
+    {
+        other.assertValidIndex(*it);
+        other.d->arrayData()[*it].update(array[i]);
+        ++i;
+    }
+    
+    this->operator=(other);
+}
+
+/** Update the arrays whose indicies are in 'idxs' so that they have the
+    same contents as the passed arrays
+    
+    \throw SireError::invalid_index
+    \throw SireError::incompatible_error
+*/
+template<class T>
+template<class C>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::updateAll(const C &idxs, const QVector< QVector<T> > &arrays)
+{
+    if (idxs.count() != arrays.count())
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot update the arrays because the number of indicies (%1) "
+                "is not equal to the number of arrays (%2). Indicies are %3.")
+                    .arg(idxs.count()).arg(arrays.count())
+                    .arg(Sire::toString(idxs)), CODELOC );
+                
+    PackedArray2D<T> other(*this);
+    
+    typename QVector< QVector<T> >::const_iterator array = arrays.constBegin();
+    
+    for (typename C::const_iterator it = idxs.constBegin();
+         it != idxs.constEnd();
+         ++it)
+    {
+        other.assertValidIndex(*it);
+        other.d->arrayData()[*it].update(*array);
+        ++array;
+    }
+    
+    this->operator=(other);
+}
+
+/** Append the passed array onto the end of the array of arrays */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::append(const Array &array)
+{
+    this->operator=( PackedArray2D<T>(*this, array) );
+}
+
+/** Append the passed arrays onto the end of the array of arrays */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::append(const PackedArray2D<T> &arrays)
+{
+    this->operator=( PackedArray2D<T>(*this, arrays) );
+}
+
+/** Append the passed array onto the end of the array of arrays */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::append(const QVector<T> &array)
+{
+    this->operator=( PackedArray2D<T>(*this, array) );
+}
+
+/** Append the passed arrays onto the end of the array of arrays */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::append(const QVector< QVector<T> > &arrays)
+{
+    this->operator=( PackedArray2D<T>(*this, arrays) );
+}
+
+/** Remove the array at the specified index
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::remove(quint32 idx)
+{
+    quint32 nvals = this->nValues() - this->nValues(idx);
+    quint32 narrays = this->nArrays() - 1;
+    
+    if (nvals == 0 or narrays == 0)
+    {
+        this->operator=( PackedArray2D<T>() );
+        return;
+    }
+    
+    detail::SharedArray2DPtr< detail::PackedArray2DData<T> > new_d
+                                     = SireBase::detail::createArray<T>(narrays, nvals);
+    
+    detail::PackedArray2DData<T> *dptr = new_d.data();
+
+    const typename PackedArray2D<T>::Array *array_data = this->constData();
+    
+    int int_idx = idx;
+    
+    //dimension each packed array
+    for (int i=0; i<this->nArrays(); ++i)
+    {
+        if (i < int_idx)
+            dptr->setNValuesInArray(i, array_data[i].count());
+        
+        else if (i > int_idx)
+            dptr->setNValuesInArray(i-1, array_data[i].count());
+    }
+    
+    dptr->close();
+    
+    //now copy all of the data
+    T *values_array = dptr->valueData();
+
+    for (int i=0; i<this->nArrays(); ++i)
+    {
+        if (i != int_idx)
+        {
+            T *output = quickCopy(values_array, array_data[i].constData(),
+                                  array_data[i].count());
+            BOOST_ASSERT( output == values_array );
+            
+            values_array += array_data[i].count();
+        }
+    }
+    
+    d = new_d;
+}
+
+/** Remove all of the arrays at the specified indicies
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+template<class C>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::removeAll(const C &idxs)
+{
+    if (idxs.isEmpty())
+        return;
+    
+    else if (idxs.count() == 1)
+    {
+        this->remove( *(idxs.constBegin()) );
+        return;
+    }
+    
+    QVector<bool> to_keep(this->nArrays(), true);
+    
+    for (typename C::const_iterator it = idxs.constBegin(); 
+         it != idxs.constEnd();
+         ++it)
+    {
+        this->assertValidIndex(*it);
+        to_keep[*it] = false;
+    }
+    
+    quint32 narrays = 0;
+    
+    for (QVector<bool>::const_iterator it = to_keep.constBegin();
+         it != to_keep.constEnd();
+         ++it)
+    {
+        if (*it)
+            narrays += 1;
+    }
+    
+    if (narrays == 0)
+    {
+        this->operator=( PackedArray2D<T>() );
+        return;
+    }
+    
+    quint32 nvals = 0;
+    
+    const typename PackedArray2D<T>::Array *array_data = this->constData();
+    
+    for (int i=0; i<this->nArrays(); ++i)
+    {
+        if (to_keep.constData()[i])
+        {
+            nvals += array_data[i].count();
+        }
+    }
+    
+    if (nvals == 0)
+    {
+        this->operator=( PackedArray2D<T>() );
+        return;
+    }
+    
+    detail::SharedArray2DPtr< detail::PackedArray2DData<T> > new_d
+                                     = SireBase::detail::createArray<T>(narrays, nvals);
+    
+    detail::PackedArray2DData<T> *dptr = new_d.data();
+
+    int idx = 0;
+    
+    //dimension each packed array
+    for (int i=0; i<this->nArrays(); ++i)
+    {
+        if (to_keep.constData()[i])
+        {
+            dptr->setNValuesInArray(idx, array_data[i].count());
+            ++idx;
+        }
+    }
+    
+    dptr->close();
+    
+    //now copy all of the data
+    T *values_array = dptr->valueData();
+
+    for (int i=0; i<this->nArrays(); ++i)
+    {
+        if (to_keep.constData()[i])
+        {
+            T *output = quickCopy(values_array, array_data[i].constData(),
+                                  array_data[i].count());
+            BOOST_ASSERT( output == values_array );
+            
+            values_array += array_data[i].count();
+        }
+    }
+    
+    d = new_d;
+}
+
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 } // end of namespace SireBase
@@ -1965,7 +2333,7 @@ void PackedArray2D<T>::update(quint32 i, const Array &array)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 QDataStream& operator<<(QDataStream &ds,
-                        const typename SireBase::PackedArray2D<T>::Array &array)
+                        const typename SireBase::detail::PackedArray2D_Array<T> &array)
 {
     SireBase::detail::writePackedArray2DArrayHeader(ds, 1);
     
@@ -1985,7 +2353,7 @@ QDataStream& operator<<(QDataStream &ds,
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 QDataStream& operator>>(QDataStream &ds,
-                        typename SireBase::PackedArray2D<T>::Array &array)
+                        typename SireBase::detail::PackedArray2D_Array<T> &array)
 {
     SireBase::detail::readPackedArray2DArrayHeader(ds, 1);
     
@@ -1995,7 +2363,7 @@ QDataStream& operator>>(QDataStream &ds,
     
     if (nvals == 0)
     {
-        array = SireBase::PackedArray2D<T>::Array();
+        array = typename SireBase::PackedArray2D<T>::Array();
         return ds;
     }
     
@@ -2005,7 +2373,7 @@ QDataStream& operator>>(QDataStream &ds,
     //read in the values
     T *data = new_array.data();
     
-    for (int i=0; i<nvals; ++i)
+    for (quint32 i=0; i<nvals; ++i)
     {
         ds >> data[i];
     }

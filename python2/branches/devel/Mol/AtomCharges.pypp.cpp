@@ -27,6 +27,7 @@ void register_AtomCharges_class(){
         bp::scope AtomCharges_scope( AtomCharges_exposer );
         AtomCharges_exposer.def( bp::init< >() );
         AtomCharges_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
+        AtomCharges_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomCharges_exposer.def( bp::init< SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > const & >(( bp::arg("value") )) );
         AtomCharges_exposer.def( bp::init< SireBase::PackedArray2D< SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > > const & >(( bp::arg("values") )) );
         AtomCharges_exposer.def( bp::init< SireMol::AtomProperty< SireUnits::Dimension::PhysUnit< 0, 0, 0, 1, 0, 0, 0 > > const & >(( bp::arg("other") )) );

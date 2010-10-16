@@ -14,6 +14,7 @@
 #include "linktoproperty.h"
 #include "majorminorversion.h"
 #include "meminfo.h"
+#include "packedarrays.h"
 #include "process.h"
 #include "properties.h"
 #include "property.h"

@@ -47,6 +47,7 @@ void register_AtomIntProperty_class(){
         bp::scope AtomIntProperty_scope( AtomIntProperty_exposer );
         AtomIntProperty_exposer.def( bp::init< >() );
         AtomIntProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
+        AtomIntProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const &, long long int const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomIntProperty_exposer.def( bp::init< long long int const & >(( bp::arg("value") )) );
         AtomIntProperty_exposer.def( bp::init< SireBase::PackedArray2D< long long int > const & >(( bp::arg("values") )) );
         AtomIntProperty_exposer.def( bp::init< SireMol::AtomProperty< long long int > const & >(( bp::arg("other") )) );

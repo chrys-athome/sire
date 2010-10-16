@@ -27,6 +27,7 @@ void register_AtomEnergies_class(){
         bp::scope AtomEnergies_scope( AtomEnergies_exposer );
         AtomEnergies_exposer.def( bp::init< >() );
         AtomEnergies_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
+        AtomEnergies_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomEnergies_exposer.def( bp::init< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > const & >(( bp::arg("value") )) );
         AtomEnergies_exposer.def( bp::init< SireBase::PackedArray2D< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > const & >(( bp::arg("values") )) );
         AtomEnergies_exposer.def( bp::init< SireMol::AtomProperty< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > const & >(( bp::arg("other") )) );

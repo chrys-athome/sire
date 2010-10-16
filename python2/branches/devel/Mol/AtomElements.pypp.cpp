@@ -27,6 +27,7 @@ void register_AtomElements_class(){
         bp::scope AtomElements_scope( AtomElements_exposer );
         AtomElements_exposer.def( bp::init< >() );
         AtomElements_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
+        AtomElements_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireMol::Element const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomElements_exposer.def( bp::init< SireMol::Element const & >(( bp::arg("value") )) );
         AtomElements_exposer.def( bp::init< SireBase::PackedArray2D< SireMol::Element > const & >(( bp::arg("values") )) );
         AtomElements_exposer.def( bp::init< SireMol::AtomProperty< SireMol::Element > const & >(( bp::arg("other") )) );

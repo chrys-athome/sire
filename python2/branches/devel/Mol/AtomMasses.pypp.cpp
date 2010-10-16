@@ -27,6 +27,7 @@ void register_AtomMasses_class(){
         bp::scope AtomMasses_scope( AtomMasses_exposer );
         AtomMasses_exposer.def( bp::init< >() );
         AtomMasses_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
+        AtomMasses_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireUnits::Dimension::PhysUnit< 1, 0, 0, 0, 0, -0x00000000000000001, 0 > const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomMasses_exposer.def( bp::init< SireUnits::Dimension::PhysUnit< 1, 0, 0, 0, 0, -0x00000000000000001, 0 > const & >(( bp::arg("value") )) );
         AtomMasses_exposer.def( bp::init< SireBase::PackedArray2D< SireUnits::Dimension::PhysUnit< 1, 0, 0, 0, 0, -0x00000000000000001, 0 > > const & >(( bp::arg("values") )) );
         AtomMasses_exposer.def( bp::init< SireMol::AtomProperty< SireUnits::Dimension::PhysUnit< 1, 0, 0, 0, 0, -0x00000000000000001, 0 > > const & >(( bp::arg("other") )) );

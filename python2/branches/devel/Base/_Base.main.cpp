@@ -31,6 +31,18 @@
 
 #include "NullProperty.pypp.hpp"
 
+#include "PackedArray2D_QString_.pypp.hpp"
+
+#include "PackedArray2D_QString_Array.pypp.hpp"
+
+#include "PackedArray2D_double_.pypp.hpp"
+
+#include "PackedArray2D_double_Array.pypp.hpp"
+
+#include "PackedArray2D_int_.pypp.hpp"
+
+#include "PackedArray2D_int_Array.pypp.hpp"
+
 #include "Process.pypp.hpp"
 
 #include "Properties.pypp.hpp"
@@ -106,6 +118,12 @@ BOOST_PYTHON_MODULE(_Base){
 
     register_NullProperty_class();
 
+    register_PackedArray2D_QString__class();
+
+    register_PackedArray2D_double__class();
+
+    register_PackedArray2D_int__class();
+
     register_Process_class();
 
     register_Properties_class();
@@ -127,6 +145,12 @@ BOOST_PYTHON_MODULE(_Base){
     register_VariantProperty_class();
 
     register_Version_class();
+
+    register_PackedArray2D_QString_Array_class();
+
+    register_PackedArray2D_double_Array_class();
+
+    register_PackedArray2D_int_Array_class();
 
     register_SireBase_properties();
 

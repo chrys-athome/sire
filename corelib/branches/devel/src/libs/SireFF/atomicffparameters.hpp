@@ -33,18 +33,32 @@
 
 #include "SireBase/packedarray2d.hpp"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+#include "SireError/errors.h"
+#include "tostring.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
 {
 template<class T>
 class AtomicFFParameters;
+
+template<class T>
+class AtomicFFParametersArray;
 }
 
 template<class T>
 QDataStream& operator<<(QDataStream&, const SireFF::AtomicFFParameters<T>&);
 template<class T>
 QDataStream& operator>>(QDataStream&, SireFF::AtomicFFParameters<T>&);
+
+template<class T>
+QDataStream& operator<<(QDataStream&, const SireFF::AtomicFFParametersArray<T>&);
+template<class T>
+QDataStream& operator>>(QDataStream&, SireFF::AtomicFFParametersArray<T>&);
 
 namespace SireFF
 {
@@ -91,6 +105,7 @@ private:
 
     @author Christopher Woods
 */
+template<class T>
 class SIREFF_EXPORT AtomicFFParametersArray
     : public SireBase::ConcreteProperty<AtomicFFParametersArray<T>,FFParametersArray>
 {
@@ -100,7 +115,7 @@ friend QDataStream& ::operator>><>(QDataStream&, AtomicFFParametersArray<T>&);
 
 public:
     AtomicFFParametersArray();
-    AtomicFFParametersArray(const PackedArray2D<T> &params);
+    AtomicFFParametersArray(const SireBase::PackedArray2D<T> &params);
     AtomicFFParametersArray(const QVector<T> &params);
     AtomicFFParametersArray(const QVector< QVector<T> > &params);
     
@@ -143,6 +158,444 @@ private:
     SireBase::PackedArray2D<T> params;
 };
 
+/////////
+///////// Implementation of AtomicFFParameters
+/////////
+
+/** Null constructor */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParameters<T>::AtomicFFParameters()
+                      : SireBase::ConcreteProperty<AtomicFFParameters<T>,FFParameters>()
+{}
+
+/** Construct to hold the parameters in 'params' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParameters<T>::AtomicFFParameters(const QVector<T> &parameters)
+                      : SireBase::ConcreteProperty<AtomicFFParameters<T>,FFParameters>(),
+                        params(parameters)
+{}
+
+/** Construct to hold the parameters in 'params' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParameters<T>::AtomicFFParameters(
+                        const typename SireBase::PackedArray2D<T>::Array &parameters)
+                      : SireBase::ConcreteProperty<AtomicFFParameters<T>,FFParameters>(),
+                        params(parameters)
+{}
+                        
+/** Copy constructor */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParameters<T>::AtomicFFParameters(const AtomicFFParameters<T> &other)
+                 : SireBase::ConcreteProperty<AtomicFFParameters<T>,FFParameters>(other),
+                   params(other.params)
+{}
+
+/** Destructor */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParameters<T>::~AtomicFFParameters()
+{}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const char* AtomicFFParameters<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< AtomicFFParameters<T> >() );
+}
+
+/** Copy assignment operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParameters<T>& AtomicFFParameters<T>::operator=(
+                                                const AtomicFFParameters<T> &other)
+{
+    params = other.params;
+    FFParameters::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomicFFParameters<T>::operator==(const AtomicFFParameters<T> &other) const
+{
+    return params == other.params and FFParameters::operator==(other);
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomicFFParameters<T>::operator!=(const AtomicFFParameters<T> &other) const
+{
+    return not AtomicFFParameters<T>::operator==(other);
+}
+
+/** Return the raw array of parameters */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const typename SireBase::PackedArray2D<T>::Array& AtomicFFParameters<T>::array() const
+{
+    return params;
+}
+
+/** Allow automatic casting to a SireBase::PackedArray2D<T>::Array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParameters<T>::operator typename SireBase::PackedArray2D<T>::Array() const
+{
+    return params;
+}
+
+/////////
+///////// Implementation of AtomicFFParametersArray
+/////////
+
+/** Null constructor */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParametersArray<T>::AtomicFFParametersArray()
+    : SireBase::ConcreteProperty<AtomicFFParametersArray<T>,FFParametersArray>()
+{}
+
+/** Construct to hold the passed parameters */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParametersArray<T>::AtomicFFParametersArray(
+                                    const SireBase::PackedArray2D<T> &parameters)
+    : SireBase::ConcreteProperty<AtomicFFParametersArray<T>,FFParametersArray>(),
+      params(parameters)
+{}
+
+/** Construct to hold the passed parameters */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParametersArray<T>::AtomicFFParametersArray(const QVector<T> &parameters)
+    : SireBase::ConcreteProperty<AtomicFFParametersArray<T>,FFParametersArray>(),
+      params(parameters)
+{}
+
+/** Construct to hold the passed parameters */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParametersArray<T>::AtomicFFParametersArray(
+                                        const QVector< QVector<T> > &parameters)
+    : SireBase::ConcreteProperty<AtomicFFParametersArray<T>,FFParametersArray>(),
+      params(parameters)
+{}
+
+/** Destructor */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParametersArray<T>::~AtomicFFParametersArray()
+{}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const char* AtomicFFParametersArray<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< AtomicFFParametersArray<T> >() );
+}
+
+/** Copy assignment operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParametersArray<T>& AtomicFFParametersArray<T>::operator=(
+                                            const AtomicFFParametersArray<T> &other)
+{
+    params = other.params;
+    FFParametersArray::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomicFFParametersArray<T>::operator==(const AtomicFFParametersArray<T> &other) const
+{
+    return params == other.params and FFParametersArray::operator==(other);
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomicFFParametersArray<T>::operator!=(const AtomicFFParametersArray<T> &other) const
+{
+    return not FFParametersArray::operator==(other);
+}
+
+/** Return the raw parameter array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const SireBase::PackedArray2D<T>& AtomicFFParametersArray<T>::array() const
+{
+    return params;
+}
+
+/** Allow for automatic casting to a raw parameter array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicFFParametersArray<T>::operator SireBase::PackedArray2D<T>() const
+{
+    return params;
+}
+
+/** Append the passed parameters onto the end of the array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::append(const QVector<T> &parameters)
+{
+    params.append(parameters);
+}
+
+/** Append the passed arrays of parameters onto the end of the array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::append(const QVector< QVector<T> > &parameters)
+{
+    params.append(parameters);
+}
+
+/** Append the passed parameters onto the end of the array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::append(const AtomicFFParameters<T> &parameters)
+{
+    params.append( parameters.array() );
+}
+
+/** Append the passed array of parameters onto the end of the array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::append(const AtomicFFParametersArray<T> &parameters)
+{
+    params.append( parameters.array() );
+}
+
+/** Append the passed parameters onto the end of the array
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::append(const FFParameters &params)
+{
+    AtomicFFParametersArray<T>::append( params.asA< AtomicFFParameters<T> >() );
+}
+
+/** Append the passed array of parameters onto the end of this array
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::append(const FFParametersArray &params)
+{
+    AtomicFFParametersArray<T>::append( params.asA< AtomicFFParametersArray<T> >() );
+}
+
+/** Update the parameters at index 'idx' with the passed values
+
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::update(int idx, const QVector<T> &parameters)
+{
+    params.update(idx, parameters);
+}
+
+/** Update the parameters at the passed indicies with the passed values
+
+    \throw SireError::invalid_index
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::update(const QVector<int> &idxs, 
+                                        const QVector< QVector<T> > &parameters)
+{
+    params.updateAll(idxs, parameters);
+}
+
+/** Update the parameters at index 'idx' with the passed values
+
+    \throw SireError::invalid_index
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::update(int idx, const AtomicFFParameters<T> &parameters)
+{
+    params.update(idx, parameters.array());
+}
+
+/** Update the parameters at the passed indicies with the passed values
+
+    \throw SireError::invalid_index
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::update(const QVector<int> &idxs, 
+                                        const AtomicFFParametersArray<T> &parameters)
+{
+    params.updateAll(idxs, parameters.array());
+}
+
+/** Update the parameters at index 'idx' with the passed values
+
+    \throw SireError::invalid_cast
+    \throw SireError::invalid_index
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::update(int idx, const FFParameters &parameters)
+{
+    AtomicFFParametersArray<T>::update(idx, parameters.asA< AtomicFFParameters<T> >());
+}
+
+/** Update the parameters at the passed indicies with the passed values
+
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::update(const QVector<int> &idxs, 
+                                        const FFParametersArray &parameters)
+{
+    AtomicFFParametersArray<T>::update(idxs, 
+                                       parameters.asA< AtomicFFParametersArray<T> >());
+}
+
+/** Remove all of the parameters at index 'idx'
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::remove(int idx)
+{
+    params.remove(idx);
+}
+
+/** Remove all of the parameters at the passed indicies
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicFFParametersArray<T>::remove(const QVector<int> &idxs)
+{
+    params.removeAll(idxs);
+}
+
+/////////
+///////// Implementation of streaming operators
+/////////
+
+namespace detail
+{
+
+template<class T>
+struct AtomicFFParametersMT
+{
+    static const RegisterMetaType< SireFF::AtomicFFParameters<T> > r_atomffparams;
+};
+
+template<class T>
+struct AtomicFFParametersArrayMT
+{
+    static const RegisterMetaType< SireFF::AtomicFFParametersArray<T> > r_atomffparams;
+};
+
+template<class T>
+const RegisterMetaType< SireFF::AtomicFFParameters<T> > 
+                                AtomicFFParametersMT<T>::r_atomffparams;
+
+template<class T>
+const RegisterMetaType< SireFF::AtomicFFParametersArray<T> >
+                                AtomicFFParametersArrayMT<T>::r_atomffparams;
+
+} // end of namespace detail
+
+} // end of namespace SireFF
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, const SireFF::AtomicFFParameters<T> &ffparams)
+{
+    SireStream::writeHeader(ds, 
+                            SireFF::detail::AtomicFFParametersMT<T>::r_atomffparams,
+                            1);
+                            
+    SireStream::SharedDataStream sds(ds);
+    
+    sds << ffparams.params;
+    
+    return ds;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireFF::AtomicFFParameters<T> &ffparams)
+{
+    SireStream::VersionID v = SireStream::readHeader(ds,
+                                SireFF::detail::AtomicFFParametersMT<T>::r_atomffparams);
+                                
+    if (v == 1)
+    {
+        SireStream::SharedDataStream sds(ds);
+        sds >> ffparams.params;
+    }
+    else
+        throw SireStream::version_error(v, "1", 
+                               SireFF::detail::AtomicFFParametersMT<T>::r_atomffparams,
+                               CODELOC);
+                               
+    return ds;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireFF::AtomicFFParametersArray<T> &ffparams)
+{
+    SireStream::writeHeader(ds, 
+                            SireFF::detail::AtomicFFParametersArrayMT<T>::r_atomffparams,
+                            1);
+                            
+    SireStream::SharedDataStream sds(ds);
+    
+    sds << ffparams.params;
+    
+    return ds;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireFF::AtomicFFParametersArray<T> &ffparams)
+{
+    SireStream::VersionID v = SireStream::readHeader(ds,
+                    SireFF::detail::AtomicFFParametersArrayMT<T>::r_atomffparams);
+                                
+    if (v == 1)
+    {
+        SireStream::SharedDataStream sds(ds);
+        sds >> ffparams.params;
+    }
+    else
+        throw SireStream::version_error(v, "1", 
+                            SireFF::detail::AtomicFFParametersArrayMT<T>::r_atomffparams,
+                            CODELOC);
+                               
+    return ds;
 }
 
 SIRE_END_HEADER

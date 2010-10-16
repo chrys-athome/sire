@@ -25,6 +25,48 @@ void register_ChunkedVector_double__class(){
         typedef bp::class_< SireBase::ChunkedVector< double, 100 > > ChunkedVector_double__exposer_t;
         ChunkedVector_double__exposer_t ChunkedVector_double__exposer = ChunkedVector_double__exposer_t( "ChunkedVector_double_" );
         bp::scope ChunkedVector_double__scope( ChunkedVector_double__exposer );
+        { //::SireBase::ChunkedVector< double, 100 >::const_iterator
+            typedef bp::class_< SireBase::ChunkedVector< double, 100 >::const_iterator > const_iterator_exposer_t;
+            const_iterator_exposer_t const_iterator_exposer = const_iterator_exposer_t( "const_iterator" );
+            bp::scope const_iterator_scope( const_iterator_exposer );
+            const_iterator_exposer.def( bp::init< >() );
+            const_iterator_exposer.def( bp::init< SireBase::ChunkedVector< double, 100 >::const_iterator const & >(( bp::arg("other") )) );
+            const_iterator_exposer.def( bp::self != bp::self );
+            { //::SireBase::ChunkedVector< double, 100 >::const_iterator::operator=
+            
+                typedef ::SireBase::ChunkedVector< double, 100 >::const_iterator & ( ::SireBase::ChunkedVector< double, 100 >::const_iterator::*assign_function_type )( ::SireBase::ChunkedVector< double, 100 >::const_iterator const & ) ;
+                assign_function_type assign_function_value( &::SireBase::ChunkedVector< double, 100 >::const_iterator::operator= );
+                
+                const_iterator_exposer.def( 
+                    "assign"
+                    , assign_function_value
+                    , ( bp::arg("other") )
+                    , bp::return_self< >() );
+            
+            }
+            const_iterator_exposer.def( bp::self == bp::self );
+        }
+        { //::SireBase::ChunkedVector< double, 100 >::iterator
+            typedef bp::class_< SireBase::ChunkedVector< double, 100 >::iterator > iterator_exposer_t;
+            iterator_exposer_t iterator_exposer = iterator_exposer_t( "iterator" );
+            bp::scope iterator_scope( iterator_exposer );
+            iterator_exposer.def( bp::init< >() );
+            iterator_exposer.def( bp::init< SireBase::ChunkedVector< double, 100 >::iterator const & >(( bp::arg("other") )) );
+            iterator_exposer.def( bp::self != bp::self );
+            { //::SireBase::ChunkedVector< double, 100 >::iterator::operator=
+            
+                typedef ::SireBase::ChunkedVector< double, 100 >::iterator & ( ::SireBase::ChunkedVector< double, 100 >::iterator::*assign_function_type )( ::SireBase::ChunkedVector< double, 100 >::iterator const & ) ;
+                assign_function_type assign_function_value( &::SireBase::ChunkedVector< double, 100 >::iterator::operator= );
+                
+                iterator_exposer.def( 
+                    "assign"
+                    , assign_function_value
+                    , ( bp::arg("other") )
+                    , bp::return_self< >() );
+            
+            }
+            iterator_exposer.def( bp::self == bp::self );
+        }
         ChunkedVector_double__exposer.def( bp::init< >() );
         ChunkedVector_double__exposer.def( bp::init< int >(( bp::arg("size") )) );
         ChunkedVector_double__exposer.def( bp::init< int, double const & >(( bp::arg("size"), bp::arg("value") )) );
@@ -54,6 +96,28 @@ void register_ChunkedVector_double__class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireBase::ChunkedVector< double, 100 >::begin
+        
+            typedef SireBase::ChunkedVector< double, 100 > exported_class_t;
+            typedef ::SireBase::ChunkedVector< double, 100 >::iterator ( ::SireBase::ChunkedVector< double, 100 >::*begin_function_type )(  ) ;
+            begin_function_type begin_function_value( &::SireBase::ChunkedVector< double, 100 >::begin );
+            
+            ChunkedVector_double__exposer.def( 
+                "begin"
+                , begin_function_value );
+        
+        }
+        { //::SireBase::ChunkedVector< double, 100 >::begin
+        
+            typedef SireBase::ChunkedVector< double, 100 > exported_class_t;
+            typedef ::SireBase::ChunkedVector< double, 100 >::const_iterator ( ::SireBase::ChunkedVector< double, 100 >::*begin_function_type )(  ) const;
+            begin_function_type begin_function_value( &::SireBase::ChunkedVector< double, 100 >::begin );
+            
+            ChunkedVector_double__exposer.def( 
+                "begin"
+                , begin_function_value );
+        
+        }
         { //::SireBase::ChunkedVector< double, 100 >::capacity
         
             typedef SireBase::ChunkedVector< double, 100 > exported_class_t;
@@ -74,6 +138,28 @@ void register_ChunkedVector_double__class(){
             ChunkedVector_double__exposer.def( 
                 "clear"
                 , clear_function_value );
+        
+        }
+        { //::SireBase::ChunkedVector< double, 100 >::constBegin
+        
+            typedef SireBase::ChunkedVector< double, 100 > exported_class_t;
+            typedef ::SireBase::ChunkedVector< double, 100 >::const_iterator ( ::SireBase::ChunkedVector< double, 100 >::*constBegin_function_type )(  ) const;
+            constBegin_function_type constBegin_function_value( &::SireBase::ChunkedVector< double, 100 >::constBegin );
+            
+            ChunkedVector_double__exposer.def( 
+                "constBegin"
+                , constBegin_function_value );
+        
+        }
+        { //::SireBase::ChunkedVector< double, 100 >::constEnd
+        
+            typedef SireBase::ChunkedVector< double, 100 > exported_class_t;
+            typedef ::SireBase::ChunkedVector< double, 100 >::const_iterator ( ::SireBase::ChunkedVector< double, 100 >::*constEnd_function_type )(  ) const;
+            constEnd_function_type constEnd_function_value( &::SireBase::ChunkedVector< double, 100 >::constEnd );
+            
+            ChunkedVector_double__exposer.def( 
+                "constEnd"
+                , constEnd_function_value );
         
         }
         { //::SireBase::ChunkedVector< double, 100 >::count
@@ -97,6 +183,28 @@ void register_ChunkedVector_double__class(){
                 "count"
                 , count_function_value
                 , ( bp::arg("value") ) );
+        
+        }
+        { //::SireBase::ChunkedVector< double, 100 >::end
+        
+            typedef SireBase::ChunkedVector< double, 100 > exported_class_t;
+            typedef ::SireBase::ChunkedVector< double, 100 >::iterator ( ::SireBase::ChunkedVector< double, 100 >::*end_function_type )(  ) ;
+            end_function_type end_function_value( &::SireBase::ChunkedVector< double, 100 >::end );
+            
+            ChunkedVector_double__exposer.def( 
+                "end"
+                , end_function_value );
+        
+        }
+        { //::SireBase::ChunkedVector< double, 100 >::end
+        
+            typedef SireBase::ChunkedVector< double, 100 > exported_class_t;
+            typedef ::SireBase::ChunkedVector< double, 100 >::const_iterator ( ::SireBase::ChunkedVector< double, 100 >::*end_function_type )(  ) const;
+            end_function_type end_function_value( &::SireBase::ChunkedVector< double, 100 >::end );
+            
+            ChunkedVector_double__exposer.def( 
+                "end"
+                , end_function_value );
         
         }
         { //::SireBase::ChunkedVector< double, 100 >::fromList

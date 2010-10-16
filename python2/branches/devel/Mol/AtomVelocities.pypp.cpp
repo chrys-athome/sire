@@ -27,6 +27,7 @@ void register_AtomVelocities_class(){
         bp::scope AtomVelocities_scope( AtomVelocities_exposer );
         AtomVelocities_exposer.def( bp::init< >() );
         AtomVelocities_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
+        AtomVelocities_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireMaths::Vector3D< SireUnits::Dimension::PhysUnit< 0, 1, -0x00000000000000001, 0, 0, 0, 0 > > const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomVelocities_exposer.def( bp::init< SireMaths::Vector3D< SireUnits::Dimension::PhysUnit< 0, 1, -0x00000000000000001, 0, 0, 0, 0 > > const & >(( bp::arg("value") )) );
         AtomVelocities_exposer.def( bp::init< SireBase::PackedArray2D< SireMaths::Vector3D< SireUnits::Dimension::PhysUnit< 0, 1, -0x00000000000000001, 0, 0, 0, 0 > > > const & >(( bp::arg("values") )) );
         AtomVelocities_exposer.def( bp::init< SireMol::AtomProperty< SireMaths::Vector3D< SireUnits::Dimension::PhysUnit< 0, 1, -0x00000000000000001, 0, 0, 0, 0 > > > const & >(( bp::arg("other") )) );

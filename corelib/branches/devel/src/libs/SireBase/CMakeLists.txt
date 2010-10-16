@@ -28,6 +28,7 @@ set ( SIREBASE_HEADERS
       meminfo.h
       packedarray2d.h
       packedarray2d.hpp
+      packedarrays.h
       pairmatrix.hpp
       process.h
       properties.h
