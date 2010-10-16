@@ -86,12 +86,15 @@ set (SIRE_ARCHIVES "lib/static")
 set (SIRE_INCLUDES "include/Sire")
 # CMake install files install dir
 set (SIRE_CMAKEFILES "include/Sire/cmake")
+# Sire share directory (for parameters etc.)
+set (SIRE_SHARE "share/Sire")
 
 save_sire_variable( "SIRE_INSTALL_PREFIX" "${CMAKE_INSTALL_PREFIX}" )
 save_sire_variable( "SIRE_BIN" "${SIRE_BIN}" )
 save_sire_variable( "SIRE_LIBS" "${SIRE_LIBS}" )
 save_sire_variable( "SIRE_ARCHIVES" "${SIRE_ARCHIVES}" )
 save_sire_variable( "SIRE_INCLUDES" "${SIRE_INCLUDES}" )
+save_sire_variable( "SIRE_SHARE" "${SIRE_SHARE}" )
 save_sire_variable( "SIRE_CMAKEFILES" "${SIRE_CMAKEFILES}" )
 
 # Uncomment for more verbose compiling/linking
@@ -502,6 +505,11 @@ install (FILES ${SIRE_VARIABLES_FILE}
 
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/sire_config.h
          DESTINATION ${SIRE_INCLUDES})
+
+# install the parameters file (containing forcefield parameters) into
+# share/Sire
+install (DIRECTORY ${CMAKE_SOURCE_DIR}/parameters
+         DESTINATION ${SIRE_SHARE})
 
 # These commands are used to create an 'uninstall' target
 # (this is copied from the vtk.org wiki)

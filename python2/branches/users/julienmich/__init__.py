@@ -13,3 +13,5 @@
 import Sire.Qt
 import Sire.Error
 
+#load the configuration - this says where files are installed
+import Sire.Config
