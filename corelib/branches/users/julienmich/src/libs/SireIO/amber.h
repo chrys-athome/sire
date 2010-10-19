@@ -32,6 +32,7 @@
 #include <QString>
 #include <QStringList>
 
+#include "iobase.h"
 #include "SireBase/properties.h"
 #include "SireBase/propertymap.h"
 
@@ -58,6 +59,25 @@ namespace SireIO
 
 using SireMol::Molecules;
 
+
+///////////
+/////////// FortranFormat is an internal class that holds the information about a format used in a top file entry
+/////////// 
+
+class FortranFormat
+{
+public:
+  FortranFormat();
+  FortranFormat( const int repeat, const QString type, const int size, const int decimal);
+  ~FortranFormat();
+  /// 10I8 'repeat' 'type' 'size', 'decimal' is 0
+  // 5E16.8 'repeat' is 5, 'type' is 'E' 'size' is 16 'decimal' is 8
+  int repeat;
+  QString type;
+  int size;
+  int decimal;
+};
+
 /** This class is used to read in an AMBER top file and crd file 
     
     @author Julien Michel
@@ -80,7 +100,96 @@ class SIREIO_EXPORT Amber
   
   Molecules readcrdtop(const QString &crdfile, const QString &topfile);
 
+ private:
+  /** enumerates the FLAGS in a TOP file*/
+  enum { TITLE = 1, //a TITLE flag in a top file
+	 POINTERS = 2, // a POINTERS flag in a top file
+	 ATOM_NAME = 3, //a ATOM_NAME flag in a top file
+	 CHARGE = 4, //a CHARGE flag in a top file
+	 MASS = 5, // a MASS flag
+	 ATOM_TYPE_INDEX = 6, //
+	 NUMBER_EXCLUDED_ATOMS = 7,
+	 NONBONDED_PARM_INDEX = 8,
+	 RESIDUE_LABEL = 9,
+	 RESIDUE_POINTER = 10,
+	 BOND_FORCE_CONSTANT = 11,
+	 BOND_EQUIL_VALUE = 12,
+	 ANGLE_FORCE_CONSTANT = 13,
+	 ANGLE_EQUIL_VALUE = 14,
+	 DIHEDRAL_FORCE_CONSTANT = 15,
+	 DIHEDRAL_PERIODICITY = 16,
+	 DIHEDRAL_PHASE = 17,
+	 SOLTY = 18,
+	 LENNARD_JONES_ACOEF = 19,
+	 LENNARD_JONES_BCOEF = 20,
+	 BONDS_INC_HYDROGEN = 21,
+	 BONDS_WITHOUT_HYDROGEN = 22,
+	 ANGLES_INC_HYDROGEN = 23,
+	 ANGLES_WITHOUT_HYDROGEN = 24,	
+	 DIHEDRALS_INC_HYDROGEN = 25,
+	 DIHEDRALS_WITHOUT_HYDROGEN = 26,
+	 EXCLUDED_ATOMS_LIST = 27,
+	 HBOND_ACOEF = 28,
+	 HBOND_BCOEF = 29,
+	 HBCUT = 30,
+	 AMBER_ATOM_TYPE = 31,
+	 TREE_CHAIN_CLASSIFICATION = 32,
+	 JOIN_ARRAY = 33,
+	 IROTAT = 34,
+	 SOLVENT_POINTERS = 35,
+	 ATOMS_PER_MOLECULE = 36,
+	 BOX_DIMENSIONS = 37,
+	 RADIUS_SET = 38,
+	 RADII = 39,
+	 SCREEN = 40
+  };
+  /** enumerates the POINTERS in a TOP file */
+  enum { NATOM = 0, // total number of atoms
+	 NTYPES = 1, // total number of distinct atom types
+	 NBONH = 2, // number of bonds containing hydrogen
+	 MBONA = 3, // number of bonds not containing hydrogen
+	 NTHETH = 4, // number of angles containing hydrogen
+	 MTHETA = 5, // number of angles not containing hydrogen
+	 NPHIH = 6, // number of dihedrals containing hydrogen
+	 MPHIA = 7, // number of dihedrals not containing hydrogen
+	 NHPARM = 8, // currently not used
+	 NPARM = 9, // currently  not used
+	 NEXT = 10, // number of excluded atoms
+	 NRES = 11, // number of residues
+	 NBONA = 12, // MBONA + number of constraint bonds
+	 NTHETA = 13, // MTHETA + number of constraint angles
+	 NPHIA = 14, // MPHIA + number of constraint dihedrals
+	 NUMBND = 15, // number of unique bond types
+	 NUMANG = 16, // number of unique angle types
+	 NPTRA = 17, // number of unique dihedral types
+	 NATYP = 18, // number of atom types in parameter file, see SOLTY below
+	 NPHB = 19, // number of distinct 10-12 hydrogen bond pair types
+	 IFPERT = 20, // set to 1 if perturbation info is to be read in
+	 NBPER = 21, // number of bonds to be perturbed
+	 NGPER = 22, // number of angles to be perturbed
+	 NDPER = 23, // number of dihedrals to be perturbed
+	 MBPER = 24, // number of bonds with atoms completely in perturbed group
+	 MGPER = 25, // number of agnles with atoms completely in perturbed group
+	 MDPER = 26, // number of dihedrals with atoms completely in perturbed groups
+	 IFBOX = 27, // set to 1 if standard periodic box, 2 when truncated octahedral
+	 NMXRS = 28, // number of atoms in the largest residue
+	 IFCAP = 29 // set to 1 if the CAP option from edit was specified
+  };
+  /** enumerate SOLVENT pointers*/
+  enum { IPTRES = 0, //final residue that is considered part of the solute, reset in sander and gibbs
+	 NSPM = 1,   //total number of molecules
+	 NSPOL = 2   //the first solvent "molecule"
+  };
+  void processFlagLine(const QStringList &words, int &flag);
+  void processFormatLine(const QStringList &words, FortranFormat &format);
+  void processVersionLine(const QStringList &words, QString &version);
  
+  void processTitleLine(const QString &line, const FortranFormat &format, QString &title);
+  void processIntegerLine(const QString &line, const FortranFormat &format, QList<int> &intarray);
+  void processStringLine(const QString &line, const FortranFormat &format, QStringList &stringarray);
+  void processDoubleLine(const QString &line, const FortranFormat &format, QList<double> &doublearray);
+
+  static const double AMBERCHARGECONV = 18.2223;// The partial charges in the top file are not in electrons
 };
 
 }

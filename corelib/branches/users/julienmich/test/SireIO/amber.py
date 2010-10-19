@@ -22,3 +22,6 @@ crd_file = "test/io/SYSTEM.crd"
 amber = Amber()
 mols = amber.readcrdtop(crd_file, top_file)
 
+lig = mols.molecule(MolNum(1)).molecule()
+
+print lig.properties()
