@@ -25,3 +25,13 @@ mols = amber.readcrdtop(crd_file, top_file)
 lig = mols.molecule(MolNum(1)).molecule()
 
 print lig.properties()
+
+at = lig.atoms()[0]
+
+print at
+for prop in at.propertyKeys():
+    print prop, at.property(prop)
+
+prot = mols.molecule(MolNum(2)).molecule()
+
+wat = mols.molecule(MolNum(3)).molecule()

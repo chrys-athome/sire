@@ -31,10 +31,17 @@
 
 #include <QString>
 #include <QStringList>
+#include <QSet>
 
 #include "iobase.h"
 #include "SireBase/properties.h"
 #include "SireBase/propertymap.h"
+
+#include "SireMol/moleditor.h"
+#include "SireMol/atomeditor.h"
+#include "SireMol/atomnum.h"
+
+#include "SireMM/internalff.h"
 
 SIRE_BEGIN_HEADER
 
@@ -51,14 +58,31 @@ class QTextStream;
 namespace SireMol
 {
   class Molecules;
+  class MolEditor;
+  class AtomEditor;
+  class ConnectivityEditor;
+  class AtomNum;
 }
 
+namespace SireMM
+{
+  class TwoAtomFunctions;
+  class ThreeAtomFunctions;
+  class FourAtomFunctions;
+}
 
 namespace SireIO
 {
 
 using SireMol::Molecules;
+using SireMol::MolEditor;
+using SireMol::AtomEditor;
+using SireMol::ConnectivityEditor;
+using SireMol::AtomNum;
 
+using SireMM::TwoAtomFunctions;
+using SireMM::ThreeAtomFunctions;
+using SireMM::FourAtomFunctions;
 
 ///////////
 /////////// FortranFormat is an internal class that holds the information about a format used in a top file entry
@@ -188,6 +212,35 @@ class SIREIO_EXPORT Amber
   void processIntegerLine(const QString &line, const FortranFormat &format, QList<int> &intarray);
   void processStringLine(const QString &line, const FortranFormat &format, QStringList &stringarray);
   void processDoubleLine(const QString &line, const FortranFormat &format, QList<double> &doublearray);
+
+  void setAtomParameters(AtomEditor &editatom, MolEditor &editmol, QList<double> &crdCoords, 
+			 PropertyName &coords_property, QList<double> &charge, PropertyName &charge_property, 
+			 QList<double> &mass, PropertyName &mass_property, QList<int> &atomTypeIndex, 
+			 QList<int> &nonbondedParmIndex, QList<double> &lennardJonesAcoef, 
+			 QList<double> &lennardJonesBcoef, PropertyName &lj_property, 
+			 QStringList &amberAtomType, PropertyName &ambertype_property, QList<int> &pointers);
+
+  void setConnectivity(MolEditor &editmol, QList<int> &pointers, 
+		       QList<int> &bondsIncHydrogen, QList<int> &bondsWithoutHydrogen,
+		       ConnectivityEditor &connectivity, PropertyName &connectivity_property);
+
+  void setBonds(MolEditor &editmol, int pointer,
+		QList<int> &bondsArray, 
+		QList<double> &bondForceConstant, QList<double> &bondEquilValue,
+		TwoAtomFunctions &bondfuncs, PropertyName &bond_property);
+  
+  void setAngles(MolEditor &editmol, int pointer,
+		 QList<int> &anglesArray, 
+		 QList<double> &angleForceConstant, QList<double> &angleEquilValue,
+		 ThreeAtomFunctions &anglefuncs, PropertyName &angle_property);
+
+  void setDihedrals(MolEditor &editmol, int pointer,
+		    QList<int> &dihedralsArray, 
+		    QList<double> &ForceConstant, QList<double> &Periodicity, QList<double> &Phase,
+		    FourAtomFunctions &dihedralfuncs, PropertyName &dihedral_property,
+		    FourAtomFunctions &improperfuncs, PropertyName &improper_property);
+
+  QSet<AtomNum> _pvt_selectAtomsbyNumber(const MolEditor &editmol);
 
   static const double AMBERCHARGECONV = 18.2223;// The partial charges in the top file are not in electrons
 };

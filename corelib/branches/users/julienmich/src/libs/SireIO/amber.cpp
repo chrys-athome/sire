@@ -38,8 +38,7 @@
 //#include "SireMol/atomelements.h"
 #include "SireMol/atomcharges.h"
 #include "SireMol/atommasses.h"
-//#include "SireMol/connectivity.h"
-
+#include "SireMol/connectivity.h"
 //#include "SireMol/mover.hpp"
 #include "SireMol/selector.hpp"
 
@@ -61,9 +60,15 @@
 //#include "SireBase/stringmangler.h"
 
 #include "SireMM/ljparameter.h"
+#include "SireMM/atomljs.h"
+#include "SireMM/internalff.h"
 
 #include "SireMaths/maths.h"
 #include "SireUnits/units.h"
+
+#include "SireBase/tempdir.h"
+#include "SireBase/findexe.h"
+#include "SireBase/process.h"
 
 #include "SireError/errors.h"
 #include "SireIO/errors.h"
@@ -95,6 +100,7 @@ using namespace SireMM;
 using namespace SireMaths;
 using namespace SireUnits;
 using namespace SireStream;
+using namespace SireBase;
 
 //
 // Implementation of FortranFormat
@@ -675,7 +681,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
 	}
     }
   //DEBUG STUFF
-  qDebug() << " POINTERS " << pointers << " ATOMNAME " << atomName.size() << " CHARGE " << charge.size() << " MASS " << mass.size() << " ATOM_TYPE_INDEX " << atomTypeIndex.size() << " SCREEN " << screen.size();
+  //qDebug() << " POINTERS " << pointers << " ATOMNAME " << atomName.size() << " CHARGE " << charge.size() << " MASS " << mass.size() << " ATOM_TYPE_INDEX " << atomTypeIndex.size() << " SCREEN " << screen.size();
 
   // Now read the contents of the crd file to get the coordinates
   QFile crd_f(crdfile);
@@ -718,17 +724,28 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
 
   // Now create the atoms and molecules etc..
 
+  PropertyName coords_property = PropertyName("coordinates");
+  PropertyName charge_property = PropertyName("charge");
+  PropertyName mass_property = PropertyName("mass");
+  PropertyName lj_property = PropertyName("LJ");
+  PropertyName ambertype_property = PropertyName("ambertype");
+
+  PropertyName connectivity_property = PropertyName("connectivity");
+  PropertyName bond_property = PropertyName("bond");
+  PropertyName angle_property = PropertyName("angle");
+  PropertyName dihedral_property = PropertyName("dihedral");
+  PropertyName improper_property = PropertyName("improper");
+
   Molecules molecules;
+
   int moleculeNumber = 1;
   int residueNumber = 1;
   for (int i=0; i < solventPointers[NSPM] ; i++)
   // for each molecule. Use solventPointers[NSPM] or ATOMS_PER_MOLECULE to find out the number of molecules
     {
-  //   create an empty molecule editor
-      MolStructureEditor moleditor;
-  //   for each residue in this molecule. Keep track of a counter to know when ATOMS_PER_MOLECULE has been exceeded.
+      /** First pass, use StructureEditors to build the layout of the molecule*/
+      MolStructureEditor molstructeditor;
       int atomsInMolecule = 0;
-      //qDebug() << "Molecule " << i << " has " << atomsPerMolecule[i] << " atoms ";
       while (atomsInMolecule < atomsPerMolecule[i])
 	{
 	  int atomStart = residuePointer[residueNumber - 1];
@@ -741,17 +758,13 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
 
 	  //qDebug() << "Residue " << residueNumber << " start " << atomStart << " end " << atomEnd;
 	  //       create an empty residue. Use RESIDUE_LABEL for the name
-	  ResStructureEditor reseditor = moleditor.add( ResNum(residueNumber) );
-	  reseditor.rename( ResName( residueLabel[residueNumber - 1]) );
-	  //       for each atom in this residue. Use RESIDUE_POINTER to find the atoms 
+	  ResStructureEditor resstructeditor = molstructeditor.add( ResNum(residueNumber) );
+	  resstructeditor.rename( ResName( residueLabel[residueNumber - 1]) );
 	  for (int j=atomStart; j <= atomEnd; j++)
 	    {
-	      //       create a new atom. Use ATOM_NAME and counter to get index
-	      //qDebug() << "Atom " << j;
-	      // Add atom to the residue
-	      AtomStructureEditor atomeditor = moleditor.add( AtomNum(j) );
-	      atomeditor.rename( AtomName(atomName[j -1]) );
-	      atomeditor.reparent( ResNum(residueNumber) );
+	      AtomStructureEditor atomstructeditor = molstructeditor.add( AtomNum(j) );
+	      atomstructeditor.rename( AtomName(atomName[j -1]) );
+	      atomstructeditor.reparent( ResNum(residueNumber) );
 	    }
 	  atomsInMolecule += ( atomEnd - atomStart ) + 1 ;
 	  residueNumber++;
@@ -759,97 +772,80 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
       // Create cut groups using a per residue scheme
       ResidueCutting residue_cutfunc = ResidueCutting();
 
-      moleditor = residue_cutfunc(moleditor);
+      molstructeditor = residue_cutfunc(molstructeditor);
 
-      Molecule molecule = moleditor.commit();
+      Molecule molecule = molstructeditor.commit();
 
-      // Now that the structure of the molecule has been built, we assign the following properties
-      // atom: coordinates, charge, mass, lj acoef, lj bcoef, amber_atom_type, radii, screen
-      
-      PropertyName coords_property = PropertyName("coordinates");
-      // See pdb.cpp ~line 1000 for an explanation
-      QVector< QVector<Vector> > atomcoords(molecule.nCutGroups() );
-      QVector<Vector> *atomcoords_array = atomcoords.data();
+      MolEditor editmol = molecule.edit();
 
-      PropertyName charges_property = PropertyName("partial_charges");
-      AtomCharges charges( molecule.data().info() );
+      ConnectivityEditor connectivity = Connectivity(editmol.data()).edit();
+      TwoAtomFunctions bondfuncs(editmol);
+      ThreeAtomFunctions anglefuncs(editmol);
+      FourAtomFunctions dihedralfuncs(editmol);
+      FourAtomFunctions improperfuncs(editmol);
 
-      PropertyName masses_property = PropertyName("masses");
-      AtomMasses masses( molecule.data().info() );
-
-      for ( CGIdx i(0); i<molecule.nCutGroups() ; ++i)
+      for (int i=0; i < editmol.nAtoms() ; ++i)
 	{
-	  atomcoords_array[i] = QVector<Vector>( molecule.data().info().nAtoms(i) );
-	}
+	  // Now that the structure of the molecule has been built, we assign the following 
+	  // atom properties: coordinates, charge, mass, lj , amber_atom_type
+	  AtomEditor editatom = editmol.atom(AtomIdx(i)); 
 
-      for (int i=0; i < molecule.nAtoms(); ++i)
-	{
-	  Atom atomi = molecule.atom(AtomIdx(i));
-	  int atomiNumber = atomi.number().value();
- 	  // Need to know in which cutgroup the atom is and what is the index
-	  const CGAtomIdx &cgatomidx = atomi.cgAtomIdx();
-	  // index into coordinates array is idx = 3 * ( atom.number().value() -1)
-	  int array_index = 3 * ( atomiNumber - 1 );
-	  // set the coordinates
-	  atomcoords_array[cgatomidx.cutGroup()][cgatomidx.atom()] = Vector(crdCoords[array_index], 
-									    crdCoords[array_index+1],
-									    crdCoords[array_index+2] );
-	  // set the charges
-	  SireUnits::Dimension::Charge chg = ( charge[atomiNumber - 1] / this->AMBERCHARGECONV ) * mod_electron;
-	  charges.set(cgatomidx, chg); 
-	  // set the masses
-	  SireUnits::Dimension::MolarMass ms = mass[atomiNumber - 1] * g_per_mol; 
-	  masses.set(cgatomidx, ms);
-	  // set the LJ parameters
-	  // ALSO NEED TO THINK ABOUT THE SHIFT OF 1
-	  // For atom 'i' first get the 'itype' from atomTypeIndex
-	  int itype = atomTypeIndex[ atomiNumber - 1 ];
-	  // Then lookup the index 'inbparams' for an interaction of 'itype' with 'itype' in nonbondedParmIndex
-	  // which is calculated as 'inbparams' = pointers[NTYPES]*(itype-1)+itype
-	  int inbparams = nonbondedParmIndex[ pointers[NTYPES] * (itype - 1) + itype - 1 ];
-	  // Then lookup the values of A & B in lennardJonesAcoef and lennardJonesBcoef
-	  // iAcoef = lennardJonesAcoef[inbparams] iBcoef =  lennardJonesBcoef[inbparams]
-	  double iAcoef = lennardJonesAcoef[ inbparams - 1 ];
-	  double iBcoef = lennardJonesBcoef[ inbparams - 1 ];
-
-	  double sigma, epsilon, rstar;
-	  // is there a SMALL?
-	  if (iAcoef <=0.000001)
-	    {
-	      sigma = 0.0;
-	      epsilon = 0.0;
-	      rstar = 0.0;
-	    }
-	  else
-	    {
-	  // and convert lennardJonesAcoef & lennardJonesBcoef into angstroms and kcal/mol-1
-	      sigma = std::pow( iAcoef / iBcoef ,  1/6. );
-	      epsilon = pow_2( iBcoef ) / (4*iAcoef);
-	      rstar = (sigma/2.)* std::pow(2.0, 1/6. ) ;
-	    }
-	  qDebug() << " Atom " << atomiNumber << " itype " << itype << " inbparams " << inbparams << " iAcoef " << iAcoef << " iBcoef " << iBcoef << " sigma " << sigma << " epsilon " << epsilon << " rstar " << rstar ;
-	  // Note that the amber par files give rstar=(sigma/2)*(2**(1/6.)) instead of sigma
-	  LJParameter lj( sigma * angstrom, epsilon * kcal_per_mol);
+	  this->setAtomParameters( editatom, editmol, crdCoords, coords_property, 
+				   charge, charge_property,
+				   mass, mass_property, atomTypeIndex, 
+				   nonbondedParmIndex, lennardJonesAcoef, 
+				   lennardJonesBcoef, lj_property,
+				   amberAtomType, ambertype_property, pointers);
 	}
-      molecule = molecule.edit()
-	.setProperty(coords_property.source(), AtomCoords(atomcoords))
-	.setProperty(charges_property.source(), charges)
-	.setProperty(masses_property.source(), masses)
-	.commit();
       
+      // Find all the bonds that involve an atom in this molecule. 
+      // Because bonds are indexed in two arrays in the top file 
+      // (those without hydrogen atoms and those with hydrogen atoms) 
+      // we have to look in both. Also note how the atom index is x / 3 + 1 
+
+      this->setConnectivity(editmol, pointers, 
+			    bondsIncHydrogen, bondsWithoutHydrogen,
+			    connectivity, connectivity_property);
+
+      // Next all the forcefield terms
+      this->setBonds(editmol, pointers[NBONH],
+		     bondsIncHydrogen, 
+		     bondForceConstant, bondEquilValue,
+		     bondfuncs, bond_property);
+
+      this->setBonds(editmol, pointers[MBONA],
+		     bondsWithoutHydrogen, 
+		     bondForceConstant, bondEquilValue,
+		     bondfuncs, bond_property);
+      
+      this->setAngles(editmol, pointers[NTHETH], 
+		      anglesIncHydrogen, 
+		      angleForceConstant, angleEquilValue,
+		      anglefuncs, angle_property);
+
+      this->setAngles(editmol, pointers[MTHETA], 
+		      anglesWithoutHydrogen, 
+		      angleForceConstant, angleEquilValue,
+		      anglefuncs, angle_property);
+      
+      this->setDihedrals(editmol, pointers[NTHETH],
+			 dihedralsIncHydrogen, 
+			 dihedralForceConstant, dihedralPeriodicity, dihedralPhase,
+			 dihedralfuncs, dihedral_property,
+			 improperfuncs, improper_property);
+
+      this->setDihedrals(editmol, pointers[MTHETA],
+			 dihedralsWithoutHydrogen, 
+			 dihedralForceConstant, dihedralPeriodicity, dihedralPhase,
+			 dihedralfuncs, dihedral_property,
+			 improperfuncs, improper_property);
+      // Needs to deal with the excluded atoms too
+      
+      molecule = editmol.commit();
 
       molecules.add(molecule);
       moleculeNumber++;
     }
-
-  // Then for each atom.
-  // Add COORDINATES CHARGE, MASS, LENNARD-JONES ACOEF, BCOEF, AMBER_ATOM_TYPE, RADII, SCREEN
-
-  // Then create bonds (and update connectivity)
-  // Then create bondff parameters
-
-  // angles & dihedrals
-
   // Finally, box information
 
   //%FLAG TITLE
@@ -1186,9 +1182,265 @@ void Amber::processDoubleLine(const QString &line, const FortranFormat &format, 
     }
 }
 
+
+void Amber::setAtomParameters(AtomEditor &editatom, MolEditor &editmol, QList<double> &crdCoords, 
+				  PropertyName &coords_property, QList<double> &charge, PropertyName &charge_property, 
+				  QList<double> &mass, PropertyName &mass_property, QList<int> &atomTypeIndex, 
+				  QList<int> &nonbondedParmIndex, QList<double> &lennardJonesAcoef, 
+				  QList<double> &lennardJonesBcoef, PropertyName &lj_property, 
+				  QStringList &amberAtomType, PropertyName &ambertype_property, QList<int> &pointers)
+{
+  //AtomEditor editatom = editmol.atom(AtomIdx(atomIndex));
+  int atomNumber = editatom.number().value();
+  
+  // set the coordinates. index into coordinates array is idx = 3 * ( atom.number().value() -1)
+  int array_index = 3 * ( atomNumber - 1 );
+  Vector coords = Vector(crdCoords[array_index], crdCoords[array_index+1],crdCoords[array_index+2] );
+  editatom.setProperty( coords_property.source(), coords);
+
+  // set the charges
+  SireUnits::Dimension::Charge chg = ( charge[atomNumber - 1] / this->AMBERCHARGECONV ) * mod_electron;
+  editatom.setProperty( charge_property, chg);
+  
+  // set the masses
+  SireUnits::Dimension::MolarMass ms = mass[atomNumber - 1] * g_per_mol; 
+  editatom.setProperty( mass_property.source(), ms);
+  
+  // set the LJ parameters
+  // For atom 'i' first get the 'itype' from atomTypeIndex
+  // Then lookup the index 'inbparams' for an interaction of 'itype' with 'itype' in nonbondedParmIndex
+  // which is calculated as 'inbparams' = pointers[NTYPES]*(itype-1)+itype
+  // Then lookup the values of A & B in lennardJonesAcoef and lennardJonesBcoef
+  // iAcoef = lennardJonesAcoef[inbparams] iBcoef =  lennardJonesBcoef[inbparams]
+  
+  int itype = atomTypeIndex[ atomNumber - 1 ];
+  int inbparams = nonbondedParmIndex[ pointers[NTYPES] * (itype - 1) + itype - 1 ];
+  double iAcoef = lennardJonesAcoef[ inbparams - 1 ];
+  double iBcoef = lennardJonesBcoef[ inbparams - 1 ];
+  double sigma, epsilon, rstar;
+  // is there a SMALL?
+  if (iAcoef < 0.000001)
+    {
+      sigma = 0.0;
+      epsilon = 0.0;
+      rstar = 0.0;
+    }
+  else
+    {
+      // and convert lennardJonesAcoef & lennardJonesBcoef into angstroms and kcal/mol-1
+      sigma = std::pow( iAcoef / iBcoef ,  1/6. );
+      epsilon = pow_2( iBcoef ) / (4*iAcoef);
+      rstar = (sigma/2.)* std::pow(2.0, 1/6. ) ;
+    }
+  //qDebug() << " Atom " << atomNumber << " itype " << itype << " inbparams " << inbparams << " iAcoef " << iAcoef << " iBcoef " << iBcoef << " sigma " << sigma << " epsilon " << epsilon << " rstar " << rstar ;
+  // Note that the amber par files give rstar=(sigma/2)*(2**(1/6.)) instead of sigma
+  LJParameter lj( sigma * angstrom, epsilon * kcal_per_mol);
+  editatom.setProperty( lj_property.source(), lj);
+  
+  // set the Amber atom type
+  QString ambertype = amberAtomType[ atomNumber - 1 ];
+  editatom.setProperty( ambertype_property.source(), ambertype);
+
+  editmol = editatom.molecule();
+}
+
+
+void Amber::setConnectivity(MolEditor &editmol, QList<int> &pointers, 
+			    QList<int> &bondsIncHydrogen, QList<int> &bondsWithoutHydrogen,
+			    ConnectivityEditor &connectivity, PropertyName &connectivity_property)
+{
+  
+  QSet<AtomNum> moleculeAtomNumbers = this->_pvt_selectAtomsbyNumber(editmol);
+ 
+  for (int i=0 ; i < 3 * pointers[NBONH] ; i = i + 3)
+    {
+      int index0 = bondsIncHydrogen[ i ] / 3 + 1 ;
+      AtomNum number0 = AtomNum( index0 );
+      int index1 = bondsIncHydrogen[ i + 1] / 3 + 1 ;
+      AtomNum number1 = AtomNum( index1 );
+      //int bondParamIndex = bondsIncHydrogen[ i + 2 ];
+      if ( moleculeAtomNumbers.contains(number0) || moleculeAtomNumbers.contains(number1) ) 
+	{
+	  AtomIdx atom0 = editmol.select( number0 ).index();
+	  AtomIdx atom1 = editmol.select( number1 ).index();
+	  //qDebug() << " Connect " << bondedAtom0Number << " and " << bondedAtom1Number;
+	  connectivity.connect( atom0, atom1 );
+	}
+    }
+  for (int i=0 ; i < 3 * pointers[MBONA] ; i = i + 3)
+    {
+      int index0 = bondsWithoutHydrogen[ i ] / 3 + 1 ;
+      AtomNum number0 = AtomNum( index0 );
+      int index1 = bondsWithoutHydrogen[ i + 1] / 3 + 1 ;
+      AtomNum number1 = AtomNum( index1 );
+      //int bondParamIndex = bondsWithoutHydrogen[ i + 2 ];
+      if ( moleculeAtomNumbers.contains(number0) || moleculeAtomNumbers.contains(number1) ) 
+	{
+	  AtomIdx atom0 = editmol.select( number0 ).index();
+	  AtomIdx atom1 = editmol.select( number1 ).index();
+	  //qDebug() << " Connect " << bondedAtom0Number << " and " << bondedAtom1Number;
+	  connectivity.connect( atom0, atom1 );
+	}
+    }
+  editmol.setProperty( connectivity_property.source(), connectivity.commit() );
+}
+
+void Amber::setBonds(MolEditor &editmol, int pointer,
+		     QList<int> &bondsArray, 
+		     QList<double> &bondForceConstant, QList<double> &bondEquilValue,
+		     TwoAtomFunctions &bondfuncs, PropertyName &bond_property)
+{
+  QSet<AtomNum> moleculeAtomNumbers = this->_pvt_selectAtomsbyNumber(editmol);
+
+  for (int i=0 ; i < 3 * pointer ; i = i + 3)
+    {
+      int index0 = bondsArray[ i ] / 3 + 1 ;
+      AtomNum number0 = AtomNum( index0 );
+      int index1 = bondsArray[ i + 1] / 3 + 1 ;
+      AtomNum number1 = AtomNum( index1 );
+      int paramIndex = bondsArray[ i + 2 ];
+      if ( moleculeAtomNumbers.contains(number0) || moleculeAtomNumbers.contains(number1) ) 
+	{
+	  AtomIdx atom0 = editmol.select( number0 ).index();
+	  AtomIdx atom1 = editmol.select( number1 ).index();
+
+	  Symbol r = InternalPotential::symbols().bond().r();
+
+	  double k = bondForceConstant[ paramIndex -1 ];
+	  double r0 = bondEquilValue[ paramIndex - 1 ];
+
+	  Expression bondfunc = k * SireMaths::pow_2(r - r0);
+	  // IS IT CORRECT ? AM I NOT GOING TO COUNT MORE THAN ONCE BONDS ACROSS RESIDUES?
+	  bondfuncs.set( atom0, atom1, bondfunc );
+	}
+    }
+  editmol.setProperty( bond_property.source(), bondfuncs );
+}
+
+void Amber::setAngles(MolEditor &editmol, int pointer,
+		      QList<int> &anglesArray, 
+		      QList<double> &angleForceConstant, QList<double> &angleEquilValue,
+		      ThreeAtomFunctions &anglefuncs, PropertyName &angle_property)
+{
+  QSet<AtomNum> moleculeAtomNumbers = this->_pvt_selectAtomsbyNumber(editmol);
+
+  for (int i=0 ; i < 4 * pointer ; i = i + 4)
+    {
+      int index0 = anglesArray[ i ] / 3 + 1 ;
+      AtomNum number0 = AtomNum( index0 );
+      int index1 = anglesArray[ i + 1] / 3 + 1 ;
+      AtomNum number1 = AtomNum( index1 );
+      int index2 = anglesArray[ i + 2] / 3 + 1 ;
+      AtomNum number2 = AtomNum( index2 );
+      int paramIndex = anglesArray[ i + 3 ];
+
+      if ( moleculeAtomNumbers.contains(number0) || 
+	   moleculeAtomNumbers.contains(number1) || 
+	   moleculeAtomNumbers.contains(number2)  ) 
+	{
+	  AtomIdx atom0 = editmol.select( number0 ).index();
+	  AtomIdx atom1 = editmol.select( number1 ).index();
+	  AtomIdx atom2 = editmol.select( number2 ).index();
+
+	  Symbol theta = InternalPotential::symbols().angle().theta();
+
+	  double k = angleForceConstant[ paramIndex - 1 ];
+	  double theta0 = angleEquilValue[ paramIndex - 1 ];// radians
+
+	  Expression anglefunc = k * SireMaths::pow_2(theta - theta0);
+	  // IS IT CORRECT ? AM I NOT GOING TO COUNT MORE THAN ONCE BONDS ACROSS RESIDUES?
+	  anglefuncs.set( atom0, atom1, atom2, anglefunc );
+	}
+    }
+  editmol.setProperty( angle_property.source(), anglefuncs );
+}
+
+void Amber::setDihedrals(MolEditor &editmol, int pointer,
+			 QList<int> &dihedralsArray, 
+			 QList<double> &dihedralForceConstant, QList<double> &dihedralPeriodicity, QList<double> &dihedralPhase,
+			 FourAtomFunctions &dihedralfuncs, PropertyName &dihedral_property,
+			 FourAtomFunctions &improperfuncs, PropertyName &improper_property)
+{
+  QSet<AtomNum> moleculeAtomNumbers = this->_pvt_selectAtomsbyNumber(editmol);
+  
+  // Don't bother since no dihedrals can be defined
+  if (moleculeAtomNumbers.size() < 4)
+    return;
+
+  for (int i= 0 ; i < 5 * pointer ; i = i + 5)
+    {
+      bool ignored = false;
+      bool improper = false;
+
+      int index0 = dihedralsArray[ i ] / 3 + 1 ;
+      int index1 = dihedralsArray[ i + 1 ] / 3 + 1 ;
+      int index2 = dihedralsArray[ i + 2 ] / 3 + 1 ;
+      int index3 = dihedralsArray[ i + 3 ] / 3 + 1 ;
+      int paramIndex = dihedralsArray[ i + 4 ];
+      
+      AtomNum number0 = AtomNum( index0 );
+      AtomNum number1 = AtomNum( index1 );
+ 
+      // Note that if index2 is negative it indicates that end group interactions are ignored
+      if (index2 < 0)
+	{
+	  ignored = true;
+	  index2 = - index2 ;
+	}
+      AtomNum number2 = AtomNum( index2 );
+
+      // Note that if index3 is negative, it indicates that the dihedral is improper
+      if (index3 < 0)
+	{
+	  improper = true;
+	  index3 = -index3;
+	}
+      AtomNum number3 = AtomNum( index3 );
+      
+      if ( moleculeAtomNumbers.contains(number0) || 
+	   moleculeAtomNumbers.contains(number1) || 
+	   moleculeAtomNumbers.contains(number2) || 
+	   moleculeAtomNumbers.contains(number3) ) 
+	{
+	  qDebug() << "indices " << index0 << index1 << index2 << index3 << paramIndex;
+	  Atom atom0 = editmol.select( number0 );
+	  Atom atom1 = editmol.select( number1 );
+	  Atom atom2 = editmol.select( number2 );
+	  Atom atom3 = editmol.select( number3 );
+	  if ( ignored )
+	    {
+	      qDebug() << " IGNORING " << atom0.name().value() << atom1.name().value() << atom2.name().value() << atom3.name().value() ;
+	    }
+	  else if ( improper )
+	    {
+	      qDebug() << " IMPROPER " << atom0.name().value() << atom1.name().value() << atom2.name().value() << atom3.name().value() ;
+	    }
+	  else
+	    {
+	      qDebug() << " REGULAR " << atom0.name().value() << atom1.name().value() << atom2.name().value() << atom3.name().value() ;
+	    }
+	}
+    }
+  editmol.setProperty( dihedral_property.source(), dihedralfuncs ); 
+  editmol.setProperty( improper_property.source(), improperfuncs );  
+}
+
 const char* Amber::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Amber>() );
 }
 
-
+/** Internal function to create a set of atom numbers in an editmol*/
+QSet<AtomNum> Amber::_pvt_selectAtomsbyNumber(const MolEditor &editmol)
+{
+  Selector<Atom> atoms = editmol.selectAllAtoms();
+  AtomSelection moleculeAtoms = atoms.selection();
+  QVector<AtomIdx> moleculeAtomIdxs = moleculeAtoms.selectedAtoms();
+  QSet<AtomNum> moleculeAtomNumbers;
+  foreach (AtomIdx atomIdx, moleculeAtomIdxs)
+    {
+      Atom atom = editmol.select(atomIdx);
+      moleculeAtomNumbers.insert(atom.number());
+    }
+  return moleculeAtomNumbers;
+}
