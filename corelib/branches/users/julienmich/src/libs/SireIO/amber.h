@@ -28,6 +28,7 @@
 
 #ifndef SIREIO_AMBER_H
 #define SIREIO_AMBER_H
+#include <boost/tuple/tuple.hpp>
 
 #include <QString>
 #include <QStringList>
@@ -42,6 +43,10 @@
 #include "SireMol/atomnum.h"
 
 #include "SireMM/internalff.h"
+#include "SireMM/cljnbpairs.h"
+
+#include "SireVol/space.h"
+//#include "SireVol/periodicbox.h"
 
 SIRE_BEGIN_HEADER
 
@@ -69,10 +74,17 @@ namespace SireMM
   class TwoAtomFunctions;
   class ThreeAtomFunctions;
   class FourAtomFunctions;
+  class CLJNBPairs;
+}
+
+namespace SireVol
+{
+  class Space;
 }
 
 namespace SireIO
 {
+using boost::tuple;
 
 using SireMol::Molecules;
 using SireMol::MolEditor;
@@ -83,7 +95,9 @@ using SireMol::AtomNum;
 using SireMM::TwoAtomFunctions;
 using SireMM::ThreeAtomFunctions;
 using SireMM::FourAtomFunctions;
+using SireMM::CLJNBPairs;
 
+using SireVol::SpacePtr;
 ///////////
 /////////// FortranFormat is an internal class that holds the information about a format used in a top file entry
 /////////// 
@@ -122,7 +136,7 @@ class SIREIO_EXPORT Amber
     return Amber::typeName();
   }
   
-  Molecules readcrdtop(const QString &crdfile, const QString &topfile);
+ const tuple<Molecules,SpacePtr> readcrdtop(const QString &crdfile, const QString &topfile);
 
  private:
   /** enumerates the FLAGS in a TOP file*/
@@ -220,8 +234,8 @@ class SIREIO_EXPORT Amber
 			 QList<double> &lennardJonesBcoef, PropertyName &lj_property, 
 			 QStringList &amberAtomType, PropertyName &ambertype_property, QList<int> &pointers);
 
-  void setConnectivity(MolEditor &editmol, QList<int> &pointers, 
-		       QList<int> &bondsIncHydrogen, QList<int> &bondsWithoutHydrogen,
+  void setConnectivity(MolEditor &editmol, int pointer, 
+		       QList<int> &bondsArray, 
 		       ConnectivityEditor &connectivity, PropertyName &connectivity_property);
 
   void setBonds(MolEditor &editmol, int pointer,
@@ -236,13 +250,21 @@ class SIREIO_EXPORT Amber
 
   void setDihedrals(MolEditor &editmol, int pointer,
 		    QList<int> &dihedralsArray, 
-		    QList<double> &ForceConstant, QList<double> &Periodicity, QList<double> &Phase,
+		    QList<double> &dihedralForceConstant, QList<double> &dihedralPeriodicity, QList<double> &dihedralPhase,
 		    FourAtomFunctions &dihedralfuncs, PropertyName &dihedral_property,
-		    FourAtomFunctions &improperfuncs, PropertyName &improper_property);
+		    FourAtomFunctions &improperfuncs, PropertyName &improper_property,
+		    QHash<AtomNum, QList<AtomNum> > &atoms14);
+
+  void setNonBondedPairs(MolEditor &editmol, int pointer,
+			 QList<int> &numberExcludedAtoms, QList<int> &excludedAtomsList,
+			 CLJNBPairs &nbpairs, PropertyName &nb_property,
+			 QHash<AtomNum, QList<AtomNum> > &atoms14);
 
   QSet<AtomNum> _pvt_selectAtomsbyNumber(const MolEditor &editmol);
 
   static const double AMBERCHARGECONV = 18.2223;// The partial charges in the top file are not in electrons
+  static const double AMBER14COUL = 1 / 1.2 ;
+  static const double AMBER14LJ = 0.50 ;
 };
 
 }
