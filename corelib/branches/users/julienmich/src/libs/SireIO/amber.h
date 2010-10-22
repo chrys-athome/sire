@@ -28,25 +28,9 @@
 
 #ifndef SIREIO_AMBER_H
 #define SIREIO_AMBER_H
-#include <boost/tuple/tuple.hpp>
-
-#include <QString>
-#include <QStringList>
-#include <QSet>
 
 #include "iobase.h"
-#include "SireBase/properties.h"
-#include "SireBase/propertymap.h"
-
-#include "SireMol/moleditor.h"
-#include "SireMol/atomeditor.h"
-#include "SireMol/atomnum.h"
-
-#include "SireMM/internalff.h"
-#include "SireMM/cljnbpairs.h"
-
 #include "SireVol/space.h"
-//#include "SireVol/periodicbox.h"
 
 SIRE_BEGIN_HEADER
 
@@ -98,6 +82,7 @@ using SireMM::FourAtomFunctions;
 using SireMM::CLJNBPairs;
 
 using SireVol::SpacePtr;
+
 ///////////
 /////////// FortranFormat is an internal class that holds the information about a format used in a top file entry
 /////////// 
@@ -136,7 +121,7 @@ class SIREIO_EXPORT Amber
     return Amber::typeName();
   }
   
- const tuple<Molecules,SpacePtr> readcrdtop(const QString &crdfile, const QString &topfile);
+ tuple<Molecules,SpacePtr> readcrdtop(const QString &crdfile, const QString &topfile);
 
  private:
   /** enumerates the FLAGS in a TOP file*/
@@ -263,7 +248,7 @@ class SIREIO_EXPORT Amber
   QSet<AtomNum> _pvt_selectAtomsbyNumber(const MolEditor &editmol);
 
   static const double AMBERCHARGECONV = 18.2223;// The partial charges in the top file are not in electrons
-  static const double AMBER14COUL = 1 / 1.2 ;
+  static const double AMBER14COUL = 1.0 / 1.2 ;
   static const double AMBER14LJ = 0.50 ;
 };
 
