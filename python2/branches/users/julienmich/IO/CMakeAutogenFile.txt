@@ -2,6 +2,7 @@
 set ( PYPP_SOURCES
        PDB.pypp.cpp
        TinkerParameters.pypp.cpp
+       Amber.pypp.cpp
        NullIO.pypp.cpp
        ProtoMS.pypp.cpp
        Tinker.pypp.cpp

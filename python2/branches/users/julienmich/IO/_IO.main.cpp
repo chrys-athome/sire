@@ -5,6 +5,8 @@
 
 #include "boost/python.hpp"
 
+#include "Amber.pypp.hpp"
+
 #include "Cube.pypp.hpp"
 
 #include "IOBase.pypp.hpp"
@@ -35,6 +37,8 @@ namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(_IO){
     register_SireIO_objects();
+
+    register_Amber_class();
 
     register_Cube_class();
 

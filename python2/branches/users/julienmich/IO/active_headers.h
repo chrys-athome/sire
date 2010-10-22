@@ -3,6 +3,7 @@
 
 #ifdef GCCXML_PARSE
 
+#include "amber.h"
 #include "cube.h"
 #include "iobase.h"
 #include "pdb.h"

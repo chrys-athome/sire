@@ -48,6 +48,7 @@
 #include "SireMol/chain.h"
 #include "SireMol/segment.h"
 #include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
 #include "SireMol/atomselection.h"
 #include "SireMol/moleculegroup.h"
 #include "SireMol/moleculegroups.h"
@@ -64,6 +65,8 @@
 #include "SireMol/bondid.h"
 #include "SireMol/angleid.h"
 #include "SireMol/dihedralid.h"
+
+#include "SireVol/space.h"
 
 using namespace SireMol;
 
@@ -127,6 +130,7 @@ void register_SireMol_containers()
     register_tuple< boost::tuple<MGIdentifier,SireBase::PropertyMap> >();
     register_tuple< boost::tuple<QList<MGIdentifier>,SireBase::PropertyMap> >();
     register_tuple< boost::tuple<QList<MolGroupPtr>,SireBase::PropertyMap> >();
+    register_tuple< boost::tuple<Molecules,SireVol::SpacePtr> >();
 
     register_PackedArray< SireBase::PackedArray2D<Element> >();
 

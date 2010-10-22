@@ -17,6 +17,7 @@
 #include "movermove.h"
 #include "moves.h"
 #include "mtsmc.h"
+#include "multrepexmove.h"
 #include "prefsampler.h"
 #include "rbworkspace.h"
 #include "repexmove.h"
