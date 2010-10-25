@@ -212,6 +212,14 @@ class SIREIO_EXPORT Amber
   void processStringLine(const QString &line, const FortranFormat &format, QStringList &stringarray);
   void processDoubleLine(const QString &line, const FortranFormat &format, QList<double> &doublearray);
 
+  void calcNumberMolecules(int &totalMolecules, QList<int> &atomsPerMolecule, 
+			   QList<int> &bondsIncHydrogen, QList<int> &bondsWithoutHydrogen,
+			   int natoms, int bondsh, int nbondsa);
+
+  void walk(int &atom, QHash<int, int> &atoms12, 
+	    int &totalMolecules, QHash<int, int> &atIsInMol, QHash<int, int> &atomsInMolecule);
+  
+
   void setAtomParameters(AtomEditor &editatom, MolEditor &editmol, QList<double> &crdCoords, 
 			 PropertyName &coords_property, QList<double> &charge, PropertyName &charge_property, 
 			 QList<double> &mass, PropertyName &mass_property, QList<int> &atomTypeIndex, 
