@@ -15,7 +15,6 @@ from Sire.Qt import *
 import os,re,sys
 import shutil
 
-from IPython.Debugger import Tracer; debug_here = Tracer()
 #############################################################
 top_file = "test/io/SYSTEM.top"
 crd_file = "test/io/SYSTEM.crd"

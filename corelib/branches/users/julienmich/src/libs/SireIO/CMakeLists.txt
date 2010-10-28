@@ -17,6 +17,7 @@ set ( SIREIO_HEADERS
       protoms.h
       tinker.h
       trajectorymonitor.h
+      zmatrixmaker.h
     )
 
 # Define the sources in SireIO
@@ -32,6 +33,7 @@ set ( SIREIO_SOURCES
       protoms.cpp
       tinker.cpp
       trajectorymonitor.cpp    
+      zmatrixmaker.cpp
 
       ${SIREIO_HEADERS}
     )

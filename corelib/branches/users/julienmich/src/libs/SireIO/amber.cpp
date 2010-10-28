@@ -34,30 +34,17 @@
 
 #include "SireMol/element.h"
 
-//#include "SireMol/atomcoords.h"
-//#include "SireMol/atomelements.h"
 #include "SireMol/atomcharges.h"
 #include "SireMol/atommasses.h"
 #include "SireMol/connectivity.h"
-//#include "SireMol/mover.hpp"
 #include "SireMol/selector.hpp"
 
 #include "SireMol/molecule.h"
-//#include "SireMol/moleculegroup.h"
-//#include "SireMol/molidx.h"
-//#include "SireMol/molidentifier.h"
 #include "SireMol/moleditor.h"
-//#include "SireMol/segeditor.h"
-//#include "SireMol/chaineditor.h"
 #include "SireMol/reseditor.h"
-//#include "SireMol/cgeditor.h"
 #include "SireMol/atomeditor.h"
-//#include "SireMol/residue.h"
-//#include "SireMol/chain.h"
-//#include "SireMol/segment.h"
 #include "SireMol/cgatomidx.h"
 #include "SireMol/residuecutting.h"
-//#include "SireBase/stringmangler.h"
 
 #include "SireCAS/trigfuncs.h"
 
@@ -66,7 +53,6 @@
 #include "SireMM/internalff.h"
 #include "SireMM/cljnbpairs.h"
 
-//#include "SireVol/space.h"
 #include "SireVol/cartesian.h"
 #include "SireVol/periodicbox.h"
 
@@ -84,25 +70,6 @@
 #include "SireStream/shareddatastream.h"
 
 #include "SireMove/movermove.h"
-
-//#include "SireStream/sharestrings.h"
-
-//#include "SireMol/atomcoords.h"
-//#include "SireMol/atomelements.h"
-//#include "SireMol/atomcharges.h"
-//#include "SireMol/connectivity.h"
-
-//#include "SireMol/molecule.h"
-//#include "SireMol/molecules.h"
-//#include "SireMol/moleditor.h"
-//#include "SireMol/reseditor.h"
-//#include "SireMol/atomeditor.h"
-//#include "SireMol/residue.h"
-
-//#include "SireError/errors.h"
-
-//#include "SireStream/datastream.h"
-//#include "SireStream/shareddatastream.h"
 
 using namespace SireIO;
 using namespace SireMol;
