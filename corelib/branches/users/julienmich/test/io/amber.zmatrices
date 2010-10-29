@@ -1,10 +1,6 @@
 version 1
 
-chain aacenter
-bbatom N
-bbatom CA
-bbatom C
-bbatom O
+chain aamiddle
 zmatrix H N CA C
 zmatrix HA CA N C
 bond  H N flex 0.1
@@ -12,12 +8,7 @@ angle H N CA flex 0.50
 angle HA CA N flex 0.50
 dihedral H N CA C flex 3.0
 
-
 chain aanterm
-bbatom N
-bbatom CA
-bbatom C
-bbatom O
 zmatrix H1 N CA C
 zmatrix H2 N CA C
 zmatrix H3 N CA C
@@ -31,10 +22,6 @@ dihedral H2 N CA C flex 3.0
 dihedral H3 N CA C flex 3.0
 
 chain aacterm
-bbatom N
-bbatom CA
-bbatom C
-bbatom O
 zmatrix H N CA C
 zmatrix OXT C O CA
 zmatrix HA CA N C
@@ -42,21 +29,30 @@ angle H N CA flex 0.50
 angle HA CA N flex 0.50
 dihedral H N CA C flex 3.0
 
+chain aasingle
+zmatrix H1 N CA C
+zmatrix H2 N CA C
+zmatrix H3 N CA C
+zmatrix OXT C O CA
+zmatrix HA CA N C
+angle H1 N CA flex 0.50
+angle H2 N CA flex 0.50
+angle H3 N CA flex 0.50
+angle HA CA N flex 0.50
+dihedral H1 N CA C flex 3.0
+dihedral H2 N CA C flex 3.0
+dihedral H3 N CA C flex 3.0
+
+chain promiddle
+zmatrix HA CA N C
+angle HA CA N flex 0.50
 
 chain procterm
-bbatom N
-bbatom CA
-bbatom C
-bbatom O
 zmatrix HA CA N C
 zmatrix OXT C O CA
 angle HA CA N flex 0.50
 
 chain pronterm
-bbatom N
-bbatom CA
-bbatom C
-bbatom O
 zmatrix HA CA N C
 zmatrix H2 N CA C
 zmatrix H3 N CA C
@@ -66,32 +62,33 @@ angle HA CA N flex 0.50
 dihedral H2 N CA C flex 3.0
 dihedral H3 N CA C flex 3.0
 
-
-chain procenter
-bbatom N
-bbatom CA
-bbatom C
-bbatom O
+chain prosingle
 zmatrix HA CA N C
+zmatrix H2 N CA C
+zmatrix H3 N CA C
+zmatrix OXT C O CA
+angle H2 N CA flex 0.50
+angle H3 N CA flex 0.50
 angle HA CA N flex 0.50
+dihedral H2 N CA C flex 3.0
+dihedral H3 N CA C flex 3.0
 
-chain glycenter
-bbatom N
-bbatom CA
-bbatom C
-bbatom O
+chain glymiddle
 zmatrix H N CA C
 zmatrix HA2 CA N C
 angle H N CA flex 0.50
 angle HA2 CA N flex 0.50
 dihedral H N CA C flex 3.0
 
+chain glycterm
+zmatrix H N CA C
+zmatrix OXT C O CA
+zmatrix HA2 CA N C
+angle H N CA flex 0.50
+angle HA2 CA N flex 0.50
+dihedral H N CA C flex 3.0
 
-chain glyaanterm
-bbatom N
-bbatom CA
-bbatom C
-bbatom O
+chain glynterm
 zmatrix H1 N CA C
 zmatrix H2 N CA C
 zmatrix H3 N CA C
@@ -104,21 +101,27 @@ dihedral H1 N CA C flex 3.0
 dihedral H2 N CA C flex 3.0
 dihedral H3 N CA C flex 3.0
 
-chain glycterm
-bbatom N
-bbatom CA
-bbatom C
-bbatom O
-zmatrix H N CA C
-zmatrix OT C O CA
+chain glysingle
+zmatrix H1 N CA C
+zmatrix H2 N CA C
+zmatrix H3 N CA C
 zmatrix HA2 CA N C
-angle H N CA flex 0.50
+zmatrix OXT C O CA
+angle H1 N CA flex 0.50
+angle H2 N CA flex 0.50
+angle H3 N CA flex 0.50
 angle HA2 CA N flex 0.50
-dihedral H N CA C flex 3.0
+dihedral H1 N CA C flex 3.0
+dihedral H2 N CA C flex 3.0
+dihedral H3 N CA C flex 3.0
 
 residue GLH
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix CD CG CB CA
@@ -146,48 +149,56 @@ dihedral HE2 OE2 CD OE1 flex 10.00
 
 residue ILE
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG1 CB CA N
 zmatrix CG2 CB CA CG1
 zmatrix CD1 CG1 CB CA
 zmatrix HB CB CA CG1
-zmatrix 2HG1 CG1 CB CD1
-zmatrix 3HG1 CG1 CB CD1
-zmatrix 1HG2 CG2 CB CA
-zmatrix 2HG2 CG2 CB 1HG2
-zmatrix 3HG2 CG2 CB 1HG2
-zmatrix 1HD1 CD1 CG1 CB
-zmatrix 2HD1 CD1 CG1 1HD1
-zmatrix 3HD1 CD1 CG1 1HD1
+zmatrix HG12 CG1 CB CD1
+zmatrix HG13 CG1 CB CD1
+zmatrix HG21 CG2 CB CA
+zmatrix HG22 CG2 CB HG21
+zmatrix HG23 CG2 CB HG21
+zmatrix HD11 CD1 CG1 CB
+zmatrix HD12 CD1 CG1 HD11
+zmatrix HD13 CD1 CG1 HD11
 angle CB CA N flex 0.50
 angle CG1 CB CA flex 0.50
 angle CG2 CB CA flex 0.50
 angle CD1 CG1 CB flex 0.50
 angle HB CB CA flex 0.50
-angle 1HG2 CG2 CB flex 0.50
-angle 2HG2 CG2 CB flex 0.50
-angle 3HG2 CG2 CB flex 0.50
-angle 2HG1 CG1 CB flex 0.50
-angle 3HG1 CG1 CB flex 0.50
-angle 1HD1 CD1 CG1 flex 0.50
-angle 2HD1 CD1 CG1 flex 0.50
-angle 3HD1 CD1 CG1 flex 0.50
+angle HG21 CG2 CB flex 0.50
+angle HG22 CG2 CB flex 0.50
+angle HG23 CG2 CB flex 0.50
+angle HG12 CG1 CB flex 0.50
+angle HG13 CG1 CB flex 0.50
+angle HD11 CD1 CG1 flex 0.50
+angle HD12 CD1 CG1 flex 0.50
+angle HD13 CD1 CG1 flex 0.50
 dihedral CG1 CB CA N flex 10.00
 dihedral CD1 CG1 CB CA flex 15.00
-dihedral 1HG2 CG2 CB CA flex 15.00
-dihedral 1HD1 CD1 CG1 CB flex 15.00
+dihedral HG21 CG2 CB CA flex 15.00
+dihedral HD11 CD1 CG1 CB flex 15.00
 
 
 residue GLN
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix CD CG CB CA
 zmatrix NE2 CD CG CB
-zmatrix 1HE2 NE2 CD CG
-zmatrix 2HE2 NE2 CD 1HE2
+zmatrix HE21 NE2 CD CG
+zmatrix HE22 NE2 CD HE21
 zmatrix OE1 CD CG NE2
 zmatrix HB2 CB CA CG
 zmatrix HB3 CB CA CG
@@ -205,18 +216,26 @@ angle HG3 CG CB flex 0.50
 dihedral CG CB CA N flex 5.00
 dihedral CD CG CB CA flex 10.00
 dihedral NE2 CD CG CB flex 10.00
-dihedral 1HE2 NE2 CD CG flex 15.00
+dihedral HE21 NE2 CD CG flex 15.00
 
 
 residue GLY
 rigidbody rotate 2.000 translate 0.050
-backbone first glynterm middle glycenter last glycterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first glynterm middle glymiddle last glycterm single glysingle
 zmatrix HA3 CA N C
 angle HA3 CA N flex 0.50
 
 residue GLU
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix CD CG CB CA
@@ -242,7 +261,11 @@ dihedral OE1 CD CG CB flex 15.00
 
 residue CYS
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix SG CB CA N
 zmatrix HG SG CB CA
@@ -259,7 +282,11 @@ dihedral HG SG CB CA flex 15.00
 
 residue HIS
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix ND1 CG CB CA
@@ -285,7 +312,11 @@ dihedral ND1 CG CB CA flex 10.00
 
 residue SER
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix OG CB CA N
 zmatrix HG OG CB CA
@@ -302,7 +333,11 @@ dihedral HG OG CB CA flex 15.00
 
 residue LYS
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix CD CG CB CA
@@ -344,7 +379,11 @@ dihedral HZ1 NZ CE CD flex 15.00
 #neutral lysine
 residue LYN
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix CD CG CB CA
@@ -384,7 +423,11 @@ dihedral HZ2 NZ CE CD flex 15.00
 
 residue PRO
 rigidbody rotate 2.000 translate 0.050
-backbone first pronterm middle procenter last procterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first pronterm middle promiddle last procterm single prosingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix CD CG CB CA
@@ -409,7 +452,11 @@ dihedral CD CG CB CA flex 2.00
 
 residue CYX
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix SG CB CA N
 zmatrix HB1 CB CA SG
@@ -424,7 +471,11 @@ dihedral SG CB CA N flex 10.00
 
 residue HIE
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix ND1 CG CB CA
@@ -450,7 +501,11 @@ dihedral ND1 CG CB CA flex 10.00
 
 residue ASH
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix OD1 CG CB CA
@@ -471,12 +526,16 @@ dihedral HD2 OD2 CG OD1 flex 10.00
 
 residue ASN
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix ND2 CG CB CA
-zmatrix HD1 ND2 CG CB
-zmatrix HD2 ND2 CG HD1
+zmatrix HD21 ND2 CG CB
+zmatrix HD22 ND2 CG HD21
 zmatrix OD1 CG CB ND2
 zmatrix HB2 CB CA CG
 zmatrix HB3 CB CA CG
@@ -486,16 +545,20 @@ angle OD1 CG CB flex 0.50
 angle ND2 CG CB flex 0.50
 angle HB2 CB CA flex 0.50
 angle HB3 CB CA flex 0.50
-angle HD1 ND2 CG flex 0.50
-angle HD2 ND2 CG flex 0.50
+angle HD21 ND2 CG flex 0.50
+angle HD22 ND2 CG flex 0.50
 dihedral CG CB CA N flex 10.00
 dihedral ND2 CG CB CA flex 10.00
-dihedral HD1 ND2 CG CB flex 15.00
+dihedral HD21 ND2 CG CB flex 15.00
 
 
 residue HIP
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix ND1 CG CB CA
@@ -522,59 +585,71 @@ dihedral ND1 CG CB CA flex 10.00
 
 residue VAL
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG1 CB CA N
 zmatrix CG2 CB CA CG1
 zmatrix HB CB CA CG1
-zmatrix 1HG1 CG1 CB CA
-zmatrix 2HG1 CG1 CB 1HG1
-zmatrix 3HG1 CG1 CB 1HG1
-zmatrix 1HG2 CG2 CB CA
-zmatrix 2HG2 CG2 CB 1HG2
-zmatrix 3HG2 CG2 CB 1HG2
+zmatrix HG11 CG1 CB CA
+zmatrix HG12 CG1 CB HG11
+zmatrix HG13 CG1 CB HG11
+zmatrix HG21 CG2 CB CA
+zmatrix HG22 CG2 CB HG21
+zmatrix HG23 CG2 CB HG21
 angle CB CA N flex 0.50
 angle CG1 CB CA flex 0.50
 angle CG2 CB CA flex 0.50
 angle HB CB CA flex 0.50
-angle 1HG1 CG1 CB flex 0.50
-angle 2HG1 CG1 CB flex 0.50
-angle 3HG1 CG1 CB flex 0.50
-angle 1HG2 CG2 CB flex 0.50
-angle 2HG2 CG2 CB flex 0.50
-angle 3HG2 CG2 CB flex 0.50
+angle HG11 CG1 CB flex 0.50
+angle HG12 CG1 CB flex 0.50
+angle HG13 CG1 CB flex 0.50
+angle HG21 CG2 CB flex 0.50
+angle HG22 CG2 CB flex 0.50
+angle HG23 CG2 CB flex 0.50
 dihedral CG1 CB CA N flex 15.00
-dihedral 1HG1 CG1 CB CA flex 15.00
-dihedral 1HG2 CG2 CB CA flex 15.00
+dihedral HG11 CG1 CB CA flex 15.00
+dihedral HG21 CG2 CB CA flex 15.00
 
 
 residue THR
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix OG1 CB CA N
 zmatrix HG1 OG1 CB CA
 zmatrix CG2 CB CA OG1
 zmatrix HB CB CA OG1
-zmatrix 1HG2 CG2 CB CA
-zmatrix 2HG2 CG2 CB 1HG2
-zmatrix 3HG2 CG2 CB 1HG2
+zmatrix HG21 CG2 CB CA
+zmatrix HG22 CG2 CB HG21
+zmatrix HG23 CG2 CB HG21
 angle CB CA N flex 0.50
 angle CG2 CB CA flex 0.50
 angle OG1 CB CA flex 0.50
 angle HG1 OG1 CB flex 0.50
 angle HB CB CA flex 0.50
-angle 1HG2 CG2 CB flex 0.50
-angle 2HG2 CG2 CB flex 0.50
-angle 3HG2 CG2 CB flex 0.50
+angle HG21 CG2 CB flex 0.50
+angle HG22 CG2 CB flex 0.50
+angle HG23 CG2 CB flex 0.50
 dihedral OG1 CB CA N flex 10.00
 dihedral HG1 OG1 CB CA flex 15.00
-dihedral 1HG2 CG2 CB CA flex 15.00
+dihedral HG21 CG2 CB CA flex 15.00
 
 
 residue ASP
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix OD1 CG CB CA
@@ -593,7 +668,11 @@ dihedral OD1 CG CB CA flex 15.00
 
 residue TRP
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix CD1 CG CB CA
@@ -628,7 +707,11 @@ dihedral CD1 CG CB CA flex 10.00
 
 residue PHE
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix CD1 CG CB CA
@@ -659,7 +742,11 @@ dihedral CD1 CG CB CA flex 10.00
 
 residue ALA
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix HB1 CB CA N
 zmatrix HB2 CB CA HB1
@@ -673,7 +760,11 @@ dihedral HB1 CB CA N flex 10.00
 
 residue MET
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix SD CG CB CA
@@ -704,7 +795,11 @@ dihedral HE1 CE SD CG flex 15.00
 
 residue LEU
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix CD1 CG CB CA
@@ -712,12 +807,12 @@ zmatrix CD2 CG CB CD1
 zmatrix HB2 CB CA CG
 zmatrix HB3 CB CA CG
 zmatrix HG CG CB CD1
-zmatrix 1HD1 CD1 CG CB
-zmatrix 2HD1 CD1 CG 1HD1
-zmatrix 3HD1 CD1 CG 1HD1
-zmatrix 1HD2 CD2 CG CB
-zmatrix 2HD2 CD2 CG 1HD2
-zmatrix 3HD2 CD2 CG 1HD2
+zmatrix HD11 CD1 CG CB
+zmatrix HD12 CD1 CG HD11
+zmatrix HD13 CD1 CG HD11
+zmatrix HD21 CD2 CG CB
+zmatrix HD22 CD2 CG HD21
+zmatrix HD23 CD2 CG HD21
 angle CB CA N flex 0.50
 angle CG CB CA flex 0.50
 angle CD1 CG CB flex 0.50
@@ -725,21 +820,25 @@ angle CD2 CG CB flex 0.50
 angle HB2 CB CA flex 0.50
 angle HB3 CB CA flex 0.50
 angle HG CG CB flex 0.50
-angle 1HD1 CD1 CG flex 0.50
-angle 2HD1 CD1 CG flex 0.50
-angle 3HD1 CD1 CG flex 0.50
-angle 1HD2 CD2 CG flex 0.50
-angle 2HD2 CD2 CG flex 0.50
-angle 3HD2 CD2 CG flex 0.50
+angle HD11 CD1 CG flex 0.50
+angle HD12 CD1 CG flex 0.50
+angle HD13 CD1 CG flex 0.50
+angle HD21 CD2 CG flex 0.50
+angle HD22 CD2 CG flex 0.50
+angle HD23 CD2 CG flex 0.50
 dihedral CG CB CA N flex 10.00
 dihedral CD1 CG CB CA flex 15.00
-dihedral 1HD1 CD1 CG CB flex 15.00
-dihedral 1HD2 CD2 CG CB flex 15.00
+dihedral HD11 CD1 CG CB flex 15.00
+dihedral HD21 CD2 CG CB flex 15.00
 
 
 residue ARG
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix CD CG CB CA
@@ -747,11 +846,11 @@ zmatrix NE CD CG CB
 zmatrix CZ NE CD CG
 zmatrix HE NE CD CZ
 zmatrix NH1 CZ NE CD
-zmatrix 1HH1 NH1 CZ NE
-zmatrix 2HH1 NH1 CZ 1HH1
+zmatrix HH11 NH1 CZ NE
+zmatrix HH12 NH1 CZ HH11
 zmatrix NH2 CZ NE NH1
-zmatrix 1HH2 NH2 CZ NE
-zmatrix 2HH2 NH2 CZ 1HH2
+zmatrix HH21 NH2 CZ NE
+zmatrix HH22 NH2 CZ HH21
 zmatrix HB2 CB CA CG
 zmatrix HB3 CB CA CG
 zmatrix HG2 CG CB CD
@@ -764,10 +863,10 @@ angle CD CG CB flex 0.50
 angle NE CD CG flex 0.50
 angle HE NE CD flex 0.50
 angle CZ NE CD flex 0.50
-angle 1HH1 NH1 CZ flex 0.50
-angle 2HH1 NH1 CZ flex 0.50
-angle 1HH2 NH2 CZ flex 0.50
-angle 2HH2 NH2 CZ flex 0.50
+angle HH11 NH1 CZ flex 0.50
+angle HH12 NH1 CZ flex 0.50
+angle HH21 NH2 CZ flex 0.50
+angle HH22 NH2 CZ flex 0.50
 angle HB2 CB CA flex 0.50
 angle HB3 CB CA flex 0.50
 angle HG2 CG CB flex 0.50
@@ -782,7 +881,11 @@ dihedral CZ NE CD CG flex 10.00
 
 residue TYR
 rigidbody rotate 2.000 translate 0.050
-backbone first aanterm middle aacenter last aacterm
+bbatom N
+bbatom CA
+bbatom O
+bbatom C
+backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix CG CB CA N
 zmatrix CD1 CG CB CA

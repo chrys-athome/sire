@@ -43,24 +43,23 @@ QDataStream& operator>>(QDataStream&, SireIO::ZmatrixMaker&);
 
 namespace SireMol
 {
-  class MoleculeGroup;
+  class Molecule;
 }
 
-//class QTextStream;
 
 namespace SireIO
 {
   /** 
-      This internal class is used to store information describing a ZmatrixLine.
+      This internal class is used to store information describing a ZmatrixLineTemplate.
       
       @author Julien Michel
    */
-  using SireMol::MoleculeGroup;
+  using SireMol::Molecule;
 
-  class ZmatrixLine
+  class ZmatrixLineTemplate
   {
   public:
-    ZmatrixLine( const QString &atom = " ", const QString &bond = " ", const QString &angle = " ", 
+    ZmatrixLineTemplate( const QString &atom = " ", const QString &bond = " ", const QString &angle = " ", 
 		 const QString &dihedral = " ", const double &bondDelta = 0.0, const double &angleDelta = 0.0, 
 		 const double &dihedralDelta = 0.0);
     
@@ -87,7 +86,7 @@ namespace SireIO
   };
   /** 
       This internal class is used to store information describing a ZmatrixTemplate, which is 
-      an hash of ZmatrixLine with a name
+      an hash of ZmatrixLineTemplate with a name
       
       @author Julien Michel
    */
@@ -96,11 +95,11 @@ namespace SireIO
   public:
     ZmatrixTemplate( const QString &name= " ");
 
-    QList<ZmatrixLine> getZmatrix();
-    ZmatrixLine getZmatrixLine(const QString &atom);
+    QList<ZmatrixLineTemplate> getZmatrix();
+    ZmatrixLineTemplate getZmatrixLineTemplate(const QString &atom);
     const QString getName();
 
-    void addZmatrixLine( const QString &atom, const ZmatrixLine &zmatline);
+    void addZmatrixLineTemplate( const QString &atom, const ZmatrixLineTemplate &zmatline);
     void setBondDelta( const QString &atom, const QString &bond, double bondDelta  );
     void setAngleDelta( const QString &atom, const QString &bond, const QString &angle, double angleDelta);
     void setDihedralDelta( const QString &atom, const QString &bond, 
@@ -108,25 +107,7 @@ namespace SireIO
 
   private:
     QString name;
-    QHash< QString, ZmatrixLine > zmatrix;
-  };
-
-  /** 
-      This internal class is used to store information describing a Zmatrixchain template. 
-      It inherits from ZmatrixTemplate.
-      @author Julien Michel
-   */
-  class ZmatrixChain : public ZmatrixTemplate
-  {
-  public:
-    ZmatrixChain( const QString &name=" " );
-
-    QStringList getBBatoms();
-    void addBBatom( const QString &bbAtom);
-
-  private:
-    QStringList bbatoms;
-    
+    QHash< QString, ZmatrixLineTemplate > zmatrix;
   };
 
   /** 
@@ -142,18 +123,21 @@ namespace SireIO
 
     void setRotation ( const double rot);
     void setTranslation( const double trans);
-    void addChain( const QString &name, const ZmatrixChain &chain);
+    void addChain( const QString &name, const ZmatrixTemplate &chain);
+    QStringList getBBatoms();
+    void addBBatom( const QString &bbAtom);
 
     const double getRotation();
     const double getTranslation();
-    QList<ZmatrixChain> getChains();
-    const ZmatrixChain getChain(const QString &name);
+    QList<ZmatrixTemplate> getChains();
+    const ZmatrixTemplate getChain(const QString &name);
     
   private:
     double rotate;
     double translate;
+    QStringList bbatoms;
     // We use 'first' , 'middle' and 'last'
-    QHash< QString, ZmatrixChain> backbone;
+    QHash< QString, ZmatrixTemplate> backbone;
   };
 
 
