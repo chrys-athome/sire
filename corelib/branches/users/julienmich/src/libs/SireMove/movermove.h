@@ -88,10 +88,14 @@ friend QDataStream& ::operator<<(QDataStream&, const MoverMove&);
 friend QDataStream& ::operator>>(QDataStream&, MoverMove&);
 
 public:
-    MoverMove();
+
+    MoverMove(const PropertyMap &map = PropertyMap() );
     
-    MoverMove(const MoleculeGroup &molgroup);
-    MoverMove(const Sampler &sampler);
+    MoverMove(const MoleculeGroup &molgroup,
+	      const PropertyMap &map = PropertyMap() );
+
+    MoverMove(const Sampler &sampler, 
+	      const PropertyMap &map = PropertyMap() );
     
     MoverMove(const MoverMove &other);
     
@@ -112,25 +116,29 @@ public:
     const Sampler& sampler() const;
     const MoleculeGroup& moleculeGroup() const;
     
+    const PropertyName& flexibilityProperty() const;
+
+    void setFlexibilityProperty(const PropertyName &property);
+
     void setGenerator(const RanGenerator &rangenerator);
 
     void move(System &system, int nmoves, bool record_stats=true);
-    void changeDeltas(float prob, float scale);
-    void setDelta(const BondID &bond, SireUnits::Dimension::Length delta);
-    void setDelta(const AngleID &angle, SireUnits::Dimension::Angle delta);
-    void setDelta(const DihedralID &dihedral, SireUnits::Dimension::Angle delta);
+    //void changeDeltas(float prob, float scale);
+    //void setDelta(const BondID &bond, SireUnits::Dimension::Length delta);
+    //void setDelta(const AngleID &angle, SireUnits::Dimension::Angle delta);
+    //void setDelta(const DihedralID &dihedral, SireUnits::Dimension::Angle delta);
 
-    void setBonds(const QList<BondID> &bonds);
-    void setAngles(const QList<AngleID> &angles);
-    void setDihedrals(const QList<DihedralID> &dihedrals);    
-    void setBondDeltas(const QHash<DofID,SireUnits::Dimension::Length> &bond_deltas);
-    void setAngleDeltas(const QHash<DofID,SireUnits::Dimension::Angle> &angle_deltas);
+    //void setBonds(const QList<BondID> &bonds);
+    //void setAngles(const QList<AngleID> &angles);
+    //void setDihedrals(const QList<DihedralID> &dihedrals);    
+    //void setBondDeltas(const QHash<DofID,SireUnits::Dimension::Length> &bond_deltas);
+    //void setAngleDeltas(const QHash<DofID,SireUnits::Dimension::Angle> &angle_deltas);
 
-    const QList<BondID>& getBonds(); 
-    const QList<AngleID>& getAngles(); 
-    const QList<DihedralID>& getDihedrals(); 
-    const QHash<DofID,SireUnits::Dimension::Length>& getBondDeltas();
-    const QHash<DofID,SireUnits::Dimension::Angle>& getAngleDeltas();
+    //const QList<BondID>& getBonds(); 
+    //const QList<AngleID>& getAngles(); 
+    //const QList<DihedralID>& getDihedrals(); 
+    //const QHash<DofID,SireUnits::Dimension::Length>& getBondDeltas();
+    //const QHash<DofID,SireUnits::Dimension::Angle>& getAngleDeltas();
 
 protected:
     void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
@@ -138,16 +146,20 @@ protected:
 private:
     /** The sampler used to select random molecules for the move */
     SamplerPtr smplr;
+
+    /** The name of the property that contains the flexibility*/
+    PropertyName flexibility_property;
+
     /** The bonds that can be moved */
-    QList<BondID> bonds;
+    //QList<BondID> bonds;
     /** The angles that can be moved */
-    QList<AngleID> angles;
+    //QList<AngleID> angles;
     /** The dihedrals that can be moved */
-    QList<DihedralID> dihedrals;    
+    //QList<DihedralID> dihedrals;    
     /** The list of delta values for bonds*/
-    QHash<DofID,SireUnits::Dimension::Length> bond_deltas;
+    //QHash<DofID,SireUnits::Dimension::Length> bond_deltas;
     /** The list of delta values for angle/dihedrals*/
-    QHash<DofID,SireUnits::Dimension::Angle> angle_deltas;
+    //QHash<DofID,SireUnits::Dimension::Angle> angle_deltas;
  };
 
 /** This class implements an unique label of degrees of freedom based 

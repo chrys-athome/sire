@@ -372,8 +372,7 @@ void ZmatrixMaker::loadTemplates( const QString &templatefile)
     {
       line = ts.readLine();
       QStringList words = line.split(" ", QString::SkipEmptyParts);
-      qDebug() << line;
-      //qDebug() << " current chain/residue " << current << " type " << currentType;
+      //qDebug() << line;
       
       if ( line.startsWith("chain") )
 	{
@@ -450,25 +449,25 @@ void ZmatrixMaker::loadTemplates( const QString &templatefile)
     }
 
   /** Store the new residues */
-  foreach (ZmatrixTemplate chain, chains)
-    {
-      qDebug() << " CHAIN " << chain.getName();
-      QList<ZmatrixLineTemplate> zmatrix = chain.getZmatrix();
-      foreach ( ZmatrixLineTemplate zmatline, zmatrix)
-	qDebug() << zmatline.toString();
-    }
+  // foreach (ZmatrixTemplate chain, chains)
+  //   {
+  //     qDebug() << " CHAIN " << chain.getName();
+  //     QList<ZmatrixLineTemplate> zmatrix = chain.getZmatrix();
+  //     foreach ( ZmatrixLineTemplate zmatline, zmatrix)
+  // 	qDebug() << zmatline.toString();
+  //   }
   foreach (ZmatrixResidue residue, residues)
     {
-      qDebug() << " RESIDUE " << residue.getName();
-      qDebug() << " Rotate " << residue.getRotation();
-      qDebug() << " Translate " << residue.getTranslation();
-      qDebug() << " CHAINS " ;
-      QList<ZmatrixTemplate> chains = residue.getChains();
-      foreach (ZmatrixTemplate chain, chains)
-	qDebug() << chain.getName();
-      QList<ZmatrixLineTemplate> zmatrix = residue.getZmatrix();
-      foreach ( ZmatrixLineTemplate zmatline, zmatrix)
-	qDebug() << zmatline.toString();
+      //qDebug() << " RESIDUE " << residue.getName();
+      //qDebug() << " Rotate " << residue.getRotation();
+      //qDebug() << " Translate " << residue.getTranslation();
+      //qDebug() << " CHAINS " ;
+      //QList<ZmatrixTemplate> chains = residue.getChains();
+      //foreach (ZmatrixTemplate chain, chains)
+      //	qDebug() << chain.getName();
+      //QList<ZmatrixLineTemplate> zmatrix = residue.getZmatrix();
+      //foreach ( ZmatrixLineTemplate zmatline, zmatrix)
+      //	qDebug() << zmatline.toString();
       QString resname = residue.getName();
       if ( not this->residues.contains(resname))
 	this->residues[resname] = residue;
@@ -497,25 +496,11 @@ Molecule ZmatrixMaker::applyTemplates( Molecule &molecule)
       /** Look up a residue among the templates*/
       QString resname = residue.name().value();
  
-      qDebug() << " Looking at residue " << resname;
-
       if ( not this->residues.contains(resname) )
        	throw SireError::invalid_key(resname, CODELOC);
 
       ZmatrixResidue restemplate = this->residues[resname];
       
-      qDebug() << " For which have this template ";
-      qDebug() << restemplate.getName();
-      qDebug() << restemplate.getRotation();
-      qDebug() << restemplate.getTranslation();
-      qDebug() << restemplate.getBBatoms();
-      QList<ZmatrixTemplate> chains = restemplate.getChains();
-      foreach (ZmatrixTemplate chain, chains)
-	qDebug() << chain.getName();
-      QList<ZmatrixLineTemplate> zmat = restemplate.getZmatrix();
-      foreach ( ZmatrixLineTemplate zmatline, zmat)
-	 qDebug() << zmatline.toString();
-
       /** Is this residue 'first', 'middle' or 'last' or 'single' ?*/
       bool firstbondedwithother = false;
       bool lastbondedwithother = false;
@@ -556,7 +541,7 @@ Molecule ZmatrixMaker::applyTemplates( Molecule &molecule)
       else
 	position = "single";
 
-      qDebug() << " The position of this residue is " << position ;
+      //qDebug() << " The position of this residue is " << position ;
 
       /** Need to decide where to store info about rigid body 
 	  translation and rotations of this residue*/
@@ -566,7 +551,7 @@ Molecule ZmatrixMaker::applyTemplates( Molecule &molecule)
       for (Index j(0); j<nats; ++j)
        	{
        	  Atom atom = residue.atom(j);
-	  qDebug() << " Finding template for atom " << atom.name().toString();
+	  //qDebug() << " Finding template for atom " << atom.name().toString();
 	  /** Backbone atoms do not have a zmatrix line */
 	  if ( bbatoms.contains( atom.name().value() ) )
 	    continue;

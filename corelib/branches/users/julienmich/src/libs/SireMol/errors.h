@@ -738,6 +738,39 @@ public:
     }
 };
 
+/** This exception is thrown when a request is made of a non-existant dihedral
+
+    @author Julien Michel
+*/
+class SIREMOL_EXPORT missing_dihedral : public siremol_error
+{
+public:
+    missing_dihedral() : siremol_error()
+    {}
+
+    missing_dihedral(QString err, QString place = QString::null)
+              : siremol_error(err,place)
+    {}
+
+    missing_dihedral(const missing_angle &other) : siremol_error(other)
+    {}
+
+    ~missing_dihedral() throw()
+    {}
+
+    static const char* typeName();
+
+    const char* what() const throw()
+    {
+        return missing_dihedral::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_dihedral(*this);
+    }
+};
+
 }
 
 Q_DECLARE_METATYPE(SireMol::missing_atom)
@@ -760,6 +793,7 @@ Q_DECLARE_METATYPE(SireMol::ring_error)
 Q_DECLARE_METATYPE(SireMol::incompatible_molecule)
 Q_DECLARE_METATYPE(SireMol::missing_bond)
 Q_DECLARE_METATYPE(SireMol::missing_angle)
+Q_DECLARE_METATYPE(SireMol::missing_dihedral)
 
 SIRE_END_HEADER
 

@@ -44,6 +44,7 @@
 #include "SireUnits/dimensions.h"
 
 #include "SireMove/movermove.h"
+#include "SireMove/flexibility.h"
 
 #include "SireError/errors.h"
 #include "SireIO/errors.h"
@@ -205,7 +206,7 @@ void FlexibilityMaker::loadTemplates( const QString &templatefile)
     {
       line = ts.readLine();
       QStringList words = line.split(" ", QString::SkipEmptyParts);
-      qDebug() << line;
+      //     qDebug() << line;
 
       if ( line.startsWith("molecule") )
 	{
@@ -244,17 +245,17 @@ void FlexibilityMaker::loadTemplates( const QString &templatefile)
       QString templname = templ.getName();
       if ( not this->templates.contains(templname) )
 	this->templates[templname] = templ;
-      qDebug() << " TEMPLATE " << templ.getName() ;
-      qDebug() << " ROT " << templ.getRotation() << " TRANS " << templ.getTranslation();
-      QList< QStringList > bonds = templ.getBonds();
-      foreach ( QStringList bond, bonds)
-	  qDebug() << bond.join(" ");
-      QList< QStringList > angles = templ.getAngles();
-      foreach ( QStringList angle, angles)
-	  qDebug() << angle.join(" ");
-      QList< QStringList > dihedrals = templ.getDihedrals();
-      foreach ( QStringList dihedral, dihedrals)
-	  qDebug() << dihedral.join(" ");
+      // qDebug() << " TEMPLATE " << templ.getName() ;
+      // qDebug() << " ROT " << templ.getRotation() << " TRANS " << templ.getTranslation();
+      // QList< QStringList > bonds = templ.getBonds();
+      // foreach ( QStringList bond, bonds)
+      // 	  qDebug() << bond.join(" ");
+      // QList< QStringList > angles = templ.getAngles();
+      // foreach ( QStringList angle, angles)
+      // 	  qDebug() << angle.join(" ");
+      // QList< QStringList > dihedrals = templ.getDihedrals();
+      // foreach ( QStringList dihedral, dihedrals)
+      // 	  qDebug() << dihedral.join(" ");
     }
 }
 
@@ -268,7 +269,7 @@ Molecule FlexibilityMaker::applyTemplates( Molecule &molecule)
   
   MolEditor editmol = molecule.edit();
   
-  //Flexibility &flexibility = Flexibility( editmol );
+  Flexibility flexibility = Flexibility( editmol );
   
   MolName moleculename = editmol.name();
 
@@ -277,20 +278,20 @@ Molecule FlexibilityMaker::applyTemplates( Molecule &molecule)
 
   FlexibilityTemplate templ = this->templates[moleculename];
 
-  double rotate = templ.getRotation();
-  double translate = templ.getTranslation();
+  Angle rotate = templ.getRotation() * degrees;
+  Length translate = templ.getTranslation() * angstroms ;
 
-  // Add to flexibility
+  flexibility.setRotation( rotate );
+  flexibility.setTranslation( translate );
 
   QList< QStringList > templbonds = templ.getBonds();
   foreach ( QStringList templbond, templbonds)
     {
       Atom atom0 = editmol.select( AtomName(templbond[0]) );
       Atom atom1 = editmol.select( AtomName(templbond[1]) );
-      BondID bondid = BondID(atom0.index() , atom1.index() );
-      //DofID dofidbond = DofID(bondid);
-      ::Dimension::Length bonddelta = templbond[2].toDouble() * angstrom ; 
-      // Add to flexibility bonds and bondDeltas
+      BondID bond = BondID(atom0.index() , atom1.index() );
+      Length bonddelta = templbond[2].toDouble() * angstrom ; 
+      flexibility.add( bond, bonddelta );
     }
 
   QList< QStringList > templangles = templ.getAngles();
@@ -299,10 +300,9 @@ Molecule FlexibilityMaker::applyTemplates( Molecule &molecule)
       Atom atom0 = editmol.select( AtomName(templangle[0]) );
       Atom atom1 = editmol.select( AtomName(templangle[1]) );
       Atom atom2 = editmol.select( AtomName(templangle[2]) );
-      AngleID angleid = AngleID(atom0.index() , atom1.index(), atom2.index() );
-      //DofID dofidangle = DofID(angleid);
-      ::Dimension::Angle angledelta = templangle[3].toDouble() * degrees; 
-      // Add to flexibility angles and angleDeltas
+      AngleID angle = AngleID(atom0.index() , atom1.index(), atom2.index() );
+      Angle angledelta = templangle[3].toDouble() * degrees; 
+      flexibility.add( angle, angledelta );
     }
 
   QList< QStringList > templdihedrals = templ.getDihedrals();
@@ -312,13 +312,12 @@ Molecule FlexibilityMaker::applyTemplates( Molecule &molecule)
       Atom atom1 = editmol.select( AtomName(templdihedral[1]) );
       Atom atom2 = editmol.select( AtomName(templdihedral[2]) );
       Atom atom3 = editmol.select( AtomName(templdihedral[3]) );
-      DihedralID dihedralid = DihedralID(atom0.index() , atom1.index(), atom2.index(), atom3.index() );
-      //DofID dofiddihedral = DofID(dihedralid);
-      ::Dimension::Angle angledelta = templdihedral[4].toDouble() * degrees; 
-      // Add to flexibility dihedrals and angleDeltas
+      DihedralID dihedral = DihedralID(atom0.index() , atom1.index(), atom2.index(), atom3.index() );
+      Angle angledelta = templdihedral[4].toDouble() * degrees; 
+      flexibility.add( dihedral, angledelta );
     }
 
-  //editmol.setProperty( flexibility_property, flexibility);
+  editmol.setProperty( flexibility_property, flexibility);
 
   return editmol.commit();
 }

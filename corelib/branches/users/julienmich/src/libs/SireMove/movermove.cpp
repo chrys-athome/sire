@@ -27,7 +27,7 @@
 \*********************************************/
 
 #include "movermove.h"
-
+#include "flexibility.h"
 #include "ensemble.h"
 
 #include "SireSystem/system.h"
@@ -65,13 +65,12 @@ static const RegisterMetaType<MoverMove> r_movermove;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MoverMove &movermove)
 {
-    writeHeader(ds, r_movermove, 2);
+    writeHeader(ds, r_movermove, 1);
     
     SharedDataStream sds(ds);
     
     sds << movermove.smplr 
-	<< movermove.bonds << movermove.angles << movermove.dihedrals
-	<< movermove.bond_deltas << movermove.angle_deltas
+	<< movermove.flexibility_property
 	<< static_cast<const MonteCarlo&>(movermove);
     
     return ds;
@@ -82,13 +81,12 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MoverMove &movermove)
 {
     VersionID v = readHeader(ds, r_movermove);
 
-    if (v == 2)
+    if (v == 1)
       {
 	SharedDataStream sds(ds);
     
 	sds >> movermove.smplr 
-	    >> movermove.bonds >> movermove.angles >> movermove.dihedrals 
-	    >> movermove.bond_deltas >> movermove.angle_deltas 
+	    >> movermove.flexibility_property
 	    >> static_cast<MonteCarlo&>(movermove);
       }
     else
@@ -98,42 +96,39 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MoverMove &movermove)
 }
 
 /** Null constructor */
-MoverMove::MoverMove() 
-  : ConcreteProperty<MoverMove,MonteCarlo>(),
-    bonds(QList<BondID>()),
-    angles(QList<AngleID>()),
-    dihedrals(QList<DihedralID>()),
-    bond_deltas(QHash<DofID,SireUnits::Dimension::Length>()),
-    angle_deltas(QHash<DofID,SireUnits::Dimension::Angle>())
+MoverMove::MoverMove(const PropertyMap &map) 
+  : ConcreteProperty<MoverMove,MonteCarlo>(map)
 {
+  flexibility_property = map["flexibility"];
   MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
 }
 
 /** Construct the mover move for the passed group of molecules */
-MoverMove::MoverMove(const MoleculeGroup &molgroup)
+MoverMove::MoverMove(const MoleculeGroup &molgroup, const PropertyMap &map)
          : ConcreteProperty<MoverMove,MonteCarlo>(),
            smplr( UniformSampler(molgroup) )
 {
-    MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
-    smplr.edit().setGenerator( this->generator() );
+  flexibility_property = map["flexibility"];
+  MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
+  smplr.edit().setGenerator( this->generator() );
 }
 
 /** Construct the mover move that samples molecules from the
     passed sampler */
-MoverMove::MoverMove(const Sampler &sampler)
+MoverMove::MoverMove(const Sampler &sampler, const PropertyMap &map)
          : ConcreteProperty<MoverMove,MonteCarlo>(),
            smplr(sampler)
 {
-    MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
-    smplr.edit().setGenerator( this->generator() );
+  flexibility_property = map["flexibility"];
+  MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
+  smplr.edit().setGenerator( this->generator() );
 }
 
 /** Copy constructor */
 MoverMove::MoverMove(const MoverMove &other)
          : ConcreteProperty<MoverMove,MonteCarlo>(other),
            smplr(other.smplr),
-	   bonds(other.bonds),angles(other.angles),dihedrals(other.dihedrals),
-	   bond_deltas(other.bond_deltas),angle_deltas(other.angle_deltas)
+	   flexibility_property(other.flexibility_property)
 {}
 
 /** Destructor */
@@ -147,11 +142,7 @@ MoverMove& MoverMove::operator=(const MoverMove &other)
     {
         MonteCarlo::operator=(other);
         smplr = other.smplr;
-	bonds = other.bonds;
-	angles = other.angles;
-	dihedrals = other.dihedrals;
-	bond_deltas = other.bond_deltas;
-	angle_deltas = other.angle_deltas;
+	flexibility_property = other.flexibility_property;
     }
     
     return *this;
@@ -161,9 +152,7 @@ MoverMove& MoverMove::operator=(const MoverMove &other)
 bool MoverMove::operator==(const MoverMove &other) const
 {
   return MonteCarlo::operator==(other) and smplr == other.smplr 
-    and bonds == other.bonds and angles == other.angles and 
-    dihedrals == other.dihedrals and bond_deltas == other.bond_deltas
-    and angle_deltas == other.angle_deltas;
+    and flexibility_property == other.flexibility_property;
 }
 
 /** Comparison operator */
@@ -206,6 +195,19 @@ const MoleculeGroup& MoverMove::moleculeGroup() const
     return smplr->group();
 }
 
+/** Return the property used to find the flexibility of each molecule*/
+const PropertyName& MoverMove::flexibilityProperty() const
+{
+  return flexibility_property;
+}
+
+/** Set the name of the property used to find the flexibility of each molecule */
+void MoverMove::setFlexibilityProperty(const PropertyName &property)
+{
+  flexibility_property = property;
+  Move::setProperty("flexibility", flexibility_property);
+}
+
 /** Set the random number generator used to generate the random
     number used for this move */
 void MoverMove::setGenerator(const RanGenerator &rangenerator)
@@ -221,56 +223,56 @@ void MoverMove::_pvt_setTemperature(const Temperature &temperature)
     MonteCarlo::setEnsemble( Ensemble::NVT(temperature) );
 }
 /* Set the list of variable bonds */
-void MoverMove::setBonds(const QList<BondID> &bonds)
-{
-  this->bonds = bonds;
-}
+//void MoverMove::setBonds(const QList<BondID> &bonds)
+//{
+//  this->bonds = bonds;
+//}
 /* Set the list of variable angles */
-void MoverMove::setAngles(const QList<AngleID> &angles)
-{
-  this->angles = angles;
-}
+//void MoverMove::setAngles(const QList<AngleID> &angles)
+//{
+//  this->angles = angles;
+//}
 /* Set the list of variable dihedrals */
-void MoverMove::setDihedrals(const QList<DihedralID> &dihedrals)
-{
-  this->dihedrals = dihedrals;
-}
+//void MoverMove::setDihedrals(const QList<DihedralID> &dihedrals)
+//{
+//  this->dihedrals = dihedrals;
+//}
 /* Set the dictionnary of delta values for bonds*/
-void MoverMove::setBondDeltas(const QHash<DofID, SireUnits::Dimension::Length> &bond_deltas)
-{
-  this->bond_deltas = bond_deltas;
-}
+//void MoverMove::setBondDeltas(const QHash<DofID, SireUnits::Dimension::Length> &bond_deltas)
+//{
+//  this->bond_deltas = bond_deltas;
+//}
 /* Set the dictionnary of delta values for angles*/
-void MoverMove::setAngleDeltas(const QHash<DofID, SireUnits::Dimension::Angle> &angle_deltas)
-{
-  this->angle_deltas = angle_deltas;
-}
+//void MoverMove::setAngleDeltas(const QHash<DofID, SireUnits::Dimension::Angle> &angle_deltas)
+//{
+//  this->angle_deltas = angle_deltas;
+//}
 
 /* Return the list of variable bonds */
-const QList<BondID>& MoverMove::getBonds()
-{
-  return this->bonds;
-}
+//const QList<BondID>& MoverMove::getBonds()
+//{
+//  return this->bonds;
+//}
 /* Return the list of variable angles*/
-const QList<AngleID>& MoverMove::getAngles()
-{
-  return this->angles;
-}
+//const QList<AngleID>& MoverMove::getAngles()
+//{
+//  return this->angles;
+//}
 /* Return the list of variable dihedrals */
-const QList<DihedralID>& MoverMove::getDihedrals()
-{
-  return this->dihedrals;
-}
+//const QList<DihedralID>& MoverMove::getDihedrals()
+//{
+//  return this->dihedrals;
+//}
 /* Return the dictionnary of delta values for bonds*/
-const QHash<DofID,SireUnits::Dimension::Length>& MoverMove::getBondDeltas()
-{
-  return this->bond_deltas;
-}
+//const QHash<DofID,SireUnits::Dimension::Length>& MoverMove::getBondDeltas()
+//{
+//  return this->bond_deltas;
+//}
 /* Return the dictionnary of delta values for angles*/
-const QHash<DofID,SireUnits::Dimension::Angle>& MoverMove::getAngleDeltas()
-{
-  return this->angle_deltas;
-}
+//const QHash<DofID,SireUnits::Dimension::Angle>& MoverMove::getAngleDeltas()
+//{
+//  return this->angle_deltas;
+//}
 
 /** Actually perform 'nmoves' moves of the molecules in the 
     system 'system', optionally recording simulation statistics
@@ -301,41 +303,43 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	  //update the sampler with the latest version of the molecules
 	  smplr.edit().updateFrom(system);
 	  //this will randomly select one molecule
-	  //JM - does this still make sense as we store a collection of dofs?
 	  tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
 	  
-	  PartialMolecule oldmol = mol_and_bias.get<0>();
+	  const PartialMolecule &oldmol = mol_and_bias.get<0>();
 	  old_bias = mol_and_bias.get<1>();
 	
+	  Flexibility flex = oldmol.property(flexibility_property).asA<Flexibility>();
+
 	  Mover<Molecule> mol_mover = oldmol.molecule().move();
 
-	  // move the bonds 
+	  // move the bonds of this molecule
 	  Length bond_delta;
-	  foreach (const BondID &bond, this->bonds)
+	  foreach (const BondID &bond, flex.bonds)
 	    {
-	      const Length bond_delta_value = this->bond_deltas[bond];
+	      const Length bond_delta_value = flex.bond_deltas[bond];
 	      bond_delta = Length( this->generator().rand(-bond_delta_value, bond_delta_value) );
-	      mol_mover.change(bond,bond_delta);
+	      mol_mover.change(bond, bond_delta);
 	    }
 
 	  // and the angles
 	  Angle angle_delta;
-	  foreach (const AngleID &angle,this->angles)
+	  foreach (const AngleID &angle, flex.angles)
 	    {
-	      const Angle angle_delta_value = this->angle_deltas[angle];
+	      const Angle angle_delta_value = flex.angle_deltas[angle];
 	      angle_delta = Angle( this->generator().rand(-angle_delta_value,angle_delta_value) );	      
-	      mol_mover.change(angle,angle_delta);
+	      mol_mover.change(angle, angle_delta);
 	    }
-	    // and the torsions
+	  
+	  // and the torsions
 	  Angle dihedral_delta;
- 	  foreach (const DihedralID &dihedral,this->dihedrals)
+ 	  foreach (const DihedralID &dihedral,flex.dihedrals)
 	    {
 	      // We rotate by picking the central bond of the dihedral to handle concerted motions
 	      BondID centralbond;
 	      centralbond = BondID(dihedral.atom1(), dihedral.atom2());
-	      const Angle angle_delta_value = this->angle_deltas[dihedral];
+	      const Angle angle_delta_value = flex.angle_deltas[dihedral];
 	      dihedral_delta =  Angle( this->generator().rand(-angle_delta_value,angle_delta_value) );
-	      mol_mover.change(centralbond,dihedral_delta);
+	      mol_mover.change(centralbond, dihedral_delta);
 	    }
 
 	  //update the system with the new coordinates
@@ -374,75 +378,75 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 
 /** Loop over all bond, angles and dihedrals. Multiply their delta value by scale 
 with probability prob */
-void MoverMove::changeDeltas(float prob, float scale)
-{
-  /**upper and lower bounds for bond, angle and dihedrals */
-  Length lower_bond = Length(0.001*angstrom);
-  Length upper_bond = Length(0.1*angstrom);
-  Angle lower_angle = Angle(0.01*degree);
-  Angle upper_angle = Angle(5.0*degree);
-  Angle lower_dihedral = Angle(0.5*degree); 
-  Angle upper_dihedral = Angle(15.0*degree);
+// void MoverMove::changeDeltas(float prob, float scale)
+// {
+//   /**upper and lower bounds for bond, angle and dihedrals */
+//   Length lower_bond = Length(0.001*angstrom);
+//   Length upper_bond = Length(0.1*angstrom);
+//   Angle lower_angle = Angle(0.01*degree);
+//   Angle upper_angle = Angle(5.0*degree);
+//   Angle lower_dihedral = Angle(0.5*degree); 
+//   Angle upper_dihedral = Angle(15.0*degree);
 
-  const RanGenerator ran;
+//   const RanGenerator ran;
  
-  foreach (const BondID &bond, this->bonds)
-    {
-      if (ran.rand() <= prob) 
-	{
-	  Length newdelta = Length(this->bond_deltas[bond].value()*scale);
-	  if (newdelta < lower_bond)
-	    newdelta = lower_bond;
-	  else if (newdelta > upper_bond)
-	    newdelta = upper_bond;
-	  this->setDelta(bond, newdelta);
-	}
-    }
-  foreach (const AngleID &angle, this->angles)
-    {
-      if (ran.rand() <= prob) 
-	{
-	  Angle newdelta = Angle(this->angle_deltas[angle].value()*scale);
-	  if (newdelta < lower_angle)
-	    newdelta = lower_angle;
-	  else if (newdelta > upper_angle)
-	    newdelta = upper_angle;
-	  this->setDelta(angle, newdelta);
-	}
-    }
-  foreach (const DihedralID &dihedral, this->dihedrals)
-    {
-      if (ran.rand() <= prob) 
-	{
-	  Angle newdelta = Angle(this->angle_deltas[dihedral].value()*scale);
-	  if (newdelta < lower_dihedral)
-	    newdelta = lower_dihedral;
-	  else if (newdelta > upper_dihedral)
-	    newdelta = upper_dihedral;
-	  this->setDelta(dihedral, newdelta);
-	}
-    }
-}
-/** Set the delta value of a bond*/
-void MoverMove::setDelta(const BondID &bond, SireUnits::Dimension::Length delta)
-{
-  //What to do if bond is not in bond_deltas?
-  this->bond_deltas[bond] = delta;
-}
+//   foreach (const BondID &bond, this->bonds)
+//     {
+//       if (ran.rand() <= prob) 
+// 	{
+// 	  Length newdelta = Length(this->bond_deltas[bond].value()*scale);
+// 	  if (newdelta < lower_bond)
+// 	    newdelta = lower_bond;
+// 	  else if (newdelta > upper_bond)
+// 	    newdelta = upper_bond;
+// 	  this->setDelta(bond, newdelta);
+// 	}
+//     }
+//   foreach (const AngleID &angle, this->angles)
+//     {
+//       if (ran.rand() <= prob) 
+// 	{
+// 	  Angle newdelta = Angle(this->angle_deltas[angle].value()*scale);
+// 	  if (newdelta < lower_angle)
+// 	    newdelta = lower_angle;
+// 	  else if (newdelta > upper_angle)
+// 	    newdelta = upper_angle;
+// 	  this->setDelta(angle, newdelta);
+// 	}
+//     }
+//   foreach (const DihedralID &dihedral, this->dihedrals)
+//     {
+//       if (ran.rand() <= prob) 
+// 	{
+// 	  Angle newdelta = Angle(this->angle_deltas[dihedral].value()*scale);
+// 	  if (newdelta < lower_dihedral)
+// 	    newdelta = lower_dihedral;
+// 	  else if (newdelta > upper_dihedral)
+// 	    newdelta = upper_dihedral;
+// 	  this->setDelta(dihedral, newdelta);
+// 	}
+//     }
+// }
+// /** Set the delta value of a bond*/
+// void MoverMove::setDelta(const BondID &bond, SireUnits::Dimension::Length delta)
+// {
+//   //What to do if bond is not in bond_deltas?
+//   this->bond_deltas[bond] = delta;
+// }
 
-/** Set the delta value of an angle*/
-void MoverMove::setDelta(const AngleID &angle, SireUnits::Dimension::Angle delta)
-{
-  //What to do if angle is not in angle_deltas?
-  this->angle_deltas[angle] = delta;
-}
+// /** Set the delta value of an angle*/
+// void MoverMove::setDelta(const AngleID &angle, SireUnits::Dimension::Angle delta)
+// {
+//   //What to do if angle is not in angle_deltas?
+//   this->angle_deltas[angle] = delta;
+// }
 
-/** Set the delta value of a dihedral*/
-void MoverMove::setDelta(const DihedralID &dihedral, SireUnits::Dimension::Angle delta)
-{
-  //What to do if dihedral is not in angle_deltas?
-  this->angle_deltas[dihedral] = delta;
-}
+// /** Set the delta value of a dihedral*/
+// void MoverMove::setDelta(const DihedralID &dihedral, SireUnits::Dimension::Angle delta)
+// {
+//   //What to do if dihedral is not in angle_deltas?
+//   this->angle_deltas[dihedral] = delta;
+// }
 
 const char* MoverMove::typeName()
 {

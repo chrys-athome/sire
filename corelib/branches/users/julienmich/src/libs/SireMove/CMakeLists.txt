@@ -15,6 +15,7 @@ set ( SIREMOVE_HEADERS
       dynamics.h
       ensemble.h
       errors.h
+      flexibility.h
       gibbsmove.h
       hybridmc.h
       integrator.h
@@ -72,6 +73,7 @@ set ( SIREMOVE_SOURCES
       dynamics.cpp
       ensemble.cpp
       errors.cpp
+      flexibility.cpp
       gibbsmove.cpp
       hybridmc.cpp
       integrator.cpp
