@@ -310,34 +310,108 @@ void MoverMove::move(System &system, int nmoves, bool record_stats)
 	
 	  Flexibility flex = oldmol.property(flexibility_property).asA<Flexibility>();
 
+	  // Select the dofs to move. 
+	  QList<BondID> moved_bonds;
+	  QList<AngleID> moved_angles;
+	  QList<DihedralID> moved_dihedrals;
+
+	  int maxvar = flex.maximumVar();
+	  int nbonds = flex.bonds.size();
+	  int nangles = flex.angles.size();
+	  int ndihedrals = flex.dihedrals.size();
+	  int ndofs = nbonds + nangles + ndihedrals ;
+
+
+	  //qDebug() << "There are " << nbonds << " bonds ";
+	  //qDebug() << "There are " << nangles << " angles ";
+	  //qDebug() << "There are " << ndihedrals << " dihedrals ";
+
+	  if ( ndofs == 0 || maxvar < 0 || maxvar >= ndofs  )
+	    {
+	      // We move everything in these cases..
+	      moved_bonds = flex.bonds;
+	      moved_angles = flex.angles;
+	      moved_dihedrals = flex.dihedrals;
+	    }
+	  else
+	    {
+	      // draw a random number [0, bonds.size()+angles.size()+dihedrals.size()) to find matching dof. 
+	      // Add it to moved_bonds or moved_angles or moved_dihedrals if not already present	
+	      int movecount = 0;
+	      
+	      while (movecount < maxvar)
+		{
+		  int rand = this->generator().randInt(0, ndofs - 1);
+		  //qDebug() << " rand is " << rand;
+		  if ( rand < nbonds )
+		    {
+		      // it is a bond...
+		      const BondID &bond = flex.bonds.at( rand );
+		      if ( not  moved_bonds.contains(bond) )
+			{
+			  //qDebug() << " adding bond " << rand;
+			  moved_bonds.append(bond);
+			  movecount++;
+			}
+		    }
+		  else if ( rand < ( nbonds + nangles ) )
+		    {
+		      // it is an angle...
+		      const AngleID &angle = flex.angles.at( rand - nbonds );
+		      if ( not moved_angles.contains(angle) )
+			{
+			  //qDebug() << " adding angle " << rand - nbonds;
+			  moved_angles.append(angle);
+			  movecount++;
+			}
+		    }
+		  else
+		    {
+		      // it is a dihedral...
+		      const DihedralID &dihedral = flex.dihedrals.at( rand - nbonds - nangles );
+		      if ( not moved_dihedrals.contains(dihedral) )
+			{
+			  //qDebug() << " adding dihedral " << rand - nbonds - nangles;
+			  moved_dihedrals.append(dihedral);
+			  movecount++;
+			}
+		    }
+		}
+	    }
+
+	  // Now actually move the selected dofs
+
 	  Mover<Molecule> mol_mover = oldmol.molecule().move();
 
 	  // move the bonds of this molecule
 	  Length bond_delta;
-	  foreach (const BondID &bond, flex.bonds)
+	  foreach (const BondID &bond, moved_bonds)
 	    {
-	      const Length bond_delta_value = flex.bond_deltas[bond];
+	      //const Length bond_delta_value = flex.bond_deltas[bond];
+	      double bond_delta_value = flex.bond_deltas[bond].to(angstrom);
 	      bond_delta = Length( this->generator().rand(-bond_delta_value, bond_delta_value) );
 	      mol_mover.change(bond, bond_delta);
 	    }
 
 	  // and the angles
 	  Angle angle_delta;
-	  foreach (const AngleID &angle, flex.angles)
+	  foreach (const AngleID &angle, moved_angles)
 	    {
-	      const Angle angle_delta_value = flex.angle_deltas[angle];
+	      //const Angle angle_delta_value = flex.angle_deltas[angle];
+	      double angle_delta_value = flex.angle_deltas[angle].to(radians);
 	      angle_delta = Angle( this->generator().rand(-angle_delta_value,angle_delta_value) );	      
 	      mol_mover.change(angle, angle_delta);
 	    }
 	  
 	  // and the torsions
 	  Angle dihedral_delta;
- 	  foreach (const DihedralID &dihedral,flex.dihedrals)
+ 	  foreach (const DihedralID &dihedral, moved_dihedrals)
 	    {
 	      // We rotate by picking the central bond of the dihedral to handle concerted motions
 	      BondID centralbond;
 	      centralbond = BondID(dihedral.atom1(), dihedral.atom2());
-	      const Angle angle_delta_value = flex.angle_deltas[dihedral];
+	      //const Angle angle_delta_value = flex.angle_deltas[dihedral];
+	      double angle_delta_value = flex.angle_deltas[dihedral].to(radians);
 	      dihedral_delta =  Angle( this->generator().rand(-angle_delta_value,angle_delta_value) );
 	      mol_mover.change(centralbond, dihedral_delta);
 	    }

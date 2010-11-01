@@ -15,23 +15,6 @@ from Sire.Qt import *
 import os,re,sys
 import shutil
 
-#zmat_maker = ProtoMSZMatrixMaker()
-#zmat_maker.readtemplates("amber.pmszmat")
-#residues = zmat_Maker.addZmatrix( residues )// adds property['z-matrix'] to each residue in residues
-#  and
-#  flexibility_maker = FlexibilityMaker()
-#flexibility_maker.readFlexibilityTemplates("solute.mover")
-#molecule = flexibility_maker.addFlexibility( molecule ) // adds property['flexibility'] to molecule
-#4:14 PM Where property['flexibility'] contains the following information
-#  ==>
-#maximum_translation'
-#maximum_rotation
-#var_bonds
-#var_angles
-#var_dihedrals
-#bond_deltas
-#angle_deltas
-
 ################################
 combining_rules = "arithmetic"
 temperature = 25 * celsius
@@ -52,14 +35,14 @@ volume_mc_weight = 1
 random_seed = 42
 ###################################
 
-#top_file = "test/io/SYSTEM.top"
-#crd_file = "test/io/SYSTEM.crd"
+top_file = "test/io/SYSTEM.top"
+crd_file = "test/io/SYSTEM.crd"
 
-top_file = "/home/julien/projects/cyps/sire/setup/leap/LI8/COMPLEX_GAS.top"
-crd_file = "/home/julien/projects/cyps/sire/setup/leap/LI8/COMPLEX_GAS.crd"
-
+print "Loading input..."
 amber = Amber()
 molecules, space = amber.readcrdtop(crd_file, top_file)
+
+print "Applying flexibility and zmatrix templates..."
 
 moleculeNumbers = molecules.molNums()
 moleculeList = []
@@ -73,9 +56,13 @@ solute = solute.edit().rename("LIG").commit()
 # This will add the property "flexibility" to the solute
 flexibility_maker = FlexibilityMaker()
 flexibility_maker.loadTemplates("test/io/ligand.flex")
-# solute = flexibility_maker.applyTemplates( solute )
+solute = flexibility_maker.applyTemplates( solute )
 
-sys.exit(-1)
+
+#editmol = solute.edit()
+#weightproperty = PropertyName("weight function")
+#editmol.setProperty(weightproperty, AbsFromNumber() )
+#solute = editmol.commit()
 
 solute = MoleculeGroup("solute", solute)
 
@@ -109,6 +96,8 @@ system.add(protein)
 system.add(solvent)
 system.add(residues)
 system.add(all)
+
+print "Creating force fields... "
 
 # - first solvent-solvent coulomb/LJ (CLJ) energy
 solventff = InterCLJFF("solvent:solvent")
@@ -167,19 +156,21 @@ total_nrg = solute_intraclj.components().total() + solute_intraff.components().t
 
 e_total = system.totalComponent()
 system.setComponent( e_total, total_nrg )
-system.add( "trajectory", TrajectoryMonitor(system[MGName('all')]), 100 )
+system.add( "trajectory", TrajectoryMonitor(system[MGName('all')]), 1000 )
 
 # Add a space wrapper that wraps all molecules into the box centered at (0,0,0)
 system.add( SpaceWrapper(Vector(0,0,0), all) )
 
+print "Setting up moves..."
 # Setup Moves
 max_volume_change = 0.1 * solvent.nMolecules() * angstrom3
 
 # This should automatically set MaxTransl and MaxRot based on the contents of property("flexibility")
-# solute_moves = RigidBodyMC( solute ) 
-# This should automatically set setBonds, setBondDeltas, setAngles, setDihedrals, setAngleDeltas based on the 
-# contents of the property("flexibility")
-# solute_intra_moves = MoverMove( solute )
+solute_moves = RigidBodyMC( solute ) 
+solute_moves.setMaximumTranslation(solute[MolIdx(0)].molecule().property('flexibility').translation() )
+solute_moves.setMaximumRotation(solute[MolIdx(0)].molecule().property('flexibility').rotation() )
+
+solute_intra_moves = MoverMove( solute )
 
 solvent_moves = RigidBodyMC( PrefSampler(solute[MolIdx(0)], 
                                          solvent, pref_constant) )
@@ -193,8 +184,8 @@ volume_moves = VolumeMove()
 volume_moves.setMaximumVolumeChange(max_volume_change)
 
 moves = WeightedMoves()
-#moves.add( solute_moves, solute_mc_weight / 2 )
-#moves.add( solute_intra_moves, solute_mc_weight / 2)
+moves.add( solute_moves, solute_mc_weight / 2 )
+moves.add( solute_intra_moves, solute_mc_weight / 2)
 moves.add( protein_intra_moves, protein_mc_weight )
 moves.add( solvent_moves, solvent_mc_weight )
 moves.add( volume_moves, volume_mc_weight )
@@ -203,6 +194,14 @@ moves.setTemperature(temperature)
 moves.setPressure(pressure)
 moves.setGenerator( RanGenerator(random_seed+3) )
 # Run a short simulation
-system = moves.move(system, 1000, True)
+
+print "Performing a short simulation"
+
+nmoves = 1000
+for x in range(0,10):
+    print "Doing %s moves..." % nmoves
+    system = moves.move(system, nmoves, True)
+
+print moves
 
 system.monitor( MonitorName("trajectory") ).writeToDisk("outputXXXXXX.pdb")

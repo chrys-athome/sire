@@ -97,9 +97,11 @@ class SIREMOVE_EXPORT Flexibility
 
       void setRotation(const Angle &rotation);
       void setTranslation(const Length &translation);
+      void setMaximumVar(const int &maxvar);
 
       Length translation() const;
       Angle rotation() const;
+      int maximumVar() const;
 
       void add(const BondID &bond, const Length &delta);
       void add(const AngleID &angle, const Angle &delta);
@@ -132,6 +134,8 @@ class SIREMOVE_EXPORT Flexibility
       Length maxtranslation;
       /** The maximum rotation for that molecule */
       Angle maxrotation;
+      /** The maximum number of dofs to sample in one move */
+      int maxvar;
       /** The list of bonds that are flexible */
       QList<BondID> bonds;
       /** The list of angles that are flexible */

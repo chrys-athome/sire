@@ -60,8 +60,10 @@ namespace SireIO
     const QString getName();
     void setRotation(double rotation);
     void setTranslation(double translation);
+    void setMaximumVar(int maxvar);
     const double getRotation();
     const double getTranslation();
+    const int getMaximumVar();
     void addBond( QStringList words );
     void addAngle(QStringList words );
     void addDihedral(QStringList words );
@@ -73,6 +75,7 @@ namespace SireIO
     QString name;
     double translation;
     double rotation;
+    int maxvar;
     QList< QStringList > bonds;
     QList< QStringList > angles;
     QList< QStringList > dihedrals;

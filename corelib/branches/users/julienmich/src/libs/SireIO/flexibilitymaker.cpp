@@ -78,6 +78,11 @@ void FlexibilityTemplate::setTranslation(double translation)
   this->translation = translation;
 }
 
+void FlexibilityTemplate::setMaximumVar( int maxvar)
+{
+  this->maxvar = maxvar;
+}
+
 const double FlexibilityTemplate::getRotation()
 {
   return this->rotation;
@@ -86,6 +91,11 @@ const double FlexibilityTemplate::getRotation()
 const double FlexibilityTemplate::getTranslation()
 {
   return this->translation;
+}
+
+const int FlexibilityTemplate::getMaximumVar()
+{
+  return this->maxvar;
 }
 
 void FlexibilityTemplate::addBond(QStringList words)
@@ -220,6 +230,10 @@ void FlexibilityMaker::loadTemplates( const QString &templatefile)
 	  templates[current].setRotation( words[2].toDouble() );
 	  templates[current].setTranslation( words[4].toDouble() );
 	}
+      else if ( line.startsWith("maximumvariables") )
+	{
+	  templates[current].setMaximumVar( words[1].toInt() );
+	}
       else if ( line.startsWith("bond") )
 	{
 	  QStringList bonddata;
@@ -284,6 +298,10 @@ Molecule FlexibilityMaker::applyTemplates( Molecule &molecule)
   flexibility.setRotation( rotate );
   flexibility.setTranslation( translate );
 
+  int maxvar = templ.getMaximumVar();
+  
+  flexibility.setMaximumVar( maxvar );
+
   QList< QStringList > templbonds = templ.getBonds();
   foreach ( QStringList templbond, templbonds)
     {
@@ -301,7 +319,7 @@ Molecule FlexibilityMaker::applyTemplates( Molecule &molecule)
       Atom atom1 = editmol.select( AtomName(templangle[1]) );
       Atom atom2 = editmol.select( AtomName(templangle[2]) );
       AngleID angle = AngleID(atom0.index() , atom1.index(), atom2.index() );
-      Angle angledelta = templangle[3].toDouble() * degrees; 
+      Angle angledelta =  templangle[3].toDouble() * degrees ; 
       flexibility.add( angle, angledelta );
     }
 

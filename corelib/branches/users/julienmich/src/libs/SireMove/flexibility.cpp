@@ -66,8 +66,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Flexibility &flex
     SharedDataStream sds(ds);
     
     sds << flex.molinfo << flex.maxtranslation 
-	<< flex.maxrotation << flex.bonds 
-	<< flex.angles << flex.dihedrals 
+	<< flex.maxrotation << flex.maxvar 
+	<< flex.bonds << flex.angles << flex.dihedrals 
 	<< flex.bond_deltas << flex.angle_deltas 
         << static_cast<const MoleculeProperty&>(flex);
     
@@ -84,8 +84,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Flexibility &flex)
         SharedDataStream sds(ds);
         
         sds >> flex.molinfo >> flex.maxtranslation
-	    >> flex.maxrotation >> flex.bonds
-	    >> flex.angles >> flex.dihedrals
+	    >> flex.maxrotation >> flex.maxvar 
+	    >> flex.bonds >> flex.angles >> flex.dihedrals
 	    >> flex.bond_deltas >> flex.angle_deltas
             >> static_cast<MoleculeProperty&>(flex);
     }
@@ -109,7 +109,7 @@ Flexibility::Flexibility(const Molecule &molecule)
 Flexibility::Flexibility(const Flexibility &other)
   : ConcreteProperty<Flexibility,MoleculeProperty>(),
     molinfo(other.molinfo),maxtranslation(other.maxtranslation),
-    maxrotation(other.maxrotation),bonds(other.bonds),
+    maxrotation(other.maxrotation),maxvar(other.maxvar), bonds(other.bonds),
     angles(other.angles),dihedrals(other.dihedrals),
     bond_deltas(other.bond_deltas),angle_deltas(other.angle_deltas)
 {}
@@ -127,6 +127,7 @@ Flexibility& Flexibility::operator=(const Flexibility &other)
       molinfo = other.molinfo;
       maxtranslation = other.maxtranslation;
       maxrotation = other.maxrotation;
+      maxvar = other.maxvar;
       bonds = other.bonds;
       angles = other.angles;
       dihedrals = other.dihedrals;
@@ -141,9 +142,9 @@ Flexibility& Flexibility::operator=(const Flexibility &other)
 bool Flexibility::operator==(const Flexibility &other) const
 {
   return ( molinfo == other.molinfo and maxtranslation == other.maxtranslation 
-	   and maxrotation == other.maxrotation and bonds == other.bonds 
-	   and angles == other.angles and dihedrals == other.dihedrals and 
-	   bond_deltas == other.bond_deltas and angle_deltas == other.angle_deltas );
+	   and maxrotation == other.maxrotation and maxvar == other.maxvar 
+	   and bonds == other.bonds and angles == other.angles and dihedrals == other.dihedrals 
+	   and bond_deltas == other.bond_deltas and angle_deltas == other.angle_deltas );
 }
 
 /** Comparison operator */
@@ -171,6 +172,8 @@ QString Flexibility::toString() const
     lines.append( QObject::tr("Rotation: %1 , Translation: %2 ")
 		  .arg(this->maxrotation.toString())
 		  .arg(this->maxtranslation.toString()) );
+    lines.append( QObject::tr("Maximum Variables: %1")
+		  .arg(this->maxvar) );
 
     foreach (BondID bond, this->bonds)
 	lines.append( QObject::tr("%1 %2")
@@ -208,6 +211,12 @@ void Flexibility::setTranslation(const Length &translation)
   this->maxtranslation = translation;
 }
 
+/** Set the maximum number of degrees of freedom that will be sampled in one move*/
+void Flexibility::setMaximumVar(const int &maxvar )
+{
+  this->maxvar = maxvar;
+}
+
 /** Return the maximum rotation of this flexibility*/
 Angle Flexibility::rotation() const
 {
@@ -218,6 +227,12 @@ Angle Flexibility::rotation() const
 Length Flexibility::translation() const
 {
   return this->maxtranslation;
+}
+
+/** Return the maximum number of dofs that will be sampled in one move */
+int Flexibility::maximumVar() const
+{
+  return this->maxvar;
 }
 
 /** Add bond with delta to this flexibility*/
