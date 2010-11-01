@@ -15,6 +15,7 @@ set ( SIREMOVE_HEADERS
       dynamics.h
       ensemble.h
       errors.h
+      getpoint.h
       gibbsmove.h
       hybridmc.h
       integrator.h
@@ -71,6 +72,7 @@ set ( SIREMOVE_SOURCES
       dynamics.cpp
       ensemble.cpp
       errors.cpp
+      getpoint.cpp
       gibbsmove.cpp
       hybridmc.cpp
       integrator.cpp
