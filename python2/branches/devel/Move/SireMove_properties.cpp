@@ -113,6 +113,18 @@
 #include "move.h"
 #include <QMutex>
 #include "move.h"
+#include "SireError/errors.h"
+#include "SireMaths/vector.h"
+#include "SireMol/atom.h"
+#include "SireMol/atomcoords.h"
+#include "SireMol/evaluator.h"
+#include "SireMol/moleculeview.h"
+#include "SireMol/mover.hpp"
+#include "SireMol/selector.hpp"
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+#include "getpoint.h"
+#include "getpoint.h"
 #include "SireMol/molecule.h"
 #include "SireMol/moleculegroup.h"
 #include "SireStream/datastream.h"
@@ -135,5 +147,6 @@ void register_SireMove_properties()
     register_property_container< SireMove::SamplerPtr, SireMove::Sampler >();
     register_property_container< SireMove::MolInserterPtr, SireMove::MolInserter >();
     register_property_container< SireMove::MovePtr, SireMove::Move >();
+    register_property_container< SireMove::GetPointPtr, SireMove::GetPoint >();
     register_property_container< SireMove::MolDeleterPtr, SireMove::MolDeleter >();
 }

@@ -13,6 +13,12 @@
 
 #include "Ensemble.pypp.hpp"
 
+#include "GetCOGPoint.pypp.hpp"
+
+#include "GetCOMPoint.pypp.hpp"
+
+#include "GetPoint.pypp.hpp"
+
 #include "HMCGenerator.pypp.hpp"
 
 #include "HMCVelGen.pypp.hpp"
@@ -38,6 +44,8 @@
 #include "Moves.pypp.hpp"
 
 #include "NullDeleter.pypp.hpp"
+
+#include "NullGetPoint.pypp.hpp"
 
 #include "NullInserter.pypp.hpp"
 
@@ -154,6 +162,12 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_Ensemble_class();
 
+    register_GetPoint_class();
+
+    register_GetCOGPoint_class();
+
+    register_GetCOMPoint_class();
+
     register_VelocityGenerator_class();
 
     register_HMCVelGen_class();
@@ -177,6 +191,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_Moves_class();
 
     register_NullDeleter_class();
+
+    register_NullGetPoint_class();
 
     register_NullInserter_class();
 

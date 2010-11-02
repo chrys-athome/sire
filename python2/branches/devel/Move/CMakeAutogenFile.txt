@@ -3,6 +3,9 @@ set ( PYPP_SOURCES
        DLMRigidBody.pypp.cpp
        Dynamics.pypp.cpp
        Ensemble.pypp.cpp
+       GetCOGPoint.pypp.cpp
+       GetCOMPoint.pypp.cpp
+       GetPoint.pypp.cpp
        HMCGenerator.pypp.cpp
        HMCVelGen.pypp.cpp
        HybridMC.pypp.cpp
@@ -16,6 +19,7 @@ set ( PYPP_SOURCES
        Moves.pypp.cpp
        MTSMC.pypp.cpp
        NullDeleter.pypp.cpp
+       NullGetPoint.pypp.cpp
        NullInserter.pypp.cpp
        NullIntegrator.pypp.cpp
        NullMove.pypp.cpp

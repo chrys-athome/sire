@@ -61,11 +61,11 @@ static const RegisterMetaType<RigidBodyMC> r_rbmc;
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const RigidBodyMC &rbmc)
 {
-    writeHeader(ds, r_rbmc, 3);
+    writeHeader(ds, r_rbmc, 4);
 
     SharedDataStream sds(ds);
 
-    sds << rbmc.smplr
+    sds << rbmc.smplr << rbmc.center_function
         << rbmc.adel << rbmc.rdel
         << rbmc.sync_trans << rbmc.sync_rot << rbmc.common_center
         << static_cast<const MonteCarlo&>(rbmc);
@@ -78,7 +78,19 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 {
     VersionID v = readHeader(ds, r_rbmc);
 
-    if (v == 3)
+    rbmc.center_function = GetCOGPoint();
+
+    if (v == 4)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> rbmc.center_function >> rbmc.smplr
+            >> rbmc.adel >> rbmc.rdel
+            >> rbmc.sync_trans >> rbmc.sync_rot
+            >> rbmc.common_center
+            >> static_cast<MonteCarlo&>(rbmc);
+    }
+    else if (v == 3)
     {
         SharedDataStream sds(ds);
         
@@ -112,7 +124,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
         rbmc.common_center = false;
     }
     else
-        throw version_error(v, "1,2,3", r_rbmc, CODELOC);
+        throw version_error(v, "1,2,3,4", r_rbmc, CODELOC);
 
     return ds;
 }
@@ -120,6 +132,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 /** Null constructor */
 RigidBodyMC::RigidBodyMC(const PropertyMap &map) 
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(map),
+              center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
               sync_trans(false), sync_rot(false), common_center(false)
 {
@@ -129,7 +142,7 @@ RigidBodyMC::RigidBodyMC(const PropertyMap &map)
 /** Construct a move that moves molecules returned by the sampler 'sampler' */
 RigidBodyMC::RigidBodyMC(const Sampler &sampler, const PropertyMap &map)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(map), 
-              smplr(sampler),
+              smplr(sampler), center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ),
               rdel( 15 * degrees ),
               sync_trans(false), sync_rot(false), common_center(false)
@@ -145,6 +158,7 @@ RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup,
                          const PropertyMap &map)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(map), 
               smplr( UniformSampler(molgroup) ),
+              center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
               sync_trans(false), sync_rot(false), common_center(false)
 {
@@ -155,7 +169,7 @@ RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup,
 /** Copy constructor */
 RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(other), 
-              smplr(other.smplr),
+              smplr(other.smplr), center_function(other.center_function),
               adel(other.adel), rdel(other.rdel),
               sync_trans(other.sync_trans), sync_rot(other.sync_rot),
               common_center(other.common_center)
@@ -176,6 +190,7 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
     if (this != &other)
     {
         smplr = other.smplr;
+        center_function = other.center_function;
         adel = other.adel;
         rdel = other.rdel;
         sync_trans = other.sync_trans;
@@ -190,8 +205,8 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
 /** Comparison operator */
 bool RigidBodyMC::operator==(const RigidBodyMC &other) const
 {
-    return smplr == other.smplr and adel == other.adel and
-           rdel == other.rdel and 
+    return smplr == other.smplr and center_function == other.center_function and
+           adel == other.adel and rdel == other.rdel and 
            sync_trans == other.sync_trans and sync_rot == other.sync_rot and
            common_center == other.common_center and
            MonteCarlo::operator==(other);
@@ -227,6 +242,12 @@ void RigidBodyMC::setMaximumRotation(Dimension::Angle max_rotation)
     rdel = max_rotation;
 }
 
+/** Set the function used to get the center of rotation for each molecule */
+void RigidBodyMC::setCenterOfRotation(const GetPoint &func)
+{
+    center_function = func;
+}
+
 /** Return the maximum translation for each move */
 Dimension::Length RigidBodyMC::maximumTranslation() const
 {
@@ -237,6 +258,12 @@ Dimension::Length RigidBodyMC::maximumTranslation() const
 Dimension::Angle RigidBodyMC::maximumRotation() const
 {
     return rdel;
+}
+
+/** Return the function used to get the center of rotation of each molecule */
+const GetPoint& RigidBodyMC::centerOfRotation() const
+{
+    return center_function.read();
 }
 
 /** Set the sampler (and contained molecule group) that provides
@@ -339,7 +366,7 @@ void RigidBodyMC::performMove(System &system,
 
         PartialMolecule newmol = oldmol.move()
                                        .rotate(rotdelta,
-                                               oldmol.evaluate().centerOfGeometry(map),
+                                               center_function.read()(oldmol,map),
                                                map)
                                        .translate(delta, map)
                                        .commit();
@@ -371,7 +398,7 @@ void RigidBodyMC::performMove(System &system,
                      it != molecules.constEnd();
                      ++it)
                 {
-                    box += it->evaluate().centerOfGeometry(map);
+                    box += center_function.read()(*it,map);
                 }
                 
                 for (Molecules::const_iterator it = molecules.constBegin();
@@ -395,7 +422,7 @@ void RigidBodyMC::performMove(System &system,
                 {
                     PartialMolecule newmol = it->move()
                                                 .rotate(rotdelta,
-                                                        it->evaluate().centerOfGeometry(map),
+                                                        center_function.read()(*it,map),
                                                         map)
                                                 .translate(delta, map)
                                                 .commit();
@@ -436,7 +463,7 @@ void RigidBodyMC::performMove(System &system,
 
             PartialMolecule newmol = oldmol.move()
                                           .rotate(rotdelta,
-                                                  oldmol.evaluate().centerOfGeometry(map),
+                                                  center_function.read()(oldmol,map),
                                                   map)
                                           .commit();
 
@@ -473,7 +500,7 @@ void RigidBodyMC::performMove(System &system,
                      it != molecules.constEnd();
                      ++it)
                 {
-                    box += it->evaluate().centerOfGeometry(map);
+                    box += center_function.read()(*it,map);
                 }
             
                 for (Molecules::const_iterator it = molecules.constBegin();
@@ -496,7 +523,7 @@ void RigidBodyMC::performMove(System &system,
             {
                 PartialMolecule newmol = it->move()
                                             .rotate(rotdelta,
-                                                    it->evaluate().centerOfGeometry(map),
+                                                    center_function.read()(*it,map),
                                                     map)
                                             .commit();
 

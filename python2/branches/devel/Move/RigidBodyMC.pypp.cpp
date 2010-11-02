@@ -51,6 +51,17 @@ void register_RigidBodyMC_class(){
         RigidBodyMC_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         RigidBodyMC_exposer.def( bp::init< SireMove::Sampler const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("sampler"), bp::arg("map")=SireBase::PropertyMap() )) );
         RigidBodyMC_exposer.def( bp::init< SireMove::RigidBodyMC const & >(( bp::arg("other") )) );
+        { //::SireMove::RigidBodyMC::centerOfRotation
+        
+            typedef ::SireMove::GetPoint const & ( ::SireMove::RigidBodyMC::*centerOfRotation_function_type )(  ) const;
+            centerOfRotation_function_type centerOfRotation_function_value( &::SireMove::RigidBodyMC::centerOfRotation );
+            
+            RigidBodyMC_exposer.def( 
+                "centerOfRotation"
+                , centerOfRotation_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
         { //::SireMove::RigidBodyMC::maximumRotation
         
             typedef ::SireUnits::Dimension::Angle ( ::SireMove::RigidBodyMC::*maximumRotation_function_type )(  ) const;
@@ -116,6 +127,17 @@ void register_RigidBodyMC_class(){
                 "sampler"
                 , sampler_function_value
                 , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireMove::RigidBodyMC::setCenterOfRotation
+        
+            typedef void ( ::SireMove::RigidBodyMC::*setCenterOfRotation_function_type )( ::SireMove::GetPoint const & ) ;
+            setCenterOfRotation_function_type setCenterOfRotation_function_value( &::SireMove::RigidBodyMC::setCenterOfRotation );
+            
+            RigidBodyMC_exposer.def( 
+                "setCenterOfRotation"
+                , setCenterOfRotation_function_value
+                , ( bp::arg("center_function") ) );
         
         }
         { //::SireMove::RigidBodyMC::setGenerator

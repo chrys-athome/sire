@@ -6,6 +6,7 @@
 #include "dlmrigidbody.h"
 #include "dynamics.h"
 #include "ensemble.h"
+#include "getpoint.h"
 #include "hybridmc.h"
 #include "integrator.h"
 #include "integratorworkspace.h"

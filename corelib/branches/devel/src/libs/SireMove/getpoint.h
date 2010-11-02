@@ -32,6 +32,8 @@
 #include "SireBase/property.h"
 #include "SireBase/propertymap.h"
 
+#include "SireID/idorset.hpp"
+
 #include "SireMol/atomidx.h"
 #include "SireMol/atomidentifier.h"
 
@@ -167,6 +169,11 @@ friend QDataStream& ::operator>>(QDataStream&, GetCOGPoint&);
 
 public:
     GetCOGPoint();
+
+    GetCOGPoint(const AtomID &atomid);
+    GetCOGPoint(const AtomID &atomid0, const AtomID &atomid1);
+    GetCOGPoint(const QList<SireMol::AtomIdentifier> &atomids);
+    
     GetCOGPoint(const GetCOGPoint &other);
     
     ~GetCOGPoint();
@@ -177,9 +184,16 @@ public:
     
     bool operator==(const GetCOGPoint &other) const;
     bool operator!=(const GetCOGPoint &other) const;
+
+    const AtomID& atomID() const;
     
     Vector getPoint(const MoleculeView &molecule,
                     const PropertyMap &map = PropertyMap()) const;
+
+private:
+    /** The list of AtomIDs to use to limit the atoms over which the 
+        COG is calculated */
+    SireID::IDOrSet<AtomID> atomids;
 };
 
 /** This function returns the center of mass (COG) of the 
@@ -196,6 +210,11 @@ friend QDataStream& ::operator>>(QDataStream&, GetCOMPoint&);
 
 public:
     GetCOMPoint();
+
+    GetCOMPoint(const AtomID &atomid);
+    GetCOMPoint(const AtomID &atomid0, const AtomID &atomid1);
+    GetCOMPoint(const QList<SireMol::AtomIdentifier> &atomids);
+
     GetCOMPoint(const GetCOMPoint &other);
     
     ~GetCOMPoint();
@@ -206,89 +225,16 @@ public:
     
     bool operator==(const GetCOMPoint &other) const;
     bool operator!=(const GetCOMPoint &other) const;
-    
-    Vector getPoint(const MoleculeView &molecule,
-                    const PropertyMap &map = PropertyMap()) const;
-};
 
-/** This function returns the coordinates of the atom that matches
-    the contained AtomID from the selection of atoms in the 
-    passed MoleculeView
-    
-    @author Christopher Woods
-*/
-class SIREMOVE_EXPORT GetAtomPoint 
-            : public SireBase::ConcreteProperty<GetAtomPoint,GetPoint>
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const GetAtomPoint&);
-friend QDataStream& ::operator>>(QDataStream&, GetAtomPoint&);
-
-public:
-    GetAtomPoint();
-    GetAtomPoint(const AtomID &atomid);
-    GetAtomPoint(const GetAtomPoint &other);
-    
-    ~GetAtomPoint();
-    
-    static const char* typeName();
-    
-    GetAtomPoint& operator=(const GetAtomPoint &other);
-    
-    bool operator==(const GetAtomPoint &other) const;
-    bool operator!=(const GetAtomPoint &other) const;
-    
     const AtomID& atomID() const;
-    
+   
     Vector getPoint(const MoleculeView &molecule,
                     const PropertyMap &map = PropertyMap()) const;
 
 private:
-    /** The ID for the atom whose coordinates are to be returned */
-    SireMol::AtomIdentifier atomid;
-};
-
-/** This function returns the point that is at the intersection
-    of two vectors (formed between points of four atoms).
-    
-    This is used to find the point used to perform ProtoMS-style
-    protein backbone moves, in which the residue is rotated
-    about the point that lies at the intersection of the 
-    vector between the N and CA atoms, and the vector of the 
-    C=O bond.
-    
-    @author Christopher Woods
-*/
-class SIREMOVE_EXPORT GetIntersectionPoint 
-            : public SireBase::ConcreteProperty<GetIntersectionPoint,GetPoint>
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const GetIntersectionPoint&);
-friend QDataStream& ::operator>>(QDataStream&, GetIntersectionPoint&);
-
-public:
-    GetIntersectionPoint();
-    GetIntersectionPoint(const AtomID &atom0, const AtomID &atom1,
-                         const AtomID &atom2, const AtomID &atom3);
-    GetIntersectionPoint(const GetIntersectionPoint &other);
-    
-    ~GetIntersectionPoint();
-    
-    static const char* typeName();
-    
-    GetIntersectionPoint& operator=(const GetIntersectionPoint &other);
-    
-    bool operator==(const GetIntersectionPoint &other) const;
-    bool operator!=(const GetIntersectionPoint &other) const;
-    
-    const AtomID& atomID(int i) const;
-    
-    Vector getPoint(const MoleculeView &molecule,
-                    const PropertyMap &map = PropertyMap()) const;
-
-private:
-    /** The IDs for the four atoms used to find the intersection point */
-    SireMol::AtomIdentifier atomid0, atomid1, atomid2, atomid3;
+    /** The list of AtomIDs to use to limit the atoms over which the 
+        COG is calculated */
+    SireID::IDOrSet<AtomID> atomids;
 };
 
 typedef SireBase::PropPtr<GetPoint> GetPointPtr;
@@ -298,15 +244,11 @@ typedef SireBase::PropPtr<GetPoint> GetPointPtr;
 Q_DECLARE_METATYPE( SireMove::NullGetPoint )
 Q_DECLARE_METATYPE( SireMove::GetCOMPoint )
 Q_DECLARE_METATYPE( SireMove::GetCOGPoint )
-Q_DECLARE_METATYPE( SireMove::GetAtomPoint )
-Q_DECLARE_METATYPE( SireMove::GetIntersectionPoint )
 
 SIRE_EXPOSE_CLASS( SireMove::GetPoint )
 SIRE_EXPOSE_CLASS( SireMove::NullGetPoint )
 SIRE_EXPOSE_CLASS( SireMove::GetCOMPoint )
 SIRE_EXPOSE_CLASS( SireMove::GetCOGPoint )
-SIRE_EXPOSE_CLASS( SireMove::GetAtomPoint )
-SIRE_EXPOSE_CLASS( SireMove::GetIntersectionPoint )
 
 SIRE_EXPOSE_PROPERTY( SireMove::GetPointPtr, SireMove::GetPoint )
 

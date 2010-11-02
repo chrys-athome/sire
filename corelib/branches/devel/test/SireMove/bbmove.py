@@ -12,7 +12,7 @@ import os
 
 protoms_dir = "%s/Work/ProtoMS" % (os.getenv("HOME"))
 
-protein = PDB().readMolecule("test/io/p38.pdb")
+protein = PDB().readMolecule("test/io/peptide.pdb")
 
 protoms = ProtoMS("%s/protoms2" % protoms_dir)
 protoms.addParameterFile("%s/parameter/amber99.ff" % protoms_dir)
@@ -24,14 +24,33 @@ print "...done!"
 
 residues = MoleculeGroup("residues")
 
+hn_atoms = AtomName("N", CaseInsensitive) * \
+           AtomName("HN", CaseInsensitive) * AtomName("HN1", CaseInsensitive) * \
+           AtomName("HN2", CaseInsensitive) * AtomName("HN3", CaseInsensitive)
+
+print hn_atoms
+
 for i in range(0, protein.nResidues()):
     atoms = protein.select(ResIdx(i)).selection()
 
     if i < (protein.nResidues()-1):
-       atoms.deselect( AtomName("N", CaseInsensitive) + ResIdx(i) )
-    
+       try:
+           atoms.deselect( hn_atoms + ResIdx(i) )    
+       except:
+           pass
+
     if i > 0:
-       atoms.select( AtomName("N", CaseInsensitive) + ResIdx(i) )
+       try:
+           atoms.select( hn_atoms + ResIdx(i-1) )
+       except:
+           pass
+
+    ats = Selector_Atom_(protein,atoms)
+
+    print "RESIDUE %d" % i
+
+    for at in ats:
+        print at
 
     residues.add( PartialMolecule(protein, atoms) )
 
@@ -48,11 +67,10 @@ system.add(intraclj)
 
 bbmoves = RigidBodyMC(residues)
 
-# updated version would be something like;
-# bbmoves = RigidBodyMC(residues, {"center" : GetBBMoveCenter()})
-
-bbmoves.setMaximumTranslation(0.05*angstrom)
-bbmoves.setMaximumRotation(2*degrees)
+bbmoves.setMaximumTranslation(0.025*angstrom)
+bbmoves.setMaximumRotation(1*degrees)
+bbmoves.setCenterOfRotation( GetCOGPoint( AtomName("CA", Sire.ID.CaseInsensitive),
+                                          AtomName("N", Sire.ID.CaseInsensitive) ) )
 
 scmoves = ZMatMove(residues)
 
@@ -68,7 +86,7 @@ print "Performing moves..."
 
 for i in range(0,10):
     print "Moves %d..." % (i+1)
-    system = moves.move(system, 1000, False)
+    system = moves.move(system, 10000, False)
 
     print system.energy()
 

@@ -30,6 +30,10 @@
 
 #include "SireMol/moleculeview.h"
 #include "SireMol/evaluator.h"
+#include "SireMol/atom.h"
+#include "SireMol/atomcoords.h"
+#include "SireMol/mover.hpp"
+#include "SireMol/selector.hpp"
 
 #include "SireMaths/vector.h"
 
@@ -212,7 +216,9 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_getcogpoint, 1);
     
-    ds << static_cast<const GetPoint&>(getpoint);
+    SharedDataStream sds(ds);
+    
+    sds << getpoint.atomids << static_cast<const GetPoint&>(getpoint);
     
     return ds;
 }
@@ -223,7 +229,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, GetCOGPoint &getpoint)
     
     if (v == 1)
     {
-        ds >> static_cast<GetPoint&>(getpoint);
+        SharedDataStream sds(ds);
+        
+        sds >> getpoint.atomids >> static_cast<GetPoint&>(getpoint);
     }
     else
         throw version_error(v, "1", r_getcogpoint, CODELOC);
@@ -235,9 +243,31 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, GetCOGPoint &getpoint)
 GetCOGPoint::GetCOGPoint() : ConcreteProperty<GetCOGPoint,GetPoint>()
 {}
 
+/** Construct to get the COG of the atoms in the molecule that match
+    the passed AtomID */
+GetCOGPoint::GetCOGPoint(const AtomID &atomid)
+            : ConcreteProperty<GetCOGPoint,GetPoint>(),
+              atomids(atomid)
+{}
+
+/** Construct to get the COG of the atoms in the molecule that
+    match either of the two passed AtomIDs */
+GetCOGPoint::GetCOGPoint(const AtomID &atomid0, const AtomID &atomid1)
+            : ConcreteProperty<GetCOGPoint,GetPoint>(),
+              atomids(atomid0,atomid1)
+{}
+
+/** Construct to get the COG of the atoms in the molecule that
+    match any of the passed AtomIDs */
+GetCOGPoint::GetCOGPoint(const QList<AtomIdentifier> &ids)
+            : ConcreteProperty<GetCOGPoint,GetPoint>(),
+              atomids(ids)
+{}
+
 /** Copy constructor */
 GetCOGPoint::GetCOGPoint(const GetCOGPoint &other)
-            : ConcreteProperty<GetCOGPoint,GetPoint>(other)
+            : ConcreteProperty<GetCOGPoint,GetPoint>(other),
+              atomids(other.atomids)
 {}
 
 /** Destructor */
@@ -253,25 +283,37 @@ const char* GetCOGPoint::typeName()
 GetCOGPoint& GetCOGPoint::operator=(const GetCOGPoint &other)
 {
     GetPoint::operator=(other);
+    atomids = other.atomids;
+    
     return *this;
 }
 
 /** Comparison operator */
 bool GetCOGPoint::operator==(const GetCOGPoint &other) const
 {
-    return GetPoint::operator==(other);
+    return atomids == other.atomids and GetPoint::operator==(other);
 }
 
 /** Comparison operator */
 bool GetCOGPoint::operator!=(const GetCOGPoint &other) const
 {
-    return GetPoint::operator!=(other);
+    return not GetCOGPoint::operator==(other);
+}
+
+/** Return the AtomID(s) used to limit the search for the point */
+const AtomID& GetCOGPoint::atomID() const
+{
+    return atomids;
 }
 
 Vector GetCOGPoint::getPoint(const MoleculeView &molecule,
                              const PropertyMap &map) const
 {
-    return Evaluator(molecule).centerOfGeometry(map);
+    if (atomids.IDs().isEmpty())
+        return Evaluator(molecule).centerOfGeometry(map);
+
+    else
+        return molecule.atoms(atomids,map).evaluate().centerOfGeometry(map);
 }
 
 ///////////
@@ -285,7 +327,9 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_getcompoint, 1);
     
-    ds << static_cast<const GetPoint&>(getpoint);
+    SharedDataStream sds(ds);
+    
+    sds << getpoint.atomids << static_cast<const GetPoint&>(getpoint);
     
     return ds;
 }
@@ -296,7 +340,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, GetCOMPoint &getpoint)
     
     if (v == 1)
     {
-        ds >> static_cast<GetPoint&>(getpoint);
+        SharedDataStream sds(ds);
+        
+        sds >> getpoint.atomids >> static_cast<GetPoint&>(getpoint);
     }
     else
         throw version_error(v, "1", r_getcompoint, CODELOC);
@@ -308,9 +354,31 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, GetCOMPoint &getpoint)
 GetCOMPoint::GetCOMPoint() : ConcreteProperty<GetCOMPoint,GetPoint>()
 {}
 
+/** Construct to get the COM of the atoms in the molecule that match
+    the passed AtomID */
+GetCOMPoint::GetCOMPoint(const AtomID &atomid)
+            : ConcreteProperty<GetCOMPoint,GetPoint>(),
+              atomids(atomid)
+{}
+
+/** Construct to get the COM of the atoms in the molecule that
+    match either of the two passed AtomIDs */
+GetCOMPoint::GetCOMPoint(const AtomID &atomid0, const AtomID &atomid1)
+            : ConcreteProperty<GetCOMPoint,GetPoint>(),
+              atomids(atomid0,atomid1)
+{}
+
+/** Construct to get the COM of the atoms in the molecule that
+    match any of the passed AtomIDs */
+GetCOMPoint::GetCOMPoint(const QList<AtomIdentifier> &ids)
+            : ConcreteProperty<GetCOMPoint,GetPoint>(),
+              atomids(ids)
+{}
+
 /** Copy constructor */
 GetCOMPoint::GetCOMPoint(const GetCOMPoint &other)
-            : ConcreteProperty<GetCOMPoint,GetPoint>(other)
+            : ConcreteProperty<GetCOMPoint,GetPoint>(other),
+              atomids(other.atomids)
 {}
 
 /** Destructor */
@@ -326,107 +394,33 @@ const char* GetCOMPoint::typeName()
 GetCOMPoint& GetCOMPoint::operator=(const GetCOMPoint &other)
 {
     GetPoint::operator=(other);
+    atomids = other.atomids;
     return *this;
 }
 
 /** Comparison operator */
 bool GetCOMPoint::operator==(const GetCOMPoint &other) const
 {
-    return GetPoint::operator==(other);
+    return atomids == other.atomids and GetPoint::operator==(other);
 }
 
 /** Comparison operator */
 bool GetCOMPoint::operator!=(const GetCOMPoint &other) const
 {
-    return GetPoint::operator!=(other);
+    return not GetCOMPoint::operator==(other);
+}
+
+/** Return the AtomID(s) used to limit the search for the point */
+const AtomID& GetCOMPoint::atomID() const
+{
+    return atomids;
 }
 
 Vector GetCOMPoint::getPoint(const MoleculeView &molecule,
                              const PropertyMap &map) const
 {
-    return Evaluator(molecule).centerOfMass(map);
-}
-
-///////////
-/////////// Implementation of GetAtomPoint
-///////////
-
-static const RegisterMetaType<GetAtomPoint> r_getatompoint;
-
-QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
-                                        const GetAtomPoint &getpoint)
-{
-    writeHeader(ds, r_getatompoint, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << getpoint.atomid << static_cast<const GetPoint&>(getpoint);
-    
-    return ds;
-}
-
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, GetAtomPoint &getpoint)
-{
-    VersionID v = readHeader(ds, r_getatompoint);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-    
-        sds >> getpoint.atomid >> static_cast<GetPoint&>(getpoint);
-    }
+    if (atomids.IDs().isEmpty())
+        return Evaluator(molecule).centerOfMass(map);
     else
-        throw version_error(v, "1", r_getatompoint, CODELOC);
-        
-    return ds;
+        return molecule.atoms(atomids,map).evaluate().centerOfMass(map);
 }
-
-GOT TO HERE
-
-/** Constructor */
-GetCOGPoint::GetCOGPoint() : ConcreteProperty<GetCOGPoint,GetPoint>()
-{}
-
-/** Copy constructor */
-GetCOGPoint::GetCOGPoint(const GetCOGPoint &other)
-            : ConcreteProperty<GetCOGPoint,GetPoint>(other)
-{}
-
-/** Destructor */
-GetCOGPoint::~GetCOGPoint()
-{}
-
-const char* GetCOGPoint::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<GetCOGPoint>() );
-}
-
-/** Copy assignment operator */
-GetCOGPoint& GetCOGPoint::operator=(const GetCOGPoint &other)
-{
-    GetPoint::operator=(other);
-    return *this;
-}
-
-/** Comparison operator */
-bool GetCOGPoint::operator==(const GetCOGPoint &other) const
-{
-    return GetPoint::operator==(other);
-}
-
-/** Comparison operator */
-bool GetCOGPoint::operator!=(const GetCOGPoint &other) const
-{
-    return GetPoint::operator!=(other);
-}
-
-Vector GetCOGPoint::getPoint(const MoleculeView &molecule,
-                             const PropertyMap &map) const
-{
-    return Evaluator(molecule).centerOfGeometry(map);
-}
-
-///////////
-/////////// Implementation of GetIntersectionPoint
-///////////
-

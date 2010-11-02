@@ -31,6 +31,7 @@
 
 #include "montecarlo.h"
 #include "sampler.h"
+#include "getpoint.h"
 
 SIRE_BEGIN_HEADER
 
@@ -100,6 +101,8 @@ public:
     void setMaximumTranslation(SireUnits::Dimension::Length max_translation);
     void setMaximumRotation(SireUnits::Dimension::Angle max_rotation);
 
+    void setCenterOfRotation(const GetPoint &center_function);
+
     void setSynchronisedTranslation(bool on);
     void setSynchronisedRotation(bool on);
     void setSharedRotationCenter(bool on);
@@ -110,6 +113,8 @@ public:
 
     SireUnits::Dimension::Length maximumTranslation() const;
     SireUnits::Dimension::Angle maximumRotation() const;
+
+    const GetPoint& centerOfRotation() const;
 
     void move(System &system, int nmoves, bool record_stats=true);
 
@@ -123,6 +128,9 @@ private:
 
     /** The sampler used to select random molecules for the move */
     SamplerPtr smplr;
+
+    /** The function used to get the center of rotation of each molecule */
+    GetPointPtr center_function;
 
     /** The maximum translation */
     double adel;

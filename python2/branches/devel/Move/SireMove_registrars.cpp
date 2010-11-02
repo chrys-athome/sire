@@ -35,6 +35,7 @@
 #include "move.h"
 #include "velocityverlet.h"
 #include "ensemble.h"
+#include "getpoint.h"
 #include "moldeleter.h"
 #include "simstore.h"
 #include "dlmrigidbody.h"
@@ -86,6 +87,9 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::NullMove >();
     ObjectRegistry::registerConverterFor< SireMove::VelocityVerlet >();
     ObjectRegistry::registerConverterFor< SireMove::Ensemble >();
+    ObjectRegistry::registerConverterFor< SireMove::NullGetPoint >();
+    ObjectRegistry::registerConverterFor< SireMove::GetCOMPoint >();
+    ObjectRegistry::registerConverterFor< SireMove::GetCOGPoint >();
     ObjectRegistry::registerConverterFor< SireMove::NullDeleter >();
     ObjectRegistry::registerConverterFor< SireMove::SpecifiedGroupsDeleter >();
     ObjectRegistry::registerConverterFor< SireMove::SystemWideDeleter >();

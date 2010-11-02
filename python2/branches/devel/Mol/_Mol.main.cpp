@@ -415,6 +415,8 @@ namespace bp = boost::python;
 
 #include "SireMol/mover.hpp"
 
+#include "SireMol/mgidentifier.h"
+
 BOOST_PYTHON_MODULE(_Mol){
     register_SireMol_objects();
 
@@ -811,6 +813,20 @@ BOOST_PYTHON_MODULE(_Mol){
     register_SpecifyMol_class();
 
     register_SireMol_properties();
+
+    bp::implicitly_convertible< SireMol::AtomID, SireMol::AtomIdentifier >();
+
+    bp::implicitly_convertible< SireMol::CGID, SireMol::CGIdentifier >();
+
+    bp::implicitly_convertible< SireMol::ChainID, SireMol::ChainIdentifier >();
+
+    bp::implicitly_convertible< SireMol::ResID, SireMol::ResIdentifier >();
+
+    bp::implicitly_convertible< SireMol::SegID, SireMol::SegIdentifier >();
+
+    bp::implicitly_convertible< SireMol::MolID, SireMol::MolIdentifier >();
+
+    bp::implicitly_convertible< SireMol::MGID, SireMol::MGIdentifier >();
 
     bp::implicitly_convertible< SireMol::MoleculeView, SireMol::MoleculeData >();
 
