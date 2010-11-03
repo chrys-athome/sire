@@ -120,6 +120,21 @@ const char* incompatible_molecule::typeName()
     return QMetaType::typeName( qMetaTypeId<incompatible_molecule>() );
 }
 
+const char* missing_bond::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_bond>() );
+}
+
+const char* missing_angle::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_angle>() );
+}
+
+const char* missing_dihedral::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_dihedral>() );
+}
+
 static const RegisterMetaType<missing_atom> r_matom;
 static const RegisterMetaType<missing_group> r_mgrp;
 static const RegisterMetaType<duplicate_atom> r_datom;
@@ -137,3 +152,6 @@ static const RegisterMetaType<template_error> r_tmplerr;
 static const RegisterMetaType<anchor_error> r_ancerr;
 static const RegisterMetaType<ring_error> r_ringerr;
 static const RegisterMetaType<incompatible_molecule> r_incompat;
+static const RegisterMetaType<missing_bond> r_mbond;
+static const RegisterMetaType<missing_angle> r_mangle;
+static const RegisterMetaType<missing_angle> r_mdihedral;

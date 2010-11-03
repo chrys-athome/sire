@@ -9,13 +9,16 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireIO
 set ( SIREIO_HEADERS
+      amber.h
       cube.h
       errors.h
+      flexibilitymaker.h
       iobase.h
       pdb.h
       protoms.h
       tinker.h
       trajectorymonitor.h
+      zmatrixmaker.h
     )
 
 # Define the sources in SireIO
@@ -23,13 +26,16 @@ set ( SIREIO_SOURCES
 
       register_sireio.cpp
 
+      amber.cpp
       cube.cpp
       errors.cpp
+      flexibilitymaker.cpp
       iobase.cpp
       pdb.cpp
       protoms.cpp
       tinker.cpp
       trajectorymonitor.cpp    
+      zmatrixmaker.cpp
 
       ${SIREIO_HEADERS}
     )
