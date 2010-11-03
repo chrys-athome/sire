@@ -1360,6 +1360,256 @@ ConnectivityBase::split(const ImproperID &improper,
                         selected_atoms );
 }
 
+/** Return the list of bonds present in this connectivity*/
+QList<BondID> ConnectivityBase::getBonds() const
+{
+  QList<BondID> bonds;
+  int nats = connected_atoms.count();
+  for (int i=0; i < nats; ++i)
+    {
+      AtomIdx atomidx = AtomIdx(i);
+      QSet<AtomIdx> neighbors = this->connectionsTo(atomidx);
+      foreach (AtomIdx neighbor, neighbors)
+	{
+	  // Do not add the bond to the list if already found. Note that we 
+	  // have to check if the bond has been defined in reverse order too
+	  // and we do that using the mirror() method
+	  BondID bond = BondID(atomidx, neighbor);
+	  if ( not ( bonds.contains(bond) or bonds.contains(bond.mirror()) ) )
+	    bonds.append(bond);
+	}
+    }
+  return bonds;
+}
+/** Return the list of bonds in the connectivity containing atom */
+QList<BondID> ConnectivityBase::getBonds(const AtomID &atom) const
+{
+   QList<BondID> bonds;
+
+   // the "connectionsTo()" function will throw exceptions
+   // if no atom matches the ID
+
+   foreach (AtomIdx bonded_atom, this->connectionsTo(atom))
+   {
+       bonds.append( BondID(atom, bonded_atom) );
+   }
+   // It is ok to return an empty list of bonds
+   //if (bonds.isEmpty())
+   //    throw SireMol::missing_bond( QObject::tr(
+   //       "There are no bonds to the atom with ID %1.")
+   //           .arg(atom.toString()), CODELOC );
+
+   return bonds;
+}
+/** Return a list of angles defined by the connectivity*/
+QList<AngleID> ConnectivityBase::getAngles() const
+{
+  QList<AngleID> angles;
+  int nats = connected_atoms.count();
+  for (int i=0; i < nats; ++i)
+    {
+      AtomIdx atom0idx = AtomIdx(i);
+      foreach (AtomIdx atom1idx, this->connectionsTo(atom0idx))
+	{
+	  foreach (AtomIdx atom2idx, this->connectionsTo(atom1idx))
+	    {
+	      if (atom2idx != atom0idx)
+		{
+		  AngleID angle = AngleID( atom0idx, atom1idx, atom2idx );
+		  if ( not ( angles.contains(angle) or angles.contains(angle.mirror()) ) ) 
+		    angles.append(angle);
+		}
+	    }
+	}
+    }
+  return angles;
+}
+/** Return a list of angles defined by the connectivity that involve atom0 and atom1*/
+QList<AngleID> ConnectivityBase::getAngles(const AtomID &atom0, const AtomID &atom1) const
+{
+  QList<AngleID> angles;
+  // Is this the best way to do this? What if map returns multiple atoms?
+  AtomIdx atom0idx = atom0.map(this->info())[0];
+  AtomIdx atom1idx = atom1.map(this->info())[0];
+  // check that atom0 and atom1 are bonded
+  QSet<AtomIdx> bonded_atoms0 = this->connectionsTo(atom0);
+  if (not bonded_atoms0.contains(atom1idx))
+    throw SireMol::missing_bond( QObject::tr(
+					     "There is no bond between atoms with ID %1 and %2.")
+				 .arg(atom0.toString(),atom1.toString()), CODELOC );  
+  // Get all the neighbors of atom1 that are not atom0 (to get the set of atom0-atom1-atom2)
+  foreach (AtomIdx atom2idx, this->connectionsTo(atom1idx))
+    {
+      if ( atom2idx != atom0idx )
+	{
+	  AngleID angle = AngleID( atom0idx, atom1idx, atom2idx );
+	  if ( not ( angles.contains(angle) or angles.contains(angle.mirror()) ) )
+	    angles.append(angle);
+	}
+    }
+  // And now the neighbors of atom0 so we get the set (atom1-atom0-atom2)
+  foreach (AtomIdx atom2idx, this->connectionsTo(atom0idx))
+    {
+      if (atom2idx != atom1idx)
+	{
+	  AngleID angle = AngleID( atom1idx, atom0idx, atom2idx );
+	  if ( not ( angles.contains(angle) or angles.contains(angle.mirror()) ) )
+	    angles.append(angle);	  
+	}
+    }
+  // It is ok not to return an empty list of angles
+  //if (angles.isEmpty())
+  //  throw SireMol::missing_angle( QObject::tr(
+  //					      "There are no angles to the atoms with ID %1 and %2.")
+  //				  .arg( atom0.toString(),atom1.toString() ), CODELOC );
+  
+  return angles;
+}
+
+/** Return a list of angles defined by the connectivity that involve atom0*/
+QList<AngleID> ConnectivityBase::getAngles(const AtomID &atom0) const
+{
+  QList<AngleID> angles;
+  AtomIdx atom0idx = atom0.map(this->info())[0];
+  foreach (AtomIdx atom1idx, this->connectionsTo(atom0idx))
+    {
+      QList<AngleID> angles01 = this->getAngles(atom0idx, atom1idx);
+      foreach (AngleID angle, angles01)	
+	{
+	  if ( not ( angles.contains(angle) or angles.contains(angle.mirror()) ) )
+	    angles.append(angle);
+	}
+    }
+  return angles;
+}
+
+/** Return a list of dihedrals defined by the connectivity*/
+QList<DihedralID> ConnectivityBase::getDihedrals() const
+{
+  QList<DihedralID> dihedrals;
+  int nats = connected_atoms.count();
+  for (int i=0; i < nats ; ++i)
+    {
+      AtomIdx atom0idx = AtomIdx(i);
+      foreach (AtomIdx atom1idx, this->connectionsTo(atom0idx))
+	{
+	  foreach (AtomIdx atom2idx, this->connectionsTo(atom1idx))
+	    {
+	      if (atom2idx != atom0idx)
+		{
+		  foreach (AtomIdx atom3idx, this->connectionsTo(atom2idx))
+		    {
+		      if (atom3idx != atom1idx)
+			{
+			  DihedralID dihedral = DihedralID( atom0idx, atom1idx, atom2idx, atom3idx);
+			  if ( not ( dihedrals.contains(dihedral) or dihedrals.contains(dihedral.mirror()) ) )
+			    dihedrals.append(dihedral);
+			}
+		    } 
+		}
+	    }
+	}
+    }
+  return dihedrals;
+}
+/** Return a list of dihedrals defined by the connectivity that involve atom0, atom1 and atom2*/
+QList<DihedralID> ConnectivityBase::getDihedrals(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2) const
+{
+  QList<DihedralID> dihedrals;
+  AtomIdx atom0idx = atom0.map(this->info())[0];
+  AtomIdx atom1idx = atom1.map(this->info())[0];
+  AtomIdx atom2idx = atom2.map(this->info())[0];
+  //Check that atom0, atom1 & atom2 form an angle
+  QSet<AtomIdx> bonded_atoms0 = this->connectionsTo(atom0);
+  if (not bonded_atoms0.contains(atom1idx))
+        throw SireMol::missing_bond( QObject::tr(
+					     "There is no bond between atoms with ID %1 and %2.")
+				     .arg(atom0.toString(),atom1.toString()), CODELOC );  
+  QSet<AtomIdx> bonded_atoms1 = this->connectionsTo(atom1);
+  if (not bonded_atoms1.contains(atom2idx))
+        throw SireMol::missing_bond( QObject::tr(
+					     "There is no bond between atoms with ID %1 and %2.")
+				     .arg(atom0.toString(),atom2.toString()), CODELOC );  
+  // Get all the neighbors of atom2, that are not atom1 or atom0 so we build atom0-atom1-atom2-atom3
+  foreach (AtomIdx atom3idx, this->connectionsTo(atom2idx))
+    {
+      if ( (atom3idx != atom1idx) and (atom3idx != atom0idx) )
+	{
+	  DihedralID dihedral = DihedralID( atom0idx, atom1idx, atom2idx, atom3idx );
+	  if ( not ( dihedrals.contains(dihedral) or dihedrals.contains(dihedral.mirror()) ) )
+	    dihedrals.append(dihedral);
+	}
+    }
+  // And now building atom2-atom1-atom0-atom3
+  foreach (AtomIdx atom3idx, this->connectionsTo(atom0idx))
+    {
+      if ( (atom3idx != atom1idx) and (atom3idx != atom2idx) )
+	{
+	  DihedralID dihedral = DihedralID( atom2idx, atom1idx, atom0idx, atom3idx );
+	  if ( not ( dihedrals.contains(dihedral) or dihedrals.contains(dihedral.mirror()) ) )
+	    dihedrals.append(dihedral);
+	}
+    }  
+  return dihedrals;
+}
+/** Return a list of dihedrals defined by the connectivity that involve atom0 and atom1*/
+QList<DihedralID> ConnectivityBase::getDihedrals(const AtomID &atom0, const AtomID &atom1) const
+{
+  QList<DihedralID> dihedrals;
+  AtomIdx atom0idx = atom0.map(this->info())[0];
+  AtomIdx atom1idx = atom1.map(this->info())[0];
+  //Check that atom0 and atom1 are bonded
+  QSet<AtomIdx> bonded_atoms0 = this->connectionsTo(atom0);
+  if (not bonded_atoms0.contains(atom1idx))
+    throw SireMol::missing_bond( QObject::tr(
+					     "There is no bond between atoms with ID %1 and %2.")
+				 .arg(atom0.toString(),atom1.toString()), CODELOC );  
+  foreach (AtomIdx atom2idx, this->connectionsTo(atom1idx))
+    {
+      if (atom2idx != atom0idx) 
+	{
+	  // the dihedrals that are atom0-atom1-atom2-XXX
+	  QList<DihedralID> dihedrals012 = this->getDihedrals(atom0idx, atom1idx, atom2idx);
+	  foreach (DihedralID dihedral,dihedrals012)
+	    {
+	      if ( not ( dihedrals.contains(dihedral) or dihedrals.contains(dihedral.mirror()) ) )
+		dihedrals.append(dihedral);
+	    }
+	  // the dihedrals that are atom2-atom1-atom0-XXX
+	  QList<DihedralID> dihedrals210 = this->getDihedrals(atom2idx, atom1idx, atom0idx);
+	  foreach (DihedralID dihedral,dihedrals210)
+	    {
+	      if ( not ( dihedrals.contains(dihedral) or dihedrals.contains(dihedral.mirror()) ) )
+		dihedrals.append(dihedral);
+	    }	  
+	}
+    }
+  return dihedrals;
+}
+/** Return a list of dihedrals defined by the connectivity that involve atom0*/
+QList<DihedralID> ConnectivityBase::getDihedrals(const AtomID &atom0) const
+{
+  QList<DihedralID> dihedrals;
+  AtomIdx atom0idx = atom0.map(this->info())[0];
+  foreach (AtomIdx atom1idx, this->connectionsTo(atom0idx))
+    {
+      // Dihedrals going along atom0-atom1-XXX
+      QList<DihedralID> dihedrals01 = this->getDihedrals(atom0idx, atom1idx);
+      foreach (DihedralID dihedral,dihedrals01)
+	{
+	  if ( not ( dihedrals.contains(dihedral) or dihedrals.contains(dihedral.mirror()) ) )
+	    dihedrals.append(dihedral);
+	}
+      // Dihedrals going along atom1-atom0-XXX
+      QList<DihedralID> dihedrals10 = this->getDihedrals(atom1idx, atom0idx);
+      foreach (DihedralID dihedral,dihedrals10)
+	{
+	  if ( not ( dihedrals.contains(dihedral) or dihedrals.contains(dihedral.mirror()) ) )
+	    dihedrals.append(dihedral);
+	}     
+    }
+  return dihedrals;
+}
 /////////
 ///////// Implementation of Connectivity
 /////////

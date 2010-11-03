@@ -4,6 +4,7 @@
 #include "SireMove_registrars.h"
 
 #include "moleculardynamics.h"
+#include "movermove.h"
 #include "suprasimpacket.h"
 #include "replica.h"
 #include "suprasubmove.h"
@@ -22,6 +23,7 @@
 #include "velocitygenerator.h"
 #include "supramoves.h"
 #include "rigidbodymc.h"
+#include "flexibility.h"
 #include "weightedmoves.h"
 #include "volumechanger.h"
 #include "repexmove.h"
@@ -46,6 +48,8 @@ void register_SireMove_objects()
 {
 
     ObjectRegistry::registerConverterFor< SireMove::MolecularDynamics >();
+    ObjectRegistry::registerConverterFor< SireMove::MoverMove >();
+    ObjectRegistry::registerConverterFor< SireMove::DofID >();
     ObjectRegistry::registerConverterFor< SireMove::SupraSimPacket >();
     ObjectRegistry::registerConverterFor< SireMove::Replica >();
     ObjectRegistry::registerConverterFor< SireMove::NullSupraSubMove >();
@@ -70,6 +74,7 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::MaxwellBoltzmann >();
     ObjectRegistry::registerConverterFor< SireMove::SameSupraMoves >();
     ObjectRegistry::registerConverterFor< SireMove::RigidBodyMC >();
+    ObjectRegistry::registerConverterFor< SireMove::Flexibility >();
     ObjectRegistry::registerConverterFor< SireMove::WeightedMoves >();
     ObjectRegistry::registerConverterFor< SireMove::NullVolumeChanger >();
     ObjectRegistry::registerConverterFor< SireMove::ScaleVolumeFromCenter >();

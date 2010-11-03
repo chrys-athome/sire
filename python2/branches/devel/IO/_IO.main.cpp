@@ -5,7 +5,11 @@
 
 #include "boost/python.hpp"
 
+#include "Amber.pypp.hpp"
+
 #include "Cube.pypp.hpp"
+
+#include "FlexibilityMaker.pypp.hpp"
 
 #include "IOBase.pypp.hpp"
 
@@ -27,6 +31,8 @@
 
 #include "TrajectoryMonitor.pypp.hpp"
 
+#include "ZmatrixMaker.pypp.hpp"
+
 namespace bp = boost::python;
 
 #include "SireIO_registrars.h"
@@ -36,7 +42,11 @@ namespace bp = boost::python;
 BOOST_PYTHON_MODULE(_IO){
     register_SireIO_objects();
 
+    register_Amber_class();
+
     register_Cube_class();
+
+    register_FlexibilityMaker_class();
 
     register_IOBase_class();
 
@@ -56,8 +66,10 @@ BOOST_PYTHON_MODULE(_IO){
 
     register_TinkerParameters_class();
 
+    register_TrajectoryMonitor_class();
+
     register_SireIO_properties();
 
-    register_TrajectoryMonitor_class();
+    register_ZmatrixMaker_class();
 }
 

@@ -9,9 +9,13 @@
 
 #include "DLMRigidBody.pypp.hpp"
 
+#include "DofID.pypp.hpp"
+
 #include "Dynamics.pypp.hpp"
 
 #include "Ensemble.pypp.hpp"
+
+#include "Flexibility.pypp.hpp"
 
 #include "GetCOGPoint.pypp.hpp"
 
@@ -40,6 +44,8 @@
 #include "MonteCarlo.pypp.hpp"
 
 #include "Move.pypp.hpp"
+
+#include "MoverMove.pypp.hpp"
 
 #include "Moves.pypp.hpp"
 
@@ -156,11 +162,15 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_DLMRigidBody_class();
 
+    register_DofID_class();
+
     register_Move_class();
 
     register_Dynamics_class();
 
     register_Ensemble_class();
+
+    register_Flexibility_class();
 
     register_GetPoint_class();
 
@@ -187,6 +197,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_MolInserter_class();
 
     register_MolecularDynamics_class();
+
+    register_MoverMove_class();
 
     register_Moves_class();
 

@@ -672,6 +672,72 @@ public:
     }
 };
 
+/** This exception is thrown when a request is made of a non-existant bond
+
+    @author Julien Michel
+*/
+class SIREMOL_EXPORT missing_bond : public siremol_error
+{
+public:
+    missing_bond() : siremol_error()
+    {}
+
+    missing_bond(QString err, QString place = QString::null)
+              : siremol_error(err,place)
+    {}
+
+    missing_bond(const missing_bond &other) : siremol_error(other)
+    {}
+
+    ~missing_bond() throw()
+    {}
+
+    static const char* typeName();
+
+    const char* what() const throw()
+    {
+        return missing_bond::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_bond(*this);
+    }
+};
+
+/** This exception is thrown when a request is made of a non-existant angle
+
+    @author Julien Michel
+*/
+class SIREMOL_EXPORT missing_angle : public siremol_error
+{
+public:
+    missing_angle() : siremol_error()
+    {}
+
+    missing_angle(QString err, QString place = QString::null)
+              : siremol_error(err,place)
+    {}
+
+    missing_angle(const missing_angle &other) : siremol_error(other)
+    {}
+
+    ~missing_angle() throw()
+    {}
+
+    static const char* typeName();
+
+    const char* what() const throw()
+    {
+        return missing_angle::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_angle(*this);
+    }
+};
+
 /** This exception is thrown when a request is made of a non-existant dihedral
 
     @author Julien Michel
@@ -686,7 +752,7 @@ public:
               : siremol_error(err,place)
     {}
 
-    missing_dihedral(const missing_angle &other) : siremol_error(other)
+    missing_dihedral(const missing_dihedral &other) : siremol_error(other)
     {}
 
     ~missing_dihedral() throw()
@@ -725,6 +791,8 @@ Q_DECLARE_METATYPE(SireMol::template_error)
 Q_DECLARE_METATYPE(SireMol::anchor_error)
 Q_DECLARE_METATYPE(SireMol::ring_error)
 Q_DECLARE_METATYPE(SireMol::incompatible_molecule)
+Q_DECLARE_METATYPE(SireMol::missing_bond)
+Q_DECLARE_METATYPE(SireMol::missing_angle)
 Q_DECLARE_METATYPE(SireMol::missing_dihedral)
 
 SIRE_END_HEADER

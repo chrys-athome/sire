@@ -475,114 +475,133 @@ void ZmatrixMaker::loadTemplates( const QString &templatefile)
 
 }
 
-
 Molecule ZmatrixMaker::applyTemplates( Molecule &molecule)
 {
+    PropertyName zmatrix_property = PropertyName("z-matrix");
 
-  PropertyName zmatrix_property = PropertyName("z-matrix");
+    // Does it already have a zmatrix_property?
+    if ( molecule.hasProperty(zmatrix_property) )
+        return molecule;
 
-  // Does it already have a zmatrix_property?
-  if ( molecule.hasProperty(zmatrix_property) )
-    return molecule;
+    const Connectivity &connectivity = molecule.data()
+                                               .property("connectivity")
+                                               .asA<Connectivity>();
 
-  const Connectivity &connectivity = molecule.data().property("connectivity").asA<Connectivity>();
-  MolEditor editmol = molecule.edit();
-  ZMatrix zmatrix( editmol );
+    MolEditor editmol = molecule.edit();
+    
+    ZMatrix zmatrix( editmol );
 
-  int nres = editmol.nResidues();
-  for (ResIdx i(0) ; i < nres ; ++i)
+    int nres = editmol.nResidues();
+    
+    for (ResIdx i(0) ; i < nres ; ++i)
     {
-      Residue residue = editmol.residue(i);
-      /** Look up a residue among the templates*/
-      QString resname = residue.name().value();
+        Residue residue = editmol.residue(i);
+
+        /** Look up a residue among the templates*/
+        QString resname = residue.name().value();
  
-      if ( not this->residues.contains(resname) )
-       	throw SireError::invalid_key(resname, CODELOC);
+        if ( not this->residues.contains(resname) )
+            throw SireError::invalid_key(resname, CODELOC);
 
-      ZmatrixResidue restemplate = this->residues[resname];
+        ZmatrixResidue restemplate = this->residues[resname];
       
-      /** Is this residue 'first', 'middle' or 'last' or 'single' ?*/
-      bool firstbondedwithother = false;
-      bool lastbondedwithother = false;
-      // nterm has first false and last true
-      // cterm has first true and last false
-      // middle has first and last true
-      // single hast first and last false
-      QStringList bbatoms = restemplate.getBBatoms();
+        /** Is this residue 'first', 'middle' or 'last' or 'single' ?*/
+        bool firstbondedwithother = false;
+        bool lastbondedwithother = false;
 
-      Atom lastatom = residue.select( AtomName ( bbatoms.last() ) );
-      QList<BondID> bonds = connectivity.getBonds(lastatom.index());
-      foreach (BondID bond, bonds)
-	{
-	  if ( not residue.contains( bond.atom1() ) )
-	    {
-	      lastbondedwithother = true;
-	      break;
-	    }
-	}
+        // nterm has first false and last true
+        // cterm has first true and last false
+        // middle has first and last true
+        // single hast first and last false
+        QStringList bbatoms = restemplate.getBBatoms();
 
-      Atom firstatom = residue.select( AtomName ( bbatoms.first() ) );
-      bonds = connectivity.getBonds(firstatom.index());
-      foreach (BondID bond, bonds)
-	{
-	  if ( not residue.contains( bond.atom1() ) )
-	    {
-	      firstbondedwithother = true;
-	      break;
-	    }
-	}
-      QString position;
-      if ( firstbondedwithother and lastbondedwithother)
-	position = "middle";
-      else if ( firstbondedwithother )
-	position = "last";
-      else if ( lastbondedwithother )
-	position = "first";
-      else
-	position = "single";
+        Atom lastatom = residue.select( AtomName(bbatoms.last()) );
 
-      //qDebug() << " The position of this residue is " << position ;
+        QList<BondID> bonds = connectivity.getBonds(lastatom.index());
 
-      /** Need to decide where to store info about rigid body 
-	  translation and rotations of this residue*/
+        foreach (BondID bond, bonds)
+        {
+            if ( not residue.contains(bond.atom1()) )
+            {
+                lastbondedwithother = true;
+                break;
+            }
+        }
 
-      int nats = residue.nAtoms();
+        Atom firstatom = residue.select( AtomName ( bbatoms.first() ) );
+        bonds = connectivity.getBonds(firstatom.index());
+        
+        foreach (BondID bond, bonds)
+        {
+            if ( not residue.contains( bond.atom1() ) )
+            {
+                firstbondedwithother = true;
+                break;
+            }
+        }
 
-      for (Index j(0); j<nats; ++j)
+        QString position;
+        
+        if ( firstbondedwithother and lastbondedwithother)
+            position = "middle";
+        else if ( firstbondedwithother )
+            position = "last";
+        else if ( lastbondedwithother )
+            position = "first";
+        else
+            position = "single";
+
+        //qDebug() << " The position of this residue is " << position ;
+
+        /** Need to decide where to store info about rigid body 
+            translation and rotations of this residue*/
+
+        Selector<Atom> atoms = residue.atoms();
+
+        for (int i=0; i<atoms.count(); ++i)
        	{
-       	  Atom atom = residue.atom(j);
-	  //qDebug() << " Finding template for atom " << atom.name().toString();
-	  /** Backbone atoms do not have a zmatrix line */
-	  if ( bbatoms.contains( atom.name().value() ) )
-	    continue;
-	  /** Try to find matching atom in the residue zmatrix */
-	  ZmatrixLineTemplate linetemplate;
-	  try
-	    {
-	      linetemplate = restemplate.getZmatrixLineTemplate( atom.name().value() );
-	    }
-	  catch (SireError::invalid_key)
-	    {
-	      /** If this fails, look also in the matching backbone zmatrix*/
-	      ZmatrixTemplate chain = restemplate.getChain(position);
-	      linetemplate = chain.getZmatrixLineTemplate( atom.name().value() );
-	    }
-       	  Atom bond = residue.select( AtomName( linetemplate.getBond() ) );
-       	  Atom angle = residue.select( AtomName( linetemplate.getAngle() ) );
-       	  Atom dihedral = residue.select( AtomName( linetemplate.getDihedral() ) );
-       	  double bondDelta = linetemplate.getBondDelta();
-       	  double angleDelta = linetemplate.getAngleDelta();
-       	  double dihedralDelta = linetemplate.getDihedralDelta();
-	  ZMatrixLine zmatrixline = ZMatrixLine( atom.index(), bond.index(), 
-       						 angle.index(), dihedral.index() );
-       	  zmatrixline.setBondDelta( bondDelta * angstrom );
-       	  zmatrixline.setAngleDelta( angleDelta * degrees );
-       	  zmatrixline.setDihedralDelta( dihedralDelta * degrees );
-	  
-       	  zmatrix.add( zmatrixline );
-       	}
-    }
-  editmol.setProperty( zmatrix_property, zmatrix );
+            Atom atom = atoms[i];
+            
+            //qDebug() << " Finding template for atom " << atom.name().toString();
 
-  return editmol.commit();
+            /** Backbone atoms do not have a zmatrix line */
+            if ( bbatoms.contains( atom.name().value() ) )
+                continue;
+
+            /** Try to find matching atom in the residue zmatrix */
+            ZmatrixLineTemplate linetemplate;
+            
+            try
+            {
+                linetemplate = restemplate.getZmatrixLineTemplate( atom.name().value() );
+            }
+            catch (SireError::invalid_key)
+            {
+                /** If this fails, look also in the matching backbone zmatrix*/
+                ZmatrixTemplate chain = restemplate.getChain(position);
+                linetemplate = chain.getZmatrixLineTemplate( atom.name().value() );
+            }
+
+            Atom bond = residue.select( AtomName( linetemplate.getBond() ) );
+            Atom angle = residue.select( AtomName( linetemplate.getAngle() ) );
+            Atom dihedral = residue.select( AtomName( linetemplate.getDihedral() ) );
+
+            double bondDelta = linetemplate.getBondDelta();
+            double angleDelta = linetemplate.getAngleDelta();
+            double dihedralDelta = linetemplate.getDihedralDelta();
+            
+            ZMatrixLine zmatrixline = ZMatrixLine( atom.index(), bond.index(), 
+                                                   angle.index(), dihedral.index() );
+
+            zmatrixline.setBondDelta( bondDelta * angstrom );
+            zmatrixline.setAngleDelta( angleDelta * degrees );
+            zmatrixline.setDihedralDelta( dihedralDelta * degrees );
+	  
+            zmatrix.add( zmatrixline );
+        }
+    }
+    
+    editmol.setProperty( zmatrix_property, zmatrix );
+    
+    return editmol.commit();
 }

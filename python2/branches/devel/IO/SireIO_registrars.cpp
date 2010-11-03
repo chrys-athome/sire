@@ -5,9 +5,12 @@
 
 #include "trajectorymonitor.h"
 #include "protoms.h"
+#include "zmatrixmaker.h"
+#include "amber.h"
 #include "pdb.h"
 #include "tinker.h"
 #include "iobase.h"
+#include "flexibilitymaker.h"
 
 #include "Helpers/objectregistry.hpp"
 
@@ -16,9 +19,12 @@ void register_SireIO_objects()
 
     ObjectRegistry::registerConverterFor< SireIO::TrajectoryMonitor >();
     ObjectRegistry::registerConverterFor< SireIO::ProtoMS >();
+    ObjectRegistry::registerConverterFor< SireIO::ZmatrixMaker >();
+    ObjectRegistry::registerConverterFor< SireIO::Amber >();
     ObjectRegistry::registerConverterFor< SireIO::PDB >();
     ObjectRegistry::registerConverterFor< SireIO::Tinker >();
     ObjectRegistry::registerConverterFor< SireIO::NullIO >();
+    ObjectRegistry::registerConverterFor< SireIO::FlexibilityMaker >();
 
 }
 

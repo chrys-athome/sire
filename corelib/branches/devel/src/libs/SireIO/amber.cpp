@@ -1744,33 +1744,36 @@ void Amber::calcNumberMolecules(int &totalMolecules, QList<int> &atomsPerMolecul
 }
 
 void Amber::walk(int &atom, QHash<int, int> &atoms12, 
-	    int &totalMolecules, QHash<int, int> &atIsInMol, QHash<int, int> &atomsInMolecule)
+                 int &totalMolecules, QHash<int, int> &atIsInMol, 
+                 QHash<int, int> &atomsInMolecule)
 {
-  QList<int> neighbors = atoms12.values( atom );
-  //qDebug() << " neighbors of " << atom << " are : " << neighbors;
-  foreach ( int neighbor, neighbors )
+    QList<int> neighbors = atoms12.values( atom );
+    //qDebug() << " neighbors of " << atom << " are : " << neighbors;
+    
+    foreach ( int neighbor, neighbors )
     {
-      QList<int> nn = atomsInMolecule.values( totalMolecules );
-      if ( not nn.contains(neighbor) )
-	{
-	  atIsInMol[ neighbor ] = totalMolecules;
-	  atomsInMolecule.insertMulti( totalMolecules, neighbor );
-	  walk( neighbor, atoms12, totalMolecules, atIsInMol, atomsInMolecule);
-	}
+        QList<int> nn = atomsInMolecule.values( totalMolecules );
+        
+        if ( not nn.contains(neighbor) )
+        {
+            atIsInMol[ neighbor ] = totalMolecules;
+            atomsInMolecule.insertMulti( totalMolecules, neighbor );
+            walk( neighbor, atoms12, totalMolecules, atIsInMol, atomsInMolecule);
+        }
     }
 }
 
 /** Internal function to create a set of atom numbers in an editmol*/
 QSet<AtomNum> Amber::_pvt_selectAtomsbyNumber(const MolEditor &editmol)
 {
-  Selector<Atom> atoms = editmol.selectAllAtoms();
-  AtomSelection moleculeAtoms = atoms.selection();
-  QVector<AtomIdx> moleculeAtomIdxs = moleculeAtoms.selectedAtoms();
-  QSet<AtomNum> moleculeAtomNumbers;
-  foreach (AtomIdx atomIdx, moleculeAtomIdxs)
+    QSet<AtomNum> atomnums;
+
+    Selector<Atom> atoms = editmol.selectAllAtoms();
+    
+    for (int i=0; i<atoms.count(); ++i)
     {
-      Atom atom = editmol.select(atomIdx);
-      moleculeAtomNumbers.insert(atom.number());
+        atomnums.insert( atoms[i].number() );
     }
-  return moleculeAtomNumbers;
+    
+    return atomnums;
 }

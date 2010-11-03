@@ -26,6 +26,7 @@ set ( SIREMOVE_HEADERS
       moleculardynamics.h
       montecarlo.h
       move.h
+      movermove.h
       moves.h
       mtsmc.h
       prefsampler.h
@@ -84,6 +85,7 @@ set ( SIREMOVE_SOURCES
       moleculardynamics.cpp
       montecarlo.cpp
       move.cpp
+      movermove.cpp
       moves.cpp
       mtsmc.cpp
       prefsampler.cpp
