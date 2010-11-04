@@ -35,6 +35,10 @@
 
 #include "PackedArray2D_QString_Array.pypp.hpp"
 
+#include "PackedArray2D_QVariant_.pypp.hpp"
+
+#include "PackedArray2D_QVariant_Array.pypp.hpp"
+
 #include "PackedArray2D_double_.pypp.hpp"
 
 #include "PackedArray2D_double_Array.pypp.hpp"
@@ -120,6 +124,8 @@ BOOST_PYTHON_MODULE(_Base){
 
     register_PackedArray2D_QString__class();
 
+    register_PackedArray2D_QVariant__class();
+
     register_PackedArray2D_double__class();
 
     register_PackedArray2D_int__class();
@@ -147,6 +153,8 @@ BOOST_PYTHON_MODULE(_Base){
     register_Version_class();
 
     register_PackedArray2D_QString_Array_class();
+
+    register_PackedArray2D_QVariant_Array_class();
 
     register_PackedArray2D_double_Array_class();
 

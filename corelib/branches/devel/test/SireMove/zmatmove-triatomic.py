@@ -23,8 +23,11 @@ solute_file = "test/io/triatomic.pdb"
 solute_name = "triatomic"
 solute_params = "test/io/triatomic.ff"
 
-protoms_dir = "%s/software/protoms" % os.getenv("HOME")
+protoms_dir = os.getenv("PROTOMSDIR")
 
+if not protoms_dir:
+    raise "You must set the location of your ProtoMS installation in PROTOMSDIR"
+    
 ff_parameters = [ "%s/parameter/amber99.ff" % protoms_dir,
                   "%s/parameter/gaff.ff" % protoms_dir ]
 

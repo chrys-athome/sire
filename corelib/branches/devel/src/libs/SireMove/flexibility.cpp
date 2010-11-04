@@ -36,6 +36,7 @@
 #include "SireMol/angleid.h"
 #include "SireMol/dihedralid.h"
 #include "SireMol/atomidx.h"
+#include "SireMol/mover.hpp"
 
 #include "SireUnits/convert.h"
 #include "SireUnits/units.h"
@@ -53,6 +54,160 @@ using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
+
+//////
+////// Implementation of DofID
+//////
+
+static const RegisterMetaType<DofID> r_dofid;
+
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const DofID &dofid)
+{
+    writeHeader(ds, r_dofid, 2);
+
+    SharedDataStream sds(ds);
+  
+    sds << dofid.idx0 << dofid.idx1
+        << dofid.idx2 << dofid.idx3;
+       
+    return ds;
+}
+
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, DofID &dofid)
+{
+    VersionID v = readHeader(ds, r_dofid);
+
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+   
+        sds >> dofid.idx0 >> dofid.idx1
+            >> dofid.idx2 >> dofid.idx3;
+    }
+    else
+        throw version_error(v, "2", r_dofid, CODELOC);
+
+   return ds;
+}
+
+bool DofID::isBond() const
+{
+    return idx0 >=0 and idx1 >= 0 and idx2 < 0 and idx3 < 0;
+}
+
+bool DofID::isAngle() const
+{
+    return idx0 >=0 and idx1 >= 0 and idx2 >= 0 and idx3 < 0;
+}
+
+bool DofID::isDihedral() const
+{
+    return idx0 >=0 and idx1 >= 0 and idx2 >= 0 and idx3 >= 0;
+}
+
+bool DofID::isNull() const
+{
+    return idx0 < 0 and idx1 < 0 and idx2 < 0 and idx3 < 0;
+}
+
+void DofID::sort()
+{
+    if (isBond())
+    {
+        if (idx1 < idx0)
+            qSwap(idx1, idx0);
+    }
+    else if (isAngle())
+    {
+        if (idx2 < idx0)
+            qSwap(idx2, idx0);
+    }
+    else if (isDihedral())
+    {
+        if (idx3 < idx0)
+        {
+            qSwap(idx3, idx0);
+            qSwap(idx2, idx1);
+        }
+    }
+    else
+    {
+        idx0 = -1;
+        idx1 = -1;
+        idx2 = -1;
+        idx3 = -1;
+    }
+}
+
+/** Null constructor */
+DofID::DofID() 
+      : idx0(-1), idx1(-1), idx2(-1), idx3(-1)
+{}
+
+/** Constructor for a set of 2 AtomIdxs*/
+DofID::DofID(const AtomIdx &atom0, const AtomIdx &atom1)
+      : idx0(atom0.value()), idx1(atom1.value()),
+        idx2(-1), idx3(-1)
+{
+    this->sort();
+}
+
+/** Constructor for a set of 3 AtomIdxs*/
+DofID::DofID(const AtomIdx &atom0, const AtomIdx &atom1, const AtomIdx &atom2)
+      : idx0(atom0.value()), idx1(atom1.value()),
+        idx2(atom2.value()), idx3(-1)
+{
+    this->sort();
+}
+
+/** Constructor for a set of 4 AtomIdxs*/
+DofID::DofID(const AtomIdx &atom0, const AtomIdx &atom1, 
+             const AtomIdx &atom2, const AtomIdx &atom3)
+      : idx0(atom0.value()), idx1(atom1.value()),
+        idx2(atom2.value()), idx3(atom3.value())
+{
+    this->sort();
+}
+
+/** Copy constructor */
+DofID::DofID(const DofID &other)
+      : idx0(other.idx0), idx1(other.idx1), 
+        idx2(other.idx2), idx3(other.idx3)
+{}
+
+/** Destructor */
+DofID::~DofID()
+{}
+
+/** Copy assignment operator */
+DofID& DofID::operator=(const DofID &other)
+{
+    idx0 = other.idx0;
+    idx1 = other.idx1;
+    idx2 = other.idx2;
+    idx3 = other.idx3;
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool DofID::operator==(const DofID &other) const
+{
+    return idx0 == other.idx0 and idx1 == other.idx1 and
+           idx2 == other.idx2 and idx3 == other.idx3;
+}
+
+/** Comparison operator */
+bool DofID::operator!=(const DofID &other) const
+{
+    return not DofID::operator==(other);
+}
+
+const char* DofID::typeName()
+{
+    return QMetaType::typeName(qMetaTypeId<DofID>());
+}
+
 //
 // Implementation of Flexibility
 //
@@ -66,9 +221,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Flexibility &flex
     SharedDataStream sds(ds);
     
     sds << flex.molinfo << flex.maxtranslation 
-	<< flex.maxrotation << flex.maxvar 
-	<< flex.bonds << flex.angles << flex.dihedrals 
-	<< flex.bond_deltas << flex.angle_deltas 
+        << flex.maxrotation << flex.maxvar 
+        << flex.bond_deltas << flex.angle_deltas 
         << static_cast<const MoleculeProperty&>(flex);
     
     return ds;
@@ -84,34 +238,32 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Flexibility &flex)
         SharedDataStream sds(ds);
         
         sds >> flex.molinfo >> flex.maxtranslation
-	    >> flex.maxrotation >> flex.maxvar 
-	    >> flex.bonds >> flex.angles >> flex.dihedrals
-	    >> flex.bond_deltas >> flex.angle_deltas
+            >> flex.maxrotation >> flex.maxvar 
+            >> flex.bond_deltas >> flex.angle_deltas
             >> static_cast<MoleculeProperty&>(flex);
     }
     else
-        throw version_error( v, "1", r_flex, CODELOC );
+        throw version_error(v, "1", r_flex, CODELOC);
         
     return ds;
 }
 
 /** Null Constructor */
-Flexibility::Flexibility()
+Flexibility::Flexibility() : ConcreteProperty<Flexibility,MoleculeProperty>()
 {}
 
 /** Constructor for the passed molecule*/
-Flexibility::Flexibility(const Molecule &molecule)
-  : ConcreteProperty<Flexibility,MoleculeProperty>(),
-    molinfo(molecule.data().info())
+Flexibility::Flexibility(const MoleculeData &molecule)
+            : ConcreteProperty<Flexibility,MoleculeProperty>(),
+              molinfo(molecule.info())
 {}
 
 /** Copy constructor */
 Flexibility::Flexibility(const Flexibility &other)
-  : ConcreteProperty<Flexibility,MoleculeProperty>(),
-    molinfo(other.molinfo),maxtranslation(other.maxtranslation),
-    maxrotation(other.maxrotation),maxvar(other.maxvar), bonds(other.bonds),
-    angles(other.angles),dihedrals(other.dihedrals),
-    bond_deltas(other.bond_deltas),angle_deltas(other.angle_deltas)
+            : ConcreteProperty<Flexibility,MoleculeProperty>(),
+              molinfo(other.molinfo),maxtranslation(other.maxtranslation),
+              maxrotation(other.maxrotation),maxvar(other.maxvar),
+              bond_deltas(other.bond_deltas),angle_deltas(other.angle_deltas)
 {}
 
 /** Destructor */
@@ -121,36 +273,33 @@ Flexibility::~Flexibility()
 /** Copy assignment operator */
 Flexibility& Flexibility::operator=(const Flexibility &other)
 {
-  if (this != &other)
+    if (this != &other)
     {
-      MoleculeProperty::operator=(other);
-      molinfo = other.molinfo;
-      maxtranslation = other.maxtranslation;
-      maxrotation = other.maxrotation;
-      maxvar = other.maxvar;
-      bonds = other.bonds;
-      angles = other.angles;
-      dihedrals = other.dihedrals;
-      bond_deltas = other.bond_deltas;
-      angle_deltas = other.angle_deltas;
+        MoleculeProperty::operator=(other);
+        molinfo = other.molinfo;
+        maxtranslation = other.maxtranslation;
+        maxrotation = other.maxrotation;
+        maxvar = other.maxvar;
+        bond_deltas = other.bond_deltas;
+        angle_deltas = other.angle_deltas;
     }
   
-  return *this;
+    return *this;
 }
 
 /** Comparison operator */
 bool Flexibility::operator==(const Flexibility &other) const
 {
-  return ( molinfo == other.molinfo and maxtranslation == other.maxtranslation 
-	   and maxrotation == other.maxrotation and maxvar == other.maxvar 
-	   and bonds == other.bonds and angles == other.angles and dihedrals == other.dihedrals 
-	   and bond_deltas == other.bond_deltas and angle_deltas == other.angle_deltas );
+    return (molinfo == other.molinfo and maxtranslation == other.maxtranslation and
+             maxrotation == other.maxrotation and maxvar == other.maxvar and
+	         bond_deltas == other.bond_deltas and 
+             angle_deltas == other.angle_deltas);
 }
 
 /** Comparison operator */
 bool Flexibility::operator!=(const Flexibility &other) const
 {
-  return not this->operator==(other);
+    return not Flexibility::operator==(other);
 }
 
 /** Return the layout of the molecule whose flexibility is contained
@@ -163,224 +312,274 @@ const MoleculeInfoData& Flexibility::info() const
         return *molinfo;
 }
 
+static QString getAtom(const AtomIdx &idx, const MoleculeInfoData &molinfo)
+{
+    return QString("%1:%2").arg( molinfo.name(idx), molinfo.number(idx) );
+}
+
 /** Return a string representation of this flexibility */
 QString Flexibility::toString() const
 {
     QStringList lines;
     
-    lines.append( QObject::tr("Flexibility ")  );
-    lines.append( QObject::tr("Rotation: %1 , Translation: %2 ")
-		  .arg(this->maxrotation.toString())
-		  .arg(this->maxtranslation.toString()) );
-    lines.append( QObject::tr("Maximum Variables: %1")
-		  .arg(this->maxvar) );
+    lines.append(QObject::tr("Flexibility ") );
+    
+    lines.append(QObject::tr("Rotation: %1 , Translation: %2 ")
+                            .arg(maxrotation.toString())
+                            .arg(maxtranslation.toString()));
 
-    foreach (BondID bond, this->bonds)
-	lines.append( QObject::tr("%1 %2")
-		      .arg(bond.toString())
-		      .arg(this->bond_deltas[bond].toString()) );
+    lines.append(QObject::tr("Maximum Variables: %1")
+                            .arg(maxvar));
 
-    foreach (AngleID angle, this->angles)
-      lines.append( QObject::tr("%1 %2")
-		    .arg(angle.toString())
-		    .arg(this->angle_deltas[angle].toString()) );
+    for (QHash<DofID,Length>::const_iterator it = bond_deltas.constBegin();
+         it != bond_deltas.constEnd();
+         ++it)
+    {
+        const DofID &bond = it.key();
+    
+        lines.append(QObject::tr("%1-%2 = %3")
+                    .arg(getAtom(bond.atom0(),*molinfo), getAtom(bond.atom1(),*molinfo))
+                    .arg(it.value().toString()));
+    }
+    
+    for (QHash<DofID,Angle>::const_iterator it = angle_deltas.constBegin();
+         it != angle_deltas.constEnd();
+         ++it)
+    {
+        const DofID &angle = it.key();
+    
+        if (angle.atom3().isNull())
+        {
+            lines.append(QObject::tr("%1-%2-%3 = %4")
+                    .arg(getAtom(angle.atom0(),*molinfo), getAtom(angle.atom1(),*molinfo))
+                    .arg(getAtom(angle.atom2(),*molinfo))
+                    .arg(it.value().toString()));
+        }
+    }
+    
+    for (QHash<DofID,Angle>::const_iterator it = angle_deltas.constBegin();
+         it != angle_deltas.constEnd();
+         ++it)
+    {
+        const DofID &angle = it.key();
 
-    foreach (DihedralID dihedral, this->dihedrals)
-      lines.append( QObject::tr("%1 %2")
-		    .arg(dihedral.toString())
-		    .arg(this->angle_deltas[dihedral].toString()) );
+        if (not angle.atom3().isNull())
+        {
+            lines.append(QObject::tr("%1-%2-%3-%4 = %5")
+                    .arg(getAtom(angle.atom0(),*molinfo), getAtom(angle.atom1(),*molinfo))
+                    .arg(getAtom(angle.atom2(),*molinfo), getAtom(angle.atom3(),*molinfo))
+                    .arg(it.value().toString()));
+        }
+    }
 
     return lines.join("\n");
 }
 
-/** *Return whether or not this flexibility is compatible with the molecule whose info is in 'molinfo'*/
+/** Return whether or not this flexibility is compatible with the molecule 
+    whose info is in 'molinfo' */
 bool Flexibility::isCompatibleWith(const SireMol::MoleculeInfoData &molinfo) const
 {
     return info().UID() == molinfo.UID();
 }
 
-/** Set the maximum rotation of this flexibility*/
+/** Set the maximum rotation of this flexibility */
 void Flexibility::setRotation(const Angle &rotation)
 {
-  this->maxrotation = rotation;
+    this->maxrotation = rotation;
 }
 
-/** Set the maximum translation of this flexibility*/
+/** Set the maximum translation of this flexibility */
 void Flexibility::setTranslation(const Length &translation)
 {
-  this->maxtranslation = translation;
+    this->maxtranslation = translation;
 }
 
-/** Set the maximum number of degrees of freedom that will be sampled in one move*/
-void Flexibility::setMaximumVar(const int &maxvar )
+/** Set the maximum number of degrees of freedom that will be sampled in one move */
+void Flexibility::setMaximumVar(int maxvar)
 {
-  this->maxvar = maxvar;
+    this->maxvar = maxvar;
 }
 
 /** Return the maximum rotation of this flexibility*/
 Angle Flexibility::rotation() const
 {
-  return this->maxrotation;
+    return this->maxrotation;
 }
 
 /** Return the maximum translation of this flexibility */
 Length Flexibility::translation() const
 {
-  return this->maxtranslation;
+    return this->maxtranslation;
 }
 
 /** Return the maximum number of dofs that will be sampled in one move */
 int Flexibility::maximumVar() const
 {
-  return this->maxvar;
+    return this->maxvar;
+}
+
+static DofID getBond(const BondID &bond, 
+                     const SharedDataPointer<MoleculeInfoData> &molinfo)
+{
+    return DofID( molinfo->atomIdx(bond.atom0()), molinfo->atomIdx(bond.atom1()) );
+}
+
+static DofID getAngle(const AngleID &angle, 
+                      const SharedDataPointer<MoleculeInfoData> &molinfo)
+{
+    return DofID( molinfo->atomIdx(angle.atom0()), molinfo->atomIdx(angle.atom1()),
+                  molinfo->atomIdx(angle.atom2()) );
+}
+
+static DofID getDihedral(const DihedralID &dihedral, 
+                         const SharedDataPointer<MoleculeInfoData> &molinfo)
+{
+    return DofID( molinfo->atomIdx(dihedral.atom0()),
+                  molinfo->atomIdx(dihedral.atom1()),
+                  molinfo->atomIdx(dihedral.atom2()), 
+                  molinfo->atomIdx(dihedral.atom3()) );
 }
 
 /** Add bond with delta to this flexibility*/
-void Flexibility::add( const BondID &bond, const Length &delta)
+void Flexibility::add(const BondID &bond, const Length &delta)
 {
-  // the bond could be between atoms that are not in this molecule --> throw SireMol::missing_atom
-  // QList<AtomIdx> atoms = this->molinfo.getAtoms(); // Obviously I don't understand what a SharedDataPointer is
-  if (not this->bonds.contains(bond) )
-    this->bonds.append(bond);
-  this->bond_deltas[bond] = delta;
+    bond_deltas.insert(::getBond(bond,molinfo), delta);
 }
 
 /** Add angle with delta to this flexibility*/
-void Flexibility::add( const AngleID &angle, const Angle &delta)
+void Flexibility::add(const AngleID &angle, const Angle &delta)
 {
-  if (not this->angles.contains(angle) )
-    this->angles.append(angle);
-  this->angle_deltas[angle] = delta;
+    angle_deltas.insert(::getAngle(angle,molinfo), delta);
 }
 
 /** Add dihedral with delta to this flexibility*/
-void Flexibility::add( const DihedralID &dihedral, const Angle &delta)
+void Flexibility::add(const DihedralID &dihedral, const Angle &delta)
 {
-  if (not this->dihedrals.contains(dihedral) )
-    this->dihedrals.append(dihedral);
-  this->angle_deltas[dihedral] = delta;
+    angle_deltas.insert(::getDihedral(dihedral,molinfo), delta);
 }
 
 /** Remove bond from this flexibility*/
-void Flexibility::remove( const BondID &bond)
+void Flexibility::remove(const BondID &bond)
 {
-  if ( this->bonds.contains(bond) )
-    {
-    this->bonds.removeAll(bond); 
-    this->bond_deltas.remove(bond);
-    }
+    bond_deltas.remove(::getBond(bond,molinfo));
 }
 
 /** Remove angle from this flexibility*/
-void Flexibility::remove( const AngleID &angle)
+void Flexibility::remove(const AngleID &angle)
 {
-  if ( this->angles.contains(angle) )
-    {
-    this->angles.removeAll(angle); 
-    this->angle_deltas.remove(angle);
-    }
+    angle_deltas.remove(::getAngle(angle,molinfo));
 }
 
 /** Remove dihedral from this flexibility*/
-void Flexibility::remove( const DihedralID &dihedral)
+void Flexibility::remove(const DihedralID &dihedral)
 {
-  if ( this->dihedrals.contains(dihedral) )
-    {
-    this->dihedrals.removeAll(dihedral); 
-    this->angle_deltas.remove(dihedral);
-    }
+    angle_deltas.remove(::getDihedral(dihedral,molinfo));
 }
 
 /** Check if bond is present in this flexibility */
 bool Flexibility::contains(const BondID &bond) const
 {
-  if ( this->bonds.contains(bond) )
-    return true;
-  else
-    return false;
+    return bond_deltas.contains(::getBond(bond,molinfo));
 }
 
 /** Check if angle is present in this flexibility */
 bool Flexibility::contains(const AngleID &angle) const
 {
-  if ( this->angles.contains(angle) )
-    return true;
-  else
-    return false;
+    return angle_deltas.contains(::getAngle(angle,molinfo));
 }
 
 /** Check if angle is present in this flexibility */
 bool Flexibility::contains(const DihedralID &dihedral) const
 {
-  if ( this->dihedrals.contains(dihedral) )
-    return true;
-  else
-    return false;
+    return angle_deltas.contains(::getDihedral(dihedral,molinfo));
 }
 
 /** set the delta value of bond to delta*/
 void Flexibility::setDelta(const BondID &bond, const Length &delta)
 {
-  if ( not this->bonds.contains(bond) )
-    throw SireMol::missing_bond( QObject::tr(
-					     "There is no bond %1 in this flexibility")
-                                 .arg(bond.toString()), CODELOC );
-  this->bond_deltas[bond] = delta;
+    this->add(bond, delta);
 }
 
 /** set the delta value of bond to delta*/
 void Flexibility::setDelta(const AngleID &angle, const Angle &delta)
 {
-  if ( not this->angles.contains(angle) )
-    throw SireMol::missing_angle( QObject::tr(
-					     "There is no angle %1 in this flexibility")
-                                 .arg(angle.toString()), CODELOC );
-  this->angle_deltas[angle] = delta;
+    this->add(angle, delta);
 }
 
 /** set the delta value of bond to delta*/
 void Flexibility::setDelta(const DihedralID &dihedral, const Angle &delta)
 {
-  if ( not this->dihedrals.contains(dihedral) )
-    throw SireMol::missing_dihedral( QObject::tr(
-						 "There is no dihedral %1 in this flexibility")
-				     .arg(dihedral.toString()), CODELOC );
-  this->angle_deltas[dihedral] = delta;
+    this->add(dihedral, delta);
 }
 
 /** Return the delta value of bond in this flexibility */
 Length Flexibility::delta(const BondID &bond) const
 {
-  if ( not this->bonds.contains(bond) )
-    throw SireMol::missing_bond( QObject::tr(
-					     "There is no bond %1 in this flexibility")
-                                 .arg(bond.toString()), CODELOC );
-  return this->bond_deltas[bond];
+    return bond_deltas.value( ::getBond(bond,molinfo), Length(0) );
 }
 
 /** Return the delta value of angle in this flexibility */
 Angle Flexibility::delta(const AngleID &angle) const
 {
-  if ( not this->angles.contains(angle) )
-    throw SireMol::missing_angle( QObject::tr(
-					     "There is no angle %1 in this flexibility")
-                                 .arg(angle.toString()), CODELOC );
-  return this->angle_deltas[angle];
+    return angle_deltas.value( ::getAngle(angle,molinfo), Angle(0) );
 }
 
 /** Return the delta value of angle in this flexibility */
 Angle Flexibility::delta(const DihedralID &dihedral) const
 {
-  if ( not this->dihedrals.contains(dihedral) )
-    throw SireMol::missing_angle( QObject::tr(
-					     "There is no dihedral %1 in this flexibility")
-                                 .arg(dihedral.toString()), CODELOC );
-  return this->angle_deltas[dihedral];
+    return angle_deltas.value( ::getDihedral(dihedral,molinfo), Angle(0) );
+}
+
+/** Return the list of all flexible bonds */
+QList<BondID> Flexibility::flexibleBonds() const
+{
+    QList<BondID> bonds;
+    
+    for (QHash<DofID,Length>::const_iterator it = bond_deltas.constBegin();
+         it != bond_deltas.constEnd();
+         ++it)
+    {
+        bonds.append( BondID(it.key().atom0(), it.key().atom1()) );
+    }
+    
+    return bonds;
+}
+
+/** Return the list of all flexible angles */
+QList<AngleID> Flexibility::flexibleAngles() const
+{
+    QList<AngleID> angles;
+    
+    for (QHash<DofID,Angle>::const_iterator it = angle_deltas.constBegin();
+         it != angle_deltas.constEnd();
+         ++it)
+    {
+        if (it.key().isAngle())
+            angles.append( AngleID(it.key().atom0(), it.key().atom1(),
+                                   it.key().atom2()) );
+    }
+    
+    return angles;
+}
+
+/** Return the list of all flexible dihedrals */
+QList<DihedralID> Flexibility::flexibleDihedrals() const
+{
+    QList<DihedralID> dihedrals;
+    
+    for (QHash<DofID,Angle>::const_iterator it = angle_deltas.constBegin();
+         it != angle_deltas.constEnd();
+         ++it)
+    {
+        if (it.key().isDihedral())
+            dihedrals.append( DihedralID(it.key().atom0(), it.key().atom1(),
+                                         it.key().atom2(), it.key().atom3()) );
+    }
+    
+    return dihedrals;
 }
 
 const char* Flexibility::typeName()
 {
-  return QMetaType::typeName( qMetaTypeId<Flexibility>() );
+    return QMetaType::typeName(qMetaTypeId<Flexibility>());
 }
-
-

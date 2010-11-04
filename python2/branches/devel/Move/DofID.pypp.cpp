@@ -7,47 +7,39 @@
 
 namespace bp = boost::python;
 
+#include "SireError/errors.h"
+
 #include "SireMol/angleid.h"
 
 #include "SireMol/atomidx.h"
 
 #include "SireMol/bondid.h"
 
-#include "SireMol/connectivity.h"
-
 #include "SireMol/dihedralid.h"
 
-#include "SireMol/molecule.h"
+#include "SireMol/errors.h"
 
-#include "SireMol/moleditor.h"
+#include "SireMol/molecule.h"
 
 #include "SireMol/mover.hpp"
 
 #include "SireMol/partialmolecule.h"
 
+#include "SireMove/errors.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
 
-#include "SireSystem/system.h"
-
-#include "SireUnits/dimensions.h"
-
-#include "SireUnits/temperature.h"
+#include "SireUnits/convert.h"
 
 #include "SireUnits/units.h"
 
-#include "ensemble.h"
-
 #include "flexibility.h"
 
-#include "movermove.h"
+#include <QList>
 
-#include <QDebug>
-
-#include <QTime>
-
-#include "movermove.h"
+#include "flexibility.h"
 
 SireMove::DofID __copy__(const SireMove::DofID &other){ return SireMove::DofID(other); }
 
@@ -59,17 +51,12 @@ void register_DofID_class(){
 
     { //::SireMove::DofID
         typedef bp::class_< SireMove::DofID > DofID_exposer_t;
-        DofID_exposer_t DofID_exposer = DofID_exposer_t( "DofID", bp::init< bp::optional< qint32, qint32, qint32, qint32 > >(( bp::arg("index0")=(int)(-0x00000000000000001), bp::arg("index1")=(int)(-0x00000000000000001), bp::arg("index2")=(int)(-0x00000000000000001), bp::arg("index3")=(int)(-0x00000000000000001) )) );
+        DofID_exposer_t DofID_exposer = DofID_exposer_t( "DofID" );
         bp::scope DofID_scope( DofID_exposer );
-        DofID_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("atom0"), bp::arg("atom1") )) );
-        DofID_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2") )) );
-        DofID_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3") )) );
+        DofID_exposer.def( bp::init< >() );
         DofID_exposer.def( bp::init< SireMol::AtomIdx const &, SireMol::AtomIdx const & >(( bp::arg("atom0"), bp::arg("atom1") )) );
         DofID_exposer.def( bp::init< SireMol::AtomIdx const &, SireMol::AtomIdx const &, SireMol::AtomIdx const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2") )) );
         DofID_exposer.def( bp::init< SireMol::AtomIdx const &, SireMol::AtomIdx const &, SireMol::AtomIdx const &, SireMol::AtomIdx const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3") )) );
-        DofID_exposer.def( bp::init< SireMol::BondID const & >(( bp::arg("bond") )) );
-        DofID_exposer.def( bp::init< SireMol::AngleID const & >(( bp::arg("angle") )) );
-        DofID_exposer.def( bp::init< SireMol::DihedralID const & >(( bp::arg("dihedral") )) );
         DofID_exposer.def( bp::init< SireMove::DofID const & >(( bp::arg("other") )) );
         { //::SireMove::DofID::atom0
         
@@ -109,6 +96,46 @@ void register_DofID_class(){
             DofID_exposer.def( 
                 "atom3"
                 , atom3_function_value );
+        
+        }
+        { //::SireMove::DofID::isAngle
+        
+            typedef bool ( ::SireMove::DofID::*isAngle_function_type )(  ) const;
+            isAngle_function_type isAngle_function_value( &::SireMove::DofID::isAngle );
+            
+            DofID_exposer.def( 
+                "isAngle"
+                , isAngle_function_value );
+        
+        }
+        { //::SireMove::DofID::isBond
+        
+            typedef bool ( ::SireMove::DofID::*isBond_function_type )(  ) const;
+            isBond_function_type isBond_function_value( &::SireMove::DofID::isBond );
+            
+            DofID_exposer.def( 
+                "isBond"
+                , isBond_function_value );
+        
+        }
+        { //::SireMove::DofID::isDihedral
+        
+            typedef bool ( ::SireMove::DofID::*isDihedral_function_type )(  ) const;
+            isDihedral_function_type isDihedral_function_value( &::SireMove::DofID::isDihedral );
+            
+            DofID_exposer.def( 
+                "isDihedral"
+                , isDihedral_function_value );
+        
+        }
+        { //::SireMove::DofID::isNull
+        
+            typedef bool ( ::SireMove::DofID::*isNull_function_type )(  ) const;
+            isNull_function_type isNull_function_value( &::SireMove::DofID::isNull );
+            
+            DofID_exposer.def( 
+                "isNull"
+                , isNull_function_value );
         
         }
         DofID_exposer.def( bp::self != bp::self );

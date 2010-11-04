@@ -18,6 +18,8 @@ set ( PYPP_SOURCES
        PackedArray2D_int_Array.pypp.cpp
        PackedArray2D_QString_.pypp.cpp
        PackedArray2D_QString_Array.pypp.cpp
+       PackedArray2D_QVariant_.pypp.cpp
+       PackedArray2D_QVariant_Array.pypp.cpp
        Process.pypp.cpp
        Properties.pypp.cpp
        Property.pypp.cpp

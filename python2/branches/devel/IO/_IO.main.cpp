@@ -9,7 +9,9 @@
 
 #include "Cube.pypp.hpp"
 
-#include "FlexibilityMaker.pypp.hpp"
+#include "FlexibilityLibrary.pypp.hpp"
+
+#include "FlexibilityTemplate.pypp.hpp"
 
 #include "IOBase.pypp.hpp"
 
@@ -46,7 +48,9 @@ BOOST_PYTHON_MODULE(_IO){
 
     register_Cube_class();
 
-    register_FlexibilityMaker_class();
+    register_FlexibilityLibrary_class();
+
+    register_FlexibilityTemplate_class();
 
     register_IOBase_class();
 

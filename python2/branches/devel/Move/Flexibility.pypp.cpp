@@ -21,6 +21,8 @@ namespace bp = boost::python;
 
 #include "SireMol/molecule.h"
 
+#include "SireMol/mover.hpp"
+
 #include "SireMol/partialmolecule.h"
 
 #include "SireMove/errors.h"
@@ -52,7 +54,7 @@ void register_Flexibility_class(){
         Flexibility_exposer_t Flexibility_exposer = Flexibility_exposer_t( "Flexibility" );
         bp::scope Flexibility_scope( Flexibility_exposer );
         Flexibility_exposer.def( bp::init< >() );
-        Flexibility_exposer.def( bp::init< SireMol::Molecule const & >(( bp::arg("molecule") )) );
+        Flexibility_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("molecule") )) );
         Flexibility_exposer.def( bp::init< SireMove::Flexibility const & >(( bp::arg("other") )) );
         { //::SireMove::Flexibility::add
         
@@ -151,6 +153,36 @@ void register_Flexibility_class(){
                 "delta"
                 , delta_function_value
                 , ( bp::arg("dihedral") ) );
+        
+        }
+        { //::SireMove::Flexibility::flexibleAngles
+        
+            typedef ::QList< SireMol::AngleID > ( ::SireMove::Flexibility::*flexibleAngles_function_type )(  ) const;
+            flexibleAngles_function_type flexibleAngles_function_value( &::SireMove::Flexibility::flexibleAngles );
+            
+            Flexibility_exposer.def( 
+                "flexibleAngles"
+                , flexibleAngles_function_value );
+        
+        }
+        { //::SireMove::Flexibility::flexibleBonds
+        
+            typedef ::QList< SireMol::BondID > ( ::SireMove::Flexibility::*flexibleBonds_function_type )(  ) const;
+            flexibleBonds_function_type flexibleBonds_function_value( &::SireMove::Flexibility::flexibleBonds );
+            
+            Flexibility_exposer.def( 
+                "flexibleBonds"
+                , flexibleBonds_function_value );
+        
+        }
+        { //::SireMove::Flexibility::flexibleDihedrals
+        
+            typedef ::QList< SireMol::DihedralID > ( ::SireMove::Flexibility::*flexibleDihedrals_function_type )(  ) const;
+            flexibleDihedrals_function_type flexibleDihedrals_function_value( &::SireMove::Flexibility::flexibleDihedrals );
+            
+            Flexibility_exposer.def( 
+                "flexibleDihedrals"
+                , flexibleDihedrals_function_value );
         
         }
         { //::SireMove::Flexibility::info
@@ -277,7 +309,7 @@ void register_Flexibility_class(){
         }
         { //::SireMove::Flexibility::setMaximumVar
         
-            typedef void ( ::SireMove::Flexibility::*setMaximumVar_function_type )( int const & ) ;
+            typedef void ( ::SireMove::Flexibility::*setMaximumVar_function_type )( int ) ;
             setMaximumVar_function_type setMaximumVar_function_value( &::SireMove::Flexibility::setMaximumVar );
             
             Flexibility_exposer.def( 

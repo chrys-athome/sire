@@ -75,9 +75,8 @@ def createSystem(molecules):
             lig_name = "ligand" # Likely not good...
     solute = solute.edit().rename(lig_name).commit()
     # This will add the property "flexibility" to the solute
-    flexibility_maker = FlexibilityMaker()
-    flexibility_maker.loadTemplates( ligand_flex_file )
-    solute = flexibility_maker.applyTemplates( solute )
+    flexibility = FlexibilityLibrary(ligand_flex_file).getFlexibility(solute)
+    solute = solute.edit().setProperty("flexibility", flexibility).commit()
 
     # editmol = solute.edit()
     # weightproperty = PropertyName("weight function")
@@ -209,7 +208,7 @@ def setupMoves(system):
     solute_moves.setMaximumTranslation(solute[MolIdx(0)].molecule().property('flexibility').translation() )
     solute_moves.setMaximumRotation(solute[MolIdx(0)].molecule().property('flexibility').rotation() )
 
-    solute_intra_moves = MoverMove( solute )
+    solute_intra_moves = InternalMove( solute )
     
     solvent_moves = RigidBodyMC( PrefSampler(solute[MolIdx(0)], 
                                              solvent, pref_constant) )
@@ -238,7 +237,7 @@ def setupMoves(system):
 
 print "Loading input..."
 amber = Amber()
-molecules, space = amber.readcrdtop(crd_file, top_file)
+molecules, space = amber.readCrdTop(crd_file, top_file)
 
 system = createSystem(molecules)
 

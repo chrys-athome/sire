@@ -169,6 +169,15 @@ private:
     AtomIdentifier atm0,atm1,atm2;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+inline uint qHash(const AngleID &angleid)
+{
+    return angleid.hash();
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMol::AngleID);

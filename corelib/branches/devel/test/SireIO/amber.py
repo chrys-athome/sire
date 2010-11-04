@@ -16,7 +16,6 @@ import os,re,sys
 import shutil
 
 
-
 combining_rules = "arithmetic"
 temperature = 25 * celsius
 pressure = 1 * atm
@@ -33,7 +32,7 @@ timer = QTime()
 timer.start()
 
 amber = Amber()
-molecules, space = amber.readcrdtop(crd_file, top_file)
+molecules, space = amber.readCrdTop(crd_file, top_file)
 ms = timer.elapsed()
 print "...took %d s" % (ms/1000.)
 # Overload, we want to calc the energy in a non periodic box for comparison with Sander

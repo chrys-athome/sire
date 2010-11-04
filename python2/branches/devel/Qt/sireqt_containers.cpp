@@ -87,11 +87,6 @@ void register_SireQt_containers()
 
     register_tuple< boost::tuple<double,double,double> >();
 
-    register_PackedArray< SireBase::PackedArray2D<qint64> >();
-    register_PackedArray< SireBase::PackedArray2D<double> >();
-    register_PackedArray< SireBase::PackedArray2D<QString> >();
-    register_PackedArray< SireBase::PackedArray2D<QVariant> >();
-
     #if QT_VERSION >= 0x402000
     register_set< QSet<QString> >();
     

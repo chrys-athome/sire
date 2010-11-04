@@ -50,6 +50,12 @@ SIRE_EXPOSE_ALIAS(SireBase::PackedArray2D<QString>,
 
 SIRE_EXPOSE_ALIAS(SireBase::detail::PackedArray2D_Array<QString>,
                   SireBase::PackedArray2D_QString_Array)
+                  
+SIRE_EXPOSE_ALIAS(SireBase::PackedArray2D<QVariant>,
+                  SireBase::PackedArray2D_QVariant_)
+
+SIRE_EXPOSE_ALIAS(SireBase::detail::PackedArray2D_Array<QVariant>,
+                  SireBase::PackedArray2D_QVariant_Array)
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 template class
@@ -69,6 +75,12 @@ SireBase::PackedArray2D<QString>;
 
 template class
 SireBase::detail::PackedArray2D_Array<QString>;
+
+template class
+SireBase::PackedArray2D<QVariant>;
+
+template class
+SireBase::detail::PackedArray2D_Array<QVariant>;
 
 #endif
 

@@ -69,7 +69,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
-#include "SireMove/movermove.h"
+#include "SireMove/internalmove.h"
+#include "SireMove/flexibility.h"
 
 using namespace SireIO;
 using namespace SireMol;
@@ -82,23 +83,923 @@ using namespace SireVol;
 using namespace SireStream;
 using namespace SireBase;
 
-//
-// Implementation of FortranFormat
-//
-
-FortranFormat::FortranFormat() : repeat(0), type("I"), size(0), decimal(0)
-{}
-
-FortranFormat::FortranFormat(const int repeat, const QString type, const int size, const int decimal )
+/** FortranFormat is an internal class that holds the information about a 
+    format used in a top file entry
+*/
+class FortranFormat
 {
-  this->repeat = repeat;
-  this->type = type;
-  this->size = size;
-  this->decimal = decimal;
+public:
+    FortranFormat() : repeat(0), type("I"), size(0), decimal(0)
+    {}
+    
+    FortranFormat(int r, const QString &t, int s, int d)
+         : repeat(r), type(t), size(s), decimal(d)
+    {}
+
+    ~FortranFormat()
+    {}
+    
+    /// 10I8 'repeat' 'type' 'size', 'decimal' is 0
+    // 5E16.8 'repeat' is 5, 'type' is 'E' 'size' is 16 'decimal' is 8
+    int repeat;
+    QString type;
+    int size;
+    int decimal;
+};
+
+/** enumerates the FLAGS in a TOP file*/
+enum { TITLE = 1, //a TITLE flag in a top file
+       POINTERS = 2, // a POINTERS flag in a top file
+       ATOM_NAME = 3, //a ATOM_NAME flag in a top file
+       CHARGE = 4, //a CHARGE flag in a top file
+       MASS = 5, // a MASS flag
+       ATOM_TYPE_INDEX = 6, //
+       NUMBER_EXCLUDED_ATOMS = 7,
+       NONBONDED_PARM_INDEX = 8,
+       RESIDUE_LABEL = 9,
+       RESIDUE_POINTER = 10,
+       BOND_FORCE_CONSTANT = 11,
+       BOND_EQUIL_VALUE = 12,
+       ANGLE_FORCE_CONSTANT = 13,
+       ANGLE_EQUIL_VALUE = 14,
+       DIHEDRAL_FORCE_CONSTANT = 15,
+       DIHEDRAL_PERIODICITY = 16,
+       DIHEDRAL_PHASE = 17,
+       SOLTY = 18,
+       LENNARD_JONES_ACOEF = 19,
+       LENNARD_JONES_BCOEF = 20,
+       BONDS_INC_HYDROGEN = 21,
+       BONDS_WITHOUT_HYDROGEN = 22,
+       ANGLES_INC_HYDROGEN = 23,
+       ANGLES_WITHOUT_HYDROGEN = 24,	
+       DIHEDRALS_INC_HYDROGEN = 25,
+       DIHEDRALS_WITHOUT_HYDROGEN = 26,
+       EXCLUDED_ATOMS_LIST = 27,
+       HBOND_ACOEF = 28,
+       HBOND_BCOEF = 29,
+       HBCUT = 30,
+       AMBER_ATOM_TYPE = 31,
+       TREE_CHAIN_CLASSIFICATION = 32,
+       JOIN_ARRAY = 33,
+       IROTAT = 34,
+       SOLVENT_POINTERS = 35,
+       ATOMS_PER_MOLECULE = 36,
+       BOX_DIMENSIONS = 37,
+       RADIUS_SET = 38,
+       RADII = 39,
+       SCREEN = 40
+};
+
+/** enumerates the POINTERS in a TOP file */
+enum { NATOM = 0, // total number of atoms
+       NTYPES = 1, // total number of distinct atom types
+       NBONH = 2, // number of bonds containing hydrogen
+       MBONA = 3, // number of bonds not containing hydrogen
+       NTHETH = 4, // number of angles containing hydrogen
+       MTHETA = 5, // number of angles not containing hydrogen
+       NPHIH = 6, // number of dihedrals containing hydrogen
+       MPHIA = 7, // number of dihedrals not containing hydrogen
+       NHPARM = 8, // currently not used
+       NPARM = 9, // currently  not used
+       NEXT = 10, // number of excluded atoms
+       NRES = 11, // number of residues
+       NBONA = 12, // MBONA + number of constraint bonds
+       NTHETA = 13, // MTHETA + number of constraint angles
+       NPHIA = 14, // MPHIA + number of constraint dihedrals
+       NUMBND = 15, // number of unique bond types
+       NUMANG = 16, // number of unique angle types
+       NPTRA = 17, // number of unique dihedral types
+       NATYP = 18, // number of atom types in parameter file, see SOLTY below
+       NPHB = 19, // number of distinct 10-12 hydrogen bond pair types
+       IFPERT = 20, // set to 1 if perturbation info is to be read in
+       NBPER = 21, // number of bonds to be perturbed
+       NGPER = 22, // number of angles to be perturbed
+       NDPER = 23, // number of dihedrals to be perturbed
+       MBPER = 24, // number of bonds with atoms completely in perturbed group
+       MGPER = 25, // number of agnles with atoms completely in perturbed group
+       MDPER = 26, // number of dihedrals with atoms completely in perturbed groups
+       IFBOX = 27, // set to 1 if standard periodic box, 2 when truncated octahedral
+       NMXRS = 28, // number of atoms in the largest residue
+       IFCAP = 29 // set to 1 if the CAP option from edit was specified
+};
+
+/** enumerate SOLVENT pointers*/
+enum { IPTRES = 0, //final residue that is considered part of the solute, 
+                   //reset in sander and gibbs
+       NSPM = 1,   //total number of molecules
+       NSPOL = 2   //the first solvent "molecule"
+     };
+
+// The partial charges in the top file are not in electrons
+static const double AMBERCHARGECONV = 18.2223;
+
+static const double AMBER14COUL = 1.0 / 1.2 ;
+static const double AMBER14LJ = 0.50 ;
+
+/** Processes a line that starts with %FLAG*/
+static void processFlagLine(const QStringList &words, int &flag)
+{
+    //%FLAG TITLE
+    if (words[1] == "TITLE")
+        flag = TITLE;
+    else if (words[1] == "POINTERS")
+        flag = POINTERS;
+    else if (words[1] == "ATOM_NAME")
+        flag = ATOM_NAME;
+    else if (words[1] == "CHARGE")
+        flag = CHARGE;
+    else if (words[1] == "MASS")
+        flag = MASS;
+    else if (words[1] == "ATOM_TYPE_INDEX")
+        flag = ATOM_TYPE_INDEX;
+    else if (words[1] == "NUMBER_EXCLUDED_ATOMS")
+        flag = NUMBER_EXCLUDED_ATOMS;
+    else if (words[1] == "NONBONDED_PARM_INDEX")
+        flag = NONBONDED_PARM_INDEX;
+    else if (words[1] == "RESIDUE_LABEL")
+        flag = RESIDUE_LABEL;
+    else if (words[1] == "RESIDUE_POINTER")
+        flag = RESIDUE_POINTER;
+    else if (words[1] == "BOND_FORCE_CONSTANT")
+        flag = BOND_FORCE_CONSTANT;
+    else if (words[1] == "BOND_EQUIL_VALUE")
+        flag = BOND_EQUIL_VALUE;
+    else if (words[1] == "ANGLE_FORCE_CONSTANT")
+        flag = ANGLE_FORCE_CONSTANT;
+    else if (words[1] == "ANGLE_EQUIL_VALUE")
+        flag = ANGLE_EQUIL_VALUE;
+    else if (words[1] == "DIHEDRAL_FORCE_CONSTANT")
+        flag = DIHEDRAL_FORCE_CONSTANT;
+    else if (words[1] == "DIHEDRAL_PERIODICITY")
+        flag = DIHEDRAL_PERIODICITY;
+    else if (words[1] == "DIHEDRAL_PHASE")
+        flag = DIHEDRAL_PHASE;
+    else if (words[1] == "SOLTY")
+        flag = SOLTY;
+    else if (words[1] == "LENNARD_JONES_ACOEF")
+        flag = LENNARD_JONES_ACOEF;
+    else if (words[1] == "LENNARD_JONES_BCOEF")
+        flag = LENNARD_JONES_BCOEF;
+    else if (words[1] == "BONDS_INC_HYDROGEN")
+        flag = BONDS_INC_HYDROGEN;
+    else if (words[1] == "BONDS_WITHOUT_HYDROGEN")
+        flag = BONDS_WITHOUT_HYDROGEN;
+    else if (words[1] == "ANGLES_INC_HYDROGEN")
+        flag = ANGLES_INC_HYDROGEN;
+    else if (words[1] == "ANGLES_WITHOUT_HYDROGEN")
+        flag = ANGLES_WITHOUT_HYDROGEN;
+    else if (words[1] == "DIHEDRALS_INC_HYDROGEN")
+        flag = DIHEDRALS_INC_HYDROGEN;
+    else if (words[1] == "DIHEDRALS_WITHOUT_HYDROGEN")
+        flag = DIHEDRALS_WITHOUT_HYDROGEN;
+    else if (words[1] == "EXCLUDED_ATOMS_LIST")
+        flag = EXCLUDED_ATOMS_LIST;
+    else if (words[1] == "HBOND_ACOEF")
+        flag = HBOND_ACOEF;
+    else if (words[1] == "HBOND_BCOEF")
+        flag = HBOND_BCOEF;
+    else if (words[1] == "HBCUT")
+        flag = HBCUT;
+    else if (words[1] == "AMBER_ATOM_TYPE")
+        flag = AMBER_ATOM_TYPE;
+    else if (words[1] == "TREE_CHAIN_CLASSIFICATION")
+        flag = TREE_CHAIN_CLASSIFICATION;
+    else if (words[1] == "JOIN_ARRAY")
+        flag = JOIN_ARRAY;
+    else if (words[1] == "IROTAT")
+        flag = IROTAT;
+    else if (words[1] == "SOLVENT_POINTERS")
+        flag = SOLVENT_POINTERS;
+    else if (words[1] == "ATOMS_PER_MOLECULE")
+        flag = ATOMS_PER_MOLECULE;
+    else if (words[1] == "BOX_DIMENSIONS")
+        flag = BOX_DIMENSIONS;
+    else if (words[1] == "RADIUS_SET")
+        flag = RADIUS_SET;
+    else if (words[1] == "RADII")
+        flag = RADII;
+    else if (words[1] == "SCREEN")
+        flag = SCREEN;
+    else
+        throw SireError::program_bug( QObject::tr(
+                "Does not know what to do with this flag: '%1'").arg(words[1]), 
+                    CODELOC );
 }
 
-FortranFormat::~FortranFormat()
-{}
+/** Processes a line that starts with %FORMAT*/
+static void processFormatLine(const QStringList &words, FortranFormat &format)
+{
+    //%FORMAT(20a4)
+    QString tmp = words[0];
+    
+    tmp = tmp.remove( QString("%FORMAT(") );
+    tmp = tmp.remove( QChar(')') );
+
+    // QRegExp must match either (a,I,E)
+    QString match = " ";
+    QRegExp rx("[aIE]");
+  
+    if (tmp.contains(rx) )
+        match = rx.cap(0);
+    else
+        throw SireError::program_bug( QObject::tr(
+                "The format line '%1' does not contain a supported format type")
+                        .arg(tmp), CODELOC);
+
+    QStringList elements = tmp.split(match);
+
+    bool ok;
+    int repeat = elements[0].toInt(&ok);
+
+    QStringList elem2;
+    int size;
+    int decimal;
+
+    if (elements[1].contains(".")) 
+    {
+        elem2 =  elements[1].split(".");
+        size = elem2[0].toInt(&ok);
+        decimal = elem2[1].toInt(&ok);
+    }
+    else
+    {
+        size = elements[1].toInt(&ok);
+        decimal = 0;
+    }
+
+    format.repeat = repeat;
+    format.type = match;
+    format.size = size;
+    format.decimal = decimal;
+    //qDebug() << "MY FORMAT " << format.repeat << " " << format.type << " " 
+    //         << format.size << " " << format.decimal;
+}
+
+/** Processes the line that contains the VERSION of the top file*/
+/*static void processVersionLine(const QStringList &words, QString &version)
+{
+    //%VERSION VERSION_STAMP = V0001.000 DATE = 05/22/06  12:10:21
+    version = words[3];
+}*/
+
+/** Processes the title of the top file*/
+static void processTitleLine(const QString &line, const FortranFormat &format, 
+                             QString &title)
+{
+    //FORMAT(20a4) reads up to 20 times 4 characters and treat them as a string
+    // However, FORMAT is ignored in the TOP file, so we merely set title to line
+    //qDebug() << "TITLE LINE IS " << line;
+    title = line;
+}
+
+/** Processes a line of INTEGER in the top file */
+static void processIntegerLine(const QString &line, const FortranFormat &format, 
+                               QList<int> &intarray)
+{
+    //FORMAT(10i8) reads up to 10 times 8 characters and treat them as an integer
+    if ( format.type != "I") 
+        throw SireError::program_bug( QObject::tr(
+            "Format '%1' is not supported, should be I").arg(format.type), CODELOC);
+
+    int count = 0;
+    
+    for (int i= 0 ; i < line.size() ; i = i + format.size )
+    {
+        if ( ++count > format.repeat || (i + format.size) > line.size() )
+            break;
+
+        QString element = line.mid(i, format.size );
+        bool ok;
+        int data = element.toInt(&ok);
+        intarray.append(data);
+    }
+}
+
+/** Processes a line of STRINGS in the top file */
+static void processStringLine(const QString &line, const FortranFormat &format, 
+                              QStringList &stringarray)
+{
+    //FORMAT(20a4) 
+    if ( format.type != "a") 
+        throw SireError::program_bug( QObject::tr(
+            "Format '%1' is not supported, should be a").arg(format.type), CODELOC);
+    
+    int count = 0;
+    
+    for (int i= 0 ; i < line.size() ; i = i + format.size )
+    {
+        if ( ++count > format.repeat || (i + format.size) > line.size() )
+            break;
+
+        QString str = line.mid(i, format.size );
+        // Should we remove trailing spaces?
+        str = str.trimmed();
+        // Terminate if empty string
+        
+        if (str.size() == 0)
+            break;
+
+        stringarray.append(str);
+    }
+}
+
+/** Processes a line of type DOUBLE in the top file*/
+static void processDoubleLine(const QString &line, const FortranFormat &format, 
+                              QList<double> &doublearray)
+{
+    //FORMAT(5E16.8) 
+    if ( format.type != "E") 
+        throw SireError::program_bug( QObject::tr(
+            "Format '%1' is not supported, should be E").arg(format.type), CODELOC);
+
+    int count = 0;
+    
+    for (int i= 0 ; i < line.size() ; i = i + format.size )
+    {
+        if ( ++count > format.repeat || (i + format.size) > line.size() )
+            break;
+
+        QString element = line.mid(i, format.size );
+        bool ok;
+        double data = element.toDouble(&ok);
+
+        //qDebug() << "element " << element << "Data " << data;
+        doublearray.append(data);
+    }
+}
+
+static void setAtomParameters(AtomEditor &editatom, MolEditor &editmol,
+                              const QList<double> &crdCoords, 
+                              const PropertyName &coords_property, 
+                              const QList<double> &charge, 
+                              const PropertyName &charge_property, 
+                              const QList<double> &mass, 
+                              const PropertyName &mass_property, 
+                              const QList<int> &atom_type_index, 
+                              const QList<int> &nb_parm_index, 
+                              const QList<double> &lj_a_coeff, 
+                              const QList<double> &lj_b_coeff, 
+                              const PropertyName &lj_property, 
+                              const QStringList &amber_type, 
+                              const PropertyName &ambertype_property, 
+                              const QList<int> &pointers)
+{
+    //AtomEditor editatom = editmol.atom(AtomIdx(atomIndex));
+    int atomNumber = editatom.number().value();
+  
+    //qDebug() << " Coordinates for number..." << atomNumber;
+    // set the coordinates. index into coordinates array is idx = 3 * ( atom.number().value() -1)
+    int array_index = 3 * ( atomNumber - 1 );
+
+    //qDebug() << " array_index " << array_index;
+    //qDebug() << " crdCoords.size() " << crdCoords.size();
+    //qDebug() << " crdCoords[ array_index ] " << crdCoords[array_index];
+    //qDebug() << " crdCoords[ array_index + 1 ] " << crdCoords[array_index + 1 ];
+    //qDebug() << " crdCoords[ array_index + 2 ] " << crdCoords[array_index + 2 ];
+
+    Vector coords = Vector(crdCoords[array_index], 
+                           crdCoords[array_index+1],
+                           crdCoords[array_index+2]);
+                           
+    editatom.setProperty( coords_property.source(), coords);
+
+    //qDebug() << " Coords " << coords.x() << coords.y() << coords.z() ;
+
+    //qDebug() << " Charges...";
+    // set the charges
+    SireUnits::Dimension::Charge chg = ( charge[atomNumber - 1] / AMBERCHARGECONV ) 
+                                                * mod_electron;
+    editatom.setProperty( charge_property, chg);
+  
+    //qDebug() << " Masses...";
+    // set the masses
+    SireUnits::Dimension::MolarMass ms = mass[atomNumber - 1] * g_per_mol; 
+    editatom.setProperty( mass_property.source(), ms);
+  
+    // set the LJ parameters
+    // For atom 'i' first get the 'itype' from atom_type_index
+    // Then lookup the index 'inbparams' for an interaction of 'itype' with 'itype' 
+    // in nb_parm_index which is calculated as 
+    // 'inbparams' = pointers[NTYPES]*(itype-1)+itype
+    // Then lookup the values of A & B in lj_a_coeff and lj_b_coeff
+    // iAcoef = lj_a_coeff[inbparams] iBcoef =  lj_b_coeff[inbparams]
+  
+    //qDebug() << " LJ...";
+    int itype = atom_type_index[ atomNumber - 1 ];
+    int inbparams = nb_parm_index[ pointers[NTYPES] * (itype - 1) + itype - 1 ];
+    double iAcoef = lj_a_coeff[ inbparams - 1 ];
+    double iBcoef = lj_b_coeff[ inbparams - 1 ];
+    double sigma, epsilon, rstar;
+
+    // is there a SMALL?
+    if (iAcoef < 0.000001)
+    {
+        sigma = 0.0;
+        epsilon = 0.0;
+        rstar = 0.0;
+    }
+    else
+    {
+        // and convert lj_a_coeff & lj_b_coeff into angstroms and kcal/mol-1
+        sigma = std::pow( iAcoef / iBcoef ,  1/6. );
+        epsilon = pow_2( iBcoef ) / (4*iAcoef);
+        rstar = (sigma/2.)* std::pow(2.0, 1/6. ) ;
+    }
+
+    //qDebug() << " Atom " << atomNumber << " itype " << itype << " inbparams " 
+    //         << inbparams << " iAcoef " << iAcoef << " iBcoef " << iBcoef << " sigma " 
+    //         << sigma << " epsilon " << epsilon << " rstar " << rstar ;
+
+    // Note that the amber par files give rstar=(sigma/2)*(2**(1/6.)) instead of sigma
+    LJParameter lj( sigma * angstrom, epsilon * kcal_per_mol);
+    editatom.setProperty( lj_property.source(), lj);
+  
+    //qDebug() << " Type...";
+
+    // set the Amber atom type
+    QString ambertype = amber_type[ atomNumber - 1 ];
+    editatom.setProperty( ambertype_property.source(), ambertype);
+
+    editmol = editatom.molecule();
+}
+
+/** Set the connectivity property of molecule editmol*/
+static void setConnectivity(MolEditor &editmol, int pointer, 
+                            const QList<int> &bondsArray, 
+                            ConnectivityEditor &connectivity, 
+                            const PropertyName &connectivity_property)
+{
+    //QSet<AtomNum> moleculeAtomNumbers = _pvt_selectAtomsbyNumber(editmol);
+    int atomStart = editmol.atoms().at(0).number().value();
+    int atomEnd = editmol.atoms().at(-1).number().value();
+
+    //qDebug() << " atomStart " << atomStart << " atomEnd " << atomEnd;
+    for (int i=0 ; i < 3 * pointer ; i = i + 3)
+    {
+        /** Might be faster*/
+        int index0 = bondsArray[ i ] / 3 + 1 ;
+        int index1 = bondsArray[ i + 1] / 3 + 1 ;
+        
+        if ( index0 < atomStart || index0 > atomEnd || 
+             index1 < atomStart || index1 > atomEnd )
+        {
+            continue;
+        }
+        
+        AtomNum number0 = AtomNum( index0 );
+        AtomNum number1 = AtomNum( index1 );
+        AtomIdx atom0 = editmol.select( number0 ).index();
+        AtomIdx atom1 = editmol.select( number1 ).index();
+        connectivity.connect( atom0, atom1 );
+    }
+
+    editmol.setProperty( connectivity_property.source(), connectivity.commit() );
+}
+
+/** Set the property bonds for molecule editmol*/
+static void setBonds(MolEditor &editmol, int pointer,
+                     const QList<int> &bondsArray, 
+                     const QList<double> &bond_force_constant, 
+                     const QList<double> &bond_equil_value,
+                     TwoAtomFunctions &bondfuncs, 
+                     const PropertyName &bond_property)
+{
+    //QSet<AtomNum> moleculeAtomNumbers = _pvt_selectAtomsbyNumber(editmol);
+    int atomStart = editmol.atoms().at(0).number().value();
+    int atomEnd = editmol.atoms().at(-1).number().value();
+
+    for (int i=0 ; i < 3 * pointer ; i = i + 3)
+    {
+        int index0 = bondsArray[ i ] / 3 + 1 ;
+        int index1 = bondsArray[ i + 1] / 3 + 1 ;
+
+        if ( index0 < atomStart || index0 > atomEnd || 
+             index1 < atomStart || index1 > atomEnd )
+        {
+            continue;
+        }
+        
+        int paramIndex = bondsArray[ i + 2 ];
+
+        AtomNum number0 = AtomNum( index0 );
+        AtomNum number1 = AtomNum( index1 );
+        AtomIdx atom0 = editmol.select( number0 ).index();
+        AtomIdx atom1 = editmol.select( number1 ).index();
+
+        Symbol r = InternalPotential::symbols().bond().r();
+
+        double k = bond_force_constant[ paramIndex -1 ];
+        double r0 = bond_equil_value[ paramIndex - 1 ];
+
+        Expression bondfunc = k * SireMaths::pow_2(r - r0);
+        bondfuncs.set( atom0, atom1, bondfunc );
+    }
+
+    editmol.setProperty( bond_property.source(), bondfuncs );
+}
+
+static void setAngles(MolEditor &editmol, int pointer,
+                      const QList<int> &anglesArray, 
+                      const QList<double> &ang_force_constant, 
+                      const QList<double> &ang_equil_value,
+                      ThreeAtomFunctions &anglefuncs, 
+                      const PropertyName &angle_property)
+{
+    //QSet<AtomNum> moleculeAtomNumbers = _pvt_selectAtomsbyNumber(editmol);
+    int atomStart = editmol.atoms().at(0).number().value();
+    int atomEnd = editmol.atoms().at(-1).number().value();
+
+    for (int i=0 ; i < 4 * pointer ; i = i + 4)
+    {
+        int index0 = anglesArray[ i ] / 3 + 1 ;
+        int index1 = anglesArray[ i + 1] / 3 + 1 ;
+        int index2 = anglesArray[ i + 2] / 3 + 1 ;
+        
+        if ( index0 < atomStart || index0 > atomEnd || 
+             index1 < atomStart || index1 > atomEnd ||
+             index2 < atomStart || index2 > atomEnd )
+        {
+            continue;
+        }
+        
+        AtomNum number0 = AtomNum( index0 );
+        AtomNum number1 = AtomNum( index1 );
+        AtomNum number2 = AtomNum( index2 );
+
+        int paramIndex = anglesArray[ i + 3 ];
+        AtomIdx atom0 = editmol.select( number0 ).index();
+        AtomIdx atom1 = editmol.select( number1 ).index();
+        AtomIdx atom2 = editmol.select( number2 ).index();
+      
+        Symbol theta = InternalPotential::symbols().angle().theta();
+      
+        double k = ang_force_constant[ paramIndex - 1 ];
+        double theta0 = ang_equil_value[ paramIndex - 1 ];// radians
+      
+        Expression anglefunc = k * SireMaths::pow_2(theta - theta0);
+        anglefuncs.set( atom0, atom1, atom2, anglefunc );
+    }
+
+    editmol.setProperty( angle_property.source(), anglefuncs );
+}
+
+static void setDihedrals(MolEditor &editmol, int pointer,
+                         const QList<int> &dihedralsArray, 
+                         const QList<double> &dih_force_constant, 
+                         const QList<double> &dih_periodicity, 
+                         const QList<double> &dih_phase,
+                         FourAtomFunctions &dihedralfuncs, 
+                         const PropertyName &dihedral_property,
+                         FourAtomFunctions &improperfuncs, 
+                         const PropertyName &improper_property,
+                         QHash<AtomNum, QList<AtomNum> > &atoms14)
+{
+    //QSet<AtomNum> moleculeAtomNumbers = _pvt_selectAtomsbyNumber(editmol);
+    int atomStart = editmol.atoms().at(0).number().value();
+    int atomEnd = editmol.atoms().at(-1).number().value();
+    
+    QHash<DofID,Expression> improper_hash;
+    QHash<DofID,Expression> dihedral_hash;
+  
+    for (int i= 0 ; i < 5 * pointer ; i = i + 5)
+    {
+        bool ignored = false;
+        bool improper = false;
+
+        //qDebug() << " RAW IDXs " << dihedralsArray[ i ] << dihedralsArray[ i +1 ] 
+        //         << dihedralsArray[ i + 2 ] << dihedralsArray[ i + 3] 
+        //         << dihedralsArray[ i + 4];
+
+        int index0 = dihedralsArray[ i ] ;
+        index0 = index0 / 3 + 1 ;
+
+        int index1 = dihedralsArray[ i + 1 ] ;
+        index1 = index1 / 3 + 1 ;
+
+        int index2 = dihedralsArray[ i + 2 ] ;
+
+        // Note that if index2 is negative it indicates that end group interactions 
+        // re ignored (= non bonded) this could be because this quad of atoms has 
+        // already been set in the top file (for multi term dihedrals)
+        // or because the 1,4 interaction has already been counted (for ring systems). 
+        if (index2 < 0)
+        {
+            ignored = true;
+            index2 = - index2 ;
+        }
+
+        index2 = index2 / 3 + 1 ;
+      
+        int index3 = dihedralsArray[ i + 3 ] ;
+
+        // Note that if index3 is negative, it indicates that the dihedral is an improper
+        if (index3 < 0)
+        {
+            improper = true;
+            index3 = -index3;
+        }
+        
+        index3 = index3 / 3 + 1 ;
+
+        if ( index0 < atomStart || index0 > atomEnd || 
+             index1 < atomStart || index1 > atomEnd ||
+             index2 < atomStart || index2 > atomEnd ||
+             index3 < atomStart || index3 > atomEnd )
+        {
+            continue;
+        }
+
+        int paramIndex = dihedralsArray[ i + 4 ];
+
+        AtomNum number0 = AtomNum( index0 );
+        AtomNum number1 = AtomNum( index1 );
+        AtomNum number2 = AtomNum( index2 );
+        AtomNum number3 = AtomNum( index3 );
+      
+        Symbol phi = InternalPotential::symbols().dihedral().phi();
+
+        double k = dih_force_constant[ paramIndex - 1 ];// kcal_per_mol
+        double periodicity = dih_periodicity[ paramIndex - 1] * radians.to(radians);
+        double phase = dih_phase[ paramIndex - 1];
+	  
+        Expression dihedral_func = k * ( 1 + Cos( periodicity * ( phi - 0 ) - phase ) );
+	  
+        Atom atom0 = editmol.select( number0 );
+        Atom atom1 = editmol.select( number1 );
+        Atom atom2 = editmol.select( number2 );
+        Atom atom3 = editmol.select( number3 );
+      
+        // Actually, we just save the terms in an array of atom indices 
+        // because some dihedrals may have multi-term
+        if (improper and k > 0.00001) 
+        {
+            //qDebug() << "IMPROPER" << atom0.name().value() << atom1.name().value() 
+            //         << atom2.name().value() << atom3.name().value() << " K "
+            //         << k << " period " << periodicity << " phase " << phase ;
+            DofID improperid = DofID( atom0.index(), atom1.index(),
+                                      atom2.index(), atom3.index() );
+
+            if ( improper_hash.contains(improperid) )
+                improper_hash[improperid] += dihedral_func;
+            else
+                improper_hash.insert(improperid, dihedral_func);
+        }
+        else if ( k > 0.00001)
+        {
+            //qDebug() << " DIHEDRAL " << atom0.name().value() << atom1.name().value() 
+            //         << atom2.name().value() << atom3.name().value() << " K " 
+            //         << k << " period " << periodicity << " phase " << phase ;
+            DofID dihid = DofID( atom0.index(), atom1.index(), 
+                                 atom2.index(), atom3.index() );
+
+            if ( dihedral_hash.contains(dihid) )
+                dihedral_hash[dihid] += dihedral_func;
+            else
+                dihedral_hash.insert( dihid, dihedral_func);
+        }
+
+        if (not ignored and not improper)
+        {
+            /**Save this in 14 array */
+            if (not atoms14.contains(atom0.number()))
+            {
+                QList<AtomNum> list;
+                atoms14.insert( atom0.number(), list);
+            }
+
+            /** Not sure this can happens but to be safe.. */
+            if ( not atoms14[atom0.number()].contains(atom3.number()) )
+            {
+                atoms14[atom0.number()].append(atom3.number());
+            }
+	  
+            if (not atoms14.contains(atom3.number()))
+            {
+                QList<AtomNum> list;
+                atoms14.insert( atom3.number(), list);
+            }
+
+            if ( not atoms14[atom3.number()].contains(atom0.number()) )
+            {
+                atoms14[atom3.number()].append(atom0.number());
+            }
+        }
+    }
+
+    /** We can now create the appropriate dihedrals*/
+    for (QHash<DofID,Expression>::const_iterator it = dihedral_hash.constBegin();
+         it != dihedral_hash.constEnd();
+         ++it)
+    {
+        dihedralfuncs.set( it.key().atom0(), it.key().atom1(), it.key().atom2(), 
+                           it.key().atom3(), it.value() );
+    }
+
+    for (QHash<DofID,Expression>::const_iterator it = improper_hash.constBegin();
+         it != improper_hash.constEnd();
+         ++it)
+    {
+        improperfuncs.set( it.key().atom0(), it.key().atom1(), it.key().atom2(), 
+                           it.key().atom3(), it.value() );
+    }
+
+    editmol.setProperty( dihedral_property.source(), dihedralfuncs ); 
+    editmol.setProperty( improper_property.source(), improperfuncs );  
+}
+
+static void setNonBondedPairs(MolEditor &editmol, int pointer,
+                              const QList<int> &num_excluded_atoms, 
+                              const QList<int> &exc_atom_list,
+                              CLJNBPairs &nbpairs, 
+                              const PropertyName &nb_property,
+                              const QHash<AtomNum, QList<AtomNum> > &atoms14)
+{
+    // For each pair of atoms within a molecule
+    // --> if 1,2 or 1,3 CLJScaleFactor(0,0)
+    // --> if 1,4 CLJScaleFactor( 1/ 1.2 , 1 / 2. )
+    // the TOP file stores this information in num_excluded_atoms, 
+    // exc_atom_list, pointers[NEXT]
+
+    // however it does not discriminates 1,4 from 1,2 or 1,3. So the 
+    // solution is to get setDihedrals to return a list of 1,4 atoms.
+    
+    // --> if 1,5 or more CLJScaleFactor ( 1, 1 )
+  
+    // this is the default situation
+    nbpairs = CLJNBPairs(editmol.data().info(), CLJScaleFactor(1.0,1.0));
+    int natoms = editmol.nAtoms();
+
+    // find the excluded atoms of i
+    // IEXCL = SUM(NUMEX(j), j=1,i-1)
+    // then excluded atoms are NATEX(IEXCL) to NATEX(IEXCL+NUMEX(i))
+    // if excluded and in 1,4  CLJScaleFactor( 1/ 1.2 , 1 / 2. )
+    // if excluded and not in 1,4 CLJScaleFactor(0,0)
+    // if not excluded CLJScaleFactor ( 1, 1 )
+    for (int i = 0; i < natoms ; i ++ )
+    {
+        Atom atom0 = editmol.atom(AtomIdx(i));
+        
+        // skip itself
+        nbpairs.set( atom0.cgAtomIdx(), atom0.cgAtomIdx(), 
+                     CLJScaleFactor(0.0, 0.0) );
+
+        // Excluded atoms of atom0?
+        int iexcl = 0;
+        int atomNum = atom0.number();
+
+        // TODO OPT 1: save previous values so no need to recompute from scratch
+        for ( int j = 0 ; j < ( atomNum - 1 ); j++ )
+        {
+            iexcl += num_excluded_atoms[j];
+        }
+
+        QList<Atom> excludedAtoms;
+        //qDebug() << " Looking at ATOM " << atomNum << atom0.toString();
+        //qDebug() << " iexcl is " << iexcl << " num_excluded_atoms[ i ] " <<  num_excluded_atoms[ atomNum - 1 ];
+
+        for ( int j = iexcl ; j < iexcl + num_excluded_atoms[ atomNum - 1 ] ; j++ )
+        {
+            int jnumber = exc_atom_list[ j ];
+            //qDebug() << " jnumber " << jnumber;
+            if (jnumber > 0)
+            {
+                Atom excludedAtom = editmol.atom( AtomNum( jnumber  ) );
+                //qDebug() << " EXCLUDED ATOM OF " << atomNum << " : " << jnumber;
+                excludedAtoms.append(excludedAtom);
+            }
+        }
+
+        int nexcluded = excludedAtoms.size();
+        
+        if ( nexcluded == 0 )
+            continue;
+      
+        for ( int j = 0 ; j < nexcluded ; j++ )
+        {
+            double cscl;
+            double ljscl;
+            
+            Atom atom1 = excludedAtoms.at(j);
+
+            if ( atoms14[ atom0.number() ].contains( atom1.number() ) )
+            {
+                //qDebug() << " ATOMS " << atom0.number() << " and " 
+                //         << atom1.number() << " are 14";
+                cscl = AMBER14COUL;
+                ljscl = AMBER14LJ;
+            }
+            else
+            {
+                //qDebug() << " ATOMS " << atom0.number() << " and " 
+                //         << atom1.number() << " are 12 or 13";
+                cscl = 0.0;
+                ljscl = 0.0;
+            }
+
+            CGAtomIdx atom0cgidx = atom0.cgAtomIdx();
+            CGAtomIdx atom1cgidx = atom1.cgAtomIdx();
+
+            nbpairs.set( atom0.cgAtomIdx(), atom1.cgAtomIdx(),
+                         CLJScaleFactor(cscl, ljscl) );
+            nbpairs.set( atom1.cgAtomIdx(), atom0.cgAtomIdx(),
+                         CLJScaleFactor(cscl, ljscl) );
+        }
+    }
+
+    editmol.setProperty( nb_property, nbpairs );
+}
+
+static void walk(int atom, 
+                 const QHash<int, int> &atoms12, 
+                 int totalMolecules, 
+                 QHash<int, int> &atIsInMol, 
+                 QHash<int, int> &atomsInMolecule)
+{
+    QList<int> neighbors = atoms12.values( atom );
+    //qDebug() << " neighbors of " << atom << " are : " << neighbors;
+    
+    foreach ( int neighbor, neighbors )
+    {
+        QList<int> nn = atomsInMolecule.values( totalMolecules );
+        
+        if ( not nn.contains(neighbor) )
+        {
+            atIsInMol[ neighbor ] = totalMolecules;
+            atomsInMolecule.insertMulti( totalMolecules, neighbor );
+            walk( neighbor, atoms12, totalMolecules, atIsInMol, atomsInMolecule);
+        }
+    }
+}
+
+static void calcNumberMolecules(int &totalMolecules, 
+                                QList<int> &atoms_per_mol, 
+                                const QList<int> &bond_inc_h, 
+                                const QList<int> &bonds_exc_h,
+                                int natoms, int nbondsh, int nbondsa)
+{
+    QHash<int, int> atIsInMol;
+    QHash<int, int> atoms12 ;
+
+    /** First construct a list of atoms bonded to each atom*/
+    for ( int i = 1 ; i <= natoms ; i++ )
+    {
+        atIsInMol[ i ] = -1;
+    }
+
+    for ( int j = 0 ; j < 3 * nbondsa ; j = j + 3 )
+    {
+        int atom0 = bonds_exc_h[ j ] / 3 + 1 ;
+        int atom1 = bonds_exc_h[ j + 1 ] / 3 + 1 ;
+        atoms12.insertMulti(atom0, atom1);
+        atoms12.insertMulti(atom1, atom0);
+    }
+
+    for ( int j = 0 ; j < 3 * nbondsh ; j = j + 3 )
+    {
+        int atom0 = bond_inc_h[ j ] / 3 + 1 ;
+        int atom1 = bond_inc_h[ j + 1 ] / 3 + 1 ;
+        atoms12.insertMulti(atom0, atom1);
+        atoms12.insertMulti(atom1, atom0);
+    }
+
+    // Then recursively walk along each atom find all the atoms that 
+    // are in the same molecule
+    totalMolecules = 0;
+    QHash<int, int> atomsInMolecule;
+
+    for ( int i = 1 ; i <= natoms ; i++ )
+    {
+        if (atIsInMol[ i ] == -1)
+        {
+            totalMolecules++;
+            atIsInMol[ i ] = totalMolecules;
+            atomsInMolecule.insertMulti( totalMolecules, i );
+
+            // Recursive walk
+            //qDebug() << " Calling walk ";
+            walk(i, atoms12, totalMolecules, atIsInMol, atomsInMolecule);
+
+            //qDebug() << " Molecule " << totalMolecules << " has " 
+            //         << atomsInMolecule.values(totalMolecules).size() << " atoms ";
+            atoms_per_mol.append( atomsInMolecule.values(totalMolecules).size() );
+        }
+    }
+}
+
+/** Internal function to create a set of atom numbers in an editmol*/
+/*static QSet<AtomNum> selectAtomsbyNumber(const MolEditor &editmol)
+{
+    QSet<AtomNum> atomnums;
+
+    Selector<Atom> atoms = editmol.selectAllAtoms();
+    
+    for (int i=0; i<atoms.count(); ++i)
+    {
+        atomnums.insert( atoms[i].number() );
+    }
+    
+    return atomnums;
+}*/
 
 ///////////
 /////////// Implementation of Amber
@@ -109,42 +1010,36 @@ static const RegisterMetaType<Amber> r_amber;
 /** Serialise to a binary datastream */
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, const Amber &amber)
 {
-    writeHeader(ds, r_amber, 1);
-    
-    SharedDataStream sds(ds);
-    
-    //sds << protoms.paramfiles << protoms.protoms_exe;
-    
+    //empty class so nothing to stream
+
+    writeHeader(ds, r_amber, 0);
     return ds;
 }
 
 /** Extract from a binary datastream */
 QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, Amber &amber)
 {
+    //empty class so nothing to stream
+
     VersionID v = readHeader(ds, r_amber);
     
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        //sds >> protoms.paramfiles >> protoms.protoms_exe;
-    }
-    else
-        throw version_error( v, "1", r_amber, CODELOC );
+    if (v != 0)
+        throw version_error( v, "0", r_amber, CODELOC );
         
     return ds;
 }
 
 /** Constructor */
 Amber::Amber()
-{
-}
+{}
+
 /** Destructor */
 Amber::~Amber()
-{
-}
+{}
+
 /** Reads the contents of a topfile and associated crdfile and returns a molecule group */
-tuple<Molecules,SpacePtr> Amber::readcrdtop(const QString &crdfile, const QString &topfile)
+tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile, 
+                                            const QString &topfile) const
 {
   /** 
       See http://ambermd.org/formats.html
@@ -449,1239 +1344,524 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
   ATPOL1 : atomic polarizabilities at lambda = 1 (above is at lambda = 0)
   */
 
-  // Read the contents of the top file
-  QFile top_f(topfile);
+    // Read the contents of the top file
+    QFile top_f(topfile);
   
-  if ( not (top_f.exists() and top_f.open(QIODevice::ReadOnly) ) )
+    if ( not (top_f.exists() and top_f.open(QIODevice::ReadOnly) ) )
     {
-      throw SireError::file_error(top_f, CODELOC);
+        throw SireError::file_error(top_f, CODELOC);
     }
 
-  QTextStream ts(&top_f);
+    QTextStream ts(&top_f);
 
-  // TOP file format generated by sleap in Amber-tools 1.4
-  // see amber11/AmberTools/src/gleap/mortsrc/ambfmt/prmtop.cpp
+    // TOP file format generated by sleap in Amber-tools 1.4
+    // see amber11/AmberTools/src/gleap/mortsrc/ambfmt/prmtop.cpp
 
-  // The following holds the data read from the top file
-  int currentFlag = 0;
-  FortranFormat currentFormat = FortranFormat(); 
-  //QString currentVersion = " ";
-  QString title = " ";
-  QList<int> pointers;
-  QStringList atomName;
-  QList<double> charge;
-  QList<double> mass;
-  QList<int> atomTypeIndex;
-  QList<int> numberExcludedAtoms;
-  QList<int> nonbondedParmIndex;
-  QStringList residueLabel;
-  QList<int> residuePointer;
-  QList<double> bondForceConstant;
-  QList<double> bondEquilValue;
-  QList<double> angleForceConstant;
-  QList<double> angleEquilValue;
-  QList<double> dihedralForceConstant;
-  QList<double> dihedralPeriodicity;
-  QList<double> dihedralPhase;
-  QList<double> solty;
-  QList<double> lennardJonesAcoef;
-  QList<double> lennardJonesBcoef;
-  QList<int> bondsIncHydrogen;
-  QList<int> bondsWithoutHydrogen;
-  QList<int> anglesIncHydrogen;
-  QList<int> anglesWithoutHydrogen;
-  QList<int> dihedralsIncHydrogen;
-  QList<int> dihedralsWithoutHydrogen;
-  QList<int> excludedAtomsList;
-  QList<double> hbondAcoef;
-  QList<double> hbondBcoef;
-  QList<double> hbcut;
-  QStringList amberAtomType;
-  QStringList treeChainClassification;
-  QList<int> joinArray;
-  QList<int> irotat;
-  QList<int> solventPointers;
-  QList<int> atomsPerMolecule;
-  QList<double> boxDimensions;
-  QStringList radiusSet;
-  QList<double> radii;
-  QList<double> screen;
+    // The following holds the data read from the top file
+    int currentFlag = 0;
+    
+    FortranFormat currentFormat = FortranFormat(); 
 
-  QString line = ts.readLine();
-  // The first line containts the version. 
-  // Make sure we know how to read this version
-  //this->processVersionLine(words, currentVersion);
-  while (not line.isNull() )
+    //QString currentVersion = " ";
+    QString title = " ";
+    QList<int> pointers;
+    QStringList atom_name;
+    QList<double> charge;
+    QList<double> mass;
+    QList<int> atom_type_index;
+    QList<int> num_excluded_atoms;
+    QList<int> nb_parm_index;
+    QStringList res_label;
+    QList<int> res_pointer;
+    QList<double> bond_force_constant;
+    QList<double> bond_equil_value;
+    QList<double> ang_force_constant;
+    QList<double> ang_equil_value;
+    QList<double> dih_force_constant;
+    QList<double> dih_periodicity;
+    QList<double> dih_phase;
+    QList<double> solty;
+    QList<double> lj_a_coeff;
+    QList<double> lj_b_coeff;
+    QList<int> bond_inc_h;
+    QList<int> bonds_exc_h;
+    QList<int> angs_inc_h;
+    QList<int> angs_exc_h;
+    QList<int> dihs_inc_h;
+    QList<int> dihs_exc_h;
+    QList<int> exc_atom_list;
+    QList<double> hbond_a_coeff;
+    QList<double> hbond_b_coeff;
+    QList<double> hbcut;
+    QStringList amber_type;
+    QStringList tree_chain_class;
+    QList<int> join_array;
+    QList<int> irotat;
+    QList<int> svn_pointers;
+    QList<int> atoms_per_mol;
+    QList<double> box_dims;
+    QStringList radius_set;
+    QList<double> radii;
+    QList<double> screen;
+
+    QString line = ts.readLine();
+    
+    // The first line containts the version. 
+    // Make sure we know how to read this version
+    //processVersionLine(words, currentVersion);
+    while (not line.isNull() )
     {
-      //qDebug() << line;
-      line = ts.readLine();
+        //qDebug() << line;
+        line = ts.readLine();
 
-      if (line.startsWith("%"))
-	{
-	  // We are reading meta data, can be VERSION, FLAG, FORMAT
-	  QStringList words = line.split(" ", QString::SkipEmptyParts);
-	  if (line.startsWith("%FLAG"))
-	    this->processFlagLine(words, currentFlag);
-	  else if (line.startsWith("%FORMAT"))
-	    this->processFormatLine(words, currentFormat);
-	  else
-	      throw SireError::program_bug( QObject::tr(
-		  "Does not know what to do with a '%1' statement").arg(words[0]), CODELOC );
-	}
-      // if not we are reading data. Read it according to the latest FLAG/FORMAT values
-      else
-	{
-	  //qDebug() << "FORMAT IS " << currentFormat.type << " FLAG IS " << currentFlag;
-	  switch ( currentFlag ) 
-	    {
-	    case TITLE:
-	      this->processTitleLine(line, currentFormat, title);
-	      break;
-	    case POINTERS:
-	      this->processIntegerLine(line, currentFormat, pointers);
-	      break;
-	    case ATOM_NAME:
-	      this->processStringLine(line, currentFormat, atomName);
-	      break;
-	    case CHARGE:
-	      this->processDoubleLine(line, currentFormat, charge);
-	      break;
-	    case MASS:
-	      this->processDoubleLine(line, currentFormat, mass);
-	      break;
-	    case ATOM_TYPE_INDEX:
-	      this->processIntegerLine(line, currentFormat, atomTypeIndex);
-	      break;
-	    case NUMBER_EXCLUDED_ATOMS:
-	      this->processIntegerLine(line, currentFormat, numberExcludedAtoms);
-	      break;
-	    case NONBONDED_PARM_INDEX:
-	      this->processIntegerLine(line, currentFormat, nonbondedParmIndex);
-	      break;
-	    case RESIDUE_LABEL:
-	      this->processStringLine(line, currentFormat, residueLabel);
-	      break;
-	    case RESIDUE_POINTER:
-	      this->processIntegerLine(line, currentFormat, residuePointer);
-	      break;
-	    case BOND_FORCE_CONSTANT:
-	      this->processDoubleLine(line, currentFormat, bondForceConstant);
-	      break;
-	    case BOND_EQUIL_VALUE:
-	      this->processDoubleLine(line, currentFormat, bondEquilValue);
-	      break;
-	    case ANGLE_FORCE_CONSTANT:
-	      this->processDoubleLine(line, currentFormat, angleForceConstant);
-	      break;
-	    case ANGLE_EQUIL_VALUE:
-	      this->processDoubleLine(line, currentFormat, angleEquilValue);
-	      break;
-	    case DIHEDRAL_FORCE_CONSTANT:
-	      this->processDoubleLine(line, currentFormat, dihedralForceConstant);
-	      break;
-	    case DIHEDRAL_PERIODICITY:
-	      this->processDoubleLine(line, currentFormat, dihedralPeriodicity);
-	      break;
-	    case DIHEDRAL_PHASE:
-	      this->processDoubleLine(line, currentFormat, dihedralPhase);
-	      break;
-	    case SOLTY:
-	      this->processDoubleLine(line, currentFormat, solty);
-	      break; 
-	    case LENNARD_JONES_ACOEF:
-	      this->processDoubleLine(line, currentFormat, lennardJonesAcoef);
-	      break; 
-	    case LENNARD_JONES_BCOEF:
-	      this->processDoubleLine(line, currentFormat, lennardJonesBcoef);
-	      break; 
-	    case BONDS_INC_HYDROGEN:
-	      this->processIntegerLine(line, currentFormat, bondsIncHydrogen);
-	      break;
-	    case BONDS_WITHOUT_HYDROGEN:
-	      this->processIntegerLine(line, currentFormat, bondsWithoutHydrogen);
-	      break;
-	    case ANGLES_INC_HYDROGEN:
-	      this->processIntegerLine(line, currentFormat, anglesIncHydrogen);
-	      break;
-	    case ANGLES_WITHOUT_HYDROGEN:
-	      this->processIntegerLine(line, currentFormat, anglesWithoutHydrogen);
-	      break;
-	    case DIHEDRALS_INC_HYDROGEN:
-	      this->processIntegerLine(line, currentFormat, dihedralsIncHydrogen);
-	      break;
-	    case DIHEDRALS_WITHOUT_HYDROGEN:
-	      this->processIntegerLine(line, currentFormat, dihedralsWithoutHydrogen);
-	      break;
-	    case EXCLUDED_ATOMS_LIST:
-	      this->processIntegerLine(line, currentFormat, excludedAtomsList);
-	      break;
-	    case HBOND_ACOEF:
-	      this->processDoubleLine(line, currentFormat, hbondAcoef);
-	      break; 
-	    case HBOND_BCOEF:
-	      this->processDoubleLine(line, currentFormat, hbondBcoef);
-	      break; 
-	    case HBCUT:
-	      this->processDoubleLine(line, currentFormat, hbcut);
-	      break; 
-	    case AMBER_ATOM_TYPE:
-	      this->processStringLine(line, currentFormat, amberAtomType);
-	      break; 
-	    case TREE_CHAIN_CLASSIFICATION:
-	      this->processStringLine(line, currentFormat, treeChainClassification);
-	      break; 
-	    case JOIN_ARRAY:
-	      this->processIntegerLine(line, currentFormat, joinArray);
-	      break;
- 	    case IROTAT:
-	      this->processIntegerLine(line, currentFormat, irotat);
-	      break;
-	    case SOLVENT_POINTERS:
-	      this->processIntegerLine(line, currentFormat, solventPointers);
-	      break;
-	    case ATOMS_PER_MOLECULE:
-	      this->processIntegerLine(line, currentFormat, atomsPerMolecule);
-	      break;
-	    case BOX_DIMENSIONS:
-	      this->processDoubleLine(line, currentFormat, boxDimensions);
-	      break;
-	    case RADIUS_SET:
-	      this->processStringLine(line, currentFormat, radiusSet);
-	      break;
-	    case RADII:
-	      this->processDoubleLine(line, currentFormat, radii);
-	      break;
-	    case SCREEN:
-	      this->processDoubleLine(line, currentFormat, screen);
-	      break;
-	    default:
-	      throw SireError::program_bug( QObject::tr(
-	      "Serious problem with the value of the variable currentFlag, '%1'").arg(currentFlag), CODELOC);
-	    }
-	}
+        if (line.startsWith("%"))
+        {
+            // We are reading meta data, can be VERSION, FLAG, FORMAT
+            QStringList words = line.split(" ", QString::SkipEmptyParts);
+            
+            if (line.startsWith("%FLAG"))
+                processFlagLine(words, currentFlag);
+            else if (line.startsWith("%FORMAT"))
+                processFormatLine(words, currentFormat);
+            else
+                throw SireError::program_bug( QObject::tr(
+                    "Does not know what to do with a '%1' statement")
+                        .arg(words[0]), CODELOC );
+        }
+        else
+        {
+            // if not we are reading data. Read it according to the 
+            // latest FLAG/FORMAT values
+
+            //qDebug() << "FORMAT IS " << currentFormat.type << " FLAG IS " << currentFlag;
+            switch ( currentFlag ) 
+            {
+                case TITLE:
+                    processTitleLine(line, currentFormat, title);
+                    break;
+                case POINTERS:
+                    processIntegerLine(line, currentFormat, pointers);
+                    break;
+                case ATOM_NAME:
+                    processStringLine(line, currentFormat, atom_name);
+                    break;
+                case CHARGE:
+                    processDoubleLine(line, currentFormat, charge);
+                    break;
+                case MASS:
+                    processDoubleLine(line, currentFormat, mass);
+                    break;
+                case ATOM_TYPE_INDEX:
+                    processIntegerLine(line, currentFormat, atom_type_index);
+                    break;
+                case NUMBER_EXCLUDED_ATOMS:
+                    processIntegerLine(line, currentFormat, num_excluded_atoms);
+                    break;
+                case NONBONDED_PARM_INDEX:
+                    processIntegerLine(line, currentFormat, nb_parm_index);
+                    break;
+                case RESIDUE_LABEL:
+                    processStringLine(line, currentFormat, res_label);
+                    break;
+                case RESIDUE_POINTER:
+                    processIntegerLine(line, currentFormat, res_pointer);
+                    break;
+                case BOND_FORCE_CONSTANT:
+                    processDoubleLine(line, currentFormat, bond_force_constant);
+                    break;
+                case BOND_EQUIL_VALUE:
+                    processDoubleLine(line, currentFormat, bond_equil_value);
+                    break;
+                case ANGLE_FORCE_CONSTANT:
+                    processDoubleLine(line, currentFormat, ang_force_constant);
+                    break;
+                case ANGLE_EQUIL_VALUE:
+                    processDoubleLine(line, currentFormat, ang_equil_value);
+                    break;
+                case DIHEDRAL_FORCE_CONSTANT:
+                    processDoubleLine(line, currentFormat, dih_force_constant);
+                    break;
+                case DIHEDRAL_PERIODICITY:
+                    processDoubleLine(line, currentFormat, dih_periodicity);
+                    break;
+                case DIHEDRAL_PHASE:
+                    processDoubleLine(line, currentFormat, dih_phase);
+                    break;
+                case SOLTY:
+                    processDoubleLine(line, currentFormat, solty);
+                    break; 
+                case LENNARD_JONES_ACOEF:
+                    processDoubleLine(line, currentFormat, lj_a_coeff);
+                    break; 
+                case LENNARD_JONES_BCOEF:
+                    processDoubleLine(line, currentFormat, lj_b_coeff);
+                    break; 
+                case BONDS_INC_HYDROGEN:
+                    processIntegerLine(line, currentFormat, bond_inc_h);
+                    break;
+                case BONDS_WITHOUT_HYDROGEN:
+                    processIntegerLine(line, currentFormat, bonds_exc_h);
+                    break;
+                case ANGLES_INC_HYDROGEN:
+                    processIntegerLine(line, currentFormat, angs_inc_h);
+                    break;
+                case ANGLES_WITHOUT_HYDROGEN:
+                    processIntegerLine(line, currentFormat, angs_exc_h);
+                    break;
+                case DIHEDRALS_INC_HYDROGEN:
+                    processIntegerLine(line, currentFormat, dihs_inc_h);
+                    break;
+                case DIHEDRALS_WITHOUT_HYDROGEN:
+                    processIntegerLine(line, currentFormat, dihs_exc_h);
+                    break;
+                case EXCLUDED_ATOMS_LIST:
+                    processIntegerLine(line, currentFormat, exc_atom_list);
+                    break;
+                case HBOND_ACOEF:
+                    processDoubleLine(line, currentFormat, hbond_a_coeff);
+                    break; 
+                case HBOND_BCOEF:
+                    processDoubleLine(line, currentFormat, hbond_b_coeff);
+                    break; 
+                case HBCUT:
+                    processDoubleLine(line, currentFormat, hbcut);
+                    break; 
+                case AMBER_ATOM_TYPE:
+                    processStringLine(line, currentFormat, amber_type);
+                    break; 
+                case TREE_CHAIN_CLASSIFICATION:
+                    processStringLine(line, currentFormat, tree_chain_class);
+                    break; 
+                case JOIN_ARRAY:
+                    processIntegerLine(line, currentFormat, join_array);
+                    break;
+                case IROTAT:
+                    processIntegerLine(line, currentFormat, irotat);
+                    break;
+                case SOLVENT_POINTERS:
+                    processIntegerLine(line, currentFormat, svn_pointers);
+                    break;
+                case ATOMS_PER_MOLECULE:
+                    processIntegerLine(line, currentFormat, atoms_per_mol);
+                    break;
+                case BOX_DIMENSIONS:
+                    processDoubleLine(line, currentFormat, box_dims);
+                    break;
+                case RADIUS_SET:
+                    processStringLine(line, currentFormat, radius_set);
+                    break;
+                case RADII:
+                    processDoubleLine(line, currentFormat, radii);
+                    break;
+                case SCREEN:
+                    processDoubleLine(line, currentFormat, screen);
+                    break;
+                default:
+                    throw SireError::program_bug( QObject::tr(
+                                "Serious problem with the value of the variable "
+                                "currentFlag, '%1'").arg(currentFlag), 
+                                    CODELOC);
+            }
+        }
     }
-  //DEBUG STUFF
-  //qDebug() << " POINTERS " << pointers << " ATOMNAME " << atomName.size() << " CHARGE " << charge.size() << " MASS " << mass.size() << " ATOM_TYPE_INDEX " << atomTypeIndex.size() << " SCREEN " << screen.size();
 
-  //qDebug() << " Finished reading the top file";
+    //DEBUG STUFF
+    //qDebug() << " POINTERS " << pointers << " ATOMNAME " 
+    //         << atom_name.size() << " CHARGE " << charge.size() 
+    //         << " MASS " << mass.size() << " ATOM_TYPE_INDEX " 
+    //         << atom_type_index.size() << " SCREEN " << screen.size();
 
-  // Now read the contents of the crd file to get the coordinates
-  QFile crd_f(crdfile);
+    //qDebug() << " Finished reading the top file";
+
+    // Now read the contents of the crd file to get the coordinates
+    QFile crd_f(crdfile);
   
-  if ( not (crd_f.exists() and crd_f.open(QIODevice::ReadOnly) ) )
+    if ( not (crd_f.exists() and crd_f.open(QIODevice::ReadOnly) ) )
     {
-      throw SireError::file_error(crd_f, CODELOC);
+        throw SireError::file_error(crd_f, CODELOC);
     }
 
-  QTextStream ts2(&crd_f);
-  // the first line contains the title
-  line = ts2.readLine();
-  // the second line contains the number of atoms, read as 1I6
-  line = ts2.readLine();
-  QList<int> temp;
-  FortranFormat crdIntegerFormat = FortranFormat(1, "I", 6, 0);
-  this->processIntegerLine(line, crdIntegerFormat,temp);
-  int crdAtoms = temp[0];
-  //qDebug() << " THERE ARE " << crdAtoms << " ATOMS IN THE CRD FILE";
-  // Check that this number of atoms is compatible with what is in the top file
-  if (pointers[NATOM] != crdAtoms)
-    throw SireError::incompatible_error( QObject::tr(
-                        "The number of atoms in the crd file (%1) does not equal the number "
-                "of atoms in the top file (%2)!")
-		     .arg(crdAtoms).arg(pointers[NATOM]), CODELOC );
-  QList<double> crdCoords;
-  FortranFormat crdDoubleFormat = FortranFormat(6,"E",12,7);
+    QTextStream ts2(&crd_f);
+    
+    // the first line contains the title
+    line = ts2.readLine();
+    
+    // the second line contains the number of atoms, read as 1I6
+    line = ts2.readLine();
 
-  // Must read crdAtoms / 2 lines, but make sure to round up !
-  int crdCoordLines = ( double (crdAtoms) / 2.0 ) + 0.5 ;
-  for (int i=0; i < crdCoordLines ; i++ )
+    QList<int> temp;
+    FortranFormat crd_int_format = FortranFormat(1, "I", 6, 0);
+    processIntegerLine(line, crd_int_format,temp);
+
+    int crd_atoms = temp[0];
+    
+    //qDebug() << " THERE ARE " << crdAtoms << " ATOMS IN THE CRD FILE";
+    // Check that this number of atoms is compatible with what is in the top file
+    if (pointers[NATOM] != crd_atoms)
+        throw SireError::incompatible_error( QObject::tr(
+                    "The number of atoms in the crd file (%1) does not equal the number "
+                    "of atoms in the top file (%2)!")
+                        .arg(crd_atoms).arg(pointers[NATOM]), CODELOC );
+
+    QList<double> crd_coords;
+    FortranFormat crd_double_format = FortranFormat(6,"E",12,7);
+
+    // Must read crdAtoms / 2 lines, but make sure to round up !
+    int crd_coord_lines = ( double (crd_atoms) / 2.0 ) + 0.5 ;
+
+    for (int i=0; i < crd_coord_lines ; i++ )
     {
-      line = ts2.readLine();
-      this->processDoubleLine(line, crdDoubleFormat, crdCoords);
-    }
-  //qDebug() << " THE COORDS ARE " << crdCoords;
-  // And now the box dimensions
-  line = ts2.readLine();
-  QList<double> crdBox;
-  if ( pointers[IFBOX] != 0 )
-    {
-      this->processDoubleLine(line, crdDoubleFormat, crdBox);
-      //qDebug() << " THE BOX DIMENSIONS ARE " << crdBox;
+        line = ts2.readLine();
+        processDoubleLine(line, crd_double_format, crd_coords);
     }
 
-  //qDebug() << " Finished reading the crd file";
+    //qDebug() << " THE COORDS ARE " << crdCoords;
+    // And now the box dimensions
+    line = ts2.readLine();
+    QList<double> crd_box;
 
-  // Now create the atoms and molecules etc..
+    if ( pointers[IFBOX] != 0 )
+    {
+        processDoubleLine(line, crd_double_format, crd_box);
+        //qDebug() << " THE BOX DIMENSIONS ARE " << crdBox;
+    }
 
-  PropertyName coords_property = PropertyName("coordinates");
-  PropertyName charge_property = PropertyName("charge");
-  PropertyName mass_property = PropertyName("mass");
-  PropertyName lj_property = PropertyName("LJ");
-  PropertyName ambertype_property = PropertyName("ambertype");
+    //qDebug() << " Finished reading the crd file";
 
-  PropertyName connectivity_property = PropertyName("connectivity");
-  PropertyName bond_property = PropertyName("bond");
-  PropertyName angle_property = PropertyName("angle");
-  PropertyName dihedral_property = PropertyName("dihedral");
-  PropertyName improper_property = PropertyName("improper");
-  PropertyName nb_property = PropertyName("intrascale");
+    // Now create the atoms and molecules etc..
+
+    PropertyName coords_property = PropertyName("coordinates");
+    PropertyName charge_property = PropertyName("charge");
+    PropertyName mass_property = PropertyName("mass");
+    PropertyName lj_property = PropertyName("LJ");
+    PropertyName ambertype_property = PropertyName("ambertype");
+
+    PropertyName connectivity_property = PropertyName("connectivity");
+    PropertyName bond_property = PropertyName("bond");
+    PropertyName angle_property = PropertyName("angle");
+    PropertyName dihedral_property = PropertyName("dihedral");
+    PropertyName improper_property = PropertyName("improper");
+    PropertyName nb_property = PropertyName("intrascale");
+    
+    Molecules molecules;
+
+    int molnum = 1;
+    int resnum = 1;
+
+    int total_molecules;
+
+    if ( pointers[IFBOX] != 0 )
+    {
+        // When loading a top file setup with a periodic box, 
+        // the number of molecules and atoms per molecule 
+        // has been specified, which makes our life easier
+        total_molecules = svn_pointers[NSPM];
+    }
+    else
+    {
+        // Otherwise we need to figure out the number of molecules 
+        // using the information about bonds
+        //qDebug() << "Information about the position of atoms in molecules is "
+        //            "not present in the top file and must be determined. "
+        //            "This may take a while...";
+        calcNumberMolecules(total_molecules, atoms_per_mol, 
+                            bond_inc_h, bonds_exc_h,
+                            pointers[NATOM], pointers[NBONH], pointers[MBONA]);
+    }
   
-  Molecules molecules;
-
-  int moleculeNumber = 1;
-  int residueNumber = 1;
-
-  int totalMolecules;
-  if ( pointers[IFBOX] != 0 )
+    for (int i=0; i < total_molecules ; i++)
     {
-      /** When loading a top file setup with a periodic box, the number of molecules and atoms per molecule 
-       has been specified, which makes our life easier*/
-      totalMolecules = solventPointers[NSPM];
-    }
-  else
-    {
-      /** Otherwise we need to figure out the number of molecules using the information about bonds*/
-      //qDebug() << " Information about the position of atoms in molecules is not present in the top file and must be determined. This may take a while...";
-      this->calcNumberMolecules(totalMolecules, atomsPerMolecule, 
-      				bondsIncHydrogen, bondsWithoutHydrogen,
-                                pointers[NATOM], pointers[NBONH], pointers[MBONA]);
-    }
-  
-  for (int i=0; i < totalMolecules ; i++)
-    {
-      //qDebug() << " Parameterizing molecule " << moleculeNumber;
-      /** First pass, use StructureEditors to build the layout of the molecule*/
-      MolStructureEditor molstructeditor;
-      int atomsInMolecule = 0;
-      while (atomsInMolecule < atomsPerMolecule[i])
-	{
-	  int atomStart = residuePointer[residueNumber - 1];
-	  // Be careful not to overflow 
-	  int atomEnd;
-	  //qDebug() << " atomStart " << atomStart << " pointers[NRES] " << pointers[NRES] ;
-	  if ( residueNumber < ( pointers[NRES] ) )
-	    atomEnd = residuePointer[residueNumber - 1 + 1 ] - 1;
-	  else
-	    atomEnd = pointers[NATOM] ;
+        //qDebug() << " Parameterizing molecule " << moleculeNumber;
+        /** First pass, use StructureEditors to build the layout of the molecule*/
+        MolStructureEditor molstructeditor;
+        int atoms_in_mol = 0;
 
-	  //qDebug() << "Residue " << residueNumber << " start " << atomStart << " end " << atomEnd;
-	  //       create an empty residue. Use RESIDUE_LABEL for the name
-	  ResStructureEditor resstructeditor = molstructeditor.add( ResNum(residueNumber) );
-	  resstructeditor.rename( ResName( residueLabel[residueNumber - 1]) );
-	  for (int j=atomStart; j <= atomEnd; j++)
-	    {
-	      AtomStructureEditor atomstructeditor = molstructeditor.add( AtomNum(j) );
-	      atomstructeditor.rename( AtomName(atomName[j -1]) );
-	      atomstructeditor.reparent( ResNum(residueNumber) );
-	    }
-	  atomsInMolecule += ( atomEnd - atomStart ) + 1 ;
-	  residueNumber++;
-	}
-      // Create cut groups using a per residue scheme
-      ResidueCutting residue_cutfunc = ResidueCutting();
+        while (atoms_in_mol < atoms_per_mol[i])
+        {
+            int start_atom = res_pointer[resnum - 1];
+            
+            // Be careful not to overflow 
+            int end_atom;
+            //qDebug() << " atomStart " << atomStart << " pointers[NRES] " 
+            //         << pointers[NRES] ;
 
-      molstructeditor = residue_cutfunc(molstructeditor);
+            if ( resnum < ( pointers[NRES] ) )
+                end_atom = res_pointer[resnum - 1 + 1 ] - 1;
+            else
+                end_atom = pointers[NATOM] ;
 
-      Molecule molecule = molstructeditor.commit();
+            //qDebug() << "Residue " << residueNumber << " start " 
+            //         << atomStart << " end " << atomEnd;
+            
+            // create an empty residue. Use RESIDUE_LABEL for the name
+            ResStructureEditor resstructeditor = molstructeditor.add( ResNum(resnum) );
+            resstructeditor.rename( ResName( res_label[resnum - 1]) );
 
-      MolEditor editmol = molecule.edit();
+            for (int j=start_atom; j <= end_atom; ++j)
+            {
+                AtomStructureEditor atomstructeditor = molstructeditor.add( AtomNum(j) );
+                atomstructeditor.rename( AtomName(atom_name[j -1]) );
+                atomstructeditor.reparent( ResNum(resnum) );
+            }
 
-      ConnectivityEditor connectivity = Connectivity(editmol.data()).edit();
-      TwoAtomFunctions bondfuncs(editmol);
-      ThreeAtomFunctions anglefuncs(editmol);
-      FourAtomFunctions dihedralfuncs(editmol);
-      FourAtomFunctions improperfuncs(editmol);
-      CLJNBPairs nbpairs;
-      QHash<AtomNum, QList<AtomNum> > atoms14;
+            atoms_in_mol += ( end_atom - start_atom ) + 1 ;
+            ++resnum;
+        }
 
-      int natoms = editmol.nAtoms();
-      for (int i=0; i < natoms ; ++i)
-	{
-	  //qDebug() << " Parameterizing atom " << i;
-	  // Now that the structure of the molecule has been built, we assign the following 
-	  // atom properties: coordinates, charge, mass, lj , amber_atom_type
-	  AtomEditor editatom = editmol.atom(AtomIdx(i)); 
+        // Create cut groups using a per residue scheme
+        ResidueCutting residue_cutfunc = ResidueCutting();
 
-	  this->setAtomParameters( editatom, editmol, crdCoords, coords_property, 
-				   charge, charge_property,
-				   mass, mass_property, atomTypeIndex, 
-				   nonbondedParmIndex, lennardJonesAcoef, 
-				   lennardJonesBcoef, lj_property,
-				   amberAtomType, ambertype_property, pointers);
-	}
-      
+        molstructeditor = residue_cutfunc(molstructeditor);
 
-      // Find all the bonds that involve an atom in this molecule. 
-      // Because bonds are indexed in two arrays in the top file 
-      // (those without hydrogen atoms and those with hydrogen atoms) 
-      // we have to look in both.
+        Molecule molecule = molstructeditor.commit();
 
-      /** The following routines are slow because for each atom in a molecule we look at all arrays to find entries
-       this is inefficient for solvent molecules. One way to improve efficiency could be to construct all the molecules 
-      first and maintain an array of atom pointers. Then in a single pass create connectivity, bonds, angles, dihedrals 
-      in molecules of matching atoms.*/
+        MolEditor editmol = molecule.edit();
 
-      if (natoms > 1)
-	{
-	  //qDebug() << " Setting up connectivity ";
-	  this->setConnectivity(editmol, pointers[NBONH], 
-				bondsIncHydrogen, 
-				connectivity, connectivity_property);
+        ConnectivityEditor connectivity = Connectivity(editmol.data()).edit();
 
-	  this->setConnectivity(editmol, pointers[MBONA], 
-				bondsWithoutHydrogen,
-				connectivity, connectivity_property);
+        TwoAtomFunctions bondfuncs(editmol);
+        ThreeAtomFunctions anglefuncs(editmol);
+        FourAtomFunctions dihedralfuncs(editmol);
+        FourAtomFunctions improperfuncs(editmol);
 
-	  // Next all the forcefield terms
-	  //qDebug() << " Setting up bonds ";
-	  this->setBonds(editmol, pointers[NBONH],
-			 bondsIncHydrogen, 
-			 bondForceConstant, bondEquilValue,
-			 bondfuncs, bond_property);
+        CLJNBPairs nbpairs;
+        QHash<AtomNum, QList<AtomNum> > atoms14;
+
+        int natoms = editmol.nAtoms();
+
+        for (int i=0; i < natoms ; ++i)
+        {
+            //qDebug() << " Parameterizing atom " << i;
+            // Now that the structure of the molecule has been built, we assign the 
+            // following atom properties: coordinates, charge, mass, lj , amber_atom_type
+            AtomEditor editatom = editmol.atom(AtomIdx(i)); 
+
+            setAtomParameters( editatom, editmol, crd_coords, coords_property, 
+                               charge, charge_property,
+                               mass, mass_property, atom_type_index, 
+                               nb_parm_index, lj_a_coeff, 
+                               lj_b_coeff, lj_property,
+                               amber_type, ambertype_property, pointers);
+        }
+
+        // Find all the bonds that involve an atom in this molecule. 
+        // Because bonds are indexed in two arrays in the top file 
+        // (those without hydrogen atoms and those with hydrogen atoms) 
+        // we have to look in both.
+
+        // The following routines are slow because for each atom in a molecule 
+        // we look at all arrays to find entries this is inefficient for solvent 
+        // molecules. One way to improve efficiency could be to construct all the molecules 
+        // first and maintain an array of atom pointers. Then in a single pass 
+        // create connectivity, bonds, angles, dihedrals in molecules of matching atoms
+        if (natoms > 1)
+        {
+            //qDebug() << " Setting up connectivity ";
+            setConnectivity(editmol, pointers[NBONH], 
+                            bond_inc_h, 
+                            connectivity, connectivity_property);
+
+            setConnectivity(editmol, pointers[MBONA], 
+                            bonds_exc_h,
+                            connectivity, connectivity_property);
+
+            // Next all the forcefield terms
+            //qDebug() << " Setting up bonds ";
+            setBonds(editmol, pointers[NBONH],
+                     bond_inc_h, 
+                     bond_force_constant, bond_equil_value,
+                     bondfuncs, bond_property);
 	  
-	  this->setBonds(editmol, pointers[MBONA],
-			 bondsWithoutHydrogen, 
-			 bondForceConstant, bondEquilValue,
-			 bondfuncs, bond_property);
-	}
-      
-      if (natoms > 2)
-	{
-	  //qDebug() << " Setting up angles ";
-	  this->setAngles(editmol, pointers[NTHETH], 
-			  anglesIncHydrogen, 
-			  angleForceConstant, angleEquilValue,
-			  anglefuncs, angle_property);
+            setBonds(editmol, pointers[MBONA],
+                     bonds_exc_h, 
+                     bond_force_constant, bond_equil_value,
+                     bondfuncs, bond_property);
+        }
+        
+        if (natoms > 2)
+        {
+            //qDebug() << " Setting up angles ";
+            setAngles(editmol, pointers[NTHETH], 
+                      angs_inc_h, 
+                      ang_force_constant, ang_equil_value,
+                      anglefuncs, angle_property);
 	  
-	  this->setAngles(editmol, pointers[MTHETA], 
-			  anglesWithoutHydrogen, 
-			  angleForceConstant, angleEquilValue,
-			  anglefuncs, angle_property);
-	}
-      if (natoms >3)
-	{
-	  //qDebug() << " Setting up dihedrals ";
-	  this->setDihedrals(editmol, pointers[NPHIH],
-			     dihedralsIncHydrogen, 
-			     dihedralForceConstant, dihedralPeriodicity, dihedralPhase,
-			     dihedralfuncs, dihedral_property,
-			     improperfuncs, improper_property,
-			     atoms14);
+            setAngles(editmol, pointers[MTHETA], 
+                      angs_exc_h, 
+                      ang_force_constant, ang_equil_value,
+                      anglefuncs, angle_property);
+        }
+
+        if (natoms >3)
+        {
+            //qDebug() << " Setting up dihedrals ";
+            setDihedrals(editmol, pointers[NPHIH],
+                         dihs_inc_h, 
+                         dih_force_constant, dih_periodicity, dih_phase,
+                         dihedralfuncs, dihedral_property,
+                         improperfuncs, improper_property,
+                         atoms14);
 	  
-	  this->setDihedrals(editmol, pointers[MPHIA],
-			     dihedralsWithoutHydrogen, 
-			     dihedralForceConstant, dihedralPeriodicity, dihedralPhase,
-			     dihedralfuncs, dihedral_property,
-			     improperfuncs, improper_property,
-			     atoms14);
-	}
+            setDihedrals(editmol, pointers[MPHIA],
+                         dihs_exc_h, 
+                         dih_force_constant, dih_periodicity, dih_phase,
+                         dihedralfuncs, dihedral_property,
+                         improperfuncs, improper_property,
+                         atoms14);
+        }
       
-      // Set non bonded pairs
-      if (natoms >1)
-	{
-	  /**foreach (QList<AtomNum> atomnums, atoms14)
-	    {
-	      AtomNum key = atoms14.key(atomnums);
-	      qDebug() << " ATOM  " << key.toString();
-	      foreach (AtomNum atomnum, atomnums)
-		{
-		  qDebug() << " has 14 " << atomnum.toString();
-		}
-		}*/
-	  //qDebug() << " Setting up non bonded pairs ";
-	    this->setNonBondedPairs(editmol, pointers[NEXT],
-				    numberExcludedAtoms, excludedAtomsList,
-				    nbpairs, nb_property,
-				    atoms14);
-	}
-      molecule = editmol.commit();
+        // Set non bonded pairs
+        if (natoms >1)
+        {
+            setNonBondedPairs(editmol, pointers[NEXT],
+                              num_excluded_atoms, exc_atom_list,
+                              nbpairs, nb_property,
+                              atoms14);
+        }
+        
+        molecule = editmol.commit();
 
-      molecules.add(molecule);
-      moleculeNumber++;
+        molecules.add(molecule);
+        ++molnum;
     }
 
-  //qDebug() << " Getting space information "; 
-  // Now the box information
-  SpacePtr spce;
+    //qDebug() << " Getting space information "; 
+    // Now the box information
+    SpacePtr spce;
 
-  if ( pointers[IFBOX] == 1)
+    if ( pointers[IFBOX] == 1)
     {
-      /** Rectangular box, dimensions read from the crd file */
-      Vector dimensions = Vector( crdBox[0], crdBox[1], crdBox[2] );
-      //qDebug() << " We have a periodic box of dimensions  " << crdBox[0] << crdBox[1] << crdBox[2] ; 
-      // Check that dimensions are compatible with a periodic rectangular box
-      if ( not ( crdBox[3] == 90.0 && crdBox[4] == 90.0 && crdBox[5] == 90.0 ) )
-	throw SireError::incompatible_error( QObject::tr("The top file specifies a rectangular box, "
-	      "but the box angles are not 90 degrees ('%1', '%2', '%3' )")
-	      .arg(crdBox[3]).arg(crdBox[4]).arg(crdBox[5]), CODELOC );
-      spce = PeriodicBox( dimensions ).asA<Space>() ;
-      //spce = PeriodicBox( Vector ( crdBox[0], crdBox[1], crdBox[2] ) ).asA<Space>() ;
-      //qDebug() << " periodic box " << spce.toString() ; 
+        /** Rectangular box, dimensions read from the crd file */
+        Vector dimensions( crd_box[0], crd_box[1], crd_box[2] );
+
+        //qDebug() << "We have a periodic box of dimensions" 
+        //         << crdBox[0] << crdBox[1] << crdBox[2]; 
+
+        // Check that dimensions are compatible with a periodic rectangular box
+        if ( not ( crd_box[3] == 90.0 && crd_box[4] == 90.0 && crd_box[5] == 90.0 ) )
+            throw SireError::incompatible_error( QObject::tr(
+                        "The top file specifies a rectangular box, "
+                        "but the box angles are not 90 degrees ('%1', '%2', '%3' )")
+                                .arg(crd_box[3]).arg(crd_box[4]).arg(crd_box[5]), CODELOC );
+
+        spce = PeriodicBox( dimensions );
+        //spce = PeriodicBox( Vector ( crdBox[0], crdBox[1], crdBox[2] ) ).asA<Space>() ;
+        //qDebug() << " periodic box " << spce.toString() ; 
     }
-  else if ( pointers[IFBOX] == 2 ) 
+    else if ( pointers[IFBOX] == 2 ) 
     {
-      /** Truncated Octahedral box*/
-      throw SireError::incompatible_error( QObject::tr("Sire does not yet support a truncated octahedral box")
-					   , CODELOC );
+        /** Truncated Octahedral box*/
+        throw SireError::incompatible_error( QObject::tr(
+                            "Sire does not yet support a truncated octahedral box"),
+                                CODELOC );
     }
-  else
+    else
     {
-      /** Default is a non periodic system */
-      spce = Cartesian().asA<Space>();
+        /** Default is a non periodic system */
+        spce = Cartesian();
     }
   
-  return tuple<Molecules, SpacePtr>(molecules, spce);
-}
-
-/** Processes a line that starts with %FLAG*/
-void Amber::processFlagLine(const QStringList &words, int &flag)
-{
-  //%FLAG TITLE
-  if (words[1] == "TITLE")
-    flag = TITLE;
-  else if (words[1] == "POINTERS")
-    flag = POINTERS;
-  else if (words[1] == "ATOM_NAME")
-    flag = ATOM_NAME;
-  else if (words[1] == "CHARGE")
-    flag = CHARGE;
-  else if (words[1] == "MASS")
-    flag = MASS;
-  else if (words[1] == "ATOM_TYPE_INDEX")
-    flag = ATOM_TYPE_INDEX;
-  else if (words[1] == "NUMBER_EXCLUDED_ATOMS")
-    flag = NUMBER_EXCLUDED_ATOMS;
-  else if (words[1] == "NONBONDED_PARM_INDEX")
-    flag = NONBONDED_PARM_INDEX;
-  else if (words[1] == "RESIDUE_LABEL")
-    flag = RESIDUE_LABEL;
-  else if (words[1] == "RESIDUE_POINTER")
-    flag = RESIDUE_POINTER;
-  else if (words[1] == "BOND_FORCE_CONSTANT")
-    flag = BOND_FORCE_CONSTANT;
-  else if (words[1] == "BOND_EQUIL_VALUE")
-    flag = BOND_EQUIL_VALUE;
-  else if (words[1] == "ANGLE_FORCE_CONSTANT")
-    flag = ANGLE_FORCE_CONSTANT;
-  else if (words[1] == "ANGLE_EQUIL_VALUE")
-    flag = ANGLE_EQUIL_VALUE;
-  else if (words[1] == "DIHEDRAL_FORCE_CONSTANT")
-    flag = DIHEDRAL_FORCE_CONSTANT;
-  else if (words[1] == "DIHEDRAL_PERIODICITY")
-    flag = DIHEDRAL_PERIODICITY;
-  else if (words[1] == "DIHEDRAL_PHASE")
-    flag = DIHEDRAL_PHASE;
-  else if (words[1] == "SOLTY")
-    flag = SOLTY;
-  else if (words[1] == "LENNARD_JONES_ACOEF")
-    flag = LENNARD_JONES_ACOEF;
-  else if (words[1] == "LENNARD_JONES_BCOEF")
-    flag = LENNARD_JONES_BCOEF;
-  else if (words[1] == "BONDS_INC_HYDROGEN")
-    flag = BONDS_INC_HYDROGEN;
-  else if (words[1] == "BONDS_WITHOUT_HYDROGEN")
-    flag = BONDS_WITHOUT_HYDROGEN;
-  else if (words[1] == "ANGLES_INC_HYDROGEN")
-    flag = ANGLES_INC_HYDROGEN;
-  else if (words[1] == "ANGLES_WITHOUT_HYDROGEN")
-    flag = ANGLES_WITHOUT_HYDROGEN;
-  else if (words[1] == "DIHEDRALS_INC_HYDROGEN")
-    flag = DIHEDRALS_INC_HYDROGEN;
-  else if (words[1] == "DIHEDRALS_WITHOUT_HYDROGEN")
-    flag = DIHEDRALS_WITHOUT_HYDROGEN;
-  else if (words[1] == "EXCLUDED_ATOMS_LIST")
-    flag = EXCLUDED_ATOMS_LIST;
-  else if (words[1] == "HBOND_ACOEF")
-    flag = HBOND_ACOEF;
-  else if (words[1] == "HBOND_BCOEF")
-    flag = HBOND_BCOEF;
-  else if (words[1] == "HBCUT")
-    flag = HBCUT;
-  else if (words[1] == "AMBER_ATOM_TYPE")
-    flag = AMBER_ATOM_TYPE;
-  else if (words[1] == "TREE_CHAIN_CLASSIFICATION")
-    flag = TREE_CHAIN_CLASSIFICATION;
-  else if (words[1] == "JOIN_ARRAY")
-      flag = JOIN_ARRAY;
-  else if (words[1] == "IROTAT")
-      flag = IROTAT;
-  else if (words[1] == "SOLVENT_POINTERS")
-      flag = SOLVENT_POINTERS;
-  else if (words[1] == "ATOMS_PER_MOLECULE")
-      flag = ATOMS_PER_MOLECULE;
-  else if (words[1] == "BOX_DIMENSIONS")
-     flag = BOX_DIMENSIONS;
-  else if (words[1] == "RADIUS_SET")
-     flag = RADIUS_SET;
-  else if (words[1] == "RADII")
-    flag = RADII;
-  else if (words[1] == "SCREEN")
-    flag = SCREEN;
-  else
-    throw SireError::program_bug( QObject::tr(
-      "Does not know what to do with this flag: '%1'").arg(words[1]), CODELOC );
-}
-
-/** Processes a line that starts with %FORMAT*/
-void Amber::processFormatLine(const QStringList &words, FortranFormat &format)
-{
-  //%FORMAT(20a4)
-  QString tmp = words[0];
-  tmp = tmp.remove( QString("%FORMAT(") );
-  tmp = tmp.remove( QChar(')') );
-  // QRegExp must match either (a,I,E)
-  QString match = " ";
-  QRegExp rx("[aIE]");
-  
-  if (tmp.contains(rx) )
-    match = rx.cap(0);
-  else
-    throw SireError::program_bug( QObject::tr(
-      "The format line '%1' does not contain a supported format type").arg(tmp), CODELOC);
-
-  QStringList elements = tmp.split(match);
-  bool ok;
-  int repeat = elements[0].toInt(&ok);
-  QStringList elem2;
-  int size;
-  int decimal;
-  if (elements[1].contains(".")) 
-    {
-      elem2 =  elements[1].split(".");
-      size = elem2[0].toInt(&ok);
-      decimal = elem2[1].toInt(&ok);
-    }
-  else
-    {
-      size = elements[1].toInt(&ok);
-      decimal = 0;
-    }
-  format.repeat = repeat;
-  format.type = match;
-  format.size = size;
-  format.decimal = decimal;
-  //qDebug() << "MY FORMAT " << format.repeat << " " << format.type << " " << format.size << " " << format.decimal;
-}
-
-/** Processes the line that contains the VERSION of the top file*/
-void Amber::processVersionLine(const QStringList &words, QString &version)
-{
-  //%VERSION VERSION_STAMP = V0001.000 DATE = 05/22/06  12:10:21
-  version = words[3];
-}
-
-/** Processes the title of the top file*/
-void Amber::processTitleLine(const QString &line, const FortranFormat &format, QString &title)
-{
-  //FORMAT(20a4) reads up to 20 times 4 characters and treat them as a string
-  // However, FORMAT is ignored in the TOP file, so we merely set title to line
-  //qDebug() << "TITLE LINE IS " << line;
-  title = line;
-}
-
-/** Processes a line of INTEGER in the top file */
-void Amber::processIntegerLine(const QString &line, const FortranFormat &format, QList<int> &intarray)
-{
-  //FORMAT(10i8) reads up to 10 times 8 characters and treat them as an integer
-  if ( format.type != "I") 
-    throw SireError::program_bug( QObject::tr(
-	      "Format '%1' is not supported, should be I").arg(format.type), CODELOC);
-  int count = 0;
-  for (int i= 0 ; i < line.size() ; i = i + format.size )
-    {
-      if ( ++count > format.repeat || (i + format.size) > line.size() )
-	break;
-      QString element = line.mid(i, format.size );
-      bool ok;
-      int data = element.toInt(&ok);
-      intarray.append(data);
-    }
-}
-
-/** Processes a line of STRINGS in the top file */
-void Amber::processStringLine(const QString &line, const FortranFormat &format, QStringList &stringarray)
-{
-  //FORMAT(20a4) 
-  if ( format.type != "a") 
-    throw SireError::program_bug( QObject::tr(
-	      "Format '%1' is not supported, should be a").arg(format.type), CODELOC);
-  int count = 0;
-  for (int i= 0 ; i < line.size() ; i = i + format.size )
-    {
-      if ( ++count > format.repeat || (i + format.size) > line.size() )
-	break;
-      QString str = line.mid(i, format.size );
-      // Should we remove trailing spaces?
-      str = str.trimmed();
-      // Terminate if empty string
-      if (str.size() == 0)
-	break;
-      stringarray.append(str);
-    }
-}
-
-/** Processes a line of type DOUBLE in the top file*/
-void Amber::processDoubleLine(const QString &line, const FortranFormat &format, QList<double> &doublearray)
-{
-  //FORMAT(5E16.8) 
-  if ( format.type != "E") 
-    throw SireError::program_bug( QObject::tr(
-	      "Format '%1' is not supported, should be E").arg(format.type), CODELOC);
-  int count = 0;
-  for (int i= 0 ; i < line.size() ; i = i + format.size )
-    {
-      if ( ++count > format.repeat || (i + format.size) > line.size() )
-	break;
-      QString element = line.mid(i, format.size );
-      bool ok;
-      double data = element.toDouble(&ok);
-      //qDebug() << "element " << element << "Data " << data;
-      doublearray.append(data);
-    }
-}
-
-
-void Amber::setAtomParameters(AtomEditor &editatom, MolEditor &editmol, QList<double> &crdCoords, 
-				  PropertyName &coords_property, QList<double> &charge, PropertyName &charge_property, 
-				  QList<double> &mass, PropertyName &mass_property, QList<int> &atomTypeIndex, 
-				  QList<int> &nonbondedParmIndex, QList<double> &lennardJonesAcoef, 
-				  QList<double> &lennardJonesBcoef, PropertyName &lj_property, 
-				  QStringList &amberAtomType, PropertyName &ambertype_property, QList<int> &pointers)
-{
-  //AtomEditor editatom = editmol.atom(AtomIdx(atomIndex));
-  int atomNumber = editatom.number().value();
-  
-  //qDebug() << " Coordinates for number..." << atomNumber;
-  // set the coordinates. index into coordinates array is idx = 3 * ( atom.number().value() -1)
-  int array_index = 3 * ( atomNumber - 1 );
-  //qDebug() << " array_index " << array_index;
-  //qDebug() << " crdCoords.size() " << crdCoords.size();
-  //qDebug() << " crdCoords[ array_index ] " << crdCoords[array_index];
-  //qDebug() << " crdCoords[ array_index + 1 ] " << crdCoords[array_index + 1 ];
-  //qDebug() << " crdCoords[ array_index + 2 ] " << crdCoords[array_index + 2 ];
-
-  Vector coords = Vector(crdCoords[array_index], crdCoords[array_index+1],crdCoords[array_index+2] );
-  editatom.setProperty( coords_property.source(), coords);
-
-  //qDebug() << " Coords " << coords.x() << coords.y() << coords.z() ;
-
-  //qDebug() << " Charges...";
-  // set the charges
-  SireUnits::Dimension::Charge chg = ( charge[atomNumber - 1] / this->AMBERCHARGECONV ) * mod_electron;
-  editatom.setProperty( charge_property, chg);
-  
-  //qDebug() << " Masses...";
-  // set the masses
-  SireUnits::Dimension::MolarMass ms = mass[atomNumber - 1] * g_per_mol; 
-  editatom.setProperty( mass_property.source(), ms);
-  
-  // set the LJ parameters
-  // For atom 'i' first get the 'itype' from atomTypeIndex
-  // Then lookup the index 'inbparams' for an interaction of 'itype' with 'itype' in nonbondedParmIndex
-  // which is calculated as 'inbparams' = pointers[NTYPES]*(itype-1)+itype
-  // Then lookup the values of A & B in lennardJonesAcoef and lennardJonesBcoef
-  // iAcoef = lennardJonesAcoef[inbparams] iBcoef =  lennardJonesBcoef[inbparams]
-  
-  //qDebug() << " LJ...";
-
-  int itype = atomTypeIndex[ atomNumber - 1 ];
-  int inbparams = nonbondedParmIndex[ pointers[NTYPES] * (itype - 1) + itype - 1 ];
-  double iAcoef = lennardJonesAcoef[ inbparams - 1 ];
-  double iBcoef = lennardJonesBcoef[ inbparams - 1 ];
-  double sigma, epsilon, rstar;
-  // is there a SMALL?
-  if (iAcoef < 0.000001)
-    {
-      sigma = 0.0;
-      epsilon = 0.0;
-      rstar = 0.0;
-    }
-  else
-    {
-      // and convert lennardJonesAcoef & lennardJonesBcoef into angstroms and kcal/mol-1
-      sigma = std::pow( iAcoef / iBcoef ,  1/6. );
-      epsilon = pow_2( iBcoef ) / (4*iAcoef);
-      rstar = (sigma/2.)* std::pow(2.0, 1/6. ) ;
-    }
-  //qDebug() << " Atom " << atomNumber << " itype " << itype << " inbparams " << inbparams << " iAcoef " << iAcoef << " iBcoef " << iBcoef << " sigma " << sigma << " epsilon " << epsilon << " rstar " << rstar ;
-  // Note that the amber par files give rstar=(sigma/2)*(2**(1/6.)) instead of sigma
-  LJParameter lj( sigma * angstrom, epsilon * kcal_per_mol);
-  editatom.setProperty( lj_property.source(), lj);
-  
-  
-  //qDebug() << " Type...";
-  // set the Amber atom type
-  QString ambertype = amberAtomType[ atomNumber - 1 ];
-  editatom.setProperty( ambertype_property.source(), ambertype);
-
-  editmol = editatom.molecule();
-}
-
-/** Set the connectivity property of molecule editmol*/
-void Amber::setConnectivity(MolEditor &editmol, int pointer, 
-			    QList<int> &bondsArray, 
-			    ConnectivityEditor &connectivity, PropertyName &connectivity_property)
-{
-  
-  //QSet<AtomNum> moleculeAtomNumbers = this->_pvt_selectAtomsbyNumber(editmol);
-  int atomStart = editmol.atoms().at(0).number().value();
-  int atomEnd = editmol.atoms().at(-1).number().value();
-  //qDebug() << " atomStart " << atomStart << " atomEnd " << atomEnd;
-  for (int i=0 ; i < 3 * pointer ; i = i + 3)
-    {
-      /** Might be faster*/
-      int index0 = bondsArray[ i ] / 3 + 1 ;
-      int index1 = bondsArray[ i + 1] / 3 + 1 ;
-      if ( index0 < atomStart || index0 > atomEnd || 
-	   index1 < atomStart || index1 > atomEnd )
-	continue;
-      AtomNum number0 = AtomNum( index0 );
-      AtomNum number1 = AtomNum( index1 );
-      AtomIdx atom0 = editmol.select( number0 ).index();
-      AtomIdx atom1 = editmol.select( number1 ).index();
-      connectivity.connect( atom0, atom1 );
-      //if ( moleculeAtomNumbers.contains(number0) && moleculeAtomNumbers.contains(number1) ) 
-      //	{
-      //	  AtomIdx atom0 = editmol.select( number0 ).index();
-      //	  AtomIdx atom1 = editmol.select( number1 ).index();
-      //	  //qDebug() << " Connect " << number0 << " and " << number1;
-      //	  connectivity.connect( atom0, atom1 );
-      //	}
-    }
-  editmol.setProperty( connectivity_property.source(), connectivity.commit() );
-}
-
-/** Set the property bonds for molecule editmol*/
-void Amber::setBonds(MolEditor &editmol, int pointer,
-		     QList<int> &bondsArray, 
-		     QList<double> &bondForceConstant, QList<double> &bondEquilValue,
-		     TwoAtomFunctions &bondfuncs, PropertyName &bond_property)
-{
-  //QSet<AtomNum> moleculeAtomNumbers = this->_pvt_selectAtomsbyNumber(editmol);
-  int atomStart = editmol.atoms().at(0).number().value();
-  int atomEnd = editmol.atoms().at(-1).number().value();
-
-  for (int i=0 ; i < 3 * pointer ; i = i + 3)
-    {
-      int index0 = bondsArray[ i ] / 3 + 1 ;
-      int index1 = bondsArray[ i + 1] / 3 + 1 ;
-      if ( index0 < atomStart || index0 > atomEnd || 
-	   index1 < atomStart || index1 > atomEnd )
-	continue;
-      int paramIndex = bondsArray[ i + 2 ];
-
-      AtomNum number0 = AtomNum( index0 );
-      AtomNum number1 = AtomNum( index1 );
-      AtomIdx atom0 = editmol.select( number0 ).index();
-      AtomIdx atom1 = editmol.select( number1 ).index();
-
-      Symbol r = InternalPotential::symbols().bond().r();
-
-      double k = bondForceConstant[ paramIndex -1 ];
-      double r0 = bondEquilValue[ paramIndex - 1 ];
-
-      Expression bondfunc = k * SireMaths::pow_2(r - r0);
-      bondfuncs.set( atom0, atom1, bondfunc );
-      /** if ( moleculeAtomNumbers.contains(number0) && moleculeAtomNumbers.contains(number1) ) 
-	{
-	  AtomIdx atom0 = editmol.select( number0 ).index();
-	  AtomIdx atom1 = editmol.select( number1 ).index();
-
-	  Symbol r = InternalPotential::symbols().bond().r();
-
-	  double k = bondForceConstant[ paramIndex -1 ];
-	  double r0 = bondEquilValue[ paramIndex - 1 ];
-
-	  Expression bondfunc = k * SireMaths::pow_2(r - r0);
-	  bondfuncs.set( atom0, atom1, bondfunc );
-	  }*/
-    }
-  editmol.setProperty( bond_property.source(), bondfuncs );
-}
-
-void Amber::setAngles(MolEditor &editmol, int pointer,
-		      QList<int> &anglesArray, 
-		      QList<double> &angleForceConstant, QList<double> &angleEquilValue,
-		      ThreeAtomFunctions &anglefuncs, PropertyName &angle_property)
-{
-  //QSet<AtomNum> moleculeAtomNumbers = this->_pvt_selectAtomsbyNumber(editmol);
-  int atomStart = editmol.atoms().at(0).number().value();
-  int atomEnd = editmol.atoms().at(-1).number().value();
-  
-  for (int i=0 ; i < 4 * pointer ; i = i + 4)
-    {
-      int index0 = anglesArray[ i ] / 3 + 1 ;
-      int index1 = anglesArray[ i + 1] / 3 + 1 ;
-      int index2 = anglesArray[ i + 2] / 3 + 1 ;
-      if ( index0 < atomStart || index0 > atomEnd || 
-	   index1 < atomStart || index1 > atomEnd ||
-	   index2 < atomStart || index2 > atomEnd )
-	continue;
-      AtomNum number0 = AtomNum( index0 );
-      AtomNum number1 = AtomNum( index1 );
-      AtomNum number2 = AtomNum( index2 );
-      int paramIndex = anglesArray[ i + 3 ];
-      AtomIdx atom0 = editmol.select( number0 ).index();
-      AtomIdx atom1 = editmol.select( number1 ).index();
-      AtomIdx atom2 = editmol.select( number2 ).index();
-      
-      Symbol theta = InternalPotential::symbols().angle().theta();
-      
-      double k = angleForceConstant[ paramIndex - 1 ];
-      double theta0 = angleEquilValue[ paramIndex - 1 ];// radians
-      
-      Expression anglefunc = k * SireMaths::pow_2(theta - theta0);
-      anglefuncs.set( atom0, atom1, atom2, anglefunc );
-      /**if ( moleculeAtomNumbers.contains(number0) && 
-	   moleculeAtomNumbers.contains(number1) && 
-	   moleculeAtomNumbers.contains(number2)  ) 
-	{
-	  AtomIdx atom0 = editmol.select( number0 ).index();
-	  AtomIdx atom1 = editmol.select( number1 ).index();
-	  AtomIdx atom2 = editmol.select( number2 ).index();
-
-	  Symbol theta = InternalPotential::symbols().angle().theta();
-
-	  double k = angleForceConstant[ paramIndex - 1 ];
-	  double theta0 = angleEquilValue[ paramIndex - 1 ];// radians
-
-	  Expression anglefunc = k * SireMaths::pow_2(theta - theta0);
-	  anglefuncs.set( atom0, atom1, atom2, anglefunc );
-	  }*/
-    }
-  editmol.setProperty( angle_property.source(), anglefuncs );
-}
-
-void Amber::setDihedrals(MolEditor &editmol, int pointer,
-			 QList<int> &dihedralsArray, 
-			 QList<double> &dihedralForceConstant, QList<double> &dihedralPeriodicity, QList<double> &dihedralPhase,
-			 FourAtomFunctions &dihedralfuncs, PropertyName &dihedral_property,
-			 FourAtomFunctions &improperfuncs, PropertyName &improper_property,
-			 QHash<AtomNum, QList<AtomNum> > &atoms14)
-{
-  //QSet<AtomNum> moleculeAtomNumbers = this->_pvt_selectAtomsbyNumber(editmol);
-  int atomStart = editmol.atoms().at(0).number().value();
-  int atomEnd = editmol.atoms().at(-1).number().value();
-  QHash< DofID, Expression > improperHash;
-  QHash< DofID, Expression > dihedralHash;
-  
-  for (int i= 0 ; i < 5 * pointer ; i = i + 5)
-    {
-      bool ignored = false;
-      bool improper = false;
-
-      //qDebug() << " RAW IDXs " << dihedralsArray[ i ] << dihedralsArray[ i +1 ] << dihedralsArray[ i + 2 ] << dihedralsArray[ i + 3] << dihedralsArray[ i + 4];
-
-      int index0 = dihedralsArray[ i ] ;
-      index0 = index0 / 3 + 1 ;
-
-      int index1 = dihedralsArray[ i + 1 ] ;
-      index1 = index1 / 3 + 1 ;
-
-      int index2 = dihedralsArray[ i + 2 ] ;
-      // Note that if index2 is negative it indicates that end group interactions are ignored (= non bonded)
-      // this could be because this quad of atoms has already been set in the top file (for multi term dihedrals)
-      // or because the 1,4 interaction has already been counted (for ring systems). 
-      if (index2 < 0)
-	{
-	  ignored = true;
-	  index2 = - index2 ;
-	}
-      index2 = index2 / 3 + 1 ;
-      
-      int index3 = dihedralsArray[ i + 3 ] ;
-      // Note that if index3 is negative, it indicates that the dihedral is an improper
-      if (index3 < 0)
-	{
-	  improper = true;
-	  index3 = -index3;
-	}
-      index3 = index3 / 3 + 1 ;
-
-      if ( index0 < atomStart || index0 > atomEnd || 
-	   index1 < atomStart || index1 > atomEnd ||
-	   index2 < atomStart || index2 > atomEnd ||
-	   index3 < atomStart || index3 > atomEnd )
-	continue;
-
-      int paramIndex = dihedralsArray[ i + 4 ];
-
-      AtomNum number0 = AtomNum( index0 );
-      AtomNum number1 = AtomNum( index1 );
-      AtomNum number2 = AtomNum( index2 );
-      AtomNum number3 = AtomNum( index3 );
-      
-      Symbol phi = InternalPotential::symbols().dihedral().phi();
-
-      double k = dihedralForceConstant[ paramIndex - 1 ];// kcal_per_mol
-      double periodicity = dihedralPeriodicity[ paramIndex - 1] * radians.to(radians);
-      double phase = dihedralPhase[ paramIndex - 1];
-	  
-      Expression dihedral_func = k * ( 1 + Cos( periodicity * ( phi - 0 ) - phase ) );
-	  
-      Atom atom0 = editmol.select( number0 );
-      Atom atom1 = editmol.select( number1 );
-      Atom atom2 = editmol.select( number2 );
-      Atom atom3 = editmol.select( number3 );
-      
-      /** Actually, we just save the terms in an array of atom indices because some dihedrals may have 
-	  multi-term*/
-      if (improper and k > 0.00001) 
-	{
-	  //qDebug() << "IMPROPER" << atom0.name().value() << atom1.name().value() << atom2.name().value() << atom3.name().value() << " K " << k << " period " << periodicity << " phase " << phase ;
-	  DofID improperid = DofID( atom0.index(), atom1.index(), atom2.index(), atom3.index());
-	  if ( improperHash.contains(improperid) )
-	    improperHash[improperid] += dihedral_func;
-	  else
-	    improperHash.insert(improperid, dihedral_func);
-	}
-      else if ( k > 0.00001)
-	{
-	  //qDebug() << " DIHEDRAL " << atom0.name().value() << atom1.name().value() << atom2.name().value() << atom3.name().value() << " K " << k << " period " << periodicity << " phase " << phase ;
-	  DofID dihid = DofID( atom0.index(), atom1.index(), atom2.index(), atom3.index() );
-	  if ( dihedralHash.contains(dihid) )
-	    dihedralHash[dihid] += dihedral_func;
-	  else
-	    dihedralHash.insert( dihid, dihedral_func);
-	}
-      if (not ignored and not improper)
-	{
-	  /**Save this in 14 array */
-	  if (not atoms14.contains(atom0.number()))
-	    {
-	      QList<AtomNum> list;
-	      atoms14.insert( atom0.number(), list);
-	    }
-	  /** Not sure this can happens but to be safe.. */
-	  if ( not atoms14[atom0.number()].contains(atom3.number()) )
-	    atoms14[atom0.number()].append(atom3.number());
-	  
-	  if (not atoms14.contains(atom3.number()))
-	    {
-	      QList<AtomNum> list;
-	      atoms14.insert( atom3.number(), list);
-	    }
-	  if ( not atoms14[atom3.number()].contains(atom0.number()) )
-	    atoms14[atom3.number()].append(atom0.number());
-	}
-
-      /**if ( moleculeAtomNumbers.contains(number0) && 
-	   moleculeAtomNumbers.contains(number1) && 
-	   moleculeAtomNumbers.contains(number2) && 
-	   moleculeAtomNumbers.contains(number3) ) 
-	{
-	  //qDebug() << "indices " << index0 << index1 << index2 << index3 << paramIndex;
-
-	  double k = dihedralForceConstant[ paramIndex - 1 ];// kcal_per_mol
-	  double periodicity = dihedralPeriodicity[ paramIndex - 1] * radians.to(radians);
-	  double phase = dihedralPhase[ paramIndex - 1];
-	  
-	  Expression dihedral_func = k * ( 1 + Cos( periodicity * ( phi - 0 ) - phase ) );
-	  
-	  Atom atom0 = editmol.select( number0 );
-	  Atom atom1 = editmol.select( number1 );
-	  Atom atom2 = editmol.select( number2 );
-	  Atom atom3 = editmol.select( number3 );
-	  
-	  if (improper and k > 0.00001) 
-	    {
-
-	      //qDebug() << "IMPROPER" << atom0.name().value() << atom1.name().value() << atom2.name().value() << atom3.name().value() << " K " << k << " period " << periodicity << " phase " << phase ;
-	      DofID improperid = DofID( atom0.index(), atom1.index(), atom2.index(), atom3.index());
-	      if ( improperHash.contains(improperid) )
-		improperHash[improperid] += dihedral_func;
-	      else
-	      	improperHash.insert(improperid, dihedral_func);
-	      improperfuncs.set( atom0.index(), atom1.index(), atom2.index(), atom3.index(), dihedral_func);
-	    }
-	  else if ( k > 0.00001)
-	    {
-	      //qDebug() << " DIHEDRAL " << atom0.name().value() << atom1.name().value() << atom2.name().value() << atom3.name().value() << " K " << k << " period " << periodicity << " phase " << phase ;
-	      DofID dihid = DofID( atom0.index(), atom1.index(), atom2.index(), atom3.index() );
-	      if ( dihedralHash.contains(dihid) )
-		dihedralHash[dihid] += dihedral_func;
-	      else
-		dihedralHash.insert( dihid, dihedral_func);
-	      //dihedralfuncs.set( atom0.index(), atom1.index(), atom2.index(), atom3.index(), dihedral_func);
-	    }
-	  
-	  if (not ignored and not improper)
-	    {
-	      if (not atoms14.contains(atom0.number()))
-		{
-		  QList<AtomNum> list;
-		  atoms14.insert( atom0.number(), list);
-		}
-	      if ( not atoms14[atom0.number()].contains(atom3.number()) )
-		atoms14[atom0.number()].append(atom3.number());
-
-	      if (not atoms14.contains(atom3.number()))
-		{
-		  QList<AtomNum> list;
-		  atoms14.insert( atom3.number(), list);
-		}
-	      if ( not atoms14[atom3.number()].contains(atom0.number()) )
-		atoms14[atom3.number()].append(atom0.number());
-	    }
-	}*/
-    }
-  /** We can now create the appropriate dihedrals*/
-  QHash<DofID, Expression>::const_iterator i = dihedralHash.constBegin();
-  while (i != dihedralHash.constEnd()) 
-    {
-      dihedralfuncs.set( i.key().atom0(), i.key().atom1(), i.key().atom2(), i.key().atom3(), i.value() );
-      ++i;
-    }
-  i = improperHash.constBegin();
-  while (i != improperHash.constEnd()) 
-    {
-      improperfuncs.set( i.key().atom0(), i.key().atom1(), i.key().atom2(), i.key().atom3(), i.value() );
-      ++i;
-    }
-
-  editmol.setProperty( dihedral_property.source(), dihedralfuncs ); 
-  editmol.setProperty( improper_property.source(), improperfuncs );  
-}
-
-void Amber::setNonBondedPairs(MolEditor &editmol, int pointer,
-			      QList<int> &numberExcludedAtoms, QList<int> &excludedAtomsList,
-			      CLJNBPairs &nbpairs, PropertyName &nb_property,
-			      QHash<AtomNum, QList<AtomNum> > &atoms14)
-{
-  // For each pair of atoms within a molecule
-  // --> if 1,2 or 1,3 CLJScaleFactor(0,0)
-  // --> if 1,4 CLJScaleFactor( 1/ 1.2 , 1 / 2. )
-  // the TOP file stores this information in numberExcludedAtoms, excludedAtomsList, pointers[NEXT]
-  // however it does not discriminates 1,4 from 1,2 or 1,3. So the solution is to get setDihedrals to return 
-  // a list of 1,4 atoms.
-  // --> if 1,5 or more CLJScaleFactor ( 1, 1 )
-  
-  // this is the default situation
-  nbpairs = CLJNBPairs(editmol.data().info(), CLJScaleFactor(1.0,1.0));
-  int natoms = editmol.nAtoms();
-  // find the excluded atoms of i
-  // IEXCL = SUM(NUMEX(j), j=1,i-1)
-  // then excluded atoms are NATEX(IEXCL) to NATEX(IEXCL+NUMEX(i))
-  // if excluded and in 1,4  CLJScaleFactor( 1/ 1.2 , 1 / 2. )
-  // if excluded and not in 1,4 CLJScaleFactor(0,0)
-  // if not excluded CLJScaleFactor ( 1, 1 )
-  for (int i = 0; i < natoms ; i ++ )
-    {
-      Atom atom0 = editmol.atom(AtomIdx(i));
-      // skip itself
-      nbpairs.set( atom0.cgAtomIdx(), atom0.cgAtomIdx(), 
-		   CLJScaleFactor(0.0, 0.0) );
-
-      // Excluded atoms of atom0?
-      int iexcl = 0;
-      int atomNum = atom0.number();
-      // TODO OPT 1: save previous values so no need to recompute from scratch
-      for ( int j = 0 ; j < ( atomNum - 1 ); j++ )
-	iexcl += numberExcludedAtoms[j];
-
-      QList<Atom> excludedAtoms;
-      //qDebug() << " Looking at ATOM " << atomNum << atom0.toString();
-      //qDebug() << " iexcl is " << iexcl << " numberExcludedAtoms[ i ] " <<  numberExcludedAtoms[ atomNum - 1 ];
-      for ( int j = iexcl ; j < iexcl + numberExcludedAtoms[ atomNum - 1 ] ; j++ )
-	{
-	  int jnumber = excludedAtomsList[ j ];
-	  //qDebug() << " jnumber " << jnumber;
-	  if (jnumber > 0)
-	    {
-	      Atom excludedAtom = editmol.atom( AtomNum( jnumber  ) );
-	      //qDebug() << " EXCLUDED ATOM OF " << atomNum << " : " << jnumber;
-	      excludedAtoms.append(excludedAtom);
-	    }
-	}
-
-      int nexcluded = excludedAtoms.size();
-      if ( nexcluded == 0 )
-      	continue;
-      
-      for ( int j = 0 ; j < nexcluded ; j++ )
-	{
-	  double cscl;
-	  double ljscl;
-	  Atom atom1 = excludedAtoms.at(j);
-
-	  if ( atoms14[ atom0.number() ].contains( atom1.number() ) )
-	    {
-	      //qDebug() << " ATOMS " << atom0.number() << " and " << atom1.number() << " are 14";
-	      cscl = AMBER14COUL;
-	      ljscl = AMBER14LJ;
-	    }
-	  else
-	    {
-	      //qDebug() << " ATOMS " << atom0.number() << " and " << atom1.number() << " are 12 or 13";
-	      cscl = 0.0;
-	      ljscl = 0.0;
-	    }
-
-	  CGAtomIdx atom0cgidx = atom0.cgAtomIdx();
-       	  CGAtomIdx atom1cgidx = atom1.cgAtomIdx();
-
-       	  nbpairs.set( atom0.cgAtomIdx(), atom1.cgAtomIdx(),
-       		       CLJScaleFactor(cscl, ljscl) );
-       	  nbpairs.set( atom1.cgAtomIdx(), atom0.cgAtomIdx(),
-		       CLJScaleFactor(cscl, ljscl) );
-	}
-
-      // int countexcluded = 0;
-      // // Opt 2, break of the loop if all the excludedAtoms have been accounted for (probably what's killing me now)
-      // for ( int j = i + 1 ; j < natoms ; j++)
-      // 	{
-      // 	  if (countexcluded == nexcluded)
-      // 	    break;
-      // 	  Atom atom1 = editmol.atom(AtomIdx(j));
-      // 	  //qDebug() << " THERE ARE " << excludedAtoms.size() << " EXCLUDED ATOMS ";
-      // 	  //qDebug() << " IS ATOM1 " << atom1.number().value() << " in EXCLUDED ? " ;
-      // 	  if (excludedAtoms.contains(atom1))
-      // 	    {
-      // 	      countexcluded++;
-      // 	      //qDebug() << " YES IT IS ";
-      // 	      // if atom1 in 1,4 of atom0?
-      // 	      /** QList<AtomNum> atom14nums;
-      // 	      if (atoms14.contains( atom0.number() ) )
-      // 		atom14nums = atoms14.value(atom0.number() );
-      // 	      qDebug() << " ATOM  " << atom0.number().toString() << " HAS THE FOLLOWING IN MEMORY " ;
-      // 	      foreach (AtomNum atom14num, atom14nums)
-      // 		{
-      // 		  qDebug() << " ATOM 14...  "<< atom14num.toString();
-      // 		  }*/
-      // 	      if ( atoms14[ atom0.number() ].contains( atom1.number() ) )
-      // 		{
-      // 		  qDebug() << " ATOMS " << atom0.number() << " and " << atom1.number() << " are 14";
-      // 		  cscl = AMBER14COUL;
-      // 		  ljscl = AMBER14LJ;
-      // 		  //cscl = 0.0;
-      // 		  //ljscl = 0.0;
-      // 		}
-      // 	      else
-      // 		{
-      // 		  qDebug() << " ATOMS " << atom0.number() << " and " << atom1.number() << " are 12 or 13";
-      // 		  cscl = 0.0;
-      // 		  ljscl = 0.0;
-      // 		}
-      // 	    }
-      // 	  else
-      // 	    {
-      // 	      /** The pair is non bonded*/
-      // 	      qDebug() << " ATOMS " << atom0.number() << " and " << atom1.number() << " are non bonded";
-      // 	      cscl = 1.0;
-      // 	      ljscl = 1.0;
-      // 	    }
-      // 	  CGAtomIdx atom0cgidx = atom0.cgAtomIdx();
-      // 	  CGAtomIdx atom1cgidx = atom1.cgAtomIdx();
-      // 	  //qDebug() << "CGIDxes " << atom0cgidx.toString() << atom1cgidx.toString();
-      // 	  nbpairs.set( atom0.cgAtomIdx(), atom1.cgAtomIdx(),
-      // 		       CLJScaleFactor(cscl, ljscl) );
-      // 	  nbpairs.set( atom1.cgAtomIdx(), atom0.cgAtomIdx(),
-      // 	  CLJScaleFactor(cscl, ljscl) );
-      // 	}
-    }
-
-  editmol.setProperty( nb_property, nbpairs );
-
+    return tuple<Molecules, SpacePtr>(molecules, spce);
 }
 
 const char* Amber::typeName()
@@ -1689,91 +1869,7 @@ const char* Amber::typeName()
     return QMetaType::typeName( qMetaTypeId<Amber>() );
 }
 
-void Amber::calcNumberMolecules(int &totalMolecules, QList<int> &atomsPerMolecule, 
-				QList<int> &bondsIncHydrogen, QList<int> &bondsWithoutHydrogen,
-				int natoms, int nbondsh, int nbondsa)
+const char* Amber::what() const
 {
-  QHash<int, int> atIsInMol;
-  QHash<int, int> atoms12 ;
-
-  /** First construct a list of atoms bonded to each atom*/
-  for ( int i = 1 ; i <= natoms ; i++ )
-    {
-      atIsInMol[ i ] = -1;
-    }
-
-  for ( int j = 0 ; j < 3 * nbondsa ; j = j + 3 )
-    {
-      int atom0 = bondsWithoutHydrogen[ j ] / 3 + 1 ;
-      int atom1 = bondsWithoutHydrogen[ j + 1 ] / 3 + 1 ;
-      atoms12.insertMulti(atom0, atom1);
-      atoms12.insertMulti(atom1, atom0);
-    }
-
-  for ( int j = 0 ; j < 3 * nbondsh ; j = j + 3 )
-    {
-      int atom0 = bondsIncHydrogen[ j ] / 3 + 1 ;
-      int atom1 = bondsIncHydrogen[ j + 1 ] / 3 + 1 ;
-      atoms12.insertMulti(atom0, atom1);
-      atoms12.insertMulti(atom1, atom0);
-    }
-
-  /**for ( int i = 1 ; i <= natoms ; i++ )
-    {
-      qDebug() << " atom " << i << " bonded to : " << atoms12.values(i);
-      }*/
-
-  /** Then recursively walk along each atom find all the atoms that are in the same molecule*/
-  totalMolecules = 0;
-  QHash<int, int> atomsInMolecule;
-  for ( int i = 1 ; i <= natoms ; i++ )
-    {
-      if (atIsInMol[ i ] == -1)
-	{
-	  totalMolecules++;
-	  atIsInMol[ i ] = totalMolecules;
-	  atomsInMolecule.insertMulti( totalMolecules, i );
-	  /** Recursive walk */
-	  //qDebug() << " Calling walk ";
-	  this->walk(i, atoms12, 
-		 totalMolecules, atIsInMol, atomsInMolecule);
-	  //qDebug() << " Molecule " << totalMolecules << " has " << atomsInMolecule.values(totalMolecules).size() << " atoms ";
-	  atomsPerMolecule.append( atomsInMolecule.values(totalMolecules).size() );
-	}
-    }
-}
-
-void Amber::walk(int &atom, QHash<int, int> &atoms12, 
-                 int &totalMolecules, QHash<int, int> &atIsInMol, 
-                 QHash<int, int> &atomsInMolecule)
-{
-    QList<int> neighbors = atoms12.values( atom );
-    //qDebug() << " neighbors of " << atom << " are : " << neighbors;
-    
-    foreach ( int neighbor, neighbors )
-    {
-        QList<int> nn = atomsInMolecule.values( totalMolecules );
-        
-        if ( not nn.contains(neighbor) )
-        {
-            atIsInMol[ neighbor ] = totalMolecules;
-            atomsInMolecule.insertMulti( totalMolecules, neighbor );
-            walk( neighbor, atoms12, totalMolecules, atIsInMol, atomsInMolecule);
-        }
-    }
-}
-
-/** Internal function to create a set of atom numbers in an editmol*/
-QSet<AtomNum> Amber::_pvt_selectAtomsbyNumber(const MolEditor &editmol)
-{
-    QSet<AtomNum> atomnums;
-
-    Selector<Atom> atoms = editmol.selectAllAtoms();
-    
-    for (int i=0; i<atoms.count(); ++i)
-    {
-        atomnums.insert( atoms[i].number() );
-    }
-    
-    return atomnums;
+    return Amber::typeName();
 }

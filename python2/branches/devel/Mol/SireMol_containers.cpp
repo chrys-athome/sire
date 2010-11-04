@@ -66,6 +66,8 @@
 #include "SireMol/angleid.h"
 #include "SireMol/dihedralid.h"
 
+#include "SireVol/space.h"
+
 using namespace SireMol;
 
 using boost::python::register_tuple;
@@ -115,7 +117,9 @@ void register_SireMol_containers()
     register_tuple< boost::tuple<AtomIdx,AtomIdx> >();
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx> >();
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx,AtomIdx> >();
-
+    
+    register_tuple< boost::tuple<Molecules,SireVol::SpacePtr> >();
+    
     register_tuple< boost::tuple<AtomIdentifier,AtomIdentifier> >();
 
     register_tuple< boost::tuple<AtomSelection,AtomSelection> >();    

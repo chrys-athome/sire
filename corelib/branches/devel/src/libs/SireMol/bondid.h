@@ -154,6 +154,15 @@ private:
     AtomIdentifier atm0,atm1;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+inline uint qHash(const BondID &bondid)
+{
+    return bondid.hash();
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMol::BondID);

@@ -31,6 +31,8 @@
 
 #include "Integrator.pypp.hpp"
 
+#include "InternalMove.pypp.hpp"
+
 #include "MTSMC.pypp.hpp"
 
 #include "MaxwellBoltzmann.pypp.hpp"
@@ -44,8 +46,6 @@
 #include "MonteCarlo.pypp.hpp"
 
 #include "Move.pypp.hpp"
-
-#include "MoverMove.pypp.hpp"
 
 #include "Moves.pypp.hpp"
 
@@ -188,6 +188,8 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_HybridMC_class();
 
+    register_InternalMove_class();
+
     register_MTSMC_class();
 
     register_MaxwellBoltzmann_class();
@@ -197,8 +199,6 @@ BOOST_PYTHON_MODULE(_Move){
     register_MolInserter_class();
 
     register_MolecularDynamics_class();
-
-    register_MoverMove_class();
 
     register_Moves_class();
 

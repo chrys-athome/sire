@@ -51,7 +51,9 @@ namespace bp = boost::python;
 
 #include "SireMol/selector.hpp"
 
-#include "SireMove/movermove.h"
+#include "SireMove/flexibility.h"
+
+#include "SireMove/internalmove.h"
 
 #include "SireStream/datastream.h"
 
@@ -84,14 +86,14 @@ void register_Amber_class(){
         Amber_exposer_t Amber_exposer = Amber_exposer_t( "Amber" );
         bp::scope Amber_scope( Amber_exposer );
         Amber_exposer.def( bp::init< >() );
-        { //::SireIO::Amber::readcrdtop
+        { //::SireIO::Amber::readCrdTop
         
-            typedef ::boost::tuples::tuple< SireMol::Molecules, SireBase::PropPtr< SireVol::Space >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireIO::Amber::*readcrdtop_function_type )( ::QString const &,::QString const & ) ;
-            readcrdtop_function_type readcrdtop_function_value( &::SireIO::Amber::readcrdtop );
+            typedef ::boost::tuples::tuple< SireMol::Molecules, SireBase::PropPtr< SireVol::Space >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireIO::Amber::*readCrdTop_function_type )( ::QString const &,::QString const & ) const;
+            readCrdTop_function_type readCrdTop_function_value( &::SireIO::Amber::readCrdTop );
             
             Amber_exposer.def( 
-                "readcrdtop"
-                , readcrdtop_function_value
+                "readCrdTop"
+                , readCrdTop_function_value
                 , ( bp::arg("crdfile"), bp::arg("topfile") ) );
         
         }

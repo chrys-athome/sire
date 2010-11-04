@@ -12,7 +12,7 @@ set ( SIREIO_HEADERS
       amber.h
       cube.h
       errors.h
-      flexibilitymaker.h
+      flexibilitylibrary.h
       iobase.h
       pdb.h
       protoms.h
@@ -29,7 +29,7 @@ set ( SIREIO_SOURCES
       amber.cpp
       cube.cpp
       errors.cpp
-      flexibilitymaker.cpp
+      flexibilitylibrary.cpp
       iobase.cpp
       pdb.cpp
       protoms.cpp

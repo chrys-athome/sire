@@ -10,7 +10,7 @@
 #include "pdb.h"
 #include "tinker.h"
 #include "iobase.h"
-#include "flexibilitymaker.h"
+#include "flexibilitylibrary.h"
 
 #include "Helpers/objectregistry.hpp"
 
@@ -24,7 +24,8 @@ void register_SireIO_objects()
     ObjectRegistry::registerConverterFor< SireIO::PDB >();
     ObjectRegistry::registerConverterFor< SireIO::Tinker >();
     ObjectRegistry::registerConverterFor< SireIO::NullIO >();
-    ObjectRegistry::registerConverterFor< SireIO::FlexibilityMaker >();
+    ObjectRegistry::registerConverterFor< SireIO::FlexibilityLibrary >();
+    ObjectRegistry::registerConverterFor< SireIO::FlexibilityTemplate >();
 
 }
 

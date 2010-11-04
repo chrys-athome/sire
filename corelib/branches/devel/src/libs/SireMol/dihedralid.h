@@ -165,6 +165,15 @@ private:
     AtomIdentifier atm0,atm1,atm2,atm3;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+inline uint qHash(const DihedralID &dihedralid)
+{
+    return dihedralid.hash();
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMol::DihedralID);

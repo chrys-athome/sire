@@ -71,3 +71,13 @@ void foo()
 
 (9) Speaking of braces, please use the above style - e.g. braces are on their own
     line and line up. This makes it much easier to read.
+
+(10) Sire uses doxygen to autogenerate the API documentation. This means comments
+     should be written using these rules;
+  
+     (i) All class and function comments should start /** and end with */
+     (ii) If you author a class, add a @author Your Name to the class comment
+     (iii) If you function throws an exception, add a \throw Namespace::exception 
+           to the function comment
+     (iv) Use "//" for all other comments (even multiline). This is so that it is
+          possible to quickly comment out blocks of text using "/*" and "*/"

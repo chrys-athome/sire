@@ -21,12 +21,12 @@ set ( SIREMOVE_HEADERS
       hybridmc.h
       integrator.h
       integratorworkspace.h
+      internalmove.h
       moldeleter.h
       molinserter.h
       moleculardynamics.h
       montecarlo.h
       move.h
-      movermove.h
       moves.h
       mtsmc.h
       prefsampler.h
@@ -80,12 +80,12 @@ set ( SIREMOVE_SOURCES
       hybridmc.cpp
       integrator.cpp
       integratorworkspace.cpp
+      internalmove.cpp
       moldeleter.cpp
       molinserter.cpp
       moleculardynamics.cpp
       montecarlo.cpp
       move.cpp
-      movermove.cpp
       moves.cpp
       mtsmc.cpp
       prefsampler.cpp

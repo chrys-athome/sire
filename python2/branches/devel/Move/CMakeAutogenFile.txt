@@ -12,13 +12,13 @@ set ( PYPP_SOURCES
        HMCVelGen.pypp.cpp
        HybridMC.pypp.cpp
        Integrator.pypp.cpp
+       InternalMove.pypp.cpp
        MaxwellBoltzmann.pypp.cpp
        MolDeleter.pypp.cpp
        MolecularDynamics.pypp.cpp
        MolInserter.pypp.cpp
        MonteCarlo.pypp.cpp
        Move.pypp.cpp
-       MoverMove.pypp.cpp
        Moves.pypp.cpp
        MTSMC.pypp.cpp
        NullDeleter.pypp.cpp
