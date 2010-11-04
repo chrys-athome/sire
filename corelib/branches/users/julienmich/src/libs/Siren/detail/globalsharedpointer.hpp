@@ -1,0 +1,459 @@
+/********************************************\
+  *
+  *  Sire - Molecular Simulation Framework
+  *
+  *  Copyright (C) 2009  Christopher Woods
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License as published by
+  *  the Free Software Foundation; either version 2 of the License, or
+  *  (at your option) any later version.
+  *
+  *  This program is distributed in the hope that it will be useful,
+  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  *  GNU General Public License for more details.
+  *
+  *  You should have received a copy of the GNU General Public License
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  *
+  *  For full details of the license please see the COPYING file
+  *  that should have come with this distribution.
+  *
+  *  You can contact the authors via the developer's mailing list
+  *  at http://siremol.org
+  *
+\*********************************************/
+
+#ifndef SIREN_GLOBALSHAREDPOINTER_HPP
+#define SIREN_GLOBALSHAREDPOINTER_HPP
+
+#include <QMutex>
+#include <QMutexLocker>
+#include <QSet>
+
+#include "sharedpolypointer.hpp"
+
+SIREN_BEGIN_HEADER
+
+namespace Siren
+{
+namespace detail
+{
+template<class T>
+class GlobalSharedPointer;
+}
+}
+
+namespace Siren
+{
+
+namespace detail
+{
+
+/** This is the base class of global shared pointers */
+class SIREN_EXPORT GlobalSharedPointerBase
+{
+public:
+    ~GlobalSharedPointerBase();
+
+protected:
+    GlobalSharedPointerBase();
+
+    static QMutex* registryMutex();
+    static QSet<const void*>& getRegistry(const QString &typname); 
+
+    template<class T>
+    static T* registerObject(const T *obj_ptr);
+    
+    template<class T>
+    static void unregisterObject(const T *obj_ptr);
+};
+
+#ifndef SIREN_SKIP_INLINE_FUNCTIONS
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+T* GlobalSharedPointerBase::registerObject(const T *obj_ptr)
+{
+    if (not obj_ptr)
+        return const_cast<T*>(obj_ptr);
+
+    QMutexLocker lkr( GlobalSharedPointerBase::registryMutex() );
+    
+    QSet<const void*> &registry = GlobalSharedPointerBase::getRegistry(
+                                        SharedPolyPointerHelper<T>::typeName() );
+                                        
+    for (typename QSet<const void*>::const_iterator it = registry.constBegin();
+         it != registry.constEnd();
+         ++it)
+    {
+        const T *global_obj = (const T*)(*it);
+        
+        if ( obj_ptr == global_obj)
+            //this is the same pointer
+            return const_cast<T*>(obj_ptr);
+
+        if ( SharedPolyPointerHelper<T>::equal(*obj_ptr, *global_obj) )
+        {
+            //the objects are equal - return the global copy
+            return const_cast<T*>(global_obj);
+        }
+    }
+    
+    //there is no global object with this value
+    registry.insert( obj_ptr );
+    
+    return const_cast<T*>(obj_ptr);
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+void GlobalSharedPointerBase::unregisterObject(const T *obj_ptr)
+{
+    if (not obj_ptr)
+        return;
+
+    QMutexLocker lkr( GlobalSharedPointerBase::registryMutex() );
+    
+    QSet<const void*> &registry = GlobalSharedPointerBase::getRegistry(
+                                        SharedPolyPointerHelper<T>::typeName() );
+
+    if (registry.contains(obj_ptr))
+    {
+        //we can only remove this from the registry if this is a unique
+        //pointer
+        if (obj_ptr->ref == 1)
+            registry.remove(obj_ptr);
+    }
+}
+
+#endif // SIREN_SKIP_INLINE_FUNCTIONS
+
+/** This is a SharedPolyPointer that uses a global registry
+    to ensure that there is just one shared copy of an object.
+    
+    Note that the this can only hold a const pointer - it does
+    not allow editing of the object. 
+    
+    @author Christopher Woods
+*/
+template<class T>
+class SIREN_EXPORT GlobalSharedPointer
+        : private SharedPolyPointer<T>, private GlobalSharedPointerBase
+{
+public:
+    typedef T element_type;
+    typedef T value_type;
+    typedef T* pointer;
+
+    GlobalSharedPointer();
+    ~GlobalSharedPointer();
+
+    explicit GlobalSharedPointer(T *data);
+    GlobalSharedPointer(const T &obj);
+
+    GlobalSharedPointer(const SharedPolyPointer<T> &o);
+
+    GlobalSharedPointer(const GlobalSharedPointer<T> &o);
+
+    GlobalSharedPointer<T>& operator=(T *o);
+    GlobalSharedPointer<T>& operator=(const T &obj);
+
+    GlobalSharedPointer<T>& operator=(const GlobalSharedPointer<T> &o);
+
+    GlobalSharedPointer<T>& operator=(int);
+    
+    bool unique() const;
+    
+    const T& operator*() const;
+    const T* operator->() const;
+    
+    operator const T*() const;
+    
+    const T* data() const;
+    const T* constData() const;
+
+    bool operator!() const;
+
+    bool operator==(const GlobalSharedPointer<T> &other) const;
+    bool operator!=(const GlobalSharedPointer<T> &other) const;
+
+    bool operator==(const T *other_ptr) const;
+    bool operator!=(const T *other_ptr) const;
+
+    const char* what() const;
+
+    template<class S>
+    bool isA() const;
+
+    template<class S>
+    const S& asA() const;
+
+private:
+    void registerGlobalPointer(bool auto_detach=true);
+};
+
+#ifndef SIREN_SKIP_INLINE_FUNCTIONS
+
+/** Null constructor */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+GlobalSharedPointer<T>::GlobalSharedPointer()
+                       : SharedPolyPointer<T>(), GlobalSharedPointerBase()
+{}
+
+/** Destructor */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+GlobalSharedPointer<T>::~GlobalSharedPointer()
+{
+    //are we the only pointer to this object?
+    if (SharedPolyPointer<T>::unique())
+    {
+        //unregister this object
+        GlobalSharedPointerBase::unregisterObject<T>( this->constData() );
+    }
+}
+
+/** Internal function called to register the global pointer */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+void GlobalSharedPointer<T>::registerGlobalPointer(bool auto_detach)
+{
+    if (this->constData())
+    {   
+        if (auto_detach)
+        {
+            if (not this->unique())
+                this->detach();
+        }
+
+        SharedPolyPointer<T>::operator=( SharedPolyPointer<T>(
+                    GlobalSharedPointerBase::registerObject<T>(this->constData()) ) );
+    }
+}
+
+/** Construct a pointer to the object 'data' - this takes over ownership
+    of the object pointed to by 'data' */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+GlobalSharedPointer<T>::GlobalSharedPointer(T *data)
+                       : SharedPolyPointer<T>(data), GlobalSharedPointerBase()
+{
+    this->registerGlobalPointer();
+}
+
+/** Construct a pointer to the object 'obj' */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+GlobalSharedPointer<T>::GlobalSharedPointer(const T &obj)
+                       : SharedPolyPointer<T>(obj), GlobalSharedPointerBase()
+{
+    this->registerGlobalPointer();
+}
+
+/** Construct a pointer to the object pointed to by 'o' */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+GlobalSharedPointer<T>::GlobalSharedPointer(const SharedPolyPointer<T> &o)
+                       : SharedPolyPointer<T>(o), GlobalSharedPointerBase()
+{
+    this->registerGlobalPointer();
+}
+
+/** Copy constructor */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+GlobalSharedPointer<T>::GlobalSharedPointer(const GlobalSharedPointer<T> &o)
+               : SharedPolyPointer<T>( static_cast<const SharedPolyPointer<T>&>(o) ), 
+                 GlobalSharedPointerBase()
+{
+    //by definition, 'o' is already global
+}
+
+/** Copy assignment from the passed pointer - this takes over ownership of the pointer */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+GlobalSharedPointer<T>& GlobalSharedPointer<T>::operator=(T *o)
+{
+    if (SharedPolyPointer<T>::unique())
+        GlobalSharedPointerBase::unregisterObject( this->constData() );
+
+    SharedPolyPointer<T>::operator=(o);
+    this->registerGlobalPointer();
+    
+    return *this;
+}
+
+/** Copy assignment from the passed object */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+GlobalSharedPointer<T>& GlobalSharedPointer<T>::operator=(const T &obj)
+{
+    if (SharedPolyPointer<T>::unique())
+        GlobalSharedPointerBase::unregisterObject( this->constData() );
+
+    SharedPolyPointer<T>::operator=(obj);
+    this->registerGlobalPointer();
+    
+    return *this;
+}
+
+/** Copy assignment operator */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+GlobalSharedPointer<T>& GlobalSharedPointer<T>::operator=(
+                                                const GlobalSharedPointer<T> &o)
+{
+    if (SharedPolyPointer<T>::unique())
+        GlobalSharedPointerBase::unregisterObject( this->constData() );
+
+    SharedPolyPointer<T>::operator=( static_cast<const SharedPolyPointer<T>&>(o) );
+    
+    return *this;
+}
+
+/** This is used to allow "ptr = 0" to reset the pointer */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+GlobalSharedPointer<T>& GlobalSharedPointer<T>::operator=(int val)
+{
+    if (SharedPolyPointer<T>::unique())
+        GlobalSharedPointerBase::unregisterObject( this->constData() );
+
+    SharedPolyPointer<T>::operator=(val);
+    
+    return *this;
+}
+
+/** Return whether or not this object is unique (and thus globally unique) */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool GlobalSharedPointer<T>::unique() const
+{
+    return SharedPolyPointer<T>::unique();
+}
+
+/** Return a const reference to the object - don't dereference a null pointer! */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+const T& GlobalSharedPointer<T>::operator*() const
+{
+    return SharedPolyPointer<T>::operator*();
+}
+
+/** Pointer operator */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+const T* GlobalSharedPointer<T>::operator->() const
+{
+    return SharedPolyPointer<T>::operator->();
+}
+
+/** Cast to a raw pointer */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+GlobalSharedPointer<T>::operator const T*() const
+{
+    return SharedPolyPointer<T>::constData();
+}
+
+/** Return the raw pointer */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+const T* GlobalSharedPointer<T>::data() const
+{
+    return SharedPolyPointer<T>::constData();
+}
+
+/** Return the raw pointer */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+const T* GlobalSharedPointer<T>::constData() const
+{
+    return SharedPolyPointer<T>::constData();
+}
+
+/** Used to implement if (!ptr){ ... } */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool GlobalSharedPointer<T>::operator!() const
+{
+    return SharedPolyPointer<T>::operator!();
+}
+
+/** Comparison operator */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool GlobalSharedPointer<T>::operator==(const GlobalSharedPointer<T> &other) const
+{
+    //this is easy, as only one copy of each global object
+    return this->constData() == other.constData();
+}
+
+/** Comparison operator */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool GlobalSharedPointer<T>::operator!=(const GlobalSharedPointer<T> &other) const
+{
+    //this is easy, as only one copy of each global object
+    return this->constData() != other.constData();
+}
+
+/** Comparison operator */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool GlobalSharedPointer<T>::operator==(const T *other_ptr) const
+{
+    return SharedPolyPointer<T>::operator==(other_ptr);
+}
+
+/** Comparison operator */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool GlobalSharedPointer<T>::operator!=(const T *other_ptr) const
+{
+    return SharedPolyPointer<T>::operator!=(other_ptr);
+}
+
+/** Return the class name of the object pointed to by this pointer */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+const char* GlobalSharedPointer<T>::what() const
+{
+    return SharedPolyPointer<T>::what();
+}
+
+/** Return whether or not this object is of type 'S' */
+template<class T>
+template<class S>
+SIREN_OUTOFLINE_TEMPLATE
+bool GlobalSharedPointer<T>::isA() const
+{
+    return SharedPolyPointer<T>::template isA<S>();
+}
+
+/** Return the object pointed to by this pointer cast as
+    an object of type 'S'
+    
+    \throw SireError::invalid_cast
+*/
+template<class T>
+template<class S>
+SIREN_OUTOFLINE_TEMPLATE
+const S& GlobalSharedPointer<T>::asA() const
+{
+    return SharedPolyPointer<T>::template asA<S>();
+}
+
+#endif // SIREN_SKIP_INLINE_FUNCTIONS
+
+} // end of namespace detail
+
+} // end of namespace Siren
+
+SIREN_END_HEADER
+
+#endif

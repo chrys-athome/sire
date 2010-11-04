@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+import sys
+import os
+
+if len(sys.argv) < 2:
+    print "USAGE: resubmit PBS_JOB_ID"
+    raise SystemExit
+
+jobid = sys.argv[1]
+
+print "Resubmitting job %s..." % jobid
+
+lines = os.popen("qstat -an1 %s" % jobid, "r").readlines()
+
+line = lines[-1]
+
+#Job ID               Username Queue    Jobname          SessID NDS   TSK Memory Time  S Time
+#-------------------- -------- -------- ---------------- ------ ----- --- ------ ----- - -----
+#12456.bluequeue1     chzcjw   short    bound_1_charging  31959     1  --    --  48:00 R 10:30   u01n073+u01n073+u01n073+u01n073+u01n073+u01n073+u01n073+u01n073
+
+words = line.split()
+
+nnodes = int(words[5])
+nprocs = len(words[-1].split("+"))
+
+#divide the processors between the nodes evenly
+ppn = nprocs / nnodes
+
+runtime = words[8]
+jobname = os.getenv("PBS_JOBNAME")
+
+qsub_cmd = "qsub -l walltime=%s:00,nodes=%d:ppn=%d %s" % (runtime,nnodes,ppn,jobname)
+
+pbs_host = os.getenv("PBS_O_HOST")
+workdir = os.getenv("PBS_O_WORKDIR")
+
+cmd = "ssh %s \"cd %s; %s\"" % (pbs_host, workdir, qsub_cmd)
+
+print cmd
+
+os.system(cmd)

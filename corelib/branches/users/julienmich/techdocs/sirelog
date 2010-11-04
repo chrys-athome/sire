@@ -1,0 +1,116 @@
+SireLog will be build on SireStream
+
+DBStream& operator<<(DBStream &db, const T &obj);
+DBStream& operator>>(DBStream &db, const T &obj);
+
+Uses an underlying SQL database which creating the data.
+
+Stream to XML uses DBStream, e.g.
+
+XMLStream : public DBStream;
+
+XMLStream::XMLStream()
+{
+    //create a temporary SQLite file database
+    pass this database to the parent DBStream
+    for initialisation
+}
+
+XMLStream::~XMLStream()
+{
+    this->reset();
+}
+
+void XMLStream::reset()
+{
+    if (initialised())
+    {
+        //convert the DBStream database to XML
+        //and write this to the file.
+    }
+}
+
+Use database as writing the XML file will involve adding nodes 
+dynamically, and adding these to a file would be too difficult
+(also could perhaps have different ordering?)
+
+<molecule id="34" version="1">
+
+  <atoms>
+    <atom id="1" name="CA" element="6"/>
+    <atom id="2" name="HA" element="1"/>
+    <atom id="3" name="CA" element="6"/>
+  </atoms>
+
+  <connectivity>
+    <connect atom0="1" atom1="2"/>
+    <connect atom0="1" atom1="3"/>
+  </connectivity>
+
+  <properties>
+
+    <atomgroups>
+    
+      <residues>
+        <residue name="ALA" number="1">
+          <atomref id="1"/>
+          <atomref id="2"/>
+        </residue>
+        
+        <residue name="CYS" number="2">
+          <atomref id="3"/>
+        </residue>
+      </residues>
+    
+      <cutgroups>
+        <cutgroup id="1" number="1">
+          <atomref id="1"/>
+          <atomref id="2"/>
+        </cutgroup>
+
+        <cutgroup id="2" number="2">
+          <atomref id="3"/>
+        </cutgroup>
+      </cutgroups>
+    
+    </atomgroups>
+
+    <atomic_properties>
+    
+      <coordinates name="coordinates">
+        <provenance>
+          Obtained from x-ray structure from <pdb>1a9u</pdb>
+          downloaded on <date>13-43-43</date> by <user>me</user>
+        </provenance>
+
+        <point atom="1" x="4.343" y="3.231" z="-4503.23"/>
+        <point atom="2" x="5.432" y="4.321" z="343.23"/>
+          ...
+      </coordinates>
+    
+      <charges name="charges">
+        <provenance>
+          Obtained from gaussian calculation
+        </provenance>
+
+        <charge atom="1" value="0.315" units="|E|"/>
+        <charge atom="2" value="-0.315" units="|E|"/>
+        <charge atom="3" value="0.315" units="|E|"/>
+        
+        <charge atom="default" value="0.0"/>
+      </charges>
+    
+      <ljparams name="ljs">
+      
+        <ljparam atom="1">
+          <sigma value="0.315" units="A"/>
+          <epsilon value="0.105" units="kcal_per_mol"/>
+        </ljparam>
+      
+      </ljparams>
+    
+    </atomic_properties>
+  
+  </properties>
+
+</molecule>
