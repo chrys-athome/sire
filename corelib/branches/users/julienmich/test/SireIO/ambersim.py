@@ -11,6 +11,7 @@ from Sire.Vol import *
 from Sire.Maths import *
 from Sire.Base import *
 from Sire.Qt import *
+from Sire.ID import *
 from Sire.Config import *
 import os,re,sys
 import shutil
@@ -53,6 +54,33 @@ random_seed = 42
 
 ####### FUNCTIONS  ###############
 
+def createBBMoveGroup(protein, group_name):
+    bbgroup = MoleculeGroup(group_name)
+
+    hn_atoms = AtomName("N", CaseInsensitive) * \
+               AtomName("HN", CaseInsensitive) * AtomName("HN1", CaseInsensitive) * \
+               AtomName("HN2", CaseInsensitive) * AtomName("HN3", CaseInsensitive)
+
+    for i in range(0, protein.nResidues()):
+        atoms = protein.select(ResIdx(i)).selection()
+
+        if i < (protein.nResidues()-1):
+           try:
+                atoms.deselect( hn_atoms + ResIdx(i) )
+           except:
+               pass
+
+        if i > 0:
+           try:
+               atoms.select( hn_atoms + ResIdx(i-1) )
+           except:
+               pass
+
+        bbgroup.add( PartialMolecule(protein, atoms) )
+
+    return bbgroup
+
+
 def createSystem(molecules):
     print "Applying flexibility and zmatrix templates..."
 
@@ -73,23 +101,25 @@ def createSystem(molecules):
             lig_name = solute.residue( ResIdx(0) ).name().value()
         else:
             lig_name = "ligand" # Likely not good...
+
     solute = solute.edit().rename(lig_name).commit()
+
     # This will add the property "flexibility" to the solute
     flexibility = FlexibilityLibrary(ligand_flex_file).getFlexibility(solute)
     solute = solute.edit().setProperty("flexibility", flexibility).commit()
 
-    # editmol = solute.edit()
-    # weightproperty = PropertyName("weight function")
-    # editmol.setProperty(weightproperty, AbsFromNumber() )
-    # solute = editmol.commit()
-
     solute = MoleculeGroup("solute", solute)
 
     protein = moleculeList[1]
+
     # This will add the property "z-matrix" to the protein
     zmat_maker = ZmatrixMaker()
     zmat_maker.loadTemplates( protein_zmatrices )
     protein = zmat_maker.applyTemplates( protein )
+
+    # Now create the MoleculeGroup used to perform backbone moves
+    # on the protein
+    bbgroup = createBBMoveGroup(protein, "bbresidues")
 
     residues = MoleculeGroup("residues")
     for i in range(0, protein.nResidues()):
@@ -114,6 +144,7 @@ def createSystem(molecules):
     system.add(protein)
     system.add(solvent)
     system.add(residues)
+    system.add(bbgroup)
     system.add(all)
 
     return system
@@ -126,6 +157,7 @@ def setupForcefields(system, space):
     protein = system[ MGName("protein") ]
     solvent = system[ MGName("solvent") ]
     residues = system[ MGName("residues") ]
+
     all = system[ MGName("all") ]
 
     # - first solvent-solvent coulomb/LJ (CLJ) energy
@@ -198,6 +230,8 @@ def setupMoves(system):
     protein = system[ MGName("protein") ]
     solvent = system[ MGName("solvent") ]
     residues = system[ MGName("residues") ]
+    bbresidues = system[ MGName("bbresidues") ]
+    all = system[ MGName("all") ]
 
     print "Setting up moves..."
     # Setup Moves
@@ -217,14 +251,22 @@ def setupMoves(system):
     solvent_moves.setMaximumRotation(max_solvent_rotation)
 
     protein_intra_moves = ZMatMove( PrefSampler(solute[MolIdx(0)], residues, pref_constant) ) 
-    
-    volume_moves = VolumeMove()
+
+    # Now add protein backbone moves
+    bbmoves = RigidBodyMC(bbresidues)
+    bbmoves.setMaximumTranslation(0.025*angstrom)
+    bbmoves.setMaximumRotation(1*degrees)
+    bbmoves.setCenterOfRotation( GetCOGPoint( AtomName("CA", CaseInsensitive),
+                                              AtomName("N", CaseInsensitive) ) )
+
+    volume_moves = VolumeMove(all)
     volume_moves.setMaximumVolumeChange(max_volume_change)
 
     moves = WeightedMoves()
     moves.add( solute_moves, solute_mc_weight / 2 )
-    moves.add( solute_intra_moves, solute_mc_weight / 2)
-    moves.add( protein_intra_moves, protein_mc_weight )
+    moves.add( solute_intra_moves, solute_mc_weight / 2 )
+    moves.add( protein_intra_moves, protein_mc_weight / 2 )
+    moves.add( bbmoves, protein_mc_weight / 2 )
     moves.add( solvent_moves, solvent_mc_weight )
     moves.add( volume_moves, volume_mc_weight )
 
