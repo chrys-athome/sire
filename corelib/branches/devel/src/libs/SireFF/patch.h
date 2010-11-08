@@ -131,13 +131,17 @@ private:
     
     /** The parameters for all of the beads, in the same order
         as the coordinates */
-    FFParametersArray params;
+    FFParametersArrayPtr params;
     
     /** Internal ID number of each bead */
     QVector<quint32> idx_to_beadid;
     
     /** Index of each bead in the arrays */
     QHash<quint32,int> beadid_to_idx;
+    
+    /** The AABox that completely encloses all of the 
+        atoms in this patch */
+    AABox aabox;
 };
 
 }

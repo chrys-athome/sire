@@ -460,6 +460,9 @@ public:
     CoordGroupArray(const QVector< QVector<Vector> > &points);
     CoordGroupArray(const QVector<CoordGroup> &cgroups);
     
+    CoordGroupArray(const CoordGroupArray &array0,
+                    const CoordGroupArray &array1);
+    
     CoordGroupArray(const CoordGroupArray &other);
     
     ~CoordGroupArray();
@@ -497,6 +500,12 @@ public:
     const AABox* constAABoxData() const;
 
     CoordGroup merge() const;
+    
+    void append(const CoordGroup &cgroup);
+    void append(const CoordGroupArray &cgroups);
+    
+    void remove(quint32 i);
+    void remove(quint32 i, int count);
     
     void update(quint32 i, const CoordGroup &cgroup);
     void update(quint32 i, const QVector<Vector> &coords);

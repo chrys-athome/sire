@@ -394,8 +394,6 @@ void FlexibilityLibrary::setTemplate(const QString &key,
 
 void FlexibilityLibrary::loadTemplates(const QString &templatefile)
 {
-    qDebug() << "Loading templates...";
-
     QFile template_f(templatefile);
   
     if ( not (template_f.exists() and template_f.open(QIODevice::ReadOnly) ) )
@@ -468,8 +466,6 @@ void FlexibilityLibrary::loadTemplates(const QString &templatefile)
     foreach (FlexibilityTemplate templ, new_templates)
     {
         QString templname = templ.getName();
-
-        qDebug() << templname;
 
         if ( not templates.contains(templname) )
             templates.insert(templname, templ);

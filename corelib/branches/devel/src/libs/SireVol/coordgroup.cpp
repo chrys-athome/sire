@@ -2536,6 +2536,18 @@ const AABox* CoordGroupArray::constAABoxData() const
     return d->aaBoxData();
 }
 
+/** Append the passed CoordGroup onto the end of this array */
+void CoordGroupArray::append(const CoordGroup &group)
+{
+    throw SireError::incomplete_code("TODO", CODELOC);
+}
+
+/** Append the passed CoordGroups onto the end of this array */
+void CoordGroupArray::append(const CoordGroupArray &groups)
+{
+    throw SireError::incomplete_code("TODO", CODELOC);
+}
+
 /** Update the CoordGroup at index i so that it has coordinates 'coords'
     (there are 'ncoords' coordinates in this array)
     

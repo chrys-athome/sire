@@ -196,6 +196,9 @@ public:
     void remove(const QVector<int> &idxs);
 };
 
+typedef SireBase::PropPtr<FFParameters> FFParametersPtr;
+typedef SireBase::PropPtr<FFParametersArray> FFParametersArrayPtr;
+
 } // end of namespace SireFF
 
 Q_DECLARE_METATYPE( SireFF::NullFFParameters )

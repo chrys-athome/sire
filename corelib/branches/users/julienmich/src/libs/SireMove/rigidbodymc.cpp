@@ -84,7 +84,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
     {
         SharedDataStream sds(ds);
         
-        sds >> rbmc.center_function >> rbmc.smplr
+        sds >> rbmc.smplr >> rbmc.center_function
             >> rbmc.adel >> rbmc.rdel
             >> rbmc.sync_trans >> rbmc.sync_rot
             >> rbmc.common_center
