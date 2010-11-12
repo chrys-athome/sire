@@ -181,9 +181,9 @@ def setupForcefields(system, space):
     protein_intraclj.add(protein)
 
     # Now the solute-solvent CLJ energy
-    solute_solventff = InterGroupCLJFF("solute:solvent")
-    solute_solventff.add(solute, MGIdx(0))
-    solute_solventff.add(solvent, MGIdx(1))
+    #solute_solventff = InterGroupCLJFF("solute:solvent")
+    #solute_solventff.add(solute, MGIdx(0))
+    #solute_solventff.add(solvent, MGIdx(1))
 
     # Now the solute-protein CLJ energy
     solute_proteinff = InterGroupCLJFF("solute:protein")
@@ -191,15 +191,15 @@ def setupForcefields(system, space):
     solute_proteinff.add(protein, MGIdx(1))
   
     # The protein-solvent energy 
-    protein_solventff = InterGroupCLJFF("protein:solvent")
-    protein_solventff.add(protein, MGIdx(0))
-    protein_solventff.add(solvent, MGIdx(1))
+    #protein_solventff = InterGroupCLJFF("protein:solvent")
+    #protein_solventff.add(protein, MGIdx(0))
+    #protein_solventff.add(solvent, MGIdx(1))
 
     # Here is the list of all forcefields
     forcefields = [ solute_intraff, solute_intraclj,
-                    solventff, solute_solventff,
                     protein_intraff, protein_intraclj,
-                    solute_proteinff, protein_solventff ]
+                    solventff, solute_proteinff ]
+#                    solute_solventff, protein_solventff ]
     
     for forcefield in forcefields:
         system.add(forcefield)
@@ -211,9 +211,11 @@ def setupForcefields(system, space):
     system.setProperty( "combiningRules", VariantProperty(combining_rules) )
 
     total_nrg = solute_intraclj.components().total() + solute_intraff.components().total() +\
-        solventff.components().total() + solute_solventff.components().total() +\
-        protein_intraclj.components().total() + protein_intraff.components().total() + \
-        solute_proteinff.components().total() + protein_solventff.components().total() 
+        protein_intraclj.components().total() + protein_intraff.components().total() +\
+        solventff.components().total() +\
+        solute_proteinff.components().total()
+        #solute_solventff.components().total() +\
+        #protein_solventff.components().total() 
 
     e_total = system.totalComponent()
     system.setComponent( e_total, total_nrg )
@@ -298,3 +300,26 @@ for x in range(0,10):
 print moves
 
 system.monitor( MonitorName("trajectory") ).writeToDisk("outputXXXXXX.pdb")
+
+totalenergy1 = system.energy()
+
+print " TOTAL ENERGY AT THE END OF THE RUN "
+
+print totalenergy1
+
+print system.energies()
+
+system.mustNowRecalculateFromScratch()
+
+print " TOTAL ENERGY RECOMPUTED FROM SCRATCH"
+
+totalenergy2 = system.energy()
+
+print totalenergy2
+
+print system.energies()
+
+diff = totalenergy1 - totalenergy2
+
+print " THE ENERGIES DIFFER BY "
+print diff

@@ -1589,11 +1589,15 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
     // the second line contains the number of atoms, read as 1I6
     line = ts2.readLine();
 
-    QList<int> temp;
-    FortranFormat crd_int_format = FortranFormat(1, "I", 6, 0);
-    processIntegerLine(line, crd_int_format,temp);
+    //QList<int> temp;
+    //FortranFormat crd_int_format = FortranFormat(1, "I", 6, 0);
+    //processIntegerLine(line, crd_int_format,temp);
 
-    int crd_atoms = temp[0];
+    // Split by space to get the first number. I unfortunately discovered that 
+    // leap and sander do not produce exactly the same crd files...
+    QStringList temp = line.split(" ", QString::SkipEmptyParts);
+    bool ok;
+    int crd_atoms = temp[0].toInt(&ok);
     
     //qDebug() << " THERE ARE " << crdAtoms << " ATOMS IN THE CRD FILE";
     // Check that this number of atoms is compatible with what is in the top file
