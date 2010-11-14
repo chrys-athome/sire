@@ -31,7 +31,7 @@ namespace bp = boost::python;
 
 SireVol::CoordGroupEditor __copy__(const SireVol::CoordGroupEditor &other){ return SireVol::CoordGroupEditor(other); }
 
-const char* pvt_get_name(const SireVol::CoordGroupEditor&){ return "SireVol::CoordGroupEditor";}
+#include "Helpers/str.hpp"
 
 void register_CoordGroupEditor_class(){
 
@@ -268,8 +268,8 @@ void register_CoordGroupEditor_class(){
         CoordGroupEditor_exposer.def( "__copy__", &__copy__);
         CoordGroupEditor_exposer.def( "__deepcopy__", &__copy__);
         CoordGroupEditor_exposer.def( "clone", &__copy__);
-        CoordGroupEditor_exposer.def( "__str__", &pvt_get_name);
-        CoordGroupEditor_exposer.def( "__repr__", &pvt_get_name);
+        CoordGroupEditor_exposer.def( "__str__", &__str__< ::SireVol::CoordGroupEditor > );
+        CoordGroupEditor_exposer.def( "__repr__", &__str__< ::SireVol::CoordGroupEditor > );
     }
 
 }

@@ -454,6 +454,9 @@ public:
     template<class C>
     void updateAll(const C &idxs, const PackedArray2D<T> &arrays);
     
+    void updateAll(const QVarLengthArray<int> &idxs,    
+                   const PackedArray2D<T> &arrays);
+    
     template<class C>
     void updateAll(const C &idxs, const QVector< QVector<T> > &arrays);
     
@@ -467,6 +470,8 @@ public:
     
     template<class C>
     void removeAll(const C &idxs);
+
+    void removeAll(const QVarLengthArray<int> &idxs);
 
     void assertValidIndex(quint32 i) const;
 
@@ -2109,6 +2114,38 @@ void PackedArray2D<T>::updateAll(const C &idxs, const PackedArray2D<T> &arrays)
     \throw SireError::incompatible_error
 */
 template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::updateAll(const QVarLengthArray<int> &idxs, 
+                                 const PackedArray2D<T> &arrays)
+{
+    if (idxs.count() != arrays.count())
+        throw SireError::incompatible_error( QObject::tr(
+                "You cannot update the arrays because the number of indicies (%1) "
+                "is not equal to the number of arrays (%2).")
+                    .arg(idxs.count()).arg(arrays.count()), CODELOC );
+                
+    PackedArray2D<T> other(*this);
+    
+    const typename PackedArray2D<T>::Array *array = arrays.constData();
+    
+    for (int i=0; i<idxs.count(); ++i)
+    {
+        int idx = idxs.constData()[i];
+    
+        other.assertValidIndex(idx);
+        other.d->arrayData()[idx].update(array[i]);
+    }
+    
+    this->operator=(other);
+}
+
+/** Update the arrays whose indicies are in 'idxs' so that they have the
+    same contents as the passed arrays
+    
+    \throw SireError::invalid_index
+    \throw SireError::incompatible_error
+*/
+template<class T>
 template<class C>
 SIRE_OUTOFLINE_TEMPLATE
 void PackedArray2D<T>::updateAll(const C &idxs, const QVector< QVector<T> > &arrays)
@@ -2250,6 +2287,102 @@ void PackedArray2D<T>::removeAll(const C &idxs)
     {
         this->assertValidIndex(*it);
         to_keep[*it] = false;
+    }
+    
+    quint32 narrays = 0;
+    
+    for (QVector<bool>::const_iterator it = to_keep.constBegin();
+         it != to_keep.constEnd();
+         ++it)
+    {
+        if (*it)
+            narrays += 1;
+    }
+    
+    if (narrays == 0)
+    {
+        this->operator=( PackedArray2D<T>() );
+        return;
+    }
+    
+    quint32 nvals = 0;
+    
+    const typename PackedArray2D<T>::Array *array_data = this->constData();
+    
+    for (int i=0; i<this->nArrays(); ++i)
+    {
+        if (to_keep.constData()[i])
+        {
+            nvals += array_data[i].count();
+        }
+    }
+    
+    if (nvals == 0)
+    {
+        this->operator=( PackedArray2D<T>() );
+        return;
+    }
+    
+    detail::SharedArray2DPtr< detail::PackedArray2DData<T> > new_d
+                                     = SireBase::detail::createArray<T>(narrays, nvals);
+    
+    detail::PackedArray2DData<T> *dptr = new_d.data();
+
+    int idx = 0;
+    
+    //dimension each packed array
+    for (int i=0; i<this->nArrays(); ++i)
+    {
+        if (to_keep.constData()[i])
+        {
+            dptr->setNValuesInArray(idx, array_data[i].count());
+            ++idx;
+        }
+    }
+    
+    dptr->close();
+    
+    //now copy all of the data
+    T *values_array = dptr->valueData();
+
+    for (int i=0; i<this->nArrays(); ++i)
+    {
+        if (to_keep.constData()[i])
+        {
+            T *output = quickCopy(values_array, array_data[i].constData(),
+                                  array_data[i].count());
+            BOOST_ASSERT( output == values_array );
+            
+            values_array += array_data[i].count();
+        }
+    }
+    
+    d = new_d;
+}
+
+/** Remove all of the arrays at the specified indicies
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void PackedArray2D<T>::removeAll(const QVarLengthArray<int> &idxs)
+{
+    if (idxs.isEmpty())
+        return;
+    
+    else if (idxs.count() == 1)
+    {
+        this->remove( idxs.constData()[0] );
+        return;
+    }
+    
+    QVector<bool> to_keep(this->nArrays(), true);
+    
+    for (int i=0; i<idxs.count(); ++i)
+    {
+        this->assertValidIndex( idxs.constData()[i] );
+        to_keep[ idxs.constData()[i] ] = false;
     }
     
     quint32 narrays = 0;

@@ -181,6 +181,12 @@ const char* FFParametersArray::typeName()
     return "SireFF::FFParametersArray";
 }
 
+/** Return the ith set of parameters */
+FFParametersPtr FFParametersArray::at(int i) const
+{
+    return this->operator[](i);
+}
+
 NullFFParametersArray FFParametersArray::null()
 {
     return NullFFParametersArray();
@@ -251,6 +257,12 @@ bool NullFFParameters::operator==(const NullFFParameters &other) const
 bool NullFFParameters::operator!=(const NullFFParameters &other) const
 {
     return not NullFFParameters::operator==(other);
+}
+
+/** Return a null array */
+FFParametersArrayPtr NullFFParameters::toArray() const
+{
+    return NullFFParametersArray();
 }
 
 ////////////
@@ -324,6 +336,31 @@ bool NullFFParametersArray::operator!=(const NullFFParametersArray &other) const
     return not NullFFParametersArray::operator==(other);
 }
 
+/** Return the number of groups of parameters in this array */
+int NullFFParametersArray::count() const
+{
+    return 0;
+}
+
+/** Return whether or not this array is empty */
+bool NullFFParametersArray::isEmpty() const
+{
+    return true;
+}
+
+/** Return the ith set of parameters 
+
+    \throw SireError::invalid_index
+*/
+FFParametersPtr NullFFParametersArray::operator[](int i) const
+{
+    throw SireError::invalid_index( QObject::tr(
+            "Cannot access element %1 from a NullFFParametersArray.")
+                .arg(i), CODELOC );
+                
+    return FFParametersPtr();
+}
+
 /** Append the passed set of parameters onto the end of this array */
 void NullFFParametersArray::append(const FFParameters &params)
 {}
@@ -338,7 +375,7 @@ void NullFFParametersArray::update(int idx, const FFParameters &params)
 
 /** Update the parameters with the passed indicies so that they equal 
     the values in 'params' */
-void NullFFParametersArray::update(const QVector<int> &idxs, 
+void NullFFParametersArray::update(const QVarLengthArray<int> &idxs, 
                                    const FFParametersArray &params)
 {}
 
@@ -347,5 +384,10 @@ void NullFFParametersArray::remove(int idx)
 {}
 
 /** Remove the parameters whose indicies are in 'idxs' */
-void NullFFParametersArray::remove(const QVector<int> &idxs)
+void NullFFParametersArray::remove(const QVarLengthArray<int> &idxs)
 {}
+
+/** Remove all of the parameters from this array */
+void NullFFParametersArray::removeAll()
+{}
+

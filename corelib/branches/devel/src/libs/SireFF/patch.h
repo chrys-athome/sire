@@ -33,6 +33,8 @@
 
 #include "SireVol/coordgroup.h"
 
+#include <QVarLengthArray>
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -90,7 +92,11 @@ public:
     bool operator==(const Patch &other) const;
     bool operator!=(const Patch &other) const;
     
+    QString toString() const;
+    
     bool isEmpty() const;
+    
+    int nBeads() const;
     
     const AABox& aaBox() const;
 
@@ -98,31 +104,35 @@ public:
     const CoordGroupArray& coordinates() const;
     const FFParametersArray& parameters() const;
 
+    int getLocation(quint32 beadid) const;
+
 protected:
     /////////////////////////////////////////////////////////////////////////
     //Functions to modify the Patch, called only by the parent Patches class
 
     void add(quint32 beadid, const CoordGroup &coords, const FFParameters &params);
-    void add(const QVector<quint32> &beadids, const CoordGroupArray &coords,
+    void add(const QVarLengthArray<quint32> &beadids, const CoordGroupArray &coords,
              const FFParametersArray &params);
              
     void update(quint32 beadid, const CoordGroup &coords);
     void update(quint32 beadid, const FFParameters &params);
     void update(quint32 beadid, const CoordGroup &coords, const FFParameters &params);
                 
-    void update(const QVector<quint32> &beadids, const CoordGroupArray &coords);
-    void update(const QVector<quint32> &beadids, const FFParametersArray &params);
-    void update(const QVector<quint32> &beadids, const CoordGroupArray &coords,
+    void update(const QVarLengthArray<quint32> &beadids, const CoordGroupArray &coords);
+    void update(const QVarLengthArray<quint32> &beadids, const FFParametersArray &params);
+    void update(const QVarLengthArray<quint32> &beadids, const CoordGroupArray &coords,
                 const FFParametersArray &params);
                 
     void remove(quint32 beadid);
-    void remove(const QVector<quint32> &beadids);
+    void remove(const QVarLengthArray<quint32> &beadids);
 
     void removeAll();
 
     //
     //////////////////////////////////////////////////////////////////////////
 private:
+    int getBeadIdx(quint32 beadid) const;
+
     /** The coordinates of all of the atoms in the patch,
         arranged into beads (CoordGroups). This object also
         contains the AABox that completely encompasses the 

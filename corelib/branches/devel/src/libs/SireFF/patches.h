@@ -61,11 +61,13 @@ class SIREFF_EXPORT Patches
         : public SireBase::ConcreteProperty<Patches,SireBase::Property>
 {
 
-friend QDataStream& operator<<(QDataStream&, const Patches&);
-friend QDataStream& operator>>(QDataStream&, Patches&);
+friend QDataStream& ::operator<<(QDataStream&, const Patches&);
+friend QDataStream& ::operator>>(QDataStream&, Patches&);
 
 public:
     Patches();
+    Patches(const Space &space, const Patching &patching);
+    
     Patches(const Patching &patching);
 
     Patches(const Patches &other);
@@ -77,6 +79,8 @@ public:
     bool operator==(const Patches &other) const;
     bool operator!=(const Patches &other) const;
     
+    QString toString() const;
+    
     const Patching& patching() const;
     const Space& space() const;
     
@@ -87,13 +91,17 @@ public:
     int size() const;
     int count() const;
     
+    bool isEmpty() const;
+    
+    int nBeads() const;
+    
     const Patch& operator[](int i) const;
     const Patch& at(int i) const;
     
     const Patch* data() const;
     const Patch* constData() const;
 
-    const Patching& patching() const;
+    QPair<int,int> getLocation(quint32 beadid) const;
 
     quint32 add(const CoordGroup &coords, const FFParameters &params);
     
@@ -122,17 +130,16 @@ public:
     void removeAll();
     
 private:
+    int getIdx(quint32 beadid) const;
+
     /** The current patching scheme (contains the space as well) */
-    PatchingPtr patching;
+    SireVol::PatchingPtr ptchng;
 
     /** All of the patches */
-    QVector<Patch> patches;
+    QVector<Patch> ptchs;
     
     /** Index of the patch that contains each bead */
     QHash<quint32,quint32> beadid_to_patch;
-    
-    /** The list of beads to skip (normally because they have changed) */
-    QSet<quint32> beads_to_skip;
     
     /** The last assigned bead ID */
     quint32 last_beadid;

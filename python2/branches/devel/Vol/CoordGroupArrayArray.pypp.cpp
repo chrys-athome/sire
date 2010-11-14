@@ -33,7 +33,7 @@ SireVol::CoordGroupArrayArray __copy__(const SireVol::CoordGroupArrayArray &othe
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireVol::CoordGroupArrayArray&){ return "SireVol::CoordGroupArrayArray";}
+#include "Helpers/str.hpp"
 
 void register_CoordGroupArrayArray_class(){
 
@@ -343,6 +343,16 @@ void register_CoordGroupArrayArray_class(){
                 , size_function_value );
         
         }
+        { //::SireVol::CoordGroupArrayArray::toString
+        
+            typedef ::QString ( ::SireVol::CoordGroupArrayArray::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireVol::CoordGroupArrayArray::toString );
+            
+            CoordGroupArrayArray_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
         { //::SireVol::CoordGroupArrayArray::translate
         
             typedef void ( ::SireVol::CoordGroupArrayArray::*translate_function_type )( ::SireMaths::Vector const & ) ;
@@ -426,8 +436,8 @@ void register_CoordGroupArrayArray_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CoordGroupArrayArray_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireVol::CoordGroupArrayArray >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        CoordGroupArrayArray_exposer.def( "__str__", &pvt_get_name);
-        CoordGroupArrayArray_exposer.def( "__repr__", &pvt_get_name);
+        CoordGroupArrayArray_exposer.def( "__str__", &__str__< ::SireVol::CoordGroupArrayArray > );
+        CoordGroupArrayArray_exposer.def( "__repr__", &__str__< ::SireVol::CoordGroupArrayArray > );
     }
 
 }

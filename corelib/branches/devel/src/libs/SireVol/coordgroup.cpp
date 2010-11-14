@@ -1614,6 +1614,24 @@ bool CoordGroupBase::operator!=(const CoordGroupBase &other) const
     return not this->operator==(other);
 }
 
+/** Return a string representation of this CoordGroup */
+QString CoordGroupBase::toString() const
+{
+    if (this->isEmpty())
+        return QObject::tr("CoordGroup::null");
+        
+    QStringList lines;
+    
+    for (int i=0; i<this->count(); ++i)
+    {
+        const Vector &c = this->constData()[i];
+        lines.append( QString("[%1, %2, %3]").arg(c.x()).arg(c.y()).arg(c.z()) );
+    }
+    
+    return QObject::tr("CoordGroup( aaBox() == %1,\n    %2\n         )")
+                .arg(this->aaBox().toString(), lines.join("\n    "));
+}
+
 /** Return whether 'other' may be different to this group - this uses
     a simple comparison of the memory addresses of the storage of
     these two groups to see if they are definitely the same, or maybe
@@ -2347,6 +2365,73 @@ CoordGroupArray::CoordGroupArray(const QVector< QVector<Vector> > &points)
     this->operator=( CoordGroupArray(cgroups) );
 }
 
+/** Construct from a pair of CoordGroupArrays */
+CoordGroupArray::CoordGroupArray(const CoordGroupArray &array0,
+                                 const CoordGroupArray &array1)
+{
+    if (array0.isEmpty())
+        d = array1.d;
+    else if (array1.isEmpty())
+        d = array0.d;
+    else
+    {
+        //now create space for the CoordGroups
+        d = ::createCGArray(array0.nCoordGroups() + array1.nCoordGroups(),
+                            array0.nCoords() + array1.nCoords());
+    
+        CGArrayArrayData *cgarrayarray = (CGArrayArrayData*)(d->memory());
+    
+        cgarrayarray->setNCGroupsInArray(0, array0.nCoordGroups() +
+                                            array1.nCoordGroups());
+    
+        for (int i=0; i<array0.nCoordGroups(); ++i)
+        {
+            cgarrayarray->setNPointsInCGroup(i, array0.constData()[i].count());
+        }
+        
+        for (int i=0; i<array1.nCoordGroups(); ++i)
+        {
+            cgarrayarray->setNPointsInCGroup(array0.nCoordGroups() + i,
+                                             array1.constData()[i].count());
+        }
+    
+        cgarrayarray->close();
+    
+        Vector *coords = cgarrayarray->coordsData();
+        AABox *aabox = cgarrayarray->aaBoxData();
+        
+        //copy the coordinates
+        {
+            Vector *output = quickCopy<Vector>(coords, array0.constCoordsData(),
+                                               array0.nCoords());
+                                
+            BOOST_ASSERT(output == coords);
+        
+            coords += array0.nCoords();
+        
+            output = quickCopy<Vector>(coords, array1.constCoordsData(),
+                                       array1.nCoords());
+        
+            BOOST_ASSERT(output == coords);
+        }
+        
+        //copy the AABoxes
+        {
+            AABox *output = quickCopy<AABox>(aabox, array0.constAABoxData(),
+                                             array0.nCoordGroups());
+                                             
+            BOOST_ASSERT(output == aabox);
+        
+            aabox += array0.nCoordGroups();
+            
+            output = quickCopy<AABox>(aabox, array1.constAABoxData(),
+                                      array1.nCoordGroups());
+                                      
+            BOOST_ASSERT(output == aabox);
+        }
+    }
+}
+
 /** Copy constructor */
 CoordGroupArray::CoordGroupArray(const CoordGroupArray &other)
                 : d(other.d)
@@ -2445,6 +2530,29 @@ const CoordGroup& CoordGroupArray::at(quint32 i) const
     return this->operator[](i);
 }
 
+/** Return whether or not this array is empty */
+bool CoordGroupArray::isEmpty() const
+{
+    return d->nCGroups() == 0;
+}
+
+/** Return a string representation of this array */
+QString CoordGroupArray::toString() const
+{
+    if (this->isEmpty())
+        return QObject::tr("CoordGroupArray::null");
+        
+    QStringList lines;
+    
+    for (int i=0; i<this->count(); ++i)
+    {
+        lines.append( this->constData()[i].toString() );
+    }
+    
+    return QObject::tr("CoordGroupArray( aaBox() == %1,\n%2\n)")
+                .arg(this->aaBox().toString(), lines.join("\n"));
+}
+
 /** Return the number of CoordGroups in this array */
 int CoordGroupArray::count() const
 {
@@ -2539,13 +2647,166 @@ const AABox* CoordGroupArray::constAABoxData() const
 /** Append the passed CoordGroup onto the end of this array */
 void CoordGroupArray::append(const CoordGroup &group)
 {
-    throw SireError::incomplete_code("TODO", CODELOC);
+    this->operator=( CoordGroupArray(*this, group) );
 }
 
 /** Append the passed CoordGroups onto the end of this array */
 void CoordGroupArray::append(const CoordGroupArray &groups)
 {
-    throw SireError::incomplete_code("TODO", CODELOC);
+    this->operator=( CoordGroupArray(*this, groups) );
+}
+
+/** Internal function used to remove the CoordGroups that are 'true' in
+    the passed list */
+void CoordGroupArray::pvt_remove(const QVarLengthArray<bool> &to_remove)
+{
+    BOOST_ASSERT( this->nCoordGroups() == to_remove.count() );
+    
+    const CoordGroup *cgroups_array = this->constData();
+    
+    //count the number of groups and coordinates
+    quint32 ncoords = 0;
+    quint32 ngroups = 0;
+    
+    for (int i=0; i<to_remove.count(); ++i)
+    {
+        if (not to_remove[i])
+        {
+            ncoords += cgroups_array[i].count();
+            ++ngroups;
+        }
+    }
+    
+    if (ngroups == 0)
+    {
+        this->operator=( CoordGroupArray() );
+        return;
+    }
+    
+    //now create space for the CoordGroups
+    CGSharedPtr<detail::CGArrayData> d2 = ::createCGArray(ngroups, ncoords);
+    
+    CGArrayArrayData *cgarrayarray = (CGArrayArrayData*)(d2->memory());
+    
+    cgarrayarray->setNCGroupsInArray(0, ngroups);
+    
+    int igroup = 0;
+    
+    for (int i=0; i<to_remove.count(); ++i)
+    {
+        if (not to_remove[i])
+        {
+            cgarrayarray->setNPointsInCGroup(igroup, cgroups_array[i].count());
+            ++igroup;
+        }
+    }
+    
+    cgarrayarray->close();
+    
+    Vector *coords = cgarrayarray->coordsData();
+    AABox *aabox = cgarrayarray->aaBoxData();
+    
+    //finally, copy the data into the arrays
+    for (int i=0; i<to_remove.count(); ++i)
+    {
+        if (not to_remove[i])
+        {
+            const CoordGroup &cgroup = cgroups_array[i];
+        
+            //copy the coordinates
+            Vector *output = quickCopy<Vector>(coords, cgroup.constData(),
+                                               cgroup.count());
+                                
+            BOOST_ASSERT(output == coords);
+        
+            coords += cgroup.count();
+        
+            //now copy the AABox
+            *aabox = cgroup.aaBox();
+            ++aabox;
+        }
+    }
+    
+    d = d2;
+}
+
+/** Remove 'count' CoordGroups from the array, starting with the ith CoordGroup */
+void CoordGroupArray::remove(quint32 start, int count)
+{
+    if (start == 0 and count == this->nCoordGroups())
+    {
+        this->operator=( CoordGroupArray() );
+        return;
+    }
+
+    if (count < 0 or int(start)+count > this->nCoordGroups())
+    {
+        throw SireError::invalid_index( QObject::tr(
+                "Cannot remove elements %1 to %2 as this is an invalid index "
+                "range for a CoordGroupArray of size %3.")
+                    .arg(start).arg(start+count)
+                    .arg(this->nCoordGroups()), CODELOC );
+    }
+
+    QVarLengthArray<bool> to_remove(this->nCoordGroups());
+    
+    for (int i=0; i<this->nCoordGroups(); ++i)
+    {
+        to_remove[i] = false;
+    }
+
+    for (int i=int(start); i<int(start)+count; ++i)
+    {
+        to_remove[i] = true;
+    }
+
+    this->pvt_remove(to_remove);
+}
+
+/** Remove the ith CoordGroup from the array */
+void CoordGroupArray::remove(quint32 i)
+{
+    this->remove(i, 1);
+}
+
+/** Remove the specified CoordGroups from the array */
+void CoordGroupArray::remove(const QVarLengthArray<quint32> &idxs)
+{
+    if (idxs.isEmpty())
+        return;
+
+    QVarLengthArray<bool> to_remove(this->nCoordGroups());
+    
+    for (int i=0; i<this->nCoordGroups(); ++i)
+    {
+        to_remove[i] = false;
+    }
+    
+    int nremoved = 0;
+    
+    for (int i=0; i<idxs.count(); ++i)
+    {
+        if (int(idxs[i]) >= this->nCoordGroups())
+            throw SireError::invalid_index( QObject::tr(
+                    "The list of indexes contains an invalid index (%1). "
+                    "The number of CoordGroups is %2.")
+                        .arg(idxs[i]).arg(this->nCoordGroups()), CODELOC );
+                     
+        if (not to_remove[i])
+        {
+            to_remove[i] = false;
+            ++nremoved;
+        }
+    }
+    
+    if (nremoved == this->nCoordGroups())
+    {
+        this->operator=( CoordGroupArray() );
+    }
+    else
+    {
+        this->pvt_remove(to_remove);
+    }
 }
 
 /** Update the CoordGroup at index i so that it has coordinates 'coords'
@@ -3260,6 +3521,23 @@ bool CoordGroupArrayArray::operator==(const CoordGroupArrayArray &other) const
 bool CoordGroupArrayArray::operator!=(const CoordGroupArrayArray &other) const
 {
     return not this->operator==(other);
+}
+
+/** Return a string representation of this array of arrays */
+QString CoordGroupArrayArray::toString() const
+{
+    if (this->count() == 0)
+        return QObject::tr("CoordGroupArrayArray::null");
+        
+    QStringList lines;
+    
+    for (int i=0; i<this->count(); ++i)
+    {
+        lines.append( this->constData()[i].toString() );
+    }
+    
+    return QObject::tr("CoordGroupArrayArray( aaBox() == %1\n%2\n)")
+                .arg(this->aaBox().toString(), lines.join("\n"));
 }
 
 /** Merge this array of array of CoordGroups back into a single CoordGroup */

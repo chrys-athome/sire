@@ -29,7 +29,7 @@ namespace bp = boost::python;
 
 #include "coordgroup.h"
 
-const char* pvt_get_name(const SireVol::CoordGroupBase&){ return "SireVol::CoordGroupBase";}
+#include "Helpers/str.hpp"
 
 void register_CoordGroupBase_class(){
 
@@ -148,6 +148,16 @@ void register_CoordGroupBase_class(){
                 , size_function_value );
         
         }
+        { //::SireVol::CoordGroupBase::toString
+        
+            typedef ::QString ( ::SireVol::CoordGroupBase::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireVol::CoordGroupBase::toString );
+            
+            CoordGroupBase_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
         { //::SireVol::CoordGroupBase::toVector
         
             typedef ::QVector< SireMaths::Vector > ( ::SireVol::CoordGroupBase::*toVector_function_type )(  ) const;
@@ -179,8 +189,8 @@ void register_CoordGroupBase_class(){
         
         }
         CoordGroupBase_exposer.staticmethod( "typeName" );
-        CoordGroupBase_exposer.def( "__str__", &pvt_get_name);
-        CoordGroupBase_exposer.def( "__repr__", &pvt_get_name);
+        CoordGroupBase_exposer.def( "__str__", &__str__< ::SireVol::CoordGroupBase > );
+        CoordGroupBase_exposer.def( "__repr__", &__str__< ::SireVol::CoordGroupBase > );
     }
 
 }

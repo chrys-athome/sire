@@ -33,7 +33,7 @@ SireVol::CoordGroupArray __copy__(const SireVol::CoordGroupArray &other){ return
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireVol::CoordGroupArray&){ return "SireVol::CoordGroupArray";}
+#include "Helpers/str.hpp"
 
 void register_CoordGroupArray_class(){
 
@@ -45,6 +45,7 @@ void register_CoordGroupArray_class(){
         CoordGroupArray_exposer.def( bp::init< SireVol::CoordGroup const & >(( bp::arg("cgroup") )) );
         CoordGroupArray_exposer.def( bp::init< QVector< QVector< SireMaths::Vector > > const & >(( bp::arg("points") )) );
         CoordGroupArray_exposer.def( bp::init< QVector< SireVol::CoordGroup > const & >(( bp::arg("cgroups") )) );
+        CoordGroupArray_exposer.def( bp::init< SireVol::CoordGroupArray const &, SireVol::CoordGroupArray const & >(( bp::arg("array0"), bp::arg("array1") )) );
         CoordGroupArray_exposer.def( bp::init< SireVol::CoordGroupArray const & >(( bp::arg("other") )) );
         { //::SireVol::CoordGroupArray::aaBox
         
@@ -54,6 +55,28 @@ void register_CoordGroupArray_class(){
             CoordGroupArray_exposer.def( 
                 "aaBox"
                 , aaBox_function_value );
+        
+        }
+        { //::SireVol::CoordGroupArray::append
+        
+            typedef void ( ::SireVol::CoordGroupArray::*append_function_type )( ::SireVol::CoordGroup const & ) ;
+            append_function_type append_function_value( &::SireVol::CoordGroupArray::append );
+            
+            CoordGroupArray_exposer.def( 
+                "append"
+                , append_function_value
+                , ( bp::arg("cgroup") ) );
+        
+        }
+        { //::SireVol::CoordGroupArray::append
+        
+            typedef void ( ::SireVol::CoordGroupArray::*append_function_type )( ::SireVol::CoordGroupArray const & ) ;
+            append_function_type append_function_value( &::SireVol::CoordGroupArray::append );
+            
+            CoordGroupArray_exposer.def( 
+                "append"
+                , append_function_value
+                , ( bp::arg("cgroups") ) );
         
         }
         { //::SireVol::CoordGroupArray::assertValidCoordGroup
@@ -131,6 +154,16 @@ void register_CoordGroupArray_class(){
             CoordGroupArray_exposer.def( 
                 "count"
                 , count_function_value );
+        
+        }
+        { //::SireVol::CoordGroupArray::isEmpty
+        
+            typedef bool ( ::SireVol::CoordGroupArray::*isEmpty_function_type )(  ) const;
+            isEmpty_function_type isEmpty_function_value( &::SireVol::CoordGroupArray::isEmpty );
+            
+            CoordGroupArray_exposer.def( 
+                "isEmpty"
+                , isEmpty_function_value );
         
         }
         { //::SireVol::CoordGroupArray::mapInto
@@ -211,6 +244,39 @@ void register_CoordGroupArray_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireVol::CoordGroupArray::remove
+        
+            typedef void ( ::SireVol::CoordGroupArray::*remove_function_type )( ::quint32 ) ;
+            remove_function_type remove_function_value( &::SireVol::CoordGroupArray::remove );
+            
+            CoordGroupArray_exposer.def( 
+                "remove"
+                , remove_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::SireVol::CoordGroupArray::remove
+        
+            typedef void ( ::SireVol::CoordGroupArray::*remove_function_type )( ::quint32,int ) ;
+            remove_function_type remove_function_value( &::SireVol::CoordGroupArray::remove );
+            
+            CoordGroupArray_exposer.def( 
+                "remove"
+                , remove_function_value
+                , ( bp::arg("i"), bp::arg("count") ) );
+        
+        }
+        { //::SireVol::CoordGroupArray::remove
+        
+            typedef void ( ::SireVol::CoordGroupArray::*remove_function_type )( ::QVarLengthArray< unsigned int, 256 > const & ) ;
+            remove_function_type remove_function_value( &::SireVol::CoordGroupArray::remove );
+            
+            CoordGroupArray_exposer.def( 
+                "remove"
+                , remove_function_value
+                , ( bp::arg("idxs") ) );
+        
+        }
         { //::SireVol::CoordGroupArray::rotate
         
             typedef void ( ::SireVol::CoordGroupArray::*rotate_function_type )( ::SireMaths::Quaternion const &,::SireMaths::Vector const & ) ;
@@ -263,6 +329,16 @@ void register_CoordGroupArray_class(){
             CoordGroupArray_exposer.def( 
                 "size"
                 , size_function_value );
+        
+        }
+        { //::SireVol::CoordGroupArray::toString
+        
+            typedef ::QString ( ::SireVol::CoordGroupArray::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireVol::CoordGroupArray::toString );
+            
+            CoordGroupArray_exposer.def( 
+                "toString"
+                , toString_function_value );
         
         }
         { //::SireVol::CoordGroupArray::translate
@@ -348,8 +424,8 @@ void register_CoordGroupArray_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CoordGroupArray_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireVol::CoordGroupArray >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        CoordGroupArray_exposer.def( "__str__", &pvt_get_name);
-        CoordGroupArray_exposer.def( "__repr__", &pvt_get_name);
+        CoordGroupArray_exposer.def( "__str__", &__str__< ::SireVol::CoordGroupArray > );
+        CoordGroupArray_exposer.def( "__repr__", &__str__< ::SireVol::CoordGroupArray > );
     }
 
 }

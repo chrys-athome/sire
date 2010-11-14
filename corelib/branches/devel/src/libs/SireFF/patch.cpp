@@ -30,6 +30,8 @@
 
 #include "SireError/errors.h"
 
+#include "tostring.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -134,11 +136,45 @@ const AABox& Patch::aaBox() const
     return aabox;
 }
 
+/** Return the index (location) of the patch with ID 'beadid'
+
+    \throw SireError::invalid_key
+*/
+int Patch::getLocation(quint32 beadid) const
+{
+    int idx = beadid_to_idx.value(beadid, -1);
+    
+    if (idx == -1)
+        throw SireError::invalid_key( QObject::tr(
+                "There is no bead with ID %1 in this patch. Available beads "
+                "are %1.")
+                    .arg(beadid).arg(Sire::toString(beadid_to_idx.keys())),
+                        CODELOC );
+                        
+    return idx;
+}
+
 /** Return the internal IDs of each of the beads in this patch,
     in the order that they appear in the patch */
 const QVector<quint32> Patch::beadIDs() const
 {
     return idx_to_beadid;
+}
+
+/** Return the number of beads in this patch */
+int Patch::nBeads() const
+{
+    return coords.nCoordGroups();
+}
+
+/** Return a string representation of this patch */
+QString Patch::toString() const
+{
+    if (this->isEmpty())
+        return QObject::tr("Patch::null");
+
+    return QObject::tr("Patch( aaBox() == %1, nBeads() == %2 )")
+                .arg(this->aaBox().toString()).arg(this->nBeads());
 }
 
 /** Return the array of coordinates of the beads in this patch */
@@ -166,7 +202,16 @@ void Patch::add(quint32 beadid, const CoordGroup &groupcoords,
     beadid_to_idx.insert(beadid, idx_to_beadid.count());
     idx_to_beadid.append(beadid);
     
-    params.edit().append(groupparams);
+    if (params.read().isEmpty())
+    {
+        //make this parameter array into an array of the right type
+        params = groupparams.toArray();
+    }
+    else
+    {
+        params.edit().append(groupparams);
+    }
+    
     coords.append(groupcoords);
     
     aabox = coords.aaBox();
@@ -174,48 +219,329 @@ void Patch::add(quint32 beadid, const CoordGroup &groupcoords,
 
 /** Internal function used to add the array of beads with the passed
     array of beadids */
-void Patch::add(const QVector<quint32> &beadids, const CoordGroupArray &groupcoords,
+void Patch::add(const QVarLengthArray<quint32> &beadids, 
+                const CoordGroupArray &groupcoords,
                 const FFParametersArray &groupparams)
 {
-    for (QVector<quint32>::const_iterator it = beadids.constBegin();
-         it != beadids.constEnd();
-         ++it)
+    if (beadids.count() != groupcoords.count() or
+        beadids.count() != groupparams.count())
     {
-        if (beadid_to_idx.contains(*it))
-            this->remove(*it);
+        throw SireError::incompatible_error( QObject::tr(
+                "You must ensure that the number of CoordGroups (%1) "
+                "is equal to the number of parameter groups (%2) and "
+                "that is equal to the number of specified beads (%3).")
+                    .arg(groupcoords.count())
+                    .arg(groupparams.count())
+                    .arg(beadids.count()), CODELOC );
     }
+
+    for (int i=0; i<beadids.count(); ++i)
+    {
+        if (beadid_to_idx.contains(beadids.constData()[i]))
+            this->remove(beadids.constData()[i]);
+    }
+
+    const int old_n_beads = idx_to_beadid.count();
+    idx_to_beadid.resize( idx_to_beadid.count() + beadids.count() );
+    quint32 *idx_to_beadid_data = idx_to_beadid.data() + old_n_beads;
     
     for (int i=0; i<beadids.count(); ++i)
     {
         beadid_to_idx.insert(beadids.constData()[i], beadids.count() + i);
+        idx_to_beadid_data[i] = beadids.constData()[i];
     }
     
-    idx_to_beadid += beadids;
-    params.edit().append(groupparams);
+    if (params.read().isEmpty())
+    {
+        //make an array of the right type
+        params = groupparams;
+    }
+    else
+    {
+        params.edit().append(groupparams);
+    }
+    
     coords.append(groupcoords);
+    aabox = coords.aaBox();
 }
 
-/*
-void Patch::update(quint32 beadid, const CoordGroup &coords);
-void Patch::update(quint32 beadid, const FFParameters &params);
-void Patch::update(quint32 beadid, const CoordGroup &coords, const FFParameters &params);
-            
-void Patch::update(const QVector<quint32> &beadids, const CoordGroupArray &coords);
-void Patch::update(const QVector<quint32> &beadids, const FFParametersArray &params);
-void Patch::update(const QVector<quint32> &beadids, const CoordGroupArray &coords,
-            const FFParametersArray &params);
+/** Return the index of the bead with passed beadid
+
+    \throw SireError::program_bug
 */
-            
+int Patch::getBeadIdx(quint32 beadid) const
+{
+    int idx = beadid_to_idx.value(beadid, -1);
+    
+    if (idx == -1)
+        throw SireError::program_bug( QObject::tr(
+                "There is a bug as there is no bead with ID %1 in this Patch!")
+                    .arg(beadid), CODELOC );
+                    
+    return idx;
+}
+
+/** Update the bead with ID 'beadid' with the new set of passed coordinates
+
+    \throw SireError::incompatible_error
+*/
+void Patch::update(quint32 beadid, const CoordGroup &new_coords)
+{
+    coords.update( getBeadIdx(beadid), new_coords );
+    aabox = coords.aaBox();
+}
+
+/** Update the bead with ID 'beadid' with the new set of passed parameters 
+
+    \throw SireError::incompatible_error
+*/
+void Patch::update(quint32 beadid, const FFParameters &new_params)
+{
+    params.edit().update( getBeadIdx(beadid), new_params );
+}
+
+/** Update the bead with ID 'beadid' with the new set of passed coordinates
+    and parameters
+    
+    \throw SireError::incompatible_error
+*/
+void Patch::update(quint32 beadid, const CoordGroup &new_coords, 
+                                   const FFParameters &new_params)
+{
+    int idx = getBeadIdx(beadid);
+    
+    //update a copy, so that the original is safe
+    //if the parameters update causes an exception
+    CoordGroupArray ncoords(coords);
+    
+    ncoords.update(idx, new_coords);
+    params.edit().update(idx, new_params);
+    coords = ncoords;
+    aabox = coords.aaBox();
+}
+
+/** Update the specified beads with the specified coords 
+
+    \throw SireError::incompatible_error
+*/
+void Patch::update(const QVarLengthArray<quint32> &beadids, 
+                   const CoordGroupArray &new_coords)
+{
+    if (beadids.count() != new_coords.count())
+        throw SireError::invalid_arg( QObject::tr(
+                "You must pass in the same number of CoordGroups (%1) as there are "
+                "beads specified in the array (%2).")
+                    .arg(new_coords.count()).arg(beadids.count()), CODELOC );
+
+    if (beadids.isEmpty())
+        return;
+    
+    else if (beadids.count() == 1)
+    {
+        this->update( beadids.constData()[0], new_coords.constData()[0] );
+    }
+    else
+    {
+        CoordGroupArray ncoords(coords);
+        
+        for (int i=0; i<beadids.count(); ++i)
+        {
+            ncoords.update( getBeadIdx(beadids.constData()[i]),
+                            new_coords.constData()[i] );
+        }
+        
+        coords = ncoords;
+        aabox = coords.aaBox();
+    }
+}
+
+/** Update the specified beads with the specified forcefield parameters
+
+    \throw SireError::incompatible_error
+*/
+void Patch::update(const QVarLengthArray<quint32> &beadids, 
+                   const FFParametersArray &new_params)
+{
+    if (beadids.count() != new_params.count())
+        throw SireError::invalid_arg( QObject::tr(
+                "You must pass in the same number of parameters (%1) as there are "
+                "beads specified in the array (%2).")
+                    .arg(new_params.count()).arg(beadids.count()), CODELOC );
+
+    if (beadids.isEmpty())
+        return;
+    
+    else
+    {
+        QVarLengthArray<int> idxs(beadids.count());
+        
+        int *idxs_array = idxs.data();
+        
+        for (int i=0; i<beadids.count(); ++i)
+        {
+            idxs_array[i] = getBeadIdx(beadids.constData()[i]);
+        }
+        
+        params.edit().update(idxs, new_params);
+    }
+}
+
+/** Update the coordinates and parameters of the specified beads
+
+    \throw SireError::incompatible_error
+*/
+void Patch::update(const QVarLengthArray<quint32> &beadids, 
+                   const CoordGroupArray &new_coords,
+                   const FFParametersArray &new_params)
+{
+    if (beadids.count() != new_coords.count() or
+        beadids.count() != new_params.count())
+    {
+        throw SireError::incompatible_error( QObject::tr(
+                "You must ensure that the number of CoordGroups (%1) "
+                "is equal to the number of parameter groups (%2) and "
+                "that is equal to the number of specified beads (%3).")
+                    .arg(new_coords.count())
+                    .arg(new_params.count())
+                    .arg(beadids.count()), CODELOC );
+    }
+    
+    if (beadids.isEmpty())
+        return;
+        
+    else
+    {
+        QVarLengthArray<int> idxs(beadids.count());
+        
+        int *idxs_array = idxs.data();
+        
+        for (int i=0; i<beadids.count(); ++i)
+        {
+            idxs_array[i] = getBeadIdx(beadids.constData()[i]);
+        }
+        
+        CoordGroupArray ncoords(coords);
+        
+        for (int i=0; i<idxs.count(); ++i)
+        {
+            ncoords.update(idxs_array[i], new_coords.constData()[i]);
+        }
+
+        params.edit().update(idxs, new_params);
+        coords = ncoords;
+        aabox = coords.aaBox();
+    }
+    
+}
+
+/** Remove the bead with ID 'beadid' */
 void Patch::remove(quint32 beadid)
 {
-    throw SireError::incomplete_code("TODO", CODELOC);
+    int idx = getBeadIdx(beadid);
+    {
+        CoordGroupArray ncoords(coords);
+        ncoords.remove(idx);
+        params.edit().remove(idx);
+        coords = ncoords;
+    }
+    
+    //update the index
+    if (coords.isEmpty())
+    {
+        idx_to_beadid = QVector<quint32>();
+        beadid_to_idx = QHash<quint32,int>();
+        aabox = AABox();
+    }
+    else
+    {
+        beadid_to_idx.remove(beadid);
+        idx_to_beadid.remove(idx);
+    
+        for (int i=0; i<idx_to_beadid.count(); ++i)
+        {
+            beadid_to_idx.insert( idx_to_beadid.constData()[i], i );
+        }
+        
+        aabox = coords.aaBox();
+    }
 }
 
-void Patch::remove(const QVector<quint32> &beadids)
+/** Remove all of the beads whose IDs are in 'beadids' */
+void Patch::remove(const QVarLengthArray<quint32> &beadids)
 {
-    throw SireError::incomplete_code("TODO", CODELOC);
+    if (beadids.isEmpty())
+        return;
+        
+    QVarLengthArray<int> idxs(beadids.count());
+        
+    int *idxs_array = idxs.data();
+        
+    for (int i=0; i<beadids.count(); ++i)
+    {
+        idxs_array[i] = getBeadIdx(beadids.constData()[i]);
+    }
+
+    qSort( idxs_array, idxs_array + idxs.count() );
+    {
+        CoordGroupArray ncoords(coords);
+
+        QVarLengthArray<quint32> uidxs32(idxs.count());
+        quint32 *uidxs32_array = uidxs32.data();
+        
+        for (int i=0; i<idxs.count(); ++i)
+        {
+            uidxs32_array[i] = idxs_array[i];
+        }
+    
+        ncoords.remove(uidxs32);
+        params.edit().remove(idxs);
+        coords = ncoords;
+    }
+    
+    //update the index
+    if (coords.isEmpty())
+    {
+        idx_to_beadid = QVector<quint32>();
+        beadid_to_idx = QHash<quint32,int>();
+        aabox = AABox();
+    }
+    else
+    {
+        for (int i=0; i<beadids.count(); ++i)
+        {
+            beadid_to_idx.remove( beadids.constData()[i] );
+        }
+        
+        int last_idx = -1;
+        
+        //have to remove from the end so that the indicies
+        //to remove remain valid
+        for (int i=idxs.count()-1; i>=0; --i)
+        {
+            if (idxs_array[i] != last_idx)
+            {
+                idx_to_beadid.remove(idxs_array[i]);
+                last_idx = idxs_array[i];
+            }
+        }
+        
+        for (int i=0; i<idx_to_beadid.count(); ++i)
+        {
+            beadid_to_idx.insert( idx_to_beadid.constData()[i], i );
+        }
+        
+        aabox = coords.aaBox();
+    }
 }
 
-/*
-void Patch::removeAll();
-*/
+/** Remove all groups from this patch */
+void Patch::removeAll()
+{
+    coords = CoordGroupArray();
+    params.edit().removeAll();
+    
+    beadid_to_idx = QHash<quint32,int>();
+    idx_to_beadid = QVector<quint32>();
+    
+    aabox = AABox();
+}

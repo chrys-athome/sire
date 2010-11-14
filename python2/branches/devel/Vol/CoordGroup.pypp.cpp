@@ -33,7 +33,7 @@ SireVol::CoordGroup __copy__(const SireVol::CoordGroup &other){ return SireVol::
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireVol::CoordGroup&){ return "SireVol::CoordGroup";}
+#include "Helpers/str.hpp"
 
 void register_CoordGroup_class(){
 
@@ -111,8 +111,8 @@ void register_CoordGroup_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         CoordGroup_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireVol::CoordGroup >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        CoordGroup_exposer.def( "__str__", &pvt_get_name);
-        CoordGroup_exposer.def( "__repr__", &pvt_get_name);
+        CoordGroup_exposer.def( "__str__", &__str__< ::SireVol::CoordGroup > );
+        CoordGroup_exposer.def( "__repr__", &__str__< ::SireVol::CoordGroup > );
     }
 
 }
