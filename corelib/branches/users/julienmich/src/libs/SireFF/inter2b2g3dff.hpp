@@ -262,29 +262,24 @@ void Inter2B2G3DFF<Potential>::recalculateEnergy()
             const typename Potential::ChangedMolecule &changed_mol = 
                                             *(this->changed_mols[0].constBegin());
                          
-            int idx = this->mols[0].indexOf(changed_mol.number());
-
             const SireVol::AABox &new_box = changed_mol.newMolecule().aaBox();
             const SireVol::AABox &old_box = changed_mol.oldMolecule().aaBox();
 
             for (int i=0; i<nmols1; ++i)
             {
-                if (idx != i)
+                const typename Potential::Molecule &mol = mols1_array.at(i);
+                const SireVol::AABox &aabox = aaboxes1_array.at(i);
+                
+                if (not spce.beyond(cutoff, old_box, aabox))
                 {
-                    const typename Potential::Molecule &mol = mols1_array.at(i);
-                    const SireVol::AABox &aabox = aaboxes1_array.at(i);
-                    
-                    if (not spce.beyond(cutoff, old_box, aabox))
-                    {
-                        Potential::calculateEnergy(mol, changed_mol.oldParts(),
-                                                   old_nrg, old_workspace);
-                    }
+                    Potential::calculateEnergy(mol, changed_mol.oldParts(),
+                                               old_nrg, old_workspace);
+                }
 
-                    if (not spce.beyond(cutoff, new_box, aabox))
-                    {
-                        Potential::calculateEnergy(mol, changed_mol.newParts(),
-                                                   new_nrg, new_workspace);
-                    }
+                if (not spce.beyond(cutoff, new_box, aabox))
+                {
+                    Potential::calculateEnergy(mol, changed_mol.newParts(),
+                                               new_nrg, new_workspace);
                 }
             }
         }
@@ -294,29 +289,24 @@ void Inter2B2G3DFF<Potential>::recalculateEnergy()
             const typename Potential::ChangedMolecule &changed_mol = 
                                             *(this->changed_mols[1].constBegin());
                          
-            int idx = this->mols[1].indexOf(changed_mol.number());
-
             const SireVol::AABox &new_box = changed_mol.newMolecule().aaBox();
             const SireVol::AABox &old_box = changed_mol.oldMolecule().aaBox();
 
             for (int i=0; i<nmols0; ++i)
             {
-                if (idx != i)
+                const typename Potential::Molecule &mol = mols0_array.at(i);
+                const SireVol::AABox &aabox = aaboxes0_array.at(i);
+                
+                if (not spce.beyond(cutoff, old_box, aabox))
                 {
-                    const typename Potential::Molecule &mol = mols0_array.at(i);
-                    const SireVol::AABox &aabox = aaboxes0_array.at(i);
-                    
-                    if (not spce.beyond(cutoff, old_box, aabox))
-                    {
-                        Potential::calculateEnergy(mol, changed_mol.oldParts(),
-                                                   old_nrg, old_workspace);
-                    }
+                    Potential::calculateEnergy(mol, changed_mol.oldParts(),
+                                               old_nrg, old_workspace);
+                }
 
-                    if (not spce.beyond(cutoff, new_box, aabox))
-                    {
-                        Potential::calculateEnergy(mol, changed_mol.newParts(),
-                                                   new_nrg, new_workspace);
-                    }
+                if (not spce.beyond(cutoff, new_box, aabox))
+                {
+                    Potential::calculateEnergy(mol, changed_mol.newParts(),
+                                               new_nrg, new_workspace);
                 }
             }
         }

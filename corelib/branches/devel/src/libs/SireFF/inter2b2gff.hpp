@@ -591,20 +591,15 @@ void Inter2B2GFF<Potential>::recalculateEnergy()
             const typename Potential::ChangedMolecule &changed_mol = 
                                             *(changed_mols[0].constBegin());
                          
-            int idx = this->mols[0].indexOf(changed_mol.number());
-
             for (int i=0; i<nmols1; ++i)
             {
-                if (idx != i)
-                {
-                    const typename Potential::Molecule &mol = mols1_array[i];
+                const typename Potential::Molecule &mol = mols1_array[i];
 
-                    Potential::calculateEnergy(mol, changed_mol.oldParts(),
-                                               old_nrg, old_workspace);
+                Potential::calculateEnergy(mol, changed_mol.oldParts(),
+                                           old_nrg, old_workspace);
 
-                    Potential::calculateEnergy(mol, changed_mol.newParts(),
-                                               new_nrg, new_workspace);
-                }
+                Potential::calculateEnergy(mol, changed_mol.newParts(),
+                                           new_nrg, new_workspace);
             }
         }
         else if (changed_mols[0].isEmpty() and changed_mols[1].count() == 1)
@@ -613,20 +608,15 @@ void Inter2B2GFF<Potential>::recalculateEnergy()
             const typename Potential::ChangedMolecule &changed_mol = 
                                             *(changed_mols[1].constBegin());
                          
-            int idx = this->mols[1].indexOf(changed_mol.number());
-
             for (int i=0; i<nmols0; ++i)
             {
-                if (idx != i)
-                {
-                    const typename Potential::Molecule &mol = mols0_array[i];
+                const typename Potential::Molecule &mol = mols0_array[i];
 
-                    Potential::calculateEnergy(mol, changed_mol.oldParts(),
-                                               old_nrg, old_workspace);
+                Potential::calculateEnergy(mol, changed_mol.oldParts(),
+                                           old_nrg, old_workspace);
 
-                    Potential::calculateEnergy(mol, changed_mol.newParts(),
-                                               new_nrg, new_workspace);
-                }
+                Potential::calculateEnergy(mol, changed_mol.newParts(),
+                                           new_nrg, new_workspace);
             }
         }
         else 
