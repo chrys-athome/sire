@@ -294,6 +294,7 @@ zmatrix CE1 ND1 CG CB
 zmatrix HD1 ND1 CG CE1
 zmatrix NE2 CE1 ND1 CG
 zmatrix HE1 CE1 ND1 NE2
+zmatrix HE2 NE2 CE1 ND1
 zmatrix CD2 NE2 CE1 ND1
 zmatrix HD2 CD2 NE2 CG
 zmatrix HB2 CB CA CG

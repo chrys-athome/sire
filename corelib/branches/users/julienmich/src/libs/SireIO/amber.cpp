@@ -1620,8 +1620,16 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
     }
 
     //qDebug() << " THE COORDS ARE " << crdCoords;
-    // And now the box dimensions
-    line = ts2.readLine();
+    // And now the box dimensions. Skip to the last line of the file, because 
+    // the crd file could have contained velocities, which are not used for the moment
+
+    while (not ts2.atEnd())
+      {
+	line = ts2.readLine();
+      }
+
+    //qDebug() << "THE LAST LINE IS " << line;
+
     QList<double> crd_box;
 
     if ( pointers[IFBOX] != 0 )
