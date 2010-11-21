@@ -95,6 +95,14 @@ public:
 
     Bead* clone() const;
 
+    Atom operator[](int i) const;
+    
+    Atom atom(int i) const;
+    Atom at(int i) const;
+
+    int count() const;
+    int size() const;
+
     QString toString() const;
     
     bool isEmpty() const;

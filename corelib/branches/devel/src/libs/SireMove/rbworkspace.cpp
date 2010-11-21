@@ -35,8 +35,6 @@
 #include "SireMol/atomcoords.h"
 #include "SireMol/molecule.h"
 #include "SireMol/moleditor.h"
-#include "SireMol/beadnum.h"
-#include "SireMol/atombeading.h"
 
 #include "SireMaths/axisset.h"
 
@@ -393,45 +391,7 @@ static void getBeading(const ViewsOfMol &mol, const PropertyName &beading_proper
     
         if (mol.selectedAll())
         {
-            const AtomBeading &beadprop = moldata.property(beading_property)
-                                                 .asA<AtomBeading>();
-
-            int nats = beadprop.nAtoms();
-
-            QHash<BeadNum,qint32> have_bead;
-
-            QVector<qint32> beads(nats);
-            beads.squeeze();
-            
-            int num_beads = 0;
-            
-            const BeadNum *beading_array = beadprop.array().constValueData();
-            
-            for (int i=0; i<nats; ++i)
-            {
-                const BeadNum &beadnum = beading_array[i];
-                
-                if (beadnum.isNull())
-                {
-                    beads[i] = -1;
-                    continue;
-                }
-                
-                if (not have_bead.contains(beadnum))
-                {
-                    have_bead.insert(beadnum,num_beads);
-                    num_beads += 1;
-                }
-                    
-                beads[i] = have_bead[beadnum];
-            }
-            
-            if (num_beads > 0)
-            {
-                beading.first = nbeads;
-                beading.second = beads;
-                nbeads += num_beads;
-            }
+            throw SireError::incomplete_code( QObject::tr("TODO"), CODELOC );
         }
         else
         {

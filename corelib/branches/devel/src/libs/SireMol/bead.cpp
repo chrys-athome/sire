@@ -97,9 +97,19 @@ Bead::Bead(const MoleculeData &moldata, const BeadIdx &bead,
     }
     
     beadidx = BeadIdx( beadidx.map(bdng.read().nBeads(moldata.info())) );
-    selected_atoms = bdng.read().selection(moldata.info());
+    selected_atoms = bdng.read().selection(moldata.info(), beadidx);
 }
-     
+
+/** Internal constructor */ 
+Bead::Bead(const MoleculeData &moldata, BeadIdx idx,
+           const Beading &beading, const PropertyName &prop)
+     : ConcreteProperty<Bead,MoleculeView>(moldata),
+       bdng(beading), beading_property(prop)
+{
+    beadidx = BeadIdx( idx.map(beading.nBeads(moldata.info())) );
+    selected_atoms = beading.selection(moldata.info(), beadidx);
+}
+
 /** Copy constructor */
 Bead::Bead(const Bead &other)
      : ConcreteProperty<Bead,MoleculeView>(other),
@@ -164,10 +174,7 @@ QString Bead::toString() const
 /** Return if this is an empty bead */
 bool Bead::isEmpty() const
 {
-    if (beadidx.isNull())
-        return true;
-    else
-        return bdng.read().isEmpty(this->data().info(), beadidx);
+    return selected_atoms.selectedNone();
 }
 
 /** Return whether or not this bead includes all of the atoms in the molecule */
@@ -357,6 +364,45 @@ BeadEditor Bead::edit() const
 int Bead::nAtoms() const
 {
     return selected_atoms.nSelected();
+}
+
+/** Return the ith atom in this bead
+
+    \throw SireError::invalid_index
+*/
+Atom Bead::operator[](int i) const
+{
+    return Atom(data(), bdng.read().atomIdx(data().info(), beadidx, i));
+}
+    
+/** Return the ith atom in this bead
+
+    \throw SireError::invalid_index
+*/
+Atom Bead::atom(int i) const
+{
+    return Bead::operator[](i);
+}
+
+/** Return the ith atom in this bead
+
+    \throw SireError::invalid_index
+*/
+Atom Bead::at(int i) const
+{
+    return Bead::operator[](i);
+}
+
+/** Return the number of atoms in this bead */
+int Bead::count() const
+{
+    return Bead::nAtoms();
+}
+
+/** Return the number of atoms in this bead */
+int Bead::size() const
+{
+    return Bead::nAtoms();
 }
 
 /** Return the beading function used to bead up the molecule */

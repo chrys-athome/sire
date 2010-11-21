@@ -79,6 +79,9 @@ public:
     
     Bead bead(BeadIdx beadidx) const;
     
+    int count() const;
+    int size() const;
+    
     QString toString() const;
     
     bool isEmpty() const;
@@ -91,9 +94,8 @@ public:
     
     void update(const MoleculeData &moldata);
 
-    Mover<Bead> move() const;
+    Mover<Beads> move() const;
     Evaluator evaluate() const;
-    BeadEditor edit() const;
 
     QList<AtomIdx> atomIdxs() const;
     
@@ -127,9 +129,20 @@ private:
 
 }
 
-Q_DECLARE_METATYPE( SireMol::Beads )
+Q_DECLARE_METATYPE(SireMol::Beads);
+Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Beads>);
 
 SIRE_EXPOSE_CLASS( SireMol::Beads )
+
+SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Beads>, SireMol::Mover_Beads_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+
+#include "mover.hpp"
+
+template class SireMol::Mover<SireMol::Beads>;
+
+#endif //SIRE_INSTANTIATE_TEMPLATES
 
 SIRE_END_HEADER
 

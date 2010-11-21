@@ -104,6 +104,11 @@ uint BeadIdx::hash() const
     return SireID::Index_T_<BeadIdx>::hash();
 }
 
+BeadIdx* BeadIdx::clone() const
+{
+    return new BeadIdx(*this);
+}
+
 QString BeadIdx::toString() const
 {
     return QString("BeadIdx(%1)").arg(_idx);

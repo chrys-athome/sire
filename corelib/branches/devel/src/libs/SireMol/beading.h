@@ -120,62 +120,11 @@ protected:
 
     virtual int nBeads(const MoleculeInfoData &moldata) const=0;
 
-    virtual int nAtoms(const MoleculeInfoData &moldata) const=0;
-    virtual int nAtoms(const BeadIdx &idx, const MoleculeInfoData &moldata) const=0;
-    
     virtual AtomIdx atomIdx(const MoleculeInfoData &moldata,
-                            const BeadIdx &bead, const SireID::Index &atom) const=0;
+                            const BeadIdx &bead, int i) const=0;
 
     virtual SireBase::PropertyPtr atomProperty(const MoleculeData &moldata,
                                                const SireBase::PropertyName &key) const=0;
-
-    template<class T>
-    T property(const MoleculeData &moldata,
-               const BeadIdx &bead,
-               const SireBase::PropertyName &key) const;
-      
-    template<class T>
-    T metadata(const MoleculeData &moldata,
-               const BeadIdx &bead,
-               const SireBase::PropertyName &metakey) const;
-      
-    template<class T>
-    T metadata(const MoleculeData &moldata,
-               const BeadIdx &bead,
-               const SireBase::PropertyName &key,
-               const SireBase::PropertyName &metakey) const;
-                                                                                                     
-    QStringList propertyKeys(const MoleculeData &moldata,
-                             const BeadIdx &bead) const;
-                                     
-    QStringList metadataKeys(const MoleculeData &moldata,
-                             const BeadIdx &bead) const;
-                                     
-    QStringList metadataKeys(const MoleculeData &moldata,
-                             const BeadIdx &bead,
-                             const SireBase::PropertyName &key) const;
-
-    bool hasProperty(const MoleculeData &moldata,
-                     const BeadIdx &bead,
-                     const SireBase::PropertyName &key) const;
-                             
-    bool hasMetadata(const MoleculeData &moldata,
-                     const BeadIdx &bead,
-                     const SireBase::PropertyName &metakey) const;
-                             
-    bool hasMetadata(const MoleculeData &moldata,
-                     const BeadIdx &bead,
-                     const SireBase::PropertyName &key,
-                     const SireBase::PropertyName &metakey) const;
-                             
-    virtual bool isEmpty(const MoleculeInfoData &moldata) const=0;
-    
-    virtual bool isEmpty(const MoleculeInfoData &moldata,
-                         const BeadIdx &bead) const=0;
-                         
-    virtual bool selectedAll(const MoleculeInfoData &moldata) const=0;
-    virtual bool selectedAll(const MoleculeInfoData &moldata,
-                             const BeadIdx &bead) const=0;
                              
     virtual AtomSelection selection(const MoleculeInfoData &moldata) const=0;
                              
@@ -185,31 +134,6 @@ protected:
     virtual QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata) const=0;
     virtual QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata,
                                     const BeadIdx &bead) const=0;
-                                    
-    virtual bool contains(const MoleculeInfoData &moldata,
-                          const AtomIdx &atomidx) const=0;
-                          
-    virtual bool contains(const MoleculeInfoData &moldata,  
-                          const BeadIdx &bead, const AtomIdx &atomidx) const=0;
-                    
-    template<class T>
-    void setProperty(MoleculeData &moldata,
-                     const BeadIdx &bead,
-                     const SireBase::PropertyName &key,
-                     const T &value) const;
-                             
-    template<class T>
-    void setMetadata(MoleculeData &moldata,
-                     const BeadIdx &bead,
-                     const SireBase::PropertyName &metakey,
-                     const T &value) const;
-                            
-    template<class T>
-    void setMetadata(MoleculeData &moldata,
-                     const BeadIdx &bead,
-                     const SireBase::PropertyName &key,
-                     const SireBase::PropertyName &metakey,
-                     const T &value) const;
 
     void assertValidIndex(BeadIdx beadidx, const MoleculeInfoData &molinfo) const;
 };
@@ -244,23 +168,11 @@ public:
 protected:
     int nBeads(const MoleculeInfoData &moldata) const;
 
-    int nAtoms(const MoleculeInfoData &moldata) const;
-    int nAtoms(const BeadIdx &idx, const MoleculeInfoData &moldata) const;
-    
     AtomIdx atomIdx(const MoleculeInfoData &moldata,
-                    const BeadIdx &bead, const SireID::Index &atom) const;
+                    const BeadIdx &bead, int i) const;
 
     SireBase::PropertyPtr atomProperty(const MoleculeData &moldata,
                                        const SireBase::PropertyName &key) const;
-
-    bool isEmpty(const MoleculeInfoData &moldata) const;
-    
-    bool isEmpty(const MoleculeInfoData &moldata,
-                 const BeadIdx &bead) const;
-                         
-    bool selectedAll(const MoleculeInfoData &moldata) const;
-    bool selectedAll(const MoleculeInfoData &moldata,
-                     const BeadIdx &bead) const;
                              
     AtomSelection selection(const MoleculeInfoData &moldata) const;
                              
@@ -270,12 +182,6 @@ protected:
     QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata) const;
     QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata,
                             const BeadIdx &bead) const;
-                                    
-    bool contains(const MoleculeInfoData &moldata,
-                  const AtomIdx &atomidx) const;
-                          
-    bool contains(const MoleculeInfoData &moldata,  
-                  const BeadIdx &bead, const AtomIdx &atomidx) const;
 };
 
 /** This is a beading function that breaks a molecule into beads
@@ -306,23 +212,11 @@ public:
 protected:
     int nBeads(const MoleculeInfoData &moldata) const;
 
-    int nAtoms(const MoleculeInfoData &moldata) const;
-    int nAtoms(const BeadIdx &idx, const MoleculeInfoData &moldata) const;
-    
     AtomIdx atomIdx(const MoleculeInfoData &moldata,
-                    const BeadIdx &bead, const SireID::Index &atom) const;
+                    const BeadIdx &bead, int i) const;
 
     SireBase::PropertyPtr atomProperty(const MoleculeData &moldata,
                                        const SireBase::PropertyName &key) const;
-
-    bool isEmpty(const MoleculeInfoData &moldata) const;
-    
-    bool isEmpty(const MoleculeInfoData &moldata,
-                 const BeadIdx &bead) const;
-                         
-    bool selectedAll(const MoleculeInfoData &moldata) const;
-    bool selectedAll(const MoleculeInfoData &moldata,
-                     const BeadIdx &bead) const;
                              
     AtomSelection selection(const MoleculeInfoData &moldata) const;
                              
@@ -332,12 +226,6 @@ protected:
     QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata) const;
     QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata,
                             const BeadIdx &bead) const;
-                                    
-    bool contains(const MoleculeInfoData &moldata,
-                  const AtomIdx &atomidx) const;
-                          
-    bool contains(const MoleculeInfoData &moldata,  
-                  const BeadIdx &bead, const AtomIdx &atomidx) const;
 };
 
 /** This is a beading function that divides a molecule into 
@@ -368,23 +256,11 @@ public:
 protected:
     int nBeads(const MoleculeInfoData &moldata) const;
 
-    int nAtoms(const MoleculeInfoData &moldata) const;
-    int nAtoms(const BeadIdx &idx, const MoleculeInfoData &moldata) const;
-    
     AtomIdx atomIdx(const MoleculeInfoData &moldata,
-                    const BeadIdx &bead, const SireID::Index &atom) const;
+                    const BeadIdx &bead, int i) const;
 
     SireBase::PropertyPtr atomProperty(const MoleculeData &moldata,
                                        const SireBase::PropertyName &key) const;
-
-    bool isEmpty(const MoleculeInfoData &moldata) const;
-    
-    bool isEmpty(const MoleculeInfoData &moldata,
-                 const BeadIdx &bead) const;
-                         
-    bool selectedAll(const MoleculeInfoData &moldata) const;
-    bool selectedAll(const MoleculeInfoData &moldata,
-                     const BeadIdx &bead) const;
                              
     AtomSelection selection(const MoleculeInfoData &moldata) const;
                              
@@ -394,12 +270,6 @@ protected:
     QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata) const;
     QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata,
                             const BeadIdx &bead) const;
-                                    
-    bool contains(const MoleculeInfoData &moldata,
-                  const AtomIdx &atomidx) const;
-                          
-    bool contains(const MoleculeInfoData &moldata,  
-                  const BeadIdx &bead, const AtomIdx &atomidx) const;
 };
 
 /** Null beading function */
@@ -426,23 +296,11 @@ public:
 protected:
     int nBeads(const MoleculeInfoData &moldata) const;
 
-    int nAtoms(const MoleculeInfoData &moldata) const;
-    int nAtoms(const BeadIdx &idx, const MoleculeInfoData &moldata) const;
-    
     AtomIdx atomIdx(const MoleculeInfoData &moldata,
-                    const BeadIdx &bead, const SireID::Index &atom) const;
+                    const BeadIdx &bead, int i) const;
 
     SireBase::PropertyPtr atomProperty(const MoleculeData &moldata,
                                        const SireBase::PropertyName &key) const;
-
-    bool isEmpty(const MoleculeInfoData &moldata) const;
-    
-    bool isEmpty(const MoleculeInfoData &moldata,
-                 const BeadIdx &bead) const;
-                         
-    bool selectedAll(const MoleculeInfoData &moldata) const;
-    bool selectedAll(const MoleculeInfoData &moldata,
-                     const BeadIdx &bead) const;
                              
     AtomSelection selection(const MoleculeInfoData &moldata) const;
                              
@@ -452,12 +310,6 @@ protected:
     QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata) const;
     QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata,
                             const BeadIdx &bead) const;
-                                    
-    bool contains(const MoleculeInfoData &moldata,
-                  const AtomIdx &atomidx) const;
-                          
-    bool contains(const MoleculeInfoData &moldata,  
-                  const BeadIdx &bead, const AtomIdx &atomidx) const;
 };
 
 

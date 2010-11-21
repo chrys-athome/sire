@@ -96,6 +96,28 @@ void register_Bead_class(){
                 , ( bp::arg("key") ) );
         
         }
+        { //::SireMol::Bead::at
+        
+            typedef ::SireMol::Atom ( ::SireMol::Bead::*at_function_type )( int ) const;
+            at_function_type at_function_value( &::SireMol::Bead::at );
+            
+            Bead_exposer.def( 
+                "at"
+                , at_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::SireMol::Bead::atom
+        
+            typedef ::SireMol::Atom ( ::SireMol::Bead::*atom_function_type )( int ) const;
+            atom_function_type atom_function_value( &::SireMol::Bead::atom );
+            
+            Bead_exposer.def( 
+                "atom"
+                , atom_function_value
+                , ( bp::arg("i") ) );
+        
+        }
         { //::SireMol::Bead::atomIdxs
         
             typedef ::QList< SireMol::AtomIdx > ( ::SireMol::Bead::*atomIdxs_function_type )(  ) const;
@@ -147,6 +169,16 @@ void register_Bead_class(){
                 "contains"
                 , contains_function_value
                 , ( bp::arg("atomid") ) );
+        
+        }
+        { //::SireMol::Bead::count
+        
+            typedef int ( ::SireMol::Bead::*count_function_type )(  ) const;
+            count_function_type count_function_value( &::SireMol::Bead::count );
+            
+            Bead_exposer.def( 
+                "count"
+                , count_function_value );
         
         }
         { //::SireMol::Bead::edit
@@ -288,6 +320,17 @@ void register_Bead_class(){
         
         }
         Bead_exposer.def( bp::self == bp::self );
+        { //::SireMol::Bead::operator[]
+        
+            typedef ::SireMol::Atom ( ::SireMol::Bead::*__getitem___function_type )( int ) const;
+            __getitem___function_type __getitem___function_value( &::SireMol::Bead::operator[] );
+            
+            Bead_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("i") ) );
+        
+        }
         { //::SireMol::Bead::propertyKeys
         
             typedef ::QStringList ( ::SireMol::Bead::*propertyKeys_function_type )(  ) const;
@@ -316,6 +359,16 @@ void register_Bead_class(){
             Bead_exposer.def( 
                 "selection"
                 , selection_function_value );
+        
+        }
+        { //::SireMol::Bead::size
+        
+            typedef int ( ::SireMol::Bead::*size_function_type )(  ) const;
+            size_function_type size_function_value( &::SireMol::Bead::size );
+            
+            Bead_exposer.def( 
+                "size"
+                , size_function_value );
         
         }
         { //::SireMol::Bead::toString
