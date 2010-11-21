@@ -5,7 +5,6 @@ set ( PYPP_SOURCES
        AngleID.pypp.cpp
        AnglePerturbation.pypp.cpp
        Atom.pypp.cpp
-       AtomBeading.pypp.cpp
        AtomCharges.pypp.cpp
        AtomCoords.pypp.cpp
        AtomEditor.pypp.cpp
@@ -34,7 +33,15 @@ set ( PYPP_SOURCES
        AtomStructureEditor.pypp.cpp
        AtomVariantProperty.pypp.cpp
        AtomVelocities.pypp.cpp
-       BeadNum.pypp.cpp
+       Bead.pypp.cpp
+       BeadFloatProperty.pypp.cpp
+       BeadID.pypp.cpp
+       BeadIdx.pypp.cpp
+       Beading.pypp.cpp
+       BeadIntProperty.pypp.cpp
+       BeadProp.pypp.cpp
+       BeadStringProperty.pypp.cpp
+       BeadVariantProperty.pypp.cpp
        BondHunter.pypp.cpp
        BondID.pypp.cpp
        BondPerturbation.pypp.cpp
@@ -109,6 +116,7 @@ set ( PYPP_SOURCES
        MGNum.pypp.cpp
        MolAtomID.pypp.cpp
        Molecule.pypp.cpp
+       MoleculeBeading.pypp.cpp
        MoleculeGroup.pypp.cpp
        MoleculeGroups.pypp.cpp
        MoleculeProperty.pypp.cpp
@@ -125,6 +133,7 @@ set ( PYPP_SOURCES
        MolStructureEditor.pypp.cpp
        MolViewProperty.pypp.cpp
        Mover_Atom_.pypp.cpp
+       Mover_Bead_.pypp.cpp
        Mover_Chain_.pypp.cpp
        Mover_CutGroup_.pypp.cpp
        Mover_Molecule_.pypp.cpp
@@ -138,6 +147,7 @@ set ( PYPP_SOURCES
        Mover_Selector_Segment_.pypp.cpp
        Mover_ViewsOfMol_.pypp.cpp
        MoverBase.pypp.cpp
+       NullBeading.pypp.cpp
        NullGeometryPerturbation.pypp.cpp
        NullPerturbation.pypp.cpp
        PartialMolecule.pypp.cpp
@@ -152,6 +162,7 @@ set ( PYPP_SOURCES
        ResFloatProperty.pypp.cpp
        ResID.pypp.cpp
        Residue.pypp.cpp
+       ResidueBeading.pypp.cpp
        ResidueCutting.pypp.cpp
        ResIdx.pypp.cpp
        ResIn_ChainID_.pypp.cpp
@@ -192,6 +203,7 @@ set ( PYPP_SOURCES
        Specify_ResID_.pypp.cpp
        Specify_SegID_.pypp.cpp
        SpecifyMol.pypp.cpp
+       UserBeading.pypp.cpp
        Velocity3D.pypp.cpp
        ViewsOfMol.pypp.cpp
        WeightFunction.pypp.cpp

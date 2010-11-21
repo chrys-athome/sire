@@ -26,78 +26,88 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_BEADNUM_H
-#define SIREMOL_BEADNUM_H
+#ifndef SIREMOL_BEADIDX_H
+#define SIREMOL_BEADIDX_H
 
-#include "SireID/number.h"
-#include "SireID/id.h"
+#include "SireID/index.h"
+
+#include "beadid.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class BeadNum;
+class BeadIdx;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMol::BeadNum&);
-QDataStream& operator>>(QDataStream&, SireMol::BeadNum&);
+QDataStream& operator<<(QDataStream&, const SireMol::BeadIdx&);
+QDataStream& operator>>(QDataStream&, SireMol::BeadIdx&);
 
 namespace SireMol
 {
 
-/** This class provides an ID number for a bead in a molecule.
-    A bead is a collection of atoms that are grouped together,
-    i.e. for the purpose of coarse graining, or for rigid
-    body dynamics
-    
+class CGAtomIdx;
+
+/** This is an ID object that is used to index CutGroups
+
     @author Christopher Woods
 */
-class SIREMOL_EXPORT BeadNum : public SireID::Number
+class SIREMOL_EXPORT BeadIdx 
+       : public SireID::Index_T_<BeadIdx>, public BeadID
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const BeadNum&);
-friend QDataStream& ::operator>>(QDataStream&, BeadNum&);
+friend QDataStream& ::operator<<(QDataStream&, const BeadIdx&);
+friend QDataStream& ::operator>>(QDataStream&, BeadIdx&);
 
 public:
-    BeadNum();
-
-    explicit BeadNum(quint32 num);
-
-    BeadNum(const BeadNum &other);
-
-    ~BeadNum();
+    BeadIdx();
+    
+    explicit BeadIdx(qint32 idx);
+    
+    BeadIdx(const BeadIdx &other);
+    
+    ~BeadIdx();
     
     static const char* typeName();
+
+    const char* what() const
+    {
+        return SireID::Index_T_<BeadIdx>::what();
+    }
     
-    const char* what() const;
+    BeadIdx* clone() const;
     
-    BeadNum* clone() const;
+    static BeadIdx null();
     
     bool isNull() const;
     
     uint hash() const;
-    
+
     QString toString() const;
     
-    BeadNum& operator=(const BeadNum &other);
+    BeadIdx& operator=(const BeadIdx &other);
     
     bool operator==(const SireID::ID &other) const;
-    bool operator==(const BeadNum &other) const;
-    bool operator!=(const BeadNum &other) const;
+    
+    using SireID::Index_T_<BeadIdx>::operator=;
 
-    bool operator<(const BeadNum &other) const;
-    bool operator<=(const BeadNum &other) const;
-    bool operator>(const BeadNum &other) const;
-    bool operator>=(const BeadNum &other) const;
+    using SireID::Index_T_<BeadIdx>::operator==;
+    using SireID::Index_T_<BeadIdx>::operator!=;
+
+    using SireID::Index_T_<BeadIdx>::operator+=;
+    using SireID::Index_T_<BeadIdx>::operator++;
+    using SireID::Index_T_<BeadIdx>::operator-=;
+    using SireID::Index_T_<BeadIdx>::operator--;
+    
+    using SireID::Index_T_<BeadIdx>::map;
 };
-
+    
 }
 
-Q_DECLARE_TYPEINFO(SireMol::BeadNum, Q_MOVABLE_TYPE);
+Q_DECLARE_TYPEINFO(SireMol::BeadIdx, Q_MOVABLE_TYPE);
+Q_DECLARE_METATYPE(SireMol::BeadIdx);
 
-Q_DECLARE_METATYPE( SireMol::BeadNum )
-
-SIRE_EXPOSE_CLASS( SireMol::BeadNum )
+SIRE_EXPOSE_CLASS( SireMol::BeadIdx )
 
 SIRE_END_HEADER
 

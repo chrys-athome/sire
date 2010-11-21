@@ -26,28 +26,41 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMBEADING_H
-#define SIREMOL_ATOMBEADING_H
+#ifndef SIREMOL_BEADID_H
+#define SIREMOL_BEADID_H
 
-#include "atomproperty.hpp"
-#include "beadnum.h"
+#include "SireID/id.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 
-typedef AtomProperty<BeadNum> AtomBeading;
+/** This is the base class of all identifiers that are used 
+    to identify a Bead
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT BeadID : public SireID::ID
+{
+
+public:
+    BeadID();
+    BeadID(const BeadID &other);
+
+    virtual ~BeadID();
+    
+    static const char* typeName()
+    {
+        return "SireMol::BeadID";
+    }
+    
+    virtual BeadID* clone() const=0;
+};
 
 }
 
-Q_DECLARE_METATYPE( SireMol::AtomBeading );
-
-SIRE_EXPOSE_ATOM_PROPERTY( SireMol::BeadNum, SireMol::AtomBeading )
-
-#ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireMol::AtomProperty<SireMol::BeadNum>;
-#endif
+SIRE_EXPOSE_CLASS( SireMol::BeadID )
 
 SIRE_END_HEADER
 

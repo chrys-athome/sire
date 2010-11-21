@@ -35,6 +35,7 @@
 
 #include "SireFF/g1ff.h"
 #include "SireFF/ff3d.h"
+#include "SireFF/patches.h"
 
 #include "SireVol/space.h"
 
@@ -75,6 +76,7 @@ using SireFF::PotentialTable;
 using SireFF::Probe;
 
 using SireVol::Space;
+using SireVol::Patching;
 
 using SireCAS::Symbol;
 using SireCAS::Symbols;
@@ -114,11 +116,13 @@ public:
     
     const CLJComponent& components() const;
     
+    const Patching& patching() const;
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
     bool shiftElectrostatics() const;
     const QString& combiningRules() const;
     
+    bool setPatching(const Patching &patching);
     bool setSpace(const Space &space);
     bool setSwitchingFunction(const SwitchingFunction &new_switchfunc);
     bool setShiftElectrostatics(bool switchelectro);
@@ -207,14 +211,16 @@ private:
     /** The mapping of molecule to beadid */
     QHash< MolNum,QVector<quint32> > mol_to_beadid;
 
-    /** The space in which the restraints are evaluated */
-    SireVol::SpacePtr spce;
-
     /** The switching function used to implement a non-bonded cutoff */
     SwitchFuncPtr switchfunc;
 
     /** The combining rules to use to get mixed LJ parameters */
     LJParameterDB::CombiningRules combining_rules;
+
+    /** All of the patches - this contains the processed molecule beads,
+        arranged into patches, controlled by a contained patching function
+        with contained space */
+    SireFF::Patches ptchs;
 
     /** Whether or not the LJ pair matrix needs to be rebuilt */
     bool need_update_ljpairs;

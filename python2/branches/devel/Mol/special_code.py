@@ -18,6 +18,7 @@ chainprops = pickle.load( open("chainprops.data") )
 cgprops = pickle.load( open("cgprops.data") )
 resprops = pickle.load( open("resprops.data") )
 segprops = pickle.load( open("segprops.data") )
+beadprops = pickle.load( open("beadprops.data") )
 
 active_headers = pickle.load( open("active_headers.data") )
 
@@ -64,6 +65,9 @@ def fix_Residue(c):
 
 def fix_Segment(c):
    fix_MolView(c, "SireMol::Segment", segprops)
+
+def fix_Bead(c):
+   fix_MolView(c, "SireMol::Bead", beadprops)
 
 def fix_MolEditorBase(c):
    c.decls( "removeProperty" ).call_policies = call_policies.return_self()
@@ -140,6 +144,9 @@ def fix_ResEditorBase(c):
 
 def fix_SegEditorBase(c):
     fix_MolViewEditorBase(c, "SireMol::SegEditorBase", segprops)
+
+def fix_BeadEditorBase(c):
+    fix_MolViewEditorBase(c, "SireMol::BeadEditorBase", beadprops)
 
 def fix_AtomEditor(c):
    c.decls( "rename" ).call_policies = call_policies.return_self()
@@ -323,6 +330,9 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::SegIdx" : fix_SegID,
                  "SireMol::SegName" : fix_SegID,
 
+                 "SireMol::Bead" : fix_Bead,
+                 "SireMol::Editor<SireMol::BeadEditor, SireMol::Bead>" : fix_BeadEditorBase,
+
                  "SireMol::CutGroup" : fix_CutGroup,
                  "SireMol::Editor<SireMol::CGEditor, SireMol::CutGroup>" : fix_CGEditorBase,
                  "SireMol::CGEditor" : fix_CGEditor,
@@ -362,6 +372,10 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "AtomIntProperty" : fix_MolViewProperty,
                  "AtomFloatProperty" : fix_MolViewProperty,
                  "AtomVariantProperty" : fix_MolViewProperty,
+                 "BeadStringProperty" : fix_MolViewProperty,
+                 "BeadIntProperty" : fix_MolViewProperty,
+                 "BeadFloatProperty" : fix_MolViewProperty,
+                 "BeadVariantProperty" : fix_MolViewProperty,
                  "CGStringProperty" : fix_MolViewProperty,
                  "CGIntProperty" : fix_MolViewProperty,
                  "CGFloatProperty" : fix_MolViewProperty,

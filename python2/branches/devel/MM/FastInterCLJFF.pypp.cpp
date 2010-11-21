@@ -170,6 +170,17 @@ void register_FastInterCLJFF_class(){
         
         }
         FastInterCLJFF_exposer.def( bp::self == bp::self );
+        { //::SireMM::FastInterCLJFF::patching
+        
+            typedef ::SireVol::Patching const & ( ::SireMM::FastInterCLJFF::*patching_function_type )(  ) const;
+            patching_function_type patching_function_value( &::SireMM::FastInterCLJFF::patching );
+            
+            FastInterCLJFF_exposer.def( 
+                "patching"
+                , patching_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
         { //::SireMM::FastInterCLJFF::potential
         
             typedef void ( ::SireMM::FastInterCLJFF::*potential_function_type )( ::SireFF::PotentialTable &,double ) ;
@@ -246,6 +257,17 @@ void register_FastInterCLJFF_class(){
                 "setCombiningRules"
                 , setCombiningRules_function_value
                 , ( bp::arg("combiningrules") ) );
+        
+        }
+        { //::SireMM::FastInterCLJFF::setPatching
+        
+            typedef bool ( ::SireMM::FastInterCLJFF::*setPatching_function_type )( ::SireVol::Patching const & ) ;
+            setPatching_function_type setPatching_function_value( &::SireMM::FastInterCLJFF::setPatching );
+            
+            FastInterCLJFF_exposer.def( 
+                "setPatching"
+                , setPatching_function_value
+                , ( bp::arg("patching") ) );
         
         }
         { //::SireMM::FastInterCLJFF::setProperty

@@ -88,6 +88,8 @@
 #include "residuecutting.h"
 #include <QMutex>
 #include "cuttingfunction.h"
+#include "beading.h"
+#include "beading.h"
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 #include "SireVol/coordgroup.h"
@@ -120,6 +122,7 @@ void register_SireMol_properties()
     register_property_container< SireMol::WeightFuncPtr, SireMol::WeightFunction >();
     register_property_container< SireMol::MolGroupPtr, SireMol::MoleculeGroup >();
     register_property_container< SireMol::CutFuncPtr, SireMol::CuttingFunction >();
+    register_property_container< SireMol::BeadingPtr, SireMol::Beading >();
     register_property_container< SireMol::BondHunterPtr, SireMol::BondHunter >();
     register_property_container< SireMol::AtomMatcherPtr, SireMol::AtomMatcher >();
 }

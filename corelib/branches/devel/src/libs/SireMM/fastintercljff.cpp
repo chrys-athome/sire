@@ -88,7 +88,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 void FastInterCLJFF::rebuildProperties()
 {
     props.clear();
-    props.setProperty("space", spce);
+    props.setProperty("patching", ptchs.patching());
+    props.setProperty("space", ptchs.space());
     props.setProperty("switchingFunction", switchfunc);
     props.setProperty("shiftElectrostatics", VariantProperty(use_electrostatic_shifting));
     props.setProperty("combiningRules", 
@@ -98,7 +99,7 @@ void FastInterCLJFF::rebuildProperties()
 /** Construct an un-named, empty FastInterCLJFF */
 FastInterCLJFF::FastInterCLJFF() 
                : ConcreteProperty<FastInterCLJFF,G1FF>(), FF3D(),
-                 spce( Space::null() ), switchfunc( SwitchingFunction::null() ),
+                 switchfunc( SwitchingFunction::null() ),
                  combining_rules( LJParameterDB::interpret("arithmetic") ),
                  need_update_ljpairs(true), use_electrostatic_shifting(false),
                  recalc_from_scratch(true)
@@ -110,7 +111,7 @@ FastInterCLJFF::FastInterCLJFF()
 /** Construct a named, empty FastInterCLJFF */
 FastInterCLJFF::FastInterCLJFF(const QString &name)
                : ConcreteProperty<FastInterCLJFF,G1FF>(), FF3D(),
-                 spce( Space::null() ), switchfunc( SwitchingFunction::null() ),
+                 switchfunc( SwitchingFunction::null() ),
                  combining_rules( LJParameterDB::interpret("arithmetic") ),
                  need_update_ljpairs(true), use_electrostatic_shifting(false),
                  recalc_from_scratch(true)
@@ -125,8 +126,9 @@ FastInterCLJFF::FastInterCLJFF(const FastInterCLJFF &other)
                : ConcreteProperty<FastInterCLJFF,G1FF>(other), FF3D(other),
                  ffcomponents(other.ffcomponents), 
                  ljpairs(other.ljpairs), props(other.props),
-                 spce(other.spce), switchfunc(other.switchfunc),
-                 combining_rules(other.combining_rules),
+                 molprops(other.molprops), mol_to_beadid(other.mol_to_beadid),
+                 switchfunc(other.switchfunc),
+                 combining_rules(other.combining_rules), ptchs(other.ptchs),
                  need_update_ljpairs(other.need_update_ljpairs),
                  use_electrostatic_shifting(other.use_electrostatic_shifting),
                  recalc_from_scratch(other.recalc_from_scratch)
@@ -150,9 +152,11 @@ FastInterCLJFF& FastInterCLJFF::operator=(const FastInterCLJFF &other)
         ffcomponents = other.ffcomponents;
         ljpairs = other.ljpairs;
         props = other.props;
-        spce = other.spce;
+        molprops = other.molprops;
+        mol_to_beadid = other.mol_to_beadid;
         switchfunc = other.switchfunc;
         combining_rules = other.combining_rules;
+        ptchs = other.ptchs;
         need_update_ljpairs = other.need_update_ljpairs;
         use_electrostatic_shifting = other.use_electrostatic_shifting;
         recalc_from_scratch = other.recalc_from_scratch;
@@ -192,7 +196,7 @@ void FastInterCLJFF::rebuildAll()
     need_update_ljpairs = true;
     
     switchfunc = props.property("switchingFunction").asA<SwitchingFunction>();
-    spce = props.property("space").asA<Space>();
+    ptchs = Patches( props.property("patching").asA<Patching>() );
     combining_rules = LJParameterDB::interpret( props.property("combiningRules")
                                         .asA<VariantProperty>().convertTo<QString>() );
     use_electrostatic_shifting = props.property("shiftElectrostatics")
@@ -204,7 +208,6 @@ void FastInterCLJFF::rebuildAll()
     QHash<MolNum,PropertyMap> old_molprops = molprops;
     
     molprops = QHash<MolNum,PropertyMap>();
-    //ffmols.clear();
     
     for (Molecules::const_iterator it = mols.constBegin();
          it != mols.constEnd();
@@ -247,6 +250,26 @@ void FastInterCLJFF::_pvt_updateName()
 /** Called when the passed molecule view has been added to the forcefield */
 void FastInterCLJFF::_pvt_added(const PartialMolecule &mol, const PropertyMap &map)
 {
+    if (mol_to_beadid.contains(mol.number()))
+    {
+        //remove the current version of the molecule
+        ptchs.remove( mol_to_beadid.value(mol.number()) );
+        mol_to_beadid.remove(mol.number());
+        #warning I AM HERE
+        //beadmols.remove(mol.number());
+    }
+    
+    //break the molecule into beads
+    #warning AND HERE
+    
+    //Beads beads = mol.splitIntoBeads(map);
+
+    //beads.property<Vector>() returns AtomCoords
+    //beads.property<Charge>() returns AtomCharges
+
+    //bead.property<Vector>() returns correct CoordGroup
+    //bead.property<Charge>() returns correct AtomCharges
+
     return;
 }
                 
@@ -292,14 +315,30 @@ const CLJComponent& FastInterCLJFF::components() const
     not this changed the space */
 bool FastInterCLJFF::setSpace(const Space &space)
 {
-    if (not spce.read().equals(space))
+    if (not ptchs.space().equals(space))
     {
-        spce = space;
-        props.setProperty("space", spce);
+        ptchs.repatch(space);
+        props.setProperty("space", space);        
+        this->mustNowRecalculateFromScratch();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Set the patching scheme (together with enclosed space) to use
+    to break the molecules into patches */
+bool FastInterCLJFF::setPatching(const Patching &patching)
+{
+    if (not ptchs.patching().equals(patching))
+    {
+        FastInterCLJFF new_cljff(*this);
         
-        //need to rebuild all as the patching will have changed
-        this->rebuildAll();
-        
+        new_cljff.ptchs = Patches(patching);
+        new_cljff.props.setProperty("space", patching.space());
+        new_cljff.rebuildAll();
+        new_cljff.mustNowRecalculateFromScratch();
+        FastInterCLJFF::operator=(new_cljff);
         return true;
     }
     else
@@ -314,10 +353,7 @@ bool FastInterCLJFF::setSwitchingFunction(const SwitchingFunction &new_switchfun
     {
         switchfunc = new_switchfunc;
         props.setProperty( "switchingFunction", new_switchfunc );
-        
-        //need to rebuild everything as the cutoff distance has changed
-        this->rebuildAll();
-
+        this->mustNowRecalculateFromScratch();
         return true;
     }
     else
@@ -333,8 +369,7 @@ bool FastInterCLJFF::setShiftElectrostatics(bool switchelectro)
     {
         use_electrostatic_shifting = switchelectro;
         props.setProperty( "shiftElectrostatics", VariantProperty(switchelectro) );
-        recalc_from_scratch = true;
-        FF::setDirty();
+        this->mustNowRecalculateFromScratch();
         
         return true;
     }
@@ -352,8 +387,7 @@ bool FastInterCLJFF::setCombiningRules(const QString &combiningrules)
         combining_rules = new_rules;
         need_update_ljpairs = true;
         props.setProperty( "combiningRules", VariantProperty(combiningrules) );
-        recalc_from_scratch = true;
-        FF::setDirty();
+        this->mustNowRecalculateFromScratch();
 
         return true;
     }
@@ -372,6 +406,10 @@ bool FastInterCLJFF::setProperty(const QString &name, const Property &value)
     if (name == QLatin1String("space"))
     {
         return this->setSpace( value.asA<Space>() );
+    }
+    else if (name == QLatin1String("patching"))
+    {
+        return this->setPatching( value.asA<Patching>() );
     }
     else if (name == QLatin1String("switchingFunction"))
     {
@@ -399,7 +437,13 @@ bool FastInterCLJFF::setProperty(const QString &name, const Property &value)
 /** Return the 3D space in which this potential is evaluated */
 const Space& FastInterCLJFF::space() const
 {
-    return spce.read();
+    return ptchs.space();
+}
+
+/** Return the patching function used to divide space into patches */
+const Patching& FastInterCLJFF::patching() const
+{
+    return ptchs.patching();
 }
 
 /** Return the switching function used to scale the group-group

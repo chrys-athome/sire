@@ -150,10 +150,12 @@ match_res_property = r"SIRE_EXPOSE_RESIDUE_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)
 match_cg_property = r"SIRE_EXPOSE_CUTGROUP_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_chain_property = r"SIRE_EXPOSE_CHAIN_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_seg_property = r"SIRE_EXPOSE_SEGMENT_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_bead_property = r"SIRE_EXPOSE_BEAD_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_metatype = r"Q_DECLARE_METATYPE\(\s*\n*\s*\(?([<>.\s\w\d:]+)\)?\s*\n*\s*\)"
 
 def scanFiles(dir, module_dir, atom_properties, cg_properties,
-                               res_properties, chain_properties, seg_properties):
+                               res_properties, chain_properties, seg_properties,
+                               bead_properties):
     """Scan the header files in the passed directory to get information
        about all of the exposed classes, returning a list of all of 
        the classes that are being exposed, and placing meta information
@@ -271,6 +273,16 @@ def scanFiles(dir, module_dir, atom_properties, cg_properties,
             active_files[file].addClass(m.groups()[1].split("::")[-1].strip())
             exposed_classes.append(m.groups()[1].split("::")[-1].strip())
 
+        for m in re.finditer(match_bead_property, text):
+            bead_properties.addDependency(file, dir, module_dir)
+            bead_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
+
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
+
+            active_files[file].addClass(m.groups()[1].split("::")[-1].strip())
+            exposed_classes.append(m.groups()[1].split("::")[-1].strip())
+
     #now add each active file to a single header file that can be parsed by Py++
     FILE = open("%s/active_headers.h" % module_dir, "w")
 
@@ -333,6 +345,7 @@ if __name__ == "__main__":
     res_properties = Properties()
     chain_properties = Properties()
     seg_properties = Properties()
+    bead_properties = Properties()
 
     for module in modules:
         
@@ -352,7 +365,7 @@ if __name__ == "__main__":
         module_classes = scanFiles( "%s/%s" % (siredir,modules[module]),
                                     "%s/%s" % (outdir,module),
                                     atom_properties, cg_properties, res_properties,
-                                    chain_properties, seg_properties ) 
+                                    chain_properties, seg_properties, bead_properties ) 
 
         for clas in module_classes:
             exposed_classes[clas] = 1
@@ -367,3 +380,4 @@ if __name__ == "__main__":
     pickle.dump( res_properties, open("%s/Mol/resprops.data" % outdir, "w") )
     pickle.dump( chain_properties, open("%s/Mol/chainprops.data" % outdir, "w") )
     pickle.dump( seg_properties, open("%s/Mol/segprops.data" % outdir, "w") )
+    pickle.dump( bead_properties, open("%s/Mol/beadprops.data" % outdir, "w") )

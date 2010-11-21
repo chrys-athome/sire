@@ -17,8 +17,6 @@
 
 #include "Atom.pypp.hpp"
 
-#include "AtomBeading.pypp.hpp"
-
 #include "AtomCharges.pypp.hpp"
 
 #include "AtomCoords.pypp.hpp"
@@ -75,7 +73,23 @@
 
 #include "AtomsIn_SegID_.pypp.hpp"
 
-#include "BeadNum.pypp.hpp"
+#include "Bead.pypp.hpp"
+
+#include "BeadFloatProperty.pypp.hpp"
+
+#include "BeadID.pypp.hpp"
+
+#include "BeadIdx.pypp.hpp"
+
+#include "BeadIntProperty.pypp.hpp"
+
+#include "BeadProp.pypp.hpp"
+
+#include "BeadStringProperty.pypp.hpp"
+
+#include "BeadVariantProperty.pypp.hpp"
+
+#include "Beading.pypp.hpp"
 
 #include "BondHunter.pypp.hpp"
 
@@ -245,6 +259,8 @@
 
 #include "Molecule.pypp.hpp"
 
+#include "MoleculeBeading.pypp.hpp"
+
 #include "MoleculeGroup.pypp.hpp"
 
 #include "MoleculeGroups.pypp.hpp"
@@ -258,6 +274,8 @@
 #include "MoverBase.pypp.hpp"
 
 #include "Mover_Atom_.pypp.hpp"
+
+#include "Mover_Bead_.pypp.hpp"
 
 #include "Mover_Chain_.pypp.hpp"
 
@@ -282,6 +300,8 @@
 #include "Mover_Selector_Segment_.pypp.hpp"
 
 #include "Mover_ViewsOfMol_.pypp.hpp"
+
+#include "NullBeading.pypp.hpp"
 
 #include "NullGeometryPerturbation.pypp.hpp"
 
@@ -330,6 +350,8 @@
 #include "ResWithAtoms.pypp.hpp"
 
 #include "Residue.pypp.hpp"
+
+#include "ResidueBeading.pypp.hpp"
 
 #include "ResidueCutting.pypp.hpp"
 
@@ -390,6 +412,8 @@
 #include "Specify_ResID_.pypp.hpp"
 
 #include "Specify_SegID_.pypp.hpp"
+
+#include "UserBeading.pypp.hpp"
 
 #include "Velocity3D.pypp.hpp"
 
@@ -528,8 +552,6 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_AtomCoords_class();
 
-    register_AtomBeading_class();
-
     register_AtomElements_class();
 
     register_AtomCharges_class();
@@ -558,7 +580,23 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_AtomsIn_SegID__class();
 
-    register_BeadNum_class();
+    register_Bead_class();
+
+    register_BeadID_class();
+
+    register_BeadIdx_class();
+
+    register_BeadProp_class();
+
+    register_BeadStringProperty_class();
+
+    register_BeadVariantProperty_class();
+
+    register_BeadFloatProperty_class();
+
+    register_BeadIntProperty_class();
+
+    register_Beading_class();
 
     register_BondHunter_class();
 
@@ -704,6 +742,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_MolStructureEditor_class();
 
+    register_MoleculeBeading_class();
+
     register_MoleculeGroup_class();
 
     register_MoleculeGroups_class();
@@ -713,6 +753,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_MoverBase_class();
 
     register_Mover_Atom__class();
+
+    register_Mover_Bead__class();
 
     register_Mover_Chain__class();
 
@@ -752,6 +794,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_Mover_ViewsOfMol__class();
 
+    register_NullBeading_class();
+
     register_NullGeometryPerturbation_class();
 
     register_NullPerturbation_class();
@@ -788,6 +832,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_ResWithAtoms_class();
 
+    register_ResidueBeading_class();
+
     register_ResidueCutting_class();
 
     register_SegEditor_class();
@@ -811,6 +857,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_SegsWithAtoms_class();
 
     register_SpecifyMol_class();
+
+    register_UserBeading_class();
 
     register_SireMol_properties();
 
