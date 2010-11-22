@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QTime>
+
 #include "zmatrix.h"
 
 #include "SireID/index.h"
@@ -435,7 +437,8 @@ ZMatrix::ZMatrix(const MoleculeInfoData &info)
 ZMatrix::ZMatrix(const ZMatrix &other)
         : ConcreteProperty<ZMatrix,MoleculeProperty>(),
           molinfo(other.molinfo),
-          zmat(other.zmat), atomidx_to_zmat(other.atomidx_to_zmat)
+          zmat(other.zmat), atomidx_to_zmat(other.atomidx_to_zmat),
+          zmat_build_order(other.zmat_build_order)
 {}
 
 /** Destructor */
@@ -451,6 +454,7 @@ ZMatrix& ZMatrix::operator=(const ZMatrix &other)
         molinfo = other.molinfo;
         zmat = other.zmat;
         atomidx_to_zmat = other.atomidx_to_zmat;
+        zmat_build_order = other.zmat_build_order;
     }
     
     return *this;
@@ -468,20 +472,69 @@ bool ZMatrix::operator!=(const ZMatrix &other) const
     return molinfo != other.molinfo or zmat != other.zmat;
 }
 
-/** Reindex the z-matrix lines */
-void ZMatrix::reindex()
+/** Recalculate the optimum order with which to build atoms using
+    this z-matrix - this order will ensure that atoms are built after
+    any atoms on which they depend. This will raise an exception 
+    if a circular reference is detected 
+    
+    \throw SireMol::zmatrix_error
+*/
+void ZMatrix::rebuildOrder()
 {
-    atomidx_to_zmat.clear();
+    const ZMatrixLine *lines_array = zmat.constData();
+    const int nlines = zmat.count();
+
+    if (nlines == 0)
+    {
+        zmat_build_order = QVector<int>();
+        return;
+    }
+
+    QVector<int> new_order( nlines );
+    new_order.squeeze();
     
-    int nlines = zmat.count();
-    const ZMatrixLine *zmat_array = zmat.constData();
-    
-    atomidx_to_zmat.reserve(nlines);
+    QSet<int> unconstructed_atoms;
+    unconstructed_atoms.reserve(nlines);
     
     for (int i=0; i<nlines; ++i)
     {
-        atomidx_to_zmat.insert( zmat_array[i].atom(), i );
+        unconstructed_atoms.insert( lines_array[i].atom().value() );
     }
+    
+    int nassigned = 0;
+    int old_nassigned = 0;
+    
+    while (nassigned < nlines)
+    {
+        for (int i=0; i<nlines; ++i)
+        {
+            const ZMatrixLine &line = lines_array[i];
+
+            if ( unconstructed_atoms.contains(line.atom()) and
+                 not (unconstructed_atoms.contains(line.bond().value()) or
+                      unconstructed_atoms.contains(line.angle().value()) or
+                      unconstructed_atoms.contains(line.dihedral().value())) )
+            {
+                //this atom does not depend on any unconstructed atoms!
+                new_order[nassigned] = i;
+                ++nassigned;
+                unconstructed_atoms.remove(line.atom().value());
+            }
+        }
+        
+        if (nassigned == old_nassigned)
+        {
+            //no atoms were assigned on this loop - this means that there
+            //are circular dependencies
+            throw SireMove::zmatrix_error( QObject::tr(
+                    "The z-matrix contains a circular dependency (involving "
+                    "the atoms with indicies %1.\n%2")
+                        .arg(Sire::toString(unconstructed_atoms))
+                        .arg(this->toString()), CODELOC );
+        }
+    }
+    
+    zmat_build_order = new_order;
 }
 
 /** Return the layout of the molecule whose z-matrix is contained
@@ -575,6 +628,26 @@ bool ZMatrix::contains(const AtomID &atom) const
     return atomidx_to_zmat.contains( info().atomIdx(atom) );
 }
 
+static bool zmatrixDependsOnAtom(const QVector<ZMatrixLine> &zmat,
+                                 const AtomIdx &atom)
+{
+    const ZMatrixLine *lines_array = zmat.constData();
+    const int nlines = zmat.count();
+    
+    for (int i=0; i<nlines; ++i)
+    {
+        const ZMatrixLine &line = lines_array[i];
+        
+        if (atom == line.bond() or atom == line.angle() or 
+            atom == line.dihedral())
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 /** Add a line to the z-matrix that gives the coordinates of the 
     atom 'atom' based on the passed bond, angle and dihedal atoms 
     
@@ -602,51 +675,31 @@ void ZMatrix::add(const AtomID &atom, const AtomID &bond,
                 .arg(atom.toString(), bond.toString(),
                      angle.toString(), dihedral.toString()), CODELOC );
     }
+    
+    const int nlines = zmat.count();
 
-    //work out where this line should be (move it to as late as
-    //it can go in the file)
-    int nlines = zmat.count();
-    int earliest = 0;
-    int latest = nlines;
-    
-    const ZMatrixLine *zmat_array = zmat.constData();
-    
-    for (int i=0; i<nlines; ++i)
+    if (zmatrixDependsOnAtom(zmat, atm))
     {
-        const ZMatrixLine &line = zmat_array[i];
-        
-        if (line.atom() == atm)
-            throw SireMol::duplicate_atom( QObject::tr(
-                "The atom %1 is already present in this z-matrix. It cannot "
-                "be added twice.").arg(atom.toString()), CODELOC );
+        ZMatrix old_state(*this);
     
-        if (line.atom() == bnd or line.atom() == ang or line.atom() == dih)
-            //we must come after this line
-            earliest = i+1;
-            
-        if (line.bond() == atm or line.angle() == atm or line.dihedral() == atm)
-            //we must come before this line
-            latest = i;
-    }
-    
-    if (latest < earliest)
-    {
-        throw SireMove::zmatrix_error( QObject::tr(
-            "Cannot add the line %1-%2-%3-%4 as doing so would create "
-            "a circular reference.")
-                .arg( atom.toString(), bond.toString(),
-                      angle.toString(), dihedral.toString() ), CODELOC );
-    }
-                     
-    if (latest >= nlines)
-    {
-        zmat.append( ZMatrixLine(atm,bnd,ang,dih) );
-        atomidx_to_zmat.insert(atm, nlines);
+        try
+        {
+            zmat.append( ZMatrixLine(atm,bnd,ang,dih) );
+            atomidx_to_zmat.insert(atm, nlines);
+            this->rebuildOrder();
+        }
+        catch(...)
+        {
+            ZMatrix::operator=(old_state);
+            throw;
+        }
     }
     else
     {
-        zmat.insert( latest+1, ZMatrixLine(atm,bnd,ang,dih) );
-        this->reindex();
+        //we can just append this line onto the end of the z-matrix
+        zmat.append( ZMatrixLine(atm,bnd,ang,dih) );
+        atomidx_to_zmat.insert(atm, nlines);
+        zmat_build_order.append(nlines);
     }
 }
 
@@ -663,6 +716,22 @@ void ZMatrix::add(const DihedralID &dihedral)
 {
     this->add( dihedral.atom0(), dihedral.atom1(),
                dihedral.atom2(), dihedral.atom3() );
+}
+
+void ZMatrix::reindex()
+{
+    const int nlines = zmat.count();
+    const ZMatrixLine *lines_array = zmat.constData();
+
+    atomidx_to_zmat.clear();
+    atomidx_to_zmat.reserve(nlines);
+    
+    for (int i=0; i<nlines; ++i)
+    {
+        atomidx_to_zmat.insert( lines_array[i].atom(), i );
+    }
+    
+    this->rebuildOrder();
 }
 
 /** Remove the z-matrix line that gives the coordinates of the 
@@ -1382,6 +1451,7 @@ ZMatrix ZMatrix::matchToSelection(const AtomSelection &selection) const
     ZMatrix zmatrix(*this);
     zmatrix.zmat = new_zmat;
     zmatrix.atomidx_to_zmat = new_index;
+    zmatrix.rebuildOrder();
 
     return zmatrix;
 }
@@ -1390,6 +1460,12 @@ ZMatrix ZMatrix::matchToSelection(const AtomSelection &selection) const
 int ZMatrix::nLines() const
 {
     return zmat.count();
+}
+
+/** Return the correct atom build order for this z-matrix */
+const QVector<int>& ZMatrix::atomBuildOrder() const
+{
+    return zmat_build_order;
 }
 
 /** Return a copy of this property that has been made to be compatible
@@ -1644,14 +1720,19 @@ void ZMatrixCoords::_pvt_rebuildCartesian()
     int nlines = zmat.lines().count();
     
     const ZMatrixLine *lines_array = zmat.lines().constData();
+    const int *build_order = zmat.atomBuildOrder().constData();
     const Vector *internal_coords_array = internal_coords.constData();
+
+    BOOST_ASSERT( zmat.atomBuildOrder().count() == nlines );
 
     AtomCoords new_coords = cartesian_coords;
 
     for (int i=0; i<nlines; ++i)
     {
-        const ZMatrixLine &line = lines_array[i];
-        const Vector &internal = internal_coords_array[i];
+        int build_atom = build_order[i];
+    
+        const ZMatrixLine &line = lines_array[build_atom];
+        const Vector &internal = internal_coords_array[build_atom];
     
         //get the coordinates of the bond, angle and dihedral atoms
         Vector bond = new_coords[ info().cgAtomIdx(line.bond()) ];

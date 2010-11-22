@@ -124,6 +124,7 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 #include "getpoint.h"
+#include <QDebug>
 #include "getpoint.h"
 #include "SireMol/molecule.h"
 #include "SireMol/moleculegroup.h"

@@ -30,6 +30,8 @@ namespace bp = boost::python;
 
 #include "getpoint.h"
 
+#include <QDebug>
+
 #include "getpoint.h"
 
 SireMove::GetCOGPoint __copy__(const SireMove::GetCOGPoint &other){ return SireMove::GetCOGPoint(other); }

@@ -29,6 +29,8 @@ namespace bp = boost::python;
 
 #include "getpoint.h"
 
+#include <QDebug>
+
 #include "getpoint.h"
 
 SireMove::NullGetPoint __copy__(const SireMove::NullGetPoint &other){ return SireMove::NullGetPoint(other); }

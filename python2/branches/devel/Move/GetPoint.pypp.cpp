@@ -29,6 +29,8 @@ namespace bp = boost::python;
 
 #include "getpoint.h"
 
+#include <QDebug>
+
 #include "getpoint.h"
 
 #include "Qt/qdatastream.hpp"

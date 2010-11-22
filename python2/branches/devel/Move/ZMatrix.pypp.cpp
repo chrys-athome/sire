@@ -128,6 +128,17 @@ void register_ZMatrix_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMove::ZMatrix::atomBuildOrder
+        
+            typedef ::QVector< int > const & ( ::SireMove::ZMatrix::*atomBuildOrder_function_type )(  ) const;
+            atomBuildOrder_function_type atomBuildOrder_function_value( &::SireMove::ZMatrix::atomBuildOrder );
+            
+            ZMatrix_exposer.def( 
+                "atomBuildOrder"
+                , atomBuildOrder_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::SireMove::ZMatrix::bondDelta
         
             typedef ::SireUnits::Dimension::Length ( ::SireMove::ZMatrix::*bondDelta_function_type )( ::SireMol::AtomID const & ) const;

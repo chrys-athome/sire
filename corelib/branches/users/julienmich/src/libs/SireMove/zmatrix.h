@@ -309,12 +309,16 @@ public:
 
     ZMatrix matchToSelection(const AtomSelection &selection) const;
 
+    const QVector<int>& atomBuildOrder() const;
+
     bool isCompatibleWith(const SireMol::MoleculeInfoData &molinfo) const;
 
 protected:
     SireBase::PropertyPtr _pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
                                                   const AtomMatcher &atommatcher) const;
+    
 private:
+    void rebuildOrder();
     void reindex();
 
     /** The layout of the molecule whose coordinates
@@ -326,6 +330,10 @@ private:
 
     /** The index of each atom in the zmatrix */
     QHash<AtomIdx,int> atomidx_to_zmat;
+    
+    /** The order in which atoms should be constructed using
+        this z-matrix */
+    QVector<int> zmat_build_order;
 };
 
 /** This class holds a z-matrix of a molecule, together with the 
