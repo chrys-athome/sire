@@ -17,6 +17,8 @@
 
 #include "Atom.pypp.hpp"
 
+#include "AtomBeads.pypp.hpp"
+
 #include "AtomCharges.pypp.hpp"
 
 #include "AtomCoords.pypp.hpp"
@@ -75,6 +77,10 @@
 
 #include "Bead.pypp.hpp"
 
+#include "BeadEditor.pypp.hpp"
+
+#include "BeadEditorBase.pypp.hpp"
+
 #include "BeadFloatProperty.pypp.hpp"
 
 #include "BeadID.pypp.hpp"
@@ -83,6 +89,8 @@
 
 #include "BeadIntProperty.pypp.hpp"
 
+#include "BeadNum.pypp.hpp"
+
 #include "BeadProp.pypp.hpp"
 
 #include "BeadStringProperty.pypp.hpp"
@@ -90,6 +98,8 @@
 #include "BeadVariantProperty.pypp.hpp"
 
 #include "Beading.pypp.hpp"
+
+#include "Beads.pypp.hpp"
 
 #include "BondHunter.pypp.hpp"
 
@@ -276,6 +286,8 @@
 #include "Mover_Atom_.pypp.hpp"
 
 #include "Mover_Bead_.pypp.hpp"
+
+#include "Mover_Beads_.pypp.hpp"
 
 #include "Mover_Chain_.pypp.hpp"
 
@@ -552,6 +564,8 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_AtomCoords_class();
 
+    register_AtomBeads_class();
+
     register_AtomElements_class();
 
     register_AtomCharges_class();
@@ -582,9 +596,15 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_Bead_class();
 
+    register_BeadEditorBase_class();
+
+    register_BeadEditor_class();
+
     register_BeadID_class();
 
     register_BeadIdx_class();
+
+    register_BeadNum_class();
 
     register_BeadProp_class();
 
@@ -597,6 +617,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_BeadIntProperty_class();
 
     register_Beading_class();
+
+    register_Beads_class();
 
     register_BondHunter_class();
 
@@ -755,6 +777,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_Mover_Atom__class();
 
     register_Mover_Bead__class();
+
+    register_Mover_Beads__class();
 
     register_Mover_Chain__class();
 

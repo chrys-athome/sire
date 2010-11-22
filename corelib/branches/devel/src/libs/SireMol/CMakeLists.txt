@@ -13,6 +13,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREMOL_HEADERS
       angleid.h
       atom.h
+      atombeads.h
       atomcharges.h
       atomcoords.h
       atomcutting.h
@@ -38,6 +39,7 @@ set ( SIREMOL_HEADERS
       beadid.h
       beadidx.h
       beading.h
+      beadnum.h
       beadproperty.hpp
       beads.h
       bondhunter.h

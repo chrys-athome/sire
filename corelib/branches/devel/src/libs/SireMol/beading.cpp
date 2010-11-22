@@ -53,7 +53,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Beading &beading)
 {
     writeHeader(ds, r_beading, 1);
     
-    ds << static_cast<const Property&>(beading);
+    ds << static_cast<const MolViewProperty&>(beading);
     
     return ds; 
 }
@@ -64,7 +64,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Beading &beading)
     
     if (v == 1)
     {
-        ds >> static_cast<Property&>(beading);
+        ds >> static_cast<MolViewProperty&>(beading);
     }
     else
         throw version_error(v, "1", r_beading, CODELOC);
@@ -73,11 +73,11 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Beading &beading)
 }
 
 /** Constructor */
-Beading::Beading() : Property()
+Beading::Beading() : MolViewProperty()
 {}
 
 /** Copy constructor */
-Beading::Beading(const Beading &other) : Property(other)
+Beading::Beading(const Beading &other) : MolViewProperty(other)
 {}
 
 /** Destructor */
@@ -89,23 +89,28 @@ void Beading::assertValidIndex(BeadIdx idx, const MoleculeInfoData &molinfo) con
     idx.map( this->nBeads(molinfo) );
 }
 
+bool Beading::isCompatibleWith(const MoleculeInfoData&) const
+{
+    return true;
+}
+
 /** Copy assignment operator */
 Beading& Beading::operator=(const Beading &other)
 {
-    Property::operator=(other);
+    MolViewProperty::operator=(other);
     return *this;
 }
 
 /** Comparison operator */
 bool Beading::operator==(const Beading &other) const
 {
-    return Property::operator==(other);
+    return MolViewProperty::operator==(other);
 }
 
 /** Comparison operator */
 bool Beading::operator!=(const Beading &other) const
 {
-    return Property::operator!=(other);
+    return MolViewProperty::operator!=(other);
 }
 
 const char* Beading::typeName()

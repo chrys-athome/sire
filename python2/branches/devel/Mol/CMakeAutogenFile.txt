@@ -5,6 +5,7 @@ set ( PYPP_SOURCES
        AngleID.pypp.cpp
        AnglePerturbation.pypp.cpp
        Atom.pypp.cpp
+       AtomBeads.pypp.cpp
        AtomCharges.pypp.cpp
        AtomCoords.pypp.cpp
        AtomEditor.pypp.cpp
@@ -34,12 +35,16 @@ set ( PYPP_SOURCES
        AtomVariantProperty.pypp.cpp
        AtomVelocities.pypp.cpp
        Bead.pypp.cpp
+       BeadEditor.pypp.cpp
+       BeadEditorBase.pypp.cpp
        BeadFloatProperty.pypp.cpp
        BeadID.pypp.cpp
        BeadIdx.pypp.cpp
        Beading.pypp.cpp
        BeadIntProperty.pypp.cpp
+       BeadNum.pypp.cpp
        BeadProp.pypp.cpp
+       Beads.pypp.cpp
        BeadStringProperty.pypp.cpp
        BeadVariantProperty.pypp.cpp
        BondHunter.pypp.cpp
@@ -134,6 +139,7 @@ set ( PYPP_SOURCES
        MolViewProperty.pypp.cpp
        Mover_Atom_.pypp.cpp
        Mover_Bead_.pypp.cpp
+       Mover_Beads_.pypp.cpp
        Mover_Chain_.pypp.cpp
        Mover_CutGroup_.pypp.cpp
        Mover_Molecule_.pypp.cpp

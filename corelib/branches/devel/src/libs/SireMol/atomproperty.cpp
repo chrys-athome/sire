@@ -30,6 +30,7 @@
 
 #include "atomproperty.hpp"
 
+#include "atombeads.h"
 #include "atomcharges.h"
 #include "atomelements.h"
 #include "atomenergies.h"
@@ -98,6 +99,7 @@ namespace SireMol
     template class AtomProperty<double>;
     template class AtomProperty<QVariant>;
     
+    template class AtomProperty<BeadNum>;
     template class AtomProperty<SireUnits::Dimension::MolarMass>;
     template class AtomProperty<SireUnits::Dimension::MolarEnergy>;
     template class AtomProperty<Element>;
@@ -114,6 +116,7 @@ static const RegisterMetaType<AtomStringProperty> r_atomstring;
 static const RegisterMetaType<AtomIntProperty> r_atomint;
 static const RegisterMetaType<AtomFloatProperty> r_atomfloat;
 static const RegisterMetaType<AtomVariantProperty> r_atomvariant;
+static const RegisterMetaType<BeadNum> r_atombeads;
 static const RegisterMetaType<AtomCharges> r_atomcharges;
 static const RegisterMetaType<AtomEnergies> r_atomenergies;
 static const RegisterMetaType<AtomMasses> r_atommasses;

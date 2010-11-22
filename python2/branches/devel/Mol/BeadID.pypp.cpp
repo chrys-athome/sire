@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "beadidx.h"
 
+#include "beadnum.h"
+
 #include "beadid.h"
 
 #include "Helpers/str.hpp"

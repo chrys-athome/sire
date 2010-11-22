@@ -7,7 +7,23 @@
 
 namespace bp = boost::python;
 
+#include "SireBase/errors.h"
+
+#include "SireError/errors.h"
+
+#include "SireStream/datastream.h"
+
+#include "SireStream/shareddatastream.h"
+
+#include "atomidx.h"
+
+#include "atomselection.h"
+
+#include "beadidx.h"
+
 #include "beading.h"
+
+#include "moleculeinfodata.h"
 
 #include "beading.h"
 
@@ -18,9 +34,20 @@ namespace bp = boost::python;
 void register_Beading_class(){
 
     { //::SireMol::Beading
-        typedef bp::class_< SireMol::Beading, bp::bases< SireBase::Property >, boost::noncopyable > Beading_exposer_t;
+        typedef bp::class_< SireMol::Beading, bp::bases< SireMol::MolViewProperty, SireBase::Property >, boost::noncopyable > Beading_exposer_t;
         Beading_exposer_t Beading_exposer = Beading_exposer_t( "Beading", bp::no_init );
         bp::scope Beading_scope( Beading_exposer );
+        { //::SireMol::Beading::isCompatibleWith
+        
+            typedef bool ( ::SireMol::Beading::*isCompatibleWith_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            isCompatibleWith_function_type isCompatibleWith_function_value( &::SireMol::Beading::isCompatibleWith );
+            
+            Beading_exposer.def( 
+                "isCompatibleWith"
+                , isCompatibleWith_function_value
+                , ( bp::arg("molinfo") ) );
+        
+        }
         { //::SireMol::Beading::null
         
             typedef ::SireMol::NullBeading ( *null_function_type )(  );

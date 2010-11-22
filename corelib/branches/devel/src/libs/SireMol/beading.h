@@ -29,7 +29,7 @@
 #ifndef SIREMOL_BEADING_H
 #define SIREMOL_BEADING_H
 
-#include "SireBase/property.h"
+#include "molviewproperty.h"
 
 SIRE_BEGIN_HEADER
 
@@ -87,7 +87,7 @@ class MoleculeData;
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Beading : public SireBase::Property
+class SIREMOL_EXPORT Beading : public MolViewProperty
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Beading&);
@@ -104,6 +104,8 @@ public:
     static const char* typeName();
     
     static NullBeading null();
+    
+    bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
     
 protected:
     Beading& operator=(const Beading &other);

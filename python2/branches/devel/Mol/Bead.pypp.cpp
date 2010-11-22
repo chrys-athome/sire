@@ -8,13 +8,21 @@
 
 namespace bp = boost::python;
 
+#include "SireBase/errors.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
 
 #include "bead.h"
 
+#include "beadeditor.h"
+
+#include "beads.h"
+
 #include "mover.hpp"
+
+#include "tostring.h"
 
 #include "bead.h"
 

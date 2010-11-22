@@ -7,7 +7,23 @@
 
 namespace bp = boost::python;
 
+#include "SireBase/errors.h"
+
+#include "SireError/errors.h"
+
+#include "SireStream/datastream.h"
+
+#include "SireStream/shareddatastream.h"
+
+#include "atomidx.h"
+
+#include "atomselection.h"
+
+#include "beadidx.h"
+
 #include "beading.h"
+
+#include "moleculeinfodata.h"
 
 #include "beading.h"
 
@@ -20,7 +36,7 @@ SireMol::NullBeading __copy__(const SireMol::NullBeading &other){ return SireMol
 void register_NullBeading_class(){
 
     { //::SireMol::NullBeading
-        typedef bp::class_< SireMol::NullBeading, bp::bases< SireMol::Beading, SireBase::Property > > NullBeading_exposer_t;
+        typedef bp::class_< SireMol::NullBeading, bp::bases< SireMol::Beading, SireMol::MolViewProperty, SireBase::Property > > NullBeading_exposer_t;
         NullBeading_exposer_t NullBeading_exposer = NullBeading_exposer_t( "NullBeading" );
         bp::scope NullBeading_scope( NullBeading_exposer );
         NullBeading_exposer.def( bp::init< >() );

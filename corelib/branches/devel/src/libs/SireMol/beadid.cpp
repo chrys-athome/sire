@@ -28,6 +28,7 @@
 
 #include "beadid.h"
 #include "beadidx.h"
+#include "beadnum.h"
 
 #include "SireStream/datastream.h"
 
@@ -131,4 +132,108 @@ const char* BeadIdx::typeName()
     return QMetaType::typeName( qMetaTypeId<BeadIdx>() );
 }
 
+///////
+/////// Implementation of BeadNum
+///////
+
+static const RegisterMetaType<BeadNum> r_beadnum;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const BeadNum &beadnum)
+{
+    writeHeader(ds, r_beadnum, 1);
+    
+    ds << static_cast<const SireID::Number&>(beadnum);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, BeadNum &beadnum)
+{
+    VersionID v = readHeader(ds, r_beadnum);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Number&>(beadnum);
+    }
+    else
+        throw version_error( v, "1", r_beadnum, CODELOC );
+        
+    return ds;
+}
+
+BeadNum::BeadNum() : SireID::Number(), BeadID()
+{}
+
+BeadNum::BeadNum(quint32 num) : SireID::Number(num), BeadID()
+{}
+
+BeadNum::BeadNum(const BeadNum &other) : SireID::Number(other), BeadID(other)
+{}
+
+BeadNum::~BeadNum()
+{}
+
+bool BeadNum::isNull() const
+{
+    return SireID::Number::isNull();
+}
+
+uint BeadNum::hash() const
+{
+    return ::qHash( static_cast<const SireID::Number&>(*this) );
+}
+
+QString BeadNum::toString() const
+{
+    return QString("BeadNum(%1)").arg(_num);
+}
+
+BeadNum& BeadNum::operator=(const BeadNum &other)
+{
+    SireID::Number::operator=(other);
+    BeadID::operator=(other);
+    return *this;
+}
+
+bool BeadNum::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<BeadNum>(*this, other);
+}
+
+bool BeadNum::operator==(const BeadNum &other) const
+{
+    return _num == other._num;
+}
+
+bool BeadNum::operator!=(const BeadNum &other) const
+{
+    return _num != other._num;
+}
+
+bool BeadNum::operator<(const BeadNum &other) const
+{
+    return _num < other._num;
+}
+
+bool BeadNum::operator<=(const BeadNum &other) const
+{
+    return _num <= other._num;
+}
+
+bool BeadNum::operator>(const BeadNum &other) const
+{
+    return _num > other._num;
+}
+
+bool BeadNum::operator>=(const BeadNum &other) const
+{
+    return _num >= other._num;
+}
+
+const char* BeadNum::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<BeadNum>() );
+}
 

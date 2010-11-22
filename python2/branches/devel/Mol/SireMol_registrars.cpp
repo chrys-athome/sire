@@ -4,6 +4,7 @@
 #include "SireMol_registrars.h"
 
 #include "moleculegroups.h"
+#include "beadeditor.h"
 #include "beadproperty.hpp"
 #include "improperid.h"
 #include "atomelements.h"
@@ -55,6 +56,7 @@
 #include "mgname.h"
 #include "chainidx.h"
 #include "cgatomidx.h"
+#include "beads.h"
 #include "bead.h"
 #include "atomidx.h"
 #include "resid.h"
@@ -67,6 +69,7 @@
 #include "segeditor.h"
 #include "molnum.h"
 #include "atomforces.h"
+#include "beadnum.h"
 #include "reseditor.h"
 #include "within.h"
 #include "molname.h"
@@ -79,6 +82,7 @@
 #include "atomcoords.h"
 #include "cutgroup.h"
 #include "beadidx.h"
+#include "atombeads.h"
 #include "segname.h"
 #include "resproperty.hpp"
 #include "molecule.h"
@@ -103,6 +107,7 @@ void register_SireMol_objects()
 {
 
     ObjectRegistry::registerConverterFor< SireMol::MoleculeGroups >();
+    ObjectRegistry::registerConverterFor< SireMol::BeadEditor >();
     ObjectRegistry::registerConverterFor< SireMol::BeadStringProperty >();
     ObjectRegistry::registerConverterFor< SireMol::BeadIntProperty >();
     ObjectRegistry::registerConverterFor< SireMol::BeadFloatProperty >();
@@ -191,6 +196,8 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::MGName >();
     ObjectRegistry::registerConverterFor< SireMol::ChainIdx >();
     ObjectRegistry::registerConverterFor< SireMol::CGAtomIdx >();
+    ObjectRegistry::registerConverterFor< SireMol::Beads >();
+    ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::Beads> >();
     ObjectRegistry::registerConverterFor< SireMol::Bead >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::Bead> >();
     ObjectRegistry::registerConverterFor< SireMol::AtomIdx >();
@@ -220,6 +227,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::MolNum >();
     ObjectRegistry::registerConverterFor< SireMol::AtomForces >();
     ObjectRegistry::registerConverterFor< SireMol::Force3D >();
+    ObjectRegistry::registerConverterFor< SireMol::BeadNum >();
     ObjectRegistry::registerConverterFor< SireMol::ResEditor >();
     ObjectRegistry::registerConverterFor< SireMol::ResStructureEditor >();
     ObjectRegistry::registerConverterFor< SireMol::Within >();
@@ -245,6 +253,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::Selector<SireMol::CutGroup> >();
     ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::CutGroup> > >();
     ObjectRegistry::registerConverterFor< SireMol::BeadIdx >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomBeads >();
     ObjectRegistry::registerConverterFor< SireMol::SegName >();
     ObjectRegistry::registerConverterFor< SireMol::ResStringProperty >();
     ObjectRegistry::registerConverterFor< SireMol::ResIntProperty >();

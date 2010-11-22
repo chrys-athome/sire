@@ -7,7 +7,23 @@
 
 namespace bp = boost::python;
 
+#include "SireBase/errors.h"
+
+#include "SireError/errors.h"
+
+#include "SireStream/datastream.h"
+
+#include "SireStream/shareddatastream.h"
+
+#include "atomidx.h"
+
+#include "atomselection.h"
+
+#include "beadidx.h"
+
 #include "beading.h"
+
+#include "moleculeinfodata.h"
 
 #include "beading.h"
 
@@ -20,7 +36,7 @@ SireMol::ResidueBeading __copy__(const SireMol::ResidueBeading &other){ return S
 void register_ResidueBeading_class(){
 
     { //::SireMol::ResidueBeading
-        typedef bp::class_< SireMol::ResidueBeading, bp::bases< SireMol::Beading, SireBase::Property > > ResidueBeading_exposer_t;
+        typedef bp::class_< SireMol::ResidueBeading, bp::bases< SireMol::Beading, SireMol::MolViewProperty, SireBase::Property > > ResidueBeading_exposer_t;
         ResidueBeading_exposer_t ResidueBeading_exposer = ResidueBeading_exposer_t( "ResidueBeading" );
         bp::scope ResidueBeading_scope( ResidueBeading_exposer );
         ResidueBeading_exposer.def( bp::init< >() );
