@@ -29,8 +29,12 @@
 #include "beading.h"
 #include "beadidx.h"
 #include "atomidx.h"
+#include "atombeads.h"
 #include "atomselection.h"
+#include "moleculedata.h"
 #include "moleculeinfodata.h"
+
+#include <boost/noncopyable.hpp>
 
 #include "SireError/errors.h"
 #include "SireBase/errors.h"
@@ -113,6 +117,14 @@ bool Beading::operator!=(const Beading &other) const
     return MolViewProperty::operator!=(other);
 }
 
+/** By default the bead number is the index + 1 (e.g. if
+    the BeadIdx is 0, the BeadNum is 1) */
+BeadNum Beading::beadNum(const MoleculeInfoData &moldata,
+                         const BeadIdx &bead) const
+{
+    return BeadNum( 1 + bead.map( this->nBeads(moldata) ) );
+}
+
 const char* Beading::typeName()
 {
     return "SireMol::Beading";
@@ -127,6 +139,135 @@ NullBeading Beading::null()
 ////////// Implementation of MoleculeBeading
 //////////
 
+static const RegisterMetaType<MoleculeBeading> r_molbeading;
+
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MoleculeBeading &molbeading)
+{
+    writeHeader(ds, r_molbeading, 1);
+    
+    ds << static_cast<const Beading&>(molbeading);
+    
+    return ds;
+}
+
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeBeading &molbeading)
+{
+    VersionID v = readHeader(ds, r_molbeading);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Beading&>(molbeading);
+    }
+    else
+        throw version_error(v, "1", r_molbeading, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+MoleculeBeading::MoleculeBeading() : ConcreteProperty<MoleculeBeading,Beading>()
+{}
+
+/** Copy constructor */
+MoleculeBeading::MoleculeBeading(const MoleculeBeading &other)
+                : ConcreteProperty<MoleculeBeading,Beading>(other)
+{}
+
+/** Destructor */
+MoleculeBeading::~MoleculeBeading()
+{}
+
+/** Copy assignment operator */
+MoleculeBeading& MoleculeBeading::operator=(const MoleculeBeading &other)
+{
+    Beading::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool MoleculeBeading::operator==(const MoleculeBeading &other) const
+{
+    return Beading::operator==(other);
+}
+
+/** Comparison operator */
+bool MoleculeBeading::operator!=(const MoleculeBeading &other) const
+{
+    return Beading::operator!=(other);
+}
+
+const char* MoleculeBeading::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MoleculeBeading>() );
+}
+
+/** Return the number of beads */
+int MoleculeBeading::nBeads(const MoleculeInfoData &moldata) const
+{
+    if (moldata.nAtoms() == 0)
+        return 0;
+    else
+        return 1;
+}
+
+/** Return the index of the ith atom in the ith bead */
+AtomIdx MoleculeBeading::atomIdx(const MoleculeInfoData &moldata,
+                                 const BeadIdx &bead, int i) const
+{
+    bead.map( MoleculeBeading::nBeads(moldata) );
+    
+    return AtomIdx( AtomIdx(i).map(moldata.nAtoms()) );
+}
+
+/** Return the values of the atom property 'key' for all beads, 
+    arranged in bead:index order */
+PropertyPtr MoleculeBeading::atomProperty(const MoleculeData &moldata,
+                                          const SireBase::PropertyName &key) const
+{
+    throw SireError::incomplete_code("TODO", CODELOC);
+    return PropertyPtr();
+}
+                         
+/** Return all of the atoms that are selected in the beads */
+AtomSelection MoleculeBeading::selection(const MoleculeInfoData &moldata) const
+{
+    return AtomSelection(moldata);
+}
+
+/** Return the atoms that are part of the bead with index 'bead' 
+
+    \throw SireError::invalid_index
+*/
+AtomSelection MoleculeBeading::selection(const MoleculeInfoData &moldata,
+                                         const BeadIdx &bead) const
+{
+    bead.map( MoleculeBeading::nBeads(moldata) );
+    return AtomSelection(moldata);
+}
+
+/** Return the indicies of all of the atoms in the beads */
+QList<AtomIdx> MoleculeBeading::atomIdxs(const MoleculeInfoData &moldata) const
+{
+    QList<AtomIdx> atoms;
+    
+    for (int i=0; i<moldata.nAtoms(); ++i)
+    {
+        atoms.append( AtomIdx(i) );
+    }
+    
+    return atoms;
+}
+
+/** Return the indicies of all of the atoms in the bead with index 'bead'
+
+    \throw SireError::invalid_index
+*/
+QList<AtomIdx> MoleculeBeading::atomIdxs(const MoleculeInfoData &moldata,
+                                         const BeadIdx &bead) const
+{
+    bead.map( MoleculeBeading::nBeads(moldata) );
+    return MoleculeBeading::atomIdxs(moldata);
+}
 
 //////////
 ////////// Implementation of ResidueBeading
@@ -192,6 +333,14 @@ bool ResidueBeading::operator!=(const ResidueBeading &other) const
 const char* ResidueBeading::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ResidueBeading>() );
+}
+
+/** Return the bead number - for residue beads, the bead number
+    is the same as the residue number */
+BeadNum ResidueBeading::beadNum(const MoleculeInfoData &moldata,
+                                const BeadIdx &bead) const
+{
+    return BeadNum( moldata.number( ResIdx(bead.value()) ).value() );
 }
 
 /** Return the number of beads */
@@ -260,6 +409,407 @@ QList<AtomIdx> ResidueBeading::atomIdxs(const MoleculeInfoData &moldata,
 ////////// Implementation of UserBeading
 //////////
 
+namespace SireMol{ namespace detail {
+
+    /** This is an internal helper class used to cache the information
+        required for UserBeading */
+    class UserBeadingInfo : public boost::noncopyable
+    {
+    public:
+        UserBeadingInfo();
+    
+        UserBeadingInfo(const AtomBeads &beads,
+                        const MoleculeInfoData &molinfo);
+                        
+        ~UserBeadingInfo();
+
+        int nBeads() const;
+
+        BeadNum beadNum(const BeadIdx &bead) const;
+
+        AtomIdx atomIdx(const BeadIdx &bead, int i) const;
+
+        PropertyPtr atomProperty(const MoleculeData &moldata,
+                                 const SireBase::PropertyName &key) const;
+                                 
+        AtomSelection selection() const;
+                                 
+        AtomSelection selection(const BeadIdx &bead) const;
+
+        QList<AtomIdx> atomIdxs() const;
+        QList<AtomIdx> atomIdxs(const BeadIdx &bead) const;
+
+    private:
+        /** The atoms selected in each bead */
+        QVector<AtomSelection> bead_atoms;
+        
+        /** All of the atoms in the beads */
+        AtomSelection all_atoms;
+
+        /** The map of bead index to number */
+        QVector<BeadNum> beadidx_to_num;
+        
+        /** The indicies of the atoms in each bead */
+        QVector< QVector<AtomIdx> > bead_atomidxs;
+    };
+    
+    /** This internal class holds the cache of UserBeadInfos
+        for each MoleculeInfoData object */
+    class UserBeadingInfoRegistry : public boost::noncopyable
+    {
+    public:
+        UserBeadingInfoRegistry(const AtomBeads &beads);
+        ~UserBeadingInfoRegistry();
+        
+        const AtomBeads& atomBeads() const;
+        
+        const UserBeadingInfo& getInfoFor(const MoleculeInfoData &moldata);
+        
+    private:
+        /** The AtomBeads to use to bead up the molecule */
+        AtomBeads atom_beads;
+    
+        /** The actual database of beading infos */
+        QHash< QUuid,boost::shared_ptr<UserBeadingInfo> > reg;
+        
+        /** Lock to protect access to the database */
+        QMutex datamutex;
+    };
+
+} } // end of namespaces SireMol::detail and SireMol
+
+using namespace SireMol::detail;
+
+UserBeadingInfoRegistry::UserBeadingInfoRegistry(const AtomBeads &beads)
+                        : boost::noncopyable(), atom_beads(beads)
+{}
+
+UserBeadingInfoRegistry::~UserBeadingInfoRegistry()
+{
+    QMutexLocker lkr(&datamutex);
+    reg.clear();
+}
+
+const AtomBeads& UserBeadingInfoRegistry::atomBeads() const
+{
+    return atom_beads;
+}
+        
+const UserBeadingInfo& UserBeadingInfoRegistry::getInfoFor(
+                                        const MoleculeInfoData &moldata)
+{
+    if (atom_beads.isEmpty())
+    {
+        static const UserBeadingInfo default_info;
+        return default_info;
+    }
+
+    QMutexLocker lkr(&datamutex);
+    
+    if (not reg.contains(moldata.UID()))
+    {
+        lkr.unlock();
+        
+        boost::shared_ptr<UserBeadingInfo> info(
+                                new UserBeadingInfo(atom_beads, moldata) );
+                                
+        lkr.relock();
+        
+        if (not reg.contains(moldata.UID()))
+            reg.insert(moldata.UID(), info);
+    }
+    
+    return *(reg.value(moldata.UID()));
+}
+
+/** Null constructor */
+UserBeadingInfo::UserBeadingInfo() : boost::noncopyable()
+{}
+
+/** Construct the bead information for the passed atom beads applied
+    to the passed molecule info */
+UserBeadingInfo::UserBeadingInfo(const AtomBeads &beads,
+                                 const MoleculeInfoData &molinfo)
+                : boost::noncopyable()
+{}
+
+/** Destructor */                
+UserBeadingInfo::~UserBeadingInfo()
+{}
+
+/** Return the number of beads */
+int UserBeadingInfo::nBeads() const
+{
+    return beadidx_to_num.count();
+}
+
+/** Return the number of the bead with index 'bead' 
+
+    \throw SireError::invalid_index
+*/
+BeadNum UserBeadingInfo::beadNum(const BeadIdx &bead) const
+{
+    return beadidx_to_num.constData()[ bead.map(beadidx_to_num.count()) ];
+}
+
+/** Return the index of the ith atom in the bead with index 'bead'
+
+    \throw SireError::invalid_index
+*/
+AtomIdx UserBeadingInfo::atomIdx(const BeadIdx &bead, int i) const
+{
+    const QVector<AtomIdx> &atoms = bead_atomidxs.constData()
+                                            [ bead.map(bead_atomidxs.count()) ];
+                                            
+    return atoms.constData()[ Index(i).map(atoms.count()) ];
+}
+
+/** Return the property with key 'key' of all of the atoms in the beads
+    in bead/index order */
+PropertyPtr UserBeadingInfo::atomProperty(const MoleculeData &moldata,
+                                          const SireBase::PropertyName &key) const
+{
+    throw SireError::incomplete_code("TODO", CODELOC);
+    return PropertyPtr();
+}
+                         
+/** Return the selection of all of the atoms that are
+    in all of the beads */
+AtomSelection UserBeadingInfo::selection() const
+{
+    return all_atoms;
+}
+                     
+/** Return the selection of the atoms that are in the bead with
+    index 'bead'
+    
+    \throw SireError::invalid_index
+*/
+AtomSelection UserBeadingInfo::selection(const BeadIdx &bead) const
+{
+    return bead_atoms.constData()[ bead.map(bead_atoms.count()) ];
+}
+
+/** Return the indices of all of the atoms in all of the beads */
+QList<AtomIdx> UserBeadingInfo::atomIdxs() const
+{
+    QList<AtomIdx> atoms;
+    
+    for (int i=0; i<bead_atomidxs.count(); ++i)
+    {
+        atoms += bead_atomidxs.constData()[i].toList();
+    }
+    
+    return atoms;
+}
+
+/** Return the indicies of the atoms that are in the bead 
+    with index 'bead'
+    
+    \throw SireError::invalid_index
+*/
+QList<AtomIdx> UserBeadingInfo::atomIdxs(const BeadIdx &bead) const
+{
+    return bead_atomidxs.constData()[ bead.map(bead_atomidxs.count()) ].toList();
+}
+
+static const RegisterMetaType<UserBeading> r_userbeading;
+
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const UserBeading &userbeading)
+{
+    writeHeader(ds, r_userbeading, 1);
+    
+    SharedDataStream sds(ds);
+    
+    if (userbeading.registry.get() == 0)
+    {
+        sds << AtomBeads();
+    }
+    else
+    {
+        sds << userbeading.registry->atomBeads();
+    }
+    
+    sds << static_cast<const Beading&>(userbeading);
+    
+    return ds;
+}
+
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, UserBeading &userbeading)
+{
+    VersionID v = readHeader(ds, r_userbeading);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        AtomBeads atom_beads;
+        
+        sds >> atom_beads;
+        
+        userbeading = UserBeading(atom_beads);
+        
+        sds >> static_cast<Beading&>(userbeading);
+    }
+    else
+        throw version_error(v, "1", r_userbeading, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor - this looks for the bead property in "bead" */
+UserBeading::UserBeading()
+            : ConcreteProperty<UserBeading,Beading>()
+{}
+
+/** Constructor used to specify the beads for each atom */
+UserBeading::UserBeading(const AtomBeads &beads)
+            : ConcreteProperty<UserBeading,Beading>()
+{
+    if (not beads.isEmpty())
+    {
+        registry.reset( new UserBeadingInfoRegistry(beads) );
+    }
+}
+
+/** Copy constructor */
+UserBeading::UserBeading(const UserBeading &other)
+            : ConcreteProperty<UserBeading,Beading>(other),
+              registry(other.registry)
+{}
+
+/** Destructor */
+UserBeading::~UserBeading()
+{}
+
+/** Copy assignment operator */
+UserBeading& UserBeading::operator=(const UserBeading &other)
+{
+    if (this != &other)
+    {
+        registry = other.registry;
+        Beading::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool UserBeading::operator==(const UserBeading &other) const
+{
+    return this->atomBeads() == other.atomBeads() and
+           Beading::operator==(other);
+}
+
+/** Comparison operator */
+bool UserBeading::operator!=(const UserBeading &other) const
+{
+    return not UserBeading::operator==(other);
+}
+
+const char* UserBeading::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<UserBeading>() );
+}
+
+/** Return the bead specification for each atom */
+const AtomBeads& UserBeading::atomBeads() const
+{
+    if (registry.get() == 0)
+    {
+        static const AtomBeads atom_beads;
+        return atom_beads;
+    }
+    else
+    {
+        return registry->atomBeads();
+    }
+}
+
+/** Return whether or not this beading is compatible with the passed molecule info */
+bool UserBeading::isCompatibleWith(const MoleculeInfoData &molinfo) const
+{
+    return this->atomBeads().isCompatibleWith(molinfo);
+}
+
+const UserBeadingInfo& UserBeading::getUserBeadingInfo(
+                                const MoleculeInfoData &moldata) const
+{
+    if (registry.get() == 0)
+    {
+        static const UserBeadingInfo default_info;
+        return default_info;
+    }
+    else
+    {
+        return registry->getInfoFor(moldata);
+    }
+}
+
+/** Return the number of the bead with index 'bead'
+
+    \throw SireError::invalid_index
+*/
+BeadNum UserBeading::beadNum(const MoleculeInfoData &moldata, const BeadIdx &bead) const
+{
+    return getUserBeadingInfo(moldata).beadNum(bead);
+}
+
+/** Return the number of beads in the passed molecule */
+int UserBeading::nBeads(const MoleculeInfoData &moldata) const
+{
+    return getUserBeadingInfo(moldata).nBeads();
+}
+
+/** Return the index of the ith atom in the bead with index 'bead'
+
+    \throw SireError::invalid_index
+*/
+AtomIdx UserBeading::atomIdx(const MoleculeInfoData &moldata,
+                             const BeadIdx &bead, int i) const
+{
+    return getUserBeadingInfo(moldata).atomIdx(bead, i);
+}
+
+/** Return the properties of all of the atoms of all of the beads,
+    in bead index, atom in bead index order */
+PropertyPtr UserBeading::atomProperty(const MoleculeData &moldata,
+                                      const SireBase::PropertyName &key) const
+{
+    return getUserBeadingInfo(moldata.info()).atomProperty(moldata, key);
+}
+                         
+/** Return the selection of all of the atoms in all of the beads */
+AtomSelection UserBeading::selection(const MoleculeInfoData &moldata) const
+{
+    return getUserBeadingInfo(moldata).selection();
+}
+                         
+/** Return the selection of atoms in the bead with index 'bead'
+
+    \throw SireError::invalid_index
+*/
+AtomSelection UserBeading::selection(const MoleculeInfoData &moldata,
+                                     const BeadIdx &bead) const
+{
+    return getUserBeadingInfo(moldata).selection(bead);
+}
+
+/** Return the indicies of all of the atoms in all of the beads */
+QList<AtomIdx> UserBeading::atomIdxs(const MoleculeInfoData &moldata) const
+{
+    return getUserBeadingInfo(moldata).atomIdxs();
+}
+
+/** Return the indicies of the atoms in the bead with index 'bead'
+
+    \throw SireError::invalid_index
+*/
+QList<AtomIdx> UserBeading::atomIdxs(const MoleculeInfoData &moldata,
+                                     const BeadIdx &bead) const
+{
+    return getUserBeadingInfo(moldata).atomIdxs(bead);
+}
 
 //////////
 ////////// Implementation of NullBeading

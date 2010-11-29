@@ -32,12 +32,17 @@
 #include "cljcomponent.h"
 #include "switchingfunction.h"
 #include "ljpotential.h"
+#include "cljparam.h"
 
 #include "SireFF/g1ff.h"
 #include "SireFF/ff3d.h"
 #include "SireFF/patches.h"
 
+#include "SireMol/beads.h"
+
 #include "SireVol/space.h"
+
+#include "SireBase/chunkedhash.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -69,6 +74,7 @@ using SireMol::PartialMolecule;
 using SireMol::ViewsOfMol;
 using SireMol::Molecules;
 using SireMol::MolNum;
+using SireMol::Beads;
 
 using SireFF::ForceTable;
 using SireFF::FieldTable;
@@ -162,6 +168,7 @@ public:
                    const Probe &probe, double scale_potential=1);
 
 protected:
+    bool recordingChanges() const;
 
     ////
     //// Virtual functions from SireFF::FF
@@ -205,11 +212,11 @@ private:
     /** All of the properties of this forcefield */
     Properties props;
 
-    /** The property maps for all of the molecules in this forcefield */
-    QHash<MolNum,PropertyMap> molprops;
-
     /** The mapping of molecule to beadid */
     QHash< MolNum,QVector<quint32> > mol_to_beadid;
+
+    /** All of the molecules in the forcefield, split into beads */
+    SireBase::ChunkedHash< MolNum,QPair<Beads,PropertyMap> > beads_by_molnum;
 
     /** The switching function used to implement a non-bonded cutoff */
     SwitchFuncPtr switchfunc;
@@ -222,6 +229,18 @@ private:
         with contained space */
     SireFF::Patches ptchs;
 
+    /** The bead IDs of beads that have been added since the last  
+        energy calculation */
+    QSet<quint32> added_beads;
+    
+    /** The bead IDs of beads that have been removed since the last
+        energy calculation */
+    QHash< quint32,QPair<CoordGroup,CLJParams> > removed_beads;
+    
+    /** The bead IDs of beads that have changed, with the old state of the
+        beads */
+    QHash< quint32,QPair<CoordGroup,CLJParams> > changed_beads; 
+
     /** Whether or not the LJ pair matrix needs to be rebuilt */
     bool need_update_ljpairs;
     
@@ -230,8 +249,9 @@ private:
         is zero at the cutoff distance) */
     bool use_electrostatic_shifting;
     
-    /** Whether or not to recalculate everything from scratch */
-    bool recalc_from_scratch;
+    /** Whether or not changes are being recorded (so that
+        an energy delta is calculated) */
+    bool recording_changes;
 };
 
 }

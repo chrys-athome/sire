@@ -11,6 +11,16 @@ namespace bp = boost::python;
 
 #include "beadidx.h"
 
+#include "SireStream/datastream.h"
+
+#include "beadid.h"
+
+#include "beadidx.h"
+
+#include "beadnum.h"
+
+#include "beadid.h"
+
 SireMol::BeadIdx __copy__(const SireMol::BeadIdx &other){ return SireMol::BeadIdx(other); }
 
 #include "Qt/qdatastream.hpp"

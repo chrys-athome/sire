@@ -247,8 +247,22 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void Bead::setProperty(const QString &key, const T &value)
 {
-    MoleculeView::setProperty<BeadIdx,BeadProperty<T>,T>(*d, key, this->index(),
-                                                         value);
+    BeadProperty<T> props;
+    MoleculeData &data = *d;
+    
+    if (data.hasProperty(key))
+    {
+        //take the property to prevent unnecessary copying caused
+        //by implicit sharing of the property
+        PropertyPtr old_property = data.takeProperty(key);
+        props = old_property->asA< BeadProperty<T> >();
+    }
+    else
+        props = BeadProperty<T>(data.info(), bdng.read());
+        
+    props.set(this->index(), value);
+    
+    data.setProperty(key, props);
 }
 
 /** Set the metadata at metakey 'metakey' to the value 'value' 
@@ -260,8 +274,22 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void Bead::setMetadata(const QString &metakey, const T &value)
 {
-    MoleculeView::setMetadata<BeadIdx,BeadProperty<T>,T>(*d, metakey, this->index(),
-                                                         value);
+    BeadProperty<T> props;
+    MoleculeData &data = *d;
+    
+    if (data.hasMetadata(metakey))
+    {
+        //take the metadata to prevent unnecessary copying caused
+        //by implicit sharing of the property
+        PropertyPtr old_metadata = data.takeMetadata(metakey);
+        props = old_metadata->asA< BeadProperty<T> >();
+    }
+    else
+        props = BeadProperty<T>(data.info(), bdng.read());
+        
+    props.set(this->index(), value);
+    
+    data.setMetadata(metakey, props);
 }
 
 /** Set the metadata at metakey 'metakey' for the property at key
@@ -274,8 +302,22 @@ SIRE_OUTOFLINE_TEMPLATE
 void Bead::setMetadata(const QString &key, const QString &metakey,
                        const T &value)
 {
-    MoleculeView::setMetadata<BeadIdx,BeadProperty<T>,T>(*d, key, metakey, this->index(),
-                                                         value);
+    BeadProperty<T> props;
+    MoleculeData &data = *d;
+    
+    if (data.hasMetadata(key, metakey))
+    {
+        //take the metadata to prevent unnecessary copying caused
+        //by implicit sharing of the property
+        PropertyPtr old_metadata = data.takeMetadata(key, metakey);
+        props = old_metadata->asA< BeadProperty<T> >();
+    }
+    else
+        props = BeadProperty<T>(data.info(),bdng.read());
+        
+    props.set(this->index(), value);
+    
+    data.setMetadata(key, metakey, props);
 }
 
 namespace detail

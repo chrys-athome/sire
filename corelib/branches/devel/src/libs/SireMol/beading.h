@@ -30,6 +30,9 @@
 #define SIREMOL_BEADING_H
 
 #include "molviewproperty.h"
+#include "atombeads.h"
+
+#include <boost/shared_ptr.hpp>
 
 SIRE_BEGIN_HEADER
 
@@ -121,6 +124,9 @@ protected:
     friend class BeadProp;
 
     virtual int nBeads(const MoleculeInfoData &moldata) const=0;
+
+    virtual BeadNum beadNum(const MoleculeInfoData &moldata,
+                            const BeadIdx &bead) const;
 
     virtual AtomIdx atomIdx(const MoleculeInfoData &moldata,
                             const BeadIdx &bead, int i) const=0;
@@ -214,6 +220,9 @@ public:
 protected:
     int nBeads(const MoleculeInfoData &moldata) const;
 
+    BeadNum beadNum(const MoleculeInfoData &moldata,
+                    const BeadIdx &bead) const;
+
     AtomIdx atomIdx(const MoleculeInfoData &moldata,
                     const BeadIdx &bead, int i) const;
 
@@ -230,6 +239,12 @@ protected:
                             const BeadIdx &bead) const;
 };
 
+namespace detail
+{
+class UserBeadingInfo;
+class UserBeadingInfoRegistry;
+}
+
 /** This is a beading function that divides a molecule into 
     user-defined beads
     
@@ -244,6 +259,7 @@ friend QDataStream& ::operator>>(QDataStream&, UserBeading&);
 
 public:
     UserBeading();
+    UserBeading(const AtomBeads &beads);
     UserBeading(const UserBeading &other);
     
     ~UserBeading();
@@ -255,8 +271,15 @@ public:
     
     static const char* typeName();
     
+    const AtomBeads& atomBeads() const;
+
+    bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
+    
 protected:
     int nBeads(const MoleculeInfoData &moldata) const;
+
+    BeadNum beadNum(const MoleculeInfoData &moldata,
+                    const BeadIdx &bead) const;
 
     AtomIdx atomIdx(const MoleculeInfoData &moldata,
                     const BeadIdx &bead, int i) const;
@@ -272,6 +295,13 @@ protected:
     QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata) const;
     QList<AtomIdx> atomIdxs(const MoleculeInfoData &moldata,
                             const BeadIdx &bead) const;
+
+private:
+    const detail::UserBeadingInfo& getUserBeadingInfo(
+                                        const MoleculeInfoData &moldata) const;
+    
+    /** Shared pointer to the UserBeadingInfo registry */
+    boost::shared_ptr<detail::UserBeadingInfoRegistry> registry;
 };
 
 /** Null beading function */

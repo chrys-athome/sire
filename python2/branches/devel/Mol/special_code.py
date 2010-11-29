@@ -306,6 +306,12 @@ def fix_SegID(c):
     for header in active_headers["segid.h"].dependencies():
         c.add_declaration_code( "#include %s" % header )
 
+def fix_BeadID(c):
+    #also include all of the header files included in segid.cpp
+    for header in active_headers["beadid.h"].dependencies():
+        c.add_declaration_code( "#include %s" % header )
+
+
 def fix_PerturbationSymbols(c):
     c.mem_funs("lambda").rename("Lambda")
 
@@ -329,9 +335,14 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::ResNum" : fix_ResID,
                  "SireMol::SegIdx" : fix_SegID,
                  "SireMol::SegName" : fix_SegID,
+                 "SireMol::BeadIdx" : fix_BeadID,
+                 "SireMol::BeadNum" : fix_BeadID,
 
                  "SireMol::Bead" : fix_Bead,
                  "SireMol::Editor<SireMol::BeadEditor, SireMol::Bead>" : fix_BeadEditorBase,
+                 "SireMol::Mover<SireMol::Bead>" : fix_Mover,
+                 
+                 "SireMol::Mover<SireMol::Beads>" : fix_Mover,
 
                  "SireMol::CutGroup" : fix_CutGroup,
                  "SireMol::Editor<SireMol::CGEditor, SireMol::CutGroup>" : fix_CGEditorBase,
@@ -393,7 +404,7 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "SegFloatProperty" : fix_MolViewProperty,
                  "SegVariantProperty" : fix_MolViewProperty,
 
-                 "AtomBeading" : fix_MolViewProperty,
+                 "AtomBeads" : fix_MolViewProperty,
                  "AtomCoords" : fix_AtomCoords,
                  "AtomCharges" : fix_MolViewProperty,
                  "AtomElements" : fix_MolViewProperty,

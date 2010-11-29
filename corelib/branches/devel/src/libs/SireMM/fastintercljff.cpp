@@ -28,9 +28,13 @@
 
 #include "fastintercljff.h"
 
+#include "atomljs.h"
+
 #include "SireMol/molecule.h"
 #include "SireMol/viewsofmol.h"
 #include "SireMol/partialmolecule.h"
+#include "SireMol/atomcoords.h"
+#include "SireMol/atomcharges.h"
 
 #include "SireBase/propertymap.h"
 #include "SireBase/properties.h"
@@ -54,12 +58,13 @@ static const RegisterMetaType<FastInterCLJFF> r_fastintercljff;
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
                                        const FastInterCLJFF &fastcljff)
 {
+    throw SireError::incomplete_code( "TODO", CODELOC );
+
     writeHeader(ds, r_fastintercljff, 1);
     
     SharedDataStream sds(ds);
     
-    sds << fastcljff.props << fastcljff.molprops
-        << static_cast<const G1FF&>(fastcljff);
+    sds << static_cast<const G1FF&>(fastcljff);
     
     return ds;
 }
@@ -67,16 +72,15 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
                                        FastInterCLJFF &fastcljff)
 {
+    throw SireError::incomplete_code( "TODO", CODELOC );
+
     VersionID v = readHeader(ds, r_fastintercljff);
     
     if (v == 1)
     {
         SharedDataStream sds(ds);
         
-        sds >> fastcljff.props >> fastcljff.molprops
-            >> static_cast<G1FF&>(fastcljff);
-        
-        fastcljff.rebuildAll();
+        sds >> static_cast<G1FF&>(fastcljff);
     }
     else
         throw version_error(v, "1", r_fastintercljff, CODELOC);
@@ -102,7 +106,7 @@ FastInterCLJFF::FastInterCLJFF()
                  switchfunc( SwitchingFunction::null() ),
                  combining_rules( LJParameterDB::interpret("arithmetic") ),
                  need_update_ljpairs(true), use_electrostatic_shifting(false),
-                 recalc_from_scratch(true)
+                 recording_changes(false)
 {
     this->_pvt_updateName();
     this->rebuildProperties();
@@ -114,7 +118,7 @@ FastInterCLJFF::FastInterCLJFF(const QString &name)
                  switchfunc( SwitchingFunction::null() ),
                  combining_rules( LJParameterDB::interpret("arithmetic") ),
                  need_update_ljpairs(true), use_electrostatic_shifting(false),
-                 recalc_from_scratch(true)
+                 recording_changes(false)
 {
     FF::setName(name);
     this->_pvt_updateName();
@@ -123,16 +127,10 @@ FastInterCLJFF::FastInterCLJFF(const QString &name)
 
 /** Copy constructor */
 FastInterCLJFF::FastInterCLJFF(const FastInterCLJFF &other)
-               : ConcreteProperty<FastInterCLJFF,G1FF>(other), FF3D(other),
-                 ffcomponents(other.ffcomponents), 
-                 ljpairs(other.ljpairs), props(other.props),
-                 molprops(other.molprops), mol_to_beadid(other.mol_to_beadid),
-                 switchfunc(other.switchfunc),
-                 combining_rules(other.combining_rules), ptchs(other.ptchs),
-                 need_update_ljpairs(other.need_update_ljpairs),
-                 use_electrostatic_shifting(other.use_electrostatic_shifting),
-                 recalc_from_scratch(other.recalc_from_scratch)
-{}
+               : ConcreteProperty<FastInterCLJFF,G1FF>(other), FF3D(other)
+{
+    throw SireError::incomplete_code( "TODO", CODELOC );
+}
 
 /** Destructor */
 FastInterCLJFF::~FastInterCLJFF()
@@ -148,18 +146,7 @@ FastInterCLJFF& FastInterCLJFF::operator=(const FastInterCLJFF &other)
 {
     if (this != &other)
     {
-        G1FF::operator=(other);
-        ffcomponents = other.ffcomponents;
-        ljpairs = other.ljpairs;
-        props = other.props;
-        molprops = other.molprops;
-        mol_to_beadid = other.mol_to_beadid;
-        switchfunc = other.switchfunc;
-        combining_rules = other.combining_rules;
-        ptchs = other.ptchs;
-        need_update_ljpairs = other.need_update_ljpairs;
-        use_electrostatic_shifting = other.use_electrostatic_shifting;
-        recalc_from_scratch = other.recalc_from_scratch;
+        throw SireError::incomplete_code( "TODO", CODELOC );
     }
     
     return *this;
@@ -168,6 +155,8 @@ FastInterCLJFF& FastInterCLJFF::operator=(const FastInterCLJFF &other)
 /** Comparison operator */
 bool FastInterCLJFF::operator==(const FastInterCLJFF &other) const
 {
+    throw SireError::incomplete_code( "TODO", CODELOC );
+
     return G1FF::operator==(other) and
            props == other.props;
 }
@@ -188,11 +177,19 @@ const CLJComponent& FastInterCLJFF::_pvt_components() const
     return ffcomponents;
 }
 
+/** Internal function used to return whether or not this
+    forcefield is recording changes (so that an energy delta
+    is calculated, rather than calculating the energy from scratch) */
+bool FastInterCLJFF::recordingChanges() const
+{
+    return recording_changes;
+}
+
 /** Call to rebuild the entire internal state from the current
     molecules in this forcefield */
 void FastInterCLJFF::rebuildAll()
 {
-    recalc_from_scratch = true;
+    this->mustNowRecalculateFromScratch();
     need_update_ljpairs = true;
     
     switchfunc = props.property("switchingFunction").asA<SwitchingFunction>();
@@ -205,19 +202,33 @@ void FastInterCLJFF::rebuildAll()
     //now rebuild all of the bead groups from the list of molecules
     const Molecules &mols = this->operator[](MGIdx(0)).molecules();
     
-    QHash<MolNum,PropertyMap> old_molprops = molprops;
+    ChunkedHash< MolNum,QPair<Beads,PropertyMap> > old_beads = beads_by_molnum;
     
-    molprops = QHash<MolNum,PropertyMap>();
+    mol_to_beadid.clear();
+    beads_by_molnum.clear();
+    added_beads.clear();
+    removed_beads.clear();
+    changed_beads.clear();
     
     for (Molecules::const_iterator it = mols.constBegin();
          it != mols.constEnd();
          ++it)
     {
-        this->_pvt_added( *it, molprops.value(it.key(), PropertyMap()) );
+        this->_pvt_added( *it, old_beads.value(it.key()).second );
     }
 
     //the energy almost certainly will need recalculating
     FF::setDirty();
+}
+
+/** Internal function used to calculate the energy of the passed two CoordGroups */
+static void addEnergy(const CoordGroup &icoords, const CLJParams &iparams,
+                      const CoordGroup &jcoords, const CLJParams &jparams,
+                      const Space &space, const SwitchingFunction &switchfunc,
+                      double &cnrg, double &ljnrg, double scale)
+{
+    //probably should be Workspace to hold cnrg, ljnrg and switchfunc,
+    //distmatrix etc.
 }
 
 /** Recalculate the energy - this will either increment the energy
@@ -227,18 +238,129 @@ void FastInterCLJFF::recalculateEnergy()
     if (need_update_ljpairs)
     {
         //rebuild the LJ pair parameter database
-        
-        recalc_from_scratch = true;
+        ljpairs = LJParameterDB::getLJPairs(combining_rules);
+        need_update_ljpairs = false;
+        this->mustNowRecalculateFromScratch();
     }
 
-    if (recalc_from_scratch)
+    if ( this->recordingChanges() )
     {
+        if (added_beads.isEmpty() and removed_beads.isEmpty() and
+            changed_beads.isEmpty())
+        {
+            //nothing has changed
+            return;
+        }
+    
+        //calculate an energy delta
+        
     }
     else
     {
+        //calculate the energy from scratch - loop over each patch,
+        //then pair of patches
+        
+        const Patch *patches_array = ptchs.constData();
+        const int npatches = ptchs.nPatches();
+        
+        double cnrg = 0;
+        double ljnrg = 0;
+        
+        for (int ip=0; ip<npatches; ++ip)
+        {
+            const Patch &patch = patches_array[ip];
+            const int nbeads = patch.nBeads();
+            
+            if (nbeads < 2)
+                continue;
+            
+            const CoordGroup *coords_array = patch.coordinates().constData();
+            const CLJParamsArray::Array *params_array = patch.parameters()
+                                            .asA<CLJParamsArray>().constData();
+                                               
+            for (int i=0; i<nbeads-1; ++i)
+            {
+                const CoordGroup &ibead_coords = coords_array[i];
+                const CLJParamsArray::Array &ibead_params = params_array[i];
+                
+                for (int j=i+1; j<nbeads; ++j)
+                {
+                    const CoordGroup &jbead_coords = coords_array[j];
+                    const CLJParamsArray::Array &jbead_params = params_array[j];
+                    
+                    addEnergy(ibead_coords, ibead_params,
+                              jbead_coords, jbead_params,
+                              space(), switchfunc.read(),
+                              cnrg, ljnrg, 1);
+                }
+            }
+        }
+        
+        //now loop over all pairs of patches
+        const double cutoff = switchfunc.read().cutoffDistance();
+        
+        for (int ip=0; ip<npatches-1; ++ip)
+        {
+            const Patch &ipatch = patches_array[ip];
+            
+            const int inbeads = ipatch.nBeads();
+            
+            if (inbeads == 0)
+                continue;
+
+            const CoordGroup *icoords_array = ipatch.coordinates().constData();
+            const CLJParamsArray::Array *iparams_array = ipatch.parameters()
+                                                   .asA<CLJParamsArray>().constData();
+                
+            for (int jp=ip+1; jp<npatches; ++jp)
+            {
+                const Patch &jpatch = patches_array[jp];
+                
+                const int jnbeads = jpatch.nBeads();
+                
+                if (jnbeads == 0)
+                    continue;
+                    
+                //calculate the minimum distance between these
+                //two patches
+                const double patchdist = space().calcDist( ipatch.aaBox().center(),
+                                                           jpatch.aaBox().center() );
+                                                           
+                if ( patchdist > (cutoff + ipatch.aaBox().radius() +
+                                           jpatch.aaBox().radius()) )
+                {
+                    //the patches are beyond cutoff, so the contents must also
+                    //be beyond cutoff
+                    continue;
+                }
+                
+                const CoordGroup *jcoords_array = jpatch.coordinates().constData();
+                const CLJParamsArray::Array *jparams_array = jpatch.parameters()
+                                                       .asA<CLJParamsArray>().constData();
+                                                       
+                for (int i=0; i<inbeads; ++i)
+                {
+                    const CoordGroup &ibead_coords = icoords_array[i];
+                    const CLJParamsArray::Array &ibead_params = iparams_array[i];
+                    
+                    for (int j=0; j<jnbeads; ++j)
+                    {
+                        const CoordGroup &jbead_coords = jcoords_array[j];
+                        const CLJParamsArray::Array &jbead_params = jparams_array[j];
+                        
+                        addEnergy(ibead_coords, ibead_params,
+                                  jbead_coords, jbead_params,
+                                  space(), switchfunc.read(),
+                                  cnrg, ljnrg, 1);
+                    }
+                }
+            }
+        }
+        
+        this->components().setEnergy(*this, CLJEnergy(cnrg, ljnrg));
     }
     
-    this->components().setEnergy(*this, CLJEnergy(0));
+    recording_changes = true;
 }
 
 void FastInterCLJFF::_pvt_updateName()
@@ -247,28 +369,134 @@ void FastInterCLJFF::_pvt_updateName()
     G1FF::_pvt_updateName();
 }
 
+/** Internal function used to merge the passed charge and LJ parameters
+    into a single array (and also convert the LJ parameters into a
+    lookup ID into the LJ parameter database, and multiplies the charges
+    by sqrt(1 / 4 pi epsilon_0)) */
+static CLJParamsArray mergeCLJ(const AtomCharges &charges, const AtomLJs &ljs)
+{
+    try
+    {
+        const int nbeads = charges.array().nArrays();
+        BOOST_ASSERT( ljs.array().nArrays() == nbeads );
+        
+        const AtomCharges::Array *atom_charges_array = charges.constData();
+        const AtomLJs::Array *atom_ljs_array = ljs.constData();
+
+        QVector< QVector<CLJParam> > cljparams( nbeads );
+        QVector<CLJParam> *cljparams_array = cljparams.data();
+        
+        LJParameterDB::lock();
+    
+        for (int i=0; i<nbeads; ++i)
+        {
+            const AtomCharges::Array &atom_charges = atom_charges_array[i];
+            const AtomLJs::Array &atom_ljs = atom_ljs_array[i];
+        
+            const int nats = atom_charges.count();
+            BOOST_ASSERT( atom_ljs.count() == nats );
+            
+            const SireUnits::Dimension::Charge *chgs_array = atom_charges.constData();
+            const LJParameter *ljs_array = atom_ljs.constData();
+            
+            QVector<CLJParam> bead_cljparams(nats);
+            CLJParam *bead_cljparams_array = bead_cljparams.data();
+            
+            for (int j=0; j<nats; ++j)
+            {
+                bead_cljparams_array[j] = CLJParam( chgs_array[j], 
+                                                    ljs_array[j], false );
+            }
+            
+            cljparams_array[i] = bead_cljparams;
+        }
+        
+        LJParameterDB::unlock();
+        
+        return CLJParamsArray(cljparams);
+    }
+    catch(...)
+    {
+        LJParameterDB::unlock();
+        throw;
+    }
+}
+
+/** Internal function used to create the parameters used to
+    represent the beads in this forcefield */
+static QPair<CoordGroupArray,CLJParamsArray> 
+createParameters(const Beads &beads, const PropertyMap &map)
+{
+    AtomCoords coords = beads.atomProperty( map["coordinates"] )
+                             .read().asA<AtomCoords>();
+
+    AtomCharges charges = beads.atomProperty( map["charge"] )
+                               .read().asA<AtomCharges>();
+                                
+    AtomLJs ljs = beads.atomProperty( map["lj"] )
+                       .read().asA<AtomLJs>();
+                       
+    return QPair<CoordGroupArray,CLJParamsArray>(coords.array(),
+                                                 mergeCLJ(charges, ljs));
+}
+
+template<class C, class T>
+static void remove(C &container, const T &values)
+{
+    for (typename T::const_iterator it = values.constBegin();
+         it != values.constEnd();
+         ++it)
+    {
+        container.remove(*it);
+    }
+}
+
+template<class C, class T>
+static void insert(C &container, const T &values)
+{
+    for (typename T::const_iterator it = values.constBegin();
+         it != values.constEnd();
+         ++it)
+    {
+        container.insert(*it);
+    }
+}
+
 /** Called when the passed molecule view has been added to the forcefield */
 void FastInterCLJFF::_pvt_added(const PartialMolecule &mol, const PropertyMap &map)
 {
+    if (not mol.selectedAll())
+        throw SireError::unsupported( QObject::tr(
+                "The FastInterCLJFF currently only supports whole molecules!"),
+                    CODELOC );
+
     if (mol_to_beadid.contains(mol.number()))
     {
         //remove the current version of the molecule
-        ptchs.remove( mol_to_beadid.value(mol.number()) );
+        QVector<quint32> beadids = mol_to_beadid.value(mol.number());
+        
+        ptchs.remove(beadids);
+        ::remove(added_beads, beadids);
+        ::remove(removed_beads, beadids);
+        ::remove(changed_beads, beadids);
+
         mol_to_beadid.remove(mol.number());
-        #warning I AM HERE
-        //beadmols.remove(mol.number());
+        beads_by_molnum.remove(mol.number());
     }
     
     //break the molecule into beads
-    #warning AND HERE
+    Beads beads = Beads(mol.data(), map);
+
+    QPair<CoordGroupArray,CLJParamsArray> param_beads = createParameters(beads, map);
+    need_update_ljpairs = true;
+
+    QVector<quint32> bead_ids = ptchs.add(param_beads.first, param_beads.second);
+
+    mol_to_beadid.insert(mol.number(), bead_ids);
+    beads_by_molnum.insert(mol.number(), QPair<Beads,PropertyMap>(beads,map));
     
-    //Beads beads = mol.splitIntoBeads(map);
-
-    //beads.property<Vector>() returns AtomCoords
-    //beads.property<Charge>() returns AtomCharges
-
-    //bead.property<Vector>() returns correct CoordGroup
-    //bead.property<Charge>() returns correct AtomCharges
+    if (this->recordingChanges())
+        ::insert(added_beads, bead_ids);
 
     return;
 }
@@ -502,7 +730,10 @@ const Properties& FastInterCLJFF::properties() const
 /** Set that this forcefield must recalculate the energy from scratch */
 void FastInterCLJFF::mustNowRecalculateFromScratch()
 {
-    recalc_from_scratch = true;
+    recording_changes = false;
+    removed_beads.clear();
+    changed_beads.clear();
+    added_beads.clear();
 }
 
 void FastInterCLJFF::force(ForceTable &forcetable, double scale_force)

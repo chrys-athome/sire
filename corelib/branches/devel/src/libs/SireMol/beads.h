@@ -30,6 +30,8 @@
 #define SIREMOL_BEADS_H
 
 #include "bead.h"
+#include "beadproperty.hpp"
+#include "atomselection.h"
 
 SIRE_BEGIN_HEADER
 

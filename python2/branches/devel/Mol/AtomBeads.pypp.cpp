@@ -12,6 +12,8 @@ namespace bp = boost::python;
 
 #include "atombeads.h"
 
+#include "SireMaths/vector.h"
+
 SireMol::AtomProperty<SireMol::BeadNum> __copy__(const SireMol::AtomProperty<SireMol::BeadNum> &other){ return SireMol::AtomProperty<SireMol::BeadNum>(other); }
 
 #include "Qt/qdatastream.hpp"
@@ -297,7 +299,7 @@ void register_AtomBeads_class(){
                 "set"
                 , set_function_value
                 , ( bp::arg("cgatomidx"), bp::arg("value") )
-                    /* undefined call policies */ );
+                , bp::return_self< >() );
         
         }
         { //::SireMol::AtomProperty< SireMol::BeadNum >::set
@@ -310,7 +312,7 @@ void register_AtomBeads_class(){
                 "set"
                 , set_function_value
                 , ( bp::arg("cgidx"), bp::arg("values") )
-                    /* undefined call policies */ );
+                , bp::return_self< >() );
         
         }
         { //::SireMol::AtomProperty< SireMol::BeadNum >::size

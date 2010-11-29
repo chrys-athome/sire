@@ -40,7 +40,30 @@ void register_UserBeading_class(){
         UserBeading_exposer_t UserBeading_exposer = UserBeading_exposer_t( "UserBeading" );
         bp::scope UserBeading_scope( UserBeading_exposer );
         UserBeading_exposer.def( bp::init< >() );
+        UserBeading_exposer.def( bp::init< SireMol::AtomBeads const & >(( bp::arg("beads") )) );
         UserBeading_exposer.def( bp::init< SireMol::UserBeading const & >(( bp::arg("other") )) );
+        { //::SireMol::UserBeading::atomBeads
+        
+            typedef ::SireMol::AtomBeads const & ( ::SireMol::UserBeading::*atomBeads_function_type )(  ) const;
+            atomBeads_function_type atomBeads_function_value( &::SireMol::UserBeading::atomBeads );
+            
+            UserBeading_exposer.def( 
+                "atomBeads"
+                , atomBeads_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireMol::UserBeading::isCompatibleWith
+        
+            typedef bool ( ::SireMol::UserBeading::*isCompatibleWith_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            isCompatibleWith_function_type isCompatibleWith_function_value( &::SireMol::UserBeading::isCompatibleWith );
+            
+            UserBeading_exposer.def( 
+                "isCompatibleWith"
+                , isCompatibleWith_function_value
+                , ( bp::arg("molinfo") ) );
+        
+        }
         UserBeading_exposer.def( bp::self != bp::self );
         { //::SireMol::UserBeading::operator=
         

@@ -232,6 +232,11 @@ bool BeadNum::operator>=(const BeadNum &other) const
     return _num >= other._num;
 }
 
+BeadNum* BeadNum::clone() const
+{
+    return new BeadNum(*this);
+}
+
 const char* BeadNum::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<BeadNum>() );

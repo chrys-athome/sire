@@ -116,6 +116,8 @@ friend QDataStream& ::operator<<<>(QDataStream&, const AtomicFFParametersArray<T
 friend QDataStream& ::operator>><>(QDataStream&, AtomicFFParametersArray<T>&);
 
 public:
+    typedef typename SireBase::PackedArray2D<T>::Array Array;
+
     AtomicFFParametersArray();
     AtomicFFParametersArray(const SireBase::PackedArray2D<T> &params);
     AtomicFFParametersArray(const QVector<T> &params);
@@ -142,6 +144,8 @@ public:
     const SireBase::PackedArray2D<T>& array() const;
     
     operator SireBase::PackedArray2D<T>() const;
+    
+    const Array* constData() const;
     
     void append(const QVector<T> &params);
     void append(const QVector< QVector<T> > &params);
@@ -383,6 +387,15 @@ SIRE_OUTOFLINE_TEMPLATE
 const SireBase::PackedArray2D<T>& AtomicFFParametersArray<T>::array() const
 {
     return params;
+}
+
+/** Return the raw pointer to the array of parameters for a bead */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const typename SireBase::PackedArray2D<T>::Array*
+AtomicFFParametersArray<T>::constData() const
+{
+    return params.constData();
 }
 
 /** Return the number of arrays of parameters */
