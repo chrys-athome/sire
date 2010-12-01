@@ -160,6 +160,30 @@ void register_AtomStringProperty_class(){
                 , count_function_value );
         
         }
+        { //::SireMol::AtomProperty< QString >::divide
+        
+            typedef SireMol::AtomProperty< QString > exported_class_t;
+            typedef ::SireBase::PropPtr< SireBase::Property > ( ::SireMol::AtomProperty< QString >::*divide_function_type )( ::QVector< SireMol::AtomSelection > const & ) const;
+            divide_function_type divide_function_value( &::SireMol::AtomProperty< QString >::divide );
+            
+            AtomStringProperty_exposer.def( 
+                "divide"
+                , divide_function_value
+                , ( bp::arg("beads") ) );
+        
+        }
+        { //::SireMol::AtomProperty< QString >::divideByResidue
+        
+            typedef SireMol::AtomProperty< QString > exported_class_t;
+            typedef ::SireBase::PropPtr< SireBase::Property > ( ::SireMol::AtomProperty< QString >::*divideByResidue_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            divideByResidue_function_type divideByResidue_function_value( &::SireMol::AtomProperty< QString >::divideByResidue );
+            
+            AtomStringProperty_exposer.def( 
+                "divideByResidue"
+                , divideByResidue_function_value
+                , ( bp::arg("molinfo") ) );
+        
+        }
         { //::SireMol::AtomProperty< QString >::fromVariant
         
             typedef SireMol::AtomProperty< QString > exported_class_t;
@@ -231,6 +255,18 @@ void register_AtomStringProperty_class(){
                 "matchToSelection"
                 , matchToSelection_function_value
                 , ( bp::arg("selection") ) );
+        
+        }
+        { //::SireMol::AtomProperty< QString >::merge
+        
+            typedef SireMol::AtomProperty< QString > exported_class_t;
+            typedef ::SireBase::PropPtr< SireBase::Property > ( ::SireMol::AtomProperty< QString >::*merge_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            merge_function_type merge_function_value( &::SireMol::AtomProperty< QString >::merge );
+            
+            AtomStringProperty_exposer.def( 
+                "merge"
+                , merge_function_value
+                , ( bp::arg("molinfo") ) );
         
         }
         { //::SireMol::AtomProperty< QString >::nAtoms

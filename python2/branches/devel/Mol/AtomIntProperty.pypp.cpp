@@ -160,6 +160,30 @@ void register_AtomIntProperty_class(){
                 , count_function_value );
         
         }
+        { //::SireMol::AtomProperty< long long int >::divide
+        
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireBase::PropPtr< SireBase::Property > ( ::SireMol::AtomProperty< long long int >::*divide_function_type )( ::QVector< SireMol::AtomSelection > const & ) const;
+            divide_function_type divide_function_value( &::SireMol::AtomProperty< long long int >::divide );
+            
+            AtomIntProperty_exposer.def( 
+                "divide"
+                , divide_function_value
+                , ( bp::arg("beads") ) );
+        
+        }
+        { //::SireMol::AtomProperty< long long int >::divideByResidue
+        
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireBase::PropPtr< SireBase::Property > ( ::SireMol::AtomProperty< long long int >::*divideByResidue_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            divideByResidue_function_type divideByResidue_function_value( &::SireMol::AtomProperty< long long int >::divideByResidue );
+            
+            AtomIntProperty_exposer.def( 
+                "divideByResidue"
+                , divideByResidue_function_value
+                , ( bp::arg("molinfo") ) );
+        
+        }
         { //::SireMol::AtomProperty< long long int >::fromVariant
         
             typedef SireMol::AtomProperty< long long int > exported_class_t;
@@ -231,6 +255,18 @@ void register_AtomIntProperty_class(){
                 "matchToSelection"
                 , matchToSelection_function_value
                 , ( bp::arg("selection") ) );
+        
+        }
+        { //::SireMol::AtomProperty< long long int >::merge
+        
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireBase::PropPtr< SireBase::Property > ( ::SireMol::AtomProperty< long long int >::*merge_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            merge_function_type merge_function_value( &::SireMol::AtomProperty< long long int >::merge );
+            
+            AtomIntProperty_exposer.def( 
+                "merge"
+                , merge_function_value
+                , ( bp::arg("molinfo") ) );
         
         }
         { //::SireMol::AtomProperty< long long int >::nAtoms

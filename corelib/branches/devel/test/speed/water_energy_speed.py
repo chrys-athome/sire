@@ -18,13 +18,14 @@ mincoords = Vector(-18.3854, -18.66855, -18.4445)
 maxcoords = Vector( 18.3854,  18.66855,  18.4445)
 
 vol = PeriodicBox(mincoords, maxcoords)
-switchfunc = HarmonicSwitchingFunction(15*angstrom, 14.5*angstrom)
+switchfunc = HarmonicSwitchingFunction(10*angstrom, 9.5*angstrom)
 
 cljff.setSpace(vol)
 cljff.setSwitchingFunction(switchfunc)
 
 fast_cljff.setSpace(vol)
 fast_cljff.setSwitchingFunction(switchfunc)
+fast_cljff.setPatching( BoxPatching(Cartesian(), 12*angstrom) )
 
 mols = PDB().read("test/io/water.pdb")
 
@@ -59,9 +60,33 @@ for i in range(1, mols.nMolecules()):
                     .setProperty("charge", charges) \
                     .setProperty("LJ", ljs) \
              .commit()
-   
+
     cljff.add(mol) 
     fast_cljff.add(mol)   
+
+solvent = MoleculeGroup("solvent", cljff.molecules())
+
+delta = vol.dimensions()
+print "Space == %s" % delta
+
+#for i in range(-1,1):
+#    for j in range(-1,1):
+#        for k in range(-2,2):
+#            if i == 0 and j == 0 and k == 0:
+#                continue
+#
+#            print "Adding molecules to box %d,%d,%d..." % (i,j,k)
+#
+#            add_mols = Molecules()
+#
+#            for imol in range(0,solvent.nMolecules()):
+#                mol = solvent.moleculeAt(imol).molecule()
+#                mol = mol.edit().renumber().commit()
+#                mol = mol.move().translate( Vector( i*delta.x(), j*delta.y(), k*delta.z() ) ).commit()
+#                add_mols.add(mol)
+#
+#            cljff.add(add_mols)
+#            fast_cljff.add(add_mols)
 
 ms = t.elapsed()
 print "Parameterised all of the water molecules (in %d ms)!" % ms
@@ -93,7 +118,7 @@ print "%.1f MFLOPS for sum+quotient and %.1f MFLOPS for sum+product+sqrt.\n" % \
 
 print cljff.property("space")
 
-for i in range(0,5):
+for i in range(0,1):
     t.start()
     cljff.mustNowRecalculateFromScratch()
     before_energy = FlopsMark()
@@ -118,6 +143,7 @@ for i in range(0,5):
              ( 100 * (mflops / benchmark), 100 * (mflops / benchmark_quot), \
                100 * (mflops / benchmark_sum), 100 * (mflops / benchmark_prod) )
 
+    print fast_cljff.patching()
     t.start()
     fast_cljff.mustNowRecalculateFromScratch()
     before_energy = FlopsMark()

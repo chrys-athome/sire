@@ -224,8 +224,7 @@ AtomIdx MoleculeBeading::atomIdx(const MoleculeInfoData &moldata,
 PropertyPtr MoleculeBeading::atomProperty(const MoleculeData &moldata,
                                           const SireBase::PropertyName &key) const
 {
-    throw SireError::incomplete_code("TODO", CODELOC);
-    return PropertyPtr();
+    return moldata.property(key).asA<AtomProp>().merge(moldata.info());
 }
                          
 /** Return all of the atoms that are selected in the beads */
@@ -360,9 +359,7 @@ AtomIdx ResidueBeading::atomIdx(const MoleculeInfoData &moldata,
 PropertyPtr ResidueBeading::atomProperty(const MoleculeData &moldata,
                                          const SireBase::PropertyName &key) const
 {
-    throw SireError::incomplete_code( "TODO", CODELOC );
-    
-    return PropertyPtr();
+    return moldata.property(key).asA<AtomProp>().divideByResidue(moldata.info());
 }
                          
 /** Return the atoms that are in all of the beads */
@@ -531,7 +528,9 @@ UserBeadingInfo::UserBeadingInfo() : boost::noncopyable()
 UserBeadingInfo::UserBeadingInfo(const AtomBeads &beads,
                                  const MoleculeInfoData &molinfo)
                 : boost::noncopyable()
-{}
+{
+    throw SireError::incomplete_code( "TODO", CODELOC );
+}
 
 /** Destructor */                
 UserBeadingInfo::~UserBeadingInfo()
@@ -569,8 +568,7 @@ AtomIdx UserBeadingInfo::atomIdx(const BeadIdx &bead, int i) const
 PropertyPtr UserBeadingInfo::atomProperty(const MoleculeData &moldata,
                                           const SireBase::PropertyName &key) const
 {
-    throw SireError::incomplete_code("TODO", CODELOC);
-    return PropertyPtr();
+    return moldata.property(key).asA<AtomProp>().divide(bead_atoms);
 }
                          
 /** Return the selection of all of the atoms that are

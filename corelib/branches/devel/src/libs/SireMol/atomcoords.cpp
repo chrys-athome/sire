@@ -152,6 +152,101 @@ const CoordGroup& AtomProperty<Vector>::operator[](CGIdx cgidx) const
     return coords.constData()[cgidx.map(coords.count())];
 }
 
+/** Merge all of the atomic properties into a single array, with 
+    the properties arranged in AtomIdx order */
+PropertyPtr AtomProperty<Vector>::merge(const MoleculeInfoData &moldata) const
+{
+    this->assertCompatibleWith(moldata);
+
+    QVector<Vector> vals( moldata.nAtoms() );
+    
+    Vector *vals_array = vals.data();
+    
+    for (AtomIdx i(0); i<moldata.nAtoms(); ++i)
+    {
+        vals_array[i] = this->at( moldata.cgAtomIdx(i) );
+    }
+    
+    return AtomProperty<Vector>(vals);
+}
+
+/** Divide the AtomProperty into beads according to the passed atom selections,
+    and returning the properties in AtomIdx order within each bead
+    
+    \throw SireError::incompatible_error
+*/
+PropertyPtr AtomProperty<Vector>::divide(const QVector<AtomSelection> &beads) const
+{
+    if (beads.isEmpty())
+        return PropertyPtr();
+
+    const int nbeads = beads.count();
+    const AtomSelection *beads_array = beads.constData();
+
+    QVector< QVector<Vector> > bead_vals(nbeads);
+    QVector<Vector> *bead_vals_array = bead_vals.data();
+    
+    for (int i=0; i<nbeads; ++i)
+    {
+        const AtomSelection &bead = beads_array[i];
+        
+        bead.assertCompatibleWith<Vector>(*this);
+        
+        QVector<Vector> vals( bead.nSelected() );
+        Vector *vals_array = vals.data();
+        
+        if (bead.selectedAll())
+        {
+            for (AtomIdx j(0); j<bead.nSelected(); ++j)
+            {
+                vals_array[j] = this->at( bead.info().cgAtomIdx(j) );
+            }
+        }
+        else
+        {
+            foreach (const AtomIdx &j, bead.selectedAtoms())
+            {
+                *vals_array = this->at( bead.info().cgAtomIdx(j) );
+                ++vals_array;
+            }
+        }
+        
+        bead_vals_array[i] = vals;
+    }
+    
+    return AtomProperty<Vector>(bead_vals);
+}
+
+/** Divide the properties into residues. This returns the values in 
+    Residue/Index order
+
+    \throw SireError::incompatible_error
+*/
+PropertyPtr AtomProperty<Vector>::divideByResidue(const MoleculeInfoData &molinfo) const
+{
+    this->assertCompatibleWith(molinfo);
+    
+    QVector< QVector<Vector> > res_vals( molinfo.nResidues() );
+    QVector<Vector> *res_vals_array = res_vals.data();
+    
+    for (ResIdx i(0); i<molinfo.nResidues(); ++i)
+    {
+        const int nats = molinfo.nAtoms(i);
+        
+        QVector<Vector> vals(nats);
+        Vector *vals_array = vals.data();
+        
+        for (int j=0; j<nats; ++j)
+        {
+            vals_array[j] = this->at( molinfo.cgAtomIdx(molinfo.getAtom(i,j)) );
+        }
+        
+        res_vals_array[i] = vals;
+    }
+    
+    return AtomProperty<Vector>(res_vals);
+}
+
 /** Convert the coordinates to an array of array of vectors - each
     array holds the coordinates of one CutGroup */
 AtomProperty<QVariant> AtomProperty<Vector>::toVariant() const

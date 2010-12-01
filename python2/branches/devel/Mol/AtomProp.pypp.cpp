@@ -74,6 +74,39 @@ void register_AtomProp_class(){
                 , ( bp::arg("value") ) );
         
         }
+        { //::SireMol::AtomProp::divide
+        
+            typedef ::SireBase::PropertyPtr ( ::SireMol::AtomProp::*divide_function_type )( ::QVector< SireMol::AtomSelection > const & ) const;
+            divide_function_type divide_function_value( &::SireMol::AtomProp::divide );
+            
+            AtomProp_exposer.def( 
+                "divide"
+                , divide_function_value
+                , ( bp::arg("beads") ) );
+        
+        }
+        { //::SireMol::AtomProp::divideByResidue
+        
+            typedef ::SireBase::PropertyPtr ( ::SireMol::AtomProp::*divideByResidue_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            divideByResidue_function_type divideByResidue_function_value( &::SireMol::AtomProp::divideByResidue );
+            
+            AtomProp_exposer.def( 
+                "divideByResidue"
+                , divideByResidue_function_value
+                , ( bp::arg("molinfo") ) );
+        
+        }
+        { //::SireMol::AtomProp::merge
+        
+            typedef ::SireBase::PropertyPtr ( ::SireMol::AtomProp::*merge_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            merge_function_type merge_function_value( &::SireMol::AtomProp::merge );
+            
+            AtomProp_exposer.def( 
+                "merge"
+                , merge_function_value
+                , ( bp::arg("molinfo") ) );
+        
+        }
         { //::SireMol::AtomProp::operator=
         
             typedef ::SireMol::AtomProp & ( ::SireMol::AtomProp::*assign_function_type )( ::SireMol::AtomVariantProperty const & ) ;

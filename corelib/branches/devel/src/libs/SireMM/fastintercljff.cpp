@@ -50,6 +50,8 @@
 using namespace SireMol;
 using namespace SireMM;
 using namespace SireFF;
+using namespace SireMaths;
+using namespace SireVol;
 using namespace SireBase;
 using namespace SireStream;
 
@@ -127,10 +129,22 @@ FastInterCLJFF::FastInterCLJFF(const QString &name)
 
 /** Copy constructor */
 FastInterCLJFF::FastInterCLJFF(const FastInterCLJFF &other)
-               : ConcreteProperty<FastInterCLJFF,G1FF>(other), FF3D(other)
-{
-    throw SireError::incomplete_code( "TODO", CODELOC );
-}
+               : ConcreteProperty<FastInterCLJFF,G1FF>(other), FF3D(other),
+                 ffcomponents(other.ffcomponents),
+                 ljpairs(other.ljpairs),
+                 props(other.props),
+                 mol_to_beadid(other.mol_to_beadid),
+                 beads_by_molnum(other.beads_by_molnum),
+                 switchfunc(other.switchfunc),
+                 combining_rules(other.combining_rules),
+                 ptchs(other.ptchs),
+                 added_beads(other.added_beads),
+                 removed_beads(other.removed_beads),
+                 changed_beads(other.changed_beads),
+                 need_update_ljpairs(other.need_update_ljpairs),
+                 use_electrostatic_shifting(other.use_electrostatic_shifting),
+                 recording_changes(other.recording_changes)
+{}
 
 /** Destructor */
 FastInterCLJFF::~FastInterCLJFF()
@@ -146,7 +160,21 @@ FastInterCLJFF& FastInterCLJFF::operator=(const FastInterCLJFF &other)
 {
     if (this != &other)
     {
-        throw SireError::incomplete_code( "TODO", CODELOC );
+        G1FF::operator=(other);
+        ffcomponents = other.ffcomponents;
+        ljpairs = other.ljpairs;
+        props = other.props;
+        mol_to_beadid = other.mol_to_beadid;
+        beads_by_molnum = other.beads_by_molnum;
+        switchfunc = other.switchfunc;
+        combining_rules = other.combining_rules;
+        ptchs = other.ptchs;
+        added_beads = other.added_beads;
+        removed_beads = other.removed_beads;
+        changed_beads = other.changed_beads;
+        need_update_ljpairs = other.need_update_ljpairs;
+        use_electrostatic_shifting = other.use_electrostatic_shifting;
+        recording_changes = other.recording_changes;
     }
     
     return *this;
@@ -221,14 +249,193 @@ void FastInterCLJFF::rebuildAll()
     FF::setDirty();
 }
 
+typedef PairMatrix<double> DistMatrix;
+
 /** Internal function used to calculate the energy of the passed two CoordGroups */
 static void addEnergy(const CoordGroup &icoords, const CLJParams &iparams,
                       const CoordGroup &jcoords, const CLJParams &jparams,
-                      const Space &space, const SwitchingFunction &switchfunc,
+                      const SwitchingFunction &switchfunc, double mindist,
+                      DistMatrix &distmat, const LJPairMatrix &ljpairs,
                       double &cnrg, double &ljnrg, double scale)
 {
-    //probably should be Workspace to hold cnrg, ljnrg and switchfunc,
-    //distmatrix etc.
+    static const Cartesian cart_space;
+
+    const int inats = icoords.count();
+    const int jnats = jcoords.count();
+
+    if (inats == 0 or jnats == 0 or scale == 0)
+        return;
+
+    double icnrg = 0;
+    double iljnrg = 0;
+    
+    //loop over all interatomic pairs and calculate the energies
+    const CLJParam *iparams_array = iparams.constData();
+    const CLJParam *jparams_array = jparams.constData();
+
+    #ifdef SIRE_USE_SSE
+    {
+        const int remainder = jnats % 2;
+        
+        __m128d sse_cnrg = { 0, 0 };
+        __m128d sse_ljnrg = { 0, 0 };
+
+        const __m128d sse_one = { 1.0, 1.0 };
+        
+        for (int i=0; i<inats; ++i)
+        {
+            distmat.setOuterIndex(i);
+            const CLJParam &iparam = iparams_array[i];
+            
+            __m128d sse_chg0 = _mm_set_pd( iparam.q(), iparam.q() );
+                                 
+            //process atoms in pairs (so can then use SSE)
+            for (int j=0; j<jnats-1; j += 2)
+            {
+                const CLJParam &jparam0 = jparams_array[j];
+                const CLJParam &jparam1 = jparams_array[j+1];
+                
+                __m128d sse_dist = _mm_set_pd( distmat[j], distmat[j+1] );
+                __m128d sse_chg1 = _mm_set_pd( jparam0.q(), jparam1.q() );
+                                   
+                const LJPair &ljpair0 = ljpairs.constData()[
+                                        ljpairs.map(iparam.ljID(), jparam0.ljID()) ];
+            
+                const LJPair &ljpair1 = ljpairs.constData()[
+                                        ljpairs.map(iparam.ljID(), jparam1.ljID()) ];
+            
+                __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
+                                              ljpair1.epsilon() );
+                
+                sse_dist = _mm_div_pd(sse_one, sse_dist);
+                
+                //calculate the coulomb energy
+                __m128d tmp = _mm_mul_pd(sse_chg0, sse_chg1);
+                tmp = _mm_mul_pd(tmp, sse_dist);
+                sse_cnrg = _mm_add_pd(sse_cnrg, tmp);
+                
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 8;
+                #endif
+                
+                //calculate (sigma/r)^6 and (sigma/r)^12
+                __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_dist);
+                sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,  
+                                                 sse_sig_over_dist2 );
+                                             
+                __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
+                                                        sse_sig_over_dist2);
+                                                
+                sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
+                                                sse_sig_over_dist2);
+                                             
+                __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
+                                                         sse_sig_over_dist6);
+                                      
+                //calculate LJ energy (the factor of 4 is added later)
+                tmp = _mm_sub_pd(sse_sig_over_dist12, 
+                                 sse_sig_over_dist6);
+                                         
+                tmp = _mm_mul_pd(tmp, sse_eps);
+                sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
+                                        
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 16;
+                #endif
+            }
+                  
+            if (remainder == 1)
+            {
+                const CLJParam &jparam = jparams_array[jnats-1];
+
+                const double invdist = double(1) / distmat[jnats-1];
+                
+                icnrg += iparam.q() * jparam.q() * invdist;
+            
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 4;
+                #endif
+
+                const LJPair &ljpair = ljpairs.constData()[
+                                        ljpairs.map(iparam.ljID(), jparam.ljID()) ];
+                
+                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                              sig_over_dist6);
+                                                  
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 8;
+                #endif
+            }
+        }
+        
+        icnrg += *((const double*)&sse_cnrg) +
+                 *( ((const double*)&sse_cnrg) + 1 );
+                 
+        iljnrg += *((const double*)&sse_ljnrg) +
+                  *( ((const double*)&sse_ljnrg) + 1 );
+    }
+    #else
+    {
+        for (quint32 i=0; i<nats0; ++i)
+        {
+            distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+        
+            for (quint32 j=0; j<nats1; ++j)
+            {
+                const Parameter &param1 = params1_array[j];
+
+                const double invdist = double(1) / distmat[j];
+                
+                icnrg += param0.reduced_charge * param1.reduced_charge 
+                            * invdist;
+            
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 4;
+                #endif
+
+                const LJPair &ljpair = ljpairs.constData()[
+                                        ljpairs.map(param0.ljid,
+                                                    param1.ljid)];
+
+                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                              sig_over_dist6);
+                                                  
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 8;
+                #endif
+            }
+        }
+    }
+    #endif
+    
+    //now add these energies onto the total for the molecule,
+    //scaled by any non-bonded feather factor
+    if (mindist > switchfunc.featherDistance())
+    {
+        cnrg += scale * switchfunc.electrostaticScaleFactor( Length(mindist) ) * icnrg;
+        ljnrg += scale * switchfunc.vdwScaleFactor( Length(mindist) ) * 4 * iljnrg;
+        
+        #ifdef SIRE_TIME_ROUTINES
+        nflops += 4;
+        #endif
+    }
+    else
+    {
+        cnrg += scale * icnrg;
+        ljnrg += scale * 4 * iljnrg;
+        
+        #ifdef SIRE_TIME_ROUTINES
+        nflops += 2;
+        #endif
+    }
 }
 
 /** Recalculate the energy - this will either increment the energy
@@ -263,8 +470,16 @@ void FastInterCLJFF::recalculateEnergy()
         const Patch *patches_array = ptchs.constData();
         const int npatches = ptchs.nPatches();
         
+        qDebug() << npatches;
+        
         double cnrg = 0;
         double ljnrg = 0;
+        const double cutoff = switchfunc.read().cutoffDistance();
+        
+        PairMatrix<double> distmatrix;
+        
+        //Cartesian cart_space;
+        const Space &spce = this->space();
         
         for (int ip=0; ip<npatches; ++ip)
         {
@@ -287,17 +502,24 @@ void FastInterCLJFF::recalculateEnergy()
                 {
                     const CoordGroup &jbead_coords = coords_array[j];
                     const CLJParamsArray::Array &jbead_params = params_array[j];
+
+                    if (spce.beyond(cutoff, ibead_coords, jbead_coords))
+                        continue;
+                        
+                    double mindist = spce.calcDist(ibead_coords, jbead_coords,
+                                                   distmatrix);
+                    
+                    if (mindist > cutoff)
+                        continue;
                     
                     addEnergy(ibead_coords, ibead_params,
                               jbead_coords, jbead_params,
-                              space(), switchfunc.read(),
+                              switchfunc.read(), mindist,
+                              distmatrix, ljpairs,
                               cnrg, ljnrg, 1);
                 }
             }
         }
-        
-        //now loop over all pairs of patches
-        const double cutoff = switchfunc.read().cutoffDistance();
         
         for (int ip=0; ip<npatches-1; ++ip)
         {
@@ -323,11 +545,7 @@ void FastInterCLJFF::recalculateEnergy()
                     
                 //calculate the minimum distance between these
                 //two patches
-                const double patchdist = space().calcDist( ipatch.aaBox().center(),
-                                                           jpatch.aaBox().center() );
-                                                           
-                if ( patchdist > (cutoff + ipatch.aaBox().radius() +
-                                           jpatch.aaBox().radius()) )
+                if (spce.beyond(cutoff, ipatch.aaBox(), jpatch.aaBox()))
                 {
                     //the patches are beyond cutoff, so the contents must also
                     //be beyond cutoff
@@ -343,19 +561,39 @@ void FastInterCLJFF::recalculateEnergy()
                     const CoordGroup &ibead_coords = icoords_array[i];
                     const CLJParamsArray::Array &ibead_params = iparams_array[i];
                     
+                    if (spce.beyond(cutoff, ibead_coords.aaBox(), jpatch.aaBox()))
+                        continue;
+                    
                     for (int j=0; j<jnbeads; ++j)
                     {
                         const CoordGroup &jbead_coords = jcoords_array[j];
                         const CLJParamsArray::Array &jbead_params = jparams_array[j];
                         
+                        if (spce.beyond(cutoff, ibead_coords.aaBox(), 
+                                                      jbead_coords.aaBox()))
+                        {
+                            continue;
+                        }
+                        
+                        const double mindist = spce.calcDist(ibead_coords,
+                                                                   jbead_coords,
+                                                                   distmatrix);
+                        
+                        if (mindist > cutoff)
+                            continue;
+                        
                         addEnergy(ibead_coords, ibead_params,
                                   jbead_coords, jbead_params,
-                                  space(), switchfunc.read(),
+                                  switchfunc.read(), mindist,
+                                  distmatrix, ljpairs,
                                   cnrg, ljnrg, 1);
                     }
                 }
             }
         }
+        
+        qDebug() << "CNRG" << cnrg << "LJNRG" << ljnrg
+                 << "TOTAL" << (cnrg+ljnrg);
         
         this->components().setEnergy(*this, CLJEnergy(cnrg, ljnrg));
     }
@@ -433,7 +671,7 @@ createParameters(const Beads &beads, const PropertyMap &map)
     AtomCharges charges = beads.atomProperty( map["charge"] )
                                .read().asA<AtomCharges>();
                                 
-    AtomLJs ljs = beads.atomProperty( map["lj"] )
+    AtomLJs ljs = beads.atomProperty( map["LJ"] )
                        .read().asA<AtomLJs>();
                        
     return QPair<CoordGroupArray,CLJParamsArray>(coords.array(),
@@ -558,15 +796,22 @@ bool FastInterCLJFF::setSpace(const Space &space)
     to break the molecules into patches */
 bool FastInterCLJFF::setPatching(const Patching &patching)
 {
+    qDebug() << ptchs.patching().toString() << patching.toString();
+
     if (not ptchs.patching().equals(patching))
     {
         FastInterCLJFF new_cljff(*this);
         
         new_cljff.ptchs = Patches(patching);
         new_cljff.props.setProperty("space", patching.space());
+        new_cljff.props.setProperty("patching", patching);
         new_cljff.rebuildAll();
         new_cljff.mustNowRecalculateFromScratch();
         FastInterCLJFF::operator=(new_cljff);
+        
+        qDebug() << new_cljff.ptchs.patching().toString()
+                 << ptchs.patching().toString();
+        
         return true;
     }
     else

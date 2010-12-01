@@ -118,6 +118,8 @@ public:
 
     bool isEmpty() const;
 
+    const MoleculeInfoData& info() const;
+
     int nSelected() const;
 
     int nSelected(CGIdx cgidx) const;
@@ -447,8 +449,6 @@ public:
     void assertCompatibleWith(const AtomProperty<T> &prop) const;
 
 private:
-    const MoleculeInfoData& info() const;
-
     bool _pvt_selected(const CGAtomIdx &cgatomidx) const;
     bool _pvt_selected(AtomIdx atomidx) const;
     

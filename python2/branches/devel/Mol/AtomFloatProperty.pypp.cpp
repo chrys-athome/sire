@@ -160,6 +160,30 @@ void register_AtomFloatProperty_class(){
                 , count_function_value );
         
         }
+        { //::SireMol::AtomProperty< double >::divide
+        
+            typedef SireMol::AtomProperty< double > exported_class_t;
+            typedef ::SireBase::PropPtr< SireBase::Property > ( ::SireMol::AtomProperty< double >::*divide_function_type )( ::QVector< SireMol::AtomSelection > const & ) const;
+            divide_function_type divide_function_value( &::SireMol::AtomProperty< double >::divide );
+            
+            AtomFloatProperty_exposer.def( 
+                "divide"
+                , divide_function_value
+                , ( bp::arg("beads") ) );
+        
+        }
+        { //::SireMol::AtomProperty< double >::divideByResidue
+        
+            typedef SireMol::AtomProperty< double > exported_class_t;
+            typedef ::SireBase::PropPtr< SireBase::Property > ( ::SireMol::AtomProperty< double >::*divideByResidue_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            divideByResidue_function_type divideByResidue_function_value( &::SireMol::AtomProperty< double >::divideByResidue );
+            
+            AtomFloatProperty_exposer.def( 
+                "divideByResidue"
+                , divideByResidue_function_value
+                , ( bp::arg("molinfo") ) );
+        
+        }
         { //::SireMol::AtomProperty< double >::fromVariant
         
             typedef SireMol::AtomProperty< double > exported_class_t;
@@ -231,6 +255,18 @@ void register_AtomFloatProperty_class(){
                 "matchToSelection"
                 , matchToSelection_function_value
                 , ( bp::arg("selection") ) );
+        
+        }
+        { //::SireMol::AtomProperty< double >::merge
+        
+            typedef SireMol::AtomProperty< double > exported_class_t;
+            typedef ::SireBase::PropPtr< SireBase::Property > ( ::SireMol::AtomProperty< double >::*merge_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            merge_function_type merge_function_value( &::SireMol::AtomProperty< double >::merge );
+            
+            AtomFloatProperty_exposer.def( 
+                "merge"
+                , merge_function_value
+                , ( bp::arg("molinfo") ) );
         
         }
         { //::SireMol::AtomProperty< double >::nAtoms

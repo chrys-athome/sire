@@ -494,6 +494,17 @@ void register_AtomSelection_class(){
                 , bp::return_self< >() );
         
         }
+        { //::SireMol::AtomSelection::info
+        
+            typedef ::SireMol::MoleculeInfoData const & ( ::SireMol::AtomSelection::*info_function_type )(  ) const;
+            info_function_type info_function_value( &::SireMol::AtomSelection::info );
+            
+            AtomSelection_exposer.def( 
+                "info"
+                , info_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
         { //::SireMol::AtomSelection::intersect
         
             typedef ::SireMol::AtomSelection & ( ::SireMol::AtomSelection::*intersect_function_type )( ::SireMol::AtomIdx ) ;

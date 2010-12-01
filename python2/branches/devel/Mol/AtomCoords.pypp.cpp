@@ -179,6 +179,30 @@ void register_AtomCoords_class(){
                 , count_function_value );
         
         }
+        { //::SireMol::AtomProperty< SireMaths::Vector >::divide
+        
+            typedef SireMol::AtomProperty< SireMaths::Vector > exported_class_t;
+            typedef ::SireBase::PropertyPtr ( ::SireMol::AtomProperty< SireMaths::Vector >::*divide_function_type )( ::QVector< SireMol::AtomSelection > const & ) const;
+            divide_function_type divide_function_value( &::SireMol::AtomProperty< SireMaths::Vector >::divide );
+            
+            AtomCoords_exposer.def( 
+                "divide"
+                , divide_function_value
+                , ( bp::arg("beads") ) );
+        
+        }
+        { //::SireMol::AtomProperty< SireMaths::Vector >::divideByResidue
+        
+            typedef SireMol::AtomProperty< SireMaths::Vector > exported_class_t;
+            typedef ::SireBase::PropertyPtr ( ::SireMol::AtomProperty< SireMaths::Vector >::*divideByResidue_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            divideByResidue_function_type divideByResidue_function_value( &::SireMol::AtomProperty< SireMaths::Vector >::divideByResidue );
+            
+            AtomCoords_exposer.def( 
+                "divideByResidue"
+                , divideByResidue_function_value
+                , ( bp::arg("molinfo") ) );
+        
+        }
         { //::SireMol::AtomProperty< SireMaths::Vector >::fromVariant
         
             typedef SireMol::AtomProperty< SireMaths::Vector > exported_class_t;
@@ -251,6 +275,18 @@ void register_AtomCoords_class(){
                 "mapInto"
                 , mapInto_function_value
                 , ( bp::arg("cgidx"), bp::arg("axes") ) );
+        
+        }
+        { //::SireMol::AtomProperty< SireMaths::Vector >::merge
+        
+            typedef SireMol::AtomProperty< SireMaths::Vector > exported_class_t;
+            typedef ::SireBase::PropertyPtr ( ::SireMol::AtomProperty< SireMaths::Vector >::*merge_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            merge_function_type merge_function_value( &::SireMol::AtomProperty< SireMaths::Vector >::merge );
+            
+            AtomCoords_exposer.def( 
+                "merge"
+                , merge_function_value
+                , ( bp::arg("molinfo") ) );
         
         }
         { //::SireMol::AtomProperty< SireMaths::Vector >::nAtoms

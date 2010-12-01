@@ -94,6 +94,10 @@ public:
     
     FFParametersArrayPtr toArray() const;
     
+    const T* constData() const;
+    
+    int count() const;
+    
     const typename SireBase::PackedArray2D<T>::Array& array() const;
     
     operator typename SireBase::PackedArray2D<T>::Array() const;
@@ -258,6 +262,22 @@ SIRE_OUTOFLINE_TEMPLATE
 FFParametersArrayPtr AtomicFFParameters<T>::toArray() const
 {
     return AtomicFFParametersArray<T>(*this);
+}
+
+/** Return the number of parameters in the array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+int AtomicFFParameters<T>::count() const
+{
+    return params.count();
+}
+
+/** Return a raw pointer to the parameters */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T* AtomicFFParameters<T>::constData() const
+{
+    return params.constData();
 }
 
 /** Return the raw array of parameters */
