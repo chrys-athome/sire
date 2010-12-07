@@ -425,7 +425,12 @@ void Process::kill()
     }
     
     //now wait for it to finish
-    this->wait();
+    if (not this->wait(1000))
+    {
+        //it still hasn't finished - print a warning
+        qDebug() << "...job still not dead. You may want to check it "
+                 << "is not still running.";
+    }
 }
 
 /** Use this function to kill all of the jobs that are currently running */
