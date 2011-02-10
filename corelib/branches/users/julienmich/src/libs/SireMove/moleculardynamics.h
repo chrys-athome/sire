@@ -128,6 +128,8 @@ public:
 
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
     
+    SireUnits::Dimension::Temperature temperature() const;
+
     void setCoordinatesProperty(const PropertyName &value);
     void setSpaceProperty(const PropertyName &value);
 

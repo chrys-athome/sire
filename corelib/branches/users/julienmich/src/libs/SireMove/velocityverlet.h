@@ -30,16 +30,21 @@
 #define SIREMOVE_VELOCITYVERLET_H
 
 #include "integrator.h"
+#include "SireUnits/temperature.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
 class VelocityVerlet;
+class VelocityVerletBerendsen;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMove::VelocityVerlet&);
 QDataStream& operator>>(QDataStream&, SireMove::VelocityVerlet&);
+
+QDataStream& operator<<(QDataStream&, const SireMove::VelocityVerletBerendsen&);
+QDataStream& operator>>(QDataStream&, SireMove::VelocityVerletBerendsen&);
 
 namespace SireMove
 {
@@ -90,11 +95,73 @@ private:
     bool frequent_save_velocities;
 };
 
+/** This class implements an atomistic velocity verlet dynamics integrator 
+    with a Berendsen thermostat
+
+    @author Julien Michel
+*/
+class SIREMOVE_EXPORT VelocityVerletBerendsen
+          : public SireBase::ConcreteProperty<VelocityVerletBerendsen,Integrator>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const VelocityVerletBerendsen&);
+friend QDataStream& ::operator>>(QDataStream&, VelocityVerletBerendsen&);
+
+public:
+    VelocityVerletBerendsen(bool frequent_save_velocities = false);
+
+    VelocityVerletBerendsen(const VelocityVerletBerendsen &other);
+    
+    ~VelocityVerletBerendsen();
+    
+    VelocityVerletBerendsen& operator=(const VelocityVerletBerendsen &other);
+    
+    bool operator==(const VelocityVerletBerendsen &other) const;
+    bool operator!=(const VelocityVerletBerendsen &other) const;
+    
+    static const char* typeName();
+    
+    QString toString() const;
+    
+    Ensemble ensemble() const;
+
+    void setTemperature(SireUnits::Dimension::Temperature temp);
+    
+    void setTemperatureCoupling(SireUnits::Dimension::Time tau);
+
+    bool isTimeReversible() const;
+    
+    void integrate(IntegratorWorkspace &workspace,
+                   const Symbol &nrg_component, 
+                   SireUnits::Dimension::Time timestep,
+                   int nmoves, bool record_stats) const;
+
+    IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
+    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,
+                                           const PropertyMap &map = PropertyMap()) const;
+
+private:
+    /** Whether or not to save the velocities after every step, 
+        or to save them at the end of all of the steps */
+    bool frequent_save_velocities;
+
+    /** The temperature at which the integration is performed*/
+    SireUnits::Dimension::Temperature temperature;
+
+    /** The lag time for temperature coupling */
+    SireUnits::Dimension::Time tau;
+
+};
+
 }
 
 Q_DECLARE_METATYPE( SireMove::VelocityVerlet )
 
 SIRE_EXPOSE_CLASS( SireMove::VelocityVerlet )
+
+Q_DECLARE_METATYPE( SireMove::VelocityVerletBerendsen )
+
+SIRE_EXPOSE_CLASS( SireMove::VelocityVerletBerendsen )
 
 SIRE_END_HEADER
 
