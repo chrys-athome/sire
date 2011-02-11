@@ -3,7 +3,6 @@ version 1
 chain aamiddle
 zmatrix H N CA C
 zmatrix HA CA N C
-bond  H N flex 0.1
 angle H N CA flex 0.50
 angle HA CA N flex 0.50
 dihedral H N CA C flex 3.0

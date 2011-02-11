@@ -570,7 +570,9 @@ void CHARMMSwitchingFunction::set(double cutelec, double featherelec,
     feather_elec2 = SireMaths::pow_2(feather_elec);
 
     if (cut_elec != feather_elec)
-        norm_elec = 1.0 / SireMaths::pow_3( cut_elec - feather_elec );
+        //norm_elec = 1.0 / SireMaths::pow_3( cut_elec - feather_elec );
+        // JM Feb 11 - above is wrong !
+        norm_elec = 1.0 / SireMaths::pow_3( cut_elec2 - feather_elec2 );
     else
         norm_elec = 0;
 
@@ -580,7 +582,9 @@ void CHARMMSwitchingFunction::set(double cutelec, double featherelec,
     feather_vdw2 = SireMaths::pow_2(feather_vdw);
 
     if (cut_vdw != feather_vdw)
-        norm_vdw = 1.0 / SireMaths::pow_3( cut_vdw - feather_vdw );
+        //norm_vdw = 1.0 / SireMaths::pow_3( cut_vdw - feather_vdw );
+        // JM Feb 11
+        norm_vdw = 1.0 / SireMaths::pow_3( cut_vdw2 - feather_vdw2 );
     else
         norm_vdw = 0;
         
@@ -745,6 +749,11 @@ QString CHARMMSwitchingFunction::toString() const
     feather_elec < dist < cut_elec : (cut_elec^2 - r^2)^3 *
                                        (cut_elec^2 + 2 r ^2 - 3 feather_elec^2 ) /
                                          (cut_elec^2 - feather_elec^2)^3
+    JM Feb Correct expresion is  (cut_elec^2 - r^2)^2 *
+                                 (cut_elec^2 + 2 r ^2 - 3 feather_elec^2 ) /
+                                 (cut_elec^2 - feather_elec^2)^3
+
+
     dist >= cut_elec               : 0
 */
 double CHARMMSwitchingFunction::electrostaticScaleFactor(Length dist) const
@@ -757,12 +766,13 @@ double CHARMMSwitchingFunction::electrostaticScaleFactor(Length dist) const
     {
         double dist2 = SireMaths::pow_2( double(dist) );
         
-        return SireMaths::pow_3(cut_elec2 - dist2) *
+	//return SireMaths::pow_3(cut_elec2 - dist2) *
+	return SireMaths::pow_2(cut_elec2 - dist2) *
                  (cut_elec2 + 2*dist2 - 3*feather_elec2) * norm_elec;
     }
 }
 
-/** Return the scale factor for the electrostatic interaction for the
+/** Return the scale factor for the vdw interaction for the
     distance 'dist'. This returns;
 
     dist <= feather_vdw           : 1
@@ -781,7 +791,8 @@ double CHARMMSwitchingFunction::vdwScaleFactor(Length dist) const
     {
         double dist2 = SireMaths::pow_2( double(dist) );
         
-        return SireMaths::pow_3(cut_vdw2 - dist2) *
+        //return SireMaths::pow_3(cut_vdw2 - dist2) *
+	return SireMaths::pow_2(cut_vdw2 - dist2) *
                  (cut_vdw2 + 2*dist2 - 3*feather_vdw2) * norm_vdw;
     }
 }
