@@ -394,7 +394,7 @@ void VelocityVerletBerendsen::integrate(IntegratorWorkspace &workspace,
             const Vector *f = ws.forceArray(i);
             Vector *p = ws.momentaArray(i);
             const double *m = ws.massArray(i);
-
+	    
             for (int j=0; j<nats; ++j)
             {
                 if (m[j] != 0)

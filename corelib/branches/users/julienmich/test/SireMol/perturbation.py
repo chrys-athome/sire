@@ -5,7 +5,7 @@ from Sire.CAS import *
 
 import os
 
-protomsdir = "%s/Work/ProtoMS" % os.getenv("HOME")
+protomsdir = "%s/software/protoms" % os.getenv("HOME")
 
 protoms = ProtoMS( "%s/protoms2" % protomsdir )
 
