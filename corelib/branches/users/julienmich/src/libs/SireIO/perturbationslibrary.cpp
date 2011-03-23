@@ -63,7 +63,8 @@ QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
     
     sds << pertstemplate.name 
-        << pertstemplate.initcharges << pertstemplate.finalcharges;
+        << pertstemplate.initcharges << pertstemplate.finalcharges 
+	<< pertstemplate.initLJs << pertstemplate.finalLJs ;
         
     return ds;
 }
@@ -77,7 +78,8 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, PerturbationsTemplate &pe
         SharedDataStream sds(ds);
         
         sds >> pertstemplate.name 
-            >> pertstemplate.initcharges >> pertstemplate.finalcharges;
+            >> pertstemplate.initcharges >> pertstemplate.finalcharges
+	    >> pertstemplate.initLJs >> pertstemplate.finalLJs ;
     }
     else
         throw version_error(v, "1", r_pertstemplate, CODELOC);
@@ -96,7 +98,8 @@ PerturbationsTemplate::PerturbationsTemplate(const QString &name)
 /** Copy constructor */
 PerturbationsTemplate::PerturbationsTemplate(const PerturbationsTemplate &other)
                     : name(other.name), initcharges(other.initcharges),
-                      finalcharges(other.finalcharges)
+                      finalcharges(other.finalcharges), initLJs(other.initLJs), 
+		      finalLJs(other.finalLJs)
 {}
 
 /** Destructor */
@@ -116,6 +119,8 @@ PerturbationsTemplate& PerturbationsTemplate::operator=(const PerturbationsTempl
         name = other.name;
         initcharges = other.initcharges;
         finalcharges = other.finalcharges;
+	initLJs = other.initLJs;
+	finalLJs = other.finalLJs;
     }
     
     return *this;
@@ -126,7 +131,8 @@ bool PerturbationsTemplate::operator==(const PerturbationsTemplate &other) const
 {
     return this == &other or
            (name == other.name and initcharges == other.initcharges and
-            finalcharges == other.finalcharges);
+            finalcharges == other.finalcharges and initLJs == other.initLJs and 
+	    finalLJs == other.finalLJs);
 }
 
 /** Comparison operator */
@@ -425,8 +431,10 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    qDebug() << atname << atchargeinit.toString() << atchargefinal.toString() << atsigmainit.toString();
 	    new_templates[current].setInitCharge(atname, atchargeinit);
 	    new_templates[current].setFinalCharge(atname, atchargefinal);
-	    new_templates[current].setInitLJ(atname, LJParameter(atsigmainit, atepsiloninit) );
-	    new_templates[current].setFinalLJ(atname, LJParameter(atsigmafinal, atepsilonfinal) );
+	    LJParameter ljinit = LJParameter(atsigmainit, atepsiloninit);
+	    new_templates[current].setInitLJ(atname, ljinit);
+	    LJParameter ljfinal = LJParameter(atsigmafinal, atepsilonfinal);
+	    new_templates[current].setFinalLJ(atname, ljfinal);
 	  }
     }
     //

@@ -164,7 +164,7 @@ public:
     //Flexibility getFlexibility(const MoleculeView &molecule) const;
 
 private:
-    /** The flexibility templates, indexed by molecule name*/
+    /** The perturbations templates, indexed by molecule name*/
     QHash<QString,PerturbationsTemplate> templates; 
 };
 
