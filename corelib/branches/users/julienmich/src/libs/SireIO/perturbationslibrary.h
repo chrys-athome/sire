@@ -32,10 +32,7 @@
 #include "iobase.h"
 
 #include "SireMM/ljparameter.h"
-
-//#include "SireMol/bondid.h"
-//#include "SireMol/angleid.h"
-//#include "SireMol/dihedralid.h"
+#include "SireMol/molecule.h"
 
 #include "SireUnits/dimensions.h"
 
@@ -64,7 +61,7 @@ namespace SireIO
   //using SireMol::BondID;
   //using SireMol::AngleID;
   //using SireMol::DihedralID;
-  //using SireMol::MoleculeView;
+  using SireMol::Molecule;
 
   //using SireMove::Flexibility;
   using SireMM::LJParameter;
@@ -101,11 +98,15 @@ public:
     void setFinalCharge(const QString &atomname, const Charge &atomcharge);
     void setInitLJ(const QString &atomname, const LJParameter &atomlj);
     void setFinalLJ(const QString &atomname, const LJParameter &atomlj);
+    void setInitType(const QString &atomname, const QString &atype);
+    void setFinalType(const QString &atomname, const QString &atype);
 
     Charge getInitCharge(const QString &atomname) const;
     Charge getFinalCharge(const QString &atomname) const;
     LJParameter getInitLJ(const QString &atomname) const;
     LJParameter getFinalLJ(const QString &atomname) const;
+    QString getInitType(const QString &atomname) const;
+    QString getFinalType(const QString &atomname) const;
 
 private:
     QString name;
@@ -116,6 +117,9 @@ private:
     // The atom LJs
     QHash<QString,LJParameter> initLJs;
     QHash<QString,LJParameter> finalLJs;
+    // The atom types
+    QHash<QString,QString> initatypes;
+    QHash<QString,QString> finalatypes;
     // HAS INFO TO MAKE MANY TWOATOMPOTENTIAL PERTS (BONDS)
     // HAS INFO TO MAKE MANY THREEATOMPOTENTIAL PERTS (ANGLES)
     // HAS INTO TO MAKE MANY FOURATOMPOTENTIAL PERTS (DIHEDRALS, IMPROPERS)
@@ -161,7 +165,7 @@ public:
     
     void setTemplate(const QString &key, const PerturbationsTemplate &tmplate);
     
-    //Flexibility getFlexibility(const MoleculeView &molecule) const;
+    Molecule applyTemplate(const Molecule &molecule) const;
 
 private:
     /** The perturbations templates, indexed by molecule name*/
