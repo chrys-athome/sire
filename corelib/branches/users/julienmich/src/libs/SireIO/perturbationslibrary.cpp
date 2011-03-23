@@ -32,6 +32,8 @@
 #include "perturbationslibrary.h"
 #include "tostring.h"
 
+
+#include "SireMM/ljparameter.h"
 //#include "SireUnits/convert.h"
 #include "SireUnits/units.h"
 #include "SireUnits/dimensions.h"
@@ -41,11 +43,12 @@
 #include "SireMol/errors.h"
 
 using namespace SireIO;
+using namespace SireMM;
 //using namespace SireMol;
 //using namespace SireMove;
 using namespace SireStream;
+using namespace SireUnits::Dimension;
 using namespace SireUnits;
-
 //
 // Implementation of PerturbationsTemplate
 //
@@ -155,6 +158,43 @@ Charge PerturbationsTemplate::getInitCharge(const QString &atomname) const
 Charge PerturbationsTemplate::getFinalCharge(const QString &atomname) const
 {
     return this->finalcharges[atomname];
+}
+
+void PerturbationsTemplate::setInitLJ(const QString &atomname, const LJParameter &atomlj)
+{
+    this->initLJs[atomname] = atomlj;
+}
+
+void PerturbationsTemplate::setFinalLJ(const QString &atomname, const LJParameter &atomlj)
+{
+    this->finalLJs[atomname] = atomlj;
+}
+
+LJParameter PerturbationsTemplate::getInitLJ(const QString &atomname) const
+{
+    return this->initLJs[atomname];
+}
+
+LJParameter PerturbationsTemplate::getFinalLJ(const QString &atomname) const
+{
+    return this->finalLJs[atomname];
+}
+//
+// Helper functions to parse a templates input file
+//
+
+static int processVersionLine( QString& line)
+{
+    QStringList words = line.split(" ", QString::SkipEmptyParts);
+    bool ok;
+    int version = words[1].toInt(&ok);
+    
+    if (not ok)
+        throw SireError::program_bug( QObject::tr(
+                    "Unexpected error while trying to read the version line "
+                    "of the perturbations template file"), CODELOC);
+
+    return version;
 }
 
 //
@@ -309,23 +349,86 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
     QString line = ts.readLine();
 
     // The first line contains the version
-    //int version = ::processVersionLine(line);
+    int version = ::processVersionLine(line);
 
-    //if (version != 1)
-    //    throw SireError::process_error( QObject::tr(
-    //                "Invalid version of the template, got '%1' but only support '1'")
-    //                    .arg(version), CODELOC);
+    if (version != 1)
+        throw SireError::process_error( QObject::tr(
+                    "Invalid version of the template, got '%1' but only support '1'")
+                        .arg(version), CODELOC);
   
     QString current = " "; // the template currently being read
 
     QHash <QString,PerturbationsTemplate> new_templates; 
 
+    /** Define temporary place holders */
+    QString atname = " ";
+    Charge atchargeinit = 0 * mod_electron;
+    Charge atchargefinal = 0 * mod_electron;
+    Length atsigmainit = 0 * angstrom;
+    MolarEnergy atepsiloninit = 0 * kcal_per_mol;
+    Length atsigmafinal = 0 * angstrom;
+    MolarEnergy atepsilonfinal = 0 * kcal_per_mol;
+
+    bool inatom = false;
     /** Now read rest of the file */
-    //while ( not line.isNull() )
-    //{
-    //    line = ts.readLine();
-    //    QStringList words = line.split(" ", QString::SkipEmptyParts);
-    //    //     qDebug() << line;
+    while ( not line.isNull() )
+    {
+        line = ts.readLine();
+	line = line.simplified();
+        QStringList words = line.split(" ", QString::SkipEmptyParts);
+	//qDebug() << line;
+	qDebug() << words;
+	if ( line.startsWith("molecule") )
+	  {
+	    // create a new perturbations template
+	    PerturbationsTemplate pertstemplate = PerturbationsTemplate( words[1] );
+	    current = pertstemplate.getName();
+	    new_templates[current] = pertstemplate;
+	  }
+	if ( line.startsWith("atom") )
+	  {
+	    atname = "";
+	    atchargeinit = 0 * mod_electron;
+	    atchargefinal = 0 * mod_electron;
+	    atsigmainit = 0 * angstrom;
+	    atsigmafinal = 0 * angstrom;
+	    atepsiloninit = 0 * kcal_per_mol;
+	    atepsilonfinal = 0 * kcal_per_mol;
+	    inatom = true;
+	  }
+	if (line.startsWith("name") and inatom)
+	  {
+	    atname = words[1];
+	  }
+	if (line.startsWith("initial_charge") and inatom)
+	  {
+	    atchargeinit = words[1].toDouble() * mod_electron;
+	  }
+	if (line.startsWith("final_charge") and inatom)
+	  {
+	    atchargefinal = words[1].toDouble() * mod_electron;
+	  }
+	if (line.startsWith("initial_LJ") and inatom)
+	  {
+	    atsigmainit = words[1].toDouble() * angstrom;
+	    atepsiloninit = words[2].toDouble() * kcal_per_mol;
+	  }
+	if (line.startsWith("final_LJ") and inatom)
+	  {
+	    atsigmafinal = words[1].toDouble() * angstrom;
+	    atepsilonfinal = words[2].toDouble() * kcal_per_mol;
+	  }	
+
+	if (line.startsWith("endatom") )
+	  {
+	    inatom = false;
+	    qDebug() << atname << atchargeinit.toString() << atchargefinal.toString() << atsigmainit.toString();
+	    new_templates[current].setInitCharge(atname, atchargeinit);
+	    new_templates[current].setFinalCharge(atname, atchargefinal);
+	    new_templates[current].setInitLJ(atname, LJParameter(atsigmainit, atepsiloninit) );
+	    new_templates[current].setFinalLJ(atname, LJParameter(atsigmafinal, atepsilonfinal) );
+	  }
+    }
     //
     //    if ( line.startsWith("molecule") )
     //    {

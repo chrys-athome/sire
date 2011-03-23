@@ -31,6 +31,8 @@
 
 #include "iobase.h"
 
+#include "SireMM/ljparameter.h"
+
 //#include "SireMol/bondid.h"
 //#include "SireMol/angleid.h"
 //#include "SireMol/dihedralid.h"
@@ -51,15 +53,10 @@ QDataStream& operator>>(QDataStream&, SireIO::PerturbationsLibrary&);
 QDataStream& operator<<(QDataStream&, const SireIO::PerturbationsTemplate&);
 QDataStream& operator>>(QDataStream&, SireIO::PerturbationsTemplate&);
 
-//namespace SireMol
-//{
-//class MoleculeView;
-//}
-
-//namespace SireMove
-//{
-//class Flexibility;
-//}
+namespace SireMM
+{
+  class LJParameter;
+}
 
 namespace SireIO
 {  
@@ -70,7 +67,7 @@ namespace SireIO
   //using SireMol::MoleculeView;
 
   //using SireMove::Flexibility;
-
+  using SireMM::LJParameter;
   using SireUnits::Dimension::Charge;
 
 /** Internal class used to store the data describing a single perturbations template
@@ -102,9 +99,13 @@ public:
     
     void setInitCharge(const QString &atomname, const Charge &atomcharge);
     void setFinalCharge(const QString &atomname, const Charge &atomcharge);
-    
+    void setInitLJ(const QString &atomname, const LJParameter &atomlj);
+    void setFinalLJ(const QString &atomname, const LJParameter &atomlj);
+
     Charge getInitCharge(const QString &atomname) const;
     Charge getFinalCharge(const QString &atomname) const;
+    LJParameter getInitLJ(const QString &atomname) const;
+    LJParameter getFinalLJ(const QString &atomname) const;
 
 private:
     QString name;
@@ -112,7 +113,9 @@ private:
     // The atom charges 
     QHash<QString,Charge> initcharges;
     QHash<QString,Charge> finalcharges;
-    // HAS INFO TO MAKE ONE LJ PERTURBATION
+    // The atom LJs
+    QHash<QString,LJParameter> initLJs;
+    QHash<QString,LJParameter> finalLJs;
     // HAS INFO TO MAKE MANY TWOATOMPOTENTIAL PERTS (BONDS)
     // HAS INFO TO MAKE MANY THREEATOMPOTENTIAL PERTS (ANGLES)
     // HAS INTO TO MAKE MANY FOURATOMPOTENTIAL PERTS (DIHEDRALS, IMPROPERS)
