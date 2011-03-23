@@ -8,6 +8,7 @@
 #include "flexibilitylibrary.h"
 #include "iobase.h"
 #include "pdb.h"
+#include "perturbationslibrary.h"
 #include "protoms.h"
 #include "tinker.h"
 #include "trajectorymonitor.h"

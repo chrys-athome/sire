@@ -30,7 +30,7 @@
 #include "cgeditor.h"
 #include "atomeditor.h"
 #include "chainname.h"
-#include "chargeperturbation.h"
+#include "withres.h"
 #include "partialmolecule.h"
 #include "atompolarisabilities.h"
 #include "mgidx.h"
@@ -93,7 +93,7 @@
 #include "residue.h"
 #include "atommatcher.h"
 #include "atomname.h"
-#include "withres.h"
+#include "chargeperturbation.h"
 
 #include "Helpers/objectregistry.hpp"
 
@@ -151,7 +151,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::AtomEditor >();
     ObjectRegistry::registerConverterFor< SireMol::AtomStructureEditor >();
     ObjectRegistry::registerConverterFor< SireMol::ChainName >();
-    ObjectRegistry::registerConverterFor< SireMol::ChargePerturbation >();
+    ObjectRegistry::registerConverterFor< SireMol::ChainsWithRes >();
     ObjectRegistry::registerConverterFor< SireMol::PartialMolecule >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::PartialMolecule> >();
     ObjectRegistry::registerConverterFor< SireMol::AtomPolarisabilities >();
@@ -270,7 +270,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::AtomIdxMatcher >();
     ObjectRegistry::registerConverterFor< SireMol::AtomNameMatcher >();
     ObjectRegistry::registerConverterFor< SireMol::AtomName >();
-    ObjectRegistry::registerConverterFor< SireMol::ChainsWithRes >();
+    ObjectRegistry::registerConverterFor< SireMol::ChargePerturbation >();
 
 }
 

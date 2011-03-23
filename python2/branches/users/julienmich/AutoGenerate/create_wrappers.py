@@ -548,7 +548,7 @@ if __name__ == "__main__":
 
     #construct a module builder that will build all of the wrappers for this module
     mb = module_builder_t( files = [ "active_headers.h" ],
-                           cflags = "-m64",
+                           #cflags = "-m64",
                            include_paths = sire_include_dirs + qt_include_dirs +
                                            boost_include_dirs + gsl_include_dirs,
                            define_symbols = ["GCCXML_PARSE",
