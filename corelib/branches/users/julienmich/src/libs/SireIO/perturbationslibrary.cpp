@@ -32,14 +32,22 @@
 #include "perturbationslibrary.h"
 #include "tostring.h"
 
-
+#include "SireMM/atomljs.h"
 #include "SireMM/ljparameter.h"
+#include "SireMM/ljperturbation.h"
+#include "SireMM/internalff.h"
+#include "SireMM/internalperturbation.h"
+
 #include "SireMol/molecule.h"
 #include "SireMol/moleditor.h"
 #include "SireMol/atomeditor.h"
 #include "SireMol/perturbation.h"
+#include "SireMol/chargeperturbation.h"
 #include "SireMol/selector.hpp"
 #include "SireMol/atomcharges.h"
+#include "SireMol/bondid.h"
+#include "SireMol/angleid.h"
+#include "SireMol/dihedralid.h"
 
 #include "SireUnits/convert.h"
 #include "SireUnits/units.h"
@@ -76,7 +84,9 @@ QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds,
     sds << pertstemplate.name 
         << pertstemplate.initcharges << pertstemplate.finalcharges 
 	<< pertstemplate.initLJs << pertstemplate.finalLJs
-	<< pertstemplate.initatypes << pertstemplate.finalatypes;
+	<< pertstemplate.initatypes << pertstemplate.finalatypes
+	<< pertstemplate.initbondsk << pertstemplate.initbondsr
+	<< pertstemplate.finalbondsk << pertstemplate.finalbondsr;
         
     return ds;
 }
@@ -92,7 +102,9 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, PerturbationsTemplate &pe
         sds >> pertstemplate.name 
             >> pertstemplate.initcharges >> pertstemplate.finalcharges
 	    >> pertstemplate.initLJs >> pertstemplate.finalLJs
-	    >> pertstemplate.initatypes >> pertstemplate.finalatypes;
+	    >> pertstemplate.initatypes >> pertstemplate.finalatypes
+	    >> pertstemplate.initbondsk >> pertstemplate.initbondsr
+	    >> pertstemplate.finalbondsk >> pertstemplate.finalbondsr;
     }
     else
         throw version_error(v, "1", r_pertstemplate, CODELOC);
@@ -113,7 +125,9 @@ PerturbationsTemplate::PerturbationsTemplate(const PerturbationsTemplate &other)
                     : name(other.name), initcharges(other.initcharges),
                       finalcharges(other.finalcharges), initLJs(other.initLJs), 
 		      finalLJs(other.finalLJs),initatypes(other.initatypes),
-		      finalatypes(other.finalatypes)
+		      finalatypes(other.finalatypes),initbondsk(other.initbondsk),
+		      initbondsr(other.initbondsr),finalbondsk(other.finalbondsk),
+		      finalbondsr(other.finalbondsr)
 {}
 
 /** Destructor */
@@ -137,6 +151,10 @@ PerturbationsTemplate& PerturbationsTemplate::operator=(const PerturbationsTempl
 	finalLJs = other.finalLJs;
 	initatypes = other.initatypes;
 	finalatypes = other.finalatypes;
+	initbondsk = other.initbondsk;
+	initbondsr = other.initbondsr;
+	finalbondsk = other.finalbondsk;
+	finalbondsr = other.finalbondsr;
     }
     
     return *this;
@@ -149,7 +167,9 @@ bool PerturbationsTemplate::operator==(const PerturbationsTemplate &other) const
            (name == other.name and 
 	    initcharges == other.initcharges and finalcharges == other.finalcharges and 
 	    initLJs == other.initLJs and finalLJs == other.finalLJs and 
-	    initatypes == other.initatypes and finalatypes == other.finalatypes);
+	    initatypes == other.initatypes and finalatypes == other.finalatypes and 
+	    initbondsk == other.initbondsk and initbondsr == other.initbondsr and 
+	    finalbondsk == other.finalbondsk and finalbondsr == other.finalbondsr);
 }
 
 /** Comparison operator */
@@ -239,6 +259,70 @@ QString PerturbationsTemplate::getFinalType(const QString &atomname) const
     throw SireError::invalid_key( QObject::tr("No value for key %1").arg(atomname) );
   else
     return finalatypes.value(atomname);
+}
+
+void PerturbationsTemplate::setInitBondK(const BondID &bond, const double &k)
+{
+  initbondsk.insert(bond, k);
+}
+
+void PerturbationsTemplate::setInitBondR(const BondID &bond, const double &r)
+{
+  initbondsr.insert(bond, r);
+}
+
+void PerturbationsTemplate::setFinalBondK(const BondID &bond, const double &k)
+{
+  finalbondsk.insert(bond, k);
+}
+
+void PerturbationsTemplate::setFinalBondR(const BondID &bond, const double &r)
+{
+  finalbondsr.insert(bond, r);
+}
+
+double PerturbationsTemplate::getInitBondK(const BondID &bond) const
+{
+  if ( not initbondsk.contains(bond) )
+    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(bond.toString()) );
+  else
+    return initbondsk.value(bond);
+
+  //  for (QHash<BondID,double>::const_iterator 
+  //                                    it = initbondsk.constBegin();
+  //         it != initbondsk.constEnd();
+  //         ++it)
+  //    {
+  //      const BondID key = it.key();
+  //      qDebug() << key.toString();
+  //      if (bond == key)
+  //	return it.value();
+  //    }
+  //  throw SireError::invalid_key( QObject::tr("Template does not contains bond %1").arg(bond.toString()) );
+}
+
+double PerturbationsTemplate::getInitBondR(const BondID &bond) const
+{
+  if ( not initbondsr.contains(bond) )
+    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(bond.toString()) );
+  else
+    return initbondsr.value(bond);
+}
+
+double PerturbationsTemplate::getFinalBondK(const BondID &bond) const
+{
+  if ( not finalbondsk.contains(bond) )
+    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(bond.toString()) );
+  else
+    return finalbondsk.value(bond);
+}
+
+double PerturbationsTemplate::getFinalBondR(const BondID &bond) const
+{
+  if ( not finalbondsr.contains(bond) )
+    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(bond.toString()) );
+  else
+    return finalbondsr.value(bond);
 }
 
 //
@@ -432,8 +516,17 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
     SireUnits::Dimension::MolarEnergy atepsilonfinal = 0 * kcal_per_mol;
     QString attypeinit = " ";
     QString attypefinal = " ";
-
+    double ki = 0.0;
+    double ri = 0.0;
+    double kf = 0.0;
+    double rf = 0.0;
+    QString atom0 = " ";
+    QString atom1 = " ";
+    QString atom2 = " ";
+    QString atom3 = " ";
     bool inatom = false;
+    bool inbond = false;
+    
     /** Now read rest of the file */
     while ( not line.isNull() )
     {
@@ -442,14 +535,18 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
         QStringList words = line.split(" ", QString::SkipEmptyParts);
 	//qDebug() << line;
 	qDebug() << words;
+	if ( words.length() < 1 )
+	  continue;
 	if ( line.startsWith("molecule") )
 	  {
 	    // create a new perturbations template
 	    PerturbationsTemplate pertstemplate = PerturbationsTemplate( words[1] );
 	    current = pertstemplate.getName();
 	    new_templates[current] = pertstemplate;
+	    continue;
 	  }
-	if ( line.startsWith("atom") )
+	// not using startswith to avoid catching up atomX when dealing with dofs
+	if ( words[0] == "atom")
 	  {
 	    atname = "";
 	    atchargeinit = 0 * mod_electron;
@@ -461,36 +558,44 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    attypeinit = " ";
 	    attypefinal = " ";
 	    inatom = true;
+	    continue;
 	  }
 	if (line.startsWith("name") and inatom)
 	  {
 	    atname = words[1];
+	    continue;
 	  }
 	if (line.startsWith("initial_charge") and inatom)
 	  {
 	    atchargeinit = words[1].toDouble() * mod_electron;
+	    continue;
 	  }
 	if (line.startsWith("final_charge") and inatom)
 	  {
 	    atchargefinal = words[1].toDouble() * mod_electron;
+	    continue;
 	  }
 	if (line.startsWith("initial_LJ") and inatom)
 	  {
 	    atsigmainit = words[1].toDouble() * angstrom;
 	    atepsiloninit = words[2].toDouble() * kcal_per_mol;
+	    continue;
 	  }
 	if (line.startsWith("final_LJ") and inatom)
 	  {
 	    atsigmafinal = words[1].toDouble() * angstrom;
 	    atepsilonfinal = words[2].toDouble() * kcal_per_mol;
+	    continue;
 	  }	
 	if (line.startsWith("initial_type") and inatom)
 	  {
 	    attypeinit = words[1];
+	    continue;
 	  }
 	if (line.startsWith("final_type") and inatom)
 	  {
 	    attypefinal = words[1];
+	    continue;
 	  }
 	if (line.startsWith("endatom") )
 	  {
@@ -504,6 +609,56 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    new_templates[current].setFinalLJ(atname, ljfinal);
 	    new_templates[current].setInitType(atname, attypeinit);
 	    new_templates[current].setFinalType(atname, attypefinal);
+	    continue;
+	  }
+	if ( line.startsWith("bond") )
+	  {
+	    inbond = true;
+	    atom0 = " ";
+	    atom1 = " ";
+	    ki = 0.0;
+	    ri = 0.0;
+	    kf = 0.0;
+	    rf = 0.0;
+	    continue;
+	  }
+	if ( line.startsWith("atom0") and inbond )
+	  {
+	    qDebug() << "HELLOOOOOO " << words[1];
+	    atom0 = words[1];
+	    continue;
+	  }
+	if ( line.startsWith("atom1") and inbond )
+	  {
+	    atom1 = words[1];
+	    continue;
+	  }
+	if ( line.startsWith("initial") and inbond )
+	  {
+	    ki = words[1].toDouble();
+	    // This is quite ugly and misleading, so should have a better way of either reading symbolic expressions in the 
+	    // input, or simplify the input
+	    ri = words[4].remove("]^2").toDouble();
+	    continue;
+	  }
+	if ( line.startsWith("final") and inbond )
+	  {
+	    kf = words[1].toDouble();
+	    // This is quite ugly and misleading, so should have a better way of either reading symbolic expressions in the 
+	    // input, or simplify the input
+	    rf = words[4].remove("]^2").toDouble();
+	    continue;
+	  }
+	if ( line.startsWith("endbond") )
+	  {
+	    BondID bond = BondID( AtomName(atom0), AtomName(atom1) );
+	    qDebug() << bond.toString() << atom0 << atom1 << ki << ri << kf << rf ;
+	    new_templates[current].setInitBondK( bond, ki);
+	    new_templates[current].setInitBondR( bond, ri);
+	    new_templates[current].setFinalBondK( bond, kf);
+	    new_templates[current].setFinalBondR( bond, rf);
+	    inbond = false;
+	    continue;
 	  }
     }
 
@@ -536,9 +691,14 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
   PropertyName charge_property = PropertyName("charge");
   PropertyName initial_charge_property = PropertyName("initial_charge");
   PropertyName final_charge_property = PropertyName("final_charge");
+  PropertyName LJ_property = PropertyName("LJ");
+  PropertyName initial_LJ_property = PropertyName("initial_LJ");
+  PropertyName final_LJ_property = PropertyName("final_LJ");
 
   editmol.setProperty( initial_charge_property, editmol.property(charge_property) );
   editmol.setProperty( final_charge_property, editmol.property(charge_property) );
+  editmol.setProperty( initial_LJ_property, editmol.property(LJ_property) );
+  editmol.setProperty( final_LJ_property, editmol.property(LJ_property) );
 
   // Now look at each atom and see if they have an entry in init/final CLJ template
 
@@ -550,6 +710,7 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
       
       QString iname = atom.name().value();
       qDebug() << atom.name();
+      // the charges...
       try
 	{
 	  SireUnits::Dimension::Charge icharge = pert.getInitCharge(iname);
@@ -568,10 +729,45 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
 	{
 	  continue;
 	}
+      // the LJ parameters...
+      try
+	{
+	  LJParameter ilj = pert.getInitLJ(iname);
+	  atom.setProperty( initial_LJ_property, ilj);
+	}
+      catch(const SireError::invalid_key)
+	{
+	  continue;
+	}
+      try
+	{
+	  LJParameter flj = pert.getFinalLJ(iname);
+	  atom.setProperty( final_LJ_property, flj);
+	}
+      catch(const SireError::invalid_key)
+	{
+	  continue;
+	}
       editmol = atom.molecule();
     }
+  PropertyMap charge_map;
+  charge_map.set("initial_charge", initial_charge_property);
+  charge_map.set("charge", charge_property);
+  charge_map.set("final_charge", final_charge_property);
+
+  perturbations.append( ChargePerturbation(charge_map) );
+
+  PropertyMap lj_map;
+  lj_map.set("initial_LJ", initial_LJ_property);
+  lj_map.set("LJ", LJ_property);
+  lj_map.set("final_LJ", final_LJ_property);
+
+  perturbations.append( LJPerturbation(lj_map) );
+
+  editmol.setProperty( "perturbations", Perturbations(perturbations) );
 
   newmol = editmol.commit();
+
   return newmol;
 }
 //    AtomSelection selected_atoms = molecule.selection();

@@ -57,7 +57,7 @@ def printComponents(energies):
     print "\n",
 
 def createSystem():
-    protomsdir = "%s/Work/ProtoMS" % os.getenv("HOME")
+    protomsdir = "%s/software/devel/protoms" % os.getenv("HOME")
 
     protoms = ProtoMS( "%s/protoms2" % protomsdir )
 
@@ -411,7 +411,7 @@ def writeReplicaData(replicas, outdir, nmoves):
         nrg_avg[lamval] = total_energy[lamval][-1].accumulator().average()
 
     # write the average energies, gradients and PMF for each
-    #Êlambda value to a file in the output directory
+    # lambda value to a file in the output directory
     writeEnergies(dg_f_avg, "%s/average_dg_f.txt" % outdir)
     writeEnergies(dg_b_avg, "%s/average_dg_b.txt" % outdir)
 

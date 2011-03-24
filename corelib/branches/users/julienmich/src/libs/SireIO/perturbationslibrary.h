@@ -33,6 +33,9 @@
 
 #include "SireMM/ljparameter.h"
 #include "SireMol/molecule.h"
+#include "SireMol/bondid.h"
+#include "SireMol/angleid.h"
+#include "SireMol/dihedralid.h"
 
 #include "SireUnits/dimensions.h"
 
@@ -58,12 +61,11 @@ namespace SireMM
 namespace SireIO
 {  
 
-  //using SireMol::BondID;
-  //using SireMol::AngleID;
-  //using SireMol::DihedralID;
+  using SireMol::BondID;
+  using SireMol::AngleID;
+  using SireMol::DihedralID;
   using SireMol::Molecule;
 
-  //using SireMove::Flexibility;
   using SireMM::LJParameter;
   using SireUnits::Dimension::Charge;
 
@@ -100,6 +102,10 @@ public:
     void setFinalLJ(const QString &atomname, const LJParameter &atomlj);
     void setInitType(const QString &atomname, const QString &atype);
     void setFinalType(const QString &atomname, const QString &atype);
+    void setInitBondK(const BondID &bond, const double &k);
+    void setInitBondR(const BondID &bond, const double &r);
+    void setFinalBondK(const BondID &bond, const double &k);
+    void setFinalBondR(const BondID &bond, const double &r);
 
     Charge getInitCharge(const QString &atomname) const;
     Charge getFinalCharge(const QString &atomname) const;
@@ -107,6 +113,10 @@ public:
     LJParameter getFinalLJ(const QString &atomname) const;
     QString getInitType(const QString &atomname) const;
     QString getFinalType(const QString &atomname) const;
+    double getInitBondK(const BondID &bond) const;
+    double getInitBondR(const BondID &bond) const;
+    double getFinalBondK(const BondID &bond) const;
+    double getFinalBondR(const BondID &bond) const;
 
 private:
     QString name;
@@ -120,7 +130,11 @@ private:
     // The atom types
     QHash<QString,QString> initatypes;
     QHash<QString,QString> finalatypes;
-    // HAS INFO TO MAKE MANY TWOATOMPOTENTIAL PERTS (BONDS)
+    // The bond parameters
+    QHash<BondID,double> initbondsk;
+    QHash<BondID,double> initbondsr;    
+    QHash<BondID,double> finalbondsk;
+    QHash<BondID,double> finalbondsr;
     // HAS INFO TO MAKE MANY THREEATOMPOTENTIAL PERTS (ANGLES)
     // HAS INTO TO MAKE MANY FOURATOMPOTENTIAL PERTS (DIHEDRALS, IMPROPERS)
 };
