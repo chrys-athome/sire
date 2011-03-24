@@ -39,6 +39,7 @@
 #include "SireMol/atomeditor.h"
 #include "SireMol/perturbation.h"
 #include "SireMol/selector.hpp"
+#include "SireMol/atomcharges.h"
 
 #include "SireUnits/convert.h"
 #include "SireUnits/units.h"
