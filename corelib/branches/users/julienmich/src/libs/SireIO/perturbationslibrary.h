@@ -106,6 +106,16 @@ public:
     void setInitBondR(const BondID &bond, const double &r);
     void setFinalBondK(const BondID &bond, const double &k);
     void setFinalBondR(const BondID &bond, const double &r);
+    void setInitAngleK(const AngleID &angle, const double &k);
+    void setInitAngleT(const AngleID &angle, const double &r);
+    void setFinalAngleK(const AngleID &angle, const double &k);
+    void setFinalAngleT(const AngleID &angle, const double &r);
+    void setInitDihedralK0(const DihedralID &dihedral, const double &k0);
+    void setInitDihedralN(const DihedralID &dihedral, const int &n);
+    void setInitDihedralPhase(const DihedralID &dihedral, const double &phase);
+    void setFinalDihedralK0(const DihedralID &dihedral, const double &k0);
+    void setFinalDihedralN(const DihedralID &dihedral, const int &n);
+    void setFinalDihedralPhase(const DihedralID &dihedral, const double &phase);
 
     Charge getInitCharge(const QString &atomname) const;
     Charge getFinalCharge(const QString &atomname) const;
@@ -113,14 +123,26 @@ public:
     LJParameter getFinalLJ(const QString &atomname) const;
     QString getInitType(const QString &atomname) const;
     QString getFinalType(const QString &atomname) const;
+    QList<BondID> getBonds() const;
     double getInitBondK(const BondID &bond) const;
     double getInitBondR(const BondID &bond) const;
     double getFinalBondK(const BondID &bond) const;
     double getFinalBondR(const BondID &bond) const;
+    QList<AngleID> getAngles() const;
+    double getInitAngleK(const AngleID &angle) const;
+    double getInitAngleT(const AngleID &angle) const;
+    double getFinalAngleK(const AngleID &angle) const;
+    double getFinalAngleT(const AngleID &angle) const;
+    QList<DihedralID> getDihedrals() const;
+    double getInitDihedralK0(const DihedralID &dihedral) const;
+    int getInitDihedralN(const DihedralID &dihedral) const;
+    double getInitDihedralPhase(const DihedralID &dihedral) const;
+    double getFinalDihedralK0(const DihedralID &dihedral) const;
+    int getFinalDihedralN(const DihedralID &dihedral) const;
+    double getFinalDihedralPhase(const DihedralID &dihedral) const;
 
 private:
     QString name;
-    
     // The atom charges 
     QHash<QString,Charge> initcharges;
     QHash<QString,Charge> finalcharges;
@@ -135,8 +157,19 @@ private:
     QHash<BondID,double> initbondsr;    
     QHash<BondID,double> finalbondsk;
     QHash<BondID,double> finalbondsr;
-    // HAS INFO TO MAKE MANY THREEATOMPOTENTIAL PERTS (ANGLES)
-    // HAS INTO TO MAKE MANY FOURATOMPOTENTIAL PERTS (DIHEDRALS, IMPROPERS)
+    // The angle parameters
+    QHash<AngleID,double> initanglesk;
+    QHash<AngleID,double> initanglest;    
+    QHash<AngleID,double> finalanglesk;
+    QHash<AngleID,double> finalanglest;
+    // The dihedral parameters
+    QHash<DihedralID,double> initdihedralsk0;
+    QHash<DihedralID,double> initdihedralsn;    
+    QHash<DihedralID,double> initdihedralsphase;
+    QHash<DihedralID,double> finaldihedralsk0;
+    QHash<DihedralID,double> finaldihedralsn;    
+    QHash<DihedralID,double> finaldihedralsphase;
+    
 };
 
 /** This class is used to read templates describing how a 
