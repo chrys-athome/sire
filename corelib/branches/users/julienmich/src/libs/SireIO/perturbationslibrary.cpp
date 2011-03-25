@@ -814,7 +814,8 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    rf = 0.0;
 	    continue;
 	  }
-	if ( line.startsWith("dihedral") )
+	// dihedral and improper are the same since we only deal with force field parameters
+	if ( line.startsWith("dihedral") or line.startsWith("improper") )
 	  {
 	    indihedral = true;
 	    atom0 = " ";
@@ -923,7 +924,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    inangle = false;
 	    continue;
 	  }
-	if ( line.startsWith("enddihedral") )
+	if ( line.startsWith("enddihedral") or line.startsWith("endimproper") )
 	  {
 	    DihedralID dihedral = DihedralID( AtomName(atom0), AtomName(atom1), AtomName(atom2), AtomName(atom3) );
 	    qDebug() << dihedral.toString() << atom0 << atom1 << atom2 << atom3 << k0i << ni << phasei << k0f << nf << phasef;
@@ -1139,68 +1140,4 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
 
   return newmol;
 }
-//    AtomSelection selected_atoms = molecule.selection();
-//
-//    Flexibility flexibility = Flexibility(molecule);
-//  
-//    MolName moleculename = molecule.data().name();
-//
-//    if ( not this->templates.contains(moleculename) )
-//        throw SireError::invalid_key(QObject::tr("There is no flexibility template for the "
-//               "molecule with name \"%1\" - available templates are %2.")
-//                    .arg(moleculename, Sire::toString(templates.keys())), CODELOC);
-//
-//    FlexibilityTemplate templ = this->templates[moleculename];
-//
-//    flexibility.setRotation(templ.getRotation());
-//    flexibility.setTranslation(templ.getTranslation());
-//    flexibility.setMaximumVar(templ.getMaximumVar());
-//
-//    for (QHash<BondID,Length>::const_iterator it = templ.getBondDeltas().constBegin();
-//         it != templ.getBondDeltas().constEnd();
-//         ++it)
-//    {
-//        const BondID &bond = it.key();
-//    
-//        if ( selected_atoms.selectedAll() or
-//             (selected_atoms.selected(bond.atom0()) and
-//              selected_atoms.selected(bond.atom1())) )
-//        {
-//            flexibility.add(bond, it.value());
-//        }
-//    }
-//
-//    for (QHash<AngleID,Angle>::const_iterator it = templ.getAngleDeltas().constBegin();
-//         it != templ.getAngleDeltas().constEnd();
-//         ++it)
-//    {
-//        const AngleID &angle = it.key();
-//        
-//        if ( selected_atoms.selectedAll() or
-//             (selected_atoms.selected(angle.atom0()) and
-//              selected_atoms.selected(angle.atom1()) and
-//              selected_atoms.selected(angle.atom2())) )
-//        {
-//            flexibility.add(angle, it.value());
-//        }
-//    }
-//
-//    for (QHash<DihedralID,Angle>::const_iterator 
-//                                    it = templ.getDihedralDeltas().constBegin();
-//         it != templ.getDihedralDeltas().constEnd();
-//         ++it)
-//    {
-//        const DihedralID &dihedral = it.key();
-//        
-//        if ( selected_atoms.selectedAll() or
-//             (selected_atoms.selected(dihedral.atom0()) and
-//              selected_atoms.selected(dihedral.atom1()) and
-//              selected_atoms.selected(dihedral.atom2()) and
-//              selected_atoms.selected(dihedral.atom3())) )
-//        {
-//            flexibility.add(dihedral, it.value());
-//        }
-//    }
-//
-//    return flexibility;
-//}
+
