@@ -22,6 +22,7 @@ set ( SIREMOVE_HEADERS
       integrator.h
       integratorworkspace.h
       internalmove.h
+      internalmovesingle.h
       moldeleter.h
       molinserter.h
       moleculardynamics.h
@@ -81,6 +82,7 @@ set ( SIREMOVE_SOURCES
       integrator.cpp
       integratorworkspace.cpp
       internalmove.cpp
+      internalmovesingle.cpp
       moldeleter.cpp
       molinserter.cpp
       moleculardynamics.cpp
