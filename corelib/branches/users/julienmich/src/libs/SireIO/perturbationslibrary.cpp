@@ -971,11 +971,16 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
   PropertyName LJ_property = PropertyName("LJ");
   PropertyName initial_LJ_property = PropertyName("initial_LJ");
   PropertyName final_LJ_property = PropertyName("final_LJ");
+  PropertyName ambertype_property = PropertyName("ambertype");
+  PropertyName initial_ambertype_property = PropertyName("initial_ambertype");
+  PropertyName final_ambertype_property = PropertyName("final_ambertype");
 
   editmol.setProperty( initial_charge_property, editmol.property(charge_property) );
   editmol.setProperty( final_charge_property, editmol.property(charge_property) );
   editmol.setProperty( initial_LJ_property, editmol.property(LJ_property) );
   editmol.setProperty( final_LJ_property, editmol.property(LJ_property) );
+  editmol.setProperty( initial_ambertype_property, editmol.property(ambertype_property) );
+  editmol.setProperty( final_ambertype_property, editmol.property(ambertype_property) );
 
   // Now look at each atom and see if they have an entry in init/final CLJ template
 
@@ -1020,6 +1025,25 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
 	{
 	  LJParameter flj = pert.getFinalLJ(iname);
 	  atom.setProperty( final_LJ_property, flj);
+	}
+      catch(const SireError::invalid_key)
+	{
+	  continue;
+	}
+      // the amber types...
+      try
+	{
+	  QString iatype = pert.getInitType(iname);
+	  atom.setProperty(initial_ambertype_property, iatype);
+	}
+      catch(const SireError::invalid_key)
+	{
+	  continue;
+	}
+      try
+	{
+	  QString fatype = pert.getFinalType(iname);
+	  atom.setProperty(final_ambertype_property, fatype);
 	}
       catch(const SireError::invalid_key)
 	{
