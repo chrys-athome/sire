@@ -45,11 +45,13 @@
 #include "SireMol/atomeditor.h"
 #include "SireMol/perturbation.h"
 #include "SireMol/chargeperturbation.h"
+#include "SireMol/geometryperturbation.h"
 #include "SireMol/selector.hpp"
 #include "SireMol/atomcharges.h"
 #include "SireMol/bondid.h"
 #include "SireMol/angleid.h"
 #include "SireMol/dihedralid.h"
+#include "SireMol/improperid.h"
 
 #include "SireUnits/convert.h"
 #include "SireUnits/units.h"
@@ -93,7 +95,9 @@ QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds,
 	<< pertstemplate.initanglesk << pertstemplate.initanglest
 	<< pertstemplate.finalanglesk << pertstemplate.finalanglest
 	<< pertstemplate.initdihedralsk0 << pertstemplate.initdihedralsn << pertstemplate.initdihedralsphase
-	<< pertstemplate.finaldihedralsk0 << pertstemplate.finaldihedralsn << pertstemplate.finaldihedralsphase;
+	<< pertstemplate.finaldihedralsk0 << pertstemplate.finaldihedralsn << pertstemplate.finaldihedralsphase
+	<< pertstemplate.initimpropersk0 << pertstemplate.initimpropersn << pertstemplate.initimpropersphase
+	<< pertstemplate.finalimpropersk0 << pertstemplate.finalimpropersn << pertstemplate.finalimpropersphase;
         
     return ds;
 }
@@ -115,7 +119,9 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, PerturbationsTemplate &pe
 	    >> pertstemplate.initanglesk >> pertstemplate.initanglest
 	    >> pertstemplate.finalanglesk >> pertstemplate.finalanglest
 	    >> pertstemplate.initdihedralsk0 >> pertstemplate.initdihedralsn >> pertstemplate.initdihedralsphase
-	    >> pertstemplate.finaldihedralsk0 >> pertstemplate.finaldihedralsn >> pertstemplate.finaldihedralsphase;
+	    >> pertstemplate.finaldihedralsk0 >> pertstemplate.finaldihedralsn >> pertstemplate.finaldihedralsphase
+	    >> pertstemplate.initimpropersk0 >> pertstemplate.initimpropersn >> pertstemplate.initimpropersphase
+	    >> pertstemplate.finalimpropersk0 >> pertstemplate.finalimpropersn >> pertstemplate.finalimpropersphase;
     }
     else
         throw version_error(v, "1", r_pertstemplate, CODELOC);
@@ -143,7 +149,11 @@ PerturbationsTemplate::PerturbationsTemplate(const PerturbationsTemplate &other)
 		      finalanglest(other.finalanglest),initdihedralsk0(other.initdihedralsk0),
 		      initdihedralsn(other.initdihedralsn),initdihedralsphase(other.initdihedralsphase),
 		      finaldihedralsk0(other.finaldihedralsk0),finaldihedralsn(other.finaldihedralsn),
-		      finaldihedralsphase(other.finaldihedralsphase)
+		      finaldihedralsphase(other.finaldihedralsphase),initimpropersk0(other.initimpropersk0),
+		      initimpropersn(other.initimpropersn),initimpropersphase(other.initimpropersphase),
+		      finalimpropersk0(other.finalimpropersk0),finalimpropersn(other.finalimpropersn),
+		      finalimpropersphase(other.finalimpropersphase)
+
 {}
 
 /** Destructor */
@@ -181,6 +191,13 @@ PerturbationsTemplate& PerturbationsTemplate::operator=(const PerturbationsTempl
 	finaldihedralsk0 = other.finaldihedralsk0;
 	finaldihedralsn = other.finaldihedralsn;
 	finaldihedralsphase = other.finaldihedralsphase;
+	initimpropersk0 = other.initimpropersk0;
+	initimpropersn = other.initimpropersn;
+	initimpropersphase = other.initimpropersphase;
+	finalimpropersk0 = other.finalimpropersk0;
+	finalimpropersn = other.finalimpropersn;
+	finalimpropersphase = other.finalimpropersphase;
+
     }
     
     return *this;
@@ -200,7 +217,10 @@ bool PerturbationsTemplate::operator==(const PerturbationsTemplate &other) const
 	    finalanglesk == other.finalanglesk and finalanglest == other.finalanglest and
 	    initdihedralsk0 == other.initdihedralsk0 and initdihedralsn == other.initdihedralsn and 
 	    initdihedralsphase == other.initdihedralsphase and finaldihedralsk0 == other.finaldihedralsk0 and
-	    finaldihedralsn == other.finaldihedralsn and finaldihedralsphase == other.finaldihedralsphase);
+	    finaldihedralsn == other.finaldihedralsn and finaldihedralsphase == other.finaldihedralsphase and 
+	    initimpropersk0 == other.initimpropersk0 and initimpropersn == other.initimpropersn and 
+	    initimpropersphase == other.initimpropersphase and finalimpropersk0 == other.finalimpropersk0 and
+	    finalimpropersn == other.finalimpropersn and finalimpropersphase == other.finalimpropersphase);
 }
 
 /** Comparison operator */
@@ -492,6 +512,91 @@ QList<DihedralID> PerturbationsTemplate::getDihedrals() const
   // Need to fix this...
   return initdihedralsk0.keys();
 }
+
+void PerturbationsTemplate::setInitImproperK0(const ImproperID &improper, const double &k0)
+{
+  initimpropersk0.insert(improper, k0);
+}
+
+void PerturbationsTemplate::setInitImproperN(const ImproperID &improper, const int &n)
+{
+  initimpropersn.insert(improper, n);
+}
+
+void PerturbationsTemplate::setInitImproperPhase(const ImproperID &improper, const double &phase)
+{
+  initimpropersphase.insert(improper, phase);
+}
+
+void PerturbationsTemplate::setFinalImproperK0(const ImproperID &improper, const double &k0)
+{
+  finalimpropersk0.insert(improper, k0);
+}
+
+void PerturbationsTemplate::setFinalImproperN(const ImproperID &improper, const int &n)
+{
+  finalimpropersn.insert(improper, n);
+}
+
+void PerturbationsTemplate::setFinalImproperPhase(const ImproperID &improper, const double &phase)
+{
+  finalimpropersphase.insert(improper, phase);
+}
+
+double PerturbationsTemplate::getInitImproperK0(const ImproperID &improper) const
+{
+  if ( not initimpropersk0.contains(improper) )
+    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(improper.toString()) );
+  else
+    return initimpropersk0.value(improper);
+}
+
+int PerturbationsTemplate::getInitImproperN(const ImproperID &improper) const
+{
+  if ( not initimpropersn.contains(improper) )
+    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(improper.toString()) );
+  else
+    return initimpropersn.value(improper);
+}
+
+double PerturbationsTemplate::getInitImproperPhase(const ImproperID &improper) const
+{
+  if ( not initimpropersphase.contains(improper) )
+    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(improper.toString()) );
+  else
+    return initimpropersphase.value(improper);
+}
+
+double PerturbationsTemplate::getFinalImproperK0(const ImproperID &improper) const
+{
+  if ( not finalimpropersk0.contains(improper) )
+    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(improper.toString()) );
+  else
+    return finalimpropersk0.value(improper);
+}
+
+int PerturbationsTemplate::getFinalImproperN(const ImproperID &improper) const
+{
+  if ( not finalimpropersn.contains(improper) )
+    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(improper.toString()) );
+  else
+    return finalimpropersn.value(improper);
+}
+
+double PerturbationsTemplate::getFinalImproperPhase(const ImproperID &improper) const
+{
+  if ( not finalimpropersphase.contains(improper) )
+    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(improper.toString()) );
+  else
+    return finalimpropersphase.value(improper);
+}
+
+QList<ImproperID> PerturbationsTemplate::getImpropers() const
+{
+  // Need to fix this...
+  return initimpropersk0.keys();
+}
+
 
 //
 // Helper functions to parse a templates input file
@@ -868,20 +973,41 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	  }
 	if ( line.startsWith("initial") and indihedral )
 	  {
+	    // is a constant
 	    if ( words.length() == 2 ) 
 	      {
 		k0i = words[1].toDouble();
 		ni = 0;
 		phasei = 0.0;
+		continue;
 	      }
-	    else
-	      // not sure this works always, must test extensively
-	      // better...find a way to create a full expression from the entire line
+	    // If we have a bracket, then phase != 1
+	    if ( line.contains('[') and line.contains(']') )
 	      {
 		k0i = words[1].toDouble();
-		ni = words[2].remove("[cos(").toInt();
-		phasei = 0.0;
 	      }
+	    else
+	      {
+		k0i = 1.0;
+	      }
+	    if ( line.contains('(') and line.contains(')') )
+	      {
+		QStringList parts = line.split("(", QString::SkipEmptyParts);
+		QStringList parts2 = parts[1].split("phi", QString::SkipEmptyParts);
+		ni = parts2[0].toInt();
+		// Also check if there is a phase 
+		if ( line.contains("-") )
+		  {
+		    QStringList parts = line.split("-", QString::SkipEmptyParts);
+		    QStringList parts2 = parts[1].split(")", QString::SkipEmptyParts);
+		    phasei = parts2[0].toDouble();
+		  }
+	      }
+	      //{
+	      //	k0i = words[1].toDouble();
+	      //	ni = words[2].remove("[cos(").toInt();
+	      //	phasei = 0.0;
+	      //}
 	    continue;
 	  }
 	if ( line.startsWith("final") and indihedral )
@@ -891,14 +1017,29 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 		k0f = words[1].toDouble();
 		nf = 0;
 		phasef = 0.0;
+		continue;
 	      }
-	    else
-	      // not sure this works always, must test extensively
-	      // better...find a way to create a full expression from the entire line
+	    // If we have a bracket, then phase != 1
+	    if ( line.contains('[') and line.contains(']') )
 	      {
 		k0f = words[1].toDouble();
-		nf = words[2].remove("[cos(").toInt();
-		phasef = 0.0;
+	      }
+	    else
+	      {
+		k0f = 1.0;
+	      }
+	    if ( line.contains('(') and line.contains(')') )
+	      {
+		QStringList parts = line.split("(", QString::SkipEmptyParts);
+		QStringList parts2 = parts[1].split("phi", QString::SkipEmptyParts);
+		nf = parts2[0].toInt();
+		// Also check if there is a phase 
+		if ( line.contains("-") )
+		  {
+		    QStringList parts = line.split("-", QString::SkipEmptyParts);
+		    QStringList parts2 = parts[1].split(")", QString::SkipEmptyParts);
+		    phasef = parts2[0].toDouble();
+		  }
 	      }
 	    continue;
 	  }
@@ -924,7 +1065,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    inangle = false;
 	    continue;
 	  }
-	if ( line.startsWith("enddihedral") or line.startsWith("endimproper") )
+	if ( line.startsWith("enddihedral") ) 
 	  {
 	    DihedralID dihedral = DihedralID( AtomName(atom0), AtomName(atom1), AtomName(atom2), AtomName(atom3) );
 	    qDebug() << dihedral.toString() << atom0 << atom1 << atom2 << atom3 << k0i << ni << phasei << k0f << nf << phasef;
@@ -937,6 +1078,20 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    indihedral = false;
 	    continue;
 	  }
+	if ( line.startsWith("endimproper") )
+	  {
+	    ImproperID improper = ImproperID( AtomName(atom0), AtomName(atom1), AtomName(atom2), AtomName(atom3) );
+	    qDebug() << improper.toString() << atom0 << atom1 << atom2 << atom3 << k0i << ni << phasei << k0f << nf << phasef;
+	    new_templates[current].setInitImproperK0( improper, k0i);
+	    new_templates[current].setInitImproperN( improper, ni);
+	    new_templates[current].setInitImproperPhase( improper, phasei);
+	    new_templates[current].setFinalImproperK0( improper, k0f);
+	    new_templates[current].setFinalImproperN( improper, nf);
+	    new_templates[current].setFinalImproperPhase( improper, phasef);
+	    indihedral = false;
+	    continue;
+	  }
+	
     }
 
     foreach (PerturbationsTemplate templ, new_templates)
@@ -963,6 +1118,8 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
   MolEditor editmol = newmol.edit();
 
   QList<PerturbationPtr> perturbations;
+  
+  QList<GeomPertPtr> geom_perturbations;
 
   // Set initial and final charges/LJ, first assuming are unchanged
   PropertyName charge_property = PropertyName("charge");
@@ -1095,6 +1252,14 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
 							  base, initial_forms, final_forms,
 							  PropertyMap("parameters", "bond") );
       perturbations.append(bondpert);
+      
+      // Also create a GeometryPerturbation if ri != rf 
+      if (std::abs(ri - rf) > 0.000001)
+	{
+	BondPerturbation geom_bondpert = BondPerturbation(atom0, atom1, ri*angstrom, rf*angstrom);
+	geom_perturbations.append(geom_bondpert);
+	}
+
     }
   
   // Now make angle perturbations
@@ -1128,6 +1293,12 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
 							     base, initial_forms, final_forms,
 							     PropertyMap("parameters", "angle") );
       perturbations.append(anglepert);
+      // Also create a GeometryPerturbation if ri != rf 
+      if (std::abs(ri - rf) > 0.000001)
+	{
+	  AnglePerturbation geom_anglepert = AnglePerturbation(atom0, atom1, atom2, ri*radians, rf*radians);
+	  geom_perturbations.append(geom_anglepert);
+	}
     }
   // Now make dihedral perturbations
   QList<DihedralID> dihedrals = pert.getDihedrals();
@@ -1135,9 +1306,11 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
   for (int i=0; i < dihedrals.size() ; i++ )
     {
       DihedralID dihedral = dihedrals.at(i);
+
       double k0i = pert.getInitDihedralK0(dihedral);
       int ni = pert.getInitDihedralN(dihedral);
       double phasei = pert.getInitDihedralPhase(dihedral);
+
       double k0f = pert.getFinalDihedralK0(dihedral);
       int nf = pert.getFinalDihedralN(dihedral);
       double phasef = pert.getFinalDihedralPhase(dihedral);
@@ -1149,14 +1322,49 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
 
       Symbol phi = InternalPotential::symbols().dihedral().phi();
 
-      Expression dihedralfunc_i = k0i * ( 1 + ( Cos(ni*phi + phasei ) ) );
-      Expression dihedralfunc_f = k0f * ( 1 + ( Cos(nf*phi + phasef ) ) );
+      Expression dihedralfunc_i = k0i * ( 1 + ( Cos(ni*phi - phasei ) ) );
+      Expression dihedralfunc_f = k0f * ( 1 + ( Cos(nf*phi - phasef ) ) );
       
       FourAtomPerturbation dihedralpert = FourAtomPerturbation( atom0, atom1, atom2, atom3,
 								dihedralfunc_i, dihedralfunc_f,
 								PropertyMap("parameters", "dihedral") );
       perturbations.append(dihedralpert);
     }
+
+  // Now make improper perturbations
+  QList<ImproperID> impropers = pert.getImpropers();
+
+  for (int i=0; i < impropers.size() ; i++ )
+    {
+      ImproperID improper = impropers.at(i);
+
+      double k0i = pert.getInitImproperK0(improper);
+      int ni = pert.getInitImproperN(improper);
+      double phasei = pert.getInitImproperPhase(improper);
+
+      double k0f = pert.getFinalImproperK0(improper);
+      int nf = pert.getFinalImproperN(improper);
+      double phasef = pert.getFinalImproperPhase(improper);
+
+      AtomIdx atom0 = editmol.select( improper.atom0() ).index();
+      AtomIdx atom1 = editmol.select( improper.atom1() ).index();
+      AtomIdx atom2 = editmol.select( improper.atom2() ).index();
+      AtomIdx atom3 = editmol.select( improper.atom3() ).index();
+
+      Symbol phi = InternalPotential::symbols().improper().phi();
+
+      Expression improperfunc_i = k0i * ( 1 + ( Cos(ni*phi - phasei ) ) );
+      Expression improperfunc_f = k0f * ( 1 + ( Cos(nf*phi - phasef ) ) );
+      
+      FourAtomPerturbation improperpert = FourAtomPerturbation( atom0, atom1, atom2, atom3,
+								improperfunc_i, improperfunc_f,
+								PropertyMap("parameters", "improper") );
+      perturbations.append(improperpert);
+    }
+
+  // JM April 11 - need more tests before this feature is used
+  //if (not geom_perturbations.isEmpty() )
+  //  perturbations.append( GeometryPerturbations(geom_perturbations) );
 
   editmol.setProperty( "perturbations", Perturbations(perturbations) );
 

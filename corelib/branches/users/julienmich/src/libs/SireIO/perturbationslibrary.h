@@ -36,6 +36,7 @@
 #include "SireMol/bondid.h"
 #include "SireMol/angleid.h"
 #include "SireMol/dihedralid.h"
+#include "SireMol/improperid.h"
 
 #include "SireUnits/dimensions.h"
 
@@ -64,6 +65,7 @@ namespace SireIO
   using SireMol::BondID;
   using SireMol::AngleID;
   using SireMol::DihedralID;
+  using SireMol::ImproperID;
   using SireMol::Molecule;
 
   using SireMM::LJParameter;
@@ -98,24 +100,36 @@ public:
     
     void setInitCharge(const QString &atomname, const Charge &atomcharge);
     void setFinalCharge(const QString &atomname, const Charge &atomcharge);
+
     void setInitLJ(const QString &atomname, const LJParameter &atomlj);
     void setFinalLJ(const QString &atomname, const LJParameter &atomlj);
+
     void setInitType(const QString &atomname, const QString &atype);
     void setFinalType(const QString &atomname, const QString &atype);
+
     void setInitBondK(const BondID &bond, const double &k);
     void setInitBondR(const BondID &bond, const double &r);
     void setFinalBondK(const BondID &bond, const double &k);
     void setFinalBondR(const BondID &bond, const double &r);
+
     void setInitAngleK(const AngleID &angle, const double &k);
     void setInitAngleT(const AngleID &angle, const double &r);
     void setFinalAngleK(const AngleID &angle, const double &k);
     void setFinalAngleT(const AngleID &angle, const double &r);
+
     void setInitDihedralK0(const DihedralID &dihedral, const double &k0);
     void setInitDihedralN(const DihedralID &dihedral, const int &n);
     void setInitDihedralPhase(const DihedralID &dihedral, const double &phase);
     void setFinalDihedralK0(const DihedralID &dihedral, const double &k0);
     void setFinalDihedralN(const DihedralID &dihedral, const int &n);
     void setFinalDihedralPhase(const DihedralID &dihedral, const double &phase);
+
+    void setInitImproperK0(const ImproperID &improper, const double &k0);
+    void setInitImproperN(const ImproperID &improper, const int &n);
+    void setInitImproperPhase(const ImproperID &improper, const double &phase);
+    void setFinalImproperK0(const ImproperID &improper, const double &k0);
+    void setFinalImproperN(const ImproperID &improper, const int &n);
+    void setFinalImproperPhase(const ImproperID &improper, const double &phase);
 
     Charge getInitCharge(const QString &atomname) const;
     Charge getFinalCharge(const QString &atomname) const;
@@ -140,6 +154,13 @@ public:
     double getFinalDihedralK0(const DihedralID &dihedral) const;
     int getFinalDihedralN(const DihedralID &dihedral) const;
     double getFinalDihedralPhase(const DihedralID &dihedral) const;
+    QList<ImproperID> getImpropers() const;
+    double getInitImproperK0(const ImproperID &improper) const;
+    int getInitImproperN(const ImproperID &improper) const;
+    double getInitImproperPhase(const ImproperID &improper) const;
+    double getFinalImproperK0(const ImproperID &improper) const;
+    int getFinalImproperN(const ImproperID &improper) const;
+    double getFinalImproperPhase(const ImproperID &improper) const;
 
 private:
     QString name;
@@ -169,7 +190,14 @@ private:
     QHash<DihedralID,double> finaldihedralsk0;
     QHash<DihedralID,double> finaldihedralsn;    
     QHash<DihedralID,double> finaldihedralsphase;
-    
+    // The improper parameters
+    QHash<ImproperID,double> initimpropersk0;
+    QHash<ImproperID,double> initimpropersn;    
+    QHash<ImproperID,double> initimpropersphase;
+    QHash<ImproperID,double> finalimpropersk0;
+    QHash<ImproperID,double> finalimpropersn;    
+    QHash<ImproperID,double> finalimpropersphase;
+
 };
 
 /** This class is used to read templates describing how a 
