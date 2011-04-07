@@ -38,6 +38,7 @@ namespace SireMM
 {
 class SoftCLJPotential;
 class InterSoftCLJPotential;
+class IntraSoftCLJPotential;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMM::SoftCLJPotential&);
@@ -45,6 +46,9 @@ QDataStream& operator>>(QDataStream&, SireMM::SoftCLJPotential&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::InterSoftCLJPotential&);
 QDataStream& operator>>(QDataStream&, SireMM::InterSoftCLJPotential&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::IntraSoftCLJPotential&);
+QDataStream& operator>>(QDataStream&, SireMM::IntraSoftCLJPotential&);
 
 namespace SireMM
 {
@@ -483,6 +487,268 @@ private:
                                    GridPotentialTable &fields,
                                    InterSoftCLJPotential::PotentialWorkspace &workspace,
                                    double scale_potential) const;
+};
+
+/** This class provides the functions and containers necessary to provide an interface to 
+    calculate the intramolecular interaction potentials using soft Coulomb and Lennard Jones functions. 
+    This is a 3D potential class, namely it requires that
+    the atoms possess 3D coordinates, thereby allowing this
+    potential to also be used to calculate 3D forces on the atoms.
+
+    This potential has the following properties (parameters);
+    
+    (1) space               : This is the 3D space in which the molecules exist
+    (2) switchingFunction   : This is the switching function used to scale the 
+                              energies / forces to zero at the cutoff
+    (3) shiftElectrostatics : This is a boolean - if it is true then the 
+                              group-group electrostatic interactions are scaled 
+                              so that they are zero at the cutoff
+    (4) combiningRules      : This is a string specifying the LJ combining rules
+                              (currently "arithmetic" or "geometric")
+    (5) alpha               : The alpha scaling parameter used to soften the potential
+    (6) coulombPower        : A parameter used to control the softening of coulomb terms
+    (7) ljPower             : A parameter used to control the softening of LJ terms
+                              
+    The molecules used with this potential must contain the following 
+    properties (defined in parameters(), e.g. parameters().coordinates())
+    
+    (1) .coordinates()       : These are the 3D coordinates of each atom, must be
+                               a property of type AtomCoords
+    (2) .charge()            : These are the partial charges of each atom, must
+                               be a property of type AtomCharges
+    (3) .lj()                : These are the LJ parameters for each atom, must
+                               be a property of type AtomLJs
+    (4) .intraScaleFactors() : These are the intramolecular atomic scaling factors,
+                               used to scale the intramolecular coulomb and LJ
+                               energies, must be a property of type CLJNBPairs
+
+    @author Julien Michel */
+
+class SIREMM_EXPORT IntraSoftCLJPotential : public SoftCLJPotential
+{
+  friend QDataStream& ::operator<<(QDataStream&, const IntraSoftCLJPotential&);
+  friend QDataStream& ::operator>>(QDataStream&, IntraSoftCLJPotential&);
+
+public:
+    typedef SoftCLJEnergy Energy;
+    typedef Energy::Components Components;
+    
+    typedef ScaledCLJParameterNames3D ParameterNames;
+
+    typedef detail::CLJParameter Parameter;
+
+    typedef detail::IntraScaledAtomicParameters<
+                  SireFF::detail::AtomicParameters3D<Parameter>,
+                  detail::IntraScaledParameters<CLJNBPairs> > Parameters;
+        
+    typedef SireBase::PairMatrix<double> EnergyWorkspace;
+    typedef SireBase::PairMatrix<SireMaths::DistVector> ForceWorkspace;
+    typedef SireBase::PairMatrix<SireMaths::DistVector> FieldWorkspace;
+    typedef SireBase::PairMatrix<double> PotentialWorkspace;
+
+    typedef CLJProbe Probe;
+
+    typedef SireFF::detail::FFMolecule3D<IntraSoftCLJPotential> Molecule;
+    typedef SireFF::detail::FFMolecules3D<IntraSoftCLJPotential> Molecules;
+
+    typedef SireFF::detail::ChangedMolecule<Molecule> ChangedMolecule;
+
+    IntraSoftCLJPotential();
+
+    IntraSoftCLJPotential(const IntraSoftCLJPotential &other);
+
+    ~IntraSoftCLJPotential();
+
+    IntraSoftCLJPotential& operator=(const IntraSoftCLJPotential &other);
+
+    static const char* typeName()
+    {
+        return "SireMM::IntraSoftCLJPotential";
+    }
+    
+    const char* what() const
+    {
+        return IntraSoftCLJPotential::typeName();
+    }
+    
+    static ParameterNames parameters()
+    {
+        return ParameterNames();
+    }
+    
+    IntraSoftCLJPotential::Parameters 
+    getParameters(const PartialMolecule &molecule,
+		  const PropertyMap &map = PropertyMap());
+    
+    IntraSoftCLJPotential::Parameters
+    updateParameters(const IntraSoftCLJPotential::Parameters &old_params,
+                     const PartialMolecule &old_molecule,
+                     const PartialMolecule &new_molecule,
+                     const PropertyMap &map = PropertyMap());
+                     
+    IntraSoftCLJPotential::Parameters
+    updateParameters(const IntraSoftCLJPotential::Parameters &old_params,
+                     const PartialMolecule &old_molecule,
+                     const PartialMolecule &new_molecule,
+                     const PropertyMap &old_map, const PropertyMap &new_map);
+
+    IntraSoftCLJPotential::Molecule
+    parameterise(const PartialMolecule &molecule,
+                 const PropertyMap &map = PropertyMap());
+    
+    IntraSoftCLJPotential::Molecules 
+    parameterise(const MoleculeGroup &molecules,
+                 const PropertyMap &map = PropertyMap());
+
+
+    void calculateEnergy(const IntraSoftCLJPotential::Molecule &mol,
+			 IntraSoftCLJPotential::Energy &energy,
+			 IntraSoftCLJPotential::EnergyWorkspace &workspace,
+			 double scale_energy=1) const;
+
+    void calculateEnergy(const IntraSoftCLJPotential::Molecule &mol,
+                         const IntraSoftCLJPotential::Molecule &rest_of_mol,
+                         IntraSoftCLJPotential::Energy &energy,
+                         IntraSoftCLJPotential::EnergyWorkspace &workspace,
+                         double scale_energy=1) const;
+
+    void calculateForce(const IntraSoftCLJPotential::Molecule &mol, 
+                        MolForceTable &forces,
+                        IntraCLJPotential::ForceWorkspace &workspace,
+                        double scale_force=1) const;
+
+    void calculateForce(const IntraSoftCLJPotential::Molecule &mol,
+                        const IntraSoftCLJPotential::Molecule &rest_of_mol,
+                        MolForceTable &forces,
+                        IntraSoftCLJPotential::ForceWorkspace &workspace,
+                        double scale_force=1) const;
+
+    void calculateForce(const IntraSoftCLJPotential::Molecule &mol, 
+			MolForceTable &forces,
+			const Symbol &symbol,
+			const Components &components,
+			IntraSoftCLJPotential::ForceWorkspace &workspace,
+                            double scale_force=1) const;
+    
+    void calculateForce(const IntraSoftCLJPotential::Molecule &mol,
+			const IntraSoftCLJPotential::Molecule &rest_of_mol,
+			MolForceTable &forces,
+			const Symbol &symbol,
+			const Components &components,
+			IntraSoftCLJPotential::ForceWorkspace &workspace,
+			double scale_force=1) const;
+
+    void calculateField(const IntraSoftCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        MolFieldTable &fields,
+                        IntraSoftCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraSoftCLJPotential::Molecule &mol,
+                        const IntraSoftCLJPotential::Molecule &rest_of_mol,
+                        const CLJProbe &probe,
+                        MolFieldTable &fields,
+                        IntraSoftCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraSoftCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        MolFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraSoftCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraSoftCLJPotential::Molecule &mol,
+                        const IntraSoftCLJPotential::Molecule &rest_of_mol,
+                        const CLJProbe &probe,
+                        MolFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraSoftCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraSoftCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        GridFieldTable &fields,
+                        IntraSoftCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculateField(const IntraSoftCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        GridFieldTable &fields,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraSoftCLJPotential::FieldWorkspace &workspace,
+                        double scale_field=1) const;
+
+    void calculatePotential(const IntraSoftCLJPotential::Molecule &mol, 
+                            const CLJProbe &probe,
+                            MolPotentialTable &potentials,
+                            IntraSoftCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraSoftCLJPotential::Molecule &mol,
+                            const IntraSoftCLJPotential::Molecule &rest_of_mol,
+                            const CLJProbe &probe,
+                            MolPotentialTable &potentials,
+                            IntraSoftCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraSoftCLJPotential::Molecule &mol, 
+                            const CLJProbe &probe,
+                            MolPotentialTable &potentials,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraSoftCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraSoftCLJPotential::Molecule &mol,
+                            const IntraSoftCLJPotential::Molecule &rest_of_mol,
+                            const CLJProbe &probe,
+                            MolPotentialTable &potentials,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraSoftCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraSoftCLJPotential::Molecule &mol, 
+                            const CLJProbe &probe,
+                            GridPotentialTable &potentials,
+                            IntraSoftCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+
+    void calculatePotential(const IntraSoftCLJPotential::Molecule &mol, 
+                            const CLJProbe &probe,
+                            GridPotentialTable &potentials,
+                            const Symbol &symbol,
+                            const Components &components,
+                            IntraSoftCLJPotential::PotentialWorkspace &workspace,
+                            double scale_potential=1) const;
+private:
+    double totalCharge(const IntraSoftCLJPotential::Parameters::Array &params) const;
+
+    void assertCompatible(const IntraSoftCLJPotential::Molecule &mol,
+                          const IntraSoftCLJPotential::Molecule &rest_of_mol) const;
+
+    void _pvt_calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
+			      IntraSoftCLJPotential::EnergyWorkspace &workspace,
+			      const Parameter *params0_array,
+			      const Parameter *params1_array,
+			      const quint32 nats0, const quint32 nats1,
+			      double icnrg[], double iljnrg[],
+			      const double alfa[], double delta[], const int nalpha) const;
+
+    void _pvt_calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
+			      const QSet<SireID::Index> &atoms0, 
+			      const QSet<SireID::Index> &atoms1,
+			      IntraSoftCLJPotential::EnergyWorkspace &workspace,
+			      const Parameter *params0_array,
+			      const Parameter *params1_array,
+			      const quint32 nats0, const quint32 nats1,
+			      double icnrg[], double iljnrg[],
+			      const double alfa[], double delta[], const int nalpha) const;
+
 };
 
 /** This small class is used to hide most of the public interfaces of the 
@@ -1073,6 +1339,47 @@ InterSoftCLJPotential::calculatePotential(
         
     else
         throwMissingFieldComponent(symbol, components);
+}
+
+//////
+////// Inline functions of IntraCLJPotential
+//////
+
+/** Calculate the forces represented by the symbol 'symbol' between the 
+    atoms in the molecule 'mol' and add these forces onto 'forces'. This uses
+    the passed workspace to perform the calculation */
+inline void 
+IntraSoftCLJPotential::calculateForce(const IntraSoftCLJPotential::Molecule &mol, 
+				      MolForceTable &forces,
+				      const Symbol &symbol,
+				      const IntraSoftCLJPotential::Components &components,
+				      IntraSoftCLJPotential::ForceWorkspace &workspace,
+				      double scale_force) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ forces has not yet been written..."), CODELOC );
+}
+
+/** Calculate the forces represented by the symbol 'symbol' acting on the 
+    atoms in 'mol1' caused by the atoms in the rest of the same molecule 
+    in 'rest_of_mol', and add these forces onto 'forces'. This uses the 
+    passed workspace to perform the calculation
+    
+    \throw SireError::incompatible_error
+*/
+inline void
+IntraSoftCLJPotential::calculateForce(const IntraSoftCLJPotential::Molecule &mol,
+				      const IntraSoftCLJPotential::Molecule &rest_of_mol,
+				      MolForceTable &forces,
+				      const Symbol &symbol,
+				      const IntraSoftCLJPotential::Components &components,
+				      IntraSoftCLJPotential::ForceWorkspace &workspace,
+				      double scale_force) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ forces has not yet been written..."), CODELOC );
 }
 
 #endif

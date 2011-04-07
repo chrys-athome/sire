@@ -2052,3 +2052,1317 @@ void InterSoftCLJPotential::_pvt_calculateLJPotential(const InterSoftCLJPotentia
                 "The code to calculate soft coulomb and LJ fields has not "
                 "yet been written..."), CODELOC );
 }
+
+//////////////
+////////////// Implementation of IntraSoftCLJPotential
+/////////////
+
+static const RegisterMetaType<IntraSoftCLJPotential> r_intraclj( MAGIC_ONLY,
+                                                   IntraSoftCLJPotential::typeName() );
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+                                      const IntraSoftCLJPotential &intraclj)
+{
+    writeHeader(ds, r_intraclj, 1);
+    
+    ds << static_cast<const SoftCLJPotential&>(intraclj);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      IntraSoftCLJPotential &intraclj)
+{
+    VersionID v = readHeader(ds, r_intraclj);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SoftCLJPotential&>(intraclj);
+    }
+    else
+        throw version_error(v, "1", r_intraclj, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+IntraSoftCLJPotential::IntraSoftCLJPotential() : SoftCLJPotential()
+{}
+
+/** Copy constructor */
+IntraSoftCLJPotential::IntraSoftCLJPotential(const IntraSoftCLJPotential &other)
+                  : SoftCLJPotential(other)
+{}
+
+/** Destructor */
+IntraSoftCLJPotential::~IntraSoftCLJPotential()
+{}
+
+/** Copy assignment operator */
+IntraSoftCLJPotential& 
+IntraSoftCLJPotential::operator=(const IntraSoftCLJPotential &other)
+{
+    SoftCLJPotential::operator=(other);
+    return *this;
+}
+
+/** Return all of the parameters needed by this potential for 
+    the molecule 'molecule', using the supplied property map to
+    find the properties that contain those parameters
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+IntraSoftCLJPotential::Parameters 
+IntraSoftCLJPotential::getParameters(const PartialMolecule &molecule,
+				     const PropertyMap &map)
+{
+    need_update_ljpairs = true;
+
+    return Parameters( AtomicParameters3D<CLJParameter>(
+                               molecule, map[parameters().coordinates()],
+                               CLJPotential::getCLJParameters(molecule, 
+							      map[parameters().charge()],
+							      map[parameters().lj()]) ),
+		       IntraScaledParameters<CLJNBPairs>(
+					molecule, map[parameters().intraScaleFactors()] )
+                     );
+}
+
+/** Update the parameters for the molecule going from 'old_molecule' to 
+    'new_molecule', with the parameters found using the property map 'map'
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+IntraSoftCLJPotential::Parameters
+IntraSoftCLJPotential::updateParameters(const IntraSoftCLJPotential::Parameters &old_params,
+					const PartialMolecule &old_molecule,
+					const PartialMolecule &new_molecule,
+					const PropertyMap &map)
+{
+    if (old_molecule.selection() != new_molecule.selection())
+        //the selection has changed - just get completely new parameters
+        return this->getParameters(new_molecule, map);
+
+    Parameters new_params = old_params;
+
+    //get the property names
+    const PropertyName &coords_property = map[parameters().coordinates()];
+    const PropertyName &chg_property = map[parameters().charge()];
+    const PropertyName &lj_property = map[parameters().lj()];
+    const PropertyName &scl_property = map[parameters().intraScaleFactors()];
+    
+    //get what has changed
+    bool new_coords = old_molecule.version(coords_property) !=
+                         new_molecule.version(coords_property);
+                             
+    bool new_clj = ( old_molecule.version(chg_property) !=
+                         new_molecule.version(chg_property) ) or
+                   ( old_molecule.version(lj_property) !=
+                         new_molecule.version(lj_property) );
+
+    bool new_scl = ( old_molecule.version(scl_property) !=
+                         new_molecule.version(scl_property) );
+
+    if (new_coords)
+        new_params.setAtomicCoordinates( AtomicCoords3D(new_molecule, 
+                                                        coords_property) );
+
+    if (new_clj)
+    {
+        new_params.setAtomicParameters( CLJPotential::getCLJParameters(new_molecule,
+                                            chg_property, lj_property) );
+
+	//need_update_ljpairs = true;
+    }
+
+    if (new_scl)
+        new_params.setIntraScaleFactors( 
+                IntraScaledParameters<CLJNBPairs>(new_molecule, scl_property) );
+
+    return new_params;
+}
+                 
+/** Update the parameters for the molecule going from 'old_molecule' to 
+    'new_molecule', also while the parameters of 'old_molecule'
+    where found in 'old_map', now get the parameters using 'new_map'
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+IntraSoftCLJPotential::Parameters
+IntraSoftCLJPotential::updateParameters(const IntraSoftCLJPotential::Parameters &old_params,
+					const PartialMolecule &old_molecule,
+					const PartialMolecule &new_molecule,
+					const PropertyMap &old_map, 
+					const PropertyMap &new_map)
+{
+    if (old_molecule.selection() != new_molecule.selection())
+        //the selection has changed - just get completely new parameters
+        return this->getParameters(new_molecule, new_map);
+
+    Parameters new_params = old_params;
+
+    //get the property names
+    const PropertyName &old_coords = old_map[parameters().coordinates()];
+    const PropertyName &old_chg = old_map[parameters().charge()];
+    const PropertyName &old_lj = old_map[parameters().lj()];
+    const PropertyName &old_scl = old_map[parameters().intraScaleFactors()];
+    
+    const PropertyName &new_coords = new_map[parameters().coordinates()];
+    const PropertyName &new_chg = new_map[parameters().charge()];
+    const PropertyName &new_lj = new_map[parameters().lj()];
+    const PropertyName &new_scl = new_map[parameters().intraScaleFactors()];
+    
+    //get what has changed
+    bool changed_coords = (new_coords != old_coords) or
+                           old_molecule.version(old_coords) !=
+                           new_molecule.version(old_coords);
+                             
+    bool changed_clj = (new_chg != old_chg or new_lj != old_lj) or
+                       ( old_molecule.version(old_chg) !=
+                         new_molecule.version(old_chg) ) or
+                       ( old_molecule.version(old_lj) !=
+                         new_molecule.version(old_lj) );
+
+    bool changed_scl = (new_scl != old_scl) or
+                        old_molecule.version(old_scl) !=
+                        new_molecule.version(old_scl);
+
+    if (changed_coords)
+        new_params.setAtomicCoordinates( AtomicCoords3D(new_molecule, new_coords) );
+
+    if (changed_clj)
+    {
+      new_params.setAtomicParameters( CLJPotential::getCLJParameters(new_molecule,
+                                                         new_chg, new_lj) );
+                                                         
+      //       need_update_ljpairs = true;
+    }
+
+    if (changed_scl)
+        new_params.setIntraScaleFactors( 
+                        IntraScaledParameters<CLJNBPairs>(new_molecule, new_scl) );
+
+    return new_params;
+}
+
+/** Return the IntraSoftCLJPotential::Molecule representation of 'molecule',
+    using the supplied PropertyMap to find the properties that contain
+    the necessary forcefield parameters
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+IntraSoftCLJPotential::Molecule
+IntraSoftCLJPotential::parameterise(const PartialMolecule &molecule,
+                                    const PropertyMap &map)
+{
+    return IntraSoftCLJPotential::Molecule(molecule, *this, map);
+}
+
+/** Convert the passed group of molecules into IntraSoftCLJPotential::Molecules,
+    using the supplied PropertyMap to find the properties that contain
+    the necessary forcefield parameters in each molecule
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+IntraSoftCLJPotential::Molecules 
+IntraSoftCLJPotential::parameterise(const MoleculeGroup &molecules,
+                                    const PropertyMap &map)
+{
+    return IntraSoftCLJPotential::Molecules(molecules, *this, map);
+}
+
+
+/** Assert that 'rest_of_mol' is compatible with 'mol'. They are only 
+    compatible if they are both part of the same molecule (not necessarily
+    the same version) with the same layout UID.
+    
+    \throw SireError::incompatible_error
+*/
+void IntraSoftCLJPotential::assertCompatible(const IntraSoftCLJPotential::Molecule &mol,
+					     const IntraSoftCLJPotential::Molecule &rest_of_mol) const
+{
+    if (mol.number() != rest_of_mol.number() or
+        mol.molecule().data().info().UID() 
+                        != rest_of_mol.molecule().data().info().UID())
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "Problem adding the molecule %1 (%2). It doesn't appear to be "
+            "in the same molecule as %3 (%4), or the molecule layout "
+            "IDs may be different!")
+                .arg(mol.molecule().name()).arg(mol.number())
+                .arg(rest_of_mol.molecule().name()).arg(rest_of_mol.number()),
+                    CODELOC );
+    }
+    else if (mol.parameters().intraScaleFactors() != 
+                rest_of_mol.parameters().intraScaleFactors())
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "The non-bonded scaling factors for the molecule %1 (%2) "
+            "are different to the ones for the rest of the molecule. "
+            "This is probably caused by a program bug...")
+                .arg(mol.molecule().name()).arg(mol.number()),
+                    CODELOC );
+    }
+}
+
+/** Return the total charge of the parameters for the group in 'params' */
+double IntraSoftCLJPotential::totalCharge(
+                            const IntraSoftCLJPotential::Parameters::Array &params) const
+{
+    int n = params.count();
+    const Parameter *params_array = params.constData();
+    
+    double chg = 0;
+    
+    for (int i=0; i<n; ++i)
+    {
+        chg += params_array[i].reduced_charge;
+    }
+    
+    return chg;
+}
+
+void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &group_pairs, 
+						 IntraSoftCLJPotential::EnergyWorkspace &distmat,
+						 const IntraSoftCLJPotential::Parameter *params0_array, 
+						 const IntraSoftCLJPotential::Parameter *params1_array,
+						 const quint32 nats0, const quint32 nats1, 
+						 double icnrg[], double iljnrg[],
+						 const double alfa[], double delta[], const int nalpha) const
+{
+    if (group_pairs.isEmpty())
+    {
+        //there is a constant scale factor between groups
+        CLJScaleFactor cljscl = group_pairs.defaultValue();
+
+        if (cljscl.coulomb() == 0 and cljscl.lj() == 0)
+            return;
+
+        for (quint32 i=0; i<nats0; ++i)
+        {
+            distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+                
+            if (param0.ljid == 0)
+            {
+                //null LJ parameter - only add on the coulomb energy
+                for (quint32 j=0; j<nats1; ++j)
+                {
+		  const double dist2 = distmat[j];
+		  
+		  const double q2 = cljscl.coulomb() * 
+		    param0.reduced_charge * params1_array[j].reduced_charge;
+		  
+		  for (int k=0; k<nalpha; ++k)
+		    {
+		      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+		    }
+		  
+		  //icnrg += cljscl.coulomb() *
+		  //         param0.reduced_charge * 
+		  //         params1_array[j].reduced_charge / distmat[j];
+                }
+            }
+            else
+            {
+                for (quint32 j=0; j<nats1; ++j)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param1 = params1_array[j];
+                        
+                    const double invdist = double(1) / distmat[j];
+		    
+                    icnrg += cljscl.coulomb() *
+                             param0.reduced_charge * param1.reduced_charge
+                                                   * invdist;
+		    //const double dist2 = distmat[j];
+                    //    
+		    //const double q2 = cljscl.coulomb() * 
+		    // param0.reduced_charge * param1.reduced_charge;
+                    //    
+		    //for (int k=0; k<nalpha; ++k)
+		    //  {
+		    //icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+		    //  }
+                              
+                    if (param1.ljid != 0)
+                    {
+                        const LJPair &ljpair = ljpairs.constData()[
+                                                  ljpairs.map(param0.ljid,
+                                                              param1.ljid)];
+                        
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        iljnrg += cljscl.lj() *
+                                  4 * ljpair.epsilon() * (sig_over_dist12 - 
+                                                          sig_over_dist6);
+                        //const double sig2 = ljpair.sigma() * ljpair.sigma();
+			//             const double sig6 = sig2 * sig2 * sig2;
+			//                        
+			//                        for (int k=0; k<nalpha; ++k)
+			//                        {
+			//                            const double shift = ljpair.sigma() * delta[k];
+			//                        
+			//                            double lj_denom = dist2 + shift;
+			//                            lj_denom = lj_denom * lj_denom * lj_denom;
+			//                        
+			//                            const double sig6_over_denom = sig6 / lj_denom;
+			//                            const double sig12_over_denom2 = sig6_over_denom *
+			//                                                             sig6_over_denom;
+			//    
+			//                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
+			//                                                             sig6_over_denom);
+			//                        }
+
+                    }
+                }
+            }
+        } 
+    }
+    else
+    {
+        //there are different nb scale factors between
+        //the atoms. We need to calculate the energies using
+        //them...
+        for (quint32 i=0; i<nats0; ++i)
+        {
+            distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+                
+            if (param0.ljid == 0)
+            {
+                //null LJ parameter - only add on the coulomb energy
+                for (quint32 j=0; j<nats1; ++j)
+                {
+                    const CLJScaleFactor &cljscl = group_pairs(i,j);
+                            
+                    if (cljscl.coulomb() != 0)
+                    {
+                        icnrg += cljscl.coulomb() * 
+                                    param0.reduced_charge * 
+                                    params1_array[j].reduced_charge / distmat[j];
+			//const double dist2 = distmat[j];
+			//
+			//const double q2 = cljscl.coulomb() * 
+			// param0.reduced_charges * params1_array[j].reduced_charges;
+			//
+			//for (int k=0; k<nalpha; ++k)
+			//  {
+			//      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+			//  }
+                    }
+                }
+            }
+            else
+            {
+                for (quint32 j=0; j<nats1; ++j)
+                {
+                    //do both coulomb and LJ
+                    const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+                    if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        
+                        const double invdist = double(1) / distmat[j];
+                        
+                        icnrg += cljscl.coulomb() *  
+                                 param0.reduced_charge * 
+                                 param1.reduced_charge * invdist;
+			//const double dist2 = distmat[j];
+			//
+			//const double q2 = cljscl.coulomb() * 
+			// param0.reduced_charges * params1_array[j].reduced_charges;
+			//
+			//for (int k=0; k<nalpha; ++k)
+			//  {
+			//      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+			//  }
+
+                        if (cljscl.lj() != 0 and param1.ljid != 0)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                     ljpairs.map(param0.ljid,
+                                                                 param1.ljid)];
+                        
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            iljnrg += cljscl.lj() * 4 * ljpair.epsilon() * 
+                                       (sig_over_dist12 - sig_over_dist6);
+			    //const double sig2 = ljpair.sigma() * ljpair.sigma();
+			    //             const double sig6 = sig2 * sig2 * sig2;
+			    //                        
+			    //                        for (int k=0; k<nalpha; ++k)
+			    //                        {
+			    //                            const double shift = ljpair.sigma() * delta[k];
+			    //                        
+			    //                            double lj_denom = dist2 + shift;
+			    //                            lj_denom = lj_denom * lj_denom * lj_denom;
+			    //                        
+			    //                            const double sig6_over_denom = sig6 / lj_denom;
+			    //                            const double sig12_over_denom2 = sig6_over_denom *
+			    //                                                             sig6_over_denom;
+			    //    
+			    //                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
+			    //                                                             sig6_over_denom);
+			    //                        }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &group_pairs, 
+						 const QSet<Index> &atoms0, const QSet<Index> &atoms1,
+						 IntraSoftCLJPotential::EnergyWorkspace &distmat,
+						 const IntraSoftCLJPotential::Parameter *params0_array, 
+						 const IntraSoftCLJPotential::Parameter *params1_array,
+						 const quint32 nats0, const quint32 nats1, 
+						 double icnrg[], double iljnrg[],
+						 const double alfa[], double delta[], const int nalpha) const
+{
+    if (atoms0.isEmpty() or atoms1.isEmpty())
+        return;
+
+    if (group_pairs.isEmpty())
+    {
+        //there is a constant scale factor between groups
+        CLJScaleFactor cljscl = group_pairs.defaultValue();
+
+        if (cljscl.coulomb() == 0 and cljscl.lj() == 0)
+            return;
+        
+        foreach (Index i, atoms0)
+        {
+            distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+                
+            if (param0.ljid == 0)
+            {
+                //null LJ parameter - only add on the coulomb energy
+                foreach (Index j, atoms1)
+                {
+		  //icnrg += cljscl.coulomb() * 
+		  //         param0.reduced_charge * 
+		  //         params1_array[j].reduced_charge / distmat[j];
+		    // BUT IS DISTMAT THE DISTANCE OR DISTANCE**2 ?
+		  const double dist2 = distmat[j];
+		    
+		  const double q2 = cljscl.coulomb() * 
+		    param0.reduced_charge * params1_array[j].reduced_charge;
+		    
+		  for (int k=0; k<nalpha; ++k)
+		    {
+		      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+		    }
+                }
+            }
+            else
+            {
+                foreach (Index j, atoms1)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param1 = params1_array[j];
+                        
+                    const double invdist = double(1) / distmat[j];
+
+                    icnrg += cljscl.coulomb() *
+                             param0.reduced_charge * param1.reduced_charge
+                                                   * invdist;
+		    //const double dist2 = distmat[j];
+                    //    
+		    //const double q2 = cljscl.coulomb() * 
+		    // param0.reduced_charge * param1.reduced_charge;
+                    //    
+		    //for (int k=0; k<nalpha; ++k)
+		    //  {
+		    //icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+		    //  }
+
+                    if (param1.ljid != 0)
+                    {
+                        const LJPair &ljpair = ljpairs.constData()[
+                                                  ljpairs.map(param0.ljid,
+                                                              param1.ljid)];
+                        
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        iljnrg += cljscl.lj() *
+                                  4 * ljpair.epsilon() * (sig_over_dist12 - 
+                                                          sig_over_dist6);
+                        //const double sig2 = ljpair.sigma() * ljpair.sigma();
+			//             const double sig6 = sig2 * sig2 * sig2;
+			//                        
+			//                        for (int k=0; k<nalpha; ++k)
+			//                        {
+			//                            const double shift = ljpair.sigma() * delta[k];
+			//                        
+			//                            double lj_denom = dist2 + shift;
+			//                            lj_denom = lj_denom * lj_denom * lj_denom;
+			//                        
+			//                            const double sig6_over_denom = sig6 / lj_denom;
+			//                            const double sig12_over_denom2 = sig6_over_denom *
+			//                                                             sig6_over_denom;
+			//    
+			//                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
+			//                                                             sig6_over_denom);
+			//                        }
+			
+                    }
+                }
+            }
+        } 
+    }
+    else
+    {
+        //there are different nb scale factors between
+        //the atoms. We need to calculate the energies using
+        //them...
+        foreach (Index i, atoms0)
+        {
+            distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+                
+            if (param0.ljid == 0)
+            {
+                //null LJ parameter - only add on the coulomb energy
+                foreach (Index j, atoms1)
+                {
+                    const CLJScaleFactor &cljscl = group_pairs(i,j);
+                            
+                    if (cljscl.coulomb() != 0)
+		      {
+			icnrg += cljscl.coulomb() * 
+			  param0.reduced_charge * 
+			  params1_array[j].reduced_charge / distmat[j];
+			//const double dist2 = distmat[j];
+			//
+			//const double q2 = cljscl.coulomb() * 
+			// param0.reduced_charges * params1_array[j].reduced_charges;
+			//
+			//for (int k=0; k<nalpha; ++k)
+			//  {
+			//      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+			//  }
+		      }
+                }
+            }
+            else
+            {
+                foreach (Index j, atoms1)
+                {
+                    //do both coulomb and LJ
+                    const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+                    if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        
+                        const double invdist = double(1) / distmat[j];
+                        
+                        icnrg += cljscl.coulomb() *  
+                                 param0.reduced_charge * 
+                                 param1.reduced_charge * invdist;
+			//const double dist2 = distmat[j];
+			//
+			//const double q2 = cljscl.coulomb() * 
+			// param0.reduced_charges * params1_array[j].reduced_charges;
+			//
+			//for (int k=0; k<nalpha; ++k)
+			//  {
+			//      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+			//  }
+
+                        if (cljscl.lj() != 0 and param1.ljid != 0)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                     ljpairs.map(param0.ljid,
+                                                                 param1.ljid)];
+                        
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            iljnrg += cljscl.lj() * 4 * ljpair.epsilon() * 
+                                       (sig_over_dist12 - sig_over_dist6);
+			    //const double sig2 = ljpair.sigma() * ljpair.sigma();
+			    //             const double sig6 = sig2 * sig2 * sig2;
+			    //                        
+			    //                        for (int k=0; k<nalpha; ++k)
+			    //                        {
+			    //                            const double shift = ljpair.sigma() * delta[k];
+			    //                        
+			    //                            double lj_denom = dist2 + shift;
+			    //                            lj_denom = lj_denom * lj_denom * lj_denom;
+			    //                        
+			    //                            const double sig6_over_denom = sig6 / lj_denom;
+			    //                            const double sig12_over_denom2 = sig6_over_denom *
+			    //                                                             sig6_over_denom;
+			    //    
+			    //                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
+			    //                                                             sig6_over_denom);
+			    //                        }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Calculate the intramolecular CLJ energy of the passed molecule, and
+    add this onto 'energy'. This uses the passed workspace when
+    performing the calculation */
+void IntraSoftCLJPotential::calculateEnergy(const IntraSoftCLJPotential::Molecule &mol,
+					    IntraSoftCLJPotential::Energy &energy,
+					    IntraSoftCLJPotential::EnergyWorkspace &distmat,
+					    double scale_energy) const
+{
+  //    throw SireError::incomplete_code( QObject::tr(
+  //            "The code necessary to calculate intramolecular soft coulomb "
+  //            "and LJ energies has not yet been written..."), CODELOC );
+  qDebug() << " HELLO MOL ";
+    if (scale_energy == 0 or mol.isEmpty())
+        return;
+
+    const quint32 ngroups = mol.nCutGroups();
+    
+    const CoordGroup *groups_array = mol.coordinates().constData();
+    
+    BOOST_ASSERT( mol.parameters().atomicParameters().count() == int(ngroups) );
+    const Parameters::Array *molparams_array 
+                            = mol.parameters().atomicParameters().constData();
+
+    const CLJNBPairs &nbpairs = mol.parameters().intraScaleFactors();
+    
+    //double cnrg = 0;
+    //double ljnrg = 0;
+
+    //the alpha_values array contains all of the unique alpha values
+    const double *alfa = alpha_values.constData();
+    const int nalpha = alpha_values.count();
+        
+    if (nalpha <= 0)
+      return;
+        
+    double cnrg[nalpha];
+    double ljnrg[nalpha];
+        
+    for (int i=0; i<nalpha; ++i)
+      {
+	cnrg[i] = 0;
+	ljnrg[i] = 0;
+      }
+        
+    //this uses the following potentials
+    //           Zacharias and McCammon, J. Chem. Phys., 1994, and also,
+    //           Michel et al., JCTC, 2007
+    //
+    //  V_{LJ}(r) = 4 epsilon [ ( sigma^12 / (delta*sigma + r^2)^6 ) - 
+    //                          ( sigma^6  / (delta*sigma + r^2)^3 ) ]
+    //
+    //  delta = shift_delta * alpha
+    //
+    //  V_{coul}(r) = (1-alpha)^n q_i q_j / 4 pi eps_0 (alpha+r^2)^(1/2)
+    //
+    // This contrasts to Rich T's LJ softcore function, which was;
+    //
+    //  V_{LJ}(r) = 4 epsilon [ (sigma^12 / (alpha^m sigma^6 + r^6)^2) - 
+    //                          (sigma^6  / (alpha^m sigma^6 + r^6) ) ]
+    
+    double one_minus_alfa_to_n[nalpha];
+    double delta[nalpha];
+        
+    for (int i=0; i<nalpha; ++i)
+      {
+	one_minus_alfa_to_n[i] = SireMaths::pow(1 - alfa[i], int(coul_power));
+	delta[i] = shift_delta * alfa[i];
+      }
+      
+    //loop over all pairs of CutGroups in the molecule
+    for (quint32 igroup=0; igroup<ngroups; ++igroup)
+    {
+        const Parameters::Array &params0 = molparams_array[igroup];
+
+        const CoordGroup &group0 = groups_array[igroup];
+        const AABox &aabox0 = group0.aaBox();
+        const quint32 nats0 = group0.count();
+        const Parameter *params0_array = params0.constData();
+    
+        CGIdx cgidx_igroup = mol.cgIdx(igroup);
+    
+        for (quint32 jgroup=igroup; jgroup<ngroups; ++jgroup)
+        {
+            const CoordGroup &group1 = groups_array[jgroup];
+            const Parameters::Array &params1 = molparams_array[jgroup];
+
+            //check first that these two CoordGroups could be within cutoff
+            //(don't test igroup==jgroup as this is the same CutGroup
+            // and definitely within cutoff!)
+            const bool within_cutoff = (igroup == jgroup) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox0, group1.aaBox());
+            
+            if (not within_cutoff)
+                //this CutGroup is beyond the cutoff distance
+                continue;
+            
+            //calculate all of the interatomic distances
+            const double mindist = spce->calcDist(group0, group1, distmat);
+            
+            if (mindist > switchfunc->cutoffDistance())
+                //all of the atoms are definitely beyond cutoff
+                continue;
+                
+            CGIdx cgidx_jgroup = mol.cgIdx(jgroup);
+                
+            //get the non-bonded scale factors for all pairs of atoms
+            //between these groups (or within this group, if igroup == jgroup)
+            const CLJNBPairs::CGPairs &group_pairs = nbpairs(cgidx_igroup,
+                                                             cgidx_jgroup);
+
+            //double icnrg = 0;
+            //double iljnrg = 0;
+
+	    double icnrg[nalpha];
+	    double iljnrg[nalpha];
+
+	    for (int i=0; i<nalpha; ++i)
+	      {
+		icnrg[i] = 0;
+		iljnrg[i] = 0;
+	      }
+            
+            //loop over all intraatomic pairs and calculate the energies
+            const quint32 nats1 = group1.count();
+            const Parameter *params1_array = params1.constData();
+            
+            _pvt_calculateEnergy(group_pairs, distmat, params0_array, params1_array,
+				 nats0, nats1, icnrg, iljnrg, alfa, delta, nalpha);
+            
+            //if this is the same group then half the energies to 
+            //correct for double-counting
+            if (igroup == jgroup)
+            {
+	      for (int i=0; i<nalpha; ++i)
+		{
+		  icnrg[i] *= 0.5;
+		  iljnrg[i] *= 0.5;
+		}
+            }
+
+            //are we shifting the electrostatic potential?
+            if (use_electrostatic_shifting and igroup != jgroup)
+	      {
+                //icnrg -= this->totalCharge(params0) * this->totalCharge(params1)
+                //              / switchfunc->electrostaticCutoffDistance();
+		const double coul_shift = this->totalCharge(params0) * 
+		  this->totalCharge(params1)
+		  / switchfunc->electrostaticCutoffDistance();
+		
+		for (int i=0; i<nalpha; ++i)
+		  {
+		    icnrg[i] -= coul_shift;
+		  }
+	      }
+            //now add these energies onto the total for the molecule,
+            //scaled by any non-bonded feather factor
+            if (mindist > switchfunc->featherDistance())
+            {
+	      //cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
+	      //ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
+	      const double cscl = switchfunc->electrostaticScaleFactor( Length(mindist) );
+	      
+	      const double ljscl = switchfunc->vdwScaleFactor( Length(mindist) );
+		            
+	      for (int i=0; i<nalpha; ++i)
+		{
+		  cnrg[i] += cscl * icnrg[i];
+		  ljnrg[i] += ljscl * iljnrg[i];
+		}
+            }
+            else
+            {
+	      //cnrg += icnrg;
+	      //ljnrg += iljnrg;
+	      for (int i=0; i<nalpha; ++i)
+		{
+		  cnrg[i] += icnrg[i];
+		  ljnrg[i] += iljnrg[i];
+		}
+	    }
+        }
+    }
+    
+    //add this molecule pair's energy onto the total
+    //energy += Energy(scale_energy * cnrg, scale_energy * ljnrg);
+    for (int i=0; i<nalpha; ++i)
+      {
+	cnrg[i] *= scale_energy * one_minus_alfa_to_n[i];
+	ljnrg[i] *= 4 * scale_energy;//THIS NEEDS TO BE CHECKED
+      }
+
+    //now copy the calculated energies back to the Energy object
+    Energy soft_energy;
+    
+    for (int i=0; i<alpha_index.count(); ++i)
+    {
+      int idx = alpha_index.at(i);
+      
+      if (idx >= 0)
+	soft_energy.setEnergy(i, cnrg[idx], ljnrg[idx]);
+    }
+    
+    energy += soft_energy;
+    
+}
+
+/** Calculate the intramolecular CLJ energy of the passed molecule
+    interacting with the rest of the same molecule in 'rest_of_mol', and
+    add this onto 'energy'. This uses the passed workspace when
+    performing the calculation. Note that mol and rest_of_mol should
+    not contain any overlapping atoms, and that they should both be
+    part of the same molecule (albeit potentially at different versions,
+    but with the same layout UID)
+    
+    \throw SireError::incompatible_error
+*/
+void IntraSoftCLJPotential::calculateEnergy(const IntraSoftCLJPotential::Molecule &mol,
+					    const IntraSoftCLJPotential::Molecule &rest_of_mol,
+					    IntraSoftCLJPotential::Energy &energy,
+					    IntraSoftCLJPotential::EnergyWorkspace &distmat,
+					    double scale_energy) const
+{
+  //    throw SireError::incomplete_code( QObject::tr(
+  //            "The code necessary to calculate intramolecular soft coulomb "
+  //            "and LJ energies has not yet been written..."), CODELOC );
+  qDebug() << " HELLO MOL  AND REST OF MOL";
+        if (scale_energy == 0 or mol.isEmpty() or rest_of_mol.isEmpty())
+        return;
+
+    //ensure that this is the same molecule, with the same layout UID
+    this->assertCompatible(mol, rest_of_mol);
+
+    const quint32 ngroups0 = mol.nCutGroups();
+    const CoordGroup *groups0_array = mol.coordinates().constData();
+    
+    BOOST_ASSERT( mol.parameters().atomicParameters().count() == int(ngroups0) );
+    const Parameters::Array *molparams0_array 
+                            = mol.parameters().atomicParameters().constData();
+
+    const quint32 ngroups1 = rest_of_mol.nCutGroups();
+    const CoordGroup *groups1_array = rest_of_mol.coordinates().constData();
+    
+    BOOST_ASSERT( rest_of_mol.parameters().atomicParameters().count() == int(ngroups1) );
+    const Parameters::Array *molparams1_array
+                            = rest_of_mol.parameters().atomicParameters().constData();
+
+    //the CLJNBPairs must be the same in both molecules - this is checked
+    //as part of assertCompatible(..)
+    const CLJNBPairs &nbpairs = mol.parameters().intraScaleFactors();
+
+    //double cnrg = 0;
+    //double ljnrg = 0;
+    
+    //the alpha_values array contains all of the unique alpha values
+    const double *alfa = alpha_values.constData();
+    const int nalpha = alpha_values.count();
+    
+    if (nalpha <= 0)
+      return;
+    
+    double cnrg[nalpha];
+    double ljnrg[nalpha];
+    
+    for (int i=0; i<nalpha; ++i)
+      {
+	cnrg[i] = 0;
+	ljnrg[i] = 0;
+      }
+
+    //this uses the following potentials
+    //           Zacharias and McCammon, J. Chem. Phys., 1994, and also,
+    //           Michel et al., JCTC, 2007
+    //
+    //  V_{LJ}(r) = 4 epsilon [ ( sigma^12 / (delta*sigma + r^2)^6 ) - 
+    //                          ( sigma^6  / (delta*sigma + r^2)^3 ) ]
+    //
+    //  delta = shift_delta * alpha
+    //
+    //  V_{coul}(r) = (1-alpha)^n q_i q_j / 4 pi eps_0 (alpha+r^2)^(1/2)
+    //
+    // This contrasts to Rich T's LJ softcore function, which was;
+    //
+    //  V_{LJ}(r) = 4 epsilon [ (sigma^12 / (alpha^m sigma^6 + r^6)^2) - 
+    //                          (sigma^6  / (alpha^m sigma^6 + r^6) ) ]
+    //
+
+    double one_minus_alfa_to_n[nalpha];
+    double delta[nalpha];
+        
+    for (int i=0; i<nalpha; ++i)
+      {
+	one_minus_alfa_to_n[i] = SireMaths::pow(1 - alfa[i], int(coul_power));
+	delta[i] = shift_delta * alfa[i];
+      }
+
+    //calculate the energy of all of the atoms in 'mol' interacting with
+    //all of the atoms in 'rest_of_mol' that aren't in 'mol'
+    for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+    {
+        const Parameters::Array &params0 = molparams0_array[igroup];
+
+        const CoordGroup &group0 = groups0_array[igroup];
+        const AABox &aabox0 = group0.aaBox();
+        const quint32 nats0 = group0.count();
+        const Parameter *params0_array = params0.constData();
+    
+        //get the CGIdx of this CutGroup
+        CGIdx cgidx_igroup = mol.cgIdx(igroup);
+    
+        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        {
+            const CoordGroup &group1 = groups1_array[jgroup];
+            const Parameters::Array &params1 = molparams1_array[jgroup];
+
+            CGIdx cgidx_jgroup = rest_of_mol.cgIdx(jgroup);
+
+            //skip this CutGroup if it is in 'mol'
+            if (mol.molecule().selection().selectedAll(cgidx_jgroup))
+                continue;
+
+            //check first that these two CoordGroups could be within cutoff
+            //(don't test igroup==jgroup as this is the same CutGroup
+            // and definitely within cutoff!)
+            const bool within_cutoff = (cgidx_igroup == cgidx_jgroup) or not
+                                        spce->beyond(switchfunc->cutoffDistance(), 
+                                                     aabox0, group1.aaBox());
+            
+            if (not within_cutoff)
+                //this CutGroup is beyond the cutoff distance
+                continue;
+            
+            //calculate all of the interatomic distances
+            const double mindist = spce->calcDist(group0, group1, distmat);
+            
+            if (mindist > switchfunc->cutoffDistance())
+                //all of the atoms are definitely beyond cutoff
+                continue;
+                
+            //get the non-bonded scale factors for all pairs of atoms
+            //between these groups (or within this group, if igroup == jgroup)
+            const CLJNBPairs::CGPairs &group_pairs = nbpairs(cgidx_igroup,
+                                                             cgidx_jgroup);
+
+            //double icnrg = 0;
+            //double iljnrg = 0;
+
+	    double icnrg[nalpha];
+	    double iljnrg[nalpha];
+	                
+	    for (int i=0; i<nalpha; ++i)
+	      {
+		icnrg[i] = 0;
+		iljnrg[i] = 0;
+	      }
+            
+            //loop over all intraatomic pairs and calculate the energies
+            const quint32 nats1 = group1.count();
+            const Parameter *params1_array = params1.constData();
+            
+            if (cgidx_igroup == cgidx_jgroup
+                or mol.molecule().selection().selected(cgidx_jgroup))
+            {
+                //this is the same CutGroup, or some of CutGroup jgroup
+                //is present in 'mol' - we must be careful not to 
+                //double-count the energy between atoms in both 'mol'
+                //and 'rest_of_mol'
+                
+                //get the atoms from this CutGroup that are contained in 
+                //each part of the molecule
+                QSet<Index> atoms0 = mol.molecule()
+                                        .selection().selectedAtoms(cgidx_igroup);
+                                      
+                QSet<Index> mol_atoms1 = atoms0;
+                
+                if (cgidx_igroup != cgidx_jgroup)
+                    mol_atoms1 = mol.molecule().selection().selectedAtoms(cgidx_jgroup);
+                                            
+                QSet<Index> atoms1 = rest_of_mol.molecule()
+                                        .selection().selectedAtoms(cgidx_jgroup);
+                                        
+                //remove from atoms1 atoms that are part of 'mol'
+                atoms1 -= mol_atoms1;
+                
+                _pvt_calculateEnergy(group_pairs, atoms0, atoms1, distmat,
+				     params0_array, params1_array, 
+				     nats0, nats1, icnrg, iljnrg, alfa, delta, nalpha);
+            }
+            else
+            {
+	      _pvt_calculateEnergy(group_pairs, distmat,
+				   params0_array, params1_array,
+				   nats0, nats1, icnrg, iljnrg, alfa, delta, nalpha);
+            }
+
+            //are we shifting the electrostatic potential?
+            if (use_electrostatic_shifting and cgidx_igroup != cgidx_jgroup)
+	      {
+                //icnrg -= this->totalCharge(params0) * this->totalCharge(params1)
+                //              / switchfunc->electrostaticCutoffDistance();
+		const double coul_shift = this->totalCharge(params0) * 
+		  this->totalCharge(params1)
+		  / switchfunc->electrostaticCutoffDistance();
+		
+		for (int i=0; i<nalpha; ++i)
+		  {
+		    icnrg[i] -= coul_shift;
+		  }
+	      }
+	    
+
+            //now add these energies onto the total for the molecule,
+            //scaled by any non-bonded feather factor
+            if (mindist > switchfunc->featherDistance())
+            {
+	      //cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
+	      // ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
+	      const double cscl = switchfunc->electrostaticScaleFactor( 
+								       Length(mindist) );
+		                                                                    
+	      const double ljscl = switchfunc->vdwScaleFactor( Length(mindist) );
+	      
+	      for (int i=0; i<nalpha; ++i)
+		{
+		  cnrg[i] += cscl * icnrg[i];
+		  ljnrg[i] += ljscl * iljnrg[i];
+		}
+            }
+            else
+            {
+	      //cnrg += icnrg;
+	      //ljnrg += iljnrg;
+	      for (int i=0; i<nalpha; ++i)
+		{
+		  cnrg[i] += icnrg[i];
+		  ljnrg[i] += iljnrg[i];
+		}
+            }
+        }
+    }
+    
+    //add the molecule's energy onto the total
+    //energy += Energy(scale_energy * cnrg, scale_energy * ljnrg);
+    for (int i=0; i<nalpha; ++i)
+      {
+	cnrg[i] *= scale_energy * one_minus_alfa_to_n[i];
+	ljnrg[i] *= 4 * scale_energy;//!!!!!THIS NEEDS TO BE CHECKED
+				       }
+    //now copy the calculated energies back to the Energy object
+    Energy soft_energy;
+        
+    for (int i=0; i<alpha_index.count(); ++i)
+      {
+	int idx = alpha_index.at(i);
+        
+	if (idx >= 0)
+	  soft_energy.setEnergy(i, cnrg[idx], ljnrg[idx]);
+      }
+    
+    energy += soft_energy;
+}
+
+/** Calculate the coulomb and LJ forces between the atoms in the molecule 'mol'
+    and add these forces onto 'forces'. This uses
+    the passed workspace to perform the calculation */
+void IntraSoftCLJPotential::calculateForce(const IntraSoftCLJPotential::Molecule &mol,
+					   MolForceTable &forces, 
+					   IntraSoftCLJPotential::ForceWorkspace &distmat,
+					   double scale_force) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ forces has not yet been written..."), CODELOC );
+}
+
+/** Calculate the total forces acting on the atoms in 'mol' caused by the 
+    other atoms in the same molecule contained in 'rest_of_mol'. This calculates
+    the forces and adds them onto 'forces' (which are for 'mol'). Note that they must
+    use the same layout UID and same intra-nonbonded scaling factors
+    
+    \throw SireError::incompatible_error
+*/
+void IntraSoftCLJPotential::calculateForce(const IntraSoftCLJPotential::Molecule &mol,
+					   const IntraSoftCLJPotential::Molecule &rest_of_mol,
+					   MolForceTable &forces,
+					   IntraSoftCLJPotential::ForceWorkspace &distmat,
+					   double scale_force) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ forces has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculateField(const IntraSoftCLJPotential::Molecule &mol, 
+					   const CLJProbe &probe,
+					   MolFieldTable &fields,
+					   IntraSoftCLJPotential::FieldWorkspace &workspace,
+					   double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculateField(const IntraSoftCLJPotential::Molecule &mol,
+					   const IntraSoftCLJPotential::Molecule &rest_of_mol,
+					   const CLJProbe &probe,
+					   MolFieldTable &fields,
+					   IntraSoftCLJPotential::FieldWorkspace &workspace,
+					   double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculateField(const IntraSoftCLJPotential::Molecule &mol, 
+					   const CLJProbe &probe,
+					   MolFieldTable &fields,
+					   const Symbol &symbol,
+					   const Components &components,
+					   IntraSoftCLJPotential::FieldWorkspace &workspace,
+					   double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculateField(const IntraSoftCLJPotential::Molecule &mol,
+					   const IntraSoftCLJPotential::Molecule &rest_of_mol,
+					   const CLJProbe &probe,
+					   MolFieldTable &fields,
+					   const Symbol &symbol,
+					   const Components &components,
+					   IntraCLJPotential::FieldWorkspace &workspace,
+					   double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculateField(const IntraSoftCLJPotential::Molecule &mol, 
+					   const CLJProbe &probe,
+					   GridFieldTable &fields,
+					   IntraSoftCLJPotential::FieldWorkspace &workspace,
+					   double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculateField(const IntraSoftCLJPotential::Molecule &mol, 
+					   const CLJProbe &probe,
+					   GridFieldTable &fields,
+					   const Symbol &symbol,
+					   const Components &components,
+					   IntraSoftCLJPotential::FieldWorkspace &workspace,
+                    double scale_field) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculatePotential(const IntraSoftCLJPotential::Molecule &mol, 
+					       const CLJProbe &probe,
+					       MolPotentialTable &potentials,
+					       IntraSoftCLJPotential::PotentialWorkspace &workspace,
+					       double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculatePotential(const IntraSoftCLJPotential::Molecule &mol,
+					       const IntraSoftCLJPotential::Molecule &rest_of_mol,
+					       const CLJProbe &probe,
+					       MolPotentialTable &potentials,
+					       IntraSoftCLJPotential::PotentialWorkspace &workspace,
+					       double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ fields has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculatePotential(const IntraSoftCLJPotential::Molecule &mol, 
+					       const CLJProbe &probe,
+					       MolPotentialTable &potentials,
+					       const Symbol &symbol,
+					       const Components &components,
+					       IntraSoftCLJPotential::PotentialWorkspace &workspace,
+					       double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculatePotential(const IntraSoftCLJPotential::Molecule &mol,
+                        const IntraSoftCLJPotential::Molecule &rest_of_mol,
+                        const CLJProbe &probe,
+                        MolPotentialTable &potentials,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraSoftCLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculatePotential(const IntraSoftCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        GridPotentialTable &potentials,
+                        IntraSoftCLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
+
+void IntraSoftCLJPotential::calculatePotential(const IntraSoftCLJPotential::Molecule &mol, 
+                        const CLJProbe &probe,
+                        GridPotentialTable &potentials,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraSoftCLJPotential::PotentialWorkspace &workspace,
+                        double scale_potential) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+                "The code necessary to calculate intramolecular soft coulomb "
+                "and LJ potentials has not yet been written..."), CODELOC );
+}
