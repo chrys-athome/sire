@@ -2342,6 +2342,8 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
 						 double icnrg[], double iljnrg[],
 						 const double alfa[], double delta[], const int nalpha) const
 {
+  //  double tmpnrg = 0;
+
     if (group_pairs.isEmpty())
     {
         //there is a constant scale factor between groups
@@ -2360,8 +2362,15 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                 //null LJ parameter - only add on the coulomb energy
                 for (quint32 j=0; j<nats1; ++j)
                 {
-		  const double dist2 = distmat[j];
+		  //icnrg += cljscl.coulomb() *
+		  //         param0.reduced_charge * 
+		  //         params1_array[j].reduced_charge / distmat[j];
+
+		  //tmpnrg += cljscl.coulomb() *
+		  //         param0.reduced_charge * 
+		  //         params1_array[j].reduced_charge / distmat[j];
 		  
+		  const double dist2 = distmat[j];
 		  const double q2 = cljscl.coulomb() * 
 		    param0.reduced_charge * params1_array[j].reduced_charge;
 		  
@@ -2369,11 +2378,10 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
 		    {
 		      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
 		    }
-		  
-		  //icnrg += cljscl.coulomb() *
-		  //         param0.reduced_charge * 
-		  //         params1_array[j].reduced_charge / distmat[j];
-                }
+
+		  //qDebug() << "NULL PARAM0 LJ CASE " << "tmpnrg " << tmpnrg << " icnrg[0] " << icnrg[0];
+		  //icnrg[0] = tmpnrg;
+		}
             }
             else
             {
@@ -2382,51 +2390,73 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                     //do both coulomb and LJ
                     const Parameter &param1 = params1_array[j];
                         
-                    const double invdist = double(1) / distmat[j];
+		    //const double invdist = double(1) / distmat[j];
+                    //TOREMOVE
+		    //const double invdist = double(1) / std::sqrt(distmat[j]);
+		    //TOREMOVE
+		    //
+		    //double tmpnrg = 0;
+                    //tmpnrg += cljscl.coulomb() *
+                    //         param0.reduced_charge * param1.reduced_charge
+                    //                               * invdist;
+
+                    //const double invdist = double(1) / distmat[j];
+		    //
+                    //icnrg[0] += cljscl.coulomb() *
+                    //         param0.reduced_charge * param1.reduced_charge
+		    //                              * invdist;
+
+		    const double dist2 = distmat[j];
+		    const double q2 = cljscl.coulomb() * 
+		      param0.reduced_charge * param1.reduced_charge;
+                        
+		    for (int k=0; k<nalpha; ++k)
+		      {
+		    icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+		      }
+		    //qDebug() << "PARAM0 PARAM1 LJ CASE " << "tmpnrg " << tmpnrg << " icnrg[0] " << icnrg[0];
+		    //icnrg[0] = tmpnrg;                              
 		    
-                    icnrg += cljscl.coulomb() *
-                             param0.reduced_charge * param1.reduced_charge
-                                                   * invdist;
-		    //const double dist2 = distmat[j];
-                    //    
-		    //const double q2 = cljscl.coulomb() * 
-		    // param0.reduced_charge * param1.reduced_charge;
-                    //    
-		    //for (int k=0; k<nalpha; ++k)
-		    //  {
-		    //icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
-		    //  }
-                              
                     if (param1.ljid != 0)
                     {
-                        const LJPair &ljpair = ljpairs.constData()[
+		      const LJPair &ljpair = ljpairs.constData()[
                                                   ljpairs.map(param0.ljid,
                                                               param1.ljid)];
                         
-                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                        double sig_over_dist12 = pow_2(sig_over_dist6);
+		      //double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+		      //double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                        iljnrg += cljscl.lj() *
-                                  4 * ljpair.epsilon() * (sig_over_dist12 - 
-                                                          sig_over_dist6);
-                        //const double sig2 = ljpair.sigma() * ljpair.sigma();
-			//             const double sig6 = sig2 * sig2 * sig2;
-			//                        
-			//                        for (int k=0; k<nalpha; ++k)
-			//                        {
-			//                            const double shift = ljpair.sigma() * delta[k];
-			//                        
-			//                            double lj_denom = dist2 + shift;
-			//                            lj_denom = lj_denom * lj_denom * lj_denom;
-			//                        
-			//                            const double sig6_over_denom = sig6 / lj_denom;
-			//                            const double sig12_over_denom2 = sig6_over_denom *
-			//                                                             sig6_over_denom;
-			//    
-			//                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
-			//                                                             sig6_over_denom);
-			//                        }
+		      //iljnrg += cljscl.lj() *
+		      //          4 * ljpair.epsilon() * (sig_over_dist12 - 
+		      //                                  sig_over_dist6);
 
+		      //tmpnrg =  cljscl.lj() *
+		      //	4 * ljpair.epsilon() * (sig_over_dist12 - 
+		      //			sig_over_dist6);
+
+                      const double sig2 = ljpair.sigma() * ljpair.sigma();
+		      const double sig6 = sig2 * sig2 * sig2;
+			                        
+
+		      //double tmpnrg2[nalpha];
+
+		      for (int k=0; k<nalpha; ++k)
+			{
+			  const double shift = ljpair.sigma() * delta[k];
+			  
+			  double lj_denom = dist2 + shift;
+			  lj_denom = lj_denom * lj_denom * lj_denom;
+			  
+			  const double sig6_over_denom = sig6 / lj_denom;
+			  const double sig12_over_denom2 = sig6_over_denom *
+			    sig6_over_denom;
+			  
+			  iljnrg[k] += cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 - 
+									 sig6_over_denom);
+			  //tmpnrg2[k] = ljpair.epsilon() * (sig12_over_denom2 - 
+			  //				   sig6_over_denom);
+			}
+		      //	      qDebug() << "tmpnrg " << tmpnrg << " tmpnrg2 " << tmpnrg2[0];
                     }
                 }
             }
@@ -2451,18 +2481,32 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                             
                     if (cljscl.coulomb() != 0)
                     {
-                        icnrg += cljscl.coulomb() * 
-                                    param0.reduced_charge * 
-                                    params1_array[j].reduced_charge / distmat[j];
-			//const double dist2 = distmat[j];
-			//
-			//const double q2 = cljscl.coulomb() * 
-			// param0.reduced_charges * params1_array[j].reduced_charges;
-			//
-			//for (int k=0; k<nalpha; ++k)
-			//  {
-			//      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
-			//  }
+		      //icnrg += cljscl.coulomb() * 
+		      //            param0.reduced_charge * 
+		      //             params1_array[j].reduced_charge / distmat[j];
+		      //double tmpnrg = 0;
+		      //double tmp2nrg = cljscl.coulomb() * 
+		      //param0.reduced_charge * 
+		      //	params1_array[j].reduced_charge / std::sqrt( distmat[j] );
+
+		      //tmpnrg += cljscl.coulomb() * 
+		      //	param0.reduced_charge * 
+		      //params1_array[j].reduced_charge / distmat[j];
+		      
+		      const double dist2 = distmat[j];
+		      
+		      const double q2 = cljscl.coulomb() * 
+		      	param0.reduced_charge * params1_array[j].reduced_charge;
+		      
+		      //double tmp3[nalpha];
+
+		      for (int k=0; k<nalpha; ++k)
+			{
+			  //tmp3[k] = q2 / std::sqrt(alfa[k] + dist2);
+			  icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+		      	}
+		      //qDebug() << "VAR NB NULL PARAM0 LJ CASE " << "tmp2nrg " << tmp2nrg << " tmp3[0] " << tmp3[0];
+		      //icnrg[0] = tmpnrg;
                     }
                 }
             }
@@ -2475,22 +2519,47 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
 
                     if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
                     {
-                        const Parameter &param1 = params1_array[j];
+		        const Parameter &param1 = params1_array[j];
                         
-                        const double invdist = double(1) / distmat[j];
-                        
-                        icnrg += cljscl.coulomb() *  
-                                 param0.reduced_charge * 
-                                 param1.reduced_charge * invdist;
-			//const double dist2 = distmat[j];
+			//TOREMOVE
+			//const double invdist = double(1) / std::sqrt(distmat[j]);
+			//TOREMOVE
+
+			//const double invdist = double(1) / distmat[j];
 			//
-			//const double q2 = cljscl.coulomb() * 
-			// param0.reduced_charges * params1_array[j].reduced_charges;
-			//
-			//for (int k=0; k<nalpha; ++k)
-			//  {
-			//      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
-			//  }
+			//icnrg += cljscl.coulomb() *  
+			//         param0.reduced_charge * 
+			//         param1.reduced_charge * invdist;
+
+			//const double invdist = double(1) / distmat[j];
+			
+			//double tmp2nrg = cljscl.coulomb() * 
+			//param0.reduced_charge * 
+			//  params1_array[j].reduced_charge / std::sqrt( distmat[j] );
+
+			//tmpnrg += cljscl.coulomb() *  
+			//         param0.reduced_charge * 
+			//        param1.reduced_charge * invdist;
+
+             	        const double dist2 = distmat[j];
+  		        
+			const double q2 = cljscl.coulomb() * 
+			  param0.reduced_charge * params1_array[j].reduced_charge;
+			
+			//double tmp3[nalpha];
+
+   		        for (int k=0; k<nalpha; ++k)
+			  {
+			    //tmp3[k] = q2 / std::sqrt(alfa[k] + dist2);
+			    icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+			  }
+			//qDebug() << "VAR NB GEN CASE " << "tmp2nrg " << tmp2nrg << " tmp3[0] " << tmp3[0];
+			//qDebug() << "param0.reduced_charge " << param0.reduced_charge;
+			//qDebug() << "param1.reduced_charge " << param1.reduced_charge;
+			//qDebug() << "params1_array[j].reduced_charge " << params1_array[j].reduced_charge;
+			//qDebug() << "invdist " << invdist;
+			//qDebug() << " q2 " << q2 << "alfa[0]" << alfa[0] << " dist2 " << dist2;
+			//icnrg[0] = tmpnrg;
 
                         if (cljscl.lj() != 0 and param1.ljid != 0)
                         {
@@ -2498,28 +2567,39 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                                                      ljpairs.map(param0.ljid,
                                                                  param1.ljid)];
                         
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
+                            //double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            //double sig_over_dist12 = pow_2(sig_over_dist6);
+			    //
+                            //iljnrg += cljscl.lj() * 4 * ljpair.epsilon() * 
+                            //           (sig_over_dist12 - sig_over_dist6);
+			    
+			    //tmpnrg =  cljscl.lj() *
+			    //  4 * ljpair.epsilon() * (sig_over_dist12 - 
+			    //sig_over_dist6);
 
-                            iljnrg += cljscl.lj() * 4 * ljpair.epsilon() * 
-                                       (sig_over_dist12 - sig_over_dist6);
-			    //const double sig2 = ljpair.sigma() * ljpair.sigma();
-			    //             const double sig6 = sig2 * sig2 * sig2;
-			    //                        
-			    //                        for (int k=0; k<nalpha; ++k)
-			    //                        {
-			    //                            const double shift = ljpair.sigma() * delta[k];
-			    //                        
-			    //                            double lj_denom = dist2 + shift;
-			    //                            lj_denom = lj_denom * lj_denom * lj_denom;
-			    //                        
-			    //                            const double sig6_over_denom = sig6 / lj_denom;
-			    //                            const double sig12_over_denom2 = sig6_over_denom *
-			    //                                                             sig6_over_denom;
-			    //    
-			    //                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
-			    //                                                             sig6_over_denom);
-			    //                        }
+
+			    const double sig2 = ljpair.sigma() * ljpair.sigma();
+			    const double sig6 = sig2 * sig2 * sig2;
+			    
+			    //double tmpnrg2[nalpha];
+              
+			    for (int k=0; k<nalpha; ++k)
+			      {
+				const double shift = ljpair.sigma() * delta[k];
+			        
+				double lj_denom = dist2 + shift;
+				lj_denom = lj_denom * lj_denom * lj_denom;
+			        
+				const double sig6_over_denom = sig6 / lj_denom;
+				const double sig12_over_denom2 = sig6_over_denom *
+				  sig6_over_denom;
+			        
+				//tmpnrg2[k] = cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 - 
+				//					       sig6_over_denom);
+				iljnrg[k] += cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 - 
+									       sig6_over_denom);
+			      }
+			    //qDebug() << "tmpnrg " << tmpnrg << " tmpnrg2 " << tmpnrg2[0];			    
                         }
                     }
                 }
@@ -2560,7 +2640,11 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                 {
 		  //icnrg += cljscl.coulomb() * 
 		  //         param0.reduced_charge * 
-		  //         params1_array[j].reduced_charge / distmat[j];
+		  //        params1_array[j].reduced_charge / distmat[j];
+		  //icnrg[0] += cljscl.coulomb() * 
+		  //  param0.reduced_charge * 
+		  //  params1_array[j].reduced_charge / distmat[j];
+		  
 		    // BUT IS DISTMAT THE DISTANCE OR DISTANCE**2 ?
 		  const double dist2 = distmat[j];
 		    
@@ -2580,20 +2664,26 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                     //do both coulomb and LJ
                     const Parameter &param1 = params1_array[j];
                         
-                    const double invdist = double(1) / distmat[j];
+                    //const double invdist = double(1) / distmat[j];
+		    //
+                    //icnrg += cljscl.coulomb() *
+                    //         param0.reduced_charge * param1.reduced_charge
+                    //                               * invdist;
+                    //const double invdist = double(1) / distmat[j];
+		    
+                    //icnrg[0] += cljscl.coulomb() *
+		    //  param0.reduced_charge * param1.reduced_charge
+		    //  * invdist;
 
-                    icnrg += cljscl.coulomb() *
-                             param0.reduced_charge * param1.reduced_charge
-                                                   * invdist;
-		    //const double dist2 = distmat[j];
-                    //    
-		    //const double q2 = cljscl.coulomb() * 
-		    // param0.reduced_charge * param1.reduced_charge;
-                    //    
-		    //for (int k=0; k<nalpha; ++k)
-		    //  {
-		    //icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
-		    //  }
+		    const double dist2 = distmat[j];
+                        
+		    const double q2 = cljscl.coulomb() * 
+		     param0.reduced_charge * param1.reduced_charge;
+                        
+		    for (int k=0; k<nalpha; ++k)
+		      {
+		    icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+		      }
 
                     if (param1.ljid != 0)
                     {
@@ -2601,29 +2691,29 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                                                   ljpairs.map(param0.ljid,
                                                               param1.ljid)];
                         
-                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                        double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                        iljnrg += cljscl.lj() *
-                                  4 * ljpair.epsilon() * (sig_over_dist12 - 
-                                                          sig_over_dist6);
-                        //const double sig2 = ljpair.sigma() * ljpair.sigma();
-			//             const double sig6 = sig2 * sig2 * sig2;
-			//                        
-			//                        for (int k=0; k<nalpha; ++k)
-			//                        {
-			//                            const double shift = ljpair.sigma() * delta[k];
-			//                        
-			//                            double lj_denom = dist2 + shift;
-			//                            lj_denom = lj_denom * lj_denom * lj_denom;
-			//                        
-			//                            const double sig6_over_denom = sig6 / lj_denom;
-			//                            const double sig12_over_denom2 = sig6_over_denom *
-			//                                                             sig6_over_denom;
-			//    
-			//                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
-			//                                                             sig6_over_denom);
-			//                        }
+                        //double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        //double sig_over_dist12 = pow_2(sig_over_dist6);
+			//
+                        //iljnrg += cljscl.lj() *
+                        //          4 * ljpair.epsilon() * (sig_over_dist12 - 
+                        //                                  sig_over_dist6);
+                        const double sig2 = ljpair.sigma() * ljpair.sigma();
+			const double sig6 = sig2 * sig2 * sig2;
+			                        
+			for (int k=0; k<nalpha; ++k)
+			  {
+			    const double shift = ljpair.sigma() * delta[k];
+			    
+			    double lj_denom = dist2 + shift;
+			    lj_denom = lj_denom * lj_denom * lj_denom;
+			    
+			    const double sig6_over_denom = sig6 / lj_denom;
+			    const double sig12_over_denom2 = sig6_over_denom *
+			      sig6_over_denom;
+			    
+			    iljnrg[k] +=  cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 - 
+									    sig6_over_denom);
+			  }
 			
                     }
                 }
@@ -2649,18 +2739,21 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                             
                     if (cljscl.coulomb() != 0)
 		      {
-			icnrg += cljscl.coulomb() * 
-			  param0.reduced_charge * 
-			  params1_array[j].reduced_charge / distmat[j];
-			//const double dist2 = distmat[j];
-			//
-			//const double q2 = cljscl.coulomb() * 
-			// param0.reduced_charges * params1_array[j].reduced_charges;
-			//
-			//for (int k=0; k<nalpha; ++k)
-			//  {
-			//      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
-			//  }
+			//icnrg += cljscl.coulomb() * 
+			//  param0.reduced_charge * 
+			//  params1_array[j].reduced_charge / distmat[j];
+			//icnrg[0] += cljscl.coulomb() * 
+			//  param0.reduced_charge * 
+			//  params1_array[j].reduced_charge / distmat[j];
+			const double dist2 = distmat[j];
+			
+			const double q2 = cljscl.coulomb() * 
+			  param0.reduced_charge * params1_array[j].reduced_charge;
+			
+			for (int k=0; k<nalpha; ++k)
+			  {
+			      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+			  }
 		      }
                 }
             }
@@ -2675,20 +2768,26 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                     {
                         const Parameter &param1 = params1_array[j];
                         
-                        const double invdist = double(1) / distmat[j];
+                        //const double invdist = double(1) / distmat[j];
+                        //
+                        //icnrg += cljscl.coulomb() *  
+                        //         param0.reduced_charge * 
+                        //         param1.reduced_charge * invdist;
+                        //const double invdist = double(1) / distmat[j];
                         
-                        icnrg += cljscl.coulomb() *  
-                                 param0.reduced_charge * 
-                                 param1.reduced_charge * invdist;
-			//const double dist2 = distmat[j];
-			//
-			//const double q2 = cljscl.coulomb() * 
-			// param0.reduced_charges * params1_array[j].reduced_charges;
-			//
-			//for (int k=0; k<nalpha; ++k)
-			//  {
-			//      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
-			//  }
+                        //icnrg[0] += cljscl.coulomb() *  
+			//  param0.reduced_charge * 
+			//  param1.reduced_charge * invdist;
+
+			const double dist2 = distmat[j];
+			
+			const double q2 = cljscl.coulomb() * 
+			  param0.reduced_charge * params1_array[j].reduced_charge;
+			
+			for (int k=0; k<nalpha; ++k)
+			  {
+			      icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+			  }
 
                         if (cljscl.lj() != 0 and param1.ljid != 0)
                         {
@@ -2696,28 +2795,28 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                                                      ljpairs.map(param0.ljid,
                                                                  param1.ljid)];
                         
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
+                            //double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            //double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                            iljnrg += cljscl.lj() * 4 * ljpair.epsilon() * 
-                                       (sig_over_dist12 - sig_over_dist6);
-			    //const double sig2 = ljpair.sigma() * ljpair.sigma();
-			    //             const double sig6 = sig2 * sig2 * sig2;
-			    //                        
-			    //                        for (int k=0; k<nalpha; ++k)
-			    //                        {
-			    //                            const double shift = ljpair.sigma() * delta[k];
-			    //                        
-			    //                            double lj_denom = dist2 + shift;
-			    //                            lj_denom = lj_denom * lj_denom * lj_denom;
-			    //                        
-			    //                            const double sig6_over_denom = sig6 / lj_denom;
-			    //                            const double sig12_over_denom2 = sig6_over_denom *
-			    //                                                             sig6_over_denom;
-			    //    
-			    //                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
-			    //                                                             sig6_over_denom);
-			    //                        }
+                            //iljnrg += cljscl.lj() * 4 * ljpair.epsilon() * 
+                            //           (sig_over_dist12 - sig_over_dist6);
+			    const double sig2 = ljpair.sigma() * ljpair.sigma();
+			    const double sig6 = sig2 * sig2 * sig2;
+			                            
+			    for (int k=0; k<nalpha; ++k)
+			      {
+				const double shift = ljpair.sigma() * delta[k];
+			        
+				double lj_denom = dist2 + shift;
+				lj_denom = lj_denom * lj_denom * lj_denom;
+			        
+				const double sig6_over_denom = sig6 / lj_denom;
+				const double sig12_over_denom2 = sig6_over_denom *
+				  sig6_over_denom;
+				
+				iljnrg[k] +=  cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 - 
+										sig6_over_denom);
+			      }
                         }
                     }
                 }
@@ -2737,7 +2836,7 @@ void IntraSoftCLJPotential::calculateEnergy(const IntraSoftCLJPotential::Molecul
   //    throw SireError::incomplete_code( QObject::tr(
   //            "The code necessary to calculate intramolecular soft coulomb "
   //            "and LJ energies has not yet been written..."), CODELOC );
-  qDebug() << " HELLO MOL ";
+  //  qDebug() << " HELLO MOL ";
     if (scale_energy == 0 or mol.isEmpty())
         return;
 
@@ -2823,8 +2922,8 @@ void IntraSoftCLJPotential::calculateEnergy(const IntraSoftCLJPotential::Molecul
                 //this CutGroup is beyond the cutoff distance
                 continue;
             
-            //calculate all of the interatomic distances
-            const double mindist = spce->calcDist(group0, group1, distmat);
+            //calculate all of the interatomic distances^2
+            const double mindist = spce->calcDist2(group0, group1, distmat);
             
             if (mindist > switchfunc->cutoffDistance())
                 //all of the atoms are definitely beyond cutoff
@@ -2952,7 +3051,7 @@ void IntraSoftCLJPotential::calculateEnergy(const IntraSoftCLJPotential::Molecul
   //    throw SireError::incomplete_code( QObject::tr(
   //            "The code necessary to calculate intramolecular soft coulomb "
   //            "and LJ energies has not yet been written..."), CODELOC );
-  qDebug() << " HELLO MOL  AND REST OF MOL";
+  // qDebug() << " HELLO MOL  AND REST OF MOL";
         if (scale_energy == 0 or mol.isEmpty() or rest_of_mol.isEmpty())
         return;
 
@@ -3058,8 +3157,8 @@ void IntraSoftCLJPotential::calculateEnergy(const IntraSoftCLJPotential::Molecul
                 //this CutGroup is beyond the cutoff distance
                 continue;
             
-            //calculate all of the interatomic distances
-            const double mindist = spce->calcDist(group0, group1, distmat);
+            //calculate all of the interatomic distances^2
+            const double mindist = spce->calcDist2(group0, group1, distmat);
             
             if (mindist > switchfunc->cutoffDistance())
                 //all of the atoms are definitely beyond cutoff
