@@ -817,7 +817,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	line = line.simplified();
         QStringList words = line.split(" ", QString::SkipEmptyParts);
 	//qDebug() << line;
-	qDebug() << words;
+	//qDebug() << words;
 	if ( words.length() < 1 )
 	  continue;
 	if ( line.startsWith("molecule") )
@@ -883,7 +883,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	if (line.startsWith("endatom") )
 	  {
 	    inatom = false;
-	    qDebug() << atname << atchargeinit.toString() << atchargefinal.toString() << atsigmainit.toString();
+	    //qDebug() << atname << atchargeinit.toString() << atchargefinal.toString() << atsigmainit.toString();
 	    new_templates[current].setInitCharge(atname, atchargeinit);
 	    new_templates[current].setFinalCharge(atname, atchargefinal);
 	    LJParameter ljinit = LJParameter(atsigmainit, atepsiloninit);
@@ -1046,7 +1046,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	if ( line.startsWith("endbond") )
 	  {
 	    BondID bond = BondID( AtomName(atom0), AtomName(atom1) );
-	    qDebug() << bond.toString() << atom0 << atom1 << ki << ri << kf << rf ;
+	    //qDebug() << bond.toString() << atom0 << atom1 << ki << ri << kf << rf ;
 	    new_templates[current].setInitBondK( bond, ki);
 	    new_templates[current].setInitBondR( bond, ri);
 	    new_templates[current].setFinalBondK( bond, kf);
@@ -1057,7 +1057,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	if ( line.startsWith("endangle") )
 	  {
 	    AngleID angle = AngleID( AtomName(atom0), AtomName(atom1), AtomName(atom2) );
-	    qDebug() << angle.toString() << atom0 << atom1 << atom2 << ki << ri << kf << rf ;
+	    //qDebug() << angle.toString() << atom0 << atom1 << atom2 << ki << ri << kf << rf ;
 	    new_templates[current].setInitAngleK( angle, ki);
 	    new_templates[current].setInitAngleT( angle, ri);
 	    new_templates[current].setFinalAngleK( angle, kf);
@@ -1068,7 +1068,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	if ( line.startsWith("enddihedral") ) 
 	  {
 	    DihedralID dihedral = DihedralID( AtomName(atom0), AtomName(atom1), AtomName(atom2), AtomName(atom3) );
-	    qDebug() << dihedral.toString() << atom0 << atom1 << atom2 << atom3 << k0i << ni << phasei << k0f << nf << phasef;
+	    //qDebug() << dihedral.toString() << atom0 << atom1 << atom2 << atom3 << k0i << ni << phasei << k0f << nf << phasef;
 	    new_templates[current].setInitDihedralK0( dihedral, k0i);
 	    new_templates[current].setInitDihedralN( dihedral, ni);
 	    new_templates[current].setInitDihedralPhase( dihedral, phasei);
@@ -1081,7 +1081,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	if ( line.startsWith("endimproper") )
 	  {
 	    ImproperID improper = ImproperID( AtomName(atom0), AtomName(atom1), AtomName(atom2), AtomName(atom3) );
-	    qDebug() << improper.toString() << atom0 << atom1 << atom2 << atom3 << k0i << ni << phasei << k0f << nf << phasef;
+	    //qDebug() << improper.toString() << atom0 << atom1 << atom2 << atom3 << k0i << ni << phasei << k0f << nf << phasef;
 	    new_templates[current].setInitImproperK0( improper, k0i);
 	    new_templates[current].setInitImproperN( improper, ni);
 	    new_templates[current].setInitImproperPhase( improper, phasei);
@@ -1148,7 +1148,7 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
       AtomEditor atom = editmol.atom(AtomIdx(i));
       
       QString iname = atom.name().value();
-      qDebug() << atom.name();
+      //qDebug() << atom.name();
       // the charges...
       try
 	{

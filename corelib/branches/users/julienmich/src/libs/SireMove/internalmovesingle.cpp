@@ -397,8 +397,9 @@ void InternalMoveSingle::move(System &system, int nmoves, bool record_stats)
 
             //update the system with the new coordinates
             Molecule newmol = mol_mover.commit();
-            system.update(newmol);
 
+            //system.update(newmol);
+	    
 	    //JM 03/11 test if molecule coordinates synched with others
 	    // if so, for each synched mol, set coordinates to those of newmol
 	    // This only works if all molecules have identical topology
@@ -426,7 +427,15 @@ void InternalMoveSingle::move(System &system, int nmoves, bool record_stats)
 		    //qDebug() << molecule.toString();
 		    //MolEditor editmol = molecule.edit()
 		  }
+
+		new_molecules.add(newmol);
+
 		system.update(new_molecules);
+	      }
+	    else
+	      {
+		//update the system with the new coordinates
+		system.update(newmol);
 	      }
 
             //get the new bias on this molecule
@@ -435,6 +444,9 @@ void InternalMoveSingle::move(System &system, int nmoves, bool record_stats)
             new_bias = smplr.read().probabilityOf( PartialMolecule(newmol,
 			                                                       oldmol.selection()) );
 
+	    // JM DEBUG THERE IS A BUG AND THE INTRAGROUP FORCEFIELDS ENERGIES OF THE MOVED MOLECULE 
+	    // ARE NOT UPDATED ( BUT THE PERTURBED ENERGIES ARE CORRECT ! ) 
+	    //system.mustNowRecalculateFromScratch();
             //calculate the energy of the system
             double new_nrg = system.energy( this->energyComponent() );
 	
