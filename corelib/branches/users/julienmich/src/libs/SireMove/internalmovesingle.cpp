@@ -407,6 +407,14 @@ void InternalMoveSingle::move(System &system, int nmoves, bool record_stats)
 	    
 	    //qDebug() << "HELLO " << synched_molgroup.molecules().toString();
 
+	    // Get the synched_molgroup from system using the name of the stored synched_molgroup
+	    // We have to look up by names at numbers may have changed if for instance 
+	    // two replicas have been swapped
+
+	    const MGName &sync_name = synched_molgroup.name();
+	    
+	    synched_molgroup = system[ sync_name ];
+
 	    if (not synched_molgroup.molecules().isEmpty()) 
 	      {
 		const PropertyName &coords_property = map["coordinates"];
