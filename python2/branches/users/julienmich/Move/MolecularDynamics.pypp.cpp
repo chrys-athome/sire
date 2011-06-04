@@ -294,6 +294,16 @@ void register_MolecularDynamics_class(){
                 , spaceProperty_function_value );
         
         }
+        { //::SireMove::MolecularDynamics::temperature
+        
+            typedef ::SireUnits::Dimension::Temperature ( ::SireMove::MolecularDynamics::*temperature_function_type )(  ) const;
+            temperature_function_type temperature_function_value( &::SireMove::MolecularDynamics::temperature );
+            
+            MolecularDynamics_exposer.def( 
+                "temperature"
+                , temperature_function_value );
+        
+        }
         { //::SireMove::MolecularDynamics::timeStep
         
             typedef ::SireUnits::Dimension::Time ( ::SireMove::MolecularDynamics::*timeStep_function_type )(  ) const;

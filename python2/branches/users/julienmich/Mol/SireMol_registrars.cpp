@@ -8,7 +8,7 @@
 #include "atomelements.h"
 #include "chain.h"
 #include "residx.h"
-#include "atomcharges.h"
+#include "atompolarisabilities.h"
 #include "element.h"
 #include "chainproperty.hpp"
 #include "atomselection.h"
@@ -32,7 +32,7 @@
 #include "chainname.h"
 #include "withres.h"
 #include "partialmolecule.h"
-#include "atompolarisabilities.h"
+#include "atomcharges.h"
 #include "mgidx.h"
 #include "viewsofmol.h"
 #include "residentifier.h"
@@ -108,7 +108,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::Selector<SireMol::Chain> >();
     ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::Chain> > >();
     ObjectRegistry::registerConverterFor< SireMol::ResIdx >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomCharges >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomPolarisabilities >();
     ObjectRegistry::registerConverterFor< SireMol::Element >();
     ObjectRegistry::registerConverterFor< SireMol::ChainStringProperty >();
     ObjectRegistry::registerConverterFor< SireMol::ChainIntProperty >();
@@ -154,7 +154,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::ChainsWithRes >();
     ObjectRegistry::registerConverterFor< SireMol::PartialMolecule >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::PartialMolecule> >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomPolarisabilities >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomCharges >();
     ObjectRegistry::registerConverterFor< SireMol::MGIdx >();
     ObjectRegistry::registerConverterFor< SireMol::ViewsOfMol >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::ViewsOfMol> >();

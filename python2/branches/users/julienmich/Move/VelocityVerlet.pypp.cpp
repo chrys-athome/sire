@@ -29,6 +29,10 @@ namespace bp = boost::python;
 
 #include "SireSystem/system.h"
 
+#include "SireUnits/convert.h"
+
+#include "SireUnits/temperature.h"
+
 #include "SireUnits/units.h"
 
 #include "ensemble.h"

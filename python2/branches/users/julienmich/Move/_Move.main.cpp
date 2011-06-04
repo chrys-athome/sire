@@ -33,6 +33,8 @@
 
 #include "InternalMove.pypp.hpp"
 
+#include "InternalMoveSingle.pypp.hpp"
+
 #include "MTSMC.pypp.hpp"
 
 #include "MaxwellBoltzmann.pypp.hpp"
@@ -129,6 +131,8 @@
 
 #include "VelocityVerlet.pypp.hpp"
 
+#include "VelocityVerletBerendsen.pypp.hpp"
+
 #include "VolumeChanger.pypp.hpp"
 
 #include "VolumeMove.pypp.hpp"
@@ -189,6 +193,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_HybridMC_class();
 
     register_InternalMove_class();
+
+    register_InternalMoveSingle_class();
 
     register_MTSMC_class();
 
@@ -281,6 +287,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_VelocitiesFromProperty_class();
 
     register_VelocityVerlet_class();
+
+    register_VelocityVerletBerendsen_class();
 
     register_VolumeMove_class();
 

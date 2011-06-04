@@ -7,11 +7,57 @@
 
 namespace bp = boost::python;
 
+#include "SireBase/findexe.h"
+
+#include "SireBase/process.h"
+
+#include "SireBase/tempdir.h"
+
+#include "SireCAS/expression.h"
+
+#include "SireCAS/trigfuncs.h"
+
 #include "SireError/errors.h"
 
 #include "SireIO/errors.h"
 
+#include "SireMM/atomljs.h"
+
+#include "SireMM/internalff.h"
+
+#include "SireMM/internalperturbation.h"
+
+#include "SireMM/ljparameter.h"
+
+#include "SireMM/ljperturbation.h"
+
+#include "SireMol/angleid.h"
+
+#include "SireMol/atomcharges.h"
+
+#include "SireMol/atomeditor.h"
+
+#include "SireMol/bondid.h"
+
+#include "SireMol/chargeperturbation.h"
+
+#include "SireMol/dihedralid.h"
+
 #include "SireMol/errors.h"
+
+#include "SireMol/geometryperturbation.h"
+
+#include "SireMol/improperid.h"
+
+#include "SireMol/molecule.h"
+
+#include "SireMol/moleditor.h"
+
+#include "SireMol/perturbation.h"
+
+#include "SireMol/selector.hpp"
+
+#include "SireStream/streamdata.hpp"
 
 #include "SireUnits/convert.h"
 
@@ -53,6 +99,17 @@ void register_PerturbationsLibrary_class(){
                 "add"
                 , add_function_value
                 , ( bp::arg("other") ) );
+        
+        }
+        { //::SireIO::PerturbationsLibrary::applyTemplate
+        
+            typedef ::SireMol::Molecule ( ::SireIO::PerturbationsLibrary::*applyTemplate_function_type )( ::SireMol::Molecule const & ) const;
+            applyTemplate_function_type applyTemplate_function_value( &::SireIO::PerturbationsLibrary::applyTemplate );
+            
+            PerturbationsLibrary_exposer.def( 
+                "applyTemplate"
+                , applyTemplate_function_value
+                , ( bp::arg("molecule") ) );
         
         }
         { //::SireIO::PerturbationsLibrary::getTemplate

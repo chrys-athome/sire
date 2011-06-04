@@ -253,16 +253,27 @@ void register_QByteArray_class(){
                 , bp::return_self< >() );
         
         }
-        { //::QByteArray::fromBase64
+        { //::QByteArray::toBase64
         
-            typedef ::QByteArray ( *fromBase64_function_type )( ::QByteArray const & );
-            fromBase64_function_type fromBase64_function_value( &::QByteArray::fromBase64 );
+            typedef ::QByteArray ( ::QByteArray::*toBase64_function_type )( ) const;
+            toBase64_function_type toBase64_function_value( &::QByteArray::toBase64 );
             
             QByteArray_exposer.def( 
+                "toBase64"
+                , toBase64_function_value
+                , ( bp::arg("toBase64") ) );
+        
+        }
+        { //::QByteArray::fromBase64
+
+            typedef ::QByteArray ( *fromBase64_function_type )( ::QByteArray const & );
+            fromBase64_function_type fromBase64_function_value( &::QByteArray::fromBase64 );
+
+            QByteArray_exposer.def(
                 "fromBase64"
                 , fromBase64_function_value
                 , ( bp::arg("base64") ) );
-        
+
         }
         { //::QByteArray::fromRawData
         

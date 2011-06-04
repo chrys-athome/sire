@@ -26,6 +26,7 @@
 #include "intracljff.h"
 #include "intracoulombff.h"
 #include "intraljff.h"
+#include "intrasoftcljff.h"
 #include "ljpair.h"
 #include "ljparameter.h"
 #include "ljperturbation.h"

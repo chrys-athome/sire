@@ -7,12 +7,12 @@
 #include "command.h"
 #include "glrenderfunction.h"
 #include "glsphere.h"
-#include "glbackground.h"
+#include "glinitstate.h"
 #include "glmesh.h"
 #include "cameracommand.h"
 #include "camera.h"
 #include "glcanvas.h"
-#include "glinitstate.h"
+#include "glbackground.h"
 
 #include "Helpers/objectregistry.hpp"
 
@@ -24,15 +24,15 @@ void register_Spier_objects()
     ObjectRegistry::registerConverterFor< Spier::NullGLRenderFunction >();
     ObjectRegistry::registerConverterFor< Spier::GLSphere >();
     ObjectRegistry::registerConverterFor< Spier::GLSphereRenderFunction >();
-    ObjectRegistry::registerConverterFor< Spier::GradientBackground >();
+    ObjectRegistry::registerConverterFor< Spier::GLInitRenderState >();
+    ObjectRegistry::registerConverterFor< Spier::GLInitSelectorState >();
     ObjectRegistry::registerConverterFor< Spier::NullGLMesh >();
     ObjectRegistry::registerConverterFor< Spier::RotateCamera >();
     ObjectRegistry::registerConverterFor< Spier::TranslateCamera >();
     ObjectRegistry::registerConverterFor< Spier::NullCamera >();
     ObjectRegistry::registerConverterFor< Spier::OrbitCamera >();
     ObjectRegistry::registerConverterFor< Spier::GLCanvas >();
-    ObjectRegistry::registerConverterFor< Spier::GLInitRenderState >();
-    ObjectRegistry::registerConverterFor< Spier::GLInitSelectorState >();
+    ObjectRegistry::registerConverterFor< Spier::GradientBackground >();
 
 }
 

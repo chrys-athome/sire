@@ -3,21 +3,21 @@
 
 #include "SireSystem_registrars.h"
 
-#include "distancecomponent.h"
+#include "sysidentifier.h"
 #include "perturbationconstraint.h"
 #include "rdfmonitor.h"
-#include "sysidentifier.h"
+#include "distancecomponent.h"
 #include "monitormonitor.h"
 #include "spacewrapper.h"
 #include "monitoridx.h"
 #include "constraints.h"
+#include "anglecomponent.h"
 #include "monitorproperty.h"
 #include "sysname.h"
 #include "monitorname.h"
 #include "sysidx.h"
 #include "monitorcomponent.h"
 #include "dihedralcomponent.h"
-#include "anglecomponent.h"
 #include "systemmonitor.h"
 #include "sysid.h"
 #include "constraint.h"
@@ -36,24 +36,24 @@
 void register_SireSystem_objects()
 {
 
-    ObjectRegistry::registerConverterFor< SireSystem::DistanceComponent >();
-    ObjectRegistry::registerConverterFor< SireSystem::DoubleDistanceComponent >();
-    ObjectRegistry::registerConverterFor< SireSystem::TripleDistanceComponent >();
+    ObjectRegistry::registerConverterFor< SireSystem::SysIdentifier >();
     ObjectRegistry::registerConverterFor< SireSystem::PerturbationConstraint >();
     ObjectRegistry::registerConverterFor< SireSystem::RDF >();
     ObjectRegistry::registerConverterFor< SireSystem::RDFMonitor >();
-    ObjectRegistry::registerConverterFor< SireSystem::SysIdentifier >();
+    ObjectRegistry::registerConverterFor< SireSystem::DistanceComponent >();
+    ObjectRegistry::registerConverterFor< SireSystem::DoubleDistanceComponent >();
+    ObjectRegistry::registerConverterFor< SireSystem::TripleDistanceComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::SpaceWrapper >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorIdx >();
     ObjectRegistry::registerConverterFor< SireSystem::Constraints >();
+    ObjectRegistry::registerConverterFor< SireSystem::AngleComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorProperty >();
     ObjectRegistry::registerConverterFor< SireSystem::SysName >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorName >();
     ObjectRegistry::registerConverterFor< SireSystem::SysIdx >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::DihedralComponent >();
-    ObjectRegistry::registerConverterFor< SireSystem::AngleComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::NullMonitor >();
     ObjectRegistry::registerConverterFor< SireID::Specify<SireSystem::SysID> >();
     ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireSystem::SysID> >();

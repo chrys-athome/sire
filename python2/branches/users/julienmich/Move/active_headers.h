@@ -12,6 +12,7 @@
 #include "integrator.h"
 #include "integratorworkspace.h"
 #include "internalmove.h"
+#include "internalmovesingle.h"
 #include "moldeleter.h"
 #include "moleculardynamics.h"
 #include "molinserter.h"
