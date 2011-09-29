@@ -72,7 +72,7 @@ namespace Siren
         
         bool hasSuper() const;
         
-        const Class& superClass() const;
+        Class superClass() const;
         
         bool implements(const String &type_name) const;
         bool implements(const char* type_name) const;
@@ -102,6 +102,8 @@ namespace Siren
         static StringList registeredTypes();
 
     private:
+        void checkNotNull() const;
+
         /** Pointer to the metatype data for this class */
         const detail::ClassData *d;
 

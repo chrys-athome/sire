@@ -29,8 +29,8 @@
   *
 \*********************************************/
 
-/** This file contains the set of C preprocessor macros
-    that are used and are global for Siren */
+//// This file contains the set of C preprocessor macros
+//// that are used and are global for Siren
 
 /** Used to signify the beginning of a header file */
 #define SIREN_BEGIN_HEADER
@@ -61,11 +61,11 @@
     const classname * classname::ptr_clone() const{ return new classname(*this); } \
     static const Siren::detail::ConcreteClassData<classname> \
                                                 register_object_##__LINE__; \
-    const Siren::Class& classname::typeClass() { \
+    Siren::Class classname::typeClass() { \
         static Siren::Class r_class( register_object_##__LINE__ ); \
         return r_class; \
     } \
-    const Siren::Class& classname::getClass() const { \
+    Siren::Class classname::getClass() const { \
         return classname::typeClass(); \
     }
     
@@ -76,8 +76,8 @@
         typedef baseclass super; \
         static const char* typeName(); \
         virtual const char* what() const; \
-        static const Class& typeClass(); \
-        const Class& getClass() const; \
+        static Class typeClass(); \
+        Class getClass() const; \
         classname& operator=(const Siren::Object &other); \
         bool operator==(const Siren::Object &other) const; \
         bool operator!=(const Siren::Object &other) const; \
@@ -92,6 +92,7 @@
     public: \
         typedef baseclass super; \
         static const char* typeName(); \
+        static Class typeClass(); \
     private:
     
 /** Use to register a new virtual Siren Object class */
@@ -99,7 +100,7 @@
     static const char* classname::typeName(){ return #classname; } \
     static const Siren::detail::VirtualClassData<classname> \
                                         register_object_##__LINE__; \
-    const Siren::Class& classname::typeClass() { \
+    Siren::Class classname::typeClass() { \
         static Siren::Class r_class( register_object_##__LINE__ ); \
         return r_class; \
     } \

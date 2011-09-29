@@ -178,8 +178,8 @@ namespace Siren
         virtual ~Object();
 
         ///////////////////////////////////////////////////////////
-        static const Class& typeClass();
-        virtual const Class& getClass() const=0;
+        static Class typeClass();
+        virtual Class getClass() const=0;
 
         static const char* typeName();
         virtual const char* what() const=0;
@@ -206,9 +206,6 @@ namespace Siren
 
         template<class T>
         const T& asA() const;
-
-        template<class T>
-        T& asA();
 
         //////////////////////////////////////////
         //                                      //

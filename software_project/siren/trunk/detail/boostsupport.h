@@ -1,5 +1,5 @@
-#ifndef SIREN_QT4SUPPORT_H
-#define SIREN_QT4SUPPORT_H
+#ifndef SIREN_BOOSTSUPPORT_H
+#define SIREN_BOOSTSUPPORT_H
 
 /********************************************\
   *
@@ -29,56 +29,22 @@
   *
 \*********************************************/
 
-// Definition of Qt classes that are required for Siren.
+// Definition of boost classes that are required for Siren.
 // These will (eventually!) be replaced with Siren's own classes,
-// thereby removing the dependency on Qt
+// thereby removing the dependency on boost
 
-#include <QString>
-#include <QStringList>
-#include <QMutex>
-#include <QMutexLocker>
-#include <QByteArray>
-#include <QDataStream>
-#include <QSharedData>
-#include <QSharedDataPointer>
-#include <QHash>
-#include <QVector>
-
-#include <QDebug>
+#include <boost/shared_ptr.hpp>
 
 namespace Siren
 {
-    typedef QString String;
-    typedef QStringList StringList;
-    typedef QMutex Mutex;
-    typedef QMutexLocker MutexLocker;
-    typedef QByteArray ByteArray;
-    typedef QDataStream DataStream;
-    typedef QSharedData SharedData;
-    
-    template<class T>
-    struct imp_shared_ptr
-    {
-        typedef QSharedDataPointer<T> Type;
-    };
-    
-    template<class T>
-    struct Vector
-    {
-        typedef QVector<T> Type;
-    };
 
-    template<class Key, class Value>
-    struct Hash
-    {
-        typedef QHash<Key,Value> Type;
-    };
-
-    #if !defined(QT_NO_DEBUG_STREAM)
-    QDebug sirenDebug() { return qDebug(); }
-    #endif
+template<class T>
+struct exp_shared_ptr
+{
+    typedef boost::shared_ptr<T> Type;
+};
 
 } // end of namespace Siren
 
-#endif // SIREN_QT4SUPPORT_H
+#endif // SIREN_QTSUPPORT_H
 

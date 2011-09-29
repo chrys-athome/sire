@@ -53,12 +53,14 @@ set ( SIREN_PUBLIC_HEADERS
       macros.h
       none.h
       object.h
+      obj.h
       siren.h
       siren.hpp
     )
 
 set ( SIREN_PRIVATE_HEADERS
 
+      detail/boostsupport.h
       detail/metatype.h
       detail/metatype.hpp
       detail/qt4support.h
@@ -71,6 +73,7 @@ set ( SIREN_SOURCES
       class.cpp
       none.cpp
       object.cpp
+      obj.cpp
 
       ${SIREN_PRIVATE_HEADERS}
 
