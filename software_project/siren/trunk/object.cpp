@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#include "object.h"
-#include "metatype.hpp"
+#include "Siren/object.h"
+#include "Siren/detail/metatype.hpp"
 
 using namespace Siren;
 

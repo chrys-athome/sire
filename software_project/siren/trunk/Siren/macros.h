@@ -54,6 +54,10 @@
     as part of a public API to a scripting interface */
 #define SIREN_EXPOSE_CLASS(classname)
 
+/** Used to signify that the passed exception class should be
+    exposed as part of a public API to a scripting interface */
+#define SIREN_EXPOSE_EXCEPTION(classname)
+
 /** Used to register a new concrete Siren Object class */
 #define REGISTER_SIREN_CLASS(classname)  \
     const char* classname::typeName(){ return #classname; } \

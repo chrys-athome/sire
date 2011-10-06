@@ -28,8 +28,8 @@
   *
 \*********************************************/
 
-#include "siren.h"
-#include "detail/boostsupport.h"
+#include "Siren/siren.h"
+#include "Siren/detail/boostsupport.h"
 
 SIREN_BEGIN_HEADER
 
@@ -107,7 +107,6 @@ namespace Siren
     }; // end of class Obj
 
 } // end of namespace Siren
-
 
 SIREN_END_HEADER
 

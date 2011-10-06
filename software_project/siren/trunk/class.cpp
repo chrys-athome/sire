@@ -26,12 +26,16 @@
   *
 \*********************************************/
 
-#include "class.h"
-#include "none.h"
-#include "obj.h"
-#include "siren.hpp"
+#include "Siren/class.h"
+#include "Siren/none.h"
+#include "Siren/obj.h"
+#include "Siren/string.h"
+#include "Siren/bytearray.h"
+#include "Siren/siren.hpp"
 
 using namespace Siren;
+
+REGISTER_SIREN_CLASS( Siren::Class )
 
 typedef Hash<String,const detail::ClassData*>::Type ObjectRegistry;
 

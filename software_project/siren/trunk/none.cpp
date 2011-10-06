@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#include "none.h"
-#include "siren.hpp"
+#include "Siren/none.h"
+#include "Siren/siren.hpp"
 
 using namespace Siren;
 

@@ -29,7 +29,7 @@
   *
 \*********************************************/
 
-#include "siren.h"
+#include "Siren/siren.h"
 
 SIREN_BEGIN_HEADER
 

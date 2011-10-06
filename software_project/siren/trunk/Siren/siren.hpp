@@ -1,5 +1,5 @@
-#ifndef SIREN_SIREN_H
-#define SIREN_SIREN_H
+#ifndef SIREN_SIREN_HPP
+#define SIREN_SIREN_HPP
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -28,20 +28,7 @@
   *
 \*********************************************/
 
-#include "macros.h"
-#include "detail/metatype.h"
-#include "detail/qt4support.h"
+#include "Siren/detail/metatype.hpp"
+#include "Siren/class.h"
 
-//Forward declaration of key classes
-namespace Siren
-{
-    class Object;
-    class Class;
-    class Logger;
-    class Stream;
-    class Obj;
-}
-
-#include "object.h"
-
-#endif // SIREN_SIREN_H
+#endif // define SIREN_SIREN_HPP

@@ -1,5 +1,6 @@
-#ifndef SIREN_SIREN_HPP
-#define SIREN_SIREN_HPP
+#ifndef SIREN_NONE_H
+#define SIREN_NONE_H
+
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -28,7 +29,45 @@
   *
 \*********************************************/
 
-#include "detail/metatype.hpp"
-#include "class.h"
+#include "Siren/siren.h"
 
-#endif // define SIREN_SIREN_HPP
+SIREN_BEGIN_HEADER
+
+namespace Siren
+{
+    /** This class is used to represent nothing - it is the equivalent
+        of Python's None object */
+    class SIREN_EXPORT None : public Object
+    {
+        SIREN_CLASS(None, Object)
+
+    public:
+        None();
+        None(const None &other);
+        
+        ~None();
+
+        None& operator=(const None &other);
+        
+        bool operator==(const None &other) const;
+        bool operator!=(const None &other) const;
+        
+        String toString() const;
+        String docString() const;
+        String docString(const String &function) const;
+        
+        bool test(Logger &logger) const;
+        
+        uint hashCode() const;
+
+        void stream(Stream &s);
+    
+    }; // end of class None
+
+} // end of namespace Siren
+
+SIREN_EXPOSE_CLASS( Siren::None )
+
+SIREN_END_HEADER
+
+#endif // SIREN_NONE_H

@@ -26,8 +26,10 @@
   *
 \*********************************************/
 
-#include "obj.h"
-#include "siren.hpp"
+#include "Siren/obj.h"
+#include "Siren/none.h"
+#include "Siren/stream.h"
+#include "Siren/siren.hpp"
 
 using namespace Siren;
 
@@ -164,22 +166,54 @@ bool Obj::test() const
     return d->test();
 }
 
-template<class T>
-bool isA() const;
+/** Return a string representation of the contained object */
+String Obj::toString() const
+{
+    return d->toString();
+}
 
-template<class T>
-const T& asA() const;
+/** Test the contained object */
+bool Obj::test(Logger &logger) const
+{
+    return d->test(logger);
+}
 
-String toString() const;
+/** Return the documentation for the contained object */
+String Obj::docString() const
+{
+    return d->docString();
+}
 
-bool test(Logger &logger) const;
+/** Return the documentation for the named function of 
+    the contained object */
+String Obj::docString(const String &function) const
+{
+    return d->docString(function);
+}
 
-String docString() const;
-String docString(const String &function) const;
+/** Return a hashcode for the contained object */
+uint Obj::hashCode() const
+{
+    return d->hashCode();
+}
 
-uint hashCode() const;
+/** Stream the contained object */
+void Obj::stream(Stream &s)
+{
+    if (s.isWriting())
+        this->save(s);
+    else
+        this->load(s);
+}
 
-void stream(Stream &s);
+/** Allow automatic casting to Siren::Object */
+Obj::operator const Object&() const
+{
+    return *d;
+}
 
-operator const Object&() const;
-operator const Object*() const;
+/** Allow automatic casting to a pointer to Siren::Object */
+Obj::operator const Object*() const
+{
+    return d.get();
+}

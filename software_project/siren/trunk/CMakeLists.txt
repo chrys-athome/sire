@@ -49,31 +49,46 @@ include_directories(${CMAKE_SOURCE_DIR}
 
 set ( SIREN_PUBLIC_HEADERS
 
-      class.h
-      macros.h
-      none.h
-      object.h
-      obj.h
-      siren.h
-      siren.hpp
+      Siren/bytearray.h
+      Siren/class.h
+      Siren/exception.h
+      Siren/exceptions.h
+      Siren/macros.h
+      Siren/none.h
+      Siren/number.h
+      Siren/object.h
+      Siren/obj.h
+      Siren/obj.hpp
+      Siren/schemas.h
+      Siren/siren.h
+      Siren/siren.hpp
+      Siren/stream.h
+      Siren/string.h
     )
 
 set ( SIREN_PRIVATE_HEADERS
 
-      detail/boostsupport.h
-      detail/metatype.h
-      detail/metatype.hpp
-      detail/qt4support.h
+      Siren/detail/boostsupport.h
+      Siren/detail/metatype.h
+      Siren/detail/metatype.hpp
+      Siren/detail/qt4support.h
     )
 
 set ( SIREN_SOURCES
 
       ${SIREN_PUBLIC_HEADERS}
 
+      bytearray.cpp
       class.cpp
+      exception.cpp
+      exceptions.cpp
       none.cpp
+      number.cpp
       object.cpp
       obj.cpp
+      schemas.cpp
+      stream.cpp
+      string.cpp
 
       ${SIREN_PRIVATE_HEADERS}
 
