@@ -35,9 +35,6 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    class String;
-    typedef List<String>::Type StringList;
-
     /** This class is used to represent a text string in Siren.
         The string is held as a unicode string, and provides
         support for automatic translation. All strings are

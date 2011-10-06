@@ -94,6 +94,12 @@ namespace Siren
         uint32 toUInt32() const;
         uint64 toUInt64() const;
         
+        float32 toFloat32() const;
+        float64 toFloat64() const;
+        
+        int toInt() const;
+        uint toUInt() const;
+        
         float toFloat() const;
         double toDouble() const;
 
@@ -106,6 +112,9 @@ namespace Siren
         static Number fromUInt8(uint8 number);
         static Number fromUInt32(uint32 number);
         static Number fromUInt64(uint64 number);
+        
+        static Number fromFloat32(float32 number);
+        static Number fromFloat64(float64 number);
         
         static Number fromFloat(float number);
         static Number fromDouble(double number);

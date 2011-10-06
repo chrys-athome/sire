@@ -30,6 +30,7 @@
 
 #include "Siren/siren.h"
 #include "Siren/string.h"
+#include "Siren/stringlist.h"
 #include "Siren/detail/boostsupport.h"
 
 SIREN_BEGIN_HEADER

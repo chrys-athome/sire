@@ -45,6 +45,7 @@ namespace Siren
     class Stream;
 
     class String;
+    class StringList;
     class Number;
     class ByteArray;
 

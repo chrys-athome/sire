@@ -30,5 +30,7 @@
 
 #include "Siren/detail/metatype.hpp"
 #include "Siren/class.h"
+#include "Siren/string.h"
+#include "Siren/stringlist.h"
 
 #endif // define SIREN_SIREN_HPP

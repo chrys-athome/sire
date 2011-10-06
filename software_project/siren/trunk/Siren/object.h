@@ -184,8 +184,6 @@ namespace Siren
         static const char* typeName();
         virtual const char* what() const=0;
 
-        static const char** interfaces();
-
         virtual void copy(const Object &other)=0;
         virtual bool equals(const Object &other) const=0;
 
@@ -226,6 +224,8 @@ namespace Siren
         virtual void stream(Stream &s);
 
     protected:
+        static const char** ifaces();
+    
         /** Return a clone of this object. */
         virtual const Object* ptr_clone() const=0;
     };

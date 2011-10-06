@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#include "metatype.h"
-#include "qtsupport.h"
+#include "Siren/detail/metatype.h"
+#include "Siren/detail/qt4support.h"
 
 using namespace Siren;
 

@@ -98,7 +98,7 @@ namespace Siren
     };
 
     #if !defined(QT_NO_DEBUG_STREAM)
-    QDebug sirenDebug() { return qDebug(); }
+    inline QDebug sirenDebug() { return qDebug(); }
     #endif
 
 } // end of namespace Siren

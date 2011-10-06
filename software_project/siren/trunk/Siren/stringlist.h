@@ -1,5 +1,5 @@
-#ifndef SIREN_BYTEARRAY_H
-#define SIREN_BYTEARRAY_H
+#ifndef SIREN_STRINGLIST_H
+#define SIREN_STRINGLIST_H
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -28,61 +28,64 @@
   *
 \*********************************************/
 
-#include "siren.h"
+#include "Siren/siren.h"
+#include "Siren/string.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    /** This class provides a binary array of bytes. This is useful
-        for storing binary data
-        
+    /** This class provides a list of Siren Strings 
+    
         @author Christopher Woods
     */
-    class SIREN_EXPORT ByteArray : public Object
+    class SIREN_EXPORT StringList : public Object
     {
-        SIREN_CLASS(ByteArray, Object);
+        SIREN_CLASS( StringList, Object )
         
     public:
-        ByteArray();
-        ByteArray(const char *str);
-        ByteArray(const char *data, int size);
+        StringList();
+        StringList(const String &str);
+        StringList(const String *strs, int count);
+        StringList(const List<String>::Type &strs);
         
         #ifdef SIREN_QT_SUPPORT
-        ByteArray(const QByteArray &data);
-        operator QByteArray() const;
+        StringList(const QStringList &strlist);
+        operator QStringList() const;
         #endif
         
-        ByteArray(const ByteArray &other);
+        StringList(const StringList &other);
         
-        ~ByteArray();
+        ~StringList();
         
-        ByteArray& operator=(const ByteArray &other);
+        StringList& operator=(const StringList &other);
         
-        bool operator==(const ByteArray &other) const;
-        bool operator!=(const ByteArray &other) const;
+        bool operator==(const StringList &other) const;
+        bool operator!=(const StringList &other) const;
         
-        char at(int i) const;
-        
-        const char* data() const;
+        const String& at(int i) const;
+        const String& operator[](int i) const;
         
         int count() const;
         int size() const;
-        int length() const;
         
-        bool isEmpty() const;
+        bool contains(const String &str) const;
         
-        ByteArray toBase64() const;
-        static ByteArray fromBase64(const ByteArray &data);
+        List<String>::Type toList() const;
+        static StringList fromList(const List<String>::Type &list);
+        
+        operator List<String>::Type() const;
         
     private:
-        /** The actual QByteArray holding the data... */
-        QByteArray d;
-    };
-
+        /** The actual list of strings */
+        List<String>::Type d;
+        
+    }; // end of class StringList
 
 } // end of namespace Siren
 
+SIREN_EXPOSE_CLASS( Siren::StringList )
+
 SIREN_END_HEADER
 
-#endif // ifndef SIREN_BYTEARRAY_H
+#endif // ifndef SIREN_STRINGLIST_H

@@ -61,7 +61,7 @@ Object& Object::operator=(const Object&)
 
 /** Return the list of interfaces supported by this type.
     "0" is returned if this class does not support any interfaces */
-const char** Object::interfaces()
+const char** Object::ifaces()
 {
     return 0;
 }

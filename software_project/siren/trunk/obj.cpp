@@ -28,7 +28,7 @@
 
 #include "Siren/obj.h"
 #include "Siren/none.h"
-#include "Siren/stream.h"
+//#include "Siren/stream.h"
 #include "Siren/siren.hpp"
 
 using namespace Siren;
@@ -157,7 +157,7 @@ void Obj::save(Stream &s) const
 /** Load this object from the passed stream */
 void Obj::load(Stream &s)
 {
-    this->operator=( s.loadNextObject() );
+    //this->operator=( s.loadNextObject() );
 }
 
 /** Test the contained class */
@@ -200,10 +200,10 @@ uint Obj::hashCode() const
 /** Stream the contained object */
 void Obj::stream(Stream &s)
 {
-    if (s.isWriting())
-        this->save(s);
-    else
-        this->load(s);
+    //if (s.isWriting())
+    //    this->save(s);
+    //else
+    //    this->load(s);
 }
 
 /** Allow automatic casting to Siren::Object */

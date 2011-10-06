@@ -77,6 +77,7 @@
     the functions that are common to all Siren objects */
 #define SIREN_CLASS(classname, baseclass) \
     public: \
+        friend class detail::ConcreteClassData< classname >; \
         typedef baseclass super; \
         static const char* typeName(); \
         virtual const char* what() const; \

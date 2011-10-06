@@ -64,6 +64,7 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/siren.hpp
       Siren/stream.h
       Siren/string.h
+      Siren/stringlist.h
     )
 
 set ( SIREN_PRIVATE_HEADERS
@@ -89,6 +90,7 @@ set ( SIREN_SOURCES
       schemas.cpp
       stream.cpp
       string.cpp
+      stringlist.cpp
 
       ${SIREN_PRIVATE_HEADERS}
 

@@ -166,7 +166,7 @@ void Class::checkNotNull() const
 String Class::name() const
 {
     checkNotNull();
-    return d->typeName();
+    return String(d->typeName());
 }
 
 /** Return whether or not the class has a super class (should do!) */
@@ -212,7 +212,7 @@ StringList Class::interfaces() const
 {
     checkNotNull();
     
-    StringList ifaces;
+    List<String>::Type ifaces;
     
     for (int i=0; i < d->nInterfaces(); ++i)
     {

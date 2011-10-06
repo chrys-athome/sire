@@ -44,14 +44,13 @@ namespace Siren
         ///////////////// of ConcreteClassData<T>
         /////////////////
 
-        /** Create a metadata object to register the class "type_name",
-            derived from "base_name", that supports the interfaces in "interfaces" */
+        /** Create a metadata object to register the class T */
         template<class T>
         SIREN_OUTOFLINE_TEMPLATE
         ConcreteClassData<T>::ConcreteClassData() 
                              : ClassData( T::typeName(), 
                                           T::super::typeName(), 
-                                          T::interfaces() )
+                                          T::ifaces() )
         {
             Siren::detail::registerObject(*this);
         }
@@ -84,8 +83,7 @@ namespace Siren
         ///////////////// of VirtualClassData<T>
         /////////////////
 
-        /** Create a metadata object to register the class "type_name",
-            derived from "base_name", that supports the interfaces in "interfaces" */
+        /** Create a metadata object to register the class T */
         template<class T>
         SIREN_OUTOFLINE_TEMPLATE
         VirtualClassData<T>::VirtualClassData() 

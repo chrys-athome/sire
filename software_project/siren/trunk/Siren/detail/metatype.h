@@ -83,6 +83,7 @@ namespace Siren
                 This is a 0-terminated array, so 0 indicates that
                 there are no interfaces supported by this class */
             const char **ifaces;
+            
         }; // end of class ClassData
 
         /** This template class is used to hold metadata
