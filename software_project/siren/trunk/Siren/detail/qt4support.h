@@ -35,16 +35,21 @@
 
 #include <QString>
 #include <QStringList>
+#include <QChar>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QReadWriteLock>
 #include <QByteArray>
 #include <QDataStream>
 #include <QSharedData>
 #include <QSharedDataPointer>
+
 #include <QHash>
 #include <QVector>
 #include <QList>
-#include <QChar>
+#include <QSet>
+#include <QCache>
+#include <QAtomic>
 
 #include <QDebug>
 
@@ -67,6 +72,9 @@ namespace Siren
 
     typedef QMutex Mutex;
     typedef QMutexLocker MutexLocker;
+    typedef QReadWriteLock ReadWriteLock;
+    typedef QReadLocker ReadLocker;
+    typedef QWriteLocker WriteLocker;
     typedef QDataStream DataStream;
     typedef QSharedData SharedData;
     typedef QChar Char;
@@ -97,9 +105,24 @@ namespace Siren
         typedef QHash<Key,Value> Type;
     };
 
+    template<class T>
+    struct Set
+    {
+        typedef QSet<T> Type;
+    };
+
+    template<class Key, class Value>
+    struct Cache
+    {
+        typedef QCache<Key,Value> Type;
+    };
+
     #if !defined(QT_NO_DEBUG_STREAM)
     inline QDebug sirenDebug() { return qDebug(); }
     #endif
+    
+    inline int atomic_increment(volatile int *ptr){ return q_atomic_increment(ptr); }
+    inline int atomic_decrement(volatile int *ptr){ return q_atomic_decrement(ptr); }s
 
 } // end of namespace Siren
 

@@ -71,14 +71,6 @@ namespace Siren
         bool operator!=(const String &other) const;
         
         String toString() const;
-        String docString() const;
-        String docString(const String &function) const;
-        
-        bool test(Logger &logger) const;
-        
-        uint hashCode() const;
-
-        void stream(Stream &s);
         
         ///////
         /////// String functions
@@ -230,8 +222,15 @@ namespace Siren
         float64 toFloat64() const;
     
     private:
+        void incref();
+        void decref();
+    
         /** The actual string - currently use QString to hold the data */
         QString d;
+        
+        /** A reference count for the number of times this string is used
+            in the program */
+        int *refcount;
     
     }; // end of class String
 
