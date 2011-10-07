@@ -112,15 +112,15 @@ namespace Siren
         String remove(int pos, int len) const;
         
         StringList split() const;
-        StringList split(const String &sep) const;
+        StringList split(const String &sep, bool case_sensitive=true) const;
         
         String repeated(int n) const;
         
         const Char* unicode() const;
         const Char* data() const;
         
-        const Char& at(int i) const;
-        const Char& operator[](int i) const;
+        const Char at(int i) const;
+        const Char operator[](int i) const;
         
         static String fromUtf8(const char *string, int size=-1);
         static String fromAscii(const char *string, int size=-1);
@@ -230,7 +230,7 @@ namespace Siren
         
         /** A reference count for the number of times this string is used
             in the program */
-        int *refcount;
+        AtomicInt *refcount;
     
     }; // end of class String
 

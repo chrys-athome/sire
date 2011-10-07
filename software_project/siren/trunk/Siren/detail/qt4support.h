@@ -45,11 +45,23 @@
 #include <QSharedDataPointer>
 
 #include <QHash>
+#include <QMutableHashIterator>
+#include <QHashIterator>
+
 #include <QVector>
+#include <QMutableVectorIterator>
+#include <QVectorIterator>
+
 #include <QList>
+#include <QMutableListIterator>
+#include <QListIterator>
+
 #include <QSet>
+#include <QMutableSetIterator>
+#include <QSetIterator>
+
 #include <QCache>
-#include <QAtomic>
+#include <QAtomicInt>
 
 #include <QDebug>
 
@@ -75,6 +87,7 @@ namespace Siren
     typedef QReadWriteLock ReadWriteLock;
     typedef QReadLocker ReadLocker;
     typedef QWriteLocker WriteLocker;
+    typedef QAtomicInt AtomicInt;
     typedef QDataStream DataStream;
     typedef QSharedData SharedData;
     typedef QChar Char;
@@ -91,24 +104,40 @@ namespace Siren
     struct Vector
     {
         typedef QVector<T> Type;
+        typedef QMutableVectorIterator<T> MutableIterator;
+        typedef QVectorIterator<T> Iterator;
+        typedef typename QVector<T>::iterator iterator;
+        typedef typename QVector<T>::const_iterator const_iterator;
     };
 
     template<class T>
     struct List
     {
         typedef QList<T> Type;
+        typedef QMutableListIterator<T> MutableIterator;
+        typedef QListIterator<T> Iterator;
+        typedef typename QList<T>::iterator iterator;
+        typedef typename QList<T>::const_iterator const_iterator;
     };
 
     template<class Key, class Value>
     struct Hash
     {
         typedef QHash<Key,Value> Type;
+        typedef QMutableHashIterator<Key,Value> MutableIterator;
+        typedef QHashIterator<Key,Value> Iterator;
+        typedef typename QHash<Key,Value>::iterator iterator;
+        typedef typename QHash<Key,Value>::const_iterator const_iterator;
     };
 
     template<class T>
     struct Set
     {
         typedef QSet<T> Type;
+        typedef QMutableSetIterator<T> MutableIterator;
+        typedef QSetIterator<T> Iterator;
+        typedef typename QSet<T>::iterator iterator;
+        typedef typename QSet<T>::const_iterator const_iterator;
     };
 
     template<class Key, class Value>
@@ -120,9 +149,6 @@ namespace Siren
     #if !defined(QT_NO_DEBUG_STREAM)
     inline QDebug sirenDebug() { return qDebug(); }
     #endif
-    
-    inline int atomic_increment(volatile int *ptr){ return q_atomic_increment(ptr); }
-    inline int atomic_decrement(volatile int *ptr){ return q_atomic_decrement(ptr); }s
 
 } // end of namespace Siren
 
