@@ -180,18 +180,16 @@ Number::~Number()
 {}
 
 /** Copy assignment operator */
-Number& Number::operator=(const Number &other)
+void Number::copy_object(const Number &other)
 {
     if (this != &other)
     {
         memcpy(this, &other, sizeof(Number));
     }
-    
-    return *this;
 }
 
 /** Comparison function */
-bool Number::operator==(const Number &other) const
+bool Number::compare_object(const Number &other) const
 {
     if (num_type == other.num_type)
     {
@@ -225,12 +223,6 @@ bool Number::operator==(const Number &other) const
     }
     else
         return false;
-}
-
-/** Comparison function */
-bool Number::operator!=(const Number &other) const
-{
-    return not operator==(other);
 }
 
 /** Return a string representation of this number */

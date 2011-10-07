@@ -57,11 +57,6 @@ namespace Siren
         
         ~ByteArray();
         
-        ByteArray& operator=(const ByteArray &other);
-        
-        bool operator==(const ByteArray &other) const;
-        bool operator!=(const ByteArray &other) const;
-        
         char at(int i) const;
         
         const char* data() const;
@@ -74,6 +69,10 @@ namespace Siren
         
         ByteArray toBase64() const;
         static ByteArray fromBase64(const ByteArray &data);
+
+    protected:
+        void copy_object(const ByteArray &other);
+        bool compare_object(const ByteArray &other) const;
         
     private:
         /** The actual QByteArray holding the data... */

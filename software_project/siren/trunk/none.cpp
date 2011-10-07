@@ -46,89 +46,13 @@ None::~None()
 {}
 
 /** Copy assignment operator */
-None& None::operator=(const None &other)
+void None::copy_object(const None &other)
 {
-    return *this;
+    super::copy_object(other);
 }
 
 /** Comparison operator */
-bool None::operator==(const None &other) const
+bool None::compare_object(const None &other) const
 {
-    return true;
+    return super::compare_object(other);
 }
-
-/** Comparison operator */
-bool None::operator!=(const None &other) const
-{
-    return false;
-}
-
-/*void None::stream(Stream &s)
-{
-    s.assertVersion<None>(1);
-
-    Schema schema = s.item<None>();
-    Object::stream( schema.base() );
-}*/
-
-/*bool None::test(Logger &logger) const
-{
-    Tester tester(*this, logger);
-
-    #ifndef SIREN_DISABLE_TESTS
-    
-    try
-    {
-        // Test 1
-        {
-            tester.nextTest();
-            tester.expect_equal( QObject::tr("Test a clone is equal."),
-                                 CODELOC,
-                                 *this, this->clone() );
-        }
-        
-        // Test 2
-        {
-            tester.nextTest();
-            tester.expect_equal( QObject::tr("None.what() is \"Siren::None\""),
-                                 CODELOC,
-                                 this->what(), QLatin1String("Siren::None") );
-        }
-        
-        // Test 3
-        {
-            tester.nextTest();
-        
-            QByteArray b;
-
-            DataStream ds( &b, QIODevice::WriteOnly );
-        
-            ds << *this;
-        
-            DataStream ds2( b );
-            
-            None new_none;
-            
-            ds2 >> new_none;
-            
-            tester.expect_true( QObject::tr("Reloaded None object is equal."),
-                                CODELOC, new_none.equals( *this ) );
-        }
-    }
-    catch(const Siren::exception &e)
-    {
-        tester.unexpected_error(e);
-    }
-    catch(const std::exception &e)
-    {
-        tester.unexpected_error( std_exception(e) );
-    }
-    catch(...)
-    {
-        tester.unexpected_error( unknown_error(CODELOC) );
-    }
-    
-    #endif // SIREN_DISABLE_TESTS
-    
-    return tester.allPassed();
-}*/

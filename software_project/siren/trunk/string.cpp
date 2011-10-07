@@ -38,7 +38,7 @@ using namespace Siren;
 REGISTER_SIREN_CLASS( Siren::String )
 
 /** Null constructor */
-String::String() : refcount(0)
+String::String() : Object(), refcount(0)
 {}
 
 static Hash<QString,AtomicInt*>::Type string_registry;
@@ -103,31 +103,31 @@ static void unregisterString(const QString &str)
 }
 
 /** Construct from the passed unicode array */
-String::String(const Char *unicode, int size) : refcount(0)
+String::String(const Char *unicode, int size) : Object(), refcount(0)
 {
     d = registerString( QString(unicode,size), &refcount );
 }
 
 /** Construct from a single unicode character */
-String::String(Char c) : refcount(0)
+String::String(Char c) : Object(), refcount(0)
 {
     d = registerString( QString(c), &refcount );
 }
 
-String::String(int size, Char c) : refcount(0)
+String::String(int size, Char c) : Object(), refcount(0)
 {
     d = registerString( QString(size,c), &refcount );
 }
 
 /** Construct from the passed Latin1 encoded string */
-String::String(const Latin1String &latin1) : refcount(0)
+String::String(const Latin1String &latin1) : Object(), refcount(0)
 {
     d = registerString( QString(latin1), &refcount );
 }
 
 #ifdef SIREN_QT_SUPPORT
     /** Construct from a QString */
-    String::String(const QString &qstring) : refcount(0)
+    String::String(const QString &qstring) : Object(), refcount(0)
     {
         d = registerString(qstring, &refcount);
     }
@@ -165,7 +165,8 @@ void String::decref()
 }
 
 /** Copy constructor */
-String::String(const String &other) : d(other.d), refcount(other.refcount)
+String::String(const String &other) 
+       : Object(other), d(other.d), refcount(other.refcount)
 {
     incref();
 }
@@ -177,10 +178,10 @@ String::~String()
 }
 
 /** Copy assignment operator */
-String& String::operator=(const String &other)
+void String::copy_object(const String &other)
 {
     if (this == &other)
-        return *this;
+        return;
 
     decref();
 
@@ -188,8 +189,6 @@ String& String::operator=(const String &other)
     incref();
     
     d = other.d;
-    
-    return *this;
 }
 
 /** Copy assignment operator */
@@ -202,20 +201,6 @@ String& String::operator=(Char c)
 String& String::operator=(const Latin1String &latin1)
 {
     return this->operator=( String(latin1) );
-}
-
-/** String comparison - fast as all identical strings use
-    the same storage */
-bool String::operator==(const String &other) const
-{
-    return refcount == other.refcount;
-}
-
-/** String comparison - fast as all identical strings use
-    the same storage */
-bool String::operator!=(const String &other) const
-{
-    return refcount != other.refcount;
 }
 
 /** Return a string representation of this string */

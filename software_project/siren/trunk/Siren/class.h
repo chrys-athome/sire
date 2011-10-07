@@ -56,17 +56,8 @@ namespace Siren
         Class(const Class &other);
         
         ~Class();
-        
-        Class& operator=(const Class &other);
-        
-        bool operator==(const Class &other) const;
-        bool operator!=(const Class &other) const;
-        
-        uint hashCode() const;
-        String toString() const;
 
-        bool test(Logger &logger) const;
-        void stream(Stream &s);
+        String toString() const;
         
         String name() const;
         
@@ -100,6 +91,10 @@ namespace Siren
         void assertCanCast() const;
 
         static StringList registeredTypes();
+
+    protected:
+        void copy_object(const Class &other);
+        bool compare_object(const Class &other) const;
 
     private:
         void checkNotNull() const;

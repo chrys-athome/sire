@@ -58,11 +58,6 @@ namespace Siren
         
         ~StringList();
         
-        StringList& operator=(const StringList &other);
-        
-        bool operator==(const StringList &other) const;
-        bool operator!=(const StringList &other) const;
-        
         const String& at(int i) const;
         const String& operator[](int i) const;
         
@@ -75,6 +70,10 @@ namespace Siren
         static StringList fromList(const List<String>::Type &list);
         
         operator List<String>::Type() const;
+
+    protected:
+        void copy_object(const StringList &other);
+        bool compare_object(const StringList &other) const;
         
     private:
         /** The actual list of strings */

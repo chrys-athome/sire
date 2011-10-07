@@ -61,11 +61,6 @@ namespace Siren
         
         ~Exception() throw();
         
-        Exception& operator=(const Exception &other);
-        
-        bool operator==(const Exception &other) const;
-        bool operator!=(const Exception &other) const;
-        
         String error() const;
         String from() const;
         
@@ -77,6 +72,10 @@ namespace Siren
         String pid() const;
         
         virtual void throwSelf() const=0;
+
+    protected:
+        void copy_object(const Exception &other);
+        bool compare_object(const Exception &other) const;
         
     private:
         /** The error message associated with this exception */

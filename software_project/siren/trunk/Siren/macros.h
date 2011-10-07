@@ -62,7 +62,7 @@
 #define REGISTER_SIREN_CLASS(classname)  \
     const char* classname::typeName(){ return #classname; } \
     const char* classname::what() const{ return classname::typeName(); } \
-    const classname * classname::ptr_clone() const{ return new classname(*this); } \
+    classname * classname::ptr_clone() const{ return new classname(*this); } \
     static const Siren::detail::ConcreteClassData<classname> \
                                                 register_object_##__LINE__; \
     Siren::Class classname::typeClass() { \
@@ -71,8 +71,16 @@
     } \
     Siren::Class classname::getClass() const { \
         return classname::typeClass(); \
+    } \
+    void classname::pvt_copy_object(const Siren::Object &other) \
+    { \
+        classname::copy_object( other.asA<classname>() ); \
+    } \
+    bool classname::pvt_compare_object(const Siren::Object &other) const \
+    { \
+        return classname::compare_object( other.asA<classname>() ); \
     }
-    
+        
 /** Used to define, in the definition of Siren Object classes,
     the functions that are common to all Siren objects */
 #define SIREN_CLASS(classname, baseclass) \
@@ -83,13 +91,11 @@
         virtual const char* what() const; \
         static Class typeClass(); \
         Class getClass() const; \
-        classname& operator=(const Siren::Object &other); \
-        bool operator==(const Siren::Object &other) const; \
-        bool operator!=(const Siren::Object &other) const; \
-        void copy(const Siren::Object &other); \
-        bool equals(const Siren::Object &other) const; \
+    protected: \
+        void pvt_copy_object(const Siren::Object &other); \
+        bool pvt_compare_object(const Siren::Object &other) const; \
     private: \
-        const classname * ptr_clone() const;
+        classname * ptr_clone() const;
     
 /** Used to define, in the definition of Siren Object classes,
     the functions that are common to all Siren objects */

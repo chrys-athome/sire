@@ -51,11 +51,6 @@ namespace Siren
         invalid_cast(const invalid_cast &other);
         
         ~invalid_cast() throw();
-        
-        invalid_cast& operator=(const invalid_cast &other);
-        
-        bool operator==(const invalid_cast &other) const;
-        bool operator!=(const invalid_cast &other) const;
 
         void throwSelf() const;
         
@@ -79,14 +74,28 @@ namespace Siren
         
         ~numeric_overflow() throw();
         
-        numeric_overflow& operator=(const numeric_overflow &other);
-        
-        bool operator==(const numeric_overflow &other) const;
-        bool operator!=(const numeric_overflow &other) const;
-        
         void throwSelf() const;
 
     }; // end of class numeric_overflow
+
+    /** This exception is thrown when a call is made of some
+        code that has not yet been written! 
+    */
+    class SIREN_EXPORT incomplete_code : public Exception
+    {
+        SIREN_CLASS( incomplete_code, Exception )
+        
+    public:
+        incomplete_code();
+        incomplete_code(const String &error, CODELOC_ARGS);
+        
+        incomplete_code(const incomplete_code &other);
+        
+        ~incomplete_code() throw();
+        
+        void throwSelf() const;
+    
+    }; // end of class incomplete_code
 
 } // end of namespace Siren
 

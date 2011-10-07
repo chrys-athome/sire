@@ -47,20 +47,9 @@ namespace Siren
         
         ~None();
 
-        None& operator=(const None &other);
-        
-        bool operator==(const None &other) const;
-        bool operator!=(const None &other) const;
-        
-        String toString() const;
-        String docString() const;
-        String docString(const String &function) const;
-        
-        bool test(Logger &logger) const;
-        
-        uint hashCode() const;
-
-        void stream(Stream &s);
+    protected:
+        void copy_object(const None &other);
+        bool compare_object(const None &other) const;
     
     }; // end of class None
 

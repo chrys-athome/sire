@@ -184,12 +184,13 @@ namespace Siren
         static const char* typeName();
         virtual const char* what() const=0;
 
-        virtual void copy(const Object &other)=0;
-        virtual bool equals(const Object &other) const=0;
+        void copy(const Object &other);
+        bool equals(const Object &other) const;
 
-        virtual Object& operator=(const Object &other)=0;
-        virtual bool operator==(const Object &other) const=0;
-        virtual bool operator!=(const Object &other) const=0;
+        Object& operator=(const Object &other);
+        
+        bool operator==(const Object &other) const;
+        bool operator!=(const Object &other) const;
         ///////////////////////////////////////////////////////////
 
         Obj clone() const;
@@ -216,8 +217,8 @@ namespace Siren
 
         virtual bool test(Logger &logger) const;
 
-        virtual String docString() const;
-        virtual String docString(const String &function) const;
+        String docString() const;
+        String docString(const String &function) const;
         
         virtual uint hashCode() const;
         
@@ -226,8 +227,14 @@ namespace Siren
     protected:
         static const char** ifaces();
     
+        void copy_object(const Object &other);
+        bool compare_object(const Object &other) const;
+
+        virtual void pvt_copy_object(const Object &other)=0;
+        virtual bool pvt_compare_object(const Object &other) const=0;
+    
         /** Return a clone of this object. */
-        virtual const Object* ptr_clone() const=0;
+        virtual Object* ptr_clone() const=0;
     };
 
 } // end of namespace Siren

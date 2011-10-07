@@ -51,6 +51,6 @@ namespace Siren
 
 } // end of namespace Siren
 
-#include "object.h"
+#include "Siren/object.h"
 
 #endif // SIREN_SIREN_H

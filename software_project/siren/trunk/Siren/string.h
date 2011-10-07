@@ -63,12 +63,23 @@ namespace Siren
         
         ~String();
 
-        String& operator=(const String &other);
+        String& operator=(const String &other)
+        { 
+            String::copy_object(other); return *this; 
+        }
+        
         String& operator=(Char c);
         String& operator=(const Latin1String &latin1);
         
-        bool operator==(const String &other) const;
-        bool operator!=(const String &other) const;
+        bool operator==(const String &other) const
+        {
+            return String::compare_object(other);
+        }
+        
+        bool operator!=(const String &other) const
+        {
+            return not String::compare_object(other);
+        }
         
         String toString() const;
         
@@ -220,6 +231,14 @@ namespace Siren
         
         float32 toFloat32() const;
         float64 toFloat64() const;
+
+    protected:
+        void copy_object(const String &other);
+        
+        bool compare_object(const String &other) const
+        {
+            return refcount == other.refcount;
+        }
     
     private:
         void incref();

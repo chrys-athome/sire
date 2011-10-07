@@ -132,22 +132,16 @@ Class::~Class()
 {}
 
 /** Copy assignment operator */
-Class& Class::operator=(const Class &other)
+void Class::copy_object(const Class &other)
 {
     d = other.d;
-    return *this;
+    super::copy_object(other);
 }
 
 /** Comparison operator */
-bool Class::operator==(const Class &other) const
+bool Class::compare_object(const Class &other) const
 {
-    return d == other.d;
-}
-
-/** Comparison operator */
-bool Class::operator!=(const Class &other) const
-{
-    return d != other.d;
+    return d == other.d and super::compare_object(other);
 }
 
 /** Check that the class is not null. This will ensure that

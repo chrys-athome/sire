@@ -64,11 +64,6 @@ namespace Siren
         Number(const Number &other);
         
         ~Number();
-
-        Number& operator=(const Number &other);
-        
-        bool operator==(const Number &other) const;
-        bool operator!=(const Number &other) const;
         
         String toString() const;
 
@@ -122,6 +117,10 @@ namespace Siren
         operator int() const;
         operator double() const;
         operator bool() const;
+
+    protected:
+        void copy_object(const Number &other);
+        bool compare_object(const Number &other) const;
 
     private:
         union
