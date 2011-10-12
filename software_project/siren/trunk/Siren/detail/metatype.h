@@ -63,6 +63,9 @@ namespace Siren
         
             virtual Object* createObject() const=0;
         
+            bool operator==(const ClassData &other) const;
+            bool operator!=(const ClassData &other) const;
+        
             const char* typeName() const;
             const char* baseTypeName() const;
         

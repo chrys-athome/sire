@@ -53,10 +53,13 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/class.h
       Siren/exception.h
       Siren/exceptions.h
+      Siren/lock.h
       Siren/macros.h
+      Siren/mutex.h
       Siren/none.h
       Siren/number.h
       Siren/object.h
+      Siren/object.hpp
       Siren/obj.h
       Siren/obj.hpp
       Siren/schemas.h
@@ -65,6 +68,7 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/stream.h
       Siren/string.h
       Siren/stringlist.h
+      Siren/thread.h
     )
 
 set ( SIREN_PRIVATE_HEADERS
@@ -83,6 +87,8 @@ set ( SIREN_SOURCES
       class.cpp
       exception.cpp
       exceptions.cpp
+      lock.cpp
+      mutex.cpp
       none.cpp
       number.cpp
       object.cpp
@@ -91,6 +97,7 @@ set ( SIREN_SOURCES
       stream.cpp
       string.cpp
       stringlist.cpp
+      thread.cpp
 
       ${SIREN_PRIVATE_HEADERS}
 

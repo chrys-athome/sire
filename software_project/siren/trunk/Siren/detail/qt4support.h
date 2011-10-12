@@ -44,6 +44,9 @@
 #include <QSharedData>
 #include <QSharedDataPointer>
 
+#include <QThread>
+#include <QThreadStorage>
+
 #include <QHash>
 #include <QMutableHashIterator>
 #include <QHashIterator>

@@ -42,6 +42,9 @@
     visible outside of the Siren library. */
 #define SIREN_EXPORT
 
+/** Macro used to assert that the passed argument is true */
+#define SIREN_ASSERT
+
 /** Use to signify that the following template function should be
     compiled inline */
 #define SIREN_INLINE_TEMPLATE
@@ -74,11 +77,11 @@
     } \
     void classname::pvt_copy_object(const Siren::Object &other) \
     { \
-        classname::copy_object( other.asA<classname>() ); \
+        classname::copy_object( *((const classname *) (&other)) ); \
     } \
     bool classname::pvt_compare_object(const Siren::Object &other) const \
     { \
-        return classname::compare_object( other.asA<classname>() ); \
+        return classname::compare_object( *((const classname *) (&other)) ); \
     }
         
 /** Used to define, in the definition of Siren Object classes,
@@ -101,6 +104,7 @@
     the functions that are common to all Siren objects */
 #define SIREN_VIRTUAL_CLASS(classname, baseclass) \
     public: \
+        friend class detail::VirtualClassData< classname >; \
         typedef baseclass super; \
         static const char* typeName(); \
         static Class typeClass(); \
@@ -108,7 +112,7 @@
     
 /** Use to register a new virtual Siren Object class */
 #define REGISTER_SIREN_VIRTUAL_CLASS(classname)  \
-    static const char* classname::typeName(){ return #classname; } \
+    const char* classname::typeName(){ return #classname; } \
     static const Siren::detail::VirtualClassData<classname> \
                                         register_object_##__LINE__; \
     Siren::Class classname::typeClass() { \

@@ -55,6 +55,48 @@ namespace Siren
         void throwSelf() const;
         
     }; // end of class invalid_cast
+
+    /** This exception is thrown when an attempt is made
+        to access a list or array with an invalid index
+        
+        @author Christopher Woods
+    */
+    class SIREN_EXPORT invalid_index : public Exception
+    {
+        SIREN_CLASS( invalid_index, Exception )
+    
+    public:
+        invalid_index();
+        invalid_index(const String &error, CODELOC_ARGS);
+        
+        invalid_index(const invalid_index &other);
+        
+        ~invalid_index() throw();
+
+        void throwSelf() const;
+        
+    }; // end of class invalid_index
+
+    /** This exception is thrown when an attempt is made
+        to access a hash, dictionary or map with an invalid key
+        
+        @author Christopher Woods
+    */
+    class SIREN_EXPORT invalid_key : public Exception
+    {
+        SIREN_CLASS( invalid_key, Exception )
+    
+    public:
+        invalid_key();
+        invalid_key(const String &error, CODELOC_ARGS);
+        
+        invalid_key(const invalid_key &other);
+        
+        ~invalid_key() throw();
+
+        void throwSelf() const;
+        
+    }; // end of class invalid_key
     
     /** This exception is thrown when a numeric value
         held in one type would overflow when placed into

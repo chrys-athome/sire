@@ -146,6 +146,12 @@ namespace Siren
         ByteArray toLatin1() const;
         int toWCharArray(wchar_t *wchar) const;
     
+        String arg(const char *str, int fieldWidth=0, 
+                   const Char &fillChar = Latin1Char(' ')) const;
+
+        String arg(const char *str1, const char *str2) const;
+        String arg(const char *str1, const char *str2, const char *str3) const;
+    
         String arg(int8 number, int fieldWidth=0, int base=10,
                    const Char &fillChar = Latin1Char(' ')) const;
     

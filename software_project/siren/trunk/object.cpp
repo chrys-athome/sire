@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "Siren/object.h"
+#include "Siren/object.hpp"
 #include "Siren/string.h"
 #include "Siren/obj.h"
 #include "Siren/siren.hpp"
@@ -153,6 +154,19 @@ String Object::docString() const
 String Object::docString(const String &function) const
 {
     return String::tr("No documentation available for %1.").arg(function);
+}
+
+/** Internal function used to raise an invalid_cast exception if an attempt
+    is made to cast this object to an invalid type 
+    
+    \throw Siren::invalid_cast
+*/
+void Object::throwInvalidCast(const char *type_name) const
+{
+    throw Siren::invalid_cast( String::tr(
+            "It is not possible to cast from an object of type %1 "
+            "to an object of type %2.")
+                .arg(this->what()).arg(type_name), CODELOC );
 }
 
 /** Return a clone of this object. */

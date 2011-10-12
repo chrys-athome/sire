@@ -206,6 +206,9 @@ namespace Siren
         template<class T>
         const T& asA() const;
 
+        template<class T>
+        void assertIsA() const;
+
         //////////////////////////////////////////
         //                                      //
         // Functions that should be overridden  //
@@ -235,6 +238,9 @@ namespace Siren
     
         /** Return a clone of this object. */
         virtual Object* ptr_clone() const=0;
+
+    private:
+        void throwInvalidCast(const char *type_name) const;
     };
 
 } // end of namespace Siren

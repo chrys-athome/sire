@@ -37,6 +37,7 @@ SIREN_BEGIN_HEADER
 
 #define CODELOC __FILE__, __LINE__, BOOST_CURRENT_FUNCTION
 #define CODELOC_ARGS const char *file, int line, const char *current_function
+#define CODELOC_PASS_ARGS file, line, current_function
 
 namespace Siren
 {
@@ -61,15 +62,17 @@ namespace Siren
         
         ~Exception() throw();
         
-        String error() const;
-        String from() const;
-        
         StringList backTrace() const;
         
         String where() const;
         String why() const;
         
+        String node() const;
         String pid() const;
+        
+        String toString() const;
+        
+        static StringList generateBackTrace();
         
         virtual void throwSelf() const=0;
 
@@ -84,6 +87,13 @@ namespace Siren
         /** The location (function, file and line number) from 
             where the exception was thrown */
         String plce;
+        
+        /** The name of the node on which the exception was first raised */
+        String node_name;
+        
+        /** The process and thread ID of the thread/process that
+            first raised the exception */
+        String pid_thrid;
         
         /** The backtrace associated with the error */
         StringList bt;

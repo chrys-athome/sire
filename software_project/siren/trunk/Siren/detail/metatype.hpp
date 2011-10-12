@@ -89,7 +89,7 @@ namespace Siren
         VirtualClassData<T>::VirtualClassData() 
                               : ClassData( T::typeName(), 
                                            T::super::typeName(), 
-                                           T::interfaces() )
+                                           T::ifaces() )
         {
             Siren::detail::registerObject(*this);
         }

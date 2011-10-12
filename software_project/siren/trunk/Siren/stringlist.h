@@ -58,6 +58,8 @@ namespace Siren
         
         ~StringList();
         
+        void assertValidIndex(int i) const;
+        
         const String& at(int i) const;
         const String& operator[](int i) const;
         
