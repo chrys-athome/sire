@@ -53,7 +53,8 @@ namespace Siren
         String(Char c);
         String(int size, Char c);
         String(const Latin1String &latin1);
-        
+        String(const char *str);
+
         #ifdef SIREN_QT_SUPPORT
             String(const QString &qstring);
             operator QString() const;

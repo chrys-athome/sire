@@ -114,6 +114,12 @@ String::String(Char c) : Object(), refcount(0)
     d = registerString( QString(c), &refcount );
 }
 
+/** Construct from a const char* string */
+String::String(const char *str) : Object(), refcount(0)
+{
+    d = registerString( QString(QLatin1String(str)), &refcount );
+}
+
 String::String(int size, Char c) : Object(), refcount(0)
 {
     d = registerString( QString(size,c), &refcount );
@@ -189,6 +195,8 @@ void String::copy_object(const String &other)
     incref();
     
     d = other.d;
+    
+    super::copy_object(other);
 }
 
 /** Copy assignment operator */
@@ -648,6 +656,35 @@ String String::arg(float64 number, int fieldWidth, char fmt,
 String String::arg(char a, int fieldWidth, const Char &fillChar) const
 {
     return String( d.arg(a,fieldWidth,fillChar) );
+}
+           
+/** Returns a copy of this string with the lowest numbered place marker
+    replaced by the string 'str', i.e., %1, %2, ..., %99.
+    
+    fieldWidth specifies the minimum amount of space that the argument shall 
+    occupy. If it requires less space than fieldWidth, it is padded to 
+    fieldWidth with the character fillChar. A positive fieldWidth 
+    produces right-aligned text. A negative fieldWidth produces left-aligned text.
+*/
+String String::arg(const char *str, int fieldWidth, const Char &fillChar) const
+{
+    return String( d.arg(QLatin1String(str),fieldWidth,fillChar) );
+}
+
+/** This function overloads arg(). This is the same as str.arg(str1).arg(str2), 
+    except that the strings str1 and str2 are replaced in one pass. */
+String String::arg(const char *str1, const char *str2) const
+{
+    return String( d.arg( QLatin1String(str1), QLatin1String(str2) ) );
+}
+
+/** This function overloads arg(). This is the same as str.arg(str1).arg(str2)..., 
+    except that the strings str1 and str2... are replaced in one pass. */
+String String::arg(const char *str1, const char *str2, const char *str3) const
+{
+    return String( d.arg( QLatin1String(str1),
+                          QLatin1String(str2),
+                          QLatin1String(str3) ) );
 }
            
 /** Returns a copy of this string with the lowest numbered place marker

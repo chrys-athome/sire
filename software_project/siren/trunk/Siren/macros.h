@@ -61,15 +61,18 @@
     exposed as part of a public API to a scripting interface */
 #define SIREN_EXPOSE_EXCEPTION(classname)
 
+#define PASTE_TOKENS2(arg1,arg2) arg1 ## arg2
+#define PASTE_TOKENS(arg1,arg2) PASTE_TOKENS2(arg1,arg2)
+
 /** Used to register a new concrete Siren Object class */
 #define REGISTER_SIREN_CLASS(classname)  \
     const char* classname::typeName(){ return #classname; } \
     const char* classname::what() const{ return classname::typeName(); } \
     classname * classname::ptr_clone() const{ return new classname(*this); } \
     static const Siren::detail::ConcreteClassData<classname> \
-                                                register_object_##__LINE__; \
+                                                PASTE_TOKENS(register_object_,__LINE__); \
     Siren::Class classname::typeClass() { \
-        static Siren::Class r_class( register_object_##__LINE__ ); \
+        static Siren::Class r_class( PASTE_TOKENS(register_object_,__LINE__) ); \
         return r_class; \
     } \
     Siren::Class classname::getClass() const { \

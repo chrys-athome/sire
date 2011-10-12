@@ -1,5 +1,5 @@
-#ifndef SIREN_STRINGLIST_H
-#define SIREN_STRINGLIST_H
+#ifndef SIREN_TIME_H
+#define SIREN_TIME_H
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -29,66 +29,60 @@
 \*********************************************/
 
 #include "Siren/siren.h"
-#include "Siren/string.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    /** This class provides a list of Siren Strings 
-    
-        @author Christopher Woods
-    */
-    class SIREN_EXPORT StringList : public Object
+    /** This class provides functions to query time. */
+    class SIREN_EXPORT Time : public Object
     {
-        SIREN_CLASS( StringList, Object )
-        
+        SIREN_CLASS( Time, Object )
+    
     public:
-        StringList();
-        StringList(const String &str);
-        StringList(const String *strs, int count);
-        StringList(const List<String>::Type &strs);
+        Time();
+        Time(int h, int m, int s=0, int ms=0);
         
         #ifdef SIREN_QT_SUPPORT
-        StringList(const QStringList &strlist);
-        operator QStringList() const;
+            Time(const QTime &time);
+            operator QTime() const;
         #endif
         
-        StringList(const StringList &other);
+        Time(const Time &other);
         
-        ~StringList();
-        
-        void assertValidIndex(int i) const;
-        
-        const String& at(int i) const;
-        const String& operator[](int i) const;
-        
-        int count() const;
-        int size() const;
-        
-        String join(const String &seperator) const;
-        
-        bool contains(const String &str) const;
-        
-        List<String>::Type toList() const;
-        static StringList fromList(const List<String>::Type &list);
-        
-        operator List<String>::Type() const;
+        ~Time();
 
+        int hour() const;
+        int minute() const;
+        int second() const;
+        int millisecond() const;
+        
+        int secsTo(const Time &other) const;
+        int msecsTo(const Time &other) const;
+        
+        String toString() const;
+        
+        bool operator<(const Time &other) const;
+        bool operator<=(const Time &other) const;
+        bool operator>=(const Time &other) const;
+        bool operator>(const Time &other) const;
+        
+        static Time current();
+        
     protected:
-        void copy_object(const StringList &other);
-        bool compare_object(const StringList &other) const;
-        
+        void copy_object(const Time &other);
+        bool compare_object(const Time &other) const;
+    
     private:
-        /** The actual list of strings */
-        List<String>::Type d;
-        
-    }; // end of class StringList
+        /** A Qt QTime is used to get and query the date */
+        QTime d;
+    
+    }; // end of class Time
 
 } // end of namespace Siren
 
-SIREN_EXPOSE_CLASS( Siren::StringList )
+SIREN_EXPOSE_CLASS( Siren::Time )
 
 SIREN_END_HEADER
 
-#endif // ifndef SIREN_STRINGLIST_H
+#endif // ifndef SIREN_TIME_H

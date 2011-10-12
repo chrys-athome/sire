@@ -1,5 +1,5 @@
-#ifndef SIREN_STRINGLIST_H
-#define SIREN_STRINGLIST_H
+#ifndef SIREN_DATE_H
+#define SIREN_DATE_H
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -29,66 +29,65 @@
 \*********************************************/
 
 #include "Siren/siren.h"
-#include "Siren/string.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    /** This class provides a list of Siren Strings 
-    
-        @author Christopher Woods
-    */
-    class SIREN_EXPORT StringList : public Object
+    /** This class provides functions for manipulating and 
+        querying dates */
+    class SIREN_EXPORT Date : public Object
     {
-        SIREN_CLASS( StringList, Object )
-        
+        SIREN_CLASS( Date, Object )
+    
     public:
-        StringList();
-        StringList(const String &str);
-        StringList(const String *strs, int count);
-        StringList(const List<String>::Type &strs);
+        Date();
+        Date(int y, int m, int d);
+        
+        Date(const Date &other);
         
         #ifdef SIREN_QT_SUPPORT
-        StringList(const QStringList &strlist);
-        operator QStringList() const;
+            Date(const QDate &date);
+            operator QDate() const;
         #endif
         
-        StringList(const StringList &other);
+        ~Date();
         
-        ~StringList();
+        String toString() const;
         
-        void assertValidIndex(int i) const;
+        int day() const;
+        int month() const;
+        int year() const;
         
-        const String& at(int i) const;
-        const String& operator[](int i) const;
+        int dayOfWeek() const;
+        int dayOfYear() const;
         
-        int count() const;
-        int size() const;
+        int daysInMonth() const;
+        int daysInYear() const;
         
-        String join(const String &seperator) const;
+        bool isValid() const;
         
-        bool contains(const String &str) const;
+        bool operator<(const Date &other) const;
+        bool operator<=(const Date &other) const;
+        bool operator>=(const Date &other) const;
+        bool operator>(const Date &other) const;
         
-        List<String>::Type toList() const;
-        static StringList fromList(const List<String>::Type &list);
+        static Date current();
         
-        operator List<String>::Type() const;
-
     protected:
-        void copy_object(const StringList &other);
-        bool compare_object(const StringList &other) const;
+        void copy_object(const Date &other);
+        bool compare_object(const Date &other) const;
         
     private:
-        /** The actual list of strings */
-        List<String>::Type d;
-        
-    }; // end of class StringList
+        /** The Qt QDate class is used to provide date functions */
+        QDate d;
+            
+    }; // end of class Date
 
 } // end of namespace Siren
 
-SIREN_EXPOSE_CLASS( Siren::StringList )
+SIREN_EXPOSE_CLASS( Siren::Date )
 
 SIREN_END_HEADER
 
-#endif // ifndef SIREN_STRINGLIST_H
+#endif // ifndef SIREN_TIME_H

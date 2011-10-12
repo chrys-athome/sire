@@ -144,6 +144,18 @@ bool Class::compare_object(const Class &other) const
     return d == other.d and super::compare_object(other);
 }
 
+/** Return a string representation of this class */
+String Class::toString() const
+{
+    StringList ifaces = this->interfaces();
+    
+    if (ifaces.isEmpty())
+        return String::tr("Class{ \"%1\", Base = \"%2\" }")
+                .arg(this->
+    else
+        return String::tr("Class{ \"%1\", Base = \"%2\", Interfaces = ( %3 ) }")
+}
+
 /** Check that the class is not null. This will ensure that
     a null Class describes the Siren::None class */
 void Class::checkNotNull() const

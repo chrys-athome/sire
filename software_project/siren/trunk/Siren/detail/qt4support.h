@@ -36,6 +36,8 @@
 #include <QString>
 #include <QStringList>
 #include <QChar>
+#include <QRegExp>
+
 #include <QMutex>
 #include <QMutexLocker>
 #include <QReadWriteLock>
@@ -43,6 +45,7 @@
 #include <QDataStream>
 #include <QSharedData>
 #include <QSharedDataPointer>
+#include <QDateTime>
 
 #include <QThread>
 #include <QThreadStorage>
@@ -90,12 +93,14 @@ namespace Siren
     typedef QReadWriteLock ReadWriteLock;
     typedef QReadLocker ReadLocker;
     typedef QWriteLocker WriteLocker;
+    
     typedef QAtomicInt AtomicInt;
     typedef QDataStream DataStream;
     typedef QSharedData SharedData;
     typedef QChar Char;
     typedef QLatin1Char Latin1Char;
     typedef QLatin1String Latin1String;
+    typedef QRegExp RegExp;
     
     template<class T>
     struct imp_shared_ptr

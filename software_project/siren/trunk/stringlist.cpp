@@ -174,3 +174,52 @@ StringList::operator List<String>::Type() const
 {
     return d;
 }
+
+/** Join the strings together, separated by the separator 'sep' */
+String StringList::join(const String &sep) const
+{
+    if (d.isEmpty())
+        return String();
+    
+    else if (d.count() == 1)
+        return d.at(0);
+        
+    else
+    {
+        int sz = 0;
+    
+        for (List<String>::const_iterator it = d.constBegin();
+             it != d.constEnd();
+             ++it)
+        {
+            sz += it->length();
+        }
+    
+        if (sz == 0)
+            return String();
+            
+        QString s;
+        s.reserve(sz);
+        
+        bool is_first = true;
+        
+        for (List<String>::const_iterator it = d.constBegin();
+             it != d.constEnd();
+             ++it)
+        {
+            if (it->isEmpty())
+                continue;
+        
+            if (not is_first)
+            {
+                s += sep;
+            }
+            else
+                is_first = false;
+                
+            s += *it;
+        }
+
+        return String(s);
+    }
+}

@@ -51,6 +51,8 @@ set ( SIREN_PUBLIC_HEADERS
 
       Siren/bytearray.h
       Siren/class.h
+      Siren/date.h
+      Siren/datetime.h
       Siren/exception.h
       Siren/exceptions.h
       Siren/lock.h
@@ -69,6 +71,8 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/string.h
       Siren/stringlist.h
       Siren/thread.h
+      Siren/time.h
+      Siren/timer.h
     )
 
 set ( SIREN_PRIVATE_HEADERS
@@ -85,6 +89,8 @@ set ( SIREN_SOURCES
 
       bytearray.cpp
       class.cpp
+      date.cpp
+      datetime.cpp
       exception.cpp
       exceptions.cpp
       lock.cpp
@@ -98,6 +104,8 @@ set ( SIREN_SOURCES
       string.cpp
       stringlist.cpp
       thread.cpp
+      time.cpp
+      timer.cpp
 
       ${SIREN_PRIVATE_HEADERS}
 

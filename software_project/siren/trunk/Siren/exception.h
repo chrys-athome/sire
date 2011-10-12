@@ -31,6 +31,7 @@
 #include "Siren/siren.h"
 #include "Siren/string.h"
 #include "Siren/stringlist.h"
+#include "Siren/datetime.h"
 #include "Siren/detail/boostsupport.h"
 
 SIREN_BEGIN_HEADER
@@ -70,6 +71,8 @@ namespace Siren
         String node() const;
         String pid() const;
         
+        DateTime dateTime() const;
+        
         String toString() const;
         
         static StringList generateBackTrace();
@@ -94,6 +97,9 @@ namespace Siren
         /** The process and thread ID of the thread/process that
             first raised the exception */
         String pid_thrid;
+        
+        /** The time and date when the exception was thrown */
+        DateTime date_time;
         
         /** The backtrace associated with the error */
         StringList bt;
