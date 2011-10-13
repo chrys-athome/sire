@@ -40,7 +40,7 @@ namespace Siren
 
     class Class;
 
-    class Logger;
+    class TestReport;
 
     class Stream;
 

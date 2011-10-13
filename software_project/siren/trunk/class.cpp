@@ -229,7 +229,7 @@ bool Class::implements(const char* type_name) const
 /** Return the list of interfaces supported by this class */
 StringList Class::interfaces() const
 {
-    return d->ifaces();
+    return d->interfaces();
 }
 
 /** Return whether or not this class is a concrete type */

@@ -28,6 +28,7 @@
 
 #include "Siren/obj.h"
 #include "Siren/none.h"
+#include "Siren/testreport.h"
 //#include "Siren/stream.h"
 #include "Siren/siren.hpp"
 
@@ -161,7 +162,7 @@ void Obj::load(Stream &s)
 }
 
 /** Test the contained class */
-bool Obj::test() const
+TestReport Obj::test() const throw()
 {
     return d->test();
 }
@@ -170,12 +171,6 @@ bool Obj::test() const
 String Obj::toString() const
 {
     return d->toString();
-}
-
-/** Test the contained object */
-bool Obj::test(Logger &logger) const
-{
-    return d->test(logger);
 }
 
 /** Return the documentation for the contained object */

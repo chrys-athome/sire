@@ -30,6 +30,7 @@
 #include "Siren/object.hpp"
 #include "Siren/string.h"
 #include "Siren/obj.h"
+#include "Siren/testreport.h"
 #include "Siren/siren.hpp"
 #include "Siren/detail/metatype.hpp"
 
@@ -212,30 +213,17 @@ String Object::toString() const
     (and it is an error for the programmer to *NOT* provide any tests!).
     
     This should run all of the unit tests on this class, writing the 
-    results to the passed logger, and only returning true if all
-    of the tests passed */
-bool Object::test(Logger &logger) const
+    results and returning them in the passed TestReport object
+*/
+TestReport Object::test() const throw()
 {
     #ifndef SIREN_DISABLE_TESTS
 
-    logger.write( QObject::tr(
-            "Testing of %1 failed as no unit tests have been written "
-            "for this class. Please ask the author to provide some tests.")
-                .arg(this->what()) );
-                
-    return false;
+    return TestReport();
     
     #else
     
-    return true;
+    return TestReport();
     
     #endif
-}
-
-/** This is an overloaded class provided to run the unit tests
-    and write the results to the default logger */
-bool Object::test() const
-{
-    Logger logger;
-    return this->test(logger);
 }

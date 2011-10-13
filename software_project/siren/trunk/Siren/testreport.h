@@ -29,11 +29,15 @@
 \*********************************************/
 
 #include "Siren/siren.h"
+#include "Siren/interfaces.h"
+#include "Siren/mutable.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    class TestReportEditor;
+
     /** This class holds a report of the results of unit testing
         of a Siren::Object class. Each Siren::Object class provides
         in-built unit testing, to ensure that it is functioning 
@@ -43,14 +47,33 @@ namespace Siren
         @author Christopher Woods
     */
     class SIREN_EXPORT TestReport 
-            : public Object, public Interfaces<
+            : public Object, public Interfaces< Mutable<TestReportWriter> >
     {
         SIREN_CLASS( TestReport, Object )
         
     
     }; // end of class TestReport
 
-
+    /** This is the class that is used to write and edit
+        a TestReport
+        
+        @author Christopher Woods
+    */
+    class SIREN_EXPORT TestReportEditor 
+            : public Editor<TestReportEditor,TestReport>
+    {
+    public:
+        TestReportEditor();
+        TestReportEditor(const TestReport &report);
+        TestReportEditor(const TestReportEditor &other);
+        
+        ~TestReportEditor();
+        
+        TestReportEditor& operator=(const TestReportEditor &other);
+        
+        bool operator==(const TestReportEditor &other) const;
+    
+    }; // end of class TestReportEditor
 }
 
 SIREN_EXPOSE_CLASS( Siren::TestReport )

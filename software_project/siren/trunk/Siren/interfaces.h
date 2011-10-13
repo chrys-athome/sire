@@ -97,7 +97,59 @@ namespace Siren
             return false;
         }
         
-        static const char** listInterfaces();
+        static const char** listInterfaces()
+        {
+        
+            if (ifaces_array == 0)
+            {
+                int n = 0;
+            
+                if (I0::IS_INTERFACE()) n += 1;
+                if (I1::IS_INTERFACE()) n += 1;
+                if (I2::IS_INTERFACE()) n += 1;
+                if (I3::IS_INTERFACE()) n += 1;
+                if (I4::IS_INTERFACE()) n += 1;
+                if (I5::IS_INTERFACE()) n += 1;
+                if (I6::IS_INTERFACE()) n += 1;
+                if (I7::IS_INTERFACE()) n += 1;
+                if (I8::IS_INTERFACE()) n += 1;
+                if (I9::IS_INTERFACE()) n += 1;
+            
+                if (n == 0)
+                    return 0;
+            
+                const char **ifs = new const char*[n+1];
+                
+                int i = 0;
+                
+                if (I0::IS_INTERFACE()){ ifs[i] = I0::interfaceName(); ++i }
+                if (I1::IS_INTERFACE()){ ifs[i] = I1::interfaceName(); ++i }
+                if (I2::IS_INTERFACE()){ ifs[i] = I2::interfaceName(); ++i }
+                if (I3::IS_INTERFACE()){ ifs[i] = I3::interfaceName(); ++i }
+                if (I4::IS_INTERFACE()){ ifs[i] = I4::interfaceName(); ++i }
+                if (I5::IS_INTERFACE()){ ifs[i] = I5::interfaceName(); ++i }
+                if (I6::IS_INTERFACE()){ ifs[i] = I6::interfaceName(); ++i }
+                if (I7::IS_INTERFACE()){ ifs[i] = I7::interfaceName(); ++i }
+                if (I8::IS_INTERFACE()){ ifs[i] = I8::interfaceName(); ++i }
+                if (I9::IS_INTERFACE()){ ifs[i] = I9::interfaceName(); ++i }
+                
+                //null terminate the list of interface names
+                ifs[i] = 0;
+                
+                while (ifaces_array == 0)
+                {
+                    ifaces_array = ifs;
+                }
+                
+                if (ifaces_array != ifs)
+                    delete[] ifs;
+            }
+            
+            return ifaces_array;
+        }
+        
+    private:
+        static const char **ifaces_array;
     
     }; // end of class Interfaces<...>
 

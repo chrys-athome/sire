@@ -88,7 +88,7 @@ namespace Siren
 
         String toString() const;
 
-        bool test(Logger &logger) const;
+        TestReport test() const throw();
 
         String docString() const;
         String docString(const String &function) const;

@@ -198,8 +198,6 @@ namespace Siren
         void save(Stream &s) const;
         void load(Stream &s);
 
-        bool test() const;
-
         template<class T>
         bool isA() const;
 
@@ -218,7 +216,7 @@ namespace Siren
 
         virtual String toString() const;
 
-        virtual bool test(Logger &logger) const;
+        virtual TestReport test() const throw();
 
         String docString() const;
         String docString(const String &function) const;
