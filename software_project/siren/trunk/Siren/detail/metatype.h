@@ -36,6 +36,8 @@ namespace Siren
 {
     class Object;
     class Class;
+    class String;
+    class StringList;
 }
 
 namespace Siren
@@ -66,10 +68,12 @@ namespace Siren
             bool operator==(const ClassData &other) const;
             bool operator!=(const ClassData &other) const;
         
-            const char* typeName() const;
-            const char* baseTypeName() const;
+            bool hasSuper() const;
         
-            const char** interfaces() const;
+            const String& typeName() const;
+            const String& baseTypeName() const;
+        
+            const StringList& interfaces() const;
             int nInterfaces() const;
         
             virtual bool isConcrete() const=0;
@@ -86,6 +90,16 @@ namespace Siren
                 This is a 0-terminated array, so 0 indicates that
                 there are no interfaces supported by this class */
             const char **ifaces;
+            
+            /** This is a cache of the string name of the class */
+            AtomicPointer<String>::Type type_name_string;
+            
+            /** This is a cache of the base name of the class */
+            AtomicPointer<String>::Type base_name_string;
+            
+            /** This is a cache of the interfaces supported by this 
+                class - this is 0 if there are no interfaces */
+            AtomicPointer<StringList>::Type ifaces_list;
             
         }; // end of class ClassData
 

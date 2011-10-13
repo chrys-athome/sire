@@ -151,6 +151,12 @@ int StringList::size() const
     return d.count();
 }
 
+/** Return whether or not the list is empty */
+bool StringList::isEmpty() const
+{
+    return d.isEmpty();
+}
+
 /** Return whether or not this list contains the passed string */
 bool StringList::contains(const String &str) const
 {

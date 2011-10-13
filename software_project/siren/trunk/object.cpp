@@ -214,7 +214,7 @@ String Object::toString() const
     This should run all of the unit tests on this class, writing the 
     results to the passed logger, and only returning true if all
     of the tests passed */
-/*bool Object::test(Logger &logger) const
+bool Object::test(Logger &logger) const
 {
     #ifndef SIREN_DISABLE_TESTS
 
@@ -230,13 +230,12 @@ String Object::toString() const
     return true;
     
     #endif
-}*/
+}
 
 /** This is an overloaded class provided to run the unit tests
     and write the results to the default logger */
-/*bool Object::test() const
+bool Object::test() const
 {
     Logger logger;
     return this->test(logger);
-}*/
-
+}

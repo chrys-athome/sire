@@ -66,6 +66,8 @@ namespace Siren
         int count() const;
         int size() const;
         
+        bool isEmpty() const;
+        
         String join(const String &seperator) const;
         
         bool contains(const String &str) const;

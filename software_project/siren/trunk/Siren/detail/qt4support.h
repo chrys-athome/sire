@@ -68,6 +68,7 @@
 
 #include <QCache>
 #include <QAtomicInt>
+#include <QAtomicPointer>
 
 #include <QDebug>
 
@@ -152,6 +153,12 @@ namespace Siren
     struct Cache
     {
         typedef QCache<Key,Value> Type;
+    };
+
+    template<class T>
+    struct AtomicPointer
+    {
+        typedef QAtomicPointer<T> Type;
     };
 
     #if !defined(QT_NO_DEBUG_STREAM)

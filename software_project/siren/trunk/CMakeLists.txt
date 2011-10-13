@@ -56,7 +56,10 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/exception.h
       Siren/exceptions.h
       Siren/lock.h
+      Siren/interfaces.h
       Siren/macros.h
+      Siren/mutable.h
+      Siren/mutable.hpp
       Siren/mutex.h
       Siren/none.h
       Siren/number.h
@@ -70,6 +73,7 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/stream.h
       Siren/string.h
       Siren/stringlist.h
+      Siren/testreport.h
       Siren/thread.h
       Siren/time.h
       Siren/timer.h
@@ -93,7 +97,9 @@ set ( SIREN_SOURCES
       datetime.cpp
       exception.cpp
       exceptions.cpp
+      interfaces.cpp
       lock.cpp
+      mutable.cpp
       mutex.cpp
       none.cpp
       number.cpp
@@ -103,6 +109,7 @@ set ( SIREN_SOURCES
       stream.cpp
       string.cpp
       stringlist.cpp
+      testreport.cpp
       thread.cpp
       time.cpp
       timer.cpp

@@ -149,11 +149,24 @@ String Class::toString() const
 {
     StringList ifaces = this->interfaces();
     
-    if (ifaces.isEmpty())
-        return String::tr("Class{ \"%1\", Base = \"%2\" }")
-                .arg(this->
+    if (this->hasSuper())
+    {
+        if (ifaces.isEmpty())
+            return String::tr("Class{ \"%1\", Base = \"%2\" }")
+                    .arg(this->name(), this->superClass().name());
+        else
+            return String::tr("Class{ \"%1\", Base = \"%2\", Interfaces = ( %3 ) }")
+                    .arg(this->name(), this->superClass().name(),
+                         this->interfaces().join(", "));
+    }
     else
-        return String::tr("Class{ \"%1\", Base = \"%2\", Interfaces = ( %3 ) }")
+    {
+        if (ifaces.isEmpty())
+            return String::tr("Class{ \"%1\" }").arg(this->name());
+        else
+            return String::tr("Class{ \"%1\", Interfaces = ( %3 ) }")
+                    .arg(this->name(), this->interfaces().join(", "));
+    }
 }
 
 /** Check that the class is not null. This will ensure that
@@ -172,14 +185,14 @@ void Class::checkNotNull() const
 String Class::name() const
 {
     checkNotNull();
-    return String(d->typeName());
+    return d->typeName();
 }
 
 /** Return whether or not the class has a super class (should do!) */
 bool Class::hasSuper() const
 {
     checkNotNull();
-    return d->baseTypeName() != 0;
+    return d->hasSuper();
 }
 
 /** Return the class object that represents the superclass of this class */
@@ -216,16 +229,7 @@ bool Class::implements(const char* type_name) const
 /** Return the list of interfaces supported by this class */
 StringList Class::interfaces() const
 {
-    checkNotNull();
-    
-    List<String>::Type ifaces;
-    
-    for (int i=0; i < d->nInterfaces(); ++i)
-    {
-        ifaces.append( String(d->interfaces()[i]) );
-    }
-    
-    return ifaces;
+    return d->ifaces();
 }
 
 /** Return whether or not this class is a concrete type */
