@@ -28,6 +28,7 @@
 
 #include "Siren/stringlist.h"
 #include "Siren/exceptions.h"
+#include "Siren/assert.h"
 #include "Siren/siren.hpp"
 
 using namespace Siren;
@@ -117,6 +118,30 @@ void StringList::assertValidIndex(int i) const
                 "Index %1 is not valid for a StringList containing "
                 "a number of strings equal to %2.")
                     .arg(i).arg(d.count()), CODELOC );
+}
+
+/** Return an iterator pointing to the beginning of the list */
+StringList::const_iterator StringList::constBegin() const
+{
+    return d.constBegin();
+}
+
+/** Return an iterator pointing to the beginning of the list */
+StringList::const_iterator StringList::begin() const
+{
+    return d.constBegin();
+}
+
+/** Return an iterator pointing to the end of the list */
+StringList::const_iterator StringList::constEnd() const
+{
+    return d.constEnd();
+}
+
+/** Return an iterator pointing to the end of the list */
+StringList::const_iterator StringList::end() const
+{
+    return d.constEnd();
 }
 
 /** Return the ith string in the list

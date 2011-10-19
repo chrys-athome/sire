@@ -39,6 +39,8 @@ namespace Siren
     class Obj;
 
     class Class;
+    
+    class Exception;
 
     class TestReport;
 

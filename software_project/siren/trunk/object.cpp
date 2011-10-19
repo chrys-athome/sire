@@ -44,6 +44,8 @@ using namespace Siren;
 //////// Implementation of Object
 ////////
 
+static const Siren::detail::VirtualClassData<Object> r_object;
+
 Object::Object()
 {}
 
@@ -234,7 +236,7 @@ TestReport Object::test() const throw()
 {
     #ifndef SIREN_DISABLE_TESTS
 
-    return TestReport();
+    return TestReport(this->getClass());
     
     #else
     

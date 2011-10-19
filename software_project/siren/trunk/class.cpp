@@ -37,66 +37,10 @@ using namespace Siren;
 
 REGISTER_SIREN_CLASS( Siren::Class )
 
-typedef Hash<String,const detail::ClassData*>::Type ObjectRegistry;
-
-static ObjectRegistry object_registry;
-static Mutex registry_mutex;
-
-/** Return the class data for the class with specified type name */
-static const detail::ClassData* getClassData(const char *type_name)
-{
-    MutexLocker lkr(&registry_mutex);
-    
-    ObjectRegistry::const_iterator it = object_registry.constFind( String(type_name) );
-    
-    if (it == object_registry.constEnd())
-    {
-        sirenDebug() << "CANNOT FIND OBJECT" << type_name;
-        return 0;
-    }
-    
-    return it.value();
-}
-
-/** Return the class data for the class with specified type name */
-static const detail::ClassData* getClassData(const String &type_name)
-{
-    return getClassData( type_name.toAscii().data() );
-}
-
-/** Register the passed class metadata. This ensures that only one copy 
-    of metadata exists for each Siren class */
-static const detail::ClassData* registerClassData(const detail::ClassData &data)
-{
-    if (data.typeName() == 0)
-    {
-        sirenDebug() << "REGISTERING A NULL TYPE";
-    }
-
-    String type_name( data.typeName() );
-
-    MutexLocker lkr(&registry_mutex);
-
-    ObjectRegistry::const_iterator it = object_registry.constFind(type_name);
-    
-    if (it.value() != &data)
-    {
-        sirenDebug() << "Trying to register a class twice!"
-                 << type_name << &data << it.value();
-                 
-        return it.value();
-    }
-
-    object_registry.insert(type_name, &data);
-    
-    return &data;
-}
-
 /** Return a full list of the registered Siren classes in this program */
 StringList Class::registeredTypes()
 {
-    MutexLocker lkr( &registry_mutex );
-    return object_registry.keys();
+    return detail::ClassRegistry::registeredClasses();
 }
 
 /** Null constructor */
@@ -106,22 +50,24 @@ Class::Class() : super(), d(0)
 /** Construct the class handle for the passed object */
 Class::Class(const Object &object) : super(), d(0)
 {
-    this->operator=(object.getClass());
+    Class::copy_object(object.getClass());
 }
 
 /** Construct the class handle for the passed class metadata */
-Class::Class(const detail::ClassData &data) : super(), d(0)
+Class::Class(const detail::ClassData *data) : super(), d(data)
+{}
+
+/** Construct the class handle for the class with specified name */
+Class::Class(const char *type_name) : super(), d(0)
 {
-    d = registerClassData(data);
+    Class::copy_object( detail::ClassRegistry::getClass(type_name) );
 }
 
 /** Construct the class handle for the class with specified name */
-Class::Class(const char *type_name) : super(), d( getClassData(type_name) )
-{}
-
-/** Construct the class handle for the class with specified name */
-Class::Class(const String &type_name) : super(), d( getClassData(type_name) )
-{}
+Class::Class(const String &type_name) : super(), d(0)
+{
+    Class::copy_object( detail::ClassRegistry::getClass(type_name) );
+}
 
 /** Copy constructor */
 Class::Class(const Class &other) : super(other), d(other.d)
@@ -246,7 +192,7 @@ bool Class::canCreate() const
 }
 
 /** Return a newly created object of this class */
-Obj Class::createObject() const
+Obj Class::create() const
 {
     if (this->isConcrete())
         return Obj( d->createObject() );

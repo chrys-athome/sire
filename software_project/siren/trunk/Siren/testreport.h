@@ -32,6 +32,8 @@
 #include "Siren/interfaces.h"
 #include "Siren/mutable.h"
 #include "Siren/editor.h"
+#include "Siren/class.h"
+#include "Siren/stringlist.h"
 
 SIREN_BEGIN_HEADER
 
@@ -56,15 +58,41 @@ namespace Siren
     
     public:
         TestReport();
+        TestReport(const Class &c);
+        
         TestReport(TestReportEditor &editor);
         
         TestReport(const TestReport &other);
         
         ~TestReport();
         
+        String toString() const;
+        
+        bool passed() const;
+        bool failed() const;
+        
+        int numberOfTests() const;
+        int numberOfSuccesses() const;
+        int numberOfFailures() const;
+        
+        StringList successes() const;
+        StringList failures() const;
+        
+        Class testedClass() const;
+        
     protected:
         void copy_object(const TestReport &other);
         bool compare_object(const TestReport &other) const;
+
+    private:
+        /** The list of all successes */
+        StringList all_successes;
+        
+        /** The list of all failures */
+        StringList all_failures;
+        
+        /** The class being tested */
+        Class cls;
     
     }; // end of class TestReport
 
@@ -90,6 +118,27 @@ namespace Siren
         
         TestReport commit();
     
+        void startGroup(const String &description);
+    
+        void testTrue(bool test, const String &description);
+        void testFalse(bool test, const String &description);
+
+        void addFailure(const String &description);
+
+        void addException(const Exception &e);
+        void addException(const std::exception &e);
+        void addUnknownException();
+
+        template<class T>
+        void testEqual(const T &obj0, const T &obj1,
+                       const String &description);
+                       
+        void testIntegersEqual(int i0, int i1, 
+                              const String &description);
+                              
+        void testFloatsEqual(double i0, double i1,
+                             const String &description,
+                             double tol=1.0e-6);
 
     }; // end of class TestReportEditor
 }

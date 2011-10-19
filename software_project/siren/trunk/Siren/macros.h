@@ -29,6 +29,9 @@
   *
 \*********************************************/
 
+#include <QtGlobal>
+#include <boost/static_assert.hpp>
+
 //// This file contains the set of C preprocessor macros
 //// that are used and are global for Siren
 
@@ -40,10 +43,10 @@
 
 /** Used to signify that the symbol for the class or function should be 
     visible outside of the Siren library. */
-#define SIREN_EXPORT
+#define SIREN_EXPORT Q_DECL_EXPORT
 
-/** Macro used to assert that the passed argument is true */
-#define SIREN_ASSERT
+/** Macro used to assert that the passed argument is true at compile time */
+#define SIREN_STATIC_ASSERT BOOST_STATIC_ASSERT
 
 /** Use to signify that the following template function should be
     compiled inline */
@@ -72,7 +75,7 @@
     static const Siren::detail::ConcreteClassData<classname> \
                                                 PASTE_TOKENS(register_object_,__LINE__); \
     Siren::Class classname::typeClass() { \
-        static Siren::Class r_class( PASTE_TOKENS(register_object_,__LINE__) ); \
+        static Siren::Class r_class(#classname); \
         return r_class; \
     } \
     Siren::Class classname::getClass() const { \
@@ -119,7 +122,7 @@
     static const Siren::detail::VirtualClassData<classname> \
                                         register_object_##__LINE__; \
     Siren::Class classname::typeClass() { \
-        static Siren::Class r_class( register_object_##__LINE__ ); \
+        static Siren::Class r_class(#classname); \
         return r_class; \
     } \
 

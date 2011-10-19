@@ -1,5 +1,5 @@
-#ifndef SIREN_BOOSTSUPPORT_H
-#define SIREN_BOOSTSUPPORT_H
+#ifndef SIREN_ASSERT_H
+#define SIREN_ASSERT_H
 
 /********************************************\
   *
@@ -29,25 +29,40 @@
   *
 \*********************************************/
 
-// Definition of boost classes that are required for Siren.
-// These will (eventually!) be replaced with Siren's own classes,
-// thereby removing the dependency on boost
+#include "Siren/exception.h"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/noncopyable.hpp>
+SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    /** This exception is written to accompany the "SIREN_ASSERT"
+        macro, which is used to perform compile-time assert tests.
+        
+        @author Christopher Woods
+    */
+    class SIREN_EXPORT assertation_error : public Exception
+    {
+        SIREN_CLASS( assertation_error, Exception )
+        
+    public:
+        assertation_error();
+        assertation_error(const char *condition, CODELOC_ARGS);
+        
+        assertation_error(const assertation_error &other);
+        
+        ~assertation_error() throw();
+        
+        void throwSelf() const;
+    
+    }; // end of class assertation_error
 
-template<class T>
-struct exp_shared_ptr
-{
-    typedef boost::shared_ptr<T> Type;
-};
+    #define SIREN_ASSERT( COND ) \
+                do { if (not (COND)) \
+                    throw Siren::assertation_error( #COND, CODELOC ); } while(0);
+}
 
-typedef boost::noncopyable noncopyable;
+SIREN_EXPOSE_EXCEPTION( Siren::assertation_error )
 
-} // end of namespace Siren
+SIREN_END_HEADER
 
-#endif // SIREN_QTSUPPORT_H
-
+#endif // ifndef SIREN_ASSERT_H

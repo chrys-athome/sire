@@ -151,3 +151,51 @@ void incomplete_code::throwSelf() const
 {
     throw *this;
 }
+
+///////////
+/////////// Implementation of unavailable_class
+///////////
+
+REGISTER_SIREN_CLASS( Siren::unavailable_class )
+
+unavailable_class::unavailable_class() : Exception()
+{}
+
+unavailable_class::unavailable_class(const String &error, CODELOC_ARGS)
+                : Exception(error, CODELOC_PASS_ARGS)
+{}
+
+unavailable_class::unavailable_class(const unavailable_class &other) : Exception(other)
+{}
+
+unavailable_class::~unavailable_class() throw()
+{}
+
+void unavailable_class::throwSelf() const
+{
+    throw *this;
+}
+
+///////////
+/////////// Implementation of program_bug
+///////////
+
+REGISTER_SIREN_CLASS( Siren::program_bug )
+
+program_bug::program_bug() : Exception()
+{}
+
+program_bug::program_bug(const String &error, CODELOC_ARGS)
+                : Exception(error, CODELOC_PASS_ARGS)
+{}
+
+program_bug::program_bug(const program_bug &other) : Exception(other)
+{}
+
+program_bug::~program_bug() throw()
+{}
+
+void program_bug::throwSelf() const
+{
+    throw *this;
+}

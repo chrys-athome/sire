@@ -171,7 +171,9 @@ namespace Siren
     */
     class SIREN_EXPORT Object
     {
-    public:
+    public:    
+        typedef Object super;
+
         Object();
         Object(const Object &other);
         
@@ -226,6 +228,7 @@ namespace Siren
         virtual void stream(Stream &s);
 
     protected:
+        friend class detail::VirtualClassData<Object>;
         static const char** ifaces();
     
         void copy_object(const Object &other);

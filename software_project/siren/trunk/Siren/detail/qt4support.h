@@ -37,6 +37,7 @@
 #include <QStringList>
 #include <QChar>
 #include <QRegExp>
+#include <QTextStream>
 
 #include <QMutex>
 #include <QMutexLocker>
@@ -102,6 +103,13 @@ namespace Siren
     typedef QLatin1Char Latin1Char;
     typedef QLatin1String Latin1String;
     typedef QRegExp RegExp;
+    typedef QTextStream TextStream;
+    
+    template<typename Container>
+    void sort(Container &c)
+    {
+        qSort<Container>(c);
+    }
     
     template<class T>
     struct imp_shared_ptr
@@ -164,6 +172,8 @@ namespace Siren
     #if !defined(QT_NO_DEBUG_STREAM)
     inline QDebug sirenDebug() { return qDebug(); }
     #endif
+
+    #define PRINT_DEBUG_LINE sirenDebug() << __FILE__ << __LINE__;
 
 } // end of namespace Siren
 

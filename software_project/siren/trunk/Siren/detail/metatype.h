@@ -44,6 +44,40 @@ namespace Siren
 {
     namespace detail
     {
+        class ClassData;
+    
+        /** This is an internal class used to provide the registry 
+            of all Siren types held in the program 
+            
+            @author Christopher Woods
+        */
+        class ClassRegistry
+        {
+        public:
+            static Class getClass(const char *type_name);
+            static Class getClass(const String &type_name);
+            
+            static StringList registeredClasses();
+            
+        protected:
+            friend class ClassData;
+            static void registerClass(const ClassData &data);
+            static void unregisterClass(const ClassData &data);
+        
+        private:
+            ClassRegistry();
+            ~ClassRegistry();
+            
+            static void createSingleton();
+            
+            //static AtomicPointer<ClassRegistry>::Type singleton;
+            static ClassRegistry *singleton;
+
+            ReadWriteLock *lock;
+            List<const ClassData*>::Type *registry;
+            
+        }; // end of class ClassRegistry
+    
         /** This is the base class of the objects that are used
             internally by Siren to hold basic metadata about Siren
             objects.
@@ -58,8 +92,6 @@ namespace Siren
             ClassData(const char* class_type_name, 
                       const char* base_type_name,
                       const char** interfaces);
-                   
-            ClassData(const ClassData &other);
         
             virtual ~ClassData();
         
@@ -69,6 +101,9 @@ namespace Siren
             bool operator!=(const ClassData &other) const;
         
             bool hasSuper() const;
+            
+            bool isClass(const char *type_name) const;
+            bool isClass(const ClassData &other) const;
         
             const String& typeName() const;
             const String& baseTypeName() const;
@@ -79,6 +114,10 @@ namespace Siren
             virtual bool isConcrete() const=0;
         
         private:
+            /** Noncopyable class */
+            ClassData(const ClassData&){}
+            ClassData& operator=(const ClassData&){ return *this;}
+
             /** The fully qualified name of the class */
             const char *type_name;
             
@@ -146,8 +185,6 @@ namespace Siren
             bool isConcrete() const;
         
         }; // end of class VirtualClassData<T>
-
-        void registerObject(const ClassData &object);
 
     } // end of namespace Siren::detail
 

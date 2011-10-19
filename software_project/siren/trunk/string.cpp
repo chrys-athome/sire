@@ -30,6 +30,7 @@
 #include "Siren/bytearray.h"
 #include "Siren/number.h"
 #include "Siren/siren.hpp"
+#include "Siren/detail/qt4support.h"
 
 #include "Siren/exceptions.h"
 
@@ -41,12 +42,30 @@ REGISTER_SIREN_CLASS( Siren::String )
 String::String() : Object(), refcount(0)
 {}
 
-static Hash<QString,AtomicInt*>::Type string_registry;
-static ReadWriteLock string_registry_lock;
+class StringRegistry
+{
+public:
+    static QString registerString(const QString &str, AtomicInt **refcount);
+    static void unregisterString(const QString &str);
+
+private:
+    static AtomicPointer<StringRegistry>::Type singleton;
+
+    StringRegistry()
+    {}
+    
+    ~StringRegistry()
+    {}
+
+    Hash<QString,AtomicInt*>::Type registry;
+    ReadWriteLock lock;
+};
+
+AtomicPointer<StringRegistry>::Type StringRegistry::singleton;
 
 /** This function registers the passed string, thus ensuring that 
     only one copy of each string is used by the code. */
-static QString registerString(const QString &str, AtomicInt **refcount)
+QString StringRegistry::registerString(const QString &str, AtomicInt **refcount)
 {
     if (str.isEmpty())
     {
@@ -54,13 +73,21 @@ static QString registerString(const QString &str, AtomicInt **refcount)
         return QString();
     }
 
+    while (not singleton)
+    {
+        StringRegistry *reg = new StringRegistry();
+        
+        if (not singleton.testAndSetAcquire(0,reg))
+            delete reg;
+    }
+
     // CODE TO SEE IF THE STRING IS ALREADY REGISTERED
     {
-        ReadLocker lkr(&string_registry_lock);
+        ReadLocker lkr( &(singleton->lock) );
     
-        Hash<QString,AtomicInt*>::const_iterator it = string_registry.constFind(str);
+        Hash<QString,AtomicInt*>::const_iterator it = singleton->registry.constFind(str);
     
-        if (it != string_registry.constEnd())
+        if (it != singleton->registry.constEnd())
         {
             *refcount = it.value();
             return it.key();
@@ -68,16 +95,16 @@ static QString registerString(const QString &str, AtomicInt **refcount)
     }
     
     // the string is not registered, so register it now
-    WriteLocker lkr(&string_registry_lock);
+    WriteLocker lkr( &(singleton->lock) );
     
     *refcount = new AtomicInt(1);
     
-    string_registry.insert(str, *refcount);
+    singleton->registry.insert(str, *refcount);
     
     // clean the registry every time a multiple of 1000 strings are added
-    if (string_registry.count() % 1000 == 0)
+    if (singleton->registry.count() % 1000 == 0)
     {
-        Hash<QString,AtomicInt*>::MutableIterator it(string_registry);
+        Hash<QString,AtomicInt*>::MutableIterator it(singleton->registry);
         
         while (it.hasNext())
         {
@@ -96,46 +123,49 @@ static QString registerString(const QString &str, AtomicInt **refcount)
 }
 
 /** Unregister a string */
-static void unregisterString(const QString &str)
+void StringRegistry::unregisterString(const QString &str)
 {
-    WriteLocker lkr(&string_registry_lock);
-    string_registry.remove(str);
+    if (singleton == 0)
+        return;
+
+    WriteLocker lkr( &(singleton->lock) );
+    singleton->registry.remove(str);
 }
 
 /** Construct from the passed unicode array */
 String::String(const Char *unicode, int size) : Object(), refcount(0)
 {
-    d = registerString( QString(unicode,size), &refcount );
+    d = StringRegistry::registerString( QString(unicode,size), &refcount );
 }
 
 /** Construct from a single unicode character */
 String::String(Char c) : Object(), refcount(0)
 {
-    d = registerString( QString(c), &refcount );
+    d = StringRegistry::registerString( QString(c), &refcount );
 }
 
 /** Construct from a const char* string */
 String::String(const char *str) : Object(), refcount(0)
 {
-    d = registerString( QString(QLatin1String(str)), &refcount );
+    d = StringRegistry::registerString( QString(QLatin1String(str)), &refcount );
 }
 
 String::String(int size, Char c) : Object(), refcount(0)
 {
-    d = registerString( QString(size,c), &refcount );
+    d = StringRegistry::registerString( QString(size,c), &refcount );
 }
 
 /** Construct from the passed Latin1 encoded string */
 String::String(const Latin1String &latin1) : Object(), refcount(0)
 {
-    d = registerString( QString(latin1), &refcount );
+    d = StringRegistry::registerString( QString(latin1), &refcount );
 }
 
 #ifdef SIREN_QT_SUPPORT
     /** Construct from a QString */
     String::String(const QString &qstring) : Object(), refcount(0)
     {
-        d = registerString(qstring, &refcount);
+        d = StringRegistry::registerString(qstring, &refcount);
     }
     
     /** Allow automatic casting to a QString */
@@ -163,7 +193,7 @@ void String::decref()
             delete refcount;
         
             //this was the last reference
-            ::unregisterString(d);
+            StringRegistry::unregisterString(d);
         }
         
         refcount = 0;
@@ -180,6 +210,7 @@ String::String(const String &other)
 /** Destructor */
 String::~String()
 {
+    #warning BUG IN ~String - decref causes problems at shutdown!
     decref();
 }
 
@@ -209,6 +240,30 @@ String& String::operator=(Char c)
 String& String::operator=(const Latin1String &latin1)
 {
     return this->operator=( String(latin1) );
+}
+
+/** Comparison operator */
+bool String::operator<(const String &other) const
+{
+    return d < other.d;
+}
+
+/** Comparison operator */
+bool String::operator<=(const String &other) const
+{
+    return d <= other.d;
+}
+
+/** Comparison operator */
+bool String::operator>(const String &other) const
+{
+    return d > other.d;
+}
+
+/** Comparison operator */
+bool String::operator>=(const String &other) const
+{
+    return d >= other.d;
 }
 
 /** Return a string representation of this string */

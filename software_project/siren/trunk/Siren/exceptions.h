@@ -139,10 +139,52 @@ namespace Siren
     
     }; // end of class incomplete_code
 
+    /** This exception is thrown when a bug in the program is detected 
+    */
+    class SIREN_EXPORT program_bug : public Exception
+    {
+        SIREN_CLASS( program_bug, Exception )
+        
+    public:
+        program_bug();
+        program_bug(const String &error, CODELOC_ARGS);
+        
+        program_bug(const program_bug &other);
+        
+        ~program_bug() throw();
+        
+        void throwSelf() const;
+    
+    }; // end of class program_bug
+
+    /** This exception is thrown when a request is made
+        of a class that is not registered with Siren
+    */
+    class SIREN_EXPORT unavailable_class : public Exception
+    {
+        SIREN_CLASS( unavailable_class, Exception )
+        
+    public:
+        unavailable_class();
+        unavailable_class(const String &error, CODELOC_ARGS);
+        
+        unavailable_class(const unavailable_class &other);
+        
+        ~unavailable_class() throw();
+        
+        void throwSelf() const;
+    
+    }; // end of class unavailable_class
+
 } // end of namespace Siren
 
 SIREN_EXPOSE_EXCEPTION( Siren::invalid_cast )
+SIREN_EXPOSE_EXCEPTION( Siren::invalid_index )
+SIREN_EXPOSE_EXCEPTION( Siren::invalid_key )
 SIREN_EXPOSE_EXCEPTION( Siren::numeric_overflow )
+SIREN_EXPOSE_EXCEPTION( Siren::incomplete_code )
+SIREN_EXPOSE_EXCEPTION( Siren::program_bug )
+SIREN_EXPOSE_EXCEPTION( Siren::unavailable_class )
 
 SIREN_END_HEADER
 

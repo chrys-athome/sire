@@ -48,7 +48,6 @@ namespace Siren
         Class();
         
         Class(const Object &object);
-        Class(const detail::ClassData &metadata);
 
         Class(const char *type_name);
         Class(const String &type_name);
@@ -73,7 +72,7 @@ namespace Siren
         
         StringList interfaces() const;
         
-        Obj createObject() const;
+        Obj create() const;
         
         bool canCreate() const;
         bool isConcrete() const;
@@ -93,6 +92,9 @@ namespace Siren
         static StringList registeredTypes();
 
     protected:
+        friend class detail::ClassRegistry;
+        Class(const detail::ClassData *metadata);
+
         void copy_object(const Class &other);
         bool compare_object(const Class &other) const;
 

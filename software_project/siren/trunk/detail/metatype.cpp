@@ -26,7 +26,10 @@
   *
 \*********************************************/
 
+#include "Siren/class.h"
+#include "Siren/bytearray.h"
 #include "Siren/stringlist.h"
+#include "Siren/exceptions.h"
 #include "Siren/detail/metatype.h"
 #include "Siren/detail/qt4support.h"
 
@@ -38,16 +41,170 @@ namespace Siren
 {
     namespace detail
     {
+        ///////////
+        /////////// Implementation of ClassRegistry
+        ///////////
 
-        /** Internal function used to register the ClassData object that
-            contains the metadata information for a class.
-    
-            This is an internal function and is not part of the public API
-        */
-        void SIREN_EXPORT registerObject(const ClassData &object)
+        //AtomicPointer<ClassRegistry>::Type ClassRegistry::singleton(0);
+
+        ClassRegistry* ClassRegistry::singleton(0);
+
+        /** Construct the singleton registry class. The lock and list are
+            added as pointers to avoid having to expose the class definitions
+            in the header file */
+        ClassRegistry::ClassRegistry() : lock(0), registry(0)
         {
-            qDebug() << "Registering" << object.typeName();
+            lock = new ReadWriteLock();
+            registry = new List<const ClassData*>::Type();
         }
+        
+        /** Destructor */
+        ClassRegistry::~ClassRegistry()
+        {
+            if (lock)
+            {
+                lock->lockForWrite();
+                delete registry;
+                registry = 0;
+                lock->unlock();
+                delete lock;
+            }
+        }
+    
+        static bool created_singleton = false;
+    
+        /** Create the singleton class */
+        void ClassRegistry::createSingleton()
+        {
+            if (created_singleton)
+                return;
+        
+            while ( singleton == 0 )
+            {
+                ClassRegistry *reg = new ClassRegistry();
+
+                singleton = reg;
+                //if (not singleton.testAndSetAcquire(0, reg))
+                //{
+                //    sirenDebug() << "COULDN'T SET THE REGISTRY IN THIS THREAD!";
+                //    delete reg;
+                //}
+            }
+
+            created_singleton = true;
+        }
+        
+        /** Register the passed class - this function can only be called
+            by ClassData constructor */
+        void ClassRegistry::registerClass(const ClassData &data)
+        {
+            createSingleton();
+            
+            WriteLocker lkr( singleton->lock );
+            
+            // check to make sure that this class has not yet been registered
+            for (List<const ClassData*>::const_iterator 
+                                it = singleton->registry->constBegin();
+                 it != singleton->registry->constEnd();
+                 ++it)
+            {
+                if ( (*it)->isClass(data) )
+                    throw Siren::program_bug( String::tr(
+                            "There is a bug with the implementation of class "
+                            "\"%1\". For some reason, an attempt is being made "
+                            "to register this class twice!")
+                                .arg(data.typeName()), CODELOC );
+            }
+            
+            //register this class
+            singleton->registry->append( &data );
+        }
+        
+        /** Unregister the passed class - this can only be called by 
+            the ClassData destructor */
+        void ClassRegistry::unregisterClass(const ClassData &data)
+        {
+            createSingleton();
+            
+            WriteLocker lkr( singleton->lock );
+
+            List<const ClassData*>::MutableIterator it( *(singleton->registry) );
+            
+            while (it.hasNext())
+            {
+                const ClassData *c = it.next();
+                
+                if ( c->isClass(data) )
+                {
+                    it.remove();
+                    break;
+                }
+            }
+        }
+
+        /** Return the Class associated with the passed class type 
+            
+            \throw Siren::unavailable_class
+        */
+        Class ClassRegistry::getClass(const char *type_name)
+        {
+            createSingleton();
+        
+            ReadLocker lkr( singleton->lock );
+            
+            for (List<const ClassData*>::const_iterator
+                            it = singleton->registry->constBegin();
+                 it != singleton->registry->constEnd();
+                 ++it)
+            {
+                if ( (*it)->isClass(type_name) )
+                    return Class(*it);
+            }
+            
+            throw Siren::unavailable_class( String::tr(
+                    "No class called \"%1\" is available. Available classes are;\n"
+                    "( %2 )")
+                        .arg(type_name)
+                        .arg( ClassRegistry::registeredClasses().join(", ") ),
+                            CODELOC );
+                            
+            return Class();
+        }
+        
+        /** Return the Class associated with the passed class type 
+            
+            \throw Siren::unavailable_class
+        */
+        Class ClassRegistry::getClass(const String &type_name)
+        {
+            return ClassRegistry::getClass( type_name.toAscii().data() );
+        }
+        
+        /** Return the list of registered classes */
+        StringList ClassRegistry::registeredClasses()
+        {
+            createSingleton();
+        
+            List<String>::Type types;
+            
+            ReadLocker lkr( singleton->lock );
+            
+            for (List<const ClassData*>::const_iterator
+                                    it = singleton->registry->constBegin();
+                 it != singleton->registry->constEnd();
+                 ++it)
+            {
+                types.append( (*it)->typeName() );
+            }
+            
+            Siren::sort(types);
+            
+            return StringList(types);
+        }
+        
+        ///////////
+        /////////// Implementation of ClassData
+        ///////////
 
         /** Construct a new ClassData object for the passed class,
             specifying the base class name and the list of supported
@@ -61,21 +218,19 @@ namespace Siren
                     type_name_string(0),
                     base_name_string(0),
                     ifaces_list(0)
-        {}
-          
-        /** Copy constructor */
-        ClassData::ClassData(const ClassData &other)
-                  : type_name(other.type_name),
-                    base_name(other.base_name),
-                    ifaces(other.ifaces),
-                    type_name_string(0),
-                    base_name_string(0),
-                    ifaces_list(0)
-        {}
+        {
+            if (base_name == type_name)
+                //this object has no base type
+                base_name = 0;
+        
+            ClassRegistry::registerClass(*this);
+        }
     
         /** Destructor */
         ClassData::~ClassData()
         {
+            ClassRegistry::unregisterClass(*this);
+        
             String *ptr = type_name_string;
             delete ptr;
             
@@ -85,13 +240,28 @@ namespace Siren
             StringList *ptr2 = ifaces_list;
             delete ptr2;
         }
+        
+        /** Return whether or not this is the type data for the class
+            with name 'type_name' */
+        bool ClassData::isClass(const char *name) const
+        {
+            return (std::strcmp(type_name, name) == 0);
+        }
+
+        /** Return whether or not this is the type data for the passed
+            class contained in the other type data */
+        bool ClassData::isClass(const ClassData &other) const
+        {
+            return (this == &other) or 
+                   (std::strcmp(type_name, other.type_name) == 0);
+        }
 
         /** Comparison operator - two classes are identical if they
             have the same type names */
         bool ClassData::operator==(const ClassData &other) const
         {
             return base_name == other.base_name or
-                   std::strcmp(base_name, other.base_name);
+                   (std::strcmp(base_name, other.base_name) == 0);
         }
 
         /** Return whether or not this class has a super type (base class) */

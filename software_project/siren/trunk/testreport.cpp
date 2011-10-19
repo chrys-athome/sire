@@ -45,6 +45,13 @@ TestReport::TestReport()
              Interfaces< Mutable<TestReportEditor,TestReport> >()
 {}
 
+/** Construct to report on the tests of the passed class */
+TestReport::TestReport(const Class &c)
+           : Object(),
+             Interfaces< Mutable<TestReportEditor,TestReport> >(),
+             cls(c)
+{}
+
 /** Construct from the passed editor */
 TestReport::TestReport(TestReportEditor &editor)
            : Object(),
@@ -63,6 +70,13 @@ TestReport::TestReport(const TestReport &other)
 TestReport::~TestReport()
 {}
 
+/** Return a string representation of the report */
+String TestReport::toString() const
+{
+    return String::tr("Test report for the class %1.")
+                .arg(cls.name());
+}
+
 /** Copy assignment operator */
 void TestReport::copy_object(const TestReport &other)
 {
@@ -73,6 +87,24 @@ void TestReport::copy_object(const TestReport &other)
 bool TestReport::compare_object(const TestReport &other) const
 {
     return super::compare_object(other);
+}
+
+/** Return whether or not all of the tests passed */
+bool TestReport::passed() const
+{
+    return false;
+}
+
+/** Return whether or not any of the tests failed */
+bool TestReport::failed() const
+{
+    return true;
+}
+
+/** Return the class that was tested */
+Class TestReport::testedClass() const
+{
+    return cls;
 }
 
 ///////////

@@ -1,6 +1,3 @@
-#ifndef SIREN_BOOSTSUPPORT_H
-#define SIREN_BOOSTSUPPORT_H
-
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -29,25 +26,28 @@
   *
 \*********************************************/
 
-// Definition of boost classes that are required for Siren.
-// These will (eventually!) be replaced with Siren's own classes,
-// thereby removing the dependency on boost
+#include "Siren/assert.h"
+#include "Siren/siren.hpp"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/noncopyable.hpp>
+using namespace Siren;
 
-namespace Siren
+REGISTER_SIREN_CLASS( Siren::assertation_error )
+
+assertation_error::assertation_error() : Exception()
+{}
+
+assertation_error::assertation_error(const char *condition, CODELOC_ARGS)
+                : Exception( String::tr(
+            "Assertation failed: %1").arg(condition), CODELOC_PASS_ARGS)
+{}
+
+assertation_error::assertation_error(const assertation_error &other) : Exception(other)
+{}
+
+assertation_error::~assertation_error() throw()
+{}
+
+void assertation_error::throwSelf() const
 {
-
-template<class T>
-struct exp_shared_ptr
-{
-    typedef boost::shared_ptr<T> Type;
-};
-
-typedef boost::noncopyable noncopyable;
-
-} // end of namespace Siren
-
-#endif // SIREN_QTSUPPORT_H
-
+    throw *this;
+}

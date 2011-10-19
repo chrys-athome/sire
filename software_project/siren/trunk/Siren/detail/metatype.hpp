@@ -51,9 +51,7 @@ namespace Siren
                              : ClassData( T::typeName(), 
                                           T::super::typeName(), 
                                           T::ifaces() )
-        {
-            Siren::detail::registerObject(*this);
-        }
+        {}
 
         /** Destructor */
         template<class T>
@@ -90,9 +88,7 @@ namespace Siren
                               : ClassData( T::typeName(), 
                                            T::super::typeName(), 
                                            T::ifaces() )
-        {
-            Siren::detail::registerObject(*this);
-        }
+        {}
 
         /** Destructor */
         template<class T>

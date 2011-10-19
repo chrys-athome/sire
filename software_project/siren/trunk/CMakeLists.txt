@@ -49,6 +49,7 @@ include_directories(${CMAKE_SOURCE_DIR}
 
 set ( SIREN_PUBLIC_HEADERS
 
+      Siren/assert.h
       Siren/bytearray.h
       Siren/class.h
       Siren/date.h
@@ -93,6 +94,7 @@ set ( SIREN_SOURCES
 
       ${SIREN_PUBLIC_HEADERS}
 
+      assert.cpp
       bytearray.cpp
       class.cpp
       date.cpp
@@ -124,6 +126,7 @@ set ( SIREN_SOURCES
 
 
 add_library ( Siren ${SIREN_SOURCES} )
+add_executable ( sirentest sirentest.cpp )
 
 set_target_properties (Siren PROPERTIES
                        VERSION ${SIREN_VERSION_MAJOR}
@@ -133,6 +136,8 @@ set_target_properties (Siren PROPERTIES
 target_link_libraries ( Siren 
                         ${QT_QTXML_LIBRARY} 
                         ${QT_QTCORE_LIBRARY} )
+
+target_link_libraries ( sirentest Siren )
 
 # installation
 install( TARGETS Siren EXPORT Siren

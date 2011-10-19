@@ -82,6 +82,12 @@ namespace Siren
             return not String::compare_object(other);
         }
         
+        bool operator<(const String &other) const;
+        bool operator<=(const String &other) const;
+        
+        bool operator>(const String &other) const;
+        bool operator>=(const String &other) const;
+        
         String toString() const;
         
         ///////

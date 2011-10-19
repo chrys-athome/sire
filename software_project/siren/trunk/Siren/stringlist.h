@@ -44,6 +44,9 @@ namespace Siren
         SIREN_CLASS( StringList, Object )
         
     public:
+        typedef List<String>::const_iterator const_iterator;
+        typedef const_iterator iterator;
+    
         StringList();
         StringList(const String &str);
         StringList(const String *strs, int count);
@@ -57,6 +60,12 @@ namespace Siren
         StringList(const StringList &other);
         
         ~StringList();
+        
+        const_iterator constBegin() const;
+        const_iterator begin() const;
+        
+        const_iterator constEnd() const;
+        const_iterator end() const;
         
         void assertValidIndex(int i) const;
         
