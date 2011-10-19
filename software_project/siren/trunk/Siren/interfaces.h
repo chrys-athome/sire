@@ -122,16 +122,16 @@ namespace Siren
                 
                 int i = 0;
                 
-                if (I0::IS_INTERFACE()){ ifs[i] = I0::interfaceName(); ++i }
-                if (I1::IS_INTERFACE()){ ifs[i] = I1::interfaceName(); ++i }
-                if (I2::IS_INTERFACE()){ ifs[i] = I2::interfaceName(); ++i }
-                if (I3::IS_INTERFACE()){ ifs[i] = I3::interfaceName(); ++i }
-                if (I4::IS_INTERFACE()){ ifs[i] = I4::interfaceName(); ++i }
-                if (I5::IS_INTERFACE()){ ifs[i] = I5::interfaceName(); ++i }
-                if (I6::IS_INTERFACE()){ ifs[i] = I6::interfaceName(); ++i }
-                if (I7::IS_INTERFACE()){ ifs[i] = I7::interfaceName(); ++i }
-                if (I8::IS_INTERFACE()){ ifs[i] = I8::interfaceName(); ++i }
-                if (I9::IS_INTERFACE()){ ifs[i] = I9::interfaceName(); ++i }
+                if (I0::IS_INTERFACE()){ ifs[i] = I0::interfaceName(); ++i; }
+                if (I1::IS_INTERFACE()){ ifs[i] = I1::interfaceName(); ++i; }
+                if (I2::IS_INTERFACE()){ ifs[i] = I2::interfaceName(); ++i; }
+                if (I3::IS_INTERFACE()){ ifs[i] = I3::interfaceName(); ++i; }
+                if (I4::IS_INTERFACE()){ ifs[i] = I4::interfaceName(); ++i; }
+                if (I5::IS_INTERFACE()){ ifs[i] = I5::interfaceName(); ++i; }
+                if (I6::IS_INTERFACE()){ ifs[i] = I6::interfaceName(); ++i; }
+                if (I7::IS_INTERFACE()){ ifs[i] = I7::interfaceName(); ++i; }
+                if (I8::IS_INTERFACE()){ ifs[i] = I8::interfaceName(); ++i; }
+                if (I9::IS_INTERFACE()){ ifs[i] = I9::interfaceName(); ++i; }
                 
                 //null terminate the list of interface names
                 ifs[i] = 0;

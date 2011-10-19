@@ -200,13 +200,28 @@ void Object::stream(Stream &s)
             "The streaming function for class %1 has not been written. "
             "Please ensure that this function has been written or else "
             "it will not be possible to save or load objects of this type!")
-                .arg( String(this->what()) ), CODELOC );
+                .arg(this->what()), CODELOC );
 }
 
 /** This returns the default string representation of all objects */
 String Object::toString() const
 {
     return String(this->what());
+}
+
+/** Return a hashcode for this object - note that you must supply
+    your own copy of this function or else it will not be possible
+    to add objects of this type to a hash, dictionary, map or set */
+uint Object::hashCode() const
+{
+    throw Siren::incomplete_code( String::tr(
+            "The .hashCode() function for class %1 has not been written. "
+            "Please ensure that this function has been written or else "
+            "it will not be possible to add objects of this class to "
+            "dictionaries, maps, hashes or sets.")
+                .arg(this->what()), CODELOC );
+                
+    return 0;
 }
 
 /** This is the default unit test - it fails as there aren't any  

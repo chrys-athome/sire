@@ -36,6 +36,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/current_function.hpp>
+#include <boost/static_assert.hpp>
+
+#define SIREN_STATIC_ASSERT BOOST_STATIC_ASSERT
 
 namespace Siren
 {

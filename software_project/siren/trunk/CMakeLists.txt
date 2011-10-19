@@ -53,6 +53,8 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/class.h
       Siren/date.h
       Siren/datetime.h
+      Siren/editor.h
+      Siren/editor.hpp
       Siren/exception.h
       Siren/exceptions.h
       Siren/lock.h
@@ -95,6 +97,7 @@ set ( SIREN_SOURCES
       class.cpp
       date.cpp
       datetime.cpp
+      editor.cpp
       exception.cpp
       exceptions.cpp
       interfaces.cpp

@@ -31,11 +31,13 @@
 #include "Siren/siren.h"
 #include "Siren/interfaces.h"
 #include "Siren/mutable.h"
+#include "Siren/editor.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+
     class TestReportEditor;
 
     /** This class holds a report of the results of unit testing
@@ -47,12 +49,25 @@ namespace Siren
         @author Christopher Woods
     */
     class SIREN_EXPORT TestReport 
-            : public Object, public Interfaces< Mutable<TestReportWriter> >
+            : public Object, public Interfaces< Mutable<TestReportEditor,
+                                                        TestReport> >
     {
         SIREN_CLASS( TestReport, Object )
+    
+    public:
+        TestReport();
+        TestReport(TestReportEditor &editor);
         
+        TestReport(const TestReport &other);
+        
+        ~TestReport();
+        
+    protected:
+        void copy_object(const TestReport &other);
+        bool compare_object(const TestReport &other) const;
     
     }; // end of class TestReport
+
 
     /** This is the class that is used to write and edit
         a TestReport
@@ -72,7 +87,10 @@ namespace Siren
         TestReportEditor& operator=(const TestReportEditor &other);
         
         bool operator==(const TestReportEditor &other) const;
+        
+        TestReport commit();
     
+
     }; // end of class TestReportEditor
 }
 

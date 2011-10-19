@@ -76,10 +76,9 @@ namespace Siren
         Obj clone() const;
         
         void save(Stream &s) const;
-        void load(Stream &s);
 
-        bool test() const;
-        
+        void load(Stream &s);
+    
         template<class T>
         bool isA() const;
         

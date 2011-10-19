@@ -40,63 +40,29 @@ namespace Siren
         
         @author Christopher Woods
     */
-    template<class T>
+    template<class Ed, class Vw>
     class SIREN_EXPORT Mutable
     {
     public:
-        typedef typename T Editor;
-        typedef typename Editor::View View;
+        typedef Ed Editor;
+        typedef Vw View;
         
-        Editor edit() const
-        {
-            const View *view = static_cast<const View*>(this);
-            return Editor(*view);
-        }
+        Editor edit() const;
         
-        Editor quickEdit()
-        {
-            View *view = static_cast<View*>(this);
-            Editor editor(view);
-            
-            //destroy the original
-            view->operator=(View());
-            
-            return editor;
-        }
+        Editor quickEdit();
         
-        View& operator=(const Editor &editor)
-        {
-            View *view = static_cast<View*>(this);
-            return view->operator=( editor.commit() );
-        }
+        View& operator=(Editor &editor);
         
-        bool operator==(const Editor &editor) const
-        {
-            const View *view = static_cast<const View*>(this);
-            return view->operator==(editor.commit());
-        }
-        
-        bool operator!=(const Editor &editor) const
-        {
-            return not Mutable<T>::operator==(editor);
-        }
+        bool operator==(Editor &editor) const;
+        bool operator!=(Editor &editor) const;
         
     protected:
-        Mutable()
-        {}
-        
-        ~Mutable()
-        {}
+        Mutable();
+        ~Mutable();
 
-        static const char* interfaceName()
-        {
-            return "Mutable";
-        }
+        static const char* interfaceName();
         
-        static bool IS_INTERFACE()
-        {
-            return true;
-        }
+        static bool IS_INTERFACE();
 
     }; // end of class Mutable
 
