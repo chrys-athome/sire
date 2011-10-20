@@ -80,6 +80,8 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/thread.h
       Siren/time.h
       Siren/timer.h
+      Siren/tostring.h
+      Siren/tostring.hpp
     )
 
 set ( SIREN_PRIVATE_HEADERS

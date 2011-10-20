@@ -29,6 +29,8 @@
 \*********************************************/
 
 #include "Siren/macros.h"
+#include "Siren/tostring.h"
+
 #include "Siren/detail/metatype.h"
 #include "Siren/detail/qt4support.h"
 

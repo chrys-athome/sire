@@ -30,8 +30,44 @@
 #include "Siren/mutable.hpp"
 #include "Siren/editor.hpp"
 #include "Siren/siren.hpp"
+#include "Siren/class.h"
 
 using namespace Siren;
+
+namespace Siren
+{
+    namespace detail
+    {
+        /** This internal class is used to hold the implicitly shared data
+            of a TestReport */
+        class TestReportData : public imp_shared_data
+        {
+        public:
+            TestReportData() : imp_shared_data()
+            {}
+            
+            TestReportData(const TestReportData &other)
+                  : imp_shared_data(), 
+                    clas(other.clas)
+            {}
+            
+            ~TestReportData()
+            {}
+            
+            /** The class being tested */
+            Class clas;
+            
+        private:
+            TestReportData& operator=(const TestReportData &other)
+            {
+                return *this;
+            }
+            
+        }; // end of TestReportData
+    
+    } // end of namespace detail
+
+} // end of namespace Siren
 
 ///////////
 /////////// Implementation of Siren::TestReport
@@ -39,18 +75,24 @@ using namespace Siren;
 
 REGISTER_SIREN_CLASS( Siren::TestReport )
 
+static imp_shared_ptr<detail::TestReportData> shared_null( 
+                                                    new detail::TestReportData() );
+
 /** Constructor */
 TestReport::TestReport() 
            : Object(), 
-             Interfaces< Mutable<TestReportEditor,TestReport> >()
+             Interfaces< Mutable<TestReportEditor,TestReport> >(),
+             d( shared_null )
 {}
 
 /** Construct to report on the tests of the passed class */
 TestReport::TestReport(const Class &c)
            : Object(),
              Interfaces< Mutable<TestReportEditor,TestReport> >(),
-             cls(c)
-{}
+             d( shared_null )
+{
+    d->clas = c;
+}
 
 /** Construct from the passed editor */
 TestReport::TestReport(TestReportEditor &editor)
@@ -63,7 +105,8 @@ TestReport::TestReport(TestReportEditor &editor)
 /** Copy constructor */
 TestReport::TestReport(const TestReport &other)
            : Object(other),
-             Interfaces< Mutable<TestReportEditor,TestReport> >(other)
+             Interfaces< Mutable<TestReportEditor,TestReport> >(other),
+             d(other.d)
 {}
 
 /** Destructor */
@@ -80,13 +123,14 @@ String TestReport::toString() const
 /** Copy assignment operator */
 void TestReport::copy_object(const TestReport &other)
 {
+    d = other.d;
     super::copy_object(other);
 }
 
 /** Comparison operator */
 bool TestReport::compare_object(const TestReport &other) const
 {
-    return super::compare_object(other);
+    return d == other.d and super::compare_object(other);
 }
 
 /** Return whether or not all of the tests passed */

@@ -32,8 +32,6 @@
 #include "Siren/interfaces.h"
 #include "Siren/mutable.h"
 #include "Siren/editor.h"
-#include "Siren/class.h"
-#include "Siren/stringlist.h"
 
 SIREN_BEGIN_HEADER
 
@@ -41,6 +39,11 @@ namespace Siren
 {
 
     class TestReportEditor;
+
+    namespace detail
+    {
+        class TestReportData;
+    }
 
     /** This class holds a report of the results of unit testing
         of a Siren::Object class. Each Siren::Object class provides
@@ -58,6 +61,7 @@ namespace Siren
     
     public:
         TestReport();
+        
         TestReport(const Class &c);
         
         TestReport(TestReportEditor &editor);
@@ -85,14 +89,8 @@ namespace Siren
         bool compare_object(const TestReport &other) const;
 
     private:
-        /** The list of all successes */
-        StringList all_successes;
-        
-        /** The list of all failures */
-        StringList all_failures;
-        
-        /** The class being tested */
-        Class cls;
+        friend class TestReportEditor;
+        imp_shared_ptr<detail::TestReportData>::Type d;
     
     }; // end of class TestReport
 
@@ -128,11 +126,10 @@ namespace Siren
         void addException(const Exception &e);
         void addException(const std::exception &e);
         void addUnknownException();
-
-        template<class T>
-        void testEqual(const T &obj0, const T &obj1,
-                       const String &description);
-                       
+                
+        void testObjectsEqual(const Object &obj0, const Object &obj1,
+                              const String &description);
+                                     
         void testIntegersEqual(int i0, int i1, 
                               const String &description);
                               
@@ -140,10 +137,43 @@ namespace Siren
                              const String &description,
                              double tol=1.0e-6);
 
+        template<class T>
+        void testEqual(const T &obj0, const T &obj1,
+                       const String &description);
+
+    private:
+        imp_shared_ptr<detail::TestReportData>::Type d;
+
     }; // end of class TestReportEditor
+
+
+    template<>
+    SIREN_INLINE_TEMPLATE
+    void TestReportEditor::testEqual<int>(const int &obj0, const int &obj1,
+                                          const String &description)
+    {
+        this->testIntegersEqual(obj0, obj1, description);
+    }
+    
+    template<>
+    SIREN_INLINE_TEMPLATE
+    void TestReportEditor::testEqual<double>(const double &obj0, const double &obj1,
+                                             const String &description)
+    {
+        this->testFloatsEqual(obj0, obj1, description);
+    }
+    
+    template<>
+    SIREN_INLINE_TEMPLATE
+    void TestReportEditor::testEqual<Object>(const Object &obj0, const Object &obj1,
+                                             const String &description)
+    {
+        this->testObjectsEqual(obj0, obj1, description);
+    }
 }
 
 SIREN_EXPOSE_CLASS( Siren::TestReport )
+SIREN_EXPOSE_CLASS( Siren::TestReportEditor )
 
 SIREN_END_HEADER
 

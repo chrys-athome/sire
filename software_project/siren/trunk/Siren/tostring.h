@@ -1,5 +1,5 @@
-#ifndef SIREN_SIREN_HPP
-#define SIREN_SIREN_HPP
+#ifndef SIREN_TOSTRING_H
+#define SIREN_TOSTRING_H
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -28,11 +28,15 @@
   *
 \*********************************************/
 
-#include "Siren/detail/metatype.hpp"
-#include "Siren/tostring.hpp"
+SIREN_BEGIN_HEADER
 
-#include "Siren/class.h"
-#include "Siren/string.h"
-#include "Siren/stringlist.h"
+namespace Siren
+{
+    template<class T>
+    String toString(const T &obj);
+    
+} // end namespace Siren
 
-#endif // define SIREN_SIREN_HPP
+SIREN_END_HEADER
+
+#endif

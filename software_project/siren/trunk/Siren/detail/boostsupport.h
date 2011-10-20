@@ -36,6 +36,12 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#ifndef GCCXML_PARSE
+   // GCCXML chokes on these files
+   #include <boost/type_traits/is_pod.hpp>
+   #include <boost/mpl/if.hpp>
+#endif
+
 namespace Siren
 {
 

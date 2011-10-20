@@ -117,6 +117,8 @@ namespace Siren
         typedef QSharedDataPointer<T> Type;
     };
     
+    typedef QSharedData imp_shared_data;
+    
     template<class T>
     struct Vector
     {
