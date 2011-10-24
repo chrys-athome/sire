@@ -58,7 +58,7 @@ namespace Siren
         
     protected:
         Mutable();
-        ~Mutable();
+        virtual ~Mutable();
 
         static const char* interfaceName();
         

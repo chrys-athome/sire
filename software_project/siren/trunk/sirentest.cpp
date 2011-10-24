@@ -31,6 +31,7 @@
 #include "Siren/bytearray.h"
 #include "Siren/stringlist.h"
 #include "Siren/exception.h"
+#include "Siren/exceptions.h"
 #include "Siren/obj.h"
 #include "Siren/testreport.h"
 
@@ -41,48 +42,109 @@ int main(int argc, const char **argv)
     TextStream cout(stdout);
     TextStream cerr(stderr);
 
+    Class tested_class;
+
+    TestReport report( String::tr("Testing all libSiren classes") );
+
     try
     {
-        StringList classes = Class::registeredTypes();
+        TestReport::Editor editor = report.edit();
         
-        List<TestReport>::Type reports;
-        
-        for (StringList::const_iterator it = classes.constBegin();
-             it != classes.constEnd();
-             ++it)
+        try
         {
-            Class c(*it);
+            StringList classes = Class::registeredTypes();
 
-            if (c.canCreate())
+            for (StringList::const_iterator it = classes.constBegin();
+                 it != classes.constEnd();
+                 ++it)
             {
-                Obj obj = c.create();
-                
-                cout << "Testing " << obj.what() << "...";
-                
-                TestReport report = obj.test();
-                
-                if (report.passed())
-                    cout << " (passed)\n";
-
-                else
+                try
                 {
-                    cout << " (FAILED!)\n";
-                    reports.append(report);
+                    tested_class = Class(*it);
+
+                    if (tested_class.canCreate())
+                    {
+                        Obj obj = tested_class.create();
+                        
+                        cout << "Testing " << obj.what() << "...";
+                        
+                        TestReport report = obj.test();
+                        
+                        editor.addReport(report);
+                        
+                        if (report.passed())
+                            cout << " (passed)\n";
+
+                        else
+                        {
+                            cout << " (FAILED!)\n";
+                        }
+                            
+                    }
                 }
-                    
+                catch( const Siren::Exception &e )
+                {
+                    editor.addException(e, 
+                            String::tr("Exception caught while testing class \"%1\".")
+                                    .arg(tested_class.name()) );
+                }
+                catch( const std::exception &e )
+                {
+                    editor.addException( standard_exception(e, CODELOC),
+                            String::tr("Exception caught while testing class \"%1\".")
+                                    .arg(tested_class.name()) );
+                }
+                catch(...)
+                {
+                    editor.addException( unknown_exception(CODELOC),
+                            String::tr("Exception caught while testing class \"%1\".")
+                                    .arg(tested_class.name()) );
+                }
             }
         }
+        catch(...)
+        {
+            report = editor.commit();
+            throw;
+        }
+        
+        report = editor.commit();
     }
     catch( const Siren::Exception &e )
     {
-        cerr << e.toString() << "\n";
-        return -1;
+        report = report.edit()
+                    .addException( e, 
+                        String::tr("Exception caught while testing class \"%1\".")
+                            .arg(tested_class.name()) )
+                    .commit();
+    }
+    catch( const std::exception &e )
+    {
+        report = report.edit()
+                    .addException( standard_exception(e, CODELOC),
+                        String::tr("Exception caught while testing class \"%1\".")
+                            .arg(tested_class.name()) )
+                    .commit();
     }
     catch(...)
     {
-        cerr << "Caught an unknown exception!\n";
-        return -1;
+        report = report.edit()
+                    .addException( unknown_exception(CODELOC),
+                        String::tr("Exception caught while testing class \"%1\".")
+                            .arg(tested_class.name()) )
+                    .commit();
     }
     
-    return 0;
+    cout << report.toString() << "\n";
+    
+    for (int i=0; i<report.count(); ++i)
+    {
+        cout << (i+1) << " : " << report[i].toString() << "\n";
+    }
+    
+    if (report.passed())
+        return 0;
+        
+    else
+        return -1;
 }

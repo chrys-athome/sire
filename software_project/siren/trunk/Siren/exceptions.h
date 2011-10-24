@@ -42,7 +42,7 @@ namespace Siren
     */
     class SIREN_EXPORT invalid_cast : public Exception
     {
-        SIREN_CLASS( invalid_cast, Exception )
+        SIREN_CLASS(invalid_cast,Exception,1)
     
     public:
         invalid_cast();
@@ -63,7 +63,7 @@ namespace Siren
     */
     class SIREN_EXPORT invalid_index : public Exception
     {
-        SIREN_CLASS( invalid_index, Exception )
+        SIREN_CLASS(invalid_index,Exception,1)
     
     public:
         invalid_index();
@@ -84,7 +84,7 @@ namespace Siren
     */
     class SIREN_EXPORT invalid_key : public Exception
     {
-        SIREN_CLASS( invalid_key, Exception )
+        SIREN_CLASS(invalid_key,Exception,1)
     
     public:
         invalid_key();
@@ -106,7 +106,7 @@ namespace Siren
     */
     class SIREN_EXPORT numeric_overflow : public Exception
     {
-        SIREN_CLASS( numeric_overflow, Exception )
+        SIREN_CLASS(numeric_overflow,Exception,1)
         
     public:
         numeric_overflow();
@@ -125,7 +125,7 @@ namespace Siren
     */
     class SIREN_EXPORT incomplete_code : public Exception
     {
-        SIREN_CLASS( incomplete_code, Exception )
+        SIREN_CLASS(incomplete_code,Exception,1)
         
     public:
         incomplete_code();
@@ -143,7 +143,7 @@ namespace Siren
     */
     class SIREN_EXPORT program_bug : public Exception
     {
-        SIREN_CLASS( program_bug, Exception )
+        SIREN_CLASS(program_bug,Exception,1)
         
     public:
         program_bug();
@@ -162,7 +162,7 @@ namespace Siren
     */
     class SIREN_EXPORT unavailable_class : public Exception
     {
-        SIREN_CLASS( unavailable_class, Exception )
+        SIREN_CLASS(unavailable_class,Exception,1)
         
     public:
         unavailable_class();
@@ -176,6 +176,45 @@ namespace Siren
     
     }; // end of class unavailable_class
 
+    /** This exception is thrown when a standard C++ exception is caught 
+        (it acts to translate standard C++ exceptions into Siren exceptions) */
+    class SIREN_EXPORT standard_exception : public Exception
+    {
+        SIREN_CLASS(standard_exception,Exception,1)
+    
+    public:
+        standard_exception();
+        standard_exception(const std::exception &e, CODELOC_ARGS);
+        standard_exception(const String &error, const std::exception &e,
+                           CODELOC_ARGS);
+        
+        standard_exception(const standard_exception &other);
+        
+        ~standard_exception() throw();
+        
+        void throwSelf() const;
+        
+    }; // end of class standard_exception
+
+    /** This exception is thrown when an unknown exception is caught
+        (it acts to translate unknown exceptions into Siren exceptions) */
+    class SIREN_EXPORT unknown_exception : public Exception
+    {
+        SIREN_CLASS(unknown_exception,Exception,1)
+        
+    public:
+        unknown_exception();
+        unknown_exception(CODELOC_ARGS);
+        unknown_exception(const String &error, CODELOC_ARGS);
+    
+        unknown_exception(const unknown_exception &other);
+        
+        ~unknown_exception() throw();
+        
+        void throwSelf() const;
+    
+    }; // end of class unknown_exception
+
 } // end of namespace Siren
 
 SIREN_EXPOSE_EXCEPTION( Siren::invalid_cast )
@@ -185,6 +224,8 @@ SIREN_EXPOSE_EXCEPTION( Siren::numeric_overflow )
 SIREN_EXPOSE_EXCEPTION( Siren::incomplete_code )
 SIREN_EXPOSE_EXCEPTION( Siren::program_bug )
 SIREN_EXPOSE_EXCEPTION( Siren::unavailable_class )
+SIREN_EXPOSE_EXCEPTION( Siren::standard_exception )
+SIREN_EXPOSE_EXCEPTION( Siren::unknown_exception )
 
 SIREN_END_HEADER
 

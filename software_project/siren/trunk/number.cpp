@@ -36,21 +36,21 @@ using namespace Siren;
 REGISTER_SIREN_CLASS( Siren::Number )
 
 /** Number constructor - this equals 0 */
-Number::Number()
+Number::Number() : Object()
 {
     i64 = 0;
     num_type = ZERO;
 }
 
 /** Construct from the passed logical boolean */
-Number::Number(bool number)
+Number::Number(bool number) : Object()
 {
     b1 = number;
     num_type = LOGICAL;
 }
 
 /** Construct from the passed 8-bit integer */
-Number::Number(int8 number)
+Number::Number(int8 number) : Object()
 {
     if (number == 0)
     {
@@ -65,7 +65,7 @@ Number::Number(int8 number)
 }
 
 /** Construct from the passed 32-bit integer */
-Number::Number(int32 number)
+Number::Number(int32 number) : Object()
 {
     if (number == 0)
     {
@@ -80,7 +80,7 @@ Number::Number(int32 number)
 }
 
 /** Construct from the passed 64-bit integer */
-Number::Number(int64 number)
+Number::Number(int64 number) : Object()
 {
     if (number == 0)
     {
@@ -95,7 +95,7 @@ Number::Number(int64 number)
 }
 
 /** Construct from the passed 8-bit unsigned integer */
-Number::Number(uint8 number)
+Number::Number(uint8 number) : Object()
 {
     if (number == 0)
     {
@@ -110,7 +110,7 @@ Number::Number(uint8 number)
 }
 
 /** Construct from the pased 32-bit unsigned integer */
-Number::Number(uint32 number)
+Number::Number(uint32 number) : Object()
 {
     if (number == 0)
     {
@@ -125,7 +125,7 @@ Number::Number(uint32 number)
 }
 
 /** Construct from the passed 64-bit unsigned integer */
-Number::Number(uint64 number)
+Number::Number(uint64 number) : Object()
 {
     if (number == 0)
     {
@@ -140,7 +140,7 @@ Number::Number(uint64 number)
 }
 
 /** Construct from the passed 32-bit floating point number */
-Number::Number(float32 number)
+Number::Number(float32 number) : Object()
 {
     if (number == 0)
     {
@@ -155,7 +155,7 @@ Number::Number(float32 number)
 }
 
 /** Construct from the passed 64-bit floating point number */
-Number::Number(float64 number)
+Number::Number(float64 number) : Object()
 {
     if (number == 0)
     {
@@ -170,9 +170,9 @@ Number::Number(float64 number)
 }
 
 /** Copy constructor */
-Number::Number(const Number &other)
+Number::Number(const Number &other) : Object(), num_type(ZERO)
 {
-    memcpy(this, &other, sizeof(Number));
+    Number::copy_object(other);
 }
 
 /** Destructor */
@@ -184,13 +184,52 @@ void Number::copy_object(const Number &other)
 {
     if (this != &other)
     {
-        memcpy(this, &other, sizeof(Number));
+        num_type = other.num_type;
+    
+        switch(num_type)
+        {
+        case ZERO:
+            i64 = 0;
+            break;
+        case LOGICAL:
+            b1 = other.b1;
+            break;
+        case INT8:
+            i8 = other.i8;
+            break;
+        case INT32:
+            i32 = other.i32;
+            break;
+        case INT64:
+            i64 = other.i64;
+            break;
+        case UINT8:
+            u8 = other.u8;
+            break;
+        case UINT32:
+            u32 = other.u32;
+            break;
+        case UINT64:
+            u64 = other.u64;
+            break;
+        case FLOAT32:
+            f32 = other.f32;
+            break;
+        case FLOAT64:
+            f64 = other.f64;
+            break;
+        }
     }
+    
+    super::copy_object(other);
 }
 
 /** Comparison function */
 bool Number::compare_object(const Number &other) const
 {
+    if (not super::compare_object(other))
+        return false;
+
     if (num_type == other.num_type)
     {
         switch(num_type)
@@ -578,42 +617,45 @@ float64 Number::toFloat64() const
         
     case FLOAT32:
         return double(f32);
-    }
 
-    if (this->isSigned())
-    {
-        int64 num = this->toInt64();
-        
-        if (num > std::numeric_limits<float64>::max() or
-            num < -std::numeric_limits<float64>::min())
+    default:
         {
-            throw Siren::numeric_overflow( String::tr(
-                    "Overflow of %1 into a floating point number with 8 bytes. "
-                    "The maximum range for this type is %2 to %3.")
-                        .arg(num)
-                        .arg(-std::numeric_limits<float64>::max())
-                        .arg(std::numeric_limits<float64>::min()), CODELOC );
+            if (this->isSigned())
+            {
+                int64 num = this->toInt64();
+                
+                if (num > std::numeric_limits<float64>::max() or
+                    num < -std::numeric_limits<float64>::min())
+                {
+                    throw Siren::numeric_overflow( String::tr(
+                            "Overflow of %1 into a floating point number with 8 bytes. "
+                            "The maximum range for this type is %2 to %3.")
+                                .arg(num)
+                                .arg(-std::numeric_limits<float64>::max())
+                                .arg(std::numeric_limits<float64>::min()), CODELOC );
+                }
+                
+                return float64(num);
+            }
+            else
+            {
+                uint64 num = this->toUInt64();
+                
+                if (num > std::numeric_limits<float64>::max())
+                {
+                    throw Siren::numeric_overflow( String::tr(
+                            "Overflow of %1 into a floating point number with 8 bytes. "
+                            "The maximum range for this type is %2 to %3.")
+                                .arg(num)
+                                .arg(-std::numeric_limits<float64>::max())
+                                .arg(std::numeric_limits<float64>::min()), CODELOC );
+                }
+                
+                return float64(num);
+            }
         }
-        
-        return float64(num);
     }
-    else
-    {
-        uint64 num = this->toUInt64();
-        
-        if (num > std::numeric_limits<float64>::max())
-        {
-            throw Siren::numeric_overflow( String::tr(
-                    "Overflow of %1 into a floating point number with 8 bytes. "
-                    "The maximum range for this type is %2 to %3.")
-                        .arg(num)
-                        .arg(-std::numeric_limits<float64>::max())
-                        .arg(std::numeric_limits<float64>::min()), CODELOC );
-        }
-        
-        return float64(num);
-    }
-
+    
     return 0;
 }
 
@@ -628,24 +670,28 @@ float32 Number::toFloat32() const
     {
     case ZERO:
         return 0;
+    
     case FLOAT32:
         return f32;
+    
+    default:
+        {
+            float64 num = toFloat64();
+            
+            if (num > std::numeric_limits<float32>::max() or
+                num < -std::numeric_limits<float32>::max())
+            {
+                throw Siren::numeric_overflow( String::tr(
+                        "Overflow of %1 into a floating point number with 4 bytes. "
+                        "The maximum range of this type is %2 to %3.")
+                            .arg(num_type)
+                            .arg(-std::numeric_limits<float32>::max())
+                            .arg(std::numeric_limits<float32>::max()), CODELOC );
+            }
+
+            return float32(num);
+        }
     }
-    
-    float64 num = toFloat64();
-    
-    if (num > std::numeric_limits<float32>::max() or
-        num < -std::numeric_limits<float32>::max())
-    {
-        throw Siren::numeric_overflow( String::tr(
-                "Overflow of %1 into a floating point number with 4 bytes. "
-                "The maximum range of this type is %2 to %3.")
-                    .arg(num_type)
-                    .arg(-std::numeric_limits<float32>::max())
-                    .arg(std::numeric_limits<float32>::max()), CODELOC );
-    }
-    
-    return float32(num);
 }
 
 /** Return this number cast as a standard "int" type. This will raise

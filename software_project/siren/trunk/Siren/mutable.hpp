@@ -48,7 +48,7 @@ namespace Siren
     SIREN_OUTOFLINE_TEMPLATE
     Ed Mutable<Ed,Vw>::edit() const
     {
-        const View *view = static_cast<const View*>(this);
+        const View *view = dynamic_cast<const View*>(this);
         return Editor(*view);
     }
     

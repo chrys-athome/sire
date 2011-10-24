@@ -55,6 +55,10 @@
 #include <QMutableHashIterator>
 #include <QHashIterator>
 
+#include <QMap>
+#include <QMutableMapIterator>
+#include <QMapIterator>
+
 #include <QVector>
 #include <QMutableVectorIterator>
 #include <QVectorIterator>
@@ -147,6 +151,16 @@ namespace Siren
         typedef QHashIterator<Key,Value> Iterator;
         typedef typename QHash<Key,Value>::iterator iterator;
         typedef typename QHash<Key,Value>::const_iterator const_iterator;
+    };
+
+    template<class Key, class Value>
+    struct Map
+    {
+        typedef QMap<Key,Value> Type;
+        typedef QMutableMapIterator<Key,Value> MutableIterator;
+        typedef QMapIterator<Key,Value> Iterator;
+        typedef typename QMap<Key,Value>::iterator iterator;
+        typedef typename QMap<Key,Value>::const_iterator const_iterator;
     };
 
     template<class T>

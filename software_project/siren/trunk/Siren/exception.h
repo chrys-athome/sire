@@ -53,7 +53,7 @@ namespace Siren
     */
     class SIREN_EXPORT Exception : public Object
     {
-        SIREN_VIRTUAL_CLASS( Exception, Object )
+        SIREN_VIRTUAL_CLASS(Exception,Object,1)
     
     public:
         Exception();
@@ -105,6 +105,7 @@ namespace Siren
         StringList bt;
     };
 
+    int wrap_index(int i, int count, CODELOC_ARGS);
 
 } // end of namespace Siren
 

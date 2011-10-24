@@ -67,6 +67,7 @@ namespace Siren
         bool operator!=(const Object &other) const;
         
         Class getClass() const;
+        int getClassVersion() const;
 
         const char* what() const;
 
@@ -78,6 +79,8 @@ namespace Siren
         void save(Stream &s) const;
 
         void load(Stream &s);
+
+        bool isNone() const;
     
         template<class T>
         bool isA() const;

@@ -211,13 +211,15 @@ namespace Siren
             interfaces */
         ClassData::ClassData(const char* class_type_name, 
                              const char* base_type_name,
-                             const char** interfaces)
+                             const char** interfaces,
+                             int version)
                   : type_name(class_type_name),
                     base_name(base_type_name),
                     ifaces(interfaces), 
                     type_name_string(0),
                     base_name_string(0),
-                    ifaces_list(0)
+                    ifaces_list(0),
+                    version_number(version)
         {
             if (base_name == type_name)
                 //this object has no base type
@@ -239,6 +241,12 @@ namespace Siren
             
             StringList *ptr2 = ifaces_list;
             delete ptr2;
+        }
+        
+        /** Return the version number of the data in this class */
+        int ClassData::version() const
+        {
+            return version_number;
         }
         
         /** Return whether or not this is the type data for the class

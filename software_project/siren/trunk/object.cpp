@@ -30,6 +30,7 @@
 #include "Siren/object.hpp"
 #include "Siren/string.h"
 #include "Siren/obj.h"
+#include "Siren/none.h"
 #include "Siren/testreport.h"
 #include "Siren/siren.hpp"
 #include "Siren/detail/metatype.hpp"
@@ -178,6 +179,12 @@ Obj Object::clone() const
     return Obj( this->ptr_clone() );
 }
 
+/** Return whether or not this is the None object */
+bool Object::isNone() const
+{
+    return dynamic_cast<const None*>(this) != 0;
+}
+
 /** Save this object to the passed stream */
 void Object::save(Stream &s) const
 {
@@ -234,13 +241,5 @@ uint Object::hashCode() const
 */
 TestReport Object::test() const throw()
 {
-    #ifndef SIREN_DISABLE_TESTS
-
     return TestReport(this->getClass());
-    
-    #else
-    
-    return TestReport();
-    
-    #endif
 }

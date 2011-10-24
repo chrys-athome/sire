@@ -125,10 +125,22 @@ Class Obj::getClass() const
     return d->getClass();
 }
 
+/** Return the version number of the class of the referenced object */
+int Obj::getClassVersion() const
+{
+    return d->getClassVersion();
+}
+
 /** Return the type of the passed object */
 const char* Obj::what() const
 {
     return d->what();
+}
+
+/** Return whether or not this object is None */
+bool Obj::isNone() const
+{
+    return d.get() == none.d.get() or d->isNone();
 }
 
 /** Copy the passed object into this object */

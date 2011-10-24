@@ -60,6 +60,14 @@ namespace Siren
     Editor<EditorClass,ViewClass>::~Editor()
     {}
     
+    /** Call this class to update the version of the view that will 
+        be returned when "revert" is called */
+    template<class EditorClass, class ViewClass>
+    void Editor<EditorClass,ViewClass>::updateOriginal(const ViewClass &v)
+    {
+        orig_view = v;
+    }
+    
     /** Default implementation of the "commit" function.
         A compile-time error is raised if you fail to override
         this function in your own class */

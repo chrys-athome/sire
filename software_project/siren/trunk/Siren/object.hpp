@@ -69,7 +69,7 @@ namespace Siren
         if (not this->getClass().canCast( T::typeName() ))
             this->throwInvalidCast( T::typeName() );
             
-        return (const T*)(this);
+        return *((const T*)(this));
     }
 
 } // end of namespace Siren

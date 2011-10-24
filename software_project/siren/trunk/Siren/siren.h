@@ -39,6 +39,7 @@ namespace Siren
 {
     class Object;
     class Obj;
+    class None;
 
     class Class;
     
@@ -52,6 +53,8 @@ namespace Siren
     class StringList;
     class Number;
     class ByteArray;
+
+    int wrap_index(int i, int count);
 
 } // end of namespace Siren
 

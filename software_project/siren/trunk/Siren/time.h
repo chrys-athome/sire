@@ -37,7 +37,7 @@ namespace Siren
     /** This class provides functions to query time. */
     class SIREN_EXPORT Time : public Object
     {
-        SIREN_CLASS( Time, Object )
+        SIREN_CLASS(Time,Object,1)
     
     public:
         Time();

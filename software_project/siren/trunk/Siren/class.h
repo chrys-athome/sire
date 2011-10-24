@@ -42,7 +42,7 @@ namespace Siren
     */
     class SIREN_EXPORT Class : public Object
     {
-        SIREN_CLASS(Class, Object)
+        SIREN_CLASS(Class,Object,1)
 
     public:
         Class();
@@ -59,6 +59,8 @@ namespace Siren
         String toString() const;
         
         String name() const;
+        
+        int version() const;
         
         bool hasSuper() const;
         

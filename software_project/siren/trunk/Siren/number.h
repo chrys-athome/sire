@@ -43,7 +43,7 @@ namespace Siren
     */
     class SIREN_EXPORT Number : public Object
     {
-        SIREN_CLASS(Number, Object)
+        SIREN_CLASS(Number,Object,1)
     
     public:
         Number();

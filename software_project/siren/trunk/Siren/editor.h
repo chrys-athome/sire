@@ -71,6 +71,8 @@ namespace Siren
         bool operator!=(const EditorClass &other) const;
         
     protected:
+        void updateOriginal(const View &new_version);
+    
         const View& originalView() const;
     
     private:

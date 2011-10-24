@@ -199,3 +199,65 @@ void program_bug::throwSelf() const
 {
     throw *this;
 }
+
+///////////
+/////////// Implementation of standard_exception
+///////////
+
+REGISTER_SIREN_CLASS( Siren::standard_exception )
+
+standard_exception::standard_exception() : Exception()
+{}
+
+standard_exception::standard_exception(const std::exception &e, CODELOC_ARGS)
+                   : Exception( String::tr("Caught standard exception %1")
+                                    .arg(e.what()), CODELOC_PASS_ARGS)
+{}
+
+standard_exception::standard_exception(const String &error, 
+                                       const std::exception &e, CODELOC_ARGS)
+                   : Exception( String::tr("%1. Caught standard exception %2")
+                                    .arg(error, e.what()), CODELOC_PASS_ARGS)
+{}
+
+standard_exception::standard_exception(const standard_exception &other) 
+                   : Exception(other)
+{}
+
+standard_exception::~standard_exception() throw()
+{}
+
+void standard_exception::throwSelf() const
+{
+    throw *this;
+}
+
+///////////
+/////////// Implementation of unknown_exception
+///////////
+
+REGISTER_SIREN_CLASS( Siren::unknown_exception )
+
+unknown_exception::unknown_exception() : Exception()
+{}
+
+unknown_exception::unknown_exception(CODELOC_ARGS)
+                  : Exception( String::tr("Caught an unknown exception"),
+                               CODELOC_PASS_ARGS )
+{}
+
+unknown_exception::unknown_exception(const String &error, CODELOC_ARGS)
+                : Exception(String::tr("%1. Caught an unknown exception")
+                                .arg(error), CODELOC_PASS_ARGS)
+{}
+
+unknown_exception::unknown_exception(const unknown_exception &other) : Exception(other)
+{}
+
+unknown_exception::~unknown_exception() throw()
+{}
+
+void unknown_exception::throwSelf() const
+{
+    throw *this;
+}

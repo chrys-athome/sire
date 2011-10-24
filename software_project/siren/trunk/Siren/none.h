@@ -39,7 +39,7 @@ namespace Siren
         of Python's None object */
     class SIREN_EXPORT None : public Object
     {
-        SIREN_CLASS(None, Object)
+        SIREN_CLASS(None,Object,1)
 
     public:
         None();

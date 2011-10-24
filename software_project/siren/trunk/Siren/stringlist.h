@@ -41,7 +41,7 @@ namespace Siren
     */
     class SIREN_EXPORT StringList : public Object
     {
-        SIREN_CLASS( StringList, Object )
+        SIREN_CLASS(StringList,Object,1)
         
     public:
         typedef List<String>::const_iterator const_iterator;

@@ -38,7 +38,7 @@ namespace Siren
         to time how long operations take */
     class SIREN_EXPORT Timer : public Object
     {
-        SIREN_CLASS( Timer, Object )
+        SIREN_CLASS(Timer,Object,1)
         
     public:
         Timer();

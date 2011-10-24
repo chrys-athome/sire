@@ -38,7 +38,7 @@ namespace Siren
         querying dates */
     class SIREN_EXPORT Date : public Object
     {
-        SIREN_CLASS( Date, Object )
+        SIREN_CLASS(Date,Object,1)
     
     public:
         Date();

@@ -50,7 +50,8 @@ namespace Siren
         ConcreteClassData<T>::ConcreteClassData() 
                              : ClassData( T::typeName(), 
                                           T::super::typeName(), 
-                                          T::ifaces() )
+                                          T::ifaces(),
+                                          T::typeClassVersion() )
         {}
 
         /** Destructor */
@@ -87,7 +88,8 @@ namespace Siren
         VirtualClassData<T>::VirtualClassData() 
                               : ClassData( T::typeName(), 
                                            T::super::typeName(), 
-                                           T::ifaces() )
+                                           T::ifaces(),
+                                           T::typeClassVersion() )
         {}
 
         /** Destructor */

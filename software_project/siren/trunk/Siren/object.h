@@ -183,6 +183,9 @@ namespace Siren
         static Class typeClass();
         virtual Class getClass() const=0;
 
+        static int typeClassVersion(){ return 1; }
+        virtual int getClassVersion() const=0;
+
         static const char* typeName();
         virtual const char* what() const=0;
 
@@ -196,6 +199,8 @@ namespace Siren
         ///////////////////////////////////////////////////////////
 
         Obj clone() const;
+        
+        bool isNone() const;
         
         void save(Stream &s) const;
         void load(Stream &s);

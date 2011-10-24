@@ -45,7 +45,7 @@ namespace Siren
     */
     class SIREN_EXPORT String : public Object
     {
-        SIREN_CLASS(String, Object)
+        SIREN_CLASS(String,Object,1)
 
     public:
         String();
@@ -63,24 +63,9 @@ namespace Siren
         String(const String &other);
         
         ~String();
-
-        String& operator=(const String &other)
-        { 
-            String::copy_object(other); return *this; 
-        }
         
         String& operator=(Char c);
         String& operator=(const Latin1String &latin1);
-        
-        bool operator==(const String &other) const
-        {
-            return String::compare_object(other);
-        }
-        
-        bool operator!=(const String &other) const
-        {
-            return not String::compare_object(other);
-        }
         
         bool operator<(const String &other) const;
         bool operator<=(const String &other) const;

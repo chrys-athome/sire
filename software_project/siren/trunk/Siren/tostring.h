@@ -32,6 +32,8 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    class String;
+
     template<class T>
     String toString(const T &obj);
     
@@ -39,4 +41,4 @@ namespace Siren
 
 SIREN_END_HEADER
 
-#endif
+#endif // end of ifndef SIREN_TOSTRING_H

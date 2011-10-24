@@ -42,7 +42,7 @@ namespace Siren
     */
     class SIREN_EXPORT assertation_error : public Exception
     {
-        SIREN_CLASS( assertation_error, Exception )
+        SIREN_CLASS(assertation_error,Exception,1)
         
     public:
         assertation_error();

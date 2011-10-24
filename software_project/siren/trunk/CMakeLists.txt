@@ -47,6 +47,12 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR} 
                     ${QT_QTCORE_INCLUDE_DIR})
 
+set ( SIREN_THIRD_PARTY_SOURCES
+
+      third_party/fcmp.h
+      third_party/fcmp.cpp
+    )
+
 set ( SIREN_PUBLIC_HEADERS
 
       Siren/assert.h
@@ -96,6 +102,8 @@ set ( SIREN_SOURCES
 
       ${SIREN_PUBLIC_HEADERS}
 
+      ${SIREN_THIRD_PARTY_SOURCES}
+
       assert.cpp
       bytearray.cpp
       class.cpp
@@ -113,6 +121,7 @@ set ( SIREN_SOURCES
       object.cpp
       obj.cpp
       schemas.cpp
+      siren.cpp
       stream.cpp
       string.cpp
       stringlist.cpp

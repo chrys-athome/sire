@@ -211,7 +211,7 @@ String::String(const String &other)
 String::~String()
 {
     #warning BUG IN ~String - decref causes problems at shutdown!
-    decref();
+    //decref();
 }
 
 /** Copy assignment operator */

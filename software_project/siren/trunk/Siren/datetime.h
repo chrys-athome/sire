@@ -41,7 +41,7 @@ namespace Siren
         of a time and a date */
     class SIREN_EXPORT DateTime : public Object
     {
-        SIREN_CLASS( DateTime, Object )
+        SIREN_CLASS(DateTime,Object,1)
     
     public:
         DateTime();

@@ -32,153 +32,168 @@
 #include "Siren/string.h"
 #include "Siren/stringlist.h"
 
+#include "Siren/detail/qt4support.h"
+#include "Siren/detail/boostsupport.h"
+
 namespace Siren
 {
-    /** Return a string representation of a POD type */
-    template<typename T>
-    SIREN_INLINE_TEMPLATE
-    struct to_string_pod
+    namespace detail
     {
-        static String to_string(const T &val)
+        /** Return a string representation of number */
+        template<typename T>
+        struct to_string_numtype
         {
-            return String::number(val);
-        }
-    };
+            static String to_string(const T &val)
+            {
+                return String::number(val);
+            }
+        };
 
-    /** Return a string representation of a class type (must have 
-        implemented a .toString() member function, or else you
-        must supply a specific instantiation) */
-    template<class T>
-    SIREN_INLINE_TEMPLATE
-    struct to_string_class_with_toString
-    {
-        static String to_string(const T &obj)
+        /** Return a string representation of a class type (must have 
+            implemented a .toString() member function, or else you
+            must supply a specific instantiation) */
+        template<class T>
+        struct to_string_class_with_toString
         {
-            return obj.toString();
-        }
-    };
+            static String to_string(const T &obj)
+            {
+                return obj.toString();
+            }
+        };
 
-    /** Used to return the string of a non-container type */
-    template<class T>
-    SIREN_INLINE_TEMPLATE
-    String to_string(const T &obj)
-    {
-        return boost::mpl::if_<boost::is_pod<T>,
-                                  to_string_numtype<T>, 
-                                  to_string_class_with_toString<T> >
-                             ::type::to_string(obj);
-    }
-
-    /** Used to return a string representation of a String! */
-    template<>
-    inline String to_string(const String &string)
-    {
-        return string;
-    }
-
-    /** Used to return a string representation of a String! */
-    template<>
-    inline String to_string(const Latin1String &string)
-    {
-        return string;
-    }
-
-    /** Used to return a string representation of a StringList */
-    template<>
-    inline String to_string(const StringList &strings)
-    {
-        if (strings.isEmpty())
-            return String("( )");
-        else
-            return String("( %1 )").arg( strings.join(", ") );
-    }
-
-    /** Used to return a string representation of a List */
-    template<class T>
-    String to_string(const List<T>::Type &objs)
-    {
-        StringList strngs;
-        
-        for (typename List<T>::const_iterator it = objs.begin();
-             it != objs.end();
-             ++it)
+        /** Used to return the string of a non-container type */
+        template<class T>
+        SIREN_INLINE_TEMPLATE
+        String to_string(const T &obj)
         {
-            strngs.append( to_string(*it) );
+            return boost::mpl::if_<boost::is_pod<T>,
+                                      to_string_numtype<T>, 
+                                      to_string_class_with_toString<T> >
+                                 ::type::to_string(obj);
         }
-        
-        return String("[ %1 ]").arg( strngs.join(","));
-    }
 
-    /** Used to return a string representation of a Vector */
-    template<class T>
-    String to_string(const Vector<T>::Type &objs)
-    {
-        StringList strngs;
-        
-        for (typename Vector<T>::const_iterator it = objs.begin();
-             it != objs.end();
-             ++it)
+        /** Used to return a string representation of a String! */
+        template<>
+        SIREN_INLINE_TEMPLATE
+        String to_string(const String &string)
         {
-            strngs.append( to_string(*it) );
+            return string;
         }
-        
-        return String("[ %1 ]").arg( strngs.join(","));
-    }
 
-    /** Used to return a string representation of a Set */
-    template<class T>
-    String to_string(const Set<T>::Type &objs)
-    {
-        StringList strngs;
-        
-        for (typename Set<T>::const_iterator it = objs.begin();
-             it != objs.end();
-             ++it)
+        /** Used to return a string representation of a String! */
+        template<>
+        SIREN_INLINE_TEMPLATE
+        String to_string(const Latin1String &string)
         {
-            strngs.append( to_string(*it) );
+            return string;
         }
-        
-        return String("{ %1 }").arg( strngs.join(","));
-    }
 
-    /** Used to return a string representation of a Hash */
-    template<class S, class T>
-    String to_string(const Hash<S,T>::Type &objs)
-    {
-        StringList strngs;
-        
-        for (typename Hash<S,T>::const_iterator it = objs.begin();
-             it != objs.end();
-             ++it)
+        /** Used to return a string representation of a StringList */
+        template<>
+        SIREN_INLINE_TEMPLATE
+        String to_string(const StringList &strings)
         {
-            strngs.append( String(" %1 : %2").arg( qstr(it.key()), qstr(it.value()) ) );
+            if (strings.isEmpty())
+                return String("( )");
+            else
+                return String("( %1 )").arg( strings.join(", ") );
         }
-        
-        return QString("{ %1 }").arg( strngs.join(","));
-    }
 
-    /** Used to return a string representation of a QMap */
-    template<class S, class T>
-    QString qstr(const QMap<S,T> &objs)
-    {
-        QStringList strngs;
-        
-        for (typename QMap<S,T>::const_iterator it = objs.begin();
-             it != objs.end();
-             ++it)
+        /** Used to return a string representation of a List */
+        template<class T>
+        SIREN_INLINE_TEMPLATE
+        String to_string(const typename List<T>::Type &objs)
         {
-            strngs.append( String(" %1 : %2")
-                                .arg( to_string(it.key()), to_string(it.value()) ) );
+            List<String>::Type strngs;
+            
+            for (typename List<T>::const_iterator it = objs.begin();
+                 it != objs.end();
+                 ++it)
+            {
+                strngs.append( to_string(*it) );
+            }
+            
+            return String("[ %1 ]").arg( StringList(strngs).join(","));
         }
-        
-        return String("{ %1 }").arg( strngs.join(","));
-    }
+
+        /** Used to return a string representation of a Vector */
+        template<class T>
+        SIREN_INLINE_TEMPLATE
+        String to_string(const typename Vector<T>::Type &objs)
+        {
+            List<String>::Type strngs;
+            
+            for (typename Vector<T>::const_iterator it = objs.begin();
+                 it != objs.end();
+                 ++it)
+            {
+                strngs.append( to_string(*it) );
+            }
+            
+            return String("[ %1 ]").arg( StringList(strngs).join(","));
+        }
+
+        /** Used to return a string representation of a Set */
+        template<class T>
+        SIREN_INLINE_TEMPLATE
+        String to_string(const typename Set<T>::Type &objs)
+        {
+            List<String>::Type strngs;
+            
+            for (typename Set<T>::const_iterator it = objs.begin();
+                 it != objs.end();
+                 ++it)
+            {
+                strngs.append( to_string(*it) );
+            }
+            
+            return String("{ %1 }").arg( StringList(strngs).join(",") );
+        }
+
+        /** Used to return a string representation of a Hash */
+        template<class S, class T>
+        SIREN_INLINE_TEMPLATE
+        String to_string(const typename Hash<S,T>::Type &objs)
+        {
+            List<String>::Type strngs;
+            
+            for (typename Hash<S,T>::const_iterator it = objs.begin();
+                 it != objs.end();
+                 ++it)
+            {
+                strngs.append( String("%1 : %2")
+                        .arg( to_string(it.key()), to_string(it.value()) ) );
+            }
+            
+            return String("{ %1 }").arg( StringList(strngs).join(",") );
+        }
+
+        /** Used to return a string representation of a QMap */
+        template<class S, class T>
+        SIREN_INLINE_TEMPLATE
+        String to_string(const typename Map<S,T>::Type &objs)
+        {
+            List<String>::Type strngs;
+            
+            for (typename Map<S,T>::const_iterator it = objs.begin();
+                 it != objs.end();
+                 ++it)
+            {
+                strngs.append( String(" %1 : %2")
+                                    .arg( to_string(it.key()), to_string(it.value()) ) );
+            }
+            
+            return String("{ %1 }").arg( StringList(strngs).join(",") );
+        }
+    
+    } // end of namespace detail
 
     /** Return a String representation of the object 'obj' */
     template<class T>
-    inline String toString(const T &obj)
+    SIREN_INLINE_TEMPLATE
+    String toString(const T &obj)
     {
-        return to_string(obj);
+        return detail::to_string(obj);
     }
 
 } // end of namespace Siren

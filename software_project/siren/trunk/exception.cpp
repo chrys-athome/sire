@@ -28,9 +28,13 @@
 
 #include "Siren/exception.h"
 #include "Siren/thread.h"
+#include "Siren/bytearray.h"
 #include "Siren/siren.hpp"
 
 using namespace Siren;
+
+#define HAVE_BACKTRACE 1
+#define HAVE_EXECINFO_H
 
 ////////////
 //////////// Code used to generate a backtrace in a live program
@@ -113,7 +117,7 @@ static StringList getBackTrace()
             //now try and demangle the symbol
             int stat;
             char *demangled = 
-                    abi::__cxa_demangle(symbol.constData(),0,0,&stat);
+                    abi::__cxa_demangle(symbol_data.data(),0,0,&stat);
         
             if (demangled)
             {
@@ -150,7 +154,7 @@ static StringList getBackTrace()
                 //now try and demangle the symbol
                 int stat;
                 char *demangled = 
-                        abi::__cxa_demangle(symbol_data.constData(),0,0,&stat);
+                        abi::__cxa_demangle(symbol_data.data(),0,0,&stat);
         
                 if (demangled)
                 {
@@ -309,7 +313,9 @@ String Exception::toString() const
                             "|Node / process: %5 | %6\n"
                             "|\n"
                             "|****************************************\n")
-                    .arg(err, String(this->what()));
+                    .arg(err, this->what(),
+                         this->dateTime().toString(),
+                         this->where(), this->node(), this->pid());
 
     return String::tr("%1\n"
                       "Backtrace:\n%2\n\n"

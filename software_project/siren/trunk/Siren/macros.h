@@ -50,7 +50,7 @@
 
 /** Use to signify that the following template function should be
     compiled inline */
-#define SIREN_INLINE_TEMPLATE
+#define SIREN_INLINE_TEMPLATE inline
 
 /** Use to signify that the following template function should be 
     compiled out of line */
@@ -92,7 +92,7 @@
         
 /** Used to define, in the definition of Siren Object classes,
     the functions that are common to all Siren objects */
-#define SIREN_CLASS(classname, baseclass) \
+#define SIREN_CLASS(classname, baseclass, version) \
     public: \
         friend class detail::ConcreteClassData< classname >; \
         typedef baseclass super; \
@@ -100,6 +100,14 @@
         virtual const char* what() const; \
         static Class typeClass(); \
         Class getClass() const; \
+        static int typeClassVersion() { return version; } \
+        int getClassVersion() const { return version; } \
+        classname& operator=(const classname &other) { \
+                   classname::copy_object(other); return *this; } \
+        bool operator==(const classname &other) const { \
+                   return classname::compare_object(other); } \
+        bool operator!=(const classname &other) const { \
+                   return not classname::operator==(other); } \
     protected: \
         void pvt_copy_object(const Siren::Object &other); \
         bool pvt_compare_object(const Siren::Object &other) const; \
@@ -108,12 +116,19 @@
     
 /** Used to define, in the definition of Siren Object classes,
     the functions that are common to all Siren objects */
-#define SIREN_VIRTUAL_CLASS(classname, baseclass) \
+#define SIREN_VIRTUAL_CLASS(classname, baseclass, version) \
     public: \
         friend class detail::VirtualClassData< classname >; \
         typedef baseclass super; \
         static const char* typeName(); \
         static Class typeClass(); \
+        static int typeClassVersion() { return version; } \
+        classname& operator=(const classname &other) { \
+                   Object::operator=(other); return *this; } \
+        bool operator==(const classname &other) const { \
+                   return Object::operator==(other); } \
+        bool operator!=(const classname &other) const { \
+                   return not Object::operator==(other); } \
     private:
     
 /** Use to register a new virtual Siren Object class */

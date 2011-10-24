@@ -134,6 +134,13 @@ String Class::name() const
     return d->typeName();
 }
 
+/** Return the version number of this class */
+int Class::version() const
+{
+    checkNotNull();
+    return d->version();
+}
+
 /** Return whether or not the class has a super class (should do!) */
 bool Class::hasSuper() const
 {

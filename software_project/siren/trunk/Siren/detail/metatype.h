@@ -91,7 +91,8 @@ namespace Siren
         public:
             ClassData(const char* class_type_name, 
                       const char* base_type_name,
-                      const char** interfaces);
+                      const char** interfaces,
+                      int version);
         
             virtual ~ClassData();
         
@@ -107,6 +108,8 @@ namespace Siren
         
             const String& typeName() const;
             const String& baseTypeName() const;
+        
+            int version() const;
         
             const StringList& interfaces() const;
             int nInterfaces() const;
@@ -139,6 +142,9 @@ namespace Siren
             /** This is a cache of the interfaces supported by this 
                 class - this is 0 if there are no interfaces */
             AtomicPointer<StringList>::Type ifaces_list;
+            
+            /** The version number of the data in this class */
+            int version_number;
             
         }; // end of class ClassData
 

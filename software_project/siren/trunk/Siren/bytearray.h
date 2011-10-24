@@ -41,7 +41,7 @@ namespace Siren
     */
     class SIREN_EXPORT ByteArray : public Object
     {
-        SIREN_CLASS(ByteArray, Object);
+        SIREN_CLASS(ByteArray,Object,1);
         
     public:
         ByteArray();
