@@ -47,6 +47,7 @@ namespace Siren
     class Exception;
 
     class TestReport;
+    class TestReportEditor;
 
     class Stream;
 

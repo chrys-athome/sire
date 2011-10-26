@@ -29,6 +29,7 @@
 #include "Siren/exception.h"
 #include "Siren/thread.h"
 #include "Siren/bytearray.h"
+#include "Siren/testreport.h"
 #include "Siren/siren.hpp"
 
 using namespace Siren;
@@ -327,4 +328,22 @@ String Exception::toString() const
 StringList Exception::generateBackTrace()
 {
     return ::getBackTrace();
+}
+
+/** Test this exception */
+void Exception::test(TestReportEditor &report) const
+{
+    try
+    {
+        this->throwSelf();
+    }
+    catch(const Exception &e)
+    {
+        report.testTrue( e.isA(this->what()), 
+                    String::tr("Exception type %1 is caught correctly.")
+                                .arg(this->what()) );
+                                
+        report.testEqual( *this, e,
+                    String::tr("Caught exception is equal to itself, from throwSelf()") );
+    }
 }

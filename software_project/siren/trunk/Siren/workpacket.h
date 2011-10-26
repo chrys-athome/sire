@@ -56,14 +56,18 @@ namespace Siren
         virtual Obj createWorkspace() const;
         virtual Obj createWorkspace(int worker_id) const;
         
+        virtual bool isFinished() const=0;
+        virtual int progress() const=0;
+
+        Obj run() const throw();
+        Obj run(WorkSpace &workspace) const throw();
+        Obj run(WorkSpace &workspace, int worker_id) const throw();
+        
+    protected:
         virtual Obj runChunk() const=0;
         virtual Obj runChunk(WorkSpace &workspace) const;
         virtual Obj runChunk(WorkSpace &workspace, int worker_id) const;
-        
-        virtual bool isFinished() const=0;
-        virtual int progress() const=0;
-        
-    protected:
+
         void copy_object(const WorkPacket &other);
         bool compare_object(const WorkPacket &other) const;
         
@@ -82,16 +86,23 @@ namespace Siren
         
         ~TestPacket();
         
-        Obj runChunk() const;
-        
         bool isFinished() const;
         int progress() const;
         
-        TestReport test() const;
+        TestReport test() const throw();
         
     protected:
+        Obj runChunk() const;
+
         void copy_object(const TestPacket &other);
         bool compare_object(const TestPacket &other) const;
+    
+    private:
+        /** The number to which we must count */
+        int target_val;
+        
+        /** The current value */
+        int current_val;
     
     }; // end of class TestPacket
 

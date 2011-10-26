@@ -234,6 +234,27 @@ namespace Siren
     
     }; // end of class interupted_thread
 
+    /** This exception is thrown when a function or constructor
+        is called using an invalid argument, e.g. passing a 
+        negative number to a function that is expecting
+        positive numbers.
+    */
+    class SIREN_EXPORT invalid_arg : public Exception
+    {
+        SIREN_CLASS(invalid_arg,Exception,1)
+        
+    public:
+        invalid_arg();
+        invalid_arg(const String &error, CODELOC_ARGS);
+        
+        invalid_arg(const invalid_arg &other);
+        
+        ~invalid_arg() throw();
+        
+        void throwSelf() const;
+    
+    }; // end of class invalid_arg
+
 } // end of namespace Siren
 
 SIREN_EXPOSE_EXCEPTION( Siren::invalid_cast )
@@ -246,6 +267,7 @@ SIREN_EXPOSE_EXCEPTION( Siren::unavailable_class )
 SIREN_EXPOSE_EXCEPTION( Siren::standard_exception )
 SIREN_EXPOSE_EXCEPTION( Siren::unknown_exception )
 SIREN_EXPOSE_EXCEPTION( Siren::interupted_thread )
+SIREN_EXPOSE_EXCEPTION( Siren::invalid_arg )
 
 SIREN_END_HEADER
 

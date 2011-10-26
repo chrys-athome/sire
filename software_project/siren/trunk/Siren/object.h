@@ -208,11 +208,17 @@ namespace Siren
         template<class T>
         bool isA() const;
 
+        bool isA(const char *type_name) const;
+        bool isA(const String &type_name) const;
+
         template<class T>
         const T& asA() const;
 
         template<class T>
         void assertIsA() const;
+
+        void assertIsA(const char *type_name) const;
+        void assertIsA(const String &type_name) const;
 
         //////////////////////////////////////////
         //                                      //
@@ -223,7 +229,7 @@ namespace Siren
 
         virtual String toString() const;
 
-        virtual TestReport test() const throw();
+        TestReport test() const throw();
 
         String docString() const;
         String docString(const String &function) const;
@@ -239,6 +245,8 @@ namespace Siren
         void copy_object(const Object &other);
         bool compare_object(const Object &other) const;
 
+        virtual void test(TestReportEditor &report) const;
+
         virtual void pvt_copy_object(const Object &other)=0;
         virtual bool pvt_compare_object(const Object &other) const=0;
     
@@ -246,7 +254,7 @@ namespace Siren
         virtual Object* ptr_clone() const=0;
 
     private:
-        void throwInvalidCast(const char *type_name) const;
+        void throwInvalidCast(const String &type_name) const;
     };
 
 } // end of namespace Siren

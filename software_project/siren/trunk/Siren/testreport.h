@@ -317,6 +317,7 @@ namespace Siren
         TestReportEditor& testTrue(bool test, const String &description);
         TestReportEditor& testFalse(bool test, const String &description);
 
+        TestReportEditor& addPassed(const String &description);
         TestReportEditor& addFailure(const String &description);
 
         TestReportEditor& addException(const Exception &e);

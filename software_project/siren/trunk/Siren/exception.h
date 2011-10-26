@@ -83,6 +83,8 @@ namespace Siren
         void copy_object(const Exception &other);
         bool compare_object(const Exception &other) const;
         
+        void test(TestReportEditor &report) const;
+
     private:
         /** The error message associated with this exception */
         String err;

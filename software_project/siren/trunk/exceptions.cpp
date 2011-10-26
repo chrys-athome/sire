@@ -261,3 +261,27 @@ void unknown_exception::throwSelf() const
 {
     throw *this;
 }
+
+///////////
+/////////// Implementation of invalid_arg
+///////////
+
+REGISTER_SIREN_CLASS( Siren::invalid_arg )
+
+invalid_arg::invalid_arg() : Exception()
+{}
+
+invalid_arg::invalid_arg(const String &error, CODELOC_ARGS)
+                : Exception(error, CODELOC_PASS_ARGS)
+{}
+
+invalid_arg::invalid_arg(const invalid_arg &other) : Exception(other)
+{}
+
+invalid_arg::~invalid_arg() throw()
+{}
+
+void invalid_arg::throwSelf() const
+{
+    throw *this;
+}

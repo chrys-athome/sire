@@ -30,7 +30,12 @@
 #include "Siren/workspace.h"
 #include "Siren/obj.h"
 #include "Siren/none.h"
+#include "Siren/exceptions.h"
 #include "Siren/siren.hpp"
+#include "Siren/timer.h"
+#include "Siren/testreport.h"
+
+#include <cmath>
 
 using namespace Siren;
 
@@ -124,3 +129,127 @@ bool WorkPacket::compare_object(const WorkPacket &other) const
 //////////////
 
 REGISTER_SIREN_CLASS( Siren::TestPacket )
+
+/** Construct a default TestPacket - this counts to 10 */
+TestPacket::TestPacket() : WorkPacket(), target_val(10), current_val(0)
+{}
+
+/** Construct a TestPacket that will count up to 'n' */
+TestPacket::TestPacket(int n) : WorkPacket(), target_val(n), current_val(0)
+{
+    if (n < 0)
+        throw Siren::invalid_arg( String::tr(
+                "You cannot create a TestPacket which asks to count up to "
+                "a negative number (%1).")
+                    .arg(n), CODELOC );
+}
+
+/** Copy constructor */
+TestPacket::TestPacket(const TestPacket &other)
+           : WorkPacket(other), 
+             target_val(other.target_val),
+             current_val(other.current_val)
+{}
+
+/** Destructor */
+TestPacket::~TestPacket()
+{}
+
+/** Run a chunk of calculation. This will count from current_val to 
+    target_val in blocks of 10, sleeping for one second between each
+    value */
+Obj TestPacket::runChunk() const
+{
+    int n_remaining = target_val - current_val;
+    
+    if (n_remaining <= 0)
+        return *this;
+    
+    if (n_remaining > 10)
+        n_remaining = 10;
+        
+    for (int i=1; i<=n_remaining; ++i)
+    {
+        sirenDebug() << "TestPacket counting:" << (current_val+i)
+                     << "of" << target_val << "...";
+                     
+        //busy sleep, so that we burn some CPU
+        Timer t = Timer::start();
+        
+        double j = 1;
+        int k = 0;
+        
+        while (t.elapsed() < 1000)
+        {
+            j += std::sqrt(j);
+            k += 1;
+        }
+        
+        sirenDebug() << "(performed" << k << "square roots per second!)";
+    }
+    
+    TestPacket next_chunk(*this);
+    next_chunk.current_val += n_remaining;
+    
+    return next_chunk;
+}
+
+/** Return whether or not this WorkPacket is finished */
+bool TestPacket::isFinished() const
+{
+    return current_val == target_val;
+}
+
+/** Return the progress towards a completed calculation. This is 
+    the percentage of the calculation that has been completed,
+    e.g. 0 means the calculation has not been started, 50 means
+    it is half complete, and 100 means fully completed */
+int TestPacket::progress() const
+{
+    return (100 * (target_val - current_val)) / target_val; 
+}
+
+/** Test this TestPacket */
+TestReport TestPacket::test() const throw()
+{
+    TestReport report;
+    TestReport::Editor editor = report.edit();
+
+    try
+    {
+        TestPacket packet(10);
+        packet.run();
+
+        editor.addPassed( String::tr("TestPacket passed as no exception was thrown.") );
+    }
+    catch(const Siren::Exception &e)
+    {
+        editor.addException(e);
+    }
+    catch(const std::exception &e)
+    {
+        editor.addException( standard_exception(e,CODELOC) );
+    }
+    catch(...)
+    {
+        editor.addException( unknown_exception(CODELOC) );
+    }
+    
+    return editor.commit();
+}
+
+/** Copy assignment operator */
+void TestPacket::copy_object(const TestPacket &other)
+{
+    target_val = other.target_val;
+    current_val = other.current_val;
+    super::copy_object(other);
+}
+
+/** Comparison operator */
+bool TestPacket::compare_object(const TestPacket &other) const
+{
+    return target_val == other.target_val and
+           current_val == other.current_val and
+           super::compare_object(other);
+}

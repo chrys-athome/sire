@@ -927,6 +927,15 @@ TestReportEditor& TestReportEditor::testFalse(bool test, const String &descripti
     return *this;
 }
 
+/** Add a passed report - this is used to just pass a test report, with 
+    the passed reason */
+TestReportEditor& TestReportEditor::addPassed(const String &description)
+{
+    d->items.append( TestPassedItem(description) );
+    
+    return *this;
+}
+
 /** Add a failed report - this is used to just fail a test report, with 
     the passed reason */
 TestReportEditor& TestReportEditor::addFailure(const String &description)

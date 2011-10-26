@@ -115,6 +115,35 @@ bool Object::operator!=(const Object &other) const
     return not Object::operator==(other);
 }
 
+/** Return whether or not this object is of type "type_name", or can be
+    cast to an object of type "type_name" */
+bool Object::isA(const String &type_name) const
+{
+    return this->getClass().canCast(type_name);
+}
+
+/** Return whether or not this object is of type "type_name", or can be
+    cast to an object of type "type_name" */
+bool Object::isA(const char *type_name) const
+{
+    return this->isA( String(type_name) );
+}
+
+/** Assert that this object is of type "type_name", or can be cast 
+    to an object of type "type_name" */
+void Object::assertIsA(const String &type_name) const
+{
+    if (not this->isA(type_name))
+        this->throwInvalidCast(type_name);
+}
+
+/** Assert that this object is of type "type_name", or can be cast 
+    to an object of type "type_name" */
+void Object::assertIsA(const char *type_name) const
+{
+    this->assertIsA( String(type_name) );
+}
+
 /** Copy the object 'other' into this object. Note that both
     objects must be of the same type, or an invalid
     cast exception will be raised
@@ -165,7 +194,7 @@ String Object::docString(const String &function) const
     
     \throw Siren::invalid_cast
 */
-void Object::throwInvalidCast(const char *type_name) const
+void Object::throwInvalidCast(const String &type_name) const
 {
     throw Siren::invalid_cast( String::tr(
             "It is not possible to cast from an object of type %1 "
@@ -233,13 +262,39 @@ uint Object::hashCode() const
     return 0;
 }
 
-/** This is the default unit test - it fails as there aren't any  
-    (and it is an error for the programmer to *NOT* provide any tests!).
-    
-    This should run all of the unit tests on this class, writing the 
-    results and returning them in the passed TestReport object
+/** This is the default unit test. It performs no tests, and
+    as such, produces an empty test report. In your class, you
+    should provide some tests, and write the results of those
+    tests to the passed TestReport (via the TestReportEditor)
 */
+void Object::test(TestReportEditor&) const
+{}
+
+/** Perform a series of unit tests on the object, returning a report
+    that describes those tests. These tests are guaranteed not to change
+    the object, nor to cause any exceptions to be raised */
 TestReport Object::test() const throw()
 {
-    return TestReport(this->getClass());
+    TestReport report( this->getClass() );
+
+    TestReport::Editor editor = report.edit();
+    
+    try
+    {
+        this->test(editor);
+    }
+    catch(const Siren::Exception &e)
+    {
+        editor.addException(e);
+    }
+    catch(const std::exception &e)
+    {
+        editor.addException( standard_exception(e,CODELOC) );
+    }
+    catch(...)
+    {
+        editor.addException( unknown_exception(CODELOC) );
+    }
+
+    return editor.commit();
 }

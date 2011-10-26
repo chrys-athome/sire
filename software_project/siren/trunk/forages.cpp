@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#ifdef DO_NOT_COMPILE
+
 #include "Siren/thread.h"
 #include "Siren/threadstorage.h"
 #include "Siren/forages.h"
@@ -373,3 +375,5 @@ namespace Siren
     }
 
 } // end of namespace Siren
+
+#endif

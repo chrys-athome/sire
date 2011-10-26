@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#ifdef DO_NOT_COMPILE
+
 #include "Siren/mutex.h"
 #include "Siren/forages.h"
 
@@ -132,3 +134,5 @@ void Mutex::unlock()
 {
     m.unlock();
 }
+
+#endif
