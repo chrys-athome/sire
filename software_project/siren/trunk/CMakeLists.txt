@@ -64,6 +64,7 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/editor.hpp
       Siren/exception.h
       Siren/exceptions.h
+      Siren/forages.h
       Siren/lock.h
       Siren/interfaces.h
       Siren/macros.h
@@ -88,6 +89,8 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/timer.h
       Siren/tostring.h
       Siren/tostring.hpp
+      Siren/workpacket.h
+      Siren/workspace.h
     )
 
 set ( SIREN_PRIVATE_HEADERS
@@ -112,6 +115,7 @@ set ( SIREN_SOURCES
       editor.cpp
       exception.cpp
       exceptions.cpp
+      forages.cpp
       interfaces.cpp
       lock.cpp
       mutable.cpp
@@ -129,6 +133,8 @@ set ( SIREN_SOURCES
       thread.cpp
       time.cpp
       timer.cpp
+      workpacket.cpp
+      workspace.cpp
 
       ${SIREN_PRIVATE_HEADERS}
 

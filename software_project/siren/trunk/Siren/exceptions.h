@@ -215,6 +215,25 @@ namespace Siren
     
     }; // end of class unknown_exception
 
+    /** This exception is thrown when the end of for_ages is
+        signalled, and any blocked threads are interupted
+    */
+    class SIREN_EXPORT interupted_thread : public Exception
+    {
+        SIREN_CLASS(interupted_thread,Exception,1)
+        
+    public:
+        interupted_thread();
+        interupted_thread(const String &error, CODELOC_ARGS);
+        
+        interupted_thread(const interupted_thread &other);
+        
+        ~interupted_thread() throw();
+        
+        void throwSelf() const;
+    
+    }; // end of class interupted_thread
+
 } // end of namespace Siren
 
 SIREN_EXPOSE_EXCEPTION( Siren::invalid_cast )
@@ -226,6 +245,7 @@ SIREN_EXPOSE_EXCEPTION( Siren::program_bug )
 SIREN_EXPOSE_EXCEPTION( Siren::unavailable_class )
 SIREN_EXPOSE_EXCEPTION( Siren::standard_exception )
 SIREN_EXPOSE_EXCEPTION( Siren::unknown_exception )
+SIREN_EXPOSE_EXCEPTION( Siren::interupted_thread )
 
 SIREN_END_HEADER
 

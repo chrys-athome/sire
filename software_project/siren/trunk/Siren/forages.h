@@ -1,5 +1,5 @@
-#ifndef SIREN_SIREN_H
-#define SIREN_SIREN_H
+#ifndef SIREN_FORAGES_H
+#define SIREN_FORAGES_H
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -28,37 +28,47 @@
   *
 \*********************************************/
 
-#include "Siren/macros.h"
-#include "Siren/tostring.h"
+#include "Siren/siren.h"
 
-#include "Siren/detail/metatype.h"
-#include "Siren/detail/qt4support.h"
-#include "Siren/detail/boostsupport.h"
+SIREN_BEGIN_HEADER
 
-//Forward declaration of key classes
 namespace Siren
 {
-    class Object;
-    class Obj;
-    class None;
+    struct for_ages
+    {
+        static void registerThisThread();
+        static void unregisterThisThread();
+    };
 
-    class Class;
-    
-    class Exception;
+    int register_this_thread();
+    void unregister_this_thread();
 
-    class TestReport;
+    void msleep(int ms);
+    void sleep(int secs);
 
-    class Stream;
+    bool for_ages();
 
-    class String;
-    class StringList;
-    class Number;
-    class ByteArray;
+    void check_for_ages();
 
-    int wrap_index(int i, int count);
+    void pause_for_ages();
+    void pause_for_ages(const Thread *thread);
+
+    void play_for_ages();
+    void play_for_ages(const Thread *thread);
+
+    void end_for_ages();
+    void end_for_ages(const Thread *thread);
 
 } // end of namespace Siren
 
-#include "Siren/object.h"
+SIREN_EXPOSE_FUNCTION( Siren::msleep )
+SIREN_EXPOSE_FUNCTION( Siren::sleep )
+SIREN_EXPOSE_FUNCTION( Siren::for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::check_for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::pause_for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::play_for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::end_for_ages )
 
-#endif // SIREN_SIREN_H
+SIREN_END_HEADER
+
+#endif // ifndef SIREN_FORAGES_H

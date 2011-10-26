@@ -94,8 +94,6 @@ namespace Siren
     typedef double float64;
     typedef long double float128;
 
-    typedef QMutex Mutex;
-    typedef QMutexLocker MutexLocker;
     typedef QReadWriteLock ReadWriteLock;
     typedef QReadLocker ReadLocker;
     typedef QWriteLocker WriteLocker;
@@ -190,6 +188,8 @@ namespace Siren
     #endif
 
     #define PRINT_DEBUG_LINE sirenDebug() << __FILE__ << __LINE__;
+
+    #define SIREN_GLOBAL_STATIC Q_GLOBAL_STATIC
 
 } // end of namespace Siren
 

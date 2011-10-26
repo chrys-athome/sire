@@ -48,6 +48,7 @@ namespace Siren
     {
     public:
         Obj();
+        Obj(const None &none);
         Obj(const Object &object);
         Obj(Object *object);
         

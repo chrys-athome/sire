@@ -40,6 +40,10 @@ static Obj none( new None() );
 Obj::Obj() : d(none.d)
 {}
 
+/** Construct to hold Siren::None */
+Obj::Obj(const None&) : d(none.d)
+{}
+
 /** Construct to hold a clone of the passed object */
 Obj::Obj(const Object &object)
 {
