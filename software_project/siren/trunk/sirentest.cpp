@@ -27,13 +27,16 @@
 \*********************************************/
 
 #include "Siren/siren.h"
+#include "Siren/siren.hpp"
 #include "Siren/class.h"
 #include "Siren/bytearray.h"
 #include "Siren/stringlist.h"
 #include "Siren/exception.h"
 #include "Siren/exceptions.h"
 #include "Siren/obj.h"
+#include "Siren/object.hpp"
 #include "Siren/testreport.h"
+#include "Siren/obj.hpp"
 
 using namespace Siren;
 
@@ -42,104 +45,93 @@ int main(int argc, const char **argv)
     TextStream cout(stdout);
     TextStream cerr(stderr);
 
-    Class tested_class;
-
     TestReport report( String::tr("Testing all libSiren classes") );
-
-    try
-    {
-        TestReport::Editor editor = report.edit();
+    TestReport::Editor editor = report.edit();
         
+    StringList classes = Class::registeredTypes();
+
+    for (StringList::const_iterator it = classes.constBegin();
+         it != classes.constEnd();
+         ++it)
+    {
+        Class tested_class(*it);
+
         try
         {
-            StringList classes = Class::registeredTypes();
-
-            for (StringList::const_iterator it = classes.constBegin();
-                 it != classes.constEnd();
-                 ++it)
+            if (tested_class.canCreate())
             {
-                try
-                {
-                    tested_class = Class(*it);
+                Obj obj = tested_class.create();
+                
+                cout << "Testing " << obj.what() << "...";
+                cout.flush();
+                
+                TestReport report = obj.test();
+                
+                editor.addReport(report);
+                
+                if (report.isEmpty())
+                    cout << " (no tests)\n";
+        
+                else if (report.passed())
+                    cout << " (passed)\n";
 
-                    if (tested_class.canCreate())
-                    {
-                        Obj obj = tested_class.create();
-                        
-                        cout << "Testing " << obj.what() << "...";
-                        
-                        TestReport report = obj.test();
-                        
-                        editor.addReport(report);
-                        
-                        if (report.passed())
-                            cout << " (passed)\n";
-
-                        else
-                        {
-                            cout << " (FAILED!)\n";
-                        }
-                            
-                    }
-                }
-                catch( const Siren::Exception &e )
+                else
                 {
-                    editor.addException(e, 
-                            String::tr("Exception caught while testing class \"%1\".")
-                                    .arg(tested_class.name()) );
+                    cout << " (FAILED!)\n";
                 }
-                catch( const std::exception &e )
-                {
-                    editor.addException( standard_exception(e, CODELOC),
-                            String::tr("Exception caught while testing class \"%1\".")
-                                    .arg(tested_class.name()) );
-                }
-                catch(...)
-                {
-                    editor.addException( unknown_exception(CODELOC),
-                            String::tr("Exception caught while testing class \"%1\".")
-                                    .arg(tested_class.name()) );
-                }
+                    
             }
+        }
+        catch( const Siren::Exception &e )
+        {
+            editor.addException(e, 
+                    String::tr("Exception caught while testing class \"%1\".")
+                            .arg(tested_class.name()) );
+        }
+        catch( const std::exception &e )
+        {
+            editor.addException( standard_exception(e, CODELOC),
+                    String::tr("Exception caught while testing class \"%1\".")
+                            .arg(tested_class.name()) );
         }
         catch(...)
         {
-            report = editor.commit();
-            throw;
+            editor.addException( unknown_exception(CODELOC),
+                    String::tr("Exception caught while testing class \"%1\".")
+                            .arg(tested_class.name()) );
         }
-        
-        report = editor.commit();
-    }
-    catch( const Siren::Exception &e )
-    {
-        report = report.edit()
-                    .addException( e, 
-                        String::tr("Exception caught while testing class \"%1\".")
-                            .arg(tested_class.name()) )
-                    .commit();
-    }
-    catch( const std::exception &e )
-    {
-        report = report.edit()
-                    .addException( standard_exception(e, CODELOC),
-                        String::tr("Exception caught while testing class \"%1\".")
-                            .arg(tested_class.name()) )
-                    .commit();
-    }
-    catch(...)
-    {
-        report = report.edit()
-                    .addException( unknown_exception(CODELOC),
-                        String::tr("Exception caught while testing class \"%1\".")
-                            .arg(tested_class.name()) )
-                    .commit();
     }
     
-    cout << report.toString() << "\n";
+    report = editor.commit();
+    
+    cout << "\n\n DETAILED TEST REPORT\n\n" << report.toString() << "\n";
+    
+    List<String>::Type missing_tests;
     
     for (int i=0; i<report.count(); ++i)
     {
-        cout << (i+1) << " : " << report[i].toString() << "\n";
+        TestReport class_report = report[i].asA<TestReport>();
+
+        if (not class_report.isEmpty())
+        {
+            cout << (i+1) << " : " << class_report.toString() << "\n";
+        
+            for (int j=0; j<class_report.count(); ++j)
+            {
+                cout << "    " << (i+1) << "." << (j+1) << " : "
+                     << class_report[j].toString() << "\n";
+            }
+        }
+        else
+        {
+            missing_tests.append( class_report.testedClass().name() );
+        }
+    }
+    
+    if (not missing_tests.isEmpty())
+    {
+        cout << "\nWARNING: Some classes are missing unit tests:\n["
+             << StringList(missing_tests).join(", ") << "]\n";
     }
     
     if (report.passed())

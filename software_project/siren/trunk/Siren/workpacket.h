@@ -36,6 +36,7 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
     class WorkSpace;
+    typedef exp_shared_ptr<WorkSpace>::Type WorkSpacePtr;
 
     /** A WorkPacket is the base class of objects that contain
         packets of computational work that need to be processed.
@@ -53,8 +54,8 @@ namespace Siren
         ~WorkPacket();
         
         virtual bool needsWorkspace() const;
-        virtual Obj createWorkspace() const;
-        virtual Obj createWorkspace(int worker_id) const;
+        virtual WorkSpacePtr createWorkspace() const;
+        virtual WorkSpacePtr createWorkspace(int worker_id) const;
         
         virtual bool isFinished() const=0;
         virtual int progress() const=0;

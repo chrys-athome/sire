@@ -68,21 +68,21 @@ bool WorkPacket::needsWorkspace() const
 }
 
 /** Create the accompanying WorkSpace for this WorkPacket. This returns
-    Siren::None if a WorkSpace is not required for this WorkPacket */
-Obj WorkPacket::createWorkspace() const
+    a null pointer if a WorkSpace is not required for this WorkPacket */
+WorkSpacePtr WorkPacket::createWorkspace() const
 {
-    return None();
+    return 0;
 }
 
 /** Create the accompanying WorkSpace for this WorkPacket, passing the
     ID of the worker thread processing this WorkPacket. This allows a 
     group of worker threads to all process a WorkPacket together, with
     each one given its own ID, and with each one able to communicate
-    with the others via the created WorkSpace. This returns Siren::None
+    with the others via the created WorkSpace. This returns a null pointer
     if a WorkSpace is not required for this WorkPacket */
-Obj WorkPacket::createWorkspace(int) const
+WorkSpacePtr WorkPacket::createWorkspace(int) const
 {
-    return None();
+    return 0;
 }
 
 /** Run a chunk of processing of this WorkPacket. This returns the processed
