@@ -89,10 +89,10 @@ namespace Siren
         bool isFinished() const;
         int progress() const;
         
-        TestReport test() const throw();
-        
     protected:
         Obj runChunk() const;
+        
+        void test(TestReportEditor &report) const;
 
         void copy_object(const TestPacket &other);
         bool compare_object(const TestPacket &other) const;

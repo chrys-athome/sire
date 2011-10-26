@@ -104,7 +104,7 @@ void StringList::copy_object(const StringList &other)
 /** Comparison operator */
 bool StringList::compare_object(const StringList &other) const
 {
-    return d == other.d and super::operator==(other);
+    return d == other.d and super::compare_object(other);
 }
 
 /** Assert that "i" indexes a valid position in the list 

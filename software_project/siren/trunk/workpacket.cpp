@@ -85,14 +85,88 @@ Obj WorkPacket::createWorkspace(int) const
     return None();
 }
 
+/** Run a chunk of processing of this WorkPacket. This returns the processed
+    WorkPacket, or a Siren::Exception if something went wrong, or a non-WorkPacket
+    object that corresponds to the final result of the calculation */
+Obj WorkPacket::run() const throw()
+{
+    try
+    {
+        return this->runChunk();
+    }
+    catch(const Siren::Exception &e)
+    {
+        return e;
+    }
+    catch(const std::exception &e)
+    {
+        try
+        {
+            return standard_exception(String::tr(
+                "A C++ standard exception was thrown during processing "
+                "of the WorkPacket %1.").arg(this->toString()), e, CODELOC);
+        }
+        catch(...)
+        {
+            return standard_exception(e,CODELOC);
+        }
+    }
+    catch(...)
+    {
+        try
+        {
+            return unknown_exception(String::tr(
+                "An unknown exception was thrown during processing "
+                "of the WorkPacket %1.").arg(this->toString()), CODELOC);
+        }
+        catch(...)
+        {
+            return unknown_exception(CODELOC);
+        }
+    }
+}
+
 /** Run a chunk of processing of this WorkPacket, using the passed WorkSpace
     as an area for inter-process communication, or as a temporary work area.
     This returns the processed WorkPacket, or a Siren::Exception if something
     went wrong, or a non-WorkPacket object that corresponds to the final 
     result of the calculation */
-Obj WorkPacket::runChunk(WorkSpace&) const
+Obj WorkPacket::run(WorkSpace &workspace) const throw()
 {
-    return this->runChunk();
+    try
+    {
+        return this->runChunk(workspace);
+    }
+    catch(const Siren::Exception &e)
+    {
+        return e;
+    }
+    catch(const std::exception &e)
+    {
+        try
+        {
+            return standard_exception(String::tr(
+                "A C++ standard exception was thrown during processing "
+                "of the WorkPacket %1.").arg(this->toString()), e, CODELOC);
+        }
+        catch(...)
+        {
+            return standard_exception(e,CODELOC);
+        }
+    }
+    catch(...)
+    {
+        try
+        {
+            return unknown_exception(String::tr(
+                "An unknown exception was thrown during processing "
+                "of the WorkPacket %1.").arg(this->toString()), CODELOC);
+        }
+        catch(...)
+        {
+            return unknown_exception(CODELOC);
+        }
+    }
 }
 
 /** Run a chunk of processing of this WorkPacket, using the passed WorkSpace
@@ -104,6 +178,54 @@ Obj WorkPacket::runChunk(WorkSpace&) const
     This returns the processed WorkPacket, or a Siren::Exception if something
     went wrong, or a non-WorkPacket object that corresponds to the final 
     result of the calculation */
+Obj WorkPacket::run(WorkSpace &workspace, int id) const throw()
+{
+    try
+    {
+        return this->runChunk(workspace, id);
+    }
+    catch(const Siren::Exception &e)
+    {
+        return e;
+    }
+    catch(const std::exception &e)
+    {
+        try
+        {
+            return standard_exception(String::tr(
+                "A C++ standard exception was thrown during processing "
+                "of the WorkPacket %1.").arg(this->toString()), e, CODELOC);
+        }
+        catch(...)
+        {
+            return standard_exception(e,CODELOC);
+        }
+    }
+    catch(...)
+    {
+        try
+        {
+            return unknown_exception(String::tr(
+                "An unknown exception was thrown during processing "
+                "of the WorkPacket %1.").arg(this->toString()), CODELOC);
+        }
+        catch(...)
+        {
+            return unknown_exception(CODELOC);
+        }
+    }
+}
+
+/** Over-ride this function to allow your WorkPacket to access and use
+    a WorkSpace during WorkPacket processing */
+Obj WorkPacket::runChunk(WorkSpace&) const
+{
+    return this->runChunk();
+}
+
+/** Over-ride this function to allow your WorkPacket to access and use
+    a WorkSpace, and be processed by a team of work threads during
+    WorkPacket processing */
 Obj WorkPacket::runChunk(WorkSpace&, int id) const
 {
     if (id == 0)
@@ -210,32 +332,12 @@ int TestPacket::progress() const
 }
 
 /** Test this TestPacket */
-TestReport TestPacket::test() const throw()
+void TestPacket::test(TestReportEditor &report) const
 {
-    TestReport report;
-    TestReport::Editor editor = report.edit();
+    TestPacket packet(2);
+    packet.run();
 
-    try
-    {
-        TestPacket packet(10);
-        packet.run();
-
-        editor.addPassed( String::tr("TestPacket passed as no exception was thrown.") );
-    }
-    catch(const Siren::Exception &e)
-    {
-        editor.addException(e);
-    }
-    catch(const std::exception &e)
-    {
-        editor.addException( standard_exception(e,CODELOC) );
-    }
-    catch(...)
-    {
-        editor.addException( unknown_exception(CODELOC) );
-    }
-    
-    return editor.commit();
+    report.addPassed( String::tr("TestPacket passed as no exception was thrown.") );
 }
 
 /** Copy assignment operator */
