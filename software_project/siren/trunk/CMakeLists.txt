@@ -85,10 +85,12 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/stringlist.h
       Siren/testreport.h
       Siren/thread.h
+      Siren/threadstorage.h
       Siren/time.h
       Siren/timer.h
       Siren/tostring.h
       Siren/tostring.hpp
+      Siren/waitcondition.h
       Siren/workpacket.h
       Siren/workspace.h
     )
@@ -131,8 +133,10 @@ set ( SIREN_SOURCES
       stringlist.cpp
       testreport.cpp
       thread.cpp
+      threadstorage.cpp
       time.cpp
       timer.cpp
+      waitcondition.cpp
       workpacket.cpp
       workspace.cpp
 

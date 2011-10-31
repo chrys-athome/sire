@@ -1,5 +1,5 @@
-#ifndef SIREN_FORAGES_H
-#define SIREN_FORAGES_H
+#ifndef SIREN_WAITCONDITION_H
+#define SIREN_WAITCONDITION_H
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -34,57 +34,40 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    class WaitCondition;
+    class Mutex;
+    class for_ages;
 
-    class SIREN_EXPORT for_ages
+    /** This is a simple wait condition. A wait condition allows 
+        a thread to pause (sleep), until it is woken up by another
+        thread, or until the end of for_ages has been signalled */
+    class SIREN_EXPORT WaitCondition
     {
     public:
-        static int registerThisThread();
-        static void unregisterThisThread();
+        WaitCondition();
+        ~WaitCondition();
         
-        static bool loop();
-        static void test();
+        void wait();
+        bool wait(unsigned long time);
         
-        static bool loop(int n);
-        static void test(int n);
+        void wait(Mutex *mutex);
+        bool wait(Mutex *mutex, unsigned long time);
         
-        static bool end();
-        static bool end(int thread_id);
-        static bool endAll();
-        
-        static bool play();
-        static bool play(int thread_id);
-        static bool playAll();
-        
-        static bool pause();
-        static bool pause(int thread_id);
-        static bool pauseAll();
-        
-        static void setThisThreadName(const String &thread_name);
-        static String getThisThreadName();
-        
-        void msleep(int ms);
-        void sleep(int secs);
+        void wakeOne();
+        void wakeAll();
 
     protected:
-        friend class WaitCondition;
-        static void threadSleepingOn(WaitCondition *w);
-        static void wakeAll(WaitCondition *w);
-        static void wakeOne(WaitCondition *w);
-        
-        static void threadHasWoken(WaitCondition *w);
-        static bool threadWoken(WaitCondition *w);
+        friend class for_ages;
+        void checkEndForAges() const;
 
     private:
-        for_ages(){}
-        ~for_ages(){}
+        QWaitCondition w;
         
-    }; // end of class for_ages
+    }; // end of class WaitCondition
 
-} // end of namespace Siren
+}
 
-SIREN_EXPOSE_CLASS( Siren::for_ages )
+SIREN_EXPOSE_CLASS( Siren::WaitCondition )
 
 SIREN_END_HEADER
 
-#endif // ifndef SIREN_FORAGES_H
+#endif // ifndef SIREN_WAITCONDITION_H

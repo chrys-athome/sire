@@ -42,6 +42,8 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QReadWriteLock>
+#include <QWaitCondition>
+#include <QThreadStorage>
 #include <QByteArray>
 #include <QDataStream>
 #include <QSharedData>
