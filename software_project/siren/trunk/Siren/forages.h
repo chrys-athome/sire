@@ -34,40 +34,41 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    struct for_ages
+    class SIREN_EXPORT for_ages
     {
-        static void registerThisThread();
+    public:
+        static int registerThisThread();
         static void unregisterThisThread();
-    };
+        
+        static bool loop();
+        static void test();
+        
+        static bool loop(int n);
+        static void test(int n);
+        
+        static bool end();
+        static bool end(int thread_id);
+        
+        static bool play();
+        static bool play(int thread_id);
+        
+        static bool pause();
+        static bool pause(int thread_id);
+        
+        static void setThisThreadName(const String &thread_name);
+        
+        void msleep(int ms);
+        void sleep(int secs);
 
-    int register_this_thread();
-    void unregister_this_thread();
-
-    void msleep(int ms);
-    void sleep(int secs);
-
-    bool for_ages();
-
-    void check_for_ages();
-
-    void pause_for_ages();
-    void pause_for_ages(const Thread *thread);
-
-    void play_for_ages();
-    void play_for_ages(const Thread *thread);
-
-    void end_for_ages();
-    void end_for_ages(const Thread *thread);
+    private:
+        for_ages(){}
+        ~for_ages(){}
+        
+    }; // end of class for_ages
 
 } // end of namespace Siren
 
-SIREN_EXPOSE_FUNCTION( Siren::msleep )
-SIREN_EXPOSE_FUNCTION( Siren::sleep )
-SIREN_EXPOSE_FUNCTION( Siren::for_ages )
-SIREN_EXPOSE_FUNCTION( Siren::check_for_ages )
-SIREN_EXPOSE_FUNCTION( Siren::pause_for_ages )
-SIREN_EXPOSE_FUNCTION( Siren::play_for_ages )
-SIREN_EXPOSE_FUNCTION( Siren::end_for_ages )
+SIREN_EXPOSE_CLASS( Siren::for_ages )
 
 SIREN_END_HEADER
 

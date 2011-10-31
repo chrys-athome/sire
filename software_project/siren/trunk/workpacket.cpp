@@ -71,7 +71,7 @@ bool WorkPacket::needsWorkspace() const
     a null pointer if a WorkSpace is not required for this WorkPacket */
 WorkSpacePtr WorkPacket::createWorkspace() const
 {
-    return 0;
+    return WorkSpacePtr();
 }
 
 /** Create the accompanying WorkSpace for this WorkPacket, passing the
@@ -82,7 +82,7 @@ WorkSpacePtr WorkPacket::createWorkspace() const
     if a WorkSpace is not required for this WorkPacket */
 WorkSpacePtr WorkPacket::createWorkspace(int) const
 {
-    return 0;
+    return WorkSpacePtr();
 }
 
 /** Run a chunk of processing of this WorkPacket. This returns the processed

@@ -118,9 +118,6 @@ namespace Siren
             in this workspace */
         ReadWriteLock lk;
         
-        /** The set of all saved objects */
-        Hash<String,Obj>::Type objs;
-        
         /** The set of all arrays of saved objects */
         Hash<String,Vector<Obj>::Type>::Type obj_arrays;
         

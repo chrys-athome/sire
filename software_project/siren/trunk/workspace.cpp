@@ -60,12 +60,28 @@ bool WorkSpace::isAutoFlush()
     return false;
 }
 
+/** Return the size of the array associated with the key 'key' */
+int WorkSpace::arraySize(const String &key)
+{
+    ReadLocker lkr(&lk);
+    
+    Hash<String,Vector<Obj>::Type>::const_iterator it = obj_arrays.constFind(key);
+    
+    if (it == obj_arrays.constEnd())
+    {
+        return 1;
+    }
+    else
+    {
+        return it->count();
+    }
+}
+
 /** Save the passed object using the key 'key'. This overwrites the
     current value of the object with the passed value */
 void WorkSpace::save(const String &key, const Object &object)
 {
-    WriteLocker lkr(&lk);
-    objs.insert(key, object);
+    this->save(key, 0, object);
 }
 
 /** Load and return the current value of the object with key 'key'. This
@@ -73,8 +89,7 @@ void WorkSpace::save(const String &key, const Object &object)
     or if this key does not exist. */
 Obj WorkSpace::load(const String &key)
 {
-    ReadLocker lkr(&lk);
-    return objs.value(key, None());
+    return this->load(key, 0);
 }
 
 /** Save the current value of the object with key 'key' into the array
@@ -90,9 +105,17 @@ void WorkSpace::save(const String &key, int idx, const Object &object)
     Hash<String,Vector<Obj>::Type>::iterator it = obj_arrays.find(key);
     
     if (it == obj_arrays.end())
-        throw Siren::invalid_key( String::tr(
-                "There is no array with key %1 in the workspace!")
-                    .arg(key), CODELOC );
+    {
+        if (idx == 0)
+        {
+            obj_arrays.insert(key, Vector<Obj>::Type());
+            it = obj_arrays.find(key);
+        }
+        else
+            throw Siren::invalid_index( String::tr(
+                    "There is no space for an object with key %1, index %2.")
+                        .arg(key).arg(idx), CODELOC );
+    }
     
     idx = wrap_index(idx, it->count(), CODELOC);
     
@@ -112,9 +135,14 @@ Obj WorkSpace::load(const String &key, int idx)
     Hash<String,Vector<Obj>::Type>::const_iterator it = obj_arrays.constFind(key);
     
     if (it == obj_arrays.constEnd())
+    {
+        if (idx == 0)
+            return None();
+    
         throw Siren::invalid_key( String::tr(
                 "There is no array with key %1 in the workspace!")
                     .arg(key), CODELOC );
+    }
 
     idx = wrap_index(idx, it->count(), CODELOC);
     

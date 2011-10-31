@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#ifdef DO_NOT_COMPILE
-
 #include "Siren/thread.h"
 #include "Siren/threadstorage.h"
 #include "Siren/forages.h"
@@ -35,6 +33,8 @@
 #include "Siren/waitcondition.h"
 
 #include "Siren/exceptions.h"
+
+using namespace Siren;
 
 namespace Siren
 {
@@ -44,11 +44,14 @@ namespace Siren
             of an individual Siren thread */
         struct ForAgesState
         {
-            ForAgesState() : is_interupted(false), is_paused(false)
+            ForAgesState() : thread_id(-1), is_interupted(false), is_paused(false)
             {}
             
             ~ForAgesState()
             {}
+
+            int thread_id;
+            String name;
 
             bool is_interupted;
             bool is_paused;
@@ -58,7 +61,7 @@ namespace Siren
             of each active Siren thread */
         struct GlobalForAgesState
         {
-            GlobalForAgesState()
+            GlobalForAgesState() : last_id(0)
             {}
             
             ~GlobalForAgesState()
@@ -69,6 +72,8 @@ namespace Siren
 
             Hash<int,ForAgesState*>::Type thread_states;
 
+            int last_id;
+
             Mutex pause_mutex;
             WaitCondition pause_waiter;
         };
@@ -78,302 +83,334 @@ namespace Siren
     } // end of namespace detail
 } // end of namespace Siren
 
-namespace Siren
-{
-    /** Call this function to register the current thread with for-ages.
-        Note that only Siren::Thread-based threads can be registered */
-    int SIREN_EXPORT register_this_thread()
-    {
-        GlobalForAgesState *s = globalForAgesState();
+/////////
+///////// Implementation of for_ages
+/////////
 
-        Thread *t = Thread::currentThread();
+/** Call this function to register the current thread with for-ages. */
+int for_ages::register_this_thread()
+{
+    GlobalForAgesState *s = globalForAgesState();
+
+    if (not s)
+        throw Siren::invalid_state( String::tr(
+                "For some reason, we cannot get hold of the global for_ages state!"),
+                    CODELOC );
+
+    MutexLocker lkr( &(s->pause_mutex) );
+
+    if (thread_state.hasLocalData())
+        throw Siren::invalid_state( String::tr(
+                "For some reason, this thread appears to have been already registered "
+                "with for_ages."), CODELOC );
+                
+    s->last_id += 1;
+    s->thread_state.setLocalData( new ForAgesState(s->last_id) );
+    
+    s->thread_states.insert(last_id, s->thread_state.localData());
+      
+    return last_id;
+}
+
+/** Unregister the current thread from for_ages */
+void for_ages::unregister_this_thread()
+{
+    GlobalForAgesState *s = globalForAgesState();
+    
+    if (not s)
+        return;
+
+    MutexLocker lkr( &(s->pause_mutex) );
+
+    if (not s->thread_state.hasLocalData())
+        //thread is not registered
+        return;
+
+    ForAgesState *state = s->thread_state.lockData();
+
+    bool is_paused = state->is_paused;
         
-        if (s and t)
+    s->thread_state.setLocalData(0);
+    s->thread_states.remove(state->thread_id);
+        
+    if (is_paused and not s->global_state.is_paused)
+        //wake the thread up
+        s->pause_waiter.wakeAll();
+}
+
+void throwInteruptedError()
+{
+    static String err = String::tr("for-ages is over. This thread has been interupted.");
+    throw Siren::interupted_thread( err, CODELOC );
+}
+
+/** Pause all threads that use for_ages or for_ages mutexes. This returns whether
+    or not this call actually paused the threads */
+bool for_ages::pause_for_ages()
+{
+    GlobalForAgesState *s = globalForAgesState();
+
+    if (s)
+    {
+        MutexLocker lkr( &(s->pause_mutex) );
+        
+        if (s->global_state.is_paused)
+            return false;
+        
+        else
         {
-            MutexLocker lkr( &(s->pause_mutex) );
+            s->global_state.is_paused = true;
+            return true;
+        }
+    }
+    else
+        return false;
+}
+
+/** Pause the thread with ID 'thread_id'. This returns whether or 
+    not this call actually paused the threads */
+bool for_ages::pause_for_ages(int thread_id)
+{
+    GlobalForAgesState *s = globalForAgesState();
+
+    if (s)
+    {
+        MutexLocker lkr( &(s->pause_mutex) );
+        
+        if (s->thread_states.contains(thread_id))
+        {
+            if (s->thread_states[thread]->is_paused)
+                return false;
             
-            if (s->thread_states.contains(t))
-                return s->thread_states[t]->ID;
-            
-            s->thread_state.setLocalData( new ForAgesState() );
-            s->thread_states[t] = s->thread_state.localData();
-            ++last_id;
-            s->thread_states[t]->ID = last_id;
-            
-            return last_id;
+            else
+            {
+                s->thread_states[thread]->is_paused = true;
+                return true;
+            }
+        }
+    }
+    else
+        return false;
+}
+
+/** Play (wake) all threads that are paused. This returns whether or not this
+    call actually awoke the threads */
+bool for_ages::play_for_ages()
+{
+    GlobalForAgesState *s = globalForAgesState();
+    
+    if (s)
+    {
+        MutexLocker lkr( &(s->pause_mutex) );
+        
+        if (s->global_state.is_paused)
+        {
+            s->global_state.is_paused = false;
+            s->pause_waiter.wakeAll();
+            return true;
         }
         else
-            return 0;
+            return false;
     }
+    else
+        return false;
+}
 
-    /** Unregister the current thread (which must be based on Siren::Thread) */
-    void SIREN_EXPORT unregister_this_thread()
-    {
-        GlobalForAgesState *s = globalForAgesState();
-
-        Thread *t = Thread::currentThread();
-        
-        if (s and t)
-        {
-            MutexLocker lkr( &(s->pause_mutex) );
-            
-            if (not s->thread_states.contains(t))
-                return;
-            
-            bool is_paused = s->thread_states[t]->is_paused;
-            
-            s->thread_state.setLocalData(0);
-            s->thread_states.remove(t);
-            
-            if (is_paused and not s->global_state.is_paused)
-                //wake the thread up
-                s->pause_waiter.wakeAll();
-        }
-    }
-
-    void throwInteruptedError()
-    {
-        throw Siren::interupted_thread( String::tr(
-                "for-ages is over. This thread has been interupted."), CODELOC );
-    }
-
-    /** Pause all threads that use for_ages or for_ages mutexes */
-    void SIREN_EXPORT pause_for_ages()
-    {
-        GlobalForAgesState *s = globalForAgesState();
+/** Play (wake) the thread with ID 'thread_id' if it is paused. This returns
+    whether or not this call actually awoke the thread */
+bool for_ages::play_for_ages(int thread_id)
+{
+    GlobalForAgesState *s = globalForAgesState();
     
-        if (s)
-        {
-            QMutexLocker lkr( &(s->pause_mutex) );
-            
-            s->global_state.is_paused = true;
-            
-            foreach (const QThread *thread, s->thread_states.keys())
-            {
-                s->thread_states[thread]->is_paused = true;
-            }
-        }
-    }
-    
-    /** Pause the thread 'thread' */
-    void SIREN_EXPORT pause_for_ages(const QThread *thread)
+    if (s)
     {
-        GlobalForAgesState *s = globalForAgesState();
-
-        if (s and thread)
-        {
-            QMutexLocker lkr( &(s->pause_mutex) );
-            
-            s->global_state.is_paused = true;
-            
-            if (s->thread_states.contains(thread))
-            {
-                s->thread_states[thread]->is_paused = true;
-            }
-        }
-    }
-
-    /** Play (wake) all threads that are paused */
-    void SIREN_EXPORT play_for_ages()
-    {
-        GlobalForAgesState *s = globalForAgesState();
+        MutexLocker lkr( &(s->pause_mutex) );
         
-        if (s)
+        if (s->thread_states.contains(thread_id))
         {
-            QMutexLocker lkr( &(s->pause_mutex) );
-            
-            s->global_state.is_paused = false;
-            
-            foreach (const QThread *thread, s->thread_states.keys())
+            if (s->thread_states[thread_id]->is_paused)
             {
-                s->thread_states[thread]->is_paused = false;
-            }
-            
-            s->pause_waiter.wakeAll();
-        }
-    }
-    
-    /** Play (wake) the thread 'thread' if it is paused */
-    void SIREN_EXPORT play_for_ages(const QThread *thread)
-    {
-        GlobalForAgesState *s = globalForAgesState();
-        
-        if (s and thread)
-        {
-            QMutexLocker lkr( &(s->pause_mutex) );
-            
-            if (s->thread_states.contains(thread))
-            {
-                if (s->thread_states[thread]->is_paused)
+                s->thread_states[thread_id]->is_paused = false;
+                
+                if (not s->global_state.is_paused)
                 {
-                    s->thread_states[thread]->is_paused = false;
-                    
                     //have to wake everyone, but everyone but the 
                     //desired thread will see that they are still 
                     //paused so will go back to sleep
                     s->pause_waiter.wakeAll();
+                    return true;
                 }
             }
         }
     }
+    
+    return false;
+}
 
-    /** Tell all threads that for_ages is over. This will interupt
-        any thread that is blocking on a for_ages, causing it to
-        throw a Siren::interupted exception */
-    void SIREN_EXPORT end_for_ages()
+/** Tell all threads that for_ages is over. This will interupt
+    any thread that is blocking on a for_ages, causing it to
+    throw a Siren::interupted_thread exception. This returns whether
+    or not the end of for_ages was already set */
+bool for_ages::end()
+{
+    GlobalForAgesState *s = globalForAgesState();
+    
+    if (s)
     {
-        GlobalForAgesState *s = globalForAgesState();
-        
-        if (s)
+        MutexLocker lkr( &(s->pause_mutex) );
+
+        if (not s->global_state.is_interupted)
         {
-            QMutexLocker lkr( &(s->pause_mutex) );
-            
             s->global_state.is_interupted = true;
-            
-            foreach (const QThread *thread, s->thread_states.keys())
-            {
-                s->thread_states[thread]->is_interupted = true;
-            }
-            
+        
             //wake everyone now in case anyone is paused
             s->pause_waiter.wakeAll();
+            
+            return true;
         }
     }
     
-    /** Tell the thread 'thread' that for_ages is over. This 
-        iwll interupt this thread if it is blocking on a for_ages,
-        causing it to throw a Siren::interupted exception */
-    void SIREN_EXPORT end_for_ages(const QThread *thread)
+    return false;
+}
+
+/** Tell the thread with ID 'thread_id' that for_ages is over. This 
+    iwll interupt this thread if it is blocking on a for_ages,
+    causing it to throw a Siren::interupted_thread exception. This
+    returns whether or not the end of for_ages for this thread
+    was already set */
+bool for_ages::end_for_ages(int thread_id)
+{
+    GlobalForAgesState *s = globalForAgesState();
+    
+    if (s)
     {
-        GlobalForAgesState *s = globalForAgesState();
+        MutexLocker lkr( &(s->pause_mutex) );
         
-        if (s and thread)
+        if (s->thread_states.contains(thread))
         {
-            QMutexLocker lkr( &(s->pause_mutex) );
-            
-            if (s->thread_states.contains(thread))
+            if (not s->thread_states[thread]->is_interupted)
             {
                 s->thread_states[thread]->is_interupted = true;
                 s->pause_waiter.wakeAll();
+                return true;
             }
         }
     }
+    
+    return false;
+}
 
-    /** This function does nothing, unless the end of for-ages
-        has been signalled, in which case it will throw a
-        Siren::interupted exception. This allows you to put
-        checks in your code before long or intensive calculations
-        that will allow the code to be exited by signalling
-        the end of for-ages by called end_for_ages()
-    */
-    void SIREN_EXPORT check_for_ages()
+/** This function does nothing, unless the end of for-ages
+    has been signalled, in which case it will throw a
+    Siren::interupted_thread exception, or in the case that
+    the thread has been paused, in which case this function
+    will block. This allows you to put
+    checks in your code before long or intensive calculations
+    that will allow the code to be exited by signalling
+    the end of for-ages by called for_ages::end()
+*/
+void for_ages::test()
+{
+    GlobalForAgesState *s = globalForAgesState();
+    
+    if (not s)
+        return;
+
+    ForAgesState *global = s->global_state;
+    ForAgesState *local = s->global_state.localData();
+    
+    if (not local)
+        //this thread as not been registered, so is not subject to for_ages
+        return;
+        
+    if (global->is_interupted or local->is_interupted)
     {
-        GlobalForAgesState *s = globalForAgesState();
+        interupt_thread(local->is_interupted);
+    }
+    else if (global->is_paused or local->is_paused)
+    {
+        pause_thread(local->is_paused);
+    }
+}
+
+void for_ages::test(int n)
+{
+    GlobalForAgesState *s = globalForAgesState();
+    
+    if (not s)
+        return;
         
-        if (not s)
-            return;
+    ForAgesState *global = s->global_state;
+    ForAgesState *local = s->global_state.localData();
+    
+    if (not local)
+        return;
         
-        else if (s->thread_state.hasLocalData())
+    local->counter += 1;
+    
+    if (local->counter % n == 0)
+    {
+        if (global->is_interupted or local->is_interupted)
         {
-            if (s->thread_state.localData()->is_interupted)
-                throwInteruptedError();
-
-            else if (s->thread_state.localData()->is_paused)
-            {
-                //we may have been paused - we need to
-                //check again, protected by a mutex, to ensure
-                //that we are not interupted or unpaused before
-                //we actually go to sleep
-            
-                QMutexLocker lkr( &(s->pause_mutex) );
-                
-                if (s->thread_state.localData()->is_interupted)
-                    throwInteruptedError();
-
-                else if (s->thread_state.localData()->is_paused)
-                {
-                    s->pause_waiter.wait( &(s->pause_mutex) );
-                    
-                    //we need to check again in case we've been
-                    //sent back to sleep or interupted
-                    lkr.unlock();
-                    check_for_ages();
-                }
-            }
+            interupt_thread(local->is_interupted);
         }
-        else
+        else if (global->is_paused or local->is_paused)
         {
-            if (s->global_state.is_interupted)
-                throwInteruptedError();
-                
-            else if (s->global_state.is_paused)
-            {
-                QMutexLocker lkr( &(s->pause_mutex) );
-                
-                if (s->global_state.is_interupted)
-                    throwInteruptedError();
-                
-                else if (s->global_state.is_paused)
-                {
-                    s->pause_waiter.wait( &(s->pause_mutex) );
-
-                    //we need to check again in case we've been
-                    //sent back to sleep or interupted
-                    lkr.unlock();
-                    check_for_ages();
-                }
-            }
+            pause_thread(local->is_paused);
         }
     }
+}
 
-    /** This is a simple function that always returns 'true'.
-        However, once the end for-ages has been signalled, this
-        will throw a Siren::interupted exception. You can use
-        this to create infinite loops that will loop for-ages, e.g.
-        
-        while (for_ages())
-        {
-            //do stuff
-        }
-        
-        This loop will continue until end_for_ages() is called
-    */
-    bool SIREN_EXPORT for_ages()
-    {
-        check_for_ages();
-        return true;
-    }
-
-    /** Sleep for 'secs' seconds. This will pause for 'secs' seconds,
-        but can be interupted by calling 'end_for_ages()', in which case
-        a Siren::interupted exception will be raised */
-    void SIREN_EXPORT sleep(int secs)
-    {
-        if (secs <= 0)
-            return;
+/** This is a simple function that always returns 'true'.
+    However, once the end for-ages has been signalled, this
+    will throw a Siren::interupted_thread exception. You can use
+    this to create infinite loops that will loop for-ages, e.g.
     
-        Mutex m;
-        MutexLocker lkr(&m);
-        
-        WaitCondition w;
-        w.wait(&m, 1000*secs);
+    while (for_ages::loop())
+    {
+        //do stuff
     }
     
-    /** Sleep for 'ms' milliseconds. This will pause for 'ms' milliseconds,
-        but can be interupted by calling 'end_for_ages()', in which case
-        a Siren::interupted exception will be raised */
-    void SIREN_EXPORT msleep(int ms)
-    {
-        if (ms <= 0)
-            return;
+    This loop will continue until for_ages::end() is called
+*/
+bool for_ages::loop()
+{
+    for_ages::test();
+    return true;
+}
+
+bool for_ages::loop(int n)
+{
+    for_ages::test(n);
+    return true;
+}
+
+/** Sleep for 'secs' seconds. This will pause for 'secs' seconds,
+    but can be interupted by calling 'end_for_ages()', in which case
+    a Siren::interupted exception will be raised */
+void SIREN_EXPORT sleep(int secs)
+{
+    if (secs <= 0)
+        return;
+
+    Mutex m;
+    MutexLocker lkr(&m);
     
-        Mutex m;
-        MutexLocker lkr(&m);
-        
-        WaitCondition w;
-        w.wait(&m, ms);
-    }
+    WaitCondition w;
+    w.wait(&m, 1000*secs);
+}
 
-} // end of namespace Siren
+/** Sleep for 'ms' milliseconds. This will pause for 'ms' milliseconds,
+    but can be interupted by calling 'end_for_ages()', in which case
+    a Siren::interupted exception will be raised */
+void SIREN_EXPORT msleep(int ms)
+{
+    if (ms <= 0)
+        return;
 
-#endif
+    Mutex m;
+    MutexLocker lkr(&m);
+    
+    WaitCondition w;
+    w.wait(&m, ms);
+}
