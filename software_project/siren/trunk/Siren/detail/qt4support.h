@@ -42,6 +42,8 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QReadWriteLock>
+#include <QSemaphore>
+#include <QThreadStorage>
 #include <QWaitCondition>
 #include <QThreadStorage>
 #include <QByteArray>
@@ -100,6 +102,8 @@ namespace Siren
     typedef QReadLocker ReadLocker;
     typedef QWriteLocker WriteLocker;
     
+    typedef QSemaphore Semaphore;
+    
     typedef QAtomicInt AtomicInt;
     typedef QDataStream DataStream;
     typedef QSharedData SharedData;
@@ -108,6 +112,12 @@ namespace Siren
     typedef QLatin1String Latin1String;
     typedef QRegExp RegExp;
     typedef QTextStream TextStream;
+
+    template<class T>
+    struct ThreadStorage
+    {
+        typedef QThreadStorage<T> Type;
+    };
     
     template<typename Container>
     void sort(Container &c)

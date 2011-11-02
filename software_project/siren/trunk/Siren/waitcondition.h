@@ -29,6 +29,7 @@
 \*********************************************/
 
 #include "Siren/siren.h"
+#include "Siren/block.h"
 
 SIREN_BEGIN_HEADER
 
@@ -40,11 +41,13 @@ namespace Siren
     /** This is a simple wait condition. A wait condition allows 
         a thread to pause (sleep), until it is woken up by another
         thread, or until the end of for_ages has been signalled */
-    class SIREN_EXPORT WaitCondition
+    class SIREN_EXPORT WaitCondition : public Block
     {
     public:
         WaitCondition();
         ~WaitCondition();
+        
+        String toString() const;
         
         void wait();
         bool wait(unsigned long time);
@@ -56,8 +59,7 @@ namespace Siren
         void wakeAll();
 
     protected:
-        friend class for_ages;
-        void checkEndForAges() const;
+        void checkEndForAges();
 
     private:
         QWaitCondition w;

@@ -168,6 +168,9 @@ namespace Siren
         String arg(float64 number, int fieldWidth=0, char fmt='g',
                    int prec=-1, const Char &fillChar = Latin1Char(' ')) const;
                    
+        String arg(const void *pointer, int fieldWidth=0,
+                   const Char &fillChar = Latin1Char(' ')) const;
+                   
         String arg(char a, int fieldWidth=0, 
                    const Char &fillChar = Latin1Char(' ')) const;
                    

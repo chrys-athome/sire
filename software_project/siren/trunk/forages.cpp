@@ -32,7 +32,10 @@
 #include "Siren/mutex.h"
 #include "Siren/waitcondition.h"
 
+#include "Siren/detail/qt4support.h"
+
 #include "Siren/exceptions.h"
+#include "Siren/assert.h"
 
 using namespace Siren;
 using namespace Siren::detail;
@@ -43,11 +46,14 @@ namespace Siren
     {
         /** This internal struct is used to store the for_ages state
             of each individual thread */
-        struct ThreadState
+        class ThreadState : public noncopyable
         {
-            ThreadState() : id(-1), counter(0), 
+        public:
+        
+            ThreadState(int thread_id) 
+                          : noncopyable(),
+                            id(thread_id), counter(0), 
                             current_block(0),
-                            current_block_type(NOTBLOCKED),
                             wake_from_current(false),
                             is_interupted(false), is_paused(false)
             {}
@@ -59,36 +65,28 @@ namespace Siren
             int id;
             int counter;
 
-            const void *current_block;
-            
-            enum BlockType
-            {
-                NOTBLOCKED = 0,
-                WAITCONDITION = 1,
-                MUTEX = 2,
-                READWRITELOCK = 3,
-                SEMAPHORE = 4
-            };
-            
-            BlockType current_block_type;
+            const Block *current_block;
             
             bool wake_from_current;
 
             bool is_interupted;
             bool is_paused;
-        };
+       
+        }; // end of class ThreadState
 
         /** This internal struct is used to store the thread state
             of each thread in the program */
-        struct ProgramState
+        class ProgramState : public noncopyable
         {
+        public:
+        
             ProgramState() : last_id(0), is_interupted(false), is_paused(false)
             {}
             
             ~ProgramState()
             {}
             
-            ThreadStorage<ThreadState*> thread;
+            ThreadStorage<ThreadState*>::Type thread;
 
             Hash<int,ThreadState*>::Type threads;
 
@@ -103,14 +101,12 @@ namespace Siren
             Mutex pause_mutex;  // used to protect the program and thread pause flags
             WaitCondition pause_waiter;
             
-            Hash<WaitCondition*,int>::Type wait_conditions;
-            Hash<Mutex*,int>::Type mutexes;
-            Hash<ReadWriteLock*,int>::Type locks;
-            Hash<Semaphore*,int>::Type semaphores;
+            Hash<Block*,int>::Type blocks;
             
             bool is_interupted;
             bool is_paused;
-        };
+        
+        }; // end of class ProgramState
 
     } // end of namespace detail
 } // end of namespace Siren
@@ -150,9 +146,9 @@ int for_ages::registerThisThread()
                 "with for_ages."), CODELOC );
                 
     program->last_id += 1;
-    program->thread.setLocalData( new ThreadState(s->last_id) );
+    program->thread.setLocalData( new ThreadState(program->last_id) );
     
-    program->threads.insert(last_id, program->thread.localData());
+    program->threads.insert(program->last_id, program->thread.localData());
       
     return program->last_id;
 }
@@ -197,7 +193,7 @@ void for_ages::wakeAll(WaitCondition *w)
          it != program->threads.constEnd();
          ++it)
     {
-        if ( (*it)->current_waiter == w )
+        if ( (*it)->current_block == w )
         {
             (*it)->wake_from_current = true;
         }
@@ -223,7 +219,7 @@ void for_ages::wakeOne(WaitCondition *w)
          ++it)
     {
         //wake the first thread
-        if ( (*it)->current_waiter == w )
+        if ( (*it)->current_block == w )
         {
             (*it)->wake_from_current = true;
             return;
@@ -243,26 +239,31 @@ static String errorString()
 static void addWaiterRef(ProgramState *program, ThreadState *thread,
                          WaitCondition *w)
 {
+    if (w == 0)
+        return;
+
     if (w == &(program->pause_waiter))
         return;
 
-    if (thread->current_waiter != 0)
+    if (thread->current_block != 0)
         throw Siren::program_bug( String::tr(
                 "It should not be possible for a single thread (%1, %2) to be waiting "
-                "simultaneously on two WaitConditions!")
-                    .arg(thread->name).arg(thread->id), CODELOC );
+                "simultaneously on two blocks (%3 and %4)!")
+                    .arg(thread->name).arg(thread->id)
+                    .arg(w->toString())
+                    .arg(thread->current_block->toString()), CODELOC );
 
-    if (program->wait_conditions.contains(w))
+    if (program->blocks.contains(w))
     {
-        program->wait_conditions[w] += 1;
+        program->blocks[w] += 1;
     }
     else
     {
-        program->wait_conditions.insert(w, 1);
+        program->blocks.insert(w, 1);
     }
     
-    thread->current_waiter = w;
-    thread->wake_from_current_waiter = false;
+    thread->current_block = w;
+    thread->wake_from_current = false;
 }
 
 /** Internal function used to remove the flags used to record that
@@ -274,10 +275,13 @@ static void removeWaiterRef(ProgramState *program, ThreadState *thread,
     if (w == &(program->pause_waiter))
         return;
 
-    if (thread->current_waiter == w)
+    SIREN_ASSERT( thread->current_block == w );
+
+    if (thread->current_block == w)
     {
-        thread->current_waiter = 0;
-        thread->wake_from_current_waiter = false;
+        thread->current_block = 0;
+        thread->current_block_type = ThreadState::NOTBLOCKED;
+        thread->wake_from_current = false;
         
         if (program->wait_conditions.value(w, 1) <= 1)
         {
@@ -324,15 +328,19 @@ bool for_ages::threadWoken(WaitCondition *w)
     {
         ThreadState *thread = program->thread.localData();
     
-        if (thread->current_waiter != w)
+        if (thread->current_block != w)
             throw Siren::program_bug( String::tr(
-                "A thread should only be able to be woken from one wait condition "
-                "at a time... (%1, %2)").arg(thread->name).arg(thread->id),
+                "A thread should only be able to be woken from one block "
+                "at a time... (%1:%2, blocked on %3:%4, woken from %5:WaitCondition)")
+                        .arg(thread->name).arg(thread->id)
+                        .arg(thread->current_block)
+                        .arg(blockType(thread->current_block_type))
+                        .arg(w),
                     CODELOC );
 
         WriteLocker lkr( &(program->lock) );
     
-        if (thread->wake_from_current_waiter)
+        if (thread->wake_from_current)
         {
             removeWaiterRef(program, thread, w);
 
@@ -373,29 +381,21 @@ void for_ages::threadHasWoken(WaitCondition *w)
     
         WriteLocker lkr( &(program->lock) );
 
+        if (thread->current_block != w)
+            throw Siren::program_bug( String::tr(
+                "A thread should only be able to be woken from one block "
+                "at a time... (%1:%2, blocked on %3:%4, woken from %5:WaitCondition)")
+                        .arg(thread->name).arg(thread->id)
+                        .arg(thread->current_block)
+                        .arg(blockType(thread->current_block_type))
+                        .arg(w),
+                    CODELOC );
+
         removeWaiterRef(program, thread, w);
 
         //check for the end of for_ages in this thread
         if (program->is_interupted or thread->is_interupted)
             throw Siren::interupted_thread( errorString(), CODELOC );
-    }
-}
-
-/** Pause all threads that use for_ages or for_ages mutexes. This returns whether
-    or not this call actually paused the threads */
-bool for_ages::pause()
-{
-    ProgramState *program = programState();
-
-    MutexLocker lkr( &(program->pause_mutex) );
-
-    if (program->is_paused)
-        return false;
-    
-    else
-    {
-        program->is_paused = true;
-        return true;
     }
 }
 
@@ -426,6 +426,24 @@ String for_ages::getThisThreadName()
         return String::tr("Unregistered thread");
 }
 
+/** Pause all threads that use for_ages or for_ages mutexes. This returns whether
+    or not this call actually paused the threads */
+bool for_ages::pause()
+{
+    ProgramState *program = programState();
+
+    MutexLocker lkr( &(program->pause_mutex) );
+
+    if (program->is_paused)
+        return false;
+    
+    else
+    {
+        program->is_paused = true;
+        return true;
+    }
+}
+
 /** Pause the thread with ID 'thread_id'. This returns whether or 
     not this call actually paused the threads */
 bool for_ages::pause(int thread_id)
@@ -434,16 +452,18 @@ bool for_ages::pause(int thread_id)
 
     ReadLocker lkr( &(program->lock) );
         
-    if (program->threads.contains(thread_id))
+    ThreadState *thread = program->threads.value(thread_id,0);
+        
+    if (thread)
     {
         MutexLocker lkr2( &(program->pause_mutex) );
         
-        if (program->threads[thread_id]->is_paused)
+        if (thread->is_paused)
             return false;
         
         else
         {
-            program->threads[thread_id]->is_paused = true;
+            thread->is_paused = true;
             return true;
         }
     }
@@ -487,20 +507,15 @@ bool for_ages::pauseAll()
     call actually awoke the threads */
 bool for_ages::play()
 {
-    ProgramState *s = ProgramState();
+    ProgramState *program = programState();
+
+    MutexLocker lkr( &(program->pause_mutex) );
     
-    if (s)
+    if (program->is_paused)
     {
-        MutexLocker lkr( &(s->global_mutex) );
-        
-        if (s->global_state.is_paused)
-        {
-            s->global_state.is_paused = false;
-            s->global_waiter.wakeAll();
-            return true;
-        }
-        else
-            return false;
+        program->is_paused = false;
+        program->pause_waiter.wakeAll();
+        return true;
     }
     else
         return false;
@@ -510,26 +525,24 @@ bool for_ages::play()
     whether or not this call actually awoke the thread */
 bool for_ages::play(int thread_id)
 {
-    ProgramState *s = ProgramState();
+    ProgramState *program = programState();
     
-    if (s)
-    {
-        MutexLocker lkr( &(s->global_mutex) );
+    ReadLocker lkr( &(program->lock) );
         
-        if (s->thread_states.contains(thread_id))
+    ThreadState *thread = program->threads.value(thread_id,0);
+    
+    if (thread)
+    {
+        MutexLocker lkr( &(program->pause_mutex) );
+        
+        if (thread->is_paused)
         {
-            if (s->thread_states[thread_id]->is_paused)
+            thread->is_paused = false;
+            
+            if (not program->is_paused)
             {
-                s->thread_states[thread_id]->is_paused = false;
-                
-                if (not s->global_state.is_paused)
-                {
-                    //have to wake everyone, but everyone but the 
-                    //desired thread will see that they are still 
-                    //paused so will go back to sleep
-                    s->global_waiter.wakeAll();
-                    return true;
-                }
+                program->pause_waiter.wakeAll();
+                return true;
             }
         }
     }
@@ -542,38 +555,34 @@ bool for_ages::play(int thread_id)
     "play" flag. This will set the "play" flag for each individual thread */
 bool for_ages::playAll()
 {
-    ProgramState *s = ProgramState();
+    ProgramState *program = programState();
     
-    if (s)
+    bool some_played = false;
+    
+    ReadLocker lkr( &(program->lock) );
+    MutexLocker lkr2( &(program->pause_mutex) );
+        
+    for (Hash<int,ThreadState*>::const_iterator it = program->threads.constBegin();
+         it != program->threads.constEnd();
+         ++it)
     {
-        bool some_played = false;
-    
-        MutexLocker lkr( &(s->global_mutex) );
-        
-        for (Hash<int,ThreadState*>::iterator it = s->thread_states.begin();
-             it != s->thread_states.end();
-             ++it)
-        {
-            if ((*it)->is_paused)
-            {
-                some_played = true;
-                (*it)->is_paused = false;
-            }
-        }
-        
-        if (s->global_state.is_paused)
+        if ((*it)->is_paused)
         {
             some_played = true;
-            s->global_state.is_paused = false;
+            (*it)->is_paused = false;
         }
         
-        if (some_played)
-            s->global_waiter.wakeAll();
-        
-        return some_played;
+        if (program->is_paused)
+        {
+            some_played = true;
+            program->is_paused = false;
+        }
     }
-    else
-        return false;
+    
+    if (some_played)
+        program->pause_waiter.wakeAll();
+        
+    return some_played;
 }
 
 /** Tell all threads that for_ages is over. This will interupt
@@ -582,40 +591,53 @@ bool for_ages::playAll()
     or not the end of for_ages was already set */
 bool for_ages::end()
 {
-    ProgramState *s = ProgramState();
+    ProgramState *program = programState();
     
-    if (s)
-    {
-        MutexLocker lkr( &(s->global_mutex) );
+    WriteLocker lkr( &(program->lock) ); // need write lock as will change 
+                                         // interupt state
 
-        if (not s->global_state.is_interupted)
-        {
-            s->global_state.is_interupted = true;
+    if (program->is_interupted)
+        return false;
+
+    program->is_interupted = true;
         
-            //wake up every thread waiting on any WaitCondition
-            for (Hash<WaitCondition*,int>::iterator it = s->wait_conditions.begin();
-                 it != s->wait_conditions.end();
-                 ++it)
-            {
-                it.key()->checkEndForAges();
-            }
-        
-            //unlock every mutex that is locked
-            for (Hash<Mutex*,int>::iterator it = s->mutexes.begin();
-                 it != s->mutexes.end();
-                 ++it)
-            {
-                it.key()->checkEndForAges();
-            }
-        
-            //wake everyone now in case anyone is paused
-            s->global_waiter.wakeAll();
-            
-            return true;
-        }
+    //wake up every thread waiting on any WaitCondition
+    for (Hash<WaitCondition*,int>::const_iterator 
+                    it = program->wait_conditions.constBegin();
+         it != program->wait_conditions.constEnd();
+         ++it)
+    {
+        it.key()->endForAges();
     }
     
-    return false;
+    //unlock every mutex that is locked
+    for (Hash<Mutex*,int>::const_iterator it = program->mutexes.constBegin();
+         it != program->mutexes.constEnd();
+         ++it)
+    {
+        //it.key()->endForAges();
+    }
+
+    //unlock every lock that is locked
+    for (Hash<ReadWriteLock*,int>::const_iterator it = program->locks.constBegin();
+         it != program->locks.constEnd();
+         ++it)
+    {
+        //it.key()->endForAges();
+    }
+    
+    //unlock every semaphore that is locked
+    for (Hash<Semaphore*,int>::const_iterator it = program->semaphores.constBegin();
+         it != program->semaphores.constEnd();
+         ++it)
+    {
+        //it.key()->endForAges();
+    }
+    
+    //wake everyone now in case anyone is paused
+    program->pause_waiter.wakeAll();
+        
+    return true;
 }
 
 /** Tell the thread with ID 'thread_id' that for_ages is over. This 
@@ -625,29 +647,23 @@ bool for_ages::end()
     was already set */
 bool for_ages::end(int thread_id)
 {
-    ProgramState *s = ProgramState();
+    ProgramState *program = programState();
     
-    if (s)
+    WriteLocker lkr( &(program->lock) );
+        
+    ThreadState *thread = program->threads.value(thread_id, 0);
+            
+    if (thread)
     {
-        MutexLocker lkr( &(s->global_mutex) );
-        
-        ThreadState *local = s->thread_states.value(thread_id, 0);
-        
-        if (local)
+        if (not thread->is_interupted)
         {
-            if (not local->is_interupted)
-            {
-                local->is_interupted = true;
+            thread->is_interupted = true;
                 
-                if (local->current_waiter)
-                    local->current_waiter->checkEndForAges();
+            if (thread->current_block)
+                thread->current_block->endForAges();
                     
-                if (local->current_mutex)
-                    local->current_mutex->checkEndForAges();
-                
-                s->global_waiter.wakeAll();
-                return true;
-            }
+            program->pause_waiter.wakeAll();
+            return true;
         }
     }
     
@@ -657,56 +673,43 @@ bool for_ages::end(int thread_id)
 /** Tell each individual thread to end for-ages */
 bool for_ages::endAll()
 {
-    ProgramState *s = ProgramState();
+    ProgramState *program = programState();
     
-    if (s)
+    bool some_ended = false;
+    
+    WriteLocker lkr( &(program->lock) );
+        
+    for (Hash<int,ThreadState*>::const_iterator it = program->threads.constBegin();
+         it != program->threads.constEnd();
+         ++it)
     {
-        bool some_ended = false;
-    
-        MutexLocker lkr( &(s->global_mutex) );
-        
-        for (Hash<int,ThreadState*>::iterator it = s->thread_states.begin();
-             it != s->thread_states.end();
-             ++it)
-        {
-            if (not (*it)->is_interupted)
-            {
-                some_ended = true;
-                (*it)->is_interupted = true;
-            }
-        }
-        
-        if (not s->global_state.is_interupted)
+        if (not (*it)->is_interupted)
         {
             some_ended = true;
-            s->global_state.is_interupted = true;
+            (*it)->is_interupted = true;
         }
-        
-        if (some_ended)
-        {
-            s->global_waiter.wakeAll();
-
-            //wake up every thread waiting on any WaitCondition
-            for (Hash<WaitCondition*,int>::iterator it = s->wait_conditions.begin();
-                 it != s->wait_conditions.end();
-                 ++it)
-            {
-                it.key()->checkEndForAges();
-            }
-        
-            //unlock every mutex that is locked
-            for (Hash<Mutex*,int>::iterator it = s->mutexes.begin();
-                 it != s->mutexes.end();
-                 ++it)
-            {
-                it.key()->checkEndForAges();
-            }
-        }
-        
-        return some_ended;
     }
-    else
-        return false;
+        
+    if (not program->is_interupted)
+    {
+        some_ended = true;
+        program->is_interupted = true;
+    }
+        
+    if (some_ended)
+    {
+        program->pause_waiter.wakeAll();
+
+        //wake up every thread waiting on a block
+        for (Hash<WaitCondition*,int>::const_iterator it = program->blocks.constBegin();
+             it != program->blocks.constEnd();
+             ++it)
+        {
+            it.key()->checkIfInterupted();
+        }
+    }    
+    
+    return some_ended;
 }
 
 void interupt_thread(bool local_is_interupted)
@@ -720,16 +723,13 @@ void interupt_thread(bool local_is_interupted)
     }
     else
     {
-        ProgramState *s = ProgramState();
+        ProgramState *program = programState();
         
-        if (not s)
-            return;
-            
         //really check that for-ages has finished - the check 
         //before didn't acquire the mutex
-        MutexLocker lkr( &(s->global_mutex) );
+        ReadLocker lkr( &(program->lock) );
         
-        if (s->global_state->is_interupted)
+        if (program->is_interupted)
         {
             static String err = String::tr(
                     "The global end of for-ages has been signalled!");
@@ -739,37 +739,19 @@ void interupt_thread(bool local_is_interupted)
     }
 }
 
-void pause_thread(bool local_is_paused)
+void pause_thread(bool thread_is_paused, bool thread_is_interupted)
 {
-    ProgramState *s = ProgramState();
-    
-    if (not s)
-        return;
+    ProgramState *program = programState();
 
-    //acquire the mutex, to ensure that we really have been paused
-    MutexLocker lkr( &(s->global_mutex) );
-
-    ThreadState *global = &(s->global_state);
-    ThreadState *local = s->global_state.localData();
-    
-    if (not local)
-        //this thread as not been registered, so is not subject to for_ages
-        return;
-    
-    if (global->is_interupted or local->is_interupted)
+    if (program->is_interupted or thread_is_interupted)
     {
         //we have been interupted before we could pause!
-        lkr.unlock();
-        interupt_thread(local->is_interupted);
+        interupt_thread(thread_is_interupted);
     }
-    else if (global->is_paused or local->is_paused)
+    else if (program->is_paused or thread_is_paused)
     {
-        s->global_waiter.sleep( &(s->global_mutex) );
+        //actually pause
     }
-    
-    //test for pausing of interupting again, in case 
-    //this has been signalled while we were sleeping
-    for_ages::test();
 }
 
 /** This function does nothing, unless the end of for-ages
@@ -783,55 +765,68 @@ void pause_thread(bool local_is_paused)
 */
 void for_ages::test()
 {
-    ProgramState *s = ProgramState();
-    
-    if (not s)
-        return;
+    ProgramState *program = programState();
 
-    ThreadState *global = &(s->global_state);
-    ThreadState *local = s->global_state.localData();
-    
-    if (not local)
-        //this thread as not been registered, so is not subject to for_ages
+    if (not program->thread.hasLocalData())
+    {
+        //this is not a registered thread, so cannot be paused or interupted
+        sirenDebug() << "RUNNING A TEST IN AN UNREGISTERED THREAD!";
         return;
-        
-    if (global->is_interupted or local->is_interupted)
-    {
-        interupt_thread(local->is_interupted);
     }
-    else if (global->is_paused or local->is_paused)
+
+    ThreadState *thread = program->thread.localData();
+    
+    if (program->is_interupted or thread->is_interupted)
     {
-        pause_thread(local->is_paused);
+        interupt_thread(thread->is_interupted);
+    }
+    else if (program->is_paused or thread->is_paused)
+    {
+        // actually pause the thread
+        {
+            MutexLocker lkr( &(program->pause_mutex) );
+            program->pause_waiter.wait( &(program->pause_mutex) );
+        }
+        
+        //check that we have not been interupted after we woke up
+        for_ages::test();
     }
 }
 
 void for_ages::test(int n)
 {
-    ProgramState *s = ProgramState();
+    ProgramState *program = programState();
     
-    if (not s)
-        return;
-        
-    ThreadState *global = &(s->global_state);
-    ThreadState *local = s->local_state.localData();
-    
-    if (not local)
-        return;
-        
-    local->counter += 1;
-    
-    if (local->counter == std::numeric_limits<int>::max())
-        local->counter = 0;
-    
-    if (local->counter % n == 0)
+    if (not program->thread.hasLocalData())
     {
-        if (global->is_interupted or local->is_interupted)
+        //this is not a registered thread, so cannot be paused or interupted
+        sirenDebug() << "RUNNING A TEST IN AN UNREGISTERED THREAD!";
+        return;
+    }
+    
+    ThreadState *thread = program->thread.localData();
+    
+    thread->counter += 1;
+    
+    if (thread->counter == std::numeric_limits<int>::max())
+        thread->counter = 0;
+    
+    if (thread->counter % n == 0)
+    {
+        if (program->is_interupted or thread->is_interupted)
         {
-            interupt_thread(local->is_interupted);
+            interupt_thread(thread->is_interupted);
         }
-        else if (global->is_paused or local->is_paused)
+        else if (program->is_paused or thread->is_paused)
         {
-            pause_thread(local->is_paused);
+            // actually pause the thread
+            {
+                MutexLocker lkr( &(program->pause_mutex) );
+                program->pause_waiter.wait( &(program->pause_mutex) );
+            }
+            
+            //check that we have not been interupted after we woke up
+            for_ages::test(n);
         }
     }
 }
