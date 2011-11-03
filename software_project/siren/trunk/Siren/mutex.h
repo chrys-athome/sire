@@ -29,6 +29,7 @@
 \*********************************************/
 
 #include "Siren/siren.h"
+#include "Siren/block.h"
 
 SIREN_BEGIN_HEADER
 
@@ -45,7 +46,7 @@ namespace Siren
         
         @author Christopher Woods
     */
-    class SIREN_EXPORT Mutex
+    class SIREN_EXPORT Mutex : public Block
     {
     public:
         enum RecursionMode 
@@ -62,6 +63,11 @@ namespace Siren
         bool tryLock(int ms);
         
         void unlock();
+        
+        String toString() const;
+        
+    protected:
+        void checkEndForAges() const;
         
     private:
         friend class WaitCondition;

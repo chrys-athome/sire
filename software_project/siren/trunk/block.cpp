@@ -1,5 +1,3 @@
-#ifndef SIREN_WAITCONDITION_H
-#define SIREN_WAITCONDITION_H
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -28,48 +26,14 @@
   *
 \*********************************************/
 
-#include "Siren/siren.h"
 #include "Siren/block.h"
 
-SIREN_BEGIN_HEADER
+using namespace Siren;
 
-namespace Siren
-{
-    class Mutex;
-    class for_ages;
+/** Constructor */
+Block::Block() : noncopyable()
+{}
 
-    /** This is a simple wait condition. A wait condition allows 
-        a thread to pause (sleep), until it is woken up by another
-        thread, or until the end of for_ages has been signalled */
-    class SIREN_EXPORT WaitCondition : public Block
-    {
-    public:
-        WaitCondition();
-        ~WaitCondition();
-        
-        String toString() const;
-        
-        void wait();
-        bool wait(unsigned long time);
-        
-        void wait(Mutex *mutex);
-        bool wait(Mutex *mutex, unsigned long time);
-        
-        void wakeOne();
-        void wakeAll();
-
-    protected:
-        void checkEndForAges() const;
-
-    private:
-        QWaitCondition w;
-        
-    }; // end of class WaitCondition
-
-}
-
-SIREN_EXPOSE_CLASS( Siren::WaitCondition )
-
-SIREN_END_HEADER
-
-#endif // ifndef SIREN_WAITCONDITION_H
+/** Destructor */
+Block::~Block()
+{}

@@ -38,6 +38,7 @@ namespace Siren
     class Class;
     class String;
     class StringList;
+    class ReadWriteLock;
 }
 
 namespace Siren

@@ -1,5 +1,5 @@
-#ifndef SIREN_FORAGES_H
-#define SIREN_FORAGES_H
+#ifndef SIREN_SYSTEMSEMAPHORE_H
+#define SIREN_SYSTEMSEMAPHORE_H
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -29,62 +29,48 @@
 \*********************************************/
 
 #include "Siren/siren.h"
+#include "Siren/block.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    class Block;
-
-    class SIREN_EXPORT for_ages
+    /** This is a system-wide Semaphore, which enables multiple
+        processes to share the same semaphore on a system, thereby
+        allowing multiple processes to co-ordinate the sharing
+        of a resource. It is heavily based on QSystemSemaphore */
+    class SIREN_EXPORT SystemSemaphore : public Block
     {
     public:
-        static int registerThisThread();
-        static void unregisterThisThread();
-        
-        static bool loop();
-        static void test();
-        
-        static bool loop(int n);
-        static void test(int n);
-        
-        static bool end();
-        static bool end(int thread_id);
-        static bool endAll();
-        
-        static bool play();
-        static bool play(int thread_id);
-        static bool playAll();
-        
-        static bool pause();
-        static bool pause(int thread_id);
-        static bool pauseAll();
-        
-        static void setThisThreadName(const String &thread_name);
-        static String getThisThreadName();
-        
-        void msleep(int ms);
-        void sleep(int secs);
+        enum AccessMode
+        {
+            Open = QSystemSemaphore::Open,
+            Create = QSystemSemaphore::Create
+        };
 
+        SystemSemaphore(const String &key, int initialValue=0, AccessMode mode=Open);
+        ~SystemSemaphore();
+
+        void setKey(const String &key, int initialValue=0, AccessMode mode=Open);
+        String key() const;
+
+        void acquire();
+        void release(int n=1);
+        
+        String toString() const;
+        
     protected:
-        friend class Block;
-        static void threadSleepingOn(Block *w);
-        static void wakeAll(Block *w);
-        static void wakeOne(Block *w);
+        void checkEndForAges() const;
         
-        static void threadHasWoken(Block *w);
-        static bool threadWoken(Block *w);
-
     private:
-        for_ages(){}
-        ~for_ages(){}
-        
-    }; // end of class for_ages
+        QSystemSemaphore s;
+    
+    }; // end of class SystemSemaphore
 
 } // end of namespace Siren
 
-SIREN_EXPOSE_CLASS( Siren::for_ages )
+SIREN_EXPOSE_CLASS( Siren::SystemSempaphore )
 
 SIREN_END_HEADER
 
-#endif // ifndef SIREN_FORAGES_H
+#endif // ifndef SIREN_SYSTEMSEMAPHORE_H

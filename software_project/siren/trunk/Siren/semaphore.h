@@ -1,5 +1,5 @@
-#ifndef SIREN_FORAGES_H
-#define SIREN_FORAGES_H
+#ifndef SIREN_SEMAPHORE_H
+#define SIREN_SEMAPHORE_H
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -29,62 +29,43 @@
 \*********************************************/
 
 #include "Siren/siren.h"
+#include "Siren/block.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    class Block;
-
-    class SIREN_EXPORT for_ages
+    /** This is a semaphore - this provides a single counter
+        that can be used to reserve resources etc. It is heavily
+        based on QSemaphore */
+    class SIREN_EXPORT Semaphore : public Block
     {
     public:
-        static int registerThisThread();
-        static void unregisterThisThread();
-        
-        static bool loop();
-        static void test();
-        
-        static bool loop(int n);
-        static void test(int n);
-        
-        static bool end();
-        static bool end(int thread_id);
-        static bool endAll();
-        
-        static bool play();
-        static bool play(int thread_id);
-        static bool playAll();
-        
-        static bool pause();
-        static bool pause(int thread_id);
-        static bool pauseAll();
-        
-        static void setThisThreadName(const String &thread_name);
-        static String getThisThreadName();
-        
-        void msleep(int ms);
-        void sleep(int secs);
+        explicit Semaphore(int n = 0);
+        ~Semaphore();
 
+        void acquire(int n = 1);
+        bool tryAcquire(int n = 1);
+        bool tryAcquire(int n, int timeout);
+
+        void release(int n = 1);
+
+        int available() const;
+
+        String toString() const;
+        
     protected:
-        friend class Block;
-        static void threadSleepingOn(Block *w);
-        static void wakeAll(Block *w);
-        static void wakeOne(Block *w);
+        void checkEndForAges() const;
         
-        static void threadHasWoken(Block *w);
-        static bool threadWoken(Block *w);
-
     private:
-        for_ages(){}
-        ~for_ages(){}
-        
-    }; // end of class for_ages
+        QSemaphore s;
+    
+    }; // end of class Semaphore
 
 } // end of namespace Siren
 
-SIREN_EXPOSE_CLASS( Siren::for_ages )
+SIREN_EXPOSE_CLASS( Siren::Semaphore )
 
 SIREN_END_HEADER
 
-#endif // ifndef SIREN_FORAGES_H
+#endif // ifndef SIREN_SEMAPHORE_H

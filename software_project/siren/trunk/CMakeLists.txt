@@ -56,6 +56,7 @@ set ( SIREN_THIRD_PARTY_SOURCES
 set ( SIREN_PUBLIC_HEADERS
 
       Siren/assert.h
+      Siren/block.h
       Siren/bytearray.h
       Siren/class.h
       Siren/date.h
@@ -65,7 +66,6 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/exception.h
       Siren/exceptions.h
       Siren/forages.h
-      Siren/lock.h
       Siren/interfaces.h
       Siren/macros.h
       Siren/mutable.h
@@ -77,12 +77,15 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/object.hpp
       Siren/obj.h
       Siren/obj.hpp
+      Siren/readwritelock.h
+      Siren/semaphore.h
       Siren/schemas.h
       Siren/siren.h
       Siren/siren.hpp
       Siren/stream.h
       Siren/string.h
       Siren/stringlist.h
+      Siren/systemsemaphore.h
       Siren/testreport.h
       Siren/thread.h
       Siren/threadstorage.h
@@ -110,6 +113,7 @@ set ( SIREN_SOURCES
       ${SIREN_THIRD_PARTY_SOURCES}
 
       assert.cpp
+      block.cpp
       bytearray.cpp
       class.cpp
       date.cpp
@@ -119,18 +123,20 @@ set ( SIREN_SOURCES
       exceptions.cpp
       forages.cpp
       interfaces.cpp
-      lock.cpp
       mutable.cpp
       mutex.cpp
       none.cpp
       number.cpp
       object.cpp
       obj.cpp
+      readwritelock.cpp
+      semaphore.cpp
       schemas.cpp
       siren.cpp
       stream.cpp
       string.cpp
       stringlist.cpp
+      systemsemaphore.cpp
       testreport.cpp
       thread.cpp
       threadstorage.cpp

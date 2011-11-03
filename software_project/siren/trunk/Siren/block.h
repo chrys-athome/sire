@@ -1,5 +1,5 @@
-#ifndef SIREN_FORAGES_H
-#define SIREN_FORAGES_H
+#ifndef SIREN_BLOCK_H
+#define SIREN_BLOCK_H
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -34,57 +34,32 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    class Block;
+    class for_ages;
 
-    class SIREN_EXPORT for_ages
+    /** This is the virtual base class of all Blocking types. 
+        A Block object is used to stop or block a thread, e.g.
+        a Mutex, WaitCondition, Semaphore or ReadWriteLock
+        
+        @author Christopher Woods
+    */
+    class SIREN_EXPORT Block : public noncopyable
     {
     public:
-        static int registerThisThread();
-        static void unregisterThisThread();
+        Block();
+        virtual ~Block();
         
-        static bool loop();
-        static void test();
+        virtual String toString() const=0;
         
-        static bool loop(int n);
-        static void test(int n);
-        
-        static bool end();
-        static bool end(int thread_id);
-        static bool endAll();
-        
-        static bool play();
-        static bool play(int thread_id);
-        static bool playAll();
-        
-        static bool pause();
-        static bool pause(int thread_id);
-        static bool pauseAll();
-        
-        static void setThisThreadName(const String &thread_name);
-        static String getThisThreadName();
-        
-        void msleep(int ms);
-        void sleep(int secs);
-
     protected:
-        friend class Block;
-        static void threadSleepingOn(Block *w);
-        static void wakeAll(Block *w);
-        static void wakeOne(Block *w);
-        
-        static void threadHasWoken(Block *w);
-        static bool threadWoken(Block *w);
-
-    private:
-        for_ages(){}
-        ~for_ages(){}
-        
-    }; // end of class for_ages
+        friend class for_ages;
+        virtual void checkEndForAges() const=0;
+    
+    }; // end of class Block
 
 } // end of namespace Siren
 
-SIREN_EXPOSE_CLASS( Siren::for_ages )
+SIREN_EXPOSE_CLASS( Siren::Block )
 
 SIREN_END_HEADER
 
-#endif // ifndef SIREN_FORAGES_H
+#endif // ifndef SIREN_BLOCK_H

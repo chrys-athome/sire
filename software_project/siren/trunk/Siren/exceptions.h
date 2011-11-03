@@ -255,6 +255,25 @@ namespace Siren
     
     }; // end of class invalid_arg
 
+    /** This exception is thrown when a problem with the  
+        computer system running this program is detected 
+    */
+    class SIREN_EXPORT system_error : public Exception
+    {
+        SIREN_CLASS(system_error,Exception,1)
+        
+    public:
+        system_error();
+        system_error(const String &error, CODELOC_ARGS);
+        
+        system_error(const system_error &other);
+        
+        ~system_error() throw();
+        
+        void throwSelf() const;
+    
+    }; // end of class system_error
+
 } // end of namespace Siren
 
 SIREN_EXPOSE_EXCEPTION( Siren::invalid_cast )
@@ -268,6 +287,7 @@ SIREN_EXPOSE_EXCEPTION( Siren::standard_exception )
 SIREN_EXPOSE_EXCEPTION( Siren::unknown_exception )
 SIREN_EXPOSE_EXCEPTION( Siren::interupted_thread )
 SIREN_EXPOSE_EXCEPTION( Siren::invalid_arg )
+SIREN_EXPOSE_EXCEPTION( Siren::system_error )
 
 SIREN_END_HEADER
 

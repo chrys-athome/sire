@@ -43,6 +43,7 @@
 #include <QMutexLocker>
 #include <QReadWriteLock>
 #include <QSemaphore>
+#include <QSystemSemaphore>
 #include <QThreadStorage>
 #include <QWaitCondition>
 #include <QThreadStorage>
@@ -98,12 +99,6 @@ namespace Siren
     typedef double float64;
     typedef long double float128;
 
-    typedef QReadWriteLock ReadWriteLock;
-    typedef QReadLocker ReadLocker;
-    typedef QWriteLocker WriteLocker;
-    
-    typedef QSemaphore Semaphore;
-    
     typedef QAtomicInt AtomicInt;
     typedef QDataStream DataStream;
     typedef QSharedData SharedData;

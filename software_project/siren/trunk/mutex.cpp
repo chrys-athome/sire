@@ -26,15 +26,13 @@
   *
 \*********************************************/
 
-#ifdef DO_NOT_COMPILE
-
 #include "Siren/mutex.h"
 #include "Siren/forages.h"
 
 using namespace Siren;
 
 /** Construct a mutex with the specified recursion mode */
-Mutex::Mutex(Mutex::RecursionMode mode) : m(mode)
+Mutex::Mutex(Mutex::RecursionMode mode) : m( QMutex::RecursionMode(mode) )
 {}
 
 /** Destructor - please make sure you have unlocked the mutex
@@ -134,5 +132,3 @@ void Mutex::unlock()
 {
     m.unlock();
 }
-
-#endif
