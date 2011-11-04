@@ -80,6 +80,6 @@ String Semaphore::toString() const
 }
 
 /** Check for the end of for_ages */
-void Semaphore::checkEndForAges()
+void Semaphore::checkEndForAges() const
 {
 }

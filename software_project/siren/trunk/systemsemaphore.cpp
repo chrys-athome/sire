@@ -85,6 +85,6 @@ String SystemSemaphore::toString() const
 }
 
 /** Called by for_ages to check for the end of for_ages */
-void SystemSemaphore::checkEndForAges()
+void SystemSemaphore::checkEndForAges() const
 {
 }

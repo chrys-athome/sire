@@ -50,13 +50,23 @@ void WaitCondition::wait(Mutex *mutex)
     if (mutex == 0)
         return;
 
-    for_ages::threadSleepingOn(this);
-
-    do
+    try
     {
-        w.wait( &(mutex->m) );
+        this->aboutToSleep();
+
+        do
+        {
+            w.wait( &(mutex->m) );
     
-    } while (not for_ages::threadWoken(this));
+        } while (not this->shouldWake());
+
+        this->hasWoken();
+    }
+    catch(...)
+    {
+        this->hasWoken();
+        throw;
+    }
 }
 
 /** This function wakes up all sleeping threads so that they
@@ -81,26 +91,37 @@ bool WaitCondition::wait(Mutex *mutex, unsigned long time)
 {
     if (mutex == 0)
         return false;
-        
-    Timer t = Timer::start();
-    for_ages::threadSleepingOn(this);
-    
-    bool woken = false;
-    
-    do
+
+    try
     {
-        woken = w.wait( &(mutex->m), time - t.elapsed() );
-
-        if (t.elapsed() >= time)
-        {
-            woken = true;
-            for_ages::threadHasWoken(this);
-            break;
-        }
-
-    } while (not for_ages::threadWoken(this));
+        Timer t = Timer::start();
+        this->aboutToSleep();
     
-    return woken;
+        bool woken = false;
+    
+        do
+        {
+            woken = w.wait( &(mutex->m), time - t.elapsed() );
+
+            if (t.elapsed() >= time)
+            {
+                woken = true;
+                break;
+            }
+            
+        } while (not this->shouldWake());
+    
+        this->hasWoken();
+        
+        return woken;
+    }
+    catch(...)
+    {
+        this->hasWoken();
+        throw;
+    }
+    
+    return true;
 }
 
 /** Wait until this thread has been woken up, or until 'time' milliseconds
@@ -116,7 +137,7 @@ bool WaitCondition::wait(unsigned long time)
 /** Wake up one of the threads sleeping on this wait condition */
 void WaitCondition::wakeOne()
 {
-    for_ages::wakeOne(this);
+    Block::wakeOne();
     w.wakeAll(); // for_ages will assure that only one thread
                  // is woken - we need to wake them all temporarily to do this
 }
@@ -124,6 +145,6 @@ void WaitCondition::wakeOne()
 /** Wake up all of the threads sleeping on this wait condition */
 void WaitCondition::wakeAll()
 {
-    for_ages::wakeAll(this);
+    Block::wakeAll();
     w.wakeAll();
 }

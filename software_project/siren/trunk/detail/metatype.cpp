@@ -30,6 +30,7 @@
 #include "Siren/bytearray.h"
 #include "Siren/stringlist.h"
 #include "Siren/exceptions.h"
+#include "Siren/readwritelock.h"
 #include "Siren/detail/metatype.h"
 #include "Siren/detail/qt4support.h"
 

@@ -30,6 +30,7 @@
 \*********************************************/
 
 #include "Siren/siren.h"
+#include "Siren/readwritelock.h"
 
 SIREN_BEGIN_HEADER
 

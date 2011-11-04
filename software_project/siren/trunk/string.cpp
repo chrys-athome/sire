@@ -29,6 +29,7 @@
 #include "Siren/string.h"
 #include "Siren/bytearray.h"
 #include "Siren/number.h"
+#include "Siren/readwritelock.h"
 #include "Siren/siren.hpp"
 #include "Siren/detail/qt4support.h"
 

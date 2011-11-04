@@ -33,6 +33,7 @@
 #include "Siren/workspace.h"
 #include "Siren/obj.h"
 #include "Siren/none.h"
+#include "Siren/waitcondition.h"
 #include "Siren/forages.h"
 #include "Siren/siren.hpp"
 
@@ -157,7 +158,7 @@ void CPUThread::process(const WorkPacket &packet)
                     
     else if (not reslt.isNone())
         throw Siren::program_bug( String::tr(
-                "A completed CPUThread has not yet had its result retrieved!",
+                "A completed CPUThread has not yet had its result retrieved!"),
                     CODELOC );
 
     workpacket = &packet;
@@ -186,7 +187,7 @@ void CPUThread::process(const WorkPacket &packet,
 
     else if (not reslt.isNone())
         throw Siren::program_bug( String::tr(
-                "A completed CPUThread has not yet had its result retrieved!",
+                "A completed CPUThread has not yet had its result retrieved!"),
                     CODELOC );
 
     workpacket = &packet;
@@ -250,7 +251,7 @@ void CPUThread::run()
         while (for_ages::loop())
         {
             if (workpacket == 0)
-                thread_waiter.sleep(&mutex);
+                thread_waiter.wait(&mutex);
             
             Obj result;
             lkr.unlock();

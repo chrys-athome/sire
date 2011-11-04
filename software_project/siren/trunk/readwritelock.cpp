@@ -90,6 +90,6 @@ String ReadWriteLock::toString() const
 }
 
 /** Called by for_ages to asked this lock to check for the end of for_ages */
-void ReadWriteLock::checkEndForAges()
+void ReadWriteLock::checkEndForAges() const
 {
 }
