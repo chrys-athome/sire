@@ -29,8 +29,34 @@
 #include "Siren/readwritelock.h"
 #include "Siren/string.h"
 #include "Siren/forages.h"
+#include "Siren/timer.h"
+
+#include <algorithm>
 
 using namespace Siren;
+using namespace Siren::detail;
+
+namespace Siren
+{
+    namespace detail
+    {
+        class LockBreaker : public noncopyable
+        {
+        public:
+            LockBreaker() : noncopyable()
+            {}
+            
+            ~LockBreaker()
+            {}
+            
+            QMutex mutex;
+            QWaitCondition waiter;
+        };
+    
+    } // end of namespace detail
+
+} // end of namespace Siren
+
 
 /** Constructor */
 ReadWriteLock::ReadWriteLock() : Block()
@@ -38,12 +64,49 @@ ReadWriteLock::ReadWriteLock() : Block()
 
 /** Destructor */
 ReadWriteLock::~ReadWriteLock()
-{}
+{
+    LockBreaker *b = breaker.fetchAndStoreRelaxed(0);
+    delete b;
+}
+
+void ReadWriteLock::createBreaker()
+{
+    while (breaker == 0)
+    {
+        LockBreaker *b = new LockBreaker();
+        
+        if (not breaker.testAndSetAcquire(b,0))
+            delete b;
+    }
+}
 
 /** Lock for reading */
 void ReadWriteLock::lockForRead()
 {
-    l.lockForRead();
+    if (l.tryLockForRead(200))
+        return;
+
+    try
+    {
+        createBreaker();
+        Block::aboutToSleep();
+    
+        while (not l.tryLockForRead(200))
+        {
+            breaker->mutex.lock();
+            breaker->waiter.wait( &(breaker->mutex) );
+            breaker->mutex.unlock();
+            
+            for_ages::test();
+        }
+        
+        Block::hasWoken();
+    }
+    catch(...)
+    {
+        Block::hasWoken();
+        throw;
+    }
 }
 
 /** Try to lock for reading - return whether we succeed */
@@ -56,13 +119,88 @@ bool ReadWriteLock::tryLockForRead()
     This returns whether or not we succeeded */
 bool ReadWriteLock::tryLockForRead(int ms)
 {
-    return l.tryLockForRead(ms);
+    if (ms < 200)
+        return l.tryLockForRead(ms);
+        
+    try
+    {
+        //sleep until it is possible to break this lock
+        createBreaker();
+        Block::aboutToSleep();
+
+        Timer t = Timer::start();
+        int remaining_time = ms - t.elapsed();
+
+        if (remaining_time < 200)
+        {
+            Block::hasWoken();
+            
+            if (remaining_time <= 0)
+                return l.tryLockForRead();
+            else
+                return l.tryLockForRead(remaining_time);
+        }
+
+        while (remaining_time > 0)
+        {
+            if (l.tryLockForRead( std::min(remaining_time,200) ))
+            {
+                Block::hasWoken();
+                return true;
+            }
+
+            for_ages::test();
+
+            remaining_time = ms - t.elapsed();
+
+            breaker->mutex.lock();
+            breaker->waiter.wait( &(breaker->mutex), remaining_time );
+            breaker->mutex.unlock();
+            
+            for_ages::test();
+            remaining_time = ms - t.elapsed();
+        }
+        
+        Block::hasWoken();
+        
+        return false;
+    }
+    catch(...)
+    {
+        Block::hasWoken();
+        throw;
+    }
+    
+    return false;
 }
 
 /** Lock fro writing */
 void ReadWriteLock::lockForWrite()
 {
-    l.lockForWrite();
+    if (l.tryLockForWrite(200))
+        return;
+
+    try
+    {
+        createBreaker();
+        Block::aboutToSleep();
+    
+        while (not l.tryLockForWrite(200))
+        {
+            breaker->mutex.lock();
+            breaker->waiter.wait( &(breaker->mutex) );
+            breaker->mutex.unlock();
+            
+            for_ages::test();
+        }
+        
+        Block::hasWoken();
+    }
+    catch(...)
+    {
+        Block::hasWoken();
+        throw;
+    }
 }
 
 /** Try to lock for writing - return whether or not we succeed */
@@ -74,13 +212,68 @@ bool ReadWriteLock::tryLockForWrite()
 /** Try to lock for writing for up to "ms" milliseconds */
 bool ReadWriteLock::tryLockForWrite(int ms)
 {
-    return l.tryLockForWrite(ms);
+    if (ms < 200)
+        return l.tryLockForWrite(ms);
+        
+    try
+    {
+        //sleep until it is possible to break this lock
+        createBreaker();
+        Block::aboutToSleep();
+
+        Timer t = Timer::start();
+        int remaining_time = ms - t.elapsed();
+
+        if (remaining_time < 200)
+        {
+            Block::hasWoken();
+            
+            if (remaining_time <= 0)
+                return l.tryLockForWrite();
+            else
+                return l.tryLockForWrite(remaining_time);
+        }
+
+        while (remaining_time > 0)
+        {
+            if (l.tryLockForWrite( std::min(remaining_time,200) ))
+            {
+                Block::hasWoken();
+                return true;
+            }
+
+            for_ages::test();
+
+            remaining_time = ms - t.elapsed();
+
+            breaker->mutex.lock();
+            breaker->waiter.wait( &(breaker->mutex), remaining_time );
+            breaker->mutex.unlock();
+            
+            for_ages::test();
+            remaining_time = ms - t.elapsed();
+        }
+        
+        Block::hasWoken();
+        
+        return false;
+    }
+    catch(...)
+    {
+        Block::hasWoken();
+        throw;
+    }
+    
+    return false;
 }
 
 /** Unlock the lock */
 void ReadWriteLock::unlock()
 {
     l.unlock();
+    
+    if (breaker)
+        breaker->waiter.wakeAll();
 }
 
 /** Return a string representation of this lock */
@@ -92,4 +285,6 @@ String ReadWriteLock::toString() const
 /** Called by for_ages to asked this lock to check for the end of for_ages */
 void ReadWriteLock::checkEndForAges() const
 {
+    if (breaker)
+        breaker->waiter.wakeAll();
 }

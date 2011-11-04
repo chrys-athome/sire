@@ -71,6 +71,12 @@ namespace Siren
     
         Promise run(const WorkPacket &packet);
     
+        Promise run(const WorkPacket &packet, int nthreads);
+        Promise run(const WorkPacket &packet, WorkSpace &workspace, int nthreads);
+    
+        Promise allRun(const WorkPacket &packet);
+        Promise allRun(const WorkPacket &packet, WorkSpace &workspace);
+    
         void abort();
         void pause();
         void play();
@@ -118,6 +124,7 @@ namespace Siren
         ~Thread();
         
         Promise run(const WorkPacket &packet);
+        Promise run(const WorkPacket &packet, WorkSpace &workspace);
         
         void abort();
         void pause();
@@ -128,8 +135,8 @@ namespace Siren
         void waitUntilAvailable();
         bool waitUntilAvailable(int ms); 
         
-        void stealThread();
-        void returnStolenThread();
+        void steal();
+        void returnStolen();
 
         void toBackGround();
         void toForeGround();

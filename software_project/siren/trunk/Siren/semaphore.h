@@ -35,6 +35,12 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    namespace detail
+    {
+        class SemBreaker;
+    
+    } // end of namespace detail
+
     /** This is a semaphore - this provides a single counter
         that can be used to reserve resources etc. It is heavily
         based on QSemaphore */
@@ -58,7 +64,11 @@ namespace Siren
         void checkEndForAges() const;
         
     private:
+        void createBreaker();
+    
         QSemaphore s;
+    
+        AtomicPointer<detail::SemBreaker>::Type breaker;
     
     }; // end of class Semaphore
 

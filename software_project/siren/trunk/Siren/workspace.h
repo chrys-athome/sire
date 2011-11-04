@@ -108,11 +108,22 @@ namespace Siren
         virtual bool hasObjectFrom(int worker_id, const String &key);
         virtual bool waitForObjectFrom(int worker_id, const String &key, int ms);
         
+        template<class T>
+        bool isA() const;
+        
+        template<class T>
+        T& asA();
+        
+        template<class T>
+        const T& asA() const;
+        
     protected:
         void createKey(const String &key);
         void createArrayKey(const String &key, int count);
         
         void receivedFrom(int worker_id, const String &key, const Obj &object);
+        
+        ReadWriteLock& lock();
         
     private:
         /** The lock used to protect access to the data

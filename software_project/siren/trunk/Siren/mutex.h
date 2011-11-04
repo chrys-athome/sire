@@ -38,6 +38,12 @@ namespace Siren
 
     class WaitCondition;
 
+    namespace detail
+    {
+        class MutexBreaker;
+        
+    } // end of namespace detail
+
     /** This class provides a Mutex which respects the end
         of for_ages (i.e. .lock() and .tryLock() can be interupted
         by signalling the end of for_ages, in which case they will
@@ -72,8 +78,13 @@ namespace Siren
     private:
         friend class WaitCondition;
 
+        void createBreaker();
+
         /** The actual QMutex */
         QMutex m;
+
+        /** Pointer to a breaker used to unblock a mutex */
+        AtomicPointer<detail::MutexBreaker>::Type breaker;
 
     }; // end of class Mutex
 

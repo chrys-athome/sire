@@ -52,6 +52,12 @@ void WaitCondition::wait(Mutex *mutex)
     if (mutex == 0)
         return;
 
+    //first wait for 200 ms - this will prevent us from
+    //wasting a lot of resources on short sleeps
+    if (w.wait( &(mutex->m), 200 ))
+        //the wait was interupted :-)
+        return;
+
     try
     {
         this->aboutToSleep();
@@ -96,7 +102,13 @@ void WaitCondition::wait()
 bool WaitCondition::wait(Mutex *mutex, unsigned long time)
 {
     if (mutex == 0)
-        return false;
+        return true;
+
+    else if (time == 0)
+        return true;
+
+    else if (time < 200)
+        return w.wait( &(mutex->m), time );
 
     try
     {
@@ -109,16 +121,18 @@ bool WaitCondition::wait(Mutex *mutex, unsigned long time)
         {
             woken = w.wait( &(mutex->m), time - t.elapsed() );
 
-            if (t.elapsed() >= time)
+            if (woken)
             {
-                woken = true;
                 this->hasWoken();
-                break;
+                return true;
+            }
+            else if (t.elapsed() >= time)
+            {
+                this->hasWoken();
+                return false;
             }
             
         } while (not this->shouldWake());
-        
-        return woken;
     }
     catch(...)
     {

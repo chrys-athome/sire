@@ -54,8 +54,11 @@ namespace Siren
         void setKey(const String &key, int initialValue=0, AccessMode mode=Open);
         String key() const;
 
-        void acquire();
+        void acquire(int n=1);
         void release(int n=1);
+        
+        bool tryAcquire(int n=1);
+        bool tryAcquire(int n, int timeout);
         
         String toString() const;
         

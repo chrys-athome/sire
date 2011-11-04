@@ -30,8 +30,135 @@
 #include "Siren/forages.h"
 #include "Siren/string.h"
 #include "Siren/exceptions.h"
+#include "Siren/workpacket.h"
+#include "Siren/workspace.h"
+#include "Siren/mutex.h"
+#include "Siren/semaphore.h"
+#include "Siren/obj.h"
 
 using namespace Siren;
+
+namespace Siren
+{
+    /** This is the WorkSpace used in the background to communicate between the 
+        program and the background thread that is used to acquire the 
+        system semaphore */
+    class SysSemWorkSpace : public WorkSpace
+    {
+    public:
+        SysSemWorkSpace();
+        ~SysSemWorkSpace();
+        
+        void acquire(int n);
+        void release(int n);
+        
+        Mutex& mutex();
+        Semaphore& semaphore();
+        WaitCondition& waiter();
+
+        QSystemSemaphore& systemSemaphore();
+
+        bool mustAcquire();
+        bool mustRelease();
+
+    private:
+        Mutex m;
+        Semaphore s;
+        WaitCondition w;
+        
+        int n_to_acquire;
+   
+    }; // end of class SysSemWorkSpace
+
+    /** Create a background thread to interface with the system semaphore.
+        This is needed as the system semaphore can only be acquired one at a time,
+        cannot by tryAcquired, and acquires are not interuptable! */
+    class SysSemWorkPacket : public WorkPacket
+    {
+        SIREN_CLASS( SysSemWorkPacket, WorkPacket, 1 )
+
+    public:
+        SysSemWorkPacket();
+        SysSemWorkPacket(const SysSemWorkPacket &other);
+        
+        ~SysSemWorkPacket();
+        
+        bool isFinished() const;
+        int progress() const;
+        
+    protected:
+        Obj runChunk() const;
+        Obj runChunk(WorkSpace &workspace) const;
+        
+        void copy_object(const SysSemWorkPacket &other);
+        bool compare_object(const SysSemWorkPacket &other) const;
+        
+    }; // end of class SysSemWorkPacket
+        
+} // end of namespace Siren
+    
+/////////
+///////// Implementation of SysSemWorkSpace
+/////////
+
+void addResource()
+{
+    nresources += 1;
+    semaphore.release();
+}
+    
+/////////
+///////// Implementation of SysSemWorkPacket
+/////////
+    
+Obj SysSemWorkPacket::runChunk(WorkSpace &workspace) const
+{
+    SysSemWorkSpace &ws = workspace.asA<SysSemWorkSpace>();
+    
+    while (for_ages::loop())
+    {
+        MutexLocker lkr( &(ws.mutex()) );
+
+        //do I need to acquire another SystemSemaphore resource?
+        do
+        {
+            if (ws.mustAcquire())
+            {
+                do
+                {
+                    lkr.unlock();
+                    ws.systemSemaphore().acquire();
+                    lkr.relock();
+                    ws.addResource();
+                }
+                while (ws.mustAcquire());
+            }
+            else if (ws.mustRelease())
+            {
+                do
+                {
+                    ws.semaphore().acquire();
+                    ws.lostResource();
+                    lkr.unlock();
+                    ws.systemSemaphore().release();
+                    lkr.relock();
+
+                    //now need to release ws.sem, as this resource has now
+                    //permanently gone
+                }
+                while (ws.mustRelease());
+            }
+        }
+        while (ws.mustAcquire() or ws.mustRelease());
+
+        //now sleep until something happens...
+        ws.waiter().wait( &(ws.mutex()) );
+    }
+}
+    
+/////////
+///////// Implementation of SystemSemaphore
+/////////
 
 /** Construct a SystemSemaphore with the specified key, initial value
     and access mode */
@@ -59,7 +186,7 @@ String SystemSemaphore::key() const
 
     \throw Siren::system_error
 */
-void SystemSemaphore::acquire()
+void SystemSemaphore::acquire(int n)
 {
     if (not s.acquire())
     {

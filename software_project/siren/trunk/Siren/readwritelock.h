@@ -35,6 +35,12 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    namespace detail
+    {
+        class LockBreaker;
+    
+    } // end of namespace detail
+
     /** This is a ReadWriteLock. This is like a mutex,
         but allows multiple threads to hold a simultaneous
         reading lock, but only one thread to hold the write lock.
@@ -61,7 +67,11 @@ namespace Siren
         void checkEndForAges() const;
         
     private:
+        void createBreaker();
+    
         QReadWriteLock l;
+    
+        AtomicPointer<detail::LockBreaker>::Type breaker;
     
     }; // end of class ReadWriteLock
     
