@@ -54,12 +54,12 @@ namespace Siren
         friend class for_ages;
         virtual void checkEndForAges() const=0;
     
-        void aboutToSleep();
-        bool shouldWake();
-        void hasWoken();
+        void aboutToSleep() const;
+        bool shouldWake() const;
+        void hasWoken() const;
         
-        void wakeOne();
-        void wakeAll();
+        void setShouldWakeOne() const;
+        void setShouldWakeAll() const;
     
     }; // end of class Block
 

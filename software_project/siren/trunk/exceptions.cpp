@@ -285,3 +285,51 @@ void invalid_arg::throwSelf() const
 {
     throw *this;
 }
+
+///////////
+/////////// Implementation of interupted_thread
+///////////
+
+REGISTER_SIREN_CLASS( Siren::interupted_thread )
+
+interupted_thread::interupted_thread() : Exception()
+{}
+
+interupted_thread::interupted_thread(const String &error, CODELOC_ARGS)
+                  : Exception(error, CODELOC_PASS_ARGS)
+{}
+
+interupted_thread::interupted_thread(const interupted_thread &other) : Exception(other)
+{}
+
+interupted_thread::~interupted_thread() throw()
+{}
+
+void interupted_thread::throwSelf() const
+{
+    throw *this;
+}
+
+///////////
+/////////// Implementation of system_error
+///////////
+
+REGISTER_SIREN_CLASS( Siren::system_error )
+
+system_error::system_error() : Exception()
+{}
+
+system_error::system_error(const String &error, CODELOC_ARGS)
+             : Exception(error, CODELOC_PASS_ARGS)
+{}
+
+system_error::system_error(const system_error &other) : Exception(other)
+{}
+
+system_error::~system_error() throw()
+{}
+
+void system_error::throwSelf() const
+{
+    throw *this;
+}

@@ -28,6 +28,7 @@
 
 #include "Siren/mutex.h"
 #include "Siren/forages.h"
+#include "Siren/string.h"
 
 using namespace Siren;
 
@@ -39,6 +40,12 @@ Mutex::Mutex(Mutex::RecursionMode mode) : m( QMutex::RecursionMode(mode) )
     before destroying it! */
 Mutex::~Mutex()
 {}
+
+/** Return a string representation of this Mutex */
+String Mutex::toString() const
+{
+    return String::tr("Mutex(%1)").arg(this);
+}
 
 /** Lock the mutex. This will block until the mutex is locked,
     or the end of for_ages is signalled on this thread
@@ -69,4 +76,10 @@ bool Mutex::tryLock(int ms)
 void Mutex::unlock()
 {
     m.unlock();
+}
+
+/** Called by for_ages to tell the mutex to check for the
+    end of for_ages in each blocked thread */
+void Mutex::checkEndForAges() const
+{
 }

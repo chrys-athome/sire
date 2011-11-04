@@ -29,7 +29,9 @@
 #include "Siren/waitcondition.h"
 #include "Siren/mutex.h"
 #include "Siren/forages.h"
+#include "Siren/string.h"
 #include "Siren/timer.h"
+#include "Siren/block.hpp"
 
 using namespace Siren;
 
@@ -59,14 +61,18 @@ void WaitCondition::wait(Mutex *mutex)
             w.wait( &(mutex->m) );
     
         } while (not this->shouldWake());
-
-        this->hasWoken();
     }
     catch(...)
     {
         this->hasWoken();
         throw;
     }
+}
+
+/** Return a string representation of this WaitCondition */
+String WaitCondition::toString() const
+{
+    return String::tr("WaitCondition(%1)").arg(this);
 }
 
 /** This function wakes up all sleeping threads so that they
@@ -106,12 +112,11 @@ bool WaitCondition::wait(Mutex *mutex, unsigned long time)
             if (t.elapsed() >= time)
             {
                 woken = true;
+                this->hasWoken();
                 break;
             }
             
         } while (not this->shouldWake());
-    
-        this->hasWoken();
         
         return woken;
     }
@@ -137,7 +142,7 @@ bool WaitCondition::wait(unsigned long time)
 /** Wake up one of the threads sleeping on this wait condition */
 void WaitCondition::wakeOne()
 {
-    Block::wakeOne();
+    Block::setShouldWakeOne();
     w.wakeAll(); // for_ages will assure that only one thread
                  // is woken - we need to wake them all temporarily to do this
 }
@@ -145,6 +150,6 @@ void WaitCondition::wakeOne()
 /** Wake up all of the threads sleeping on this wait condition */
 void WaitCondition::wakeAll()
 {
-    Block::wakeAll();
+    Block::setShouldWakeAll();
     w.wakeAll();
 }

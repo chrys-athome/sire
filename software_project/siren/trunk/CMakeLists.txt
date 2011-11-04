@@ -57,6 +57,7 @@ set ( SIREN_PUBLIC_HEADERS
 
       Siren/assert.h
       Siren/block.h
+      Siren/block.hpp
       Siren/bytearray.h
       Siren/class.h
       Siren/date.h

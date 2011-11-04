@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "Siren/block.h"
+#include "Siren/block.hpp"
 
 using namespace Siren;
 

@@ -36,10 +36,22 @@
 //// that are used and are global for Siren
 
 /** Used to signify the beginning of a header file */
-#define SIREN_BEGIN_HEADER
+#define SIREN_BEGIN_HEADER QT_BEGIN_HEADER
 
 /** Used to signify the end of a header file */
-#define SIREN_END_HEADER
+#define SIREN_END_HEADER QT_END_HEADER
+
+/** The size of a pointer in bytes */
+#define SIREN_POINTER_SIZE QT_POINTER_SIZE
+
+/** Used to signify that we are compiling 32bit code */
+#if SIREN_POINTER_SIZE == 8
+  #define SIREN_64BIT 1
+#elif SIREN_POINTER_SIZE == 4
+  #define SIREN_32BIT 1
+#else
+  #warning Cannot work out if this is a 32bit or 64bit compile!
+#endif
 
 /** Used to signify that the symbol for the class or function should be 
     visible outside of the Siren library. */

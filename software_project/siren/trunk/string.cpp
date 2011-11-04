@@ -666,7 +666,25 @@ String String::arg(uint64 number, int fieldWidth, int base,
 {
     return String( d.arg(number, fieldWidth, base, fillChar) );
 }                   
-           
+       
+/** Returns a copy of this string with the lowest numbered place marker
+    replaced by the pointer address 'pointer', i.e., %1, %2, ..., %99.
+    The pointer address is given in hexadecimal notation.
+    
+    fieldWidth specifies the minimum amount of space that the argument shall 
+    occupy. If it requires less space than fieldWidth, it is padded to 
+    fieldWidth with the character fillChar. A positive fieldWidth 
+    produces right-aligned text. A negative fieldWidth produces left-aligned text.
+*/
+String String::arg(const void *pointer, int fieldWidth, const Char &fillChar) const
+{
+    #ifdef SIREN_32BIT
+    return String( d.arg( quint32(pointer), fieldWidth, 16, fillChar ) );
+    #else
+    return String( d.arg( quint64(pointer), fieldWidth, 16, fillChar ) );
+    #endif
+}
+
 /** Returns a copy of this string with the lowest numbered place marker
     replaced by the number 'number', i.e., %1, %2, ..., %99.
     
