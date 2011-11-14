@@ -34,6 +34,7 @@
 // thereby removing the dependency on boost
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
 #ifndef GCCXML_PARSE
@@ -51,9 +52,14 @@ struct exp_shared_ptr
     typedef boost::shared_ptr<T> Type;
 };
 
+template<class T>
+struct exp_weak_ptr
+{
+    typedef boost::weak_ptr<T> Type;
+};
+
 typedef boost::noncopyable noncopyable;
 
 } // end of namespace Siren
 
 #endif // SIREN_QTSUPPORT_H
-

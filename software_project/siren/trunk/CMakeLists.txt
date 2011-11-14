@@ -78,6 +78,7 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/object.hpp
       Siren/obj.h
       Siren/obj.hpp
+      Siren/promise.h
       Siren/readwritelock.h
       Siren/semaphore.h
       Siren/schemas.h
@@ -101,6 +102,8 @@ set ( SIREN_PUBLIC_HEADERS
     )
 
 set ( SIREN_PRIVATE_HEADERS
+
+      Siren/detail/promisedata.h
 
       Siren/detail/boostsupport.h
       Siren/detail/metatype.h
@@ -131,6 +134,8 @@ set ( SIREN_SOURCES
       number.cpp
       object.cpp
       obj.cpp
+      promise.cpp
+      promisedata.cpp
       readwritelock.cpp
       semaphore.cpp
       schemas.cpp

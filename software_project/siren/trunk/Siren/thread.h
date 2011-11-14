@@ -65,6 +65,10 @@ namespace Siren
     {
     public:
         ThreadPool(int n);
+        ThreadPool(const Thread &thread);
+        
+        ThreadPool(const ThreadPool &other);
+        
         ~ThreadPool();
     
         void reallocate(int n);
@@ -120,6 +124,9 @@ namespace Siren
         
         Thread();
         Thread(ThreadState state);
+        Thread(const ThreadPool &pool);
+        
+        Thread(const Thread &other);
         
         ~Thread();
         
