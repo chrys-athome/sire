@@ -85,6 +85,8 @@ namespace Siren
 
         virtual ~WorkSpace();
         
+        virtual const char* what() const=0;
+        
         void flush();
         void setAutoFlush(bool on);
         bool isAutoFlush();

@@ -97,6 +97,7 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/waitcondition.h
       Siren/workpacket.h
       Siren/workspace.h
+      Siren/workspace.hpp
     )
 
 set ( SIREN_PRIVATE_HEADERS

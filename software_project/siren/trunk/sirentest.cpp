@@ -112,7 +112,7 @@ int main(int argc, const char **argv)
     {
         TestReport class_report = report[i].asA<TestReport>();
 
-        if (not class_report.isEmpty())
+        if (class_report.failed())
         {
             cout << (i+1) << " : " << class_report.toString() << "\n";
         
@@ -122,7 +122,7 @@ int main(int argc, const char **argv)
                      << class_report[j].toString() << "\n";
             }
         }
-        else
+        else if (class_report.isEmpty())
         {
             missing_tests.append( class_report.testedClass().name() );
         }

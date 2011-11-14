@@ -26,6 +26,9 @@
   *
 \*********************************************/
 
+#include "Siren/siren.hpp"
+#include "Siren/object.hpp"
+#include "Siren/workspace.hpp"
 #include "Siren/systemsemaphore.h"
 #include "Siren/forages.h"
 #include "Siren/string.h"
@@ -34,12 +37,20 @@
 #include "Siren/workspace.h"
 #include "Siren/mutex.h"
 #include "Siren/semaphore.h"
+#include "Siren/waitcondition.h"
 #include "Siren/obj.h"
+#include "Siren/none.h"
+#include "Siren/testreport.h"
+#include "Siren/exceptions.h"
+#include "Siren/assert.h"
+#include "Siren/timer.h"
 
 using namespace Siren;
 
 namespace Siren
 {
+    class SysSemWorkPacket;
+
     /** This is the WorkSpace used in the background to communicate between the 
         program and the background thread that is used to acquire the 
         system semaphore */
@@ -48,25 +59,55 @@ namespace Siren
     public:
         SysSemWorkSpace();
         ~SysSemWorkSpace();
+
+        static const char* typeName() { return "Siren::SysSemWorkSpace"; }
+        const char* what() const { return typeName(); }
+
+        //////
+        ////// Functions called by SystemSemaphore
+        //////
+        int nAcquired();
+        int nAvailable();
         
         void acquire(int n);
         void release(int n);
+        
+        bool tryAcquire(int n);
+        bool tryAcquire(int n, int ms);
+        
+        bool hasError() const;
+        void checkError() const;
+        
+        //////
+        ////// Functions called by SysSemWorkSpace
+        //////
+        
+        void gotLock();
+        void lostLock();
         
         Mutex& mutex();
         Semaphore& semaphore();
         WaitCondition& waiter();
 
-        QSystemSemaphore& systemSemaphore();
+        void initialise(const SysSemWorkPacket &parent);
 
-        bool mustAcquire();
-        bool mustRelease();
+        bool mustAcquire() const;
+        bool mustRelease() const;
+
+        void setError(const Exception &e);
 
     private:
         Mutex m;
-        Semaphore s;
-        WaitCondition w;
+        Semaphore *s;
+        WaitCondition *w;
+
+        String key;
+        Obj error;
         
-        int n_to_acquire;
+        int n_available;
+        
+        int n_acquired;
+        int n_requested;
    
     }; // end of class SysSemWorkSpace
 
@@ -79,9 +120,13 @@ namespace Siren
 
     public:
         SysSemWorkPacket();
+        SysSemWorkPacket(const String &key, int initial_value);
         SysSemWorkPacket(const SysSemWorkPacket &other);
         
         ~SysSemWorkPacket();
+        
+        int nAvailable() const;
+        String key() const;
         
         bool isFinished() const;
         int progress() const;
@@ -93,6 +138,15 @@ namespace Siren
         void copy_object(const SysSemWorkPacket &other);
         bool compare_object(const SysSemWorkPacket &other) const;
         
+        void test(TestReportEditor &report) const;
+
+    private:
+        /** Key used to find the system semaphore */
+        String k;
+        
+        /** The initial value of the system semaphore */
+        int initial_value;
+
     }; // end of class SysSemWorkPacket
         
 } // end of namespace Siren
@@ -101,61 +155,567 @@ namespace Siren
 ///////// Implementation of SysSemWorkSpace
 /////////
 
-void addResource()
+/** Constructor */
+SysSemWorkSpace::SysSemWorkSpace() 
+                : WorkSpace(), s(0), w(0), n_acquired(0), n_requested(0)
+{}
+
+/** Destructor */
+SysSemWorkSpace::~SysSemWorkSpace()
 {
-    nresources += 1;
-    semaphore.release();
+    MutexLocker lkr(&m);
+    delete s;
+    delete w;
 }
+
+/** Return the number of resources that have been acquired */
+int SysSemWorkSpace::nAcquired()
+{
+    MutexLocker lkr(&m);
+    return n_acquired;
+}
+
+/** Return the number of resources that are available */
+int SysSemWorkSpace::nAvailable()
+{
+    MutexLocker lkr(&m);
+    return n_available;
+}
+
+/** Return whether or not we are in an error state - note that the calling
+    thread must hold the mutex */
+bool SysSemWorkSpace::hasError() const
+{
+    return not error.isNone();
+}
+
+/** Function called by SysSemWorkSpace when it holds the mutex to set 
+    the error state */
+void SysSemWorkSpace::setError(const Exception &e)
+{
+    error = e;
+}
+
+/** Throw the error if we are in an error state 
+        - note that the calling thread must hold the mutex */
+void SysSemWorkSpace::checkError() const
+{
+    if (not error.isNone())
+        error.asA<Exception>().throwSelf();
+}
+
+/** Tell the SysSemWorkPacket to acquire an addition 'n' reservations.
+    This blocks until the extra 'n' reservations have been made, or
+    until the end of for_ages has been signalled on this thread */
+void SysSemWorkSpace::acquire(int n)
+{
+    if (n <= 0)
+        n = 1;
+
+    MutexLocker lkr(&m);
+
+    //raise an exception if this semaphore is in an error state
+    this->checkError();
+
+    if (n_requested + n > n_available)
+        throw Siren::unavailable_resource( String::tr(
+                "Cannot acquire an additional %1 resources for the SystemSemaphore "
+                "with key \"%2\" because the number of locks we already hold "
+                "on this semaphore is %3, and the number available is just %4.")
+                    .arg(n).arg(key)
+                    .arg(n_requested).arg(n_available), CODELOC );
+
+    n_requested += n;
+
+    try
+    {
+        w->wakeAll();
+        lkr.unlock();
+        s->acquire(n);
+        lkr.relock();
+        
+        if (this->hasError())
+        {
+            s->release(n);
+            this->checkError();
+            n_requested -= n;
+        }
+    }
+    catch(...)
+    {
+        n_requested -= n;
+        throw;
+    }
+}
+
+/** Try to acquire 'n' resources. This acquires the resources if they
+    are immediately available (returns 'true'), or, if, not, then it returns 'false' */
+bool SysSemWorkSpace::tryAcquire(int n)
+{
+    if (n <= 0)
+        n = 1;
+
+    MutexLocker lkr(&m);
+
+    //raise an exception if this semaphore is in an error state
+    this->checkError();
+
+    if (n_requested + n > n_available)
+        //not possible as not enough resources!
+        return false;
+
+    n_requested += n;
+
+    try
+    {
+        w->wakeAll();
+        
+        //we now sleep, so that we give a chance for the background
+        //thread to actually acquire a lock!
+        w->wait(&m);
+        
+        if (s->tryAcquire(n))
+        {
+            if (this->hasError())
+            {
+                s->release(n);
+                this->checkError();
+                n_requested -= n;
+                return false;
+            }
+            
+            return true;
+        }
+
+        //could not get the lock in time
+        n_requested -= n;
+        w->wakeAll();
+            
+        return false;
+    }
+    catch(...)
+    {
+        n_requested -= n;
+        throw;
+    }
     
+    return false;
+}
+
+/** Try to acquire 'n' resources, waiting for a maximum of 'ms' milliseconds.
+    This will return 'true' if the resources have been acquired, and 'false' if not */
+bool SysSemWorkSpace::tryAcquire(int n, int ms)
+{
+    if (ms <= 0)
+        return this->tryAcquire(n);
+
+    if (n <= 0)
+        n = 1;
+
+    //raise an exception if this semaphore is in an error state
+    this->checkError();
+
+    Timer t = Timer::start();
+
+    MutexLocker lkr(&m);
+
+    if (n_requested + n > n_available)
+        //not possible as not enough resources!
+        return false;
+
+    n_requested += n;
+
+    try
+    {
+        w->wakeAll();
+        
+        //we now sleep, so that we give a chance for the background
+        //thread to actually acquire a lock!
+        w->wait(&m);
+        
+        ms -= t.elapsed();
+        
+        if (ms <= 0)
+        {
+            if (s->tryAcquire(n))
+            {
+                if (this->hasError())
+                {
+                    s->release(n);
+                    this->checkError();
+                    n_requested -= n;
+                    return false;
+                }
+            
+                return true;
+            }
+        }
+        else
+        {
+            lkr.unlock();
+            bool success = s->tryAcquire(n,ms);
+            lkr.relock();
+            
+            if (success)
+            {
+                if (this->hasError())
+                {
+                    s->release(n);
+                    this->checkError();
+                    n_requested -= n;
+                    return false;
+                }
+                
+                return true;
+            }
+        }
+
+        //could not get the lock in time
+        n_requested -= n;
+        w->wakeAll();
+            
+        return false;
+    }
+    catch(...)
+    {
+        n_requested -= n;
+        throw;
+    }
+    
+    return false;
+}
+
+/** Tell the SysSemWorkPacket to release 'n' reservations */
+void SysSemWorkSpace::release(int n)
+{
+    if (n <= 0)
+        n = 1;
+        
+    MutexLocker lkr(&m);
+    
+    //raise an exception if this semaphore is in an error state
+    this->checkError();
+
+    if (n_requested - n < 0)
+        throw Siren::unavailable_resource( String::tr(
+                "It is not possible to release more resources than have "
+                "been requested! (%1 versus %2, %3 acquired)")
+                    .arg(n).arg(n_requested).arg(n_acquired), CODELOC );
+                    
+    n_requested -= n;
+    
+    s->release(n);
+    w->wakeAll();
+}
+
+/** Intialise this workspace to work with the passed SysSemWorkPacket */
+void SysSemWorkSpace::initialise(const SysSemWorkPacket &parent)
+{
+    MutexLocker lkr(&m);
+    
+    if (s != 0)
+        throw Siren::program_bug( String::tr(
+                "It is a mistake for a SysSemWorkSpace to be initialised twice!"),
+                    CODELOC );
+
+    n_acquired = 0;
+    n_requested = 0;
+    n_available = parent.nAvailable();
+    
+    if (n_available == 0)
+        //this is an empty semaphore!
+        return;
+
+    //create a new semaphore that holds a local copy of the 
+    //number of available resources - acquire all of these
+    //resources as they are not yet acquired locally
+    s = new Semaphore(n_available);
+    s->acquire(n_available);
+    
+    w = new WaitCondition();
+}
+
+/** Signal that a global resource has been acquired - this releases
+    a spot on the local semaphore thus allowing the resource to be
+    made available to the local process. Note that this must be 
+    called only by the thread running the workpacket, while the workpacket
+    holds a lock on the mutex */
+void SysSemWorkSpace::gotLock()
+{
+    SIREN_ASSERT( s != 0 );
+
+    n_acquired += 1;
+    s->release();
+}
+
+/** Signal that a global resource has been returned to the pool.
+    This must only be called by the thread running the workpacket,
+    and only while the workpacket holds a lock on the mutex */
+void SysSemWorkSpace::lostLock()
+{
+    SIREN_ASSERT( s != 0 );
+    
+    n_acquired -= 1;
+    s->acquire();
+}
+
+/** Return the mutex used to protect access to the data of the workspace */
+Mutex& SysSemWorkSpace::mutex()
+{
+    return m;
+}
+
+/** Return the semaphore that holds a local copy of the resources */
+Semaphore& SysSemWorkSpace::semaphore()
+{
+    if (s == 0)
+        throw Siren::program_bug( String::tr(
+                "You cannot get the semaphore of a workspace that has not "
+                "yet been initialised."), CODELOC );
+                
+    return *s;
+}
+
+/** Return the waiter that is used to tell the background thread
+    to wake up and process a lock request */
+WaitCondition& SysSemWorkSpace::waiter()
+{
+    if (w == 0)
+        throw Siren::program_bug( String::tr(
+                "You cannot get the WaitCondition of a workspace that has not "
+                "yet been initialised."), CODELOC );
+                
+    return *w;
+}
+
+/** Return whether or not a global resource needs to be acquired. This
+    can only be called by the thread running the workpacket, and only
+    while the workpacket holds a lock of the mutex */
+bool SysSemWorkSpace::mustAcquire() const
+{
+    return n_acquired < n_requested;
+}
+
+/** Return whether or not a global resource needs to be released. This
+    can only be called by the thread running the workpacket, and only
+    while the workpacket holds a lock of the mutex */
+bool SysSemWorkSpace::mustRelease() const
+{
+    return n_acquired > n_requested;
+}
+
 /////////
 ///////// Implementation of SysSemWorkPacket
 /////////
     
+REGISTER_SIREN_CLASS( Siren::SysSemWorkPacket )
+
+/** Null constructor */
+SysSemWorkPacket::SysSemWorkPacket() 
+                 : WorkPacket(), initial_value(0)
+{}
+
+/** Construct to create and manage a SystemSemaphore backend with
+    key 'key', with 'initial_value' resources available. Note that this
+    can only set the number of resources available if the system semaphore
+    has not already been created */
+SysSemWorkPacket::SysSemWorkPacket(const String &key, int val)
+                 : WorkPacket(), k(key), initial_value(val)
+{}
+
+/** Copy constructor */
+SysSemWorkPacket::SysSemWorkPacket(const SysSemWorkPacket &other)
+                 : WorkPacket(other),
+                   k(other.k), initial_value(other.initial_value)
+{}
+
+/** Destructor */
+SysSemWorkPacket::~SysSemWorkPacket()
+{}
+
+/** Copy assignment operator */
+void SysSemWorkPacket::copy_object(const SysSemWorkPacket &other)
+{
+    k = other.k;
+    initial_value = other.initial_value;
+    super::copy_object(other);
+}
+
+/** Comparison operator */
+bool SysSemWorkPacket::compare_object(const SysSemWorkPacket &other) const
+{
+    return k == other.k and initial_value == other.initial_value and
+           super::compare_object(other);
+}
+
+/** Return the key used to identify the system semaphore */
+String SysSemWorkPacket::key() const
+{
+    return k;
+}
+
+/** Return the number of resources that should be available on this semaphore */
+int SysSemWorkPacket::nAvailable() const
+{
+    return initial_value;
+}
+
+/** Return whether or not the workpacket has finished */
+bool SysSemWorkPacket::isFinished() const
+{
+    return false;
+}
+
+/** Return the progress made in running the packet */
+int SysSemWorkPacket::progress() const
+{
+    return 0;
+}
+ 
+/** Cannot run this WorkPacket without an accompanying WorkSpace */
+Obj SysSemWorkPacket::runChunk() const
+{
+    throw Siren::invalid_arg( String::tr(
+                "Cannot process a SysSemWorkPacket without an accompanying "
+                "WorkSpace (SysSemWorkSpace)."), CODELOC );
+                
+    return None();
+}
+ 
+/** Actually run the work in the WorkPacket */
 Obj SysSemWorkPacket::runChunk(WorkSpace &workspace) const
 {
+    //no need to run anything that manages a null semaphore!
+    if (initial_value == 0)
+        return None();
+
     SysSemWorkSpace &ws = workspace.asA<SysSemWorkSpace>();
+    MutexLocker lkr( &(ws.mutex()) );
+
+    ws.initialise(*this);
+
+    int nheld = 0;
+    QSystemSemaphore *sys_sem = new QSystemSemaphore(k, initial_value);
     
-    while (for_ages::loop())
+    if (sys_sem->error() != QSystemSemaphore::NoError)
     {
-        MutexLocker lkr( &(ws.mutex()) );
+        ws.setError( system_error( String::tr(
+                "Could not create a system semaphore with key \"%1\". %2.")
+                    .arg(k, sys_sem->errorString()), CODELOC ) );
 
-        //do I need to acquire another SystemSemaphore resource?
-        do
-        {
-            if (ws.mustAcquire())
-            {
-                do
-                {
-                    lkr.unlock();
-                    ws.systemSemaphore().acquire();
-                    lkr.relock();
-                    ws.addResource();
-                }
-                while (ws.mustAcquire());
-            }
-            else if (ws.mustRelease())
-            {
-                do
-                {
-                    ws.semaphore().acquire();
-                    ws.lostResource();
-                    lkr.unlock();
-                    ws.systemSemaphore().release();
-                    lkr.relock();
-
-                    //now need to release ws.sem, as this resource has now
-                    //permanently gone
-                }
-                while (ws.mustRelease());
-            }
-        }
-        while (ws.mustAcquire() or ws.mustRelease());
-
-        //now sleep until something happens...
-        ws.waiter().wait( &(ws.mutex()) );
+        delete sys_sem;
+        
+        return None();
     }
-}
     
+    try
+    {
+        while (for_ages::loop())
+        {
+            //do I need to acquire another SystemSemaphore resource?
+            do
+            {
+                if (ws.mustAcquire())
+                {
+                    do
+                    {
+                        ws.waiter().wakeAll();
+                        lkr.unlock();
+                        bool success = sys_sem->acquire();
+                        lkr.relock();
+                        
+                        if (not success)
+                        {
+                            ws.setError( system_error( String::tr(
+                                    "There was an error acquiring the system semaphore "
+                                    "with key \"%1\": %2.")
+                                        .arg(k, sys_sem->errorString()), CODELOC ) );
+                                        
+                            delete sys_sem;
+                            return None();
+                        }
+                        
+                        nheld += 1;
+                        ws.gotLock();
+                    }
+                    while (ws.mustAcquire());
+                }
+                else if (ws.mustRelease())
+                {
+                    do
+                    {
+                        ws.waiter().wakeAll();
+                        ws.lostLock();
+                        lkr.unlock();
+                        bool success = sys_sem->release();
+                        lkr.relock();
+                        
+                        if (not success)
+                        {
+                            ws.setError( system_error( String::tr(
+                                    "There was an error releasing the system semaphore "
+                                    "with key \"%1\": %2.")
+                                        .arg(k, sys_sem->errorString()), CODELOC ) );
+
+                            delete sys_sem;
+                            return None();
+                        }
+                        
+                        nheld -= 1;
+                    }
+                    while (ws.mustRelease());
+                }
+            }
+            while (ws.mustAcquire() or ws.mustRelease());
+
+            //now sleep until something happens (waking up anyone who has 
+            //been waiting for us to finish communicating with the system semaphore)
+            ws.waiter().wakeAll();
+            ws.waiter().wait( &(ws.mutex()) );
+        }
+    }
+    catch(...)
+    {
+        ws.waiter().wakeAll();
+    
+        //release all holds of the System semaphore
+        while (nheld > 0)
+        {
+            sys_sem->release();
+            nheld -= 1;
+        }
+        
+        //must delete the system semaphore so that it is properly cleaned
+        delete sys_sem;
+
+        throw;
+    }
+    
+    ws.waiter().wakeAll();
+    
+    if (nheld > 0)
+    {
+        sirenDebug() << "WEIRD!!! Exiting with non-zero nheld!" << nheld
+                     << "IN" << __FILE__ << __LINE__;
+    
+        while (nheld > 0)
+        {
+            sys_sem->release();
+            nheld -= 1;
+        }
+    }
+    
+    delete sys_sem;
+    
+    return None();
+}
+
+/** Test this WorkPacket */        
+void SysSemWorkPacket::test(TestReportEditor &report) const
+{
+    report.addFailure( String::tr("NEED TO WRITE TESTS!!!") );
+}
+
 /////////
 ///////// Implementation of SystemSemaphore
 /////////

@@ -333,3 +333,52 @@ void system_error::throwSelf() const
 {
     throw *this;
 }
+
+///////////
+/////////// Implementation of invalid_state
+///////////
+
+REGISTER_SIREN_CLASS( Siren::invalid_state )
+
+invalid_state::invalid_state() : Exception()
+{}
+
+invalid_state::invalid_state(const String &error, CODELOC_ARGS)
+              : Exception(error, CODELOC_PASS_ARGS)
+{}
+
+invalid_state::invalid_state(const invalid_state &other) : Exception(other)
+{}
+
+invalid_state::~invalid_state() throw()
+{}
+
+void invalid_state::throwSelf() const
+{
+    throw *this;
+}
+
+///////////
+/////////// Implementation of unavailable_resource
+///////////
+
+REGISTER_SIREN_CLASS( Siren::unavailable_resource )
+
+unavailable_resource::unavailable_resource() : Exception()
+{}
+
+unavailable_resource::unavailable_resource(const String &error, CODELOC_ARGS)
+                     : Exception(error, CODELOC_PASS_ARGS)
+{}
+
+unavailable_resource::unavailable_resource(const unavailable_resource &other) 
+                     : Exception(other)
+{}
+
+unavailable_resource::~unavailable_resource() throw()
+{}
+
+void unavailable_resource::throwSelf() const
+{
+    throw *this;
+}

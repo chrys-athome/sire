@@ -274,6 +274,44 @@ namespace Siren
     
     }; // end of class system_error
 
+    /** This exception is thrown when the program is 
+        detected to be in an invalid state 
+    */
+    class SIREN_EXPORT invalid_state : public Exception
+    {
+        SIREN_CLASS(invalid_state,Exception,1)
+        
+    public:
+        invalid_state();
+        invalid_state(const String &error, CODELOC_ARGS);
+        
+        invalid_state(const invalid_state &other);
+        
+        ~invalid_state() throw();
+        
+        void throwSelf() const;
+    
+    }; // end of class invalid_state
+
+    /** This exception is thrown when a request is made
+        of a resource that does not exist
+    */
+    class SIREN_EXPORT unavailable_resource : public Exception
+    {
+        SIREN_CLASS(unavailable_resource,Exception,1)
+        
+    public:
+        unavailable_resource();
+        unavailable_resource(const String &error, CODELOC_ARGS);
+        
+        unavailable_resource(const unavailable_resource &other);
+        
+        ~unavailable_resource() throw();
+        
+        void throwSelf() const;
+    
+    }; // end of class system_error
+
 } // end of namespace Siren
 
 SIREN_EXPOSE_EXCEPTION( Siren::invalid_cast )
@@ -288,6 +326,8 @@ SIREN_EXPOSE_EXCEPTION( Siren::unknown_exception )
 SIREN_EXPOSE_EXCEPTION( Siren::interupted_thread )
 SIREN_EXPOSE_EXCEPTION( Siren::invalid_arg )
 SIREN_EXPOSE_EXCEPTION( Siren::system_error )
+SIREN_EXPOSE_EXCEPTION( Siren::invalid_state )
+SIREN_EXPOSE_EXCEPTION( Siren::unavailable_resource )
 
 SIREN_END_HEADER
 
