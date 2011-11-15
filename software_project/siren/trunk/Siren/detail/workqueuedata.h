@@ -38,95 +38,6 @@ namespace Siren
 {
     namespace detail
     {
-        friend class WorkQueueData;
-    
-        class WorkQueueItem
-        {
-        public:
-            WorkQueueItem();
-            WorkQueueItem(const Promise &promise,
-                          const WorkQueue &queue);
-                          
-            WorkQueueItem(const WorkQueueItem &other);
-            
-            ~WorkQueueItem();
-            
-            WorkQueueItem& operator=(const WorkQueueItem &other);
-            
-            bool operator==(const WorkQueueItem &other) const;
-            bool operator!=(const WorkQueueItem &other) const;
-            
-            Obj workPacket() const;
-            DateTime submissionTime() const;
-            DateTime startTime() const;
-            DateTime finishTime() const;
-            
-            Obj operator[](const String &string) const;
-        
-            Promise promise() const;
-        
-        private:
-            exp_shared_ptr<detail::WorkQueueItemData>::Type d;
-        };
-    
-        /** This class holds the metadata for a single job in the queue */
-        class WorkQueueItemData : public noncopyable
-        {
-        public:
-            WorkQueueItem(const Promise &promise,
-                          const WorkQueue &queue);
-            
-            WorkQueueItem(const WorkQueueItem &other);
-            
-            ~WorkQueueItem();
-            
-            Obj workPacket() const;
-            DateTime submissionTime() const;
-            DateTime startTime() const;
-            DateTime finishTime() const;
-            
-            Obj operator[](const String &string) const;
-        
-            Promise promise() const;
-        
-        protected:
-            friend class WorkQueueData;
-            void jobStarted();
-            void jobFinished();
-            void jobCancelled();
-        
-            friend class PromiseData;
-            void cancelJob();
-            void pauseJob();
-        
-        private:
-            /** Mutex protecting access to the data of this object */
-            Mutex mutex;
-        
-            /** Store the WorkPacket in the Promise, so if lose promise,
-                then lose WorkPacket - the Promise is the handle to the job */
-            exp_weak_ptr<PromiseData>::Type promise_data;
-
-            /** This is the queue that is processing this item. If we lose
-                the queue, then we cannot run this job */
-            exp_weak_ptr<WorkQueueData>::Type parent_queue;
-            
-            /** The time the job was submitted (this WorkQueueItem was created) */
-            DateTime submission_time;
-            
-            /** The time the queue told us the job was running */
-            DateTime start_time;
-            
-            /** The time the queue told us that the job had finished.
-                The result is added to the Promise attached to this item */
-            DateTime finish_time;
-        
-            /** A set of other metadata that may be added and manipulated
-                by the WorkScheduler responsible for scheduling this job */
-            Hash<String,Obj>::Type mdata;
-        
-        }; // end of class WorkQueueItem
-    
         /** This class provides the private implementation of WorkQueue */
         class WorkQueueData : public noncopyable
         {
@@ -134,13 +45,13 @@ namespace Siren
             WorkQueueData();
             ~WorkQueueData();
 
-            
+            Promise submit(const WorkPacket &packet, int n);
         
         private:
-            Mutex mutex;
+            Mutex m;
             
+            List<WorkQueueItem>::Type waiting_jobs;
             List<WorkQueueItem>::Type running_jobs;
-            List<WorkQueueItem>::Type pending_jobs;
             List<WorkQueueItem>::Type cancelled_jobs;
             List<WorkQueueItem>::Type finished_jobs;
             

@@ -32,72 +32,181 @@
 #include "Siren/waitcondition.h"
 #include "Siren/mutex.h"
 #include "Siren/exceptions.h"
+#include "Siren/none.h"
+#include "Siren/workpacket.h"
 
 #include "Siren/detail/promisedata.h"
+#include "Siren/detail/workqueuedata.h"
+#include "Siren/detail/workqueueitemdata.h"
 
 using namespace Siren;
 using namespace Siren::detail;
 
-REGISTER_SIREN_CLASS( Siren::Promise )
+/////////
+///////// Implementation of PromiseData
+/////////
+
+/** Null constructor */
+PromiseData::PromiseData(const WorkPacket &packet) 
+            : noncopyable(), workpacket(packet), ready(false)
+{}
+
+/** Destructor */
+PromiseData::~PromiseData()
+{
+    //tell the job to abort as there is no longer a promise
+    //available to hold the result
+    WorkQueueItem(workitem.lock()).abort();
+}
+
+/** Return whether or not the result is available */
+bool PromiseData::available()
+{
+    MutexLocker lkr(&m);
+    return ready;
+}
+
+/** Return the original WorkPacket used to run the calculation.
+    This returns "None" if this is a null packet */
+Obj PromiseData::workPacket()
+{
+    MutexLocker lkr(&m);
+    return workpacket;
+}
+
+/** Wait until the result is available, and then return the result */
+Obj PromiseData::result()
+{
+    MutexLocker lkr(&m);
+    
+    while (not ready)
+    {
+        w.wait(&m);
+    }
+    
+    return reslt;
+}
+
+/** Wait until the result is available */
+void PromiseData::wait()
+{
+    MutexLocker lkr(&m);
+    
+    if (ready)
+        return;
+        
+    w.wait(&m);
+}
+
+/** Wait until the result is available, or until 'ms' milliseconds
+    has passed - this returns whether the result is available or not */
+bool PromiseData::wait(int ms)
+{
+    MutexLocker lkr(&m);
+    
+    if (ready)
+        return true;
+        
+    w.wait(&m, ms);
+    
+    return ready;
+}
+
+/** Set the promised result */
+void PromiseData::setResult(const Obj &result)
+{
+    MutexLocker lkr(&m);
+    
+    if (ready)
+        throw Siren::program_bug( String::tr(
+                "It is a mistake to try to give a Promise two results! "
+                "Trying to set result...\n"
+                "%1\n"
+                "...when already contain result...\n"
+                "%2")
+                    .arg(reslt.toString(), result.toString()), CODELOC );
+                    
+    reslt = result;
+    ready = true;
+    w.wakeAll();
+}
+
+/////////
+///////// Implementation of Promise
+/////////
 
 /** Construct an empty Promise - this has a "None" result */
-Promise::Promise() : Object()
+Promise::Promise()
 {}
 
 /** Construct an empty Promise - this is the same as a default-constructed promise */
-Promise::Promise(const None &none) : Object()
+Promise::Promise(const None &none)
 {}
 
 /** Construct a Promise with the supplied result - this is useful for occasions
     where the result is immediately available, but you still want to use the 
     Promise API */
-Promise::Promise(const Object &object) : Object(), reslt(object)
+Promise::Promise(const Object &object) : reslt(object)
 {}
 
 /** Copy constructor */
 Promise::Promise(const Promise &other)
-        : Object(other), reslt(other.reslt), d(other.d)
+        : reslt(other.reslt), d(other.d)
 {}
 
 /** Destructor */
 Promise::~Promise()
 {}
 
-/** Internal constructor used by Thread and ThreadPool to create a promise
-    to hold a future result */
-Promise::Promise(const exp_shared_ptr<PromiseData>::Type &ptr)
-        : Object(), d(ptr)
+/** Internal constructor used to create a promise to hold a future result */
+Promise::Promise(const exp_shared_ptr<PromiseData>::Type &ptr) : d(ptr)
 {}
 
-/** Copy assignment operator */
-void Promise::copy_object(const Promise &other)
+/** Copy operator */
+Promise& Promise::operator=(const Promise &other)
 {
-    reslt = other.reslt;
     d = other.d;
-    super::copy_object(other);
+    reslt = other.reslt;
+    return *this;
 }
 
 /** Comparison operator */
-bool Promise::compare_object(const Promise &other) const
+bool Promise::operator==(const Promise &other) const
 {
-    return d.get() == other.d.get() and reslt == other.reslt and
-           super::compare_object(other);
+    return d == other.d and reslt == other.reslt;
+}
+
+/** Comparison operator */
+bool Promise::operator!=(const Promise &other) const
+{
+    return not operator==(other);
+}
+
+/** Return the original WorkPacket used to perform this calculation. 
+    This returns "None" if this is a null Promise, or if the calculation
+    is complete and the result is available */
+Obj Promise::workPacket() const
+{
+    if (d)
+        return d->workPacket();
+    else
+        return None();
 }
 
 /** Return whether or not the result is available */
 bool Promise::available() const
 {
-    if (d.get() == 0)
-        return true;
+    if (d)
+        return d->available();
     
     else
-        return d->available();
+        return true;
 }
 
 /** Wait until the result is available */
 void Promise::wait() const
 {
-    if (d.get() != 0)
+    if (d)
         d->wait();
 }
 
@@ -105,7 +214,7 @@ void Promise::wait() const
     passed. This returns whether or not the result is available */
 bool Promise::wait(int ms) const
 {
-    if (d.get() != 0)
+    if (d)
         return d->wait(ms);
     else
         return true;
@@ -115,7 +224,7 @@ bool Promise::wait(int ms) const
     is available */
 Obj Promise::result() const
 {
-    if (d.get() != 0)
+    if (d)
     {
         const_cast<Promise*>(this)->reslt = d->result();
         const_cast<Promise*>(this)->d.reset();
@@ -128,7 +237,7 @@ Obj Promise::result() const
     or return 'def' instead */
 Obj Promise::result(const Object &def) const
 {
-    if (d.get() == 0)
+    if (not d)
         return reslt;
     
     else
@@ -148,7 +257,7 @@ Obj Promise::result(const Object &def) const
     or return 'def' instead */
 Obj Promise::result(const Object &def, int ms) const
 {
-    if (d.get() == 0)
+    if (not d)
         return reslt;
         
     else
@@ -168,7 +277,7 @@ Obj Promise::result(const Object &def, int ms) const
     of the calculation is available */
 void Promise::abort() const
 {
-    if (d.get() != 0)
+    if (not d)
     {
         if (d->available())
             const_cast<Promise*>(this)->reslt = d->result();

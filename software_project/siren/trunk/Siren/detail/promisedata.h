@@ -38,9 +38,14 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    class WorkPacket;
+    class WorkQueue;
+    class WorkQueueItem;
+
     namespace detail
     { 
-        class ThreadPoolData;
+        class WorkQueueData;
+        class WorkQueueItemData;
     
         /** This is an internal class used by Promise, Thread
             and ThreadPool to hold the future results of calculations
@@ -49,7 +54,7 @@ namespace Siren
         class PromiseData : public noncopyable
         {
         public:
-            PromiseData(const exp_shared_ptr<ThreadPoolData>::Type &thread);
+            PromiseData(const WorkQueueItem &workitem);
             ~PromiseData();
 
             bool available();
@@ -60,13 +65,14 @@ namespace Siren
             Obj result();
             
             void setResult(const Obj &result);
-            
+
         private:
-            exp_weak_ptr<ThreadPoolData>::Type thread;
-        
             Mutex m;
             WaitCondition w;
             Obj reslt;
+
+            exp_weak_ptr<WorkQueueItemData> workitem;
+
             bool ready;
         
         }; // end of class PromiseData

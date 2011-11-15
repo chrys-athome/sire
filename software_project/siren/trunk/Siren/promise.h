@@ -36,10 +36,17 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    class Thread;
-    class ThreadPool;
+    class WorkPacket;
+    class WorkQueue;
+    class WorkSpace;
 
-    namespace detail{ class PromiseData; }
+    namespace detail
+    { 
+        class PromiseData;
+        class WorkQueueData;
+        class WorkQueueItemData;
+    
+    } // end of namespace detail
 
     /** This class holds a promised result from calling a function.
         It provides a place-holder into which a result can be placed,
@@ -47,10 +54,8 @@ namespace Siren
         
         @author Christopher Woods
     */
-    class SIREN_EXPORT Promise : public Object
+    class SIREN_EXPORT Promise
     {
-        SIREN_CLASS(Promise,Object,1)
-    
     public:
         Promise();
         Promise(const None &none);
@@ -59,6 +64,16 @@ namespace Siren
         Promise(const Promise &other);
         
         ~Promise();
+        
+        Promise& operator=(const Promise &other);
+        
+        bool operator==(const Promise &other) const;
+        bool operator!=(const Promise &other) const;
+        
+        static const char* typeName(){ return "Siren::Promise";}
+        const char* what() const{ return typeName(); }
+        
+        Obj workPacket() const;
         
         bool available() const;
         
@@ -72,19 +87,28 @@ namespace Siren
         void abort() const;
         void abort(int ms) const;
         
+        void pause() const;
+        
+        Promise resubmit() const;
+        
     protected:
-        void copy_object(const Promise &other);
-        bool compare_object(const Promise &other) const;
+        friend class detail::WorkQueueData;
+        friend class detail::WorkQueueItemData;
+        Promise(const WorkQueueItem &item);
 
-        friend class Thread;
-        friend class ThreadPool;
-        Promise(const exp_shared_ptr<detail::PromiseData>::Type &d);
+        void cancel() const;  // called by the queueing system (abort is user)
+    
+        void jobStarted();
+        void jobCancelled();
+        void jobFinished(const Obj &result);
     
     private:
         /** Copy of the final result */
         Obj reslt;
         
-        /** Shared pointer to the placeholder for the result */
+        /** Shared pointer to the placeholder for the result,
+            which contains a copy of the original WorkPacket used for 
+            the computation */
         exp_shared_ptr<detail::PromiseData>::Type d;
     
     }; // end of class Promise

@@ -33,13 +33,16 @@ REGISTER_SIREN_CLASS( Siren::Date )
 
 using namespace Siren;
 
-/** Constructor that creates the current date */
-Date::Date() : Object(), d( QDate::currentDate() )
+/** Construct a null date */
+Date::Date() : Object()
 {}
 
 /** Construct the specified year, month and day */
-Date::Date(int y, int m, int d) : Object(), d(y,m,d)
-{}
+Date::Date(int year, int month, int day) : Object(), d(year,month,day)
+{
+    if (not d.isValid())
+        d = QDate();
+}
 
 /** Copy constructor */
 Date::Date(const Date &other) : Object(other), d(other.d)
@@ -47,7 +50,10 @@ Date::Date(const Date &other) : Object(other), d(other.d)
 
 #ifdef SIREN_QT_SUPPORT
     Date::Date(const QDate &date) : Object(), d(date)
-    {}
+    {
+        if (not d.isValid())
+            d = QDate();
+    }
     
     Date::operator QDate() const
     {
@@ -63,6 +69,12 @@ Date::~Date()
 String Date::toString() const
 {
     return d.toString();
+}
+
+/** Return whether or not this is a null date */
+bool Date::isNull() const
+{
+    return d.isNull();
 }
 
 /** Return the day */

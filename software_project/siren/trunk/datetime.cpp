@@ -33,7 +33,7 @@ REGISTER_SIREN_CLASS( Siren::DateTime )
 
 using namespace Siren;
 
-/** Construct a DateTime to represent the current date and time */
+/** Construct a null DateTime */
 DateTime::DateTime() : Object()
 {}
 
@@ -49,6 +49,12 @@ DateTime::DateTime(const DateTime &other) : Object(other), d(other.d), t(other.t
 /** Destructor */
 DateTime::~DateTime()
 {}
+
+/** Return if this DateTime is null */
+bool DateTime::isNull() const
+{
+    return d.isNull() or t.isNull();
+}
 
 /** Return the date */
 Date DateTime::date() const

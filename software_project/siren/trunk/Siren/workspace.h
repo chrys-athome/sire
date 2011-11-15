@@ -64,6 +64,12 @@ namespace Siren
         {}
     };
 
+    RENAME WorkSpace to WSpace and create WorkSpace that holds
+    a shared pointer to a WSpace and provides the same API. That 
+    way I have proper sharing of a WSpace object, so no unexpected
+    deletions, and I can return WorkSpace objects, and work with
+    WorkSpace objects
+
     /** This is the base class of all WorkSpace types. A WorkSpace
         provides a shared area that can be used by a group of worker
         threads to collaborate on the processing of a WorkPacket.

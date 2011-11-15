@@ -55,6 +55,8 @@ namespace Siren
         
         String toString() const;
         
+        bool isNull() const;
+        
         int day() const;
         int month() const;
         int year() const;

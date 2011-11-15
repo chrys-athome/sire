@@ -33,18 +33,24 @@ REGISTER_SIREN_CLASS( Siren::Time )
 
 using namespace Siren;
 
-/** Construct a time - this is the current time */
-Time::Time() : Object(), d( QTime::currentTime() )
+/** Construct a null time */
+Time::Time() : Object()
 {}
 
 /** Construct the time from the specified number of hours, minutes
     and seconds (and milliseconds too, if you want to be that accurate) */
 Time::Time(int h, int m, int s, int ms) : Object(), d(h,m,s,ms)
-{}
+{
+    if (not d.isValid())
+        d = QTime();
+}
 
 #ifdef SIREN_QT_SUPPORT
     Time::Time(const QTime &time) : Object(), d(time)
-    {}
+    {
+        if (not d.isValid())
+            d = QTime();
+    }
     
     Time::operator QTime() const
     {
@@ -59,6 +65,12 @@ Time::Time(const Time &other) : Object(other), d(other.d)
 /** Destructor */
 Time::~Time()
 {}
+
+/** Return whether or not this time is null */
+bool Time::isNull() const
+{
+    return d.isNull();
+}
 
 /** Return the hour */
 int Time::hour() const

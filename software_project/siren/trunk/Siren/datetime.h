@@ -51,6 +51,8 @@ namespace Siren
 
         ~DateTime();
         
+        bool isNull() const;
+        
         Date date() const;
         Time time() const;
         

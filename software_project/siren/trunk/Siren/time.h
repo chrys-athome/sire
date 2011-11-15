@@ -52,6 +52,8 @@ namespace Siren
         
         ~Time();
 
+        bool isNull() const;
+
         int hour() const;
         int minute() const;
         int second() const;

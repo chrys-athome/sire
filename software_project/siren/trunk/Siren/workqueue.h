@@ -35,7 +35,12 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    namespace detail{ class WorkQueueData; }
+    namespace detail
+    {
+        class WorkQueueData; 
+        class PromiseData;
+        class WorkQueueItemData;
+    }
 
     /** A WorkQueue provides a scheduler that manages the processing
         of WorkPackets 
@@ -65,6 +70,10 @@ namespace Siren
         int nCompleted() const;
         
     private:
+        friend class detail::WorkQueueItemData;
+        friend class detail::PromiseData;
+        friend class detail::WorkQueueData;
+    
         exp_shared_ptr<detail::WorkQueueData>::Type d;
         
     }; // end of class WorkQueue
