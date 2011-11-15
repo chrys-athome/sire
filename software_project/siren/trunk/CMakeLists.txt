@@ -104,6 +104,7 @@ set ( SIREN_PUBLIC_HEADERS
 set ( SIREN_PRIVATE_HEADERS
 
       Siren/detail/promisedata.h
+      Siren/detail/threaddata.h
 
       Siren/detail/boostsupport.h
       Siren/detail/metatype.h
@@ -146,6 +147,7 @@ set ( SIREN_SOURCES
       systemsemaphore.cpp
       testreport.cpp
       thread.cpp
+      threaddata.cpp
       threadstorage.cpp
       time.cpp
       timer.cpp
