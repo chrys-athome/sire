@@ -97,6 +97,8 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/tostring.hpp
       Siren/waitcondition.h
       Siren/workpacket.h
+      Siren/workqueue.h
+      Siren/workscheduler.h
       Siren/workspace.h
       Siren/workspace.hpp
     )
@@ -105,6 +107,7 @@ set ( SIREN_PRIVATE_HEADERS
 
       Siren/detail/promisedata.h
       Siren/detail/threaddata.h
+      Siren/detail/workqueuedata.h
 
       Siren/detail/boostsupport.h
       Siren/detail/metatype.h
@@ -153,6 +156,9 @@ set ( SIREN_SOURCES
       timer.cpp
       waitcondition.cpp
       workpacket.cpp
+      workqueue.cpp
+      workqueuedata.cpp
+      workscheduler.cpp
       workspace.cpp
 
       ${SIREN_PRIVATE_HEADERS}
