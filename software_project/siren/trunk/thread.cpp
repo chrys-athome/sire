@@ -28,274 +28,245 @@
 
 #include "Siren/thread.h"
 #include "Siren/mutex.h"
-#include "Siren/exceptions.h"
-#include "Siren/workpacket.h"
-#include "Siren/workspace.h"
-#include "Siren/obj.h"
-#include "Siren/none.h"
 #include "Siren/waitcondition.h"
+#include "Siren/exceptions.h"
 #include "Siren/forages.h"
+#include "Siren/obj.h"
+#include "Siren/object.hpp"
+#include "Siren/obj.hpp"
+#include "Siren/none.h"
 #include "Siren/siren.hpp"
+
+using namespace Siren;
+using namespace Siren::detail;
 
 namespace Siren
 {
     namespace detail
     {
-        /** This internal class represents a real, physical CPU thread. */
-        class CPUThread : public QThread
+        /** This class provides the actual implementation of Thread */
+        class ThreadData : public QThread
         {
         public:
-            ~CPUThread();
+            ThreadData();
+            ~ThreadData();
             
-            void start();
+            int session();
+
+            void setFunction( void (*function)() );
+
+            bool isError();
+            bool hasFinished();
             
-            void process(const WorkPacket &workpacket);
+            void throwError();
+            void checkError();
             
-            void process(const WorkPacket &workpacket, 
-                         WorkSpace &workspace,
-                         int id);
-            
-            Obj result();
-            
-            bool hasResult();
-            bool finished();
-            bool isBusy();
-            
+            void abort();
             void pause();
             void play();
-            void abort();
             
-            int ID();
-            String description();
+            void quit();
             
         protected:
-            friend class CPUThreads;
-            CPUThread();
             void run();
-        
+            
         private:
-            /** Mutex used to seriliase access to the thread's state */
-            Mutex mutex;
+            /** Mutex protecting access to the data of this thread */
+            Mutex m;
         
-            /** Waitcondition used to pause the thread */
-            WaitCondition thread_waiter;
+            /** WaitCondition used to wake the thread when it has something to run */
+            WaitCondition waiter;
         
-            /** The WorkPacket to process */
-            const WorkPacket *workpacket;
-            
-            /** The WorkSpace that may be used during processing */
-            WorkSpace *workspace;
-            
-            /** The result of processing - this in "None" until processing has 
-                completed */
-            Obj reslt;
-            
-            /** Any truly unexpected error that occurred with this thread */
+            /** Any error that was caught during running of the function */
             Obj err;
-            
-            /** The ID of the thread in the group processing
-                the WorkPacket */
-            int packet_id;
-
-            /** The name of the thread - this comes from the WorkPacket
-                being processed */
-            String thread_name;
-            
-            /** The ID of the thread */
+        
+            /** The for_ages thread ID */
             int thread_id;
+        
+            /** The current session number - this is incremented
+                when the thread has finished its work */
+            int session_id;
             
-            /** The worker thread ID if this thread is part of a group
-                that is processing a WorkPacket */
-            int worker_id;
+            /** Pointer to the function that should be run */
+            void (*func_ptr)();
+            
+            /** Whether or not we should exit the thread */
+            bool should_quit;
+        };
+    
+        /** This class provides a simple pool of threads */
+        class ThreadPool : public noncopyable
+        {
+        public:
+            ThreadPool();
+            ~ThreadPool();
+            
+            Mutex m;
+            List<exp_shared_ptr<ThreadData>::Type>::Type free_threads;
+            List<exp_shared_ptr<ThreadData>::Type>::Type busy_threads;
         };
     
     } // end of namespace detail
-    
+
 } // end of namespace Siren
 
-using namespace Siren;
-using namespace Siren::detail;
+//////////
+////////// Implementation of ThreadData
+//////////
 
-///////////////
-/////////////// Implementation of CPUThread
-///////////////
-
-/** Constructor - a CPUThread sits idle on a pool until it is needed */
-CPUThread::CPUThread() 
-          : QThread(), workpacket(0), workspace(0),
-            packet_id(0), thread_id(-1), worker_id(0)
+/** Constructor */
+ThreadData::ThreadData() 
+           : QThread(), thread_id(0), session_id(0), func_ptr(0), should_quit(false)
 {
-    CPUThread::start();
+    QThread::start();
 }
 
 /** Destructor */
-CPUThread::~CPUThread()
+ThreadData::~ThreadData()
 {
+    this->quit();
     QThread::wait();
 }
 
-/** Start this thread */
-void CPUThread::start()
+/** Tell this thread to quit as soon as it can */
+void ThreadData::quit()
 {
-    if (this->isRunning())
-        return;
-
-    MutexLocker lkr(&mutex);
-    QThread::start();
-    thread_waiter.wait(&mutex);
+    MutexLocker lkr(&m);
+    should_quit = true;
+    waiter.wakeAll();
 }
 
-/** Process the passed WorkPacket - this raises an exception if this
-    thread is already busy processing another WorkPacket */
-void CPUThread::process(const WorkPacket &packet)
+/** Return the session ID of this run */
+int ThreadData::session()
 {
-    MutexLocker lkr(&mutex);
-    
-    if (workpacket != 0)
-        throw Siren::program_bug( String::tr(
-                "A busy CPUThread has been asked to process the workpacket %1.")
-                    .arg(packet.toString()), CODELOC );
-                    
-    else if (not reslt.isNone())
-        throw Siren::program_bug( String::tr(
-                "A completed CPUThread has not yet had its result retrieved!"),
-                    CODELOC );
-
-    workpacket = &packet;
-    workspace = 0;
-    worker_id = -1;
-    reslt = None();
-    thread_name = String::tr("CPUThread(%1) processing \"%1\"")
-                    .arg(thread_id).arg(packet.toString());
-    
-    thread_waiter.wakeAll();
+    MutexLocker lkr(&m);
+    return session_id;
 }
 
-/** Process the passed WorkPacket, as part of a worker thread group.
-    This thread uses the passed WorkSpace to communicate with the other
-    threads, and is given worker id "id". This raises an exception
-    if this thread is already busy processing another WorkPacket */
-void CPUThread::process(const WorkPacket &packet, 
-                        WorkSpace &space, int id)
+/** Set the function that should be run by this thread */
+void ThreadData::setFunction( void (*function)() )
 {
-    MutexLocker lkr(&mutex);
+    MutexLocker lkr(&m);
     
-    if (workpacket != 0)
+    if (func_ptr)
         throw Siren::program_bug( String::tr(
-                "A busy CPUThread has been asked to process the workpacket %1.")
-                    .arg(packet.toString()), CODELOC );
-
-    else if (not reslt.isNone())
-        throw Siren::program_bug( String::tr(
-                "A completed CPUThread has not yet had its result retrieved!"),
+                "It should not be possible to set the function of an active thread!"),
                     CODELOC );
 
-    workpacket = &packet;
-    workspace = &space;
-    worker_id = id;
-    reslt = None();
+    session_id += 1;
     err = None();
-    thread_name = String::tr("CPUThread(%1, worker %2) processing \"%3\"")
-                    .arg(thread_id).arg(worker_id).arg(packet.toString());
+    func_ptr = function;
+
+    waiter.wakeAll();
+}
+
+/** Return whether processing the function caused an error */
+bool ThreadData::isError()
+{
+    MutexLocker lkr(&m);
+    return not err.isNone();
+}
+
+/** Return whether or not the last job has finished */
+bool ThreadData::hasFinished()
+{
+    MutexLocker lkr(&m);
+    return func_ptr == 0;
+}
+
+/** Throw the error (if one exists) */
+void ThreadData::throwError()
+{
+    MutexLocker lkr(&m);
     
-    thread_waiter.wakeAll();
-}
-
-/** Pause this thread - this sends a for_ages::pause to this thread */
-void CPUThread::pause()
-{
-    for_ages::pause(thread_id);
-}
-
-/** Play this thread - this sends a for_ages::play to this thread */
-void CPUThread::play()
-{
-    for_ages::play(thread_id);
-}
-
-/** Abort running in this thread - this sends a for_ages::end to this thread,
-    which will cause any blocked operations to exit, and an interupted_thread
-    exception to be raised */
-void CPUThread::abort()
-{
-    for_ages::end(thread_id);
-}
-
-/** Return the ID number of this thread. This is "-1" if this thread
-    hasn't been started */
-int CPUThread::ID()
-{
-    MutexLocker lkr(&mutex);
-    return thread_id;
-}
-
-/** Return the description of this thread - this is a string describing
-    what the thread is currently doing */
-String CPUThread::description()
-{
-    MutexLocker lkr(&mutex);
-    return thread_name;
-}
-
-/** The actual code running in the background thread */
-void CPUThread::run()
-{
-    MutexLocker lkr(&mutex);
-   
-    thread_id = for_ages::registerThisThread();
+    if (err.isNone())
+        return;
     
-    thread_waiter.wakeAll();
+    else if (err.isA<Exception>())
+        err.asA<Exception>().throwSelf();
+}
+
+/** Check if there was an error, and if there was, then throw it */
+void ThreadData::checkError()
+{
+    MutexLocker lkr(&m);
+    
+    if (err.isNone())
+        return;
+    
+    else if (err.isA<Exception>())
+        err.asA<Exception>().throwSelf();
+}
+
+/** Abort running this thread - this sends an end_for_ages to this thread */
+void ThreadData::abort()
+{
+    MutexLocker lkr(&m);
+
+    if (thread_id)
+        for_ages::end(thread_id);
+}
+
+/** Pause this thread */
+void ThreadData::pause()
+{
+    MutexLocker lkr(&m);
+    
+    if (thread_id)
+        for_ages::pause(thread_id);
+}
+
+/** Resume playing this thread */
+void ThreadData::play()
+{
+    MutexLocker lkr(&m);
+    
+    if (thread_id)
+        for_ages::play(thread_id);
+}
+
+/** The actual code running in the thread */
+void ThreadData::run()
+{
+    MutexLocker lkr(&m);
 
     try
     {
+        thread_id = for_ages::registerThisThread();
+        
         while (for_ages::loop())
         {
-            if (workpacket == 0)
-                thread_waiter.wait(&mutex);
-            
-            Obj result;
-            lkr.unlock();
-            
-            try
+            if (should_quit)
             {
-                for_ages::setThisThreadName(thread_name);
-
-                if (workspace == 0)
-                    result = workpacket->run();
-            
-                else if (worker_id >= 0)
-                    result = workpacket->run(*workspace, worker_id);
-            
-                else
-                    result = workpacket->run(*workspace);
+                break;
             }
-            catch(const Siren::Exception &e)
+            else if (func_ptr)
             {
-                result = e;
-            }
-            catch(const std::exception &e)
-            {
-                result = standard_exception(e,CODELOC);
-            }
-            catch(...)
-            {
-                result = unknown_exception(CODELOC);
+                lkr.unlock();
+                
+                try
+                {
+                    (*func_ptr)();
+                }
+                catch(const Siren::Exception &e)
+                {
+                    err = e;
+                }
+                catch(const std::exception &e)
+                {
+                    err = standard_exception(e, CODELOC);
+                }
+                catch(...)
+                {
+                    err = unknown_exception(CODELOC);
+                }
+                
+                lkr.relock();
+                func_ptr = 0;
             }
             
-            lkr.relock();
-            
-            for_ages::setThisThreadName( String() );
-
-            workpacket = 0;
-            workspace = 0;
-            worker_id = -1;
-            reslt = result;
+            waiter.wait(&m);
         }
-    }
-    catch(const Siren::interupted_thread&)
-    {
-        //this is just the signal to stop the thread
-        // - it is not an error
     }
     catch(const Siren::Exception &e)
     {
@@ -303,13 +274,162 @@ void CPUThread::run()
     }
     catch(const std::exception &e)
     {
-        err = standard_exception(e, CODELOC);
-    } 
+        err = standard_exception(e,CODELOC);
+    }
     catch(...)
     {
         err = unknown_exception(CODELOC);
     }
-
+    
     for_ages::unregisterThisThread();
-    thread_id = -1;
+    thread_id = 0;
+    session_id = 0;
+}
+
+//////////
+////////// Implementation of ThreadPool
+//////////
+
+ThreadPool::ThreadPool()
+{}
+
+ThreadPool::~ThreadPool()
+{
+    //make sure that all of the threads quit before the program ends
+    MutexLocker lkr(&m);
+    
+    for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = free_threads.begin();
+         it != free_threads.end();
+         ++it)
+    {
+        (*it)->quit();
+    }
+    
+    for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = busy_threads.begin();
+         it != busy_threads.end();
+         ++it)
+    {
+        (*it)->quit();
+    }
+}
+
+//////////
+////////// Implementation of Thread
+//////////
+
+static AtomicPointer<ThreadPool>::Type global_pool;
+
+static ThreadPool& pool()
+{
+    while (global_pool == 0)
+    {
+        ThreadPool *p = new ThreadPool();
+        
+        if (not global_pool.testAndSetAcquire(0,p))
+            delete p;
+    }
+    
+    return *global_pool;
+}
+
+/** Construct a null Thread */
+Thread::Thread() : session_id(0)
+{}
+
+/** Copy constructor */
+Thread::Thread(const Thread &other) : d(other.d), session_id(other.session_id)
+{}
+
+/** Destructor */
+Thread::~Thread()
+{
+    if (d.unique())
+    {
+        //return the underlying thread to the pool
+        MutexLocker lkr( &(pool().m) );
+        pool().busy_threads.append(d);
+    }
+}
+
+/** Copy assignment operator */
+Thread& Thread::operator=(const Thread &other)
+{
+    d = other.d;
+    session_id = other.session_id;
+    return *this;
+}
+
+/** Comparison operator */
+bool Thread::operator==(const Thread &other) const
+{
+    return d.get() == other.d.get() and session_id == other.session_id;
+}
+
+/** Comparison operator */
+bool Thread::operator!=(const Thread &other) const
+{
+    return not operator==(other);
+}
+
+/** Return whether or not this thread is null */
+bool Thread::isNull()
+{
+    return d.get() == 0;
+}
+
+/** Start a thread to run the passed function. The thread will be started
+    and run as soon as possible */
+Thread Thread::run( void (*function)() )
+{
+    ThreadPool &p = pool();
+    
+    Thread t;
+    int nfree = 0;
+    
+    {
+        MutexLocker lkr( &(p.m) );
+        
+        if (p.free_threads.isEmpty())
+        {
+            //have any of the active threads finished?
+            List<exp_shared_ptr<ThreadData>::Type>::MutableIterator it(p.busy_threads);
+            
+            while (it.hasNext())
+            {
+                it.next();
+                
+                if ( it.value()->hasFinished() )
+                {
+                    t.d = it.value();
+                    it.remove();
+                    break;
+                }
+            }
+            
+            if (t.isNull())
+                //there were no free threads, so create a new thread
+                t.d.reset( new ThreadData() );
+        }
+        else
+        {
+            t.d = p.free_threads.takeFirst();
+            nfree = p.free_threads.count();
+        }
+    }
+
+    //start the background job
+    t.d->setFunction(function);
+    
+    //now clean up the pool, if needed
+    if (nfree > 5)
+    {
+        MutexLocker lkr( &(p.m) );
+        
+        while (p.free_threads.count() > 5)
+        {
+            p.free_threads.takeFirst();
+        }
+    }
+    
+    return t;
 }

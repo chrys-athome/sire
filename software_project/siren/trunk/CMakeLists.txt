@@ -141,7 +141,6 @@ set ( SIREN_SOURCES
       object.cpp
       obj.cpp
       promise.cpp
-      promisedata.cpp
       readwritelock.cpp
       semaphore.cpp
       schemas.cpp
@@ -152,7 +151,6 @@ set ( SIREN_SOURCES
       systemsemaphore.cpp
       testreport.cpp
       thread.cpp
-      threaddata.cpp
       threadstorage.cpp
       time.cpp
       timer.cpp

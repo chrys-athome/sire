@@ -55,6 +55,9 @@ namespace Siren
         void wait(Mutex *mutex);
         bool wait(Mutex *mutex, unsigned long time);
         
+        void wait(ReadWriteLock *lock);
+        bool wait(ReadWriteLock *lock, unsigned long time);
+        
         void wakeOne();
         void wakeAll();
 

@@ -28,6 +28,7 @@
 
 #include "Siren/waitcondition.h"
 #include "Siren/mutex.h"
+#include "Siren/readwritelock.h"
 #include "Siren/forages.h"
 #include "Siren/string.h"
 #include "Siren/timer.h"
@@ -65,6 +66,36 @@ void WaitCondition::wait(Mutex *mutex)
         do
         {
             w.wait( &(mutex->m) );
+    
+        } while (not this->shouldWake());
+    }
+    catch(...)
+    {
+        this->hasWoken();
+        throw;
+    }
+}
+
+/** Wait until this thread has been woken up.
+    Note that the passed lock must have been locked! */
+void WaitCondition::wait(ReadWriteLock *lock)
+{
+    if (lock == 0)
+        return;
+
+    //first wait for 200 ms - this will prevent us from
+    //wasting a lot of resources on short sleeps
+    if (w.wait( &(lock->l), 200 ))
+        //the wait was interupted :-)
+        return;
+
+    try
+    {
+        this->aboutToSleep();
+
+        do
+        {
+            w.wait( &(lock->l) );
     
         } while (not this->shouldWake());
     }
@@ -120,6 +151,53 @@ bool WaitCondition::wait(Mutex *mutex, unsigned long time)
         do
         {
             woken = w.wait( &(mutex->m), time - t.elapsed() );
+
+            if (woken)
+            {
+                this->hasWoken();
+                return true;
+            }
+            else if (t.elapsed() >= time)
+            {
+                this->hasWoken();
+                return false;
+            }
+            
+        } while (not this->shouldWake());
+    }
+    catch(...)
+    {
+        this->hasWoken();
+        throw;
+    }
+    
+    return true;
+}
+
+/** Wait until this thread has been woken up, or until 'time' milliseconds
+    has passed, whichever comes first. Returns whether or not the thread
+    was woken up before 'time' milliseconds */
+bool WaitCondition::wait(ReadWriteLock *lock, unsigned long time)
+{
+    if (lock == 0)
+        return true;
+
+    else if (time == 0)
+        return true;
+
+    else if (time < 200)
+        return w.wait( &(lock->l), time );
+
+    try
+    {
+        Timer t = Timer::start();
+        this->aboutToSleep();
+    
+        bool woken = false;
+    
+        do
+        {
+            woken = w.wait( &(lock->l), time - t.elapsed() );
 
             if (woken)
             {

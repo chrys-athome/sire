@@ -35,6 +35,8 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    class WorkQueueItem;
+
     namespace detail
     {
         class WorkQueueData; 
@@ -64,16 +66,21 @@ namespace Siren
         Promise submit(const WorkPacket &workpacket, int n=1);
         Promise submit(const WorkPacket &workpacket, WorkSpace &workspace, int n=1);
         
+        bool isNull() const;
+        
         int nWaiting() const;
         int nRunning() const;
         
         int nCompleted() const;
+    
+    protected:
+        friend class Siren::detail::WorkQueueItemData;
+        friend class Siren::detail::WorkQueueData;
+        WorkQueue(const exp_shared_ptr<detail::WorkQueueData>::Type &ptr);
+        
+        void abort(const WorkQueueItem &item);
         
     private:
-        friend class detail::WorkQueueItemData;
-        friend class detail::PromiseData;
-        friend class detail::WorkQueueData;
-    
         exp_shared_ptr<detail::WorkQueueData>::Type d;
         
     }; // end of class WorkQueue

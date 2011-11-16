@@ -64,12 +64,6 @@ namespace Siren
         {}
     };
 
-    RENAME WorkSpace to WSpace and create WorkSpace that holds
-    a shared pointer to a WSpace and provides the same API. That 
-    way I have proper sharing of a WSpace object, so no unexpected
-    deletions, and I can return WorkSpace objects, and work with
-    WorkSpace objects
-
     /** This is the base class of all WorkSpace types. A WorkSpace
         provides a shared area that can be used by a group of worker
         threads to collaborate on the processing of a WorkPacket.
@@ -83,15 +77,17 @@ namespace Siren
         
         @author Christopher Woods
     */
-    class SIREN_EXPORT WorkSpace : public noncopyable
+    class SIREN_EXPORT WSpace : public noncopyable
     {
     public:
-        WorkSpace();
-        WorkSpace(int worker_id);
+        WSpace();
+        WSpace(int worker_id);
 
-        virtual ~WorkSpace();
+        virtual ~WSpace();
+
+        static const char* typeName(){ return "Siren::WSpace"; }
         
-        virtual const char* what() const=0;
+        virtual const char* what() const{ return typeName(); }
         
         void flush();
         void setAutoFlush(bool on);
@@ -116,22 +112,13 @@ namespace Siren
         virtual bool hasObjectFrom(int worker_id, const String &key);
         virtual bool waitForObjectFrom(int worker_id, const String &key, int ms);
         
-        template<class T>
-        bool isA() const;
-        
-        template<class T>
-        T& asA();
-        
-        template<class T>
-        const T& asA() const;
+        ReadWriteLock& lock();
         
     protected:
         void createKey(const String &key);
         void createArrayKey(const String &key, int count);
         
         void receivedFrom(int worker_id, const String &key, const Obj &object);
-        
-        ReadWriteLock& lock();
         
     private:
         /** The lock used to protect access to the data
@@ -144,10 +131,71 @@ namespace Siren
         /** The received objects from other worker threads */
         Hash<int,Hash<String,Obj>::Type>::Type received_objs;
         
-    }; // end of class WorkSpace
+    }; // end of class WSpace
 
-    /** Simple synonym for the explicitly shared pointer to a WorkSpace */
-    typedef exp_shared_ptr<WorkSpace>::Type WorkSpacePtr;
+    /** This class provides a generic holder for any WSpace WorkSpace.
+        This provides a simple handle that provides the same API as WSpace,
+        along with automatic explicit reference counting, ensuring that
+        the WorkSpace is only deleted once all references are lost 
+        
+        @author Christopher Woods
+    */
+    class SIREN_EXPORT WorkSpace
+    {
+    public:
+        WorkSpace();
+        WorkSpace(int worker_id);
+        WorkSpace(WSpace *wspace);
+
+        WorkSpace(const WorkSpace &other);
+
+        ~WorkSpace();
+        
+        WorkSpace& operator=(const WorkSpace &other);
+        
+        bool operator==(const WorkSpace &other) const;
+        bool operator!=(const WorkSpace &other) const;
+        
+        static const char* typeName(){ return "Siren::WorkSpace"; }
+        
+        const char* what() const;
+        
+        void flush();
+        void setAutoFlush(bool on);
+        bool isAutoFlush();
+        
+        int arraySize(const String &key);
+        
+        void save(const String &key, const Object &object);
+        Obj load(const String &key);
+        
+        void save(const String &key, int idx, const Object &object);
+        Obj load(const String &key, int idx);
+        
+        void save(const String &key, int idx, const List<Obj>::Type &objects);
+                  
+        List<Obj>::Type load(const String &key, int idx, int count);
+        
+        Obj receive(int worker_id, const String &key);
+        Receipt send(int worker_id, const String &key, const Object &object);
+        Receipts broadcast(const String &key, const Object &object);
+        
+        bool hasObjectFrom(int worker_id, const String &key);
+        bool waitForObjectFrom(int worker_id, const String &key, int ms);
+        
+        template<class T>
+        bool isA() const;
+        
+        template<class T>
+        T& asA();
+        
+        template<class T>
+        const T& asA() const;
+        
+    private:
+        exp_shared_ptr<WSpace>::Type d;
+        
+    }; // end of class WorkSpace
 
 } // end of namespace Siren
 

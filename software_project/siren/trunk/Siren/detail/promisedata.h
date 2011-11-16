@@ -71,7 +71,7 @@ namespace Siren
             WaitCondition w;
             Obj reslt;
 
-            exp_weak_ptr<WorkQueueItemData> workitem;
+            exp_weak_ptr<WorkQueueItemData>::Type workitem;
 
             bool ready;
         

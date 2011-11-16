@@ -35,6 +35,8 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    class WaitCondition;
+
     namespace detail
     {
         class LockBreaker;
@@ -69,6 +71,7 @@ namespace Siren
     private:
         void createBreaker();
     
+        friend class WaitCondition;
         QReadWriteLock l;
     
         AtomicPointer<detail::LockBreaker>::Type breaker;

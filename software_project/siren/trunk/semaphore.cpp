@@ -75,7 +75,7 @@ void Semaphore::createBreaker()
     {
         SemBreaker *b = new SemBreaker();
         
-        if (not breaker.testAndSetAcquire(b, 0))
+        if (not breaker.testAndSetAcquire(0, b))
             delete b;
     }
 }

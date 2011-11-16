@@ -39,6 +39,7 @@ namespace Siren
     class WorkPacket;
     class WorkQueue;
     class WorkSpace;
+    class WorkQueueItem;
 
     namespace detail
     { 
@@ -74,6 +75,7 @@ namespace Siren
         const char* what() const{ return typeName(); }
         
         Obj workPacket() const;
+        WorkSpace workSpace() const;
         
         bool available() const;
         
@@ -93,8 +95,10 @@ namespace Siren
         
     protected:
         friend class detail::WorkQueueData;
-        friend class detail::WorkQueueItemData;
         Promise(const WorkQueueItem &item);
+
+        friend class detail::WorkQueueItemData;
+        Promise(const exp_shared_ptr<detail::PromiseData>::Type &ptr);
 
         void cancel() const;  // called by the queueing system (abort is user)
     

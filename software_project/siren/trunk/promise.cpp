@@ -47,8 +47,8 @@ using namespace Siren::detail;
 /////////
 
 /** Null constructor */
-PromiseData::PromiseData(const WorkPacket &packet) 
-            : noncopyable(), workpacket(packet), ready(false)
+PromiseData::PromiseData(const WorkQueueItem &item) 
+            : noncopyable(), workitem(item.d), ready(false)
 {}
 
 /** Destructor */
@@ -64,14 +64,6 @@ bool PromiseData::available()
 {
     MutexLocker lkr(&m);
     return ready;
-}
-
-/** Return the original WorkPacket used to run the calculation.
-    This returns "None" if this is a null packet */
-Obj PromiseData::workPacket()
-{
-    MutexLocker lkr(&m);
-    return workpacket;
 }
 
 /** Wait until the result is available, and then return the result */
@@ -139,6 +131,12 @@ void PromiseData::setResult(const Obj &result)
 Promise::Promise()
 {}
 
+/** Internal function used by WorkQueue to construct a Promise from 
+    the passed WorkQueueItem */
+Promise::Promise(const WorkQueueItem &item)
+        : d(new PromiseData(item))
+{}
+
 /** Construct an empty Promise - this is the same as a default-constructed promise */
 Promise::Promise(const None &none)
 {}
@@ -180,17 +178,6 @@ bool Promise::operator==(const Promise &other) const
 bool Promise::operator!=(const Promise &other) const
 {
     return not operator==(other);
-}
-
-/** Return the original WorkPacket used to perform this calculation. 
-    This returns "None" if this is a null Promise, or if the calculation
-    is complete and the result is available */
-Obj Promise::workPacket() const
-{
-    if (d)
-        return d->workPacket();
-    else
-        return None();
 }
 
 /** Return whether or not the result is available */
@@ -298,4 +285,25 @@ void Promise::abort(int ms) const
         
         const_cast<Promise*>(this)->d.reset();
     }
+}
+
+/** This internal function is called when the job attached to this promise
+    is cancelled */
+void Promise::jobCancelled()
+{
+    throw Siren::incomplete_code("TODO", CODELOC);
+}
+
+/** This internal function is called when the job attached to this promise
+    is finished, and is used to supply the result */
+void Promise::jobFinished(const Obj &result)
+{
+    throw Siren::incomplete_code("TODO", CODELOC);
+}
+
+/** This internal function is called when the job attached to this promise
+    has started */
+void Promise::jobStarted()
+{
+    throw Siren::incomplete_code("TODO", CODELOC);
 }

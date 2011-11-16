@@ -37,6 +37,8 @@ namespace Siren
 {
     class Promise;
     class WorkQueue;
+    class WorkPacket;
+    class WorkSpace;
     class Obj;
     class DateTime;
 
@@ -59,8 +61,12 @@ namespace Siren
     {
     public:
         WorkQueueItem();
-        WorkQueueItem(const Promise &promise,
-                      const WorkQueue &queue);
+        WorkQueueItem(const WorkPacket &workpacket,
+                      const WorkQueue &queue, int n=1);
+                      
+        WorkQueueItem(const WorkPacket &workpacket,
+                      const WorkSpace &workspace, 
+                      const WorkQueue &queue, int n=1);
                       
         WorkQueueItem(const WorkQueueItem &other);
         
@@ -75,6 +81,12 @@ namespace Siren
         const char* what() const{ return typeName(); }
         
         Obj workPacket() const;
+        WorkSpace workSpace() const;
+        
+        bool hasWorkSpace() const;
+        
+        int nWorkers() const;
+        
         DateTime submissionTime() const;
         DateTime startTime() const;
         DateTime finishTime() const;
@@ -82,16 +94,21 @@ namespace Siren
         Obj operator[](const String &key) const;
     
         Promise promise() const;
+        WorkQueue queue() const;
     
     protected:
-        friend class detail::PromiseData;
-        friend class detail::WorkQueueData;
         friend class detail::WorkQueueItemData;
-        WorkQueueItem(const exp_shared_ptr<detail::WorkQueueItemData> &ptr);
+        WorkQueueItem(const exp_shared_ptr<detail::WorkQueueItemData>::Type &ptr);
+
+        friend class detail::WorkQueueData;
+        friend class detail::PromiseData;
+        void setPromise(const Promise &promise);
     
         void jobStarted();
         void jobCancelled();
         void jobFinished(const Obj &result);
+    
+        void abort(); // called by Promise to indicate that the job should stop
     
     private:
         exp_shared_ptr<detail::WorkQueueItemData>::Type d;

@@ -65,7 +65,7 @@ void Mutex::createBreaker()
     {
         MutexBreaker *tmp = new MutexBreaker();
         
-        if (not breaker.testAndSetAcquire(tmp, 0))
+        if (not breaker.testAndSetAcquire(0, tmp))
         {
             delete tmp;
         }

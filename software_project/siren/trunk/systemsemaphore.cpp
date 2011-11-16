@@ -54,10 +54,11 @@ namespace Siren
     /** This is the WorkSpace used in the background to communicate between the 
         program and the background thread that is used to acquire the 
         system semaphore */
-    class SysSemWorkSpace : public WorkSpace
+    class SysSemWorkSpace : public WSpace
     {
     public:
-        SysSemWorkSpace();
+        static WorkSpace create();
+    
         ~SysSemWorkSpace();
 
         static const char* typeName() { return "Siren::SysSemWorkSpace"; }
@@ -85,7 +86,6 @@ namespace Siren
         void gotLock();
         void lostLock();
         
-        Mutex& mutex();
         Semaphore& semaphore();
         WaitCondition& waiter();
 
@@ -97,7 +97,8 @@ namespace Siren
         void setError(const Exception &e);
 
     private:
-        Mutex m;
+        SysSemWorkSpace();
+
         Semaphore *s;
         WaitCondition *w;
 
@@ -157,13 +158,19 @@ namespace Siren
 
 /** Constructor */
 SysSemWorkSpace::SysSemWorkSpace() 
-                : WorkSpace(), s(0), w(0), n_acquired(0), n_requested(0)
+                : WSpace(), s(0), w(0), n_acquired(0), n_requested(0)
 {}
+
+/** Public construction must use the "create" function */
+WorkSpace SysSemWorkSpace::create()
+{
+    return WorkSpace( new SysSemWorkSpace() );
+}
 
 /** Destructor */
 SysSemWorkSpace::~SysSemWorkSpace()
 {
-    MutexLocker lkr(&m);
+    WriteLocker lkr(&(lock()));
     delete s;
     delete w;
 }
@@ -171,25 +178,25 @@ SysSemWorkSpace::~SysSemWorkSpace()
 /** Return the number of resources that have been acquired */
 int SysSemWorkSpace::nAcquired()
 {
-    MutexLocker lkr(&m);
+    ReadLocker lkr(&(lock()));
     return n_acquired;
 }
 
 /** Return the number of resources that are available */
 int SysSemWorkSpace::nAvailable()
 {
-    MutexLocker lkr(&m);
+    ReadLocker lkr(&(lock()));
     return n_available;
 }
 
 /** Return whether or not we are in an error state - note that the calling
-    thread must hold the mutex */
+    thread must hold a read or write lock */
 bool SysSemWorkSpace::hasError() const
 {
     return not error.isNone();
 }
 
-/** Function called by SysSemWorkSpace when it holds the mutex to set 
+/** Function called by SysSemWorkSpace when it holds the write lock to set 
     the error state */
 void SysSemWorkSpace::setError(const Exception &e)
 {
@@ -197,7 +204,7 @@ void SysSemWorkSpace::setError(const Exception &e)
 }
 
 /** Throw the error if we are in an error state 
-        - note that the calling thread must hold the mutex */
+        - note that the calling thread must hold a read or write lock */
 void SysSemWorkSpace::checkError() const
 {
     if (not error.isNone())
@@ -212,7 +219,7 @@ void SysSemWorkSpace::acquire(int n)
     if (n <= 0)
         n = 1;
 
-    MutexLocker lkr(&m);
+    WriteLocker lkr(&(lock()));
 
     //raise an exception if this semaphore is in an error state
     this->checkError();
@@ -255,7 +262,7 @@ bool SysSemWorkSpace::tryAcquire(int n)
     if (n <= 0)
         n = 1;
 
-    MutexLocker lkr(&m);
+    WriteLocker lkr(&(lock()));
 
     //raise an exception if this semaphore is in an error state
     this->checkError();
@@ -272,7 +279,7 @@ bool SysSemWorkSpace::tryAcquire(int n)
         
         //we now sleep, so that we give a chance for the background
         //thread to actually acquire a lock!
-        w->wait(&m);
+        w->wait(&(lock()));
         
         if (s->tryAcquire(n))
         {
@@ -317,7 +324,7 @@ bool SysSemWorkSpace::tryAcquire(int n, int ms)
 
     Timer t = Timer::start();
 
-    MutexLocker lkr(&m);
+    WriteLocker lkr(&(lock()));
 
     if (n_requested + n > n_available)
         //not possible as not enough resources!
@@ -331,7 +338,7 @@ bool SysSemWorkSpace::tryAcquire(int n, int ms)
         
         //we now sleep, so that we give a chance for the background
         //thread to actually acquire a lock!
-        w->wait(&m);
+        w->wait(&(lock()));
         
         ms -= t.elapsed();
         
@@ -391,7 +398,7 @@ void SysSemWorkSpace::release(int n)
     if (n <= 0)
         n = 1;
         
-    MutexLocker lkr(&m);
+    WriteLocker lkr(&(lock()));
     
     //raise an exception if this semaphore is in an error state
     this->checkError();
@@ -411,7 +418,7 @@ void SysSemWorkSpace::release(int n)
 /** Intialise this workspace to work with the passed SysSemWorkPacket */
 void SysSemWorkSpace::initialise(const SysSemWorkPacket &parent)
 {
-    MutexLocker lkr(&m);
+    WriteLocker lkr(&(lock()));
     
     if (s != 0)
         throw Siren::program_bug( String::tr(
@@ -457,12 +464,6 @@ void SysSemWorkSpace::lostLock()
     
     n_acquired -= 1;
     s->acquire();
-}
-
-/** Return the mutex used to protect access to the data of the workspace */
-Mutex& SysSemWorkSpace::mutex()
-{
-    return m;
 }
 
 /** Return the semaphore that holds a local copy of the resources */
@@ -590,7 +591,7 @@ Obj SysSemWorkPacket::runChunk(WorkSpace &workspace) const
         return None();
 
     SysSemWorkSpace &ws = workspace.asA<SysSemWorkSpace>();
-    MutexLocker lkr( &(ws.mutex()) );
+    WriteLocker lkr( &(ws.lock()) );
 
     ws.initialise(*this);
 
@@ -671,7 +672,7 @@ Obj SysSemWorkPacket::runChunk(WorkSpace &workspace) const
             //now sleep until something happens (waking up anyone who has 
             //been waiting for us to finish communicating with the system semaphore)
             ws.waiter().wakeAll();
-            ws.waiter().wait( &(ws.mutex()) );
+            ws.waiter().wait( &(ws.lock()) );
         }
     }
     catch(...)

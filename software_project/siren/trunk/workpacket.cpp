@@ -34,6 +34,7 @@
 #include "Siren/siren.hpp"
 #include "Siren/timer.h"
 #include "Siren/testreport.h"
+#include "Siren/thread.h"
 
 #include <cmath>
 
@@ -69,9 +70,9 @@ bool WorkPacket::needsWorkspace() const
 
 /** Create the accompanying WorkSpace for this WorkPacket. This returns
     a null pointer if a WorkSpace is not required for this WorkPacket */
-WorkSpacePtr WorkPacket::createWorkspace() const
+WorkSpace WorkPacket::createWorkspace() const
 {
-    return WorkSpacePtr();
+    return WorkSpace();
 }
 
 /** Create the accompanying WorkSpace for this WorkPacket, passing the
@@ -80,9 +81,9 @@ WorkSpacePtr WorkPacket::createWorkspace() const
     each one given its own ID, and with each one able to communicate
     with the others via the created WorkSpace. This returns a null pointer
     if a WorkSpace is not required for this WorkPacket */
-WorkSpacePtr WorkPacket::createWorkspace(int) const
+WorkSpace WorkPacket::createWorkspace(int) const
 {
-    return WorkSpacePtr();
+    return WorkSpace();
 }
 
 /** Run a chunk of processing of this WorkPacket. This returns the processed
@@ -131,7 +132,7 @@ Obj WorkPacket::run() const throw()
     This returns the processed WorkPacket, or a Siren::Exception if something
     went wrong, or a non-WorkPacket object that corresponds to the final 
     result of the calculation */
-Obj WorkPacket::run(WorkSpace &workspace) const throw()
+Obj WorkPacket::run(WorkSpace workspace) const throw()
 {
     try
     {
@@ -178,7 +179,7 @@ Obj WorkPacket::run(WorkSpace &workspace) const throw()
     This returns the processed WorkPacket, or a Siren::Exception if something
     went wrong, or a non-WorkPacket object that corresponds to the final 
     result of the calculation */
-Obj WorkPacket::run(WorkSpace &workspace, int id) const throw()
+Obj WorkPacket::run(WorkSpace workspace, int id) const throw()
 {
     try
     {
@@ -331,6 +332,11 @@ int TestPacket::progress() const
     return (100 * (target_val - current_val)) / target_val; 
 }
 
+void run_function()
+{
+    sirenDebug() << "HELLO WORLD!!!";
+}
+
 /** Test this TestPacket */
 void TestPacket::test(TestReportEditor &report) const
 {
@@ -338,6 +344,15 @@ void TestPacket::test(TestReportEditor &report) const
     packet.run();
 
     report.addPassed( String::tr("TestPacket passed as no exception was thrown.") );
+
+    Thread t = Thread::run( &run_function );
+    t = Thread::run( &run_function );
+    Thread t2 = Thread::run( &run_function );
+    
+    for (int i=0; i<10; ++i)
+    {
+        Thread::run( &run_function );
+    }
 }
 
 /** Copy assignment operator */

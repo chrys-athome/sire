@@ -35,128 +35,44 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    class Promise;
-    class WorkPacket;
-    class WorkSpace;
+    namespace detail{ class ThreadData; }
 
-    class Thread;
-    class ThreadPool;
-
-    namespace detail 
-    { 
-        class ThreadPoolData;
-
-        class SystemThreadPool;
-        class ProcessThreadPool;
-
-        class ThreadRequest;
-        class ThreadQueue;
-
-        class CPUThread;
-        class CPUThreads;
-    }
-
-    /** This is a pool of threads that are available to run tasks. This
-        provides a user-specified number of threads, which can be asked
-        to run a task. If all of the threads are busy, then the caller
-        for the current task is blocked
-    */
-    class SIREN_EXPORT ThreadPool
+    /** This internal class holds a pool of threads that can
+        run specified functions */
+    class Thread
     {
     public:
-        ThreadPool(int n);
-        ThreadPool(const Thread &thread);
-        
-        ThreadPool(const ThreadPool &other);
-        
-        ~ThreadPool();
-    
-        void reallocate(int n);
-    
-        Promise run(const WorkPacket &packet);
-    
-        Promise run(const WorkPacket &packet, int nthreads);
-        Promise run(const WorkPacket &packet, WorkSpace &workspace, int nthreads);
-    
-        Promise allRun(const WorkPacket &packet);
-        Promise allRun(const WorkPacket &packet, WorkSpace &workspace);
-    
-        void abort();
-        void pause();
-        void play();
-    
-        void stealThreads();
-        void returnStolenThreads();
-    
-        void stealThreads(int n);
-        void returnStolenThreads(int n);
-    
-        ThreadPool getPool(int n);
-        Thread getThread();
-    
-        bool allAvailable();
-        int nAvailable();
-    
-        void waitUntilAllAvailable();
-        bool waitUntilAllAvailable(int ms);
-        
-        void waitUntilNAvailable(int n);
-        bool waitUntilNAvailable(int n, int ms);
-    
-    private:
-        exp_shared_ptr<detail::ThreadPoolData>::Type d;
-        
-    }; // end of class ThreadPool
-
-    /** This is a separate thread of execution. A Siren thread provides 
-        a thread that can run the passed function. While the thread runs,
-        it returns a handle to the running code, which can be interupted,
-        stopped, paused etc.
-    */
-    class SIREN_EXPORT Thread
-    {
-    public:
-        enum ThreadState
-        {
-            BackGround = 1,
-            ForeGround = 2
-        };
-        
         Thread();
-        Thread(ThreadState state);
-        Thread(const ThreadPool &pool);
-        
         Thread(const Thread &other);
-        
         ~Thread();
         
-        Promise run(const WorkPacket &packet);
-        Promise run(const WorkPacket &packet, WorkSpace &workspace);
+        Thread& operator=(const Thread &other);
         
+        bool operator==(const Thread &other) const;
+        bool operator!=(const Thread &other) const;
+
+        static Thread run( void (*function)() );
+
+        bool isNull();
+
         void abort();
         void pause();
         void play();
-        
-        bool available();
-        
-        void waitUntilAvailable();
-        bool waitUntilAvailable(int ms); 
-        
-        void steal();
-        void returnStolen();
 
-        void toBackGround();
-        void toForeGround();
+        bool isError();
+        void throwError();
         
+        void checkError();
+
     private:
-        exp_shared_ptr<detail::ThreadPoolData>::Type d;
-    
+        
+        exp_shared_ptr<detail::ThreadData>::Type d;
+        int session_id;
+
     }; // end of class Thread
 
-} // end of namespace Siren
 
-SIREN_EXPOSE_CLASS( Siren::ThreadPool )
-SIREN_EXPOSE_CLASS( Sirne::Thread )
+} // end of namespace Siren
 
 SIREN_END_HEADER
 

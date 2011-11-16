@@ -122,7 +122,7 @@ static ProgramState* programState()
     {
         ProgramState *new_state = new ProgramState();
         
-        if (not global_state_pvt.testAndSetAcquire(new_state,0))
+        if (not global_state_pvt.testAndSetAcquire(0,new_state))
         {
             delete new_state;
         }

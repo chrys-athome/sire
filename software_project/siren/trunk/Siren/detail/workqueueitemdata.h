@@ -57,13 +57,19 @@ namespace Siren
                               int n);
             
             WorkQueueItemData(const WorkPacket &packet,
-                              WorkSpace &workspace,
+                              const WorkSpace &workspace,
                               const WorkQueue &queue,
                               int n);
             
             ~WorkQueueItemData();
             
             Obj workPacket();
+            WorkSpace workSpace();
+            
+            bool hasWorkSpace();
+            
+            int nWorkers();
+            
             DateTime submissionTime();
             DateTime startTime();
             DateTime finishTime();
@@ -71,18 +77,19 @@ namespace Siren
             Obj operator[](const String &string);
         
             Promise promise();
+            WorkQueue queue();
+            WorkQueueItem workQueueItem();
         
         protected:
-            friend class WorkQueueItem;
+            friend class Siren::WorkQueueItem;
+            void setPromise(const Promise &promise);
         
-            friend class WorkQueueData;
+            friend class Siren::detail::WorkQueueData;
             void jobStarted();
             void jobFinished(const Obj &result);
             void jobCancelled();
         
-            friend class PromiseData;
-            void cancelJob();
-            void pauseJob();
+            void abort();
         
         private:
             /** Mutex protecting access to the data of this object */
@@ -90,14 +97,20 @@ namespace Siren
         
             /** Self-pointer */
             exp_weak_ptr<WorkQueueItemData>::Type self;
-        
-            /** Store the WorkPacket in the Promise, so if lose promise,
-                then lose WorkPacket - the Promise is the handle to the job */
-            exp_weak_ptr<PromiseData>::Type promise_data;
+            
+            /** The WorkPacket to be processed */
+            Obj workpacket;
+            
+            /** Pointer to a WorkSpace, if one is needed */
+            WorkSpace *workspace;
 
             /** This is the queue that is processing this item. If we lose
                 the queue, then we cannot run this job */
             exp_weak_ptr<WorkQueueData>::Type parent_queue;
+        
+            /** Store the WorkPacket in the Promise, so if lose promise,
+                then lose WorkPacket - the Promise is the handle to the job */
+            exp_weak_ptr<PromiseData>::Type promise_data;
             
             /** The time the job was submitted (this WorkQueueItem was created) */
             DateTime submission_time;
@@ -112,6 +125,9 @@ namespace Siren
             /** A set of other metadata that may be added and manipulated
                 by the WorkScheduler responsible for scheduling this job */
             Hash<String,Obj>::Type mdata;
+
+            /** The number of worker threads to use to process the packet */
+            int nworkers;
         
         }; // end of class WorkQueueItem
     

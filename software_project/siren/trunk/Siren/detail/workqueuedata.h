@@ -31,11 +31,14 @@
 
 #include "Siren/workqueue.h"
 #include "Siren/mutex.h"
+#include "Siren/waitcondition.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    class WorkQueue;
+
     namespace detail
     {
         /** This class provides the private implementation of WorkQueue */
@@ -46,14 +49,36 @@ namespace Siren
             ~WorkQueueData();
 
             Promise submit(const WorkPacket &packet, int n);
+            Promise submit(const WorkPacket &packet,
+                           const WorkSpace &space, int n);
         
+            int nRunning();
+            int nWaiting();
+            int nCompleted();
+        
+            static exp_shared_ptr<WorkQueueData>::Type global();
+    
         private:
+            /** Mutex to protect access to the data of this queue */
             Mutex m;
+        
+            /** WaitCondition used to wake the background thread to 
+                notify it of any change in state */
+            WaitCondition waiter;
             
+            /** The list of jobs that have not yet run */
             List<WorkQueueItem>::Type waiting_jobs;
+            
+            /** The list of jobs that are currently running */
             List<WorkQueueItem>::Type running_jobs;
+            
+            /** The list of jobs that have been cancelled */
             List<WorkQueueItem>::Type cancelled_jobs;
-            List<WorkQueueItem>::Type finished_jobs;
+            
+            /** The list of jobs that have been finished */
+            List<WorkQueueItem>::Type completed_jobs;
+
+            exp_weak_ptr<WorkQueueData>::Type self;
             
         };
     

@@ -30,6 +30,9 @@
 #include "Siren/none.h"
 #include "Siren/promise.h"
 #include "Siren/workqueue.h"
+#include "Siren/workpacket.h"
+#include "Siren/workspace.h"
+#include "Siren/exceptions.h"
 
 #include "Siren/detail/workqueueitemdata.h"
 #include "Siren/detail/promisedata.h"
@@ -42,14 +45,32 @@ using namespace Siren::detail;
 ////////////// Implementation of WorkQueueItemData
 //////////////
 
-/** Construct the item for the job handled by the passed promise,
-    which is queued on the passed WorkQueue */
-WorkQueueItemData::WorkQueueItemData(const Promise &promise,
-                                     const WorkQueue &queue)
+/** Construct the item representing the processing of the passed WorkPacket
+    using 'n' worker threads, submitted to the passed queue */
+WorkQueueItemData::WorkQueueItemData(const WorkPacket &packet,
+                                     const WorkQueue &queue, int n)
+                  : workpacket(packet), workspace(0), parent_queue(queue.d), 
+                    nworkers(n)
 {
-    promise_data = promise.d;
-    parent_queue = queue.d;
     submission_time = DateTime::current();
+
+    if (nworkers <= 0)
+        nworkers = 1;
+}
+
+/** Construct the item representing the processing of the passed WorkPacket
+    using the passed WorkSpace, using 'n' worker threads, submitted to the 
+    passed queue */
+WorkQueueItemData::WorkQueueItemData(const WorkPacket &packet,
+                                     const WorkSpace &space,
+                                     const WorkQueue &queue, int n)
+                  : workpacket(packet), workspace(new WorkSpace(space)),
+                    parent_queue(queue.d), nworkers(n)
+{
+    submission_time = DateTime::current();
+    
+    if (nworkers <= 0)
+        nworkers = 1;
 }
 
 /** Destructor */
@@ -58,6 +79,15 @@ WorkQueueItemData::~WorkQueueItemData()
     //tell the promise that the job has aborted as the
     //WorkQueueItem has been lost
     Promise(promise_data.lock()).abort();
+
+    //delete the WorkSpace
+    delete workspace;
+}
+
+/** Internal function used to set the Promise that is associated with this job */
+void WorkQueueItemData::setPromise(const Promise &promise)
+{
+    promise_data = promise.d;
 }
 
 /** Return the WorkPacket associated with this WorkQueueItem, or 
@@ -65,7 +95,36 @@ WorkQueueItemData::~WorkQueueItemData()
 Obj WorkQueueItemData::workPacket()
 {
     MutexLocker lkr(&m);
-    return Promise(promise_data.lock()).workPacket();
+    return workpacket;
+}
+
+/** Return the WorkSpace associated with this WorkQueueItem, or raise
+    an exception if a WorkSpace is not available */
+WorkSpace WorkQueueItemData::workSpace()
+{
+    MutexLocker lkr(&m);
+    
+    if (not workspace)
+        throw Siren::invalid_state( String::tr(
+                "You cannot request a WorkSpace for the processing of the "
+                "WorkPacket \"%1\" when no such WorkSpace was provided!")
+                    .arg(workpacket.toString()), CODELOC );
+                    
+    return *workspace;
+}
+
+/** Return whether or not this WorkPacket comes with a WorkSpace */
+bool WorkQueueItemData::hasWorkSpace()
+{
+    MutexLocker lkr(&m);
+    return workspace != 0;
+}
+
+/** Return the number of worker threads required for this job */
+int WorkQueueItemData::nWorkers()
+{
+    MutexLocker lkr(&m);
+    return nworkers;
 }
 
 /** Return the original submission time of the job, or a null
@@ -104,6 +163,21 @@ Promise WorkQueueItemData::promise()
 {
     MutexLocker lkr(&m);
     return Promise(promise_data.lock());
+}
+
+/** Return the WorkQueue on which this item is queueued. This will
+    return a null WorkQueue if the queue is lost or this item is invalid */
+WorkQueue WorkQueueItemData::queue()
+{
+    MutexLocker lkr(&m);
+    return WorkQueue(parent_queue.lock());
+}
+
+/** Return the WorkQueueItem associated with this object */
+WorkQueueItem WorkQueueItemData::workQueueItem()
+{
+    MutexLocker lkr(&m);
+    return WorkQueueItem(self.lock());
 }
 
 /** Internal function used to tell this item that the job has been
@@ -149,30 +223,18 @@ void WorkQueueItemData::jobCancelled()
     p.jobCancelled();
 }
 
-/** Tell the job that it should be cancelled */
-void WorkQueueItemData::cancelJob()
+/** Internal function used to relay the message to the queue that this job
+    should be aborted */
+void WorkQueueItemData::abort()
 {
-    Promise p;
+    MutexLocker lkr(&m);
     
+    WorkQueue q(parent_queue.lock());
+    
+    if (not q.isNull())
     {
-        MutexLocker lkr(&m);
-        p = Promise(promise_data.lock());
+        q.abort( WorkQueueItem(self.lock()) );
     }
-    
-    p.cancel();
-}
-
-/** Tell the job that it has been paused */
-void WorkQueueItemData::pauseJob()
-{
-    Promise p;
-    
-    {
-        MutexLocker lkr(&m);
-        p = Promise(promise_data.lock());
-    }
-    
-    p.pause();
 }
 
 //////////////
@@ -183,12 +245,27 @@ void WorkQueueItemData::pauseJob()
 WorkQueueItem::WorkQueueItem()
 {}
 
-/** Construct the WorkItem that corresponds to the job behind the 
-    passed Promise from the passed WorkQueue */
-WorkQueueItem::WorkQueueItem(const Promise &promise,
-                             const WorkQueue &queue)
+/** Construct from the passed pointer */
+WorkQueueItem::WorkQueueItem(const exp_shared_ptr<WorkQueueItemData>::Type &ptr)
+              : d(ptr)
+{}
+
+/** Construct the item representing the processing of the passed WorkPacket
+    using 'n' worker threads, submitted to the passed queue */
+WorkQueueItem::WorkQueueItem(const WorkPacket &workpacket, 
+                             const WorkQueue &workqueue, int nworkers)
 {
-    d.reset( new WorkQueueItemData(promise,queue) );
+    d.reset( new WorkQueueItemData(workpacket,workqueue,nworkers) );
+    d->self = d;
+}
+
+/** Construct the item representing the processing of the passed WorkPacket
+    using the passed WorkSpace, using 'n' worker threads, submitted to the 
+    passed queue */
+WorkQueueItem::WorkQueueItem(const WorkPacket &workpacket, const WorkSpace &workspace,
+                             const WorkQueue &workqueue, int nworkers)
+{
+    d.reset( new WorkQueueItemData(workpacket,workspace,workqueue,nworkers) );
     d->self = d;
 }
 
@@ -200,6 +277,21 @@ WorkQueueItem::WorkQueueItem(const WorkQueueItem &other)
 /** Destructor */
 WorkQueueItem::~WorkQueueItem()
 {}
+
+/** Internal function used to relay the message that the job should be aborted */
+void WorkQueueItem::abort()
+{
+    if (d)
+        d->abort();
+}
+
+/** Internal function called by WorkQueue to tell this item which Promise
+    has been assigned to the job */
+void WorkQueueItem::setPromise(const Promise &promise)
+{
+    if (d)
+        d->setPromise(promise);
+}
 
 /** Copy assignment operator */
 WorkQueueItem& WorkQueueItem::operator=(const WorkQueueItem &other)

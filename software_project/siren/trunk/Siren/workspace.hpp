@@ -40,14 +40,14 @@ namespace Siren
     SIREN_OUTOFLINE_TEMPLATE
     bool WorkSpace::isA() const
     {
-        return dynamic_cast<const T*>(this) != 0;
+        return dynamic_cast<const T*>(this->d.get()) != 0;
     }
 
     template<class T>
     SIREN_OUTOFLINE_TEMPLATE
     const T& WorkSpace::asA() const
     {
-        const T* ptr = dynamic_cast<const T*>(this);
+        const T* ptr = dynamic_cast<const T*>(this->d.get());
         
         if (not ptr)
             throw Siren::invalid_cast( String::tr(
@@ -63,7 +63,7 @@ namespace Siren
     SIREN_OUTOFLINE_TEMPLATE
     T& WorkSpace::asA()
     {
-        T* ptr = dynamic_cast<T*>(this);
+        T* ptr = dynamic_cast<T*>(this->d.get());
         
         if (not ptr)
             throw Siren::invalid_cast( String::tr(
