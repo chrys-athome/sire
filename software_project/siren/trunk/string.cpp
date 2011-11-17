@@ -31,6 +31,7 @@
 #include "Siren/number.h"
 #include "Siren/readwritelock.h"
 #include "Siren/siren.hpp"
+#include "Siren/static.h"
 #include "Siren/detail/qt4support.h"
 
 #include "Siren/exceptions.h"
@@ -46,23 +47,21 @@ String::String() : Object(), refcount(0)
 class StringRegistry
 {
 public:
-    static QString registerString(const QString &str, AtomicInt **refcount);
-    static void unregisterString(const QString &str);
-
-private:
-    static AtomicPointer<StringRegistry>::Type singleton;
-
     StringRegistry()
     {}
     
     ~StringRegistry()
     {}
 
+    static QString registerString(const QString &str, AtomicInt **refcount);
+    static void unregisterString(const QString &str);
+
+private:
     Hash<QString,AtomicInt*>::Type registry;
     ReadWriteLock lock;
 };
 
-AtomicPointer<StringRegistry>::Type StringRegistry::singleton;
+SIREN_STATIC( StringRegistry, globalRegistry )
 
 /** This function registers the passed string, thus ensuring that 
     only one copy of each string is used by the code. */
@@ -74,16 +73,15 @@ QString StringRegistry::registerString(const QString &str, AtomicInt **refcount)
         return QString();
     }
 
-    while (not singleton)
-    {
-        StringRegistry *reg = new StringRegistry();
+    exp_shared_ptr<StringRegistry>::Type singleton = globalRegistry();
         
-        if (not singleton.testAndSetAcquire(0,reg))
-            delete reg;
-    }
+    if (not singleton)
+        //we have been shut down...
+        return str;
 
     // CODE TO SEE IF THE STRING IS ALREADY REGISTERED
     {
+    
         ReadLocker lkr( &(singleton->lock) );
     
         Hash<QString,AtomicInt*>::const_iterator it = singleton->registry.constFind(str);
@@ -126,8 +124,12 @@ QString StringRegistry::registerString(const QString &str, AtomicInt **refcount)
 /** Unregister a string */
 void StringRegistry::unregisterString(const QString &str)
 {
+    exp_shared_ptr<StringRegistry>::Type singleton = globalRegistry();
+
     if (singleton == 0)
         return;
+
+    sirenDebug() << "unregisterString(" << str << ")";
 
     WriteLocker lkr( &(singleton->lock) );
     singleton->registry.remove(str);
@@ -211,8 +213,7 @@ String::String(const String &other)
 /** Destructor */
 String::~String()
 {
-    #warning BUG IN ~String - decref causes problems at shutdown!
-    //decref();
+    decref();
 }
 
 /** Copy assignment operator */

@@ -233,15 +233,21 @@ namespace Siren
         ClassData::~ClassData()
         {
             ClassRegistry::unregisterClass(*this);
-        
-            String *ptr = type_name_string;
-            delete ptr;
+
+            // We don't delete the class name strings as 
+            // this would cause the program to crash as it will
+            // delete the underlying QString during static destruction
+
+            #warning NEED TO SOLVE MEMORY LEAK OF CLASS NAMES AT SYSTEM SHUTDOWN
+
+            //String *ptr = type_name_string;
+            //delete ptr;
             
-            ptr = base_name_string;
-            delete ptr;
+            //ptr = base_name_string;
+            //delete ptr;
             
-            StringList *ptr2 = ifaces_list;
-            delete ptr2;
+            //StringList *ptr2 = ifaces_list;
+            //delete ptr2;
         }
         
         /** Return the version number of the data in this class */

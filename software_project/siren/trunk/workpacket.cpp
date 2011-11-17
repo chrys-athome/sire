@@ -35,6 +35,7 @@
 #include "Siren/timer.h"
 #include "Siren/testreport.h"
 #include "Siren/thread.h"
+#include "Siren/forages.h"
 
 #include <cmath>
 
@@ -334,7 +335,8 @@ int TestPacket::progress() const
 
 void run_function()
 {
-    sirenDebug() << "HELLO WORLD!!!";
+    for_ages::sleep(5);
+    sirenDebug() << "HELLO WORLD...";
 }
 
 /** Test this TestPacket */
@@ -345,14 +347,22 @@ void TestPacket::test(TestReportEditor &report) const
 
     report.addPassed( String::tr("TestPacket passed as no exception was thrown.") );
 
+    sirenDebug() << "RUNNING FUNCTION 1";
     Thread t = Thread::run( &run_function );
+    
+    sirenDebug() << "RUNNING FUNCTION 2";
     t = Thread::run( &run_function );
+    
+    sirenDebug() << "RUNNING FUNCTION 3";
     Thread t2 = Thread::run( &run_function );
     
     for (int i=0; i<10; ++i)
     {
+        sirenDebug() << "RUNNING FUNCTION" << (i+4);
         Thread::run( &run_function );
     }
+    
+    //for_ages::sleep(10);
 }
 
 /** Copy assignment operator */

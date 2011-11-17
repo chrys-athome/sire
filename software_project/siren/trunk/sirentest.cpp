@@ -42,6 +42,8 @@ using namespace Siren;
 
 int main(int argc, const char **argv)
 {
+    Siren::init(argc, argv);
+
     TextStream cout(stdout);
     TextStream cerr(stderr);
 

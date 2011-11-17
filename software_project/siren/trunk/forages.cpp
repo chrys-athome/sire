@@ -55,10 +55,14 @@ namespace Siren
                             current_block(0),
                             wake_from_current(false),
                             is_interupted(false), is_paused(false)
-            {}
+            {
+                sirenDebug() << "CREATING" << id;
+            }
             
             ~ThreadState()
-            {}
+            {
+                sirenDebug() << "DELETING" << id;
+            }
 
             String name;
             int id;
@@ -158,18 +162,26 @@ void for_ages::unregisterThisThread()
 
     WriteLocker lkr( &(program->lock) );
 
+    sirenDebug() << "UNREGISTERING THREAD";
+
     if (program->thread.hasLocalData())
     {
         ThreadState *thread = program->thread.localData();
 
         bool is_paused = thread->is_paused;
         
+        sirenDebug() << "Unregister" << thread->id << is_paused;
+        
         program->threads.remove(thread->id);
-        program->thread.setLocalData(0);
         
         if (is_paused and not program->is_paused)
             //wake the thread up
             program->pause_waiter.wakeAll();
+
+        sirenDebug() << "Done :-)";
+
+        // no need to delete the ThreadState object, as this will be 
+        // deleted automatically by ThreadStorage when the thread exits
     }
 }
 
@@ -309,6 +321,9 @@ void for_ages::aboutToSleep(const Block *block)
     
         WriteLocker lkr( &(program->lock) );
         addRef(program, thread, block);
+        
+        if (program->is_interupted or thread->is_interupted)
+            throw Siren::interupted_thread( errorString(), CODELOC );
     }
 }
 
@@ -319,7 +334,9 @@ void for_ages::aboutToSleep(const Block *block)
 bool for_ages::shouldWake(const Block *block)
 {
     ProgramState *program = programState();
-    
+ 
+    sirenDebug() << "for_ages::shouldWake(" << block << ")";
+          
     if (isForAgesBlock(program,block))
         //don't record waking from any of the for_ages blocks
         return true;
@@ -630,7 +647,9 @@ bool for_ages::end(int thread_id)
     ProgramState *program = programState();
     
     WriteLocker lkr( &(program->lock) );
-        
+    
+    sirenDebug() << "for_ages::end(" << thread_id << ")";
+    
     ThreadState *thread = program->threads.value(thread_id, 0);
             
     if (thread)
@@ -644,6 +663,10 @@ bool for_ages::end(int thread_id)
                     
             program->pause_waiter.wakeAll();
             return true;
+        }
+        else if (thread->current_block)
+        {
+            thread->current_block->checkEndForAges();
         }
     }
     
@@ -825,11 +848,15 @@ bool for_ages::loop(int n)
     a Siren::interupted_thread exception will be raised */
 void for_ages::sleep(int secs)
 {
+    sirenDebug() << "for_ages::sleep(" << secs << ")";
+    
     if (secs <= 0)
         return;
 
     WaitCondition w;
     w.wait(1000*secs);
+    
+    sirenDebug() << "for_ages::sleep(" << secs << ") finished!";
 }
 
 /** Sleep for 'ms' milliseconds. This will pause for 'ms' milliseconds,

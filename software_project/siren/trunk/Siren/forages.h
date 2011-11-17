@@ -63,8 +63,8 @@ namespace Siren
         static void setThisThreadName(const String &thread_name);
         static String getThisThreadName();
         
-        void msleep(int ms);
-        void sleep(int secs);
+        static void msleep(int ms);
+        static void sleep(int secs);
 
     protected:
         friend class Block;

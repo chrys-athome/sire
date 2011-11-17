@@ -28,6 +28,7 @@
 
 #include "Siren/siren.h"
 #include "Siren/exceptions.h"
+#include "Siren/static.h"
 
 namespace Siren
 {
@@ -70,5 +71,48 @@ namespace Siren
         else
             return count - i;
     }
+
+    namespace detail
+    {
+        void fini()
+        {
+            Siren::detail::Static::deleteAll();
+        }
+    }
+
+    /** Call this once before using any Siren classes to ensure that 
+        all Siren libraries are initialised */
+    void SIREN_EXPORT init(int argc, const char **argv)
+    {
+        Siren::detail::Static::createAll();
+        
+        if (std::atexit(&(Siren::detail::fini)) != 0)
+        {
+            sirenDebug() << "CANNOT REGISTER EXIT HANDLER!!!";
+            std::exit(-1);
+        }
+    }
+    
+    /** Call this once at the end of your program to ensure that 
+        all of the Siren libraries are closed down properly */
+    void SIREN_EXPORT fini()
+    {
+        Siren::detail::fini();
+    }
+    
+    void SIREN_EXPORT loadLibrary(const char *library)
+    {
+        sirenDebug() << "Loading library" << library << "...";
+        
+        //find the library
+        
+        //load the library
+        
+        //resolve symbols - this will find all of the Siren object metadata
+        
+        //create all static objects - this initialises the library
+        Siren::detail::Static::createAll();
+    }
+
 
 } // end of namespace Siren

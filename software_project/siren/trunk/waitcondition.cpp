@@ -61,17 +61,23 @@ void WaitCondition::wait(Mutex *mutex)
 
     try
     {
+        QMutexLocker lkr(&m);
+        mutex->unlock();
+        
         this->aboutToSleep();
 
         do
         {
-            w.wait( &(mutex->m) );
+            w.wait( &m );
     
         } while (not this->shouldWake());
+        
+        mutex->lock();
     }
     catch(...)
     {
         this->hasWoken();
+        mutex->lock();
         throw;
     }
 }
@@ -116,6 +122,8 @@ String WaitCondition::toString() const
     can check if their for_ages state has changed */
 void WaitCondition::checkEndForAges() const
 {
+    QMutexLocker lkr( &(const_cast<WaitCondition*>(this)->m) );
+    sirenDebug() << "WaitCondition::checkEndForAges(" << this << ")";
     const_cast<QWaitCondition*>(&w)->wakeAll();
 }
 
@@ -143,31 +151,38 @@ bool WaitCondition::wait(Mutex *mutex, unsigned long time)
 
     try
     {
+        //switch over to use a local mutex so that we can ensure
+        //that for_ages transitions are atomic
+        QMutexLocker lkr(&m);
+        mutex->unlock();
+        
         Timer t = Timer::start();
         this->aboutToSleep();
     
-        bool woken = false;
-    
         do
         {
-            woken = w.wait( &(mutex->m), time - t.elapsed() );
-
-            if (woken)
+            w.wait( &m, time - t.elapsed() );
+            
+            if (t.elapsed() >= time)
             {
+                //we have run out of time without being woken!
                 this->hasWoken();
-                return true;
-            }
-            else if (t.elapsed() >= time)
-            {
-                this->hasWoken();
+                mutex->lock();
                 return false;
             }
-            
+        
         } while (not this->shouldWake());
+        
+        //we were woken up before time :-)
+        this->hasWoken();
+        mutex->lock();
+        return true;
     }
     catch(...)
     {
+        sirenDebug() << "wait has been interupted!";
         this->hasWoken();
+        mutex->lock();
         throw;
     }
     
@@ -187,6 +202,8 @@ bool WaitCondition::wait(ReadWriteLock *lock, unsigned long time)
 
     else if (time < 200)
         return w.wait( &(lock->l), time );
+
+    sirenDebug() << "BROKEN WaitCondition::wait(ReadWriteLock *lock)";
 
     try
     {
@@ -234,6 +251,7 @@ bool WaitCondition::wait(unsigned long time)
 /** Wake up one of the threads sleeping on this wait condition */
 void WaitCondition::wakeOne()
 {
+    QMutexLocker lkr(&m);
     Block::setShouldWakeOne();
     w.wakeAll(); // for_ages will assure that only one thread
                  // is woken - we need to wake them all temporarily to do this
@@ -242,6 +260,7 @@ void WaitCondition::wakeOne()
 /** Wake up all of the threads sleeping on this wait condition */
 void WaitCondition::wakeAll()
 {
+    QMutexLocker lkr(&m);
     Block::setShouldWakeAll();
     w.wakeAll();
 }

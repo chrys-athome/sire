@@ -36,6 +36,7 @@
 #include "Siren/obj.hpp"
 #include "Siren/none.h"
 #include "Siren/siren.hpp"
+#include "Siren/static.h"
 
 using namespace Siren;
 using namespace Siren::detail;
@@ -51,7 +52,8 @@ namespace Siren
             ThreadData();
             ~ThreadData();
             
-            int session();
+            int sessionID();
+            int threadID();
 
             void setFunction( void (*function)() );
 
@@ -100,7 +102,11 @@ namespace Siren
         public:
             ThreadPool();
             ~ThreadPool();
-            
+
+            exp_shared_ptr<ThreadData>::Type getThread();
+            void returnThread(const exp_shared_ptr<ThreadData>::Type &ptr);
+        
+        private:
             Mutex m;
             List<exp_shared_ptr<ThreadData>::Type>::Type free_threads;
             List<exp_shared_ptr<ThreadData>::Type>::Type busy_threads;
@@ -118,12 +124,15 @@ namespace Siren
 ThreadData::ThreadData() 
            : QThread(), thread_id(0), session_id(0), func_ptr(0), should_quit(false)
 {
+    MutexLocker lkr(&m);
     QThread::start();
+    waiter.wait(&m);
 }
 
 /** Destructor */
 ThreadData::~ThreadData()
 {
+    sirenDebug() << "REALLY DELETING THREAD" << thread_id << session_id;
     this->quit();
     QThread::wait();
 }
@@ -133,14 +142,25 @@ void ThreadData::quit()
 {
     MutexLocker lkr(&m);
     should_quit = true;
+    
+    if (thread_id != 0)
+        for_ages::end( thread_id );
+        
     waiter.wakeAll();
 }
 
 /** Return the session ID of this run */
-int ThreadData::session()
+int ThreadData::sessionID()
 {
     MutexLocker lkr(&m);
     return session_id;
+}
+
+/** Return the thread ID */
+int ThreadData::threadID()
+{
+    MutexLocker lkr(&m);
+    return thread_id;
 }
 
 /** Set the function that should be run by this thread */
@@ -152,6 +172,8 @@ void ThreadData::setFunction( void (*function)() )
         throw Siren::program_bug( String::tr(
                 "It should not be possible to set the function of an active thread!"),
                     CODELOC );
+
+    sirenDebug() << "THREAD" << thread_id << "INCREASING SESSION_ID FROM" << session_id;
 
     session_id += 1;
     err = None();
@@ -229,6 +251,14 @@ void ThreadData::play()
 void ThreadData::run()
 {
     MutexLocker lkr(&m);
+    waiter.wakeAll();
+
+    if (should_quit)
+    {
+        //quitted the thread before it even started!
+        sirenDebug() << "Thread quit before started!";
+        return;
+    }
 
     try
     {
@@ -246,6 +276,8 @@ void ThreadData::run()
                 
                 try
                 {
+                    sirenDebug() << "THREAD" << thread_id << session_id 
+                                 << "RUNNING FUNCTION...";
                     (*func_ptr)();
                 }
                 catch(const Siren::Exception &e)
@@ -270,6 +302,7 @@ void ThreadData::run()
     }
     catch(const Siren::Exception &e)
     {
+        sirenDebug() << e.toString();
         err = e;
     }
     catch(const std::exception &e)
@@ -298,6 +331,10 @@ ThreadPool::~ThreadPool()
     //make sure that all of the threads quit before the program ends
     MutexLocker lkr(&m);
     
+    sirenDebug() << "DELETING REMAINING THREADS..." << free_threads.count()
+                 << busy_threads.count();
+
+    sirenDebug() << "SENDING quit()";
     for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = free_threads.begin();
          it != free_threads.end();
          ++it)
@@ -311,26 +348,92 @@ ThreadPool::~ThreadPool()
     {
         (*it)->quit();
     }
+    
+    sirenDebug() << "waiting for termination...";
+    for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = free_threads.begin();
+         it != free_threads.end();
+         ++it)
+    {
+        (*it)->wait();
+    }
+    
+    for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = busy_threads.begin();
+         it != busy_threads.end();
+         ++it)
+    {
+        (*it)->wait();
+    }
+
+    sirenDebug() << "All done!";
+}
+
+void ThreadPool::returnThread(const exp_shared_ptr<ThreadData>::Type &ptr)
+{
+    MutexLocker lkr(&m);
+    busy_threads.append(ptr);
+
+    //now clean up the pool, if needed
+    if (busy_threads.count() > 5)
+    {
+        List<exp_shared_ptr<ThreadData>::Type>::MutableIterator it( busy_threads );
+        
+        while (it.hasNext())
+        {
+            it.next();
+            
+            if (it.value()->hasFinished())
+            {
+                free_threads.append(it.value());
+                it.remove();
+            }
+        }
+    }
+
+    while (free_threads.count() > 5)
+    {
+        free_threads.takeFirst();
+    }
+    
+    sirenDebug() << "HAVE RETURNED A THREAD" << busy_threads.count()
+                                             << free_threads.count();
+}
+
+exp_shared_ptr<ThreadData>::Type ThreadPool::getThread()
+{
+    MutexLocker lkr(&m);
+    
+    if (free_threads.isEmpty())
+    {
+        //have any of the active threads finished?
+        List<exp_shared_ptr<ThreadData>::Type>::MutableIterator it(busy_threads);
+        
+        while (it.hasNext())
+        {
+            it.next();
+            
+            if ( it.value()->hasFinished() )
+            {
+                exp_shared_ptr<ThreadData>::Type t = it.value();
+                it.remove();
+                return t;
+            }
+        }
+        
+        //there were no free threads, so create a new thread
+        sirenDebug() << "CREATING A NEW THREAD";
+        return exp_shared_ptr<ThreadData>::Type( new ThreadData() );
+    }
+    else
+    {
+        return free_threads.takeFirst();
+    }
 }
 
 //////////
 ////////// Implementation of Thread
 //////////
 
-static AtomicPointer<ThreadPool>::Type global_pool;
-
-static ThreadPool& pool()
-{
-    while (global_pool == 0)
-    {
-        ThreadPool *p = new ThreadPool();
-        
-        if (not global_pool.testAndSetAcquire(0,p))
-            delete p;
-    }
-    
-    return *global_pool;
-}
+SIREN_STATIC( ThreadPool, pool );
 
 /** Construct a null Thread */
 Thread::Thread() : session_id(0)
@@ -343,17 +446,49 @@ Thread::Thread(const Thread &other) : d(other.d), session_id(other.session_id)
 /** Destructor */
 Thread::~Thread()
 {
-    if (d.unique())
+    if (d.get() != 0)
     {
-        //return the underlying thread to the pool
-        MutexLocker lkr( &(pool().m) );
-        pool().busy_threads.append(d);
+        int tid = d->threadID();
+        sirenDebug() << "Thread::~Thread()" << session_id << tid;
+
+        if (d.unique())
+        {
+            sirenDebug() << "Thread::~Thread()" << tid << session_id << "Returning!";
+            //return the underlying thread to the pool
+            exp_shared_ptr<ThreadPool>::Type p = pool();
+            
+            if (p)
+                p->returnThread(d);
+                
+            sirenDebug() << "Thread::~Thread()" << tid << session_id << "Returning DONE!";
+        }
     }
 }
 
 /** Copy assignment operator */
 Thread& Thread::operator=(const Thread &other)
 {
+    if (d.get() == other.d.get())
+        return *this;
+        
+    if (d.unique())
+    {
+        //return the underlying thread to the pool
+        int tid = d->threadID();
+        sirenDebug() << "Thread::~Thread()" << session_id << tid;
+
+        sirenDebug() << "Thread::operator=" << tid << session_id << "Returning!";
+        //return the underlying thread to the pool
+        exp_shared_ptr<ThreadPool>::Type p = pool();
+        
+        if (p)
+            p->returnThread(d);
+            
+        sirenDebug() << "Thread::operator=" << tid << session_id << "Returning DONE!";
+
+        d.reset();
+    }
+
     d = other.d;
     session_id = other.session_id;
     return *this;
@@ -381,55 +516,21 @@ bool Thread::isNull()
     and run as soon as possible */
 Thread Thread::run( void (*function)() )
 {
-    ThreadPool &p = pool();
-    
     Thread t;
-    int nfree = 0;
     
-    {
-        MutexLocker lkr( &(p.m) );
-        
-        if (p.free_threads.isEmpty())
-        {
-            //have any of the active threads finished?
-            List<exp_shared_ptr<ThreadData>::Type>::MutableIterator it(p.busy_threads);
-            
-            while (it.hasNext())
-            {
-                it.next();
+    exp_shared_ptr<ThreadPool>::Type p = pool();
+    
+    if (not p)
+        throw Siren::invalid_state( String::tr(
+                "Cannot create a thread as the global ThreadPool is not available. "
+                "Either Siren::init(...) has not been called, or you are trying to "
+                "create a thread while the application is shutting down!"), CODELOC );
                 
-                if ( it.value()->hasFinished() )
-                {
-                    t.d = it.value();
-                    it.remove();
-                    break;
-                }
-            }
-            
-            if (t.isNull())
-                //there were no free threads, so create a new thread
-                t.d.reset( new ThreadData() );
-        }
-        else
-        {
-            t.d = p.free_threads.takeFirst();
-            nfree = p.free_threads.count();
-        }
-    }
+    t.d = p->getThread();
 
     //start the background job
     t.d->setFunction(function);
-    
-    //now clean up the pool, if needed
-    if (nfree > 5)
-    {
-        MutexLocker lkr( &(p.m) );
-        
-        while (p.free_threads.count() > 5)
-        {
-            p.free_threads.takeFirst();
-        }
-    }
+    t.session_id = t.d->sessionID();
     
     return t;
 }

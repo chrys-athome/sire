@@ -78,7 +78,7 @@ String DateTime::toString() const
 /** Return the current date and time */
 DateTime DateTime::current()
 {
-    return DateTime();
+    return DateTime( Date::current(), Time::current() );
 }
 
 /** Copy assignment operator */

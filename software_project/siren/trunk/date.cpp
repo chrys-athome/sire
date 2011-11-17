@@ -152,7 +152,7 @@ bool Date::operator>(const Date &other) const
 /** Return the current date */
 Date Date::current()
 {
-    return Date();
+    return Date( QDate::currentDate() );
 }
 
 /** Copy assignment operator */

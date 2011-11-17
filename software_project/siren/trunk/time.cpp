@@ -141,7 +141,7 @@ bool Time::operator>(const Time &other) const
 /** Return the current time */
 Time Time::current()
 {
-    return Time();
+    return Time( QTime::currentTime() );
 }
 
 /** Copy assignment operator */

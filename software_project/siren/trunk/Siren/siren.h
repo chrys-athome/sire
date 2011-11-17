@@ -58,6 +58,10 @@ namespace Siren
 
     int wrap_index(int i, int count);
 
+    void init(int argc=0, const char **argv=0);
+    void loadLibrary(const char *library);
+    void fini();
+
 } // end of namespace Siren
 
 #include "Siren/object.h"

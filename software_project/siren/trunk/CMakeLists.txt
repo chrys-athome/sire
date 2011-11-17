@@ -84,6 +84,7 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/schemas.h
       Siren/siren.h
       Siren/siren.hpp
+      Siren/static.h
       Siren/stream.h
       Siren/string.h
       Siren/stringlist.h
@@ -145,6 +146,7 @@ set ( SIREN_SOURCES
       semaphore.cpp
       schemas.cpp
       siren.cpp
+      static.cpp
       stream.cpp
       string.cpp
       stringlist.cpp
