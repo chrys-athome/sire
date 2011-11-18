@@ -132,9 +132,23 @@ ThreadData::ThreadData()
 /** Destructor */
 ThreadData::~ThreadData()
 {
-    sirenDebug() << "REALLY DELETING THREAD" << thread_id << session_id;
     this->quit();
-    QThread::wait();
+    
+    //give the thread 3 seconds to finish...
+    int n = 0;
+    while (not QThread::wait(1000))
+    {
+        n += 1;
+        
+        if (n > 3)
+        {
+            sirenDebug() << "WARNING: Had to terminate thread" << thread_id << session_id;
+            QThread::terminate();
+            break;
+        }
+
+        for_ages::end(thread_id);
+    }
 }
 
 /** Tell this thread to quit as soon as it can */
@@ -172,8 +186,6 @@ void ThreadData::setFunction( void (*function)() )
         throw Siren::program_bug( String::tr(
                 "It should not be possible to set the function of an active thread!"),
                     CODELOC );
-
-    sirenDebug() << "THREAD" << thread_id << "INCREASING SESSION_ID FROM" << session_id;
 
     session_id += 1;
     err = None();
@@ -276,8 +288,6 @@ void ThreadData::run()
                 
                 try
                 {
-                    sirenDebug() << "THREAD" << thread_id << session_id 
-                                 << "RUNNING FUNCTION...";
                     (*func_ptr)();
                 }
                 catch(const Siren::Exception &e)
@@ -297,12 +307,14 @@ void ThreadData::run()
                 func_ptr = 0;
             }
             
-            waiter.wait(&m);
+            if (not should_quit)
+            {
+                waiter.wait(&m);
+            }
         }
     }
     catch(const Siren::Exception &e)
     {
-        sirenDebug() << e.toString();
         err = e;
     }
     catch(const std::exception &e)
@@ -330,41 +342,25 @@ ThreadPool::~ThreadPool()
 {
     //make sure that all of the threads quit before the program ends
     MutexLocker lkr(&m);
-    
-    sirenDebug() << "DELETING REMAINING THREADS..." << free_threads.count()
-                 << busy_threads.count();
+    List<exp_shared_ptr<ThreadData>::Type>::Type threads = free_threads + busy_threads;
+    lkr.unlock();
 
-    sirenDebug() << "SENDING quit()";
-    for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = free_threads.begin();
-         it != free_threads.end();
+    int i=0;
+    for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = threads.begin();
+         it != threads.end();
          ++it)
     {
         (*it)->quit();
+        i += 1;
     }
     
-    for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = busy_threads.begin();
-         it != busy_threads.end();
+    for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = threads.begin();
+         it != threads.end();
          ++it)
     {
-        (*it)->quit();
+        (*it)->wait(1000);
+        i -= 1;
     }
-    
-    sirenDebug() << "waiting for termination...";
-    for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = free_threads.begin();
-         it != free_threads.end();
-         ++it)
-    {
-        (*it)->wait();
-    }
-    
-    for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = busy_threads.begin();
-         it != busy_threads.end();
-         ++it)
-    {
-        (*it)->wait();
-    }
-
-    sirenDebug() << "All done!";
 }
 
 void ThreadPool::returnThread(const exp_shared_ptr<ThreadData>::Type &ptr)
@@ -393,9 +389,6 @@ void ThreadPool::returnThread(const exp_shared_ptr<ThreadData>::Type &ptr)
     {
         free_threads.takeFirst();
     }
-    
-    sirenDebug() << "HAVE RETURNED A THREAD" << busy_threads.count()
-                                             << free_threads.count();
 }
 
 exp_shared_ptr<ThreadData>::Type ThreadPool::getThread()
@@ -420,7 +413,6 @@ exp_shared_ptr<ThreadData>::Type ThreadPool::getThread()
         }
         
         //there were no free threads, so create a new thread
-        sirenDebug() << "CREATING A NEW THREAD";
         return exp_shared_ptr<ThreadData>::Type( new ThreadData() );
     }
     else
@@ -449,18 +441,14 @@ Thread::~Thread()
     if (d.get() != 0)
     {
         int tid = d->threadID();
-        sirenDebug() << "Thread::~Thread()" << session_id << tid;
 
         if (d.unique())
         {
-            sirenDebug() << "Thread::~Thread()" << tid << session_id << "Returning!";
             //return the underlying thread to the pool
             exp_shared_ptr<ThreadPool>::Type p = pool();
             
             if (p)
                 p->returnThread(d);
-                
-            sirenDebug() << "Thread::~Thread()" << tid << session_id << "Returning DONE!";
         }
     }
 }
@@ -475,16 +463,12 @@ Thread& Thread::operator=(const Thread &other)
     {
         //return the underlying thread to the pool
         int tid = d->threadID();
-        sirenDebug() << "Thread::~Thread()" << session_id << tid;
 
-        sirenDebug() << "Thread::operator=" << tid << session_id << "Returning!";
         //return the underlying thread to the pool
         exp_shared_ptr<ThreadPool>::Type p = pool();
         
         if (p)
             p->returnThread(d);
-            
-        sirenDebug() << "Thread::operator=" << tid << session_id << "Returning DONE!";
 
         d.reset();
     }

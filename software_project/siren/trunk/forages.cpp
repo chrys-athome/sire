@@ -32,6 +32,7 @@
 #include "Siren/mutex.h"
 #include "Siren/waitcondition.h"
 #include "Siren/readwritelock.h"
+#include "Siren/static.h"
 
 #include "Siren/exceptions.h"
 #include "Siren/assert.h"
@@ -49,20 +50,23 @@ namespace Siren
         {
         public:
         
-            ThreadState(int thread_id) 
+            ThreadState(int thread_id,
+                        exp_shared_ptr<ThreadStorage<ThreadState*>::Type>::Type ptr) 
                           : noncopyable(),
                             id(thread_id), counter(0), 
                             current_block(0),
                             wake_from_current(false),
                             is_interupted(false), is_paused(false)
             {
-                sirenDebug() << "CREATING" << id;
+                thread = ptr;
             }
             
             ~ThreadState()
-            {
-                sirenDebug() << "DELETING" << id;
-            }
+            {}
+
+            /** Hold a shared pointer to the ThreadStorage to ensure that it 
+                is not deleted until all of the threads have exited */
+            exp_shared_ptr<ThreadStorage<ThreadState*>::Type>::Type thread;
 
             String name;
             int id;
@@ -81,14 +85,26 @@ namespace Siren
         class ProgramState : public noncopyable
         {
         public:
-        
             ProgramState() : last_id(0), is_interupted(false), is_paused(false)
-            {}
+            {
+                thread.reset( new ThreadStorage<ThreadState*>::Type() );
+            }
             
             ~ProgramState()
-            {}
+            {
+                //wake up every block
+                for (Hash<const Block*,int>::const_iterator it = blocks.constBegin();
+                     it != blocks.constEnd();
+                     ++it)
+                {
+                    it.key()->checkEndForAges();
+                }
+
+                pause_waiter.wakeAll();
+                
+            }
             
-            ThreadStorage<ThreadState*>::Type thread;
+            exp_shared_ptr<ThreadStorage<ThreadState*>::Type>::Type thread;
 
             Hash<int,ThreadState*>::Type threads;
 
@@ -117,40 +133,28 @@ namespace Siren
 ///////// Implementation of for_ages
 /////////
 
-static AtomicPointer<ProgramState>::Type global_state_pvt;
-
-/** Internal function used to get the global ForAges registry */
-static ProgramState* programState()
-{
-    while (global_state_pvt == 0)
-    {
-        ProgramState *new_state = new ProgramState();
-        
-        if (not global_state_pvt.testAndSetAcquire(0,new_state))
-        {
-            delete new_state;
-        }
-    }
-    
-    return global_state_pvt;
-}
+SIREN_STATIC( ProgramState, programState )
 
 /** Call this function to register the current thread with for-ages. */
 int for_ages::registerThisThread()
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return -1;
 
     WriteLocker lkr( &(program->lock) );
 
-    if (program->thread.hasLocalData())
+    if (program->thread->hasLocalData())
         throw Siren::program_bug( String::tr(
                 "For some reason, this thread appears to have been already registered "
                 "with for_ages."), CODELOC );
                 
     program->last_id += 1;
-    program->thread.setLocalData( new ThreadState(program->last_id) );
+    program->thread->setLocalData( new ThreadState(program->last_id,
+                                                   program->thread) );
     
-    program->threads.insert(program->last_id, program->thread.localData());
+    program->threads.insert(program->last_id, program->thread->localData());
       
     return program->last_id;
 }
@@ -158,19 +162,18 @@ int for_ages::registerThisThread()
 /** Unregister the current thread from for_ages */
 void for_ages::unregisterThisThread()
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+
+    if (not program)
+        return;
 
     WriteLocker lkr( &(program->lock) );
 
-    sirenDebug() << "UNREGISTERING THREAD";
-
-    if (program->thread.hasLocalData())
+    if (program->thread->hasLocalData())
     {
-        ThreadState *thread = program->thread.localData();
+        ThreadState *thread = program->thread->localData();
 
         bool is_paused = thread->is_paused;
-        
-        sirenDebug() << "Unregister" << thread->id << is_paused;
         
         program->threads.remove(thread->id);
         
@@ -178,15 +181,41 @@ void for_ages::unregisterThisThread()
             //wake the thread up
             program->pause_waiter.wakeAll();
 
-        sirenDebug() << "Done :-)";
-
         // no need to delete the ThreadState object, as this will be 
         // deleted automatically by ThreadStorage when the thread exits
     }
 }
 
+void interupt_thread(const exp_shared_ptr<ProgramState>::Type &program, 
+                     bool local_is_interupted, bool got_lock=false)
+{
+    if (local_is_interupted)
+    {
+        throw Siren::interupted_thread();
+    }
+    else if (got_lock)
+    {
+        if (program->is_interupted)
+        {
+            throw Siren::interupted_thread();
+        }
+    }
+    else
+    {
+        //really check that for-ages has finished - the check 
+        //before didn't acquire the mutex
+        ReadLocker lkr( &(program->lock) );
+        
+        if (program->is_interupted)
+        {
+            throw Siren::interupted_thread();
+        }
+    }
+}
+
 /** Return whether or not the passed block is one of the special for_ages blocks */
-static bool isForAgesBlock(const ProgramState *program, const Block *block)
+static bool isForAgesBlock(const exp_shared_ptr<ProgramState>::Type program, 
+                           const Block *block)
 {
     return (block == 0) or (block == &(program->lock)) or
            (block == &(program->pause_mutex)) or 
@@ -197,7 +226,10 @@ static bool isForAgesBlock(const ProgramState *program, const Block *block)
     to show that all threads waiting on this block can now wake up */
 void for_ages::setShouldWakeAll(const Block *block)
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return;
 
     if (block == 0 or isForAgesBlock(program,block))
         return;
@@ -221,7 +253,10 @@ void for_ages::setShouldWakeAll(const Block *block)
     one thread that is waiting on this condition may now wake up */
 void for_ages::setShouldWakeOne(const Block *block)
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+
+    if (not program)
+        return;
 
     //ignore the global "pause_waiter"
     if (block == 0 or isForAgesBlock(program,block))
@@ -246,16 +281,11 @@ void for_ages::setShouldWakeOne(const Block *block)
     }
 }
 
-static String errorString()
-{
-    static String err = String::tr("Thread interupted by for_ages::end()");
-    return err;
-}
-
 /** Internal function used to set the flags necessary to record that the 
     thread represented by 'local' is waiting on the passed Block.
     Note that you must hold a write lock on program->lock */
-static void addRef(ProgramState *program, ThreadState *thread, const Block *block)
+static void addRef(const exp_shared_ptr<ProgramState>::Type program, 
+                   ThreadState *thread, const Block *block)
 {
     if (block == 0 or isForAgesBlock(program,block))
         return;
@@ -284,7 +314,8 @@ static void addRef(ProgramState *program, ThreadState *thread, const Block *bloc
 /** Internal function used to remove the flags used to record that
     the thread represented by 'local' is waiting on the passed block.
     Note that you must hold a write lock on program->lock */
-static void removeRef(ProgramState *program, ThreadState *thread, const Block *block)
+static void removeRef(exp_shared_ptr<ProgramState>::Type program, 
+                      ThreadState *thread, const Block *block)
 {
     if (isForAgesBlock(program,block))
         return;
@@ -309,21 +340,25 @@ static void removeRef(ProgramState *program, ThreadState *thread, const Block *b
     thread when for_ages::end() is called */
 void for_ages::aboutToSleep(const Block *block)
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        //it is the end of the program - the end of for_ages has arrived
+        throw Siren::interupted_thread();
     
     if (isForAgesBlock(program,block))
         //don't record sleeping on any of the for_ages blocks
         return;
 
-    if (program->thread.hasLocalData())
+    if (program->thread->hasLocalData())
     {
-        ThreadState *thread = program->thread.localData();
+        ThreadState *thread = program->thread->localData();
     
         WriteLocker lkr( &(program->lock) );
         addRef(program, thread, block);
         
         if (program->is_interupted or thread->is_interupted)
-            throw Siren::interupted_thread( errorString(), CODELOC );
+            interupt_thread(program, thread->is_interupted, true);
     }
 }
 
@@ -333,17 +368,19 @@ void for_ages::aboutToSleep(const Block *block)
     removes the reference to this block from this thread */
 bool for_ages::shouldWake(const Block *block)
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        //it is the end of the program - the end of for_ages has arrived
+        throw Siren::interupted_thread();
  
-    sirenDebug() << "for_ages::shouldWake(" << block << ")";
-          
     if (isForAgesBlock(program,block))
         //don't record waking from any of the for_ages blocks
         return true;
 
-    if (program->thread.hasLocalData())
+    if (program->thread->hasLocalData())
     {
-        ThreadState *thread = program->thread.localData();
+        ThreadState *thread = program->thread->localData();
     
         if (thread->current_block == 0)
             return true;
@@ -357,28 +394,7 @@ bool for_ages::shouldWake(const Block *block)
                         .arg(block->toString()),
                     CODELOC );
 
-        WriteLocker lkr( &(program->lock) );
-    
-        if (thread->wake_from_current)
-        {
-            removeRef(program, thread, block);
-
-            //check for the end of for_ages in this thread
-            if (program->is_interupted or thread->is_interupted)
-                throw Siren::interupted_thread( errorString(), CODELOC );
-            
-            return true;
-        }
-        else
-        {
-            if (program->is_interupted or thread->is_interupted)
-            {
-                removeRef(program, thread, block);
-                throw Siren::interupted_thread( errorString(), CODELOC );
-            }
-            
-            return false;
-        }
+        return thread->wake_from_current;
     }
     else
         return true;
@@ -388,15 +404,19 @@ bool for_ages::shouldWake(const Block *block)
     current thread has woken up because of time */
 void for_ages::hasWoken(const Block *block)
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
     
-    if (isForAgesBlock(program,block))
+    if (not program)
+        //it is the end of the program - the end of for_ages has arrived
+        throw Siren::interupted_thread();
+    
+    else if (isForAgesBlock(program,block))
         //don't record waking from any of the for_ages blocks
         return;
                 
-    if (program->thread.hasLocalData())
+    if (program->thread->hasLocalData())
     {
-        ThreadState *thread = program->thread.localData();
+        ThreadState *thread = program->thread->localData();
 
         if (thread->current_block == 0)
             //the reference has been removed already
@@ -417,18 +437,21 @@ void for_ages::hasWoken(const Block *block)
 
         //check for the end of for_ages in this thread
         if (program->is_interupted or thread->is_interupted)
-            throw Siren::interupted_thread( errorString(), CODELOC );
+            interupt_thread(program, thread->is_interupted, true);
     }
 }
 
 /** Update the name used to refer to the current thread */
 void for_ages::setThisThreadName(const String &name)
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return;
 
-    if (program->thread.hasLocalData())
+    if (program->thread->hasLocalData())
     {
-        ThreadState *thread = program->thread.localData();
+        ThreadState *thread = program->thread->localData();
         thread->name = name;
     }
 }
@@ -436,11 +459,14 @@ void for_ages::setThisThreadName(const String &name)
 /** Return the name used to refer to this thread */
 String for_ages::getThisThreadName()
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return String();
 
-    if (program->thread.hasLocalData())
+    if (program->thread->hasLocalData())
     {
-        ThreadState *thread = program->thread.localData();
+        ThreadState *thread = program->thread->localData();
         
         return thread->name;
     }
@@ -452,7 +478,10 @@ String for_ages::getThisThreadName()
     or not this call actually paused the threads */
 bool for_ages::pause()
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+
+    if (not program)
+        return false;
 
     MutexLocker lkr( &(program->pause_mutex) );
 
@@ -470,7 +499,10 @@ bool for_ages::pause()
     not this call actually paused the threads */
 bool for_ages::pause(int thread_id)
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return false;
 
     ReadLocker lkr( &(program->lock) );
         
@@ -498,7 +530,10 @@ bool for_ages::pause(int thread_id)
     registered thread */
 bool for_ages::pauseAll()
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return false;
     
     bool some_paused = false;
     
@@ -529,7 +564,10 @@ bool for_ages::pauseAll()
     call actually awoke the threads */
 bool for_ages::play()
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return false;
 
     MutexLocker lkr( &(program->pause_mutex) );
     
@@ -547,7 +585,10 @@ bool for_ages::play()
     whether or not this call actually awoke the thread */
 bool for_ages::play(int thread_id)
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return false;
     
     ReadLocker lkr( &(program->lock) );
         
@@ -577,7 +618,10 @@ bool for_ages::play(int thread_id)
     "play" flag. This will set the "play" flag for each individual thread */
 bool for_ages::playAll()
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return false;
     
     bool some_played = false;
     
@@ -613,7 +657,10 @@ bool for_ages::playAll()
     or not the end of for_ages was already set */
 bool for_ages::end()
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return false;
     
     WriteLocker lkr( &(program->lock) ); // need write lock as will change 
                                          // interupt state
@@ -644,11 +691,12 @@ bool for_ages::end()
     was already set */
 bool for_ages::end(int thread_id)
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return false;
     
     WriteLocker lkr( &(program->lock) );
-    
-    sirenDebug() << "for_ages::end(" << thread_id << ")";
     
     ThreadState *thread = program->threads.value(thread_id, 0);
             
@@ -676,7 +724,10 @@ bool for_ages::end(int thread_id)
 /** Tell each individual thread to end for-ages */
 bool for_ages::endAll()
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return false;
     
     bool some_ended = false;
     
@@ -715,33 +766,6 @@ bool for_ages::endAll()
     return some_ended;
 }
 
-void interupt_thread(bool local_is_interupted)
-{
-    if (local_is_interupted)
-    {
-        static String err = String::tr(
-                "The local end of for-ages has been signalled for this thread.");
-                
-        throw Siren::interupted_thread(err, CODELOC);
-    }
-    else
-    {
-        ProgramState *program = programState();
-        
-        //really check that for-ages has finished - the check 
-        //before didn't acquire the mutex
-        ReadLocker lkr( &(program->lock) );
-        
-        if (program->is_interupted)
-        {
-            static String err = String::tr(
-                    "The global end of for-ages has been signalled!");
-                    
-            throw Siren::interupted_thread(err, CODELOC);
-        }
-    }
-}
-
 /** This function does nothing, unless the end of for-ages
     has been signalled, in which case it will throw a
     Siren::interupted_thread exception, or in the case that
@@ -753,20 +777,23 @@ void interupt_thread(bool local_is_interupted)
 */
 void for_ages::test()
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
+    
+    if (not program)
+        return;
 
-    if (not program->thread.hasLocalData())
+    if (not program->thread->hasLocalData())
     {
         //this is not a registered thread, so cannot be paused or interupted
         sirenDebug() << "RUNNING A TEST IN AN UNREGISTERED THREAD!";
         return;
     }
 
-    ThreadState *thread = program->thread.localData();
+    ThreadState *thread = program->thread->localData();
     
     if (program->is_interupted or thread->is_interupted)
     {
-        interupt_thread(thread->is_interupted);
+        interupt_thread(program, thread->is_interupted);
     }
     else if (program->is_paused or thread->is_paused)
     {
@@ -783,16 +810,19 @@ void for_ages::test()
 
 void for_ages::test(int n)
 {
-    ProgramState *program = programState();
+    exp_shared_ptr<ProgramState>::Type program = programState();
     
-    if (not program->thread.hasLocalData())
+    if (not program)
+        return;
+    
+    if (not program->thread->hasLocalData())
     {
         //this is not a registered thread, so cannot be paused or interupted
         sirenDebug() << "RUNNING A TEST IN AN UNREGISTERED THREAD!";
         return;
     }
     
-    ThreadState *thread = program->thread.localData();
+    ThreadState *thread = program->thread->localData();
     
     thread->counter += 1;
     
@@ -803,7 +833,7 @@ void for_ages::test(int n)
     {
         if (program->is_interupted or thread->is_interupted)
         {
-            interupt_thread(thread->is_interupted);
+            interupt_thread(program, thread->is_interupted);
         }
         else if (program->is_paused or thread->is_paused)
         {
@@ -848,15 +878,11 @@ bool for_ages::loop(int n)
     a Siren::interupted_thread exception will be raised */
 void for_ages::sleep(int secs)
 {
-    sirenDebug() << "for_ages::sleep(" << secs << ")";
-    
     if (secs <= 0)
         return;
 
     WaitCondition w;
     w.wait(1000*secs);
-    
-    sirenDebug() << "for_ages::sleep(" << secs << ") finished!";
 }
 
 /** Sleep for 'ms' milliseconds. This will pause for 'ms' milliseconds,

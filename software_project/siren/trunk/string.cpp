@@ -41,7 +41,7 @@ using namespace Siren;
 REGISTER_SIREN_CLASS( Siren::String )
 
 /** Null constructor */
-String::String() : Object(), refcount(0)
+String::String() : Object()
 {}
 
 class StringRegistry
@@ -53,11 +53,15 @@ public:
     ~StringRegistry()
     {}
 
-    static QString registerString(const QString &str, AtomicInt **refcount);
-    static void unregisterString(const QString &str);
+    QString registerString(const QString &str, 
+                           exp_shared_ptr<AtomicInt>::Type &refcount);
+    void unregisterString(const QString &str);
+
+    QString tr(const char* source_text, const char* comment, int n);
+    QString trUtf8(const char* source_text, const char* comment, int n);
 
 private:
-    Hash<QString,AtomicInt*>::Type registry;
+    Hash<QString,exp_weak_ptr<AtomicInt>::Type>::Type registry;
     ReadWriteLock lock;
 };
 
@@ -65,54 +69,71 @@ SIREN_STATIC( StringRegistry, globalRegistry )
 
 /** This function registers the passed string, thus ensuring that 
     only one copy of each string is used by the code. */
-QString StringRegistry::registerString(const QString &str, AtomicInt **refcount)
+QString StringRegistry::registerString(const QString &str, 
+                                       exp_shared_ptr<AtomicInt>::Type &refcount)
 {
     if (str.isEmpty())
     {
-        *refcount = 0;
+        refcount.reset();
         return QString();
     }
-
-    exp_shared_ptr<StringRegistry>::Type singleton = globalRegistry();
-        
-    if (not singleton)
-        //we have been shut down...
-        return str;
 
     // CODE TO SEE IF THE STRING IS ALREADY REGISTERED
     {
     
-        ReadLocker lkr( &(singleton->lock) );
+        ReadLocker lkr(&lock);
     
-        Hash<QString,AtomicInt*>::const_iterator it = singleton->registry.constFind(str);
+        Hash<QString,exp_weak_ptr<AtomicInt>::Type>::const_iterator 
+                                                    it = registry.constFind(str);
     
-        if (it != singleton->registry.constEnd())
+        if (it != registry.constEnd())
         {
-            *refcount = it.value();
-            return it.key();
+            refcount = it.value().lock();
+            
+            if (refcount.get() != 0)
+            {
+                return it.key();
+            }
         }
     }
     
     // the string is not registered, so register it now
-    WriteLocker lkr( &(singleton->lock) );
+    WriteLocker lkr( &lock );
+
+    //check again, as someone may have snuck in and added it between 
+    //acquiring the read lock and write lock!
+    if (registry.contains(str))
+    {
+        Hash<QString,exp_weak_ptr<AtomicInt>::Type>::const_iterator 
+                                                    it = registry.constFind(str);
+
+        if (it != registry.constEnd())
+        {
+            refcount = it.value().lock();
+            
+            if (refcount.get() != 0)
+            {
+                return it.key();
+            }
+        }
+    }
     
-    *refcount = new AtomicInt(1);
+    refcount.reset(new AtomicInt(1));
     
-    singleton->registry.insert(str, *refcount);
+    registry.insert(str, refcount);
     
     // clean the registry every time a multiple of 1000 strings are added
-    if (singleton->registry.count() % 1000 == 0)
+    if (registry.count() % 1000 == 0)
     {
-        Hash<QString,AtomicInt*>::MutableIterator it(singleton->registry);
+        Hash<QString,exp_weak_ptr<AtomicInt>::Type>::MutableIterator it(registry);
         
         while (it.hasNext())
         {
             it.next();
         
-            if ( *(it.value()) == 0 )
+            if ( it.value().lock().get() == 0 )
             {
                 //there are no more references to this string
-                delete it.value();
                 it.remove();
             }
         }
@@ -124,51 +145,72 @@ QString StringRegistry::registerString(const QString &str, AtomicInt **refcount)
 /** Unregister a string */
 void StringRegistry::unregisterString(const QString &str)
 {
-    exp_shared_ptr<StringRegistry>::Type singleton = globalRegistry();
+    WriteLocker lkr(&lock);
+    registry.remove(str);
+}
 
-    if (singleton == 0)
-        return;
+QString StringRegistry::tr(const char* source_text, const char* comment, int n)
+{
+    return QObject::tr(source_text, comment, n);
+}
 
-    sirenDebug() << "unregisterString(" << str << ")";
-
-    WriteLocker lkr( &(singleton->lock) );
-    singleton->registry.remove(str);
+QString StringRegistry::trUtf8(const char* source_text, const char* comment, int n)
+{
+    return QObject::trUtf8(source_text, comment, n);
 }
 
 /** Construct from the passed unicode array */
-String::String(const Char *unicode, int size) : Object(), refcount(0)
+String::String(const Char *unicode, int size) : Object()
 {
-    d = StringRegistry::registerString( QString(unicode,size), &refcount );
+    exp_shared_ptr<StringRegistry>::Type reg = globalRegistry();
+    
+    if (reg)
+        d = reg->registerString( QString(unicode,size), refcount );
 }
 
 /** Construct from a single unicode character */
-String::String(Char c) : Object(), refcount(0)
+String::String(Char c) : Object()
 {
-    d = StringRegistry::registerString( QString(c), &refcount );
+    exp_shared_ptr<StringRegistry>::Type reg = globalRegistry();
+    
+    if (reg)
+        d = reg->registerString( QString(c), refcount );
 }
 
 /** Construct from a const char* string */
-String::String(const char *str) : Object(), refcount(0)
+String::String(const char *str) : Object()
 {
-    d = StringRegistry::registerString( QString(QLatin1String(str)), &refcount );
+    exp_shared_ptr<StringRegistry>::Type reg = globalRegistry();
+    
+    if (reg)
+        d = reg->registerString( QString(QLatin1String(str)), refcount );
 }
 
-String::String(int size, Char c) : Object(), refcount(0)
+String::String(int size, Char c) : Object()
 {
-    d = StringRegistry::registerString( QString(size,c), &refcount );
+    exp_shared_ptr<StringRegistry>::Type reg = globalRegistry();
+    
+    if (reg)
+        d = reg->registerString( QString(size,c), refcount );
 }
 
 /** Construct from the passed Latin1 encoded string */
-String::String(const Latin1String &latin1) : Object(), refcount(0)
+String::String(const Latin1String &latin1) : Object()
 {
-    d = StringRegistry::registerString( QString(latin1), &refcount );
+    exp_shared_ptr<StringRegistry>::Type reg = globalRegistry();
+    
+    if (reg)
+        d = reg->registerString( QString(latin1), refcount );
 }
 
 #ifdef SIREN_QT_SUPPORT
     /** Construct from a QString */
-    String::String(const QString &qstring) : Object(), refcount(0)
+    String::String(const QString &qstring) : Object()
     {
-        d = StringRegistry::registerString(qstring, &refcount);
+        exp_shared_ptr<StringRegistry>::Type reg = globalRegistry();
+    
+        if (reg)
+            d = reg->registerString(qstring, refcount);
     }
     
     /** Allow automatic casting to a QString */
@@ -192,14 +234,14 @@ void String::decref()
     {
         if (not refcount->deref())
         {
-            //delete the reference count
-            delete refcount;
-        
             //this was the last reference
-            StringRegistry::unregisterString(d);
+            exp_shared_ptr<StringRegistry>::Type reg = globalRegistry();
+
+            if (reg)
+                reg->unregisterString(d);
         }
         
-        refcount = 0;
+        refcount.reset();
     }
 }
 
@@ -219,11 +261,10 @@ String::~String()
 /** Copy assignment operator */
 void String::copy_object(const String &other)
 {
-    if (this == &other)
+    if (this == &other or refcount == other.refcount)
         return;
 
     decref();
-
     refcount = other.refcount;
     incref();
     
@@ -863,7 +904,14 @@ String String::arg(const String &a1, const String &a2, const String &a3,
     is available. */
 String String::tr(const char* source_text, const char* comment, int n)
 {
-    return String( QObject::tr(source_text, comment, n) );
+    //Qt translation cannot be called before program initialisation or 
+    //after program destruction
+    exp_shared_ptr<StringRegistry>::Type reg = globalRegistry();
+
+    if (not reg)
+        return String();
+
+    return String( reg->tr(source_text, comment, n) );
 }
                  
 /** Returns a translated version of sourceText, or QString::fromUtf8(sourceText) 
@@ -871,7 +919,14 @@ String String::tr(const char* source_text, const char* comment, int n)
     tr(sourceText, disambiguation, n). */
 String String::trUtf8(const char* source_text, const char* comment, int n)
 {
-    return String( QObject::trUtf8(source_text, comment, n) );
+    //Qt translation cannot be called before program initialisation or 
+    //after program destruction
+    exp_shared_ptr<StringRegistry>::Type reg = globalRegistry();
+
+    if (not reg)
+        return String();
+        
+    return String( reg->trUtf8(source_text, comment, n) );
 }
 
 /** Returns a string equivalent of the number 'num' according to the specified base.

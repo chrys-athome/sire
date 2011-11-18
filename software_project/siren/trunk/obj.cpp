@@ -30,24 +30,25 @@
 #include "Siren/none.h"
 #include "Siren/testreport.h"
 //#include "Siren/stream.h"
+#include "Siren/static.h"
 #include "Siren/siren.hpp"
+#include "Siren/exceptions.h"
 
 using namespace Siren;
 
-static Obj none( new None() );
-
 /** Null constructor - this holds a pointer to None */
-Obj::Obj() : d(none.d)
+Obj::Obj()
 {}
 
 /** Construct to hold Siren::None */
-Obj::Obj(const None&) : d(none.d)
+Obj::Obj(const None&)
 {}
 
 /** Construct to hold a clone of the passed object */
 Obj::Obj(const Object &object)
 {
-    this->operator=( object.clone() );
+    if (not object.isNone())
+        this->operator=( object.clone() );
 }
 
 /** Construct to hold a pointer to the passed object - the Obj
@@ -56,7 +57,7 @@ Obj::Obj(const Object &object)
 Obj::Obj(Object *object) : d(object)
 {
     if (object == 0)
-        this->operator=(none);
+        d.reset();
 }
 
 /** Copy constructor */
@@ -77,10 +78,11 @@ Obj& Obj::operator=(const Obj &other)
 /** Assign this reference to equal a clone of the passed object */
 Obj& Obj::operator=(const Object &other)
 {
-    if (d.get() != &other)
-    {
+    if (other.isNone())
+        d.reset();
+
+    else if (d.get() != &other)
         this->operator=(other.clone());
-    }
     
     return *this;
 }
@@ -91,7 +93,10 @@ Obj& Obj::operator=(const Object &other)
 Obj& Obj::operator=(Object *object)
 {
     if (object == 0)
-        this->operator=(none);
+        d.reset();
+
+    else if (object->isNone())
+        d.reset();
 
     else
         d.reset( object );
@@ -102,49 +107,64 @@ Obj& Obj::operator=(Object *object)
 /** Comparison operator */
 bool Obj::operator==(const Obj &other) const
 {
-    return d.get() == other.d.get() or d->equals(other);
+    if (this->isNone())
+        return other.isNone();
+    else
+        return d.get() == other.d.get() or d->equals(other);
 }
 
 /** Comparison operator */
 bool Obj::operator!=(const Obj &other) const
 {
-    return d.get() != other.d.get() and (not d->equals(other));
+    return not Obj::operator==(other);
 }
 
 /** Comparison operator */
 bool Obj::operator==(const Object &other) const
 {
-    return d.get() == &other or d->equals(other);
+    if (this->isNone())
+        return other.isNone();
+    else
+        return d.get() == &other or d->equals(other);
 }
 
 /** Comparison operator */
 bool Obj::operator!=(const Object &other) const
 {
-    return d.get() != &other and (not d->equals(other));
+    return not operator==(other);
 }
 
 /** Return the class type of the referenced object */
 Class Obj::getClass() const
 {
-    return d->getClass();
+    if (this->isNone())
+        return None::typeClass();
+    else
+        return d->getClass();
 }
 
 /** Return the version number of the class of the referenced object */
 int Obj::getClassVersion() const
 {
-    return d->getClassVersion();
+    if (this->isNone())
+        return None::typeClassVersion();
+    else
+        return d->getClassVersion();
 }
 
 /** Return the type of the passed object */
 const char* Obj::what() const
 {
-    return d->what();
+    if (this->isNone())
+        return None::typeName();
+    else
+        return d->what();
 }
 
 /** Return whether or not this object is None */
 bool Obj::isNone() const
 {
-    return d.get() == none.d.get() or d->isNone();
+    return d.get() == 0;
 }
 
 /** Copy the passed object into this object */
@@ -168,7 +188,13 @@ Obj Obj::clone() const
 /** Save this object to the passed stream */
 void Obj::save(Stream &s) const
 {
-    d->save(s);
+    if (this->isNone())
+    {
+        None n;
+        n.save(s);
+    }
+    else
+        d->save(s);
 }
 
 /** Load this object from the passed stream */
@@ -180,32 +206,62 @@ void Obj::load(Stream &s)
 /** Test the contained class */
 TestReport Obj::test() const throw()
 {
-    return d->test();
+    if (this->isNone())
+    {
+        None n;
+        return n.test();
+    }
+    else
+        return d->test();
 }
 
 /** Return a string representation of the contained object */
 String Obj::toString() const
 {
-    return d->toString();
+    if (this->isNone())
+    {
+        None n;
+        return n.toString();
+    }
+    else
+        return d->toString();
 }
 
 /** Return the documentation for the contained object */
 String Obj::docString() const
 {
-    return d->docString();
+    if (this->isNone())
+    {
+        None n;
+        return n.docString();
+    }
+    else
+        return d->docString();
 }
 
 /** Return the documentation for the named function of 
     the contained object */
 String Obj::docString(const String &function) const
 {
-    return d->docString(function);
+    if (this->isNone())
+    {
+        None n;
+        return n.docString(function);
+    }
+    else
+        return d->docString(function);
 }
 
 /** Return a hashcode for the contained object */
 uint Obj::hashCode() const
 {
-    return d->hashCode();
+    if (this->isNone())
+    {
+        None n;
+        return n.hashCode();
+    }
+    else
+        return d->hashCode();
 }
 
 /** Stream the contained object */
@@ -217,14 +273,34 @@ void Obj::stream(Stream &s)
     //    this->load(s);
 }
 
+SIREN_STATIC( None, getNone );
+
+const None& Obj::globalNone() const
+{
+    exp_shared_ptr<None>::Type n = getNone();
+    
+    if (not n)
+        throw Siren::invalid_state( String::tr(
+                "Cannot get the global none object during program "
+                "shutdown or startup."), CODELOC );
+                
+    return *n;
+}
+
 /** Allow automatic casting to Siren::Object */
 Obj::operator const Object&() const
 {
-    return *d;
+    if (this->isNone())
+        return globalNone();
+    else
+        return *d;
 }
 
 /** Allow automatic casting to a pointer to Siren::Object */
 Obj::operator const Object*() const
 {
-    return d.get();
+    if (this->isNone())
+        return &(globalNone());
+    else
+        return d.get();
 }

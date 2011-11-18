@@ -42,8 +42,13 @@ namespace Siren
         class Static
         {
         public:
-            Static( void (*create_function)(), void (*delete_function)() );
+            Static( void (*create_function)(), void (*delete_function)(),
+                    const char *func, const char *type);
+                    
             ~Static();
+            
+            static bool beingCreated();
+            static bool beingDeleted();
             
             static void createAll();
             static void deleteAll();
@@ -63,7 +68,6 @@ namespace Siren
          { \
              if (not foo) \
              { \
-                 sirenDebug() << "CREATE GLOBAL" << #TYPE << #FUNC; \
                  foo.reset(new TYPE()); \
                  weak_foo = foo; \
              } \
@@ -71,15 +75,23 @@ namespace Siren
          \
          void deleteFoo() \
          { \
-             sirenDebug() << "DELETE GLOBAL" << #TYPE << #FUNC; \
              foo.reset(); \
          } \
          \
-         static Siren::detail::Static foo_static( &createFoo, &deleteFoo ); \
+         static Siren::detail::Static foo_static( &createFoo, &deleteFoo, \
+                                                  #TYPE, #FUNC ); \
     } \
     \
     exp_shared_ptr<TYPE>::Type FUNC() \
     { \
+        exp_shared_ptr<TYPE>::Type ptr = Siren_Static_ ## FUNC::weak_foo.lock(); \
+        \
+        if (not ptr) \
+        { \
+            if (Siren::detail::Static::beingCreated()) \
+                Siren_Static_ ## FUNC::createFoo(); \
+        } \
+        \
         return Siren_Static_ ## FUNC::weak_foo.lock(); \
     }         
 

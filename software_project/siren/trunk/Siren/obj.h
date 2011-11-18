@@ -104,6 +104,8 @@ namespace Siren
         operator const Object*() const;
         
     private:
+        const None& globalNone() const;
+    
         /** Holder for the generic pointer to the Object */
         exp_shared_ptr<Object>::Type d;
     

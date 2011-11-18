@@ -55,8 +55,6 @@ namespace Siren
             int nRunning();
             int nWaiting();
             int nCompleted();
-        
-            static exp_shared_ptr<WorkQueueData>::Type global();
     
         private:
             /** Mutex to protect access to the data of this queue */

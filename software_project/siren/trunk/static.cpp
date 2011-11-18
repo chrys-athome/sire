@@ -54,43 +54,65 @@ public:
     static void createAll();
     static void deleteAll();
     
+    static bool beingCreated();
+    static bool beingDeleted();
+    
 private:
     Mutex m;
     List<CreateFunction>::Type create_funcs;
     List<DeleteFunction>::Type delete_funcs;
+    
+    bool being_created;
+    bool being_deleted;
 };
 
-AtomicPointer<StaticRegistry>::Type static_registry;
+StaticRegistry* static_registry = 0;
 
-StaticRegistry::StaticRegistry()
+StaticRegistry::StaticRegistry() : being_created(true), being_deleted(false)
 {}
 
 StaticRegistry::~StaticRegistry()
 {}
 
-static void createRegistry()
+void createRegistry()
 {
-    while (static_registry == 0)
+    if (static_registry == 0)
     {
-        StaticRegistry *newreg = new StaticRegistry();
-        
-        if (not static_registry.testAndSetAcquire(0,newreg))
-            delete newreg;
+        static_registry = new StaticRegistry();
     }
 }
 
 void StaticRegistry::registerObject(CreateFunction cre, DeleteFunction del)
 {
     createRegistry();
+
     MutexLocker lkr( &(static_registry->m) );
     
     static_registry->create_funcs.append(cre);
     static_registry->delete_funcs.append(del);
 }
 
+bool StaticRegistry::beingCreated()
+{
+    if (static_registry == 0)
+        return false;
+
+    return static_registry->being_created;
+}
+
+bool StaticRegistry::beingDeleted()
+{
+    if (static_registry == 0)
+        return false;
+
+    return static_registry->being_deleted;
+}
+
 void StaticRegistry::unregisterObject(CreateFunction cre, DeleteFunction del)
 {
-    createRegistry();
+    if (static_registry == 0)
+        return;
+
     MutexLocker lkr( &(static_registry->m) );
     
     static_registry->create_funcs.removeAll(cre);
@@ -99,37 +121,65 @@ void StaticRegistry::unregisterObject(CreateFunction cre, DeleteFunction del)
 
 void StaticRegistry::createAll()
 {
-    createRegistry();
+    if (static_registry == 0)
+        return;
     
     MutexLocker lkr( &(static_registry->m) );
     
-    for (List<CreateFunction>::const_iterator 
-                        it = static_registry->create_funcs.constBegin();
-         it != static_registry->create_funcs.constEnd();
-         ++it)
+    static_registry->being_created = true;
+    static_registry->being_deleted = false;
+    
+    try
     {
-        (*it)();
+        for (List<CreateFunction>::const_iterator 
+                            it = static_registry->create_funcs.constBegin();
+             it != static_registry->create_funcs.constEnd();
+             ++it)
+        {
+            (*it)();
+        }
+    
+        static_registry->being_created = false;
+    }
+    catch(...)
+    {
+        static_registry->being_created = false;
+        throw;
     }
 }
 
 void StaticRegistry::deleteAll()
 {
-    createRegistry();
+    if (static_registry == 0)
+        return;
     
     MutexLocker lkr( &(static_registry->m) );
     
-    for (List<CreateFunction>::const_iterator 
-                        it = static_registry->delete_funcs.constBegin();
-         it != static_registry->delete_funcs.constEnd();
-         ++it)
+    static_registry->being_created = false;
+    static_registry->being_deleted = true;
+    
+    try
     {
-        (*it)();
+        for (List<CreateFunction>::const_iterator 
+                            it = static_registry->delete_funcs.constBegin();
+             it != static_registry->delete_funcs.constEnd();
+             ++it)
+        {
+            (*it)();
+        }
+        
+        static_registry->being_deleted = false;
+    }
+    catch(...)
+    {
+        static_registry->being_deleted = false;
+        throw;
     }
 }
 
-Static::Static( void (*create_function)(), void (*delete_function)() )
+Static::Static( void (*create_function)(), void (*delete_function)(),
+                const char*, const char* )
 {
-    sirenDebug() << "REGISTERING FUNCTIONS...";
     StaticRegistry::registerObject(create_function, delete_function);
 }
 
@@ -138,10 +188,21 @@ Static::~Static()
 
 void Static::createAll()
 {
+    createRegistry();
     StaticRegistry::createAll();
 }
 
 void Static::deleteAll()
 {
     StaticRegistry::deleteAll();
+}
+
+bool Static::beingCreated()
+{
+    return StaticRegistry::beingCreated();
+}
+
+bool Static::beingDeleted()
+{
+    return StaticRegistry::beingDeleted();
 }

@@ -66,7 +66,6 @@ namespace Siren
 
     private:
         QWaitCondition w;
-        QMutex m;
         
     }; // end of class WaitCondition
 

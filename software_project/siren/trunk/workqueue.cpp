@@ -32,6 +32,7 @@
 #include "Siren/workqueue.h"
 #include "Siren/workqueueitem.h"
 #include "Siren/exceptions.h"
+#include "Siren/static.h"
 
 #include "Siren/detail/workqueuedata.h"
 
@@ -114,24 +115,7 @@ int WorkQueueData::nCompleted()
     return completed_jobs.count();
 }
 
-static AtomicPointer<WorkQueueData>::Type global_ptr;
-static exp_shared_ptr<WorkQueueData>::Type global_work_queue;
-
-exp_shared_ptr<WorkQueueData>::Type WorkQueueData::global()
-{
-    while (global_work_queue.get() == 0)
-    {
-        exp_shared_ptr<WorkQueueData>::Type ptr( new WorkQueueData() );
-        
-        if (global_ptr.testAndSetAcquire(0, ptr.get()))
-        {
-            ptr->self = ptr;
-            global_work_queue = ptr;
-        }
-    }
-    
-    return global_work_queue;
-}
+SIREN_STATIC( WorkQueueData, globalWorkQueue )
 
 //////////
 ////////// Implementation of WorkQueue
@@ -140,7 +124,7 @@ exp_shared_ptr<WorkQueueData>::Type WorkQueueData::global()
 /** Construct a new view of the global WorkQueue */
 WorkQueue::WorkQueue()
 {
-    d = WorkQueueData::global();
+    d = globalWorkQueue();
 }
 
 /** Internal constructor used to construct the WorkQueue from the shared pointer */

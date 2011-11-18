@@ -29,6 +29,7 @@
 #include "Siren/siren.h"
 #include "Siren/exceptions.h"
 #include "Siren/static.h"
+#include "Siren/forages.h"
 
 namespace Siren
 {
@@ -76,6 +77,10 @@ namespace Siren
     {
         void fini()
         {
+            //send the end of for_ages
+            for_ages::end();
+
+            //now delete all of the static objects
             Siren::detail::Static::deleteAll();
         }
     }

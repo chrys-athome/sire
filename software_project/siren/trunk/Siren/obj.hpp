@@ -29,6 +29,7 @@
 \*********************************************/
 
 #include "Siren/obj.h"
+#include "Siren/none.h"
 
 SIREN_BEGIN_HEADER
 
@@ -42,7 +43,13 @@ template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 bool Obj::isA() const
 {
-    return d->isA<T>();
+    if (this->isNone())
+    {
+        None n;
+        return n.isA<T>();
+    }
+    else
+        return d->isA<T>();
 }
 
 /** Return the contained object cast to type T
@@ -52,7 +59,12 @@ bool Obj::isA() const
 template<class T>
 const T& Obj::asA() const
 {
-    return d->asA<T>();
+    if (this->isNone())
+    {
+        return this->globalNone().asA<T>();
+    }
+    else
+        return d->asA<T>();
 }
 
 

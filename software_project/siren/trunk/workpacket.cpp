@@ -335,8 +335,10 @@ int TestPacket::progress() const
 
 void run_function()
 {
+    for_ages::setThisThreadName("run_function");
+    sirenDebug() << "HELLO...";
     for_ages::sleep(5);
-    sirenDebug() << "HELLO WORLD...";
+    sirenDebug() << "...WORLD!";
 }
 
 /** Test this TestPacket */

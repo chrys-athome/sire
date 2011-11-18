@@ -36,6 +36,8 @@ namespace Siren
 {
     class for_ages;
 
+    namespace detail{ class ProgramState; }
+
     /** This is the virtual base class of all Blocking types. 
         A Block object is used to stop or block a thread, e.g.
         a Mutex, WaitCondition, Semaphore or ReadWriteLock
@@ -52,6 +54,7 @@ namespace Siren
         
     protected:
         friend class for_ages;
+        friend class Siren::detail::ProgramState;
         virtual void checkEndForAges() const=0;
     
         void aboutToSleep() const;

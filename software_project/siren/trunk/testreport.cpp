@@ -562,38 +562,36 @@ bool TestFailedExceptionItem::compare_object(const TestFailedExceptionItem &othe
 
 REGISTER_SIREN_CLASS( Siren::TestReport )
 
-static imp_shared_ptr<detail::TestReportData>::Type shared_null(  
-                                                    new detail::TestReportData() );
-
 /** Constructor */
-TestReport::TestReport() 
+TestReport::TestReport()
            : TestReportItem(), 
              Interfaces< Mutable<TestReportEditor,TestReport> >(),
-             d( shared_null )
+             d( new detail::TestReportData() )
 {}
 
 /** Construct to report, not on a class, but on a group of tests */
 TestReport::TestReport(const String &description)
            : TestReportItem(description),
-             Interfaces< Mutable<TestReportEditor,TestReport> >(),
-             d( shared_null )
-{}
+             Interfaces< Mutable<TestReportEditor,TestReport> >()
+{
+    d = new detail::TestReportData();
+}
 
 /** Construct to report on the tests of the passed class */
 TestReport::TestReport(const Class &c)
            : TestReportItem( String::tr("Tests for class \"%1\"").arg(c.name()) ),
-             Interfaces< Mutable<TestReportEditor,TestReport> >(),
-             d( shared_null )
+             Interfaces< Mutable<TestReportEditor,TestReport> >()
 {
+    d = new detail::TestReportData();
     d->clas = c;
 }
 
 /** Construct to report on the tests of the passed class */
 TestReport::TestReport(const Class &c, const String &description)
            : TestReportItem(description),
-             Interfaces< Mutable<TestReportEditor,TestReport> >(),
-             d( shared_null )
+             Interfaces< Mutable<TestReportEditor,TestReport> >()
 {
+    d = new detail::TestReportData();
     d->clas = c;
 }
 
@@ -738,9 +736,10 @@ Class TestReport::testedClass() const
 
 /** Constructor */
 TestReportEditor::TestReportEditor()
-                 : Editor<TestReportEditor,TestReport>(),
-                   d( shared_null )
-{}
+                 : Editor<TestReportEditor,TestReport>()
+{
+    d = new detail::TestReportData();
+}
 
 /** Construct from the passed TestReport - this extracts the data
     from TestReport and packages it as an editable block */

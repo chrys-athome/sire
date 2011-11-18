@@ -250,7 +250,7 @@ namespace Siren
         
         /** A reference count for the number of times this string is used
             in the program */
-        AtomicInt *refcount;
+        exp_shared_ptr<AtomicInt>::Type refcount;
     
     }; // end of class String
 

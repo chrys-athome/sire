@@ -30,6 +30,7 @@
 #include "Siren/thread.h"
 #include "Siren/bytearray.h"
 #include "Siren/testreport.h"
+#include "Siren/forages.h"
 #include "Siren/siren.hpp"
 
 using namespace Siren;
@@ -216,7 +217,7 @@ Exception::Exception(const String &error, CODELOC_ARGS)
 //                    .arg(Thread::getPID(), Thread::getTHRID());
                         
     date_time = DateTime::current();
-                        
+    pid_thrid = for_ages::getThisThreadName();                    
     bt = Exception::generateBackTrace();
 }
 
@@ -298,6 +299,10 @@ bool Exception::compare_object(const Exception &other) const
 /** Return a string representation of the exception */
 String Exception::toString() const
 {
+    if (bt.isEmpty())
+        //this is an empty exception - just return the name
+        return this->what();
+
     String box = String::tr("*****************************************\n"
                             "|ERROR: %1\n"
                             "|\n"
