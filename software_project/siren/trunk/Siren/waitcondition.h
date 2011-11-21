@@ -38,6 +38,11 @@ namespace Siren
     class Mutex;
     class for_ages;
 
+    namespace detail
+    {
+        class WaitConditionData;
+    }
+
     /** This is a simple wait condition. A wait condition allows 
         a thread to pause (sleep), until it is woken up by another
         thread, or until the end of for_ages has been signalled */
@@ -45,9 +50,13 @@ namespace Siren
     {
     public:
         WaitCondition();
+        WaitCondition(const WaitCondition &other);
+        
         ~WaitCondition();
         
-        String toString() const;
+        WaitCondition& operator=(const WaitCondition &other);
+        
+        static const char* typeName(){ return "Siren::WaitCondition";}
         
         void wait();
         bool wait(unsigned long time);
@@ -62,10 +71,13 @@ namespace Siren
         void wakeAll();
 
     protected:
-        void checkEndForAges() const;
+        friend class BlockRef;
+        WaitCondition(const exp_shared_ptr<detail::BlockData>::Type &ptr);
+
+        static bool isOfType(const exp_shared_ptr<detail::BlockData>::Type &ptr);
 
     private:
-        QWaitCondition w;
+        detail::WaitConditionData *d;
         
     }; // end of class WaitCondition
 

@@ -1,5 +1,5 @@
-#ifndef SIREN_SEMAPHORE_H
-#define SIREN_SEMAPHORE_H
+#ifndef SIREN_DETAIL_BLOCKDATA_H
+#define SIREN_DETAIL_BLOCKDATA_H
 /********************************************\
   *
   *  Siren - C++ metaobject library
@@ -28,7 +28,6 @@
   *
 \*********************************************/
 
-#include "Siren/siren.h"
 #include "Siren/block.h"
 
 SIREN_BEGIN_HEADER
@@ -37,51 +36,26 @@ namespace Siren
 {
     namespace detail
     {
-        class SemBreaker;
-        class SemaphoreData;
+        /** This is the base class of the objects that hold the 
+            actual data for a Block class */
+        class BlockData : public noncopyable
+        {
+        public:
+            BlockData();
+            virtual ~BlockData();
+
+            virtual const char* blockType() const=0;
+
+            virtual String toString() const=0;
+
+            virtual void checkEndForAges() const=0;
+
+        }; // end of class BlockData
     
     } // end of namespace detail
-
-    /** This is a semaphore - this provides a single counter
-        that can be used to reserve resources etc. It is heavily
-        based on QSemaphore */
-    class SIREN_EXPORT Semaphore : public Block
-    {
-    public:
-        Semaphore();
-        explicit Semaphore(int n);
-
-        Semaphore(const Semaphore &other);
-
-        ~Semaphore();
-
-        Semaphore& operator=(const Semaphore &other);
-
-        static const char* typeName(){ return "Siren::Semaphore"; }
-
-        void acquire(int n = 1);
-        bool tryAcquire(int n = 1);
-        bool tryAcquire(int n, int timeout);
-
-        void release(int n = 1);
-
-        int available() const;
-
-    protected:
-        friend class BlockRef;
-        Semaphore(const exp_shared_ptr<detail::BlockData>::Type &ptr);
-
-        static bool isOfType(const exp_shared_ptr<detail::BlockData>::Type &ptr);
     
-    private:
-        detail::SemaphoreData *d;
-    
-    }; // end of class Semaphore
-
 } // end of namespace Siren
-
-SIREN_EXPOSE_CLASS( Siren::Semaphore )
 
 SIREN_END_HEADER
 
-#endif // ifndef SIREN_SEMAPHORE_H
+#endif // ifndef SIREN_DETAIL_BLOCKDATA_H

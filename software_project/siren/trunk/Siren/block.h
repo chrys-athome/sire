@@ -29,14 +29,20 @@
 \*********************************************/
 
 #include "Siren/siren.h"
+#include "Siren/string.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
     class for_ages;
+    class BlockRef;
 
-    namespace detail{ class ProgramState; }
+    namespace detail
+    { 
+        class ProgramState; 
+        class BlockData;
+    }
 
     /** This is the virtual base class of all Blocking types. 
         A Block object is used to stop or block a thread, e.g.
@@ -44,18 +50,29 @@ namespace Siren
         
         @author Christopher Woods
     */
-    class SIREN_EXPORT Block : public noncopyable
+    class SIREN_EXPORT Block
     {
     public:
         Block();
-        virtual ~Block();
+        Block(const Block &other);
+        ~Block();
         
-        virtual String toString() const=0;
+        const char* what() const;
+        
+        String toString() const;
+        
+        bool operator==(const Block &other) const;
+        bool operator!=(const Block &other) const;
+        
+        bool operator==(const BlockRef &other) const;
+        bool operator!=(const BlockRef &other) const;
         
     protected:
-        friend class for_ages;
-        friend class Siren::detail::ProgramState;
-        virtual void checkEndForAges() const=0;
+        Block(const exp_shared_ptr<detail::BlockData>::Type &ptr);
+
+        void setData(detail::BlockData *ptr);
+
+        Block& operator=(const Block &other);
     
         void aboutToSleep() const;
         bool shouldWake() const;
@@ -64,11 +81,60 @@ namespace Siren
         void setShouldWakeOne() const;
         void setShouldWakeAll() const;
     
+    private:
+        friend class BlockRef;
+        exp_shared_ptr<detail::BlockData>::Type d;
+
     }; // end of class Block
+
+    /** This class holds a weak reference to a Block. This holds
+        the reference for as long as the block is alive, and is then
+        automatically set to null when the block is deleted. */
+    class SIREN_EXPORT BlockRef
+    {
+    public:
+        BlockRef();
+        BlockRef(const Block &block);
+        BlockRef(const BlockRef &other);
+        
+        ~BlockRef();
+        
+        BlockRef& operator=(const BlockRef &other);
+        
+        bool operator==(const Block &block) const;
+        bool operator!=(const Block &block) const;
+        
+        bool operator==(const BlockRef &other) const;
+        bool operator!=(const BlockRef &other) const;
+        
+        bool isNull() const;
+        
+        String toString() const;
+        
+        const char* what() const;
+        
+        template<class T>
+        bool isA() const;
+        
+        template<class T>
+        T asA() const;
+        
+    protected:
+        friend class for_ages;
+        friend class Siren::detail::ProgramState;
+
+        void checkEndForAges() const;
+        void throwNullRefError(const char *type_name) const;
+
+    private:
+        exp_weak_ptr<detail::BlockData>::Type d;
+        detail::BlockData *orig_ptr;
+    };
 
 } // end of namespace Siren
 
 SIREN_EXPOSE_CLASS( Siren::Block )
+SIREN_EXPOSE_CLASS( Siren::BlockRef )
 
 SIREN_END_HEADER
 

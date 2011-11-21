@@ -33,6 +33,7 @@
 #include "Siren/waitcondition.h"
 #include "Siren/readwritelock.h"
 #include "Siren/static.h"
+#include "Siren/block.hpp"
 
 #include "Siren/exceptions.h"
 #include "Siren/assert.h"
@@ -54,7 +55,6 @@ namespace Siren
                         exp_shared_ptr<ThreadStorage<ThreadState*>::Type>::Type ptr) 
                           : noncopyable(),
                             id(thread_id), counter(0), 
-                            current_block(0),
                             wake_from_current(false),
                             is_interupted(false), is_paused(false)
             {
@@ -72,7 +72,7 @@ namespace Siren
             int id;
             int counter;
 
-            const Block *current_block;
+            BlockRef current_block;
             bool wake_from_current;
 
             bool is_interupted;
@@ -93,15 +93,15 @@ namespace Siren
             ~ProgramState()
             {
                 //wake up every block
-                for (Hash<const Block*,int>::const_iterator it = blocks.constBegin();
+                for (List< std::pair<BlockRef,int> >::const_iterator 
+                                                        it = blocks.constBegin();
                      it != blocks.constEnd();
                      ++it)
                 {
-                    it.key()->checkEndForAges();
+                    it->first.checkEndForAges();
                 }
 
                 pause_waiter.wakeAll();
-                
             }
             
             exp_shared_ptr<ThreadStorage<ThreadState*>::Type>::Type thread;
@@ -119,7 +119,7 @@ namespace Siren
             Mutex pause_mutex;  // used to protect the program and thread pause flags
             WaitCondition pause_waiter;
             
-            Hash<const Block*,int>::Type blocks;
+            List< std::pair<BlockRef,int> >::Type blocks;
             
             bool is_interupted;
             bool is_paused;
@@ -215,23 +215,23 @@ void interupt_thread(const exp_shared_ptr<ProgramState>::Type &program,
 
 /** Return whether or not the passed block is one of the special for_ages blocks */
 static bool isForAgesBlock(const exp_shared_ptr<ProgramState>::Type program, 
-                           const Block *block)
+                           const Block &block)
 {
-    return (block == 0) or (block == &(program->lock)) or
-           (block == &(program->pause_mutex)) or 
-           (block == &(program->pause_waiter));
+    return block == program->lock or
+           block == program->pause_mutex or 
+           block == program->pause_waiter;
 }
 
 /** Internal function called by a block to set the for_ages flag
     to show that all threads waiting on this block can now wake up */
-void for_ages::setShouldWakeAll(const Block *block)
+void for_ages::setShouldWakeAll(const Block &block)
 {
     exp_shared_ptr<ProgramState>::Type program = programState();
     
     if (not program)
         return;
 
-    if (block == 0 or isForAgesBlock(program,block))
+    if (isForAgesBlock(program,block))
         return;
 
     ReadLocker lkr( &(program->lock) );
@@ -251,7 +251,7 @@ void for_ages::setShouldWakeAll(const Block *block)
 
 /** Internal function called by a block to say that just
     one thread that is waiting on this condition may now wake up */
-void for_ages::setShouldWakeOne(const Block *block)
+void for_ages::setShouldWakeOne(const Block &block)
 {
     exp_shared_ptr<ProgramState>::Type program = programState();
 
@@ -259,7 +259,7 @@ void for_ages::setShouldWakeOne(const Block *block)
         return;
 
     //ignore the global "pause_waiter"
-    if (block == 0 or isForAgesBlock(program,block))
+    if (isForAgesBlock(program,block))
         return;
 
     ReadLocker lkr( &(program->lock) );
@@ -285,60 +285,80 @@ void for_ages::setShouldWakeOne(const Block *block)
     thread represented by 'local' is waiting on the passed Block.
     Note that you must hold a write lock on program->lock */
 static void addRef(const exp_shared_ptr<ProgramState>::Type program, 
-                   ThreadState *thread, const Block *block)
+                   ThreadState *thread, const Block &block)
 {
-    if (block == 0 or isForAgesBlock(program,block))
+    if (isForAgesBlock(program,block))
         return;
 
-    if (thread->current_block != 0)
+    if (not thread->current_block.isNull())
         throw Siren::program_bug( String::tr(
                 "It should not be possible for a single thread (%1, %2) to be waiting "
                 "simultaneously on two blocks (%3 and %4)!")
                     .arg(thread->name).arg(thread->id)
-                    .arg(block->toString())
-                    .arg(thread->current_block->toString()), CODELOC );
+                    .arg(block.toString())
+                    .arg(thread->current_block.toString()), CODELOC );
 
-    if (program->blocks.contains(block))
-    {
-        program->blocks[block] += 1;
-    }
-    else
-    {
-        program->blocks.insert(block, 1);
-    }
-    
     thread->current_block = block;
     thread->wake_from_current = false;
+
+    List< std::pair<BlockRef,int> >::MutableIterator it( program->blocks );
+
+    while (it.hasNext())
+    {
+        it.next();
+        
+        if (it.value().first == block)
+        {
+            it.value().first = block;
+            it.value().second += 1;
+            return;
+        }
+    }
+
+    //we don't hold a reference to this block
+    program->blocks.append( std::pair<BlockRef,int>(block,1) );
 }
 
 /** Internal function used to remove the flags used to record that
     the thread represented by 'local' is waiting on the passed block.
     Note that you must hold a write lock on program->lock */
 static void removeRef(exp_shared_ptr<ProgramState>::Type program, 
-                      ThreadState *thread, const Block *block)
+                      ThreadState *thread, const Block &block)
 {
     if (isForAgesBlock(program,block))
         return;
 
     SIREN_ASSERT( thread->current_block == block );
 
-    thread->current_block = 0;
+    thread->current_block = BlockRef();
     thread->wake_from_current = false;
+    
+    List< std::pair<BlockRef,int> >::MutableIterator it( program->blocks );
+    
+    while (it.hasNext())
+    {
+        it.next();
         
-    if (program->blocks.value(block, 1) <= 1)
-    {
-        program->blocks.remove(block);
-    }
-    else
-    {
-        program->blocks[block] -= 1;
+        if (it.value().first.isNull())
+        {
+            it.remove();
+        }
+        else if (it.value().first == block)
+        {
+            it.value().second -= 1;
+            
+            if (it.value().second <= 0) 
+                it.remove();
+                
+            return;
+        }
     }
 }
 
 /** Internal function used by a block to tell for_ages that a thread
     is about sleeping on a block. This is to allow for_ages to wake that
     thread when for_ages::end() is called */
-void for_ages::aboutToSleep(const Block *block)
+void for_ages::aboutToSleep(const Block &block)
 {
     exp_shared_ptr<ProgramState>::Type program = programState();
     
@@ -366,7 +386,7 @@ void for_ages::aboutToSleep(const Block *block)
     that has woken from a block may stay awake, or whether it should go back
     to sleep. If this thread should wake, this function automatically
     removes the reference to this block from this thread */
-bool for_ages::shouldWake(const Block *block)
+bool for_ages::shouldWake(const Block &block)
 {
     exp_shared_ptr<ProgramState>::Type program = programState();
     
@@ -382,7 +402,7 @@ bool for_ages::shouldWake(const Block *block)
     {
         ThreadState *thread = program->thread->localData();
     
-        if (thread->current_block == 0)
+        if (thread->current_block.isNull())
             return true;
     
         else if (thread->current_block != block)
@@ -390,8 +410,8 @@ bool for_ages::shouldWake(const Block *block)
                 "A thread should only be able to be woken from one block "
                 "at a time... (%1:%2, blocked on %3, woken from %4)")
                         .arg(thread->name).arg(thread->id)
-                        .arg(thread->current_block->toString())
-                        .arg(block->toString()),
+                        .arg(thread->current_block.toString())
+                        .arg(block.toString()),
                     CODELOC );
 
         return thread->wake_from_current;
@@ -402,7 +422,7 @@ bool for_ages::shouldWake(const Block *block)
 
 /** This function is called by a Block to say that the 
     current thread has woken up because of time */
-void for_ages::hasWoken(const Block *block)
+void for_ages::hasWoken(const Block &block)
 {
     exp_shared_ptr<ProgramState>::Type program = programState();
     
@@ -418,7 +438,7 @@ void for_ages::hasWoken(const Block *block)
     {
         ThreadState *thread = program->thread->localData();
 
-        if (thread->current_block == 0)
+        if (thread->current_block.isNull())
             //the reference has been removed already
             return;
 
@@ -427,8 +447,8 @@ void for_ages::hasWoken(const Block *block)
                 "A thread should only be able to be woken from one block "
                 "at a time... (%1:%2, blocked on %3, woken from %4)")
                         .arg(thread->name).arg(thread->id)
-                        .arg(thread->current_block->toString())
-                        .arg(block->toString()),
+                        .arg(thread->current_block.toString())
+                        .arg(block.toString()),
                     CODELOC );
     
         WriteLocker lkr( &(program->lock) );
@@ -671,11 +691,12 @@ bool for_ages::end()
     program->is_interupted = true;
         
     //tell every active block to check for the end of for_ages
-    for (Hash<const Block*,int>::const_iterator it = program->blocks.constBegin();
+    for (List< std::pair<BlockRef,int> >::const_iterator 
+                                        it = program->blocks.constBegin();
          it != program->blocks.constEnd();
          ++it)
     {
-        it.key()->checkEndForAges();
+        it->first.checkEndForAges();
     }
     
     //wake everyone now in case anyone is paused
@@ -705,16 +726,14 @@ bool for_ages::end(int thread_id)
         if (not thread->is_interupted)
         {
             thread->is_interupted = true;
-                
-            if (thread->current_block)
-                thread->current_block->checkEndForAges();
+            thread->current_block.checkEndForAges();
                     
             program->pause_waiter.wakeAll();
             return true;
         }
-        else if (thread->current_block)
+        else
         {
-            thread->current_block->checkEndForAges();
+            thread->current_block.checkEndForAges();
         }
     }
     
@@ -755,11 +774,12 @@ bool for_ages::endAll()
         program->pause_waiter.wakeAll();
 
         //wake up every thread waiting on a block
-        for (Hash<const Block*,int>::const_iterator it = program->blocks.constBegin();
+        for (List< std::pair<BlockRef,int> >::const_iterator 
+                                            it = program->blocks.constBegin();
              it != program->blocks.constEnd();
              ++it)
         {
-            it.key()->checkEndForAges();
+            it->first.checkEndForAges();
         }
     }    
     

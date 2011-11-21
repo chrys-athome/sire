@@ -107,6 +107,7 @@ set ( SIREN_PUBLIC_HEADERS
 
 set ( SIREN_PRIVATE_HEADERS
 
+      Siren/detail/blockdata.h
       Siren/detail/promisedata.h
       Siren/detail/threaddata.h
       Siren/detail/workqueuedata.h

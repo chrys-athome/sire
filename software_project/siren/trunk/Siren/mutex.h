@@ -35,12 +35,12 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-
     class WaitCondition;
 
     namespace detail
     {
         class MutexBreaker;
+        class MutexData;
         
     } // end of namespace detail
 
@@ -61,8 +61,14 @@ namespace Siren
             NonRecursive = QMutex::NonRecursive
         };
     
-        Mutex( Mutex::RecursionMode mode = Mutex::NonRecursive );
+        Mutex(Mutex::RecursionMode mode = Mutex::NonRecursive);
+        Mutex(const Mutex &other);
+        
         ~Mutex();
+        
+        Mutex& operator=(const Mutex &other);
+        
+        static const char* typeName() { return "Siren::Mutex"; }
         
         void lock();
         bool tryLock();
@@ -70,21 +76,17 @@ namespace Siren
         
         void unlock();
         
-        String toString() const;
-        
     protected:
-        void checkEndForAges() const;
-        
-    private:
+        friend class BlockRef;
+        Mutex(const exp_shared_ptr<detail::BlockData>::Type &ptr);
+
+        static bool isOfType(const exp_shared_ptr<detail::BlockData>::Type &ptr);
+
         friend class WaitCondition;
+        QMutex* pointer();
 
-        void createBreaker();
-
-        /** The actual QMutex */
-        QMutex m;
-
-        /** Pointer to a breaker used to unblock a mutex */
-        AtomicPointer<detail::MutexBreaker>::Type breaker;
+    private:
+        detail::MutexData *d;
 
     }; // end of class Mutex
 
@@ -139,9 +141,9 @@ namespace Siren
     #pragma warning( disable : 4312 ) // ignoring the warning from /Wp64
     #endif
 
-        inline QMutex *mutex() const
+        inline Mutex *mutex() const
         {
-            return reinterpret_cast<QMutex *>(val & ~quintptr(1u));
+            return reinterpret_cast<Mutex *>(val & ~quintptr(1u));
         }
 
     #if defined(Q_CC_MSVC)

@@ -68,12 +68,12 @@ namespace Siren
 
     protected:
         friend class Block;
-        static void aboutToSleep(const Block *block);
-        static bool shouldWake(const Block *block);
-        static void hasWoken(const Block *block);
+        static void aboutToSleep(const Block &block);
+        static bool shouldWake(const Block &block);
+        static void hasWoken(const Block &block);
         
-        static void setShouldWakeAll(const Block *w);
-        static void setShouldWakeOne(const Block *w);
+        static void setShouldWakeAll(const Block &w);
+        static void setShouldWakeOne(const Block &w);
 
     private:
         for_ages(){}

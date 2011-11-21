@@ -45,7 +45,10 @@
 #include "Siren/assert.h"
 #include "Siren/timer.h"
 
+#include "Siren/detail/blockdata.h"
+
 using namespace Siren;
+using namespace Siren::detail;
 
 namespace Siren
 {
@@ -149,6 +152,28 @@ namespace Siren
         int initial_value;
 
     }; // end of class SysSemWorkPacket
+
+    namespace detail
+    {
+        /** This class holds the actual data needed by SystemSemamphore */
+        class SystemSemaphoreData : public BlockData
+        {
+        public:
+            SystemSemaphoreData(const String &key, int initialValue, 
+                                SystemSemaphore::AccessMode mode);
+                                
+            ~SystemSemaphoreData();
+                  
+            String toString() const;
+            
+            const char* blockType() const;
+            
+            void checkEndForAges() const;
+            
+            QSystemSemaphore s;
+        };
+    
+    } // end of namespace detail
         
 } // end of namespace Siren
     
@@ -718,29 +743,104 @@ void SysSemWorkPacket::test(TestReportEditor &report) const
 }
 
 /////////
+///////// Implementation of SystemSemaphoreData
+/////////
+        
+SystemSemaphoreData::SystemSemaphoreData(const String &key, int initialValue, 
+                                         SystemSemaphore::AccessMode mode)
+                    : BlockData(), 
+                      s(key, initialValue, QSystemSemaphore::AccessMode(mode))
+{}
+
+SystemSemaphoreData::~SystemSemaphoreData()
+{}
+
+const char* SystemSemaphoreData::blockType() const
+{
+    return SystemSemaphore::typeName();
+}
+
+/** Return a string representation of this error */
+String SystemSemaphoreData::toString() const
+{
+    return String::tr("SystemSemaphore(%1)").arg(this);
+}
+
+/** Called by for_ages to check for the end of for_ages */
+void SystemSemaphoreData::checkEndForAges() const
+{
+}
+
+/////////
 ///////// Implementation of SystemSemaphore
 /////////
 
 /** Construct a SystemSemaphore with the specified key, initial value
     and access mode */
 SystemSemaphore::SystemSemaphore(const String &key, int initialValue, AccessMode mode)
-                : Block(), s(key, initialValue, QSystemSemaphore::AccessMode(mode))
+                : Block()
+{
+    d = new SystemSemaphoreData(key, initialValue, mode);
+    Block::setData(d);
+}
+
+/** Internal constructor used to construct a SystemSemaphore from a BlockRef */
+SystemSemaphore::SystemSemaphore(const exp_shared_ptr<detail::BlockData>::Type &ptr)
+                : Block(ptr), d(0)
+{
+    if (ptr)
+    {
+        if ( std::strcmp(ptr->blockType(), SystemSemaphore::typeName()) == 0 )
+        {
+            d = static_cast<SystemSemaphoreData*>(ptr.get());
+        }
+        else
+            throw Siren::invalid_cast( String::tr(
+                    "Cannot cast a Block of type %1 to a Siren::SystemSemaphore.")
+                        .arg(ptr->blockType()), CODELOC );
+    }
+}
+
+/** Copy constructor */
+SystemSemaphore::SystemSemaphore(const SystemSemaphore &other)
+                : Block(other), d(other.d)
 {}
 
 /** Destructor */
 SystemSemaphore::~SystemSemaphore()
 {}
 
+/** Internal function used by BlockRef to check if the passed data is a Mutex */
+bool SystemSemaphore::isOfType(const exp_shared_ptr<BlockData>::Type &ptr)
+{
+    if (ptr.get() == 0)
+        return false;
+    else
+        return std::strcmp(ptr->blockType(), SystemSemaphore::typeName()) == 0;
+}
+
+/** Copy assignment operator */
+SystemSemaphore& SystemSemaphore::operator=(const SystemSemaphore &other)
+{
+    if (this != &other)
+    {
+        Block::operator=(other);
+        d = other.d;
+    }
+    
+    return *this;
+}
+
 /** Set the key for this semaphore */
 void SystemSemaphore::setKey(const String &key, int initialValue, AccessMode mode)
 {
-    s.setKey(key, initialValue, QSystemSemaphore::AccessMode(mode));
+    d->s.setKey(key, initialValue, QSystemSemaphore::AccessMode(mode));
 }
 
 /** Return the key for this semaphore */
 String SystemSemaphore::key() const
 {
-    return s.key();
+    return d->s.key();
 }
 
 /** Acquire the semaphore.
@@ -749,30 +849,19 @@ String SystemSemaphore::key() const
 */
 void SystemSemaphore::acquire(int n)
 {
-    if (not s.acquire())
+    if (not d->s.acquire())
     {
         throw system_error( String::tr("Unable to acquire %1: %2")
-                .arg(this->toString(), s.errorString()), CODELOC );
+                .arg(this->toString(), d->s.errorString()), CODELOC );
     }
 }
 
 /** Release the semaphore */
 void SystemSemaphore::release(int n)
 {
-    if (not s.release())
+    if (not d->s.release())
     {
         throw system_error( String::tr("Unable to release %1: %2")
-                .arg(this->toString(), s.errorString()), CODELOC );
+                .arg(this->toString(), d->s.errorString()), CODELOC );
     }
-}
-
-/** Return a string representation of this error */
-String SystemSemaphore::toString() const
-{
-    return String::tr("SystemSemaphore(%1)").arg(this);
-}
-
-/** Called by for_ages to check for the end of for_ages */
-void SystemSemaphore::checkEndForAges() const
-{
 }

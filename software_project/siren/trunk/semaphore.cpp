@@ -30,6 +30,9 @@
 #include "Siren/forages.h"
 #include "Siren/string.h"
 #include "Siren/timer.h"
+#include "Siren/exceptions.h"
+
+#include "Siren/detail/blockdata.h"
 
 #include <algorithm>
 
@@ -54,22 +57,45 @@ namespace Siren
         
         }; // end of class SemBreaker
     
+        class SemaphoreData : public BlockData
+        {
+        public:
+            SemaphoreData(int n);
+            ~SemaphoreData();
+        
+            const char* blockType() const;
+                    
+            String toString() const;
+        
+            void checkEndForAges() const;
+        
+            void createBreaker();
+    
+            QSemaphore s;
+    
+            AtomicPointer<detail::SemBreaker>::Type breaker;
+        };
+    
     } // end of namespace detail
 
 } // end of namespace Siren
 
-/** Construct a semaphore with 'n' reservations available */
-Semaphore::Semaphore(int n) : Block(), s(n)
+///////////
+/////////// Implementation of SemaphoreData
+///////////
+
+/** Constructor */
+SemaphoreData::SemaphoreData(int n) : BlockData(), s(n)
 {}
 
 /** Destructor */
-Semaphore::~Semaphore()
+SemaphoreData::~SemaphoreData()
 {
     SemBreaker *b = breaker.fetchAndStoreRelaxed(0);
     delete b;
 }
 
-void Semaphore::createBreaker()
+void SemaphoreData::createBreaker()
 {
     while (breaker == 0)
     {
@@ -80,6 +106,88 @@ void Semaphore::createBreaker()
     }
 }
 
+const char* SemaphoreData::blockType() const
+{
+    return Semaphore::typeName();
+}
+
+/** Return a string representation of the semaphore */
+String SemaphoreData::toString() const
+{
+    return String::tr("Semaphore(%1)").arg(this);
+}
+
+/** Check for the end of for_ages */
+void SemaphoreData::checkEndForAges() const
+{
+    if (breaker)
+        breaker->waiter.wakeAll();
+}
+
+///////////
+/////////// Implementation of Semaphore
+///////////
+
+/** Construct a sempaphore with 1 reservation available */
+Semaphore::Semaphore() : Block()
+{
+    d = new SemaphoreData(1);
+    Block::setData(d);
+}
+
+/** Construct a semaphore with 'n' reservations available */
+Semaphore::Semaphore(int n) : Block()
+{
+    d = new SemaphoreData(n);
+    Block::setData(d);
+}
+
+/** Internal constructor used to construct a Semaphore from a BlockRef */
+Semaphore::Semaphore(const exp_shared_ptr<detail::BlockData>::Type &ptr)
+          : Block(ptr), d(0)
+{
+    if (ptr)
+    {
+        if ( std::strcmp(ptr->blockType(), Semaphore::typeName()) == 0 )
+        {
+            d = static_cast<SemaphoreData*>(ptr.get());
+        }
+        else
+            throw Siren::invalid_cast( String::tr(
+                    "Cannot cast a Block of type %1 to a Siren::Semaphore.")
+                        .arg(ptr->blockType()), CODELOC );
+    }
+}
+
+/** Copy constructor */
+Semaphore::Semaphore(const Semaphore &other) : Block(other), d(other.d)
+{}
+
+/** Destructor */
+Semaphore::~Semaphore()
+{}
+
+/** Copy assignment operator */
+Semaphore& Semaphore::operator=(const Semaphore &other)
+{
+    if (this != &other)
+    {
+        Block::operator=(other);
+        d = other.d;
+    }
+    
+    return *this;
+}
+
+/** Internal function used by BlockRef to check if the passed data is a Mutex */
+bool Semaphore::isOfType(const exp_shared_ptr<BlockData>::Type &ptr)
+{
+    if (ptr.get() == 0)
+        return false;
+    else
+        return std::strcmp(ptr->blockType(), Semaphore::typeName()) == 0;
+}
+
 /** Acquire 'n' reservations - block until this is available */
 void Semaphore::acquire(int n)
 {
@@ -87,21 +195,21 @@ void Semaphore::acquire(int n)
         return;
         
     //try for 200 ms, so that we don't invoke for_ages for short acquires
-    if (s.tryAcquire(n, 200))
+    if (d->s.tryAcquire(n, 200))
         return;
         
     try
     {
-        createBreaker();
+        d->createBreaker();
         Block::aboutToSleep();
     
-        while (not s.tryAcquire(n,200))
+        while (not d->s.tryAcquire(n,200))
         {
             for_ages::test();
 
-            breaker->mutex.lock();
-            breaker->waiter.wait( &(breaker->mutex) );
-            breaker->mutex.unlock();
+            d->breaker->mutex.lock();
+            d->breaker->waiter.wait( &(d->breaker->mutex) );
+            d->breaker->mutex.unlock();
             
             for_ages::test();
         }
@@ -118,7 +226,7 @@ void Semaphore::acquire(int n)
 /** Try to acquire 'n' reservations - block until this is available */
 bool Semaphore::tryAcquire(int n)
 {
-    return s.tryAcquire(n);
+    return d->s.tryAcquire(n);
 }
 
 /** Try to acquire 'n' reservations for up to 'ms' milliseconds.
@@ -129,15 +237,15 @@ bool Semaphore::tryAcquire(int n, int ms)
         return false;
     
     else if (ms == 0)
-        return s.tryAcquire(n);
+        return d->s.tryAcquire(n);
         
     else if (ms <= 200)
-        return s.tryAcquire(n,ms);
+        return d->s.tryAcquire(n,ms);
         
     try
     {
         //sleep until it is possible to break this lock
-        createBreaker();
+        d->createBreaker();
         Block::aboutToSleep();
 
         Timer t = Timer::start();
@@ -148,14 +256,14 @@ bool Semaphore::tryAcquire(int n, int ms)
             Block::hasWoken();
             
             if (remaining_time <= 0)
-                return s.tryAcquire(n);
+                return d->s.tryAcquire(n);
             else
-                return s.tryAcquire(n, remaining_time);
+                return d->s.tryAcquire(n, remaining_time);
         }
 
         while (remaining_time > 0)
         {
-            if (s.tryAcquire(n,std::min(remaining_time,200)))
+            if (d->s.tryAcquire(n,std::min(remaining_time,200)))
             {
                 Block::hasWoken();
                 return true;
@@ -165,9 +273,9 @@ bool Semaphore::tryAcquire(int n, int ms)
 
             remaining_time = ms - t.elapsed();
 
-            breaker->mutex.lock();
-            breaker->waiter.wait( &(breaker->mutex), remaining_time );
-            breaker->mutex.unlock();
+            d->breaker->mutex.lock();
+            d->breaker->waiter.wait( &(d->breaker->mutex), remaining_time );
+            d->breaker->mutex.unlock();
             
             for_ages::test();
             remaining_time = ms - t.elapsed();
@@ -191,27 +299,14 @@ bool Semaphore::tryAcquire(int n, int ms)
     value */
 void Semaphore::release(int n)
 {
-    s.release(n);
+    d->s.release(n);
     
-    if (breaker)
-        breaker->waiter.wakeAll();
+    if (d->breaker)
+        d->breaker->waiter.wakeAll();
 }
 
 /** Return the number of available reservations */
 int Semaphore::available() const
 {
-    return s.available();
-}
-
-/** Return a string representation of the semaphore */
-String Semaphore::toString() const
-{
-    return String::tr("Semaphore(%1)").arg(this);
-}
-
-/** Check for the end of for_ages */
-void Semaphore::checkEndForAges() const
-{
-    if (breaker)
-        breaker->waiter.wakeAll();
+    return d->s.available();
 }

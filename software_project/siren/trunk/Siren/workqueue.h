@@ -36,6 +36,7 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
     class WorkQueueItem;
+    class Promise;
 
     namespace detail
     {

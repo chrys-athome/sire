@@ -40,6 +40,7 @@ namespace Siren
     namespace detail
     {
         class LockBreaker;
+        class ReadWriteLockData;
     
     } // end of namespace detail
 
@@ -51,7 +52,13 @@ namespace Siren
     {
     public:
         ReadWriteLock();
+        ReadWriteLock(const ReadWriteLock &other);
+        
+        ReadWriteLock& operator=(const ReadWriteLock &other);
+        
         ~ReadWriteLock();
+        
+        static const char* typeName(){ return "Siren::ReadWriteLock"; }
         
         void lockForRead();
         bool tryLockForRead();
@@ -62,20 +69,19 @@ namespace Siren
         bool tryLockForWrite(int timeout);
 
         void unlock();
-    
-        String toString() const;
-    
+
     protected:
-        void checkEndForAges() const;
-        
-    private:
-        void createBreaker();
+        friend class BlockRef;
+        ReadWriteLock(const exp_shared_ptr<detail::BlockData>::Type &ptr);
+
+        static bool isOfType(const exp_shared_ptr<detail::BlockData>::Type &ptr);
     
         friend class WaitCondition;
-        QReadWriteLock l;
-    
-        AtomicPointer<detail::LockBreaker>::Type breaker;
-    
+        QReadWriteLock* pointer();
+
+    private:
+        detail::ReadWriteLockData *d;
+
     }; // end of class ReadWriteLock
     
     /** This is a RAII locker that holds a read-lock on a ReadWriteLock.

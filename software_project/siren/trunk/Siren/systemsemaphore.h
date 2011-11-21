@@ -35,6 +35,11 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    namespace detail
+    {
+        class SystemSemaphoreData;
+    }
+
     /** This is a system-wide Semaphore, which enables multiple
         processes to share the same semaphore on a system, thereby
         allowing multiple processes to co-ordinate the sharing
@@ -49,7 +54,13 @@ namespace Siren
         };
 
         SystemSemaphore(const String &key, int initialValue=0, AccessMode mode=Open);
+        SystemSemaphore(const SystemSemaphore &other);
+        
         ~SystemSemaphore();
+
+        SystemSemaphore& operator=(const SystemSemaphore &other);
+        
+        static const char* typeName(){ return "Siren::SystemSemaphore"; }
 
         void setKey(const String &key, int initialValue=0, AccessMode mode=Open);
         String key() const;
@@ -59,14 +70,14 @@ namespace Siren
         
         bool tryAcquire(int n=1);
         bool tryAcquire(int n, int timeout);
-        
-        String toString() const;
-        
+
     protected:
-        void checkEndForAges() const;
-        
+        SystemSemaphore(const exp_shared_ptr<detail::BlockData>::Type &ptr);
+
+        static bool isOfType(const exp_shared_ptr<detail::BlockData>::Type &ptr);
+    
     private:
-        QSystemSemaphore s;
+        detail::SystemSemaphoreData *d;
     
     }; // end of class SystemSemaphore
 

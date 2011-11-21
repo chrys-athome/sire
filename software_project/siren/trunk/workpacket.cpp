@@ -36,6 +36,8 @@
 #include "Siren/testreport.h"
 #include "Siren/thread.h"
 #include "Siren/forages.h"
+#include "Siren/workqueue.h"
+#include "Siren/promise.h"
 
 #include <cmath>
 
@@ -337,7 +339,7 @@ void run_function()
 {
     for_ages::setThisThreadName("run_function");
     sirenDebug() << "HELLO...";
-    for_ages::sleep(5);
+    for_ages::sleep(10);
     sirenDebug() << "...WORLD!";
 }
 
@@ -364,7 +366,7 @@ void TestPacket::test(TestReportEditor &report) const
         Thread::run( &run_function );
     }
     
-    //for_ages::sleep(10);
+    for_ages::sleep(1);
 }
 
 /** Copy assignment operator */
