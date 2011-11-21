@@ -928,6 +928,8 @@ void FFSymbolFF::force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
 {
     FFPtr &ffield = forcefields[ffidx];
     
+
+    //qDebug() << " in forcefields.cpp line 932 FFSymbolFF::force";
     if (not ffield->isA<FF3D>())
         throw SireFF::missing_derivative( QObject::tr(
             "The forcefield of type %1 does not inherit from FF3D so does "
@@ -2874,6 +2876,7 @@ QHash<Symbol,Expression> ForceFields::componentExpressions() const
 void ForceFields::force(ForceTable &forcetable, const Symbol &component,
                         double scale_force)
 {
+  //qDebug() << " in forcefields.cpp line 2879 ForceFields::force ";
     FFSymbolPtr comp = ffsymbols.value(component);
 
     if (comp.get() == 0)

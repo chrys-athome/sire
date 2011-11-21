@@ -237,6 +237,18 @@ void QMFF::changedPotential()
     this->mustNowRecalculateFromScratch();
 }
 
+void QMFF::energy(EnergyTable &energytable, double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "QMFF does not yet support energy calculations!"), CODELOC );
+}
+
+void QMFF::energy(EnergyTable &energytable, const Symbol &symbol,
+                           double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "QMFF does not yet support energy calculations!"), CODELOC );
+}
 /** Calculate the QM forces on the molecules in this forcefield
     and add the results to the forces for the molecules contained
     in the table 'forcetable' - this scales the forces by

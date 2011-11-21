@@ -59,6 +59,8 @@ namespace SireMM
 using SireFF::ForceField;
 using SireFF::G1FF;
 using SireFF::FF3D;
+using SireFF::EnergyTable;
+using SireFF::MolEnergyTable;
 using SireFF::ForceTable;
 using SireFF::MolForceTable;
 using SireFF::FieldTable;
@@ -471,7 +473,12 @@ public:
     const Property& property(const QString &name) const;
     bool containsProperty(const QString &name) const;
     const Properties& properties() const;
+
+    void energy(EnergyTable &energytable, double scale_energy=1);
     
+    void energy(EnergyTable &energytable, const Symbol &symbol,
+               double scale_energy=1);
+
     void force(ForceTable &forcetable, double scale_force=1);
     
     void force(ForceTable &forcetable, const Symbol &symbol,

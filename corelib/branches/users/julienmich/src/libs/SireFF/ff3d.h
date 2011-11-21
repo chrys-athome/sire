@@ -29,6 +29,7 @@
 #ifndef SIREFF_FF3D_H
 #define SIREFF_FF3D_H
 
+#include "energytable.h"
 #include "forcetable.h"
 #include "fieldtable.h"
 #include "potentialtable.h"
@@ -65,6 +66,18 @@ public:
         return "SireFF::FF3D";
     }
     
+    /** Calculate all of the energies of the 
+        molecules in the forcetable 'forcetable' due to the
+        molecules' interactions in this forcefield */
+    virtual void energy(EnergyTable &energytable, double scale_energy=1)=0;
+
+    /** Calculate all of the energies acting on all of the 
+        molecules in the energytable 'energytable' due to the
+        specified component of the molecules' interactions in 
+        this forcefield */
+    virtual void energy(EnergyTable &forcetable, const SireCAS::Symbol &component,
+                       double scale_energy=1)=0;
+
     /** Calculate all of the forces acting on all of the 
         molecules in the forcetable 'forcetable' due to the
         molecules' interactions in this forcefield */

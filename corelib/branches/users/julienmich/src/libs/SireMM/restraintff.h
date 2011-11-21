@@ -51,6 +51,7 @@ QDataStream& operator>>(QDataStream&, SireMM::RestraintFF&);
 
 namespace SireFF
 {
+class EnergyTable;
 class ForceTable;
 class FieldTable;
 class PotentialTable;
@@ -68,6 +69,7 @@ using SireMol::PartialMolecule;
 using SireMol::ViewsOfMol;
 using SireMol::Molecules;
 
+using SireFF::EnergyTable;
 using SireFF::ForceTable;
 using SireFF::FieldTable;
 using SireFF::PotentialTable;
@@ -151,6 +153,11 @@ public:
     int nRestraints() const;
 
     void mustNowRecalculateFromScratch();    
+
+    void energy(EnergyTable &energytable, double scale_energy=1);
+    
+    void energy(EnergyTable &energytable, const Symbol &symbol,
+               double scale_energy=1);
 
     void force(ForceTable &forcetable, double scale_force=1);
     

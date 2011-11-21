@@ -145,6 +145,8 @@ LJPairMatrix LJParameterDB::LJParameterDBData::combineArithmetic() const
 /** Return the matrix of LJ pairs for the given combining rules */
 const LJPairMatrix& LJParameterDB::LJParameterDBData::getLJPairs(CombiningRules type)
 {
+  //qDebug() << " In ::getLJPair line 148";
+
     //use a scope so that variables below are private - this allows
     //me to use a QReadLocker to safely lock the database
     {
@@ -161,6 +163,7 @@ const LJPairMatrix& LJParameterDB::LJParameterDBData::getLJPairs(CombiningRules 
     //the array wasn't found - it needs to be constructed
     QWriteLocker lkr(&db_lock);
     
+    //qDebug() << " Constructing LJ Pairs ljparamaterdb.cpp getLJPairs line 164 ";
     switch (type)
     {
         case ARITHMETIC:

@@ -50,6 +50,7 @@ namespace Squire
 using SireBase::Property;
 using SireBase::Properties;
 
+using SireFF::EnergyTable;
 using SireFF::ForceTable;
 using SireFF::FieldTable;
 using SireFF::PotentialTable;
@@ -114,6 +115,11 @@ public:
     const Properties& properties() const;
 
     void mustNowRecalculateFromScratch();    
+
+    void energy(EnergyTable &energytable, double scale_energy=1);
+    
+    void energy(EnergyTable &energytable, const Symbol &symbol,
+               double scale_energy=1);
 
     void force(ForceTable &forcetable, double scale_force=1);
     

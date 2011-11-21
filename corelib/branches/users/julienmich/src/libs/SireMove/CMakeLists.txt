@@ -12,6 +12,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the headers in SireMove
 set ( SIREMOVE_HEADERS
       dlmrigidbody.h
+      dlmrigidbodyjm.h
       dynamics.h
       ensemble.h
       errors.h
@@ -30,8 +31,10 @@ set ( SIREMOVE_HEADERS
       move.h
       moves.h
       mtsmc.h
+      openmmintegrator.h
       prefsampler.h
       rbworkspace.h
+      rbworkspacejm.h
       repexmove.h
       replica.h
       replicas.h
@@ -72,6 +75,7 @@ set ( SIREMOVE_SOURCES
       register_siremove.cpp
 
       dlmrigidbody.cpp
+      dlmrigidbodyjm.cpp
       dynamics.cpp
       ensemble.cpp
       errors.cpp
@@ -90,8 +94,10 @@ set ( SIREMOVE_SOURCES
       move.cpp
       moves.cpp
       mtsmc.cpp
+      openmmintegrator.cpp
       prefsampler.cpp
       rbworkspace.cpp
+      rbworkspacejm.cpp
       repexmove.cpp
       replica.cpp
       replicas.cpp

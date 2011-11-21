@@ -1049,6 +1049,8 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
     BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == forces0.nCutGroups() );
     BOOST_ASSERT( mol0.molecule().data().number() == forces0.molNum() );
 
+    //qDebug() << " InterCLJPotential _pvt_calculateForce mol0 and mol1 ";
+
     const quint32 ngroups0 = mol0.nCutGroups();
     const quint32 ngroups1 = mol1.nCutGroups();
     
@@ -1157,7 +1159,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                     const Parameter &param0 = params0_array[i];
                 
                     Vector total_force;
-                
+		    
                     if (param0.ljid == 0)
                     {
                         //null LJ parameter - only add on the coulomb energy
@@ -1176,7 +1178,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                                  distmat[j].direction()) +
                                              
                                                 ((cnrg-shift_coul) * dscl_coul);
-                        
+
                                 total_force += cforce;
                             }
                         }
@@ -1252,6 +1254,8 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
 
                     Vector total_force;
                 
+		    //qDebug() << " atom " << i << " total force initialised ";
+
                     if (param0.ljid == 0)
                     {
                         //null LJ parameter - only add on the coulomb energy
@@ -1267,6 +1271,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                                     distmat[j].direction();
                         
                                 total_force += cforce;
+				//qDebug() << " i no LJ...after  " << j << " force " << total_force.toString();
                             }
                         }
                     }
@@ -1285,7 +1290,9 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                              param1.reduced_charge * invdist2) 
                                             
                                             * distmat[j].direction();
-                              
+                            
+			    //qDebug() <<  " ...coul only" << j << " force " << force.toString();
+			    
                             if (param1.ljid != 0)
                             {
                                 const LJPair &ljpair = ljpairs.constData()[
@@ -1302,9 +1309,20 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                 force += (4 * ljpair.epsilon() * (6.0*sig_over_dist6 - 
                                                               12.0*sig_over_dist12))
                                         * distmat[j].direction();
+			   
+				//qDebug() << "ljpair.sigma " << ljpair.sigma();
+				//qDebug() << "ljpair.epsilon" << ljpair.epsilon();
+				//qDebug() << "distmat[j].direction() " << distmat[j].direction().toString();
+				//qDebug() << " invdist " << invdist;
+				//qDebug() << " param0.ljid " << param0.ljid;
+				//qDebug() << " param1.ljid " << param1.ljid;
+				//qDebug() <<  " ...after LJ " << j << " force " << force.toString();
+				//force = Vector(0);
+				
                             }
                         
                             total_force += force;
+			    //qDebug() << " ...after  " << j << " force " << total_force.toString();
                         }
                     }
                     

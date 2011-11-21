@@ -72,6 +72,11 @@ public:
     
     Intra2B3DFF<Potential>* clone() const;
     
+    void energy(EnergyTable &energytable, double scale_energy=1);
+    
+    void energy(EnergyTable &energytable, const Symbol &symbol,
+               double scale_energy=1);
+
     void force(ForceTable &forcetable, double scale_force=1);
     
     void force(ForceTable &forcetable, const Symbol &symbol,
@@ -178,6 +183,29 @@ SIRE_OUTOFLINE_TEMPLATE
 Intra2B3DFF<Potential>* Intra2B3DFF<Potential>::clone() const
 {
     return new Intra2B3DFF<Potential>(*this);
+}
+
+/** Calculate the energies of the molecules in the passed forcetable
+    that arise from this forcefield, and add them onto the energies present
+    in the energy table, multiplied by the passed (optional) scaling factor */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Intra2B3DFF<Potential>::energy(EnergyTable &energytable, double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Intra2B3DFF does not yet support energy calculations!"), CODELOC );
+}
+
+/** Calculate the energies acting on the molecules in the passed energytable  
+    caused by the component of this forcefield represented by 'symbol',
+    adding this energy onto the existing energies in the forcetable (optionally
+    multiplied by 'scale_energy' */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Intra2B3DFF<Potential>::energy(EnergyTable &energytable, const Symbol &symbol, double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Intra2B3DFF does not yet support energy calculations!"), CODELOC );
 }
 
 /** Calculate the forces acting on the molecules in the passed forcetable

@@ -461,6 +461,19 @@ void FastInterCLJFF::mustNowRecalculateFromScratch()
     recalc_from_scratch = true;
 }
 
+void FastInterCLJFF::energy(EnergyTable &energytable, double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "FastInterCLJFF does not yet support energy calculations!"), CODELOC );
+}
+
+void FastInterCLJFF::energy(EnergyTable &energytable, const Symbol &symbol,
+                           double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "FastInterCLJFF does not yet support energy calculations!"), CODELOC );
+}
+
 void FastInterCLJFF::force(ForceTable &forcetable, double scale_force)
 {
     throw SireError::incomplete_code( QObject::tr(

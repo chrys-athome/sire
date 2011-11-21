@@ -29,6 +29,7 @@
 
 #include <QFile>
 #include <QTextStream>
+#include <QHash>
 
 #include "amber.h"
 
@@ -45,6 +46,8 @@
 #include "SireMol/atomeditor.h"
 #include "SireMol/cgatomidx.h"
 #include "SireMol/residuecutting.h"
+
+#include "SireMol/amberparameters.h"
 
 #include "SireCAS/trigfuncs.h"
 
@@ -562,7 +565,9 @@ static void setBonds(MolEditor &editmol, int pointer,
                      const QList<double> &bond_force_constant, 
                      const QList<double> &bond_equil_value,
                      TwoAtomFunctions &bondfuncs, 
-                     const PropertyName &bond_property)
+                     const PropertyName &bond_property,
+		     AmberParameters &amberparams,
+		     const PropertyName &amberparameters_property)
 {
     //QSet<AtomNum> moleculeAtomNumbers = _pvt_selectAtomsbyNumber(editmol);
     int atomStart = editmol.atoms().at(0).number().value();
@@ -593,9 +598,15 @@ static void setBonds(MolEditor &editmol, int pointer,
 
         Expression bondfunc = k * SireMaths::pow_2(r - r0);
         bondfuncs.set( atom0, atom1, bondfunc );
+	
+	BondID bond = BondID(atom0, atom1);
+	amberparams.add( bond, k, r0);
+
     }
 
     editmol.setProperty( bond_property.source(), bondfuncs );
+
+    editmol.setProperty( amberparameters_property.source(), amberparams);
 }
 
 static void setAngles(MolEditor &editmol, int pointer,
@@ -603,7 +614,9 @@ static void setAngles(MolEditor &editmol, int pointer,
                       const QList<double> &ang_force_constant, 
                       const QList<double> &ang_equil_value,
                       ThreeAtomFunctions &anglefuncs, 
-                      const PropertyName &angle_property)
+                      const PropertyName &angle_property,
+		      AmberParameters &amberparams,
+		      const PropertyName &amberparameters_property)
 {
     //QSet<AtomNum> moleculeAtomNumbers = _pvt_selectAtomsbyNumber(editmol);
     int atomStart = editmol.atoms().at(0).number().value();
@@ -638,9 +651,14 @@ static void setAngles(MolEditor &editmol, int pointer,
       
         Expression anglefunc = k * SireMaths::pow_2(theta - theta0);
         anglefuncs.set( atom0, atom1, atom2, anglefunc );
+
+	AngleID angle = AngleID(atom0, atom1, atom2);
+	amberparams.add( angle, k, theta0);
     }
 
     editmol.setProperty( angle_property.source(), anglefuncs );
+    
+    editmol.setProperty( amberparameters_property.source(), amberparams);
 }
 
 static void setDihedrals(MolEditor &editmol, int pointer,
@@ -652,7 +670,9 @@ static void setDihedrals(MolEditor &editmol, int pointer,
                          const PropertyName &dihedral_property,
                          FourAtomFunctions &improperfuncs, 
                          const PropertyName &improper_property,
-                         QHash<AtomNum, QList<AtomNum> > &atoms14)
+                         QHash<AtomNum, QList<AtomNum> > &atoms14,
+			 AmberParameters &amberparams,
+			 const PropertyName &amberparameters_property)
 {
     //QSet<AtomNum> moleculeAtomNumbers = _pvt_selectAtomsbyNumber(editmol);
     int atomStart = editmol.atoms().at(0).number().value();
@@ -729,6 +749,17 @@ static void setDihedrals(MolEditor &editmol, int pointer,
         Atom atom2 = editmol.select( number2 );
         Atom atom3 = editmol.select( number3 );
       
+	if (improper)
+	  {
+	  ImproperID dih = ImproperID( atom0.index(), atom1.index(), atom2.index(), atom3.index() );
+	  amberparams.add( dih, k, periodicity, phase);
+	  }
+	else
+	  {
+	  DihedralID dih = DihedralID( atom0.index(), atom1.index(), atom2.index(), atom3.index() );
+	  amberparams.add( dih, k, periodicity, phase);
+	  }
+
         // Actually, we just save the terms in an array of atom indices 
         // because some dihedrals may have multi-term
         if (improper and k > 0.00001) 
@@ -805,6 +836,8 @@ static void setDihedrals(MolEditor &editmol, int pointer,
 
     editmol.setProperty( dihedral_property.source(), dihedralfuncs ); 
     editmol.setProperty( improper_property.source(), improperfuncs );  
+
+    editmol.setProperty( amberparameters_property.source(), amberparams);
 }
 
 static void setNonBondedPairs(MolEditor &editmol, int pointer,
@@ -1655,6 +1688,8 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
     PropertyName improper_property = PropertyName("improper");
     PropertyName nb_property = PropertyName("intrascale");
     
+    PropertyName amberparameters_property = PropertyName("amberparameters");
+
     Molecules molecules;
 
     int molnum = 1;
@@ -1736,6 +1771,8 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
         FourAtomFunctions dihedralfuncs(editmol);
         FourAtomFunctions improperfuncs(editmol);
 
+	AmberParameters amberparams(editmol);
+
         CLJNBPairs nbpairs;
         QHash<AtomNum, QList<AtomNum> > atoms14;
 
@@ -1782,12 +1819,14 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
             setBonds(editmol, pointers[NBONH],
                      bond_inc_h, 
                      bond_force_constant, bond_equil_value,
-                     bondfuncs, bond_property);
+                     bondfuncs, bond_property,
+		     amberparams, amberparameters_property);
 	  
             setBonds(editmol, pointers[MBONA],
                      bonds_exc_h, 
                      bond_force_constant, bond_equil_value,
-                     bondfuncs, bond_property);
+                     bondfuncs, bond_property, 
+		     amberparams, amberparameters_property);
         }
         
         if (natoms > 2)
@@ -1796,12 +1835,14 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
             setAngles(editmol, pointers[NTHETH], 
                       angs_inc_h, 
                       ang_force_constant, ang_equil_value,
-                      anglefuncs, angle_property);
+                      anglefuncs, angle_property,
+		      amberparams, amberparameters_property);
 	  
             setAngles(editmol, pointers[MTHETA], 
                       angs_exc_h, 
                       ang_force_constant, ang_equil_value,
-                      anglefuncs, angle_property);
+                      anglefuncs, angle_property,
+		      amberparams, amberparameters_property);
         }
 
         if (natoms >3)
@@ -1812,14 +1853,16 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
                          dih_force_constant, dih_periodicity, dih_phase,
                          dihedralfuncs, dihedral_property,
                          improperfuncs, improper_property,
-                         atoms14);
+                         atoms14,
+			 amberparams, amberparameters_property);
 	  
             setDihedrals(editmol, pointers[MPHIA],
                          dihs_exc_h, 
                          dih_force_constant, dih_periodicity, dih_phase,
                          dihedralfuncs, dihedral_property,
                          improperfuncs, improper_property,
-                         atoms14);
+                         atoms14,
+			 amberparams, amberparameters_property);
         }
       
         // Set non bonded pairs
@@ -1885,3 +1928,5 @@ const char* Amber::what() const
 {
     return Amber::typeName();
 }
+
+

@@ -73,6 +73,11 @@ public:
     bool operator!=(const Inter2B3DFF<Potential> &other) const;
     
     Inter2B3DFF<Potential>* clone() const;
+
+    void energy(EnergyTable &energytable, double scale_energy=1);
+    
+    void energy(EnergyTable &energytable, const Symbol &symbol,
+               double scale_energy=1);
     
     void force(ForceTable &forcetable, double scale_force=1);
     
@@ -506,6 +511,30 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
     }
 }
 
+/** Calculate the energies of the molecules in the passed forcetable
+    that arise from this forcefield, and add them onto the energies present
+    in the energy table, multiplied by the passed (optional) scaling factor */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Inter2B3DFF<Potential>::energy(EnergyTable &energytable, double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Inter2B3DFF does not yet support energy calculations!"), CODELOC );
+}
+
+/** Calculate the energies acting on the molecules in the passed energytable  
+    caused by the component of this forcefield represented by 'symbol',
+    adding this energy onto the existing energies in the forcetable (optionally
+    multiplied by 'scale_energy' */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Inter2B3DFF<Potential>::energy(EnergyTable &energytable, const Symbol &symbol, double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "Inter2B3DFF does not yet support energy calculations!"), CODELOC );
+}
+
+
 /** Calculate the forces acting on the molecules in the passed forcetable
     that arise from this forcefield, and add them onto the forces present
     in the force table, multiplied by the passed (optional) scaling factor */
@@ -563,6 +592,7 @@ SIRE_OUTOFLINE_TEMPLATE
 void Inter2B3DFF<Potential>::force(ForceTable &forcetable, const Symbol &symbol,
                                    double scale_force)
 {
+  //qDebug() << "In Inter2B3DFF line 566 Inter2B3DFF<Potential>::force";
     if (scale_force == 0)
         return;
 

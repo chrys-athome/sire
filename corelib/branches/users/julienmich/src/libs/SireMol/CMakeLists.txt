@@ -11,6 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMol
 set ( SIREMOL_HEADERS
+      amberparameters.h
       angleid.h
       atom.h
       atombeading.h
@@ -126,7 +127,7 @@ set ( SIREMOL_HEADERS
 set ( SIREMOL_SOURCES
 
       register_siremol.cpp
-
+      amberparameters.cpp
       angleid.cpp
       atom.cpp
       atomcoords.cpp

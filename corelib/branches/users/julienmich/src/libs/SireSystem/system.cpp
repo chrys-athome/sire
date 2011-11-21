@@ -1070,6 +1070,7 @@ void System::force(ForceTable &forcetable, double scale_force)
 void System::force(ForceTable &forcetable, const Symbol &component,
                    double scale_force)
 {
+  //qDebug() << " calling _pvt_forceFields system.cpp line 1291";
     this->_pvt_forceFields().force(forcetable, component, scale_force);
 }
 

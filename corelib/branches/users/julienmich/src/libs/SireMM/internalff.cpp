@@ -2310,6 +2310,19 @@ const Properties& InternalFF::properties() const
     return props;
 }
 
+void InternalFF::energy(EnergyTable &energytable, double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "InternalFF does not yet support energy calculations!"), CODELOC );
+}
+
+void InternalFF::energy(EnergyTable &energytable, const Symbol &symbol,
+			double scale_energy)
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "InternalFF does not yet support energy calculations!"), CODELOC );
+}
+
 /** Calculate the forces acting on molecules in the passed force table 
     caused by this potential, and add them onto the forces already
     in the force table (optionally scaled by 'scale_force') */

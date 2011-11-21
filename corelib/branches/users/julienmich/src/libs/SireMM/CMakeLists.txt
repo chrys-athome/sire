@@ -59,7 +59,6 @@ set ( SIREMM_DETAIL_HEADERS
 set ( SIREMM_SOURCES
 
       register_siremm.cpp
-
       anglerestraint.cpp
       atomfunctions.cpp
       atomljs.cpp

@@ -10,6 +10,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the headers in SireFF
 set ( SIREFF_HEADERS
       atomicffparameters.hpp
+      energytable.h
       errors.h
       ff.h
       ff3d.h
@@ -34,8 +35,8 @@ set ( SIREFF_HEADERS
       intra2b2gff.hpp
       intra2b3dff.hpp
       intra2b2g3dff.hpp
-      patch.h
-      patches.h
+      #patch.h
+      #patches.h
       point.h
       potentialtable.h
       probe.h
@@ -53,7 +54,7 @@ set ( SIREFF_DETAIL_HEADERS
 set ( SIREFF_SOURCES
 
       register_sireff.cpp
-
+      energytable.cpp
       errors.cpp
       ff.cpp
       ff3d.cpp
@@ -68,8 +69,8 @@ set ( SIREFF_SOURCES
       forcetable.cpp
       g1ff.cpp
       g2ff.cpp
-      patch.cpp
-      patches.cpp
+      #patch.cpp
+      #patches.cpp
       point.cpp
       potentialtable.cpp
       probe.cpp
