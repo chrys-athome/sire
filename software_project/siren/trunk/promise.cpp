@@ -264,7 +264,7 @@ Obj Promise::result(const Object &def, int ms) const
     of the calculation is available */
 void Promise::abort() const
 {
-    if (not d)
+    if (d)
     {
         if (d->available())
             const_cast<Promise*>(this)->reslt = d->result();
@@ -276,7 +276,7 @@ void Promise::abort() const
 /** Abort the calculation if it has not finished in 'ms' milliseconds */
 void Promise::abort(int ms) const
 {
-    if (d.get() != 0)
+    if (d)
     {
         if (d->available() or d->wait(ms))
         {

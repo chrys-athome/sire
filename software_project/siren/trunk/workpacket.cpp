@@ -346,7 +346,7 @@ void run_function()
 /** Test this TestPacket */
 void TestPacket::test(TestReportEditor &report) const
 {
-    TestPacket packet(2);
+    TestPacket packet(0);
     packet.run();
 
     report.addPassed( String::tr("TestPacket passed as no exception was thrown.") );
@@ -366,7 +366,13 @@ void TestPacket::test(TestReportEditor &report) const
         Thread::run( &run_function );
     }
     
-    for_ages::sleep(1);
+    WorkQueue queue;
+    
+    Promise promise = queue.submit(packet);
+    
+    sirenDebug() << queue.toString();
+    
+    promise.wait();
 }
 
 /** Copy assignment operator */

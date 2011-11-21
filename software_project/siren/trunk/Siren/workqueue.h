@@ -54,6 +54,7 @@ namespace Siren
     {
     public:
         WorkQueue();
+        WorkQueue(int nthreads);
         
         WorkQueue(const WorkQueue &other);
     
@@ -64,6 +65,8 @@ namespace Siren
         bool operator==(const WorkQueue &other) const;
         bool operator!=(const WorkQueue &other) const;
         
+        String toString() const;
+        
         Promise submit(const WorkPacket &workpacket, int n=1);
         Promise submit(const WorkPacket &workpacket, WorkSpace &workspace, int n=1);
         
@@ -71,6 +74,7 @@ namespace Siren
         
         int nWaiting() const;
         int nRunning() const;
+        int nBlocked() const;
         
         int nCompleted() const;
     

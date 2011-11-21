@@ -55,7 +55,7 @@ namespace Siren
             int sessionID();
             int threadID();
 
-            void setFunction( void (*function)() );
+            void setFunction( boost::function<void ()> func );
 
             bool isError();
             bool hasFinished();
@@ -90,7 +90,7 @@ namespace Siren
             int session_id;
             
             /** Pointer to the function that should be run */
-            void (*func_ptr)();
+            boost::function<void ()> func_ptr;
             
             /** Whether or not we should exit the thread */
             bool should_quit;
@@ -178,7 +178,7 @@ int ThreadData::threadID()
 }
 
 /** Set the function that should be run by this thread */
-void ThreadData::setFunction( void (*function)() )
+void ThreadData::setFunction( boost::function<void ()> func )
 {
     MutexLocker lkr(&m);
     
@@ -189,7 +189,7 @@ void ThreadData::setFunction( void (*function)() )
 
     session_id += 1;
     err = None();
-    func_ptr = function;
+    func_ptr = func;
 
     waiter.wakeAll();
 }
@@ -288,7 +288,7 @@ void ThreadData::run()
                 
                 try
                 {
-                    (*func_ptr)();
+                    func_ptr();
                 }
                 catch(const Siren::Exception &e)
                 {
@@ -327,6 +327,7 @@ void ThreadData::run()
     }
     
     for_ages::unregisterThisThread();
+    func_ptr = 0;
     thread_id = 0;
     session_id = 0;
 }
@@ -440,8 +441,6 @@ Thread::~Thread()
 {
     if (d.get() != 0)
     {
-        int tid = d->threadID();
-
         if (d.unique())
         {
             //return the underlying thread to the pool
@@ -461,9 +460,6 @@ Thread& Thread::operator=(const Thread &other)
         
     if (d.unique())
     {
-        //return the underlying thread to the pool
-        int tid = d->threadID();
-
         //return the underlying thread to the pool
         exp_shared_ptr<ThreadPool>::Type p = pool();
         
@@ -498,7 +494,7 @@ bool Thread::isNull()
 
 /** Start a thread to run the passed function. The thread will be started
     and run as soon as possible */
-Thread Thread::run( void (*function)() )
+Thread Thread::run( boost::function<void ()> func )
 {
     Thread t;
     
@@ -513,8 +509,15 @@ Thread Thread::run( void (*function)() )
     t.d = p->getThread();
 
     //start the background job
-    t.d->setFunction(function);
+    t.d->setFunction(func);
     t.session_id = t.d->sessionID();
     
     return t;
+}
+
+/** Start a thread to run the passed function. The thread will be started
+    and run as soon as possible */
+Thread Thread::run( void (*func)() )
+{
+    return Thread::run( boost::function<void ()>(func) );
 }

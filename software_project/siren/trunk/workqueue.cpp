@@ -33,8 +33,12 @@
 #include "Siren/workqueueitem.h"
 #include "Siren/exceptions.h"
 #include "Siren/static.h"
+#include "Siren/forages.h"
+#include "Siren/thread.h"
 
 #include "Siren/detail/workqueuedata.h"
+
+#include <boost/bind.hpp>
 
 using namespace Siren;
 using namespace Siren::detail;
@@ -44,8 +48,15 @@ using namespace Siren::detail;
 //////////
 
 /** Constructor */
-WorkQueueData::WorkQueueData() : noncopyable()
+WorkQueueData::WorkQueueData() : noncopyable(), nthreads(0)
 {}
+
+/** Construct a WorkQueue that can manage up to 'nthreads' CPU threads */
+WorkQueueData::WorkQueueData(int n) : noncopyable(), nthreads(n)
+{
+    if (nthreads < 0)
+        nthreads = 0;
+}
 
 /** Destructor */
 WorkQueueData::~WorkQueueData()
@@ -64,10 +75,14 @@ Promise WorkQueueData::submit(const WorkPacket &packet, int n)
 
     Promise promise(workitem);
     workitem.setPromise(promise);
-    
-    waiting_jobs.append(workitem);
-    
-    waiter.wakeAll();
+
+    if (n <= nthreads)
+    {
+        waiting_jobs.append(workitem);
+        waiter.wakeAll();
+    }
+    else
+        blocked_jobs.append(workitem);
     
     return promise;
 }
@@ -87,9 +102,13 @@ Promise WorkQueueData::submit(const WorkPacket &packet, const WorkSpace &space, 
     Promise promise(workitem);
     workitem.setPromise(promise);
     
-    waiting_jobs.append(workitem);
-    
-    waiter.wakeAll();
+    if (n <= nthreads)
+    {
+        waiting_jobs.append(workitem);
+        waiter.wakeAll();
+    }
+    else
+        blocked_jobs.append(workitem);
     
     return promise;
 }
@@ -108,6 +127,13 @@ int WorkQueueData::nWaiting()
     return waiting_jobs.count();
 }
 
+/** Return the number of blocked jobs */
+int WorkQueueData::nBlocked()
+{
+    MutexLocker lkr(&m);
+    return blocked_jobs.count();
+}
+
 /** Return the number of completed jobs */
 int WorkQueueData::nCompleted()
 {
@@ -115,16 +141,44 @@ int WorkQueueData::nCompleted()
     return completed_jobs.count();
 }
 
-SIREN_STATIC( WorkQueueData, globalWorkQueue )
+/** Return a string representation of this queue */
+String WorkQueueData::toString()
+{
+    MutexLocker lkr(&m);
+    
+    return String::tr("WorkQueue( nCPUs() == %1, nRunning() == %2, "
+                      "nWaiting() == %3, nBlocked() == %4, nCompleted() == %5 )")
+                        .arg(nthreads)
+                        .arg(running_jobs.count())
+                        .arg(waiting_jobs.count())
+                        .arg(blocked_jobs.count())
+                        .arg(completed_jobs.count());
+}
 
 //////////
 ////////// Implementation of WorkQueue
 //////////
 
-/** Construct a new view of the global WorkQueue */
-WorkQueue::WorkQueue()
+void manage_queue(WorkQueue queue)
 {
-    d = globalWorkQueue();
+    while (for_ages::loop())
+    {
+        sirenDebug() << "HELLO WORLD!!!\n" << queue.toString();
+        for_ages::sleep(1);
+    }
+}
+
+/** Construct a WorkQueue that manages no resources */
+WorkQueue::WorkQueue() : d( new WorkQueueData() )
+{
+    d->self = d;
+    Thread::run( boost::bind(manage_queue,*this) );
+}
+
+/** Construct a WorkQueue that wants to manage 'n' CPU threads */
+WorkQueue::WorkQueue(int n) : d( new WorkQueueData(n) )
+{
+    d->self = d;
 }
 
 /** Internal constructor used to construct the WorkQueue from the shared pointer */
@@ -163,6 +217,16 @@ bool WorkQueue::operator!=(const WorkQueue &other) const
 bool WorkQueue::isNull() const
 {
     return d.get() == 0;
+}
+
+/** Return a string representation of the WorkQueue - this gives
+    a summary of the available resources, waiting jobs etc. */
+String WorkQueue::toString() const
+{
+    if (not d)
+        return String::tr("WorkQueue::null");
+    else
+        return d->toString();
 }
 
 /** Submit the passed WorkPacket to the queue for processing, requiring 'n'
@@ -212,6 +276,16 @@ int WorkQueue::nCompleted() const
 {
     if (d)
         return d->nCompleted();
+    else
+        return 0;
+}
+
+/** Return the number of blocked jobs (ones that request more resources
+    than this queue will ever have available!) */
+int WorkQueue::nBlocked() const
+{
+    if (d)
+        return d->nBlocked();
     else
         return 0;
 }

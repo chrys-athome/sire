@@ -46,6 +46,8 @@ namespace Siren
         {
         public:
             WorkQueueData();
+            WorkQueueData(int n);
+            
             ~WorkQueueData();
 
             Promise submit(const WorkPacket &packet, int n);
@@ -54,7 +56,10 @@ namespace Siren
         
             int nRunning();
             int nWaiting();
+            int nBlocked();
             int nCompleted();
+    
+            String toString();
     
         private:
             /** Mutex to protect access to the data of this queue */
@@ -70,14 +75,22 @@ namespace Siren
             /** The list of jobs that are currently running */
             List<WorkQueueItem>::Type running_jobs;
             
+            /** The list of jobs that are blocked because they 
+                request more resources than will ever be available */
+            List<WorkQueueItem>::Type blocked_jobs;
+            
             /** The list of jobs that have been cancelled */
             List<WorkQueueItem>::Type cancelled_jobs;
             
             /** The list of jobs that have been finished */
             List<WorkQueueItem>::Type completed_jobs;
 
+            friend class Siren::WorkQueue;
             exp_weak_ptr<WorkQueueData>::Type self;
             
+            /** The number of cpu threads that this WorkQueue 
+                would like to manage */
+            int nthreads;
         };
     
     } // end of namespace detail

@@ -30,6 +30,7 @@
 \*********************************************/
 
 #include "Siren/siren.h"
+#include <boost/function.hpp>
 
 SIREN_BEGIN_HEADER
 
@@ -52,6 +53,7 @@ namespace Siren
         bool operator!=(const Thread &other) const;
 
         static Thread run( void (*function)() );
+        static Thread run( boost::function<void ()> func );
 
         bool isNull();
 

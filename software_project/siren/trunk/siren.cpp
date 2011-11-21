@@ -31,6 +31,12 @@
 #include "Siren/static.h"
 #include "Siren/forages.h"
 
+#ifdef Q_OS_UNIX
+    #include <signal.h>    // CONDITIONAL_INCLUDE
+#endif
+
+#include <cstdlib>
+
 namespace Siren
 {
     /** Wrap the index 'i' so that it indexes into a container
@@ -75,6 +81,90 @@ namespace Siren
 
     namespace detail
     {
+        /** This code is called in 'abort' if an exception
+            manages to escape! */
+        static void error_abort()
+        {
+            Siren::fini();
+        }
+
+        #ifdef Q_OS_UNIX
+            volatile sig_atomic_t error_in_progress = 0;
+             
+            /** Signal handler called on fatal errors to ensure
+                that Siren cleans up correctly before program termination */
+            void fatal_error_signal(int sig)
+            {
+                if (error_in_progress)
+                    raise(sig);
+         
+                error_in_progress = 1;
+
+                signal(sig, SIG_DFL);
+                raise(sig);
+            }
+            
+            void install_handler( int sig, struct sigaction *action )
+            {
+                sigemptyset( &(action->sa_mask) );
+                action->sa_handler = fatal_error_signal;
+                action->sa_flags = 0;
+                    
+                if (sigaction(sig, action, 0) == -1)
+                {
+                    sirenDebug() << "CANNOT SET THE HANDLER FOR SIGNAL" << sig;
+                    std::exit(-1);
+                }
+            }
+        #endif // Q_OS_UNIX
+
+        /** This function installs signal handlers that will ensure that
+            all shared memory is detached if this process exits uncleanly */
+        void installSignalHandlers()
+        {
+            #ifdef Q_OS_UNIX
+                //set a separate signal stack to be used
+                // (so we can work around possible stack corruption)
+                static stack_t signal_stack;
+
+                if (signal_stack.ss_sp != 0)
+                
+                    //the signal handlers have been set already
+                    return;
+
+                if ((signal_stack.ss_sp = malloc(SIGSTKSZ)) == 0)
+                {
+                    sirenDebug() << "CANNOT ALLOCATE SIGNAL STACK SPACE!";
+                    std::exit(-1);
+                }
+                    
+                signal_stack.ss_size = SIGSTKSZ;
+                signal_stack.ss_flags = 0;
+                
+                if (sigaltstack(&signal_stack,(stack_t *)0) < 0)
+                {
+                    sirenDebug() << "CANNOT SET THE SIGNAL STACK!";
+                    std::exit(-1);
+                }
+
+                static struct sigaction segv_action;
+                static struct sigaction fpe_action;
+                static struct sigaction term_action;
+                static struct sigaction bus_action;
+                static struct sigaction int_action;
+                static struct sigaction abrt_action;
+
+                Siren::detail::install_handler(SIGSEGV, &segv_action);
+                Siren::detail::install_handler(SIGFPE, &fpe_action);
+                Siren::detail::install_handler(SIGTERM, &term_action);
+                Siren::detail::install_handler(SIGBUS, &bus_action);
+                Siren::detail::install_handler(SIGINT, &int_action);
+                Siren::detail::install_handler(SIGABRT, &abrt_action);
+            #endif
+
+            std::set_terminate( error_abort );
+        }
+            
         void fini()
         {
             //send the end of for_ages
@@ -89,6 +179,8 @@ namespace Siren
         all Siren libraries are initialised */
     void SIREN_EXPORT init(int argc, const char **argv)
     {
+        Siren::detail::installSignalHandlers();
+
         Siren::detail::Static::createAll();
         
         if (std::atexit(&(Siren::detail::fini)) != 0)
