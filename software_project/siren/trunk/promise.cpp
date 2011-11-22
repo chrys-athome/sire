@@ -46,9 +46,16 @@ using namespace Siren::detail;
 ///////// Implementation of PromiseData
 /////////
 
-/** Null constructor */
+/** Construct the promise that will be processed by the 
+    passed WorkQueueItem */
 PromiseData::PromiseData(const WorkQueueItem &item) 
             : noncopyable(), workitem(item.d), ready(false)
+{}
+
+/** Construct the promise that had already been processed,
+    and has the passed result */
+PromiseData::PromiseData(const Obj &result)
+            : noncopyable(), reslt(result), ready(true)
 {}
 
 /** Destructor */
@@ -56,7 +63,7 @@ PromiseData::~PromiseData()
 {
     //tell the job to abort as there is no longer a promise
     //available to hold the result
-    WorkQueueItem(workitem.lock()).abort();
+    workitem.abort();
 }
 
 /** Return whether or not the result is available */
@@ -145,6 +152,13 @@ Promise::Promise(const None &none)
     where the result is immediately available, but you still want to use the 
     Promise API */
 Promise::Promise(const Object &object) : reslt(object)
+{
+    if (not reslt.isNone())
+        d.reset(new PromiseData(reslt));
+}
+
+/** Construct from the passed reference */
+Promise::Promise(const PromiseRef &ref) : d(ref.d.lock())
 {}
 
 /** Copy constructor */
@@ -178,6 +192,18 @@ bool Promise::operator==(const Promise &other) const
 bool Promise::operator!=(const Promise &other) const
 {
     return not operator==(other);
+}
+
+/** Comparison operator */
+bool Promise::operator==(const PromiseRef &other) const
+{
+    return other.operator==(*this);
+}
+
+/** Comparison operator */
+bool Promise::operator!=(const PromiseRef &other) const
+{
+    return other.operator!=(*this);
 }
 
 /** Return whether or not the result is available */
@@ -288,7 +314,7 @@ void Promise::abort(int ms) const
 }
 
 /** This internal function is called when the job attached to this promise
-    is cancelled */
+    is cancelled by the queue */
 void Promise::jobCancelled()
 {
     throw Siren::incomplete_code("TODO", CODELOC);
@@ -306,4 +332,71 @@ void Promise::jobFinished(const Obj &result)
 void Promise::jobStarted()
 {
     throw Siren::incomplete_code("TODO", CODELOC);
+}
+
+/////////
+///////// Implementation of PromiseRef
+/////////
+
+/** Null constructor */
+PromiseRef::PromiseRef()
+{}
+
+/** Construct from the passed promise */
+PromiseRef::PromiseRef(const Promise &promise) : d(promise.d)
+{}
+
+/** Copy constructor */
+PromiseRef::PromiseRef(const PromiseRef &other) : d(other.d)
+{}
+
+/** Destructor */
+PromiseRef::~PromiseRef()
+{}
+
+/** Copy assignment operator */
+PromiseRef& PromiseRef::operator=(const PromiseRef &other)
+{
+    d = other.d;
+}
+
+/** Comparison operator */
+bool PromiseRef::operator==(const PromiseRef &other) const
+{
+    return d.lock().get() == other.d.lock().get();
+}
+
+/** Comparison operator */
+bool PromiseRef::operator!=(const PromiseRef &other) const
+{
+    return not operator==(other);
+}
+
+/** Comparison operator */
+bool PromiseRef::operator==(const Promise &other) const
+{
+    return Promise(*this) == other;
+}
+
+/** Comparison operator */
+bool PromiseRef::operator!=(const Promise &other) const
+{
+    return not operator==(other);
+}
+
+/** Return whether or not this reference has expired */
+bool PromiseRef::isNull() const
+{
+    return d.expired();
+}
+
+/** Return a string representation of this promise */
+String PromiseRef::toString() const
+{
+    exp_shared_ptr<PromiseData>::Type ptr = d.lock();
+    
+    if (ptr)
+        return Promise(ptr).toString();
+    else
+        return String::tr("PromiseRef::null");
 }

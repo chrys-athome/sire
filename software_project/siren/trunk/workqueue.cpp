@@ -43,18 +43,60 @@
 using namespace Siren;
 using namespace Siren::detail;
 
+namespace Siren
+{
+    namespace detail
+    {
+        /** This class holds the global list of WorkQueues */
+        class WorkQueueRegistry : public noncopyable
+        {
+        public:
+            WorkQueueRegistry();
+            ~WorkQueueRegistry();
+            
+            void registerQueue(const WorkQueue &queue);
+            
+        private:
+            Mutex m;
+            Hash<WorkQueueData*,WorkQueueRef>::Type queues;
+        
+        }; // end of class WorkQueueRegistry
+    
+    } // end of namespace detail
+
+} // end of namespace Siren
+
+//////////
+////////// Implementation of WorkQueueRegistry
+//////////
+
+SIREN_STATIC( WorkQueueRegistry, workQueueRegistry )
+
+/** Constructor */
+WorkQueueRegistry::WorkQueueRegistry()
+{}
+
+/** Destructor */
+WorkQueueRegistry::~WorkQueueRegistry()
+{}
+
+/** Register the passed WorkQueue */
+void WorkQueueRegistry::registerQueue(const WorkQueue &queue)
+{
+    if (queue.d.get() != 0)
+    {
+        MutexLocker lkr(&m);
+        queues.insert( queue.d.get(), queue );
+    }
+}
+
 //////////
 ////////// Implementation of WorkQueueData
 //////////
 
-/** Constructor */
-WorkQueueData::WorkQueueData() : noncopyable(), nthreads(0)
-{
-    sirenDebug() << "CREATING" << this;
-}
-
 /** Construct a WorkQueue that can manage up to 'nthreads' CPU threads */
-WorkQueueData::WorkQueueData(int n) : noncopyable(), nthreads(n)
+WorkQueueData::WorkQueueData(int n) 
+              : noncopyable(), nthreads(n), navailable(0), nrunning(0)
 {
     if (nthreads < 0)
         nthreads = 0;
@@ -62,8 +104,30 @@ WorkQueueData::WorkQueueData(int n) : noncopyable(), nthreads(n)
 
 /** Destructor */
 WorkQueueData::~WorkQueueData()
+{}
+
+void process_job(WorkQueueItem item)
 {
-    sirenDebug() << "DELETING" << this;
+    int nworkers = item.nWorkers();
+
+    if (item.nWorkers() == 1)
+    {
+        //process the job in this thread
+        ...
+    }
+    else
+    {
+        //create enough threads to run the job...
+        List<Thread>::Type threads;
+        
+        for (int i=0; i<nworkers; ++i)
+        {
+            threads.append( Thread::run(...) );
+        }
+        
+        //wait for them all to finish
+        ...;
+    }
 }
 
 /** Submit the passed WorkPacket for processing using 'n' workers. Return the 
@@ -80,11 +144,29 @@ Promise WorkQueueData::submit(const WorkPacket &packet, int n)
 
     if (n <= nthreads)
     {
-        waiting_jobs.append(workitem);
+        waiting_jobs.append( std::pair<WorkQueueItem,Thread>(workitem,Thread()) );
         waiter.wakeAll();
     }
     else
-        blocked_jobs.append(workitem);
+        blocked_jobs.append( std::pair<WorkQueueItem,Thread>(workitem,Thread()) );
+    
+    return promise;
+}
+
+/** Submit the passed WorkPacket for processing on a background thread, using
+    'n' workers. Return a promise that will be used to get the result of processing,
+    and to get a handle on the job */
+Promise WorkQueueData::submitBG(const WorkPacket &packet, int n)
+{
+    WorkQueue queue(self.lock());
+    
+    WorkQueueItem workitem(packet, queue, n, true);
+    
+    Promise promise(workitem);
+    workitem.setPromise(promise);
+    
+    bg_jobs.append( std::pair<WorkQueueItem,Thread>(workitem,
+                        Thread::run( boost::bind(process_job,item) )) );
     
     return promise;
 }
@@ -104,11 +186,30 @@ Promise WorkQueueData::submit(const WorkPacket &packet, const WorkSpace &space, 
     
     if (n <= nthreads)
     {
-        waiting_jobs.append(workitem);
+        waiting_jobs.append( std::pair<WorkQueueItem,Thread>(workitem,Thread()) );
         waiter.wakeAll();
     }
     else
-        blocked_jobs.append(workitem);
+        blocked_jobs.append( std::pair<WorkQueueItem,Thread>(workitem,Thread()) );
+    
+    return promise;
+}
+
+/** Submit the passed WorkPacket for processing using 'n' background threads, with
+    the passed WorkSpace used for inter-process communication. Return the 
+    promise that will be used to get the result of processing, and to get a handle
+    on the job */
+Promise WorkQueueData::submitBG(const WorkPacket &packet, const WorkSpace &space, int n)
+{
+    WorkQueue queue(self.lock());
+    
+    WorkQueueItem workitem(packet, space, queue, n, true);
+    
+    Promise promise(workitem);
+    workitem.setPromise(promise);
+    
+    bg_jobs.append( std::pair<WorkQueueItem,Thread>(workitem,
+                            Thread::run( boost::bind(process_job,workitem) )) );
     
     return promise;
 }
@@ -170,7 +271,20 @@ void WorkQueueData::manage_queue(WorkQueueRef ref)
         
         else
         {
-            ... actually schedule the jobs
+            //look for any finished jobs
+            {
+                List<WorkQueueItem>::MutableIterator it( d->running_jobs );
+                
+                while (it.hasNext())
+                {
+                    it.next();
+                }
+                
+                //now see if we need to request any more resources
+                
+                
+                //now see
+            }
         }
     
         d->waiter.wait( &(d->m) );
@@ -178,11 +292,89 @@ void WorkQueueData::manage_queue(WorkQueueRef ref)
 }
 
 //////////
+////////// Implementation of WorkQueueRef
+//////////
+
+/** Construct a null reference */
+WorkQueueRef::WorkQueueRef()
+{}
+
+/** Construct a reference to the passed queue */
+WorkQueueRef::WorkQueueRef(const WorkQueue &queue) : d(queue.d)
+{}
+
+/** Copy constructor */
+WorkQueueRef::WorkQueueRef(const WorkQueueRef &other) : d(other.d)
+{}
+
+/** Destructor */
+WorkQueueRef::~WorkQueueRef()
+{}
+
+/** Copy assignment operator */
+WorkQueueRef& WorkQueueRef::operator=(const WorkQueueRef &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Comparison operator */
+bool WorkQueueRef::operator==(const WorkQueueRef &other) const
+{
+    return d.lock().get() == other.d.lock().get();
+}
+
+/** Comparison operator */
+bool WorkQueueRef::operator!=(const WorkQueueRef &other) const
+{
+    return not operator==(other);
+}
+
+/** Comparison operator */
+bool WorkQueueRef::operator==(const WorkQueue &queue) const
+{
+    return d.lock().get() == queue.d.get();
+}
+
+/** Comparison operator */
+bool WorkQueueRef::operator!=(const WorkQueue &queue) const
+{
+    return not operator==(queue);
+}
+
+/** Return whether or not this is a null reference - remember that
+    this only says if the reference is not null *now*. It can become
+    null immediately after this call! */
+bool WorkQueueRef::isNull() const
+{
+    return d.expired();
+}
+
+/** Return a string representation of this queue */
+String WorkQueueRef::toString() const
+{
+    exp_shared_ptr<WorkQueueData>::Type ptr = d.lock();
+    
+    if (ptr)
+        return ptr->toString();
+    else
+        return String::tr("WorkQueueRef::null");
+}
+
+/** Tell the WorkQueue that it needs to wake up and process a state change 
+    on the queue */
+void WorkQueueRef::process() const
+{
+    WorkQueue queue(*this);
+    queue.process();
+}
+
+//////////
 ////////// Implementation of WorkQueue
 //////////
 
 /** Construct a WorkQueue that manages no resources */
-WorkQueue::WorkQueue() : d (new WorkQueueData(0) )
+WorkQueue::WorkQueue()
 {}
 
 /** Construct a WorkQueue that wants to manage 'n' CPU threads */
@@ -190,7 +382,16 @@ WorkQueue::WorkQueue(int n) : d( new WorkQueueData(n) )
 {
     d->self = d;
     Thread::run( boost::bind(WorkQueueData::manage_queue, WorkQueueRef(*this)) );
+    
+    exp_shared_ptr<WorkQueueRegistry>::Type ptr = workQueueRegistry();
+    
+    if (ptr)
+        ptr->registerQueue(*this);
 }
+
+/** Construct from the passed WorkQueueRef reference */
+WorkQueue::WorkQueue(const WorkQueueRef &ref) : d(ref.d.lock())
+{}
 
 /** Internal constructor used to construct the WorkQueue from the shared pointer */
 WorkQueue::WorkQueue(const exp_shared_ptr<detail::WorkQueueData>::Type &ptr)
@@ -230,6 +431,28 @@ bool WorkQueue::operator==(const WorkQueue &other) const
 bool WorkQueue::operator!=(const WorkQueue &other) const
 {
     return d.get() != other.d.get();
+}
+
+/** Comparison operator */
+bool WorkQueue::operator==(const WorkQueueRef &other) const
+{
+    return other.operator==(*this);
+}
+
+/** Comparison operator */
+bool WorkQueue::operator!=(const WorkQueueRef &other) const
+{
+    return other.operator!=(*this);
+}
+
+/** Tell the WorkQueue that it needs to wake up and process some change of state */
+void WorkQueue::process() const
+{
+    if (d)
+    {
+        MutexLocker lkr( &(d->m) );
+        d->waiter.wakeAll();
+    }
 }
 
 /** Return whether or not this WorkQueue is empty (no jobs or requested resources) */
@@ -344,15 +567,4 @@ int WorkQueue::nBlocked() const
     }
     else
         return 0;
-}
-
-/** Internal function called to tell the WorkQueue that the passed  
-    job should be aborted (either cancelled, or, if running, stopped!) */
-void WorkQueue::abort(const WorkQueueItem &item)
-{
-    if (d)
-    {
-        MutexLocker lkr( &(d->m) );
-        d->abort(item);
-    }
 }

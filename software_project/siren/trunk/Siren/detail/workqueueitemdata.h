@@ -34,15 +34,13 @@
 #include "Siren/datetime.h"
 #include "Siren/string.h"
 #include "Siren/obj.h"
+#include "Siren/promise.h"
+#include "Siren/workqueue.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-    class Promise;
-    class WorkQueue;
-    class WorkQueueItem;
-
     namespace detail
     {
         class WorkQueueData;
@@ -54,12 +52,12 @@ namespace Siren
         public:
             WorkQueueItemData(const WorkPacket &packet,
                               const WorkQueue &queue,
-                              int n);
+                              int n, bool is_background);
             
             WorkQueueItemData(const WorkPacket &packet,
                               const WorkSpace &workspace,
                               const WorkQueue &queue,
-                              int n);
+                              int n, bool is_background);
             
             ~WorkQueueItemData();
             
@@ -80,6 +78,9 @@ namespace Siren
             WorkQueue queue();
             WorkQueueItem workQueueItem();
         
+            bool isBG();
+            bool isFG();
+        
         protected:
             friend class Siren::WorkQueueItem;
             void setPromise(const Promise &promise);
@@ -90,6 +91,9 @@ namespace Siren
             void jobCancelled();
         
             void abort();
+        
+            void toFG();
+            void toBG();
         
         private:
             /** Mutex protecting access to the data of this object */
@@ -106,11 +110,11 @@ namespace Siren
 
             /** This is the queue that is processing this item. If we lose
                 the queue, then we cannot run this job */
-            exp_weak_ptr<WorkQueueData>::Type parent_queue;
+            WorkQueueRef parent_queue;
         
             /** Store the WorkPacket in the Promise, so if lose promise,
                 then lose WorkPacket - the Promise is the handle to the job */
-            exp_weak_ptr<PromiseData>::Type promise_data;
+            PromiseRef job_promise;
             
             /** The time the job was submitted (this WorkQueueItem was created) */
             DateTime submission_time;
@@ -128,6 +132,12 @@ namespace Siren
 
             /** The number of worker threads to use to process the packet */
             int nworkers;
+            
+            /** Whether or not the job should be aborted */
+            bool should_abort;
+            
+            /** Whether or not the work should be processed in the background */
+            bool is_bg;
         
         }; // end of class WorkQueueItem
     

@@ -44,6 +44,7 @@ namespace Siren
         class WorkQueueData; 
         class PromiseData;
         class WorkQueueItemData;
+        class WorkQueueRegistry;
     }
 
     /** A WorkQueue provides a scheduler that manages the processing
@@ -88,14 +89,11 @@ namespace Siren
     protected:
         friend class Siren::detail::WorkQueueItemData;
         friend class Siren::detail::WorkQueueData;
+        friend class Siren::detail::WorkQueueRegistry;
         friend class WorkQueueRef;
         WorkQueue(const exp_shared_ptr<detail::WorkQueueData>::Type &ptr);
         
-        static void manage_queue(WorkQueueRef queue);
-        
-        void abort(const WorkQueueItem &item);
-        
-        void runBGManager();
+        void process() const;
         
     private:
         exp_shared_ptr<detail::WorkQueueData>::Type d;
@@ -123,8 +121,14 @@ namespace Siren
         bool isNull() const;
         
         String toString() const;
-        
+    
+    protected:
+        void process() const;
+    
     private:
+        friend class WorkQueue;
+        friend class detail::WorkQueueItemData;
+        
         exp_weak_ptr<detail::WorkQueueData>::Type d;
     };
 

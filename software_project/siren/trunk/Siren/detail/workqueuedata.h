@@ -32,6 +32,7 @@
 #include "Siren/workqueue.h"
 #include "Siren/mutex.h"
 #include "Siren/waitcondition.h"
+#include "Siren/thread.h"
 
 SIREN_BEGIN_HEADER
 
@@ -41,11 +42,12 @@ namespace Siren
 
     namespace detail
     {
-        /** This class provides the private implementation of WorkQueue */
+        /** This class provides the private implementation of WorkQueue.
+            Note that you must hold the mutex lock on this class while
+            you call any of the member functions. */
         class WorkQueueData : public noncopyable
         {
         public:
-            WorkQueueData();
             WorkQueueData(int n);
             
             ~WorkQueueData();
@@ -53,6 +55,14 @@ namespace Siren
             Promise submit(const WorkPacket &packet, int n);
             Promise submit(const WorkPacket &packet,
                            const WorkSpace &space, int n);
+        
+            Promise submitBG(const WorkPacket &packet, int n);
+            Promise submitBG(const WorkPacket &packet,
+                             const WorkSpace &space, int n);
+        
+            void addCPUs(int nthreads);
+        
+            void abort(const WorkQueueItem &item);
         
             int nRunning();
             int nWaiting();
@@ -77,14 +87,17 @@ namespace Siren
             WaitCondition waiter;
             
             /** The list of jobs that have not yet run */
-            List<WorkQueueItem>::Type waiting_jobs;
+            List< std::pair<WorkQueueItem,Thread> >::Type waiting_jobs;
             
             /** The list of jobs that are currently running */
-            List<WorkQueueItem>::Type running_jobs;
+            List< std::pair<WorkQueueItem,Thread> >::Type running_jobs;
+            
+            /** The list of jobs that are currently running in the background */
+            List< std::pair<WorkQueueItem,Thread> >::Type bg_jobs;
             
             /** The list of jobs that are blocked because they 
                 request more resources than will ever be available */
-            List<WorkQueueItem>::Type blocked_jobs;
+            List< std::pair<WorkQueueItem,Thread> >::Type blocked_jobs;
             
             /** The list of jobs that have been cancelled */
             List<WorkQueueItem>::Type cancelled_jobs;
@@ -98,6 +111,13 @@ namespace Siren
             /** The number of cpu threads that this WorkQueue 
                 would like to manage */
             int nthreads;
+            
+            /** The number of cpu threads that this WorkQueue
+                currently manages */
+            int navailable;
+            
+            /** The number of cpu threads that this WorkQueue is currently using */
+            int nrunning;
         };
     
     } // end of namespace detail

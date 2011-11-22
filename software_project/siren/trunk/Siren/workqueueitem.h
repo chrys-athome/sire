@@ -62,11 +62,13 @@ namespace Siren
     public:
         WorkQueueItem();
         WorkQueueItem(const WorkPacket &workpacket,
-                      const WorkQueue &queue, int n=1);
+                      const WorkQueue &queue, int n=1,
+                      bool is_background = false);
                       
         WorkQueueItem(const WorkPacket &workpacket,
                       const WorkSpace &workspace, 
-                      const WorkQueue &queue, int n=1);
+                      const WorkQueue &queue, int n=1,
+                      bool is_background = false);
                       
         WorkQueueItem(const WorkQueueItem &other);
         
@@ -96,6 +98,9 @@ namespace Siren
         Promise promise() const;
         WorkQueue queue() const;
     
+        bool isBG() const;
+        bool isFG() const;
+    
     protected:
         friend class detail::WorkQueueItemData;
         WorkQueueItem(const exp_shared_ptr<detail::WorkQueueItemData>::Type &ptr);
@@ -103,6 +108,9 @@ namespace Siren
         friend class detail::WorkQueueData;
         friend class detail::PromiseData;
         void setPromise(const Promise &promise);
+        
+        void toBG();
+        void toFG();
     
         void jobStarted();
         void jobCancelled();

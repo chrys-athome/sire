@@ -36,6 +36,7 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    class PromiseRef;
     class WorkPacket;
     class WorkQueue;
     class WorkSpace;
@@ -61,6 +62,7 @@ namespace Siren
         Promise();
         Promise(const None &none);
         Promise(const Object &object);
+        Promise(const PromiseRef &ref);
         
         Promise(const Promise &other);
         
@@ -71,8 +73,13 @@ namespace Siren
         bool operator==(const Promise &other) const;
         bool operator!=(const Promise &other) const;
         
+        bool operator==(const PromiseRef &other) const;
+        bool operator!=(const PromiseRef &other) const;
+        
         static const char* typeName(){ return "Siren::Promise";}
         const char* what() const{ return typeName(); }
+        
+        String toString() const;
         
         Obj workPacket() const;
         WorkSpace workSpace() const;
@@ -94,14 +101,14 @@ namespace Siren
         Promise resubmit() const;
         
     protected:
+        friend class PromiseRef;
         friend class detail::WorkQueueData;
         Promise(const WorkQueueItem &item);
 
         friend class detail::WorkQueueItemData;
         Promise(const exp_shared_ptr<detail::PromiseData>::Type &ptr);
 
-        void cancel() const;  // called by the queueing system (abort is user)
-    
+        // functions called by the queueing system
         void jobStarted();
         void jobCancelled();
         void jobFinished(const Obj &result);
@@ -116,6 +123,42 @@ namespace Siren
         exp_shared_ptr<detail::PromiseData>::Type d;
     
     }; // end of class Promise
+
+    /** A weak reference to a promise */
+    class SIREN_EXPORT PromiseRef
+    {
+    public:
+        PromiseRef();
+        PromiseRef(const Promise &promise);
+        PromiseRef(const PromiseRef &other);
+        
+        ~PromiseRef();
+        
+        PromiseRef& operator=(const PromiseRef &other);
+        
+        bool operator==(const PromiseRef &other) const;
+        bool operator!=(const PromiseRef &other) const;
+        
+        bool operator==(const Promise &other) const;
+        bool operator!=(const Promise &other) const;
+        
+        bool isNull() const;
+        
+        String toString() const;
+
+    protected:
+        friend class Promise;
+        friend class detail::WorkQueueData;
+        friend class detail::WorkQueueItemData;
+
+        // functions called by the queueing system
+        void jobStarted();
+        void jobCancelled();
+        void jobFinished(const Obj &result);
+
+    private:
+        exp_weak_ptr<detail::PromiseData>::Type d;
+    };
 
 } // end of namespace Siren
 

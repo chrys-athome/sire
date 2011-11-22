@@ -48,9 +48,10 @@ using namespace Siren::detail;
 /** Construct the item representing the processing of the passed WorkPacket
     using 'n' worker threads, submitted to the passed queue */
 WorkQueueItemData::WorkQueueItemData(const WorkPacket &packet,
-                                     const WorkQueue &queue, int n)
-                  : workpacket(packet), workspace(0), parent_queue(queue.d), 
-                    nworkers(n)
+                                     const WorkQueue &q, int n,
+                                     bool is_background)
+                  : workpacket(packet), workspace(0), parent_queue(q), 
+                    nworkers(n), should_abort(false), is_bg(is_background)
 {
     submission_time = DateTime::current();
 
@@ -63,9 +64,11 @@ WorkQueueItemData::WorkQueueItemData(const WorkPacket &packet,
     passed queue */
 WorkQueueItemData::WorkQueueItemData(const WorkPacket &packet,
                                      const WorkSpace &space,
-                                     const WorkQueue &queue, int n)
+                                     const WorkQueue &q, int n,
+                                     bool is_background)
                   : workpacket(packet), workspace(new WorkSpace(space)),
-                    parent_queue(queue.d), nworkers(n)
+                    parent_queue(q), nworkers(n), should_abort(false), 
+                    is_bg(is_background)
 {
     submission_time = DateTime::current();
     
@@ -78,16 +81,17 @@ WorkQueueItemData::~WorkQueueItemData()
 {
     //tell the promise that the job has aborted as the
     //WorkQueueItem has been lost
-    Promise(promise_data.lock()).abort();
+    job_promise.jobCancelled();
+    parent_queue.process();
 
     //delete the WorkSpace
     delete workspace;
 }
 
 /** Internal function used to set the Promise that is associated with this job */
-void WorkQueueItemData::setPromise(const Promise &promise)
+void WorkQueueItemData::setPromise(const Promise &p)
 {
-    promise_data = promise.d;
+    job_promise = p;
 }
 
 /** Return the WorkPacket associated with this WorkQueueItem, or 
@@ -162,7 +166,7 @@ Obj WorkQueueItemData::operator[](const String &string)
 Promise WorkQueueItemData::promise()
 {
     MutexLocker lkr(&m);
-    return Promise(promise_data.lock());
+    return job_promise;
 }
 
 /** Return the WorkQueue on which this item is queueued. This will
@@ -170,7 +174,7 @@ Promise WorkQueueItemData::promise()
 WorkQueue WorkQueueItemData::queue()
 {
     MutexLocker lkr(&m);
-    return WorkQueue(parent_queue.lock());
+    return parent_queue;
 }
 
 /** Return the WorkQueueItem associated with this object */
@@ -188,7 +192,7 @@ void WorkQueueItemData::jobStarted()
 
     {
         MutexLocker lkr(&m);
-        p = Promise(promise_data.lock());
+        p = job_promise;
         start_time = DateTime::current();
     }
     
@@ -202,7 +206,7 @@ void WorkQueueItemData::jobFinished(const Obj &result)
 
     {
         MutexLocker lkr(&m);
-        p = Promise(promise_data.lock());
+        p = job_promise;
         finish_time = DateTime::current();
     }
     
@@ -213,14 +217,17 @@ void WorkQueueItemData::jobFinished(const Obj &result)
 void WorkQueueItemData::jobCancelled()
 {
     Promise p;
+    WorkQueue q;
 
     {
         MutexLocker lkr(&m);
-        p = Promise(promise_data.lock());
+        p = job_promise;
+        q = parent_queue;
         finish_time = DateTime::current();
     }
     
     p.jobCancelled();
+    q.process();
 }
 
 /** Internal function used to relay the message to the queue that this job
@@ -229,11 +236,34 @@ void WorkQueueItemData::abort()
 {
     MutexLocker lkr(&m);
     
-    WorkQueue q(parent_queue.lock());
-    
-    if (not q.isNull())
+    if (not should_abort)
     {
-        q.abort( WorkQueueItem(self.lock()) );
+        should_abort = true;
+        parent_queue.process();
+    }
+}
+
+/** Set the flag to say that the work item should be processed in the background */
+void WorkQueueItemData::toBG()
+{
+    MutexLocker lkr(&m);
+    
+    if (not is_bg)
+    {
+        is_bg = true;
+        parent_queue.process();
+    }
+}
+
+/** Set the flag to say that the work item should be processed in the foreground */
+void WorkQueueItemData::toFG()
+{
+    MutexLocker lkr(&m);
+    
+    if (is_bg)
+    {
+        is_bg = false;
+        parent_queue.process();
     }
 }
 
@@ -253,9 +283,11 @@ WorkQueueItem::WorkQueueItem(const exp_shared_ptr<WorkQueueItemData>::Type &ptr)
 /** Construct the item representing the processing of the passed WorkPacket
     using 'n' worker threads, submitted to the passed queue */
 WorkQueueItem::WorkQueueItem(const WorkPacket &workpacket, 
-                             const WorkQueue &workqueue, int nworkers)
+                             const WorkQueue &workqueue, int nworkers,
+                             bool is_background)
 {
-    d.reset( new WorkQueueItemData(workpacket,workqueue,nworkers) );
+    d.reset( new WorkQueueItemData(workpacket,workqueue,
+                                   nworkers,is_background) );
     d->self = d;
 }
 
@@ -263,9 +295,11 @@ WorkQueueItem::WorkQueueItem(const WorkPacket &workpacket,
     using the passed WorkSpace, using 'n' worker threads, submitted to the 
     passed queue */
 WorkQueueItem::WorkQueueItem(const WorkPacket &workpacket, const WorkSpace &workspace,
-                             const WorkQueue &workqueue, int nworkers)
+                             const WorkQueue &workqueue, int nworkers,
+                             bool is_background)
 {
-    d.reset( new WorkQueueItemData(workpacket,workspace,workqueue,nworkers) );
+    d.reset( new WorkQueueItemData(workpacket,workspace,workqueue,
+                                   nworkers,is_background) );
     d->self = d;
 }
 
@@ -371,3 +405,18 @@ Promise WorkQueueItem::promise() const
         return Promise();
 }
 
+/** Set the flag to signal that this work item should be processed
+    in the background */
+void WorkQueueItem::toBG()
+{
+    if (d)
+        d->toBG();
+}
+
+/** Set the flag to signal that this work item should now be processed
+    in the foreground */
+void WorkQueueItem::toFG()
+{
+    if (d)
+        d->toFG();
+}

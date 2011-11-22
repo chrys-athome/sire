@@ -55,6 +55,7 @@ namespace Siren
         {
         public:
             PromiseData(const WorkQueueItem &workitem);
+            PromiseData(const Obj &result);
             ~PromiseData();
 
             bool available();
@@ -71,7 +72,7 @@ namespace Siren
             WaitCondition w;
             Obj reslt;
 
-            exp_weak_ptr<WorkQueueItemData>::Type workitem;
+            WorkQueueItemRef workitem;
 
             bool ready;
         
