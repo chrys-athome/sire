@@ -366,11 +366,13 @@ void TestPacket::test(TestReportEditor &report) const
         Thread::run( &run_function );
     }
     
-    WorkQueue queue;
+    WorkQueue queue(5);
     
     Promise promise = queue.submit(packet);
     
     sirenDebug() << queue.toString();
+    
+    queue = WorkQueue();
     
     promise.wait();
 }

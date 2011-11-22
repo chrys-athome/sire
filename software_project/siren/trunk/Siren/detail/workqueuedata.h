@@ -59,9 +59,16 @@ namespace Siren
             int nBlocked();
             int nCompleted();
     
+            bool isEmpty();
+    
             String toString();
     
+        protected:
+            friend class WorkQueue;
+            static void manage_queue(WorkQueueRef queue);
+            
         private:
+        
             /** Mutex to protect access to the data of this queue */
             Mutex m;
         

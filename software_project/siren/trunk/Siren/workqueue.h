@@ -35,6 +35,7 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+    class WorkQueueRef;
     class WorkQueueItem;
     class Promise;
 
@@ -54,6 +55,7 @@ namespace Siren
     {
     public:
         WorkQueue();
+        WorkQueue(const WorkQueueRef &queue);
         WorkQueue(int nthreads);
         
         WorkQueue(const WorkQueue &other);
@@ -65,12 +67,17 @@ namespace Siren
         bool operator==(const WorkQueue &other) const;
         bool operator!=(const WorkQueue &other) const;
         
+        bool operator==(const WorkQueueRef &other) const;
+        bool operator!=(const WorkQueueRef &other) const;
+        
+        bool isEmpty() const;
+        
         String toString() const;
         
         Promise submit(const WorkPacket &workpacket, int n=1);
         Promise submit(const WorkPacket &workpacket, WorkSpace &workspace, int n=1);
         
-        bool isNull() const;
+        void addCPUs(int nthreads);
         
         int nWaiting() const;
         int nRunning() const;
@@ -81,18 +88,50 @@ namespace Siren
     protected:
         friend class Siren::detail::WorkQueueItemData;
         friend class Siren::detail::WorkQueueData;
+        friend class WorkQueueRef;
         WorkQueue(const exp_shared_ptr<detail::WorkQueueData>::Type &ptr);
         
+        static void manage_queue(WorkQueueRef queue);
+        
         void abort(const WorkQueueItem &item);
+        
+        void runBGManager();
         
     private:
         exp_shared_ptr<detail::WorkQueueData>::Type d;
         
     }; // end of class WorkQueue
 
+    /** This class holds a weak reference to a WorkQueue */
+    class SIREN_EXPORT WorkQueueRef
+    {
+    public:
+        WorkQueueRef();
+        WorkQueueRef(const WorkQueue &queue);
+        WorkQueueRef(const WorkQueueRef &other);
+        
+        ~WorkQueueRef();
+        
+        WorkQueueRef& operator=(const WorkQueueRef &other);
+        
+        bool operator==(const WorkQueueRef &other) const;
+        bool operator!=(const WorkQueueRef &other) const;
+        
+        bool operator==(const WorkQueue &queue) const;
+        bool operator!=(const WorkQueue &queue) const;
+        
+        bool isNull() const;
+        
+        String toString() const;
+        
+    private:
+        exp_weak_ptr<detail::WorkQueueData>::Type d;
+    };
+
 } // end of namespace Siren
 
 SIREN_EXPOSE_CLASS( Siren::WorkQueue )
+SIREN_EXPOSE_CLASS( Siren::WorkQueueRef )
 
 SIREN_END_HEADER
 
