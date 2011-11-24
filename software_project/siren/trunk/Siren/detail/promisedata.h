@@ -58,17 +58,31 @@ namespace Siren
             PromiseData(const Obj &result);
             ~PromiseData();
 
-            bool available();
+            bool hasFinished();
+            bool hasStarted();
+            
+            void waitForStarted();
+            bool waitForStarted(int ms);
             
             void wait();
             bool wait(int ms);
             
             Obj result();
+
+            String toString();
+
+        protected:
+            friend class Siren::Promise;
             
-            void setResult(const Obj &result);
+            void jobFinished(const Obj &result);
+            void jobFinished(const Obj &result, int i, int n);
+            
+            void jobCancelled();
+            void jobStarted();
 
         private:
-            friend class Siren::Promise;
+            void setResult(const Obj &result);
+
             Mutex m;
             
             /** Pointer to self */
@@ -76,10 +90,15 @@ namespace Siren
             
             WaitCondition w;
             Obj reslt;
+            
+            Vector<Obj>::Type result_part;
+            Set<int>::Type got_result;
 
             WorkQueueItemRef workitem;
 
-            bool ready;
+            bool has_started;
+            bool is_cancelled;
+            bool has_finished;
         
         }; // end of class PromiseData
     

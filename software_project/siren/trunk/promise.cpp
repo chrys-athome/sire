@@ -34,6 +34,7 @@
 #include "Siren/exceptions.h"
 #include "Siren/none.h"
 #include "Siren/workpacket.h"
+#include "Siren/timer.h"
 
 #include "Siren/detail/promisedata.h"
 #include "Siren/detail/workqueuedata.h"
@@ -49,13 +50,15 @@ using namespace Siren::detail;
 /** Construct the promise that will be processed by the 
     passed WorkQueueItem */
 PromiseData::PromiseData(const WorkQueueItem &item) 
-            : noncopyable(), workitem(item.d), ready(false)
+            : noncopyable(), workitem(item.d), 
+              has_started(false), is_cancelled(false), has_finished(false)
 {}
 
 /** Construct the promise that had already been processed,
     and has the passed result */
 PromiseData::PromiseData(const Obj &result)
-            : noncopyable(), reslt(result), ready(true)
+            : noncopyable(), reslt(result), 
+              has_started(true), is_cancelled(false), has_finished(true)
 {}
 
 /** Destructor */
@@ -66,11 +69,18 @@ PromiseData::~PromiseData()
     workitem.abort();
 }
 
-/** Return whether or not the result is available */
-bool PromiseData::available()
+/** Return whether or not the job has finished */
+bool PromiseData::hasFinished()
 {
     MutexLocker lkr(&m);
-    return ready;
+    return has_finished;
+}
+
+/** Return whether or not the job has started */
+bool PromiseData::hasStarted() 
+{
+    MutexLocker lkr(&m);
+    return has_started;
 }
 
 /** Wait until the result is available, and then return the result */
@@ -78,9 +88,12 @@ Obj PromiseData::result()
 {
     MutexLocker lkr(&m);
     
-    while (not ready)
+    while (not has_finished)
     {
         w.wait(&m);
+        
+        if (is_cancelled)
+            return None();
     }
     
     return reslt;
@@ -91,10 +104,10 @@ void PromiseData::wait()
 {
     MutexLocker lkr(&m);
     
-    if (ready)
-        return;
-        
-    w.wait(&m);
+    while (not (has_finished or is_cancelled))
+    {
+        w.wait(&m);
+    }
 }
 
 /** Wait until the result is available, or until 'ms' milliseconds
@@ -103,20 +116,60 @@ bool PromiseData::wait(int ms)
 {
     MutexLocker lkr(&m);
     
-    if (ready)
-        return true;
-        
-    w.wait(&m, ms);
+    Timer t = Timer::start();
     
-    return ready;
+    while (not (has_finished or is_cancelled))
+    {
+        int new_ms = ms - t.elapsed();
+    
+        if (new_ms <= 0 or is_cancelled)
+            return false;
+            
+        w.wait(&m, new_ms);
+    }
+
+    return true;
+}
+
+/** Wait until the job has started */
+void PromiseData::waitForStarted()
+{
+    MutexLocker lkr(&m);
+    
+    while (not has_started)
+    {
+        if (is_cancelled)
+            return;
+    
+        w.wait(&m);
+    }
+}
+
+/** Wait until the job has started, or until 'ms' milliseconds
+    has passed - this returns whether or not the job has started */
+bool PromiseData::waitForStarted(int ms)
+{
+    MutexLocker lkr(&m);
+    
+    Timer t = Timer::start();
+    
+    while (not has_started)
+    {
+        int new_ms = ms - t.elapsed();
+    
+        if (new_ms <= 0 or is_cancelled)
+            return false;
+            
+        w.wait(&m, new_ms);
+    }
+
+    return true;
 }
 
 /** Set the promised result */
 void PromiseData::setResult(const Obj &result)
 {
-    MutexLocker lkr(&m);
-    
-    if (ready)
+    if (has_finished)
         throw Siren::program_bug( String::tr(
                 "It is a mistake to try to give a Promise two results! "
                 "Trying to set result...\n"
@@ -126,8 +179,127 @@ void PromiseData::setResult(const Obj &result)
                     .arg(reslt.toString(), result.toString()), CODELOC );
                     
     reslt = result;
-    ready = true;
+    has_finished = true;
     w.wakeAll();
+}
+
+/** Use to say that the job has started */
+void PromiseData::jobStarted()
+{
+    MutexLocker lkr(&m);
+    
+    if (not has_started)
+    {
+        has_started = true;
+        w.wakeAll();
+    }
+}
+
+/** Use to say that the job has been cancelled */
+void PromiseData::jobCancelled()
+{
+    MutexLocker lkr(&m);
+    
+    if (not is_cancelled)
+    {
+        is_cancelled = true;
+        w.wakeAll();
+    }
+}
+
+/** Use to say that the job has finished, with the passed result */
+void PromiseData::jobFinished(const Obj &result)
+{
+    MutexLocker lkr(&m);
+    this->setResult(result);
+}
+
+/** Use to say that that the part of the job identified with 'i' out of 'n'
+    has finished, and set the value of this part. If all parts have been
+    set, then they will be merged together to make the final result */
+void PromiseData::jobFinished(const Obj &result, int i, int n)
+{
+    if (n <= 0 or i < 0 or i >= n)
+        throw Siren::program_bug( String::tr(
+                "Cannot set the result as the index or count "
+                "are really, badly wrong!\n(%1 of %2) == %3")
+                    .arg(i).arg(n).arg(result.toString()), CODELOC );
+
+    MutexLocker lkr(&m);
+    
+    if (has_finished)
+        throw Siren::program_bug( String::tr(
+                "It is a mistake to try to give a Promise two results! "
+                "Trying to set result (%1 of %2)...\n"
+                "%3\n"
+                "...when already contain result...\n"
+                "%4")
+                    .arg(i).arg(n)
+                    .arg(reslt.toString(), result.toString()), CODELOC );
+
+    if (got_result.isEmpty())
+    {
+        //this is the first of the n parts
+        got_result = Set<int>::Type();
+        got_result.reserve(n);
+        result_part = Vector<Obj>::Type(n);
+    }
+    
+    if (n != result_part.count())    
+        throw Siren::program_bug( String::tr(
+                "It is a mistake to try to set part %1 of %2, when the number "
+                "of parts is equal to %3...")
+                    .arg(i).arg(n).arg(result_part.count()), CODELOC );
+    
+    if (got_result.contains(i))
+        throw Siren::program_bug( String::tr(
+                "It is a mistake to try to set part %1 of %2 as the Promise "
+                "already has a result for this part...\n"
+                "%3\n"
+                "...versus...\n"
+                "%4")
+                    .arg(i).arg(n)
+                    .arg(result.toString(), result_part[i].toString()), CODELOC );
+
+    result_part[i] = result;
+    got_result.insert(i);
+    
+    //check to see if all of the results have been collected :-)
+    if (got_result.count() >= n)
+    {
+        Obj workpacket = WorkQueueItem(workitem).workPacket();
+        
+        if (workpacket.isNone())
+        {
+            //there is no work packet to combine the result, so there is no result...
+            this->setResult(None());
+            lkr.unlock();
+            return;
+        }
+
+        Obj final_result;
+
+        try
+        {
+            final_result = workpacket.asA<WorkPacket>().reduce(result_part);
+        }
+        catch(const Exception &e)
+        {
+            final_result = e;
+        }
+        catch(const std::exception &e)
+        {
+            final_result = standard_exception(e, CODELOC);
+        }
+        catch(...)
+        {
+            final_result = unknown_exception(CODELOC);
+        }
+        
+        this->setResult(final_result);
+    }
+    
+    lkr.unlock();
 }
 
 /////////
@@ -318,25 +490,46 @@ void Promise::abort(int ms) const
     }
 }
 
+/** Return a string representation of this promise */
+String Promise::toString() const
+{
+    if (d)
+        return d->toString();
+
+    else
+        return String::tr("Promise( result() == %1 )").arg( reslt.toString() );
+}
+
 /** This internal function is called when the job attached to this promise
     is cancelled by the queue */
 void Promise::jobCancelled()
 {
-    throw Siren::incomplete_code("TODO", CODELOC);
+    if (d)
+        d->jobCancelled();
 }
 
 /** This internal function is called when the job attached to this promise
     is finished, and is used to supply the result */
 void Promise::jobFinished(const Obj &result)
 {
-    throw Siren::incomplete_code("TODO", CODELOC);
+    if (d)
+        d->jobFinished(result);
+}
+
+/** This internal function is called when part 'i' of 'n' parts of this
+    work has finished */
+void Promise::jobFinished(const Obj &result, int i, int n)
+{
+    if (d)
+        d->jobFinished(result, i, n);
 }
 
 /** This internal function is called when the job attached to this promise
     has started */
 void Promise::jobStarted()
 {
-    throw Siren::incomplete_code("TODO", CODELOC);
+    if (d)
+        d->jobStarted();
 }
 
 /////////

@@ -64,7 +64,7 @@ namespace Siren
         Obj run(WorkSpace workspace) const throw();
         Obj run(WorkSpace workspace, int worker_id, int nworkers) const throw();
 
-        Obj reduce(const List<Obj>::Type &results) const throw();
+        Obj reduce(const Vector<Obj>::Type &results) const throw();
         
     protected:
         virtual Obj runChunk() const=0;
