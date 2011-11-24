@@ -84,10 +84,15 @@ namespace Siren
         Obj workPacket() const;
         WorkSpace workSpace() const;
         
-        bool available() const;
+        bool hasFinished() const;
+        bool hasStarted() const;
+        bool isCancelled() const;
         
         void wait() const;
         bool wait(int ms) const;
+
+        void waitForStarted() const;
+        bool waitForStarted(int ms) const;
         
         Obj result() const;
         Obj result(const Object &def) const;

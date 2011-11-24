@@ -76,7 +76,12 @@ namespace Siren
         String toString() const;
         
         Promise submit(const WorkPacket &workpacket, int n=1);
-        Promise submit(const WorkPacket &workpacket, WorkSpace &workspace, int n=1);
+        Promise submit(const WorkPacket &workpacket, 
+                       const WorkSpace &workspace, int n=1);
+        
+        Promise submitBG(const WorkPacket &workpacket, int n=1);
+        Promise submitBG(const WorkPacket &workpacket, 
+                         const WorkSpace &workspace, int n=1);
         
         void addCPUs(int nthreads);
         

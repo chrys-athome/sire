@@ -19,7 +19,7 @@ endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
 project (SIREN CXX C)
 
 # project version
-set (SIREN_VERSION_MAJOR "0")
+set (SIREN_VERSION_MAJOR "1")
 set (SIREN_VERSION_MINOR "0")
 set (SIREN_VERSION_PATCH "1")
 
@@ -179,7 +179,7 @@ add_executable ( sirentest sirentest.cpp )
 
 set_target_properties (Siren PROPERTIES
                        VERSION ${SIREN_VERSION_MAJOR}
-                       SOVERSION ${SIREN_VERSION_MINOR}
+                       SOVERSION ${SIREN_VERSION_MAJOR}
                       )
 
 target_link_libraries ( Siren  

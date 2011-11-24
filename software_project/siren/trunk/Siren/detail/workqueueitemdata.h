@@ -81,8 +81,11 @@ namespace Siren
             bool isBG();
             bool isFG();
         
+            String toString();
+        
         protected:
             friend class Siren::WorkQueueItem;
+            friend class Siren::WorkQueueItemRef;
             void setPromise(const Promise &promise);
         
             friend class Siren::detail::WorkQueueData;

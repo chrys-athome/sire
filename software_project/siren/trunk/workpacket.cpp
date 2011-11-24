@@ -162,6 +162,65 @@ Obj WorkPacket::run(WorkSpace workspace) const throw()
     }
 }
 
+/** Run a chunk of processing of this WorkPacket, using a group of worker threads 
+    to process a WorkPacket together, with each thread given a unique worker_id
+    (from 0 to n_workers-1).
+    
+    This returns the processed WorkPacket, or a Siren::Exception if something
+    went wrong, or a non-WorkPacket object that corresponds to the final 
+    result of the calculation 
+*/
+Obj WorkPacket::run(int id, int nworkers) const throw()
+{
+    if (nworkers <= 0)
+        nworkers = 1;
+        
+    if (id < 0)
+        id = 0;
+        
+    if (id >= nworkers)
+    {
+        return Siren::program_bug( String::tr(
+                "How can ID (%1) be greater than or equal to NWORKERS (%2)???")
+                    .arg(id).arg(nworkers), CODELOC );
+    }
+
+    try
+    {
+        return this->runChunk(id, nworkers);
+    }
+    catch(const Siren::Exception &e)
+    {
+        return e;
+    }
+    catch(const std::exception &e)
+    {
+        try
+        {
+            return standard_exception(String::tr(
+                "A C++ standard exception was thrown during processing "
+                "of the WorkPacket %1.").arg(this->toString()), e, CODELOC);
+        }
+        catch(...)
+        {
+            return standard_exception(e,CODELOC);
+        }
+    }
+    catch(...)
+    {
+        try
+        {
+            return unknown_exception(String::tr(
+                "An unknown exception was thrown during processing "
+                "of the WorkPacket %1.").arg(this->toString()), CODELOC);
+        }
+        catch(...)
+        {
+            return unknown_exception(CODELOC);
+        }
+    }
+}
+
 /** Run a chunk of processing of this WorkPacket, using the passed WorkSpace
     as an area for inter-process communication, or as a temporary work area.
     This function is used to allow a group of worker threads to process 
@@ -240,9 +299,19 @@ Obj WorkPacket::runChunk(WorkSpace&, int id, int) const
         return None();
 }
 
+/** Over-ride this function to allow your WorkPacket to be 
+    processed by a team of work threads during WorkPacket processing */
+Obj WorkPacket::runChunk(int id, int) const
+{
+    if (id == 0)
+        return this->runChunk();
+    else
+        return None();
+}
+
 /** Reduce the set of results returned by each of the workers into the
     single result of the calculation */
-Obj WorkPacket::reduce(const List<Obj>::Type &results) const throw()
+Obj WorkPacket::reduce(const Vector<Obj>::Type &results) const throw()
 {
     //if the workpacket does not know how to reduce the results, then
     //we are only interested in the first result
@@ -353,7 +422,7 @@ void run_function()
 {
     for_ages::setThisThreadName("run_function");
     sirenDebug() << "HELLO...";
-    for_ages::sleep(10);
+    for_ages::sleep(2);
     sirenDebug() << "...WORLD!";
 }
 
@@ -382,11 +451,14 @@ void TestPacket::test(TestReportEditor &report) const
     
     WorkQueue queue(5);
     
-    Promise promise = queue.submit(packet);
+    sirenDebug() << "SUBMIT TO QUEUE";
+    Promise promise = queue.submitBG( TestPacket(5), 5 );
     
     sirenDebug() << queue.toString();
     
-    queue = WorkQueue();
+    //queue = WorkQueue();
+    
+    sirenDebug() << promise.toString();
     
     promise.wait();
 }

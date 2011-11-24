@@ -60,6 +60,7 @@ namespace Siren
 
             bool hasFinished();
             bool hasStarted();
+            bool isCancelled();
             
             void waitForStarted();
             bool waitForStarted(int ms);
@@ -73,6 +74,7 @@ namespace Siren
 
         protected:
             friend class Siren::Promise;
+            friend class Siren::PromiseRef;
             
             void jobFinished(const Obj &result);
             void jobFinished(const Obj &result, int i, int n);

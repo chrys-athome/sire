@@ -68,6 +68,8 @@ namespace Siren
         
     protected:
         virtual Obj runChunk() const=0;
+        virtual Obj runChunk(int worker_id, int nworkers) const;
+        
         virtual Obj runChunk(WorkSpace &workspace) const;
         virtual Obj runChunk(WorkSpace &workspace, int worker_id, int nworkers) const;
 

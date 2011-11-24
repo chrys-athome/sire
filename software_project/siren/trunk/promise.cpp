@@ -35,6 +35,8 @@
 #include "Siren/none.h"
 #include "Siren/workpacket.h"
 #include "Siren/timer.h"
+#include "Siren/obj.hpp"
+#include "Siren/object.hpp"
 
 #include "Siren/detail/promisedata.h"
 #include "Siren/detail/workqueuedata.h"
@@ -69,6 +71,28 @@ PromiseData::~PromiseData()
     workitem.abort();
 }
 
+/** Return a string representation of the promise */
+String PromiseData::toString()
+{
+    MutexLocker lkr(&m);
+    
+    if (has_finished)
+        return String::tr("Promise( hasFinished()==true, result()==\"%1\" )")
+                            .arg(reslt.toString());
+    
+    else if (is_cancelled)
+        return String::tr("Promise( isCancelled()==true, workPacket()==\"%1\" )")
+                            .arg( WorkQueueItem(workitem).workPacket().toString() );
+                            
+    else if (has_started)
+        return String::tr("Promise( hasStarted()==true, workPacket()==\"%1\" )")
+                            .arg( WorkQueueItem(workitem).workPacket().toString() );
+
+    else
+        return String::tr("Promise( workPacket()==\"%1\" )")
+                            .arg( WorkQueueItem(workitem).workPacket().toString() );
+}
+
 /** Return whether or not the job has finished */
 bool PromiseData::hasFinished()
 {
@@ -81,6 +105,13 @@ bool PromiseData::hasStarted()
 {
     MutexLocker lkr(&m);
     return has_started;
+}
+
+/** Return whether or not the job has been cancelled */
+bool PromiseData::isCancelled()
+{
+    MutexLocker lkr(&m);
+    return is_cancelled;
 }
 
 /** Wait until the result is available, and then return the result */
@@ -383,14 +414,32 @@ bool Promise::operator!=(const PromiseRef &other) const
     return other.operator!=(*this);
 }
 
-/** Return whether or not the result is available */
-bool Promise::available() const
+/** Return whether or not the calculation has finished (result
+    available or job cancelled) */
+bool Promise::hasFinished() const
 {
     if (d)
-        return d->available();
-    
+        return d->hasFinished();
     else
         return true;
+}
+
+/** Return whether or not the job has started */
+bool Promise::hasStarted() const
+{
+    if (d)
+        return d->hasStarted();
+    else
+        return true;
+}
+
+/** Return whether or not the job is cancelled */
+bool Promise::isCancelled() const
+{
+    if (d)
+        return d->isCancelled();
+    else
+        return false;
 }
 
 /** Wait until the result is available */
@@ -406,6 +455,23 @@ bool Promise::wait(int ms) const
 {
     if (d)
         return d->wait(ms);
+    else
+        return true;
+}
+
+/** Wait until the job has started */
+void Promise::waitForStarted() const
+{
+    if (d)
+        d->waitForStarted();
+}
+
+/** Wait until the job has started, or for 'ms' milliseconds has passed.
+    This returns whether or not the job has started */
+bool Promise::waitForStarted(int ms) const
+{
+    if (d)
+        return d->waitForStarted(ms);
     else
         return true;
 }
@@ -432,7 +498,7 @@ Obj Promise::result(const Object &def) const
     
     else
     {
-        if (d->available())
+        if (d->hasFinished())
         {
             const_cast<Promise*>(this)->reslt = d->result();
             const_cast<Promise*>(this)->d.reset();
@@ -452,7 +518,7 @@ Obj Promise::result(const Object &def, int ms) const
         
     else
     {
-        if (d->available() or d->wait(ms))
+        if (d->wait(ms))
         {
             const_cast<Promise*>(this)->reslt = d->result();
             const_cast<Promise*>(this)->d.reset();
@@ -469,7 +535,7 @@ void Promise::abort() const
 {
     if (d)
     {
-        if (d->available())
+        if (d->hasFinished())
             const_cast<Promise*>(this)->reslt = d->result();
             
         const_cast<Promise*>(this)->d.reset();
@@ -481,7 +547,7 @@ void Promise::abort(int ms) const
 {
     if (d)
     {
-        if (d->available() or d->wait(ms))
+        if (d->wait(ms))
         {
             const_cast<Promise*>(this)->reslt = d->result();
         }
@@ -586,6 +652,15 @@ bool PromiseRef::operator!=(const Promise &other) const
 bool PromiseRef::isNull() const
 {
     return d.expired();
+}
+
+/** Call this to cancel the job */
+void PromiseRef::jobCancelled()
+{
+    exp_shared_ptr<PromiseData>::Type ptr = d.lock();
+
+    if (ptr)
+        ptr->jobCancelled();
 }
 
 /** Return a string representation of this promise */

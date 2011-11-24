@@ -88,6 +88,19 @@ WorkQueueItemData::~WorkQueueItemData()
     delete workspace;
 }
 
+/** Return a string representation of this item */
+String WorkQueueItemData::toString()
+{
+    return String::tr("WorkQueueItem( submissionTime() == %1,\n"
+                      "               startTime() == %2,\n"
+                      "               finishTime() == %3,\n"
+                      "               workPacket() == \"%4\" )")
+                        .arg(submission_time.toString(),
+                             start_time.toString(),
+                             finish_time.toString(),
+                             workpacket.toString());
+}
+
 /** Internal function used to set the Promise that is associated with this job */
 void WorkQueueItemData::setPromise(const Promise &p)
 {
@@ -102,19 +115,16 @@ Obj WorkQueueItemData::workPacket()
     return workpacket;
 }
 
-/** Return the WorkSpace associated with this WorkQueueItem, or raise
-    an exception if a WorkSpace is not available */
+/** Return the WorkSpace associated with this WorkQueueItem, or a null
+    WorkSpace if there is no WorkSpace associated */
 WorkSpace WorkQueueItemData::workSpace()
 {
     MutexLocker lkr(&m);
     
-    if (not workspace)
-        throw Siren::invalid_state( String::tr(
-                "You cannot request a WorkSpace for the processing of the "
-                "WorkPacket \"%1\" when no such WorkSpace was provided!")
-                    .arg(workpacket.toString()), CODELOC );
-                    
-    return *workspace;
+    if (workspace)
+        return *workspace;
+    else
+        return WorkSpace();
 }
 
 /** Return whether or not this WorkPacket comes with a WorkSpace */
@@ -371,6 +381,43 @@ Obj WorkQueueItem::workPacket() const
         return None();
 }
 
+/** Return whether or not this WorkQueueItem has an accompanying WorkSpace */
+bool WorkQueueItem::hasWorkSpace() const
+{
+    if (d)
+        return d->hasWorkSpace();
+    else
+        return false;
+}
+
+/** Return the WorkSpace associated with this WorkQueueItem. This will return
+    a null WorkSpace if there is no WorkSpace associated with this item */
+WorkSpace WorkQueueItem::workSpace() const
+{
+    if (d)
+        return d->workSpace();
+    else
+        return WorkSpace();
+}
+
+/** Return the number of workers who should work to process this WorkPacket */
+int WorkQueueItem::nWorkers() const
+{
+    if (d)
+        return d->nWorkers();
+    else
+        return 0;
+}
+
+/** Return a string representation of this WorkQueueItem */
+String WorkQueueItem::toString() const
+{
+    if (d)
+        return d->toString();
+    else
+        return String::tr("WorkQueueItem::null");
+}
+
 /** Return the submission time for this packet. This is a null
     time if the job has not been submitted */
 DateTime WorkQueueItem::submissionTime() const
@@ -486,6 +533,15 @@ bool WorkQueueItemRef::operator==(const WorkQueueItem &other) const
 bool WorkQueueItemRef::operator!=(const WorkQueueItem &other) const
 {
     return not operator==(other);
+}
+
+/** Abort the job */
+void WorkQueueItemRef::abort()
+{
+    exp_shared_ptr<WorkQueueItemData>::Type ptr = d.lock();
+
+    if (ptr)
+        ptr->abort();
 }
 
 /** Return a string representation of the referenced item */

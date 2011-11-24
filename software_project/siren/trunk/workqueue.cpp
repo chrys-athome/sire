@@ -104,6 +104,12 @@ WorkQueueData::WorkQueueData(int n)
 WorkQueueData::~WorkQueueData()
 {}
 
+/** Return whether or not this is an empty workqueue */
+bool WorkQueueData::isEmpty()
+{
+    return nthreads == 0 and waiting_jobs.isEmpty();
+}
+
 void WorkQueueData::process_job_n(WorkQueueItemRef item_ref, 
                                   int worker_id, int nworkers)
 {
@@ -289,6 +295,13 @@ Promise WorkQueueData::submitBG(const WorkPacket &packet, const WorkSpace &space
     bg_jobs.append( std::pair<WorkQueueItem,Thread>(workitem, get_thread(workitem)) );
     
     return promise;
+}
+
+/** Add a request for some additional CPUs */
+void WorkQueueData::addCPUs(int n)
+{
+    nthreads += n;
+    waiter.wakeAll();
 }
 
 /** Return the number of running jobs */
@@ -545,15 +558,40 @@ Promise WorkQueue::submit(const WorkPacket &workpacket, int n)
     return d->submit(workpacket,n);
 }
 
+/** Submit the passed WorkPacket to the queue for immediate processing
+    in a background thread, requiring 'n' workers to process the packet */
+Promise WorkQueue::submitBG(const WorkPacket &workpacket, int n)
+{
+    if (not d)
+        this->operator=( WorkQueue(0) );
+    
+    MutexLocker lkr( &(d->m) );
+    return d->submitBG(workpacket,n);
+}
+
 /** Submit the passed WorkPacket to the queue for processing, requiring 'n'
     workers that communicate using the passed WorkSpace */
-Promise WorkQueue::submit(const WorkPacket &workpacket, WorkSpace &workspace, int n)
+Promise WorkQueue::submit(const WorkPacket &workpacket, 
+                          const WorkSpace &workspace, int n)
 {
     if (not d)
         this->operator=( WorkQueue(0) );
 
     MutexLocker lkr( &(d->m) );
     return d->submit(workpacket,workspace,n);
+}
+
+/** Submit the passed WorkPacket to the queue for immediate processing
+    in a background thread, requiring 'n' workers that communicate using 
+    the passed WorkSpace */
+Promise WorkQueue::submitBG(const WorkPacket &workpacket, 
+                            const WorkSpace &workspace, int n)
+{
+    if (not d)
+        this->operator=( WorkQueue(0) );
+
+    MutexLocker lkr( &(d->m) );
+    return d->submitBG(workpacket,workspace,n);
 }
 
 /** Return the number of waiting jobs */
