@@ -30,7 +30,6 @@
 \*********************************************/
 
 #include "Siren/siren.h"
-#include <boost/function.hpp>
 
 SIREN_BEGIN_HEADER
 
@@ -38,8 +37,8 @@ namespace Siren
 {
     namespace detail{ class ThreadData; }
 
-    /** This internal class holds a pool of threads that can
-        run specified functions */
+    /** This class represents a Thread that can run a specified
+        function in the background */
     class Thread
     {
     public:
@@ -53,9 +52,14 @@ namespace Siren
         bool operator!=(const Thread &other) const;
 
         static Thread run( void (*function)() );
-        static Thread run( boost::function<void ()> func );
+        static Thread run( function<void ()> func );
+
+        static Thread run( void (*function)(int,int), int n );
+        static Thread run( function<void (int,int)> func, int n );
 
         bool isNull();
+
+        int nSubThreads();
 
         void abort();
         void pause();
@@ -67,12 +71,9 @@ namespace Siren
         void checkError();
 
     private:
-        
-        exp_shared_ptr<detail::ThreadData>::Type d;
-        int session_id;
+        List<exp_shared_ptr<detail::ThreadData>::Type>::Type d;
 
     }; // end of class Thread
-
 
 } // end of namespace Siren
 

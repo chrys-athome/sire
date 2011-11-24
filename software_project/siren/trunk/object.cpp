@@ -270,6 +270,14 @@ uint Object::hashCode() const
 void Object::test(TestReportEditor&) const
 {}
 
+/** This is the default unit stress test. It performs no tests, and 
+    as such, produces an empty test report. In your class, you 
+    should provide some stress tests, if appropriate, and write the 
+    results of those tests to the passed TestReport (via the
+    TestReportEditor) */
+void Object::stressTest(TestReportEditor&) const
+{}
+
 /** Perform a series of unit tests on the object, returning a report
     that describes those tests. These tests are guaranteed not to change
     the object, nor to cause any exceptions to be raised */
@@ -282,6 +290,39 @@ TestReport Object::test() const throw()
     try
     {
         this->test(editor);
+    }
+    catch(const Siren::Exception &e)
+    {
+        editor.addException(e);
+    }
+    catch(const std::exception &e)
+    {
+        editor.addException( standard_exception(e,CODELOC) );
+    }
+    catch(...)
+    {
+        editor.addException( unknown_exception(CODELOC) );
+    }
+
+    return editor.commit();
+}
+
+/** Perform a series of unit stress tests on the object, returning a report
+    that describes those tests. These tests are guaranteed not to change
+    the object, nor to cause any exceptions to be raised. These tests
+    differ from the unit tests in that they are designed to be more
+    compute hungry, and are designed to stress the hardware as well
+    as the software (e.g. to find corner cases due to system contention,
+    failures caused by raising system temperature, running out of memory etc.) */
+TestReport Object::stressTest() const throw()
+{
+    TestReport report( this->getClass() );
+
+    TestReport::Editor editor = report.edit();
+    
+    try
+    {
+        this->stressTest(editor);
     }
     catch(const Siren::Exception &e)
     {

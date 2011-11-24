@@ -55,7 +55,7 @@ namespace Siren
             int sessionID();
             int threadID();
 
-            void setFunction( boost::function<void ()> func );
+            void setFunction( function<void ()> func );
 
             bool isError();
             bool hasFinished();
@@ -90,7 +90,7 @@ namespace Siren
             int session_id;
             
             /** Pointer to the function that should be run */
-            boost::function<void ()> func_ptr;
+            function<void ()> func_ptr;
             
             /** Whether or not we should exit the thread */
             bool should_quit;
@@ -178,7 +178,7 @@ int ThreadData::threadID()
 }
 
 /** Set the function that should be run by this thread */
-void ThreadData::setFunction( boost::function<void ()> func )
+void ThreadData::setFunction( function<void ()> func )
 {
     MutexLocker lkr(&m);
     
@@ -346,13 +346,11 @@ ThreadPool::~ThreadPool()
     List<exp_shared_ptr<ThreadData>::Type>::Type threads = free_threads + busy_threads;
     lkr.unlock();
 
-    int i=0;
     for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = threads.begin();
          it != threads.end();
          ++it)
     {
         (*it)->quit();
-        i += 1;
     }
     
     for (List<exp_shared_ptr<ThreadData>::Type>::iterator it = threads.begin();
@@ -360,7 +358,6 @@ ThreadPool::~ThreadPool()
          ++it)
     {
         (*it)->wait(1000);
-        i -= 1;
     }
 }
 
@@ -429,25 +426,30 @@ exp_shared_ptr<ThreadData>::Type ThreadPool::getThread()
 SIREN_STATIC( ThreadPool, pool );
 
 /** Construct a null Thread */
-Thread::Thread() : session_id(0)
+Thread::Thread()
 {}
 
 /** Copy constructor */
-Thread::Thread(const Thread &other) : d(other.d), session_id(other.session_id)
+Thread::Thread(const Thread &other) : d(other.d)
 {}
 
 /** Destructor */
 Thread::~Thread()
 {
-    if (d.get() != 0)
+    //return the underlying threads to the pool
+    exp_shared_ptr<ThreadPool>::Type p = pool();
+
+    if (p)
     {
-        if (d.unique())
+        for (List<exp_shared_ptr<ThreadData>::Type>::const_iterator
+                                it = d.constBegin();
+             it != d.constEnd();
+             ++it)
         {
-            //return the underlying thread to the pool
-            exp_shared_ptr<ThreadPool>::Type p = pool();
-            
-            if (p)
-                p->returnThread(d);
+            if (it->unique())
+            {
+                p->returnThread( *it );
+            }
         }
     }
 }
@@ -455,29 +457,37 @@ Thread::~Thread()
 /** Copy assignment operator */
 Thread& Thread::operator=(const Thread &other)
 {
-    if (d.get() == other.d.get())
+    if (this == &other)
         return *this;
-        
-    if (d.unique())
-    {
-        //return the underlying thread to the pool
-        exp_shared_ptr<ThreadPool>::Type p = pool();
-        
-        if (p)
-            p->returnThread(d);
 
-        d.reset();
+    if (not d.isEmpty())
+    {
+        exp_shared_ptr<ThreadPool>::Type p = pool();
+    
+        if (p)
+        {
+            for (List<exp_shared_ptr<ThreadData>::Type>::const_iterator 
+                                                        it = d.constBegin();
+                 it != d.constEnd();
+                 ++it)
+            {
+                if (it->unique())
+                    p->returnThread(*it);
+            }
+        }
+        
+        d.clear();
     }
 
     d = other.d;
-    session_id = other.session_id;
+
     return *this;
 }
 
 /** Comparison operator */
 bool Thread::operator==(const Thread &other) const
 {
-    return d.get() == other.d.get() and session_id == other.session_id;
+    return d == other.d;
 }
 
 /** Comparison operator */
@@ -489,12 +499,12 @@ bool Thread::operator!=(const Thread &other) const
 /** Return whether or not this thread is null */
 bool Thread::isNull()
 {
-    return d.get() == 0;
+    return d.isEmpty();
 }
 
 /** Start a thread to run the passed function. The thread will be started
     and run as soon as possible */
-Thread Thread::run( boost::function<void ()> func )
+Thread Thread::run( function<void ()> func )
 {
     Thread t;
     
@@ -506,11 +516,39 @@ Thread Thread::run( boost::function<void ()> func )
                 "Either Siren::init(...) has not been called, or you are trying to "
                 "create a thread while the application is shutting down!"), CODELOC );
                 
-    t.d = p->getThread();
+    exp_shared_ptr<ThreadData>::Type thread = p->getThread();
+    thread->setFunction(func);
 
-    //start the background job
-    t.d->setFunction(func);
-    t.session_id = t.d->sessionID();
+    t.d.append(thread);
+    
+    return t;
+}
+
+/** Start 'nthreads' threads, all running the passed function. The passed function
+    must accept two integer arguments. These are the ID number of the thread
+    running the function (0 to nthreads-1), and the total number of threads */
+Thread Thread::run( function<void (int,int)> func, int nthreads )
+{
+    if (nthreads <= 0)
+        nthreads = 1;
+
+    Thread t;
+    
+    exp_shared_ptr<ThreadPool>::Type p = pool();
+    
+    if (not p)
+        throw Siren::invalid_state( String::tr(
+                "Cannot create a thread as the global ThreadPool is not available. "
+                "Either Siren::init(...) has not been called, or you are trying to "
+                "create a thread while the application is shutting down!"), CODELOC );
+
+    for (int i=0; i<nthreads; ++i)
+    {
+        exp_shared_ptr<ThreadData>::Type thread = p->getThread();
+        thread->setFunction( bind(func, i, nthreads) );
+        
+        t.d.append(thread);
+    }
     
     return t;
 }
@@ -519,5 +557,88 @@ Thread Thread::run( boost::function<void ()> func )
     and run as soon as possible */
 Thread Thread::run( void (*func)() )
 {
-    return Thread::run( boost::function<void ()>(func) );
+    return Thread::run( function<void ()>(func) );
+}
+
+/** Start 'nthreads' threads to run the passed function. The passed function
+    must accept two integer arguments. These are the ID number of the thread
+    running the function (0 to nthreads-1), and the total number of threads */
+Thread Thread::run( void (*func)(int, int), int nthreads )
+{
+    return Thread::run( function<void (int, int)>(func), nthreads );
+}
+
+/** Return the number of sub threads running */
+int Thread::nSubThreads()
+{
+    return d.count();
+}
+
+/** Abort the thread */
+void Thread::abort()
+{
+    for (List<exp_shared_ptr<ThreadData>::Type>::const_iterator it = d.constBegin();
+         it != d.constEnd();
+         ++it)
+    {
+        (*it)->abort();
+    }
+}
+
+/** Pause the thread */
+void Thread::pause()
+{
+    for (List<exp_shared_ptr<ThreadData>::Type>::const_iterator it = d.constBegin();
+         it != d.constEnd();
+         ++it)
+    {
+        (*it)->pause();
+    }
+}
+
+/** Play the thread */
+void Thread::play()
+{
+    for (List<exp_shared_ptr<ThreadData>::Type>::const_iterator it = d.constBegin();
+         it != d.constEnd();
+         ++it)
+    {
+        (*it)->play();
+    }
+}
+
+/** Return whether there are any errors */
+bool Thread::isError()
+{
+    for (List<exp_shared_ptr<ThreadData>::Type>::const_iterator it = d.constBegin();
+         it != d.constEnd();
+         ++it)
+    {
+        if ((*it)->isError())
+            return true;
+    }
+
+    return false;
+}
+
+/** Throw any error */
+void Thread::throwError()
+{
+    for (List<exp_shared_ptr<ThreadData>::Type>::const_iterator it = d.constBegin();
+         it != d.constEnd();
+         ++it)
+    {
+        (*it)->throwError();
+    }
+}
+
+/** Check for any errors */
+void Thread::checkError()
+{
+    for (List<exp_shared_ptr<ThreadData>::Type>::const_iterator it = d.constBegin();
+         it != d.constEnd();
+         ++it)
+    {
+        (*it)->checkError();
+    }
 }

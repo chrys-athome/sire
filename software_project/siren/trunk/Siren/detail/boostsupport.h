@@ -33,32 +33,36 @@
 // These will (eventually!) be replaced with Siren's own classes,
 // thereby removing the dependency on boost
 
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
-#include <boost/noncopyable.hpp>
+#include "Siren/third_party/boost/shared_ptr.hpp"
+#include "Siren/third_party/boost/weak_ptr.hpp"
+#include "Siren/third_party/boost/noncopyable.hpp"
+#include "Siren/third_party/boost/function.hpp"
+#include "Siren/third_party/boost/bind.hpp"
 
 #ifndef GCCXML_PARSE
    // GCCXML chokes on these files
-   #include <boost/type_traits/is_pod.hpp>
-   #include <boost/mpl/if.hpp>
+   #include "Siren/third_party/boost/type_traits/is_pod.hpp"
+   #include "Siren/third_party/boost/mpl/if.hpp"
 #endif
 
 namespace Siren
 {
+    template<class T>
+    struct exp_shared_ptr
+    {
+        typedef boost::shared_ptr<T> Type;
+    };
 
-template<class T>
-struct exp_shared_ptr
-{
-    typedef boost::shared_ptr<T> Type;
-};
+    template<class T>
+    struct exp_weak_ptr
+    {
+        typedef boost::weak_ptr<T> Type;
+    };
 
-template<class T>
-struct exp_weak_ptr
-{
-    typedef boost::weak_ptr<T> Type;
-};
+    using boost::noncopyable;
 
-typedef boost::noncopyable noncopyable;
+    using boost::bind;
+    using boost::function;
 
 } // end of namespace Siren
 

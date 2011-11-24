@@ -38,8 +38,6 @@
 
 #include "Siren/detail/workqueuedata.h"
 
-#include <boost/bind.hpp>
-
 using namespace Siren;
 using namespace Siren::detail;
 
@@ -106,27 +104,108 @@ WorkQueueData::WorkQueueData(int n)
 WorkQueueData::~WorkQueueData()
 {}
 
-void process_job(WorkQueueItem item)
+void WorkQueueData::process_job_n(WorkQueueItemRef item_ref, 
+                                  int worker_id, int nworkers)
 {
-    int nworkers = item.nWorkers();
-
-    if (item.nWorkers() == 1)
+    WorkQueueItem item(item_ref);
+    
+    Obj workpacket = item.workPacket();
+    
+    if (workpacket.isNone())
+        //there is nothing to process
+        return;
+        
+    if (item.hasWorkSpace())
     {
-        //process the job in this thread
-        ...
+        Obj result = workpacket.asA<WorkPacket>().run(item.workSpace(), 
+                                                      worker_id, nworkers);
+
+        item.promise().jobFinished(result, worker_id, nworkers);
     }
     else
     {
-        //create enough threads to run the job...
-        List<Thread>::Type threads;
+        Obj result = workpacket.asA<WorkPacket>().run(worker_id, nworkers);
         
-        for (int i=0; i<nworkers; ++i)
+        item.promise().jobFinished(result, worker_id, nworkers);
+    }
+}
+
+void WorkQueueData::process_job(WorkQueueItemRef item_ref)
+{
+    WorkQueueItem item(item_ref);
+    
+    Obj workpacket = item.workPacket();
+    
+    if (workpacket.isNone())
+        //there is nothing to process
+        return;
+
+    if (item.hasWorkSpace())
+    {
+        Obj result = workpacket.asA<WorkPacket>().run(item.workSpace());
+        item.promise().jobFinished(result);
+    }
+    else
+    {
+        Obj result = workpacket.asA<WorkPacket>().run();
+        item.promise().jobFinished(result);
+    }
+}
+
+Thread WorkQueueData::get_thread(const WorkQueueItem &item)
+{
+    int nworkers = item.nWorkers();
+
+    if (nworkers > 1)
+    {
+        return Thread::run( bind( WorkQueueData::process_job_n,
+                                        WorkQueueItemRef(item), _1, _2 ), nworkers );
+    }
+    else
+    {
+        return Thread::run( bind( WorkQueueData::process_job,
+                                        WorkQueueItemRef(item) ) );
+    }
+}
+
+/** This function is run in a background thread to manage the queue of jobs */
+void WorkQueueData::manage_queue(WorkQueueRef ref)
+{
+    while (for_ages::loop())
+    {
+        WorkQueue q(ref);
+
+        WorkQueueData *d = q.d.get();
+
+        if (not d)
+            //this is a null, empty queue
+            return;
+
+        MutexLocker lkr( &(d->m) );
+
+        if (d->isEmpty())
+            //the queue is empty, it no longer needs to be run
+            return;
+        
+        else
         {
-            threads.append( Thread::run(...) );
+            //look for any finished jobs
+            {
+                //List<WorkQueueItem>::MutableIterator it( d->running_jobs );
+                
+                //while (it.hasNext())
+                //{
+                //    it.next();
+                //}
+                
+                //now see if we need to request any more resources
+                
+                
+                //now see
+            }
         }
-        
-        //wait for them all to finish
-        ...;
+    
+        d->waiter.wait( &(d->m) );
     }
 }
 
@@ -165,8 +244,7 @@ Promise WorkQueueData::submitBG(const WorkPacket &packet, int n)
     Promise promise(workitem);
     workitem.setPromise(promise);
     
-    bg_jobs.append( std::pair<WorkQueueItem,Thread>(workitem,
-                        Thread::run( boost::bind(process_job,item) )) );
+    bg_jobs.append( std::pair<WorkQueueItem,Thread>(workitem, get_thread(workitem)) );
     
     return promise;
 }
@@ -208,8 +286,7 @@ Promise WorkQueueData::submitBG(const WorkPacket &packet, const WorkSpace &space
     Promise promise(workitem);
     workitem.setPromise(promise);
     
-    bg_jobs.append( std::pair<WorkQueueItem,Thread>(workitem,
-                            Thread::run( boost::bind(process_job,workitem) )) );
+    bg_jobs.append( std::pair<WorkQueueItem,Thread>(workitem, get_thread(workitem)) );
     
     return promise;
 }
@@ -248,47 +325,6 @@ String WorkQueueData::toString()
                         .arg(waiting_jobs.count())
                         .arg(blocked_jobs.count())
                         .arg(completed_jobs.count());
-}
-
-/** This function is run in a background thread to manage the queue of jobs */
-void WorkQueueData::manage_queue(WorkQueueRef ref)
-{
-    while (for_ages::loop())
-    {
-        WorkQueue q(ref);
-
-        WorkQueueData *d = q.d.get();
-
-        if (not d)
-            //this is a null, empty queue
-            return;
-
-        MutexLocker lkr( &(d->m) );
-
-        if (d->isEmpty())
-            //the queue is empty, it no longer needs to be run
-            return;
-        
-        else
-        {
-            //look for any finished jobs
-            {
-                List<WorkQueueItem>::MutableIterator it( d->running_jobs );
-                
-                while (it.hasNext())
-                {
-                    it.next();
-                }
-                
-                //now see if we need to request any more resources
-                
-                
-                //now see
-            }
-        }
-    
-        d->waiter.wait( &(d->m) );
-    }
 }
 
 //////////
@@ -381,7 +417,7 @@ WorkQueue::WorkQueue()
 WorkQueue::WorkQueue(int n) : d( new WorkQueueData(n) )
 {
     d->self = d;
-    Thread::run( boost::bind(WorkQueueData::manage_queue, WorkQueueRef(*this)) );
+    Thread::run( bind(WorkQueueData::manage_queue, WorkQueueRef(*this)) );
     
     exp_shared_ptr<WorkQueueRegistry>::Type ptr = workQueueRegistry();
     

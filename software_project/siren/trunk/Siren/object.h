@@ -230,6 +230,7 @@ namespace Siren
         virtual String toString() const;
 
         TestReport test() const throw();
+        TestReport stressTest() const throw();
 
         String docString() const;
         String docString(const String &function) const;
@@ -246,6 +247,7 @@ namespace Siren
         bool compare_object(const Object &other) const;
 
         virtual void test(TestReportEditor &report) const;
+        virtual void stressTest(TestReportEditor &report) const;
 
         virtual void pvt_copy_object(const Object &other)=0;
         virtual bool pvt_compare_object(const Object &other) const=0;

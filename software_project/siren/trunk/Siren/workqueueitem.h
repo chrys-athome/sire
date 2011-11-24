@@ -41,6 +41,7 @@ namespace Siren
     class WorkSpace;
     class Obj;
     class DateTime;
+    class WorkQueueItemRef;
 
     namespace detail
     { 
@@ -70,6 +71,8 @@ namespace Siren
                       const WorkQueue &queue, int n=1,
                       bool is_background = false);
                       
+        WorkQueueItem(const WorkQueueItemRef &ref);
+                      
         WorkQueueItem(const WorkQueueItem &other);
         
         ~WorkQueueItem();
@@ -79,8 +82,13 @@ namespace Siren
         bool operator==(const WorkQueueItem &other) const;
         bool operator!=(const WorkQueueItem &other) const;
 
+        bool operator==(const WorkQueueItemRef &other) const;
+        bool operator!=(const WorkQueueItemRef &other) const;
+
         static const char* typeName(){ return "Siren::WorkQueueItem"; }
         const char* what() const{ return typeName(); }
+        
+        String toString() const;
         
         Obj workPacket() const;
         WorkSpace workSpace() const;
@@ -102,6 +110,7 @@ namespace Siren
         bool isFG() const;
     
     protected:
+        friend class WorkQueueItemRef;
         friend class detail::WorkQueueItemData;
         WorkQueueItem(const exp_shared_ptr<detail::WorkQueueItemData>::Type &ptr);
 
@@ -123,9 +132,39 @@ namespace Siren
 
     }; // end of class WorkQueueItem
 
+    /** This is a weak reference to a WorkQueueItem */
+    class SIREN_EXPORT WorkQueueItemRef
+    {
+    public:
+        WorkQueueItemRef();
+        WorkQueueItemRef(const WorkQueueItem &item);
+        WorkQueueItemRef(const WorkQueueItemRef &other);
+        
+        ~WorkQueueItemRef();
+        
+        WorkQueueItemRef& operator=(const WorkQueueItemRef &other);
+        
+        bool operator==(const WorkQueueItemRef &other) const;
+        bool operator!=(const WorkQueueItemRef &other) const;
+        
+        bool operator==(const WorkQueueItem &other) const;
+        bool operator!=(const WorkQueueItem &other) const;
+        
+        String toString() const;
+
+    protected:
+        friend class detail::PromiseData;
+        void abort(); // called by Promise to indicate that the job should stop
+
+    private:
+        friend class WorkQueueItem;
+        exp_weak_ptr<detail::WorkQueueItemData>::Type d;
+    };
+
 } // end of namespace Siren
 
 SIREN_EXPOSE_CLASS( Siren::WorkQueueItem )
+SIREN_EXPOSE_CLASS( Siren::WorkQueueItemRef )
 
 SIREN_END_HEADER
 

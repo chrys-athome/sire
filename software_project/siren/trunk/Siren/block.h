@@ -128,8 +128,8 @@ namespace Siren
 
     private:
         exp_weak_ptr<detail::BlockData>::Type d;
-        detail::BlockData *orig_ptr;
-    };
+
+    }; // end of class BlockRef
 
 } // end of namespace Siren
 

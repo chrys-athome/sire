@@ -72,19 +72,8 @@ bool WorkPacket::needsWorkspace() const
 }
 
 /** Create the accompanying WorkSpace for this WorkPacket. This returns
-    a null pointer if a WorkSpace is not required for this WorkPacket */
+    a null WorkSpace if one is not required for this WorkPacket */
 WorkSpace WorkPacket::createWorkspace() const
-{
-    return WorkSpace();
-}
-
-/** Create the accompanying WorkSpace for this WorkPacket, passing the
-    ID of the worker thread processing this WorkPacket. This allows a 
-    group of worker threads to all process a WorkPacket together, with
-    each one given its own ID, and with each one able to communicate
-    with the others via the created WorkSpace. This returns a null pointer
-    if a WorkSpace is not required for this WorkPacket */
-WorkSpace WorkPacket::createWorkspace(int) const
 {
     return WorkSpace();
 }
@@ -182,11 +171,24 @@ Obj WorkPacket::run(WorkSpace workspace) const throw()
     This returns the processed WorkPacket, or a Siren::Exception if something
     went wrong, or a non-WorkPacket object that corresponds to the final 
     result of the calculation */
-Obj WorkPacket::run(WorkSpace workspace, int id) const throw()
+Obj WorkPacket::run(WorkSpace workspace, int id, int nworkers) const throw()
 {
+    if (nworkers <= 0)
+        nworkers = 1;
+        
+    if (id < 0)
+        id = 0;
+        
+    if (id >= nworkers)
+    {
+        return Siren::program_bug( String::tr(
+                "How can ID (%1) be greater than or equal to NWORKERS (%2)???")
+                    .arg(id).arg(nworkers), CODELOC );
+    }
+
     try
     {
-        return this->runChunk(workspace, id);
+        return this->runChunk(workspace, id, nworkers);
     }
     catch(const Siren::Exception &e)
     {
@@ -230,10 +232,22 @@ Obj WorkPacket::runChunk(WorkSpace&) const
 /** Over-ride this function to allow your WorkPacket to access and use
     a WorkSpace, and be processed by a team of work threads during
     WorkPacket processing */
-Obj WorkPacket::runChunk(WorkSpace&, int id) const
+Obj WorkPacket::runChunk(WorkSpace&, int id, int) const
 {
     if (id == 0)
         return this->runChunk();
+    else
+        return None();
+}
+
+/** Reduce the set of results returned by each of the workers into the
+    single result of the calculation */
+Obj WorkPacket::reduce(const List<Obj>::Type &results) const throw()
+{
+    //if the workpacket does not know how to reduce the results, then
+    //we are only interested in the first result
+    if (results.count() >= 1)
+        return results.at(0);
     else
         return None();
 }

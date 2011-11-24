@@ -142,7 +142,9 @@ Promise::Promise()
     the passed WorkQueueItem */
 Promise::Promise(const WorkQueueItem &item)
         : d(new PromiseData(item))
-{}
+{
+    d->self = d;
+}
 
 /** Construct an empty Promise - this is the same as a default-constructed promise */
 Promise::Promise(const None &none)
@@ -154,7 +156,10 @@ Promise::Promise(const None &none)
 Promise::Promise(const Object &object) : reslt(object)
 {
     if (not reslt.isNone())
+    {
         d.reset(new PromiseData(reslt));
+        d->self = d;
+    }
 }
 
 /** Construct from the passed reference */

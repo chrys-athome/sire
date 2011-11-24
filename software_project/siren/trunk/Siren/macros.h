@@ -30,7 +30,7 @@
 \*********************************************/
 
 #include <QtGlobal>
-#include <boost/static_assert.hpp>
+#include "Siren/third_party/boost/static_assert.hpp"
 
 //// This file contains the set of C preprocessor macros
 //// that are used and are global for Siren

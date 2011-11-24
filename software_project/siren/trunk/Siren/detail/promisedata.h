@@ -33,6 +33,7 @@
 #include "Siren/waitcondition.h"
 #include "Siren/mutex.h"
 #include "Siren/obj.h"
+#include "Siren/workqueueitem.h"
 
 SIREN_BEGIN_HEADER
 
@@ -40,7 +41,6 @@ namespace Siren
 {
     class WorkPacket;
     class WorkQueue;
-    class WorkQueueItem;
 
     namespace detail
     { 
@@ -68,7 +68,12 @@ namespace Siren
             void setResult(const Obj &result);
 
         private:
+            friend class Siren::Promise;
             Mutex m;
+            
+            /** Pointer to self */
+            exp_weak_ptr<PromiseData>::Type self;
+            
             WaitCondition w;
             Obj reslt;
 

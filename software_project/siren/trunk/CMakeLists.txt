@@ -33,8 +33,13 @@ set (SIREN_VERSION_STRING "${SIREN_VERSION_MAJOR}_${SIREN_VERSION_MINOR}_${SIREN
 # Build shared libraries by default
 set (BUILD_SHARED_LIBS ON)
 
+# Make sure that the Siren 'Siren' include directory is searched first
+# when looking for header files
+include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/Siren/third_party )
+include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR} )
+
 # Siren depends on >= Qt 4.4
-find_package( Qt4 4.4.0 COMPONENTS QtCore QtXml )
+find_package( Qt4 4.4.0 COMPONENTS QtCore )
 
 if ( ${QT_QTCORE_FOUND} )
    include (${QT_USE_FILE})
@@ -109,7 +114,6 @@ set ( SIREN_PRIVATE_HEADERS
 
       Siren/detail/blockdata.h
       Siren/detail/promisedata.h
-      Siren/detail/threaddata.h
       Siren/detail/workqueuedata.h
       Siren/detail/workqueueitemdata.h
 
@@ -178,8 +182,7 @@ set_target_properties (Siren PROPERTIES
                        SOVERSION ${SIREN_VERSION_MINOR}
                       )
 
-target_link_libraries ( Siren 
-                        ${QT_QTXML_LIBRARY} 
+target_link_libraries ( Siren  
                         ${QT_QTCORE_LIBRARY} )
 
 target_link_libraries ( sirentest Siren )
@@ -194,6 +197,10 @@ install( TARGETS Siren EXPORT Siren
 install( FILES ${SIREN_PUBLIC_HEADERS}
          DESTINATION include/Siren )
 
+install( DIRECTORY ${SOURCE_DIR}/Siren/third_party
+         DESTINATION include/Siren
+         PATTERN .svn EXCLUDE
+       )
+
 install( FILES ${SIREN_PRIVATE_HEADERS}
          DESTINATION include/Siren/detail )
-

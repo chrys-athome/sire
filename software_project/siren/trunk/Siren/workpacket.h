@@ -54,19 +54,22 @@ namespace Siren
         
         virtual bool needsWorkspace() const;
         virtual WorkSpace createWorkspace() const;
-        virtual WorkSpace createWorkspace(int worker_id) const;
-        
+
         virtual bool isFinished() const=0;
         virtual int progress() const=0;
 
         Obj run() const throw();
+        Obj run(int worker_id, int nworkers) const throw();
+        
         Obj run(WorkSpace workspace) const throw();
-        Obj run(WorkSpace workspace, int worker_id) const throw();
+        Obj run(WorkSpace workspace, int worker_id, int nworkers) const throw();
+
+        Obj reduce(const List<Obj>::Type &results) const throw();
         
     protected:
         virtual Obj runChunk() const=0;
         virtual Obj runChunk(WorkSpace &workspace) const;
-        virtual Obj runChunk(WorkSpace &workspace, int worker_id) const;
+        virtual Obj runChunk(WorkSpace &workspace, int worker_id, int nworkers) const;
 
         void copy_object(const WorkPacket &other);
         bool compare_object(const WorkPacket &other) const;

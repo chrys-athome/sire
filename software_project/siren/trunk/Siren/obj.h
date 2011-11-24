@@ -92,6 +92,7 @@ namespace Siren
         String toString() const;
 
         TestReport test() const throw();
+        TestReport stressTest() const throw();
 
         String docString() const;
         String docString(const String &function) const;

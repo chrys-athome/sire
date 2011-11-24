@@ -74,13 +74,21 @@ namespace Siren
             String toString();
     
         protected:
-            friend class WorkQueue;
+            friend class Siren::WorkQueue;
             static void manage_queue(WorkQueueRef queue);
             
+            static void process_job(WorkQueueItemRef item);
+            static void process_job_n(WorkQueueItemRef item, 
+                                      int worker_id, int nworkers);
+            
+            static Thread get_thread(const WorkQueueItem &item);
+            
         private:
-        
             /** Mutex to protect access to the data of this queue */
             Mutex m;
+        
+            /** Pointer to self */
+            exp_weak_ptr<WorkQueueData>::Type self;
         
             /** WaitCondition used to wake the background thread to 
                 notify it of any change in state */
@@ -104,9 +112,6 @@ namespace Siren
             
             /** The list of jobs that have been finished */
             List<WorkQueueItem>::Type completed_jobs;
-
-            friend class Siren::WorkQueue;
-            exp_weak_ptr<WorkQueueData>::Type self;
             
             /** The number of cpu threads that this WorkQueue 
                 would like to manage */

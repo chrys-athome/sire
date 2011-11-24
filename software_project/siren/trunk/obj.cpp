@@ -215,6 +215,18 @@ TestReport Obj::test() const throw()
         return d->test();
 }
 
+/** Stress-test the contained class */
+TestReport Obj::stressTest() const throw()
+{
+    if (this->isNone())
+    {
+        None n;
+        return n.stressTest();
+    }
+    else
+        return d->stressTest();
+}
+
 /** Return a string representation of the contained object */
 String Obj::toString() const
 {

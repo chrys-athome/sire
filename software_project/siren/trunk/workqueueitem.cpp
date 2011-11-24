@@ -303,6 +303,10 @@ WorkQueueItem::WorkQueueItem(const WorkPacket &workpacket, const WorkSpace &work
     d->self = d;
 }
 
+/** Construct from the passed reference */
+WorkQueueItem::WorkQueueItem(const WorkQueueItemRef &ref) : d(ref.d.lock())
+{}
+
 /** Copy constructor */              
 WorkQueueItem::WorkQueueItem(const WorkQueueItem &other)
               : d(other.d)
@@ -344,6 +348,18 @@ bool WorkQueueItem::operator==(const WorkQueueItem &other) const
 bool WorkQueueItem::operator!=(const WorkQueueItem &other) const
 {
     return not operator==(other);
+}
+
+/** Comparison operator */
+bool WorkQueueItem::operator==(const WorkQueueItemRef &other) const
+{
+    return other.operator==(*this);
+}
+
+/** Comparison operator */
+bool WorkQueueItem::operator!=(const WorkQueueItemRef &other) const
+{
+    return other.operator!=(*this);
 }
 
 /** Return the WorkPacket that is processed as part of this WorkQueueItem */
@@ -419,4 +435,66 @@ void WorkQueueItem::toFG()
 {
     if (d)
         d->toFG();
+}
+
+//////////////
+////////////// Implementation of WorkQueueItemRef
+//////////////
+
+/** Null constructor */
+WorkQueueItemRef::WorkQueueItemRef()
+{}
+
+/** Construct a reference to the passed WorkQueueItem */
+WorkQueueItemRef::WorkQueueItemRef(const WorkQueueItem &item) : d(item.d)
+{}
+
+/** Copy constructor */
+WorkQueueItemRef::WorkQueueItemRef(const WorkQueueItemRef &other) : d(other.d)
+{}
+
+/** Destructor */
+WorkQueueItemRef::~WorkQueueItemRef()
+{}
+
+/** Copy assignment operator */
+WorkQueueItemRef& WorkQueueItemRef::operator=(const WorkQueueItemRef &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Comparison operator */
+bool WorkQueueItemRef::operator==(const WorkQueueItemRef &other) const
+{
+    return d.lock().get() == other.d.lock().get();
+}
+
+/** Comparison operator */
+bool WorkQueueItemRef::operator!=(const WorkQueueItemRef &other) const
+{
+    return not operator==(other);
+}
+
+/** Comparison operator */
+bool WorkQueueItemRef::operator==(const WorkQueueItem &other) const
+{
+    return d.lock().get() == other.d.get();
+}
+
+/** Comparison operator */
+bool WorkQueueItemRef::operator!=(const WorkQueueItem &other) const
+{
+    return not operator==(other);
+}
+
+/** Return a string representation of the referenced item */
+String WorkQueueItemRef::toString() const
+{
+    exp_shared_ptr<WorkQueueItemData>::Type ptr = d.lock();
+    
+    if (ptr)
+        return WorkQueueItem(*this).toString();
+    else
+        return String::tr("WorkQueueItemRef::null");
 }

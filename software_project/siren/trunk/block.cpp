@@ -108,15 +108,15 @@ const char* Block::what() const
 //////////
 
 /** Null constructor */
-BlockRef::BlockRef() : orig_ptr(0)
+BlockRef::BlockRef()
 {}
 
 /** Construct a reference to the passed block */
-BlockRef::BlockRef(const Block &block) : d(block.d), orig_ptr(block.d.get())
+BlockRef::BlockRef(const Block &block) : d(block.d)
 {}
 
 /** Copy constructor*/
-BlockRef::BlockRef(const BlockRef &other) : d(other.d), orig_ptr(other.orig_ptr)
+BlockRef::BlockRef(const BlockRef &other) : d(other.d)
 {}
 
 /** Destructor */
@@ -126,12 +126,7 @@ BlockRef::~BlockRef()
 /** Copy assignment operator */
 BlockRef& BlockRef::operator=(const BlockRef &other)
 {
-    if (orig_ptr != other.orig_ptr)
-    {
-        orig_ptr = other.orig_ptr;
-        d = other.d;
-    }
-    
+    d = other.d;
     return *this;
 }
 
@@ -150,7 +145,7 @@ bool BlockRef::operator!=(const Block &other) const
 /** Comparison operator */
 bool BlockRef::operator==(const BlockRef &other) const
 {
-    return orig_ptr == other.orig_ptr;
+    return d.lock().get() == other.d.lock().get();
 }
 
 /** Comparison operator */
