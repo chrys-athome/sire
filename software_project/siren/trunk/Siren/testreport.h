@@ -260,6 +260,9 @@ namespace Siren
         void copy_object(const TestReport &other);
         bool compare_object(const TestReport &other) const;
 
+        void test(TestReportEditor &report) const;
+        void stressTest(TestReportEditor &report) const;
+
     private:
         friend class TestReportEditor;
         imp_shared_ptr<detail::TestReportData>::Type d;

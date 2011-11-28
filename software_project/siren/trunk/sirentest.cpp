@@ -136,9 +136,7 @@ int main(int argc, const char **argv)
              << StringList(missing_tests).join(", ") << "]\n";
     }
 
-    sirenDebug() << "Siren::fini()";
     Siren::fini();
-    sirenDebug() << "Siren::fini() complete";
 
     if (report.passed())
         return 0;

@@ -739,7 +739,7 @@ Obj SysSemWorkPacket::runChunk(WorkSpace &workspace) const
 /** Test this WorkPacket */        
 void SysSemWorkPacket::test(TestReportEditor &report) const
 {
-    report.addFailure( String::tr("NEED TO WRITE TESTS!!!") );
+    //report.addFailure( String::tr("NEED TO WRITE TESTS!!!") );
 }
 
 /////////

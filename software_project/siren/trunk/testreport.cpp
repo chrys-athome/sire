@@ -730,6 +730,33 @@ Class TestReport::testedClass() const
     return d->clas;
 }
 
+/** Perform the tests of the TestReport class */
+void TestReport::test(TestReportEditor &report) const
+{
+    TestReport test;
+    
+    report.testTrue( test.passed(), String::tr("Empty report has no failures") );
+    report.testFalse( test.failed(), String::tr("Empty report has not failed") );
+    
+    test = test.edit().addFailure( String::tr("Test failure") );
+    
+    report.testFalse( test.passed(), 
+                      String::tr("Report with one failure has not passed") );
+    report.testTrue( test.failed(), String::tr("Report with one failure has failed") );
+    
+    report.testEqual( test.numberOfTests(), 1, String::tr("Number of tests is 1") );
+    report.testEqual( test.numberOfSuccesses(), 0, String::tr("Number of passes is 0") );
+    report.testEqual( test.numberOfFailures(), 1, String::tr("Number of failures is 1") );
+
+    
+}
+
+/** Perform the stress tests of the TestReport class */
+void TestReport::stressTest(TestReportEditor &report) const
+{
+    TestReport::test(report);
+}
+
 ///////////
 /////////// Implementation of Siren::TestReportEditor
 ///////////
