@@ -275,13 +275,13 @@ void PromiseData::jobFinished(const Obj &result, int i, int n)
         got_result.reserve(n);
         result_part = Vector<Obj>::Type(n);
     }
-    
+
     if (n != result_part.count())    
         throw Siren::program_bug( String::tr(
                 "It is a mistake to try to set part %1 of %2, when the number "
                 "of parts is equal to %3...")
                     .arg(i).arg(n).arg(result_part.count()), CODELOC );
-    
+
     if (got_result.contains(i))
         throw Siren::program_bug( String::tr(
                 "It is a mistake to try to set part %1 of %2 as the Promise "
@@ -622,6 +622,7 @@ PromiseRef::~PromiseRef()
 PromiseRef& PromiseRef::operator=(const PromiseRef &other)
 {
     d = other.d;
+    return *this;
 }
 
 /** Comparison operator */

@@ -96,6 +96,7 @@ namespace Siren
         
     protected:
         Obj runChunk() const;
+        Obj runChunk(int worker_id, int nworkers) const;
         
         void test(TestReportEditor &report) const;
 

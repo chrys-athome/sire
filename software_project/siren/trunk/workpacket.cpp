@@ -403,6 +403,52 @@ Obj TestPacket::runChunk() const
     return next_chunk;
 }
 
+/** Run a chunk of the calculation in parallel. This will count from current_val 
+    to target_val in blocks of 10, divided between the various threads, sleeping
+    for one second between blocks */
+Obj TestPacket::runChunk(int worker_id, int nworkers) const
+{
+    int n_remaining = target_val - current_val;
+    
+    if (n_remaining <= 0)
+        return *this;
+
+    const int n_per_thread = 10;
+    const int max_n_to_count = n_per_thread * nworkers;
+    
+    if (n_remaining > max_n_to_count)
+        n_remaining = max_n_to_count;
+
+    for (int i=worker_id+1; i<=n_remaining; i += nworkers)
+    {
+        sirenDebug() << "TestPacket(" << worker_id << ") counting:" << (current_val+i)
+                     << "of" << target_val << "...";
+                     
+        //busy sleep, so that we burn some CPU
+        Timer t = Timer::start();
+        
+        double j = 1;
+        int k = 0;
+        
+        while (t.elapsed() < 1000)
+        {
+            for (int l=0; l<1000; ++l)
+            {
+                j += std::sqrt(j);
+                k += 1;
+            }
+        }
+        
+        sirenDebug() << "(" << worker_id << "performed" 
+                     << k << "square roots per second!)";
+    }
+        
+    TestPacket next_chunk(*this);
+    next_chunk.current_val += n_remaining;
+    
+    return next_chunk;
+}
+
 /** Return whether or not this WorkPacket is finished */
 bool TestPacket::isFinished() const
 {
@@ -429,32 +475,27 @@ void run_function()
 /** Test this TestPacket */
 void TestPacket::test(TestReportEditor &report) const
 {
-    return;
-
     TestPacket packet(0);
     packet.run();
 
     report.addPassed( String::tr("TestPacket passed as no exception was thrown.") );
 
-    sirenDebug() << "RUNNING FUNCTION 1";
     Thread t = Thread::run( &run_function );
     
-    sirenDebug() << "RUNNING FUNCTION 2";
+
     t = Thread::run( &run_function );
     
-    sirenDebug() << "RUNNING FUNCTION 3";
+
     Thread t2 = Thread::run( &run_function );
     
     for (int i=0; i<10; ++i)
     {
-        sirenDebug() << "RUNNING FUNCTION" << (i+4);
         Thread::run( &run_function );
     }
     
     WorkQueue queue(5);
     
-    sirenDebug() << "SUBMIT TO QUEUE";
-    Promise promise = queue.submitBG( TestPacket(5), 5 );
+    Promise promise = queue.submitBG( TestPacket(50), 5 );
     
     sirenDebug() << queue.toString();
     
@@ -463,6 +504,8 @@ void TestPacket::test(TestReportEditor &report) const
     sirenDebug() << promise.toString();
     
     promise.wait();
+    
+    sirenDebug() << promise.result().toString();
 }
 
 /** Copy assignment operator */
