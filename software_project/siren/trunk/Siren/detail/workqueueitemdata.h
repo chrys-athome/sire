@@ -36,6 +36,7 @@
 #include "Siren/obj.h"
 #include "Siren/promise.h"
 #include "Siren/workqueue.h"
+#include "Siren/worklog.h"
 
 SIREN_BEGIN_HEADER
 
@@ -76,6 +77,7 @@ namespace Siren
         
             Promise promise();
             WorkQueue queue();
+            WorkLog log();
             WorkQueueItem workQueueItem();
         
             bool isBG();
@@ -88,10 +90,11 @@ namespace Siren
             friend class Siren::WorkQueueItemRef;
             void setPromise(const Promise &promise);
         
-            friend class Siren::detail::WorkQueueData;
-            void jobStarted();
-            void jobFinished(const Obj &result);
-            void jobCancelled();
+            void chunkStarted();
+            void chunkStarted(int worker_id, int nworkers);
+            
+            void chunkFinished(const Obj &result);
+            void chunkFinished(const Obj &result, int worker_id, int nworkers);
         
             void abort();
         
@@ -111,6 +114,9 @@ namespace Siren
             /** Pointer to a WorkSpace, if one is needed */
             WorkSpace *workspace;
 
+            /** The log detailing the progress made while running the job */
+            WorkLog worklog;
+
             /** This is the queue that is processing this item. If we lose
                 the queue, then we cannot run this job */
             WorkQueueRef parent_queue;
@@ -118,16 +124,6 @@ namespace Siren
             /** Store the WorkPacket in the Promise, so if lose promise,
                 then lose WorkPacket - the Promise is the handle to the job */
             PromiseRef job_promise;
-            
-            /** The time the job was submitted (this WorkQueueItem was created) */
-            DateTime submission_time;
-            
-            /** The time the queue told us the job was running */
-            DateTime start_time;
-            
-            /** The time the queue told us that the job had finished.
-                The result is added to the Promise attached to this item */
-            DateTime finish_time;
         
             /** A set of other metadata that may be added and manipulated
                 by the WorkScheduler responsible for scheduling this job */

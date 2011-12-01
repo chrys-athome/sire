@@ -30,6 +30,7 @@
 #include "Siren/workpacket.h"
 #include "Siren/workspace.h"
 #include "Siren/workqueue.h"
+#include "Siren/worklog.h"
 #include "Siren/workqueueitem.h"
 #include "Siren/exceptions.h"
 #include "Siren/static.h"
@@ -120,19 +121,21 @@ void WorkQueueData::process_job_n(WorkQueueItemRef item_ref,
     if (workpacket.isNone())
         //there is nothing to process
         return;
-        
+
+    item.chunkStarted();
+
     if (item.hasWorkSpace())
     {
         Obj result = workpacket.asA<WorkPacket>().run(item.workSpace(), 
                                                       worker_id, nworkers);
 
-        item.promise().jobFinished(result, worker_id, nworkers);
+        item.chunkFinished(result, worker_id, nworkers);
     }
     else
     {
         Obj result = workpacket.asA<WorkPacket>().run(worker_id, nworkers);
         
-        item.promise().jobFinished(result, worker_id, nworkers);
+        item.chunkFinished(result, worker_id, nworkers);
     }
 }
 
@@ -146,15 +149,17 @@ void WorkQueueData::process_job(WorkQueueItemRef item_ref)
         //there is nothing to process
         return;
 
+    item.chunkStarted();
+
     if (item.hasWorkSpace())
     {
         Obj result = workpacket.asA<WorkPacket>().run(item.workSpace());
-        item.promise().jobFinished(result);
+        item.chunkFinished(result);
     }
     else
     {
         Obj result = workpacket.asA<WorkPacket>().run();
-        item.promise().jobFinished(result);
+        item.chunkFinished(result);
     }
 }
 

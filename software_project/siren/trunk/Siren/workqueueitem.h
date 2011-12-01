@@ -39,6 +39,7 @@ namespace Siren
     class WorkQueue;
     class WorkPacket;
     class WorkSpace;
+    class WorkLog;
     class Obj;
     class DateTime;
     class WorkQueueItemRef;
@@ -105,6 +106,7 @@ namespace Siren
     
         Promise promise() const;
         WorkQueue queue() const;
+        WorkLog log() const;
     
         bool isBG() const;
         bool isFG() const;
@@ -120,10 +122,12 @@ namespace Siren
         
         void toBG();
         void toFG();
-    
-        void jobStarted();
-        void jobCancelled();
-        void jobFinished(const Obj &result);
+
+        void chunkStarted();
+        void chunkStarted(int worker_id, int nworkers);
+        
+        void chunkFinished(const Obj &result);
+        void chunkFinished(const Obj &result, int worker_id, int nworkers);
     
         void abort(); // called by Promise to indicate that the job should stop
     

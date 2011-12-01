@@ -36,6 +36,10 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
     class WorkSpace;
+    class WorkLog;
+    class WorkLogEditor;
+    class WorkMonitor;
+    class Percentage;
 
     /** A WorkPacket is the base class of objects that contain
         packets of computational work that need to be processed.
@@ -55,23 +59,26 @@ namespace Siren
         virtual bool needsWorkspace() const;
         virtual WorkSpace createWorkspace() const;
 
-        virtual bool isFinished() const=0;
-        virtual int progress() const=0;
+        int maxChunkTime() const;
 
-        Obj run() const throw();
-        Obj run(int worker_id, int nworkers) const throw();
+        Obj run(WorkMonitor monitor) const throw();
+        Obj run(int worker_id, int nworkers, WorkMonitor monitor) const throw();
         
-        Obj run(WorkSpace workspace) const throw();
-        Obj run(WorkSpace workspace, int worker_id, int nworkers) const throw();
+        Obj run(WorkSpace workspace, WorkMonitor monitor) const throw();
+        Obj run(WorkSpace workspace, int worker_id, int nworkers,
+                WorkMonitor monitor) const throw();
 
-        Obj reduce(const Vector<Obj>::Type &results) const throw();
+        Obj reduce(const Vector<Obj>::Type &results,
+                   WorkMonitor monitor) const throw();
         
     protected:
-        virtual Obj runChunk() const=0;
-        virtual Obj runChunk(int worker_id, int nworkers) const;
+        virtual Obj runChunk(WorkMonitor monitor) const=0;
+        virtual Obj runChunk(int worker_id, int nworkers, 
+                             WorkMonitor monitor) const;
         
-        virtual Obj runChunk(WorkSpace &workspace) const;
-        virtual Obj runChunk(WorkSpace &workspace, int worker_id, int nworkers) const;
+        virtual Obj runChunk(WorkSpace &workspace, WorkMonitor monitor) const;
+        virtual Obj runChunk(WorkSpace &workspace, int worker_id, int nworkers,
+                             WorkMonitor monitor) const;
 
         void copy_object(const WorkPacket &other);
         bool compare_object(const WorkPacket &other) const;
@@ -91,12 +98,9 @@ namespace Siren
         
         ~TestPacket();
         
-        bool isFinished() const;
-        int progress() const;
-        
     protected:
-        Obj runChunk() const;
-        Obj runChunk(int worker_id, int nworkers) const;
+        Obj runChunk(WorkMonitor monitor) const;
+        Obj runChunk(int worker_id, int nworkers, WorkMonitor monitor) const;
         
         void test(TestReportEditor &report) const;
 

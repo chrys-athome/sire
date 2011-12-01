@@ -82,6 +82,8 @@ namespace Siren
         void load(Stream &s);
 
         bool isNone() const;
+        bool isError() const;
+        void throwError() const;
     
         template<class T>
         bool isA() const;

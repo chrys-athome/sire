@@ -167,6 +167,21 @@ bool Obj::isNone() const
     return d.get() == 0;
 }
 
+/** Return whether the object is an error (object derived from Siren::Exception) */
+bool Obj::isError() const
+{
+    return dynamic_cast<const Siren::Exception*>(d.get()) != 0;
+}
+
+/** If this object is an error, then throw that error */
+void Obj::throwError() const
+{
+    const Siren::Exception *error = dynamic_cast<const Siren::Exception*>(d.get());
+    
+    if (error)
+        error->throwSelf();
+}
+
 /** Copy the passed object into this object */
 void Obj::copy(const Object &other)
 {

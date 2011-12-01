@@ -53,7 +53,7 @@ WorkQueueItemData::WorkQueueItemData(const WorkPacket &packet,
                   : workpacket(packet), workspace(0), parent_queue(q), 
                     nworkers(n), should_abort(false), is_bg(is_background)
 {
-    submission_time = DateTime::current();
+    worklog = WorkLog::submitted();
 
     if (nworkers <= 0)
         nworkers = 1;
@@ -70,8 +70,8 @@ WorkQueueItemData::WorkQueueItemData(const WorkPacket &packet,
                     parent_queue(q), nworkers(n), should_abort(false), 
                     is_bg(is_background)
 {
-    submission_time = DateTime::current();
-    
+    worklog = WorkLog::submitted();
+
     if (nworkers <= 0)
         nworkers = 1;
 }
@@ -95,9 +95,9 @@ String WorkQueueItemData::toString()
                       "               startTime() == %2,\n"
                       "               finishTime() == %3,\n"
                       "               workPacket() == \"%4\" )")
-                        .arg(submission_time.toString(),
-                             start_time.toString(),
-                             finish_time.toString(),
+                        .arg(worklog.submissionTime().toString(),
+                             worklog.startTime().toString(),
+                             worklog.finishTime().toString(),
                              workpacket.toString());
 }
 
@@ -146,21 +146,21 @@ int WorkQueueItemData::nWorkers()
 DateTime WorkQueueItemData::submissionTime()
 {
     MutexLocker lkr(&m);
-    return submission_time;
+    return worklog.submissionTime();
 }
 
 /** Return the time the job started, or null if the job has not started */
 DateTime WorkQueueItemData::startTime()
 {
     MutexLocker lkr(&m);
-    return start_time;
+    return worklog.startTime();
 }
 
 /** Return the time the job ended, or null if the job hasn't ended */
 DateTime WorkQueueItemData::finishTime()
 {
     MutexLocker lkr(&m);
-    return finish_time;
+    return worklog.finishTime();
 }
 
 /** Return the object associated with the key 'key', or None if 
@@ -187,57 +187,18 @@ WorkQueue WorkQueueItemData::queue()
     return parent_queue;
 }
 
+/** Return a copy of the log associated with this item */
+WorkLog WorkQueueItemData::log()
+{
+    MutexLocker lkr(&m);
+    return worklog;
+}
+
 /** Return the WorkQueueItem associated with this object */
 WorkQueueItem WorkQueueItemData::workQueueItem()
 {
     MutexLocker lkr(&m);
     return WorkQueueItem(self.lock());
-}
-
-/** Internal function used to tell this item that the job has been
-    started */
-void WorkQueueItemData::jobStarted()
-{
-    Promise p;
-
-    {
-        MutexLocker lkr(&m);
-        p = job_promise;
-        start_time = DateTime::current();
-    }
-    
-    p.jobStarted();
-}
-
-/** Internal function used to tell this item that the job has finished */
-void WorkQueueItemData::jobFinished(const Obj &result)
-{
-    Promise p;
-
-    {
-        MutexLocker lkr(&m);
-        p = job_promise;
-        finish_time = DateTime::current();
-    }
-    
-    p.jobFinished(result);
-}
-
-/** Internal function used to tell this item that the job has been cancelled */
-void WorkQueueItemData::jobCancelled()
-{
-    Promise p;
-    WorkQueue q;
-
-    {
-        MutexLocker lkr(&m);
-        p = job_promise;
-        q = parent_queue;
-        finish_time = DateTime::current();
-    }
-    
-    p.jobCancelled();
-    q.process();
 }
 
 /** Internal function used to relay the message to the queue that this job
@@ -249,6 +210,7 @@ void WorkQueueItemData::abort()
     if (not should_abort)
     {
         should_abort = true;
+        worklog = worklog.quickEdit().jobAborted().commit();
         parent_queue.process();
     }
 }
@@ -261,6 +223,7 @@ void WorkQueueItemData::toBG()
     if (not is_bg)
     {
         is_bg = true;
+        worklog = worklog.quickEdit().jobToBG().commit();
         parent_queue.process();
     }
 }
@@ -273,8 +236,70 @@ void WorkQueueItemData::toFG()
     if (is_bg)
     {
         is_bg = false;
+        worklog = worklog.quickEdit().jobToFG().commit();
         parent_queue.process();
     }
+}
+
+/** Internal function called to signal when a chunk of the job has started */
+void WorkQueueItemData::chunkStarted()
+{
+    MutexLocker lkr(&m);
+    
+    bool job_already_started = worklog.hasStarted();
+    
+    worklog = worklog.quickEdit().chunkStarted().commit();
+    
+    if (not job_already_started)
+        job_promise.jobStarted();
+}
+
+/** Internal function called to signal when a chunk of the job has started, 
+    as processed by the worker with ID 'worker_id' out of a team of 'nworkers'
+    workers */
+void WorkQueueItemData::chunkStarted(int worker_id, int nworkers)
+{
+    MutexLocker lkr(&m);
+    
+    bool job_already_started = worklog.hasStarted();
+    
+    worklog = worklog.quickEdit().chunkStarted(worker_id, nworkers).commit();
+    
+    if (not job_already_started)
+        job_promise.jobStarted();
+}
+
+/** Internal function called to signal that the result of chunk processing
+    is available */
+void WorkQueueItemData::chunkFinished(const Obj &result)
+{
+    MutexLocker lkr(&m);
+    
+    if (result.isError())
+        worklog = worklog.quickEdit().chunkHadError().commit();
+
+    else
+        worklog = worklog.quickEdit().chunkFinished().commit();
+
+    if (result.isA<WorkPacket>())
+    {
+        const WorkPacket &workpacket = result.asA<WorkPacket>();
+        
+        if (not workpacket.hasFinished())
+        {
+            worklog = worklog
+        }
+            
+    }
+}
+
+/** Internal function called to signal that the result of chunk processing
+    is available, as processed by the worker with ID 'worker_id' out of a 
+    team of 'nworkers' workers */
+void WorkQueueItem::chunkFinished(const Obj &result, int worker_id, int nworkers)
+{
+    if (d)
+        d->chunkFinished(result, worker_id, nworkers);
 }
 
 //////////////
@@ -448,6 +473,15 @@ DateTime WorkQueueItem::finishTime() const
         return DateTime();
 }
 
+/** Return the WorkLog describing the progress of this job */
+WorkLog WorkQueueItem::log() const
+{
+    if (d)
+        return d->log();
+    else
+        return WorkLog();
+}
+
 /** Return the value of the metadata item with key 'key' - this is equal
     to 'None' if there is no item with that key */
 Obj WorkQueueItem::operator[](const String &key) const
@@ -482,6 +516,39 @@ void WorkQueueItem::toFG()
 {
     if (d)
         d->toFG();
+}
+
+/** Internal function called to signal when a chunk of the job has started */
+void WorkQueueItem::chunkStarted()
+{
+    if (d)
+        d->chunkStarted();
+}
+
+/** Internal function called to signal when a chunk of the job has started, 
+    as processed by the worker with ID 'worker_id' out of a team of 'nworkers'
+    workers */
+void WorkQueueItem::chunkStarted(int worker_id, int nworkers)
+{
+    if (d)
+        d->chunkStarted(worker_id, nworkers);
+}
+
+/** Internal function called to signal that the result of chunk processing
+    is available */
+void WorkQueueItem::chunkFinished(const Obj &result)
+{
+    if (d)
+        d->chunkFinished(result);
+}
+
+/** Internal function called to signal that the result of chunk processing
+    is available, as processed by the worker with ID 'worker_id' out of a 
+    team of 'nworkers' workers */
+void WorkQueueItem::chunkFinished(const Obj &result, int worker_id, int nworkers)
+{
+    if (d)
+        d->chunkFinished(result, worker_id, nworkers);
 }
 
 //////////////

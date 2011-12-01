@@ -971,6 +971,13 @@ TestReportEditor& TestReportEditor::addFailure(const String &description)
     return *this;
 }
 
+/** Add a failed report - this is used to just fail a test report, with 
+    the passed reason */
+TestReportEditor& TestReportEditor::addFailed(const String &description)
+{
+    return TestReportEditor::addFailure(description);
+}
+
 /** Add a captured exception to the report */
 TestReportEditor& TestReportEditor::addException(const Exception &e)
 {

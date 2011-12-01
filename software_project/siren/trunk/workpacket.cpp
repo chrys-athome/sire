@@ -28,6 +28,8 @@
 
 #include "Siren/workpacket.h"
 #include "Siren/workspace.h"
+#include "Siren/workmonitor.h"
+#include "Siren/percentage.h"
 #include "Siren/obj.h"
 #include "Siren/none.h"
 #include "Siren/exceptions.h"
@@ -80,19 +82,30 @@ WorkSpace WorkPacket::createWorkspace() const
 
 /** Run a chunk of processing of this WorkPacket. This returns the processed
     WorkPacket, or a Siren::Exception if something went wrong, or a non-WorkPacket
-    object that corresponds to the final result of the calculation */
-Obj WorkPacket::run() const throw()
+    object that corresponds to the final result of the calculation 
+    
+    The (optionally supplied) WorkMonitor allows the in-progress calculation
+    to be monitored, with near-real-time recording of the progress, energy
+    consumption, speed and health of the job
+*/
+Obj WorkPacket::run(WorkMonitor monitor) const throw()
 {
     try
     {
-        return this->runChunk();
+        return this->runChunk(monitor);
     }
     catch(const Siren::Exception &e)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         return e;
     }
     catch(const std::exception &e)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+    
         try
         {
             return standard_exception(String::tr(
@@ -106,6 +119,9 @@ Obj WorkPacket::run() const throw()
     }
     catch(...)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         try
         {
             return unknown_exception(String::tr(
@@ -123,19 +139,31 @@ Obj WorkPacket::run() const throw()
     as an area for inter-process communication, or as a temporary work area.
     This returns the processed WorkPacket, or a Siren::Exception if something
     went wrong, or a non-WorkPacket object that corresponds to the final 
-    result of the calculation */
-Obj WorkPacket::run(WorkSpace workspace) const throw()
+    result of the calculation 
+    
+    The (optionally supplied) WorkMonitor allows the in-progress calculation
+    to be monitored, with near-real-time recording of the progress, energy
+    consumption, speed and health of the job
+
+*/
+Obj WorkPacket::run(WorkSpace workspace, WorkMonitor monitor) const throw()
 {
     try
     {
-        return this->runChunk(workspace);
+        return this->runChunk(workspace, monitor);
     }
     catch(const Siren::Exception &e)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         return e;
     }
     catch(const std::exception &e)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         try
         {
             return standard_exception(String::tr(
@@ -149,6 +177,9 @@ Obj WorkPacket::run(WorkSpace workspace) const throw()
     }
     catch(...)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         try
         {
             return unknown_exception(String::tr(
@@ -168,9 +199,13 @@ Obj WorkPacket::run(WorkSpace workspace) const throw()
     
     This returns the processed WorkPacket, or a Siren::Exception if something
     went wrong, or a non-WorkPacket object that corresponds to the final 
-    result of the calculation 
+    result of the calculation.
+    
+    The (optionally supplied) WorkMonitor allows the in-progress calculation
+    to be monitored, with near-real-time recording of the progress, energy
+    consumption, speed and health of the job
 */
-Obj WorkPacket::run(int id, int nworkers) const throw()
+Obj WorkPacket::run(int id, int nworkers, WorkMonitor monitor) const throw()
 {
     if (nworkers <= 0)
         nworkers = 1;
@@ -180,6 +215,9 @@ Obj WorkPacket::run(int id, int nworkers) const throw()
         
     if (id >= nworkers)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         return Siren::program_bug( String::tr(
                 "How can ID (%1) be greater than or equal to NWORKERS (%2)???")
                     .arg(id).arg(nworkers), CODELOC );
@@ -187,14 +225,20 @@ Obj WorkPacket::run(int id, int nworkers) const throw()
 
     try
     {
-        return this->runChunk(id, nworkers);
+        return this->runChunk(id, nworkers, monitor);
     }
     catch(const Siren::Exception &e)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         return e;
     }
     catch(const std::exception &e)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         try
         {
             return standard_exception(String::tr(
@@ -208,6 +252,9 @@ Obj WorkPacket::run(int id, int nworkers) const throw()
     }
     catch(...)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         try
         {
             return unknown_exception(String::tr(
@@ -229,8 +276,14 @@ Obj WorkPacket::run(int id, int nworkers) const throw()
     
     This returns the processed WorkPacket, or a Siren::Exception if something
     went wrong, or a non-WorkPacket object that corresponds to the final 
-    result of the calculation */
-Obj WorkPacket::run(WorkSpace workspace, int id, int nworkers) const throw()
+    result of the calculation 
+    
+    The (optionally supplied) WorkMonitor allows the in-progress calculation
+    to be monitored, with near-real-time recording of the progress, energy
+    consumption, speed and health of the job
+*/
+Obj WorkPacket::run(WorkSpace workspace, int id, int nworkers,
+                    WorkMonitor monitor) const throw()
 {
     if (nworkers <= 0)
         nworkers = 1;
@@ -240,6 +293,9 @@ Obj WorkPacket::run(WorkSpace workspace, int id, int nworkers) const throw()
         
     if (id >= nworkers)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         return Siren::program_bug( String::tr(
                 "How can ID (%1) be greater than or equal to NWORKERS (%2)???")
                     .arg(id).arg(nworkers), CODELOC );
@@ -247,14 +303,20 @@ Obj WorkPacket::run(WorkSpace workspace, int id, int nworkers) const throw()
 
     try
     {
-        return this->runChunk(workspace, id, nworkers);
+        return this->runChunk(workspace, id, nworkers, monitor);
     }
     catch(const Siren::Exception &e)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         return e;
     }
     catch(const std::exception &e)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         try
         {
             return standard_exception(String::tr(
@@ -268,6 +330,9 @@ Obj WorkPacket::run(WorkSpace workspace, int id, int nworkers) const throw()
     }
     catch(...)
     {
+        //catastrophic failure!
+        monitor.setHealth(0);
+
         try
         {
             return unknown_exception(String::tr(
@@ -283,35 +348,36 @@ Obj WorkPacket::run(WorkSpace workspace, int id, int nworkers) const throw()
 
 /** Over-ride this function to allow your WorkPacket to access and use
     a WorkSpace during WorkPacket processing */
-Obj WorkPacket::runChunk(WorkSpace&) const
+Obj WorkPacket::runChunk(WorkSpace&, WorkMonitor monitor) const
 {
-    return this->runChunk();
+    return this->runChunk(monitor);
 }
 
 /** Over-ride this function to allow your WorkPacket to access and use
     a WorkSpace, and be processed by a team of work threads during
     WorkPacket processing */
-Obj WorkPacket::runChunk(WorkSpace&, int id, int) const
+Obj WorkPacket::runChunk(WorkSpace&, int id, int, WorkMonitor monitor) const
 {
     if (id == 0)
-        return this->runChunk();
+        return this->runChunk(monitor);
     else
         return None();
 }
 
 /** Over-ride this function to allow your WorkPacket to be 
     processed by a team of work threads during WorkPacket processing */
-Obj WorkPacket::runChunk(int id, int) const
+Obj WorkPacket::runChunk(int id, int, WorkMonitor monitor) const
 {
     if (id == 0)
-        return this->runChunk();
+        return this->runChunk(monitor);
     else
         return None();
 }
 
 /** Reduce the set of results returned by each of the workers into the
     single result of the calculation */
-Obj WorkPacket::reduce(const Vector<Obj>::Type &results) const throw()
+Obj WorkPacket::reduce(const Vector<Obj>::Type &results,
+                       WorkMonitor monitor) const throw()
 {
     //if the workpacket does not know how to reduce the results, then
     //we are only interested in the first result
@@ -367,7 +433,7 @@ TestPacket::~TestPacket()
 /** Run a chunk of calculation. This will count from current_val to 
     target_val in blocks of 10, sleeping for one second between each
     value */
-Obj TestPacket::runChunk() const
+Obj TestPacket::runChunk(WorkMonitor monitor) const
 {
     int n_remaining = target_val - current_val;
     
@@ -406,7 +472,7 @@ Obj TestPacket::runChunk() const
 /** Run a chunk of the calculation in parallel. This will count from current_val 
     to target_val in blocks of 10, divided between the various threads, sleeping
     for one second between blocks */
-Obj TestPacket::runChunk(int worker_id, int nworkers) const
+Obj TestPacket::runChunk(int worker_id, int nworkers, WorkMonitor monitor) const
 {
     int n_remaining = target_val - current_val;
     
@@ -441,27 +507,27 @@ Obj TestPacket::runChunk(int worker_id, int nworkers) const
         
         sirenDebug() << "(" << worker_id << "performed" 
                      << k << "square roots per second!)";
+
+        monitor.addFLOPs(k);
     }
+
+    monitor.setHealth(100);
+
+    if (current_val + n_remaining >= target_val)
+    {
+        //we have finished :-)
+        monitor.setProgress(100);
+        return None();
+    }
+    else
+    {
+        TestPacket next_chunk(*this);
+        next_chunk.current_val += n_remaining;
         
-    TestPacket next_chunk(*this);
-    next_chunk.current_val += n_remaining;
+        monitor.setProgress( 100.0 * (next_chunk.current_val / target_val) );
     
-    return next_chunk;
-}
-
-/** Return whether or not this WorkPacket is finished */
-bool TestPacket::isFinished() const
-{
-    return current_val == target_val;
-}
-
-/** Return the progress towards a completed calculation. This is 
-    the percentage of the calculation that has been completed,
-    e.g. 0 means the calculation has not been started, 50 means
-    it is half complete, and 100 means fully completed */
-int TestPacket::progress() const
-{
-    return (100 * (target_val - current_val)) / target_val; 
+        return next_chunk;
+    }
 }
 
 void run_function()
@@ -475,10 +541,27 @@ void run_function()
 /** Test this TestPacket */
 void TestPacket::test(TestReportEditor &report) const
 {
-    TestPacket packet(0);
-    packet.run();
+    TestPacket packet(5);
 
-    report.addPassed( String::tr("TestPacket passed as no exception was thrown.") );
+    WorkMonitor monitor;
+    
+    Obj result;
+    
+    while (for_ages::loop())
+    {
+        result = packet.run(monitor);
+        
+        if (not result.isA<TestPacket>())
+            break;
+            
+        packet = result.asA<TestPacket>();
+    }
+
+    if (not result.isNone())
+        report.addFailed( String::tr("Processing a TestPacket resulted in a non-None "
+                                     "result! Result = %1").arg(result.toString()) );
+    else
+        report.addPassed( String::tr("TestPacket processing was successful.") );
 
     Thread t = Thread::run( &run_function );
     

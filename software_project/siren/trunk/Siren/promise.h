@@ -118,7 +118,6 @@ namespace Siren
         void jobCancelled();
         
         void jobFinished(const Obj &result);
-        void jobFinished(const Obj &result, int worker_id, int nworkers);
     
     private:
         /** Copy of the final result */

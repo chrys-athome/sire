@@ -83,6 +83,7 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/object.hpp
       Siren/obj.h
       Siren/obj.hpp
+      Siren/percentage.h
       Siren/promise.h
       Siren/readwritelock.h
       Siren/semaphore.h
@@ -102,6 +103,8 @@ set ( SIREN_PUBLIC_HEADERS
       Siren/tostring.h
       Siren/tostring.hpp
       Siren/waitcondition.h
+      Siren/worklog.h
+      Siren/workmonitor.h
       Siren/workpacket.h
       Siren/workqueue.h
       Siren/workqueueitem.h
@@ -146,6 +149,7 @@ set ( SIREN_SOURCES
       number.cpp
       object.cpp
       obj.cpp
+      percentage.cpp
       promise.cpp
       readwritelock.cpp
       semaphore.cpp
@@ -162,6 +166,8 @@ set ( SIREN_SOURCES
       time.cpp
       timer.cpp
       waitcondition.cpp
+      worklog.cpp
+      workmonitor.cpp
       workpacket.cpp
       workqueue.cpp
       workqueueitem.cpp
