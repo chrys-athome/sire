@@ -53,6 +53,8 @@ using SireVol::CoordGroup;
 using SireVol::AABox;
 
 class Patches;
+class FFBead;
+class FFBeadChange;
 
 /** A patch is used by the forcefield classes to organise the
     beads into groups (normally spatially grouped, e.g. into
@@ -110,21 +112,26 @@ protected:
     /////////////////////////////////////////////////////////////////////////
     //Functions to modify the Patch, called only by the parent Patches class
 
-    void add(quint32 beadid, const CoordGroup &coords, const FFParameters &params);
-    void add(const QVarLengthArray<quint32> &beadids, const CoordGroupArray &coords,
-             const FFParametersArray &params);
+    FFBead add(quint32 beadid, const CoordGroup &coords, const FFParameters &params);
+    QHash<quint32,FFBead> add(const QVarLengthArray<quint32> &beadids, 
+                              const CoordGroupArray &coords,
+                              const FFParametersArray &params);
              
-    void update(quint32 beadid, const CoordGroup &coords);
-    void update(quint32 beadid, const FFParameters &params);
-    void update(quint32 beadid, const CoordGroup &coords, const FFParameters &params);
+    FFBeadChange update(quint32 beadid, const CoordGroup &coords);
+    FFBeadChange update(quint32 beadid, const FFParameters &params);
+    FFBeadChange update(quint32 beadid, const CoordGroup &coords, 
+                                        const FFParameters &params);
                 
-    void update(const QVarLengthArray<quint32> &beadids, const CoordGroupArray &coords);
-    void update(const QVarLengthArray<quint32> &beadids, const FFParametersArray &params);
-    void update(const QVarLengthArray<quint32> &beadids, const CoordGroupArray &coords,
-                const FFParametersArray &params);
+    QHash<quint32,FFBeadChange> update(const QVarLengthArray<quint32> &beadids, 
+                                       const CoordGroupArray &coords);
+    QHash<quint32,FFBeadChange> update(const QVarLengthArray<quint32> &beadids, 
+                                       const FFParametersArray &params);
+    QHash<quint32,FFBeadChange> update(const QVarLengthArray<quint32> &beadids, 
+                                       const CoordGroupArray &coords,
+                                       const FFParametersArray &params);
                 
-    void remove(quint32 beadid);
-    void remove(const QVarLengthArray<quint32> &beadids);
+    FFBead remove(quint32 beadid);
+    QHash<quint32,FFBead> remove(const QVarLengthArray<quint32> &beadids);
 
     void removeAll();
 

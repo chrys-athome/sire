@@ -80,6 +80,8 @@ using SireFF::ForceTable;
 using SireFF::FieldTable;
 using SireFF::PotentialTable;
 using SireFF::Probe;
+using SireFF::FFBeadChange;
+using SireFF::FFBead;
 
 using SireVol::Space;
 using SireVol::Patching;
@@ -228,18 +230,10 @@ private:
         arranged into patches, controlled by a contained patching function
         with contained space */
     SireFF::Patches ptchs;
-
-    /** The bead IDs of beads that have been added since the last  
-        energy calculation */
-    QSet<quint32> added_beads;
     
-    /** The bead IDs of beads that have been removed since the last
-        energy calculation */
-    QHash< quint32,QPair<CoordGroup,CLJParams> > removed_beads;
-    
-    /** The bead IDs of beads that have changed, with the old state of the
-        beads */
-    QHash< quint32,QPair<CoordGroup,CLJParams> > changed_beads; 
+    /** The bead IDs of beads that have changed, with the 
+        old and new states of the beads */
+    QHash<quint32,FFBeadChange> changed_beads; 
 
     /** Whether or not the LJ pair matrix needs to be rebuilt */
     bool need_update_ljpairs;

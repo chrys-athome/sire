@@ -138,8 +138,6 @@ FastInterCLJFF::FastInterCLJFF(const FastInterCLJFF &other)
                  switchfunc(other.switchfunc),
                  combining_rules(other.combining_rules),
                  ptchs(other.ptchs),
-                 added_beads(other.added_beads),
-                 removed_beads(other.removed_beads),
                  changed_beads(other.changed_beads),
                  need_update_ljpairs(other.need_update_ljpairs),
                  use_electrostatic_shifting(other.use_electrostatic_shifting),
@@ -169,8 +167,6 @@ FastInterCLJFF& FastInterCLJFF::operator=(const FastInterCLJFF &other)
         switchfunc = other.switchfunc;
         combining_rules = other.combining_rules;
         ptchs = other.ptchs;
-        added_beads = other.added_beads;
-        removed_beads = other.removed_beads;
         changed_beads = other.changed_beads;
         need_update_ljpairs = other.need_update_ljpairs;
         use_electrostatic_shifting = other.use_electrostatic_shifting;
@@ -234,8 +230,6 @@ void FastInterCLJFF::rebuildAll()
     
     mol_to_beadid.clear();
     beads_by_molnum.clear();
-    added_beads.clear();
-    removed_beads.clear();
     changed_beads.clear();
     
     for (Molecules::const_iterator it = mols.constBegin();
@@ -452,15 +446,228 @@ void FastInterCLJFF::recalculateEnergy()
 
     if ( this->recordingChanges() )
     {
-        if (added_beads.isEmpty() and removed_beads.isEmpty() and
-            changed_beads.isEmpty())
+        if (changed_beads.isEmpty())
         {
             //nothing has changed
             return;
         }
     
         //calculate an energy delta
+        const Patch *patches_array = ptchs.constData();
+        const int npatches = ptchs.nPatches();
         
+        double old_cnrg = 0;
+        double old_ljnrg = 0;
+        double new_cnrg = 0;
+        double new_ljnrg = 0;
+        const double cutoff = switchfunc.read().cutoffDistance();
+        
+        PairMatrix<double> distmatrix;
+        
+        //Cartesian cart_space;
+        const Space &spce = this->space();
+
+        //loop through all of the changed molecules and calculate
+        //the change in energy against all of the molecules in all
+        //of the patches...
+        for (QHash<quint32,FFBeadChange>::const_iterator it = changed_beads.constBegin();
+             it != changed_beads.constEnd();
+             ++it)
+        {
+            const FFBead &old_bead = it.value().oldBead();
+            const FFBead &new_bead = it.value().newBead();
+            
+            const CoordGroup &old_coords = old_bead.coordinates();
+            const CoordGroup &new_coords = new_bead.coordinates();
+            
+            const CLJParams::Array &old_params = old_bead.parameters()
+                                                         .asA<CLJParams>()
+                                                         .array();
+                                                         
+            const CLJParams::Array &new_params = new_bead.parameters()
+                                                         .asA<CLJParams>()
+                                                         .array();
+                                                         
+            for (int ip=0; ip<npatches; ++ip)
+            {
+                const Patch &patch = patches_array[ip];
+                
+                bool old_is_beyond = spce.beyond(cutoff, patch.aaBox(), 
+                                                         old_coords.aaBox());
+                                                         
+                bool new_is_beyond = spce.beyond(cutoff, patch.aaBox(),
+                                                         new_coords.aaBox());
+                                                         
+                if (old_is_beyond and new_is_beyond)
+                    continue;
+                    
+                const int nbeads = patch.nBeads();
+                
+                const CoordGroup *coords_array = patch.coordinates().constData();
+                const CLJParamsArray::Array *params_array = patch.parameters()
+                                                .asA<CLJParamsArray>().constData();
+                                                
+                const quint32 *ids_array = patch.beadIDs().constData();
+                
+                for (int i=0; i<nbeads; ++i)
+                {
+                    if (ids_array[i] == it.key())
+                        //do not calculate the energy of the same bead
+                        continue;
+                
+                    const CoordGroup &bead_coords = coords_array[i];
+                    const CLJParamsArray::Array &bead_params = params_array[i];
+
+                    if ( not (old_is_beyond or spce.beyond(cutoff, old_coords,
+                                                                   bead_coords)) )
+                    {
+                        double mindist = spce.calcDist(old_coords, bead_coords,
+                                                       distmatrix);
+                    
+                        if (mindist <= cutoff)
+                        {
+                            addEnergy(old_coords, old_params,
+                                      bead_coords, bead_params,
+                                      switchfunc.read(), mindist,
+                                      distmatrix, ljpairs,
+                                      old_cnrg, old_ljnrg, 1);
+                        }
+                    }
+
+                    if ( not (new_is_beyond or spce.beyond(cutoff, new_coords,
+                                                                   bead_coords)) )
+                    {
+                        double mindist = spce.calcDist(new_coords, bead_coords,
+                                                       distmatrix);
+                    
+                        if (mindist <= cutoff)
+                        {
+                            addEnergy(new_coords, new_params,
+                                      bead_coords, bead_params,
+                                      switchfunc.read(), mindist,
+                                      distmatrix, ljpairs,
+                                      new_cnrg, new_ljnrg, 1);
+                        }
+                    }
+                    
+                } // end of loop over beads
+            } // end of loop over patches
+        } // end of loop over changed beads
+
+        //now loop over all changed beads and remove the changed-changed
+        //energy from the total
+        if (changed_beads.count() > 1)
+        {
+            double old_old_cnrg = 0;
+            double old_old_ljnrg = 0;
+            double new_old_cnrg = 0;
+            double new_old_ljnrg = 0;
+            double new_new_cnrg = 0;
+            double new_new_ljnrg = 0;
+
+            //loop over all pairs of changed beads
+            for (QHash<quint32,FFBeadChange>::const_iterator 
+                                                it = changed_beads.constBegin();
+                 it != changed_beads.constEnd();
+                 ++it)
+            {
+                const FFBead &old_bead0 = it.value().oldBead();
+                const FFBead &new_bead0 = it.value().newBead();
+            
+                const CoordGroup &old_coords0 = old_bead0.coordinates();
+                const CoordGroup &new_coords0 = new_bead0.coordinates();
+            
+                const CLJParams::Array &old_params0 = old_bead0.parameters()
+                                                               .asA<CLJParams>()
+                                                               .array();
+                                                         
+                const CLJParams::Array &new_params0 = new_bead0.parameters()
+                                                               .asA<CLJParams>()
+                                                               .array();
+            
+                QHash<quint32,FFBeadChange>::const_iterator it2 = it;
+
+                for (++it2; it2 != changed_beads.constEnd(); ++it2)
+                {
+                    const FFBead &old_bead1 = it2.value().oldBead();
+                    const FFBead &new_bead1 = it2.value().newBead();
+                
+                    const CoordGroup &old_coords1 = old_bead1.coordinates();
+                    const CoordGroup &new_coords1 = new_bead1.coordinates();
+                
+                    const CLJParams::Array &old_params1 = old_bead1.parameters()
+                                                                   .asA<CLJParams>()
+                                                                   .array();
+                                                             
+                    const CLJParams::Array &new_params1 = new_bead1.parameters()
+                                                                   .asA<CLJParams>()
+                                                                   .array();
+
+                    double mindist = spce.calcDist(old_coords0, old_coords1,
+                                                   distmatrix);
+                
+                    if (mindist <= cutoff)
+                    {
+                        addEnergy(old_coords0, old_params0,
+                                  old_coords1, old_params1,
+                                  switchfunc.read(), mindist,
+                                  distmatrix, ljpairs,
+                                  old_old_cnrg, old_old_ljnrg, 1);
+                    }
+
+                    mindist = spce.calcDist(new_coords0, old_coords1,
+                                            distmatrix);
+                
+                    if (mindist <= cutoff)
+                    {
+                        addEnergy(new_coords0, new_params0,
+                                  old_coords1, old_params1,
+                                  switchfunc.read(), mindist,
+                                  distmatrix, ljpairs,
+                                  new_old_cnrg, new_old_ljnrg, 1);
+                    }
+
+                    mindist = spce.calcDist(new_coords0, new_coords1,
+                                            distmatrix);
+                
+                    if (mindist <= cutoff)
+                    {
+                        addEnergy(new_coords0, new_params0,
+                                  new_coords1, new_params1,
+                                  switchfunc.read(), mindist,
+                                  distmatrix, ljpairs,
+                                  new_new_cnrg, new_new_ljnrg, 1);
+                    }
+                }
+            }
+        
+            qDebug() << "OLD_OLD_CNRG" << old_old_cnrg << "OLD_OLD_LJNRG" << old_old_ljnrg
+                     << "NEW_OLD_CNRG" << new_old_cnrg << "NEW_OLD_LJNRG" << new_old_ljnrg;
+    
+            qDebug() << "NEW_NEW_CNRG" << new_new_cnrg<< "NEW_OLD_LJNRG" << new_new_ljnrg;
+            
+            old_cnrg += new_old_cnrg;
+            old_ljnrg += new_old_ljnrg;
+            
+            old_cnrg += old_old_cnrg;
+            old_ljnrg += old_old_ljnrg;
+            
+            new_cnrg += new_new_cnrg;
+            new_cnrg += new_new_ljnrg;
+        }
+
+        qDebug() << "OLD_CNRG" << old_cnrg << "OLD_LJNRG" << old_ljnrg
+                 << "OLD_TOTAL" << (old_cnrg+old_ljnrg);
+
+        qDebug() << "NEW_CNRG" << new_cnrg << "NEW_LJNRG" << new_ljnrg
+                 << "NEW_TOTAL" << (new_cnrg+new_ljnrg);
+        
+        qDebug() << "THIS IS STILL WRONG!!!";
+        
+        changed_beads.clear();
+        
+        this->components().changeEnergy(*this, CLJEnergy(new_cnrg - old_cnrg, 
+                                                         new_ljnrg - old_ljnrg));
     }
     else
     {
@@ -469,8 +676,6 @@ void FastInterCLJFF::recalculateEnergy()
         
         const Patch *patches_array = ptchs.constData();
         const int npatches = ptchs.nPatches();
-        
-        qDebug() << npatches;
         
         double cnrg = 0;
         double ljnrg = 0;
@@ -605,6 +810,7 @@ void FastInterCLJFF::_pvt_updateName()
 {
     ffcomponents = CLJComponent(this->name());
     G1FF::_pvt_updateName();
+    FastInterCLJFF::mustNowRecalculateFromScratch();
 }
 
 /** Internal function used to merge the passed charge and LJ parameters
@@ -708,58 +914,237 @@ void FastInterCLJFF::_pvt_added(const PartialMolecule &mol, const PropertyMap &m
                 "The FastInterCLJFF currently only supports whole molecules!"),
                     CODELOC );
 
-    if (mol_to_beadid.contains(mol.number()))
+    FastInterCLJFF old_state(*this);
+    
+    try
     {
-        //remove the current version of the molecule
-        QVector<quint32> beadids = mol_to_beadid.value(mol.number());
+        if (mol_to_beadid.contains(mol.number()))
+        {
+            throw SireError::program_bug( QObject::tr(
+                "How can we be adding a molecule (%1) that already appears to exist??")
+                    .arg(mol.number()), CODELOC );
+        }
+    
+        //break the molecule into beads
+        Beads beads = Beads(mol.data(), map);
+
+        QPair<CoordGroupArray,CLJParamsArray> param_beads = createParameters(beads, map);
+        need_update_ljpairs = true;
+
+        QHash<quint32,FFBead> new_beads = ptchs.add(param_beads.first, 
+                                                    param_beads.second);
+
+        mol_to_beadid.insert(mol.number(), new_beads.keys().toVector());
+        beads_by_molnum.insert(mol.number(), QPair<Beads,PropertyMap>(beads,map));
+
+        if (this->recordingChanges())
+        {
+            for (QHash<quint32,FFBead>::const_iterator it = new_beads.constBegin();
+                 it != new_beads.constEnd();
+                 ++it)
+            {
+                if (changed_beads.contains(it.key()))
+                {
+                    changed_beads.insert(it.key(), changed_beads[it.key()]
+                                                        .update(it.value()));
+                }
+                else
+                {
+                    changed_beads.insert(it.key(), FFBeadChange(FFBead(),it.value()));
+                }
+            }
+        }
         
-        ptchs.remove(beadids);
-        ::remove(added_beads, beadids);
-        ::remove(removed_beads, beadids);
-        ::remove(changed_beads, beadids);
-
-        mol_to_beadid.remove(mol.number());
-        beads_by_molnum.remove(mol.number());
+        if (not new_beads.isEmpty())
+        {
+            G1FF::setDirty();
+        }
     }
-    
-    //break the molecule into beads
-    Beads beads = Beads(mol.data(), map);
-
-    QPair<CoordGroupArray,CLJParamsArray> param_beads = createParameters(beads, map);
-    need_update_ljpairs = true;
-
-    QVector<quint32> bead_ids = ptchs.add(param_beads.first, param_beads.second);
-
-    mol_to_beadid.insert(mol.number(), bead_ids);
-    beads_by_molnum.insert(mol.number(), QPair<Beads,PropertyMap>(beads,map));
-    
-    if (this->recordingChanges())
-        ::insert(added_beads, bead_ids);
-
-    return;
+    catch(...)
+    {
+        FastInterCLJFF::operator=(old_state);
+        throw;
+    }
 }
                 
 /** Called when the passed molecule view has been removed from the forcefield */
 void FastInterCLJFF::_pvt_removed(const PartialMolecule &mol)
 {
-    return;
+    if (not mol.selectedAll())
+        throw SireError::unsupported( QObject::tr(
+                "The FastInterCLJFF only supports complete molecules"),
+                    CODELOC );
+                    
+    QVector<quint32> beadids = mol_to_beadid.value(mol.number());
+    
+    if (beadids.isEmpty())
+        return;
+    
+    FastInterCLJFF old_state(*this);
+    
+    try
+    {
+        QHash<quint32,FFBeadChange> deltas = ptchs.remove(beadids);
+
+        mol_to_beadid.remove(mol.number());
+        beads_by_molnum.remove(mol.number());
+        
+        if (this->recordingChanges())
+        {
+            for (QHash<quint32,FFBeadChange>::const_iterator it = deltas.constBegin();
+                 it != deltas.constEnd();
+                 ++it)
+            {
+                if (changed_beads.contains(it.key()))
+                {
+                    changed_beads.insert(it.key(), changed_beads[it.key()]
+                                                        .update(it.value().newBead()));
+                                                        
+                    if (changed_beads[it.key()].isEmpty())
+                        changed_beads.remove(it.key());
+                }
+                else
+                {
+                    changed_beads.insert(it.key(), it.value());
+                }
+            }
+        }
+        
+        if (not changed_beads.isEmpty())
+        {
+            G1FF::setDirty();
+        }
+    }
+    catch(...)
+    {
+        FastInterCLJFF::operator=(old_state);
+        throw;
+    }
 }
 
 /** Called when the passed molecule view has been changed */
 void FastInterCLJFF::_pvt_changed(const Molecule &mol)
 {
-    return;
+    QVector<quint32> beadids = mol_to_beadid.value(mol.number());
+    
+    if (beadids.isEmpty())
+        return;
+    
+    else if (not mol_to_beadid.contains(mol.number()))
+    {
+        //the molecule no longer exists!
+        return;
+    }
+    
+    QPair<Beads,PropertyMap> beaddata = beads_by_molnum.value(mol.number());
+    Beads beads = beaddata.first;
+
+    if (beads.data().version() == mol.data().version())
+        //the molecule hasn't changed
+        return;
+
+    FastInterCLJFF old_state(*this);
+    
+    try 
+    {
+        const PropertyMap &map = beaddata.second;
+
+        const PropertyName &coords_property = map["coordinates"];
+        const PropertyName &charge_property = map["charge"];
+        const PropertyName &lj_property = map["LJ"];
+
+        QHash<quint32,FFBeadChange> deltas;
+
+        if ( (beads.data().version(charge_property) 
+                    != mol.data().version(charge_property)) or
+             (beads.data().version(lj_property) != mol.data().version(lj_property)) )
+        {
+            //completely reparameterise the beads
+            beads.update(mol.data());
+            
+            QPair<CoordGroupArray,CLJParamsArray> param_beads 
+                                                    = createParameters(beads, map);
+            need_update_ljpairs = true;
+
+            deltas = ptchs.update(mol_to_beadid.value(mol.number()), param_beads.first,
+                                  param_beads.second);
+        }
+        else if (beads.data().version(coords_property) 
+                            != mol.data().version(coords_property))
+        {
+            beads.update(mol.data());
+            
+            AtomCoords coords = beads.atomProperty( map["coordinates"] )
+                                     .read().asA<AtomCoords>();
+
+            deltas = ptchs.update(mol_to_beadid.value(mol.number()), coords.array());
+        }
+
+        beads_by_molnum.insert( mol.number(), QPair<Beads,PropertyMap>(beads,map) );
+
+        if (this->recordingChanges())
+        {
+            for (QHash<quint32,FFBeadChange>::const_iterator it = deltas.constBegin();
+                 it != deltas.constEnd();
+                 ++it)
+            {
+                if (changed_beads.contains(it.key()))
+                {
+                    changed_beads.insert(it.key(), changed_beads[it.key()]
+                                                        .update(it.value().newBead()));
+                                                        
+                    if (changed_beads[it.key()].isEmpty())
+                        changed_beads.remove(it.key());
+                }
+                else
+                {
+                    changed_beads.insert(it.key(),it.value());
+                }
+            }
+        }
+        
+        if (not deltas.isEmpty())
+        {
+            G1FF::setDirty();
+        }
+    }
+    catch(...)
+    {
+        FastInterCLJFF::operator=(old_state);
+        throw;
+    }
 }
 
 /** Called when the passed list of molecules has been changed */
 void FastInterCLJFF::_pvt_changed(const QList<Molecule> &mols)
 {
-    return;
+    FastInterCLJFF old_state(*this);
+
+    try
+    {
+        for (QList<Molecule>::const_iterator it = mols.constBegin();
+             it != mols.constEnd();
+             ++it)
+        {
+            FastInterCLJFF::_pvt_changed(*it);
+        }
+    }
+    catch(...)
+    {
+        FastInterCLJFF::operator=(old_state);
+        throw;
+    }
 }
 
 /** Called when all molecules have been removed */
 void FastInterCLJFF::_pvt_removedAll()
 {
+    ptchs.removeAll();
+    mol_to_beadid.clear();
+    beads_by_molnum.clear();
+    changed_beads.clear();
+    recording_changes = true;
+
     return;
 }
 
@@ -768,7 +1153,7 @@ void FastInterCLJFF::_pvt_removedAll()
 bool FastInterCLJFF::_pvt_wouldChangeProperties(MolNum molnum, 
                                                 const PropertyMap &map) const
 {
-    return false;
+    return beads_by_molnum.value(molnum).second != map;
 }
 
 /** Return the symbols for the energy components of this forcefield */
@@ -784,6 +1169,7 @@ bool FastInterCLJFF::setSpace(const Space &space)
     if (not ptchs.space().equals(space))
     {
         ptchs.repatch(space);
+        props.setProperty("patching", ptchs.patching());
         props.setProperty("space", space);        
         this->mustNowRecalculateFromScratch();
         return true;
@@ -976,9 +1362,8 @@ const Properties& FastInterCLJFF::properties() const
 void FastInterCLJFF::mustNowRecalculateFromScratch()
 {
     recording_changes = false;
-    removed_beads.clear();
     changed_beads.clear();
-    added_beads.clear();
+    G1FF::setDirty();
 }
 
 void FastInterCLJFF::force(ForceTable &forcetable, double scale_force)

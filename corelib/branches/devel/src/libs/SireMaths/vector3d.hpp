@@ -149,7 +149,7 @@ Vector3D<T>::Vector3D(const Vector &v)
 {
     sc[0] = T(v.x());
     sc[1] = T(v.y());
-    sc[3] = T(v.z());
+    sc[2] = T(v.z());
 }
 
 /** Copy constructor */

@@ -77,6 +77,8 @@ friend QDataStream& ::operator<<<>(QDataStream&, const AtomicFFParameters<T>&);
 friend QDataStream& ::operator>><>(QDataStream&, AtomicFFParameters<T>&);
 
 public:
+    typedef typename SireBase::PackedArray2D<T>::Array Array;
+
     AtomicFFParameters();
     AtomicFFParameters(const QVector<T> &params);
     AtomicFFParameters(const typename SireBase::PackedArray2D<T>::Array &params);

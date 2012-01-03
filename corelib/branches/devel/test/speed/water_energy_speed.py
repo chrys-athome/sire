@@ -18,14 +18,13 @@ mincoords = Vector(-18.3854, -18.66855, -18.4445)
 maxcoords = Vector( 18.3854,  18.66855,  18.4445)
 
 vol = PeriodicBox(mincoords, maxcoords)
-switchfunc = HarmonicSwitchingFunction(10*angstrom, 9.5*angstrom)
+switchfunc = HarmonicSwitchingFunction(15*angstrom, 14.5*angstrom)
 
 cljff.setSpace(vol)
 cljff.setSwitchingFunction(switchfunc)
 
-fast_cljff.setSpace(vol)
 fast_cljff.setSwitchingFunction(switchfunc)
-fast_cljff.setPatching( BoxPatching(Cartesian(), 12*angstrom) )
+fast_cljff.setPatching( BoxPatching(vol, 15*angstrom) )
 
 mols = PDB().read("test/io/water.pdb")
 
@@ -71,7 +70,7 @@ print "Space == %s" % delta
 
 #for i in range(-1,1):
 #    for j in range(-1,1):
-#        for k in range(-2,2):
+#        for k in range(-1,1):
 #            if i == 0 and j == 0 and k == 0:
 #                continue
 #
@@ -180,10 +179,60 @@ newmol = mol0.move().translate( Vector(1,0,0) ).commit()
 print mol0.evaluate().center()
 
 cljff.update( newmol )
+fast_cljff.update( newmol )
 
-print "%s  (%f)" % (cljff.energy(), cljff.energy().value())
+t.start()
+nrg = cljff.energy()
+ms1 = t.elapsed()
+
+t.start()
+nrg = fast_cljff.energy()
+ms2 = t.elapsed()
+
+print ms1, ms2
+
+print "SLOW %s  (%f)" % (cljff.energy(), cljff.energy().value())
+print "FAST %s  (%f)" % (fast_cljff.energy(), fast_cljff.energy().value())
 
 cljff.update( mol0 )
+fast_cljff.update( mol0 )
 
-print "%s  (%f)" % (cljff.energy(), cljff.energy().value())
+print "SLOW %s  (%f)" % (cljff.energy(), cljff.energy().value())
+print "FAST %s  (%f)" % (fast_cljff.energy(), fast_cljff.energy().value())
+
+print "Move two..."
+
+mol1 = mols[molnums[1]]
+
+print mol1.evaluate().center()
+
+mol1 = mol1.move().translate( Vector(1,0,0) ).commit()
+
+print mol1.evaluate().center()
+
+mol0 = mol0.move().translate( Vector(2,0,0) ).commit()
+
+print mol0.evaluate().center()
+
+cljff.update(mol0)
+cljff.update(mol1)
+
+fast_cljff.update(mol0)
+fast_cljff.update(mol1)
+
+t.start()
+nrg1 = cljff.energy()
+ms1 = t.elapsed()
+
+t.start()
+nrg2 = fast_cljff.energy()
+ms2 = t.elapsed()
+
+print "REAL %f kcal mol-1, VERSUS %f jcal mol-1" \
+           % (nrg1.to(kcal_per_mol), nrg2.to(kcal_per_mol))
+
+print "TOOK %d versus %d milliseconds" % (ms1, ms2)
+      
+fast_cljff.mustNowRecalculateFromScratch();
+print fast_cljff.energy()
 

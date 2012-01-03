@@ -38,10 +38,18 @@ SIRE_BEGIN_HEADER
 namespace SireFF
 {
 class Patches;
+class FFBead;
+class FFBeadChange;
 }
 
 QDataStream& operator<<(QDataStream&, const SireFF::Patches&);
 QDataStream& operator>>(QDataStream&, SireFF::Patches&);
+
+QDataStream& operator<<(QDataStream&, const SireFF::FFBead&);
+QDataStream& operator>>(QDataStream&, SireFF::FFBead&);
+
+QDataStream& operator<<(QDataStream&, const SireFF::FFBeadChange&);
+QDataStream& operator>>(QDataStream&, SireFF::FFBeadChange&);
 
 namespace SireFF
 {
@@ -50,6 +58,82 @@ using SireVol::Patching;
 using SireVol::Space;
 using SireVol::CoordGroup;
 using SireVol::AABox;
+
+/** This simple class holds the coordinates and forcefield parameters 
+    for a bead
+    
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT FFBead
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const FFBead&);
+friend QDataStream& ::operator>>(QDataStream&, FFBead&);
+
+public:
+    FFBead();
+    FFBead(const CoordGroup &coordinates, const FFParameters &parameters);
+    
+    FFBead(const FFBead &other);
+    
+    ~FFBead();
+    
+    FFBead& operator=(const FFBead &other);
+    
+    bool operator==(const FFBead &other) const;
+    bool operator!=(const FFBead &other) const;
+    
+    const CoordGroup& coordinates() const;
+    const FFParameters& parameters() const;
+    
+    bool isEmpty() const;
+    
+private:
+    /** The bead coordinates */
+    CoordGroup coords;
+    
+    /** The bead parameters */
+    FFParametersPtr params;
+};
+
+/** This simple class holds the data the describes a change
+    in a bead
+    
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT FFBeadChange
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const FFBeadChange&);
+friend QDataStream& ::operator>>(QDataStream&, FFBeadChange&);
+
+public:
+    FFBeadChange();
+    FFBeadChange(const FFBead &old_bead, const FFBead &new_bead);
+    
+    FFBeadChange(const FFBeadChange &other);
+    
+    ~FFBeadChange();
+    
+    FFBeadChange& operator=(const FFBeadChange &other);
+    
+    bool operator==(const FFBeadChange &other) const;
+    bool operator!=(const FFBeadChange &other) const;
+    
+    bool isEmpty() const;
+    
+    const FFBead& oldBead() const;
+    const FFBead& newBead() const;
+    
+    FFBeadChange update(const FFBead &newer_bead) const;
+    
+private:
+    /** The old state of the bead */
+    FFBead old_bead;
+    
+    /** The new state of the bead */
+    FFBead new_bead;
+};
 
 /** This class holds a collection of Patch objects. All of the beads
     in a forcefield are arranged into Patches, with each patch containing
@@ -103,29 +187,35 @@ public:
 
     QPair<int,int> getLocation(quint32 beadid) const;
 
-    quint32 add(const CoordGroup &coords, const FFParameters &params);
+    QPair<quint32,FFBead> add(const CoordGroup &coords, const FFParameters &params);
+    QPair<quint32,FFBead> add(const FFBead &bead);
     
-    QVector<quint32> add(const CoordGroupArray &coords, 
-                         const FFParametersArray &params);
+    QHash<quint32,FFBead> add(const CoordGroupArray &coords, 
+                              const FFParametersArray &params);
     
-    QVector<quint32> add(const QVector<CoordGroup> &coords,
-                         const QVector<FFParametersPtr> &params);
-                         
-    QVector< QVector<quint32> > add(const QVector<CoordGroupArray> &coords,
-                                    const QVector<FFParametersArrayPtr> &params);
+    QHash<quint32,FFBead> add(const QVector<CoordGroup> &coords,
+                              const QVector<FFParametersPtr> &params);
+
+    QHash<quint32,FFBead> add(const QVector<FFBead> &beads);
     
-    void update(quint32 beadid, const CoordGroup &coords);
-    void update(quint32 beadid, const FFParameters &params);
-    void update(quint32 beadid, const CoordGroup &coords,
-                const FFParameters &params);
+    FFBeadChange update(quint32 beadid, const CoordGroup &coords);
+    FFBeadChange update(quint32 beadid, const FFParameters &params);
+    FFBeadChange update(quint32 beadid, const CoordGroup &coords, 
+                        const FFParameters &params);
+    FFBeadChange update(quint32 beadid, const FFBead &bead);
+
+    QHash<quint32,FFBeadChange> update(const QVector<quint32> &beadids, 
+                                       const CoordGroupArray &coords);
+                                 
+    QHash<quint32,FFBeadChange> update(const QVector<quint32> &beadids, 
+                                       const FFParametersArray &params);
+                                 
+    QHash<quint32,FFBeadChange> update(const QVector<quint32> &beadids, 
+                                       const CoordGroupArray &coords,
+                                       const FFParametersArray &params);
     
-    void update(const QVector<quint32> &beadids, const CoordGroupArray &coords);
-    void update(const QVector<quint32> &beadids, const FFParametersArray &params);
-    void update(const QVector<quint32> &beadids, const CoordGroupArray &coords,
-                const FFParametersArray &params);
-    
-    void remove(quint32 beadid);
-    void remove(const QVector<quint32> &beadids);
+    FFBeadChange remove(quint32 beadid);
+    QHash<quint32,FFBeadChange> remove(const QVector<quint32> &beadids);
 
     void removeAll();
     
@@ -145,8 +235,50 @@ private:
     quint32 last_beadid;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Return the coordinates of this bead */
+inline const CoordGroup& FFBead::coordinates() const
+{
+    return coords;
 }
 
+/** Return the parameters of the bead */
+inline const FFParameters& FFBead::parameters() const
+{
+    return params.read();
+}
+
+/** Return whether or not this bead is empty */
+inline bool FFBead::isEmpty() const
+{
+    return coords.isEmpty();
+}
+
+/** Return whether the change is empty (represents no change) */    
+inline bool FFBeadChange::isEmpty() const
+{
+    return old_bead.isEmpty() and new_bead.isEmpty();
+}
+
+/** Return the state of the bead before the change */
+inline const FFBead& FFBeadChange::oldBead() const
+{
+    return old_bead;
+}
+
+/** Return the state of the bead after the change */
+inline const FFBead& FFBeadChange::newBead() const
+{
+    return new_bead;
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
+}
+
+Q_DECLARE_METATYPE( SireFF::FFBead )
+Q_DECLARE_METATYPE( SireFF::FFBeadChange )
 Q_DECLARE_METATYPE( SireFF::Patches )
 
 SIRE_END_HEADER

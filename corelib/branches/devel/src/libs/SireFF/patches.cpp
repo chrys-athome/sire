@@ -40,6 +40,167 @@ using namespace SireMaths;
 using namespace SireBase;
 using namespace SireStream;
 
+////////////
+//////////// Implementation of FFBead
+////////////
+
+static const RegisterMetaType<FFBead> r_ffbead;
+
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFBead &ffbead)
+{
+    writeHeader(ds, r_ffbead, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << ffbead.coords << ffbead.params;
+    
+    return ds;
+}
+
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFBead &ffbead)
+{
+    VersionID v = readHeader(ds, r_ffbead);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> ffbead.coords >> ffbead.params;
+    }
+    else
+        throw version_error(v, "1", r_ffbead, CODELOC);
+        
+    return ds;
+}
+
+/** Null Constructor */
+FFBead::FFBead()
+{}
+
+/** Construct a bead from the passed coordinates and parameters */
+FFBead::FFBead(const CoordGroup &coordinates, const FFParameters &parameters)
+       : coords(coordinates), params(parameters)
+{}
+
+/** Copy constructor */
+FFBead::FFBead(const FFBead &other)
+       : coords(other.coords), params(other.params)
+{}
+
+/** Destructor */
+FFBead::~FFBead()
+{}
+
+/** Copy assignment operator */
+FFBead& FFBead::operator=(const FFBead &other)
+{
+    coords = other.coords;
+    params = other.params;
+    return *this;
+}
+
+/** Comparison operator */
+bool FFBead::operator==(const FFBead &other) const
+{
+    return coords.constData() == other.coords.constData() and
+           (params.constData() == other.params.constData() or
+            params.read().equals(other.params.read()));
+}
+
+/** Comparison operator */
+bool FFBead::operator!=(const FFBead &other) const
+{
+    return not FFBead::operator==(other);
+}
+
+////////////
+//////////// Implementation of FFBeadChange
+////////////
+
+static const RegisterMetaType<FFBeadChange> r_ffbeadchange;
+
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFBeadChange &bead)
+{
+    writeHeader(ds, r_ffbeadchange, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << bead.old_bead << bead.new_bead;
+    
+    return ds;
+}
+
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFBeadChange &bead)
+{
+    VersionID v = readHeader(ds, r_ffbeadchange);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> bead.old_bead >> bead.new_bead;
+    }
+    else
+        throw version_error(v, "1", r_ffbeadchange, CODELOC);
+        
+    return ds;
+}
+
+/** Null constructor */
+FFBeadChange::FFBeadChange()
+{}
+
+/** Construct for the change from 'old_bead' to 'new_bead' */
+FFBeadChange::FFBeadChange(const FFBead &oldbead, const FFBead &newbead)
+             : old_bead(oldbead), new_bead(newbead)
+{
+    if (old_bead == new_bead)
+    {
+        old_bead = FFBead();
+        new_bead = FFBead();
+    }
+}
+
+/** Copy constructor */
+FFBeadChange::FFBeadChange(const FFBeadChange &other)
+             : old_bead(other.old_bead), new_bead(other.new_bead)
+{}
+
+/** Destructor */
+FFBeadChange::~FFBeadChange()
+{}
+
+/** Copy assignment operator */
+FFBeadChange& FFBeadChange::operator=(const FFBeadChange &other)
+{
+    old_bead = other.old_bead;
+    new_bead = other.new_bead;
+    return *this;
+}
+
+/** Comparison operator */
+bool FFBeadChange::operator==(const FFBeadChange &other) const
+{
+    return old_bead == other.old_bead and
+           new_bead == other.new_bead;
+}
+
+/** Comparison operator */
+bool FFBeadChange::operator!=(const FFBeadChange &other) const
+{
+    return not FFBeadChange::operator==(other);
+}
+
+/** Return the change from this->oldBead() to 'newer_bead' */
+FFBeadChange FFBeadChange::update(const FFBead &newer_bead) const
+{
+    return FFBeadChange(old_bead, newer_bead);
+}
+
+////////////
+//////////// Implementation of Patches
+////////////
+
 static const RegisterMetaType<Patches> r_patches;
 
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const Patches &patches)
@@ -306,28 +467,34 @@ QPair<int,int> Patches::getLocation(quint32 beadid) const
 
 /** Add a new bead (with specified coordinates and parameters) to these patches,
     returning the ID of the bead in these patches */
-quint32 Patches::add(const CoordGroup &coords, const FFParameters &params)
+QPair<quint32,FFBead> Patches::add(const CoordGroup &coords, const FFParameters &params)
 {
     QPair<int,Vector> idx = ptchng.read().patchIndexAndCenter(
                                                 coords.aaBox().center() );
                                                 
     BOOST_ASSERT( idx.first >= 0 and idx.first < ptchs.count() );
     
-    ptchs.data()[idx.first].add( last_beadid + 1,
-                                 ptchng.read().space()
-                                       .getMinimumImage(coords, idx.second),
-                                 params );
+    FFBead bead = ptchs.data()[idx.first].add( last_beadid + 1,
+                                                ptchng.read().space()
+                                                .getMinimumImage(coords, idx.second),
+                                                params );
 
     ++last_beadid;
     
     beadid_to_patch.insert(last_beadid, idx.first);
     
-    return last_beadid;
+    return QPair<quint32,FFBead>(last_beadid, bead);
+}
+
+/** Add the passed bead, returning the ID of the bead in these patches */
+QPair<quint32,FFBead> Patches::add(const FFBead &bead)
+{
+    return this->add(bead.coordinates(), bead.parameters());
 }
 
 /** Add the passed beads, returning the IDs of the beads in these patches */
-QVector<quint32> Patches::add(const CoordGroupArray &coords, 
-                              const FFParametersArray &params)
+QHash<quint32,FFBead> Patches::add(const CoordGroupArray &coords, 
+                                   const FFParametersArray &params)
 {
     if (coords.count() != params.count())
         throw SireError::program_bug( QObject::tr(
@@ -336,20 +503,42 @@ QVector<quint32> Patches::add(const CoordGroupArray &coords,
                     .arg(params.count()).arg(coords.count()), CODELOC );
 
     Patches new_patches(*this);
-    QVector<quint32> beadids( coords.count() );
+    QHash<quint32,FFBead> beads;
+    beads.reserve(coords.count());
     
     for (int i=0; i<coords.count(); ++i)
     {
-        beadids[i] = new_patches.add(coords.constData()[i], params[i]);
+        QPair<quint32,FFBead> bead = new_patches.add(coords.constData()[i], params[i]);
+        beads.insert( bead.first, bead.second );
     }
     
     this->operator=(new_patches);
-    return beadids;
+    return beads;
 }
 
 /** Add the passed beads, returning the IDs of the beads in these patches */
-QVector<quint32> Patches::add(const QVector<CoordGroup> &coords,
-                              const QVector<FFParametersPtr> &params)
+QHash<quint32,FFBead> Patches::add(const QVector<FFBead> &beads)
+{
+    Patches new_patches(*this);
+        
+    QHash<quint32,FFBead> new_beads;
+    new_beads.reserve(beads.count());
+    
+    for (int i=0; i<beads.count(); ++i)
+    {
+        QPair<quint32,FFBead> bead = new_patches.add(beads[i].coordinates(), 
+                                                     beads[i].parameters());
+                                                     
+        new_beads.insert(bead.first, bead.second);
+    }
+    
+    this->operator=(new_patches);
+    return new_beads;
+}
+
+/** Add the passed beads, returning the IDs of the beads in these patches */
+QHash<quint32,FFBead> Patches::add(const QVector<CoordGroup> &coords,
+                                   const QVector<FFParametersPtr> &params)
 {
     if (coords.count() != params.count())
         throw SireError::program_bug( QObject::tr(
@@ -358,38 +547,20 @@ QVector<quint32> Patches::add(const QVector<CoordGroup> &coords,
                     .arg(params.count()).arg(coords.count()), CODELOC );
 
     Patches new_patches(*this);
-    QVector<quint32> beadids( coords.count() );
+
+    QHash<quint32,FFBead> beads;
+    beads.reserve(coords.count());
     
     for (int i=0; i<coords.count(); ++i)
     {
-        beadids[i] = new_patches.add(coords.constData()[i], params.constData()[i]);
+        QPair<quint32,FFBead> bead = new_patches.add(coords.constData()[i], 
+                                                     params.constData()[i]);
+                                                    
+        beads.insert(bead.first, bead.second);
     }
     
     this->operator=(new_patches);
-    return beadids;
-}
-
-/** Add the passed beads, returning the IDs of the beads in these patches */
-QVector< QVector<quint32> > Patches::add(const QVector<CoordGroupArray> &coords,
-                                         const QVector<FFParametersArrayPtr> &params)
-{
-    if (coords.count() != params.count())
-        throw SireError::program_bug( QObject::tr(
-                "The number of bead parameters (%1) must equal the number of "
-                "coordinate groups (%2).")
-                    .arg(params.count()).arg(coords.count()), CODELOC );
-
-    Patches new_patches(*this);
-    
-    QVector< QVector<quint32> > beadids(coords.count());
-    
-    for (int i=0; i<coords.count(); ++i)
-    {
-        beadids[i] = new_patches.add(coords.constData()[i], params.constData()[i]);
-    }
-    
-    this->operator=(new_patches);
-    return beadids;
+    return beads;
 }
 
 int Patches::getIdx(quint32 beadid) const
@@ -412,30 +583,31 @@ int Patches::getIdx(quint32 beadid) const
     \throw SireError::invalid_key
     \throw SireError::incompatible_error
 */
-void Patches::update(quint32 beadid, const CoordGroup &coords)
+FFBeadChange Patches::update(quint32 beadid, const CoordGroup &coords)
 {
     int old_idx = getIdx(beadid);
-    
+
     //is this changing patch?
-    QPair<int,Vector> new_idx = patching().patchIndexAndCenter(coords.aaBox().center());
-    
+    QPair<int,Vector> new_idx = patching()
+                                    .patchIndexAndCenter(coords.aaBox().center());
+
     if (new_idx.first == old_idx)
     {
         //just update the coordinates
-        ptchs.data()[old_idx].update(beadid, 
-                                     space().getMinimumImage(coords,new_idx.second));
+        return ptchs.data()[old_idx].update(beadid, 
+                                 space().getMinimumImage(coords,new_idx.second));
     }
     else
     {
         FFParametersPtr old_params = ptchs.constData()[old_idx]
-                                          .parameters()[ptchs.constData()[old_idx]
-                                                             .getLocation(beadid)];
-        
-        ptchs.data()[new_idx.first].add(beadid,
-                                        space().getMinimumImage(coords,new_idx.second),
-                                        old_params.read());
-                                 
-        ptchs.data()[old_idx].remove(beadid);
+                                      .parameters()[ptchs.constData()[old_idx]
+                                                         .getLocation(beadid)];
+    
+        FFBead added = ptchs.data()[new_idx.first].add(beadid,
+                                      space().getMinimumImage(coords,new_idx.second),
+                                      old_params.read());
+                             
+        return FFBeadChange(ptchs.data()[old_idx].remove(beadid), added);
     }
 }
 
@@ -444,10 +616,10 @@ void Patches::update(quint32 beadid, const CoordGroup &coords)
     \throw SireError::invalid_key
     \throw SireError::incompatible_error
 */
-void Patches::update(quint32 beadid, const FFParameters &params)
+FFBeadChange Patches::update(quint32 beadid, const FFParameters &params)
 {
     int idx = getIdx(beadid);
-    ptchs.data()[idx].update(beadid, params);
+    return ptchs.data()[idx].update(beadid, params);
 }
 
 /** Update the bead with ID 'beadid' with the passed coordinates and parameters
@@ -455,8 +627,8 @@ void Patches::update(quint32 beadid, const FFParameters &params)
     \throw SireError:::invalid_key
     \throw SireError::incompatible_error
 */
-void Patches::update(quint32 beadid, const CoordGroup &coords,
-                     const FFParameters &params)
+FFBeadChange Patches::update(quint32 beadid, const CoordGroup &coords,
+                             const FFParameters &params)
 {
     int old_idx = getIdx(beadid);
     
@@ -465,18 +637,19 @@ void Patches::update(quint32 beadid, const CoordGroup &coords,
     
     if (new_idx.first == old_idx)
     {
-        //just update the coordinates
-        ptchs.data()[old_idx].update(beadid, 
+        //just update the coordinates and parameters in place
+        return ptchs.data()[old_idx].update(beadid, 
                                      space().getMinimumImage(coords,new_idx.second),
                                      params);
     }
     else
     {
-        ptchs.data()[new_idx.first].add(beadid,
-                                        space().getMinimumImage(coords,new_idx.second),
-                                        params);
+        //add the bead to its new patch, and remove from the old patch
+        FFBead added = ptchs.data()[new_idx.first].add(beadid,
+                                       space().getMinimumImage(coords,new_idx.second),
+                                       params);
                                  
-        ptchs.data()[old_idx].remove(beadid);
+        return FFBeadChange(ptchs.data()[old_idx].remove(beadid), added);
     }
 }
 
@@ -486,7 +659,8 @@ void Patches::update(quint32 beadid, const CoordGroup &coords,
     \throw SireError:::invalid_key
     \throw SireError::incompatible_error
 */
-void Patches::update(const QVector<quint32> &beadids, const CoordGroupArray &coords)
+QHash<quint32,FFBeadChange> Patches::update(const QVector<quint32> &beadids, 
+                                            const CoordGroupArray &coords)
 {
     if (beadids.count() != coords.count())
         throw SireError::program_bug( QObject::tr(
@@ -497,12 +671,21 @@ void Patches::update(const QVector<quint32> &beadids, const CoordGroupArray &coo
 
     Patches new_patches(*this);
     
+    QHash<quint32,FFBeadChange> deltas;
+    deltas.reserve(beadids.count());
+    
     for (int i=0; i<beadids.count(); ++i)
     {
-        new_patches.update( beadids.constData()[i], coords.constData()[i] );
+        FFBeadChange delta = new_patches
+                            .update( beadids.constData()[i], coords.constData()[i] );
+                            
+        if (not delta.isEmpty())
+            deltas.insert(beadids.constData()[i], delta);
     }
     
     this->operator=(new_patches);
+    
+    return deltas;
 }
 
 /** Update the beads with the passed bead IDs with the parameters in the
@@ -511,7 +694,8 @@ void Patches::update(const QVector<quint32> &beadids, const CoordGroupArray &coo
     \throw SireError:::invalid_key
     \throw SireError::incompatible_error
 */
-void Patches::update(const QVector<quint32> &beadids, const FFParametersArray &params)
+QHash<quint32,FFBeadChange> Patches::update(const QVector<quint32> &beadids, 
+                                            const FFParametersArray &params)
 {
     if (beadids.count() != params.count())
         throw SireError::program_bug( QObject::tr(
@@ -522,12 +706,21 @@ void Patches::update(const QVector<quint32> &beadids, const FFParametersArray &p
 
     Patches new_patches(*this);
     
+    QHash<quint32,FFBeadChange> deltas;
+    deltas.reserve(beadids.count());
+    
     for (int i=0; i<beadids.count(); ++i)
     {
-        new_patches.update( beadids.constData()[i], params[i].read() );
+        FFBeadChange delta = new_patches.update( beadids.constData()[i], 
+                                                 params[i].read() );
+        
+        if (not delta.isEmpty())
+            deltas.insert(beadids.constData()[i], delta);
     }
     
     this->operator=(new_patches);
+    
+    return deltas;
 }
 
 /** Update the beads with the passed bead IDs with the new
@@ -536,8 +729,9 @@ void Patches::update(const QVector<quint32> &beadids, const FFParametersArray &p
     \throw SireError:::invalid_key
     \throw SireError::incompatible_error
 */
-void Patches::update(const QVector<quint32> &beadids, const CoordGroupArray &coords,
-                     const FFParametersArray &params)
+QHash<quint32,FFBeadChange> Patches::update(const QVector<quint32> &beadids,
+                                            const CoordGroupArray &coords,
+                                      const FFParametersArray &params)
 {
     if (beadids.count() != params.count() or
         beadids.count() != coords.count())
@@ -550,37 +744,56 @@ void Patches::update(const QVector<quint32> &beadids, const CoordGroupArray &coo
 
     Patches new_patches(*this);
     
+    QHash<quint32,FFBeadChange> deltas;
+    deltas.reserve(beadids.count());
+    
     for (int i=0; i<beadids.count(); ++i)
     {
-        new_patches.update( beadids.constData()[i], 
-                            coords.constData()[i],
-                            params[i].read() );
+        FFBeadChange delta = new_patches.update( beadids.constData()[i], 
+                                                 coords.constData()[i],
+                                                 params[i].read() );
+                                              
+        if (not delta.isEmpty())
+            deltas.insert(beadids.constData()[i], delta);
     }
     
     this->operator=(new_patches);
+    
+    return deltas;
 }
 
 /** Remove the bead with ID 'beadid' */
-void Patches::remove(quint32 beadid)
+FFBeadChange Patches::remove(quint32 beadid)
 {
     int idx = beadid_to_patch.value(beadid, -1);
     
     if (idx != -1)
     {
-        ptchs.data()[idx].remove(beadid);
+        FFBead old_bead = ptchs.data()[idx].remove(beadid);
         beadid_to_patch.remove(beadid);
+        return FFBeadChange(old_bead, FFBead());
     }
+    else
+        return FFBeadChange();
 }
 
 /** Remove the beads whose indicies are in 'beadids' */
-void Patches::remove(const QVector<quint32> &beadids)
+QHash<quint32,FFBeadChange> Patches::remove(const QVector<quint32> &beadids)
 {
     Patches new_patches(*this);
     
+    QHash<quint32,FFBeadChange> deltas;
+    deltas.reserve(beadids.count());
+    
     for (int i=0; i<beadids.count(); ++i)
     {
-        new_patches.remove( beadids.constData()[i] );
+        FFBeadChange delta = new_patches.remove( beadids.constData()[i] );
+        
+        if (not delta.isEmpty())
+            deltas.insert(beadids.constData()[i], delta);
     }
+    
+    return deltas;
 }
 
 /** Remove all of the beads from the patches */

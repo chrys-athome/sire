@@ -176,6 +176,11 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, NullPatching &nullpatchi
 NullPatching::NullPatching() : ConcreteProperty<NullPatching,Patching>()
 {}
 
+/** Construct with the passed space */
+NullPatching::NullPatching(const Space &space)
+             : ConcreteProperty<NullPatching,Patching>(space)
+{}
+
 /** Copy constructor */
 NullPatching::NullPatching(const NullPatching &other)
              : ConcreteProperty<NullPatching,Patching>(other)
@@ -230,7 +235,7 @@ QPair<int,Vector> NullPatching::patchIndexAndCenter(const Vector &point) const
 /** Repatch this patching for the passed space */
 PatchingPtr NullPatching::repatch(const Space &new_space) const
 {
-    return *this;
+    return NullPatching(new_space);
 }
 
 /////////////
