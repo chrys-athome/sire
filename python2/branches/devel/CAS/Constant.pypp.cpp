@@ -41,9 +41,8 @@ void register_Constant_class(){
 
     { //::SireCAS::Constant
         typedef bp::class_< SireCAS::Constant, bp::bases< SireCAS::ExBase > > Constant_exposer_t;
-        Constant_exposer_t Constant_exposer = Constant_exposer_t( "Constant" );
+        Constant_exposer_t Constant_exposer = Constant_exposer_t( "Constant", bp::init< >() );
         bp::scope Constant_scope( Constant_exposer );
-        Constant_exposer.def( bp::init< >() );
         Constant_exposer.def( bp::init< SireCAS::Constant const & >(( bp::arg("other") )) );
         { //::SireCAS::Constant::children
         

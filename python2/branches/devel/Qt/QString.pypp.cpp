@@ -30,7 +30,7 @@ void register_QString_class(){
 
     { //::QString
         typedef bp::class_< QString > QString_exposer_t;
-        QString_exposer_t QString_exposer = QString_exposer_t( "QString" );
+        QString_exposer_t QString_exposer = QString_exposer_t( "QString", bp::init< >() );
         bp::scope QString_scope( QString_exposer );
         bp::enum_< QString::NormalizationForm>("NormalizationForm")
             .value("NormalizationForm_D", QString::NormalizationForm_D)
@@ -52,7 +52,6 @@ void register_QString_class(){
             .value("SkipEmptyParts", QString::SkipEmptyParts)
             .export_values()
             ;
-        QString_exposer.def( bp::init< >() );
         QString_exposer.def( bp::init< QChar const *, int >(( bp::arg("unicode"), bp::arg("size") )) );
         QString_exposer.def( bp::init< QChar >(( bp::arg("c") )) );
         QString_exposer.def( bp::init< int, QChar >(( bp::arg("size"), bp::arg("c") )) );

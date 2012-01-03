@@ -50,9 +50,8 @@ void register_SegStructureEditor_class(){
 
     { //::SireMol::SegStructureEditor
         typedef bp::class_< SireMol::SegStructureEditor > SegStructureEditor_exposer_t;
-        SegStructureEditor_exposer_t SegStructureEditor_exposer = SegStructureEditor_exposer_t( "SegStructureEditor" );
+        SegStructureEditor_exposer_t SegStructureEditor_exposer = SegStructureEditor_exposer_t( "SegStructureEditor", bp::init< >() );
         bp::scope SegStructureEditor_scope( SegStructureEditor_exposer );
-        SegStructureEditor_exposer.def( bp::init< >() );
         SegStructureEditor_exposer.def( bp::init< SireMol::Segment const & >(( bp::arg("residue") )) );
         SegStructureEditor_exposer.def( bp::init< SireMol::StructureEditor const &, SireMol::SegIdx >(( bp::arg("data"), bp::arg("residx") )) );
         SegStructureEditor_exposer.def( bp::init< SireMol::SegStructureEditor const & >(( bp::arg("other") )) );

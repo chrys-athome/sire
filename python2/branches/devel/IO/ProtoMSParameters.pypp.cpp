@@ -97,9 +97,8 @@ void register_ProtoMSParameters_class(){
 
     { //::SireIO::ProtoMSParameters
         typedef bp::class_< SireIO::ProtoMSParameters > ProtoMSParameters_exposer_t;
-        ProtoMSParameters_exposer_t ProtoMSParameters_exposer = ProtoMSParameters_exposer_t( "ProtoMSParameters" );
+        ProtoMSParameters_exposer_t ProtoMSParameters_exposer = ProtoMSParameters_exposer_t( "ProtoMSParameters", bp::init< >() );
         bp::scope ProtoMSParameters_scope( ProtoMSParameters_exposer );
-        ProtoMSParameters_exposer.def( bp::init< >() );
         { //::SireIO::ProtoMSParameters::angle
         
             typedef ::SireBase::PropertyName const & ( ::SireIO::ProtoMSParameters::*angle_function_type )(  ) const;

@@ -39,9 +39,8 @@ void register_ArcSinh_class(){
 
     { //::SireCAS::ArcSinh
         typedef bp::class_< SireCAS::ArcSinh, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > ArcSinh_exposer_t;
-        ArcSinh_exposer_t ArcSinh_exposer = ArcSinh_exposer_t( "ArcSinh" );
+        ArcSinh_exposer_t ArcSinh_exposer = ArcSinh_exposer_t( "ArcSinh", bp::init< >() );
         bp::scope ArcSinh_scope( ArcSinh_exposer );
-        ArcSinh_exposer.def( bp::init< >() );
         ArcSinh_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         ArcSinh_exposer.def( bp::init< SireCAS::ArcSinh const & >(( bp::arg("other") )) );
         { //::SireCAS::ArcSinh::evaluate

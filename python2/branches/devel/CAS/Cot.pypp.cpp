@@ -31,9 +31,8 @@ void register_Cot_class(){
 
     { //::SireCAS::Cot
         typedef bp::class_< SireCAS::Cot, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Cot_exposer_t;
-        Cot_exposer_t Cot_exposer = Cot_exposer_t( "Cot" );
+        Cot_exposer_t Cot_exposer = Cot_exposer_t( "Cot", bp::init< >() );
         bp::scope Cot_scope( Cot_exposer );
-        Cot_exposer.def( bp::init< >() );
         Cot_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Cot_exposer.def( bp::init< SireCAS::Cot const & >(( bp::arg("other") )) );
         { //::SireCAS::Cot::evaluate

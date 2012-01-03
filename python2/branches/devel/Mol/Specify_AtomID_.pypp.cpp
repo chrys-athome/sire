@@ -63,9 +63,8 @@ void register_Specify_AtomID__class(){
 
     { //::SireID::Specify< SireMol::AtomID >
         typedef bp::class_< SireID::Specify< SireMol::AtomID >, bp::bases< SireMol::AtomID, SireID::ID > > Specify_AtomID__exposer_t;
-        Specify_AtomID__exposer_t Specify_AtomID__exposer = Specify_AtomID__exposer_t( "Specify_AtomID_" );
+        Specify_AtomID__exposer_t Specify_AtomID__exposer = Specify_AtomID__exposer_t( "Specify_AtomID_", bp::init< >() );
         bp::scope Specify_AtomID__scope( Specify_AtomID__exposer );
-        Specify_AtomID__exposer.def( bp::init< >() );
         Specify_AtomID__exposer.def( bp::init< SireMol::AtomID const &, qint32 >(( bp::arg("id"), bp::arg("i") )) );
         Specify_AtomID__exposer.def( bp::init< SireMol::AtomID const &, qint32, qint32 >(( bp::arg("id"), bp::arg("i"), bp::arg("j") )) );
         Specify_AtomID__exposer.def( bp::init< SireID::Specify< SireMol::AtomID > const & >(( bp::arg("other") )) );

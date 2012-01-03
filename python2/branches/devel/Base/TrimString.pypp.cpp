@@ -27,9 +27,8 @@ void register_TrimString_class(){
 
     { //::SireBase::TrimString
         typedef bp::class_< SireBase::TrimString, bp::bases< SireBase::StringMangler, SireBase::Property > > TrimString_exposer_t;
-        TrimString_exposer_t TrimString_exposer = TrimString_exposer_t( "TrimString" );
+        TrimString_exposer_t TrimString_exposer = TrimString_exposer_t( "TrimString", bp::init< >() );
         bp::scope TrimString_scope( TrimString_exposer );
-        TrimString_exposer.def( bp::init< >() );
         TrimString_exposer.def( bp::init< SireBase::TrimString const & >(( bp::arg("other") )) );
         { //::SireBase::TrimString::mangle
         

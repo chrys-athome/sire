@@ -35,9 +35,8 @@ void register_ArcSin_class(){
 
     { //::SireCAS::ArcSin
         typedef bp::class_< SireCAS::ArcSin, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > ArcSin_exposer_t;
-        ArcSin_exposer_t ArcSin_exposer = ArcSin_exposer_t( "ArcSin" );
+        ArcSin_exposer_t ArcSin_exposer = ArcSin_exposer_t( "ArcSin", bp::init< >() );
         bp::scope ArcSin_scope( ArcSin_exposer );
-        ArcSin_exposer.def( bp::init< >() );
         ArcSin_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         ArcSin_exposer.def( bp::init< SireCAS::ArcSin const & >(( bp::arg("other") )) );
         { //::SireCAS::ArcSin::evaluate

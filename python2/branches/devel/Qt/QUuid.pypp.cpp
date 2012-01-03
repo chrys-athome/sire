@@ -28,7 +28,7 @@ void register_QUuid_class(){
 
     { //::QUuid
         typedef bp::class_< QUuid > QUuid_exposer_t;
-        QUuid_exposer_t QUuid_exposer = QUuid_exposer_t( "QUuid" );
+        QUuid_exposer_t QUuid_exposer = QUuid_exposer_t( "QUuid", bp::init< >() );
         bp::scope QUuid_scope( QUuid_exposer );
         bp::enum_< QUuid::Variant>("Variant")
             .value("VarUnknown", QUuid::VarUnknown)
@@ -46,7 +46,6 @@ void register_QUuid_class(){
             .value("Random", QUuid::Random)
             .export_values()
             ;
-        QUuid_exposer.def( bp::init< >() );
         QUuid_exposer.def( bp::init< uint, ushort, ushort, uchar, uchar, uchar, uchar, uchar, uchar, uchar, uchar >(( bp::arg("l"), bp::arg("w1"), bp::arg("w2"), bp::arg("b1"), bp::arg("b2"), bp::arg("b3"), bp::arg("b4"), bp::arg("b5"), bp::arg("b6"), bp::arg("b7"), bp::arg("b8") )) );
         QUuid_exposer.def( bp::init< QString const & >(( bp::arg("arg0") )) );
         QUuid_exposer.def( bp::init< char const * >(( bp::arg("arg0") )) );

@@ -44,9 +44,8 @@ void register_PerturbationConstraint_class(){
 
     { //::SireSystem::PerturbationConstraint
         typedef bp::class_< SireSystem::PerturbationConstraint, bp::bases< SireSystem::MoleculeConstraint, SireSystem::Constraint, SireBase::Property > > PerturbationConstraint_exposer_t;
-        PerturbationConstraint_exposer_t PerturbationConstraint_exposer = PerturbationConstraint_exposer_t( "PerturbationConstraint" );
+        PerturbationConstraint_exposer_t PerturbationConstraint_exposer = PerturbationConstraint_exposer_t( "PerturbationConstraint", bp::init< >() );
         bp::scope PerturbationConstraint_scope( PerturbationConstraint_exposer );
-        PerturbationConstraint_exposer.def( bp::init< >() );
         PerturbationConstraint_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         PerturbationConstraint_exposer.def( bp::init< SireSystem::PerturbationConstraint const & >(( bp::arg("other") )) );
         { //::SireSystem::PerturbationConstraint::moleculeGroup

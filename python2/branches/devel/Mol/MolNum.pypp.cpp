@@ -35,9 +35,8 @@ void register_MolNum_class(){
 
     { //::SireMol::MolNum
         typedef bp::class_< SireMol::MolNum, bp::bases< SireMol::MolID, SireID::ID, SireID::Number > > MolNum_exposer_t;
-        MolNum_exposer_t MolNum_exposer = MolNum_exposer_t( "MolNum" );
+        MolNum_exposer_t MolNum_exposer = MolNum_exposer_t( "MolNum", bp::init< >() );
         bp::scope MolNum_scope( MolNum_exposer );
-        MolNum_exposer.def( bp::init< >() );
         MolNum_exposer.def( bp::init< quint32 >(( bp::arg("num") )) );
         MolNum_exposer.def( bp::init< SireMol::MolNum const & >(( bp::arg("other") )) );
         { //::SireMol::MolNum::getUniqueNumber

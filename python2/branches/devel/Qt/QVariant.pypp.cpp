@@ -28,7 +28,7 @@ void register_QVariant_class(){
 
     { //::QVariant
         typedef bp::class_< QVariant > QVariant_exposer_t;
-        QVariant_exposer_t QVariant_exposer = QVariant_exposer_t( "QVariant" );
+        QVariant_exposer_t QVariant_exposer = QVariant_exposer_t( "QVariant", bp::init< >() );
         bp::scope QVariant_scope( QVariant_exposer );
         bp::enum_< QVariant::Type>("Type")
             .value("Invalid", QVariant::Invalid)
@@ -82,7 +82,6 @@ void register_QVariant_class(){
             .value("LastType", QVariant::LastType)
             .export_values()
             ;
-        QVariant_exposer.def( bp::init< >() );
         QVariant_exposer.def( bp::init< QVariant::Type >(( bp::arg("type") )) );
         QVariant_exposer.def( bp::init< QVariant const & >(( bp::arg("other") )) );
         QVariant_exposer.def( bp::init< QDataStream & >(( bp::arg("s") )) );

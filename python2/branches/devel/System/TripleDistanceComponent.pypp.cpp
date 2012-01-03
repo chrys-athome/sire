@@ -34,9 +34,8 @@ void register_TripleDistanceComponent_class(){
 
     { //::SireSystem::TripleDistanceComponent
         typedef bp::class_< SireSystem::TripleDistanceComponent, bp::bases< SireSystem::GeometryComponent, SireSystem::Constraint, SireBase::Property > > TripleDistanceComponent_exposer_t;
-        TripleDistanceComponent_exposer_t TripleDistanceComponent_exposer = TripleDistanceComponent_exposer_t( "TripleDistanceComponent" );
+        TripleDistanceComponent_exposer_t TripleDistanceComponent_exposer = TripleDistanceComponent_exposer_t( "TripleDistanceComponent", bp::init< >() );
         bp::scope TripleDistanceComponent_scope( TripleDistanceComponent_exposer );
-        TripleDistanceComponent_exposer.def( bp::init< >() );
         TripleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("point4"), bp::arg("point5"), bp::arg("map")=SireBase::PropertyMap() )) );
         TripleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("point4"), bp::arg("point5"), bp::arg("geometry_expression"), bp::arg("map")=SireBase::PropertyMap() )) );
         TripleDistanceComponent_exposer.def( bp::init< SireSystem::TripleDistanceComponent const & >(( bp::arg("other") )) );

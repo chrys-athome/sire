@@ -26,9 +26,8 @@ void register_CGsWithAtoms_class(){
 
     { //::SireMol::CGsWithAtoms
         typedef bp::class_< SireMol::CGsWithAtoms, bp::bases< SireMol::CGID, SireID::ID > > CGsWithAtoms_exposer_t;
-        CGsWithAtoms_exposer_t CGsWithAtoms_exposer = CGsWithAtoms_exposer_t( "CGsWithAtoms" );
+        CGsWithAtoms_exposer_t CGsWithAtoms_exposer = CGsWithAtoms_exposer_t( "CGsWithAtoms", bp::init< >() );
         bp::scope CGsWithAtoms_scope( CGsWithAtoms_exposer );
-        CGsWithAtoms_exposer.def( bp::init< >() );
         CGsWithAtoms_exposer.def( bp::init< SireMol::AtomID const & >(( bp::arg("atomid") )) );
         CGsWithAtoms_exposer.def( bp::init< SireMol::CGsWithAtoms const & >(( bp::arg("other") )) );
         { //::SireMol::CGsWithAtoms::atomID

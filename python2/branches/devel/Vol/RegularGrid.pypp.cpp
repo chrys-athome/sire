@@ -31,9 +31,8 @@ void register_RegularGrid_class(){
 
     { //::SireVol::RegularGrid
         typedef bp::class_< SireVol::RegularGrid, bp::bases< SireVol::Grid, SireBase::Property > > RegularGrid_exposer_t;
-        RegularGrid_exposer_t RegularGrid_exposer = RegularGrid_exposer_t( "RegularGrid" );
+        RegularGrid_exposer_t RegularGrid_exposer = RegularGrid_exposer_t( "RegularGrid", bp::init< >() );
         bp::scope RegularGrid_scope( RegularGrid_exposer );
-        RegularGrid_exposer.def( bp::init< >() );
         RegularGrid_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireUnits::Dimension::Length >(( bp::arg("min"), bp::arg("max"), bp::arg("gridsize") )) );
         RegularGrid_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Matrix const &, SireUnits::Dimension::Length >(( bp::arg("min"), bp::arg("max"), bp::arg("basis"), bp::arg("gridsize") )) );
         RegularGrid_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Quaternion const &, SireUnits::Dimension::Length >(( bp::arg("min"), bp::arg("max"), bp::arg("basis"), bp::arg("gridsize") )) );

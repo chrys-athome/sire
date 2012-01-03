@@ -55,9 +55,8 @@ void register_ZMatrixCoords_class(){
 
     { //::SireMove::ZMatrixCoords
         typedef bp::class_< SireMove::ZMatrixCoords, bp::bases< SireMol::MoleculeProperty, SireMol::MolViewProperty, SireBase::Property > > ZMatrixCoords_exposer_t;
-        ZMatrixCoords_exposer_t ZMatrixCoords_exposer = ZMatrixCoords_exposer_t( "ZMatrixCoords" );
+        ZMatrixCoords_exposer_t ZMatrixCoords_exposer = ZMatrixCoords_exposer_t( "ZMatrixCoords", bp::init< >() );
         bp::scope ZMatrixCoords_scope( ZMatrixCoords_exposer );
-        ZMatrixCoords_exposer.def( bp::init< >() );
         ZMatrixCoords_exposer.def( bp::init< SireMol::PartialMolecule const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() )) );
         ZMatrixCoords_exposer.def( bp::init< SireMove::ZMatrix const &, SireMol::PartialMolecule const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("zmatrix"), bp::arg("molecule"), bp::arg("map")=SireBase::PropertyMap() )) );
         ZMatrixCoords_exposer.def( bp::init< SireMove::ZMatrix const &, SireMol::AtomCoords const & >(( bp::arg("zmatrix"), bp::arg("coords") )) );

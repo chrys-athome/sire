@@ -51,9 +51,8 @@ void register_ResEditor_class(){
 
     { //::SireMol::ResEditor
         typedef bp::class_< SireMol::ResEditor, bp::bases< SireMol::Editor<SireMol::ResEditor, SireMol::Residue>, SireMol::Residue, SireMol::MoleculeView, SireBase::Property > > ResEditor_exposer_t;
-        ResEditor_exposer_t ResEditor_exposer = ResEditor_exposer_t( "ResEditor" );
+        ResEditor_exposer_t ResEditor_exposer = ResEditor_exposer_t( "ResEditor", bp::init< >() );
         bp::scope ResEditor_scope( ResEditor_exposer );
-        ResEditor_exposer.def( bp::init< >() );
         ResEditor_exposer.def( bp::init< SireMol::Residue const & >(( bp::arg("residue") )) );
         ResEditor_exposer.def( bp::init< SireMol::ResEditor const & >(( bp::arg("other") )) );
         { //::SireMol::ResEditor::add

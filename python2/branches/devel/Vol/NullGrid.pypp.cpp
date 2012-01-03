@@ -31,9 +31,8 @@ void register_NullGrid_class(){
 
     { //::SireVol::NullGrid
         typedef bp::class_< SireVol::NullGrid, bp::bases< SireVol::Grid, SireBase::Property > > NullGrid_exposer_t;
-        NullGrid_exposer_t NullGrid_exposer = NullGrid_exposer_t( "NullGrid" );
+        NullGrid_exposer_t NullGrid_exposer = NullGrid_exposer_t( "NullGrid", bp::init< >() );
         bp::scope NullGrid_scope( NullGrid_exposer );
-        NullGrid_exposer.def( bp::init< >() );
         NullGrid_exposer.def( bp::init< SireVol::NullGrid const & >(( bp::arg("other") )) );
         NullGrid_exposer.def( bp::self != bp::self );
         { //::SireVol::NullGrid::operator=

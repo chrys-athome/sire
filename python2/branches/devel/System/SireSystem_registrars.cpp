@@ -5,6 +5,7 @@
 
 #include "distancecomponent.h"
 #include "perturbationconstraint.h"
+#include "energymonitor.h"
 #include "rdfmonitor.h"
 #include "polarisecharges.h"
 #include "monitormonitor.h"
@@ -40,6 +41,7 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::DoubleDistanceComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::TripleDistanceComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::PerturbationConstraint >();
+    ObjectRegistry::registerConverterFor< SireSystem::EnergyMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::RDF >();
     ObjectRegistry::registerConverterFor< SireSystem::RDFMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::PolariseCharges >();

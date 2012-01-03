@@ -44,9 +44,8 @@ void register_DihedralRestraint_class(){
 
     { //::SireMM::DihedralRestraint
         typedef bp::class_< SireMM::DihedralRestraint, bp::bases< SireMM::Restraint3D, SireMM::Restraint, SireBase::Property > > DihedralRestraint_exposer_t;
-        DihedralRestraint_exposer_t DihedralRestraint_exposer = DihedralRestraint_exposer_t( "DihedralRestraint" );
+        DihedralRestraint_exposer_t DihedralRestraint_exposer = DihedralRestraint_exposer_t( "DihedralRestraint", bp::init< >() );
         bp::scope DihedralRestraint_scope( DihedralRestraint_exposer );
-        DihedralRestraint_exposer.def( bp::init< >() );
         DihedralRestraint_exposer.def( bp::init< SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("restraint") )) );
         DihedralRestraint_exposer.def( bp::init< SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, SireCAS::Values const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("restraint"), bp::arg("values") )) );
         DihedralRestraint_exposer.def( bp::init< SireMM::DihedralRestraint const & >(( bp::arg("other") )) );

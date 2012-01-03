@@ -35,9 +35,8 @@ void register_SegAtomID_class(){
 
     { //::SireMol::GroupAtomID< SireMol::SegID, SireMol::AtomID >
         typedef bp::class_< SireMol::GroupAtomID< SireMol::SegID, SireMol::AtomID >, bp::bases< SireMol::GroupAtomIDBase, SireMol::AtomID, SireID::ID > > SegAtomID_exposer_t;
-        SegAtomID_exposer_t SegAtomID_exposer = SegAtomID_exposer_t( "SegAtomID" );
+        SegAtomID_exposer_t SegAtomID_exposer = SegAtomID_exposer_t( "SegAtomID", bp::init< >() );
         bp::scope SegAtomID_scope( SegAtomID_exposer );
-        SegAtomID_exposer.def( bp::init< >() );
         SegAtomID_exposer.def( bp::init< SireMol::SegID const &, SireMol::AtomID const & >(( bp::arg("group"), bp::arg("atom") )) );
         SegAtomID_exposer.def( bp::init< SireMol::GroupAtomID< SireMol::SegID, SireMol::AtomID > const & >(( bp::arg("other") )) );
         { //::SireMol::GroupAtomID< SireMol::SegID, SireMol::AtomID >::hash

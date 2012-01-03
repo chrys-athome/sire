@@ -25,9 +25,8 @@ void register_PointCharge_class(){
 
     { //::Squire::PointCharge
         typedef bp::class_< Squire::PointCharge > PointCharge_exposer_t;
-        PointCharge_exposer_t PointCharge_exposer = PointCharge_exposer_t( "PointCharge" );
+        PointCharge_exposer_t PointCharge_exposer = PointCharge_exposer_t( "PointCharge", bp::init< >() );
         bp::scope PointCharge_scope( PointCharge_exposer );
-        PointCharge_exposer.def( bp::init< >() );
         PointCharge_exposer.def( bp::init< SireMaths::Vector const &, SireUnits::Dimension::Charge const & >(( bp::arg("coords"), bp::arg("charge") )) );
         PointCharge_exposer.def( bp::init< SireUnits::Dimension::Charge const &, SireMaths::Vector const & >(( bp::arg("charge"), bp::arg("coords") )) );
         PointCharge_exposer.def( bp::init< Squire::PointCharge const & >(( bp::arg("other") )) );

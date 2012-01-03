@@ -29,9 +29,8 @@ void register_AABox_class(){
 
     { //::SireVol::AABox
         typedef bp::class_< SireVol::AABox > AABox_exposer_t;
-        AABox_exposer_t AABox_exposer = AABox_exposer_t( "AABox" );
+        AABox_exposer_t AABox_exposer = AABox_exposer_t( "AABox", bp::init< >() );
         bp::scope AABox_scope( AABox_exposer );
-        AABox_exposer.def( bp::init< >() );
         AABox_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("point") )) );
         AABox_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("cent"), bp::arg("extents") )) );
         AABox_exposer.def( bp::init< QVector< SireMaths::Vector > const & >(( bp::arg("coordinates") )) );

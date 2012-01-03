@@ -27,6 +27,8 @@
 
 #include "DoubleDistanceComponent.pypp.hpp"
 
+#include "EnergyMonitor.pypp.hpp"
+
 #include "GeometryComponent.pypp.hpp"
 
 #include "IDAndSet_MonitorID_.pypp.hpp"
@@ -146,9 +148,11 @@ BOOST_PYTHON_MODULE(_System){
 
     register_DoubleDistanceComponent_class();
 
-    register_IdentityConstraint_class();
-
     register_SystemMonitor_class();
+
+    register_EnergyMonitor_class();
+
+    register_IdentityConstraint_class();
 
     register_MonitorComponent_class();
 

@@ -25,9 +25,8 @@ void register_MonitorName_class(){
 
     { //::SireSystem::MonitorName
         typedef bp::class_< SireSystem::MonitorName, bp::bases< SireSystem::MonitorID, SireID::ID, SireID::Name > > MonitorName_exposer_t;
-        MonitorName_exposer_t MonitorName_exposer = MonitorName_exposer_t( "MonitorName" );
+        MonitorName_exposer_t MonitorName_exposer = MonitorName_exposer_t( "MonitorName", bp::init< >() );
         bp::scope MonitorName_scope( MonitorName_exposer );
-        MonitorName_exposer.def( bp::init< >() );
         MonitorName_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         MonitorName_exposer.def( bp::init< SireSystem::MonitorName const & >(( bp::arg("other") )) );
         { //::SireSystem::MonitorName::hash

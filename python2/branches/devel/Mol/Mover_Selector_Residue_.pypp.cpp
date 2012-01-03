@@ -81,9 +81,8 @@ void register_Mover_Selector_Residue__class(){
 
     { //::SireMol::Mover< SireMol::Selector< SireMol::Residue > >
         typedef bp::class_< SireMol::Mover< SireMol::Selector< SireMol::Residue > >, bp::bases< SireMol::MoverBase, SireMol::Selector<SireMol::Residue>, SireMol::MoleculeView, SireBase::Property > > Mover_Selector_Residue__exposer_t;
-        Mover_Selector_Residue__exposer_t Mover_Selector_Residue__exposer = Mover_Selector_Residue__exposer_t( "Mover_Selector_Residue_" );
+        Mover_Selector_Residue__exposer_t Mover_Selector_Residue__exposer = Mover_Selector_Residue__exposer_t( "Mover_Selector_Residue_", bp::init< >() );
         bp::scope Mover_Selector_Residue__scope( Mover_Selector_Residue__exposer );
-        Mover_Selector_Residue__exposer.def( bp::init< >() );
         Mover_Selector_Residue__exposer.def( bp::init< SireMol::Selector< SireMol::Residue > const & >(( bp::arg("view") )) );
         Mover_Selector_Residue__exposer.def( bp::init< SireMol::Selector< SireMol::Residue > const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Selector_Residue__exposer.def( bp::init< SireMol::Mover< SireMol::Selector< SireMol::Residue > > const & >(( bp::arg("other") )) );

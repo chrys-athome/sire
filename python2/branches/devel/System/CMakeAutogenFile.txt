@@ -10,6 +10,7 @@ set ( PYPP_SOURCES
        DihedralComponent.pypp.cpp
        DistanceComponent.pypp.cpp
        DoubleDistanceComponent.pypp.cpp
+       EnergyMonitor.pypp.cpp
        GeometryComponent.pypp.cpp
        IDAndSet_MonitorID_.pypp.cpp
        IDAndSet_SysID_.pypp.cpp

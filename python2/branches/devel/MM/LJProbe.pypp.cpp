@@ -25,9 +25,8 @@ void register_LJProbe_class(){
 
     { //::SireMM::LJProbe
         typedef bp::class_< SireMM::LJProbe, bp::bases< SireFF::Probe, SireBase::Property > > LJProbe_exposer_t;
-        LJProbe_exposer_t LJProbe_exposer = LJProbe_exposer_t( "LJProbe" );
+        LJProbe_exposer_t LJProbe_exposer = LJProbe_exposer_t( "LJProbe", bp::init< >() );
         bp::scope LJProbe_scope( LJProbe_exposer );
-        LJProbe_exposer.def( bp::init< >() );
         LJProbe_exposer.def( bp::init< SireMM::LJParameter const & >(( bp::arg("ljparam") )) );
         LJProbe_exposer.def( bp::init< SireMM::CLJProbe const & >(( bp::arg("cljprobe") )) );
         LJProbe_exposer.def( bp::init< SireFF::Probe const & >(( bp::arg("probe") )) );

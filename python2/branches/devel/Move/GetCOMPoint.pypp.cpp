@@ -44,9 +44,8 @@ void register_GetCOMPoint_class(){
 
     { //::SireMove::GetCOMPoint
         typedef bp::class_< SireMove::GetCOMPoint, bp::bases< SireMove::GetPoint, SireBase::Property > > GetCOMPoint_exposer_t;
-        GetCOMPoint_exposer_t GetCOMPoint_exposer = GetCOMPoint_exposer_t( "GetCOMPoint" );
+        GetCOMPoint_exposer_t GetCOMPoint_exposer = GetCOMPoint_exposer_t( "GetCOMPoint", bp::init< >() );
         bp::scope GetCOMPoint_scope( GetCOMPoint_exposer );
-        GetCOMPoint_exposer.def( bp::init< >() );
         GetCOMPoint_exposer.def( bp::init< SireMol::AtomID const & >(( bp::arg("atomid") )) );
         GetCOMPoint_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("atomid0"), bp::arg("atomid1") )) );
         GetCOMPoint_exposer.def( bp::init< QList< SireMol::AtomIdentifier > const & >(( bp::arg("atomids") )) );

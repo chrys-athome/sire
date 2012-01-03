@@ -23,9 +23,8 @@ void register_BeadFloatProperty_class(){
 
     { //::SireMol::BeadProperty< double >
         typedef bp::class_< SireMol::BeadProperty< double >, bp::bases< SireMol::BeadProp, SireMol::MolViewProperty, SireBase::Property > > BeadFloatProperty_exposer_t;
-        BeadFloatProperty_exposer_t BeadFloatProperty_exposer = BeadFloatProperty_exposer_t( "BeadFloatProperty" );
+        BeadFloatProperty_exposer_t BeadFloatProperty_exposer = BeadFloatProperty_exposer_t( "BeadFloatProperty", bp::init< >() );
         bp::scope BeadFloatProperty_scope( BeadFloatProperty_exposer );
-        BeadFloatProperty_exposer.def( bp::init< >() );
         BeadFloatProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireMol::Beading const & >(( bp::arg("molinfo"), bp::arg("beading") )) );
         BeadFloatProperty_exposer.def( bp::init< QVector< double > const &, SireMol::Beading const & >(( bp::arg("values"), bp::arg("beading") )) );
         BeadFloatProperty_exposer.def( bp::init< SireMol::BeadProperty< double > const & >(( bp::arg("other") )) );

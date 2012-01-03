@@ -57,9 +57,8 @@ void register_FlexibilityLibrary_class(){
 
     { //::SireIO::FlexibilityLibrary
         typedef bp::class_< SireIO::FlexibilityLibrary, bp::bases< SireBase::Property > > FlexibilityLibrary_exposer_t;
-        FlexibilityLibrary_exposer_t FlexibilityLibrary_exposer = FlexibilityLibrary_exposer_t( "FlexibilityLibrary" );
+        FlexibilityLibrary_exposer_t FlexibilityLibrary_exposer = FlexibilityLibrary_exposer_t( "FlexibilityLibrary", bp::init< >() );
         bp::scope FlexibilityLibrary_scope( FlexibilityLibrary_exposer );
-        FlexibilityLibrary_exposer.def( bp::init< >() );
         FlexibilityLibrary_exposer.def( bp::init< QString const & >(( bp::arg("file") )) );
         FlexibilityLibrary_exposer.def( bp::init< SireIO::FlexibilityLibrary const & >(( bp::arg("other") )) );
         { //::SireIO::FlexibilityLibrary::add

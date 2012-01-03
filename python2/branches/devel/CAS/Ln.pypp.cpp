@@ -29,9 +29,8 @@ void register_Ln_class(){
 
     { //::SireCAS::Ln
         typedef bp::class_< SireCAS::Ln, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Ln_exposer_t;
-        Ln_exposer_t Ln_exposer = Ln_exposer_t( "Ln" );
+        Ln_exposer_t Ln_exposer = Ln_exposer_t( "Ln", bp::init< >() );
         bp::scope Ln_scope( Ln_exposer );
-        Ln_exposer.def( bp::init< >() );
         Ln_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("expression") )) );
         Ln_exposer.def( bp::init< SireCAS::Ln const & >(( bp::arg("other") )) );
         { //::SireCAS::Ln::evaluate

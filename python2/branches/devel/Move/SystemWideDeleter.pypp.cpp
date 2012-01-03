@@ -34,9 +34,8 @@ void register_SystemWideDeleter_class(){
 
     { //::SireMove::SystemWideDeleter
         typedef bp::class_< SireMove::SystemWideDeleter, bp::bases< SireMove::MolDeleter, SireBase::Property > > SystemWideDeleter_exposer_t;
-        SystemWideDeleter_exposer_t SystemWideDeleter_exposer = SystemWideDeleter_exposer_t( "SystemWideDeleter" );
+        SystemWideDeleter_exposer_t SystemWideDeleter_exposer = SystemWideDeleter_exposer_t( "SystemWideDeleter", bp::init< >() );
         bp::scope SystemWideDeleter_scope( SystemWideDeleter_exposer );
-        SystemWideDeleter_exposer.def( bp::init< >() );
         SystemWideDeleter_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         SystemWideDeleter_exposer.def( bp::init< SireMove::Sampler const & >(( bp::arg("sampler") )) );
         SystemWideDeleter_exposer.def( bp::init< SireMove::SystemWideDeleter const & >(( bp::arg("other") )) );

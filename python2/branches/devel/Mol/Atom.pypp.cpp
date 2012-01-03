@@ -186,9 +186,8 @@ void register_Atom_class(){
 
     { //::SireMol::Atom
         typedef bp::class_< SireMol::Atom, bp::bases< SireMol::MoleculeView, SireBase::Property > > Atom_exposer_t;
-        Atom_exposer_t Atom_exposer = Atom_exposer_t( "Atom" );
+        Atom_exposer_t Atom_exposer = Atom_exposer_t( "Atom", bp::init< >() );
         bp::scope Atom_scope( Atom_exposer );
-        Atom_exposer.def( bp::init< >() );
         Atom_exposer.def( bp::init< SireMol::MoleculeView const &, SireMol::AtomID const & >(( bp::arg("molview"), bp::arg("atomid") )) );
         Atom_exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::AtomID const & >(( bp::arg("moldata"), bp::arg("atomid") )) );
         Atom_exposer.def( bp::init< SireMol::Atom const & >(( bp::arg("other") )) );

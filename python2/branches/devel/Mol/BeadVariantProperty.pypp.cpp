@@ -23,9 +23,8 @@ void register_BeadVariantProperty_class(){
 
     { //::SireMol::BeadProperty< QVariant >
         typedef bp::class_< SireMol::BeadProperty< QVariant >, bp::bases< SireMol::BeadProp, SireMol::MolViewProperty, SireBase::Property > > BeadVariantProperty_exposer_t;
-        BeadVariantProperty_exposer_t BeadVariantProperty_exposer = BeadVariantProperty_exposer_t( "BeadVariantProperty" );
+        BeadVariantProperty_exposer_t BeadVariantProperty_exposer = BeadVariantProperty_exposer_t( "BeadVariantProperty", bp::init< >() );
         bp::scope BeadVariantProperty_scope( BeadVariantProperty_exposer );
-        BeadVariantProperty_exposer.def( bp::init< >() );
         BeadVariantProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireMol::Beading const & >(( bp::arg("molinfo"), bp::arg("beading") )) );
         BeadVariantProperty_exposer.def( bp::init< QVector< QVariant > const &, SireMol::Beading const & >(( bp::arg("values"), bp::arg("beading") )) );
         BeadVariantProperty_exposer.def( bp::init< SireMol::BeadProperty< QVariant > const & >(( bp::arg("other") )) );

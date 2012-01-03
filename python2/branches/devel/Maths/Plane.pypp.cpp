@@ -23,9 +23,8 @@ void register_Plane_class(){
 
     { //::SireMaths::Plane
         typedef bp::class_< SireMaths::Plane > Plane_exposer_t;
-        Plane_exposer_t Plane_exposer = Plane_exposer_t( "Plane" );
+        Plane_exposer_t Plane_exposer = Plane_exposer_t( "Plane", bp::init< >() );
         bp::scope Plane_scope( Plane_exposer );
-        Plane_exposer.def( bp::init< >() );
         Plane_exposer.def( bp::init< SireMaths::Vector const &, double const & >(( bp::arg("normal"), bp::arg("distance") )) );
         Plane_exposer.def( bp::init< double const &, double const &, double const &, double const & >(( bp::arg("a"), bp::arg("b"), bp::arg("c"), bp::arg("d") )) );
         Plane_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("normal"), bp::arg("contains_point") )) );

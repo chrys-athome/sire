@@ -51,9 +51,8 @@ void register_Mopac_class(){
 
     { //::Squire::Mopac
         typedef bp::class_< Squire::Mopac, bp::bases< Squire::QMProgram, SireBase::Property > > Mopac_exposer_t;
-        Mopac_exposer_t Mopac_exposer = Mopac_exposer_t( "Mopac" );
+        Mopac_exposer_t Mopac_exposer = Mopac_exposer_t( "Mopac", bp::init< >() );
         bp::scope Mopac_scope( Mopac_exposer );
-        Mopac_exposer.def( bp::init< >() );
         Mopac_exposer.def( bp::init< QString const & >(( bp::arg("mopac") )) );
         Mopac_exposer.def( bp::init< Squire::Mopac const & >(( bp::arg("other") )) );
         { //::Squire::Mopac::calculateCharges

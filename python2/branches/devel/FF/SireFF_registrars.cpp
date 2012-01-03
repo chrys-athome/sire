@@ -48,6 +48,8 @@ void register_SireFF_objects()
     ObjectRegistry::registerConverterFor< SireFF::Center >();
     ObjectRegistry::registerConverterFor< SireFF::CenterOfGeometry >();
     ObjectRegistry::registerConverterFor< SireFF::CenterOfMass >();
+    ObjectRegistry::registerConverterFor< SireFF::FFBead >();
+    ObjectRegistry::registerConverterFor< SireFF::FFBeadChange >();
     ObjectRegistry::registerConverterFor< SireFF::Patches >();
     ObjectRegistry::registerConverterFor< SireFF::FFMolGroup >();
     ObjectRegistry::registerConverterFor< SireFF::SingleComponent >();

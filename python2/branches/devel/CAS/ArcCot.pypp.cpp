@@ -35,9 +35,8 @@ void register_ArcCot_class(){
 
     { //::SireCAS::ArcCot
         typedef bp::class_< SireCAS::ArcCot, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > ArcCot_exposer_t;
-        ArcCot_exposer_t ArcCot_exposer = ArcCot_exposer_t( "ArcCot" );
+        ArcCot_exposer_t ArcCot_exposer = ArcCot_exposer_t( "ArcCot", bp::init< >() );
         bp::scope ArcCot_scope( ArcCot_exposer );
-        ArcCot_exposer.def( bp::init< >() );
         ArcCot_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         ArcCot_exposer.def( bp::init< SireCAS::ArcCot const & >(( bp::arg("other") )) );
         { //::SireCAS::ArcCot::evaluate

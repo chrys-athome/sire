@@ -41,9 +41,8 @@ void register_RationalPower_class(){
 
     { //::SireCAS::RationalPower
         typedef bp::class_< SireCAS::RationalPower, bp::bases< SireCAS::PowerFunction, SireCAS::ExBase > > RationalPower_exposer_t;
-        RationalPower_exposer_t RationalPower_exposer = RationalPower_exposer_t( "RationalPower" );
+        RationalPower_exposer_t RationalPower_exposer = RationalPower_exposer_t( "RationalPower", bp::init< >() );
         bp::scope RationalPower_scope( RationalPower_exposer );
-        RationalPower_exposer.def( bp::init< >() );
         RationalPower_exposer.def( bp::init< SireCAS::Expression const &, SireMaths::Rational const & >(( bp::arg("expression"), bp::arg("power") )) );
         RationalPower_exposer.def( bp::init< SireCAS::RationalPower const & >(( bp::arg("other") )) );
         { //::SireCAS::RationalPower::evaluate

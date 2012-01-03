@@ -42,9 +42,8 @@ void register_Factor_class(){
 
     { //::SireCAS::Factor
         typedef bp::class_< SireCAS::Factor > Factor_exposer_t;
-        Factor_exposer_t Factor_exposer = Factor_exposer_t( "Factor" );
+        Factor_exposer_t Factor_exposer = Factor_exposer_t( "Factor", bp::init< >() );
         bp::scope Factor_scope( Factor_exposer );
-        Factor_exposer.def( bp::init< >() );
         Factor_exposer.def( bp::init< SireCAS::Symbol const &, double, double >(( bp::arg("symbol"), bp::arg("factor"), bp::arg("power") )) );
         Factor_exposer.def( bp::init< SireCAS::Symbol const &, SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("symbol"), bp::arg("factor"), bp::arg("power") )) );
         Factor_exposer.def( bp::init< SireCAS::Factor const & >(( bp::arg("other") )) );

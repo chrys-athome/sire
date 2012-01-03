@@ -40,9 +40,8 @@ void register_BondSymbols_class(){
 
     { //::SireMM::BondSymbols
         typedef bp::class_< SireMM::BondSymbols, bp::bases< SireMM::InternalSymbolsBase > > BondSymbols_exposer_t;
-        BondSymbols_exposer_t BondSymbols_exposer = BondSymbols_exposer_t( "BondSymbols" );
+        BondSymbols_exposer_t BondSymbols_exposer = BondSymbols_exposer_t( "BondSymbols", bp::init< >() );
         bp::scope BondSymbols_scope( BondSymbols_exposer );
-        BondSymbols_exposer.def( bp::init< >() );
         { //::SireMM::BondSymbols::r
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::BondSymbols::*r_function_type )(  ) const;

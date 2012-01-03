@@ -26,9 +26,8 @@ void register_SupraSubSystem_class(){
 
     { //::SireMove::SupraSubSystem
         typedef bp::class_< SireMove::SupraSubSystem, bp::bases< SireBase::Property > > SupraSubSystem_exposer_t;
-        SupraSubSystem_exposer_t SupraSubSystem_exposer = SupraSubSystem_exposer_t( "SupraSubSystem" );
+        SupraSubSystem_exposer_t SupraSubSystem_exposer = SupraSubSystem_exposer_t( "SupraSubSystem", bp::init< >() );
         bp::scope SupraSubSystem_scope( SupraSubSystem_exposer );
-        SupraSubSystem_exposer.def( bp::init< >() );
         SupraSubSystem_exposer.def( bp::init< SireMove::SupraSubSystem const & >(( bp::arg("other") )) );
         { //::SireMove::SupraSubSystem::clearAllStatistics
         

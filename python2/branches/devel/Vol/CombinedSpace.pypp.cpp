@@ -38,9 +38,8 @@ void register_CombinedSpace_class(){
 
     { //::SireVol::CombinedSpace
         typedef bp::class_< SireVol::CombinedSpace, bp::bases< SireVol::Space, SireBase::Property > > CombinedSpace_exposer_t;
-        CombinedSpace_exposer_t CombinedSpace_exposer = CombinedSpace_exposer_t( "CombinedSpace" );
+        CombinedSpace_exposer_t CombinedSpace_exposer = CombinedSpace_exposer_t( "CombinedSpace", bp::init< >() );
         bp::scope CombinedSpace_scope( CombinedSpace_exposer );
-        CombinedSpace_exposer.def( bp::init< >() );
         CombinedSpace_exposer.def( bp::init< SireVol::Space const & >(( bp::arg("space") )) );
         CombinedSpace_exposer.def( bp::init< SireVol::Space const &, SireVol::Space const & >(( bp::arg("space0"), bp::arg("space1") )) );
         CombinedSpace_exposer.def( bp::init< QList< SireBase::PropPtr< SireVol::Space > > const & >(( bp::arg("spaces") )) );

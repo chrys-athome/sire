@@ -59,9 +59,8 @@ void register_AtomsIn_SegID__class(){
 
     { //::SireMol::AtomsIn< SireMol::SegID >
         typedef bp::class_< SireMol::AtomsIn< SireMol::SegID >, bp::bases< SireMol::AtomID, SireID::ID > > AtomsIn_SegID__exposer_t;
-        AtomsIn_SegID__exposer_t AtomsIn_SegID__exposer = AtomsIn_SegID__exposer_t( "AtomsIn_SegID_" );
+        AtomsIn_SegID__exposer_t AtomsIn_SegID__exposer = AtomsIn_SegID__exposer_t( "AtomsIn_SegID_", bp::init< >() );
         bp::scope AtomsIn_SegID__scope( AtomsIn_SegID__exposer );
-        AtomsIn_SegID__exposer.def( bp::init< >() );
         AtomsIn_SegID__exposer.def( bp::init< SireMol::SegID const & >(( bp::arg("id") )) );
         AtomsIn_SegID__exposer.def( bp::init< SireMol::SegID const &, qint32 >(( bp::arg("id"), bp::arg("i") )) );
         AtomsIn_SegID__exposer.def( bp::init< SireMol::SegID const &, qint32, qint32 >(( bp::arg("id"), bp::arg("i"), bp::arg("j") )) );

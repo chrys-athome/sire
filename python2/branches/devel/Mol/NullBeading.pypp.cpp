@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "SireStream/shareddatastream.h"
 
+#include "atombeads.h"
+
 #include "atomidx.h"
 
 #include "atomselection.h"
@@ -23,7 +25,11 @@ namespace bp = boost::python;
 
 #include "beading.h"
 
+#include "moleculedata.h"
+
 #include "moleculeinfodata.h"
+
+#include <boost/noncopyable.hpp>
 
 #include "beading.h"
 
@@ -37,9 +43,8 @@ void register_NullBeading_class(){
 
     { //::SireMol::NullBeading
         typedef bp::class_< SireMol::NullBeading, bp::bases< SireMol::Beading, SireMol::MolViewProperty, SireBase::Property > > NullBeading_exposer_t;
-        NullBeading_exposer_t NullBeading_exposer = NullBeading_exposer_t( "NullBeading" );
+        NullBeading_exposer_t NullBeading_exposer = NullBeading_exposer_t( "NullBeading", bp::init< >() );
         bp::scope NullBeading_scope( NullBeading_exposer );
-        NullBeading_exposer.def( bp::init< >() );
         NullBeading_exposer.def( bp::init< SireMol::NullBeading const & >(( bp::arg("other") )) );
         NullBeading_exposer.def( bp::self != bp::self );
         { //::SireMol::NullBeading::operator=

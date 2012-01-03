@@ -44,9 +44,8 @@ void register_QMChargeConstraint_class(){
 
     { //::Squire::QMChargeConstraint
         typedef bp::class_< Squire::QMChargeConstraint, bp::bases< SireSystem::ChargeConstraint, SireSystem::MoleculeConstraint, SireSystem::Constraint, SireBase::Property > > QMChargeConstraint_exposer_t;
-        QMChargeConstraint_exposer_t QMChargeConstraint_exposer = QMChargeConstraint_exposer_t( "QMChargeConstraint" );
+        QMChargeConstraint_exposer_t QMChargeConstraint_exposer = QMChargeConstraint_exposer_t( "QMChargeConstraint", bp::init< >() );
         bp::scope QMChargeConstraint_scope( QMChargeConstraint_exposer );
-        QMChargeConstraint_exposer.def( bp::init< >() );
         QMChargeConstraint_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         QMChargeConstraint_exposer.def( bp::init< SireMol::MoleculeGroup const &, Squire::QMChargeCalculator const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("chargecalculator"), bp::arg("map")=SireBase::PropertyMap() )) );
         QMChargeConstraint_exposer.def( bp::init< Squire::QMChargeConstraint const & >(( bp::arg("other") )) );

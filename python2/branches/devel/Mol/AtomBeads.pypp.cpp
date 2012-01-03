@@ -24,9 +24,8 @@ void register_AtomBeads_class(){
 
     { //::SireMol::AtomProperty< SireMol::BeadNum >
         typedef bp::class_< SireMol::AtomProperty< SireMol::BeadNum >, bp::bases< SireMol::AtomProp, SireMol::MolViewProperty, SireBase::Property > > AtomBeads_exposer_t;
-        AtomBeads_exposer_t AtomBeads_exposer = AtomBeads_exposer_t( "AtomBeads" );
+        AtomBeads_exposer_t AtomBeads_exposer = AtomBeads_exposer_t( "AtomBeads", bp::init< >() );
         bp::scope AtomBeads_scope( AtomBeads_exposer );
-        AtomBeads_exposer.def( bp::init< >() );
         AtomBeads_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         AtomBeads_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireMol::BeadNum const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomBeads_exposer.def( bp::init< SireMol::BeadNum const & >(( bp::arg("value") )) );

@@ -26,9 +26,8 @@ void register_Beads_class(){
 
     { //::SireMol::Beads
         typedef bp::class_< SireMol::Beads, bp::bases< SireMol::MoleculeView, SireBase::Property > > Beads_exposer_t;
-        Beads_exposer_t Beads_exposer = Beads_exposer_t( "Beads" );
+        Beads_exposer_t Beads_exposer = Beads_exposer_t( "Beads", bp::init< >() );
         bp::scope Beads_scope( Beads_exposer );
-        Beads_exposer.def( bp::init< >() );
         Beads_exposer.def( bp::init< SireMol::MoleculeData const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("moldata"), bp::arg("map")=SireBase::PropertyMap() )) );
         Beads_exposer.def( bp::init< SireMol::Beads const & >(( bp::arg("other") )) );
         { //::SireMol::Beads::at

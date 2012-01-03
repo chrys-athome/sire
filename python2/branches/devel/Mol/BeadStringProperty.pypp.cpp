@@ -23,9 +23,8 @@ void register_BeadStringProperty_class(){
 
     { //::SireMol::BeadProperty< QString >
         typedef bp::class_< SireMol::BeadProperty< QString >, bp::bases< SireMol::BeadProp, SireMol::MolViewProperty, SireBase::Property > > BeadStringProperty_exposer_t;
-        BeadStringProperty_exposer_t BeadStringProperty_exposer = BeadStringProperty_exposer_t( "BeadStringProperty" );
+        BeadStringProperty_exposer_t BeadStringProperty_exposer = BeadStringProperty_exposer_t( "BeadStringProperty", bp::init< >() );
         bp::scope BeadStringProperty_scope( BeadStringProperty_exposer );
-        BeadStringProperty_exposer.def( bp::init< >() );
         BeadStringProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireMol::Beading const & >(( bp::arg("molinfo"), bp::arg("beading") )) );
         BeadStringProperty_exposer.def( bp::init< QVector< QString > const &, SireMol::Beading const & >(( bp::arg("values"), bp::arg("beading") )) );
         BeadStringProperty_exposer.def( bp::init< SireMol::BeadProperty< QString > const & >(( bp::arg("other") )) );

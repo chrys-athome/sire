@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "SireStream/shareddatastream.h"
 
+#include "atombeads.h"
+
 #include "atomidx.h"
 
 #include "atomselection.h"
@@ -23,7 +25,11 @@ namespace bp = boost::python;
 
 #include "beading.h"
 
+#include "moleculedata.h"
+
 #include "moleculeinfodata.h"
+
+#include <boost/noncopyable.hpp>
 
 #include "beading.h"
 

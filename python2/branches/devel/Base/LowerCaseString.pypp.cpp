@@ -27,9 +27,8 @@ void register_LowerCaseString_class(){
 
     { //::SireBase::LowerCaseString
         typedef bp::class_< SireBase::LowerCaseString, bp::bases< SireBase::StringMangler, SireBase::Property > > LowerCaseString_exposer_t;
-        LowerCaseString_exposer_t LowerCaseString_exposer = LowerCaseString_exposer_t( "LowerCaseString" );
+        LowerCaseString_exposer_t LowerCaseString_exposer = LowerCaseString_exposer_t( "LowerCaseString", bp::init< >() );
         bp::scope LowerCaseString_scope( LowerCaseString_exposer );
-        LowerCaseString_exposer.def( bp::init< >() );
         LowerCaseString_exposer.def( bp::init< SireBase::LowerCaseString const & >(( bp::arg("other") )) );
         { //::SireBase::LowerCaseString::mangle
         

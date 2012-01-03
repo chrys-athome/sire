@@ -28,9 +28,8 @@ void register_QByteArray_class(){
 
     { //::QByteArray
         typedef bp::class_< QByteArray > QByteArray_exposer_t;
-        QByteArray_exposer_t QByteArray_exposer = QByteArray_exposer_t( "QByteArray" );
+        QByteArray_exposer_t QByteArray_exposer = QByteArray_exposer_t( "QByteArray", bp::init< >() );
         bp::scope QByteArray_scope( QByteArray_exposer );
-        QByteArray_exposer.def( bp::init< >() );
         QByteArray_exposer.def( bp::init< char const * >(( bp::arg("arg0") )) );
         QByteArray_exposer.def( bp::init< char const *, int >(( bp::arg("arg0"), bp::arg("size") )) );
         QByteArray_exposer.def( bp::init< int, char >(( bp::arg("size"), bp::arg("c") )) );

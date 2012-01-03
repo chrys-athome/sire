@@ -23,9 +23,8 @@ void register_SegChainID_class(){
 
     { //::SireMol::GroupGroupID< SireMol::SegID, SireMol::ChainID >
         typedef bp::class_< SireMol::GroupGroupID< SireMol::SegID, SireMol::ChainID >, bp::bases< SireMol::GroupAtomIDBase, SireMol::AtomID, SireID::ID > > SegChainID_exposer_t;
-        SegChainID_exposer_t SegChainID_exposer = SegChainID_exposer_t( "SegChainID" );
+        SegChainID_exposer_t SegChainID_exposer = SegChainID_exposer_t( "SegChainID", bp::init< >() );
         bp::scope SegChainID_scope( SegChainID_exposer );
-        SegChainID_exposer.def( bp::init< >() );
         SegChainID_exposer.def( bp::init< SireMol::SegID const &, SireMol::ChainID const & >(( bp::arg("group0"), bp::arg("group1") )) );
         SegChainID_exposer.def( bp::init< SireMol::GroupGroupID< SireMol::SegID, SireMol::ChainID > const & >(( bp::arg("other") )) );
         { //::SireMol::GroupGroupID< SireMol::SegID, SireMol::ChainID >::hash

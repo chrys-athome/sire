@@ -43,9 +43,8 @@ void register_EqualTo_class(){
 
     { //::SireCAS::EqualTo
         typedef bp::class_< SireCAS::EqualTo, bp::bases< SireCAS::Condition, SireCAS::ExBase > > EqualTo_exposer_t;
-        EqualTo_exposer_t EqualTo_exposer = EqualTo_exposer_t( "EqualTo" );
+        EqualTo_exposer_t EqualTo_exposer = EqualTo_exposer_t( "EqualTo", bp::init< >() );
         bp::scope EqualTo_scope( EqualTo_exposer );
-        EqualTo_exposer.def( bp::init< >() );
         EqualTo_exposer.def( bp::init< SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("left_hand_side"), bp::arg("right_hand_side") )) );
         EqualTo_exposer.def( bp::init< SireCAS::EqualTo const & >(( bp::arg("other") )) );
         { //::SireCAS::EqualTo::alwaysFalse

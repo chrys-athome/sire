@@ -44,9 +44,8 @@ void register_AngleRestraint_class(){
 
     { //::SireMM::AngleRestraint
         typedef bp::class_< SireMM::AngleRestraint, bp::bases< SireMM::Restraint3D, SireMM::Restraint, SireBase::Property > > AngleRestraint_exposer_t;
-        AngleRestraint_exposer_t AngleRestraint_exposer = AngleRestraint_exposer_t( "AngleRestraint" );
+        AngleRestraint_exposer_t AngleRestraint_exposer = AngleRestraint_exposer_t( "AngleRestraint", bp::init< >() );
         bp::scope AngleRestraint_scope( AngleRestraint_exposer );
-        AngleRestraint_exposer.def( bp::init< >() );
         AngleRestraint_exposer.def( bp::init< SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("restraint") )) );
         AngleRestraint_exposer.def( bp::init< SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, SireCAS::Values const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("restraint"), bp::arg("values") )) );
         AngleRestraint_exposer.def( bp::init< SireMM::AngleRestraint const & >(( bp::arg("other") )) );

@@ -25,9 +25,8 @@ void register_FreeEnergyAverage_class(){
 
     { //::SireMaths::FreeEnergyAverage
         typedef bp::class_< SireMaths::FreeEnergyAverage, bp::bases< SireMaths::ExpAverage, SireMaths::Accumulator, SireBase::Property > > FreeEnergyAverage_exposer_t;
-        FreeEnergyAverage_exposer_t FreeEnergyAverage_exposer = FreeEnergyAverage_exposer_t( "FreeEnergyAverage" );
+        FreeEnergyAverage_exposer_t FreeEnergyAverage_exposer = FreeEnergyAverage_exposer_t( "FreeEnergyAverage", bp::init< >() );
         bp::scope FreeEnergyAverage_scope( FreeEnergyAverage_exposer );
-        FreeEnergyAverage_exposer.def( bp::init< >() );
         FreeEnergyAverage_exposer.def( bp::init< SireUnits::Dimension::Temperature const & >(( bp::arg("temperature") )) );
         FreeEnergyAverage_exposer.def( bp::init< SireMaths::FreeEnergyAverage const & >(( bp::arg("other") )) );
         { //::SireMaths::FreeEnergyAverage::operator=

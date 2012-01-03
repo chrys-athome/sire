@@ -21,9 +21,8 @@ void register_SysName_class(){
 
     { //::SireSystem::SysName
         typedef bp::class_< SireSystem::SysName, bp::bases< SireSystem::SysID, SireID::ID, SireID::Name > > SysName_exposer_t;
-        SysName_exposer_t SysName_exposer = SysName_exposer_t( "SysName" );
+        SysName_exposer_t SysName_exposer = SysName_exposer_t( "SysName", bp::init< >() );
         bp::scope SysName_scope( SysName_exposer );
-        SysName_exposer.def( bp::init< >() );
         SysName_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         SysName_exposer.def( bp::init< SireSystem::SysName const & >(( bp::arg("other") )) );
         { //::SireSystem::SysName::hash

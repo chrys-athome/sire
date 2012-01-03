@@ -25,9 +25,8 @@ void register_CheckPoint_class(){
 
     { //::SireSystem::CheckPoint
         typedef bp::class_< SireSystem::CheckPoint, bp::bases< SireBase::Property > > CheckPoint_exposer_t;
-        CheckPoint_exposer_t CheckPoint_exposer = CheckPoint_exposer_t( "CheckPoint" );
+        CheckPoint_exposer_t CheckPoint_exposer = CheckPoint_exposer_t( "CheckPoint", bp::init< >() );
         bp::scope CheckPoint_scope( CheckPoint_exposer );
-        CheckPoint_exposer.def( bp::init< >() );
         CheckPoint_exposer.def( bp::init< SireSystem::System const & >(( bp::arg("system") )) );
         CheckPoint_exposer.def( bp::init< SireSystem::CheckPoint const & >(( bp::arg("other") )) );
         CheckPoint_exposer.def( bp::self != bp::self );

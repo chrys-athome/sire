@@ -99,12 +99,11 @@ void register_ProtoMS_class(){
 
     { //::SireIO::ProtoMS
         typedef bp::class_< SireIO::ProtoMS > ProtoMS_exposer_t;
-        ProtoMS_exposer_t ProtoMS_exposer = ProtoMS_exposer_t( "ProtoMS" );
+        ProtoMS_exposer_t ProtoMS_exposer = ProtoMS_exposer_t( "ProtoMS", bp::init< >() );
         bp::scope ProtoMS_scope( ProtoMS_exposer );
         bp::scope().attr("PROTEIN") = (int)SireIO::ProtoMS::PROTEIN;
         bp::scope().attr("SOLUTE") = (int)SireIO::ProtoMS::SOLUTE;
         bp::scope().attr("SOLVENT") = (int)SireIO::ProtoMS::SOLVENT;
-        ProtoMS_exposer.def( bp::init< >() );
         ProtoMS_exposer.def( bp::init< QString const & >(( bp::arg("protoms") )) );
         { //::SireIO::ProtoMS::addParameterFile
         

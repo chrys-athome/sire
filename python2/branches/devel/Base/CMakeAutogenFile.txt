@@ -32,7 +32,7 @@ set ( PYPP_SOURCES
        TrimString.pypp.cpp
        UpperCaseString.pypp.cpp
        VariantProperty.pypp.cpp
-       vector_less__double__grate_.pypp.cpp
+       vector_less__double__greater_.pypp.cpp
        Version.pypp.cpp
        SireBase_containers.cpp
        SireBase_properties.cpp

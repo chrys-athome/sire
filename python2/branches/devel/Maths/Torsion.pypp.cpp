@@ -25,9 +25,8 @@ void register_Torsion_class(){
 
     { //::SireMaths::Torsion
         typedef bp::class_< SireMaths::Torsion > Torsion_exposer_t;
-        Torsion_exposer_t Torsion_exposer = Torsion_exposer_t( "Torsion" );
+        Torsion_exposer_t Torsion_exposer = Torsion_exposer_t( "Torsion", bp::init< >() );
         bp::scope Torsion_scope( Torsion_exposer );
-        Torsion_exposer.def( bp::init< >() );
         Torsion_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3") )) );
         { //::SireMaths::Torsion::angle
         

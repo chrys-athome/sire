@@ -41,9 +41,8 @@ void register_NullIntegrator_class(){
 
     { //::SireMove::NullIntegrator
         typedef bp::class_< SireMove::NullIntegrator, bp::bases< SireMove::Integrator, SireBase::Property > > NullIntegrator_exposer_t;
-        NullIntegrator_exposer_t NullIntegrator_exposer = NullIntegrator_exposer_t( "NullIntegrator" );
+        NullIntegrator_exposer_t NullIntegrator_exposer = NullIntegrator_exposer_t( "NullIntegrator", bp::init< >() );
         bp::scope NullIntegrator_scope( NullIntegrator_exposer );
-        NullIntegrator_exposer.def( bp::init< >() );
         NullIntegrator_exposer.def( bp::init< SireMove::NullIntegrator const & >(( bp::arg("other") )) );
         { //::SireMove::NullIntegrator::createWorkspace
         

@@ -41,9 +41,8 @@ void register_IntegerPower_class(){
 
     { //::SireCAS::IntegerPower
         typedef bp::class_< SireCAS::IntegerPower, bp::bases< SireCAS::PowerFunction, SireCAS::ExBase > > IntegerPower_exposer_t;
-        IntegerPower_exposer_t IntegerPower_exposer = IntegerPower_exposer_t( "IntegerPower" );
+        IntegerPower_exposer_t IntegerPower_exposer = IntegerPower_exposer_t( "IntegerPower", bp::init< >() );
         bp::scope IntegerPower_scope( IntegerPower_exposer );
-        IntegerPower_exposer.def( bp::init< >() );
         IntegerPower_exposer.def( bp::init< SireCAS::Expression const &, int >(( bp::arg("expression"), bp::arg("power") )) );
         IntegerPower_exposer.def( bp::init< SireCAS::IntegerPower const & >(( bp::arg("other") )) );
         { //::SireCAS::IntegerPower::evaluate

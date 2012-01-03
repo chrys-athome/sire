@@ -35,9 +35,8 @@ void register_MolIdx_class(){
 
     { //::SireMol::MolIdx
         typedef bp::class_< SireMol::MolIdx, bp::bases< SireMol::MolID, SireID::ID, SireID::IndexBase > > MolIdx_exposer_t;
-        MolIdx_exposer_t MolIdx_exposer = MolIdx_exposer_t( "MolIdx" );
+        MolIdx_exposer_t MolIdx_exposer = MolIdx_exposer_t( "MolIdx", bp::init< >() );
         bp::scope MolIdx_scope( MolIdx_exposer );
-        MolIdx_exposer.def( bp::init< >() );
         MolIdx_exposer.def( bp::init< qint32 >(( bp::arg("idx") )) );
         MolIdx_exposer.def( bp::init< SireMol::MolIdx const & >(( bp::arg("other") )) );
         { //::SireMol::MolIdx::hash

@@ -19,9 +19,8 @@ void register_Fahrenheit_class(){
 
     { //::SireUnits::Fahrenheit
         typedef bp::class_< SireUnits::Fahrenheit, bp::bases< SireUnits::Dimension::TempBase > > Fahrenheit_exposer_t;
-        Fahrenheit_exposer_t Fahrenheit_exposer = Fahrenheit_exposer_t( "Fahrenheit" );
+        Fahrenheit_exposer_t Fahrenheit_exposer = Fahrenheit_exposer_t( "Fahrenheit", bp::init< >() );
         bp::scope Fahrenheit_scope( Fahrenheit_exposer );
-        Fahrenheit_exposer.def( bp::init< >() );
         Fahrenheit_exposer.def( bp::init< double >(( bp::arg("value") )) );
         Fahrenheit_exposer.def( bp::init< SireUnits::Dimension::Temperature const & >(( bp::arg("temp") )) );
         Fahrenheit_exposer.def( bp::init< SireUnits::Dimension::TempBase const & >(( bp::arg("other") )) );

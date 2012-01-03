@@ -4,7 +4,7 @@
 ~@casting_operator_t@operator int@int ( ::QFlags<QDir::Filter>::* )(  ) constint ( ::QFlags<QDir::Filter>::* )(  ) const
 ~@casting_operator_t@operator int@int ( ::QFlags<QDir::SortFlag>::* )(  ) constint ( ::QFlags<QDir::SortFlag>::* )(  ) const
 ~@casting_operator_t@operator int@int ( ::QFlags<QIODevice::OpenModeFlag>::* )(  ) constint ( ::QFlags<QIODevice::OpenModeFlag>::* )(  ) const
-~@destructor_t@~__darwin_pthread_handler_rec@ ( ::__darwin_pthread_handler_rec::* )(  )  ( ::__darwin_pthread_handler_rec::* )(  ) 
++@destructor_t@~QFile@ ( ::QFile::* )(  )  ( ::QFile::* )(  ) 
 +@destructor_t@~QDir@ ( ::QDir::* )(  )  ( ::QDir::* )(  ) 
 +@destructor_t@~QDataStream@ ( ::QDataStream::* )(  )  ( ::QDataStream::* )(  ) 
 ~@destructor_t@~_opaque_pthread_attr_t@ ( ::_opaque_pthread_attr_t::* )(  )  ( ::_opaque_pthread_attr_t::* )(  ) 
@@ -12,6 +12,7 @@
 +@destructor_t@~QDateTime@ ( ::QDateTime::* )(  )  ( ::QDateTime::* )(  ) 
 +@destructor_t@~QByteArray@ ( ::QByteArray::* )(  )  ( ::QByteArray::* )(  ) 
 ~@destructor_t@~_opaque_pthread_mutexattr_t@ ( ::_opaque_pthread_mutexattr_t::* )(  )  ( ::_opaque_pthread_mutexattr_t::* )(  ) 
++@destructor_t@~QUuid@ ( ::QUuid::* )(  )  ( ::QUuid::* )(  ) 
 +@destructor_t@~QTime@ ( ::QTime::* )(  )  ( ::QTime::* )(  ) 
 ~@destructor_t@~_opaque_pthread_cond_t@ ( ::_opaque_pthread_cond_t::* )(  )  ( ::_opaque_pthread_cond_t::* )(  ) 
 ~@destructor_t@~_opaque_pthread_mutex_t@ ( ::_opaque_pthread_mutex_t::* )(  )  ( ::_opaque_pthread_mutex_t::* )(  ) 
@@ -28,13 +29,12 @@
 +@destructor_t@~QFlags@ ( ::QFlags<QDir::Filter>::* )(  )  ( ::QFlags<QDir::Filter>::* )(  ) 
 +@destructor_t@~QFlags@ ( ::QFlags<QDir::SortFlag>::* )(  )  ( ::QFlags<QDir::SortFlag>::* )(  ) 
 +@destructor_t@~QFlags@ ( ::QFlags<QIODevice::OpenModeFlag>::* )(  )  ( ::QFlags<QIODevice::OpenModeFlag>::* )(  ) 
-+@destructor_t@~QFile@ ( ::QFile::* )(  )  ( ::QFile::* )(  ) 
+~@destructor_t@~__darwin_pthread_handler_rec@ ( ::__darwin_pthread_handler_rec::* )(  )  ( ::__darwin_pthread_handler_rec::* )(  ) 
 +@destructor_t@~QVariant@ ( ::QVariant::* )(  )  ( ::QVariant::* )(  ) 
 ~@destructor_t@~_opaque_pthread_t@ ( ::_opaque_pthread_t::* )(  )  ( ::_opaque_pthread_t::* )(  ) 
-~@destructor_t@~QFlag@ ( ::QFlag::* )(  )  ( ::QFlag::* )(  ) 
 +@destructor_t@~QString@ ( ::QString::* )(  )  ( ::QString::* )(  ) 
 ~@destructor_t@~_opaque_pthread_rwlockattr_t@ ( ::_opaque_pthread_rwlockattr_t::* )(  )  ( ::_opaque_pthread_rwlockattr_t::* )(  ) 
-+@destructor_t@~QUuid@ ( ::QUuid::* )(  )  ( ::QUuid::* )(  ) 
+~@destructor_t@~QFlag@ ( ::QFlag::* )(  )  ( ::QFlag::* )(  ) 
 +@enumeration_t@Category@::QChar::Category
 +@enumeration_t@SectionFlag@::QString::SectionFlag
 +@enumeration_t@NumberOption@::QLocale::NumberOption
@@ -107,10 +107,10 @@
 ~@typedef_t@__darwin_mach_port_name_t@::__darwin_mach_port_name_t
 ~@typedef_t@__darwin_pthread_attr_t@::__darwin_pthread_attr_t
 ~@typedef_t@__darwin_pthread_t@::__darwin_pthread_t
-+@typedef_t@enum_type@::QFlags<QFile::Permission>::enum_type
-+@typedef_t@enum_type@::QFlags<QDir::Filter>::enum_type
-+@typedef_t@enum_type@::QFlags<QDir::SortFlag>::enum_type
-+@typedef_t@enum_type@::QFlags<QIODevice::OpenModeFlag>::enum_type
++@typedef_t@enum_type@::QFlags< QFile::Permission >::enum_type
++@typedef_t@enum_type@::QFlags< QDir::Filter >::enum_type
++@typedef_t@enum_type@::QFlags< QDir::SortFlag >::enum_type
++@typedef_t@enum_type@::QFlags< QIODevice::OpenModeFlag >::enum_type
 ~@typedef_t@uint@::uint
 ~@typedef_t@__darwin_wint_t@::__darwin_wint_t
 ~@typedef_t@__darwin_pthread_cond_t@::__darwin_pthread_cond_t
@@ -125,10 +125,10 @@
 ~@typedef_t@__darwin_ct_rune_t@::__darwin_ct_rune_t
 ~@typedef_t@va_list@::va_list
 ~@typedef_t@__darwin_ino_t@::__darwin_ino_t
-+@typedef_t@Zero@::QFlags<QFile::Permission>::Zero
-+@typedef_t@Zero@::QFlags<QDir::Filter>::Zero
-+@typedef_t@Zero@::QFlags<QDir::SortFlag>::Zero
-+@typedef_t@Zero@::QFlags<QIODevice::OpenModeFlag>::Zero
++@typedef_t@Zero@::QFlags< QFile::Permission >::Zero
++@typedef_t@Zero@::QFlags< QDir::Filter >::Zero
++@typedef_t@Zero@::QFlags< QDir::SortFlag >::Zero
++@typedef_t@Zero@::QFlags< QIODevice::OpenModeFlag >::Zero
 ~@typedef_t@__int64_t@::__int64_t
 ~@typedef_t@__darwin_mbstate_t@::__darwin_mbstate_t
 +@typedef_t@Filters@::QDir::Filters
@@ -145,7 +145,6 @@
 ~@class_declaration_t@QSize@::QSize
 ~@class_declaration_t@QMatrix@::QMatrix
 ~@class_declaration_t@QVariantComparisonHelper@::QVariantComparisonHelper
-~@class_declaration_t@QFlags<QString::SectionFlag>@::QFlags<QString::SectionFlag>
 ~@class_declaration_t@QStringList@::QStringList
 ~@class_declaration_t@QRegExp@::QRegExp
 ~@class_declaration_t@QUrl@::QUrl
@@ -154,18 +153,19 @@
 ~@class_declaration_t@QRectF@::QRectF
 ~@class_declaration_t@QTextFormat@::QTextFormat
 ~@class_declaration_t@QFileInfoList@::QFileInfoList
-~@class_declaration_t@QMap<QString,QVariant>@::QMap<QString,QVariant>
-~@class_declaration_t@QFlags<QLocale::NumberOption>@::QFlags<QLocale::NumberOption>
+~@class_declaration_t@QFlags< QString::SectionFlag >@::QFlags< QString::SectionFlag >
+~@class_declaration_t@QList< QByteArray >@::QList< QByteArray >
 ~@class_declaration_t@QLatin1String@::QLatin1String
-~@class_declaration_t@QList<QByteArray>@::QList<QByteArray>
 ~@class_declaration_t@QSizeF@::QSizeF
 ~@class_declaration_t@QLine@::QLine
 ~@class_declaration_t@QTextCodec@::QTextCodec
-~@class_declaration_t@QList<QVariant>@::QList<QVariant>
 ~@class_declaration_t@QRect@::QRect
+~@class_declaration_t@QMap< QString, QVariant >@::QMap< QString, QVariant >
+~@class_declaration_t@QFlags< QLocale::NumberOption >@::QFlags< QLocale::NumberOption >
 ~@class_declaration_t@QTextLength@::QTextLength
 ~@class_declaration_t@QLineF@::QLineF
 ~@class_declaration_t@QPointF@::QPointF
+~@class_declaration_t@QList< QVariant >@::QList< QVariant >
 ~@variable_t@__sig@::_opaque_pthread_cond_t::__sig
 ~@variable_t@__sig@::_opaque_pthread_mutex_t::__sig
 ~@variable_t@__sig@::_opaque_pthread_attr_t::__sig
@@ -202,10 +202,12 @@
 +@class_t@QDir@::QDir
 ~@class_t@_opaque_pthread_condattr_t@::_opaque_pthread_condattr_t
 +@class_t@QString@::QString
++@class_t@QFlags< QDir::SortFlag >@::QFlags< QDir::SortFlag >
 +@class_t@QDateTime@::QDateTime
-+@class_t@QIODevice@::QIODevice
++@class_t@QFlags< QIODevice::OpenModeFlag >@::QFlags< QIODevice::OpenModeFlag >
 ~@class_t@_opaque_pthread_rwlockattr_t@::_opaque_pthread_rwlockattr_t
 ~@class_t@_opaque_pthread_mutexattr_t@::_opaque_pthread_mutexattr_t
++@class_t@QFlags< QDir::Filter >@::QFlags< QDir::Filter >
 ~@class_t@__mbstate_t@::__mbstate_t
 +@class_t@QVariant@::QVariant
 +@class_t@QDate@::QDate
@@ -213,27 +215,24 @@
 ~@class_t@_opaque_pthread_mutex_t@::_opaque_pthread_mutex_t
 ~@class_t@_opaque_pthread_attr_t@::_opaque_pthread_attr_t
 ~@class_t@__class_type_info_pseudo@::__class_type_info_pseudo
-+@class_t@QFlags<QFile::Permission>@::QFlags<QFile::Permission>
-+@class_t@QFlags<QDir::SortFlag>@::QFlags<QDir::SortFlag>
++@class_t@QIODevice@::QIODevice
 +@class_t@QByteArray@::QByteArray
 ~@class_t@_opaque_pthread_cond_t@::_opaque_pthread_cond_t
 ~@class_t@_opaque_pthread_rwlock_t@::_opaque_pthread_rwlock_t
++@class_t@QFlags< QFile::Permission >@::QFlags< QFile::Permission >
 ~@class_t@_opaque_pthread_t@::_opaque_pthread_t
 +@class_t@QChar@::QChar
-+@class_t@QFlags<QIODevice::OpenModeFlag>@::QFlags<QIODevice::OpenModeFlag>
 +@class_t@QBool@::QBool
 +@class_t@QDataStream@::QDataStream
-+@class_t@QFlags<QDir::Filter>@::QFlags<QDir::Filter>
 +@class_t@QUuid@::QUuid
 +@member_function_t@load@void ( ::QVariant::* )( ::QDataStream & ) void ( ::QVariant::* )( ::QDataStream & ) 
-+@member_function_t@fromJulianDay@::QDate (*)( int )::QDate (*)( int )
 +@member_function_t@bytesAvailable@::qint64 ( ::QIODevice::* )(  ) const::qint64 ( ::QIODevice::* )(  ) const
 +@member_function_t@currentPath@::QString (*)(  )::QString (*)(  )
 +@member_function_t@copy@bool ( ::QFile::* )( ::QString const & ) bool ( ::QFile::* )( ::QString const & ) 
 +@member_function_t@copy@bool (*)( ::QString const &,::QString const & )bool (*)( ::QString const &,::QString const & )
 +@member_function_t@month@int ( ::QDate::* )(  ) constint ( ::QDate::* )(  ) const
-+@member_function_t@toJulianDay@int ( ::QDate::* )(  ) constint ( ::QDate::* )(  ) const
 +@member_function_t@setCell@void ( ::QChar::* )( ::uchar ) void ( ::QChar::* )( ::uchar ) 
++@member_function_t@unsetDevice@void ( ::QDataStream::* )(  ) void ( ::QDataStream::* )(  ) 
 +@member_function_t@daysInMonth@int ( ::QDate::* )(  ) constint ( ::QDate::* )(  ) const
 +@member_function_t@reset@bool ( ::QIODevice::* )(  ) bool ( ::QIODevice::* )(  ) 
 +@member_function_t@prepend@::QString & ( ::QString::* )( ::QChar ) ::QString & ( ::QString::* )( ::QChar ) 
@@ -242,13 +241,18 @@
 +@member_function_t@prepend@::QByteArray & ( ::QByteArray::* )( char const * ) ::QByteArray & ( ::QByteArray::* )( char const * ) 
 +@member_function_t@prepend@::QByteArray & ( ::QByteArray::* )( ::QByteArray const & ) ::QByteArray & ( ::QByteArray::* )( ::QByteArray const & ) 
 +@member_function_t@combiningClass@unsigned char ( ::QChar::* )(  ) constunsigned char ( ::QChar::* )(  ) const
-+@member_function_t@isSpace@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
++@member_function_t@toJulianDay@int ( ::QDate::* )(  ) constint ( ::QDate::* )(  ) const
 +@member_function_t@ungetChar@void ( ::QIODevice::* )( char ) void ( ::QIODevice::* )( char ) 
 +@member_function_t@row@::uchar ( ::QChar::* )(  ) const::uchar ( ::QChar::* )(  ) const
 +@member_function_t@cell@::uchar ( ::QChar::* )(  ) const::uchar ( ::QChar::* )(  ) const
-+@member_function_t@toMap@::QMap<QString,QVariant> ( ::QVariant::* )(  ) const::QMap<QString,QVariant> ( ::QVariant::* )(  ) const
-+@member_function_t@isNumber@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
++@member_function_t@toMap@::QMap< QString, QVariant > ( ::QVariant::* )(  ) const::QMap<QString,QVariant> ( ::QVariant::* )(  ) const
++@member_function_t@detach@void ( ::QString::* )(  ) void ( ::QString::* )(  ) 
++@member_function_t@detach@void ( ::QFileInfo::* )(  ) void ( ::QFileInfo::* )(  ) 
++@member_function_t@detach@void ( ::QVariant::* )(  ) void ( ::QVariant::* )(  ) 
++@member_function_t@detach@void ( ::QByteArray::* )(  ) void ( ::QByteArray::* )(  ) 
 +@member_function_t@group@::QString ( ::QFileInfo::* )(  ) const::QString ( ::QFileInfo::* )(  ) const
++@member_function_t@isSequential@bool ( ::QFile::* )(  ) constbool ( ::QFile::* )(  ) const
++@member_function_t@isSequential@bool ( ::QIODevice::* )(  ) constbool ( ::QIODevice::* )(  ) const
 +@member_function_t@fromLatin1@::QString (*)( char const *,int )::QString (*)( char const *,int )
 +@member_function_t@fromLatin1@::QChar (*)( char )::QChar (*)( char )
 +@member_function_t@setHMS@bool ( ::QTime::* )( int,int,int,int ) bool ( ::QTime::* )( int,int,int,int ) 
@@ -263,10 +267,10 @@
 +@member_function_t@minute@int ( ::QTime::* )(  ) constint ( ::QTime::* )(  ) const
 +@member_function_t@longDayName@::QString (*)( int )::QString (*)( int )
 +@member_function_t@digitValue@int ( ::QChar::* )(  ) constint ( ::QChar::* )(  ) const
-+@member_function_t@elapsed@int ( ::QTime::* )(  ) constint ( ::QTime::* )(  ) const
-+@member_function_t@permissions@::QFlags<QFile::Permission> ( ::QFileInfo::* )(  ) const::QFlags<QFile::Permission> ( ::QFileInfo::* )(  ) const
-+@member_function_t@permissions@::QFlags<QFile::Permission> ( ::QFile::* )(  ) const::QFlags<QFile::Permission> ( ::QFile::* )(  ) const
-+@member_function_t@permissions@::QFlags<QFile::Permission> (*)( ::QString const & )::QFlags<QFile::Permission> (*)( ::QString const & )
++@member_function_t@fromJulianDay@::QDate (*)( int )::QDate (*)( int )
++@member_function_t@permissions@::QFlags< QFile::Permission > ( ::QFileInfo::* )(  ) const::QFlags<QFile::Permission> ( ::QFileInfo::* )(  ) const
++@member_function_t@permissions@::QFlags< QFile::Permission > ( ::QFile::* )(  ) const::QFlags<QFile::Permission> ( ::QFile::* )(  ) const
++@member_function_t@permissions@::QFlags< QFile::Permission > (*)( ::QString const & )::QFlags<QFile::Permission> (*)( ::QString const & )
 +@member_function_t@match@bool (*)( ::QStringList const &,::QString const & )bool (*)( ::QStringList const &,::QString const & )
 +@member_function_t@match@bool (*)( ::QString const &,::QString const & )bool (*)( ::QString const &,::QString const & )
 +@member_function_t@toDate@::QDate ( ::QVariant::* )(  ) const::QDate ( ::QVariant::* )(  ) const
@@ -277,22 +281,19 @@
 +@member_function_t@decodeName@::QString (*)( ::QByteArray const & )::QString (*)( ::QByteArray const & )
 +@member_function_t@dayName@::QString ( ::QLocale::* )( int,::QLocale::FormatType ) const::QString ( ::QLocale::* )( int,::QLocale::FormatType ) const
 +@member_function_t@shortMonthName@::QString (*)( int )::QString (*)( int )
-+@member_function_t@setSorting@void ( ::QDir::* )( ::QFlags<QDir::SortFlag> ) void ( ::QDir::* )( ::QFlags<QDir::SortFlag> ) 
++@member_function_t@errorString@::QString ( ::QIODevice::* )(  ) const::QString ( ::QIODevice::* )(  ) const
++@member_function_t@setSorting@void ( ::QDir::* )( ::QFlags< QDir::SortFlag > ) void ( ::QDir::* )( ::QFlags<QDir::SortFlag> ) 
 +@member_function_t@rightJustified@::QString ( ::QString::* )( int,::QChar,bool ) const::QString ( ::QString::* )( int,::QChar,bool ) const
 +@member_function_t@rightJustified@::QByteArray ( ::QByteArray::* )( int,char,bool ) const::QByteArray ( ::QByteArray::* )( int,char,bool ) const
 +@member_function_t@setYMD@bool ( ::QDate::* )( int,int,int ) bool ( ::QDate::* )( int,int,int ) 
-+@member_function_t@setNumberOptions@void ( ::QLocale::* )( ::QFlags<QLocale::NumberOption> ) void ( ::QLocale::* )( ::QFlags<QLocale::NumberOption> ) 
++@member_function_t@setNumberOptions@void ( ::QLocale::* )( ::QFlags< QLocale::NumberOption > ) void ( ::QLocale::* )( ::QFlags<QLocale::NumberOption> ) 
 +@member_function_t@isMark@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
 +@member_function_t@waitForBytesWritten@bool ( ::QIODevice::* )( int ) bool ( ::QIODevice::* )( int ) 
 +@member_function_t@setTextModeEnabled@void ( ::QIODevice::* )( bool ) void ( ::QIODevice::* )( bool ) 
 +@member_function_t@setByteOrder@void ( ::QDataStream::* )( ::QDataStream::ByteOrder ) void ( ::QDataStream::* )( ::QDataStream::ByteOrder ) 
-+@member_function_t@detach@void ( ::QString::* )(  ) void ( ::QString::* )(  ) 
-+@member_function_t@detach@void ( ::QFileInfo::* )(  ) void ( ::QFileInfo::* )(  ) 
-+@member_function_t@detach@void ( ::QVariant::* )(  ) void ( ::QVariant::* )(  ) 
-+@member_function_t@detach@void ( ::QByteArray::* )(  ) void ( ::QByteArray::* )(  ) 
-+@member_function_t@setPermissions@bool ( ::QFile::* )( ::QFlags<QFile::Permission> ) bool ( ::QFile::* )( ::QFlags<QFile::Permission> ) 
-+@member_function_t@setPermissions@bool (*)( ::QString const &,::QFlags<QFile::Permission> )bool (*)( ::QString const &,::QFlags<QFile::Permission> )
-+@member_function_t@numberOptions@::QFlags<QLocale::NumberOption> ( ::QLocale::* )(  ) const::QFlags<QLocale::NumberOption> ( ::QLocale::* )(  ) const
++@member_function_t@cd@bool ( ::QDir::* )( ::QString const & ) bool ( ::QDir::* )( ::QString const & ) 
++@member_function_t@day@int ( ::QDate::* )(  ) constint ( ::QDate::* )(  ) const
++@member_function_t@numberOptions@::QFlags< QLocale::NumberOption > ( ::QLocale::* )(  ) const::QFlags<QLocale::NumberOption> ( ::QLocale::* )(  ) const
 +@member_function_t@name@::QString ( ::QLocale::* )(  ) const::QString ( ::QLocale::* )(  ) const
 +@member_function_t@insert@::QString & ( ::QString::* )( int,::QChar ) ::QString & ( ::QString::* )( int,::QChar ) 
 +@member_function_t@insert@::QString & ( ::QString::* )( int,::QChar const *,int ) ::QString & ( ::QString::* )( int,::QChar const *,int ) 
@@ -301,7 +302,7 @@
 +@member_function_t@insert@::QByteArray & ( ::QByteArray::* )( int,char ) ::QByteArray & ( ::QByteArray::* )( int,char ) 
 +@member_function_t@insert@::QByteArray & ( ::QByteArray::* )( int,char const * ) ::QByteArray & ( ::QByteArray::* )( int,char const * ) 
 +@member_function_t@insert@::QByteArray & ( ::QByteArray::* )( int,::QByteArray const & ) ::QByteArray & ( ::QByteArray::* )( int,::QByteArray const & ) 
-+@member_function_t@sorting@::QFlags<QDir::SortFlag> ( ::QDir::* )(  ) const::QFlags<QDir::SortFlag> ( ::QDir::* )(  ) const
++@member_function_t@sorting@::QFlags< QDir::SortFlag > ( ::QDir::* )(  ) const::QFlags<QDir::SortFlag> ( ::QDir::* )(  ) const
 +@member_function_t@nameFilters@::QStringList ( ::QDir::* )(  ) const::QStringList ( ::QDir::* )(  ) const
 +@member_function_t@typeName@char const * ( ::QVariant::* )(  ) constchar const * ( ::QVariant::* )(  ) const
 +@member_function_t@lastModified@::QDateTime ( ::QFileInfo::* )(  ) const::QDateTime ( ::QFileInfo::* )(  ) const
@@ -309,29 +310,34 @@
 +@member_function_t@atEnd@bool ( ::QFile::* )(  ) constbool ( ::QFile::* )(  ) const
 +@member_function_t@atEnd@bool ( ::QIODevice::* )(  ) constbool ( ::QIODevice::* )(  ) const
 +@member_function_t@fromTime_t@::QDateTime (*)( ::uint )::QDateTime (*)( ::uint )
-+@member_function_t@refresh@void ( ::QDir::* )(  ) constvoid ( ::QDir::* )(  ) const
-+@member_function_t@refresh@void ( ::QFileInfo::* )(  ) void ( ::QFileInfo::* )(  ) 
++@member_function_t@remove@bool ( ::QDir::* )( ::QString const & ) bool ( ::QDir::* )( ::QString const & ) 
++@member_function_t@remove@::QString & ( ::QString::* )( int,int ) ::QString & ( ::QString::* )( int,int ) 
++@member_function_t@remove@::QString & ( ::QString::* )( ::QChar,::Qt::CaseSensitivity ) ::QString & ( ::QString::* )( ::QChar,::Qt::CaseSensitivity ) 
++@member_function_t@remove@::QString & ( ::QString::* )( ::QString const &,::Qt::CaseSensitivity ) ::QString & ( ::QString::* )( ::QString const &,::Qt::CaseSensitivity ) 
++@member_function_t@remove@::QString & ( ::QString::* )( ::QRegExp const & ) ::QString & ( ::QString::* )( ::QRegExp const & ) 
++@member_function_t@remove@bool ( ::QFile::* )(  ) bool ( ::QFile::* )(  ) 
++@member_function_t@remove@bool (*)( ::QString const & )bool (*)( ::QString const & )
++@member_function_t@remove@::QByteArray & ( ::QByteArray::* )( int,int ) ::QByteArray & ( ::QByteArray::* )( int,int ) 
 +@member_function_t@isSymbol@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
 +@member_function_t@isNull@bool ( ::QDateTime::* )(  ) constbool ( ::QDateTime::* )(  ) const
++@member_function_t@isNull@bool ( ::QDate::* )(  ) constbool ( ::QDate::* )(  ) const
 +@member_function_t@isNull@bool ( ::QString::* )(  ) constbool ( ::QString::* )(  ) const
 +@member_function_t@isNull@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
 +@member_function_t@isNull@bool ( ::QUuid::* )(  ) constbool ( ::QUuid::* )(  ) const
 +@member_function_t@isNull@bool ( ::QVariant::* )(  ) constbool ( ::QVariant::* )(  ) const
 +@member_function_t@isNull@bool ( ::QTime::* )(  ) constbool ( ::QTime::* )(  ) const
 +@member_function_t@isNull@bool ( ::QByteArray::* )(  ) constbool ( ::QByteArray::* )(  ) const
-+@member_function_t@isNull@bool ( ::QDate::* )(  ) constbool ( ::QDate::* )(  ) const
 +@member_function_t@readLink@::QString ( ::QFileInfo::* )(  ) const::QString ( ::QFileInfo::* )(  ) const
 +@member_function_t@readLink@::QString ( ::QFile::* )(  ) const::QString ( ::QFile::* )(  ) const
 +@member_function_t@readLink@::QString (*)( ::QString const & )::QString (*)( ::QString const & )
 +@member_function_t@toDateTime@::QDateTime ( ::QVariant::* )(  ) const::QDateTime ( ::QVariant::* )(  ) const
-+@member_function_t@longMonthName@::QString (*)( int )::QString (*)( int )
 +@member_function_t@ownerId@::uint ( ::QFileInfo::* )(  ) const::uint ( ::QFileInfo::* )(  ) const
 +@member_function_t@readLine@::qint64 ( ::QIODevice::* )( char *,::qint64 ) ::qint64 ( ::QIODevice::* )( char *,::qint64 ) 
 +@member_function_t@readLine@::QByteArray ( ::QIODevice::* )( ::qint64 ) ::QByteArray ( ::QIODevice::* )( ::qint64 ) 
 +@member_function_t@isPunct@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
 +@member_function_t@dateFormat@::QString ( ::QLocale::* )( ::QLocale::FormatType ) const::QString ( ::QLocale::* )( ::QLocale::FormatType ) const
-+@member_function_t@entryInfoList@::QFileInfoList ( ::QDir::* )( ::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const::QFileInfoList ( ::QDir::* )( ::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const
-+@member_function_t@entryInfoList@::QFileInfoList ( ::QDir::* )( ::QStringList const &,::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const::QFileInfoList ( ::QDir::* )( ::QStringList const &,::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const
++@member_function_t@addYears@::QDateTime ( ::QDateTime::* )( int ) const::QDateTime ( ::QDateTime::* )( int ) const
++@member_function_t@addYears@::QDate ( ::QDate::* )( int ) const::QDate ( ::QDate::* )( int ) const
 +@member_function_t@dir@::QDir ( ::QFileInfo::* )(  ) const::QDir ( ::QFileInfo::* )(  ) const
 +@member_function_t@setNameFilters@void ( ::QDir::* )( ::QStringList const & ) void ( ::QDir::* )( ::QStringList const & ) 
 +@member_function_t@status@::QDataStream::Status ( ::QDataStream::* )(  ) const::QDataStream::Status ( ::QDataStream::* )(  ) const
@@ -353,27 +359,11 @@
 +@member_function_t@canonicalFilePath@::QString ( ::QFileInfo::* )(  ) const::QString ( ::QFileInfo::* )(  ) const
 +@member_function_t@second@int ( ::QTime::* )(  ) constint ( ::QTime::* )(  ) const
 +@member_function_t@isAbsolutePath@bool (*)( ::QString const & )bool (*)( ::QString const & )
-+@member_function_t@remove@bool ( ::QDir::* )( ::QString const & ) bool ( ::QDir::* )( ::QString const & ) 
-+@member_function_t@remove@::QString & ( ::QString::* )( int,int ) ::QString & ( ::QString::* )( int,int ) 
-+@member_function_t@remove@::QString & ( ::QString::* )( ::QChar,::Qt::CaseSensitivity ) ::QString & ( ::QString::* )( ::QChar,::Qt::CaseSensitivity ) 
-+@member_function_t@remove@::QString & ( ::QString::* )( ::QString const &,::Qt::CaseSensitivity ) ::QString & ( ::QString::* )( ::QString const &,::Qt::CaseSensitivity ) 
-+@member_function_t@remove@::QString & ( ::QString::* )( ::QRegExp const & ) ::QString & ( ::QString::* )( ::QRegExp const & ) 
-+@member_function_t@remove@bool ( ::QFile::* )(  ) bool ( ::QFile::* )(  ) 
-+@member_function_t@remove@bool (*)( ::QString const & )bool (*)( ::QString const & )
-+@member_function_t@remove@::QByteArray & ( ::QByteArray::* )( int,int ) ::QByteArray & ( ::QByteArray::* )( int,int ) 
++@member_function_t@refresh@void ( ::QDir::* )(  ) constvoid ( ::QDir::* )(  ) const
++@member_function_t@refresh@void ( ::QFileInfo::* )(  ) void ( ::QFileInfo::* )(  ) 
 +@member_function_t@read@::qint64 ( ::QIODevice::* )( char *,::qint64 ) ::qint64 ( ::QIODevice::* )( char *,::qint64 ) 
 +@member_function_t@read@::QByteArray ( ::QIODevice::* )( ::qint64 ) ::QByteArray ( ::QIODevice::* )( ::qint64 ) 
-+@member_function_t@arg@::QString ( ::QString::* )( long int,int,int,::QChar const & ) const::QString ( ::QString::* )( long int,int,int,::QChar const & ) const
-+@member_function_t@arg@::QString ( ::QString::* )( ::ulong,int,int,::QChar const & ) const::QString ( ::QString::* )( ::ulong,int,int,::QChar const & ) const
-+@member_function_t@arg@::QString ( ::QString::* )( int,int,int,::QChar const & ) const::QString ( ::QString::* )( int,int,int,::QChar const & ) const
-+@member_function_t@arg@::QString ( ::QString::* )( ::uint,int,int,::QChar const & ) const::QString ( ::QString::* )( ::uint,int,int,::QChar const & ) const
-+@member_function_t@arg@::QString ( ::QString::* )( double,int,char,int,::QChar const & ) const::QString ( ::QString::* )( double,int,char,int,::QChar const & ) const
-+@member_function_t@arg@::QString ( ::QString::* )( char,int,::QChar const & ) const::QString ( ::QString::* )( char,int,::QChar const & ) const
-+@member_function_t@arg@::QString ( ::QString::* )( ::QChar,int,::QChar const & ) const::QString ( ::QString::* )( ::QChar,int,::QChar const & ) const
-+@member_function_t@arg@::QString ( ::QString::* )( ::QString const &,int,::QChar const & ) const::QString ( ::QString::* )( ::QString const &,int,::QChar const & ) const
-+@member_function_t@arg@::QString ( ::QString::* )( ::QString const &,::QString const & ) const::QString ( ::QString::* )( ::QString const &,::QString const & ) const
-+@member_function_t@arg@::QString ( ::QString::* )( ::QString const &,::QString const &,::QString const & ) const::QString ( ::QString::* )( ::QString const &,::QString const &,::QString const & ) const
-+@member_function_t@arg@::QString ( ::QString::* )( ::QString const &,::QString const &,::QString const &,::QString const & ) const::QString ( ::QString::* )( ::QString const &,::QString const &,::QString const &,::QString const & ) const
++@member_function_t@year@int ( ::QDate::* )(  ) constint ( ::QDate::* )(  ) const
 +@member_function_t@home@::QDir (*)(  )::QDir (*)(  )
 +@member_function_t@isExecutable@bool ( ::QFileInfo::* )(  ) constbool ( ::QFileInfo::* )(  ) const
 +@member_function_t@setCurrent@bool (*)( ::QString const & )bool (*)( ::QString const & )
@@ -390,25 +380,28 @@
 +@member_function_t@startsWith@bool ( ::QByteArray::* )( char const * ) constbool ( ::QByteArray::* )( char const * ) const
 +@member_function_t@capacity@int ( ::QString::* )(  ) constint ( ::QString::* )(  ) const
 +@member_function_t@capacity@int ( ::QByteArray::* )(  ) constint ( ::QByteArray::* )(  ) const
-+@member_function_t@isRoot@bool ( ::QDir::* )(  ) constbool ( ::QDir::* )(  ) const
-+@member_function_t@isRoot@bool ( ::QFileInfo::* )(  ) constbool ( ::QFileInfo::* )(  ) const
++@member_function_t@truncate@void ( ::QString::* )( int ) void ( ::QString::* )( int ) 
++@member_function_t@truncate@void ( ::QByteArray::* )( int ) void ( ::QByteArray::* )( int ) 
 +@member_function_t@trimmed@::QString ( ::QString::* )(  ) const::QString ( ::QString::* )(  ) const
 +@member_function_t@trimmed@::QByteArray ( ::QByteArray::* )(  ) const::QByteArray ( ::QByteArray::* )(  ) const
 +@member_function_t@hour@int ( ::QTime::* )(  ) constint ( ::QTime::* )(  ) const
 +@member_function_t@toBitArray@::QBitArray ( ::QVariant::* )(  ) const::QBitArray ( ::QVariant::* )(  ) const
-+@member_function_t@section@::QString ( ::QString::* )( ::QChar,int,int,::QFlags<QString::SectionFlag> ) const::QString ( ::QString::* )( ::QChar,int,int,::QFlags<QString::SectionFlag> ) const
-+@member_function_t@section@::QString ( ::QString::* )( ::QString const &,int,int,::QFlags<QString::SectionFlag> ) const::QString ( ::QString::* )( ::QString const &,int,int,::QFlags<QString::SectionFlag> ) const
-+@member_function_t@section@::QString ( ::QString::* )( ::QRegExp const &,int,int,::QFlags<QString::SectionFlag> ) const::QString ( ::QString::* )( ::QRegExp const &,int,int,::QFlags<QString::SectionFlag> ) const
++@member_function_t@section@::QString ( ::QString::* )( ::QChar,int,int,::QFlags< QString::SectionFlag > ) const::QString ( ::QString::* )( ::QChar,int,int,::QFlags<QString::SectionFlag> ) const
++@member_function_t@section@::QString ( ::QString::* )( ::QString const &,int,int,::QFlags< QString::SectionFlag > ) const::QString ( ::QString::* )( ::QString const &,int,int,::QFlags<QString::SectionFlag> ) const
++@member_function_t@section@::QString ( ::QString::* )( ::QRegExp const &,int,int,::QFlags< QString::SectionFlag > ) const::QString ( ::QString::* )( ::QRegExp const &,int,int,::QFlags<QString::SectionFlag> ) const
 +@member_function_t@localeAwareCompare@int ( ::QString::* )( ::QString const & ) constint ( ::QString::* )( ::QString const & ) const
 +@member_function_t@localeAwareCompare@int (*)( ::QString const &,::QString const & )int (*)( ::QString const &,::QString const & )
-+@member_function_t@unsetDevice@void ( ::QDataStream::* )(  ) void ( ::QDataStream::* )(  ) 
-+@member_function_t@isSequential@bool ( ::QFile::* )(  ) constbool ( ::QFile::* )(  ) const
-+@member_function_t@isSequential@bool ( ::QIODevice::* )(  ) constbool ( ::QIODevice::* )(  ) const
++@member_function_t@flush@bool ( ::QFile::* )(  ) bool ( ::QFile::* )(  ) 
++@member_function_t@toDouble@double ( ::QString::* )( bool * ) constdouble ( ::QString::* )( bool * ) const
++@member_function_t@toDouble@double ( ::QLocale::* )( ::QString const &,bool * ) constdouble ( ::QLocale::* )( ::QString const &,bool * ) const
++@member_function_t@toDouble@double ( ::QVariant::* )( bool * ) constdouble ( ::QVariant::* )( bool * ) const
++@member_function_t@isSpace@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
 +@member_function_t@current@::QDir (*)(  )::QDir (*)(  )
 +@member_function_t@fromLocal8Bit@::QString (*)( char const *,int )::QString (*)( char const *,int )
 +@member_function_t@version@::QUuid::Version ( ::QUuid::* )(  ) const::QUuid::Version ( ::QUuid::* )(  ) const
 +@member_function_t@version@int ( ::QDataStream::* )(  ) constint ( ::QDataStream::* )(  ) const
 +@member_function_t@toString@::QString ( ::QDateTime::* )( ::QString const & ) const::QString ( ::QDateTime::* )( ::QString const & ) const
++@member_function_t@toString@::QString ( ::QDate::* )( ::QString const & ) const::QString ( ::QDate::* )( ::QString const & ) const
 +@member_function_t@toString@::QString ( ::QUuid::* )(  ) const::QString ( ::QUuid::* )(  ) const
 +@member_function_t@toString@::QString ( ::QLocale::* )( short int ) const::QString ( ::QLocale::* )( short int ) const
 +@member_function_t@toString@::QString ( ::QLocale::* )( ::ushort ) const::QString ( ::QLocale::* )( ::ushort ) const
@@ -422,8 +415,8 @@
 +@member_function_t@toString@::QString ( ::QLocale::* )( ::QTime const &,::QLocale::FormatType ) const::QString ( ::QLocale::* )( ::QTime const &,::QLocale::FormatType ) const
 +@member_function_t@toString@::QString ( ::QVariant::* )(  ) const::QString ( ::QVariant::* )(  ) const
 +@member_function_t@toString@::QString ( ::QTime::* )( ::QString const & ) const::QString ( ::QTime::* )( ::QString const & ) const
-+@member_function_t@toString@::QString ( ::QDate::* )( ::QString const & ) const::QString ( ::QDate::* )( ::QString const & ) const
 +@member_function_t@setPath@void ( ::QDir::* )( ::QString const & ) void ( ::QDir::* )( ::QString const & ) 
++@member_function_t@isDigit@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
 +@member_function_t@currentDateTime@::QDateTime (*)(  )::QDateTime (*)(  )
 +@member_function_t@toLocale@::QLocale ( ::QVariant::* )(  ) const::QLocale ( ::QVariant::* )(  ) const
 +@member_function_t@toStringList@::QStringList ( ::QVariant::* )(  ) const::QStringList ( ::QVariant::* )(  ) const
@@ -442,7 +435,7 @@
 +@member_function_t@setTime_t@void ( ::QDateTime::* )( ::uint ) void ( ::QDateTime::* )( ::uint ) 
 +@member_function_t@addSecs@::QDateTime ( ::QDateTime::* )( int ) const::QDateTime ( ::QDateTime::* )( int ) const
 +@member_function_t@addSecs@::QTime ( ::QTime::* )( int ) const::QTime ( ::QTime::* )( int ) const
-+@member_function_t@canConvert@bool ( ::QVariant::* )( ::QVariant::Type ) constbool ( ::QVariant::* )( ::QVariant::Type ) const
++@member_function_t@toULong@::ulong ( ::QString::* )( bool *,int ) const::ulong ( ::QString::* )( bool *,int ) const
 +@member_function_t@canReadLine@bool ( ::QIODevice::* )(  ) constbool ( ::QIODevice::* )(  ) const
 +@member_function_t@setCaching@void ( ::QFileInfo::* )( bool ) void ( ::QFileInfo::* )( bool ) 
 +@member_function_t@msecsTo@int ( ::QTime::* )( ::QTime const & ) constint ( ::QTime::* )( ::QTime const & ) const
@@ -450,7 +443,7 @@
 +@member_function_t@path@::QString ( ::QDir::* )(  ) const::QString ( ::QDir::* )(  ) const
 +@member_function_t@path@::QString ( ::QFileInfo::* )(  ) const::QString ( ::QFileInfo::* )(  ) const
 +@member_function_t@isUpper@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
-+@member_function_t@setFilter@void ( ::QDir::* )( ::QFlags<QDir::Filter> ) void ( ::QDir::* )( ::QFlags<QDir::Filter> ) 
++@member_function_t@setFilter@void ( ::QDir::* )( ::QFlags< QDir::Filter > ) void ( ::QDir::* )( ::QFlags<QDir::Filter> ) 
 +@member_function_t@fromAscii@::QString (*)( char const *,int )::QString (*)( char const *,int )
 +@member_function_t@fromAscii@::QChar (*)( char )::QChar (*)( char )
 +@member_function_t@c@::QLocale (*)(  )::QLocale (*)(  )
@@ -463,26 +456,26 @@
 +@member_function_t@toUrl@::QUrl ( ::QVariant::* )(  ) const::QUrl ( ::QVariant::* )(  ) const
 +@member_function_t@toLatin1@::QByteArray ( ::QString::* )(  ) const::QByteArray ( ::QString::* )(  ) const
 +@member_function_t@rootPath@::QString (*)(  )::QString (*)(  )
-+@member_function_t@addYears@::QDateTime ( ::QDateTime::* )( int ) const::QDateTime ( ::QDateTime::* )( int ) const
-+@member_function_t@addYears@::QDate ( ::QDate::* )( int ) const::QDate ( ::QDate::* )( int ) const
-+@member_function_t@chop@void ( ::QString::* )( int ) void ( ::QString::* )( int ) 
-+@member_function_t@chop@void ( ::QByteArray::* )( int ) void ( ::QByteArray::* )( int ) 
++@member_function_t@entryInfoList@::QFileInfoList ( ::QDir::* )( ::QFlags< QDir::Filter >,::QFlags< QDir::SortFlag > ) const::QFileInfoList ( ::QDir::* )( ::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const
++@member_function_t@entryInfoList@::QFileInfoList ( ::QDir::* )( ::QStringList const &,::QFlags< QDir::Filter >,::QFlags< QDir::SortFlag > ) const::QFileInfoList ( ::QDir::* )( ::QStringList const &,::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const
++@member_function_t@filter@::QFlags< QDir::Filter > ( ::QDir::* )(  ) const::QFlags<QDir::Filter> ( ::QDir::* )(  ) const
 +@member_function_t@length@int ( ::QString::* )(  ) constint ( ::QString::* )(  ) const
 +@member_function_t@length@int ( ::QByteArray::* )(  ) constint ( ::QByteArray::* )(  ) const
 +@member_function_t@dayOfYear@int ( ::QDate::* )(  ) constint ( ::QDate::* )(  ) const
 +@member_function_t@separator@::QChar (*)(  )::QChar (*)(  )
 +@member_function_t@decimalPoint@::QChar ( ::QLocale::* )(  ) const::QChar ( ::QLocale::* )(  ) const
-+@member_function_t@currentDate@::QDate (*)(  )::QDate (*)(  )
 +@member_function_t@setUnicode@::QString & ( ::QString::* )( ::QChar const *,int ) ::QString & ( ::QString::* )( ::QChar const *,int ) 
 +@member_function_t@isFile@bool ( ::QFileInfo::* )(  ) constbool ( ::QFileInfo::* )(  ) const
 +@member_function_t@makeAbsolute@bool ( ::QDir::* )(  ) bool ( ::QDir::* )(  ) 
 +@member_function_t@makeAbsolute@bool ( ::QFileInfo::* )(  ) bool ( ::QFileInfo::* )(  ) 
++@member_function_t@toLocal8Bit@::QByteArray ( ::QString::* )(  ) const::QByteArray ( ::QString::* )(  ) const
 +@member_function_t@isLetter@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
 +@member_function_t@isLetterOrNumber@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
 +@member_function_t@toUShort@::ushort ( ::QString::* )( bool *,int ) const::ushort ( ::QString::* )( bool *,int ) const
 +@member_function_t@toUShort@::ushort ( ::QLocale::* )( ::QString const &,bool *,int ) const::ushort ( ::QLocale::* )( ::QString const &,bool *,int ) const
 ~@member_function_t@writeData@::qint64 ( ::QIODevice::* )( char const *,::qint64 ) ::qint64 ( ::QIODevice::* )( char const *,::qint64 ) 
 +@member_function_t@hasMirrored@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
++@member_function_t@canConvert@bool ( ::QVariant::* )( ::QVariant::Type ) constbool ( ::QVariant::* )( ::QVariant::Type ) const
 +@member_function_t@isRelative@bool ( ::QDir::* )(  ) constbool ( ::QDir::* )(  ) const
 +@member_function_t@isRelative@bool ( ::QFileInfo::* )(  ) constbool ( ::QFileInfo::* )(  ) const
 +@member_function_t@completeBaseName@::QString ( ::QFileInfo::* )(  ) const::QString ( ::QFileInfo::* )(  ) const
@@ -496,7 +489,8 @@
 +@member_function_t@number@::QByteArray (*)( int,int )::QByteArray (*)( int,int )
 +@member_function_t@number@::QByteArray (*)( ::uint,int )::QByteArray (*)( ::uint,int )
 +@member_function_t@number@::QByteArray (*)( double,char,int )::QByteArray (*)( double,char,int )
-+@member_function_t@cd@bool ( ::QDir::* )( ::QString const & ) bool ( ::QDir::* )( ::QString const & ) 
++@member_function_t@entryList@::QStringList ( ::QDir::* )( ::QFlags< QDir::Filter >,::QFlags< QDir::SortFlag > ) const::QStringList ( ::QDir::* )( ::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const
++@member_function_t@entryList@::QStringList ( ::QDir::* )( ::QStringList const &,::QFlags< QDir::Filter >,::QFlags< QDir::SortFlag > ) const::QStringList ( ::QDir::* )( ::QStringList const &,::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const
 +@member_function_t@rmpath@bool ( ::QDir::* )( ::QString const & ) constbool ( ::QDir::* )( ::QString const & ) const
 +@member_function_t@restart@int ( ::QTime::* )(  ) int ( ::QTime::* )(  ) 
 +@member_function_t@push_back@void ( ::QString::* )( ::QChar ) void ( ::QString::* )( ::QChar ) 
@@ -511,8 +505,8 @@
 +@member_function_t@toUTC@::QDateTime ( ::QDateTime::* )(  ) const::QDateTime ( ::QDateTime::* )(  ) const
 +@member_function_t@tempPath@::QString (*)(  )::QString (*)(  )
 +@member_function_t@owner@::QString ( ::QFileInfo::* )(  ) const::QString ( ::QFileInfo::* )(  ) const
-+@member_function_t@open@bool ( ::QFile::* )( ::QFlags<QIODevice::OpenModeFlag> ) bool ( ::QFile::* )( ::QFlags<QIODevice::OpenModeFlag> ) 
-+@member_function_t@open@bool ( ::QIODevice::* )( ::QFlags<QIODevice::OpenModeFlag> ) bool ( ::QIODevice::* )( ::QFlags<QIODevice::OpenModeFlag> ) 
++@member_function_t@open@bool ( ::QFile::* )( ::QFlags< QIODevice::OpenModeFlag > ) bool ( ::QFile::* )( ::QFlags<QIODevice::OpenModeFlag> ) 
++@member_function_t@open@bool ( ::QIODevice::* )( ::QFlags< QIODevice::OpenModeFlag > ) bool ( ::QIODevice::* )( ::QFlags<QIODevice::OpenModeFlag> ) 
 +@member_function_t@setVersion@void ( ::QDataStream::* )( int ) void ( ::QDataStream::* )( int ) 
 +@member_function_t@size@int ( ::QString::* )(  ) constint ( ::QString::* )(  ) const
 +@member_function_t@size@::qint64 ( ::QFileInfo::* )(  ) const::qint64 ( ::QFileInfo::* )(  ) const
@@ -520,10 +514,9 @@
 +@member_function_t@size@int ( ::QByteArray::* )(  ) constint ( ::QByteArray::* )(  ) const
 +@member_function_t@size@::qint64 ( ::QIODevice::* )(  ) const::qint64 ( ::QIODevice::* )(  ) const
 +@member_function_t@toNativeSeparators@::QString (*)( ::QString const & )::QString (*)( ::QString const & )
-+@member_function_t@toList@::QList<QVariant> ( ::QVariant::* )(  ) const::QList<QVariant> ( ::QVariant::* )(  ) const
++@member_function_t@toList@::QList< QVariant > ( ::QVariant::* )(  ) const::QList<QVariant> ( ::QVariant::* )(  ) const
 +@member_function_t@timeFormat@::QString ( ::QLocale::* )( ::QLocale::FormatType ) const::QString ( ::QLocale::* )( ::QLocale::FormatType ) const
-+@member_function_t@toLocal8Bit@::QByteArray ( ::QString::* )(  ) const::QByteArray ( ::QString::* )(  ) const
-+@member_function_t@isOpen@bool ( ::QIODevice::* )(  ) constbool ( ::QIODevice::* )(  ) const
++@member_function_t@weekNumber@int ( ::QDate::* )( int * ) constint ( ::QDate::* )( int * ) const
 +@member_function_t@isWritable@bool ( ::QFileInfo::* )(  ) constbool ( ::QFileInfo::* )(  ) const
 +@member_function_t@isWritable@bool ( ::QIODevice::* )(  ) constbool ( ::QIODevice::* )(  ) const
 +@member_function_t@contains@::QBool ( ::QString::* )( ::QChar,::Qt::CaseSensitivity ) const::QBool ( ::QString::* )( ::QChar,::Qt::CaseSensitivity ) const
@@ -542,13 +535,8 @@
 +@member_function_t@groupSeparator@::QChar ( ::QLocale::* )(  ) const::QChar ( ::QLocale::* )(  ) const
 +@member_function_t@dirName@::QString ( ::QDir::* )(  ) const::QString ( ::QDir::* )(  ) const
 +@member_function_t@isHidden@bool ( ::QFileInfo::* )(  ) constbool ( ::QFileInfo::* )(  ) const
-+@member_function_t@entryList@::QStringList ( ::QDir::* )( ::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const::QStringList ( ::QDir::* )( ::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const
-+@member_function_t@entryList@::QStringList ( ::QDir::* )( ::QStringList const &,::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const::QStringList ( ::QDir::* )( ::QStringList const &,::QFlags<QDir::Filter>,::QFlags<QDir::SortFlag> ) const
-+@member_function_t@isDir@bool ( ::QFileInfo::* )(  ) constbool ( ::QFileInfo::* )(  ) const
-+@member_function_t@testFlag@bool ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) constbool ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const
-+@member_function_t@testFlag@bool ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) constbool ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const
-+@member_function_t@testFlag@bool ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) constbool ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const
-+@member_function_t@testFlag@bool ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) constbool ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const
++@member_function_t@dayOfWeek@int ( ::QDate::* )(  ) constint ( ::QDate::* )(  ) const
++@member_function_t@isNumber@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
 +@member_function_t@leftJustified@::QString ( ::QString::* )( int,::QChar,bool ) const::QString ( ::QString::* )( int,::QChar,bool ) const
 +@member_function_t@leftJustified@::QByteArray ( ::QByteArray::* )( int,char,bool ) const::QByteArray ( ::QByteArray::* )( int,char,bool ) const
 +@member_function_t@putChar@bool ( ::QIODevice::* )( char ) bool ( ::QIODevice::* )( char ) 
@@ -581,7 +569,7 @@
 +@member_function_t@count@int ( ::QByteArray::* )( char const * ) constint ( ::QByteArray::* )( char const * ) const
 +@member_function_t@count@int ( ::QByteArray::* )( ::QByteArray const & ) constint ( ::QByteArray::* )( ::QByteArray const & ) const
 +@member_function_t@count@int ( ::QByteArray::* )(  ) constint ( ::QByteArray::* )(  ) const
-+@member_function_t@openMode@::QFlags<QIODevice::OpenModeFlag> ( ::QIODevice::* )(  ) const::QFlags<QIODevice::OpenModeFlag> ( ::QIODevice::* )(  ) const
++@member_function_t@openMode@::QFlags< QIODevice::OpenModeFlag > ( ::QIODevice::* )(  ) const::QFlags<QIODevice::OpenModeFlag> ( ::QIODevice::* )(  ) const
 +@member_function_t@cdUp@bool ( ::QDir::* )(  ) bool ( ::QDir::* )(  ) 
 +@member_function_t@save@void ( ::QVariant::* )( ::QDataStream & ) constvoid ( ::QVariant::* )( ::QDataStream & ) const
 +@member_function_t@temp@::QDir (*)(  )::QDir (*)(  )
@@ -589,7 +577,6 @@
 +@member_function_t@type@::QVariant::Type ( ::QVariant::* )(  ) const::QVariant::Type ( ::QVariant::* )(  ) const
 +@member_function_t@baseName@::QString ( ::QFileInfo::* )(  ) const::QString ( ::QFileInfo::* )(  ) const
 +@member_function_t@currentTime@::QTime (*)(  )::QTime (*)(  )
-+@member_function_t@dayOfWeek@int ( ::QDate::* )(  ) constint ( ::QDate::* )(  ) const
 +@member_function_t@nameFiltersFromString@::QStringList (*)( ::QString const & )::QStringList (*)( ::QString const & )
 +@member_function_t@resetStatus@void ( ::QDataStream::* )(  ) void ( ::QDataStream::* )(  ) 
 +@member_function_t@toByteArray@::QByteArray ( ::QVariant::* )(  ) const::QByteArray ( ::QVariant::* )(  ) const
@@ -601,7 +588,7 @@
 +@member_function_t@isReadable@bool ( ::QFileInfo::* )(  ) constbool ( ::QFileInfo::* )(  ) const
 +@member_function_t@isReadable@bool ( ::QIODevice::* )(  ) constbool ( ::QIODevice::* )(  ) const
 +@member_function_t@country@::QLocale::Country ( ::QLocale::* )(  ) const::QLocale::Country ( ::QLocale::* )(  ) const
-+@member_function_t@isDigit@bool ( ::QChar::* )(  ) constbool ( ::QChar::* )(  ) const
++@member_function_t@currentDate@::QDate (*)(  )::QDate (*)(  )
 +@member_function_t@setRow@void ( ::QChar::* )( ::uchar ) void ( ::QChar::* )( ::uchar ) 
 +@member_function_t@root@::QDir (*)(  )::QDir (*)(  )
 +@member_function_t@shortDayName@::QString (*)( int )::QString (*)( int )
@@ -617,11 +604,25 @@
 +@member_function_t@getChar@bool ( ::QIODevice::* )( char * ) bool ( ::QIODevice::* )( char * ) 
 +@member_function_t@fromUtf8@::QString (*)( char const *,int )::QString (*)( char const *,int )
 +@member_function_t@fromString@::QDateTime (*)( ::QString const &,::QString const & )::QDateTime (*)( ::QString const &,::QString const & )
-+@member_function_t@fromString@::QTime (*)( ::QString const &,::QString const & )::QTime (*)( ::QString const &,::QString const & )
 +@member_function_t@fromString@::QDate (*)( ::QString const &,::QString const & )::QDate (*)( ::QString const &,::QString const & )
-+@member_function_t@flush@bool ( ::QFile::* )(  ) bool ( ::QFile::* )(  ) 
++@member_function_t@fromString@::QTime (*)( ::QString const &,::QString const & )::QTime (*)( ::QString const &,::QString const & )
++@member_function_t@arg@::QString ( ::QString::* )( long int,int,int,::QChar const & ) const::QString ( ::QString::* )( long int,int,int,::QChar const & ) const
++@member_function_t@arg@::QString ( ::QString::* )( ::ulong,int,int,::QChar const & ) const::QString ( ::QString::* )( ::ulong,int,int,::QChar const & ) const
++@member_function_t@arg@::QString ( ::QString::* )( int,int,int,::QChar const & ) const::QString ( ::QString::* )( int,int,int,::QChar const & ) const
++@member_function_t@arg@::QString ( ::QString::* )( ::uint,int,int,::QChar const & ) const::QString ( ::QString::* )( ::uint,int,int,::QChar const & ) const
++@member_function_t@arg@::QString ( ::QString::* )( double,int,char,int,::QChar const & ) const::QString ( ::QString::* )( double,int,char,int,::QChar const & ) const
++@member_function_t@arg@::QString ( ::QString::* )( char,int,::QChar const & ) const::QString ( ::QString::* )( char,int,::QChar const & ) const
++@member_function_t@arg@::QString ( ::QString::* )( ::QChar,int,::QChar const & ) const::QString ( ::QString::* )( ::QChar,int,::QChar const & ) const
++@member_function_t@arg@::QString ( ::QString::* )( ::QString const &,int,::QChar const & ) const::QString ( ::QString::* )( ::QString const &,int,::QChar const & ) const
++@member_function_t@arg@::QString ( ::QString::* )( ::QString const &,::QString const & ) const::QString ( ::QString::* )( ::QString const &,::QString const & ) const
++@member_function_t@arg@::QString ( ::QString::* )( ::QString const &,::QString const &,::QString const & ) const::QString ( ::QString::* )( ::QString const &,::QString const &,::QString const & ) const
++@member_function_t@arg@::QString ( ::QString::* )( ::QString const &,::QString const &,::QString const &,::QString const & ) const::QString ( ::QString::* )( ::QString const &,::QString const &,::QString const &,::QString const & ) const
 +@member_function_t@toFloat@float ( ::QString::* )( bool * ) constfloat ( ::QString::* )( bool * ) const
 +@member_function_t@toFloat@float ( ::QLocale::* )( ::QString const &,bool * ) constfloat ( ::QLocale::* )( ::QString const &,bool * ) const
++@member_function_t@testFlag@bool ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) constbool ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const
++@member_function_t@testFlag@bool ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) constbool ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const
++@member_function_t@testFlag@bool ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) constbool ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const
++@member_function_t@testFlag@bool ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) constbool ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const
 +@member_function_t@waitForReadyRead@bool ( ::QIODevice::* )( int ) bool ( ::QIODevice::* )( int ) 
 +@member_function_t@toTime_t@::uint ( ::QDateTime::* )(  ) const::uint ( ::QDateTime::* )(  ) const
 +@member_function_t@decomposition@::QString ( ::QChar::* )(  ) const::QString ( ::QChar::* )(  ) const
@@ -629,21 +630,24 @@
 +@member_function_t@close@void ( ::QFile::* )(  ) void ( ::QFile::* )(  ) 
 +@member_function_t@close@void ( ::QIODevice::* )(  ) void ( ::QIODevice::* )(  ) 
 +@member_function_t@homePath@::QString (*)(  )::QString (*)(  )
++@member_function_t@setPermissions@bool ( ::QFile::* )( ::QFlags< QFile::Permission > ) bool ( ::QFile::* )( ::QFlags<QFile::Permission> ) 
++@member_function_t@setPermissions@bool (*)( ::QString const &,::QFlags< QFile::Permission > )bool (*)( ::QString const &,::QFlags<QFile::Permission> )
 +@member_function_t@seek@bool ( ::QFile::* )( ::qint64 ) bool ( ::QFile::* )( ::qint64 ) 
 +@member_function_t@seek@bool ( ::QIODevice::* )( ::qint64 ) bool ( ::QIODevice::* )( ::qint64 ) 
 +@member_function_t@addResourceSearchPath@void (*)( ::QString const & )void (*)( ::QString const & )
 +@member_function_t@languageToString@::QString (*)( ::QLocale::Language )::QString (*)( ::QLocale::Language )
 +@member_function_t@fill@::QString & ( ::QString::* )( ::QChar,int ) ::QString & ( ::QString::* )( ::QChar,int ) 
 +@member_function_t@fill@::QByteArray & ( ::QByteArray::* )( char,int ) ::QByteArray & ( ::QByteArray::* )( char,int ) 
-+@member_function_t@filter@::QFlags<QDir::Filter> ( ::QDir::* )(  ) const::QFlags<QDir::Filter> ( ::QDir::* )(  ) const
++@member_function_t@chop@void ( ::QString::* )( int ) void ( ::QString::* )( int ) 
++@member_function_t@chop@void ( ::QByteArray::* )( int ) void ( ::QByteArray::* )( int ) 
 +@member_function_t@daysTo@int ( ::QDateTime::* )( ::QDateTime const & ) constint ( ::QDateTime::* )( ::QDateTime const & ) const
 +@member_function_t@daysTo@int ( ::QDate::* )( ::QDate const & ) constint ( ::QDate::* )( ::QDate const & ) const
 +@member_function_t@symLinkTarget@::QString ( ::QFileInfo::* )(  ) const::QString ( ::QFileInfo::* )(  ) const
 +@member_function_t@symLinkTarget@::QString ( ::QFile::* )(  ) const::QString ( ::QFile::* )(  ) const
 +@member_function_t@symLinkTarget@::QString (*)( ::QString const & )::QString (*)( ::QString const & )
-+@member_function_t@errorString@::QString ( ::QIODevice::* )(  ) const::QString ( ::QIODevice::* )(  ) const
++@member_function_t@isDir@bool ( ::QFileInfo::* )(  ) constbool ( ::QFileInfo::* )(  ) const
 +@member_function_t@fromUcs4@::QString (*)( ::uint const *,int )::QString (*)( ::uint const *,int )
-+@member_function_t@permission@bool ( ::QFileInfo::* )( ::QFlags<QFile::Permission> ) constbool ( ::QFileInfo::* )( ::QFlags<QFile::Permission> ) const
++@member_function_t@permission@bool ( ::QFileInfo::* )( ::QFlags< QFile::Permission > ) constbool ( ::QFileInfo::* )( ::QFlags<QFile::Permission> ) const
 +@member_function_t@percent@::QChar ( ::QLocale::* )(  ) const::QChar ( ::QLocale::* )(  ) const
 +@member_function_t@mid@::QString ( ::QString::* )( int,int ) const::QString ( ::QString::* )( int,int ) const
 +@member_function_t@mid@::QByteArray ( ::QByteArray::* )( int,int ) const::QByteArray ( ::QByteArray::* )( int,int ) const
@@ -658,16 +662,15 @@
 +@member_function_t@split@::QStringList ( ::QString::* )( ::QString const &,::QString::SplitBehavior,::Qt::CaseSensitivity ) const::QStringList ( ::QString::* )( ::QString const &,::QString::SplitBehavior,::Qt::CaseSensitivity ) const
 +@member_function_t@split@::QStringList ( ::QString::* )( ::QChar const &,::QString::SplitBehavior,::Qt::CaseSensitivity ) const::QStringList ( ::QString::* )( ::QChar const &,::QString::SplitBehavior,::Qt::CaseSensitivity ) const
 +@member_function_t@split@::QStringList ( ::QString::* )( ::QRegExp const &,::QString::SplitBehavior ) const::QStringList ( ::QString::* )( ::QRegExp const &,::QString::SplitBehavior ) const
-+@member_function_t@split@::QList<QByteArray> ( ::QByteArray::* )( char ) const::QList<QByteArray> ( ::QByteArray::* )( char ) const
++@member_function_t@split@::QList< QByteArray > ( ::QByteArray::* )( char ) const::QList<QByteArray> ( ::QByteArray::* )( char ) const
 +@member_function_t@canonicalPath@::QString ( ::QDir::* )(  ) const::QString ( ::QDir::* )(  ) const
 +@member_function_t@canonicalPath@::QString ( ::QFileInfo::* )(  ) const::QString ( ::QFileInfo::* )(  ) const
 +@member_function_t@setDevice@void ( ::QDataStream::* )( ::QIODevice * ) void ( ::QDataStream::* )( ::QIODevice * ) 
-+@member_function_t@toDouble@double ( ::QString::* )( bool * ) constdouble ( ::QString::* )( bool * ) const
-+@member_function_t@toDouble@double ( ::QLocale::* )( ::QString const &,bool * ) constdouble ( ::QLocale::* )( ::QString const &,bool * ) const
-+@member_function_t@toDouble@double ( ::QVariant::* )( bool * ) constdouble ( ::QVariant::* )( bool * ) const
++@member_function_t@longMonthName@::QString (*)( int )::QString (*)( int )
++@member_function_t@elapsed@int ( ::QTime::* )(  ) constint ( ::QTime::* )(  ) const
 +@member_function_t@setDate@void ( ::QDateTime::* )( ::QDate const & ) void ( ::QDateTime::* )( ::QDate const & ) 
 +@member_function_t@setDate@bool ( ::QDate::* )( int,int,int ) bool ( ::QDate::* )( int,int,int ) 
-+@member_function_t@day@int ( ::QDate::* )(  ) constint ( ::QDate::* )(  ) const
++@member_function_t@isOpen@bool ( ::QIODevice::* )(  ) constbool ( ::QIODevice::* )(  ) const
 +@member_function_t@exponential@::QChar ( ::QLocale::* )(  ) const::QChar ( ::QLocale::* )(  ) const
 +@member_function_t@isDetached@bool ( ::QString::* )(  ) constbool ( ::QString::* )(  ) const
 +@member_function_t@isDetached@bool ( ::QVariant::* )(  ) constbool ( ::QVariant::* )(  ) const
@@ -694,16 +697,15 @@
 +@member_function_t@setNum@::QByteArray & ( ::QByteArray::* )( ::uint,int ) ::QByteArray & ( ::QByteArray::* )( ::uint,int ) 
 +@member_function_t@setNum@::QByteArray & ( ::QByteArray::* )( float,char,int ) ::QByteArray & ( ::QByteArray::* )( float,char,int ) 
 +@member_function_t@setNum@::QByteArray & ( ::QByteArray::* )( double,char,int ) ::QByteArray & ( ::QByteArray::* )( double,char,int ) 
-+@member_function_t@truncate@void ( ::QString::* )( int ) void ( ::QString::* )( int ) 
-+@member_function_t@truncate@void ( ::QByteArray::* )( int ) void ( ::QByteArray::* )( int ) 
-+@member_function_t@toULong@::ulong ( ::QString::* )( bool *,int ) const::ulong ( ::QString::* )( bool *,int ) const
++@member_function_t@isRoot@bool ( ::QDir::* )(  ) constbool ( ::QDir::* )(  ) const
++@member_function_t@isRoot@bool ( ::QFileInfo::* )(  ) constbool ( ::QFileInfo::* )(  ) const
++@member_function_t@isLeapYear@bool (*)( int )bool (*)( int )
 +@member_function_t@isValid@bool ( ::QDateTime::* )(  ) constbool ( ::QDateTime::* )(  ) const
++@member_function_t@isValid@bool ( ::QDate::* )(  ) constbool ( ::QDate::* )(  ) const
++@member_function_t@isValid@bool (*)( int,int,int )bool (*)( int,int,int )
 +@member_function_t@isValid@bool ( ::QVariant::* )(  ) constbool ( ::QVariant::* )(  ) const
 +@member_function_t@isValid@bool ( ::QTime::* )(  ) constbool ( ::QTime::* )(  ) const
 +@member_function_t@isValid@bool (*)( int,int,int,int )bool (*)( int,int,int,int )
-+@member_function_t@isValid@bool ( ::QDate::* )(  ) constbool ( ::QDate::* )(  ) const
-+@member_function_t@isValid@bool (*)( int,int,int )bool (*)( int,int,int )
-+@member_function_t@isLeapYear@bool (*)( int )bool (*)( int )
 +@member_function_t@addDays@::QDateTime ( ::QDateTime::* )( int ) const::QDateTime ( ::QDateTime::* )( int ) const
 +@member_function_t@addDays@::QDate ( ::QDate::* )( int ) const::QDate ( ::QDate::* )( int ) const
 +@member_function_t@absoluteFilePath@::QString ( ::QDir::* )( ::QString const & ) const::QString ( ::QDir::* )( ::QString const & ) const
@@ -743,7 +745,6 @@
 +@member_function_t@unsetError@void ( ::QFile::* )(  ) void ( ::QFile::* )(  ) 
 +@member_function_t@mkpath@bool ( ::QDir::* )( ::QString const & ) constbool ( ::QDir::* )( ::QString const & ) const
 +@member_function_t@zeroDigit@::QChar ( ::QLocale::* )(  ) const::QChar ( ::QLocale::* )(  ) const
-+@member_function_t@year@int ( ::QDate::* )(  ) constint ( ::QDate::* )(  ) const
 +@member_function_t@clear@void ( ::QString::* )(  ) void ( ::QString::* )(  ) 
 +@member_function_t@clear@void ( ::QVariant::* )(  ) void ( ::QVariant::* )(  ) 
 +@member_function_t@clear@void ( ::QByteArray::* )(  ) void ( ::QByteArray::* )(  ) 
@@ -759,7 +760,6 @@
 +@member_function_t@endsWith@bool ( ::QByteArray::* )( char const * ) constbool ( ::QByteArray::* )( char const * ) const
 +@member_function_t@write@::qint64 ( ::QIODevice::* )( char const *,::qint64 ) ::qint64 ( ::QIODevice::* )( char const *,::qint64 ) 
 +@member_function_t@write@::qint64 ( ::QIODevice::* )( ::QByteArray const & ) ::qint64 ( ::QIODevice::* )( ::QByteArray const & ) 
-+@member_function_t@weekNumber@int ( ::QDate::* )( int * ) constint ( ::QDate::* )( int * ) const
 +@member_function_t@toUpper@::QString ( ::QString::* )(  ) const::QString ( ::QString::* )(  ) const
 +@member_function_t@toUpper@::QChar ( ::QChar::* )(  ) const::QChar ( ::QChar::* )(  ) const
 +@member_function_t@toUpper@::QByteArray ( ::QByteArray::* )(  ) const::QByteArray ( ::QByteArray::* )(  ) const
@@ -801,19 +801,19 @@
 +@constructor_t@QString@ ( ::QString::* )( ::QChar )  ( ::QString::* )( ::QChar ) 
 +@constructor_t@QString@ ( ::QString::* )( int,::QChar )  ( ::QString::* )( int,::QChar ) 
 +@constructor_t@QString@ ( ::QString::* )( ::QString const & )  ( ::QString::* )( ::QString const & ) 
-+@constructor_t@QFlags@ ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> const & )  ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> const & ) 
++@constructor_t@QFlags@ ( ::QFlags<QFile::Permission>::* )( ::QFlags< QFile::Permission > const & )  ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> const & ) 
 +@constructor_t@QFlags@ ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission )  ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) 
 +@constructor_t@QFlags@ ( ::QFlags<QFile::Permission>::* )( void * * )  ( ::QFlags<QFile::Permission>::* )( void * * ) 
 +@constructor_t@QFlags@ ( ::QFlags<QFile::Permission>::* )( ::QFlag )  ( ::QFlags<QFile::Permission>::* )( ::QFlag ) 
-+@constructor_t@QFlags@ ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> const & )  ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> const & ) 
++@constructor_t@QFlags@ ( ::QFlags<QDir::Filter>::* )( ::QFlags< QDir::Filter > const & )  ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> const & ) 
 +@constructor_t@QFlags@ ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter )  ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) 
 +@constructor_t@QFlags@ ( ::QFlags<QDir::Filter>::* )( void * * )  ( ::QFlags<QDir::Filter>::* )( void * * ) 
 +@constructor_t@QFlags@ ( ::QFlags<QDir::Filter>::* )( ::QFlag )  ( ::QFlags<QDir::Filter>::* )( ::QFlag ) 
-+@constructor_t@QFlags@ ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> const & )  ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> const & ) 
++@constructor_t@QFlags@ ( ::QFlags<QDir::SortFlag>::* )( ::QFlags< QDir::SortFlag > const & )  ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> const & ) 
 +@constructor_t@QFlags@ ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag )  ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) 
 +@constructor_t@QFlags@ ( ::QFlags<QDir::SortFlag>::* )( void * * )  ( ::QFlags<QDir::SortFlag>::* )( void * * ) 
 +@constructor_t@QFlags@ ( ::QFlags<QDir::SortFlag>::* )( ::QFlag )  ( ::QFlags<QDir::SortFlag>::* )( ::QFlag ) 
-+@constructor_t@QFlags@ ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> const & )  ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> const & ) 
++@constructor_t@QFlags@ ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags< QIODevice::OpenModeFlag > const & )  ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> const & ) 
 +@constructor_t@QFlags@ ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag )  ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) 
 +@constructor_t@QFlags@ ( ::QFlags<QIODevice::OpenModeFlag>::* )( void * * )  ( ::QFlags<QIODevice::OpenModeFlag>::* )( void * * ) 
 +@constructor_t@QFlags@ ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlag )  ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlag ) 
@@ -841,8 +841,8 @@
 +@constructor_t@QVariant@ ( ::QVariant::* )( ::QDate const & )  ( ::QVariant::* )( ::QDate const & ) 
 +@constructor_t@QVariant@ ( ::QVariant::* )( ::QTime const & )  ( ::QVariant::* )( ::QTime const & ) 
 +@constructor_t@QVariant@ ( ::QVariant::* )( ::QDateTime const & )  ( ::QVariant::* )( ::QDateTime const & ) 
-+@constructor_t@QVariant@ ( ::QVariant::* )( ::QList<QVariant> const & )  ( ::QVariant::* )( ::QList<QVariant> const & ) 
-+@constructor_t@QVariant@ ( ::QVariant::* )( ::QMap<QString,QVariant> const & )  ( ::QVariant::* )( ::QMap<QString,QVariant> const & ) 
++@constructor_t@QVariant@ ( ::QVariant::* )( ::QList< QVariant > const & )  ( ::QVariant::* )( ::QList<QVariant> const & ) 
++@constructor_t@QVariant@ ( ::QVariant::* )( ::QMap< QString, QVariant > const & )  ( ::QVariant::* )( ::QMap<QString,QVariant> const & ) 
 +@constructor_t@QVariant@ ( ::QVariant::* )( ::QUrl const & )  ( ::QVariant::* )( ::QUrl const & ) 
 +@constructor_t@QVariant@ ( ::QVariant::* )( ::QLocale const & )  ( ::QVariant::* )( ::QLocale const & ) 
 +@constructor_t@QVariant@ ( ::QVariant::* )( ::QRegExp const & )  ( ::QVariant::* )( ::QRegExp const & ) 
@@ -880,7 +880,7 @@
 +@constructor_t@QBool@ ( ::QBool::* )( bool )  ( ::QBool::* )( bool ) 
 ~@constructor_t@QDataStream@ ( ::QDataStream::* )(  )  ( ::QDataStream::* )(  ) 
 ~@constructor_t@QDataStream@ ( ::QDataStream::* )( ::QIODevice * )  ( ::QDataStream::* )( ::QIODevice * ) 
-~@constructor_t@QDataStream@ ( ::QDataStream::* )( ::QByteArray *,::QFlags<QIODevice::OpenModeFlag> )  ( ::QDataStream::* )( ::QByteArray *,::QFlags<QIODevice::OpenModeFlag> ) 
+~@constructor_t@QDataStream@ ( ::QDataStream::* )( ::QByteArray *,::QFlags< QIODevice::OpenModeFlag > )  ( ::QDataStream::* )( ::QByteArray *,::QFlags<QIODevice::OpenModeFlag> ) 
 ~@constructor_t@QDataStream@ ( ::QDataStream::* )( ::QByteArray const & )  ( ::QDataStream::* )( ::QByteArray const & ) 
 ~@constructor_t@QDataStream@ ( ::QDataStream::* )( ::QDataStream const & )  ( ::QDataStream::* )( ::QDataStream const & ) 
 +@constructor_t@QUuid@ ( ::QUuid::* )( ::QUuid const & )  ( ::QUuid::* )( ::QUuid const & ) 
@@ -910,69 +910,69 @@
 ~@free_operator_t@operator>>@::QDataStream & (*)( ::QDataStream &,::QDate & )::QDataStream & (*)( ::QDataStream &,::QDate & )
 ~@free_operator_t@operator>>@::QDataStream & (*)( ::QDataStream &,::QChar & )::QDataStream & (*)( ::QDataStream &,::QChar & )
 ~@free_operator_t@operator>>@::QDataStream & (*)( ::QDataStream &,::QByteArray & )::QDataStream & (*)( ::QDataStream &,::QByteArray & )
-+@member_operator_t@operator~@::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )(  ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )(  ) const
-+@member_operator_t@operator~@::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )(  ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )(  ) const
-+@member_operator_t@operator~@::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )(  ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )(  ) const
-+@member_operator_t@operator~@::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )(  ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )(  ) const
++@member_operator_t@operator~@::QFlags< QFile::Permission > ( ::QFlags<QFile::Permission>::* )(  ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )(  ) const
++@member_operator_t@operator~@::QFlags< QDir::Filter > ( ::QFlags<QDir::Filter>::* )(  ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )(  ) const
++@member_operator_t@operator~@::QFlags< QDir::SortFlag > ( ::QFlags<QDir::SortFlag>::* )(  ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )(  ) const
++@member_operator_t@operator~@::QFlags< QIODevice::OpenModeFlag > ( ::QFlags<QIODevice::OpenModeFlag>::* )(  ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )(  ) const
 +@member_operator_t@operator!=@bool ( ::QDateTime::* )( ::QDateTime const & ) constbool ( ::QDateTime::* )( ::QDateTime const & ) const
++@member_operator_t@operator!=@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
 +@member_operator_t@operator!=@bool ( ::QDir::* )( ::QDir const & ) constbool ( ::QDir::* )( ::QDir const & ) const
 +@member_operator_t@operator!=@bool ( ::QString::* )( ::QString const & ) constbool ( ::QString::* )( ::QString const & ) const
 +@member_operator_t@operator!=@bool ( ::QUuid::* )( ::QUuid const & ) constbool ( ::QUuid::* )( ::QUuid const & ) const
 +@member_operator_t@operator!=@bool ( ::QLocale::* )( ::QLocale const & ) constbool ( ::QLocale::* )( ::QLocale const & ) const
 +@member_operator_t@operator!=@bool ( ::QFileInfo::* )( ::QFileInfo const & ) constbool ( ::QFileInfo::* )( ::QFileInfo const & ) const
 +@member_operator_t@operator!=@bool ( ::QTime::* )( ::QTime const & ) constbool ( ::QTime::* )( ::QTime const & ) const
-+@member_operator_t@operator!=@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
 +@member_operator_t@operator<@bool ( ::QDateTime::* )( ::QDateTime const & ) constbool ( ::QDateTime::* )( ::QDateTime const & ) const
++@member_operator_t@operator<@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
 +@member_operator_t@operator<@bool ( ::QString::* )( ::QString const & ) constbool ( ::QString::* )( ::QString const & ) const
 +@member_operator_t@operator<@bool ( ::QUuid::* )( ::QUuid const & ) constbool ( ::QUuid::* )( ::QUuid const & ) const
 +@member_operator_t@operator<@bool ( ::QTime::* )( ::QTime const & ) constbool ( ::QTime::* )( ::QTime const & ) const
-+@member_operator_t@operator<@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
 ~@member_operator_t@operator+=@::QString & ( ::QString::* )( ::QChar ) ::QString & ( ::QString::* )( ::QChar ) 
 ~@member_operator_t@operator+=@::QString & ( ::QString::* )( ::QString const & ) ::QString & ( ::QString::* )( ::QString const & ) 
 ~@member_operator_t@operator+=@::QByteArray & ( ::QByteArray::* )( char ) ::QByteArray & ( ::QByteArray::* )( char ) 
 ~@member_operator_t@operator+=@::QByteArray & ( ::QByteArray::* )( char const * ) ::QByteArray & ( ::QByteArray::* )( char const * ) 
 ~@member_operator_t@operator+=@::QByteArray & ( ::QByteArray::* )( ::QByteArray const & ) ::QByteArray & ( ::QByteArray::* )( ::QByteArray const & ) 
 +@member_operator_t@operator>@bool ( ::QDateTime::* )( ::QDateTime const & ) constbool ( ::QDateTime::* )( ::QDateTime const & ) const
++@member_operator_t@operator>@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
 +@member_operator_t@operator>@bool ( ::QString::* )( ::QString const & ) constbool ( ::QString::* )( ::QString const & ) const
 +@member_operator_t@operator>@bool ( ::QUuid::* )( ::QUuid const & ) constbool ( ::QUuid::* )( ::QUuid const & ) const
 +@member_operator_t@operator>@bool ( ::QTime::* )( ::QTime const & ) constbool ( ::QTime::* )( ::QTime const & ) const
-+@member_operator_t@operator>@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
-+@member_operator_t@operator^@::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) const
-+@member_operator_t@operator^@::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const
-+@member_operator_t@operator^@::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) const
-+@member_operator_t@operator^@::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const
-+@member_operator_t@operator^@::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) const
-+@member_operator_t@operator^@::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const
-+@member_operator_t@operator^@::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) const
-+@member_operator_t@operator^@::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const
-~@member_operator_t@operator^=@::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) 
-~@member_operator_t@operator^=@::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) 
-~@member_operator_t@operator^=@::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) 
-~@member_operator_t@operator^=@::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) 
-~@member_operator_t@operator^=@::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) 
-~@member_operator_t@operator^=@::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) 
-~@member_operator_t@operator^=@::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) 
-~@member_operator_t@operator^=@::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) 
++@member_operator_t@operator^@::QFlags< QFile::Permission > ( ::QFlags<QFile::Permission>::* )( ::QFlags< QFile::Permission > ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) const
++@member_operator_t@operator^@::QFlags< QFile::Permission > ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const
++@member_operator_t@operator^@::QFlags< QDir::Filter > ( ::QFlags<QDir::Filter>::* )( ::QFlags< QDir::Filter > ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) const
++@member_operator_t@operator^@::QFlags< QDir::Filter > ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const
++@member_operator_t@operator^@::QFlags< QDir::SortFlag > ( ::QFlags<QDir::SortFlag>::* )( ::QFlags< QDir::SortFlag > ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) const
++@member_operator_t@operator^@::QFlags< QDir::SortFlag > ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const
++@member_operator_t@operator^@::QFlags< QIODevice::OpenModeFlag > ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags< QIODevice::OpenModeFlag > ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) const
++@member_operator_t@operator^@::QFlags< QIODevice::OpenModeFlag > ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const
+~@member_operator_t@operator^=@::QFlags< QFile::Permission > & ( ::QFlags<QFile::Permission>::* )( ::QFlags< QFile::Permission > ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) 
+~@member_operator_t@operator^=@::QFlags< QFile::Permission > & ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) 
+~@member_operator_t@operator^=@::QFlags< QDir::Filter > & ( ::QFlags<QDir::Filter>::* )( ::QFlags< QDir::Filter > ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) 
+~@member_operator_t@operator^=@::QFlags< QDir::Filter > & ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) 
+~@member_operator_t@operator^=@::QFlags< QDir::SortFlag > & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags< QDir::SortFlag > ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) 
+~@member_operator_t@operator^=@::QFlags< QDir::SortFlag > & ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) 
+~@member_operator_t@operator^=@::QFlags< QIODevice::OpenModeFlag > & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags< QIODevice::OpenModeFlag > ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) 
+~@member_operator_t@operator^=@::QFlags< QIODevice::OpenModeFlag > & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) 
 +@member_operator_t@operator==@bool ( ::QDateTime::* )( ::QDateTime const & ) constbool ( ::QDateTime::* )( ::QDateTime const & ) const
++@member_operator_t@operator==@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
 +@member_operator_t@operator==@bool ( ::QDir::* )( ::QDir const & ) constbool ( ::QDir::* )( ::QDir const & ) const
 +@member_operator_t@operator==@bool ( ::QString::* )( ::QString const & ) constbool ( ::QString::* )( ::QString const & ) const
 +@member_operator_t@operator==@bool ( ::QUuid::* )( ::QUuid const & ) constbool ( ::QUuid::* )( ::QUuid const & ) const
 +@member_operator_t@operator==@bool ( ::QLocale::* )( ::QLocale const & ) constbool ( ::QLocale::* )( ::QLocale const & ) const
 +@member_operator_t@operator==@bool ( ::QFileInfo::* )( ::QFileInfo const & ) constbool ( ::QFileInfo::* )( ::QFileInfo const & ) const
 +@member_operator_t@operator==@bool ( ::QTime::* )( ::QTime const & ) constbool ( ::QTime::* )( ::QTime const & ) const
-+@member_operator_t@operator==@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
 +@member_operator_t@operator<=@bool ( ::QDateTime::* )( ::QDateTime const & ) constbool ( ::QDateTime::* )( ::QDateTime const & ) const
++@member_operator_t@operator<=@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
 +@member_operator_t@operator<=@bool ( ::QString::* )( ::QString const & ) constbool ( ::QString::* )( ::QString const & ) const
 +@member_operator_t@operator<=@bool ( ::QTime::* )( ::QTime const & ) constbool ( ::QTime::* )( ::QTime const & ) const
-+@member_operator_t@operator<=@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
-~@member_operator_t@operator&=@::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( int ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( int ) 
-~@member_operator_t@operator&=@::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::uint ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::uint ) 
-~@member_operator_t@operator&=@::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( int ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( int ) 
-~@member_operator_t@operator&=@::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::uint ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::uint ) 
-~@member_operator_t@operator&=@::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( int ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( int ) 
-~@member_operator_t@operator&=@::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::uint ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::uint ) 
-~@member_operator_t@operator&=@::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( int ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( int ) 
-~@member_operator_t@operator&=@::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::uint ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::uint ) 
+~@member_operator_t@operator&=@::QFlags< QFile::Permission > & ( ::QFlags<QFile::Permission>::* )( int ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( int ) 
+~@member_operator_t@operator&=@::QFlags< QFile::Permission > & ( ::QFlags<QFile::Permission>::* )( ::uint ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::uint ) 
+~@member_operator_t@operator&=@::QFlags< QDir::Filter > & ( ::QFlags<QDir::Filter>::* )( int ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( int ) 
+~@member_operator_t@operator&=@::QFlags< QDir::Filter > & ( ::QFlags<QDir::Filter>::* )( ::uint ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::uint ) 
+~@member_operator_t@operator&=@::QFlags< QDir::SortFlag > & ( ::QFlags<QDir::SortFlag>::* )( int ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( int ) 
+~@member_operator_t@operator&=@::QFlags< QDir::SortFlag > & ( ::QFlags<QDir::SortFlag>::* )( ::uint ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::uint ) 
+~@member_operator_t@operator&=@::QFlags< QIODevice::OpenModeFlag > & ( ::QFlags<QIODevice::OpenModeFlag>::* )( int ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( int ) 
+~@member_operator_t@operator&=@::QFlags< QIODevice::OpenModeFlag > & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::uint ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::uint ) 
 +@member_operator_t@operator[]@::QString ( ::QDir::* )( int ) const::QString ( ::QDir::* )( int ) const
 +@member_operator_t@operator[]@::QChar const ( ::QString::* )( int ) const::QChar const ( ::QString::* )( int ) const
 +@member_operator_t@operator[]@::QChar const ( ::QString::* )( ::uint ) const::QChar const ( ::QString::* )( ::uint ) const
@@ -985,12 +985,13 @@
 ~@member_operator_t@operator=@::_opaque_pthread_cond_t & ( ::_opaque_pthread_cond_t::* )( ::_opaque_pthread_cond_t const & ) ::_opaque_pthread_cond_t & ( ::_opaque_pthread_cond_t::* )( ::_opaque_pthread_cond_t const & ) 
 ~@member_operator_t@operator=@::_opaque_pthread_mutex_t & ( ::_opaque_pthread_mutex_t::* )( ::_opaque_pthread_mutex_t const & ) ::_opaque_pthread_mutex_t & ( ::_opaque_pthread_mutex_t::* )( ::_opaque_pthread_mutex_t const & ) 
 +@member_operator_t@operator=@::QDateTime & ( ::QDateTime::* )( ::QDateTime const & ) ::QDateTime & ( ::QDateTime::* )( ::QDateTime const & ) 
++@member_operator_t@operator=@::QDate & ( ::QDate::* )( ::QDate const & ) ::QDate & ( ::QDate::* )( ::QDate const & ) 
 +@member_operator_t@operator=@::QDir & ( ::QDir::* )( ::QDir const & ) ::QDir & ( ::QDir::* )( ::QDir const & ) 
 +@member_operator_t@operator=@::QDir & ( ::QDir::* )( ::QString const & ) ::QDir & ( ::QDir::* )( ::QString const & ) 
+~@member_operator_t@operator=@::__mbstate_t & ( ::__mbstate_t::* )( ::__mbstate_t const & ) ::__mbstate_t & ( ::__mbstate_t::* )( ::__mbstate_t const & ) 
 +@member_operator_t@operator=@::QString & ( ::QString::* )( ::QString const & ) ::QString & ( ::QString::* )( ::QString const & ) 
 +@member_operator_t@operator=@::QChar & ( ::QChar::* )( ::QChar const & ) ::QChar & ( ::QChar::* )( ::QChar const & ) 
 +@member_operator_t@operator=@::QUuid & ( ::QUuid::* )( ::QUuid const & ) ::QUuid & ( ::QUuid::* )( ::QUuid const & ) 
-~@member_operator_t@operator=@::__mbstate_t & ( ::__mbstate_t::* )( ::__mbstate_t const & ) ::__mbstate_t & ( ::__mbstate_t::* )( ::__mbstate_t const & ) 
 ~@member_operator_t@operator=@::_opaque_pthread_attr_t & ( ::_opaque_pthread_attr_t::* )( ::_opaque_pthread_attr_t const & ) ::_opaque_pthread_attr_t & ( ::_opaque_pthread_attr_t::* )( ::_opaque_pthread_attr_t const & ) 
 +@member_operator_t@operator=@::QLocale & ( ::QLocale::* )( ::QLocale const & ) ::QLocale & ( ::QLocale::* )( ::QLocale const & ) 
 ~@member_operator_t@operator=@::_opaque_pthread_rwlock_t & ( ::_opaque_pthread_rwlock_t::* )( ::_opaque_pthread_rwlock_t const & ) ::_opaque_pthread_rwlock_t & ( ::_opaque_pthread_rwlock_t::* )( ::_opaque_pthread_rwlock_t const & ) 
@@ -1005,45 +1006,44 @@
 +@member_operator_t@operator=@::QFile & ( ::QFile::* )( ::QFile const & ) ::QFile & ( ::QFile::* )( ::QFile const & ) 
 +@member_operator_t@operator=@::QTime & ( ::QTime::* )( ::QTime const & ) ::QTime & ( ::QTime::* )( ::QTime const & ) 
 +@member_operator_t@operator=@::QByteArray & ( ::QByteArray::* )( ::QByteArray const & ) ::QByteArray & ( ::QByteArray::* )( ::QByteArray const & ) 
-+@member_operator_t@operator=@::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> const & ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> const & ) 
-+@member_operator_t@operator=@::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> const & ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> const & ) 
-+@member_operator_t@operator=@::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> const & ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> const & ) 
-+@member_operator_t@operator=@::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> const & ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> const & ) 
-+@member_operator_t@operator=@::QDate & ( ::QDate::* )( ::QDate const & ) ::QDate & ( ::QDate::* )( ::QDate const & ) 
++@member_operator_t@operator=@::QFlags< QFile::Permission > & ( ::QFlags<QFile::Permission>::* )( ::QFlags< QFile::Permission > const & ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> const & ) 
++@member_operator_t@operator=@::QFlags< QDir::Filter > & ( ::QFlags<QDir::Filter>::* )( ::QFlags< QDir::Filter > const & ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> const & ) 
++@member_operator_t@operator=@::QFlags< QDir::SortFlag > & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags< QDir::SortFlag > const & ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> const & ) 
++@member_operator_t@operator=@::QFlags< QIODevice::OpenModeFlag > & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags< QIODevice::OpenModeFlag > const & ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> const & ) 
 ~@member_operator_t@operator=@::_opaque_pthread_t & ( ::_opaque_pthread_t::* )( ::_opaque_pthread_t const & ) ::_opaque_pthread_t & ( ::_opaque_pthread_t::* )( ::_opaque_pthread_t const & ) 
 ~@member_operator_t@operator=@::QIODevice & ( ::QIODevice::* )( ::QIODevice const & ) ::QIODevice & ( ::QIODevice::* )( ::QIODevice const & ) 
-+@member_operator_t@operator&@::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( int ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( int ) const
-+@member_operator_t@operator&@::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::uint ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::uint ) const
-+@member_operator_t@operator&@::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const
-+@member_operator_t@operator&@::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( int ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( int ) const
-+@member_operator_t@operator&@::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::uint ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::uint ) const
-+@member_operator_t@operator&@::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const
-+@member_operator_t@operator&@::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( int ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( int ) const
-+@member_operator_t@operator&@::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::uint ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::uint ) const
-+@member_operator_t@operator&@::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const
-+@member_operator_t@operator&@::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( int ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( int ) const
-+@member_operator_t@operator&@::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::uint ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::uint ) const
-+@member_operator_t@operator&@::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const
++@member_operator_t@operator&@::QFlags< QFile::Permission > ( ::QFlags<QFile::Permission>::* )( int ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( int ) const
++@member_operator_t@operator&@::QFlags< QFile::Permission > ( ::QFlags<QFile::Permission>::* )( ::uint ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::uint ) const
++@member_operator_t@operator&@::QFlags< QFile::Permission > ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const
++@member_operator_t@operator&@::QFlags< QDir::Filter > ( ::QFlags<QDir::Filter>::* )( int ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( int ) const
++@member_operator_t@operator&@::QFlags< QDir::Filter > ( ::QFlags<QDir::Filter>::* )( ::uint ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::uint ) const
++@member_operator_t@operator&@::QFlags< QDir::Filter > ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const
++@member_operator_t@operator&@::QFlags< QDir::SortFlag > ( ::QFlags<QDir::SortFlag>::* )( int ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( int ) const
++@member_operator_t@operator&@::QFlags< QDir::SortFlag > ( ::QFlags<QDir::SortFlag>::* )( ::uint ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::uint ) const
++@member_operator_t@operator&@::QFlags< QDir::SortFlag > ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const
++@member_operator_t@operator&@::QFlags< QIODevice::OpenModeFlag > ( ::QFlags<QIODevice::OpenModeFlag>::* )( int ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( int ) const
++@member_operator_t@operator&@::QFlags< QIODevice::OpenModeFlag > ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::uint ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::uint ) const
++@member_operator_t@operator&@::QFlags< QIODevice::OpenModeFlag > ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const
 +@member_operator_t@operator>=@bool ( ::QDateTime::* )( ::QDateTime const & ) constbool ( ::QDateTime::* )( ::QDateTime const & ) const
++@member_operator_t@operator>=@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
 +@member_operator_t@operator>=@bool ( ::QString::* )( ::QString const & ) constbool ( ::QString::* )( ::QString const & ) const
 +@member_operator_t@operator>=@bool ( ::QTime::* )( ::QTime const & ) constbool ( ::QTime::* )( ::QTime const & ) const
-+@member_operator_t@operator>=@bool ( ::QDate::* )( ::QDate const & ) constbool ( ::QDate::* )( ::QDate const & ) const
-~@member_operator_t@operator|=@::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) 
-~@member_operator_t@operator|=@::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) 
-~@member_operator_t@operator|=@::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) 
-~@member_operator_t@operator|=@::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) 
-~@member_operator_t@operator|=@::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) 
-~@member_operator_t@operator|=@::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) 
-~@member_operator_t@operator|=@::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) 
-~@member_operator_t@operator|=@::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) 
-+@member_operator_t@operator|@::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) const
-+@member_operator_t@operator|@::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const
-+@member_operator_t@operator|@::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) const
-+@member_operator_t@operator|@::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const
-+@member_operator_t@operator|@::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) const
-+@member_operator_t@operator|@::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const
-+@member_operator_t@operator|@::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) const
-+@member_operator_t@operator|@::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const
+~@member_operator_t@operator|=@::QFlags< QFile::Permission > & ( ::QFlags<QFile::Permission>::* )( ::QFlags< QFile::Permission > ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) 
+~@member_operator_t@operator|=@::QFlags< QFile::Permission > & ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) ::QFlags<QFile::Permission> & ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) 
+~@member_operator_t@operator|=@::QFlags< QDir::Filter > & ( ::QFlags<QDir::Filter>::* )( ::QFlags< QDir::Filter > ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) 
+~@member_operator_t@operator|=@::QFlags< QDir::Filter > & ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) ::QFlags<QDir::Filter> & ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) 
+~@member_operator_t@operator|=@::QFlags< QDir::SortFlag > & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags< QDir::SortFlag > ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) 
+~@member_operator_t@operator|=@::QFlags< QDir::SortFlag > & ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) ::QFlags<QDir::SortFlag> & ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) 
+~@member_operator_t@operator|=@::QFlags< QIODevice::OpenModeFlag > & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags< QIODevice::OpenModeFlag > ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) 
+~@member_operator_t@operator|=@::QFlags< QIODevice::OpenModeFlag > & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) ::QFlags<QIODevice::OpenModeFlag> & ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) 
++@member_operator_t@operator|@::QFlags< QFile::Permission > ( ::QFlags<QFile::Permission>::* )( ::QFlags< QFile::Permission > ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFlags<QFile::Permission> ) const
++@member_operator_t@operator|@::QFlags< QFile::Permission > ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const::QFlags<QFile::Permission> ( ::QFlags<QFile::Permission>::* )( ::QFile::Permission ) const
++@member_operator_t@operator|@::QFlags< QDir::Filter > ( ::QFlags<QDir::Filter>::* )( ::QFlags< QDir::Filter > ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QFlags<QDir::Filter> ) const
++@member_operator_t@operator|@::QFlags< QDir::Filter > ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const::QFlags<QDir::Filter> ( ::QFlags<QDir::Filter>::* )( ::QDir::Filter ) const
++@member_operator_t@operator|@::QFlags< QDir::SortFlag > ( ::QFlags<QDir::SortFlag>::* )( ::QFlags< QDir::SortFlag > ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QFlags<QDir::SortFlag> ) const
++@member_operator_t@operator|@::QFlags< QDir::SortFlag > ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const::QFlags<QDir::SortFlag> ( ::QFlags<QDir::SortFlag>::* )( ::QDir::SortFlag ) const
++@member_operator_t@operator|@::QFlags< QIODevice::OpenModeFlag > ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags< QIODevice::OpenModeFlag > ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QFlags<QIODevice::OpenModeFlag> ) const
++@member_operator_t@operator|@::QFlags< QIODevice::OpenModeFlag > ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const::QFlags<QIODevice::OpenModeFlag> ( ::QFlags<QIODevice::OpenModeFlag>::* )( ::QIODevice::OpenModeFlag ) const
 ~@free_function_t@strncasecmp@int (*)( char const *,char const *,::size_t )int (*)( char const *,char const *,::size_t )
 ~@free_function_t@__builtin_sinf@float (*)( float )float (*)( float )
 ~@free_function_t@__builtin_ldexpf@float (*)( float,int )float (*)( float,int )
@@ -1056,7 +1056,9 @@
 ~@free_function_t@flsl@int (*)( long int )int (*)( long int )
 ~@free_function_t@__builtin_expf@float (*)( float )float (*)( float )
 ~@free_function_t@__builtin_ctzl@int (*)( long int )int (*)( long int )
+~@free_function_t@__builtin_bswap32@unsigned int (*)( unsigned int )unsigned int (*)( unsigned int )
 ~@free_function_t@__builtin_expl@long double (*)( long double )long double (*)( long double )
+~@free_function_t@__builtin_coshl@long double (*)( long double )long double (*)( long double )
 ~@free_function_t@swab@void (*)( void const *,void *,::ssize_t )void (*)( void const *,void *,::ssize_t )
 ~@free_function_t@__builtin_log10@double (*)( double )double (*)( double )
 ~@free_function_t@__builtin_exp@double (*)( double )double (*)( double )
@@ -1067,6 +1069,7 @@
 ~@free_function_t@__builtin_csin@complex double (*)( complex double )complex double (*)( complex double )
 ~@free_function_t@__builtin_csinl@complex long double (*)( complex long double )complex long double (*)( complex long double )
 ~@free_function_t@__builtin_acos@double (*)( double )double (*)( double )
+~@free_function_t@__builtin_ccosl@complex long double (*)( complex long double )complex long double (*)( complex long double )
 ~@free_function_t@ffs@int (*)( int )int (*)( int )
 ~@free_function_t@__builtin_cargl@long double (*)( complex long double )long double (*)( complex long double )
 ~@free_function_t@__builtin_acosl@long double (*)( long double )long double (*)( long double )
@@ -1078,7 +1081,7 @@
 ~@free_function_t@memcpy@void * (*)( void *,void const *,::size_t )void * (*)( void *,void const *,::size_t )
 ~@free_function_t@__builtin_ccosh@complex double (*)( complex double )complex double (*)( complex double )
 ~@free_function_t@__builtin_powi@double (*)( double,int )double (*)( double,int )
-~@free_function_t@__builtin_ccosl@complex long double (*)( complex long double )complex long double (*)( complex long double )
+~@free_function_t@strnlen@::size_t (*)( char const *,::size_t )::size_t (*)( char const *,::size_t )
 ~@free_function_t@__builtin_frame_address@void * (*)( unsigned int )void * (*)( unsigned int )
 ~@free_function_t@strstr@char * (*)( char const *,char const * )char * (*)( char const *,char const * )
 ~@free_function_t@__builtin_tanf@float (*)( float )float (*)( float )
@@ -1113,7 +1116,7 @@
 ~@free_function_t@__builtin_fabs@double (*)( double )double (*)( double )
 ~@free_function_t@__builtin_infl@long double (*)(  )long double (*)(  )
 ~@free_function_t@__builtin_atan2f@float (*)( float,float )float (*)( float,float )
-~@free_function_t@__builtin_prefetch@void (*)( void const * )void (*)( void const * )
+~@free_function_t@__builtin_prefetch@void (*)( void const *,... )void (*)( void const *,... )
 ~@free_function_t@__builtin_sinh@double (*)( double )double (*)( double )
 ~@free_function_t@__builtin_floor@double (*)( double )double (*)( double )
 ~@free_function_t@__builtin_cabsl@long double (*)( complex long double )long double (*)( complex long double )
@@ -1123,12 +1126,13 @@
 ~@free_function_t@__builtin_csqrtl@complex long double (*)( complex long double )complex long double (*)( complex long double )
 ~@free_function_t@strcspn@::size_t (*)( char const *,char const * )::size_t (*)( char const *,char const * )
 ~@free_function_t@__builtin_csqrtf@complex float (*)( complex float )complex float (*)( complex float )
-~@free_function_t@memset_pattern16@void (*)( void *,void const *,::size_t )void (*)( void *,void const *,::size_t )
+~@free_function_t@__builtin_return_address@void * (*)( unsigned int )void * (*)( unsigned int )
 ~@free_function_t@__builtin_csinhl@complex long double (*)( complex long double )complex long double (*)( complex long double )
 ~@free_function_t@__builtin_coshf@float (*)( float )float (*)( float )
 ~@free_function_t@__builtin_ccos@complex double (*)( complex double )complex double (*)( complex double )
 ~@free_function_t@__builtin_csinhf@complex float (*)( complex float )complex float (*)( complex float )
-~@free_function_t@__builtin_coshl@long double (*)( long double )long double (*)( long double )
+~@free_function_t@stpncpy@char * (*)( char *,char const *,::size_t )char * (*)( char *,char const *,::size_t )
+~@free_function_t@memset_pattern16@void (*)( void *,void const *,::size_t )void (*)( void *,void const *,::size_t )
 ~@free_function_t@__builtin_powf@float (*)( float,float )float (*)( float,float )
 ~@free_function_t@__builtin_ldexp@double (*)( double,int )double (*)( double,int )
 ~@free_function_t@__builtin_ctz@int (*)( int )int (*)( int )
@@ -1185,6 +1189,7 @@
 ~@free_function_t@__builtin_sinhl@long double (*)( long double )long double (*)( long double )
 ~@free_function_t@ffsl@int (*)( long int )int (*)( long int )
 ~@free_function_t@__builtin_powif@float (*)( float,int )float (*)( float,int )
+~@free_function_t@strndup@char * (*)( char const *,::size_t )char * (*)( char const *,::size_t )
 ~@free_function_t@__builtin_sinhf@float (*)( float )float (*)( float )
 ~@free_function_t@__builtin_return@void (*)( void * )void (*)( void * )
 ~@free_function_t@strtok_r@char * (*)( char *,char const *,char * * )char * (*)( char *,char const *,char * * )
@@ -1199,7 +1204,7 @@
 ~@free_function_t@index@char * (*)( char const *,int )char * (*)( char const *,int )
 ~@free_function_t@__builtin_ccoshf@complex float (*)( complex float )complex float (*)( complex float )
 ~@free_function_t@__builtin_nansl@long double (*)( char const * )long double (*)( char const * )
-~@free_function_t@__builtin_return_address@void * (*)( unsigned int )void * (*)( unsigned int )
+~@free_function_t@__builtin_bswap64@long unsigned int (*)( long unsigned int )long unsigned int (*)( long unsigned int )
 ~@free_function_t@strpbrk@char * (*)( char const *,char const * )char * (*)( char const *,char const * )
 ~@free_function_t@__builtin_cosf@float (*)( float )float (*)( float )
 ~@free_function_t@__builtin_cosh@double (*)( double )double (*)( double )
@@ -1209,6 +1214,7 @@
 ~@free_function_t@__builtin_ceil@double (*)( double )double (*)( double )
 ~@free_function_t@__builtin_fmodf@float (*)( float,float )float (*)( float,float )
 ~@free_function_t@__builtin_cos@double (*)( double )double (*)( double )
+~@free_function_t@memmem@void * (*)( void const *,::size_t,void const *,::size_t )void * (*)( void const *,::size_t,void const *,::size_t )
 ~@free_function_t@__builtin_fmodl@long double (*)( long double,long double )long double (*)( long double,long double )
 ~@free_function_t@__builtin_sinl@long double (*)( long double )long double (*)( long double )
 ~@free_function_t@strsep@char * (*)( char * *,char const * )char * (*)( char * *,char const * )

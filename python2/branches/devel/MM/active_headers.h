@@ -8,6 +8,7 @@
 #include "atomljs.h"
 #include "cljcomponent.h"
 #include "cljnbpairs.h"
+#include "cljparam.h"
 #include "cljpotential.h"
 #include "cljprobe.h"
 #include "coulombpotential.h"

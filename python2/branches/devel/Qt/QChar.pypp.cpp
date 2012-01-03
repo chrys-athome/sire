@@ -30,7 +30,7 @@ void register_QChar_class(){
 
     { //::QChar
         typedef bp::class_< QChar > QChar_exposer_t;
-        QChar_exposer_t QChar_exposer = QChar_exposer_t( "QChar" );
+        QChar_exposer_t QChar_exposer = QChar_exposer_t( "QChar", bp::init< >() );
         bp::scope QChar_scope( QChar_exposer );
         bp::enum_< QChar::Category>("Category")
             .value("NoCategory", QChar::NoCategory)
@@ -161,7 +161,6 @@ void register_QChar_class(){
             .value("Unicode_4_0", QChar::Unicode_4_0)
             .export_values()
             ;
-        QChar_exposer.def( bp::init< >() );
         QChar_exposer.def( bp::init< uchar, uchar >(( bp::arg("c"), bp::arg("r") )) );
         QChar_exposer.def( bp::init< ushort >(( bp::arg("rc") )) );
         QChar_exposer.def( bp::init< short int >(( bp::arg("rc") )) );

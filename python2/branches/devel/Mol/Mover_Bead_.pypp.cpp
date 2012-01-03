@@ -69,9 +69,8 @@ void register_Mover_Bead__class(){
 
     { //::SireMol::Mover< SireMol::Bead >
         typedef bp::class_< SireMol::Mover< SireMol::Bead >, bp::bases< SireMol::MoverBase, SireMol::Bead, SireMol::MoleculeView, SireBase::Property > > Mover_Bead__exposer_t;
-        Mover_Bead__exposer_t Mover_Bead__exposer = Mover_Bead__exposer_t( "Mover_Bead_" );
+        Mover_Bead__exposer_t Mover_Bead__exposer = Mover_Bead__exposer_t( "Mover_Bead_", bp::init< >() );
         bp::scope Mover_Bead__scope( Mover_Bead__exposer );
-        Mover_Bead__exposer.def( bp::init< >() );
         Mover_Bead__exposer.def( bp::init< SireMol::Bead const & >(( bp::arg("view") )) );
         Mover_Bead__exposer.def( bp::init< SireMol::Bead const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Bead__exposer.def( bp::init< SireMol::Mover< SireMol::Bead > const & >(( bp::arg("other") )) );

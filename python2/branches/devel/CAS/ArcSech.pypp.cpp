@@ -39,9 +39,8 @@ void register_ArcSech_class(){
 
     { //::SireCAS::ArcSech
         typedef bp::class_< SireCAS::ArcSech, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > ArcSech_exposer_t;
-        ArcSech_exposer_t ArcSech_exposer = ArcSech_exposer_t( "ArcSech" );
+        ArcSech_exposer_t ArcSech_exposer = ArcSech_exposer_t( "ArcSech", bp::init< >() );
         bp::scope ArcSech_scope( ArcSech_exposer );
-        ArcSech_exposer.def( bp::init< >() );
         ArcSech_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         ArcSech_exposer.def( bp::init< SireCAS::ArcSech const & >(( bp::arg("other") )) );
         { //::SireCAS::ArcSech::evaluate

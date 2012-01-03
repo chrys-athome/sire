@@ -37,9 +37,8 @@ void register_HarmonicSwitchingFunction_class(){
 
     { //::SireMM::HarmonicSwitchingFunction
         typedef bp::class_< SireMM::HarmonicSwitchingFunction, bp::bases< SireMM::SwitchingFunction, SireBase::Property > > HarmonicSwitchingFunction_exposer_t;
-        HarmonicSwitchingFunction_exposer_t HarmonicSwitchingFunction_exposer = HarmonicSwitchingFunction_exposer_t( "HarmonicSwitchingFunction" );
+        HarmonicSwitchingFunction_exposer_t HarmonicSwitchingFunction_exposer = HarmonicSwitchingFunction_exposer_t( "HarmonicSwitchingFunction", bp::init< >() );
         bp::scope HarmonicSwitchingFunction_scope( HarmonicSwitchingFunction_exposer );
-        HarmonicSwitchingFunction_exposer.def( bp::init< >() );
         HarmonicSwitchingFunction_exposer.def( bp::init< SireUnits::Dimension::Length >(( bp::arg("cutoffdist") )) );
         HarmonicSwitchingFunction_exposer.def( bp::init< SireUnits::Dimension::Length, SireUnits::Dimension::Length >(( bp::arg("cutoffdist"), bp::arg("featherdist") )) );
         HarmonicSwitchingFunction_exposer.def( bp::init< SireUnits::Dimension::Length, SireUnits::Dimension::Length, SireUnits::Dimension::Length >(( bp::arg("cutoffdist"), bp::arg("elecfeather"), bp::arg("vdwfeather") )) );

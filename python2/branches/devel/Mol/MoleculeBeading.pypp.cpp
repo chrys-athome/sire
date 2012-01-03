@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "SireStream/shareddatastream.h"
 
+#include "atombeads.h"
+
 #include "atomidx.h"
 
 #include "atomselection.h"
@@ -23,7 +25,11 @@ namespace bp = boost::python;
 
 #include "beading.h"
 
+#include "moleculedata.h"
+
 #include "moleculeinfodata.h"
+
+#include <boost/noncopyable.hpp>
 
 #include "beading.h"
 
@@ -37,9 +43,8 @@ void register_MoleculeBeading_class(){
 
     { //::SireMol::MoleculeBeading
         typedef bp::class_< SireMol::MoleculeBeading, bp::bases< SireMol::Beading, SireMol::MolViewProperty, SireBase::Property > > MoleculeBeading_exposer_t;
-        MoleculeBeading_exposer_t MoleculeBeading_exposer = MoleculeBeading_exposer_t( "MoleculeBeading" );
+        MoleculeBeading_exposer_t MoleculeBeading_exposer = MoleculeBeading_exposer_t( "MoleculeBeading", bp::init< >() );
         bp::scope MoleculeBeading_scope( MoleculeBeading_exposer );
-        MoleculeBeading_exposer.def( bp::init< >() );
         MoleculeBeading_exposer.def( bp::init< SireMol::MoleculeBeading const & >(( bp::arg("other") )) );
         MoleculeBeading_exposer.def( bp::self != bp::self );
         { //::SireMol::MoleculeBeading::operator=

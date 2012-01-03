@@ -45,9 +45,8 @@ void register_ChargeParameterName3D_class(){
 
     { //::SireMM::ChargeParameterName3D
         typedef bp::class_< SireMM::ChargeParameterName3D, bp::bases< SireMM::ChargeParameterName > > ChargeParameterName3D_exposer_t;
-        ChargeParameterName3D_exposer_t ChargeParameterName3D_exposer = ChargeParameterName3D_exposer_t( "ChargeParameterName3D" );
+        ChargeParameterName3D_exposer_t ChargeParameterName3D_exposer = ChargeParameterName3D_exposer_t( "ChargeParameterName3D", bp::init< >() );
         bp::scope ChargeParameterName3D_scope( ChargeParameterName3D_exposer );
-        ChargeParameterName3D_exposer.def( bp::init< >() );
         ChargeParameterName3D_exposer.def( "__copy__", &__copy__);
         ChargeParameterName3D_exposer.def( "__deepcopy__", &__copy__);
         ChargeParameterName3D_exposer.def( "clone", &__copy__);

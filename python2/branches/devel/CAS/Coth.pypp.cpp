@@ -33,9 +33,8 @@ void register_Coth_class(){
 
     { //::SireCAS::Coth
         typedef bp::class_< SireCAS::Coth, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Coth_exposer_t;
-        Coth_exposer_t Coth_exposer = Coth_exposer_t( "Coth" );
+        Coth_exposer_t Coth_exposer = Coth_exposer_t( "Coth", bp::init< >() );
         bp::scope Coth_scope( Coth_exposer );
-        Coth_exposer.def( bp::init< >() );
         Coth_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Coth_exposer.def( bp::init< SireCAS::Coth const & >(( bp::arg("other") )) );
         { //::SireCAS::Coth::evaluate

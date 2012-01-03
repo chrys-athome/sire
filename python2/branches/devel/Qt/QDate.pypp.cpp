@@ -28,9 +28,8 @@ void register_QDate_class(){
 
     { //::QDate
         typedef bp::class_< QDate > QDate_exposer_t;
-        QDate_exposer_t QDate_exposer = QDate_exposer_t( "QDate" );
+        QDate_exposer_t QDate_exposer = QDate_exposer_t( "QDate", bp::init< >() );
         bp::scope QDate_scope( QDate_exposer );
-        QDate_exposer.def( bp::init< >() );
         QDate_exposer.def( bp::init< int, int, int >(( bp::arg("y"), bp::arg("m"), bp::arg("d") )) );
         { //::QDate::addDays
         

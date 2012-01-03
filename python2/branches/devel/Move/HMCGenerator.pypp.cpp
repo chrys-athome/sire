@@ -37,9 +37,8 @@ void register_HMCGenerator_class(){
 
     { //::SireMove::HMCGenerator
         typedef bp::class_< SireMove::HMCGenerator, bp::bases< SireMove::HMCVelGen, SireMove::VelocityGenerator, SireBase::Property > > HMCGenerator_exposer_t;
-        HMCGenerator_exposer_t HMCGenerator_exposer = HMCGenerator_exposer_t( "HMCGenerator" );
+        HMCGenerator_exposer_t HMCGenerator_exposer = HMCGenerator_exposer_t( "HMCGenerator", bp::init< >() );
         bp::scope HMCGenerator_scope( HMCGenerator_exposer );
-        HMCGenerator_exposer.def( bp::init< >() );
         HMCGenerator_exposer.def( bp::init< SireMove::HMCGenerator const & >(( bp::arg("other") )) );
         { //::SireMove::HMCGenerator::generate
         

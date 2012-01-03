@@ -11,6 +11,7 @@
 #include "constraints.h"
 #include "dihedralcomponent.h"
 #include "distancecomponent.h"
+#include "energymonitor.h"
 #include "geometrycomponent.h"
 #include "identityconstraint.h"
 #include "moleculeconstraint.h"

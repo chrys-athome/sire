@@ -16,6 +16,10 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireMol/atomcharges.h"
+
+#include "SireMol/atomcoords.h"
+
 #include "SireMol/molecule.h"
 
 #include "SireMol/partialmolecule.h"
@@ -25,6 +29,8 @@ namespace bp = boost::python;
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
+
+#include "atomljs.h"
 
 #include "fastintercljff.h"
 
@@ -42,9 +48,8 @@ void register_FastInterCLJFF_class(){
 
     { //::SireMM::FastInterCLJFF
         typedef bp::class_< SireMM::FastInterCLJFF, bp::bases< SireFF::FF3D, SireFF::G1FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > FastInterCLJFF_exposer_t;
-        FastInterCLJFF_exposer_t FastInterCLJFF_exposer = FastInterCLJFF_exposer_t( "FastInterCLJFF" );
+        FastInterCLJFF_exposer_t FastInterCLJFF_exposer = FastInterCLJFF_exposer_t( "FastInterCLJFF", bp::init< >() );
         bp::scope FastInterCLJFF_scope( FastInterCLJFF_exposer );
-        FastInterCLJFF_exposer.def( bp::init< >() );
         FastInterCLJFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         FastInterCLJFF_exposer.def( bp::init< SireMM::FastInterCLJFF const & >(( bp::arg("other") )) );
         { //::SireMM::FastInterCLJFF::combiningRules

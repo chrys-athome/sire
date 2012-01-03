@@ -28,9 +28,8 @@ void register_QTime_class(){
 
     { //::QTime
         typedef bp::class_< QTime > QTime_exposer_t;
-        QTime_exposer_t QTime_exposer = QTime_exposer_t( "QTime" );
+        QTime_exposer_t QTime_exposer = QTime_exposer_t( "QTime", bp::init< >() );
         bp::scope QTime_scope( QTime_exposer );
-        QTime_exposer.def( bp::init< >() );
         QTime_exposer.def( bp::init< int, int, bp::optional< int, int > >(( bp::arg("h"), bp::arg("m"), bp::arg("s")=(int)(0), bp::arg("ms")=(int)(0) )) );
         { //::QTime::addMSecs
         

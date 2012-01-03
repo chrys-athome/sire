@@ -23,9 +23,8 @@ void register_ResVariantProperty_class(){
 
     { //::SireMol::ResProperty< QVariant >
         typedef bp::class_< SireMol::ResProperty< QVariant >, bp::bases< SireMol::ResProp, SireMol::MolViewProperty, SireBase::Property > > ResVariantProperty_exposer_t;
-        ResVariantProperty_exposer_t ResVariantProperty_exposer = ResVariantProperty_exposer_t( "ResVariantProperty" );
+        ResVariantProperty_exposer_t ResVariantProperty_exposer = ResVariantProperty_exposer_t( "ResVariantProperty", bp::init< >() );
         bp::scope ResVariantProperty_scope( ResVariantProperty_exposer );
-        ResVariantProperty_exposer.def( bp::init< >() );
         ResVariantProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         ResVariantProperty_exposer.def( bp::init< QVector< QVariant > const & >(( bp::arg("values") )) );
         ResVariantProperty_exposer.def( bp::init< SireMol::ResProperty< QVariant > const & >(( bp::arg("other") )) );

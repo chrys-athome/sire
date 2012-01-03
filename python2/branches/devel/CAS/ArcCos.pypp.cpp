@@ -35,9 +35,8 @@ void register_ArcCos_class(){
 
     { //::SireCAS::ArcCos
         typedef bp::class_< SireCAS::ArcCos, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > ArcCos_exposer_t;
-        ArcCos_exposer_t ArcCos_exposer = ArcCos_exposer_t( "ArcCos" );
+        ArcCos_exposer_t ArcCos_exposer = ArcCos_exposer_t( "ArcCos", bp::init< >() );
         bp::scope ArcCos_scope( ArcCos_exposer );
-        ArcCos_exposer.def( bp::init< >() );
         ArcCos_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         ArcCos_exposer.def( bp::init< SireCAS::ArcCos const & >(( bp::arg("other") )) );
         { //::SireCAS::ArcCos::evaluate

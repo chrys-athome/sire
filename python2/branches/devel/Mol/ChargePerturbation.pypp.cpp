@@ -33,9 +33,8 @@ void register_ChargePerturbation_class(){
 
     { //::SireMol::ChargePerturbation
         typedef bp::class_< SireMol::ChargePerturbation, bp::bases< SireMol::Perturbation, SireBase::Property > > ChargePerturbation_exposer_t;
-        ChargePerturbation_exposer_t ChargePerturbation_exposer = ChargePerturbation_exposer_t( "ChargePerturbation" );
+        ChargePerturbation_exposer_t ChargePerturbation_exposer = ChargePerturbation_exposer_t( "ChargePerturbation", bp::init< >() );
         bp::scope ChargePerturbation_scope( ChargePerturbation_exposer );
-        ChargePerturbation_exposer.def( bp::init< >() );
         ChargePerturbation_exposer.def( bp::init< SireBase::PropertyMap const & >(( bp::arg("map") )) );
         ChargePerturbation_exposer.def( bp::init< SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("mapping_function"), bp::arg("map")=SireBase::PropertyMap() )) );
         ChargePerturbation_exposer.def( bp::init< SireMol::ChargePerturbation const & >(( bp::arg("other") )) );

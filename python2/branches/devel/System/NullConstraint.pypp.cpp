@@ -37,9 +37,8 @@ void register_NullConstraint_class(){
 
     { //::SireSystem::NullConstraint
         typedef bp::class_< SireSystem::NullConstraint, bp::bases< SireSystem::Constraint, SireBase::Property > > NullConstraint_exposer_t;
-        NullConstraint_exposer_t NullConstraint_exposer = NullConstraint_exposer_t( "NullConstraint" );
+        NullConstraint_exposer_t NullConstraint_exposer = NullConstraint_exposer_t( "NullConstraint", bp::init< >() );
         bp::scope NullConstraint_scope( NullConstraint_exposer );
-        NullConstraint_exposer.def( bp::init< >() );
         NullConstraint_exposer.def( bp::init< SireSystem::NullConstraint const & >(( bp::arg("other") )) );
         NullConstraint_exposer.def( bp::self != bp::self );
         { //::SireSystem::NullConstraint::operator=

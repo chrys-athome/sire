@@ -31,9 +31,8 @@ void register_Min_class(){
 
     { //::SireCAS::Min
         typedef bp::class_< SireCAS::Min, bp::bases< SireCAS::DoubleFunc, SireCAS::ExBase > > Min_exposer_t;
-        Min_exposer_t Min_exposer = Min_exposer_t( "Min" );
+        Min_exposer_t Min_exposer = Min_exposer_t( "Min", bp::init< >() );
         bp::scope Min_scope( Min_exposer );
-        Min_exposer.def( bp::init< >() );
         Min_exposer.def( bp::init< SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("x"), bp::arg("y") )) );
         Min_exposer.def( bp::init< SireCAS::Min const & >(( bp::arg("other") )) );
         { //::SireCAS::Min::evaluate

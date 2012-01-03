@@ -31,9 +31,8 @@ void register_Specify_MonitorID__class(){
 
     { //::SireID::Specify< SireSystem::MonitorID >
         typedef bp::class_< SireID::Specify< SireSystem::MonitorID >, bp::bases< SireSystem::MonitorID, SireID::ID > > Specify_MonitorID__exposer_t;
-        Specify_MonitorID__exposer_t Specify_MonitorID__exposer = Specify_MonitorID__exposer_t( "Specify_MonitorID_" );
+        Specify_MonitorID__exposer_t Specify_MonitorID__exposer = Specify_MonitorID__exposer_t( "Specify_MonitorID_", bp::init< >() );
         bp::scope Specify_MonitorID__scope( Specify_MonitorID__exposer );
-        Specify_MonitorID__exposer.def( bp::init< >() );
         Specify_MonitorID__exposer.def( bp::init< SireSystem::MonitorID const &, qint32 >(( bp::arg("id"), bp::arg("i") )) );
         Specify_MonitorID__exposer.def( bp::init< SireSystem::MonitorID const &, qint32, qint32 >(( bp::arg("id"), bp::arg("i"), bp::arg("j") )) );
         Specify_MonitorID__exposer.def( bp::init< SireID::Specify< SireSystem::MonitorID > const & >(( bp::arg("other") )) );

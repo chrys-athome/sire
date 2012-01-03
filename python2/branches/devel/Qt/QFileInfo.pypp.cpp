@@ -26,9 +26,8 @@ void register_QFileInfo_class(){
 
     { //::QFileInfo
         typedef bp::class_< QFileInfo > QFileInfo_exposer_t;
-        QFileInfo_exposer_t QFileInfo_exposer = QFileInfo_exposer_t( "QFileInfo" );
+        QFileInfo_exposer_t QFileInfo_exposer = QFileInfo_exposer_t( "QFileInfo", bp::init< >() );
         bp::scope QFileInfo_scope( QFileInfo_exposer );
-        QFileInfo_exposer.def( bp::init< >() );
         QFileInfo_exposer.def( bp::init< QString const & >(( bp::arg("file") )) );
         QFileInfo_exposer.def( bp::init< QFile const & >(( bp::arg("file") )) );
         QFileInfo_exposer.def( bp::init< QDir const &, QString const & >(( bp::arg("dir"), bp::arg("file") )) );

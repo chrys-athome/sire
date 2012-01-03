@@ -21,9 +21,8 @@ void register_PackedArray2D_double__class(){
 
     { //::SireBase::PackedArray2D< double >
         typedef bp::class_< SireBase::PackedArray2D< double > > PackedArray2D_double__exposer_t;
-        PackedArray2D_double__exposer_t PackedArray2D_double__exposer = PackedArray2D_double__exposer_t( "PackedArray2D_double_" );
+        PackedArray2D_double__exposer_t PackedArray2D_double__exposer = PackedArray2D_double__exposer_t( "PackedArray2D_double_", bp::init< >() );
         bp::scope PackedArray2D_double__scope( PackedArray2D_double__exposer );
-        PackedArray2D_double__exposer.def( bp::init< >() );
         PackedArray2D_double__exposer.def( bp::init< SireBase::detail::PackedArray2D_Array< double > const & >(( bp::arg("array") )) );
         PackedArray2D_double__exposer.def( bp::init< QVector< SireBase::detail::PackedArray2D_Array< double > > const & >(( bp::arg("arrays") )) );
         PackedArray2D_double__exposer.def( bp::init< QVector< double > const & >(( bp::arg("values") )) );
@@ -237,6 +236,18 @@ void register_PackedArray2D_double__class(){
                 , ( bp::arg("i") ) );
         
         }
+        { //::SireBase::PackedArray2D< double >::removeAll
+        
+            typedef SireBase::PackedArray2D< double > exported_class_t;
+            typedef void ( ::SireBase::PackedArray2D< double >::*removeAll_function_type )( ::QVarLengthArray< int, 256 > const & ) ;
+            removeAll_function_type removeAll_function_value( &::SireBase::PackedArray2D< double >::removeAll );
+            
+            PackedArray2D_double__exposer.def( 
+                "removeAll"
+                , removeAll_function_value
+                , ( bp::arg("idxs") ) );
+        
+        }
         { //::SireBase::PackedArray2D< double >::size
         
             typedef SireBase::PackedArray2D< double > exported_class_t;
@@ -314,6 +325,18 @@ void register_PackedArray2D_double__class(){
                 "update"
                 , update_function_value
                 , ( bp::arg("i"), bp::arg("array") ) );
+        
+        }
+        { //::SireBase::PackedArray2D< double >::updateAll
+        
+            typedef SireBase::PackedArray2D< double > exported_class_t;
+            typedef void ( ::SireBase::PackedArray2D< double >::*updateAll_function_type )( ::QVarLengthArray< int, 256 > const &,::SireBase::PackedArray2D< double > const & ) ;
+            updateAll_function_type updateAll_function_value( &::SireBase::PackedArray2D< double >::updateAll );
+            
+            PackedArray2D_double__exposer.def( 
+                "updateAll"
+                , updateAll_function_value
+                , ( bp::arg("idxs"), bp::arg("arrays") ) );
         
         }
         PackedArray2D_double__exposer.staticmethod( "fromVariant" );

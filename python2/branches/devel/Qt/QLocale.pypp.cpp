@@ -26,7 +26,7 @@ void register_QLocale_class(){
 
     { //::QLocale
         typedef bp::class_< QLocale > QLocale_exposer_t;
-        QLocale_exposer_t QLocale_exposer = QLocale_exposer_t( "QLocale" );
+        QLocale_exposer_t QLocale_exposer = QLocale_exposer_t( "QLocale", bp::init< >() );
         bp::scope QLocale_scope( QLocale_exposer );
         bp::enum_< QLocale::Country>("Country")
             .value("AnyCountry", QLocale::AnyCountry)
@@ -433,7 +433,6 @@ void register_QLocale_class(){
             .value("RejectGroupSeparator", QLocale::RejectGroupSeparator)
             .export_values()
             ;
-        QLocale_exposer.def( bp::init< >() );
         QLocale_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         QLocale_exposer.def( bp::init< QLocale::Language, QLocale::Country >(( bp::arg("language"), bp::arg("country") )) );
         QLocale_exposer.def( bp::init< QLocale const & >(( bp::arg("other") )) );

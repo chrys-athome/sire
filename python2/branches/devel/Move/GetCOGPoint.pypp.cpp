@@ -44,9 +44,8 @@ void register_GetCOGPoint_class(){
 
     { //::SireMove::GetCOGPoint
         typedef bp::class_< SireMove::GetCOGPoint, bp::bases< SireMove::GetPoint, SireBase::Property > > GetCOGPoint_exposer_t;
-        GetCOGPoint_exposer_t GetCOGPoint_exposer = GetCOGPoint_exposer_t( "GetCOGPoint" );
+        GetCOGPoint_exposer_t GetCOGPoint_exposer = GetCOGPoint_exposer_t( "GetCOGPoint", bp::init< >() );
         bp::scope GetCOGPoint_scope( GetCOGPoint_exposer );
-        GetCOGPoint_exposer.def( bp::init< >() );
         GetCOGPoint_exposer.def( bp::init< SireMol::AtomID const & >(( bp::arg("atomid") )) );
         GetCOGPoint_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("atomid0"), bp::arg("atomid1") )) );
         GetCOGPoint_exposer.def( bp::init< QList< SireMol::AtomIdentifier > const & >(( bp::arg("atomids") )) );

@@ -25,9 +25,8 @@ void register_BeadEditor_class(){
 
     { //::SireMol::BeadEditor
         typedef bp::class_< SireMol::BeadEditor, bp::bases< SireMol::Editor<SireMol::BeadEditor, SireMol::Bead>, SireMol::Bead, SireMol::MoleculeView, SireBase::Property > > BeadEditor_exposer_t;
-        BeadEditor_exposer_t BeadEditor_exposer = BeadEditor_exposer_t( "BeadEditor" );
+        BeadEditor_exposer_t BeadEditor_exposer = BeadEditor_exposer_t( "BeadEditor", bp::init< >() );
         bp::scope BeadEditor_scope( BeadEditor_exposer );
-        BeadEditor_exposer.def( bp::init< >() );
         BeadEditor_exposer.def( bp::init< SireMol::Bead const & >(( bp::arg("bead") )) );
         BeadEditor_exposer.def( bp::init< SireMol::BeadEditor const & >(( bp::arg("other") )) );
         { //::SireMol::BeadEditor::commit

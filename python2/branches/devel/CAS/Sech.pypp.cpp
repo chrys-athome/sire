@@ -33,9 +33,8 @@ void register_Sech_class(){
 
     { //::SireCAS::Sech
         typedef bp::class_< SireCAS::Sech, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Sech_exposer_t;
-        Sech_exposer_t Sech_exposer = Sech_exposer_t( "Sech" );
+        Sech_exposer_t Sech_exposer = Sech_exposer_t( "Sech", bp::init< >() );
         bp::scope Sech_scope( Sech_exposer );
-        Sech_exposer.def( bp::init< >() );
         Sech_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Sech_exposer.def( bp::init< SireCAS::Sech const & >(( bp::arg("other") )) );
         { //::SireCAS::Sech::evaluate

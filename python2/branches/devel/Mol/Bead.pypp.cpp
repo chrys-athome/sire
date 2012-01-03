@@ -66,9 +66,8 @@ void register_Bead_class(){
 
     { //::SireMol::Bead
         typedef bp::class_< SireMol::Bead, bp::bases< SireMol::MoleculeView, SireBase::Property > > Bead_exposer_t;
-        Bead_exposer_t Bead_exposer = Bead_exposer_t( "Bead" );
+        Bead_exposer_t Bead_exposer = Bead_exposer_t( "Bead", bp::init< >() );
         bp::scope Bead_scope( Bead_exposer );
-        Bead_exposer.def( bp::init< >() );
         Bead_exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::BeadIdx const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("moldata"), bp::arg("bead"), bp::arg("map")=SireBase::PropertyMap() )) );
         Bead_exposer.def( bp::init< SireMol::Bead const & >(( bp::arg("other") )) );
         { //::SireMol::Bead::assertContainsMetadata

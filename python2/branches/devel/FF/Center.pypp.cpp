@@ -43,9 +43,8 @@ void register_Center_class(){
 
     { //::SireFF::Center
         typedef bp::class_< SireFF::Center, bp::bases< SireFF::Point, SireBase::Property > > Center_exposer_t;
-        Center_exposer_t Center_exposer = Center_exposer_t( "Center" );
+        Center_exposer_t Center_exposer = Center_exposer_t( "Center", bp::init< >() );
         bp::scope Center_scope( Center_exposer );
-        Center_exposer.def( bp::init< >() );
         Center_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() )) );
         Center_exposer.def( bp::init< SireMol::Molecules const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() )) );
         Center_exposer.def( bp::init< SireFF::Center const & >(( bp::arg("other") )) );
