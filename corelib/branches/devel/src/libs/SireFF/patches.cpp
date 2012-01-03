@@ -113,6 +113,11 @@ bool FFBead::operator!=(const FFBead &other) const
     return not FFBead::operator==(other);
 }
 
+const char* FFBead::typeName()
+{
+    return "SireFF::FFBead";
+}
+
 ////////////
 //////////// Implementation of FFBeadChange
 ////////////
@@ -195,6 +200,11 @@ bool FFBeadChange::operator!=(const FFBeadChange &other) const
 FFBeadChange FFBeadChange::update(const FFBead &newer_bead) const
 {
     return FFBeadChange(old_bead, newer_bead);
+}
+
+const char* FFBeadChange::typeName()
+{
+    return "SireFF::FFBeadChange";
 }
 
 ////////////

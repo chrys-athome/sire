@@ -20,6 +20,7 @@ set ( SIRESYSTEM_HEADERS
       delta.h
       dihedralcomponent.h
       distancecomponent.h
+      energymonitor.h
       errors.h
       geometrycomponent.h
       identityconstraint.h
@@ -59,6 +60,7 @@ set ( SIRESYSTEM_SOURCES
       delta.cpp
       dihedralcomponent.cpp
       distancecomponent.cpp
+      energymonitor.cpp
       errors.cpp
       geometrycomponent.cpp
       identityconstraint.cpp

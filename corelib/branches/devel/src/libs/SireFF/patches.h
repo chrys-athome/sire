@@ -83,6 +83,8 @@ public:
     bool operator==(const FFBead &other) const;
     bool operator!=(const FFBead &other) const;
     
+    static const char* typeName();
+    
     const CoordGroup& coordinates() const;
     const FFParameters& parameters() const;
     
@@ -119,6 +121,8 @@ public:
     
     bool operator==(const FFBeadChange &other) const;
     bool operator!=(const FFBeadChange &other) const;
+    
+    static const char* typeName();
     
     bool isEmpty() const;
     
