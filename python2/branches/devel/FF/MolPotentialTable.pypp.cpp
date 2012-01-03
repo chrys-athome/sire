@@ -33,7 +33,7 @@ SireFF::MolPotentialTable __copy__(const SireFF::MolPotentialTable &other){ retu
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireFF::MolPotentialTable&){ return "SireFF::MolPotentialTable";}
+#include "Helpers/str.hpp"
 
 void register_MolPotentialTable_class(){
 
@@ -330,8 +330,8 @@ void register_MolPotentialTable_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         MolPotentialTable_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireFF::MolPotentialTable >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        MolPotentialTable_exposer.def( "__str__", &pvt_get_name);
-        MolPotentialTable_exposer.def( "__repr__", &pvt_get_name);
+        MolPotentialTable_exposer.def( "__str__", &__str__< ::SireFF::MolPotentialTable > );
+        MolPotentialTable_exposer.def( "__repr__", &__str__< ::SireFF::MolPotentialTable > );
     }
 
 }
