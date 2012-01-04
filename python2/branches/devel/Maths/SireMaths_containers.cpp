@@ -43,6 +43,7 @@
 #include "SireMaths/vector.h"
 #include "SireMaths/nmatrix.h"
 #include "SireMaths/nvector.h"
+#include "SireMaths/accumulator.h"
 
 using namespace SireMaths;
 

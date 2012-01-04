@@ -3,9 +3,22 @@
 // (C) Christopher Woods, GPL >= 2 License
 
 #include "boost/python.hpp"
+#include "Helpers/clone_const_reference.hpp"
 #include "EnergyMonitor.pypp.hpp"
 
 namespace bp = boost::python;
+
+#include "SireBase/array2d.hpp"
+
+#include "SireMM/atomljs.h"
+
+#include "SireMM/ljpair.h"
+
+#include "SireMol/atomcharges.h"
+
+#include "SireMol/atomcoords.h"
+
+#include "SireMol/partialmolecule.h"
 
 #include "SireStream/datastream.h"
 
@@ -14,6 +27,8 @@ namespace bp = boost::python;
 #include "SireSystem/energymonitor.h"
 
 #include "SireSystem/system.h"
+
+#include "SireUnits/units.h"
 
 #include "energymonitor.h"
 
@@ -42,6 +57,48 @@ void register_EnergyMonitor_class(){
             EnergyMonitor_exposer.def( 
                 "clearStatistics"
                 , clearStatistics_function_value );
+        
+        }
+        { //::SireSystem::EnergyMonitor::coulombEnergies
+        
+            typedef ::SireBase::Array2D< SireBase::PropPtr< SireMaths::Accumulator > > ( ::SireSystem::EnergyMonitor::*coulombEnergies_function_type )(  ) const;
+            coulombEnergies_function_type coulombEnergies_function_value( &::SireSystem::EnergyMonitor::coulombEnergies );
+            
+            EnergyMonitor_exposer.def( 
+                "coulombEnergies"
+                , coulombEnergies_function_value );
+        
+        }
+        { //::SireSystem::EnergyMonitor::group0
+        
+            typedef ::SireMol::MoleculeGroup const & ( ::SireSystem::EnergyMonitor::*group0_function_type )(  ) const;
+            group0_function_type group0_function_value( &::SireSystem::EnergyMonitor::group0 );
+            
+            EnergyMonitor_exposer.def( 
+                "group0"
+                , group0_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireSystem::EnergyMonitor::group1
+        
+            typedef ::SireMol::MoleculeGroup const & ( ::SireSystem::EnergyMonitor::*group1_function_type )(  ) const;
+            group1_function_type group1_function_value( &::SireSystem::EnergyMonitor::group1 );
+            
+            EnergyMonitor_exposer.def( 
+                "group1"
+                , group1_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireSystem::EnergyMonitor::ljEnergies
+        
+            typedef ::SireBase::Array2D< SireBase::PropPtr< SireMaths::Accumulator > > ( ::SireSystem::EnergyMonitor::*ljEnergies_function_type )(  ) const;
+            ljEnergies_function_type ljEnergies_function_value( &::SireSystem::EnergyMonitor::ljEnergies );
+            
+            EnergyMonitor_exposer.def( 
+                "ljEnergies"
+                , ljEnergies_function_value );
         
         }
         { //::SireSystem::EnergyMonitor::monitor
@@ -77,6 +134,26 @@ void register_EnergyMonitor_class(){
             EnergyMonitor_exposer.def( 
                 "typeName"
                 , typeName_function_value );
+        
+        }
+        { //::SireSystem::EnergyMonitor::views0
+        
+            typedef ::QVector< SireMol::PartialMolecule > ( ::SireSystem::EnergyMonitor::*views0_function_type )(  ) const;
+            views0_function_type views0_function_value( &::SireSystem::EnergyMonitor::views0 );
+            
+            EnergyMonitor_exposer.def( 
+                "views0"
+                , views0_function_value );
+        
+        }
+        { //::SireSystem::EnergyMonitor::views1
+        
+            typedef ::QVector< SireMol::PartialMolecule > ( ::SireSystem::EnergyMonitor::*views1_function_type )(  ) const;
+            views1_function_type views1_function_value( &::SireSystem::EnergyMonitor::views1 );
+            
+            EnergyMonitor_exposer.def( 
+                "views1"
+                , views1_function_value );
         
         }
         EnergyMonitor_exposer.staticmethod( "typeName" );

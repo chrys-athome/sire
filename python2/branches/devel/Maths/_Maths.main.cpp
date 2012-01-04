@@ -11,6 +11,8 @@
 
 #include "Array2D_NMatrix_.pypp.hpp"
 
+#include "Array2D_SireMaths_AccumulatorPtr_.pypp.hpp"
+
 #include "Array2D_Vector_.pypp.hpp"
 
 #include "Average.pypp.hpp"
@@ -103,6 +105,8 @@ BOOST_PYTHON_MODULE(_Maths){
     register_SireMaths_objects();
 
     register_SireMaths_containers();
+
+    register_Array2D_SireMaths_AccumulatorPtr__class();
 
     register_Array2D_Matrix__class();
 

@@ -39,6 +39,15 @@ def findGlobals():
 
     print >>FILE, "}\n"
 
+def fix_Array2D(c):
+   for o in c.operators("()"):
+       if o.call_policies is None:
+           o.exclude()
+
+   c.add_declaration_code( "#include \"SireBase/array2d.hpp\"" )
+
+special_code = { "SireBase::Array2D<SireBase::PropPtr<SireMaths::Accumulator> >" : fix_Array2D }
+
 def fixMB(mb):
    mb.add_declaration_code("#include \"_Maths_global_variables.pyman.hpp\"")
    mb.add_registration_code("register_man_global_variables();")

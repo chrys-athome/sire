@@ -4,6 +4,7 @@ set ( PYPP_SOURCES
        Accumulator.pypp.cpp
        Array2D_Matrix_.pypp.cpp
        Array2D_NMatrix_.pypp.cpp
+       Array2D_SireMaths_AccumulatorPtr_.pypp.cpp
        Array2D_Vector_.pypp.cpp
        Average.pypp.cpp
        AverageAndStddev.pypp.cpp

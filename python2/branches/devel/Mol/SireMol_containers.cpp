@@ -114,6 +114,8 @@ void register_SireMol_containers()
 
     register_list< QList<MGIDsAndMaps> >();
 
+    register_list< QVector<PartialMolecule> >();
+
     register_tuple< boost::tuple<AtomIdx,AtomIdx> >();
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx> >();
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx,AtomIdx> >();
