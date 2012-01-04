@@ -407,6 +407,14 @@ SIRE_EXPOSE_CLASS( SireMaths::RecordValues )
 
 SIRE_EXPOSE_PROPERTY( SireMaths::AccumulatorPtr, SireMaths::Accumulator )
 
+SIRE_EXPOSE_ALIAS( SireBase::Array2D<SireBase::PropPtr<SireMaths::Accumulator> >, 
+                   SireBase::Array2D_SireMaths_AccumulatorPtr_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+#include "SireBase/array2d.hpp"
+template class SireBase::Array2D<SireMaths::AccumulatorPtr>;
+#endif
+
 SIRE_END_HEADER
 
 #endif

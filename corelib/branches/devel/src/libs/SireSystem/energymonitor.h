@@ -29,9 +29,13 @@
 #ifndef SIRESYSTEM_ENERGYMONITOR_H
 #define SIRESYSTEM_ENERGYMONITOR_H
 
+#include "SireBase/array2d.hpp"
+
 #include "SireSystem/systemmonitor.h"
-#include "SireMol/moleculegroup.h"
 #include "SireMaths/accumulator.h"
+
+#include "SireMol/moleculegroup.h"
+#include "SireMol/partialmolecule.h"
 
 SIRE_BEGIN_HEADER
 
@@ -87,13 +91,28 @@ public:
     
     void monitor(System &system);
 
+    const MoleculeGroup& group0() const;
+    const MoleculeGroup& group1() const;
+
+    QVector<SireMol::PartialMolecule> views0() const;
+    QVector<SireMol::PartialMolecule> views1() const;
+
+    SireBase::Array2D<SireMaths::AccumulatorPtr> coulombEnergies() const;
+    SireBase::Array2D<SireMaths::AccumulatorPtr> ljEnergies() const;
+
 private:
     /** The two molecule groups that contain the molecule views
         between which energies will be calculated */
     SireMol::MolGroupPtr grp0, grp1;
     
-    /** The accumulator used to accumulate the energy values */
+    /** Template for the accumulator used to accumulate the energy values */
     SireMaths::AccumulatorPtr accum;
+    
+    /** The accumulated coulomb energies */
+    SireBase::Array2D<SireMaths::AccumulatorPtr> coul_nrgs;
+    
+    /** The accumulated LJ energies */
+    SireBase::Array2D<SireMaths::AccumulatorPtr> lj_nrgs;
 };
 
 }
