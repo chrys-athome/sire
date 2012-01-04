@@ -96,8 +96,18 @@ ljnrgs = nrgmon.ljEnergies()
 
 for i in range(0,cnrgs.nRows()):
     for j in range(0,cnrgs.nColumns()):
-        print i,j,cnrgs(i,j).value(),ljnrgs(i,j).value()
+        print i,j,cnrgs(i,j).average(),ljnrgs(i,j).average()
 
 print nrgmon.views0()
 print nrgmon.views1()
+
+nrgmon.monitor(system)
+
+cnrgs = nrgmon.coulombEnergies()
+ljnrgs = nrgmon.ljEnergies()
+
+for i in range(0,cnrgs.nRows()):  
+    for j in range(0,cnrgs.nColumns()):
+        print i,j,cnrgs(i,j).average(),ljnrgs(i,j).average()
+        print i,j,cnrgs(i,j).nSamples(),ljnrgs(i,j).nSamples()
 
