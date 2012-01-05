@@ -243,7 +243,7 @@ void FastInterCLJFF::rebuildAll()
     FF::setDirty();
 }
 
-typedef PairMatrix<double> DistMatrix;
+//typedef PairMatrix<double> DistMatrix;
 
 /** Internal function used to calculate the energy of the passed two CoordGroups */
 static void addEnergy(const CoordGroup &icoords, const CLJParams &iparams,
