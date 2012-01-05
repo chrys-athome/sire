@@ -63,6 +63,7 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
     
     sds << nrgmonitor.grp0 << nrgmonitor.grp1 << nrgmonitor.accum
+        << nrgmonitor.coul_nrgs << nrgmonitor.lj_nrgs
         << static_cast<const SystemMonitor&>(nrgmonitor);
         
     return ds;
@@ -78,6 +79,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
         SharedDataStream sds(ds);
         
         sds >> nrgmonitor.grp0 >> nrgmonitor.grp1 >> nrgmonitor.accum
+            >> nrgmonitor.coul_nrgs >> nrgmonitor.lj_nrgs
             >> static_cast<SystemMonitor&>(nrgmonitor);
     }
     else
@@ -112,7 +114,8 @@ EnergyMonitor::EnergyMonitor(const MoleculeGroup &group0,
 /** Copy constructor */
 EnergyMonitor::EnergyMonitor(const EnergyMonitor &other)
               : ConcreteProperty<EnergyMonitor,SystemMonitor>(other),
-                grp0(other.grp0), grp1(other.grp1), accum(other.accum)
+                grp0(other.grp0), grp1(other.grp1), accum(other.accum),
+                coul_nrgs(other.coul_nrgs), lj_nrgs(other.lj_nrgs) 
 {}
 
 /** Destructor */
@@ -127,6 +130,8 @@ EnergyMonitor& EnergyMonitor::operator=(const EnergyMonitor &other)
         grp0 = other.grp0;
         grp1 = other.grp1;
         accum = other.accum;
+        coul_nrgs = other.coul_nrgs;
+        lj_nrgs = other.lj_nrgs;
         SystemMonitor::operator=(other);
     }
     
@@ -138,7 +143,10 @@ bool EnergyMonitor::operator==(const EnergyMonitor &other) const
 {
     return this == &other or
            (grp0 == other.grp0 and grp1 == other.grp1 and
-            accum == other.accum and SystemMonitor::operator==(other));
+            accum == other.accum and 
+            coul_nrgs == other.coul_nrgs and
+            lj_nrgs == other.lj_nrgs and
+            SystemMonitor::operator==(other));
 }
 
 /** Comparison operator */
