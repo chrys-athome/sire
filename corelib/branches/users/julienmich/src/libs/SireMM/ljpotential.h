@@ -52,6 +52,7 @@
 #include "ljparameterdb.h"
 #include "switchingfunction.h"
 
+#include "SireFF/energytable.h"
 #include "SireFF/forcetable.h"
 #include "SireFF/fieldtable.h"
 #include "SireFF/potentialtable.h"
@@ -114,6 +115,7 @@ using SireVol::CoordGroup;
 using SireMol::PartialMolecule;
 using SireMol::MoleculeGroup;
 
+using SireFF::MolEnergyTable;
 using SireFF::MolForceTable;
 using SireFF::MolFieldTable;
 using SireFF::MolPotentialTable;
@@ -368,6 +370,12 @@ public:
     void calculateEnergy(const InterLJPotential::Molecule &mol0, 
                          const InterLJPotential::Molecule &mol1,
                          InterLJPotential::Energy &energy, 
+                         InterLJPotential::EnergyWorkspace &workspace,
+                         double scale_energy=1) const;
+
+    void calculateEnergy(const InterLJPotential::Molecule &mol0, 
+                         const InterLJPotential::Molecule &mol1,
+                         MolEnergyTable &energies0, 
                          InterLJPotential::EnergyWorkspace &workspace,
                          double scale_energy=1) const;
 
@@ -961,6 +969,17 @@ InterLJPotential::calculateEnergy(const InterLJPotential::Molecule &mol0,
     {
         this->_pvt_calculateEnergy(mol0, mol1, energy, workspace, scale_energy);
     }
+}
+
+inline void 
+InterLJPotential::calculateEnergy(const InterLJPotential::Molecule &mol0,
+                                  const InterLJPotential::Molecule &mol1,
+                                  MolEnergyTable &energies0,
+                                  InterLJPotential::EnergyWorkspace &workspace,
+                                  double scale_energy) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "InterLJPotential does not yet support this energy calculations!"), CODELOC );
 }
 
 /** Calculate the LJ forces on the atoms between the passed pair

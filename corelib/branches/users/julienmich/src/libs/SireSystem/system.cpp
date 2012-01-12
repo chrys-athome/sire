@@ -38,6 +38,7 @@
 #include "SireFF/ff.h"
 #include "SireFF/ffmolgroup.h"
 #include "SireFF/forcetable.h"
+#include "SireFF/energytable.h"
 #include "SireFF/fieldtable.h"
 #include "SireFF/potentialtable.h"
 #include "SireFF/probe.h"
@@ -747,6 +748,18 @@ MolarEnergy System::energy(const Symbol &component)
 {
     return this->_pvt_forceFields().energy(component);
 }
+
+void System::energy(EnergyTable &energytable, double scale_energy)
+{
+    this->_pvt_forceFields().energy(energytable, scale_energy);
+}
+
+void System::energy(EnergyTable &energytable, const Symbol &component,
+                   double scale_energy)
+{
+    this->_pvt_forceFields().energy(energytable, component, scale_energy);
+}
+
 
 /** Return the energies of the energy components of this system whose
     symbols are in 'components'

@@ -65,6 +65,7 @@ using SireFF::FFID;
 using SireFF::FFIdx;
 using SireFF::FFName;
 using SireFF::ForceTable;
+using SireFF::EnergyTable;
 using SireFF::FieldTable;
 using SireFF::PotentialTable;
 using SireFF::Probe;
@@ -190,7 +191,7 @@ public:
     
     SireUnits::Dimension::MolarEnergy energy();
     SireUnits::Dimension::MolarEnergy energy(const Symbol &component);
-    
+
     Values energies();
     Values energies(const QSet<Symbol> &components);
     
@@ -245,6 +246,9 @@ public:
     QHash<Symbol,SireCAS::Expression> componentExpressions(
                                             const QSet<Symbol> &symbols) const;
     QHash<Symbol,SireCAS::Expression> componentExpressions() const;
+
+    void energy(EnergyTable &energytable, double scale_energy=1);
+    void energy(EnergyTable &energytable, const Symbol &component, double scale_energy=1);
     
     void force(ForceTable &forcetable, double scale_force=1);
     void force(ForceTable &forcetable, const Symbol &component,

@@ -1201,6 +1201,8 @@ void EnergyTable::initialiseTables()
 {
     int nmols = tables_by_idx.count();
     
+    //    qDebug() << " In initialiseTables nmols is " << nmols;
+
     if (nmols > 0)
     {
         MolEnergyTable *tables_by_idx_array = tables_by_idx.data();
@@ -1245,9 +1247,17 @@ int EnergyTable::indexOf(MolNum molnum) const
 */
 void EnergyTable::assertContainsTableFor(MolNum molnum) const
 {
+    QList<MolNum> molnums = molnum_to_idx.keys();
+    
+    qDebug() << " THE MOLNUMS ARE ";
+
+    for (int i=0; i<molnums.length() ; i++)
+      qDebug() << " molnum " << molnums[i].toString() ;
+    
+  
     if (not this->containsTable(molnum))
         throw SireMol::missing_molecule( QObject::tr(
-            "This force table does not contain a table for the "
+            "This energy table does not contain a table for the "
             "molecule with number %1.")
                 .arg(molnum), CODELOC );
 }

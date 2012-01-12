@@ -49,6 +49,7 @@
 
 #include "switchingfunction.h"
 
+#include "SireFF/energytable.h"
 #include "SireFF/forcetable.h"
 #include "SireFF/fieldtable.h"
 #include "SireFF/potentialtable.h"
@@ -111,6 +112,7 @@ using SireVol::CoordGroup;
 using SireMol::PartialMolecule;
 using SireMol::MoleculeGroup;
 
+using SireFF::MolEnergyTable;
 using SireFF::MolForceTable;
 using SireFF::MolFieldTable;
 using SireFF::MolPotentialTable;
@@ -362,6 +364,12 @@ public:
     void calculateEnergy(const InterCoulombPotential::Molecule &mol0, 
                          const InterCoulombPotential::Molecule &mol1,
                          InterCoulombPotential::Energy &energy, 
+                         InterCoulombPotential::EnergyWorkspace &workspace,
+                         double scale_energy=1) const;
+
+    void calculateEnergy(const InterCoulombPotential::Molecule &mol0, 
+                         const InterCoulombPotential::Molecule &mol1,
+                         MolEnergyTable &energies0, 
                          InterCoulombPotential::EnergyWorkspace &workspace,
                          double scale_energy=1) const;
 
@@ -978,6 +986,20 @@ InterCoulombPotential::calculateEnergy(const InterCoulombPotential::Molecule &mo
     {
         this->_pvt_calculateEnergy(mol0, mol1, energy, workspace, scale_energy);
     }
+}
+
+/** Calculate the coulomb and LJ energy between the passed pair
+    of molecules and add these energies on mol0 onto energies. This uses
+    the passed workspace to perform the calculation */
+inline void 
+InterCoulombPotential::calculateEnergy(const InterCoulombPotential::Molecule &mol0,
+				       const InterCoulombPotential::Molecule &mol1,
+				       MolEnergyTable &energies0,
+				       InterCoulombPotential::EnergyWorkspace &workspace,
+				       double scale_energy) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "InterCoulombPotential does not yet support this energy calculations!"), CODELOC );
 }
 
 /** Calculate the coulomb forces on the atoms between the passed pair

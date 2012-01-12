@@ -43,6 +43,7 @@
 #include "SireMol/atommasses.h"
 
 #include "SireFF/forcetable.h"
+#include "SireFF/energytable.h"
 
 #include "SireSystem/system.h"
 
@@ -90,6 +91,7 @@ using SireMol::Molecules;
 
 using SireSystem::System;
 
+using SireFF::EnergyTable;
 using SireFF::ForceTable;
 
 using SireMaths::Vector;
@@ -158,6 +160,8 @@ public:
 
     virtual bool calculateForces(const Symbol &nrg_component);
 
+    virtual bool calculateEnergies(const Symbol &nrg_component);
+
     bool forcesNeedCalculating(const Symbol &nrg_component) const;
     
     void mustNowRecalculateFromScratch();
@@ -202,6 +206,10 @@ private:
 
     /** Whether or not the forces need to be recalculated */
     bool need_new_forces;
+
+    /** The current energies of the molecules */
+    EnergyTable molenergies;
+
 };
 
 /** This is the null integrator workspace */
@@ -285,6 +293,7 @@ public:
     
     bool calculateForces(const Symbol &nrg_component);
     
+
     bool setSystem(const System &system);
 
     void regenerateVelocities(const VelocityGenerator &generator);

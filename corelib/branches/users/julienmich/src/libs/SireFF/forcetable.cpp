@@ -1256,6 +1256,14 @@ int ForceTable::indexOf(MolNum molnum) const
 */
 void ForceTable::assertContainsTableFor(MolNum molnum) const
 {
+
+    QList<MolNum> molnums = molnum_to_idx.keys();
+    
+    qDebug() << " IN FORCE TABL THE MOLNUMS ARE ";
+
+    for (int i=0; i<molnums.length() ; i++)
+      qDebug() << " molnum " << molnums[i].toString() ;
+
     if (not this->containsTable(molnum))
         throw SireMol::missing_molecule( QObject::tr(
             "This force table does not contain a table for the "

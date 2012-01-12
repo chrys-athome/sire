@@ -238,6 +238,13 @@ public:
                          InterSoftCLJPotential::EnergyWorkspace &workspace,
                          double scale_energy=1) const;
 
+    void calculateEnergy(const InterSoftCLJPotential::Molecule &mol0, 
+                         const InterSoftCLJPotential::Molecule &mol1,
+			 MolEnergyTable &energies0,
+                         InterSoftCLJPotential::EnergyWorkspace &workspace,
+                         double scale_energy=1) const;
+
+
     void calculateForce(const InterSoftCLJPotential::Molecule &mol0, 
                         const InterSoftCLJPotential::Molecule &mol1,
                         MolForceTable &forces0,
@@ -867,6 +874,16 @@ InterSoftCLJPotential::calculateEnergy(const InterSoftCLJPotential::Molecule &mo
     }
 }
 
+inline void 
+InterSoftCLJPotential::calculateEnergy(const InterSoftCLJPotential::Molecule &mol0,
+                                       const InterSoftCLJPotential::Molecule &mol1,
+				       MolEnergyTable &energies0,
+                                       InterSoftCLJPotential::EnergyWorkspace &workspace,
+                                       double scale_energy) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+            "InterSoftCLJPotential does not yet support this energy calculations!"), CODELOC );
+}
 /** Calculate the coulomb and LJ forces on the atoms between the passed pair
     of molecules and add the forces on 'mol0' onto 'forces'. This uses
     the passed workspace to perform the calculation. The forces
