@@ -7,7 +7,7 @@
 #include "perturbationconstraint.h"
 #include "energymonitor.h"
 #include "rdfmonitor.h"
-#include "polarisecharges.h"
+#include "idassigner.h"
 #include "monitormonitor.h"
 #include "spacewrapper.h"
 #include "monitoridx.h"
@@ -29,6 +29,7 @@
 #include "monitorcomponents.h"
 #include "sysidentifier.h"
 #include "identityconstraint.h"
+#include "polarisecharges.h"
 #include "sysname.h"
 #include "monitorid.h"
 
@@ -44,8 +45,7 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::EnergyMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::RDF >();
     ObjectRegistry::registerConverterFor< SireSystem::RDFMonitor >();
-    ObjectRegistry::registerConverterFor< SireSystem::PolariseCharges >();
-    ObjectRegistry::registerConverterFor< SireSystem::PolariseChargesFF >();
+    ObjectRegistry::registerConverterFor< SireSystem::IDAssigner >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::SpaceWrapper >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorIdx >();
@@ -72,6 +72,8 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::MonitorComponents >();
     ObjectRegistry::registerConverterFor< SireSystem::SysIdentifier >();
     ObjectRegistry::registerConverterFor< SireSystem::IdentityConstraint >();
+    ObjectRegistry::registerConverterFor< SireSystem::PolariseCharges >();
+    ObjectRegistry::registerConverterFor< SireSystem::PolariseChargesFF >();
     ObjectRegistry::registerConverterFor< SireSystem::SysName >();
     ObjectRegistry::registerConverterFor< SireID::Specify<SireSystem::MonitorID> >();
     ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireSystem::MonitorID> >();

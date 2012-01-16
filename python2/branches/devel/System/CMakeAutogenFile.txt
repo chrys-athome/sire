@@ -14,6 +14,7 @@ set ( PYPP_SOURCES
        GeometryComponent.pypp.cpp
        IDAndSet_MonitorID_.pypp.cpp
        IDAndSet_SysID_.pypp.cpp
+       IDAssigner.pypp.cpp
        IdentityConstraint.pypp.cpp
        IDOrSet_MonitorID_.pypp.cpp
        IDOrSet_SysID_.pypp.cpp
