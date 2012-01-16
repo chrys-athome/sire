@@ -1632,7 +1632,7 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
         }
     }
     
-    if (mol.hasProperty(connectivity_property))
+    /*if (mol.hasProperty(connectivity_property))
     {
         const Connectivity &connectivity = mol.property(connectivity_property)
                                               .asA<Connectivity>();
@@ -1656,7 +1656,7 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
                 ts << "\n";
             }
         }
-    } 
+    } */
     
     return atomnum;
 }
