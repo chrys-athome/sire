@@ -149,7 +149,8 @@ void IDAssigner::validateGroup(const MoleculeGroup &new_group) const
 
 
 /** Constructor */
-IDAssigner::IDAssigner() : distances_changed(false)
+IDAssigner::IDAssigner() 
+           : ConcreteProperty<IDAssigner,Property>(), distances_changed(false)
 {}
 
 /** Construct to find the identity of the molecules from
@@ -159,7 +160,8 @@ IDAssigner::IDAssigner() : distances_changed(false)
 IDAssigner::IDAssigner(const QVector<PointPtr> &points,
                        const MoleculeGroup &group,
                        const PropertyMap &property_map)
-           : molgroup(group), identity_points(points), map(property_map),
+           : ConcreteProperty<IDAssigner,Property>(),
+             molgroup(group), identity_points(points), map(property_map),
              distances_changed(false)
 {
     this->validateGroup(group);
@@ -191,7 +193,8 @@ IDAssigner::IDAssigner(const QVector<PointPtr> &points,
 IDAssigner::IDAssigner(const PointRef &point,
                        const MoleculeGroup &group,
                        const PropertyMap &property_map)
-           : molgroup(group), map(property_map), distances_changed(false)
+           : ConcreteProperty<IDAssigner,Property>(),
+             molgroup(group), map(property_map), distances_changed(false)
 {
     this->validateGroup(group);
     identity_points.append( PointPtr(point) );
@@ -222,7 +225,8 @@ IDAssigner::IDAssigner(const PointRef &point,
   
 /** Copy constructor */                         
 IDAssigner::IDAssigner(const IDAssigner &other)
-           : molgroup(other.molgroup),
+           : ConcreteProperty<IDAssigner,Property>(other),
+             molgroup(other.molgroup),
              identity_points(other.identity_points),
              spce(other.spce),
              map(other.map), 
@@ -708,13 +712,11 @@ QString IDAssigner::toString() const
             .arg(lines.join(", "), molgroup->toString());
 }
 
-/** Update the assigner with the passed system. This returns the list
-    of identified molecules from the system, which are returned in the same
-    order as the list of identity points */
-QVector<PartialMolecule> IDAssigner::update(const System &system)
+/** Update the assigner with the passed system.  */
+void IDAssigner::update(const System &system)
 {
     if (identity_points.isEmpty())
-        return QVector<PartialMolecule>();
+        return;
 
     bool new_group = this->updateGroup(system);
     bool new_points = this->updatePoints(system);
@@ -740,7 +742,13 @@ QVector<PartialMolecule> IDAssigner::update(const System &system)
     }
 
     this->assignMoleculesToPoints();
+}
 
+/** Returns the list of identified molecules from the system, 
+    which are returned in the same order as the list of identity points
+*/
+QVector<PartialMolecule> IDAssigner::identifiedMolecules() const
+{
     //find each matching molecule in turn
     const Molecules molecules = this->moleculeGroup().molecules();
     

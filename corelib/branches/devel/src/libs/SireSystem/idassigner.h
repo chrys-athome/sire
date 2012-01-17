@@ -65,7 +65,8 @@ using SireFF::PointRef;
     
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT IDAssigner
+class SIRESYSTEM_EXPORT IDAssigner 
+         : public SireBase::ConcreteProperty<IDAssigner,SireBase::Property>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const IDAssigner&);
@@ -107,7 +108,9 @@ public:
 
     const PropertyMap& propertyMap() const;
 
-    QVector<PartialMolecule> update(const System &system);
+    QVector<PartialMolecule> identifiedMolecules() const;
+
+    void update(const System &system);
 
     const Space& space() const;
 

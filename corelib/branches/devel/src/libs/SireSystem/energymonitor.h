@@ -37,6 +37,8 @@
 #include "SireMol/moleculegroup.h"
 #include "SireMol/partialmolecule.h"
 
+#include "idassigner.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireSystem
@@ -76,6 +78,27 @@ public:
                   const MoleculeGroup &group1,
                   const SireMaths::Accumulator &accum);
 
+    EnergyMonitor(const MoleculeGroup &group0,
+                  const IDAssigner &group1);
+                  
+    EnergyMonitor(const MoleculeGroup &group0,
+                  const IDAssigner &group1,
+                  const SireMaths::Accumulator &accum);
+
+    EnergyMonitor(const IDAssigner &group0,
+                  const MoleculeGroup &group1);
+                  
+    EnergyMonitor(const IDAssigner &group0,
+                  const MoleculeGroup &group1,
+                  const SireMaths::Accumulator &accum);
+                  
+    EnergyMonitor(const IDAssigner &group0,
+                  const IDAssigner &group1);
+                  
+    EnergyMonitor(const IDAssigner &group0,
+                  const IDAssigner &group1,
+                  const SireMaths::Accumulator &accum);
+
     EnergyMonitor(const EnergyMonitor &other);
     
     ~EnergyMonitor();
@@ -91,9 +114,6 @@ public:
     
     void monitor(System &system);
 
-    const MoleculeGroup& group0() const;
-    const MoleculeGroup& group1() const;
-
     QVector<SireMol::PartialMolecule> views0() const;
     QVector<SireMol::PartialMolecule> views1() const;
 
@@ -104,6 +124,10 @@ private:
     /** The two molecule groups that contain the molecule views
         between which energies will be calculated */
     SireMol::MolGroupPtr grp0, grp1;
+    
+    /** The two IDAssigners that will be used to assign molecules. These
+        are null unless an assigner is being used */
+    SireBase::PropertyPtr asgn0, asgn1;
     
     /** Template for the accumulator used to accumulate the energy values */
     SireMaths::AccumulatorPtr accum;

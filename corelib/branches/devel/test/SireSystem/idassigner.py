@@ -23,8 +23,10 @@ idassigner = IDAssigner(points, solvent)
 
 points = idassigner.points()
 
-mols = idassigner.update(system)
+idassigner.update(system)
+
+mols = idassigner.identifiedMolecules()
 
 for i in range(0,len(points)):
     print points[i], points[i].point(), mols[i].number(), mols[i].evaluate().center()
-      
+

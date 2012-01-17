@@ -34,6 +34,7 @@
 #include "SireMol/atomcharges.h"
 #include "SireMM/atomljs.h"
 #include "SireMM/ljpair.h"
+#include "SireMol/mgname.h"
 
 #include "SireBase/array2d.hpp"
 
@@ -58,11 +59,13 @@ static const RegisterMetaType<EnergyMonitor> r_nrgmonitor;
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
                                           const EnergyMonitor &nrgmonitor)
 {
-    writeHeader(ds, r_nrgmonitor, 1);
+    writeHeader(ds, r_nrgmonitor, 2);
     
     SharedDataStream sds(ds);
     
-    sds << nrgmonitor.grp0 << nrgmonitor.grp1 << nrgmonitor.accum
+    sds << nrgmonitor.grp0 << nrgmonitor.grp1 
+        << nrgmonitor.asgn0 << nrgmonitor.asgn1
+        << nrgmonitor.accum
         << nrgmonitor.coul_nrgs << nrgmonitor.lj_nrgs
         << static_cast<const SystemMonitor&>(nrgmonitor);
         
@@ -74,7 +77,17 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
 {
     VersionID v = readHeader(ds, r_nrgmonitor);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> nrgmonitor.grp0 >> nrgmonitor.grp1 
+            >> nrgmonitor.asgn0 >> nrgmonitor.asgn1
+            >> nrgmonitor.accum
+            >> nrgmonitor.coul_nrgs >> nrgmonitor.lj_nrgs
+            >> static_cast<SystemMonitor&>(nrgmonitor);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
         
@@ -83,7 +96,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
             >> static_cast<SystemMonitor&>(nrgmonitor);
     }
     else
-        throw version_error(v, "1", r_nrgmonitor, CODELOC);
+        throw version_error(v, "1,2", r_nrgmonitor, CODELOC);
         
     return ds;
 }
@@ -111,10 +124,69 @@ EnergyMonitor::EnergyMonitor(const MoleculeGroup &group0,
                 grp0(group0), grp1(group1), accum(accumulator)
 {}
 
+/** Construct to monitor the energies between all pairs of molecule views in the
+    two passed groups. This will accumulate the average and standard deviation
+    of each of the energies */
+EnergyMonitor::EnergyMonitor(const MoleculeGroup &group0,
+                             const IDAssigner &group1)
+              : ConcreteProperty<EnergyMonitor,SystemMonitor>(),
+                grp0(group0), asgn1(group1), accum( AverageAndStddev() )
+{}
+            
+/** Construct to monitor the energies between all pairs of molecule views in 
+    the two passed groups, accumulating the energies using the passed
+    accumulator */
+EnergyMonitor::EnergyMonitor(const MoleculeGroup &group0, 
+                             const IDAssigner &group1,
+                             const SireMaths::Accumulator &accumulator)
+              : ConcreteProperty<EnergyMonitor,SystemMonitor>(),
+                grp0(group0), asgn1(group1), accum(accumulator)
+{}
+
+/** Construct to monitor the energies between all pairs of molecule views in the
+    two passed groups. This will accumulate the average and standard deviation
+    of each of the energies */
+EnergyMonitor::EnergyMonitor(const IDAssigner &group0,
+                             const MoleculeGroup &group1)
+              : ConcreteProperty<EnergyMonitor,SystemMonitor>(),
+                grp1(group1), asgn0(group0), accum( AverageAndStddev() )
+{}
+            
+/** Construct to monitor the energies between all pairs of molecule views in 
+    the two passed groups, accumulating the energies using the passed
+    accumulator */
+EnergyMonitor::EnergyMonitor(const IDAssigner &group0, 
+                             const MoleculeGroup &group1,
+                             const SireMaths::Accumulator &accumulator)
+              : ConcreteProperty<EnergyMonitor,SystemMonitor>(),
+                grp1(group1), asgn0(group0), accum(accumulator)
+{}
+
+/** Construct to monitor the energies between all pairs of molecule views in the
+    two passed groups. This will accumulate the average and standard deviation
+    of each of the energies */
+EnergyMonitor::EnergyMonitor(const IDAssigner &group0,
+                             const IDAssigner &group1)
+              : ConcreteProperty<EnergyMonitor,SystemMonitor>(),
+                asgn0(group0), asgn1(group1), accum( AverageAndStddev() )
+{}
+            
+/** Construct to monitor the energies between all pairs of molecule views in 
+    the two passed groups, accumulating the energies using the passed
+    accumulator */
+EnergyMonitor::EnergyMonitor(const IDAssigner &group0, 
+                             const IDAssigner &group1,
+                             const SireMaths::Accumulator &accumulator)
+              : ConcreteProperty<EnergyMonitor,SystemMonitor>(),
+                asgn0(group0), asgn1(group1), accum(accumulator)
+{}
+
 /** Copy constructor */
 EnergyMonitor::EnergyMonitor(const EnergyMonitor &other)
               : ConcreteProperty<EnergyMonitor,SystemMonitor>(other),
-                grp0(other.grp0), grp1(other.grp1), accum(other.accum),
+                grp0(other.grp0), grp1(other.grp1), 
+                asgn0(other.asgn0), asgn1(other.asgn1),
+                accum(other.accum),
                 coul_nrgs(other.coul_nrgs), lj_nrgs(other.lj_nrgs) 
 {}
 
@@ -129,6 +201,8 @@ EnergyMonitor& EnergyMonitor::operator=(const EnergyMonitor &other)
     {
         grp0 = other.grp0;
         grp1 = other.grp1;
+        asgn0 = other.asgn0;
+        asgn1 = other.asgn1;
         accum = other.accum;
         coul_nrgs = other.coul_nrgs;
         lj_nrgs = other.lj_nrgs;
@@ -143,6 +217,7 @@ bool EnergyMonitor::operator==(const EnergyMonitor &other) const
 {
     return this == &other or
            (grp0 == other.grp0 and grp1 == other.grp1 and
+            asgn0 == other.asgn0 and asgn1 == other.asgn1 and
             accum == other.accum and 
             coul_nrgs == other.coul_nrgs and
             lj_nrgs == other.lj_nrgs and
@@ -173,48 +248,50 @@ Array2D<AccumulatorPtr> EnergyMonitor::ljEnergies() const
     return lj_nrgs;
 }
 
-/** Return the molecule group containing the first group of views */
-const MoleculeGroup& EnergyMonitor::group0() const
-{
-    return grp0.read();
-}
-
-/** Return the molecule group containing the second group of views */
-const MoleculeGroup& EnergyMonitor::group1() const
-{
-    return grp1.read();
-}
-
 /** Return the array of the first group of molecule views in the same order as they
     appear in the arrays of energies */
 QVector<SireMol::PartialMolecule> EnergyMonitor::views0() const
 {
-    int n = grp0->nViews();
-    
-    QVector<PartialMolecule> views(n);
-    
-    for (int i=0; i<n; ++i)
+    if (asgn0.isNull())
     {
-        views[i] = grp0->viewAt(i);
-    }
+        int n = grp0->nViews();
     
-    return views;
+        QVector<PartialMolecule> views(n);
+    
+        for (int i=0; i<n; ++i)
+        {
+            views[i] = grp0->viewAt(i);
+        }
+    
+        return views;
+    }
+    else
+    {
+        return asgn0.read().asA<IDAssigner>().identifiedMolecules();
+    }
 }
 
 /** Return the array of the second group of molecule views in the same order as they
     appear in the arrays of energies */
 QVector<SireMol::PartialMolecule> EnergyMonitor::views1() const
 {
-    int n = grp1->nViews();
-    
-    QVector<PartialMolecule> views(n);
-    
-    for (int i=0; i<n; ++i)
+    if (asgn1.isNull())
     {
-        views[i] = grp1->viewAt(i);
-    }
+        int n = grp1->nViews();
     
-    return views;
+        QVector<PartialMolecule> views(n);
+    
+        for (int i=0; i<n; ++i)
+        {
+            views[i] = grp1->viewAt(i);
+        }
+    
+        return views;
+    }
+    else
+    {
+        return asgn1.read().asA<IDAssigner>().identifiedMolecules();
+    }
 }
 
 /** Clear all statistics */
@@ -279,19 +356,36 @@ void EnergyMonitor::monitor(System &system)
 
     try
     {
-        if (system.contains(grp0->number()))
-            grp0 = system[grp0->number()];
+        if (asgn0.isNull())
+        {
+            if (system.contains(grp0->number()))
+                grp0 = system[grp0->number()];
+        }
+        else
+        {
+            asgn0.edit().asA<IDAssigner>().update(system);
+        }
             
-        if (system.contains(grp1->number()))
-            grp1 = system[grp1->number()];
-            
+        if (asgn1.isNull())
+        {
+            if (system.contains(grp1->number()))
+                grp1 = system[grp1->number()];
+        }
+        else
+        {
+            asgn1.edit().asA<IDAssigner>().update(system);
+        }
+
+        QVector<PartialMolecule> v0 = this->views0();
+        QVector<PartialMolecule> v1 = this->views1();
+
         // extract the charge, LJ and coordinates of all of the views
         const PropertyName charge_prop("charge");
         const PropertyName lj_prop("LJ");
         const PropertyName coords_prop("coordinates");
         
-        const int n0 = grp0->nViews();
-        const int n1 = grp1->nViews();
+        const int n0 = v0.count();
+        const int n1 = v1.count();
 
         //has the number of views changed?
         if (n0 != coul_nrgs.nRows() or n1 != coul_nrgs.nColumns())
@@ -322,7 +416,7 @@ void EnergyMonitor::monitor(System &system)
 
         for (int i=0; i<n0; ++i)
         {
-            const PartialMolecule &mol0 = grp0->viewAt(i);
+            const PartialMolecule &mol0 = v0.constData()[i];
             
             if (mol0.selectedAll())
             {
@@ -358,7 +452,7 @@ void EnergyMonitor::monitor(System &system)
 
         for (int i=0; i<n1; ++i)
         {
-            const PartialMolecule &mol1 = grp1->viewAt(i);
+            const PartialMolecule &mol1 = v1.constData()[i];
             
             if (mol1.selectedAll())
             {
