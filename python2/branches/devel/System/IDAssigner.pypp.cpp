@@ -57,12 +57,22 @@ SireSystem::IDAssigner __copy__(const SireSystem::IDAssigner &other){ return Sir
 void register_IDAssigner_class(){
 
     { //::SireSystem::IDAssigner
-        typedef bp::class_< SireSystem::IDAssigner > IDAssigner_exposer_t;
+        typedef bp::class_< SireSystem::IDAssigner, bp::bases< SireBase::Property > > IDAssigner_exposer_t;
         IDAssigner_exposer_t IDAssigner_exposer = IDAssigner_exposer_t( "IDAssigner", bp::init< >() );
         bp::scope IDAssigner_scope( IDAssigner_exposer );
         IDAssigner_exposer.def( bp::init< SireFF::PointRef const &, SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("point"), bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         IDAssigner_exposer.def( bp::init< QVector< SireBase::PropPtr< SireFF::Point > > const &, SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("points"), bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         IDAssigner_exposer.def( bp::init< SireSystem::IDAssigner const & >(( bp::arg("other") )) );
+        { //::SireSystem::IDAssigner::identifiedMolecules
+        
+            typedef ::QVector< SireMol::PartialMolecule > ( ::SireSystem::IDAssigner::*identifiedMolecules_function_type )(  ) const;
+            identifiedMolecules_function_type identifiedMolecules_function_value( &::SireSystem::IDAssigner::identifiedMolecules );
+            
+            IDAssigner_exposer.def( 
+                "identifiedMolecules"
+                , identifiedMolecules_function_value );
+        
+        }
         { //::SireSystem::IDAssigner::moleculeGroup
         
             typedef ::SireMol::MoleculeGroup const & ( ::SireSystem::IDAssigner::*moleculeGroup_function_type )(  ) const;
@@ -152,7 +162,7 @@ void register_IDAssigner_class(){
         }
         { //::SireSystem::IDAssigner::update
         
-            typedef ::QVector< SireMol::PartialMolecule > ( ::SireSystem::IDAssigner::*update_function_type )( ::SireSystem::System const & ) ;
+            typedef void ( ::SireSystem::IDAssigner::*update_function_type )( ::SireSystem::System const & ) ;
             update_function_type update_function_value( &::SireSystem::IDAssigner::update );
             
             IDAssigner_exposer.def( 

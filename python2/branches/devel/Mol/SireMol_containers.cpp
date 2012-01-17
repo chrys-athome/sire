@@ -86,6 +86,7 @@ void register_SireMol_containers()
     register_list< QList<SegIdx> >();
 
     register_list< QList<MolNum> >();
+    register_list< QVector<MolNum> >();
     register_list< QList<MGNum> >();
     register_list< QList<MGName> >();
 

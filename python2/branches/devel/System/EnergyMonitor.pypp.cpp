@@ -3,7 +3,6 @@
 // (C) Christopher Woods, GPL >= 2 License
 
 #include "boost/python.hpp"
-#include "Helpers/clone_const_reference.hpp"
 #include "EnergyMonitor.pypp.hpp"
 
 namespace bp = boost::python;
@@ -48,6 +47,12 @@ void register_EnergyMonitor_class(){
         bp::scope EnergyMonitor_scope( EnergyMonitor_exposer );
         EnergyMonitor_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireMol::MoleculeGroup const & >(( bp::arg("group0"), bp::arg("group1") )) );
         EnergyMonitor_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireMol::MoleculeGroup const &, SireMaths::Accumulator const & >(( bp::arg("group0"), bp::arg("group1"), bp::arg("accum") )) );
+        EnergyMonitor_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireSystem::IDAssigner const & >(( bp::arg("group0"), bp::arg("group1") )) );
+        EnergyMonitor_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireSystem::IDAssigner const &, SireMaths::Accumulator const & >(( bp::arg("group0"), bp::arg("group1"), bp::arg("accum") )) );
+        EnergyMonitor_exposer.def( bp::init< SireSystem::IDAssigner const &, SireMol::MoleculeGroup const & >(( bp::arg("group0"), bp::arg("group1") )) );
+        EnergyMonitor_exposer.def( bp::init< SireSystem::IDAssigner const &, SireMol::MoleculeGroup const &, SireMaths::Accumulator const & >(( bp::arg("group0"), bp::arg("group1"), bp::arg("accum") )) );
+        EnergyMonitor_exposer.def( bp::init< SireSystem::IDAssigner const &, SireSystem::IDAssigner const & >(( bp::arg("group0"), bp::arg("group1") )) );
+        EnergyMonitor_exposer.def( bp::init< SireSystem::IDAssigner const &, SireSystem::IDAssigner const &, SireMaths::Accumulator const & >(( bp::arg("group0"), bp::arg("group1"), bp::arg("accum") )) );
         EnergyMonitor_exposer.def( bp::init< SireSystem::EnergyMonitor const & >(( bp::arg("other") )) );
         { //::SireSystem::EnergyMonitor::clearStatistics
         
@@ -67,28 +72,6 @@ void register_EnergyMonitor_class(){
             EnergyMonitor_exposer.def( 
                 "coulombEnergies"
                 , coulombEnergies_function_value );
-        
-        }
-        { //::SireSystem::EnergyMonitor::group0
-        
-            typedef ::SireMol::MoleculeGroup const & ( ::SireSystem::EnergyMonitor::*group0_function_type )(  ) const;
-            group0_function_type group0_function_value( &::SireSystem::EnergyMonitor::group0 );
-            
-            EnergyMonitor_exposer.def( 
-                "group0"
-                , group0_function_value
-                , bp::return_value_policy<bp::clone_const_reference>() );
-        
-        }
-        { //::SireSystem::EnergyMonitor::group1
-        
-            typedef ::SireMol::MoleculeGroup const & ( ::SireSystem::EnergyMonitor::*group1_function_type )(  ) const;
-            group1_function_type group1_function_value( &::SireSystem::EnergyMonitor::group1 );
-            
-            EnergyMonitor_exposer.def( 
-                "group1"
-                , group1_function_value
-                , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
         { //::SireSystem::EnergyMonitor::ljEnergies
