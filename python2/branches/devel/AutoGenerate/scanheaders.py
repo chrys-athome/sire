@@ -322,6 +322,7 @@ if __name__ == "__main__":
                 "MMDB" : "SireMMDB",
                 "Mol" : "SireMol",
                 "Move" : "SireMove",
+                "Sim" : "SireSim",
                 "Siren" : "Siren",
                 "Soiree" : "Soiree",
                 "Spier" : "Spier",
