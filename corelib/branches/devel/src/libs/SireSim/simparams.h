@@ -33,14 +33,43 @@
 
 namespace SireSim
 {
+class Sim;
 class SimParams;
 }
+
+QDataStream& operator<<(QDataStream&, const SireSim::Sim&);
+QDataStream& operator>>(QDataStream&, SireSim::Sim&);
 
 QDataStream& operator<<(QDataStream&, const SireSim::SimParams&);
 QDataStream& operator>>(QDataStream&, SireSim::SimParams&);
 
 namespace SireSim
 {
+
+/** This is the base class of the helper classes that are
+    used to run the template simulations available in Sire.
+    These provide a simple, high-level interface that allow
+    users to quickly and easily use Sire to run common types
+    of simulation
+    
+    @author Christopher Woods
+*/
+class SIRESIM_EXPORT Sim : public SireBase::Property
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Sim&);
+friend QDataStream& ::operator>>(QDataStream&, Sim&);
+
+public:
+    Sim();
+    Sim(const Sim &other);
+    
+    virtual ~Sim();
+
+    static const char* typeName();
+    
+    virtual Sim* clone() const=0;
+};
 
 /** This is the base class of the helper classes that are
     used to store user parameters for a simulation. These are used
@@ -69,6 +98,7 @@ public:
 
 }
 
+SIRE_EXPOSE_CLASS( SireSim::Sim )
 SIRE_EXPOSE_CLASS( SireSim::SimParams )
 
 #endif

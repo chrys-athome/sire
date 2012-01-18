@@ -35,6 +35,56 @@ using namespace SireSim;
 using namespace SireBase;
 using namespace SireStream;
 
+///////////
+/////////// Implementation of Sim
+///////////
+
+static const RegisterMetaType<Sim> r_sim( MAGIC_ONLY, Sim::typeName() );
+
+QDataStream SIRESIM_EXPORT &operator<<(QDataStream &ds, const Sim &sim)
+{
+    writeHeader(ds, r_sim, 0);
+
+    ds << static_cast<const Property&>(sim);
+    
+    return ds;
+}
+
+QDataStream SIRESIM_EXPORT &operator>>(QDataStream &ds, Sim &sim)
+{
+    VersionID v = readHeader(ds, r_sim);
+    
+    if (v == 0)
+    {
+        ds >> static_cast<Property&>(sim);
+    }
+    else
+        throw version_error(v, "1", r_sim, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+Sim::Sim() : Property()
+{}
+
+/** Copy constructor */
+Sim::Sim(const Sim &other) : Property(other)
+{}
+
+/** Destructor */
+Sim::~Sim()
+{}
+
+const char* Sim::typeName()
+{
+    return "SireSim::Sim";
+}
+
+///////////
+/////////// Implementation of SimParams
+///////////
+
 static const RegisterMetaType<SimParams> r_simparams( MAGIC_ONLY, SimParams::typeName() );
 
 QDataStream SIRESIM_EXPORT &operator<<(QDataStream &ds, const SimParams &params)

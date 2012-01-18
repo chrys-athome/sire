@@ -12,6 +12,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the header files for SireSim
 set ( SIRESIM_HEADERS
 
+      proteinligandmc.h
+
       simparams.h
     )
 
@@ -19,6 +21,8 @@ set ( SIRESIM_HEADERS
 set ( SIRESIM_SOURCES
 
       register_siresim.cpp
+
+      proteinligandmc.cpp
 
       simparams.cpp
 
