@@ -5,11 +5,27 @@
 
 #include "boost/python.hpp"
 
+#include "ProteinLigandMC.pypp.hpp"
+
+#include "ProteinLigandMCParams.pypp.hpp"
+
+#include "Sim.pypp.hpp"
+
 #include "SimParams.pypp.hpp"
 
 namespace bp = boost::python;
 
+#include "SireSim_registrars.h"
+
 BOOST_PYTHON_MODULE(_Sim){
+    register_SireSim_objects();
+
+    register_Sim_class();
+
+    register_ProteinLigandMC_class();
+
     register_SimParams_class();
+
+    register_ProteinLigandMCParams_class();
 }
 
