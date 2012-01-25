@@ -203,6 +203,11 @@ bool ProteinLigandMC::operator!=(const ProteinLigandMC &other) const
 }
 
 /** Run one iteration of this simulation */
+//void ProteinLigandMC::run()
+//{
+//}
+
 void ProteinLigandMC::run()
 {
+   qDebug() << "HELLO";
 }

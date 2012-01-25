@@ -182,6 +182,9 @@ public:
     QHash< int, QPair<int,int> > getProteinMolecules() const;
     QHash< int, QPair<int,int> > getSoluteMolecules() const;
 
+    QHash<int,int> getProteinMolecules(int file) const;
+    QHash<int,int> getSoluteMolecules(int file) const;
+
     QList<int> getIgnoredSolventMolecules() const;
     QList<int> getIgnoredSolventMolecules(int file) const;
         

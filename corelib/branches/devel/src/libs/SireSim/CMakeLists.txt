@@ -6,6 +6,10 @@
 
 # Third Party dependencies of this module
 
+if ( QT_QTXML_FOUND )
+    include_directories( ${QT_QTXML_INCLUDE_DIR} )
+endif ()
+
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
@@ -41,6 +45,7 @@ target_link_libraries (SireSim
                        SireSystem
                        SireMove
                        SireIO
+                       ${QT_QTXML_LIBRARY}
                        )
 
 # installation
