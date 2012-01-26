@@ -26,6 +26,11 @@
   *
 \*********************************************/
 
+#include <QDomDocument>
+#include <QDomNode>
+#include <QDomElement>
+#include <QFile>
+
 #include "simparams.h"
 
 #include "SireStream/datastream.h"
@@ -177,6 +182,15 @@ void Value::throwInvalidCast(const char* this_type, const char* other_type)
                 .arg(other_type).arg(this_type), CODELOC );
 }
 
+bool Value::isContainer() const
+{
+    return false;
+}
+
+Value::operator ValuePtr() const
+{
+    return self();
+}
 
 ///////////
 /////////// Implementation of Option
@@ -202,6 +216,79 @@ Option::Option(const QString &key, const QString &description,
         throw SireError::invalid_arg( QObject::tr(
                 "You cannot set a key (%1) that contains spaces or square brakets.")
                     .arg(k), CODELOC );
+    }
+}
+  
+/** Construct from a QDomElement */
+Option::Option(QDomElement elem) 
+       : Value(), is_optional(false), allow_multiple(false)
+{
+    if (elem.tagName() != "option")
+        throw SireError::file_error( QObject::tr(
+                "Can only create an Option object from an <option>...</option> "
+                "XML DOM element. Cannot use a <%1>...</%1> element!")
+                    .arg(elem.tagName()), CODELOC );
+    
+    QString is_optional_string = elem.attribute("optional", "false");
+    QString allow_multiple_string = elem.attribute("allow_multiple", "false");
+    
+    qDebug() << "OPTION" << is_optional_string << allow_multiple_string;
+                                                    
+    QDomNode n = elem.firstChild();
+    
+    while (not n.isNull()) 
+    {
+        elem = n.toElement(); // try to convert the node to an element.
+        
+        if (not elem.isNull()) 
+        {
+            if (elem.tagName() == "key")
+            {
+                //get the key
+                k = elem.text();
+            }
+            else if (elem.tagName() == "description")
+            {
+                //get the description of the option
+                desc = elem.text();
+            }
+            else if (elem.tagName() == "value")
+            {
+                //now read the value
+                QDomNode n1 = elem.firstChild();
+                
+                if (not n.isNull())
+                {
+                    elem = n1.toElement();
+                    
+                    if (not elem.isNull())
+                    {
+                        if (elem.tagName() == "options")
+                        {
+                            val = Options(elem);
+                        }
+                        else if (elem.tagName() == "option")
+                        {
+                            val = Option(elem);
+                        }
+                        else if (elem.tagName() == "string")
+                        {
+                            val = StringValue(elem);
+                        }
+                        else
+                            qDebug() << "Option(QDomElement elem) cannot recognise "
+                                     << "the value tag" << elem.tagName();
+                    }
+                }
+            }
+            else
+            {
+                qDebug() << "Option(QDomElement elem) cannot recognise tag" 
+                         << elem.tagName();
+            }
+        }
+        
+        n = n.nextSibling();
     }
 }
   
@@ -263,6 +350,11 @@ Option* Option::ptr_clone() const
     return new Option(*this);
 }
 
+bool Option::isContainer() const
+{
+    return true;
+}
+
 void Option::assertNotNull() const
 {
     if (val.get() == 0)
@@ -305,7 +397,7 @@ namespace SireSim
                 }
                 else
                 {   
-                    key = k.mid(0,idx-1).trimmed();
+                    key = k.mid(0,idx).trimmed();
                     tail = k.mid(idx+1).trimmed();
                 }
         
@@ -328,7 +420,7 @@ namespace SireSim
                                 .arg(key), CODELOC );
         
                     bool ok;
-                    QString idx_string = key.mid(idx+1, idx2-idx2-1);
+                    QString idx_string = key.mid(idx+1, idx2-idx-1);
                     index = idx_string.toInt(&ok);
                     
                     if (not ok)
@@ -338,7 +430,25 @@ namespace SireSim
                                 "should be an integer in square brackets, e.g. key[1].")
                                     .arg(idx_string, key), CODELOC );
                                     
-                    key = key.mid(0,idx-1).trimmed();
+                    key = key.mid(0,idx).trimmed();
+                }
+            }
+            
+            QString unparse() const
+            {
+                if (index == 1)
+                {
+                    if (tail.isEmpty())
+                        return key;
+                    else
+                        return QString("%1.%2").arg(key, tail);
+                }
+                else
+                {
+                    if (tail.isEmpty())
+                        return QString("%1[%2]").arg(key).arg(index);
+                    else
+                        return QString("%1[%2].%3").arg(key).arg(index).arg(tail);
                 }
             }
             
@@ -364,6 +474,11 @@ namespace SireSim
                 been_read = false;
             }
 
+            QString unparse() const
+            {
+                return QString("%1 = %2").arg(key.unparse(),value);
+            }
+
             static QString cleanLine(QString line)
             {
                 int idx = line.indexOf('#');
@@ -379,7 +494,7 @@ namespace SireSim
                         idx = line.indexOf('#', idx+1);
                     }
                     
-                    return line.mid(0,idx-1).trimmed();
+                    return line.mid(0,idx).trimmed();
                 }
                 else
                 {
@@ -436,7 +551,7 @@ bool Option::hasUserValue(int index) const
 {
     assertNotNull();
 
-    if (user_vals.count() <= index)
+    if (index <= user_vals.count())
     {
         return user_vals.at(index-1).get() != 0;
     }
@@ -446,7 +561,7 @@ bool Option::hasUserValue(int index) const
 
 /** Return the user value at the supplied index. This raises an exception
     if there is no value set for this index */
-const Value& Option::userValue(int index) const
+ValuePtr Option::userValue(int index) const
 {
     assertNotNull();
 
@@ -455,15 +570,21 @@ const Value& Option::userValue(int index) const
         ValuePtr ptr = user_vals.at(index-1);
         
         if (ptr)
-            return *ptr;
+            return ptr;
     }
     
     throw SireError::invalid_index( QObject::tr(
               "No value for option %1[%2] has been set.")
                     .arg(k).arg(index), CODELOC );
 
-    //below code will never be executed, but prevent a warning message ;-)
-    return *(user_vals.at(0));
+    return ValuePtr();
+}
+
+/** Return the default value of the option */
+ValuePtr Option::defaultValue() const
+{
+    assertNotNull();
+    return val;
 }
 
 /** Return the value of the passed key. Note that the first element of 
@@ -488,7 +609,7 @@ ValuePtr Option::getValue(QString key) const
     }
 
     if (hasUserValue(p.index))
-        return userValue(p.index).getValue(p.tail);
+        return userValue(p.index)->getValue(p.tail);
     else
         return val->getValue(p.tail);
 }
@@ -522,7 +643,6 @@ ValuePtr Option::setValue(QString key, const Value &value) const
 {
     assertNotNull();
 
-
     ParsedKey p(key);
     ValuePtr v;
     
@@ -539,7 +659,7 @@ ValuePtr Option::setValue(QString key, const Value &value) const
     
     if (hasUserValue(p.index))
     {
-        const Value *old_val = &(userValue(p.index));
+        const Value *old_val = userValue(p.index).get();
     
         ValuePtr v = old_val->setValue(p.tail, value);
         
@@ -557,7 +677,9 @@ ValuePtr Option::setValue(QString key, const Value &value) const
         ValuePtr v = val->setValue(p.tail, value);
         
         ValuePtr ret = this->clone();
+
         ret->asA<Option>().setUserValue(p.index, v);
+
         return ret;
     }
 }
@@ -618,7 +740,7 @@ ValuePtr Option::fromConfig(ParsedLine &line) const
     
     if (hasUserValue(line.key.index))
     {
-        const Value *old_val = &(userValue(line.key.index));
+        const Value *old_val = userValue(line.key.index).get();
     
         ParsedLine new_line(ParsedKey(line.key.tail), line.value);
     
@@ -691,14 +813,20 @@ QStringList Option::toConfig() const
             return QStringList();
         else
         {
-            return prep( QString("%1.").arg(key()), val->toConfig() );
+            if (val->isContainer())
+                return prep( QString("%1.").arg(key()), val->toConfig() );
+            else
+                return prep( QString("%1 = ").arg(key()), val->toConfig() );
         }
     }
     else
     {
         if (user_vals.count() == 1)
         {
-            return prep( QString("%1.").arg(key()), user_vals[0]->toConfig() );
+            if (user_vals[0]->isContainer())
+                return prep( QString("%1.").arg(key()), user_vals[0]->toConfig() );
+            else
+                return prep( QString("%1 = ").arg(key()), user_vals[0]->toConfig() );
         }
         else
         {
@@ -708,8 +836,12 @@ QStringList Option::toConfig() const
             {
                 if (user_vals.at(i))
                 {
-                    lines += prep(QString("%1[%2].").arg(key()).arg(i+1),
-                                  user_vals[i]->toConfig());
+                    if (user_vals.at(i)->isContainer())
+                        lines += prep(QString("%1[%2].").arg(key()).arg(i+1),
+                                    user_vals[i]->toConfig());
+                    else
+                        lines += prep(QString("%1[%2] = ").arg(key()).arg(i+1),
+                                    user_vals[i]->toConfig());
                 }
             }
             
@@ -726,9 +858,103 @@ QStringList Option::toConfig() const
 Options::Options() : Value()
 {}
 
+/** Construct from the passed QDomElement */
+Options::Options(QDomElement elem) : Value()
+{
+    if (elem.tagName() != "options")
+        throw SireError::file_error( QObject::tr(
+                "Can only create an Options object from an <options>...</options> "
+                "XML DOM element. Cannot use a <%1>...</%1> element!")
+                    .arg(elem.tagName()), CODELOC );
+                    
+    QDomNode n = elem.firstChild();
+    
+    QList<Option> options;
+    
+    while(not n.isNull()) 
+    {
+        elem = n.toElement(); // try to convert the node to an element.
+        
+        if (not elem.isNull()) 
+        {
+            if (elem.tagName() == "option")
+            {
+                //this is an Option :-)
+                options.append( Option(elem) );
+            }
+            else
+                qDebug() << "Options(QDomElement elem) cannot recognise tag" 
+                         << elem.tagName();
+        }
+        
+        n = n.nextSibling();
+    }
+}
+
 /** Construct the set of options by reading the passed XML file */
 Options::Options(const QString &xmlfile) : Value()
-{}
+{
+    QDomDocument doc;
+    QFile file(xmlfile);
+     
+    if (!file.open(QIODevice::ReadOnly))
+        throw SireError::file_error(file, CODELOC);
+     
+    if (!doc.setContent(&file)) 
+    {
+        file.close();
+     
+        throw SireError::file_error(QObject::tr(
+                "Unable to parse the XML configure file \"%1\"").arg(xmlfile),
+                    CODELOC);
+     
+        return;
+    }
+     
+    file.close();
+
+    //get the root of the XML document
+    QDomElement docElem = doc.documentElement();
+
+    //now loop over all children, and create Options objects for each
+    // <options>...</options> block
+    QList<Options> all_options;
+    
+    QDomNode n = docElem.firstChild();
+     
+    while(not n.isNull()) 
+    {
+        QDomElement e = n.toElement(); // try to convert the node to an element.
+        
+        if (not e.isNull()) 
+        {
+            if (e.tagName() == "options")
+            {
+                //this is an Options option :-)
+                all_options.append( Options(e) );
+            }
+            else
+                qDebug() << "Options(QString xmlfile) cannot recognise tag" 
+                         << e.tagName();
+        }
+        
+        n = n.nextSibling();
+    }
+    
+    if (all_options.isEmpty())
+    {
+        throw SireError::file_error( QObject::tr(
+                "Could not find any <options>...</options> blocks in the "
+                "XML file \"%1\"").arg(xmlfile), CODELOC );
+    }
+    
+    this->operator=(all_options.at(0));
+    
+    for (int i=1; i<all_options.count(); ++i)
+    {
+        this->operator=( this->add(all_options.at(i) ) );
+    }
+}
 
 /** Construct the set of options from the passed list of options.
     If mutually_exclusive is true, then only one of these options can
@@ -835,6 +1061,11 @@ const char* Options::what() const
 const char* Options::typeName()
 {
     return "SireSim::Options";
+}
+
+bool Options::isContainer() const
+{
+    return true;
 }
 
 Options* Options::ptr_clone() const
@@ -1182,4 +1413,170 @@ QStringList Options::toConfig() const
     }
     
     return lines;
+}
+
+/** Return the set of options that have been modified by reading the passed
+    configure lines */
+Options Options::fromConfig(const QStringList &lines) const
+{
+    QList<ParsedLine> parsed_lines = ParsedLine::parse(lines);
+    
+    Options ret(*this);
+    
+    QStringList lost_lines;
+    
+    foreach (ParsedLine parsed_line,  parsed_lines)
+    {
+        ret = ret.fromConfig(parsed_line)->asA<Options>();
+        
+        if (not parsed_line.been_read)
+            lost_lines.append(parsed_line.unparse());
+    }
+    
+    if (not lost_lines.isEmpty())
+        qDebug() << "FAILED TO READ\n" << lost_lines.join("\n") << "\n";
+    
+    return ret;
+}
+
+/////////
+///////// Implementation of StringValue
+/////////
+
+/** Constructor */
+StringValue::StringValue() : Value()
+{}
+
+/** Construct, passing in a value */
+StringValue::StringValue(const QString &value) : Value(), val(value)
+{}
+
+/** Construct from a QDomElement */
+StringValue::StringValue(QDomElement elem) : Value()
+{
+    if (elem.tagName() != "string")
+        throw SireError::file_error( QObject::tr(
+                "Can only create a StringValue object from an <string>...</string> "
+                "XML DOM element. Cannot use a <%1>...</%1> element!")
+                    .arg(elem.tagName()), CODELOC );
+                    
+    QDomNode n = elem.firstChild();
+    
+    while (not n.isNull()) 
+    {
+        elem = n.toElement(); // try to convert the node to an element.
+        
+        if (not elem.isNull()) 
+        {
+            qDebug() << "StringValue(QDomElement elem) cannot recognise tag" 
+                     << elem.tagName();
+        }
+        
+        n = n.nextSibling();
+    }
+}
+
+/** Copy constructor */
+StringValue::StringValue(const StringValue &other)
+            : Value(other), val(other.val)
+{}
+
+/** Destructor */
+StringValue::~StringValue()
+{}
+
+StringValue* StringValue::ptr_clone() const
+{
+    return new StringValue(*this);
+}
+
+/** Copy assignment operator */
+StringValue& StringValue::operator=(const StringValue &other)
+{
+    val = other.val;
+    return *this;
+}
+
+/** Comparison operator */
+bool StringValue::operator==(const StringValue &other) const
+{
+    return val == other.val;
+}
+
+/** Comparison operator */
+bool StringValue::operator!=(const StringValue &other) const
+{
+    return not StringValue::operator==(other);
+}
+
+const char* StringValue::typeName()
+{
+    return "SireSim::StringValue";
+}
+
+const char* StringValue::what() const
+{
+    return StringValue::typeName();
+}
+
+/** Return the actual string value */
+QString StringValue::value() const
+{
+    return val;
+}
+
+/** Get the value. This passed key should be null, as this is a value */
+ValuePtr StringValue::getValue(QString key) const
+{
+    if (not key.isEmpty())
+        throw SireError::invalid_key( QObject::tr(
+                "It should not be possible to get a StringValue value with "
+                "a non-empty key! \"%1\"").arg(key), CODELOC );
+
+    return self();
+}
+
+/** Set the value of this string to 'value'. This passed key should be null,
+    and the passed value must have type "StringValue" */
+ValuePtr StringValue::setValue(QString key, const Value &value) const
+{
+    if (not key.isEmpty())
+        throw SireError::invalid_key( QObject::tr(
+                "It should not be possible to set a StringValue value with "
+                "a non-empty key! \"%1\"").arg(key), CODELOC );
+    
+    else if (not value.isA<StringValue>())
+        throw SireError::invalid_arg( QObject::tr(
+                "You cannot set the value of a StringValue using a value "
+                "of type \"%1\".").arg(value.what()), CODELOC );
+    
+    return value;
+}
+
+/** Return this value as given in a configure file */
+QStringList StringValue::toConfig() const
+{
+    QStringList lines;
+    
+    lines.append(val);
+    
+    return lines;
+}
+
+/** Set the value from the passed line */
+ValuePtr StringValue::fromConfig(detail::ParsedLine &line) const
+{
+    if (not line.key.key.isEmpty())
+        throw SireError::invalid_key( QObject::tr(
+                "It should not be possible to set a StringValue value with "
+                "a non-empty key! \"%1\"").arg(line.key.key), CODELOC );
+
+    if (line.been_read)
+        return self();
+    
+    else
+    {
+        line.been_read = true;
+        return StringValue(line.value).clone();
+    }
 }

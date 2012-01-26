@@ -46,6 +46,8 @@ QDataStream& operator>>(QDataStream&, SireSim::Sim&);
 QDataStream& operator<<(QDataStream&, const SireSim::SimParams&);
 QDataStream& operator>>(QDataStream&, SireSim::SimParams&);
 
+class QDomElement;
+
 namespace SireSim
 {
 
@@ -165,6 +167,8 @@ public:
     
     virtual QStringList toConfig() const=0;
 
+    operator ValuePtr() const;
+
 protected:
     virtual Value* ptr_clone() const=0;
     
@@ -173,6 +177,7 @@ protected:
     friend class Option;
     friend class Options;
     virtual ValuePtr fromConfig(detail::ParsedLine &line) const=0;
+    virtual bool isContainer() const;
     
 private:
     static void throwInvalidCast(const char* this_type, const char* other_type);
@@ -196,6 +201,8 @@ public:
     Option(const QString &key, const QString &description,
            const Value &value,
            bool is_optional=false, bool allow_multiple=false);
+
+    Option(QDomElement elem);
            
     Option(const Option &other);
     
@@ -222,10 +229,10 @@ public:
     bool isOptional() const;
     bool allowMultiple() const;
     
-    const Value& defaultValue() const;
+    ValuePtr defaultValue() const;
 
     bool hasUserValue(int index) const;
-    const Value& userValue(int index) const;
+    ValuePtr userValue(int index) const;
 
     QStringList toConfig() const;
 
@@ -233,6 +240,7 @@ protected:
     Option* ptr_clone() const;
 
     ValuePtr fromConfig(detail::ParsedLine &lines) const;
+    bool isContainer() const;
 
 private:
     void assertNotNull() const;
@@ -260,11 +268,12 @@ private:
     
     @author Christopher Woods
 */
-class Options : public Value
+class SIRESIM_EXPORT Options : public Value
 {
 public:
     Options();
     Options(const QString &xmlfile);
+    Options(QDomElement elem);
 
     Options(const QList<Option> &options,
             bool mutually_exclusive=false);
@@ -293,12 +302,14 @@ public:
     Options operator+(const Options &other) const;
     
     QStringList toConfig() const;
+    Options fromConfig(const QStringList &lines) const;
 
 protected:
     Options* ptr_clone() const;
 
     ValuePtr fromConfig(detail::ParsedLine &line) const;
-     
+    bool isContainer() const;
+
 private:
     /** The set of options */
     QList<ValuePtr> opts;
@@ -324,6 +335,8 @@ public:
     StringValue();
     StringValue(const QString &value);
     
+    StringValue(QDomElement elem);
+    
     StringValue(const StringValue &other);
     
     ~StringValue();
@@ -333,6 +346,8 @@ public:
     bool operator==(const StringValue &other) const;
     bool operator!=(const StringValue &other) const;
     
+    static const char* typeName();
+    
     const char* what() const;
     
     ValuePtr getValue(QString key) const;
@@ -340,10 +355,16 @@ public:
     
     QStringList toConfig() const;
     
+    QString value() const;
+    
 protected:
     StringValue* ptr_clone() const;
 
     ValuePtr fromConfig(detail::ParsedLine &lines) const;
+
+private:
+    /** The current value of this string. */
+    QString val;
 };
 
 }
