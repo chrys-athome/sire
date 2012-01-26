@@ -44,6 +44,7 @@ target_link_libraries (Sim
                        SIRE_SireSim
                        ${PYTHON_LIBRARIES}
                        ${BOOST_PYTHON_LIBRARY}
+                       ${QT_QTXML_LIBRARY}
                       )
 
 include( LimitSirePythonExportSymbols )

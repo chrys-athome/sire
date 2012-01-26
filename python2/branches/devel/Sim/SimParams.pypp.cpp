@@ -7,11 +7,21 @@
 
 namespace bp = boost::python;
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
 
 #include "simparams.h"
+
+#include <QDomDocument>
+
+#include <QDomElement>
+
+#include <QDomNode>
+
+#include <QFile>
 
 #include "simparams.h"
 

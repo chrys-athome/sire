@@ -5,6 +5,10 @@
 
 #include "boost/python.hpp"
 
+#include "Option.pypp.hpp"
+
+#include "Options.pypp.hpp"
+
 #include "ProteinLigandMC.pypp.hpp"
 
 #include "ProteinLigandMCParams.pypp.hpp"
@@ -13,12 +17,26 @@
 
 #include "SimParams.pypp.hpp"
 
+#include "StringValue.pypp.hpp"
+
+#include "Value.pypp.hpp"
+
 namespace bp = boost::python;
+
+#include "SireSim_containers.h"
 
 #include "SireSim_registrars.h"
 
 BOOST_PYTHON_MODULE(_Sim){
     register_SireSim_objects();
+
+    register_SireSim_containers();
+
+    register_Value_class();
+
+    register_Option_class();
+
+    register_Options_class();
 
     register_Sim_class();
 
@@ -27,5 +45,7 @@ BOOST_PYTHON_MODULE(_Sim){
     register_SimParams_class();
 
     register_ProteinLigandMCParams_class();
+
+    register_StringValue_class();
 }
 
