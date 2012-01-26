@@ -133,6 +133,8 @@ public:
     virtual ValuePtr getValue(QString key) const=0;
     virtual ValuePtr setValue(QString key, const Value &value) const=0;
     
+    ValuePtr operator[](QString key) const;
+    
     template<class T>
     bool isA() const
     {
@@ -170,7 +172,7 @@ protected:
     
     friend class Option;
     friend class Options;
-    virtual ValuePtr fromConfig(const detail::ParsedLine &line) const=0;
+    virtual ValuePtr fromConfig(detail::ParsedLine &line) const=0;
     
 private:
     static void throwInvalidCast(const char* this_type, const char* other_type);
@@ -207,6 +209,10 @@ public:
     const char* what() const;
     static const char* typeName();
     
+    bool isNull() const;
+    
+    ValuePtr clear() const;
+    
     ValuePtr getValue(QString key) const;
     ValuePtr setValue(QString key, const Value &value) const;
     
@@ -226,7 +232,7 @@ public:
 protected:
     Option* ptr_clone() const;
 
-    ValuePtr fromConfig(const detail::ParsedLine &lines) const;
+    ValuePtr fromConfig(detail::ParsedLine &lines) const;
 
 private:
     void assertNotNull() const;
@@ -278,9 +284,9 @@ public:
     ValuePtr getValue(QString key) const;
     ValuePtr setValue(QString key, const Value &value) const;
     
-    QList<Option> options() const;
+    ValuePtr clear() const;
     
-    Option operator[](QString key) const;
+    QList<Option> options() const;
     
     Options add(const Options &other) const;
     
@@ -291,11 +297,11 @@ public:
 protected:
     Options* ptr_clone() const;
 
-    ValuePtr fromConfig(const detail::ParsedLine &lines) const;
+    ValuePtr fromConfig(detail::ParsedLine &line) const;
      
 private:
     /** The set of options */
-    QList<Option> opts;
+    QList<ValuePtr> opts;
     
     /** Hash to accelerate finding the option with specified key */
     QHash<QString,int> keys;
@@ -306,6 +312,9 @@ private:
     
     /** The inverse map, going from color to options */
     QMultiHash<int,int> color_to_option;
+    
+    /** The name of the option selected from each color group */
+    QHash<int,QString> color_option;
 };
 
 /** This class represents a string value */
@@ -334,7 +343,7 @@ public:
 protected:
     StringValue* ptr_clone() const;
 
-    ValuePtr fromConfig(const detail::ParsedLine &lines) const;
+    ValuePtr fromConfig(detail::ParsedLine &lines) const;
 };
 
 }

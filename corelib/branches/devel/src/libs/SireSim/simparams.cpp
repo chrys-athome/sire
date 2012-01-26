@@ -164,6 +164,12 @@ ValuePtr Value::self() const
         return this->clone();
 }
 
+/** Return the value of the option with the passed key */
+ValuePtr Value::operator[](QString key) const
+{
+    return this->getValue(key);
+}
+
 void Value::throwInvalidCast(const char* this_type, const char* other_type)
 {
     throw SireError::invalid_cast( QObject::tr(
@@ -187,9 +193,17 @@ Option::Option() : Value()
 Option::Option(const QString &key, const QString &description,
                const Value &value,
                bool is_opt, bool allow_mult)
-       : Value(), k(key), desc(description), val(value.clone()),
+       : Value(), k(key.trimmed().toLower()), desc(description), val(value.clone()),
          is_optional(is_opt), allow_multiple(allow_mult)
-{}
+{
+    //the key may not contain any spaces or square brackets
+    if (key.indexOf(' ') != -1 or key.indexOf('[') != -1 or key.indexOf(']') != -1)
+    {
+        throw SireError::invalid_arg( QObject::tr(
+                "You cannot set a key (%1) that contains spaces or square brakets.")
+                    .arg(k), CODELOC );
+    }
+}
   
 /** Copy constructor */
 Option::Option(const Option &other) 
@@ -257,6 +271,11 @@ void Option::assertNotNull() const
                 "You can not perform any operations on a null Option object!"),
                     CODELOC );
     }
+}
+
+bool Option::isNull() const
+{
+    return val.get() == 0;
 }
 
 namespace SireSim
@@ -335,12 +354,14 @@ namespace SireSim
             {
                 key = ParsedKey();
                 value = QString::null;
+                been_read = true;
             }
             
             ParsedLine(const ParsedKey &k, const QString &v)
             {
                 key = k;
                 value = v;
+                been_read = false;
             }
 
             static QString cleanLine(QString line)
@@ -405,6 +426,7 @@ namespace SireSim
             
             ParsedKey key;
             QString value;
+            bool been_read;
         };
     }
 }
@@ -540,6 +562,19 @@ ValuePtr Option::setValue(QString key, const Value &value) const
     }
 }
 
+/** Return a copy of this option which has all user-set data cleared */
+ValuePtr Option::clear() const
+{
+    if (user_vals.isEmpty())
+        return self();
+    else
+    {
+        Option ret(*this);
+        ret.user_vals.clear();
+        return ret.clone();
+    }
+}
+
 /** Return the key for this option */
 QString Option::key() const
 {
@@ -566,9 +601,13 @@ bool Option::allowMultiple() const
 
 /** Internal function used to set the user values from the passed,
     parsed configure file */
-ValuePtr Option::fromConfig(const ParsedLine &line) const
+ValuePtr Option::fromConfig(ParsedLine &line) const
 {
     assertNotNull();
+
+    if (line.been_read)
+        //this line has been read already - skip it
+        return self();
 
     if (not line.key.key.isEmpty())
     {
@@ -581,9 +620,15 @@ ValuePtr Option::fromConfig(const ParsedLine &line) const
     {
         const Value *old_val = &(userValue(line.key.index));
     
-        ValuePtr new_val = old_val->fromConfig( ParsedLine( 
-                                                    ParsedKey(line.key.tail),
-                                                    line.value) );
+        ParsedLine new_line(ParsedKey(line.key.tail), line.value);
+    
+        ValuePtr new_val = old_val->fromConfig(new_line);
+        
+        if (new_line.been_read)
+        {
+            //the line was read :-)
+            line.been_read = true;
+        }
     
         if (new_val.get() != old_val)
         {
@@ -601,8 +646,14 @@ ValuePtr Option::fromConfig(const ParsedLine &line) const
     {
         ValuePtr ret = this->clone();
         
-        ret->asA<Option>().setUserValue(line.key.index,
-                val->fromConfig( ParsedLine(ParsedKey(line.key.tail), line.value) ) );
+        ParsedLine new_line(ParsedKey(line.key.tail), line.value);
+        
+        ret->asA<Option>().setUserValue(line.key.index, val->fromConfig(new_line));
+                
+        if (new_line.been_read)
+        {
+            line.been_read = true;
+        }
                 
         return ret;
     }
@@ -665,4 +716,470 @@ QStringList Option::toConfig() const
             return lines;
         }
     }
+}
+
+///////////
+/////////// Implementation of Options
+///////////
+
+/** Constructor */
+Options::Options() : Value()
+{}
+
+/** Construct the set of options by reading the passed XML file */
+Options::Options(const QString &xmlfile) : Value()
+{}
+
+/** Construct the set of options from the passed list of options.
+    If mutually_exclusive is true, then only one of these options can
+    be selected at a time. */
+Options::Options(const QList<Option> &options, bool mutually_exclusive) : Value()
+{
+    foreach (const Option &option, options)
+    {
+        if (not option.isNull())
+        {
+            QString key = option.key();
+            
+            if (key.isEmpty())
+            {
+                if (not opts.isEmpty())
+                    throw SireError::invalid_arg( QObject::tr(
+                        "You can only add an unnamed option as the first option "
+                        "in a group of options, otherwise the unnamed option can "
+                        "never be selected! Option at index %1 is unnamed!")
+                            .arg(opts.count()), CODELOC );
+            }
+            else if (keys.contains(key))
+            {
+                QStringList keynames;
+                
+                foreach (const Option &option2, options)
+                {
+                    if (not option2.isNull())
+                        keynames.append(option.key());
+                }
+            
+                throw SireError::invalid_key( QObject::tr(
+                        "You cannot create a series of options if two have a duplicated "
+                        "keys! Options at indexes %1 and %2 have the same key (%3). "
+                        "[ %4 ]")
+                            .arg(keys[key]).arg(opts.count())
+                            .arg(key).arg(keynames.join(", ")),
+                                CODELOC );
+            }
+            else
+                keys.insert(key, opts.count());
+            
+            opts.append( option.clone() );
+        }
+    }
+    
+    //if the options are mutually exclusive, then add all of the keys
+    //to a new color group
+    if (mutually_exclusive)
+    {
+        for (int i=0; i<opts.count(); ++i)
+        {
+            option_to_color.insert(i, 1);
+            color_to_option.insertMulti(1, i);
+        }
+    }
+}
+
+/** Copy constructor */
+Options::Options(const Options &other) 
+        : Value(other), opts(other.opts), keys(other.keys),
+          option_to_color(other.option_to_color),
+          color_to_option(other.color_to_option),
+          color_option(other.color_option)
+{}
+
+/** Destructor */
+Options::~Options()
+{}
+
+/** Copy assignment operator */
+Options& Options::operator=(const Options &other)
+{
+    if (this != &other)
+    {
+        opts = other.opts;
+        keys = other.keys;
+        option_to_color = other.option_to_color;
+        color_to_option = other.color_to_option;
+        color_option = other.color_option;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool Options::operator==(const Options &other) const
+{
+    return this == &other or 
+           (opts == other.opts and option_to_color == other.option_to_color);
+}
+
+/** Comparison operator */
+bool Options::operator!=(const Options &other) const
+{
+    return not Options::operator==(other);
+}
+
+const char* Options::what() const
+{
+    return Options::typeName();
+}
+
+const char* Options::typeName()
+{
+    return "SireSim::Options";
+}
+
+Options* Options::ptr_clone() const
+{
+    return new Options(*this);
+}
+
+int getIndex(QString key, const QHash<QString,int> &keys)
+{
+    if (key.isEmpty())
+    {
+        if (keys.isEmpty())
+            throw SireError::invalid_key( QObject::tr(
+                    "Cannot get the value of the option as there are no options "
+                    "in this group!"), CODELOC );
+                    
+        return 0;
+    }
+    else
+    {
+        int idx = keys.value(key, -1);
+        
+        if (idx == -1)
+            throw SireError::invalid_key( QObject::tr(
+                    "Cannot find the option with key \"%1\". Available options are "
+                    "[ %2 ].")
+                        .arg(key, QStringList(keys.keys()).join(", ")),
+                            CODELOC );
+    
+        return idx;
+    }
+}
+
+/** Return the options as they have been read from the passed parsed line */
+ValuePtr Options::fromConfig(detail::ParsedLine &line) const
+{
+    if (line.been_read)
+        //this line has been read already - skip it
+        return self();
+        
+    if (opts.isEmpty())
+        return self();
+    
+    QString key;
+    int idx = -1;
+    
+    if (line.key.key.isEmpty())
+    {
+        idx = 0;
+        key = opts.at(0)->asA<Option>().key();
+    }
+    else
+    {
+        idx = keys.value(line.key.key, -1);
+        key = line.key.key;
+    }
+
+    //see if changing this option would affect the selected color. This is
+    //strictly forbidden when parsing a config file
+    int color = option_to_color.value(idx, 0);
+    
+    if (color != 0)
+    {
+        if (color_option.contains(color))
+        {
+            if (color_option.value(color) != key)
+                throw SireError::invalid_state( QObject::tr(
+                        "You cannot set the value of the option \"%1\" as the option "
+                        "\"%2\" has been set already, and these two options are "
+                        "mutually exclusive!")
+                            .arg(key, color_option.value(color)), CODELOC );
+        }
+    }
+
+    ValuePtr old_option = opts.at(idx);
+    ValuePtr new_option = old_option->fromConfig(line);
+    
+    if (old_option.get() == new_option.get())
+    {
+        //no change in the option :-). Has this set the color though?
+        if (color != 0)
+        {
+            if (not color_option.contains(color))
+            {
+                Options ret(*this);
+                ret.color_option.insert(color,key);
+                return ret.clone();
+            }
+        }
+        
+        return self();
+    }
+    else
+    {
+        Options ret(*this);
+        
+        ret.opts[idx] = new_option;
+        
+        if (color != 0)
+        {
+            if (not color_option.contains(color))
+            {
+                ret.color_option.insert(color,key);
+            }
+        }
+        
+        return ret.clone();
+    }
+}
+
+/** Return the value of the option with the passed key */
+ValuePtr Options::getValue(QString key) const
+{
+    return opts.at( getIndex(ParsedKey(key).key, keys) )->getValue(key);
+}
+
+/** Set the of the key 'key' to 'value'. Note that setting the value of 
+    one mutually exclusive option will clear all values of the other
+    mutually exclusive options in the same group */
+ValuePtr Options::setValue(QString key, const Value &value) const
+{
+    int idx = getIndex(ParsedKey(key).key, keys);
+    
+    ValuePtr old_option = opts.at(idx);
+
+    ValuePtr new_option = old_option->setValue(key, value);
+
+    int color = option_to_color.value(idx, 0);
+    
+    if (old_option.get() == new_option.get())
+    {
+        if (color == 0)
+        {
+            //nothing has changed
+            return self();
+        }
+        else if (color_option.contains(color))
+        {
+            QString old_color_key = color_option.value(color);
+            QString new_color_key = new_option->asA<Option>().key();
+            
+            if (old_color_key == new_color_key)
+                //the choice of color key has not changed
+                return self();
+                
+            Options ret(*this);
+            
+            int old_color_index = getIndex(old_color_key, keys);
+            
+            ret.opts[old_color_index] = opts.at(old_color_index)->asA<Option>().clear();
+            ret.color_option[color] = new_color_key;
+            
+            return ret.clone();
+        }
+        else
+        {
+            //we need to record that this option has been selected
+            Options ret(*this);
+            ret.color_option[color] = new_option->asA<Option>().key();
+            return ret.clone();
+        }
+    }
+    else
+    {
+        //the option has been changed
+        Options ret(*this);
+        
+        ret.opts[idx] = new_option;
+        
+        if (color == 0)
+            return ret.clone();
+            
+        else if (color_option.contains(color))
+        {
+            QString old_color_key = color_option.value(color);
+            QString new_color_key = new_option->asA<Option>().key();
+            
+            if (old_color_key == new_color_key)
+                //the choice of color key has not changed
+                return ret.clone();
+                
+            int old_color_index = getIndex(old_color_key, keys);
+            
+            ret.opts[old_color_index] = opts.at(old_color_index)->asA<Option>().clear();
+            ret.color_option[color] = new_color_key;
+            
+            return ret.clone();
+        }
+        else
+        {
+            //we need to record that this option has been selected
+            ret.color_option[color] = new_option->asA<Option>().key();
+            return ret.clone();
+        }
+    }
+}
+
+/** Return the list of all options */
+QList<Option> Options::options() const
+{
+    QList<Option> ret;
+    
+    foreach (ValuePtr option, opts)
+    {
+        ret.append( option->asA<Option>() );
+    }
+    
+    return ret;
+}
+
+/** Add this set of options to 'other', returning the result. The options
+    in this set are listed before the options in 'other' */
+Options Options::add(const Options &other) const
+{
+    if (opts.isEmpty())
+        return other;
+    else if (other.opts.isEmpty())
+        return *this;
+
+    //make sure that there are no duplicated keys...
+    {
+        bool overlaps = false;
+        
+        if (keys.count() <= other.keys.count())
+        {
+            foreach (const QString &k, keys.keys())
+            {
+                if (other.keys.contains(k))
+                {
+                    overlaps = true;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            foreach (const QString &k, other.keys.keys())
+            {
+                if (keys.contains(k))
+                {
+                    overlaps = true;
+                    break;
+                }
+            }
+        }
+        
+        if (overlaps)
+            throw SireError::invalid_key( QObject::tr(
+                    "Cannot add the options [ %1 ] to the options [ %2 ] as "
+                    "some of the option names are duplicated!")
+                        .arg( QStringList(other.keys.keys()).join(", "), 
+                              QStringList(keys.keys()).join(", ") ), CODELOC );
+    }
+
+    //the first option of the second group cannot be unnamed
+    if (other.opts.at(0)->asA<Option>().key().isEmpty())
+        throw SireError::invalid_key( QObject::tr(
+                "It is not possible to add a set of options where the first key "
+                "in the second set is empty. This is because the unnamed key will "
+                "be lost."), CODELOC );
+
+    Options ret(*this);
+    
+    ret.opts += other.opts;
+    
+    for (int i=opts.count(); i<ret.opts.count(); ++i)
+    {
+        ret.keys.insert(ret.opts.at(i)->asA<Option>().key(), i);
+    }
+    
+    //now sort out the color groups
+    if (not other.option_to_color.isEmpty())
+    {
+        //we just need to copy across the color groups from other to ret
+        //(updating the indicies by increasing them by opts.count()
+        // and updating the color by max_color
+        int max_color = 0;
+
+        if (not color_to_option.isEmpty() )
+        {
+            QList<int> colors = color_to_option.keys();
+            qSort(colors);
+            max_color = colors.at( colors.count() - 1 );
+        }
+        
+        for (QHash<int,int>::const_iterator it = other.option_to_color.constBegin();
+             it != option_to_color.constEnd();
+             ++it)
+        {
+            int color = it.value() + max_color;
+            int idx = it.key() + opts.count();
+            
+            ret.option_to_color.insert(idx, color);
+            ret.color_to_option.insertMulti(color, idx);
+        }
+        
+        if (max_color == 0)
+        {
+            ret.color_option = other.color_option;
+        }
+        else
+        {
+            for (QHash<int,QString>::const_iterator it = other.color_option.constBegin();
+                 it != other.color_option.constEnd();
+                 ++it)
+            {
+                ret.color_option.insert( it.key() + max_color, it.value() );
+            }
+        }
+    }
+
+    return ret;
+}
+
+/** Clear this set of options of all user-supplied data */
+ValuePtr Options::clear() const
+{
+    Options ret(*this);
+    
+    for (int i=0; i<ret.opts.count(); ++i)
+    {
+        ret.opts[i] = ret.opts[i]->asA<Option>().clear();
+    }
+    
+    ret.color_option.clear();
+    
+    return ret.clone();
+}
+
+/** Convenenient shorthand for Options::add */
+Options Options::operator+(const Options &other) const
+{
+    return Options::add(other);
+}
+
+/** Return the lines of a configure file that would be needed to set
+    all of the options in this group */
+QStringList Options::toConfig() const
+{
+    QStringList lines;
+    
+    foreach (ValuePtr option, opts)
+    {
+        lines += option->toConfig();
+    }
+    
+    return lines;
 }
