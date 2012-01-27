@@ -10,27 +10,23 @@ o5 = Option("solute", "Configure solutes in the system", Options([o5_1,o5_2]), T
 
 options = Options( [o1, o2, o3, o4, o5] )
 
-def printConfig(options):
-    lines = options.toConfig()
-
-    print "#Configure file"
-    for line in lines:
-        print line
-
 print "Initial, default configuration file"
-printConfig(options)
+print options.toConfig()
 
 print "\nAfter setting some options..."
 new_opts = options.setValue("solute[2].name", StringValue("osel"))
-
-printConfig(new_opts)
+print new_opts.toConfig()
 
 print "\nNow trying to load up the same configuration file..."
 
 new_opts = options.fromConfig( new_opts.toConfig() )
-
-printConfig(new_opts)
+print new_opts.toConfig()
 
 print "\nNow parsing an XML configuration file..."
 options = Options("test/SireSim/testoptions.xml")
+print options.toConfig()
+
+print "\n\nHere is the XML"
+print new_opts.toXML()
+print options.toXML()
 

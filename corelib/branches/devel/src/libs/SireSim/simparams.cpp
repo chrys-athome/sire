@@ -192,6 +192,11 @@ Value::operator ValuePtr() const
     return self();
 }
 
+QString Value::toConfig() const
+{
+    return this->toConfigLines().join("\n");
+}
+
 ///////////
 /////////// Implementation of Option
 ///////////
@@ -218,6 +223,62 @@ Option::Option(const QString &key, const QString &description,
                     .arg(k), CODELOC );
     }
 }
+
+bool getBool(QDomElement elem, QString option, bool default_val)
+{
+    QString str = elem.attribute(option).trimmed().toLower();
+    
+    if (str.isEmpty())
+        return default_val;
+        
+    if (str == "true")
+        return true;
+    else if (str == "false")
+        return false;
+    else
+        throw SireError::file_error( QObject::tr(
+                "Cannot interpret the boolean option \"%1\" from XML element "
+                "\"%2\". The option should read 'true' or 'false'.")
+                    .arg(option, elem.tagName()), CODELOC );
+                    
+    return false;
+}
+
+QDomElement Option::toDomElement(QDomDocument doc) const
+{
+    assertNotNull();
+    
+    QDomElement elem = doc.createElement("option");
+    
+    if (is_optional)
+        elem.setAttribute("optional", "true");
+    
+    if (allow_multiple)
+        elem.setAttribute("allow_multiple", "true");
+    
+    // describe the key
+    {
+        QDomElement key_node = doc.createElement("key");
+        key_node.appendChild( doc.createTextNode(key()) );
+        elem.appendChild(key_node);
+    }
+    
+    //describe the description
+    {
+        QDomElement desc_node = doc.createElement("description");
+        desc_node.appendChild( doc.createTextNode(description()) );
+        elem.appendChild(desc_node);
+    }
+    
+    //now describe the value
+    {
+        QDomElement value_node = doc.createElement("value");
+        value_node.appendChild( val->toDomElement(doc) );
+        elem.appendChild(value_node);
+    }
+    
+    return elem;
+}
   
 /** Construct from a QDomElement */
 Option::Option(QDomElement elem) 
@@ -229,10 +290,8 @@ Option::Option(QDomElement elem)
                 "XML DOM element. Cannot use a <%1>...</%1> element!")
                     .arg(elem.tagName()), CODELOC );
     
-    QString is_optional_string = elem.attribute("optional", "false");
-    QString allow_multiple_string = elem.attribute("allow_multiple", "false");
-    
-    qDebug() << "OPTION" << is_optional_string << allow_multiple_string;
+    is_optional = getBool(elem, "optional", false);
+    allow_multiple = getBool(elem, "allow_multiple", false);
                                                     
     QDomNode n = elem.firstChild();
     
@@ -515,8 +574,10 @@ namespace SireSim
                                    line.mid(idx+1).trimmed() );
             }
 
-            static QList<ParsedLine> parse(QStringList lines)
+            static QList<ParsedLine> parse(QString config)
             {
+                QStringList lines = config.split("\n");
+            
                 QList<ParsedLine> parsed_lines;
                 QString parse_line;
             
@@ -526,8 +587,11 @@ namespace SireSim
                 
                     if (not parse_line.endsWith("\\"))
                     {
-                        parsed_lines.append( parseLine(parse_line) );
-                        parse_line = QString::null;
+                        if (not parse_line.isEmpty())
+                        {
+                            parsed_lines.append( parseLine(parse_line) );
+                            parse_line = QString::null;
+                        }
                     }
                 }
             
@@ -801,7 +865,7 @@ QStringList prep(QString p, QStringList lines)
 
 /** Return the lines needed in the text configure file to be able to 
     set all of the user-supplied values held in this option */
-QStringList Option::toConfig() const
+QStringList Option::toConfigLines() const
 {
     assertNotNull();
 
@@ -814,9 +878,9 @@ QStringList Option::toConfig() const
         else
         {
             if (val->isContainer())
-                return prep( QString("%1.").arg(key()), val->toConfig() );
+                return prep( QString("%1.").arg(key()), val->toConfigLines() );
             else
-                return prep( QString("%1 = ").arg(key()), val->toConfig() );
+                return prep( QString("%1 = ").arg(key()), val->toConfigLines() );
         }
     }
     else
@@ -824,9 +888,9 @@ QStringList Option::toConfig() const
         if (user_vals.count() == 1)
         {
             if (user_vals[0]->isContainer())
-                return prep( QString("%1.").arg(key()), user_vals[0]->toConfig() );
+                return prep( QString("%1.").arg(key()), user_vals[0]->toConfigLines() );
             else
-                return prep( QString("%1 = ").arg(key()), user_vals[0]->toConfig() );
+                return prep( QString("%1 = ").arg(key()), user_vals[0]->toConfigLines() );
         }
         else
         {
@@ -838,10 +902,10 @@ QStringList Option::toConfig() const
                 {
                     if (user_vals.at(i)->isContainer())
                         lines += prep(QString("%1[%2].").arg(key()).arg(i+1),
-                                    user_vals[i]->toConfig());
+                                    user_vals[i]->toConfigLines());
                     else
                         lines += prep(QString("%1[%2] = ").arg(key()).arg(i+1),
-                                    user_vals[i]->toConfig());
+                                    user_vals[i]->toConfigLines());
                 }
             }
             
@@ -858,6 +922,112 @@ QStringList Option::toConfig() const
 Options::Options() : Value()
 {}
 
+/** Return the description of these options as XML. Note that
+    this returns the structure of the options, and does not
+    return anything about the user-supplied values. To get those,
+    you need to call 'toConfig()' */
+QString Options::toXML() const
+{
+    QDomDocument doc("SIRE_OPTIONS");
+    {
+        QDomProcessingInstruction xmlDeclaration 
+                = doc.createProcessingInstruction("xml", 
+                                    "version=\"1.0\" encoding=\"UTF-8\"");
+        
+        doc.appendChild(xmlDeclaration);
+    }
+    
+    doc.appendChild( doc.createComment("Created using SireSim::Options") );
+    QDomElement top = doc.createElement("simoptions");
+    {
+        QDomElement version = doc.createElement("version");
+        version.appendChild( doc.createTextNode("1.0") );
+        top.appendChild(version);
+    }
+    
+    QDomElement elem = this->toDomElement(doc);
+    
+    top.appendChild(elem);
+    doc.appendChild(top);
+    
+    return doc.toString(2);
+}
+
+/** Return the options object represented by the passed XML data.
+    Note that this is the structure of the options, and does not 
+    contain any user-supplied data. To add user data, you must
+    combine the XML with the config file, e.g. by calling
+    Options::fromXMLConfig(xml, config) */
+Options Options::fromXML(const QString &xml)
+{
+    return Options(xml);
+}
+
+/** Return the complete options from the passed XML data and config data */
+Options Options::fromXMLConfig(const QString &xml, const QString &config)
+{
+    return Options(xml).fromConfig(config);
+}
+
+/** Convert this set of Options to a QDomElement */
+QDomElement Options::toDomElement(QDomDocument doc) const
+{
+    QDomElement elem = doc.createElement("options");
+    
+    if (color_to_option.count() > 1 or
+        (color_to_option.count() == 1 and option_to_color.count() != opts.count()))
+    {
+        //we have multiple colors, or one color but some not colored. This
+        //means that we have to write this Options block as a series of 
+        //options blocks, one for each color
+        
+        //first add all non-exclusive options...
+        {
+            QList<Option> non_excl_opts;
+        
+            for (int i=0; i<opts.count(); ++i)
+            {
+                if (not option_to_color.contains(i))
+                {
+                    non_excl_opts.append(opts.at(i)->asA<Option>());
+                }
+            }
+        
+            elem.appendChild( Options(non_excl_opts).toDomElement(doc) );
+        }
+        
+        //now add the options for each color in turn
+        QList<int> colors = color_to_option.keys();
+        qSort(colors);
+        
+        foreach (int color, colors)
+        {
+            QList<Option> color_opts;
+            
+            foreach (int idx, color_to_option.values(color))
+            {
+                color_opts.append(opts.at(idx)->asA<Option>());
+            }
+            
+            elem.appendChild( Options(color_opts,true).toDomElement(doc) );
+        }
+        
+        return elem;
+    }
+    else
+    {
+        if (color_to_option.count() == 1)
+            elem.setAttribute("mutually_exclusive", "true");
+            
+        for (int i=0; i<opts.count(); ++i)
+        {
+            elem.appendChild( opts.at(i)->toDomElement(doc) );
+        }
+        
+        return elem;
+    }
+}
+
 /** Construct from the passed QDomElement */
 Options::Options(QDomElement elem) : Value()
 {
@@ -866,10 +1036,13 @@ Options::Options(QDomElement elem) : Value()
                 "Can only create an Options object from an <options>...</options> "
                 "XML DOM element. Cannot use a <%1>...</%1> element!")
                     .arg(elem.tagName()), CODELOC );
+
                     
     QDomNode n = elem.firstChild();
     
     QList<Option> options;
+    QList<Options> child_options;
+    bool mutually_exclusive = getBool(elem, "mutually_exclusive", false);
     
     while(not n.isNull()) 
     {
@@ -882,12 +1055,23 @@ Options::Options(QDomElement elem) : Value()
                 //this is an Option :-)
                 options.append( Option(elem) );
             }
+            else if (elem.tagName() == "options")
+            {
+                child_options.append( Options(elem) );
+            }
             else
                 qDebug() << "Options(QDomElement elem) cannot recognise tag" 
                          << elem.tagName();
         }
         
         n = n.nextSibling();
+    }
+    
+    this->operator=( Options(options,mutually_exclusive) );
+    
+    foreach (Options child, child_options)
+    {
+        this->operator=( this->add(child) );
     }
 }
 
@@ -1403,13 +1587,13 @@ Options Options::operator+(const Options &other) const
 
 /** Return the lines of a configure file that would be needed to set
     all of the options in this group */
-QStringList Options::toConfig() const
+QStringList Options::toConfigLines() const
 {
     QStringList lines;
     
     foreach (ValuePtr option, opts)
     {
-        lines += option->toConfig();
+        lines += option->toConfigLines();
     }
     
     return lines;
@@ -1417,9 +1601,9 @@ QStringList Options::toConfig() const
 
 /** Return the set of options that have been modified by reading the passed
     configure lines */
-Options Options::fromConfig(const QStringList &lines) const
+Options Options::fromConfig(const QString &config) const
 {
-    QList<ParsedLine> parsed_lines = ParsedLine::parse(lines);
+    QList<ParsedLine> parsed_lines = ParsedLine::parse(config);
     
     Options ret(*this);
     
@@ -1451,6 +1635,13 @@ StringValue::StringValue() : Value()
 StringValue::StringValue(const QString &value) : Value(), val(value)
 {}
 
+QDomElement StringValue::toDomElement(QDomDocument doc) const
+{
+    QDomElement elem = doc.createElement("string");
+    elem.appendChild( doc.createTextNode(val) );
+    return elem;
+}
+
 /** Construct from a QDomElement */
 StringValue::StringValue(QDomElement elem) : Value()
 {
@@ -1460,20 +1651,7 @@ StringValue::StringValue(QDomElement elem) : Value()
                 "XML DOM element. Cannot use a <%1>...</%1> element!")
                     .arg(elem.tagName()), CODELOC );
                     
-    QDomNode n = elem.firstChild();
-    
-    while (not n.isNull()) 
-    {
-        elem = n.toElement(); // try to convert the node to an element.
-        
-        if (not elem.isNull()) 
-        {
-            qDebug() << "StringValue(QDomElement elem) cannot recognise tag" 
-                     << elem.tagName();
-        }
-        
-        n = n.nextSibling();
-    }
+    val = elem.text();
 }
 
 /** Copy constructor */
@@ -1554,7 +1732,7 @@ ValuePtr StringValue::setValue(QString key, const Value &value) const
 }
 
 /** Return this value as given in a configure file */
-QStringList StringValue::toConfig() const
+QStringList StringValue::toConfigLines() const
 {
     QStringList lines;
     

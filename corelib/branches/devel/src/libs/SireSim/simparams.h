@@ -46,6 +46,7 @@ QDataStream& operator>>(QDataStream&, SireSim::Sim&);
 QDataStream& operator<<(QDataStream&, const SireSim::SimParams&);
 QDataStream& operator>>(QDataStream&, SireSim::SimParams&);
 
+class QDomDocument;
 class QDomElement;
 
 namespace SireSim
@@ -164,13 +165,15 @@ public:
             
         return *ptr;
     }
-    
-    virtual QStringList toConfig() const=0;
+
+    QString toConfig() const;
 
     operator ValuePtr() const;
 
 protected:
     virtual Value* ptr_clone() const=0;
+    
+    virtual QStringList toConfigLines() const=0;
     
     ValuePtr self() const;
     
@@ -178,6 +181,8 @@ protected:
     friend class Options;
     virtual ValuePtr fromConfig(detail::ParsedLine &line) const=0;
     virtual bool isContainer() const;
+    
+    virtual QDomElement toDomElement(QDomDocument doc) const=0;
     
 private:
     static void throwInvalidCast(const char* this_type, const char* other_type);
@@ -234,13 +239,15 @@ public:
     bool hasUserValue(int index) const;
     ValuePtr userValue(int index) const;
 
-    QStringList toConfig() const;
-
 protected:
     Option* ptr_clone() const;
 
     ValuePtr fromConfig(detail::ParsedLine &lines) const;
     bool isContainer() const;
+
+    QDomElement toDomElement(QDomDocument doc) const;
+
+    QStringList toConfigLines() const;
 
 private:
     void assertNotNull() const;
@@ -290,6 +297,12 @@ public:
     const char* what() const;
     static const char* typeName();
 
+    QString toXML() const;
+    static Options fromXML(const QString &xmlfile);
+
+    static Options fromXMLConfig(const QString &xmlfile, 
+                                 const QString &config);
+
     ValuePtr getValue(QString key) const;
     ValuePtr setValue(QString key, const Value &value) const;
     
@@ -301,14 +314,17 @@ public:
     
     Options operator+(const Options &other) const;
     
-    QStringList toConfig() const;
-    Options fromConfig(const QStringList &lines) const;
+    Options fromConfig(const QString &text) const;
 
 protected:
     Options* ptr_clone() const;
 
     ValuePtr fromConfig(detail::ParsedLine &line) const;
     bool isContainer() const;
+
+    QStringList toConfigLines() const;
+
+    QDomElement toDomElement(QDomDocument doc) const;
 
 private:
     /** The set of options */
@@ -353,14 +369,16 @@ public:
     ValuePtr getValue(QString key) const;
     ValuePtr setValue(QString key, const Value &value) const;
     
-    QStringList toConfig() const;
-    
     QString value() const;
     
 protected:
     StringValue* ptr_clone() const;
 
     ValuePtr fromConfig(detail::ParsedLine &lines) const;
+
+    QDomElement toDomElement(QDomDocument doc) const;
+    
+    QStringList toConfigLines() const;
 
 private:
     /** The current value of this string. */
