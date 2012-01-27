@@ -19,6 +19,11 @@ set ( SIRESIM_HEADERS
       proteinligandmc.h
 
       simparams.h
+
+      option.h
+
+      value.h
+      values.h
     )
 
 # Define the sources in SireSim
@@ -29,6 +34,11 @@ set ( SIRESIM_SOURCES
       proteinligandmc.cpp
 
       simparams.cpp
+
+      option.cpp
+
+      value.cpp
+      values.cpp
 
       ${SIRESIM_HEADERS}
     )

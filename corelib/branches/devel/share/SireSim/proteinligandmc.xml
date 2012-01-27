@@ -1,460 +1,11 @@
-
-====== FILE basic_options.xml =====
-<xml>
-  <options>
-    <option>
-      <key>simulation_title</key>
-      <description>
-        The name of the simulation. This is printed in the output file so that you can label
-        the simulation that will be run.
-      </description>
-      <value><string>My Simulation</string></value>
-    </option>
-
-    <option allow_multiple="true" optional="true">
-      <key>input_directory</key>
-      <description>
-        The directory (or directories) that contain input files. These directories will be searched,
-        in order, for all input files that do not have an absolute file path.
-      </description> 
-      <value><directory>.</directory></value>
-    </option>
-
-    <option>
-      <key>output_directory</key>
-      <description>
-        The directory in which all simulation output will be written. Be careful, as files in the
-        output directory may be overwritten or removed during the simulation.
-      </description>
-      <value><directory>.</directory></value>
-    </option>
-
-    <option>
-      <key>output_basename</key>
-      <description>
-        This is the base name of all output files.
-      </description>
-      <value><string>output</string></value>
-    </option>
-  </options>
-</xml>
-
-====== FILE molfile_options.xml ======
-
-<xml>
-  <options mutually_exclusive="true">
-    <option>
-      <key>crdtop</key>
-      <description>Use CRD/TOP format molecule files.</description>
-      <value>
-        <options>
-          <option>
-            <key>crd</key>
-            <description>The name of the CRD file that contains the molecular coordinates.</description>
-            <value><file>input.crd</file></value>
-          </option>
-          <option>
-            <key>top</top>
-            <description>The name of the TOP file that contains the molecular topology.</description>
-            <value><file>input.top</file></value>
-          </option>
-        </options>
-      </value>
-    </option>
-  </options>
-</xml> 
-
-====== FILE protein_mc_options.xml ======
-
-<xml>
-  <options>
-    <option>
-      <key>molecule</key>
-      <description>The identity of the protein molecule amongst the set of loaded molecules.</description>
-      <value><molecule>file:1,molecule:1</molecule></value>
-    </option>
-
-    <option optional="true">
-      <key>z-matrix</key>
-      <description>
-        The file(s) containing the z-matrix templates for the residues in this protein.
-        Note that if you do not supply any z-matrix templates, then the protein will be rigid.
-      </description>
-      <value allow_multiple="true"><file>amber.zmatricies</file></value>
-    </option>
-
-    <option optional="true">
-      <key>flexibility</key>
-      <description>
-        The flexibility of the protein. This can be either a file containing the list of flexible 
-        residues, or a distance from a solute or point that specifies flexible residues, or an
-        index list of flexibile residues.
-
-        For example,
-
-        protein.flexibility.file = protein.flex
-
-        or
-
-        protein.flexibility.residues.sidechain = all
-        protein.flexibility.residues.backbone = none
-
-        or
-
-        protein.flexibility.cutoff.solute = 1
-        protein.flexibility.cutoff.sidechain_distance = 10 A
-        protein.flexibility.cutoff.backbone_distance = 5 A
-
-        Note that if you don't specify the flexibility, then, if the z-matrix has been provided,
-        then all side-chains of the protein will be flexible, but the backbone will be rigid. If
-        no z-matrix has been provided, then the protein will be rigid.
-      </description>
-
-      <value>
-        <options mutually_exclusive="true">
-          <option>
-            <key>file</key>
-            <description>The name of the file that details which residues in this protein are flexible.</description>
-            <value><file>protein.flex</file></value>
-          </option>
-          <option>
-            <key>residues</key>
-            <description>Manually specify the indicies or residue numbers of flexible residues.</description>
-            <value>
-              <options>
-                <option>
-                  <key>sidechain</key>
-                  <description>Specify the residues that have flexible sidechains.</description>
-                  <value><index_list>all</index_list></value>
-                </option>
-                <option optional="true">
-                  <key>backbone</key>
-                  <description>Specify the residues that have flexible backbones.</description>
-                  <value><index_list>none</index_list></value>
-                </option>
-                <option optional="true">
-                  <key>use_residue_numbers</key>
-                  <description>Use the residue number, rather than residue index to select residues.</description>
-                  <value><bool>false</bool></value>
-                </option>
-              </options>
-            </value>
-          </option>
-          <option>
-            <key>cutoff</key>
-            <description>Choose flexible residues based on a cutoff distance from a selected molecule.</description>
-            <value>
-              <options>
-                <option>
-                  <key>molecule</key>
-                  <description>The identity of the molecule from which to apply the flexible residue cutoff.</description>
-                  <value><molecule>file:1,molecule:2</molecule></value>
-                </option>
-                <option>
-                  <key>sidechain_distance</key>
-                  <description>
-                    All residues that are within this distance of the selected molecule at the start of
-                    the simulation will have a flexible sidechain.
-                  </description>
-                  <value><distance units="angstrom">10.0</distance></value>
-                </option>
-                <option optional="true">
-                  <key>backbone_distance</key>
-                  <description>
-                    All residues that are within this distance of the selected molecule at the start of
-                    the simulation will have a flexible backbone.
-                  </description>
-                  <value><distance units="angstrom">0.0</distance></value>
-                </option>
-              </options>
-            </value>
-          </option>
-        </options>
-      </value>
-    </option>
-
-  </options>
-</xml>
-
-====== FILE solute_mc_options.xml ====
-
-<xml>
-  <options>
-    <option>
-      <key>molecule</key>
-      <description>The identity of the solute molecule amongst the set of loaded molecules.</description>
-      <value><molecule>file:1,molecule:2</molecule></value>
-    </option>
-
-    <option>
-      <key>name</key>
-      <description>
-        The name of the solute molecule. This is used to identify the solute
-        in the output of the simulation, and also to locate the flexibility template
-        file for the solute.
-      </description>
-      <value><string>ligand</string></value>
-    </option>
-
-    <option optional="true">
-      <key>flexibility</key>
-      <description>
-        The file containing the flexibility template for this solute molecule.
-        Note that if you don't supply a flexibility template, then the solute will be rigid.
-      </description>
-      <value><file>ligand.flex</file></value>
-    </option>
-  </options>
-</xml>
-
-====== FILE prefsampling_options.xml =
-
-<xml>
-  <options>
-    <option optional="true">
-      <key>preferential_sampling</key>
-      <description>
-        Turn on and configure preferential sampling. This focuses the choice of molecule for the Monte Carlo moves
-        so that more moves are performed near the specified molecule.
-      </description>
-      <value>
-        <options>
-          <option>
-            <key>molecule</key>
-            <description>The identity of the molecule around which to focus sampling.</description>
-            <value><molecule>file:1,molecule:1</molecule></value>
-          </option>
-          <option optional="true">
-            <key>constant</key>
-            <description>The preferential sampling constant. The higher the value, the less focussed the sampling.</description>
-            <value><area units="angstrom^2">200</area></value>
-          </option>
-        </options>
-      </value>
-    </option>
-  </options>
-</xml>
-
-====== FILE cutoff_clj_options.xml ===
-
-<xml>
-  <options>
-    <option optional="true">
-      <key>cutoff</key>
-      <description>
-        The cutoff distances used to truncate the non-bonded interactions.
-
-        Set using;
-
-        cutoff.coulomb = 15 A
-        cutoff.lj = 15 A
-      </description>
-      <value>
-        <options>
-          <option optional="true">
-            <key>coulomb</key>
-            <description>The cutoff distance for the coulombic (electrostatic) interactions.</description>
-            <value><length units="angstrom">15.0</length></value>
-          </option>
-          <option optional="true">
-            <key>lj</key>
-            <description>The cutoff distance for the Lennard Jones (van der waals) interactions.</description>
-            <value><length units="angstrom">15.0</length></value>
-          </option>
-        </options>
-      </value>
-    </option>
-
-    <option optional="true">
-      <key>feather</key>
-      <description>
-        The feather distance used to scale down the non-bonded interactions between the feather distance
-        and the cutoff distance. This allows the non-bonded cutoff to be applied gradually, rather than
-        the cutoff applying abruptly at the cutoff distance. Feather distances should typically be 0.5 or
-        1.0 angstroms less than the corresponding cutoff distances.
-      </description>
-      <value>
-        <options>
-          <option optional="true">
-            <key>coulomb</key>
-            <description>The feather distance for the coulombic (electrostatic) interactions.</description>
-            <value><length units="angstrom">14.5</length></value>
-          </option>
-          <option optional="true">
-            <key>lj</key>
-            <description>The feather distance for the Lennard Jones (van der waals) interactions.</description>
-            <value><length units="angstrom">14.5</length></value>
-          </option>
-        </options>
-      </value>
-    </option>
-  </options>
-</xml>
-
-====== FILE combining_rules_options.xml
-
-<xml>
-  <options>
-    <option optional="true">
-      <key>combining_rules</key>
-      <description>
-        The choice of Lennard Jones combining rules. This should be set to "arithmetic" for AMBER-type forcefields, 
-        or "geometric" for OPLS-type forcefields, e.g.
-
-        combining_rules = arithmetic
-
-        or
-
-        combining_rules = geometric
-      </description>
-      <value>
-        <enum>
-          <enumval name="arithmetic">
-            <description>
-              Use arithmetic combining rules. The LJ sigma parameter for atom A interacting with atom B is
-              calculated as the mean average of the sigma parameters of A and B, while the epsilon parameter
-              is calculated as the geometric average.
-            </description>
-          </enumval>
-          <enumval name="geometric">
-            <description>
-              Use geometric combining rules. The LJ sigma and epsilon parameters for atom A interacting with atom B
-              are calculated as the geometric average of the sigma and epsilon parameters of A and B.
-            </description>
-          </enumval>
-        </enum> 
-      </value>
-    </option>
-  </options>
-</xml>
-
-====== FILE mcweights_options.xml ====
-
-<xml>
-  <options>
-    <option optional="true">
-      <key>mc_weight</key>
-      <description>
-        Manually set the ratios for each type of Monte Carlo move. This sets the relative probability
-        of choosing a type of Monte Carlo move amongst all of the types of moves available during the simulation, e.g. 
-
-        mc_weight.solute.intramolecular = 50
-        mc_weight.solute.rigid_body = 50
-
-        mc_weight.solute = 100
-
-        mc_weight.protein.backbone = 100
-        mc_weight.protein.sidechain = 100
-
-        mc_weight.protein = 200
-
-        mc_weight.solvent = 1000
-
-        mc_weight.volume = 500
-      </description>
-      <value>
-        <options>
-          <option optional="true">
-            <key>solute</key>
-            <description>Set the weight of the types of move that apply only to solute molecule(s).</description>
-            <value>
-              <options mutually_exclusive="true">
-                <option>
-                  <description>
-                    Set the total weight of all solute moves. Each type of solute move will be assigned an
-                    equal sub-weight based on a portion of the total weight.
-                  </description>
-                  <value><integer minimum="0">0</integer></value>
-                </option>
-                <options>
-                  <option optional="true">
-                    <key>intramolecular</key>
-                    <description>Set the weight of the intramolecular (bond, angle and dihedral) moves of the solute.</description>
-                    <value><integer minimum="0">0</integer></value>
-                  </option>
-                  <option optional="true">
-                    <key>rigid_body</key>
-                    <description>Set the weight of the rigid body (translation and rotation) moves of the solute.</description>
-                    <value><integer minimum="0">0</integer></value>
-                  </option>
-                </options>
-              </options>
-            </value>
-          </option>
-
-          <option optional="true">
-            <key>protein</key>
-            <description>Set the weight of the types of move that apply only to the protein molecule(s).</description>
-            <value>
-              <options mutually_exclusive="true">
-                <option>
-                  <description>
-                    Set the total weight of all protein moves. Each type of protein move will be assigned an
-                    equal sub-weight based on a portion of the total weight.
-                  </description>
-                  <value><integer minimum="0">0</integer></value>
-                </option>
-                <options>
-                  <option optional="true">
-                    <key>sidechain</key>
-                    <description>Set the weight of the backbone moves of residues of the protein.</description>
-                    <value><integer minimum="0">0</integer></value>
-                  </option>
-                  <option optional="true">
-                    <key>backbone</key>
-                    <description>Set the weight of the sidechain moves of residues of the protein.</description>
-                    <value><integer minimum="0">0</integer></value>
-                  </option>
-                </options>
-              </options>
-            </value>
-          </option>
-
-          <option optional="true">
-            <key>solvent</key>
-            <description>Set the weight of the rigid body (translation and rotation) moves of the solvent molecules.</description>
-            <value><integer minimum="0">0</integer"></value>
-          </option>
-
-          <option optional="true">
-            <key>volume</key>
-            <description>
-              Set the weight of the volume moves. Note that this will be ignored unless you have specified
-              the simulation pressure.
-            </description>
-            <value><integer minimum="0">0</integer></value>
-          </option>
-        </options>
-      </value>
-    </option>
-  </options>
-</xml>
-
-====== FILE proteinligandmc.xml ======
-
-<xml>
-  <sire_simulation type="protein_ligand_mc" version="1">
-    <short_description>
-      A Protein-Ligand Monte Carlo simulation is used to set up Monte Carlo simulations
-      of protein-ligand systems. The simulation consists of one or more protein molecules
-      binding to one or more ligand molecules, optionally solvated by solvent molecules.
-    </short_description>
-      
-    <description prepend_short="true">
-      Different types of simulation are possible, ranging from simple equilibration
-      to absolute and relative binding free energy calculations.
-    </description>
-
     <options>
-      <include_options file="basic_options.xml"/>
-
       <option allow_multiple="true">
         <key>input_file</key>
         <description>
           The file (or files) that contain the coordinates and parameters of the molecule(s)
           to be simulated.
         </description>
-        <value><suboptions file="molfile_options.xml"/></value>
+        <value><include file="molfile_options.xml"/></value>
       </option>
 
       <option allow_multiple="true" optional="true">
@@ -463,7 +14,7 @@
           Provide details about any protein molecules in the simulation. Protein molecules are those 
           that are comprised of multiple residues, with z-matricies assigned using a template file.
         </description>
-        <value><suboptions file="protein_mc_options.xml"/></value>
+        <value><include file="protein_mc_options.xml"/></value>
       </option>
 
       <option allow_multiple="true" optional="true">
@@ -472,7 +23,7 @@
           Provide details about any solute molecules in the simulation. Solute molecules tend to be 
           smaller molecules, comprising only a few residues, that are moved automatically using "flex" files.
         </description>
-        <value><suboptions file="solute_mc_options.xml"/></value>
+        <value><include file="solute_mc_options.xml"/></value>
       </option>
 
       <option optional="true">
@@ -489,11 +40,11 @@
         <value><molecule_list>none</molecule_list></value>
       </option>
 
-      <include_options file="prefsampling_options.xml"/>
+      <include file="prefsampling_options.xml"/>
 
-      <include_options file="cutoff_clj_options.xml"/>
+      <include file="cutoff_clj_options.xml"/>
 
-      <include_options file="combining_rules_options.xml"/>
+      <include file="combining_rules_options.xml"/>
 
       <option optional="true">
         <key>temperature</key>
@@ -511,7 +62,7 @@
         <value><pressure units="atmosphere">1.0</pressure></value>
       </option>
 
-      <include_options file="mcweights_options.xml"/>
+      <include file="mcweights_options.xml"/>
 
       <option optional="true" allow_multiple="true">
         <key>synchronise</key>
@@ -587,7 +138,7 @@
               <value><integer minimum="0">0</integer></value>
             </option>
 
-            <include_options file="mcweights_options.xml"/>
+            <include file="mcweights_options.xml"/>
           </options>
         </value>
       </option>
@@ -643,7 +194,7 @@
                         <option>
                           <key>molecule</key>
                           <description>The identity of the solute molecule that you wish to monitor.</description>
-                          <value><molecule>file:1,molecule:2</molecule>
+                          <value><molecule>file:1,molecule:2</molecule></value>
                         </option>
                         <option>
                           <key>atoms</key>
@@ -707,140 +258,6 @@
         </description>
         <value><integer minimum="1">19032012</integer></value>
       </option>
-    
-      === I AM UP TO HERE WITH THE REWRITE ===
-
-      <option name="softcore" optional="true">
-        <description>
-          Set options that control the soft-core potential that can be used to soften interactions
-          between solute molecules and all other molecules. This is useful during free energy simulations
-          when you are switching off the interactions of specific solute molecules.
-        </description>
-
-        <types allow_multiple="true">
-          <float name="coulomb_power" minimum="0.0" optional="false">
-            <description>The soft-core power to use for the electrostatic interactions.</description>
-            0.0
-          </float>
-          
-          <float name="shift_delta" minimum="0.0" optional="false">
-            <description>The soft-core shift value for the van der waals interactions.</description>
-            1.0
-          </float>
-
-          <list name="solute" size="solute:size" allow_empty="true" optional="true">
-            <description>Set the soft-core alpha parameters for specific solute molecules.</description>
-            <dictionary>
-              <item>
-                <key name="alpha" optional="false">
-                  <description>Set the soft-core alpha parameter for this solute molecule.</description>
-                </key>
-                <value><float minimum="0.0">0.0</float></value>
-              </item>
-            </dictionary>
-          </list>
-        </types>
-      </option>
-
-      <option name="decouple" optional="true">
-        <description>
-          Set options that allow the interactions of specific solute molecules to be decoupled from
-          other molecules. Either the energy of interaction of the solute with other molecules can  
-          be scaled (e.g. using a lambda value), or the energy with other solute molecules can be
-          ignored completely (e.g. two solutes can be set to ignore one another).
-
-          To set the lambda value of the first solute to 0.5, use;
-
-          decouple.solute[0].lambda = 0.5
-
-          If you want to set a different lambda for the electrostatic and van der waals terms,
-          then use;
-
-          decouple.solute[0].clj.coulomb.lambda = 0.0
-          decouple.solute[0].clj.lj.lambda = 0.8
-
-          To make all solutes ignore one another, use;
-
-          decouple.solutes = all
-
-          To make just solute 1 and 2 ignore each other user;
-
-          decouple.solutes = 1 2
-        </description>
-
-        <types>
-          <index_list name="solutes" source="solute" optional="true">
-            <description>The indicies of solutes who will mutually ignore one another.</description>
-          </index_list>
-
-          <list name="solute" size="solute:size" ignore_empty="true">
-            <types>
-              <float name="lambda" minimum="0.0" maximum="1.0">
-                <description>The lambda value used to scale non-bonded interactions involving this solute.</description>
-                1.0
-              </float>
-              <dictionary name="clj">
-                <description>
-                  The lambda values used to scale the coulomb and Lennard Jones interactions
-                  involving this solute.
-                </description>
-                <item>
-                  <key name="coulomb" optional="false">
-                    <description>The lambda value used to scale the coulomb component.</description>
-                  </key>
-                  <value><float minimum="0.0" maximum="1.0">1.0</float></value>
-                </item>
-                <item>
-                  <key name="lj" optional="false">
-                    <description>The lambda value used to scale the Lennard Jones component.</description>
-                  </key>
-                  <value><float minimum="0.0" maximum="1.0">1.0</float></value>
-                </item>
-              </dictionary>
-            </types>
-          </list>
-        </types>
-      </option>
-
-      <option name="free_energy" optional="true">
-        <description>
-          Set options used to add additional energy states to the system, so that the free energy
-          along the lambda coordinate can be calculated.
-        </description>
-
-        <type>
-          ....
-        </type>
-      </option>
-
-      decouple.solute[0].lambda = 1.0
-      decouple.solute[0].solutes = 1-10
-
-      free_energy.state[0].solute[0].lambda = 1.0
-      free_energy.state[0].solute[0].alpha = 1.0
-      free_energy.state[1].solute[0].clj.coulomb.lambda = 0.0
-      free_energy.state[1].solute[0].clj.lj.lambda = 1.0
-
+ 
     </options>
-  </sire_simulation>
-</xml>
-            
-            
-    
-    void setSoluteLambda(int solute, double lam);
-    void setSoluteAlpha(int solute, double alpha);
-    
-    double getSoluteLambda(int solute) const;
-    double getSoluteAlpha(int solute) const;
-    
-    void setUseForwardWindow(int solute, bool yes);
-    void setUseBackwardWindow(int solute, bool yes);
-    
-    void setDeltaLambda(int solute, double delta_lam);
-    void setDeltaAlpha(int solute, double delta_alpha);
 
-    bool getUseForwardWindow(int solute) const;
-    bool getUseBackwardWindow(int solute) const;
-    
-    double getDeltaLambda(int solute) const;
-    double getDeltaAlpha(int solute) const;

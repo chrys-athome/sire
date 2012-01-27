@@ -1,0 +1,138 @@
+    
+      === I AM UP TO HERE WITH THE REWRITE ===
+
+      <option name="softcore" optional="true">
+        <description>
+          Set options that control the soft-core potential that can be used to soften interactions
+          between solute molecules and all other molecules. This is useful during free energy simulations
+          when you are switching off the interactions of specific solute molecules.
+        </description>
+
+        <types allow_multiple="true">
+          <float name="coulomb_power" minimum="0.0" optional="false">
+            <description>The soft-core power to use for the electrostatic interactions.</description>
+            0.0
+          </float>
+          
+          <float name="shift_delta" minimum="0.0" optional="false">
+            <description>The soft-core shift value for the van der waals interactions.</description>
+            1.0
+          </float>
+
+          <list name="solute" size="solute:size" allow_empty="true" optional="true">
+            <description>Set the soft-core alpha parameters for specific solute molecules.</description>
+            <dictionary>
+              <item>
+                <key name="alpha" optional="false">
+                  <description>Set the soft-core alpha parameter for this solute molecule.</description>
+                </key>
+                <value><float minimum="0.0">0.0</float></value>
+              </item>
+            </dictionary>
+          </list>
+        </types>
+      </option>
+
+      <option name="decouple" optional="true">
+        <description>
+          Set options that allow the interactions of specific solute molecules to be decoupled from
+          other molecules. Either the energy of interaction of the solute with other molecules can  
+          be scaled (e.g. using a lambda value), or the energy with other solute molecules can be
+          ignored completely (e.g. two solutes can be set to ignore one another).
+
+          To set the lambda value of the first solute to 0.5, use;
+
+          decouple.solute[0].lambda = 0.5
+
+          If you want to set a different lambda for the electrostatic and van der waals terms,
+          then use;
+
+          decouple.solute[0].clj.coulomb.lambda = 0.0
+          decouple.solute[0].clj.lj.lambda = 0.8
+
+          To make all solutes ignore one another, use;
+
+          decouple.solutes = all
+
+          To make just solute 1 and 2 ignore each other user;
+
+          decouple.solutes = 1 2
+        </description>
+
+        <types>
+          <index_list name="solutes" source="solute" optional="true">
+            <description>The indicies of solutes who will mutually ignore one another.</description>
+          </index_list>
+
+          <list name="solute" size="solute:size" ignore_empty="true">
+            <types>
+              <float name="lambda" minimum="0.0" maximum="1.0">
+                <description>The lambda value used to scale non-bonded interactions involving this solute.</description>
+                1.0
+              </float>
+              <dictionary name="clj">
+                <description>
+                  The lambda values used to scale the coulomb and Lennard Jones interactions
+                  involving this solute.
+                </description>
+                <item>
+                  <key name="coulomb" optional="false">
+                    <description>The lambda value used to scale the coulomb component.</description>
+                  </key>
+                  <value><float minimum="0.0" maximum="1.0">1.0</float></value>
+                </item>
+                <item>
+                  <key name="lj" optional="false">
+                    <description>The lambda value used to scale the Lennard Jones component.</description>
+                  </key>
+                  <value><float minimum="0.0" maximum="1.0">1.0</float></value>
+                </item>
+              </dictionary>
+            </types>
+          </list>
+        </types>
+      </option>
+
+      <option name="free_energy" optional="true">
+        <description>
+          Set options used to add additional energy states to the system, so that the free energy
+          along the lambda coordinate can be calculated.
+        </description>
+
+        <type>
+          ....
+        </type>
+      </option>
+
+      decouple.solute[0].lambda = 1.0
+      decouple.solute[0].solutes = 1-10
+
+      free_energy.state[0].solute[0].lambda = 1.0
+      free_energy.state[0].solute[0].alpha = 1.0
+      free_energy.state[1].solute[0].clj.coulomb.lambda = 0.0
+      free_energy.state[1].solute[0].clj.lj.lambda = 1.0
+
+    </options>
+  </sire_simulation>
+</xml>
+            
+            
+    
+    void setSoluteLambda(int solute, double lam);
+    void setSoluteAlpha(int solute, double alpha);
+    
+    double getSoluteLambda(int solute) const;
+    double getSoluteAlpha(int solute) const;
+    
+    void setUseForwardWindow(int solute, bool yes);
+    void setUseBackwardWindow(int solute, bool yes);
+    
+    void setDeltaLambda(int solute, double delta_lam);
+    void setDeltaAlpha(int solute, double delta_alpha);
+
+    bool getUseForwardWindow(int solute) const;
+    bool getUseBackwardWindow(int solute) const;
+    
+    double getDeltaLambda(int solute) const;
+    double getDeltaAlpha(int solute) const;
+

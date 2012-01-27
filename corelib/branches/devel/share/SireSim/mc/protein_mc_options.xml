@@ -1,0 +1,108 @@
+  <options>
+    <option>
+      <key>molecule</key>
+      <description>The identity of the protein molecule amongst the set of loaded molecules.</description>
+      <value><molecule>file:1,molecule:1</molecule></value>
+    </option>
+
+    <option optional="true">
+      <key>z-matrix</key>
+      <description>
+        The file(s) containing the z-matrix templates for the residues in this protein.
+        Note that if you do not supply any z-matrix templates, then the protein will be rigid.
+      </description>
+      <value allow_multiple="true"><file>amber.zmatricies</file></value>
+    </option>
+
+    <option optional="true">
+      <key>flexibility</key>
+      <description>
+        The flexibility of the protein. This can be either a file containing the list of flexible 
+        residues, or a distance from a solute or point that specifies flexible residues, or an
+        index list of flexibile residues.
+
+        For example,
+
+        protein.flexibility.file = protein.flex
+
+        or
+
+        protein.flexibility.residues.sidechain = all
+        protein.flexibility.residues.backbone = none
+
+        or
+
+        protein.flexibility.cutoff.solute = 1
+        protein.flexibility.cutoff.sidechain_distance = 10 A
+        protein.flexibility.cutoff.backbone_distance = 5 A
+
+        Note that if you don't specify the flexibility, then, if the z-matrix has been provided,
+        then all side-chains of the protein will be flexible, but the backbone will be rigid. If
+        no z-matrix has been provided, then the protein will be rigid.
+      </description>
+
+      <value>
+        <options mutually_exclusive="true">
+          <option>
+            <key>file</key>
+            <description>The name of the file that details which residues in this protein are flexible.</description>
+            <value><file>protein.flex</file></value>
+          </option>
+          <option>
+            <key>residues</key>
+            <description>Manually specify the indicies or residue numbers of flexible residues.</description>
+            <value>
+              <options>
+                <option>
+                  <key>sidechain</key>
+                  <description>Specify the residues that have flexible sidechains.</description>
+                  <value><index_list>all</index_list></value>
+                </option>
+                <option optional="true">
+                  <key>backbone</key>
+                  <description>Specify the residues that have flexible backbones.</description>
+                  <value><index_list>none</index_list></value>
+                </option>
+                <option optional="true">
+                  <key>use_residue_numbers</key>
+                  <description>Use the residue number, rather than residue index to select residues.</description>
+                  <value><bool>false</bool></value>
+                </option>
+              </options>
+            </value>
+          </option>
+          <option>
+            <key>cutoff</key>
+            <description>Choose flexible residues based on a cutoff distance from a selected molecule.</description>
+            <value>
+              <options>
+                <option>
+                  <key>molecule</key>
+                  <description>The identity of the molecule from which to apply the flexible residue cutoff.</description>
+                  <value><molecule>file:1,molecule:2</molecule></value>
+                </option>
+                <option>
+                  <key>sidechain_distance</key>
+                  <description>
+                    All residues that are within this distance of the selected molecule at the start of
+                    the simulation will have a flexible sidechain.
+                  </description>
+                  <value><distance units="angstrom">10.0</distance></value>
+                </option>
+                <option optional="true">
+                  <key>backbone_distance</key>
+                  <description>
+                    All residues that are within this distance of the selected molecule at the start of
+                    the simulation will have a flexible backbone.
+                  </description>
+                  <value><distance units="angstrom">0.0</distance></value>
+                </option>
+              </options>
+            </value>
+          </option>
+        </options>
+      </value>
+    </option>
+
+  </options>
+
