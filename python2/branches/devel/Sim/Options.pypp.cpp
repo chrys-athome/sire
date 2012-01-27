@@ -62,13 +62,35 @@ void register_Options_class(){
         }
         { //::SireSim::Options::fromConfig
         
-            typedef ::SireSim::Options ( ::SireSim::Options::*fromConfig_function_type )( ::QStringList const & ) const;
+            typedef ::SireSim::Options ( ::SireSim::Options::*fromConfig_function_type )( ::QString const & ) const;
             fromConfig_function_type fromConfig_function_value( &::SireSim::Options::fromConfig );
             
             Options_exposer.def( 
                 "fromConfig"
                 , fromConfig_function_value
-                , ( bp::arg("lines") ) );
+                , ( bp::arg("text") ) );
+        
+        }
+        { //::SireSim::Options::fromXML
+        
+            typedef ::SireSim::Options ( *fromXML_function_type )( ::QString const & );
+            fromXML_function_type fromXML_function_value( &::SireSim::Options::fromXML );
+            
+            Options_exposer.def( 
+                "fromXML"
+                , fromXML_function_value
+                , ( bp::arg("xmlfile") ) );
+        
+        }
+        { //::SireSim::Options::fromXMLConfig
+        
+            typedef ::SireSim::Options ( *fromXMLConfig_function_type )( ::QString const &,::QString const & );
+            fromXMLConfig_function_type fromXMLConfig_function_value( &::SireSim::Options::fromXMLConfig );
+            
+            Options_exposer.def( 
+                "fromXMLConfig"
+                , fromXMLConfig_function_value
+                , ( bp::arg("xmlfile"), bp::arg("config") ) );
         
         }
         { //::SireSim::Options::getValue
@@ -118,14 +140,14 @@ void register_Options_class(){
                 , ( bp::arg("key"), bp::arg("value") ) );
         
         }
-        { //::SireSim::Options::toConfig
+        { //::SireSim::Options::toXML
         
-            typedef ::QStringList ( ::SireSim::Options::*toConfig_function_type )(  ) const;
-            toConfig_function_type toConfig_function_value( &::SireSim::Options::toConfig );
+            typedef ::QString ( ::SireSim::Options::*toXML_function_type )(  ) const;
+            toXML_function_type toXML_function_value( &::SireSim::Options::toXML );
             
             Options_exposer.def( 
-                "toConfig"
-                , toConfig_function_value );
+                "toXML"
+                , toXML_function_value );
         
         }
         { //::SireSim::Options::typeName
@@ -148,6 +170,8 @@ void register_Options_class(){
                 , what_function_value );
         
         }
+        Options_exposer.staticmethod( "fromXML" );
+        Options_exposer.staticmethod( "fromXMLConfig" );
         Options_exposer.staticmethod( "typeName" );
         Options_exposer.def( "__copy__", &__copy__);
         Options_exposer.def( "__deepcopy__", &__copy__);

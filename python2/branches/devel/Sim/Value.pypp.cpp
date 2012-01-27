@@ -68,7 +68,7 @@ void register_Value_class(){
         }
         { //::SireSim::Value::toConfig
         
-            typedef ::QStringList ( ::SireSim::Value::*toConfig_function_type )(  ) const;
+            typedef ::QString ( ::SireSim::Value::*toConfig_function_type )(  ) const;
             toConfig_function_type toConfig_function_value( &::SireSim::Value::toConfig );
             
             Value_exposer.def( 

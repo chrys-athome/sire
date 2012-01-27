@@ -74,16 +74,6 @@ void register_StringValue_class(){
                 , ( bp::arg("key"), bp::arg("value") ) );
         
         }
-        { //::SireSim::StringValue::toConfig
-        
-            typedef ::QStringList ( ::SireSim::StringValue::*toConfig_function_type )(  ) const;
-            toConfig_function_type toConfig_function_value( &::SireSim::StringValue::toConfig );
-            
-            StringValue_exposer.def( 
-                "toConfig"
-                , toConfig_function_value );
-        
-        }
         { //::SireSim::StringValue::typeName
         
             typedef char const * ( *typeName_function_type )(  );
