@@ -9,11 +9,13 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
-#include "SireStream/datastream.h"
+#include "SireSim/option.h"
 
-#include "SireStream/shareddatastream.h"
+#include "option.h"
 
-#include "simparams.h"
+#include <QDebug>
+
+#include <QDir>
 
 #include <QDomDocument>
 
@@ -23,7 +25,13 @@ namespace bp = boost::python;
 
 #include <QFile>
 
-#include "simparams.h"
+#include <QFileInfo>
+
+#include <QHash>
+
+#include <QList>
+
+#include "option.h"
 
 SireSim::Options __copy__(const SireSim::Options &other){ return SireSim::Options(other); }
 
@@ -35,8 +43,9 @@ void register_Options_class(){
         typedef bp::class_< SireSim::Options, bp::bases< SireSim::Value > > Options_exposer_t;
         Options_exposer_t Options_exposer = Options_exposer_t( "Options", bp::init< >() );
         bp::scope Options_scope( Options_exposer );
-        Options_exposer.def( bp::init< QString const & >(( bp::arg("xmlfile") )) );
-        Options_exposer.def( bp::init< QDomElement >(( bp::arg("elem") )) );
+        Options_exposer.def( bp::init< QString, bp::optional< QStringList > >(( bp::arg("xml"), bp::arg("path")=::QStringList( ) )) );
+        Options_exposer.def( bp::init< QDomElement, bp::optional< QStringList > >(( bp::arg("elem"), bp::arg("path")=::QStringList( ) )) );
+        Options_exposer.def( bp::init< SireSim::Option const & >(( bp::arg("option") )) );
         Options_exposer.def( bp::init< QList< SireSim::Option > const &, bp::optional< bool > >(( bp::arg("options"), bp::arg("mutually_exclusive")=(bool)(false) )) );
         Options_exposer.def( bp::init< SireSim::Options const & >(( bp::arg("other") )) );
         { //::SireSim::Options::add
@@ -62,7 +71,7 @@ void register_Options_class(){
         }
         { //::SireSim::Options::fromConfig
         
-            typedef ::SireSim::Options ( ::SireSim::Options::*fromConfig_function_type )( ::QString const & ) const;
+            typedef ::SireSim::Options ( ::SireSim::Options::*fromConfig_function_type )( ::QString ) const;
             fromConfig_function_type fromConfig_function_value( &::SireSim::Options::fromConfig );
             
             Options_exposer.def( 
@@ -71,26 +80,37 @@ void register_Options_class(){
                 , ( bp::arg("text") ) );
         
         }
+        { //::SireSim::Options::fromConfigFile
+        
+            typedef ::SireSim::Options ( ::SireSim::Options::*fromConfigFile_function_type )( ::QString ) const;
+            fromConfigFile_function_type fromConfigFile_function_value( &::SireSim::Options::fromConfigFile );
+            
+            Options_exposer.def( 
+                "fromConfigFile"
+                , fromConfigFile_function_value
+                , ( bp::arg("configfile") ) );
+        
+        }
         { //::SireSim::Options::fromXML
         
-            typedef ::SireSim::Options ( *fromXML_function_type )( ::QString const & );
+            typedef ::SireSim::Options ( *fromXML_function_type )( ::QString,::QStringList );
             fromXML_function_type fromXML_function_value( &::SireSim::Options::fromXML );
             
             Options_exposer.def( 
                 "fromXML"
                 , fromXML_function_value
-                , ( bp::arg("xmlfile") ) );
+                , ( bp::arg("xml"), bp::arg("path")=::QStringList( ) ) );
         
         }
-        { //::SireSim::Options::fromXMLConfig
+        { //::SireSim::Options::fromXMLFile
         
-            typedef ::SireSim::Options ( *fromXMLConfig_function_type )( ::QString const &,::QString const & );
-            fromXMLConfig_function_type fromXMLConfig_function_value( &::SireSim::Options::fromXMLConfig );
+            typedef ::SireSim::Options ( *fromXMLFile_function_type )( ::QString,::QStringList );
+            fromXMLFile_function_type fromXMLFile_function_value( &::SireSim::Options::fromXMLFile );
             
             Options_exposer.def( 
-                "fromXMLConfig"
-                , fromXMLConfig_function_value
-                , ( bp::arg("xmlfile"), bp::arg("config") ) );
+                "fromXMLFile"
+                , fromXMLFile_function_value
+                , ( bp::arg("xmlfile"), bp::arg("path")=::QStringList( ) ) );
         
         }
         { //::SireSim::Options::getValue
@@ -171,7 +191,7 @@ void register_Options_class(){
         
         }
         Options_exposer.staticmethod( "fromXML" );
-        Options_exposer.staticmethod( "fromXMLConfig" );
+        Options_exposer.staticmethod( "fromXMLFile" );
         Options_exposer.staticmethod( "typeName" );
         Options_exposer.def( "__copy__", &__copy__);
         Options_exposer.def( "__deepcopy__", &__copy__);

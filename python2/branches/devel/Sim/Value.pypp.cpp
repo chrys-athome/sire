@@ -9,21 +9,17 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
-#include "SireStream/datastream.h"
+#include "SireSim/value.h"
 
-#include "SireStream/shareddatastream.h"
+#include "SireSim/values.h"
 
-#include "simparams.h"
+#include "value.h"
 
-#include <QDomDocument>
+#include <QDebug>
 
 #include <QDomElement>
 
-#include <QDomNode>
-
-#include <QFile>
-
-#include "simparams.h"
+#include "value.h"
 
 const char* pvt_get_name(const SireSim::Value&){ return "SireSim::Value";}
 
@@ -68,12 +64,13 @@ void register_Value_class(){
         }
         { //::SireSim::Value::toConfig
         
-            typedef ::QString ( ::SireSim::Value::*toConfig_function_type )(  ) const;
+            typedef ::QString ( ::SireSim::Value::*toConfig_function_type )( bool ) const;
             toConfig_function_type toConfig_function_value( &::SireSim::Value::toConfig );
             
             Value_exposer.def( 
                 "toConfig"
-                , toConfig_function_value );
+                , toConfig_function_value
+                , ( bp::arg("include_help")=(bool)(false) ) );
         
         }
         { //::SireSim::Value::what

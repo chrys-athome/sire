@@ -9,21 +9,15 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
-#include "SireStream/datastream.h"
+#include "SireSim/values.h"
 
-#include "SireStream/shareddatastream.h"
-
-#include "simparams.h"
+#include "values.h"
 
 #include <QDomDocument>
 
 #include <QDomElement>
 
-#include <QDomNode>
-
-#include <QFile>
-
-#include "simparams.h"
+#include "values.h"
 
 SireSim::StringValue __copy__(const SireSim::StringValue &other){ return SireSim::StringValue(other); }
 

@@ -15,14 +15,6 @@ namespace bp = boost::python;
 
 #include "simparams.h"
 
-#include <QDomDocument>
-
-#include <QDomElement>
-
-#include <QDomNode>
-
-#include <QFile>
-
 #include "simparams.h"
 
 #include "Qt/qdatastream.hpp"

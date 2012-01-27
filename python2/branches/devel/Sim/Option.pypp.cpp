@@ -9,11 +9,13 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
-#include "SireStream/datastream.h"
+#include "SireSim/option.h"
 
-#include "SireStream/shareddatastream.h"
+#include "option.h"
 
-#include "simparams.h"
+#include <QDebug>
+
+#include <QDir>
 
 #include <QDomDocument>
 
@@ -23,7 +25,13 @@ namespace bp = boost::python;
 
 #include <QFile>
 
-#include "simparams.h"
+#include <QFileInfo>
+
+#include <QHash>
+
+#include <QList>
+
+#include "option.h"
 
 SireSim::Option __copy__(const SireSim::Option &other){ return SireSim::Option(other); }
 
@@ -36,7 +44,7 @@ void register_Option_class(){
         Option_exposer_t Option_exposer = Option_exposer_t( "Option", bp::init< >() );
         bp::scope Option_scope( Option_exposer );
         Option_exposer.def( bp::init< QString const &, QString const &, SireSim::Value const &, bp::optional< bool, bool > >(( bp::arg("key"), bp::arg("description"), bp::arg("value"), bp::arg("is_optional")=(bool)(false), bp::arg("allow_multiple")=(bool)(false) )) );
-        Option_exposer.def( bp::init< QDomElement >(( bp::arg("elem") )) );
+        Option_exposer.def( bp::init< QDomElement, bp::optional< QStringList > >(( bp::arg("elem"), bp::arg("path")=::QStringList( ) )) );
         Option_exposer.def( bp::init< SireSim::Option const & >(( bp::arg("other") )) );
         { //::SireSim::Option::allowMultiple
         

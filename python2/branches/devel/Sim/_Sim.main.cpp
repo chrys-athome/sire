@@ -5,6 +5,16 @@
 
 #include "boost/python.hpp"
 
+#include "BoolValue.pypp.hpp"
+
+#include "DirValue.pypp.hpp"
+
+#include "FileValue.pypp.hpp"
+
+#include "FloatValue.pypp.hpp"
+
+#include "IntegerValue.pypp.hpp"
+
 #include "Option.pypp.hpp"
 
 #include "Options.pypp.hpp"
@@ -33,6 +43,16 @@ BOOST_PYTHON_MODULE(_Sim){
     register_SireSim_containers();
 
     register_Value_class();
+
+    register_BoolValue_class();
+
+    register_DirValue_class();
+
+    register_FileValue_class();
+
+    register_FloatValue_class();
+
+    register_IntegerValue_class();
 
     register_Option_class();
 

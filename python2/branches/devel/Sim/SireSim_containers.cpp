@@ -39,7 +39,7 @@
 #include "Helpers/convertset.hpp"
 #include "Helpers/tuples.hpp"
 
-#include "SireSim/simparams.h"
+#include "SireSim/option.h"
 
 using namespace SireSim;
 
