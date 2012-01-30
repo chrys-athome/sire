@@ -40,6 +40,8 @@
 
 #include "SireError/errors.h"
 
+#include "tostring.h"
+
 using namespace SireSim;
 using namespace SireSim::detail;
 
@@ -910,13 +912,33 @@ Options Options::fromXMLFile(QString xmlfile, QStringList path)
     return Options::fromXML(xml,path);
 }
 
+bool hasDifferentKeys(const QMultiHash<int,int> &hash)
+{
+    if (hash.count() <= 1)
+        return false;
+    else
+    {
+        QMultiHash<int,int>::const_iterator it = hash.constBegin();
+        
+        int key = it.key();
+        
+        for (++it; it != hash.constEnd(); ++it)
+        {
+            if (it.key() != key)
+                return true;
+        }
+        
+        return false;
+    }
+}
+
 /** Convert this set of Options to a QDomElement */
 QDomElement Options::toDomElement(QDomDocument doc) const
 {
     QDomElement elem = doc.createElement("options");
     
-    if (color_to_option.count() > 1 or
-        (color_to_option.count() == 1 and option_to_color.count() != opts.count()))
+    if ( hasDifferentKeys(color_to_option) or
+        (color_to_option.count() > 0 and option_to_color.count() != opts.count()) )
     {
         //we have multiple colors, or one color but some not colored. This
         //means that we have to write this Options block as a series of 
@@ -1121,8 +1143,11 @@ Options::Options(const QList<Option> &options, bool mutually_exclusive) : Value(
                     throw SireError::invalid_arg( QObject::tr(
                         "You can only add an unnamed option as the first option "
                         "in a group of options, otherwise the unnamed option can "
-                        "never be selected! Option at index %1 is unnamed!")
-                            .arg(opts.count()), CODELOC );
+                        "never be selected! Option at index %1 is unnamed!\n"
+                        "%2\n%3")
+                            .arg(opts.count())
+                            .arg(this->toXML())
+                            .arg(Options(option).toXML()), CODELOC );
             }
             else if (keys.contains(key))
             {
@@ -1153,7 +1178,7 @@ Options::Options(const QList<Option> &options, bool mutually_exclusive) : Value(
     //to a new color group
     if (mutually_exclusive)
     {
-        for (int i=0; i<opts.count(); ++i)
+        for (int i=opts.count()-1; i>=0; --i)
         {
             option_to_color.insert(i, 1);
             color_to_option.insertMulti(1, i);
