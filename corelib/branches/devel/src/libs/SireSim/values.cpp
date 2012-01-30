@@ -44,7 +44,7 @@ StringValue::StringValue() : Value()
 {}
 
 /** Construct, passing in a value */
-StringValue::StringValue(const QString &value) : Value(), val(value)
+StringValue::StringValue(QString value) : Value(), val(value)
 {}
 
 QDomElement StringValue::toDomElement(QDomDocument doc) const
@@ -62,8 +62,8 @@ StringValue::StringValue(QDomElement elem) : Value()
                 "Can only create a StringValue object from an <string>...</string> "
                 "XML DOM element. Cannot use a <%1>...</%1> element!")
                     .arg(elem.tagName()), CODELOC );
-                    
-    val = elem.text();
+    
+    this->operator=( StringValue(elem.text()) );
 }
 
 /** Copy constructor */
@@ -115,60 +115,19 @@ QString StringValue::value() const
     return val;
 }
 
-/** Get the value. This passed key should be null, as this is a value */
-ValuePtr StringValue::getValue(QString key) const
+/** Set the value of this string to 'value' */
+ValuePtr StringValue::fromValueString(QString value) const
 {
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to get a StringValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
-
-    return self();
-}
-
-/** Set the value of this string to 'value'. This passed key should be null,
-    and the passed value must have type "StringValue" */
-ValuePtr StringValue::setValue(QString key, const Value &value) const
-{
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a StringValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
-    
-    else if (not value.isA<StringValue>())
-        throw SireError::invalid_arg( QObject::tr(
-                "You cannot set the value of a StringValue using a value "
-                "of type \"%1\".").arg(value.what()), CODELOC );
-    
-    return value;
-}
-
-/** Return this value as given in a configure file */
-QStringList StringValue::toConfigLines(bool) const
-{
-    QStringList lines;
-    
-    lines.append(val);
-    
-    return lines;
-}
-
-/** Set the value from the passed line */
-ValuePtr StringValue::fromConfig(detail::ParsedLine &line) const
-{
-    if (not line.key.key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a StringValue value with "
-                "a non-empty key! \"%1\"").arg(line.key.key), CODELOC );
-
-    if (line.been_read)
+    if (val == value)
         return self();
-    
     else
-    {
-        line.been_read = true;
-        return StringValue(line.value).clone();
-    }
+        return StringValue(value);
+}
+
+/** Return this value as a string */
+QString StringValue::toValueString() const
+{
+    return val;
 }
 
 /////////
@@ -180,7 +139,7 @@ DirValue::DirValue() : Value()
 {}
 
 /** Construct, passing in a value */
-DirValue::DirValue(const QString &dir) : Value(), val(dir)
+DirValue::DirValue(QString dir) : Value(), val(dir)
 {
     //should validate that this looks like a directory...
 }
@@ -201,9 +160,7 @@ DirValue::DirValue(QDomElement elem) : Value()
                 "XML DOM element. Cannot use a <%1>...</%1> element!")
                     .arg(elem.tagName()), CODELOC );
                     
-    val = elem.text();
-    
-    //should validate that this looks like a directory...
+    this->operator=( DirValue(elem.text()) );
 }
 
 /** Copy constructor */
@@ -255,60 +212,19 @@ QString DirValue::value() const
     return val;
 }
 
-/** Get the value. This passed key should be null, as this is a value */
-ValuePtr DirValue::getValue(QString key) const
+/** Return this directory encoded as a string */
+QString DirValue::toValueString() const
 {
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to get a DirValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
-
-    return self();
+    return val;
 }
 
-/** Set the value of this string to 'value'. This passed key should be null,
-    and the passed value must have type "DirValue" */
-ValuePtr DirValue::setValue(QString key, const Value &value) const
+/** Return this value as read from the passed string */
+ValuePtr DirValue::fromValueString(QString value) const
 {
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a DirValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
-    
-    else if (not value.isA<DirValue>())
-        throw SireError::invalid_arg( QObject::tr(
-                "You cannot set the value of a DirValue using a value "
-                "of type \"%1\".").arg(value.what()), CODELOC );
-    
-    return value;
-}
-
-/** Return this value as given in a configure file */
-QStringList DirValue::toConfigLines(bool) const
-{
-    QStringList lines;
-    
-    lines.append(val);
-    
-    return lines;
-}
-
-/** Set the value from the passed line */
-ValuePtr DirValue::fromConfig(detail::ParsedLine &line) const
-{
-    if (not line.key.key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a DirValue value with "
-                "a non-empty key! \"%1\"").arg(line.key.key), CODELOC );
-
-    if (line.been_read)
+    if (val == value)
         return self();
-    
     else
-    {
-        line.been_read = true;
-        return DirValue(line.value).clone();
-    }
+        return DirValue(value);
 }
 
 /////////
@@ -320,7 +236,7 @@ FileValue::FileValue() : Value()
 {}
 
 /** Construct, passing in a value */
-FileValue::FileValue(const QString &file) : Value(), val(file)
+FileValue::FileValue(QString file) : Value(), val(file)
 {
     //should validate that this looks like a file...
 }
@@ -341,9 +257,7 @@ FileValue::FileValue(QDomElement elem) : Value()
                 "XML DOM element. Cannot use a <%1>...</%1> element!")
                     .arg(elem.tagName()), CODELOC );
                     
-    val = elem.text();
-    
-    //should validate that this looks like a file
+    this->operator=( FileValue(elem.text()) );
 }
 
 /** Copy constructor */
@@ -395,60 +309,17 @@ QString FileValue::value() const
     return val;
 }
 
-/** Get the value. This passed key should be null, as this is a value */
-ValuePtr FileValue::getValue(QString key) const
+QString FileValue::toValueString() const
 {
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to get a FileValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
-
-    return self();
+    return val;
 }
 
-/** Set the value of this string to 'value'. This passed key should be null,
-    and the passed value must have type "FileValue" */
-ValuePtr FileValue::setValue(QString key, const Value &value) const
+ValuePtr FileValue::fromValueString(QString value) const
 {
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a FileValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
-    
-    else if (not value.isA<FileValue>())
-        throw SireError::invalid_arg( QObject::tr(
-                "You cannot set the value of a FileValue using a value "
-                "of type \"%1\".").arg(value.what()), CODELOC );
-    
-    return value;
-}
-
-/** Return this value as given in a configure file */
-QStringList FileValue::toConfigLines(bool) const
-{
-    QStringList lines;
-    
-    lines.append(val);
-    
-    return lines;
-}
-
-/** Set the value from the passed line */
-ValuePtr FileValue::fromConfig(detail::ParsedLine &line) const
-{
-    if (not line.key.key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a FileValue value with "
-                "a non-empty key! \"%1\"").arg(line.key.key), CODELOC );
-
-    if (line.been_read)
+    if (val == value)
         return self();
-    
     else
-    {
-        line.been_read = true;
-        return FileValue(line.value).clone();
-    }
+        return FileValue(value);
 }
 
 /////////
@@ -586,6 +457,13 @@ IntegerValue::IntegerValue(QDomElement elem)
         val = maxval;
 }
 
+/** Construct from a string */
+IntegerValue::IntegerValue(QString value)
+             : Value(), val(readInt(value)),
+                        minval(std::numeric_limits<qint64>::min()),
+                        maxval(std::numeric_limits<qint64>::max())
+{}             
+
 /** Copy constructor */
 IntegerValue::IntegerValue(const IntegerValue &other)
           : Value(other), val(other.val), 
@@ -643,94 +521,28 @@ qint64 IntegerValue::value() const
     return val;
 }
 
-/** Get the value. This passed key should be null, as this is a value */
-ValuePtr IntegerValue::getValue(QString key) const
+QString IntegerValue::toValueString() const
 {
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to get a IntegerValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
-
-    return self();
+    return QString::number(val);
 }
 
-/** Set the value of this string to 'value'. This passed key should be null,
-    and the passed value must have type "IntegerValue" */
-ValuePtr IntegerValue::setValue(QString key, const Value &value) const
+ValuePtr IntegerValue::fromValueString(QString value) const
 {
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a IntegerValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
+    qint64 v = readInt(value);
     
-    else if (not value.isA<IntegerValue>())
-        throw SireError::invalid_arg( QObject::tr(
-                "You cannot set the value of a IntegerValue using a value "
-                "of type \"%1\".").arg(value.what()), CODELOC );
+    if (v > maxval)
+        v = maxval;
     
-    qint64 newval = value.asA<IntegerValue>().val;
+    if (v < minval)
+        v = minval;
     
-    if (newval == val)
+    if (val == v)
         return self();
     else
     {
         IntegerValue ret(*this);
-        
-        ret.val = newval;
-        
-        if (ret.val < ret.minval)
-            ret.val = ret.minval;
-            
-        if (ret.val > ret.maxval)
-            ret.val = ret.maxval;
-        
+        ret.val = v;
         return ret;
-    }
-}
-
-/** Return this value as given in a configure file */
-QStringList IntegerValue::toConfigLines(bool) const
-{
-    QStringList lines;
-    
-    lines.append( QString::number(val) );
-    
-    return lines;
-}
-
-/** Set the value from the passed line */
-ValuePtr IntegerValue::fromConfig(detail::ParsedLine &line) const
-{
-    if (not line.key.key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a IntegerValue value with "
-                "a non-empty key! \"%1\"").arg(line.key.key), CODELOC );
-
-    if (line.been_read)
-        return self();
-    
-    else
-    {
-        line.been_read = true;
-        
-        qint64 new_val = readInt(line.value);
-        
-        if (val == new_val)
-            return self();
-        else
-        {
-            IntegerValue ret(*this);
-            
-            ret.val = new_val;
-            
-            if (ret.val < minval)
-                ret.val = minval;
-                
-            if (ret.val > maxval)
-                ret.val = maxval;
-                
-            return ret;
-        }
     }
 }
 
@@ -834,6 +646,11 @@ double readFloat(QString text)
 
     return val;
 }
+
+FloatValue::FloatValue(QString value)
+           : Value(), val(readFloat(value)), minval(0), maxval(0),
+             has_minval(false), has_maxval(false)
+{}
 
 /** Construct from a QDomElement */
 FloatValue::FloatValue(QDomElement elem) 
@@ -940,94 +757,28 @@ double FloatValue::value() const
     return val;
 }
 
-/** Get the value. This passed key should be null, as this is a value */
-ValuePtr FloatValue::getValue(QString key) const
+QString FloatValue::toValueString() const
 {
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to get a FloatValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
-
-    return self();
+    return QString::number(val, 'g', 12);
 }
 
-/** Set the value of this string to 'value'. This passed key should be null,
-    and the passed value must have type "FloatValue" */
-ValuePtr FloatValue::setValue(QString key, const Value &value) const
+ValuePtr FloatValue::fromValueString(QString value) const
 {
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a FloatValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
+    double v = readFloat(value);
     
-    else if (not value.isA<FloatValue>())
-        throw SireError::invalid_arg( QObject::tr(
-                "You cannot set the value of a FloatValue using a value "
-                "of type \"%1\".").arg(value.what()), CODELOC );
-    
-    double newval = value.asA<FloatValue>().val;
-    
-    if (newval == val)
+    if (has_minval and v < minval)
+        v = minval;
+        
+    if (has_maxval and v > maxval)
+        v = maxval;
+        
+    if (v == val)
         return self();
     else
     {
         FloatValue ret(*this);
-        
-        ret.val = newval;
-        
-        if (has_minval and ret.val < ret.minval)
-            ret.val = ret.minval;
-            
-        if (has_maxval and ret.val > ret.maxval)
-            ret.val = ret.maxval;
-        
+        ret.val = v;
         return ret;
-    }
-}
-
-/** Return this value as given in a configure file */
-QStringList FloatValue::toConfigLines(bool) const
-{
-    QStringList lines;
-    
-    lines.append( QString::number(val,'g',12) );
-    
-    return lines;
-}
-
-/** Set the value from the passed line */
-ValuePtr FloatValue::fromConfig(detail::ParsedLine &line) const
-{
-    if (not line.key.key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a FloatValue value with "
-                "a non-empty key! \"%1\"").arg(line.key.key), CODELOC );
-
-    if (line.been_read)
-        return self();
-    
-    else
-    {
-        line.been_read = true;
-        
-        double new_val = readInt(line.value);
-        
-        if (val == new_val)
-            return self();
-        else
-        {
-            FloatValue ret(*this);
-            
-            ret.val = new_val;
-            
-            if (has_minval and ret.val < minval)
-                ret.val = minval;
-                
-            if (has_maxval and ret.val > maxval)
-                ret.val = maxval;
-                
-            return ret;
-        }
     }
 }
 
@@ -1055,7 +806,7 @@ QDomElement BoolValue::toDomElement(QDomDocument doc) const
     return elem;
 }
 
-bool getBool(QString text)
+bool readBool(QString text)
 {
     text = text.trimmed().toLower();
     
@@ -1075,6 +826,9 @@ bool getBool(QString text)
     return false;
 }
 
+BoolValue::BoolValue(QString value) : Value(), val(readBool(value))
+{}
+
 /** Construct from a QDomElement */
 BoolValue::BoolValue(QDomElement elem) : Value()
 {
@@ -1084,7 +838,7 @@ BoolValue::BoolValue(QDomElement elem) : Value()
                 "XML DOM element. Cannot use a <%1>...</%1> element!")
                     .arg(elem.tagName()), CODELOC );
                     
-    val = getBool(elem.text());
+    val = readBool(elem.text());
 }
 
 /** Copy constructor */
@@ -1136,66 +890,23 @@ bool BoolValue::value() const
     return val;
 }
 
-/** Get the value. This passed key should be null, as this is a value */
-ValuePtr BoolValue::getValue(QString key) const
+QString BoolValue::toValueString() const
 {
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to get a BoolValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
+    static QString true_string("true");
+    static QString false_string("false");
 
-    return self();
-}
-
-/** Set the value of this string to 'value'. This passed key should be null,
-    and the passed value must have type "BoolValue" */
-ValuePtr BoolValue::setValue(QString key, const Value &value) const
-{
-    if (not key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a BoolValue value with "
-                "a non-empty key! \"%1\"").arg(key), CODELOC );
-    
-    else if (not value.isA<BoolValue>())
-        throw SireError::invalid_arg( QObject::tr(
-                "You cannot set the value of a BoolValue using a value "
-                "of type \"%1\".").arg(value.what()), CODELOC );
-    
-    return value;
-}
-
-/** Return this value as given in a configure file */
-QStringList BoolValue::toConfigLines(bool) const
-{
-    QStringList lines;
-    
     if (val)
-        lines.append("true");
+        return true_string;
     else
-        lines.append("false");
-    
-    return lines;
+        return false_string;
 }
 
-/** Set the value from the passed line */
-ValuePtr BoolValue::fromConfig(detail::ParsedLine &line) const
+ValuePtr BoolValue::fromValueString(QString value) const
 {
-    if (not line.key.key.isEmpty())
-        throw SireError::invalid_key( QObject::tr(
-                "It should not be possible to set a BoolValue value with "
-                "a non-empty key! \"%1\"").arg(line.key.key), CODELOC );
-
-    if (line.been_read)
-        return self();
+    bool v = readBool(value);
     
+    if (v == val)
+        return self();
     else
-    {
-        line.been_read = true;
-        bool new_val = getBool(line.value);
-        
-        if (val == new_val)
-            return self();
-        else
-            return BoolValue(new_val);
-    }
+        return BoolValue(v);
 }

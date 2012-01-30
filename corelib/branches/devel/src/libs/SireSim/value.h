@@ -98,6 +98,7 @@ class SIRESIM_EXPORT Value
 {
 public:
     Value();
+    Value(const Value &other);
     
     virtual ~Value();
     
@@ -105,10 +106,11 @@ public:
     
     ValuePtr clone() const;
     
-    virtual ValuePtr getValue(QString key) const=0;
-    virtual ValuePtr setValue(QString key, const Value &value) const=0;
+    virtual ValuePtr getValue(QString key) const;
     
-    ValuePtr operator[](QString key) const;
+    ValuePtr setValue(QString key, QString value) const;
+    ValuePtr setValue(QString key, double value) const;
+    ValuePtr setValue(QString key, qint64 value) const;
     
     template<class T>
     bool isA() const
@@ -138,23 +140,33 @@ public:
         return *ptr;
     }
 
+    QString toString() const;
+
     QString toConfig(bool include_help=false) const;
 
+    QString toXML() const;
+
     operator ValuePtr() const;
+    operator QString() const;
 
 protected:
     virtual Value* ptr_clone() const=0;
     
-    virtual QStringList toConfigLines(bool include_help) const=0;
+    virtual QStringList toConfigLines(bool include_help) const;
     
     ValuePtr self() const;
     
     friend class Option;
     friend class Options;
-    virtual ValuePtr fromConfig(detail::ParsedLine &line) const=0;
+    virtual ValuePtr fromConfig(detail::ParsedLine &line) const;
     virtual bool isContainer() const;
     
     virtual QDomElement toDomElement(QDomDocument doc) const=0;
+    
+    virtual ValuePtr fromValueString(QString key, QString value) const;
+    
+    virtual ValuePtr fromValueString(QString value) const;
+    virtual QString toValueString() const;
     
     static ValuePtr createFrom(QDomElement elem);
     

@@ -14,7 +14,7 @@ print "Initial, default configuration file"
 print options.toConfig(True)
 
 print "\nAfter setting some options..."
-new_opts = options.setValue("solute[2].name", StringValue("osel"))
+new_opts = options.setValue("solute[2].name", "osel")
 print new_opts.toConfig(True)
 
 print "\nNow trying to load up the same configuration file..."

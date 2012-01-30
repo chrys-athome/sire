@@ -41,7 +41,7 @@ class SIRESIM_EXPORT StringValue : public Value
 {
 public:
     StringValue();
-    StringValue(const QString &value);
+    StringValue(QString value);
     
     StringValue(QDomElement elem);
     
@@ -58,19 +58,15 @@ public:
     
     const char* what() const;
     
-    ValuePtr getValue(QString key) const;
-    ValuePtr setValue(QString key, const Value &value) const;
-    
     QString value() const;
     
 protected:
     StringValue* ptr_clone() const;
 
-    ValuePtr fromConfig(detail::ParsedLine &lines) const;
-
     QDomElement toDomElement(QDomDocument doc) const;
     
-    QStringList toConfigLines(bool include_help) const;
+    QString toValueString() const;
+    ValuePtr fromValueString(QString value) const;
 
 private:
     /** The current value of this string. */
@@ -82,8 +78,7 @@ class SIRESIM_EXPORT DirValue : public Value
 {
 public:
     DirValue();
-    DirValue(const QString &dir);
-    
+    DirValue(QString dir);
     DirValue(QDomElement elem);
     
     DirValue(const DirValue &other);
@@ -99,19 +94,15 @@ public:
     
     const char* what() const;
     
-    ValuePtr getValue(QString key) const;
-    ValuePtr setValue(QString key, const Value &value) const;
-    
     QString value() const;
     
 protected:
     DirValue* ptr_clone() const;
 
-    ValuePtr fromConfig(detail::ParsedLine &lines) const;
-
     QDomElement toDomElement(QDomDocument doc) const;
     
-    QStringList toConfigLines(bool include_help) const;
+    QString toValueString() const;
+    ValuePtr fromValueString(QString value) const;
 
 private:
     /** The current value of the directory */
@@ -123,7 +114,7 @@ class SIRESIM_EXPORT FileValue : public Value
 {
 public:
     FileValue();
-    FileValue(const QString &file);
+    FileValue(QString file);
     
     FileValue(QDomElement elem);
     
@@ -140,19 +131,15 @@ public:
     
     const char* what() const;
     
-    ValuePtr getValue(QString key) const;
-    ValuePtr setValue(QString key, const Value &value) const;
-    
     QString value() const;
     
 protected:
     FileValue* ptr_clone() const;
 
-    ValuePtr fromConfig(detail::ParsedLine &lines) const;
-
     QDomElement toDomElement(QDomDocument doc) const;
     
-    QStringList toConfigLines(bool include_help) const;
+    QString toValueString() const;
+    ValuePtr fromValueString(QString value) const;
 
 private:
     /** The current value of the file. */
@@ -165,6 +152,7 @@ class SIRESIM_EXPORT IntegerValue : public Value
 public:
     IntegerValue();
     IntegerValue(qint64 val);
+    IntegerValue(QString val);
 
     static IntegerValue valueWithMinimum(qint64 val, qint64 minimum);
     static IntegerValue valueWithMaximum(qint64 val, qint64 maximum);
@@ -186,19 +174,15 @@ public:
     
     const char* what() const;
     
-    ValuePtr getValue(QString key) const;
-    ValuePtr setValue(QString key, const Value &value) const;
-    
     qint64 value() const;
     
 protected:
     IntegerValue* ptr_clone() const;
 
-    ValuePtr fromConfig(detail::ParsedLine &lines) const;
-
     QDomElement toDomElement(QDomDocument doc) const;
     
-    QStringList toConfigLines(bool include_help) const;
+    QString toValueString() const;
+    ValuePtr fromValueString(QString value) const;
 
 private:
     /** The current value */
@@ -214,6 +198,7 @@ class SIRESIM_EXPORT FloatValue : public Value
 public:
     FloatValue();
     FloatValue(double val);
+    FloatValue(QString value);
 
     static FloatValue valueWithMinimum(double val, double minimum);
     static FloatValue valueWithMaximum(double val, double maximum);
@@ -235,19 +220,15 @@ public:
     
     const char* what() const;
     
-    ValuePtr getValue(QString key) const;
-    ValuePtr setValue(QString key, const Value &value) const;
-    
     double value() const;
     
 protected:
     FloatValue* ptr_clone() const;
 
-    ValuePtr fromConfig(detail::ParsedLine &lines) const;
-
     QDomElement toDomElement(QDomDocument doc) const;
     
-    QStringList toConfigLines(bool include_help) const;
+    QString toValueString() const;
+    ValuePtr fromValueString(QString value) const;
 
 private:
     /** The current value */
@@ -264,6 +245,7 @@ class SIRESIM_EXPORT BoolValue : public Value
 public:
     BoolValue();
     BoolValue(bool value);
+    BoolValue(QString value);
     
     BoolValue(QDomElement elem);
     
@@ -280,19 +262,15 @@ public:
     
     const char* what() const;
     
-    ValuePtr getValue(QString key) const;
-    ValuePtr setValue(QString key, const Value &value) const;
-    
     bool value() const;
     
 protected:
     BoolValue* ptr_clone() const;
 
-    ValuePtr fromConfig(detail::ParsedLine &lines) const;
-
     QDomElement toDomElement(QDomDocument doc) const;
     
-    QStringList toConfigLines(bool include_help) const;
+    QString toValueString() const;
+    ValuePtr fromValueString(QString value) const;
 
 private:
     /** The current value */

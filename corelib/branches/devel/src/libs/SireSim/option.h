@@ -68,6 +68,17 @@ public:
     bool operator==(const Option &other) const;
     bool operator!=(const Option &other) const;
     
+    Option operator[](int index) const;
+    Option operator[](QString key) const;
+    
+    int count() const;
+    
+    QList<int> indicies() const;
+    QList<int> userIndicies() const;
+    
+    QStringList keys() const;
+    QStringList userKeys() const;
+    
     const char* what() const;
     static const char* typeName();
     
@@ -76,7 +87,8 @@ public:
     ValuePtr clear() const;
     
     ValuePtr getValue(QString key) const;
-    ValuePtr setValue(QString key, const Value &value) const;
+    
+    Option getOption(QString key) const;
     
     QString key() const;
     QString description() const;
@@ -84,10 +96,13 @@ public:
     bool isOptional() const;
     bool allowMultiple() const;
     
+    ValuePtr value() const;
+    
     ValuePtr defaultValue() const;
 
-    bool hasUserValue(int index) const;
-    ValuePtr userValue(int index) const;
+    bool hasUserValue() const;
+
+    Option setValue(QString value) const;
 
 protected:
     Option* ptr_clone() const;
@@ -98,6 +113,8 @@ protected:
     QDomElement toDomElement(QDomDocument doc) const;
 
     QStringList toConfigLines(bool include_help) const;
+
+    ValuePtr fromValueString(QString key, QString value) const;
 
 private:
     void assertNotNull() const;
@@ -114,6 +131,11 @@ private:
 
     /** The user-supplied value(s), if one or more have been provided */
     QList<ValuePtr> user_vals;
+
+    /** The default index - this is the index of the user option to 
+        use when calling 'value' - this is used to simplify querying 
+        of this object */
+    int default_idx;
 
     /** Whether or not this option is optional, and whether or
         not multiple values of this option are allowed */
@@ -148,18 +170,22 @@ public:
     const char* what() const;
     static const char* typeName();
 
+    Option operator[](QString key) const;
+    
+    QStringList keys() const;
+    QStringList userKeys() const;
+
     Options fromConfig(QString text) const;
     Options fromConfigFile(QString configfile) const;
 
     static Options fromXML(QString xml, QStringList path=QStringList());
     static Options fromXMLFile(QString xmlfile, QStringList path=QStringList());
 
-    QString toXML() const;
-
     // QString toConfig() const; is contained in Value
     
     ValuePtr getValue(QString key) const;
-    ValuePtr setValue(QString key, const Value &value) const;
+    
+    Option getOption(QString key) const;
     
     ValuePtr clear() const;
     
@@ -168,7 +194,6 @@ public:
     Options add(const Options &other) const;
     
     Options operator+(const Options &other) const;
-    
 
 protected:
     Options* ptr_clone() const;
@@ -180,12 +205,14 @@ protected:
 
     QDomElement toDomElement(QDomDocument doc) const;
 
+    ValuePtr fromValueString(QString key, QString value) const;
+
 private:
     /** The set of options */
     QList<ValuePtr> opts;
     
     /** Hash to accelerate finding the option with specified key */
-    QHash<QString,int> keys;
+    QHash<QString,int> kys;
     
     /** The set(s) of mutually exclusive options. All options
         in the same color group are mutually exclusive */

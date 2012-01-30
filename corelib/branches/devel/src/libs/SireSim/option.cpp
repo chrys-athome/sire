@@ -50,7 +50,7 @@ using namespace SireSim::detail;
 ///////////
 
 /** Constructor */
-Option::Option() : Value()
+Option::Option() : Value(), default_idx(1)
 {}
 
 /** Construct an option with the specified key, user-readable description,
@@ -61,7 +61,7 @@ Option::Option(const QString &key, const QString &description,
                const Value &value,
                bool is_opt, bool allow_mult)
        : Value(), k(key.trimmed().toLower()), desc(description), val(value.clone()),
-         is_optional(is_opt), allow_multiple(allow_mult)
+         default_idx(1), is_optional(is_opt), allow_multiple(allow_mult)
 {
     //the key may not contain any spaces or square brackets
     if (key.indexOf(' ') != -1 or key.indexOf('[') != -1 or key.indexOf(']') != -1)
@@ -130,7 +130,7 @@ QDomElement Option::toDomElement(QDomDocument doc) const
   
 /** Construct from a QDomElement */
 Option::Option(QDomElement elem, QStringList path) 
-       : Value(), is_optional(false), allow_multiple(false)
+       : Value(), default_idx(1), is_optional(false), allow_multiple(false)
 {
     if (elem.tagName() != "option")
         throw SireError::file_error( QObject::tr(
@@ -205,6 +205,7 @@ Option::Option(QDomElement elem, QStringList path)
 Option::Option(const Option &other) 
        : Value(other), k(other.k), desc(other.desc), 
          val(other.val), user_vals(other.user_vals),
+         default_idx(other.default_idx),
          is_optional(other.is_optional), allow_multiple(other.allow_multiple)
 {}
 
@@ -221,6 +222,7 @@ Option& Option::operator=(const Option &other)
         desc = other.desc;
         val = other.val;
         user_vals = other.user_vals;
+        default_idx = other.default_idx;
         is_optional = other.is_optional;
         allow_multiple = other.allow_multiple;
     }
@@ -234,6 +236,7 @@ bool Option::operator==(const Option &other) const
     return this == &other or
            (k == other.k and desc == other.desc and val == other.val and
             user_vals == other.user_vals and
+            default_idx == other.default_idx and
             is_optional == other.is_optional and
             allow_multiple == other.allow_multiple);
 }
@@ -444,38 +447,17 @@ namespace SireSim
     }
 }
 
-/** Return whether not we have a user-supplied value for the passed index */
-bool Option::hasUserValue(int index) const
+/** Return whether or this option has a user value. This uses the 
+    default index of the option. You set this using the operator[](int) 
+    operator, e.g. option[1].hasUserValue(), or option[2].hasUserValue() etc. */
+bool Option::hasUserValue() const
 {
     assertNotNull();
-
-    if (index <= user_vals.count())
-    {
-        return user_vals.at(index-1).get() != 0;
-    }
+    
+    if (user_vals.count() >= default_idx)
+        return user_vals.at(default_idx-1).get() != 0;
     else
         return false;
-}
-
-/** Return the user value at the supplied index. This raises an exception
-    if there is no value set for this index */
-ValuePtr Option::userValue(int index) const
-{
-    assertNotNull();
-
-    if (user_vals.count() <= index)
-    {
-        ValuePtr ptr = user_vals.at(index-1);
-        
-        if (ptr)
-            return ptr;
-    }
-    
-    throw SireError::invalid_index( QObject::tr(
-              "No value for option %1[%2] has been set.")
-                    .arg(k).arg(index), CODELOC );
-
-    return ValuePtr();
 }
 
 /** Return the default value of the option */
@@ -483,6 +465,82 @@ ValuePtr Option::defaultValue() const
 {
     assertNotNull();
     return val;
+}
+
+/** Return the value of this option. This is the default value if one hasn't
+    been set, or the value with the default index if one has, e.g. if we
+    have set the value for index 1, then option[1].value() would be that value,
+    while option[2].value() would be the default value */
+ValuePtr Option::value() const
+{
+    assertNotNull();
+    
+    if (default_idx > 0 and user_vals.count() >= default_idx)
+    {
+        if (user_vals.at(default_idx-1).get() != 0)
+            return user_vals.at(default_idx-1);
+    }
+                    
+    return val;
+}
+
+/** Return the option with the passed key. Note that the first element
+    of the key must equal the key of this option, or it must be empty.
+    If it is empty, then this option is returned. If the first element
+    does not match this option's key, then an invalid_key exception is raised */
+Option Option::getOption(QString key) const
+{
+    assertNotNull();
+    
+    ParsedKey p(key);
+    
+    if (not p.key.isEmpty())
+    {
+        if (p.key != k)
+        {
+            //maybe we are looking for one of our subkeys?
+            ValuePtr v = value();
+            
+            if (v->isA<Options>())
+                return v->asA<Options>().getOption(key);
+
+            else if (v->isA<Option>())
+            {
+                if (v->asA<Option>().key() == p.key)
+                    return v->asA<Option>().getOption(key);
+            }
+
+            throw SireError::invalid_key( QObject::tr(
+                    "Invalid key. Option \"%1\" from key \"%2\" cannot be used "
+                    "to search for an option with key \"%3\".")
+                        .arg(p.key, key, k), CODELOC );
+        }
+    
+        if (p.tail.isEmpty())
+            return *this;
+    
+        ValuePtr value = this->operator[](p.index).value();
+            
+        if (value->isA<Options>())
+            return value->asA<Options>().getOption(p.tail);
+        
+        else if (value->isA<Option>())
+            return value->asA<Option>().getOption(p.tail);
+        
+        else
+        {
+            throw SireError::invalid_key( QObject::tr(
+                    "Invalid key. Option \"%1\" from key \"%2\" cannot be used "
+                    "to search for an option as this option only has a value.")
+                        .arg(p.key, key), CODELOC );
+                        
+            return Option();
+        }
+    }
+    else
+    {
+        return *this;
+    }
 }
 
 /** Return the value of the passed key. Note that the first element of 
@@ -499,6 +557,18 @@ ValuePtr Option::getValue(QString key) const
     {
         if (p.key != k)
         {
+            //maybe we are looking for one of our subkeys?
+            ValuePtr v = value();
+            
+            if (v->isA<Options>())
+                return v->asA<Options>().getValue(key);
+
+            else if (v->isA<Option>())
+            {
+                if (v->asA<Option>().key() == p.key)
+                    return v->asA<Option>().getValue(key);
+            }
+
             throw SireError::invalid_key( QObject::tr(
                     "Invalid key. Option \"%1\" from key \"%2\" cannot be used "
                     "to search for values from an option with key \"%3\".")
@@ -506,10 +576,7 @@ ValuePtr Option::getValue(QString key) const
         }
     }
 
-    if (hasUserValue(p.index))
-        return userValue(p.index)->getValue(p.tail);
-    else
-        return val->getValue(p.tail);
+    return this->operator[](p.index).value()->getValue(p.tail);
 }
 
 void Option::setUserValue(int index, ValuePtr value)
@@ -537,7 +604,7 @@ void Option::setUserValue(int index, ValuePtr value)
     the key must equal the key of this option, or it must be empty. If 
     it is empty, then the value is returned. If the first element doesn't
     match this option's key, then an invalid_key exception is raised. */
-ValuePtr Option::setValue(QString key, const Value &value) const
+ValuePtr Option::fromValueString(QString key, QString value) const
 {
     assertNotNull();
 
@@ -555,30 +622,21 @@ ValuePtr Option::setValue(QString key, const Value &value) const
         }
     }
     
-    if (hasUserValue(p.index))
+    ValuePtr old_val = this->operator[](p.index).value();
+    qDebug() << "old_val->setValue(" << p.tail << value << ")";
+    ValuePtr new_val = old_val->setValue(p.tail, value);
+   
+    if (old_val.get() != new_val.get())
     {
-        const Value *old_val = userValue(p.index).get();
-    
-        ValuePtr v = old_val->setValue(p.tail, value);
-        
-        if (old_val != v.get())
-        {
-            ValuePtr ret = this->clone();
-            ret->asA<Option>().setUserValue(p.index, v);
-            return ret;
-        }
-        else
-            return self();
+        Option ret(*this);
+        qDebug() << "ret.setUserValue(" << p.index << new_val->toString() << ")";
+        ret.setUserValue(p.index, new_val);
+        return ret;
     }
     else
     {
-        ValuePtr v = val->setValue(p.tail, value);
-        
-        ValuePtr ret = this->clone();
-
-        ret->asA<Option>().setUserValue(p.index, v);
-
-        return ret;
+        qDebug() << "return self()";
+        return self();
     }
 }
 
@@ -593,6 +651,137 @@ ValuePtr Option::clear() const
         ret.user_vals.clear();
         return ret.clone();
     }
+}
+
+/** Return a copy of this option, where the default value index is 
+    set to 'i'. Note that user options are 1-indexed */
+Option Option::operator[](int i) const
+{
+    if (not allow_multiple)
+        return *this;
+
+    if (i < 1)
+        i = 1;
+
+    Option ret(*this);
+    
+    ret.default_idx = i;
+    
+    return ret;
+}
+
+/** Return the option(s) associated with the passed key. Note that this will 
+    only work if this option contains a set of sub-options, and no attempt
+    is made to break this key down into sub-keys. Note also that the option
+    associated with the current user value is returned, e.g. if you want
+    to find the name of the molecule set with index 2, then you would need
+    to use "molecule[2]["name"]" */
+Option Option::operator[](QString key) const
+{
+    assertNotNull();
+
+    ValuePtr val = this->value();
+    
+    if (val->isA<Options>())
+        return val->asA<Options>().operator[](key);
+    
+    else if (val->isA<Option>())
+    {
+        Option opt = val->asA<Option>();
+        
+        if (opt.key() != key)
+            throw SireError::invalid_key( QObject::tr(
+                    "There is no sub-option with key \"%1\" available in option \"%2\". "
+                    "This is because the only sub-option has key \"%3\".")
+                        .arg(key).arg(k).arg(opt.key()), CODELOC );
+        
+        return opt;
+    }
+    else
+    {
+        throw SireError::invalid_key( QObject::tr(
+                "There is no sub-option with key \"%1\" available in option \"%2\". "
+                "This is because this option contains a value of type %3.")
+                    .arg(key).arg(k).arg(val->what()), CODELOC );
+    
+        return Option();
+    }
+}
+
+/** Return the set of indicies for options - note that this will return
+    indicies for options that have not been set, and that have a default value */
+QList<int> Option::indicies() const
+{
+    QList<int> idxs;
+    idxs.append(1);
+    
+    for (int i=1; i<user_vals.count(); ++i)
+    {
+        idxs.append(i+1);
+    }
+    
+    return idxs;
+}
+
+/** Return the set of indicies of options that have been explicitly set 
+    by the user */
+QList<int> Option::userIndicies() const
+{
+    QList<int> idxs;
+    
+    for (int i=0; i<user_vals.count(); ++i)
+    {
+        if (user_vals.at(i).get() != 0)
+            idxs.append(i+1);
+    }
+    
+    return idxs;
+}
+
+/** Return the set of keys of sub-options of this option */
+QStringList Option::keys() const
+{
+    ValuePtr val = this->value();
+    
+    if (val->isA<Options>())
+        return val->asA<Options>().keys();
+    
+    else if (val->isA<Option>())
+    {
+        QStringList kys;
+        kys.append( val->asA<Option>().key() );
+        return kys;
+    }
+    else
+        return QStringList();
+}
+
+/** Return the set of keys of sub-options that have been explicitly
+    set by the user */
+QStringList Option::userKeys() const
+{
+    if (this->hasUserValue())
+    {
+        ValuePtr val = this->value();
+        
+        if (val->isA<Options>())
+            return val->asA<Options>().userKeys();
+        
+        else if (val->isA<Option>())
+        {
+            QStringList kys;
+            kys.append( val->asA<Option>().key() );
+            return kys;
+        }
+    }
+    
+    return QStringList();
+}
+
+/** Return the total number of indicies available to this option */
+int Option::count() const
+{
+    return qMax(1, user_vals.count());
 }
 
 /** Return the key for this option */
@@ -636,47 +825,26 @@ ValuePtr Option::fromConfig(ParsedLine &line) const
             return self();
     }
     
-    if (hasUserValue(line.key.index))
+    ValuePtr old_val = this->operator[](line.key.index).value();
+    
+    ParsedLine new_line(ParsedKey(line.key.tail), line.value);
+    
+    ValuePtr new_val = old_val->fromConfig(new_line);
+    
+    if (new_line.been_read)
     {
-        const Value *old_val = userValue(line.key.index).get();
-    
-        ParsedLine new_line(ParsedKey(line.key.tail), line.value);
-    
-        ValuePtr new_val = old_val->fromConfig(new_line);
-        
-        if (new_line.been_read)
-        {
-            //the line was read :-)
-            line.been_read = true;
-        }
-    
-        if (new_val.get() != old_val)
-        {
-            //the value has changed
-            ValuePtr ret = this->clone();
-            ret->asA<Option>().setUserValue(line.key.index,new_val);
-            return ret;
-        }
-        else
-        {
-            return self();
-        }
+        //the line was read :-)
+        line.been_read = true;
     }
-    else
+    
+    if (new_val.get() != old_val.get())
     {
-        ValuePtr ret = this->clone();
-        
-        ParsedLine new_line(ParsedKey(line.key.tail), line.value);
-        
-        ret->asA<Option>().setUserValue(line.key.index, val->fromConfig(new_line));
-                
-        if (new_line.been_read)
-        {
-            line.been_read = true;
-        }
-                
+        Option ret(*this);
+        ret.setUserValue(line.key.index,new_val);
         return ret;
     }
+    else
+        return self();
 }
 
 QStringList prep(QString p, QStringList lines)
@@ -777,37 +945,6 @@ QStringList Option::toConfigLines(bool include_help) const
 /** Constructor */
 Options::Options() : Value()
 {}
-
-/** Return the description of these options as XML. Note that
-    this returns the structure of the options, and does not
-    return anything about the user-supplied values. To get those,
-    you need to call 'toConfig()' */
-QString Options::toXML() const
-{
-    QDomDocument doc("SIRE_OPTIONS");
-    {
-        QDomProcessingInstruction xmlDeclaration 
-                = doc.createProcessingInstruction("xml", 
-                                    "version=\"1.0\" encoding=\"UTF-8\"");
-        
-        doc.appendChild(xmlDeclaration);
-    }
-    
-    doc.appendChild( doc.createComment("Created using SireSim::Options") );
-    QDomElement top = doc.createElement("simoptions");
-    {
-        QDomElement version = doc.createElement("version");
-        version.appendChild( doc.createTextNode("1.0") );
-        top.appendChild(version);
-    }
-    
-    QDomElement elem = this->toDomElement(doc);
-    
-    top.appendChild(elem);
-    doc.appendChild(top);
-    
-    return doc.toString(2);
-}
 
 /** Return the options object represented by the passed XML data.
     Note that this is the structure of the options, and does not 
@@ -1122,7 +1259,7 @@ Options::Options(const Option &option) : Value()
     {
         QString key = option.key();
         opts.append(option.clone());
-        keys.insert(key,0);
+        kys.insert(key,0);
     }
 }
 
@@ -1149,7 +1286,7 @@ Options::Options(const QList<Option> &options, bool mutually_exclusive) : Value(
                             .arg(this->toXML())
                             .arg(Options(option).toXML()), CODELOC );
             }
-            else if (keys.contains(key))
+            else if (kys.contains(key))
             {
                 QStringList keynames;
                 
@@ -1163,12 +1300,12 @@ Options::Options(const QList<Option> &options, bool mutually_exclusive) : Value(
                         "You cannot create a series of options if two have a duplicated "
                         "keys! Options at indexes %1 and %2 have the same key (%3). "
                         "[ %4 ]")
-                            .arg(keys[key]).arg(opts.count())
+                            .arg(kys[key]).arg(opts.count())
                             .arg(key).arg(keynames.join(", ")),
                                 CODELOC );
             }
             else
-                keys.insert(key, opts.count());
+                kys.insert(key, opts.count());
             
             opts.append( option.clone() );
         }
@@ -1188,7 +1325,7 @@ Options::Options(const QList<Option> &options, bool mutually_exclusive) : Value(
 
 /** Copy constructor */
 Options::Options(const Options &other) 
-        : Value(other), opts(other.opts), keys(other.keys),
+        : Value(other), opts(other.opts), kys(other.kys),
           option_to_color(other.option_to_color),
           color_to_option(other.color_to_option),
           color_option(other.color_option)
@@ -1204,7 +1341,7 @@ Options& Options::operator=(const Options &other)
     if (this != &other)
     {
         opts = other.opts;
-        keys = other.keys;
+        kys = other.kys;
         option_to_color = other.option_to_color;
         color_to_option = other.color_to_option;
         color_option = other.color_option;
@@ -1246,6 +1383,49 @@ Options* Options::ptr_clone() const
     return new Options(*this);
 }
 
+/** Return the list of keys for all options that have been given 
+    user-supplied values. All other options have their default values. */
+QStringList Options::userKeys() const
+{
+    QStringList k;
+
+    for (int i=0; i<opts.count(); ++i)
+    {
+        if (opts.at(i)->asA<Option>().userIndicies().count() > 0)
+            k += opts.at(i)->asA<Option>().key();
+    }
+    
+    return k;
+}
+    
+/** Return the list of keys for all active options. These are the options
+    that have either been set by the user, or are the options which are not
+    excluded by other options (e.g. only one option from each color group is set) */
+QStringList Options::keys() const
+{
+    QStringList k;
+    
+    for (int i=0; i<opts.count(); ++i)
+    {
+        int color = option_to_color.value(i,0);
+        QString key = opts.at(i)->asA<Option>().key();
+    
+        if (color == 0)
+        {
+            k += key;
+        }
+        else
+        {
+            if (color_option.value(color,QString::null) == key)
+            {
+                k += key;
+            }
+        }
+    }
+    
+    return k;
+}
+
 int getIndex(QString key, const QHash<QString,int> &keys)
 {
     if (key.isEmpty())
@@ -1272,6 +1452,15 @@ int getIndex(QString key, const QHash<QString,int> &keys)
     }
 }
 
+/** Return the option with the passed key. Note that this will only return 
+    top-level options, and will not try to break the key into suboption types.
+    Note also that this will not try to work out if the option has been set,
+    or if it is excluded by any other options. */
+Option Options::operator[](QString key) const
+{
+    return opts.at( getIndex(key,kys) )->asA<Option>();
+}
+
 /** Return the options as they have been read from the passed parsed line */
 ValuePtr Options::fromConfig(detail::ParsedLine &line) const
 {
@@ -1292,7 +1481,7 @@ ValuePtr Options::fromConfig(detail::ParsedLine &line) const
     }
     else
     {
-        idx = keys.value(line.key.key, -1);
+        idx = kys.value(line.key.key, -1);
         key = line.key.key;
     }
 
@@ -1349,22 +1538,30 @@ ValuePtr Options::fromConfig(detail::ParsedLine &line) const
     }
 }
 
+/** Return the option associated with the passed key */
+Option Options::getOption(QString key) const
+{
+    return opts.at( getIndex(ParsedKey(key).key, kys) )->asA<Option>().getOption(key);
+}
+
 /** Return the value of the option with the passed key */
 ValuePtr Options::getValue(QString key) const
 {
-    return opts.at( getIndex(ParsedKey(key).key, keys) )->getValue(key);
+    return opts.at( getIndex(ParsedKey(key).key, kys) )->getValue(key);
 }
 
 /** Set the of the key 'key' to 'value'. Note that setting the value of 
     one mutually exclusive option will clear all values of the other
     mutually exclusive options in the same group */
-ValuePtr Options::setValue(QString key, const Value &value) const
+ValuePtr Options::fromValueString(QString key, QString value) const
 {
-    int idx = getIndex(ParsedKey(key).key, keys);
+    int idx = getIndex(ParsedKey(key).key, kys);
     
     ValuePtr old_option = opts.at(idx);
 
+    qDebug() << "Options: old_option->setValue(" << key << value << ")";
     ValuePtr new_option = old_option->setValue(key, value);
+    qDebug() << "COMPARE" << (old_option.get() == new_option.get());
 
     int color = option_to_color.value(idx, 0);
     
@@ -1386,7 +1583,7 @@ ValuePtr Options::setValue(QString key, const Value &value) const
                 
             Options ret(*this);
             
-            int old_color_index = getIndex(old_color_key, keys);
+            int old_color_index = getIndex(old_color_key, kys);
             
             ret.opts[old_color_index] = opts.at(old_color_index)->asA<Option>().clear();
             ret.color_option[color] = new_color_key;
@@ -1420,7 +1617,7 @@ ValuePtr Options::setValue(QString key, const Value &value) const
                 //the choice of color key has not changed
                 return ret.clone();
                 
-            int old_color_index = getIndex(old_color_key, keys);
+            int old_color_index = getIndex(old_color_key, kys);
             
             ret.opts[old_color_index] = opts.at(old_color_index)->asA<Option>().clear();
             ret.color_option[color] = new_color_key;
@@ -1462,11 +1659,11 @@ Options Options::add(const Options &other) const
     {
         bool overlaps = false;
         
-        if (keys.count() <= other.keys.count())
+        if (kys.count() <= other.kys.count())
         {
-            foreach (const QString &k, keys.keys())
+            foreach (const QString &k, kys.keys())
             {
-                if (other.keys.contains(k))
+                if (other.kys.contains(k))
                 {
                     overlaps = true;
                     break;
@@ -1475,9 +1672,9 @@ Options Options::add(const Options &other) const
         }
         else
         {
-            foreach (const QString &k, other.keys.keys())
+            foreach (const QString &k, other.kys.keys())
             {
-                if (keys.contains(k))
+                if (kys.contains(k))
                 {
                     overlaps = true;
                     break;
@@ -1489,8 +1686,8 @@ Options Options::add(const Options &other) const
             throw SireError::invalid_key( QObject::tr(
                     "Cannot add the options [ %1 ] to the options [ %2 ] as "
                     "some of the option names are duplicated!")
-                        .arg( QStringList(other.keys.keys()).join(", "), 
-                              QStringList(keys.keys()).join(", ") ), CODELOC );
+                        .arg( QStringList(other.kys.keys()).join(", "), 
+                              QStringList(kys.keys()).join(", ") ), CODELOC );
     }
 
     //the first option of the second group cannot be unnamed
@@ -1506,7 +1703,7 @@ Options Options::add(const Options &other) const
     
     for (int i=opts.count(); i<ret.opts.count(); ++i)
     {
-        ret.keys.insert(ret.opts.at(i)->asA<Option>().key(), i);
+        ret.kys.insert(ret.opts.at(i)->asA<Option>().key(), i);
     }
     
     //now sort out the color groups
