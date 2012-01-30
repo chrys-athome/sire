@@ -35,7 +35,7 @@ namespace bp = boost::python;
 
 SireSim::Option __copy__(const SireSim::Option &other){ return SireSim::Option(other); }
 
-const char* pvt_get_name(const SireSim::Option&){ return "SireSim::Option";}
+#include "Helpers/str.hpp"
 
 void register_Option_class(){
 
@@ -66,6 +66,16 @@ void register_Option_class(){
                 , clear_function_value );
         
         }
+        { //::SireSim::Option::count
+        
+            typedef int ( ::SireSim::Option::*count_function_type )(  ) const;
+            count_function_type count_function_value( &::SireSim::Option::count );
+            
+            Option_exposer.def( 
+                "count"
+                , count_function_value );
+        
+        }
         { //::SireSim::Option::defaultValue
         
             typedef ::SireSim::ValuePtr ( ::SireSim::Option::*defaultValue_function_type )(  ) const;
@@ -86,6 +96,17 @@ void register_Option_class(){
                 , description_function_value );
         
         }
+        { //::SireSim::Option::getOption
+        
+            typedef ::SireSim::Option ( ::SireSim::Option::*getOption_function_type )( ::QString ) const;
+            getOption_function_type getOption_function_value( &::SireSim::Option::getOption );
+            
+            Option_exposer.def( 
+                "getOption"
+                , getOption_function_value
+                , ( bp::arg("key") ) );
+        
+        }
         { //::SireSim::Option::getValue
         
             typedef ::SireSim::ValuePtr ( ::SireSim::Option::*getValue_function_type )( ::QString ) const;
@@ -99,13 +120,22 @@ void register_Option_class(){
         }
         { //::SireSim::Option::hasUserValue
         
-            typedef bool ( ::SireSim::Option::*hasUserValue_function_type )( int ) const;
+            typedef bool ( ::SireSim::Option::*hasUserValue_function_type )(  ) const;
             hasUserValue_function_type hasUserValue_function_value( &::SireSim::Option::hasUserValue );
             
             Option_exposer.def( 
                 "hasUserValue"
-                , hasUserValue_function_value
-                , ( bp::arg("index") ) );
+                , hasUserValue_function_value );
+        
+        }
+        { //::SireSim::Option::indicies
+        
+            typedef ::QList< int > ( ::SireSim::Option::*indicies_function_type )(  ) const;
+            indicies_function_type indicies_function_value( &::SireSim::Option::indicies );
+            
+            Option_exposer.def( 
+                "indicies"
+                , indicies_function_value );
         
         }
         { //::SireSim::Option::isNull
@@ -138,6 +168,16 @@ void register_Option_class(){
                 , key_function_value );
         
         }
+        { //::SireSim::Option::keys
+        
+            typedef ::QStringList ( ::SireSim::Option::*keys_function_type )(  ) const;
+            keys_function_type keys_function_value( &::SireSim::Option::keys );
+            
+            Option_exposer.def( 
+                "keys"
+                , keys_function_value );
+        
+        }
         Option_exposer.def( bp::self != bp::self );
         { //::SireSim::Option::operator=
         
@@ -152,15 +192,37 @@ void register_Option_class(){
         
         }
         Option_exposer.def( bp::self == bp::self );
+        { //::SireSim::Option::operator[]
+        
+            typedef ::SireSim::Option ( ::SireSim::Option::*__getitem___function_type )( int ) const;
+            __getitem___function_type __getitem___function_value( &::SireSim::Option::operator[] );
+            
+            Option_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("index") ) );
+        
+        }
+        { //::SireSim::Option::operator[]
+        
+            typedef ::SireSim::Option ( ::SireSim::Option::*__getitem___function_type )( ::QString ) const;
+            __getitem___function_type __getitem___function_value( &::SireSim::Option::operator[] );
+            
+            Option_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("key") ) );
+        
+        }
         { //::SireSim::Option::setValue
         
-            typedef ::SireSim::ValuePtr ( ::SireSim::Option::*setValue_function_type )( ::QString,::SireSim::Value const & ) const;
+            typedef ::SireSim::Option ( ::SireSim::Option::*setValue_function_type )( ::QString ) const;
             setValue_function_type setValue_function_value( &::SireSim::Option::setValue );
             
             Option_exposer.def( 
                 "setValue"
                 , setValue_function_value
-                , ( bp::arg("key"), bp::arg("value") ) );
+                , ( bp::arg("value") ) );
         
         }
         { //::SireSim::Option::typeName
@@ -173,15 +235,34 @@ void register_Option_class(){
                 , typeName_function_value );
         
         }
-        { //::SireSim::Option::userValue
+        { //::SireSim::Option::userIndicies
         
-            typedef ::SireSim::ValuePtr ( ::SireSim::Option::*userValue_function_type )( int ) const;
-            userValue_function_type userValue_function_value( &::SireSim::Option::userValue );
+            typedef ::QList< int > ( ::SireSim::Option::*userIndicies_function_type )(  ) const;
+            userIndicies_function_type userIndicies_function_value( &::SireSim::Option::userIndicies );
             
             Option_exposer.def( 
-                "userValue"
-                , userValue_function_value
-                , ( bp::arg("index") ) );
+                "userIndicies"
+                , userIndicies_function_value );
+        
+        }
+        { //::SireSim::Option::userKeys
+        
+            typedef ::QStringList ( ::SireSim::Option::*userKeys_function_type )(  ) const;
+            userKeys_function_type userKeys_function_value( &::SireSim::Option::userKeys );
+            
+            Option_exposer.def( 
+                "userKeys"
+                , userKeys_function_value );
+        
+        }
+        { //::SireSim::Option::value
+        
+            typedef ::SireSim::ValuePtr ( ::SireSim::Option::*value_function_type )(  ) const;
+            value_function_type value_function_value( &::SireSim::Option::value );
+            
+            Option_exposer.def( 
+                "value"
+                , value_function_value );
         
         }
         { //::SireSim::Option::what
@@ -198,8 +279,8 @@ void register_Option_class(){
         Option_exposer.def( "__copy__", &__copy__);
         Option_exposer.def( "__deepcopy__", &__copy__);
         Option_exposer.def( "clone", &__copy__);
-        Option_exposer.def( "__str__", &pvt_get_name);
-        Option_exposer.def( "__repr__", &pvt_get_name);
+        Option_exposer.def( "__str__", &__str__< ::SireSim::Option > );
+        Option_exposer.def( "__repr__", &__str__< ::SireSim::Option > );
     }
 
 }

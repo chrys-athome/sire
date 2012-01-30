@@ -21,7 +21,7 @@ namespace bp = boost::python;
 
 SireSim::FloatValue __copy__(const SireSim::FloatValue &other){ return SireSim::FloatValue(other); }
 
-const char* pvt_get_name(const SireSim::FloatValue&){ return "SireSim::FloatValue";}
+#include "Helpers/str.hpp"
 
 void register_FloatValue_class(){
 
@@ -30,19 +30,9 @@ void register_FloatValue_class(){
         FloatValue_exposer_t FloatValue_exposer = FloatValue_exposer_t( "FloatValue", bp::init< >() );
         bp::scope FloatValue_scope( FloatValue_exposer );
         FloatValue_exposer.def( bp::init< double >(( bp::arg("val") )) );
+        FloatValue_exposer.def( bp::init< QString >(( bp::arg("value") )) );
         FloatValue_exposer.def( bp::init< QDomElement >(( bp::arg("elem") )) );
         FloatValue_exposer.def( bp::init< SireSim::FloatValue const & >(( bp::arg("other") )) );
-        { //::SireSim::FloatValue::getValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::FloatValue::*getValue_function_type )( ::QString ) const;
-            getValue_function_type getValue_function_value( &::SireSim::FloatValue::getValue );
-            
-            FloatValue_exposer.def( 
-                "getValue"
-                , getValue_function_value
-                , ( bp::arg("key") ) );
-        
-        }
         FloatValue_exposer.def( bp::self != bp::self );
         { //::SireSim::FloatValue::operator=
         
@@ -57,17 +47,6 @@ void register_FloatValue_class(){
         
         }
         FloatValue_exposer.def( bp::self == bp::self );
-        { //::SireSim::FloatValue::setValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::FloatValue::*setValue_function_type )( ::QString,::SireSim::Value const & ) const;
-            setValue_function_type setValue_function_value( &::SireSim::FloatValue::setValue );
-            
-            FloatValue_exposer.def( 
-                "setValue"
-                , setValue_function_value
-                , ( bp::arg("key"), bp::arg("value") ) );
-        
-        }
         { //::SireSim::FloatValue::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -138,8 +117,8 @@ void register_FloatValue_class(){
         FloatValue_exposer.def( "__copy__", &__copy__);
         FloatValue_exposer.def( "__deepcopy__", &__copy__);
         FloatValue_exposer.def( "clone", &__copy__);
-        FloatValue_exposer.def( "__str__", &pvt_get_name);
-        FloatValue_exposer.def( "__repr__", &pvt_get_name);
+        FloatValue_exposer.def( "__str__", &__str__< ::SireSim::FloatValue > );
+        FloatValue_exposer.def( "__repr__", &__str__< ::SireSim::FloatValue > );
     }
 
 }

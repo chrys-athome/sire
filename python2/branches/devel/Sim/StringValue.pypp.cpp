@@ -21,7 +21,7 @@ namespace bp = boost::python;
 
 SireSim::StringValue __copy__(const SireSim::StringValue &other){ return SireSim::StringValue(other); }
 
-const char* pvt_get_name(const SireSim::StringValue&){ return "SireSim::StringValue";}
+#include "Helpers/str.hpp"
 
 void register_StringValue_class(){
 
@@ -29,20 +29,9 @@ void register_StringValue_class(){
         typedef bp::class_< SireSim::StringValue, bp::bases< SireSim::Value > > StringValue_exposer_t;
         StringValue_exposer_t StringValue_exposer = StringValue_exposer_t( "StringValue", bp::init< >() );
         bp::scope StringValue_scope( StringValue_exposer );
-        StringValue_exposer.def( bp::init< QString const & >(( bp::arg("value") )) );
+        StringValue_exposer.def( bp::init< QString >(( bp::arg("value") )) );
         StringValue_exposer.def( bp::init< QDomElement >(( bp::arg("elem") )) );
         StringValue_exposer.def( bp::init< SireSim::StringValue const & >(( bp::arg("other") )) );
-        { //::SireSim::StringValue::getValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::StringValue::*getValue_function_type )( ::QString ) const;
-            getValue_function_type getValue_function_value( &::SireSim::StringValue::getValue );
-            
-            StringValue_exposer.def( 
-                "getValue"
-                , getValue_function_value
-                , ( bp::arg("key") ) );
-        
-        }
         StringValue_exposer.def( bp::self != bp::self );
         { //::SireSim::StringValue::operator=
         
@@ -57,17 +46,6 @@ void register_StringValue_class(){
         
         }
         StringValue_exposer.def( bp::self == bp::self );
-        { //::SireSim::StringValue::setValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::StringValue::*setValue_function_type )( ::QString,::SireSim::Value const & ) const;
-            setValue_function_type setValue_function_value( &::SireSim::StringValue::setValue );
-            
-            StringValue_exposer.def( 
-                "setValue"
-                , setValue_function_value
-                , ( bp::arg("key"), bp::arg("value") ) );
-        
-        }
         { //::SireSim::StringValue::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -102,8 +80,8 @@ void register_StringValue_class(){
         StringValue_exposer.def( "__copy__", &__copy__);
         StringValue_exposer.def( "__deepcopy__", &__copy__);
         StringValue_exposer.def( "clone", &__copy__);
-        StringValue_exposer.def( "__str__", &pvt_get_name);
-        StringValue_exposer.def( "__repr__", &pvt_get_name);
+        StringValue_exposer.def( "__str__", &__str__< ::SireSim::StringValue > );
+        StringValue_exposer.def( "__repr__", &__str__< ::SireSim::StringValue > );
     }
 
 }

@@ -35,7 +35,7 @@ namespace bp = boost::python;
 
 SireSim::Options __copy__(const SireSim::Options &other){ return SireSim::Options(other); }
 
-const char* pvt_get_name(const SireSim::Options&){ return "SireSim::Options";}
+#include "Helpers/str.hpp"
 
 void register_Options_class(){
 
@@ -113,6 +113,17 @@ void register_Options_class(){
                 , ( bp::arg("xmlfile"), bp::arg("path")=::QStringList( ) ) );
         
         }
+        { //::SireSim::Options::getOption
+        
+            typedef ::SireSim::Option ( ::SireSim::Options::*getOption_function_type )( ::QString ) const;
+            getOption_function_type getOption_function_value( &::SireSim::Options::getOption );
+            
+            Options_exposer.def( 
+                "getOption"
+                , getOption_function_value
+                , ( bp::arg("key") ) );
+        
+        }
         { //::SireSim::Options::getValue
         
             typedef ::SireSim::ValuePtr ( ::SireSim::Options::*getValue_function_type )( ::QString ) const;
@@ -122,6 +133,16 @@ void register_Options_class(){
                 "getValue"
                 , getValue_function_value
                 , ( bp::arg("key") ) );
+        
+        }
+        { //::SireSim::Options::keys
+        
+            typedef ::QStringList ( ::SireSim::Options::*keys_function_type )(  ) const;
+            keys_function_type keys_function_value( &::SireSim::Options::keys );
+            
+            Options_exposer.def( 
+                "keys"
+                , keys_function_value );
         
         }
         Options_exposer.def( bp::self != bp::self );
@@ -139,6 +160,17 @@ void register_Options_class(){
         
         }
         Options_exposer.def( bp::self == bp::self );
+        { //::SireSim::Options::operator[]
+        
+            typedef ::SireSim::Option ( ::SireSim::Options::*__getitem___function_type )( ::QString ) const;
+            __getitem___function_type __getitem___function_value( &::SireSim::Options::operator[] );
+            
+            Options_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("key") ) );
+        
+        }
         { //::SireSim::Options::options
         
             typedef ::QList< SireSim::Option > ( ::SireSim::Options::*options_function_type )(  ) const;
@@ -149,27 +181,6 @@ void register_Options_class(){
                 , options_function_value );
         
         }
-        { //::SireSim::Options::setValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::Options::*setValue_function_type )( ::QString,::SireSim::Value const & ) const;
-            setValue_function_type setValue_function_value( &::SireSim::Options::setValue );
-            
-            Options_exposer.def( 
-                "setValue"
-                , setValue_function_value
-                , ( bp::arg("key"), bp::arg("value") ) );
-        
-        }
-        { //::SireSim::Options::toXML
-        
-            typedef ::QString ( ::SireSim::Options::*toXML_function_type )(  ) const;
-            toXML_function_type toXML_function_value( &::SireSim::Options::toXML );
-            
-            Options_exposer.def( 
-                "toXML"
-                , toXML_function_value );
-        
-        }
         { //::SireSim::Options::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -178,6 +189,16 @@ void register_Options_class(){
             Options_exposer.def( 
                 "typeName"
                 , typeName_function_value );
+        
+        }
+        { //::SireSim::Options::userKeys
+        
+            typedef ::QStringList ( ::SireSim::Options::*userKeys_function_type )(  ) const;
+            userKeys_function_type userKeys_function_value( &::SireSim::Options::userKeys );
+            
+            Options_exposer.def( 
+                "userKeys"
+                , userKeys_function_value );
         
         }
         { //::SireSim::Options::what
@@ -196,8 +217,8 @@ void register_Options_class(){
         Options_exposer.def( "__copy__", &__copy__);
         Options_exposer.def( "__deepcopy__", &__copy__);
         Options_exposer.def( "clone", &__copy__);
-        Options_exposer.def( "__str__", &pvt_get_name);
-        Options_exposer.def( "__repr__", &pvt_get_name);
+        Options_exposer.def( "__str__", &__str__< ::SireSim::Options > );
+        Options_exposer.def( "__repr__", &__str__< ::SireSim::Options > );
     }
 
 }

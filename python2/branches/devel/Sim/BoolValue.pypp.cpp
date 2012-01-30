@@ -21,7 +21,7 @@ namespace bp = boost::python;
 
 SireSim::BoolValue __copy__(const SireSim::BoolValue &other){ return SireSim::BoolValue(other); }
 
-const char* pvt_get_name(const SireSim::BoolValue&){ return "SireSim::BoolValue";}
+#include "Helpers/str.hpp"
 
 void register_BoolValue_class(){
 
@@ -30,19 +30,9 @@ void register_BoolValue_class(){
         BoolValue_exposer_t BoolValue_exposer = BoolValue_exposer_t( "BoolValue", bp::init< >() );
         bp::scope BoolValue_scope( BoolValue_exposer );
         BoolValue_exposer.def( bp::init< bool >(( bp::arg("value") )) );
+        BoolValue_exposer.def( bp::init< QString >(( bp::arg("value") )) );
         BoolValue_exposer.def( bp::init< QDomElement >(( bp::arg("elem") )) );
         BoolValue_exposer.def( bp::init< SireSim::BoolValue const & >(( bp::arg("other") )) );
-        { //::SireSim::BoolValue::getValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::BoolValue::*getValue_function_type )( ::QString ) const;
-            getValue_function_type getValue_function_value( &::SireSim::BoolValue::getValue );
-            
-            BoolValue_exposer.def( 
-                "getValue"
-                , getValue_function_value
-                , ( bp::arg("key") ) );
-        
-        }
         BoolValue_exposer.def( bp::self != bp::self );
         { //::SireSim::BoolValue::operator=
         
@@ -57,17 +47,6 @@ void register_BoolValue_class(){
         
         }
         BoolValue_exposer.def( bp::self == bp::self );
-        { //::SireSim::BoolValue::setValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::BoolValue::*setValue_function_type )( ::QString,::SireSim::Value const & ) const;
-            setValue_function_type setValue_function_value( &::SireSim::BoolValue::setValue );
-            
-            BoolValue_exposer.def( 
-                "setValue"
-                , setValue_function_value
-                , ( bp::arg("key"), bp::arg("value") ) );
-        
-        }
         { //::SireSim::BoolValue::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -102,8 +81,8 @@ void register_BoolValue_class(){
         BoolValue_exposer.def( "__copy__", &__copy__);
         BoolValue_exposer.def( "__deepcopy__", &__copy__);
         BoolValue_exposer.def( "clone", &__copy__);
-        BoolValue_exposer.def( "__str__", &pvt_get_name);
-        BoolValue_exposer.def( "__repr__", &pvt_get_name);
+        BoolValue_exposer.def( "__str__", &__str__< ::SireSim::BoolValue > );
+        BoolValue_exposer.def( "__repr__", &__str__< ::SireSim::BoolValue > );
     }
 
 }

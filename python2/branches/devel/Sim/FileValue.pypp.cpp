@@ -21,7 +21,7 @@ namespace bp = boost::python;
 
 SireSim::FileValue __copy__(const SireSim::FileValue &other){ return SireSim::FileValue(other); }
 
-const char* pvt_get_name(const SireSim::FileValue&){ return "SireSim::FileValue";}
+#include "Helpers/str.hpp"
 
 void register_FileValue_class(){
 
@@ -29,20 +29,9 @@ void register_FileValue_class(){
         typedef bp::class_< SireSim::FileValue, bp::bases< SireSim::Value > > FileValue_exposer_t;
         FileValue_exposer_t FileValue_exposer = FileValue_exposer_t( "FileValue", bp::init< >() );
         bp::scope FileValue_scope( FileValue_exposer );
-        FileValue_exposer.def( bp::init< QString const & >(( bp::arg("file") )) );
+        FileValue_exposer.def( bp::init< QString >(( bp::arg("file") )) );
         FileValue_exposer.def( bp::init< QDomElement >(( bp::arg("elem") )) );
         FileValue_exposer.def( bp::init< SireSim::FileValue const & >(( bp::arg("other") )) );
-        { //::SireSim::FileValue::getValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::FileValue::*getValue_function_type )( ::QString ) const;
-            getValue_function_type getValue_function_value( &::SireSim::FileValue::getValue );
-            
-            FileValue_exposer.def( 
-                "getValue"
-                , getValue_function_value
-                , ( bp::arg("key") ) );
-        
-        }
         FileValue_exposer.def( bp::self != bp::self );
         { //::SireSim::FileValue::operator=
         
@@ -57,17 +46,6 @@ void register_FileValue_class(){
         
         }
         FileValue_exposer.def( bp::self == bp::self );
-        { //::SireSim::FileValue::setValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::FileValue::*setValue_function_type )( ::QString,::SireSim::Value const & ) const;
-            setValue_function_type setValue_function_value( &::SireSim::FileValue::setValue );
-            
-            FileValue_exposer.def( 
-                "setValue"
-                , setValue_function_value
-                , ( bp::arg("key"), bp::arg("value") ) );
-        
-        }
         { //::SireSim::FileValue::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -102,8 +80,8 @@ void register_FileValue_class(){
         FileValue_exposer.def( "__copy__", &__copy__);
         FileValue_exposer.def( "__deepcopy__", &__copy__);
         FileValue_exposer.def( "clone", &__copy__);
-        FileValue_exposer.def( "__str__", &pvt_get_name);
-        FileValue_exposer.def( "__repr__", &pvt_get_name);
+        FileValue_exposer.def( "__str__", &__str__< ::SireSim::FileValue > );
+        FileValue_exposer.def( "__repr__", &__str__< ::SireSim::FileValue > );
     }
 
 }

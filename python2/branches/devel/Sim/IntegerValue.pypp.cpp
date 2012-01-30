@@ -21,7 +21,7 @@ namespace bp = boost::python;
 
 SireSim::IntegerValue __copy__(const SireSim::IntegerValue &other){ return SireSim::IntegerValue(other); }
 
-const char* pvt_get_name(const SireSim::IntegerValue&){ return "SireSim::IntegerValue";}
+#include "Helpers/str.hpp"
 
 void register_IntegerValue_class(){
 
@@ -30,19 +30,9 @@ void register_IntegerValue_class(){
         IntegerValue_exposer_t IntegerValue_exposer = IntegerValue_exposer_t( "IntegerValue", bp::init< >() );
         bp::scope IntegerValue_scope( IntegerValue_exposer );
         IntegerValue_exposer.def( bp::init< qint64 >(( bp::arg("val") )) );
+        IntegerValue_exposer.def( bp::init< QString >(( bp::arg("val") )) );
         IntegerValue_exposer.def( bp::init< QDomElement >(( bp::arg("elem") )) );
         IntegerValue_exposer.def( bp::init< SireSim::IntegerValue const & >(( bp::arg("other") )) );
-        { //::SireSim::IntegerValue::getValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::IntegerValue::*getValue_function_type )( ::QString ) const;
-            getValue_function_type getValue_function_value( &::SireSim::IntegerValue::getValue );
-            
-            IntegerValue_exposer.def( 
-                "getValue"
-                , getValue_function_value
-                , ( bp::arg("key") ) );
-        
-        }
         IntegerValue_exposer.def( bp::self != bp::self );
         { //::SireSim::IntegerValue::operator=
         
@@ -57,17 +47,6 @@ void register_IntegerValue_class(){
         
         }
         IntegerValue_exposer.def( bp::self == bp::self );
-        { //::SireSim::IntegerValue::setValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::IntegerValue::*setValue_function_type )( ::QString,::SireSim::Value const & ) const;
-            setValue_function_type setValue_function_value( &::SireSim::IntegerValue::setValue );
-            
-            IntegerValue_exposer.def( 
-                "setValue"
-                , setValue_function_value
-                , ( bp::arg("key"), bp::arg("value") ) );
-        
-        }
         { //::SireSim::IntegerValue::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -138,8 +117,8 @@ void register_IntegerValue_class(){
         IntegerValue_exposer.def( "__copy__", &__copy__);
         IntegerValue_exposer.def( "__deepcopy__", &__copy__);
         IntegerValue_exposer.def( "clone", &__copy__);
-        IntegerValue_exposer.def( "__str__", &pvt_get_name);
-        IntegerValue_exposer.def( "__repr__", &pvt_get_name);
+        IntegerValue_exposer.def( "__str__", &__str__< ::SireSim::IntegerValue > );
+        IntegerValue_exposer.def( "__repr__", &__str__< ::SireSim::IntegerValue > );
     }
 
 }

@@ -21,7 +21,7 @@ namespace bp = boost::python;
 
 SireSim::DirValue __copy__(const SireSim::DirValue &other){ return SireSim::DirValue(other); }
 
-const char* pvt_get_name(const SireSim::DirValue&){ return "SireSim::DirValue";}
+#include "Helpers/str.hpp"
 
 void register_DirValue_class(){
 
@@ -29,20 +29,9 @@ void register_DirValue_class(){
         typedef bp::class_< SireSim::DirValue, bp::bases< SireSim::Value > > DirValue_exposer_t;
         DirValue_exposer_t DirValue_exposer = DirValue_exposer_t( "DirValue", bp::init< >() );
         bp::scope DirValue_scope( DirValue_exposer );
-        DirValue_exposer.def( bp::init< QString const & >(( bp::arg("dir") )) );
+        DirValue_exposer.def( bp::init< QString >(( bp::arg("dir") )) );
         DirValue_exposer.def( bp::init< QDomElement >(( bp::arg("elem") )) );
         DirValue_exposer.def( bp::init< SireSim::DirValue const & >(( bp::arg("other") )) );
-        { //::SireSim::DirValue::getValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::DirValue::*getValue_function_type )( ::QString ) const;
-            getValue_function_type getValue_function_value( &::SireSim::DirValue::getValue );
-            
-            DirValue_exposer.def( 
-                "getValue"
-                , getValue_function_value
-                , ( bp::arg("key") ) );
-        
-        }
         DirValue_exposer.def( bp::self != bp::self );
         { //::SireSim::DirValue::operator=
         
@@ -57,17 +46,6 @@ void register_DirValue_class(){
         
         }
         DirValue_exposer.def( bp::self == bp::self );
-        { //::SireSim::DirValue::setValue
-        
-            typedef ::SireSim::ValuePtr ( ::SireSim::DirValue::*setValue_function_type )( ::QString,::SireSim::Value const & ) const;
-            setValue_function_type setValue_function_value( &::SireSim::DirValue::setValue );
-            
-            DirValue_exposer.def( 
-                "setValue"
-                , setValue_function_value
-                , ( bp::arg("key"), bp::arg("value") ) );
-        
-        }
         { //::SireSim::DirValue::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -102,8 +80,8 @@ void register_DirValue_class(){
         DirValue_exposer.def( "__copy__", &__copy__);
         DirValue_exposer.def( "__deepcopy__", &__copy__);
         DirValue_exposer.def( "clone", &__copy__);
-        DirValue_exposer.def( "__str__", &pvt_get_name);
-        DirValue_exposer.def( "__repr__", &pvt_get_name);
+        DirValue_exposer.def( "__str__", &__str__< ::SireSim::DirValue > );
+        DirValue_exposer.def( "__repr__", &__str__< ::SireSim::DirValue > );
     }
 
 }

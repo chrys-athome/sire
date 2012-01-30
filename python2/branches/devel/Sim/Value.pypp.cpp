@@ -21,7 +21,7 @@ namespace bp = boost::python;
 
 #include "value.h"
 
-const char* pvt_get_name(const SireSim::Value&){ return "SireSim::Value";}
+#include "Helpers/str.hpp"
 
 void register_Value_class(){
 
@@ -40,20 +40,31 @@ void register_Value_class(){
                 , ( bp::arg("key") ) );
         
         }
-        { //::SireSim::Value::operator[]
+        { //::SireSim::Value::setValue
         
-            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*__getitem___function_type )( ::QString ) const;
-            __getitem___function_type __getitem___function_value( &::SireSim::Value::operator[] );
+            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*setValue_function_type )( ::QString,::QString ) const;
+            setValue_function_type setValue_function_value( &::SireSim::Value::setValue );
             
             Value_exposer.def( 
-                "__getitem__"
-                , __getitem___function_value
-                , ( bp::arg("key") ) );
+                "setValue"
+                , setValue_function_value
+                , ( bp::arg("key"), bp::arg("value") ) );
         
         }
         { //::SireSim::Value::setValue
         
-            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*setValue_function_type )( ::QString,::SireSim::Value const & ) const;
+            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*setValue_function_type )( ::QString,double ) const;
+            setValue_function_type setValue_function_value( &::SireSim::Value::setValue );
+            
+            Value_exposer.def( 
+                "setValue"
+                , setValue_function_value
+                , ( bp::arg("key"), bp::arg("value") ) );
+        
+        }
+        { //::SireSim::Value::setValue
+        
+            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*setValue_function_type )( ::QString,::qint64 ) const;
             setValue_function_type setValue_function_value( &::SireSim::Value::setValue );
             
             Value_exposer.def( 
@@ -73,6 +84,26 @@ void register_Value_class(){
                 , ( bp::arg("include_help")=(bool)(false) ) );
         
         }
+        { //::SireSim::Value::toString
+        
+            typedef ::QString ( ::SireSim::Value::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireSim::Value::toString );
+            
+            Value_exposer.def( 
+                "toString"
+                , toString_function_value );
+        
+        }
+        { //::SireSim::Value::toXML
+        
+            typedef ::QString ( ::SireSim::Value::*toXML_function_type )(  ) const;
+            toXML_function_type toXML_function_value( &::SireSim::Value::toXML );
+            
+            Value_exposer.def( 
+                "toXML"
+                , toXML_function_value );
+        
+        }
         { //::SireSim::Value::what
         
             typedef char const * ( ::SireSim::Value::*what_function_type )(  ) const;
@@ -84,8 +115,8 @@ void register_Value_class(){
         
         }
         bp::register_ptr_to_python< boost::shared_ptr< SireSim::Value > >();
-        Value_exposer.def( "__str__", &pvt_get_name);
-        Value_exposer.def( "__repr__", &pvt_get_name);
+        Value_exposer.def( "__str__", &__str__< ::SireSim::Value > );
+        Value_exposer.def( "__repr__", &__str__< ::SireSim::Value > );
     }
 
 }
