@@ -106,11 +106,11 @@ public:
     
     ValuePtr clone() const;
     
-    virtual ValuePtr getValue(QString key) const;
+    virtual ValuePtr getNestedValue(QString key) const;
     
-    ValuePtr setValue(QString key, QString value) const;
-    ValuePtr setValue(QString key, double value) const;
-    ValuePtr setValue(QString key, qint64 value) const;
+    ValuePtr setNestedValue(QString key, QString value) const;
+    ValuePtr setNestedValue(QString key, double value) const;
+    ValuePtr setNestedValue(QString key, qint64 value) const;
     
     template<class T>
     bool isA() const

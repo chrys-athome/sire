@@ -142,7 +142,7 @@ ValuePtr Value::fromValueString(QString key, QString value) const
     return ValuePtr();
 }
 
-ValuePtr Value::setValue(QString key, QString value) const
+ValuePtr Value::setNestedValue(QString key, QString value) const
 {
     if (this->isContainer())
     {
@@ -157,22 +157,21 @@ ValuePtr Value::setValue(QString key, QString value) const
                     .arg(this->what())
                     .arg(key), CODELOC );
 
-        qDebug() << "Value::fromValueString(" << value << ")";
         return this->fromValueString(value);
     }
 }
 
-ValuePtr Value::setValue(QString key, double value) const
+ValuePtr Value::setNestedValue(QString key, double value) const
 {
-    return this->setValue(key, QString::number(value, 'g', 12));
+    return this->setNestedValue(key, QString::number(value, 'g', 12));
 }
 
-ValuePtr Value::setValue(QString key, qint64 value) const
+ValuePtr Value::setNestedValue(QString key, qint64 value) const
 {
-    return this->setValue(key, QString::number(value));
+    return this->setNestedValue(key, QString::number(value));
 }
 
-ValuePtr Value::getValue(QString key) const
+ValuePtr Value::getNestedValue(QString key) const
 {
     if (not key.isEmpty())
         throw SireError::invalid_key( QObject::tr(

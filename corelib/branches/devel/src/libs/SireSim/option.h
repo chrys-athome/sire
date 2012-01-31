@@ -74,10 +74,15 @@ public:
     int count() const;
     
     QList<int> indicies() const;
-    QList<int> userIndicies() const;
+    QList<int> indiciesWithValue() const;
+    
+    bool hasIndiciesWithValue() const;
     
     QStringList keys() const;
-    QStringList userKeys() const;
+    QStringList keysWithValue() const;
+    
+    bool hasSubOptions() const;
+    bool hasValue(QString key) const;
     
     const char* what() const;
     static const char* typeName();
@@ -86,23 +91,19 @@ public:
     
     ValuePtr clear() const;
     
-    ValuePtr getValue(QString key) const;
-    
-    Option getOption(QString key) const;
-    
     QString key() const;
     QString description() const;
     
     bool isOptional() const;
     bool allowMultiple() const;
-    
+
+    bool hasValue() const;
     ValuePtr value() const;
     
     ValuePtr defaultValue() const;
-
-    bool hasUserValue() const;
-
-    Option setValue(QString value) const;
+    
+    ValuePtr getNestedValue(QString key) const;
+    Option getNestedOption(QString key) const;
 
 protected:
     Option* ptr_clone() const;
@@ -173,19 +174,18 @@ public:
     Option operator[](QString key) const;
     
     QStringList keys() const;
-    QStringList userKeys() const;
+    QStringList keysWithValue() const;
+
+    bool hasValue(QString key) const;
+    bool hasValue() const;
+    
+    bool hasSubOptions() const;
 
     Options fromConfig(QString text) const;
     Options fromConfigFile(QString configfile) const;
 
     static Options fromXML(QString xml, QStringList path=QStringList());
     static Options fromXMLFile(QString xmlfile, QStringList path=QStringList());
-
-    // QString toConfig() const; is contained in Value
-    
-    ValuePtr getValue(QString key) const;
-    
-    Option getOption(QString key) const;
     
     ValuePtr clear() const;
     
@@ -194,6 +194,9 @@ public:
     Options add(const Options &other) const;
     
     Options operator+(const Options &other) const;
+
+    ValuePtr getNestedValue(QString key) const;
+    Option getNestedOption(QString key) const;
 
 protected:
     Options* ptr_clone() const;

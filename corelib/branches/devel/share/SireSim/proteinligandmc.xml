@@ -116,26 +116,45 @@
         </value>
       </option>
 
-      <option allow_multiple="true" optional="false">
+      <option allow_multiple="true" optional="true">
         <key>run</key>
         <description>Control exactly what should be performed during a simulation.</description>
         <value>
           <options mutually_exclusive="true">
             <option>
-              <description>Set the number of moves in the simulation.</description>
+              <key>num_moves</key>
+              <description>
+                Set the number of moves in the simulation. Monitors will be active during this moves.
+              </description>
               <value><integer minimum="0">0</integer></value>
             </option>
 
             <option>
               <key>equilibrate</key>
-              <description>Set the number of equilibration moves in the simulation.</description>
-              <value><integer minimum="0">0</integer></value>
+              <description>
+                 Add a block of equilibration. Monitors are not active during equilibration.
+              </description>
+              <value>
+                <option>
+                  <key>num_moves</key>
+                  <description>Set the number of moves of equilibration.</description>
+                  <value><integer minimum="0">0</integer></value>
+                </option>
+              </value>
             </option>
 
             <option>
               <key>simulate</key>
-              <description>Set the number of moves in the simulation.</description>
-              <value><integer minimum="0">0</integer></value>
+              <description>
+                Add a block of simulation. Monitors are active during simulation blocks.
+              </description>
+              <value>
+                <option>
+                  <key>num_moves</key>
+                  <description>Set the number of moves of simulation.</description>
+                  <value><integer minimum="0">0</integer></value>
+                </option>
+              </value>
             </option>
 
             <include file="mcweights_options.xml"/>
