@@ -9,6 +9,8 @@
 
 #include "DirValue.pypp.hpp"
 
+#include "EnumValue.pypp.hpp"
+
 #include "FileValue.pypp.hpp"
 
 #include "FloatValue.pypp.hpp"
@@ -47,6 +49,8 @@ BOOST_PYTHON_MODULE(_Sim){
     register_BoolValue_class();
 
     register_DirValue_class();
+
+    register_EnumValue_class();
 
     register_FileValue_class();
 

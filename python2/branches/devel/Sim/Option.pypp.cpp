@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "option.h"
 
+#include "tostring.h"
+
 #include <QDebug>
 
 #include <QDir>

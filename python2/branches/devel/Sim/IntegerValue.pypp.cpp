@@ -13,9 +13,13 @@ namespace bp = boost::python;
 
 #include "values.h"
 
+#include <QDebug>
+
 #include <QDomDocument>
 
 #include <QDomElement>
+
+#include <QSet>
 
 #include "values.h"
 

@@ -2,6 +2,7 @@
 set ( PYPP_SOURCES
        BoolValue.pypp.cpp
        DirValue.pypp.cpp
+       EnumValue.pypp.cpp
        FileValue.pypp.cpp
        FloatValue.pypp.cpp
        IntegerValue.pypp.cpp
