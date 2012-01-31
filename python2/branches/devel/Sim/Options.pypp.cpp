@@ -113,26 +113,57 @@ void register_Options_class(){
                 , ( bp::arg("xmlfile"), bp::arg("path")=::QStringList( ) ) );
         
         }
-        { //::SireSim::Options::getOption
+        { //::SireSim::Options::getNestedOption
         
-            typedef ::SireSim::Option ( ::SireSim::Options::*getOption_function_type )( ::QString ) const;
-            getOption_function_type getOption_function_value( &::SireSim::Options::getOption );
+            typedef ::SireSim::Option ( ::SireSim::Options::*getNestedOption_function_type )( ::QString ) const;
+            getNestedOption_function_type getNestedOption_function_value( &::SireSim::Options::getNestedOption );
             
             Options_exposer.def( 
-                "getOption"
-                , getOption_function_value
+                "getNestedOption"
+                , getNestedOption_function_value
                 , ( bp::arg("key") ) );
         
         }
-        { //::SireSim::Options::getValue
+        { //::SireSim::Options::getNestedValue
         
-            typedef ::SireSim::ValuePtr ( ::SireSim::Options::*getValue_function_type )( ::QString ) const;
-            getValue_function_type getValue_function_value( &::SireSim::Options::getValue );
+            typedef ::SireSim::ValuePtr ( ::SireSim::Options::*getNestedValue_function_type )( ::QString ) const;
+            getNestedValue_function_type getNestedValue_function_value( &::SireSim::Options::getNestedValue );
             
             Options_exposer.def( 
-                "getValue"
-                , getValue_function_value
+                "getNestedValue"
+                , getNestedValue_function_value
                 , ( bp::arg("key") ) );
+        
+        }
+        { //::SireSim::Options::hasSubOptions
+        
+            typedef bool ( ::SireSim::Options::*hasSubOptions_function_type )(  ) const;
+            hasSubOptions_function_type hasSubOptions_function_value( &::SireSim::Options::hasSubOptions );
+            
+            Options_exposer.def( 
+                "hasSubOptions"
+                , hasSubOptions_function_value );
+        
+        }
+        { //::SireSim::Options::hasValue
+        
+            typedef bool ( ::SireSim::Options::*hasValue_function_type )( ::QString ) const;
+            hasValue_function_type hasValue_function_value( &::SireSim::Options::hasValue );
+            
+            Options_exposer.def( 
+                "hasValue"
+                , hasValue_function_value
+                , ( bp::arg("key") ) );
+        
+        }
+        { //::SireSim::Options::hasValue
+        
+            typedef bool ( ::SireSim::Options::*hasValue_function_type )(  ) const;
+            hasValue_function_type hasValue_function_value( &::SireSim::Options::hasValue );
+            
+            Options_exposer.def( 
+                "hasValue"
+                , hasValue_function_value );
         
         }
         { //::SireSim::Options::keys
@@ -143,6 +174,16 @@ void register_Options_class(){
             Options_exposer.def( 
                 "keys"
                 , keys_function_value );
+        
+        }
+        { //::SireSim::Options::keysWithValue
+        
+            typedef ::QStringList ( ::SireSim::Options::*keysWithValue_function_type )(  ) const;
+            keysWithValue_function_type keysWithValue_function_value( &::SireSim::Options::keysWithValue );
+            
+            Options_exposer.def( 
+                "keysWithValue"
+                , keysWithValue_function_value );
         
         }
         Options_exposer.def( bp::self != bp::self );
@@ -189,16 +230,6 @@ void register_Options_class(){
             Options_exposer.def( 
                 "typeName"
                 , typeName_function_value );
-        
-        }
-        { //::SireSim::Options::userKeys
-        
-            typedef ::QStringList ( ::SireSim::Options::*userKeys_function_type )(  ) const;
-            userKeys_function_type userKeys_function_value( &::SireSim::Options::userKeys );
-            
-            Options_exposer.def( 
-                "userKeys"
-                , userKeys_function_value );
         
         }
         { //::SireSim::Options::what

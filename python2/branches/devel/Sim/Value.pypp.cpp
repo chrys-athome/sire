@@ -29,47 +29,47 @@ void register_Value_class(){
         typedef bp::class_< SireSim::Value, boost::noncopyable > Value_exposer_t;
         Value_exposer_t Value_exposer = Value_exposer_t( "Value", bp::no_init );
         bp::scope Value_scope( Value_exposer );
-        { //::SireSim::Value::getValue
+        { //::SireSim::Value::getNestedValue
         
-            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*getValue_function_type )( ::QString ) const;
-            getValue_function_type getValue_function_value( &::SireSim::Value::getValue );
+            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*getNestedValue_function_type )( ::QString ) const;
+            getNestedValue_function_type getNestedValue_function_value( &::SireSim::Value::getNestedValue );
             
             Value_exposer.def( 
-                "getValue"
-                , getValue_function_value
+                "getNestedValue"
+                , getNestedValue_function_value
                 , ( bp::arg("key") ) );
         
         }
-        { //::SireSim::Value::setValue
+        { //::SireSim::Value::setNestedValue
         
-            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*setValue_function_type )( ::QString,::QString ) const;
-            setValue_function_type setValue_function_value( &::SireSim::Value::setValue );
+            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*setNestedValue_function_type )( ::QString,::QString ) const;
+            setNestedValue_function_type setNestedValue_function_value( &::SireSim::Value::setNestedValue );
             
             Value_exposer.def( 
-                "setValue"
-                , setValue_function_value
+                "setNestedValue"
+                , setNestedValue_function_value
                 , ( bp::arg("key"), bp::arg("value") ) );
         
         }
-        { //::SireSim::Value::setValue
+        { //::SireSim::Value::setNestedValue
         
-            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*setValue_function_type )( ::QString,double ) const;
-            setValue_function_type setValue_function_value( &::SireSim::Value::setValue );
+            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*setNestedValue_function_type )( ::QString,double ) const;
+            setNestedValue_function_type setNestedValue_function_value( &::SireSim::Value::setNestedValue );
             
             Value_exposer.def( 
-                "setValue"
-                , setValue_function_value
+                "setNestedValue"
+                , setNestedValue_function_value
                 , ( bp::arg("key"), bp::arg("value") ) );
         
         }
-        { //::SireSim::Value::setValue
+        { //::SireSim::Value::setNestedValue
         
-            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*setValue_function_type )( ::QString,::qint64 ) const;
-            setValue_function_type setValue_function_value( &::SireSim::Value::setValue );
+            typedef ::SireSim::ValuePtr ( ::SireSim::Value::*setNestedValue_function_type )( ::QString,::qint64 ) const;
+            setNestedValue_function_type setNestedValue_function_value( &::SireSim::Value::setNestedValue );
             
             Value_exposer.def( 
-                "setValue"
-                , setValue_function_value
+                "setNestedValue"
+                , setNestedValue_function_value
                 , ( bp::arg("key"), bp::arg("value") ) );
         
         }
