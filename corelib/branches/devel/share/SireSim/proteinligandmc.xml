@@ -1,6 +1,6 @@
     <options>
       <option allow_multiple="true">
-        <key>input_file</key>
+        <key>input</key>
         <description>
           The file (or files) that contain the coordinates and parameters of the molecule(s)
           to be simulated.

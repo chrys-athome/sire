@@ -262,6 +262,10 @@ ValuePtr Value::createFrom(QDomElement elem)
     {
         return EnumValue(elem);
     }
+    else if (elem.tagName() == "length")
+    {
+        return LengthValue(elem);
+    }
     else
     {
         qDebug() << "COULD NOT RECOGNISE VALUE" << elem.tagName();
