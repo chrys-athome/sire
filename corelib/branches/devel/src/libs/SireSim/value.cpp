@@ -206,7 +206,7 @@ ValuePtr Value::fromConfig(detail::ParsedLine &line) const
 /** Return the description of these option/value as XML. */
 QString Value::toXML() const
 {
-    QDomDocument doc("SIRE_OPTIONS");
+    QDomDocument doc("OPTIONS");
     {
         QDomProcessingInstruction xmlDeclaration 
                 = doc.createProcessingInstruction("xml", 
@@ -215,18 +215,11 @@ QString Value::toXML() const
         doc.appendChild(xmlDeclaration);
     }
     
-    doc.appendChild( doc.createComment("Created using SireSim::Options") );
-    QDomElement top = doc.createElement("simoptions");
-    {
-        QDomElement version = doc.createElement("version");
-        version.appendChild( doc.createTextNode("1.0") );
-        top.appendChild(version);
-    }
+    doc.appendChild( doc.createComment("Created using SireSim/C++") );
     
     QDomElement elem = this->toDomElement(doc);
     
-    top.appendChild(elem);
-    doc.appendChild(top);
+    doc.appendChild(elem);
     
     return doc.toString(2);
 }
@@ -264,6 +257,10 @@ ValuePtr Value::createFrom(QDomElement elem)
     else if (elem.tagName() == "bool")
     {
         return BoolValue(elem);
+    }
+    else if (elem.tagName() == "enum")
+    {
+        return EnumValue(elem);
     }
     else
     {

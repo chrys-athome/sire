@@ -277,6 +277,63 @@ private:
     bool val;
 };
 
+/** This class represents an enumeration of options. Each option
+    is represented by a string.
+    
+    @author Christopher Woods
+*/
+class SIRESIM_EXPORT EnumValue : public Value
+{
+public:
+    EnumValue();
+    EnumValue(QStringList options);
+    EnumValue(QStringList options, QStringList docs);
+    
+    EnumValue(QStringList options, int index);
+    EnumValue(QStringList options, QStringList docs, int index);
+    
+    EnumValue(QString value);
+    EnumValue(QString value, QString doc);
+    
+    EnumValue(QDomElement elem);
+    
+    EnumValue(const EnumValue &other);
+    
+    ~EnumValue();
+    
+    EnumValue& operator=(const EnumValue &other);
+    
+    bool operator==(const EnumValue &other) const;
+    bool operator!=(const EnumValue &other) const;
+    
+    static const char* typeName();
+    
+    const char* what() const;
+
+    QStringList options() const;
+    QStringList documentation() const;
+    
+    QString value() const;
+        
+protected:
+    EnumValue* ptr_clone() const;
+
+    QDomElement toDomElement(QDomDocument doc) const;
+    
+    QString toValueString() const;
+    ValuePtr fromValueString(QString value) const;
+
+private:
+    /** The set of possible options */
+    QStringList opts;
+    
+    /** The documentation for each possible option */
+    QStringList docs;
+    
+    /** The index of the selected option */
+    int idx;
+};
+
 }
 
 SIRE_EXPOSE_CLASS( SireSim::StringValue )
@@ -286,6 +343,8 @@ SIRE_EXPOSE_CLASS( SireSim::FileValue )
 SIRE_EXPOSE_CLASS( SireSim::IntegerValue )
 SIRE_EXPOSE_CLASS( SireSim::FloatValue )
 SIRE_EXPOSE_CLASS( SireSim::BoolValue )
+
+SIRE_EXPOSE_CLASS( SireSim::EnumValue )
 
 SIRE_END_HEADER
 

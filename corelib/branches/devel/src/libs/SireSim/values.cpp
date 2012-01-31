@@ -28,6 +28,9 @@
 
 #include <QDomElement>
 #include <QDomDocument>
+#include <QSet>
+
+#include <QDebug>
 
 #include "SireSim/values.h"
 
@@ -909,4 +912,371 @@ ValuePtr BoolValue::fromValueString(QString value) const
         return self();
     else
         return BoolValue(v);
+}
+
+
+/////////
+///////// Implementation of EnumValue
+/////////
+
+/** Constructor */
+EnumValue::EnumValue() : Value(), idx(0)
+{}
+
+void removeDuplicates(QStringList &options)
+{
+    QSet<QString> seen_strings;
+    seen_strings.reserve(options.count());
+    
+    QMutableListIterator<QString> it(options);
+    
+    while (it.hasNext())
+    {
+        //toLower as enum matching is case-insensitive
+        QString s = it.next().trimmed().toLower();
+        
+        if (s.isEmpty() or seen_strings.contains(s))
+            it.remove();
+        else
+            seen_strings.insert(s);
+    }
+}
+
+void removeDuplicates(QStringList &options, QStringList &docs)
+{
+    if (docs.count() != options.count())
+        throw SireError::invalid_arg( QObject::tr(
+            "The list of options must be attached to a list of documentation "
+            "that has the same length. %1 vs. %2.")
+                .arg(options.count()).arg(docs.count()), CODELOC );
+
+    QSet<QString> seen_strings;
+    seen_strings.reserve(options.count());
+    
+    QMutableListIterator<QString> it(options);
+    QMutableListIterator<QString> it2(docs);
+    
+    while (it.hasNext())
+    {
+        //toLower as enum matching is case-insensitive
+        QString s = it.next().trimmed().toLower();
+        it2.next();
+        
+        if (s.isEmpty() or seen_strings.contains(s))
+        {
+            it.remove();
+            it2.remove();
+        }
+        else
+            seen_strings.insert(s);
+    }
+}
+
+void cleanUp(QStringList &options)
+{
+    QMutableListIterator<QString> it(options);
+    
+    while (it.hasNext())
+    {
+        QString &s = it.next();
+        s = s.trimmed().toLower();
+    }
+}
+
+/** Construct an enum from the list of passed options. By default, 
+    the first option in the list is selected */
+EnumValue::EnumValue(QStringList options)
+          : Value(), opts(options), idx(0)
+{
+    removeDuplicates(opts);
+    cleanUp(opts);
+}
+
+/** Construct an enum from the list of passed options, with the 
+    documentation for each option in the attached 'docs' list. 
+    By default, the first option in the list is selected */
+EnumValue::EnumValue(QStringList options, QStringList documentation)
+          : Value(), opts(options), docs(documentation), idx(0)
+{
+    removeDuplicates(opts, docs);
+    cleanUp(opts);
+}
+
+/** Construct an enum from the list of passed options, with the
+    option at index 'index' initially selected */
+EnumValue::EnumValue(QStringList options, int index)
+          : Value(), opts(options)
+{
+    if (index < 0 or index >= opts.count())
+        throw SireError::invalid_index( QObject::tr(
+            "Cannot select enum option %1 as the number of options is %2.")
+                .arg(index).arg(opts.count()), CODELOC );
+    
+    QString s = opts.at(index);
+    
+    removeDuplicates(opts);
+    
+    idx = opts.indexOf(s);
+    
+    if (idx == -1)
+        idx = 0;
+
+    cleanUp(opts);
+}
+
+/** Construct an enum from the list of passed options and associated
+    documentation. The option at index 'index' is initially selected */
+EnumValue::EnumValue(QStringList options, QStringList documents, int index)
+          : Value(), opts(options), docs(documents)
+{
+    if (index < 0 or index >= opts.count())
+        throw SireError::invalid_index( QObject::tr(
+            "Cannot select enum option %1 as the number of options is %2.")
+                .arg(index).arg(opts.count()), CODELOC );
+    
+    QString s = opts.at(index);
+    
+    removeDuplicates(opts,docs);
+    
+    idx = opts.indexOf(s);
+    
+    if (idx == -1)
+        idx = 0;
+
+    cleanUp(opts);
+}
+
+/** Construct an enum with just a single value */
+EnumValue::EnumValue(QString value) : Value(), idx(0)
+{
+    opts.append(value);
+    cleanUp(opts);
+    
+    if (opts.at(0).isEmpty())
+        opts = QStringList();
+}
+
+/** Construct an enum with just a single value, with accompanying documentation */
+EnumValue::EnumValue(QString value, QString doc)
+          : Value(), idx(0)
+{
+    opts.append(value);
+    cleanUp(opts);
+    
+    if (opts.at(0).isEmpty())
+    {
+        opts = QStringList();
+    }
+    else
+    {
+        docs.append(doc);
+    }
+}
+
+/** Convert this enum into XML */
+QDomElement EnumValue::toDomElement(QDomDocument doc) const
+{
+    QDomElement elem = doc.createElement("enum");
+    
+    if (opts.count() == docs.count())
+    {
+        for (int i=0; i<opts.count(); ++i)
+        {
+            QDomElement item = doc.createElement("item");
+            item.setAttribute("name",opts[i]);
+            
+            QDomElement documentation = doc.createElement("description");
+            documentation.appendChild( doc.createTextNode(docs[i]) );
+            
+            item.appendChild(documentation);
+            elem.appendChild(item);
+        }
+    }
+    else
+    {
+        for (int i=0; i<opts.count(); ++i)
+        {
+            QDomElement item = doc.createElement("item");
+            item.setAttribute("name",opts[i]);
+            elem.appendChild(item);
+        }
+    }
+
+    if (not opts.isEmpty())
+    {
+        QDomElement val = doc.createElement("value");
+        val.appendChild( doc.createTextNode(opts[idx]) );
+        elem.appendChild(val);
+    }
+
+    return elem;
+}
+
+/** Construct from a QDomElement */
+EnumValue::EnumValue(QDomElement elem) : Value(), idx(0)
+{
+    if (elem.tagName() != "enum")
+        throw SireError::file_error( QObject::tr(
+                "Can only create a EnumValue object from an <enum>...</enum> "
+                "XML DOM element. Cannot use a <%1>...</%1> element!")
+                    .arg(elem.tagName()), CODELOC );
+                    
+    //get the items...
+    QDomNode n = elem.firstChild();
+    
+    QString val;
+    
+    while(not n.isNull()) 
+    {
+        elem = n.toElement(); // try to convert the node to an element.
+        
+        if (not elem.isNull()) 
+        {
+            if (elem.tagName() == "item")
+            {
+                QString name = elem.attribute("name", QString::null);
+                QString doc;
+                
+                QDomNode n2 = elem.firstChild();
+                
+                while (not n2.isNull())
+                {
+                    elem = n2.toElement();
+                    
+                    if (not elem.isNull())
+                    {
+                        if (elem.tagName() == "description")
+                        {
+                            doc = elem.text();
+                        }
+                        else
+                            qDebug() << "<enum><item>... cannot recognise"
+                                     << elem.tagName() << "...</item></enum>"; 
+                    }
+                    
+                    n2 = n2.nextSibling();
+                }
+                
+                opts.append(name);
+                docs.append(doc);
+            }
+            else if (elem.tagName() == "value")
+            {
+                val = elem.text().trimmed();
+            }
+        }
+        
+        n = n.nextSibling();
+    }
+    
+    removeDuplicates(opts, docs);
+    
+    idx = opts.indexOf(val);
+    
+    if (idx == -1)
+        idx = 0;
+        
+    cleanUp(opts);
+    
+    if (opts.isEmpty())
+    {
+        opts = QStringList();
+        docs = QStringList();
+    }
+}
+
+/** Copy constructor */
+EnumValue::EnumValue(const EnumValue &other)
+          : Value(other), opts(other.opts), docs(other.docs), idx(other.idx)
+{}
+
+/** Destructor */
+EnumValue::~EnumValue()
+{}
+
+EnumValue* EnumValue::ptr_clone() const
+{
+    return new EnumValue(*this);
+}
+
+/** Copy assignment operator */
+EnumValue& EnumValue::operator=(const EnumValue &other)
+{
+    if (this != &other)
+    {
+        opts = other.opts;
+        docs = other.docs;
+        idx = other.idx;
+    }
+
+    return *this;
+}
+
+/** Comparison operator */
+bool EnumValue::operator==(const EnumValue &other) const
+{
+    return opts == other.opts and docs == other.docs and idx == other.idx;
+}
+
+/** Comparison operator */
+bool EnumValue::operator!=(const EnumValue &other) const
+{
+    return not EnumValue::operator==(other);
+}
+
+const char* EnumValue::typeName()
+{
+    return "SireSim::EnumValue";
+}
+
+const char* EnumValue::what() const
+{
+    return EnumValue::typeName();
+}
+
+/** Return the set of possible options */
+QStringList EnumValue::options() const
+{
+    return opts;
+}
+
+/** Return the documentation associated with each option.
+    If this is empty, then no documentation is associated with any option */
+QStringList EnumValue::documentation() const
+{
+    return docs;
+}
+
+/** Return the actual string value */
+QString EnumValue::value() const
+{
+    if (opts.isEmpty())
+        return QString::null;
+    else
+        return opts[idx];
+}
+
+QString EnumValue::toValueString() const
+{
+    if (opts.isEmpty())
+        return QString::null;
+    else
+        return opts[idx];
+}
+
+ValuePtr EnumValue::fromValueString(QString value) const
+{
+    int index = opts.indexOf(value.trimmed().toLower());
+
+    if (index == -1)
+        index = 0;
+
+    if (index == idx)
+        return self();
+    else
+    {
+        EnumValue ret(*this);
+        ret.idx = index;
+        return ret;
+    }
 }

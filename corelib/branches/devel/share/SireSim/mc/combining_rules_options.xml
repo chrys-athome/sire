@@ -13,19 +13,19 @@
       </description>
       <value>
         <enum>
-          <enumval name="arithmetic">
+          <item name="arithmetic">
             <description>
               Use arithmetic combining rules. The LJ sigma parameter for atom A interacting with atom B is
               calculated as the mean average of the sigma parameters of A and B, while the epsilon parameter
               is calculated as the geometric average.
             </description>
-          </enumval>
-          <enumval name="geometric">
+          </item>
+          <item name="geometric">
             <description>
               Use geometric combining rules. The LJ sigma and epsilon parameters for atom A interacting with atom B
               are calculated as the geometric average of the sigma and epsilon parameters of A and B.
             </description>
-          </enumval>
+          </item>
         </enum> 
       </value>
     </option>
