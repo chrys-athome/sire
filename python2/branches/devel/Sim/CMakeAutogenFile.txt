@@ -6,6 +6,7 @@ set ( PYPP_SOURCES
        FileValue.pypp.cpp
        FloatValue.pypp.cpp
        IntegerValue.pypp.cpp
+       LengthValue.pypp.cpp
        Option.pypp.cpp
        Options.pypp.cpp
        ProteinLigandMC.pypp.cpp
