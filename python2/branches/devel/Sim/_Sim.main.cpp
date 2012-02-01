@@ -37,6 +37,8 @@
 
 #include "StringValue.pypp.hpp"
 
+#include "TempValue.pypp.hpp"
+
 #include "Value.pypp.hpp"
 
 namespace bp = boost::python;
@@ -83,5 +85,7 @@ BOOST_PYTHON_MODULE(_Sim){
     register_ProteinLigandMCParams_class();
 
     register_StringValue_class();
+
+    register_TempValue_class();
 }
 

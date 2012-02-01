@@ -16,6 +16,7 @@ set ( PYPP_SOURCES
        Sim.pypp.cpp
        SimParams.pypp.cpp
        StringValue.pypp.cpp
+       TempValue.pypp.cpp
        Value.pypp.cpp
        SireSim_containers.cpp
        SireSim_registrars.cpp

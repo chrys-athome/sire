@@ -44,6 +44,17 @@ void register_LengthValue_class(){
         
         }
         LengthValue_exposer.def( bp::self == bp::self );
+        { //::SireSim::DimensionValue< SireSim::detail::LengthData >::supportedUnits
+        
+            typedef SireSim::DimensionValue< SireSim::detail::LengthData > exported_class_t;
+            typedef ::QStringList ( *supportedUnits_function_type )(  );
+            supportedUnits_function_type supportedUnits_function_value( &::SireSim::DimensionValue< SireSim::detail::LengthData >::supportedUnits );
+            
+            LengthValue_exposer.def( 
+                "supportedUnits"
+                , supportedUnits_function_value );
+        
+        }
         { //::SireSim::DimensionValue< SireSim::detail::LengthData >::typeName
         
             typedef SireSim::DimensionValue< SireSim::detail::LengthData > exported_class_t;
@@ -125,6 +136,7 @@ void register_LengthValue_class(){
                 , what_function_value );
         
         }
+        LengthValue_exposer.staticmethod( "supportedUnits" );
         LengthValue_exposer.staticmethod( "typeName" );
         LengthValue_exposer.staticmethod( "valueWithMaximum" );
         LengthValue_exposer.staticmethod( "valueWithMinimum" );

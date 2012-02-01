@@ -44,6 +44,17 @@ void register_AreaValue_class(){
         
         }
         AreaValue_exposer.def( bp::self == bp::self );
+        { //::SireSim::DimensionValue< SireSim::detail::AreaData >::supportedUnits
+        
+            typedef SireSim::DimensionValue< SireSim::detail::AreaData > exported_class_t;
+            typedef ::QStringList ( *supportedUnits_function_type )(  );
+            supportedUnits_function_type supportedUnits_function_value( &::SireSim::DimensionValue< SireSim::detail::AreaData >::supportedUnits );
+            
+            AreaValue_exposer.def( 
+                "supportedUnits"
+                , supportedUnits_function_value );
+        
+        }
         { //::SireSim::DimensionValue< SireSim::detail::AreaData >::typeName
         
             typedef SireSim::DimensionValue< SireSim::detail::AreaData > exported_class_t;
@@ -125,6 +136,7 @@ void register_AreaValue_class(){
                 , what_function_value );
         
         }
+        AreaValue_exposer.staticmethod( "supportedUnits" );
         AreaValue_exposer.staticmethod( "typeName" );
         AreaValue_exposer.staticmethod( "valueWithMaximum" );
         AreaValue_exposer.staticmethod( "valueWithMinimum" );

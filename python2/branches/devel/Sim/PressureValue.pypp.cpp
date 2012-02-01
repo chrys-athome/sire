@@ -44,6 +44,17 @@ void register_PressureValue_class(){
         
         }
         PressureValue_exposer.def( bp::self == bp::self );
+        { //::SireSim::DimensionValue< SireSim::detail::PressureData >::supportedUnits
+        
+            typedef SireSim::DimensionValue< SireSim::detail::PressureData > exported_class_t;
+            typedef ::QStringList ( *supportedUnits_function_type )(  );
+            supportedUnits_function_type supportedUnits_function_value( &::SireSim::DimensionValue< SireSim::detail::PressureData >::supportedUnits );
+            
+            PressureValue_exposer.def( 
+                "supportedUnits"
+                , supportedUnits_function_value );
+        
+        }
         { //::SireSim::DimensionValue< SireSim::detail::PressureData >::typeName
         
             typedef SireSim::DimensionValue< SireSim::detail::PressureData > exported_class_t;
@@ -125,6 +136,7 @@ void register_PressureValue_class(){
                 , what_function_value );
         
         }
+        PressureValue_exposer.staticmethod( "supportedUnits" );
         PressureValue_exposer.staticmethod( "typeName" );
         PressureValue_exposer.staticmethod( "valueWithMaximum" );
         PressureValue_exposer.staticmethod( "valueWithMinimum" );
