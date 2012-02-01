@@ -5,6 +5,8 @@
 
 #include "boost/python.hpp"
 
+#include "AreaValue.pypp.hpp"
+
 #include "BoolValue.pypp.hpp"
 
 #include "DirValue.pypp.hpp"
@@ -22,6 +24,8 @@
 #include "Option.pypp.hpp"
 
 #include "Options.pypp.hpp"
+
+#include "PressureValue.pypp.hpp"
 
 #include "ProteinLigandMC.pypp.hpp"
 
@@ -50,6 +54,12 @@ BOOST_PYTHON_MODULE(_Sim){
 
     register_BoolValue_class();
 
+    register_AreaValue_class();
+
+    register_LengthValue_class();
+
+    register_PressureValue_class();
+
     register_DirValue_class();
 
     register_EnumValue_class();
@@ -59,8 +69,6 @@ BOOST_PYTHON_MODULE(_Sim){
     register_FloatValue_class();
 
     register_IntegerValue_class();
-
-    register_LengthValue_class();
 
     register_Option_class();
 
