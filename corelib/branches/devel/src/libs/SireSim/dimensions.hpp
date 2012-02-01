@@ -167,8 +167,11 @@ QDomElement DimensionValue<T>::toDomElement(QDomDocument doc) const
 
 namespace detail
 {
-    QPair<double,QString> readDimension(QString value);
+    QPair<double,QString> readDimension(QString value, QStringList units);
+    QPair<QString,qint64> getPostFactor(QString value);
+    
     double readFloat(QString value);
+    qint64 readInt(QString value);
 }
 
 template<class T>
@@ -177,7 +180,8 @@ DimensionValue<T>::DimensionValue(QString value)
                   : Value(), minval(0), maxval(0),
                     has_minval(false), has_maxval(false)
 {
-    QPair<double,QString> parsed_value = detail::readDimension(value);
+    QPair<double,QString> parsed_value = detail::readDimension(value,
+                                                DimensionValue<T>::supportedUnits());
     this->operator=( DimensionValue<T>(parsed_value.first, parsed_value.second) );
 }
 
@@ -351,7 +355,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ValuePtr DimensionValue<T>::fromValueString(QString value) const
 {
-    QPair<double,QString> parsed_value = detail::readDimension(value);
+    QPair<double,QString> parsed_value = detail::readDimension(value,
+                                                DimensionValue<T>::supportedUnits());
     
     double sclfrom = DimensionValue<T>::scaleFactor(parsed_value.second);
     

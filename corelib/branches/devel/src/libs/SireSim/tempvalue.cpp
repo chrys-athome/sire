@@ -262,7 +262,7 @@ TempValue::TempValue(QString value)
           : Value(), minval(0), maxval(0),
             has_minval(false), has_maxval(false)
 {
-    QPair<double,QString> parsed_value = detail::readDimension(value);
+    QPair<double,QString> parsed_value = detail::readDimension(value, supportedUnits());
     this->operator=( TempValue(parsed_value.first, parsed_value.second) );
 }
 
@@ -417,7 +417,7 @@ QString TempValue::toValueString() const
 
 ValuePtr TempValue::fromValueString(QString value) const
 {
-    QPair<double,QString> parsed_value = detail::readDimension(value);
+    QPair<double,QString> parsed_value = detail::readDimension(value, supportedUnits());
     
     QString units = parsed_value.second;
     double v = toKelvin(parsed_value.first,units);

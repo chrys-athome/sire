@@ -267,35 +267,136 @@ namespace SireSim
 {
     namespace detail
     {
-        QPair<double,QString> SIRESIM_EXPORT readDimension(QString value)
+        QPair<QString,qint64> SIRESIM_EXPORT getPostFactor(QString text)
         {
-            QStringList words = value.split(" ");
+            text = text.trimmed();
+
+            //process the text to see if any multiples are added
+            //to the end of the string (e.g. million, thousand etc.)
+            QStringList words = text.split(" ");
             
-            if (words.isEmpty())
-                return QPair<double,QString>(0,QString::null);
-            else if (words.count() == 1)
-                return QPair<double,QString>(readFloat(words[0]),QString::null);
-            else if (words.count() == 2)
-                return QPair<double,QString>(readFloat(words[0]),words[1]);
-            else
+            qint64 postfac = 1;
+            
+            QMutableListIterator<QString> it(words);
+            
+            bool start_words = false;
+            
+            // NEED TO ADD CHECKS FOR OVERFLOW!!!
+            while (it.hasNext())
             {
-                double val = readFloat(words.takeFirst());
+                QString text = it.next().toLower();
                 
-                return QPair<double,QString>(val, words.join(" "));
+                if (text == "hundred")
+                {
+                    it.remove();
+                    postfac *= 100;
+                    start_words = true;
+                }
+                else if (text == "thousand")
+                {
+                    it.remove();
+                    postfac *= 1000;
+                    start_words = true;
+                }
+                else if (text == "million")
+                {
+                    it.remove();
+                    postfac *= 1000000;
+                    start_words = true;
+                }
+                else if (text == "billion")
+                {
+                    it.remove();
+                    postfac *= 1000000000;
+                    start_words = true;
+                }
+                else if (start_words)
+                {
+                    throw SireError::invalid_arg( QObject::tr(
+                            "Cannot read a number from the text \"%1\".")
+                                .arg(text), CODELOC );
+                }
             }
+            
+            //the rest of the string should now just be the number
+            text = words.join("");
+            
+            return QPair<QString,qint64>(text,postfac);
+        }
+        
+        qint64 SIRESIM_EXPORT readInt(QString text)
+        {
+            text = text.trimmed();
+
+            QPair<QString,qint64> value = getPostFactor(text);
+            
+            bool ok;
+            qint64 val = value.first.toLongLong(&ok);
+            
+            if (not ok)
+                throw SireError::invalid_arg( QObject::tr(
+                        "Cannot read an integer from the text \"%1\".")
+                            .arg(text), CODELOC );
+                            
+            return val * value.second;
         }
         
         double SIRESIM_EXPORT readFloat(QString text)
         {
+            text = text.trimmed();
+        
+            QPair<QString,qint64> value = getPostFactor(text);
+            
             bool ok;
-            double val = text.toDouble(&ok);
+            double val = value.first.toDouble(&ok);
             
             if (not ok)
-                throw SireError::file_error( QObject::tr(
+                throw SireError::invalid_arg( QObject::tr(
                         "Cannot read a floating point number from the text \"%1\".")
                             .arg(text), CODELOC );
 
-            return val;
+            return val * value.second;
+        }
+        
+        QPair<double,QString> SIRESIM_EXPORT readDimension(QString value,
+                                                           QStringList units)
+        {
+            value = value.trimmed();
+            
+            if (value.isEmpty())
+                return QPair<double,QString>(0,QString::null);
+        
+            int index = -1;
+        
+            //we need to find the longest matching unit string
+            foreach (const QString &unit, units)
+            {
+                int idx = value.indexOf(unit);
+                
+                if (idx + unit.length() == value.length())
+                {
+                    //this matches the whole of the string
+                    if (idx != -1)
+                    {
+                        if (index == -1)
+                            index = idx;
+                        
+                        else if (idx < index)
+                            index = idx;
+                    }
+                }
+            }
+            
+            if (index == -1)
+            {
+                double val = readFloat(value);
+                return QPair<double,QString>(val,QString::null);
+            }
+            else
+            {
+                double val = readFloat(value.mid(0,index));
+                return QPair<double,QString>(val,value.mid(index));
+            }
         }
     }
 }

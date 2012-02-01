@@ -33,10 +33,12 @@
 #include <QDebug>
 
 #include "SireSim/values.h"
+#include "SireSim/dimensions.hpp"
 
 #include "SireError/errors.h"
 
 using namespace SireSim;
+using namespace SireSim::detail;
 
 /////////
 ///////// Implementation of StringValue
@@ -408,19 +410,6 @@ QDomElement IntegerValue::toDomElement(QDomDocument doc) const
     return elem;
 }
 
-qint64 readInt(QString text)
-{
-    bool ok;
-    qint64 val = text.toLongLong(&ok,0);
-    
-    if (not ok)
-        throw SireError::file_error( QObject::tr(
-                "Cannot read an integer from the text \"%1\".")
-                    .arg(text), CODELOC );
-
-    return val;
-}
-
 /** Construct from a QDomElement */
 IntegerValue::IntegerValue(QDomElement elem) 
              : Value(), val(0),
@@ -635,19 +624,6 @@ QDomElement FloatValue::toDomElement(QDomDocument doc) const
         elem.setAttribute("maximum", QString::number(maxval));
     
     return elem;
-}
-
-double readFloat(QString text)
-{
-    bool ok;
-    double val = text.toDouble(&ok);
-    
-    if (not ok)
-        throw SireError::file_error( QObject::tr(
-                "Cannot read a floating point number from the text \"%1\".")
-                    .arg(text), CODELOC );
-
-    return val;
 }
 
 FloatValue::FloatValue(QString value)
