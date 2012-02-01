@@ -87,7 +87,7 @@
                     All residues that are within this distance of the selected molecule at the start of
                     the simulation will have a flexible sidechain.
                   </description>
-                  <value><length units="angstrom">10.0</length></value>
+                  <value><length units="A">10.0</length></value>
                 </option>
                 <option optional="true">
                   <key>backbone_distance</key>
@@ -95,7 +95,7 @@
                     All residues that are within this distance of the selected molecule at the start of
                     the simulation will have a flexible backbone.
                   </description>
-                  <value><length units="angstrom">0.0</length></value>
+                  <value><length units="A">0.0</length></value>
                 </option>
               </options>
             </value>

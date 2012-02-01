@@ -14,12 +14,12 @@
           <option optional="true">
             <key>coulomb</key>
             <description>The cutoff distance for the coulombic (electrostatic) interactions.</description>
-            <value><length units="angstrom">15.0</length></value>
+            <value><length units="A">15.0</length></value>
           </option>
           <option optional="true">
             <key>lj</key>
             <description>The cutoff distance for the Lennard Jones (van der waals) interactions.</description>
-            <value><length units="angstrom">15.0</length></value>
+            <value><length units="A">15.0</length></value>
           </option>
         </options>
       </value>
@@ -38,12 +38,12 @@
           <option optional="true">
             <key>coulomb</key>
             <description>The feather distance for the coulombic (electrostatic) interactions.</description>
-            <value><length units="angstrom">14.5</length></value>
+            <value><length units="A">14.5</length></value>
           </option>
           <option optional="true">
             <key>lj</key>
             <description>The feather distance for the Lennard Jones (van der waals) interactions.</description>
-            <value><length units="angstrom">14.5</length></value>
+            <value><length units="A">14.5</length></value>
           </option>
         </options>
       </value>

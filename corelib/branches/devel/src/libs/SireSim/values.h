@@ -334,66 +334,6 @@ private:
     int idx;
 };
 
-/** This class represents a length or distance value */
-class SIRESIM_EXPORT LengthValue : public Value
-{
-public:
-    LengthValue();
-    LengthValue(double val, QString units=QString());
-    LengthValue(QString value);
-
-    static LengthValue valueWithMinimum(double val, double minimum,
-                                        QString units = QString());
-    static LengthValue valueWithMaximum(double val, double maximum,
-                                        QString units = QString());
-    static LengthValue valueWithRange(double val,
-                                      double minimum, double maximum,
-                                      QString units = QString());
-    
-    LengthValue(QDomElement elem);
-    
-    LengthValue(const LengthValue &other);
-    
-    ~LengthValue();
-    
-    LengthValue& operator=(const LengthValue &other);
-    
-    bool operator==(const LengthValue &other) const;
-    bool operator!=(const LengthValue &other) const;
-    
-    static const char* typeName();
-    
-    const char* what() const;
-    
-    double value() const;
-    double value(QString units) const;
-    
-protected:
-    LengthValue* ptr_clone() const;
-
-    QDomElement toDomElement(QDomDocument doc) const;
-    
-    QString toValueString() const;
-    ValuePtr fromValueString(QString value) const;
-
-private:
-    static double scaleFactor(QString &units);
-
-    /** The name of the unit used to get the scaling factor */
-    QString unitname;
-
-    /** The scaling factor to convert from the units of this
-        value to base units */
-    double sclfac;
-
-    /** The current value, in base units */
-    double val;
-    
-    /** The minimum and maximum allowable values */
-    double minval, maxval;
-    bool has_minval, has_maxval;
-};
-
 }
 
 SIRE_EXPOSE_CLASS( SireSim::StringValue )
@@ -405,7 +345,6 @@ SIRE_EXPOSE_CLASS( SireSim::FloatValue )
 SIRE_EXPOSE_CLASS( SireSim::BoolValue )
 
 SIRE_EXPOSE_CLASS( SireSim::EnumValue )
-SIRE_EXPOSE_CLASS( SireSim::LengthValue )
 
 SIRE_END_HEADER
 

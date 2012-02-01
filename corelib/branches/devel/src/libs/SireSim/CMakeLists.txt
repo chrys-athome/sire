@@ -20,6 +20,9 @@ set ( SIRESIM_HEADERS
 
       simparams.h
 
+      dimensions.h
+      dimensions.hpp
+
       option.h
 
       value.h
@@ -34,6 +37,8 @@ set ( SIRESIM_SOURCES
       proteinligandmc.cpp
 
       simparams.cpp
+
+      dimensions.cpp
 
       option.cpp
 

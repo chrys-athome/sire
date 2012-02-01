@@ -15,7 +15,7 @@
           <option optional="true">
             <key>constant</key>
             <description>The preferential sampling constant. The higher the value, the less focussed the sampling.</description>
-            <value><area units="angstrom^2">200</area></value>
+            <value><area units="A^2">200</area></value>
           </option>
         </options>
       </value>

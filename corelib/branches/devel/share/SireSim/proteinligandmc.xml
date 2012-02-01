@@ -59,7 +59,7 @@
           will be performed. If you don't set a pressure, then an NVT (canonical, constant temperature, constant volume)
           simulation will be performed.
         </description>
-        <value><pressure units="atmosphere">1.0</pressure></value>
+        <value><pressure units="atm">1.0</pressure></value>
       </option>
 
       <include file="mcweights_options.xml"/>
@@ -191,7 +191,7 @@
                         <option optional="true">
                           <key>cutoff</key>
                           <description>The cutoff distance used to generate the list of interacting residues.</description>
-                          <value><length units="angstrom">5.0</length></value>
+                          <value><length units="A">5.0</length></value>
                         </option>
                         <option>
                           <key>frequency</key>

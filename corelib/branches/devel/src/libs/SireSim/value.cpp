@@ -31,6 +31,8 @@
 
 #include "SireSim/value.h"
 #include "SireSim/values.h"
+#include "SireSim/dimensions.h"
+#include "SireSim/dimensions.hpp"
 
 #include "SireError/errors.h"
 
@@ -265,6 +267,14 @@ ValuePtr Value::createFrom(QDomElement elem)
     else if (elem.tagName() == "length")
     {
         return LengthValue(elem);
+    }
+    else if (elem.tagName() == "area")
+    {
+        return AreaValue(elem);
+    }
+    else if (elem.tagName() == "pressure")
+    {
+        return PressureValue(elem);
     }
     else
     {
