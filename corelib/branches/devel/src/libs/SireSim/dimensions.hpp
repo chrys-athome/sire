@@ -310,6 +310,14 @@ const char* DimensionValue<T>::what() const
     return T::typeName();
 }
 
+/** Return the list of units that are supported for this dimension */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QStringList DimensionValue<T>::supportedUnits()
+{
+    return QStringList(T::units().keys());
+}
+
 /** Return the actual value, with no conversion from the units
     in which this value was supplied */
 template<class T>

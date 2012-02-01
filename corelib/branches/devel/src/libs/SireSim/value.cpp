@@ -33,6 +33,7 @@
 #include "SireSim/values.h"
 #include "SireSim/dimensions.h"
 #include "SireSim/dimensions.hpp"
+#include "SireSim/tempvalue.h"
 
 #include "SireError/errors.h"
 
@@ -271,6 +272,10 @@ ValuePtr Value::createFrom(QDomElement elem)
     else if (elem.tagName() == "area")
     {
         return AreaValue(elem);
+    }
+    else if (elem.tagName() == "temperature")
+    {
+        return TempValue(elem);
     }
     else if (elem.tagName() == "pressure")
     {

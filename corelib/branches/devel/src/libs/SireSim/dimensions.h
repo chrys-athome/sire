@@ -91,6 +91,8 @@ public:
     
     const char* what() const;
     
+    static QStringList supportedUnits();
+    
     double value() const;
     double value(QString units) const;
     
