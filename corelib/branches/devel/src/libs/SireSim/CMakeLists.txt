@@ -23,6 +23,8 @@ set ( SIRESIM_HEADERS
       dimensions.h
       dimensions.hpp
 
+      indexvalue.h
+
       option.h
 
       tempvalue.h
@@ -41,6 +43,8 @@ set ( SIRESIM_SOURCES
       simparams.cpp
 
       dimensions.cpp
+
+      indexvalue.cpp
 
       option.cpp
 

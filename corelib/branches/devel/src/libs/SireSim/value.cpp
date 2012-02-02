@@ -229,6 +229,8 @@ QString Value::toXML() const
 
 QString Value::toConfig(bool include_help) const
 {
+    //TODO should add code to automatically split long config lines into separate lines
+
     if (this->isContainer())
         return this->toConfigLines(include_help).join("\n");
     else

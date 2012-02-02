@@ -63,4 +63,7 @@ lsrc.windows = [0,
 run.equilibrate.nmoves = 100000
 run.simulate.nmoves = 1 million
 
-lsrc.molecules = [1, 2, 15..10, 10..(10)..100, 100..(1000)..-1]
+lsrc.molecules = [1, 2, 15..10, 10..(10)..100, 100..(1000)..]
+
+cutoff.coulomb = 1000 000 000 nanometers
+

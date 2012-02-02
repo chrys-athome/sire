@@ -273,7 +273,7 @@ namespace SireSim
 
             //process the text to see if any multiples are added
             //to the end of the string (e.g. million, thousand etc.)
-            QStringList words = text.split(" ");
+            QStringList words = text.split(" ", QString::SkipEmptyParts);
             
             qint64 postfac = 1;
             

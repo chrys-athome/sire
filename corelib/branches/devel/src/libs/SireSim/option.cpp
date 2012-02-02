@@ -430,7 +430,7 @@ namespace SireSim
 
         QList<ParsedLine> ParsedLine::parse(QString config)
         {
-            QStringList lines = config.split("\n");
+            QStringList lines = config.split("\n", QString::SkipEmptyParts);
         
             QList<ParsedLine> parsed_lines;
             QString parse_line;
@@ -1049,7 +1049,7 @@ QStringList Option::toConfigLines(bool include_help) const
     {
         if (not description().isEmpty())
         {
-            QStringList desclines = description().split("\n");
+            QStringList desclines = description().split("\n", QString::SkipEmptyParts);
             
             for (int i=desclines.count()-1; i>=0; --i)
             {
