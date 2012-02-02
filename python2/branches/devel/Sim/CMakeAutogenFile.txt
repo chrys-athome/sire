@@ -13,6 +13,7 @@ set ( PYPP_SOURCES
        PressureValue.pypp.cpp
        ProteinLigandMC.pypp.cpp
        ProteinLigandMCParams.pypp.cpp
+       Range.pypp.cpp
        Sim.pypp.cpp
        SimParams.pypp.cpp
        StringValue.pypp.cpp

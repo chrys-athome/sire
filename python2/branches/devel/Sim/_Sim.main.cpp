@@ -31,6 +31,8 @@
 
 #include "ProteinLigandMCParams.pypp.hpp"
 
+#include "Range.pypp.hpp"
+
 #include "Sim.pypp.hpp"
 
 #include "SimParams.pypp.hpp"
@@ -83,6 +85,8 @@ BOOST_PYTHON_MODULE(_Sim){
     register_SimParams_class();
 
     register_ProteinLigandMCParams_class();
+
+    register_Range_class();
 
     register_StringValue_class();
 

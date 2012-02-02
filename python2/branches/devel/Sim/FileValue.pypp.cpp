@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireSim/dimensions.hpp"
+
 #include "SireSim/values.h"
 
 #include "values.h"
