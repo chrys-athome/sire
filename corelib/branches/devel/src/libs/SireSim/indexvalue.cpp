@@ -30,12 +30,14 @@
 #include <QPair>
 
 #include "SireSim/indexvalue.h"
+#include "SireSim/dimensions.hpp"
 
 #include "SireError/errors.h"
 
 #include <QDebug>
 
 using namespace SireSim;
+using namespace SireSim::detail;
 
 /////////
 ///////// Implementation of Range
@@ -114,6 +116,24 @@ Range::Range(QString range)
         {
             end = start;
             jump = 0;
+        }
+        else
+        {
+            //this could be a special word, e.g. "all" or "none"
+            if (words[0].toLower() == "all")
+            {
+                ok = true;
+                start = 1;
+                end = -1;
+                jump = 1;
+            }
+            else if (words[0].toLower() == "none")
+            {
+                ok = true;
+                start = 0;
+                end = 0;
+                jump = 0;
+            }
         }
     }
     else if (words.count() == 2)
@@ -220,7 +240,15 @@ bool Range::operator!=(const Range &other) const
 /** Return a string representation of the range */
 QString Range::toString() const
 {
-    if (_start == _end)
+    if (_start == 1 and _end == -1 and _step == 1)
+    {
+        return "all";
+    }
+    else if (_start == 0 or _end == 0)
+    {
+        return "none";
+    }
+    else if (_start == _end)
     {
         return QString::number(_start);
     }
@@ -269,7 +297,10 @@ bool Range::contains(int i, int nvalues) const
     if (i < 0)
         i = nvalues + 1 - i;
         
-    if (i >= range.first and i <= range.second)
+    if (_step == 0)
+        return i == range.first;
+        
+    else if (i >= range.first and i <= range.second)
     {
         return (i-range.first) % _step == 0;
     }
@@ -468,4 +499,360 @@ int Range::at(int i, int nvalues) const
     {
         return range.first - _step*i;
     }
+}
+
+///////
+/////// Implementation of IndexList
+///////
+
+void cleanList(QList<Range> &ranges)
+{
+    QMutableListIterator<Range> it(ranges);
+    
+    while (it.hasNext())
+    {
+        Range &r = it.next();
+        
+        if (r.start() == 0 or r.stop() == 0)
+            it.remove();
+    }
+    
+    if (ranges.isEmpty())
+        ranges = QList<Range>();
+}
+
+/** Constructor */
+IndexList::IndexList() : Value(), allow_duplicates(true)
+{}
+
+/** Construct a list that holds a single index */
+IndexList::IndexList(int index) : Value(), allow_duplicates(true)
+{
+    idxs.append( Range(index) );
+}
+
+/** Construct a list that is comprised of a single range from 
+    start to end, in steps of jump */
+IndexList::IndexList(int start, int end, int jump)
+          : Value(), allow_duplicates(true)
+{
+    idxs.append( Range(start,end,jump) );
+}
+
+/** Construct a list that is comprised of a single range */
+IndexList::IndexList(Range range) : Value(), allow_duplicates(true)
+{
+    idxs.append(range);
+}
+
+/** Construct a list that contains each of the passed single indicies */
+IndexList::IndexList(QList<int> indicies, bool allow_dups)
+          : Value(), allow_duplicates(allow_dups)
+{
+    foreach (int idx, indicies)
+    {
+        idxs.append(Range(idx));
+    }
+}
+
+/** Construct a list that contains each of the past ranges */
+IndexList::IndexList(QList<Range> indices, bool allow_dups)
+          : Value(), allow_duplicates(allow_dups)
+{
+    foreach (const Range &range, indices)
+    {
+        idxs.append(range);
+    }
+}
+
+QString removeBrackets(QString text)
+{
+    text = text.trimmed();
+    
+    if (text.startsWith("["))
+    {
+        if (not text.endsWith("]"))
+            throw SireError::invalid_arg( QObject::tr(
+                    "There is no closing ']' bracket in the list \"%1\".")
+                        .arg(text), CODELOC );
+                        
+        return text.mid(1,text.length()-2).trimmed();
+    }
+    else
+        return text;
+}
+
+/** Construct a list from the passed string */
+IndexList::IndexList(QString indicies, bool allow_dups)
+          : Value(), allow_duplicates(allow_dups)
+{
+    QStringList words = removeBrackets(indicies).split(",", QString::SkipEmptyParts);
+    
+    foreach (QString word, words)
+    {
+        idxs.append( Range(word) );
+    }
+}
+
+/** Construct from the passed XML element */
+IndexList::IndexList(QDomElement elem) : Value(), allow_duplicates(true)
+{
+    if (elem.tagName() != "index_list")
+        throw SireError::file_error( QObject::tr(
+              "Can only create an IndexList object from a <index_list>...</index_list> "
+              "XML DOM element. Cannot use a <%1>...</%1> element!")
+                    .arg(elem.tagName()), CODELOC );
+
+    
+    bool allow_dups = true;
+    
+    if (not elem.attribute("allow_duplicates").isEmpty())
+    {
+        allow_dups = readBool(elem.attribute("allow_duplicates"));
+    }
+
+    this->operator=( IndexList(elem.text(),allow_dups) );
+}
+
+/** Copy constructor */
+IndexList::IndexList(const IndexList &other)    
+          : Value(), allow_duplicates(other.allow_duplicates)
+{}
+
+/** Destructor */
+IndexList::~IndexList()
+{}
+
+IndexList* IndexList::ptr_clone() const
+{
+    return new IndexList(*this);
+}
+
+QDomElement IndexList::toDomElement(QDomDocument doc) const
+{
+    QDomElement elem = doc.createElement("index_list");
+
+    if (allow_duplicates)
+        elem.setAttribute("allow_duplicates", "true");
+    else
+        elem.setAttribute("allow_duplicates", "false");
+
+    elem.appendChild( doc.createTextNode(this->toValueString()) );
+    
+    return elem;
+}
+
+QString IndexList::toValueString() const
+{
+    if (idxs.isEmpty())
+        return "none";
+    
+    else if (idxs.count() == 1)
+        return idxs.at(0).toString();
+    
+    else
+    {
+        QStringList parts;
+        
+        foreach (const Range &idx, idxs)
+        {
+            parts.append(idx.toString());
+        }
+        
+        return QString("[ %1 ]").arg(parts.join(", "));
+    }
+}
+
+ValuePtr IndexList::fromValueString(QString value) const
+{
+    IndexList ret(value, allow_duplicates);
+    
+    if (ret != *this)
+        return ret;
+    else
+        return self();
+}
+
+/** Copy assignment operator */
+IndexList& IndexList::operator=(const IndexList &other)
+{
+    if (this != &other)
+    {
+        idxs = other.idxs;
+        allow_duplicates = other.allow_duplicates;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool IndexList::operator==(const IndexList &other) const
+{
+    return idxs == other.idxs and allow_duplicates == other.allow_duplicates;
+}
+
+/** Comparison operator */
+bool IndexList::operator!=(const IndexList &other) const
+{
+    return not IndexList::operator==(other);
+}
+
+const char* IndexList::typeName()
+{
+    return "SireSim::IndexList";
+}
+
+const char* IndexList::what() const
+{
+    return IndexList::typeName();
+}
+
+/** Return the complete set of indicies, given a container containing
+    'nvalues' objects */
+QList<int> IndexList::indicies(int nvalues) const
+{
+    QList<int> ret;
+    
+    if (allow_duplicates)
+    {
+        foreach (const Range &idx, idxs)
+        {
+            ret.append( idx.indicies(nvalues) );
+        }
+    }
+    else
+    {
+        for (int i=0; i<idxs.count(); ++i)
+        {
+            QList<int> idxs_i = idxs.at(i).indicies(nvalues);
+            
+            if (i > 0)
+            {
+                QMutableListIterator<int> it(idxs_i);
+                
+                while (it.hasNext())
+                {
+                    int idx = it.next();
+                    
+                    for (int j=0; j<i; ++j)
+                    {
+                        if (idxs.at(j).contains(idx,nvalues))
+                        {
+                            it.remove();
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            ret.append(idxs_i);
+        }
+    }
+    
+    return ret;
+}
+
+QList<int> IndexList::indicies(int i, int nvalues, int batchsize) const
+{
+    return QList<int>();
+}
+
+int IndexList::nBatches(int nvalues, int batchsize) const
+{
+    if (batchsize <= 0)
+        batchsize = 1;
+
+    return 1 + (this->count(nvalues)/batchsize);
+}
+
+/** Return the number of indicies, given a container containing 'nvalues' items */
+int IndexList::count(int nvalues) const
+{
+    if (idxs.isEmpty())
+        return 0;
+    
+    else if (idxs.count() == 1)
+    {
+        return idxs.at(0).count(nvalues);
+    }
+    else if (allow_duplicates)
+    {
+        int sz = 0;
+
+        foreach (const Range &idx, idxs)
+        {
+            sz += idx.count(nvalues);
+        }
+        
+        return sz;
+    }
+    else
+    {
+        int sz = 0;
+        
+        sz += idxs.at(0).count(nvalues);
+        
+        for (int i=1; i<idxs.count(); ++i)
+        {
+            const Range &idx = idxs.at(i);
+            
+            for (int j=0; j<idx.count(nvalues); ++j)
+            {
+                int j_idx = idx.at(j,nvalues);
+                
+                bool duplicated = false;
+                
+                for (int k=0; k<i; ++k)
+                {
+                    if (idxs.at(k).contains(j_idx,nvalues))
+                    {
+                        duplicated = true;
+                        break;
+                    }
+                }
+                
+                if (not duplicated)
+                    sz += 1;
+            }
+        }
+        
+        return sz;
+    }
+}
+
+int IndexList::count(int i, int nvalues, int batchsize) const
+{
+    int nidxs = this->count(nvalues);
+    
+    if (nidxs == 0)
+        return 0;
+        
+    if (batchsize <= 0)
+        batchsize = 1;
+        
+    int nbatches = (nidxs / batchsize) + 1;
+    
+    if (i >= nbatches or i < -nbatches)
+        return 0;
+    
+    else if (i != nbatches-1)
+        return batchsize;
+    
+    else
+    {
+        //get the remainder
+        return nidxs - batchsize*(nbatches-1);
+    }
+}
+
+int IndexList::at(int i, int nvalues) const
+{
+    return 0;
+}
+
+/** Return whether or not duplicated indicies are contained/allowed
+    in this list */
+bool IndexList::allowDuplicates() const
+{
+    return allow_duplicates;
 }

@@ -172,6 +172,7 @@ namespace detail
     
     double readFloat(QString value);
     qint64 readInt(QString value);
+    bool readBool(QString value);
 }
 
 template<class T>

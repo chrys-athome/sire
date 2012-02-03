@@ -785,26 +785,6 @@ QDomElement BoolValue::toDomElement(QDomDocument doc) const
     return elem;
 }
 
-bool readBool(QString text)
-{
-    text = text.trimmed().toLower();
-    
-    if (text == "true" or text == "yes" or text == "on" or text == "1")
-    {
-        return true;
-    }
-    else if (text == "false" or text == "no" or text == "off" or text == "0")
-    {
-        return false;
-    }
-    else
-        throw SireError::file_error( QObject::tr(
-                "Could not get a true/false value from the string \"%1\".")
-                    .arg(text), CODELOC );
-                    
-    return false;
-}
-
 BoolValue::BoolValue(QString value) : Value(), val(readBool(value))
 {}
 

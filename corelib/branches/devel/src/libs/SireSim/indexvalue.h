@@ -219,12 +219,16 @@ public:
     
     static const char* typeName();
     const char* what() const;
-    
-    int count(int nvalues) const;
-    int at(int i, int nvalues) const;
-    
+
     QList<int> indicies(int nvalues) const;
-    QList<int> indicies(int batch, int nvalues, int nbatch=1000) const;
+    QList<int> indicies(int i, int nvalues, int batchsize=1000) const;
+    
+    int nBatches(int nvalues, int batchsize=1000) const;
+
+    int count(int nvalues) const;
+    int count(int i, int nvalues, int batchsize=1000) const;
+
+    int at(int i, int nvalues) const;
 
     bool allowDuplicates() const;
 
@@ -247,5 +251,6 @@ private:
 }
 
 SIRE_EXPOSE_CLASS( SireSim::Range )
+SIRE_EXPOSE_CLASS( SireSim::IndexList )
 
 #endif

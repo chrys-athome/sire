@@ -33,6 +33,7 @@
 #include "SireSim/values.h"
 #include "SireSim/dimensions.h"
 #include "SireSim/dimensions.hpp"
+#include "SireSim/indexvalue.h"
 #include "SireSim/tempvalue.h"
 
 #include "SireError/errors.h"
@@ -282,6 +283,10 @@ ValuePtr Value::createFrom(QDomElement elem)
     else if (elem.tagName() == "pressure")
     {
         return PressureValue(elem);
+    }
+    else if (elem.tagName() == "index_list")
+    {
+        return IndexList(elem);
     }
     else
     {
