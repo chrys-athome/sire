@@ -17,6 +17,8 @@
 
 #include "FloatValue.pypp.hpp"
 
+#include "IndexList.pypp.hpp"
+
 #include "IntegerValue.pypp.hpp"
 
 #include "LengthValue.pypp.hpp"
@@ -71,6 +73,8 @@ BOOST_PYTHON_MODULE(_Sim){
     register_FileValue_class();
 
     register_FloatValue_class();
+
+    register_IndexList_class();
 
     register_IntegerValue_class();
 

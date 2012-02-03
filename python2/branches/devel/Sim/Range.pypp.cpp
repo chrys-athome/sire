@@ -9,9 +9,13 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireSim/dimensions.hpp"
+
 #include "SireSim/indexvalue.h"
 
 #include "indexvalue.h"
+
+#include <QDebug>
 
 #include <QDomDocument>
 

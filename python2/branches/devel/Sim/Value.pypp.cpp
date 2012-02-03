@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "SireSim/dimensions.hpp"
 
+#include "SireSim/indexvalue.h"
+
 #include "SireSim/tempvalue.h"
 
 #include "SireSim/value.h"

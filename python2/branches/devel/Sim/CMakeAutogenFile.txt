@@ -6,6 +6,7 @@ set ( PYPP_SOURCES
        EnumValue.pypp.cpp
        FileValue.pypp.cpp
        FloatValue.pypp.cpp
+       IndexList.pypp.cpp
        IntegerValue.pypp.cpp
        LengthValue.pypp.cpp
        Option.pypp.cpp
