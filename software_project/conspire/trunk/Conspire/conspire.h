@@ -50,6 +50,8 @@ namespace Conspire
     using Siren::tr;
 
     class Option;
+    class Options;
+    
     class Value;
     class Values;
 

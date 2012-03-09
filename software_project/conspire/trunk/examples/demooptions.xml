@@ -1,0 +1,16 @@
+<options>
+
+  <option>
+    <key>temperature</key>
+    <description>The temperature of the simulation.</description>
+    <value><temperature units="celsius">25</temperature></value>
+  </option>
+
+  <option>
+    <key>nmoves</key>
+    <description>The number of moves to perform.</description>
+    <value><integer minimum="1">1</integer></value>
+  </option>
+
+</options>
+

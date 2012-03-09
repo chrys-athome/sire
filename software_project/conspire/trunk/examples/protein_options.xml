@@ -1,0 +1,13 @@
+<options>
+  <option>
+    <key>name</key>
+    <description>Set the name of the protein molecule.</description>
+    <value><string>Protein</string></value>
+  </option>
+
+  <option>
+    <key>zmatrix</key>
+    <description>Set the name of the file that contains the z-matrix</description>
+    <value><file>protein.zmat</file></value>
+  </option>
+</options>

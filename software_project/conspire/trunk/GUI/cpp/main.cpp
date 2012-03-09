@@ -28,19 +28,70 @@
 
 #include "Conspire/GUI/view.h"
 
+#include "Conspire/conspire.h"
+#include "Conspire/option.h"
+#include "Conspire/exceptions.h"
+
 #include <QApplication>
 #include <QMainWindow>
 
+using namespace Conspire;
+
 int main(int argc, char **argv)
 {
-    QApplication a(argc, argv);
-    
-    QMainWindow *m = new QMainWindow(0);
-    m->show();
-    
-    a.exec();
-    
-    delete m;
+    try
+    {
+        QApplication a(argc, argv);
+        
+        QMainWindow *m = new QMainWindow(0);
+
+        Options opts;
+
+        if (argc > 1)
+        {
+            QString xmlfile = argv[1];
+            
+            QStringList path;
+            
+            if (argc > 2)
+            {
+                for (int i=2; i<argc; ++i)
+                {
+                    path.append( QString(argv[i]) );
+                }
+            }
+            
+            conspireDebug() << xmlfile;
+            conspireDebug() << path;
+            
+            opts = Options::fromXMLFile(xmlfile, path);
+        }
+
+        conspireDebug() << opts.toString();
+        
+        View *view = new View(m, opts);
+
+        m->setCentralWidget(view);
+
+        m->show();
+        
+        a.exec();
+        
+        delete m;
+    }
+    catch (const Conspire::Exception &e)
+    {
+        conspireDebug() << e.toString();
+    }
+    catch(const std::exception &e)
+    {
+        conspireDebug() << Conspire::tr("Caught standard exception: %1")
+                                            .arg(e.what());
+    }
+    catch (...)
+    {
+        conspireDebug() << Conspire::tr("Caught unknown exception!");
+    }
     
     return 0;
 }

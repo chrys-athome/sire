@@ -1,0 +1,8 @@
+<options>
+  <option allow_multiple="true" optional="true">
+    <key>protein</key>
+    <description>Options that refer to the protein molecule(s)</description>
+    <value><include file="protein_options.xml"/></value>
+  </option>
+</options>
+
