@@ -117,6 +117,8 @@ target_link_libraries ( Conspire
 
 target_link_libraries ( conspire_test Conspire Siren )
 
+add_subdirectory ( GUI )
+
 # installation
 install( TARGETS Conspire EXPORT Conspire
          RUNTIME DESTINATION bin

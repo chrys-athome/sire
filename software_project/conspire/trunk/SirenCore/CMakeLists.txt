@@ -15,9 +15,6 @@ if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
   message( FATAL_ERROR "You must run CMake in a different directory to the source!" )
 endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
 
-# name the project
-project (SIRENCORE CXX C)
-
 # project version
 set (SIRENCORE_VERSION_MAJOR "1")
 set (SIRENCORE_VERSION_MINOR "0")
@@ -29,9 +26,6 @@ math (EXPR SIRENCORE_VERSION_NUMBER
       "${SIRENCORE_VERSION_MAJOR}*100000 + ${SIRENCORE_VERSION_MINOR}*100 + ${SIRENCORE_VERSION_PATCH}")
 
 set (SIRENCORE_VERSION_STRING "${SIRENCORE_VERSION_MAJOR}_${SIRENCORE_VERSION_MINOR}_${SIRENCORE_VERSION_PATCH}")
-
-# Build shared libraries by default
-set (BUILD_SHARED_LIBS ON)
 
 # Make sure that the Siren 'Siren' include directory is searched first
 # when looking for header files
@@ -127,8 +121,8 @@ add_library ( Siren ${SIREN_SOURCES} )
 add_executable ( sirentest cpp/sirentest.cpp )
 
 set_target_properties (Siren PROPERTIES
-                       VERSION ${SIREN_VERSION_MAJOR}
-                       SOVERSION ${SIREN_VERSION_MAJOR}
+                       VERSION ${SIRENCORE_VERSION_MAJOR}
+                       SOVERSION ${SIRENCORE_VERSION_MAJOR}
                       )
 
 target_link_libraries ( Siren  
