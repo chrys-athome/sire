@@ -28,23 +28,28 @@
 
 #include "Conspire/GUI/view.h"
 #include "Conspire/option.h"
+#include "Conspire/exceptions.h"
+
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QMessageBox>
+#include <QLineEdit>
 
 using namespace Conspire;
+
+///////////
+/////////// Implementation of "View"
+///////////
 
 /** Constructor */
 View::View(QWidget *parent) : QLabel(parent)
 {}
 
-/** Construct from the passed set of Options */
-View::View(QWidget *parent, const Options &options) : QLabel(parent)
-{
-    this->setTextFormat( ::Qt::PlainText );
-    this->setText( options.toString() );
-}
-
 
 /** Construct from the passed set of Options */
-View::View(const Options &options) : QLabel()
+View::View(const Options &options, QWidget *parent) : QLabel(parent)
 {
     this->setTextFormat( ::Qt::PlainText );
     this->setText( options.toString() );
@@ -53,3 +58,104 @@ View::View(const Options &options) : QLabel()
 /** Destructor */
 View::~View()
 {}
+
+///////////
+/////////// Implementation of "OptionsView"
+///////////
+
+OptionsView::OptionsView(QWidget *parent) : QWidget(parent)
+{}
+
+OptionsView::OptionsView(const Options &options, QWidget *parent)
+            : QWidget(parent), opts(options)
+{
+    this->setLayout( new QVBoxLayout(this) );
+    
+    Qt::StringList keys = opts.keys();
+    
+    bool can_add = false;
+    
+    foreach (Qt::String key, keys)
+    {
+        Option opt = opts[key];
+
+        if (opt.hasValue() or (not opt.isOptional()))
+        {
+            this->layout()->addWidget( new OptionView( opts[key], this ) );
+            
+            if (opt.allowMultiple())
+                can_add = true;
+        }
+        else
+            can_add = true;
+    }
+    
+    if (can_add)
+        this->layout()->addWidget( new QPushButton("Add",this) );
+}
+
+OptionsView::~OptionsView()
+{}
+
+Options OptionsView::options() const
+{
+    return opts;
+}
+
+///////////
+/////////// Implementation of "OptionView"
+///////////
+
+OptionView::OptionView(QWidget *parent) : QWidget(parent)
+{}
+
+OptionView::OptionView(const Option &option, QWidget *parent)   
+           : QWidget(parent), opt(option)
+{
+    this->setLayout( new QHBoxLayout(this) );
+    
+    QPushButton *b = new QPushButton("?", this);
+    connect(b, SIGNAL(clicked()), this, SLOT(helpClicked()));
+    this->layout()->addWidget(b);
+
+    this->layout()->addWidget( new QLabel(option.key(),this) );
+
+    edit = new QLineEdit(this);
+    
+    edit->setText( opt.value().toString() );
+    this->layout()->addWidget(edit);
+    
+    connect(edit, SIGNAL(returnPressed()), this, SLOT(edited()));
+}
+
+OptionView::~OptionView()
+{}
+
+Option OptionView::option() const
+{
+    return opt;
+}
+
+void OptionView::helpClicked() const
+{
+    QMessageBox msgbox;
+    msgbox.setText( opt.description() );
+    msgbox.exec();
+}
+
+void OptionView::edited()
+{
+    try
+    {
+        Option newopt = opt.setNestedValue(opt.key(), edit->text()).asA<Option>();
+        opt = newopt;
+        edit->setText(opt.value().toString());
+    }
+    catch(const Conspire::Exception &e)
+    {
+        conspireDebug() << "EXCEPTION THROWN:";
+        conspireDebug() << e.toString();
+        QMessageBox::warning(this, "Conspire", e.why(), QMessageBox::Discard);
+        edit->setText( opt.value().toString() );
+    }
+}

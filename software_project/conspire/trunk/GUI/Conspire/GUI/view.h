@@ -32,8 +32,11 @@
 #include <QLabel>
 
 #include "Conspire/conspire.h"
+#include "Conspire/option.h"
 
 CONSPIRE_BEGIN_HEADER
+
+class QLineEdit;
 
 namespace Conspire
 {
@@ -47,11 +50,52 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        View(QWidget *parent);
-        View(QWidget *parent, const Options &options);
-        View(const Options &options);
+        View(QWidget *parent=0);
+        View(const Options &options, QWidget *parent=0);
         
         ~View();
+    };
+
+    /** This class holds the view of an individual Option object */
+    class CONSPIRE_EXPORT OptionView : public QWidget
+    {
+        Q_OBJECT
+        
+    public:
+        OptionView(QWidget *parent=0);
+        OptionView(const Option &option, QWidget *parent=0);
+        
+        ~OptionView();
+        
+        Option option() const;
+    
+    private slots:
+        void helpClicked() const;
+        void edited();
+        
+    private:
+        /** The option managed by this view */
+        Option opt;
+        
+        QLineEdit *edit;
+    };
+
+    /** This class holds the view of the Options object */
+    class CONSPIRE_EXPORT OptionsView : public QWidget
+    {
+        Q_OBJECT
+        
+    public:
+        OptionsView(QWidget *parent=0);
+        OptionsView(const Options &options, QWidget *parent=0);
+        
+        ~OptionsView();
+        
+        Options options() const;
+    
+    private:
+        /** This options managed by this view */
+        Options opts;
     };
 
 }
