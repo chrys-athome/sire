@@ -30,6 +30,7 @@
 
 #include <QWidget>
 #include <QLabel>
+#include <QUndoCommand>
 
 #include "Conspire/conspire.h"
 #include "Conspire/option.h"
@@ -113,6 +114,53 @@ namespace Conspire
         Options opts;
     };
 
+    /** This class holds a command that changes the Options state
+        from old_state to new_state */
+    class CONSPIRE_EXPORT OptionsCommand
+    {
+    public:
+        OptionsCommand();
+        OptionsCommand(Options old_state, Options new_state);
+        
+        OptionsCommand(const OptionsCommand &other);
+        
+        ~OptionsCommand();
+        
+        OptionsCommand& operator=(const OptionsCommand &other);
+        
+        QString changedText() const;
+        
+        Options oldState() const;
+        Options newState() const;
+        
+    private:
+        Options old_state;
+        Options new_state;
+    };
+
+    class OptionsControl;
+
+    /** This class holds the commands used to change the options object.
+        These work by calling the setNestedValue strings in the option */
+    class CONSPIRE_EXPORT OptionsUndoCommand : public QUndoCommand
+    {
+    public:
+        OptionsUndoCommand();
+        OptionsUndoCommand(OptionsControl *parent,
+                           OptionsCommand command);
+                       
+        ~OptionsUndoCommand();
+        
+        void redo();
+        void undo();
+        
+        QString text() const;
+        
+    private:
+        OptionsControl *control;
+        OptionsCommand cmd;
+    };
+
     /** This class holds the top-level overview of the options */
     class CONSPIRE_EXPORT OptionsControl : public QWidget
     {
@@ -136,10 +184,21 @@ namespace Conspire
         void load();
 
         void quit();
+    
+    protected:
+        friend class OptionsUndoCommand;
+        
+        void undo(const OptionsCommand &command);
+        void redo(const OptionsCommand &command);
 
     private:
+        void applyCommand(const OptionsCommand &command);
+
         /** The current options object */
         Options opts;
+        
+        /** Undo stack */
+        QUndoStack *undo_stack;
     };
 }
 

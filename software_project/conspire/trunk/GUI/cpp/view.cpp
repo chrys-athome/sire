@@ -37,6 +37,7 @@
 #include <QMessageBox>
 #include <QLineEdit>
 #include <QApplication>
+#include <QUndoStack>
 
 using namespace Conspire;
 
@@ -193,6 +194,94 @@ void OptionView::edited()
 }
 
 ///////////
+/////////// Implementation of "OptionsCommand"
+///////////
+
+OptionsCommand::OptionsCommand()
+{}
+
+OptionsCommand::OptionsCommand(Options oldstate, Options newstate)
+               : old_state(oldstate), new_state(newstate)
+{}
+
+OptionsCommand::OptionsCommand(const OptionsCommand &other)
+               : old_state(other.old_state), new_state(other.new_state)
+{}
+
+OptionsCommand::~OptionsCommand()
+{}
+
+OptionsCommand& OptionsCommand::operator=(const OptionsCommand &other)
+{
+    old_state = other.old_state;
+    new_state = other.new_state;
+}
+
+QString OptionsCommand::changedText() const
+{
+    QStringList old_lines = old_state.toConfig().split("\n", QString::SkipEmptyParts);
+    QStringList new_lines = new_state.toConfig().split("\n", QString::SkipEmptyParts);
+    
+    QStringList changed_lines;
+    
+    foreach (QString line, old_lines)
+    {
+        if (not new_lines.contains(line))
+            changed_lines.append( QString("< %1").arg(line) );
+    }
+    
+    foreach (QString line, new_lines)
+    {
+        if (not old_lines.contains(line))
+            changed_lines.append( QString("> %1").arg(line) );
+    }
+    
+    return changed_lines.join("\n");
+}
+
+Options OptionsCommand::oldState() const
+{
+    return old_state;
+}
+
+Options OptionsCommand::newState() const
+{
+    return new_state;
+}
+
+///////////
+/////////// Implementation of "OptionsUndoCommand"
+///////////
+
+OptionsUndoCommand::OptionsUndoCommand() : QUndoCommand(), control(0)
+{}
+
+OptionsUndoCommand::OptionsUndoCommand(OptionsControl *parent,
+                                       OptionsCommand command)
+                   : control(parent), cmd(command)
+{}
+               
+OptionsUndoCommand::~OptionsUndoCommand()
+{}
+
+void OptionsUndoCommand::redo()
+{
+    if (control)
+        control->redo(cmd);
+}
+
+void OptionsUndoCommand::undo()
+{
+    if (control)
+        control->undo(cmd);
+}
+
+QString OptionsUndoCommand::text() const
+{
+    return cmd.changedText();
+}
+
+///////////
 /////////// Implementation of "OptionsControl"
 ///////////
 
@@ -203,6 +292,8 @@ OptionsControl::OptionsControl(const Options &options, QWidget *parent)
                : QWidget(parent), opts(options)
 {
     this->setLayout( new QVBoxLayout(this) );
+    
+    undo_stack = new QUndoStack(this);
     
     OptionsView *view = new OptionsView(opts, this);
     connect(view, SIGNAL(updatedOption(Options)), this, SLOT(updated(Options)));
@@ -230,18 +321,59 @@ OptionsControl::OptionsControl(const Options &options, QWidget *parent)
 OptionsControl::~OptionsControl()
 {}
 
+void OptionsControl::applyCommand(const OptionsCommand &command)
+{
+    if (opts == command.oldState())
+    {
+        opts = command.newState();
+        
+        //propogate this down to all children
+        //
+        //
+        
+        undo_stack->push( new OptionsUndoCommand(this, command) );
+    }
+}
+
 void OptionsControl::updated(Options options)
 {
-    opts = options;
-    conspireDebug() << "Updated configuration!";
-    conspireDebug() << opts.toConfig();
+    OptionsCommand cmd(opts, options);
+    
+    conspireDebug() << "CHANGED" << cmd.changedText();
+    applyCommand(cmd);
+}
+
+void OptionsControl::undo(const OptionsCommand &command)
+{
+    if (opts == command.newState())
+    {
+        opts = command.oldState();
+        
+        //need to propogate this down...
+    }
+}
+
+void OptionsControl::redo(const OptionsCommand &command)
+{
+    if (opts == command.oldState())
+    {
+        opts = command.newState();
+        
+        //need to propogate this down...
+    }
 }
 
 void OptionsControl::undo()
-{}
+{
+    conspireDebug() << "UNDO:" << undo_stack->undoText();
+    undo_stack->undo();
+}
 
 void OptionsControl::redo()
-{}
+{
+    conspireDebug() << "REDO:" << undo_stack->redoText();
+    undo_stack->redo();
+}
 
 void OptionsControl::save()
 {}
