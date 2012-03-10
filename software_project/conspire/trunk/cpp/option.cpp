@@ -1740,6 +1740,33 @@ List<Option>::Type Options::options() const
     return ret;
 }
 
+/** Update the passed option so that its new value can be recorded */
+Options Options::update(const Option &option) const
+{
+    int idx = kys.value(option.key(), -1);
+    
+    if (idx == -1)
+        throw Conspire::invalid_key( Conspire::tr(
+                "Cannot update the Option \"%1\" as this option cannot be "
+                "found in the list of options ( %2 )")
+                    .arg(option.toString())
+                    .arg(this->keys().join(", ")), CODELOC );
+                    
+    int color = option_to_color.value(idx, 0);
+    
+    if (color != 0)
+    {
+        //we may have changed color
+        throw Conspire::incomplete_code( Conspire::tr(
+                "Cannot change the option as it may change color!"), CODELOC );
+    }
+    
+    Options ret(*this);
+    ret.opts[idx] = option;
+
+    return ret;
+}
+
 /** Add this set of options to 'other', returning the result. The options
     in this set are listed before the options in 'other' */
 Options Options::add(const Options &other) const

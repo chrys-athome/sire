@@ -36,6 +36,7 @@
 #include <QPushButton>
 #include <QMessageBox>
 #include <QLineEdit>
+#include <QApplication>
 
 using namespace Conspire;
 
@@ -81,10 +82,15 @@ OptionsView::OptionsView(const Options &options, QWidget *parent)
 
         if (opt.hasValue() or (not opt.isOptional()))
         {
-            this->layout()->addWidget( new OptionView( opts[key], this ) );
+            OptionView *view = new OptionView(opts[key], this);
             
-            if (opt.allowMultiple())
-                can_add = true;
+            connect(view, SIGNAL(updatedOption(Option)), 
+                    this, SLOT(childUpdated(Option)));
+
+            connect(view, SIGNAL(updatedOption(Options)), 
+                    this, SLOT(childUpdated(Options)));
+        
+            this->layout()->addWidget(view);
         }
         else
             can_add = true;
@@ -100,6 +106,23 @@ OptionsView::~OptionsView()
 Options OptionsView::options() const
 {
     return opts;
+}
+
+void OptionsView::childUpdated(Option option)
+{
+    Option old_option = opts[option.key()];
+    
+    if (old_option != option)
+    {
+        Options new_options = opts.update(option);
+        emit( updatedOption(new_options) );
+        opts = new_options;
+    }
+}
+
+void OptionsView::childUpdated(Options options)
+{
+    throw Conspire::incomplete_code( Conspire::tr("Not written yet..."), CODELOC );
 }
 
 ///////////
@@ -143,11 +166,20 @@ void OptionView::helpClicked() const
     msgbox.exec();
 }
 
+void OptionView::childUpdated(Option option)
+{}
+
 void OptionView::edited()
 {
     try
     {
+        //try to update the option
         Option newopt = opt.setNestedValue(opt.key(), edit->text()).asA<Option>();
+        
+        //ok - that was successful - now try to update the option in 
+        //the complete options object...
+        emit( updatedOption(newopt) );
+        
         opt = newopt;
         edit->setText(opt.value().toString());
     }
@@ -158,4 +190,66 @@ void OptionView::edited()
         QMessageBox::warning(this, "Conspire", e.why(), QMessageBox::Discard);
         edit->setText( opt.value().toString() );
     }
+}
+
+///////////
+/////////// Implementation of "OptionsControl"
+///////////
+
+OptionsControl::OptionsControl(QWidget *parent) : QWidget(parent)
+{}
+
+OptionsControl::OptionsControl(const Options &options, QWidget *parent)
+               : QWidget(parent), opts(options)
+{
+    this->setLayout( new QVBoxLayout(this) );
+    
+    OptionsView *view = new OptionsView(opts, this);
+    connect(view, SIGNAL(updatedOption(Options)), this, SLOT(updated(Options)));
+    this->layout()->addWidget(view);
+
+    QPushButton *undo = new QPushButton("Undo");
+    QPushButton *redo = new QPushButton("Redo");
+    QPushButton *save = new QPushButton("Save");
+    QPushButton *load = new QPushButton("Load");
+    QPushButton *quit = new QPushButton("Quit");
+
+    this->layout()->addWidget(undo);
+    this->layout()->addWidget(redo);
+    this->layout()->addWidget(save);
+    this->layout()->addWidget(load);
+    this->layout()->addWidget(quit);
+    
+    connect(undo, SIGNAL(clicked()), this, SLOT(undo()));
+    connect(redo, SIGNAL(clicked()), this, SLOT(redo()));
+    connect(save, SIGNAL(clicked()), this, SLOT(save()));
+    connect(load, SIGNAL(clicked()), this, SLOT(load()));
+    connect(quit, SIGNAL(clicked()), this, SLOT(quit()));
+}
+
+OptionsControl::~OptionsControl()
+{}
+
+void OptionsControl::updated(Options options)
+{
+    opts = options;
+    conspireDebug() << "Updated configuration!";
+    conspireDebug() << opts.toConfig();
+}
+
+void OptionsControl::undo()
+{}
+
+void OptionsControl::redo()
+{}
+
+void OptionsControl::save()
+{}
+
+void OptionsControl::load()
+{}
+
+void OptionsControl::quit()
+{
+    QApplication::quit();
 }

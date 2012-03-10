@@ -179,6 +179,8 @@ namespace Conspire
         
         Options operator+(const Options &other) const;
 
+        Options update(const Option &option) const;
+
         Obj getNestedValue(Qt::String key) const;
         Option getNestedOption(Qt::String key) const;
 

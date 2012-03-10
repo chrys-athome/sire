@@ -68,11 +68,18 @@ namespace Conspire
         ~OptionView();
         
         Option option() const;
+
+    public slots:
+        void childUpdated(Option option);
     
     private slots:
         void helpClicked() const;
         void edited();
         
+    signals:
+        void updatedOption(Option option);
+        void updatedOption(Options options);
+
     private:
         /** The option managed by this view */
         Option opt;
@@ -93,11 +100,47 @@ namespace Conspire
         
         Options options() const;
     
+    public slots:
+        void childUpdated(Option option);
+        void childUpdated(Options options);
+    
+    signals:
+        void updatedOption(Option option);
+        void updatedOption(Options options);
+    
     private:
         /** This options managed by this view */
         Options opts;
     };
 
+    /** This class holds the top-level overview of the options */
+    class CONSPIRE_EXPORT OptionsControl : public QWidget
+    {
+        Q_OBJECT
+        
+    public:
+        OptionsControl(QWidget *parent=0);
+        OptionsControl(const Options &options, QWidget *parent=0);
+        
+        ~OptionsControl();
+        
+        Options options() const;
+    
+    public slots:
+        void updated(Options options);
+
+        void undo();
+        void redo();
+
+        void save();
+        void load();
+
+        void quit();
+
+    private:
+        /** The current options object */
+        Options opts;
+    };
 }
 
 CONSPIRE_END_HEADER

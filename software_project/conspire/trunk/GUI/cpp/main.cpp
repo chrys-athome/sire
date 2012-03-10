@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 
         conspireDebug() << opts.toString();
         
-        OptionsView *view = new OptionsView(opts, m);
+        OptionsControl *view = new OptionsControl(opts, m);
 
         m->setCentralWidget(view);
 
