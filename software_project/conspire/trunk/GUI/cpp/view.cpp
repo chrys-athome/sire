@@ -132,27 +132,43 @@ void View::updateOption(QString key, QString value)
 /////////// Implementation of "OptionsView"
 ///////////
 
-OptionsView::OptionsView(QWidget *parent) : View(parent)
+OptionsView::OptionsView(QWidget *parent) : View(parent), views(0)
 {}
 
-OptionsView::OptionsView(const Options &options, QWidget *parent)
-            : View(parent)
+void OptionsView::build(const Options &options)
 {
+    //remove all current children
+    foreach (QObject *child, this->children())
+    {
+        delete child;
+    }
+    
+    //remove the current layout
+    delete this->layout();
+    
+    //remove the current list of children
+    delete views;
+    views = 0;
+    
+    //now create the new children views for the options
     this->setLayout( new QVBoxLayout(this) );
     
-    Qt::StringList keys = options.keys();
+    QStringList keys = options.keys();
     
     bool can_add = false;
     
-    foreach (Qt::String key, keys)
+    foreach (QString key, keys)
     {
         Option opt = options[key];
 
         if (opt.hasValue() or (not opt.isOptional()))
         {
+            if (not views)
+                views = new QHash<QString,OptionView*>();
+        
             OptionView *view = new OptionView(opt,this);
             this->layout()->addWidget(view);
-            views.insert(key, view);
+            views->insert(key, view);
         }
         else
             can_add = true;
@@ -162,8 +178,56 @@ OptionsView::OptionsView(const Options &options, QWidget *parent)
         this->layout()->addWidget( new QPushButton("Add",this) );
 }
 
+void OptionsView::update(const Options &options)
+{
+    QStringList keys = options.keys();
+    
+    bool can_add = false;
+    
+    int i = 0;
+    
+    foreach (QString key, keys)
+    {
+        Option opt = options[key];
+        
+        if (opt.hasValue() or (not opt.isOptional()))
+        {
+            if (not views)
+                views = new QHash<QString,OptionView*>();
+                
+            if (views->contains(key))
+            {
+                views->value(key)->update(opt);
+                ++i;
+            }
+            else
+            {
+                OptionView *view = new OptionView(opt,this);
+                dynamic_cast<QVBoxLayout*>(this->layout())->insertWidget(i,view);
+                ++i;
+                
+                views->insert(key,view);
+            }
+        }
+        else if (views and views->contains(key))
+        {
+            //this option has been deleted...
+            delete views->value(key);
+            views->remove(key);
+        }
+    }
+}
+
+OptionsView::OptionsView(const Options &options, QWidget *parent)
+            : View(parent), views(0)
+{
+    this->build(options);
+}
+
 OptionsView::~OptionsView()
-{}
+{
+    delete views;
+}
 
 ///////////
 /////////// Implementation of "OptionView"
@@ -172,9 +236,28 @@ OptionsView::~OptionsView()
 OptionView::OptionView(View *parent) : View(parent)
 {}
 
-OptionView::OptionView(const Option &option, View *parent)   
-           : View(parent)
+void OptionView::build(const Option &option)
 {
+    //remove all current children
+    foreach (QObject *child, this->children())
+    {
+        delete child;
+    }
+    
+    //remove the current layout
+    delete this->layout();
+
+    //forget the current values
+    k = QString::null;
+    v = QString::null;
+    help_text = QString::null;
+    edit = 0;
+
+    //disconnect all objects connected to signals
+    //from this view
+    this->disconnect();
+
+    //rebuild everything
     QString root_key = this->rootKey();
     
     if (not root_key.isEmpty())
@@ -212,6 +295,32 @@ OptionView::OptionView(const Option &option, View *parent)
         connect(this, SIGNAL(setOption(QString,QString)),
                 root_node, SLOT(updateOption(QString,QString)));
     }
+}
+
+void OptionView::update(const Option &option)
+{
+    QString root_key = this->rootKey();
+    
+    if (not root_key.isEmpty())
+    {
+        k = QString("%1.%2").arg(root_key, option.key());
+    }
+    else
+    {
+        k = option.key();
+    }
+
+    v = option.value().toString();
+
+    help_text = option.description();
+    
+    edit->setText(v);
+}
+
+OptionView::OptionView(const Option &option, View *parent)   
+           : View(parent)
+{
+    this->build(option);
 }
 
 OptionView::~OptionView()
@@ -305,7 +414,9 @@ OptionsUndoCommand::OptionsUndoCommand() : QUndoCommand(), control(0)
 OptionsUndoCommand::OptionsUndoCommand(OptionsControl *parent,
                                        OptionsCommand command)
                    : control(parent), cmd(command)
-{}
+{
+    this->setText( cmd.changedText() );
+}
                
 OptionsUndoCommand::~OptionsUndoCommand()
 {}
@@ -322,16 +433,6 @@ void OptionsUndoCommand::undo()
         control->undo(cmd);
 }
 
-QString OptionsUndoCommand::text() const
-{
-    return cmd.changedText();
-}
-
-QString OptionsUndoCommand::actionText() const
-{
-    return text();
-}
-
 ///////////
 /////////// Implementation of "OptionsControl"
 ///////////
@@ -346,7 +447,7 @@ OptionsControl::OptionsControl(const Options &options, QWidget *parent)
     
     undo_stack = new QUndoStack(this);
     
-    OptionsView *view = new OptionsView(opts, this);
+    view = new OptionsView(this);
     connect(view, SIGNAL(setOption(QString,QString)), 
             this, SLOT(updateOption(QString,QString)));
     this->layout()->addWidget(view);
@@ -357,17 +458,35 @@ OptionsControl::OptionsControl(const Options &options, QWidget *parent)
     QPushButton *load = new QPushButton("Load");
     QPushButton *quit = new QPushButton("Quit");
 
+    QLabel *undo_label = new QLabel(this);
+    QLabel *redo_label = new QLabel(this);
+
+    undo->setEnabled(false);
+    redo->setEnabled(false);
+
     this->layout()->addWidget(undo);
+    this->layout()->addWidget(undo_label);
     this->layout()->addWidget(redo);
+    this->layout()->addWidget(redo_label);
     this->layout()->addWidget(save);
     this->layout()->addWidget(load);
     this->layout()->addWidget(quit);
     
-    connect(undo, SIGNAL(clicked()), this, SLOT(undo()));
-    connect(redo, SIGNAL(clicked()), this, SLOT(redo()));
+    connect(undo, SIGNAL(clicked()), undo_stack, SLOT(undo()));
+    connect(redo, SIGNAL(clicked()), undo_stack, SLOT(redo()));
+    
+    connect(undo_stack, SIGNAL(canUndoChanged(bool)), undo, SLOT(setEnabled(bool)));
+    connect(undo_stack, SIGNAL(canRedoChanged(bool)), redo, SLOT(setEnabled(bool)));
+    connect(undo_stack, SIGNAL(undoTextChanged(QString)),
+            undo_label, SLOT(setText(QString)));
+    connect(undo_stack, SIGNAL(redoTextChanged(QString)),
+            redo_label, SLOT(setText(QString)));
+    
     connect(save, SIGNAL(clicked()), this, SLOT(save()));
     connect(load, SIGNAL(clicked()), this, SLOT(load()));
     connect(quit, SIGNAL(clicked()), this, SLOT(quit()));
+    
+    view->build(opts);
 }
 
 OptionsControl::~OptionsControl()
@@ -381,6 +500,15 @@ void OptionsControl::applyCommand(const OptionsCommand &command)
 
         opts = opts.setNestedValue(command.key(), command.newValue())
                    .asA<Options>();
+    
+        try
+        {
+            view->update(opts);
+        }
+        catch(...)
+        {
+            view->build(opts);
+        }
     }
 }
 
@@ -393,26 +521,23 @@ void OptionsControl::updateOption(QString key, QString value)
 void OptionsControl::undo(const OptionsCommand &command)
 {
     conspireDebug() << "REVERT" << command.key() << command.oldValue();
+
     opts = command.oldState();
 
     //need to propogate this down...
+    try
+    {
+        view->update(opts);
+    }
+    catch(...)
+    {
+        view->build(opts);
+    }
 }
 
 void OptionsControl::redo(const OptionsCommand &command)
 {
     this->applyCommand(command);
-}
-
-void OptionsControl::undo()
-{
-    conspireDebug() << "UNDO:" << undo_stack->undoText();
-    undo_stack->undo();
-}
-
-void OptionsControl::redo()
-{
-    conspireDebug() << "REDO:" << undo_stack->redoText();
-    undo_stack->redo();
 }
 
 void OptionsControl::save()

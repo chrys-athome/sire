@@ -83,6 +83,9 @@ namespace Conspire
 
         QString key() const;
 
+        void build(const Option &option);
+        void update(const Option &option);
+
     private slots:
         void helpClicked() const;
         void edited();
@@ -111,9 +114,12 @@ namespace Conspire
         
         ~OptionsView();
     
+        void build(const Options &options);
+        void update(const Options &options);
+    
     private:
         /** This set of views for each option key */
-        QHash<QString,View*> views;
+        QHash<QString,OptionView*> *views;
     };
 
     /** This class holds a command that changes the Options state
@@ -161,9 +167,6 @@ namespace Conspire
         void redo();
         void undo();
         
-        QString text() const;
-        QString actionText() const;
-        
     private:
         OptionsControl *control;
         OptionsCommand cmd;
@@ -185,9 +188,6 @@ namespace Conspire
     public slots:
         void updateOption(QString key, QString value);
 
-        void undo();
-        void redo();
-
         void save();
         void load();
 
@@ -204,6 +204,9 @@ namespace Conspire
 
         /** The current options object */
         Options opts;
+
+        /** The top-level OptionsView */
+        OptionsView *view;
         
         /** Undo stack */
         QUndoStack *undo_stack;
