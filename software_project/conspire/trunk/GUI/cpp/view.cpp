@@ -46,52 +46,113 @@ using namespace Conspire;
 ///////////
 
 /** Constructor */
-View::View(QWidget *parent) : QLabel(parent)
+View::View(QWidget *parent) : QWidget(parent)
 {}
-
-
-/** Construct from the passed set of Options */
-View::View(const Options &options, QWidget *parent) : QLabel(parent)
-{
-    this->setTextFormat( ::Qt::PlainText );
-    this->setText( options.toString() );
-}
 
 /** Destructor */
 View::~View()
 {}
 
+View* View::parentView()
+{
+    QObject *p = this->parent();
+    
+    if (p)
+    {
+        View *parent = dynamic_cast<View*>(p);
+        
+        if (parent)
+            return parent;
+    }
+    
+    return 0;
+}
+
+const View* View::parentView() const
+{
+    const QObject *p = this->parent();
+    
+    if (p)
+    {
+        const View *parent = dynamic_cast<const View*>(p);
+        
+        if (parent)
+            return parent;
+    }
+    
+    return 0;
+}
+
+View* View::rootNode()
+{
+    View *parent = this->parentView();
+    
+    if (parent)
+        return parent->rootNode();
+    else
+        return this;
+}
+
+const View* View::rootNode() const
+{
+    const View *parent = this->parentView();
+    
+    if (parent)
+        return parent->rootNode();
+    else
+        return this;
+}
+
+QString View::rootKey() const
+{
+    const View *parent = this->parentView();
+    
+    if (parent)
+        return parent->key();
+    else
+        return QString::null;
+}
+
+QString View::key() const
+{
+    const View *parent = this->parentView();
+    
+    if (parent)
+        return parent->key();
+    else
+        return QString::null;
+}
+
+void View::updateOption(QString key, QString value)
+{
+    emit( setOption(key,value) );
+}
+
 ///////////
 /////////// Implementation of "OptionsView"
 ///////////
 
-OptionsView::OptionsView(QWidget *parent) : QWidget(parent)
+OptionsView::OptionsView(QWidget *parent) : View(parent)
 {}
 
 OptionsView::OptionsView(const Options &options, QWidget *parent)
-            : QWidget(parent), opts(options)
+            : View(parent)
 {
     this->setLayout( new QVBoxLayout(this) );
     
-    Qt::StringList keys = opts.keys();
+    Qt::StringList keys = options.keys();
     
     bool can_add = false;
     
     foreach (Qt::String key, keys)
     {
-        Option opt = opts[key];
+        Option opt = options[key];
 
         if (opt.hasValue() or (not opt.isOptional()))
         {
-            OptionView *view = new OptionView(opts[key], this);
-            
-            connect(view, SIGNAL(updatedOption(Option)), 
-                    this, SLOT(childUpdated(Option)));
-
-            connect(view, SIGNAL(updatedOption(Options)), 
-                    this, SLOT(childUpdated(Options)));
-        
+            OptionView *view = new OptionView(opt,this);
             this->layout()->addWidget(view);
+            views.insert(key, view);
         }
         else
             can_add = true;
@@ -104,38 +165,31 @@ OptionsView::OptionsView(const Options &options, QWidget *parent)
 OptionsView::~OptionsView()
 {}
 
-Options OptionsView::options() const
-{
-    return opts;
-}
-
-void OptionsView::childUpdated(Option option)
-{
-    Option old_option = opts[option.key()];
-    
-    if (old_option != option)
-    {
-        Options new_options = opts.update(option);
-        emit( updatedOption(new_options) );
-        opts = new_options;
-    }
-}
-
-void OptionsView::childUpdated(Options options)
-{
-    throw Conspire::incomplete_code( Conspire::tr("Not written yet..."), CODELOC );
-}
-
 ///////////
 /////////// Implementation of "OptionView"
 ///////////
 
-OptionView::OptionView(QWidget *parent) : QWidget(parent)
+OptionView::OptionView(View *parent) : View(parent)
 {}
 
-OptionView::OptionView(const Option &option, QWidget *parent)   
-           : QWidget(parent), opt(option)
+OptionView::OptionView(const Option &option, View *parent)   
+           : View(parent)
 {
+    QString root_key = this->rootKey();
+    
+    if (not root_key.isEmpty())
+    {
+        k = QString("%1.%2").arg(root_key, option.key());
+    }
+    else
+    {
+        k = option.key();
+    }
+
+    v = option.value().toString();
+
+    help_text = option.description();
+
     this->setLayout( new QHBoxLayout(this) );
     
     QPushButton *b = new QPushButton("?", this);
@@ -146,50 +200,47 @@ OptionView::OptionView(const Option &option, QWidget *parent)
 
     edit = new QLineEdit(this);
     
-    edit->setText( opt.value().toString() );
+    edit->setText(v);
     this->layout()->addWidget(edit);
     
     connect(edit, SIGNAL(returnPressed()), this, SLOT(edited()));
+
+    View *root_node = this->rootNode();
+    
+    if (root_node)
+    {
+        connect(this, SIGNAL(setOption(QString,QString)),
+                root_node, SLOT(updateOption(QString,QString)));
+    }
 }
 
 OptionView::~OptionView()
 {}
 
-Option OptionView::option() const
-{
-    return opt;
-}
-
 void OptionView::helpClicked() const
 {
     QMessageBox msgbox;
-    msgbox.setText( opt.description() );
+    msgbox.setText( help_text );
     msgbox.exec();
 }
 
-void OptionView::childUpdated(Option option)
-{}
+QString OptionView::key() const
+{
+    return k;
+}
 
 void OptionView::edited()
 {
     try
     {
-        //try to update the option
-        Option newopt = opt.setNestedValue(opt.key(), edit->text()).asA<Option>();
-        
-        //ok - that was successful - now try to update the option in 
-        //the complete options object...
-        emit( updatedOption(newopt) );
-        
-        opt = newopt;
-        edit->setText(opt.value().toString());
+        emit( setOption(key(), edit->text()) );
     }
     catch(const Conspire::Exception &e)
     {
         conspireDebug() << "EXCEPTION THROWN:";
         conspireDebug() << e.toString();
         QMessageBox::warning(this, "Conspire", e.why(), QMessageBox::Discard);
-        edit->setText( opt.value().toString() );
+        edit->setText(v);
     }
 }
 
@@ -200,12 +251,12 @@ void OptionView::edited()
 OptionsCommand::OptionsCommand()
 {}
 
-OptionsCommand::OptionsCommand(Options oldstate, Options newstate)
-               : old_state(oldstate), new_state(newstate)
+OptionsCommand::OptionsCommand(Options oldstate, QString key, QString value)
+               : old_state(oldstate), k(key), v(value)
 {}
 
 OptionsCommand::OptionsCommand(const OptionsCommand &other)
-               : old_state(other.old_state), new_state(other.new_state)
+               : old_state(other.old_state), k(other.k), v(other.v)
 {}
 
 OptionsCommand::~OptionsCommand()
@@ -214,39 +265,34 @@ OptionsCommand::~OptionsCommand()
 OptionsCommand& OptionsCommand::operator=(const OptionsCommand &other)
 {
     old_state = other.old_state;
-    new_state = other.new_state;
+    k = other.k;
+    v = other.v;
+}
+
+QString OptionsCommand::key() const
+{
+    return k;
+}
+
+QString OptionsCommand::oldValue() const
+{
+    return old_state.getNestedValue(key()).toString();
+}
+
+QString OptionsCommand::newValue() const
+{
+    return v;
 }
 
 QString OptionsCommand::changedText() const
 {
-    QStringList old_lines = old_state.toConfig().split("\n", QString::SkipEmptyParts);
-    QStringList new_lines = new_state.toConfig().split("\n", QString::SkipEmptyParts);
-    
-    QStringList changed_lines;
-    
-    foreach (QString line, old_lines)
-    {
-        if (not new_lines.contains(line))
-            changed_lines.append( QString("< %1").arg(line) );
-    }
-    
-    foreach (QString line, new_lines)
-    {
-        if (not old_lines.contains(line))
-            changed_lines.append( QString("> %1").arg(line) );
-    }
-    
-    return changed_lines.join("\n");
+    return QString("Set \"%1\" equal to \"%2\"")
+                .arg(key(), newValue());
 }
 
 Options OptionsCommand::oldState() const
 {
     return old_state;
-}
-
-Options OptionsCommand::newState() const
-{
-    return new_state;
 }
 
 ///////////
@@ -281,6 +327,11 @@ QString OptionsUndoCommand::text() const
     return cmd.changedText();
 }
 
+QString OptionsUndoCommand::actionText() const
+{
+    return text();
+}
+
 ///////////
 /////////// Implementation of "OptionsControl"
 ///////////
@@ -296,7 +347,8 @@ OptionsControl::OptionsControl(const Options &options, QWidget *parent)
     undo_stack = new QUndoStack(this);
     
     OptionsView *view = new OptionsView(opts, this);
-    connect(view, SIGNAL(updatedOption(Options)), this, SLOT(updated(Options)));
+    connect(view, SIGNAL(setOption(QString,QString)), 
+            this, SLOT(updateOption(QString,QString)));
     this->layout()->addWidget(view);
 
     QPushButton *undo = new QPushButton("Undo");
@@ -325,42 +377,30 @@ void OptionsControl::applyCommand(const OptionsCommand &command)
 {
     if (opts == command.oldState())
     {
-        opts = command.newState();
-        
-        //propogate this down to all children
-        //
-        //
-        
-        undo_stack->push( new OptionsUndoCommand(this, command) );
+        conspireDebug() << "APPLY" << command.key() << command.newValue();
+
+        opts = opts.setNestedValue(command.key(), command.newValue())
+                   .asA<Options>();
     }
 }
 
-void OptionsControl::updated(Options options)
+void OptionsControl::updateOption(QString key, QString value)
 {
-    OptionsCommand cmd(opts, options);
-    
-    conspireDebug() << "CHANGED" << cmd.changedText();
-    applyCommand(cmd);
+    conspireDebug() << "CHANGED:" << key << "=" << value;
+    undo_stack->push( new OptionsUndoCommand(this, OptionsCommand(opts,key,value)) );
 }
 
 void OptionsControl::undo(const OptionsCommand &command)
 {
-    if (opts == command.newState())
-    {
-        opts = command.oldState();
-        
-        //need to propogate this down...
-    }
+    conspireDebug() << "REVERT" << command.key() << command.oldValue();
+    opts = command.oldState();
+
+    //need to propogate this down...
 }
 
 void OptionsControl::redo(const OptionsCommand &command)
 {
-    if (opts == command.oldState())
-    {
-        opts = command.newState();
-        
-        //need to propogate this down...
-    }
+    this->applyCommand(command);
 }
 
 void OptionsControl::undo()

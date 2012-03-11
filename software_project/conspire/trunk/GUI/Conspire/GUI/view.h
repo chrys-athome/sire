@@ -41,55 +41,67 @@ class QLineEdit;
 
 namespace Conspire
 {
-    /** This is the base class of View types that represent
-        views of Conspire options
-        
-        @author Christopher Woods
-    */
-    class CONSPIRE_EXPORT View : public QLabel
+    class OptionsController;
+
+    /** This class is the base class of views of Option objects */
+    class CONSPIRE_EXPORT View : public QWidget
     {
         Q_OBJECT
         
     public:
         View(QWidget *parent=0);
-        View(const Options &options, QWidget *parent=0);
         
-        ~View();
+        virtual ~View();
+        
+        View* parentView();
+        const View* parentView() const;
+        
+        View* rootNode();
+        const View* rootNode() const;
+        
+        virtual QString rootKey() const;
+        
+        virtual QString key() const;
+        
+    public slots:
+        void updateOption(QString key, QString value);
+        
+    signals:
+        void setOption(QString key, QString value);
     };
 
     /** This class holds the view of an individual Option object */
-    class CONSPIRE_EXPORT OptionView : public QWidget
+    class CONSPIRE_EXPORT OptionView : public View
     {
         Q_OBJECT
         
     public:
-        OptionView(QWidget *parent=0);
-        OptionView(const Option &option, QWidget *parent=0);
+        OptionView(View *parent=0);
+        OptionView(const Option &option, View *parent=0);
         
         ~OptionView();
-        
-        Option option() const;
 
-    public slots:
-        void childUpdated(Option option);
-    
+        QString key() const;
+
     private slots:
         void helpClicked() const;
         void edited();
-        
-    signals:
-        void updatedOption(Option option);
-        void updatedOption(Options options);
 
     private:
-        /** The option managed by this view */
-        Option opt;
+        /** The key managed by this view */
+        QString k;
+        
+        /** The current textual representation of the value */
+        QString v;
+        
+        /** The help text for this view */
+        QString help_text;
         
         QLineEdit *edit;
     };
 
     /** This class holds the view of the Options object */
-    class CONSPIRE_EXPORT OptionsView : public QWidget
+    class CONSPIRE_EXPORT OptionsView : public View
     {
         Q_OBJECT
         
@@ -98,20 +110,10 @@ namespace Conspire
         OptionsView(const Options &options, QWidget *parent=0);
         
         ~OptionsView();
-        
-        Options options() const;
-    
-    public slots:
-        void childUpdated(Option option);
-        void childUpdated(Options options);
-    
-    signals:
-        void updatedOption(Option option);
-        void updatedOption(Options options);
     
     private:
-        /** This options managed by this view */
-        Options opts;
+        /** This set of views for each option key */
+        QHash<QString,View*> views;
     };
 
     /** This class holds a command that changes the Options state
@@ -120,7 +122,7 @@ namespace Conspire
     {
     public:
         OptionsCommand();
-        OptionsCommand(Options old_state, Options new_state);
+        OptionsCommand(Options old_state, QString key, QString value);
         
         OptionsCommand(const OptionsCommand &other);
         
@@ -131,11 +133,16 @@ namespace Conspire
         QString changedText() const;
         
         Options oldState() const;
-        Options newState() const;
+
+        QString key() const;
+        
+        QString oldValue() const;
+        QString newValue() const;
         
     private:
         Options old_state;
-        Options new_state;
+        QString k;
+        QString v;
     };
 
     class OptionsControl;
@@ -155,6 +162,7 @@ namespace Conspire
         void undo();
         
         QString text() const;
+        QString actionText() const;
         
     private:
         OptionsControl *control;
@@ -175,7 +183,7 @@ namespace Conspire
         Options options() const;
     
     public slots:
-        void updated(Options options);
+        void updateOption(QString key, QString value);
 
         void undo();
         void redo();
