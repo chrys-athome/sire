@@ -90,6 +90,8 @@ namespace Conspire
         
         Obj defaultValue() const;
         
+        int index() const;
+        
         Obj getNestedValue(Qt::String key) const;
         Option getNestedOption(Qt::String key) const;
 

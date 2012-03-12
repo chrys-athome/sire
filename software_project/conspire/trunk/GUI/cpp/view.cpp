@@ -28,12 +28,14 @@
 
 #include "Conspire/GUI/view.h"
 #include "Conspire/option.h"
+#include "Conspire/values.h"
 #include "Conspire/exceptions.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QToolButton>
 #include <QMessageBox>
 #include <QLineEdit>
 #include <QApplication>
@@ -227,6 +229,254 @@ OptionsView::OptionsView(const Options &options, QWidget *parent)
 OptionsView::~OptionsView()
 {
     delete views;
+}
+
+///////////
+/////////// Implementation of "EntryView"
+///////////
+
+EntryView::EntryView(Obj value, int index, QWidget *parent) 
+          : QWidget(parent), val(value), idx(index)
+{}
+
+EntryView::~EntryView()
+{}
+
+void EntryView::setValue(Obj new_value)
+{
+    if (val != new_value)
+    {
+        val = new_value;
+        emit( edited(val) );
+    }
+}
+
+Obj EntryView::value() const
+{
+    return val;
+}
+
+int EntryView::index() const
+{
+    return idx;
+}
+
+EntryView* EntryView::build(Option option, QWidget *parent)
+{
+    return new StringValueView(option, parent);
+}
+
+void EntryView::updateValue(Obj value)
+{
+    val = value;
+}
+
+///////////
+/////////// Implementation of "EntryViewHolder"
+///////////
+
+EntryViewHolder::EntryViewHolder(QString label_text, EntryView *view, 
+                                 bool can_add, bool can_delete,
+                                 QWidget *parent)
+                : QWidget(parent), v(view)
+{
+    this->setLayout( new QHBoxLayout(this) );
+    
+    label = new QLabel(label_text, this);
+    layout()->addWidget(label);
+    layout()->addWidget(view);
+    
+    if (can_delete)
+    {
+        QToolButton *b = new QToolButton(this);
+        b->setText("-");
+        connect(b, SIGNAL(clicked()), this, SLOT(clickedDelete()));
+        layout()->addWidget(b);
+    }
+    
+    if (can_add)
+    {
+        QToolButton *b = new QToolButton(this);
+        b->setText("+");
+        connect(b, SIGNAL(clicked()), this, SLOT(clickedAdd()));
+        layout()->addWidget(b);
+    }
+}
+
+EntryViewHolder::~EntryViewHolder()
+{}
+
+void EntryViewHolder::setLabel(QString label_text)
+{
+    label->setText(label_text);
+}
+
+EntryView* EntryViewHolder::view()
+{
+    return v;
+}
+
+///////////
+/////////// Implementation of "EntryViewGroup"
+///////////
+
+EntryViewGroup::EntryViewGroup(Option option, QWidget *parent)
+               : QWidget(parent)
+{
+    allow_multiple = option.allowMultiple();
+    this->setLayout( new QHBoxLayout(this) );
+
+    QPushButton *help_button = new QPushButton(QObject::tr("?"), this);
+    connect(help_button, SIGNAL(clicked()), this, SLOT(showHelp()));
+    this->layout()->addWidget(help_button);
+    
+    QWidget *holder = new QWidget(this);
+    holder->setLayout( new QVBoxLayout() );
+    this->layout()->addWidget(holder);
+
+    views = new QHash<int,EntryViewHolder*>();
+
+    //add each widget one above the other...
+    if (allow_multiple)
+    {
+        QList<int> idxs = option.indiciesWithValue();
+        
+        qSort(idxs);
+
+        bool can_add = true;
+        bool can_delete = true;
+        
+        if (not option.isOptional() and idxs.count() == 1)
+        {
+            can_delete = false;
+        }
+        
+        foreach (int idx, idxs)
+        {
+            QString label = option.key();
+            
+            if (idx != 1 or idxs.count() > 1)
+            {
+                label = QString("%1[%2]").arg(label).arg(idx);
+            }
+        
+            EntryView *view = EntryView::build(option[idx], this);
+            connect(view, SIGNAL(edited(Obj,int)), this, SLOT(valueChanged(Obj,int)));
+            
+            EntryViewHolder *holder = new EntryViewHolder(label, view, 
+                                                          can_add, can_delete, this);
+
+            views->insert(idx,holder);
+            
+            this->layout()->addWidget(holder);
+        }
+    }
+    else
+    {
+        bool can_add = false;
+        bool can_delete = option.isOptional();
+    
+        EntryView *view = EntryView::build(option,this);
+        connect(view, SIGNAL(edited(Obj)), this, SLOT(valueChanged(Obj)));
+        
+        EntryViewHolder *holder = new EntryViewHolder(option.key(), view,
+                                                      can_add, can_delete, this);
+        
+        views->insert(1,holder);
+        this->layout()->addWidget(holder);
+    }
+}
+
+EntryViewGroup::~EntryViewGroup()
+{}
+
+bool EntryViewGroup::allowMultiple() const
+{
+    return allow_multiple;
+}
+
+Obj EntryViewGroup::value() const
+{
+    if (views)
+    {
+        if (not views->isEmpty())
+        {
+            return views->constBegin().value()->view()->value();
+        }
+    }
+
+    return None();
+}
+
+Obj EntryViewGroup::value(int index) const
+{
+    if (views)
+    {
+        EntryViewHolder *holder = views->value(index,0);
+        
+        if (holder)
+            return holder->view()->value();
+    }
+    
+    return None();
+}
+
+void EntryViewGroup::update(Option option)
+{
+    ///
+}
+
+void EntryViewGroup::valueChanged(Obj new_value)
+{
+    ///
+}
+
+void EntryViewGroup::valueChanged(Obj new_value, int index)
+{
+    ///
+}
+
+///////////
+/////////// Implementation of "StringValueView"
+///////////
+
+StringValueView::StringValueView(Option option, QWidget *parent) 
+                : EntryView(option.value(), option.index(), parent)
+{
+    this->setLayout( new QHBoxLayout() );
+    
+    edit = new QLineEdit(this);
+    edit->setText( option.value().toString() );
+    
+    this->layout()->addWidget(edit);
+    
+    connect(edit, SIGNAL(returnPressed()), this, SLOT(textChanged()));
+}
+
+StringValueView::~StringValueView()
+{}
+
+void StringValueView::textChanged()
+{
+    try
+    {
+        StringValue val( edit->text() );
+        this->setValue(val);
+    }
+    catch(const Conspire::Exception &e)
+    {
+        conspireDebug() << "EXCEPTION THROWN:";
+        conspireDebug() << e.toString();
+        QMessageBox::warning(this, "Conspire", e.why(), QMessageBox::Discard);
+        edit->setText(this->value().toString());
+    }
+}
+
+void StringValueView::update(Option option)
+{
+    Obj val = option.value();
+    edit->setText( val.toString() );
+    this->updateValue(val);
 }
 
 ///////////

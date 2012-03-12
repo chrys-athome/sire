@@ -508,6 +508,14 @@ Obj Option::defaultValue() const
     return val;
 }
 
+/** Return the index of this option - this is the index that is set 
+    for the option, and the index of the value returned by the
+    "value()" function */
+int Option::index() const
+{
+    return default_idx;
+}
+
 /** Return the value of this option. If no value has been set, then
     a null pointer will be returned if is_optional is true, or the 
     default value will be returned. Note that this will only look 

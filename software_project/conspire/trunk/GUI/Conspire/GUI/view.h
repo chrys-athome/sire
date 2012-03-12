@@ -70,6 +70,112 @@ namespace Conspire
         void setOption(QString key, QString value);
     };
 
+    /** This class provides the base of all entry widgets.
+        These are widgets used to get data from the user */
+    class CONSPIRE_EXPORT EntryView : public QWidget
+    {
+        Q_OBJECT
+        
+    public:
+        EntryView(Obj value, int index, QWidget *parent=0);
+        ~EntryView();
+
+        Obj value() const;
+        int index() const;
+
+        void setValue(Obj new_value);
+
+        static EntryView* build(Option option, QWidget *parent=0);
+
+        virtual void update(Option option)=0;
+
+    signals:
+        void edited(Obj new_value);
+        
+    protected:
+        void updateValue(Obj new_value);
+        
+    private:
+        Obj val;
+        int idx;
+    };
+
+    /** This class provides a holder for a single EntryView. This
+        holds the name of the option, and optionally buttons to 
+        allow the option to be deleted, or additional values to be
+        added */
+    class CONSPIRE_EXPORT EntryViewHolder : public QWidget
+    {
+        Q_OBJECT
+    
+    public:
+        EntryViewHolder(QString label, EntryView *view,
+                        bool can_add, bool can_delete, QWidget *parent=0);
+        ~EntryViewHolder();
+        
+        void setLabel(QString label);
+        
+        EntryView* view();
+        
+    signals:
+        void clickedAdd();
+        void clickedDelete();
+        
+    private:
+        QLabel *label;
+        EntryView *v;
+    };
+
+    /** This class provides a group of entry widgets. This is used
+        for multiple-value options */
+    class CONSPIRE_EXPORT EntryViewGroup : public QWidget
+    {
+        Q_OBJECT
+    
+    public:
+        EntryViewGroup(Option option, QWidget *parent=0);
+        ~EntryViewGroup();
+        
+        bool allowMultiple() const;
+        
+        Obj value() const;
+        Obj value(int index) const;
+        
+        void update(Option option);
+        
+    signals:
+        void edited(Obj new_value);
+        void edited(Obj new_value, int index);
+        
+    private slots:
+        void valueChanged(Obj new_value);
+        void valueChanged(Obj new_value, int index);
+    
+    private:
+        QHash<int,EntryViewHolder*> *views;
+
+        bool allow_multiple;
+    };
+
+    /** This class is used to allow the user to enter
+        textual information */
+    class CONSPIRE_EXPORT StringValueView : public EntryView
+    {
+        Q_OBJECT
+        
+    public:
+        StringValueView(Option option, QWidget *parent=0);
+        ~StringValueView();
+
+        void update(Option option);
+
+    protected slots:
+        void textChanged();
+        
+    private:
+        QLineEdit *edit;
+    };
+
     /** This class holds the view of an individual Option object */
     class CONSPIRE_EXPORT OptionView : public View
     {
