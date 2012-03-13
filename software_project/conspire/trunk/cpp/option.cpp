@@ -649,6 +649,8 @@ Obj Option::getNestedValue(String key) const
 
 void Option::setUserValue(int index, Obj value)
 {
+    conspireDebug() << "Option::setUserValue(" << index << "," << value.toString() << ")";
+
     if (value.isNone())
         throw Conspire::program_bug( Conspire::tr(
             "It should not be possible to set a null value here for "
@@ -669,9 +671,86 @@ void Option::setUserValue(int index, Obj value)
                 .arg(key()).arg(index), CODELOC );
                 
     while (user_vals.count() < index)
-        user_vals.append( Obj() );
+        user_vals.append( None() );
         
     user_vals[index-1] = value;
+}
+
+/** Add the default value of this option to the key 'key' */
+Obj Option::addDefaultValue(String key) const
+{
+    conspireDebug() << "Option::addDefaultValue(" << key << ")";
+
+    assertNotNull();
+    
+    ParsedKey p(key);
+    
+    if (not p.key.isEmpty())
+    {
+        if (p.key != k)
+        {
+            throw Conspire::invalid_key( Conspire::tr(
+                    "Invalid key. Option \"%1\" from key \"%2\" cannot be used "
+                    "to set values for an option with key \"%3\".")
+                        .arg(p.key, key, k), CODELOC );
+        }
+    }
+
+    Obj new_val = this->operator[](p.index).value();
+    
+    if (new_val.isNone())
+        new_val = defaultValue();
+    
+    conspireDebug() << "new_val ==" << new_val.toString();
+
+    if (not p.tail.isEmpty())
+    {
+        conspireDebug() << "tail == " << p.tail;
+        new_val = new_val.asA<Value>().addDefaultValue(p.tail);
+    }
+    
+    Option ret(*this);
+    ret.setUserValue(p.index, new_val);
+    return ret;
+}
+
+/** Remove the value associated with the key 'key' */
+Obj Option::removeValue(String key) const
+{
+    assertNotNull();
+    
+    ParsedKey p(key);
+    
+    if (not p.key.isEmpty())
+    {
+        if (p.key != k)
+        {
+            throw Conspire::invalid_key( Conspire::tr(
+                    "Invalid key. Option \"%1\" from key \"%2\" cannot be used "
+                    "to set values for an option with key \"%3\".")
+                        .arg(p.key, key, k), CODELOC );
+        }
+    }
+
+    Obj new_val = this->operator[](p.index).value();
+    
+    if (new_val.isNone())
+        // there is no value
+        return *this;
+
+    if (p.tail.isEmpty())
+    {
+        conspireDebug() << "MUST REMOVE THE VALUE";
+    }
+    else
+    {
+        new_val = new_val.asA<Value>().removeValue(p.tail);
+    }
+    
+    Option ret(*this);
+    // THIS IS WRONG
+    ret.setUserValue(p.index, new_val);
+    return ret;
 }
 
 /** Set the value of the specified key to 'value'. Note that the first element of 
@@ -1653,6 +1732,34 @@ Option Options::getNestedOption(String key) const
 Obj Options::getNestedValue(String key) const
 {
     return opts.at( getIndex(ParsedKey(key).key, kys) ).asA<Value>().getNestedValue(key);
+}
+
+Obj Options::addDefaultValue(String key) const
+{
+    conspireDebug() << "Options::addDefaultValue(" << key << ")";
+
+    int idx = getIndex(ParsedKey(key).key, kys);
+    
+    Obj old_option = opts.at(idx);
+    Obj new_option = old_option.asA<Value>().addDefaultValue(key);
+    
+    //SORT OUT THE COLOR
+    Options ret(*this);
+    ret.opts[idx] = new_option;
+    return ret;
+}
+
+Obj Options::removeValue(String key) const
+{
+    int idx = getIndex(ParsedKey(key).key, kys);
+    
+    Obj old_option = opts.at(idx);
+    Obj new_option = new_option.asA<Value>().removeValue(key);
+    
+    //SORT OUT THE COLOR
+    Options ret(*this);
+    ret.opts[idx] = new_option;
+    return ret;
 }
 
 /** Set the of the key 'key' to 'value'. Note that setting the value of 

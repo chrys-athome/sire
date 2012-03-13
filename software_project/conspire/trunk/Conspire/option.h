@@ -95,6 +95,9 @@ namespace Conspire
         Obj getNestedValue(Qt::String key) const;
         Option getNestedOption(Qt::String key) const;
 
+        Obj addDefaultValue(Qt::String key) const;
+        Obj removeValue(Qt::String key) const;
+
     protected:
         void copy_object(const Option &other);
         bool compare_object(const Option &other) const;
@@ -185,6 +188,9 @@ namespace Conspire
 
         Obj getNestedValue(Qt::String key) const;
         Option getNestedOption(Qt::String key) const;
+
+        Obj addDefaultValue(Qt::String key) const;
+        Obj removeValue(Qt::String key) const;
 
     protected:
         void copy_object(const Options &other);

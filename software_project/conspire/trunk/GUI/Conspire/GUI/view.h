@@ -38,6 +38,7 @@
 CONSPIRE_BEGIN_HEADER
 
 class QLineEdit;
+class QToolButton;
 
 namespace Conspire
 {
@@ -63,11 +64,11 @@ namespace Conspire
         
         virtual QString key() const;
         
-    public slots:
-        void updateOption(QString key, QString value);
-        
     signals:
         void setOption(QString key, QString value);
+
+        void addOption(QString key, int index);
+        void removeOption(QString key, int index);
     };
 
     /** This class provides the base of all entry widgets.
@@ -77,11 +78,13 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        EntryView(Obj value, int index, QWidget *parent=0);
+        EntryView(Obj value, int index, bool allow_multiple, QWidget *parent=0);
         ~EntryView();
 
         Obj value() const;
         int index() const;
+
+        bool allowMultiple() const;
 
         void setValue(Obj new_value);
 
@@ -89,8 +92,16 @@ namespace Conspire
 
         virtual void update(Option option)=0;
 
+    public slots:
+        void add();
+        void remove();
+
     signals:
         void edited(Obj new_value);
+        void edited(Obj new_value, int index);
+
+        void added(int index);
+        void removed(int index);
         
     protected:
         void updateValue(Obj new_value);
@@ -98,6 +109,7 @@ namespace Conspire
     private:
         Obj val;
         int idx;
+        bool allow_multiple;
     };
 
     /** This class provides a holder for a single EntryView. This
@@ -117,6 +129,8 @@ namespace Conspire
         
         EntryView* view();
         
+        void update(bool can_add, bool can_delete);
+        
     signals:
         void clickedAdd();
         void clickedDelete();
@@ -124,6 +138,8 @@ namespace Conspire
     private:
         QLabel *label;
         EntryView *v;
+        QToolButton *add_button;
+        QToolButton *del_button;
     };
 
     /** This class provides a group of entry widgets. This is used
@@ -146,14 +162,19 @@ namespace Conspire
     signals:
         void edited(Obj new_value);
         void edited(Obj new_value, int index);
+
+        void added(int index);
+        void removed(int index);
         
     private slots:
-        void valueChanged(Obj new_value);
-        void valueChanged(Obj new_value, int index);
+        void showHelp() const;
     
     private:
         QHash<int,EntryViewHolder*> *views;
 
+        QWidget *group_holder;
+
+        QString help_text;
         bool allow_multiple;
     };
 
@@ -193,20 +214,15 @@ namespace Conspire
         void update(const Option &option);
 
     private slots:
-        void helpClicked() const;
-        void edited();
+        void edited(Obj obj);
+        void edited(Obj obj, int index);
+
+        void added(int index);
+        void removed(int index);
 
     private:
-        /** The key managed by this view */
         QString k;
-        
-        /** The current textual representation of the value */
-        QString v;
-        
-        /** The help text for this view */
-        QString help_text;
-        
-        QLineEdit *edit;
+        EntryViewGroup *editor;
     };
 
     /** This class holds the view of the Options object */
@@ -292,7 +308,9 @@ namespace Conspire
         Options options() const;
     
     public slots:
-        void updateOption(QString key, QString value);
+        void setOption(QString key, QString value);
+        void addOption(QString key, int index);
+        void removeOption(QString key, int index);
 
         void save();
         void load();

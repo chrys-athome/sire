@@ -125,11 +125,6 @@ QString View::key() const
         return QString::null;
 }
 
-void View::updateOption(QString key, QString value)
-{
-    emit( setOption(key,value) );
-}
-
 ///////////
 /////////// Implementation of "OptionsView"
 ///////////
@@ -205,7 +200,7 @@ void OptionsView::update(const Options &options)
             else
             {
                 OptionView *view = new OptionView(opt,this);
-                dynamic_cast<QVBoxLayout*>(this->layout())->insertWidget(i,view);
+                dynamic_cast<QBoxLayout*>(this->layout())->insertWidget(i,view);
                 ++i;
                 
                 views->insert(key,view);
@@ -235,8 +230,8 @@ OptionsView::~OptionsView()
 /////////// Implementation of "EntryView"
 ///////////
 
-EntryView::EntryView(Obj value, int index, QWidget *parent) 
-          : QWidget(parent), val(value), idx(index)
+EntryView::EntryView(Obj value, int index, bool multiple, QWidget *parent) 
+          : QWidget(parent), val(value), idx(index), allow_multiple(multiple)
 {}
 
 EntryView::~EntryView()
@@ -244,10 +239,22 @@ EntryView::~EntryView()
 
 void EntryView::setValue(Obj new_value)
 {
+    conspireDebug() << new_value.toString();
+
     if (val != new_value)
     {
         val = new_value;
-        emit( edited(val) );
+ 
+        if (allow_multiple)
+        {    
+            conspireDebug() << "emit edited(" << new_value.toString() << ", " << idx << ")";
+            emit( edited(val,idx) );
+        }
+        else
+        {
+            conspireDebug() << "emit edited(" << new_value.toString() << ")";
+            emit( edited(val) );
+        }
     }
 }
 
@@ -261,6 +268,11 @@ int EntryView::index() const
     return idx;
 }
 
+bool EntryView::allowMultiple() const
+{
+    return allow_multiple;
+}
+
 EntryView* EntryView::build(Option option, QWidget *parent)
 {
     return new StringValueView(option, parent);
@@ -269,6 +281,16 @@ EntryView* EntryView::build(Option option, QWidget *parent)
 void EntryView::updateValue(Obj value)
 {
     val = value;
+}
+
+void EntryView::add()
+{
+    emit( added(idx) );
+}
+
+void EntryView::remove()
+{
+    emit( removed(idx) );
 }
 
 ///////////
@@ -282,25 +304,27 @@ EntryViewHolder::EntryViewHolder(QString label_text, EntryView *view,
 {
     this->setLayout( new QHBoxLayout(this) );
     
+    v->setParent(this);
+    
     label = new QLabel(label_text, this);
     layout()->addWidget(label);
     layout()->addWidget(view);
     
-    if (can_delete)
-    {
-        QToolButton *b = new QToolButton(this);
-        b->setText("-");
-        connect(b, SIGNAL(clicked()), this, SLOT(clickedDelete()));
-        layout()->addWidget(b);
-    }
+    del_button = new QToolButton(this);
+    del_button->setText("-");
+    connect(del_button, SIGNAL(clicked()), view, SLOT(remove()));
+    layout()->addWidget(del_button);
     
-    if (can_add)
-    {
-        QToolButton *b = new QToolButton(this);
-        b->setText("+");
-        connect(b, SIGNAL(clicked()), this, SLOT(clickedAdd()));
-        layout()->addWidget(b);
-    }
+    if (not can_delete)
+        del_button->hide();
+        
+    add_button = new QToolButton(this);
+    add_button->setText("+");
+    connect(add_button, SIGNAL(clicked()), view, SLOT(add()));
+    layout()->addWidget(add_button);
+    
+    if (not can_add)
+        add_button->hide();
 }
 
 EntryViewHolder::~EntryViewHolder()
@@ -309,6 +333,19 @@ EntryViewHolder::~EntryViewHolder()
 void EntryViewHolder::setLabel(QString label_text)
 {
     label->setText(label_text);
+}
+
+void EntryViewHolder::update(bool can_add, bool can_delete)
+{
+    if (can_add)
+        add_button->show();
+    else
+        add_button->hide();
+        
+    if (can_delete)
+        del_button->show();
+    else
+        del_button->hide();
 }
 
 EntryView* EntryViewHolder::view()
@@ -328,11 +365,12 @@ EntryViewGroup::EntryViewGroup(Option option, QWidget *parent)
 
     QPushButton *help_button = new QPushButton(QObject::tr("?"), this);
     connect(help_button, SIGNAL(clicked()), this, SLOT(showHelp()));
+    help_text = option.description();
     this->layout()->addWidget(help_button);
     
-    QWidget *holder = new QWidget(this);
-    holder->setLayout( new QVBoxLayout() );
-    this->layout()->addWidget(holder);
+    group_holder = new QWidget(this);
+    group_holder->setLayout( new QVBoxLayout() );
+    this->layout()->addWidget(group_holder);
 
     views = new QHash<int,EntryViewHolder*>();
 
@@ -361,14 +399,17 @@ EntryViewGroup::EntryViewGroup(Option option, QWidget *parent)
             }
         
             EntryView *view = EntryView::build(option[idx], this);
-            connect(view, SIGNAL(edited(Obj,int)), this, SLOT(valueChanged(Obj,int)));
             
             EntryViewHolder *holder = new EntryViewHolder(label, view, 
                                                           can_add, can_delete, this);
 
+            connect(view, SIGNAL(edited(Obj,int)), this, SIGNAL(edited(Obj,int)));
+            connect(view, SIGNAL(added(int)), this, SIGNAL(added(int)));
+            connect(view, SIGNAL(removed(int)), this, SIGNAL(removed(int)));
+
             views->insert(idx,holder);
             
-            this->layout()->addWidget(holder);
+            group_holder->layout()->addWidget(holder);
         }
     }
     else
@@ -377,18 +418,128 @@ EntryViewGroup::EntryViewGroup(Option option, QWidget *parent)
         bool can_delete = option.isOptional();
     
         EntryView *view = EntryView::build(option,this);
-        connect(view, SIGNAL(edited(Obj)), this, SLOT(valueChanged(Obj)));
+        connect(view, SIGNAL(edited(Obj)), this, SIGNAL(edited(Obj)));
         
         EntryViewHolder *holder = new EntryViewHolder(option.key(), view,
                                                       can_add, can_delete, this);
         
         views->insert(1,holder);
-        this->layout()->addWidget(holder);
+        group_holder->layout()->addWidget(holder);
+    }
+}
+
+void EntryViewGroup::update(Option option)
+{
+    if (not views)
+        return;
+
+    if (option.allowMultiple())
+    {
+        QList<int> idxs = option.indiciesWithValue();
+        
+        qSort(idxs);
+
+        bool can_add = true;
+        bool can_delete = true;
+        
+        if (not option.isOptional() and idxs.count() == 1)
+        {
+            can_delete = false;
+        }
+        
+        int i=0;
+        
+        foreach (int idx, idxs)
+        {
+            EntryViewHolder *holder = views->value(idx, 0);
+            
+            if (holder == 0)
+            {
+                QString label = option.key();
+            
+                if (idx != 1 or idxs.count() > 1)
+                {
+                    label = QString("%1[%2]").arg(label).arg(idx);
+                }
+        
+                EntryView *view = EntryView::build(option[idx], this);
+            
+                holder = new EntryViewHolder(label, view, 
+                                             can_add, can_delete, this);
+
+                connect(view, SIGNAL(edited(Obj,int)), this, SIGNAL(edited(Obj,int)));
+                connect(view, SIGNAL(added(int)), this, SIGNAL(added(int)));
+                connect(view, SIGNAL(removed(int)), this, SIGNAL(removed(int)));
+
+                views->insert(idx,holder);
+            
+                dynamic_cast<QBoxLayout*>(group_holder->layout())
+                                                ->insertWidget(i, holder);
+            }
+            else
+            {
+                holder->update(can_add, can_delete);
+                holder->view()->update(option[idx]);
+                
+                if (idx == 1 and idxs.count() > 1)
+                {
+                    holder->setLabel( QString("%1[1]").arg(option.key()) );
+                }
+            }
+            
+            i += 1;
+        }
+        
+        //delete indicies which are no longer valid
+        foreach (int idx, views->keys())
+        {
+            if (not idxs.contains(idx))
+            {
+                EntryViewHolder *holder = views->value(idx, 0);
+                
+                if (holder)
+                {
+                    delete holder;
+                    views->remove(idx);
+                }
+            }
+        }
+    }
+    else
+    {
+        bool can_add = false;
+        bool can_delete = option.isOptional();
+
+        EntryViewHolder *holder = views->value(1, 0);
+        
+        if (holder)
+        {
+            holder->update(can_add, can_delete);
+            holder->view()->update(option);
+        }
+        else
+        {
+            EntryView *view = EntryView::build(option,this);
+            connect(view, SIGNAL(edited(Obj)), this, SIGNAL(edited(Obj)));
+            
+            EntryViewHolder *holder = new EntryViewHolder(option.key(), view,
+                                                          can_add, can_delete, this);
+            
+            views->insert(1,holder);
+            group_holder->layout()->addWidget(holder);
+        }
     }
 }
 
 EntryViewGroup::~EntryViewGroup()
 {}
+
+void EntryViewGroup::showHelp() const
+{
+    QMessageBox msgbox;
+    msgbox.setText( help_text );
+    msgbox.exec();
+}
 
 bool EntryViewGroup::allowMultiple() const
 {
@@ -421,27 +572,13 @@ Obj EntryViewGroup::value(int index) const
     return None();
 }
 
-void EntryViewGroup::update(Option option)
-{
-    ///
-}
-
-void EntryViewGroup::valueChanged(Obj new_value)
-{
-    ///
-}
-
-void EntryViewGroup::valueChanged(Obj new_value, int index)
-{
-    ///
-}
-
 ///////////
 /////////// Implementation of "StringValueView"
 ///////////
 
 StringValueView::StringValueView(Option option, QWidget *parent) 
-                : EntryView(option.value(), option.index(), parent)
+                : EntryView(option.value(), option.index(), 
+                            option.allowMultiple(), parent)
 {
     this->setLayout( new QHBoxLayout() );
     
@@ -483,29 +620,16 @@ void StringValueView::update(Option option)
 /////////// Implementation of "OptionView"
 ///////////
 
-OptionView::OptionView(View *parent) : View(parent)
-{}
+OptionView::OptionView(View *parent) : View(parent), editor(0)
+{
+    this->setLayout(new QHBoxLayout(this));
+}
 
 void OptionView::build(const Option &option)
 {
-    //remove all current children
-    foreach (QObject *child, this->children())
-    {
-        delete child;
-    }
-    
-    //remove the current layout
-    delete this->layout();
-
-    //forget the current values
+    delete editor;
+    editor = 0;
     k = QString::null;
-    v = QString::null;
-    help_text = QString::null;
-    edit = 0;
-
-    //disconnect all objects connected to signals
-    //from this view
-    this->disconnect();
 
     //rebuild everything
     QString root_key = this->rootKey();
@@ -519,31 +643,26 @@ void OptionView::build(const Option &option)
         k = option.key();
     }
 
-    v = option.value().toString();
+    editor = new EntryViewGroup(option,this);
+    this->layout()->addWidget(editor);
 
-    help_text = option.description();
-
-    this->setLayout( new QHBoxLayout(this) );
-    
-    QPushButton *b = new QPushButton("?", this);
-    connect(b, SIGNAL(clicked()), this, SLOT(helpClicked()));
-    this->layout()->addWidget(b);
-
-    this->layout()->addWidget( new QLabel(option.key(),this) );
-
-    edit = new QLineEdit(this);
-    
-    edit->setText(v);
-    this->layout()->addWidget(edit);
-    
-    connect(edit, SIGNAL(returnPressed()), this, SLOT(edited()));
+    connect(editor, SIGNAL(edited(Obj)), this, SLOT(edited(Obj)));
+    connect(editor, SIGNAL(edited(Obj,int)), this, SLOT(edited(Obj,int)));
+    connect(editor, SIGNAL(added(int)), this, SLOT(added(int)));
+    connect(editor, SIGNAL(removed(int)), this, SLOT(removed(int)));
 
     View *root_node = this->rootNode();
     
     if (root_node)
     {
         connect(this, SIGNAL(setOption(QString,QString)),
-                root_node, SLOT(updateOption(QString,QString)));
+                root_node, SIGNAL(setOption(QString,QString)));
+                
+        connect(this, SIGNAL(addOption(QString, int)),
+                root_node, SIGNAL(addOption(QString, int)));
+                
+        connect(this, SIGNAL(removeOption(QString, int)),
+                root_node, SIGNAL(removeOption(QString, int)));
     }
 }
 
@@ -560,47 +679,46 @@ void OptionView::update(const Option &option)
         k = option.key();
     }
 
-    v = option.value().toString();
-
-    help_text = option.description();
-    
-    edit->setText(v);
+    editor->update(option);
 }
 
 OptionView::OptionView(const Option &option, View *parent)   
-           : View(parent)
+           : View(parent), editor(0)
 {
+    this->setLayout( new QHBoxLayout(this) );
     this->build(option);
 }
 
 OptionView::~OptionView()
 {}
 
-void OptionView::helpClicked() const
-{
-    QMessageBox msgbox;
-    msgbox.setText( help_text );
-    msgbox.exec();
-}
-
 QString OptionView::key() const
 {
     return k;
 }
 
-void OptionView::edited()
+void OptionView::edited(Obj value)
 {
-    try
-    {
-        emit( setOption(key(), edit->text()) );
-    }
-    catch(const Conspire::Exception &e)
-    {
-        conspireDebug() << "EXCEPTION THROWN:";
-        conspireDebug() << e.toString();
-        QMessageBox::warning(this, "Conspire", e.why(), QMessageBox::Discard);
-        edit->setText(v);
-    }
+    conspireDebug() << "OptionView::edited(Obj)";
+    emit( setOption(key(), value.toString()) );
+}
+
+void OptionView::edited(Obj value, int index)
+{
+    conspireDebug() << "OptionView::edited(Obj)";
+    emit( setOption(QString("%1[%2]").arg(key()).arg(index), value.toString()) );
+}
+
+void OptionView::added(int index)
+{
+    conspireDebug() << "OptionView::added(" << key() << "," << index << ")";
+    emit( addOption(key(), index) );
+}
+
+void OptionView::removed(int index)
+{
+    conspireDebug() << "OptionView::removed(" << key() << "," << index << ")";
+    emit( removeOption(key(), index) );
 }
 
 ///////////
@@ -698,8 +816,16 @@ OptionsControl::OptionsControl(const Options &options, QWidget *parent)
     undo_stack = new QUndoStack(this);
     
     view = new OptionsView(this);
+
     connect(view, SIGNAL(setOption(QString,QString)), 
-            this, SLOT(updateOption(QString,QString)));
+            this, SLOT(setOption(QString,QString)));
+            
+    connect(view, SIGNAL(addOption(QString,int)),
+            this, SLOT(addOption(QString,int)));
+            
+    connect(view, SIGNAL(removeOption(QString,int)),
+            this, SLOT(removeOption(QString,int)));
+            
     this->layout()->addWidget(view);
 
     QPushButton *undo = new QPushButton("Undo");
@@ -751,6 +877,8 @@ void OptionsControl::applyCommand(const OptionsCommand &command)
         opts = opts.setNestedValue(command.key(), command.newValue())
                    .asA<Options>();
     
+        conspireDebug() << opts.toConfig();
+    
         try
         {
             view->update(opts);
@@ -762,10 +890,42 @@ void OptionsControl::applyCommand(const OptionsCommand &command)
     }
 }
 
-void OptionsControl::updateOption(QString key, QString value)
+void OptionsControl::setOption(QString key, QString value)
 {
     conspireDebug() << "CHANGED:" << key << "=" << value;
     undo_stack->push( new OptionsUndoCommand(this, OptionsCommand(opts,key,value)) );
+}
+
+void OptionsControl::addOption(QString key, int index)
+{
+    conspireDebug() << "Adding:" << key << index;
+    opts = opts.addDefaultValue( QString("%1[%2]").arg(key).arg(index+1) )
+               .asA<Options>();
+    
+    try
+    {
+        view->update(opts);
+    }
+    catch(...)
+    {
+        view->build(opts);
+    }
+}
+
+void OptionsControl::removeOption(QString key, int index)
+{
+    conspireDebug() << "Remove:" << key << index;
+    opts = opts.removeValue( QString("%1[%2]").arg(key).arg(index) ).asA<Options>();
+
+    //need to propogate this down...
+    try
+    {
+        view->update(opts);
+    }
+    catch(...)
+    {
+        view->build(opts);
+    }
 }
 
 void OptionsControl::undo(const OptionsCommand &command)

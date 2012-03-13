@@ -100,6 +100,9 @@ namespace Conspire
         Obj setNestedValue(Qt::String key, double value) const;
         Obj setNestedValue(Qt::String key, Qt::int64 value) const;
 
+        Obj addNestedValue(Qt::String key) const;
+        Obj removeNestedValue(Qt::String key) const;
+
         Qt::String toString() const;
 
         Qt::String toConfig(bool include_help=false) const;
@@ -125,6 +128,9 @@ namespace Conspire
         
         virtual Obj fromValueString(Qt::String value) const;
         virtual Qt::String toValueString() const;
+
+        virtual Obj addDefaultValue(Qt::String key) const;
+        virtual Obj removeValue(Qt::String key) const;
         
         static Obj createFrom(Qt::DomElement elem);
     };

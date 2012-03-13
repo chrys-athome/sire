@@ -12,5 +12,11 @@
     <value><integer minimum="1">1</integer></value>
   </option>
 
+  <option allow_multiple="true" optional="false">
+    <key>solute</key>
+    <description>Define the solute in the simulation.</description>
+    <value><molecule>file:1,molecule:1</molecule></value>
+  </option>
+
 </options>
 

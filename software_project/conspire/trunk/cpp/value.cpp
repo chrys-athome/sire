@@ -104,6 +104,24 @@ StringList Value::toConfigLines(bool) const
     return lines;
 }
 
+Obj Value::addDefaultValue(QString key) const
+{
+    throw Conspire::program_bug( QObject::tr(
+            "You should not be asking for 'addDefaultValue(key)' for a %1 object...")
+                .arg(this->what()), CODELOC );
+                
+    return None();
+}
+
+Obj Value::removeValue(QString key) const
+{
+    throw Conspire::program_bug( QObject::tr(
+            "You should not be asking for 'removeValue(key)' for a %1 object...")
+                .arg(this->what()), CODELOC );
+                
+    return None();
+}
+
 Obj Value::fromValueString(QString value) const
 {
     throw Conspire::program_bug( QObject::tr(
@@ -121,6 +139,44 @@ Obj Value::fromValueString(String key, String value) const
                 .arg(this->what()), CODELOC );
                 
     return None();
+}
+
+Obj Value::addNestedValue(String key) const
+{
+    if (this->isContainer())
+    {
+        return this->addDefaultValue(key);
+    }
+    else
+    {
+        if (not key.isEmpty())
+            throw Conspire::invalid_key( QObject::tr(
+                "It should not be possible to add a %1 value with "
+                "a non-empty key! \"%2\"")
+                    .arg(this->what())
+                    .arg(key), CODELOC );
+
+        return this->addDefaultValue(key);
+    }
+}
+
+Obj Value::removeNestedValue(String key) const
+{
+    if (this->isContainer())
+    {
+        return this->removeValue(key);
+    }
+    else
+    {
+        if (not key.isEmpty())
+            throw Conspire::invalid_key( QObject::tr(
+                "It should not be possible to remove a %1 value with "
+                "a non-empty key! \"%2\"")
+                    .arg(this->what())
+                    .arg(key), CODELOC );
+
+        return this->removeValue(key);
+    }
 }
 
 Obj Value::setNestedValue(String key, String value) const
