@@ -39,6 +39,7 @@ CONSPIRE_BEGIN_HEADER
 
 class QLineEdit;
 class QToolButton;
+class QPushButton;
 
 namespace Conspire
 {
@@ -121,15 +122,18 @@ namespace Conspire
         Q_OBJECT
     
     public:
-        EntryViewHolder(QString label, EntryView *view,
-                        bool can_add, bool can_delete, QWidget *parent=0);
+        EntryViewHolder(QString label, EntryView *view, QWidget *parent=0);
         ~EntryViewHolder();
         
         void setLabel(QString label);
         
         EntryView* view();
         
-        void update(bool can_add, bool can_delete);
+        void setAddable(bool can_add);
+        void setRemovable(bool can_remove);
+        
+        bool addable() const;
+        bool removable() const;
         
     signals:
         void clickedAdd();
@@ -239,9 +243,18 @@ namespace Conspire
         void build(const Options &options);
         void update(const Options &options);
     
+    private slots:
+        void add();
+    
     private:
         /** This set of views for each option key */
         QHash<QString,OptionView*> *views;
+        
+        /** The button used to add new options */
+        QPushButton *add_button;
+        
+        /** The list of addable options, together with their help */
+        QHash<QString,QString> addable;
     };
 
     /** This class holds a command that changes the Options state

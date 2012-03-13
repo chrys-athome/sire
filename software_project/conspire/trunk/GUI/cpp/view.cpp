@@ -129,7 +129,7 @@ QString View::key() const
 /////////// Implementation of "OptionsView"
 ///////////
 
-OptionsView::OptionsView(QWidget *parent) : View(parent), views(0)
+OptionsView::OptionsView(QWidget *parent) : View(parent), views(0), add_button(0)
 {}
 
 void OptionsView::build(const Options &options)
@@ -139,6 +139,9 @@ void OptionsView::build(const Options &options)
     {
         delete child;
     }
+    
+    add_button = 0;
+    addable.clear();
     
     //remove the current layout
     delete this->layout();
@@ -151,8 +154,6 @@ void OptionsView::build(const Options &options)
     this->setLayout( new QVBoxLayout(this) );
     
     QStringList keys = options.keys();
-    
-    bool can_add = false;
     
     foreach (QString key, keys)
     {
@@ -168,18 +169,20 @@ void OptionsView::build(const Options &options)
             views->insert(key, view);
         }
         else
-            can_add = true;
+            addable.insert(key, opt.description());
     }
     
-    if (can_add)
-        this->layout()->addWidget( new QPushButton("Add",this) );
+    add_button = new QPushButton("+",this);
+    this->layout()->addWidget(add_button);
+    add_button->setVisible(not addable.isEmpty());
+    
+    connect(add_button, SIGNAL(clicked()), this, SLOT(add()));
 }
 
 void OptionsView::update(const Options &options)
 {
-    QStringList keys = options.keys();
-    
-    bool can_add = false;
+    QStringList keys = options.keys();    
+    addable.clear();
     
     int i = 0;
     
@@ -211,8 +214,15 @@ void OptionsView::update(const Options &options)
             //this option has been deleted...
             delete views->value(key);
             views->remove(key);
+            addable.insert(key, opt.description());
+        }
+        else
+        {
+            addable.insert(key, opt.description());
         }
     }
+    
+    add_button->setVisible(not addable.isEmpty());
 }
 
 OptionsView::OptionsView(const Options &options, QWidget *parent)
@@ -224,6 +234,14 @@ OptionsView::OptionsView(const Options &options, QWidget *parent)
 OptionsView::~OptionsView()
 {
     delete views;
+}
+
+void OptionsView::add()
+{
+    QStringList keys = addable.keys();
+    qSort(keys);
+    
+    conspireDebug() << "ADDABLE ==" << keys;
 }
 
 ///////////
@@ -297,9 +315,7 @@ void EntryView::remove()
 /////////// Implementation of "EntryViewHolder"
 ///////////
 
-EntryViewHolder::EntryViewHolder(QString label_text, EntryView *view, 
-                                 bool can_add, bool can_delete,
-                                 QWidget *parent)
+EntryViewHolder::EntryViewHolder(QString label_text, EntryView *view, QWidget *parent)
                 : QWidget(parent), v(view)
 {
     this->setLayout( new QHBoxLayout(this) );
@@ -314,17 +330,13 @@ EntryViewHolder::EntryViewHolder(QString label_text, EntryView *view,
     del_button->setText("-");
     connect(del_button, SIGNAL(clicked()), view, SLOT(remove()));
     layout()->addWidget(del_button);
-    
-    if (not can_delete)
-        del_button->hide();
+    del_button->hide();
         
     add_button = new QToolButton(this);
     add_button->setText("+");
     connect(add_button, SIGNAL(clicked()), view, SLOT(add()));
     layout()->addWidget(add_button);
-    
-    if (not can_add)
-        add_button->hide();
+    add_button->hide();
 }
 
 EntryViewHolder::~EntryViewHolder()
@@ -335,17 +347,24 @@ void EntryViewHolder::setLabel(QString label_text)
     label->setText(label_text);
 }
 
-void EntryViewHolder::update(bool can_add, bool can_delete)
+void EntryViewHolder::setAddable(bool can_add)
 {
-    if (can_add)
-        add_button->show();
-    else
-        add_button->hide();
-        
-    if (can_delete)
-        del_button->show();
-    else
-        del_button->hide();
+    add_button->setVisible(can_add);
+}
+
+void EntryViewHolder::setRemovable(bool can_remove)
+{
+    del_button->setVisible(can_remove);
+}
+
+bool EntryViewHolder::addable() const
+{
+    return add_button->isVisible();
+}
+
+bool EntryViewHolder::removable() const
+{
+    return del_button->isVisible();
 }
 
 EntryView* EntryViewHolder::view()
@@ -400,8 +419,9 @@ EntryViewGroup::EntryViewGroup(Option option, QWidget *parent)
         
             EntryView *view = EntryView::build(option[idx], this);
             
-            EntryViewHolder *holder = new EntryViewHolder(label, view, 
-                                                          can_add, can_delete, this);
+            EntryViewHolder *holder = new EntryViewHolder(label, view, this);
+            holder->setAddable(can_add);
+            holder->setRemovable(can_delete);
 
             connect(view, SIGNAL(edited(Obj,int)), this, SIGNAL(edited(Obj,int)));
             connect(view, SIGNAL(added(int)), this, SIGNAL(added(int)));
@@ -420,8 +440,9 @@ EntryViewGroup::EntryViewGroup(Option option, QWidget *parent)
         EntryView *view = EntryView::build(option,this);
         connect(view, SIGNAL(edited(Obj)), this, SIGNAL(edited(Obj)));
         
-        EntryViewHolder *holder = new EntryViewHolder(option.key(), view,
-                                                      can_add, can_delete, this);
+        EntryViewHolder *holder = new EntryViewHolder(option.key(), view, this);
+        holder->setAddable(can_add);
+        holder->setRemovable(can_delete);
         
         views->insert(1,holder);
         group_holder->layout()->addWidget(holder);
@@ -466,8 +487,9 @@ void EntryViewGroup::update(Option option)
         
                 EntryView *view = EntryView::build(option[idx], this);
             
-                holder = new EntryViewHolder(label, view, 
-                                             can_add, can_delete, this);
+                holder = new EntryViewHolder(label, view, this);
+                holder->setAddable(can_add);
+                holder->setRemovable(can_delete);
 
                 connect(view, SIGNAL(edited(Obj,int)), this, SIGNAL(edited(Obj,int)));
                 connect(view, SIGNAL(added(int)), this, SIGNAL(added(int)));
@@ -480,7 +502,9 @@ void EntryViewGroup::update(Option option)
             }
             else
             {
-                holder->update(can_add, can_delete);
+                holder->setAddable(can_add);
+                holder->setRemovable(can_delete);
+                
                 holder->view()->update(option[idx]);
                 
                 if (idx == 1 and idxs.count() > 1)
@@ -516,7 +540,8 @@ void EntryViewGroup::update(Option option)
         
         if (holder)
         {
-            holder->update(can_add, can_delete);
+            holder->setAddable(can_add);
+            holder->setRemovable(can_delete);
             holder->view()->update(option);
         }
         else
@@ -526,9 +551,10 @@ void EntryViewGroup::update(Option option)
             connect(view, SIGNAL(added(int)), this, SIGNAL(added(int)));
             connect(view, SIGNAL(removed(int)), this, SIGNAL(removed(int)));
             
-            EntryViewHolder *holder = new EntryViewHolder(option.key(), view,
-                                                          can_add, can_delete, this);
-            
+            EntryViewHolder *holder = new EntryViewHolder(option.key(), view, this);
+            holder->setAddable(can_add);
+            holder->setRemovable(can_delete);
+
             views->insert(1,holder);
             group_holder->layout()->addWidget(holder);
         }
