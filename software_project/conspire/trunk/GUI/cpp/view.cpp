@@ -40,6 +40,10 @@
 #include <QLineEdit>
 #include <QApplication>
 #include <QUndoStack>
+#include <QGraphicsView>
+#include <QGraphicsScene>
+#include <QGraphicsGridLayout>
+#include <QGraphicsProxyWidget>
 
 using namespace Conspire;
 
@@ -238,10 +242,75 @@ OptionsView::~OptionsView()
 
 void OptionsView::add()
 {
-    QStringList keys = addable.keys();
+    if (addable.isEmpty())
+        return;
+
+    AddOptionDialog dialog(this->key(), addable, this);
+    connect(&dialog, SIGNAL(addOption(QString)), this, SIGNAL(addOption(QString)));
+    dialog.exec();
+}
+
+///////////
+/////////// Implementation of "AddOptionDialog"
+///////////
+
+AddOptionDialog::AddOptionDialog(QString root_key, 
+                                 QHash<QString,QString> options, QWidget *parent)
+                : QDialog(parent)
+{
+    QVBoxLayout *layout = new QVBoxLayout(this);
+
+    this->setLayout(layout);
+
+    QStringList keys = options.keys();    
     qSort(keys);
+
+    QGraphicsScene *scene = new QGraphicsScene(this);
+    QGraphicsView *view = new QGraphicsView(scene, this);
+    QGraphicsGridLayout *grid = new QGraphicsGridLayout();
     
-    conspireDebug() << "ADDABLE ==" << keys;
+    for (int i=0; i<keys.count(); ++i)
+    {
+        QString l = keys.at(i);
+        
+        if (not root_key.isEmpty())
+            l = QString("%1.%2").arg(root_key,l);
+    
+        QGraphicsProxyWidget *label = scene->addWidget( new QLabel(l) );
+        QGraphicsProxyWidget *help = scene->addWidget( new QLabel(options[keys.at(i)]) );
+
+        QPushButton *add_button = new QPushButton("+");
+        add_button->setObjectName(l);
+        connect(add_button, SIGNAL(clicked()), this, SLOT(add()));
+
+        QGraphicsProxyWidget *add = scene->addWidget(add_button);        
+        
+        grid->addItem(label, i, 0);
+        grid->addItem(help, i, 1);
+        grid->addItem(add, i, 2);
+    }
+
+    QGraphicsWidget *form = new QGraphicsWidget();
+    form->setLayout(grid);
+    scene->addItem(form);
+    layout->addWidget(view);
+
+    this->resize( scene->width() + 50, scene->height() + 50 );
+    
+    QPushButton *b = new QPushButton(QObject::tr("Ok"), this);
+    connect(b, SIGNAL(clicked()), this, SLOT(accept()));
+    layout->addWidget(b);
+}
+
+AddOptionDialog::~AddOptionDialog()
+{}
+
+void AddOptionDialog::add()
+{
+    QObject *s = this->sender();
+    
+    if (s)
+        emit(addOption(s->objectName())); 
 }
 
 ///////////

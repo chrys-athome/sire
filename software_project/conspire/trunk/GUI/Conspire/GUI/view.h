@@ -31,6 +31,7 @@
 #include <QWidget>
 #include <QLabel>
 #include <QUndoCommand>
+#include <QDialog>
 
 #include "Conspire/conspire.h"
 #include "Conspire/option.h"
@@ -305,6 +306,23 @@ namespace Conspire
     private:
         OptionsControl *control;
         OptionsCommand cmd;
+    };
+
+    /** This class holds a dialog of options that can be added */
+    class CONSPIRE_EXPORT AddOptionDialog : public QDialog
+    {
+        Q_OBJECT
+    
+    public:
+        AddOptionDialog(QString key, QHash<QString,QString> options, 
+                        QWidget *parent=0);
+        ~AddOptionDialog();
+        
+    private slots:
+        void add();
+        
+    signals:
+        void addOption(QString option);
     };
 
     /** This class holds the top-level overview of the options */
