@@ -688,11 +688,11 @@ void OptionView::build(const Option &option)
         connect(this, SIGNAL(setOption(QString,QString)),
                 root_node, SIGNAL(setOption(QString,QString)));
                 
-        connect(this, SIGNAL(addOption(QString, int)),
-                root_node, SIGNAL(addOption(QString, int)));
+        connect(this, SIGNAL(addOption(QString)),
+                root_node, SIGNAL(addOption(QString)));
                 
-        connect(this, SIGNAL(removeOption(QString, int)),
-                root_node, SIGNAL(removeOption(QString, int)));
+        connect(this, SIGNAL(removeOption(QString)),
+                root_node, SIGNAL(removeOption(QString)));
     }
 }
 
@@ -741,14 +741,13 @@ void OptionView::edited(Obj value, int index)
 
 void OptionView::added(int index)
 {
-    conspireDebug() << "OptionView::added(" << key() << "," << index << ")";
-    emit( addOption(key(), index) );
+    emit( addOption(key()) );
 }
 
 void OptionView::removed(int index)
 {
     conspireDebug() << "OptionView::removed(" << key() << "," << index << ")";
-    emit( removeOption(key(), index) );
+    emit( removeOption(QString("%1[%2]").arg(key()).arg(index) ) );
 }
 
 ///////////
@@ -850,11 +849,11 @@ OptionsControl::OptionsControl(const Options &options, QWidget *parent)
     connect(view, SIGNAL(setOption(QString,QString)), 
             this, SLOT(setOption(QString,QString)));
             
-    connect(view, SIGNAL(addOption(QString,int)),
-            this, SLOT(addOption(QString,int)));
+    connect(view, SIGNAL(addOption(QString)),
+            this, SLOT(addOption(QString)));
             
-    connect(view, SIGNAL(removeOption(QString,int)),
-            this, SLOT(removeOption(QString,int)));
+    connect(view, SIGNAL(removeOption(QString)),
+            this, SLOT(removeOption(QString)));
             
     this->layout()->addWidget(view);
 
@@ -926,9 +925,11 @@ void OptionsControl::setOption(QString key, QString value)
     undo_stack->push( new OptionsUndoCommand(this, OptionsCommand(opts,key,value)) );
 }
 
-void OptionsControl::addOption(QString key, int index)
+void OptionsControl::addOption(QString key)
 {
     QList<int> idxs = opts[key].indiciesWithValue();
+    
+    int index = 1;
     
     for (int i=1; i<=(idxs.count()+1); ++i)
     {
@@ -953,10 +954,10 @@ void OptionsControl::addOption(QString key, int index)
     }
 }
 
-void OptionsControl::removeOption(QString key, int index)
+void OptionsControl::removeOption(QString key)
 {
     conspireDebug() << "Remove:" << key << index;
-    opts = opts.removeValue( QString("%1[%2]").arg(key).arg(index) ).asA<Options>();
+    opts = opts.removeValue(key).asA<Options>();
 
     //need to propogate this down...
     try

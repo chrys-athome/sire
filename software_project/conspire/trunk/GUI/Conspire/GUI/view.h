@@ -68,8 +68,8 @@ namespace Conspire
     signals:
         void setOption(QString key, QString value);
 
-        void addOption(QString key, int index);
-        void removeOption(QString key, int index);
+        void addOption(QString key);
+        void removeOption(QString key);
     };
 
     /** This class provides the base of all entry widgets.
@@ -322,8 +322,8 @@ namespace Conspire
     
     public slots:
         void setOption(QString key, QString value);
-        void addOption(QString key, int index);
-        void removeOption(QString key, int index);
+        void addOption(QString key);
+        void removeOption(QString key);
 
         void save();
         void load();
