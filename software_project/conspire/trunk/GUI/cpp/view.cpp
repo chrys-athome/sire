@@ -439,6 +439,8 @@ void EntryViewGroup::update(Option option)
         
         qSort(idxs);
 
+        conspireDebug() << "VALID INDICIES ==" << idxs;
+
         bool can_add = true;
         bool can_delete = true;
         
@@ -521,6 +523,8 @@ void EntryViewGroup::update(Option option)
         {
             EntryView *view = EntryView::build(option,this);
             connect(view, SIGNAL(edited(Obj)), this, SIGNAL(edited(Obj)));
+            connect(view, SIGNAL(added(int)), this, SIGNAL(added(int)));
+            connect(view, SIGNAL(removed(int)), this, SIGNAL(removed(int)));
             
             EntryViewHolder *holder = new EntryViewHolder(option.key(), view,
                                                           can_add, can_delete, this);
@@ -898,8 +902,19 @@ void OptionsControl::setOption(QString key, QString value)
 
 void OptionsControl::addOption(QString key, int index)
 {
+    QList<int> idxs = opts[key].indiciesWithValue();
+    
+    for (int i=1; i<=(idxs.count()+1); ++i)
+    {
+        if (not idxs.contains(i))
+        {
+            index = i;
+            break;
+        }
+    }
+
     conspireDebug() << "Adding:" << key << index;
-    opts = opts.addDefaultValue( QString("%1[%2]").arg(key).arg(index+1) )
+    opts = opts.addDefaultValue( QString("%1[%2]").arg(key).arg(index) )
                .asA<Options>();
     
     try

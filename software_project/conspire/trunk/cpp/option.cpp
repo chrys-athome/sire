@@ -651,24 +651,38 @@ void Option::setUserValue(int index, Obj value)
 {
     conspireDebug() << "Option::setUserValue(" << index << "," << value.toString() << ")";
 
-    if (value.isNone())
-        throw Conspire::program_bug( Conspire::tr(
-            "It should not be possible to set a null value here for "
-            "key %1[%2].")
-                .arg(key()).arg(index), CODELOC );
-
-    else if (not value.isA<Value>())
-        throw Conspire::program_bug( Conspire::tr(
-            "It should not be possible to set a non-Value value here for "
-            "key %1[%2] - type is %3.")
-                .arg(key()).arg(index).arg(value.what()), CODELOC );
-
-    else if (index < 1 or ((allow_multiple == false) and index > 1))
+    if (index < 1 or ((allow_multiple == false) and index > 1))
         throw Conspire::invalid_index( Conspire::tr(
             "Cannot set the user value for %1[%2] as this index is invalid. "
             "Either it is less than 1, or it is more than one for an option "
             "that does not support multiple values.")
                 .arg(key()).arg(index), CODELOC );
+
+    if (value.isNone())
+    {
+        user_vals[index-1] = None();
+        
+        bool all_none = true;
+        
+        foreach (Obj val, user_vals)
+        {
+            if (not val.isNone())
+            {
+                all_none = false;
+                break;
+            }
+        }
+        
+        if (all_none)
+            user_vals.clear();
+            
+        return;
+    }
+    else if (not value.isA<Value>())
+        throw Conspire::program_bug( Conspire::tr(
+            "It should not be possible to set a non-Value value here for "
+            "key %1[%2] - type is %3.")
+                .arg(key()).arg(index).arg(value.what()), CODELOC );
                 
     while (user_vals.count() < index)
         user_vals.append( None() );
@@ -738,18 +752,18 @@ Obj Option::removeValue(String key) const
         // there is no value
         return *this;
 
+    Option ret(*this);
+
     if (p.tail.isEmpty())
     {
-        conspireDebug() << "MUST REMOVE THE VALUE";
+        ret.setUserValue(p.index, None());
     }
     else
     {
         new_val = new_val.asA<Value>().removeValue(p.tail);
+        ret.setUserValue(p.index, new_val);
     }
     
-    Option ret(*this);
-    // THIS IS WRONG
-    ret.setUserValue(p.index, new_val);
     return ret;
 }
 
@@ -893,17 +907,10 @@ List<int>::Type Option::indiciesWithValue() const
 {
     List<int>::Type idxs;
     
-    if (is_optional)
+    for (int i=0; i<user_vals.count(); ++i)
     {
-        for (int i=0; i<user_vals.count(); ++i)
-        {
-            if (not user_vals.at(i).isNone())
-                idxs.append(i+1);
-        }
-    }
-    else
-    {
-        return indicies();
+        if (not user_vals.at(i).isNone())
+            idxs.append(i+1);
     }
     
     return idxs;
@@ -965,10 +972,18 @@ StringList Option::keysWithValue() const
 /** Return the total number of indicies available to this option */
 int Option::count() const
 {
+    int n = 0;
+
+    foreach (Obj val, user_vals)
+    {
+        if (not val.isNone())
+            n += 1;
+    }
+
     if (is_optional)
-        return user_vals.count();
+        return n;
     else
-        return qMax(1, user_vals.count());
+        return qMax(1, n);
 }
 
 /** Return the key for this option */
@@ -1754,7 +1769,7 @@ Obj Options::removeValue(String key) const
     int idx = getIndex(ParsedKey(key).key, kys);
     
     Obj old_option = opts.at(idx);
-    Obj new_option = new_option.asA<Value>().removeValue(key);
+    Obj new_option = old_option.asA<Value>().removeValue(key);
     
     //SORT OUT THE COLOR
     Options ret(*this);
