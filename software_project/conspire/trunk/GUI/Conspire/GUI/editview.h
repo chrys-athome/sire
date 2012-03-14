@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_VIEW_H
-#define CONSPIRE_VIEW_H
+#ifndef CONSPIRE_EDITVIEW_H
+#define CONSPIRE_EDITVIEW_H
 /********************************************\
   *
   *  Conspire
@@ -36,6 +36,9 @@
 #include "Conspire/conspire.h"
 #include "Conspire/option.h"
 
+#include <QGraphicsWidget>
+#include <QPointer>
+
 CONSPIRE_BEGIN_HEADER
 
 class QLineEdit;
@@ -44,6 +47,41 @@ class QPushButton;
 
 namespace Conspire
 {
+    /** This is the base class of the widget used to edit and view
+        Option and Options objects */
+    class CONSPIRE_EXPORT EditView : public QGraphicsWidget
+    {
+        Q_OBJECT
+        
+    public:
+        EditView(EditView *parent=0);
+        
+        virtual ~EditView();
+        
+        EditView* parentView();
+        const EditView* parentView() const;
+        
+        EditView* rootNode();
+        const EditView* rootNode() const;
+        
+        virtual QString rootKey() const;
+        virtual QString key() const;
+        virtual QString fullKey() const;
+        
+    signals:
+        void add(QString full_key);
+        void remove(QString full_key);
+        void update(QString full_key, Obj new_value);
+        
+    protected slots:
+        void added();
+        void removed();
+        void updated(Obj new_value);
+        
+    private:
+        QPointer<EditView> prnt;
+    };
+
     class OptionsController;
 
     /** This class is the base class of views of Option objects */

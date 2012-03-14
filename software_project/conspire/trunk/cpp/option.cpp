@@ -1004,6 +1004,20 @@ bool Option::isOptional() const
     return is_optional;
 }
 
+/** Return whether or not this particular indexed value can be deleted */
+bool Option::canDelete() const
+{
+    if (is_optional)
+        return true;
+
+    else if (allow_multiple)
+    {
+        return indiciesWithValue().count() > 1;
+    }
+    else
+        return false;
+}
+
 /** Return whether or not multiple values for this option are supported */
 bool Option::allowMultiple() const
 {

@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "Conspire/GUI/view.h"
+#include "Conspire/GUI/editview.h"
 #include "Conspire/option.h"
 #include "Conspire/values.h"
 #include "Conspire/exceptions.h"
@@ -46,6 +46,101 @@
 #include <QGraphicsProxyWidget>
 
 using namespace Conspire;
+
+///////////
+/////////// Implementation of "EditView"
+///////////
+
+EditView::EditView(EditView *parent) : QGraphicsWidget(parent), prnt(parent)
+{
+    this->setOwnedByLayout(false);
+}
+
+EditView::~EditView()
+{}
+
+EditView* EditView::parentView()
+{
+    return prnt;
+}
+
+const EditView* EditView::parentView() const
+{
+    return prnt;
+}
+
+EditView* EditView::rootNode()
+{
+    EditView *parent = this->parentView();
+    
+    if (parent)
+        return parent->rootNode();
+    else
+        return this;
+}
+
+const EditView* EditView::rootNode() const
+{
+    const EditView *parent = this->parentView();
+    
+    if (parent)
+        return parent->rootNode();
+    else
+        return this;
+}
+
+QString EditView::rootKey() const
+{
+    const EditView *parent = this->parentView();
+    
+    if (parent)
+        return parent->fullKey();
+    else
+        return QString::null;
+}
+
+QString EditView::key() const
+{
+    const EditView *parent = this->parentView();
+    
+    if (parent)
+        return parent->key();
+    else
+        return QString::null;
+}
+
+QString EditView::fullKey() const
+{
+    QString root = rootKey();
+    QString k = key();
+    
+    if (root.isEmpty())
+        return k;
+    
+    else if (k.isEmpty())
+        return root;
+    
+    else
+        return QString("%1.%2").arg(root, k);
+}
+
+void EditView::added()
+{
+    conspireDebug() << "EditView::added()" << fullKey();
+    emit( add(fullKey()) );
+}
+
+void EditView::removed()
+{
+    conspireDebug() << "EditView::removed()" << fullKey();
+    emit( remove(fullKey()) );
+}
+
+void EditView::updated(Obj new_obj)
+{
+    conspireDebug() << "EditView::updated()" << fullKey() << new_obj.toString();
+    emit( update(fullKey(),new_obj) );
+}
 
 ///////////
 /////////// Implementation of "View"

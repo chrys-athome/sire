@@ -85,6 +85,8 @@ namespace Conspire
         bool isOptional() const;
         bool allowMultiple() const;
 
+        bool canDelete() const;
+
         bool hasValue() const;
         Obj value() const;
         

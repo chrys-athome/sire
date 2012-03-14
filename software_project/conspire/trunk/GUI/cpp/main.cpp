@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "Conspire/GUI/view.h"
+#include "Conspire/GUI/optionswidget.h"
 
 #include "Conspire/conspire.h"
 #include "Conspire/option.h"
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 
         conspireDebug() << opts.toString();
         
-        OptionsControl *view = new OptionsControl(opts, m);
+        OptionsWidget *view = new OptionsWidget(opts, m);
 
         m->setCentralWidget(view);
 
