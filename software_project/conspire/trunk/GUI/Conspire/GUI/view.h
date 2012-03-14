@@ -102,7 +102,8 @@ namespace Conspire
         void edited(Obj new_value);
         void edited(Obj new_value, int index);
 
-        void added(int index);
+        void added();
+        void removed();
         void removed(int index);
         
     protected:
@@ -168,7 +169,8 @@ namespace Conspire
         void edited(Obj new_value);
         void edited(Obj new_value, int index);
 
-        void added(int index);
+        void added();
+        void removed();
         void removed(int index);
         
     private slots:
@@ -222,7 +224,8 @@ namespace Conspire
         void edited(Obj obj);
         void edited(Obj obj, int index);
 
-        void added(int index);
+        void added();
+        void removed();
         void removed(int index);
 
     private:

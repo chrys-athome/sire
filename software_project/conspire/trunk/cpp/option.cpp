@@ -1593,6 +1593,31 @@ StringList Options::keysWithValue() const
     return k;
 }
     
+/** Return the set of keys of sub-options that have not been explicitly
+    set by the user, and as such, don't have a value */
+StringList Options::keysWithoutValue() const
+{
+    StringList k;
+
+    for (int i=0; i<opts.count(); ++i)
+    {
+        int color = option_to_color.value(i, 0);
+        
+        if (color != 0)
+        {
+            //is this option excluded by other options?
+            if (color_option.value(color,String::null) != opts[i].asA<Option>().key())
+                //this option is not selected from the set
+                continue;
+        }
+    
+        if (not opts.at(i).asA<Option>().hasIndiciesWithValue())
+            k += opts.at(i).asA<Option>().key();
+    }
+    
+    return k;
+}
+
 /** Return the list of keys for all active options. These are the options
     that have either been set by the user, or are the options which are not
     excluded by other options (e.g. only one option from each color group is set) */

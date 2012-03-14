@@ -163,6 +163,7 @@ namespace Conspire
         
         Qt::StringList keys() const;
         Qt::StringList keysWithValue() const;
+        Qt::StringList keysWithoutValue() const;
 
         bool hasValue(Qt::String key) const;
         bool hasValue() const;

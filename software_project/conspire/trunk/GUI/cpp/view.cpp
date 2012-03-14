@@ -334,12 +334,10 @@ void EntryView::setValue(Obj new_value)
  
         if (allow_multiple)
         {    
-            conspireDebug() << "emit edited(" << new_value.toString() << ", " << idx << ")";
             emit( edited(val,idx) );
         }
         else
         {
-            conspireDebug() << "emit edited(" << new_value.toString() << ")";
             emit( edited(val) );
         }
     }
@@ -372,12 +370,15 @@ void EntryView::updateValue(Obj value)
 
 void EntryView::add()
 {
-    emit( added(idx) );
+    emit( added() );
 }
 
 void EntryView::remove()
 {
-    emit( removed(idx) );
+    if (allow_multiple)
+        emit( removed(idx) );
+    else
+        emit( removed() );
 }
 
 ///////////
@@ -493,7 +494,8 @@ EntryViewGroup::EntryViewGroup(Option option, QWidget *parent)
             holder->setRemovable(can_delete);
 
             connect(view, SIGNAL(edited(Obj,int)), this, SIGNAL(edited(Obj,int)));
-            connect(view, SIGNAL(added(int)), this, SIGNAL(added(int)));
+            connect(view, SIGNAL(added()), this, SIGNAL(added()));
+            connect(view, SIGNAL(removed()), this, SIGNAL(removed()));
             connect(view, SIGNAL(removed(int)), this, SIGNAL(removed(int)));
 
             views->insert(idx,holder);
@@ -508,6 +510,9 @@ EntryViewGroup::EntryViewGroup(Option option, QWidget *parent)
     
         EntryView *view = EntryView::build(option,this);
         connect(view, SIGNAL(edited(Obj)), this, SIGNAL(edited(Obj)));
+        connect(view, SIGNAL(added()), this, SIGNAL(added()));
+        connect(view, SIGNAL(removed()), this, SIGNAL(removed()));
+        connect(view, SIGNAL(removed(int)), this, SIGNAL(removed(int)));
         
         EntryViewHolder *holder = new EntryViewHolder(option.key(), view, this);
         holder->setAddable(can_add);
@@ -560,8 +565,10 @@ void EntryViewGroup::update(Option option)
                 holder->setAddable(can_add);
                 holder->setRemovable(can_delete);
 
+                connect(view, SIGNAL(edited(Obj)), this, SIGNAL(edited(Obj)));
                 connect(view, SIGNAL(edited(Obj,int)), this, SIGNAL(edited(Obj,int)));
-                connect(view, SIGNAL(added(int)), this, SIGNAL(added(int)));
+                connect(view, SIGNAL(added()), this, SIGNAL(added()));
+                connect(view, SIGNAL(removed()), this, SIGNAL(removed()));
                 connect(view, SIGNAL(removed(int)), this, SIGNAL(removed(int)));
 
                 views->insert(idx,holder);
@@ -617,7 +624,9 @@ void EntryViewGroup::update(Option option)
         {
             EntryView *view = EntryView::build(option,this);
             connect(view, SIGNAL(edited(Obj)), this, SIGNAL(edited(Obj)));
-            connect(view, SIGNAL(added(int)), this, SIGNAL(added(int)));
+            connect(view, SIGNAL(edited(Obj,int)), this, SIGNAL(edited(Obj,int)));
+            connect(view, SIGNAL(added()), this, SIGNAL(added()));
+            connect(view, SIGNAL(removed()), this, SIGNAL(removed()));
             connect(view, SIGNAL(removed(int)), this, SIGNAL(removed(int)));
             
             EntryViewHolder *holder = new EntryViewHolder(option.key(), view, this);
@@ -747,7 +756,8 @@ void OptionView::build(const Option &option)
 
     connect(editor, SIGNAL(edited(Obj)), this, SLOT(edited(Obj)));
     connect(editor, SIGNAL(edited(Obj,int)), this, SLOT(edited(Obj,int)));
-    connect(editor, SIGNAL(added(int)), this, SLOT(added(int)));
+    connect(editor, SIGNAL(added()), this, SLOT(added()));
+    connect(editor, SIGNAL(removed()), this, SLOT(removed()));
     connect(editor, SIGNAL(removed(int)), this, SLOT(removed(int)));
 
     View *root_node = this->rootNode();
@@ -798,24 +808,26 @@ QString OptionView::key() const
 
 void OptionView::edited(Obj value)
 {
-    conspireDebug() << "OptionView::edited(Obj)";
     emit( setOption(key(), value.toString()) );
 }
 
 void OptionView::edited(Obj value, int index)
 {
-    conspireDebug() << "OptionView::edited(Obj)";
     emit( setOption(QString("%1[%2]").arg(key()).arg(index), value.toString()) );
 }
 
-void OptionView::added(int index)
+void OptionView::added()
 {
     emit( addOption(key()) );
 }
 
+void OptionView::removed()
+{
+    emit( removeOption(key()) );
+}
+
 void OptionView::removed(int index)
 {
-    conspireDebug() << "OptionView::removed(" << key() << "," << index << ")";
     emit( removeOption(QString("%1[%2]").arg(key()).arg(index) ) );
 }
 
@@ -1013,6 +1025,9 @@ void OptionsControl::addOption(QString key)
     opts = opts.addDefaultValue( QString("%1[%2]").arg(key).arg(index) )
                .asA<Options>();
     
+    conspireDebug() << "VALID OPTIONS" << opts.keysWithValue();
+    conspireDebug() << "MISSING OPTIONS" << opts.keysWithoutValue();
+    
     try
     {
         view->update(opts);
@@ -1027,6 +1042,9 @@ void OptionsControl::removeOption(QString key)
 {
     conspireDebug() << "Remove:" << key << index;
     opts = opts.removeValue(key).asA<Options>();
+
+    conspireDebug() << "VALID OPTIONS" << opts.keysWithValue();
+    conspireDebug() << "MISSING OPTIONS" << opts.keysWithoutValue();
 
     //need to propogate this down...
     try
