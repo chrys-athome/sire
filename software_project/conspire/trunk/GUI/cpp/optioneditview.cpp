@@ -65,12 +65,18 @@ void OptionEditView::build()
     this->setLayout(grid_layout);
     
     help_button = new QPushButton(QObject::tr("Help"));
+
     connect(help_button, SIGNAL(clicked()), this, SLOT(showHelp()));
     
     help_button_proxy = new QGraphicsProxyWidget(this);
     help_button_proxy->setWidget(help_button);
     
     grid_layout->addItem(help_button_proxy, 0, 0, ::Qt::AlignVCenter);
+    
+    EditView *root = this->rootNode();
+    
+    if (root)
+        connect(this, SIGNAL(help(Option)), root, SIGNAL(help(Option)));
 }
 
 /** Return the key for the edited option */
@@ -86,8 +92,9 @@ Option OptionEditView::option() const
 }
 
 /** Display the help for this option */
-void OptionEditView::showHelp() const
+void OptionEditView::showHelp()
 {
+    emit help(opt);
 }
 
 /** Set the option to be edited */

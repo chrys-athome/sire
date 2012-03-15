@@ -29,6 +29,7 @@
 #include "Conspire/GUI/optionswidget.h"
 #include "Conspire/GUI/optionseditview.h"
 #include "Conspire/GUI/optionscommand.h"
+#include "Conspire/GUI/mainbar.h"
 
 #include <QVBoxLayout>
 
@@ -47,14 +48,14 @@
 using namespace Conspire;
 
 /** Constructor */
-OptionsWidget::OptionsWidget(QWidget *parent) : QWidget(parent)
+OptionsWidget::OptionsWidget(QWidget *parent) : QGraphicsView(parent)
 {
     build();
 }
 
 /** Construct to edit the passed options */
 OptionsWidget::OptionsWidget(Options options, QWidget *parent)
-              : QWidget(parent)
+              : QGraphicsView(parent)
 {
     build();
     setOptions(options);
@@ -75,8 +76,11 @@ void OptionsWidget::setOptions(Options options)
 {
     try
     {
-        view->setOptions(options);
+        top_view->setOptions(options);
         opts = options;
+        
+        if (not current_view)
+            popAllViews();
     }
     catch(const Conspire::Exception &e)
     {
@@ -91,6 +95,9 @@ void OptionsWidget::add(QString key)
     try
     {
         undo_stack->push( new OptionsAddCommand(this, key) );
+
+        if (not current_view)
+            popAllViews();
     }
     catch(const Conspire::Exception &e)
     {
@@ -106,6 +113,9 @@ void OptionsWidget::remove(QString key)
     try
     {
         undo_stack->push( new OptionsRemoveCommand(this, key) );
+
+        if (not current_view)
+            popAllViews();
     }
     catch(const Conspire::Exception &e)
     {
@@ -121,6 +131,9 @@ void OptionsWidget::update(QString key, Obj object)
     try
     {
         undo_stack->push( new OptionsUpdateCommand(this, key, object.asA<Value>()) );
+
+        if (not current_view)
+            popAllViews();
     }
     catch(const Conspire::Exception &e)
     {
@@ -133,8 +146,23 @@ void OptionsWidget::resizeEvent(QResizeEvent *event)
 {
     if (event)
     {
-        form->resize(event->size().width()-75, event->size().height()-75);
-        QWidget::resizeEvent(event);
+        this->viewport()->resize(event->size());
+
+        if (mainbar)
+        {
+            QPointF top_left = mapToScene(QRect(QPoint(0,0), QSize(2, 2)))
+                                    .boundingRect().center();
+                                    
+            mainbar->setPos(top_left);
+        }
+    
+        if (current_view)
+        {
+            current_view->resize(this->viewport()->size());
+
+            setSceneRect( QRectF(0, 0, current_view->geometry().width(), 
+                                       current_view->geometry().height()) );
+        }
     }
 }
 
@@ -148,7 +176,7 @@ void OptionsWidget::keyPressEvent(QKeyEvent *event)
         }
         else
         {
-            QWidget::keyPressEvent(event);
+            QGraphicsView::keyPressEvent(event);
         }
     }
 }
@@ -158,16 +186,45 @@ void OptionsWidget::caughtException(const Exception &e)
 {
     QLabel *l = new QLabel();
     l->setWordWrap(true);
+    l->setGeometry(0, 0, viewport()->width(), viewport()->height());
     l->setText(e.toString());
-    l->setGeometry(0, 0, 400, 600);
     
     QGraphicsProxyWidget *l_proxy = new QGraphicsProxyWidget();
     l_proxy->setWidget(l);
     l_proxy->setOpacity(0.0);
     
-    graphics_scene->addItem(l_proxy);
+    scene()->addItem(l_proxy);
+    
+    // THIS LEAKS MEMORY !!!
     
     this->pushView(l_proxy);
+}
+
+/** Internal function used to update the states of the add, back, forward etc. */
+void OptionsWidget::updateStates()
+{
+    OptionsEditView *e = dynamic_cast<OptionsEditView*>(current_view.data());
+    
+    if (e)
+    {
+        if (e->options().keysWithoutValue().isEmpty())
+        {
+            emit( canAddChanged(false) );
+        }
+        else
+        {
+            emit( canAddChanged(true) );
+        }
+    }
+
+    if (view_history.isEmpty())
+    {
+        emit( canBackChanged(false) );
+    }
+    else
+    {
+        emit( canBackChanged(true) );
+    }
 }
 
 /** Switch to a new view, pushing the old view onto the stack */
@@ -190,6 +247,10 @@ void OptionsWidget::pushView(QGraphicsWidget *v)
             
             g->addAnimation(anim);
         }
+
+        //make sure that the view has the right size
+        v->setOpacity(0);
+        v->setGeometry(0, 0, viewport()->width(), viewport()->height());
 
         //set up animating turning on the view
         {
@@ -217,6 +278,8 @@ void OptionsWidget::pushView(QGraphicsWidget *v)
         current_view = v;
         
         g->start(QAbstractAnimation::DeleteWhenStopped);
+
+        updateStates();
     }
 }
 
@@ -253,8 +316,11 @@ QGraphicsWidget* OptionsWidget::popView()
     current_view = view_history.pop();
     
     if (not current_view)
-        current_view = view;
-        
+        current_view = top_view;
+ 
+    current_view->setOpacity(0);
+    current_view->setGeometry(0, 0, viewport()->width(), viewport()->height());
+                      
     {
         QPropertyAnimation *anim = new QPropertyAnimation(current_view, "opacity");
         anim->setDuration(1000);
@@ -265,7 +331,58 @@ QGraphicsWidget* OptionsWidget::popView()
 
     g->start(QAbstractAnimation::DeleteWhenStopped);
 
+    updateStates();
+
     return old_view;
+}
+
+/** Pop all views and return to the top-level view */
+void OptionsWidget::popAllViews()
+{
+    if (current_view == top_view)
+        return;
+
+    QGraphicsWidget *old_view = 0;
+
+    QParallelAnimationGroup *g = new QParallelAnimationGroup();
+
+    if (current_view)
+    {
+        old_view = current_view;
+        
+        QPropertyAnimation *anim = new QPropertyAnimation(old_view, "opacity");
+        anim->setDuration(1000);
+        anim->setStartValue(1.0);
+        anim->setEndValue(0.0);
+        g->addAnimation(anim);
+        
+        {
+            QPropertyAnimation *anim = new QPropertyAnimation(old_view, "x");
+            anim->setDuration(1000);
+            anim->setStartValue(0.0);
+            anim->setEndValue(2 * this->width());
+            anim->setEasingCurve(QEasingCurve::InOutBack);
+            g->addAnimation(anim);
+        }
+    }
+        
+    current_view = top_view;
+    view_history.clear();
+
+    current_view->setOpacity(0);
+    current_view->setGeometry(0, 0, viewport()->width(), viewport()->height());
+
+    {
+        QPropertyAnimation *anim = new QPropertyAnimation(current_view, "opacity");
+        anim->setDuration(1000);
+        anim->setStartValue(0.0);
+        anim->setEndValue(1.0);
+        g->addAnimation(anim);
+    }
+
+    updateStates();
+
+    g->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
 /** Internal function used to construct the widget */
@@ -273,82 +390,87 @@ void OptionsWidget::build()
 {
     this->setMinimumSize(600,400);
 
-    graphics_view = new QGraphicsView(this);
+    this->setScene( new QGraphicsScene(this) );
     
-    QVBoxLayout *l = new QVBoxLayout(this);
-    l->addWidget(graphics_view);    
-    this->setLayout(l);
+    top_view = new OptionsEditView();
+    top_view->setGeometry(0, 0, viewport()->width(), viewport()->height());
+    top_view->setZValue(0);
+    current_view = top_view;
+    
+    setSceneRect( QRectF(0, 0, current_view->geometry().width(), 
+                               current_view->geometry().height()) );
 
-    graphics_scene = new QGraphicsScene(this);
-    graphics_view->setScene(graphics_scene);
-    
-    form = new QGraphicsWidget();
-    graphics_layout = new QGraphicsGridLayout();
-    graphics_layout->setSpacing(0);
-    form->setLayout(graphics_layout);
-    graphics_scene->addItem(form);
-    
+    this->scene()->addItem(top_view);
+
     undo_stack = new QUndoStack(this);
-    QPushButton *undo_button = new QPushButton( QObject::tr("Undo") );
-    QPushButton *redo_button = new QPushButton( QObject::tr("Redo") );
+
+    mainbar = new MainBar();
+    mainbar->setPos(0, 0);
+    mainbar->setZValue(1);
+
+    this->scene()->addItem(mainbar);
+
+    connect(mainbar, SIGNAL(add()), this, SLOT(add()));
+    connect(mainbar, SIGNAL(undo()), this, SLOT(undo()));
+    connect(mainbar, SIGNAL(redo()), this, SLOT(redo()));
+    connect(mainbar, SIGNAL(back()), this, SLOT(back()));
+    connect(mainbar, SIGNAL(forward()), this, SLOT(forward()));
     
-    undo_button->setEnabled(false);
-    redo_button->setEnabled(false);
+    connect(this, SIGNAL(canBackChanged(bool)), mainbar, SLOT(canBackChanged(bool)));
+    connect(this, SIGNAL(canForwardChanged(bool)),
+            mainbar, SLOT(canForwardChanged(bool)));
+    connect(this, SIGNAL(canAddChanged(bool)), mainbar, SLOT(canAddChanged(bool)));
     
-    undo_button->setSizePolicy( QSizePolicy(QSizePolicy::Minimum,
-                                            QSizePolicy::Minimum) );
-    redo_button->setSizePolicy( QSizePolicy(QSizePolicy::Minimum,
-                                            QSizePolicy::Minimum) );
-    
-    QGraphicsProxyWidget *undo_button_proxy = new QGraphicsProxyWidget(form);
-    undo_button_proxy->setWidget(undo_button);
-    QGraphicsProxyWidget *redo_button_proxy = new QGraphicsProxyWidget(form);
-    redo_button_proxy->setWidget(redo_button);
-    
-    graphics_layout->addItem( undo_button_proxy, 1, 0, 1, 1 );
-    graphics_layout->addItem( redo_button_proxy, 2, 0, 1, 1 );
-    
-    connect(undo_button, SIGNAL(clicked()), undo_stack, SLOT(undo()));
-    connect(redo_button, SIGNAL(clicked()), undo_stack, SLOT(redo()));
-    connect(undo_stack, SIGNAL(canUndoChanged(bool)), 
-            undo_button, SLOT(setEnabled(bool)));
+    connect(undo_stack, SIGNAL(canUndoChanged(bool)),
+            mainbar, SLOT(canUndoChanged(bool)));
     connect(undo_stack, SIGNAL(canRedoChanged(bool)),
-            redo_button, SLOT(setEnabled(bool)));
-            
-    QLabel *undo_label = new QLabel();
-    QLabel *redo_label = new QLabel();
-    
-    undo_label->setWordWrap(true);
-    redo_label->setWordWrap(true);
-    undo_label->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,
-                                           QSizePolicy::Minimum) );
-    redo_label->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,
-                                           QSizePolicy::Minimum) );
-    
-    QGraphicsProxyWidget *undo_label_proxy = new QGraphicsProxyWidget(form);
-    undo_label_proxy->setWidget(undo_label);
-    QGraphicsProxyWidget *redo_label_proxy = new QGraphicsProxyWidget(form);
-    redo_label_proxy->setWidget(redo_label);
-    
-    graphics_layout->addItem( undo_label_proxy, 1, 1, 1, 1 );
-    graphics_layout->addItem( redo_label_proxy, 2, 1, 1, 1 );
+            mainbar, SLOT(canRedoChanged(bool)));
     
     connect(undo_stack, SIGNAL(undoTextChanged(QString)),
-            undo_label, SLOT(setText(QString)));
+            mainbar, SLOT(undoTextChanged(QString)));
     connect(undo_stack, SIGNAL(redoTextChanged(QString)),
-            redo_label, SLOT(setText(QString)));
+            mainbar, SLOT(redoTextChanged(QString)));
     
-    view = new OptionsEditView();
-    graphics_layout->addItem(view, 0, 0, 1, 2);
-    
-    current_view = view;
-    
-    graphics_layout->setColumnStretchFactor(0, 1);
-    graphics_layout->setColumnStretchFactor(1, 5);
-    
-    graphics_layout->setContentsMargins(0,0,0,0);
-    
-    connect(view, SIGNAL(add(QString)), this, SLOT(add(QString)));
-    connect(view, SIGNAL(remove(QString)), this, SLOT(remove(QString)));
-    connect(view, SIGNAL(update(QString,Obj)), this, SLOT(update(QString,Obj)));
+    connect(top_view, SIGNAL(add(QString)), this, SLOT(add(QString)));
+    connect(top_view, SIGNAL(remove(QString)), this, SLOT(remove(QString)));
+    connect(top_view, SIGNAL(update(QString,Obj)), this, SLOT(update(QString,Obj)));
+    connect(top_view, SIGNAL(help(Option)), this, SLOT(help(Option)));
+}
+
+/** Called to undo the last action */
+void OptionsWidget::undo()
+{
+    if (undo_stack->canUndo())
+        undo_stack->undo();
+}
+
+/** Called to redo the last undone action */
+void OptionsWidget::redo()
+{
+    if (undo_stack->canRedo())
+        undo_stack->redo();
+}
+
+/** Called to return back to the previous screen */
+void OptionsWidget::back()
+{
+    this->popView();
+}
+
+/** Called to move forward to the next screen */
+void OptionsWidget::forward()
+{
+    conspireDebug() << "FORWARD";
+}
+
+/** Called to add a new option value to the current view */
+void OptionsWidget::add()
+{
+    conspireDebug() << "ADD";
+}
+
+/** Called to view the help for the passed option */
+void OptionsWidget::help(Option option)
+{
+    conspireDebug() << "HELP" << option.description();
 }

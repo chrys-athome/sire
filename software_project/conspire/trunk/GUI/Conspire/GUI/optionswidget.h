@@ -32,7 +32,7 @@
 #include "Conspire/option.h"
 #include "Conspire/exceptions.h"
 
-#include <QWidget>
+#include <QGraphicsView>
 #include <QStack>
 #include <QPointer>
 
@@ -49,10 +49,11 @@ class QAbstractButton;
 namespace Conspire
 {
     class OptionsEditView;
+    class MainBar;
 
     /** This is a widget that can view and edit the options
         held in a Conspire::Options object */
-    class CONSPIRE_EXPORT OptionsWidget : public QWidget
+    class CONSPIRE_EXPORT OptionsWidget : public QGraphicsView
     {
         Q_OBJECT
     
@@ -66,6 +67,23 @@ namespace Conspire
         
         void setOptions(Options options);
     
+    public slots:
+        void undo();
+        void redo();
+        
+        void back();
+        void forward();
+        
+        void add();
+        void help(Option option);
+
+        void caughtException(const Conspire::Exception &e);
+
+    signals:
+        void canBackChanged(bool);
+        void canForwardChanged(bool);
+        void canAddChanged(bool);
+    
     protected:
         void resizeEvent(QResizeEvent *event);    
         void keyPressEvent(QKeyEvent *event);
@@ -77,27 +95,16 @@ namespace Conspire
         
     private:
         void build();
-        void caughtException(const Conspire::Exception &e);
+        void updateStates();
     
         void pushView(QGraphicsWidget *view);
         QGraphicsWidget* popView();
-    
-        QGraphicsView *graphics_view;
-        QGraphicsScene *graphics_scene;
-        QGraphicsGridLayout *graphics_layout;
+        
+        void popAllViews();
 
-        QAbstractButton *undo_button;
-        QAbstractButton *redo_button;
-        
-        QLabel *undo_label;
-        QLabel *redo_label;
-        
         /** The options being edited */
         Options opts;
 
-        /** The form used to layout this widget */
-        QGraphicsWidget *form;
-        
         /** The current viewed widget */
         QPointer<QGraphicsWidget> current_view;
         
@@ -105,7 +112,10 @@ namespace Conspire
         QStack< QPointer<QGraphicsWidget> > view_history;
         
         /** The top-level options edit/view */
-        OptionsEditView *view;
+        QPointer<OptionsEditView> top_view;
+        
+        /** The menu bar that sits at the bottom of the screen */
+        QPointer<MainBar> mainbar;
         
         /** The undo stack of commands applied to the options */
         QUndoStack *undo_stack;

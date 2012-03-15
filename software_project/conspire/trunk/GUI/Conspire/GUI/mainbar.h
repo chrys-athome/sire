@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_EDITVIEW_H
-#define CONSPIRE_EDITVIEW_H
+#ifndef CONSPIRE_MAINBAR_H
+#define CONSPIRE_MAINBAR_H
 /********************************************\
   *
   *  Conspire
@@ -29,51 +29,59 @@
 \*********************************************/
 
 #include "Conspire/conspire.h"
-#include "Conspire/option.h"
 
 #include <QGraphicsWidget>
-#include <QPointer>
 
 CONSPIRE_BEGIN_HEADER
 
+class QAbstractButton;
+class QLabel;
+
 namespace Conspire
 {
-    /** This is the base class of the widget used to edit and view
-        Option and Options objects */
-    class CONSPIRE_EXPORT EditView : public QGraphicsWidget
+    /** This class provides the floating button
+        bar for the OptionsWidget */
+    class CONSPIRE_EXPORT MainBar : public QGraphicsWidget
     {
         Q_OBJECT
         
     public:
-        EditView(EditView *parent=0);
+        MainBar(QGraphicsItem *parent=0);
+        ~MainBar();
         
-        virtual ~EditView();
+    public slots:
+        void canBackChanged(bool can_back);
+        void canForwardChanged(bool can_forward);
+    
+        void canAddChanged(bool can_add);
+    
+        void canRedoChanged(bool can_redo);
+        void canUndoChanged(bool can_undo);
         
-        EditView* parentView();
-        const EditView* parentView() const;
-        
-        EditView* rootNode();
-        const EditView* rootNode() const;
-        
-        virtual QString rootKey() const;
-        virtual QString key() const;
-        virtual QString fullKey() const;
+        void redoTextChanged(const QString &redotext);
+        void undoTextChanged(const QString &undotext);
         
     signals:
-        void add(QString full_key);
-        void remove(QString full_key);
-        void update(QString full_key, Obj new_value);
+        void undo();
+        void redo();
+        
+        void add();
+        
+        void back();
+        void forward();
 
-        void help(Option);
-        
-    protected slots:
-        void added();
-        void removed();
-        void updated(Obj new_value);
-        
     private:
-        QPointer<EditView> prnt;
+        void build();
+        
+        QAbstractButton *add_button;
+        
+        QAbstractButton *undo_button;
+        QAbstractButton *redo_button;
+
+        QAbstractButton *back_button;
+        QAbstractButton *forward_button;
     };
+    
 }
 
 CONSPIRE_END_HEADER

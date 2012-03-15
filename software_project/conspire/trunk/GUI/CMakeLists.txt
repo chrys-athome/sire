@@ -28,8 +28,11 @@ include_directories(${QT_QTCORE_INCLUDE_DIR}
 
 set ( CONSPIRE_GUI_MOC_HEADERS
 
+      Conspire/GUI/addwidget.h
       Conspire/GUI/editview.h
       Conspire/GUI/editer.h
+      Conspire/GUI/helpwidget.h
+      Conspire/GUI/mainbar.h
       Conspire/GUI/stringediter.h
       Conspire/GUI/indexeditview.h
       Conspire/GUI/optioneditview.h
@@ -44,8 +47,11 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/editer.h
       Conspire/GUI/stringediter.h
 
+      Conspire/GUI/addwidget.h
       Conspire/GUI/editview.h
+      Conspire/GUI/helpwidget.h
       Conspire/GUI/indexeditview.h
+      Conspire/GUI/mainbar.h
       Conspire/GUI/optioneditview.h
       Conspire/GUI/optionseditview.h
       Conspire/GUI/optionswidget.h
@@ -61,8 +67,11 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/editer.cpp
       cpp/stringediter.cpp
 
+      cpp/addwidget.cpp
       cpp/editview.cpp
+      cpp/helpwidget.cpp
       cpp/indexeditview.cpp
+      cpp/mainbar.cpp
       cpp/optioneditview.cpp
       cpp/optionseditview.cpp
       cpp/optionswidget.cpp

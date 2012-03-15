@@ -59,7 +59,7 @@ namespace Conspire
         void setOption(Option option);
     
     protected slots:
-        void showHelp() const;
+        void showHelp();
     
     private:
         void build();
