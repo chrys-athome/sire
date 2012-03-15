@@ -71,17 +71,13 @@ void StringEditer::build()
 /** Set the object to be edited */
 void StringEditer::setObject(Obj object)
 {
-    conspireDebug() << "StringEditer::setObject(1)";
     edit->setText(object.toString());
     Editer::setObject(object);
-    conspireDebug() << "StringEditer::setObject(2)";
 }
 
 /** Slot called when the text in the editer is changed */
 void StringEditer::textChanged()
 {
-    conspireDebug() << "textChanged() 1";
-
     try
     {
         StringValue val(edit->text());
@@ -92,6 +88,4 @@ void StringEditer::textChanged()
         edit->setText( this->object().toString() );
         throw;
     }
-
-    conspireDebug() << "textChanged() 2";
 }

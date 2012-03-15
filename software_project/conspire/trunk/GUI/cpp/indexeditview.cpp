@@ -94,9 +94,6 @@ Option IndexEditView::option() const
 /** Set the option to be viewed and edited */
 void IndexEditView::setOption(Option option)
 {
-    if (option == opt)
-        return;
-    
     opt = option;
 
     if (editer)
@@ -110,21 +107,19 @@ void IndexEditView::setOption(Option option)
             editer->deleteLater();
             editer = Editer::create(option.value(), this);
             grid_layout->addItem(editer, 0, 1);
+            connect(editer, SIGNAL(edited(Obj)), this, SLOT(updated(Obj)));
         }
     }
     else
     {
         editer = Editer::create(option.value(), this);
         grid_layout->addItem(editer, 0, 1);
+        connect(editer, SIGNAL(edited(Obj)), this, SLOT(updated(Obj)));
     }
     
     label->setText(this->key());
-    label->setAlignment( ::Qt::AlignCenter );
-    label->setMinimumWidth(100);
-    label->setVisible(true);
     del_button->setVisible( option.canDelete() );
     
-    connect(editer, SIGNAL(edited(Obj)), this, SLOT(updated(Obj)));
 }
 
 /** Internal function called to build the widget */
@@ -138,6 +133,10 @@ void IndexEditView::build()
     QGraphicsProxyWidget *label_proxy = new QGraphicsProxyWidget(this);
     label_proxy->setWidget(label);    
     grid_layout->addItem(label_proxy, 0, 0);
+
+    label->setAlignment( ::Qt::AlignCenter );
+    label->setMinimumWidth(100);
+    label->setVisible(true);
     
     del_button = new QPushButton("-");
     QGraphicsProxyWidget *del_button_proxy = new QGraphicsProxyWidget(this);

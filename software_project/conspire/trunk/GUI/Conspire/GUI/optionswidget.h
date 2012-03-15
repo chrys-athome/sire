@@ -30,8 +30,11 @@
 
 #include "Conspire/conspire.h"
 #include "Conspire/option.h"
+#include "Conspire/exceptions.h"
 
 #include <QWidget>
+#include <QStack>
+#include <QPointer>
 
 CONSPIRE_BEGIN_HEADER
 
@@ -65,6 +68,7 @@ namespace Conspire
     
     protected:
         void resizeEvent(QResizeEvent *event);    
+        void keyPressEvent(QKeyEvent *event);
 
     protected slots:
         void add(QString key);
@@ -73,6 +77,10 @@ namespace Conspire
         
     private:
         void build();
+        void caughtException(const Conspire::Exception &e);
+    
+        void pushView(QGraphicsWidget *view);
+        QGraphicsWidget* popView();
     
         QGraphicsView *graphics_view;
         QGraphicsScene *graphics_scene;
@@ -87,10 +95,16 @@ namespace Conspire
         /** The options being edited */
         Options opts;
 
-        /** The widget used to layout this widget */
+        /** The form used to layout this widget */
         QGraphicsWidget *form;
         
-        /** The options edit/view */
+        /** The current viewed widget */
+        QPointer<QGraphicsWidget> current_view;
+        
+        /** The stack of widget views */
+        QStack< QPointer<QGraphicsWidget> > view_history;
+        
+        /** The top-level options edit/view */
         OptionsEditView *view;
         
         /** The undo stack of commands applied to the options */

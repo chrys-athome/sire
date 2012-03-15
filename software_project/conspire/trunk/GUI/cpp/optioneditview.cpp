@@ -70,7 +70,7 @@ void OptionEditView::build()
     help_button_proxy = new QGraphicsProxyWidget(this);
     help_button_proxy->setWidget(help_button);
     
-    grid_layout->addItem(help_button_proxy, 0, 0);
+    grid_layout->addItem(help_button_proxy, 0, 0, ::Qt::AlignVCenter);
 }
 
 /** Return the key for the edited option */
@@ -93,9 +93,6 @@ void OptionEditView::showHelp() const
 /** Set the option to be edited */
 void OptionEditView::setOption(Option option)
 {
-    if (opt == option)
-        return;
-        
     opt = option;
         
     QList<int> idxs = option.indiciesWithValue();
@@ -129,7 +126,8 @@ void OptionEditView::setOption(Option option)
     else
     {
         help_button->setVisible(true);
-        grid_layout->addItem(help_button_proxy, 0, 0, idxs.count(), 1);
+        grid_layout->addItem(help_button_proxy, 0, 0, idxs.count(), 1,
+                             ::Qt::AlignVCenter);
         
         qSort(idxs);
         
