@@ -36,8 +36,12 @@
 CONSPIRE_BEGIN_HEADER
 
 class QGraphicsView;
+class QGraphicsWidget;
 class QGraphicsScene;
 class QGraphicsGridLayout;
+class QUndoStack;
+class QLabel;
+class QAbstractButton;
 
 namespace Conspire
 {
@@ -59,6 +63,9 @@ namespace Conspire
         
         void setOptions(Options options);
     
+    protected:
+        void resizeEvent(QResizeEvent *event);    
+
     protected slots:
         void add(QString key);
         void remove(QString key);
@@ -70,12 +77,24 @@ namespace Conspire
         QGraphicsView *graphics_view;
         QGraphicsScene *graphics_scene;
         QGraphicsGridLayout *graphics_layout;
+
+        QAbstractButton *undo_button;
+        QAbstractButton *redo_button;
+        
+        QLabel *undo_label;
+        QLabel *redo_label;
         
         /** The options being edited */
         Options opts;
+
+        /** The widget used to layout this widget */
+        QGraphicsWidget *form;
         
         /** The options edit/view */
         OptionsEditView *view;
+        
+        /** The undo stack of commands applied to the options */
+        QUndoStack *undo_stack;
     };
 
 }

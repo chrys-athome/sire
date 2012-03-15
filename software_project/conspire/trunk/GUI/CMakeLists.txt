@@ -49,6 +49,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/optioneditview.h
       Conspire/GUI/optionseditview.h
       Conspire/GUI/optionswidget.h
+      Conspire/GUI/optionscommand.h
     )
 
 set ( CONSPIRE_GUI_PRIVATE_HEADERS
@@ -65,6 +66,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/optioneditview.cpp
       cpp/optionseditview.cpp
       cpp/optionswidget.cpp
+      cpp/optionscommand.cpp
 
       ${CONSPIRE_GUI_PUBLIC_HEADERS}
       ${CONSPIRE_GUI_PRIVATE_HEADERS}
