@@ -92,6 +92,7 @@ namespace Conspire
         void add(QString key);
         void remove(QString key);
         void update(QString key, Obj object);
+        void viewDeleted(QObject *obj);
         
     private:
         void build();

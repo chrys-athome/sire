@@ -108,7 +108,30 @@ void AddWidget::setOptions(Options options)
         
         QPushButton *button = new QPushButton(Conspire::tr("Add"));
         connect(button, SIGNAL(clicked()), mapper, SLOT(map()));
-        mapper->setMapping(button, option.key());
+        
+        if (option.allowMultiple())
+        {
+            //find the lowest available index that does not have a value
+            QList<int> idxs = option.indiciesWithValue();
+            qSort(idxs);
+            
+            int lowest_available = 1;
+            
+            foreach(int idx, idxs)
+            {
+                if (idx == lowest_available)
+                {
+                    lowest_available += 1;
+                }
+                else
+                    break;
+            }
+            
+            mapper->setMapping(button, QString("%1[%2]").arg(option.key())
+                                                .arg(lowest_available));
+        }
+        else
+            mapper->setMapping(button, option.key());
         
         QGraphicsProxyWidget *button_proxy = new QGraphicsProxyWidget(this);
         button_proxy->setWidget(button);
@@ -126,5 +149,11 @@ void AddWidget::build()
     this->setLayout(l);
     
     mapper = new QSignalMapper(this);
-    connect(mapper, SIGNAL(mapped(const QString&)), this, SIGNAL(add(QString)));
+    connect(mapper, SIGNAL(mapped(const QString&)), this, SLOT(addOption(QString)));
+}
+
+void AddWidget::addOption(QString option)
+{
+    deleteLater();
+    emit( add(option) );
 }

@@ -200,11 +200,22 @@ void OptionsWidget::updateStates()
     emit( canForwardChanged( not view_future.isEmpty() ) );
 }
 
+/** This function is called whenever any of the child views are deleted */
+void OptionsWidget::viewDeleted(QObject *obj)
+{
+    conspireDebug() << "checkViews()";
+    
+    if (not current_view)
+        this->popView();
+}
+
 /** Switch to a new view, pushing the old view onto the stack */
 void OptionsWidget::pushView(QGraphicsWidget *v, bool clear_future)
 {
     if (clear_future)
         view_future.clear();
+
+    connect(v, SIGNAL(destroyed(QObject*)), this, SLOT(viewDeleted(QObject*)));
 
     if (v)
     {
@@ -484,7 +495,8 @@ void OptionsWidget::add()
     
     scene()->addItem(a);
     
-    // THIS LEAKS MEMORY !!!
+    // The AddWidget will automatically delete itself
+    // when it is no longer needed
     
     this->pushView(a);
 }

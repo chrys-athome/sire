@@ -57,6 +57,9 @@ namespace Conspire
     signals:
         void add(QString option);
 
+    private slots:
+        void addOption(QString option);
+
     private:
         void build();
         
