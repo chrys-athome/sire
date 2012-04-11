@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "Conspire/GUI/optionswidget.h"
+#include "Conspire/GUI/addwidget.h"
 #include "Conspire/GUI/optionseditview.h"
 #include "Conspire/GUI/optionscommand.h"
 #include "Conspire/GUI/mainbar.h"
@@ -81,6 +82,8 @@ void OptionsWidget::setOptions(Options options)
         
         if (not current_view)
             popAllViews();
+            
+        updateStates();
     }
     catch(const Conspire::Exception &e)
     {
@@ -181,55 +184,26 @@ void OptionsWidget::keyPressEvent(QKeyEvent *event)
     }
 }
 
-/** Function called when an exception is caught */
-void OptionsWidget::caughtException(const Exception &e)
-{
-    QLabel *l = new QLabel();
-    l->setWordWrap(true);
-    l->setGeometry(0, 0, viewport()->width(), viewport()->height());
-    l->setText(e.toString());
-    
-    QGraphicsProxyWidget *l_proxy = new QGraphicsProxyWidget();
-    l_proxy->setWidget(l);
-    l_proxy->setOpacity(0.0);
-    
-    scene()->addItem(l_proxy);
-    
-    // THIS LEAKS MEMORY !!!
-    
-    this->pushView(l_proxy);
-}
-
 /** Internal function used to update the states of the add, back, forward etc. */
 void OptionsWidget::updateStates()
 {
     OptionsEditView *e = dynamic_cast<OptionsEditView*>(current_view.data());
     
     if (e)
-    {
-        if (e->options().keysWithoutValue().isEmpty())
-        {
-            emit( canAddChanged(false) );
-        }
-        else
-        {
-            emit( canAddChanged(true) );
-        }
-    }
-
-    if (view_history.isEmpty())
-    {
-        emit( canBackChanged(false) );
-    }
+        emit( canAddChanged( e->options().canAddValues() ) );
     else
-    {
-        emit( canBackChanged(true) );
-    }
+        emit( canAddChanged(false) );
+
+    emit( canBackChanged( not view_history.isEmpty() ) );
+    emit( canForwardChanged( not view_future.isEmpty() ) );
 }
 
 /** Switch to a new view, pushing the old view onto the stack */
-void OptionsWidget::pushView(QGraphicsWidget *v)
+void OptionsWidget::pushView(QGraphicsWidget *v, bool clear_future)
 {
+    if (clear_future)
+        view_future.clear();
+
     if (v)
     {
         QParallelAnimationGroup *g = new QParallelAnimationGroup();
@@ -331,6 +305,8 @@ QGraphicsWidget* OptionsWidget::popView()
 
     g->start(QAbstractAnimation::DeleteWhenStopped);
 
+    view_future.push(old_view);
+
     updateStates();
 
     return old_view;
@@ -367,6 +343,8 @@ void OptionsWidget::popAllViews()
     }
         
     current_view = top_view;
+    
+#warning NEED TO MOVE VIEW HISTORY INTO VIEW FUTURE
     view_history.clear();
 
     current_view->setOpacity(0);
@@ -460,13 +438,51 @@ void OptionsWidget::back()
 /** Called to move forward to the next screen */
 void OptionsWidget::forward()
 {
-    conspireDebug() << "FORWARD";
+    if (view_future.isEmpty())
+        return;
+        
+    QPointer<QGraphicsWidget> w = view_future.pop();
+    
+    if (not w)
+    {
+        //this widget has died - try to get another one
+        this->forward();
+        return;
+    }
+    
+    this->pushView(w, false);
+}
+
+/** Function called when an exception is caught */
+void OptionsWidget::caughtException(const Exception &e)
+{
+    QLabel *l = new QLabel();
+    l->setWordWrap(true);
+    l->setGeometry(0, 0, viewport()->width(), viewport()->height());
+    l->setText(e.toString());
+    
+    QGraphicsProxyWidget *l_proxy = new QGraphicsProxyWidget();
+    l_proxy->setWidget(l);
+    l_proxy->setOpacity(0.0);
+    
+    scene()->addItem(l_proxy);
+    
+    // THIS LEAKS MEMORY !!!
+    
+    this->pushView(l_proxy);
 }
 
 /** Called to add a new option value to the current view */
 void OptionsWidget::add()
 {
     conspireDebug() << "ADD";
+    AddWidget *a = new AddWidget(opts);
+    
+    scene()->addItem(a);
+    
+    // THIS LEAKS MEMORY !!!
+    
+    this->pushView(a);
 }
 
 /** Called to view the help for the passed option */

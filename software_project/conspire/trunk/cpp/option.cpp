@@ -1619,6 +1619,8 @@ StringList Options::keysWithoutValue() const
         
         if (color != 0)
         {
+#warning DO I NEED TO CHECK FOR OPTIONAL COLOR OPTIONS? WHAT IF NO OPTION IS SET?
+        
             //is this option excluded by other options?
             if (color_option.value(color,String::null) != opts[i].asA<Option>().key())
                 //this option is not selected from the set
@@ -1627,6 +1629,67 @@ StringList Options::keysWithoutValue() const
     
         if (not opts.at(i).asA<Option>().hasIndiciesWithValue())
             k += opts.at(i).asA<Option>().key();
+    }
+    
+    return k;
+}
+
+/** Return whether or not it is possible to add new values to this set of
+    options. This returns whether or not there are any optional options that
+    do not yet have any user values, or if there are any options that allow
+    multiple values */
+bool Options::canAddValues() const
+{
+    for (int i=0; i<opts.count(); ++i)
+    {
+        int color = option_to_color.value(i, 0);
+        
+        if (color != 0)
+        {
+#warning DO I NEED TO CHECK FOR OPTIONAL COLOR OPTIONS? WHAT IF NO OPTION IS SET?
+
+            //is this option excluded by other options?
+            if (color_option.value(color,String::null) != opts[i].asA<Option>().key())
+                //this option is blocked by another option
+                continue;
+        }
+        
+        if (opts.at(i).asA<Option>().allowMultiple() or 
+            not opts.at(i).asA<Option>().hasIndiciesWithValue())
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+/** Return the list of keys that can be added to this options object. These
+    are the keys that are either optional and have not been set, or the keys
+    that allow multiple values */
+StringList Options::addableKeys() const
+{
+    StringList k;
+
+    for (int i=0; i<opts.count(); ++i)
+    {
+        int color = option_to_color.value(i, 0);
+        
+        if (color != 0)
+        {
+#warning DO I NEED TO CHECK FOR OPTIONAL COLOR OPTIONS? WHAT IF NO OPTION IS SET?
+
+            //is this option excluded by other options?
+            if (color_option.value(color,String::null) != opts[i].asA<Option>().key())
+                //this option is blocked by another option
+                continue;
+        }
+        
+        if (opts.at(i).asA<Option>().allowMultiple() or 
+            not opts.at(i).asA<Option>().hasIndiciesWithValue())
+        {
+            k += opts.at(i).asA<Option>().key();
+        }
     }
     
     return k;

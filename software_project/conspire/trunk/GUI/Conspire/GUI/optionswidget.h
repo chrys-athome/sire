@@ -97,7 +97,7 @@ namespace Conspire
         void build();
         void updateStates();
     
-        void pushView(QGraphicsWidget *view);
+        void pushView(QGraphicsWidget *view, bool clear_future=true);
         QGraphicsWidget* popView();
         
         void popAllViews();
@@ -110,6 +110,9 @@ namespace Conspire
         
         /** The stack of widget views */
         QStack< QPointer<QGraphicsWidget> > view_history;
+        
+        /** The stack of future widget views */
+        QStack< QPointer<QGraphicsWidget> > view_future;
         
         /** The top-level options edit/view */
         QPointer<OptionsEditView> top_view;
