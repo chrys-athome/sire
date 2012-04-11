@@ -34,6 +34,8 @@
 
 CONSPIRE_BEGIN_HEADER
 
+class QSignalMapper;
+
 namespace Conspire
 {
     class Options;
@@ -51,9 +53,14 @@ namespace Conspire
         ~AddWidget();
         
         void setOptions(Options options);
-        
+
+    signals:
+        void add(QString option);
+
     private:
         void build();
+        
+        QSignalMapper *mapper;
     };
 }
 

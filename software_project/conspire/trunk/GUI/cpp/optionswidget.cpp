@@ -93,6 +93,8 @@ void OptionsWidget::setOptions(Options options)
 
 void OptionsWidget::add(QString key)
 {
+    conspireDebug() << "OptionsWidget::add(" << key << ")";
+
     Options old_opts = opts;
 
     try
@@ -477,6 +479,8 @@ void OptionsWidget::add()
 {
     conspireDebug() << "ADD";
     AddWidget *a = new AddWidget(opts);
+    
+    connect(a, SIGNAL(add(QString)), this, SLOT(add(QString)));
     
     scene()->addItem(a);
     
