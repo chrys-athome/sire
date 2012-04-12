@@ -40,7 +40,7 @@
 using namespace Conspire;
 
 /** Constructor */
-AddWidget::AddWidget(QGraphicsItem *parent) : QGraphicsWidget(parent)
+AddWidget::AddWidget(QGraphicsItem *parent) : PageWidget(parent)
 {
     build();
 }
@@ -48,7 +48,7 @@ AddWidget::AddWidget(QGraphicsItem *parent) : QGraphicsWidget(parent)
 /** Constructor, setting the Options object that details the list
     of options that can be added */
 AddWidget::AddWidget(Options options, QGraphicsItem *parent)
-          : QGraphicsWidget(parent)
+          : PageWidget(parent)
 {
     build();
     setOptions(options);

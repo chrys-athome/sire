@@ -32,9 +32,12 @@
 #include "Conspire/option.h"
 #include "Conspire/exceptions.h"
 
+#include "Conspire/GUI/pagewidget.h"
+
 #include <QGraphicsView>
 #include <QStack>
 #include <QPointer>
+#include <QSignalMapper>
 
 CONSPIRE_BEGIN_HEADER
 
@@ -50,6 +53,47 @@ namespace Conspire
 {
     class OptionsEditView;
     class MainBar;
+
+    /** This is a page that is used to view and edit a single page
+        of options */
+    class CONSPIRE_EXPORT NewOptionsWidget : public PageWidget
+    {
+        Q_OBJECT
+    
+    public:
+        NewOptionsWidget(QGraphicsItem *parent=0);
+        NewOptionsWidget(Options options, QGraphicsItem *parent=0);
+        NewOptionsWidget(Options options, QString root_key,
+                         QGraphicsItem *parent=0);
+        
+        ~NewOptionsWidget();
+        
+        Options options() const;
+        
+        QString rootKey() const;
+    
+    public slots:
+        void update(Options options);
+
+    private slots:
+        void clicked(const QString &key);
+
+    private:
+        void build();
+        void setOptions(Options options, QString root_key = QString::null);
+        
+        /** The options that can be edited by this page */
+        Options opts;
+        
+        /** The root key of this options object */
+        QString root_key;
+        
+        /** The list of active buttons */
+        QList<QAbstractButton*> buttons;
+        
+        /** The signal mapper */
+        QSignalMapper *mapper;
+    };
 
     /** This is a widget that can view and edit the options
         held in a Conspire::Options object */
@@ -116,7 +160,7 @@ namespace Conspire
         QStack< QPointer<QGraphicsWidget> > view_future;
         
         /** The top-level options edit/view */
-        QPointer<OptionsEditView> top_view;
+        QPointer<NewOptionsWidget> top_view;
         
         /** The menu bar that sits at the bottom of the screen */
         QPointer<MainBar> mainbar;

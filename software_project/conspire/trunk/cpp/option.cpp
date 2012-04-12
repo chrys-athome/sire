@@ -1607,6 +1607,48 @@ StringList Options::keysWithValue() const
     return k;
 }
     
+/** Return a list of keys for all options that have been given a value,
+    and make sure that multi-value keys that have multiple values are 
+    reported multiple times, with their indicies attached */
+StringList Options::keysAndIndiciesWithValue() const
+{
+    StringList k;
+    
+    for (int i=0; i<opts.count(); ++i)
+    {
+        Option opt = opts.at(i).asA<Option>();
+    
+        int color = option_to_color.value(i, 0);
+        
+        if (color != 0)
+        {
+            //is this option excluded by other options?
+            if (color_option.value(color,String::null) != opt.key())
+                //this option is not selected from the set
+                continue;
+        }
+
+        List<int>::Type idxs = opt.indiciesWithValue();
+
+        if (not idxs.isEmpty())
+        {
+            if (idxs.count() == 1 and idxs[0] == 1)
+            {
+                k += opt.key();
+            }
+            else
+            {
+                foreach (int idx, idxs)
+                {
+                    k += QString("%1[%2]").arg(opt.key()).arg(idx);
+                }
+            }
+        }
+    }
+    
+    return k;
+}
+    
 /** Return the set of keys of sub-options that have not been explicitly
     set by the user, and as such, don't have a value */
 StringList Options::keysWithoutValue() const

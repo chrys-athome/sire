@@ -29,8 +29,7 @@
 \*********************************************/
 
 #include "Conspire/conspire.h"
-
-#include <QGraphicsWidget>
+#include "Conspire/GUI/pagewidget.h"
 
 CONSPIRE_BEGIN_HEADER
 
@@ -42,7 +41,7 @@ namespace Conspire
 
     /** This widget is used to allow the user to add new
         option values to an Options object */
-    class CONSPIRE_EXPORT AddWidget : public QGraphicsWidget
+    class CONSPIRE_EXPORT AddWidget : public PageWidget
     {
         Q_OBJECT
         

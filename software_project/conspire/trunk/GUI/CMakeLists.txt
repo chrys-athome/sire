@@ -31,13 +31,16 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/addwidget.h
       Conspire/GUI/editview.h
       Conspire/GUI/editer.h
+      Conspire/GUI/exceptionwidget.h
       Conspire/GUI/helpwidget.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/stringediter.h
       Conspire/GUI/indexeditview.h
       Conspire/GUI/optioneditview.h
       Conspire/GUI/optionseditview.h
+      Conspire/GUI/optionwidget.h
       Conspire/GUI/optionswidget.h
+      Conspire/GUI/pagewidget.h
     )
 
 QT4_WRAP_CPP(CONSPIRE_GUI_MOC_SOURCES ${CONSPIRE_GUI_MOC_HEADERS})
@@ -49,13 +52,16 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
 
       Conspire/GUI/addwidget.h
       Conspire/GUI/editview.h
+      Conspire/GUI/exceptionwidget.h
       Conspire/GUI/helpwidget.h
       Conspire/GUI/indexeditview.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/optioneditview.h
       Conspire/GUI/optionseditview.h
+      Conspire/GUI/optionwidget.h
       Conspire/GUI/optionswidget.h
       Conspire/GUI/optionscommand.h
+      Conspire/GUI/pagewidget.h
     )
 
 set ( CONSPIRE_GUI_PRIVATE_HEADERS
@@ -69,13 +75,16 @@ set ( CONSPIRE_GUI_SOURCES
 
       cpp/addwidget.cpp
       cpp/editview.cpp
+      cpp/exceptionwidget.cpp
       cpp/helpwidget.cpp
       cpp/indexeditview.cpp
       cpp/mainbar.cpp
       cpp/optioneditview.cpp
       cpp/optionseditview.cpp
+      cpp/optionwidget.cpp
       cpp/optionswidget.cpp
       cpp/optionscommand.cpp
+      cpp/pagewidget.cpp
 
       ${CONSPIRE_GUI_PUBLIC_HEADERS}
       ${CONSPIRE_GUI_PRIVATE_HEADERS}

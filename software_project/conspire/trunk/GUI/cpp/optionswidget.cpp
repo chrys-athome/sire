@@ -37,6 +37,7 @@
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QGraphicsGridLayout>
+#include <QGraphicsLinearLayout>
 #include <QGraphicsWidget>
 #include <QGraphicsProxyWidget>
 #include <QUndoStack>
@@ -47,6 +48,186 @@
 #include <QParallelAnimationGroup>
 
 using namespace Conspire;
+
+/////////
+///////// Implementation of NewOptionsWidget
+/////////
+
+/** Constructor */
+NewOptionsWidget::NewOptionsWidget(QGraphicsItem *parent) : PageWidget(parent)
+{
+    build();
+}
+
+/** Construct, passing in a top-level options object */
+NewOptionsWidget::NewOptionsWidget(Options options, QGraphicsItem *parent)
+                 : PageWidget(parent)
+{
+    build();
+    setOptions(options);
+}
+
+/** Construct, passing in an Opitons object that is a sub-options object,
+    with root key 'root_key' */
+NewOptionsWidget::NewOptionsWidget(Options options, QString root_key,
+                                   QGraphicsItem *parent)
+                 : PageWidget(parent)
+{
+    build();
+    setOptions(options, root_key);
+}
+
+/** Destructor */
+NewOptionsWidget::~NewOptionsWidget()
+{}
+
+/** Return the options object being edited by this view */
+Options NewOptionsWidget::options() const
+{
+    return opts;
+}
+
+/** Return the root key of the options object being edited. This is
+    null if this view is editing the top-level options object */
+QString NewOptionsWidget::rootKey() const
+{
+    return root_key;
+}
+
+/** This function is called when the options object is updated */
+void NewOptionsWidget::update(Options options)
+{
+    if (not root_key.isNull())
+    {
+        try
+        {
+            Option opt = options.getNestedOption(root_key);
+            options = opt.value().asA<Options>();
+        }
+        catch(...)
+        {
+            conspireDebug() << "CANNOT FIND" << root_key << "IN OPTIONS!";
+            options = Options();
+        }
+    }
+    
+    //create one button for each option...
+    opts = options;
+    
+    QStringList keys = opts.keysAndIndiciesWithValue();
+    
+    //make sure that there are as many buttons in the layout as options
+    QGraphicsLinearLayout *l = dynamic_cast<QGraphicsLinearLayout*>(this->layout());
+    
+    if (not l)
+    {
+        conspireDebug() << "INVALID LAYOUT!!!";
+        throw Conspire::program_bug( Conspire::tr(
+                "How do we have an invalid layout???"), CODELOC );
+    }
+    
+    if (l->count() > keys.count())
+    {
+        for (int i = l->count()-1; i >= keys.count(); --i)
+        {
+            QGraphicsLayoutItem *item = l->itemAt(i);
+            l->removeAt(i);
+            buttons.removeAt(i);
+            delete item;
+        }
+    }
+    else if (l->count() < keys.count())
+    {
+        for (int i = l->count(); i < keys.count(); ++i)
+        {
+            QPushButton *b = new QPushButton();
+            connect(b, SIGNAL(clicked()), mapper, SLOT(map()));
+            buttons.append(b);
+            QGraphicsProxyWidget *b_proxy = new QGraphicsProxyWidget(this);
+            b_proxy->setWidget(b);
+            l->insertItem(i, b_proxy);
+        }
+    }
+    
+    for (int i=0; i<keys.count(); ++i)
+    {
+        QAbstractButton *b = buttons[i];
+        Option opt = opts.getNestedOption(keys[i]);
+        
+        if (opt.hasSubOptions())
+        {
+            b->setText( QString("%1 ----->").arg(keys[i]) );
+        }
+        else
+        {
+            b->setText( QString("%1 == %2").arg(keys[i], opt.value().toString()) );
+        }
+        
+        mapper->removeMappings(b);
+        mapper->setMapping(b, keys[i]);
+    }
+}
+
+/** Slot called when one of the options is clicked */
+void NewOptionsWidget::clicked(const QString &key)
+{
+    try
+    {
+        //create a new OptionsWidget to display the suboptions
+        conspireDebug() << "CLICKED" << key;
+        Option opt = opts.getNestedOption(key);
+        
+        if (opt.hasSubOptions())
+        {
+            QString root = key;
+                
+            if (not root_key.isNull())
+                root.prepend(".").prepend(root_key);
+
+            PagePointer p(new NewOptionsWidget(opt.value().asA<Options>(), root));
+            
+            emit( push(p) );
+        }
+        else
+        {
+            PagePointer p(new OptionWidget(opt, root_key));
+            
+            emit( push(p) );
+        }
+    }
+    catch(const Conspire::Exception &e)
+    {
+        conspireDebug() << "EXCEPTION" << e.toString();
+        
+        PagePointer p(new ExceptionWidget( Conspire::tr(
+                "An error occurred when you clicked on the option \"%1\".")
+                    .arg(key), e ));
+                    
+        emit( push(p) );
+    }
+}
+
+/** Actually build the widget */
+void NewOptionsWidget::build()
+{
+    QGraphicsLinearLayout *l = new QGraphicsLinearLayout( ::Qt::Vertical, this );
+    this->setLayout(l);
+    
+    mapper = new QSignalMapper(this);
+    connect(mapper, SIGNAL(mapped(const QString&)), this, SLOT(clicked(const QString&)));
+}
+
+/** Set the options and root_key used by this object */
+void NewOptionsWidget::setOptions(Options options, QString key)
+{
+    root_key = key;
+    opts = Options();
+    this->update(options);
+}
+
+/////////
+///////// Implementation of OptionsWidget
+/////////
 
 /** Constructor */
 OptionsWidget::OptionsWidget(QWidget *parent) : QGraphicsView(parent)
@@ -77,7 +258,8 @@ void OptionsWidget::setOptions(Options options)
 {
     try
     {
-        top_view->setOptions(options);
+        //top_view->setOptions(options);
+        top_view->update(options);
         opts = options;
         
         if (not current_view)
@@ -383,7 +565,7 @@ void OptionsWidget::build()
 
     this->setScene( new QGraphicsScene(this) );
     
-    top_view = new OptionsEditView();
+    top_view = new NewOptionsWidget();
     top_view->setGeometry(0, 0, viewport()->width(), viewport()->height());
     top_view->setZValue(0);
     current_view = top_view;
