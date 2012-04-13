@@ -117,52 +117,54 @@ namespace Conspire
         
         void back();
         void forward();
-        
-        void add();
-        void help(Option option);
 
-        void caughtException(const Conspire::Exception &e);
+        void home(bool clear_history=false);
+        
+        void push(PagePointer page);
+        void pop(bool forget_page=false);
+
+        void add(QString full_key);
+        void remove(QString full_key);
+        void update(QString full_key, Obj new_value);
 
     signals:
         void canBackChanged(bool);
         void canForwardChanged(bool);
-        void canAddChanged(bool);
+        void canUndoChanged(bool);
+        void canRedoChanged(bool);
     
     protected:
         void resizeEvent(QResizeEvent *event);    
         void keyPressEvent(QKeyEvent *event);
 
-    protected slots:
-        void add(QString key);
-        void remove(QString key);
-        void update(QString key, Obj object);
-        void viewDeleted(QObject *obj);
-        
     private:
         void build();
-        void updateStates();
     
-        void pushView(QGraphicsWidget *view, bool clear_future=true);
-        QGraphicsWidget* popView();
-        
-        void popAllViews();
+        void pushView(PagePointer view, bool clear_future=true);
+        void popView(bool forget_page=false);
+
+        void animateSwitch(PagePointer old_view, PagePointer new_view, 
+                           bool move_forwards);
+                           
+        void animateNew(PagePointer new_view);
+        void animateDestroy(PagePointer old_view);
 
         /** The options being edited */
         Options opts;
-
-        /** The current viewed widget */
-        QPointer<QGraphicsWidget> current_view;
-        
-        /** The stack of widget views */
-        QStack< QPointer<QGraphicsWidget> > view_history;
-        
-        /** The stack of future widget views */
-        QStack< QPointer<QGraphicsWidget> > view_future;
         
         /** The top-level options edit/view */
-        QPointer<NewOptionsWidget> top_view;
+        PagePointer top_view;
+
+        /** The current viewed widget */
+        PagePointer current_view;
         
-        /** The menu bar that sits at the bottom of the screen */
+        /** The stack of widget views */
+        QStack<PagePointer> view_history;
+        
+        /** The stack of future widget views */
+        QStack<PagePointer> view_future;
+        
+        /** The main bar that acts as a global control */
         QPointer<MainBar> mainbar;
         
         /** The undo stack of commands applied to the options */

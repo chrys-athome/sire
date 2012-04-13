@@ -31,6 +31,8 @@
 #include "Conspire/GUI/optionseditview.h"
 #include "Conspire/GUI/optionscommand.h"
 #include "Conspire/GUI/mainbar.h"
+#include "Conspire/GUI/optionwidget.h"
+#include "Conspire/GUI/exceptionwidget.h"
 
 #include <QVBoxLayout>
 
@@ -258,19 +260,112 @@ void OptionsWidget::setOptions(Options options)
 {
     try
     {
-        //top_view->setOptions(options);
-        top_view->update(options);
-        opts = options;
-        
-        if (not current_view)
-            popAllViews();
+        if (top_view)
+            top_view->update(options);
+        else
+        {
+            top_view = new NewOptionsWidget(options);
+            this->scene()->addItem(top_view);
+
+            top_view->setGeometry(0, 0, viewport()->width(), viewport()->height());
+            top_view->setZValue(0);
             
-        updateStates();
+            connect(top_view.data(), SIGNAL(push(PagePointer)), 
+                    this, SLOT(push(PagePointer)));
+            connect(top_view.data(), SIGNAL(pop(bool)), 
+                    this, SLOT(pop(bool)));
+            connect(top_view.data(), SIGNAL(add(QString)), 
+                    this, SLOT(add(QString)));
+            connect(top_view.data(), SIGNAL(remove(QString)), 
+                    this, SLOT(remove(QString)));
+            connect(top_view.data(), SIGNAL(update(QString,Obj)), 
+                    this, SLOT(update(QString,Obj)));
+        }
     }
     catch(const Conspire::Exception &e)
     {
-        caughtException(e);
+        PagePointer error( new ExceptionWidget( Conspire::tr(
+                "An error occurred when trying to set the global options "
+                "object."), e ) );
+                
+        emit( push(error) );
+        return;
     }
+
+    //now go through an update active pages with the new
+    //version of the options
+    try
+    {
+        if (current_view and (current_view != top_view))
+        {
+            current_view->update(options);
+
+            if (current_view->isBroken())
+                current_view = PagePointer();
+        }
+    }
+    catch(...)
+    {
+        //this broke the current view...
+        current_view = PagePointer();
+    }
+
+    if (not view_history.isEmpty())
+    {
+        QMutableVectorIterator<PagePointer> it(view_history);
+        
+        while (it.hasNext())
+        {
+            PagePointer page = it.next();
+            
+            if (page != top_view)
+            {
+                try
+                {
+                    page->update(options);
+                    
+                    if (page->isBroken())
+                        it.remove();
+                }
+                catch(...)
+                {
+                    //this broke this page
+                    it.remove();
+                }
+            }
+        }
+    }
+    
+    if (not view_future.isEmpty())
+    {
+        QMutableVectorIterator<PagePointer> it(view_future);
+        
+        while (it.hasNext())
+        {
+            PagePointer page = it.next();
+            
+            if (page != top_view)
+            {
+                try
+                {
+                    page->update(options);
+                    
+                    if (page->isBroken())
+                        it.remove();
+                }
+                catch(...)
+                {
+                    //this broke the page
+                    it.remove();
+                }
+            }
+        }
+    }
+
+    opts = options;
+
+    if (not current_view)
+        home(true);
 }
 
 void OptionsWidget::add(QString key)
@@ -282,14 +377,16 @@ void OptionsWidget::add(QString key)
     try
     {
         undo_stack->push( new OptionsAddCommand(this, key) );
-
-        if (not current_view)
-            popAllViews();
     }
     catch(const Conspire::Exception &e)
     {
-        caughtException(e);
         setOptions(old_opts);
+
+        PagePointer error( new ExceptionWidget( Conspire::tr(
+                "An error occurred when trying to add the new value \"%1\".")
+                .arg(key), e ) );
+                
+        emit( push(error) );
     }
 }
 
@@ -300,14 +397,16 @@ void OptionsWidget::remove(QString key)
     try
     {
         undo_stack->push( new OptionsRemoveCommand(this, key) );
-
-        if (not current_view)
-            popAllViews();
     }
     catch(const Conspire::Exception &e)
     {
-        caughtException(e);
         setOptions(old_opts);
+
+        PagePointer error( new ExceptionWidget( Conspire::tr(
+                "An error occurred when trying to remove the value \"%1\".")
+                .arg(key), e ) );
+                
+        emit( push(error) );
     }
 }
 
@@ -318,14 +417,16 @@ void OptionsWidget::update(QString key, Obj object)
     try
     {
         undo_stack->push( new OptionsUpdateCommand(this, key, object.asA<Value>()) );
-
-        if (not current_view)
-            popAllViews();
     }
     catch(const Conspire::Exception &e)
     {
-        caughtException(e);
         setOptions(old_opts);
+
+        PagePointer error( new ExceptionWidget( Conspire::tr(
+                "An error occurred when trying to set the value for \"%1\" to \"%2\".")
+                .arg(key, object.toString()), e ) );
+                
+        emit( push(error) );
     }
 }
 
@@ -368,192 +469,257 @@ void OptionsWidget::keyPressEvent(QKeyEvent *event)
     }
 }
 
-/** Internal function used to update the states of the add, back, forward etc. */
-void OptionsWidget::updateStates()
+/** Slot used to push a new page to the top of the view */
+void OptionsWidget::push(PagePointer page)
 {
-    OptionsEditView *e = dynamic_cast<OptionsEditView*>(current_view.data());
+    if (not page)
+        return;
+
+    this->scene()->addItem(page.data());
+
+    this->pushView(page, true);
     
-    if (e)
-        emit( canAddChanged( e->options().canAddValues() ) );
+    connect(page.data(), SIGNAL(push(PagePointer)), this, SLOT(push(PagePointer)));
+    connect(page.data(), SIGNAL(pop(bool)), this, SLOT(pop(bool)));
+    connect(page.data(), SIGNAL(add(QString)), this, SLOT(add(QString)));
+    connect(page.data(), SIGNAL(remove(QString)), this, SLOT(remove(QString)));
+    connect(page.data(), SIGNAL(update(QString,Obj)), this, SLOT(update(QString,Obj)));
+}
+
+/** Slot used to pop a page from the view. If "forget_view" is true, then
+    this page is not added to the view future */
+void OptionsWidget::pop(bool forget_page)
+{
+    this->popView(forget_page);
+}
+
+/** Slot used to switch to the home view. This clears the view history and future
+    if "clear_history" is true */
+void OptionsWidget::home(bool clear_history)
+{
+    if (clear_history)
+    {
+        view_history.clear();
+        view_future.clear();
+        pop(true);
+    }
     else
-        emit( canAddChanged(false) );
+    {
+        if (current_view != top_view)
+        {
+            push(top_view);
+        }
+    }
+}
+
+/** Switch to a new view, pushing the old view onto the stack */
+void OptionsWidget::pushView(PagePointer new_view, bool clear_future)
+{
+    if (not new_view)
+        return;
+
+    if (clear_future)
+        view_future.clear();
+
+    if (current_view == new_view)
+    {
+        //there is no change
+        return;
+    }
+    else if (current_view)
+    {
+        //animate the transition from the current view to the new view
+        animateSwitch(current_view, new_view, true);
+    }
+    else
+    {
+        //there is no current view, so animate a zoom into the new view
+        animateNew(new_view);
+    }
+
+    view_history.push(current_view);
+        
+    current_view = new_view;
 
     emit( canBackChanged( not view_history.isEmpty() ) );
     emit( canForwardChanged( not view_future.isEmpty() ) );
 }
 
-/** This function is called whenever any of the child views are deleted */
-void OptionsWidget::viewDeleted(QObject *obj)
-{
-    conspireDebug() << "checkViews()";
-    
-    if (not current_view)
-        this->popView();
-}
-
-/** Switch to a new view, pushing the old view onto the stack */
-void OptionsWidget::pushView(QGraphicsWidget *v, bool clear_future)
-{
-    if (clear_future)
-        view_future.clear();
-
-    connect(v, SIGNAL(destroyed(QObject*)), this, SLOT(viewDeleted(QObject*)));
-
-    if (v)
-    {
-        QParallelAnimationGroup *g = new QParallelAnimationGroup();
-    
-        if (current_view)
-        {
-            view_history.push(current_view);
-
-            QPropertyAnimation *anim = new QPropertyAnimation(current_view,
-                                                   "opacity");
-                                                   
-            anim->setDuration(1000);
-            anim->setStartValue(1.0);
-            anim->setEndValue(0.0);
-            
-            g->addAnimation(anim);
-        }
-
-        //make sure that the view has the right size
-        v->setOpacity(0);
-        v->setGeometry(0, 0, viewport()->width(), viewport()->height());
-
-        //set up animating turning on the view
-        {
-            QPropertyAnimation *anim = new QPropertyAnimation(v, "opacity");
-            
-            anim->setDuration(1000);
-            anim->setStartValue(0.0);
-            anim->setEndValue(1.0);
-            
-            g->addAnimation(anim);
-        }
-        
-        //now set up animating sliding to the new view
-        {
-            QPropertyAnimation *anim = new QPropertyAnimation(v, "x");
-            
-            anim->setDuration(1000);
-            anim->setStartValue(2 * this->width());
-            anim->setEndValue(0.0);
-            anim->setEasingCurve(QEasingCurve::InOutBack);
-            
-            g->addAnimation(anim);
-        }
-        
-        current_view = v;
-        
-        g->start(QAbstractAnimation::DeleteWhenStopped);
-
-        updateStates();
-    }
-}
-
 /** Switch back to the old view */
-QGraphicsWidget* OptionsWidget::popView()
+void OptionsWidget::popView(bool forget_view)
 {
-    if (view_history.isEmpty())
-        return 0;
+    PagePointer new_view;
 
-    QGraphicsWidget *old_view = 0;
+    //get the last, non-broken view to display
+    while (not view_history.isEmpty())
+    {
+        new_view = view_history.pop();
+        
+        if (new_view and not new_view->isBroken())
+            break;
+    }
+    
+    if (not new_view)
+        new_view = top_view;
+
+    if (not new_view)
+    {
+        //something has gone really wrong, as there is nothing to display...
+        conspireDebug() << "SOMETHING IS REALLY WRONG!!!";
+    }
+    else if (current_view == new_view)
+    {
+        //there is no change
+        return;
+    }
+    else if (current_view)
+    {
+        //animate the transition from the current view to the new view
+        animateSwitch(current_view, new_view, false);
+    }
+    else
+    {
+        //there is no current view, so animate a zoom into the new view
+        animateNew(new_view);
+    }
+
+    if (not forget_view)
+        view_future.push(current_view);
+        
+    current_view = new_view;
+
+    emit( canBackChanged( not view_history.isEmpty() ) );
+    emit( canForwardChanged( not view_future.isEmpty() ) );
+}
+
+void OptionsWidget::animateDestroy(PagePointer old_view)
+{
+    if (not old_view)
+        return;
+        
+    old_view->setOpacity(1.0);
 
     QParallelAnimationGroup *g = new QParallelAnimationGroup();
-
-    if (current_view)
-    {
-        old_view = current_view;
-        
-        QPropertyAnimation *anim = new QPropertyAnimation(old_view, "opacity");
-        anim->setDuration(1000);
-        anim->setStartValue(1.0);
-        anim->setEndValue(0.0);
-        g->addAnimation(anim);
-        
-        {
-            QPropertyAnimation *anim = new QPropertyAnimation(old_view, "x");
-            anim->setDuration(1000);
-            anim->setStartValue(0.0);
-            anim->setEndValue(2 * this->width());
-            anim->setEasingCurve(QEasingCurve::InOutBack);
-            g->addAnimation(anim);
-        }
-    }
-        
-    current_view = view_history.pop();
     
-    if (not current_view)
-        current_view = top_view;
- 
-    current_view->setOpacity(0);
-    current_view->setGeometry(0, 0, viewport()->width(), viewport()->height());
-                      
-    {
-        QPropertyAnimation *anim = new QPropertyAnimation(current_view, "opacity");
-        anim->setDuration(1000);
-        anim->setStartValue(0.0);
-        anim->setEndValue(1.0);
-        g->addAnimation(anim);
-    }
+    QPropertyAnimation *anim = new QPropertyAnimation(old_view.data(), "opacity");
+    anim->setDuration(1000);
+    anim->setStartValue(1.0);
+    anim->setEndValue(0.0);
+    g->addAnimation(anim);
+    
+    anim = new QPropertyAnimation(old_view.data(), "x");
+    anim->setDuration(1000);
+    anim->setStartValue(-2 * this->width());
+    anim->setStartValue(0.0);
+    anim->setEasingCurve(QEasingCurve::InOutBack);
+    g->addAnimation(anim);
 
     g->start(QAbstractAnimation::DeleteWhenStopped);
-
-    view_future.push(old_view);
-
-    updateStates();
-
-    return old_view;
 }
 
-/** Pop all views and return to the top-level view */
-void OptionsWidget::popAllViews()
+void OptionsWidget::animateNew(PagePointer new_view)
 {
-    if (current_view == top_view)
+    if (not new_view or (new_view == current_view))
+    {
         return;
+    }
+    
+    new_view->setOpacity(0);
+    new_view->resize(this->viewport()->size());
 
-    QGraphicsWidget *old_view = 0;
+    new_view->resize(this->viewport()->size());
+    
+    setSceneRect( QRectF(0, 0, new_view->geometry().width(), 
+                               new_view->geometry().height()) );
+    
+    QParallelAnimationGroup *g = new QParallelAnimationGroup();
+    
+    QPropertyAnimation *anim = new QPropertyAnimation(new_view.data(), "opacity");
+    anim->setDuration(1000);
+    anim->setStartValue(0.0);
+    anim->setEndValue(1.0);
+    g->addAnimation(anim);
+    
+    anim = new QPropertyAnimation(new_view.data(), "x");
+    anim->setDuration(1000);
+    anim->setStartValue(2 * this->width());
+    anim->setEndValue(0.0);
+    anim->setEasingCurve(QEasingCurve::InOutBack);
+    g->addAnimation(anim);
+
+    g->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+void OptionsWidget::animateSwitch(PagePointer old_view, PagePointer new_view, 
+                                  bool move_forwards)
+{
+    if (not new_view)
+    {
+        animateDestroy(old_view);
+        return;
+    }
+    else if (not old_view)
+    {
+        animateNew(new_view);
+        return;
+    }
+
+    //make sure that the two views have the correct size
+    new_view->setOpacity(0);
+    
+    new_view->resize(this->viewport()->size());
+    
+    setSceneRect( QRectF(0, 0, new_view->geometry().width(), 
+                               new_view->geometry().height()) );
+
+    old_view->resize(this->viewport()->size());
 
     QParallelAnimationGroup *g = new QParallelAnimationGroup();
 
-    if (current_view)
-    {
-        old_view = current_view;
-        
-        QPropertyAnimation *anim = new QPropertyAnimation(old_view, "opacity");
-        anim->setDuration(1000);
-        anim->setStartValue(1.0);
-        anim->setEndValue(0.0);
-        g->addAnimation(anim);
-        
-        {
-            QPropertyAnimation *anim = new QPropertyAnimation(old_view, "x");
-            anim->setDuration(1000);
-            anim->setStartValue(0.0);
-            anim->setEndValue(2 * this->width());
-            anim->setEasingCurve(QEasingCurve::InOutBack);
-            g->addAnimation(anim);
-        }
-    }
-        
-    current_view = top_view;
-    
-#warning NEED TO MOVE VIEW HISTORY INTO VIEW FUTURE
-    view_history.clear();
+    QPropertyAnimation *anim = new QPropertyAnimation(old_view.data(), "opacity");
+    anim->setDuration(1000);
+    anim->setStartValue(1.0);
+    anim->setEndValue(0.0);
+    g->addAnimation(anim);
 
-    current_view->setOpacity(0);
-    current_view->setGeometry(0, 0, viewport()->width(), viewport()->height());
+    anim = new QPropertyAnimation(new_view.data(), "opacity");
+    anim->setDuration(1000);
+    anim->setStartValue(0.0);
+    anim->setEndValue(1.0);
+    g->addAnimation(anim);
 
+    if (move_forwards)
     {
-        QPropertyAnimation *anim = new QPropertyAnimation(current_view, "opacity");
+        anim = new QPropertyAnimation(old_view.data(), "x");
         anim->setDuration(1000);
         anim->setStartValue(0.0);
-        anim->setEndValue(1.0);
+        anim->setEndValue(-2 * this->width());
+        anim->setEasingCurve(QEasingCurve::InOutBack);
+        g->addAnimation(anim);
+        
+        anim = new QPropertyAnimation(new_view.data(), "x");
+        anim->setDuration(1000);
+        anim->setStartValue(2 * this->width());
+        anim->setEndValue(0.0);
+        anim->setEasingCurve(QEasingCurve::InOutBack);
         g->addAnimation(anim);
     }
-
-    updateStates();
+    else
+    {
+        anim = new QPropertyAnimation(old_view.data(), "x");
+        anim->setDuration(1000);
+        anim->setStartValue(0.0);
+        anim->setEndValue(2 * this->width());
+        anim->setEasingCurve(QEasingCurve::InOutBack);
+        g->addAnimation(anim);
+        
+        anim = new QPropertyAnimation(new_view.data(), "x");
+        anim->setDuration(1000);
+        anim->setStartValue(-2 * this->width());
+        anim->setEndValue(0.0);
+        anim->setEasingCurve(QEasingCurve::InOutBack);
+        g->addAnimation(anim);
+    }
 
     g->start(QAbstractAnimation::DeleteWhenStopped);
 }
@@ -564,18 +730,13 @@ void OptionsWidget::build()
     this->setMinimumSize(600,400);
 
     this->setScene( new QGraphicsScene(this) );
-    
-    top_view = new NewOptionsWidget();
-    top_view->setGeometry(0, 0, viewport()->width(), viewport()->height());
-    top_view->setZValue(0);
-    current_view = top_view;
-    
-    setSceneRect( QRectF(0, 0, current_view->geometry().width(), 
-                               current_view->geometry().height()) );
-
-    this->scene()->addItem(top_view);
 
     undo_stack = new QUndoStack(this);
+
+    connect(undo_stack, SIGNAL(canUndoChanged(bool)),
+            this, SIGNAL(canUndoChanged(bool)));
+    connect(undo_stack, SIGNAL(canRedoChanged(bool)),
+            this, SIGNAL(canRedoChanged(bool)));
 
     mainbar = new MainBar();
     mainbar->setPos(0, 0);
@@ -583,7 +744,6 @@ void OptionsWidget::build()
 
     this->scene()->addItem(mainbar);
 
-    connect(mainbar, SIGNAL(add()), this, SLOT(add()));
     connect(mainbar, SIGNAL(undo()), this, SLOT(undo()));
     connect(mainbar, SIGNAL(redo()), this, SLOT(redo()));
     connect(mainbar, SIGNAL(back()), this, SLOT(back()));
@@ -592,22 +752,11 @@ void OptionsWidget::build()
     connect(this, SIGNAL(canBackChanged(bool)), mainbar, SLOT(canBackChanged(bool)));
     connect(this, SIGNAL(canForwardChanged(bool)),
             mainbar, SLOT(canForwardChanged(bool)));
-    connect(this, SIGNAL(canAddChanged(bool)), mainbar, SLOT(canAddChanged(bool)));
     
-    connect(undo_stack, SIGNAL(canUndoChanged(bool)),
+    connect(this, SIGNAL(canUndoChanged(bool)),
             mainbar, SLOT(canUndoChanged(bool)));
-    connect(undo_stack, SIGNAL(canRedoChanged(bool)),
+    connect(this, SIGNAL(canRedoChanged(bool)),
             mainbar, SLOT(canRedoChanged(bool)));
-    
-    connect(undo_stack, SIGNAL(undoTextChanged(QString)),
-            mainbar, SLOT(undoTextChanged(QString)));
-    connect(undo_stack, SIGNAL(redoTextChanged(QString)),
-            mainbar, SLOT(redoTextChanged(QString)));
-    
-    connect(top_view, SIGNAL(add(QString)), this, SLOT(add(QString)));
-    connect(top_view, SIGNAL(remove(QString)), this, SLOT(remove(QString)));
-    connect(top_view, SIGNAL(update(QString,Obj)), this, SLOT(update(QString,Obj)));
-    connect(top_view, SIGNAL(help(Option)), this, SLOT(help(Option)));
 }
 
 /** Called to undo the last action */
@@ -627,7 +776,7 @@ void OptionsWidget::redo()
 /** Called to return back to the previous screen */
 void OptionsWidget::back()
 {
-    this->popView();
+    this->popView(false);
 }
 
 /** Called to move forward to the next screen */
@@ -636,55 +785,14 @@ void OptionsWidget::forward()
     if (view_future.isEmpty())
         return;
         
-    QPointer<QGraphicsWidget> w = view_future.pop();
+    PagePointer page = view_future.pop();
     
-    if (not w)
+    if (not page or page->isBroken())
     {
         //this widget has died - try to get another one
         this->forward();
         return;
     }
     
-    this->pushView(w, false);
-}
-
-/** Function called when an exception is caught */
-void OptionsWidget::caughtException(const Exception &e)
-{
-    QLabel *l = new QLabel();
-    l->setWordWrap(true);
-    l->setGeometry(0, 0, viewport()->width(), viewport()->height());
-    l->setText(e.toString());
-    
-    QGraphicsProxyWidget *l_proxy = new QGraphicsProxyWidget();
-    l_proxy->setWidget(l);
-    l_proxy->setOpacity(0.0);
-    
-    scene()->addItem(l_proxy);
-    
-    // THIS LEAKS MEMORY !!!
-    
-    this->pushView(l_proxy);
-}
-
-/** Called to add a new option value to the current view */
-void OptionsWidget::add()
-{
-    conspireDebug() << "ADD";
-    AddWidget *a = new AddWidget(opts);
-    
-    connect(a, SIGNAL(add(QString)), this, SLOT(add(QString)));
-    
-    scene()->addItem(a);
-    
-    // The AddWidget will automatically delete itself
-    // when it is no longer needed
-    
-    this->pushView(a);
-}
-
-/** Called to view the help for the passed option */
-void OptionsWidget::help(Option option)
-{
-    conspireDebug() << "HELP" << option.description();
+    this->pushView(page, false);
 }

@@ -68,6 +68,13 @@ bool PageWidget::decref()
         return false;
 }
 
+/** Return whether or not this page is broken. This can occur when
+    the page is updated with an incompatible new Options object */
+bool PageWidget::isBroken() const
+{
+    return false;
+}
+
 /** This slot is called when the options object for the GUI has
     been changed. The parent Options object is passed to this page
     so that it can be updated. The default implementation does nothing. */
@@ -166,7 +173,7 @@ PagePointer& PagePointer::operator=(PageWidget *page)
         }
 
         page->incref();
-        connect(p, SIGNAL(destroyed(QObject*)), this, SLOT(destroyed(QObject*)));
+        connect(page, SIGNAL(destroyed(QObject*)), this, SLOT(destroyed(QObject*)));
         p = page;
     }
     

@@ -111,6 +111,8 @@ namespace Conspire
         
         virtual ~PageWidget();
 
+        virtual bool isBroken() const;
+
     public slots:
         virtual void update(Options options);
 
@@ -120,9 +122,9 @@ namespace Conspire
         void push(PagePointer new_page);
         
         /** Signal emitted when this page no longer wants to be viewed. 
-            If "delete_page" is true, then this page is removed from the
+            If "forget_page" is true, then this page is removed from the
             view history. This is useful if this page is a dialog page */
-        void pop(bool delete_page=false);
+        void pop(bool forget_page=false);
 
         /** Signal emitted when this page requests that the key "full_key"
             is added to the GUI's Options object */
