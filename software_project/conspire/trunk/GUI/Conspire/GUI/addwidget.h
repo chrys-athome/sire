@@ -29,7 +29,7 @@
 \*********************************************/
 
 #include "Conspire/conspire.h"
-#include "Conspire/GUI/pagewidget.h"
+#include "Conspire/GUI/configpage.h"
 
 CONSPIRE_BEGIN_HEADER
 
@@ -41,7 +41,7 @@ namespace Conspire
 
     /** This widget is used to allow the user to add new
         option values to an Options object */
-    class CONSPIRE_EXPORT AddWidget : public PageWidget
+    class CONSPIRE_EXPORT AddWidget : public ConfigPage
     {
         Q_OBJECT
         
@@ -52,6 +52,9 @@ namespace Conspire
         ~AddWidget();
         
         void setOptions(Options options);
+
+    public slots:
+        void update(Options options);
 
     signals:
         void add(QString option);

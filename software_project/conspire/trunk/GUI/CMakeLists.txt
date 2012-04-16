@@ -36,6 +36,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/exceptionwidget.h
       Conspire/GUI/helpwidget.h
       Conspire/GUI/mainbar.h
+      Conspire/GUI/mainwindow.h
       Conspire/GUI/stringediter.h
       Conspire/GUI/indexeditview.h
       Conspire/GUI/optioneditview.h
@@ -61,6 +62,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/helpwidget.h
       Conspire/GUI/indexeditview.h
       Conspire/GUI/mainbar.h
+      Conspire/GUI/mainwindow.h
       Conspire/GUI/optioneditview.h
       Conspire/GUI/optionseditview.h
       Conspire/GUI/optionwidget.h
@@ -87,6 +89,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/helpwidget.cpp
       cpp/indexeditview.cpp
       cpp/mainbar.cpp
+      cpp/mainwindow.cpp
       cpp/optioneditview.cpp
       cpp/optionseditview.cpp
       cpp/optionwidget.cpp

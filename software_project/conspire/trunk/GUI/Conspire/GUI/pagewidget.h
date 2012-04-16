@@ -128,19 +128,6 @@ namespace Conspire
             view history. This is useful if this page is a dialog page */
         void pop(bool forget_page=false);
 
-        /** Signal emitted when this page requests that the key "full_key"
-            is added to the GUI's Options object */
-        void add(QString full_key);
-
-        /** Signal emitted when this page requests that the key "full_key"
-            is removed from the GUI's Options object */
-        void remove(QString full_key);
-
-        /** Signal emitted when this page requests that the key "full_key"
-            in the GUI's Options object should be set to have the 
-            value "new_value" */
-        void update(QString full_key, Obj new_value);
-
     protected:
         friend class PagePointer;
         void incref();

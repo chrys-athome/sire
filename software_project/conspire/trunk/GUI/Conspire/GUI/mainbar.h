@@ -53,8 +53,6 @@ namespace Conspire
         void canBackChanged(bool can_back);
         void canForwardChanged(bool can_forward);
     
-        void canAddChanged(bool can_add);
-    
         void canRedoChanged(bool can_redo);
         void canUndoChanged(bool can_undo);
         
@@ -65,15 +63,15 @@ namespace Conspire
         void undo();
         void redo();
         
-        void add();
-        
         void back();
         void forward();
+
+        void newPage();
 
     private:
         void build();
         
-        QAbstractButton *add_button;
+        QAbstractButton *new_button;
         
         QAbstractButton *undo_button;
         QAbstractButton *redo_button;

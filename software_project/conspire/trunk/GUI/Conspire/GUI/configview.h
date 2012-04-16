@@ -28,5 +28,43 @@
   *
 \*********************************************/
 
+#include "Conspire/GUI/pageview.h"
+
+#include "Conspire/option.h"
+
+CONSPIRE_BEGIN_HEADER
+
+namespace Conspire
+{
+    /** This class holds a view of a set of ConfigPage pages. This
+        is an extension of PageView that adds additional signals
+        if the Options object is edited, and provides slots that
+        allow all of the pages to be updated if the Options are
+        edited */
+    class CONSPIRE_EXPORT ConfigView : public PageView
+    {
+        Q_OBJECT
+        
+    public:
+        ConfigView(QGraphicsItem *parent=0);
+        ConfigView(PagePointer top_page, QGraphicsItem *parent=0);
+        
+        ~ConfigView();
+        
+    public slots:
+        void push(PagePointer page, bool new_tab=false);
+        void update(Options options);
+
+    signals:
+        void updateOptions(Options);
+        
+        void add(QString full_key);
+        void remove(QString full_key);
+        void update(QString full_key, Obj value);
+    };
+
+}
+
+CONSPIRE_END_HEADER
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_CONFIGPAGE_H
-#define CONSPIRE_CONFIGPAGE_H
+#ifndef CONSPIRE_MAINWINDOW_H
+#define CONSPIRE_MAINWINDOW_H
 /********************************************\
   *
   *  Conspire
@@ -28,39 +28,49 @@
   *
 \*********************************************/
 
+#include <QGraphicsView>
+
+#include "Conspire/conspire.h"
+
 #include "Conspire/GUI/pagewidget.h"
 
 CONSPIRE_BEGIN_HEADER
 
 namespace Conspire
 {
-    /** This is the base class of all pages that are used 
-        to view and edit Options objects */
-    class CONSPIRE_EXPORT ConfigPage : public PageWidget
+    class Options;
+
+    class MainBar;
+    class PageView;
+
+    /** This is a simple MainWindow class that houses all of the 
+        graphical components of the application. Use this class
+        as a template of how to combine together the main views
+        needed to build a Conspire GUI application
+        
+        @author Christopher Woods
+    */
+    class CONSPIRE_EXPORT MainWindow : public QGraphicsView
     {
         Q_OBJECT
     
     public:
-        ConfigPage(QGraphicsItem *parent=0);
+        MainWindow(QWidget *parent=0);
+        MainWindow(Options options, QWidget *parent=0);
         
-        virtual ~ConfigPage();
-    
-    public slots:
-        virtual void update(Options options);
-                
+        ~MainWindow();
+
     signals:
-        /** Signal emitted when this page requests that the key "full_key"
-            is added to the GUI's Options object */
-        void add(QString full_key);
+        void push(PagePointer new_page, bool new_tab);
 
-        /** Signal emitted when this page requests that the key "full_key"
-            is removed from the GUI's Options object */
-        void remove(QString full_key);
-
-        /** Signal emitted when this page requests that the key "full_key"
-            in the GUI's Options object should be set to have the 
-            value "new_value" */
-        void update(QString full_key, Obj new_value);
+    protected:
+        void resizeEvent(QResizeEvent *e);
+        
+    private:
+        void build();
+    
+        MainBar *mainbar;
+        PageView *view;
     };
 
 }

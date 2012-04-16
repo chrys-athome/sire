@@ -131,16 +131,26 @@ void PageView::home(bool clear_history)
     page, which becomes its own top-level page in that tab */
 void PageView::push(PagePointer page, bool new_tab)
 {
+    conspireDebug() << "PUSHING A PAGE" << new_tab;
+
     if (not page or page->isBroken())
+    {
+        conspireDebug() << "TRYING TO PUSH A BROKEN PAGE?";
         return;
+    }
 
     page->hide();
     page->setParentItem(this);
 
+    Tab *tab = 0;
+
     if ((current_tab == -1) or new_tab)
     {
-        Tab *tab = new Tab();
+        conspireDebug() << "BUILDING A NEW TAB";
+    
+        tab = new Tab();
         tab->top_page = page;
+        tab->current_page = page;
         
         tabpages.append(tab);
         int idx = tabbar->addTab(page->description());
@@ -154,16 +164,20 @@ void PageView::push(PagePointer page, bool new_tab)
         else
             tabbar->show();
             
+        conspireDebug() << "CHANGE TO THE NEW TAB";
         this->changeTab(idx);
     }
-
-    Tab *tab = tabpages[current_tab];
-
-    this->pushView(page, true);
+    else
+    {
+        tab = tabpages[current_tab];
+        this->pushView(page, true);
+    }
     
     connect(page.data(), SIGNAL(push(PagePointer,bool)), 
             this, SLOT(push(PagePointer,bool)));
     connect(page.data(), SIGNAL(pop(bool)), this, SLOT(pop(bool)));
+
+    conspireDebug() << "ADDED PAGE" << page.data() << "TO TAB" << tab;
 }
 
 /** Pop the current view and return to the previous view in the current tab.
@@ -208,18 +222,35 @@ void PageView::changeTab(int index)
         return;
     }
     
-    Tab *old_tab = tabpages[current_tab];
-    Tab *new_tab = tabpages[index];
+    conspireDebug() << index << tabpages.count();
+    
+    if (current_tab == -1)
+    {
+        conspireDebug() << "animateNew new tab and new page";
+        Tab *new_tab = tabpages[index];
+        current_tab = index;
+        animateNew(new_tab->current_page);
+    }
+    else
+    {
+        conspireDebug() << "animateSwitch from one tab to the other";
+        Tab *old_tab = tabpages[current_tab];
+        Tab *new_tab = tabpages[index];
 
-    bool move_forwards = (index > current_tab);
+        bool move_forwards = (index > current_tab);
 
-    current_tab = index;
-    animateSwitch(old_tab->current_page, new_tab->current_page, move_forwards);
+        current_tab = index;
+        animateSwitch(old_tab->current_page, new_tab->current_page, move_forwards);
+    }
+
+    conspireDebug() << "HERE";
     
     if (tabbar->currentIndex() != current_tab)
     {
         tabbar->setCurrentIndex(current_tab);
     }
+
+    conspireDebug() << "HERE2";
 
     if (current_tab != -1)
     {
@@ -227,6 +258,8 @@ void PageView::changeTab(int index)
         emit( canBackChanged( not tab->page_history.isEmpty() ) );
         emit( canForwardChanged( not tab->page_future.isEmpty() ) );
     }
+
+    conspireDebug() << "HERE3";
 }
 
 /** Close the current tab. This will delete the tab and all of its contents */
@@ -307,6 +340,8 @@ void PageView::keyPressEvent(QKeyEvent *e)
 /** Build this widget */
 void PageView::build()
 {
+    current_tab = -1;
+
     QGraphicsLinearLayout *l = new QGraphicsLinearLayout(::Qt::Vertical, this);
     this->setLayout(l);
     
@@ -454,6 +489,7 @@ void PageView::animateNew(PagePointer new_page)
         return;
     }
     
+    conspireDebug() << "animateNew";
     new_page->setOpacity(0);
     new_page->show();
     new_page->resize(label->size());

@@ -50,12 +50,12 @@ void MainBar::build()
     QGraphicsLinearLayout *layout = new QGraphicsLinearLayout(this);
     this->setLayout(layout);
 
-    add_button = new QPushButton( QObject::tr("Add") );
-    add_button->setEnabled(false);
-    connect(add_button, SIGNAL(clicked()), this, SIGNAL(add()));
+    new_button = new QPushButton( QObject::tr("New") );
+    new_button->setEnabled(true);
+    connect(new_button, SIGNAL(clicked()), this, SIGNAL(newPage()));
 
-    QGraphicsProxyWidget *add_button_proxy = new QGraphicsProxyWidget(this);
-    add_button_proxy->setWidget(add_button);
+    QGraphicsProxyWidget *new_button_proxy = new QGraphicsProxyWidget(this);
+    new_button_proxy->setWidget(new_button);
 
     undo_button = new QPushButton( QObject::tr("Undo") );
     undo_button->setEnabled(false);
@@ -94,7 +94,7 @@ void MainBar::build()
 
     layout->addItem(back_button_proxy);
     layout->addItem(forward_button_proxy);
-    layout->addItem(add_button_proxy);
+    layout->addItem(new_button_proxy);
     layout->addItem(undo_button_proxy);
     layout->addItem(redo_button_proxy);
     layout->addItem(quit_button_proxy);
@@ -110,11 +110,6 @@ void MainBar::canBackChanged(bool can_back)
 void MainBar::canForwardChanged(bool can_forward)
 {
     forward_button->setEnabled(can_forward);
-}
-
-void MainBar::canAddChanged(bool can_add)
-{
-    add_button->setEnabled(can_add);
 }
 
 void MainBar::canRedoChanged(bool can_redo)
