@@ -111,6 +111,8 @@ namespace Conspire
         
         virtual ~PageWidget();
 
+        virtual QString description() const;
+
         virtual bool isBroken() const;
 
     public slots:
@@ -119,7 +121,7 @@ namespace Conspire
     signals:
         /** Signal emitted when this page has created a new page that 
             it wants to be displayed to the user */
-        void push(PagePointer new_page);
+        void push(PagePointer new_page, bool new_tab=false);
         
         /** Signal emitted when this page no longer wants to be viewed. 
             If "forget_page" is true, then this page is removed from the

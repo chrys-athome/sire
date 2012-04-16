@@ -18,5 +18,26 @@
     <value><molecule>file:1,molecule:1</molecule></value>
   </option>
 
+  <option>
+    <key>moves</key>
+    <description>Options that describe the moves
+                 to be made in the simulation</description>
+    <value>
+      <options>
+        <option>
+          <key>solute</key>
+          <description>The frequency of solute moves</description>
+          <value><integer minimum="0">0</integer></value>
+        </option>
+
+        <option>
+          <key>volume</key>
+          <description>The frequency of volume moves</description>
+          <value><integer minimum="0">0</integer></value>
+        </option>
+      </options>
+    </value>
+  </option>
+
 </options>
 

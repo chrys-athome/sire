@@ -81,6 +81,13 @@ bool PageWidget::isBroken() const
 void PageWidget::update(Options options)
 {}
 
+/** This function returns a string description of this page, which is useful
+    e.g. for tab page headers */
+QString PageWidget::description() const
+{
+    return "???";
+}
+
 //////////
 ////////// Implementation of PagePointer
 //////////

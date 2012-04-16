@@ -29,6 +29,8 @@ include_directories(${QT_QTCORE_INCLUDE_DIR}
 set ( CONSPIRE_GUI_MOC_HEADERS
 
       Conspire/GUI/addwidget.h
+      Conspire/GUI/configpage.h
+      Conspire/GUI/configview.h
       Conspire/GUI/editview.h
       Conspire/GUI/editer.h
       Conspire/GUI/exceptionwidget.h
@@ -40,6 +42,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/optionseditview.h
       Conspire/GUI/optionwidget.h
       Conspire/GUI/optionswidget.h
+      Conspire/GUI/pageview.h
       Conspire/GUI/pagewidget.h
     )
 
@@ -51,6 +54,8 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/stringediter.h
 
       Conspire/GUI/addwidget.h
+      Conspire/GUI/configpage.h
+      Conspire/GUI/configview.h
       Conspire/GUI/editview.h
       Conspire/GUI/exceptionwidget.h
       Conspire/GUI/helpwidget.h
@@ -62,6 +67,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/optionswidget.h
       Conspire/GUI/optionscommand.h
       Conspire/GUI/pagewidget.h
+      Conspire/GUI/pageview.h
     )
 
 set ( CONSPIRE_GUI_PRIVATE_HEADERS
@@ -74,6 +80,8 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/stringediter.cpp
 
       cpp/addwidget.cpp
+      cpp/configpage.cpp
+      cpp/configview.cpp
       cpp/editview.cpp
       cpp/exceptionwidget.cpp
       cpp/helpwidget.cpp
@@ -85,6 +93,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/optionswidget.cpp
       cpp/optionscommand.cpp
       cpp/pagewidget.cpp
+      cpp/pageview.cpp
 
       ${CONSPIRE_GUI_PUBLIC_HEADERS}
       ${CONSPIRE_GUI_PRIVATE_HEADERS}
