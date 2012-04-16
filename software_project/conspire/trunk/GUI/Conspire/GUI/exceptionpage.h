@@ -36,6 +36,9 @@
 
 CONSPIRE_BEGIN_HEADER
 
+class QLabel;
+class QTextEdit;
+
 namespace Conspire
 {
     /** This is a page that is used to display an error message */
@@ -56,6 +59,9 @@ namespace Conspire
         
         QString desc;
         Siren::Obj e;
+        
+        QLabel *short_error;
+        QTextEdit *long_error;
     };
 }
 

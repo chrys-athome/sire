@@ -118,6 +118,7 @@ void OptionPage::editingFinished()
         }
     
         emit( update(key,new_val) );
+        emit( pop() );
     }
     catch(const Conspire::Exception &e)
     {

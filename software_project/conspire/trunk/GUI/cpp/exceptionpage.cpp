@@ -32,6 +32,7 @@
 #include <QGraphicsProxyWidget>
 
 #include <QLabel>
+#include <QTextEdit>
 
 using namespace Conspire;
 
@@ -58,10 +59,29 @@ ExceptionPage::~ExceptionPage()
 
 /** Build the widget */
 void ExceptionPage::build()
-{}
+{
+    QGraphicsLinearLayout *l = new QGraphicsLinearLayout(::Qt::Vertical, this);
+    this->setLayout(l);
+    
+    short_error = new QLabel();
+    long_error = new QTextEdit();
+    long_error->setReadOnly(true);
+    
+    QGraphicsProxyWidget *short_error_proxy = new QGraphicsProxyWidget(this);
+    QGraphicsProxyWidget *long_error_proxy = new QGraphicsProxyWidget(this);
+    
+    short_error_proxy->setWidget(short_error);
+    long_error_proxy->setWidget(long_error);
+    
+    l->addItem(short_error_proxy);
+    l->addItem(long_error_proxy);
+}
 
 void ExceptionPage::setException(QString description, const Exception &error)
 {
     desc = description;
     e = error;
+    
+    short_error->setText(desc);
+    long_error->setText(error.toString());
 }
