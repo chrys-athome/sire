@@ -28,48 +28,36 @@ include_directories(${QT_QTCORE_INCLUDE_DIR}
 
 set ( CONSPIRE_GUI_MOC_HEADERS
 
-      Conspire/GUI/addwidget.h
+      Conspire/GUI/addpage.h
       Conspire/GUI/configpage.h
       Conspire/GUI/configview.h
-      Conspire/GUI/editview.h
-      Conspire/GUI/editer.h
-      Conspire/GUI/exceptionwidget.h
-      Conspire/GUI/helpwidget.h
+      Conspire/GUI/exceptionpage.h
+      Conspire/GUI/helppage.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
-      Conspire/GUI/stringediter.h
-      Conspire/GUI/indexeditview.h
-      Conspire/GUI/optioneditview.h
-      Conspire/GUI/optionseditview.h
-      Conspire/GUI/optionwidget.h
-      Conspire/GUI/optionswidget.h
+      Conspire/GUI/optionpage.h
+      Conspire/GUI/optionspage.h
+      Conspire/GUI/page.h
       Conspire/GUI/pageview.h
-      Conspire/GUI/pagewidget.h
+
     )
 
 QT4_WRAP_CPP(CONSPIRE_GUI_MOC_SOURCES ${CONSPIRE_GUI_MOC_HEADERS})
 
 set ( CONSPIRE_GUI_PUBLIC_HEADERS
       
-      Conspire/GUI/editer.h
-      Conspire/GUI/stringediter.h
-
-      Conspire/GUI/addwidget.h
-      Conspire/GUI/configpage.h
+      Conspire/GUI/addpage.h
+      Conspire/GUI/configpage.h  
       Conspire/GUI/configview.h
-      Conspire/GUI/editview.h
-      Conspire/GUI/exceptionwidget.h
-      Conspire/GUI/helpwidget.h
-      Conspire/GUI/indexeditview.h
+      Conspire/GUI/exceptionpage.h
+      Conspire/GUI/helppage.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
-      Conspire/GUI/optioneditview.h
-      Conspire/GUI/optionseditview.h
-      Conspire/GUI/optionwidget.h
-      Conspire/GUI/optionswidget.h
-      Conspire/GUI/optionscommand.h
-      Conspire/GUI/pagewidget.h
+      Conspire/GUI/optionpage.h
+      Conspire/GUI/optionspage.h
+      Conspire/GUI/page.h
       Conspire/GUI/pageview.h
+
     )
 
 set ( CONSPIRE_GUI_PRIVATE_HEADERS
@@ -78,24 +66,17 @@ set ( CONSPIRE_GUI_PRIVATE_HEADERS
 
 set ( CONSPIRE_GUI_SOURCES
 
-      cpp/editer.cpp
-      cpp/stringediter.cpp
-
-      cpp/addwidget.cpp
+      cpp/addpage.cpp
       cpp/configpage.cpp
       cpp/configview.cpp
-      cpp/editview.cpp
-      cpp/exceptionwidget.cpp
-      cpp/helpwidget.cpp
-      cpp/indexeditview.cpp
+      cpp/exceptionpage.cpp
+      cpp/helppage.cpp
       cpp/mainbar.cpp
       cpp/mainwindow.cpp
-      cpp/optioneditview.cpp
-      cpp/optionseditview.cpp
-      cpp/optionwidget.cpp
-      cpp/optionswidget.cpp
+      cpp/optionpage.cpp
+      cpp/optionspage.cpp
       cpp/optionscommand.cpp
-      cpp/pagewidget.cpp
+      cpp/page.cpp
       cpp/pageview.cpp
 
       ${CONSPIRE_GUI_PUBLIC_HEADERS}
