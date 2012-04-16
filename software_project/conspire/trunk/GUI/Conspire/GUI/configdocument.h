@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_CONFIGPAGE_H
-#define CONSPIRE_CONFIGPAGE_H
+#ifndef CONSPIRE_CONFIGDOCUMENT_H
+#define CONSPIRE_CONFIGDOCUMENT_H
 /********************************************\
   *
   *  Conspire
@@ -28,39 +28,68 @@
   *
 \*********************************************/
 
+#include "Conspire/option.h"
+
 #include "Conspire/GUI/page.h"
 
 CONSPIRE_BEGIN_HEADER
 
+class QUndoStack;
+
 namespace Conspire
 {
-    /** This is the base class of all pages that are used 
-        to view and edit Options objects */
-    class CONSPIRE_EXPORT ConfigPage : public Page
+    class ConfigView;
+
+    /** This page holds a complete Options document. This is the top-level
+        page used to edit an Options object, and allows multiple, tabbed
+        sub-views of the document, and manages all of the editing of
+        the document */
+    class CONSPIRE_EXPORT ConfigDocument : public Page
     {
         Q_OBJECT
-    
-    public:
-        ConfigPage(QGraphicsItem *parent=0);
         
-        virtual ~ConfigPage();
-    
+    public:
+        ConfigDocument(QGraphicsItem *parent=0);
+        ConfigDocument(Options options, QGraphicsItem *parent=0);
+        
+        ~ConfigDocument();
+        
+        Options options() const;
+        
     public slots:
-        virtual void reread(Options options);
-                
-    signals:
-        /** Signal emitted when this page requests that the key "full_key"
-            is added to the GUI's Options object */
         void add(QString full_key);
-
-        /** Signal emitted when this page requests that the key "full_key"
-            is removed from the GUI's Options object */
         void remove(QString full_key);
-
-        /** Signal emitted when this page requests that the key "full_key"
-            in the GUI's Options object should be set to have the 
-            value "new_value" */
         void update(QString full_key, Obj new_value);
+        
+        void undo();
+        void redo();
+        
+        void forward();
+        void back();
+        void home(bool clear_history=false);
+
+        void setOptions(Options options);
+        
+    signals:
+        void reread(Options options);
+        
+        void canUndoChanged(bool);
+        void canRedoChanged(bool);
+        
+        void canBackChanged(bool);
+        void canForwardChanged(bool);
+        
+    private:
+        void build();
+
+        /** The Options object being viewed and edited */
+        Options opts;
+
+        /** The tabbed views of the Options object */
+        ConfigView *view;
+        
+        /** The undo stack used to provide an undo history to editing commands */
+        QUndoStack *undo_stack;
     };
 
 }

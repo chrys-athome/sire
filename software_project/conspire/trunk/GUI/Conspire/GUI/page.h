@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_PAGEWIDGET_H
-#define CONSPIRE_PAGEWIDGET_H
+#ifndef CONSPIRE_PAGE_H
+#define CONSPIRE_PAGE_H
 /********************************************\
   *
   *  Conspire
@@ -36,14 +36,14 @@ CONSPIRE_BEGIN_HEADER
 
 namespace Conspire
 {
-    class PageWidget;
+    class Page;
 
-    /** This class holds a safe pointer to a PageWidget. This
+    /** This class holds a safe pointer to a Page. This
         pointer will automatically manage the reference count
-        to the PageWidget, and will ensure that the PageWidget
+        to the Page, and will ensure that the Page
         is deleted once the reference count drops to zero. It will
-        also automatically lose the pointer to the PageWidget
-        if the PageWidget is deleted by someone else.
+        also automatically lose the pointer to the Page
+        if the Page is deleted by someone else.
     */
     class CONSPIRE_EXPORT PagePointer : public QObject
     {
@@ -51,23 +51,23 @@ namespace Conspire
         
     public:
         PagePointer();
-        PagePointer(PageWidget *page);
+        PagePointer(Page *page);
         
         PagePointer(const PagePointer &other);
         
         ~PagePointer();
         
-        PageWidget* data();
+        Page* data();
         
         bool isNull() const;
         
-        operator PageWidget*();
+        operator Page*();
     
-        PageWidget& operator*() const;
-        PageWidget* operator->() const;
+        Page& operator*() const;
+        Page* operator->() const;
         
         PagePointer& operator=(const PagePointer &other);
-        PagePointer& operator=(PageWidget *page);
+        PagePointer& operator=(Page *page);
         
         bool operator==(const PagePointer &other) const;
         bool operator!=(const PagePointer &other) const;
@@ -76,7 +76,7 @@ namespace Conspire
         void destroyed(QObject *obj);
         
     private:
-        PageWidget *p;
+        Page *p;
     };
 
     /** This is the base class of all of the main full-page widgets
@@ -102,21 +102,18 @@ namespace Conspire
         
         Navigation between pages is animated :-)
     */
-    class CONSPIRE_EXPORT PageWidget : public QGraphicsWidget
+    class CONSPIRE_EXPORT Page : public QGraphicsWidget
     {
         Q_OBJECT
         
     public:
-        PageWidget(QGraphicsItem *parent=0);
+        Page(QGraphicsItem *parent=0);
         
-        virtual ~PageWidget();
+        virtual ~Page();
 
         virtual QString description() const;
 
         virtual bool isBroken() const;
-
-    public slots:
-        virtual void update(Options options);
 
     signals:
         /** Signal emitted when this page has created a new page that 

@@ -53,10 +53,10 @@ namespace Conspire
         
     public slots:
         void push(PagePointer page, bool new_tab=false);
-        void update(Options options);
+        void reread(Options options);
 
     signals:
-        void updateOptions(Options);
+        void rereadOptions(Options);
         
         void add(QString full_key);
         void remove(QString full_key);

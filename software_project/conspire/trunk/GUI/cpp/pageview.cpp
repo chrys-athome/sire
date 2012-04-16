@@ -48,13 +48,13 @@ PageView::Tab::~Tab()
 {}
 
 /** Constructor */
-PageView::PageView(QGraphicsItem *parent) : PageWidget(parent)
+PageView::PageView(QGraphicsItem *parent) : Page(parent)
 {
     build();
 }
 
 /** Constructor, passing in the top page for the first tab */
-PageView::PageView(PagePointer top_page, QGraphicsItem *parent) : PageWidget(parent)
+PageView::PageView(PagePointer top_page, QGraphicsItem *parent) : Page(parent)
 {
     build();
     push(top_page, true);
@@ -70,6 +70,12 @@ PageView::~PageView()
     }
 }
 
+/** Return the number of tabs */
+int PageView::count() const
+{
+    return tabpages.count();
+}
+
 /** Go back to the last page in the history in the current tab */
 void PageView::back()
 {
@@ -77,6 +83,10 @@ void PageView::back()
         return;
 
     this->popView(false);
+
+    Tab *tab = tabpages[current_tab];
+    emit( canBackChanged(not tab->page_history.isEmpty()) );
+    emit( canForwardChanged(not tab->page_future.isEmpty()) );
 }
 
 /** Go forward to the next page in the forward history in the current tab */
@@ -100,6 +110,9 @@ void PageView::forward()
     }
     
     this->pushView(page, false);
+    
+    emit( canBackChanged(not tab->page_history.isEmpty()) );
+    emit( canForwardChanged(not tab->page_future.isEmpty()) );
 }
 
 /** Return home in the current tab */
@@ -178,6 +191,9 @@ void PageView::push(PagePointer page, bool new_tab)
     connect(page.data(), SIGNAL(pop(bool)), this, SLOT(pop(bool)));
 
     conspireDebug() << "ADDED PAGE" << page.data() << "TO TAB" << tab;
+
+    emit( canBackChanged(not tab->page_history.isEmpty()) );
+    emit( canForwardChanged(not tab->page_future.isEmpty()) );
 }
 
 /** Pop the current view and return to the previous view in the current tab.
@@ -186,6 +202,13 @@ void PageView::push(PagePointer page, bool new_tab)
 void PageView::pop(bool forget_page)
 {
     this->popView(forget_page);
+
+    if (current_tab != -1)
+    {
+        Tab *tab = tabpages[current_tab];
+        emit( canBackChanged(not tab->page_history.isEmpty()) );
+        emit( canForwardChanged(not tab->page_future.isEmpty()) );
+    }
 }
 
 /** Change the order of the tabs, so that tab "from" now has index "to" */
@@ -305,10 +328,36 @@ void PageView::closeTab(int index)
     }
 }
 
+/** Close all of the tabs - this will delete every page and all of their contents */
+void PageView::closeAll()
+{
+    if (current_tab != -1)
+    {
+        Tab *tab = tabpages[current_tab];
+        
+        if (tab->current_page)
+            animateDestroy(tab->current_page);
+    }
+
+    current_tab = -1;
+    
+    foreach (Tab *tab, tabpages)
+    {
+        delete tab;
+    }
+    
+    tabpages.clear();
+    
+    while (tabbar->count() > 0)
+    {
+        tabbar->removeTab(0);
+    }
+}
+
 /** Called when this widget is resized */
 void PageView::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
-    PageWidget::resizeEvent(e);
+    Page::resizeEvent(e);
     
     if (current_tab != -1)
     {
@@ -332,7 +381,7 @@ void PageView::keyPressEvent(QKeyEvent *e)
         }
         else
         {
-            PageWidget::keyPressEvent(e);
+            Page::keyPressEvent(e);
         }
     }
 }

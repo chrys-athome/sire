@@ -33,13 +33,13 @@
 using namespace Conspire;
 
 /** Constructor */
-ConfigPage::ConfigPage(QGraphicsItem *parent) : PageWidget(parent)
+ConfigPage::ConfigPage(QGraphicsItem *parent) : Page(parent)
 {}
 
 /** Destructor */
 ConfigPage::~ConfigPage()
 {}
 
-/** Update the set of Options - the default is to do nothing */
-void ConfigPage::update(Options)
+/** Reread and update this page from the passed set of Options */
+void ConfigPage::reread(Options)
 {}

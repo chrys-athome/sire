@@ -30,7 +30,7 @@
 #include "Conspire/GUI/configview.h"
 #include "Conspire/GUI/mainbar.h"
 
-#include "Conspire/GUI/addwidget.h"
+#include "Conspire/GUI/configdocument.h"
 
 #include "Conspire/option.h"
 
@@ -48,8 +48,20 @@ MainWindow::MainWindow(Options options, QWidget *parent)
 {
     build();
     
-    PagePointer page( new AddWidget(options) );
-    emit( push(page,true) );
+    ConfigDocument *doc = new ConfigDocument(options);
+    
+    connect(doc, SIGNAL(canUndoChanged(bool)), mainbar, SLOT(canUndoChanged(bool)));
+    connect(doc, SIGNAL(canRedoChanged(bool)), mainbar, SLOT(canRedoChanged(bool)));
+    connect(doc, SIGNAL(canForwardChanged(bool)),
+            mainbar, SLOT(canForwardChanged(bool)));
+    connect(doc, SIGNAL(canBackChanged(bool)), mainbar, SLOT(canBackChanged(bool)));
+    
+    connect(mainbar, SIGNAL(undo()), doc, SLOT(undo()));
+    connect(mainbar, SIGNAL(redo()), doc, SLOT(redo()));
+    connect(mainbar, SIGNAL(back()), doc, SLOT(back()));
+    connect(mainbar, SIGNAL(forward()), doc, SLOT(forward()));
+    
+    view->push(PagePointer(doc), true);
 }
 
 /** Destructor */
@@ -101,6 +113,4 @@ void MainWindow::build()
             mainbar, SLOT(canUndoChanged(bool)));
     connect(view, SIGNAL(canRedoChanged(bool)),
             mainbar, SLOT(canRedoChanged(bool)));
-            
-    connect(this, SIGNAL(push(PagePointer,bool)), view, SLOT(push(PagePointer,bool)));
 }

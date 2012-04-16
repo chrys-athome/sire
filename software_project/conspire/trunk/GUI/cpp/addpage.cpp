@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "Conspire/GUI/addwidget.h"
+#include "Conspire/GUI/addpage.h"
 
 #include "Conspire/option.h"
 
@@ -40,26 +40,26 @@
 using namespace Conspire;
 
 /** Constructor */
-AddWidget::AddWidget(QGraphicsItem *parent) : ConfigPage(parent)
+AddPage::AddPage(QGraphicsItem *parent) : ConfigPage(parent)
 {
     build();
 }
 
 /** Constructor, setting the Options object that details the list
     of options that can be added */
-AddWidget::AddWidget(Options options, QGraphicsItem *parent)
-          : ConfigPage(parent)
+AddPage::AddPage(Options options, QGraphicsItem *parent)
+        : ConfigPage(parent)
 {
     build();
     setOptions(options);
 }
 
 /** Destructor */
-AddWidget::~AddWidget()
+AddPage::~AddPage()
 {}
 
 /** Set the Options object that details the list of options that can be added */
-void AddWidget::setOptions(Options options)
+void AddPage::setOptions(Options options)
 {
     conspireDebug() << options.addableKeys();
 
@@ -143,11 +143,11 @@ void AddWidget::setOptions(Options options)
 }
 
 /** Update the options object */
-void AddWidget::update(Options options)
+void AddPage::reread(Options options)
 {}
 
 /** Build the widget */
-void AddWidget::build()
+void AddPage::build()
 {
     QGraphicsGridLayout *l = new QGraphicsGridLayout(this);
     this->setLayout(l);
@@ -156,7 +156,7 @@ void AddWidget::build()
     connect(mapper, SIGNAL(mapped(const QString&)), this, SLOT(addOption(QString)));
 }
 
-void AddWidget::addOption(QString option)
+void AddPage::addOption(QString option)
 {
     deleteLater();
     emit( add(option) );

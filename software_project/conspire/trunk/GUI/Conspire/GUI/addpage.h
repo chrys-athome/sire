@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_ADDWIDGET_H
-#define CONSPIRE_ADDWIDGET_H
+#ifndef CONSPIRE_ADDPAGE_H
+#define CONSPIRE_ADDPAGE_H
 /********************************************\
   *
   *  Conspire
@@ -41,20 +41,20 @@ namespace Conspire
 
     /** This widget is used to allow the user to add new
         option values to an Options object */
-    class CONSPIRE_EXPORT AddWidget : public ConfigPage
+    class CONSPIRE_EXPORT AddPage : public ConfigPage
     {
         Q_OBJECT
         
     public:
-        AddWidget(QGraphicsItem *parent=0);
-        AddWidget(Options options, QGraphicsItem *parent=0);
+        AddPage(QGraphicsItem *parent=0);
+        AddPage(Options options, QGraphicsItem *parent=0);
         
-        ~AddWidget();
+        ~AddPage();
         
         void setOptions(Options options);
 
     public slots:
-        void update(Options options);
+        void reread(Options options);
 
     signals:
         void add(QString option);

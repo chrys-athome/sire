@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "Conspire/GUI/exceptionwidget.h"
+#include "Conspire/GUI/exceptionpage.h"
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -36,31 +36,31 @@
 using namespace Conspire;
 
 /** Constructor */
-ExceptionWidget::ExceptionWidget(QGraphicsItem *parent)
-                : PageWidget(parent)
+ExceptionPage::ExceptionPage(QGraphicsItem *parent)
+              : Page(parent)
 {
     build();
 }
 
 /** Construct, passing in the error, and a description of what action was
     taken that caused the error */
-ExceptionWidget::ExceptionWidget(QString description, const Exception &e,
-                                 QGraphicsItem *parent)
-                : PageWidget(parent)
+ExceptionPage::ExceptionPage(QString description, const Exception &e,
+                             QGraphicsItem *parent)
+              : Page(parent)
 {
     build();
     setException(description, e);
 }
                 
 /** Destructor */
-ExceptionWidget::~ExceptionWidget()
+ExceptionPage::~ExceptionPage()
 {}
 
 /** Build the widget */
-void ExceptionWidget::build()
+void ExceptionPage::build()
 {}
 
-void ExceptionWidget::setException(QString description, const Exception &error)
+void ExceptionPage::setException(QString description, const Exception &error)
 {
     desc = description;
     e = error;

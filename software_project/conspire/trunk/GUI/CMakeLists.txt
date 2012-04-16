@@ -29,6 +29,7 @@ include_directories(${QT_QTCORE_INCLUDE_DIR}
 set ( CONSPIRE_GUI_MOC_HEADERS
 
       Conspire/GUI/addpage.h
+      Conspire/GUI/configdocument.h
       Conspire/GUI/configpage.h
       Conspire/GUI/configview.h
       Conspire/GUI/exceptionpage.h
@@ -36,6 +37,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
       Conspire/GUI/optionpage.h
+      Conspire/GUI/optionscommand.h
       Conspire/GUI/optionspage.h
       Conspire/GUI/page.h
       Conspire/GUI/pageview.h
@@ -47,6 +49,7 @@ QT4_WRAP_CPP(CONSPIRE_GUI_MOC_SOURCES ${CONSPIRE_GUI_MOC_HEADERS})
 set ( CONSPIRE_GUI_PUBLIC_HEADERS
       
       Conspire/GUI/addpage.h
+      Conspire/GUI/configdocument.h
       Conspire/GUI/configpage.h  
       Conspire/GUI/configview.h
       Conspire/GUI/exceptionpage.h
@@ -54,6 +57,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
       Conspire/GUI/optionpage.h
+      Conspire/GUI/optionscommand.h
       Conspire/GUI/optionspage.h
       Conspire/GUI/page.h
       Conspire/GUI/pageview.h
@@ -67,6 +71,7 @@ set ( CONSPIRE_GUI_PRIVATE_HEADERS
 set ( CONSPIRE_GUI_SOURCES
 
       cpp/addpage.cpp
+      cpp/configdocument.cpp
       cpp/configpage.cpp
       cpp/configview.cpp
       cpp/exceptionpage.cpp
@@ -74,8 +79,8 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/mainbar.cpp
       cpp/mainwindow.cpp
       cpp/optionpage.cpp
-      cpp/optionspage.cpp
       cpp/optionscommand.cpp
+      cpp/optionspage.cpp
       cpp/page.cpp
       cpp/pageview.cpp
 

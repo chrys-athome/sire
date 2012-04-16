@@ -27,7 +27,7 @@
 \*********************************************/
 
 #include "Conspire/GUI/optionscommand.h"
-#include "Conspire/GUI/optionswidget.h"
+#include "Conspire/GUI/configdocument.h"
 
 #include "Conspire/option.h"
 #include "Conspire/exceptions.h"
@@ -44,8 +44,8 @@ OptionsCommand::OptionsCommand(OptionsCommand *parent)
 {}
 
 /** Constructor */
-OptionsCommand::OptionsCommand(OptionsWidget *widget, OptionsCommand *parent)
-               : QUndoCommand(parent), w(widget), old_state(0)
+OptionsCommand::OptionsCommand(ConfigDocument *document, OptionsCommand *parent)
+               : QUndoCommand(parent), doc(document), old_state(0)
 {}
 
 /** Destructor */
@@ -68,9 +68,9 @@ Options OptionsCommand::oldState() const
 /** Undo the effects of this command */
 void OptionsCommand::undo()
 {
-    if (w and old_state)
+    if (doc and old_state)
     {
-        w->setOptions(*old_state);
+        doc->setOptions(*old_state);
         delete old_state;
         old_state = 0;
     }
@@ -88,10 +88,10 @@ void OptionsCommand::redo()
 {
     QUndoCommand::redo();
 
-    if (w)
+    if (doc)
     {
         delete old_state;
-        old_state = new Options(w->options());
+        old_state = new Options(doc->options());
         Options new_state;
 
         try
@@ -114,7 +114,7 @@ void OptionsCommand::redo()
         {
             try
             {
-                w->setOptions(new_state);
+                doc->setOptions(new_state);
             }
             catch(...)
             {
@@ -136,16 +136,17 @@ OptionsUpdateCommand::OptionsUpdateCommand(OptionsCommand *parent)
 {}
 
 /** Constructor */
-OptionsUpdateCommand::OptionsUpdateCommand(OptionsWidget *widget, OptionsCommand *parent)
-                     : OptionsCommand(widget,parent)
+OptionsUpdateCommand::OptionsUpdateCommand(ConfigDocument *document, 
+                                           OptionsCommand *parent)
+                     : OptionsCommand(document,parent)
 {}
 
 /** Construct to set the option with key 'key' to the value 'new_value' */
-OptionsUpdateCommand::OptionsUpdateCommand(OptionsWidget *widget,
+OptionsUpdateCommand::OptionsUpdateCommand(ConfigDocument *document,
                                            QString key, 
                                            const Value &new_value, 
                                            OptionsCommand *parent)
-                     : OptionsCommand(widget,parent), k(key), val(new_value)
+                     : OptionsCommand(document,parent), k(key), val(new_value)
 {
     setText( Conspire::tr("Set option \"%1\" to value \"%2\"")
                     .arg(key, new_value.toString()) );
@@ -173,14 +174,14 @@ OptionsAddCommand::OptionsAddCommand(OptionsCommand *parent)
 {}
 
 /** Constructor */
-OptionsAddCommand::OptionsAddCommand(OptionsWidget *widget, OptionsCommand *parent)
-                  : OptionsCommand(widget, parent)
+OptionsAddCommand::OptionsAddCommand(ConfigDocument *document, OptionsCommand *parent)
+                  : OptionsCommand(document, parent)
 {}
 
 /** Construct the command to add the key 'new_key' */
-OptionsAddCommand::OptionsAddCommand(OptionsWidget *widget,
+OptionsAddCommand::OptionsAddCommand(ConfigDocument *document,
                                      QString new_key, OptionsCommand *parent)
-                  : OptionsCommand(widget, parent), k(new_key)
+                  : OptionsCommand(document, parent), k(new_key)
 {
     setText( Conspire::tr("Add new option \"%1\"").arg(new_key) );
 }
@@ -207,14 +208,15 @@ OptionsRemoveCommand::OptionsRemoveCommand(OptionsCommand *parent)
 {}
 
 /** Constructor */
-OptionsRemoveCommand::OptionsRemoveCommand(OptionsWidget *widget, OptionsCommand *parent)
-                     : OptionsCommand(widget, parent)
+OptionsRemoveCommand::OptionsRemoveCommand(ConfigDocument *document, 
+                                           OptionsCommand *parent)
+                     : OptionsCommand(document, parent)
 {}
 
 /** Construct to remove the option with the key 'take_key' */
-OptionsRemoveCommand::OptionsRemoveCommand(OptionsWidget *widget,
+OptionsRemoveCommand::OptionsRemoveCommand(ConfigDocument *document,
                                            QString take_key, OptionsCommand *parent)
-                     : OptionsCommand(widget, parent), k(take_key)
+                     : OptionsCommand(document, parent), k(take_key)
 {
     setText( Conspire::tr("Remove option \"%1\"").arg(take_key) );
 }

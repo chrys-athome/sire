@@ -26,7 +26,11 @@
   *
 \*********************************************/
 
-#include "Conspire/GUI/optionwidget.h"
+#include "Conspire/GUI/optionpage.h"
+#include "Conspire/GUI/exceptionpage.h"
+
+#include "Conspire/values.h"
+#include "Conspire/exceptions.h"
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -37,37 +41,37 @@
 using namespace Conspire;
 
 /** Constructor */
-OptionWidget::OptionWidget(QGraphicsItem *parent) : PageWidget(parent)
+OptionPage::OptionPage(QGraphicsItem *parent) : ConfigPage(parent)
 {
     build();
 }
 
 /** Constructor, passing in the option to edit, and the root key of that option */
-OptionWidget::OptionWidget(Option option, QString root_key, QGraphicsItem *parent)
-             : PageWidget(parent)
+OptionPage::OptionPage(Option option, QString root_key, QGraphicsItem *parent)
+           : ConfigPage(parent)
 {
     build();
     setOption(option, root_key);
 }
    
 /** Destructor */
-OptionWidget::~OptionWidget()
+OptionPage::~OptionPage()
 {}
 
 /** Return the option being viewed and edited */
-Option OptionWidget::option() const
+Option OptionPage::option() const
 {
     return opt;
 }
 
 /** Return the root key of that option */
-QString OptionWidget::rootKey() const
+QString OptionPage::rootKey() const
 {
     return root_key;
 }
 
 /** Build the widget */
-void OptionWidget::build()
+void OptionPage::build()
 {
     QGraphicsLinearLayout *l = new QGraphicsLinearLayout(::Qt::Vertical, this);
     this->setLayout(l);
@@ -85,6 +89,7 @@ void OptionWidget::build()
     l->addItem(help_box_proxy);
     
     value_edit = new QLineEdit();
+    connect(value_edit, SIGNAL(editingFinished()), this, SLOT(editingFinished()));
     
     QGraphicsProxyWidget *value_edit_proxy = new QGraphicsProxyWidget(this);
     value_edit_proxy->setWidget(value_edit);
@@ -92,8 +97,41 @@ void OptionWidget::build()
     l->addItem(value_edit_proxy);
 }
 
+/** Function called when editing of the option is finished */
+void OptionPage::editingFinished()
+{
+    //try to update the option locally first. This catches parse errors
+    //before they propogate up the document
+    try
+    {
+        Obj new_val = StringValue(value_edit->text());
+
+        Options opts(opt);
+        opts.setNestedValue(opt.key(),new_val.asA<Value>());
+        
+        //this worked, so now set the global value
+        QString key = opt.key();
+    
+        if (not root_key.isEmpty())
+        {
+            key = QString("%1.%2").arg(root_key, key);
+        }
+    
+        emit( update(key,new_val) );
+    }
+    catch(const Conspire::Exception &e)
+    {
+        emit( push(PagePointer( new ExceptionPage( Conspire::tr(
+                    "Something went wrong when updating the value of the option \"%1\""
+                    "to \"%2\".")
+                        .arg(opt.key(), value_edit->text()), e) ) ) );
+                        
+        value_edit->setText( opt.value().toString() );
+    }
+}
+
 /** Set the option to be edited */
-void OptionWidget::setOption(Option option, QString key)
+void OptionPage::setOption(Option option, QString key)
 {
     opt = option;
     root_key = key;
@@ -103,3 +141,7 @@ void OptionWidget::setOption(Option option, QString key)
     
     value_edit->setText(opt.value().toString());
 }
+
+/** Slot called when the option has been updated */
+void OptionPage::reread(Options options)
+{}

@@ -32,7 +32,7 @@
 
 #include "Conspire/conspire.h"
 
-#include "Conspire/GUI/pagewidget.h"
+#include "Conspire/GUI/page.h"
 
 CONSPIRE_BEGIN_HEADER
 
@@ -59,9 +59,6 @@ namespace Conspire
         MainWindow(Options options, QWidget *parent=0);
         
         ~MainWindow();
-
-    signals:
-        void push(PagePointer new_page, bool new_tab);
 
     protected:
         void resizeEvent(QResizeEvent *e);

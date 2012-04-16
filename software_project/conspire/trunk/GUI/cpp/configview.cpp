@@ -58,7 +58,7 @@ void ConfigView::push(PagePointer page, bool new_tab)
         
         if (config)
         {
-            connect(this, SIGNAL(updateOptions(Options)), config, SLOT(update(Options)));
+            connect(this, SIGNAL(rereadOptions(Options)), config, SLOT(reread(Options)));
 
             connect(config, SIGNAL(add(QString)), this, SIGNAL(add(QString)));
             connect(config, SIGNAL(remove(QString)), this, SIGNAL(remove(QString)));
@@ -69,7 +69,7 @@ void ConfigView::push(PagePointer page, bool new_tab)
 }
 
 /** This slot is used to update the Options object viewed by these pages */
-void ConfigView::update(Options options)
+void ConfigView::reread(Options options)
 {
-    emit( updateOptions(options) );
+    emit( rereadOptions(options) );
 }

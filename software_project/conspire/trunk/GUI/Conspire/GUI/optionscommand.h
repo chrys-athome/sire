@@ -37,7 +37,7 @@ CONSPIRE_BEGIN_HEADER
 
 namespace Conspire
 {
-    class OptionsWidget;
+    class ConfigDocument;
 
     /** This is the base class of all Options commands, which
         are used to describe the editing of an Options object */
@@ -45,7 +45,7 @@ namespace Conspire
     {
     public:
         OptionsCommand(OptionsCommand *parent=0);
-        OptionsCommand(OptionsWidget *widget, OptionsCommand *parent=0);
+        OptionsCommand(ConfigDocument *doc, OptionsCommand *parent=0);
 
         virtual ~OptionsCommand();
         
@@ -57,7 +57,7 @@ namespace Conspire
         virtual Options newState() const=0;
         
     private:
-        QPointer<OptionsWidget> w;
+        QPointer<ConfigDocument> doc;
         
         /** The state of the Options object just before this
             command was performed */
@@ -69,9 +69,9 @@ namespace Conspire
     {
     public:
         OptionsUpdateCommand(OptionsCommand *parent=0);
-        OptionsUpdateCommand(OptionsWidget *widget, OptionsCommand *parent=0);
+        OptionsUpdateCommand(ConfigDocument *document, OptionsCommand *parent=0);
         
-        OptionsUpdateCommand(OptionsWidget *widget,
+        OptionsUpdateCommand(ConfigDocument *document,
                              QString key, 
                              const Value &new_value,
                              OptionsCommand *parent=0);
@@ -94,9 +94,9 @@ namespace Conspire
     {
     public:
         OptionsAddCommand(OptionsCommand *parent=0);
-        OptionsAddCommand(OptionsWidget *widget, OptionsCommand *parent=0);
+        OptionsAddCommand(ConfigDocument *document, OptionsCommand *parent=0);
         
-        OptionsAddCommand(OptionsWidget *widget,
+        OptionsAddCommand(ConfigDocument *document,
                           QString new_key,
                           OptionsCommand *parent=0);
                           
@@ -115,9 +115,9 @@ namespace Conspire
     {
     public:
         OptionsRemoveCommand(OptionsCommand *parent=0);
-        OptionsRemoveCommand(OptionsWidget *widget, OptionsCommand *parent=0);
+        OptionsRemoveCommand(ConfigDocument *document, OptionsCommand *parent=0);
         
-        OptionsRemoveCommand(OptionsWidget *widget,
+        OptionsRemoveCommand(ConfigDocument *document,
                              QString take_key,
                              OptionsCommand *parent=0);
                              

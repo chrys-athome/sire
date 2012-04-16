@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_OPTIONSWIDGET_H
-#define CONSPIRE_OPTIONSWIDGET_H
+#ifndef CONSPIRE_OPTIONSPAGE_H
+#define CONSPIRE_OPTIONSPAGE_H
 /********************************************\
   *
   *  Conspire
@@ -28,52 +28,37 @@
   *
 \*********************************************/
 
-#include "Conspire/conspire.h"
 #include "Conspire/option.h"
-#include "Conspire/exceptions.h"
 
-#include "Conspire/GUI/pagewidget.h"
-
-#include <QGraphicsView>
-#include <QStack>
-#include <QPointer>
-#include <QSignalMapper>
+#include "Conspire/GUI/configpage.h"
 
 CONSPIRE_BEGIN_HEADER
 
-class QGraphicsView;
-class QGraphicsWidget;
-class QGraphicsScene;
-class QGraphicsGridLayout;
-class QUndoStack;
-class QLabel;
 class QAbstractButton;
+class QSignalMapper;
 
 namespace Conspire
 {
-    class OptionsEditView;
-    class MainBar;
-
     /** This is a page that is used to view and edit a single page
         of options */
-    class CONSPIRE_EXPORT NewOptionsWidget : public PageWidget
+    class CONSPIRE_EXPORT OptionsPage : public ConfigPage
     {
         Q_OBJECT
     
     public:
-        NewOptionsWidget(QGraphicsItem *parent=0);
-        NewOptionsWidget(Options options, QGraphicsItem *parent=0);
-        NewOptionsWidget(Options options, QString root_key,
-                         QGraphicsItem *parent=0);
+        OptionsPage(QGraphicsItem *parent=0);
+        OptionsPage(Options options, QGraphicsItem *parent=0);
+        OptionsPage(Options options, QString root_key,
+                    QGraphicsItem *parent=0);
         
-        ~NewOptionsWidget();
+        ~OptionsPage();
         
         Options options() const;
         
         QString rootKey() const;
     
     public slots:
-        void update(Options options);
+        void reread(Options options);
 
     private slots:
         void clicked(const QString &key);
@@ -93,82 +78,6 @@ namespace Conspire
         
         /** The signal mapper */
         QSignalMapper *mapper;
-    };
-
-    /** This is a widget that can view and edit the options
-        held in a Conspire::Options object */
-    class CONSPIRE_EXPORT OptionsWidget : public QGraphicsView
-    {
-        Q_OBJECT
-    
-    public:
-        OptionsWidget(QWidget *parent=0);
-        OptionsWidget(Options options, QWidget *parent=0);
-        
-        ~OptionsWidget();
-        
-        Options options() const;
-        
-        void setOptions(Options options);
-    
-    public slots:
-        void undo();
-        void redo();
-        
-        void back();
-        void forward();
-
-        void home(bool clear_history=false);
-        
-        void push(PagePointer page);
-        void pop(bool forget_page=false);
-
-        void add(QString full_key);
-        void remove(QString full_key);
-        void update(QString full_key, Obj new_value);
-
-    signals:
-        void canBackChanged(bool);
-        void canForwardChanged(bool);
-        void canUndoChanged(bool);
-        void canRedoChanged(bool);
-    
-    protected:
-        void resizeEvent(QResizeEvent *event);    
-        void keyPressEvent(QKeyEvent *event);
-
-    private:
-        void build();
-    
-        void pushView(PagePointer view, bool clear_future=true);
-        void popView(bool forget_page=false);
-
-        void animateSwitch(PagePointer old_view, PagePointer new_view, 
-                           bool move_forwards);
-                           
-        void animateNew(PagePointer new_view);
-        void animateDestroy(PagePointer old_view);
-
-        /** The options being edited */
-        Options opts;
-        
-        /** The top-level options edit/view */
-        PagePointer top_view;
-
-        /** The current viewed widget */
-        PagePointer current_view;
-        
-        /** The stack of widget views */
-        QStack<PagePointer> view_history;
-        
-        /** The stack of future widget views */
-        QStack<PagePointer> view_future;
-        
-        /** The main bar that acts as a global control */
-        QPointer<MainBar> mainbar;
-        
-        /** The undo stack of commands applied to the options */
-        QUndoStack *undo_stack;
     };
 
 }

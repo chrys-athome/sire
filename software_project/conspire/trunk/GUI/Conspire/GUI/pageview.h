@@ -28,7 +28,7 @@
   *
 \*********************************************/
 
-#include "Conspire/GUI/pagewidget.h"
+#include "Conspire/GUI/page.h"
 
 CONSPIRE_BEGIN_HEADER
 
@@ -47,7 +47,7 @@ namespace Conspire
         
         @author Christopher Woods
     */
-    class CONSPIRE_EXPORT PageView : public PageWidget
+    class CONSPIRE_EXPORT PageView : public Page
     {
         Q_OBJECT
     
@@ -56,6 +56,8 @@ namespace Conspire
         PageView(PagePointer top_page, QGraphicsItem *parent=0);
         
         ~PageView();
+        
+        int count() const;
         
     public slots:
         virtual void back();
@@ -70,6 +72,8 @@ namespace Conspire
         virtual void changeTab(int index);
         
         virtual void closeTab(int index);
+
+        virtual void closeAll();
         
     signals:
         void canBackChanged(bool);

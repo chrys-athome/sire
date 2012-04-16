@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_EXCEPTIONWIDGET_H
-#define CONSPIRE_EXCEPTIONWIDGET_H
+#ifndef CONSPIRE_EXCEPTIONPAGE_H
+#define CONSPIRE_EXCEPTIONPAGE_H
 /********************************************\
   *
   *  Conspire
@@ -28,7 +28,7 @@
   *
 \*********************************************/
 
-#include "Conspire/GUI/pagewidget.h"
+#include "Conspire/GUI/page.h"
 
 #include "Conspire/exceptions.h"
 
@@ -39,16 +39,16 @@ CONSPIRE_BEGIN_HEADER
 namespace Conspire
 {
     /** This is a page that is used to display an error message */
-    class CONSPIRE_EXPORT ExceptionWidget : public PageWidget
+    class CONSPIRE_EXPORT ExceptionPage : public Page
     {
         Q_OBJECT
     
     public:
-        ExceptionWidget(QGraphicsItem *parent=0);
-        ExceptionWidget(QString description, const Conspire::Exception &e,
-                        QGraphicsItem *parent=0);
+        ExceptionPage(QGraphicsItem *parent=0);
+        ExceptionPage(QString description, const Conspire::Exception &e,
+                      QGraphicsItem *parent=0);
                         
-        ~ExceptionWidget();
+        ~ExceptionPage();
         
     private:
         void build();

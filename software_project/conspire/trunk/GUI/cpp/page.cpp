@@ -28,34 +28,33 @@
 
 #include "Conspire/option.h"
 
-#include "Conspire/GUI/pagewidget.h"
+#include "Conspire/GUI/page.h"
 
 #include "Conspire/exceptions.h"
 
 using namespace Conspire;
 
 //////////
-////////// Implementation of PageWidget
+////////// Implementation of Page
 //////////
 
 /** Constructor */
-PageWidget::PageWidget(QGraphicsItem *parent) 
-           : QGraphicsWidget(parent), ref_count(0)
+Page::Page(QGraphicsItem *parent) : QGraphicsWidget(parent), ref_count(0)
 {}
 
 /** Destructor */
-PageWidget::~PageWidget()
+Page::~Page()
 {}
 
 /** Internal function used to increase the reference count */
-void PageWidget::incref()
+void Page::incref()
 {
     ref_count += 1;
 }
 
 /** Internal function used to decrease the reference count. This 
     returns "true" if the reference count has dropped to zero */
-bool PageWidget::decref()
+bool Page::decref()
 {
     ref_count -= 1;
     
@@ -70,20 +69,14 @@ bool PageWidget::decref()
 
 /** Return whether or not this page is broken. This can occur when
     the page is updated with an incompatible new Options object */
-bool PageWidget::isBroken() const
+bool Page::isBroken() const
 {
     return false;
 }
 
-/** This slot is called when the options object for the GUI has
-    been changed. The parent Options object is passed to this page
-    so that it can be updated. The default implementation does nothing. */
-void PageWidget::update(Options options)
-{}
-
 /** This function returns a string description of this page, which is useful
     e.g. for tab page headers */
-QString PageWidget::description() const
+QString Page::description() const
 {
     return "???";
 }
@@ -97,7 +90,7 @@ PagePointer::PagePointer() : QObject(), p(0)
 {}
 
 /** Construct to hold a pointer to 'page'. */
-PagePointer::PagePointer(PageWidget *page) : QObject(), p(page)
+PagePointer::PagePointer(Page *page) : QObject(), p(page)
 {
     if (p)
     {
@@ -127,7 +120,7 @@ PagePointer::~PagePointer()
 }
 
 /** Return the raw pointer to the page */
-PageWidget* PagePointer::data()
+Page* PagePointer::data()
 {
     return p;
 }
@@ -139,13 +132,13 @@ bool PagePointer::isNull() const
 }
 
 /** Return the raw pointer to the page */
-PagePointer::operator PageWidget*()
+PagePointer::operator Page*()
 {
     return p;
 }
 
 /** Dereference the pointer */
-PageWidget& PagePointer::operator*() const
+Page& PagePointer::operator*() const
 {
 
     if (not p)
@@ -159,13 +152,13 @@ PageWidget& PagePointer::operator*() const
 }
 
 /** Return the raw pointer to the page */
-PageWidget* PagePointer::operator->() const
+Page* PagePointer::operator->() const
 {
     return p;
 }
 
 /** Copy assignment operator */
-PagePointer& PagePointer::operator=(PageWidget *page)
+PagePointer& PagePointer::operator=(Page *page)
 {
     if (p != page)
     {

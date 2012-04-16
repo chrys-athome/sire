@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_OPTIONWIDGET_H
-#define CONSPIRE_OPTIONWIDGET_H
+#ifndef CONSPIRE_OPTIONPAGE_H
+#define CONSPIRE_OPTIONPAGE_H
 /********************************************\
   *
   *  Conspire
@@ -28,7 +28,7 @@
   *
 \*********************************************/
 
-#include "Conspire/GUI/pagewidget.h"
+#include "Conspire/GUI/configpage.h"
 
 #include "Conspire/option.h"
 
@@ -40,20 +40,26 @@ class QLineEdit;
 namespace Conspire
 {
     /** This page is used to change the value of a specific option */
-    class CONSPIRE_EXPORT OptionWidget : public PageWidget
+    class CONSPIRE_EXPORT OptionPage : public ConfigPage
     {
         Q_OBJECT
     
     public:
-        OptionWidget(QGraphicsItem *parent=0);
-        OptionWidget(Option option, QString root_key,
-                     QGraphicsItem *parent=0);
+        OptionPage(QGraphicsItem *parent=0);
+        OptionPage(Option option, QString root_key,
+                   QGraphicsItem *parent=0);
                      
-        ~OptionWidget();
+        ~OptionPage();
         
         Option option() const;
         QString rootKey() const;
-        
+    
+    public slots:
+        void reread(Options options);
+    
+    private slots:
+        void editingFinished();
+    
     private:
         void build();
         void setOption(Option option, QString key);
