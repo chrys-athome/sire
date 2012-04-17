@@ -29,6 +29,7 @@ include_directories(${QT_QTCORE_INCLUDE_DIR}
 set ( CONSPIRE_GUI_MOC_HEADERS
 
       Conspire/GUI/addpage.h
+      Conspire/GUI/animation.h
       Conspire/GUI/configdocument.h
       Conspire/GUI/configpage.h
       Conspire/GUI/configview.h
@@ -49,6 +50,7 @@ QT4_WRAP_CPP(CONSPIRE_GUI_MOC_SOURCES ${CONSPIRE_GUI_MOC_HEADERS})
 set ( CONSPIRE_GUI_PUBLIC_HEADERS
       
       Conspire/GUI/addpage.h
+      Conspire/GUI/animation.h
       Conspire/GUI/configdocument.h
       Conspire/GUI/configpage.h  
       Conspire/GUI/configview.h
@@ -71,6 +73,7 @@ set ( CONSPIRE_GUI_PRIVATE_HEADERS
 set ( CONSPIRE_GUI_SOURCES
 
       cpp/addpage.cpp
+      cpp/animation.cpp
       cpp/configdocument.cpp
       cpp/configpage.cpp
       cpp/configview.cpp
