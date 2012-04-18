@@ -48,6 +48,7 @@ namespace Conspire
     public:
         AddPage(QGraphicsItem *parent=0);
         AddPage(Options options, QGraphicsItem *parent=0);
+        AddPage(Options options, QString root_key, QGraphicsItem *parent=0);
         
         ~AddPage();
         
@@ -65,6 +66,7 @@ namespace Conspire
     private:
         void build();
         
+        QString root_key;
         QSignalMapper *mapper;
     };
 }

@@ -70,6 +70,8 @@ namespace Conspire
         QLabel *help_box;
         QLabel *key_box;
         QLineEdit *value_edit;
+        
+        QString old_text;
     };
 
 }

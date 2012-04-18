@@ -156,6 +156,37 @@ Option::Option(DomElement elem, StringList path)
             {
                 //get the description of the option
                 desc = elem.text();
+                
+                //now clean up this text - only interpret a blank line
+                //as a new paragraph. Otherwise, join all of the text together
+                //and remove extra spaces
+                QStringList lines = desc.split("\n", QString::KeepEmptyParts);
+                
+                QMutableListIterator<QString> it(lines);
+                
+                bool new_paragraph = false;
+                
+                while (it.hasNext())
+                {
+                    QString &line = it.next();
+                    
+                    line = line.simplified();
+                    
+                    if (line.isEmpty())
+                    {
+                        new_paragraph = true;
+                        it.remove();
+                    }
+                    else
+                    {
+                        if (new_paragraph)
+                            it.insert( "\n" );
+                    
+                        new_paragraph = false;
+                    }
+                }
+                
+                desc = lines.join(" ").simplified();
             }
             else if (elem.tagName() == "value")
             {

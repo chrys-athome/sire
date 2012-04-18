@@ -35,6 +35,11 @@
 #include <QGraphicsProxyWidget>
 
 #include <QPushButton>
+#include <QLabel>
+#include <QGroupBox>
+#include <QVBoxLayout>
+#include <QScrollArea>
+
 #include <QSignalMapper>
 
 using namespace Conspire;
@@ -80,60 +85,60 @@ QString OptionsPage::rootKey() const
     return root_key;
 }
 
-/** This function is called when the options object is updated */
-void OptionsPage::reread(Options options)
+/** Set the description of this set of options */
+void OptionsPage::setDescription(QString description)
 {
-    if (not root_key.isNull())
-    {
-        try
-        {
-            Option opt = options.getNestedOption(root_key);
-            options = opt.value().asA<Options>();
-        }
-        catch(...)
-        {
-            conspireDebug() << "CANNOT FIND" << root_key << "IN OPTIONS!";
-            options = Options();
-        }
-    }
+    label->setText(description);
     
+    if (description.isEmpty())
+        label->hide();
+    else
+        label->show();
+}
+
+/** Return the description of these options */
+QString OptionsPage::description() const
+{
+    return label->text();
+}
+
+/** Set the title of this set of Options */
+void OptionsPage::setTitle(QString title)
+{
+    group_box->setTitle(title);
+}
+
+/** Return the title of this set of Options */
+QString OptionsPage::title() const
+{
+    return group_box->title();
+}
+
+/** Internal function used to rebuild the widget from the passed options */
+void OptionsPage::pvt_reread(Options options)
+{
     //create one button for each option...
     opts = options;
     
     QStringList keys = opts.keysAndIndiciesWithValue();
-    
-    //make sure that there are as many buttons in the layout as options
-    QGraphicsLinearLayout *l = dynamic_cast<QGraphicsLinearLayout*>(this->layout());
-    
-    if (not l)
+
+    if (keys.count() > buttons.count())
     {
-        conspireDebug() << "INVALID LAYOUT!!!";
-        throw Conspire::program_bug( Conspire::tr(
-                "How do we have an invalid layout???"), CODELOC );
-    }
-    
-    if (l->count() > keys.count())
-    {
-        for (int i = l->count()-1; i >= keys.count(); --i)
+        for (int i=buttons.count(); i<keys.count(); ++i)
         {
-            QGraphicsLayoutItem *item = l->itemAt(i);
-            l->removeAt(i);
-            buttons.removeAt(i);
-            delete item;
+            QPushButton *b = new QPushButton(group_box);
+            button_box->layout()->addWidget(b);
+            buttons.append(b);
+
+            connect(b, SIGNAL(clicked()), mapper, SLOT(map()));
         }
     }
-    else if (l->count() < keys.count())
+    else if (keys.count() < buttons.count())
     {
-        for (int i = l->count(); i < keys.count(); ++i)
+        while (buttons.count() > keys.count())
         {
-            QPushButton *b = new QPushButton();
-            b->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-            
-            connect(b, SIGNAL(clicked()), mapper, SLOT(map()));
-            buttons.append(b);
-            QGraphicsProxyWidget *b_proxy = new QGraphicsProxyWidget(this);
-            b_proxy->setWidget(b);
-            l->insertItem(i, b_proxy);
+            QAbstractButton *b = buttons.takeLast();
+            delete b;
         }
     }
     
@@ -151,9 +156,33 @@ void OptionsPage::reread(Options options)
             b->setText( QString("%1 == %2").arg(keys[i], opt.value().toString()) );
         }
         
+        b->show();
+        
         mapper->removeMappings(b);
         mapper->setMapping(b, keys[i]);
     }
+    
+    add_button->setVisible( opts.canAddValues() );
+}
+
+/** This function is called when the options object is updated */
+void OptionsPage::reread(Options options)
+{
+    if (not root_key.isNull())
+    {
+        try
+        {
+            Option opt = options.getNestedOption(root_key);
+            options = opt.value().asA<Options>();
+        }
+        catch(...)
+        {
+            conspireDebug() << "CANNOT FIND" << root_key << "IN OPTIONS!";
+            options = Options();
+        }
+    }
+    
+    pvt_reread(options);
 }
 
 /** Slot called when one of the options is clicked */
@@ -165,6 +194,8 @@ void OptionsPage::clicked(const QString &key)
         conspireDebug() << "CLICKED" << key;
         Option opt = opts.getNestedOption(key);
         
+        conspireDebug() << opt.toString();
+        
         if (opt.hasSubOptions())
         {
             QString root = key;
@@ -172,15 +203,17 @@ void OptionsPage::clicked(const QString &key)
             if (not root_key.isNull())
                 root.prepend(".").prepend(root_key);
 
-            PagePointer p(new OptionsPage(opt.value().asA<Options>(), root));
-            
-            emit( push(p) );
+            OptionsPage *page = new OptionsPage(opt.value().asA<Options>(), root);
+            page->setTitle(opt.key());
+            page->setDescription(opt.description());
+
+            emit( push(PagePointer(page)) );
         }
         else
         {
-            PagePointer p(new OptionPage(opt, root_key));
+            OptionPage *page = new OptionPage(opt, root_key);
             
-            emit( push(p) );
+            emit( push(PagePointer(page)) );
         }
     }
     catch(const Conspire::Exception &e)
@@ -198,11 +231,55 @@ void OptionsPage::clicked(const QString &key)
 /** Actually build the widget */
 void OptionsPage::build()
 {
-    QGraphicsLinearLayout *l = new QGraphicsLinearLayout( ::Qt::Vertical, this );
-    this->setLayout(l);
+    group_box = new QGroupBox();
+    QVBoxLayout *vl = new QVBoxLayout(group_box);
+    group_box->setLayout(vl);
+    group_box->setSizePolicy( QSizePolicy::MinimumExpanding, 
+                              QSizePolicy::MinimumExpanding );
+    
+    label = new QLabel(group_box);
+    label->setWordWrap(true);
+    label->setSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Minimum );
+
+    vl->addWidget(label);
+    label->hide();
+    
+    QScrollArea *area = new QScrollArea(group_box);
+    area->setSizePolicy( QSizePolicy::MinimumExpanding,
+                         QSizePolicy::MinimumExpanding );
+    vl->addWidget(area);
+    
+    button_box = new QGroupBox(area);
+    button_box->setLayout(new QVBoxLayout(button_box));
+    button_box->setFlat(true);
+    button_box->setSizePolicy( QSizePolicy::MinimumExpanding,
+                               QSizePolicy::MinimumExpanding );
+
+    area->setWidget(button_box);
+    area->setWidgetResizable(true);
+
+    button_box->show();
+    area->show();
+    
+    add_button = new QPushButton( Conspire::tr("Add..."), group_box );
+    add_button->setSizePolicy( QSizePolicy::MinimumExpanding,
+                               QSizePolicy::Minimum );
+    connect(add_button, SIGNAL(clicked()), this, SLOT(add()));
+
+    vl->addWidget(add_button);
+    add_button->hide();
     
     mapper = new QSignalMapper(this);
     connect(mapper, SIGNAL(mapped(const QString&)), this, SLOT(clicked(const QString&)));
+
+    QGraphicsLinearLayout *l = new QGraphicsLinearLayout( ::Qt::Vertical, this );
+    this->setLayout(l);
+
+    QGraphicsProxyWidget *group_box_proxy = new QGraphicsProxyWidget(this);
+    group_box_proxy->setWidget(group_box);
+    group_box_proxy->setSizePolicy( QSizePolicy::MinimumExpanding,
+                                    QSizePolicy::MinimumExpanding );
+    l->addItem(group_box_proxy);
 }
 
 /** Set the options and root_key used by this object */
@@ -210,5 +287,15 @@ void OptionsPage::setOptions(Options options, QString key)
 {
     root_key = key;
     opts = Options();
-    this->reread(options);
+    this->pvt_reread(options);
+}
+
+/** Called when it the user wants to add an option to this page */
+void OptionsPage::add()
+{
+    if (opts.canAddValues())
+    {
+        AddPage *page = new AddPage(opts, root_key);
+        emit( push(PagePointer(page)) );
+    }
 }

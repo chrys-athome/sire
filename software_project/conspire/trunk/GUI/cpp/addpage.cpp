@@ -54,6 +54,16 @@ AddPage::AddPage(Options options, QGraphicsItem *parent)
     setOptions(options);
 }
 
+/** Constructor, setting the Options object that details the list
+    of options that can be added, together with the root key of 
+    any added options */
+AddPage::AddPage(Options options, QString key, QGraphicsItem *parent)
+        : ConfigPage(parent), root_key(key)
+{
+    build();
+    setOptions(options);
+}
+
 /** Destructor */
 AddPage::~AddPage()
 {}
@@ -144,7 +154,23 @@ void AddPage::setOptions(Options options)
 
 /** Update the options object */
 void AddPage::reread(Options options)
-{}
+{
+    if (root_key.isEmpty())
+    {
+        setOptions(options);
+    }
+    else
+    {
+        try
+        {
+            setOptions( options.getNestedValue(root_key).asA<Options>() );
+        }
+        catch(...)
+        {
+            setOptions( Options() );
+        }
+    }
+}
 
 /** Build the widget */
 void AddPage::build()
@@ -158,6 +184,14 @@ void AddPage::build()
 
 void AddPage::addOption(QString option)
 {
-    deleteLater();
-    emit( add(option) );
+    if (root_key.isEmpty())
+    {
+        emit( add(option) );
+    }
+    else
+    {
+        emit( add(QString("%1.%2").arg(root_key,option)) );
+    }
+    
+    emit( pop() );
 }

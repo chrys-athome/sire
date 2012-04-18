@@ -100,6 +100,9 @@ void OptionPage::build()
 /** Function called when editing of the option is finished */
 void OptionPage::editingFinished()
 {
+    if (value_edit->text() == old_text)
+        return;
+
     //try to update the option locally first. This catches parse errors
     //before they propogate up the document
     try
@@ -128,6 +131,7 @@ void OptionPage::editingFinished()
                         .arg(opt.key(), value_edit->text()), e) ) ) );
                         
         value_edit->setText( opt.value().toString() );
+        old_text = value_edit->text();
     }
 }
 
@@ -141,8 +145,19 @@ void OptionPage::setOption(Option option, QString key)
     key_box->setText(opt.key());
     
     value_edit->setText(opt.value().toString());
+    old_text = value_edit->text();
 }
 
 /** Slot called when the option has been updated */
 void OptionPage::reread(Options options)
-{}
+{
+    Option opt = options[root_key];
+    
+    QString text = opt.value().toString();
+    
+    if (text != old_text)
+    {
+        value_edit->setText(text);
+        old_text = text;
+    }
+}

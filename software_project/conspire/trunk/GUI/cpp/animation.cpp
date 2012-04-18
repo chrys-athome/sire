@@ -265,12 +265,24 @@ void Animation::start()
         {
             if (stop_timer)
             {
-                stop_timer->disconnect();
+                stop_timer->disconnect(this);
+                this->disconnect(stop_timer);
                 stop_timer->deleteLater();
                 stop_timer = 0;
             }
             
             anim->disconnect(this);
+            this->disconnect(stop_timer);
+            
+            if (anim->direction() == QAbstractAnimation::Forward)
+            {
+                anim->setCurrentTime(anim->duration());
+            }
+            else
+            {
+                anim->setCurrentTime(0);
+            }
+            
             anim->stop();
         }
 
@@ -302,17 +314,14 @@ void Animation::stop()
 {
     if (stop_timer)
     {
-        stop_timer->disconnect();
+        stop_timer->disconnect(this);
+        this->disconnect(stop_timer);
         stop_timer->deleteLater();
         stop_timer = 0;
     }
     
     anim->disconnect(this);
-    
-    if (anim->state() != QAbstractAnimation::Stopped)
-    {
-        anim->stop();
-    }
+    this->disconnect(anim);
     
     if (anim->direction() == QAbstractAnimation::Forward)
     {
@@ -321,6 +330,11 @@ void Animation::stop()
     else
     {
         anim->setCurrentTime(0);
+    }
+    
+    if (anim->state() != QAbstractAnimation::Stopped)
+    {
+        anim->stop();
     }
     
     if (is_running)
