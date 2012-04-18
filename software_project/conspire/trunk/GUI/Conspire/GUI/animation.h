@@ -49,10 +49,8 @@ namespace Conspire
         deleted when it is no longer referenced. In addition,
         it will also automatically lose the reference if the
         Animation is deleted outside of this pointer. */
-    class CONSPIRE_EXPORT AnimationPointer : public QObject
+    class CONSPIRE_EXPORT AnimationPointer
     {
-        Q_OBJECT
-    
     public:
         AnimationPointer();
         AnimationPointer(Animation *animation);
@@ -62,6 +60,7 @@ namespace Conspire
         ~AnimationPointer();
         
         Animation* data();
+        const Animation* data() const;
         
         bool isNull() const;
         
@@ -76,11 +75,8 @@ namespace Conspire
         bool operator==(const AnimationPointer &other) const;
         bool operator!=(const AnimationPointer &other) const;
 
-    private slots:
-        void destroyed(QObject *obj);
-        
     private:
-        Animation *a;
+        QPointer<Animation> a;
     };
 
     /** This class represents an Animation that will be performed
@@ -150,15 +146,20 @@ namespace Conspire
         void setAutoStopDelay(int ms);
         int autoStopDelay() const;
 
+        bool isRunning() const;
+
     public slots:
         void start();
         void stop();
+
+    signals:
+        void finished();
 
     protected:
         friend class AnimationPointer;
         void incref();
         bool decref();
-        
+    
     private:
         void build();
     
@@ -186,6 +187,9 @@ namespace Conspire
         /** The number of AnimationPointer pointers currently 
             pointing to this animation */
         int ref_count;
+
+        /** Whether or not the animation is running */
+        bool is_running;
     };
 }
 

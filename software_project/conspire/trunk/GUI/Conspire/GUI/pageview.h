@@ -29,6 +29,7 @@
 \*********************************************/
 
 #include "Conspire/GUI/page.h"
+#include "Conspire/GUI/animation.h"
 
 CONSPIRE_BEGIN_HEADER
 
@@ -59,6 +60,8 @@ namespace Conspire
         
         int count() const;
         
+        bool animationsEnabled() const;
+        
     public slots:
         virtual void back();
         virtual void forward();
@@ -75,26 +78,33 @@ namespace Conspire
 
         virtual void closeAll();
         
+        virtual void animate(AnimationPointer anim, bool bg_anim=false);
+        
+        void setAnimationsEnabled(bool);
+        
+    protected slots:
+        virtual void animationFinished();
+        
     signals:
         void canBackChanged(bool);
         void canForwardChanged(bool);
         
+        void animationsEnabledChanged(bool);
+        
     protected:
+        bool event(QEvent *e);
+
         void resizeEvent(QGraphicsSceneResizeEvent *e);
+
         void keyPressEvent(QKeyEvent *e);
+        void mousePressEvent(QMouseEvent *e);
+        
+        bool eventFilter(QObject *object, QEvent *e);
+        
+        bool isChildObject(const QObject *object) const;
+        bool isChildPage(const Page *page) const;
         
     private:
-        void build();
-        
-        void pushView(PagePointer view, bool clear_future=true);
-        void popView(bool forget_page=false);
-
-        void animateSwitch(PagePointer old_view, PagePointer new_view, 
-                           bool move_forwards=true);
-                           
-        void animateNew(PagePointer new_view);
-        void animateDestroy(PagePointer old_view);
-        
         class Tab
         {
         public:
@@ -113,7 +123,21 @@ namespace Conspire
             /** The set of forward pages (if we have gone "back") */
             QStack<PagePointer> page_future;
         };
+
+        void build();
+        void checkDisconnectPage(PagePointer &page);
+        void checkDisconnectPages(QStack<PagePointer> &pages);
+        void checkDisconnectTab(Tab *tab);
         
+        void pushView(PagePointer view, bool clear_future=true);
+        PagePointer popView(bool forget_page=false);
+
+        void animateSwitch(PagePointer old_view, PagePointer new_view, 
+                           bool move_forwards=true);
+                           
+        void animateNew(PagePointer new_view);
+        void animateDestroy(PagePointer old_view);
+                
         /** The pointer to the bar used to change the tabs */
         QTabBar *tabbar;
         
@@ -123,8 +147,17 @@ namespace Conspire
         /** The set of all visible tabs */
         QList<Tab*> tabpages;
         
+        /** The currently active foreground animation (if any) */
+        AnimationPointer fg_anim;
+        
+        /** The set of animations that are running in the background */
+        QList<AnimationPointer> bg_anims;
+        
         /** The index of the current tab page */
         int current_tab;
+        
+        /** Whether or not animations in this view are enabled */
+        bool anims_enabled;
     };
 
 }

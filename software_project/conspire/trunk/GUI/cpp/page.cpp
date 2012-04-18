@@ -86,27 +86,21 @@ QString Page::description() const
 //////////
 
 /** Constructor */
-PagePointer::PagePointer() : QObject(), p(0)
+PagePointer::PagePointer()
 {}
 
 /** Construct to hold a pointer to 'page'. */
-PagePointer::PagePointer(Page *page) : QObject(), p(page)
+PagePointer::PagePointer(Page *page) : p(page)
 {
     if (p)
-    {
         p->incref();
-        connect(p, SIGNAL(destroyed(QObject*)), this, SLOT(destroyed(QObject*)));
-    }
 }
 
 /** Copy constructor */
-PagePointer::PagePointer(const PagePointer &other) : QObject(), p(other.p)
+PagePointer::PagePointer(const PagePointer &other) : p(other.p)
 {
     if (p)
-    {
         p->incref();
-        connect(p, SIGNAL(destroyed(QObject*)), this, SLOT(destroyed(QObject*)));
-    }
 }
 
 /** Destructor */
@@ -125,10 +119,16 @@ Page* PagePointer::data()
     return p;
 }
 
+/** Return the raw pointer to the page */
+const Page* PagePointer::data() const
+{
+    return p;
+}
+
 /** Return whether or not this pointer is null */
 bool PagePointer::isNull() const
 {
-    return p == 0;
+    return (not p);
 }
 
 /** Return the raw pointer to the page */
@@ -140,7 +140,6 @@ PagePointer::operator Page*()
 /** Dereference the pointer */
 Page& PagePointer::operator*() const
 {
-
     if (not p)
     {
         throw Conspire::program_bug( Conspire::tr( 
@@ -164,16 +163,14 @@ PagePointer& PagePointer::operator=(Page *page)
     {
         if (p)
         {
-            //make sure that we are no longer told when this object is destroyed
-            p->disconnect(this);
-            
             //decrease the reference count
             if (p->decref())
                 p->deleteLater();
         }
 
-        page->incref();
-        connect(page, SIGNAL(destroyed(QObject*)), this, SLOT(destroyed(QObject*)));
+        if (page)
+            page->incref();
+            
         p = page;
     }
     
@@ -196,14 +193,4 @@ bool PagePointer::operator==(const PagePointer &other) const
 bool PagePointer::operator!=(const PagePointer &other) const
 {
     return p != other.p;
-}
-
-/** Function called when the page pointed to by this pointer
-    is destroyed */
-void PagePointer::destroyed(QObject *obj)
-{
-    if (obj != p)
-        conspireDebug() << "WEIRD - POINTER MISMATCH" << p << obj;
-        
-    p = 0;
 }

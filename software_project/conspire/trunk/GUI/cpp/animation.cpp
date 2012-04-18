@@ -41,26 +41,24 @@ using namespace Conspire;
 ////////
 
 /** Constructor */
-AnimationPointer::AnimationPointer() : QObject(), a(0)
+AnimationPointer::AnimationPointer()
 {}
 
 /** Construct to hold a pointer to 'Animation'. */
-AnimationPointer::AnimationPointer(Animation *animation) : QObject(), a(animation)
+AnimationPointer::AnimationPointer(Animation *animation) : a(animation)
 {
     if (a)
     {
         a->incref();
-        connect(a, SIGNAL(destroyed(QObject*)), this, SLOT(destroyed(QObject*)));
     }
 }
 
 /** Copy constructor */
-AnimationPointer::AnimationPointer(const AnimationPointer &other) : QObject(), a(other.a)
+AnimationPointer::AnimationPointer(const AnimationPointer &other) : a(other.a)
 {
     if (a)
     {
         a->incref();
-        connect(a, SIGNAL(destroyed(QObject*)), this, SLOT(destroyed(QObject*)));
     }
 }
 
@@ -83,10 +81,16 @@ Animation* AnimationPointer::data()
     return a;
 }
 
+/** Return the raw pointer to the Animation */
+const Animation* AnimationPointer::data() const
+{
+    return a;
+}
+
 /** Return whether or not this pointer is null */
 bool AnimationPointer::isNull() const
 {
-    return a == 0;
+    return (not a);
 }
 
 /** Return the raw pointer to the Animation */
@@ -121,9 +125,6 @@ AnimationPointer& AnimationPointer::operator=(Animation *animation)
     {
         if (a)
         {
-            //make sure that we are no longer told when this object is destroyed
-            a->disconnect(this);
-            
             //decrease the reference count
             if (a->decref())
             {
@@ -132,8 +133,9 @@ AnimationPointer& AnimationPointer::operator=(Animation *animation)
             }
         }
 
-        animation->incref();
-        connect(animation, SIGNAL(destroyed(QObject*)), this, SLOT(destroyed(QObject*)));
+        if (animation)
+            animation->incref();
+            
         a = animation;
     }
     
@@ -158,16 +160,6 @@ bool AnimationPointer::operator!=(const AnimationPointer &other) const
     return a != other.a;
 }
 
-/** Function called when the Animation pointed to by this pointer
-    is destroyed */
-void AnimationPointer::destroyed(QObject *obj)
-{
-    if (obj != a)
-        conspireDebug() << "WEIRD - POINTER MISMATCH" << a << obj;
-        
-    a = 0;
-}
-
 ////////
 //////// Implementation of Animation
 ////////
@@ -176,6 +168,7 @@ void Animation::build()
 {
     ref_count = 0;
     autostop_delay = 250;
+    is_running = false;
 }
 
 /** Constructor */
@@ -213,7 +206,33 @@ Animation::Animation(QAbstractAnimation *animation,
           
 /** Destructor */
 Animation::~Animation()
-{}
+{
+    if (anim)
+    {
+        if (is_running)
+        {
+            anim->disconnect(this);
+            anim->stop();
+
+            if (anim->direction() == QAbstractAnimation::Forward)
+            {
+                anim->setCurrentTime(anim->duration());
+            }
+            else
+            {
+                anim->setCurrentTime(0);
+            }
+        }
+
+        anim->deleteLater();
+    }
+}
+
+/** Return whether or not the animation is running */
+bool Animation::isRunning() const
+{
+    return is_running;
+}
 
 /** Set the delay after the end of the expected end of the 
     animation at which the animation will be automatically stopped.
@@ -242,7 +261,7 @@ void Animation::start()
 {
     if (anim)
     {
-        if (stop_timer or (anim->state() == QAbstractAnimation::Running))
+        if (stop_timer or (anim->state() != QAbstractAnimation::Stopped))
         {
             if (stop_timer)
             {
@@ -251,6 +270,7 @@ void Animation::start()
                 stop_timer = 0;
             }
             
+            anim->disconnect(this);
             anim->stop();
         }
 
@@ -261,6 +281,8 @@ void Animation::start()
             stop_time = anim->duration() + autostop_delay;
         }
         
+        is_running = true;
+        connect(anim, SIGNAL(finished()), this, SLOT(stop()));
         anim->start();
         
         if (stop_time > 0)
@@ -285,7 +307,12 @@ void Animation::stop()
         stop_timer = 0;
     }
     
-    anim->stop();
+    anim->disconnect(this);
+    
+    if (anim->state() != QAbstractAnimation::Stopped)
+    {
+        anim->stop();
+    }
     
     if (anim->direction() == QAbstractAnimation::Forward)
     {
@@ -294,6 +321,12 @@ void Animation::stop()
     else
     {
         anim->setCurrentTime(0);
+    }
+    
+    if (is_running)
+    {
+        is_running = false;
+        emit( finished() );
     }
 }
 

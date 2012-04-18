@@ -31,6 +31,7 @@
 #include "Conspire/conspire.h"
 
 #include <QGraphicsWidget>
+#include <QPointer>
 
 CONSPIRE_BEGIN_HEADER
 
@@ -45,10 +46,8 @@ namespace Conspire
         also automatically lose the pointer to the Page
         if the Page is deleted by someone else.
     */
-    class CONSPIRE_EXPORT PagePointer : public QObject
+    class CONSPIRE_EXPORT PagePointer
     {
-        Q_OBJECT
-        
     public:
         PagePointer();
         PagePointer(Page *page);
@@ -58,6 +57,7 @@ namespace Conspire
         ~PagePointer();
         
         Page* data();
+        const Page* data() const;
         
         bool isNull() const;
         
@@ -72,11 +72,8 @@ namespace Conspire
         bool operator==(const PagePointer &other) const;
         bool operator!=(const PagePointer &other) const;
 
-    private slots:
-        void destroyed(QObject *obj);
-        
     private:
-        Page *p;
+        QPointer<Page> p;
     };
 
     /** This is the base class of all of the main full-page widgets
