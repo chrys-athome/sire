@@ -41,13 +41,13 @@
 using namespace Conspire;
 
 /** Construct an empty document */
-ConfigDocument::ConfigDocument(QGraphicsItem *parent) : Page(parent)
+ConfigDocument::ConfigDocument(Page *parent) : Page(parent)
 {
     build();
 }
 
 /** Construct a document to view and edit 'options' */
-ConfigDocument::ConfigDocument(Options options, QGraphicsItem *parent)
+ConfigDocument::ConfigDocument(Options options, Page *parent)
                : Page(parent)
 {
     build();
@@ -103,7 +103,7 @@ void ConfigDocument::add(QString full_key)
     {
         view->push( PagePointer( new ExceptionPage(
                 Conspire::tr("Something went wrong when you tried to add "
-                             "a new Option called \"%1\"").arg(full_key), e) ) );
+                             "a new Option called \"%1\"").arg(full_key), e, view) ) );
 
         setOptions(old_state);
     }
@@ -122,7 +122,7 @@ void ConfigDocument::remove(QString full_key)
     {
         view->push( PagePointer( new ExceptionPage(
                 Conspire::tr("Something went wrong when you tried to remove "
-                             "an Option called \"%1\"").arg(full_key), e) ) );
+                             "an Option called \"%1\"").arg(full_key), e, view) ) );
     
         setOptions(old_state);
     }
@@ -143,7 +143,7 @@ void ConfigDocument::update(QString full_key, Obj new_value)
         view->push( PagePointer( new ExceptionPage(
                 Conspire::tr("Something went wrong when you tried to set the "
                              "value of the Option called \"%1\" to \"%2\".")
-                                .arg(full_key, new_value.toString()), e ) ) );
+                                .arg(full_key, new_value.toString()), e, view ) ) );
                                 
         setOptions(old_state);
     }
@@ -184,7 +184,7 @@ void ConfigDocument::setOptions(Options options)
 {
     if (view->count() == 0)
     {
-        view->push( PagePointer(new OptionsPage(options)), true );
+        view->push( PagePointer(new OptionsPage(options,view)), true );
     }
     else
     {
@@ -198,7 +198,7 @@ void ConfigDocument::setOptions(Options options)
             conspireDebug() << e.toString();
             
             view->closeAll();
-            view->push( PagePointer(new OptionsPage(options)), true );
+            view->push( PagePointer(new OptionsPage(options,view)), true );
         }
     }
     

@@ -41,7 +41,6 @@ class QTimer;
 namespace Conspire
 {
     class Animation;
-    class PagePointer;
 
     /** This class holds a safe pointer to an Animation. This
         pointer will automatically manage the reference count
@@ -135,11 +134,6 @@ namespace Conspire
     public:
         Animation(QObject *parent=0);
         Animation(QAbstractAnimation *animation, QObject *parent=0);
-        Animation(QAbstractAnimation *animation,
-                  PagePointer page, QObject *parent=0);
-        Animation(QAbstractAnimation *animation,
-                  PagePointer page0, PagePointer page1,
-                  QObject *parent=0);
                   
         ~Animation();
 
@@ -152,8 +146,14 @@ namespace Conspire
         void start();
         void stop();
 
+        void pause();
+        void resume();
+
     signals:
-        void finished();
+        void started(Animation *animation);
+        void paused(Animation *animation);
+        void resumed(Animation *animation);
+        void finished(Animation *animation);
 
     protected:
         friend class AnimationPointer;
@@ -168,12 +168,6 @@ namespace Conspire
         
         /** Pointer to the timer used to force an animation to end */
         QPointer<QTimer> stop_timer;
-        
-        /** The pages that contain the items being referenced by the
-            animation. These references are held until the animation
-            has completed, thereby ensuring that the pages won't disappear
-            before the animation is over */
-        QList<PagePointer> pages;
         
         /** The delay, in milliseconds, after the expected end time of
             the animation, at which the animation will be automatically

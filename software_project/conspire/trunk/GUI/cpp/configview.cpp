@@ -32,15 +32,8 @@
 using namespace Conspire;
 
 /** Constructor */
-ConfigView::ConfigView(QGraphicsItem *parent) : PageView(parent)
+ConfigView::ConfigView(Page *parent) : PageView(parent)
 {}
-
-/** Construct, passing in the initial page */
-ConfigView::ConfigView(PagePointer top_page, QGraphicsItem *parent)
-           : PageView(parent)
-{
-    push(top_page, true);
-}
         
 ConfigView::~ConfigView()
 {}

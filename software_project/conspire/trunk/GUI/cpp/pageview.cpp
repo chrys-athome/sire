@@ -49,16 +49,9 @@ PageView::Tab::~Tab()
 {}
 
 /** Constructor */
-PageView::PageView(QGraphicsItem *parent) : Page(parent)
+PageView::PageView(Page *parent) : Page(parent)
 {
     build();
-}
-
-/** Constructor, passing in the top page for the first tab */
-PageView::PageView(PagePointer top_page, QGraphicsItem *parent) : Page(parent)
-{
-    build();
-    push(top_page, true);
 }
 
 /** Destructor */
@@ -152,7 +145,12 @@ void PageView::push(PagePointer page, bool new_tab)
     }
 
     page->hide();
+    
+    //make this page a child of this page
+    // (need twice - one as a QGraphicsItem child, one as a Page child)
     page->setParentItem(this);
+    page->setParentPage(this);
+    
     page->setGeometry(label->geometry());
     
     if (page->geometry().width() > label->geometry().width() or
@@ -226,17 +224,44 @@ void PageView::checkDisconnectPage(PagePointer &page)
 {
     if (page)
     {
-        if (not isChildPage(page.data()))
+        //make sure that this page is not held by one of the tabs
+        foreach (const Tab *tab, tabpages)
         {
-            if (page->parentItem() == this)
-            {
-                page->setParentItem(0);
-            }
+            if (tab->top_page.data() == page.data() or
+                tab->current_page.data() == page.data())
+                return;
             
-            page->disconnect(this);
-            this->disconnect(page.data());
-            page->removeEventFilter(this);
+            else
+            {
+                for (QStack<PagePointer>::const_iterator 
+                                it = tab->page_history.constBegin();
+                     it != tab->page_history.constEnd();
+                     ++it)
+                {
+                    if (it->data() == page.data())
+                        return;
+                }
+
+                for (QStack<PagePointer>::const_iterator 
+                                it = tab->page_future.constBegin();
+                     it != tab->page_future.constEnd();
+                     ++it)
+                {
+                    if (it->data() == page.data())
+                        return;
+                }
+            }
         }
+
+        //the page is not connected to this view
+        if (page->parentItem() == this)
+            page->setParentItem(0);
+        
+        if (page->weakParentPage().data() == this)
+            page->setParentPage(0);
+            
+        page->disconnect(this);
+        this->disconnect(page.data());
     }
 }
 
@@ -460,265 +485,6 @@ void PageView::keyPressEvent(QKeyEvent *e)
     }
 }
 
-/** Return whether or not the passed Page is a child view of this PageView */
-bool PageView::isChildPage(const Page *page) const
-{
-    if (page)
-    {
-        foreach (const Tab *tab, tabpages)
-        {
-            if (tab->top_page.data() == page or
-                tab->current_page.data() == page)
-                return true;
-            
-            else
-            {
-                for (QStack<PagePointer>::const_iterator 
-                                it = tab->page_history.constBegin();
-                     it != tab->page_history.constEnd();
-                     ++it)
-                {
-                    if (it->data() == page)
-                        return true;
-                }
-
-                for (QStack<PagePointer>::const_iterator 
-                                it = tab->page_future.constBegin();
-                     it != tab->page_future.constEnd();
-                     ++it)
-                {
-                    if (it->data() == page)
-                        return true;
-                }
-            }
-        }
-    }
-
-    return false;
-}
-
-/** Return whether or not the passed QObject is a child view of this PageView */
-bool PageView::isChildObject(const QObject *object) const
-{
-    foreach (const QObject *child, this->children())
-    {
-        if (object == child)
-            return true;
-    }
-
-    return isChildPage(dynamic_cast<const Page*>(object));
-}
-
-/** Allow filtering of our own events... */
-bool PageView::event(QEvent *event)
-{
-    if (fg_anim)
-    {
-        switch( event->type() )
-        {
-            case QEvent::InputMethod:
-            case QEvent::KeyPress:
-            case QEvent::MouseButtonDblClick:
-            case QEvent::MouseButtonPress:
-            case QEvent::Shortcut:
-            case QEvent::TabletPress:
-            case QEvent::Wheel:
-            case QEvent::TouchBegin:
-            case QEvent::TouchUpdate:
-            case QEvent::TouchEnd:
-            case QEvent::Gesture:
-            case QEvent::GestureOverride:
-            {
-                conspireDebug() << "INPUT EVENT (" << event->type() 
-                                << ") CANCELLED ANIMATION";
-
-                fg_anim->disconnect(this);
-                fg_anim->stop();
-                fg_anim = 0;
-                return true;
-            }
-            
-            default:
-                break;
-        }
-    }
-    
-    return Page::event(event);
-}
-
-/** Filter events for the passed object. If this is a child page, and a foreground
-    animation is in progress, then this intercepts and blocks all user-input
-    events to the child page. This prevents the user from interacting with pages
-    while they are in transition or being animated. Instead, the animation is
-    automatically stopped and advanced to the end frame */
-bool PageView::eventFilter(QObject *object, QEvent *event)
-{
-    if (not event)
-        return false;
-
-    else if (fg_anim)
-    {
-        if (isChildObject(object))
-        {
-            switch( event->type() )
-            {
-                case QEvent::InputMethod:
-                case QEvent::KeyPress:
-                case QEvent::MouseButtonDblClick:
-                case QEvent::MouseButtonPress:
-                case QEvent::Shortcut:
-                case QEvent::TabletPress:
-                case QEvent::Wheel:
-                case QEvent::TouchBegin:
-                case QEvent::TouchUpdate:
-                case QEvent::TouchEnd:
-                case QEvent::Gesture:
-                case QEvent::GestureOverride:
-                {
-                    conspireDebug() << "INPUT EVENT (" << event->type() 
-                                    << ") CANCELLED ANIMATION";
-                              
-                    fg_anim->disconnect(this);
-                    fg_anim->stop();
-                    fg_anim = 0;
-                    return true;
-                }
-                
-                default:
-                    break;
-            }
-        }
-    }
-    
-    return false;
-}
-
-/** Run an animation in this view. The animation can either be a foreground
-    animation (default), or a background animation if "bg_anim" is true. 
-    
-    If the animation is a foreground animation, then any current foreground
-    animation is stopped, and is replaced by this animation. When a foreground
-    animation is running, it blocks all user input events sent to child pages 
-    or child widgets of this view. Instead, any user event will automatically
-    cancel the animation and advance it to the end.
-    
-    If the animation is a background animation, then it runs in the background,
-    free from any interaction with the user. Background animations should be
-    simple things that will not interupt the workflow of the user, or expose
-    functionality to the user outside of their current workflow.
-    
-    Note that all animations will be immediately stopped and advanced to the
-    end frame if "animationsEnabled()" is false, or if it is ever set to false.
-*/
-void PageView::animate(AnimationPointer animation, bool bg_anim)
-{
-    if (not animation)
-        return;
-        
-    if (animationsEnabled())
-    {
-        if (bg_anim)
-        {
-            bg_anims.append(animation);
-
-            connect(animation.data(), SIGNAL(finished()),
-                    this, SLOT(animationFinished()));
-
-            animation->start();
-        }
-        else
-        {
-            if (fg_anim)
-            {
-                fg_anim->disconnect(this);
-                fg_anim->stop();
-            }
-                
-            fg_anim = animation;
-            
-            connect(fg_anim.data(), SIGNAL(finished()), 
-                    this, SLOT(animationFinished()));
-                
-            fg_anim->start();
-        }
-    }
-    else
-    {
-        animation->start();
-        animation->stop();
-    }
-}    
-
-/** This slot is called whenever a child animation stops. This is used
-    to clean up the pointers to active animations */
-void PageView::animationFinished()
-{
-    if (fg_anim)
-    {
-        if (not fg_anim->isRunning())
-            fg_anim = 0;
-    }
-    
-    QMutableListIterator<AnimationPointer> it(bg_anims);
-    
-    while (it.hasNext())
-    {
-        AnimationPointer &anim = it.next();
-        
-        if (anim)
-        {
-            if (not anim->isRunning())
-                it.remove();
-        }
-        else
-            it.remove();
-    }
-}
-
-/** Call this function to enable and disable animations in pages
-    viewed by this viewer */
-void PageView::setAnimationsEnabled(bool on)
-{
-    if (on != anims_enabled)
-    {
-        anims_enabled = on;
-        
-        if (not anims_enabled)
-        {
-            if (fg_anim)
-            {
-                fg_anim->disconnect(this);
-                fg_anim->stop();
-                fg_anim = 0;
-            }
-            
-            QMutableListIterator<AnimationPointer> it(bg_anims);
-            
-            while (it.hasNext())
-            {
-                AnimationPointer &anim = it.next();
-                
-                if (anim)
-                {
-                    anim->disconnect(this);
-                    anim->stop();
-                    anim = 0;
-                }
-            }
-            
-            bg_anims.clear();
-            
-            emit( animationsEnabledChanged(anims_enabled) );
-        }
-    }
-}
-
-/** Return whether or not animations are enabled for this page view */
-bool PageView::animationsEnabled() const
-{
-    return anims_enabled;
-}
-
 /** Build this widget */
 void PageView::build()
 {
@@ -871,7 +637,7 @@ void PageView::animateDestroy(PagePointer old_page)
     anim->setEasingCurve(QEasingCurve::InOutBack);
     g->addAnimation(anim);
 
-    this->animate( AnimationPointer(new Animation(g,old_page)) );
+    this->animate( AnimationPointer(new Animation(g)) );
 }
 
 /** Internal function used to animate the appearance of a new page */
@@ -901,7 +667,7 @@ void PageView::animateNew(PagePointer new_page)
     anim->setEasingCurve(QEasingCurve::InOutBack);
     g->addAnimation(anim);
 
-    this->animate( AnimationPointer(new Animation(g,new_page)) );
+    this->animate( AnimationPointer(new Animation(g)) );
 }
 
 /** Animate the switch from "old_page" to "new_page" */
@@ -1009,5 +775,5 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
         g->addAnimation(anim);
     }
 
-    this->animate( AnimationPointer(new Animation(g,old_page,new_page)) );
+    this->animate( AnimationPointer(new Animation(g)) );
 }

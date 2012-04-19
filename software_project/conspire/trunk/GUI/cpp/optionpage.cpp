@@ -41,13 +41,13 @@
 using namespace Conspire;
 
 /** Constructor */
-OptionPage::OptionPage(QGraphicsItem *parent) : ConfigPage(parent)
+OptionPage::OptionPage(Page *parent) : ConfigPage(parent)
 {
     build();
 }
 
 /** Constructor, passing in the option to edit, and the root key of that option */
-OptionPage::OptionPage(Option option, QString root_key, QGraphicsItem *parent)
+OptionPage::OptionPage(Option option, QString root_key, Page *parent)
            : ConfigPage(parent)
 {
     build();

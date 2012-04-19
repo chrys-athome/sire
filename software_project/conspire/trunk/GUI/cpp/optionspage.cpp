@@ -45,13 +45,13 @@
 using namespace Conspire;
 
 /** Constructor */
-OptionsPage::OptionsPage(QGraphicsItem *parent) : ConfigPage(parent)
+OptionsPage::OptionsPage(Page *parent) : ConfigPage(parent)
 {
     build();
 }
 
 /** Construct, passing in a top-level options object */
-OptionsPage::OptionsPage(Options options, QGraphicsItem *parent)
+OptionsPage::OptionsPage(Options options, Page *parent)
             : ConfigPage(parent)
 {
     build();
@@ -60,8 +60,7 @@ OptionsPage::OptionsPage(Options options, QGraphicsItem *parent)
 
 /** Construct, passing in an Opitons object that is a sub-options object,
     with root key 'root_key' */
-OptionsPage::OptionsPage(Options options, QString root_key,
-                         QGraphicsItem *parent)
+OptionsPage::OptionsPage(Options options, QString root_key, Page *parent)
             : ConfigPage(parent)
 {
     build();
@@ -83,35 +82,6 @@ Options OptionsPage::options() const
 QString OptionsPage::rootKey() const
 {
     return root_key;
-}
-
-/** Set the description of this set of options */
-void OptionsPage::setDescription(QString description)
-{
-    label->setText(description);
-    
-    if (description.isEmpty())
-        label->hide();
-    else
-        label->show();
-}
-
-/** Return the description of these options */
-QString OptionsPage::description() const
-{
-    return label->text();
-}
-
-/** Set the title of this set of Options */
-void OptionsPage::setTitle(QString title)
-{
-    group_box->setTitle(title);
-}
-
-/** Return the title of this set of Options */
-QString OptionsPage::title() const
-{
-    return group_box->title();
 }
 
 /** Internal function used to rebuild the widget from the passed options */
@@ -228,6 +198,11 @@ void OptionsPage::clicked(const QString &key)
     }
 }
 
+void OptionsPage::setBoxTitle(QString title)
+{
+    group_box->setTitle(title);
+}
+
 /** Actually build the widget */
 void OptionsPage::build()
 {
@@ -237,9 +212,15 @@ void OptionsPage::build()
     group_box->setSizePolicy( QSizePolicy::MinimumExpanding, 
                               QSizePolicy::MinimumExpanding );
     
+    connect(this, SIGNAL(titleChanged(QString)),
+            this, SLOT(setBoxTitle(QString)));
+    
     label = new QLabel(group_box);
     label->setWordWrap(true);
     label->setSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Minimum );
+
+    connect(this, SIGNAL(descriptionChanged(QString)),
+            label, SLOT(setText(QString)));
 
     vl->addWidget(label);
     label->hide();

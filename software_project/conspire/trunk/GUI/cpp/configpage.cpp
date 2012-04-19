@@ -33,7 +33,7 @@
 using namespace Conspire;
 
 /** Constructor */
-ConfigPage::ConfigPage(QGraphicsItem *parent) : Page(parent)
+ConfigPage::ConfigPage(Page *parent) : Page(parent)
 {}
 
 /** Destructor */

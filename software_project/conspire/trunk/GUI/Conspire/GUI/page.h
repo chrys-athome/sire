@@ -30,6 +30,8 @@
 
 #include "Conspire/conspire.h"
 
+#include "Conspire/GUI/animation.h"
+
 #include <QGraphicsWidget>
 #include <QPointer>
 
@@ -38,6 +40,10 @@ CONSPIRE_BEGIN_HEADER
 namespace Conspire
 {
     class Page;
+    class PagePointer;
+    class PageView;
+
+    typedef QPointer<Page> PageWeakPointer;
 
     /** This class holds a safe pointer to a Page. This
         pointer will automatically manage the reference count
@@ -104,13 +110,47 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        Page(QGraphicsItem *parent=0);
+        Page(Page *parent=0);
         
         virtual ~Page();
 
-        virtual QString description() const;
+        QString title() const;
+        QString description() const;
 
-        virtual bool isBroken() const;
+        void setTitle(QString title);
+        void setDescription(QString description);
+
+        bool animationsEnabled() const;
+        bool animationsPaused() const;
+
+        bool isBlocked() const;
+
+        bool isBroken() const;
+
+        PagePointer parentPage() const;
+        void setParentPage(Page *new_parent);
+        
+        QList<PagePointer> childPages() const;
+
+    public slots:
+        void block();
+        void unblock();
+        
+        void setBlocked(bool blocked);
+
+        void setAnimationsEnabled(bool enabled);
+
+        void animate(AnimationPointer anim, bool bg_anim=false);
+
+        void pauseAnimations();
+        void resumeAnimations();
+        
+        void setAnimationsPaused(bool paused);
+        
+        void stopAnimations();
+
+    protected slots:
+        void animationFinished(Animation *animation);
 
     signals:
         /** Signal emitted when this page has created a new page that 
@@ -122,15 +162,115 @@ namespace Conspire
             view history. This is useful if this page is a dialog page */
         void pop(bool forget_page=false);
 
+        /** Signal emitted whenever animations are enabled or disabled */
+        void animationsEnabledChanged(bool);
+
+        /** Signal emitted whenever the animations are paused or resumed */
+        void animationsPausedChanged(bool);
+
+        /** Signal emitted whenever the blocked status of the page changes */
+        void blockedChanged(bool blocked);
+        
+        /** Signal emitted whenever the description changes */
+        void descriptionChanged(QString description);
+        
+        /** Signal emitted whenver the title of the page changes */
+        void titleChanged(QString title);
+
+        /** Signal emitted when the page becomes broken */
+        void broken();
+
     protected:
         friend class PagePointer;
         void incref();
         bool decref();
         
+        void setBroken();
+        
+        void addChild(Page *page);
+        PageWeakPointer takeChild(Page *page);
+        
+        friend class PageView;
+        PageWeakPointer weakParentPage() const;
+        QList<PageWeakPointer> weakChildPages() const;
+        
     private:
+        void build();
+    
+        void childDeleted(Page *child);
+        void parentDeleted();
+    
+        void setBlockedByParent(bool blocked);
+        void setBlockedByAnim(bool blocked);
+        
+        void setAnimationsEnabledByParent(bool enabled);
+        void setAnimationsPausedByParent(bool paused);
+    
+        void pvt_enableAnims();
+        void pvt_disableAnims();
+        
+        void pvt_block();
+        void pvt_unblock();
+        
+        void pvt_pauseAnims();
+        void pvt_resumeAnims();
+    
+        /** Pointer to the parent page of this page */
+        PageWeakPointer parent_page;
+        
+        /** The full set of child pages - these are held using
+            PagePointers so that they won't be deleted behind our back */
+        QList<PageWeakPointer> child_pages;
+    
+        /** The title of this page */
+        QString page_title;
+        
+        /** The description of this page */
+        QString page_description;
+    
+        /** Any foreground animation running on this page.
+            This will be animating either this page, or children
+            of this page. Only one foreground animation can be
+            running at a time, and while it is running, this
+            page and all of its children are blocked (to prevent
+            the user interacting with a page in motion) */
+        AnimationPointer fg_anim;
+        
+        /** The set of any background animations running on this page.
+            These will not block the page, and are designed to run in 
+            parallel, perhaps providing little sparkles or details to
+            the page */
+        QList<AnimationPointer> bg_anims;
+    
         /** The number of PagePointer pointers currently 
             pointing to this widget */
         int ref_count;
+        
+        /** Whether or not animations are enabled on this page */
+        bool anims_enabled;
+        
+        /** Whether or not animations are enabled by the parent */
+        bool anims_enabled_by_parent;
+        
+        /** Whether or not animations are paused */
+        bool anims_paused;
+        
+        /** Whether or not animations are paused by the parent */
+        bool anims_paused_by_parent;
+        
+        /** Whether or not this page is bloked. A blocked page
+            cannot receive user input events */
+        bool is_blocked;
+        
+        /** Whether or not this page is blocked by the parent */
+        bool is_blocked_by_parent;
+        
+        /** Whether or not this page is blocked by the foreground animation */
+        bool is_blocked_by_anim;
+        
+        /** Whether or not this page is broken. Once set, a page
+            is irrevecorably broken */
+        bool is_broken;
     };
 
 }

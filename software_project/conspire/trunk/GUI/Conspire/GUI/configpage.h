@@ -41,7 +41,7 @@ namespace Conspire
         Q_OBJECT
     
     public:
-        ConfigPage(QGraphicsItem *parent=0);
+        ConfigPage(Page *parent=0);
         
         virtual ~ConfigPage();
     

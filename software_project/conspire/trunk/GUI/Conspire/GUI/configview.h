@@ -46,8 +46,7 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        ConfigView(QGraphicsItem *parent=0);
-        ConfigView(PagePointer top_page, QGraphicsItem *parent=0);
+        ConfigView(Page *parent=0);
         
         ~ConfigView();
         

@@ -49,10 +49,10 @@ namespace Conspire
         Q_OBJECT
     
     public:
-        OptionsPage(QGraphicsItem *parent=0);
-        OptionsPage(Options options, QGraphicsItem *parent=0);
+        OptionsPage(Page *parent=0);
+        OptionsPage(Options options, Page *parent=0);
         OptionsPage(Options options, QString root_key,
-                    QGraphicsItem *parent=0);
+                    Page *parent=0);
         
         ~OptionsPage();
         
@@ -60,16 +60,11 @@ namespace Conspire
         
         QString rootKey() const;
     
-        void setTitle(QString title);
-        void setDescription(QString description);
-        
-        QString title() const;
-        QString description() const;
-    
     public slots:
         void reread(Options options);
 
     private slots:
+        void setBoxTitle(QString title);
         void clicked(const QString &key);
         void add();
 

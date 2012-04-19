@@ -40,14 +40,14 @@
 using namespace Conspire;
 
 /** Constructor */
-AddPage::AddPage(QGraphicsItem *parent) : ConfigPage(parent)
+AddPage::AddPage(Page *parent) : ConfigPage(parent)
 {
     build();
 }
 
 /** Constructor, setting the Options object that details the list
     of options that can be added */
-AddPage::AddPage(Options options, QGraphicsItem *parent)
+AddPage::AddPage(Options options, Page *parent)
         : ConfigPage(parent)
 {
     build();
@@ -57,7 +57,7 @@ AddPage::AddPage(Options options, QGraphicsItem *parent)
 /** Constructor, setting the Options object that details the list
     of options that can be added, together with the root key of 
     any added options */
-AddPage::AddPage(Options options, QString key, QGraphicsItem *parent)
+AddPage::AddPage(Options options, QString key, Page *parent)
         : ConfigPage(parent), root_key(key)
 {
     build();

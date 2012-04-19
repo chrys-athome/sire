@@ -41,7 +41,6 @@ namespace Conspire
     class Options;
 
     class MainBar;
-    class PageView;
 
     /** This is a simple MainWindow class that houses all of the 
         graphical components of the application. Use this class
@@ -67,7 +66,7 @@ namespace Conspire
         void build();
     
         MainBar *mainbar;
-        PageView *view;
+        PagePointer view;
     };
 
 }

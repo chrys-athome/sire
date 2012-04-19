@@ -49,8 +49,8 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        ConfigDocument(QGraphicsItem *parent=0);
-        ConfigDocument(Options options, QGraphicsItem *parent=0);
+        ConfigDocument(Page *parent=0);
+        ConfigDocument(Options options, Page *parent=0);
         
         ~ConfigDocument();
         

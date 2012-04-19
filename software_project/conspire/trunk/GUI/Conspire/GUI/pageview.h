@@ -53,14 +53,11 @@ namespace Conspire
         Q_OBJECT
     
     public:
-        PageView(QGraphicsItem *parent=0);
-        PageView(PagePointer top_page, QGraphicsItem *parent=0);
+        PageView(Page *parent=0);
         
         ~PageView();
         
         int count() const;
-        
-        bool animationsEnabled() const;
         
     public slots:
         virtual void back();
@@ -78,31 +75,15 @@ namespace Conspire
 
         virtual void closeAll();
         
-        virtual void animate(AnimationPointer anim, bool bg_anim=false);
-        
-        void setAnimationsEnabled(bool);
-        
-    protected slots:
-        virtual void animationFinished();
-        
     signals:
         void canBackChanged(bool);
         void canForwardChanged(bool);
         
-        void animationsEnabledChanged(bool);
-        
     protected:
-        bool event(QEvent *e);
-
         void resizeEvent(QGraphicsSceneResizeEvent *e);
 
         void keyPressEvent(QKeyEvent *e);
         void mousePressEvent(QMouseEvent *e);
-        
-        bool eventFilter(QObject *object, QEvent *e);
-        
-        bool isChildObject(const QObject *object) const;
-        bool isChildPage(const Page *page) const;
         
     private:
         class Tab
@@ -147,17 +128,8 @@ namespace Conspire
         /** The set of all visible tabs */
         QList<Tab*> tabpages;
         
-        /** The currently active foreground animation (if any) */
-        AnimationPointer fg_anim;
-        
-        /** The set of animations that are running in the background */
-        QList<AnimationPointer> bg_anims;
-        
         /** The index of the current tab page */
         int current_tab;
-        
-        /** Whether or not animations in this view are enabled */
-        bool anims_enabled;
     };
 
 }

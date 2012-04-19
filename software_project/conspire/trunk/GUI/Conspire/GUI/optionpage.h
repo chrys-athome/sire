@@ -45,9 +45,9 @@ namespace Conspire
         Q_OBJECT
     
     public:
-        OptionPage(QGraphicsItem *parent=0);
+        OptionPage(Page *parent=0);
         OptionPage(Option option, QString root_key,
-                   QGraphicsItem *parent=0);
+                   Page *parent=0);
                      
         ~OptionPage();
         

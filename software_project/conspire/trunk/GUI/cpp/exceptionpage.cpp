@@ -37,7 +37,7 @@
 using namespace Conspire;
 
 /** Constructor */
-ExceptionPage::ExceptionPage(QGraphicsItem *parent)
+ExceptionPage::ExceptionPage(Page *parent)
               : Page(parent)
 {
     build();
@@ -46,7 +46,7 @@ ExceptionPage::ExceptionPage(QGraphicsItem *parent)
 /** Construct, passing in the error, and a description of what action was
     taken that caused the error */
 ExceptionPage::ExceptionPage(QString description, const Exception &e,
-                             QGraphicsItem *parent)
+                             Page *parent)
               : Page(parent)
 {
     build();

@@ -183,26 +183,6 @@ Animation::Animation(QAbstractAnimation *animation, QObject *parent)
 {
     build();
 }
-
-/** Construct, passing in the animation to perform, and the
-    Page on which the animation acts */
-Animation::Animation(QAbstractAnimation *animation,
-                     PagePointer page, QObject *parent)
-          : QObject(parent), anim(animation)
-{
-    pages.append(page);
-}
-
-/** Construct, passing in the animation to perfrom, and the
-    Pages on which the animation acts */
-Animation::Animation(QAbstractAnimation *animation,
-                     PagePointer page0, PagePointer page1,
-                     QObject *parent)
-          : QObject(parent), anim(animation)
-{
-    pages.append(page0);
-    pages.append(page1);
-}
           
 /** Destructor */
 Animation::~Animation()
@@ -296,6 +276,7 @@ void Animation::start()
         is_running = true;
         connect(anim, SIGNAL(finished()), this, SLOT(stop()));
         anim->start();
+        emit( started(this) );
         
         if (stop_time > 0)
         {
@@ -340,7 +321,33 @@ void Animation::stop()
     if (is_running)
     {
         is_running = false;
-        emit( finished() );
+        emit( finished(this) );
+    }
+}
+
+/** Pause the animation */
+void Animation::pause()
+{
+    if (anim)
+    {
+        if (anim->state() == QAbstractAnimation::Running)
+        {
+            anim->pause();
+            emit( paused(this) );
+        }
+    }
+}
+
+/** Resume a paused animation */
+void Animation::resume()
+{
+    if (anim)
+    {
+        if (anim->state() == QAbstractAnimation::Paused)
+        {
+            anim->resume();
+            emit( resumed(this) );
+        }
     }
 }
 

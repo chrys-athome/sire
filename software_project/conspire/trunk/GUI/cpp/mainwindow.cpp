@@ -61,7 +61,7 @@ MainWindow::MainWindow(Options options, QWidget *parent)
     connect(mainbar, SIGNAL(back()), doc, SLOT(back()));
     connect(mainbar, SIGNAL(forward()), doc, SLOT(forward()));
     
-    view->push(PagePointer(doc), true);
+    dynamic_cast<PageView*>(view.data())->push(PagePointer(doc), true);
 }
 
 /** Destructor */

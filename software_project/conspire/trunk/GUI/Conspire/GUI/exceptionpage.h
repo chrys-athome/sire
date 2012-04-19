@@ -47,9 +47,9 @@ namespace Conspire
         Q_OBJECT
     
     public:
-        ExceptionPage(QGraphicsItem *parent=0);
+        ExceptionPage(Page *parent=0);
         ExceptionPage(QString description, const Conspire::Exception &e,
-                      QGraphicsItem *parent=0);
+                      Page *parent=0);
                         
         ~ExceptionPage();
         
