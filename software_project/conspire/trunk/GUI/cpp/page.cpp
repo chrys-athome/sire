@@ -29,6 +29,7 @@
 #include "Conspire/option.h"
 
 #include "Conspire/GUI/page.h"
+#include "Conspire/GUI/button.h"
 
 #include "Conspire/exceptions.h"
 
@@ -37,6 +38,7 @@
 #include <QVBoxLayout>
 
 #include <QGraphicsProxyWidget>
+#include <QGraphicsLinearLayout>
 
 using namespace Conspire;
 
@@ -72,45 +74,39 @@ void Page::build()
     this->setFlag(QGraphicsItem::ItemClipsChildrenToShape, true);
     
     //now build the holder for the page widget
-    page_box = new QGroupBox();
-    page_box->setFlat(true);
-    page_box->setCheckable(false);
-    page_box->setAlignment( ::Qt::AlignLeft );
-    page_box_proxy = new QGraphicsProxyWidget(this);
-    page_box_proxy->setWidget(page_box);
-    page_box->setLayout( new QVBoxLayout(page_box) );
-    page_box_proxy->setGeometry(this->geometry());
+    QGraphicsLinearLayout *gl = new QGraphicsLinearLayout(::Qt::Vertical,this);
 
-    description_label = new QLabel(page_box);
+    this->setLayout(gl);
+
+    title_label = new QLabel();
+    title_label->setWordWrap(false);
+    title_label->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
+    title_label->hide();
+
+    QGraphicsProxyWidget *title_label_proxy = new QGraphicsProxyWidget(this);
+    title_label_proxy->setWidget(title_label);
+    gl->addItem(title_label_proxy);
+
+    description_label = new QLabel();
     description_label->setWordWrap(true);
     description_label->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
-    page_box->layout()->addWidget(description_label);
     description_label->hide();
-    
-    box_label = new QLabel(page_box);
-    box_label->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
-    page_box->layout()->addWidget(box_label);
-    box_label->show();
+
+    QGraphicsProxyWidget *desc_label_proxy = new QGraphicsProxyWidget(this);
+    desc_label_proxy->setWidget(description_label);
+    gl->addItem(desc_label_proxy);
 }
 
 /** Called when the widget is moved */
 void Page::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     QGraphicsWidget::moveEvent(e);
-    page_box_proxy->setGeometry(this->geometry());
-    
-    if (page_widget)
-        page_widget->setGeometry(box_label->geometry());
 }
 
 /** Called when the widget is resized */
 void Page::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     QGraphicsWidget::resizeEvent(e);
-    page_box_proxy->setGeometry(this->geometry());
-    
-    if (page_widget)
-        page_widget->setGeometry(box_label->geometry());
 }
 
 /** Constructor, passing in the parent page of this page */
@@ -334,7 +330,10 @@ void Page::setTitle(QString title)
         page_title = title;
 
         if (display_title)
-            page_box->setTitle(page_title);
+        {
+            title_label->setText(page_title);
+            title_label->setVisible( not page_title.isEmpty() );
+        }
         
         emit( titleChanged(page_title) );
     }
@@ -362,16 +361,9 @@ void Page::setTitleDisplayed(bool displayed)
 {
     if (display_title != displayed)
     {
-        if (displayed)
-        {
-            display_title = true;
-            page_box->setTitle(page_title);
-        }
-        else
-        {
-            display_title = false;
-            page_box->setTitle( QString::null );
-        }
+        display_title = displayed;
+        title_label->setText(page_title);
+        title_label->setVisible(display_title);
     }
 }
 
@@ -380,18 +372,9 @@ void Page::setDescriptionDisplayed(bool displayed)
 {
     if (display_description != displayed)
     {
-        if (displayed)
-        {
-            display_description = true;
-            description_label->setText(page_description);
-            description_label->show();
-        }
-        else
-        {
-            display_description = false;
-            description_label->setText(QString::null);
-            description_label->hide();
-        }
+        display_description = displayed;
+        description_label->setText(page_description);
+        description_label->setVisible(displayed);
     }
 }
 
@@ -410,8 +393,9 @@ void Page::setPageWidget(QGraphicsWidget *widget)
     if (page_widget)
     {
         page_widget->setParentItem(this);
-        page_widget->setGeometry(box_label->geometry());
-        page_widget->show();
+        page_widget->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Expanding );
+        dynamic_cast<QGraphicsLinearLayout*>(this->layout())->addItem(page_widget);
+        //page_widget->show();
     }
 }
 

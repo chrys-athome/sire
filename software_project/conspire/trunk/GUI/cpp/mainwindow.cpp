@@ -74,7 +74,8 @@ void MainWindow::resizeEvent(QResizeEvent *e)
     QGraphicsView::resizeEvent(e);
     
     view->resize( this->viewport()->size() );
-    mainbar->resize( this->viewport()->size() );
+    mainbar->resize( this->viewport()->size().width(),
+                     mainbar->size().height() );
     
     this->scene()->setSceneRect(0, 0, view->size().width(), view->size().height());
 }
@@ -95,6 +96,8 @@ void MainWindow::build()
     this->scene()->addItem(mainbar);
 
     view = new ConfigView();
+    view->setTitle("Main Window");
+    view->setDescription("Configure your simulation using this window");
     view->setPos(0, 0);
     view->setZValue(0);
     view->resize(this->viewport()->size());

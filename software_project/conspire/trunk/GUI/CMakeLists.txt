@@ -30,6 +30,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
 
       Conspire/GUI/addpage.h
       Conspire/GUI/animation.h
+      Conspire/GUI/button.h
       Conspire/GUI/configdocument.h
       Conspire/GUI/configpage.h
       Conspire/GUI/configview.h
@@ -42,6 +43,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/optionspage.h
       Conspire/GUI/page.h
       Conspire/GUI/pageview.h
+      Conspire/GUI/widgetrack.h
 
     )
 
@@ -51,6 +53,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       
       Conspire/GUI/addpage.h
       Conspire/GUI/animation.h
+      Conspire/GUI/button.h
       Conspire/GUI/configdocument.h
       Conspire/GUI/configpage.h  
       Conspire/GUI/configview.h
@@ -63,6 +66,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/optionspage.h
       Conspire/GUI/page.h
       Conspire/GUI/pageview.h
+      Conspire/GUI/widgetrack.h
 
     )
 
@@ -74,6 +78,7 @@ set ( CONSPIRE_GUI_SOURCES
 
       cpp/addpage.cpp
       cpp/animation.cpp
+      cpp/button.cpp
       cpp/configdocument.cpp
       cpp/configpage.cpp
       cpp/configview.cpp
@@ -86,6 +91,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/optionspage.cpp
       cpp/page.cpp
       cpp/pageview.cpp
+      cpp/widgetrack.cpp
 
       ${CONSPIRE_GUI_PUBLIC_HEADERS}
       ${CONSPIRE_GUI_PRIVATE_HEADERS}

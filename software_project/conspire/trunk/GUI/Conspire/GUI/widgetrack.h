@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_MAINBAR_H
-#define CONSPIRE_MAINBAR_H
+#ifndef CONSPIRE_WIDGETRACK_H
+#define CONSPIRE_WIDGETRACK_H
 /********************************************\
   *
   *  Conspire
@@ -30,57 +30,40 @@
 
 #include "Conspire/conspire.h"
 
-#include "Conspire/GUI/widgetrack.h"
+#include <QGraphicsWidget>
 
 CONSPIRE_BEGIN_HEADER
 
 namespace Conspire
 {
-    class Button;
-
-    /** This class provides the floating button
-        bar for the OptionsWidget */
-    class CONSPIRE_EXPORT MainBar : public WidgetRack
+    /** This provides a rack on which widgets can be stacked.
+        Widgets can either be racked horizontally or vertically.
+        If there is not enough space to view the whole rack, then
+        the widgets can be scrolled */
+    class CONSPIRE_EXPORT WidgetRack : public QGraphicsWidget
     {
         Q_OBJECT
-        
-    public:
-        MainBar(QGraphicsItem *parent=0);
-        ~MainBar();
-        
-    public slots:
-        void canBackChanged(bool can_back);
-        void canForwardChanged(bool can_forward);
     
-        void canRedoChanged(bool can_redo);
-        void canUndoChanged(bool can_undo);
+    public:
+        WidgetRack(QGraphicsItem *parent=0);
+        WidgetRack(::Qt::Orientation orient, QGraphicsItem *parent=0);
         
-        void redoTextChanged(const QString &redotext);
-        void undoTextChanged(const QString &undotext);
+        ~WidgetRack();
         
-    signals:
-        void undo();
-        void redo();
-        
-        void back();
-        void forward();
-        void home();
+        void addWidget(QWidget *widget);
+        void addWidget(QGraphicsWidget *widget);
 
-        void newPage();
+        void addDivider();
+
+    protected:
+        void resizeEvent(QGraphicsSceneResizeEvent *e);
 
     private:
-        void build();
+        void build(::Qt::Orientation orient);
         
-        Button *new_button;
-        
-        Button *undo_button;
-        Button *redo_button;
-
-        Button *back_button;
-        Button *forward_button;
-        Button *home_button;
+        QGraphicsWidget *scrollview;
     };
-    
+
 }
 
 CONSPIRE_END_HEADER

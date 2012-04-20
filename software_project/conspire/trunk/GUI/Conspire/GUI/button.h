@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_MAINBAR_H
-#define CONSPIRE_MAINBAR_H
+#ifndef CONSPIRE_BUTTON_H
+#define CONSPIRE_BUTTON_H
 /********************************************\
   *
   *  Conspire
@@ -30,57 +30,63 @@
 
 #include "Conspire/conspire.h"
 
-#include "Conspire/GUI/widgetrack.h"
+#include <QGraphicsWidget>
 
 CONSPIRE_BEGIN_HEADER
 
+class QStaticText;
+
 namespace Conspire
 {
-    class Button;
-
-    /** This class provides the floating button
-        bar for the OptionsWidget */
-    class CONSPIRE_EXPORT MainBar : public WidgetRack
+    /** This is a simple button */
+    class CONSPIRE_EXPORT Button : public QGraphicsWidget
     {
         Q_OBJECT
         
     public:
-        MainBar(QGraphicsItem *parent=0);
-        ~MainBar();
+        Button(QGraphicsItem *parent=0);
+        Button(QString text, QGraphicsItem *parent=0);
         
-    public slots:
-        void canBackChanged(bool can_back);
-        void canForwardChanged(bool can_forward);
-    
-        void canRedoChanged(bool can_redo);
-        void canUndoChanged(bool can_undo);
+        ~Button();
         
-        void redoTextChanged(const QString &redotext);
-        void undoTextChanged(const QString &undotext);
+        void setText(QString text);
+
+        QString text() const;
         
     signals:
-        void undo();
-        void redo();
+        void clicked();
         
-        void back();
-        void forward();
-        void home();
+    protected:
+        void paint(QPainter *painter, 
+                   const QStyleOptionGraphicsItem *option, 
+                   QWidget *widget);
+    
+        void focusInEvent(QFocusEvent *event);
+        void focusOutEvent(QFocusEvent *event);    
 
-        void newPage();
+        void mousePressEvent(QGraphicsSceneMouseEvent *event);
+        void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+
+        void resizeEvent(QGraphicsSceneResizeEvent *event);
 
     private:
         void build();
-        
-        Button *new_button;
-        
-        Button *undo_button;
-        Button *redo_button;
-
-        Button *back_button;
-        Button *forward_button;
-        Button *home_button;
-    };
     
+        /** The text written onto the button */
+        QStaticText *txt;
+
+        /** Offset for the text */
+        float offset_x, offset_y;
+
+        /** Whether or not the button has focus */
+        bool has_focus;
+        
+        /** Whether or not the button is primed */
+        bool is_primed;
+        
+        /** Whether or not the button is checked */
+        bool is_checked;
+    };
 }
 
 CONSPIRE_END_HEADER

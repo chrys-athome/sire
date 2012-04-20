@@ -77,7 +77,9 @@ void ConfigDocument::build()
     connect(view, SIGNAL(canBackChanged(bool)), this, SIGNAL(canBackChanged(bool)));
     connect(view, SIGNAL(canForwardChanged(bool)),
             this, SIGNAL(canForwardChanged(bool)));
-            
+    
+    this->setTitle("ConfigDocument");
+    this->setDescription("Description of ConfigDocument");        
     this->setPageWidget(view);
 }
 

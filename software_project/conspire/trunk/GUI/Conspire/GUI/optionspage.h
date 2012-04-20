@@ -40,6 +40,9 @@ class QSignalMapper;
 
 namespace Conspire
 {
+    class WidgetRack;
+    class Button;
+
     /** This is a page that is used to view and edit a single page
         of options */
     class CONSPIRE_EXPORT OptionsPage : public ConfigPage
@@ -77,14 +80,14 @@ namespace Conspire
         /** The root key of this options object */
         QString root_key;
         
-        /** The frame used to hold all of the option buttons */
-        QFrame *button_frame;
+        /** The rack used to hold all of the option buttons */
+        WidgetRack *button_rack;
         
         /** The list of active buttons */
-        QList<QAbstractButton*> buttons;
+        QList<Button*> buttons;
         
         /** The button that is used to add new options */
-        QAbstractButton *add_button;
+        Button *add_button;
         
         /** The signal mapper */
         QSignalMapper *mapper;

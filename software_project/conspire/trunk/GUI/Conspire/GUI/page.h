@@ -263,10 +263,8 @@ namespace Conspire
         /** The main widget which is displayed on this page */
         QPointer<QGraphicsWidget> page_widget;
     
-        /** The group box used to hold the widget and the description label */
-        QGroupBox *page_box;
-        QGraphicsProxyWidget *page_box_proxy;
-        QLabel *box_label;
+        /** The label used to hold the title of the page */
+        QLabel *title_label;
         
         /** The label used to hold the description of the page */
         QLabel *description_label;

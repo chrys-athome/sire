@@ -27,11 +27,10 @@
 \*********************************************/
 
 #include "Conspire/GUI/pageview.h"
+#include "Conspire/GUI/button.h"
+#include "Conspire/GUI/widgetrack.h"
 
 #include <QTabBar>
-#include <QLabel>
-
-#include <QVBoxLayout>
 
 #include <QPropertyAnimation>
 #include <QParallelAnimationGroup>
@@ -143,7 +142,7 @@ void PageView::pushed(PagePointer page, bool new_tab)
     // (need twice - one as a QGraphicsItem child, one as a Page child)
     page->setParentItem(this);
     page->setParentPage(this);
-    page->setGeometry(label->geometry());
+    page->resize(bg->size());
 
     Tab *tab = 0;
 
@@ -424,7 +423,8 @@ void PageView::resizeEvent(QGraphicsSceneResizeEvent *e)
         
         if (tab->current_page)
         {
-            tab->current_page->setGeometry(label->geometry());
+            tab->current_page->resize(bg->size());
+            tab->current_page->setPos(bg->pos());
         }
     }
 }
@@ -440,7 +440,7 @@ void PageView::moveEvent(QGraphicsSceneMoveEvent *e)
         
         if (tab->current_page)
         {
-            tab->current_page->setGeometry(label->geometry());
+            tab->current_page->setPos(bg->pos());
         }
     }
 }
@@ -467,23 +467,21 @@ void PageView::build()
     anims_enabled = true;
     current_tab = -1;
 
-    QFrame *page_frame = new QFrame();
-    page_frame->setFrameShadow(QFrame::Plain);
-    page_frame->setFrameShape(QFrame::NoFrame);
-    page_frame->setLineWidth(0);
-    page_frame->setMidLineWidth(0);
-    page_frame->setContentsMargins(0,0,0,0);
-
-    page_frame->setLayout( new QVBoxLayout(page_frame) );
+    WidgetRack *rack = new WidgetRack(::Qt::Vertical);
     
-    tabbar = new QTabBar(page_frame);
-    tabbar->setTabsClosable(true);
-    page_frame->layout()->addWidget(tabbar);
+    tabbar = new QTabBar();
+    tabbar->setTabsClosable(false);
+    tabbar->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
+    tabbar->hide();
 
-    label = new QLabel(page_frame);
-    page_frame->layout()->addWidget(label);
+    //rack->addWidget(tabbar);
+
+    bg = new Button(this);
+    bg->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Expanding );
     
-    this->setPageWidget(page_frame);
+    rack->addWidget(bg);
+    
+    this->setPageWidget(rack);
 }
 
 /** Internal function used to make the passed view visible */
@@ -589,7 +587,7 @@ void PageView::animateDestroy(PagePointer old_page)
     if (not old_page)
         return;
         
-    old_page->setGeometry(label->geometry());
+    old_page->resize(bg->size());
     old_page->setOpacity(1.0);
 
     QParallelAnimationGroup *g = new QParallelAnimationGroup();
@@ -619,8 +617,8 @@ void PageView::animateNew(PagePointer new_page)
     }
     
     new_page->setOpacity(0);
-    new_page->show();
-    new_page->setGeometry(label->geometry());
+    new_page->resize(bg->size());
+    new_page->setPos(bg->pos());
     
     QParallelAnimationGroup *g = new QParallelAnimationGroup();
     
@@ -658,13 +656,14 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
     //make sure that the two views have the correct size
     new_page->setOpacity(0);
     
-    //make sure that the new page has the size of the background label
-    new_page->setGeometry(label->geometry());
+    //make sure that the new page has the size of the background
+    new_page->resize(bg->size());
+    new_page->setPos(bg->pos());
     new_page->setTransformOriginPoint( 0.5 * new_page->geometry().width(),
                                        0.5 * new_page->geometry().height() );
     
-    //also ensure that the old page has the size of the background label
-    old_page->setGeometry(label->geometry());
+    //also ensure that the old page has the size of the background
+    old_page->resize(bg->size());
     old_page->setTransformOriginPoint( 0.5 * old_page->geometry().width(),
                                        0.5 * old_page->geometry().height() );
 

@@ -124,7 +124,7 @@ namespace Conspire
         QTabBar *tabbar;
         
         /** The background of the tab view */
-        QLabel *label;
+        QGraphicsWidget *bg;
         
         /** The set of all visible tabs */
         QList<Tab*> tabpages;

@@ -31,13 +31,8 @@
 #include "Conspire/GUI/optionpage.h"
 #include "Conspire/GUI/exceptionpage.h"
 
-#include <QGraphicsLinearLayout>
-#include <QGraphicsProxyWidget>
-
-#include <QPushButton>
-#include <QFrame>
-#include <QScrollArea>
-#include <QVBoxLayout>
+#include "Conspire/GUI/button.h"
+#include "Conspire/GUI/widgetrack.h"
 
 #include <QSignalMapper>
 
@@ -95,8 +90,9 @@ void OptionsPage::pvt_reread(Options options)
     {
         for (int i=buttons.count(); i<keys.count(); ++i)
         {
-            QPushButton *b = new QPushButton(button_frame);
-            button_frame->layout()->addWidget(b);
+            Button *b = new Button();
+            b->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Expanding );
+            button_rack->addWidget(b);
             buttons.append(b);
 
             connect(b, SIGNAL(clicked()), mapper, SLOT(map()));
@@ -106,14 +102,14 @@ void OptionsPage::pvt_reread(Options options)
     {
         while (buttons.count() > keys.count())
         {
-            QAbstractButton *b = buttons.takeLast();
+            Button *b = buttons.takeLast();
             delete b;
         }
     }
     
     for (int i=0; i<keys.count(); ++i)
     {
-        QAbstractButton *b = buttons[i];
+        Button *b = buttons[i];
         Option opt = opts.getNestedOption(keys[i]);
         
         if (opt.hasSubOptions())
@@ -211,43 +207,23 @@ void OptionsPage::clicked(const QString &key)
 /** Actually build the widget */
 void OptionsPage::build()
 {
-    QFrame *page_frame = new QFrame();
-    page_frame->setFrameShadow(QFrame::Plain);
-    page_frame->setFrameShape(QFrame::NoFrame);
-    page_frame->setLineWidth(0);
-    page_frame->setMidLineWidth(0);
-    page_frame->setContentsMargins(0,0,0,0);
+    WidgetRack *rack = new WidgetRack(::Qt::Vertical, this);
     
-    page_frame->setLayout( new QVBoxLayout(page_frame) );
-    
-    QScrollArea *scroller = new QScrollArea(page_frame);
-    page_frame->layout()->addWidget(scroller);
-    scroller->show();
-    
-    add_button = new QPushButton( Conspire::tr("Add..."), page_frame );
-    add_button->setSizePolicy( QSizePolicy::MinimumExpanding,
-                               QSizePolicy::Minimum );
+    button_rack = new WidgetRack(::Qt::Vertical, rack);
+    button_rack->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+    rack->addWidget(button_rack);
+
+    add_button = new Button( Conspire::tr("Add...") );
+    add_button->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
     connect(add_button, SIGNAL(clicked()), this, SLOT(add()));
 
-    page_frame->layout()->addWidget(add_button);
+    rack->addWidget(add_button);
     add_button->hide();
 
-    button_frame = new QFrame(scroller);
-    button_frame->setFrameShadow(QFrame::Plain);
-    button_frame->setFrameShape(QFrame::Box);
-    button_frame->setLineWidth(1);
-    button_frame->setMidLineWidth(0);
-    button_frame->setContentsMargins(2,2,2,2);
-
-    button_frame->setLayout( new QVBoxLayout(button_frame) );
-    button_frame->show();
-    scroller->setWidget(button_frame);
-    scroller->setWidgetResizable(true);
-    
     mapper = new QSignalMapper(this);
     connect(mapper, SIGNAL(mapped(const QString&)), this, SLOT(clicked(const QString&)));
 
-    this->setPageWidget(page_frame);
+    this->setPageWidget(rack);
 }
 
 /** Set the options and root_key used by this object */
