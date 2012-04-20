@@ -63,9 +63,6 @@ ConfigDocument::~ConfigDocument()
 /** Build the widget */
 void ConfigDocument::build()
 {
-    QGraphicsLinearLayout *l = new QGraphicsLinearLayout(::Qt::Vertical, this);
-    this->setLayout(l);
-    
     undo_stack = new QUndoStack(this);
     connect(undo_stack, SIGNAL(canUndoChanged(bool)), 
             this, SIGNAL(canUndoChanged(bool)));
@@ -81,7 +78,7 @@ void ConfigDocument::build()
     connect(view, SIGNAL(canForwardChanged(bool)),
             this, SIGNAL(canForwardChanged(bool)));
             
-    l->addItem(view);
+    this->setPageWidget(view);
 }
 
 /** Return the current state of the options being viewed and edited */

@@ -73,28 +73,10 @@ QString OptionPage::rootKey() const
 /** Build the widget */
 void OptionPage::build()
 {
-    QGraphicsLinearLayout *l = new QGraphicsLinearLayout(::Qt::Vertical, this);
-    this->setLayout(l);
-    
-    help_box = new QLabel();
-    key_box = new QLabel();
-    
-    QGraphicsProxyWidget *help_box_proxy = new QGraphicsProxyWidget(this);
-    QGraphicsProxyWidget *key_box_proxy = new QGraphicsProxyWidget(this);
-    
-    help_box_proxy->setWidget(help_box);
-    key_box_proxy->setWidget(key_box);
-    
-    l->addItem(key_box_proxy);
-    l->addItem(help_box_proxy);
-    
     value_edit = new QLineEdit();
     connect(value_edit, SIGNAL(editingFinished()), this, SLOT(editingFinished()));
-    
-    QGraphicsProxyWidget *value_edit_proxy = new QGraphicsProxyWidget(this);
-    value_edit_proxy->setWidget(value_edit);
-    
-    l->addItem(value_edit_proxy);
+
+    this->setPageWidget(value_edit);
 }
 
 /** Function called when editing of the option is finished */
@@ -141,8 +123,16 @@ void OptionPage::setOption(Option option, QString key)
     opt = option;
     root_key = key;
     
-    help_box->setText(opt.description());
-    key_box->setText(opt.key());
+    this->setDescription(option.description());
+    
+    if (root_key.isEmpty())
+    {
+        this->setTitle(option.key());
+    }
+    else
+    {
+        this->setTitle( QString("%1.%2").arg(root_key, option.key()) );
+    }
     
     value_edit->setText(opt.value().toString());
     old_text = value_edit->text();

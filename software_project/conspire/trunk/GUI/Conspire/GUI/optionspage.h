@@ -34,10 +34,8 @@
 
 CONSPIRE_BEGIN_HEADER
 
-class QButtonGroup;
+class QFrame;
 class QAbstractButton;
-class QGroupBox;
-class QLabel;
 class QSignalMapper;
 
 namespace Conspire
@@ -64,7 +62,6 @@ namespace Conspire
         void reread(Options options);
 
     private slots:
-        void setBoxTitle(QString title);
         void clicked(const QString &key);
         void add();
 
@@ -80,15 +77,8 @@ namespace Conspire
         /** The root key of this options object */
         QString root_key;
         
-        /** The label used to display the description 
-            of the options */
-        QLabel *label;
-
-        /** The group box used to hold the child widgets */
-        QGroupBox *group_box;
-        
-        /** The group box used to hold all of the buttons */
-        QGroupBox *button_box;
+        /** The frame used to hold all of the option buttons */
+        QFrame *button_frame;
         
         /** The list of active buttons */
         QList<QAbstractButton*> buttons;

@@ -32,6 +32,12 @@
 
 #include "Conspire/exceptions.h"
 
+#include <QLabel>
+#include <QGroupBox>
+#include <QVBoxLayout>
+
+#include <QGraphicsProxyWidget>
+
 using namespace Conspire;
 
 //////////
@@ -60,8 +66,51 @@ void Page::build()
     is_blocked_by_parent = false;
     is_blocked_by_anim = false;
     is_broken = false;
+    display_title = true;
+    display_description = true;
 
     this->setFlag(QGraphicsItem::ItemClipsChildrenToShape, true);
+    
+    //now build the holder for the page widget
+    page_box = new QGroupBox();
+    page_box->setFlat(true);
+    page_box->setCheckable(false);
+    page_box->setAlignment( ::Qt::AlignLeft );
+    page_box_proxy = new QGraphicsProxyWidget(this);
+    page_box_proxy->setWidget(page_box);
+    page_box->setLayout( new QVBoxLayout(page_box) );
+    page_box_proxy->setGeometry(this->geometry());
+
+    description_label = new QLabel(page_box);
+    description_label->setWordWrap(true);
+    description_label->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
+    page_box->layout()->addWidget(description_label);
+    description_label->hide();
+    
+    box_label = new QLabel(page_box);
+    box_label->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
+    page_box->layout()->addWidget(box_label);
+    box_label->show();
+}
+
+/** Called when the widget is moved */
+void Page::moveEvent(QGraphicsSceneMoveEvent *e)
+{
+    QGraphicsWidget::moveEvent(e);
+    page_box_proxy->setGeometry(this->geometry());
+    
+    if (page_widget)
+        page_widget->setGeometry(box_label->geometry());
+}
+
+/** Called when the widget is resized */
+void Page::resizeEvent(QGraphicsSceneResizeEvent *e)
+{
+    QGraphicsWidget::resizeEvent(e);
+    page_box_proxy->setGeometry(this->geometry());
+    
+    if (page_widget)
+        page_widget->setGeometry(box_label->geometry());
 }
 
 /** Constructor, passing in the parent page of this page */
@@ -283,6 +332,10 @@ void Page::setTitle(QString title)
     if (title != page_title)
     {
         page_title = title;
+
+        if (display_title)
+            page_box->setTitle(page_title);
+        
         emit( titleChanged(page_title) );
     }
 }
@@ -293,7 +346,90 @@ void Page::setDescription(QString description)
     if (description != page_description)
     {
         page_description = description;
+        
+        if (display_description)
+        {
+            description_label->setText(page_description);
+            description_label->setVisible( not page_description.isEmpty() );
+        }
+        
         emit( descriptionChanged(page_description) );
+    }
+}
+
+/** Set whether or not the page title should be displayed */
+void Page::setTitleDisplayed(bool displayed)
+{
+    if (display_title != displayed)
+    {
+        if (displayed)
+        {
+            display_title = true;
+            page_box->setTitle(page_title);
+        }
+        else
+        {
+            display_title = false;
+            page_box->setTitle( QString::null );
+        }
+    }
+}
+
+/** Set whether or not the page description should be displayed */
+void Page::setDescriptionDisplayed(bool displayed)
+{
+    if (display_description != displayed)
+    {
+        if (displayed)
+        {
+            display_description = true;
+            description_label->setText(page_description);
+            description_label->show();
+        }
+        else
+        {
+            display_description = false;
+            description_label->setText(QString::null);
+            description_label->hide();
+        }
+    }
+}
+
+/** Set the widget that is displayed on this page. This Page takes
+    over ownership of the widget and is free to delete it whenever it wants... */
+void Page::setPageWidget(QGraphicsWidget *widget)
+{
+    if (page_widget)
+    {
+        page_widget->deleteLater();
+        page_widget = 0;
+    }
+    
+    page_widget = widget;
+    
+    if (page_widget)
+    {
+        page_widget->setParentItem(this);
+        page_widget->setGeometry(box_label->geometry());
+        page_widget->show();
+    }
+}
+
+/** Set the widget that is displayed on this page. This Page takes
+    over ownership of the widget and is free to delete it whenever it wants... */
+void Page::setPageWidget(QWidget *widget)
+{
+    if (widget)
+    {
+        QGraphicsProxyWidget *widget_proxy = new QGraphicsProxyWidget(this);
+        widget_proxy->setWidget(widget);
+        this->setPageWidget(widget_proxy);
+    }
+    else if (page_widget)
+    {
+        //clear the old widget
+        page_widget->deleteLater();
+        page_widget = 0;
     }
 }
 

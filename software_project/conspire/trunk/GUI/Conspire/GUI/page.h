@@ -38,7 +38,9 @@
 
 CONSPIRE_BEGIN_HEADER
 
-namespace Conspire{ class Page; }
+class QLabel;
+class QGroupBox;
+class QGraphicsProxyWidget;
 
 namespace Conspire
 {
@@ -127,6 +129,9 @@ namespace Conspire
         void setTitle(QString title);
         void setDescription(QString description);
 
+        void setTitleDisplayed(bool displayed);
+        void setDescriptionDisplayed(bool displayed);
+
         bool animationsEnabled() const;
         bool animationsPaused() const;
 
@@ -188,11 +193,17 @@ namespace Conspire
         void broken();
 
     protected:
+        void resizeEvent(QGraphicsSceneResizeEvent *e);
+        void moveEvent(QGraphicsSceneMoveEvent *e);
+
         friend class PagePointer;
         void incref();
         bool decref();
         
         void setBroken();
+        
+        void setPageWidget(QGraphicsWidget *widget);
+        void setPageWidget(QWidget *widget);
         
         void addChild(Page *page);
         PageWeakPointer takeChild(Page *page);
@@ -249,6 +260,17 @@ namespace Conspire
             the page */
         QList<AnimationPointer> bg_anims;
     
+        /** The main widget which is displayed on this page */
+        QPointer<QGraphicsWidget> page_widget;
+    
+        /** The group box used to hold the widget and the description label */
+        QGroupBox *page_box;
+        QGraphicsProxyWidget *page_box_proxy;
+        QLabel *box_label;
+        
+        /** The label used to hold the description of the page */
+        QLabel *description_label;
+    
         /** The number of PagePointer pointers currently 
             pointing to this widget */
         int ref_count;
@@ -278,6 +300,12 @@ namespace Conspire
         /** Whether or not this page is broken. Once set, a page
             is irrevecorably broken */
         bool is_broken;
+        
+        /** Whether or not to display the page title */
+        bool display_title;
+        
+        /** Whether or not to display the description of the page */
+        bool display_description;
     };
 
 }

@@ -35,10 +35,9 @@
 #include <QGraphicsProxyWidget>
 
 #include <QPushButton>
-#include <QLabel>
-#include <QGroupBox>
-#include <QVBoxLayout>
+#include <QFrame>
 #include <QScrollArea>
+#include <QVBoxLayout>
 
 #include <QSignalMapper>
 
@@ -96,8 +95,8 @@ void OptionsPage::pvt_reread(Options options)
     {
         for (int i=buttons.count(); i<keys.count(); ++i)
         {
-            QPushButton *b = new QPushButton(group_box);
-            button_box->layout()->addWidget(b);
+            QPushButton *b = new QPushButton(button_frame);
+            button_frame->layout()->addWidget(b);
             buttons.append(b);
 
             connect(b, SIGNAL(clicked()), mapper, SLOT(map()));
@@ -161,7 +160,6 @@ void OptionsPage::clicked(const QString &key)
     try
     {
         //create a new OptionsWidget to display the suboptions
-        conspireDebug() << "CLICKED" << key;
         Option opt = opts.getNestedOption(key);
         
         conspireDebug() << opt.toString();
@@ -170,11 +168,12 @@ void OptionsPage::clicked(const QString &key)
         {
             QString root = key;
                 
-            if (not root_key.isNull())
+            if (not root_key.isEmpty())
                 root.prepend(".").prepend(root_key);
 
             OptionsPage *page = new OptionsPage(opt.value().asA<Options>(), root);
-            page->setTitle(opt.key());
+
+            page->setTitle(root);
             page->setDescription(opt.description());
 
             emit( push(PagePointer(page)) );
@@ -182,6 +181,17 @@ void OptionsPage::clicked(const QString &key)
         else
         {
             OptionPage *page = new OptionPage(opt, root_key);
+            
+            if (not root_key.isEmpty())
+            {
+                page->setTitle( QString("%1.%2").arg(root_key, opt.key()) );
+            }
+            else
+            {
+                page->setTitle(opt.key());
+            }
+            
+            page->setDescription(opt.description());
             
             emit( push(PagePointer(page)) );
         }
@@ -198,69 +208,46 @@ void OptionsPage::clicked(const QString &key)
     }
 }
 
-void OptionsPage::setBoxTitle(QString title)
-{
-    group_box->setTitle(title);
-}
-
 /** Actually build the widget */
 void OptionsPage::build()
 {
-    group_box = new QGroupBox();
-    QVBoxLayout *vl = new QVBoxLayout(group_box);
-    group_box->setLayout(vl);
-    group_box->setSizePolicy( QSizePolicy::MinimumExpanding, 
-                              QSizePolicy::MinimumExpanding );
+    QFrame *page_frame = new QFrame();
+    page_frame->setFrameShadow(QFrame::Plain);
+    page_frame->setFrameShape(QFrame::NoFrame);
+    page_frame->setLineWidth(0);
+    page_frame->setMidLineWidth(0);
+    page_frame->setContentsMargins(0,0,0,0);
     
-    connect(this, SIGNAL(titleChanged(QString)),
-            this, SLOT(setBoxTitle(QString)));
+    page_frame->setLayout( new QVBoxLayout(page_frame) );
     
-    label = new QLabel(group_box);
-    label->setWordWrap(true);
-    label->setSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Minimum );
-
-    connect(this, SIGNAL(descriptionChanged(QString)),
-            label, SLOT(setText(QString)));
-
-    vl->addWidget(label);
-    label->hide();
+    QScrollArea *scroller = new QScrollArea(page_frame);
+    page_frame->layout()->addWidget(scroller);
+    scroller->show();
     
-    QScrollArea *area = new QScrollArea(group_box);
-    area->setSizePolicy( QSizePolicy::MinimumExpanding,
-                         QSizePolicy::MinimumExpanding );
-    vl->addWidget(area);
-    
-    button_box = new QGroupBox(area);
-    button_box->setLayout(new QVBoxLayout(button_box));
-    button_box->setFlat(true);
-    button_box->setSizePolicy( QSizePolicy::MinimumExpanding,
-                               QSizePolicy::MinimumExpanding );
-
-    area->setWidget(button_box);
-    area->setWidgetResizable(true);
-
-    button_box->show();
-    area->show();
-    
-    add_button = new QPushButton( Conspire::tr("Add..."), group_box );
+    add_button = new QPushButton( Conspire::tr("Add..."), page_frame );
     add_button->setSizePolicy( QSizePolicy::MinimumExpanding,
                                QSizePolicy::Minimum );
     connect(add_button, SIGNAL(clicked()), this, SLOT(add()));
 
-    vl->addWidget(add_button);
+    page_frame->layout()->addWidget(add_button);
     add_button->hide();
+
+    button_frame = new QFrame(scroller);
+    button_frame->setFrameShadow(QFrame::Plain);
+    button_frame->setFrameShape(QFrame::Box);
+    button_frame->setLineWidth(1);
+    button_frame->setMidLineWidth(0);
+    button_frame->setContentsMargins(2,2,2,2);
+
+    button_frame->setLayout( new QVBoxLayout(button_frame) );
+    button_frame->show();
+    scroller->setWidget(button_frame);
+    scroller->setWidgetResizable(true);
     
     mapper = new QSignalMapper(this);
     connect(mapper, SIGNAL(mapped(const QString&)), this, SLOT(clicked(const QString&)));
 
-    QGraphicsLinearLayout *l = new QGraphicsLinearLayout( ::Qt::Vertical, this );
-    this->setLayout(l);
-
-    QGraphicsProxyWidget *group_box_proxy = new QGraphicsProxyWidget(this);
-    group_box_proxy->setWidget(group_box);
-    group_box_proxy->setSizePolicy( QSizePolicy::MinimumExpanding,
-                                    QSizePolicy::MinimumExpanding );
-    l->addItem(group_box_proxy);
+    this->setPageWidget(page_frame);
 }
 
 /** Set the options and root_key used by this object */

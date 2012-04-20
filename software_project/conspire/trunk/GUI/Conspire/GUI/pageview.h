@@ -81,6 +81,7 @@ namespace Conspire
         
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
+        void moveEvent(QGraphicsSceneMoveEvent *e);
 
         void keyPressEvent(QKeyEvent *e);
         void mousePressEvent(QMouseEvent *e);

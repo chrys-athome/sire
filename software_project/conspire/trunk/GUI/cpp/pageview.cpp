@@ -30,10 +30,8 @@
 
 #include <QTabBar>
 #include <QLabel>
-#include <QPixmap>
 
-#include <QGraphicsProxyWidget>
-#include <QGraphicsLinearLayout>
+#include <QVBoxLayout>
 
 #include <QPropertyAnimation>
 #include <QParallelAnimationGroup>
@@ -431,6 +429,22 @@ void PageView::resizeEvent(QGraphicsSceneResizeEvent *e)
     }
 }
 
+/** Called when this widget is moved */
+void PageView::moveEvent(QGraphicsSceneMoveEvent *e)
+{
+    Page::moveEvent(e);
+
+    if (current_tab != -1)
+    {
+        Tab *tab = tabpages[current_tab];
+        
+        if (tab->current_page)
+        {
+            tab->current_page->setGeometry(label->geometry());
+        }
+    }
+}
+
 /** Called when a key press is detected in this widget */
 void PageView::keyPressEvent(QKeyEvent *e)
 {
@@ -453,28 +467,23 @@ void PageView::build()
     anims_enabled = true;
     current_tab = -1;
 
-    QGraphicsLinearLayout *l = new QGraphicsLinearLayout(::Qt::Vertical, this);
-    this->setLayout(l);
-    
-    tabbar = new QTabBar();
-    tabbar->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
-    tabbar->setTabsClosable(true);
-    
-    QGraphicsProxyWidget *tabbar_proxy = new QGraphicsProxyWidget(this);
-    tabbar_proxy->setWidget(tabbar);
-    
-    l->addItem(tabbar_proxy);
+    QFrame *page_frame = new QFrame();
+    page_frame->setFrameShadow(QFrame::Plain);
+    page_frame->setFrameShape(QFrame::NoFrame);
+    page_frame->setLineWidth(0);
+    page_frame->setMidLineWidth(0);
+    page_frame->setContentsMargins(0,0,0,0);
 
-    label = new QLabel();
-    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    label->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-    //label->setScaledContents(true);
-    //label->setPixmap( QPixmap("bg.png") );
+    page_frame->setLayout( new QVBoxLayout(page_frame) );
     
-    QGraphicsProxyWidget *label_proxy = new QGraphicsProxyWidget(this);
-    label_proxy->setWidget(label);
+    tabbar = new QTabBar(page_frame);
+    tabbar->setTabsClosable(true);
+    page_frame->layout()->addWidget(tabbar);
+
+    label = new QLabel(page_frame);
+    page_frame->layout()->addWidget(label);
     
-    l->addItem(label_proxy);
+    this->setPageWidget(page_frame);
 }
 
 /** Internal function used to make the passed view visible */
