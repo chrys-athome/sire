@@ -38,8 +38,19 @@ using namespace Conspire;
 ////////// Implementation of Page
 //////////
 
+QString Page::toString() const
+{
+    return QString("Page( %1, parent = %2, type = %3, title = %4 )")
+                        .arg( QString::number((size_t)(this),16) )
+                        .arg( QString::number((size_t)(this->parent_page.data()),16) )
+                        .arg(this->metaObject()->className())
+                        .arg(this->title());
+}
+
 void Page::build()
 {
+    conspireDebug() << "CONSTRUCTING PAGE" << this->toString();
+
     ref_count = 0;
     anims_enabled = true;
     anims_enabled_by_parent = true;
@@ -65,6 +76,8 @@ Page::Page(Page *parent) : QGraphicsWidget()
 /** Destructor */
 Page::~Page()
 {
+    conspireDebug() << "DESTROYING PAGE" << this->toString();
+
     if (parent_page)
         parent_page->childDeleted(this);
         
@@ -664,6 +677,8 @@ void Page::animate(AnimationPointer anim, bool bg_anim)
         fg_anim = anim;
         connect(anim, SIGNAL(finished(Animation*)),
                 this, SLOT(animationFinished(Animation*)));
+
+        anim->start();
                 
         //immediately stop the animation if animations are not enabled
         if (not animationsEnabled())
@@ -938,6 +953,14 @@ const Page* PagePointer::data() const
 bool PagePointer::isNull() const
 {
     return (not p);
+}
+
+QString PagePointer::toString() const
+{
+    if (p)
+        return p->toString();
+    else
+        return "Page::null";
 }
 
 /** Return the raw pointer to the page */

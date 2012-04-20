@@ -62,6 +62,7 @@ namespace Conspire
         const Animation* data() const;
         
         bool isNull() const;
+        QString toString() const;
         
         operator Animation*();
     
@@ -137,8 +138,7 @@ namespace Conspire
                   
         ~Animation();
 
-        void setAutoStopDelay(int ms);
-        int autoStopDelay() const;
+        QString toString() const;
 
         bool isRunning() const;
 
@@ -165,18 +165,6 @@ namespace Conspire
     
         /** Pointer to the animation to be performed */
         QPointer<QAbstractAnimation> anim;
-        
-        /** Pointer to the timer used to force an animation to end */
-        QPointer<QTimer> stop_timer;
-        
-        /** The delay, in milliseconds, after the expected end time of
-            the animation, at which the animation will be automatically
-            stopped. This is used to prevent animations stacking up
-            and blocking the user-interface when the system is under
-            heavy load. If this is 0 or less, then the animation
-            is either a looping animation, or it will not be automatically 
-            stopped */
-        int autostop_delay;
 
         /** The number of AnimationPointer pointers currently 
             pointing to this animation */

@@ -65,8 +65,8 @@ namespace Conspire
         
         virtual void home(bool clear_history=false);
         
-        virtual void push(PagePointer page, bool new_tab=false);
-        virtual void pop(bool forget_page=false);
+        virtual void pushed(PagePointer page, bool new_tab=false);
+        virtual void popped(bool forget_page=false);
         
         virtual void moveTab(int from, int to);
         virtual void changeTab(int index);

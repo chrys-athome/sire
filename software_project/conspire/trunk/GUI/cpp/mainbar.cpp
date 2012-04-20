@@ -85,6 +85,13 @@ void MainBar::build()
     QGraphicsProxyWidget *forward_button_proxy = new QGraphicsProxyWidget(this);
     forward_button_proxy->setWidget(forward_button);
 
+    home_button = new QPushButton( QObject::tr("Home") );
+    home_button->setEnabled(true);
+    connect(home_button, SIGNAL(clicked()), this, SIGNAL(home()));
+    
+    QGraphicsProxyWidget *home_button_proxy = new QGraphicsProxyWidget(this);
+    home_button_proxy->setWidget(home_button);
+
     QPushButton *quit_button = new QPushButton( QObject::tr("Quit") );
     quit_button->setEnabled(true);
     connect(quit_button, SIGNAL(clicked()), QCoreApplication::instance(), SLOT(quit()));
@@ -92,6 +99,7 @@ void MainBar::build()
     QGraphicsProxyWidget *quit_button_proxy = new QGraphicsProxyWidget(this);
     quit_button_proxy->setWidget(quit_button);
 
+    layout->addItem(home_button_proxy);
     layout->addItem(back_button_proxy);
     layout->addItem(forward_button_proxy);
     layout->addItem(new_button_proxy);

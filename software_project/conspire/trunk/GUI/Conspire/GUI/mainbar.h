@@ -65,6 +65,7 @@ namespace Conspire
         
         void back();
         void forward();
+        void home();
 
         void newPage();
 
@@ -78,6 +79,7 @@ namespace Conspire
 
         QAbstractButton *back_button;
         QAbstractButton *forward_button;
+        QAbstractButton *home_button;
     };
     
 }

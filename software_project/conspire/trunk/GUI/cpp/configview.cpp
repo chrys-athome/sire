@@ -41,11 +41,11 @@ ConfigView::~ConfigView()
 /** Reimplementation of PageView::push, with additional functionality to
     ensure that all ConfigPage pages are updated correctly when the Options
     object changes */
-void ConfigView::push(PagePointer page, bool new_tab)
+void ConfigView::pushed(PagePointer page, bool new_tab)
 {
     if (page and not page->isBroken())
     {
-        PageView::push(page, new_tab);
+        PageView::pushed(page, new_tab);
     
         ConfigPage *config = dynamic_cast<ConfigPage*>(page.data());
         

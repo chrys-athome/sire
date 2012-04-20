@@ -114,20 +114,20 @@ void PageView::home(bool clear_history)
 {
     if (current_tab == -1)
         return;
-        
+
     Tab *tab = tabpages[current_tab];
 
     if (clear_history)
     {
         tab->page_history.clear();
         tab->page_future.clear();
-        pop(true);
+        popped(true);
     }
     else
     {
         if (tab->current_page != tab->top_page)
         {
-            push(tab->top_page);
+            pushed(tab->top_page);
         }
     }
 }
@@ -136,30 +136,15 @@ void PageView::home(bool clear_history)
     page and pushes the previously viewed page into the view history. Note
     that if "new_tab" is true, then this creates a new tab using the passed
     page, which becomes its own top-level page in that tab */
-void PageView::push(PagePointer page, bool new_tab)
+void PageView::pushed(PagePointer page, bool new_tab)
 {
     if (not page or page->isBroken())
-    {
-        conspireDebug() << "TRYING TO PUSH A BROKEN PAGE?";
         return;
-    }
 
-    page->hide();
-    
     //make this page a child of this page
     // (need twice - one as a QGraphicsItem child, one as a Page child)
     page->setParentItem(this);
     page->setParentPage(this);
-    
-    page->setGeometry(label->geometry());
-    
-    if (page->geometry().width() > label->geometry().width() or
-        page->geometry().height() > label->geometry().height())
-    {
-        label->setMinimumSize(page->geometry().width(),
-                              page->geometry().height());
-    }
-    
     page->setGeometry(label->geometry());
 
     Tab *tab = 0;
@@ -181,10 +166,7 @@ void PageView::push(PagePointer page, bool new_tab)
             tabbar->hide();
         else
             tabbar->show();
-            
-        // DEBUGGING
-        tabbar->show();
-            
+          
         this->changeTab(idx);
     }
     else
@@ -194,23 +176,8 @@ void PageView::push(PagePointer page, bool new_tab)
     }
     
     connect(page.data(), SIGNAL(push(PagePointer,bool)), 
-            this, SLOT(push(PagePointer,bool)));
-    connect(page.data(), SIGNAL(pop(bool)), this, SLOT(pop(bool)));
-
-    //make sure that this view can override the events of the page,
-    //if so desired
-    page->installEventFilter(this);
-
-    //if this page is itself a PageView, then make sure that any
-    //animation-enabled state changes are propogated to this child
-    PageView *view = dynamic_cast<PageView*>(page.data());
-    
-    if (view)
-    {
-        view->setAnimationsEnabled(this->animationsEnabled());
-        connect(this, SIGNAL(animationsEnabledChanged(bool)),
-                view, SLOT(setAnimationsEnabled(bool)));
-    }
+            this, SLOT(pushed(PagePointer,bool)));
+    connect(page.data(), SIGNAL(pop(bool)), this, SLOT(popped(bool)));
 
     emit( canBackChanged(not tab->page_history.isEmpty()) );
     emit( canForwardChanged(not tab->page_future.isEmpty()) );
@@ -295,7 +262,7 @@ void PageView::checkDisconnectTab(Tab *tab)
 /** Pop the current view and return to the previous view in the current tab.
     This will forget the popped view if "forget_page" is true, which is useful
     if this page is a dialog type widget */
-void PageView::pop(bool forget_page)
+void PageView::popped(bool forget_page)
 {
     PagePointer page = this->popView(forget_page);
 
@@ -418,9 +385,6 @@ void PageView::closeTab(int index)
     {
         tabbar->hide();
     }
-
-    // DEBUGGING
-    tabbar->show();
 }
 
 /** Close all of the tabs - this will delete every page and all of their contents */
@@ -456,8 +420,6 @@ void PageView::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
 
-    conspireDebug() << "RESIZE TO SIZE" << label->size();
-    
     if (current_tab != -1)
     {
         Tab *tab = tabpages[current_tab];
@@ -506,8 +468,8 @@ void PageView::build()
     label = new QLabel();
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     label->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-    label->setScaledContents(true);
-    label->setPixmap( QPixmap("bg.png") );
+    //label->setScaledContents(true);
+    //label->setPixmap( QPixmap("bg.png") );
     
     QGraphicsProxyWidget *label_proxy = new QGraphicsProxyWidget(this);
     label_proxy->setWidget(label);
@@ -524,7 +486,7 @@ void PageView::pushView(PagePointer new_page, bool clear_future)
     if (current_tab == -1)
     {
         //need to create a new tab for this page
-        this->push(new_page, true);
+        this->pushed(new_page, true);
         return;
     }
 
@@ -618,23 +580,22 @@ void PageView::animateDestroy(PagePointer old_page)
     if (not old_page)
         return;
         
-    old_page->show();
     old_page->setGeometry(label->geometry());
     old_page->setOpacity(1.0);
 
     QParallelAnimationGroup *g = new QParallelAnimationGroup();
     
     QPropertyAnimation *anim = new QPropertyAnimation(old_page.data(), "opacity");
-    anim->setDuration(1000);
+    anim->setDuration(500);
     anim->setStartValue(1.0);
     anim->setEndValue(0.0);
     g->addAnimation(anim);
     
     anim = new QPropertyAnimation(old_page.data(), "x");
-    anim->setDuration(1000);
+    anim->setDuration(500);
     anim->setStartValue(old_page->x());
     anim->setEndValue(old_page->x() - 2 * old_page->geometry().width());
-    anim->setEasingCurve(QEasingCurve::InOutBack);
+    anim->setEasingCurve(QEasingCurve::OutBack);
     g->addAnimation(anim);
 
     this->animate( AnimationPointer(new Animation(g)) );
@@ -655,16 +616,16 @@ void PageView::animateNew(PagePointer new_page)
     QParallelAnimationGroup *g = new QParallelAnimationGroup();
     
     QPropertyAnimation *anim = new QPropertyAnimation(new_page.data(), "opacity");
-    anim->setDuration(1000);
+    anim->setDuration(500);
     anim->setStartValue(0.0);
     anim->setEndValue(1.0);
     g->addAnimation(anim);
     
     anim = new QPropertyAnimation(new_page.data(), "x");
-    anim->setDuration(1000);
+    anim->setDuration(500);
     anim->setStartValue(new_page->x() + 2 * new_page->geometry().width());
     anim->setEndValue(new_page->x());
-    anim->setEasingCurve(QEasingCurve::InOutBack);
+    anim->setEasingCurve(QEasingCurve::OutBack);
     g->addAnimation(anim);
 
     this->animate( AnimationPointer(new Animation(g)) );
@@ -687,7 +648,6 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
 
     //make sure that the two views have the correct size
     new_page->setOpacity(0);
-    new_page->show();
     
     //make sure that the new page has the size of the background label
     new_page->setGeometry(label->geometry());
@@ -695,21 +655,20 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
                                        0.5 * new_page->geometry().height() );
     
     //also ensure that the old page has the size of the background label
-    old_page->resize(label->size());
-    old_page->show();
+    old_page->setGeometry(label->geometry());
     old_page->setTransformOriginPoint( 0.5 * old_page->geometry().width(),
                                        0.5 * old_page->geometry().height() );
 
     QParallelAnimationGroup *g = new QParallelAnimationGroup();
 
     QPropertyAnimation *anim = new QPropertyAnimation(old_page.data(), "opacity");
-    anim->setDuration(1000);
+    anim->setDuration(500);
     anim->setStartValue(1.0);
     anim->setEndValue(0.0);
     g->addAnimation(anim);
 
     anim = new QPropertyAnimation(new_page.data(), "opacity");
-    anim->setDuration(1000);
+    anim->setDuration(500);
     anim->setStartValue(0.0);
     anim->setEndValue(1.0);
     g->addAnimation(anim);
@@ -717,61 +676,61 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
     if (move_forwards)
     {
         anim = new QPropertyAnimation(old_page.data(), "x");
-        anim->setDuration(1000);
+        anim->setDuration(500);
         anim->setStartValue(old_page->x());
         anim->setEndValue(old_page->x() - 2 * old_page->geometry().width());
-        anim->setEasingCurve(QEasingCurve::InOutBack);
+        anim->setEasingCurve(QEasingCurve::OutBack);
         g->addAnimation(anim);
         
         anim = new QPropertyAnimation(new_page.data(), "x");
-        anim->setDuration(1000);
+        anim->setDuration(500);
         anim->setStartValue(new_page->x() + 2 * new_page->geometry().width());
         anim->setEndValue(new_page->x());
-        anim->setEasingCurve(QEasingCurve::InOutBack);
+        anim->setEasingCurve(QEasingCurve::OutBack);
         g->addAnimation(anim);
         
         anim = new QPropertyAnimation(new_page.data(), "rotation");
-        anim->setDuration(1000);
+        anim->setDuration(500);
         anim->setStartValue(45);
         anim->setEndValue(0);
-        anim->setEasingCurve(QEasingCurve::InOutBack);
+        anim->setEasingCurve(QEasingCurve::OutBack);
         g->addAnimation(anim);
         
         anim = new QPropertyAnimation(old_page.data(), "rotation");
-        anim->setDuration(1000);
+        anim->setDuration(500);
         anim->setStartValue(0);
         anim->setEndValue(-45);
-        anim->setEasingCurve(QEasingCurve::InOutBack);
+        anim->setEasingCurve(QEasingCurve::OutBack);
         g->addAnimation(anim);
     }
     else
     {
         anim = new QPropertyAnimation(old_page.data(), "x");
-        anim->setDuration(1000);
+        anim->setDuration(500);
         anim->setStartValue(old_page->x());
         anim->setEndValue(old_page->x() + 2 * old_page->geometry().width());
-        anim->setEasingCurve(QEasingCurve::InOutBack);
+        anim->setEasingCurve(QEasingCurve::OutBack);
         g->addAnimation(anim);
         
         anim = new QPropertyAnimation(new_page.data(), "x");
-        anim->setDuration(1000);
+        anim->setDuration(500);
         anim->setStartValue(new_page->x() - 2 * new_page->geometry().width());
         anim->setEndValue(new_page->x());
-        anim->setEasingCurve(QEasingCurve::InOutBack);
+        anim->setEasingCurve(QEasingCurve::OutBack);
         g->addAnimation(anim);
         
         anim = new QPropertyAnimation(new_page.data(), "rotation");
-        anim->setDuration(1000);
+        anim->setDuration(500);
         anim->setStartValue(-45);
         anim->setEndValue(0);
-        anim->setEasingCurve(QEasingCurve::InOutBack);
+        anim->setEasingCurve(QEasingCurve::OutBack);
         g->addAnimation(anim);
         
         anim = new QPropertyAnimation(old_page.data(), "rotation");
-        anim->setDuration(1000);
+        anim->setDuration(500);
         anim->setStartValue(0);
         anim->setEndValue(45);
-        anim->setEasingCurve(QEasingCurve::InOutBack);
+        anim->setEasingCurve(QEasingCurve::OutBack);
         g->addAnimation(anim);
     }
 

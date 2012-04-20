@@ -34,8 +34,11 @@
 
 #include <QGraphicsWidget>
 #include <QPointer>
+#include <QDebug>
 
 CONSPIRE_BEGIN_HEADER
+
+namespace Conspire{ class Page; }
 
 namespace Conspire
 {
@@ -64,6 +67,8 @@ namespace Conspire
         
         Page* data();
         const Page* data() const;
+        
+        QString toString() const;
         
         bool isNull() const;
         
@@ -113,6 +118,8 @@ namespace Conspire
         Page(Page *parent=0);
         
         virtual ~Page();
+
+        QString toString() const;
 
         QString title() const;
         QString description() const;
@@ -193,7 +200,7 @@ namespace Conspire
         friend class PageView;
         PageWeakPointer weakParentPage() const;
         QList<PageWeakPointer> weakChildPages() const;
-        
+
     private:
         void build();
     

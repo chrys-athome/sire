@@ -101,7 +101,7 @@ void ConfigDocument::add(QString full_key)
     }
     catch(const Conspire::Exception &e)
     {
-        view->push( PagePointer( new ExceptionPage(
+        view->pushed( PagePointer( new ExceptionPage(
                 Conspire::tr("Something went wrong when you tried to add "
                              "a new Option called \"%1\"").arg(full_key), e, view) ) );
 
@@ -120,7 +120,7 @@ void ConfigDocument::remove(QString full_key)
     }
     catch(const Conspire::Exception &e)
     {
-        view->push( PagePointer( new ExceptionPage(
+        view->pushed( PagePointer( new ExceptionPage(
                 Conspire::tr("Something went wrong when you tried to remove "
                              "an Option called \"%1\"").arg(full_key), e, view) ) );
     
@@ -140,7 +140,7 @@ void ConfigDocument::update(QString full_key, Obj new_value)
     }
     catch(const Conspire::Exception &e)
     {
-        view->push( PagePointer( new ExceptionPage(
+        view->pushed( PagePointer( new ExceptionPage(
                 Conspire::tr("Something went wrong when you tried to set the "
                              "value of the Option called \"%1\" to \"%2\".")
                                 .arg(full_key, new_value.toString()), e, view ) ) );
@@ -184,7 +184,7 @@ void ConfigDocument::setOptions(Options options)
 {
     if (view->count() == 0)
     {
-        view->push( PagePointer(new OptionsPage(options,view)), true );
+        view->pushed( PagePointer(new OptionsPage(options,view)), true );
     }
     else
     {
@@ -198,7 +198,7 @@ void ConfigDocument::setOptions(Options options)
             conspireDebug() << e.toString();
             
             view->closeAll();
-            view->push( PagePointer(new OptionsPage(options,view)), true );
+            view->pushed( PagePointer(new OptionsPage(options,view)), true );
         }
     }
     

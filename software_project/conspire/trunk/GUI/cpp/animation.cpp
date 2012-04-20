@@ -93,6 +93,14 @@ bool AnimationPointer::isNull() const
     return (not a);
 }
 
+QString AnimationPointer::toString() const
+{
+    if (a)
+        return a->toString();
+    else
+        return "Animation::NULL";
+}
+
 /** Return the raw pointer to the Animation */
 AnimationPointer::operator Animation*()
 {
@@ -167,7 +175,6 @@ bool AnimationPointer::operator!=(const AnimationPointer &other) const
 void Animation::build()
 {
     ref_count = 0;
-    autostop_delay = 250;
     is_running = false;
 }
 
@@ -208,31 +215,17 @@ Animation::~Animation()
     }
 }
 
+QString Animation::toString() const
+{
+    return QString("Animation( %1, isRunning() == %2 )")
+                .arg( QString::number( (size_t)(anim.data()), 16 ) )
+                .arg( isRunning() );
+}
+
 /** Return whether or not the animation is running */
 bool Animation::isRunning() const
 {
     return is_running;
-}
-
-/** Set the delay after the end of the expected end of the 
-    animation at which the animation will be automatically stopped.
-    If any value less than or equal to zero is passed, then
-    the animation will never be automatically stopped. Note that
-    this is ignored if the animation has an undefined duration
-    (e.g. if it runs continuously for ever) */
-void Animation::setAutoStopDelay(int ms)
-{
-    if (ms < 0)
-        autostop_delay = 0;
-    else
-        autostop_delay = ms;
-}
-
-/** Return the delay after which the animation will be automatically
-    stopped. */
-int Animation::autoStopDelay() const
-{
-    return autostop_delay;
 }
 
 /** Start the animation. If it is already running, then it stops
@@ -241,18 +234,10 @@ void Animation::start()
 {
     if (anim)
     {
-        if (stop_timer or (anim->state() != QAbstractAnimation::Stopped))
+        if (anim->state() != QAbstractAnimation::Stopped)
         {
-            if (stop_timer)
-            {
-                stop_timer->disconnect(this);
-                this->disconnect(stop_timer);
-                stop_timer->deleteLater();
-                stop_timer = 0;
-            }
-            
             anim->disconnect(this);
-            this->disconnect(stop_timer);
+            this->disconnect(anim);
             
             if (anim->direction() == QAbstractAnimation::Forward)
             {
@@ -265,26 +250,11 @@ void Animation::start()
             
             anim->stop();
         }
-
-        int stop_time = 0;
-        
-        if (anim->duration() > 0 and autostop_delay > 0)
-        {
-            stop_time = anim->duration() + autostop_delay;
-        }
         
         is_running = true;
         connect(anim, SIGNAL(finished()), this, SLOT(stop()));
         anim->start();
         emit( started(this) );
-        
-        if (stop_time > 0)
-        {
-            stop_timer = new QTimer(this);
-            stop_timer->setSingleShot(true);
-            connect(stop_timer.data(), SIGNAL(timeout()), this, SLOT(stop()));
-            stop_timer->start();
-        }
     }
 }
 
@@ -293,29 +263,27 @@ void Animation::start()
     animation) */
 void Animation::stop()
 {
-    if (stop_timer)
+    if (not is_running)
+        return;
+
+    if (anim)
     {
-        stop_timer->disconnect(this);
-        this->disconnect(stop_timer);
-        stop_timer->deleteLater();
-        stop_timer = 0;
-    }
-    
-    anim->disconnect(this);
-    this->disconnect(anim);
-    
-    if (anim->direction() == QAbstractAnimation::Forward)
-    {
-        anim->setCurrentTime(anim->duration());
-    }
-    else
-    {
-        anim->setCurrentTime(0);
-    }
-    
-    if (anim->state() != QAbstractAnimation::Stopped)
-    {
-        anim->stop();
+        anim->disconnect(this);
+        this->disconnect(anim);
+        
+        if (anim->direction() == QAbstractAnimation::Forward)
+        {
+            anim->setCurrentTime(anim->duration());
+        }
+        else
+        {
+            anim->setCurrentTime(0);
+        }
+        
+        if (anim->state() != QAbstractAnimation::Stopped)
+        {
+            anim->stop();
+        }
     }
     
     if (is_running)
@@ -328,12 +296,14 @@ void Animation::stop()
 /** Pause the animation */
 void Animation::pause()
 {
+    conspireDebug() << "Pausing animation" << this->toString();
+
     if (anim)
     {
         if (anim->state() == QAbstractAnimation::Running)
         {
-            anim->pause();
-            emit( paused(this) );
+            //anim->pause();
+            //emit( paused(this) );
         }
     }
 }
@@ -341,12 +311,14 @@ void Animation::pause()
 /** Resume a paused animation */
 void Animation::resume()
 {
+    conspireDebug() << "Resuming animation" << this->toString();
+
     if (anim)
     {
         if (anim->state() == QAbstractAnimation::Paused)
         {
-            anim->resume();
-            emit( resumed(this) );
+            //anim->resume();
+            //emit( resumed(this) );
         }
     }
 }
