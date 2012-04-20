@@ -76,16 +76,19 @@ QString Button::text() const
 }
 
 /** Set the text to be rendered */
-void Button::setText(QString text)
+void Button::setText(QString t)
 {
+    if (t == this->text())
+        return;
+
     if (txt)
         delete txt;
     
-    if (not text.isEmpty())
+    if (not t.isEmpty())
     {
         QSizeF button_size = this->size();
 
-        txt = new QStaticText(text);
+        txt = new QStaticText(t);
         txt->setTextWidth( 0.8 * button_size.width() );
         txt->prepare( QTransform(), QFont("Helvetica [Cronyx]", 12) );
         
@@ -93,6 +96,8 @@ void Button::setText(QString text)
         
         offset_x = 0.5 * (button_size.width() - text_size.width());
         offset_y = 0.5 * (button_size.height() - text_size.height());
+        
+        update(this->geometry());
     }
 }
 
