@@ -57,6 +57,10 @@ namespace Conspire
     public slots:
         void reread(Options options);
     
+    protected:
+        void resizeEvent(QGraphicsSceneResizeEvent *e);
+        void moveEvent(QGraphicsSceneMoveEvent *e);
+    
     private slots:
         void editingFinished();
     

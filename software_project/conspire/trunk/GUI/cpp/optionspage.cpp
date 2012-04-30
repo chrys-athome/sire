@@ -32,9 +32,13 @@
 #include "Conspire/GUI/exceptionpage.h"
 
 #include "Conspire/GUI/button.h"
+#include "Conspire/GUI/optionbutton.h"
 #include "Conspire/GUI/widgetrack.h"
 
 #include <QSignalMapper>
+
+#include <QPainter>
+#include <QBrush>
 
 using namespace Conspire;
 
@@ -90,7 +94,7 @@ void OptionsPage::pvt_reread(Options options)
     {
         for (int i=buttons.count(); i<keys.count(); ++i)
         {
-            Button *b = new Button();
+            OptionButton *b = new OptionButton();
             b->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Expanding );
             button_rack->addWidget(b);
             buttons.append(b);
@@ -102,23 +106,25 @@ void OptionsPage::pvt_reread(Options options)
     {
         while (buttons.count() > keys.count())
         {
-            Button *b = buttons.takeLast();
+            OptionButton *b = buttons.takeLast();
             delete b;
         }
     }
     
     for (int i=0; i<keys.count(); ++i)
     {
-        Button *b = buttons[i];
+        OptionButton *b = buttons[i];
         Option opt = opts.getNestedOption(keys[i]);
+
+        b->setText( keys[i] );
         
         if (opt.hasSubOptions())
         {
-            b->setText( QString("%1 ----->").arg(keys[i]) );
+            b->setValue( QString::null );
         }
         else
         {
-            b->setText( QString("%1 == %2").arg(keys[i], opt.value().toString()) );
+            b->setValue( opt.value().toString() );
         }
         
         b->show();
@@ -207,7 +213,10 @@ void OptionsPage::clicked(const QString &key)
 /** Actually build the widget */
 void OptionsPage::build()
 {
-    WidgetRack *rack = new WidgetRack(::Qt::Vertical, this);
+    setTitle("Unnamed OptionsPage");
+    setDescription("Unnamed OptionsPage description");
+
+    rack = new WidgetRack(::Qt::Vertical, this);
     
     button_rack = new WidgetRack(::Qt::Vertical, rack);
     button_rack->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -223,7 +232,30 @@ void OptionsPage::build()
     mapper = new QSignalMapper(this);
     connect(mapper, SIGNAL(mapped(const QString&)), this, SLOT(clicked(const QString&)));
 
-    this->setPageWidget(rack);
+    rack->setGeometry( this->geometry() );
+}
+
+void OptionsPage::resizeEvent(QGraphicsSceneResizeEvent *e)
+{
+    Page::resizeEvent(e);
+    rack->setGeometry( this->geometry() );
+}
+
+void OptionsPage::moveEvent(QGraphicsSceneMoveEvent *e)
+{
+    Page::moveEvent(e);
+    rack->setGeometry( this->geometry() );
+}
+
+void OptionsPage::paint(QPainter *painter, 
+                        const QStyleOptionGraphicsItem *option, 
+                        QWidget *widget)
+{
+    conspireDebug() << "OptionsPage::paint(...)";
+    conspireDebug() << this->geometry();
+
+    painter->setBrush( QBrush(::Qt::red) );
+    painter->drawRect( this->geometry() );
 }
 
 /** Set the options and root_key used by this object */

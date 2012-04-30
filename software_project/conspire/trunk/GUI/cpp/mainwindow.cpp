@@ -72,12 +72,20 @@ MainWindow::~MainWindow()
 void MainWindow::resizeEvent(QResizeEvent *e)
 {
     QGraphicsView::resizeEvent(e);
+    this->scene()->setSceneRect(0, 0, this->viewport()->size().width(), 
+                                      this->viewport()->size().height());
     
-    view->resize( this->viewport()->size() );
     mainbar->resize( this->viewport()->size().width(),
                      mainbar->size().height() );
-    
-    this->scene()->setSceneRect(0, 0, view->size().width(), view->size().height());
+    mainbar->setPos(0, this->viewport()->size().height() - mainbar->size().height());
+
+    bg->setRect(1, 1,
+                this->viewport()->size().width()-3, 
+                this->viewport()->size().height() - mainbar->size().height()-2);
+
+    view->setPos(0, 0);
+    view->resize( this->viewport()->size().width(), 
+                  this->viewport()->size().height() - mainbar->size().height() );
 }
 
 /** Internal function used to build the GUI. In general, the GUI should
@@ -90,17 +98,32 @@ void MainWindow::build()
     this->setScene( new QGraphicsScene(this) );
 
     mainbar = new MainBar();
-    mainbar->setPos(0, 0);
-    mainbar->setZValue(1);
+    mainbar->setZValue(2);
+    mainbar->resize(this->viewport()->size().width(), mainbar->size().height());
+    mainbar->setPos(0, this->viewport()->size().height() - mainbar->size().height());
 
     this->scene()->addItem(mainbar);
+
+    bg = new QGraphicsRectItem();
+    bg->setPen( QPen( ::Qt::black ) );
+    bg->setBrush( QBrush( ::Qt::white ) );
+    bg->setZValue(0);
+    bg->setRect(1, 1,
+                this->viewport()->size().width()-3, 
+                this->viewport()->size().height() - mainbar->size().height()-2);
+    
+    this->scene()->addItem(bg);
 
     view = new ConfigView();
     view->setTitle("Main Window");
     view->setDescription("Configure your simulation using this window");
+    view->setZValue(1);
     view->setPos(0, 0);
-    view->setZValue(0);
-    view->resize(this->viewport()->size());
+    view->resize(this->viewport()->size().width(), 
+                 this->viewport()->size().height() - mainbar->size().height());
+    
+    view->setTitle( "MainDocument ConfigView" );
+    view->setDescription( "MainDocument ConfigView description" );
     
     this->scene()->addItem(view);
 

@@ -42,6 +42,7 @@ namespace Conspire
 {
     class WidgetRack;
     class Button;
+    class OptionButton;
 
     /** This is a page that is used to view and edit a single page
         of options */
@@ -64,6 +65,14 @@ namespace Conspire
     public slots:
         void reread(Options options);
 
+    protected:
+        void resizeEvent(QGraphicsSceneResizeEvent *e);
+        void moveEvent(QGraphicsSceneMoveEvent *e);
+
+        void paint(QPainter *painter, 
+                   const QStyleOptionGraphicsItem *option, 
+                   QWidget *widget);
+
     private slots:
         void clicked(const QString &key);
         void add();
@@ -80,11 +89,14 @@ namespace Conspire
         /** The root key of this options object */
         QString root_key;
         
+        /** The rack used to hold everything in the widget */
+        WidgetRack *rack;
+        
         /** The rack used to hold all of the option buttons */
         WidgetRack *button_rack;
         
         /** The list of active buttons */
-        QList<Button*> buttons;
+        QList<OptionButton*> buttons;
         
         /** The button that is used to add new options */
         Button *add_button;

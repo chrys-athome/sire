@@ -35,6 +35,7 @@ CONSPIRE_BEGIN_HEADER
 
 #include <QStack>
 #include <QList>
+#include <QRectF>
 
 class QTabBar;
 class QLabel;
@@ -85,7 +86,11 @@ namespace Conspire
 
         void keyPressEvent(QKeyEvent *e);
         void mousePressEvent(QMouseEvent *e);
-        
+
+        void paint(QPainter *painter, 
+                   const QStyleOptionGraphicsItem *option, 
+                   QWidget *widget);
+
     private:
         class Tab
         {
@@ -123,14 +128,21 @@ namespace Conspire
         /** The pointer to the bar used to change the tabs */
         QTabBar *tabbar;
         
-        /** The background of the tab view */
-        QGraphicsWidget *bg;
-        
         /** The set of all visible tabs */
         QList<Tab*> tabpages;
+
+        /** The correct size and location of the page being viewed */
+        QRectF view_geometry;
+        
+        /** The size of the border */
+        int border_size;
+        
+        /** The height of the title bar */
+        int title_height;
         
         /** The index of the current tab page */
         int current_tab;
+
     };
 
 }

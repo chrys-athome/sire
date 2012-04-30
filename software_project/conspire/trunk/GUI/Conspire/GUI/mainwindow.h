@@ -36,6 +36,8 @@
 
 CONSPIRE_BEGIN_HEADER
 
+class QGraphicsRectItem;
+
 namespace Conspire
 {
     class Options;
@@ -67,6 +69,8 @@ namespace Conspire
     
         MainBar *mainbar;
         PagePointer view;
+        
+        QGraphicsRectItem *bg;
     };
 
 }

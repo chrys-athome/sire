@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_BUTTON_H
-#define CONSPIRE_BUTTON_H
+#ifndef CONSPIRE_OPTIONBUTTON_H
+#define CONSPIRE_OPTIONBUTTON_H
 /********************************************\
   *
   *  Conspire
@@ -28,69 +28,57 @@
   *
 \*********************************************/
 
-#include "Conspire/conspire.h"
-
-#include <QGraphicsWidget>
+#include "Conspire/GUI/button.h"
 
 CONSPIRE_BEGIN_HEADER
 
-class QStaticText;
+class QSizeF;
 
 namespace Conspire
 {
-    /** This is a simple button */
-    class CONSPIRE_EXPORT Button : public QGraphicsWidget
+    /** This is a specialised button that is used to display
+        the name and value of an Option. It is used by the OptionsPage
+        widget to provide the buttons that access each Option
+        
+        @author Christopher Woods
+    */
+    class CONSPIRE_EXPORT OptionButton : public Button
     {
         Q_OBJECT
-        
+    
     public:
-        Button(QGraphicsItem *parent=0);
-        Button(QString text, QGraphicsItem *parent=0);
+        OptionButton(QGraphicsItem *parent=0);
+        OptionButton(QString key, QGraphicsItem *parent=0);
+        OptionButton(QString key, QString value, QGraphicsItem *parent=0);
         
-        ~Button();
+        ~OptionButton();
         
-        virtual void setText(QString text);
-
-        virtual QString text() const;
+        void setText(QString key);
+        void setValue(QString value);
         
-    signals:
-        void clicked();
+        QString text() const;
+        QString value() const;
         
-    protected:
         void paint(QPainter *painter, 
                    const QStyleOptionGraphicsItem *option, 
                    QWidget *widget);
-    
-        void focusInEvent(QFocusEvent *event);
-        void focusOutEvent(QFocusEvent *event);    
 
-        void mousePressEvent(QGraphicsSceneMouseEvent *event);
-        void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
-
+    protected:
         void resizeEvent(QGraphicsSceneResizeEvent *event);
-
-        bool hasFocus() const;
-        bool isPrimed() const;
-        bool isChecked() const;
 
     private:
         void build();
-    
-        /** The text written onto the button */
+        
+        QSizeF getTextSize() const;
+        
+        /** The text representation of the key */
         QStaticText *txt;
-
-        /** Offset for the text */
-        float offset_x, offset_y;
-
-        /** Whether or not the button has focus */
-        bool has_focus;
         
-        /** Whether or not the button is primed */
-        bool is_primed;
-        
-        /** Whether or not the button is checked */
-        bool is_checked;
+        /** The text representation of the value of the option. 
+            This is null if this option has sub-options */
+        QStaticText *val;
     };
+
 }
 
 CONSPIRE_END_HEADER

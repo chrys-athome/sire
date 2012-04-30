@@ -73,10 +73,22 @@ QString OptionPage::rootKey() const
 /** Build the widget */
 void OptionPage::build()
 {
+    setTitle("Unnamed OptionPage");
+    setDescription("Unnamed OptionPage description");
     value_edit = new QLineEdit();
     connect(value_edit, SIGNAL(editingFinished()), this, SLOT(editingFinished()));
+}
 
-    this->setPageWidget(value_edit);
+void OptionPage::resizeEvent(QGraphicsSceneResizeEvent *e)
+{
+    Page::resizeEvent(e);
+    value_edit->setGeometry(this->geometry().toAlignedRect());
+}
+
+void OptionPage::moveEvent(QGraphicsSceneMoveEvent *e)
+{
+    Page::moveEvent(e);
+    value_edit->setGeometry(this->geometry().toAlignedRect());
 }
 
 /** Function called when editing of the option is finished */

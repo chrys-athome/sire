@@ -38,6 +38,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/helppage.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
+      Conspire/GUI/optionbutton.h
       Conspire/GUI/optionpage.h
       Conspire/GUI/optionscommand.h
       Conspire/GUI/optionspage.h
@@ -61,6 +62,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/helppage.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
+      Conspire/GUI/optionbutton.h
       Conspire/GUI/optionpage.h
       Conspire/GUI/optionscommand.h
       Conspire/GUI/optionspage.h
@@ -86,6 +88,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/helppage.cpp
       cpp/mainbar.cpp
       cpp/mainwindow.cpp
+      cpp/optionbutton.cpp
       cpp/optionpage.cpp
       cpp/optionscommand.cpp
       cpp/optionspage.cpp

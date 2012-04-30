@@ -79,6 +79,10 @@ namespace Conspire
         void canBackChanged(bool);
         void canForwardChanged(bool);
         
+    protected:
+        void resizeEvent(QGraphicsSceneResizeEvent *e);
+        void moveEvent(QGraphicsSceneMoveEvent *e);
+        
     private:
         void build();
 

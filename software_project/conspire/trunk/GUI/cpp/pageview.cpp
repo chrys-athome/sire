@@ -31,6 +31,13 @@
 #include "Conspire/GUI/widgetrack.h"
 
 #include <QTabBar>
+#include <QLabel>
+#include <QPixmap>
+#include <QPainter>
+#include <QBrush>
+#include <QPen>
+
+#include <QGraphicsProxyWidget>
 
 #include <QPropertyAnimation>
 #include <QParallelAnimationGroup>
@@ -142,7 +149,12 @@ void PageView::pushed(PagePointer page, bool new_tab)
     // (need twice - one as a QGraphicsItem child, one as a Page child)
     page->setParentItem(this);
     page->setParentPage(this);
-    page->resize(bg->size());
+
+    //the new page is clipped to the parent's shape, and is also drawn
+    //behind the parent - this allows us to draw decorations over the child page
+    //page->setFlag(QGraphicsItem::ItemIsMovable, false);
+    //page->setFlag(QGraphicsItem::ItemClipsToShape, true);
+    //page->setFlag(QGraphicsItem::ItemStacksBehindParent, true);
 
     Tab *tab = 0;
 
@@ -412,39 +424,6 @@ void PageView::closeAll()
     }
 }
 
-/** Called when this widget is resized */
-void PageView::resizeEvent(QGraphicsSceneResizeEvent *e)
-{
-    Page::resizeEvent(e);
-
-    if (current_tab != -1)
-    {
-        Tab *tab = tabpages[current_tab];
-        
-        if (tab->current_page)
-        {
-            tab->current_page->resize(bg->size());
-            tab->current_page->setPos(bg->pos());
-        }
-    }
-}
-
-/** Called when this widget is moved */
-void PageView::moveEvent(QGraphicsSceneMoveEvent *e)
-{
-    Page::moveEvent(e);
-
-    if (current_tab != -1)
-    {
-        Tab *tab = tabpages[current_tab];
-        
-        if (tab->current_page)
-        {
-            tab->current_page->setPos(bg->pos());
-        }
-    }
-}
-
 /** Called when a key press is detected in this widget */
 void PageView::keyPressEvent(QKeyEvent *e)
 {
@@ -461,27 +440,110 @@ void PageView::keyPressEvent(QKeyEvent *e)
     }
 }
 
+/** Paint this page */
+void PageView::paint(QPainter *painter, 
+                     const QStyleOptionGraphicsItem *option, 
+                     QWidget *widget)
+{
+    conspireDebug() << "PageView::paint(...)";
+    //the children will all have been painted before this view. We can
+    //now draw decorations and the border
+
+    int h = this->geometry().height();
+    int w = this->geometry().width();
+
+    //draw the border
+    //  first the four sides
+    painter->setPen( QPen( ::Qt::black ) );
+    painter->setBrush( QBrush( ::Qt::black ) );
+    
+    painter->drawRect(0, 0, border_size, h);
+    painter->drawRect(w-border_size, 0, border_size, h);
+    
+    painter->drawRect(0, 0, w, border_size);
+    painter->drawRect(0, h-border_size, w, border_size);
+    
+    //  now the four curved corners
+    QPainterPath path;
+    path.moveTo( 0, 0 );
+    path.arcTo( 0, 0, 2*border_size, 2*border_size, 90, 90 );
+    
+    painter->translate(border_size, border_size);
+    painter->drawPath(path);
+    painter->resetTransform();
+    
+    painter->translate(border_size, h - border_size);
+    painter->rotate(-90);
+    painter->drawPath(path);
+    painter->resetTransform();
+    
+    painter->translate(w-border_size, border_size);
+    painter->rotate(90);
+    painter->drawPath(path);
+    painter->resetTransform();
+    
+    painter->translate(w-border_size, h-border_size);
+    painter->rotate(180);
+    painter->drawPath(path);
+    painter->resetTransform();
+}
+
 /** Build this widget */
 void PageView::build()
 {
     anims_enabled = true;
     current_tab = -1;
 
-    WidgetRack *rack = new WidgetRack(::Qt::Vertical);
-    
     tabbar = new QTabBar();
-    tabbar->setTabsClosable(false);
-    tabbar->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
-    tabbar->hide();
-
-    //rack->addWidget(tabbar);
-
-    bg = new Button(this);
-    bg->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Expanding );
     
-    rack->addWidget(bg);
+    border_size = 15;
+    title_height = 25;
+
+    view_geometry = QRectF( border_size, border_size + title_height, 
+                            this->geometry().width() - 2*border_size, 
+                            this->geometry().height() - 2*border_size - title_height );
+}
+
+/** Called when this widget is resized */
+void PageView::resizeEvent(QGraphicsSceneResizeEvent *e)
+{
+    Page::resizeEvent(e);
     
-    this->setPageWidget(rack);
+    view_geometry = QRectF( border_size, border_size + title_height, 
+                            this->geometry().width() - 2*border_size, 
+                            this->geometry().height() - 2*border_size - title_height );
+
+    if (current_tab != -1)
+    {
+        if (tabpages[current_tab]->current_page)
+        {
+            tabpages[current_tab]->current_page->setGeometry(view_geometry);
+            
+            conspireDebug() << "RESIZE" << view_geometry
+                            << tabpages[current_tab]->current_page->geometry();
+        }
+    }
+}
+
+/** Called when this widget is moved */
+void PageView::moveEvent(QGraphicsSceneMoveEvent *e)
+{
+    Page::moveEvent(e);
+
+    view_geometry = QRectF( border_size, border_size + title_height, 
+                            this->geometry().width() - 2*border_size, 
+                            this->geometry().height() - 2*border_size - title_height );
+
+    if (current_tab != -1)
+    {
+        if (tabpages[current_tab]->current_page)
+        {
+            tabpages[current_tab]->current_page->setGeometry(view_geometry);
+
+            conspireDebug() << "RESIZE" << view_geometry
+                            << tabpages[current_tab]->current_page->geometry();
+        }
+    }
 }
 
 /** Internal function used to make the passed view visible */
@@ -587,7 +649,6 @@ void PageView::animateDestroy(PagePointer old_page)
     if (not old_page)
         return;
         
-    old_page->resize(bg->size());
     old_page->setOpacity(1.0);
 
     QParallelAnimationGroup *g = new QParallelAnimationGroup();
@@ -616,15 +677,17 @@ void PageView::animateNew(PagePointer new_page)
         return;
     }
     
-    new_page->setOpacity(0);
-    new_page->resize(bg->size());
-    new_page->setPos(bg->pos());
+    new_page->setOpacity(1.0);
+    new_page->setGeometry(view_geometry);
+    new_page->show();
+    conspireDebug() << "Showing page" << new_page->title() << new_page->description()
+                    << view_geometry << new_page->geometry();
     
-    QParallelAnimationGroup *g = new QParallelAnimationGroup();
+    /*QParallelAnimationGroup *g = new QParallelAnimationGroup();
     
     QPropertyAnimation *anim = new QPropertyAnimation(new_page.data(), "opacity");
     anim->setDuration(500);
-    anim->setStartValue(0.0);
+    anim->setStartValue(0.5);
     anim->setEndValue(1.0);
     g->addAnimation(anim);
     
@@ -635,7 +698,7 @@ void PageView::animateNew(PagePointer new_page)
     anim->setEasingCurve(QEasingCurve::OutBack);
     g->addAnimation(anim);
 
-    this->animate( AnimationPointer(new Animation(g)) );
+    this->animate( AnimationPointer(new Animation(g)) );*/
 }
 
 /** Animate the switch from "old_page" to "new_page" */
@@ -655,15 +718,16 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
 
     //make sure that the two views have the correct size
     new_page->setOpacity(0);
+    new_page->show();
+    
+    //make sure that the geometry of the page is correct
+    new_page->setGeometry(view_geometry);
     
     //make sure that the new page has the size of the background
-    new_page->resize(bg->size());
-    new_page->setPos(bg->pos());
     new_page->setTransformOriginPoint( 0.5 * new_page->geometry().width(),
                                        0.5 * new_page->geometry().height() );
     
     //also ensure that the old page has the size of the background
-    old_page->resize(bg->size());
     old_page->setTransformOriginPoint( 0.5 * old_page->geometry().width(),
                                        0.5 * old_page->geometry().height() );
 

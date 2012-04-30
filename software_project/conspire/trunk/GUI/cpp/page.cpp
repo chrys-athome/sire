@@ -68,45 +68,8 @@ void Page::build()
     is_blocked_by_parent = false;
     is_blocked_by_anim = false;
     is_broken = false;
-    display_title = true;
-    display_description = true;
-
-    this->setFlag(QGraphicsItem::ItemClipsChildrenToShape, true);
-    
-    //now build the holder for the page widget
-    QGraphicsLinearLayout *gl = new QGraphicsLinearLayout(::Qt::Vertical,this);
-
-    this->setLayout(gl);
-
-    title_label = new QLabel();
-    title_label->setWordWrap(false);
-    title_label->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
-    title_label->hide();
-
-    QGraphicsProxyWidget *title_label_proxy = new QGraphicsProxyWidget(this);
-    title_label_proxy->setWidget(title_label);
-    gl->addItem(title_label_proxy);
-
-    description_label = new QLabel();
-    description_label->setWordWrap(true);
-    description_label->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
-    description_label->hide();
-
-    QGraphicsProxyWidget *desc_label_proxy = new QGraphicsProxyWidget(this);
-    desc_label_proxy->setWidget(description_label);
-    gl->addItem(desc_label_proxy);
-}
-
-/** Called when the widget is moved */
-void Page::moveEvent(QGraphicsSceneMoveEvent *e)
-{
-    QGraphicsWidget::moveEvent(e);
-}
-
-/** Called when the widget is resized */
-void Page::resizeEvent(QGraphicsSceneResizeEvent *e)
-{
-    QGraphicsWidget::resizeEvent(e);
+    display_title = false;
+    display_description = false;
 }
 
 /** Constructor, passing in the parent page of this page */
@@ -327,14 +290,7 @@ void Page::setTitle(QString title)
 {
     if (title != page_title)
     {
-        page_title = title;
-
-        if (display_title)
-        {
-            title_label->setText(page_title);
-            title_label->setVisible( not page_title.isEmpty() );
-        }
-        
+        page_title = title;        
         emit( titleChanged(page_title) );
     }
 }
@@ -345,13 +301,6 @@ void Page::setDescription(QString description)
     if (description != page_description)
     {
         page_description = description;
-        
-        if (display_description)
-        {
-            description_label->setText(page_description);
-            description_label->setVisible( not page_description.isEmpty() );
-        }
-        
         emit( descriptionChanged(page_description) );
     }
 }
@@ -362,8 +311,7 @@ void Page::setTitleDisplayed(bool displayed)
     if (display_title != displayed)
     {
         display_title = displayed;
-        title_label->setText(page_title);
-        title_label->setVisible(display_title);
+        emit( titleVisibilityChanged(displayed) );
     }
 }
 
@@ -373,47 +321,7 @@ void Page::setDescriptionDisplayed(bool displayed)
     if (display_description != displayed)
     {
         display_description = displayed;
-        description_label->setText(page_description);
-        description_label->setVisible(displayed);
-    }
-}
-
-/** Set the widget that is displayed on this page. This Page takes
-    over ownership of the widget and is free to delete it whenever it wants... */
-void Page::setPageWidget(QGraphicsWidget *widget)
-{
-    if (page_widget)
-    {
-        page_widget->deleteLater();
-        page_widget = 0;
-    }
-    
-    page_widget = widget;
-    
-    if (page_widget)
-    {
-        page_widget->setParentItem(this);
-        page_widget->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Expanding );
-        dynamic_cast<QGraphicsLinearLayout*>(this->layout())->addItem(page_widget);
-        //page_widget->show();
-    }
-}
-
-/** Set the widget that is displayed on this page. This Page takes
-    over ownership of the widget and is free to delete it whenever it wants... */
-void Page::setPageWidget(QWidget *widget)
-{
-    if (widget)
-    {
-        QGraphicsProxyWidget *widget_proxy = new QGraphicsProxyWidget(this);
-        widget_proxy->setWidget(widget);
-        this->setPageWidget(widget_proxy);
-    }
-    else if (page_widget)
-    {
-        //clear the old widget
-        page_widget->deleteLater();
-        page_widget = 0;
+        emit( descriptionVisibilityChanged(displayed) );
     }
 }
 

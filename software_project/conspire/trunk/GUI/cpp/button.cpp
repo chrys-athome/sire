@@ -89,6 +89,13 @@ void Button::setText(QString t)
         QSizeF button_size = this->size();
 
         txt = new QStaticText(t);
+
+        QTextOption opt;
+        opt.setAlignment( ::Qt::AlignCenter );
+        opt.setWrapMode( QTextOption::WordWrap );        
+
+        txt->setTextOption(opt);
+
         txt->setTextWidth( 0.8 * button_size.width() );
         txt->prepare( QTransform(), QFont("Helvetica [Cronyx]", 12) );
         
@@ -146,7 +153,7 @@ void Button::resizeEvent(QGraphicsSceneResizeEvent *event)
         QSizeF button_size = this->size();
 
         txt->setTextWidth( 0.8 * button_size.width() );
-        txt->prepare( QTransform(), QFont("Helvetica [Cronyx]", 14) );
+        txt->prepare( QTransform(), QFont("Helvetica [Cronyx]", 12) );
         
         QSizeF text_size = txt->size();
         
@@ -156,23 +163,88 @@ void Button::resizeEvent(QGraphicsSceneResizeEvent *event)
         // COULD ADD CODE HERE TO AUTOMATICALLY SCALE DOWN THE FONT
         // IF THE BUTTON TEXT IS TOO BIG
         
-        this->setMinimumSize( 1.2 * text_size );
+        //this->setMinimumSize( 1.2 * text_size );
     }
+}
+
+bool Button::hasFocus() const
+{
+    return has_focus;
+}
+
+bool Button::isPrimed() const
+{
+    return is_primed;
+}
+
+bool Button::isChecked() const
+{
+    return is_checked;
 }
 
 /** Paint the button */
 void Button::paint(QPainter *painter, 
                    const QStyleOptionGraphicsItem*, QWidget*)
 {
-    float w = this->size().width();
-    float h = this->size().height();
+    QSizeF text_size;
+    
+    if (txt)
+        text_size = txt->size();
+    
+    QSizeF button_size = this->size();
+    QRectF button_rect = this->geometry();
 
-    painter->fillRect(0, 0, w, h, QColor::fromRgbF(0.8, 0.8, 0.8, 0.5) );
-    painter->drawRoundedRect(0, 0, size().width(), size().height(), 5, 5);
+    float m_roundness = 5;
 
+    QColor button_color = QColor(225, 225, 225);
+    QColor m_highlight = QColor(255, 255, 255);
+    QColor m_shadow = QColor(200, 200, 200);
+    
+    float ox = 0;
+    float oy = 0;
+    float offset_x = 0.5 * (button_size.width() - text_size.width());
+    float offset_y = 0.5 * (button_size.height() - text_size.height());
+
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setRenderHint(QPainter::TextAntialiasing);
+
+    painter->setPen(QPen(QBrush(::Qt::black), 2.0));
+    
+    QPainterPath outline;
+    outline.addRoundedRect(0, 0, button_rect.width(), button_rect.height(), 
+                           m_roundness, m_roundness);
+    painter->setOpacity(0.5);
+    painter->drawPath(outline);
+
+    QBrush brush( ::Qt::SolidPattern );
+    brush.setColor( QColor(150,150,150) );
+    painter->setBrush(brush); 
+    painter->setPen(QPen(QColor(50,50,50), 2.0));
+ 
+    //main button
+    QPainterPath painter_path;
+    painter_path.addRoundedRect(1, 1, button_rect.width() - 2, 
+                                button_rect.height() - 2, m_roundness, m_roundness);
+    painter->setClipPath(painter_path);
+
+    painter->setOpacity(0.8);
+    painter->drawRoundedRect(1, 1, button_rect.width() - 2, 
+                             button_rect.height() - 2, m_roundness, m_roundness);
+ 
+    //glass highlight
+    painter->setBrush(QBrush(::Qt::white));
+    painter->setPen(QPen(QBrush(::Qt::white), 0.01));
+    painter->setOpacity(0.6l);
+    painter->drawRect(1, 1, button_rect.width() - 2, (button_rect.height() / 2) - 2);
+     
+    painter->setOpacity(0.9);
+    painter->setPen(QPen(QBrush(::Qt::black), 0.01));
+     
     if (txt)
     {
-        QSizeF sz = txt->size();
-        painter->drawStaticText( offset_x, offset_y, *txt );
+        float dx = offset_x;
+        float dy = offset_y + 0.5 * (text_size.height() - txt->size().height());
+
+        painter->drawStaticText( ox+dx, ox+dy, *txt );
     }
 }

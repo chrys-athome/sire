@@ -70,6 +70,9 @@ void ConfigDocument::build()
             this, SIGNAL(canRedoChanged(bool)));
 
     view = new ConfigView(this);
+    view->setTitle( "ConfigView" );
+    view->setDescription( "Description of ConfigView" );
+    
     connect(view, SIGNAL(add(QString)), this, SLOT(add(QString)));
     connect(view, SIGNAL(remove(QString)), this, SLOT(remove(QString)));
     connect(view, SIGNAL(update(QString,Obj)), this, SLOT(update(QString,Obj)));
@@ -77,10 +80,20 @@ void ConfigDocument::build()
     connect(view, SIGNAL(canBackChanged(bool)), this, SIGNAL(canBackChanged(bool)));
     connect(view, SIGNAL(canForwardChanged(bool)),
             this, SIGNAL(canForwardChanged(bool)));
-    
-    this->setTitle("ConfigDocument");
-    this->setDescription("Description of ConfigDocument");        
-    this->setPageWidget(view);
+
+    view->setGeometry(this->geometry());
+}
+
+void ConfigDocument::resizeEvent(QGraphicsSceneResizeEvent *e)
+{
+    Page::resizeEvent(e);
+    view->setGeometry(this->geometry());
+}
+
+void ConfigDocument::moveEvent(QGraphicsSceneMoveEvent *e)
+{
+    Page::moveEvent(e);
+    view->setGeometry(this->geometry());
 }
 
 /** Return the current state of the options being viewed and edited */

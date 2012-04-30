@@ -189,21 +189,21 @@ namespace Conspire
         /** Signal emitted whenver the title of the page changes */
         void titleChanged(QString title);
 
+        /** Signal emitted when the visibility of the title changes */
+        void titleVisibilityChanged(bool visible);
+        
+        /** Signal emitted when the visibility of the description changes */
+        void descriptionVisibilityChanged(bool visible);
+
         /** Signal emitted when the page becomes broken */
         void broken();
 
     protected:
-        void resizeEvent(QGraphicsSceneResizeEvent *e);
-        void moveEvent(QGraphicsSceneMoveEvent *e);
-
         friend class PagePointer;
         void incref();
         bool decref();
         
         void setBroken();
-        
-        void setPageWidget(QGraphicsWidget *widget);
-        void setPageWidget(QWidget *widget);
         
         void addChild(Page *page);
         PageWeakPointer takeChild(Page *page);
@@ -262,12 +262,6 @@ namespace Conspire
     
         /** The main widget which is displayed on this page */
         QPointer<QGraphicsWidget> page_widget;
-    
-        /** The label used to hold the title of the page */
-        QLabel *title_label;
-        
-        /** The label used to hold the description of the page */
-        QLabel *description_label;
     
         /** The number of PagePointer pointers currently 
             pointing to this widget */

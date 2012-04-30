@@ -7,9 +7,22 @@
   </option>
 
   <option>
+    <key>pressure</key>
+    <description>The pressure of the simulation.</description>
+    <value><pressure units="atm">1</pressure></value>
+  </option>
+
+  <option>
     <key>nmoves</key>
     <description>The number of moves to perform.</description>
     <value><integer minimum="1">1</integer></value>
+  </option>
+
+  <option>
+    <key>save_frequency</key>
+    <description>The number of steps between saving coordinates during  
+                 a trajectory</description>
+    <value><integer minimum="0">0</integer></value>
   </option>
 
   <option allow_multiple="true" optional="false">
