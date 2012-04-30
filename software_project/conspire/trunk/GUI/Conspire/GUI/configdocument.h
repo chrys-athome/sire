@@ -70,6 +70,11 @@ namespace Conspire
 
         void setOptions(Options options);
         
+    protected:
+        void paint(QPainter *painter, 
+                   const QStyleOptionGraphicsItem *option, 
+                   QWidget *widget);
+        
     signals:
         void reread(Options options);
         

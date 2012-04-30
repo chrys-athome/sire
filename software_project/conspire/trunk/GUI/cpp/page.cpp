@@ -73,7 +73,7 @@ void Page::build()
 }
 
 /** Constructor, passing in the parent page of this page */
-Page::Page(Page *parent) : QGraphicsWidget()
+Page::Page(Page *parent) : QGraphicsWidget(parent)
 {
     build();
     

@@ -152,9 +152,9 @@ void PageView::pushed(PagePointer page, bool new_tab)
 
     //the new page is clipped to the parent's shape, and is also drawn
     //behind the parent - this allows us to draw decorations over the child page
-    //page->setFlag(QGraphicsItem::ItemIsMovable, false);
-    //page->setFlag(QGraphicsItem::ItemClipsToShape, true);
-    //page->setFlag(QGraphicsItem::ItemStacksBehindParent, true);
+    page->setFlag(QGraphicsItem::ItemIsMovable, false);
+    page->setFlag(QGraphicsItem::ItemClipsToShape, true);
+    page->setFlag(QGraphicsItem::ItemStacksBehindParent, true);
 
     Tab *tab = 0;
 
@@ -446,11 +446,14 @@ void PageView::paint(QPainter *painter,
                      QWidget *widget)
 {
     conspireDebug() << "PageView::paint(...)";
+    
     //the children will all have been painted before this view. We can
     //now draw decorations and the border
 
     int h = this->geometry().height();
     int w = this->geometry().width();
+
+    painter->setRenderHint( QPainter::Antialiasing, true );
 
     //draw the border
     //  first the four sides
@@ -488,11 +491,22 @@ void PageView::paint(QPainter *painter,
     painter->resetTransform();
 }
 
+/** This widget is totally transparent - it is the children that are opaque */
+QPainterPath PageView::opaqueArea() const
+{
+    return QPainterPath();
+}
+
 /** Build this widget */
 void PageView::build()
 {
     anims_enabled = true;
     current_tab = -1;
+    
+    setTitle("Unnamed PageView");
+    setDescription("Description of an unnamed PageView");
+
+    this->setAutoFillBackground(false);
 
     tabbar = new QTabBar();
     

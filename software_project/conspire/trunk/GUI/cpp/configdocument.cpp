@@ -35,6 +35,7 @@
 #include "Conspire/exceptions.h"
 
 #include <QUndoStack>
+#include <QPainter>
 
 #include <QGraphicsLinearLayout>
 
@@ -70,6 +71,7 @@ void ConfigDocument::build()
             this, SIGNAL(canRedoChanged(bool)));
 
     view = new ConfigView(this);
+    
     view->setTitle( "ConfigView" );
     view->setDescription( "Description of ConfigView" );
     
@@ -81,19 +83,28 @@ void ConfigDocument::build()
     connect(view, SIGNAL(canForwardChanged(bool)),
             this, SIGNAL(canForwardChanged(bool)));
 
-    view->setGeometry(this->geometry());
+    view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
 void ConfigDocument::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
-    view->setGeometry(this->geometry());
+    view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
 void ConfigDocument::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
-    view->setGeometry(this->geometry());
+    view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+}
+
+void ConfigDocument::paint(QPainter *painter, 
+                           const QStyleOptionGraphicsItem *option, 
+                           QWidget *widget)
+{
+    conspireDebug() << "ConfigDocument::paint(...)";    
+    painter->drawRect(10, 10, 
+                      this->geometry().width() - 20, this->geometry().height() - 20);
 }
 
 /** Return the current state of the options being viewed and edited */

@@ -233,30 +233,29 @@ void OptionsPage::build()
     connect(mapper, SIGNAL(mapped(const QString&)), this, SLOT(clicked(const QString&)));
 
     rack->setGeometry( this->geometry() );
+    rack->show();
 }
 
 void OptionsPage::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
-    rack->setGeometry( this->geometry() );
+    rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    
+    conspireDebug() << "OptionsPage::resize()" << this->geometry();
 }
 
 void OptionsPage::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
-    rack->setGeometry( this->geometry() );
+    rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+
+    conspireDebug() << "OptionsPage::move()" << this->geometry();
 }
 
 void OptionsPage::paint(QPainter *painter, 
                         const QStyleOptionGraphicsItem *option, 
                         QWidget *widget)
-{
-    conspireDebug() << "OptionsPage::paint(...)";
-    conspireDebug() << this->geometry();
-
-    painter->setBrush( QBrush(::Qt::red) );
-    painter->drawRect( this->geometry() );
-}
+{}
 
 /** Set the options and root_key used by this object */
 void OptionsPage::setOptions(Options options, QString key)

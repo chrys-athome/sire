@@ -62,7 +62,8 @@ MainWindow::MainWindow(Options options, QWidget *parent)
     connect(mainbar, SIGNAL(forward()), doc, SLOT(forward()));
     connect(mainbar, SIGNAL(home()), doc, SLOT(home()));
     
-    dynamic_cast<PageView*>(view.data())->pushed(PagePointer(doc), true);
+    view = PagePointer(doc);
+    this->scene()->addItem(view);
 }
 
 /** Destructor */
@@ -83,9 +84,12 @@ void MainWindow::resizeEvent(QResizeEvent *e)
                 this->viewport()->size().width()-3, 
                 this->viewport()->size().height() - mainbar->size().height()-2);
 
-    view->setPos(0, 0);
-    view->resize( this->viewport()->size().width(), 
-                  this->viewport()->size().height() - mainbar->size().height() );
+    if (view)
+    {
+        view->setPos(0, 0);
+        view->resize( this->viewport()->size().width(), 
+                      this->viewport()->size().height() - mainbar->size().height() );
+    }
 }
 
 /** Internal function used to build the GUI. In general, the GUI should
@@ -93,7 +97,7 @@ void MainWindow::resizeEvent(QResizeEvent *e)
     and a PageView, which can be used to view pages */
 void MainWindow::build()
 {
-    this->setMinimumSize(600,400);
+    this->setMinimumSize(400,400);
 
     this->setScene( new QGraphicsScene(this) );
 
@@ -106,38 +110,17 @@ void MainWindow::build()
 
     bg = new QGraphicsRectItem();
     bg->setPen( QPen( ::Qt::black ) );
-    bg->setBrush( QBrush( ::Qt::white ) );
-    bg->setZValue(0);
+    
+    QLinearGradient grad;
+    grad.setColorAt(0.0, ::Qt::white );
+    grad.setColorAt(1.0, ::Qt::blue );
+    grad.setCoordinateMode( QGradient::StretchToDeviceMode );
+    
+    bg->setBrush( QBrush(grad) );
+    bg->setZValue(-1);
     bg->setRect(1, 1,
                 this->viewport()->size().width()-3, 
                 this->viewport()->size().height() - mainbar->size().height()-2);
     
     this->scene()->addItem(bg);
-
-    view = new ConfigView();
-    view->setTitle("Main Window");
-    view->setDescription("Configure your simulation using this window");
-    view->setZValue(1);
-    view->setPos(0, 0);
-    view->resize(this->viewport()->size().width(), 
-                 this->viewport()->size().height() - mainbar->size().height());
-    
-    view->setTitle( "MainDocument ConfigView" );
-    view->setDescription( "MainDocument ConfigView description" );
-    
-    this->scene()->addItem(view);
-
-    connect(mainbar, SIGNAL(undo()), view, SLOT(undo()));
-    connect(mainbar, SIGNAL(redo()), view, SLOT(redo()));
-    connect(mainbar, SIGNAL(back()), view, SLOT(back()));
-    connect(mainbar, SIGNAL(forward()), view, SLOT(forward()));
-    
-    connect(view, SIGNAL(canBackChanged(bool)), mainbar, SLOT(canBackChanged(bool)));
-    connect(view, SIGNAL(canForwardChanged(bool)),
-            mainbar, SLOT(canForwardChanged(bool)));
-    
-    connect(view, SIGNAL(canUndoChanged(bool)),
-            mainbar, SLOT(canUndoChanged(bool)));
-    connect(view, SIGNAL(canRedoChanged(bool)),
-            mainbar, SLOT(canRedoChanged(bool)));
 }

@@ -241,7 +241,7 @@ void OptionButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     painter->drawPath(outline);
 
     QLinearGradient gradient;
-    gradient.setCoordinateMode(QGradient::ObjectBoundingMode);
+    gradient.setCoordinateMode(QGradient::StretchToDeviceMode);
     gradient.setSpread(QGradient::ReflectSpread);
     gradient.setColorAt(0.0, button_color);
     gradient.setColorAt(0.3, m_shadow);
@@ -281,7 +281,7 @@ void OptionButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     painter->setOpacity(0.2);
     painter->drawRect(1, 1, button_rect.width() - 2, (button_rect.height() / 2) - 2);
      
-    painter->setOpacity(0.9);
+    painter->setOpacity(0.8);
     painter->setPen(QPen(QBrush(::Qt::black), 0.01));
     
     if (txt)

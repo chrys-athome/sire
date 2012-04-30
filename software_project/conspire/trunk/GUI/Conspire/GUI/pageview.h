@@ -59,7 +59,9 @@ namespace Conspire
         ~PageView();
         
         int count() const;
-        
+      
+        QPainterPath opaqueArea() const;
+            
     public slots:
         virtual void back();
         virtual void forward();

@@ -77,18 +77,21 @@ void OptionPage::build()
     setDescription("Unnamed OptionPage description");
     value_edit = new QLineEdit();
     connect(value_edit, SIGNAL(editingFinished()), this, SLOT(editingFinished()));
+    
+    QGraphicsProxyWidget *edit_proxy = new QGraphicsProxyWidget(this);
+    edit_proxy->setWidget(value_edit);
 }
 
 void OptionPage::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
-    value_edit->setGeometry(this->geometry().toAlignedRect());
+    value_edit->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
 void OptionPage::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
-    value_edit->setGeometry(this->geometry().toAlignedRect());
+    value_edit->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
 /** Function called when editing of the option is finished */

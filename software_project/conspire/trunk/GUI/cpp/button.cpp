@@ -227,14 +227,14 @@ void Button::paint(QPainter *painter,
                                 button_rect.height() - 2, m_roundness, m_roundness);
     painter->setClipPath(painter_path);
 
-    painter->setOpacity(0.8);
+    painter->setOpacity(0.6);
     painter->drawRoundedRect(1, 1, button_rect.width() - 2, 
                              button_rect.height() - 2, m_roundness, m_roundness);
  
     //glass highlight
     painter->setBrush(QBrush(::Qt::white));
     painter->setPen(QPen(QBrush(::Qt::white), 0.01));
-    painter->setOpacity(0.6l);
+    painter->setOpacity(0.4);
     painter->drawRect(1, 1, button_rect.width() - 2, (button_rect.height() / 2) - 2);
      
     painter->setOpacity(0.9);
