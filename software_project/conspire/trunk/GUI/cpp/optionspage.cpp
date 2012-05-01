@@ -213,8 +213,7 @@ void OptionsPage::clicked(const QString &key)
 /** Actually build the widget */
 void OptionsPage::build()
 {
-    setTitle("Unnamed OptionsPage");
-    setDescription("Unnamed OptionsPage description");
+    setTitle("Main Options");
 
     rack = new WidgetRack(::Qt::Vertical, this);
     

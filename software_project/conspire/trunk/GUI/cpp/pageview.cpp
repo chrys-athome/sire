@@ -468,8 +468,16 @@ void PageView::paint(QPainter *painter,
     
     painter->drawRect(0, 0, w, border_size);
     painter->drawRect(0, h-border_size, w, border_size);
+
+    //now the title bar
+    painter->setPen( QPen(::Qt::black) );
+    painter->setBrush( QBrush(::Qt::black) );
+    
+    painter->setOpacity(0.5);
+    painter->drawRect(0, border_size, w, title_height);
     
     //  now the four curved corners
+    painter->setOpacity(1.0);
     QPainterPath path;
     path.moveTo( 0, 0 );
     path.arcTo( 0, 0, 2*border_size, 2*border_size, 90, 90 );

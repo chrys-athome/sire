@@ -76,6 +76,9 @@ void OptionPage::build()
     setTitle("Unnamed OptionPage");
     setDescription("Unnamed OptionPage description");
     value_edit = new QLineEdit();
+    value_edit->setAlignment( ::Qt::AlignCenter );
+    value_edit->setFont( QFont("LucidaGrande", 48) );
+
     connect(value_edit, SIGNAL(editingFinished()), this, SLOT(editingFinished()));
     
     QGraphicsProxyWidget *edit_proxy = new QGraphicsProxyWidget(this);
