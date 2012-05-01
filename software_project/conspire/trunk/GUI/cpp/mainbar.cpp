@@ -43,8 +43,6 @@ MainBar::~MainBar()
 
 void MainBar::build()
 {
-    
-
     new_button = new Button( QObject::tr("New") );
     new_button->setEnabled(true);
     connect(new_button, SIGNAL(clicked()), this, SIGNAL(newPage()));
@@ -57,14 +55,6 @@ void MainBar::build()
     redo_button->setEnabled(false);
     connect(redo_button, SIGNAL(clicked()), this, SIGNAL(redo()));
 
-    back_button = new Button( QObject::tr("Back") );
-    back_button->setEnabled(false);
-    connect(back_button, SIGNAL(clicked()), this, SIGNAL(back()));
-
-    forward_button = new Button( QObject::tr("Forward") );
-    forward_button->setEnabled(false);
-    connect(forward_button, SIGNAL(clicked()), this, SIGNAL(forward()));
-
     home_button = new Button( QObject::tr("Home") );
     home_button->setEnabled(true);
     connect(home_button, SIGNAL(clicked()), this, SIGNAL(home()));
@@ -74,24 +64,12 @@ void MainBar::build()
     connect(quit_button, SIGNAL(clicked()), QCoreApplication::instance(), SLOT(quit()));
 
     this->addWidget(new_button);
-    this->addWidget(back_button);
-    this->addWidget(forward_button);
     this->addWidget(home_button);
     this->addWidget(undo_button);
     this->addWidget(redo_button);
     this->addWidget(quit_button);
     
     this->setOpacity(0.5);
-}
-
-void MainBar::canBackChanged(bool can_back)
-{
-    back_button->setEnabled(can_back);
-}
-
-void MainBar::canForwardChanged(bool can_forward)
-{
-    forward_button->setEnabled(can_forward);
 }
 
 void MainBar::canRedoChanged(bool can_redo)

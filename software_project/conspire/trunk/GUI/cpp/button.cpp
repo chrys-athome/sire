@@ -75,6 +75,39 @@ QString Button::text() const
         return QString::null;
 }
 
+static QFont starting_font("LucidaGrande", 10);
+
+void Button::scaleTextToFit()
+{
+    if (txt)
+    {
+        QSizeF sz = 0.9 * this->size();
+    
+        txt->setTextWidth(sz.width());
+        txt->prepare(QTransform(), starting_font);
+    
+        float w_factor = sz.width() / txt->size().width();
+        float h_factor = sz.height() / txt->size().height();
+    
+        float factor = 1.5 * qMin(w_factor, h_factor);
+
+        button_font = starting_font;
+
+        if (factor != 1)
+        {
+            QFont scaled_font = button_font;
+            scaled_font.setPointSizeF(button_font.pointSizeF() * factor);
+            txt->prepare(QTransform(), scaled_font);
+            button_font = scaled_font;
+        }
+
+        QSizeF text_size = txt->size();
+        
+        offset_x = 0.5 * (this->size().width() - text_size.width());
+        offset_y = 0.5 * (this->size().height() - text_size.height());
+    }
+}
+
 /** Set the text to be rendered */
 void Button::setText(QString t)
 {
@@ -93,16 +126,9 @@ void Button::setText(QString t)
         QTextOption opt;
         opt.setAlignment( ::Qt::AlignCenter );
         opt.setWrapMode( QTextOption::WordWrap );        
-
         txt->setTextOption(opt);
 
-        txt->setTextWidth( 0.8 * button_size.width() );
-        txt->prepare( QTransform(), QFont("Helvetica [Cronyx]", 12) );
-        
-        QSizeF text_size = txt->size();
-        
-        offset_x = 0.5 * (button_size.width() - text_size.width());
-        offset_y = 0.5 * (button_size.height() - text_size.height());
+        scaleTextToFit();
         
         update(this->geometry());
     }
@@ -147,24 +173,7 @@ void Button::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 void Button::resizeEvent(QGraphicsSceneResizeEvent *event)
 {
     QGraphicsWidget::resizeEvent(event);
-
-    if (txt)
-    {
-        QSizeF button_size = this->size();
-
-        txt->setTextWidth( 0.8 * button_size.width() );
-        txt->prepare( QTransform(), QFont("Helvetica [Cronyx]", 12) );
-        
-        QSizeF text_size = txt->size();
-        
-        offset_x = 0.5 * (button_size.width() - text_size.width());
-        offset_y = 0.5 * (button_size.height() - text_size.height());
-        
-        // COULD ADD CODE HERE TO AUTOMATICALLY SCALE DOWN THE FONT
-        // IF THE BUTTON TEXT IS TOO BIG
-        
-        //this->setMinimumSize( 1.2 * text_size );
-    }
+    scaleTextToFit();
 }
 
 bool Button::hasFocus() const
@@ -245,6 +254,7 @@ void Button::paint(QPainter *painter,
         float dx = offset_x;
         float dy = offset_y + 0.5 * (text_size.height() - txt->size().height());
 
+        painter->setFont(button_font);
         painter->drawStaticText( ox+dx, ox+dy, *txt );
     }
 }

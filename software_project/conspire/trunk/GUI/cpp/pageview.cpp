@@ -36,6 +36,8 @@
 #include <QPainter>
 #include <QBrush>
 #include <QPen>
+#include <QStaticText>
+#include <QFont>
 
 #include <QGraphicsProxyWidget>
 
@@ -66,6 +68,9 @@ PageView::~PageView()
     {
         delete tab;
     }
+    
+    delete title_text;
+    delete old_title_text;
 }
 
 /** Return the number of tabs */
@@ -445,8 +450,6 @@ void PageView::paint(QPainter *painter,
                      const QStyleOptionGraphicsItem *option, 
                      QWidget *widget)
 {
-    conspireDebug() << "PageView::paint(...)";
-    
     //the children will all have been painted before this view. We can
     //now draw decorations and the border
 
@@ -489,12 +492,69 @@ void PageView::paint(QPainter *painter,
     painter->rotate(180);
     painter->drawPath(path);
     painter->resetTransform();
+    
+    //now draw the title
+    painter->setPen( QPen(::Qt::white) );
+
+    //if (old_title_text)
+    //    painter->drawStaticText(old_title_pos, *old_title_text);
+    
+    if (title_text)
+        painter->drawStaticText(title_pos, *title_text);
 }
 
 /** This widget is totally transparent - it is the children that are opaque */
 QPainterPath PageView::opaqueArea() const
 {
     return QPainterPath();
+}
+
+QFont title_font("LucidaGrande", 10);
+
+void fitIntoRectangle(QRectF rect, QStaticText &text)
+{
+    text.setTextWidth(rect.width());
+    text.prepare(QTransform(), title_font);
+    
+    float w_factor = rect.width() / text.size().width();
+    float h_factor = rect.height() / text.size().height();
+    
+    float factor = qMin(w_factor, h_factor);
+
+    if (factor != 1)
+    {
+        QFont scaled_font = title_font;
+        scaled_font.setPointSizeF(title_font.pointSizeF() * factor);
+        text.prepare(QTransform(), scaled_font);
+    }
+}
+
+void PageView::positionTitleBar()
+{
+    float w = this->geometry().width();
+
+    float button_width = 50;
+
+    back_button->setGeometry(border_size+20, border_size+3,
+                             button_width, title_height-6);
+                             
+    forward_button->setGeometry(w-border_size-20-button_width, border_size+3,
+                                button_width, title_height-6);
+
+    float title_width = w - 2*border_size - 40 - 2*button_width - 20;
+
+    title_geometry = QRectF( 0.5*(w-title_width), border_size+3,
+                             title_width, title_height-6);
+
+    if (title_text)
+    {
+        fitIntoRectangle(title_geometry, *title_text);
+    
+        title_pos = title_geometry.topLeft() 
+            + 0.5 * QPointF( title_geometry.width() - title_text->size().width(),
+                             title_geometry.height() - title_text->size().height() );
+
+    }
 }
 
 /** Build this widget */
@@ -516,6 +576,24 @@ void PageView::build()
     view_geometry = QRectF( border_size, border_size + title_height, 
                             this->geometry().width() - 2*border_size, 
                             this->geometry().height() - 2*border_size - title_height );
+
+    back_button = new Button(this);
+    back_button->setText("Back");
+    
+    forward_button = new Button(this);
+    forward_button->setText("Next");
+    
+    connect(back_button, SIGNAL(clicked()), this, SLOT(back()));
+    connect(forward_button, SIGNAL(clicked()), this, SLOT(forward()));
+    
+    connect(this, SIGNAL(canBackChanged(bool)), back_button, SLOT(setEnabled(bool)));
+    connect(this, SIGNAL(canForwardChanged(bool)),
+            forward_button, SLOT(setEnabled(true)));
+
+    title_text = 0;
+    old_title_text = 0;
+
+    positionTitleBar();
 }
 
 /** Called when this widget is resized */
@@ -537,6 +615,8 @@ void PageView::resizeEvent(QGraphicsSceneResizeEvent *e)
                             << tabpages[current_tab]->current_page->geometry();
         }
     }
+    
+    positionTitleBar();
 }
 
 /** Called when this widget is moved */
@@ -558,6 +638,8 @@ void PageView::moveEvent(QGraphicsSceneMoveEvent *e)
                             << tabpages[current_tab]->current_page->geometry();
         }
     }
+    
+    positionTitleBar();
 }
 
 /** Internal function used to make the passed view visible */
@@ -691,13 +773,13 @@ void PageView::animateNew(PagePointer new_page)
         return;
     }
     
-    new_page->setOpacity(1.0);
+    new_page->setOpacity(0.0);
     new_page->setGeometry(view_geometry);
     new_page->show();
     conspireDebug() << "Showing page" << new_page->title() << new_page->description()
                     << view_geometry << new_page->geometry();
     
-    /*QParallelAnimationGroup *g = new QParallelAnimationGroup();
+    QParallelAnimationGroup *g = new QParallelAnimationGroup();
     
     QPropertyAnimation *anim = new QPropertyAnimation(new_page.data(), "opacity");
     anim->setDuration(500);
@@ -712,7 +794,33 @@ void PageView::animateNew(PagePointer new_page)
     anim->setEasingCurve(QEasingCurve::OutBack);
     g->addAnimation(anim);
 
-    this->animate( AnimationPointer(new Animation(g)) );*/
+    animateTitleText(new_page->title(), g);
+
+    this->animate( AnimationPointer(new Animation(g)) );
+}
+
+void PageView::animateTitleText(QString new_text, 
+                                QParallelAnimationGroup *g, 
+                                bool move_forwards)
+{
+    if (title_text)
+    {
+        delete old_title_text;
+        old_title_text = title_text;
+        old_title_pos = title_pos;
+    }
+    
+    title_text = new QStaticText(new_text);
+    QTextOption opt;
+    opt.setWrapMode(QTextOption::NoWrap);
+    opt.setAlignment(::Qt::AlignCenter);
+    title_text->setTextOption(opt);
+    
+    fitIntoRectangle(title_geometry, *title_text);
+    
+    title_pos = title_geometry.topLeft() 
+            + 0.5 * QPointF( title_geometry.width() - title_text->size().width(),
+                             title_geometry.height() - title_text->size().height() );
 }
 
 /** Animate the switch from "old_page" to "new_page" */
@@ -774,20 +882,6 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
         anim->setEndValue(new_page->x());
         anim->setEasingCurve(QEasingCurve::OutBack);
         g->addAnimation(anim);
-        
-        anim = new QPropertyAnimation(new_page.data(), "rotation");
-        anim->setDuration(500);
-        anim->setStartValue(45);
-        anim->setEndValue(0);
-        anim->setEasingCurve(QEasingCurve::OutBack);
-        g->addAnimation(anim);
-        
-        anim = new QPropertyAnimation(old_page.data(), "rotation");
-        anim->setDuration(500);
-        anim->setStartValue(0);
-        anim->setEndValue(-45);
-        anim->setEasingCurve(QEasingCurve::OutBack);
-        g->addAnimation(anim);
     }
     else
     {
@@ -804,21 +898,9 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
         anim->setEndValue(new_page->x());
         anim->setEasingCurve(QEasingCurve::OutBack);
         g->addAnimation(anim);
-        
-        anim = new QPropertyAnimation(new_page.data(), "rotation");
-        anim->setDuration(500);
-        anim->setStartValue(-45);
-        anim->setEndValue(0);
-        anim->setEasingCurve(QEasingCurve::OutBack);
-        g->addAnimation(anim);
-        
-        anim = new QPropertyAnimation(old_page.data(), "rotation");
-        anim->setDuration(500);
-        anim->setStartValue(0);
-        anim->setEndValue(45);
-        anim->setEasingCurve(QEasingCurve::OutBack);
-        g->addAnimation(anim);
     }
+
+    animateTitleText(new_page->title(), g, move_forwards);
 
     this->animate( AnimationPointer(new Animation(g)) );
 }

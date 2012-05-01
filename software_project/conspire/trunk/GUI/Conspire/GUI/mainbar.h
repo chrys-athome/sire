@@ -49,9 +49,6 @@ namespace Conspire
         ~MainBar();
         
     public slots:
-        void canBackChanged(bool can_back);
-        void canForwardChanged(bool can_forward);
-    
         void canRedoChanged(bool can_redo);
         void canUndoChanged(bool can_undo);
         
@@ -62,8 +59,6 @@ namespace Conspire
         void undo();
         void redo();
         
-        void back();
-        void forward();
         void home();
 
         void newPage();
@@ -76,8 +71,6 @@ namespace Conspire
         Button *undo_button;
         Button *redo_button;
 
-        Button *back_button;
-        Button *forward_button;
         Button *home_button;
     };
     

@@ -36,12 +36,17 @@ CONSPIRE_BEGIN_HEADER
 #include <QStack>
 #include <QList>
 #include <QRectF>
+#include <QPointF>
 
 class QTabBar;
 class QLabel;
+class QStaticText;
+class QParallelAnimationGroup;
 
 namespace Conspire
 {
+    class Button;
+
     /** This widget holds and manages a set of PageWidget pages.
         The widget keeps a page history, allowing the user to move
         back and forward through the pages, and it also provides the
@@ -94,6 +99,8 @@ namespace Conspire
                    QWidget *widget);
 
     private:
+        void positionTitleBar();
+    
         class Tab
         {
         public:
@@ -121,6 +128,9 @@ namespace Conspire
         void pushView(PagePointer view, bool clear_future=true);
         PagePointer popView(bool forget_page=false);
 
+        void animateTitleText(QString new_text, QParallelAnimationGroup *g,
+                              bool move_forwards=true);
+
         void animateSwitch(PagePointer old_view, PagePointer new_view, 
                            bool move_forwards=true);
                            
@@ -135,6 +145,27 @@ namespace Conspire
 
         /** The correct size and location of the page being viewed */
         QRectF view_geometry;
+        
+        /** The old text in the page title header (used during animation) */
+        QStaticText *old_title_text;
+        
+        /** The text in the page title header */
+        QStaticText *title_text;
+        
+        /** The rectangle for the title text */
+        QRectF title_geometry;
+        
+        /** The location for the title text */
+        QPointF title_pos;
+        
+        /** The location for the old title text */
+        QPointF old_title_pos;
+        
+        /** The "back" button in the page title header */
+        Button *back_button;
+        
+        /** The "forward" button in the page title header */
+        Button *forward_button;
         
         /** The size of the border */
         int border_size;

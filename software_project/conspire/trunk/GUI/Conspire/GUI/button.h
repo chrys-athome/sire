@@ -31,6 +31,7 @@
 #include "Conspire/conspire.h"
 
 #include <QGraphicsWidget>
+#include <QFont>
 
 CONSPIRE_BEGIN_HEADER
 
@@ -75,9 +76,14 @@ namespace Conspire
 
     private:
         void build();
+
+        void scaleTextToFit();
     
         /** The text written onto the button */
         QStaticText *txt;
+
+        /** The font used to draw the text */
+        QFont button_font;
 
         /** Offset for the text */
         float offset_x, offset_y;

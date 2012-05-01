@@ -52,14 +52,9 @@ MainWindow::MainWindow(Options options, QWidget *parent)
     
     connect(doc, SIGNAL(canUndoChanged(bool)), mainbar, SLOT(canUndoChanged(bool)));
     connect(doc, SIGNAL(canRedoChanged(bool)), mainbar, SLOT(canRedoChanged(bool)));
-    connect(doc, SIGNAL(canForwardChanged(bool)),
-            mainbar, SLOT(canForwardChanged(bool)));
-    connect(doc, SIGNAL(canBackChanged(bool)), mainbar, SLOT(canBackChanged(bool)));
     
     connect(mainbar, SIGNAL(undo()), doc, SLOT(undo()));
     connect(mainbar, SIGNAL(redo()), doc, SLOT(redo()));
-    connect(mainbar, SIGNAL(back()), doc, SLOT(back()));
-    connect(mainbar, SIGNAL(forward()), doc, SLOT(forward()));
     connect(mainbar, SIGNAL(home()), doc, SLOT(home()));
     
     view = PagePointer(doc);
