@@ -21,7 +21,6 @@ set ( SIREMOVE_HEADERS
       hybridmc.h
       integrator.h
       integratorworkspace.h
-      integratorworkspacejm.h
       internalmove.h
       internalmovesingle.h
       moldeleter.h
@@ -31,6 +30,7 @@ set ( SIREMOVE_HEADERS
       move.h
       moves.h
       mtsmc.h
+      openmmintegrator.h	
       prefsampler.h
       rbworkspace.h
       repexmove.h
@@ -82,7 +82,6 @@ set ( SIREMOVE_SOURCES
       hybridmc.cpp
       integrator.cpp
       integratorworkspace.cpp
-      integratorworkspacejm.cpp
       internalmove.cpp
       internalmovesingle.cpp
       moldeleter.cpp
@@ -92,6 +91,7 @@ set ( SIREMOVE_SOURCES
       move.cpp
       moves.cpp
       mtsmc.cpp
+      openmmintegrator.cpp
       prefsampler.cpp
       rbworkspace.cpp
       repexmove.cpp
@@ -130,6 +130,17 @@ set ( SIREMOVE_SOURCES
 
 add_library (SireMove ${SIREMOVE_SOURCES})
 
+set (Path "/home/gac/local")
+
+find_library(OPENMM_LIBRARY 
+			NAMES 
+			OpenMM 
+			PATHS
+			${Path}/lib)
+
+message ("Dir = ${OPENMM_LIBRARY}")
+
+
 set_target_properties (SireMove PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
@@ -141,6 +152,7 @@ target_link_libraries (SireMove
                        SireMaths
                        SireCluster
                        SireStream
+                       ${OPENMM_LIBRARY}
                        )
 
 # installation
