@@ -25,3 +25,57 @@
   *  at http://siremol.org
   *
 \*********************************************/
+
+#ifndef SIREMOL_ATOMCUTTING_H
+#define SIREMOL_ATOMCUTTING_H
+
+#include "cuttingfunction.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class AtomCutting;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::AtomCutting&);
+QDataStream& operator>>(QDataStream&, SireMol::AtomCutting&);
+
+namespace SireMol
+{
+
+/** This is a cutting function that divides up a molecule into 
+    CutGroups based on atoms - each atom is placed into 
+    a different CutGroup
+    
+    @author Gaetano Calabro'
+*/
+class SIREMOL_EXPORT AtomCutting 
+        : public SireBase::ConcreteProperty<AtomCutting,CuttingFunction>
+{
+public:
+    AtomCutting();
+    
+    AtomCutting(const AtomCutting &other);
+    
+    ~AtomCutting();
+    
+    static const char* typeName();
+    
+    AtomCutting& operator=(const AtomCutting &other);
+    
+    bool operator==(const AtomCutting &other) const;
+    bool operator!=(const AtomCutting &other) const;
+    
+    MolStructureEditor operator()(MolStructureEditor &moleditor) const;
+}; 
+
+}
+
+Q_DECLARE_METATYPE( SireMol::AtomCutting );
+
+SIRE_EXPOSE_CLASS( SireMol::AtomCutting )
+
+SIRE_END_HEADER
+
+#endif

@@ -25,3 +25,123 @@
   *  at http://siremol.org
   *
 \*********************************************/
+
+#include "atomcutting.h"
+
+#include "moleditor.h"
+
+#include "mover.hpp"
+#include "selector.hpp"
+
+#include "molecule.h"
+#include "residue.h"
+#include "cutgroup.h"
+#include "atom.h"
+
+#include "atomeditor.h"
+#include "cgeditor.h"
+#include "reseditor.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+using namespace SireMol;
+using namespace SireBase;
+using namespace SireStream;
+
+static const RegisterMetaType<AtomCutting> r_rescut;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
+                                       const AtomCutting &rescut)
+{
+    writeHeader(ds, r_rescut, 1);
+    
+    ds << static_cast<const CuttingFunction&>(rescut);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomCutting &rescut)
+{
+    VersionID v = readHeader(ds, r_rescut);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<CuttingFunction&>(rescut);
+    }
+    else
+        throw version_error(v, "1", r_rescut, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+AtomCutting::AtomCutting()
+               : ConcreteProperty<AtomCutting,CuttingFunction>()
+{}
+
+/** Copy constructor */
+AtomCutting::AtomCutting(const AtomCutting &other)
+               : ConcreteProperty<AtomCutting,CuttingFunction>(other)
+{}
+
+/** Destructor */
+AtomCutting::~AtomCutting()
+{}
+
+/** Copy assignment operator */
+AtomCutting& AtomCutting::operator=(const AtomCutting&)
+{
+    return *this;
+}
+
+/** Comparison operator */
+bool AtomCutting::operator==(const AtomCutting&) const
+{
+    return true;
+}
+
+/** Comparison operator */
+bool AtomCutting::operator!=(const AtomCutting&) const
+{
+    return false;
+}
+
+/** Apply this function - this creates one CutGroup per atom */
+MolStructureEditor AtomCutting::operator()(MolStructureEditor &moleditor) const
+{
+    //remove the existing CutGroups
+    moleditor.removeAllCutGroups();
+    
+    //now create one CutGroup for each atom, giving it the same
+    //number as the atom index
+    
+    int k=0;
+    
+    for (ResIdx i(0); i<moleditor.nResidues(); ++i)
+    {
+        ResStructureEditor reseditor = moleditor.residue(i);
+        
+        for (int j=0; j<reseditor.nAtoms(); ++j)
+        {
+            
+            moleditor.add( CGName(QString::number(k+j)) );          
+            
+            reseditor.atom(j).reparent( CGIdx(k+j) );
+            
+        }
+        
+        k=reseditor.nAtoms();
+        
+           
+     }
+    
+    return moleditor;
+}
+
+const char* AtomCutting::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomCutting>() );
+}
