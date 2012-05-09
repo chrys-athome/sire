@@ -314,21 +314,19 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	OpenMM::CustomNonbondedForce * custom_nonbond_openmm=NULL;
 	
-    if(free_energy_calculation == false){  
+	if(free_energy_calculation == false){  
 		
-		nonbond_openmm = new OpenMM::NonbondedForce();
-		
-		system_openmm.addForce(nonbond_openmm);
+	  nonbond_openmm = new OpenMM::NonbondedForce();
+	  
+	  system_openmm.addForce(nonbond_openmm);
 	}
-	
 	else{
-	
-		custom_nonbond_openmm = new OpenMM::CustomNonbondedForce("kgac*r");
+	  
+	  custom_nonbond_openmm = new OpenMM::CustomNonbondedForce("kgac*r");
+	  
+	  custom_nonbond_openmm->addGlobalParameter("kgac",Alchemical_values[0]);
 		
-		custom_nonbond_openmm->addGlobalParameter("kgac",Alchemical_values[0]);
-      
-		system_openmm.addForce(custom_nonbond_openmm);
-		
+	  system_openmm.addForce(custom_nonbond_openmm);
 	}
 	
 	
@@ -336,25 +334,25 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	//Long Range interaction non bonded force method setting
 
 	if(flag_cutoff == NOCUTOFF){
-				
-		if(free_energy_calculation == false)
-			nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::NoCutoff);
-		
-		else
-			custom_nonbond_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
-		
-		cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
+	  
+	  if(free_energy_calculation == false)
+	    nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::NoCutoff);
+	  else
+	    custom_nonbond_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
+
+	  cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
+
 	}
 	
 	if(flag_cutoff == CUTOFFNONPERIODIC){
-		
-		if(free_energy_calculation == false)
-			nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffNonPeriodic);
-		
-		else
-			custom_nonbond_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
-			
-		cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
+
+	  if(free_energy_calculation == false)
+	    nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffNonPeriodic);
+	  else
+	    custom_nonbond_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
+
+	  cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
+
 	}
 	
 	
@@ -474,6 +472,10 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	//QElapsedTimer timer_IN;
 	
 	//timer_IN.start();
+
+	// Conversion factor because sire units of time are in AKMA, whereas OpenMM uses picoseconds
+	double AKMAPerPs = 0.04888821;
+	double PsPerAKMA = 1 / AKMAPerPs;
 	
 	for (int i=0; i < nmols; ++i){
 	
@@ -504,8 +506,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	    
 			
 	     
-			velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) ,
-						  p[j].y()/m[j] * (OpenMM::NmPerAngstrom), p[j].z()/m[j] * (OpenMM::NmPerAngstrom));
+			velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA ,
+								       p[j].y()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA, 
+								       p[j].z()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA);
 
 			//system_masses[system_index] = m[j] ;
 	     
@@ -542,8 +545,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
       }*/
       
-      
-	
 	MoleculeGroup molgroup = ws.moleculeGroup();
 	
 	
@@ -551,9 +552,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	
 	
-	custom_nonbond_openmm->addPerParticleParameter("q");
-	custom_nonbond_openmm->addPerParticleParameter("sigma");
-	custom_nonbond_openmm->addPerParticleParameter("eps");
+	//custom_nonbond_openmm->addPerParticleParameter("q");
+	//custom_nonbond_openmm->addPerParticleParameter("sigma");
+	//custom_nonbond_openmm->addPerParticleParameter("eps");
     
 	for (int i=0; i < nmols ; i++){
 	
@@ -1138,12 +1139,12 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		for(int j=0; j<ws.nAtoms(i);j++){	
 		
 			sire_coords[j] = Vector(positions_openmm[j+k][0] * (OpenMM::AngstromsPerNm),
-									positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),
-									positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
+						positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),
+						positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
 									
-			sire_momenta[j] =  Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm),
-									  velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm),
-									  velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm));
+			sire_momenta[j] =  Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
+						  velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
+						  velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs);
 					
 		}
 		
@@ -1157,43 +1158,36 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	if (MCBarostat_flag == true) {
 	
-		
-		OpenMM::Vec3 a;
-		OpenMM::Vec3 b;
-		OpenMM::Vec3 c;
+	  OpenMM::Vec3 a;
+	  OpenMM::Vec3 b;
+	  OpenMM::Vec3 c;
 	
-		state_openmm.getPeriodicBoxVectors(a,b,c);
+	  state_openmm.getPeriodicBoxVectors(a,b,c);
 	
-		cout << "\n\nNEW BOX DIMENSIONS [A] = (" << a[0] * OpenMM::AngstromsPerNm << ", " 
-										   		 << b[1] * OpenMM::AngstromsPerNm << ", " 
-										   		 << c[2] * OpenMM::AngstromsPerNm << ")\n\n";
+	  cout << "\n\nNEW BOX DIMENSIONS [A] = (" << a[0] * OpenMM::AngstromsPerNm << ", " 
+	       << b[1] * OpenMM::AngstromsPerNm << ", " 
+	       << c[2] * OpenMM::AngstromsPerNm << ")\n\n";
 										   		 
-		Vector new_dims = Vector(a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
+	  Vector new_dims = Vector(a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
 		
 		
-		System & ptr_sys = ws.nonConstsystem();
-		
-	    PeriodicBox  sp = ptr_sys.property("space").asA<PeriodicBox>();
+	  System & ptr_sys = ws.nonConstsystem();
+	  
+	  PeriodicBox  sp = ptr_sys.property("space").asA<PeriodicBox>();
 	    
-		sp.setDimensions(new_dims);
+	  sp.setDimensions(new_dims);
 		
-		//cout << "\nBOX SIZE GAC = (" << sp.dimensions()[0] << " , " << sp.dimensions()[1] << " ,  " << sp.dimensions()[2] << ")\n\n";
+	  //cout << "\nBOX SIZE GAC = (" << sp.dimensions()[0] << " , " << sp.dimensions()[1] << " ,  " << sp.dimensions()[2] << ")\n\n";
 		
+	  const QString stringa = "space" ;
 		
-		const QString stringa = "space" ;
-		
-		ptr_sys.setProperty(stringa,sp);
-							   		 								   		 							   		
+	  ptr_sys.setProperty(stringa,sp);
 	} 
-	
-	
-	
+
 	//cout << " record_stats " << record_stats ;
 	
 	if (record_stats)
-        ws.collectStatistics();
-        
-        
+	  ws.collectStatistics();
         
 	//cout << "\n\nCOPY OUT Simulation time = " << timer_OUT.elapsed() / 1000.0 << " s"<<"\n\n";    
         

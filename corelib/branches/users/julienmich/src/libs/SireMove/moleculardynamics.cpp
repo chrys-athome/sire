@@ -363,20 +363,21 @@ MolarEnergy MolecularDynamics::kineticEnergy() const
 }
 
 /** Return the temperature of the system at the last move */
-Temperature MolecularDynamics::temperature() const
-{
-  SireUnits::Dimension::MolarEnergy ekin = MolecularDynamics::kineticEnergy();
-
-  // NOTE THAT THIS ONLY WORKS FOR 3D SPACE WHEN THERE IS ONE ATOM PER MOLECULE 
-  // AND NO CONSTRAINTS...IN OTHER WORDS..NEED TO FIX THIS
-  //int ndofs = 3 * wspace.read().nMolecules();
-  int ndofs = 3 * 256;
-
-  SireUnits::Dimension::Temperature temp = ( ( 2 * ekin.value() ) / ( ndofs * k_boltz ) ) * kelvin ;
-  
-  return temp;
-
-}
+//Temperature MolecularDynamics::temperature() const
+//{
+//  SireUnits::Dimension::MolarEnergy ekin = MolecularDynamics::kineticEnergy();
+//
+//  // NOTE THAT THIS ONLY WORKS FOR 3D SPACE WHEN THERE IS ONE ATOM PER MOLECULE 
+//  // AND NO CONSTRAINTS...IN OTHER WORDS..NEED TO FIX THIS
+//
+//  int ndofs = 3 * wspace.read().nMolecules();
+//  //int ndofs = 3 * 256;
+//
+//  SireUnits::Dimension::Temperature temp = ( ( 2 * ekin.value() ) / ( ndofs * k_boltz ) ) * kelvin ;
+//  
+//  return temp;
+//
+//}
 
 /** Completely clear any move statistics - this clears all existing
     velocities */
