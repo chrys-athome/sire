@@ -244,6 +244,12 @@ const System& IntegratorWorkspace::system() const
     return sys;
 }
 
+/** Return the system being integrated */
+System& IntegratorWorkspace::nonConstsystem() 
+{
+    return sys;
+}
+
 /** Return the property map used to find the properties that are
     required for integration */
 const PropertyMap& IntegratorWorkspace::propertyMap() const
@@ -378,23 +384,6 @@ bool IntegratorWorkspace::calculateForces(const Symbol &nrg_component)
     else
         return false;
 }
-
-/** Calculate the current energies of the molecules in the molecule group using the energy component 'nrg_component' */
-bool IntegratorWorkspace::calculateEnergies(const Symbol &nrg_component)
-{
-    if (need_new_forces or last_nrg_component != nrg_component)
-    {
-        molenergies.initialiseTables();
-        sys.energy(molenergies, nrg_component);
-        last_nrg_component = nrg_component;
-        need_new_forces = false;
-        
-        return true;
-    }
-    else
-        return false;
-}
-
 
 /** Return whether or not the forces need calculating for the energy
     component 'nrg_component' */

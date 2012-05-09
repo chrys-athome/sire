@@ -46,6 +46,7 @@
 #include "SireMol/atomeditor.h"
 #include "SireMol/cgatomidx.h"
 #include "SireMol/residuecutting.h"
+#include "SireMol/atomcutting.h"
 
 #include "SireMol/amberparameters.h"
 
@@ -150,7 +151,9 @@ enum { TITLE = 1, //a TITLE flag in a top file
        BOX_DIMENSIONS = 37,
        RADIUS_SET = 38,
        RADII = 39,
-       SCREEN = 40
+       SCREEN = 40,
+       SCEE_SCALE_FACTOR = 41, 
+       SCNB_SCALE_FACTOR = 42
 };
 
 /** enumerates the POINTERS in a TOP file */
@@ -192,6 +195,12 @@ enum { IPTRES = 0, //final residue that is considered part of the solute,
        NSPM = 1,   //total number of molecules
        NSPOL = 2   //the first solvent "molecule"
      };
+     
+/** Enumerate cutting scheme **/     
+enum {PERRESIDUE=0,
+	  PERATOM=1
+};    
+     
 
 // The partial charges in the top file are not in electrons
 static const double AMBERCHARGECONV = 18.2223;
@@ -283,6 +292,10 @@ static void processFlagLine(const QStringList &words, int &flag)
         flag = RADII;
     else if (words[1] == "SCREEN")
         flag = SCREEN;
+    else if (words[1] == "SCEE_SCALE_FACTOR")
+        flag = SCEE_SCALE_FACTOR;
+    else if (words[1] == "SCNB_SCALE_FACTOR")
+        flag = SCNB_SCALE_FACTOR;
     else
         throw SireError::program_bug( QObject::tr(
                 "Does not know what to do with this flag: '%1'").arg(words[1]), 
@@ -1072,7 +1085,7 @@ Amber::~Amber()
 
 /** Reads the contents of a topfile and associated crdfile and returns a molecule group */
 tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile, 
-                                            const QString &topfile) const
+                                            const QString &topfile, QString flag_cutting) const
 {
   /** 
       See http://ambermd.org/formats.html
@@ -1589,6 +1602,12 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
                 case SCREEN:
                     processDoubleLine(line, currentFormat, screen);
                     break;
+                // JM Feb 12. The following entries are to set the 14 scale factors. Sire hardcodes the ones for all atom forcefields. Thus loading a 
+                /// united atom amber top file in sire will currently not use the correct scale factors.  
+                case SCEE_SCALE_FACTOR:
+                    break;
+                case SCNB_SCALE_FACTOR:
+                    break;
                 default:
                     throw SireError::program_bug( QObject::tr(
                                 "Serious problem with the value of the variable "
@@ -1597,6 +1616,18 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
             }
         }
     }
+    
+    int cutting;
+    
+    if(flag_cutting == "perresidue")
+    	cutting = PERRESIDUE;
+    else if (flag_cutting == "peratom")
+    	cutting = PERATOM;
+    else
+    	throw SireError::program_bug(QObject::tr(
+            "The Cutting method has not been correctly specified. Possible choises: perresidue, peratom"), CODELOC); 
+    
+    
 
     //DEBUG STUFF
     //qDebug() << " POINTERS " << pointers << " ATOMNAME " 
@@ -1754,12 +1785,28 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
             atoms_in_mol += ( end_atom - start_atom ) + 1 ;
             ++resnum;
         }
+        
+        
+        
 
-        // Create cut groups using a per residue scheme
-        ResidueCutting residue_cutfunc = ResidueCutting();
+        // Create cut groups using a per residue or per atom scheme
+        
+        if(cutting == PERRESIDUE){
+        	
+        	ResidueCutting residue_cutfunc = ResidueCutting();
 
-        molstructeditor = residue_cutfunc(molstructeditor);
-
+        	molstructeditor = residue_cutfunc(molstructeditor);
+		}
+		
+		else if(cutting == PERATOM){
+		
+			AtomCutting atom_cutfunc = AtomCutting();
+			
+			molstructeditor = atom_cutfunc(molstructeditor);
+		
+		}
+		
+		
         Molecule molecule = molstructeditor.commit();
 
         MolEditor editmol = molecule.edit();
@@ -1771,7 +1818,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
         FourAtomFunctions dihedralfuncs(editmol);
         FourAtomFunctions improperfuncs(editmol);
 
-	AmberParameters amberparams(editmol);
+		AmberParameters amberparams(editmol);
 
         CLJNBPairs nbpairs;
         QHash<AtomNum, QList<AtomNum> > atoms14;

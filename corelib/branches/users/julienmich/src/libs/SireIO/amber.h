@@ -93,7 +93,7 @@ public:
     const char* what() const;
   
     tuple<Molecules,SpacePtr> readCrdTop(const QString &crdfile, 
-                                         const QString &topfile) const;
+                                         const QString &topfile, QString flag_cutting="perresidue") const;
 };
 
 }
