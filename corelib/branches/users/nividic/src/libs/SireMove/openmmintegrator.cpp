@@ -913,7 +913,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	int num_ex=nonbond_openmm->getNumExceptions();
 	
-	cout << "\n\n";
+	cout << "\n\n NUM pair excluded = " << num_ex <<"\n";
 	
 	if(free_energy_calculation == true){
 			
@@ -925,48 +925,33 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				double  chargeprod=0;
 				double  sigma_ex=0;
 				double  epsilon_ex=0;
-	
-				double  charge_p1=0;
-				double  sigma_p1=0;
-				double  epsilon_p1=0;
-	
-				double  charge_p2=0;
-				double  sigma_p2=0;
-				double  epsilon_p2=0;
-				
-				bool charge_p1_p2=false;
-				bool sigma_p1_p2=false;
-				bool epsilon_p1_p2=false;
-				
-		
+
 				nonbond_openmm->getExceptionParameters(i,p1,p2,chargeprod,sigma_ex,epsilon_ex);
 				
-				if(p1!=1 && p2!=2)
+				if(p1 != 1 && p2 != 2)
 					custom_nonbond_solute_solvent_openmm->addExclusion(p1,p2);
+					
+				
+				//nonbond_openmm->getParticleParameters(p1,charge_p1,sigma_p1,epsilon_p1);
 		
+				//nonbond_openmm->getParticleParameters(p2,charge_p2,sigma_p2,epsilon_p2);
+				
+				//cout << "p1 = " << p1 << " charge  p1 = " << charge_p1 << " sigma p1 = " << sigma_p1 << " epasilon p1 = " << epsilon_p1 <<"\n";
+				//cout << "p2 = " << p2 << " charge  p2 = " << charge_p2 << " sigma p2 = " << sigma_p2 << " epasilon p2 = " << epsilon_p1 <<"\n\n";
 				
 				
 				
-				
-				nonbond_openmm->getParticleParameters(p1,charge_p1,sigma_p1,epsilon_p1);
 		
-				nonbond_openmm->getParticleParameters(p2,charge_p2,sigma_p2,epsilon_p2);
-		
-				if(charge_p1 == 0.0 && charge_p2 == 0.0)
-					charge_p1_p2 = true;
-				
-				if(sigma_p1 == 1.0 && sigma_p2 == 1.0)
-					sigma_p1_p2 = true;
-				
-				if(epsilon_p1 == 0.0 && epsilon_p2 == 0.0)
-					epsilon_p1_p2 = true;
-				
-				if(charge_p1_p2 && sigma_p1_p2 && epsilon_p1_p2)
+				if(chargeprod==0.0 && sigma_ex == 1.0 && epsilon_ex ==0.0)
 					excluded_vector_12_13.append(qMakePair(p1,p2));			
 							
-		}
+			}
 	
+			
+			
 			for (int i=0;i<excluded_vector_12_13.size();i++){
+			
+			
 				
 				cout << "( " << (excluded_vector_12_13[i]).first << " , " << (excluded_vector_12_13[i]).second << " )\n";										
 			
