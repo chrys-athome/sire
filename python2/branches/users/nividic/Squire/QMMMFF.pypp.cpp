@@ -69,6 +69,28 @@ void register_QMMMFF_class(){
                 , ( bp::arg("name") ) );
         
         }
+        { //::Squire::QMMMFF::energy
+        
+            typedef void ( ::Squire::QMMMFF::*energy_function_type )( ::SireFF::EnergyTable &,double ) ;
+            energy_function_type energy_function_value( &::Squire::QMMMFF::energy );
+            
+            QMMMFF_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::Squire::QMMMFF::energy
+        
+            typedef void ( ::Squire::QMMMFF::*energy_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
+            energy_function_type energy_function_value( &::Squire::QMMMFF::energy );
+            
+            QMMMFF_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("symbol"), bp::arg("scale_energy")=1 ) );
+        
+        }
         { //::Squire::QMMMFF::energyCommandFile
         
             typedef ::QString ( ::Squire::QMMMFF::*energyCommandFile_function_type )(  ) const;

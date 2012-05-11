@@ -80,6 +80,28 @@ void register_FastInterCLJFF_class(){
                 , ( bp::arg("name") ) );
         
         }
+        { //::SireMM::FastInterCLJFF::energy
+        
+            typedef void ( ::SireMM::FastInterCLJFF::*energy_function_type )( ::SireFF::EnergyTable &,double ) ;
+            energy_function_type energy_function_value( &::SireMM::FastInterCLJFF::energy );
+            
+            FastInterCLJFF_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::SireMM::FastInterCLJFF::energy
+        
+            typedef void ( ::SireMM::FastInterCLJFF::*energy_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
+            energy_function_type energy_function_value( &::SireMM::FastInterCLJFF::energy );
+            
+            FastInterCLJFF_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("symbol"), bp::arg("scale_energy")=1 ) );
+        
+        }
         { //::SireMM::FastInterCLJFF::field
         
             typedef void ( ::SireMM::FastInterCLJFF::*field_function_type )( ::SireFF::FieldTable &,double ) ;

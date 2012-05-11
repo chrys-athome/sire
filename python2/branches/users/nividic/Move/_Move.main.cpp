@@ -69,6 +69,8 @@
 
 #include "NullVolumeChanger.pypp.hpp"
 
+#include "OpenMMIntegrator.pypp.hpp"
+
 #include "PrefSampler.pypp.hpp"
 
 #include "RepExMove.pypp.hpp"
@@ -231,6 +233,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_VolumeChanger_class();
 
     register_NullVolumeChanger_class();
+
+    register_OpenMMIntegrator_class();
 
     register_Sampler_class();
 

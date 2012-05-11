@@ -20,6 +20,7 @@
 #include "move.h"
 #include "moves.h"
 #include "mtsmc.h"
+#include "openmmintegrator.h"
 #include "prefsampler.h"
 #include "rbworkspace.h"
 #include "repexmove.h"
