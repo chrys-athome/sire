@@ -310,108 +310,48 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	//OpenMM non Bonded Forces
 	
-<<<<<<< .working
+
 	OpenMM::NonbondedForce * nonbond_openmm = new OpenMM::NonbondedForce();
-=======
-	OpenMM::NonbondedForce * nonbond_openmm=NULL; 
->>>>>>> .merge-right.r1551
 	
-<<<<<<< .working
 	OpenMM::CustomNonbondedForce * custom_nonbond_SoluteSolvent_openmm=NULL;
-=======
-	OpenMM::CustomNonbondedForce * custom_nonbond_openmm=NULL;
->>>>>>> .merge-right.r1551
+
+	system_openmm.addForce(nonbond_openmm);	
 	
-<<<<<<< .working
-	OpenMM::CustomNonbondedForce * custom_nonbond_Solute_plus_Solvent_openmm=NULL;
-=======
-    if(free_energy_calculation == false){  
-		
-		nonbond_openmm = new OpenMM::NonbondedForce();
-		
-		system_openmm.addForce(nonbond_openmm);
-	}
->>>>>>> .merge-right.r1551
 	
-	else{
-	
-<<<<<<< .working
 	if(free_energy_calculation == true){
 	
 		custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce("kgac*r");
-=======
-		custom_nonbond_openmm = new OpenMM::CustomNonbondedForce("kgac*r");
->>>>>>> .merge-right.r1551
-		
-<<<<<<< .working
-		custom_nonbond_Solute_plus_Solvent_openmm = new OpenMM::CustomNonbondedForce("kgac*r");
-		
+				
 		custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("kgac",Alchemical_values[0]);
-		
-		custom_nonbond_Solute_plus_Solvent_openmm->addGlobalParameter("kgac",Alchemical_values[0]);
 		      
 		system_openmm.addForce(custom_nonbond_SoluteSolvent_openmm);
 		
-		system_openmm.addForce(custom_nonbond_Solute_plus_Solvent_openmm);
-		
 	}
-	
-=======
-		custom_nonbond_openmm->addGlobalParameter("kgac",Alchemical_values[0]);
-      
-		system_openmm.addForce(custom_nonbond_openmm);
 		
->>>>>>> .merge-right.r1551
-	else{
-		
-		system_openmm.addForce(nonbond_openmm); 
-	
-	}
-	
-<<<<<<< .working
-	
-=======
-	
-	
->>>>>>> .merge-right.r1551
 	//Long Range interaction non bonded force method setting
 
 	if(flag_cutoff == NOCUTOFF){
 				
-<<<<<<< .working
+		nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::NoCutoff);	
+				
 		if(free_energy_calculation == true){
 			
 			custom_nonbond_SoluteSolvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
-			
-			custom_nonbond_Solute_plus_Solvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
-=======
-		if(free_energy_calculation == false)
-			nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::NoCutoff);
->>>>>>> .merge-right.r1551
-		
-		else
-			custom_nonbond_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
+		}			
 		
 		cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
 	}
 	
 	if(flag_cutoff == CUTOFFNONPERIODIC){
+	
+		nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffNonPeriodic);
 		
-<<<<<<< .working
 		if(free_energy_calculation == true){
 			
 			custom_nonbond_SoluteSolvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
-			
-			custom_nonbond_Solute_plus_Solvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
-			
+						
 		}
-=======
-		if(free_energy_calculation == false)
-			nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffNonPeriodic);
->>>>>>> .merge-right.r1551
-		
-		else
-			custom_nonbond_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
+			
 			
 		cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
 	}
@@ -423,37 +363,20 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		const double converted_cutoff_distance = convertTo(cutoff_distance.value(), nanometer);
 		
-		if(free_energy_calculation == false){
+		nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffPeriodic);
+		
+		nonbond_openmm->setCutoffDistance(converted_cutoff_distance);
+		
+		//Set Dielectric constant media
+		nonbond_openmm->setReactionFieldDielectric(field_dielectric);
+		
+		
+		if(free_energy_calculation == true){
 			
-			nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffPeriodic);
-		
-			nonbond_openmm->setCutoffDistance(converted_cutoff_distance);
-		
-			//Set Dielectric constant media
-			nonbond_openmm->setReactionFieldDielectric(field_dielectric);
-		}
-		
-		else{
-			
-			custom_nonbond_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
-		
-			custom_nonbond_openmm->setCutoffDistance(converted_cutoff_distance);
-		
-			//Set Dielectric constant media
-			
-<<<<<<< .working
 			custom_nonbond_SoluteSolvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
+		
 			custom_nonbond_SoluteSolvent_openmm->setCutoffDistance(converted_cutoff_distance);
-			
-			custom_nonbond_Solute_plus_Solvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
-			custom_nonbond_Solute_plus_Solvent_openmm->setCutoffDistance(converted_cutoff_distance);
-				
-=======
-			//custom_nonbond_openmm->setReactionFieldDielectric(field_dielectric);
-		
->>>>>>> .merge-right.r1551
 		}
-		
 		
 		cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
 		cout << "CutOff distance = " << converted_cutoff_distance  << " Nm" << "\n";
@@ -618,23 +541,13 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	int num_atoms_till_i = 0;
 	
 	
-	
-<<<<<<< .working
-	if( free_energy_calculation == true){
+	if(free_energy_calculation == true){
 		custom_nonbond_SoluteSolvent_openmm->addPerParticleParameter("q");
 		custom_nonbond_SoluteSolvent_openmm->addPerParticleParameter("sigma");
 		custom_nonbond_SoluteSolvent_openmm->addPerParticleParameter("eps");
 		
-		custom_nonbond_Solute_plus_Solvent_openmm->addPerParticleParameter("q");
-		custom_nonbond_Solute_plus_Solvent_openmm->addPerParticleParameter("sigma");
-		custom_nonbond_Solute_plus_Solvent_openmm->addPerParticleParameter("eps");
     }
-=======
-	custom_nonbond_openmm->addPerParticleParameter("q");
-	custom_nonbond_openmm->addPerParticleParameter("sigma");
-	custom_nonbond_openmm->addPerParticleParameter("eps");
->>>>>>> .merge-right.r1551
-    
+
 	for (int i=0; i < nmols ; i++){
 	
 		const Vector *c = ws.coordsArray(i);
@@ -669,13 +582,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 			double charge = charges[j].value();
 			
-			if(free_energy_calculation == false){  		
-		
-				nonbond_openmm->addParticle(charge, sigma * OpenMM::NmPerAngstrom, epsilon * OpenMM::KJPerKcal);
+			nonbond_openmm->addParticle(charge, sigma * OpenMM::NmPerAngstrom, epsilon * OpenMM::KJPerKcal);
 			
-			}
-			
-			else{
+			if( free_energy_calculation == true){
 			
 				std::vector<double> params(3);
 				
@@ -683,14 +592,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				params[1] = sigma * OpenMM::NmPerAngstrom;
 				params[2] = epsilon * OpenMM::KJPerKcal;
 				
-<<<<<<< .working
+
 				custom_nonbond_SoluteSolvent_openmm->addParticle(params);
-				custom_nonbond_Solute_plus_Solvent_openmm->addParticle(params);
 				
-=======
-				custom_nonbond_openmm->addParticle(params);
-			
->>>>>>> .merge-right.r1551
 			}
 
 			//cout<< atomvdws.toString();
@@ -994,7 +898,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	//Exclude the 1-2, 1-3 bonded atoms from nonbonded forces, and scale down 1-4 bonded atoms
 	
-	//nonbond_openmm->createExceptionsFromBonds(bondPairs, Coulob14Scale, LennardJones14Scale);**********DA ATTIVATE IMPORTANTE*****************
+	nonbond_openmm->createExceptionsFromBonds(bondPairs, Coulob14Scale, LennardJones14Scale);
 	
 	/*for(unsigned int i=0; i<bondPairs.size();i++){
 			
@@ -1002,7 +906,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		cout << "\n";
 	}*/
 	
-<<<<<<< .working
 	
 	QVector< QPair<int,int> > excluded_vector_12_13;
 	
@@ -1023,14 +926,11 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				nonbond_openmm->getExceptionParameters(i,p1,p2,chargeprod,sigma_ex,epsilon_ex);
 				
-				//if(p1 != 1 && p2 != 2)
 				custom_nonbond_SoluteSolvent_openmm->addExclusion(p1,p2);
-				//custom_nonbond_Solute_plus_Solvent_openmm->addExclusion(p1,p2);
 				
 				
 				
-				
-					
+				nonbond_openmm->addException(5,9,0.0,1.0,0.0,true);
 				
 				//nonbond_openmm->getParticleParameters(p1,charge_p1,sigma_p1,epsilon_p1);
 		
@@ -1038,9 +938,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				
 				//cout << "p1 = " << p1 << " charge  p1 = " << charge_p1 << " sigma p1 = " << sigma_p1 << " epasilon p1 = " << epsilon_p1 <<"\n";
 				//cout << "p2 = " << p2 << " charge  p2 = " << charge_p2 << " sigma p2 = " << sigma_p2 << " epasilon p2 = " << epsilon_p1 <<"\n\n";
-				
-				
-				
 		
 				if(chargeprod==0.0 && sigma_ex == 1.0 && epsilon_ex ==0.0)
 					excluded_vector_12_13.append(qMakePair(p1,p2));			
@@ -1048,23 +945,14 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			}
 	
 			
-			
 			for (int i=0;i<excluded_vector_12_13.size();i++){
-			
-			
-				
+							
 				cout << "( " << (excluded_vector_12_13[i]).first << " , " << (excluded_vector_12_13[i]).second << " )\n";										
 			
 			}
-
 	}
-	
-	
-	
-	
-	
-=======
->>>>>>> .merge-right.r1551
+
+
 	//OpenMM Integrator
 	
 	OpenMM::VerletIntegrator integrator_openmm(dt);//dt in pico seconds
