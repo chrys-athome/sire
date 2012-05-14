@@ -68,6 +68,8 @@ Options OptionsCommand::oldState() const
 /** Undo the effects of this command */
 void OptionsCommand::undo()
 {
+    conspireDebug() << "UNDO" << this->text();
+
     if (doc and old_state)
     {
         doc->setOptions(*old_state);
@@ -86,6 +88,8 @@ void OptionsCommand::undo()
 /** Run this command */
 void OptionsCommand::redo()
 {
+    conspireDebug() << "REDO" << this->text();
+
     QUndoCommand::redo();
 
     if (doc)

@@ -136,7 +136,7 @@ void PageView::home(bool clear_history)
     {
         if (tab->current_page != tab->top_page)
         {
-            pushed(tab->top_page);
+            this->pushed(tab->top_page);
         }
     }
 }

@@ -144,6 +144,8 @@ void AddPage::reread(Options options)
             setOptions( Options() );
         }
     }
+    
+    ConfigPage::reread(options);
 }
 
 /** Build the widget */

@@ -90,25 +90,19 @@ void OptionsPage::pvt_reread(Options options)
     
     QStringList keys = opts.keysAndIndiciesWithValue();
 
-    if (keys.count() > buttons.count())
+    while (keys.count() > buttons.count())
     {
-        for (int i=buttons.count(); i<keys.count(); ++i)
-        {
-            OptionButton *b = new OptionButton();
-            b->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Expanding );
-            button_rack->addWidget(b);
-            buttons.append(b);
+        OptionButton *b = new OptionButton();
+        b->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Expanding );
+        button_rack->addWidget(b);
+        buttons.append(b);
 
-            connect(b, SIGNAL(clicked()), mapper, SLOT(map()));
-        }
+        connect(b, SIGNAL(clicked()), mapper, SLOT(map()));
     }
-    else if (keys.count() < buttons.count())
+
+    while (keys.count() < buttons.count())
     {
-        while (buttons.count() > keys.count())
-        {
-            OptionButton *b = buttons.takeLast();
-            delete b;
-        }
+        delete buttons.takeLast();
     }
     
     for (int i=0; i<keys.count(); ++i)
@@ -126,8 +120,6 @@ void OptionsPage::pvt_reread(Options options)
         {
             b->setValue( opt.value().toString() );
         }
-        
-        b->show();
         
         mapper->removeMappings(b);
         mapper->setMapping(b, keys[i]);
@@ -154,6 +146,8 @@ void OptionsPage::reread(Options options)
     }
     
     pvt_reread(options);
+    
+    ConfigPage::reread(options);
 }
 
 /** Slot called when one of the options is clicked */
@@ -163,9 +157,7 @@ void OptionsPage::clicked(const QString &key)
     {
         //create a new OptionsWidget to display the suboptions
         Option opt = opts.getNestedOption(key);
-        
-        conspireDebug() << "Clicked" << key << opt.toString();
-        
+
         if (opt.hasSubOptions())
         {
             QString root = key;

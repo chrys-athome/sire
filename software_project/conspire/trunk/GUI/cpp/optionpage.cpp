@@ -118,8 +118,12 @@ void OptionPage::moveEvent(QGraphicsSceneMoveEvent *e)
 /** Function called when editing of the option is finished */
 void OptionPage::editingFinished()
 {
+    conspireDebug() << "EDITING FINISHED" << value_edit->text() << old_text;
+
     if (value_edit->text() == old_text)
         return;
+
+    old_text = value_edit->text();
 
     //try to update the option locally first. This catches parse errors
     //before they propogate up the document
@@ -130,6 +134,8 @@ void OptionPage::editingFinished()
         Options opts(opt);
         opts.setNestedValue(shortKey(),new_val.asA<Value>());
         
+        conspireDebug() << "emit( update(" << fullKey() << "," << value_edit->text() 
+                        << " ) )";
         emit( update(fullKey(),new_val) );
         emit( pop() );
     }
@@ -163,7 +169,7 @@ void OptionPage::reread(Options options)
 {
     try
     {
-        Option opt = options[root_key][opt.index()];
+        Option opt = options[fullKey()];
     
         QString text = opt.value().toString();
     
@@ -177,4 +183,6 @@ void OptionPage::reread(Options options)
     {
         conspireDebug() << "ERROR IN REREADING OPTION...";
     }
+    
+    ConfigPage::reread(options);
 }

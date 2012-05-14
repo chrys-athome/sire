@@ -230,4 +230,6 @@ void ConfigDocument::setOptions(Options options)
     
     opts = options;
     conspireDebug() << "SUCCESSFULLY CHANGED THE OPTIONS OBJECT";
+    
+    QGraphicsWidget::update();
 }

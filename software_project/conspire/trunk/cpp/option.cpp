@@ -579,6 +579,8 @@ Option Option::getNestedOption(String key) const
     
     ParsedKey p(key);
     
+    conspireDebug() << p.key << " : " << p.index << " : " << p.tail;
+    
     if (not p.key.isEmpty())
     {
         if (p.key != k)
@@ -610,7 +612,7 @@ Option Option::getNestedOption(String key) const
         }
     
         if (p.tail.isEmpty())
-            return *this;
+            return (*this)[p.index];
     
         Obj value = this->operator[](p.index).value();
             
@@ -632,7 +634,7 @@ Option Option::getNestedOption(String key) const
     }
     else
     {
-        return *this;
+        return (*this)[p.index];
     }
 }
 
