@@ -53,6 +53,10 @@ namespace Conspire
         
         Option option() const;
         QString rootKey() const;
+        int index() const;
+    
+        QString shortKey() const;
+        QString fullKey() const;
     
     public slots:
         void reread(Options options);

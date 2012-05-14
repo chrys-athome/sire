@@ -114,10 +114,12 @@ void OptionsCommand::redo()
         {
             try
             {
+                conspireDebug() << "doc->setOptions( new_state )";
                 doc->setOptions(new_state);
             }
             catch(...)
             {
+                conspireDebug() << "doc->setOptions() EXCEPTION!";
                 delete old_state;
                 old_state = 0;
                 throw;

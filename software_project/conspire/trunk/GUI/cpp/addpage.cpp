@@ -27,6 +27,8 @@
 \*********************************************/
 
 #include "Conspire/GUI/addpage.h"
+#include "Conspire/GUI/optionbutton.h"
+#include "Conspire/GUI/widgetrack.h"
 
 #include "Conspire/option.h"
 
@@ -72,53 +74,32 @@ AddPage::~AddPage()
 void AddPage::setOptions(Options options)
 {
     conspireDebug() << options.addableKeys();
-
-    QGraphicsGridLayout *l = dynamic_cast<QGraphicsGridLayout*>(this->layout());
     
-    if (not l)
-    {
-        l = new QGraphicsGridLayout(this);
-        this->setLayout(l);
-    }
-    
-    //remove all items in the view
-    for (int i=0; i<l->count(); ++i)
-    {
-        QGraphicsLayoutItem *w = l->itemAt(i);
-        l->removeAt(i);
-        delete w;
-    }
-    
-    //now add in one row for each addable option
     QStringList keys = options.addableKeys();
     
-    int row = 0;
-    
-    foreach (QString key, keys)
+    while (buttons.count() > keys.count())
     {
-        Option option = options[key];
+        delete buttons.takeLast();
+    }
     
-        QLabel *label = new QLabel(key);
-        label->setWordWrap(true);
-        label->setAlignment( ::Qt::AlignCenter );
-        
-        QGraphicsProxyWidget *label_proxy = new QGraphicsProxyWidget(this);
-        label_proxy->setWidget(label);
-        
-        l->addItem(label_proxy, row, 0, ::Qt::AlignCenter);
-        
-        label = new QLabel(option.description());
-        label->setWordWrap(true);
-        label->setAlignment( ::Qt::AlignCenter );
+    while (buttons.count() < keys.count())
+    {
+        OptionButton *button = new OptionButton(this);
+        button_rack->addWidget(button);
+        buttons.append(button);
 
-        label_proxy = new QGraphicsProxyWidget(this);
-        label_proxy->setWidget(label);
-        
-        l->addItem(label_proxy, row, 1, ::Qt::AlignCenter);
-        
-        QPushButton *button = new QPushButton(Conspire::tr("Add"));
         connect(button, SIGNAL(clicked()), mapper, SLOT(map()));
+    }
+    
+    for (int i=0; i<keys.count(); ++i)
+    {
+        Option option = options[keys[i]];
+    
+        buttons[i]->setText(option.key());
+        buttons[i]->setValue(option.description());
         
+        mapper->removeMappings( buttons[i] );
+
         if (option.allowMultiple())
         {
             //find the lowest available index that does not have a value
@@ -137,18 +118,11 @@ void AddPage::setOptions(Options options)
                     break;
             }
             
-            mapper->setMapping(button, QString("%1[%2]").arg(option.key())
-                                                .arg(lowest_available));
+            mapper->setMapping(buttons[i], QString("%1[%2]").arg(option.key())
+                                                            .arg(lowest_available));
         }
         else
-            mapper->setMapping(button, option.key());
-        
-        QGraphicsProxyWidget *button_proxy = new QGraphicsProxyWidget(this);
-        button_proxy->setWidget(button);
-        
-        l->addItem(button_proxy, row, 2, ::Qt::AlignCenter);
-        
-        row += 1;
+            mapper->setMapping(buttons[i], keys[i]);
     }
 }
 
@@ -175,11 +149,33 @@ void AddPage::reread(Options options)
 /** Build the widget */
 void AddPage::build()
 {
-    QGraphicsGridLayout *l = new QGraphicsGridLayout(this);
-    this->setLayout(l);
-    
+    button_rack = new WidgetRack(::Qt::Vertical, this);
+
+    button_rack->setGeometry( this->geometry() );
+    button_rack->show();
+
     mapper = new QSignalMapper(this);
     connect(mapper, SIGNAL(mapped(const QString&)), this, SLOT(addOption(QString)));
+}
+
+
+void AddPage::resizeEvent(QGraphicsSceneResizeEvent *e)
+{
+    ConfigPage::resizeEvent(e);
+    button_rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+}
+
+void AddPage::moveEvent(QGraphicsSceneMoveEvent *e)
+{
+    ConfigPage::moveEvent(e);
+    button_rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+}
+
+void AddPage::paint(QPainter *painter, 
+                        const QStyleOptionGraphicsItem *option, 
+                        QWidget *widget)
+{
+    ConfigPage::paint(painter, option, widget);
 }
 
 void AddPage::addOption(QString option)

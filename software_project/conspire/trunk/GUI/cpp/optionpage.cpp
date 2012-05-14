@@ -70,6 +70,24 @@ QString OptionPage::rootKey() const
     return root_key;
 }
 
+/** Return the short key of the option (the key without the root_key) */
+QString OptionPage::shortKey() const
+{
+    if (opt.index() == 1)
+        return opt.key();
+    else
+        return QString("%1[%2]").arg(opt.key()).arg(opt.index());
+}
+
+/** Return the full key of the option, including the root key */
+QString OptionPage::fullKey() const
+{
+    if (root_key.isEmpty())
+        return shortKey();
+    else
+        return QString("%1.%2").arg(root_key, shortKey());
+}
+
 /** Build the widget */
 void OptionPage::build()
 {
@@ -110,17 +128,9 @@ void OptionPage::editingFinished()
         Obj new_val = StringValue(value_edit->text());
 
         Options opts(opt);
-        opts.setNestedValue(opt.key(),new_val.asA<Value>());
+        opts.setNestedValue(shortKey(),new_val.asA<Value>());
         
-        //this worked, so now set the global value
-        QString key = opt.key();
-    
-        if (not root_key.isEmpty())
-        {
-            key = QString("%1.%2").arg(root_key, key);
-        }
-    
-        emit( update(key,new_val) );
+        emit( update(fullKey(),new_val) );
         emit( pop() );
     }
     catch(const Conspire::Exception &e)
@@ -128,7 +138,7 @@ void OptionPage::editingFinished()
         emit( push(PagePointer( new ExceptionPage( Conspire::tr(
                     "Something went wrong when updating the value of the option \"%1\""
                     "to \"%2\".")
-                        .arg(opt.key(), value_edit->text()), e) ) ) );
+                        .arg(fullKey(), value_edit->text()), e) ) ) );
                         
         value_edit->setText( opt.value().toString() );
         old_text = value_edit->text();
@@ -142,15 +152,7 @@ void OptionPage::setOption(Option option, QString key)
     root_key = key;
     
     this->setDescription(option.description());
-    
-    if (root_key.isEmpty())
-    {
-        this->setTitle(option.key());
-    }
-    else
-    {
-        this->setTitle( QString("%1.%2").arg(root_key, option.key()) );
-    }
+    this->setTitle(fullKey());
     
     value_edit->setText(opt.value().toString());
     old_text = value_edit->text();
@@ -159,13 +161,20 @@ void OptionPage::setOption(Option option, QString key)
 /** Slot called when the option has been updated */
 void OptionPage::reread(Options options)
 {
-    Option opt = options[root_key];
-    
-    QString text = opt.value().toString();
-    
-    if (text != old_text)
+    try
     {
-        value_edit->setText(text);
-        old_text = text;
+        Option opt = options[root_key][opt.index()];
+    
+        QString text = opt.value().toString();
+    
+        if (text != old_text)
+        {
+            value_edit->setText(text);
+            old_text = text;
+        }
+    }
+    catch(...)
+    {
+        conspireDebug() << "ERROR IN REREADING OPTION...";
     }
 }

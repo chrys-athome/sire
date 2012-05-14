@@ -164,7 +164,7 @@ void OptionsPage::clicked(const QString &key)
         //create a new OptionsWidget to display the suboptions
         Option opt = opts.getNestedOption(key);
         
-        conspireDebug() << opt.toString();
+        conspireDebug() << "Clicked" << key << opt.toString();
         
         if (opt.hasSubOptions())
         {
@@ -186,11 +186,11 @@ void OptionsPage::clicked(const QString &key)
             
             if (not root_key.isEmpty())
             {
-                page->setTitle( QString("%1.%2").arg(root_key, opt.key()) );
+                page->setTitle( QString("%1.%2").arg(root_key, key) );
             }
             else
             {
-                page->setTitle(opt.key());
+                page->setTitle(key);
             }
             
             page->setDescription(opt.description());
@@ -237,24 +237,22 @@ void OptionsPage::build()
 
 void OptionsPage::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
-    Page::resizeEvent(e);
+    ConfigPage::resizeEvent(e);
     rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
-    
-    conspireDebug() << "OptionsPage::resize()" << this->geometry();
 }
 
 void OptionsPage::moveEvent(QGraphicsSceneMoveEvent *e)
 {
-    Page::moveEvent(e);
+    ConfigPage::moveEvent(e);
     rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
-
-    conspireDebug() << "OptionsPage::move()" << this->geometry();
 }
 
 void OptionsPage::paint(QPainter *painter, 
                         const QStyleOptionGraphicsItem *option, 
                         QWidget *widget)
-{}
+{
+    ConfigPage::paint(painter, option, widget);
+}
 
 /** Set the options and root_key used by this object */
 void OptionsPage::setOptions(Options options, QString key)

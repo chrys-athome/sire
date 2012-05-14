@@ -31,6 +31,8 @@
 #include "Conspire/conspire.h"
 #include "Conspire/GUI/configpage.h"
 
+#include <QList>
+
 CONSPIRE_BEGIN_HEADER
 
 class QSignalMapper;
@@ -38,6 +40,8 @@ class QSignalMapper;
 namespace Conspire
 {
     class Options;
+    class OptionButton;
+    class WidgetRack;
 
     /** This widget is used to allow the user to add new
         option values to an Options object */
@@ -63,11 +67,23 @@ namespace Conspire
     private slots:
         void addOption(QString option);
 
+    protected:
+        void resizeEvent(QGraphicsSceneResizeEvent *e);
+        void moveEvent(QGraphicsSceneMoveEvent *e);
+
+        void paint(QPainter *painter, 
+                   const QStyleOptionGraphicsItem *option, 
+                   QWidget *widget);
+
     private:
         void build();
         
         QString root_key;
+        
+        WidgetRack *button_rack;
         QSignalMapper *mapper;
+        
+        QList<OptionButton*> buttons;
     };
 }
 

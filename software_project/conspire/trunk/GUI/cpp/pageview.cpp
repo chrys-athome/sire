@@ -878,33 +878,33 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
     if (move_forwards)
     {
         anim = new QPropertyAnimation(old_page.data(), "x");
-        anim->setDuration(500);
+        anim->setDuration(300);
         anim->setStartValue(old_page->x());
-        anim->setEndValue(old_page->x() - 2 * old_page->geometry().width());
-        anim->setEasingCurve(QEasingCurve::OutBack);
+        anim->setEndValue(old_page->x() - old_page->geometry().width());
+        anim->setEasingCurve(QEasingCurve::OutCubic);
         g->addAnimation(anim);
         
         anim = new QPropertyAnimation(new_page.data(), "x");
-        anim->setDuration(500);
-        anim->setStartValue(new_page->x() + 2 * new_page->geometry().width());
+        anim->setDuration(300);
+        anim->setStartValue(new_page->x() + new_page->geometry().width());
         anim->setEndValue(new_page->x());
-        anim->setEasingCurve(QEasingCurve::OutBack);
+        anim->setEasingCurve(QEasingCurve::OutCubic);
         g->addAnimation(anim);
     }
     else
     {
         anim = new QPropertyAnimation(old_page.data(), "x");
-        anim->setDuration(500);
+        anim->setDuration(300);
         anim->setStartValue(old_page->x());
-        anim->setEndValue(old_page->x() + 2 * old_page->geometry().width());
-        anim->setEasingCurve(QEasingCurve::OutBack);
+        anim->setEndValue(old_page->x() + old_page->geometry().width());
+        anim->setEasingCurve(QEasingCurve::OutCubic);
         g->addAnimation(anim);
         
         anim = new QPropertyAnimation(new_page.data(), "x");
-        anim->setDuration(500);
-        anim->setStartValue(new_page->x() - 2 * new_page->geometry().width());
+        anim->setDuration(300);
+        anim->setStartValue(new_page->x() - new_page->geometry().width());
         anim->setEndValue(new_page->x());
-        anim->setEasingCurve(QEasingCurve::OutBack);
+        anim->setEasingCurve(QEasingCurve::OutCubic);
         g->addAnimation(anim);
     }
 

@@ -102,7 +102,6 @@ void ConfigDocument::paint(QPainter *painter,
                            const QStyleOptionGraphicsItem *option, 
                            QWidget *widget)
 {
-    conspireDebug() << "ConfigDocument::paint(...)";    
     painter->drawRect(10, 10, 
                       this->geometry().width() - 20, this->geometry().height() - 20);
 }
@@ -120,10 +119,12 @@ void ConfigDocument::add(QString full_key)
 
     try
     {
+        conspireDebug() << "undo_stack->push( OptionsAddCommand(" << full_key << ") )";
         undo_stack->push( new OptionsAddCommand(this,full_key) );
     }
     catch(const Conspire::Exception &e)
     {
+        conspireDebug() << "error!";
         view->pushed( PagePointer( new ExceptionPage(
                 Conspire::tr("Something went wrong when you tried to add "
                              "a new Option called \"%1\"").arg(full_key), e, view) ) );
@@ -213,7 +214,9 @@ void ConfigDocument::setOptions(Options options)
     {
         try
         {
+            conspireDebug() << "view->reread(options)";
             view->reread(options);
+            conspireDebug() << "DONE :-)";
         }
         catch(const Conspire::Exception &e)
         {
@@ -226,4 +229,5 @@ void ConfigDocument::setOptions(Options options)
     }
     
     opts = options;
+    conspireDebug() << "SUCCESSFULLY CHANGED THE OPTIONS OBJECT";
 }
