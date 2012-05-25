@@ -368,21 +368,26 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	}
 	
 	
-	if(flag_cutoff == CUTOFFNONPERIODIC){
-	
-		//Set CutOff distance
+	if(flag_cutoff == CUTOFFNONPERIODIC || flag_cutoff == CUTOFFPERIODIC){
 	
 		const double converted_cutoff_distance = convertTo(cutoff_distance.value(), nanometer);
-	
-		nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffNonPeriodic);
+		
+		if(flag_cutoff == CUTOFFNONPERIODIC)
+			nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffNonPeriodic);
+		
+		else
+			nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffPeriodic);
+			
 		
 		nonbond_openmm->setCutoffDistance(converted_cutoff_distance);
 		
 		//Set Dielectric constant media
 		nonbond_openmm->setReactionFieldDielectric(field_dielectric);
 		
-		if(free_energy_calculation == true){
 		
+		if(free_energy_calculation == true){
+	
+	
 			/*custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "-4*eps*(dem^2-dem)-138.935456*q*(1.0/r+(krf*r*r)-crf);"
 																			   	   	"q=q1*q2;"
 																			   	   	"dem=(sigma/r)^6;"
@@ -404,7 +409,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 																			   		
 			
 			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
-			
 		
 			int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
 			double shift_Delta = ptr_sys.property("shiftDelta").toString().toDouble();
@@ -424,90 +428,34 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			
 			custom_nonbond_SoluteSolvent_openmm->setCutoffDistance(converted_cutoff_distance);
+		
+		
+			if(flag_cutoff == CUTOFFNONPERIODIC)
+				custom_nonbond_SoluteSolvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
+		
+			else
+				custom_nonbond_SoluteSolvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
 			
-			custom_nonbond_SoluteSolvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
-			
-						
+		
+			cout << "Lambda = " << Alchemical_values[0] << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
+		
 		}
-			
+	
+	
+	
 		cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
 		cout << "CutOff distance = " << converted_cutoff_distance  << " Nm" << "\n";
    	 	cout << "Dielectric constant= " << field_dielectric << "\n\n";
-	}
 	
 	
-	if(flag_cutoff == CUTOFFPERIODIC){
 	
-		//Set CutOff distance
-		
-		const double converted_cutoff_distance = convertTo(cutoff_distance.value(), nanometer);
-		
-		nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffPeriodic);
-		
-		nonbond_openmm->setCutoffDistance(converted_cutoff_distance);
-		
-		//Set Dielectric constant media
-		nonbond_openmm->setReactionFieldDielectric(field_dielectric);
-		
-		
-		if(free_energy_calculation == true){
-			
-			/*custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "-4*eps*(dem^2-dem)-138.935456*q*(1.0/r+(krf*r*r)-crf);"
-																			   	   	"q=q1*q2;"
-																			   	   	"dem=(sigma/r)^6;"
-																			   		"sigma=0.5*(sigma1+sigma2);"
-																			   		"eps=sqrt(eps1*eps2)");*/
-																			   		
-								
-			custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "max(isSolute1,isSolute2)*(Hsoft-Hinter);"
-																					"Hinter=4*eps*(LJdel^2-LJdel)+138.935456*q*(1.0/r+(krf*r*r)-crf);"
-																					"LJdel=(sigma/r)^6;"
-																					"Hsoft=diff*4*eps*(LJ^2-LJ)+138.935456*(diff^n)*q/sqrt(lambda+r^2);"
-																					"q=q1*q2;"
-																					"eps=sqrt(eps1*eps2);"
-																					"LJ=(sigma^2/soft)^3;"
-																					"soft=(lambda*delta*sigma+r^2);"
-																					"sigma=0.5*(sigma1+sigma2);"
-																					"diff=(1.0-lambda)");																   		
-																			   		
-																			   		
-			
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
-			
-			
-			int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
-			double shift_Delta = ptr_sys.property("shiftDelta").toString().toDouble();
-			
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("delta",shift_Delta);
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("n",coulomb_Power);																		   		
-																			   			
-			double eps2 = (field_dielectric-1.0)/(2.0*field_dielectric+1.0);
-			double kValue = eps2/(converted_cutoff_distance*converted_cutoff_distance*converted_cutoff_distance);
-			
-			
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("krf",kValue);
-			
-			double cValue = (1.0/converted_cutoff_distance)*(3.0*field_dielectric)/(2.0*field_dielectric+1.0);
-			
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("crf",cValue);
-			
-			
-			custom_nonbond_SoluteSolvent_openmm->setCutoffDistance(converted_cutoff_distance);
-			
-			custom_nonbond_SoluteSolvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
-			
-		}
-		
-		cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
-		cout << "CutOff distance = " << converted_cutoff_distance  << " Nm" << "\n";
-   	 	cout << "Dielectric constant= " << field_dielectric << "\n\n";
-		
-		
+	
 	}
 	
 	
 	if(free_energy_calculation == true)
 		system_openmm.addForce(custom_nonbond_SoluteSolvent_openmm);
+
 		
 	
 	//Andersen thermostat
@@ -553,12 +501,12 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
     
 	
-	/**********************************************************ATTENTION***************************************************/
-	/*system_openmm.addForce(bondStretch_openmm);
+	
+	system_openmm.addForce(bondStretch_openmm);
     
 	system_openmm.addForce(bondBend_openmm);
     
-	system_openmm.addForce(bondTorsion_openmm);*/
+	system_openmm.addForce(bondTorsion_openmm);
 	
 	
 	std::vector<std::pair<int,int> > bondPairs;
@@ -738,6 +686,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				params[1] = sigma * OpenMM::NmPerAngstrom;
 				params[2] = epsilon * OpenMM::KJPerKcal;
 				params[3] = (double) solute_group.contains(atom.molecule());
+				
 
 				custom_nonbond_SoluteSolvent_openmm->addParticle(params);
 				
