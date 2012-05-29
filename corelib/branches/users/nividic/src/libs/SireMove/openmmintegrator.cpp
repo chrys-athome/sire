@@ -218,6 +218,7 @@ QString OpenMMIntegrator::toString() const
 void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) const{
 				       
 	cout << "In OpenMMIntegrator::integrate()\n\n" ;
+		
 	
 	// Initialise OpenMM
 
@@ -1039,10 +1040,10 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				//cout << "p1 = " << p1 << " charge  p1 = " << charge_p1 << " sigma p1 = " << sigma_p1 << " epasilon p1 = " << epsilon_p1 <<"\n";
 				//cout << "p2 = " << p2 << " charge  p2 = " << charge_p2 << " sigma p2 = " << sigma_p2 << " epasilon p2 = " << epsilon_p1 <<"\n\n";
 		
-				if(chargeprod==0.0 && sigma_ex == 1.0 && epsilon_ex ==0.0){
+				/*if(chargeprod==0.0 && sigma_ex == 1.0 && epsilon_ex ==0.0){
 					
 					excluded_vector_12_13.append(qMakePair(p1,p2));			
-				}			
+				}	*/		
 			}
 	
 			
@@ -1136,46 +1137,158 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	QElapsedTimer timer_MD;
 	
+	QElapsedTimer timer_OUT;
+	
 	timer_MD.start();
 	
 	//MD SIMULATION FOR NMOVES
 	
 	//OpenMM::CMMotionRemover(1); 
 	
-	integrator_openmm.step(nmoves);
-	
-	cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
 	
 	
-	QElapsedTimer timer_OUT;
+	if(free_energy_calculation == true){
 	
-	timer_OUT.start();
+		std::vector<OpenMM::Vec3> positions_openmm_start = positions_openmm;
+    
+		std::vector<OpenMM::Vec3> velocities_openmm_start = velocities_openmm;
 	
-	
-	state_openmm=context_openmm.getState(infoMask);	
-	
-	positions_openmm = state_openmm.getPositions();
+		double delta = 0.001;
+			
+		const double beta = 1.0 / (0.0083144621 * convertTo(Temperature.value(), kelvin));
 		
-	velocities_openmm = state_openmm.getVelocities();
+		cout << "\nBETA = " << beta <<"\n";
+		
+		int frequency_energy = 10; 
+		
+		int n_freq = nmoves/frequency_energy;
+	
+		for (int i=0; i<Alchemical_values.size();i++){
+					
+							
+			double GF_acc = 0.0;
+			
+			double GB_acc = 0.0;
+		
+			double lam_val = 0.0;
+		
+			context_openmm.setParameter("lambda",Alchemical_values[i]+delta);
+			
+			state_openmm=context_openmm.getState(infoMask);
+					
+			double potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
+			
+			lam_val = context_openmm.getParameter("lambda");
+					
+			cout << "Lambda = " << lam_val << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+			
+			
+			context_openmm.setParameter("lambda",Alchemical_values[i]-delta);
+					
+			state_openmm=context_openmm.getState(infoMask);
+					
+			double potential_energy_lambda_minus_delta = state_openmm.getPotentialEnergy();
+			
+			lam_val = context_openmm.getParameter("lambda");
+					
+			cout << "Lambda = " << lam_val << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
+			
+			
+			context_openmm.setParameter("lambda",Alchemical_values[i]);
+			
+			state_openmm=context_openmm.getState(infoMask);
+			
+			lam_val = context_openmm.getParameter("lambda");
+					
+			cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+			
+			
+			for(int j=0;j<n_freq;j++){
+			
+					integrator_openmm.step(frequency_energy);
+					
+					cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";		
+					
+					state_openmm=context_openmm.getState(infoMask);	
+					
+					lam_val = context_openmm.getParameter("lambda");
+					
+					double potential_energy_lambda = state_openmm.getPotentialEnergy();
+					
+					cout << "Lambda = " << lam_val << " Potential energy lambda MD = " << potential_energy_lambda  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+					
+					
+					GF_acc = GF_acc + exp(-beta*(potential_energy_lambda_plus_delta - potential_energy_lambda));
+					
+					
+					GB_acc = GB_acc + exp(-beta*(potential_energy_lambda_minus_delta - potential_energy_lambda));
+						
+					cout << "\nGF accumulator partial = " << GF_acc << " -- GB accumulator partial = " << GB_acc << "\n\n"; 
+						
+										
+			}
+			
+			cout << "\n\nGF accumulator total = " << GF_acc << " ** GB accumulator total = " << GB_acc << "\n"; 
+			
+			double Energy_GF = -(1.0/beta)*log(GF_acc / (double) n_freq);
+			
+			double Energy_GB = -(1.0/beta)*log(GB_acc / (double) n_freq);
+			
+			double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / 2.0 * delta;
+			
+			cout << "\n\nEnergy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
+			
+			
+			
+			context_openmm.setPositions(positions_openmm_start);
+			
+			context_openmm.setVelocities(velocities_openmm_start); 
+			
+			context_openmm.setTime(0.0);
+			
+	
+		}
+		
+		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
+		
+		timer_OUT.start();
+	}
+	
+	else{
 	
 	
-	cout<< "Total Time = " << state_openmm.getTime() << " ps"<<"\n\n";
+		integrator_openmm.step(nmoves);
+	
+		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
 	
 	
-	kinetic_energy = state_openmm.getKineticEnergy(); 
-	
-	potential_energy = state_openmm.getPotentialEnergy(); 
+		timer_OUT.start();
 	
 	
-	cout<< "After MD" <<"\n";
+		state_openmm=context_openmm.getState(infoMask);	
 	
-	cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
-		 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
-		 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
-	
-	cout<<"\n";
+		positions_openmm = state_openmm.getPositions();
+		
+		velocities_openmm = state_openmm.getVelocities();
 	
 	
+		cout<< "Total Time = " << state_openmm.getTime() << " ps"<<"\n\n";
+	
+	
+		kinetic_energy = state_openmm.getKineticEnergy(); 
+	
+		potential_energy = state_openmm.getPotentialEnergy(); 
+	
+	
+		cout<< "After MD" <<"\n";
+	
+		cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
+		 	 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
+		 	 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
+	
+		cout<<"\n";
+	
+	}
 	
 	//OpenmmPDB(workspace,positions_openmm);
 	
