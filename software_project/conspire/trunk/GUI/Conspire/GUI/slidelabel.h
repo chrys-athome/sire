@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_MAINBAR_H
-#define CONSPIRE_MAINBAR_H
+#ifndef CONSPIRE_SLIDELABEL_H
+#define CONSPIRE_SLIDELABEL_H
 /********************************************\
   *
   *  Conspire
@@ -30,50 +30,54 @@
 
 #include "Conspire/conspire.h"
 
-#include "Conspire/GUI/widgetrack.h"
+#include <QGraphicsWidget>
+#include <QPointer>
 
 CONSPIRE_BEGIN_HEADER
 
 namespace Conspire
 {
-    class Button;
-
-    /** This class provides the floating button
-        bar for the OptionsWidget */
-    class CONSPIRE_EXPORT MainBar : public WidgetRack
+    /** This is a label that contains another widget, and will be 
+        slide over and display itself over the contained widget when
+        the user clicks a button
+        
+        @author Christopher Woods
+    */
+    class CONSPIRE_EXPORT SlideLabel : public QGraphicsWidget
     {
         Q_OBJECT
         
     public:
-        MainBar(QGraphicsItem *parent=0);
-        ~MainBar();
-        
-    public slots:
-        void canRedoChanged(bool can_redo);
-        void canUndoChanged(bool can_undo);
-        
-        void redoTextChanged(const QString &redotext);
-        void undoTextChanged(const QString &undotext);
-        
-    signals:
-        void undo();
-        void redo();
-        
-        void home();
+        SlideLabel(QGraphicsItem *parent=0);
+        SlideLabel(QString text, QGraphicsItem *parent=0);
 
-        void submit();
+        ~SlideLabel();
+        
+        void setWidget(QGraphicsWidget *widget);
+        
+        void setText(QString text);
+        
+        QString text() const;
+
+    protected:
+        void paint(QPainter *painter, 
+                   const QStyleOptionGraphicsItem *option, 
+                   QWidget *widget);
+    
+        void focusInEvent(QFocusEvent *event);
+        void focusOutEvent(QFocusEvent *event);    
+
+        void mousePressEvent(QGraphicsSceneMouseEvent *event);
+        void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+
+        void resizeEvent(QGraphicsSceneResizeEvent *event);
 
     private:
         void build();
-        
-        Button *submit_button;
-        
-        Button *undo_button;
-        Button *redo_button;
 
-        Button *home_button;
+        QString txt;
+        QPointer<QGraphicsWidget> w;
     };
-    
 }
 
 CONSPIRE_END_HEADER

@@ -1,5 +1,3 @@
-#ifndef CONSPIRE_MAINBAR_H
-#define CONSPIRE_MAINBAR_H
 /********************************************\
   *
   *  Conspire
@@ -28,54 +26,49 @@
   *
 \*********************************************/
 
-#include "Conspire/conspire.h"
+#include "Conspire/GUI/submitpage.h"
 
-#include "Conspire/GUI/widgetrack.h"
+#include "Conspire/option.h"
 
-CONSPIRE_BEGIN_HEADER
+#include <QPainter>
+#include <QRectF>
 
-namespace Conspire
+using namespace Conspire;
+
+void SubmitPage::build()
+{}
+
+/** Constructor */
+SubmitPage::SubmitPage(Page *parent) : Page(parent)
 {
-    class Button;
-
-    /** This class provides the floating button
-        bar for the OptionsWidget */
-    class CONSPIRE_EXPORT MainBar : public WidgetRack
-    {
-        Q_OBJECT
-        
-    public:
-        MainBar(QGraphicsItem *parent=0);
-        ~MainBar();
-        
-    public slots:
-        void canRedoChanged(bool can_redo);
-        void canUndoChanged(bool can_undo);
-        
-        void redoTextChanged(const QString &redotext);
-        void undoTextChanged(const QString &undotext);
-        
-    signals:
-        void undo();
-        void redo();
-        
-        void home();
-
-        void submit();
-
-    private:
-        void build();
-        
-        Button *submit_button;
-        
-        Button *undo_button;
-        Button *redo_button;
-
-        Button *home_button;
-    };
-    
+    build();
 }
 
-CONSPIRE_END_HEADER
+/** Construct, passing in the options used to submit the job */
+SubmitPage::SubmitPage(Options options, Page *parent) : Page(parent)
+{
+    build();
+}
 
-#endif
+/** Destructor */
+SubmitPage::~SubmitPage()
+{}
+
+void SubmitPage::resizeEvent(QGraphicsSceneResizeEvent *e)
+{
+    Page::resizeEvent(e);
+}
+
+void SubmitPage::moveEvent(QGraphicsSceneMoveEvent *e)
+{
+    Page::moveEvent(e);
+}
+
+void SubmitPage::paint(QPainter *painter, 
+                       const QStyleOptionGraphicsItem *option, 
+                       QWidget *widget)
+{
+    Page::paint(painter, option, widget);
+    
+    painter->drawRect( QRectF(10, 10, geometry().width()-20, geometry().height()-20) );
+}

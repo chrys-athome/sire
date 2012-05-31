@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_MAINBAR_H
-#define CONSPIRE_MAINBAR_H
+#ifndef CONSPIRE_SUBMITPAGE_H
+#define CONSPIRE_SUBMITPAGE_H
 /********************************************\
   *
   *  Conspire
@@ -28,52 +28,35 @@
   *
 \*********************************************/
 
-#include "Conspire/conspire.h"
-
-#include "Conspire/GUI/widgetrack.h"
+#include "Conspire/GUI/page.h"
 
 CONSPIRE_BEGIN_HEADER
 
 namespace Conspire
 {
-    class Button;
-
-    /** This class provides the floating button
-        bar for the OptionsWidget */
-    class CONSPIRE_EXPORT MainBar : public WidgetRack
+    /** This is the page used to submit a job to Acquire */
+    class CONSPIRE_EXPORT SubmitPage : public Page
     {
         Q_OBJECT
         
     public:
-        MainBar(QGraphicsItem *parent=0);
-        ~MainBar();
+        SubmitPage(Page *parent=0);
+        SubmitPage(Options options, Page *parent=0);
         
-    public slots:
-        void canRedoChanged(bool can_redo);
-        void canUndoChanged(bool can_undo);
+        ~SubmitPage();
         
-        void redoTextChanged(const QString &redotext);
-        void undoTextChanged(const QString &undotext);
-        
-    signals:
-        void undo();
-        void redo();
-        
-        void home();
+    protected:
+        void resizeEvent(QGraphicsSceneResizeEvent *e);
+        void moveEvent(QGraphicsSceneMoveEvent *e);
 
-        void submit();
+        void paint(QPainter *painter, 
+                   const QStyleOptionGraphicsItem *option, 
+                   QWidget *widget);
 
     private:
         void build();
-        
-        Button *submit_button;
-        
-        Button *undo_button;
-        Button *redo_button;
-
-        Button *home_button;
     };
-    
+
 }
 
 CONSPIRE_END_HEADER

@@ -53,6 +53,7 @@ Button::Button(QString text, QGraphicsItem *parent) : QGraphicsWidget(parent)
 Button::~Button()
 {
     delete txt;
+    txt = 0;
 }
 
 /** Build this button */
@@ -75,13 +76,13 @@ QString Button::text() const
         return QString::null;
 }
 
-static QFont starting_font("LucidaGrande", 10);
+static QFont starting_font("LucidaGrande", 14);
 
 void Button::scaleTextToFit()
 {
     if (txt)
     {
-        QSizeF sz = 0.9 * this->size();
+        QSizeF sz = 0.6 * this->size();
     
         txt->setTextWidth(sz.width());
         txt->prepare(QTransform(), starting_font);
@@ -89,7 +90,7 @@ void Button::scaleTextToFit()
         float w_factor = sz.width() / txt->size().width();
         float h_factor = sz.height() / txt->size().height();
     
-        float factor = 1.5 * qMin(w_factor, h_factor);
+        float factor = h_factor; //qMin(w_factor, h_factor);
 
         button_font = starting_font;
 
@@ -115,7 +116,10 @@ void Button::setText(QString t)
         return;
 
     if (txt)
+    {
         delete txt;
+        txt = 0;
+    }
     
     if (not t.isEmpty())
     {

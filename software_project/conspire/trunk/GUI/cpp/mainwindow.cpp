@@ -57,6 +57,8 @@ MainWindow::MainWindow(Options options, QWidget *parent)
     connect(mainbar, SIGNAL(redo()), doc, SLOT(redo()));
     connect(mainbar, SIGNAL(home()), doc, SLOT(home()));
     
+    connect(mainbar, SIGNAL(submit()), doc, SLOT(toggleMenuVisible()));
+    
     view = PagePointer(doc);
     this->scene()->addItem(view);
 }
@@ -75,9 +77,9 @@ void MainWindow::resizeEvent(QResizeEvent *e)
                      mainbar->size().height() );
     mainbar->setPos(0, this->viewport()->size().height() - mainbar->size().height());
 
-    bg->setRect(1, 1,
-                this->viewport()->size().width()-3, 
-                this->viewport()->size().height() - mainbar->size().height()-2);
+    //bg->setRect(1, 1,
+    //            this->viewport()->size().width()-3, 
+    //            this->viewport()->size().height() - mainbar->size().height()-2);
 
     if (view)
     {
@@ -103,7 +105,7 @@ void MainWindow::build()
 
     this->scene()->addItem(mainbar);
 
-    bg = new QGraphicsRectItem();
+    /*bg = new QGraphicsRectItem();
     bg->setPen( QPen( ::Qt::black ) );
     
     QLinearGradient grad;
@@ -117,5 +119,5 @@ void MainWindow::build()
                 this->viewport()->size().width()-3, 
                 this->viewport()->size().height() - mainbar->size().height()-2);
     
-    this->scene()->addItem(bg);
+    this->scene()->addItem(bg);*/
 }

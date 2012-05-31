@@ -167,9 +167,6 @@ namespace Conspire
         /** The "forward" button in the page title header */
         Button *forward_button;
         
-        /** The size of the border */
-        int border_size;
-        
         /** The height of the title bar */
         int title_height;
         

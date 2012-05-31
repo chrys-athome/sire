@@ -144,6 +144,8 @@ namespace Conspire
         
         QList<PagePointer> childPages() const;
 
+        QImage toImage();
+
     public slots:
         void block();
         void unblock();

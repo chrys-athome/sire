@@ -68,8 +68,12 @@ namespace Conspire
 
     private:
         void build();
+        void scaleTextToFit();
         
         QSizeF getTextSize() const;
+        
+        /** The font used to render the text */
+        QFont button_font;
         
         /** The text representation of the key */
         QStaticText *txt;

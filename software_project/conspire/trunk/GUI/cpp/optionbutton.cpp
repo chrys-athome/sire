@@ -38,6 +38,7 @@
 
 #include <QStaticText>
 #include <QTextOption>
+#include <QFontMetrics>
 
 #include <QGraphicsSceneMouseEvent>
 
@@ -74,6 +75,9 @@ OptionButton::~OptionButton()
 {
     delete txt;
     delete val;
+    
+    txt = 0;
+    val = 0;
 }
 
 /** Build the button */
@@ -90,6 +94,135 @@ QString OptionButton::text() const
         return txt->text();
     else
         return QString::null;
+}
+
+static QFont starting_font("LucidaGrande", 14);
+
+QSizeF OptionButton::getTextSize() const
+{
+    if (txt and val)
+    {
+        QSizeF button_size = this->size();
+    
+        return QSizeF( txt->size().width() + 0.1 * button_size.width() +
+                       val->size().width(),
+                       qMax(txt->size().height(), val->size().height()) );
+    }
+    else if (txt)
+    {
+        return QSizeF( txt->size() );
+    }
+    else
+    {
+        return QSizeF(0,0);
+    }
+}
+
+void OptionButton::scaleTextToFit()
+{
+    QSizeF sz = this->size();
+    
+    int max_height = 0.8 * sz.height();
+    int max_width = 0;
+    
+    if (txt and val)
+        max_width = 0.4 * sz.width();
+    else if (txt or val)
+        max_width = 0.8 * sz.width();
+    
+    if (txt)
+    {
+        if (val)
+            txt->setTextWidth(0.4 * sz.width());
+        else
+            txt->setTextWidth(sz.width());
+        
+        txt->prepare(QTransform(), starting_font);
+    }
+    
+    if (val)
+    {
+        if (txt)
+            val->setTextWidth(0.4 * sz.width());
+        else
+            val->setTextWidth(sz.width());
+            
+        val->prepare(QTransform(), starting_font);
+    }
+
+    QFontMetrics metrics(starting_font);
+    
+    int text_width = 0;
+    int text_height = 0;
+    
+    if (txt)
+    {
+        QRect txt_sz = metrics.boundingRect(0,0,max_width,max_height,
+                                            ::Qt::AlignRight|::Qt::AlignVCenter,
+                                            txt->text());
+                                            
+        text_width += txt_sz.width();
+        text_height = qMax(text_height, txt_sz.height());
+    }
+    
+    if (val)
+    {
+        QRect txt_sz = metrics.boundingRect(0,0,max_width,max_height,
+                                            ::Qt::AlignRight|::Qt::AlignVCenter,
+                                            val->text());
+                                            
+        text_width += txt_sz.width();
+        text_height = qMax(text_height, txt_sz.height());
+    }
+    
+    QSizeF text_size = QSizeF(text_width + 0.1*sz.width(), text_height); //this->getTextSize();
+    
+    if (text_size.width() <= 0 or text_size.height() <= 0)
+        return;
+    
+    float w_factor = sz.width() / text_size.width();
+    float h_factor = sz.height() / text_size.height();
+    
+    float factor = qMin(w_factor, h_factor);
+
+    conspireDebug() << "Factor =" << factor << w_factor << h_factor;
+
+    button_font = starting_font;
+
+    int ntries = 1;
+
+    while (factor > 1.1 or factor < 0.9)
+    {
+        QFont scaled_font = button_font;
+        
+        conspireDebug() << button_font.pointSizeF()
+                        << factor << int(button_font.pointSizeF() * factor);
+        
+        scaled_font.setPointSize( int(button_font.pointSizeF() * factor) );
+
+        if (txt)
+            txt->prepare(QTransform(), scaled_font);
+        
+        if (val)
+            val->prepare(QTransform(), scaled_font);
+            
+        button_font = scaled_font;
+        
+        text_size = this->getTextSize();
+        
+        w_factor = 0.8*sz.width() / text_size.width();
+        h_factor = 0.8*sz.height() / text_size.height();
+        
+        factor = qMin(w_factor, h_factor);
+        
+        ++ntries;
+        
+        if (ntries > 1)
+            break;
+    }
+    
+    conspireDebug() << "Scale text" << button_font.pointSizeF()
+                    << w_factor << h_factor << text_size << sz;
 }
 
 /** Set the text to be rendered */
@@ -116,10 +249,9 @@ void OptionButton::setText(QString t)
 
         txt = new QStaticText(t);
         txt->setTextOption(opt);
-        
-        txt->setTextWidth( 0.4 * button_size.width() );
-        txt->prepare( QTransform(), QFont("Helvetica [Cronyx]", 12) );
-        
+
+        this->scaleTextToFit();
+
         update(this->geometry());
     }
 }
@@ -131,7 +263,10 @@ void OptionButton::setValue(QString v)
         return;
 
     if (val)
+    {
         delete val;
+        val = 0;
+    }
     
     if (not v.isEmpty())
     {
@@ -144,8 +279,7 @@ void OptionButton::setValue(QString v)
         val = new QStaticText(v);
         val->setTextOption(opt);
         
-        val->setTextWidth( 0.4 * button_size.width() );
-        val->prepare( QTransform(), QFont("Helvetica [Cronyx]", 12) );
+        this->scaleTextToFit();
         
         update(this->geometry());
     }
@@ -166,44 +300,11 @@ QString OptionButton::value() const
         return QString::null;
 }
 
-QSizeF OptionButton::getTextSize() const
-{
-    if (txt and val)
-    {
-        QSizeF button_size = this->size();
-    
-        return QSizeF( txt->size().width() + 0.1 * button_size.width() +
-                       val->size().width(),
-                       qMax(txt->size().height(), val->size().height()) );
-    }
-    else if (txt)
-    {
-        return QSizeF( txt->size() );
-    }
-    else
-    {
-        return QSizeF(0,0);
-    }
-}
-
 void OptionButton::resizeEvent(QGraphicsSceneResizeEvent *event)
 {
     QGraphicsWidget::resizeEvent(event);
 
-    QSizeF button_size = this->size();
-
-    if (txt)
-    {
-
-        txt->setTextWidth( 0.4 * button_size.width() );
-        txt->prepare( QTransform(), QFont("Helvetica [Cronyx]", 12) );
-    }
-    
-    if (val)
-    {
-        val->setTextWidth( 0.4 * button_size.width() );
-        val->prepare( QTransform(), QFont("Helvetica [Cronyx]", 12) );
-    }
+    scaleTextToFit();
         
     //this->setMinimumSize( 1.1 * getTextSize() );
 }
@@ -276,13 +377,15 @@ void OptionButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
                              button_rect.height() - 2, m_roundness, m_roundness);
  
     //glass highlight
-    painter->setBrush(QBrush(::Qt::white));
+    /*painter->setBrush(QBrush(::Qt::white));
     painter->setPen(QPen(QBrush(::Qt::white), 0.01));
     painter->setOpacity(0.2);
     painter->drawRect(1, 1, button_rect.width() - 2, (button_rect.height() / 2) - 2);
+     */
      
     painter->setOpacity(0.8);
     painter->setPen(QPen(QBrush(::Qt::black), 0.01));
+    painter->setFont(button_font);
     
     if (txt)
     {

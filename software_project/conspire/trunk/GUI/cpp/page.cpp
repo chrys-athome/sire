@@ -36,6 +36,9 @@
 #include <QLabel>
 #include <QGroupBox>
 #include <QVBoxLayout>
+#include <QPainter>
+#include <QImage>
+#include <QGraphicsScene>
 
 #include <QGraphicsProxyWidget>
 #include <QGraphicsLinearLayout>
@@ -271,6 +274,26 @@ bool Page::decref()
     }
     else
         return false;
+}
+
+/** Render this page to a QImage */
+QImage Page::toImage()
+{
+    if (this->scene() == 0)
+        return QImage();
+
+    QRectF geom = this->geometry();
+
+    //update the options pixmap and resize
+    QImage img(int(geom.width()), int(geom.height()),
+               QImage::Format_ARGB32_Premultiplied);
+
+    QPainter p(&img);
+
+    this->scene()->render(&p, geom, mapToScene(geom).boundingRect(), 
+                          ::Qt::KeepAspectRatio);
+    
+    return img;
 }
 
 /** Return the title of the page */

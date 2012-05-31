@@ -44,6 +44,8 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/optionspage.h
       Conspire/GUI/page.h
       Conspire/GUI/pageview.h
+      Conspire/GUI/slidelabel.h
+      Conspire/GUI/submitpage.h
       Conspire/GUI/widgetrack.h
 
     )
@@ -68,6 +70,8 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/optionspage.h
       Conspire/GUI/page.h
       Conspire/GUI/pageview.h
+      Conspire/GUI/slidelabel.h
+      Conspire/GUI/submitpage.h
       Conspire/GUI/widgetrack.h
 
     )
@@ -94,6 +98,8 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/optionspage.cpp
       cpp/page.cpp
       cpp/pageview.cpp
+      cpp/slidelabel.cpp
+      cpp/submitpage.cpp
       cpp/widgetrack.cpp
 
       ${CONSPIRE_GUI_PUBLIC_HEADERS}

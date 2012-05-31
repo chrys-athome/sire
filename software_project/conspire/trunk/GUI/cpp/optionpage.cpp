@@ -28,6 +28,7 @@
 
 #include "Conspire/GUI/optionpage.h"
 #include "Conspire/GUI/exceptionpage.h"
+#include "Conspire/GUI/slidelabel.h"
 
 #include "Conspire/values.h"
 #include "Conspire/exceptions.h"
@@ -98,21 +99,25 @@ void OptionPage::build()
     value_edit->setFont( QFont("LucidaGrande", 48) );
 
     connect(value_edit, SIGNAL(editingFinished()), this, SLOT(editingFinished()));
+
+    help_label = new SlideLabel(this);
     
-    QGraphicsProxyWidget *edit_proxy = new QGraphicsProxyWidget(this);
+    QGraphicsProxyWidget *edit_proxy = new QGraphicsProxyWidget(help_label);
     edit_proxy->setWidget(value_edit);
+    
+    help_label->setWidget(edit_proxy);
 }
 
 void OptionPage::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
-    value_edit->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    help_label->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
 void OptionPage::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
-    value_edit->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    help_label->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
 /** Function called when editing of the option is finished */

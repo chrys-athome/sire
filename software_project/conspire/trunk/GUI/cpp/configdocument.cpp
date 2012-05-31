@@ -36,8 +36,12 @@
 
 #include <QUndoStack>
 #include <QPainter>
+#include <QGraphicsScene>
+#include <QImage>
 
+#include <QGraphicsPixmapItem>
 #include <QGraphicsLinearLayout>
+#include <QGraphicsBlurEffect>
 
 using namespace Conspire;
 
@@ -64,6 +68,8 @@ ConfigDocument::~ConfigDocument()
 /** Build the widget */
 void ConfigDocument::build()
 {
+    disabled_view = 0;
+    menu_visible = false;
     undo_stack = new QUndoStack(this);
     connect(undo_stack, SIGNAL(canUndoChanged(bool)), 
             this, SIGNAL(canUndoChanged(bool)));
@@ -86,24 +92,101 @@ void ConfigDocument::build()
     view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
+QTransform getZoom(int w, int h, double gw, double gh, double scale)
+{
+    double width = (scale*gw) / double(w);
+    double height = (scale*gh) / double(h);
+
+    conspireDebug() << w << h << gw << gh << scale << width << height;
+
+    return QTransform( width, 0.0, 0.0, height, 0.5*scale*gw, 0.5*scale*gh );
+}
+
+QTransform getZoom(const QPixmap &pixmap, const QRectF &geometry, double scale)
+{
+    return getZoom(pixmap.width(), pixmap.height(), 
+                   geometry.width(), geometry.height(), scale);
+}
+
+/** Change the visibility of the menu */
+void ConfigDocument::setMenuVisible(bool visible)
+{
+    if (visible == menu_visible)
+        return;
+        
+    menu_visible = visible;
+    
+    if (menu_visible)
+    {
+        delete disabled_view;
+        disabled_view = new QGraphicsPixmapItem( 
+                            QPixmap::fromImage(view->toImage()), this );
+        disabled_view->setTransformationMode(::Qt::SmoothTransformation);
+
+        disabled_view->setTransform( getZoom(disabled_view->pixmap(), 
+                                     this->geometry(), 0.5) );
+        disabled_view->setGraphicsEffect( new QGraphicsBlurEffect() );
+
+        disabled_view->show();
+        view->hide();
+    }
+    else
+    {
+        //remove the menu and redraw the options widget
+        delete disabled_view;
+        disabled_view = 0;
+        view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+        view->show();
+    }
+}
+
+void ConfigDocument::toggleMenuVisible()
+{
+    if (menu_visible)
+        setMenuVisible(false);
+    else
+        setMenuVisible(true);
+}
+
 void ConfigDocument::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
-    view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    
+    if (menu_visible)
+    {
+        //resize the menu and the widget picture
+        if (disabled_view)
+            disabled_view->setTransform( getZoom(disabled_view->pixmap(), 
+                                         this->geometry(), 0.5) );
+    }
+    else
+    {
+        view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    }
 }
 
 void ConfigDocument::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
-    view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    
+    if (menu_visible)
+    {
+        //resize the menu and the widget picture
+        if (disabled_view)
+            disabled_view->setTransform( getZoom(disabled_view->pixmap(), 
+                                         this->geometry(), 0.5) );
+    }
+    else
+    {
+        view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    }
 }
 
 void ConfigDocument::paint(QPainter *painter, 
                            const QStyleOptionGraphicsItem *option, 
                            QWidget *widget)
 {
-    painter->drawRect(10, 10, 
-                      this->geometry().width() - 20, this->geometry().height() - 20);
+    Page::paint(painter, option, widget);
 }
 
 /** Return the current state of the options being viewed and edited */

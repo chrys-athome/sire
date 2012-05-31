@@ -102,7 +102,7 @@ void OptionsPage::pvt_reread(Options options)
 
     while (keys.count() < buttons.count())
     {
-        delete buttons.takeLast();
+        buttons.takeLast()->deleteLater();
     }
     
     for (int i=0; i<keys.count(); ++i)

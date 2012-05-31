@@ -43,9 +43,9 @@ MainBar::~MainBar()
 
 void MainBar::build()
 {
-    new_button = new Button( QObject::tr("New") );
-    new_button->setEnabled(true);
-    connect(new_button, SIGNAL(clicked()), this, SIGNAL(newPage()));
+    submit_button = new Button( QObject::tr("Submit") );
+    submit_button->setEnabled(true);
+    connect(submit_button, SIGNAL(clicked()), this, SIGNAL(submit()));
 
     undo_button = new Button( QObject::tr("Undo") );
     undo_button->setEnabled(false);
@@ -63,7 +63,7 @@ void MainBar::build()
     quit_button->setEnabled(true);
     connect(quit_button, SIGNAL(clicked()), QCoreApplication::instance(), SLOT(quit()));
 
-    this->addWidget(new_button);
+    this->addWidget(submit_button);
     this->addWidget(home_button);
     this->addWidget(undo_button);
     this->addWidget(redo_button);

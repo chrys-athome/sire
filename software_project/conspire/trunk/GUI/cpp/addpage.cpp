@@ -79,7 +79,7 @@ void AddPage::setOptions(Options options)
     
     while (buttons.count() > keys.count())
     {
-        delete buttons.takeLast();
+        buttons.takeLast()->deleteLater();
     }
     
     while (buttons.count() < keys.count())

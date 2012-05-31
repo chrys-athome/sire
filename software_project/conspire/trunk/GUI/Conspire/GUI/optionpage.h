@@ -39,6 +39,8 @@ class QLineEdit;
 
 namespace Conspire
 {
+    class SlideLabel;
+
     /** This page is used to change the value of a specific option */
     class CONSPIRE_EXPORT OptionPage : public ConfigPage
     {
@@ -75,6 +77,7 @@ namespace Conspire
         Option opt;
         QString root_key;
         
+        SlideLabel *help_label;
         QLineEdit *value_edit;
         
         QString old_text;

@@ -450,34 +450,20 @@ void PageView::paint(QPainter *painter,
                      const QStyleOptionGraphicsItem *option, 
                      QWidget *widget)
 {
-    //the children will all have been painted before this view. We can
-    //now draw decorations and the border
-
     int h = this->geometry().height();
     int w = this->geometry().width();
 
     painter->setRenderHint( QPainter::Antialiasing, true );
-
-    //draw the border
-    //  first the four sides
-    painter->setPen( QPen( ::Qt::black ) );
-    painter->setBrush( QBrush( ::Qt::black ) );
-    
-    painter->drawRect(0, 0, border_size, h);
-    painter->drawRect(w-border_size, 0, border_size, h);
-    
-    painter->drawRect(0, 0, w, border_size);
-    painter->drawRect(0, h-border_size, w, border_size);
 
     //now the title bar
     painter->setPen( QPen(::Qt::black) );
     painter->setBrush( QBrush(::Qt::black) );
     
     painter->setOpacity(0.5);
-    painter->drawRect(0, border_size, w, title_height);
+    painter->drawRect(0, 0, w, title_height);
     
     //  now the four curved corners
-    painter->setOpacity(1.0);
+    /*painter->setOpacity(1.0);
     QPainterPath path;
     path.moveTo( 0, 0 );
     path.arcTo( 0, 0, 2*border_size, 2*border_size, 90, 90 );
@@ -499,14 +485,11 @@ void PageView::paint(QPainter *painter,
     painter->translate(w-border_size, h-border_size);
     painter->rotate(180);
     painter->drawPath(path);
-    painter->resetTransform();
+    painter->resetTransform();*/
     
     //now draw the title
     painter->setPen( QPen(::Qt::white) );
 
-    //if (old_title_text)
-    //    painter->drawStaticText(old_title_pos, *old_title_text);
-    
     if (title_text)
         painter->drawStaticText(title_pos, *title_text);
 }
@@ -543,15 +526,15 @@ void PageView::positionTitleBar()
 
     float button_width = 50;
 
-    back_button->setGeometry(border_size+20, border_size+3,
+    back_button->setGeometry(20, 3,
                              button_width, title_height-6);
                              
-    forward_button->setGeometry(w-border_size-20-button_width, border_size+3,
+    forward_button->setGeometry(w-20-button_width, 3,
                                 button_width, title_height-6);
 
-    float title_width = w - 2*border_size - 40 - 2*button_width - 20;
+    float title_width = w - 40 - 2*button_width - 20;
 
-    title_geometry = QRectF( 0.5*(w-title_width), border_size+3,
+    title_geometry = QRectF( 0.5*(w-title_width), 3,
                              title_width, title_height-6);
 
     if (title_text)
@@ -568,6 +551,8 @@ void PageView::positionTitleBar()
 /** Build this widget */
 void PageView::build()
 {
+    this->setFlag(QGraphicsItem::ItemClipsChildrenToShape, true);
+
     anims_enabled = true;
     current_tab = -1;
     
@@ -578,12 +563,11 @@ void PageView::build()
 
     tabbar = new QTabBar();
     
-    border_size = 15;
     title_height = 25;
 
-    view_geometry = QRectF( border_size, border_size + title_height, 
-                            this->geometry().width() - 2*border_size, 
-                            this->geometry().height() - 2*border_size - title_height );
+    view_geometry = QRectF( 0, title_height, 
+                            this->geometry().width(), 
+                            this->geometry().height() - title_height );
 
     back_button = new Button(this);
     back_button->setText("Back");
@@ -609,9 +593,9 @@ void PageView::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
     
-    view_geometry = QRectF( border_size, border_size + title_height, 
-                            this->geometry().width() - 2*border_size, 
-                            this->geometry().height() - 2*border_size - title_height );
+    view_geometry = QRectF( 0, title_height, 
+                            this->geometry().width(),
+                            this->geometry().height() - title_height );
 
     if (current_tab != -1)
     {
@@ -632,9 +616,9 @@ void PageView::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
 
-    view_geometry = QRectF( border_size, border_size + title_height, 
-                            this->geometry().width() - 2*border_size, 
-                            this->geometry().height() - 2*border_size - title_height );
+    view_geometry = QRectF( 0, title_height, 
+                            this->geometry().width(), 
+                            this->geometry().height() - title_height );
 
     if (current_tab != -1)
     {

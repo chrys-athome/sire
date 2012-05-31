@@ -32,9 +32,12 @@
 
 #include "Conspire/GUI/page.h"
 
+#include <QImage>
+
 CONSPIRE_BEGIN_HEADER
 
 class QUndoStack;
+class QGraphicsPixmapItem;
 
 namespace Conspire
 {
@@ -70,6 +73,9 @@ namespace Conspire
 
         void setOptions(Options options);
         
+        void toggleMenuVisible();
+        void setMenuVisible(bool display);
+        
     protected:
         void paint(QPainter *painter, 
                    const QStyleOptionGraphicsItem *option, 
@@ -99,6 +105,13 @@ namespace Conspire
         
         /** The undo stack used to provide an undo history to editing commands */
         QUndoStack *undo_stack;
+        
+        /** The image of the widget used to improve rendering
+            speed when the document is not being edited */
+        QGraphicsPixmapItem *disabled_view;
+        
+        /** Whether or not the menu is visible */
+        bool menu_visible;
     };
 
 }
