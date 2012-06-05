@@ -339,15 +339,21 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 																			   		"eps=sqrt(eps1*eps2)");	*/
 																			   		
 			custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "max(isSolute1,isSolute2)*(Hsoft - Hinter);"
-																					"Hinter=4*eps*(LJdel^2-LJdel)+138.935456*q/r;"
+																					"Hinter=4.0*eps*(LJdel^2-LJdel)+138.935456*q/r;"
 																					"LJdel=(sigma/r)^6;"
-																					"Hsoft=diff*4*eps*(LJ^2-LJ)+138.935456*(diff^n)*q/sqrt(lambda+r^2);"
+																					"Hsoft=Hc+Hl;"
+																					"Hc=lam_cl^n*138.935456*q/sqrt(diff_cl+r^2);"
 																					"q=q1*q2;"
+																					"diff_cl=(1.0-lam_cl);"
+																					"lam_cl=max(0,lambda-1);"
+																					"Hl=lam_lj*4.0*eps*(LJ^2-LJ);"
 																					"eps=sqrt(eps1*eps2);"
 																					"LJ=(sigma^2/soft)^3;"
-																					"soft=(lambda*delta*sigma+r^2);"
+																					"soft=(diff_lj*delta*sigma+r^2);"
 																					"sigma=0.5*(sigma1+sigma2);"
-																					"diff=(1.0-lambda)");
+																					"diff_lj=(1.0-lam_lj);"
+																					"lam_lj=min(1,lambda)");
+																					
 																			
 			
 			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
@@ -399,16 +405,20 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "max(isSolute1,isSolute2)*(Hsoft-Hinter);"
 																					"Hinter=4*eps*(LJdel^2-LJdel)+138.935456*q*(1.0/r+(krf*r*r)-crf);"
 																					"LJdel=(sigma/r)^6;"
-																					"Hsoft=diff*4*eps*(LJ^2-LJ)+138.935456*(diff^n)*q/sqrt(lambda+r^2);"
+																					"Hsoft=Hc+Hl;"
+																					"Hc=lam_cl^n*138.935456*q/sqrt(diff_cl+r^2);"
 																					"q=q1*q2;"
+																					"diff_cl=(1.0-lam_cl);"
+																					"lam_cl=max(0,lambda-1);"
+																					"Hl=lam_lj*4.0*eps*(LJ^2-LJ);"
 																					"eps=sqrt(eps1*eps2);"
 																					"LJ=(sigma^2/soft)^3;"
-																					"soft=(lambda*delta*sigma+r^2);"
+																					"soft=(diff_lj*delta*sigma+r^2);"
 																					"sigma=0.5*(sigma1+sigma2);"
-																					"diff=(1.0-lambda)");																   		
+																					"diff_lj=(1.0-lam_lj);"
+																					"lam_lj=min(1,lambda)");
+																																												   		
 																			   		
-																			   		
-			
 			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
 		
 			int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
@@ -626,9 +636,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		custom_nonbond_SoluteSolvent_openmm->addPerParticleParameter("isSolute");
 		
     }
-    
-    
-    
+   
 			
 	const QString solute = "solute";
 			
@@ -1181,8 +1189,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			lam_val = context_openmm.getParameter("lambda");
 					
 			cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
-			
-			
+				
 			
 			for(int j=0;j<n_freq;j++){
 			
