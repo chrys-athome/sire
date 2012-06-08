@@ -342,17 +342,17 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 																					"Hinter=4.0*eps*(LJdel^2-LJdel)+138.935456*q/r;"
 																					"LJdel=(sigma/r)^6;"
 																					"Hsoft=Hc+Hl;"
-																					"Hc=lam_cl^n*138.935456*q/sqrt(diff_cl+r^2);"
+																					"Hc=lam_cl^(n+1)*138.935456*q/sqrt(diff_cl+r^2);"
 																					"q=q1*q2;"
 																					"diff_cl=(1.0-lam_cl);"
-																					"lam_cl=max(0,lambda-1);"
+																					"lam_cl=min(1,max(0,lambda-1));"
 																					"Hl=lam_lj*4.0*eps*(LJ^2-LJ);"
 																					"eps=sqrt(eps1*eps2);"
 																					"LJ=(sigma^2/soft)^3;"
 																					"soft=(diff_lj*delta*sigma+r^2);"
 																					"sigma=0.5*(sigma1+sigma2);"
 																					"diff_lj=(1.0-lam_lj);"
-																					"lam_lj=min(1,lambda)");
+																					"lam_lj=max(0,min(1,lambda))");
 																					
 																			
 			
@@ -406,17 +406,17 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 																					"Hinter=4*eps*(LJdel^2-LJdel)+138.935456*q*(1.0/r+(krf*r*r)-crf);"
 																					"LJdel=(sigma/r)^6;"
 																					"Hsoft=Hc+Hl;"
-																					"Hc=lam_cl^n*138.935456*q/sqrt(diff_cl+r^2);"
+																					"Hc=lam_cl^(n+1)*138.935456*q/sqrt(diff_cl+r^2);"
 																					"q=q1*q2;"
 																					"diff_cl=(1.0-lam_cl);"
-																					"lam_cl=max(0,lambda-1);"
+																					"lam_cl=min(1,max(0,lambda-1));"
 																					"Hl=lam_lj*4.0*eps*(LJ^2-LJ);"
 																					"eps=sqrt(eps1*eps2);"
 																					"LJ=(sigma^2/soft)^3;"
 																					"soft=(diff_lj*delta*sigma+r^2);"
 																					"sigma=0.5*(sigma1+sigma2);"
 																					"diff_lj=(1.0-lam_lj);"
-																					"lam_lj=min(1,lambda)");
+																					"lam_lj=max(0,min(1,lambda))");
 																																												   		
 																			   		
 			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
@@ -511,7 +511,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
     
 	OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
     
-	
 	
 	system_openmm.addForce(bondStretch_openmm);
     
@@ -1170,8 +1169,14 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		int frequency_energy = 100; 
 		
 		int n_freq = nmoves/frequency_energy;
+		
+		cout << "NFREQ = "<< n_freq << "\n\n";
+		
+		
+		
 	
 		for (int i=0; i<Alchemical_values.size();i++){
+	
 					
 							
 			double GF_acc = 0.0;
@@ -1193,7 +1198,10 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			for(int j=0;j<n_freq;j++){
 			
+				
 					integrator_openmm.step(frequency_energy);
+					
+			
 					
 					cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";		
 					
@@ -1236,7 +1244,13 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 					
 					GB_acc = GB_acc + exp(-beta*(potential_energy_lambda_minus_delta - potential_energy_lambda));
 						
-					cout << "\nGF accumulator partial = " << GF_acc << " -- GB accumulator partial = " << GB_acc << "\n\n"; 
+					cout << "\nGF accumulator partial = " << GF_acc << " -- GB accumulator partial = " << GB_acc << "\n\n";
+					
+					if(isnormal(GF_acc==0) || isnormal(GB_acc==0)){ 
+						cout << "\n\n ********************** ERROR NAN!! ****************************\n\n";
+						exit(-1); 
+						
+					}
 					
 					
 					context_openmm.setParameter("lambda",Alchemical_values[i]);
@@ -1246,11 +1260,23 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			cout << "\n\nGF accumulator total = " << GF_acc << " ** GB accumulator total = " << GB_acc << "\n"; 
 			
-			double Energy_GF = -(1.0/beta)*log(GF_acc / (double) n_freq);
+			double avg_GF = GF_acc / ((double) n_freq);
 			
-			double Energy_GB = -(1.0/beta)*log(GB_acc / (double) n_freq);
+			double avg_GB = GB_acc /((double) n_freq);
 			
-			double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / 2.0 * delta;
+			
+			cout << "\n\nAverage GF = " << avg_GF << " Average GB = " << avg_GB << "\n";
+			
+	
+			double Energy_GF = -(1.0/beta)*log(avg_GF);
+			
+			double Energy_GB = -(1.0/beta)*log(avg_GB);
+			
+		
+			cout <<"\n\nEnergy GF = "<< Energy_GF << " Energy GB = " << Energy_GB << "\n"; 
+		
+			
+			double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2.0 * delta);
 			
 			cout << "\n\nEnergy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
 			
