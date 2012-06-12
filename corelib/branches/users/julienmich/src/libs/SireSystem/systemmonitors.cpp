@@ -519,6 +519,7 @@ void SystemMonitors::monitor(System &system)
              it != mons_by_frequency.constEnd();
              ++it)
         {
+	  //qDebug() << " stepnum " << stepnum << " it.key " << it.key();
             if (stepnum % it.key() == 0)
             {
                 //it is time to update these monitors!

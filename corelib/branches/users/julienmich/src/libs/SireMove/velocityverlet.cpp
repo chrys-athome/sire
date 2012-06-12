@@ -404,36 +404,36 @@ void VelocityVerletBerendsen::integrate(IntegratorWorkspace &workspace,
 
 	// Berendsen thermostat
 	// now compute new kinetic energy
-	SireUnits::Dimension::MolarEnergy ekin = ws.kineticEnergy();
+	//SireUnits::Dimension::MolarEnergy ekin = ws.kineticEnergy();
 	//qDebug() << " KINETIC ENERGY AFTER MOMENTUM UPDATE " << ekin.toString();
 	// rescale velocities to achieve mean target temperature
-	int ndofs = 3 * nmols ;  // NEED GOOD WAY OF CALCULATING NDOFS
-	SireUnits::Dimension::Temperature curr_temp = ( ( 2 * ekin.value() ) / ( ndofs * k_boltz ) ) * kelvin ;
+	//int ndofs = 3 * nmols ;  // NEED GOOD WAY OF CALCULATING NDOFS
+	//SireUnits::Dimension::Temperature curr_temp = ( ( 2 * ekin.value() ) / ( ndofs * k_boltz ) ) * kelvin ;
 	//qDebug() << " CURR TEMP IS " << curr_temp.toString() << " TGT TEMP IS " << temperature.toString();
 	//qDebug() << "DT IS " << convertTo(dt, picosecond);
 
 	//double tau = 0.002 * picosecond;
-	double lambda2 = 1.0 + ( dt / tau ) * ( ( temperature / curr_temp ) - 1.0 );
-	double lambda = sqrt(lambda2);
+	//double lambda2 = 1.0 + ( dt / tau ) * ( ( temperature / curr_temp ) - 1.0 );
+	//double lambda = sqrt(lambda2);
 	//qDebug() << "DT / tau " << ( dt / tau );
 	//qDebug() << "Scaling factor is " << lambda;
 	
-        for (int i=0; i<nmols; ++i)
-        {
-            const int nats = ws.nAtoms(i);
-        
-            Vector *p = ws.momentaArray(i);
-            const double *m = ws.massArray(i);
-
-            for (int j=0; j<nats; ++j)
-            {
-                if (m[j] != 0)
-		  p[j] *= lambda; 
-            }
-        }
-	SireUnits::Dimension::MolarEnergy ekin2 = ws.kineticEnergy();
+        //for (int i=0; i<nmols; ++i)
+        //{
+        //   const int nats = ws.nAtoms(i);
+        //
+        //    Vector *p = ws.momentaArray(i);
+        //    const double *m = ws.massArray(i);
+	//
+	//  for (int j=0; j<nats; ++j)
+	//  {
+	//      if (m[j] != 0)
+	//  p[j] *= lambda; 
+	//  }
+	//    }
+	//SireUnits::Dimension::MolarEnergy ekin2 = ws.kineticEnergy();
 	//qDebug() << " KINETIC ENERGY AFTER SCALING " << ekin2.toString();
-	SireUnits::Dimension::Temperature curr_temp2 = ( ( 2 * ekin2.value() ) / ( ndofs * k_boltz ) ) * kelvin ;
+	//SireUnits::Dimension::Temperature curr_temp2 = ( ( 2 * ekin2.value() ) / ( ndofs * k_boltz ) ) * kelvin ;
 	//qDebug() << " NEW CURRENT TEMPERATURE " << curr_temp2.toString();
 	// end of Berendsen 
 

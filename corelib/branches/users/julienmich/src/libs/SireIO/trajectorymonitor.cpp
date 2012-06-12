@@ -370,6 +370,8 @@ void TrajectoryMonitor::writeToDisk(const QString &file_template) const
     int i = 0;
     int n = nColumns(nframes);
 
+    //qDebug() << " There are " << nframes << " frames " ;
+
     for (QList< QPair< QString,shared_ptr<QTemporaryFile> > >::const_iterator
                             it = traj_frames.constBegin();
          it != traj_frames.constEnd();

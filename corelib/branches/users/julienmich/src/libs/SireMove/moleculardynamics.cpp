@@ -427,6 +427,7 @@ void MolecularDynamics::move(System &system, int nmoves, bool record_stats)
 
         num_moves += nmoves;
         total_time += nmoves*timestep;
+
     }
     catch(...)
     {

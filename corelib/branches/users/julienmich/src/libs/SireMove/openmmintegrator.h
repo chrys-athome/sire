@@ -124,6 +124,8 @@ public:
 	QVector<double> getAlchemical_values(void);
 	void setAlchemical_values(QVector<double>);
 	
+	void setCMMremoval_frequency(int);
+	int getCMMremoval_frequency(void);
 	
 	
 	
@@ -133,7 +135,7 @@ private:
         or to save them at the end of all of the steps */
     
     bool frequent_save_velocities;
-    
+
     QString CutoffType;
     SireUnits::Dimension::Length cutoff_distance;
     double field_dielectric;
@@ -150,6 +152,8 @@ private:
     SireUnits::Dimension::Temperature Temperature;
     
     QString platform_type;
+
+    int CMMremoval_frequency;
     
     QVector<double> Alchemical_values;
     

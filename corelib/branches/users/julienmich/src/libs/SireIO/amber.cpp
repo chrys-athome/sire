@@ -1793,19 +1793,18 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
         
         if(cutting == PERRESIDUE){
         	
-        	ResidueCutting residue_cutfunc = ResidueCutting();
-
-        	molstructeditor = residue_cutfunc(molstructeditor);
-		}
+	  ResidueCutting residue_cutfunc = ResidueCutting();
+	  
+	  molstructeditor = residue_cutfunc(molstructeditor);
+	}
 		
-		else if(cutting == PERATOM){
+	else if(cutting == PERATOM){
 		
-			AtomCutting atom_cutfunc = AtomCutting();
+	  AtomCutting atom_cutfunc = AtomCutting();
 			
-			molstructeditor = atom_cutfunc(molstructeditor);
+	  molstructeditor = atom_cutfunc(molstructeditor);
 		
-		}
-		
+	}
 		
         Molecule molecule = molstructeditor.commit();
 
