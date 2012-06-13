@@ -64,10 +64,10 @@ void MainBar::build()
     connect(quit_button, SIGNAL(clicked()), QCoreApplication::instance(), SLOT(quit()));
 
     this->addWidget(submit_button);
-    this->addWidget(home_button);
-    this->addWidget(undo_button);
-    this->addWidget(redo_button);
-    this->addWidget(quit_button);
+    //this->addWidget(home_button);
+    //this->addWidget(undo_button);
+    //this->addWidget(redo_button);
+    //this->addWidget(quit_button);
     
     this->setOpacity(0.5);
 }

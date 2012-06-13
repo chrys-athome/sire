@@ -85,6 +85,9 @@ QString OptionsPage::rootKey() const
 /** Internal function used to rebuild the widget from the passed options */
 void OptionsPage::pvt_reread(Options options)
 {
+    //delete the add_button (recreate it later if needed)
+    delete add_button;
+
     //create one button for each option...
     opts = options;
     
@@ -125,7 +128,14 @@ void OptionsPage::pvt_reread(Options options)
         mapper->setMapping(b, keys[i]);
     }
     
-    add_button->setVisible( opts.canAddValues() );
+    if (opts.canAddValues())
+    {
+        add_button = new Button( Conspire::tr("Add...") );
+        add_button->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
+        connect(add_button, SIGNAL(clicked()), this, SLOT(add()));
+
+        button_rack->addWidget(add_button);
+    }
 }
 
 /** This function is called when the options object is updated */
@@ -207,36 +217,28 @@ void OptionsPage::build()
 {
     setTitle("Main Options");
 
-    rack = new WidgetRack(::Qt::Vertical, this);
-    
-    button_rack = new WidgetRack(::Qt::Vertical, rack);
+    add_button = 0;
+
+    button_rack = new WidgetRack(::Qt::Vertical, this);
     button_rack->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
-    rack->addWidget(button_rack);
-
-    add_button = new Button( Conspire::tr("Add...") );
-    add_button->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
-    connect(add_button, SIGNAL(clicked()), this, SLOT(add()));
-
-    rack->addWidget(add_button);
-    add_button->hide();
 
     mapper = new QSignalMapper(this);
     connect(mapper, SIGNAL(mapped(const QString&)), this, SLOT(clicked(const QString&)));
 
-    rack->setGeometry( this->geometry() );
-    rack->show();
+    button_rack->setGeometry( this->geometry() );
+    button_rack->show();
 }
 
 void OptionsPage::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     ConfigPage::resizeEvent(e);
-    rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    button_rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
 void OptionsPage::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     ConfigPage::moveEvent(e);
-    rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    button_rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
 void OptionsPage::paint(QPainter *painter, 

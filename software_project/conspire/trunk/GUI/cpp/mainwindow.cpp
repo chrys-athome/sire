@@ -57,7 +57,7 @@ MainWindow::MainWindow(Options options, QWidget *parent)
     connect(mainbar, SIGNAL(redo()), doc, SLOT(redo()));
     connect(mainbar, SIGNAL(home()), doc, SLOT(home()));
     
-    connect(mainbar, SIGNAL(submit()), doc, SLOT(toggleMenuVisible()));
+    connect(mainbar, SIGNAL(submit()), doc, SLOT(submit()));
     
     view = PagePointer(doc);
     this->scene()->addItem(view);

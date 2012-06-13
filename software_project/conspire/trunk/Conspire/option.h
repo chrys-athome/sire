@@ -70,7 +70,7 @@ namespace Conspire
         bool hasIndiciesWithValue() const;
         
         Qt::StringList keys() const;
-        Qt::StringList keysWithValue() const;
+        Qt::StringList keysWithValue(bool recursive=false) const;
         
         bool hasSubOptions() const;
         bool hasValue(Qt::String key) const;
@@ -167,7 +167,7 @@ namespace Conspire
         Qt::StringList keysWithValue() const;
         Qt::StringList keysWithoutValue() const;
         
-        Qt::StringList keysAndIndiciesWithValue() const;
+        Qt::StringList keysAndIndiciesWithValue(bool recursive=false) const;
 
         bool canAddValues() const;
 

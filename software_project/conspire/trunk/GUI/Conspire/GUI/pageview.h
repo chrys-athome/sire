@@ -62,10 +62,10 @@ namespace Conspire
         PageView(Page *parent=0);
         
         ~PageView();
-        
-        int count() const;
       
         QPainterPath opaqueArea() const;
+            
+        bool isEmpty() const;
             
     public slots:
         virtual void back();
@@ -73,16 +73,9 @@ namespace Conspire
         
         virtual void home(bool clear_history=false);
         
-        virtual void pushed(PagePointer page, bool new_tab=false);
+        virtual void pushed(PagePointer page);
         virtual void popped(bool forget_page=false);
-        
-        virtual void moveTab(int from, int to);
-        virtual void changeTab(int index);
-        
-        virtual void closeTab(int index);
-
-        virtual void closeAll();
-        
+    
     signals:
         void canBackChanged(bool);
         void canForwardChanged(bool);
@@ -91,7 +84,6 @@ namespace Conspire
         void resizeEvent(QGraphicsSceneResizeEvent *e);
         void moveEvent(QGraphicsSceneMoveEvent *e);
 
-        void keyPressEvent(QKeyEvent *e);
         void mousePressEvent(QMouseEvent *e);
 
         void paint(QPainter *painter, 
@@ -101,35 +93,12 @@ namespace Conspire
     private:
         void positionTitleBar();
     
-        class Tab
-        {
-        public:
-            Tab();
-            ~Tab();
-            
-            /** The top (home) page of this tab */
-            PagePointer top_page;
-            
-            /** The page currently viewed */
-            PagePointer current_page;
-            
-            /** The history of previous pages */
-            QStack<PagePointer> page_history;
-            
-            /** The set of forward pages (if we have gone "back") */
-            QStack<PagePointer> page_future;
-        };
-
         void build();
         void checkDisconnectPage(PagePointer &page);
         void checkDisconnectPages(QStack<PagePointer> &pages);
-        void checkDisconnectTab(Tab *tab);
         
         void pushView(PagePointer view, bool clear_future=true);
         PagePointer popView(bool forget_page=false);
-
-        void animateTitleText(QString new_text, QParallelAnimationGroup *g,
-                              bool move_forwards=true);
 
         void animateSwitch(PagePointer old_view, PagePointer new_view, 
                            bool move_forwards=true);
@@ -137,17 +106,22 @@ namespace Conspire
         void animateNew(PagePointer new_view);
         void animateDestroy(PagePointer old_view);
                 
-        /** The pointer to the bar used to change the tabs */
-        QTabBar *tabbar;
+        void setTitleText(QString text);
+                
+        /** The top (home) page of this tab */
+        PagePointer top_page;
         
-        /** The set of all visible tabs */
-        QList<Tab*> tabpages;
+        /** The page currently viewed */
+        PagePointer current_page;
+        
+        /** The history of previous pages */
+        QStack<PagePointer> page_history;
+        
+        /** The set of forward pages (if we have gone "back") */
+        QStack<PagePointer> page_future;
 
         /** The correct size and location of the page being viewed */
         QRectF view_geometry;
-        
-        /** The old text in the page title header (used during animation) */
-        QStaticText *old_title_text;
         
         /** The text in the page title header */
         QStaticText *title_text;
@@ -158,9 +132,6 @@ namespace Conspire
         /** The location for the title text */
         QPointF title_pos;
         
-        /** The location for the old title text */
-        QPointF old_title_pos;
-        
         /** The "back" button in the page title header */
         Button *back_button;
         
@@ -170,9 +141,8 @@ namespace Conspire
         /** The height of the title bar */
         int title_height;
         
-        /** The index of the current tab page */
-        int current_tab;
-
+        /** Whether we move side to side, or in and out */
+        bool side_to_side;
     };
 
 }

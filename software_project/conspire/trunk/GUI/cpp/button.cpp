@@ -82,9 +82,9 @@ void Button::scaleTextToFit()
 {
     if (txt)
     {
-        QSizeF sz = 0.6 * this->size();
+        QSizeF sz = 0.8 * this->size();
     
-        txt->setTextWidth(sz.width());
+        //txt->setTextWidth(sz.width());
         txt->prepare(QTransform(), starting_font);
     
         float w_factor = sz.width() / txt->size().width();
@@ -129,7 +129,7 @@ void Button::setText(QString t)
 
         QTextOption opt;
         opt.setAlignment( ::Qt::AlignCenter );
-        opt.setWrapMode( QTextOption::WordWrap );        
+        //opt.setWrapMode( QTextOption::WordWrap );        
         txt->setTextOption(opt);
 
         scaleTextToFit();

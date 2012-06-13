@@ -30,10 +30,17 @@
 
 #include "Conspire/GUI/page.h"
 
+#include "Conspire/option.h"
+
 CONSPIRE_BEGIN_HEADER
+
+class QLabel;
+class QProgressBar;
 
 namespace Conspire
 {
+    class Button;
+
     /** This is the page used to submit a job to Acquire */
     class CONSPIRE_EXPORT SubmitPage : public Page
     {
@@ -41,9 +48,14 @@ namespace Conspire
         
     public:
         SubmitPage(Page *parent=0);
-        SubmitPage(Options options, Page *parent=0);
+        SubmitPage(Options options, QString job_class, Page *parent=0);
         
         ~SubmitPage();
+
+    protected slots:
+        void submit();
+        void query();
+        void getResults();
         
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
@@ -55,6 +67,26 @@ namespace Conspire
 
     private:
         void build();
+        void allUpdate();
+        
+        /** The options for the job to submit */
+        Options opts;
+        
+        /** The status label for job submission */
+        QLabel *status_label;
+        
+        /** The progress bar for job submission */
+        QProgressBar *progress_bar;
+        
+        /** The button used to submit the job */
+        Button *button;
+        
+        /** The class of job (e.g. which program to run) */
+        QString job_class;
+        
+        /** The ID number of the job (when it is running,
+            it is -1 when the job is not running) */
+        int job_id;
     };
 
 }

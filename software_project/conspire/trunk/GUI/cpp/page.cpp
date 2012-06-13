@@ -42,6 +42,7 @@
 
 #include <QGraphicsProxyWidget>
 #include <QGraphicsLinearLayout>
+#include <QGraphicsBlurEffect>
 
 using namespace Conspire;
 
@@ -62,6 +63,7 @@ void Page::build()
 {
     conspireDebug() << "CONSTRUCTING PAGE" << this->toString();
 
+    blr = 0;
     ref_count = 0;
     anims_enabled = true;
     anims_enabled_by_parent = true;
@@ -294,6 +296,52 @@ QImage Page::toImage()
                           ::Qt::KeepAspectRatio);
     
     return img;
+}
+
+/** Return the blur level of the page */
+float Page::getBlur() const
+{
+    return blr;
+}
+
+/** Set the blur level of the page to 'b' */
+void Page::setBlur(float b)
+{
+    if (b != blr)
+    {
+        //the blur can go from 0 to 10 pixels, from a blur of 0 to 100%
+        int blur_radius = qMax(0, int(10*b / 100));
+        
+        if (blur_radius == 0)
+        {
+            this->setGraphicsEffect(0);
+        }
+        else
+        {
+            QGraphicsBlurEffect *effect = dynamic_cast<QGraphicsBlurEffect*>(
+                                                                this->graphicsEffect());
+            
+            if (effect)
+            {
+                effect->setBlurRadius(blur_radius);
+            }
+            else
+            {
+                effect = new QGraphicsBlurEffect(this);
+                effect->setBlurRadius(blur_radius);
+                this->setGraphicsEffect(effect);
+            }
+        }
+        
+        blr = b;
+    }
+}
+
+/** Unset the blur (clear any blurring) */
+void Page::unsetBlur()
+{
+    blr = 0;
+    this->setGraphicsEffect(0);
 }
 
 /** Return the title of the page */

@@ -31,6 +31,7 @@
 #include "Conspire/GUI/optionscommand.h"
 #include "Conspire/GUI/optionspage.h"
 #include "Conspire/GUI/exceptionpage.h"
+#include "Conspire/GUI/submitpage.h"
 
 #include "Conspire/exceptions.h"
 
@@ -256,6 +257,12 @@ void ConfigDocument::update(QString full_key, Obj new_value)
     }
 }
 
+/** Submit the current document for processing */
+void ConfigDocument::submit()
+{
+    view->pushed( PagePointer( new SubmitPage(opts,"pmemd",view) ) );
+}
+
 /** Undo the last operation */
 void ConfigDocument::undo()
 {
@@ -289,30 +296,23 @@ void ConfigDocument::home(bool clear_history)
 /** Set the options object that is edited by this view */
 void ConfigDocument::setOptions(Options options)
 {
-    if (view->count() == 0)
+    if (view->isEmpty())
     {
-        view->pushed( PagePointer(new OptionsPage(options,view)), true );
+        view->pushed( PagePointer(new OptionsPage(options,view)) );
     }
     else
     {
         try
         {
-            conspireDebug() << "view->reread(options)";
             view->reread(options);
-            conspireDebug() << "DONE :-)";
         }
         catch(const Conspire::Exception &e)
         {
-            conspireDebug() << "SOMETHING WENT WRONG";
-            conspireDebug() << e.toString();
-            
-            view->closeAll();
-            view->pushed( PagePointer(new OptionsPage(options,view)), true );
+            view->pushed( PagePointer(new OptionsPage(options,view)) );
         }
     }
     
     opts = options;
-    conspireDebug() << "SUCCESSFULLY CHANGED THE OPTIONS OBJECT";
     
     QGraphicsWidget::update();
 }

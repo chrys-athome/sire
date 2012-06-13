@@ -37,6 +37,9 @@
 
 using namespace Conspire;
 
+static QString install_dir 
+                = "/Users/chris/Work/SoftwareProject/Conspire/source/job_classes";
+
 int main(int argc, char **argv)
 {
     try
@@ -47,7 +50,14 @@ int main(int argc, char **argv)
 
         Options opts;
 
-        if (argc > 1)
+        if (argc <= 1)
+        {
+            QStringList path;
+            path << QString("%1/pmemd").arg(install_dir);
+            
+            opts = Options::fromXMLFile("pmemd.xml", path);
+        }
+        else
         {
             QString xmlfile = argv[1];
             

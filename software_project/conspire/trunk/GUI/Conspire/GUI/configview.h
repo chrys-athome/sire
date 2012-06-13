@@ -51,7 +51,7 @@ namespace Conspire
         ~ConfigView();
         
     public slots:
-        void pushed(PagePointer page, bool new_tab=false);
+        void pushed(PagePointer page);
         void reread(Options options);
 
     signals:

@@ -76,6 +76,8 @@ namespace Conspire
         void toggleMenuVisible();
         void setMenuVisible(bool display);
         
+        void submit();
+        
     protected:
         void paint(QPainter *painter, 
                    const QStyleOptionGraphicsItem *option, 

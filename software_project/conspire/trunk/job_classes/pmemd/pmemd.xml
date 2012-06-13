@@ -1,0 +1,54 @@
+<options>
+
+  <option>
+    <key>structure file</key>
+    <description>The file containing the structure (topology) and parameters 
+                 of the molecules to be simulated.</description>
+    <value><file>molecules.top</file></value>
+  </option>
+
+  <option>
+    <key>coordinate file</key>
+    <description>The file containing the coordinates of the 
+                 molecules to be simulated. This is typically the 
+                 restart file from the last stage of setup or dynamics.
+    </description>
+    <value><file>molecules.rst</file></value>
+  </option>
+
+  <option>
+    <key>output name</key>
+    <description>The name of the output files produced by the simulation.
+                 Output files will include the info, trajectory, restart
+                 and log files, which will be called "output.info", 
+                 "output.rst", "output.mdcrd" and "output.out", where
+                 "output" is the name supplied here.</description>
+    <value><string>output</string></value>
+  </option>
+
+  <option>
+    <key>number of moves</key>
+    <description>The number of steps of dynamics to perform.</description>
+    <value><integer>1000</integer></value>
+  </option>
+
+  <option>
+    <key>temperature</key>
+    <description>The desired temperature of the simulation.</description>
+    <value><temperature units="celsius">25.0</temperature></value>
+  </option>
+
+  <option>
+    <key>pressure</key>
+    <description>The desired pressure of the simulation.</description>
+    <value><pressure units="atm">1.0</pressure></value>
+  </option>
+
+  <option optional="true">
+    <key>command file</key>
+    <description>Supply your own command file to set advanced pmemd options.</description>
+    <value><file>mdin</file></value>
+  </option>
+
+</options>
+

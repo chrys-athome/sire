@@ -117,9 +117,15 @@ namespace Conspire
         Q_OBJECT
         
     public:
+        Q_PROPERTY(float blur READ getBlur WRITE setBlur RESET unsetBlur);
+    
         Page(Page *parent=0);
         
         virtual ~Page();
+
+        float getBlur() const;
+        void setBlur(float b);
+        void unsetBlur();
 
         QString toString() const;
 
@@ -169,7 +175,7 @@ namespace Conspire
     signals:
         /** Signal emitted when this page has created a new page that 
             it wants to be displayed to the user */
-        void push(PagePointer new_page, bool new_tab=false);
+        void push(PagePointer new_page);
         
         /** Signal emitted when this page no longer wants to be viewed. 
             If "forget_page" is true, then this page is removed from the
@@ -264,6 +270,9 @@ namespace Conspire
     
         /** The main widget which is displayed on this page */
         QPointer<QGraphicsWidget> page_widget;
+    
+        /** The blur level of the page */
+        float blr;
     
         /** The number of PagePointer pointers currently 
             pointing to this widget */

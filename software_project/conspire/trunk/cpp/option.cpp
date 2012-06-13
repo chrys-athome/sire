@@ -972,7 +972,7 @@ StringList Option::keys() const
 
 /** Return the set of keys of sub-options that have been explicitly
     set by the user */
-StringList Option::keysWithValue() const
+StringList Option::keysWithValue(bool recursive) const
 {
     Obj val = this->value();
 
@@ -985,15 +985,31 @@ StringList Option::keysWithValue() const
     }
 
     if (val.isA<Options>())
-        return val.asA<Options>().keysWithValue();
+        return val.asA<Options>().keysAndIndiciesWithValue(recursive);
         
     else if (val.isA<Option>())
     {
         StringList kys;
         
-        if (val.asA<Option>().hasIndiciesWithValue())
+        if (recursive)
         {
-            kys.append( val.asA<Option>().key() );
+            foreach (int idx, val.asA<Option>().indiciesWithValue())
+            {
+                StringList ks = val.asA<Option>()[idx].keysWithValue(true);
+                
+                foreach (QString k, ks)
+                {
+                    kys.append( QString("%1[%3].%2").arg(val.asA<Option>().key(),
+                                       k).arg(idx) );
+                }
+            }
+        }
+        else
+        {
+            if (val.asA<Option>().hasIndiciesWithValue())
+            {
+                kys.append( val.asA<Option>().key() );
+            }
         }
         
         return kys;
@@ -1643,7 +1659,7 @@ StringList Options::keysWithValue() const
 /** Return a list of keys for all options that have been given a value,
     and make sure that multi-value keys that have multiple values are 
     reported multiple times, with their indicies attached */
-StringList Options::keysAndIndiciesWithValue() const
+StringList Options::keysAndIndiciesWithValue(bool recursive) const
 {
     StringList k;
     
@@ -1667,13 +1683,44 @@ StringList Options::keysAndIndiciesWithValue() const
         {
             if (idxs.count() == 1 and idxs[0] == 1)
             {
-                k += opt.key();
+                if (recursive)
+                {
+                    Qt::StringList child_keys = opt.keysWithValue(true);
+                    
+                    if (child_keys.isEmpty())
+                        k += opt.key();
+                    else
+                    {
+                        foreach (QString child_key, child_keys)
+                        {
+                            k += QString("%1.%2").arg(opt.key(), child_key);
+                        }
+                    }
+                }
+                else
+                    k += opt.key();
             }
             else
             {
                 foreach (int idx, idxs)
                 {
-                    k += QString("%1[%2]").arg(opt.key()).arg(idx);
+                    if (recursive)
+                    {
+                        Qt::StringList child_keys = opt[idx].keysWithValue(true);
+                    
+                        if (child_keys.isEmpty())
+                            k += QString("%1[%2]").arg(opt.key()).arg(idx);
+                        else
+                        {
+                            foreach (QString child_key, child_keys)
+                            {
+                                k += QString("%1[%3].%2").arg(opt.key(), child_key)
+                                                         .arg(idx);
+                            }
+                        }
+                    }
+                    else
+                        k += QString("%1[%2]").arg(opt.key()).arg(idx);
                 }
             }
         }

@@ -122,33 +122,28 @@ void OptionButton::scaleTextToFit()
 {
     QSizeF sz = this->size();
     
-    int max_height = 0.8 * sz.height();
+    int max_height = sz.height();
     int max_width = 0;
     
     if (txt and val)
-        max_width = 0.4 * sz.width();
+        max_width = 0.45 * sz.width();
     else if (txt or val)
-        max_width = 0.8 * sz.width();
+        max_width = 0.9 * sz.width();
     
     if (txt)
     {
-        if (val)
-            txt->setTextWidth(0.4 * sz.width());
-        else
-            txt->setTextWidth(sz.width());
-        
+        txt->setTextWidth(max_width);
         txt->prepare(QTransform(), starting_font);
     }
     
     if (val)
     {
-        if (txt)
-            val->setTextWidth(0.4 * sz.width());
-        else
-            val->setTextWidth(sz.width());
-            
+        val->setTextWidth(max_width);
         val->prepare(QTransform(), starting_font);
     }
+
+    button_font = starting_font;
+    return;
 
     QFontMetrics metrics(starting_font);
     
