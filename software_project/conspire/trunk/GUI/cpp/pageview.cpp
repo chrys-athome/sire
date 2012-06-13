@@ -46,7 +46,13 @@
 using namespace Conspire;
 
 /** Constructor */
-PageView::PageView(Page *parent) : Page(parent)
+PageView::PageView(Page *parent) : Page(parent), side_to_side(true)
+{
+    build();
+}
+
+/** Constructor, specifying whether or not we are in side_to_side mode */
+PageView::PageView(bool side, Page *parent) : Page(parent), side_to_side(side)
 {
     build();
 }
@@ -220,48 +226,31 @@ void PageView::paint(QPainter *painter,
                      const QStyleOptionGraphicsItem *option, 
                      QWidget *widget)
 {
-    int h = this->geometry().height();
-    int w = this->geometry().width();
+    if (show_title)
+    {
+        int h = this->geometry().height();
+        int w = this->geometry().width();
 
-    painter->setRenderHint( QPainter::Antialiasing, true );
+        painter->setRenderHint( QPainter::Antialiasing, true );
 
-    //now the title bar
-    painter->setPen( QPen(::Qt::black) );
-    painter->setBrush( QBrush(::Qt::black) );
-    
-    painter->setOpacity(0.5);
-    painter->drawRect(0, 0, w, title_height);
-    
-    //  now the four curved corners
-    /*painter->setOpacity(1.0);
-    QPainterPath path;
-    path.moveTo( 0, 0 );
-    path.arcTo( 0, 0, 2*border_size, 2*border_size, 90, 90 );
-    
-    painter->translate(border_size, border_size);
-    painter->drawPath(path);
-    painter->resetTransform();
-    
-    painter->translate(border_size, h - border_size);
-    painter->rotate(-90);
-    painter->drawPath(path);
-    painter->resetTransform();
-    
-    painter->translate(w-border_size, border_size);
-    painter->rotate(90);
-    painter->drawPath(path);
-    painter->resetTransform();
-    
-    painter->translate(w-border_size, h-border_size);
-    painter->rotate(180);
-    painter->drawPath(path);
-    painter->resetTransform();*/
-    
-    //now draw the title
-    painter->setPen( QPen(::Qt::white) );
+        //now the title bar
+        painter->setPen( QPen(::Qt::black) );
+        painter->setBrush( QBrush(::Qt::black) );
+        
+        painter->setOpacity(0.5);
+        painter->drawRect(0, 0, w, title_height);
+        
+        //now draw the title
+        painter->setPen( QPen(::Qt::white) );
 
-    if (title_text)
-        painter->drawStaticText(title_pos, *title_text);
+        if (title_text)
+            painter->drawStaticText(title_pos, *title_text);
+    }
+    else
+    {
+        back_button->hide();
+        forward_button->hide();
+    }
 }
 
 /** This widget is totally transparent - it is the children that are opaque */
@@ -330,7 +319,7 @@ void PageView::build()
     this->setFlag(QGraphicsItem::ItemClipsChildrenToShape, true);
 
     anims_enabled = true;
-    side_to_side = true;
+    show_title = true;
     
     setTitle("Unnamed PageView");
     setDescription("Description of an unnamed PageView");
@@ -361,21 +350,38 @@ void PageView::build()
     positionTitleBar();
 }
 
+void PageView::setTitleVisible(bool visible)
+{
+    show_title = visible;
+}
+
 /** Called when this widget is resized */
 void PageView::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
     
-    view_geometry = QRectF( 0, title_height, 
-                            this->geometry().width(),
-                            this->geometry().height() - title_height );
-
-    if (current_page)
+    if (show_title)
     {
-        current_page->setGeometry(view_geometry);
+        view_geometry = QRectF( 0, title_height, 
+                                this->geometry().width(),
+                                this->geometry().height() - title_height );
+
+        if (current_page)
+        {
+            current_page->setGeometry(view_geometry);
+        }
+        
+        positionTitleBar();
     }
-    
-    positionTitleBar();
+    else
+    {
+        view_geometry = QRectF( 0, 0, 
+                                this->geometry().width(),
+                                this->geometry().height() );
+
+        current_page->setGeometry(0, 0, this->geometry().width(),
+                                        this->geometry().height());
+    }
 }
 
 /** Called when this widget is moved */
@@ -383,16 +389,28 @@ void PageView::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
 
-    view_geometry = QRectF( 0, title_height, 
-                            this->geometry().width(), 
-                            this->geometry().height() - title_height );
-
-    if (current_page)
+    if (show_title)
     {
-        current_page->setGeometry(view_geometry);
+        view_geometry = QRectF( 0, title_height, 
+                                this->geometry().width(),
+                                this->geometry().height() - title_height );
+
+        if (current_page)
+        {
+            current_page->setGeometry(view_geometry);
+        }
+        
+        positionTitleBar();
     }
-    
-    positionTitleBar();
+    else
+    {
+        view_geometry = QRectF( 0, 0, 
+                                this->geometry().width(),
+                                this->geometry().height() );
+
+        current_page->setGeometry(0, 0, this->geometry().width(),
+                                        this->geometry().height());
+    }
 }
 
 /** Internal function used to make the passed view visible */
@@ -653,7 +671,7 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
             anim = new QPropertyAnimation(old_page.data(), "opacity");
             anim->setDuration(500);
             anim->setStartValue(1.0);
-            anim->setEndValue(0.5);
+            anim->setEndValue(0.7);
             g->addAnimation(anim);
 
             anim = new QPropertyAnimation(old_page.data(), "blur");
@@ -666,7 +684,7 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
             anim = new QPropertyAnimation(new_page.data(), "opacity");
             anim->setDuration(500);
             anim->setStartValue(0.0);
-            anim->setEndValue(0.5);
+            anim->setEndValue(0.8);
             g->addAnimation(anim);
 
             anim = new QPropertyAnimation(new_page.data(), "blur");
@@ -692,17 +710,43 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
         }
         else
         {
-            anim = new QPropertyAnimation(old_page.data(), "x");
-            anim->setDuration(300);
-            anim->setStartValue(old_page->x());
-            anim->setEndValue(old_page->x() + old_page->geometry().width());
+            anim = new QPropertyAnimation(old_page.data(), "opacity");
+            anim->setDuration(500);
+            anim->setStartValue(1.0);
+            anim->setEndValue(0);
+            g->addAnimation(anim);
+
+            anim = new QPropertyAnimation(old_page.data(), "blur");
+            anim->setDuration(500);
+            anim->setStartValue(0.0);
+            anim->setEndValue(100.0);
+            anim->setEasingCurve(QEasingCurve::OutCubic);
+            g->addAnimation(anim);
+
+            anim = new QPropertyAnimation(new_page.data(), "opacity");
+            anim->setDuration(500);
+            anim->setStartValue(0.0);
+            anim->setEndValue(1.0);
+            g->addAnimation(anim);
+
+            anim = new QPropertyAnimation(new_page.data(), "blur");
+            anim->setDuration(500);
+            anim->setStartValue(100.0);
+            anim->setEndValue(0.0);
+            anim->setEasingCurve(QEasingCurve::OutCubic);
+            g->addAnimation(anim);
+
+            anim = new QPropertyAnimation(old_page.data(), "scale");
+            anim->setDuration(500);
+            anim->setStartValue(1.0);
+            anim->setEndValue(2.0);
             anim->setEasingCurve(QEasingCurve::OutCubic);
             g->addAnimation(anim);
             
-            anim = new QPropertyAnimation(new_page.data(), "x");
-            anim->setDuration(300);
-            anim->setStartValue(new_page->x() - new_page->geometry().width());
-            anim->setEndValue(new_page->x());
+            anim = new QPropertyAnimation(new_page.data(), "scale");
+            anim->setDuration(500);
+            anim->setStartValue(0.3);
+            anim->setEndValue(1.0);
             anim->setEasingCurve(QEasingCurve::OutCubic);
             g->addAnimation(anim);
         }

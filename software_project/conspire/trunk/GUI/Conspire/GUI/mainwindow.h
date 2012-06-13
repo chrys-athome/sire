@@ -67,7 +67,7 @@ namespace Conspire
     private:
         void build();
     
-        MainBar *mainbar;
+        //MainBar *mainbar;
         PagePointer view;
         
         QGraphicsRectItem *bg;

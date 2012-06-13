@@ -28,7 +28,7 @@
 
 #include "Conspire/GUI/optionpage.h"
 #include "Conspire/GUI/exceptionpage.h"
-#include "Conspire/GUI/slidelabel.h"
+#include "Conspire/GUI/widgetrack.h"
 
 #include "Conspire/values.h"
 #include "Conspire/exceptions.h"
@@ -94,30 +94,37 @@ void OptionPage::build()
 {
     setTitle("Unnamed OptionPage");
     setDescription("Unnamed OptionPage description");
+
+    rack = new WidgetRack(this);
+
     value_edit = new QLineEdit();
     value_edit->setAlignment( ::Qt::AlignCenter );
+    value_edit->setSizePolicy( QSizePolicy(QSizePolicy::Expanding, 
+                                           QSizePolicy::Expanding) );
     value_edit->setFont( QFont("LucidaGrande", 48) );
 
     connect(value_edit, SIGNAL(editingFinished()), this, SLOT(editingFinished()));
 
-    help_label = new SlideLabel(this);
-    
-    QGraphicsProxyWidget *edit_proxy = new QGraphicsProxyWidget(help_label);
-    edit_proxy->setWidget(value_edit);
-    
-    help_label->setWidget(edit_proxy);
+    rack->addWidget(value_edit);
+
+    help_label = new QLabel();
+    help_label->setAlignment( ::Qt::AlignLeft | ::Qt::AlignVCenter );
+    help_label->setWordWrap(true);
+    help_label->setFont( QFont("LucidaGrande", 14) );
+    help_label->setSizePolicy( QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum) );
+    rack->addWidget(help_label);
 }
 
 void OptionPage::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
-    help_label->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
 void OptionPage::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
-    help_label->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
 /** Function called when editing of the option is finished */
@@ -163,6 +170,7 @@ void OptionPage::setOption(Option option, QString key)
     root_key = key;
     
     this->setDescription(option.description());
+    help_label->setText(option.description());
     this->setTitle(fullKey());
     
     value_edit->setText(opt.value().toString());

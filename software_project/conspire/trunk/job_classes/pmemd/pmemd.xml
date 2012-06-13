@@ -18,11 +18,8 @@
 
   <option>
     <key>output name</key>
-    <description>The name of the output files produced by the simulation.
-                 Output files will include the info, trajectory, restart
-                 and log files, which will be called "output.info", 
-                 "output.rst", "output.mdcrd" and "output.out", where
-                 "output" is the name supplied here.</description>
+    <description>The root name of the output files produced by the simulation.
+    </description>
     <value><string>output</string></value>
   </option>
 

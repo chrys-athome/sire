@@ -60,13 +60,16 @@ namespace Conspire
     
     public:
         PageView(Page *parent=0);
+        PageView(bool side_to_side, Page *parent=0);
         
         ~PageView();
       
         QPainterPath opaqueArea() const;
             
         bool isEmpty() const;
-            
+        
+        void setTitleVisible(bool visible);
+        
     public slots:
         virtual void back();
         virtual void forward();
@@ -143,6 +146,9 @@ namespace Conspire
         
         /** Whether we move side to side, or in and out */
         bool side_to_side;
+        
+        /** Whether or not to show the titlebar */
+        bool show_title;
     };
 
 }

@@ -34,7 +34,11 @@ using namespace Conspire;
 /** Constructor */
 ConfigView::ConfigView(Page *parent) : PageView(parent)
 {}
-        
+  
+/** Constructor, specifying the side_to_side mode */
+ConfigView::ConfigView(bool side_to_side, Page *parent) : PageView(side_to_side, parent)
+{}
+                    
 ConfigView::~ConfigView()
 {}
 

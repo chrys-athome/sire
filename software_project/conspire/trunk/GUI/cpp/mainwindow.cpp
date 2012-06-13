@@ -50,14 +50,14 @@ MainWindow::MainWindow(Options options, QWidget *parent)
     
     ConfigDocument *doc = new ConfigDocument(options);
     
-    connect(doc, SIGNAL(canUndoChanged(bool)), mainbar, SLOT(canUndoChanged(bool)));
-    connect(doc, SIGNAL(canRedoChanged(bool)), mainbar, SLOT(canRedoChanged(bool)));
+    //connect(doc, SIGNAL(canUndoChanged(bool)), mainbar, SLOT(canUndoChanged(bool)));
+    //connect(doc, SIGNAL(canRedoChanged(bool)), mainbar, SLOT(canRedoChanged(bool)));
     
-    connect(mainbar, SIGNAL(undo()), doc, SLOT(undo()));
-    connect(mainbar, SIGNAL(redo()), doc, SLOT(redo()));
-    connect(mainbar, SIGNAL(home()), doc, SLOT(home()));
+    //connect(mainbar, SIGNAL(undo()), doc, SLOT(undo()));
+    //connect(mainbar, SIGNAL(redo()), doc, SLOT(redo()));
+    //connect(mainbar, SIGNAL(home()), doc, SLOT(home()));
     
-    connect(mainbar, SIGNAL(submit()), doc, SLOT(submit()));
+    //connect(mainbar, SIGNAL(submit()), doc, SLOT(submit()));
     
     view = PagePointer(doc);
     this->scene()->addItem(view);
@@ -73,19 +73,19 @@ void MainWindow::resizeEvent(QResizeEvent *e)
     this->scene()->setSceneRect(0, 0, this->viewport()->size().width(), 
                                       this->viewport()->size().height());
     
-    mainbar->resize( this->viewport()->size().width(),
-                     mainbar->size().height() );
-    mainbar->setPos(0, this->viewport()->size().height() - mainbar->size().height());
+    //mainbar->resize( this->viewport()->size().width(),
+    //                 mainbar->size().height() );
+    //mainbar->setPos(0, this->viewport()->size().height() - mainbar->size().height());
 
-    //bg->setRect(1, 1,
-    //            this->viewport()->size().width()-3, 
-    //            this->viewport()->size().height() - mainbar->size().height()-2);
+    bg->setRect(1, 1,
+                this->viewport()->size().width()-3, 
+                this->viewport()->size().height()-2);
 
     if (view)
     {
         view->setPos(0, 0);
         view->resize( this->viewport()->size().width(), 
-                      this->viewport()->size().height() - mainbar->size().height() );
+                      this->viewport()->size().height() );
     }
 }
 
@@ -98,26 +98,26 @@ void MainWindow::build()
 
     this->setScene( new QGraphicsScene(this) );
 
-    mainbar = new MainBar();
-    mainbar->setZValue(2);
-    mainbar->resize(this->viewport()->size().width(), mainbar->size().height());
-    mainbar->setPos(0, this->viewport()->size().height() - mainbar->size().height());
+    //mainbar = new MainBar();
+    //mainbar->setZValue(2);
+    //mainbar->resize(this->viewport()->size().width(), mainbar->size().height());
+    //mainbar->setPos(0, this->viewport()->size().height() - mainbar->size().height());
+    //
+    //this->scene()->addItem(mainbar);
 
-    this->scene()->addItem(mainbar);
-
-    /*bg = new QGraphicsRectItem();
+    bg = new QGraphicsRectItem();
     bg->setPen( QPen( ::Qt::black ) );
     
     QLinearGradient grad;
-    grad.setColorAt(0.0, ::Qt::white );
-    grad.setColorAt(1.0, ::Qt::blue );
+    grad.setColorAt(0.0, QColor(255,255,255) );
+    grad.setColorAt(1.0, QColor(210,210,255) );
     grad.setCoordinateMode( QGradient::StretchToDeviceMode );
     
     bg->setBrush( QBrush(grad) );
     bg->setZValue(-1);
     bg->setRect(1, 1,
                 this->viewport()->size().width()-3, 
-                this->viewport()->size().height() - mainbar->size().height()-2);
+                this->viewport()->size().height()-2);
     
-    this->scene()->addItem(bg);*/
+    this->scene()->addItem(bg);
 }

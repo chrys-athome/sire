@@ -47,6 +47,7 @@ namespace Conspire
         
     public:
         ConfigView(Page *parent=0);
+        ConfigView(bool side_to_side, Page *parent=0);
         
         ~ConfigView();
         

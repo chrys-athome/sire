@@ -32,6 +32,8 @@
 #include "Conspire/GUI/optionspage.h"
 #include "Conspire/GUI/exceptionpage.h"
 #include "Conspire/GUI/submitpage.h"
+#include "Conspire/GUI/button.h"
+#include "Conspire/GUI/widgetrack.h"
 
 #include "Conspire/exceptions.h"
 
@@ -77,7 +79,10 @@ void ConfigDocument::build()
     connect(undo_stack, SIGNAL(canRedoChanged(bool)), 
             this, SIGNAL(canRedoChanged(bool)));
 
-    view = new ConfigView(this);
+    top_view = new PageView(false, this);
+    top_view->setTitleVisible(false);
+    
+    view = new ConfigView(true, this);
     
     view->setTitle( "ConfigView" );
     view->setDescription( "Description of ConfigView" );
@@ -90,7 +95,14 @@ void ConfigDocument::build()
     connect(view, SIGNAL(canForwardChanged(bool)),
             this, SIGNAL(canForwardChanged(bool)));
 
-    view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
+    button = new Button(Conspire::tr("Submit"), this);
+    connect(button, SIGNAL(clicked()), this, SLOT(submit()));
+
+    button->setGeometry(0, this->geometry().height()-60,
+                        this->geometry().width(), 60);
+
+    top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-60);
+    top_view->pushed(view);
 }
 
 QTransform getZoom(int w, int h, double gw, double gh, double scale)
@@ -111,76 +123,29 @@ QTransform getZoom(const QPixmap &pixmap, const QRectF &geometry, double scale)
 
 /** Change the visibility of the menu */
 void ConfigDocument::setMenuVisible(bool visible)
-{
-    if (visible == menu_visible)
-        return;
-        
-    menu_visible = visible;
-    
-    if (menu_visible)
-    {
-        delete disabled_view;
-        disabled_view = new QGraphicsPixmapItem( 
-                            QPixmap::fromImage(view->toImage()), this );
-        disabled_view->setTransformationMode(::Qt::SmoothTransformation);
-
-        disabled_view->setTransform( getZoom(disabled_view->pixmap(), 
-                                     this->geometry(), 0.5) );
-        disabled_view->setGraphicsEffect( new QGraphicsBlurEffect() );
-
-        disabled_view->show();
-        view->hide();
-    }
-    else
-    {
-        //remove the menu and redraw the options widget
-        delete disabled_view;
-        disabled_view = 0;
-        view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
-        view->show();
-    }
-}
+{}
 
 void ConfigDocument::toggleMenuVisible()
-{
-    if (menu_visible)
-        setMenuVisible(false);
-    else
-        setMenuVisible(true);
-}
+{}
 
 void ConfigDocument::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
-    
-    if (menu_visible)
-    {
-        //resize the menu and the widget picture
-        if (disabled_view)
-            disabled_view->setTransform( getZoom(disabled_view->pixmap(), 
-                                         this->geometry(), 0.5) );
-    }
-    else
-    {
-        view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
-    }
+
+    button->setGeometry(0, this->geometry().height()-60,
+                        this->geometry().width(), 60);
+
+    top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-60);
 }
 
 void ConfigDocument::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
-    
-    if (menu_visible)
-    {
-        //resize the menu and the widget picture
-        if (disabled_view)
-            disabled_view->setTransform( getZoom(disabled_view->pixmap(), 
-                                         this->geometry(), 0.5) );
-    }
-    else
-    {
-        view->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
-    }
+
+    button->setGeometry(0, this->geometry().height()-60,
+                        this->geometry().width(), 60);
+
+    top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-60);
 }
 
 void ConfigDocument::paint(QPainter *painter, 
@@ -260,7 +225,25 @@ void ConfigDocument::update(QString full_key, Obj new_value)
 /** Submit the current document for processing */
 void ConfigDocument::submit()
 {
-    view->pushed( PagePointer( new SubmitPage(opts,"pmemd",view) ) );
+    button->disconnect();
+    button->setText(Conspire::tr("Cancel"));
+    top_view->pushed( PagePointer( new SubmitPage(opts,"pmemd",view) ) );
+    
+    connect(button, SIGNAL(clicked()), this, SLOT(cancel()));
+
+    QGraphicsItem::update(this->geometry());
+}
+
+/** Cancel the submission or running job */
+void ConfigDocument::cancel()
+{
+    button->disconnect();
+    button->setText(Conspire::tr("Submit"));
+    top_view->popped(false);
+    
+    connect(button, SIGNAL(clicked()), this, SLOT(submit()));
+    
+    QGraphicsItem::update(this->geometry());
 }
 
 /** Undo the last operation */

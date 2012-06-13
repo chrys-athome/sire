@@ -42,6 +42,9 @@ class QGraphicsPixmapItem;
 namespace Conspire
 {
     class ConfigView;
+    class PageView;
+    class WidgetRack;
+    class Button;
 
     /** This page holds a complete Options document. This is the top-level
         page used to edit an Options object, and allows multiple, tabbed
@@ -77,6 +80,7 @@ namespace Conspire
         void setMenuVisible(bool display);
         
         void submit();
+        void cancel();
         
     protected:
         void paint(QPainter *painter, 
@@ -102,8 +106,14 @@ namespace Conspire
         /** The Options object being viewed and edited */
         Options opts;
 
+        /** The context-sensitive button */
+        Button *button;
+
         /** The tabbed views of the Options object */
         ConfigView *view;
+        
+        /** The top-level PageView */
+        PageView *top_view;
         
         /** The undo stack used to provide an undo history to editing commands */
         QUndoStack *undo_stack;
