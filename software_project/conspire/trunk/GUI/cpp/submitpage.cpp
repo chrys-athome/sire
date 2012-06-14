@@ -328,10 +328,20 @@ void SubmitPage::submit()
             proc.setWorkingDirectory(tmpdir);
             
             QStringList args;
-            args << "-zLcvf" << "workpacket.tgz" << "*";
+
+            QDir d(tmpdir);
+            d.setFilter(QDir::Files);
+
+            args << "-zLcvf" << "workpacket.tgz" << d.entryList();
+            conspireDebug() << "tar" << args;
             
             proc.start("tar", args);
+            
             proc.waitForFinished();
+            
+            conspireDebug() << "STDOUT" << proc.readAllStandardOutput();
+            conspireDebug() << "STDERR" << proc.readAllStandardError();
+            
             conspireDebug() << "...workpacket created!";
         }
         

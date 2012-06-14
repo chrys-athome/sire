@@ -9,19 +9,19 @@ import tempfile
 import shutil
 import datetime
 
-# directory containing the input files. This should also
-# contain a file called "config" that is used to run the 
-# simulation
 try:
-    rundir = sys.argv[1]
+    ncpus = int(sys.argv[1])
 except:
-    rundir = "."
+    ncpus = 1
 
 try:
     ngpus = int(sys.argv[2])
 except:
-    ngpus = 1
+    ngpus = 0
 
+#we run the simulation in the current directory
+# - this may change in subsequent versions...
+rundir = "."
 os.chdir(rundir)
 
 # redirect all standard output and error to "run_md.log" in this directory
@@ -60,11 +60,20 @@ def readConfig(config_file):
 
 options = readConfig("config")
 
-top_file = options["topology file"]
-restart_file = options["restart file"]
+top_file = options["structure file"]
+restart_file = options["coordinate file"]
 output_name = options["output name"]
-nblocks = int(options["number of blocks"])
-mdin_file = options["command file"]
+
+try:
+    nblocks = int(options["number of blocks"])
+except:
+    nblocks = 1
+
+try:
+    mdin_file = options["command file"]
+except:
+    mdin_file = "default_workpacket_mdin"
+
 
 def getLastIteration(output_name):
     """Find the last iteration of the simulation using the name 'output_name'.
@@ -166,10 +175,20 @@ try:
                 (mdin_file, mdout, top_file, restart_file, restart_file, \
                  new_restart, traj)
 
-        else:
+        elif ngpus > 1:
             cmd = "mpirun -1sided -np %d $AMBERHOME/bin/pmemd.cuda_SPDP.MPI -O -i %s -o %s -p %s -c %s -ref %s -r %s -x %s -v mdvel" % \
                 (ngpus, mdin_file, mdout, top_file, restart_file, restart_file, \
        	       	 new_restart, traj)
+
+        elif ncpus == 1:
+            cmd = "$AMBERHOME/bin/pmemd -O -i %s -o %s -p %s -c %s -ref %s -r %s -x %s -v mdvel" % \
+                (mdin_file, mdout, top_file, restart_file, restart_file, \
+                 new_restart, traj)
+
+        else:
+            cmd = "mpirun -np %d $AMBERHOME/bin/pmemd.MPI -O -i %s -o %s -p %s -c %s -ref %s -r %s -x %s -v mdvel" % \
+                (ncpus, mdin_file, mdout, top_file, restart_file, restart_file, \
+                 new_restart, traj)
 
         print "(command = \"%s\")" % cmd
         exitval = os.system(cmd)

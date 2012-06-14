@@ -35,6 +35,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/configpage.h
       Conspire/GUI/configview.h
       Conspire/GUI/exceptionpage.h
+      Conspire/GUI/filepage.h
       Conspire/GUI/helppage.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
@@ -61,6 +62,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/configpage.h  
       Conspire/GUI/configview.h
       Conspire/GUI/exceptionpage.h
+      Conspire/GUI/filepage.h
       Conspire/GUI/helppage.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
@@ -89,6 +91,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/configpage.cpp
       cpp/configview.cpp
       cpp/exceptionpage.cpp
+      cpp/filepage.cpp
       cpp/helppage.cpp
       cpp/mainbar.cpp
       cpp/mainwindow.cpp

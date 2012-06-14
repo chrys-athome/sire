@@ -38,7 +38,7 @@
   <option>
     <key>pressure</key>
     <description>The desired pressure of the simulation.</description>
-    <value><pressure units="atm">1.0</pressure></value>
+    <value><pressure units="atmosphere">1.0</pressure></value>
   </option>
 
   <option optional="true">

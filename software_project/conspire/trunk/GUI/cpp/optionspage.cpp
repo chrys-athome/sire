@@ -29,11 +29,15 @@
 #include "Conspire/GUI/optionspage.h"
 #include "Conspire/GUI/addpage.h"
 #include "Conspire/GUI/optionpage.h"
+#include "Conspire/GUI/filepage.h"
 #include "Conspire/GUI/exceptionpage.h"
 
 #include "Conspire/GUI/button.h"
 #include "Conspire/GUI/optionbutton.h"
 #include "Conspire/GUI/widgetrack.h"
+
+#include "Conspire/values.h"
+#include "Conspire/conspire.hpp"
 
 #include <QSignalMapper>
 
@@ -121,7 +125,12 @@ void OptionsPage::pvt_reread(Options options)
         }
         else
         {
-            b->setValue( opt.value().toString() );
+            QString val = opt.value().toString();
+            
+            if (val.length() > 20)
+                val = QString("...%1").arg(val.right(20));
+            
+            b->setValue(val);
         }
         
         mapper->removeMappings(b);
@@ -184,7 +193,12 @@ void OptionsPage::clicked(const QString &key)
         }
         else
         {
-            OptionPage *page = new OptionPage(opt, root_key);
+            ConfigPage *page;
+            
+            if (opt.value().isA<FileValue>())
+                page = new FilePage(opt, root_key);
+            else
+                page = new OptionPage(opt, root_key);
             
             if (not root_key.isEmpty())
             {
