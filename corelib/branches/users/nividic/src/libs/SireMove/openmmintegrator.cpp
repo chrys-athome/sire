@@ -69,7 +69,41 @@
 #include <iostream>
 #include <QElapsedTimer>
 #include <iomanip>
-//#include <fstream>
+#include "fastio.h"
+
+/* defines used by write_dcdstep */
+#define NFILE_POS 8L
+#define NSTEP_POS 20L
+
+/* Define error codes that may be returned by the DCD routines */
+#define DCD_SUCCESS      0  /* No problems                     */
+#define DCD_EOF         -1  /* Normal EOF                      */
+#define DCD_DNE         -2  /* DCD file does not exist         */
+#define DCD_OPENFAILED  -3  /* Open of DCD file failed         */
+#define DCD_BADREAD     -4  /* read call on DCD file failed    */
+#define DCD_BADEOF      -5  /* premature EOF found in DCD file */
+#define DCD_BADFORMAT   -6  /* format of DCD file is wrong     */
+#define DCD_FILEEXISTS  -7  /* output file already exists      */
+#define DCD_BADMALLOC   -8  /* malloc failed                   */
+#define DCD_BADWRITE    -9  /* write call on DCD file failed   */
+
+/* WRITE Macro to make porting easier */
+#define WRITE(fd, buf, size) fio_fwrite(((void *) buf), (size), 1, (fd))
+
+
+static int write_dcdheader(fio_fd fd, const char *remarks, int N, 
+			      int ISTART, int NSAVC, double DELTA, int with_unitcell,
+				  int charmm);				
+
+static int write_dcdstep(fio_fd fd, int curframe, int curstep, int N, 
+                  float *X, float *Y, float *Z, 
+				  const double *unitcell, int charmm);
+				  
+				  
+void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & integrator_openmm, 
+				std::vector<OpenMM::Vec3> & positions_openmm, std::vector<OpenMM::Vec3> & velocities_openmm,
+				bool DCD,bool wrap, int nmoves, int frequency_dcd, int flag_cutoff,int nats);
+
 
 using namespace SireMove;
 using namespace SireSystem;
@@ -104,8 +138,6 @@ enum {
 	
 };
 
-
-int OpenmmPDB(IntegratorWorkspace &workspace, std::vector<OpenMM::Vec3> &positions_openmm);
 
 
 static const RegisterMetaType<OpenMMIntegrator> r_openmmint;
@@ -153,7 +185,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMIntegrator &velve
 OpenMMIntegrator::OpenMMIntegrator(bool frequent_save) 
                : ConcreteProperty<OpenMMIntegrator,Integrator>(),
                  frequent_save_velocities(frequent_save), 
-                 CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(1.0),
+                 CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
                  Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Alchemical_values()
@@ -391,6 +423,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		//Set Dielectric constant media
 		nonbond_openmm->setReactionFieldDielectric(field_dielectric);
 		
+		//system_openmm.setDefaultPeriodicBoxVectors(OpenMM::Vec3(0,0,0),OpenMM::Vec3(0,0,0),OpenMM::Vec3(0,0,0));
+		
 		
 		if(free_energy_calculation == true){
 	
@@ -534,15 +568,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	//OpenMM vector momenta
     
 	std::vector<OpenMM::Vec3> velocities_openmm(nats);		
-     
-	double *system_momenta;
-	
-	system_momenta = new double [nats*3] ;
-
-	double *system_masses ;
-	
-	system_masses = new double [ nats ] ;
-
+    
 	int system_index = 0;
 
 	//cout << "INITAL COORDINATES AND VELOCITIES\n\n";
@@ -557,8 +583,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		Vector *c = ws.coordsArray(i);
 		
-		//const Vector *f = ws.forceArray(i);
-	
 		Vector *p = ws.momentaArray(i);
 	
 		const double *m = ws.massArray(i);
@@ -566,14 +590,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		//cout << "Molecule = " << i <<"\n";
 
 		for (int j=0; j < nats; ++j){
-	     
-			/*system_coords[ 3 * system_index + 0 ] = c[j].x() ;
-			system_coords[ 3 * system_index + 1 ] = c[j].y() ;
-			system_coords[ 3 * system_index + 2 ] = c[j].z() ;
-			
-			system_momenta[3 * system_index + 0 ] = p[j].x() ;
-			system_momenta[3 * system_index + 1 ] = p[j].y() ;
-			system_momenta[3 * system_index + 2 ] = p[j].z() ;*/
 	     
 			positions_openmm[system_index] = OpenMM::Vec3(c[j].x() * (OpenMM::NmPerAngstrom) ,
 							c[j].y() * (OpenMM::NmPerAngstrom),c[j].z() * (OpenMM::NmPerAngstrom));
@@ -583,7 +599,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) ,
 						  p[j].y()/m[j] * (OpenMM::NmPerAngstrom), p[j].z()/m[j] * (OpenMM::NmPerAngstrom));
 
-			//system_masses[system_index] = m[j] ;
 	     
 			system_openmm.addParticle(m[j]) ;
 			     
@@ -591,34 +606,21 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			/*cout <<"\n";
 			cout << "atom = " << system_index - 1  << " COORD X = " << c[j].x() << " COORD Y = " << c[j].y() << " COORD Z = " << c[j].z()<<"\n" ;
-			cout << "atom = " << system_index - 1  << " MOMENTA X = " << p[j].x() << " MOMENTA Y = " << p[j].y() << " MOMENTA Z = " << p[j].z()<<"\n" ;*/
-			//cout << "atom = " << j << " MASS = " << m[j]<<"\n" ; 
+			cout << "atom = " << system_index - 1  << " MOMENTA X = " << p[j].x() << " MOMENTA Y = " << p[j].y() << " MOMENTA Z = " << p[j].z()<<"\n" ;
+			cout << "atom = " << j << " MASS = " << m[j]<<"\n" ; */
+			
 	     
 		}
-		
-		//cout<<"\n";
+
 	   
 	}
       
-
 	
-	/*for (int i=0; i < system_index ; i++){
-		
-		cout << "atom = " << i << " COORD X = " << system_coords[3 * i + 0 ] << 
-							 	  " COORD Y = " << system_coords[3 * i + 1 ]  << 
-							 	  " COORD Z = " << system_coords[3 * i + 2 ]<<"\n";
-							 
-		cout << "atom = " << i << " MOMENTA X = " << system_momenta[3 * i + 0 ] << 
-								  " MOMENTA Y = " << system_momenta[3 * i + 1 ] << 
-								  " MOMENTA Z = " << system_momenta[3 * i + 2 ]<<"\n";
-							      
-		//cout << " MASS " << system_masses[ i ];
-		
-		cout << "\n";
-		
-      }*/
-      
-      
+	
+	
+	
+	
+	
 	
 	MoleculeGroup molgroup = ws.moleculeGroup();
 	
@@ -626,7 +628,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	int num_atoms_till_i = 0;
 	
 	
-	
+	MoleculeGroup solute_group;
 	
 	if(free_energy_calculation == true){
 		custom_nonbond_SoluteSolvent_openmm->addPerParticleParameter("q");
@@ -634,14 +636,15 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		custom_nonbond_SoluteSolvent_openmm->addPerParticleParameter("eps");
 		custom_nonbond_SoluteSolvent_openmm->addPerParticleParameter("isSolute");
 		
+		const QString solute = "solute";
+			
+		MGName Solute(solute);
+		
+    	solute_group = ptr_sys[Solute];
+    
     }
    
-			
-	const QString solute = "solute";
-			
-	MGName Solute(solute);
-			
-	MoleculeGroup solute_group = ptr_sys[Solute];
+		
 
 	
 	for (int i=0; i < nmols ; i++){
@@ -718,13 +721,20 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		// The connectivity...
 	    bool hasConnectivity = molecule.hasProperty("connectivity");
 	    
+	    //Connectivity connectivity = molecule.property("connectivity").asA<Connectivity>();
+	    
 	    /* If the molecule does not have a connectivity, then we cannot get bonds/angles/dihedrals 
 	    	(effectively assuming it is a monoatomic molecule)*/
 	    
-	    if ( !hasConnectivity )
+	    if ( !hasConnectivity ){
+	    	num_atoms_till_i = num_atoms_till_i + num_atoms_molecule ;
+	    	cout << "\n Atoms = " <<  num_atoms_molecule << "Num atoms till i =" << num_atoms_till_i <<"\n";
+	    	cout << "\n*********************IONS**************************\n";
+	    	
 	        continue;
-	        
-		Connectivity connectivity = molecule.property("connectivity").asA<Connectivity>();
+	    }    
+		
+		
 		
 		// The bonded parameters are stored in "amberparameters"
 	
@@ -1075,6 +1085,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	OpenMM::Context context_openmm(system_openmm,integrator_openmm,platform_openmm);  
 	
+	
 	if(flag_cutoff == CUTOFFPERIODIC){
 		
 		const System & ptr_sys = ws.system();
@@ -1096,6 +1107,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		context_openmm.setPeriodicBoxVectors(OpenMM::Vec3(Box_x_Edge_Length,0,0),
 											 OpenMM::Vec3(0,Box_y_Edge_Length,0),
 											 OpenMM::Vec3(0,0,Box_z_Edge_Length));
+		
+										 
 	}
 	  
 	//Add the coordinates  and velocities of the atoms to the OpenMM context
@@ -1122,6 +1135,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	OpenMM::State state_openmm=context_openmm.getState(infoMask);
 	
+		
 	
 	double kinetic_energy = 0.0; 
 	double potential_energy = 0.0; 
@@ -1193,7 +1207,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			lam_val = context_openmm.getParameter("lambda");
 					
-			cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+			//cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
 				
 			
 			for(int j=0;j<n_freq;j++){
@@ -1296,125 +1310,24 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		timer_OUT.start();
 	}
 	
-	else{
-	
-	
-		integrator_openmm.step(nmoves);
-	
-		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
-	
-	
+	else{/* ******************* MD ***********************/
+		
 		timer_OUT.start();
-	
-	
-		state_openmm=context_openmm.getState(infoMask);	
-	
-		positions_openmm = state_openmm.getPositions();
 		
-		velocities_openmm = state_openmm.getVelocities();
-	
-	
-		cout<< "Total Time = " << state_openmm.getTime() << " ps"<<"\n\n";
-	
-	
-		kinetic_energy = state_openmm.getKineticEnergy(); 
-	
-		potential_energy = state_openmm.getPotentialEnergy(); 
-	
-	
-		cout<< "After MD" <<"\n";
-	
-		cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
-		 	 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
-		 	 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
-	
-		cout<<"\n";
-	
+		int frequency_dcd = 10;
+		
+		bool dcd = true;
+		
+		bool wrap = false;
+		
+		integrator(context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , nmoves, frequency_dcd, flag_cutoff, nats);
+			
 	}
 	
-	//OpenmmPDB(workspace,positions_openmm);
 	
+	timer_OUT.start();
 	
-	
-	// Call openMM for N MD steps
-	
-	// USE VERLET INTEGRATOR
-	
-	/*cout << "\nSimulation Parameters";
-	cout << "Number of moves = " << nmoves << " DT = " << dt <<" ps";
-	cout << "\nResults\n";
-	
-	double kinetic_energy = 0.0;
-	double potential_energy = 0.0;
-		
 
-	int MAX_FRAMES = 5;
-	
-	for(int  frame = 0; frame<MAX_FRAMES; frame++){
-	
-		OpenMM::State state_openmm = context_openmm.getState(infoMask);
-		
-		if(frame == 0 || frame == MAX_FRAMES-1){
-				
-			cout<<"\n\nFrame = " <<frame<<"\n\n";
-		
-			cout<< "Total Time = " << state_openmm.getTime() << " ps";
-		
-		}
-		
-		//const std::vector<OpenMM::Vec3>& positions_check = state_openmm.getPositions();
-		
-		positions_openmm = state_openmm.getPositions();
-		
-		momenta_openmm = state_openmm.getVelocities();
-		
-		//for(unsigned int i=0;i<positions_check.size();i++){
-			//cout << "Cuda Coord x = " << positions_check [i][0] * (OpenMM::AngstromsPerNm) << " A "<< "Cuda Coord y = "  << positions_check [i][1] * (OpenMM::AngstromsPerNm)<< " A " <<"Cuda Coord z = "<< positions_check [i][2] * (OpenMM::AngstromsPerNm) << " A ";
-		//}
-		
-		
-		if(frame == 0 || frame == MAX_FRAMES-1){
-		
-			kinetic_energy = state_openmm.getKineticEnergy();
-	
-			potential_energy = state_openmm.getPotentialEnergy();
-			
-			cout<<"\n";
-	
-			cout <<"Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
-				 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
-				 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
-			cout<<"\n";
-		
-		}
-		
-		integrator_openmm.step(1);
-		
-	}*/
-	
-	/*cout<<"\n";
-
-	
-	cout << "FINAL COORDINATES AND VELOCITIES " <<"\n\n";
-	
-	for(unsigned int i=0;i<positions_openmm.size();i++){
-			
-			cout<< "atom = " << i << " COORD X = " << positions_openmm[i][0] * (OpenMM::AngstromsPerNm) << 
-									 " COORD Y = " << positions_openmm[i][1] * (OpenMM::AngstromsPerNm) << 
-									 " COORD Z = " << positions_openmm[i][2] * (OpenMM::AngstromsPerNm) <<"\n";
-			
-			
-			cout << "atom = " << i << " MOMENTA X = " << momenta_openmm[i][0] * (OpenMM::AngstromsPerNm) <<
-			 						  " MOMENTA Y = " << momenta_openmm[i][1] * (OpenMM::AngstromsPerNm) << 
-			 						  " MOMENTA Z = " << momenta_openmm[i][2] * (OpenMM::AngstromsPerNm) <<"\n";
-			 						  
-			cout<<"\n";
-	}
-	
-	cout<< "\n";
-	
-	cout << "Atoms = " << nats << " Molecules = " << nmols<<"\n";*/
-	
 	
 	//Copy back to Sire positions and velocities 
 	
@@ -1729,81 +1642,283 @@ const char* OpenMMIntegrator::typeName()
     return QMetaType::typeName( qMetaTypeId<OpenMMIntegrator>() );
 }
 
+/*
+ * Write a header for a new dcd file
+ * Input: fd - file struct opened for binary writing
+ *        remarks - string to be put in the remarks section of the header.  
+ *                  The string will be truncated to 70 characters.
+ *        natoms, istart, nsavc, delta - see comments in read_dcdheader
+ * Output: 0 on success, negative error code on failure.
+ * Side effects: Header information is written to the dcd file.
+ */
 
 
+static int write_dcdheader(fio_fd fd, const char *remarks, int N, 
+                    int ISTART, int NSAVC, double DELTA, int with_unitcell,
+                    int charmm) {
+  int out_integer;
+  float out_float;
+  char title_string[200];
+  time_t cur_time;
+  struct tm *tmbuf;
+  char time_str[81];
 
-
-
-
-int OpenmmPDB(IntegratorWorkspace &workspace, std::vector<OpenMM::Vec3> &positions_openmm){
-
-    AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
-
-    const int nmols = ws.nMolecules();
-    
-    MoleculeGroup molgroup = ws.moleculeGroup();
-
-    //ofstream file_write("data.pdb",ios::app);
-
-   /*if(!file_write) {
-        cout << "Error File .pdb";
-        return -1;
-    }*/
-
-    static int counter=0;
-    static int call=0;
-    
-    int index = 0;
-
-    //file_write << "MODEL      " << call << "\n";
-
-    for (int i=0; i < nmols; i++){
- 
-        Molecule molecule = molgroup.moleculeAt(i).molecule();
-        
-       	const int nats = ws.nAtoms(i);
-       	
-        QString molecule_name = molecule.residue(ResIdx(0)).toString();
-       
-
-        for (int j=0; j<nats ;j++){
-        
-            QString atom =  molecule.atom(AtomIdx(j)).toString();
-                      
-            cout.width(6); cout << left << "HETATM"; 
-            cout.width(5); cout << right << counter + 1; 
-            cout.width(4); cout << uppercase << right << atom.mid(6,2).toStdString();
-            cout.width(1); cout << " "; 
-            cout.width(3); cout << uppercase << right << molecule_name.mid(9,3).toStdString(); 
-            cout.width(1); cout << " ";
-            cout.width(4); cout << right << i+1;
-            cout.width(1); cout << " ";
-            
-            cout.setf(ios::fixed, ios::floatfield);
-			cout.precision(3);
-            
-            cout.width(8); cout << right  << positions_openmm[index][0];
-            cout.width(8); cout << right  << positions_openmm[index][1];
-            cout.width(8); cout << right  << positions_openmm[index][2]; 
-            cout.precision(2);
-            cout.width(6); cout << right << 1.00;
-            cout.width(6); cout << right << 0.00 << endl;
-            
-   			index = index + 1 ;	
-   			counter = counter +1;         
-
-        }
-
+  out_integer = 84;
+  WRITE(fd, (char *) & out_integer, sizeof(int));
+  strcpy(title_string, "CORD");
+  WRITE(fd, title_string, 4);
+  fio_write_int32(fd, 0);      /* Number of frames in file, none written yet   */
+  fio_write_int32(fd, ISTART); /* Starting timestep                            */
+  fio_write_int32(fd, NSAVC);  /* Timesteps between frames written to the file */
+  fio_write_int32(fd, 0);      /* Number of timesteps in simulation            */
+  fio_write_int32(fd, 0);      /* NAMD writes NSTEP or ISTART - NSAVC here?    */
+  fio_write_int32(fd, 0);
+  fio_write_int32(fd, 0);
+  fio_write_int32(fd, 0);
+  fio_write_int32(fd, 0);
+  if (charmm) {
+    out_float = DELTA;
+    WRITE(fd, (char *) &out_float, sizeof(float));
+    if (with_unitcell) {
+      fio_write_int32(fd, 1);
+    } else {
+      fio_write_int32(fd, 0);
     }
-    
-    
-    call = call+1;
+  } else {
+    WRITE(fd, (char *) &DELTA, sizeof(double));
+  }
+  fio_write_int32(fd, 0);
+  fio_write_int32(fd, 0);
+  fio_write_int32(fd, 0);
+  fio_write_int32(fd, 0);
+  fio_write_int32(fd, 0);
+  fio_write_int32(fd, 0);
+  fio_write_int32(fd, 0);
+  fio_write_int32(fd, 0);
+  if (charmm) {
+    fio_write_int32(fd, 24); /* Pretend to be Charmm version 24 */
+  } else {
+    fio_write_int32(fd, 0);
+  }
+  fio_write_int32(fd, 84);
+  fio_write_int32(fd, 164);
+  fio_write_int32(fd, 2);
 
-    //file_write.close();
-    
-    return 0;
-} 
+  strncpy(title_string, remarks, 80);
+  title_string[79] = '\0';
+  WRITE(fd, title_string, 80);
 
+  cur_time=time(NULL);
+  tmbuf=localtime(&cur_time);
+  strftime(time_str, 80, "REMARKS Created %d %B, %Y at %R", tmbuf);
+  WRITE(fd, time_str, 80);
+
+  fio_write_int32(fd, 164);
+  fio_write_int32(fd, 4);
+  fio_write_int32(fd, N);
+  fio_write_int32(fd, 4);
+
+  return DCD_SUCCESS;
+}
+
+/* 
+ * Write a timestep to a dcd file
+ * Input: fd - a file struct for which a dcd header has already been written
+ *       curframe: Count of frames written to this file, starting with 1.
+ *       curstep: Count of timesteps elapsed = istart + curframe * nsavc.
+ *        natoms - number of elements in x, y, z arrays
+ *        x, y, z: pointers to atom coordinates
+ * Output: 0 on success, negative error code on failure.
+ * Side effects: coordinates are written to the dcd file.
+ */
+
+static int write_dcdstep(fio_fd fd, int curframe, int curstep, int N, 
+                  float *X, float *Y, float *Z, 
+                  const double *unitcell, int charmm) {
+  int out_integer;
+  //int rc;
+
+  if (charmm) {
+    /* write out optional unit cell */
+    if (unitcell != NULL) {
+      out_integer = 48; /* 48 bytes (6 doubles) */
+      fio_write_int32(fd, out_integer);
+      WRITE(fd, unitcell, out_integer);
+      fio_write_int32(fd, out_integer);
+    }
+  }
+
+  /* write out coordinates */
+  out_integer = N*4; /* N*4 bytes per X/Y/Z array (N floats per array) */
+  fio_write_int32(fd, out_integer);
+  if (fio_fwrite((void *) X, out_integer, 1, fd) != 1) return DCD_BADWRITE;
+  fio_write_int32(fd, out_integer);
+  fio_write_int32(fd, out_integer);
+  if (fio_fwrite((void *) Y, out_integer, 1, fd) != 1) return DCD_BADWRITE;
+  fio_write_int32(fd, out_integer);
+  fio_write_int32(fd, out_integer);
+  if (fio_fwrite((void *) Z, out_integer, 1, fd) != 1) return DCD_BADWRITE;
+  fio_write_int32(fd, out_integer);
+
+  /* update the DCD header information */
+  fio_fseek(fd, NFILE_POS, FIO_SEEK_SET);
+  fio_write_int32(fd, curframe);
+  fio_fseek(fd, NSTEP_POS, FIO_SEEK_SET);
+  fio_write_int32(fd, curstep);
+  fio_fseek(fd, 0, FIO_SEEK_END);
+
+  return DCD_SUCCESS;
+}
+
+
+void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & integrator_openmm, 
+				std::vector<OpenMM::Vec3> & positions_openmm, std::vector<OpenMM::Vec3> & velocities_openmm,
+				bool DCD, bool wrap, int nmoves, int frequency_dcd, int flag_cutoff,int nats){
+	
+		
+		int cycles = 0;
+			
+		int steps = nmoves;
+		
+		float X[nats];
+		float Y[nats];
+		float Z[nats];
+		
+		double box_dims[6];
+		
+		fio_fd fd=NULL;
+		
+		double dt = integrator_openmm.getStepSize();
+		
+		int infoMask = 0;
+	
+		infoMask = OpenMM::State::Positions;
+	
+		infoMask = infoMask + OpenMM::State::Velocities; 
+    
+		infoMask = infoMask +  OpenMM::State::Energy;
+		
+		OpenMM::State state_openmm = context_openmm.getState(infoMask);
+		
+		double kinetic_energy = 0.0; 
+		double potential_energy = 0.0; 
+		
+		OpenMM::Vec3 a;
+		OpenMM::Vec3 b;
+		OpenMM::Vec3 c;
+		
+		
+		if(DCD == true){
+		
+			double delta = dt/0.0488821;
+			
+			cycles = nmoves/frequency_dcd;
+	
+			for(int i=0; i<nats;i++){
+				X[i]=0.0;
+				Y[i]=0.0;
+				Z[i]=0.0;	
+					
+			}
+		
+		
+			fio_open("dynamic.dcd",FIO_WRITE, &fd);
+				
+			steps=frequency_dcd;
+			
+			int box = 0;
+		
+			if(flag_cutoff == CUTOFFPERIODIC){
+				box=1;	
+			}
+				
+			write_dcdheader(fd, "Created by OpenMM", nats,0,frequency_dcd, delta, box,1);
+		
+		}
+		else
+			cycles=1;	
+
+	
+		for(int i=0;i<cycles;i++){
+		
+		
+			integrator_openmm.step(steps);
+			
+			
+			state_openmm=context_openmm.getState(infoMask);	
+	
+			positions_openmm = state_openmm.getPositions();
+		
+			velocities_openmm = state_openmm.getVelocities();
+	
+			cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
+			
+			kinetic_energy = state_openmm.getKineticEnergy(); 
+	
+			potential_energy = state_openmm.getPotentialEnergy(); 
+			
+			
+			
+	
+	
+			if(DCD==true){
+			
+				if(flag_cutoff == CUTOFFPERIODIC){
+				
+					state_openmm.getPeriodicBoxVectors(a,b,c);
+	
+					box_dims[0]=a[0] * OpenMM::AngstromsPerNm;
+					box_dims[1]=0.0;
+					box_dims[2]=b[1] * OpenMM::AngstromsPerNm;
+					box_dims[3]=0.0;
+					box_dims[4]=0.0;
+					box_dims[5]=c[2] * OpenMM::AngstromsPerNm;
+			
+				}
+			
+				
+				for(int j=0; j<nats;j++){
+					
+					X[j] = positions_openmm[j][0]*OpenMM::AngstromsPerNm;
+					Y[j] = positions_openmm[j][1]*OpenMM::AngstromsPerNm;
+					Z[j] = positions_openmm[j][2]*OpenMM::AngstromsPerNm;
+					
+					if(wrap == true && flag_cutoff == CUTOFFPERIODIC){
+						
+						X[j] = X[j] - box_dims[0]*round(X[j]/box_dims[0]);
+						Y[j] = Y[j] - box_dims[2]*round(Y[j]/box_dims[2]);
+						Z[j] = Z[j] - box_dims[5]*round(Z[j]/box_dims[5]);						
+					
+					}
+					
+					//cout << "X = "<< X[j] << " Y = " << Y[j] << " Z = " << Z[j] << "\n";
+				
+				}
+				
+				
+				if(flag_cutoff == CUTOFFPERIODIC){
+					
+					write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,box_dims, 1);		
+								   		 
+				}
+				else
+					write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,NULL, 1);
+					
+			}
+
+	
+			cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
+		 	 	<< " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
+		 	 	<< " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
+	
+			cout<<"\n";
+	
+		}
+
+		if(DCD == true)
+			fio_fclose(fd);
+
+}
 
 
 
