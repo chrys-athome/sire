@@ -560,10 +560,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	//OpenMM vector coordinate
     
 	std::vector<OpenMM::Vec3> positions_openmm(nats);		
-
-	double *system_coords;
 	
-	system_coords = new double [nats*3] ;
     
 	//OpenMM vector momenta
     
@@ -579,7 +576,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	for (int i=0; i < nmols; ++i){
 	
-		const int nats = ws.nAtoms(i);
+		const int nats_mol = ws.nAtoms(i);
 
 		Vector *c = ws.coordsArray(i);
 		
@@ -589,7 +586,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		//cout << "Molecule = " << i <<"\n";
 
-		for (int j=0; j < nats; ++j){
+		for (int j=0; j < nats_mol; ++j){
 	     
 			positions_openmm[system_index] = OpenMM::Vec3(c[j].x() * (OpenMM::NmPerAngstrom) ,
 							c[j].y() * (OpenMM::NmPerAngstrom),c[j].z() * (OpenMM::NmPerAngstrom));
@@ -604,9 +601,16 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			     
 			system_index = system_index + 1;
 			
-			/*cout <<"\n";
-			cout << "atom = " << system_index - 1  << " COORD X = " << c[j].x() << " COORD Y = " << c[j].y() << " COORD Z = " << c[j].z()<<"\n" ;
-			cout << "atom = " << system_index - 1  << " MOMENTA X = " << p[j].x() << " MOMENTA Y = " << p[j].y() << " MOMENTA Z = " << p[j].z()<<"\n" ;
+
+			
+			/*cout << "\natom = " << system_index - 1  << " COORD X = " << c[j].x() 
+							    					 << " COORD Y = " << c[j].y() 
+							  						 << " COORD Z = " << c[j].z()<<"\n" ;*/
+			
+			/*cout << "atom = " << system_index - 1  << " MOMENTA X = " << p[j].x() 
+												   << " MOMENTA Y = " << p[j].y() 
+												   << " MOMENTA Z = " << p[j].z()<<"\n" ;
+			
 			cout << "atom = " << j << " MASS = " << m[j]<<"\n" ; */
 			
 	     
@@ -616,11 +620,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	}
       
 	
-	
-	
-	
-	
-	
+
 	
 	MoleculeGroup molgroup = ws.moleculeGroup();
 	
@@ -672,6 +672,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		QVector<SireMM::LJParameter> ljparameters = atomvdws.toVector();
 	
 		QVector<SireUnits::Dimension::Charge> charges = atomcharges.toVector();
+		
 	
 		for(int j=0; j< ljparameters.size();j++){
 	
@@ -745,6 +746,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		QList<BondID> bonds_ff = amber_params.getAllBonds();
 		
 		QVector<BondID> bonds = bonds_ff.toVector();
+		
 		
 	
 		for (int j=0; j < bonds_ff.length() ; j++){
@@ -829,6 +831,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		QList<AngleID> angles_ff = amber_params.getAllAngles();
 		
 		QVector<AngleID> angles = angles_ff.toVector();
+		
 	
 		for (int j=0; j < angles_ff.length() ; j++){
 		
@@ -923,6 +926,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		QList<DihedralID> dihedrals_ff = amber_params.getAllDihedrals();
 		
 		QVector<DihedralID> dihedrals = dihedrals_ff.toVector();
+		
 
 		for (int j=0; j < dihedrals_ff.length() ; j++ ){
 	    
@@ -939,6 +943,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			int idx3 = dihedrals[j].atom3().asA<AtomIdx>().value() + num_atoms_till_i;
 	    
 			// Variable number of parameters
+			
 	    
 			for (int k=0 ; k < dihedral_params.length() ; k = k + 3 ){
 			
@@ -967,6 +972,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		QList<ImproperID> impropers_ff = amber_params.getAllImpropers();
 		
 		QVector<ImproperID> impropers = impropers_ff.toVector();
+	
 
 		for (int j=0; j < impropers_ff.length() ; j++ ){
 		
@@ -983,7 +989,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			int idx2 = impropers[j].atom2().asA<AtomIdx>().value() + num_atoms_till_i;
 		
 			int idx3 = impropers[j].atom3().asA<AtomIdx>().value() + num_atoms_till_i;
-			
+						
 	    
 			for (int k=0 ; k < improper_params.length() ; k = k + 3 ){
 				
@@ -1318,7 +1324,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		bool dcd = true;
 		
-		bool wrap = false;
+		bool wrap = true;
 		
 		integrator(context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , nmoves, frequency_dcd, flag_cutoff, nats);
 			
@@ -1837,6 +1843,14 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 		}
 		else
 			cycles=1;	
+			
+		
+		/*for(unsigned int i=0;i<positions_openmm.size();i++){
+				
+				cout << "\natom = " << i << " COORD X = " << positions_openmm[i][0]*(OpenMM::AngstromsPerNm) 
+									   	 << " COORD Y = " << positions_openmm[i][1]*(OpenMM::AngstromsPerNm) 
+									     << " COORD Z = " << positions_openmm[i][2]*(OpenMM::AngstromsPerNm) <<"\n";		 
+		}*/
 
 	
 		for(int i=0;i<cycles;i++){
@@ -1883,7 +1897,9 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 					Y[j] = positions_openmm[j][1]*OpenMM::AngstromsPerNm;
 					Z[j] = positions_openmm[j][2]*OpenMM::AngstromsPerNm;
 					
-					if(wrap == true && flag_cutoff == CUTOFFPERIODIC){
+				
+					if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
+				
 						
 						X[j] = X[j] - box_dims[0]*round(X[j]/box_dims[0]);
 						Y[j] = Y[j] - box_dims[2]*round(Y[j]/box_dims[2]);
@@ -1912,8 +1928,10 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 		 	 	<< " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
 	
 			cout<<"\n";
+			
+			//integrator_openmm.step(steps);
 	
-		}
+		}//end for
 
 		if(DCD == true)
 			fio_fclose(fd);
