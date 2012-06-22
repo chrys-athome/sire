@@ -730,7 +730,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	    if ( !hasConnectivity ){
 	    	num_atoms_till_i = num_atoms_till_i + num_atoms_molecule ;
 	    	cout << "\n Atoms = " <<  num_atoms_molecule << "Num atoms till i =" << num_atoms_till_i <<"\n";
-	    	cout << "\n*********************IONS**************************\n";
+	    	cout << "\n*********************ION DETECTED**************************\n";
 	    	
 	        continue;
 	    }    
@@ -1648,6 +1648,8 @@ const char* OpenMMIntegrator::typeName()
     return QMetaType::typeName( qMetaTypeId<OpenMMIntegrator>() );
 }
 
+
+
 /*
  * Write a header for a new dcd file
  * Input: fd - file struct opened for binary writing
@@ -1657,8 +1659,6 @@ const char* OpenMMIntegrator::typeName()
  * Output: 0 on success, negative error code on failure.
  * Side effects: Header information is written to the dcd file.
  */
-
-
 static int write_dcdheader(fio_fd fd, const char *remarks, int N, 
                     int ISTART, int NSAVC, double DELTA, int with_unitcell,
                     int charmm) {
@@ -1727,6 +1727,7 @@ static int write_dcdheader(fio_fd fd, const char *remarks, int N,
   return DCD_SUCCESS;
 }
 
+
 /* 
  * Write a timestep to a dcd file
  * Input: fd - a file struct for which a dcd header has already been written
@@ -1737,7 +1738,6 @@ static int write_dcdheader(fio_fd fd, const char *remarks, int N,
  * Output: 0 on success, negative error code on failure.
  * Side effects: coordinates are written to the dcd file.
  */
-
 static int write_dcdstep(fio_fd fd, int curframe, int curstep, int N, 
                   float *X, float *Y, float *Z, 
                   const double *unitcell, int charmm) {
@@ -1792,6 +1792,8 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 		
 		double box_dims[6];
 		
+		double COG[3] = {0.0,0.0,0.0};
+		
 		fio_fd fd=NULL;
 		
 		double dt = integrator_openmm.getStepSize();
@@ -1839,6 +1841,22 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 			}
 				
 			write_dcdheader(fd, "Created by OpenMM", nats,0,frequency_dcd, delta, box,1);
+			
+			if(wrap == true){
+				for(unsigned int i=0;i<positions_openmm.size();i++){
+		
+					COG[0] = COG[0] + positions_openmm[i][0]*(OpenMM::AngstromsPerNm); //X Cennter of Geometry
+					COG[1] = COG[1] + positions_openmm[i][1]*(OpenMM::AngstromsPerNm); //Y Cennter of Geometry
+					COG[2] = COG[2] + positions_openmm[i][2]*(OpenMM::AngstromsPerNm); //Z Cennter of Geometry
+				}
+		
+				COG[0] = COG[0]/nats;
+				COG[1] = COG[1]/nats;
+				COG[2] = COG[2]/nats;
+
+				cout << "\nCOG X = " << COG[0] << " GOG Y = " << COG[1] << " COG Z = " << COG[2] << "\n";
+			
+			}
 		
 		}
 		else
@@ -1851,7 +1869,9 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 									   	 << " COORD Y = " << positions_openmm[i][1]*(OpenMM::AngstromsPerNm) 
 									     << " COORD Z = " << positions_openmm[i][2]*(OpenMM::AngstromsPerNm) <<"\n";		 
 		}*/
-
+		
+		
+		
 	
 		for(int i=0;i<cycles;i++){
 		
@@ -1871,9 +1891,6 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 	
 			potential_energy = state_openmm.getPotentialEnergy(); 
 			
-			
-			
-	
 	
 			if(DCD==true){
 			
@@ -1899,13 +1916,18 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 					
 				
 					if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
-				
+						
+						X[j] = X[j] - COG[0];
+						Y[j] = Y[j] - COG[1];
+						Z[j] = Z[j] - COG[2];
+						
 						
 						X[j] = X[j] - box_dims[0]*round(X[j]/box_dims[0]);
 						Y[j] = Y[j] - box_dims[2]*round(Y[j]/box_dims[2]);
 						Z[j] = Z[j] - box_dims[5]*round(Z[j]/box_dims[5]);						
 					
 					}
+					
 					
 					//cout << "X = "<< X[j] << " Y = " << Y[j] << " Z = " << Z[j] << "\n";
 				
