@@ -63,6 +63,9 @@ using namespace Conspire;
 static QString install_dir 
                 = "/Users/chris/Work/SoftwareProject/Conspire/source/job_classes";
 
+static QString broker = "ssi-amrmmhd.epcc.ed.ac.uk";
+//static QString broker = "127.0.0.1";
+
 void SubmitPage::build()
 {
     job_id = -1;
@@ -418,7 +421,7 @@ void SubmitPage::submit()
         allUpdate();
         
         QProcessEnvironment env;
-        env.insert("PARENT_NODE", "ssi-amrmmhd.epcc.ed.ac.uk");
+        env.insert("PARENT_NODE", broker);
         env.insert("PARENT_NODE_PORT", "10000");
         env.insert("ISSUBMIT", "TRUE");
         env.insert("WORKNAME", "workpacket");
@@ -543,7 +546,7 @@ void SubmitPage::query()
     //do the query
     //PARENT_NODE=127.0.0.1 PARENT_NODE_PORT=10000 ISQUERY=TRUE WKPTID=2 python ./leafhead3.py
     QProcessEnvironment env;
-    env.insert("PARENT_NODE", "ssi-amrmmhd.epcc.ed.ac.uk");
+    env.insert("PARENT_NODE", broker);
     env.insert("PARENT_NODE_PORT", "10000");
     env.insert("ISQUERY", "TRUE");
     env.insert("WKPTID", QString::number(job_id));
@@ -618,7 +621,7 @@ void SubmitPage::getResults()
     //do the query
     //PARENT_NODE=127.0.0.1 PARENT_NODE_PORT=10000 ISQUERY=TRUE WKPTID=2 python ./leafhead3.py
     QProcessEnvironment env;
-    env.insert("PARENT_NODE", "ssi-amrmmhd.epcc.ed.ac.uk");
+    env.insert("PARENT_NODE", broker);
     env.insert("PARENT_NODE_PORT", "10000");
     env.insert("ISDOWNLOAD", "TRUE");
     env.insert("WKPTID", QString::number(job_id));
