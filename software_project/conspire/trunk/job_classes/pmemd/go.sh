@@ -1,4 +1,4 @@
 #!/bin/bash
 
-python run_md.py . 0
+python run_md.py . 3
 

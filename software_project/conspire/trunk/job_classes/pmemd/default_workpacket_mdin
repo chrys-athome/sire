@@ -1,10 +1,10 @@
-MD system -- Constant Pressure-- 100 PS each
+MD system -- Constant Pressure-- 1 NS each
 &cntrl
- imin=0, irest=1, ntx=5, ntpr=10000, ntwr=0, ntwx=5000,
+ imin=0, irest=1, ntx=5, ntpr=100, ntwr=0, ntwx=5000,
 
- nstlim=5, dt=0.002,
+ nstlim=1000, dt=0.002,
 
- tempi=298.0, temp0=298.0, ntt=3, gamma_ln=5, ig=-1,
+ tempi=310.0, temp0=310.0, ntt=3, gamma_ln=5, ig=-1,
 
  ntb=2, ntp=1, pres0=1.0, cut=10.0,
 
@@ -17,3 +17,4 @@ MD system -- Constant Pressure-- 100 PS each
 &ewald
   nfft1 = 128, nfft2 = 128, nfft3 = 128
 &end
+

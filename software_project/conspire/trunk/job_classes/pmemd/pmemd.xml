@@ -24,9 +24,9 @@
   </option>
 
   <option>
-    <key>number of moves</key>
-    <description>The number of steps of dynamics to perform.</description>
-    <value><integer>1000</integer></value>
+    <key>length of dynamics</key>
+    <description>Amount of dynamics you want to perform.</description>
+    <value><time units="ns">10 ns</time></value>
   </option>
 
   <option>

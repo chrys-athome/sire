@@ -1,10 +1,18 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 import socket
 import thread
 import os, re
 import subprocess
 import time
+import sys
+
+# autoflush output
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+print "Some text"
+print "Some more text"
+print "Even more text"
 
 # SUBMISSION NODE
 # PARENT_NODE=127.0.0.1 PARENT_NODE_PORT=10020 ISSUBMIT=TRUE WORKNAME=sleepwork CLASSNAME=pmemd FILENAME=/home/pgrad/long/linux/realtest.tar.gz ./leafhead3.py
@@ -132,6 +140,8 @@ def sendresultsheader(addr, portno, workname, tsid, wkptid, hostname, gzname, da
 
 def uploadstream(datablock, datain, sock, filename, addr):
    tarfile = open(filename, 'rb')
+   totlen = 0
+   dataamt = 0
    while 1:
       data = tarfile.read(datablock)
       if (len(data) == 0): break
@@ -141,6 +151,8 @@ def uploadstream(datablock, datain, sock, filename, addr):
          print('An error occurred sending data to ', addr)
          # Needs better handling!
          break
+      if (((totlen + len(data)) / 1048576) > (totlen / 1048576)): print(str(totlen))
+      totlen = totlen + len(data)
    tarfile.close()
    return sock
 
@@ -164,8 +176,8 @@ def downloadstream(datablock, datain, sock, filename, addr):
       if (len(data) == 0): break
       try:
          vfile.write(data)
+         if (((dlen + len(data)) / 1048576) > (dlen / 1048576)): print(str(dlen)+'\r')
          dlen = dlen + len(data)
-         print(str(dlen)+'\r')
       except:
          printf('Fail to write second')
          break
@@ -241,6 +253,7 @@ def clienthandler(datablock, threadid, clientsock, addr, portno):
                   workpckt_id = int((k.split(' ', 1))[1])
                if re.match('ContentLength: ', k):
                   contentlen = int((k.split(' ', 1))[1])
+            print "EXPECTED RESULTS PACKET SIZE == %s bytes" % contentlen
             downloadedcontentlength = downloadstream(datablock, datain, clientsock, os.environ['OUTFILENAME'], addr)
             if not (downloadedcontentlength == contentlen):
                print('DOWNLOAD FAILED: ' + str(len(datain)) + ' ' + str(contentlen) + ' != ' + str(downloadedcontentlength))
@@ -435,6 +448,6 @@ def serversocket(portno, datablock):
          sock.close()
 
 if (os.getenv('ISLEAF') == None) and (os.getenv('ISDOWNLOAD') == None) and (os.getenv('ISSUBMIT') == None) and (os.getenv('ISQUERY') == None):
-   serversocket(int(os.environ['MYPORT']), 4096)
+   serversocket(int(os.environ['MYPORT']), 65536)
 else:
-   serversocket(0, 4096)
+   serversocket(0, 65536)

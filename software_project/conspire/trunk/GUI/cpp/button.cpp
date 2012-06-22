@@ -82,7 +82,7 @@ void Button::scaleTextToFit()
 {
     if (txt)
     {
-        QSizeF sz = 0.8 * this->size();
+        QSizeF sz = 0.6 * this->size();
     
         //txt->setTextWidth(sz.width());
         txt->prepare(QTransform(), starting_font);

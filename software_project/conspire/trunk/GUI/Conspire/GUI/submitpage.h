@@ -40,6 +40,7 @@ class QProgressBar;
 namespace Conspire
 {
     class Button;
+    class WidgetStack;
 
     /** This is the page used to submit a job to Acquire */
     class CONSPIRE_EXPORT SubmitPage : public Page
@@ -72,6 +73,10 @@ namespace Conspire
         /** The options for the job to submit */
         Options opts;
         
+        /** The stack holding the different pages during
+            the job run process */
+        WidgetStack *stack;
+        
         /** The status label for job submission */
         QLabel *status_label;
         
@@ -84,9 +89,21 @@ namespace Conspire
         /** The class of job (e.g. which program to run) */
         QString job_class;
         
+        /** The name of the file to which to save the results */
+        QString output_name;
+        
         /** The ID number of the job (when it is running,
             it is -1 when the job is not running) */
         int job_id;
+
+        /** The number of bytes expected to be transferred */
+        int num_bytes_expected;
+        
+        /** The number of bytes actually transferred */
+        int num_bytes_transferred;
+        
+        /** Whether or not to draw the file progress bar */
+        bool draw_file_progress_bar;
     };
 
 }

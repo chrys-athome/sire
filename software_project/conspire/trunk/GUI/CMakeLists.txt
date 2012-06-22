@@ -48,6 +48,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/slidelabel.h
       Conspire/GUI/submitpage.h
       Conspire/GUI/widgetrack.h
+      Conspire/GUI/widgetstack.h
 
     )
 
@@ -75,6 +76,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/slidelabel.h
       Conspire/GUI/submitpage.h
       Conspire/GUI/widgetrack.h
+      Conspire/GUI/widgetstack.h
 
     )
 
@@ -104,6 +106,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/slidelabel.cpp
       cpp/submitpage.cpp
       cpp/widgetrack.cpp
+      cpp/widgetstack.cpp
 
       ${CONSPIRE_GUI_PUBLIC_HEADERS}
       ${CONSPIRE_GUI_PRIVATE_HEADERS}

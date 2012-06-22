@@ -30,6 +30,7 @@
 #include "Conspire/GUI/widgetrack.h"
 #include "Conspire/GUI/button.h"
 #include "Conspire/GUI/exceptionpage.h"
+#include "Conspire/GUI/widgetstack.h"
 
 #include "Conspire/option.h"
 #include "Conspire/values.h"
@@ -52,6 +53,7 @@
 #include <QComboBox>
 #include <QProgressBar>
 #include <QLabel>
+#include <QPixmap>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -64,6 +66,12 @@ static QString install_dir
 void SubmitPage::build()
 {
     job_id = -1;
+    output_name = "results.tar.gz";
+    draw_file_progress_bar = 0;
+    num_bytes_expected = 0;
+    num_bytes_transferred = 0;
+
+    this->setFlag(QGraphicsItem::ItemStacksBehindParent, true);
 
     WidgetRack *rack = new WidgetRack(this);
     
@@ -72,9 +80,13 @@ void SubmitPage::build()
     this->setLayout(l);
     
     l->insertItem(0,rack);
+
+    stack = new WidgetStack(this);
+    
+    WidgetRack *sub_rack = new WidgetRack(this);
     
     QLabel *label = new QLabel(Conspire::tr("When would you like the job to finish?"));
-    rack->addWidget(label);
+    sub_rack->addWidget(label);
     
     QComboBox *box = new QComboBox();
     box->addItem(Conspire::tr("As soon as possible!"));
@@ -85,10 +97,10 @@ void SubmitPage::build()
     box_proxy->setWidget(box);
     box_proxy->setZValue(100);
     
-    rack->addWidget(box_proxy);
+    sub_rack->addWidget(box_proxy);
     
     label = new QLabel(Conspire::tr("How energy efficient would you like to be?"));
-    rack->addWidget(label);
+    sub_rack->addWidget(label);
     
     box = new QComboBox();
     box->addItem(Conspire::tr("Use as little electricity as possible!"));
@@ -99,7 +111,30 @@ void SubmitPage::build()
     box_proxy->setWidget(box);
     box_proxy->setZValue(100);
 
-    rack->addWidget(box_proxy);
+    sub_rack->addWidget(box_proxy);
+    
+    stack->addWidget(sub_rack);
+    
+    QLabel *submitting_label = new QLabel("SUBMITTING THE JOB...");
+    stack->addWidget(submitting_label);
+    
+    QLabel *cloud_label = new QLabel("CLOUD");
+    
+    //cloud_label->setScaledContents(false);
+    //cloud_label->setPixmap( QPixmap("Clouds.JPG") );
+    cloud_label->setSizePolicy( QSizePolicy(QSizePolicy::Preferred,QSizePolicy::Preferred) );
+    
+    stack->addWidget(cloud_label);
+    
+    QLabel *emerald_label = new QLabel("EMERALD");
+    
+    //emerald_label->setScaledContents(true);
+    //emerald_label->setPixmap( QPixmap("emerald.JPG") );
+    emerald_label->setSizePolicy( QSizePolicy(QSizePolicy::Preferred,QSizePolicy::Preferred) );
+    
+    stack->addWidget(emerald_label);
+    
+    rack->addWidget(stack);
     
     status_label = new QLabel(Conspire::tr("Click \"Start Job\" to run the job..."));
     rack->addWidget(status_label);
@@ -146,6 +181,23 @@ void SubmitPage::paint(QPainter *painter,
                        QWidget *widget)
 {
     Page::paint(painter, option, widget);
+    
+    if (draw_file_progress_bar)
+    {
+        painter->setRenderHint(QPainter::Antialiasing);
+        painter->setRenderHint(QPainter::TextAntialiasing);
+
+        painter->setOpacity(0.5);
+        
+        QRectF rect( 10, 10, this->geometry().width()-20, 
+                     this->geometry().height()-20 );
+                     
+        double prog = (1.0*num_bytes_transferred) / num_bytes_expected;
+        
+        int span = int(360*16*prog);
+        
+        painter->drawPie(rect, -int(0.5*span), span);
+    }
 }
 
 void SubmitPage::allUpdate()
@@ -172,6 +224,8 @@ void SubmitPage::submit()
     allUpdate();
 
     conspireDebug() << "SUBMIT THE CALCULATION";
+
+    stack->switchTo(1);
 
     //make a temporary directory in which to stage the script
     QString tmpdir;
@@ -272,9 +326,12 @@ void SubmitPage::submit()
                                 "config file \"%1/config\".")
                                     .arg(tmpdir), CODELOC ) ) ) ) );
 
-        QTextStream ts(&conf);
-        ts << submit_opts.toConfig(true);
-        conf.close();
+        //write the config file
+        {
+            QTextStream ts(&conf);
+            ts << submit_opts.toConfig(true);
+            conf.close();
+        }
 
         status_label->setText( Conspire::tr("Copying support files...") );
         progress_bar->setValue(60);
@@ -337,7 +394,7 @@ void SubmitPage::submit()
             
             proc.start("tar", args);
             
-            proc.waitForFinished();
+            proc.waitForFinished(-1);
             
             conspireDebug() << "STDOUT" << proc.readAllStandardOutput();
             conspireDebug() << "STDERR" << proc.readAllStandardError();
@@ -350,7 +407,7 @@ void SubmitPage::submit()
         allUpdate();
         
         QProcessEnvironment env;
-        env.insert("PARENT_NODE", "127.0.0.1");
+        env.insert("PARENT_NODE", "ssi-amrmmhd.epcc.ed.ac.uk");
         env.insert("PARENT_NODE_PORT", "10000");
         env.insert("ISSUBMIT", "TRUE");
         env.insert("WORKNAME", "workpacket");
@@ -366,9 +423,44 @@ void SubmitPage::submit()
         progress_bar->setValue(90);
         allUpdate();
         
-        proc.waitForFinished();
+        /*QTextStream ts(&proc);
+        QStringList lines;
+        
+        proc.closeWriteChannel();
+        proc.waitForStarted(-1);
+        
+        draw_file_progress_bar = true;
+        num_bytes_expected = QFileInfo(QString("%1/workpacket.tgz").arg(tmpdir)).size();
+        num_bytes_transferred = 0;
+        
+        while (proc.state() == QProcess::Running)
+        {
+            if (proc.waitForReadyRead(100))
+            {
+                if (proc.canReadLine())
+                {
+                    QString line = ts.readLine();
+                    conspireDebug() << "OUTPUT" << line;
+                    lines.append(line);
+                    
+                    bool ok = false;
+                    int completed = line.toInt(&ok);
+                    
+                    if (ok)
+                    {
+                        num_bytes_transferred = completed;
+                        this->repaint();
+                    }
+                }
+            }
+        }
+        
+        draw_file_progress_bar = false;*/
+        
+        proc.waitForFinished(-1);
         
         QByteArray out = proc.readAllStandardOutput();
+        //QString out = lines.join("\n");
         QByteArray err = proc.readAllStandardError();
         
         conspireDebug() << "OUTPUT" << out;
@@ -388,6 +480,7 @@ void SubmitPage::submit()
                                                 CODELOC) ) ) ) );
         }
 
+        stack->switchTo(2);
         status_label->setText( Conspire::tr("Job is on the cloud!") );
         progress_bar->setValue(95);
         allUpdate();
@@ -409,7 +502,7 @@ void SubmitPage::submit()
         progress_bar->setValue(100);
         allUpdate();
         
-        button->setText( Conspire::tr("Get Job Status") );
+        button->setText( Conspire::tr("Get Status") );
         connect(button, SIGNAL(clicked()), this, SLOT(query()));
         button->show();
     }
@@ -439,7 +532,7 @@ void SubmitPage::query()
     //do the query
     //PARENT_NODE=127.0.0.1 PARENT_NODE_PORT=10000 ISQUERY=TRUE WKPTID=2 python ./leafhead3.py
     QProcessEnvironment env;
-    env.insert("PARENT_NODE", "127.0.0.1");
+    env.insert("PARENT_NODE", "ssi-amrmmhd.epcc.ed.ac.uk");
     env.insert("PARENT_NODE_PORT", "10000");
     env.insert("ISQUERY", "TRUE");
     env.insert("WKPTID", QString::number(job_id));
@@ -453,7 +546,7 @@ void SubmitPage::query()
     progress_bar->setValue(50);
     allUpdate();
     
-    proc.waitForFinished();
+    proc.waitForFinished(-1);
     
     QByteArray out = proc.readAllStandardOutput();
     QByteArray err = proc.readAllStandardError();
@@ -479,6 +572,8 @@ void SubmitPage::query()
     }
     else
     {
+        stack->switchTo(3);
+    
         QString status = re.cap(2).simplified();
     
         status_label->setText( Conspire::tr("The job status is \"%1\".").arg(status) );
@@ -487,6 +582,7 @@ void SubmitPage::query()
     
         if (status == "completed")
         {
+            stack->switchTo(4);
             button->setText( Conspire::tr("Get Results!") );
             button->disconnect();
             connect(button, SIGNAL(clicked()), this, SLOT(getResults()));
@@ -498,10 +594,42 @@ void SubmitPage::query()
 
 void SubmitPage::getResults()
 {
-    button->disconnect();
+    //button->disconnect();
     button->hide();
     
     status_label->setText( Conspire::tr("Getting the results...") );
     progress_bar->setValue(0);
+    allUpdate();
+
+    //do the query
+    //PARENT_NODE=127.0.0.1 PARENT_NODE_PORT=10000 ISQUERY=TRUE WKPTID=2 python ./leafhead3.py
+    QProcessEnvironment env;
+    env.insert("PARENT_NODE", "ssi-amrmmhd.epcc.ed.ac.uk");
+    env.insert("PARENT_NODE_PORT", "10000");
+    env.insert("ISDOWNLOAD", "TRUE");
+    env.insert("WKPTID", QString::number(job_id));
+    env.insert("OUTFILENAME", output_name);
+
+    QProcess proc;
+    proc.setProcessEnvironment(env);
+    
+    proc.start("python", 
+        QStringList(QString("%1/leafhead3.py").arg(install_dir)));
+    
+    progress_bar->setValue(50);
+    allUpdate();
+    
+    proc.waitForFinished(-1);
+    
+    QByteArray out = proc.readAllStandardOutput();
+    QByteArray err = proc.readAllStandardError();
+    
+    conspireDebug() << "OUTPUT" << out;
+    conspireDebug() << "ERROR" << err;
+
+    status_label->setText( Conspire::tr("Downloaded results to %1").arg(output_name) );
+    progress_bar->setValue(100);
+
+    button->show();
     allUpdate();
 }
