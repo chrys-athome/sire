@@ -94,7 +94,7 @@ void MainWindow::resizeEvent(QResizeEvent *e)
     and a PageView, which can be used to view pages */
 void MainWindow::build()
 {
-    this->setMinimumSize(400,400);
+    this->setMinimumSize(400,420);
 
     this->setScene( new QGraphicsScene(this) );
 

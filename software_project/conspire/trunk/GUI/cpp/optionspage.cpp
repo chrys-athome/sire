@@ -91,6 +91,7 @@ void OptionsPage::pvt_reread(Options options)
 {
     //delete the add_button (recreate it later if needed)
     delete add_button;
+    add_button = 0;
 
     //create one button for each option...
     opts = options;

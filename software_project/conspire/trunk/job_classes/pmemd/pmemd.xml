@@ -26,7 +26,7 @@
   <option>
     <key>length of dynamics</key>
     <description>Amount of dynamics you want to perform.</description>
-    <value><time units="ns">10 ns</time></value>
+    <value><time units="ps">2 ps</time></value>
   </option>
 
   <option>

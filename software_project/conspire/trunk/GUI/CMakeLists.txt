@@ -26,6 +26,8 @@ include_directories(${QT_QTCORE_INCLUDE_DIR}
                     ${QT_QTGUI_INCLUDE_DIR}
                     ${QT_QTOPENGL_INCLUDE_DIR})
 
+QT4_ADD_RESOURCES(Conspire_Images images/images.qrc)
+
 set ( CONSPIRE_GUI_MOC_HEADERS
 
       Conspire/GUI/addpage.h
@@ -116,7 +118,7 @@ set ( CONSPIRE_GUI_SOURCES
     )
 
 # generate the library and application
-add_library ( ConspireGUI ${CONSPIRE_GUI_SOURCES} )
+add_library ( ConspireGUI ${CONSPIRE_GUI_SOURCES} ${Conspire_Images} )
 add_executable ( conspire_gui cpp/main.cpp )
 
 set_target_properties (ConspireGUI PROPERTIES

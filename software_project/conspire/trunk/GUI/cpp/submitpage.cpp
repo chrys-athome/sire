@@ -112,25 +112,36 @@ void SubmitPage::build()
     box_proxy->setZValue(100);
 
     sub_rack->addWidget(box_proxy);
+    sub_rack->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+    sub_rack->setZValue(100);
     
     stack->addWidget(sub_rack);
     
     QLabel *submitting_label = new QLabel("SUBMITTING THE JOB...");
+    
+    submitting_label->setScaledContents(true);
+    submitting_label->setPixmap( QPixmap(":data.jpg") );
+    submitting_label->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,
+                                                 QSizePolicy::Expanding) );
+    submitting_label->setMinimumSize( QSize(10,10) );
+    
     stack->addWidget(submitting_label);
     
     QLabel *cloud_label = new QLabel("CLOUD");
     
-    //cloud_label->setScaledContents(false);
-    //cloud_label->setPixmap( QPixmap("Clouds.JPG") );
-    cloud_label->setSizePolicy( QSizePolicy(QSizePolicy::Preferred,QSizePolicy::Preferred) );
+    cloud_label->setScaledContents(true);
+    cloud_label->setPixmap( QPixmap(":cloud.jpg") );
+    cloud_label->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+    cloud_label->setMinimumSize( QSize(10,10) );
     
     stack->addWidget(cloud_label);
     
     QLabel *emerald_label = new QLabel("EMERALD");
     
-    //emerald_label->setScaledContents(true);
-    //emerald_label->setPixmap( QPixmap("emerald.JPG") );
-    emerald_label->setSizePolicy( QSizePolicy(QSizePolicy::Preferred,QSizePolicy::Preferred) );
+    emerald_label->setScaledContents(true);
+    emerald_label->setPixmap( QPixmap(":cluster.jpg") );
+    emerald_label->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+    emerald_label->setMinimumSize( QSize(10,10) );
     
     stack->addWidget(emerald_label);
     
@@ -572,9 +583,12 @@ void SubmitPage::query()
     }
     else
     {
-        stack->switchTo(3);
-    
         QString status = re.cap(2).simplified();
+
+        if (status == "running")
+        {
+            stack->switchTo(3);
+        }
     
         status_label->setText( Conspire::tr("The job status is \"%1\".").arg(status) );
         progress_bar->setValue(100);
@@ -582,8 +596,8 @@ void SubmitPage::query()
     
         if (status == "completed")
         {
-            stack->switchTo(4);
-            button->setText( Conspire::tr("Get Results!") );
+            stack->switchTo(1);
+            button->setText( Conspire::tr("Get Results") );
             button->disconnect();
             connect(button, SIGNAL(clicked()), this, SLOT(getResults()));
         }
@@ -632,4 +646,9 @@ void SubmitPage::getResults()
 
     button->show();
     allUpdate();
+
+    QProcess proc2;
+    proc2.start("open", QStringList() << output_name);
+
+    proc2.waitForFinished(-1);
 }

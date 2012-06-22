@@ -1,0 +1,7 @@
+<!DOCTYPE RCC><RCC version="1.0">
+ <qresource>
+     <file alias="cloud.jpg">cloud.jpg</file>
+     <file alias="cluster.jpg">cluster.jpg</file>
+     <file alias="data.jpg">data.jpg</file>
+ </qresource>
+</RCC>

@@ -599,6 +599,8 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
     //make sure that the two views have the correct size
     new_page->setOpacity(0);
     new_page->show();
+    new_page->setBlocked(false);
+    old_page->setBlocked(true);
     
     //make sure that the geometry of the page is correct
     new_page->setGeometry(view_geometry);
