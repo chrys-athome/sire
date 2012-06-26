@@ -100,9 +100,11 @@ static int write_dcdstep(fio_fd fd, int curframe, int curstep, int N,
 				  const double *unitcell, int charmm);
 				  
 				  
-void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & integrator_openmm, 
+void integrator(const char * filename, OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & integrator_openmm, 
 				std::vector<OpenMM::Vec3> & positions_openmm, std::vector<OpenMM::Vec3> & velocities_openmm,
 				bool DCD,bool wrap, int nmoves, int frequency_dcd, int flag_cutoff,int nats);
+				
+QString file_name(int i);
 
 
 using namespace SireMove;
@@ -349,6 +351,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	OpenMM::NonbondedForce * nonbond_openmm = new OpenMM::NonbondedForce();
 	
+	/*****************************************************************IMPORTANT********************************************************************/
+	
 	system_openmm.addForce(nonbond_openmm);	
 	
 	OpenMM::CustomNonbondedForce * custom_nonbond_SoluteSolvent_openmm=NULL;
@@ -498,6 +502,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	}
 	
 	
+	
 	if(free_energy_calculation == true)
 		system_openmm.addForce(custom_nonbond_SoluteSolvent_openmm);
 
@@ -545,6 +550,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
     
 	OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
     
+    
+    /*****************************************************************IMPORTANT********************************************************************/
 	
 	system_openmm.addForce(bondStretch_openmm);
     
@@ -1192,12 +1199,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		cout << "NFREQ = "<< n_freq << "\n\n";
 		
-		
-		
 	
 		for (int i=0; i<Alchemical_values.size();i++){
-	
-					
+				
 							
 			double GF_acc = 0.0;
 			
@@ -1205,78 +1209,87 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 			double lam_val = 0.0;
 		
-			
-			
+					
 			context_openmm.setParameter("lambda",Alchemical_values[i]);
 			
 			state_openmm=context_openmm.getState(infoMask);
 			
 			lam_val = context_openmm.getParameter("lambda");
 					
-			//cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+			cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
 				
+			bool dcd = true;
+		
+			bool wrap = false;
+			
+			int frequency_dcd = 10;
+
 			
 			for(int j=0;j<n_freq;j++){
 			
+				QString name = file_name(j);
+					
+				integrator(name.toStdString().c_str(), context_openmm,integrator_openmm, positions_openmm, 
+						   velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);
 				
-					integrator_openmm.step(frequency_energy);
 					
+				//integrator_openmm.step(frequency_energy);
+					
+					
+				cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";		
+					
+				state_openmm=context_openmm.getState(infoMask);	
+					
+				lam_val = context_openmm.getParameter("lambda");
+					
+				double potential_energy_lambda = state_openmm.getPotentialEnergy();
+					
+				cout << "Lambda = " << lam_val << " Potential energy lambda MD = " << potential_energy_lambda  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+					
+					
+					
+				context_openmm.setParameter("lambda",Alchemical_values[i]+delta);
 			
+				state_openmm=context_openmm.getState(infoMask);
 					
-					cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";		
-					
-					state_openmm=context_openmm.getState(infoMask);	
-					
-					lam_val = context_openmm.getParameter("lambda");
-					
-					double potential_energy_lambda = state_openmm.getPotentialEnergy();
-					
-					cout << "Lambda = " << lam_val << " Potential energy lambda MD = " << potential_energy_lambda  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
-					
-					
-					
-					context_openmm.setParameter("lambda",Alchemical_values[i]+delta);
+				double potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
 			
-					state_openmm=context_openmm.getState(infoMask);
+				lam_val = context_openmm.getParameter("lambda");
 					
-					double potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
+				cout << "Lambda = " << lam_val << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+					
+					
+					
+				context_openmm.setParameter("lambda",Alchemical_values[i]-delta);
+					
+				state_openmm=context_openmm.getState(infoMask);
+					
+				double potential_energy_lambda_minus_delta = state_openmm.getPotentialEnergy();
 			
-					lam_val = context_openmm.getParameter("lambda");
+				lam_val = context_openmm.getParameter("lambda");
 					
-					cout << "Lambda = " << lam_val << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
-					
-					
-					
-					context_openmm.setParameter("lambda",Alchemical_values[i]-delta);
-					
-					state_openmm=context_openmm.getState(infoMask);
-					
-					double potential_energy_lambda_minus_delta = state_openmm.getPotentialEnergy();
-			
-					lam_val = context_openmm.getParameter("lambda");
-					
-					cout << "Lambda = " << lam_val << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
+				cout << "Lambda = " << lam_val << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
 					
 					
 					
-					GF_acc = GF_acc + exp(-beta*(potential_energy_lambda_plus_delta - potential_energy_lambda));
+				GF_acc = GF_acc + exp(-beta*(potential_energy_lambda_plus_delta - potential_energy_lambda));
 					
 					
-					GB_acc = GB_acc + exp(-beta*(potential_energy_lambda_minus_delta - potential_energy_lambda));
+				GB_acc = GB_acc + exp(-beta*(potential_energy_lambda_minus_delta - potential_energy_lambda));
 						
-					cout << "\nGF accumulator partial = " << GF_acc << " -- GB accumulator partial = " << GB_acc << "\n\n";
+				cout << "\nGF accumulator partial = " << GF_acc << " -- GB accumulator partial = " << GB_acc << "\n\n";
 					
-					if(isnormal(GF_acc==0) || isnormal(GB_acc==0)){ 
-						cout << "\n\n ********************** ERROR NAN!! ****************************\n\n";
-						exit(-1); 
+				if(isnormal(GF_acc==0) || isnormal(GB_acc==0)){ 
+					cout << "\n\n ********************** ERROR NAN!! ****************************\n\n";
+					exit(-1); 
 						
-					}
+				}
 					
 					
-					context_openmm.setParameter("lambda",Alchemical_values[i]);
+				context_openmm.setParameter("lambda",Alchemical_values[i]);
 					
 				
-			}
+			}//end for cycle
 			
 			cout << "\n\nGF accumulator total = " << GF_acc << " ** GB accumulator total = " << GB_acc << "\n"; 
 			
@@ -1324,9 +1337,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		bool dcd = true;
 		
-		bool wrap = true;
-		
-		integrator(context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , nmoves, frequency_dcd, flag_cutoff, nats);
+		bool wrap = false;
+			
+		integrator("dynamic.dcd", context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , nmoves, frequency_dcd, flag_cutoff, nats);
 			
 	}
 	
@@ -1365,7 +1378,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	ws.commitCoordinates();
 	ws.commitVelocities();
-	
 	
 	if (MCBarostat_flag == true) {
 	
@@ -1777,10 +1789,9 @@ static int write_dcdstep(fio_fd fd, int curframe, int curstep, int N,
 }
 
 
-void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & integrator_openmm, 
+void integrator(const char * filename, OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & integrator_openmm, 
 				std::vector<OpenMM::Vec3> & positions_openmm, std::vector<OpenMM::Vec3> & velocities_openmm,
 				bool DCD, bool wrap, int nmoves, int frequency_dcd, int flag_cutoff,int nats){
-	
 		
 		int cycles = 0;
 			
@@ -1830,7 +1841,7 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 			}
 		
 		
-			fio_open("dynamic.dcd",FIO_WRITE, &fd);
+			fio_open(filename,FIO_WRITE, &fd);
 				
 			steps=frequency_dcd;
 			
@@ -1885,7 +1896,7 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 		
 			velocities_openmm = state_openmm.getVelocities();
 	
-			cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
+			//cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
 			
 			kinetic_energy = state_openmm.getKineticEnergy(); 
 	
@@ -1924,7 +1935,7 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 						
 						X[j] = X[j] - box_dims[0]*round(X[j]/box_dims[0]);
 						Y[j] = Y[j] - box_dims[2]*round(Y[j]/box_dims[2]);
-						Z[j] = Z[j] - box_dims[5]*round(Z[j]/box_dims[5]);						
+						Z[j] = Z[j] - box_dims[5]*round(Z[j]/box_dims[5]);			
 					
 					}
 					
@@ -1945,11 +1956,11 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 			}
 
 	
-			cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
+			/*cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
 		 	 	<< " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
 		 	 	<< " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
 	
-			cout<<"\n";
+			cout<<"\n";*/
 			
 			//integrator_openmm.step(steps);
 	
@@ -1960,5 +1971,28 @@ void integrator(OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & inte
 
 }
 
+
+QString file_name(int i){
+
+	QString num = QString::number(i);
+	
+	QString str;
+	
+	if(i<10)
+		str = "0000";
+	if((i>=10) && (i<100))
+		str = "000";
+	if((i>=100) && (i<1000))
+		str = "00";
+	if((i>=1000) & (i<10000))
+		str = "0";
+		
+	str = str + num;
+	
+	str= str + ".dcd\0";
+	
+	return str;
+	
+}
 
 
