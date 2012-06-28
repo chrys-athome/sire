@@ -353,7 +353,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	/*****************************************************************IMPORTANT********************************************************************/
 	
-	system_openmm.addForce(nonbond_openmm);	
+	
+	if(free_energy_calculation == false)
+		system_openmm.addForce(nonbond_openmm);	
 	
 	OpenMM::CustomNonbondedForce * custom_nonbond_SoluteSolvent_openmm=NULL;
 
@@ -374,7 +376,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 																			   		"sigma=0.5*(sigma1+sigma2);"
 																			   		"eps=sqrt(eps1*eps2)");	*/
 																			   		
-			custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "max(isSolute1,isSolute2)*(Hsoft - Hinter);"
+			/*custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "max(isSolute1,isSolute2)*(Hsoft - Hinter);"
 																					"Hinter=4.0*eps*(LJdel^2-LJdel)+138.935456*q/r;"
 																					"LJdel=(sigma/r)^6;"
 																					"Hsoft=Hc+Hl;"
@@ -388,8 +390,25 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 																					"soft=(diff_lj*delta*sigma+r^2);"
 																					"sigma=0.5*(sigma1+sigma2);"
 																					"diff_lj=(1.0-lam_lj);"
-																					"lam_lj=max(0,min(1,lambda))");
+																					"lam_lj=max(0,min(1,lambda))");*/
 																					
+			
+			custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "ZeroOne*(Hsoft)+ (1-ZeroOne)*(Hinter);"
+																					"Hinter=4.0*eps*(LJdel^2-LJdel)+138.935456*q/r;"
+																					"LJdel=(sigma/r)^6;"
+																					"ZeroOne=(isSolute1-isSolute2)^2;"
+																					"Hsoft=Hc+Hl;"
+																					"Hc=lam_cl^(n+1)*138.935456*q/sqrt(diff_cl+r^2);"
+																					"q=q1*q2;"
+																					"diff_cl=(1.0-lam_cl);"
+																					"lam_cl=min(1,max(0,lambda-1));"
+																					"Hl=lam_lj*4.0*eps*(LJ^2-LJ);"
+																					"eps=sqrt(eps1*eps2);"
+																					"LJ=(sigma^2/soft)^3;"
+																					"soft=(diff_lj*delta*sigma+r^2);"
+																					"sigma=0.5*(sigma1+sigma2);"
+																					"diff_lj=(1.0-lam_lj);"
+																					"lam_lj=max(0,min(1,lambda))");																	
 																			
 			
 			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
@@ -440,8 +459,27 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 																			   		"eps=sqrt(eps1*eps2)");*/
 																			   		
 								
-			custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "max(isSolute1,isSolute2)*(Hsoft-Hinter);"
+			/*custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "max(isSolute1,isSolute2)*(Hsoft-Hinter);"
 																					"Hinter=4*eps*(LJdel^2-LJdel)+138.935456*q*(1.0/r+(krf*r*r)-crf);"
+																					"LJdel=(sigma/r)^6;"
+																					"Hsoft=Hc+Hl;"
+																					"Hc=lam_cl^(n+1)*138.935456*q/sqrt(diff_cl+r^2);"
+																					"q=q1*q2;"
+																					"diff_cl=(1.0-lam_cl);"
+																					"lam_cl=min(1,max(0,lambda-1));"
+																					"Hl=lam_lj*4.0*eps*(LJ^2-LJ);"
+																					"eps=sqrt(eps1*eps2);"
+																					"LJ=(sigma^2/soft)^3;"
+																					"soft=(diff_lj*delta*sigma+r^2);"
+																					"sigma=0.5*(sigma1+sigma2);"
+																					"diff_lj=(1.0-lam_lj);"
+																					"lam_lj=max(0,min(1,lambda))");*/
+																					
+			
+			
+			custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "ZeroOne*(Hsoft)+(1-ZeroOne)*(Hinter);"
+																					"Hinter=4*eps*(LJdel^2-LJdel)+138.935456*q*(1.0/r+(krf*r*r)-crf);"
+																					"ZeroOne=(isSolute1-isSolute2)^2;"
 																					"LJdel=(sigma/r)^6;"
 																					"Hsoft=Hc+Hl;"
 																					"Hc=lam_cl^(n+1)*138.935456*q/sqrt(diff_cl+r^2);"
@@ -1199,7 +1237,15 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		cout << "NFREQ = "<< n_freq << "\n\n";
 		
+		
+		bool dcd = true;
+		
+		bool wrap = false;
+			
+		int frequency_dcd = 1;
+		
 	
+		
 		for (int i=0; i<Alchemical_values.size();i++){
 				
 							
@@ -1216,15 +1262,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			lam_val = context_openmm.getParameter("lambda");
 					
-			cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+			//cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
 				
-			bool dcd = true;
 		
-			bool wrap = false;
-			
-			int frequency_dcd = 10;
-
-			
 			for(int j=0;j<n_freq;j++){
 			
 				QString name = file_name(j);
@@ -1277,13 +1317,27 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 					
 				GB_acc = GB_acc + exp(-beta*(potential_energy_lambda_minus_delta - potential_energy_lambda));
 						
-				cout << "\nGF accumulator partial = " << GF_acc << " -- GB accumulator partial = " << GB_acc << "\n\n";
+				//cout << "\nGF accumulator partial = " << GF_acc << " -- GB accumulator partial = " << GB_acc << "\n\n";
 					
 				if(isnormal(GF_acc==0) || isnormal(GB_acc==0)){ 
 					cout << "\n\n ********************** ERROR NAN!! ****************************\n\n";
 					exit(-1); 
 						
 				}
+				
+				
+				double avg_GF = GF_acc /((double) j+1);
+			
+				double avg_GB = GB_acc /((double) j+1);
+				
+				double Energy_GF = -(1.0/beta)*log(avg_GF);
+			
+				double Energy_GB = -(1.0/beta)*log(avg_GB);
+				
+				
+				double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2.0 * delta);
+			
+				cout << "\n\nEnergy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
 					
 					
 				context_openmm.setParameter("lambda",Alchemical_values[i]);
@@ -1291,7 +1345,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				
 			}//end for cycle
 			
-			cout << "\n\nGF accumulator total = " << GF_acc << " ** GB accumulator total = " << GB_acc << "\n"; 
+			/*cout << "\n\nGF accumulator total = " << GF_acc << " ** GB accumulator total = " << GB_acc << "\n"; 
 			
 			double avg_GF = GF_acc / ((double) n_freq);
 			
@@ -1311,7 +1365,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2.0 * delta);
 			
-			cout << "\n\nEnergy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
+			cout << "\n\nEnergy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";*/
 			
 			
 			
@@ -1326,7 +1380,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
 		
-		timer_OUT.start();
+	
 	}
 	
 	else{/* ******************* MD ***********************/
@@ -1337,9 +1391,41 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		bool dcd = true;
 		
-		bool wrap = false;
-			
+		bool wrap = true;
+		
 		integrator("dynamic.dcd", context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , nmoves, frequency_dcd, flag_cutoff, nats);
+		
+		
+		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
+	
+	
+		state_openmm=context_openmm.getState(infoMask);	
+	
+		positions_openmm = state_openmm.getPositions();
+		
+		velocities_openmm = state_openmm.getVelocities();
+	
+	
+		cout<< "Total Time = " << state_openmm.getTime() << " ps"<<"\n\n";
+	
+	
+		kinetic_energy = state_openmm.getKineticEnergy(); 
+	
+		potential_energy = state_openmm.getPotentialEnergy(); 
+	
+	
+		cout<< "After MD" <<"\n";
+	
+		cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
+		 	 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
+		 	 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
+	
+		cout<<"\n";
+		
+		
+		
+		
+		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
 			
 	}
 	
