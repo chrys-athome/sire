@@ -792,7 +792,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				
 	    }
 	}
-		
+      
       //Improper Dihedrals
 
       QList<ImproperID> impropers_ff = amber_params.getAllImpropers();
@@ -835,7 +835,48 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	      //cout << "\n";
 	    }
 	}
-		
+
+      // Check whether positional restraints have been defined for a set of atoms in that molecule.
+      // You can get the information out by getting the property and casting to VariantProperty
+      //From VariantProperty you have the QVariant, so you can call .toDouble() and .toInt() there
+      //so VariantProperty num = mol.property(QString("AtomNum(%1)").arg(i)).asA<VariantProperty>();
+      //AtomNum atomnum( num.toInt() );
+      //double x = mol.property(QString("x(%1)").arg(i)).asA<VariantProperty>().toDouble();
+      //double y = ...; double z = ...;
+      //QVector< QPair<AtomNum,Vector> > vals;
+      //vals.append( QPair<AtomNum,Vector>(AtomNum(num.toInt()), Vector(x,y,z) ) );
+      
+      bool hasRestrainedAtoms = molecule.hasProperty("restrainedatoms");
+
+      //qDebug() << " molecule " << i << " restrainedAtoms? " << hasRestrainedAtoms ;
+      
+      if ( hasRestrainedAtoms )
+	{
+
+	  Properties restrainedAtoms = molecule.property("restrainedatoms").asA<Properties>();
+
+	  int nrestrainedatoms = restrainedAtoms.property(QString("nrestrainedatoms")).asA<VariantProperty>().toInt();
+
+	  qDebug() << " nrestrainedatoms " << nrestrainedatoms ;
+
+	  for (int i=0; i < nrestrainedatoms ; i++)
+	    {
+	      int atomindex = restrainedAtoms.property(QString("AtomNum(%1)").arg(i)).asA<VariantProperty>().toInt();
+	      double x = restrainedAtoms.property(QString("x(%1)").arg(i)).asA<VariantProperty>().toDouble();
+	      double y = restrainedAtoms.property(QString("y(%1)").arg(i)).asA<VariantProperty>().toDouble();
+	      double z = restrainedAtoms.property(QString("z(%1)").arg(i)).asA<VariantProperty>().toDouble();
+	      double k = restrainedAtoms.property(QString("k(%1)").arg(i)).asA<VariantProperty>().toDouble();
+
+	      qDebug() << " atomindex " << atomindex << " x " << x << " y " << y << " z " << z << " k " << k;
+
+	      //
+	      // Now create correct OpenMM custom force...
+	      //
+
+	    }
+
+	}
+	
       num_atoms_till_i = num_atoms_till_i + num_atoms_molecule ;
       
     }// end of loop over mols
