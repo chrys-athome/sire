@@ -6,6 +6,7 @@ set ( PYPP_SOURCES
        UniformSampler.pypp.cpp
        InternalMoveSingle.pypp.cpp
        DofID.pypp.cpp
+       OpenMMIntegrator.pypp.cpp
        Integrator.pypp.cpp
        NullGetPoint.pypp.cpp
        Dynamics.pypp.cpp
@@ -48,6 +49,7 @@ set ( PYPP_SOURCES
        SimPacket.pypp.cpp
        GetCOMPoint.pypp.cpp
        NullVolumeChanger.pypp.cpp
+       RBWorkspaceJM.pypp.cpp
        SupraSubSim.pypp.cpp
        NullMove.pypp.cpp
        VelocitiesFromProperty.pypp.cpp

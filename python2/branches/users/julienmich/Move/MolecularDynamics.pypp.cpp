@@ -83,7 +83,7 @@ void register_MolecularDynamics_class(){
             MolecularDynamics_exposer.def( 
                 "integrator"
                 , integrator_function_value
-                , bp::return_value_policy<bp::clone_const_reference>() );
+                , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
         { //::SireMove::MolecularDynamics::kineticEnergy
@@ -292,16 +292,6 @@ void register_MolecularDynamics_class(){
             MolecularDynamics_exposer.def( 
                 "spaceProperty"
                 , spaceProperty_function_value );
-        
-        }
-        { //::SireMove::MolecularDynamics::temperature
-        
-            typedef ::SireUnits::Dimension::Temperature ( ::SireMove::MolecularDynamics::*temperature_function_type )(  ) const;
-            temperature_function_type temperature_function_value( &::SireMove::MolecularDynamics::temperature );
-            
-            MolecularDynamics_exposer.def( 
-                "temperature"
-                , temperature_function_value );
         
         }
         { //::SireMove::MolecularDynamics::timeStep

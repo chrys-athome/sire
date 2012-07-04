@@ -102,6 +102,7 @@ set ( PYPP_SOURCES
        IDOrSet_ResID_.pypp.cpp
        ChainResID.pypp.cpp
        ConnectivityEditor.pypp.cpp
+       AmberParameters.pypp.cpp
        MolAtomID.pypp.cpp
        ChainProp.pypp.cpp
        ChainsWithAtoms.pypp.cpp
@@ -115,6 +116,7 @@ set ( PYPP_SOURCES
        ResIdx.pypp.cpp
        Mover_Molecule_.pypp.cpp
        CGAtomIdx.pypp.cpp
+       AtomCutting.pypp.cpp
        ResEditor.pypp.cpp
        AtomSelection.pypp.cpp
        CGProp.pypp.cpp

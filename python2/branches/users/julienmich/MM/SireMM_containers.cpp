@@ -47,6 +47,8 @@
 
 #include "SireBase/packedarray2d.hpp"
 
+#include "SireMM/cljpotentialjm.h"
+
 using namespace SireMM;
 
 using boost::python::register_tuple;
@@ -58,5 +60,7 @@ void register_SireMM_containers()
     register_list< QVector<TwoAtomFunction> >();
     register_list< QVector<ThreeAtomFunction> >();
     register_list< QVector<FourAtomFunction> >();
+
+    register_dict< QHash<int,double>, int, double >();
 
 }

@@ -18,10 +18,12 @@ def fix_Table(c):
 
 def fix_ForceFields(c):
    c.add_declaration_code("#include \"forcetable.h\"")
+   c.add_declaration_code("#include \"energytable.h\"")
 
 special_code = { "SireFF::ForceTable" : fix_Table,
                  "SireFF::FieldTable" : fix_Table,
                  "SireFF::PotentialTable" : fix_Table,
+                 "SireFF::EnergyTable" : fix_Table,
                  "SireFF::FFID" : fix_FFID,
                  "SireFF::FFIdx" : fix_FFID,
                  "SireFF::FFName" : fix_FFID,

@@ -29,7 +29,11 @@ namespace bp = boost::python;
 
 #include "SireMaths/maths.h"
 
+#include "SireMol/amberparameters.h"
+
 #include "SireMol/atomcharges.h"
+
+#include "SireMol/atomcutting.h"
 
 #include "SireMol/atomeditor.h"
 
@@ -69,6 +73,8 @@ namespace bp = boost::python;
 
 #include <QFile>
 
+#include <QHash>
+
 #include <QTextStream>
 
 #include "amber.h"
@@ -88,13 +94,13 @@ void register_Amber_class(){
         Amber_exposer.def( bp::init< >() );
         { //::SireIO::Amber::readCrdTop
         
-            typedef ::boost::tuples::tuple< SireMol::Molecules, SireBase::PropPtr< SireVol::Space >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireIO::Amber::*readCrdTop_function_type )( ::QString const &,::QString const & ) const;
+            typedef ::boost::tuples::tuple< SireMol::Molecules, SireBase::PropPtr< SireVol::Space >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireIO::Amber::*readCrdTop_function_type )( ::QString const &,::QString const &,::QString ) const;
             readCrdTop_function_type readCrdTop_function_value( &::SireIO::Amber::readCrdTop );
             
             Amber_exposer.def( 
                 "readCrdTop"
                 , readCrdTop_function_value
-                , ( bp::arg("crdfile"), bp::arg("topfile") ) );
+                , ( bp::arg("crdfile"), bp::arg("topfile"), bp::arg("flag_cutting")="perresidue" ) );
         
         }
         { //::SireIO::Amber::typeName
