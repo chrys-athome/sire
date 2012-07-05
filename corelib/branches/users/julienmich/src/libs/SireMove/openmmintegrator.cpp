@@ -426,6 +426,13 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
   OpenMM::HarmonicAngleForce * bondBend_openmm = new OpenMM::HarmonicAngleForce();
     
   OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
+
+  OpenMM::CustomExternalForce * positionalRestraints_openmm = new OpenMM::CustomExternalForce("k*( (x-xref)^2 + (y-yref)^2 + (z-zref)^2 )");
+
+  positionalRestraints_openmm->addPerParticleParameter("xref");
+  positionalRestraints_openmm->addPerParticleParameter("yref");
+  positionalRestraints_openmm->addPerParticleParameter("zref");	      
+  positionalRestraints_openmm->addPerParticleParameter("k");
     
   system_openmm.addForce(bondStretch_openmm);
     
@@ -433,6 +440,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
     
   system_openmm.addForce(bondTorsion_openmm);
 	
+  system_openmm.addForce(positionalRestraints_openmm);
 	
   std::vector<std::pair<int,int> > bondPairs;
 	
@@ -458,6 +466,15 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
   int system_index = 0;
 
+
+  const MoleculeGroup &molgroup = ws.moleculeGroup();
+
+
+  // To avoid possible mismatch between the index in which atoms are added to the openmm system arrays and 
+  // their atomic numbers in sire, one array is populated while filling up the openmm global arrays
+  //  AtomNumtoopenmmIndex
+  QHash<int, int> AtomNumToOpenMMIndex;
+
   //cout << "INITAL COORDINATES AND VELOCITIES\n\n";
 	
   //QElapsedTimer timer_IN;
@@ -482,9 +499,15 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
       //cout << "Molecule = " << i <<"\n";
 
+      MolNum molnum = molgroup.molNumAt(i);
+      const ViewsOfMol &molview = molgroup[molnum].data();
+      const Molecule &mol = molview.molecule();
+      Selector<Atom> molatoms = mol.atoms();
+
       for (int j=0; j < nats; ++j)
 	{
 	     
+
 	/*system_coords[ 3 * system_index + 0 ] = c[j].x() ;
 	  system_coords[ 3 * system_index + 1 ] = c[j].y() ;
 	  system_coords[ 3 * system_index + 2 ] = c[j].z() ;
@@ -504,7 +527,15 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	  //system_masses[system_index] = m[j] ;
 	     
 	  system_openmm.addParticle(m[j]) ;
-			     
+
+
+	  Atom at = molatoms.at(j);
+	  AtomNum atnum = at.number();
+
+	  //qDebug() << " openMM_index " << system_index << " Sire Atom Number " << atnum.toString();
+
+	  AtomNumToOpenMMIndex[atnum.value()] = system_index;
+
 	  system_index = system_index + 1;
 			
 	  /*cout <<"\n";
@@ -518,9 +549,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
       
     }
       
-  MoleculeGroup molgroup = ws.moleculeGroup();
-	
-	
   int num_atoms_till_i = 0;
 	
   for (int i=0; i < nmols ; i++)
@@ -861,17 +889,27 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	  for (int i=0; i < nrestrainedatoms ; i++)
 	    {
-	      int atomindex = restrainedAtoms.property(QString("AtomNum(%1)").arg(i)).asA<VariantProperty>().toInt();
-	      double x = restrainedAtoms.property(QString("x(%1)").arg(i)).asA<VariantProperty>().toDouble();
-	      double y = restrainedAtoms.property(QString("y(%1)").arg(i)).asA<VariantProperty>().toDouble();
-	      double z = restrainedAtoms.property(QString("z(%1)").arg(i)).asA<VariantProperty>().toDouble();
+	      int atomnum = restrainedAtoms.property(QString("AtomNum(%1)").arg(i)).asA<VariantProperty>().toInt();
+	      double xref = restrainedAtoms.property(QString("x(%1)").arg(i)).asA<VariantProperty>().toDouble();
+	      double yref = restrainedAtoms.property(QString("y(%1)").arg(i)).asA<VariantProperty>().toDouble();
+	      double zref = restrainedAtoms.property(QString("z(%1)").arg(i)).asA<VariantProperty>().toDouble();
 	      double k = restrainedAtoms.property(QString("k(%1)").arg(i)).asA<VariantProperty>().toDouble();
 
-	      qDebug() << " atomindex " << atomindex << " x " << x << " y " << y << " z " << z << " k " << k;
+	      int openmmindex = AtomNumToOpenMMIndex[atomnum];
 
-	      //
-	      // Now create correct OpenMM custom force...
-	      //
+	      qDebug() << " atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k;
+
+	      int posrestrdim = 4;
+
+	      std::vector<double> params(posrestrdim);
+
+	      params[0] = xref * OpenMM::NmPerAngstrom;
+	      params[1] = yref * OpenMM::NmPerAngstrom;
+	      params[2] = zref * OpenMM::NmPerAngstrom;
+	      params[3] = k  * ( OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm );
+	      
+
+	      positionalRestraints_openmm->addParticle(openmmindex, params);
 
 	    }
 
