@@ -103,6 +103,13 @@ public:
 
     void setCenterOfRotation(const GetPoint &center_function);
 
+    void setReflectionSphere(Vector sphere_center,
+                             SireUnits::Dimension::Length sphere_radius);
+
+    bool usesReflectionMoves() const;
+    Vector reflectionSphereCenter() const;
+    SireUnits::Dimension::Length reflectionSphereRadius() const;
+
     void setSynchronisedTranslation(bool on);
     void setSynchronisedRotation(bool on);
     void setSharedRotationCenter(bool on);
@@ -140,6 +147,15 @@ private:
     SireUnits::Dimension::Angle rdel;
     #endif
     
+    /** The center of the reflection sphere */
+    SireMaths::Vector reflect_center;
+
+    /** The radius^2 of the reflection sphere */
+    double reflect_radius2;
+
+    /** Whether or not to reflect the moves */
+    bool reflect_moves;
+
     /** Whether or not to synchronise the translation of all views */
     bool sync_trans;
     

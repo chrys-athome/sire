@@ -61,12 +61,14 @@ static const RegisterMetaType<RigidBodyMC> r_rbmc;
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const RigidBodyMC &rbmc)
 {
-    writeHeader(ds, r_rbmc, 4);
+    writeHeader(ds, r_rbmc, 5);
 
     SharedDataStream sds(ds);
 
     sds << rbmc.smplr << rbmc.center_function
         << rbmc.adel << rbmc.rdel
+        << rbmc.reflect_center << rbmc.reflect_radius2
+        << rbmc.reflect_moves
         << rbmc.sync_trans << rbmc.sync_rot << rbmc.common_center
         << static_cast<const MonteCarlo&>(rbmc);
 
@@ -80,7 +82,19 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 
     rbmc.center_function = GetCOGPoint();
 
-    if (v == 4)
+    if (v == 5)
+    {
+        SharedDataStream sds(ds);
+
+        sds >> rbmc.smplr >> rbmc.center_function
+            >> rbmc.adel >> rbmc.rdel
+            >> rbmc.reflect_center >> rbmc.reflect_radius2
+            >> rbmc.reflect_moves
+            >> rbmc.sync_trans >> rbmc.sync_rot
+            >> rbmc.common_center
+            >> static_cast<MonteCarlo&>(rbmc);
+    }
+    else if (v == 4)
     {
         SharedDataStream sds(ds);
         
@@ -124,7 +138,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
         rbmc.common_center = false;
     }
     else
-        throw version_error(v, "1,2,3,4", r_rbmc, CODELOC);
+        throw version_error(v, "1-5", r_rbmc, CODELOC);
 
     return ds;
 }
@@ -134,6 +148,7 @@ RigidBodyMC::RigidBodyMC(const PropertyMap &map)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(map),
               center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
+              reflect_center(0), reflect_radius2(0), reflect_moves(false),
               sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
@@ -141,10 +156,11 @@ RigidBodyMC::RigidBodyMC(const PropertyMap &map)
 
 /** Construct a move that moves molecules returned by the sampler 'sampler' */
 RigidBodyMC::RigidBodyMC(const Sampler &sampler, const PropertyMap &map)
-            : ConcreteProperty<RigidBodyMC,MonteCarlo>(map), 
+            : ConcreteProperty<RigidBodyMC,MonteCarlo>(map),
               smplr(sampler), center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ),
-              rdel( 15 * degrees ),
+              rdel( 15 * degrees ), 
+              reflect_center(0), reflect_radius2(0), reflect_moves(false),
               sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
@@ -160,6 +176,7 @@ RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup,
               smplr( UniformSampler(molgroup) ),
               center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
+              reflect_center(0), reflect_radius2(0), reflect_moves(false),
               sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
@@ -171,6 +188,9 @@ RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(other), 
               smplr(other.smplr), center_function(other.center_function),
               adel(other.adel), rdel(other.rdel),
+              reflect_center(other.reflect_center), 
+              reflect_radius2(other.reflect_radius2),
+              reflect_moves(other.reflect_moves),
               sync_trans(other.sync_trans), sync_rot(other.sync_rot),
               common_center(other.common_center)
 {}
@@ -193,6 +213,9 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
         center_function = other.center_function;
         adel = other.adel;
         rdel = other.rdel;
+        reflect_center = other.reflect_center;
+        reflect_radius2 = other.reflect_radius2;
+        reflect_moves = other.reflect_moves;
         sync_trans = other.sync_trans;
         sync_rot = other.sync_rot;
         common_center = other.common_center;
@@ -206,7 +229,10 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
 bool RigidBodyMC::operator==(const RigidBodyMC &other) const
 {
     return smplr == other.smplr and center_function == other.center_function and
-           adel == other.adel and rdel == other.rdel and 
+           adel == other.adel and rdel == other.rdel and
+           reflect_center == other.reflect_center and
+           reflect_radius2 == other.reflect_radius2 and
+           reflect_moves == other.reflect_moves and 
            sync_trans == other.sync_trans and sync_rot == other.sync_rot and
            common_center == other.common_center and
            MonteCarlo::operator==(other);
@@ -322,6 +348,45 @@ void RigidBodyMC::setSharedRotationCenter(bool on)
     common_center = on;
 }
 
+/** Turn on rigid body move reflections. This makes sure that only
+    molecules within the specified sphere can be moved, and any moves
+    are reflected so that these molecules will always remain within 
+    the sphere */
+void RigidBodyMC::setReflectionSphere(Vector sphere_center,
+                                      SireUnits::Dimension::Length sphere_radius)
+{
+    reflect_moves = true;
+    reflect_center = sphere_center;
+    reflect_radius2 = SireMaths::pow_2( sphere_radius.value() );
+
+    if (reflect_radius2 < 0.01)
+    {
+        reflect_moves = false;
+        reflect_center = Vector(0);
+        reflect_radius2 = 0;
+    }
+}
+
+/** Return whether or not these moves use a reflection sphere */
+bool RigidBodyMC::usesReflectionMoves() const
+{
+    return reflect_moves;
+}
+
+/** Return the center of the reflection sphere. Returns a null vector
+    if a reflection sphere is not being used */
+Vector RigidBodyMC::reflectionSphereCenter() const
+{
+    return reflect_center;
+}
+
+/** Return the radius of the reflection sphere. This returns zero
+    if the reflection sphere is not being used */
+SireUnits::Dimension::Length RigidBodyMC::reflectionSphereRadius() const
+{
+    return SireUnits::Dimension::Length( std::sqrt(reflect_radius2) );
+}
+
 /** Return whether or not translation of all molecules is synchronised */
 bool RigidBodyMC::synchronisedTranslation() const
 {
@@ -351,7 +416,7 @@ void RigidBodyMC::performMove(System &system,
 
     //get the random amounts by which to translate and
     //rotate the molecule(s)
-    const Vector delta = generator().vectorOnSphere(adel);
+    Vector delta = generator().vectorOnSphere(adel);
 
     const Quaternion rotdelta( rdel * generator().rand(),
                                generator().vectorOnSphere() );
@@ -363,6 +428,146 @@ void RigidBodyMC::performMove(System &system,
 
         const PartialMolecule &oldmol = mol_and_bias.get<0>();
         old_bias = mol_and_bias.get<1>();
+
+        //if we are reflecting moves in a sphere, then check that this move
+        //won't take us out of the sphere.
+        if (reflect_moves)
+        {
+            //moves are constrained into a sphere of radius reflect_radius
+            //around reflect_center. If the center of geometry moves outside
+            //the sphere, then the molecule will bounce off the edge of 
+            //the sphere and back into the sphere volume
+
+            Vector mol_center = oldmol.evaluate().center();
+
+            if ( (mol_center-reflect_center).length2() > reflect_radius2 )
+            {
+                //the molecule is already outside the sphere, so cannot be moved
+                old_bias = 1;
+                new_bias = 1;
+                return;
+            }
+
+            Vector new_center = mol_center + delta;
+
+            double dist2 = (new_center - reflect_center).length2();
+
+            if (dist2 > reflect_radius2)
+            {
+                //this would move the molecule out of the sphere. We need
+                //to work out where the molecule would intersect the surface
+                //of the sphere, and then reflect the molecule back inside
+
+                //first, find the intersection of the delta vector with the sphere.
+                // The delta vector has origin at O, direction D. The sphere
+                // is at origin C, with radius R
+                Vector D = delta.normalise();
+                Vector O = mol_center;
+                Vector C = reflect_center;
+                double R2 = reflect_radius2;
+
+                //a point P is on the surface of the sphere if (P-C).(P-C) = R^2
+                //this means that the intersection of the vector with the sphere
+                //must satisfy ( (O + iD) - C ).( (O + iD) - C ) = R^2
+                // This gives;
+                // (D.D) x^2 + 2 ( O-C ).D x + (O-C).(O-C) - R^2 = 0
+                // which is A x^2 + B x + C = 0, where
+                //
+                // A = D.D
+                // B = 2 (O-C).D
+                // C = (O-C).(O-C) - R^2
+                //
+                // which can be solved using the quadratic formula
+                //
+                // roots = [-B - sqrt(B^2 - 4AC)] / 2A
+                //       = [-B + sqrt(B^2 - 4AC)] / 2A
+                //
+                // To avoid numerical instability, we use;
+                //
+                // roots = Q / A and C / Q where
+                //
+                // Q = [-B + sqrt(B^2 - 4AC)] / 2   if B < 0
+                // Q = [-B - sqrt(B^2 - 4AC)] / 2   otherwise
+
+                double QA = Vector::dot(D,D);
+                double QB = 2.0 * Vector::dot( O-C, D );
+                double QC = Vector::dot(O-C, O-C) - R2;
+
+                double B2_minus_4AC = QB*QB - 4*QA*QC;
+
+                if (B2_minus_4AC < 0)
+                {
+                    //the move does not intersect with the sphere... weird...
+                    old_bias = 1;
+                    new_bias = 1;
+                    return;
+                }
+
+                double Q;
+
+                if (QB < 0)
+                {
+                    Q = (-QB - std::sqrt(B2_minus_4AC)) * 0.5;
+                }
+                else
+                {
+                    Q = (-QB + std::sqrt(B2_minus_4AC)) * 0.5;
+                }
+
+                double x0 = Q / QA;
+                double x1 = QC / Q;
+
+                if (x0 > x1){ qSwap(x0,x1); }
+
+                if (x1 < 0)
+                {
+                    //the intersection is behind us...
+                    qDebug() << "Intersection behind us..." << x1;
+                    old_bias = 1.0;
+                    new_bias = 1.0;
+                    return;
+                }
+
+                double x = x0;
+
+                if (x0 < 0){ x = x1; }
+
+                //the intersection point, X, is O + xD
+                Vector X = O + x*D;
+
+                qDebug() << "Reflect at " << X.toString() << (X-C).length() << std::sqrt(R2);
+
+                //ok - now we have the intersection point, the next step is to 
+                //get the normal (N) to the sphere at this point, as this defines the
+                //reflection plane
+                Vector N = (X - C).normalise();
+
+                //We want to reflect the unit vector that intersects with the 
+                //sphere about this normal
+                Vector X1 = X - D;
+                Vector X2 = X1 + 2 * ( (X - Vector::dot(D,N)*N) - X1 );
+
+                //X2 is the reflected vector. Now work out how much we have
+                //moved along X1, and then move that same amount along X2
+                double dist_x1 = (X-O).length();
+                double dist_x2 = delta.length() - dist_x1;
+
+                if (dist_x2 < 0)
+                {
+                    qDebug() << "WEIRD. NEGATIVE REFLECTION DISTANCE???";
+                    old_bias = 1.0;
+                    new_bias = 1.0;
+                    return;
+                }
+
+                //work out where the new center of the molecule should lie
+                Vector new_center = X + dist_x2*(X2-X);
+
+                //this allows us to calculate the correct delta that
+                //would reflect the molecule off the boundary of the sphere
+                delta = new_center - mol_center;
+            } 
+        }
 
         PartialMolecule newmol = oldmol.move()
                                        .rotate(rotdelta,
