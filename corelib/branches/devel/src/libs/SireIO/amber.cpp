@@ -108,7 +108,8 @@ public:
 };
 
 /** enumerates the FLAGS in a TOP file*/
-enum { TITLE = 1, //a TITLE flag in a top file
+enum { UNKNOWN = 0, //a flag that is not known, e.g. in newer format top files
+       TITLE = 1, //a TITLE flag in a top file
        POINTERS = 2, // a POINTERS flag in a top file
        ATOM_NAME = 3, //a ATOM_NAME flag in a top file
        CHARGE = 4, //a CHARGE flag in a top file
@@ -280,10 +281,11 @@ static void processFlagLine(const QStringList &words, int &flag)
         flag = RADII;
     else if (words[1] == "SCREEN")
         flag = SCREEN;
+    else if (words[1] == "ATOMIC_NUMBER")
+        flag = UNKNOWN;
     else
-        throw SireError::program_bug( QObject::tr(
-                "Does not know what to do with this flag: '%1'").arg(words[1]), 
-                    CODELOC );
+        throw SireError::unsupported( QObject::tr(
+                  "The flag \"%1\" is not supported...").arg(words[1]), CODELOC );
 }
 
 /** Processes a line that starts with %FORMAT*/
@@ -1555,6 +1557,9 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
                     break;
                 case SCREEN:
                     processDoubleLine(line, currentFormat, screen);
+                    break;
+                case UNKNOWN:
+                    //processUnknownLine(line, currentFormat);
                     break;
                 default:
                     throw SireError::program_bug( QObject::tr(
