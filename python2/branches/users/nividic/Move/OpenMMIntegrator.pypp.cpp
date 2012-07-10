@@ -31,6 +31,8 @@ namespace bp = boost::python;
 
 #include "SireMol/connectivity.h"
 
+#include "SireMol/mgname.h"
+
 #include "SireMol/molecule.h"
 
 #include "SireMol/moleculegroup.h"
@@ -57,11 +59,13 @@ namespace bp = boost::python;
 
 #include "ensemble.h"
 
+#include "fastio.h"
+
 #include "openmmintegrator.h"
 
-#include <QElapsedTimer>
+#include <QDebug>
 
-#include <fstream>
+#include <QElapsedTimer>
 
 #include <iomanip>
 
