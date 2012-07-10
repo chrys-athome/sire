@@ -67,7 +67,7 @@
 #include "SireMaths/vector.h"
 #include "SireMol/mgname.h"
 #include <iostream>
-#include <QElapsedTimer>
+/*#include <QElapsedTimer>*/
 #include <iomanip>
 #include "fastio.h"
 #include <QDebug>
@@ -494,8 +494,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "ZeroOne*(Hsoft)+(1-ZeroOne)*(Hinter);"
 																					"Hinter=4*eps*(LJdel^2-LJdel)+138.935456*q*(1.0/r+(krf*r*r)-crf);"
-																					"ZeroOne=(isSolute1-isSolute2)^2;"
 																					"LJdel=(sigma/r)^6;"
+																					"ZeroOne=(isSolute1-isSolute2)^2;"
 																					"Hsoft=Hc+Hl;"
 																					"Hc=(lam_cl^(n+1))*138.935456*q/sqrt(diff_cl+r^2);"
 																					"q=q1*q2;"
@@ -508,7 +508,19 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 																					"sigma=0.5*(sigma1+sigma2);"
 																					"diff_lj=(1.0-lam_lj);"
 																					"lam_lj=max(0,min(1,lambda))");
-																																												   		
+																			
+																					
+																					
+																					
+			
+			custom_bonded_openmm = new OpenMM::CustomBondForce("L_scale*4.0*eps_avg*(LJdel^2-LJdel)+C_scale*138.935456*q_prod/r;"
+															   "LJdel=(sigma_avg/r)^6");
+															   
+															   
+			
+			custom_bonded_openmm->addGlobalParameter("L_scale",LennardJones14Scale);
+			
+			custom_bonded_openmm->addGlobalParameter("C_scale",Coulob14Scale);	 																																											   		
 																			   		
 			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
 		
@@ -524,9 +536,15 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("krf",kValue);
 			
+			//custom_bonded_openmm->addGlobalParameter("krf",kValue);
+			
+			
 			double cValue = (1.0/converted_cutoff_distance)*(3.0*field_dielectric)/(2.0*field_dielectric+1.0);
 			
+			
 			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("crf",cValue);
+			
+			//custom_bonded_openmm->addGlobalParameter("crf",cValue);
 			
 			
 			custom_nonbond_SoluteSolvent_openmm->setCutoffDistance(converted_cutoff_distance);
@@ -632,9 +650,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	//cout << "INITAL COORDINATES AND VELOCITIES\n\n";
 	
-	QElapsedTimer timer_IN;
+	//QElapsedTimer timer_IN;
 	
-	timer_IN.start();
+	//timer_IN.start();
 	
 	for (int i=0; i < nmols; ++i){
 	
@@ -1120,7 +1138,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	int num_ex=nonbond_openmm->getNumExceptions();
 	
-	//cout << "\n\n NUM pair excluded = " << num_ex <<"\n";
+	cout << "\n\n NUM pair excluded = " << num_ex <<"\n";
 	
 	if(free_energy_calculation == true){
 	
@@ -1160,8 +1178,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 					custom_bonded_openmm->addBond(p1,p2,params);
 					
 					
-					/*cout <<"(" << p1 << " , " << p2 << ")" << " charge prod = " 
-					 << params[0] << " sigma_avg  = " << params[1] << " epsilon_avg = " << params[2] << "\n";*/
+					cout <<"(" << p1 << " , " << p2 << ")" << " charge prod = " 
+					 << params[0] << " sigma_avg  = " << params[1] << " epsilon_avg = " << params[2] << "\n";
 				
 				}
 			    
@@ -1255,7 +1273,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	
 	
-	cout << "\nCOPY IN Simulation time = " << timer_IN.elapsed() / 1000.0 << " s"<<"\n\n";
+	//cout << "\nCOPY IN Simulation time = " << timer_IN.elapsed() / 1000.0 << " s"<<"\n\n";
 	
 	
 	cout << "\n\nREMARK  Using OpenMM platform = " <<context_openmm.getPlatform().getName().c_str()<<"\n";
@@ -1292,11 +1310,11 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	//Time benchmark
 	
-	QElapsedTimer timer_MD;
+	/*QElapsedTimer timer_MD;
 	
 	QElapsedTimer timer_OUT;
 	
-	timer_MD.start();
+	timer_MD.start();*/
 	
 	//MD SIMULATION FOR NMOVES
 	
@@ -1323,7 +1341,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		cout << "NFREQ = "<< n_freq << "\n\n";
 		
 		
-		bool dcd = false;
+		bool dcd = true;
 		
 		bool wrap = false;
 			
@@ -1349,6 +1367,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 					
 			cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
 				
+		
 		
 			/*for(int j=0;j<n_freq;j++){
 			
@@ -1466,14 +1485,14 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 		}
 		
-		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
+		//cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
 		
 	
 	}
 	
 	else{/* ******************* MD ***********************/
 		
-		timer_OUT.start();
+		//timer_OUT.start();
 		
 		int frequency_dcd = 10;
 		
@@ -1484,7 +1503,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		integrator("dynamic.dcd", context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , nmoves, frequency_dcd, flag_cutoff, nats);
 		
 		
-		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
+		//cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
 	
 	
 		state_openmm=context_openmm.getState(infoMask);	
@@ -1513,13 +1532,13 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		
 		
-		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
+		//cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
 		
 		
 	}
 	
 	
-	timer_OUT.start();
+	//timer_OUT.start();
 	
 
 	
@@ -1594,7 +1613,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
         
         
         
-    cout << "\n\nCOPY OUT Simulation time = " << timer_OUT.elapsed() / 1000.0 << " s"<<"\n\n";    
+    //cout << "\n\nCOPY OUT Simulation time = " << timer_OUT.elapsed() / 1000.0 << " s"<<"\n\n";    
         
 	
 	/*cout << "FINAL COORDINATES AND VELOCITIES AFTER COMMIT" <<"\n\n";
