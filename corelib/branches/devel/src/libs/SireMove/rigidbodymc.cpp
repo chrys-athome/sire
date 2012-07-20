@@ -468,7 +468,7 @@ void RigidBodyMC::performMove(System &system,
 
                 //a point P is on the surface of the sphere if (P-C).(P-C) = R^2
                 //this means that the intersection of the vector with the sphere
-                //must satisfy ( (O + iD) - C ).( (O + iD) - C ) = R^2
+                //must satisfy ( (O + xD) - C ).( (O + xD) - C ) = R^2
                 // This gives;
                 // (D.D) x^2 + 2 ( O-C ).D x + (O-C).(O-C) - R^2 = 0
                 // which is A x^2 + B x + C = 0, where
@@ -561,7 +561,7 @@ void RigidBodyMC::performMove(System &system,
                 }
 
                 //work out where the new center of the molecule should lie
-                Vector new_center = X + dist_x2*(X2-X);
+                Vector new_center = X + dist_x2*((X2-X).normalise());
 
                 //this allows us to calculate the correct delta that
                 //would reflect the molecule off the boundary of the sphere
