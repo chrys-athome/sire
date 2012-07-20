@@ -30,6 +30,8 @@
 #include <QDomDocument>
 #include <QSet>
 
+#include <limits>
+
 #include <QDebug>
 
 #include "SireSim/values.h"

@@ -707,6 +707,16 @@ const char* IndexList::what() const
     return IndexList::typeName();
 }
 
+QList<int> my_append(QList<int> one, QList<int> two)
+{
+    foreach (int val, two)
+    {
+        one.append(val);
+    }
+
+    return one;
+}
+
 /** Return the complete set of indicies, given a container containing
     'nvalues' objects */
 QList<int> IndexList::indicies(int nvalues) const
@@ -717,7 +727,7 @@ QList<int> IndexList::indicies(int nvalues) const
     {
         foreach (const Range &idx, idxs)
         {
-            ret.append( idx.indicies(nvalues) );
+            ret = my_append( ret, idx.indicies(nvalues) );
         }
     }
     else
@@ -745,7 +755,7 @@ QList<int> IndexList::indicies(int nvalues) const
                 }
             }
             
-            ret.append(idxs_i);
+            ret = my_append(ret, idxs_i);
         }
     }
     
