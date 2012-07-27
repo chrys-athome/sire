@@ -535,7 +535,7 @@ void RigidBodyMC::performMove(System &system,
                 //the intersection point, X, is O + xD
                 Vector X = O + x*D;
 
-                qDebug() << "Reflect at " << X.toString() << (X-C).length() << std::sqrt(R2);
+                //qDebug() << "Reflect at " << X.toString() << (X-C).length() << std::sqrt(R2);
 
                 //ok - now we have the intersection point, the next step is to 
                 //get the normal (N) to the sphere at this point, as this defines the

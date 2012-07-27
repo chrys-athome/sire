@@ -1298,7 +1298,7 @@ void MoleculeGroup::add(const ViewsOfMol &molviews)
     
     quint32 nviews = dref.molecules.nViews(molnum);
     
-    for (quint32 i = nviews - molviews.count() - 1; i < nviews; ++i)
+    for (quint32 i = nviews - molviews.count(); i < nviews; ++i)
     {
         dref.molviewidx_to_num.append( tuple<MolNum,Index>(molnum,Index(i)) );
     }
