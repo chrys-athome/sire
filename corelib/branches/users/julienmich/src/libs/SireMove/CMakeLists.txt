@@ -21,7 +21,7 @@ set ( SIREMOVE_HEADERS
       hybridmc.h
       integrator.h
       integratorworkspace.h
-      integratorworkspacejm.h
+      #integratorworkspacejm.h
       internalmove.h
       internalmovesingle.h
       moldeleter.h
@@ -31,10 +31,10 @@ set ( SIREMOVE_HEADERS
       move.h
       moves.h
       mtsmc.h
-      openmmintegrator.h	
+      #openmmintegrator.h	
       prefsampler.h
       rbworkspace.h 
-      rbworkspacejm.h
+      #rbworkspacejm.h
       repexmove.h
       replica.h
       replicas.h
@@ -84,7 +84,7 @@ set ( SIREMOVE_SOURCES
       hybridmc.cpp
       integrator.cpp
       integratorworkspace.cpp
-      integratorworkspacejm.cpp
+      #integratorworkspacejm.cpp
       internalmove.cpp
       internalmovesingle.cpp
       moldeleter.cpp
@@ -94,10 +94,10 @@ set ( SIREMOVE_SOURCES
       move.cpp
       moves.cpp
       mtsmc.cpp
-      openmmintegrator.cpp
+      #openmmintegrator.cpp
       prefsampler.cpp
       rbworkspace.cpp
-      rbworkspacejm.cpp
+      #rbworkspacejm.cpp
       repexmove.cpp
       replica.cpp
       replicas.cpp
@@ -134,15 +134,15 @@ set ( SIREMOVE_SOURCES
 
 add_library (SireMove ${SIREMOVE_SOURCES})
 
-set (Path "/home/julien/local/openmm-4.0/")
+#set (Path "/home/julien/local/openmm-4.0/")
 
-find_library(OPENMM_LIBRARY 
-			NAMES 
-			OpenMM 
-			PATHS
-			${Path}/lib)
-
-message ("Dir = ${OPENMM_LIBRARY}")
+#find_library(OPENMM_LIBRARY 
+#			NAMES 
+#			OpenMM 
+#			PATHS
+#			${Path}/lib)
+#
+#message ("Dir = ${OPENMM_LIBRARY}")
 
 
 set_target_properties (SireMove PROPERTIES
@@ -156,7 +156,7 @@ target_link_libraries (SireMove
                        SireMaths
                        SireCluster
                        SireStream
-                       ${OPENMM_LIBRARY}
+                       #${OPENMM_LIBRARY}
                        )
 
 # installation

@@ -97,8 +97,10 @@ QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds,
 	<< pertstemplate.finalbondsk << pertstemplate.finalbondsr
 	<< pertstemplate.initanglesk << pertstemplate.initanglest
 	<< pertstemplate.finalanglesk << pertstemplate.finalanglest
-        << pertstemplate.initdihpotential << pertstemplate.finaldihpotential
-        << pertstemplate.initimppotential << pertstemplate.finalimppotential;
+      //<< pertstemplate.initdihpotential << pertstemplate.finaldihpotential
+	<< pertstemplate.initdihparams << pertstemplate.finaldihparams 
+      //<< pertstemplate.initimppotential << pertstemplate.finalimppotential;
+	<< pertstemplate.initimpparams << pertstemplate.finalimpparams;
         
     return ds;
 }
@@ -119,8 +121,10 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, PerturbationsTemplate &pe
 	    >> pertstemplate.finalbondsk >> pertstemplate.finalbondsr
 	    >> pertstemplate.initanglesk >> pertstemplate.initanglest
 	    >> pertstemplate.finalanglesk >> pertstemplate.finalanglest
-            >> pertstemplate.initdihpotential >> pertstemplate.finaldihpotential
-            >> pertstemplate.initimppotential >> pertstemplate.finalimppotential;
+	  //>> pertstemplate.initdihpotential >> pertstemplate.finaldihpotential
+	    >> pertstemplate.initdihparams >> pertstemplate.finaldihparams
+	  //>> pertstemplate.initimppotential >> pertstemplate.finalimppotential;
+	    >> pertstemplate.initimpparams >> pertstemplate.finalimpparams;
 
     }
     else
@@ -147,10 +151,14 @@ PerturbationsTemplate::PerturbationsTemplate(const PerturbationsTemplate &other)
 		      finalbondsr(other.finalbondsr), initanglesk(other.initanglesk),
 		      initanglest(other.initanglest),finalanglesk(other.finalanglesk),
 		      finalanglest(other.finalanglest),
-                      initdihpotential(other.initdihpotential), 
-                      finaldihpotential(other.finaldihpotential),
-                      initimppotential(other.initimppotential), 
-                      finalimppotential(other.finalimppotential)
+                      //initdihpotential(other.initdihpotential), 
+                      //finaldihpotential(other.finaldihpotential),
+		      initdihparams(other.initdihparams),
+		      finaldihparams(other.finaldihparams),
+                      //initimppotential(other.initimppotential), 
+                      //finalimppotential(other.finalimppotential)
+		      initimpparams(other.initimpparams),
+		      finalimpparams(other.finalimpparams)
 {}
 
 /** Destructor */
@@ -182,10 +190,14 @@ PerturbationsTemplate& PerturbationsTemplate::operator=(const PerturbationsTempl
 	initanglest = other.initanglest;
 	finalanglesk = other.finalanglesk;
 	finalanglest = other.finalanglest;
-        initdihpotential = other.initdihpotential;
-        finaldihpotential = other.finaldihpotential;
-        initimppotential = other.initimppotential;
-        finalimppotential = other.finalimppotential;
+        //initdihpotential = other.initdihpotential;
+        //finaldihpotential = other.finaldihpotential;
+	initdihparams = other.initdihparams;
+	finaldihparams = other.finaldihparams;
+        //initimppotential = other.initimppotential;
+        //finalimppotential = other.finalimppotential;
+	initimpparams = other.initimpparams;
+	finalimpparams = other.finalimpparams;
     }
     
     return *this;
@@ -203,8 +215,10 @@ bool PerturbationsTemplate::operator==(const PerturbationsTemplate &other) const
 	    finalbondsk == other.finalbondsk and finalbondsr == other.finalbondsr and 
 	    initanglesk == other.initanglesk and initanglest == other.initanglest and 
 	    finalanglesk == other.finalanglesk and finalanglest == other.finalanglest and
-            initdihpotential == other.initdihpotential and finaldihpotential == other.finaldihpotential and
-            initimppotential == other.initimppotential and finalimppotential == other.finalimppotential);
+            //initdihpotential == other.initdihpotential and finaldihpotential == other.finaldihpotential and
+	    initdihparams == other.initdihparams and finaldihparams == other.finaldihparams and
+            //initimppotential == other.initimppotential and finalimppotential == other.finalimppotential
+	    initimpparams == other.initimpparams and finalimpparams == other.finalimpparams);
 }
 
 /** Comparison operator */
@@ -413,36 +427,66 @@ QList<AngleID> PerturbationsTemplate::getAngles() const
   return initanglesk.keys();
 }
 
-void PerturbationsTemplate::setInitDihPotential(const DihedralID &dihedral, const Expression &pot)
+//void PerturbationsTemplate::setInitDihPotential(const DihedralID &dihedral, const Expression &pot)
+//{
+// initdihpotential.insert(dihedral, pot);
+//}
+
+void PerturbationsTemplate::setInitDihParams(const DihedralID &dihedral, const QList<double> &params)
 {
-  initdihpotential.insert(dihedral, pot);
+ initdihparams.insert(dihedral, params);
 }
 
-Expression PerturbationsTemplate::getInitDihPotential(const DihedralID &dihedral) const
+
+//Expression PerturbationsTemplate::getInitDihPotential(const DihedralID &dihedral) const
+//{
+//  if ( not initdihpotential.contains(dihedral) )
+//    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(dihedral.toString()) );
+//  else
+//    return initdihpotential.value(dihedral);
+//}
+
+QList<double> PerturbationsTemplate::getInitDihParams(const DihedralID &dihedral) const
 {
-  if ( not initdihpotential.contains(dihedral) )
+  if ( not initdihparams.contains(dihedral) )
     throw SireError::invalid_key( QObject::tr("No value for key %1").arg(dihedral.toString()) );
   else
-    return initdihpotential.value(dihedral);
+    return initdihparams.value(dihedral);
 }
 
-void PerturbationsTemplate::setFinalDihPotential(const DihedralID &dihedral, const Expression &pot)
+//void PerturbationsTemplate::setFinalDihPotential(const DihedralID &dihedral, const Expression &pot)
+//{
+//  finaldihpotential.insert(dihedral, pot);
+//}
+
+void PerturbationsTemplate::setFinalDihParams(const DihedralID &dihedral, const QList<double> &params)
 {
-  finaldihpotential.insert(dihedral, pot);
+  finaldihparams.insert(dihedral, params);
 }
 
-Expression PerturbationsTemplate::getFinalDihPotential(const DihedralID &dihedral) const
+
+//Expression PerturbationsTemplate::getFinalDihPotential(const DihedralID &dihedral) const
+//{
+//  if ( not finaldihpotential.contains(dihedral) )
+//    throw SireError::invalid_key( QObject::tr("No value for key %1").arg(dihedral.toString()) );
+//  else
+//    return finaldihpotential.value(dihedral);
+//}
+
+QList<double> PerturbationsTemplate::getFinalDihParams(const DihedralID &dihedral) const
 {
-  if ( not finaldihpotential.contains(dihedral) )
+  if ( not finaldihparams.contains(dihedral) )
     throw SireError::invalid_key( QObject::tr("No value for key %1").arg(dihedral.toString()) );
   else
-    return finaldihpotential.value(dihedral);
+    return finaldihparams.value(dihedral);
 }
+
 
 QList<DihedralID> PerturbationsTemplate::getDihedrals() const
 {
   // Need to fix this...
-  return initdihpotential.keys();
+  //return initdihpotential.keys();
+  return initdihparams.keys();
 }
 
 
@@ -603,36 +647,36 @@ QList<DihedralID> PerturbationsTemplate::getDihedrals() const
 //    return finalimpropersphase.value(improper);
 //}
 
-void PerturbationsTemplate::setInitImpPotential(const ImproperID &improper, const Expression &pot)
+void PerturbationsTemplate::setInitImpParams(const ImproperID &improper, const QList<double> &params)
 {
-  initimppotential.insert(improper, pot);
+  initimpparams.insert(improper, params);
 }
 
-Expression PerturbationsTemplate::getInitImpPotential(const ImproperID &improper) const
+QList<double> PerturbationsTemplate::getInitImpParams(const ImproperID &improper) const
 {
-  if ( not initimppotential.contains(improper) )
+  if ( not initimpparams.contains(improper) )
     throw SireError::invalid_key( QObject::tr("No value for key %1").arg(improper.toString()) );
   else
-    return initimppotential.value(improper);
+    return initimpparams.value(improper);
 }
 
-void PerturbationsTemplate::setFinalImpPotential(const ImproperID &improper, const Expression &pot)
+void PerturbationsTemplate::setFinalImpParams(const ImproperID &improper, const QList<double> &params)
 {
-  finalimppotential.insert(improper, pot);
+  finalimpparams.insert(improper, params);
 }
 
-Expression PerturbationsTemplate::getFinalImpPotential(const ImproperID &improper) const
+QList<double> PerturbationsTemplate::getFinalImpParams(const ImproperID &improper) const
 {
-  if ( not finalimppotential.contains(improper) )
+  if ( not finalimpparams.contains(improper) )
     throw SireError::invalid_key( QObject::tr("No value for key %1").arg(improper.toString()) );
   else
-    return finalimppotential.value(improper);
+    return finalimpparams.value(improper);
 }
 
 QList<ImproperID> PerturbationsTemplate::getImpropers() const
 {
   // Need to fix this...
-  return initimppotential.keys();
+  return initimpparams.keys();
 }
 
 
@@ -836,6 +880,8 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
     QString atom2 = " ";
     QString atom3 = " ";
     // dihedral parameters
+    QList<double> init_form;
+    QList<double> final_form;
     Expression init_pot = Expression(0);
     Expression final_pot = Expression(0);
 
@@ -961,7 +1007,9 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    atom1 = " " ;
 	    atom2 = " ";
 	    atom3 = " ";
-
+	    
+	    init_form.clear();
+	    final_form.clear();
             init_pot = Expression(0);
             final_pot = Expression(0);
 
@@ -1007,6 +1055,24 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    rf = words[1].toDouble();
 	    continue;
 	  }
+	if ( line.startsWith("initial_form") and indihedral )
+	  {
+	    for (int i=1 ; i < words.length() ; i++)
+	      {
+		double parameter = words[i].toDouble();
+		init_form.append(parameter);
+	      }
+	    continue;
+	  }
+	if ( line.startsWith("final_form") and indihedral )
+	  {
+	    for (int i=1 ; i < words.length() ; i++)
+	      {
+		double parameter = words[i].toDouble();
+		final_form.append(parameter);
+	      }
+	    continue;
+	  }	
 	if ( line.startsWith("initial_expression") and indihedral )
 	  {
 	    QByteArray b = words[1].toAscii();
@@ -1055,8 +1121,11 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    //qDebug() << " INIT POT " << init_pot.toString();
 	    //qDebug() << " FINAL POT " << final_pot.toString();
 
-            new_templates[current].setInitDihPotential( dihedral, init_pot);
-            new_templates[current].setFinalDihPotential( dihedral, final_pot);
+            //new_templates[current].setInitDihPotential( dihedral, init_pot);
+            //new_templates[current].setFinalDihPotential( dihedral, final_pot);
+
+	    new_templates[current].setInitDihParams( dihedral, init_form);
+	    new_templates[current].setFinalDihParams( dihedral, final_form);
 	    indihedral = false;
 	    continue;
 	  }
@@ -1064,8 +1133,9 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	  {
 	    ImproperID improper = ImproperID( AtomName(atom0), AtomName(atom1), AtomName(atom2), AtomName(atom3) );
 	    //qDebug() << improper.toString() << atom0 << atom1 << atom2 << atom3 << k0i << ni << phasei << k0f << nf << phasef;
-            new_templates[current].setInitImpPotential( improper, init_pot);
-            new_templates[current].setFinalImpPotential( improper, final_pot);
+
+            //new_templates[current].setInitImpPotential( improper, init_pot);
+            //new_templates[current].setFinalImpPotential( improper, final_pot);
 
 	    indihedral = false;
 	    continue;
@@ -1291,6 +1361,8 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
       AtomIdx atom2 = editmol.select( dihedral.atom2() ).index();
       AtomIdx atom3 = editmol.select( dihedral.atom3() ).index();
 
+      Symbol phi = InternalPotential::symbols().dihedral().phi();
+
       //Expression dihedralfunc_i = pert.getInitDihPotential(dihedral);
       //Expression dihedralfunc_f = pert.getFinalDihPotential(dihedral);      
 
@@ -1301,6 +1373,8 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
       QList<double> init_params = pert.getInitDihParams(dihedral);
 
       // Check that the length is a multiple of 3
+
+      //qDebug() << "dihedral params init " << init_params;
 
       if ( ( init_params.size() % 3 ) != 0)
 	{
@@ -1322,7 +1396,25 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
 	}
       
       QList<double> final_params = pert.getFinalDihParams(dihedral);
-      
+
+      if ( ( final_params.size() % 3 ) != 0)
+	{
+	  throw SireError::program_bug( QObject::tr(
+		     "Non standard number of parameters in perturbation for dihedral. Should be a multiple of 3")
+					, CODELOC );
+	}      
+
+      Expression dihedralfunc_f = Expression(0);
+
+      for (int j=0; j < final_params.size(); j = j + 3)
+	{
+	  double k = final_params[ j ];
+	  double periodicity = final_params[ j + 1 ] ;
+	  double phase = final_params[ j + 2 ];
+	  
+	  Expression dih =  k * ( 1 + Cos( periodicity * ( phi - 0 ) - phase ) );
+	  dihedralfunc_f += dih;
+	}
 
       //qDebug() << "DIHEDRAL INIT ";
       //qDebug() << dihedralfunc_i.toString();
@@ -1347,9 +1439,56 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
       AtomIdx atom2 = editmol.select( improper.atom2() ).index();
       AtomIdx atom3 = editmol.select( improper.atom3() ).index();
 
-      Expression improperfunc_i = pert.getInitImpPotential(improper);
-      Expression improperfunc_f = pert.getFinalImpPotential(improper);
+      Symbol phi = InternalPotential::symbols().dihedral().phi();
+
+      //
+      // The lenght of the list should be a multiple of 3. The parameters are
+      // k, periodicity, phase , k, periodicity, phase etc...
+      //
+      QList<double> init_params = pert.getInitImpParams(improper);
+
+      // Check that the length is a multiple of 3
+
+      if ( ( init_params.size() % 3 ) != 0)
+	{
+	  throw SireError::program_bug( QObject::tr(
+		     "Non standard number of parameters in perturbation for improper. Should be a multiple of 3")
+					, CODELOC );
+	}
+
+      Expression improperfunc_i = Expression(0);
+
+      for (int j=0; j < init_params.size(); j = j + 3)
+	{
+	  double k = init_params[ j ];
+	  double periodicity = init_params[ j + 1 ] ;
+	  double phase = init_params[ j + 2 ];
+	  
+	  Expression dih =  k * ( 1 + Cos( periodicity * ( phi - 0 ) - phase ) );
+	  improperfunc_i += dih;
+	}
       
+      QList<double> final_params = pert.getFinalImpParams(improper);
+
+      if ( ( final_params.size() % 3 ) != 0)
+	{
+	  throw SireError::program_bug( QObject::tr(
+		     "Non standard number of parameters in perturbation for improper. Should be a multiple of 3")
+					, CODELOC );
+	}      
+
+      Expression improperfunc_f = Expression(0);
+
+      for (int j=0; j < final_params.size(); j = j + 3)
+	{
+	  double k = final_params[ j ];
+	  double periodicity = final_params[ j + 1 ] ;
+	  double phase = final_params[ j + 2 ];
+	  
+	  Expression dih =  k * ( 1 + Cos( periodicity * ( phi - 0 ) - phase ) );
+	  improperfunc_f += dih;
+	}
+
       FourAtomPerturbation improperpert = FourAtomPerturbation( atom0, atom1, atom2, atom3,
 								improperfunc_i, improperfunc_f,
 								PropertyMap("parameters", "improper") );
