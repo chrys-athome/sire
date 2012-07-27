@@ -122,6 +122,10 @@ public:
 
     void setInitDihPotential(const DihedralID &dihedral, const Expression &pot);
     void setFinalDihPotential(const DihedralID &dihedral, const Expression &pot);
+
+    void setInitDihParams(const DihedralID &dihedral, const QList<double> &params);
+    void setFinalDihParams(const DihedralID &dihedral, const Qlist<double> &params);
+
     //void setInitDihedralK0(const DihedralID &dihedral, const double &k0);
     //void setInitDihedralN(const DihedralID &dihedral, const int &n);
     //void setInitDihedralPhase(const DihedralID &dihedral, const double &phase);
@@ -161,6 +165,9 @@ public:
     QList<DihedralID> getDihedrals() const;
     Expression getInitDihPotential(const DihedralID &dihedral) const;
     Expression getFinalDihPotential(const DihedralID &dihedral) const;
+
+    QList<double> getInitDihParams(const DihedralID &dihedral) const;
+    QList<double> getFinalDihParams(const DihedralID &dihedral) const;
     
     //double getInitDihedralK0(const DihedralID &dihedral) const;
     //int getInitDihedralN(const DihedralID &dihedral) const;
@@ -203,6 +210,9 @@ private:
     // The dihedral parameters
     QHash<DihedralID,Expression> initdihpotential;
     QHash<DihedralID,Expression> finaldihpotential;
+
+    QHash<DihedralID,QList<double> > initdihparams;
+    QHash<DihedralID,QList<double> > finaldihparams;
     //QHash<DihedralID,double> initdihedralsk0;
     //QHash<DihedralID,double> initdihedralsn;    
     //QHash<DihedralID,double> initdihedralsphase;

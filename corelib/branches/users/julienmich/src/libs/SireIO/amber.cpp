@@ -929,15 +929,15 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
 
             if ( atoms14[ atom0.number() ].contains( atom1.number() ) )
             {
-                //qDebug() << " ATOMS " << atom0.number() << " and " 
-                //         << atom1.number() << " are 14";
+	      //qDebug() << " ATOMS " << atom0.number() << " and " 
+	      //          << atom1.number() << " are 14";
                 cscl = AMBER14COUL;
                 ljscl = AMBER14LJ;
             }
             else
             {
-                //qDebug() << " ATOMS " << atom0.number() << " and " 
-                //         << atom1.number() << " are 12 or 13";
+	      //qDebug() << " ATOMS " << atom0.number() << " and " 
+	      //         << atom1.number() << " are 12 or 13";
                 cscl = 0.0;
                 ljscl = 0.0;
             }
@@ -1457,7 +1457,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
     //processVersionLine(words, currentVersion);
     while (not line.isNull() )
     {
-        //qDebug() << line;
+      //qDebug() << line;
         line = ts.readLine();
 
         if (line.startsWith("%"))
@@ -1683,7 +1683,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
         processDoubleLine(line, crd_double_format, crd_coords);
     }
 
-    //qDebug() << " THE COORDS ARE " << crdCoords;
+    //qDebug() << " THE COORDS ARE " << crd_coords;
     // And now the box dimensions. Skip to the last line of the file, because 
     // the crd file could have contained velocities, which are not used for the moment
 
@@ -1699,7 +1699,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
     if ( pointers[IFBOX] != 0 )
     {
         processDoubleLine(line, crd_double_format, crd_box);
-        //qDebug() << " THE BOX DIMENSIONS ARE " << crdBox;
+        //qDebug() << " THE BOX DIMENSIONS ARE " << crd_box;
     }
 
     //qDebug() << " Finished reading the crd file";
@@ -1768,8 +1768,8 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
             else
                 end_atom = pointers[NATOM] ;
 
-            //qDebug() << "Residue " << residueNumber << " start " 
-            //         << atomStart << " end " << atomEnd;
+            //qDebug() << "Residue " << resnum << " start " 
+            //         << start_atom << " end " << end_atom;
             
             // create an empty residue. Use RESIDUE_LABEL for the name
             ResStructureEditor resstructeditor = molstructeditor.add( ResNum(resnum) );
@@ -1817,7 +1817,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
         FourAtomFunctions dihedralfuncs(editmol);
         FourAtomFunctions improperfuncs(editmol);
 
-		AmberParameters amberparams(editmol);
+	AmberParameters amberparams(editmol);
 
         CLJNBPairs nbpairs;
         QHash<AtomNum, QList<AtomNum> > atoms14;
@@ -1826,7 +1826,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
 
         for (int i=0; i < natoms ; ++i)
         {
-            //qDebug() << " Parameterizing atom " << i;
+	  //qDebug() << " Parameterizing atom " << i;
             // Now that the structure of the molecule has been built, we assign the 
             // following atom properties: coordinates, charge, mass, lj , amber_atom_type
             AtomEditor editatom = editmol.atom(AtomIdx(i)); 
@@ -1851,7 +1851,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
         // create connectivity, bonds, angles, dihedrals in molecules of matching atoms
         if (natoms > 1)
         {
-            //qDebug() << " Setting up connectivity ";
+	  //qDebug() << " Setting up connectivity ";
             setConnectivity(editmol, pointers[NBONH], 
                             bond_inc_h, 
                             connectivity, connectivity_property);
@@ -1877,7 +1877,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
         
         if (natoms > 2)
         {
-            //qDebug() << " Setting up angles ";
+	  //qDebug() << " Setting up angles ";
             setAngles(editmol, pointers[NTHETH], 
                       angs_inc_h, 
                       ang_force_constant, ang_equil_value,
@@ -1893,7 +1893,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
 
         if (natoms >3)
         {
-            //qDebug() << " Setting up dihedrals ";
+	  //qDebug() << " Setting up dihedrals ";
             setDihedrals(editmol, pointers[NPHIH],
                          dihs_inc_h, 
                          dih_force_constant, dih_periodicity, dih_phase,
@@ -1914,10 +1914,12 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
         // Set non bonded pairs
         if (natoms >1)
         {
-            setNonBondedPairs(editmol, pointers[NEXT],
-                              num_excluded_atoms, exc_atom_list,
-                              nbpairs, nb_property,
-                              atoms14);
+	  //qDebug() << " Setting up non bonded pairs";
+
+	  setNonBondedPairs(editmol, pointers[NEXT],
+			    num_excluded_atoms, exc_atom_list,
+			    nbpairs, nb_property,
+			    atoms14);
         }
         
         molecule = editmol.commit();

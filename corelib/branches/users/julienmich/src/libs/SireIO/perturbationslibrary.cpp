@@ -1291,8 +1291,38 @@ Molecule PerturbationsLibrary::applyTemplate(const Molecule &molecule) const
       AtomIdx atom2 = editmol.select( dihedral.atom2() ).index();
       AtomIdx atom3 = editmol.select( dihedral.atom3() ).index();
 
-      Expression dihedralfunc_i = pert.getInitDihPotential(dihedral);
-      Expression dihedralfunc_f = pert.getFinalDihPotential(dihedral);      
+      //Expression dihedralfunc_i = pert.getInitDihPotential(dihedral);
+      //Expression dihedralfunc_f = pert.getFinalDihPotential(dihedral);      
+
+      //
+      // The lenght of the list should be a multiple of 3. The parameters are
+      // k, periodicity, phase , k, periodicity, phase etc...
+      //
+      QList<double> init_params = pert.getInitDihParams(dihedral);
+
+      // Check that the length is a multiple of 3
+
+      if ( ( init_params.size() % 3 ) != 0)
+	{
+	  throw SireError::program_bug( QObject::tr(
+		     "Non standard number of parameters in perturbation for dihedral. Should be a multiple of 3")
+					, CODELOC );
+	}
+
+      Expression dihedralfunc_i = Expression(0);
+
+      for (int j=0; j < init_params.size(); j = j + 3)
+	{
+	  double k = init_params[ j ];
+	  double periodicity = init_params[ j + 1 ] ;
+	  double phase = init_params[ j + 2 ];
+	  
+	  Expression dih =  k * ( 1 + Cos( periodicity * ( phi - 0 ) - phase ) );
+	  dihedralfunc_i += dih;
+	}
+      
+      QList<double> final_params = pert.getFinalDihParams(dihedral);
+      
 
       //qDebug() << "DIHEDRAL INIT ";
       //qDebug() << dihedralfunc_i.toString();
