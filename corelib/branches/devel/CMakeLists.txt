@@ -177,6 +177,17 @@ else()
   message(FATAL_ERROR "Cannot find the boost libraries.")
 endif()  
 
+# Sire depends on >= GSL 1.6
+find_package(GSL 1.6 REQUIRED)
+
+message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} "
+                "${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
+         
+list(APPEND SIREMATHS_EXTRA_LIBRARIES ${GSL_LIBRARIES})
+                                  
+include_directories( BEFORE ${GSL_INCLUDE_DIR})
+                                  
+save_sire_variable( "SIRE_GSL_INCLUDE_PATH" "${GSL_INCLUDE_DIR}" )
 # Now look for BLAS and LAPACK - if these are not found then
 # a local version will have to be used instead
 set( BLA_STATIC OFF )
