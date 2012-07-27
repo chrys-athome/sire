@@ -8,7 +8,8 @@ if ( SIRE_BUILD_SPIER )
   # Third Party dependencies of this module
   include_directories( ${BOOST_INCLUDE_DIR}
                        ${PYTHON_INCLUDE_DIR}
-                       ${SIRE_OPENGL_INCLUDE_DIR} )
+                       ${SIRE_OPENGL_INCLUDE_DIR} 
+                       ${SIRE_GSL_INCLUDE_PATH})
 
   # Sire include paths
   include_directories( BEFORE ${SIRE_INCLUDE_DIR}/Spier
