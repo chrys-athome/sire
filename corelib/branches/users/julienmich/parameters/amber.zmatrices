@@ -486,13 +486,13 @@ bbatom C
 backbone first aanterm middle aamiddle last aacterm single aasingle
 zmatrix CB CA N C
 zmatrix SG CB CA N
-zmatrix HB1 CB CA SG
 zmatrix HB2 CB CA SG
+zmatrix HB3 CB CA SG
 zmatrix HG SG CB CA
 angle CB CA N flex 0.50
 angle SG CB CA flex 0.50
-angle HB1 CB CA flex 0.50
 angle HB2 CB CA flex 0.50
+angle HB3 CB CA flex 0.50
 dihedral SG CB CA N flex 10.00
 
 
@@ -942,5 +942,36 @@ dihedral CG CB CA N flex 5.00
 dihedral CD1 CG CB CA flex 10.00
 dihedral HH OH CZ CE1 flex 15.00
 
+chain nme
+zmatrix HH31 CH3 N H
+angle HH31 CH3 N flex 0.50
+dihedral HH31 CH3 N H flex 15.0
 
+residue NME
+rigidbody rotate 2.000 translate 0.050
+bbatom H
+bbatom N
+bbatom CH3
+bbatom HH31
+backbone first nme middle nme last nme single nme
+zmatrix HH32 CH3 N HH31
+zmatrix HH33 CH3 N HH31
+angle HH32 CH3 N flex 0.50
+angle HH33 CH3 N flex 0.50
 
+chain ace
+zmatrix HH31 CH3 C O
+angle HH31 CH3 C flex 0.50
+dihedral HH31 CH3 C O flex 15.0
+
+residue ACE
+rigidbody rotate 2.000 translate 0.050
+bbatom HH31
+bbatom CH3
+bbatom C
+bbatom O
+backbone first ace middle ace last ace single ace
+zmatrix HH32 CH3 C HH31
+zmatrix HH33 CH3 C HH31
+angle HH32 CH3 C flex 0.50
+angle HH33 CH3 C flex 0.50
