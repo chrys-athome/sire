@@ -107,6 +107,36 @@ int main(int argc, char **argv)
         //are we the first node in the cluster?
         if (Cluster::getRank() == 0)
         {
+            QStringList scripts;
+
+            //read command line options
+            {
+                int i = 1;
+                while (i < argc)
+                {
+                    QString arg(argv[i]);
+
+                    if (arg.startsWith("--"))
+                    {
+                        if (arg.startsWith("--ppn"))
+                        {
+                            QStringList vals = arg.split("=");
+                            if (vals.count() == 2)
+                            {
+                                bool ok;
+                                ppn = vals[1].toInt(&ok);
+
+                                if (ppn <= 0 or (not ok)){ ppn = 1; }
+                            }
+                        }
+                    }
+                    else
+                        scripts.append(QString(argv[i]));
+
+                    i += 1;
+                }
+            }
+
             printf("Starting master node (%d of %d): nThreads()=%d\n", 
                        Cluster::getRank(), Cluster::getCount(), ppn);
 
@@ -127,13 +157,15 @@ int main(int argc, char **argv)
             #endif
 
             //run python - each argument is a python script
-            if (argc >= 2)
+            if (not scripts.isEmpty())
             {
-                int nscripts = argc - 1;
+                int nscripts = scripts.count();
 
                 printf("Running %d python script(s)...\n", nscripts);
 
                 Nodes nodes = Cluster::getNodes(nscripts);
+
+                printf("...over %d process(es)\n", nodes.count());
 
                 QList<Promise> promises;
  
@@ -141,8 +173,9 @@ int main(int argc, char **argv)
                 for (int i=0; i<nscripts; ++i)
                 {
                     Node node = nodes.getNode();
-                    printf("\nRunning script %d of %d: %s\n", i+1, nscripts, argv[i+1]);
-                    promises.append( node.startJob( PythonPacket(argv[i+1]) ) );
+                    printf("\nRunning script %d of %d: %s\n", i+1, 
+                           nscripts, scripts[i].toAscii().constData());
+                    promises.append( node.startJob( PythonPacket(scripts[i]) ) );
                 }
                 
                 //wait for them all to finish
