@@ -133,16 +133,20 @@ print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
 
 print "Took %d ms" % ms
 
-mc.setSynchronisedTranslation(True)
-mc.setSynchronisedRotation(True)
-moves = SameMoves(mc)
+#mc.setSynchronisedTranslation(True)
+#mc.setSynchronisedRotation(True)
+#moves = SameMoves(mc)
 
 for i in range(0,10):
     print i+1
-    node = nodes.getNode()
-    sim = Simulation.run(node, system, moves, 5)
+    #node = nodes.getNode()
+    #sim = Simulation.run(node, system, moves, 1)
 
-    system = sim.system()
-    moves = sim.moves()
+    #system = sim.system()
+    #moves = sim.moves()
+
+    system = moves.move(system, 1000, False)
+
+    print moves
 
     PDB().write(system.molecules(), "test%003d.pdb" % (i+1))

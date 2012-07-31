@@ -537,9 +537,6 @@ char* PackedArray2DMemory<T>::create(quint32 narrays, quint32 nvalues)
         PackedArray2DData<T> *arraydata 
                     = new (storage) PackedArray2DData<T>(narrays, nvalues);
                     
-        //add a reference count for this object
-        arraydata->ref.ref();
-
         //advance the index into the storage array so that we are now
         //pointing just after the PackedArray2DData
         quint32 idx = sizeof(PackedArray2DData<T>);
