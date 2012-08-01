@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "SireMol/atomcoords.h"
 
+#include "SireMol/mgname.h"
+
 #include "SireMol/partialmolecule.h"
 
 #include "SireStream/datastream.h"
@@ -54,6 +56,16 @@ void register_EnergyMonitor_class(){
         EnergyMonitor_exposer.def( bp::init< SireSystem::IDAssigner const &, SireSystem::IDAssigner const & >(( bp::arg("group0"), bp::arg("group1") )) );
         EnergyMonitor_exposer.def( bp::init< SireSystem::IDAssigner const &, SireSystem::IDAssigner const &, SireMaths::Accumulator const & >(( bp::arg("group0"), bp::arg("group1"), bp::arg("accum") )) );
         EnergyMonitor_exposer.def( bp::init< SireSystem::EnergyMonitor const & >(( bp::arg("other") )) );
+        { //::SireSystem::EnergyMonitor::alpha
+        
+            typedef double ( ::SireSystem::EnergyMonitor::*alpha_function_type )(  ) const;
+            alpha_function_type alpha_function_value( &::SireSystem::EnergyMonitor::alpha );
+            
+            EnergyMonitor_exposer.def( 
+                "alpha"
+                , alpha_function_value );
+        
+        }
         { //::SireSystem::EnergyMonitor::clearStatistics
         
             typedef void ( ::SireSystem::EnergyMonitor::*clearStatistics_function_type )(  ) ;
@@ -72,6 +84,16 @@ void register_EnergyMonitor_class(){
             EnergyMonitor_exposer.def( 
                 "coulombEnergies"
                 , coulombEnergies_function_value );
+        
+        }
+        { //::SireSystem::EnergyMonitor::coulombPower
+        
+            typedef int ( ::SireSystem::EnergyMonitor::*coulombPower_function_type )(  ) const;
+            coulombPower_function_type coulombPower_function_value( &::SireSystem::EnergyMonitor::coulombPower );
+            
+            EnergyMonitor_exposer.def( 
+                "coulombPower"
+                , coulombPower_function_value );
         
         }
         { //::SireSystem::EnergyMonitor::ljEnergies
@@ -109,6 +131,60 @@ void register_EnergyMonitor_class(){
         
         }
         EnergyMonitor_exposer.def( bp::self == bp::self );
+        { //::SireSystem::EnergyMonitor::setAlpha
+        
+            typedef void ( ::SireSystem::EnergyMonitor::*setAlpha_function_type )( double ) ;
+            setAlpha_function_type setAlpha_function_value( &::SireSystem::EnergyMonitor::setAlpha );
+            
+            EnergyMonitor_exposer.def( 
+                "setAlpha"
+                , setAlpha_function_value
+                , ( bp::arg("alpha") ) );
+        
+        }
+        { //::SireSystem::EnergyMonitor::setAlphaComponent
+        
+            typedef void ( ::SireSystem::EnergyMonitor::*setAlphaComponent_function_type )( ::SireCAS::Symbol const & ) ;
+            setAlphaComponent_function_type setAlphaComponent_function_value( &::SireSystem::EnergyMonitor::setAlphaComponent );
+            
+            EnergyMonitor_exposer.def( 
+                "setAlphaComponent"
+                , setAlphaComponent_function_value
+                , ( bp::arg("component") ) );
+        
+        }
+        { //::SireSystem::EnergyMonitor::setCoulombPower
+        
+            typedef void ( ::SireSystem::EnergyMonitor::*setCoulombPower_function_type )( int ) ;
+            setCoulombPower_function_type setCoulombPower_function_value( &::SireSystem::EnergyMonitor::setCoulombPower );
+            
+            EnergyMonitor_exposer.def( 
+                "setCoulombPower"
+                , setCoulombPower_function_value
+                , ( bp::arg("power") ) );
+        
+        }
+        { //::SireSystem::EnergyMonitor::setShiftDelta
+        
+            typedef void ( ::SireSystem::EnergyMonitor::*setShiftDelta_function_type )( double ) ;
+            setShiftDelta_function_type setShiftDelta_function_value( &::SireSystem::EnergyMonitor::setShiftDelta );
+            
+            EnergyMonitor_exposer.def( 
+                "setShiftDelta"
+                , setShiftDelta_function_value
+                , ( bp::arg("delta") ) );
+        
+        }
+        { //::SireSystem::EnergyMonitor::shiftDelta
+        
+            typedef double ( ::SireSystem::EnergyMonitor::*shiftDelta_function_type )(  ) const;
+            shiftDelta_function_type shiftDelta_function_value( &::SireSystem::EnergyMonitor::shiftDelta );
+            
+            EnergyMonitor_exposer.def( 
+                "shiftDelta"
+                , shiftDelta_function_value );
+        
+        }
         { //::SireSystem::EnergyMonitor::typeName
         
             typedef char const * ( *typeName_function_type )(  );
@@ -117,6 +193,16 @@ void register_EnergyMonitor_class(){
             EnergyMonitor_exposer.def( 
                 "typeName"
                 , typeName_function_value );
+        
+        }
+        { //::SireSystem::EnergyMonitor::usesSoftCore
+        
+            typedef bool ( ::SireSystem::EnergyMonitor::*usesSoftCore_function_type )(  ) const;
+            usesSoftCore_function_type usesSoftCore_function_value( &::SireSystem::EnergyMonitor::usesSoftCore );
+            
+            EnergyMonitor_exposer.def( 
+                "usesSoftCore"
+                , usesSoftCore_function_value );
         
         }
         { //::SireSystem::EnergyMonitor::views0

@@ -40,6 +40,8 @@ namespace bp = boost::python;
 
 #include "system.h"
 
+#include "tostring.h"
+
 #include <QDebug>
 
 #include <QTime>
