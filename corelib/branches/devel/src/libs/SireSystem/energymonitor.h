@@ -34,6 +34,8 @@
 #include "SireSystem/systemmonitor.h"
 #include "SireMaths/accumulator.h"
 
+#include "SireCAS/symbol.h"
+
 #include "SireMol/moleculegroup.h"
 #include "SireMol/partialmolecule.h"
 
@@ -114,6 +116,18 @@ public:
     
     void monitor(System &system);
 
+    void setAlphaComponent(const SireCAS::Symbol &component);
+
+    void setAlpha(double alpha);
+    void setShiftDelta(double delta);
+    void setCoulombPower(int power);
+
+    double shiftDelta() const;
+    double alpha() const;
+    int coulombPower() const;
+
+    bool usesSoftCore() const;
+
     QVector<SireMol::PartialMolecule> views0() const;
     QVector<SireMol::PartialMolecule> views1() const;
 
@@ -137,6 +151,19 @@ private:
     
     /** The accumulated LJ energies */
     SireBase::Array2D<SireMaths::AccumulatorPtr> lj_nrgs;
+
+    /** The symbol containing the alpha parameter for this monitor
+        (if soft-core is used) */
+    SireCAS::Symbol alpha_component;
+
+    /** The value of alpha */
+    double alfa;
+
+    /** The shift-delta parameter */
+    double shift_delta;
+
+    /** The coulomb power parameter */
+    quint32 coulomb_power;
 };
 
 }
