@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "gridff.h"
 
+#include <QDebug>
+
 #include "gridff.h"
 
 SireMM::GridFF __copy__(const SireMM::GridFF &other){ return SireMM::GridFF(other); }
@@ -31,6 +33,46 @@ void register_GridFF_class(){
         bp::scope GridFF_scope( GridFF_exposer );
         GridFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         GridFF_exposer.def( bp::init< SireMM::GridFF const & >(( bp::arg("other") )) );
+        { //::SireMM::GridFF::buffer
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMM::GridFF::*buffer_function_type )(  ) const;
+            buffer_function_type buffer_function_value( &::SireMM::GridFF::buffer );
+            
+            GridFF_exposer.def( 
+                "buffer"
+                , buffer_function_value );
+        
+        }
+        { //::SireMM::GridFF::calculatingGridError
+        
+            typedef bool ( ::SireMM::GridFF::*calculatingGridError_function_type )(  ) const;
+            calculatingGridError_function_type calculatingGridError_function_value( &::SireMM::GridFF::calculatingGridError );
+            
+            GridFF_exposer.def( 
+                "calculatingGridError"
+                , calculatingGridError_function_value );
+        
+        }
+        { //::SireMM::GridFF::coulombCutoff
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMM::GridFF::*coulombCutoff_function_type )(  ) const;
+            coulombCutoff_function_type coulombCutoff_function_value( &::SireMM::GridFF::coulombCutoff );
+            
+            GridFF_exposer.def( 
+                "coulombCutoff"
+                , coulombCutoff_function_value );
+        
+        }
+        { //::SireMM::GridFF::ljCutoff
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMM::GridFF::*ljCutoff_function_type )(  ) const;
+            ljCutoff_function_type ljCutoff_function_value( &::SireMM::GridFF::ljCutoff );
+            
+            GridFF_exposer.def( 
+                "ljCutoff"
+                , ljCutoff_function_value );
+        
+        }
         GridFF_exposer.def( bp::self != bp::self );
         { //::SireMM::GridFF::operator=
         
@@ -45,6 +87,71 @@ void register_GridFF_class(){
         
         }
         GridFF_exposer.def( bp::self == bp::self );
+        { //::SireMM::GridFF::setBuffer
+        
+            typedef void ( ::SireMM::GridFF::*setBuffer_function_type )( ::SireUnits::Dimension::Length ) ;
+            setBuffer_function_type setBuffer_function_value( &::SireMM::GridFF::setBuffer );
+            
+            GridFF_exposer.def( 
+                "setBuffer"
+                , setBuffer_function_value
+                , ( bp::arg("buffer") ) );
+        
+        }
+        { //::SireMM::GridFF::setCalculateGridError
+        
+            typedef void ( ::SireMM::GridFF::*setCalculateGridError_function_type )( bool ) ;
+            setCalculateGridError_function_type setCalculateGridError_function_value( &::SireMM::GridFF::setCalculateGridError );
+            
+            GridFF_exposer.def( 
+                "setCalculateGridError"
+                , setCalculateGridError_function_value
+                , ( bp::arg("on") ) );
+        
+        }
+        { //::SireMM::GridFF::setCoulombCutoff
+        
+            typedef void ( ::SireMM::GridFF::*setCoulombCutoff_function_type )( ::SireUnits::Dimension::Length ) ;
+            setCoulombCutoff_function_type setCoulombCutoff_function_value( &::SireMM::GridFF::setCoulombCutoff );
+            
+            GridFF_exposer.def( 
+                "setCoulombCutoff"
+                , setCoulombCutoff_function_value
+                , ( bp::arg("cutoff") ) );
+        
+        }
+        { //::SireMM::GridFF::setGridSpacing
+        
+            typedef void ( ::SireMM::GridFF::*setGridSpacing_function_type )( ::SireUnits::Dimension::Length ) ;
+            setGridSpacing_function_type setGridSpacing_function_value( &::SireMM::GridFF::setGridSpacing );
+            
+            GridFF_exposer.def( 
+                "setGridSpacing"
+                , setGridSpacing_function_value
+                , ( bp::arg("spacing") ) );
+        
+        }
+        { //::SireMM::GridFF::setLJCutoff
+        
+            typedef void ( ::SireMM::GridFF::*setLJCutoff_function_type )( ::SireUnits::Dimension::Length ) ;
+            setLJCutoff_function_type setLJCutoff_function_value( &::SireMM::GridFF::setLJCutoff );
+            
+            GridFF_exposer.def( 
+                "setLJCutoff"
+                , setLJCutoff_function_value
+                , ( bp::arg("cutoff") ) );
+        
+        }
+        { //::SireMM::GridFF::spacing
+        
+            typedef ::SireUnits::Dimension::Length ( ::SireMM::GridFF::*spacing_function_type )(  ) const;
+            spacing_function_type spacing_function_value( &::SireMM::GridFF::spacing );
+            
+            GridFF_exposer.def( 
+                "spacing"
+                , spacing_function_value );
+        
+        }
         { //::SireMM::GridFF::typeName
         
             typedef char const * ( *typeName_function_type )(  );
