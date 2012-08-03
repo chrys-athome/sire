@@ -44,6 +44,7 @@ system.add(waters)
 system.setProperty("space", space)
 
 gridff = GridFF("gridff")
+gridff.setGridSpacing( 2 * angstrom )
 
 gridff.add(swapwaters, MGIdx(0))
 gridff.add(waters, MGIdx(1))

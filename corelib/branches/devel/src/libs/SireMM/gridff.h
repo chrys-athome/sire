@@ -76,9 +76,70 @@ public:
     
     GridFF* clone() const;
 
+    void setBuffer(SireUnits::Dimension::Length buffer);
+    void setGridSpacing(SireUnits::Dimension::Length spacing);
+
+    void setCoulombCutoff(SireUnits::Dimension::Length cutoff);
+    void setLJCutoff(SireUnits::Dimension::Length cutoff);
+
+    void setCalculateGridError(bool on);
+    
+    SireUnits::Dimension::Length buffer() const;
+    SireUnits::Dimension::Length spacing() const;
+
+    SireUnits::Dimension::Length coulombCutoff() const;
+    SireUnits::Dimension::Length ljCutoff() const;
+
+    bool calculatingGridError() const;
+
 protected:
     void recalculateEnergy();
 
+private:
+    void rebuildGrid();
+
+    typedef InterGroupCLJFF::Parameters CLJParameters;
+    typedef InterGroupCLJFF::Molecule CLJMolecule;
+    typedef InterGroupCLJFF::Molecules CLJMolecules;
+
+    void addToGrid(const SireVol::CoordGroup &cgroup,
+                   const CLJParameters::Array &parameters);
+
+    /** The AABox that describes the grid */
+    SireVol::AABox gridbox;
+
+    /** The distance from the atoms and the edge of the grid.
+        This prevents the grid from being re-evaluated whenever
+        the atoms move */
+    double buffer_size;
+
+    /** The grid spacing */
+    double grid_spacing;
+
+    /** The coulomb cutoff (cutoff applies from the
+        center of the grid) */
+    double coul_cutoff;
+
+    /** The LJ cutoff (cutoff applies from the
+        center of the grid) */
+    double lj_cutoff;
+
+    /** The number of grid points in x, y, and z */
+    quint32 dimx, dimy, dimz;
+
+    /** The grid of coulomb potentials */
+    QVector<double> gridpot;
+    
+    /** The set of coordinates and parameters of group 2 
+        molecules that are within the LJ cutoff of the center of the grid */
+    QVector< QPair<SireVol::CoordGroup,CLJParameters::Array> > closemols;
+    
+    /** The energies of the group 1 molecules the last time
+        they were evaluated */
+    QVector<CLJEnergy> oldnrgs;
+    
+    /** Whether or not to calculate the grid error */
+    bool calc_grid_error;
 };
 
 }
