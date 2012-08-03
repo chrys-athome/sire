@@ -125,7 +125,9 @@ public:
 	
 	bool getRestraint(void);
 	void setRestraint(bool);
-
+	
+	int getCMMremoval_frequency(void);
+	void setCMMremoval_frequency(int);
 
 
 private:
@@ -153,6 +155,8 @@ private:
 	QVector<double> Alchemical_values;
 	
 	bool Restraint_flag;
+	
+	int CMMremoval_frequency;
 
 };
 

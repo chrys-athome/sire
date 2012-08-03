@@ -88,6 +88,24 @@
 #define DCD_BADMALLOC   -8  /* malloc failed                   */
 #define DCD_BADWRITE    -9  /* write call on DCD file failed   */
 
+using namespace SireMove;
+using namespace SireSystem;
+using namespace SireMol;
+using namespace SireFF;
+using namespace SireCAS;
+using namespace SireVol;
+using namespace SireBase;
+using namespace SireStream;
+using namespace SireUnits;
+using namespace SireUnits::Dimension;
+
+//ADDED BY JM
+using namespace SireMM;
+using namespace SireIO;
+
+//ADDED BY GAC
+using namespace std;
+
 /* WRITE Macro to make porting easier */
 #define WRITE(fd, buf, size) fio_fwrite(((void *) buf), (size), 1, (fd))
 
@@ -109,24 +127,12 @@ QString file_name(int i);
 
 double gasdev(void);
 
+void create_inter_pairs(vector<int> solute_list, int N , vector<pair<int,int> > & soft_core_list);
 
-using namespace SireMove;
-using namespace SireSystem;
-using namespace SireMol;
-using namespace SireFF;
-using namespace SireCAS;
-using namespace SireVol;
-using namespace SireBase;
-using namespace SireStream;
-using namespace SireUnits;
-using namespace SireUnits::Dimension;
+bool in(int i,vector<int> & solute_list);
 
-//ADDED BY JM
-using namespace SireMM;
-using namespace SireIO;
 
-//ADDED BY GAC
-using namespace std;
+
 
 enum {
 	NOCUTOFF = 0,
@@ -158,7 +164,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMIntegrator 
     sds << velver.frequent_save_velocities << velver.CutoffType << velver.cutoff_distance << velver.field_dielectric
     	<< velver.Andersen_flag <<  velver.Andersen_frequency 
     	<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
-    	<<velver.platform_type << velver.Alchemical_values << velver.Restraint_flag
+    	<<velver.platform_type << velver.Alchemical_values << velver.Restraint_flag << velver.CMMremoval_frequency
     	<< static_cast<const Integrator&>(velver);
     
         
@@ -177,7 +183,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMIntegrator &velve
         sds >> velver.frequent_save_velocities >> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric
     		>> velver.Andersen_flag >>  velver.Andersen_frequency 
     		>> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
-    		>> velver.platform_type >> velver.Alchemical_values >> velver.Restraint_flag
+    		>> velver.platform_type >> velver.Alchemical_values >> velver.Restraint_flag >> velver.CMMremoval_frequency
         	>> static_cast<Integrator&>(velver);
     }
     else
@@ -193,7 +199,7 @@ OpenMMIntegrator::OpenMMIntegrator(bool frequent_save)
                  CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
-                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Alchemical_values(),Restraint_flag(false)
+                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Alchemical_values(),Restraint_flag(false),CMMremoval_frequency(0)
            
 {}
 
@@ -206,7 +212,7 @@ OpenMMIntegrator::OpenMMIntegrator(const OpenMMIntegrator &other)
                  Andersen_frequency(other.Andersen_frequency), MCBarostat_flag(other.MCBarostat_flag),
                  MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
                  Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
-                 Alchemical_values(other.Alchemical_values),Restraint_flag(other.Restraint_flag)
+                 Alchemical_values(other.Alchemical_values),Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency)
 
 {}
 
@@ -278,6 +284,10 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	int flag_constraint;
 	
 	bool free_energy_calculation;
+	
+	vector<int> solute_list; //Openmm index of solute atoms
+	
+	vector<pair<int,int> > soft_core_list;
 	
 	const System & ptr_sys = ws.system();
 		
@@ -354,88 +364,41 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	OpenMM::NonbondedForce * nonbond_openmm = new OpenMM::NonbondedForce();
 	
 	/*****************************************************************IMPORTANT********************************************************************/
-	
-	
-	if(free_energy_calculation == false)
-		system_openmm.addForce(nonbond_openmm);
-	
-	OpenMM::CustomNonbondedForce * custom_nonbond_SoluteSolvent_openmm = NULL;
-	
+
+	system_openmm.addForce(nonbond_openmm);
+
+
 	OpenMM::CustomBondForce * custom_bonded_openmm = NULL;
 
-	
-		
+
 	//Long Range interaction non bonded force method setting
 
 	if(flag_cutoff == NOCUTOFF){
 				
-		nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::NoCutoff);	
+		nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::NoCutoff);
 				
 		if(free_energy_calculation == true){
-			
-																				   
-			/*custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "-4*eps*(dem^2-dem)-138.935456*q/r;"
-																			   	   	"q=q1*q2;"
-																			   	   	"dem=(sigma/r)^6;"
-																			   		"sigma=0.5*(sigma1+sigma2);"
-																			   		"eps=sqrt(eps1*eps2)");	*/
-																			   		
-			/*custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "max(isSolute1,isSolute2)*(Hsoft - Hinter);"
-																					"Hinter=4.0*eps*(LJdel^2-LJdel)+138.935456*q/r;"
-																					"LJdel=(sigma/r)^6;"
-																					"Hsoft=Hc+Hl;"
-																					"Hc=lam_cl^(n+1)*138.935456*q/sqrt(diff_cl+r^2);"
-																					"q=q1*q2;"
-																					"diff_cl=(1.0-lam_cl);"
-																					"lam_cl=min(1,max(0,lambda-1));"
-																					"Hl=lam_lj*4.0*eps*(LJ^2-LJ);"
-																					"eps=sqrt(eps1*eps2);"
-																					"LJ=(sigma^2/soft)^3;"
-																					"soft=(diff_lj*delta*sigma+r^2);"
-																					"sigma=0.5*(sigma1+sigma2);"
-																					"diff_lj=(1.0-lam_lj);"
-																					"lam_lj=max(0,min(1,lambda))");*/
-																					
-			
-			custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce("(Hsoft)*ZeroOne+(Hinter)*(1-ZeroOne);"
-																					"ZeroOne=(isSolute1-isSolute2)^2;"
-																					"Hinter=4.0*eps*(LJdel^2-LJdel)+138.935456*q/r;"
-																					"LJdel=(sigma/r)^6;"	
-																					"Hsoft=Hc+Hl;"
-																					"Hc=(lam_cl^(n+1))*138.935456*q/sqrt(diff_cl+r^2);"
-																					"q=q1*q2;"
-																					"diff_cl=(1.0-lam_cl);"
-																					"lam_cl=min(1,max(0,lambda-1));"
-																					"Hl=lam_lj*4.0*eps*(LJ^2-LJ);"
-																					"eps=sqrt(eps1*eps2);"
-																					"LJ=((sigma^2)/soft)^3;"
-																					"soft=(diff_lj*delta*sigma+r^2);"
-																					"sigma=0.5*(sigma1+sigma2);"
-																					"diff_lj=(1.0-lam_lj);"
-																					"lam_lj=max(0,min(1,lambda))");	
-																					
 
+			
+			custom_bonded_openmm = new OpenMM::CustomBondForce( "Hc+Hl;"
+																"Hc=(lam_cl^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+																"diff_cl=(1.0-lam_cl);"
+																"lam_cl=min(1,max(0,lambda-1));"
+																"Hl=lam_lj*4.0*eps_avg*(LJ^2-LJ);"
+																"LJ=((sigma_avg^2)/soft)^3;"
+																"soft=(diff_lj*delta*sigma_avg+r^2);"
+																"diff_lj=(1.0-lam_lj);"
+																"lam_lj=max(0,min(1,lambda))");
 
-			custom_bonded_openmm = new OpenMM::CustomBondForce("L_scale*4.0*eps_avg*(LJdel^2-LJdel)+C_scale*138.935456*q_prod/r;"
-															   "LJdel=(sigma_avg/r)^6");
-			
-			
-			custom_bonded_openmm->addGlobalParameter("L_scale",LennardJones14Scale);
-			
-			custom_bonded_openmm->addGlobalParameter("C_scale",Coulob14Scale);
-			
-			
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
+			custom_bonded_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
 			
 			int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
 			double shift_Delta = ptr_sys.property("shiftDelta").toString().toDouble();
 			
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("delta",shift_Delta);
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("n",coulomb_Power);
+			custom_bonded_openmm->addGlobalParameter("delta",shift_Delta);
+			custom_bonded_openmm->addGlobalParameter("n",coulomb_Power);
 
 
-			custom_nonbond_SoluteSolvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
-			
 			cout << "Lambda = " << Alchemical_values[0] << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
 
 		}
@@ -465,92 +428,28 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		if(free_energy_calculation == true){
 
-			/*custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "-4*eps*(dem^2-dem)-138.935456*q*(1.0/r+(krf*r*r)-crf);"
-																			   	   	"q=q1*q2;"
-																			   	   	"dem=(sigma/r)^6;"
-																			   		"sigma=0.5*(sigma1+sigma2);"
-																			   		"eps=sqrt(eps1*eps2)");*/
-																			   		
-								
-			/*custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "max(isSolute1,isSolute2)*(Hsoft-Hinter);"
-																					"Hinter=4*eps*(LJdel^2-LJdel)+138.935456*q*(1.0/r+(krf*r*r)-crf);"
-																					"LJdel=(sigma/r)^6;"
-																					"Hsoft=Hc+Hl;"
-																					"Hc=lam_cl^(n+1)*138.935456*q/sqrt(diff_cl+r^2);"
-																					"q=q1*q2;"
-																					"diff_cl=(1.0-lam_cl);"
-																					"lam_cl=min(1,max(0,lambda-1));"
-																					"Hl=lam_lj*4.0*eps*(LJ^2-LJ);"
-																					"eps=sqrt(eps1*eps2);"
-																					"LJ=(sigma^2/soft)^3;"
-																					"soft=(diff_lj*delta*sigma+r^2);"
-																					"sigma=0.5*(sigma1+sigma2);"
-																					"diff_lj=(1.0-lam_lj);"
-																					"lam_lj=max(0,min(1,lambda))");*/
-																					
+			custom_bonded_openmm = new OpenMM::CustomBondForce( "withinCutoff*(Hc+Hl);"
+																"withinCutoff=step(cutoff-r);"
+																"Hc=(lam_cl^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+																"diff_cl=(1.0-lam_cl);"
+																"lam_cl=min(1,max(0,lambda-1));"
+																"Hl=lam_lj*4.0*eps_avg*(LJ^2-LJ);"
+																"LJ=((sigma_avg^2)/soft)^3;"
+																"soft=(diff_lj*delta*sigma_avg+r^2);"
+																"diff_lj=(1.0-lam_lj);"
+																"lam_lj=max(0,min(1,lambda))");
 
 
-			custom_nonbond_SoluteSolvent_openmm = new OpenMM::CustomNonbondedForce( "ZeroOne*(Hsoft)+(1-ZeroOne)*(Hinter);"
-																					"Hinter=4*eps*(LJdel^2-LJdel)+138.935456*q*(1.0/r+(krf*r*r)-crf);"
-																					"LJdel=(sigma/r)^6;"
-																					"ZeroOne=(isSolute1-isSolute2)^2;"
-																					"Hsoft=Hc+Hl;"
-																					"Hc=(lam_cl^(n+1))*138.935456*q/sqrt(diff_cl+r^2);"
-																					"q=q1*q2;"
-																					"diff_cl=(1.0-lam_cl);"
-																					"lam_cl=min(1,max(0,lambda-1));"
-																					"Hl=lam_lj*4.0*eps*(LJ^2-LJ);"
-																					"eps=sqrt(eps1*eps2);"
-																					"LJ=((sigma^2)/soft)^3;"
-																					"soft=(diff_lj*delta*sigma+r^2);"
-																					"sigma=0.5*(sigma1+sigma2);"
-																					"diff_lj=(1.0-lam_lj);"
-																					"lam_lj=max(0,min(1,lambda))");
-
-
-			custom_bonded_openmm = new OpenMM::CustomBondForce("L_scale*4.0*eps_avg*(LJdel^2-LJdel)+C_scale*138.935456*q_prod/r;"
-															   "LJdel=(sigma_avg/r)^6");
-
-
-			custom_bonded_openmm->addGlobalParameter("L_scale",LennardJones14Scale);
-			
-			custom_bonded_openmm->addGlobalParameter("C_scale",Coulob14Scale);
-			
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
+			custom_bonded_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
 		
 			int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
 			double shift_Delta = ptr_sys.property("shiftDelta").toString().toDouble();
 			
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("delta",shift_Delta);
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("n",coulomb_Power);
-			
-			double eps2 = (field_dielectric-1.0)/(2.0*field_dielectric+1.0);
-			double kValue = eps2/(converted_cutoff_distance*converted_cutoff_distance*converted_cutoff_distance);
-			
-			
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("krf",kValue);
-			
-			//custom_bonded_openmm->addGlobalParameter("krf",kValue);
-			
-			
-			double cValue = (1.0/converted_cutoff_distance)*(3.0*field_dielectric)/(2.0*field_dielectric+1.0);
-			
-			
-			custom_nonbond_SoluteSolvent_openmm->addGlobalParameter("crf",cValue);
-			
-			//custom_bonded_openmm->addGlobalParameter("crf",cValue);
-			
-			
-			custom_nonbond_SoluteSolvent_openmm->setCutoffDistance(converted_cutoff_distance);
-		
-		
-			if(flag_cutoff == CUTOFFNONPERIODIC)
-				custom_nonbond_SoluteSolvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
-		
-			else
-				custom_nonbond_SoluteSolvent_openmm->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
-			
-		
+			custom_bonded_openmm->addGlobalParameter("delta",shift_Delta);
+			custom_bonded_openmm->addGlobalParameter("n",coulomb_Power);
+			custom_bonded_openmm->addGlobalParameter("cutoff",converted_cutoff_distance);
+
+
 			cout << "Lambda = " << Alchemical_values[0] << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
 		
 		}
@@ -569,8 +468,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	/*****************************************************************IMPORTANT********************************************************************/
 	
 	if(free_energy_calculation == true){
-		system_openmm.addForce(custom_nonbond_SoluteSolvent_openmm);
-		system_openmm.addForce(custom_bonded_openmm);	
+		system_openmm.addForce(custom_bonded_openmm);
 	}
 
 		
@@ -709,7 +607,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 	/*****************************************************************IMPORTANT********************************************************************/
 
-		bool boltz = false;//Generate velocities using Boltzmann Distribution (variance = 1 average = 0)
+		bool boltz = true;//Generate velocities using Boltzmann Distribution (variance = 1 average = 0)
 		
 		for (int j=0; j < nats_mol; ++j){
 
@@ -773,10 +671,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	MoleculeGroup solute_group;
 	
 	if(free_energy_calculation == true){
-		custom_nonbond_SoluteSolvent_openmm->addPerParticleParameter("q");
-		custom_nonbond_SoluteSolvent_openmm->addPerParticleParameter("sigma");
-		custom_nonbond_SoluteSolvent_openmm->addPerParticleParameter("eps");
-		custom_nonbond_SoluteSolvent_openmm->addPerParticleParameter("isSolute");
 
 		custom_bonded_openmm->addPerBondParameter("q_prod");
 		custom_bonded_openmm->addPerBondParameter("sigma_avg");
@@ -832,23 +726,17 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			Atom atom = molecule.molecule().atoms()[j];
 			
+			AtomNum atnum = atom.number();
+
+			if(solute_group.contains(atom.molecule()))
+				solute_list.push_back(AtomNumToOpenMMIndex[atnum.value()]);
+
+
+			//cout << "Sire Atom number = " << atnum.value() << " OpenMM index = " << AtomNumToOpenMMIndex[atnum.value()] << "\n";
+			
+			
 			//cout << "Is Solute = "<< (double) solute_group.contains(atom.molecule()) <<" J = "<< j << "\n";
 			
-			
-			if( free_energy_calculation == true){
-			
-				std::vector<double> params(4);
-				
-				params[0] = charge;
-				params[1] = sigma * OpenMM::NmPerAngstrom;
-				params[2] = epsilon * OpenMM::KJPerKcal;
-				params[3] = (double) solute_group.contains(atom.molecule());
-
-				
-
-				custom_nonbond_SoluteSolvent_openmm->addParticle(params);
-				
-			}
 
 			//qDebug()<< atomvdws.toString();
 	
@@ -1207,94 +1095,85 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		cout << "Bond excluded = ( " << bondPairs[i].first << " , " << bondPairs[i].second << " )";
 		cout << "\n";
 	}*/
+	
+	//Set Center of Mass motion removal 
+	
+	OpenMM::CMMotionRemover * cmmotionremover = NULL;
+	
+	if(CMMremoval_frequency > 0){
+	
+		cmmotionremover = new OpenMM::CMMotionRemover(CMMremoval_frequency);
+
+		system_openmm.addForce(cmmotionremover);
+
+		cout << "\n\nWill remove Center of Mass motion every " << CMMremoval_frequency << " steps\n\n";
+	}
 
 
-	//QVector< QPair<int,int> > excluded_vector_12_13;
-	
-	int num_ex=nonbond_openmm->getNumExceptions();
-	
-	//cout << "\n\n NUM pair excluded = " << num_ex <<"\n";
 	
 	if(free_energy_calculation == true){
-
-			for (int i = 0 ; i< num_ex; i++){
-	
-				int  p1=0;
-				int  p2=0;
-	
-				double  chargeprod=0;
-				double  sigma_ex=0;
-				double  epsilon_ex=0;
-
-				nonbond_openmm->getExceptionParameters(i,p1,p2,chargeprod,sigma_ex,epsilon_ex);
-				
-				custom_nonbond_SoluteSolvent_openmm->addExclusion(p1,p2);
-				
-				
-				//1-4 list
-
-
-				if(!(chargeprod == 0.0 && sigma_ex == 1.0 && epsilon_ex == 0.0)){
-
-					std::vector<double> params_p1(4);
-
-					std::vector<double> params_p2(4);
-
-					custom_nonbond_SoluteSolvent_openmm->getParticleParameters(p1,params_p1);
-
-					custom_nonbond_SoluteSolvent_openmm->getParticleParameters(p2,params_p2);
-
-					double tmp[]={params_p1[0]*params_p2[0],(params_p1[1]+params_p2[1])*0.5,sqrt(params_p1[2]*params_p2[2])};
-
-					const std::vector<double> params(tmp,tmp+3);
-
-					custom_bonded_openmm->addBond(p1,p2,params);
-
-					cout <<"(" << p1 << " , " << p2 << ")" << " charge prod = " 
-					 << params[0] << " sigma_avg  = " << params[1] << " epsilon_avg = " << params[2] << "\n";
-				
-				}
-
-				//1-2+1-3+1-4 list
-				/*cout << "Index = " << i << " (" << p1 << " , " << p2 << ")" << " charge prod = " 
-					 << chargeprod << " sigma  = " << sigma_ex << " epsilon = " << epsilon_ex << "\n";*/
-				
-				//nonbond_openmm->addException(19,5,0.0,1.0,0.0,false);
-				//custom_nonbond_SoluteSolvent_openmm->addExclusion(19,5);
-
-
-				//nonbond_openmm->getParticleParameters(p1,charge_p1,sigma_p1,epsilon_p1);
-				//nonbond_openmm->getParticleParameters(p2,charge_p2,sigma_p2,epsilon_p2);
-				
-				//cout << "p1 = " << p1 << " charge  p1 = " << charge_p1 << " sigma p1 = " << sigma_p1 << " epasilon p1 = " << epsilon_p1 <<"\n";
-				//cout << "p2 = " << p2 << " charge  p2 = " << charge_p2 << " sigma p2 = " << sigma_p2 << " epasilon p2 = " << epsilon_p1 <<"\n\n";
 		
-				/*if(chargeprod==0.0 && sigma_ex == 1.0 && epsilon_ex ==0.0){
-					
-					excluded_vector_12_13.append(qMakePair(p1,p2));			
-				}	*/
-			}
+		create_inter_pairs(solute_list,nats,soft_core_list);
+		
+		//cout << "Solute List SIZE = "<< solute_list.size() <<" SIZE exluded list = " << soft_core_list.size() << "\n";
+
+
+		/*for(unsigned int i=0; i<soft_core_list.size();i++){
+
+			cout << "Excluded List = ( " << soft_core_list[i].first << " , " <<soft_core_list[i].second << " )";
+			cout << "\n";
+		}*/
+		
+		for(unsigned int i=0; i<soft_core_list.size();i++){
 			
-			cout << "\nNumber of Bonds in Custom Bonded FF = " << custom_bonded_openmm->getNumBonds() << "\n\n";
+			int p1= soft_core_list[i].first;
+			int p2= soft_core_list[i].second;
+			
+			double  charge_p1=0;
+			double  sigma_p1=0;
+			double  epsilon_p1=0;
+			
+			double  charge_p2=0;
+			double  sigma_p2=0;
+			double  epsilon_p2=0;
 
 
-			/*for (int i=0;i<excluded_vector_12_13.size();i++){
+			nonbond_openmm->getParticleParameters(p1,charge_p1,sigma_p1,epsilon_p1);
+			
+			nonbond_openmm->getParticleParameters(p2,charge_p2,sigma_p2,epsilon_p2);
+			
+			//cout << "p1 = " << p1 << " charge  p1 = " << charge_p1 << " sigma p1 = " << sigma_p1 << " epsilon p1 = " << epsilon_p1 <<"\n";
+			//cout << "p2 = " << p2 << " charge  p2 = " << charge_p2 << " sigma p2 = " << sigma_p2 << " epsilon p2 = " << epsilon_p1 <<"\n\n";
+			
+			double tmp[]={charge_p1*charge_p2,(sigma_p1+sigma_p2)*0.5,sqrt(epsilon_p1*epsilon_p2)};
 
-				cout << "( " << (excluded_vector_12_13[i]).first << " , " << (excluded_vector_12_13[i]).second << " )\n";										
+			const std::vector<double> params(tmp,tmp+3);
 
-			}*/
+			custom_bonded_openmm->addBond(p1,p2,params);
+			
+			nonbond_openmm->addException(p1,p2,0.0,1.0,0.0,true);
 
-			for(int i=0;i<nats;i++){
+		}
+		
+		/*int num_exceptions = nonbond_openmm->getNumExceptions();
+		
+		cout << "NUM EXCEPTIONS = " << num_exceptions << "\n";*/
+		
+		
+		/*for(int i=0;i<num_exceptions;i++){
+	
+			int p1,p2;
+			
+			double charge_prod,sigma_avg,epsilon_avg;
+	
 
-					std::vector<double> params(4);
+			nonbond_openmm->getExceptionParameters(i,p1,p2,charge_prod,sigma_avg,epsilon_avg);
 
-					custom_nonbond_SoluteSolvent_openmm->getParticleParameters(i,params);
+			cout << "Exception = " << i << " p1 = " << p1 << " p2 = " << p2 << " charge prod = " << charge_prod << 
+				    " sigma avg = " << sigma_avg << " epsilon_avg = " << epsilon_avg << "\n";
 
-					cout << "Atom = " << i << " Params = (" << params[0] << " , " << params[1] << " , " << params[2] << " , " << params[3] << ")\n";
 
-
-			}
-
+		}*/
 
 	}
 
@@ -1431,14 +1310,15 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			for(int j=0;j<n_freq;j++){
 
-				QString name = file_name(j);
+				/*QString name = file_name(j);
 
 				integrator(name.toStdString().c_str(), context_openmm,integrator_openmm, positions_openmm, 
-						   velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);
+						   velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);*/
+				 
+				
+				integrator_openmm.step(frequency_energy);
 
-				//integrator_openmm.step(frequency_energy);
-
-				cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";		
+				cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
 
 				state_openmm=context_openmm.getState(infoMask);	
 
@@ -1490,31 +1370,12 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2.0 * delta);
 
-				cout << "\n\nEnergy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
+				cout << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
 
 				context_openmm.setParameter("lambda",Alchemical_values[i]);
 
-			}//end for cycle
+			}
 
-			/*cout << "\n\nGF accumulator total = " << GF_acc << " ** GB accumulator total = " << GB_acc << "\n"; 
-			
-			double avg_GF = GF_acc / ((double) n_freq);
-			
-			double avg_GB = GB_acc /((double) n_freq);
-			
-			
-			cout << "\n\nAverage GF = " << avg_GF << " Average GB = " << avg_GB << "\n";
-			
-
-			double Energy_GF = -(1.0/beta)*log(avg_GF);
-			
-			double Energy_GB = -(1.0/beta)*log(avg_GB);
-
-			cout <<"\n\nEnergy GF = "<< Energy_GF << " Energy GB = " << Energy_GB << "\n"; 
-
-			double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2.0 * delta);
-
-			cout << "\n\nEnergy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";*/
 
 			context_openmm.setPositions(positions_openmm_start);
 
@@ -1526,16 +1387,13 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
 
-
-	}
-	
-	else{/* ******************* MD ***********************/
+	}else{/******************** MD ***********************/
 
 		timer_OUT.start();
 		
 		int frequency_dcd = 10;
 		
-		bool dcd = false;
+		bool dcd = true;
 		
 		bool wrap = false;
 		
@@ -1545,7 +1403,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
 	
 	
-		state_openmm=context_openmm.getState(infoMask);	
+		state_openmm=context_openmm.getState(infoMask);
 	
 		positions_openmm = state_openmm.getPositions();
 		
@@ -1856,7 +1714,17 @@ void OpenMMIntegrator::setRestraint(bool Restraint){
 	Restraint_flag = Restraint;
 }
 
+/** Get the Center of Mass motion removal frequency */
+int OpenMMIntegrator::getCMMremoval_frequency(void){
 
+	return CMMremoval_frequency;
+}
+
+/** Set the Center of Mass motion removal frequency */
+void OpenMMIntegrator::setCMMremoval_frequency(int frequency){
+
+	CMMremoval_frequency = frequency;
+}
 
 
 /** Create an empty workspace */
@@ -2239,4 +2107,40 @@ double gasdev(void) {
 		return gset;
 	}
 }
+
+bool in(int i, vector<int> & solute_list){
+
+	for(unsigned int k=0;k<solute_list.size();k++){
+		if(i == solute_list[k])
+			return true;
+	}
+
+	return false;
+}
+
+void create_inter_pairs (vector<int> solute_list, int N, vector<pair<int,int> > & soft_core_list){
+
+	for(int i=0;i<N;i++){
+
+		for( int j=i+1; j<N; j++){
+
+			bool i_in = in(i,solute_list);
+			bool j_in = in(j,solute_list);
+
+			if(i_in==true && j_in==true)
+				continue;
+
+			if(i_in==true && j_in==false){
+				soft_core_list.push_back(make_pair(i,j));
+				continue;
+			}
+
+			if(j_in==true)
+					soft_core_list.push_back(make_pair(i,j));
+
+		}
+	}
+
+}
+
 
