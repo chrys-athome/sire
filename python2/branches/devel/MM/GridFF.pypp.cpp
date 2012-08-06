@@ -73,6 +73,16 @@ void register_GridFF_class(){
                 , ljCutoff_function_value );
         
         }
+        { //::SireMM::GridFF::mustNowRecalculateFromScratch
+        
+            typedef void ( ::SireMM::GridFF::*mustNowRecalculateFromScratch_function_type )(  ) ;
+            mustNowRecalculateFromScratch_function_type mustNowRecalculateFromScratch_function_value( &::SireMM::GridFF::mustNowRecalculateFromScratch );
+            
+            GridFF_exposer.def( 
+                "mustNowRecalculateFromScratch"
+                , mustNowRecalculateFromScratch_function_value );
+        
+        }
         GridFF_exposer.def( bp::self != bp::self );
         { //::SireMM::GridFF::operator=
         
