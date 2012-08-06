@@ -693,64 +693,205 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
     ljnrg = 4.0*iljnrg;  // 4 epsilon (....)
 }
 
+/** Ensure that the next energy evaluation is from scratch */
+void GridFF::mustNowRecalculateFromScratch()
+{
+    gridpot.clear();
+    closemols_coords.clear();
+    closemols_params.clear();
+    oldnrgs.clear();
+    
+    InterGroupCLJFF::mustNowRecalculateFromScratch();
+}
+
+/** Any additions mean that the forcefield must be recalculated from scratch */
+void GridFF::_pvt_added(quint32 groupid, const PartialMolecule &mol, 
+                        const PropertyMap &map)
+{
+    this->mustNowRecalculateFromScratch();
+    InterGroupCLJFF::_pvt_added(groupid, mol, map);
+}
+
+/** Any removals mean that the forcefield must be recalculated from scratch */
+void GridFF::_pvt_removed(quint32 groupid, const PartialMolecule &mol)
+{
+    this->mustNowRecalculateFromScratch();
+    InterGroupCLJFF::_pvt_removed(groupid, mol);
+}
+
+/** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
+void GridFF::_pvt_changed(quint32 groupid, const SireMol::Molecule &molecule)
+{
+    if (groupid == 1)
+        this->mustNowRecalculateFromScratch();
+
+    InterGroupCLJFF::_pvt_changed(groupid, molecule);
+}
+
+/** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
+void GridFF::_pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules)
+{
+    if (groupid == 1)
+        this->mustNowRecalculateFromScratch();
+    
+    InterGroupCLJFF::_pvt_changed(groupid, molecules);
+}
+
+/** Any removals mean that the forcefield must be recalculated from scratch */
+void GridFF::_pvt_removedAll(quint32 groupid)
+{
+    this->mustNowRecalculateFromScratch();
+    InterGroupCLJFF::_pvt_removedAll(groupid);
+}
+
 /** Recalculate the total energy */
 void GridFF::recalculateEnergy()
-{        
-    if (gridpot.isEmpty())
-        rebuildGrid();
+{
+    calc_grid_error = true;
+
+    InterGroupCLJFF test_gridff;
+
+    if (calc_grid_error)
+        test_gridff = InterGroupCLJFF(*this);
 
     QTime t;
     t.start();
 
-    double cnrg(0);
-    double ljnrg(0);
-    
-    //loop through all of the molecules and calculate the energies.
-    //First, calculate the CLJ energies for the closemols
-    for (ChunkedVector<CLJMolecule>::const_iterator 
-                    it = mols[0].moleculesByIndex().constBegin();
-         it != mols[0].moleculesByIndex().constEnd();
-         ++it)
+    bool must_recalculate = false;
+
+    //we need to recalculate if either something has changed in group 1,
+    //or nothing at all has changed (in which case we assume that changes
+    //are not being recorded), or if the grid hasn't been created,
+    //or if molecules have been added or removed to group 0.
+    if (gridpot.isEmpty())
     {
-        const CLJMolecule &cljmol = *it;
+        //the grid is empty
+        must_recalculate = true;
+    }
+    else if (not changed_mols[1].isEmpty())
+    {
+        //the molecules in group 1 have changed
+        must_recalculate = true;
+    }
+    else if (changed_mols[0].isEmpty())
+    {
+        //probably not recording changes - assume everything has changed
+        must_recalculate = true;
+    }
+    
+    if (must_recalculate)
+    {
+        this->mustNowRecalculateFromScratch();
+        this->rebuildGrid();
+
+        double total_cnrg(0);
+        double total_ljnrg(0);
+
+        //calculate all of the energies from scratch and store
+        //them in 'oldnrgs'
+        oldnrgs.reserve( mols[0].count() );
+    
+        //loop through all of the molecules and calculate the energies.
+        //First, calculate the CLJ energies for the closemols
+        for (ChunkedVector<CLJMolecule>::const_iterator 
+                    it = mols[0].moleculesByIndex().constBegin();
+             it != mols[0].moleculesByIndex().constEnd();
+             ++it)
+        {
+            const CLJMolecule &cljmol = *it;
+
+            double cnrg(0);
+            double ljnrg(0);
         
-        //loop through each CutGroup of this molecule
-        const int ngroups = cljmol.coordinates().count();
+            //loop through each CutGroup of this molecule
+            const int ngroups = cljmol.coordinates().count();
         
-        const CoordGroup *groups_array = cljmol.coordinates().constData();
+            const CoordGroup *groups_array = cljmol.coordinates().constData();
         
-        const CLJParameters::Array *params_array 
+            const CLJParameters::Array *params_array 
                                 = cljmol.parameters().atomicParameters().constData();
 
-        for (int igroup=0; igroup<ngroups; ++igroup)
-        {
-            double icnrg, iljnrg;
-            calculateEnergy(groups_array[igroup], params_array[igroup],
-                            icnrg, iljnrg);
+            for (int igroup=0; igroup<ngroups; ++igroup)
+            {
+                double icnrg, iljnrg;
+                calculateEnergy(groups_array[igroup], params_array[igroup],
+                                icnrg, iljnrg);
                             
-            cnrg += icnrg;
-            ljnrg += iljnrg;
+                cnrg += icnrg;
+                ljnrg += iljnrg;
 
-            //save the energy of this group
+            }
+            
+            oldnrgs.insert(cljmol.number(), CLJEnergy(cnrg,ljnrg));
+            
+            total_cnrg += cnrg;
+            total_ljnrg += ljnrg;
         }
+
+        this->components().setEnergy(*this, CLJEnergy(total_cnrg,total_ljnrg));
     }
-
-    int ms_grid = t.elapsed();
-
-    qDebug() << cnrg << ljnrg;
-
-    InterGroupCLJFF::mustNowRecalculateFromScratch();
+    else
+    {
+        double delta_cnrg(0);
+        double delta_ljnrg(0);
     
-    t.start();
-    InterGroupCLJFF::recalculateEnergy();
-    int ms_exact = t.elapsed();
+        for (QHash<MolNum,ChangedMolecule>::const_iterator
+                                      it = this->changed_mols[0].constBegin();
+             it != this->changed_mols[0].constEnd();
+             ++it)
+        {
+            const CLJMolecule &cljmol = it->newMolecule();
+            
+            //loop through each CutGroup of this molecule
+            const int ngroups = cljmol.coordinates().count();
+        
+            const CoordGroup *groups_array = cljmol.coordinates().constData();
+        
+            const CLJParameters::Array *params_array 
+                                = cljmol.parameters().atomicParameters().constData();
+
+            double cnrg(0);
+            double ljnrg(0);
+        
+            for (int igroup=0; igroup<ngroups; ++igroup)
+            {
+                double icnrg, iljnrg;
+                calculateEnergy(groups_array[igroup], params_array[igroup],
+                                icnrg, iljnrg);
+                            
+                cnrg += icnrg;
+                ljnrg += iljnrg;
+
+            }
+            
+            CLJEnergy old_nrg = oldnrgs[cljmol.number()];
+            oldnrgs[cljmol.number()] = CLJEnergy(cnrg,ljnrg);
+            
+            delta_cnrg += (cnrg - old_nrg.coulomb());
+            delta_ljnrg += (ljnrg - old_nrg.lj());
+        }
+         
+        //change the energy
+        this->components().changeEnergy(*this, CLJEnergy(delta_cnrg,delta_ljnrg));
+        
+        //clear the changed molecules
+        this->changed_mols[0].clear();
+    }
     
-    double coul = this->energy( components().coulomb() );
-    double lj = this->energy( components().lj() );
-    
-    qDebug() << "COULOMB" << cnrg << coul << (cnrg - coul) << ms_grid;
-    qDebug() << "LJ     " << ljnrg << lj << (ljnrg - lj) << ms_exact;
+    this->setClean();
+
+    int grid_ms = t.elapsed();
+
+    qDebug() << this->energy() << this->energies().toString();
+    qDebug() << "GRID TIME:" << grid_ms;
 
     if (calc_grid_error)
-        InterGroupCLJFF::recalculateEnergy();
+    {
+        t.start();
+        double nrg = test_gridff.energy();
+        int ms = t.elapsed();
+        
+        qDebug() << nrg << test_gridff.energies().toString();
+        qDebug() << "EXPLICIT TIME:" << ms;
+    }
 }

@@ -92,8 +92,20 @@ public:
 
     bool calculatingGridError() const;
 
+    void mustNowRecalculateFromScratch();    
+
 protected:
     void recalculateEnergy();
+
+    void _pvt_added(quint32 groupid, const PartialMolecule &mol, 
+                    const PropertyMap &map);
+
+    void _pvt_removed(quint32 groupid, const PartialMolecule &mol);
+
+    void _pvt_changed(quint32 groupid, const SireMol::Molecule &molecule);
+    void _pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules);
+    
+    void _pvt_removedAll(quint32 groupid);
 
 private:
     void rebuildGrid();
@@ -139,9 +151,8 @@ private:
     QVector<SireMaths::Vector> closemols_coords;
     QVector<detail::CLJParameter> closemols_params;
     
-    /** The energies of the group 1 CoordGroups the last time
-        they were evaluated */
-    QVector<CLJEnergy> oldnrgs;
+    /** The old energy of each molecule */
+    QHash<SireMol::MolNum,CLJEnergy> oldnrgs;
     
     /** Whether or not to calculate the grid error */
     bool calc_grid_error;
