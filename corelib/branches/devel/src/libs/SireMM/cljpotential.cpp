@@ -49,7 +49,7 @@
 
 #include "SireStream/datastream.h"
 
-#undef SIRE_USE_SSE
+#undef SIRE_USE_SSE // for some reason, this makes things slower...
 
 #ifdef SIRE_USE_SSE
     #ifdef __SSE__

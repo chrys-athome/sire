@@ -46,8 +46,8 @@ system.setProperty("space", Cartesian())
 
 gridff = GridFF("gridff")
 gridff.setBuffer(2 * angstrom)
-gridff.setGridSpacing( 2 * angstrom )
-gridff.setLJCutoff( 100 * angstrom )
+gridff.setGridSpacing( 0.5 * angstrom )
+gridff.setLJCutoff( 7.5 * angstrom )
 gridff.setCoulombCutoff( 100 * angstrom )
 
 gridff.setProperty("switchingFunction", NoCutoff())

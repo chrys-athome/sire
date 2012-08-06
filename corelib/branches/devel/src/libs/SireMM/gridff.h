@@ -136,7 +136,8 @@ private:
     
     /** The set of coordinates and parameters of group 2 
         molecules that are within the LJ cutoff of the center of the grid */
-    QVector< QPair<SireVol::CoordGroup,CLJParameters::Array> > closemols;
+    QVector<SireMaths::Vector> closemols_coords;
+    QVector<detail::CLJParameter> closemols_params;
     
     /** The energies of the group 1 CoordGroups the last time
         they were evaluated */

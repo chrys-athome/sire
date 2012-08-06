@@ -35,6 +35,14 @@
 #include <QDebug>
 #include <QTime>
 
+#ifdef SIRE_USE_SSE
+    #ifdef __SSE__
+        #include <emmintrin.h>   // CONDITIONAL_INCLUDE
+    #else
+        #undef SIRE_USE_SSE
+    #endif
+#endif
+
 using namespace SireMM;
 using namespace SireStream;
 using namespace SireVol;
@@ -102,7 +110,9 @@ GridFF::GridFF(const GridFF &other)
          buffer_size(other.buffer_size), grid_spacing(other.grid_spacing),
          coul_cutoff(other.coul_cutoff), lj_cutoff(other.lj_cutoff),
          dimx(other.dimx), dimy(other.dimy), dimz(other.dimz),
-         gridpot(other.gridpot), closemols(other.closemols),
+         gridpot(other.gridpot), 
+         closemols_coords(other.closemols_coords),
+         closemols_params(other.closemols_params),
          oldnrgs(other.oldnrgs),
          calc_grid_error(other.calc_grid_error)
 {}
@@ -135,7 +145,8 @@ GridFF& GridFF::operator=(const GridFF &other)
         dimy = other.dimy;
         dimz = other.dimz;
         gridpot = other.gridpot;
-        closemols = other.closemols;
+        closemols_coords = other.closemols_coords;
+        closemols_params = other.closemols_params;
         oldnrgs = other.oldnrgs;
         calc_grid_error = other.calc_grid_error;
     
@@ -203,7 +214,7 @@ void GridFF::setLJCutoff(SireUnits::Dimension::Length cutoff)
     if (lj_cutoff != cutoff.value())
     {
         lj_cutoff = cutoff.value();
-        closemols.clear();
+        gridpot.clear();
     }
 }
 
@@ -360,6 +371,9 @@ void GridFF::rebuildGrid()
     //create space for the grid
     gridpot = QVector<double>(dimx*dimy*dimz, 0.0);
     gridpot.squeeze();
+
+    closemols_coords.clear();
+    closemols_params.clear();
     
     //now build the grid - we take coordgroups that are within the LJ cutoff
     //and calculate those manually (saving them in the closemols list), and
@@ -371,7 +385,7 @@ void GridFF::rebuildGrid()
     
     qDebug() 
       << "Building the list of close molecules and adding far molecules to the grid...";
-        
+
     for (ChunkedVector<CLJMolecule>::const_iterator it = cljmols.constBegin();
          it != cljmols.constEnd();
          ++it)
@@ -411,8 +425,8 @@ void GridFF::rebuildGrid()
                     if (it->get<0>() < lj_cutoff)
                     {
                         //this image should be evaluated explicitly
-                        closemols.append( QPair<CoordGroup,CLJParameters::Array>
-                                                (it->get<1>(), params) );
+                        closemols_coords += it->get<1>().toVector();
+                        closemols_params += params.toQVector();
                     }
                     else
                     {
@@ -431,8 +445,8 @@ void GridFF::rebuildGrid()
                 else if (spce.minimumDistance(coordgroup, allcoords0) < lj_cutoff)
                 {
                     //this image should be evaluated explicitly
-                    closemols.append( QPair<CoordGroup,CLJParameters::Array>
-                                                (coordgroup,params) );
+                    closemols_coords += coordgroup.toVector();
+                    closemols_params += params.toQVector();
                 }
                 else
                 {
@@ -443,7 +457,8 @@ void GridFF::rebuildGrid()
         }
     }
     
-    qDebug() << "There are" << closemols.count() << "close groups...";
+    closemols_coords.squeeze();
+    closemols_params.squeeze();
 }
 
 void GridFF::calculateEnergy(const CoordGroup &coords0, 
@@ -455,43 +470,149 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
 
     const int nats0 = coords0.count();
     
-    //calculate the CLJ energy with each group in closemols
-    for ( QVector< QPair<CoordGroup,CLJParameters::Array> >::const_iterator it
-                     = closemols.constBegin();
-          it != closemols.constEnd();
-          ++it)
+    const Vector *coords0_array = coords0.constData();
+    const detail::CLJParameter *params0_array = params0.constData();
+
+    const Vector *coords1_array = closemols_coords.constData();
+    const detail::CLJParameter *params1_array = closemols_params.constData();
+        
+    const int nats1 = closemols_coords.count();
+        
+    BOOST_ASSERT( closemols_coords.count() == closemols_params.count() );
+        
+    #ifdef SIRE_USE_SSE
     {
-        const CoordGroup &coords1 = it->first;
-        const CLJParameters::Array &params1 = it->second;
+        const int remainder = nats1 % 2;
         
-        const int nats1 = coords1.count();
+        __m128d sse_cnrg = { 0, 0 };
+        __m128d sse_ljnrg = { 0, 0 };
+
+        const __m128d sse_one = { 1.0, 1.0 };
         
-        for (int i0=0; i0<nats0; ++i0)
+        for (quint32 i=0; i<nats0; ++i)
         {
-            const Vector &c0 = coords0[i0];
-            const detail::CLJParameter &p0 = params0[i0];
+            const Parameter &param0 = params0_array[i];
             
-            for (int i1=0; i1<nats1; ++i1)
+            __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge, 
+                                           param0.reduced_charge );
+            
+            const Vector &c0 = coords0_array[i];
+            
+            //process atoms in pairs (so can then use SSE)
+            for (quint32 j=0; j<nats1-1; j += 2)
             {
-                const Vector &c1 = coords1[i1];
-                const detail::CLJParameter &p1 = params1[i1];
+                const Parameter &param10 = params1_array[j];
+                const Parameter &param11 = params1_array[j+1];
                 
-                const LJPair &ljpair = ljpairs.constData()[
-                                            ljpairs.map(p0.ljid,p1.ljid) ];
-                                            
+                const Vector &c10 = coords1_array[j];
+                const Vector &c11 = coords1_array[j+1];
+                
+                __m128d sse_dist = _mm_set_pd( Vector::distance(c0,c10), 
+                                               Vector::distance(c0,c11) );
+                __m128d sse_chg1 = _mm_set_pd( param10.reduced_charge,
+                                               param11.reduced_charge );
+                                   
+                const LJPair &ljpair0 = ljpairs.constData()[
+                                        ljpairs.map(param0.ljid,
+                                                    param10.ljid)];
+            
+                const LJPair &ljpair1 = ljpairs.constData()[
+                                        ljpairs.map(param0.ljid,
+                                                    param11.ljid)];
+            
+                __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
+                                              ljpair1.epsilon() );
+                
+                sse_dist = _mm_div_pd(sse_one, sse_dist);
+                
+                //calculate the coulomb energy
+                __m128d tmp = _mm_mul_pd(sse_chg0, sse_chg1);
+                tmp = _mm_mul_pd(tmp, sse_dist);
+                sse_cnrg = _mm_add_pd(sse_cnrg, tmp);
+                
+                //calculate (sigma/r)^6 and (sigma/r)^12
+                __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_dist);
+                sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,  
+                                                 sse_sig_over_dist2 );
+                                             
+                __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
+                                                        sse_sig_over_dist2);
+                                                
+                sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
+                                                sse_sig_over_dist2);
+                                             
+                __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
+                                                         sse_sig_over_dist6);
+                                      
+                //calculate LJ energy (the factor of 4 is added later)
+                tmp = _mm_sub_pd(sse_sig_over_dist12, 
+                                 sse_sig_over_dist6);
+                                         
+                tmp = _mm_mul_pd(tmp, sse_eps);
+                sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
+            }
+                  
+            if (remainder == 1)
+            {
+                const Vector &c1 = coords1_array[nats1-1];
+                const Parameter &param1 = params1_array[nats1-1];
+
                 const double invdist = double(1) / Vector::distance(c0,c1);
                 
-                icnrg += p0.reduced_charge * p1.reduced_charge 
+                icnrg += param0.reduced_charge * param1.reduced_charge 
                             * invdist;
-            
+
+                const LJPair &ljpair = ljpairs.constData()[
+                                        ljpairs.map(param0.ljid,
+                                                    param1.ljid)];
+                
                 double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
                 double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                iljnrg += 4 * ljpair.epsilon() * (sig_over_dist12 - 
-                                                  sig_over_dist6);
+                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                              sig_over_dist6);
+                                                  
+            }
+        }
+        
+        icnrg += *((const double*)&sse_cnrg) +
+                 *( ((const double*)&sse_cnrg) + 1 );
+                 
+        iljnrg += *((const double*)&sse_ljnrg) +
+                  *( ((const double*)&sse_ljnrg) + 1 );
+    }
+    #else
+    {
+        for (quint32 i=0; i<nats0; ++i)
+        {
+            distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+            const Vector &c0 = coords0_array[i];
+            
+            for (quint32 j=0; j<nats1; ++j)
+            {
+                const Parameter &param1 = params1_array[j];
+                const Vector &c1 = coords1_array[j];
+
+                const double invdist = double(1) / Vector::distance(c0,c1);
+                
+                icnrg += param0.reduced_charge * param1.reduced_charge 
+                            * invdist;
+
+                const LJPair &ljpair = ljpairs.constData()[
+                                        ljpairs.map(param0.ljid,
+                                                    param1.ljid)];
+
+                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                              sig_over_dist6);
             }
         }
     }
+    #endif
 
     double gridnrg = 0;
     const double *gridpot_array = gridpot.constData();
@@ -569,7 +690,7 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
     }
     
     cnrg = icnrg + gridnrg;
-    ljnrg = iljnrg;
+    ljnrg = 4.0*iljnrg;  // 4 epsilon (....)
 }
 
 /** Recalculate the total energy */
