@@ -6,6 +6,7 @@ from Sire.Mol import *
 from Sire.Maths import *
 from Sire.Move import *
 from Sire.Units import *
+from Sire.Vol import *
 
 amber = Amber()
 
@@ -41,15 +42,19 @@ for molnum in molnums:
 system.add(swapwaters)
 system.add(waters)
 
-system.setProperty("space", space)
+system.setProperty("space", Cartesian())
 
 gridff = GridFF("gridff")
+gridff.setBuffer(2 * angstrom)
 gridff.setGridSpacing( 2 * angstrom )
+gridff.setLJCutoff( 100 * angstrom )
+gridff.setCoulombCutoff( 100 * angstrom )
+
+gridff.setProperty("switchingFunction", NoCutoff())
+gridff.setSpace(Cartesian())
 
 gridff.add(swapwaters, MGIdx(0))
 gridff.add(waters, MGIdx(1))
-
-gridff.setSpace(space)
 
 system.add(gridff)
 

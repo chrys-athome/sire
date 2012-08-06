@@ -102,6 +102,10 @@ private:
     typedef InterGroupCLJFF::Molecule CLJMolecule;
     typedef InterGroupCLJFF::Molecules CLJMolecules;
 
+    void calculateEnergy(const SireVol::CoordGroup &coords,
+                         const CLJParameters::Array &params,
+                         double &cnrg, double &ljnrg);
+
     void addToGrid(const SireVol::CoordGroup &cgroup,
                    const CLJParameters::Array &parameters);
 
@@ -134,7 +138,7 @@ private:
         molecules that are within the LJ cutoff of the center of the grid */
     QVector< QPair<SireVol::CoordGroup,CLJParameters::Array> > closemols;
     
-    /** The energies of the group 1 molecules the last time
+    /** The energies of the group 1 CoordGroups the last time
         they were evaluated */
     QVector<CLJEnergy> oldnrgs;
     

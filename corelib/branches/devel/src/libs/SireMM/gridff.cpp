@@ -33,6 +33,7 @@
 #include "SireStream/shareddatastream.h"
 
 #include <QDebug>
+#include <QTime>
 
 using namespace SireMM;
 using namespace SireStream;
@@ -81,16 +82,16 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
 /** Empty constructor */
 GridFF::GridFF() 
        : ConcreteProperty<GridFF,InterGroupCLJFF>(),
-         buffer_size(2), grid_spacing(0.25), 
-         coul_cutoff(15), lj_cutoff(5),
+         buffer_size(2.5), grid_spacing(1.0), 
+         coul_cutoff(50), lj_cutoff(7.5),
          calc_grid_error(false)
 {}
 
 /** Construct a grid forcefield with a specified name */
 GridFF::GridFF(const QString &name) 
        : ConcreteProperty<GridFF,InterGroupCLJFF>(name),
-         buffer_size(2), grid_spacing(0.25), 
-         coul_cutoff(15), lj_cutoff(5),
+         buffer_size(2.5), grid_spacing(1.0), 
+         coul_cutoff(50), lj_cutoff(7.5),
          calc_grid_error(false)
 {}
 
@@ -287,7 +288,7 @@ void GridFF::rebuildGrid()
 {
     qDebug() << "REBUILDING THE GRID";
 
-    //Get an CoordGroup that contains all of the molecules in group 0
+    //Get a CoordGroup that contains all of the molecules in group 0
     CoordGroup allcoords0;
     {
         QVector< QVector<Vector> > coords;
@@ -368,6 +369,9 @@ void GridFF::rebuildGrid()
     const Space &spce = this->space();
     Vector grid_center = group0_box.center();
     
+    qDebug() 
+      << "Building the list of close molecules and adding far molecules to the grid...";
+        
     for (ChunkedVector<CLJMolecule>::const_iterator it = cljmols.constBegin();
          it != cljmols.constEnd();
          ++it)
@@ -419,7 +423,12 @@ void GridFF::rebuildGrid()
             }
             else
             {
-                if (spce.minimumDistance(coordgroup, allcoords0) < lj_cutoff)
+                if (spce.beyond(lj_cutoff, coordgroup, allcoords0))
+                {
+                    //evaluate the energy on each of the gridpoints...
+                    addToGrid(coordgroup, params);
+                }
+                else if (spce.minimumDistance(coordgroup, allcoords0) < lj_cutoff)
                 {
                     //this image should be evaluated explicitly
                     closemols.append( QPair<CoordGroup,CLJParameters::Array>
@@ -437,15 +446,143 @@ void GridFF::rebuildGrid()
     qDebug() << "There are" << closemols.count() << "close groups...";
 }
 
+void GridFF::calculateEnergy(const CoordGroup &coords0, 
+                             const GridFF::CLJParameters::Array &params0,
+                             double &cnrg, double &ljnrg)
+{
+    double icnrg = 0;
+    double iljnrg = 0;
+
+    const int nats0 = coords0.count();
+    
+    //calculate the CLJ energy with each group in closemols
+    for ( QVector< QPair<CoordGroup,CLJParameters::Array> >::const_iterator it
+                     = closemols.constBegin();
+          it != closemols.constEnd();
+          ++it)
+    {
+        const CoordGroup &coords1 = it->first;
+        const CLJParameters::Array &params1 = it->second;
+        
+        const int nats1 = coords1.count();
+        
+        for (int i0=0; i0<nats0; ++i0)
+        {
+            const Vector &c0 = coords0[i0];
+            const detail::CLJParameter &p0 = params0[i0];
+            
+            for (int i1=0; i1<nats1; ++i1)
+            {
+                const Vector &c1 = coords1[i1];
+                const detail::CLJParameter &p1 = params1[i1];
+                
+                const LJPair &ljpair = ljpairs.constData()[
+                                            ljpairs.map(p0.ljid,p1.ljid) ];
+                                            
+                const double invdist = double(1) / Vector::distance(c0,c1);
+                
+                icnrg += p0.reduced_charge * p1.reduced_charge 
+                            * invdist;
+            
+                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                iljnrg += 4 * ljpair.epsilon() * (sig_over_dist12 - 
+                                                  sig_over_dist6);
+            }
+        }
+    }
+
+    double gridnrg = 0;
+    const double *gridpot_array = gridpot.constData();
+
+    //now calculate the energy in the grid
+    for (int i0=0; i0<nats0; ++i0)
+    {
+        const Vector &c0 = coords0[i0];
+        const detail::CLJParameter &p0 = params0[i0];
+        
+        Vector grid_coords = c0 - gridbox.minCoords();
+        
+        int i_0 = int(grid_coords.x() / grid_spacing);
+        int j_0 = int(grid_coords.y() / grid_spacing);
+        int k_0 = int(grid_coords.z() / grid_spacing);
+        
+        if (i_0 < 0 or i_0 >= (dimx-1) or
+            j_0 < 0 or j_0 >= (dimy-1) or
+            k_0 < 0 or k_0 >= (dimz-1))
+        {
+            qDebug() << "POINT" << c0.toString() << "LIES OUTSIDE OF "
+                     << "THE GRID?" << gridbox.toString();
+        }
+        else
+        {
+            //use tri-linear interpolation to get the potential at the atom
+            //
+            // This is described in 
+            //
+            // Davis, Madura and McCammon, Comp. Phys. Comm., 62, 187-197, 1991
+            //
+            // phi(x,y,z) = phi(i  ,j  ,k  )*(1-R)(1-S)(1-T) +
+            //              phi(i+1,j  ,k  )*(  R)(1-S)(1-T) +
+            //              phi(i  ,j+1,k  )*(1-R)(  S)(1-T) +
+            //              phi(i  ,j  ,k+1)*(1-R)(1-S)(  T) +
+            //              phi(i+1,j+1,k  )*(  R)(  S)(1-T) +
+            //              phi(i+1,j  ,k+1)*(  R)(1-S)(  T) +
+            //              phi(i  ,j+1,k+1)*(1-R)(  S)(  T) +
+            //              phi(i+1,j+1,k+1)*(  R)(  S)(  T) +
+            //
+            // where R, S and T are the coordinates of the atom in 
+            // fractional grid coordinates from the point (i,j,k), e.g.
+            // (0,0,0) is (i,j,k) and (1,1,1) is (i+1,j+1,k+1)
+            //
+            const Vector c000 = gridbox.minCoords() + 
+                                    Vector( i_0 * grid_spacing,
+                                            j_0 * grid_spacing,
+                                            k_0 * grid_spacing );
+
+            const Vector RST = (c0 - c000) / grid_spacing;
+            const double R = RST.x();
+            const double S = RST.y();
+            const double T = RST.z();
+            
+            int i000 = (i_0  ) * (dimy*dimz) + (j_0  )*dimz + (k_0  );
+            int i001 = (i_0  ) * (dimy*dimz) + (j_0  )*dimz + (k_0+1);
+            int i010 = (i_0  ) * (dimy*dimz) + (j_0+1)*dimz + (k_0  );
+            int i100 = (i_0+1) * (dimy*dimz) + (j_0  )*dimz + (k_0  );
+            int i011 = (i_0  ) * (dimy*dimz) + (j_0+1)*dimz + (k_0+1);
+            int i101 = (i_0+1) * (dimy*dimz) + (j_0  )*dimz + (k_0+1);
+            int i110 = (i_0+1) * (dimy*dimz) + (j_0+1)*dimz + (k_0  );
+            int i111 = (i_0+1) * (dimy*dimz) + (j_0+1)*dimz + (k_0+1);
+            
+            double phi = (gridpot_array[i000] * (1-R)*(1-S)*(1-T)) + 
+                         (gridpot_array[i001] * (1-R)*(1-S)*(  T)) +
+                         (gridpot_array[i010] * (1-R)*(  S)*(1-T)) +
+                         (gridpot_array[i100] * (  R)*(1-S)*(1-T)) +
+                         (gridpot_array[i011] * (1-R)*(  S)*(  T)) +
+                         (gridpot_array[i101] * (  R)*(1-S)*(  T)) +
+                         (gridpot_array[i110] * (  R)*(  S)*(1-T)) +
+                         (gridpot_array[i111] * (  R)*(  S)*(  T));                         
+                              
+            gridnrg += phi * p0.reduced_charge;
+        }
+    }
+    
+    cnrg = icnrg + gridnrg;
+    ljnrg = iljnrg;
+}
+
 /** Recalculate the total energy */
 void GridFF::recalculateEnergy()
 {        
-    if (closemols.isEmpty() or gridpot.isEmpty())
+    if (gridpot.isEmpty())
         rebuildGrid();
+
+    QTime t;
+    t.start();
 
     double cnrg(0);
     double ljnrg(0);
-    double gridnrg(0);
     
     //loop through all of the molecules and calculate the energies.
     //First, calculate the CLJ energies for the closemols
@@ -454,10 +591,6 @@ void GridFF::recalculateEnergy()
          it != mols[0].moleculesByIndex().constEnd();
          ++it)
     {
-        double icnrg(0);
-        double iljnrg(0);
-        double igridnrg(0);
-    
         const CLJMolecule &cljmol = *it;
         
         //loop through each CutGroup of this molecule
@@ -470,59 +603,32 @@ void GridFF::recalculateEnergy()
 
         for (int igroup=0; igroup<ngroups; ++igroup)
         {
-            const CoordGroup &coords0 = groups_array[igroup];
-            const CLJParameters::Array &params0 = params_array[igroup];
-            
-            const int nats0 = coords0.count();
-            
-            //calculate the CLJ energy with each group in closemols
-            for ( QVector< QPair<CoordGroup,CLJParameters::Array> >::const_iterator it2
-                             = closemols.constBegin();
-                  it2 != closemols.constEnd();
-                  ++it2)
-            {
-                const CoordGroup &coords1 = it2->first;
-                const CLJParameters::Array &params1 = it2->second;
-                
-                const int nats1 = coords1.count();
-                
-                for (int i0=0; i0<nats0; ++i0)
-                {
-                    const Vector &c0 = coords0[i0];
-                    const detail::CLJParameter &p0 = params0[i0];
-                    
-                    for (int i1=0; i1<nats1; ++i1)
-                    {
-                        const Vector &c1 = coords1[i1];
-                        const detail::CLJParameter &p1 = params1[i1];
-                        
-                        const LJPair &ljpair = ljpairs.constData()[
-                                                    ljpairs.map(p0.ljid,p1.ljid) ];
-                                                    
-                        const double invdist = double(1) / Vector::distance(c0,c1);
-                        
-                        icnrg += p0.reduced_charge * p1.reduced_charge 
-                                     * invdist;
-                    
-                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                        double sig_over_dist12 = pow_2(sig_over_dist6);
-    
-                        iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                      sig_over_dist6);
-                    }
-                }
-            }
-            
-            //now calculate the energy over the points on the grid...
-            
+            double icnrg, iljnrg;
+            calculateEnergy(groups_array[igroup], params_array[igroup],
+                            icnrg, iljnrg);
+                            
+            cnrg += icnrg;
+            ljnrg += iljnrg;
+
+            //save the energy of this group
         }
-        
-        cnrg += icnrg;
-        ljnrg += iljnrg;
-        gridnrg += igridnrg;
-        
-        //save the old energy of this molecule
     }
+
+    int ms_grid = t.elapsed();
+
+    qDebug() << cnrg << ljnrg;
+
+    InterGroupCLJFF::mustNowRecalculateFromScratch();
+    
+    t.start();
+    InterGroupCLJFF::recalculateEnergy();
+    int ms_exact = t.elapsed();
+    
+    double coul = this->energy( components().coulomb() );
+    double lj = this->energy( components().lj() );
+    
+    qDebug() << "COULOMB" << cnrg << coul << (cnrg - coul) << ms_grid;
+    qDebug() << "LJ     " << ljnrg << lj << (ljnrg - lj) << ms_exact;
 
     if (calc_grid_error)
         InterGroupCLJFF::recalculateEnergy();
