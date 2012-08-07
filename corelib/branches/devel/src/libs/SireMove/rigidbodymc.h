@@ -150,8 +150,8 @@ private:
     /** The center of the reflection sphere */
     SireMaths::Vector reflect_center;
 
-    /** The radius^2 of the reflection sphere */
-    double reflect_radius2;
+    /** The radius of the reflection sphere */
+    double reflect_radius;
 
     /** Whether or not to reflect the moves */
     bool reflect_moves;

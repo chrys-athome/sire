@@ -67,7 +67,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
 
     sds << rbmc.smplr << rbmc.center_function
         << rbmc.adel << rbmc.rdel
-        << rbmc.reflect_center << rbmc.reflect_radius2
+        << rbmc.reflect_center << rbmc.reflect_radius
         << rbmc.reflect_moves
         << rbmc.sync_trans << rbmc.sync_rot << rbmc.common_center
         << static_cast<const MonteCarlo&>(rbmc);
@@ -88,7 +88,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 
         sds >> rbmc.smplr >> rbmc.center_function
             >> rbmc.adel >> rbmc.rdel
-            >> rbmc.reflect_center >> rbmc.reflect_radius2
+            >> rbmc.reflect_center >> rbmc.reflect_radius
             >> rbmc.reflect_moves
             >> rbmc.sync_trans >> rbmc.sync_rot
             >> rbmc.common_center
@@ -148,7 +148,7 @@ RigidBodyMC::RigidBodyMC(const PropertyMap &map)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(map),
               center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
-              reflect_center(0), reflect_radius2(0), reflect_moves(false),
+              reflect_center(0), reflect_radius(0), reflect_moves(false),
               sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
@@ -160,7 +160,7 @@ RigidBodyMC::RigidBodyMC(const Sampler &sampler, const PropertyMap &map)
               smplr(sampler), center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ),
               rdel( 15 * degrees ), 
-              reflect_center(0), reflect_radius2(0), reflect_moves(false),
+              reflect_center(0), reflect_radius(0), reflect_moves(false),
               sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
@@ -176,7 +176,7 @@ RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup,
               smplr( UniformSampler(molgroup) ),
               center_function( GetCOGPoint() ),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
-              reflect_center(0), reflect_radius2(0), reflect_moves(false),
+              reflect_center(0), reflect_radius(0), reflect_moves(false),
               sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
@@ -189,7 +189,7 @@ RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
               smplr(other.smplr), center_function(other.center_function),
               adel(other.adel), rdel(other.rdel),
               reflect_center(other.reflect_center), 
-              reflect_radius2(other.reflect_radius2),
+              reflect_radius(other.reflect_radius),
               reflect_moves(other.reflect_moves),
               sync_trans(other.sync_trans), sync_rot(other.sync_rot),
               common_center(other.common_center)
@@ -214,7 +214,7 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
         adel = other.adel;
         rdel = other.rdel;
         reflect_center = other.reflect_center;
-        reflect_radius2 = other.reflect_radius2;
+        reflect_radius = other.reflect_radius;
         reflect_moves = other.reflect_moves;
         sync_trans = other.sync_trans;
         sync_rot = other.sync_rot;
@@ -231,7 +231,7 @@ bool RigidBodyMC::operator==(const RigidBodyMC &other) const
     return smplr == other.smplr and center_function == other.center_function and
            adel == other.adel and rdel == other.rdel and
            reflect_center == other.reflect_center and
-           reflect_radius2 == other.reflect_radius2 and
+           reflect_radius == other.reflect_radius and
            reflect_moves == other.reflect_moves and 
            sync_trans == other.sync_trans and sync_rot == other.sync_rot and
            common_center == other.common_center and
@@ -357,13 +357,13 @@ void RigidBodyMC::setReflectionSphere(Vector sphere_center,
 {
     reflect_moves = true;
     reflect_center = sphere_center;
-    reflect_radius2 = SireMaths::pow_2( sphere_radius.value() );
+    reflect_radius = sphere_radius.value();
 
-    if (reflect_radius2 < 0.01)
+    if (reflect_radius < 0.01)
     {
         reflect_moves = false;
         reflect_center = Vector(0);
-        reflect_radius2 = 0;
+        reflect_radius = 0;
     }
 }
 
@@ -384,7 +384,7 @@ Vector RigidBodyMC::reflectionSphereCenter() const
     if the reflection sphere is not being used */
 SireUnits::Dimension::Length RigidBodyMC::reflectionSphereRadius() const
 {
-    return SireUnits::Dimension::Length( std::sqrt(reflect_radius2) );
+    return SireUnits::Dimension::Length( reflect_radius );
 }
 
 /** Return whether or not translation of all molecules is synchronised */
@@ -429,6 +429,14 @@ void RigidBodyMC::performMove(System &system,
         const PartialMolecule &oldmol = mol_and_bias.get<0>();
         old_bias = mol_and_bias.get<1>();
 
+        //move the molecule
+        PartialMolecule newmol = oldmol.move()
+                                       .rotate(rotdelta,
+                                               center_function.read()(oldmol,map),
+                                               map)
+                                       .translate(delta, map)
+                                       .commit();
+
         //if we are reflecting moves in a sphere, then check that this move
         //won't take us out of the sphere.
         if (reflect_moves)
@@ -438,22 +446,26 @@ void RigidBodyMC::performMove(System &system,
             //the sphere, then the molecule will bounce off the edge of 
             //the sphere and back into the sphere volume
 
-            Vector mol_center = oldmol.evaluate().center();
+            Vector old_center = oldmol.evaluate().center();
 
-            if ( (mol_center-reflect_center).length2() > reflect_radius2 )
+            if ( (old_center-reflect_center).length() > reflect_radius )
             {
                 //the molecule is already outside the sphere, so cannot be moved
                 old_bias = 1;
                 new_bias = 1;
+                qDebug() << "HOW IS THE MOLECULE OUTSIDE THE SPHERE?";
+                qDebug() << (old_center-reflect_center).length() << reflect_radius;
                 return;
             }
 
-            Vector new_center = mol_center + delta;
+            Vector new_center = newmol.evaluate().center();
 
-            double dist2 = (new_center - reflect_center).length2();
+            double dist = (new_center - reflect_center).length();
 
-            if (dist2 > reflect_radius2)
+            if (dist > reflect_radius)
             {
+                delta = new_center - old_center;
+            
                 //this would move the molecule out of the sphere. We need
                 //to work out where the molecule would intersect the surface
                 //of the sphere, and then reflect the molecule back inside
@@ -462,9 +474,9 @@ void RigidBodyMC::performMove(System &system,
                 // The delta vector has origin at O, direction D. The sphere
                 // is at origin C, with radius R
                 Vector D = delta.normalise();
-                Vector O = mol_center;
+                Vector O = old_center;
                 Vector C = reflect_center;
-                double R2 = reflect_radius2;
+                double R2 = reflect_radius*reflect_radius;
 
                 //a point P is on the surface of the sphere if (P-C).(P-C) = R^2
                 //this means that the intersection of the vector with the sphere
@@ -500,6 +512,7 @@ void RigidBodyMC::performMove(System &system,
                     //the move does not intersect with the sphere... weird...
                     old_bias = 1;
                     new_bias = 1;
+                    qDebug() << "WEIRD: MOVE DOES NOT INTERSECT WITH SPHERE";
                     return;
                 }
 
@@ -554,27 +567,38 @@ void RigidBodyMC::performMove(System &system,
 
                 if (dist_x2 < 0)
                 {
-                    qDebug() << "WEIRD. NEGATIVE REFLECTION DISTANCE???";
+                    qDebug() << "WEIRD. NEGATIVE REFLECTION DISTANCE??? " 
+                             << dist_x2;
+                    
                     old_bias = 1.0;
                     new_bias = 1.0;
                     return;
                 }
 
                 //work out where the new center of the molecule should lie
-                Vector new_center = X + dist_x2*((X2-X).normalise());
+                Vector new_new_center = X + dist_x2*((X2-X).normalise());
 
-                //this allows us to calculate the correct delta that
-                //would reflect the molecule off the boundary of the sphere
-                delta = new_center - mol_center;
+                //now translate the molecule to the new position
+                newmol = newmol.move().translate(new_new_center-new_center,map).commit();
+
+                new_center = newmol.evaluate().center();
+                double dist = (new_center - reflect_center).length();
+                
+                while (dist > reflect_radius)
+                {
+                    qDebug() << "MOVED MOLECULE OUTSIDE SPHERE" << dist << reflect_radius;
+                    qDebug() 
+                        << "FIXING THE PROBLEM (MOSTLY CAUSED BY NUMERICAL IMPRECISION)";
+                    
+                    //this will be due to a little numerical imprecision
+                    newmol.move().translate( 
+                            (dist-reflect_radius)*(reflect_center-new_center) ).commit();
+                            
+                    new_center = newmol.evaluate().center();
+                    dist = (new_center - reflect_center).length();
+                }
             } 
         }
-
-        PartialMolecule newmol = oldmol.move()
-                                       .rotate(rotdelta,
-                                               center_function.read()(oldmol,map),
-                                               map)
-                                       .translate(delta, map)
-                                       .commit();
 
         //update the system with the new coordinates
         system.update(newmol);

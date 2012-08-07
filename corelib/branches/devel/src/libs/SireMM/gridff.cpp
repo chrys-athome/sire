@@ -297,7 +297,7 @@ void GridFF::addToGrid(const CoordGroup &coords,
 /** Internal function used to rebuild the coulomb potential grid */
 void GridFF::rebuildGrid()
 {
-    qDebug() << "REBUILDING THE GRID";
+    qDebug() << "REBUILDING THE GRID FOR FORCEFIELD" << this->name().value();
 
     //Get a CoordGroup that contains all of the molecules in group 0
     CoordGroup allcoords0;
@@ -382,6 +382,11 @@ void GridFF::rebuildGrid()
     
     const Space &spce = this->space();
     Vector grid_center = group0_box.center();
+    qDebug() << "Grid space equals:" << spce.toString();
+    
+    qDebug() << "Rebuilding the LJ parameter database...";
+    CLJPotential::startEvaluation();
+    CLJPotential::finishedEvaluation();
     
     qDebug() 
       << "Building the list of close molecules and adding far molecules to the grid...";
@@ -459,6 +464,9 @@ void GridFF::rebuildGrid()
     
     closemols_coords.squeeze();
     closemols_params.squeeze();
+
+    qDebug() << "Explicitly evaluating coulomb and LJ energy over the"
+             << closemols_coords.count() << "closest atom(s)";
 }
 
 void GridFF::calculateEnergy(const CoordGroup &coords0, 
@@ -475,7 +483,7 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
 
     const Vector *coords1_array = closemols_coords.constData();
     const detail::CLJParameter *params1_array = closemols_params.constData();
-        
+
     const int nats1 = closemols_coords.count();
         
     BOOST_ASSERT( closemols_coords.count() == closemols_params.count() );
@@ -519,7 +527,7 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
                 const LJPair &ljpair1 = ljpairs.constData()[
                                         ljpairs.map(param0.ljid,
                                                     param11.ljid)];
-            
+
                 __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
                 __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
                                               ljpair1.epsilon() );
@@ -747,16 +755,19 @@ void GridFF::_pvt_removedAll(quint32 groupid)
 /** Recalculate the total energy */
 void GridFF::recalculateEnergy()
 {
-    calc_grid_error = true;
+    //NEED TO FIX LJ
+    //NEED ALSO TO OPTIMISE THE CODE WHEN WE HAVE A PERIODIC SPACE...!
 
-    InterGroupCLJFF test_gridff;
+    boost::shared_ptr<InterGroupCLJFF> test_gridff;
+    boost::shared_ptr<QTime> t;
 
     if (calc_grid_error)
-        test_gridff = InterGroupCLJFF(*this);
-
-    QTime t;
-    t.start();
-
+    {
+        test_gridff.reset( new InterGroupCLJFF(*this) );
+        t.reset( new QTime() );
+        t->start();
+    }
+    
     bool must_recalculate = false;
 
     //we need to recalculate if either something has changed in group 1,
@@ -816,7 +827,7 @@ void GridFF::recalculateEnergy()
                 double icnrg, iljnrg;
                 calculateEnergy(groups_array[igroup], params_array[igroup],
                                 icnrg, iljnrg);
-                            
+                                      
                 cnrg += icnrg;
                 ljnrg += iljnrg;
 
@@ -880,18 +891,18 @@ void GridFF::recalculateEnergy()
     
     this->setClean();
 
-    int grid_ms = t.elapsed();
-
-    qDebug() << this->energy() << this->energies().toString();
-    qDebug() << "GRID TIME:" << grid_ms;
-
     if (calc_grid_error)
     {
-        t.start();
-        double nrg = test_gridff.energy();
-        int ms = t.elapsed();
+        int grid_ms = t->elapsed();
+
+        qDebug() << this->energy() << this->energies().toString();
+        qDebug() << "GRID TIME:" << grid_ms;
+
+        t->start();
+        double nrg = test_gridff->energy();
+        int ms = t->elapsed();
         
-        qDebug() << nrg << test_gridff.energies().toString();
+        qDebug() << nrg << test_gridff->energies().toString();
         qDebug() << "EXPLICIT TIME:" << ms;
     }
 }
