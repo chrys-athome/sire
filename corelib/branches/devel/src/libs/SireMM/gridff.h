@@ -118,8 +118,42 @@ private:
                          const CLJParameters::Array &params,
                          double &cnrg, double &ljnrg);
 
-    void addToGrid(const SireVol::CoordGroup &cgroup,
-                   const CLJParameters::Array &parameters);
+    class Vector4
+    {
+    public:
+        Vector4() : x(0), y(0), z(0), q(0)
+        {}
+        
+        Vector4(const SireMaths::Vector &v, double q);
+
+        Vector4(const Vector4 &other)
+            : x(other.x), y(other.y), z(other.z), q(other.q)
+        {}
+        
+        ~Vector4()
+        {}
+        
+        Vector4& operator=(const Vector4 &other)
+        {
+            x = other.x;
+            y = other.y;
+            z = other.z;
+            q = other.q;
+            return *this;
+        }
+        
+        double x;
+        double y;
+        double z;
+        double q;
+    };
+
+    static void appendTo(QVector<Vector4> &coords_and_charges,
+                         const Vector *coords, 
+                         const detail::CLJParameter *params,
+                         int nats);
+                         
+    void addToGrid(const QVector<Vector4> &coords_and_charges);
 
     /** The AABox that describes the grid */
     SireVol::AABox gridbox;

@@ -255,48 +255,353 @@ bool GridFF::calculatingGridError() const
     return calc_grid_error;
 }
 
-void GridFF::addToGrid(const CoordGroup &coords, 
-                       const GridFF::CLJParameters::Array &params)
+inline GridFF::Vector4::Vector4(const Vector &v, double chg)
+              : x(v.x()), y(v.y()), z(v.z()), q(chg)
+{}
+
+void GridFF::appendTo(QVector<GridFF::Vector4> &coords_and_charges,
+                      const Vector *coords, const detail::CLJParameter *params,
+                      int nats)
 {
-    BOOST_ASSERT( coords.count() == params.count() );
-
-    double *pot = gridpot.data();
-
-    Vector minpoint = gridbox.minCoords();
-
-    //loop through each atom...
-    for (int iat=0; iat<coords.count(); ++iat)
+    if (nats > 0)
     {
-        const Vector &c = coords[iat];
-        const detail::CLJParameter &p = params[iat];
+        coords_and_charges.reserve( coords_and_charges.count() + nats );
         
-        //now loop through every point and calculate the coulomb energy
-        int ipt = 0;
-        
-        for (quint32 i=0; i<dimx; ++i)
+        for (int i=0; i<nats; ++i)
         {
-            double dx = c.x() - (minpoint.x() + (i * grid_spacing));
-        
-            for (quint32 j=0; j<dimy; ++j)
-            {
-                double dy = c.y() - (minpoint.y() + (j * grid_spacing));
+            double q = params[i].reduced_charge;
             
-                for (quint32 k=0; k<dimz; ++k)
-                {
-                    double dz = c.z() - (minpoint.z() + (k * grid_spacing));
-                
-                    pot[ipt] += p.reduced_charge / std::sqrt(dx*dx + dy*dy + dz*dz);
-                    
-                    ipt += 1;
-                }
+            if (q != 0)
+            {
+                coords_and_charges.append( Vector4(coords[i],q) );
             }
         }
     }
 }
 
+inline QString toString(const __m128d &sseval)
+{
+    return QString("{ %1, %2 }").arg(*((const double*)&sseval))
+                                .arg(*( ((const double*)&sseval) + 1));
+}
+
+void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
+{
+    //QVector<double> gridpot2(gridpot);
+
+    double *pot = gridpot.data();
+    const Vector4 *array = coords_and_charges.constData();
+
+    Vector minpoint = gridbox.minCoords();
+
+    //loop over all grid points
+    const int npts = dimx*dimy*dimz;
+    const int nats = coords_and_charges.count();
+    
+    QTime t;
+    t.start();
+    
+    #ifdef SIRE_USE_SSE
+    {
+        const int remainder = npts % 2;
+        
+        int i0=0;
+        int j0=0;
+        int k0=0;
+        
+        int i1=0;
+        int j1=0;
+        int k1=1;
+        
+        double gx0 = minpoint.x();
+        double gy0 = minpoint.y();
+        double gz0 = minpoint.z();
+        
+        double gx1 = minpoint.x();
+        double gy1 = minpoint.y();
+        double gz1 = minpoint.z()+grid_spacing;
+        
+        for (int ipt=0; ipt<(npts-1); ipt+=2)
+        {
+            //set the sse values - note that _mm_set_pd is backwards,
+            //so the lower value is gx0, not gx1
+            const __m128d sse_gx = _mm_set_pd(gx1,gx0);
+            const __m128d sse_gy = _mm_set_pd(gy1,gy0);
+            const __m128d sse_gz = _mm_set_pd(gz1,gz0);
+            
+            __m128d sse_half_total[2];
+            __m128d sse_half_dist[2];
+            double half_q[2];
+            
+            half_q[0] = 0;
+            half_q[1] = 0;
+            sse_half_dist[0] = _mm_set_pd(1,1);
+            sse_half_dist[1] = _mm_set_pd(1,1);
+            sse_half_total[0] = _mm_set_pd(0,0);
+            sse_half_total[1] = _mm_set_pd(0,0);
+            
+            //loop through each atom
+            for (int iat=0; iat<nats; ++iat)
+            {
+                const bool a_idx = (iat % 2);
+                const bool b_idx = not a_idx;
+
+                const Vector4 &c = array[iat];
+
+                const __m128d sse_dx = _mm_sub_pd(_mm_set1_pd(c.x), sse_gx);
+                const __m128d sse_dy = _mm_sub_pd(_mm_set1_pd(c.y), sse_gy);
+                const __m128d sse_dz = _mm_sub_pd(_mm_set1_pd(c.z), sse_gz);
+
+                const __m128d sse_dist = _mm_sqrt_pd(
+                                    _mm_add_pd( _mm_mul_pd(sse_dx,sse_dx),
+                                      _mm_add_pd( _mm_mul_pd(sse_dy,sse_dy),
+                                                  _mm_mul_pd(sse_dz,sse_dz) ) ) );
+
+                
+                sse_half_dist[a_idx] = sse_dist;
+                half_q[a_idx] = c.q;
+                
+                sse_half_total[b_idx] = _mm_add_pd(sse_half_total[b_idx],
+                                          _mm_div_pd(_mm_set1_pd(half_q[b_idx]),
+                                                     sse_half_dist[b_idx]));
+            }
+
+            const bool a_idx = (nats-1) % 2;
+            sse_half_total[a_idx] = _mm_add_pd(sse_half_total[a_idx],
+                                                _mm_div_pd(_mm_set1_pd(half_q[a_idx]),
+                                                           sse_half_dist[a_idx]));
+
+            __m128d sse_total = _mm_add_pd(sse_half_total[0],sse_half_total[1]);
+
+            //qDebug() << ::toString(sse_total) << ::toString(sse_total2)
+            //         << ::toString(sse_even_total)
+            //         << ::toString(sse_odd_total);
+
+            pot[ipt] += *((const double*)&sse_total);            
+            pot[ipt+1] += *( ((const double*)&sse_total) + 1 );
+
+            for (int ii=0; ii<2; ++ii)
+            {
+                //advance the indicies (twice, as two grid points per iteration)
+                k0 += 1;
+                gz0 += grid_spacing;
+                
+                if (k0 == dimz)
+                {
+                    k0 = 0;
+                    gz0 = minpoint.z();
+                    
+                    j0 += 1;
+                    gy0 += grid_spacing;
+                    
+                    if (j0 == dimy)
+                    {
+                        j0 = 0;
+                        gy0 = minpoint.y();
+                        
+                        i0 += 1;
+                        gx0 += grid_spacing;
+                        
+                        if (i0 == dimx)
+                        {
+                            i0 = 0;
+                            gx0 = minpoint.x();
+                        }
+                    }
+                }
+
+                k1 += 1;
+                gz1 += grid_spacing;
+                
+                if (k1 == dimz)
+                {
+                    k1 = 0;
+                    gz1 = minpoint.z();
+                    
+                    j1 += 1;
+                    gy1 += grid_spacing;
+                    
+                    if (j1 == dimy)
+                    {
+                        j1 = 0;
+                        gy1 = minpoint.y();
+                        
+                        i1 += 1;
+                        gx1 += grid_spacing;
+                        
+                        if (i1 == dimx)
+                        {
+                            i1 = 0;
+                            gx1 = minpoint.x();
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (remainder)
+        {
+            //we need to process the last grid point
+            const double gx = minpoint.x() + (dimx-1)*grid_spacing;
+            const double gy = minpoint.y() + (dimy-1)*grid_spacing;
+            const double gz = minpoint.z() + (dimz-1)*grid_spacing;
+            
+            double total = 0;
+            
+            //loop through each atom...
+            for (int iat=0; iat<nats; ++iat)
+            {
+                const Vector4 &c = array[iat];
+
+                const double dx = c.x - gx;
+                const double dy = c.y - gy;
+                const double dz = c.z - gz;
+
+                total += c.q / std::sqrt(dx*dx + dy*dy + dz*dz);
+            }
+            
+            pot[npts-1] += total;
+        }
+    }
+    #else
+    {
+        int i=0;
+        int j=0;
+        int k=0;
+        
+        double gx = minpoint.x();
+        double gy = minpoint.y();
+        double gz = minpoint.z();
+
+        for (int ipt=0; ipt<npts; ++ipt)
+        {
+            double total = 0;
+            
+            //loop through each atom...
+            for (int iat=0; iat<nats; ++iat)
+            {
+                const Vector4 &c = array[iat];
+
+                const double dx = c.x - gx;
+                const double dy = c.y - gy;
+                const double dz = c.z - gz;
+
+                total += c.q / std::sqrt(dx*dx + dy*dy + dz*dz);
+            }
+                    
+            pot[ipt] += total;
+            
+            k += 1;
+            gz += grid_spacing;
+            
+            if (k == dimz)
+            {
+                k = 0;
+                gz = minpoint.z();
+                
+                j += 1;
+                gy += grid_spacing;
+                
+                if (j == dimy)
+                {
+                    j = 0;
+                    gy = minpoint.y();
+                    
+                    i += 1;
+                    gx += grid_spacing;
+                    
+                    if (i == dimx)
+                    {
+                        i = 0;
+                        gx = minpoint.x();
+                    }
+                }
+            }
+        }
+    }
+    #endif
+
+    if (false)
+    {
+        QVector<double> gridpot2(gridpot);
+        double *pot = gridpot2.data();
+    
+        int i=0;
+        int j=0;
+        int k=0;
+        
+        double gx = minpoint.x();
+        double gy = minpoint.y();
+        double gz = minpoint.z();
+
+        for (int ipt=0; ipt<npts; ++ipt)
+        {
+            double total = 0;
+            
+            //loop through each atom...
+            for (int iat=0; iat<nats; ++iat)
+            {
+                const Vector4 &c = array[iat];
+
+                const double dx = c.x - gx;
+                const double dy = c.y - gy;
+                const double dz = c.z - gz;
+
+                total += c.q / std::sqrt(dx*dx + dy*dy + dz*dz);
+            }
+                    
+            pot[ipt] += total;
+            
+            k += 1;
+            gz += grid_spacing;
+            
+            if (k == dimz)
+            {
+                k = 0;
+                gz = minpoint.z();
+                
+                j += 1;
+                gy += grid_spacing;
+                
+                if (j == dimy)
+                {
+                    j = 0;
+                    gy = minpoint.y();
+                    
+                    i += 1;
+                    gx += grid_spacing;
+                    
+                    if (i == dimx)
+                    {
+                        i = 0;
+                        gx = minpoint.x();
+                    }
+                }
+            }
+        }
+        
+        for (int i=0; i<npts; ++i)
+        {
+            if ( std::abs(gridpot[i]-gridpot2[i]) > 1e-5 )
+            {
+                qDebug() << "BROKEN" << i << npts
+                         << gridpot[i] << gridpot2[i]
+                         << (gridpot[i]-gridpot2[i]);
+            }
+        }
+    }
+    
+    int ms = t.elapsed();
+    
+    qDebug() << "Added" << nats << "more atoms to" << npts << "grid points in"
+             << ms << "ms";
+}
+
 /** Internal function used to rebuild the coulomb potential grid */
 void GridFF::rebuildGrid()
 {
+    QTime t;
+
     qDebug() << "REBUILDING THE GRID FOR FORCEFIELD" << this->name().value();
 
     //Get a CoordGroup that contains all of the molecules in group 0
@@ -391,6 +696,11 @@ void GridFF::rebuildGrid()
     qDebug() 
       << "Building the list of close molecules and adding far molecules to the grid...";
 
+    QVector<Vector4> far_mols;
+    int molcount = 0;
+    int atomcount = 0;
+    t.start();
+
     for (ChunkedVector<CLJMolecule>::const_iterator it = cljmols.constBegin();
          it != cljmols.constEnd();
          ++it)
@@ -435,8 +745,8 @@ void GridFF::rebuildGrid()
                     }
                     else
                     {
-                        //evaluate the energy on each of the gridpoints...
-                        addToGrid(it->get<1>(), params);
+                        appendTo(far_mols, it->get<1>().constData(),
+                                           params.constData(), coordgroup.count());
                     }
                 }
             }
@@ -445,7 +755,8 @@ void GridFF::rebuildGrid()
                 if (spce.beyond(lj_cutoff, coordgroup, allcoords0))
                 {
                     //evaluate the energy on each of the gridpoints...
-                    addToGrid(coordgroup, params);
+                    appendTo(far_mols, coordgroup.constData(),
+                             params.constData(), coordgroup.count());
                 }
                 else if (spce.minimumDistance(coordgroup, allcoords0) < lj_cutoff)
                 {
@@ -456,11 +767,34 @@ void GridFF::rebuildGrid()
                 else
                 {
                     //evaluate the energy on each of the gridpoints...
-                    addToGrid(coordgroup, params);
+                    appendTo(far_mols, coordgroup.constData(),
+                             params.constData(), coordgroup.count());
                 }
             }
         }
+        
+        molcount += 1;
+        
+        if (far_mols.count() > 4096)
+        {
+            atomcount += far_mols.count();
+            addToGrid(far_mols);
+            far_mols.clear();
+            qDebug() << "Added" << molcount << "of" << cljmols.count()
+                     << "molecules to the grid...";
+        }
     }
+    
+    if (not far_mols.isEmpty())
+    {
+        atomcount += far_mols.count();
+        addToGrid(far_mols);
+        qDebug() << "Added" << molcount << "of" << cljmols.count()
+                 << "molecules to the grid...";
+    }
+    
+    qDebug() << "Adding" << molcount << "molecules (" << atomcount
+             << "atoms) to the grid took" << t.elapsed() << "ms in total";
     
     closemols_coords.squeeze();
     closemols_params.squeeze();

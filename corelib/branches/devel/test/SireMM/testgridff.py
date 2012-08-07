@@ -11,6 +11,10 @@ from Sire.Qt import *
 
 import os
 
+import time
+
+time.sleep(5)
+
 try:
     run_explicit = int( os.environ["RUN_EXPLICIT"] )
 except:
@@ -54,7 +58,7 @@ gridff = GridFF("gridff")
 gridff.setBuffer(2 * angstrom)
 gridff.setGridSpacing( 0.5 * angstrom )
 gridff.setLJCutoff( 7.5 * angstrom )
-gridff.setCoulombCutoff( 15 * angstrom )
+gridff.setCoulombCutoff( 50 * angstrom )
 
 gridff.add(swapwaters, MGIdx(0))
 gridff.add(waters, MGIdx(1))
