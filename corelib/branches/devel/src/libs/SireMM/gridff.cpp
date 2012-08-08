@@ -126,8 +126,8 @@ GridFF::GridFF(const GridFF &other)
          closemols_params(other.closemols_params),
          oldnrgs(other.oldnrgs),
          total_coul_errors(other.total_coul_errors),
-         delta_coul_errors(other.delta_coul_errors),
          total_lj_errors(other.total_lj_errors),
+         delta_coul_errors(other.delta_coul_errors),
          delta_lj_errors(other.delta_lj_errors),
          total_time_saved(other.total_time_saved),
          delta_time_saved(other.delta_time_saved),
@@ -1092,18 +1092,12 @@ void GridFF::_pvt_removed(quint32 groupid, const PartialMolecule &mol)
 /** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
 void GridFF::_pvt_changed(quint32 groupid, const SireMol::Molecule &molecule)
 {
-    if (groupid == 1)
-        this->mustNowRecalculateFromScratch();
-
     InterGroupCLJFF::_pvt_changed(groupid, molecule);
 }
 
 /** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
 void GridFF::_pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules)
 {
-    if (groupid == 1)
-        this->mustNowRecalculateFromScratch();
-    
     InterGroupCLJFF::_pvt_changed(groupid, molecules);
 }
 
@@ -1136,16 +1130,47 @@ void GridFF::recalculateEnergy()
     if (gridpot.isEmpty())
     {
         //the grid is empty
+        qDebug() << "GRID RECALCULATED AS IT DOES NOT EXIST";
         must_recalculate = true;
     }
     else if (not changed_mols[1].isEmpty())
     {
-        //the molecules in group 1 have changed
-        must_recalculate = true;
+        //check to see if the parts in this forcefield have changed
+        for (QHash<MolNum,ChangedMolecule>::const_iterator
+                                      it = this->changed_mols[1].constBegin();
+             it != this->changed_mols[1].constEnd();
+             ++it)
+        {
+            if (not (it->newParts().isEmpty() and it->oldParts().isEmpty()))
+            {
+                //a part of this molecule in the forcefield has changed
+                qDebug() << "MOLECULE" << it.key().toString()
+                         << "FROM GROUP 2 HAS CHANGED. RECALCULATING THE GRID!!!";
+                         
+                must_recalculate = true;
+                break;
+            }
+        }
+        
+        if (not must_recalculate)
+        {
+            if (changed_mols[0].isEmpty())
+            {
+                //there is nothing to do :-)
+                changed_mols[1].clear();
+                this->setClean();
+                return;
+            }
+            else
+                qDebug() << "ADDITIONAL MOLECULES IN GROUP 0 HAVE CHANGED"
+                         << "SO RECALCULATING THE GRID";
+        }
     }
     else if (changed_mols[0].isEmpty())
     {
         //probably not recording changes - assume everything has changed
+        qDebug() << "RECALCULATING AS NOTHING APPEARS TO HAVE CHANGED"
+                 << "BUT WE HAVE BEEN MARKED AS DIRTY";
         must_recalculate = true;
     }
     
@@ -1189,6 +1214,8 @@ void GridFF::recalculateEnergy()
                 {
                     //this group lies outside the grid - we need to recalculate
                     //the grid
+                    qDebug() << "MOLECULE" << cljmol.number().toString() << "HAS MOVED"
+                             << "OUTSIDE THE GRID. MUST RECALCULATE!";
                     this->mustNowRecalculateFromScratch();
                     this->recalculateEnergy();
                     return;
@@ -1236,8 +1263,21 @@ void GridFF::recalculateEnergy()
         
             for (int igroup=0; igroup<ngroups; ++igroup)
             {
+                const CoordGroup &group = groups_array[igroup];
+
+                if (not gridbox.contains(group.aaBox()))
+                {
+                    //this group lies outside the grid - we need to recalculate
+                    //the grid
+                    qDebug() << "MOLECULE" << cljmol.number().toString() << "HAS MOVED"
+                             << "OUTSIDE THE GRID. MUST RECALCULATE!";
+                    this->mustNowRecalculateFromScratch();
+                    this->recalculateEnergy();
+                    return;
+                }
+
                 double icnrg, iljnrg;
-                calculateEnergy(groups_array[igroup], params_array[igroup],
+                calculateEnergy(group, params_array[igroup],
                                 icnrg, iljnrg);
                             
                 cnrg += icnrg;
