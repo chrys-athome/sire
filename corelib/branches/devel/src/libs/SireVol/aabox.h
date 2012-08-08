@@ -134,6 +134,8 @@ public:
     bool withinDistance(double dist, const AABox &box) const;
     bool intersects(const AABox &other) const;
 
+    bool contains(const AABox &other) const;
+
     static AABox from(const Vector &point);
     static AABox from(const CoordGroupBase &coordgroup);
     static AABox from(const CoordGroupArray &cgarray);

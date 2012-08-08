@@ -4,16 +4,13 @@ from Sire.MM import *
 from Sire.System import *
 from Sire.Mol import *
 from Sire.Maths import *
+from Sire.FF import *
 from Sire.Move import *
 from Sire.Units import *
 from Sire.Vol import *
 from Sire.Qt import *
 
 import os
-
-import time
-
-time.sleep(5)
 
 try:
     run_explicit = int( os.environ["RUN_EXPLICIT"] )
@@ -56,9 +53,10 @@ system.add(waters)
 
 gridff = GridFF("gridff")
 gridff.setBuffer(2 * angstrom)
-gridff.setGridSpacing( 0.5 * angstrom )
-gridff.setLJCutoff( 7.5 * angstrom )
-gridff.setCoulombCutoff( 50 * angstrom )
+gridff.setGridSpacing( 0.25 * angstrom )
+gridff.setLJCutoff( 6 * angstrom )
+gridff.setCoulombCutoff( 25 * angstrom )
+gridff.setCalculateGridError(True)
 
 gridff.add(swapwaters, MGIdx(0))
 gridff.add(waters, MGIdx(1))
@@ -95,11 +93,23 @@ t = QTime()
 for i in range(1,11):
     print "Moving the system..."
     t.start()
-    system = moves.move(system, 10000, False)
+    system = moves.move(system, 1000, False)
     ms = t.elapsed()
     print "Moves complete! Took %d ms" % ms
     print system.energies()
 
     PDB().write(system.molecules(), "test%0004d.pdb" % i)
+
+if not run_explicit:
+    gridff = system[FFName("gridff")]
+
+    print "Average total time saved = %f ms" % gridff.averageTotalTimeSaved()
+    print "Average delta time saved = %f ms" % gridff.averageDeltaTimeSaved()
+
+    print "\nCoulomb delta histogram"
+    print gridff.deltaCoulombErrorHistogram().toString()
+
+    print "\nLJ delta histogram"
+    print gridff.deltaLJErrorHistogram().toString()
 
 print "Done :-)"
