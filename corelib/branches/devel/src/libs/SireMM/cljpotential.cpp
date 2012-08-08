@@ -201,6 +201,8 @@ CLJPotential::getCLJParameters(const PartialMolecule &molecule,
     }
     else
     {
+        int igroup = 0;
+    
         foreach (CGIdx i, selected_atoms.selectedCutGroups())
         {
             const int nats = molecule.data().info().nAtoms(i);
@@ -232,7 +234,8 @@ CLJPotential::getCLJParameters(const PartialMolecule &molecule,
                 }
             }
             
-            cljparams_array[i] = group_cljs;
+            cljparams_array[igroup] = group_cljs;
+            igroup += 1;
         }
     }
     
