@@ -584,6 +584,8 @@ void RigidBodyMC::performMove(System &system,
                 new_center = newmol.evaluate().center();
                 double dist = (new_center - reflect_center).length();
                 
+                int check_count = 0;
+                
                 while (dist > reflect_radius)
                 {
                     qDebug() << "MOVED MOLECULE OUTSIDE SPHERE" << dist << reflect_radius;
@@ -591,11 +593,24 @@ void RigidBodyMC::performMove(System &system,
                         << "FIXING THE PROBLEM (MOSTLY CAUSED BY NUMERICAL IMPRECISION)";
                     
                     //this will be due to a little numerical imprecision
-                    newmol.move().translate( 
-                            (dist-reflect_radius)*(reflect_center-new_center) ).commit();
+                    newmol = newmol.move().translate( 
+                            (1.01*(dist-reflect_radius))
+                                * ((reflect_center-new_center).normalise()) ).commit();
                             
                     new_center = newmol.evaluate().center();
                     dist = (new_center - reflect_center).length();
+                    
+                    check_count += 1;
+                    
+                    if (check_count > 100)
+                    {
+                        qDebug() << "WARNING: SOMETHING WEIRD GOING ON."
+                                 << "SKIPPING THIS MOVE.";
+                                 
+                        old_bias = 1;
+                        new_bias = 1;
+                        return;
+                    }
                 }
             } 
         }
