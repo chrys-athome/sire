@@ -1154,6 +1154,8 @@ void GridFF::recalculateEnergy()
         
         if (not must_recalculate)
         {
+            changed_mols[1].clear();
+        
             if (changed_mols[0].isEmpty())
             {
                 //there is nothing to do :-)
@@ -1161,9 +1163,9 @@ void GridFF::recalculateEnergy()
                 this->setClean();
                 return;
             }
-            else
-                qDebug() << "ADDITIONAL MOLECULES IN GROUP 0 HAVE CHANGED"
-                         << "SO RECALCULATING THE GRID";
+            
+            //otherwise a part of the molecule in group 0 has changed,
+            //so evaluate the change
         }
     }
     else if (changed_mols[0].isEmpty())
