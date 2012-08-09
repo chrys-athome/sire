@@ -690,9 +690,9 @@ void GridFF::rebuildGrid()
         qDebug() << "New box grid has points:" << dimx << "x" << dimy << "x" << dimz;
     }
     
-    Vector maxpoint = gridbox.minCoords() + Vector( dimx * grid_spacing,
-                                                    dimy * grid_spacing,
-                                                    dimz * grid_spacing );
+    Vector maxpoint = gridbox.minCoords() + Vector( (dimx-1) * grid_spacing,
+                                                    (dimy-1) * grid_spacing,
+                                                    (dimz-1) * grid_spacing );
 
     gridbox = AABox::from(gridbox.minCoords(), maxpoint);
     
