@@ -627,7 +627,9 @@ void GridFF::rebuildGrid()
 {
     QTime t;
 
-    qDebug() << "REBUILDING THE GRID FOR FORCEFIELD" << this->name().value();
+    qDebug() << "REBUILDING THE GRID FOR FORCEFIELD" << this->name().value()
+             << "USING A LJ_CUTOFF OF" << lj_cutoff << "A, A COULOMB CUTOFF OF"
+             << coul_cutoff << "A AND A GRID SPACING OF" << grid_spacing << "A...";
 
     //Get a CoordGroup that contains all of the molecules in group 0
     CoordGroup allcoords0;
@@ -768,7 +770,7 @@ void GridFF::rebuildGrid()
                         closemols_coords += it->get<1>().toVector();
                         closemols_params += params.toQVector();
                     }
-                    else
+                    else if (it->get<0>() < coul_cutoff)
                     {
                         appendTo(far_mols, it->get<1>().constData(),
                                            params.constData(), coordgroup.count());
@@ -777,23 +779,22 @@ void GridFF::rebuildGrid()
             }
             else
             {
-                if (spce.beyond(lj_cutoff, coordgroup, allcoords0))
+                if (not spce.beyond(coul_cutoff, coordgroup, allcoords0))
                 {
-                    //evaluate the energy on each of the gridpoints...
-                    appendTo(far_mols, coordgroup.constData(),
-                             params.constData(), coordgroup.count());
-                }
-                else if (spce.minimumDistance(coordgroup, allcoords0) < lj_cutoff)
-                {
-                    //this image should be evaluated explicitly
-                    closemols_coords += coordgroup.toVector();
-                    closemols_params += params.toQVector();
-                }
-                else
-                {
-                    //evaluate the energy on each of the gridpoints...
-                    appendTo(far_mols, coordgroup.constData(),
-                             params.constData(), coordgroup.count());
+                    double mindist = spce.minimumDistance(coordgroup, allcoords0);
+
+                    if (mindist < lj_cutoff)
+                    {
+                        //this image should be evaluated explicitly
+                        closemols_coords += coordgroup.toVector();
+                        closemols_params += params.toQVector();
+                    }
+                    else if (mindist < coul_cutoff)
+                    {
+                        //evaluate the energy on each of the gridpoints...
+                        appendTo(far_mols, coordgroup.constData(),
+                                 params.constData(), coordgroup.count());
+                    }
                 }
             }
         }
