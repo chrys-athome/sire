@@ -100,6 +100,7 @@ set ( SIREMOL_HEADERS
       molviewproperty.h
       mover.h
       mover.hpp
+      mover_metaid.h
       partialmolecule.h
       perturbation.h
       reseditor.h
