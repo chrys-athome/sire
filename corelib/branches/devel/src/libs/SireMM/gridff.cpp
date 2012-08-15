@@ -217,7 +217,7 @@ void GridFF::setGridSpacing(SireUnits::Dimension::Length spacing)
     if (grid_spacing != spacing.value())
     {
         grid_spacing = spacing.value();
-        gridpot.clear();
+        this->mustNowRecalculateFromScratch();
     }
 }
 
@@ -228,7 +228,7 @@ void GridFF::setCoulombCutoff(SireUnits::Dimension::Length cutoff)
     if (coul_cutoff != cutoff.value())
     {
         coul_cutoff = cutoff.value();
-        gridpot.clear();
+        this->mustNowRecalculateFromScratch();
     }
 }
 
@@ -239,7 +239,7 @@ void GridFF::setLJCutoff(SireUnits::Dimension::Length cutoff)
     if (lj_cutoff != cutoff.value())
     {
         lj_cutoff = cutoff.value();
-        gridpot.clear();
+        this->mustNowRecalculateFromScratch();
     }
 }
 
