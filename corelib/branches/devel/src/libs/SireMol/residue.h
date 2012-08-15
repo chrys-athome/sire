@@ -394,7 +394,7 @@ Q_DECLARE_METATYPE(SireMol::Residue);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Residue>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Residue>);
 
-Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Residue> >);
+//Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Residue> >);
 
 SIRE_EXPOSE_CLASS( SireMol::Residue )
 

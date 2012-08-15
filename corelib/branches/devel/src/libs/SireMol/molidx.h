@@ -105,7 +105,6 @@ public:
     
 }
 
-Q_DECLARE_TYPEINFO(SireMol::MolIdx, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMol::MolIdx);
 
 SIRE_EXPOSE_CLASS( SireMol::MolIdx )

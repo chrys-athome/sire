@@ -245,6 +245,8 @@ private:
 Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::MolID> )
 Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::MolID> )
 
+#include "molidentifier.h"
+
 SIRE_EXPOSE_CLASS( SireMol::MolID )
 SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireMol::MolID>, SireMol::IDAndSet_MolID_ )
 SIRE_EXPOSE_ALIAS( SireID::IDOrSet<SireMol::MolID>, SireMol::IDOrSet_MolID_ )

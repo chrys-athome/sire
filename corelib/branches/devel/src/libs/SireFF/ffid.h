@@ -96,12 +96,7 @@ protected:
 
 }
 
-#include "ffidx.h"
 #include "ffidentifier.h"
-
-Q_DECLARE_METATYPE( SireID::Specify<SireFF::FFID> )
-Q_DECLARE_METATYPE( SireID::IDAndSet<SireFF::FFID> )
-Q_DECLARE_METATYPE( SireID::IDOrSet<SireFF::FFID> )
 
 SIRE_EXPOSE_CLASS( SireFF::FFID )
 SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireFF::FFID>, SireFF::IDAndSet_FFID_ )

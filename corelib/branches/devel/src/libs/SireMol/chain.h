@@ -396,7 +396,7 @@ Q_DECLARE_METATYPE(SireMol::Chain);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Chain>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Chain>);
 
-Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Chain> >);
+//Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Chain> >);
 
 SIRE_EXPOSE_CLASS( SireMol::Chain )
 

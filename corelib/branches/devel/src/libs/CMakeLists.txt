@@ -25,7 +25,7 @@ set ( SUBDIRS SireBase
               SireVol
               Siren
               Soiree
-              Spier
+              #Spier
               Squire
             )
 

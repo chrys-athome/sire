@@ -163,14 +163,7 @@ protected:
 
 }
 
-#include "cgidx.h"
 #include "cgidentifier.h"
-#include "atomidx.h"
-
-Q_DECLARE_METATYPE( SireID::Specify<SireMol::CGID> );
-Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::CGID> );
-Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::CGID> );
-Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::CGID> );
 
 SIRE_EXPOSE_CLASS( SireMol::CGID )
 SIRE_EXPOSE_ALIAS( (SireID::Specify<SireMol::CGID>), SireMol::Specify_CGID_ )

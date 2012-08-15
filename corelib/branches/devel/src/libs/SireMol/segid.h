@@ -163,13 +163,6 @@ protected:
 }
 
 #include "segidentifier.h"
-#include "segidx.h"
-#include "atomidx.h"
-
-Q_DECLARE_METATYPE( SireID::Specify<SireMol::SegID> );
-Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::SegID> );
-Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::SegID> );
-Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::SegID> );
 
 SIRE_EXPOSE_CLASS( SireMol::SegID )
 SIRE_EXPOSE_ALIAS( SireID::Specify<SireMol::SegID>, SireMol::Specify_SegID_ )

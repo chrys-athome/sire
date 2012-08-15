@@ -390,7 +390,7 @@ Q_DECLARE_METATYPE(SireMol::Segment);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Segment>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Segment>);
 
-Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Segment> >);
+//Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Segment> >);
 
 SIRE_EXPOSE_CLASS( SireMol::Segment )
 

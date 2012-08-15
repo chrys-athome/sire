@@ -112,4 +112,8 @@ inline uint qHash(const AtomIdentifier &atomid)
 
 Q_DECLARE_METATYPE(SireMol::AtomIdentifier);
 
+Q_DECLARE_METATYPE( SireID::Specify<SireMol::AtomID> );
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::AtomID> );
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::AtomID> );
+
 #endif

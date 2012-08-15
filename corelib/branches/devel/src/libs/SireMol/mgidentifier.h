@@ -104,6 +104,12 @@ inline uint qHash(const MGIdentifier &mgid)
 
 }
 
+#include "mgnum.h"
+
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::MGID> )
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::MGID> )
+Q_DECLARE_METATYPE( SireID::Specify<SireMol::MGID> )
+
 Q_DECLARE_METATYPE(SireMol::MGIdentifier);
 
 #endif

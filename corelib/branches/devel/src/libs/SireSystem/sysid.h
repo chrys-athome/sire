@@ -110,12 +110,7 @@ protected:
 
 }
 
-#include "sysidx.h"
 #include "sysidentifier.h"
-
-Q_DECLARE_METATYPE( SireID::Specify<SireSystem::SysID> )
-Q_DECLARE_METATYPE( SireID::IDAndSet<SireSystem::SysID> )
-Q_DECLARE_METATYPE( SireID::IDOrSet<SireSystem::SysID> )
 
 SIRE_EXPOSE_CLASS( SireSystem::SysID )
 SIRE_EXPOSE_ALIAS( SireID::Specify<SireSystem::SysID>, SireSystem::Specify_SysID_ )

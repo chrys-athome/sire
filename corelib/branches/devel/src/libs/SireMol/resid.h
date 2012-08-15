@@ -169,13 +169,6 @@ protected:
 }
 
 #include "residentifier.h"
-#include "residx.h"
-#include "atomidx.h"
-
-Q_DECLARE_METATYPE( SireID::Specify<SireMol::ResID> );
-Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ResID> );
-Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::ResID> );
-Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::ResID> );
 
 SIRE_EXPOSE_CLASS( SireMol::ResID )
 SIRE_EXPOSE_ALIAS( SireID::Specify<SireMol::ResID>, SireMol::Specify_ResID_ )

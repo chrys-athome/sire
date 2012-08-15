@@ -104,7 +104,6 @@ public:
     
 }
 
-Q_DECLARE_TYPEINFO(SireMol::BeadIdx, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMol::BeadIdx);
 
 SIRE_EXPOSE_CLASS( SireMol::BeadIdx )

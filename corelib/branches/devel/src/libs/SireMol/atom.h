@@ -30,6 +30,7 @@
 #define SIREMOL_ATOM_H
 
 #include <QVariant>
+#include <QList>
 
 #include "moleculeview.h"
 #include "atomproperty.hpp"
@@ -450,8 +451,10 @@ void set_property(Atom*, MoleculeData &moldata,
         atom_prop = moldata.property(key);
     else
         atom_prop = AtomProperty<V>(molinfo);
+
+    const QList<Atom::Index> idxs_copy(idxs);
         
-    foreach (Atom::Index idx, QList<Atom::Index>(idxs))
+    foreach (Atom::Index idx, idxs_copy)
     {
         atom_prop.set(molinfo.cgAtomIdx(idx), value);
     }
@@ -475,7 +478,9 @@ void set_metadata(Atom*, MoleculeData &moldata,
     else
         atom_prop = AtomProperty<V>(molinfo);
         
-    foreach (Atom::Index idx, QList<Atom::Index>(idxs))
+    const QList<Atom::Index> idxs_copy(idxs);
+        
+    foreach (Atom::Index idx, idxs_copy)
     {
         atom_prop.set(molinfo.cgAtomIdx(idx), value);
     }
@@ -498,12 +503,12 @@ void set_metadata(Atom*, MoleculeData &moldata,
         atom_prop = moldata.metadata(key,metakey);
     else
         atom_prop = AtomProperty<V>(molinfo);
+
+    const QList<Atom::Index> idxs_copy(idxs);
         
-    for (QList<Atom::Index>::const_iterator it = idxs.constBegin();
-         it != idxs.constEnd();
-         ++it)
+    foreach (Atom::Index idx, idxs_copy)
     {
-        atom_prop.set(molinfo.cgAtomIdx(*it), value);
+        atom_prop.set(molinfo.cgAtomIdx(idx), value);
     }
     
     moldata.setMetadata(key, metakey, atom_prop);
@@ -528,7 +533,7 @@ Q_DECLARE_METATYPE(SireMol::Atom);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Atom>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Atom>);
 
-Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Atom> >);
+//Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Atom> >);
 
 SIRE_EXPOSE_CLASS( SireMol::Atom )
 SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Atom>, SireMol::Mover_Atom_ )

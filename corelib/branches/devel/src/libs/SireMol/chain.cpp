@@ -45,6 +45,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "mover_metaid.h"
+
 using namespace SireMol;
 using namespace SireStream;
 

@@ -183,10 +183,6 @@ protected:
 
 #include "atomidentifier.h"
 
-Q_DECLARE_METATYPE( SireID::Specify<SireMol::AtomID> );
-Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::AtomID> );
-Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::AtomID> );
-
 SIRE_EXPOSE_CLASS( SireMol::AtomID )
 SIRE_EXPOSE_ALIAS( SireID::Specify<SireMol::AtomID>, SireMol::Specify_AtomID_ )
 SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireMol::AtomID>, SireMol::IDAndSet_AtomID_ )
