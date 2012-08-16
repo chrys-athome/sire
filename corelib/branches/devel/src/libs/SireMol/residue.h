@@ -400,8 +400,6 @@ SIRE_EXPOSE_CLASS( SireMol::Residue )
 
 SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Residue>, SireMol::Mover_Residue_ )
 SIRE_EXPOSE_ALIAS( SireMol::Selector<SireMol::Residue>, SireMol::Selector_Residue_ )
-SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Selector<SireMol::Residue> >, 
-                   SireMol::Mover_Selector_Residue_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 

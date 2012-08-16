@@ -396,8 +396,6 @@ SIRE_EXPOSE_CLASS( SireMol::Segment )
 
 SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Segment>, SireMol::Mover_Segment_ )
 SIRE_EXPOSE_ALIAS( SireMol::Selector<SireMol::Segment>, SireMol::Selector_Segment_ )
-SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Selector<SireMol::Segment> >, 
-                   SireMol::Mover_Selector_Segment_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 

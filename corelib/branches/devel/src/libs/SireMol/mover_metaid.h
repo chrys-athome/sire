@@ -16,6 +16,20 @@ Q_DECLARE_METATYPE( SireMol::Mover< SireMol::Selector<SireMol::CutGroup> > )
 Q_DECLARE_METATYPE( SireMol::Mover< SireMol::Selector<SireMol::Residue> > )
 Q_DECLARE_METATYPE( SireMol::Mover< SireMol::Selector<SireMol::Segment> > )
 
+SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Selector<SireMol::Segment> >, 
+                   SireMol::Mover_Selector_Segment_ )
+
+SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Selector<SireMol::Residue> >, 
+                   SireMol::Mover_Selector_Residue_ )
+
+SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Selector<SireMol::CutGroup> >, 
+                   SireMol::Mover_Selector_CutGroup_ )
+
+SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Selector<SireMol::Chain> >, 
+                   SireMol::Mover_Selector_Chain_ )
+
+SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Selector<SireMol::Atom> >, 
+                   SireMol::Mover_Selector_Atom_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 
@@ -33,6 +47,8 @@ template class SireMol::Selector<SireMol::Atom>;
 template class SireMol::Mover< SireMol::Selector<SireMol::Atom> >;
 
 #endif
+
+
 
 #endif
 

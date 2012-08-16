@@ -538,8 +538,6 @@ Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Atom>);
 SIRE_EXPOSE_CLASS( SireMol::Atom )
 SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Atom>, SireMol::Mover_Atom_ )
 SIRE_EXPOSE_ALIAS( SireMol::Selector<SireMol::Atom>, SireMol::Selector_Atom_ )
-SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Selector<SireMol::Atom> >, 
-                   SireMol::Mover_Selector_Atom_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 
