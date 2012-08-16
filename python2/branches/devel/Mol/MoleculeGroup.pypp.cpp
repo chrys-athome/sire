@@ -14,6 +14,8 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireID/index.h"
+
 #include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
@@ -49,6 +51,8 @@ namespace bp = boost::python;
 #include <QMutex>
 
 #include <QVector>
+
+#include <boost/tuple/tuple.hpp>
 
 #include "moleculegroup.h"
 

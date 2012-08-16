@@ -92,6 +92,17 @@ void register_AABox_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireVol::AABox::contains
+        
+            typedef bool ( ::SireVol::AABox::*contains_function_type )( ::SireVol::AABox const & ) const;
+            contains_function_type contains_function_value( &::SireVol::AABox::contains );
+            
+            AABox_exposer.def( 
+                "contains"
+                , contains_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::SireVol::AABox::from
         
             typedef ::SireVol::AABox ( *from_function_type )( ::SireMaths::Vector const & );

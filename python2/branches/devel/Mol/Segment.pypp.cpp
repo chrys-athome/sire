@@ -24,6 +24,8 @@ namespace bp = boost::python;
 
 #include "mover.hpp"
 
+#include "mover_metaid.h"
+
 #include "segeditor.h"
 
 #include "segment.h"

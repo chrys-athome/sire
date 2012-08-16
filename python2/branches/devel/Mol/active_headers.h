@@ -82,6 +82,7 @@
 #include "molnum.h"
 #include "molviewproperty.h"
 #include "mover.h"
+#include "mover_metaid.h"
 #include "partialmolecule.h"
 #include "perturbation.h"
 #include "reseditor.h"
