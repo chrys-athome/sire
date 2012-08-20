@@ -804,226 +804,327 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     #endif
 
     //loop over all pairs of CutGroups in the two molecules
-    for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+    if (use_electrostatic_shifting)
     {
-        const Parameters::Array &params0 = molparams0_array[igroup];
-
-        const CoordGroup &group0 = groups0_array[igroup];
-        const AABox &aabox0 = group0.aaBox();
-        const quint32 nats0 = group0.count();
-        const Parameter *params0_array = params0.constData();
-    
-        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        //we use the force shifted coulomb energy described
+        //in Fennell and Gezelter, J. Chem. Phys., 124, 234104, 2006
+        //We use alpha=0, as I have seen that a 25 A cutoff gives stable results
+        //with alpha=0, and this way we avoid changing the hamiltonian significantly
+        //by having an erfc function
+        
+        double Rc = switchfunc->cutoffDistance();
+        
+        if (Rc > 1e9)
         {
-            const CoordGroup &group1 = groups1_array[jgroup];
-            const Parameters::Array &params1 = molparams1_array[jgroup];
-
-            //check first that these two CoordGroups could be within cutoff
-            //(if there is only one CutGroup in both molecules then this
-            //test has already been performed and passed)
-            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
-                                        spce->beyond(switchfunc->cutoffDistance(), 
-                                                     aabox0, group1.aaBox());
+            Rc = 1e9;
+        }
+        
+        const double one_over_Rc = double(1) / Rc;
+        const double one_over_Rc2 = double(1) / (Rc*Rc);
+        
+        for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+        {
+            const Parameters::Array &params0 = molparams0_array[igroup];
+            const CoordGroup &group0 = groups0_array[igroup];
+            const AABox &aabox0 = group0.aaBox();
+            const quint32 nats0 = group0.count();
+            const Parameter *params0_array = params0.constData();
             
-            if (not within_cutoff)
-                //this CutGroup is either the cutoff distance
-                continue;
-            
-            //calculate all of the interatomic distances
-            const double mindist = spce->calcDist(group0, group1, distmat);
-            
-            if (mindist > switchfunc->cutoffDistance())
+            for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
             {
-                //all of the atoms are definitely beyond cutoff
-                continue;
-            }
-               
-            double icnrg = 0;
-            double iljnrg = 0;
-            
-            //loop over all interatomic pairs and calculate the energies
-            const quint32 nats1 = group1.count();
-            const Parameter *params1_array = params1.constData();
-
-            #ifdef SIRE_USE_SSE
-            {
-                const int remainder = nats1 % 2;
+                const CoordGroup &group1 = groups1_array[jgroup];
+                const Parameters::Array &params1 = molparams1_array[jgroup];
                 
-                __m128d sse_cnrg = { 0, 0 };
-                __m128d sse_ljnrg = { 0, 0 };
-
-                const __m128d sse_one = { 1.0, 1.0 };
+                //check first that these two CoordGroups could be within cutoff
+                //(if there is only one CutGroup in both molecules then this
+                //test has already been performed and passed)
+                const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                            spce->beyond(Rc, aabox0, group1.aaBox());
                 
-                for (quint32 i=0; i<nats0; ++i)
+                if (not within_cutoff)
+                    //this CutGroup is either the cutoff distance
+                    continue;
+                
+                //calculate all of the interatomic distances
+                const double mindist = spce->calcDist(group0, group1, distmat);
+                
+                if (mindist > Rc)
                 {
-                    distmat.setOuterIndex(i);
-                    const Parameter &param0 = params0_array[i];
-                    
-                    __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge, 
-                                                   param0.reduced_charge );
-                                         
-                    //process atoms in pairs (so can then use SSE)
-                    for (quint32 j=0; j<nats1-1; j += 2)
-                    {
-                        const Parameter &param10 = params1_array[j];
-                        const Parameter &param11 = params1_array[j+1];
-                        
-                        __m128d sse_dist = _mm_set_pd( distmat[j], distmat[j+1] );
-                        __m128d sse_chg1 = _mm_set_pd( param10.reduced_charge,
-                                                       param11.reduced_charge );
-                                           
-                        const LJPair &ljpair0 = ljpairs.constData()[
-                                                ljpairs.map(param0.ljid,
-                                                            param10.ljid)];
-                    
-                        const LJPair &ljpair1 = ljpairs.constData()[
-                                                ljpairs.map(param0.ljid,
-                                                            param11.ljid)];
-                    
-                        __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
-                        __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
-                                                      ljpair1.epsilon() );
-                        
-                        sse_dist = _mm_div_pd(sse_one, sse_dist);
-                        
-                        //calculate the coulomb energy
-                        __m128d tmp = _mm_mul_pd(sse_chg0, sse_chg1);
-                        tmp = _mm_mul_pd(tmp, sse_dist);
-                        sse_cnrg = _mm_add_pd(sse_cnrg, tmp);
-                        
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 8;
-                        #endif
-                        
-                        //calculate (sigma/r)^6 and (sigma/r)^12
-                        __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_dist);
-                        sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,  
-                                                         sse_sig_over_dist2 );
-                                                     
-                        __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
-                                                                sse_sig_over_dist2);
-                                                        
-                        sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
-                                                        sse_sig_over_dist2);
-                                                     
-                        __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
-                                                                 sse_sig_over_dist6);
-                                              
-                        //calculate LJ energy (the factor of 4 is added later)
-                        tmp = _mm_sub_pd(sse_sig_over_dist12, 
-                                         sse_sig_over_dist6);
-                                                 
-                        tmp = _mm_mul_pd(tmp, sse_eps);
-                        sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
-                                                
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 16;
-                        #endif
-                    }
-                          
-                    if (remainder == 1)
-                    {
-                        const Parameter &param1 = params1_array[nats1-1];
+                    //all of the atoms are definitely beyond cutoff
+                    continue;
+                }
+                   
+                double icnrg = 0;
+                double iljnrg = 0;
+                
+                //loop over all interatomic pairs and calculate the energies
+                const quint32 nats1 = group1.count();
+                const Parameter *params1_array = params1.constData();
 
-                        const double invdist = double(1) / distmat[nats1-1];
-                        
-                        icnrg += param0.reduced_charge * param1.reduced_charge 
-                                    * invdist;
+                //#ifdef SIRE_USE_SSE
+                //{
+                //}
+                //#else
+                {
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        const Parameter &param0 = params0_array[i];
                     
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 4;
-                        #endif
+                        for (quint32 j=0; j<nats1; ++j)
+                        {
+                            const Parameter &param1 = params1_array[j];
 
-                        const LJPair &ljpair = ljpairs.constData()[
-                                                ljpairs.map(param0.ljid,
-                                                            param1.ljid)];
-                        
-                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                        double sig_over_dist12 = pow_2(sig_over_dist6);
-    
-                        iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                      sig_over_dist6);
-                                                          
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 8;
-                        #endif
+                            const double r = distmat[j];
+                            const double one_over_r = double(1) / r;
+                            
+                            const double in_cutoff = (r < Rc);
+                            
+                            icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+        
+                            iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                          sig_over_dist6);
+                        }
                     }
                 }
+                //#endif
                 
-                icnrg += *((const double*)&sse_cnrg) +
-                         *( ((const double*)&sse_cnrg) + 1 );
-                         
-                iljnrg += *((const double*)&sse_ljnrg) +
-                          *( ((const double*)&sse_ljnrg) + 1 );
-            }
-            #else
-            {
-                for (quint32 i=0; i<nats0; ++i)
-                {
-                    distmat.setOuterIndex(i);
-                    const Parameter &param0 = params0_array[i];
-                
-                    for (quint32 j=0; j<nats1; ++j)
-                    {
-                        const Parameter &param1 = params1_array[j];
-
-                        const double invdist = double(1) / distmat[j];
-                        
-                        icnrg += param0.reduced_charge * param1.reduced_charge 
-                                    * invdist;
-                    
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 4;
-                        #endif
-
-                        const LJPair &ljpair = ljpairs.constData()[
-                                                ljpairs.map(param0.ljid,
-                                                            param1.ljid)];
-
-                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                        double sig_over_dist12 = pow_2(sig_over_dist6);
-    
-                        iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                      sig_over_dist6);
-                                                          
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 8;
-                        #endif
-                    }
-                }
-            }
-            #endif
-            
-            //are we shifting the electrostatic potential?
-            if (use_electrostatic_shifting)
-            {
-                icnrg -= this->totalCharge(params0) * this->totalCharge(params1)
-                              / switchfunc->electrostaticCutoffDistance();
-                        
-                #ifdef SIRE_TIME_ROUTINES      
-                nflops += 3;
-                #endif
-            }
-            
-            //now add these energies onto the total for the molecule,
-            //scaled by any non-bonded feather factor
-            if (mindist > switchfunc->featherDistance())
-            {
-                cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
-                ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
-                
-                #ifdef SIRE_TIME_ROUTINES
-                nflops += 4;
-                #endif
-            }
-            else
-            {
                 cnrg += icnrg;
                 ljnrg += iljnrg;
+            }
+        }
+    }
+    else
+    {
+        for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+        {
+            const Parameters::Array &params0 = molparams0_array[igroup];
+
+            const CoordGroup &group0 = groups0_array[igroup];
+            const AABox &aabox0 = group0.aaBox();
+            const quint32 nats0 = group0.count();
+            const Parameter *params0_array = params0.constData();
+        
+            for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+            {
+                const CoordGroup &group1 = groups1_array[jgroup];
+                const Parameters::Array &params1 = molparams1_array[jgroup];
+
+                //check first that these two CoordGroups could be within cutoff
+                //(if there is only one CutGroup in both molecules then this
+                //test has already been performed and passed)
+                const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                            spce->beyond(switchfunc->cutoffDistance(), 
+                                                         aabox0, group1.aaBox());
                 
-                #ifdef SIRE_TIME_ROUTINES
-                nflops += 2;
+                if (not within_cutoff)
+                    //this CutGroup is either the cutoff distance
+                    continue;
+                
+                //calculate all of the interatomic distances
+                const double mindist = spce->calcDist(group0, group1, distmat);
+                
+                if (mindist > switchfunc->cutoffDistance())
+                {
+                    //all of the atoms are definitely beyond cutoff
+                    continue;
+                }
+                   
+                double icnrg = 0;
+                double iljnrg = 0;
+                
+                //loop over all interatomic pairs and calculate the energies
+                const quint32 nats1 = group1.count();
+                const Parameter *params1_array = params1.constData();
+
+                #ifdef SIRE_USE_SSE
+                {
+                    const int remainder = nats1 % 2;
+                    
+                    __m128d sse_cnrg = { 0, 0 };
+                    __m128d sse_ljnrg = { 0, 0 };
+
+                    const __m128d sse_one = { 1.0, 1.0 };
+                    
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        const Parameter &param0 = params0_array[i];
+                        
+                        __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge, 
+                                                       param0.reduced_charge );
+                                             
+                        //process atoms in pairs (so can then use SSE)
+                        for (quint32 j=0; j<nats1-1; j += 2)
+                        {
+                            const Parameter &param10 = params1_array[j];
+                            const Parameter &param11 = params1_array[j+1];
+                            
+                            __m128d sse_dist = _mm_set_pd( distmat[j], distmat[j+1] );
+                            __m128d sse_chg1 = _mm_set_pd( param10.reduced_charge,
+                                                           param11.reduced_charge );
+                                               
+                            const LJPair &ljpair0 = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param10.ljid)];
+                        
+                            const LJPair &ljpair1 = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param11.ljid)];
+                        
+                            __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                            __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
+                                                          ljpair1.epsilon() );
+                            
+                            sse_dist = _mm_div_pd(sse_one, sse_dist);
+                            
+                            //calculate the coulomb energy
+                            __m128d tmp = _mm_mul_pd(sse_chg0, sse_chg1);
+                            tmp = _mm_mul_pd(tmp, sse_dist);
+                            sse_cnrg = _mm_add_pd(sse_cnrg, tmp);
+                            
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 8;
+                            #endif
+                            
+                            //calculate (sigma/r)^6 and (sigma/r)^12
+                            __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_dist);
+                            sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,  
+                                                             sse_sig_over_dist2 );
+                                                         
+                            __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
+                                                                    sse_sig_over_dist2);
+                                                            
+                            sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
+                                                            sse_sig_over_dist2);
+                                                         
+                            __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
+                                                                     sse_sig_over_dist6);
+                                                  
+                            //calculate LJ energy (the factor of 4 is added later)
+                            tmp = _mm_sub_pd(sse_sig_over_dist12, 
+                                             sse_sig_over_dist6);
+                                                     
+                            tmp = _mm_mul_pd(tmp, sse_eps);
+                            sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
+                                                    
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 16;
+                            #endif
+                        }
+                              
+                        if (remainder == 1)
+                        {
+                            const Parameter &param1 = params1_array[nats1-1];
+
+                            const double invdist = double(1) / distmat[nats1-1];
+                            
+                            icnrg += param0.reduced_charge * param1.reduced_charge 
+                                        * invdist;
+                        
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 4;
+                            #endif
+
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+                            
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+        
+                            iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                          sig_over_dist6);
+                                                              
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 8;
+                            #endif
+                        }
+                    }
+                    
+                    icnrg += *((const double*)&sse_cnrg) +
+                             *( ((const double*)&sse_cnrg) + 1 );
+                             
+                    iljnrg += *((const double*)&sse_ljnrg) +
+                              *( ((const double*)&sse_ljnrg) + 1 );
+                }
+                #else
+                {
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        const Parameter &param0 = params0_array[i];
+                    
+                        for (quint32 j=0; j<nats1; ++j)
+                        {
+                            const Parameter &param1 = params1_array[j];
+
+                            const double invdist = double(1) / distmat[j];
+                            
+                            icnrg += param0.reduced_charge * param1.reduced_charge 
+                                        * invdist;
+                        
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 4;
+                            #endif
+
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+        
+                            iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                          sig_over_dist6);
+                                                              
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 8;
+                            #endif
+                        }
+                    }
+                }
                 #endif
+                
+                //are we shifting the electrostatic potential?
+                if (use_electrostatic_shifting)
+                {
+                    icnrg -= this->totalCharge(params0) * this->totalCharge(params1)
+                                  / switchfunc->electrostaticCutoffDistance();
+                            
+                    #ifdef SIRE_TIME_ROUTINES      
+                    nflops += 3;
+                    #endif
+                }
+                
+                //now add these energies onto the total for the molecule,
+                //scaled by any non-bonded feather factor
+                if (mindist > switchfunc->featherDistance())
+                {
+                    cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
+                    ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
+                    
+                    #ifdef SIRE_TIME_ROUTINES
+                    nflops += 4;
+                    #endif
+                }
+                else
+                {
+                    cnrg += icnrg;
+                    ljnrg += iljnrg;
+                    
+                    #ifdef SIRE_TIME_ROUTINES
+                    nflops += 2;
+                    #endif
+                }
             }
         }
     }
