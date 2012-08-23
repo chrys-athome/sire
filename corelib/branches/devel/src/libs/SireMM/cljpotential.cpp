@@ -4907,7 +4907,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
     }
     
     cnrg += icnrg;
-    ljnrg += iljnrg;
+    ljnrg += 4*iljnrg;
 }
 
 /** Calculate the intramolecular CLJ energy of the passed molecule, and
