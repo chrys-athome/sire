@@ -57,8 +57,6 @@
     #endif
 #endif
 
-#undef SIRE_USE_SSE
-
 #include <QDebug>
 
 using namespace SireMM;
@@ -884,6 +882,16 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
     //
     //  V_{coul}(r) = (1-alpha)^n q_i q_j / 4 pi eps_0 (alpha+r^2)^(1/2)
     //
+    // If force shifting is used, then I have modified this to fit the
+    // force-shifted coulomb equation by substituting
+    //
+    // sr = (alpha+r^2)^(1/2)
+    // sRc = (alpha+Rc^2)^(1/2)
+    //
+    // into
+    //
+    // V_{coul}{sr} = (1-alpha)^n q_i q_j [ 1/sr - 1/sRc + 1/sRc^2 (sr - sRc) ]
+    //
     // This contrasts to Rich T's LJ softcore function, which was;
     //
     //  V_{LJ}(r) = 4 epsilon [ (sigma^12 / (alpha^m sigma^6 + r^6)^2) - 
@@ -902,309 +910,592 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
     int nflops = 0;
     #endif
 
-    //loop over all pairs of CutGroups in the two molecules
-    for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+    if (use_electrostatic_shifting)
     {
-        const Parameters::Array &params0 = molparams0_array[igroup];
-
-        const CoordGroup &group0 = groups0_array[igroup];
-        const AABox &aabox0 = group0.aaBox();
-        const quint32 nats0 = group0.count();
-        const Parameter *params0_array = params0.constData();
+        double Rc = switchfunc->electrostaticCutoffDistance();
     
-        for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+        if (Rc != switchfunc->vdwCutoffDistance())
+            throw SireError::unsupported( QObject::tr(
+                    "The SoftCLJ potentials do not support electrostatic force shifting "
+                    "together with a different coulomb and vdw cutoff distance."), CODELOC );
+        
+        if (Rc > 1e9)
+            Rc = 1e9;
+    
+        double sRc[nalpha];
+        double one_over_sRc[nalpha];
+        double one_over_sRc2[nalpha];
+        
+        for (int i=0; i<nalpha; ++i)
         {
-            const CoordGroup &group1 = groups1_array[jgroup];
-            const Parameters::Array &params1 = molparams1_array[jgroup];
-
-            //check first that these two CoordGroups could be within cutoff
-            //(if there is only one CutGroup in both molecules then this
-            //test has already been performed and passed)
-            const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
-                                        spce->beyond(switchfunc->cutoffDistance(), 
-                                                     aabox0, group1.aaBox());
-            
-            if (not within_cutoff)
-                //this CutGroup is either the cutoff distance
-                continue;
-            
-            //calculate all of the interatomic distances^2
-            const double mindist = spce->calcDist2(group0, group1, distmat);
-            
-            if (mindist > switchfunc->cutoffDistance())
-            {
-                //all of the atoms are definitely beyond cutoff
-                continue;
-            }
-               
-            double icnrg[nalpha];
-            double iljnrg[nalpha];
-            
-            for (int i=0; i<nalpha; ++i)
-            {
-                icnrg[i] = 0;
-                iljnrg[i] = 0;
-            }
-            
-            //loop over all interatomic pairs and calculate the energies
-            const quint32 nats1 = group1.count();
-            const Parameter *params1_array = params1.constData();
-
-            #ifdef SIRE_USE_SSE
-            {
-                const int remainder = nats1 % 2;
-                
-                __m128d sse_cnrg[nalpha];
-                __m128d sse_ljnrg[nalpha];
-                __m128d sse_alpha[nalpha];
-                __m128d sse_delta[nalpha];
-                                
-                for (int i=0; i<nalpha; ++i)
-                {
-                    sse_cnrg[i] = _mm_set_pd(0, 0);
-                    sse_ljnrg[i] = _mm_set_pd(0, 0);
-                    
-                    sse_alpha[i] = _mm_set_pd(alfa[i], alfa[i]);
-                    sse_delta[i] = _mm_set_pd(delta[i], delta[i]);
-                }
-                
-                for (quint32 i=0; i<nats0; ++i)
-                {
-                    distmat.setOuterIndex(i);
-                    const Parameter &param0 = params0_array[i];
-                    
-                    __m128d sse_chg0 = _mm_set_pd(param0.reduced_charge, 
-                                                  param0.reduced_charge);
-
-                    //process atoms in pairs (so can then use SSE)
-                    for (quint32 j=0; j<nats1-1; j += 2)
-                    {
-                        const Parameter &param10 = params1_array[j];
-                        const Parameter &param11 = params1_array[j+1];
-                        
-                        __m128d sse_dist2 = _mm_set_pd(distmat[j], distmat[j+1]);
-                        __m128d sse_chg1 = _mm_set_pd(param10.reduced_charge,
-                                                      param11.reduced_charge);
-                                           
-                        const LJPair &ljpair0 = ljpairs.constData()[
-                                                ljpairs.map(param0.ljid,
-                                                            param10.ljid)];
-                    
-                        const LJPair &ljpair1 = ljpairs.constData()[
-                                                ljpairs.map(param0.ljid,
-                                                            param11.ljid)];
-                    
-                        __m128d sse_sig = _mm_set_pd(ljpair0.sigma(), 
-                                                     ljpair1.sigma());
-                        __m128d sse_eps = _mm_set_pd(ljpair0.epsilon(), 
-                                                     ljpair1.epsilon());
-                        
-                        //calculate the coulomb energy
-                        __m128d sse_q2 = _mm_mul_pd(sse_chg0, sse_chg1);
-                        
-                        for (int k=0; k<nalpha; ++k)
-                        {
-                            __m128d tmp = _mm_add_pd( sse_dist2, sse_alpha[k] );
-                            __m128d coul_denom = _mm_sqrt_pd( tmp );
-                        
-                            coul_denom = _mm_div_pd(sse_q2, coul_denom);
-                        
-                            sse_cnrg[k] = _mm_add_pd(sse_cnrg[k], coul_denom);
-                        }
-                       
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 2 + 8*nalpha;
-                        #endif
-
-                        const __m128d sse_sig2 = _mm_mul_pd(sse_sig, sse_sig);
-                        const __m128d sse_sig3 = _mm_mul_pd(sse_sig2, sse_sig);
-                        const __m128d sse_sig6 = _mm_mul_pd(sse_sig3, sse_sig3);
-                        
-                        for (int k=0; k<nalpha; ++k)
-                        {
-                            //calculate shift = alpha * sigma * shift_delta
-                            const __m128d sse_shift = _mm_mul_pd(sse_sig, sse_delta[k]);
-
-                            __m128d lj_denom = _mm_mul_pd(sse_dist2, sse_shift);
-                            __m128d lj_denom2 = _mm_mul_pd(lj_denom, lj_denom);
-                            lj_denom = _mm_mul_pd(lj_denom, lj_denom2);
-                        
-                            const __m128d sig6_over_denom = _mm_div_pd(sse_sig6, 
-                                                                       lj_denom);
-                                                                       
-                            const __m128d sig12_over_denom2 = _mm_mul_pd(sig6_over_denom, 
-                                                                         sig6_over_denom);
-                                              
-                            //calculate LJ energy (the factor of 4 is added later)
-                            __m128d tmp = _mm_sub_pd(sig12_over_denom2,
-                                                     sig6_over_denom);
-                                                     
-                            tmp = _mm_mul_pd(sse_eps, tmp);
-                            sse_ljnrg[k] = _mm_add_pd(sse_ljnrg[k], tmp);
-                        }
-                        
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 6 + nalpha*18;
-                        #endif
-                    }
-                          
-                    if (remainder == 1)
-                    {
-                        const Parameter &param1 = params1_array[nats1-1];
-
-                        const double dist2 = distmat[nats1-1];
-                        
-                        const double q2 = param0.reduced_charge * param1.reduced_charge;
-                        
-                        for (int k=0; k<nalpha; ++k)
-                        {
-                            icnrg[k] += q2 / std::sqrt( alfa[k] + dist2 );
-                        }
-                    
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 1 + 3*nalpha;
-                        #endif
-
-                        const LJPair &ljpair = ljpairs.constData()[
-                                                ljpairs.map(param0.ljid,
-                                                            param1.ljid)];
-                        
-                        const double sig2 = ljpair.sigma() * ljpair.sigma();
-                        const double sig6 = sig2 * sig2 * sig2;
-
-                        for (int k=0; k<nalpha; ++k)
-                        {
-                            const double shift = ljpair.sigma() * delta[k];
-                        
-                            double lj_denom = dist2 + shift; 
-                            lj_denom = lj_denom * lj_denom * lj_denom;
-                        
-                            const double sig6_over_denom = sig6 / lj_denom;
-                            const double sig12_over_denom2 = sig6_over_denom * 
-                                                             sig6_over_denom;
-                        
-                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
-                                                             sig6_over_denom);
-                        }
-                        
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 3 + 9*nalpha;
-                        #endif
-                    }
-                }
-                
-                for (int k=0; k<nalpha; ++k)
-                {
-                    icnrg[k] += *((const double*)&(sse_cnrg[k])) +
-                                *( ((const double*)&(sse_cnrg[k])) + 1 );
-                         
-                    iljnrg[k] += *((const double*)&(sse_ljnrg[k])) +
-                                 *( ((const double*)&(sse_ljnrg[k])) + 1 );
-                }
-            }
-            #else
-            {
-                for (quint32 i=0; i<nats0; ++i)
-                {
-                    distmat.setOuterIndex(i);
-                    const Parameter &param0 = params0_array[i];
-                
-                    for (quint32 j=0; j<nats1; ++j)
-                    {
-                        const Parameter &param1 = params1_array[j];
-
-                        const double dist2 = distmat[j];
-                        
-                        const double q2 = param0.reduced_charge * param1.reduced_charge;
-                        
-                        for (int k=0; k<nalpha; ++k)
-                        {
-                            icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
-                        }
-                    
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 1 + 3*nalpha;
-                        #endif
-
-                        const LJPair &ljpair = ljpairs.constData()[
-                                                ljpairs.map(param0.ljid,
-                                                            param1.ljid)];
-                        
-                        const double sig2 = ljpair.sigma() * ljpair.sigma();
-                        const double sig6 = sig2 * sig2 * sig2;
-                        
-                        for (int k=0; k<nalpha; ++k)
-                        {
-                            const double shift = ljpair.sigma() * delta[k];
-                        
-                            double lj_denom = dist2 + shift;
-                            lj_denom = lj_denom * lj_denom * lj_denom;
-                        
-                            const double sig6_over_denom = sig6 / lj_denom;
-                            const double sig12_over_denom2 = sig6_over_denom *
-                                                             sig6_over_denom;
+            sRc[i] = std::sqrt(alfa[i] + Rc*Rc);
+            one_over_sRc[i] = double(1) / sRc[i];
+            one_over_sRc2[i] = double(1) / (sRc[i]*sRc[i]);
+        }
     
-                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
-                                                             sig6_over_denom);
-                        }
+        //loop over all pairs of CutGroups in the two molecules
+        for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+        {
+            const Parameters::Array &params0 = molparams0_array[igroup];
+
+            const CoordGroup &group0 = groups0_array[igroup];
+            const AABox &aabox0 = group0.aaBox();
+            const quint32 nats0 = group0.count();
+            const Parameter *params0_array = params0.constData();
+        
+            for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+            {
+                const CoordGroup &group1 = groups1_array[jgroup];
+                const Parameters::Array &params1 = molparams1_array[jgroup];
+
+                //check first that these two CoordGroups could be within cutoff
+                //(if there is only one CutGroup in both molecules then this
+                //test has already been performed and passed)
+                const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                            spce->beyond(switchfunc->cutoffDistance(), 
+                                                         aabox0, group1.aaBox());
+                
+                if (not within_cutoff)
+                    //this CutGroup is either the cutoff distance
+                    continue;
+                
+                //calculate all of the interatomic distances^2
+                const double mindist = spce->calcDist2(group0, group1, distmat);
+                
+                if (mindist > switchfunc->cutoffDistance())
+                {
+                    //all of the atoms are definitely beyond cutoff
+                    continue;
+                }
+                   
+                double icnrg[nalpha];
+                double iljnrg[nalpha];
+                
+                for (int i=0; i<nalpha; ++i)
+                {
+                    icnrg[i] = 0;
+                    iljnrg[i] = 0;
+                }
+                
+                //loop over all interatomic pairs and calculate the energies
+                const quint32 nats1 = group1.count();
+                const Parameter *params1_array = params1.constData();
+
+                #ifdef SIRE_USE_SSE
+                {
+                    const int remainder = nats1 % 2;
+                    
+                    const __m128d sse_one = { 1.0, 1.0 };
+                    
+                    __m128d sse_cnrg[nalpha];
+                    __m128d sse_ljnrg[nalpha];
+                    __m128d sse_alpha[nalpha];
+                    __m128d sse_delta[nalpha];
+                    
+                    __m128d sse_sRc[nalpha];
+                    __m128d sse_one_over_sRc[nalpha];
+                    __m128d sse_one_over_sRc2[nalpha];
+                    
+                    for (int i=0; i<nalpha; ++i)
+                    {
+                        sse_cnrg[i] = _mm_set_pd(0, 0);
+                        sse_ljnrg[i] = _mm_set_pd(0, 0);
                         
-                        #ifdef SIRE_TIME_ROUTINES
-                        nflops += 3 + 9*nalpha;
-                        #endif
+                        sse_alpha[i] = _mm_set_pd(alfa[i], alfa[i]);
+                        sse_delta[i] = _mm_set_pd(delta[i], delta[i]);
+                        
+                        sse_sRc[i] = _mm_set1_pd(sRc[i]);
+                        sse_one_over_sRc[i] = _mm_set1_pd(one_over_sRc[i]);
+                        sse_one_over_sRc2[i] = _mm_set1_pd(one_over_sRc2[i]);
+                    }
+                    
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        const Parameter &param0 = params0_array[i];
+                        
+                        __m128d sse_chg0 = _mm_set_pd(param0.reduced_charge, 
+                                                      param0.reduced_charge);
+
+                        //process atoms in pairs (so can then use SSE)
+                        for (quint32 j=0; j<nats1-1; j += 2)
+                        {
+                            const Parameter &param10 = params1_array[j];
+                            const Parameter &param11 = params1_array[j+1];
+                            
+                            const __m128d sse_r2 = _mm_set_pd(distmat[j], distmat[j+1]);
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                __m128d sse_sr = _mm_sqrt_pd( _mm_add_pd(sse_r2,sse_alpha[k]) );
+                                __m128d sse_one_over_sr = _mm_div_pd(sse_one, sse_sr);
+                            
+                                __m128d nrg = _mm_sub_pd(sse_sr, sse_sRc[k]);
+                                nrg = _mm_mul_pd(nrg, sse_one_over_sRc2[k]);
+                                nrg = _mm_add_pd(nrg, sse_one_over_sr);
+                                nrg = _mm_sub_pd(nrg, sse_one_over_sRc[k]);
+
+                                __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
+                                                              param11.reduced_charge );
+                        
+                                sse_chg = _mm_mul_pd(sse_chg, sse_chg0);
+                        
+                                nrg = _mm_mul_pd(sse_chg, nrg);
+
+                                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_sr, sse_sRc[k]);
+                                nrg = _mm_and_pd(nrg, sse_in_cutoff);
+                                
+                                sse_cnrg[k] = _mm_add_pd(sse_cnrg[k], nrg);
+                            }
+                                                       
+                            const LJPair &ljpair0 = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param10.ljid)];
+                        
+                            const LJPair &ljpair1 = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param11.ljid)];
+                        
+                            __m128d sse_sig = _mm_set_pd(ljpair0.sigma(), 
+                                                         ljpair1.sigma());
+                            __m128d sse_eps = _mm_set_pd(ljpair0.epsilon(), 
+                                                         ljpair1.epsilon());
+
+                            const __m128d sse_sig2 = _mm_mul_pd(sse_sig, sse_sig);
+                            const __m128d sse_sig3 = _mm_mul_pd(sse_sig2, sse_sig);
+                            const __m128d sse_sig6 = _mm_mul_pd(sse_sig3, sse_sig3);
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                //calculate shift = alpha * sigma * shift_delta
+                                const __m128d sse_shift = _mm_mul_pd(sse_sig, sse_delta[k]);
+
+                                __m128d lj_denom = _mm_mul_pd(sse_r2, sse_shift);
+                                __m128d lj_denom2 = _mm_mul_pd(lj_denom, lj_denom);
+                                lj_denom = _mm_mul_pd(lj_denom, lj_denom2);
+                            
+                                const __m128d sig6_over_denom = _mm_div_pd(sse_sig6, 
+                                                                           lj_denom);
+                                                                           
+                                const __m128d sig12_over_denom2 = _mm_mul_pd(sig6_over_denom, 
+                                                                             sig6_over_denom);
+                                                  
+                                //calculate LJ energy (the factor of 4 is added later)
+                                __m128d tmp = _mm_sub_pd(sig12_over_denom2,
+                                                         sig6_over_denom);
+                                                         
+                                tmp = _mm_mul_pd(sse_eps, tmp);
+                                sse_ljnrg[k] = _mm_add_pd(sse_ljnrg[k], tmp);
+                            }
+                        }
+                              
+                        if (remainder == 1)
+                        {
+                            const Parameter &param1 = params1_array[nats1-1];
+
+                            const double r2 = distmat[nats1-1];
+                            
+                            const double q2 = param0.reduced_charge * param1.reduced_charge;
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double sr = std::sqrt(alfa[k] + r2);
+
+                                const double one_over_sr = double(1) / sr;
+                                
+                                const double in_cutoff = (sr < sRc[k]);
+                                
+                                icnrg[k] += in_cutoff * q2 *
+                                              (one_over_sr - one_over_sRc[k] +
+                                                  one_over_sRc2[k]*(sr-sRc[k]));
+                            }
+
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+                            
+                            const double sig2 = ljpair.sigma() * ljpair.sigma();
+                            const double sig6 = sig2 * sig2 * sig2;
+
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double shift = ljpair.sigma() * delta[k];
+                            
+                                double lj_denom = r2 + shift;
+                                lj_denom = lj_denom * lj_denom * lj_denom;
+                            
+                                const double sig6_over_denom = sig6 / lj_denom;
+                                const double sig12_over_denom2 = sig6_over_denom * 
+                                                                 sig6_over_denom;
+                            
+                                iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
+                                                                 sig6_over_denom);
+                            }
+                        }
+                    }
+                    
+                    for (int k=0; k<nalpha; ++k)
+                    {
+                        icnrg[k] += *((const double*)&(sse_cnrg[k])) +
+                                    *( ((const double*)&(sse_cnrg[k])) + 1 );
+                             
+                        iljnrg[k] += *((const double*)&(sse_ljnrg[k])) +
+                                     *( ((const double*)&(sse_ljnrg[k])) + 1 );
                     }
                 }
-            }
-            #endif
-            
-            //are we shifting the electrostatic potential?
-            if (use_electrostatic_shifting)
-            {
-                const double coul_shift = this->totalCharge(params0) * 
-                                          this->totalCharge(params1)
-                                        / switchfunc->electrostaticCutoffDistance();
-                
-                for (int i=0; i<nalpha; ++i)
+                #else
                 {
-                    icnrg[i] -= coul_shift;
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        const Parameter &param0 = params0_array[i];
+                    
+                        for (quint32 j=0; j<nats1; ++j)
+                        {
+                            const Parameter &param1 = params1_array[j];
+
+                            const double r2 = distmat[j];
+                            
+                            const double q2 = param0.reduced_charge * param1.reduced_charge;
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double sr = std::sqrt(alfa[k] + r2);
+
+                                const double one_over_sr = double(1) / sr;
+                                
+                                const double in_cutoff = (sr < sRc[k]);
+                                
+                                icnrg[k] += in_cutoff * q2 *
+                                              (one_over_sr - one_over_sRc[k] +
+                                                  one_over_sRc2[k]*(sr-sRc[k]));
+                            }
+
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+                            
+                            const double sig2 = ljpair.sigma() * ljpair.sigma();
+                            const double sig6 = sig2 * sig2 * sig2;
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double shift = ljpair.sigma() * delta[k];
+                            
+                                double lj_denom = dist2 + shift;
+                                lj_denom = lj_denom * lj_denom * lj_denom;
+                            
+                                const double sig6_over_denom = sig6 / lj_denom;
+                                const double sig12_over_denom2 = sig6_over_denom *
+                                                                 sig6_over_denom;
+        
+                                iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
+                                                                 sig6_over_denom);
+                            }
+                        }
+                    }
                 }
-                        
-                #ifdef SIRE_TIME_ROUTINES      
-                nflops += 2 + nalpha;
                 #endif
-            }
-            
-            //now add these energies onto the total for the molecule,
-            //scaled by any non-bonded feather factor
-            if (mindist > switchfunc->featherDistance())
-            {
-                const double cscl = switchfunc->electrostaticScaleFactor( 
-                                                                    Length(mindist) );
-                                                                    
-                const double ljscl = switchfunc->vdwScaleFactor( Length(mindist) );
-            
-                for (int i=0; i<nalpha; ++i)
-                {
-                    cnrg[i] += cscl * icnrg[i];
-                    ljnrg[i] += ljscl * iljnrg[i];
-                }
                 
-                #ifdef SIRE_TIME_ROUTINES
-                nflops += 4*nalpha;
-                #endif
-            }
-            else
-            {
+                //now add these energies onto the total for the molecule,
+                //scaled by any non-bonded feather factor
                 for (int i=0; i<nalpha; ++i)
                 {
                     cnrg[i] += icnrg[i];
                     ljnrg[i] += iljnrg[i];
                 }
-                
-                #ifdef SIRE_TIME_ROUTINES
-                nflops += 2*nalpha;
-                #endif
             }
         }
+    }
+    else // use_electrostatic_shifting
+    {
+        //loop over all pairs of CutGroups in the two molecules
+        for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+        {
+            const Parameters::Array &params0 = molparams0_array[igroup];
+
+            const CoordGroup &group0 = groups0_array[igroup];
+            const AABox &aabox0 = group0.aaBox();
+            const quint32 nats0 = group0.count();
+            const Parameter *params0_array = params0.constData();
+        
+            for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+            {
+                const CoordGroup &group1 = groups1_array[jgroup];
+                const Parameters::Array &params1 = molparams1_array[jgroup];
+
+                //check first that these two CoordGroups could be within cutoff
+                //(if there is only one CutGroup in both molecules then this
+                //test has already been performed and passed)
+                const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                            spce->beyond(switchfunc->cutoffDistance(), 
+                                                         aabox0, group1.aaBox());
+                
+                if (not within_cutoff)
+                    //this CutGroup is either the cutoff distance
+                    continue;
+                
+                //calculate all of the interatomic distances^2
+                const double mindist = spce->calcDist2(group0, group1, distmat);
+                
+                if (mindist > switchfunc->cutoffDistance())
+                {
+                    //all of the atoms are definitely beyond cutoff
+                    continue;
+                }
+                   
+                double icnrg[nalpha];
+                double iljnrg[nalpha];
+                
+                for (int i=0; i<nalpha; ++i)
+                {
+                    icnrg[i] = 0;
+                    iljnrg[i] = 0;
+                }
+                
+                //loop over all interatomic pairs and calculate the energies
+                const quint32 nats1 = group1.count();
+                const Parameter *params1_array = params1.constData();
+
+                #ifdef SIRE_USE_SSE
+                {
+                    const int remainder = nats1 % 2;
+                    
+                    __m128d sse_cnrg[nalpha];
+                    __m128d sse_ljnrg[nalpha];
+                    __m128d sse_alpha[nalpha];
+                    __m128d sse_delta[nalpha];
+                                    
+                    for (int i=0; i<nalpha; ++i)
+                    {
+                        sse_cnrg[i] = _mm_set_pd(0, 0);
+                        sse_ljnrg[i] = _mm_set_pd(0, 0);
+                        
+                        sse_alpha[i] = _mm_set_pd(alfa[i], alfa[i]);
+                        sse_delta[i] = _mm_set_pd(delta[i], delta[i]);
+                    }
+                    
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        const Parameter &param0 = params0_array[i];
+                        
+                        __m128d sse_chg0 = _mm_set_pd(param0.reduced_charge, 
+                                                      param0.reduced_charge);
+
+                        //process atoms in pairs (so can then use SSE)
+                        for (quint32 j=0; j<nats1-1; j += 2)
+                        {
+                            const Parameter &param10 = params1_array[j];
+                            const Parameter &param11 = params1_array[j+1];
+                            
+                            __m128d sse_dist2 = _mm_set_pd(distmat[j], distmat[j+1]);
+                            __m128d sse_chg1 = _mm_set_pd(param10.reduced_charge,
+                                                          param11.reduced_charge);
+                                               
+                            const LJPair &ljpair0 = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param10.ljid)];
+                        
+                            const LJPair &ljpair1 = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param11.ljid)];
+                        
+                            __m128d sse_sig = _mm_set_pd(ljpair0.sigma(), 
+                                                         ljpair1.sigma());
+                            __m128d sse_eps = _mm_set_pd(ljpair0.epsilon(), 
+                                                         ljpair1.epsilon());
+                            
+                            //calculate the coulomb energy
+                            __m128d sse_q2 = _mm_mul_pd(sse_chg0, sse_chg1);
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                __m128d tmp = _mm_add_pd( sse_dist2, sse_alpha[k] );
+                                __m128d coul_denom = _mm_sqrt_pd( tmp );
+                            
+                                coul_denom = _mm_div_pd(sse_q2, coul_denom);
+                            
+                                sse_cnrg[k] = _mm_add_pd(sse_cnrg[k], coul_denom);
+                            }
+                           
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 2 + 8*nalpha;
+                            #endif
+
+                            const __m128d sse_sig2 = _mm_mul_pd(sse_sig, sse_sig);
+                            const __m128d sse_sig3 = _mm_mul_pd(sse_sig2, sse_sig);
+                            const __m128d sse_sig6 = _mm_mul_pd(sse_sig3, sse_sig3);
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                //calculate shift = alpha * sigma * shift_delta
+                                const __m128d sse_shift = _mm_mul_pd(sse_sig, sse_delta[k]);
+
+                                __m128d lj_denom = _mm_mul_pd(sse_dist2, sse_shift);
+                                __m128d lj_denom2 = _mm_mul_pd(lj_denom, lj_denom);
+                                lj_denom = _mm_mul_pd(lj_denom, lj_denom2);
+                            
+                                const __m128d sig6_over_denom = _mm_div_pd(sse_sig6, 
+                                                                           lj_denom);
+                                                                           
+                                const __m128d sig12_over_denom2 = _mm_mul_pd(sig6_over_denom, 
+                                                                             sig6_over_denom);
+                                                  
+                                //calculate LJ energy (the factor of 4 is added later)
+                                __m128d tmp = _mm_sub_pd(sig12_over_denom2,
+                                                         sig6_over_denom);
+                                                         
+                                tmp = _mm_mul_pd(sse_eps, tmp);
+                                sse_ljnrg[k] = _mm_add_pd(sse_ljnrg[k], tmp);
+                            }
+                            
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 6 + nalpha*18;
+                            #endif
+                        }
+                              
+                        if (remainder == 1)
+                        {
+                            const Parameter &param1 = params1_array[nats1-1];
+
+                            const double dist2 = distmat[nats1-1];
+                            
+                            const double q2 = param0.reduced_charge * param1.reduced_charge;
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                icnrg[k] += q2 / std::sqrt( alfa[k] + dist2 );
+                            }
+                        
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 1 + 3*nalpha;
+                            #endif
+
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+                            
+                            const double sig2 = ljpair.sigma() * ljpair.sigma();
+                            const double sig6 = sig2 * sig2 * sig2;
+
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double shift = ljpair.sigma() * delta[k];
+                            
+                                double lj_denom = dist2 + shift; 
+                                lj_denom = lj_denom * lj_denom * lj_denom;
+                            
+                                const double sig6_over_denom = sig6 / lj_denom;
+                                const double sig12_over_denom2 = sig6_over_denom * 
+                                                                 sig6_over_denom;
+                            
+                                iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
+                                                                 sig6_over_denom);
+                            }
+                            
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 3 + 9*nalpha;
+                            #endif
+                        }
+                    }
+                    
+                    for (int k=0; k<nalpha; ++k)
+                    {
+                        icnrg[k] += *((const double*)&(sse_cnrg[k])) +
+                                    *( ((const double*)&(sse_cnrg[k])) + 1 );
+                             
+                        iljnrg[k] += *((const double*)&(sse_ljnrg[k])) +
+                                     *( ((const double*)&(sse_ljnrg[k])) + 1 );
+                    }
+                }
+                #else
+                {
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        const Parameter &param0 = params0_array[i];
+                    
+                        for (quint32 j=0; j<nats1; ++j)
+                        {
+                            const Parameter &param1 = params1_array[j];
+
+                            const double dist2 = distmat[j];
+                            
+                            const double q2 = param0.reduced_charge * param1.reduced_charge;
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+                            }
+                        
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 1 + 3*nalpha;
+                            #endif
+
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+                            
+                            const double sig2 = ljpair.sigma() * ljpair.sigma();
+                            const double sig6 = sig2 * sig2 * sig2;
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double shift = ljpair.sigma() * delta[k];
+                            
+                                double lj_denom = dist2 + shift;
+                                lj_denom = lj_denom * lj_denom * lj_denom;
+                            
+                                const double sig6_over_denom = sig6 / lj_denom;
+                                const double sig12_over_denom2 = sig6_over_denom *
+                                                                 sig6_over_denom;
+        
+                                iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
+                                                                 sig6_over_denom);
+                            }
+                            
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 3 + 9*nalpha;
+                            #endif
+                        }
+                    }
+                }
+                #endif
+                
+                //now add these energies onto the total for the molecule,
+                //scaled by any non-bonded feather factor
+                if (mindist > switchfunc->featherDistance())
+                {
+                    const double cscl = switchfunc->electrostaticScaleFactor( 
+                                                                        Length(mindist) );
+                                                                        
+                    const double ljscl = switchfunc->vdwScaleFactor( Length(mindist) );
+                
+                    for (int i=0; i<nalpha; ++i)
+                    {
+                        cnrg[i] += cscl * icnrg[i];
+                        ljnrg[i] += ljscl * iljnrg[i];
+                    }
+                    
+                    #ifdef SIRE_TIME_ROUTINES
+                    nflops += 4*nalpha;
+                    #endif
+                }
+                else
+                {
+                    for (int i=0; i<nalpha; ++i)
+                    {
+                        cnrg[i] += icnrg[i];
+                        ljnrg[i] += iljnrg[i];
+                    }
+                    
+                    #ifdef SIRE_TIME_ROUTINES
+                    nflops += 2*nalpha;
+                    #endif
+                }
+            }
+        } // end of if use_electrostatic_shifting
     }
     
     //add this molecule pair's energy onto the total
