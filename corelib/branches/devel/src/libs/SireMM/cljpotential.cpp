@@ -49,7 +49,7 @@
 
 #include "SireStream/datastream.h"
 
-#undef SIRE_USE_SSE // for some reason, this makes things slower...
+//#undef SIRE_USE_SSE // for some reason, this makes things slower...
 
 #ifdef SIRE_USE_SSE
     #ifdef __SSE__
@@ -812,7 +812,12 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
         //with alpha=0, and this way we avoid changing the hamiltonian significantly
         //by having an erfc function
         
-        double Rc = switchfunc->cutoffDistance();
+        double Rc = switchfunc->electrostaticCutoffDistance();
+        
+        if (Rc != switchfunc->vdwCutoffDistance())
+            throw SireError::unsupported( QObject::tr(
+                    "This code does not support having electrostatic shifting together "
+                    "with different coulomb and vdw cutoffs..."), CODELOC );
         
         if (Rc > 1e9)
         {
@@ -842,7 +847,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                             spce->beyond(Rc, aabox0, group1.aaBox());
                 
                 if (not within_cutoff)
-                    //this CutGroup is either the cutoff distance
+                    //this CutGroup is beyond the cutoff distance
                     continue;
                 
                 //calculate all of the interatomic distances
@@ -861,10 +866,117 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                 const quint32 nats1 = group1.count();
                 const Parameter *params1_array = params1.constData();
 
-                //#ifdef SIRE_USE_SSE
-                //{
-                //}
-                //#else
+                #ifdef SIRE_USE_SSE
+                {
+                    const int remainder = nats1 % 2;
+                    
+                    __m128d sse_cnrg = { 0, 0 };
+                    __m128d sse_ljnrg = { 0, 0 };
+
+                    const __m128d sse_one = { 1.0, 1.0 };
+                    const __m128d sse_Rc = { Rc, Rc };
+                    const __m128d sse_one_over_Rc = { one_over_Rc, one_over_Rc };
+                    const __m128d sse_one_over_Rc2 = { one_over_Rc2, one_over_Rc2 };
+                    
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        const Parameter &param0 = params0_array[i];
+                        
+                        __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge, 
+                                                       param0.reduced_charge );
+                                             
+                        //process atoms in pairs (so can then use SSE)
+                        for (quint32 j=0; j<nats1-1; j += 2)
+                        {
+                            const Parameter &param10 = params1_array[j];
+                            const Parameter &param11 = params1_array[j+1];
+                            
+                            const __m128d sse_r = _mm_set_pd( distmat[j], distmat[j+1] );
+                            const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
+                            {
+                                __m128d nrg = _mm_sub_pd(sse_r, sse_Rc);
+                                nrg = _mm_mul_pd(nrg, sse_one_over_Rc2);
+                                nrg = _mm_add_pd(nrg, sse_one_over_r);
+                                nrg = _mm_sub_pd(nrg, sse_one_over_Rc);
+
+                                __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
+                                                              param11.reduced_charge );
+                        
+                                sse_chg = _mm_mul_pd(sse_chg, sse_chg0);
+                        
+                                nrg = _mm_mul_pd(sse_chg, nrg);
+
+                                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
+                                nrg = _mm_and_pd(nrg, sse_in_cutoff);
+                                
+                                sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
+                            }
+                                               
+                            const LJPair &ljpair0 = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param10.ljid)];
+                        
+                            const LJPair &ljpair1 = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param11.ljid)];
+                        
+                            __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                            __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
+                                                          ljpair1.epsilon() );
+                                                        
+                            //calculate (sigma/r)^6 and (sigma/r)^12
+                            __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_one_over_r);
+                            sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,  
+                                                             sse_sig_over_dist2 );
+                                                         
+                            __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
+                                                                    sse_sig_over_dist2);
+                                                            
+                            sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
+                                                            sse_sig_over_dist2);
+                                                         
+                            __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
+                                                                     sse_sig_over_dist6);
+                                                  
+                            __m128d nrg = _mm_sub_pd(sse_sig_over_dist12,
+                                                     sse_sig_over_dist6);
+                                                     
+                            nrg = _mm_mul_pd(nrg, sse_eps);
+                            sse_ljnrg = _mm_add_pd(sse_ljnrg, nrg);
+                        }
+                              
+                        if (remainder == 1)
+                        {
+                            const Parameter &param1 = params1_array[nats1-1];
+
+                            const double r = distmat[nats1-1];
+                            const double one_over_r = double(1) / r;
+                            
+                            const double in_cutoff = (r < Rc);
+                            
+                            icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+        
+                            iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                          sig_over_dist6);
+                        }
+                    }
+                    
+                    icnrg += *((const double*)&sse_cnrg) +
+                             *( ((const double*)&sse_cnrg) + 1 );
+                             
+                    iljnrg += *((const double*)&sse_ljnrg) +
+                              *( ((const double*)&sse_ljnrg) + 1 );
+                }
+                #else
                 {
                     for (quint32 i=0; i<nats0; ++i)
                     {
@@ -895,7 +1007,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                         }
                     }
                 }
-                //#endif
+                #endif
                 
                 cnrg += icnrg;
                 ljnrg += iljnrg;
@@ -4229,8 +4341,11 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             const IntraCLJPotential::Parameter *params0_array, 
                             const IntraCLJPotential::Parameter *params1_array,
                             const quint32 nats0, const quint32 nats1, 
-                            double &icnrg, double &iljnrg) const
+                            double &cnrg, double &ljnrg) const
 {
+    double icnrg = 0;
+    double iljnrg = 0;
+
     if (group_pairs.isEmpty())
     {
         //there is a constant scale factor between groups
@@ -4239,110 +4354,272 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         if (cljscl.coulomb() == 0 and cljscl.lj() == 0)
             return;
 
-        for (quint32 i=0; i<nats0; ++i)
+        if (use_electrostatic_shifting)
         {
-            distmat.setOuterIndex(i);
-            const Parameter &param0 = params0_array[i];
-                
-            if (param0.ljid == 0)
+            double Rc = switchfunc->electrostaticCutoffDistance();
+            
+            if (Rc != switchfunc->vdwCutoffDistance())
+                throw SireError::unsupported( QObject::tr(
+                        "This code does not support having electrostatic shifting together "
+                        "with different coulomb and vdw cutoffs..."), CODELOC );
+            
+            if (Rc > 1e9)
             {
-                //null LJ parameter - only add on the coulomb energy
-                for (quint32 j=0; j<nats1; ++j)
-                {
-                    icnrg += cljscl.coulomb() *
-                             param0.reduced_charge * 
-                             params1_array[j].reduced_charge / distmat[j];
-                }
+                Rc = 1e9;
             }
-            else
+            
+            const double one_over_Rc = double(1) / Rc;
+            const double one_over_Rc2 = double(1) / (Rc*Rc);
+        
+            for (quint32 i=0; i<nats0; ++i)
             {
-                for (quint32 j=0; j<nats1; ++j)
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                    
+                if (param0.ljid == 0)
                 {
-                    //do both coulomb and LJ
-                    const Parameter &param1 = params1_array[j];
-                        
-                    const double invdist = double(1) / distmat[j];
-                        
-                    icnrg += cljscl.coulomb() *
-                             param0.reduced_charge * param1.reduced_charge
-                                                   * invdist;
-                              
-                    if (param1.ljid != 0)
+                    //null LJ parameter - only add on the coulomb energy
+                    for (quint32 j=0; j<nats1; ++j)
                     {
-                        const LJPair &ljpair = ljpairs.constData()[
-                                                  ljpairs.map(param0.ljid,
-                                                              param1.ljid)];
-                        
-                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                        double sig_over_dist12 = pow_2(sig_over_dist6);
+                        const Parameter &param1 = params1_array[j];
 
-                        iljnrg += cljscl.lj() *
-                                  4 * ljpair.epsilon() * (sig_over_dist12 - 
-                                                          sig_over_dist6);
+                        const double r = distmat[j];
+                        const double one_over_r = double(1) / r;
+                        
+                        const double in_cutoff = (r < Rc);
+                        
+                        icnrg += cljscl.coulomb() * 
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                    }
+                }
+                else
+                {
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        //do both coulomb and LJ
+                        const Parameter &param1 = params1_array[j];
+                            
+                        const double r = distmat[j];
+                        const double one_over_r = double(1) / r;
+                        
+                        const double in_cutoff = (r < Rc);
+                            
+                        icnrg += cljscl.coulomb() * 
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                  
+                        if (param1.ljid != 0)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                      ljpairs.map(param0.ljid,
+                                                                  param1.ljid)];
+                            
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            iljnrg += cljscl.lj() *
+                                          ljpair.epsilon() * (sig_over_dist12 - 
+                                                              sig_over_dist6);
+                        }
                     }
                 }
             }
-        } 
+        }
+        else // if use_electrostatic_shifting
+        {
+            for (quint32 i=0; i<nats0; ++i)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                    
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        icnrg += cljscl.coulomb() *
+                                 param0.reduced_charge * 
+                                 params1_array[j].reduced_charge / distmat[j];
+                    }
+                }
+                else
+                {
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        //do both coulomb and LJ
+                        const Parameter &param1 = params1_array[j];
+                            
+                        const double invdist = double(1) / distmat[j];
+                            
+                        icnrg += cljscl.coulomb() *
+                                 param0.reduced_charge * param1.reduced_charge
+                                                       * invdist;
+                                  
+                        if (param1.ljid != 0)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                      ljpairs.map(param0.ljid,
+                                                                  param1.ljid)];
+                            
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            iljnrg += cljscl.lj() *
+                                          ljpair.epsilon() * (sig_over_dist12 - 
+                                                              sig_over_dist6);
+                        }
+                    }
+                }
+            }
+        } // end of if use_electrostatic_shifting
     }
     else
     {
         //there are different nb scale factors between
         //the atoms. We need to calculate the energies using
         //them...
-        for (quint32 i=0; i<nats0; ++i)
+        if (use_electrostatic_shifting)
         {
-            distmat.setOuterIndex(i);
-            const Parameter &param0 = params0_array[i];
-                
-            if (param0.ljid == 0)
+            double Rc = switchfunc->electrostaticCutoffDistance();
+            
+            if (Rc != switchfunc->vdwCutoffDistance())
+                throw SireError::unsupported( QObject::tr(
+                        "This code does not support having electrostatic shifting together "
+                        "with different coulomb and vdw cutoffs..."), CODELOC );
+            
+            if (Rc > 1e9)
             {
-                //null LJ parameter - only add on the coulomb energy
-                for (quint32 j=0; j<nats1; ++j)
+                Rc = 1e9;
+            }
+            
+            const double one_over_Rc = double(1) / Rc;
+            const double one_over_Rc2 = double(1) / (Rc*Rc);
+        
+            for (quint32 i=0; i<nats0; ++i)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                    
+                if (param0.ljid == 0)
                 {
-                    const CLJScaleFactor &cljscl = group_pairs(i,j);
-                            
-                    if (cljscl.coulomb() != 0)
+                    //null LJ parameter - only add on the coulomb energy
+                    for (quint32 j=0; j<nats1; ++j)
                     {
-                        icnrg += cljscl.coulomb() * 
-                                    param0.reduced_charge * 
-                                    params1_array[j].reduced_charge / distmat[j];
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                                
+                        if (cljscl.coulomb() != 0)
+                        {
+                            const Parameter &param1 = params1_array[j];
+
+                            const double r = distmat[j];
+                            const double one_over_r = double(1) / r;
+                            
+                            const double in_cutoff = (r < Rc);
+                            
+                            icnrg += cljscl.coulomb() * 
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                        }
                     }
                 }
-            }
-            else
-            {
-                for (quint32 j=0; j<nats1; ++j)
+                else
                 {
-                    //do both coulomb and LJ
-                    const CLJScaleFactor &cljscl = group_pairs(i,j);
-
-                    if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                    for (quint32 j=0; j<nats1; ++j)
                     {
-                        const Parameter &param1 = params1_array[j];
-                        
-                        const double invdist = double(1) / distmat[j];
-                        
-                        icnrg += cljscl.coulomb() *  
-                                 param0.reduced_charge * 
-                                 param1.reduced_charge * invdist;
+                        //do both coulomb and LJ
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
 
-                        if (cljscl.lj() != 0 and param1.ljid != 0)
+                        if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
                         {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                     ljpairs.map(param0.ljid,
-                                                                 param1.ljid)];
-                        
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
+                            const Parameter &param1 = params1_array[j];
 
-                            iljnrg += cljscl.lj() * 4 * ljpair.epsilon() * 
-                                       (sig_over_dist12 - sig_over_dist6);
+                            const double r = distmat[j];
+                            const double one_over_r = double(1) / r;
+                            
+                            const double in_cutoff = (r < Rc);
+                            
+                            icnrg += cljscl.coulomb() * 
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+
+                            if (cljscl.lj() != 0 and param1.ljid != 0)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                         ljpairs.map(param0.ljid,
+                                                                     param1.ljid)];
+                            
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                iljnrg += cljscl.lj() * ljpair.epsilon() * 
+                                           (sig_over_dist12 - sig_over_dist6);
+                            }
                         }
                     }
                 }
             }
         }
+        else // if use_electrostatic_shifting
+        {
+            for (quint32 i=0; i<nats0; ++i)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                    
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                                
+                        if (cljscl.coulomb() != 0)
+                        {
+                            icnrg += cljscl.coulomb() * 
+                                        param0.reduced_charge * 
+                                        params1_array[j].reduced_charge / distmat[j];
+                        }
+                    }
+                }
+                else
+                {
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        //do both coulomb and LJ
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+                        if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                        {
+                            const Parameter &param1 = params1_array[j];
+                            
+                            const double invdist = double(1) / distmat[j];
+                            
+                            icnrg += cljscl.coulomb() *  
+                                     param0.reduced_charge * 
+                                     param1.reduced_charge * invdist;
+
+                            if (cljscl.lj() != 0 and param1.ljid != 0)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                         ljpairs.map(param0.ljid,
+                                                                     param1.ljid)];
+                            
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                iljnrg += cljscl.lj() * ljpair.epsilon() * 
+                                           (sig_over_dist12 - sig_over_dist6);
+                            }
+                        }
+                    }
+                }
+            }
+        } // end of if use_electrostatic_shifting
     }
+    
+    cnrg += icnrg;
+    ljnrg += 4*iljnrg;
 }
 
 void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs, 
@@ -4351,10 +4628,13 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             const IntraCLJPotential::Parameter *params0_array, 
                             const IntraCLJPotential::Parameter *params1_array,
                             const quint32 nats0, const quint32 nats1, 
-                            double &icnrg, double &iljnrg) const
+                            double &cnrg, double &ljnrg) const
 {
     if (atoms0.isEmpty() or atoms1.isEmpty())
         return;
+
+    double icnrg = 0;
+    double iljnrg = 0;
 
     if (group_pairs.isEmpty())
     {
@@ -4363,109 +4643,271 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
         if (cljscl.coulomb() == 0 and cljscl.lj() == 0)
             return;
-        
-        foreach (Index i, atoms0)
-        {
-            distmat.setOuterIndex(i);
-            const Parameter &param0 = params0_array[i];
-                
-            if (param0.ljid == 0)
-            {
-                //null LJ parameter - only add on the coulomb energy
-                foreach (Index j, atoms1)
-                {
-                    icnrg += cljscl.coulomb() * 
-                             param0.reduced_charge * 
-                             params1_array[j].reduced_charge / distmat[j];
-                }
-            }
-            else
-            {
-                foreach (Index j, atoms1)
-                {
-                    //do both coulomb and LJ
-                    const Parameter &param1 = params1_array[j];
-                        
-                    const double invdist = double(1) / distmat[j];
-                        
-                    icnrg += cljscl.coulomb() *
-                             param0.reduced_charge * param1.reduced_charge
-                                                   * invdist;
-                              
-                    if (param1.ljid != 0)
-                    {
-                        const LJPair &ljpair = ljpairs.constData()[
-                                                  ljpairs.map(param0.ljid,
-                                                              param1.ljid)];
-                        
-                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                        double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                        iljnrg += cljscl.lj() *
-                                  4 * ljpair.epsilon() * (sig_over_dist12 - 
-                                                          sig_over_dist6);
+        if (use_electrostatic_shifting)
+        {
+            double Rc = switchfunc->electrostaticCutoffDistance();
+            
+            if (Rc != switchfunc->vdwCutoffDistance())
+                throw SireError::unsupported( QObject::tr(
+                        "This code does not support having electrostatic shifting together "
+                        "with different coulomb and vdw cutoffs..."), CODELOC );
+            
+            if (Rc > 1e9)
+            {
+                Rc = 1e9;
+            }
+            
+            const double one_over_Rc = double(1) / Rc;
+            const double one_over_Rc2 = double(1) / (Rc*Rc);
+        
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                    
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    foreach (Index j, atoms1)
+                    {
+                        const Parameter &param1 = params1_array[j];
+
+                        const double r = distmat[j];
+                        const double one_over_r = double(1) / r;
+                        
+                        const double in_cutoff = (r < Rc);
+                        
+                        icnrg += cljscl.coulomb() * 
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                    }
+                }
+                else
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        //do both coulomb and LJ
+                        const Parameter &param1 = params1_array[j];
+
+                        const double r = distmat[j];
+                        const double one_over_r = double(1) / r;
+                        
+                        const double in_cutoff = (r < Rc);
+                        
+                        icnrg += cljscl.coulomb() * 
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                  
+                        if (param1.ljid != 0)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                      ljpairs.map(param0.ljid,
+                                                                  param1.ljid)];
+                            
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            iljnrg += cljscl.lj() *
+                                          ljpair.epsilon() * (sig_over_dist12 - 
+                                                              sig_over_dist6);
+                        }
                     }
                 }
             }
-        } 
+        }
+        else // if use_electrostatic_shifting
+        {
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                    
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    foreach (Index j, atoms1)
+                    {
+                        icnrg += cljscl.coulomb() * 
+                                 param0.reduced_charge * 
+                                 params1_array[j].reduced_charge / distmat[j];
+                    }
+                }
+                else
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        //do both coulomb and LJ
+                        const Parameter &param1 = params1_array[j];
+                            
+                        const double invdist = double(1) / distmat[j];
+                            
+                        icnrg += cljscl.coulomb() *
+                                 param0.reduced_charge * param1.reduced_charge
+                                                       * invdist;
+                                  
+                        if (param1.ljid != 0)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                      ljpairs.map(param0.ljid,
+                                                                  param1.ljid)];
+                            
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            iljnrg += cljscl.lj() *
+                                          ljpair.epsilon() * (sig_over_dist12 - 
+                                                              sig_over_dist6);
+                        }
+                    }
+                }
+            }
+        } // end of if use_electrostatic_shifting
     }
     else
     {
         //there are different nb scale factors between
         //the atoms. We need to calculate the energies using
         //them...
-        foreach (Index i, atoms0)
+        if (use_electrostatic_shifting)
         {
-            distmat.setOuterIndex(i);
-            const Parameter &param0 = params0_array[i];
-                
-            if (param0.ljid == 0)
+            double Rc = switchfunc->electrostaticCutoffDistance();
+            
+            if (Rc != switchfunc->vdwCutoffDistance())
+                throw SireError::unsupported( QObject::tr(
+                        "This code does not support having electrostatic shifting together "
+                        "with different coulomb and vdw cutoffs..."), CODELOC );
+            
+            if (Rc > 1e9)
             {
-                //null LJ parameter - only add on the coulomb energy
-                foreach (Index j, atoms1)
-                {
-                    const CLJScaleFactor &cljscl = group_pairs(i,j);
-                            
-                    if (cljscl.coulomb() != 0)
-                           icnrg += cljscl.coulomb() * 
-                                    param0.reduced_charge * 
-                                    params1_array[j].reduced_charge / distmat[j];
-                }
+                Rc = 1e9;
             }
-            else
+            
+            const double one_over_Rc = double(1) / Rc;
+            const double one_over_Rc2 = double(1) / (Rc*Rc);
+
+            foreach (Index i, atoms0)
             {
-                foreach (Index j, atoms1)
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                    
+                if (param0.ljid == 0)
                 {
-                    //do both coulomb and LJ
-                    const CLJScaleFactor &cljscl = group_pairs(i,j);
-
-                    if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                    //null LJ parameter - only add on the coulomb energy
+                    foreach (Index j, atoms1)
                     {
-                        const Parameter &param1 = params1_array[j];
-                        
-                        const double invdist = double(1) / distmat[j];
-                        
-                        icnrg += cljscl.coulomb() *  
-                                 param0.reduced_charge * 
-                                 param1.reduced_charge * invdist;
-                              
-                        if (cljscl.lj() != 0 and param1.ljid != 0)
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                                
+                        if (cljscl.coulomb() != 0)
                         {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                     ljpairs.map(param0.ljid,
-                                                                 param1.ljid)];
-                        
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
+                            const Parameter &param1 = params1_array[j];
 
-                            iljnrg += cljscl.lj() * 4 * ljpair.epsilon() * 
-                                       (sig_over_dist12 - sig_over_dist6);
+                            const double r = distmat[j];
+                            const double one_over_r = double(1) / r;
+                            
+                            const double in_cutoff = (r < Rc);
+                            
+                            icnrg += cljscl.coulomb() * 
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        //do both coulomb and LJ
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+                        if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                        {
+                            const Parameter &param1 = params1_array[j];
+
+                            const double r = distmat[j];
+                            const double one_over_r = double(1) / r;
+                            
+                            const double in_cutoff = (r < Rc);
+                            
+                            icnrg += cljscl.coulomb() * 
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                  
+                            if (cljscl.lj() != 0 and param1.ljid != 0)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                         ljpairs.map(param0.ljid,
+                                                                     param1.ljid)];
+                            
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                iljnrg += cljscl.lj() * ljpair.epsilon() * 
+                                           (sig_over_dist12 - sig_over_dist6);
+                            }
                         }
                     }
                 }
             }
         }
+        else // if use_electrostatic_shifting
+        {
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                    
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    foreach (Index j, atoms1)
+                    {
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                                
+                        if (cljscl.coulomb() != 0)
+                               icnrg += cljscl.coulomb() * 
+                                        param0.reduced_charge * 
+                                        params1_array[j].reduced_charge / distmat[j];
+                    }
+                }
+                else
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        //do both coulomb and LJ
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+                        if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                        {
+                            const Parameter &param1 = params1_array[j];
+                            
+                            const double invdist = double(1) / distmat[j];
+                            
+                            icnrg += cljscl.coulomb() *  
+                                     param0.reduced_charge * 
+                                     param1.reduced_charge * invdist;
+                                  
+                            if (cljscl.lj() != 0 and param1.ljid != 0)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                         ljpairs.map(param0.ljid,
+                                                                     param1.ljid)];
+                            
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                iljnrg += cljscl.lj() * ljpair.epsilon() * 
+                                           (sig_over_dist12 - sig_over_dist6);
+                            }
+                        }
+                    }
+                }
+            }
+        } // end of if use_electrostatic_shifting
     }
+    
+    cnrg += icnrg;
+    ljnrg += iljnrg;
 }
 
 /** Calculate the intramolecular CLJ energy of the passed molecule, and
@@ -4552,14 +4994,9 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
                 iljnrg *= 0.5;
             }
 
-            //are we shifting the electrostatic potential?
-            if (use_electrostatic_shifting and igroup != jgroup)
-                icnrg -= this->totalCharge(params0) * this->totalCharge(params1)
-                              / switchfunc->electrostaticCutoffDistance();
-
             //now add these energies onto the total for the molecule,
             //scaled by any non-bonded feather factor
-            if (mindist > switchfunc->featherDistance())
+            if ((not use_electrostatic_shifting) and (mindist > switchfunc->featherDistance()))
             {
                 cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
                 ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
@@ -4709,14 +5146,9 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
                                 nats0, nats1, icnrg, iljnrg);
             }
 
-            //are we shifting the electrostatic potential?
-            if (use_electrostatic_shifting and cgidx_igroup != cgidx_jgroup)
-                icnrg -= this->totalCharge(params0) * this->totalCharge(params1)
-                              / switchfunc->electrostaticCutoffDistance();
-
             //now add these energies onto the total for the molecule,
             //scaled by any non-bonded feather factor
-            if (mindist > switchfunc->featherDistance())
+            if ((not use_electrostatic_shifting) and (mindist > switchfunc->featherDistance()))
             {
                 cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
                 ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
