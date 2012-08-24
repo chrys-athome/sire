@@ -1070,7 +1070,7 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                                 //calculate shift = alpha * sigma * shift_delta
                                 const __m128d sse_shift = _mm_mul_pd(sse_sig, sse_delta[k]);
 
-                                __m128d lj_denom = _mm_mul_pd(sse_r2, sse_shift);
+                                __m128d lj_denom = _mm_add_pd(sse_r2, sse_shift);
                                 __m128d lj_denom2 = _mm_mul_pd(lj_denom, lj_denom);
                                 lj_denom = _mm_mul_pd(lj_denom, lj_denom2);
                             
@@ -1268,11 +1268,11 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                                     
                     for (int i=0; i<nalpha; ++i)
                     {
-                        sse_cnrg[i] = _mm_set_pd(0, 0);
-                        sse_ljnrg[i] = _mm_set_pd(0, 0);
+                        sse_cnrg[i] = _mm_set1_pd(0);
+                        sse_ljnrg[i] = _mm_set1_pd(0);
                         
-                        sse_alpha[i] = _mm_set_pd(alfa[i], alfa[i]);
-                        sse_delta[i] = _mm_set_pd(delta[i], delta[i]);
+                        sse_alpha[i] = _mm_set1_pd(alfa[i]);
+                        sse_delta[i] = _mm_set1_pd(delta[i]);
                     }
                     
                     for (quint32 i=0; i<nats0; ++i)
@@ -1332,7 +1332,7 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                                 //calculate shift = alpha * sigma * shift_delta
                                 const __m128d sse_shift = _mm_mul_pd(sse_sig, sse_delta[k]);
 
-                                __m128d lj_denom = _mm_mul_pd(sse_dist2, sse_shift);
+                                __m128d lj_denom = _mm_add_pd(sse_dist2, sse_shift);
                                 __m128d lj_denom2 = _mm_mul_pd(lj_denom, lj_denom);
                                 lj_denom = _mm_mul_pd(lj_denom, lj_denom2);
                             
