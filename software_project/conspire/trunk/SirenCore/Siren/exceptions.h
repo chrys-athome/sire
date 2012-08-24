@@ -49,7 +49,7 @@ namespace Siren
         public:
             file_error();
             file_error(const Qt::String &error, CODELOC_ARGS);
-            file_error(const Qt::File &file,
+            file_error(const Qt::File &f,
                        const Qt::String &error, CODELOC_ARGS);
             
             file_error(const file_error &other);

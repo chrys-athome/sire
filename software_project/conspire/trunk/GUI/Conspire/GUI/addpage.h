@@ -31,6 +31,8 @@
 #include "Conspire/conspire.h"
 #include "Conspire/GUI/configpage.h"
 
+#include "Conspire/option.h"
+
 #include <QList>
 
 CONSPIRE_BEGIN_HEADER

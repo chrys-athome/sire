@@ -30,6 +30,8 @@
 
 #include "Conspire/GUI/page.h"
 
+#include "Conspire/option.h"
+
 CONSPIRE_BEGIN_HEADER
 
 namespace Conspire
