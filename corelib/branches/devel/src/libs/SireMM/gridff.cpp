@@ -1089,6 +1089,14 @@ void GridFF::_pvt_removedAll(quint32 groupid)
 /** Recalculate the total energy */
 void GridFF::recalculateEnergy()
 {
+    if (mols[0].isEmpty() or mols[1].isEmpty())
+    {
+        //one of the two groups is empty, so the energy must be zero
+        this->components().setEnergy(*this, CLJEnergy(0,0));
+        this->setClean();
+        return;
+    }
+
     boost::shared_ptr<InterGroupCLJFF> test_gridff;
     boost::shared_ptr<QTime> t;
 
