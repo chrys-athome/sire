@@ -32,6 +32,7 @@
 #include "Conspire/GUI/optionspage.h"
 #include "Conspire/GUI/exceptionpage.h"
 #include "Conspire/GUI/submitpage.h"
+#include "Conspire/GUI/userpage.h"
 #include "Conspire/GUI/button.h"
 #include "Conspire/GUI/widgetrack.h"
 
@@ -227,7 +228,8 @@ void ConfigDocument::submit()
 {
     button->disconnect();
     button->setText(Conspire::tr("Cancel"));
-    top_view->pushed( PagePointer( new SubmitPage(opts,"pmemd",view) ) );
+    top_view->pushed( PagePointer( new UserPage(1, view) ) );
+//    top_view->pushed( PagePointer( new UserPage(opts,"pmemd",view) ) );
     
     connect(button, SIGNAL(clicked()), this, SLOT(cancel()));
 

@@ -10,9 +10,11 @@ include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/SirenCore )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/Conspire/third_party )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR} )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/GUI )
+include_directories( BEFORE SYSTEM /home/benlong/include )
 
 # Siren depends on >= Qt 4.4
 find_package( Qt4 4.4.0 COMPONENTS QtCore QtGui QtOpenGL )
+find_library( ACQUIRE_LIBRARY NAMES Acquire )
 
 if ( ${QT_QTCORE_FOUND} )
    include (${QT_USE_FILE})
@@ -49,6 +51,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/pageview.h
       Conspire/GUI/slidelabel.h
       Conspire/GUI/submitpage.h
+      Conspire/GUI/userpage.h
       Conspire/GUI/widgetrack.h
       Conspire/GUI/widgetstack.h
 
@@ -77,6 +80,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/pageview.h
       Conspire/GUI/slidelabel.h
       Conspire/GUI/submitpage.h
+      Conspire/GUI/userpage.h
       Conspire/GUI/widgetrack.h
       Conspire/GUI/widgetstack.h
 
@@ -107,6 +111,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/pageview.cpp
       cpp/slidelabel.cpp
       cpp/submitpage.cpp
+      cpp/userpage.cpp
       cpp/widgetrack.cpp
       cpp/widgetstack.cpp
 
@@ -132,9 +137,10 @@ target_link_libraries (ConspireGUI
                        Siren
                        ${QT_QTCORE_LIBRARY}
                        ${QT_QTGUI_LIBRARY}
-                       ${QT_QTOPENGL_LIBRARY})
+                       ${QT_QTOPENGL_LIBRARY}
+                       ${ACQUIRE_LIBRARY})
 
-target_link_libraries ( conspire_gui ConspireGUI )
+target_link_libraries ( conspire_gui ConspireGUI ${ACQUIRE_LIBRARY} )
 
 # installation
 install( TARGETS ConspireGUI conspire_gui EXPORT ConspireGUI

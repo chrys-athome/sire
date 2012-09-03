@@ -28,6 +28,7 @@
 
 #include "Conspire/GUI/mainwindow.h"
 #include "Conspire/GUI/configview.h"
+#include "Conspire/GUI/userpage.h"
 #include "Conspire/GUI/mainbar.h"
 
 #include "Conspire/GUI/configdocument.h"
@@ -48,7 +49,7 @@ MainWindow::MainWindow(Options options, QWidget *parent)
 {
     build();
     
-    ConfigDocument *doc = new ConfigDocument(options);
+    //ConfigDocument *doc = new ConfigDocument(options);
     
     //connect(doc, SIGNAL(canUndoChanged(bool)), mainbar, SLOT(canUndoChanged(bool)));
     //connect(doc, SIGNAL(canRedoChanged(bool)), mainbar, SLOT(canRedoChanged(bool)));
@@ -59,7 +60,12 @@ MainWindow::MainWindow(Options options, QWidget *parent)
     
     //connect(mainbar, SIGNAL(submit()), doc, SLOT(submit()));
     
-    view = PagePointer(doc);
+    //view = PagePointer(doc);
+    //this->scene()->addItem(view);
+    
+    UserPage *page = new UserPage(0);
+    
+    view = PagePointer(page);
     this->scene()->addItem(view);
 }
 

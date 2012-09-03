@@ -32,13 +32,15 @@
 #include "Conspire/option.h"
 #include "Conspire/exceptions.h"
 
+#include "Acquire/acquire_client.h"
+
 #include <QApplication>
 #include <QMainWindow>
 
 using namespace Conspire;
 
 static QString install_dir 
-                = "/Users/chris/Work/SoftwareProject/Conspire/source/job_classes";
+                = "/home/benlong/conspire/job_classes";
 
 int main(int argc, char **argv)
 {
@@ -102,6 +104,8 @@ int main(int argc, char **argv)
     {
         conspireDebug() << Conspire::tr("Caught unknown exception!");
     }
+    
+    AcquireClientDestroy();
     
     return 0;
 }

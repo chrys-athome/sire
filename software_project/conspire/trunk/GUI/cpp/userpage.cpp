@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "Conspire/GUI/submitpage.h"
+#include "Conspire/GUI/userpage.h"
 #include "Conspire/GUI/widgetrack.h"
 #include "Conspire/GUI/button.h"
 #include "Conspire/GUI/exceptionpage.h"
@@ -53,7 +53,9 @@
 #include <QComboBox>
 #include <QProgressBar>
 #include <QLabel>
+#include <QLineEdit>
 #include <QPixmap>
+#include <QSettings>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -68,16 +70,17 @@ static QString install_dir
 static QString broker = "ssi-amrmmhd.epcc.ed.ac.uk";
 //static QString broker = "127.0.0.1";
 
-void SubmitPage::build()
+void UserPage::build()
 {
     job_id = -1;
     output_name = "results.tar.gz";
+
     draw_file_progress_bar = 0;
     num_bytes_expected = 0;
     num_bytes_transferred = 0;
 
-    this->setFlag(QGraphicsItem::ItemStacksBehindParent, true);
-
+    //this->setFlag(QGraphicsItem::ItemStacksBehindParent, true);
+    
     WidgetRack *rack = new WidgetRack(this);
     
     QGraphicsLinearLayout *l = new QGraphicsLinearLayout(::Qt::Vertical, this);
@@ -87,41 +90,96 @@ void SubmitPage::build()
     l->insertItem(0,rack);
 
     stack = new WidgetStack(this);
+    stack->setFocusPolicy(::Qt::NoFocus);
     
     WidgetRack *sub_rack = new WidgetRack(this);
+    sub_rack->setFocusPolicy(::Qt::NoFocus);
     
-    QLabel *label = new QLabel(Conspire::tr("When would you like the job to finish?"));
-    sub_rack->addWidget(label);
+    if (usemode == 1)
+    {
+       QLabel *label_host = new QLabel(Conspire::tr("Machine to connect to via SSH:"));
+       label_host->setFocusPolicy(::Qt::NoFocus);
+       sub_rack->addWidget(label_host);
+       lineedit_host = new QLineEdit();
+       lineedit_host->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+       lineedit_host->setPlaceholderText("Hostname");
+       sub_rack->addWidget(lineedit_host);
+    }
     
-    QComboBox *box = new QComboBox();
-    box->addItem(Conspire::tr("As soon as possible!"));
-    box->addItem(Conspire::tr("As soon as is practical."));
-    box->addItem(Conspire::tr("Whenever is cheapest."));
-    
-    QGraphicsProxyWidget *box_proxy = new QGraphicsProxyWidget(this);
-    box_proxy->setWidget(box);
-    box_proxy->setZValue(100);
-    
-    sub_rack->addWidget(box_proxy);
-    
-    label = new QLabel(Conspire::tr("How energy efficient would you like to be?"));
-    sub_rack->addWidget(label);
-    
-    box = new QComboBox();
-    box->addItem(Conspire::tr("Use as little electricity as possible!"));
-    box->addItem(Conspire::tr("Use as little electricity as is practical."));
-    box->addItem(Conspire::tr("Burn as much electricity as is needed!"));
+    QLabel *hello_label_unknown = new QLabel(Conspire::tr("Hello. Please log in."));
+    sub_rack->addWidget(hello_label_unknown);
+    QLabel *label_username = new QLabel(Conspire::tr("Username:"));
+    label_username->setFocusPolicy(::Qt::NoFocus);
+    sub_rack->addWidget(label_username);
+    lineedit_username = new QLineEdit();
+    lineedit_username->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+    lineedit_username->setPlaceholderText("Username");
+    lineedit_username->setFocusPolicy(::Qt::StrongFocus);
+    sub_rack->addWidget(lineedit_username);
 
-    box_proxy = new QGraphicsProxyWidget(this);
-    box_proxy->setWidget(box);
-    box_proxy->setZValue(100);
+    QLabel *label_password = new QLabel(Conspire::tr("Password:"));
+    label_password->setFocusPolicy(::Qt::NoFocus);
+    sub_rack->addWidget(label_password);
+    lineedit_password = new QLineEdit();
+    lineedit_password->setEchoMode(QLineEdit::Password);
+    lineedit_password->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+    lineedit_password->setPlaceholderText("Password");
+    lineedit_password->setFocusPolicy(::Qt::StrongFocus);
+    connect(lineedit_password, SIGNAL(returnPressed()), this, SLOT(login()));
+    sub_rack->addWidget(lineedit_password);
 
-    sub_rack->addWidget(box_proxy);
-    sub_rack->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
-    sub_rack->setZValue(100);
-    
+    login_label = new QLabel();
+    sub_rack->addWidget(login_label);
+
     stack->addWidget(sub_rack);
     
+    WidgetRack *sub_rack2 = new WidgetRack(this);
+    
+    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+    last_username = qsetter->value("preferences/lastUsername", QString("")).toString();
+    delete qsetter;
+    
+    QLabel *hello_label_known = new QLabel(Conspire::tr("Hello %1. Please type your password.").arg(last_username));
+    sub_rack2->addWidget(hello_label_known);
+    QLabel *label_password_known = new QLabel(Conspire::tr("Password:"));
+    sub_rack2->addWidget(label_password_known);
+    lineedit_password_known = new QLineEdit();
+    lineedit_password_known->setEchoMode(QLineEdit::Password);
+    lineedit_password_known->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+    lineedit_password_known->setPlaceholderText("Password");
+    connect(lineedit_password_known, SIGNAL(returnPressed()), this, SLOT(login()));
+    sub_rack2->addWidget(lineedit_password_known);
+    QLabel *ifyouare_label_loggedin2 = new QLabel(Conspire::tr("If you are not %1,"
+       " or would like to use another account, please use the 'Change user' button below").arg(last_username));
+    ifyouare_label_loggedin2->setWordWrap(true);
+    sub_rack2->addWidget(ifyouare_label_loggedin2);
+
+    chgusr1_button = new Button(Conspire::tr("Change user..."));
+    connect(chgusr1_button, SIGNAL(clicked()), this, SLOT(changeUser()));
+    sub_rack2->addWidget(chgusr1_button);
+    
+    stack->addWidget(sub_rack2);
+    
+    WidgetRack *sub_rack3 = new WidgetRack(this);
+    
+    QLabel *hello_label_loggedin = new QLabel(Conspire::tr("Hello %1. You are logged in.").arg(last_username));
+    sub_rack3->addWidget(hello_label_loggedin);
+    QLabel *ifyouare_label_loggedin = new QLabel(Conspire::tr("If you are not %1,"
+       " or would like to use another account, please use the 'Change user' button below").arg(last_username));
+    ifyouare_label_loggedin->setWordWrap(true);
+    sub_rack3->addWidget(ifyouare_label_loggedin);
+    
+    chgusr2_button = new Button(Conspire::tr("Change user..."));
+    connect(chgusr2_button, SIGNAL(clicked()), this, SLOT(changeUser()));
+    sub_rack3->addWidget(chgusr2_button);
+    
+    continuebutton = new Button(Conspire::tr("To work..."));
+    connect(continuebutton, SIGNAL(clicked()), this, SLOT(continueToWorkStores()));
+    sub_rack3->addWidget(continuebutton);
+    
+    stack->addWidget(sub_rack3);
+    
+    /*
     QLabel *submitting_label = new QLabel("SUBMITTING THE JOB...");
     
     submitting_label->setScaledContents(true);
@@ -149,50 +207,62 @@ void SubmitPage::build()
     emerald_label->setMinimumSize( QSize(10,10) );
     
     stack->addWidget(emerald_label);
-    
+    */
     rack->addWidget(stack);
     
-    status_label = new QLabel(Conspire::tr("Click \"Start Job\" to run the job..."));
-    rack->addWidget(status_label);
-
-    progress_bar = new QProgressBar();
-    progress_bar->setMinimum(0);
-    progress_bar->setMaximum(100);
-    rack->addWidget(progress_bar);
+    submode = (strlen(last_username.toAscii().constData()) > 0);
     
-    button = new Button(Conspire::tr("Start Job"), this);
-    rack->addWidget(button);
-    connect(button, SIGNAL(clicked()), this, SLOT(submit()));
+    if (usemode == 1)
+    {
+        button = new Button(Conspire::tr("Add"), this);
+        rack->addWidget(button);
+        connect(button, SIGNAL(clicked()), this, SLOT(sshadd()));
+        lineedit_host->setFocus();
+    } else if (usemode == 0)
+    {
+       stack->switchTo(submode);
+       if (submode)
+       {
+           button = new Button(Conspire::tr("Log in"), this);
+           rack->addWidget(button);
+           connect(button, SIGNAL(clicked()), this, SLOT(login()));
+           lineedit_password_known->setFocus();
+       } else
+       {
+           button = new Button(Conspire::tr("Log in"), this);
+           rack->addWidget(button);
+           connect(button, SIGNAL(clicked()), this, SLOT(login()));
+           lineedit_username->setFocus();
+       }
+    }
+    
+    QWidget::setTabOrder(lineedit_host, lineedit_username);
+    QWidget::setTabOrder(lineedit_username, lineedit_password);
 }
 
 /** Constructor */
-SubmitPage::SubmitPage(Page *parent) : Page(parent)
+UserPage::UserPage(int iusemode, Page *parent) : Page(parent)
 {
-    build();
-}
-
-/** Construct, passing in the options used to submit the job */
-SubmitPage::SubmitPage(Options options, QString clas, Page *parent) 
-           : Page(parent), opts(options), job_class(clas)
-{
+//   usemode = AcquireClientIsInitialised();
+    usemode = iusemode;
     build();
 }
 
 /** Destructor */
-SubmitPage::~SubmitPage()
+UserPage::~UserPage()
 {}
 
-void SubmitPage::resizeEvent(QGraphicsSceneResizeEvent *e)
+void UserPage::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
 }
 
-void SubmitPage::moveEvent(QGraphicsSceneMoveEvent *e)
+void UserPage::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
 }
 
-void SubmitPage::paint(QPainter *painter, 
+void UserPage::paint(QPainter *painter, 
                        const QStyleOptionGraphicsItem *option, 
                        QWidget *widget)
 {
@@ -216,14 +286,119 @@ void SubmitPage::paint(QPainter *painter,
     }
 }
 
-void SubmitPage::allUpdate()
+void UserPage::allUpdate()
 {
-    status_label->update();
-    progress_bar->update();
+    //status_label->update();
+    //progress_bar->update();
     QCoreApplication::processEvents();
 }
 
-void SubmitPage::submit()
+QString UserPage::addMachine(QString username, QString password, QString machinename, bool *loginsuccessful)
+{
+   QString userathost = QString("%1@%2").arg(username, machinename);
+   char *failed_hosts_list = NULL;
+   if (loginsuccessful) *loginsuccessful = FALSE;
+   int retval = AcquireAddSSHHostToPool(userathost.toAscii().constData(), password.toAscii().constData(), &failed_hosts_list);
+   switch (retval)
+   {
+      case ACQUIRE_USER_ADD_SSH__SSH_SUCCESS:
+      {
+         if (loginsuccessful) *loginsuccessful = TRUE;
+         return "Successfuly added machine";
+      }
+      case ACQUIRE_USER_ADD_SSH__FINGERPRINT_UNTRUSTED:
+         return "The fingerprint for this machine has changed, contact administrator";
+      case ACQUIRE_USER_ADD_SSH__SSH_ROUTING_FAILED:
+      {
+         if ((failed_hosts_list == NULL) || (strlen(failed_hosts_list) <= 1))
+         {
+            return "Bad password, machine not trusted or could not find machine (connection failed)";
+         } else
+         {
+            return QObject::tr("Could not reach machine, failed to connect to %1").arg(failed_hosts_list);
+         }
+      }
+   }
+}
+
+QString UserPage::loginUser(QString username, QString password, bool *loginsuccessful)
+{
+   int login_success = AcquireClientInit(DEFAULT_HOST, DEFAULT_PORT, username.toAscii().constData(),
+                                         password.toAscii().constData(), "broker");
+   if (login_success == ACQUIRE_USER_REGISTRATION_STATE__FINAL)
+   {
+      // Successful log in
+      if (loginsuccessful) *loginsuccessful = TRUE;
+      QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+      qsetter->setValue("preferences/lastUsername", username);
+      delete qsetter;
+      stack->switchTo(2);
+      return "Log in successful";
+   } else
+   {
+      // Failed to log in
+      AcquireClientDestroy();
+      if (loginsuccessful) *loginsuccessful = FALSE;
+      return "Log in failed";
+   }
+}
+
+void UserPage::changeUser()
+{
+   button->show();
+   login_label->setText("");
+   lineedit_username->setText("");
+   lineedit_password->setText("");
+   if (AcquireClientIsInitialised())
+   {
+      AcquireClientDestroy();
+   }
+   submode = 0;
+   stack->switchTo(0);
+   lineedit_username->setFocus();
+   allUpdate();
+}
+
+void UserPage::login()
+{
+    QString username;
+    QString password;
+    if (submode)
+    {
+       username = last_username;
+       password = lineedit_password_known->text();
+    } else
+    {
+       username = lineedit_username->text();
+       password = lineedit_password->text();
+    }
+    bool wasokay = FALSE;
+    QString login_status = loginUser(username, password, &wasokay);
+
+    if (wasokay)
+    {
+       button->hide();
+       stack->switchTo(2);
+    }
+    login_label->setText(login_status);
+    allUpdate();
+}
+
+void UserPage::sshadd()
+{
+    QString susername = lineedit_username->text();
+    QString machinename = lineedit_host->text();
+    QString spassword = lineedit_password->text();
+    
+    bool wasokay = FALSE;
+    QString sshadd_retstring = addMachine(susername, spassword, machinename, &wasokay);
+
+    if (wasokay) button->hide();
+    login_label->setText(sshadd_retstring);
+    allUpdate();
+}
+
+void UserPage::submit()
 {
     if (job_class.isEmpty())
         return;
@@ -234,7 +409,7 @@ void SubmitPage::submit()
     button->disconnect();
     button->hide();
     
-    status_label->setText(Conspire::tr("Creating a temporary directory..."));
+//    status_label->setText(Conspire::tr("Creating a temporary directory..."));
     progress_bar->setValue(5);
 
     allUpdate();
@@ -265,7 +440,7 @@ void SubmitPage::submit()
                 Conspire::tr("Cannot create a temporary directory! (%1)")
                         .arg(tmpdir), CODELOC );
 
-    status_label->setText(Conspire::tr("Assembling the input files..."));
+//    status_label->setText(Conspire::tr("Assembling the input files..."));
     progress_bar->setValue(10);
     allUpdate();
     
@@ -295,8 +470,8 @@ void SubmitPage::submit()
                 //copy this file to the tmp directory
                 QFile f(opt.value().toString());
                 
-                status_label->setText(Conspire::tr("Copying file \"%1\"...")
-                                            .arg(opt.value().toString()));
+//                status_label->setText(Conspire::tr("Copying file \"%1\"...")
+//                                            .arg(opt.value().toString()));
                 allUpdate();
                 
                 if (not f.open(QIODevice::ReadOnly))
@@ -328,7 +503,7 @@ void SubmitPage::submit()
             }
         }
         
-        status_label->setText( Conspire::tr("Creating a config file...") );
+//        status_label->setText( Conspire::tr("Creating a config file...") );
         progress_bar->setValue(50);
         allUpdate();
          
@@ -349,7 +524,7 @@ void SubmitPage::submit()
             conf.close();
         }
 
-        status_label->setText( Conspire::tr("Copying support files...") );
+//        status_label->setText( Conspire::tr("Copying support files...") );
         progress_bar->setValue(60);
         allUpdate();
 
@@ -392,7 +567,7 @@ void SubmitPage::submit()
                   
         //now tar up this whole directory into a workpacket
         {
-            status_label->setText( Conspire::tr("Constructing the workpacket...") );
+//            status_label->setText( Conspire::tr("Constructing the workpacket...") );
             progress_bar->setValue(80);
             allUpdate();
     
@@ -418,7 +593,7 @@ void SubmitPage::submit()
             conspireDebug() << "...workpacket created!";
         }
         
-        status_label->setText( Conspire::tr("Sending the job to the cloud...") );
+//        status_label->setText( Conspire::tr("Sending the job to the cloud...") );
         progress_bar->setValue(85);
         allUpdate();
         
@@ -486,7 +661,7 @@ void SubmitPage::submit()
         
         if (proc.exitCode() != 0)
         {
-            status_label->setText( Conspire::tr("SUBMISSION FAILURE!!!") );
+//            status_label->setText( Conspire::tr("SUBMISSION FAILURE!!!") );
             progress_bar->setValue(0);
             allUpdate();
         
@@ -497,7 +672,7 @@ void SubmitPage::submit()
         }
 
         stack->switchTo(2);
-        status_label->setText( Conspire::tr("Job is on the cloud!") );
+//        status_label->setText( Conspire::tr("Job is on the cloud!") );
         progress_bar->setValue(95);
         allUpdate();
 
@@ -513,8 +688,8 @@ void SubmitPage::submit()
         conspireDebug() << "JOB_ID ==" << re.cap(1);
         job_id = re.cap(1).toInt();
         
-        status_label->setText( Conspire::tr("Submitted the job "
-               "to the cloud! JOB_ID = %1.").arg(job_id) );
+//        status_label->setText( Conspire::tr("Submitted the job "
+//               "to the cloud! JOB_ID = %1.").arg(job_id) );
         progress_bar->setValue(100);
         allUpdate();
         
@@ -537,11 +712,11 @@ void SubmitPage::submit()
     }
 }
 
-void SubmitPage::query()
+void UserPage::query()
 {
     button->hide();
     
-    status_label->setText( Conspire::tr("Querying the job...") );
+//    status_label->setText( Conspire::tr("Querying the job...") );
     progress_bar->setValue(0);
     allUpdate();
     
@@ -570,7 +745,7 @@ void SubmitPage::query()
     conspireDebug() << "OUTPUT" << out;
     conspireDebug() << "ERROR" << err;
 
-    status_label->setText( Conspire::tr("Got a response...") );
+//    status_label->setText( Conspire::tr("Got a response...") );
     progress_bar->setValue(50);
     allUpdate();
 
@@ -582,7 +757,7 @@ void SubmitPage::query()
     
     if (pos == -1)
     {
-        status_label->setText( Conspire::tr("Strange? Couldn't get job status.") );
+//        status_label->setText( Conspire::tr("Strange? Couldn't get job status.") );
         progress_bar->setValue(0);
         allUpdate();
     }
@@ -595,7 +770,7 @@ void SubmitPage::query()
             stack->switchTo(3);
         }
     
-        status_label->setText( Conspire::tr("The job status is \"%1\".").arg(status) );
+//        status_label->setText( Conspire::tr("The job status is \"%1\".").arg(status) );
         progress_bar->setValue(100);
         allUpdate();
     
@@ -611,12 +786,12 @@ void SubmitPage::query()
     button->show();
 }
 
-void SubmitPage::getResults()
+void UserPage::getResults()
 {
     //button->disconnect();
     button->hide();
     
-    status_label->setText( Conspire::tr("Getting the results...") );
+//    status_label->setText( Conspire::tr("Getting the results...") );
     progress_bar->setValue(0);
     allUpdate();
 
@@ -646,7 +821,7 @@ void SubmitPage::getResults()
     conspireDebug() << "OUTPUT" << out;
     conspireDebug() << "ERROR" << err;
 
-    status_label->setText( Conspire::tr("Downloaded results to %1").arg(output_name) );
+//    status_label->setText( Conspire::tr("Downloaded results to %1").arg(output_name) );
     progress_bar->setValue(100);
 
     button->show();
