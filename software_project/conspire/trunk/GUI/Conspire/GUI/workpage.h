@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_USERPAGE_H
-#define CONSPIRE_USERPAGE_H
+#ifndef CONSPIRE_WORKPAGE_H
+#define CONSPIRE_WORKPAGE_H
 /********************************************\
   *
   *  Conspire
@@ -37,6 +37,7 @@ CONSPIRE_BEGIN_HEADER
 class QLabel;
 class QLineEdit;
 class QProgressBar;
+class QTableWidget;
 
 namespace Conspire
 {
@@ -44,14 +45,14 @@ namespace Conspire
     class WidgetStack;
 
     /** This is the page used to submit a job to Acquire */
-    class CONSPIRE_EXPORT UserPage : public Page
+    class CONSPIRE_EXPORT WorkPage : public Page
     {
         Q_OBJECT
         
     public:
-        UserPage(int usemode, Page *parent=0);
+        WorkPage(int usemode, Page *parent=0);
         
-        ~UserPage();
+        ~WorkPage();
 
     protected slots:
         void submit();
@@ -60,6 +61,8 @@ namespace Conspire
         void query();
         void getResults();
         void changeUser();
+        void makeWork();
+        void modifyWork(int col, int row);
         
     protected:
        QString addMachine(QString username, QString password, QString machinename, bool *loginsuccessful);
@@ -85,6 +88,8 @@ namespace Conspire
         /** The stack holding the different pages during
             the job run process */
         WidgetStack *stack;
+        
+        QTableWidget *tableofworkstores;
 
         /** Text editor for host */
         QLineEdit *lineedit_host;

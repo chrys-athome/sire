@@ -26,8 +26,9 @@
   *
 \*********************************************/
 
+#include "Conspire/GUI/accountpage.h"
 #include "Conspire/GUI/workpage.h"
-#include "Conspire/GUI/optionspage.h"
+#include "Conspire/GUI/userpage.h"
 #include "Conspire/GUI/widgetrack.h"
 #include "Conspire/GUI/button.h"
 #include "Conspire/GUI/exceptionpage.h"
@@ -57,8 +58,7 @@
 #include <QLineEdit>
 #include <QPixmap>
 #include <QSettings>
-#include <QTableWidget>
-#include <QHeaderView>
+#include <QListWidget>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -73,24 +73,19 @@ static QString install_dir
 static QString broker = "ssi-amrmmhd.epcc.ed.ac.uk";
 //static QString broker = "127.0.0.1";
 
-void WorkPage::modifyWork(int col, int row)
+void AccountPage::continueToWorkStores()
 {
-   QTableWidgetItem *qwidget = tableofworkstores->item(col, row);
-   if (qwidget == NULL) return;
-   if (QString("Create new...") == qwidget->text())
-      makeWork();
+   emit( push( PagePointer( new WorkPage(1))));
 }
 
-void WorkPage::makeWork()
+void AccountPage::addSSHAccount()
 {
-   QStringList path;
-   path << QString("%1/pmemd").arg(install_dir);
-   Options opts = Options::fromXMLFile("pmemd.xml", path);
-   emit( push( PagePointer( new OptionsPage(opts))));
+   emit( push( PagePointer( new UserPage(1))));
 }
 
-void WorkPage::build()
+void AccountPage::build()
 {
+   
     job_id = -1;
     output_name = "results.tar.gz";
 
@@ -114,32 +109,36 @@ void WorkPage::build()
     WidgetRack *sub_rack = new WidgetRack(this);
     sub_rack->setFocusPolicy(::Qt::NoFocus);
     
-    QLabel *label_table = new QLabel(Conspire::tr("Active work:"));
-    sub_rack->addWidget(label_table);
+    QLabel *intro_label = new QLabel(Conspire::tr("Remote machine accounts using SSH must be added"
+       " to Acquire in order to do work. Click here to add an SSH login:"));
+    intro_label->setWordWrap(true);
+    sub_rack->addWidget(intro_label);
     
-    tableofworkstores = new QTableWidget(3, 3);
-    tableofworkstores->horizontalHeader()->hide();
-    tableofworkstores->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
-    tableofworkstores->verticalHeader()->hide();
-    tableofworkstores->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-    tableofworkstores->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+    modifybutton = new Button(Conspire::tr("Add..."));
+    connect(modifybutton, SIGNAL(clicked()), this, SLOT(addSSHAccount()));
+    sub_rack->addWidget(modifybutton);
     
-    QTableWidgetItem *new_item = new QTableWidgetItem("Create new...");
-    tableofworkstores->setItem(0, 0, new_item);
-    connect(tableofworkstores, SIGNAL(cellClicked(int, int)), this, SLOT(modifyWork(int, int)));    
+    QLabel *clusters_avail = new QLabel(Conspire::tr("Clusters currently available"
+       " to your account are listed below:"));
+    clusters_avail->setWordWrap(true);
+    sub_rack->addWidget(clusters_avail);
+        
+    clusterlist = new QListWidget();
+    QListWidgetItem *none_item = new QListWidgetItem("None available...");
+    clusterlist->addItem(none_item);
+    sub_rack->addWidget(clusterlist);
     
-    sub_rack->addWidget(tableofworkstores);
-
-    login_label = new QLabel();
+    login_label = new QLabel("");
     sub_rack->addWidget(login_label);
 
     stack->addWidget(sub_rack);
-
+    
     rack->addWidget(stack);
+    
 }
 
 /** Constructor */
-WorkPage::WorkPage(int iusemode, Page *parent) : Page(parent)
+AccountPage::AccountPage(int iusemode, Page *parent) : Page(parent)
 {
 //   usemode = AcquireClientIsInitialised();
     usemode = iusemode;
@@ -147,20 +146,20 @@ WorkPage::WorkPage(int iusemode, Page *parent) : Page(parent)
 }
 
 /** Destructor */
-WorkPage::~WorkPage()
+AccountPage::~AccountPage()
 {}
 
-void WorkPage::resizeEvent(QGraphicsSceneResizeEvent *e)
+void AccountPage::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
 }
 
-void WorkPage::moveEvent(QGraphicsSceneMoveEvent *e)
+void AccountPage::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
 }
 
-void WorkPage::paint(QPainter *painter, 
+void AccountPage::paint(QPainter *painter, 
                        const QStyleOptionGraphicsItem *option, 
                        QWidget *widget)
 {
@@ -184,15 +183,14 @@ void WorkPage::paint(QPainter *painter,
     }
 }
 
-void WorkPage::allUpdate()
+void AccountPage::allUpdate()
 {
-   
     //status_label->update();
     //progress_bar->update();
     QCoreApplication::processEvents();
 }
 
-QString WorkPage::addMachine(QString username, QString password, QString machinename, bool *loginsuccessful)
+QString AccountPage::addMachine(QString username, QString password, QString machinename, bool *loginsuccessful)
 {
    QString userathost = QString("%1@%2").arg(username, machinename);
    char *failed_hosts_list = NULL;
@@ -220,7 +218,7 @@ QString WorkPage::addMachine(QString username, QString password, QString machine
    }
 }
 
-QString WorkPage::loginUser(QString username, QString password, bool *loginsuccessful)
+QString AccountPage::loginUser(QString username, QString password, bool *loginsuccessful)
 {
    int login_success = AcquireClientInit(DEFAULT_HOST, DEFAULT_PORT, username.toAscii().constData(),
                                          password.toAscii().constData(), "broker");
@@ -242,7 +240,7 @@ QString WorkPage::loginUser(QString username, QString password, bool *loginsucce
    }
 }
 
-void WorkPage::changeUser()
+void AccountPage::changeUser()
 {
    button->show();
    login_label->setText("");
@@ -258,7 +256,7 @@ void WorkPage::changeUser()
    allUpdate();
 }
 
-void WorkPage::login()
+void AccountPage::login()
 {
     QString username;
     QString password;
@@ -283,7 +281,7 @@ void WorkPage::login()
     allUpdate();
 }
 
-void WorkPage::sshadd()
+void AccountPage::sshadd()
 {
     QString susername = lineedit_username->text();
     QString machinename = lineedit_host->text();
@@ -297,7 +295,7 @@ void WorkPage::sshadd()
     allUpdate();
 }
 
-void WorkPage::submit()
+void AccountPage::submit()
 {
     if (job_class.isEmpty())
         return;
@@ -611,7 +609,7 @@ void WorkPage::submit()
     }
 }
 
-void WorkPage::query()
+void AccountPage::query()
 {
     button->hide();
     
@@ -685,7 +683,7 @@ void WorkPage::query()
     button->show();
 }
 
-void WorkPage::getResults()
+void AccountPage::getResults()
 {
     //button->disconnect();
     button->hide();

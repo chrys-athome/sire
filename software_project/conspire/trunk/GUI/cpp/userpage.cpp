@@ -26,7 +26,9 @@
   *
 \*********************************************/
 
+#include "Conspire/GUI/accountpage.h"
 #include "Conspire/GUI/userpage.h"
+#include "Conspire/GUI/workpage.h"
 #include "Conspire/GUI/widgetrack.h"
 #include "Conspire/GUI/button.h"
 #include "Conspire/GUI/exceptionpage.h"
@@ -70,6 +72,16 @@ static QString install_dir
 static QString broker = "ssi-amrmmhd.epcc.ed.ac.uk";
 //static QString broker = "127.0.0.1";
 
+void UserPage::continueToWorkStores()
+{
+   emit( push( PagePointer( new WorkPage(1))));
+}
+
+void UserPage::modifyAccount()
+{
+   emit( push( PagePointer( new AccountPage(1))));
+}
+
 void UserPage::build()
 {
     job_id = -1;
@@ -95,19 +107,28 @@ void UserPage::build()
     WidgetRack *sub_rack = new WidgetRack(this);
     sub_rack->setFocusPolicy(::Qt::NoFocus);
     
+       lineedit_host = new QLineEdit();
     if (usemode == 1)
     {
-       QLabel *label_host = new QLabel(Conspire::tr("Machine to connect to via SSH:"));
+       QLabel *intro_label = new QLabel(Conspire::tr("For Acquire to push your work to a cluster, "
+          "trusted machine logins must be added to your account. These are transparently appended "
+          "to an encrypted remote keyring which can only be opened with your main password."));
+       intro_label->setWordWrap(true);
+       intro_label->adjustSize();
+       sub_rack->addWidget(intro_label);
+       QLabel *label_host = new QLabel(Conspire::tr("Machine to add to remote SSH keyring:"));
        label_host->setFocusPolicy(::Qt::NoFocus);
        sub_rack->addWidget(label_host);
-       lineedit_host = new QLineEdit();
        lineedit_host->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
        lineedit_host->setPlaceholderText("Hostname");
        sub_rack->addWidget(lineedit_host);
     }
     
-    QLabel *hello_label_unknown = new QLabel(Conspire::tr("Hello. Please log in."));
-    sub_rack->addWidget(hello_label_unknown);
+    if (usemode == 0)
+    {
+       QLabel *hello_label_unknown = new QLabel(Conspire::tr("Hello. Please log in."));
+       sub_rack->addWidget(hello_label_unknown);
+    }
     QLabel *label_username = new QLabel(Conspire::tr("Username:"));
     label_username->setFocusPolicy(::Qt::NoFocus);
     sub_rack->addWidget(label_username);
@@ -131,6 +152,14 @@ void UserPage::build()
     login_label = new QLabel();
     sub_rack->addWidget(login_label);
 
+    if (usemode == 1)
+    {
+        button = new Button(Conspire::tr("Add"), this);
+        sub_rack->addWidget(button);
+        connect(button, SIGNAL(clicked()), this, SLOT(sshadd()));
+        lineedit_host->setFocus();
+    }
+    
     stack->addWidget(sub_rack);
     
     WidgetRack *sub_rack2 = new WidgetRack(this);
@@ -177,6 +206,10 @@ void UserPage::build()
     connect(continuebutton, SIGNAL(clicked()), this, SLOT(continueToWorkStores()));
     sub_rack3->addWidget(continuebutton);
     
+    modifybutton = new Button(Conspire::tr("Modify account..."));
+    connect(modifybutton, SIGNAL(clicked()), this, SLOT(modifyAccount()));
+    sub_rack3->addWidget(modifybutton);
+    
     stack->addWidget(sub_rack3);
     
     /*
@@ -212,13 +245,7 @@ void UserPage::build()
     
     submode = (strlen(last_username.toAscii().constData()) > 0);
     
-    if (usemode == 1)
-    {
-        button = new Button(Conspire::tr("Add"), this);
-        rack->addWidget(button);
-        connect(button, SIGNAL(clicked()), this, SLOT(sshadd()));
-        lineedit_host->setFocus();
-    } else if (usemode == 0)
+    if (usemode == 0)
     {
        stack->switchTo(submode);
        if (submode)
@@ -236,8 +263,8 @@ void UserPage::build()
        }
     }
     
-    QWidget::setTabOrder(lineedit_host, lineedit_username);
-    QWidget::setTabOrder(lineedit_username, lineedit_password);
+    //QWidget::setTabOrder(lineedit_host, lineedit_username);
+    //QWidget::setTabOrder(lineedit_username, lineedit_password);
 }
 
 /** Constructor */

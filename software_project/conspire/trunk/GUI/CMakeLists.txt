@@ -32,6 +32,7 @@ QT4_ADD_RESOURCES(Conspire_Images images/images.qrc)
 
 set ( CONSPIRE_GUI_MOC_HEADERS
 
+      Conspire/GUI/accountpage.h
       Conspire/GUI/addpage.h
       Conspire/GUI/animation.h
       Conspire/GUI/button.h
@@ -54,13 +55,15 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/userpage.h
       Conspire/GUI/widgetrack.h
       Conspire/GUI/widgetstack.h
-
+      Conspire/GUI/workpage.h
+      
     )
 
 QT4_WRAP_CPP(CONSPIRE_GUI_MOC_SOURCES ${CONSPIRE_GUI_MOC_HEADERS})
 
 set ( CONSPIRE_GUI_PUBLIC_HEADERS
       
+      Conspire/GUI/accountpage.h
       Conspire/GUI/addpage.h
       Conspire/GUI/animation.h
       Conspire/GUI/button.h
@@ -83,6 +86,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/userpage.h
       Conspire/GUI/widgetrack.h
       Conspire/GUI/widgetstack.h
+      Conspire/GUI/workpage.h
 
     )
 
@@ -92,6 +96,7 @@ set ( CONSPIRE_GUI_PRIVATE_HEADERS
 
 set ( CONSPIRE_GUI_SOURCES
 
+      cpp/accountpage.cpp
       cpp/addpage.cpp
       cpp/animation.cpp
       cpp/button.cpp
@@ -114,6 +119,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/userpage.cpp
       cpp/widgetrack.cpp
       cpp/widgetstack.cpp
+      cpp/workpage.cpp
 
       ${CONSPIRE_GUI_PUBLIC_HEADERS}
       ${CONSPIRE_GUI_PRIVATE_HEADERS}

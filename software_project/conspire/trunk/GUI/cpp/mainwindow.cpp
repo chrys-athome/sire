@@ -63,9 +63,12 @@ MainWindow::MainWindow(Options options, QWidget *parent)
     //view = PagePointer(doc);
     //this->scene()->addItem(view);
     
-    UserPage *page = new UserPage(0);
+    PageView *pageview = new PageView();
+    view = PagePointer(pageview);
     
-    view = PagePointer(page);
+    UserPage *page = new UserPage(0);
+    pageview->pushed(page);
+
     this->scene()->addItem(view);
 }
 
