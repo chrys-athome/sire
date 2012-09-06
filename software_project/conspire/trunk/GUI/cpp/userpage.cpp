@@ -423,6 +423,7 @@ void UserPage::sshadd()
     if (wasokay) button->hide();
     login_label->setText(sshadd_retstring);
     allUpdate();
+    if (wasokay) emit( pop() );
 }
 
 void UserPage::submit()

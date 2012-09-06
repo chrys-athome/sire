@@ -63,6 +63,7 @@ namespace Conspire
         void changeUser();
         void continueToWorkStores();
         void addSSHAccount();
+        void refreshList();
         
     protected:
        QString addMachine(QString username, QString password, QString machinename, bool *loginsuccessful);

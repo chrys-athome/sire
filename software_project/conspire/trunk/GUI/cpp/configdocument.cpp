@@ -47,6 +47,8 @@
 #include <QGraphicsLinearLayout>
 #include <QGraphicsBlurEffect>
 
+#define MAIN_BUTTON_HEIGHT 40
+
 using namespace Conspire;
 
 /** Construct an empty document */
@@ -99,10 +101,10 @@ void ConfigDocument::build()
     button = new Button(Conspire::tr("Submit"), this);
     connect(button, SIGNAL(clicked()), this, SLOT(submit()));
 
-    button->setGeometry(0, this->geometry().height()-60,
-                        this->geometry().width(), 60);
+    button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                        this->geometry().width(), MAIN_BUTTON_HEIGHT);
 
-    top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-60);
+    top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-MAIN_BUTTON_HEIGHT);
     top_view->pushed(view);
 }
 
@@ -133,20 +135,20 @@ void ConfigDocument::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
 
-    button->setGeometry(0, this->geometry().height()-60,
-                        this->geometry().width(), 60);
+    button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                        this->geometry().width(), MAIN_BUTTON_HEIGHT);
 
-    top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-60);
+    top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-MAIN_BUTTON_HEIGHT);
 }
 
 void ConfigDocument::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
 
-    button->setGeometry(0, this->geometry().height()-60,
-                        this->geometry().width(), 60);
+    button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                        this->geometry().width(), MAIN_BUTTON_HEIGHT);
 
-    top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-60);
+    top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-MAIN_BUTTON_HEIGHT);
 }
 
 void ConfigDocument::paint(QPainter *painter, 

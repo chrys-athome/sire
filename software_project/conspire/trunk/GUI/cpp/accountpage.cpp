@@ -83,6 +83,46 @@ void AccountPage::addSSHAccount()
    emit( push( PagePointer( new UserPage(1))));
 }
 
+void AccountPage::refreshList()
+{
+   int items = clusterlist->count();
+   for (int i = 0; i < items; i++)
+   {
+      QListWidgetItem *wid = clusterlist->item(i);
+      clusterlist->removeItemWidget(wid);
+      delete wid;
+   }
+   const char *listclust = AcquireListOfAccessibleClusters();
+   char *remainder = NULL;
+   const char *token = strtok_r((char *)listclust, ",", &remainder);
+   int haveany = 0;
+   while (token != NULL)
+   {
+      char buffer[512];
+      const char *cname = NULL;
+      if (strcmp(token, "pretend") == 0) cname = "My local testing cluster";
+      if (strcmp(token, "bluecrystalp1") == 0) cname = "Bluecrystal Phase 1";
+      if (strcmp(token, "bluecrystalp2") == 0) cname = "Bluecrystal Phase 2";
+      if (cname)
+      {
+         sprintf(buffer, "%s (%s)", cname, token);
+      } else
+      {
+         sprintf(buffer, "%s", token);
+      }
+      QListWidgetItem *wid = new QListWidgetItem(buffer);
+      clusterlist->addItem(wid);
+      haveany = 1;
+      token = strtok_r(NULL, ",", &remainder);
+   }
+   if (haveany == 0)
+   {
+      QListWidgetItem *none_item = new QListWidgetItem("None available...");
+      clusterlist->addItem(none_item);
+   }
+   AcquireClientClearResults();
+}
+
 void AccountPage::build()
 {
    
@@ -128,13 +168,17 @@ void AccountPage::build()
     clusterlist->addItem(none_item);
     sub_rack->addWidget(clusterlist);
     
+    button = new Button(Conspire::tr("Refresh"));
+    connect(button, SIGNAL(clicked()), this, SLOT(refreshList()));
+    sub_rack->addWidget(button);
+    
     login_label = new QLabel("");
     sub_rack->addWidget(login_label);
 
     stack->addWidget(sub_rack);
     
     rack->addWidget(stack);
-    
+    refreshList();
 }
 
 /** Constructor */
@@ -185,6 +229,7 @@ void AccountPage::paint(QPainter *painter,
 
 void AccountPage::allUpdate()
 {
+   
     //status_label->update();
     //progress_bar->update();
     QCoreApplication::processEvents();
