@@ -64,6 +64,7 @@ MainWindow::MainWindow(Options options, QWidget *parent)
     //this->scene()->addItem(view);
     
     PageView *pageview = new PageView();
+    pageview->setTitleVisible(false);
     view = PagePointer(pageview);
     
     UserPage *page = new UserPage(0);

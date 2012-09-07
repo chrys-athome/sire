@@ -307,6 +307,22 @@ void PageView::positionTitleBar()
     }
 }
 
+void PageView::positionBottomBar()
+{
+    if (bottom_bar_buttons.isEmpty()) return;
+
+    float w = this->geometry().width();
+    float h = this->geometry().height();
+
+    float button_width = w / bottom_bar_buttons.count();
+
+    for (int i = 0; i < bottom_bar_buttons.count(); i++)
+    {
+       bottom_bar_buttons[i]->setGeometry(i*button_width, h - bottom_bar_height, button_width, bottom_bar_height);
+    }
+}
+
+
 /** Return whether or not this view is empty */
 bool PageView::isEmpty() const
 {
@@ -327,6 +343,7 @@ void PageView::build()
     this->setAutoFillBackground(false);
     
     title_height = 25;
+    bottom_bar_height = 25;
 
     view_geometry = QRectF( 0, title_height, 
                             this->geometry().width(), 
@@ -359,12 +376,17 @@ void PageView::setTitleVisible(bool visible)
 void PageView::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
+
+    int bottom_height = 0;
+    
+    if (not bottom_bar_buttons.isEmpty())
+       bottom_height = bottom_bar_height;
     
     if (show_title)
     {
         view_geometry = QRectF( 0, title_height, 
                                 this->geometry().width(),
-                                this->geometry().height() - title_height );
+                                this->geometry().height() - title_height - bottom_height );
 
         if (current_page)
         {
@@ -372,15 +394,16 @@ void PageView::resizeEvent(QGraphicsSceneResizeEvent *e)
         }
         
         positionTitleBar();
+        positionBottomBar();
     }
     else
     {
         view_geometry = QRectF( 0, 0, 
                                 this->geometry().width(),
-                                this->geometry().height() );
+                                this->geometry().height() - bottom_height );
 
-        current_page->setGeometry(0, 0, this->geometry().width(),
-                                        this->geometry().height());
+        current_page->setGeometry(view_geometry);
+        positionBottomBar();
     }
 }
 
@@ -757,4 +780,10 @@ void PageView::animateSwitch(PagePointer old_page, PagePointer new_page,
     }
     
     setTitleText(new_page->title());
+}
+
+void PageView::addToBottomBar(Button *tbutton)
+{
+   if (tbutton)
+      bottom_bar_buttons.append(tbutton);
 }

@@ -98,12 +98,20 @@ void ConfigDocument::build()
     connect(view, SIGNAL(canForwardChanged(bool)),
             this, SIGNAL(canForwardChanged(bool)));
 
-    button = new Button(Conspire::tr("Submit"), this);
-    connect(button, SIGNAL(clicked()), this, SLOT(submit()));
+    submit_button = new Button(Conspire::tr("Submit"), this);
+    connect(submit_button, SIGNAL(clicked()), this, SLOT(submit()));
 
-    button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
-                        this->geometry().width(), MAIN_BUTTON_HEIGHT);
+    save_button = new Button(Conspire::tr("Save"), this);
+    connect(save_button, SIGNAL(clicked()), this, SLOT(save()));
 
+    double half_width = 0.5*this->geometry().width();
+    
+    submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                  half_width, MAIN_BUTTON_HEIGHT);
+
+    save_button->setGeometry(half_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                  half_width, MAIN_BUTTON_HEIGHT);
+    
     top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-MAIN_BUTTON_HEIGHT);
     top_view->pushed(view);
 }
@@ -135,8 +143,13 @@ void ConfigDocument::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
 
-    button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
-                        this->geometry().width(), MAIN_BUTTON_HEIGHT);
+    double half_width = 0.5*this->geometry().width();
+    
+    submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                  half_width, MAIN_BUTTON_HEIGHT);
+
+    save_button->setGeometry(half_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                  half_width, MAIN_BUTTON_HEIGHT);
 
     top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-MAIN_BUTTON_HEIGHT);
 }
@@ -145,8 +158,13 @@ void ConfigDocument::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
 
-    button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
-                        this->geometry().width(), MAIN_BUTTON_HEIGHT);
+    double half_width = 0.5*this->geometry().width();
+    
+    submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                  half_width, MAIN_BUTTON_HEIGHT);
+
+    save_button->setGeometry(half_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                  half_width, MAIN_BUTTON_HEIGHT);
 
     top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-MAIN_BUTTON_HEIGHT);
 }
@@ -228,12 +246,12 @@ void ConfigDocument::update(QString full_key, Obj new_value)
 /** Submit the current document for processing */
 void ConfigDocument::submit()
 {
-    button->disconnect();
-    button->setText(Conspire::tr("Cancel"));
-    top_view->pushed( PagePointer( new UserPage(1, view) ) );
-//    top_view->pushed( PagePointer( new UserPage(opts,"pmemd",view) ) );
+    submit_button->disconnect();
+    submit_button->setText(Conspire::tr("Cancel"));
+//    top_view->pushed( PagePointer( new UserPage(1, view) ) );
+    top_view->pushed( PagePointer( new SubmitPage(opts,"pmemd",view) ) );
     
-    connect(button, SIGNAL(clicked()), this, SLOT(cancel()));
+    connect(submit_button, SIGNAL(clicked()), this, SLOT(cancel()));
 
     QGraphicsItem::update(this->geometry());
 }
@@ -241,11 +259,11 @@ void ConfigDocument::submit()
 /** Cancel the submission or running job */
 void ConfigDocument::cancel()
 {
-    button->disconnect();
-    button->setText(Conspire::tr("Submit"));
+    submit_button->disconnect();
+    submit_button->setText(Conspire::tr("Submit"));
     top_view->popped(false);
     
-    connect(button, SIGNAL(clicked()), this, SLOT(submit()));
+    connect(submit_button, SIGNAL(clicked()), this, SLOT(submit()));
     
     QGraphicsItem::update(this->geometry());
 }
@@ -302,4 +320,11 @@ void ConfigDocument::setOptions(Options options)
     opts = options;
     
     QGraphicsWidget::update();
+}
+
+void ConfigDocument::save()
+{
+   printf("Save\n");
+   emit( saveDocument(opts) );
+   emit( pop(true) );
 }

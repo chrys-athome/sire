@@ -92,9 +92,13 @@ namespace Conspire
         void paint(QPainter *painter, 
                    const QStyleOptionGraphicsItem *option, 
                    QWidget *widget);
+        
+        PagePointer getCurrentPage();
+        void addToBottomBar(Button *tbutton);
 
     private:
         void positionTitleBar();
+        void positionBottomBar();
     
         void build();
         void checkDisconnectPage(PagePointer &page);
@@ -140,9 +144,15 @@ namespace Conspire
         
         /** The "forward" button in the page title header */
         Button *forward_button;
+      
+        /** The list of buttons to display at the bottom of each page */
+        QList< QPointer<QGraphicsWidget> > bottom_bar_buttons;
         
         /** The height of the title bar */
         int title_height;
+        
+        /** The height of the bottom bar */
+        int bottom_bar_height;
         
         /** Whether we move side to side, or in and out */
         bool side_to_side;

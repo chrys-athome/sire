@@ -30,6 +30,7 @@
 #include "Conspire/GUI/optionspage.h"
 #include "Conspire/GUI/widgetrack.h"
 #include "Conspire/GUI/button.h"
+#include "Conspire/GUI/configdocument.h"
 #include "Conspire/GUI/exceptionpage.h"
 #include "Conspire/GUI/widgetstack.h"
 
@@ -73,12 +74,73 @@ static QString install_dir
 static QString broker = "ssi-amrmmhd.epcc.ed.ac.uk";
 //static QString broker = "127.0.0.1";
 
+void WorkPage::refreshWork()
+{
+   login_label->setText("");
+   char **store_ids = NULL;
+   float *pct_b2c = NULL;
+   float *pct_wrk = NULL;
+   float *pct_c2b = NULL;
+   int noofws = 0;
+   int retval = AcquireQueryAllWorkStatus(&store_ids, &pct_b2c, &pct_wrk, &pct_c2b, &noofws);
+   if ((retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) || (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK))
+   {
+      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText("Success");
+      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText("Success. No remote work in progress.");
+      int row = 0;
+      int col = 0;
+      QTableWidgetItem *qttwi = tableofworkstores->item(row, col);
+      while (qttwi != NULL)
+      {
+         tableofworkstores->removeCellWidget(row, col);
+         delete qttwi;
+         col++;
+         if (col > 3) { col = 0; row++; }
+         qttwi = tableofworkstores->item(row, col);
+      }
+      row = 0;
+      col = 0;
+      for (int i = 0; i < noofws; i++)
+      {
+         qttwi = new QTableWidgetItem("Untitled work");
+         tableofworkstores->setItem(col, row, qttwi);
+         col++;
+         if (col > 3) { col = 0; row++; }
+      }
+      QTableWidgetItem *new_item = new QTableWidgetItem("Create new...");
+      tableofworkstores->setItem(col, row, new_item);
+   } else
+   {
+      switch (retval)
+      {
+         case ACQUIRE_QUERY_ALL_WORK__PARSE_ERROR:
+            login_label->setText("Error parsing server reply");
+         case ACQUIRE_QUERY_ALL_WORK__UNKNOWN_ERROR:
+            login_label->setText("Error - Network may be down");
+         case ACQUIRE_QUERY_ALL_WORK__ACCESS_DENIED:
+            login_label->setText("Access to work states denied");
+         default:
+            login_label->setText("Error");
+      }
+   }
+   AcquireClientClearResults();
+   allUpdate();
+}
+
 void WorkPage::modifyWork(int col, int row)
 {
    QTableWidgetItem *qwidget = tableofworkstores->item(col, row);
    if (qwidget == NULL) return;
    if (QString("Create new...") == qwidget->text())
+   {
+      const char *hadclusters = AcquireListOfAccessibleClusters();
+      if ((hadclusters == NULL) || (strlen(hadclusters) == 0))
+      {
+         login_label->setText("Please add some accessible clusters before creating work");
+         return;
+      }
       makeWork();
+   }
 }
 
 void WorkPage::makeWork()
@@ -86,18 +148,11 @@ void WorkPage::makeWork()
    QStringList path;
    path << QString("%1/pmemd").arg(install_dir);
    Options opts = Options::fromXMLFile("pmemd.xml", path);
-   emit( push( PagePointer( new OptionsPage(opts))));
+   emit( push( PagePointer(new ConfigDocument(opts))) );
 }
 
 void WorkPage::build()
 {
-    job_id = -1;
-    output_name = "results.tar.gz";
-
-    draw_file_progress_bar = 0;
-    num_bytes_expected = 0;
-    num_bytes_transferred = 0;
-
     //this->setFlag(QGraphicsItem::ItemStacksBehindParent, true);
     
     WidgetRack *rack = new WidgetRack(this);
@@ -129,20 +184,27 @@ void WorkPage::build()
     connect(tableofworkstores, SIGNAL(cellClicked(int, int)), this, SLOT(modifyWork(int, int)));    
     
     sub_rack->addWidget(tableofworkstores);
+    
+    button = new Button(Conspire::tr("Refresh"));
+    connect(button, SIGNAL(clicked()), this, SIGNAL(refreshWork()));
+    sub_rack->addWidget(button);
 
+    return_button = new Button(Conspire::tr("Return"));
+    connect(return_button, SIGNAL(clicked()), this, SIGNAL(pop()));
+    sub_rack->addWidget(return_button);
+ 
     login_label = new QLabel();
     sub_rack->addWidget(login_label);
 
     stack->addWidget(sub_rack);
 
     rack->addWidget(stack);
+    refreshWork();
 }
 
 /** Constructor */
-WorkPage::WorkPage(int iusemode, Page *parent) : Page(parent)
+WorkPage::WorkPage(Page *parent) : Page(parent)
 {
-//   usemode = AcquireClientIsInitialised();
-    usemode = iusemode;
     build();
 }
 
@@ -165,23 +227,6 @@ void WorkPage::paint(QPainter *painter,
                        QWidget *widget)
 {
     Page::paint(painter, option, widget);
-    
-    if (draw_file_progress_bar)
-    {
-        painter->setRenderHint(QPainter::Antialiasing);
-        painter->setRenderHint(QPainter::TextAntialiasing);
-
-        painter->setOpacity(0.5);
-        
-        QRectF rect( 10, 10, this->geometry().width()-20, 
-                     this->geometry().height()-20 );
-                     
-        double prog = (1.0*num_bytes_transferred) / num_bytes_expected;
-        
-        int span = int(360*16*prog);
-        
-        painter->drawPie(rect, -int(0.5*span), span);
-    }
 }
 
 void WorkPage::allUpdate()
@@ -220,514 +265,3 @@ QString WorkPage::addMachine(QString username, QString password, QString machine
    }
 }
 
-QString WorkPage::loginUser(QString username, QString password, bool *loginsuccessful)
-{
-   int login_success = AcquireClientInit(DEFAULT_HOST, DEFAULT_PORT, username.toAscii().constData(),
-                                         password.toAscii().constData(), "broker");
-   if (login_success == ACQUIRE_USER_REGISTRATION_STATE__FINAL)
-   {
-      // Successful log in
-      if (loginsuccessful) *loginsuccessful = TRUE;
-      QSettings *qsetter = new QSettings("UoB", "AcquireClient");
-      qsetter->setValue("preferences/lastUsername", username);
-      delete qsetter;
-      stack->switchTo(2);
-      return "Log in successful";
-   } else
-   {
-      // Failed to log in
-      AcquireClientDestroy();
-      if (loginsuccessful) *loginsuccessful = FALSE;
-      return "Log in failed";
-   }
-}
-
-void WorkPage::changeUser()
-{
-   button->show();
-   login_label->setText("");
-   lineedit_username->setText("");
-   lineedit_password->setText("");
-   if (AcquireClientIsInitialised())
-   {
-      AcquireClientDestroy();
-   }
-   submode = 0;
-   stack->switchTo(0);
-   lineedit_username->setFocus();
-   allUpdate();
-}
-
-void WorkPage::login()
-{
-    QString username;
-    QString password;
-    if (submode)
-    {
-       username = last_username;
-       password = lineedit_password_known->text();
-    } else
-    {
-       username = lineedit_username->text();
-       password = lineedit_password->text();
-    }
-    bool wasokay = FALSE;
-    QString login_status = loginUser(username, password, &wasokay);
-
-    if (wasokay)
-    {
-       button->hide();
-       stack->switchTo(2);
-    }
-    login_label->setText(login_status);
-    allUpdate();
-}
-
-void WorkPage::sshadd()
-{
-    QString susername = lineedit_username->text();
-    QString machinename = lineedit_host->text();
-    QString spassword = lineedit_password->text();
-    
-    bool wasokay = FALSE;
-    QString sshadd_retstring = addMachine(susername, spassword, machinename, &wasokay);
-
-    if (wasokay) button->hide();
-    login_label->setText(sshadd_retstring);
-    allUpdate();
-}
-
-void WorkPage::submit()
-{
-    if (job_class.isEmpty())
-        return;
-
-    try
-    {
-
-    button->disconnect();
-    button->hide();
-    
-//    status_label->setText(Conspire::tr("Creating a temporary directory..."));
-    progress_bar->setValue(5);
-
-    allUpdate();
-
-    conspireDebug() << "SUBMIT THE CALCULATION";
-
-    stack->switchTo(1);
-
-    //make a temporary directory in which to stage the script
-    QString tmpdir;
-    {
-        //use QTemporaryFile to get a unique filename
-        QTemporaryFile f;
-        
-        if (f.open())
-            tmpdir = QFileInfo(f.fileName()).absoluteFilePath();
-    }
-    
-    if (tmpdir.isEmpty())
-        throw Siren::unavailable_resource( 
-                Conspire::tr("Cannot create a temporary directory!"), CODELOC );
-                
-    conspireDebug() << tmpdir;
-                
-    QDir dir(tmpdir);
-    if (not dir.mkpath("."))
-        throw Siren::unavailable_resource(
-                Conspire::tr("Cannot create a temporary directory! (%1)")
-                        .arg(tmpdir), CODELOC );
-
-//    status_label->setText(Conspire::tr("Assembling the input files..."));
-    progress_bar->setValue(10);
-    allUpdate();
-    
-    Options submit_opts = opts;
-
-    try
-    {
-        //go through the options and get all of the files - copy them into
-        //the temporary directory
-        QStringList all_keys = opts.keysAndIndiciesWithValue(true);
-        
-        double progress_value = 10;
-        double progress_delta = all_keys.count() / 40.0;
-        
-        foreach (QString key, all_keys)
-        {
-            Option opt = opts[key];
-            
-            progress_value += progress_delta;
-            progress_bar->setValue(progress_value);
-            allUpdate();
-            
-            if (opt.value().isA<FileValue>())
-            {
-                conspireDebug() << opt.key() << "is a file" << opt.value().toString();
-                
-                //copy this file to the tmp directory
-                QFile f(opt.value().toString());
-                
-//                status_label->setText(Conspire::tr("Copying file \"%1\"...")
-//                                            .arg(opt.value().toString()));
-                allUpdate();
-                
-                if (not f.open(QIODevice::ReadOnly))
-                    emit( push( PagePointer( new ExceptionPage(
-                        Conspire::tr("Error in submission! Cannot find the file "
-                                     "\"%2\" which is required for option \"%1\".")
-                                        .arg(opt.key(), opt.value().toString()),
-                            Conspire::file_error( Conspire::tr("Cannot open the "
-                                "file \"%2\" which is specified for option \"%1\".")
-                                    .arg(opt.key(), opt.value().toString()), CODELOC ) 
-                                        ) ) ) );
-
-                QString short_name = QFileInfo(f).fileName();
-                
-                if (not f.copy(QString("%1/%2").arg(tmpdir,short_name)))
-                    emit( push( PagePointer( new ExceptionPage(
-                        Conspire::tr("Error in submission! Cannot copy the file "
-                                     "\"%2\" which is required for option \"%1\".")
-                                        .arg(opt.key(), opt.value().toString()),
-                            Conspire::file_error( Conspire::tr("Cannot copy the "
-                                "file \"%2\" which is specified for option \"%1\" "
-                                "to the temporary directory \"%3\".")
-                                    .arg(opt.key(), opt.value().toString(), tmpdir), 
-                                        CODELOC ) ) ) ) );
-            
-                //update the options object so that it uses the local path for the file
-                submit_opts = submit_opts.setNestedValue(key, short_name)
-                                         .asA<Options>();
-            }
-        }
-        
-//        status_label->setText( Conspire::tr("Creating a config file...") );
-        progress_bar->setValue(50);
-        allUpdate();
-         
-        //now write the configuration file into this directory
-        QFile conf(QString("%1/config").arg(tmpdir));
-        
-        if (not conf.open(QIODevice::WriteOnly))
-            emit( push( PagePointer( new ExceptionPage(
-                Conspire::tr("Error in submission! Could not write the config file."),
-                            Conspire::file_error( Conspire::tr("Cannot open the "
-                                "config file \"%1/config\".")
-                                    .arg(tmpdir), CODELOC ) ) ) ) );
-
-        //write the config file
-        {
-            QTextStream ts(&conf);
-            ts << submit_opts.toConfig(true);
-            conf.close();
-        }
-
-//        status_label->setText( Conspire::tr("Copying support files...") );
-        progress_bar->setValue(60);
-        allUpdate();
-
-        //now copy all support files needed for this class of job
-        //into the temporary file
-        QDir class_dir(QString("%1/%2").arg(install_dir,job_class));
-        class_dir.setFilter(QDir::Files);
-        
-        if (not class_dir.exists())
-        {
-            emit( push( PagePointer( new ExceptionPage(
-                Conspire::tr("Error in submission! Could not find the job class "
-                             "directory \"%1\".").arg(class_dir.absolutePath()),
-                            Conspire::file_error( Conspire::tr("Cannot open the "
-                                "class file directory \"%1\".")
-                                    .arg(class_dir.absolutePath()), CODELOC ) ) ) ) );
-        }
-        
-        conspireDebug() << "Reading job class directory" << class_dir.absolutePath();
-        
-        foreach (QString file, class_dir.entryList())
-        {
-            QFile f(QString("%1/%2").arg(class_dir.absolutePath(),file));
-            
-            QString f_name = QFileInfo(f).fileName();
-            
-            conspireDebug() << "Copying file" << f_name;
-            
-            if (not f.open(QIODevice::ReadOnly))
-                throw Conspire::file_error( Conspire::tr(
-                        "Cannot open class file \"%1\".")
-                            .arg(file), CODELOC );
-                            
-            if (not f.copy(QString("%1/%2").arg(tmpdir,f_name)))
-                throw Conspire::file_error( Conspire::tr(
-                        "Cannot copy class file \"%1\" to temp directory \"%2\".")
-                            .arg(file, tmpdir), CODELOC );
-        
-        }
-                  
-        //now tar up this whole directory into a workpacket
-        {
-//            status_label->setText( Conspire::tr("Constructing the workpacket...") );
-            progress_bar->setValue(80);
-            allUpdate();
-    
-            conspireDebug() << "Creating the workpacket...";
-            QProcess proc;
-            proc.setWorkingDirectory(tmpdir);
-            
-            QStringList args;
-
-            QDir d(tmpdir);
-            d.setFilter(QDir::Files);
-
-            args << "-zLcvf" << "workpacket.tgz" << d.entryList();
-            conspireDebug() << "tar" << args;
-            
-            proc.start("tar", args);
-            
-            proc.waitForFinished(-1);
-            
-            conspireDebug() << "STDOUT" << proc.readAllStandardOutput();
-            conspireDebug() << "STDERR" << proc.readAllStandardError();
-            
-            conspireDebug() << "...workpacket created!";
-        }
-        
-//        status_label->setText( Conspire::tr("Sending the job to the cloud...") );
-        progress_bar->setValue(85);
-        allUpdate();
-        
-        QProcessEnvironment env;
-        env.insert("PARENT_NODE", broker);
-        env.insert("PARENT_NODE_PORT", "10000");
-        env.insert("ISSUBMIT", "TRUE");
-        env.insert("WORKNAME", "workpacket");
-        env.insert("CLASSNAME", job_class);
-        env.insert("FILENAME", QString("%1/workpacket.tgz").arg(tmpdir));
-        
-        QProcess proc;
-        proc.setProcessEnvironment(env);
-        
-        proc.start("python", 
-            QStringList(QString("%1/leafhead3.py").arg(install_dir)));
-        
-        progress_bar->setValue(90);
-        allUpdate();
-        
-        /*QTextStream ts(&proc);
-        QStringList lines;
-        
-        proc.closeWriteChannel();
-        proc.waitForStarted(-1);
-        
-        draw_file_progress_bar = true;
-        num_bytes_expected = QFileInfo(QString("%1/workpacket.tgz").arg(tmpdir)).size();
-        num_bytes_transferred = 0;
-        
-        while (proc.state() == QProcess::Running)
-        {
-            if (proc.waitForReadyRead(100))
-            {
-                if (proc.canReadLine())
-                {
-                    QString line = ts.readLine();
-                    conspireDebug() << "OUTPUT" << line;
-                    lines.append(line);
-                    
-                    bool ok = false;
-                    int completed = line.toInt(&ok);
-                    
-                    if (ok)
-                    {
-                        num_bytes_transferred = completed;
-                        this->repaint();
-                    }
-                }
-            }
-        }
-        
-        draw_file_progress_bar = false;*/
-        
-        proc.waitForFinished(-1);
-        
-        QByteArray out = proc.readAllStandardOutput();
-        //QString out = lines.join("\n");
-        QByteArray err = proc.readAllStandardError();
-        
-        conspireDebug() << "OUTPUT" << out;
-        conspireDebug() << "ERROR" << err;
-        
-        conspireDebug() << "JOB SUBMITTED";
-        
-        if (proc.exitCode() != 0)
-        {
-//            status_label->setText( Conspire::tr("SUBMISSION FAILURE!!!") );
-            progress_bar->setValue(0);
-            allUpdate();
-        
-            //something went wrong
-            emit( push( PagePointer( new ExceptionPage("Error in submission!", 
-                                            unavailable_resource("Could not submit!", 
-                                                CODELOC) ) ) ) );
-        }
-
-        stack->switchTo(2);
-//        status_label->setText( Conspire::tr("Job is on the cloud!") );
-        progress_bar->setValue(95);
-        allUpdate();
-
-        //get the JOB_ID and pass it to the job running page
-        QRegExp re("ID on BROKER: (\\d+)");
-
-        int pos = re.indexIn(out);
-        
-        if (pos == -1)
-            throw Conspire::unavailable_resource("ERROR IN PARSING RESULT OF SUBMISSION!",
-                                                    CODELOC );
-
-        conspireDebug() << "JOB_ID ==" << re.cap(1);
-        job_id = re.cap(1).toInt();
-        
-//        status_label->setText( Conspire::tr("Submitted the job "
-//               "to the cloud! JOB_ID = %1.").arg(job_id) );
-        progress_bar->setValue(100);
-        allUpdate();
-        
-        button->setText( Conspire::tr("Get Status") );
-        connect(button, SIGNAL(clicked()), this, SLOT(query()));
-        button->show();
-    }
-    catch(...)
-    {
-        dir.rmpath(".");
-        throw;
-    }
-    
-    dir.rmpath(".");
-    }
-    catch(const Siren::Exception &e)
-    {
-        emit( push( PagePointer( new ExceptionPage(
-            Conspire::tr("Error in submission!"), e) ) ) );
-    }
-}
-
-void WorkPage::query()
-{
-    button->hide();
-    
-//    status_label->setText( Conspire::tr("Querying the job...") );
-    progress_bar->setValue(0);
-    allUpdate();
-    
-    //do the query
-    //PARENT_NODE=127.0.0.1 PARENT_NODE_PORT=10000 ISQUERY=TRUE WKPTID=2 python ./leafhead3.py
-    QProcessEnvironment env;
-    env.insert("PARENT_NODE", broker);
-    env.insert("PARENT_NODE_PORT", "10000");
-    env.insert("ISQUERY", "TRUE");
-    env.insert("WKPTID", QString::number(job_id));
-    
-    QProcess proc;
-    proc.setProcessEnvironment(env);
-    
-    proc.start("python", 
-        QStringList(QString("%1/leafhead3.py").arg(install_dir)));
-    
-    progress_bar->setValue(50);
-    allUpdate();
-    
-    proc.waitForFinished(-1);
-    
-    QByteArray out = proc.readAllStandardOutput();
-    QByteArray err = proc.readAllStandardError();
-    
-    conspireDebug() << "OUTPUT" << out;
-    conspireDebug() << "ERROR" << err;
-
-//    status_label->setText( Conspire::tr("Got a response...") );
-    progress_bar->setValue(50);
-    allUpdate();
-
-    //WORKPACKET ID 0 on BROKER is *******
-    // where ****** is unallocated, allocated, running, completed, or non existant
-    QRegExp re("WORKPACKET ID (\\d+) on BROKER is ([\\w\\s]+)");
-    
-    int pos = re.indexIn(out);
-    
-    if (pos == -1)
-    {
-//        status_label->setText( Conspire::tr("Strange? Couldn't get job status.") );
-        progress_bar->setValue(0);
-        allUpdate();
-    }
-    else
-    {
-        QString status = re.cap(2).simplified();
-
-        if (status == "running")
-        {
-            stack->switchTo(3);
-        }
-    
-//        status_label->setText( Conspire::tr("The job status is \"%1\".").arg(status) );
-        progress_bar->setValue(100);
-        allUpdate();
-    
-        if (status == "completed")
-        {
-            stack->switchTo(1);
-            button->setText( Conspire::tr("Get Results") );
-            button->disconnect();
-            connect(button, SIGNAL(clicked()), this, SLOT(getResults()));
-        }
-    }
-    
-    button->show();
-}
-
-void WorkPage::getResults()
-{
-    //button->disconnect();
-    button->hide();
-    
-//    status_label->setText( Conspire::tr("Getting the results...") );
-    progress_bar->setValue(0);
-    allUpdate();
-
-    //do the query
-    //PARENT_NODE=127.0.0.1 PARENT_NODE_PORT=10000 ISQUERY=TRUE WKPTID=2 python ./leafhead3.py
-    QProcessEnvironment env;
-    env.insert("PARENT_NODE", broker);
-    env.insert("PARENT_NODE_PORT", "10000");
-    env.insert("ISDOWNLOAD", "TRUE");
-    env.insert("WKPTID", QString::number(job_id));
-    env.insert("OUTFILENAME", output_name);
-
-    QProcess proc;
-    proc.setProcessEnvironment(env);
-    
-    proc.start("python", 
-        QStringList(QString("%1/leafhead3.py").arg(install_dir)));
-    
-    progress_bar->setValue(50);
-    allUpdate();
-    
-    proc.waitForFinished(-1);
-    
-    QByteArray out = proc.readAllStandardOutput();
-    QByteArray err = proc.readAllStandardError();
-    
-    conspireDebug() << "OUTPUT" << out;
-    conspireDebug() << "ERROR" << err;
-
-//    status_label->setText( Conspire::tr("Downloaded results to %1").arg(output_name) );
-    progress_bar->setValue(100);
-
-    button->show();
-    allUpdate();
-
-    QProcess proc2;
-    proc2.start("open", QStringList() << output_name);
-
-    proc2.waitForFinished(-1);
-}

@@ -79,8 +79,10 @@ namespace Conspire
         void toggleMenuVisible();
         void setMenuVisible(bool display);
         
+        void save();
         void submit();
         void cancel();
+        
         
     protected:
         void paint(QPainter *painter, 
@@ -95,6 +97,7 @@ namespace Conspire
         
         void canBackChanged(bool);
         void canForwardChanged(bool);
+        void saveDocument(Options opts);
         
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
@@ -107,8 +110,9 @@ namespace Conspire
         Options opts;
 
         /** The context-sensitive button */
-        Button *button;
-
+        Button *submit_button;
+        Button *save_button;
+        
         /** The tabbed views of the Options object */
         ConfigView *view;
         

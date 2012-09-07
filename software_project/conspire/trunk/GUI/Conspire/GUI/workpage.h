@@ -50,19 +50,14 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        WorkPage(int usemode, Page *parent=0);
+        WorkPage(Page *parent=0);
         
         ~WorkPage();
 
     protected slots:
-        void submit();
-        void login();
-        void sshadd();
-        void query();
-        void getResults();
-        void changeUser();
         void makeWork();
         void modifyWork(int col, int row);
+        void refreshWork();
         
     protected:
        QString addMachine(QString username, QString password, QString machinename, bool *loginsuccessful);
@@ -77,11 +72,7 @@ namespace Conspire
     private:
         void build();
         void allUpdate();
-        
-        /** The mode in which the page is to be used **/
-        int usemode;
-        int submode;
-        
+                
         /** The options for the job to submit */
         Options opts;
         
@@ -105,44 +96,12 @@ namespace Conspire
         
         /** The status label for logging in */
         QLabel *login_label;
-        
-        /** The progress bar for job submission */
-        QProgressBar *progress_bar;
-        
+                
         /** The button used to submit the job */
         Button *button;
-        
-        /** The button used to change user */
-        Button *button_knownuser;
-        
-        /** The button used to change user */
-        Button *chgusr1_button;
-        /** The button used to change user */
-        Button *chgusr2_button;
-        
-        Button *continuebutton;
+                        
+        Button *return_button;
 
-        /** The last username that was logged in */
-        QString last_username;
-        
-        /** The class of job (e.g. which program to run) */
-        QString job_class;
-        
-        /** The name of the file to which to save the results */
-        QString output_name;
-        
-        /** The ID number of the job (when it is running,
-            it is -1 when the job is not running) */
-        int job_id;
-
-        /** The number of bytes expected to be transferred */
-        int num_bytes_expected;
-        
-        /** The number of bytes actually transferred */
-        int num_bytes_transferred;
-        
-        /** Whether or not to draw the file progress bar */
-        bool draw_file_progress_bar;
     };
 
 }

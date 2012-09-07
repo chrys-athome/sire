@@ -50,17 +50,11 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        AccountPage(int usemode, Page *parent=0);
+        AccountPage(Page *parent=0);
         
         ~AccountPage();
 
     protected slots:
-        void submit();
-        void login();
-        void sshadd();
-        void query();
-        void getResults();
-        void changeUser();
         void continueToWorkStores();
         void addSSHAccount();
         void refreshList();
@@ -78,10 +72,6 @@ namespace Conspire
     private:
         void build();
         void allUpdate();
-        
-        /** The mode in which the page is to be used **/
-        int usemode;
-        int submode;
         
         /** The options for the job to submit */
         Options opts;
@@ -106,24 +96,13 @@ namespace Conspire
         
         /** The status label for logging in */
         QLabel *login_label;
-        
-        /** The progress bar for job submission */
-        QProgressBar *progress_bar;
-        
+                
         /** The button used to submit the job */
         Button *button;
-        
-        /** The button used to change user */
-        Button *button_knownuser;
-        
-        /** The button used to change user */
-        Button *chgusr1_button;
-        /** The button used to change user */
-        Button *chgusr2_button;
-        
-        Button *continuebutton;
-        
+                
         Button *modifybutton;
+        
+        Button *return_button;
 
         /** The last username that was logged in */
         QString last_username;
