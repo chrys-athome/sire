@@ -60,8 +60,6 @@ namespace Conspire
         void refreshList();
         
     protected:
-       QString addMachine(QString username, QString password, QString machinename, bool *loginsuccessful);
-       QString loginUser(QString username, QString password, bool *wassuccessful);
         void resizeEvent(QGraphicsSceneResizeEvent *e);
         void moveEvent(QGraphicsSceneMoveEvent *e);
 
@@ -103,28 +101,6 @@ namespace Conspire
         Button *modifybutton;
         
         Button *return_button;
-
-        /** The last username that was logged in */
-        QString last_username;
-        
-        /** The class of job (e.g. which program to run) */
-        QString job_class;
-        
-        /** The name of the file to which to save the results */
-        QString output_name;
-        
-        /** The ID number of the job (when it is running,
-            it is -1 when the job is not running) */
-        int job_id;
-
-        /** The number of bytes expected to be transferred */
-        int num_bytes_expected;
-        
-        /** The number of bytes actually transferred */
-        int num_bytes_transferred;
-        
-        /** Whether or not to draw the file progress bar */
-        bool draw_file_progress_bar;
     };
 
 }

@@ -232,36 +232,5 @@ void WorkPage::paint(QPainter *painter,
 void WorkPage::allUpdate()
 {
    
-    //status_label->update();
-    //progress_bar->update();
     QCoreApplication::processEvents();
 }
-
-QString WorkPage::addMachine(QString username, QString password, QString machinename, bool *loginsuccessful)
-{
-   QString userathost = QString("%1@%2").arg(username, machinename);
-   char *failed_hosts_list = NULL;
-   if (loginsuccessful) *loginsuccessful = FALSE;
-   int retval = AcquireAddSSHHostToPool(userathost.toAscii().constData(), password.toAscii().constData(), &failed_hosts_list);
-   switch (retval)
-   {
-      case ACQUIRE_USER_ADD_SSH__SSH_SUCCESS:
-      {
-         if (loginsuccessful) *loginsuccessful = TRUE;
-         return "Successfuly added machine";
-      }
-      case ACQUIRE_USER_ADD_SSH__FINGERPRINT_UNTRUSTED:
-         return "The fingerprint for this machine has changed, contact administrator";
-      case ACQUIRE_USER_ADD_SSH__SSH_ROUTING_FAILED:
-      {
-         if ((failed_hosts_list == NULL) || (strlen(failed_hosts_list) <= 1))
-         {
-            return "Bad password, machine not trusted or could not find machine (connection failed)";
-         } else
-         {
-            return QObject::tr("Could not reach machine, failed to connect to %1").arg(failed_hosts_list);
-         }
-      }
-   }
-}
-

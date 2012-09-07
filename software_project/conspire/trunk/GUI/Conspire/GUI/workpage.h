@@ -60,8 +60,6 @@ namespace Conspire
         void refreshWork();
         
     protected:
-       QString addMachine(QString username, QString password, QString machinename, bool *loginsuccessful);
-       QString loginUser(QString username, QString password, bool *wassuccessful);
         void resizeEvent(QGraphicsSceneResizeEvent *e);
         void moveEvent(QGraphicsSceneMoveEvent *e);
 

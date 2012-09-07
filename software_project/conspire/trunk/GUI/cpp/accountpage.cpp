@@ -210,7 +210,5 @@ void AccountPage::paint(QPainter *painter,
 void AccountPage::allUpdate()
 {
    
-    //status_label->update();
-    //progress_bar->update();
     QCoreApplication::processEvents();
 }
