@@ -82,11 +82,12 @@ void WorkPage::refreshWork()
    float *pct_wrk = NULL;
    float *pct_c2b = NULL;
    int noofws = 0;
-   int retval = AcquireQueryAllWorkStatus(&store_ids, &pct_b2c, &pct_wrk, &pct_c2b, &noofws);
+   int64_t bytesfree = 0;
+   int retval = AcquireQueryAllWorkStatus(&store_ids, &pct_b2c, &pct_wrk, &pct_c2b, &noofws, &bytesfree);
    if ((retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) || (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK))
    {
-      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText("Success");
-      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText("Success. No remote work in progress.");
+      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText(QString("Success. %1 bytes free").arg(QString::number(bytesfree)));
+      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Success. No remote work in progress. %1 bytes free").arg(QString::number(bytesfree)));
       int row = 0;
       int col = 0;
       QTableWidgetItem *qttwi = tableofworkstores->item(row, col);
@@ -103,12 +104,12 @@ void WorkPage::refreshWork()
       for (int i = 0; i < noofws; i++)
       {
          qttwi = new QTableWidgetItem("Untitled work");
-         tableofworkstores->setItem(col, row, qttwi);
+         tableofworkstores->setItem(row, col, qttwi);
          col++;
          if (col > 3) { col = 0; row++; }
       }
       QTableWidgetItem *new_item = new QTableWidgetItem("Create new...");
-      tableofworkstores->setItem(col, row, new_item);
+      tableofworkstores->setItem(row, col, new_item);
    } else
    {
       switch (retval)
@@ -129,7 +130,7 @@ void WorkPage::refreshWork()
 
 void WorkPage::modifyWork(int col, int row)
 {
-   QTableWidgetItem *qwidget = tableofworkstores->item(col, row);
+   QTableWidgetItem *qwidget = tableofworkstores->item(row, col);
    if (qwidget == NULL) return;
    if (QString("Create new...") == qwidget->text())
    {

@@ -54,6 +54,9 @@
 #include <QProgressBar>
 #include <QLabel>
 #include <QPixmap>
+#include <QDesktopServices>
+#include <QUuid>
+#include <QSettings>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -234,7 +237,7 @@ void SubmitPage::submit()
     button->disconnect();
     button->hide();
     
-    status_label->setText(Conspire::tr("Creating a temporary directory..."));
+    status_label->setText(Conspire::tr("Creating a new directory..."));
     progress_bar->setValue(5);
 
     allUpdate();
@@ -243,27 +246,21 @@ void SubmitPage::submit()
 
     stack->switchTo(1);
 
-    //make a temporary directory in which to stage the script
-    QString tmpdir;
-    {
-        //use QTemporaryFile to get a unique filename
-        QTemporaryFile f;
-        
-        if (f.open())
-            tmpdir = QFileInfo(f.fileName()).absoluteFilePath();
-    }
+    //make a directory in which to stage the script
+    QString overdatadir = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+                    
+    conspireDebug() << overdatadir;
     
-    if (tmpdir.isEmpty())
-        throw Siren::unavailable_resource( 
-                Conspire::tr("Cannot create a temporary directory!"), CODELOC );
+    QUuid uuidgen;
+    QString quuid = uuidgen.createUuid().toString().replace('{', ' ').replace('}', ' ').trimmed();
+    
+    QString datadir = overdatadir + "/input_" + quuid;
                 
-    conspireDebug() << tmpdir;
-                
-    QDir dir(tmpdir);
+    QDir dir(datadir);
     if (not dir.mkpath("."))
         throw Siren::unavailable_resource(
                 Conspire::tr("Cannot create a temporary directory! (%1)")
-                        .arg(tmpdir), CODELOC );
+                        .arg(datadir), CODELOC );
 
     status_label->setText(Conspire::tr("Assembling the input files..."));
     progress_bar->setValue(10);
@@ -311,7 +308,7 @@ void SubmitPage::submit()
 
                 QString short_name = QFileInfo(f).fileName();
                 
-                if (not f.copy(QString("%1/%2").arg(tmpdir,short_name)))
+                if (not f.copy(QString("%1/%2").arg(datadir,short_name)))
                     emit( push( PagePointer( new ExceptionPage(
                         Conspire::tr("Error in submission! Cannot copy the file "
                                      "\"%2\" which is required for option \"%1\".")
@@ -319,7 +316,7 @@ void SubmitPage::submit()
                             Conspire::file_error( Conspire::tr("Cannot copy the "
                                 "file \"%2\" which is specified for option \"%1\" "
                                 "to the temporary directory \"%3\".")
-                                    .arg(opt.key(), opt.value().toString(), tmpdir), 
+                                    .arg(opt.key(), opt.value().toString(), datadir), 
                                         CODELOC ) ) ) ) );
             
                 //update the options object so that it uses the local path for the file
@@ -333,14 +330,14 @@ void SubmitPage::submit()
         allUpdate();
          
         //now write the configuration file into this directory
-        QFile conf(QString("%1/config").arg(tmpdir));
+        QFile conf(QString("%1/config").arg(datadir));
         
         if (not conf.open(QIODevice::WriteOnly))
             emit( push( PagePointer( new ExceptionPage(
                 Conspire::tr("Error in submission! Could not write the config file."),
                             Conspire::file_error( Conspire::tr("Cannot open the "
                                 "config file \"%1/config\".")
-                                    .arg(tmpdir), CODELOC ) ) ) ) );
+                                    .arg(datadir), CODELOC ) ) ) ) );
 
         //write the config file
         {
@@ -383,12 +380,71 @@ void SubmitPage::submit()
                         "Cannot open class file \"%1\".")
                             .arg(file), CODELOC );
                             
-            if (not f.copy(QString("%1/%2").arg(tmpdir,f_name)))
+            if (not f.copy(QString("%1/%2").arg(datadir,f_name)))
                 throw Conspire::file_error( Conspire::tr(
                         "Cannot copy class file \"%1\" to temp directory \"%2\".")
-                            .arg(file, tmpdir), CODELOC );
+                            .arg(file, datadir), CODELOC );
         
         }
+        
+        status_label->setText(Conspire::tr("Recording directory for uploading..."));
+        progress_bar->setValue(70);
+        allUpdate();
+        
+        QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+        qsetter->setValue(quuid + "/uploaddir", datadir);
+        delete qsetter;
+
+        status_label->setText( Conspire::tr("Generating initial work descriptor...") );
+        progress_bar->setValue(75);
+        allUpdate();
+        
+        QString xmldescr = overdatadir + "/descr_" + quuid + ".xml";
+        int retval = AcquireGenerateInitialXMLWorkDescriptor(xmldescr.toAscii().constData(), "Untitled work", "work/subwork/single", "single", 3600);
+        
+        if (retval == 0)
+        {
+                  emit( push( PagePointer( new ExceptionPage(
+            Conspire::tr("Error in submission! Most likely could not write the XML descriptor "
+                        "\"%1\" (or client state is corrupt).").arg(xmldescr),
+                        Conspire::file_error( Conspire::tr("Cannot write the "
+                           "file \"%1\".")
+                              .arg(xmldescr), CODELOC ) ) ) ) );
+        } else
+        {
+           status_label->setText(Conspire::tr("Recording XML descriptor filename..."));
+           progress_bar->setValue(80);
+           allUpdate();
+         
+           QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+           qsetter->setValue(quuid + "/descrxml", xmldescr);
+           delete qsetter;
+        }
+
+        status_label->setText( Conspire::tr("Negotiating a remote work allocation...") );
+        progress_bar->setValue(90);
+        allUpdate();
+        
+        int64_t spaceused = 0;
+        int blocks = 0;
+        const char *workstore = AcquireReserveWorkStore(xmldescr.toAscii().constData(), datadir.toAscii().constData(), &spaceused, &blocks);
+        if (workstore)
+        {
+           QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+           qsetter->setValue(quuid + "/workstoreid", workstore);
+           qsetter->setValue(quuid + "/remotespace", QString::number(spaceused));
+           qsetter->setValue(quuid + "/blocks", QString::number(blocks));
+           delete qsetter;
+           
+           status_label->setText( Conspire::tr("Done. Acquired work store ID.") );
+           progress_bar->setValue(100);
+           allUpdate();
+        }
+        
+        emit( pop() );
+
+/*        
+        QSettings 
                   
         //now tar up this whole directory into a workpacket
         {
@@ -398,11 +454,11 @@ void SubmitPage::submit()
     
             conspireDebug() << "Creating the workpacket...";
             QProcess proc;
-            proc.setWorkingDirectory(tmpdir);
+            proc.setWorkingDirectory(datadir);
             
             QStringList args;
 
-            QDir d(tmpdir);
+            QDir d(datadir);
             d.setFilter(QDir::Files);
 
             args << "-zLcvf" << "workpacket.tgz" << d.entryList();
@@ -428,7 +484,7 @@ void SubmitPage::submit()
         env.insert("ISSUBMIT", "TRUE");
         env.insert("WORKNAME", "workpacket");
         env.insert("CLASSNAME", job_class);
-        env.insert("FILENAME", QString("%1/workpacket.tgz").arg(tmpdir));
+        env.insert("FILENAME", QString("%1/workpacket.tgz").arg(datadir));
         
         QProcess proc;
         proc.setProcessEnvironment(env);
@@ -439,39 +495,6 @@ void SubmitPage::submit()
         progress_bar->setValue(90);
         allUpdate();
         
-        /*QTextStream ts(&proc);
-        QStringList lines;
-        
-        proc.closeWriteChannel();
-        proc.waitForStarted(-1);
-        
-        draw_file_progress_bar = true;
-        num_bytes_expected = QFileInfo(QString("%1/workpacket.tgz").arg(tmpdir)).size();
-        num_bytes_transferred = 0;
-        
-        while (proc.state() == QProcess::Running)
-        {
-            if (proc.waitForReadyRead(100))
-            {
-                if (proc.canReadLine())
-                {
-                    QString line = ts.readLine();
-                    conspireDebug() << "OUTPUT" << line;
-                    lines.append(line);
-                    
-                    bool ok = false;
-                    int completed = line.toInt(&ok);
-                    
-                    if (ok)
-                    {
-                        num_bytes_transferred = completed;
-                        this->repaint();
-                    }
-                }
-            }
-        }
-        
-        draw_file_progress_bar = false;*/
         
         proc.waitForFinished(-1);
         
@@ -521,14 +544,15 @@ void SubmitPage::submit()
         button->setText( Conspire::tr("Get Status") );
         connect(button, SIGNAL(clicked()), this, SLOT(query()));
         button->show();
+    */
     }
     catch(...)
     {
-        dir.rmpath(".");
+//        dir.rmpath(".");
         throw;
     }
     
-    dir.rmpath(".");
+//    dir.rmpath(".");
     }
     catch(const Siren::Exception &e)
     {
