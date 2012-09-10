@@ -138,11 +138,13 @@ set ( SIREMOVE_SOURCES
 if ( ${OpenMM_FOUND} )
     message ( STATUS "Adding in OpenMM support to SireMove using OpenMM ${OpenMM_ROOT_DIR}" )
     set ( SIREMOVE_SOURCES  ${SIREMOVE_SOURCES} ${SIREMOVE_OPENMM_SOURCES} )
-    set ( SIREMOVE_HEADERS  ${SIREMOVE_HEADERS} ${SIREMOVE_OPENMM_HEADERS} )    
+    set ( SIREMOVE_HEADERS  ${SIREMOVE_HEADERS} ${SIREMOVE_OPENMM_HEADERS} )
+    set ( SIRE_OPENMM_LIBRARIES ${OpenMM_LIBRARIES} )    
     include_directories(${OpenMM_INCLUDE_DIR})
     add_definitions( "-DSIRE_USE_OPENMM" )
 else()
     message ( STATUS "OpenMM not found, so OpenMM support is disabled." )
+    set ( SIRE_OPENMM_LIBRARIES "" )
 endif()
 
 add_library (SireMove ${SIREMOVE_SOURCES})
@@ -158,7 +160,7 @@ target_link_libraries (SireMove
                        SireMaths
                        SireCluster
                        SireStream
-                       ${OpenMM_LIBRARIES}
+                       ${SIRE_OPENMM_LIBRARIES}
                        )
 
 # installation
@@ -173,3 +175,6 @@ install( FILES ${SIREMOVE_HEADERS}
 
 install( FILES ${SIREMOVE_DEPRECATED_HEADERS}
          DESTINATION ${SIRE_INCLUDES}/SireMove/deprecated )
+
+install( FILES ${SIREMOVE_OPENMM_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireMove )

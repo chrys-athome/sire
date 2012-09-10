@@ -12,4 +12,4 @@ if (${QT_VERSION_MAJOR} GREATER 3 AND ${QT_VERSION_MINOR} GREATER 3)
     add_subdirectory (sirentest)
 endif()
 
-add_subdirectory (sire_browser)
+#add_subdirectory (sire_browser)
