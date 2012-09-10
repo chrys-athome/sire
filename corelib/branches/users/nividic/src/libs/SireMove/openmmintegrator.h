@@ -30,11 +30,17 @@
 #define SIREMOVE_OPENMMINTEGRATOR_H
 
 #include "integrator.h"
-#include <OpenMM.h>
+
+#ifdef SIRE_USE_OPENMM
+  #include <OpenMM.h>   // CONDITIONAL_INCLUDE
+#endif
+
 #include <cstdio>
 #include "SireUnits/temperature.h"
 
 SIRE_BEGIN_HEADER
+
+#ifdef SIRE_USE_OPENMM
 
 namespace SireMove
 {
@@ -168,5 +174,26 @@ Q_DECLARE_METATYPE( SireMove::OpenMMIntegrator )
 SIRE_EXPOSE_CLASS( SireMove::OpenMMIntegrator )
 
 SIRE_END_HEADER
+
+#else // SIRE_USE_OPENMM
+
+namespace SireMove
+{
+
+    class OpenMMIntegrator
+    {
+    public:
+        OpenMMIntegrator(){}
+        ~OpenMMIntegrator(){}
+
+        static const char* typeName(){ return "SireMM::OpenMMIntegrator"; }
+
+    };
+
+}
+
+Q_DECLARE_METATYPE( SireMove::OpenMMIntegrator )
+
+#endif // SIRE_USE_OPENMM
 
 #endif
