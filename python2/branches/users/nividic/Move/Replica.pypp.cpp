@@ -40,9 +40,8 @@ void register_Replica_class(){
 
     { //::SireMove::Replica
         typedef bp::class_< SireMove::Replica, bp::bases< SireMove::SupraSubSystem, SireBase::Property > > Replica_exposer_t;
-        Replica_exposer_t Replica_exposer = Replica_exposer_t( "Replica" );
+        Replica_exposer_t Replica_exposer = Replica_exposer_t( "Replica", bp::init< >() );
         bp::scope Replica_scope( Replica_exposer );
-        Replica_exposer.def( bp::init< >() );
         Replica_exposer.def( bp::init< SireMove::SupraSubSystem const & >(( bp::arg("subsystem") )) );
         Replica_exposer.def( bp::init< SireMove::Replica const & >(( bp::arg("other") )) );
         { //::SireMove::Replica::chemicalPotential

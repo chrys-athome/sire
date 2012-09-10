@@ -51,9 +51,8 @@ void register_Flexibility_class(){
 
     { //::SireMove::Flexibility
         typedef bp::class_< SireMove::Flexibility, bp::bases< SireMol::MoleculeProperty, SireMol::MolViewProperty, SireBase::Property > > Flexibility_exposer_t;
-        Flexibility_exposer_t Flexibility_exposer = Flexibility_exposer_t( "Flexibility" );
+        Flexibility_exposer_t Flexibility_exposer = Flexibility_exposer_t( "Flexibility", bp::init< >() );
         bp::scope Flexibility_scope( Flexibility_exposer );
-        Flexibility_exposer.def( bp::init< >() );
         Flexibility_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("molecule") )) );
         Flexibility_exposer.def( bp::init< SireMove::Flexibility const & >(( bp::arg("other") )) );
         { //::SireMove::Flexibility::add

@@ -23,9 +23,8 @@ void register_Simulation_class(){
 
     { //::SireMove::Simulation
         typedef bp::class_< SireMove::Simulation > Simulation_exposer_t;
-        Simulation_exposer_t Simulation_exposer = Simulation_exposer_t( "Simulation" );
+        Simulation_exposer_t Simulation_exposer = Simulation_exposer_t( "Simulation", bp::init< >() );
         bp::scope Simulation_scope( Simulation_exposer );
-        Simulation_exposer.def( bp::init< >() );
         Simulation_exposer.def( bp::init< SireMove::Simulation const & >(( bp::arg("other") )) );
         { //::SireMove::Simulation::abort
         

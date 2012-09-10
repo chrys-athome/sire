@@ -34,9 +34,8 @@ void register_SpecifiedGroupsDeleter_class(){
 
     { //::SireMove::SpecifiedGroupsDeleter
         typedef bp::class_< SireMove::SpecifiedGroupsDeleter, bp::bases< SireMove::MolDeleter, SireBase::Property > > SpecifiedGroupsDeleter_exposer_t;
-        SpecifiedGroupsDeleter_exposer_t SpecifiedGroupsDeleter_exposer = SpecifiedGroupsDeleter_exposer_t( "SpecifiedGroupsDeleter" );
+        SpecifiedGroupsDeleter_exposer_t SpecifiedGroupsDeleter_exposer = SpecifiedGroupsDeleter_exposer_t( "SpecifiedGroupsDeleter", bp::init< >() );
         bp::scope SpecifiedGroupsDeleter_scope( SpecifiedGroupsDeleter_exposer );
-        SpecifiedGroupsDeleter_exposer.def( bp::init< >() );
         SpecifiedGroupsDeleter_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireMol::MGID const & >(( bp::arg("molgroup"), bp::arg("mgid") )) );
         SpecifiedGroupsDeleter_exposer.def( bp::init< SireMove::Sampler const &, SireMol::MGID const & >(( bp::arg("sampler"), bp::arg("mgid") )) );
         SpecifiedGroupsDeleter_exposer.def( bp::init< SireMove::SpecifiedGroupsDeleter const & >(( bp::arg("other") )) );

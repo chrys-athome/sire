@@ -38,9 +38,8 @@ void register_SupraSystem_class(){
 
     { //::SireMove::SupraSystem
         typedef bp::class_< SireMove::SupraSystem, bp::bases< SireBase::Property > > SupraSystem_exposer_t;
-        SupraSystem_exposer_t SupraSystem_exposer = SupraSystem_exposer_t( "SupraSystem" );
+        SupraSystem_exposer_t SupraSystem_exposer = SupraSystem_exposer_t( "SupraSystem", bp::init< >() );
         bp::scope SupraSystem_scope( SupraSystem_exposer );
-        SupraSystem_exposer.def( bp::init< >() );
         SupraSystem_exposer.def( bp::init< int >(( bp::arg("n") )) );
         SupraSystem_exposer.def( bp::init< SireSystem::System const &, bp::optional< int > >(( bp::arg("system"), bp::arg("n")=(int)(1) )) );
         SupraSystem_exposer.def( bp::init< QVector< SireSystem::System > const & >(( bp::arg("systems") )) );

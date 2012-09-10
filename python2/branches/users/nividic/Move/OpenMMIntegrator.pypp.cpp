@@ -148,6 +148,16 @@ void register_OpenMMIntegrator_class(){
                 , getAndersen_frequency_function_value );
         
         }
+        { //::SireMove::OpenMMIntegrator::getCMMremoval_frequency
+        
+            typedef int ( ::SireMove::OpenMMIntegrator::*getCMMremoval_frequency_function_type )(  ) ;
+            getCMMremoval_frequency_function_type getCMMremoval_frequency_function_value( &::SireMove::OpenMMIntegrator::getCMMremoval_frequency );
+            
+            OpenMMIntegrator_exposer.def( 
+                "getCMMremoval_frequency"
+                , getCMMremoval_frequency_function_value );
+        
+        }
         { //::SireMove::OpenMMIntegrator::getConstraintType
         
             typedef ::QString ( ::SireMove::OpenMMIntegrator::*getConstraintType_function_type )(  ) ;
@@ -228,6 +238,16 @@ void register_OpenMMIntegrator_class(){
                 , getPressure_function_value );
         
         }
+        { //::SireMove::OpenMMIntegrator::getRestraint
+        
+            typedef bool ( ::SireMove::OpenMMIntegrator::*getRestraint_function_type )(  ) ;
+            getRestraint_function_type getRestraint_function_value( &::SireMove::OpenMMIntegrator::getRestraint );
+            
+            OpenMMIntegrator_exposer.def( 
+                "getRestraint"
+                , getRestraint_function_value );
+        
+        }
         { //::SireMove::OpenMMIntegrator::getTemperature
         
             typedef ::SireUnits::Dimension::Temperature ( ::SireMove::OpenMMIntegrator::*getTemperature_function_type )(  ) ;
@@ -303,6 +323,17 @@ void register_OpenMMIntegrator_class(){
             OpenMMIntegrator_exposer.def( 
                 "setAndersen_frequency"
                 , setAndersen_frequency_function_value
+                , ( bp::arg("arg0") ) );
+        
+        }
+        { //::SireMove::OpenMMIntegrator::setCMMremoval_frequency
+        
+            typedef void ( ::SireMove::OpenMMIntegrator::*setCMMremoval_frequency_function_type )( int ) ;
+            setCMMremoval_frequency_function_type setCMMremoval_frequency_function_value( &::SireMove::OpenMMIntegrator::setCMMremoval_frequency );
+            
+            OpenMMIntegrator_exposer.def( 
+                "setCMMremoval_frequency"
+                , setCMMremoval_frequency_function_value
                 , ( bp::arg("arg0") ) );
         
         }
@@ -391,6 +422,17 @@ void register_OpenMMIntegrator_class(){
             OpenMMIntegrator_exposer.def( 
                 "setPressure"
                 , setPressure_function_value
+                , ( bp::arg("arg0") ) );
+        
+        }
+        { //::SireMove::OpenMMIntegrator::setRestraint
+        
+            typedef void ( ::SireMove::OpenMMIntegrator::*setRestraint_function_type )( bool ) ;
+            setRestraint_function_type setRestraint_function_value( &::SireMove::OpenMMIntegrator::setRestraint );
+            
+            OpenMMIntegrator_exposer.def( 
+                "setRestraint"
+                , setRestraint_function_value
                 , ( bp::arg("arg0") ) );
         
         }

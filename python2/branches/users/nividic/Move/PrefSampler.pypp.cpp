@@ -44,9 +44,8 @@ void register_PrefSampler_class(){
 
     { //::SireMove::PrefSampler
         typedef bp::class_< SireMove::PrefSampler, bp::bases< SireMove::Sampler, SireBase::Property > > PrefSampler_exposer_t;
-        PrefSampler_exposer_t PrefSampler_exposer = PrefSampler_exposer_t( "PrefSampler" );
+        PrefSampler_exposer_t PrefSampler_exposer = PrefSampler_exposer_t( "PrefSampler", bp::init< >() );
         bp::scope PrefSampler_scope( PrefSampler_exposer );
-        PrefSampler_exposer.def( bp::init< >() );
         PrefSampler_exposer.def( bp::init< SireUnits::Dimension::Area >(( bp::arg("k") )) );
         PrefSampler_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("f") )) );
         PrefSampler_exposer.def( bp::init< SireCAS::Expression const &, SireUnits::Dimension::Area >(( bp::arg("f"), bp::arg("k") )) );

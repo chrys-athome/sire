@@ -47,9 +47,8 @@ void register_RepExSubMove_class(){
 
     { //::SireMove::RepExSubMove
         typedef bp::class_< SireMove::RepExSubMove, bp::bases< SireMove::SupraSubMove, SireBase::Property > > RepExSubMove_exposer_t;
-        RepExSubMove_exposer_t RepExSubMove_exposer = RepExSubMove_exposer_t( "RepExSubMove" );
+        RepExSubMove_exposer_t RepExSubMove_exposer = RepExSubMove_exposer_t( "RepExSubMove", bp::init< >() );
         bp::scope RepExSubMove_scope( RepExSubMove_exposer );
-        RepExSubMove_exposer.def( bp::init< >() );
         RepExSubMove_exposer.def( bp::init< SireMove::Replica const &, SireMove::Replica const & >(( bp::arg("replica_a"), bp::arg("replica_b") )) );
         RepExSubMove_exposer.def( bp::init< SireMove::RepExSubMove const & >(( bp::arg("other") )) );
         { //::SireMove::RepExSubMove::energy_i
