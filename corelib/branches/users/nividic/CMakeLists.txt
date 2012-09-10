@@ -177,6 +177,21 @@ else()
   message(FATAL_ERROR "Cannot find the boost libraries.")
 endif()  
 
+# Now look for OpenMM
+option (OPENMM_HOME "The location of the OpenMM installation" "$ENV{HOME}/local")
+FIND_PACKAGE( OpenMM )
+
+save_sire_variable( "SIRE_OpenMM_FOUND" "${OpenMM_FOUND}" )
+
+if ( ${OpenMM_FOUND} )
+    message( STATUS "Found OpenMM at ${OpenMM_ROOT_DIR}" )
+    save_sire_variable( "SIRE_OpenMM_INCLUDE_DIR" "${OpenMM_INCLUDE_DIR}" )
+    save_sire_variable( "SIRE_OpenMM_LIBRARIES" "${OpenMM_LIBRARIES}" )
+    save_sire_variable( "SIRE_OpenMM_LIBRARY_DIR" "${OpenMM_LIBRARY_DIR}" )
+else()
+    message( STATUS "Could not find OpenMM. OpenMM support is disabled." )
+endif()
+
 # Now look for BLAS and LAPACK - if these are not found then
 # a local version will have to be used instead
 set( BLA_STATIC OFF )

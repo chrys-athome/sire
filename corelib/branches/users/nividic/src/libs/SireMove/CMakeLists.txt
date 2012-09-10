@@ -31,7 +31,6 @@ set ( SIREMOVE_HEADERS
       move.h
       moves.h
       mtsmc.h
-      openmmintegrator.h	
       prefsampler.h
       rbworkspace.h
       repexmove.h
@@ -60,6 +59,14 @@ set ( SIREMOVE_HEADERS
       weightedmoves.h
       zmatmove.h
       zmatrix.h
+    )
+
+set ( SIREMOVE_OPENMM_HEADERS
+      openmmintegrator.h
+    )
+
+set ( SIREMOVE_OPENMM_SOURCES
+      openmmintegrator.cpp
     )
 
 set ( SIREMOVE_DEPRECATED_HEADERS
@@ -92,7 +99,6 @@ set ( SIREMOVE_SOURCES
       move.cpp
       moves.cpp
       mtsmc.cpp
-      openmmintegrator.cpp
       prefsampler.cpp
       rbworkspace.cpp
       repexmove.cpp
@@ -129,18 +135,17 @@ set ( SIREMOVE_SOURCES
       ${SIREMOVE_DEPRECATED_HEADERS}
     )
 
+if ( ${OpenMM_FOUND} )
+    message ( STATUS "Adding in OpenMM support to SireMove using OpenMM ${OpenMM_ROOT_DIR}" )
+    set ( SIREMOVE_SOURCES  ${SIREMOVE_SOURCES} ${SIREMOVE_OPENMM_SOURCES} )
+    set ( SIREMOVE_HEADERS  ${SIREMOVE_HEADERS} ${SIREMOVE_OPENMM_HEADERS} )    
+    include_directories(${OpenMM_INCLUDE_DIR})
+    add_definitions( "-DSIRE_USE_OPENMM" )
+else()
+    message ( STATUS "OpenMM not found, so OpenMM support is disabled." )
+endif()
+
 add_library (SireMove ${SIREMOVE_SOURCES})
-
-set (Path "/home/gac/local")
-
-find_library(OPENMM_LIBRARY 
-			NAMES 
-			OpenMM 
-			PATHS
-			${Path}/lib)
-
-message ("Dir = ${OPENMM_LIBRARY}")
-
 
 set_target_properties (SireMove PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -153,7 +158,7 @@ target_link_libraries (SireMove
                        SireMaths
                        SireCluster
                        SireStream
-                       ${OPENMM_LIBRARY}
+                       ${OpenMM_LIBRARIES}
                        )
 
 # installation
