@@ -97,7 +97,6 @@ public:
 
 }
 
-Q_DECLARE_TYPEINFO(SireMol::ResNum, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMol::ResNum);
 
 SIRE_EXPOSE_CLASS( SireMol::ResNum )

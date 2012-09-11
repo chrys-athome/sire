@@ -104,6 +104,12 @@ inline uint qHash(const FFIdentifier &ffid)
 
 }
 
+#include "ffidx.h"
+
+Q_DECLARE_METATYPE( SireID::Specify<SireFF::FFID> )
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireFF::FFID> )
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireFF::FFID> )
+
 Q_DECLARE_METATYPE(SireFF::FFIdentifier);
 
 #endif

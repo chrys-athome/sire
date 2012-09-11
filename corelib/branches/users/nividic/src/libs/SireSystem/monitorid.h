@@ -96,12 +96,7 @@ protected:
 
 }
 
-#include "monitorname.h"
 #include "monitoridentifier.h"
-
-Q_DECLARE_METATYPE( SireID::Specify<SireSystem::MonitorID> )
-Q_DECLARE_METATYPE( SireID::IDAndSet<SireSystem::MonitorID> )
-Q_DECLARE_METATYPE( SireID::IDOrSet<SireSystem::MonitorID> )
 
 SIRE_EXPOSE_CLASS( SireSystem::MonitorID )
 SIRE_EXPOSE_ALIAS( SireID::Specify<SireSystem::MonitorID>, 

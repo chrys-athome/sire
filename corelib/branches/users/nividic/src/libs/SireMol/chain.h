@@ -396,14 +396,12 @@ Q_DECLARE_METATYPE(SireMol::Chain);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Chain>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Chain>);
 
-Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Chain> >);
+//Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Chain> >);
 
 SIRE_EXPOSE_CLASS( SireMol::Chain )
 
 SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Chain>, SireMol::Mover_Chain_ )
 SIRE_EXPOSE_ALIAS( SireMol::Selector<SireMol::Chain>, SireMol::Selector_Chain_ )
-SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Selector<SireMol::Chain> >, 
-                   SireMol::Mover_Selector_Chain_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 

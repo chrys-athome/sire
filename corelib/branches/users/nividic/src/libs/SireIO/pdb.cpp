@@ -457,12 +457,22 @@ QString PDBAtom::writeToLine() const
     {
         num -= 100000;
     }
+
+    int resnum = resseq;
+    
+    if (resnum < 0)
+        resnum = 0;
+
+    while (resnum >= 10000)
+    {
+        resnum -= 10000;
+    }
     
     qsnprintf(line, 82,
      "%-6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s%2s",
             qPrintable(record_name), num, qPrintable(name),
             qPrintable(altloc), qPrintable(resname), qPrintable(chainid),
-            resseq, qPrintable(icode), x, y, z, occupancy, tempfactor,
+            resnum, qPrintable(icode), x, y, z, occupancy, tempfactor,
             qPrintable(segid), qPrintable(element), qPrintable(chg));
 
     return QString::fromLocal8Bit(line).trimmed();

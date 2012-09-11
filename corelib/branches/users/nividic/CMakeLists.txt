@@ -322,7 +322,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
 
     if ( HAVE_EMMINTRIN_H )
       # we have emmintrin.h so we have SSE
-      set ( SIRE_VECTOR_FLAGS "-msse2 -mfpmath=sse -DSIRE_USE_SSE" )
+      set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
     endif()
         
     # Now gcc 4 specific options

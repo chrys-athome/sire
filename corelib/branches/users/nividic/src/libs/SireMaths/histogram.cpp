@@ -535,6 +535,11 @@ double Histogram::sumOverBins() const
     return sum;
 }
 
+Histogram* Histogram::clone() const
+{
+    return new Histogram(*this);
+}
+
 /** Add 'weight' to the histogram bin 'i'
     
     \throw SireError::invalid_index

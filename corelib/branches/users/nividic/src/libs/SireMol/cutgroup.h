@@ -387,14 +387,12 @@ Q_DECLARE_METATYPE(SireMol::CutGroup);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::CutGroup>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::CutGroup>);
 
-Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::CutGroup> >);
+//Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::CutGroup> >);
 
 SIRE_EXPOSE_CLASS( SireMol::CutGroup )
 
 SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::CutGroup>, SireMol::Mover_CutGroup_ )
 SIRE_EXPOSE_ALIAS( SireMol::Selector<SireMol::CutGroup>, SireMol::Selector_CutGroup_ )
-SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Selector<SireMol::CutGroup> >, 
-                   SireMol::Mover_Selector_CutGroup_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 

@@ -93,7 +93,6 @@ public:
 
 }
 
-Q_DECLARE_TYPEINFO(SireMol::BeadNum, Q_MOVABLE_TYPE);
 
 Q_DECLARE_METATYPE( SireMol::BeadNum )
 

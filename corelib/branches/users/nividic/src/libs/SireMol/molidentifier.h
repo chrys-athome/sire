@@ -31,6 +31,12 @@
 
 #include "molid.h"
 
+#include "atomsin.hpp"
+
+#include "SireID/specify.hpp"
+#include "SireID/idandset.hpp"
+#include "SireID/idorset.hpp"
+
 #include <boost/shared_ptr.hpp>
 
 namespace SireMol

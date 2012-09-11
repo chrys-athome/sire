@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2008  Christopher Woods
+  *  Copyright (C) 2010  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,55 +26,58 @@
   *
 \*********************************************/
 
-#ifndef SIREFF_FFIDX_H
-#define SIREFF_FFIDX_H
+#ifndef SIREMOL_BEADIDX_H
+#define SIREMOL_BEADIDX_H
 
 #include "SireID/index.h"
 
-#include "ffid.h"
+#include "beadid.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireFF
+namespace SireMol
 {
-class FFIdx;
+class BeadIdx;
 }
 
-QDataStream& operator<<(QDataStream&, const SireFF::FFIdx&);
-QDataStream& operator>>(QDataStream&, SireFF::FFIdx&);
+QDataStream& operator<<(QDataStream&, const SireMol::BeadIdx&);
+QDataStream& operator>>(QDataStream&, SireMol::BeadIdx&);
 
-namespace SireFF
+namespace SireMol
 {
 
-/** This is an ID object that is used to index forcefields (e.g. index
-    in a list or array).
+class CGAtomIdx;
+
+/** This is an ID object that is used to index CutGroups
 
     @author Christopher Woods
 */
-class SIREFF_EXPORT FFIdx : public SireID::Index_T_<FFIdx>, public FFID
+class SIREMOL_EXPORT BeadIdx 
+       : public SireID::Index_T_<BeadIdx>, public BeadID
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const FFIdx&);
-friend QDataStream& ::operator>>(QDataStream&, FFIdx&);
+friend QDataStream& ::operator<<(QDataStream&, const BeadIdx&);
+friend QDataStream& ::operator>>(QDataStream&, BeadIdx&);
 
 public:
-    FFIdx();
-    explicit FFIdx(qint32 idx);
+    BeadIdx();
     
-    FFIdx(const FFIdx &other);
+    explicit BeadIdx(qint32 idx);
     
-    ~FFIdx();
+    BeadIdx(const BeadIdx &other);
+    
+    ~BeadIdx();
     
     static const char* typeName();
-    
+
     const char* what() const
     {
-        return FFIdx::typeName();
+        return SireID::Index_T_<BeadIdx>::what();
     }
     
-    FFIdx* clone() const;
+    BeadIdx* clone() const;
     
-    static FFIdx null();
+    static BeadIdx null();
     
     bool isNull() const;
     
@@ -82,30 +85,28 @@ public:
 
     QString toString() const;
     
-    FFIdx& operator=(const FFIdx &other);
+    BeadIdx& operator=(const BeadIdx &other);
     
     bool operator==(const SireID::ID &other) const;
     
-    using SireID::Index_T_<FFIdx>::operator=;
+    using SireID::Index_T_<BeadIdx>::operator=;
 
-    using SireID::Index_T_<FFIdx>::operator==;
-    using SireID::Index_T_<FFIdx>::operator!=;
+    using SireID::Index_T_<BeadIdx>::operator==;
+    using SireID::Index_T_<BeadIdx>::operator!=;
 
-    using SireID::Index_T_<FFIdx>::operator+=;
-    using SireID::Index_T_<FFIdx>::operator++;
-    using SireID::Index_T_<FFIdx>::operator-=;
-    using SireID::Index_T_<FFIdx>::operator--;
+    using SireID::Index_T_<BeadIdx>::operator+=;
+    using SireID::Index_T_<BeadIdx>::operator++;
+    using SireID::Index_T_<BeadIdx>::operator-=;
+    using SireID::Index_T_<BeadIdx>::operator--;
     
-    using SireID::Index_T_<FFIdx>::map;
-    
-    QList<FFIdx> map(const ForceFields &ffields) const;
+    using SireID::Index_T_<BeadIdx>::map;
 };
     
 }
 
-Q_DECLARE_METATYPE(SireFF::FFIdx);
+Q_DECLARE_METATYPE(SireMol::BeadIdx);
 
-SIRE_EXPOSE_CLASS( SireFF::FFIdx )
+SIRE_EXPOSE_CLASS( SireMol::BeadIdx )
 
 SIRE_END_HEADER
 

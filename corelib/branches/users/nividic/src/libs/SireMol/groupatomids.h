@@ -40,6 +40,12 @@
 #include "chainid.h"
 #include "segid.h"
 
+#include "atomidentifier.h"
+#include "chainidentifier.h"
+#include "cgidentifier.h"
+#include "residentifier.h"
+#include "segidentifier.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol

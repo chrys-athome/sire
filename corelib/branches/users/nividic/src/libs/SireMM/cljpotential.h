@@ -205,11 +205,16 @@ public:
     bool setSwitchingFunction(const SwitchingFunction &new_switchfunc);
     bool setShiftElectrostatics(bool switchelectro);
     bool setCombiningRules(const QString &combiningrules);
+    bool setUseReactionField(bool switchrf);
     
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
     bool shiftElectrostatics() const;
+    bool useReactionField() const;
     const QString& combiningRules() const;
+
+    bool setReactionFieldDielectric(double dielectric);
+    double reactionFieldDielectric() const;
 
 protected:
     CLJPotential();
@@ -242,6 +247,13 @@ protected:
 
     /** The combining rules to use to get mixed LJ parameters */
     LJParameterDB::CombiningRules combining_rules;
+    
+    /** The dielectric constant for the solvent if a reaction field is to be used */
+    double rf_dielectric_constant;
+    
+    /** Whether or not to use the reaction field method to handle
+        the cutoff */
+    bool use_reaction_field;
     
     /** Whether or not the LJ pair matrix needs to be rebuilt */
     bool need_update_ljpairs;
@@ -1144,6 +1156,27 @@ public:
     {
         return CLJPot::combiningRules();
     }
+    
+    bool setUseReactionField(bool switchrf)
+    {
+        return CLJPot::setUseReactionField(switchrf);
+    }
+    
+    bool useReactionField() const
+    {
+        return CLJPot::useReactionField();
+    }
+
+    bool setReactionFieldDielectric(double dielectric)
+    {
+        return CLJPot::setReactionFieldDielectric(dielectric);
+    }
+    
+    double reactionFieldDielectric() const
+    {
+        return CLJPot::reactionFieldDielectric();
+    }
+
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS

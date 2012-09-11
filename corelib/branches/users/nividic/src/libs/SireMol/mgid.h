@@ -97,11 +97,6 @@ protected:
 }
 
 #include "mgidentifier.h"
-#include "mgnum.h"
-
-Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::MGID> )
-Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::MGID> )
-Q_DECLARE_METATYPE( SireID::Specify<SireMol::MGID> )
 
 SIRE_EXPOSE_CLASS( SireMol::MGID )
 SIRE_EXPOSE_ALIAS( SireID::Specify<SireMol::MGID>, SireMol::Specify_MGID_ )

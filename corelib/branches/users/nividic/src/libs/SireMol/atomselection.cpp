@@ -2872,9 +2872,6 @@ AtomSelection& AtomSelection::intersect(CGIdx cgidx)
     if (not this->intersects(cgidx))
         return this->deselectAll();
 
-    else if (this->selectedAll(cgidx))
-        return *this;
-        
     else
     {
         int ncg = info().nCutGroups();
@@ -2908,10 +2905,38 @@ AtomSelection& AtomSelection::intersect(const QList<AtomIdx> &atomidxs)
 */
 AtomSelection& AtomSelection::intersect(const QList<CGIdx> &cgidxs)
 {
-    AtomSelection copy(*this);
-    copy.selectOnly(cgidxs);
+    if (cgidxs.isEmpty())
+    {
+        //nothing is selected
+        this->deselectAll();
+        return *this;
+    }
+    else if (cgidxs.count() == 1)
+    {
+        return this->intersect(cgidxs.first());
+    }
+    else
+    {
+        QSet<CGIdx> selected;
+        selected.reserve(cgidxs.count());
 
-    return this->intersect(copy);
+        foreach (CGIdx idx, cgidxs)
+        {
+            selected.insert(idx);
+        }
+
+        int ncg = info().nCutGroups();
+
+        for (CGIdx idx(0); idx < ncg; ++idx)
+        {
+            if (not selected.contains(idx))
+            {
+                this->_pvt_deselect(idx);
+            }
+        }
+
+        return *this;
+    }
 }
 
 /** Intersect this selection with the index 'residx'

@@ -242,11 +242,14 @@ AtomicCoords3D AtomicCoords3D::applyMask(const QSet<quint32> &idxs) const
     else if (idxs.isEmpty())
         return AtomicCoords3D();
         
+    else if (idxs.count() == 1)
+        return AtomicCoords3D( coords[*(idxs.constBegin())] );
+
     //mask by the indicies
     quint32 ngroups = coords.count();
     
     QVector<CoordGroup> cgroups;
-    cgroups.reserve(ngroups);
+    cgroups.reserve(idxs.count());
     
     const CoordGroup *cgroups_array = coords.constData();
     

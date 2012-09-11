@@ -164,12 +164,6 @@ double DistVector::z() const
     return sc[3] * sc[2];
 }
 
-/** Allow auto-conversion to a Vector */
-DistVector::operator Vector() const
-{
-    return Vector( x(), y(), z() );
-}
-
 /** Return the length of the vector */
 double DistVector::length() const
 {

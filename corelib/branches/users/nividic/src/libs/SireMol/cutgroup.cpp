@@ -46,6 +46,8 @@
 
 #include <QDebug>
 
+#include "mover_metaid.h"
+
 using namespace SireMol;
 using namespace SireStream;
 

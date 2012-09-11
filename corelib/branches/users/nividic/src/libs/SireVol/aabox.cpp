@@ -308,6 +308,25 @@ bool AABox::intersects(const AABox &box) const
     return dx <= 0.0 and dy <= 0.0 and dz <= 0.0;
 }
 
+/** Return whether or not this box contains 'other' */
+bool AABox::contains(const AABox &other) const
+{
+    const Vector mindelta = this->minCoords() - other.minCoords();
+    
+    if (mindelta.x() > 0 or mindelta.y() > 0 or mindelta.z() > 0)
+        return false;
+
+    else
+    {
+        const Vector maxdelta = this->maxCoords() - other.maxCoords();
+        
+        if (maxdelta.x() < 0 or maxdelta.y() < 0 or maxdelta.z() < 0)
+            return false;
+        else
+            return true;
+    }
+}
+
 /** Translate this AABox by 'delta' */
 void AABox::translate(const Vector &delta)
 {

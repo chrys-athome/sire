@@ -48,6 +48,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "mover_metaid.h"
+
 #include <QDebug>
 
 using namespace SireMol;

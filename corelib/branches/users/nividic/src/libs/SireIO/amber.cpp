@@ -37,6 +37,7 @@
 
 #include "SireMol/atomcharges.h"
 #include "SireMol/atommasses.h"
+#include "SireMol/atomelements.h"
 #include "SireMol/connectivity.h"
 #include "SireMol/selector.hpp"
 
@@ -112,7 +113,8 @@ public:
 };
 
 /** enumerates the FLAGS in a TOP file*/
-enum { TITLE = 1, //a TITLE flag in a top file
+enum { UNKNOWN = 0, //a flag that is not known, e.g. in newer format top files
+       TITLE = 1, //a TITLE flag in a top file
        POINTERS = 2, // a POINTERS flag in a top file
        ATOM_NAME = 3, //a ATOM_NAME flag in a top file
        CHARGE = 4, //a CHARGE flag in a top file
@@ -297,9 +299,8 @@ static void processFlagLine(const QStringList &words, int &flag)
     else if (words[1] == "SCNB_SCALE_FACTOR")
         flag = SCNB_SCALE_FACTOR;
     else
-        throw SireError::program_bug( QObject::tr(
-                "Does not know what to do with this flag: '%1'").arg(words[1]), 
-                    CODELOC );
+        throw SireError::unsupported( QObject::tr(
+                  "The flag \"%1\" is not supported...").arg(words[1]), CODELOC );
 }
 
 /** Processes a line that starts with %FORMAT*/
@@ -447,6 +448,8 @@ static void processDoubleLine(const QString &line, const FortranFormat &format,
 static void setAtomParameters(AtomEditor &editatom, MolEditor &editmol,
                               const QList<double> &crdCoords, 
                               const PropertyName &coords_property, 
+                              const QList<int> &element,
+                              const PropertyName &element_property,
                               const QList<double> &charge, 
                               const PropertyName &charge_property, 
                               const QList<double> &mass, 
@@ -461,12 +464,13 @@ static void setAtomParameters(AtomEditor &editatom, MolEditor &editmol,
                               const QList<int> &pointers)
 {
     //AtomEditor editatom = editmol.atom(AtomIdx(atomIndex));
-    int atomNumber = editatom.number().value();
   
+    int atomNumber = editatom.number().value();
+
     //qDebug() << " Coordinates for number..." << atomNumber;
     // set the coordinates. index into coordinates array is idx = 3 * ( atom.number().value() -1)
     int array_index = 3 * ( atomNumber - 1 );
-
+         
     //qDebug() << " array_index " << array_index;
     //qDebug() << " crdCoords.size() " << crdCoords.size();
     //qDebug() << " crdCoords[ array_index ] " << crdCoords[array_index];
@@ -491,6 +495,12 @@ static void setAtomParameters(AtomEditor &editatom, MolEditor &editmol,
     // set the masses
     SireUnits::Dimension::MolarMass ms = mass[atomNumber - 1] * g_per_mol; 
     editatom.setProperty( mass_property.source(), ms);
+
+    // set the element (if it exists)
+    if (not element.isEmpty())
+    {
+        editatom.setProperty( element_property.source(), Element(element[atomNumber-1]) );
+    }
   
     // set the LJ parameters
     // For atom 'i' first get the 'itype' from atom_type_index
@@ -1415,6 +1425,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
     QList<double> charge;
     QList<double> mass;
     QList<int> atom_type_index;
+    QList<int> element;
     QList<int> num_excluded_atoms;
     QList<int> nb_parm_index;
     QStringList res_label;
@@ -1708,6 +1719,7 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
 
     PropertyName coords_property = PropertyName("coordinates");
     PropertyName charge_property = PropertyName("charge");
+    PropertyName element_property = PropertyName("element");
     PropertyName mass_property = PropertyName("mass");
     PropertyName lj_property = PropertyName("LJ");
     PropertyName ambertype_property = PropertyName("ambertype");
@@ -1830,9 +1842,11 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
             //qDebug() << " Parameterizing atom " << i;
             // Now that the structure of the molecule has been built, we assign the 
             // following atom properties: coordinates, charge, mass, lj , amber_atom_type
+            // and element (if element is available)
             AtomEditor editatom = editmol.atom(AtomIdx(i)); 
 
-            setAtomParameters( editatom, editmol, crd_coords, coords_property, 
+            setAtomParameters( editatom, editmol, crd_coords, coords_property,
+                               element, element_property, 
                                charge, charge_property,
                                mass, mass_property, atom_type_index, 
                                nb_parm_index, lj_a_coeff, 

@@ -104,7 +104,6 @@ public:
 
 }
 
-Q_DECLARE_TYPEINFO(SireMol::AtomNum, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMol::AtomNum);
 
 SIRE_EXPOSE_CLASS( SireMol::AtomNum )

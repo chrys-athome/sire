@@ -146,8 +146,6 @@ public:
     static DistVector generate(double dst, const DistVector &v1, const Angle &ang,
                                const DistVector &v2, const Angle &dih, 
                                const DistVector &v3);
-
-    operator Vector() const;
 };
 
 }
