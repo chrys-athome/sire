@@ -284,6 +284,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         cljpot.switchfunc = cljpot.props.property("switchingFunction")
                                         .asA<SwitchingFunction>();
     
+        cljpot.rf_dielectric_constant = cljpot.props.property("reactionFieldDielectric")
+                                            .asA<VariantProperty>().convertTo<double>();
+                                            
+        cljpot.use_reaction_field = cljpot.props.property("useReactionField")
+                                        .asA<VariantProperty>().convertTo<bool>();
+    
         cljpot.combining_rules = LJParameterDB::interpret(
                                     cljpot.props.property("combiningRules")
                                         .asA<VariantProperty>().convertTo<QString>() );
@@ -303,6 +309,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 CLJPotential::CLJPotential()
              : spce( Space::null() ), switchfunc( SwitchingFunction::null() ),
                combining_rules( LJParameterDB::interpret("arithmetic") ),
+               rf_dielectric_constant(1), use_reaction_field(false),
                need_update_ljpairs(true), use_electrostatic_shifting(false)
 {
     //record the defaults
@@ -312,6 +319,8 @@ CLJPotential::CLJPotential()
                        VariantProperty( LJParameterDB::toString(combining_rules) ) );
     props.setProperty( "shiftElectrostatics",
                        VariantProperty(use_electrostatic_shifting) );
+    props.setProperty("useReactionField", VariantProperty(use_reaction_field));
+    props.setProperty("reactionFieldDielectric", VariantProperty(rf_dielectric_constant));
 }
 
 /** Copy constructor */
@@ -319,6 +328,8 @@ CLJPotential::CLJPotential(const CLJPotential &other)
              : ljpairs(other.ljpairs), props(other.props),
                spce(other.spce), switchfunc(other.switchfunc),
                combining_rules(other.combining_rules),
+               rf_dielectric_constant(other.rf_dielectric_constant),
+               use_reaction_field(other.use_reaction_field),
                need_update_ljpairs(other.need_update_ljpairs),
                use_electrostatic_shifting(other.use_electrostatic_shifting)
 {}
@@ -337,6 +348,8 @@ CLJPotential& CLJPotential::operator=(const CLJPotential &other)
         spce = other.spce;
         switchfunc = other.switchfunc;
         combining_rules = other.combining_rules;
+        rf_dielectric_constant = other.rf_dielectric_constant;
+        use_reaction_field = other.use_reaction_field;
         need_update_ljpairs = other.need_update_ljpairs;
         use_electrostatic_shifting = other.use_electrostatic_shifting;
     }
@@ -422,6 +435,10 @@ bool CLJPotential::setShiftElectrostatics(bool switchelectro)
     {
         use_electrostatic_shifting = switchelectro;
         props.setProperty( "shiftElectrostatics", VariantProperty(switchelectro) );
+        
+        if (use_electrostatic_shifting)
+            this->setUseReactionField(false);
+        
         this->changedPotential();
         return true;
     }
@@ -467,6 +484,16 @@ bool CLJPotential::setProperty(const QString &name, const Property &value)
         return this->setShiftElectrostatics( value.asA<VariantProperty>()
                                                      .convertTo<bool>() );
     }
+    else if (name == QLatin1String("useReactionField"))
+    {
+        return this->setUseReactionField( value.asA<VariantProperty>()
+                                                    .convertTo<bool>() );
+    }
+    else if (name == QLatin1String("reactionFieldDielectric"))
+    {
+        return this->setReactionFieldDielectric( value.asA<VariantProperty>()
+                                                        .convertTo<double>() );
+    }
     else if (name == QLatin1String("combiningRules"))
     {
         return this->setCombiningRules( value.asA<VariantProperty>()
@@ -506,6 +533,55 @@ bool CLJPotential::shiftElectrostatics() const
 const QString& CLJPotential::combiningRules() const
 {
     return LJParameterDB::toString(combining_rules);
+}
+
+/** Turn on the use of the reaction field method for handling the cutoff */
+bool CLJPotential::setUseReactionField(bool switchrf)
+{
+    if (use_reaction_field != switchrf)
+    {
+        use_reaction_field = switchrf;
+        props.setProperty( "useReactionField", VariantProperty(use_reaction_field) );
+        
+        if (use_reaction_field)
+            this->setShiftElectrostatics(false);
+        
+        this->changedPotential();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Return whether or not the reaction field method is being used */
+bool CLJPotential::useReactionField() const
+{
+    return use_reaction_field;
+}
+
+/** Set the dielectric constant to use for the reaction field. Note that this
+    only has an effect if the reaction field cutoff method is being used */
+bool CLJPotential::setReactionFieldDielectric(double dielectric)
+{
+    if (dielectric != rf_dielectric_constant)
+    {
+        rf_dielectric_constant = dielectric;
+        props.setProperty("reactionFieldDielectric", VariantProperty(dielectric) );
+        
+        if (use_reaction_field)
+            this->changedPotential();
+            
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Return the dielectric constant used for the reaction field cutoff. This 
+    only has an effect if the reaction field cutoff method is being used */
+double CLJPotential::reactionFieldDielectric() const
+{
+    return rf_dielectric_constant;
 }
 
 /////////////
@@ -1008,6 +1084,222 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                     }
                 }
                 #endif
+                
+                cnrg += icnrg;
+                ljnrg += iljnrg;
+            }
+        }
+    }
+    else if (use_reaction_field)
+    {
+        //use the reaction field potential
+        // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
+        // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+        // c = (1/r_c) * (3 eps)/(2 eps + 1)
+        
+        double Rc = switchfunc->electrostaticCutoffDistance();
+        
+        if (Rc != switchfunc->vdwCutoffDistance())
+            throw SireError::unsupported( QObject::tr(
+                    "This code does not support having electrostatic shifting together "
+                    "with different coulomb and vdw cutoffs..."), CODELOC );
+        
+        if (Rc > 1e9)
+        {
+            Rc = 1e9;
+        }
+
+        const double k_rf = (1.0 / pow_3(Rc)) * ( (rf_dielectric_constant-1) /
+                                                  (2*rf_dielectric_constant + 1) );
+        const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric_constant) /
+                                           (2*rf_dielectric_constant + 1) );
+        
+        const double one_over_Rc = double(1) / Rc;
+        const double one_over_Rc2 = double(1) / (Rc*Rc);
+        
+        for (quint32 igroup=0; igroup<ngroups0; ++igroup)
+        {
+            const Parameters::Array &params0 = molparams0_array[igroup];
+            const CoordGroup &group0 = groups0_array[igroup];
+            const AABox &aabox0 = group0.aaBox();
+            const quint32 nats0 = group0.count();
+            const Parameter *params0_array = params0.constData();
+            
+            for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
+            {
+                const CoordGroup &group1 = groups1_array[jgroup];
+                const Parameters::Array &params1 = molparams1_array[jgroup];
+                
+                //check first that these two CoordGroups could be within cutoff
+                //(if there is only one CutGroup in both molecules then this
+                //test has already been performed and passed)
+                const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
+                                            spce->beyond(Rc, aabox0, group1.aaBox());
+                
+                if (not within_cutoff)
+                    //this CutGroup is beyond the cutoff distance
+                    continue;
+                
+                //calculate all of the interatomic distances
+                const double mindist = spce->calcDist(group0, group1, distmat);
+                
+                if (mindist > Rc)
+                {
+                    //all of the atoms are definitely beyond cutoff
+                    continue;
+                }
+                   
+                double icnrg = 0;
+                double iljnrg = 0;
+                
+                //loop over all interatomic pairs and calculate the energies
+                const quint32 nats1 = group1.count();
+                const Parameter *params1_array = params1.constData();
+
+                //#ifdef SIRE_USE_SSE
+                if (false)
+                {
+                    const int remainder = nats1 % 2;
+                    
+                    __m128d sse_cnrg = { 0, 0 };
+                    __m128d sse_ljnrg = { 0, 0 };
+
+                    const __m128d sse_one = { 1.0, 1.0 };
+                    const __m128d sse_Rc = { Rc, Rc };
+                    const __m128d sse_one_over_Rc = { one_over_Rc, one_over_Rc };
+                    const __m128d sse_one_over_Rc2 = { one_over_Rc2, one_over_Rc2 };
+                    
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        const Parameter &param0 = params0_array[i];
+                        
+                        __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge, 
+                                                       param0.reduced_charge );
+                                             
+                        //process atoms in pairs (so can then use SSE)
+                        for (quint32 j=0; j<nats1-1; j += 2)
+                        {
+                            const Parameter &param10 = params1_array[j];
+                            const Parameter &param11 = params1_array[j+1];
+                            
+                            const __m128d sse_r = _mm_set_pd( distmat[j], distmat[j+1] );
+                            const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
+                            {
+                                __m128d nrg = _mm_sub_pd(sse_r, sse_Rc);
+                                nrg = _mm_mul_pd(nrg, sse_one_over_Rc2);
+                                nrg = _mm_add_pd(nrg, sse_one_over_r);
+                                nrg = _mm_sub_pd(nrg, sse_one_over_Rc);
+
+                                __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
+                                                              param11.reduced_charge );
+                        
+                                sse_chg = _mm_mul_pd(sse_chg, sse_chg0);
+                        
+                                nrg = _mm_mul_pd(sse_chg, nrg);
+
+                                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
+                                nrg = _mm_and_pd(nrg, sse_in_cutoff);
+                                
+                                sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
+                            }
+                                               
+                            const LJPair &ljpair0 = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param10.ljid)];
+                        
+                            const LJPair &ljpair1 = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param11.ljid)];
+                        
+                            __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                            __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
+                                                          ljpair1.epsilon() );
+                                                        
+                            //calculate (sigma/r)^6 and (sigma/r)^12
+                            __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_one_over_r);
+                            sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,  
+                                                             sse_sig_over_dist2 );
+                                                         
+                            __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
+                                                                    sse_sig_over_dist2);
+                                                            
+                            sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
+                                                            sse_sig_over_dist2);
+                                                         
+                            __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
+                                                                     sse_sig_over_dist6);
+                                                  
+                            __m128d nrg = _mm_sub_pd(sse_sig_over_dist12,
+                                                     sse_sig_over_dist6);
+                                                     
+                            nrg = _mm_mul_pd(nrg, sse_eps);
+                            sse_ljnrg = _mm_add_pd(sse_ljnrg, nrg);
+                        }
+                              
+                        if (remainder == 1)
+                        {
+                            const Parameter &param1 = params1_array[nats1-1];
+
+                            const double r = distmat[nats1-1];
+                            const double one_over_r = double(1) / r;
+                            
+                            const double in_cutoff = (r < Rc);
+                            
+                            icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+        
+                            iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                          sig_over_dist6);
+                        }
+                    }
+                    
+                    icnrg += *((const double*)&sse_cnrg) +
+                             *( ((const double*)&sse_cnrg) + 1 );
+                             
+                    iljnrg += *((const double*)&sse_ljnrg) +
+                              *( ((const double*)&sse_ljnrg) + 1 );
+                }
+                //#else
+                else
+                {
+                    for (quint32 i=0; i<nats0; ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        const Parameter &param0 = params0_array[i];
+                    
+                        for (quint32 j=0; j<nats1; ++j)
+                        {
+                            const Parameter &param1 = params1_array[j];
+
+                            const double r = distmat[j];
+                            const double one_over_r = double(1) / r;
+                            
+                            const double in_cutoff = (r < Rc);
+                            
+                            icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r + k_rf*r*r - c_rf);
+
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+        
+                            iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                          sig_over_dist6);
+                        }
+                    }
+                }
+                //#endif
                 
                 cnrg += icnrg;
                 ljnrg += iljnrg;
