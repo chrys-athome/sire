@@ -1294,14 +1294,14 @@ void GridFF::recalculateEnergy()
         int grid_ms = t->elapsed();
 
         t->start();
-        double nrg = test_gridff->energy();
+        double nrg = 0; //test_gridff->energy();
         int ms = t->elapsed();
         
-        double dcoul = this->energy(components().coulomb()) -
-                       test_gridff->energy(components().coulomb());
+        double dcoul = 0; //this->energy(components().coulomb()) -
+                          //test_gridff->energy(components().coulomb());
                        
-        double dlj = this->energy(components().lj()) -
-                     test_gridff->energy(components().lj());
+        double dlj = 0; //this->energy(components().lj()) -
+                        //test_gridff->energy(components().lj());
                      
         if (must_recalculate)
         {
