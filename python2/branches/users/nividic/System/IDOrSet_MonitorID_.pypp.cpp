@@ -31,9 +31,8 @@ void register_IDOrSet_MonitorID__class(){
 
     { //::SireID::IDOrSet< SireSystem::MonitorID >
         typedef bp::class_< SireID::IDOrSet< SireSystem::MonitorID >, bp::bases< SireSystem::MonitorID, SireID::ID > > IDOrSet_MonitorID__exposer_t;
-        IDOrSet_MonitorID__exposer_t IDOrSet_MonitorID__exposer = IDOrSet_MonitorID__exposer_t( "IDOrSet_MonitorID_" );
+        IDOrSet_MonitorID__exposer_t IDOrSet_MonitorID__exposer = IDOrSet_MonitorID__exposer_t( "IDOrSet_MonitorID_", bp::init< >() );
         bp::scope IDOrSet_MonitorID__scope( IDOrSet_MonitorID__exposer );
-        IDOrSet_MonitorID__exposer.def( bp::init< >() );
         IDOrSet_MonitorID__exposer.def( bp::init< SireSystem::MonitorID const & >(( bp::arg("id") )) );
         IDOrSet_MonitorID__exposer.def( bp::init< SireSystem::MonitorID const &, SireSystem::MonitorID const & >(( bp::arg("id0"), bp::arg("id1") )) );
         IDOrSet_MonitorID__exposer.def( bp::init< QList< SireSystem::MonitorIdentifier > const & >(( bp::arg("ids") )) );

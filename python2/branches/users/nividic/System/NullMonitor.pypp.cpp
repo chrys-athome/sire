@@ -29,9 +29,8 @@ void register_NullMonitor_class(){
 
     { //::SireSystem::NullMonitor
         typedef bp::class_< SireSystem::NullMonitor, bp::bases< SireSystem::SystemMonitor, SireBase::Property > > NullMonitor_exposer_t;
-        NullMonitor_exposer_t NullMonitor_exposer = NullMonitor_exposer_t( "NullMonitor" );
+        NullMonitor_exposer_t NullMonitor_exposer = NullMonitor_exposer_t( "NullMonitor", bp::init< >() );
         bp::scope NullMonitor_scope( NullMonitor_exposer );
-        NullMonitor_exposer.def( bp::init< >() );
         NullMonitor_exposer.def( bp::init< SireSystem::NullMonitor const & >(( bp::arg("other") )) );
         { //::SireSystem::NullMonitor::clearStatistics
         

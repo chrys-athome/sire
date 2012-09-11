@@ -35,9 +35,8 @@ void register_ElementParameterName3D_class(){
 
     { //::Squire::ElementParameterName3D
         typedef bp::class_< Squire::ElementParameterName3D, bp::bases< Squire::ElementParameterName > > ElementParameterName3D_exposer_t;
-        ElementParameterName3D_exposer_t ElementParameterName3D_exposer = ElementParameterName3D_exposer_t( "ElementParameterName3D" );
+        ElementParameterName3D_exposer_t ElementParameterName3D_exposer = ElementParameterName3D_exposer_t( "ElementParameterName3D", bp::init< >() );
         bp::scope ElementParameterName3D_scope( ElementParameterName3D_exposer );
-        ElementParameterName3D_exposer.def( bp::init< >() );
         ElementParameterName3D_exposer.def( "__copy__", &__copy__);
         ElementParameterName3D_exposer.def( "__deepcopy__", &__copy__);
         ElementParameterName3D_exposer.def( "clone", &__copy__);

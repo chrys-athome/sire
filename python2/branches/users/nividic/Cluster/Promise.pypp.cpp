@@ -35,9 +35,8 @@ void register_Promise_class(){
 
     { //::SireCluster::Promise
         typedef bp::class_< SireCluster::Promise > Promise_exposer_t;
-        Promise_exposer_t Promise_exposer = Promise_exposer_t( "Promise" );
+        Promise_exposer_t Promise_exposer = Promise_exposer_t( "Promise", bp::init< >() );
         bp::scope Promise_scope( Promise_exposer );
-        Promise_exposer.def( bp::init< >() );
         Promise_exposer.def( bp::init< SireCluster::Promise const & >(( bp::arg("other") )) );
         { //::SireCluster::Promise::abort
         

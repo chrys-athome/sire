@@ -51,9 +51,8 @@ void register_InternalParameterNames_class(){
 
     { //::SireMM::InternalParameterNames
         typedef bp::class_< SireMM::InternalParameterNames, bp::bases< SireMM::StretchBendTorsionParameterName, SireMM::BendBendParameterName, SireMM::StretchBendParameterName, SireMM::StretchStretchParameterName, SireMM::UreyBradleyParameterName, SireMM::ImproperParameterName, SireMM::DihedralParameterName, SireMM::AngleParameterName, SireMM::BondParameterName > > InternalParameterNames_exposer_t;
-        InternalParameterNames_exposer_t InternalParameterNames_exposer = InternalParameterNames_exposer_t( "InternalParameterNames" );
+        InternalParameterNames_exposer_t InternalParameterNames_exposer = InternalParameterNames_exposer_t( "InternalParameterNames", bp::init< >() );
         bp::scope InternalParameterNames_scope( InternalParameterNames_exposer );
-        InternalParameterNames_exposer.def( bp::init< >() );
         InternalParameterNames_exposer.def( "__copy__", &__copy__);
         InternalParameterNames_exposer.def( "__deepcopy__", &__copy__);
         InternalParameterNames_exposer.def( "clone", &__copy__);

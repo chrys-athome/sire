@@ -41,9 +41,8 @@ void register_RealPower_class(){
 
     { //::SireCAS::RealPower
         typedef bp::class_< SireCAS::RealPower, bp::bases< SireCAS::PowerFunction, SireCAS::ExBase > > RealPower_exposer_t;
-        RealPower_exposer_t RealPower_exposer = RealPower_exposer_t( "RealPower" );
+        RealPower_exposer_t RealPower_exposer = RealPower_exposer_t( "RealPower", bp::init< >() );
         bp::scope RealPower_scope( RealPower_exposer );
-        RealPower_exposer.def( bp::init< >() );
         RealPower_exposer.def( bp::init< SireCAS::Expression const &, double >(( bp::arg("expression"), bp::arg("power") )) );
         RealPower_exposer.def( bp::init< SireCAS::RealPower const & >(( bp::arg("other") )) );
         { //::SireCAS::RealPower::evaluate

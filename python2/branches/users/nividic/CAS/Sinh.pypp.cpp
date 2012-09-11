@@ -33,9 +33,8 @@ void register_Sinh_class(){
 
     { //::SireCAS::Sinh
         typedef bp::class_< SireCAS::Sinh, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Sinh_exposer_t;
-        Sinh_exposer_t Sinh_exposer = Sinh_exposer_t( "Sinh" );
+        Sinh_exposer_t Sinh_exposer = Sinh_exposer_t( "Sinh", bp::init< >() );
         bp::scope Sinh_scope( Sinh_exposer );
-        Sinh_exposer.def( bp::init< >() );
         Sinh_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Sinh_exposer.def( bp::init< SireCAS::Sinh const & >(( bp::arg("other") )) );
         { //::SireCAS::Sinh::evaluate

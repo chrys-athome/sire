@@ -39,9 +39,8 @@ void register_ThreeAtomFunctions_class(){
 
     { //::SireMM::ThreeAtomFunctions
         typedef bp::class_< SireMM::ThreeAtomFunctions, bp::bases< SireMM::AtomFunctions, SireMol::MoleculeProperty, SireMol::MolViewProperty, SireBase::Property > > ThreeAtomFunctions_exposer_t;
-        ThreeAtomFunctions_exposer_t ThreeAtomFunctions_exposer = ThreeAtomFunctions_exposer_t( "ThreeAtomFunctions" );
+        ThreeAtomFunctions_exposer_t ThreeAtomFunctions_exposer = ThreeAtomFunctions_exposer_t( "ThreeAtomFunctions", bp::init< >() );
         bp::scope ThreeAtomFunctions_scope( ThreeAtomFunctions_exposer );
-        ThreeAtomFunctions_exposer.def( bp::init< >() );
         ThreeAtomFunctions_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         ThreeAtomFunctions_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         ThreeAtomFunctions_exposer.def( bp::init< SireMM::ThreeAtomFunctions const & >(( bp::arg("other") )) );

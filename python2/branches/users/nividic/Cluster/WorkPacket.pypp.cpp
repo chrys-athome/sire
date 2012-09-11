@@ -32,9 +32,8 @@ void register_WorkPacket_class(){
 
     { //::SireCluster::WorkPacket
         typedef bp::class_< SireCluster::WorkPacket > WorkPacket_exposer_t;
-        WorkPacket_exposer_t WorkPacket_exposer = WorkPacket_exposer_t( "WorkPacket" );
+        WorkPacket_exposer_t WorkPacket_exposer = WorkPacket_exposer_t( "WorkPacket", bp::init< >() );
         bp::scope WorkPacket_scope( WorkPacket_exposer );
-        WorkPacket_exposer.def( bp::init< >() );
         WorkPacket_exposer.def( bp::init< SireCluster::WorkPacketBase const & >(( bp::arg("work") )) );
         WorkPacket_exposer.def( bp::init< SireCluster::WorkPacket const & >(( bp::arg("other") )) );
         { //::SireCluster::WorkPacket::abort

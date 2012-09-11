@@ -51,9 +51,8 @@ void register_ThisThread_class(){
 
     { //::SireCluster::ThisThread
         typedef bp::class_< SireCluster::ThisThread > ThisThread_exposer_t;
-        ThisThread_exposer_t ThisThread_exposer = ThisThread_exposer_t( "ThisThread" );
+        ThisThread_exposer_t ThisThread_exposer = ThisThread_exposer_t( "ThisThread", bp::init< >() );
         bp::scope ThisThread_scope( ThisThread_exposer );
-        ThisThread_exposer.def( bp::init< >() );
         ThisThread_exposer.def( bp::init< SireCluster::ThisThread const & >(( bp::arg("other") )) );
         ThisThread_exposer.def( bp::init< SireCluster::Nodes const & >(( bp::arg("nodes") )) );
         { //::SireCluster::ThisThread::operator=

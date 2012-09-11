@@ -86,6 +86,17 @@ void register_CLJPotentialInterface_IntraSoftCLJPotential__class(){
                 , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
+        { //::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::reactionFieldDielectric
+        
+            typedef SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential > exported_class_t;
+            typedef double ( ::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::*reactionFieldDielectric_function_type )(  ) const;
+            reactionFieldDielectric_function_type reactionFieldDielectric_function_value( &::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::reactionFieldDielectric );
+            
+            CLJPotentialInterface_IntraSoftCLJPotential__exposer.def( 
+                "reactionFieldDielectric"
+                , reactionFieldDielectric_function_value );
+        
+        }
         { //::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::setCombiningRules
         
             typedef SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential > exported_class_t;
@@ -108,6 +119,18 @@ void register_CLJPotentialInterface_IntraSoftCLJPotential__class(){
                 "setProperty"
                 , setProperty_function_value
                 , ( bp::arg("name"), bp::arg("value") ) );
+        
+        }
+        { //::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::setReactionFieldDielectric
+        
+            typedef SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential > exported_class_t;
+            typedef bool ( ::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::*setReactionFieldDielectric_function_type )( double ) ;
+            setReactionFieldDielectric_function_type setReactionFieldDielectric_function_value( &::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::setReactionFieldDielectric );
+            
+            CLJPotentialInterface_IntraSoftCLJPotential__exposer.def( 
+                "setReactionFieldDielectric"
+                , setReactionFieldDielectric_function_value
+                , ( bp::arg("dielectric") ) );
         
         }
         { //::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::setShiftElectrostatics
@@ -146,6 +169,18 @@ void register_CLJPotentialInterface_IntraSoftCLJPotential__class(){
                 , ( bp::arg("new_switchfunc") ) );
         
         }
+        { //::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::setUseReactionField
+        
+            typedef SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential > exported_class_t;
+            typedef bool ( ::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::*setUseReactionField_function_type )( bool ) ;
+            setUseReactionField_function_type setUseReactionField_function_value( &::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::setUseReactionField );
+            
+            CLJPotentialInterface_IntraSoftCLJPotential__exposer.def( 
+                "setUseReactionField"
+                , setUseReactionField_function_value
+                , ( bp::arg("switchrf") ) );
+        
+        }
         { //::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::shiftElectrostatics
         
             typedef SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential > exported_class_t;
@@ -179,6 +214,17 @@ void register_CLJPotentialInterface_IntraSoftCLJPotential__class(){
                 "switchingFunction"
                 , switchingFunction_function_value
                 , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::useReactionField
+        
+            typedef SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential > exported_class_t;
+            typedef bool ( ::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::*useReactionField_function_type )(  ) const;
+            useReactionField_function_type useReactionField_function_value( &::SireMM::CLJPotentialInterface< SireMM::IntraSoftCLJPotential >::useReactionField );
+            
+            CLJPotentialInterface_IntraSoftCLJPotential__exposer.def( 
+                "useReactionField"
+                , useReactionField_function_value );
         
         }
         CLJPotentialInterface_IntraSoftCLJPotential__exposer.staticmethod( "parameters" );

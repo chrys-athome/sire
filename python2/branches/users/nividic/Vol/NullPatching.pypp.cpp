@@ -31,9 +31,8 @@ void register_NullPatching_class(){
 
     { //::SireVol::NullPatching
         typedef bp::class_< SireVol::NullPatching, bp::bases< SireVol::Patching, SireBase::Property > > NullPatching_exposer_t;
-        NullPatching_exposer_t NullPatching_exposer = NullPatching_exposer_t( "NullPatching" );
+        NullPatching_exposer_t NullPatching_exposer = NullPatching_exposer_t( "NullPatching", bp::init< >() );
         bp::scope NullPatching_scope( NullPatching_exposer );
-        NullPatching_exposer.def( bp::init< >() );
         NullPatching_exposer.def( bp::init< SireVol::NullPatching const & >(( bp::arg("other") )) );
         { //::SireVol::NullPatching::nPatches
         

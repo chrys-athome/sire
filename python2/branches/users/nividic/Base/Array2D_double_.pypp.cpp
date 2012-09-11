@@ -27,9 +27,8 @@ void register_Array2D_double__class(){
 
     { //::SireBase::Array2D< double >
         typedef bp::class_< SireBase::Array2D< double >, bp::bases< SireBase::Array2DBase > > Array2D_double__exposer_t;
-        Array2D_double__exposer_t Array2D_double__exposer = Array2D_double__exposer_t( "Array2D_double_" );
+        Array2D_double__exposer_t Array2D_double__exposer = Array2D_double__exposer_t( "Array2D_double_", bp::init< >() );
         bp::scope Array2D_double__scope( Array2D_double__exposer );
-        Array2D_double__exposer.def( bp::init< >() );
         Array2D_double__exposer.def( bp::init< int, int >(( bp::arg("nrows"), bp::arg("ncolumns") )) );
         Array2D_double__exposer.def( bp::init< int, int, double const & >(( bp::arg("nrows"), bp::arg("ncolumns"), bp::arg("default_value") )) );
         Array2D_double__exposer.def( bp::init< SireBase::Array2D< double > const & >(( bp::arg("other") )) );

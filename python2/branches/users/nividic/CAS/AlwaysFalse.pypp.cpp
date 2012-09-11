@@ -43,9 +43,8 @@ void register_AlwaysFalse_class(){
 
     { //::SireCAS::AlwaysFalse
         typedef bp::class_< SireCAS::AlwaysFalse, bp::bases< SireCAS::Condition, SireCAS::ExBase > > AlwaysFalse_exposer_t;
-        AlwaysFalse_exposer_t AlwaysFalse_exposer = AlwaysFalse_exposer_t( "AlwaysFalse" );
+        AlwaysFalse_exposer_t AlwaysFalse_exposer = AlwaysFalse_exposer_t( "AlwaysFalse", bp::init< >() );
         bp::scope AlwaysFalse_scope( AlwaysFalse_exposer );
-        AlwaysFalse_exposer.def( bp::init< >() );
         AlwaysFalse_exposer.def( bp::init< SireCAS::AlwaysFalse const & >(( bp::arg("other") )) );
         { //::SireCAS::AlwaysFalse::alwaysFalse
         

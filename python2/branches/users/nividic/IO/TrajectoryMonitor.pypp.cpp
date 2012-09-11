@@ -45,9 +45,8 @@ void register_TrajectoryMonitor_class(){
 
     { //::SireIO::TrajectoryMonitor
         typedef bp::class_< SireIO::TrajectoryMonitor, bp::bases< SireSystem::SystemMonitor, SireBase::Property > > TrajectoryMonitor_exposer_t;
-        TrajectoryMonitor_exposer_t TrajectoryMonitor_exposer = TrajectoryMonitor_exposer_t( "TrajectoryMonitor" );
+        TrajectoryMonitor_exposer_t TrajectoryMonitor_exposer = TrajectoryMonitor_exposer_t( "TrajectoryMonitor", bp::init< >() );
         bp::scope TrajectoryMonitor_scope( TrajectoryMonitor_exposer );
-        TrajectoryMonitor_exposer.def( bp::init< >() );
         TrajectoryMonitor_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         TrajectoryMonitor_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireIO::IOBase const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("writer"), bp::arg("map")=SireBase::PropertyMap() )) );
         TrajectoryMonitor_exposer.def( bp::init< SireMol::MGID const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("mgid"), bp::arg("map")=SireBase::PropertyMap() )) );

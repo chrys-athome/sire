@@ -51,9 +51,8 @@ void register_BondParameterName_class(){
 
     { //::SireMM::BondParameterName
         typedef bp::class_< SireMM::BondParameterName > BondParameterName_exposer_t;
-        BondParameterName_exposer_t BondParameterName_exposer = BondParameterName_exposer_t( "BondParameterName" );
+        BondParameterName_exposer_t BondParameterName_exposer = BondParameterName_exposer_t( "BondParameterName", bp::init< >() );
         bp::scope BondParameterName_scope( BondParameterName_exposer );
-        BondParameterName_exposer.def( bp::init< >() );
         { //::SireMM::BondParameterName::bond
         
             typedef ::SireBase::PropertyName const & ( ::SireMM::BondParameterName::*bond_function_type )(  ) const;

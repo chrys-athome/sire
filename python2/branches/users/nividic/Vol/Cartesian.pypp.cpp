@@ -39,9 +39,8 @@ void register_Cartesian_class(){
 
     { //::SireVol::Cartesian
         typedef bp::class_< SireVol::Cartesian, bp::bases< SireVol::Space, SireBase::Property > > Cartesian_exposer_t;
-        Cartesian_exposer_t Cartesian_exposer = Cartesian_exposer_t( "Cartesian" );
+        Cartesian_exposer_t Cartesian_exposer = Cartesian_exposer_t( "Cartesian", bp::init< >() );
         bp::scope Cartesian_scope( Cartesian_exposer );
-        Cartesian_exposer.def( bp::init< >() );
         Cartesian_exposer.def( bp::init< SireVol::Cartesian const & >(( bp::arg("other") )) );
         { //::SireVol::Cartesian::beyond
         

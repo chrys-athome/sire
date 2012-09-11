@@ -29,9 +29,8 @@ void register_AABox_class(){
 
     { //::SireVol::AABox
         typedef bp::class_< SireVol::AABox > AABox_exposer_t;
-        AABox_exposer_t AABox_exposer = AABox_exposer_t( "AABox" );
+        AABox_exposer_t AABox_exposer = AABox_exposer_t( "AABox", bp::init< >() );
         bp::scope AABox_scope( AABox_exposer );
-        AABox_exposer.def( bp::init< >() );
         AABox_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("point") )) );
         AABox_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("cent"), bp::arg("extents") )) );
         AABox_exposer.def( bp::init< QVector< SireMaths::Vector > const & >(( bp::arg("coordinates") )) );
@@ -91,6 +90,17 @@ void register_AABox_class(){
                 "center"
                 , center_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
+        
+        }
+        { //::SireVol::AABox::contains
+        
+            typedef bool ( ::SireVol::AABox::*contains_function_type )( ::SireVol::AABox const & ) const;
+            contains_function_type contains_function_value( &::SireVol::AABox::contains );
+            
+            AABox_exposer.def( 
+                "contains"
+                , contains_function_value
+                , ( bp::arg("other") ) );
         
         }
         { //::SireVol::AABox::from

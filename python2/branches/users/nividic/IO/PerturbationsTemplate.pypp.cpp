@@ -85,9 +85,8 @@ void register_PerturbationsTemplate_class(){
 
     { //::SireIO::PerturbationsTemplate
         typedef bp::class_< SireIO::PerturbationsTemplate > PerturbationsTemplate_exposer_t;
-        PerturbationsTemplate_exposer_t PerturbationsTemplate_exposer = PerturbationsTemplate_exposer_t( "PerturbationsTemplate" );
+        PerturbationsTemplate_exposer_t PerturbationsTemplate_exposer = PerturbationsTemplate_exposer_t( "PerturbationsTemplate", bp::init< >() );
         bp::scope PerturbationsTemplate_scope( PerturbationsTemplate_exposer );
-        PerturbationsTemplate_exposer.def( bp::init< >() );
         PerturbationsTemplate_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         PerturbationsTemplate_exposer.def( bp::init< SireIO::PerturbationsTemplate const & >(( bp::arg("other") )) );
         { //::SireIO::PerturbationsTemplate::getAngles

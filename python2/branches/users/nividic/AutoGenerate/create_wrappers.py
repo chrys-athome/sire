@@ -560,6 +560,7 @@ if __name__ == "__main__":
                                            boost_include_dirs + gsl_include_dirs +
                                            openmm_include_dirs,
                            define_symbols = ["GCCXML_PARSE",
+                                             "SIRE_USE_OPENMM",
                                              "SIRE_SKIP_INLINE_FUNCTIONS",
                                              "SIREN_SKIP_INLINE_FUNCTIONS",
                                              "SIRE_INSTANTIATE_TEMPLATES",

@@ -43,9 +43,8 @@ void register_NotEqualTo_class(){
 
     { //::SireCAS::NotEqualTo
         typedef bp::class_< SireCAS::NotEqualTo, bp::bases< SireCAS::Condition, SireCAS::ExBase > > NotEqualTo_exposer_t;
-        NotEqualTo_exposer_t NotEqualTo_exposer = NotEqualTo_exposer_t( "NotEqualTo" );
+        NotEqualTo_exposer_t NotEqualTo_exposer = NotEqualTo_exposer_t( "NotEqualTo", bp::init< >() );
         bp::scope NotEqualTo_scope( NotEqualTo_exposer );
-        NotEqualTo_exposer.def( bp::init< >() );
         NotEqualTo_exposer.def( bp::init< SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("left_hand_side"), bp::arg("right_hand_side") )) );
         NotEqualTo_exposer.def( bp::init< SireCAS::NotEqualTo const & >(( bp::arg("other") )) );
         { //::SireCAS::NotEqualTo::alwaysFalse

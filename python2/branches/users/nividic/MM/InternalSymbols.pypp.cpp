@@ -39,9 +39,8 @@ void register_InternalSymbols_class(){
 
     { //::SireMM::InternalSymbols
         typedef bp::class_< SireMM::InternalSymbols, bp::bases< SireMM::InternalSymbolsBase > > InternalSymbols_exposer_t;
-        InternalSymbols_exposer_t InternalSymbols_exposer = InternalSymbols_exposer_t( "InternalSymbols" );
+        InternalSymbols_exposer_t InternalSymbols_exposer = InternalSymbols_exposer_t( "InternalSymbols", bp::init< >() );
         bp::scope InternalSymbols_scope( InternalSymbols_exposer );
-        InternalSymbols_exposer.def( bp::init< >() );
         { //::SireMM::InternalSymbols::angle
         
             typedef ::SireMM::AngleSymbols const & ( ::SireMM::InternalSymbols::*angle_function_type )(  ) const;

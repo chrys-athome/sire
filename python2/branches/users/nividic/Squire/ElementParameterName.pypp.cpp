@@ -35,9 +35,8 @@ void register_ElementParameterName_class(){
 
     { //::Squire::ElementParameterName
         typedef bp::class_< Squire::ElementParameterName > ElementParameterName_exposer_t;
-        ElementParameterName_exposer_t ElementParameterName_exposer = ElementParameterName_exposer_t( "ElementParameterName" );
+        ElementParameterName_exposer_t ElementParameterName_exposer = ElementParameterName_exposer_t( "ElementParameterName", bp::init< >() );
         bp::scope ElementParameterName_scope( ElementParameterName_exposer );
-        ElementParameterName_exposer.def( bp::init< >() );
         { //::Squire::ElementParameterName::element
         
             typedef ::QString const & ( ::Squire::ElementParameterName::*element_function_type )(  ) const;

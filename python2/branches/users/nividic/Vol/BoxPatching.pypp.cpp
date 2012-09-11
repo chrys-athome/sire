@@ -31,9 +31,8 @@ void register_BoxPatching_class(){
 
     { //::SireVol::BoxPatching
         typedef bp::class_< SireVol::BoxPatching, bp::bases< SireVol::Patching, SireBase::Property > > BoxPatching_exposer_t;
-        BoxPatching_exposer_t BoxPatching_exposer = BoxPatching_exposer_t( "BoxPatching" );
+        BoxPatching_exposer_t BoxPatching_exposer = BoxPatching_exposer_t( "BoxPatching", bp::init< >() );
         bp::scope BoxPatching_scope( BoxPatching_exposer );
-        BoxPatching_exposer.def( bp::init< >() );
         BoxPatching_exposer.def( bp::init< SireVol::Space const & >(( bp::arg("space") )) );
         BoxPatching_exposer.def( bp::init< SireVol::Space const &, SireMaths::Vector const & >(( bp::arg("space"), bp::arg("center") )) );
         BoxPatching_exposer.def( bp::init< SireVol::Space const &, SireUnits::Dimension::Length >(( bp::arg("space"), bp::arg("patch_size") )) );

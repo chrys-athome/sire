@@ -7,13 +7,13 @@
 #include "function.h"
 #include "complexvalues.h"
 #include "values.h"
-#include "trigfuncs.h"
+#include "powerconstant.h"
 #include "hyperbolicfuncs.h"
 #include "sum.h"
 #include "invtrigfuncs.h"
 #include "identities.h"
 #include "minmax.h"
-#include "powerconstant.h"
+#include "trigfuncs.h"
 #include "exp.h"
 #include "product.h"
 #include "invhyperbolicfuncs.h"
@@ -35,12 +35,11 @@ void register_SireCAS_objects()
     ObjectRegistry::registerConverterFor< SireCAS::Function >();
     ObjectRegistry::registerConverterFor< SireCAS::ComplexValues >();
     ObjectRegistry::registerConverterFor< SireCAS::Values >();
-    ObjectRegistry::registerConverterFor< SireCAS::Cos >();
-    ObjectRegistry::registerConverterFor< SireCAS::Sin >();
-    ObjectRegistry::registerConverterFor< SireCAS::Tan >();
-    ObjectRegistry::registerConverterFor< SireCAS::Csc >();
-    ObjectRegistry::registerConverterFor< SireCAS::Sec >();
-    ObjectRegistry::registerConverterFor< SireCAS::Cot >();
+    ObjectRegistry::registerConverterFor< SireCAS::PowerConstant >();
+    ObjectRegistry::registerConverterFor< SireCAS::IntegerPower >();
+    ObjectRegistry::registerConverterFor< SireCAS::RationalPower >();
+    ObjectRegistry::registerConverterFor< SireCAS::RealPower >();
+    ObjectRegistry::registerConverterFor< SireCAS::ComplexPower >();
     ObjectRegistry::registerConverterFor< SireCAS::Cosh >();
     ObjectRegistry::registerConverterFor< SireCAS::Sinh >();
     ObjectRegistry::registerConverterFor< SireCAS::Tanh >();
@@ -57,11 +56,12 @@ void register_SireCAS_objects()
     ObjectRegistry::registerConverterFor< SireCAS::Identities >();
     ObjectRegistry::registerConverterFor< SireCAS::Min >();
     ObjectRegistry::registerConverterFor< SireCAS::Max >();
-    ObjectRegistry::registerConverterFor< SireCAS::PowerConstant >();
-    ObjectRegistry::registerConverterFor< SireCAS::IntegerPower >();
-    ObjectRegistry::registerConverterFor< SireCAS::RationalPower >();
-    ObjectRegistry::registerConverterFor< SireCAS::RealPower >();
-    ObjectRegistry::registerConverterFor< SireCAS::ComplexPower >();
+    ObjectRegistry::registerConverterFor< SireCAS::Cos >();
+    ObjectRegistry::registerConverterFor< SireCAS::Sin >();
+    ObjectRegistry::registerConverterFor< SireCAS::Tan >();
+    ObjectRegistry::registerConverterFor< SireCAS::Csc >();
+    ObjectRegistry::registerConverterFor< SireCAS::Sec >();
+    ObjectRegistry::registerConverterFor< SireCAS::Cot >();
     ObjectRegistry::registerConverterFor< SireCAS::Exp >();
     ObjectRegistry::registerConverterFor< SireCAS::Ln >();
     ObjectRegistry::registerConverterFor< SireCAS::Product >();

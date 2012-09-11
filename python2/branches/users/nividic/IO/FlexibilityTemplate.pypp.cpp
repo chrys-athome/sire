@@ -57,9 +57,8 @@ void register_FlexibilityTemplate_class(){
 
     { //::SireIO::FlexibilityTemplate
         typedef bp::class_< SireIO::FlexibilityTemplate > FlexibilityTemplate_exposer_t;
-        FlexibilityTemplate_exposer_t FlexibilityTemplate_exposer = FlexibilityTemplate_exposer_t( "FlexibilityTemplate" );
+        FlexibilityTemplate_exposer_t FlexibilityTemplate_exposer = FlexibilityTemplate_exposer_t( "FlexibilityTemplate", bp::init< >() );
         bp::scope FlexibilityTemplate_scope( FlexibilityTemplate_exposer );
-        FlexibilityTemplate_exposer.def( bp::init< >() );
         FlexibilityTemplate_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         FlexibilityTemplate_exposer.def( bp::init< SireIO::FlexibilityTemplate const & >(( bp::arg("other") )) );
         { //::SireIO::FlexibilityTemplate::getAngleDeltas

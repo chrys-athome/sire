@@ -51,9 +51,8 @@ void register_Product_class(){
 
     { //::SireCAS::Product
         typedef bp::class_< SireCAS::Product, bp::bases< SireCAS::ExBase > > Product_exposer_t;
-        Product_exposer_t Product_exposer = Product_exposer_t( "Product" );
+        Product_exposer_t Product_exposer = Product_exposer_t( "Product", bp::init< >() );
         bp::scope Product_scope( Product_exposer );
-        Product_exposer.def( bp::init< >() );
         Product_exposer.def( bp::init< SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("ex0"), bp::arg("ex1") )) );
         Product_exposer.def( bp::init< SireCAS::Expressions const & >(( bp::arg("expressions") )) );
         Product_exposer.def( bp::init< SireCAS::Product const & >(( bp::arg("other") )) );

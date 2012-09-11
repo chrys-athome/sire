@@ -51,9 +51,8 @@ void register_StretchStretchParameterName_class(){
 
     { //::SireMM::StretchStretchParameterName
         typedef bp::class_< SireMM::StretchStretchParameterName > StretchStretchParameterName_exposer_t;
-        StretchStretchParameterName_exposer_t StretchStretchParameterName_exposer = StretchStretchParameterName_exposer_t( "StretchStretchParameterName" );
+        StretchStretchParameterName_exposer_t StretchStretchParameterName_exposer = StretchStretchParameterName_exposer_t( "StretchStretchParameterName", bp::init< >() );
         bp::scope StretchStretchParameterName_scope( StretchStretchParameterName_exposer );
-        StretchStretchParameterName_exposer.def( bp::init< >() );
         { //::SireMM::StretchStretchParameterName::stretchStretch
         
             typedef ::SireBase::PropertyName const & ( ::SireMM::StretchStretchParameterName::*stretchStretch_function_type )(  ) const;

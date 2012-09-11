@@ -23,13 +23,12 @@ void register_ChunkedVector_double__class(){
 
     { //::SireBase::ChunkedVector< double, 100 >
         typedef bp::class_< SireBase::ChunkedVector< double, 100 > > ChunkedVector_double__exposer_t;
-        ChunkedVector_double__exposer_t ChunkedVector_double__exposer = ChunkedVector_double__exposer_t( "ChunkedVector_double_" );
+        ChunkedVector_double__exposer_t ChunkedVector_double__exposer = ChunkedVector_double__exposer_t( "ChunkedVector_double_", bp::init< >() );
         bp::scope ChunkedVector_double__scope( ChunkedVector_double__exposer );
         { //::SireBase::ChunkedVector< double, 100 >::const_iterator
             typedef bp::class_< SireBase::ChunkedVector< double, 100 >::const_iterator > const_iterator_exposer_t;
-            const_iterator_exposer_t const_iterator_exposer = const_iterator_exposer_t( "const_iterator" );
+            const_iterator_exposer_t const_iterator_exposer = const_iterator_exposer_t( "const_iterator", bp::init< >() );
             bp::scope const_iterator_scope( const_iterator_exposer );
-            const_iterator_exposer.def( bp::init< >() );
             const_iterator_exposer.def( bp::init< SireBase::ChunkedVector< double, 100 >::const_iterator const & >(( bp::arg("other") )) );
             const_iterator_exposer.def( bp::self != bp::self );
             { //::SireBase::ChunkedVector< double, 100 >::const_iterator::operator=
@@ -48,9 +47,8 @@ void register_ChunkedVector_double__class(){
         }
         { //::SireBase::ChunkedVector< double, 100 >::iterator
             typedef bp::class_< SireBase::ChunkedVector< double, 100 >::iterator > iterator_exposer_t;
-            iterator_exposer_t iterator_exposer = iterator_exposer_t( "iterator" );
+            iterator_exposer_t iterator_exposer = iterator_exposer_t( "iterator", bp::init< >() );
             bp::scope iterator_scope( iterator_exposer );
-            iterator_exposer.def( bp::init< >() );
             iterator_exposer.def( bp::init< SireBase::ChunkedVector< double, 100 >::iterator const & >(( bp::arg("other") )) );
             iterator_exposer.def( bp::self != bp::self );
             { //::SireBase::ChunkedVector< double, 100 >::iterator::operator=
@@ -67,7 +65,6 @@ void register_ChunkedVector_double__class(){
             }
             iterator_exposer.def( bp::self == bp::self );
         }
-        ChunkedVector_double__exposer.def( bp::init< >() );
         ChunkedVector_double__exposer.def( bp::init< int >(( bp::arg("size") )) );
         ChunkedVector_double__exposer.def( bp::init< int, double const & >(( bp::arg("size"), bp::arg("value") )) );
         ChunkedVector_double__exposer.def( bp::init< SireBase::ChunkedVector< double, 100 > const & >(( bp::arg("other") )) );

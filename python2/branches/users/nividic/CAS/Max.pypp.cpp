@@ -31,9 +31,8 @@ void register_Max_class(){
 
     { //::SireCAS::Max
         typedef bp::class_< SireCAS::Max, bp::bases< SireCAS::DoubleFunc, SireCAS::ExBase > > Max_exposer_t;
-        Max_exposer_t Max_exposer = Max_exposer_t( "Max" );
+        Max_exposer_t Max_exposer = Max_exposer_t( "Max", bp::init< >() );
         bp::scope Max_scope( Max_exposer );
-        Max_exposer.def( bp::init< >() );
         Max_exposer.def( bp::init< SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("x"), bp::arg("y") )) );
         Max_exposer.def( bp::init< SireCAS::Max const & >(( bp::arg("other") )) );
         { //::SireCAS::Max::evaluate

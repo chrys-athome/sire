@@ -40,9 +40,8 @@ void register_TripleDistanceRestraint_class(){
 
     { //::SireMM::TripleDistanceRestraint
         typedef bp::class_< SireMM::TripleDistanceRestraint, bp::bases< SireMM::Restraint3D, SireMM::Restraint, SireBase::Property > > TripleDistanceRestraint_exposer_t;
-        TripleDistanceRestraint_exposer_t TripleDistanceRestraint_exposer = TripleDistanceRestraint_exposer_t( "TripleDistanceRestraint" );
+        TripleDistanceRestraint_exposer_t TripleDistanceRestraint_exposer = TripleDistanceRestraint_exposer_t( "TripleDistanceRestraint", bp::init< >() );
         bp::scope TripleDistanceRestraint_scope( TripleDistanceRestraint_exposer );
-        TripleDistanceRestraint_exposer.def( bp::init< >() );
         TripleDistanceRestraint_exposer.def( bp::init< SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("point4"), bp::arg("point5"), bp::arg("restraint") )) );
         TripleDistanceRestraint_exposer.def( bp::init< SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, SireCAS::Values const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("point4"), bp::arg("point5"), bp::arg("restraint"), bp::arg("values") )) );
         TripleDistanceRestraint_exposer.def( bp::init< SireMM::TripleDistanceRestraint const & >(( bp::arg("other") )) );
