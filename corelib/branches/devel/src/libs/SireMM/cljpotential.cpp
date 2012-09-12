@@ -1114,9 +1114,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
         const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric_constant) /
                                            (2*rf_dielectric_constant + 1) );
         
-        const double one_over_Rc = double(1) / Rc;
-        const double one_over_Rc2 = double(1) / (Rc*Rc);
-        
         for (quint32 igroup=0; igroup<ngroups0; ++igroup)
         {
             const Parameters::Array &params0 = molparams0_array[igroup];
@@ -1156,8 +1153,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                 const quint32 nats1 = group1.count();
                 const Parameter *params1_array = params1.constData();
 
-                //#ifdef SIRE_USE_SSE
-                if (false)
+                #ifdef SIRE_USE_SSE
                 {
                     const int remainder = nats1 % 2;
                     
@@ -1165,9 +1161,9 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                     __m128d sse_ljnrg = { 0, 0 };
 
                     const __m128d sse_one = { 1.0, 1.0 };
-                    const __m128d sse_Rc = { Rc, Rc };
-                    const __m128d sse_one_over_Rc = { one_over_Rc, one_over_Rc };
-                    const __m128d sse_one_over_Rc2 = { one_over_Rc2, one_over_Rc2 };
+                    const __m128d sse_Rc = _mm_set1_pd(Rc);
+                    const __m128d sse_k_rf = _mm_set1_pd(k_rf);
+                    const __m128d sse_c_rf = _mm_set1_pd(c_rf);
                     
                     for (quint32 i=0; i<nats0; ++i)
                     {
@@ -1186,10 +1182,10 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             const __m128d sse_r = _mm_set_pd( distmat[j], distmat[j+1] );
                             const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
                             {
-                                __m128d nrg = _mm_sub_pd(sse_r, sse_Rc);
-                                nrg = _mm_mul_pd(nrg, sse_one_over_Rc2);
+                                __m128d nrg = _mm_mul_pd(sse_r, sse_r);
+                                nrg = _mm_mul_pd(nrg, sse_k_rf);
+                                nrg = _mm_sub_pd(nrg, sse_c_rf);
                                 nrg = _mm_add_pd(nrg, sse_one_over_r);
-                                nrg = _mm_sub_pd(nrg, sse_one_over_Rc);
 
                                 __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
                                                               param11.reduced_charge );
@@ -1247,7 +1243,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             const double in_cutoff = (r < Rc);
                             
                             icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                        (one_over_r + k_rf*r*r - c_rf);
 
                             const LJPair &ljpair = ljpairs.constData()[
                                                     ljpairs.map(param0.ljid,
@@ -1267,8 +1263,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                     iljnrg += *((const double*)&sse_ljnrg) +
                               *( ((const double*)&sse_ljnrg) + 1 );
                 }
-                //#else
-                else
+                #else
                 {
                     for (quint32 i=0; i<nats0; ++i)
                     {
@@ -1299,7 +1294,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                         }
                     }
                 }
-                //#endif
+                #endif
                 
                 cnrg += icnrg;
                 ljnrg += iljnrg;
