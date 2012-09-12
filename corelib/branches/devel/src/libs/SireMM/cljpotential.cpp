@@ -5003,6 +5003,80 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                 }
             }
         }
+        else if (use_reaction_field)
+        {
+            double Rc = switchfunc->electrostaticCutoffDistance();
+            
+            if (Rc != switchfunc->vdwCutoffDistance())
+                throw SireError::unsupported( QObject::tr(
+                        "This code does not support having reaction field together "
+                        "with different coulomb and vdw cutoffs..."), CODELOC );
+            
+            if (Rc > 1e9)
+            {
+                Rc = 1e9;
+            }
+            
+            const double k_rf = (1.0 / pow_3(Rc)) * ( (rf_dielectric_constant-1) /
+                                                      (2*rf_dielectric_constant + 1) );
+            const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric_constant) /
+                                                (2*rf_dielectric_constant + 1) );
+        
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                    
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    foreach (Index j, atoms1)
+                    {
+                        const Parameter &param1 = params1_array[j];
+
+                        const double r = distmat[j];
+                        const double one_over_r = double(1) / r;
+                        
+                        const double in_cutoff = (r < Rc);
+                        
+                        icnrg += cljscl.coulomb() * 
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                                  (one_over_r + k_rf*r*r - c_rf);
+                    }
+                }
+                else
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        //do both coulomb and LJ
+                        const Parameter &param1 = params1_array[j];
+
+                        const double r = distmat[j];
+                        const double one_over_r = double(1) / r;
+                        
+                        const double in_cutoff = (r < Rc);
+                        
+                        icnrg += cljscl.coulomb() * 
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r + k_rf*r*r - c_rf);
+                                  
+                        if (param1.ljid != 0)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                      ljpairs.map(param0.ljid,
+                                                                  param1.ljid)];
+                            
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            iljnrg += cljscl.lj() *
+                                          ljpair.epsilon() * (sig_over_dist12 - 
+                                                              sig_over_dist6);
+                        }
+                    }
+                }
+            }
+        }
         else // if use_electrostatic_shifting
         {
             foreach (Index i, atoms0)
