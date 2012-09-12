@@ -15,6 +15,7 @@
 #include "distancerestraint.h"
 #include "fastintercljff.h"
 #include "fouratomfunctions.h"
+#include "gridff.h"
 #include "intercljff.h"
 #include "intercoulombff.h"
 #include "interljff.h"
