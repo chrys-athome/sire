@@ -47,7 +47,7 @@ def readConfig(config_file):
         line = line.strip()
 
         if line.startswith("#"):
-            next
+            continue
 
         parts = line.split("=")
 
