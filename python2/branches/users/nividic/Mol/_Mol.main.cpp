@@ -79,6 +79,8 @@
 
 #include "AtomsIn_SegID_.pypp.hpp"
 
+#include "BeadIdx.pypp.hpp"
+
 #include "BeadNum.pypp.hpp"
 
 #include "BondHunter.pypp.hpp"
@@ -567,6 +569,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_AtomsIn_ResID__class();
 
     register_AtomsIn_SegID__class();
+
+    register_BeadIdx_class();
 
     register_BeadNum_class();
 

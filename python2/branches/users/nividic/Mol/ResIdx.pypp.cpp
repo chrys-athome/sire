@@ -67,9 +67,8 @@ void register_ResIdx_class(){
 
     { //::SireMol::ResIdx
         typedef bp::class_< SireMol::ResIdx, bp::bases< SireMol::ResID, SireID::ID, SireID::IndexBase > > ResIdx_exposer_t;
-        ResIdx_exposer_t ResIdx_exposer = ResIdx_exposer_t( "ResIdx" );
+        ResIdx_exposer_t ResIdx_exposer = ResIdx_exposer_t( "ResIdx", bp::init< >() );
         bp::scope ResIdx_scope( ResIdx_exposer );
-        ResIdx_exposer.def( bp::init< >() );
         ResIdx_exposer.def( bp::init< quint32 >(( bp::arg("idx") )) );
         ResIdx_exposer.def( bp::init< SireMol::ResIdx const & >(( bp::arg("other") )) );
         { //::SireMol::ResIdx::hash

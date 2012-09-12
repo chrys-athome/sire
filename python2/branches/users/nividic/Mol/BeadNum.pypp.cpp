@@ -22,10 +22,9 @@ SireMol::BeadNum __copy__(const SireMol::BeadNum &other){ return SireMol::BeadNu
 void register_BeadNum_class(){
 
     { //::SireMol::BeadNum
-        typedef bp::class_< SireMol::BeadNum, bp::bases< SireID::Number > > BeadNum_exposer_t;
-        BeadNum_exposer_t BeadNum_exposer = BeadNum_exposer_t( "BeadNum" );
+        typedef bp::class_< SireMol::BeadNum, bp::bases< SireID::ID, SireID::Number > > BeadNum_exposer_t;
+        BeadNum_exposer_t BeadNum_exposer = BeadNum_exposer_t( "BeadNum", bp::init< >() );
         bp::scope BeadNum_scope( BeadNum_exposer );
-        BeadNum_exposer.def( bp::init< >() );
         BeadNum_exposer.def( bp::init< quint32 >(( bp::arg("num") )) );
         BeadNum_exposer.def( bp::init< SireMol::BeadNum const & >(( bp::arg("other") )) );
         { //::SireMol::BeadNum::hash

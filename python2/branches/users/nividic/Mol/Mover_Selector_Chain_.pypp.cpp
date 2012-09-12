@@ -7,33 +7,9 @@
 
 namespace bp = boost::python;
 
-#include "SireBase/errors.h"
+#include "mover_metaid.h"
 
-#include "SireStream/datastream.h"
-
-#include "SireStream/shareddatastream.h"
-
-#include "atom.h"
-
-#include "chain.h"
-
-#include "chaineditor.h"
-
-#include "chainresid.h"
-
-#include "evaluator.h"
-
-#include "groupatomids.h"
-
-#include "molecule.h"
-
-#include "mover.hpp"
-
-#include "residue.h"
-
-#include "selector.hpp"
-
-#include "chain.h"
+#include "mover_metaid.h"
 
 #include "SireMaths/axisset.h"
 
@@ -79,9 +55,8 @@ void register_Mover_Selector_Chain__class(){
 
     { //::SireMol::Mover< SireMol::Selector< SireMol::Chain > >
         typedef bp::class_< SireMol::Mover< SireMol::Selector< SireMol::Chain > >, bp::bases< SireMol::MoverBase, SireMol::Selector<SireMol::Chain>, SireMol::MoleculeView, SireBase::Property > > Mover_Selector_Chain__exposer_t;
-        Mover_Selector_Chain__exposer_t Mover_Selector_Chain__exposer = Mover_Selector_Chain__exposer_t( "Mover_Selector_Chain_" );
+        Mover_Selector_Chain__exposer_t Mover_Selector_Chain__exposer = Mover_Selector_Chain__exposer_t( "Mover_Selector_Chain_", bp::init< >() );
         bp::scope Mover_Selector_Chain__scope( Mover_Selector_Chain__exposer );
-        Mover_Selector_Chain__exposer.def( bp::init< >() );
         Mover_Selector_Chain__exposer.def( bp::init< SireMol::Selector< SireMol::Chain > const & >(( bp::arg("view") )) );
         Mover_Selector_Chain__exposer.def( bp::init< SireMol::Selector< SireMol::Chain > const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Selector_Chain__exposer.def( bp::init< SireMol::Mover< SireMol::Selector< SireMol::Chain > > const & >(( bp::arg("other") )) );

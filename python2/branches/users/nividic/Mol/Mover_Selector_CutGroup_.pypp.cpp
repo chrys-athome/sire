@@ -7,33 +7,9 @@
 
 namespace bp = boost::python;
 
-#include "SireBase/errors.h"
+#include "mover_metaid.h"
 
-#include "SireStream/datastream.h"
-
-#include "SireStream/shareddatastream.h"
-
-#include "atom.h"
-
-#include "cgatomidx.h"
-
-#include "cgeditor.h"
-
-#include "cutgroup.h"
-
-#include "evaluator.h"
-
-#include "groupatomids.h"
-
-#include "molecule.h"
-
-#include "mover.hpp"
-
-#include "selector.hpp"
-
-#include <QDebug>
-
-#include "cutgroup.h"
+#include "mover_metaid.h"
 
 #include "SireMaths/axisset.h"
 
@@ -79,9 +55,8 @@ void register_Mover_Selector_CutGroup__class(){
 
     { //::SireMol::Mover< SireMol::Selector< SireMol::CutGroup > >
         typedef bp::class_< SireMol::Mover< SireMol::Selector< SireMol::CutGroup > >, bp::bases< SireMol::MoverBase, SireMol::Selector<SireMol::CutGroup>, SireMol::MoleculeView, SireBase::Property > > Mover_Selector_CutGroup__exposer_t;
-        Mover_Selector_CutGroup__exposer_t Mover_Selector_CutGroup__exposer = Mover_Selector_CutGroup__exposer_t( "Mover_Selector_CutGroup_" );
+        Mover_Selector_CutGroup__exposer_t Mover_Selector_CutGroup__exposer = Mover_Selector_CutGroup__exposer_t( "Mover_Selector_CutGroup_", bp::init< >() );
         bp::scope Mover_Selector_CutGroup__scope( Mover_Selector_CutGroup__exposer );
-        Mover_Selector_CutGroup__exposer.def( bp::init< >() );
         Mover_Selector_CutGroup__exposer.def( bp::init< SireMol::Selector< SireMol::CutGroup > const & >(( bp::arg("view") )) );
         Mover_Selector_CutGroup__exposer.def( bp::init< SireMol::Selector< SireMol::CutGroup > const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Selector_CutGroup__exposer.def( bp::init< SireMol::Mover< SireMol::Selector< SireMol::CutGroup > > const & >(( bp::arg("other") )) );

@@ -7,29 +7,9 @@
 
 namespace bp = boost::python;
 
-#include "SireBase/errors.h"
+#include "mover_metaid.h"
 
-#include "SireStream/datastream.h"
-
-#include "SireStream/shareddatastream.h"
-
-#include "atom.h"
-
-#include "evaluator.h"
-
-#include "groupatomids.h"
-
-#include "molecule.h"
-
-#include "mover.hpp"
-
-#include "segeditor.h"
-
-#include "segment.h"
-
-#include "selector.hpp"
-
-#include "segment.h"
+#include "mover_metaid.h"
 
 #include "SireMaths/axisset.h"
 
@@ -75,9 +55,8 @@ void register_Mover_Selector_Segment__class(){
 
     { //::SireMol::Mover< SireMol::Selector< SireMol::Segment > >
         typedef bp::class_< SireMol::Mover< SireMol::Selector< SireMol::Segment > >, bp::bases< SireMol::MoverBase, SireMol::Selector<SireMol::Segment>, SireMol::MoleculeView, SireBase::Property > > Mover_Selector_Segment__exposer_t;
-        Mover_Selector_Segment__exposer_t Mover_Selector_Segment__exposer = Mover_Selector_Segment__exposer_t( "Mover_Selector_Segment_" );
+        Mover_Selector_Segment__exposer_t Mover_Selector_Segment__exposer = Mover_Selector_Segment__exposer_t( "Mover_Selector_Segment_", bp::init< >() );
         bp::scope Mover_Selector_Segment__scope( Mover_Selector_Segment__exposer );
-        Mover_Selector_Segment__exposer.def( bp::init< >() );
         Mover_Selector_Segment__exposer.def( bp::init< SireMol::Selector< SireMol::Segment > const & >(( bp::arg("view") )) );
         Mover_Selector_Segment__exposer.def( bp::init< SireMol::Selector< SireMol::Segment > const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Selector_Segment__exposer.def( bp::init< SireMol::Mover< SireMol::Selector< SireMol::Segment > > const & >(( bp::arg("other") )) );

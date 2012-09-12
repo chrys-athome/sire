@@ -38,9 +38,8 @@ void register_AnglePerturbation_class(){
 
     { //::SireMol::AnglePerturbation
         typedef bp::class_< SireMol::AnglePerturbation, bp::bases< SireMol::GeometryPerturbation, SireMol::Perturbation, SireBase::Property > > AnglePerturbation_exposer_t;
-        AnglePerturbation_exposer_t AnglePerturbation_exposer = AnglePerturbation_exposer_t( "AnglePerturbation" );
+        AnglePerturbation_exposer_t AnglePerturbation_exposer = AnglePerturbation_exposer_t( "AnglePerturbation", bp::init< >() );
         bp::scope AnglePerturbation_scope( AnglePerturbation_exposer );
-        AnglePerturbation_exposer.def( bp::init< >() );
         AnglePerturbation_exposer.def( bp::init< SireMol::AngleID const &, SireUnits::Dimension::Angle const &, SireUnits::Dimension::Angle const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("angle"), bp::arg("start"), bp::arg("end"), bp::arg("map")=SireBase::PropertyMap() )) );
         AnglePerturbation_exposer.def( bp::init< SireMol::AngleID const &, SireUnits::Dimension::Angle const &, SireUnits::Dimension::Angle const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("angle"), bp::arg("start"), bp::arg("end"), bp::arg("mapping_function"), bp::arg("map")=SireBase::PropertyMap() )) );
         AnglePerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireUnits::Dimension::Angle const &, SireUnits::Dimension::Angle const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("start"), bp::arg("end"), bp::arg("map")=SireBase::PropertyMap() )) );

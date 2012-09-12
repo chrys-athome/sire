@@ -23,9 +23,8 @@ void register_ResStringProperty_class(){
 
     { //::SireMol::ResProperty< QString >
         typedef bp::class_< SireMol::ResProperty< QString >, bp::bases< SireMol::ResProp, SireMol::MolViewProperty, SireBase::Property > > ResStringProperty_exposer_t;
-        ResStringProperty_exposer_t ResStringProperty_exposer = ResStringProperty_exposer_t( "ResStringProperty" );
+        ResStringProperty_exposer_t ResStringProperty_exposer = ResStringProperty_exposer_t( "ResStringProperty", bp::init< >() );
         bp::scope ResStringProperty_scope( ResStringProperty_exposer );
-        ResStringProperty_exposer.def( bp::init< >() );
         ResStringProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         ResStringProperty_exposer.def( bp::init< QVector< QString > const & >(( bp::arg("values") )) );
         ResStringProperty_exposer.def( bp::init< SireMol::ResProperty< QString > const & >(( bp::arg("other") )) );

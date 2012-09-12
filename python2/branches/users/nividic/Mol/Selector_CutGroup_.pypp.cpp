@@ -29,6 +29,8 @@ namespace bp = boost::python;
 
 #include "mover.hpp"
 
+#include "mover_metaid.h"
+
 #include "selector.hpp"
 
 #include <QDebug>
@@ -43,9 +45,8 @@ void register_Selector_CutGroup__class(){
 
     { //::SireMol::Selector< SireMol::CutGroup >
         typedef bp::class_< SireMol::Selector< SireMol::CutGroup >, bp::bases< SireMol::MoleculeView, SireBase::Property > > Selector_CutGroup__exposer_t;
-        Selector_CutGroup__exposer_t Selector_CutGroup__exposer = Selector_CutGroup__exposer_t( "Selector_CutGroup_" );
+        Selector_CutGroup__exposer_t Selector_CutGroup__exposer = Selector_CutGroup__exposer_t( "Selector_CutGroup_", bp::init< >() );
         bp::scope Selector_CutGroup__scope( Selector_CutGroup__exposer );
-        Selector_CutGroup__exposer.def( bp::init< >() );
         Selector_CutGroup__exposer.def( bp::init< SireMol::CutGroup const & >(( bp::arg("view") )) );
         Selector_CutGroup__exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         Selector_CutGroup__exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::AtomSelection const & >(( bp::arg("moldata"), bp::arg("selected_atoms") )) );

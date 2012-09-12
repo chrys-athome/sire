@@ -63,9 +63,8 @@ void register_ChainIdx_class(){
 
     { //::SireMol::ChainIdx
         typedef bp::class_< SireMol::ChainIdx, bp::bases< SireMol::ChainID, SireID::ID, SireID::IndexBase > > ChainIdx_exposer_t;
-        ChainIdx_exposer_t ChainIdx_exposer = ChainIdx_exposer_t( "ChainIdx" );
+        ChainIdx_exposer_t ChainIdx_exposer = ChainIdx_exposer_t( "ChainIdx", bp::init< >() );
         bp::scope ChainIdx_scope( ChainIdx_exposer );
-        ChainIdx_exposer.def( bp::init< >() );
         ChainIdx_exposer.def( bp::init< qint32 >(( bp::arg("idx") )) );
         ChainIdx_exposer.def( bp::init< SireMol::ChainIdx const & >(( bp::arg("other") )) );
         { //::SireMol::ChainIdx::hash

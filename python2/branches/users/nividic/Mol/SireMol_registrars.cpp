@@ -5,10 +5,10 @@
 
 #include "moleculegroups.h"
 #include "improperid.h"
-#include "molidentifier.h"
+#include "atomelements.h"
 #include "chain.h"
 #include "residx.h"
-#include "atompolarisabilities.h"
+#include "atomcharges.h"
 #include "element.h"
 #include "chainproperty.hpp"
 #include "atomselection.h"
@@ -26,14 +26,14 @@
 #include "perturbation.h"
 #include "molid.h"
 #include "atomcutting.h"
-#include "mgid.h"
+#include "atomenergies.h"
 #include "weightfunction.h"
 #include "cgeditor.h"
 #include "atomeditor.h"
 #include "chainname.h"
 #include "chargeperturbation.h"
 #include "partialmolecule.h"
-#include "atomcharges.h"
+#include "atompolarisabilities.h"
 #include "mgidx.h"
 #include "viewsofmol.h"
 #include "residentifier.h"
@@ -46,9 +46,8 @@
 #include "moleculegroup.h"
 #include "resnum.h"
 #include "atomvelocities.h"
-#include "atomelements.h"
+#include "molidentifier.h"
 #include "segidx.h"
-#include "chainid.h"
 #include "chaineditor.h"
 #include "atomproperty.hpp"
 #include "resname.h"
@@ -56,12 +55,9 @@
 #include "mgname.h"
 #include "chainidx.h"
 #include "cgatomidx.h"
-#include "withatoms.h"
 #include "atomidx.h"
-#include "resid.h"
 #include "connectivity.h"
-#include "molatomid.h"
-#include "cgid.h"
+#include "groupgroupids.h"
 #include "atommasses.h"
 #include "segment.h"
 #include "angleid.h"
@@ -72,13 +68,14 @@
 #include "reseditor.h"
 #include "within.h"
 #include "molname.h"
-#include "atomenergies.h"
+#include "withatoms.h"
 #include "mgidsandmaps.h"
 #include "mgnum.h"
-#include "segid.h"
 #include "atomidentifier.h"
 #include "atomcoords.h"
 #include "cutgroup.h"
+#include "beadidx.h"
+#include "mover_metaid.h"
 #include "segname.h"
 #include "resproperty.hpp"
 #include "molecule.h"
@@ -87,9 +84,8 @@
 #include "segproperty.hpp"
 #include "groupatomids.h"
 #include "cgidentifier.h"
-#include "atomid.h"
 #include "molecules.h"
-#include "groupgroupids.h"
+#include "molatomid.h"
 #include "dihedralid.h"
 #include "atom.h"
 #include "residue.h"
@@ -104,13 +100,13 @@ void register_SireMol_objects()
 
     ObjectRegistry::registerConverterFor< SireMol::MoleculeGroups >();
     ObjectRegistry::registerConverterFor< SireMol::ImproperID >();
-    ObjectRegistry::registerConverterFor< SireMol::MolIdentifier >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomElements >();
     ObjectRegistry::registerConverterFor< SireMol::Chain >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::Chain> >();
     ObjectRegistry::registerConverterFor< SireMol::Selector<SireMol::Chain> >();
     ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::Chain> > >();
     ObjectRegistry::registerConverterFor< SireMol::ResIdx >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomPolarisabilities >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomCharges >();
     ObjectRegistry::registerConverterFor< SireMol::Element >();
     ObjectRegistry::registerConverterFor< SireMol::ChainStringProperty >();
     ObjectRegistry::registerConverterFor< SireMol::ChainIntProperty >();
@@ -118,6 +114,10 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::ChainVariantProperty >();
     ObjectRegistry::registerConverterFor< SireMol::AtomSelection >();
     ObjectRegistry::registerConverterFor< SireMol::AtomBeading >();
+    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::SegID> >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomsIn<SireMol::SegID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::SegID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::SegID> >();
     ObjectRegistry::registerConverterFor< SireMol::SegIdentifier >();
     ObjectRegistry::registerConverterFor< SireMol::MolEditor >();
     ObjectRegistry::registerConverterFor< SireMol::MolStructureEditor >();
@@ -141,9 +141,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::MolID> >();
     ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::MolID> >();
     ObjectRegistry::registerConverterFor< SireMol::AtomCutting >();
-    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::MGID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::MGID> >();
-    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::MGID> >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomEnergies >();
     ObjectRegistry::registerConverterFor< SireMol::RelFromMass >();
     ObjectRegistry::registerConverterFor< SireMol::RelFromNumber >();
     ObjectRegistry::registerConverterFor< SireMol::AbsFromMass >();
@@ -156,28 +154,35 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::ChargePerturbation >();
     ObjectRegistry::registerConverterFor< SireMol::PartialMolecule >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::PartialMolecule> >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomCharges >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomPolarisabilities >();
     ObjectRegistry::registerConverterFor< SireMol::MGIdx >();
     ObjectRegistry::registerConverterFor< SireMol::ViewsOfMol >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::ViewsOfMol> >();
+    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::ResID> >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomsIn<SireMol::ResID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::ResID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::ResID> >();
     ObjectRegistry::registerConverterFor< SireMol::ResIdentifier >();
     ObjectRegistry::registerConverterFor< SireMol::AmberParameters >();
     ObjectRegistry::registerConverterFor< SireMol::BondID >();
     ObjectRegistry::registerConverterFor< SireMol::MolIdx >();
     ObjectRegistry::registerConverterFor< SireMol::AtomNum >();
-    ObjectRegistry::registerConverterFor< SireMol::ChainIdentifier >();
-    ObjectRegistry::registerConverterFor< SireMol::MGIdentifier >();
-    ObjectRegistry::registerConverterFor< SireMol::MoleculeGroup >();
-    ObjectRegistry::registerConverterFor< SireMol::ResNum >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomVelocities >();
-    ObjectRegistry::registerConverterFor< SireMol::Velocity3D >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomElements >();
-    ObjectRegistry::registerConverterFor< SireMol::SegIdx >();
     ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::ChainID> >();
     ObjectRegistry::registerConverterFor< SireMol::AtomsIn<SireMol::ChainID> >();
     ObjectRegistry::registerConverterFor< SireMol::ResIn<SireMol::ChainID> >();
     ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::ChainID> >();
     ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::ChainID> >();
+    ObjectRegistry::registerConverterFor< SireMol::ChainIdentifier >();
+    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::MGID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::MGID> >();
+    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::MGID> >();
+    ObjectRegistry::registerConverterFor< SireMol::MGIdentifier >();
+    ObjectRegistry::registerConverterFor< SireMol::MoleculeGroup >();
+    ObjectRegistry::registerConverterFor< SireMol::ResNum >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomVelocities >();
+    ObjectRegistry::registerConverterFor< SireMol::Velocity3D >();
+    ObjectRegistry::registerConverterFor< SireMol::MolIdentifier >();
+    ObjectRegistry::registerConverterFor< SireMol::SegIdx >();
     ObjectRegistry::registerConverterFor< SireMol::ChainEditor >();
     ObjectRegistry::registerConverterFor< SireMol::ChainStructureEditor >();
     ObjectRegistry::registerConverterFor< SireMol::AtomStringProperty >();
@@ -189,22 +194,14 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::MGName >();
     ObjectRegistry::registerConverterFor< SireMol::ChainIdx >();
     ObjectRegistry::registerConverterFor< SireMol::CGAtomIdx >();
-    ObjectRegistry::registerConverterFor< SireMol::ResWithAtoms >();
-    ObjectRegistry::registerConverterFor< SireMol::CGsWithAtoms >();
-    ObjectRegistry::registerConverterFor< SireMol::ChainsWithAtoms >();
-    ObjectRegistry::registerConverterFor< SireMol::SegsWithAtoms >();
     ObjectRegistry::registerConverterFor< SireMol::AtomIdx >();
-    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::ResID> >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomsIn<SireMol::ResID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::ResID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::ResID> >();
     ObjectRegistry::registerConverterFor< SireMol::Connectivity >();
     ObjectRegistry::registerConverterFor< SireMol::ConnectivityEditor >();
-    ObjectRegistry::registerConverterFor< SireMol::MolAtomID >();
-    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::CGID> >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomsIn<SireMol::CGID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::CGID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::CGID> >();
+    ObjectRegistry::registerConverterFor< SireMol::SegResID >();
+    ObjectRegistry::registerConverterFor< SireMol::SegChainID >();
+    ObjectRegistry::registerConverterFor< SireMol::SegCGID >();
+    ObjectRegistry::registerConverterFor< SireMol::CGResID >();
+    ObjectRegistry::registerConverterFor< SireMol::CGChainID >();
     ObjectRegistry::registerConverterFor< SireMol::AtomMasses >();
     ObjectRegistry::registerConverterFor< SireMol::Segment >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::Segment> >();
@@ -221,19 +218,27 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::ResStructureEditor >();
     ObjectRegistry::registerConverterFor< SireMol::Within >();
     ObjectRegistry::registerConverterFor< SireMol::MolName >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomEnergies >();
+    ObjectRegistry::registerConverterFor< SireMol::ResWithAtoms >();
+    ObjectRegistry::registerConverterFor< SireMol::CGsWithAtoms >();
+    ObjectRegistry::registerConverterFor< SireMol::ChainsWithAtoms >();
+    ObjectRegistry::registerConverterFor< SireMol::SegsWithAtoms >();
     ObjectRegistry::registerConverterFor< SireMol::MGIDsAndMaps >();
     ObjectRegistry::registerConverterFor< SireMol::MGNum >();
-    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::SegID> >();
-    ObjectRegistry::registerConverterFor< SireMol::AtomsIn<SireMol::SegID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::SegID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::SegID> >();
     ObjectRegistry::registerConverterFor< SireMol::AtomIdentifier >();
+    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::AtomID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::AtomID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::AtomID> >();
     ObjectRegistry::registerConverterFor< SireMol::AtomCoords >();
     ObjectRegistry::registerConverterFor< SireMol::CutGroup >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::CutGroup> >();
     ObjectRegistry::registerConverterFor< SireMol::Selector<SireMol::CutGroup> >();
     ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::CutGroup> > >();
+    ObjectRegistry::registerConverterFor< SireMol::BeadIdx >();
+    ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::Atom> > >();
+    ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::Chain> > >();
+    ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::CutGroup> > >();
+    ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::Residue> > >();
+    ObjectRegistry::registerConverterFor< SireMol::Mover< SireMol::Selector<SireMol::Segment> > >();
     ObjectRegistry::registerConverterFor< SireMol::SegName >();
     ObjectRegistry::registerConverterFor< SireMol::ResStringProperty >();
     ObjectRegistry::registerConverterFor< SireMol::ResIntProperty >();
@@ -252,16 +257,13 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::ChainAtomID >();
     ObjectRegistry::registerConverterFor< SireMol::SegAtomID >();
     ObjectRegistry::registerConverterFor< SireMol::CGAtomID >();
+    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::CGID> >();
+    ObjectRegistry::registerConverterFor< SireMol::AtomsIn<SireMol::CGID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::CGID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::CGID> >();
     ObjectRegistry::registerConverterFor< SireMol::CGIdentifier >();
-    ObjectRegistry::registerConverterFor< SireID::Specify<SireMol::AtomID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireMol::AtomID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireMol::AtomID> >();
     ObjectRegistry::registerConverterFor< SireMol::Molecules >();
-    ObjectRegistry::registerConverterFor< SireMol::SegResID >();
-    ObjectRegistry::registerConverterFor< SireMol::SegChainID >();
-    ObjectRegistry::registerConverterFor< SireMol::SegCGID >();
-    ObjectRegistry::registerConverterFor< SireMol::CGResID >();
-    ObjectRegistry::registerConverterFor< SireMol::CGChainID >();
+    ObjectRegistry::registerConverterFor< SireMol::MolAtomID >();
     ObjectRegistry::registerConverterFor< SireMol::DihedralID >();
     ObjectRegistry::registerConverterFor< SireMol::Atom >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::Atom> >();

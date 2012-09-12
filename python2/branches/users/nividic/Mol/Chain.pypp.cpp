@@ -29,6 +29,8 @@ namespace bp = boost::python;
 
 #include "mover.hpp"
 
+#include "mover_metaid.h"
+
 #include "residue.h"
 
 #include "selector.hpp"
@@ -75,9 +77,8 @@ void register_Chain_class(){
 
     { //::SireMol::Chain
         typedef bp::class_< SireMol::Chain, bp::bases< SireMol::MoleculeView, SireBase::Property > > Chain_exposer_t;
-        Chain_exposer_t Chain_exposer = Chain_exposer_t( "Chain" );
+        Chain_exposer_t Chain_exposer = Chain_exposer_t( "Chain", bp::init< >() );
         bp::scope Chain_scope( Chain_exposer );
-        Chain_exposer.def( bp::init< >() );
         Chain_exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::ChainID const & >(( bp::arg("moldata"), bp::arg("chainid") )) );
         Chain_exposer.def( bp::init< SireMol::Chain const & >(( bp::arg("other") )) );
         { //::SireMol::Chain::assertContainsMetadata

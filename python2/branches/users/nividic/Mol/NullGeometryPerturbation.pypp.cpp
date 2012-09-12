@@ -37,9 +37,8 @@ void register_NullGeometryPerturbation_class(){
 
     { //::SireMol::NullGeometryPerturbation
         typedef bp::class_< SireMol::NullGeometryPerturbation, bp::bases< SireMol::GeometryPerturbation, SireMol::Perturbation, SireBase::Property > > NullGeometryPerturbation_exposer_t;
-        NullGeometryPerturbation_exposer_t NullGeometryPerturbation_exposer = NullGeometryPerturbation_exposer_t( "NullGeometryPerturbation" );
+        NullGeometryPerturbation_exposer_t NullGeometryPerturbation_exposer = NullGeometryPerturbation_exposer_t( "NullGeometryPerturbation", bp::init< >() );
         bp::scope NullGeometryPerturbation_scope( NullGeometryPerturbation_exposer );
-        NullGeometryPerturbation_exposer.def( bp::init< >() );
         NullGeometryPerturbation_exposer.def( bp::init< SireMol::NullGeometryPerturbation const & >(( bp::arg("other") )) );
         NullGeometryPerturbation_exposer.def( bp::self != bp::self );
         { //::SireMol::NullGeometryPerturbation::operator=

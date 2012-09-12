@@ -26,9 +26,8 @@ void register_ResWithAtoms_class(){
 
     { //::SireMol::ResWithAtoms
         typedef bp::class_< SireMol::ResWithAtoms, bp::bases< SireMol::ResID, SireID::ID > > ResWithAtoms_exposer_t;
-        ResWithAtoms_exposer_t ResWithAtoms_exposer = ResWithAtoms_exposer_t( "ResWithAtoms" );
+        ResWithAtoms_exposer_t ResWithAtoms_exposer = ResWithAtoms_exposer_t( "ResWithAtoms", bp::init< >() );
         bp::scope ResWithAtoms_scope( ResWithAtoms_exposer );
-        ResWithAtoms_exposer.def( bp::init< >() );
         ResWithAtoms_exposer.def( bp::init< SireMol::AtomID const & >(( bp::arg("atomid") )) );
         ResWithAtoms_exposer.def( bp::init< SireMol::ResWithAtoms const & >(( bp::arg("other") )) );
         { //::SireMol::ResWithAtoms::atomID

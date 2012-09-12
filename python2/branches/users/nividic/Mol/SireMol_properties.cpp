@@ -60,6 +60,7 @@
 #include "SireBase/incremint.h"
 #include "SireBase/majorminorversion.h"
 #include "SireError/errors.h"
+#include "SireID/index.h"
 #include "SireMol/errors.h"
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -78,6 +79,7 @@
 #include <QDebug>
 #include <QMutex>
 #include <QVector>
+#include <boost/tuple/tuple.hpp>
 #include "moleculegroup.h"
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"

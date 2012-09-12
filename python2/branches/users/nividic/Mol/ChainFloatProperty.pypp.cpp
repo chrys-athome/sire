@@ -23,9 +23,8 @@ void register_ChainFloatProperty_class(){
 
     { //::SireMol::ChainProperty< double >
         typedef bp::class_< SireMol::ChainProperty< double >, bp::bases< SireMol::ChainProp, SireMol::MolViewProperty, SireBase::Property > > ChainFloatProperty_exposer_t;
-        ChainFloatProperty_exposer_t ChainFloatProperty_exposer = ChainFloatProperty_exposer_t( "ChainFloatProperty" );
+        ChainFloatProperty_exposer_t ChainFloatProperty_exposer = ChainFloatProperty_exposer_t( "ChainFloatProperty", bp::init< >() );
         bp::scope ChainFloatProperty_scope( ChainFloatProperty_exposer );
-        ChainFloatProperty_exposer.def( bp::init< >() );
         ChainFloatProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         ChainFloatProperty_exposer.def( bp::init< QVector< double > const & >(( bp::arg("values") )) );
         ChainFloatProperty_exposer.def( bp::init< SireMol::ChainProperty< double > const & >(( bp::arg("other") )) );

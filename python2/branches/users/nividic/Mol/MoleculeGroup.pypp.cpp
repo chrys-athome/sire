@@ -14,6 +14,8 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireID/index.h"
+
 #include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
@@ -50,6 +52,8 @@ namespace bp = boost::python;
 
 #include <QVector>
 
+#include <boost/tuple/tuple.hpp>
+
 #include "moleculegroup.h"
 
 SireMol::MoleculeGroup __copy__(const SireMol::MoleculeGroup &other){ return SireMol::MoleculeGroup(other); }
@@ -62,9 +66,8 @@ void register_MoleculeGroup_class(){
 
     { //::SireMol::MoleculeGroup
         typedef bp::class_< SireMol::MoleculeGroup, bp::bases< SireBase::Property > > MoleculeGroup_exposer_t;
-        MoleculeGroup_exposer_t MoleculeGroup_exposer = MoleculeGroup_exposer_t( "MoleculeGroup" );
+        MoleculeGroup_exposer_t MoleculeGroup_exposer = MoleculeGroup_exposer_t( "MoleculeGroup", bp::init< >() );
         bp::scope MoleculeGroup_scope( MoleculeGroup_exposer );
-        MoleculeGroup_exposer.def( bp::init< >() );
         MoleculeGroup_exposer.def( bp::init< SireMol::Molecules const & >(( bp::arg("molecules") )) );
         MoleculeGroup_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         MoleculeGroup_exposer.def( bp::init< QString const &, SireMol::MoleculeView const & >(( bp::arg("name"), bp::arg("molview") )) );

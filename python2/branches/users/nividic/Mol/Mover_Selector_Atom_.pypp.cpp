@@ -7,41 +7,9 @@
 
 namespace bp = boost::python;
 
-#include "SireBase/errors.h"
+#include "mover_metaid.h"
 
-#include "SireMol/errors.h"
-
-#include "SireStream/datastream.h"
-
-#include "SireStream/shareddatastream.h"
-
-#include "atom.h"
-
-#include "atomcharges.h"
-
-#include "atomeditor.h"
-
-#include "atomproperty.hpp"
-
-#include "chain.h"
-
-#include "cutgroup.h"
-
-#include "evaluator.h"
-
-#include "molecule.h"
-
-#include "mover.hpp"
-
-#include "residue.h"
-
-#include "segment.h"
-
-#include "selector.hpp"
-
-#include <QDebug>
-
-#include "atom.h"
+#include "mover_metaid.h"
 
 #include "SireMaths/axisset.h"
 
@@ -87,9 +55,8 @@ void register_Mover_Selector_Atom__class(){
 
     { //::SireMol::Mover< SireMol::Selector< SireMol::Atom > >
         typedef bp::class_< SireMol::Mover< SireMol::Selector< SireMol::Atom > >, bp::bases< SireMol::MoverBase, SireMol::Selector<SireMol::Atom>, SireMol::MoleculeView, SireBase::Property > > Mover_Selector_Atom__exposer_t;
-        Mover_Selector_Atom__exposer_t Mover_Selector_Atom__exposer = Mover_Selector_Atom__exposer_t( "Mover_Selector_Atom_" );
+        Mover_Selector_Atom__exposer_t Mover_Selector_Atom__exposer = Mover_Selector_Atom__exposer_t( "Mover_Selector_Atom_", bp::init< >() );
         bp::scope Mover_Selector_Atom__scope( Mover_Selector_Atom__exposer );
-        Mover_Selector_Atom__exposer.def( bp::init< >() );
         Mover_Selector_Atom__exposer.def( bp::init< SireMol::Selector< SireMol::Atom > const & >(( bp::arg("view") )) );
         Mover_Selector_Atom__exposer.def( bp::init< SireMol::Selector< SireMol::Atom > const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Selector_Atom__exposer.def( bp::init< SireMol::Mover< SireMol::Selector< SireMol::Atom > > const & >(( bp::arg("other") )) );

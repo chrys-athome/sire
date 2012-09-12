@@ -23,9 +23,8 @@ void register_CGVariantProperty_class(){
 
     { //::SireMol::CGProperty< QVariant >
         typedef bp::class_< SireMol::CGProperty< QVariant >, bp::bases< SireMol::CGProp, SireMol::MolViewProperty, SireBase::Property > > CGVariantProperty_exposer_t;
-        CGVariantProperty_exposer_t CGVariantProperty_exposer = CGVariantProperty_exposer_t( "CGVariantProperty" );
+        CGVariantProperty_exposer_t CGVariantProperty_exposer = CGVariantProperty_exposer_t( "CGVariantProperty", bp::init< >() );
         bp::scope CGVariantProperty_scope( CGVariantProperty_exposer );
-        CGVariantProperty_exposer.def( bp::init< >() );
         CGVariantProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         CGVariantProperty_exposer.def( bp::init< QVector< QVariant > const & >(( bp::arg("values") )) );
         CGVariantProperty_exposer.def( bp::init< SireMol::CGProperty< QVariant > const & >(( bp::arg("other") )) );
