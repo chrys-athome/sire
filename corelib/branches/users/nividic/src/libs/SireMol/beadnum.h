@@ -30,7 +30,8 @@
 #define SIREMOL_BEADNUM_H
 
 #include "SireID/number.h"
-#include "SireID/id.h"
+
+#include "beadid.h"
 
 SIRE_BEGIN_HEADER
 
@@ -45,14 +46,12 @@ QDataStream& operator>>(QDataStream&, SireMol::BeadNum&);
 namespace SireMol
 {
 
-/** This class provides an ID number for a bead in a molecule.
-    A bead is a collection of atoms that are grouped together,
-    i.e. for the purpose of coarse graining, or for rigid
-    body dynamics
-    
+/** This ID number is used to identify a Bead by the user-supplied
+    number
+
     @author Christopher Woods
 */
-class SIREMOL_EXPORT BeadNum : public SireID::Number
+class SIREMOL_EXPORT BeadNum : public SireID::Number, public BeadID
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const BeadNum&);
@@ -69,7 +68,10 @@ public:
     
     static const char* typeName();
     
-    const char* what() const;
+    const char* what() const
+    {
+        return BeadNum::typeName();
+    }
     
     BeadNum* clone() const;
     
@@ -93,8 +95,7 @@ public:
 
 }
 
-
-Q_DECLARE_METATYPE( SireMol::BeadNum )
+Q_DECLARE_METATYPE(SireMol::BeadNum);
 
 SIRE_EXPOSE_CLASS( SireMol::BeadNum )
 

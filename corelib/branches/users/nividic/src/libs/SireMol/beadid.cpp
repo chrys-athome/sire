@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include "beadid.h"
+#include "beadidx.h"
 #include "beadnum.h"
 
 #include "SireStream/datastream.h"
@@ -33,6 +35,106 @@
 using namespace SireMol;
 using namespace SireID;
 using namespace SireStream;
+
+BeadID::BeadID() : ID()
+{}
+
+BeadID::BeadID(const BeadID &other) : ID(other)
+{}
+
+BeadID::~BeadID()
+{}
+
+/////////
+///////// Implementation of BeadIdx
+/////////
+
+static const RegisterMetaType<BeadIdx> r_beadidx;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const BeadIdx &beadidx)
+{
+    writeHeader(ds, r_beadidx, 1);
+    
+    ds << static_cast<const SireID::Index_T_<BeadIdx>&>(beadidx);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, BeadIdx &beadidx)
+{
+    VersionID v = readHeader(ds, r_beadidx);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Index_T_<BeadIdx>&>(beadidx);
+    }
+    else
+        throw version_error( v, "1", r_beadidx, CODELOC );
+        
+    return ds;
+}
+
+BeadIdx::BeadIdx() : SireID::Index_T_<BeadIdx>(), BeadID()
+{}
+
+BeadIdx::BeadIdx(qint32 idx) 
+          : SireID::Index_T_<BeadIdx>(idx), BeadID()
+{}
+
+BeadIdx::BeadIdx(const BeadIdx &other) 
+          : SireID::Index_T_<BeadIdx>(other), BeadID(other)
+{}
+
+BeadIdx::~BeadIdx()
+{}
+
+BeadIdx BeadIdx::null()
+{
+    return BeadIdx();
+}
+
+bool BeadIdx::isNull() const
+{
+    return SireID::Index_T_<BeadIdx>::isNull();
+}
+
+uint BeadIdx::hash() const
+{
+    return SireID::Index_T_<BeadIdx>::hash();
+}
+
+BeadIdx* BeadIdx::clone() const
+{
+    return new BeadIdx(*this);
+}
+
+QString BeadIdx::toString() const
+{
+    return QString("BeadIdx(%1)").arg(_idx);
+}
+
+BeadIdx& BeadIdx::operator=(const BeadIdx &other)
+{
+    SireID::IndexBase::operator=(other);
+    BeadID::operator=(other);
+    return *this;
+}
+
+bool BeadIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<BeadIdx>(*this, other);
+}
+
+const char* BeadIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<BeadIdx>() );
+}
+
+///////
+/////// Implementation of BeadNum
+///////
 
 static const RegisterMetaType<BeadNum> r_beadnum;
 
@@ -61,13 +163,13 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, BeadNum &beadnum)
     return ds;
 }
 
-BeadNum::BeadNum() : SireID::Number()
+BeadNum::BeadNum() : SireID::Number(), BeadID()
 {}
 
-BeadNum::BeadNum(quint32 num) : SireID::Number(num)
+BeadNum::BeadNum(quint32 num) : SireID::Number(num), BeadID()
 {}
 
-BeadNum::BeadNum(const BeadNum &other) : SireID::Number(other)
+BeadNum::BeadNum(const BeadNum &other) : SireID::Number(other), BeadID(other)
 {}
 
 BeadNum::~BeadNum()
@@ -75,12 +177,12 @@ BeadNum::~BeadNum()
 
 bool BeadNum::isNull() const
 {
-    return Number::isNull();
+    return SireID::Number::isNull();
 }
 
 uint BeadNum::hash() const
 {
-    return ::qHash( static_cast<const Number&>(*this) );
+    return ::qHash( static_cast<const SireID::Number&>(*this) );
 }
 
 QString BeadNum::toString() const
@@ -91,6 +193,7 @@ QString BeadNum::toString() const
 BeadNum& BeadNum::operator=(const BeadNum &other)
 {
     SireID::Number::operator=(other);
+    BeadID::operator=(other);
     return *this;
 }
 
@@ -137,10 +240,5 @@ BeadNum* BeadNum::clone() const
 const char* BeadNum::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<BeadNum>() );
-}
-
-const char* BeadNum::what() const
-{
-    return BeadNum::typeName();
 }
 
