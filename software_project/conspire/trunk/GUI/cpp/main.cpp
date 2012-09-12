@@ -41,16 +41,24 @@ using namespace Conspire;
 
 static QString install_dir 
                 = "/home/benlong/conspire/job_classes";
+                
+QMap<QString, UploadThread *> *uploadarray;
+QMap<QString, DownloadThread *> *downloadarray;
 
 int main(int argc, char **argv)
 {
     try
     {
+        AcquireClientInitLibraries();
+        
         QApplication a(argc, argv);
         
         QMainWindow *m = new QMainWindow(0);
 
         Options opts;
+        
+        uploadarray = new QMap<QString, UploadThread *>();
+        downloadarray = new QMap<QString, DownloadThread *>();
 
         if (argc <= 1)
         {

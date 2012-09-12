@@ -56,7 +56,7 @@ namespace Conspire
 
     protected slots:
         void makeWork();
-        void modifyWork(int col, int row);
+        void modifyWork(int row, int col);
         void refreshWork();
         
     protected:

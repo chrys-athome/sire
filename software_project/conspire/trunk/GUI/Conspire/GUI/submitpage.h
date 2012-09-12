@@ -55,8 +55,6 @@ namespace Conspire
 
     protected slots:
         void submit();
-        void query();
-        void getResults();
         
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);

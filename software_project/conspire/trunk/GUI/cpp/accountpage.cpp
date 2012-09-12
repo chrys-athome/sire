@@ -67,12 +67,6 @@
 
 using namespace Conspire;
 
-static QString install_dir 
-                = "/home/benlong/conspire/job_classes";
-
-static QString broker = "ssi-amrmmhd.epcc.ed.ac.uk";
-//static QString broker = "127.0.0.1";
-
 void AccountPage::continueToWorkStores()
 {
    emit( push( PagePointer( new WorkPage())));

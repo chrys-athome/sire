@@ -66,12 +66,6 @@
 
 using namespace Conspire;
 
-static QString install_dir 
-                = "/home/benlong/conspire/job_classes";
-
-static QString broker = "ssi-amrmmhd.epcc.ed.ac.uk";
-//static QString broker = "127.0.0.1";
-
 void UserPage::continueToWorkStores()
 {
    emit( push( PagePointer( new WorkPage())));
@@ -140,13 +134,21 @@ void UserPage::build()
     lineedit_password->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
     lineedit_password->setPlaceholderText("Password");
     lineedit_password->setFocusPolicy(::Qt::StrongFocus);
-    connect(lineedit_password, SIGNAL(returnPressed()), this, SLOT(login()));
+    if (usemode == 1)
+    {
+       disconnect(lineedit_password, SIGNAL(returnPressed()));
+       connect(lineedit_password, SIGNAL(returnPressed()), this, SLOT(sshadd()));
+    } else
+    {
+       connect(lineedit_password, SIGNAL(returnPressed()), this, SLOT(login()));
+    }
     sub_rack->addWidget(lineedit_password);
 
     if (usemode == 1)
     {
         button = new Button(Conspire::tr("Add"), this);
         sub_rack->addWidget(button);
+        disconnect(button, SIGNAL(clicked()));
         connect(button, SIGNAL(clicked()), this, SLOT(sshadd()));
         lineedit_host->setFocus();
         return_button = new Button(Conspire::tr("Cancel"));
@@ -175,7 +177,7 @@ void UserPage::build()
     lineedit_password_known->setPlaceholderText("Password");
     connect(lineedit_password_known, SIGNAL(returnPressed()), this, SLOT(login()));
     sub_rack2->addWidget(lineedit_password_known);
-    QLabel *ifyouare_label_loggedin2 = new QLabel(Conspire::tr("If you are not %1,"
+    ifyouare_label_loggedin2 = new QLabel(Conspire::tr("If you are not %1,"
        " or would like to use another account, please use the 'Change user' button below").arg(last_username));
     ifyouare_label_loggedin2->setWordWrap(true);
     sub_rack2->addWidget(ifyouare_label_loggedin2);
@@ -188,9 +190,9 @@ void UserPage::build()
     
     WidgetRack *sub_rack3 = new WidgetRack(this);
     
-    QLabel *hello_label_loggedin = new QLabel(Conspire::tr("Hello %1. You are logged in.").arg(last_username));
+    hello_label_loggedin = new QLabel(Conspire::tr("Hello %1. You are logged in.").arg(last_username));
     sub_rack3->addWidget(hello_label_loggedin);
-    QLabel *ifyouare_label_loggedin = new QLabel(Conspire::tr("If you are not %1,"
+    ifyouare_label_loggedin = new QLabel(Conspire::tr("If you are not %1,"
        " or would like to use another account, please use the 'Change user' button below").arg(last_username));
     ifyouare_label_loggedin->setWordWrap(true);
     sub_rack3->addWidget(ifyouare_label_loggedin);
@@ -304,21 +306,23 @@ QString UserPage::addMachine(QString username, QString password, QString machine
 
 QString UserPage::loginUser(QString username, QString password, bool *loginsuccessful)
 {
-   int login_success = AcquireClientInit(DEFAULT_HOST, DEFAULT_PORT, username.toAscii().constData(),
-                                         password.toAscii().constData(), "broker");
+   int login_success = AcquireClientInitState(DEFAULT_HOST, DEFAULT_PORT, username.toAscii().constData(),
+                                              password.toAscii().constData(), "broker");
    if (login_success == ACQUIRE_USER_REGISTRATION_STATE__FINAL)
    {
       // Successful log in
       if (loginsuccessful) *loginsuccessful = TRUE;
       QSettings *qsetter = new QSettings("UoB", "AcquireClient");
       qsetter->setValue("preferences/lastUsername", username);
+      last_username = username;
       delete qsetter;
       stack->switchTo(2);
+      submode = 2;
       return "Log in successful";
    } else
    {
       // Failed to log in
-      AcquireClientDestroy();
+      AcquireClientDestroyState();
       if (loginsuccessful) *loginsuccessful = FALSE;
       return "Log in failed";
    }
@@ -332,7 +336,7 @@ void UserPage::changeUser()
    lineedit_password->setText("");
    if (AcquireClientIsInitialised())
    {
-      AcquireClientDestroy();
+      AcquireClientDestroyState();
    }
    submode = 0;
    stack->switchTo(0);
@@ -360,6 +364,13 @@ void UserPage::login()
     {
        button->hide();
        stack->switchTo(2);
+       ifyouare_label_loggedin->setText(Conspire::tr("If you are not %1,"
+          " or might like to use another account, please use the 'Change user' button below").arg(last_username));
+       hello_label_loggedin->setText(Conspire::tr("Hello %1. You are logged in.").arg(last_username));
+       submode = 2;
+    } else
+    {
+       printf("login failed?\n");
     }
     login_label->setText(login_status);
     allUpdate();

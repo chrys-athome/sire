@@ -26,6 +26,7 @@
   *
 \*********************************************/
 
+#include "Conspire/GUI/workstorepage.h"
 #include "Conspire/GUI/workpage.h"
 #include "Conspire/GUI/optionspage.h"
 #include "Conspire/GUI/widgetrack.h"
@@ -71,11 +72,9 @@ using namespace Conspire;
 static QString install_dir 
                 = "/home/benlong/conspire/job_classes";
 
-static QString broker = "ssi-amrmmhd.epcc.ed.ac.uk";
-//static QString broker = "127.0.0.1";
-
 void WorkPage::refreshWork()
 {
+   printf("refresh work triggered\n");
    login_label->setText("");
    char **store_ids = NULL;
    float *pct_b2c = NULL;
@@ -87,7 +86,7 @@ void WorkPage::refreshWork()
    if ((retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) || (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK))
    {
       if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText(QString("Success. %1 bytes free").arg(QString::number(bytesfree)));
-      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Success. No remote work in progress. %1 bytes free").arg(QString::number(bytesfree)));
+      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Success. No work found. %1 bytes free").arg(QString::number(bytesfree)));
       int row = 0;
       int col = 0;
       QTableWidgetItem *qttwi = tableofworkstores->item(row, col);
@@ -104,6 +103,7 @@ void WorkPage::refreshWork()
       for (int i = 0; i < noofws; i++)
       {
          qttwi = new QTableWidgetItem("Untitled work");
+         qttwi->setData(::Qt::UserRole, QString(store_ids[i]));
          tableofworkstores->setItem(row, col, qttwi);
          col++;
          if (col > 3) { col = 0; row++; }
@@ -128,7 +128,7 @@ void WorkPage::refreshWork()
    allUpdate();
 }
 
-void WorkPage::modifyWork(int col, int row)
+void WorkPage::modifyWork(int row, int col)
 {
    QTableWidgetItem *qwidget = tableofworkstores->item(row, col);
    if (qwidget == NULL) return;
@@ -141,6 +141,9 @@ void WorkPage::modifyWork(int col, int row)
          return;
       }
       makeWork();
+   } else
+   {
+      emit( push(new WorkStorePage(qwidget->data(::Qt::UserRole).toString())));
    }
 }
 
@@ -187,7 +190,7 @@ void WorkPage::build()
     sub_rack->addWidget(tableofworkstores);
     
     button = new Button(Conspire::tr("Refresh"));
-    connect(button, SIGNAL(clicked()), this, SIGNAL(refreshWork()));
+    connect(button, SIGNAL(clicked()), this, SLOT(refreshWork()));
     sub_rack->addWidget(button);
 
     return_button = new Button(Conspire::tr("Return"));
@@ -227,6 +230,7 @@ void WorkPage::paint(QPainter *painter,
                        const QStyleOptionGraphicsItem *option, 
                        QWidget *widget)
 {
+    tableofworkstores->repaint();
     Page::paint(painter, option, widget);
 }
 

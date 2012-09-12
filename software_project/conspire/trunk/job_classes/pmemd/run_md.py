@@ -25,16 +25,16 @@ rundir = "."
 os.chdir(rundir)
 
 # redirect all standard output and error to "run_md.log" in this directory
-sys.stdout = open("run_md.log", "w", 0)
-sys.stderr = open("run_md.err", "w", 0)
+sys.stdout = open("run_md.log", "wb", 0)
+sys.stderr = open("run_md.err", "wb", 0)
 
 # get the full, absolute path to the run directory
 rundir = os.getcwd()
 
 username = os.getenv("USER")
 
-print "User %s is running a simulation in directory %s" % (username, rundir)
-print datetime.datetime.now()
+print("User %s is running a simulation in directory %s" % (username, rundir))
+print(datetime.datetime.now())
 
 def readConfig(config_file):
     """Read the configuration file - this returns a dictionary 
@@ -110,14 +110,14 @@ def getTrajectoryName(output_name, iteration):
 last_iteration = getLastIteration(output_name)
 
 if last_iteration == 0:
-   print "No previous iterations have been run... Starting from block 1..."
+   print("No previous iterations have been run... Starting from block 1...")
 
 elif last_iteration >= nblocks:
-   print "All requested blocks have finished! Simulation is complete!"
+   print("All requested blocks have finished! Simulation is complete!")
    sys.exit(0)
 
 else:
-   print "Continuing the simulation from iteration %d..." % last_iteration
+   print("Continuing the simulation from iteration %d..." % last_iteration)
 
    # update the restart file to be the one from the last iteration
    restart_file = getRestartName(output_name, last_iteration)
@@ -129,7 +129,7 @@ tempdir = tempfile.mkdtemp(suffix="_%s_%s_" % (username,output_name), \
 
 try:
     # Copy the topology file, restart file and mdin file to the temporary directory
-    print "Copying input files to temporary run directory \"%s\"..." % tempdir
+    print("Copying input files to temporary run directory \"%s\"..." % tempdir)
 
     try:
         shutil.copyfile(top_file, "%s/%s" % (tempdir,top_file))
@@ -145,7 +145,7 @@ try:
 
     shutil.copyfile(mdin_file, "%s/%s" % (tempdir,mdin_file))
 
-    print "...all files copied :-)"
+    print("...all files copied :-)")
 
     # Change into the temp directory - writing files here should be quicker
     # than writing to the home directory
@@ -163,8 +163,8 @@ try:
     # Now run the iterations one after another until the requested number
     # have been completed
     for i in range(last_iteration+1, nblocks+1):
-        print "Running iteration %d of %d..." % (i, nblocks)
-        print datetime.datetime.now()
+        print("Running iteration %d of %d..." % (i, nblocks))
+        print(datetime.datetime.now())
 
         mdout = getOutputName(output_name, i)
         new_restart = getRestartName(output_name, i)
@@ -190,19 +190,19 @@ try:
                 (ncpus, mdin_file, mdout, top_file, restart_file, restart_file, \
                  new_restart, traj)
 
-        print "(command = \"%s\")" % cmd
+        print("(command = \"%s\")" % cmd)
         exitval = os.system(cmd)
-        print "Finished :-)"
-        print datetime.datetime.now()
+        print("Finished :-)")
+        print(datetime.datetime.now())
 
         if exitval != 0:
-            print "WARNING: SOMETHING WENT WRONG WITH THE SIMULATION"
-            print "COPYING THE OUTPUT FILES TO filename_BROKEN"
+            print("WARNING: SOMETHING WENT WRONG WITH THE SIMULATION")
+            print("COPYING THE OUTPUT FILES TO filename_BROKEN")
             os.system("cp %s %s/%s_BROKEN" % (mdout, rundir, mdout))
             os.system("cp %s %s/%s_BROKEN" % (new_restart, rundir, new_restart))
             os.system("cp %s %s/%s_BROKEN" % (traj, rundir, traj))
 
-            print "EXITING!!!"
+            print("EXITING!!!")
             break
 
         # We don't need the old restart file any more
@@ -229,8 +229,8 @@ try:
 
     os.system("rm -rf %s" % tempdir)
 
-    print "All iterations completed :-)"
+    print("All iterations completed :-)")
 
 except:
-    print "SOMETHING WEIRD HAPPENED!!!"
+    print("SOMETHING WEIRD HAPPENED!!!")
     os.system("rm -rf %s" % tempdir)

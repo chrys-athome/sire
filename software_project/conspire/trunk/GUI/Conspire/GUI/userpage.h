@@ -80,6 +80,9 @@ namespace Conspire
         
         /** The options for the job to submit */
         Options opts;
+        QLabel *ifyouare_label_loggedin2;
+        QLabel *ifyouare_label_loggedin;
+        QLabel *hello_label_loggedin;
         
         /** The stack holding the different pages during
             the job run process */

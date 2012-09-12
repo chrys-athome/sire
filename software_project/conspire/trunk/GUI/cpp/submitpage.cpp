@@ -31,6 +31,9 @@
 #include "Conspire/GUI/button.h"
 #include "Conspire/GUI/exceptionpage.h"
 #include "Conspire/GUI/widgetstack.h"
+#include "Conspire/GUI/uploadthread.h"
+#include "Conspire/GUI/workstorepage.h"
+#include "Conspire/GUI/mainwindow.h"
 
 #include "Conspire/option.h"
 #include "Conspire/values.h"
@@ -57,6 +60,7 @@
 #include <QDesktopServices>
 #include <QUuid>
 #include <QSettings>
+#include <QThreadPool>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -67,9 +71,6 @@ using namespace Conspire;
 
 static QString install_dir 
                 = "/home/benlong/conspire/job_classes";
-
-static QString broker = "ssi-amrmmhd.epcc.ed.ac.uk";
-//static QString broker = "127.0.0.1";
 
 void SubmitPage::build()
 {
@@ -428,17 +429,28 @@ void SubmitPage::submit()
         int64_t spaceused = 0;
         int blocks = 0;
         const char *workstore = AcquireReserveWorkStore(xmldescr.toAscii().constData(), datadir.toAscii().constData(), &spaceused, &blocks);
+        int allinstances = 1;
         if (workstore)
         {
            QSettings *qsetter = new QSettings("UoB", "AcquireClient");
            qsetter->setValue(quuid + "/workstoreid", workstore);
            qsetter->setValue(quuid + "/remotespace", QString::number(spaceused));
            qsetter->setValue(quuid + "/blocks", QString::number(blocks));
+           qsetter->setValue(quuid + "/instances", QString::number(allinstances));
            delete qsetter;
            
            status_label->setText( Conspire::tr("Done. Acquired work store ID.") );
+           progress_bar->setValue(99);
+           allUpdate();
+           
+           UploadThread *uploadthread = new UploadThread(workstore, datadir.toAscii().constData(), NULL, NULL, allinstances, 3600, blocks);
+           uploadarray->insert(workstore, uploadthread);
+           QThreadPool::globalInstance()->start(uploadthread);
+                      
+           status_label->setText( Conspire::tr("Started upload") );
            progress_bar->setValue(100);
            allUpdate();
+           
         }
         
         emit( pop() );
@@ -559,125 +571,4 @@ void SubmitPage::submit()
         emit( push( PagePointer( new ExceptionPage(
             Conspire::tr("Error in submission!"), e) ) ) );
     }
-}
-
-void SubmitPage::query()
-{
-    button->hide();
-    
-    status_label->setText( Conspire::tr("Querying the job...") );
-    progress_bar->setValue(0);
-    allUpdate();
-    
-    //do the query
-    //PARENT_NODE=127.0.0.1 PARENT_NODE_PORT=10000 ISQUERY=TRUE WKPTID=2 python ./leafhead3.py
-    QProcessEnvironment env;
-    env.insert("PARENT_NODE", broker);
-    env.insert("PARENT_NODE_PORT", "10000");
-    env.insert("ISQUERY", "TRUE");
-    env.insert("WKPTID", QString::number(job_id));
-    
-    QProcess proc;
-    proc.setProcessEnvironment(env);
-    
-    proc.start("python", 
-        QStringList(QString("%1/leafhead3.py").arg(install_dir)));
-    
-    progress_bar->setValue(50);
-    allUpdate();
-    
-    proc.waitForFinished(-1);
-    
-    QByteArray out = proc.readAllStandardOutput();
-    QByteArray err = proc.readAllStandardError();
-    
-    conspireDebug() << "OUTPUT" << out;
-    conspireDebug() << "ERROR" << err;
-
-    status_label->setText( Conspire::tr("Got a response...") );
-    progress_bar->setValue(50);
-    allUpdate();
-
-    //WORKPACKET ID 0 on BROKER is *******
-    // where ****** is unallocated, allocated, running, completed, or non existant
-    QRegExp re("WORKPACKET ID (\\d+) on BROKER is ([\\w\\s]+)");
-    
-    int pos = re.indexIn(out);
-    
-    if (pos == -1)
-    {
-        status_label->setText( Conspire::tr("Strange? Couldn't get job status.") );
-        progress_bar->setValue(0);
-        allUpdate();
-    }
-    else
-    {
-        QString status = re.cap(2).simplified();
-
-        if (status == "running")
-        {
-            stack->switchTo(3);
-        }
-    
-        status_label->setText( Conspire::tr("The job status is \"%1\".").arg(status) );
-        progress_bar->setValue(100);
-        allUpdate();
-    
-        if (status == "completed")
-        {
-            stack->switchTo(1);
-            button->setText( Conspire::tr("Get Results") );
-            button->disconnect();
-            connect(button, SIGNAL(clicked()), this, SLOT(getResults()));
-        }
-    }
-    
-    button->show();
-}
-
-void SubmitPage::getResults()
-{
-    //button->disconnect();
-    button->hide();
-    
-    status_label->setText( Conspire::tr("Getting the results...") );
-    progress_bar->setValue(0);
-    allUpdate();
-
-    //do the query
-    //PARENT_NODE=127.0.0.1 PARENT_NODE_PORT=10000 ISQUERY=TRUE WKPTID=2 python ./leafhead3.py
-    QProcessEnvironment env;
-    env.insert("PARENT_NODE", broker);
-    env.insert("PARENT_NODE_PORT", "10000");
-    env.insert("ISDOWNLOAD", "TRUE");
-    env.insert("WKPTID", QString::number(job_id));
-    env.insert("OUTFILENAME", output_name);
-
-    QProcess proc;
-    proc.setProcessEnvironment(env);
-    
-    proc.start("python", 
-        QStringList(QString("%1/leafhead3.py").arg(install_dir)));
-    
-    progress_bar->setValue(50);
-    allUpdate();
-    
-    proc.waitForFinished(-1);
-    
-    QByteArray out = proc.readAllStandardOutput();
-    QByteArray err = proc.readAllStandardError();
-    
-    conspireDebug() << "OUTPUT" << out;
-    conspireDebug() << "ERROR" << err;
-
-    status_label->setText( Conspire::tr("Downloaded results to %1").arg(output_name) );
-    progress_bar->setValue(100);
-
-    button->show();
-    allUpdate();
-
-    QProcess proc2;
-    proc2.start("open", QStringList() << output_name);
-
-    proc2.waitForFinished(-1);
 }

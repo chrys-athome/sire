@@ -12,6 +12,8 @@ include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR} )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/GUI )
 include_directories( BEFORE SYSTEM /home/benlong/include )
 
+set (CMAKE_BUILD_TYPE Debug)
+
 # Siren depends on >= Qt 4.4
 find_package( Qt4 4.4.0 COMPONENTS QtCore QtGui QtOpenGL )
 find_library( ACQUIRE_LIBRARY NAMES Acquire )
@@ -56,6 +58,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/widgetrack.h
       Conspire/GUI/widgetstack.h
       Conspire/GUI/workpage.h
+      Conspire/GUI/workstorepage.h
       
     )
 
@@ -70,6 +73,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/configdocument.h
       Conspire/GUI/configpage.h  
       Conspire/GUI/configview.h
+      Conspire/GUI/downloadthread.h
       Conspire/GUI/exceptionpage.h
       Conspire/GUI/filepage.h
       Conspire/GUI/helppage.h
@@ -83,10 +87,12 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/pageview.h
       Conspire/GUI/slidelabel.h
       Conspire/GUI/submitpage.h
+      Conspire/GUI/uploadthread.h
       Conspire/GUI/userpage.h
       Conspire/GUI/widgetrack.h
       Conspire/GUI/widgetstack.h
       Conspire/GUI/workpage.h
+      Conspire/GUI/workstorepage.h
 
     )
 
@@ -103,6 +109,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/configdocument.cpp
       cpp/configpage.cpp
       cpp/configview.cpp
+      cpp/downloadthread.cpp
       cpp/exceptionpage.cpp
       cpp/filepage.cpp
       cpp/helppage.cpp
@@ -116,10 +123,12 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/pageview.cpp
       cpp/slidelabel.cpp
       cpp/submitpage.cpp
+      cpp/uploadthread.cpp
       cpp/userpage.cpp
       cpp/widgetrack.cpp
       cpp/widgetstack.cpp
       cpp/workpage.cpp
+      cpp/workstorepage.cpp
 
       ${CONSPIRE_GUI_PUBLIC_HEADERS}
       ${CONSPIRE_GUI_PRIVATE_HEADERS}
