@@ -36,6 +36,7 @@ set ( SIREMOL_HEADERS
       atomsin.hpp
       atomvelocities.h
       beadid.h
+      beadidx.h
       beadnum.h
       bondhunter.h
       bondid.h
