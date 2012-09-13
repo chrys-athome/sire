@@ -970,6 +970,8 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             
                             const __m128d sse_r = _mm_set_pd( distmat[j], distmat[j+1] );
                             const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
+                            const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
+
                             {
                                 __m128d nrg = _mm_sub_pd(sse_r, sse_Rc);
                                 nrg = _mm_mul_pd(nrg, sse_one_over_Rc2);
@@ -982,8 +984,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                 sse_chg = _mm_mul_pd(sse_chg, sse_chg0);
                         
                                 nrg = _mm_mul_pd(sse_chg, nrg);
-
-                                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
                                 nrg = _mm_and_pd(nrg, sse_in_cutoff);
                                 
                                 sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
@@ -1019,6 +1019,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                                      sse_sig_over_dist6);
                                                      
                             nrg = _mm_mul_pd(nrg, sse_eps);
+                            nrg = _mm_and_pd(nrg, sse_in_cutoff);
                             sse_ljnrg = _mm_add_pd(sse_ljnrg, nrg);
                         }
                               
@@ -1027,22 +1028,24 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             const Parameter &param1 = params1_array[nats1-1];
 
                             const double r = distmat[nats1-1];
-                            const double one_over_r = double(1) / r;
-                            
-                            const double in_cutoff = (r < Rc);
-                            
-                            icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
 
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param1.ljid)];
+                            if (r < Rc)
+                            {
+                                const double one_over_r = double(1) / r;
 
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
-        
-                            iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                          sig_over_dist6);
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
+                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                        ljpairs.map(param0.ljid,
+                                                                    param1.ljid)];
+
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+            
+                                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                              sig_over_dist6);
+                            }
                         }
                     }
                     
@@ -1064,22 +1067,24 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             const Parameter &param1 = params1_array[j];
 
                             const double r = distmat[j];
-                            const double one_over_r = double(1) / r;
                             
-                            const double in_cutoff = (r < Rc);
+                            if (r < Rc)
+                            {
+                                const double one_over_r = double(1) / r;
                             
-                            icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
+                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
 
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param1.ljid)];
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                        ljpairs.map(param0.ljid,
+                                                                    param1.ljid)];
 
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
-        
-                            iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                          sig_over_dist6);
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+            
+                                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                              sig_over_dist6);
+                            }
                         }
                     }
                 }
@@ -1181,6 +1186,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             
                             const __m128d sse_r = _mm_set_pd( distmat[j], distmat[j+1] );
                             const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
+                            const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
                             {
                                 __m128d nrg = _mm_mul_pd(sse_r, sse_r);
                                 nrg = _mm_mul_pd(nrg, sse_k_rf);
@@ -1194,7 +1200,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                         
                                 nrg = _mm_mul_pd(sse_chg, nrg);
 
-                                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
                                 nrg = _mm_and_pd(nrg, sse_in_cutoff);
                                 
                                 sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
@@ -1230,6 +1235,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                                      sse_sig_over_dist6);
                                                      
                             nrg = _mm_mul_pd(nrg, sse_eps);
+                            nrg = _mm_and_pd(nrg, sse_in_cutoff);
                             sse_ljnrg = _mm_add_pd(sse_ljnrg, nrg);
                         }
                               
@@ -1238,22 +1244,24 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             const Parameter &param1 = params1_array[nats1-1];
 
                             const double r = distmat[nats1-1];
-                            const double one_over_r = double(1) / r;
                             
-                            const double in_cutoff = (r < Rc);
+                            if (r < Rc)
+                            {
+                                const double one_over_r = double(1) / r;
                             
-                            icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r + k_rf*r*r - c_rf);
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
+                                            (one_over_r + k_rf*r*r - c_rf);
 
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param1.ljid)];
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                        ljpairs.map(param0.ljid,
+                                                                    param1.ljid)];
 
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
-        
-                            iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                          sig_over_dist6);
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+            
+                                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                              sig_over_dist6);
+                            }
                         }
                     }
                     
@@ -1275,22 +1283,24 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             const Parameter &param1 = params1_array[j];
 
                             const double r = distmat[j];
-                            const double one_over_r = double(1) / r;
                             
-                            const double in_cutoff = (r < Rc);
+                            if (r < Rc)
+                            {
+                                const double one_over_r = double(1) / r;
                             
-                            icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r + k_rf*r*r - c_rf);
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
+                                            (one_over_r + k_rf*r*r - c_rf);
 
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param1.ljid)];
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                        ljpairs.map(param0.ljid,
+                                                                    param1.ljid)];
 
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
-        
-                            iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                          sig_over_dist6);
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+            
+                                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                              sig_over_dist6);
+                            }
                         }
                     }
                 }
