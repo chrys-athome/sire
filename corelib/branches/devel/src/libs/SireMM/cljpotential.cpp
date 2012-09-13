@@ -4660,18 +4660,19 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         const Parameter &param1 = params1_array[j];
 
                         const double r = distmat[j];
-                        const double one_over_r = double(1) / r;
                         
-                        const double in_cutoff = (r < Rc);
+                        if (r < Rc)
+                        {
+                            const double one_over_r = double(1) / r;
                         
-                        if (cljscl.coulomb() != 1)
-                            icnrg += cljscl.coulomb() * 
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r);
-                        else
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                            param0.reduced_charge * param1.reduced_charge *
+                                                one_over_r;
+                            else
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
+                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                        }
                     }
                 }
                 else
@@ -4682,31 +4683,32 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         const Parameter &param1 = params1_array[j];
                             
                         const double r = distmat[j];
-                        const double one_over_r = double(1) / r;
                         
-                        const double in_cutoff = (r < Rc);
-                            
-                        if (cljscl.coulomb() != 1)
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r);
-                        else
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
-                                  
-                        if (param1.ljid != 0)
+                        if (r < Rc)
                         {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                      ljpairs.map(param0.ljid,
-                                                                  param1.ljid)];
-                            
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
+                            const double one_over_r = double(1) / r;
+                        
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                            param0.reduced_charge * param1.reduced_charge *
+                                                one_over_r;
+                            else
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
+                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
 
-                            iljnrg += cljscl.lj() *
-                                          ljpair.epsilon() * (sig_over_dist12 - 
-                                                              sig_over_dist6);
+                            if (param1.ljid != 0)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                          ljpairs.map(param0.ljid,
+                                                                      param1.ljid)];
+                                
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                iljnrg += cljscl.lj() *
+                                              ljpair.epsilon() * (sig_over_dist12 - 
+                                                                  sig_over_dist6);
+                            }
                         }
                     }
                 }
@@ -4744,18 +4746,19 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         const Parameter &param1 = params1_array[j];
 
                         const double r = distmat[j];
-                        const double one_over_r = double(1) / r;
                         
-                        const double in_cutoff = (r < Rc);
+                        if (r < Rc)
+                        {
+                            const double one_over_r = double(1) / r;
                         
-                        if (cljscl.coulomb() != 1)
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r);
-                        else
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r + k_rf*r*r - c_rf);
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                            param0.reduced_charge * param1.reduced_charge *
+                                                one_over_r;
+                            else
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
+                                            (one_over_r + k_rf*r*r - c_rf);
+                        }
                     }
                 }
                 else
@@ -4766,31 +4769,32 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         const Parameter &param1 = params1_array[j];
                             
                         const double r = distmat[j];
-                        const double one_over_r = double(1) / r;
                         
-                        const double in_cutoff = (r < Rc);
-                            
-                        if (cljscl.coulomb() != 1)
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r);
-                        else
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r + k_rf*r*r - c_rf);
-                                  
-                        if (param1.ljid != 0)
+                        if (r < Rc)
                         {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                      ljpairs.map(param0.ljid,
-                                                                  param1.ljid)];
+                            const double one_over_r = double(1) / r;
                             
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                            param0.reduced_charge * param1.reduced_charge *
+                                                one_over_r;
+                            else
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r + k_rf*r*r - c_rf);
+                                  
+                            if (param1.ljid != 0)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                          ljpairs.map(param0.ljid,
+                                                                      param1.ljid)];
+                                
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                            iljnrg += cljscl.lj() *
-                                          ljpair.epsilon() * (sig_over_dist12 - 
-                                                              sig_over_dist6);
+                                iljnrg += cljscl.lj() *
+                                              ljpair.epsilon() * (sig_over_dist12 - 
+                                                                  sig_over_dist6);
+                            }
                         }
                     }
                 }
@@ -4883,18 +4887,19 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             const Parameter &param1 = params1_array[j];
 
                             const double r = distmat[j];
-                            const double one_over_r = double(1) / r;
                             
-                            const double in_cutoff = (r < Rc);
+                            if (r < Rc)
+                            {
+                                const double one_over_r = double(1) / r;
                             
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
-                            else
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r);
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                            }
                         }
                     }
                 }
@@ -4910,30 +4915,31 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             const Parameter &param1 = params1_array[j];
 
                             const double r = distmat[j];
-                            const double one_over_r = double(1) / r;
                             
-                            const double in_cutoff = (r < Rc);
-                            
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r);
-                            else
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
-
-                            if (cljscl.lj() != 0 and param1.ljid != 0)
+                            if (r < Rc)
                             {
-                                const LJPair &ljpair = ljpairs.constData()[
-                                                         ljpairs.map(param0.ljid,
-                                                                     param1.ljid)];
+                                const double one_over_r = double(1) / r;
                             
-                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                                double sig_over_dist12 = pow_2(sig_over_dist6);
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
 
-                                iljnrg += cljscl.lj() * ljpair.epsilon() * 
-                                           (sig_over_dist12 - sig_over_dist6);
+                                if (cljscl.lj() != 0 and param1.ljid != 0)
+                                {
+                                    const LJPair &ljpair = ljpairs.constData()[
+                                                             ljpairs.map(param0.ljid,
+                                                                         param1.ljid)];
+                                
+                                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                    double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                    iljnrg += cljscl.lj() * ljpair.epsilon() * 
+                                               (sig_over_dist12 - sig_over_dist6);
+                                }
                             }
                         }
                     }
@@ -4976,18 +4982,19 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             const Parameter &param1 = params1_array[j];
 
                             const double r = distmat[j];
-                            const double one_over_r = double(1) / r;
                             
-                            const double in_cutoff = (r < Rc);
+                            if (r < Rc)
+                            {
+                                const double one_over_r = double(1) / r;
                             
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r);
-                            else
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r + k_rf*r*r - c_rf);
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r + k_rf*r*r - c_rf);
+                            }
                         }
                     }
                 }
@@ -5003,30 +5010,31 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             const Parameter &param1 = params1_array[j];
 
                             const double r = distmat[j];
-                            const double one_over_r = double(1) / r;
                             
-                            const double in_cutoff = (r < Rc);
-                            
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r);
-                            else
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r + k_rf*r*r - c_rf);
-
-                            if (cljscl.lj() != 0 and param1.ljid != 0)
+                            if (r < Rc)
                             {
-                                const LJPair &ljpair = ljpairs.constData()[
-                                                         ljpairs.map(param0.ljid,
-                                                                     param1.ljid)];
+                                const double one_over_r = double(1) / r;
                             
-                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                                double sig_over_dist12 = pow_2(sig_over_dist6);
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r + k_rf*r*r - c_rf);
 
-                                iljnrg += cljscl.lj() * ljpair.epsilon() * 
-                                           (sig_over_dist12 - sig_over_dist6);
+                                if (cljscl.lj() != 0 and param1.ljid != 0)
+                                {
+                                    const LJPair &ljpair = ljpairs.constData()[
+                                                             ljpairs.map(param0.ljid,
+                                                                         param1.ljid)];
+                                
+                                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                    double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                    iljnrg += cljscl.lj() * ljpair.epsilon() * 
+                                               (sig_over_dist12 - sig_over_dist6);
+                                }
                             }
                         }
                     }
@@ -5147,18 +5155,19 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         const Parameter &param1 = params1_array[j];
 
                         const double r = distmat[j];
-                        const double one_over_r = double(1) / r;
                         
-                        const double in_cutoff = (r < Rc);
+                        if (r < Rc)
+                        {
+                            const double one_over_r = double(1) / r;
                         
-                        if (cljscl.coulomb() != 1)
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r);
-                        else
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                            param0.reduced_charge * param1.reduced_charge *
+                                                one_over_r;
+                            else
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
+                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                        }
                     }
                 }
                 else
@@ -5169,31 +5178,32 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         const Parameter &param1 = params1_array[j];
 
                         const double r = distmat[j];
-                        const double one_over_r = double(1) / r;
                         
-                        const double in_cutoff = (r < Rc);
-                        
-                        if (cljscl.coulomb() != 1)
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r);
-                        else
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
-                                  
-                        if (param1.ljid != 0)
+                        if (r < Rc)
                         {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                      ljpairs.map(param0.ljid,
-                                                                  param1.ljid)];
-                            
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
+                            const double one_over_r = double(1) / r;
+                        
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                            param0.reduced_charge * param1.reduced_charge *
+                                                one_over_r;
+                            else
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
+                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                  
+                            if (param1.ljid != 0)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                          ljpairs.map(param0.ljid,
+                                                                      param1.ljid)];
+                                
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                            iljnrg += cljscl.lj() *
-                                          ljpair.epsilon() * (sig_over_dist12 - 
-                                                              sig_over_dist6);
+                                iljnrg += cljscl.lj() *
+                                              ljpair.epsilon() * (sig_over_dist12 - 
+                                                                  sig_over_dist6);
+                            }
                         }
                     }
                 }
@@ -5231,18 +5241,19 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         const Parameter &param1 = params1_array[j];
 
                         const double r = distmat[j];
-                        const double one_over_r = double(1) / r;
                         
-                        const double in_cutoff = (r < Rc);
+                        if (r < Rc)
+                        {
+                            const double one_over_r = double(1) / r;
                         
-                        if (cljscl.coulomb() != 1)
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                            param0.reduced_charge * param1.reduced_charge *
                                                   (one_over_r);
-                        else
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                            else
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
                                                   (one_over_r + k_rf*r*r - c_rf);
+                        }
                     }
                 }
                 else
@@ -5253,31 +5264,32 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         const Parameter &param1 = params1_array[j];
 
                         const double r = distmat[j];
-                        const double one_over_r = double(1) / r;
                         
-                        const double in_cutoff = (r < Rc);
-                        
-                        if (cljscl.coulomb() != 1)
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r);
-                        else
-                            icnrg += cljscl.coulomb() *
-                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                    (one_over_r + k_rf*r*r - c_rf);
-                                  
-                        if (param1.ljid != 0)
+                        if (r < Rc)
                         {
-                            const LJPair &ljpair = ljpairs.constData()[
-                                                      ljpairs.map(param0.ljid,
-                                                                  param1.ljid)];
-                            
-                            double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                            double sig_over_dist12 = pow_2(sig_over_dist6);
+                            const double one_over_r = double(1) / r;
+                        
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                            param0.reduced_charge * param1.reduced_charge *
+                                                one_over_r;
+                            else
+                                icnrg += param0.reduced_charge * param1.reduced_charge *
+                                            (one_over_r + k_rf*r*r - c_rf);
+                                  
+                            if (param1.ljid != 0)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                          ljpairs.map(param0.ljid,
+                                                                      param1.ljid)];
+                                
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                            iljnrg += cljscl.lj() *
-                                          ljpair.epsilon() * (sig_over_dist12 - 
-                                                              sig_over_dist6);
+                                iljnrg += cljscl.lj() *
+                                              ljpair.epsilon() * (sig_over_dist12 - 
+                                                                  sig_over_dist6);
+                            }
                         }
                     }
                 }
@@ -5370,18 +5382,19 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             const Parameter &param1 = params1_array[j];
 
                             const double r = distmat[j];
-                            const double one_over_r = double(1) / r;
                             
-                            const double in_cutoff = (r < Rc);
+                            if (r < Rc)
+                            {
+                                const double one_over_r = double(1) / r;
                             
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() * 
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r);
-                            else
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                            }
                         }
                     }
                 }
@@ -5397,30 +5410,31 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             const Parameter &param1 = params1_array[j];
 
                             const double r = distmat[j];
-                            const double one_over_r = double(1) / r;
                             
-                            const double in_cutoff = (r < Rc);
-                            
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() * 
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r);
-                            else
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
-                                  
-                            if (cljscl.lj() != 0 and param1.ljid != 0)
+                            if (r < Rc)
                             {
-                                const LJPair &ljpair = ljpairs.constData()[
-                                                         ljpairs.map(param0.ljid,
-                                                                     param1.ljid)];
+                                const double one_over_r = double(1) / r;
                             
-                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                                double sig_over_dist12 = pow_2(sig_over_dist6);
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
 
-                                iljnrg += cljscl.lj() * ljpair.epsilon() * 
-                                           (sig_over_dist12 - sig_over_dist6);
+                                if (cljscl.lj() != 0 and param1.ljid != 0)
+                                {
+                                    const LJPair &ljpair = ljpairs.constData()[
+                                                             ljpairs.map(param0.ljid,
+                                                                         param1.ljid)];
+                                
+                                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                    double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                    iljnrg += cljscl.lj() * ljpair.epsilon() * 
+                                               (sig_over_dist12 - sig_over_dist6);
+                                }
                             }
                         }
                     }
@@ -5463,18 +5477,19 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             const Parameter &param1 = params1_array[j];
 
                             const double r = distmat[j];
-                            const double one_over_r = double(1) / r;
                             
-                            const double in_cutoff = (r < Rc);
+                            if (r < Rc)
+                            {
+                                const double one_over_r = double(1) / r;
                             
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r);
-                            else
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r + k_rf*r*r - c_rf);
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r + k_rf*r*r - c_rf);
+                            }
                         }
                     }
                 }
@@ -5490,30 +5505,31 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             const Parameter &param1 = params1_array[j];
 
                             const double r = distmat[j];
-                            const double one_over_r = double(1) / r;
                             
-                            const double in_cutoff = (r < Rc);
-                            
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() * 
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r);
-                            else
-                                icnrg += cljscl.coulomb() *
-                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
-                                        (one_over_r + k_rf*r*r - c_rf);
-                                  
-                            if (cljscl.lj() != 0 and param1.ljid != 0)
+                            if (r < Rc)
                             {
-                                const LJPair &ljpair = ljpairs.constData()[
-                                                         ljpairs.map(param0.ljid,
-                                                                     param1.ljid)];
+                                const double one_over_r = double(1) / r;
                             
-                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                                double sig_over_dist12 = pow_2(sig_over_dist6);
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r + k_rf*r*r - c_rf);
+                                      
+                                if (cljscl.lj() != 0 and param1.ljid != 0)
+                                {
+                                    const LJPair &ljpair = ljpairs.constData()[
+                                                             ljpairs.map(param0.ljid,
+                                                                         param1.ljid)];
+                                
+                                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                    double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                                iljnrg += cljscl.lj() * ljpair.epsilon() * 
-                                           (sig_over_dist12 - sig_over_dist6);
+                                    iljnrg += cljscl.lj() * ljpair.epsilon() * 
+                                               (sig_over_dist12 - sig_over_dist6);
+                                }
                             }
                         }
                     }
