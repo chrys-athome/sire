@@ -4664,7 +4664,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         
                         const double in_cutoff = (r < Rc);
                         
-                        icnrg += cljscl.coulomb() * 
+                        if (cljscl.coulomb() != 1)
+                            icnrg += cljscl.coulomb() * 
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r);
+                        else
+                            icnrg += cljscl.coulomb() *
                                  in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                     (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
                     }
@@ -4681,7 +4686,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         
                         const double in_cutoff = (r < Rc);
                             
-                        icnrg += cljscl.coulomb() * 
+                        if (cljscl.coulomb() != 1)
+                            icnrg += cljscl.coulomb() *
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r);
+                        else
+                            icnrg += cljscl.coulomb() *
                                  in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                     (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
                                   
@@ -4738,7 +4748,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         
                         const double in_cutoff = (r < Rc);
                         
-                        icnrg += cljscl.coulomb() * 
+                        if (cljscl.coulomb() != 1)
+                            icnrg += cljscl.coulomb() *
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r);
+                        else
+                            icnrg += cljscl.coulomb() *
                                  in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                     (one_over_r + k_rf*r*r - c_rf);
                     }
@@ -4755,7 +4770,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         
                         const double in_cutoff = (r < Rc);
                             
-                        icnrg += cljscl.coulomb() * 
+                        if (cljscl.coulomb() != 1)
+                            icnrg += cljscl.coulomb() *
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r);
+                        else
+                            icnrg += cljscl.coulomb() *
                                  in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                     (one_over_r + k_rf*r*r - c_rf);
                                   
@@ -4867,9 +4887,14 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             
                             const double in_cutoff = (r < Rc);
                             
-                            icnrg += cljscl.coulomb() * 
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
                                      in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                         (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                            else
+                                icnrg += cljscl.coulomb() *
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r);
                         }
                     }
                 }
@@ -4889,7 +4914,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             
                             const double in_cutoff = (r < Rc);
                             
-                            icnrg += cljscl.coulomb() * 
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r);
+                            else
+                                icnrg += cljscl.coulomb() *
                                      in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                         (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
 
@@ -4913,7 +4943,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         else if (use_reaction_field)
         {
             double Rc = switchfunc->electrostaticCutoffDistance();
-            
+
             if (Rc != switchfunc->vdwCutoffDistance())
                 throw SireError::unsupported( QObject::tr(
                         "This code does not support having electrostatic shifting together "
@@ -4950,7 +4980,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             
                             const double in_cutoff = (r < Rc);
                             
-                            icnrg += cljscl.coulomb() * 
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r);
+                            else
+                                icnrg += cljscl.coulomb() *
                                      in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                         (one_over_r + k_rf*r*r - c_rf);
                         }
@@ -4972,7 +5007,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             
                             const double in_cutoff = (r < Rc);
                             
-                            icnrg += cljscl.coulomb() * 
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r);
+                            else
+                                icnrg += cljscl.coulomb() *
                                      in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                         (one_over_r + k_rf*r*r - c_rf);
 
@@ -5111,7 +5151,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         
                         const double in_cutoff = (r < Rc);
                         
-                        icnrg += cljscl.coulomb() * 
+                        if (cljscl.coulomb() != 1)
+                            icnrg += cljscl.coulomb() *
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r);
+                        else
+                            icnrg += cljscl.coulomb() *
                                  in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                     (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
                     }
@@ -5128,7 +5173,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         
                         const double in_cutoff = (r < Rc);
                         
-                        icnrg += cljscl.coulomb() * 
+                        if (cljscl.coulomb() != 1)
+                            icnrg += cljscl.coulomb() *
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r);
+                        else
+                            icnrg += cljscl.coulomb() *
                                  in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                     (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
                                   
@@ -5185,7 +5235,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         
                         const double in_cutoff = (r < Rc);
                         
-                        icnrg += cljscl.coulomb() * 
+                        if (cljscl.coulomb() != 1)
+                            icnrg += cljscl.coulomb() *
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                                  (one_over_r);
+                        else
+                            icnrg += cljscl.coulomb() *
                                  in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                                   (one_over_r + k_rf*r*r - c_rf);
                     }
@@ -5202,7 +5257,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         
                         const double in_cutoff = (r < Rc);
                         
-                        icnrg += cljscl.coulomb() * 
+                        if (cljscl.coulomb() != 1)
+                            icnrg += cljscl.coulomb() *
+                                 in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                    (one_over_r);
+                        else
+                            icnrg += cljscl.coulomb() *
                                  in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                     (one_over_r + k_rf*r*r - c_rf);
                                   
@@ -5314,7 +5374,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             
                             const double in_cutoff = (r < Rc);
                             
-                            icnrg += cljscl.coulomb() * 
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() * 
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r);
+                            else
+                                icnrg += cljscl.coulomb() *
                                      in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                         (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
                         }
@@ -5336,7 +5401,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             
                             const double in_cutoff = (r < Rc);
                             
-                            icnrg += cljscl.coulomb() * 
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() * 
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r);
+                            else
+                                icnrg += cljscl.coulomb() *
                                      in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                         (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
                                   
@@ -5397,7 +5467,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             
                             const double in_cutoff = (r < Rc);
                             
-                            icnrg += cljscl.coulomb() * 
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() *
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r);
+                            else
+                                icnrg += cljscl.coulomb() *
                                      in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                         (one_over_r + k_rf*r*r - c_rf);
                         }
@@ -5419,7 +5494,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             
                             const double in_cutoff = (r < Rc);
                             
-                            icnrg += cljscl.coulomb() * 
+                            if (cljscl.coulomb() != 1)
+                                icnrg += cljscl.coulomb() * 
+                                     in_cutoff * param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r);
+                            else
+                                icnrg += cljscl.coulomb() *
                                      in_cutoff * param0.reduced_charge * param1.reduced_charge *
                                         (one_over_r + k_rf*r*r - c_rf);
                                   
