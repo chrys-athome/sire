@@ -56,7 +56,6 @@ gridff.setBuffer(2 * angstrom)
 gridff.setGridSpacing( 0.25 * angstrom )
 gridff.setLJCutoff( 6 * angstrom )
 gridff.setCoulombCutoff( 25 * angstrom )
-gridff.setCalculateGridError(True)
 
 gridff.add(swapwaters, MGIdx(0))
 gridff.add(waters, MGIdx(1))
