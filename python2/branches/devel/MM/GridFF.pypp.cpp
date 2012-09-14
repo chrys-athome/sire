@@ -3,7 +3,6 @@
 // (C) Christopher Woods, GPL >= 2 License
 
 #include "boost/python.hpp"
-#include "Helpers/clone_const_reference.hpp"
 #include "GridFF.pypp.hpp"
 
 namespace bp = boost::python;
@@ -36,26 +35,6 @@ void register_GridFF_class(){
         bp::scope GridFF_scope( GridFF_exposer );
         GridFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         GridFF_exposer.def( bp::init< SireMM::GridFF const & >(( bp::arg("other") )) );
-        { //::SireMM::GridFF::averageDeltaTimeSaved
-        
-            typedef double ( ::SireMM::GridFF::*averageDeltaTimeSaved_function_type )(  ) const;
-            averageDeltaTimeSaved_function_type averageDeltaTimeSaved_function_value( &::SireMM::GridFF::averageDeltaTimeSaved );
-            
-            GridFF_exposer.def( 
-                "averageDeltaTimeSaved"
-                , averageDeltaTimeSaved_function_value );
-        
-        }
-        { //::SireMM::GridFF::averageTotalTimeSaved
-        
-            typedef double ( ::SireMM::GridFF::*averageTotalTimeSaved_function_type )(  ) const;
-            averageTotalTimeSaved_function_type averageTotalTimeSaved_function_value( &::SireMM::GridFF::averageTotalTimeSaved );
-            
-            GridFF_exposer.def( 
-                "averageTotalTimeSaved"
-                , averageTotalTimeSaved_function_value );
-        
-        }
         { //::SireMM::GridFF::buffer
         
             typedef ::SireUnits::Dimension::Length ( ::SireMM::GridFF::*buffer_function_type )(  ) const;
@@ -66,16 +45,6 @@ void register_GridFF_class(){
                 , buffer_function_value );
         
         }
-        { //::SireMM::GridFF::calculatingGridError
-        
-            typedef bool ( ::SireMM::GridFF::*calculatingGridError_function_type )(  ) const;
-            calculatingGridError_function_type calculatingGridError_function_value( &::SireMM::GridFF::calculatingGridError );
-            
-            GridFF_exposer.def( 
-                "calculatingGridError"
-                , calculatingGridError_function_value );
-        
-        }
         { //::SireMM::GridFF::coulombCutoff
         
             typedef ::SireUnits::Dimension::Length ( ::SireMM::GridFF::*coulombCutoff_function_type )(  ) const;
@@ -84,28 +53,6 @@ void register_GridFF_class(){
             GridFF_exposer.def( 
                 "coulombCutoff"
                 , coulombCutoff_function_value );
-        
-        }
-        { //::SireMM::GridFF::deltaCoulombErrorHistogram
-        
-            typedef ::SireMaths::Histogram const & ( ::SireMM::GridFF::*deltaCoulombErrorHistogram_function_type )(  ) const;
-            deltaCoulombErrorHistogram_function_type deltaCoulombErrorHistogram_function_value( &::SireMM::GridFF::deltaCoulombErrorHistogram );
-            
-            GridFF_exposer.def( 
-                "deltaCoulombErrorHistogram"
-                , deltaCoulombErrorHistogram_function_value
-                , bp::return_value_policy<bp::clone_const_reference>() );
-        
-        }
-        { //::SireMM::GridFF::deltaLJErrorHistogram
-        
-            typedef ::SireMaths::Histogram const & ( ::SireMM::GridFF::*deltaLJErrorHistogram_function_type )(  ) const;
-            deltaLJErrorHistogram_function_type deltaLJErrorHistogram_function_value( &::SireMM::GridFF::deltaLJErrorHistogram );
-            
-            GridFF_exposer.def( 
-                "deltaLJErrorHistogram"
-                , deltaLJErrorHistogram_function_value
-                , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
         { //::SireMM::GridFF::ljCutoff
@@ -153,17 +100,6 @@ void register_GridFF_class(){
                 , ( bp::arg("buffer") ) );
         
         }
-        { //::SireMM::GridFF::setCalculateGridError
-        
-            typedef void ( ::SireMM::GridFF::*setCalculateGridError_function_type )( bool ) ;
-            setCalculateGridError_function_type setCalculateGridError_function_value( &::SireMM::GridFF::setCalculateGridError );
-            
-            GridFF_exposer.def( 
-                "setCalculateGridError"
-                , setCalculateGridError_function_value
-                , ( bp::arg("on") ) );
-        
-        }
         { //::SireMM::GridFF::setCoulombCutoff
         
             typedef void ( ::SireMM::GridFF::*setCoulombCutoff_function_type )( ::SireUnits::Dimension::Length ) ;
@@ -197,6 +133,39 @@ void register_GridFF_class(){
                 , ( bp::arg("cutoff") ) );
         
         }
+        { //::SireMM::GridFF::setReactionFieldDielectric
+        
+            typedef bool ( ::SireMM::GridFF::*setReactionFieldDielectric_function_type )( double ) ;
+            setReactionFieldDielectric_function_type setReactionFieldDielectric_function_value( &::SireMM::GridFF::setReactionFieldDielectric );
+            
+            GridFF_exposer.def( 
+                "setReactionFieldDielectric"
+                , setReactionFieldDielectric_function_value
+                , ( bp::arg("dielectric") ) );
+        
+        }
+        { //::SireMM::GridFF::setShiftElectrostatics
+        
+            typedef bool ( ::SireMM::GridFF::*setShiftElectrostatics_function_type )( bool ) ;
+            setShiftElectrostatics_function_type setShiftElectrostatics_function_value( &::SireMM::GridFF::setShiftElectrostatics );
+            
+            GridFF_exposer.def( 
+                "setShiftElectrostatics"
+                , setShiftElectrostatics_function_value
+                , ( bp::arg("on") ) );
+        
+        }
+        { //::SireMM::GridFF::setUseReactionField
+        
+            typedef bool ( ::SireMM::GridFF::*setUseReactionField_function_type )( bool ) ;
+            setUseReactionField_function_type setUseReactionField_function_value( &::SireMM::GridFF::setUseReactionField );
+            
+            GridFF_exposer.def( 
+                "setUseReactionField"
+                , setUseReactionField_function_value
+                , ( bp::arg("on") ) );
+        
+        }
         { //::SireMM::GridFF::spacing
         
             typedef ::SireUnits::Dimension::Length ( ::SireMM::GridFF::*spacing_function_type )(  ) const;
@@ -205,48 +174,6 @@ void register_GridFF_class(){
             GridFF_exposer.def( 
                 "spacing"
                 , spacing_function_value );
-        
-        }
-        { //::SireMM::GridFF::totalCoulombErrorHistogram
-        
-            typedef ::SireMaths::Histogram const & ( ::SireMM::GridFF::*totalCoulombErrorHistogram_function_type )(  ) const;
-            totalCoulombErrorHistogram_function_type totalCoulombErrorHistogram_function_value( &::SireMM::GridFF::totalCoulombErrorHistogram );
-            
-            GridFF_exposer.def( 
-                "totalCoulombErrorHistogram"
-                , totalCoulombErrorHistogram_function_value
-                , bp::return_value_policy<bp::clone_const_reference>() );
-        
-        }
-        { //::SireMM::GridFF::totalDeltaTimeSaved
-        
-            typedef double ( ::SireMM::GridFF::*totalDeltaTimeSaved_function_type )(  ) const;
-            totalDeltaTimeSaved_function_type totalDeltaTimeSaved_function_value( &::SireMM::GridFF::totalDeltaTimeSaved );
-            
-            GridFF_exposer.def( 
-                "totalDeltaTimeSaved"
-                , totalDeltaTimeSaved_function_value );
-        
-        }
-        { //::SireMM::GridFF::totalLJErrorHistogram
-        
-            typedef ::SireMaths::Histogram const & ( ::SireMM::GridFF::*totalLJErrorHistogram_function_type )(  ) const;
-            totalLJErrorHistogram_function_type totalLJErrorHistogram_function_value( &::SireMM::GridFF::totalLJErrorHistogram );
-            
-            GridFF_exposer.def( 
-                "totalLJErrorHistogram"
-                , totalLJErrorHistogram_function_value
-                , bp::return_value_policy<bp::clone_const_reference>() );
-        
-        }
-        { //::SireMM::GridFF::totalTotalTimeSaved
-        
-            typedef double ( ::SireMM::GridFF::*totalTotalTimeSaved_function_type )(  ) const;
-            totalTotalTimeSaved_function_type totalTotalTimeSaved_function_value( &::SireMM::GridFF::totalTotalTimeSaved );
-            
-            GridFF_exposer.def( 
-                "totalTotalTimeSaved"
-                , totalTotalTimeSaved_function_value );
         
         }
         { //::SireMM::GridFF::typeName
