@@ -8,6 +8,7 @@
 #include "softcljcomponent.h"
 #include "ljpair.h"
 #include "restraintcomponent.h"
+#include "gridff.h"
 #include "restraint.h"
 #include "interljff.h"
 #include "cljnbpairs.h"
@@ -45,6 +46,7 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::SoftCLJComponent >();
     ObjectRegistry::registerConverterFor< SireMM::LJPair >();
     ObjectRegistry::registerConverterFor< SireMM::RestraintComponent >();
+    ObjectRegistry::registerConverterFor< SireMM::GridFF >();
     ObjectRegistry::registerConverterFor< SireMM::NullRestraint >();
     ObjectRegistry::registerConverterFor< SireMM::InterLJFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::InterLJFF >();

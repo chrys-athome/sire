@@ -97,6 +97,8 @@
 
 #include "FourAtomPerturbation.pypp.hpp"
 
+#include "GridFF.pypp.hpp"
+
 #include "GroupInternalParameters.pypp.hpp"
 
 #include "HarmonicSwitchingFunction.pypp.hpp"
@@ -457,6 +459,8 @@ BOOST_PYTHON_MODULE(_MM){
     register_InternalPerturbation_class();
 
     register_FourAtomPerturbation_class();
+
+    register_GridFF_class();
 
     register_GroupInternalParameters_class();
 

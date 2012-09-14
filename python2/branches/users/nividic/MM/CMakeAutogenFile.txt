@@ -45,6 +45,7 @@ set ( PYPP_SOURCES
        FourAtomFunction.pypp.cpp
        FourAtomFunctions.pypp.cpp
        FourAtomPerturbation.pypp.cpp
+       GridFF.pypp.cpp
        GroupInternalParameters.pypp.cpp
        HarmonicSwitchingFunction.pypp.cpp
        ImproperComponent.pypp.cpp
