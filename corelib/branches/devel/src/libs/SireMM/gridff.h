@@ -83,27 +83,16 @@ public:
     void setCoulombCutoff(SireUnits::Dimension::Length cutoff);
     void setLJCutoff(SireUnits::Dimension::Length cutoff);
 
-    void setCalculateGridError(bool on);
+    bool setShiftElectrostatics(bool on);
+    
+    bool setUseReactionField(bool on);
+    bool setReactionFieldDielectric(double dielectric);
     
     SireUnits::Dimension::Length buffer() const;
     SireUnits::Dimension::Length spacing() const;
 
     SireUnits::Dimension::Length coulombCutoff() const;
     SireUnits::Dimension::Length ljCutoff() const;
-
-    bool calculatingGridError() const;
-
-    const SireMaths::Histogram& totalCoulombErrorHistogram() const;
-    const SireMaths::Histogram& deltaCoulombErrorHistogram() const;
-
-    const SireMaths::Histogram& totalLJErrorHistogram() const;
-    const SireMaths::Histogram& deltaLJErrorHistogram() const;
-    
-    double totalTotalTimeSaved() const;
-    double totalDeltaTimeSaved() const;
-    
-    double averageTotalTimeSaved() const;
-    double averageDeltaTimeSaved() const;
 
     void mustNowRecalculateFromScratch();    
 
@@ -200,23 +189,6 @@ private:
     
     /** The old energy of each molecule */
     QHash<SireMol::MolNum,CLJEnergy> oldnrgs;
-    
-    /** Histogram of grid errors for total energy calculations */
-    SireMaths::Histogram total_coul_errors;
-    SireMaths::Histogram total_lj_errors;
-    
-    /** Histogram of grid errors for delta energy calculations */
-    SireMaths::Histogram delta_coul_errors;
-    SireMaths::Histogram delta_lj_errors;
-    
-    /** Total time saving during total energy calculations (ms) */
-    double total_time_saved;
-    
-    /** Total time saving during delta energy calculations (ms) */
-    double delta_time_saved;
-    
-    /** Whether or not to calculate the grid error */
-    bool calc_grid_error;
 };
 
 }

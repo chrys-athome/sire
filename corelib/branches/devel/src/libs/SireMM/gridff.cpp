@@ -56,16 +56,12 @@ static const RegisterMetaType<GridFF> r_gridff;
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridFF &gridff)
 {
-    writeHeader(ds, r_gridff, 1);
+    writeHeader(ds, r_gridff, 2);
     
     SharedDataStream sds(ds);
     
     sds << gridff.buffer_size << gridff.grid_spacing
         << gridff.coul_cutoff << gridff.lj_cutoff
-        << gridff.total_coul_errors << gridff.delta_coul_errors
-        << gridff.total_lj_errors << gridff.delta_lj_errors
-        << gridff.total_time_saved << gridff.delta_time_saved
-        << gridff.calc_grid_error
         << static_cast<const InterGroupCLJFF&>(gridff);
     
     return ds;
@@ -75,7 +71,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
 {
     VersionID v = readHeader(ds, r_gridff);
     
-    if (v == 1)
+    if (v == 2)
     {
         SharedDataStream sds(ds);
         
@@ -83,14 +79,10 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
         
         sds >> gridff.buffer_size >> gridff.grid_spacing
             >> gridff.coul_cutoff >> gridff.lj_cutoff
-            >> gridff.total_coul_errors >> gridff.delta_coul_errors
-            >> gridff.total_lj_errors >> gridff.delta_lj_errors
-            >> gridff.total_time_saved >> gridff.delta_time_saved
-            >> gridff.calc_grid_error
             >> static_cast<InterGroupCLJFF&>(gridff);
     }
     else
-        throw version_error(v, "1", r_gridff, CODELOC);
+        throw version_error(v, "2", r_gridff, CODELOC);
         
     return ds;
 }
@@ -99,8 +91,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
 GridFF::GridFF() 
        : ConcreteProperty<GridFF,InterGroupCLJFF>(),
          buffer_size(2.5), grid_spacing(1.0), 
-         coul_cutoff(50), lj_cutoff(7.5),
-         calc_grid_error(false)
+         coul_cutoff(50), lj_cutoff(7.5)
 {
     this->setSwitchingFunction(NoCutoff());
 }
@@ -109,9 +100,7 @@ GridFF::GridFF()
 GridFF::GridFF(const QString &name) 
        : ConcreteProperty<GridFF,InterGroupCLJFF>(name),
          buffer_size(2.5), grid_spacing(1.0), 
-         coul_cutoff(50), lj_cutoff(7.5),
-         total_time_saved(0), delta_time_saved(0),
-         calc_grid_error(false)
+         coul_cutoff(50), lj_cutoff(7.5)
 {
     this->setSwitchingFunction(NoCutoff());
 }
@@ -126,14 +115,7 @@ GridFF::GridFF(const GridFF &other)
          gridpot(other.gridpot), 
          closemols_coords(other.closemols_coords),
          closemols_params(other.closemols_params),
-         oldnrgs(other.oldnrgs),
-         total_coul_errors(other.total_coul_errors),
-         total_lj_errors(other.total_lj_errors),
-         delta_coul_errors(other.delta_coul_errors),
-         delta_lj_errors(other.delta_lj_errors),
-         total_time_saved(other.total_time_saved),
-         delta_time_saved(other.delta_time_saved),
-         calc_grid_error(other.calc_grid_error)
+         oldnrgs(other.oldnrgs)
 {
     this->setSwitchingFunction(NoCutoff());
 }
@@ -169,13 +151,6 @@ GridFF& GridFF::operator=(const GridFF &other)
         closemols_coords = other.closemols_coords;
         closemols_params = other.closemols_params;
         oldnrgs = other.oldnrgs;
-        total_coul_errors = other.total_coul_errors;
-        delta_coul_errors = other.delta_coul_errors;
-        total_lj_errors = other.total_lj_errors;
-        delta_lj_errors = other.delta_lj_errors;
-        total_time_saved = other.total_time_saved;
-        delta_time_saved = other.delta_time_saved;
-        calc_grid_error = other.calc_grid_error;
     
         InterGroupCLJFF::operator=(other);
     }
@@ -188,7 +163,6 @@ bool GridFF::operator==(const GridFF &other) const
 {
     return buffer_size == other.buffer_size and
            grid_spacing == other.grid_spacing and
-           calc_grid_error == other.calc_grid_error and
            InterGroupCLJFF::operator==(other);
 }
 
@@ -245,11 +219,40 @@ void GridFF::setLJCutoff(SireUnits::Dimension::Length cutoff)
     }
 }
 
-/** Set whether or not to calculate the exact energy too, so that
-    the grid error can be monitored */
-void GridFF::setCalculateGridError(bool on)
+/** Turn on or off use of the force shifted potential */
+bool GridFF::setShiftElectrostatics(bool on)
 {
-    calc_grid_error = on;
+    if (InterGroupCLJFF::setShiftElectrostatics(on))
+    {
+        this->mustNowRecalculateFromScratch();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Turn on or off the use of the reaction field */
+bool GridFF::setUseReactionField(bool on)
+{
+    if (InterGroupCLJFF::setUseReactionField(on))
+    {
+        this->mustNowRecalculateFromScratch();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Set the dielectric constant to use with the reaction field potential */
+bool GridFF::setReactionFieldDielectric(double dielectric)
+{
+    if (InterGroupCLJFF::setReactionFieldDielectric(dielectric))
+    {
+        this->mustNowRecalculateFromScratch();
+        return true;
+    }
+
+    return false;
 }
 
 /** Return the buffer size used when building grids */
@@ -274,12 +277,6 @@ SireUnits::Dimension::Length GridFF::coulombCutoff() const
 SireUnits::Dimension::Length GridFF::ljCutoff() const
 {
     return SireUnits::Dimension::Length(lj_cutoff);
-}
-
-/** Return whether or not the grid error is being monitored */
-bool GridFF::calculatingGridError() const
-{
-    return calc_grid_error;
 }
 
 inline GridFF::Vector4::Vector4(const Vector &v, double chg)
@@ -324,230 +321,675 @@ void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
     const int nats = coords_and_charges.count();
 
     const double Rc = coul_cutoff;
-    const double one_over_Rc = double(1) / Rc;
-    const double one_over_Rc2 = double(1) / (Rc*Rc);
     
     QTime t;
     t.start();
     
-    #ifdef SIRE_USE_SSE
+    if (shiftElectrostatics())
     {
-        const int remainder = npts % 2;
-        
-        int i0=0;
-        int j0=0;
-        int k0=0;
-        
-        int i1=0;
-        int j1=0;
-        int k1=1;
-        
-        double gx0 = minpoint.x();
-        double gy0 = minpoint.y();
-        double gz0 = minpoint.z();
-        
-        double gx1 = minpoint.x();
-        double gy1 = minpoint.y();
-        double gz1 = minpoint.z()+grid_spacing;
-        
-        const __m128d sse_one = { 1.0, 1.0 };
-        
-        const __m128d sse_Rc = { Rc, Rc };
-        const __m128d sse_one_over_Rc = { one_over_Rc, one_over_Rc };
-        const __m128d sse_one_over_Rc2 = { one_over_Rc2, one_over_Rc2 };
-        
-        for (int ipt=0; ipt<(npts-1); ipt+=2)
+        const double one_over_Rc = double(1) / Rc;
+        const double one_over_Rc2 = double(1) / (Rc*Rc);
+
+        #ifdef SIRE_USE_SSE
         {
-            //set the sse values - note that _mm_set_pd is backwards,
-            //so the lower value is gx0, not gx1
-            const __m128d sse_gx = _mm_set_pd(gx1,gx0);
-            const __m128d sse_gy = _mm_set_pd(gy1,gy0);
-            const __m128d sse_gz = _mm_set_pd(gz1,gz0);
-
-            __m128d sse_cnrg = { 0.0, 0.0 };
+            const int remainder = npts % 2;
             
-            //loop through each atom
-            for (int iat=0; iat<nats; ++iat)
-            {
-                const Vector4 &c = array[iat];
-
-                const __m128d sse_dx = _mm_sub_pd(_mm_set1_pd(c.x), sse_gx);
-                const __m128d sse_dy = _mm_sub_pd(_mm_set1_pd(c.y), sse_gy);
-                const __m128d sse_dz = _mm_sub_pd(_mm_set1_pd(c.z), sse_gz);
-
-                const __m128d sse_r = _mm_sqrt_pd(
-                                    _mm_add_pd( _mm_mul_pd(sse_dx,sse_dx),
-                                      _mm_add_pd( _mm_mul_pd(sse_dy,sse_dy),
-                                                  _mm_mul_pd(sse_dz,sse_dz) ) ) );
-
-                const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
+            int i0=0;
+            int j0=0;
+            int k0=0;
             
-                __m128d nrg = _mm_sub_pd(sse_r, sse_Rc);
-                nrg = _mm_mul_pd(nrg, sse_one_over_Rc2);
-                nrg = _mm_add_pd(nrg, sse_one_over_r);
-                nrg = _mm_sub_pd(nrg, sse_one_over_Rc);
-                nrg = _mm_mul_pd(nrg, _mm_set1_pd(c.q));
-
-                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
-                nrg = _mm_and_pd(nrg, sse_in_cutoff);
-                
-                sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
-            }
-
-            pot[ipt] += *((const double*)&sse_cnrg);
-            pot[ipt+1] += *( ((const double*)&sse_cnrg) + 1 );
-
-            for (int ii=0; ii<2; ++ii)
+            int i1=0;
+            int j1=0;
+            int k1=1;
+            
+            double gx0 = minpoint.x();
+            double gy0 = minpoint.y();
+            double gz0 = minpoint.z();
+            
+            double gx1 = minpoint.x();
+            double gy1 = minpoint.y();
+            double gz1 = minpoint.z()+grid_spacing;
+            
+            const __m128d sse_one = { 1.0, 1.0 };
+            
+            const __m128d sse_Rc = { Rc, Rc };
+            const __m128d sse_one_over_Rc = { one_over_Rc, one_over_Rc };
+            const __m128d sse_one_over_Rc2 = { one_over_Rc2, one_over_Rc2 };
+            
+            for (int ipt=0; ipt<(npts-1); ipt+=2)
             {
-                //advance the indicies (twice, as two grid points per iteration)
-                k0 += 1;
-                gz0 += grid_spacing;
+                //set the sse values - note that _mm_set_pd is backwards,
+                //so the lower value is gx0, not gx1
+                const __m128d sse_gx = _mm_set_pd(gx1,gx0);
+                const __m128d sse_gy = _mm_set_pd(gy1,gy0);
+                const __m128d sse_gz = _mm_set_pd(gz1,gz0);
+
+                __m128d sse_cnrg = { 0.0, 0.0 };
                 
-                if (k0 == dimz)
+                //loop through each atom
+                for (int iat=0; iat<nats; ++iat)
                 {
-                    k0 = 0;
-                    gz0 = minpoint.z();
+                    const Vector4 &c = array[iat];
+
+                    const __m128d sse_dx = _mm_sub_pd(_mm_set1_pd(c.x), sse_gx);
+                    const __m128d sse_dy = _mm_sub_pd(_mm_set1_pd(c.y), sse_gy);
+                    const __m128d sse_dz = _mm_sub_pd(_mm_set1_pd(c.z), sse_gz);
+
+                    const __m128d sse_r = _mm_sqrt_pd(
+                                        _mm_add_pd( _mm_mul_pd(sse_dx,sse_dx),
+                                          _mm_add_pd( _mm_mul_pd(sse_dy,sse_dy),
+                                                      _mm_mul_pd(sse_dz,sse_dz) ) ) );
+
+                    const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
+                
+                    __m128d nrg = _mm_sub_pd(sse_r, sse_Rc);
+                    nrg = _mm_mul_pd(nrg, sse_one_over_Rc2);
+                    nrg = _mm_add_pd(nrg, sse_one_over_r);
+                    nrg = _mm_sub_pd(nrg, sse_one_over_Rc);
+                    nrg = _mm_mul_pd(nrg, _mm_set1_pd(c.q));
+
+                    const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
+                    nrg = _mm_and_pd(nrg, sse_in_cutoff);
                     
-                    j0 += 1;
-                    gy0 += grid_spacing;
+                    sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
+                }
+
+                pot[ipt] += *((const double*)&sse_cnrg);
+                pot[ipt+1] += *( ((const double*)&sse_cnrg) + 1 );
+
+                for (int ii=0; ii<2; ++ii)
+                {
+                    //advance the indicies (twice, as two grid points per iteration)
+                    k0 += 1;
+                    gz0 += grid_spacing;
                     
-                    if (j0 == dimy)
+                    if (k0 == dimz)
                     {
-                        j0 = 0;
-                        gy0 = minpoint.y();
+                        k0 = 0;
+                        gz0 = minpoint.z();
                         
-                        i0 += 1;
-                        gx0 += grid_spacing;
+                        j0 += 1;
+                        gy0 += grid_spacing;
                         
-                        if (i0 == dimx)
+                        if (j0 == dimy)
                         {
-                            i0 = 0;
-                            gx0 = minpoint.x();
+                            j0 = 0;
+                            gy0 = minpoint.y();
+                            
+                            i0 += 1;
+                            gx0 += grid_spacing;
+                            
+                            if (i0 == dimx)
+                            {
+                                i0 = 0;
+                                gx0 = minpoint.x();
+                            }
+                        }
+                    }
+
+                    k1 += 1;
+                    gz1 += grid_spacing;
+                    
+                    if (k1 == dimz)
+                    {
+                        k1 = 0;
+                        gz1 = minpoint.z();
+                        
+                        j1 += 1;
+                        gy1 += grid_spacing;
+                        
+                        if (j1 == dimy)
+                        {
+                            j1 = 0;
+                            gy1 = minpoint.y();
+                            
+                            i1 += 1;
+                            gx1 += grid_spacing;
+                            
+                            if (i1 == dimx)
+                            {
+                                i1 = 0;
+                                gx1 = minpoint.x();
+                            }
                         }
                     }
                 }
-
-                k1 += 1;
-                gz1 += grid_spacing;
+            }
+            
+            if (remainder)
+            {
+                //we need to process the last grid point
+                const double gx = minpoint.x() + (dimx-1)*grid_spacing;
+                const double gy = minpoint.y() + (dimy-1)*grid_spacing;
+                const double gz = minpoint.z() + (dimz-1)*grid_spacing;
                 
-                if (k1 == dimz)
+                double total = 0;
+                
+                //loop through each atom...
+                for (int iat=0; iat<nats; ++iat)
                 {
-                    k1 = 0;
-                    gz1 = minpoint.z();
+                    const Vector4 &c = array[iat];
+
+                    const double dx = c.x - gx;
+                    const double dy = c.y - gy;
+                    const double dz = c.z - gz;
+
+                    const double r = std::sqrt(dx*dx + dy*dy + dz*dz);
+                    const double one_over_r = double(1) / r;
+
+                    const double in_cutoff = (r < Rc);
+                    total += in_cutoff * c.q * (one_over_r - one_over_Rc +
+                                                   one_over_Rc2*(r - Rc));
+                }
+                
+                pot[npts-1] += total;
+            }
+        }
+        #else
+        {
+            int i=0;
+            int j=0;
+            int k=0;
+            
+            double gx = minpoint.x();
+            double gy = minpoint.y();
+            double gz = minpoint.z();
+
+            for (int ipt=0; ipt<npts; ++ipt)
+            {
+                double total = 0;
+                
+                //loop through each atom...
+                for (int iat=0; iat<nats; ++iat)
+                {
+                    const Vector4 &c = array[iat];
+
+                    const double dx = c.x - gx;
+                    const double dy = c.y - gy;
+                    const double dz = c.z - gz;
+
+                    const double r = std::sqrt(dx*dx + dy*dy + dz*dz);
+                    const double one_over_r = double(1) / r;
+
+                    const double in_cutoff = (r < Rc);
+
+                    total += in_cutoff * c.q * (one_over_r - one_over_Rc +
+                                                one_over_Rc2*(r - Rc));
+                }
+                        
+                pot[ipt] += total;
+                
+                k += 1;
+                gz += grid_spacing;
+                
+                if (k == dimz)
+                {
+                    k = 0;
+                    gz = minpoint.z();
                     
-                    j1 += 1;
-                    gy1 += grid_spacing;
+                    j += 1;
+                    gy += grid_spacing;
                     
-                    if (j1 == dimy)
+                    if (j == dimy)
                     {
-                        j1 = 0;
-                        gy1 = minpoint.y();
+                        j = 0;
+                        gy = minpoint.y();
                         
-                        i1 += 1;
-                        gx1 += grid_spacing;
+                        i += 1;
+                        gx += grid_spacing;
                         
-                        if (i1 == dimx)
+                        if (i == dimx)
                         {
-                            i1 = 0;
-                            gx1 = minpoint.x();
+                            i = 0;
+                            gx = minpoint.x();
                         }
                     }
                 }
             }
         }
-        
-        if (remainder)
-        {
-            //we need to process the last grid point
-            const double gx = minpoint.x() + (dimx-1)*grid_spacing;
-            const double gy = minpoint.y() + (dimy-1)*grid_spacing;
-            const double gz = minpoint.z() + (dimz-1)*grid_spacing;
-            
-            double total = 0;
-            
-            //loop through each atom...
-            for (int iat=0; iat<nats; ++iat)
-            {
-                const Vector4 &c = array[iat];
-
-                const double dx = c.x - gx;
-                const double dy = c.y - gy;
-                const double dz = c.z - gz;
-
-                const double r = std::sqrt(dx*dx + dy*dy + dz*dz);
-                const double one_over_r = double(1) / r;
-
-                const double in_cutoff = (r < Rc);
-                total += in_cutoff * c.q * (one_over_r - one_over_Rc +
-                                               one_over_Rc2*(r - Rc));
-            }
-            
-            pot[npts-1] += total;
-        }
+        #endif
     }
-    #else
+    else if (useReactionField())
     {
-        int i=0;
-        int j=0;
-        int k=0;
-        
-        double gx = minpoint.x();
-        double gy = minpoint.y();
-        double gz = minpoint.z();
-
-        for (int ipt=0; ipt<npts; ++ipt)
+        //use the reaction field potential
+        double rf_dielectric = reactionFieldDielectric();
+        const double k_rf = (1.0 / pow_3(Rc)) * ( (rf_dielectric-1) /
+                                                  (2*rf_dielectric + 1) );
+        const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric) /
+                                           (2*rf_dielectric + 1) );
+    
+        #ifdef SIRE_USE_SSE
         {
-            double total = 0;
+            const int remainder = npts % 2;
             
-            //loop through each atom...
-            for (int iat=0; iat<nats; ++iat)
+            int i0=0;
+            int j0=0;
+            int k0=0;
+            
+            int i1=0;
+            int j1=0;
+            int k1=1;
+            
+            double gx0 = minpoint.x();
+            double gy0 = minpoint.y();
+            double gz0 = minpoint.z();
+            
+            double gx1 = minpoint.x();
+            double gy1 = minpoint.y();
+            double gz1 = minpoint.z()+grid_spacing;
+            
+            const __m128d sse_one = { 1.0, 1.0 };
+            
+            const __m128d sse_Rc = { Rc, Rc };
+            const __m128d sse_k_rf = { k_rf, k_rf };
+            const __m128d sse_c_rf = { c_rf, c_rf };
+            
+            for (int ipt=0; ipt<(npts-1); ipt+=2)
             {
-                const Vector4 &c = array[iat];
+                //set the sse values - note that _mm_set_pd is backwards,
+                //so the lower value is gx0, not gx1
+                const __m128d sse_gx = _mm_set_pd(gx1,gx0);
+                const __m128d sse_gy = _mm_set_pd(gy1,gy0);
+                const __m128d sse_gz = _mm_set_pd(gz1,gz0);
 
-                const double dx = c.x - gx;
-                const double dy = c.y - gy;
-                const double dz = c.z - gz;
-
-                const double r = std::sqrt(dx*dx + dy*dy + dz*dz);
-                const double one_over_r = double(1) / r;
-
-                const double in_cutoff = (r < Rc);
-
-                total += in_cutoff * c.q * (one_over_r - one_over_Rc +
-                                            one_over_Rc2*(r - Rc));
-            }
-                    
-            pot[ipt] += total;
-            
-            k += 1;
-            gz += grid_spacing;
-            
-            if (k == dimz)
-            {
-                k = 0;
-                gz = minpoint.z();
+                __m128d sse_cnrg = { 0.0, 0.0 };
                 
-                j += 1;
-                gy += grid_spacing;
-                
-                if (j == dimy)
+                //loop through each atom
+                for (int iat=0; iat<nats; ++iat)
                 {
-                    j = 0;
-                    gy = minpoint.y();
+                    const Vector4 &c = array[iat];
+
+                    const __m128d sse_dx = _mm_sub_pd(_mm_set1_pd(c.x), sse_gx);
+                    const __m128d sse_dy = _mm_sub_pd(_mm_set1_pd(c.y), sse_gy);
+                    const __m128d sse_dz = _mm_sub_pd(_mm_set1_pd(c.z), sse_gz);
+
+                    const __m128d sse_r = _mm_sqrt_pd(
+                                        _mm_add_pd( _mm_mul_pd(sse_dx,sse_dx),
+                                          _mm_add_pd( _mm_mul_pd(sse_dy,sse_dy),
+                                                      _mm_mul_pd(sse_dz,sse_dz) ) ) );
+
+                    const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
+
+                    __m128d nrg = _mm_mul_pd(sse_r, sse_r);
+                    nrg = _mm_mul_pd(nrg, sse_k_rf);
+                    nrg = _mm_sub_pd(nrg, sse_c_rf);
+                    nrg = _mm_add_pd(nrg, sse_one_over_r);
+                    nrg = _mm_mul_pd(nrg, _mm_set1_pd(c.q));
+
+                    const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
+                    nrg = _mm_and_pd(nrg, sse_in_cutoff);
                     
-                    i += 1;
-                    gx += grid_spacing;
+                    sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
+                }
+
+                pot[ipt] += *((const double*)&sse_cnrg);
+                pot[ipt+1] += *( ((const double*)&sse_cnrg) + 1 );
+
+                for (int ii=0; ii<2; ++ii)
+                {
+                    //advance the indicies (twice, as two grid points per iteration)
+                    k0 += 1;
+                    gz0 += grid_spacing;
                     
-                    if (i == dimx)
+                    if (k0 == dimz)
                     {
-                        i = 0;
-                        gx = minpoint.x();
+                        k0 = 0;
+                        gz0 = minpoint.z();
+                        
+                        j0 += 1;
+                        gy0 += grid_spacing;
+                        
+                        if (j0 == dimy)
+                        {
+                            j0 = 0;
+                            gy0 = minpoint.y();
+                            
+                            i0 += 1;
+                            gx0 += grid_spacing;
+                            
+                            if (i0 == dimx)
+                            {
+                                i0 = 0;
+                                gx0 = minpoint.x();
+                            }
+                        }
+                    }
+
+                    k1 += 1;
+                    gz1 += grid_spacing;
+                    
+                    if (k1 == dimz)
+                    {
+                        k1 = 0;
+                        gz1 = minpoint.z();
+                        
+                        j1 += 1;
+                        gy1 += grid_spacing;
+                        
+                        if (j1 == dimy)
+                        {
+                            j1 = 0;
+                            gy1 = minpoint.y();
+                            
+                            i1 += 1;
+                            gx1 += grid_spacing;
+                            
+                            if (i1 == dimx)
+                            {
+                                i1 = 0;
+                                gx1 = minpoint.x();
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (remainder)
+            {
+                //we need to process the last grid point
+                const double gx = minpoint.x() + (dimx-1)*grid_spacing;
+                const double gy = minpoint.y() + (dimy-1)*grid_spacing;
+                const double gz = minpoint.z() + (dimz-1)*grid_spacing;
+                
+                double total = 0;
+                
+                //loop through each atom...
+                for (int iat=0; iat<nats; ++iat)
+                {
+                    const Vector4 &c = array[iat];
+
+                    const double dx = c.x - gx;
+                    const double dy = c.y - gy;
+                    const double dz = c.z - gz;
+
+                    const double r = std::sqrt(dx*dx + dy*dy + dz*dz);
+                    const double one_over_r = double(1) / r;
+
+                    const double in_cutoff = (r < Rc);
+                    total += in_cutoff * c.q * (one_over_r + k_rf*r*r - c_rf);
+                }
+                
+                pot[npts-1] += total;
+            }
+        }
+        #else
+        {
+            int i=0;
+            int j=0;
+            int k=0;
+            
+            double gx = minpoint.x();
+            double gy = minpoint.y();
+            double gz = minpoint.z();
+
+            for (int ipt=0; ipt<npts; ++ipt)
+            {
+                double total = 0;
+                
+                //loop through each atom...
+                for (int iat=0; iat<nats; ++iat)
+                {
+                    const Vector4 &c = array[iat];
+
+                    const double dx = c.x - gx;
+                    const double dy = c.y - gy;
+                    const double dz = c.z - gz;
+
+                    const double r = std::sqrt(dx*dx + dy*dy + dz*dz);
+                    const double one_over_r = double(1) / r;
+
+                    const double in_cutoff = (r < Rc);
+
+                    total += in_cutoff * c.q * (one_over_r + k_rf*r*r - c_rf);
+                }
+                        
+                pot[ipt] += total;
+                
+                k += 1;
+                gz += grid_spacing;
+                
+                if (k == dimz)
+                {
+                    k = 0;
+                    gz = minpoint.z();
+                    
+                    j += 1;
+                    gy += grid_spacing;
+                    
+                    if (j == dimy)
+                    {
+                        j = 0;
+                        gy = minpoint.y();
+                        
+                        i += 1;
+                        gx += grid_spacing;
+                        
+                        if (i == dimx)
+                        {
+                            i = 0;
+                            gx = minpoint.x();
+                        }
                     }
                 }
             }
         }
+        #endif
     }
-    #endif
+    else
+    {
+        //we use a simple atom-based cutoff
+    
+        #ifdef SIRE_USE_SSE
+        {
+            const int remainder = npts % 2;
+            
+            int i0=0;
+            int j0=0;
+            int k0=0;
+            
+            int i1=0;
+            int j1=0;
+            int k1=1;
+            
+            double gx0 = minpoint.x();
+            double gy0 = minpoint.y();
+            double gz0 = minpoint.z();
+            
+            double gx1 = minpoint.x();
+            double gy1 = minpoint.y();
+            double gz1 = minpoint.z()+grid_spacing;
+            
+            const __m128d sse_one = { 1.0, 1.0 };
+            
+            const __m128d sse_Rc = { Rc, Rc };
+            
+            for (int ipt=0; ipt<(npts-1); ipt+=2)
+            {
+                //set the sse values - note that _mm_set_pd is backwards,
+                //so the lower value is gx0, not gx1
+                const __m128d sse_gx = _mm_set_pd(gx1,gx0);
+                const __m128d sse_gy = _mm_set_pd(gy1,gy0);
+                const __m128d sse_gz = _mm_set_pd(gz1,gz0);
+
+                __m128d sse_cnrg = { 0.0, 0.0 };
+                
+                //loop through each atom
+                for (int iat=0; iat<nats; ++iat)
+                {
+                    const Vector4 &c = array[iat];
+
+                    const __m128d sse_dx = _mm_sub_pd(_mm_set1_pd(c.x), sse_gx);
+                    const __m128d sse_dy = _mm_sub_pd(_mm_set1_pd(c.y), sse_gy);
+                    const __m128d sse_dz = _mm_sub_pd(_mm_set1_pd(c.z), sse_gz);
+
+                    const __m128d sse_r = _mm_sqrt_pd(
+                                        _mm_add_pd( _mm_mul_pd(sse_dx,sse_dx),
+                                          _mm_add_pd( _mm_mul_pd(sse_dy,sse_dy),
+                                                      _mm_mul_pd(sse_dz,sse_dz) ) ) );
+
+                    const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
+                
+                    __m128d nrg = _mm_mul_pd(sse_one_over_r, _mm_set1_pd(c.q));
+
+                    const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
+                    nrg = _mm_and_pd(nrg, sse_in_cutoff);
+                    
+                    sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
+                }
+
+                pot[ipt] += *((const double*)&sse_cnrg);
+                pot[ipt+1] += *( ((const double*)&sse_cnrg) + 1 );
+
+                for (int ii=0; ii<2; ++ii)
+                {
+                    //advance the indicies (twice, as two grid points per iteration)
+                    k0 += 1;
+                    gz0 += grid_spacing;
+                    
+                    if (k0 == dimz)
+                    {
+                        k0 = 0;
+                        gz0 = minpoint.z();
+                        
+                        j0 += 1;
+                        gy0 += grid_spacing;
+                        
+                        if (j0 == dimy)
+                        {
+                            j0 = 0;
+                            gy0 = minpoint.y();
+                            
+                            i0 += 1;
+                            gx0 += grid_spacing;
+                            
+                            if (i0 == dimx)
+                            {
+                                i0 = 0;
+                                gx0 = minpoint.x();
+                            }
+                        }
+                    }
+
+                    k1 += 1;
+                    gz1 += grid_spacing;
+                    
+                    if (k1 == dimz)
+                    {
+                        k1 = 0;
+                        gz1 = minpoint.z();
+                        
+                        j1 += 1;
+                        gy1 += grid_spacing;
+                        
+                        if (j1 == dimy)
+                        {
+                            j1 = 0;
+                            gy1 = minpoint.y();
+                            
+                            i1 += 1;
+                            gx1 += grid_spacing;
+                            
+                            if (i1 == dimx)
+                            {
+                                i1 = 0;
+                                gx1 = minpoint.x();
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (remainder)
+            {
+                //we need to process the last grid point
+                const double gx = minpoint.x() + (dimx-1)*grid_spacing;
+                const double gy = minpoint.y() + (dimy-1)*grid_spacing;
+                const double gz = minpoint.z() + (dimz-1)*grid_spacing;
+                
+                double total = 0;
+                
+                //loop through each atom...
+                for (int iat=0; iat<nats; ++iat)
+                {
+                    const Vector4 &c = array[iat];
+
+                    const double dx = c.x - gx;
+                    const double dy = c.y - gy;
+                    const double dz = c.z - gz;
+
+                    const double r = std::sqrt(dx*dx + dy*dy + dz*dz);
+                    const double one_over_r = double(1) / r;
+
+                    const double in_cutoff = (r < Rc);
+                    total += in_cutoff * c.q * one_over_r;
+                }
+                
+                pot[npts-1] += total;
+            }
+        }
+        #else
+        {
+            int i=0;
+            int j=0;
+            int k=0;
+            
+            double gx = minpoint.x();
+            double gy = minpoint.y();
+            double gz = minpoint.z();
+
+            for (int ipt=0; ipt<npts; ++ipt)
+            {
+                double total = 0;
+                
+                //loop through each atom...
+                for (int iat=0; iat<nats; ++iat)
+                {
+                    const Vector4 &c = array[iat];
+
+                    const double dx = c.x - gx;
+                    const double dy = c.y - gy;
+                    const double dz = c.z - gz;
+
+                    const double r = std::sqrt(dx*dx + dy*dy + dz*dz);
+                    const double one_over_r = double(1) / r;
+
+                    const double in_cutoff = (r < Rc);
+
+                    total += in_cutoff * c.q * one_over_r;
+                }
+                        
+                pot[ipt] += total;
+                
+                k += 1;
+                gz += grid_spacing;
+                
+                if (k == dimz)
+                {
+                    k = 0;
+                    gz = minpoint.z();
+                    
+                    j += 1;
+                    gy += grid_spacing;
+                    
+                    if (j == dimy)
+                    {
+                        j = 0;
+                        gy = minpoint.y();
+                        
+                        i += 1;
+                        gx += grid_spacing;
+                        
+                        if (i == dimx)
+                        {
+                            i = 0;
+                            gx = minpoint.x();
+                        }
+                    }
+                }
+            }
+        }
+        #endif
+    }
     
     int ms = t.elapsed();
     
@@ -783,183 +1225,544 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
 
     if (nats1 > 0)
     {
-        const double Rc = coul_cutoff;
-        const double one_over_Rc = double(1) / Rc;
-        const double one_over_Rc2 = double(1) / (Rc*Rc);
-    
-        #ifdef SIRE_USE_SSE
+        if (shiftElectrostatics())
         {
-            const int remainder = nats1 % 2;
-            
-            __m128d sse_cnrg = { 0, 0 };
-            __m128d sse_ljnrg = { 0, 0 };
-
-            const __m128d sse_one = { 1.0, 1.0 };
-            
-            const __m128d sse_Rc = { Rc, Rc };
-            const __m128d sse_one_over_Rc = { one_over_Rc, one_over_Rc };
-            const __m128d sse_one_over_Rc2 = { one_over_Rc2, one_over_Rc2 };
-            
-            for (quint32 i=0; i<nats0; ++i)
+            const double Rc = coul_cutoff;
+            const double one_over_Rc = double(1) / Rc;
+            const double one_over_Rc2 = double(1) / (Rc*Rc);
+        
+            #ifdef SIRE_USE_SSE
             {
-                const Parameter &param0 = params0_array[i];
+                const int remainder = nats1 % 2;
                 
-                __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge, 
-                                               param0.reduced_charge );
+                __m128d sse_cnrg = { 0, 0 };
+                __m128d sse_ljnrg = { 0, 0 };
+
+                const __m128d sse_one = { 1.0, 1.0 };
                 
-                const Vector &c0 = coords0_array[i];
+                const __m128d sse_Rc = { Rc, Rc };
+                const __m128d sse_one_over_Rc = { one_over_Rc, one_over_Rc };
+                const __m128d sse_one_over_Rc2 = { one_over_Rc2, one_over_Rc2 };
                 
-                //process atoms in pairs (so can then use SSE)
-                for (quint32 j=0; j<nats1-1; j += 2)
+                for (quint32 i=0; i<nats0; ++i)
                 {
-                    const Parameter &param10 = params1_array[j];
-                    const Parameter &param11 = params1_array[j+1];
-
-                    __m128d sse_r;
+                    const Parameter &param0 = params0_array[i];
+                    
+                    __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge, 
+                                                   param0.reduced_charge );
+                    
+                    const Vector &c0 = coords0_array[i];
+                    
+                    //process atoms in pairs (so can then use SSE)
+                    for (quint32 j=0; j<nats1-1; j += 2)
                     {
-                        const Vector &c10 = coords1_array[j];
-                        const Vector &c11 = coords1_array[j+1];
+                        const Parameter &param10 = params1_array[j];
+                        const Parameter &param11 = params1_array[j+1];
 
-                        __m128d dx = _mm_set_pd( c0.x() - c10.x(), c0.x() - c11.x() );
-                        __m128d dy = _mm_set_pd( c0.y() - c10.y(), c0.y() - c11.y() );
-                        __m128d dz = _mm_set_pd( c0.z() - c10.z(), c0.z() - c11.z() );
-                    
-                        __m128d dx2 = _mm_mul_pd(dx, dx);
-                        __m128d dy2 = _mm_mul_pd(dy, dy);
-                        __m128d dz2 = _mm_mul_pd(dz, dz);
-                    
-                        __m128d sse_r2 = _mm_add_pd(dx2,dy2);
-                        sse_r2 = _mm_add_pd(sse_r2, dz2);
-                    
-                        sse_r = _mm_sqrt_pd(sse_r2);
-                    }
-                    
-                    const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
-                    
-                    //calculate the coulomb energy
-                    {
-                        __m128d nrg = _mm_sub_pd(sse_r, sse_Rc);
-                        nrg = _mm_mul_pd(nrg, sse_one_over_Rc2);
-                        nrg = _mm_add_pd(nrg, sse_one_over_r);
-                        nrg = _mm_sub_pd(nrg, sse_one_over_Rc);
+                        __m128d sse_r;
+                        {
+                            const Vector &c10 = coords1_array[j];
+                            const Vector &c11 = coords1_array[j+1];
 
-                        __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
-                                                      param11.reduced_charge );
-                    
-                        sse_chg = _mm_mul_pd(sse_chg, sse_chg0);
-                    
-                        nrg = _mm_mul_pd(sse_chg, nrg);
-
-                        const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
-                        nrg = _mm_and_pd(nrg, sse_in_cutoff);
+                            __m128d dx = _mm_set_pd( c0.x() - c10.x(), c0.x() - c11.x() );
+                            __m128d dy = _mm_set_pd( c0.y() - c10.y(), c0.y() - c11.y() );
+                            __m128d dz = _mm_set_pd( c0.z() - c10.z(), c0.z() - c11.z() );
                         
-                        sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
+                            __m128d dx2 = _mm_mul_pd(dx, dx);
+                            __m128d dy2 = _mm_mul_pd(dy, dy);
+                            __m128d dz2 = _mm_mul_pd(dz, dz);
+                        
+                            __m128d sse_r2 = _mm_add_pd(dx2,dy2);
+                            sse_r2 = _mm_add_pd(sse_r2, dz2);
+                        
+                            sse_r = _mm_sqrt_pd(sse_r2);
+                        }
+                        
+                        const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
+                        const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
+
+                        //calculate the coulomb energy
+                        {
+                            __m128d nrg = _mm_sub_pd(sse_r, sse_Rc);
+                            nrg = _mm_mul_pd(nrg, sse_one_over_Rc2);
+                            nrg = _mm_add_pd(nrg, sse_one_over_r);
+                            nrg = _mm_sub_pd(nrg, sse_one_over_Rc);
+
+                            __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
+                                                          param11.reduced_charge );
+                        
+                            sse_chg = _mm_mul_pd(sse_chg, sse_chg0);
+                        
+                            nrg = _mm_mul_pd(sse_chg, nrg);
+
+                            nrg = _mm_and_pd(nrg, sse_in_cutoff);
+                            
+                            sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
+                        }
+                                           
+                       const LJPair &ljpair0 = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param10.ljid)];
+                    
+                        const LJPair &ljpair1 = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param11.ljid)];
+
+                        const __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                        const __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(),
+                                                            ljpair1.epsilon() );
+                        
+                        //calculate (sigma/r)^6 and (sigma/r)^12
+                        __m128d sse_sig_over_r2 = _mm_mul_pd(sse_sig, sse_one_over_r);
+                        sse_sig_over_r2 = _mm_mul_pd( sse_sig_over_r2,
+                                                      sse_sig_over_r2 );
+                                                     
+                        __m128d sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r2,
+                                                             sse_sig_over_r2);
+                                                        
+                        sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r6,
+                                                     sse_sig_over_r2);
+                                                     
+                        __m128d sse_sig_over_r12 = _mm_mul_pd(sse_sig_over_r6,
+                                                              sse_sig_over_r6);
+                                              
+                        //calculate LJ energy (the factor of 4 is added later)
+                        __m128d tmp = _mm_sub_pd(sse_sig_over_r12,
+                                                 sse_sig_over_r6);
+                                                 
+                        tmp = _mm_mul_pd(tmp, sse_eps);
+                        tmp = _mm_and_pd(tmp, sse_in_cutoff);
+                        sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
                     }
-                                       
-                   const LJPair &ljpair0 = ljpairs.constData()[
-                                            ljpairs.map(param0.ljid,
-                                                        param10.ljid)];
+                          
+                    if (remainder == 1)
+                    {
+                        const Vector &c1 = coords1_array[nats1-1];
+                        const Parameter &param1 = params1_array[nats1-1];
+
+                        const double r = Vector::distance(c0,c1);
+                        const double one_over_r = double(1) / r;
+                        
+                        const double in_cutoff = (r < coul_cutoff);
+
+                        icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge
+                                        * (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+
+                        const LJPair &ljpair = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param1.ljid)];
+                        
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        iljnrg += in_cutoff * ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                                                          
+                    }
+                }
                 
-                    const LJPair &ljpair1 = ljpairs.constData()[
-                                            ljpairs.map(param0.ljid,
-                                                        param11.ljid)];
-
-                    const __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
-                    const __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(),
-                                                        ljpair1.epsilon() );
-                    
-                    //calculate (sigma/r)^6 and (sigma/r)^12
-                    __m128d sse_sig_over_r2 = _mm_mul_pd(sse_sig, sse_one_over_r);
-                    sse_sig_over_r2 = _mm_mul_pd( sse_sig_over_r2,
-                                                  sse_sig_over_r2 );
-                                                 
-                    __m128d sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r2,
-                                                         sse_sig_over_r2);
-                                                    
-                    sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r6,
-                                                 sse_sig_over_r2);
-                                                 
-                    __m128d sse_sig_over_r12 = _mm_mul_pd(sse_sig_over_r6,
-                                                          sse_sig_over_r6);
-                                          
-                    //calculate LJ energy (the factor of 4 is added later)
-                    __m128d tmp = _mm_sub_pd(sse_sig_over_r12,
-                                             sse_sig_over_r6);
-                                             
-                    tmp = _mm_mul_pd(tmp, sse_eps);
-                    sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
-                }
-                      
-                if (remainder == 1)
-                {
-                    const Vector &c1 = coords1_array[nats1-1];
-                    const Parameter &param1 = params1_array[nats1-1];
-
-                    const double r = Vector::distance(c0,c1);
-                    const double one_over_r = double(1) / r;
-                    
-                    const double in_cutoff = (r < coul_cutoff);
-
-                    icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge
-                                    * (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
-
-                    const LJPair &ljpair = ljpairs.constData()[
-                                            ljpairs.map(param0.ljid,
-                                                        param1.ljid)];
-                    
-                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                    double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                    iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                  sig_over_dist6);
-                                                      
-                }
+                icnrg += *((const double*)&sse_cnrg) +
+                         *( ((const double*)&sse_cnrg) + 1 );
+                         
+                iljnrg += *((const double*)&sse_ljnrg) +
+                          *( ((const double*)&sse_ljnrg) + 1 );
             }
-            
-            icnrg += *((const double*)&sse_cnrg) +
-                     *( ((const double*)&sse_cnrg) + 1 );
-                     
-            iljnrg += *((const double*)&sse_ljnrg) +
-                      *( ((const double*)&sse_ljnrg) + 1 );
-        }
-        #else
-        {
-            //we use the force-shifted cutoff potential described in equation 18
-            //in Fennell and Gezelter, J. Chem. Phys., 124, 234104, 2006
-            //We use alpha=0, as I have seen that a 25 A cutoff gives stable results
-            //with alpha=0, and this way we avoid changing the hamiltonian significantly
-            //by having an erfc function
-            for (quint32 i=0; i<nats0; ++i)
+            #else
             {
-                const Parameter &param0 = params0_array[i];
-                const Vector &c0 = coords0_array[i];
-                
-                for (quint32 j=0; j<nats1; ++j)
+                //we use the force-shifted cutoff potential described in equation 18
+                //in Fennell and Gezelter, J. Chem. Phys., 124, 234104, 2006
+                //We use alpha=0, as I have seen that a 25 A cutoff gives stable results
+                //with alpha=0, and this way we avoid changing the hamiltonian significantly
+                //by having an erfc function
+                for (quint32 i=0; i<nats0; ++i)
                 {
-                    const Parameter &param1 = params1_array[j];
-                    const Vector &c1 = coords1_array[j];
-
-                    const double r = Vector::distance(c0,c1);
-                    const double one_over_r = double(1) / r;
+                    const Parameter &param0 = params0_array[i];
+                    const Vector &c0 = coords0_array[i];
                     
-                    int in_cutoff = (r < Rc);
-                    
-                    icnrg += (in_cutoff * param0.reduced_charge * param1.reduced_charge) *
-                                 (one_over_r - one_over_Rc + one_over_Rc2 * (r-Rc));
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        const Vector &c1 = coords1_array[j];
 
-                    const LJPair &ljpair = ljpairs.constData()[
-                                            ljpairs.map(param0.ljid,
-                                                        param1.ljid)];
+                        const double r = Vector::distance(c0,c1);
+                        const double one_over_r = double(1) / r;
+                        
+                        int in_cutoff = (r < Rc);
+                        
+                        icnrg += (in_cutoff * param0.reduced_charge * param1.reduced_charge) *
+                                     (one_over_r - one_over_Rc + one_over_Rc2 * (r-Rc));
 
-                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                    double sig_over_dist12 = pow_2(sig_over_dist6);
+                        const LJPair &ljpair = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param1.ljid)];
 
-                    iljnrg += ljpair.epsilon() * (sig_over_dist12 -
-                                                  sig_over_dist6);
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        iljnrg += in_cutoff * ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                    }
                 }
             }
+            #endif
         }
-        #endif
+        else if (useReactionField())
+        {
+            //use the reaction field potential
+        
+            const double Rc = coul_cutoff;
+            const double rf_dielectric = reactionFieldDielectric();
+            const double k_rf = (1.0 / pow_3(Rc)) * ( (rf_dielectric-1) /
+                                                      (2*rf_dielectric + 1) );
+            const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric) /
+                                               (2*rf_dielectric + 1) );            
+        
+            #ifdef SIRE_USE_SSE
+            {
+                const int remainder = nats1 % 2;
+                
+                __m128d sse_cnrg = { 0, 0 };
+                __m128d sse_ljnrg = { 0, 0 };
+
+                const __m128d sse_one = { 1.0, 1.0 };
+                
+                const __m128d sse_Rc = { Rc, Rc };
+                const __m128d sse_k_rf = { k_rf, k_rf };
+                const __m128d sse_c_rf = { c_rf, c_rf };
+                
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    const Parameter &param0 = params0_array[i];
+                    
+                    __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge, 
+                                                   param0.reduced_charge );
+                    
+                    const Vector &c0 = coords0_array[i];
+                    
+                    //process atoms in pairs (so can then use SSE)
+                    for (quint32 j=0; j<nats1-1; j += 2)
+                    {
+                        const Parameter &param10 = params1_array[j];
+                        const Parameter &param11 = params1_array[j+1];
+
+                        __m128d sse_r;
+                        {
+                            const Vector &c10 = coords1_array[j];
+                            const Vector &c11 = coords1_array[j+1];
+
+                            __m128d dx = _mm_set_pd( c0.x() - c10.x(), c0.x() - c11.x() );
+                            __m128d dy = _mm_set_pd( c0.y() - c10.y(), c0.y() - c11.y() );
+                            __m128d dz = _mm_set_pd( c0.z() - c10.z(), c0.z() - c11.z() );
+                        
+                            __m128d dx2 = _mm_mul_pd(dx, dx);
+                            __m128d dy2 = _mm_mul_pd(dy, dy);
+                            __m128d dz2 = _mm_mul_pd(dz, dz);
+                        
+                            __m128d sse_r2 = _mm_add_pd(dx2,dy2);
+                            sse_r2 = _mm_add_pd(sse_r2, dz2);
+                        
+                            sse_r = _mm_sqrt_pd(sse_r2);
+                        }
+                        
+                        const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
+                        
+                        //calculate the coulomb energy
+                        const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
+                        {
+                            __m128d nrg = _mm_mul_pd(sse_r, sse_r);
+                            nrg = _mm_mul_pd(nrg, sse_k_rf);
+                            nrg = _mm_sub_pd(nrg, sse_c_rf);
+                            nrg = _mm_add_pd(nrg, sse_one_over_r);
+
+                            __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
+                                                          param11.reduced_charge );
+                    
+                            sse_chg = _mm_mul_pd(sse_chg, sse_chg0);
+                    
+                            nrg = _mm_mul_pd(sse_chg, nrg);
+
+                            nrg = _mm_and_pd(nrg, sse_in_cutoff);
+                            
+                            sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
+                        }
+                                           
+                        const LJPair &ljpair0 = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param10.ljid)];
+                    
+                        const LJPair &ljpair1 = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param11.ljid)];
+
+                        const __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                        const __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(),
+                                                            ljpair1.epsilon() );
+                        
+                        //calculate (sigma/r)^6 and (sigma/r)^12
+                        __m128d sse_sig_over_r2 = _mm_mul_pd(sse_sig, sse_one_over_r);
+                        sse_sig_over_r2 = _mm_mul_pd( sse_sig_over_r2,
+                                                      sse_sig_over_r2 );
+                                                     
+                        __m128d sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r2,
+                                                             sse_sig_over_r2);
+                                                        
+                        sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r6,
+                                                     sse_sig_over_r2);
+                                                     
+                        __m128d sse_sig_over_r12 = _mm_mul_pd(sse_sig_over_r6,
+                                                              sse_sig_over_r6);
+                                              
+                        //calculate LJ energy (the factor of 4 is added later)
+                        __m128d tmp = _mm_sub_pd(sse_sig_over_r12,
+                                                 sse_sig_over_r6);
+                                                 
+                        tmp = _mm_mul_pd(tmp, sse_eps);
+                        tmp = _mm_and_pd(tmp, sse_in_cutoff);
+                        sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
+                    }
+                          
+                    if (remainder == 1)
+                    {
+                        const Vector &c1 = coords1_array[nats1-1];
+                        const Parameter &param1 = params1_array[nats1-1];
+
+                        const double r = Vector::distance(c0,c1);
+                        const double one_over_r = double(1) / r;
+                        
+                        const double in_cutoff = (r < coul_cutoff);
+
+                        icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge
+                                        * (one_over_r + k_rf*r*r - c_rf);
+
+                        const LJPair &ljpair = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param1.ljid)];
+                        
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        iljnrg += in_cutoff * ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                    }
+                }
+                
+                icnrg += *((const double*)&sse_cnrg) +
+                         *( ((const double*)&sse_cnrg) + 1 );
+                         
+                iljnrg += *((const double*)&sse_ljnrg) +
+                          *( ((const double*)&sse_ljnrg) + 1 );
+            }
+            #else
+            {
+                //we use the force-shifted cutoff potential described in equation 18
+                //in Fennell and Gezelter, J. Chem. Phys., 124, 234104, 2006
+                //We use alpha=0, as I have seen that a 25 A cutoff gives stable results
+                //with alpha=0, and this way we avoid changing the hamiltonian significantly
+                //by having an erfc function
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    const Parameter &param0 = params0_array[i];
+                    const Vector &c0 = coords0_array[i];
+                    
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        const Vector &c1 = coords1_array[j];
+
+                        const double r = Vector::distance(c0,c1);
+                        const double one_over_r = double(1) / r;
+                        
+                        int in_cutoff = (r < Rc);
+                        
+                        icnrg += (in_cutoff * param0.reduced_charge * param1.reduced_charge) *
+                                     (one_over_r + k_rf*r*r - c_rf);
+
+                        const LJPair &ljpair = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param1.ljid)];
+
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        iljnrg += in_cutoff * ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                    }
+                }
+            }
+            #endif
+        }
+        else
+        {
+            //use a simple atom-based cutoff
+            const double Rc = coul_cutoff;
+        
+            #ifdef SIRE_USE_SSE
+            {
+                const int remainder = nats1 % 2;
+                
+                __m128d sse_cnrg = { 0, 0 };
+                __m128d sse_ljnrg = { 0, 0 };
+
+                const __m128d sse_one = { 1.0, 1.0 };
+                const __m128d sse_Rc = { Rc, Rc };
+                
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    const Parameter &param0 = params0_array[i];
+                    
+                    __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge, 
+                                                   param0.reduced_charge );
+                    
+                    const Vector &c0 = coords0_array[i];
+                    
+                    //process atoms in pairs (so can then use SSE)
+                    for (quint32 j=0; j<nats1-1; j += 2)
+                    {
+                        const Parameter &param10 = params1_array[j];
+                        const Parameter &param11 = params1_array[j+1];
+
+                        __m128d sse_r;
+                        {
+                            const Vector &c10 = coords1_array[j];
+                            const Vector &c11 = coords1_array[j+1];
+
+                            __m128d dx = _mm_set_pd( c0.x() - c10.x(), c0.x() - c11.x() );
+                            __m128d dy = _mm_set_pd( c0.y() - c10.y(), c0.y() - c11.y() );
+                            __m128d dz = _mm_set_pd( c0.z() - c10.z(), c0.z() - c11.z() );
+                        
+                            __m128d dx2 = _mm_mul_pd(dx, dx);
+                            __m128d dy2 = _mm_mul_pd(dy, dy);
+                            __m128d dz2 = _mm_mul_pd(dz, dz);
+                        
+                            __m128d sse_r2 = _mm_add_pd(dx2,dy2);
+                            sse_r2 = _mm_add_pd(sse_r2, dz2);
+                        
+                            sse_r = _mm_sqrt_pd(sse_r2);
+                        }
+                        
+                        const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
+                        const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
+                        
+                        //calculate the coulomb energy
+                        {
+                            __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
+                                                          param11.reduced_charge );
+                        
+                            sse_chg = _mm_mul_pd(sse_chg, sse_chg0);
+                        
+                            __m128d nrg = _mm_mul_pd(sse_chg, sse_one_over_r);
+
+                            nrg = _mm_and_pd(nrg, sse_in_cutoff);
+                            
+                            sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
+                        }
+                                           
+                        const LJPair &ljpair0 = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param10.ljid)];
+                    
+                        const LJPair &ljpair1 = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param11.ljid)];
+
+                        const __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                        const __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(),
+                                                            ljpair1.epsilon() );
+                        
+                        //calculate (sigma/r)^6 and (sigma/r)^12
+                        __m128d sse_sig_over_r2 = _mm_mul_pd(sse_sig, sse_one_over_r);
+                        sse_sig_over_r2 = _mm_mul_pd( sse_sig_over_r2,
+                                                      sse_sig_over_r2 );
+                                                     
+                        __m128d sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r2,
+                                                             sse_sig_over_r2);
+                                                        
+                        sse_sig_over_r6 = _mm_mul_pd(sse_sig_over_r6,
+                                                     sse_sig_over_r2);
+                                                     
+                        __m128d sse_sig_over_r12 = _mm_mul_pd(sse_sig_over_r6,
+                                                              sse_sig_over_r6);
+                                              
+                        //calculate LJ energy (the factor of 4 is added later)
+                        __m128d tmp = _mm_sub_pd(sse_sig_over_r12,
+                                                 sse_sig_over_r6);
+                                                 
+                        tmp = _mm_mul_pd(tmp, sse_eps);
+                        tmp = _mm_and_pd(tmp, sse_in_cutoff);
+                        sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
+                    }
+                          
+                    if (remainder == 1)
+                    {
+                        const Vector &c1 = coords1_array[nats1-1];
+                        const Parameter &param1 = params1_array[nats1-1];
+
+                        const double r = Vector::distance(c0,c1);
+                        const double one_over_r = double(1) / r;
+                        
+                        const double in_cutoff = (r < coul_cutoff);
+
+                        icnrg += in_cutoff * param0.reduced_charge * param1.reduced_charge
+                                           * one_over_r;
+
+                        const LJPair &ljpair = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param1.ljid)];
+                        
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        iljnrg += in_cutoff * ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                                                          
+                    }
+                }
+                
+                icnrg += *((const double*)&sse_cnrg) +
+                         *( ((const double*)&sse_cnrg) + 1 );
+                         
+                iljnrg += *((const double*)&sse_ljnrg) +
+                          *( ((const double*)&sse_ljnrg) + 1 );
+            }
+            #else
+            {
+                //we use the force-shifted cutoff potential described in equation 18
+                //in Fennell and Gezelter, J. Chem. Phys., 124, 234104, 2006
+                //We use alpha=0, as I have seen that a 25 A cutoff gives stable results
+                //with alpha=0, and this way we avoid changing the hamiltonian significantly
+                //by having an erfc function
+                for (quint32 i=0; i<nats0; ++i)
+                {
+                    const Parameter &param0 = params0_array[i];
+                    const Vector &c0 = coords0_array[i];
+                    
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        const Vector &c1 = coords1_array[j];
+
+                        const double r = Vector::distance(c0,c1);
+                        const double one_over_r = double(1) / r;
+                        
+                        int in_cutoff = (r < Rc);
+                        
+                        icnrg += (in_cutoff * param0.reduced_charge * param1.reduced_charge) *
+                                     one_over_r;
+
+                        const LJPair &ljpair = ljpairs.constData()[
+                                                ljpairs.map(param0.ljid,
+                                                            param1.ljid)];
+
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        iljnrg += in_cutoff * ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                    }
+                }
+            }
+            #endif
+        }
     }
 
     double gridnrg = 0;
@@ -1095,16 +1898,6 @@ void GridFF::recalculateEnergy()
         this->components().setEnergy(*this, CLJEnergy(0,0));
         this->setClean();
         return;
-    }
-
-    boost::shared_ptr<InterGroupCLJFF> test_gridff;
-    boost::shared_ptr<QTime> t;
-
-    if (calc_grid_error)
-    {
-        test_gridff.reset( new InterGroupCLJFF(*this) );
-        t.reset( new QTime() );
-        t->start();
     }
     
     bool must_recalculate = false;
@@ -1288,108 +2081,5 @@ void GridFF::recalculateEnergy()
     }
     
     this->setClean();
-
-    if (calc_grid_error)
-    {
-        int grid_ms = t->elapsed();
-
-        t->start();
-        double nrg = test_gridff->energy();
-        int ms = t->elapsed();
-        
-        double dcoul = this->energy(components().coulomb()) -
-                       test_gridff->energy(components().coulomb());
-                       
-        double dlj = this->energy(components().lj()) -
-                     test_gridff->energy(components().lj());
-                     
-        if (must_recalculate)
-        {
-            if (total_coul_errors.count() == 0)
-            {
-                //need to construct the histograms
-                total_coul_errors = Histogram(-10*dcoul, 10*dcoul, int(200));
-                total_lj_errors = Histogram(-10*dlj, 10*dlj, int(200));
-            }
-
-            total_coul_errors.accumulate(dcoul);
-            total_lj_errors.accumulate(dlj);
-            total_time_saved += (ms - grid_ms);
-        }
-        else
-        {
-            if (delta_coul_errors.count() == 0)
-            {
-                //need to construct the histograms
-                delta_coul_errors = Histogram(-10*dcoul, 10*dcoul, int(200));
-                delta_lj_errors = Histogram(-10*dlj, 10*dlj, int(200));
-            }
-            
-            delta_coul_errors.accumulate(dcoul);
-            delta_lj_errors.accumulate(dlj);
-            delta_time_saved += (ms - grid_ms);
-        }
-    }
 }
 
-/** Return the histogram of errors in the calculation of total coulomb energies */
-const Histogram& GridFF::totalCoulombErrorHistogram() const
-{
-    return total_coul_errors;
-}
-
-/** Return the histogram of errors in the calculation of delta coulomb energies */
-const Histogram& GridFF::deltaCoulombErrorHistogram() const
-{
-    return delta_coul_errors;
-}
-
-/** Return the histogram of errors in the calculation of total LJ energies */
-const Histogram& GridFF::totalLJErrorHistogram() const
-{
-    return total_lj_errors;
-}
-
-/** Return the histogram of errors in the calculation of delta LJ energies */
-const Histogram& GridFF::deltaLJErrorHistogram() const
-{
-    return delta_lj_errors;
-}
-
-/** Return the total time saved using a grid as opposed to the explicit
-    calculation of the total energy */
-double GridFF::totalTotalTimeSaved() const
-{
-    return total_time_saved;
-}
-
-/** Return the total time saved using a grid as opposed to the explicit 
-    calculate of the delta energies */
-double GridFF::totalDeltaTimeSaved() const
-{
-    return delta_time_saved;
-}
-
-/** Return the average time saved using a grid as opposed to the explicit
-    calculation of the total energy */
-double GridFF::averageTotalTimeSaved() const
-{
-    double sum = total_coul_errors.sumOverBins();
-    
-    if (sum > 0)
-        return total_time_saved / sum;
-    else
-        return 0;
-}
-
-/** Return the average time saved using a grid as opposed to the explicit 
-    calculate of the delta energies */
-double GridFF::averageDeltaTimeSaved() const
-{
-    double sum = delta_coul_errors.sumOverBins();
-    
-    if (sum > 0)
-        return delta_time_saved / sum;
-    else
-        return 0;
-}
