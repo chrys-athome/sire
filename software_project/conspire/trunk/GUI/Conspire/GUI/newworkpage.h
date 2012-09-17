@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_ACCOUNTPAGE_H
-#define CONSPIRE_ACCOUNTPAGE_H
+#ifndef CONSPIRE_NEWWORKPAGE_H
+#define CONSPIRE_NEWWORKPAGE_H
 /********************************************\
   *
   *  Conspire
@@ -37,7 +37,11 @@ CONSPIRE_BEGIN_HEADER
 class QLabel;
 class QLineEdit;
 class QProgressBar;
-class QListWidget;
+class QTableWidget;
+class QGraphicsView;
+class QGraphicsWidget;
+class QGraphicsGridLayout;
+class QTimer;
 
 namespace Conspire
 {
@@ -45,18 +49,19 @@ namespace Conspire
     class WidgetStack;
 
     /** This is the page used to submit a job to Acquire */
-    class CONSPIRE_EXPORT AccountPage : public Page
+    class CONSPIRE_EXPORT NewWorkPage : public Page
     {
         Q_OBJECT
         
     public:
-        AccountPage(Page *parent=0);
+        NewWorkPage(Page *parent=0);
         
-        ~AccountPage();
+        ~NewWorkPage();
 
     protected slots:
-        void addSSHAccount();
-        void refreshList();
+        void makeWork();
+        void modifyWork(int row, int col);
+        void refreshWork();
         
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
@@ -69,7 +74,7 @@ namespace Conspire
     private:
         void build();
         void allUpdate();
-        
+                
         /** The options for the job to submit */
         Options opts;
         
@@ -77,7 +82,9 @@ namespace Conspire
             the job run process */
         WidgetStack *stack;
         
-        QListWidget *clusterlist;
+        QList<QGraphicsLayoutItem *> *all_wpw;
+        QGraphicsGridLayout *qgrid;
+        QGraphicsWidget *tableofworkstores;
 
         /** Text editor for host */
         QLineEdit *lineedit_host;
@@ -96,10 +103,11 @@ namespace Conspire
                 
         /** The button used to submit the job */
         Button *button;
-                
-        Button *modifybutton;
         
+        QTimer *refreshtimer;
+                        
         Button *return_button;
+
     };
 
 }

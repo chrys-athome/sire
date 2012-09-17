@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_ACCOUNTPAGE_H
-#define CONSPIRE_ACCOUNTPAGE_H
+#ifndef CONSPIRE_WORKSTOREPAGE_H
+#define CONSPIRE_WORKSTOREPAGE_H
 /********************************************\
   *
   *  Conspire
@@ -38,6 +38,7 @@ class QLabel;
 class QLineEdit;
 class QProgressBar;
 class QListWidget;
+class QListWidgetItem;
 
 namespace Conspire
 {
@@ -45,18 +46,20 @@ namespace Conspire
     class WidgetStack;
 
     /** This is the page used to submit a job to Acquire */
-    class CONSPIRE_EXPORT AccountPage : public Page
+    class CONSPIRE_EXPORT WorkStorePage : public Page
     {
         Q_OBJECT
         
     public:
-        AccountPage(Page *parent=0);
+        WorkStorePage(QString iworkstoreid, Page *parent=0);
         
-        ~AccountPage();
+        ~WorkStorePage();
 
     protected slots:
-        void addSSHAccount();
-        void refreshList();
+        void downloadItem(QListWidgetItem *titem);
+        void restartUpload();
+        void expungeWorkStore();
+        void refreshTimes();
         
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
@@ -77,7 +80,10 @@ namespace Conspire
             the job run process */
         WidgetStack *stack;
         
-        QListWidget *clusterlist;
+        QString workstoreid;
+        QString quuid;
+        
+        QListWidget *instancelist;
 
         /** Text editor for host */
         QLineEdit *lineedit_host;

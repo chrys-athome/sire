@@ -46,6 +46,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/helppage.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
+      Conspire/GUI/newworkpage.h
       Conspire/GUI/optionbutton.h
       Conspire/GUI/optionpage.h
       Conspire/GUI/optionscommand.h
@@ -57,6 +58,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/userpage.h
       Conspire/GUI/widgetrack.h
       Conspire/GUI/widgetstack.h
+      Conspire/GUI/workpacketwidget.h
       Conspire/GUI/workpage.h
       Conspire/GUI/workstorepage.h
       
@@ -79,18 +81,21 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/helppage.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
+      Conspire/GUI/newworkpage.h
       Conspire/GUI/optionbutton.h
       Conspire/GUI/optionpage.h
       Conspire/GUI/optionscommand.h
       Conspire/GUI/optionspage.h
       Conspire/GUI/page.h
       Conspire/GUI/pageview.h
+      Conspire/GUI/reservethread.h
       Conspire/GUI/slidelabel.h
       Conspire/GUI/submitpage.h
       Conspire/GUI/uploadthread.h
       Conspire/GUI/userpage.h
       Conspire/GUI/widgetrack.h
       Conspire/GUI/widgetstack.h
+      Conspire/GUI/workpacketwidget.h
       Conspire/GUI/workpage.h
       Conspire/GUI/workstorepage.h
 
@@ -115,18 +120,21 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/helppage.cpp
       cpp/mainbar.cpp
       cpp/mainwindow.cpp
+      cpp/newworkpage.cpp
       cpp/optionbutton.cpp
       cpp/optionpage.cpp
       cpp/optionscommand.cpp
       cpp/optionspage.cpp
       cpp/page.cpp
       cpp/pageview.cpp
+      cpp/reservethread.cpp
       cpp/slidelabel.cpp
       cpp/submitpage.cpp
       cpp/uploadthread.cpp
       cpp/userpage.cpp
       cpp/widgetrack.cpp
       cpp/widgetstack.cpp
+      cpp/workpacketwidget.cpp
       cpp/workpage.cpp
       cpp/workstorepage.cpp
 

@@ -34,6 +34,7 @@
 #include "Conspire/GUI/uploadthread.h"
 #include "Conspire/GUI/workstorepage.h"
 #include "Conspire/GUI/mainwindow.h"
+#include "Conspire/GUI/reservethread.h"
 
 #include "Conspire/option.h"
 #include "Conspire/values.h"
@@ -276,7 +277,7 @@ void SubmitPage::submit()
         QStringList all_keys = opts.keysAndIndiciesWithValue(true);
         
         double progress_value = 10;
-        double progress_delta = all_keys.count() / 40.0;
+        double progress_delta = all_keys.count() / 20.0;
         
         foreach (QString key, all_keys)
         {
@@ -327,7 +328,7 @@ void SubmitPage::submit()
         }
         
         status_label->setText( Conspire::tr("Creating a config file...") );
-        progress_bar->setValue(50);
+        progress_bar->setValue(30);
         allUpdate();
          
         //now write the configuration file into this directory
@@ -348,7 +349,7 @@ void SubmitPage::submit()
         }
 
         status_label->setText( Conspire::tr("Copying support files...") );
-        progress_bar->setValue(60);
+        progress_bar->setValue(35);
         allUpdate();
 
         //now copy all support files needed for this class of job
@@ -389,7 +390,7 @@ void SubmitPage::submit()
         }
         
         status_label->setText(Conspire::tr("Recording directory for uploading..."));
-        progress_bar->setValue(70);
+        progress_bar->setValue(40);
         allUpdate();
         
         QSettings *qsetter = new QSettings("UoB", "AcquireClient");
@@ -397,7 +398,7 @@ void SubmitPage::submit()
         delete qsetter;
 
         status_label->setText( Conspire::tr("Generating initial work descriptor...") );
-        progress_bar->setValue(75);
+        progress_bar->setValue(45);
         allUpdate();
         
         QString xmldescr = overdatadir + "/descr_" + quuid + ".xml";
@@ -414,7 +415,7 @@ void SubmitPage::submit()
         } else
         {
            status_label->setText(Conspire::tr("Recording XML descriptor filename..."));
-           progress_bar->setValue(80);
+           progress_bar->setValue(50);
            allUpdate();
          
            QSettings *qsetter = new QSettings("UoB", "AcquireClient");
@@ -423,24 +424,40 @@ void SubmitPage::submit()
         }
 
         status_label->setText( Conspire::tr("Negotiating a remote work allocation...") );
-        progress_bar->setValue(90);
+        progress_bar->setValue(52);
         allUpdate();
-        
-        int64_t spaceused = 0;
-        int blocks = 0;
-        const char *workstore = AcquireReserveWorkStore(xmldescr.toAscii().constData(), datadir.toAscii().constData(), &spaceused, &blocks);
+        printf("total size of data directory: %d\n", ReserveThread::totalOfDirectory(datadir.toAscii().constData()));
+        ReserveThread *rsrvth = new ReserveThread(xmldescr.toAscii().constData(), datadir.toAscii().constData());
+        QThreadPool::globalInstance()->start(rsrvth);
+        int lastblockscount = -1;
+        while (!(rsrvth->isFinished()))
+        {
+           if (lastblockscount != rsrvth->getCurrentBlock())
+           {
+              status_label->setText( Conspire::tr("Compressing, encrypting and hashing block %1/%2...").arg(QString::number(rsrvth->getCurrentBlock()+1)).arg(QString::number(rsrvth->getTotalBlocks()+1)));
+              progress_bar->setValue(52 + (95-52)*rsrvth->getBlockFraction());
+              allUpdate();
+              lastblockscount = rsrvth->getCurrentBlock();
+           }
+           QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+        }
+        int blocks = rsrvth->getCurrentBlock();
+        int64_t spaceused = rsrvth->getRemoteUsedSpace();
+        int64_t localspaceused = rsrvth->getLocalUsedSpace();
+        const char *workstore = rsrvth->getFinalID();
         int allinstances = 1;
         if (workstore)
         {
            QSettings *qsetter = new QSettings("UoB", "AcquireClient");
            qsetter->setValue(quuid + "/workstoreid", workstore);
            qsetter->setValue(quuid + "/remotespace", QString::number(spaceused));
+           qsetter->setValue(quuid + "/localspace", QString::number(spaceused));
            qsetter->setValue(quuid + "/blocks", QString::number(blocks));
            qsetter->setValue(quuid + "/instances", QString::number(allinstances));
            delete qsetter;
            
            status_label->setText( Conspire::tr("Done. Acquired work store ID.") );
-           progress_bar->setValue(99);
+           progress_bar->setValue(97);
            allUpdate();
            
            UploadThread *uploadthread = new UploadThread(workstore, datadir.toAscii().constData(), NULL, NULL, allinstances, 3600, blocks);

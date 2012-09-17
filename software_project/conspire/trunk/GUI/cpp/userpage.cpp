@@ -29,6 +29,7 @@
 #include "Conspire/GUI/accountpage.h"
 #include "Conspire/GUI/userpage.h"
 #include "Conspire/GUI/workpage.h"
+#include "Conspire/GUI/newworkpage.h"
 #include "Conspire/GUI/widgetrack.h"
 #include "Conspire/GUI/button.h"
 #include "Conspire/GUI/exceptionpage.h"
@@ -68,7 +69,7 @@ using namespace Conspire;
 
 void UserPage::continueToWorkStores()
 {
-   emit( push( PagePointer( new WorkPage())));
+   emit( push( PagePointer( new NewWorkPage())));
 }
 
 void UserPage::modifyAccount()

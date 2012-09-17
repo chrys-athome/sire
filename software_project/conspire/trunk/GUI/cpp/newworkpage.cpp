@@ -27,7 +27,8 @@
 \*********************************************/
 
 #include "Conspire/GUI/workstorepage.h"
-#include "Conspire/GUI/workpage.h"
+#include "Conspire/GUI/workpacketwidget.h"
+#include "Conspire/GUI/newworkpage.h"
 #include "Conspire/GUI/optionspage.h"
 #include "Conspire/GUI/widgetrack.h"
 #include "Conspire/GUI/button.h"
@@ -59,8 +60,10 @@
 #include <QLineEdit>
 #include <QPixmap>
 #include <QSettings>
-#include <QTableWidget>
 #include <QHeaderView>
+#include <QGraphicsView>
+#include <QGraphicsGridLayout>
+#include <QTimer>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -69,10 +72,7 @@
 
 using namespace Conspire;
 
-static QString install_dir 
-                = "/home/benlong/conspire/job_classes";
-
-void WorkPage::refreshWork()
+void NewWorkPage::refreshWork()
 {
    printf("refresh work triggered\n");
    login_label->setText("");
@@ -87,29 +87,89 @@ void WorkPage::refreshWork()
    {
       if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText(QString("Success. %1 bytes free").arg(QString::number(bytesfree)));
       if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Success. No work found. %1 bytes free").arg(QString::number(bytesfree)));
-      int row = 0;
-      int col = 0;
-      QTableWidgetItem *qttwi = tableofworkstores->item(row, col);
-      while (qttwi != NULL)
+      
+      if (all_wpw->size() != (noofws + 1))
       {
-         tableofworkstores->removeCellWidget(row, col);
-         delete qttwi;
-         col++;
-         if (col >= 3) { col = 0; row++; }
-         qttwi = tableofworkstores->item(row, col);
+         for (int i = 0; i < all_wpw->size(); i++)
+         {
+            qgrid->removeItem(all_wpw->at(i));
+            delete all_wpw->at(i);
+         }
+         all_wpw->clear();
+         int row = 0;
+         int col = 0;
+         for (int i = 0; i < (noofws + 1); i++)
+         {
+            WorkPacketWidget *t_wpw = new WorkPacketWidget("", 0, 0, NULL);
+            qgrid->addItem(t_wpw, row, col, 1, 1);
+            col++;
+            if (col >= 3) { row++; col = 0; }
+            connect(t_wpw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
+            all_wpw->append(t_wpw);
+         }
       }
-      row = 0;
-      col = 0;
+
       for (int i = 0; i < noofws; i++)
       {
-         qttwi = new QTableWidgetItem("Untitled work");
-         qttwi->setData(::Qt::UserRole, QString(store_ids[i]));
-         tableofworkstores->setItem(row, col, qttwi);
-         col++;
-         if (col >= 3) { col = 0; row++; }
+         QString quuid;
+         QString workstoreid = QString(store_ids[i]);
+         QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+         QStringList groups = qsetter->childGroups();
+         for (int j = 0; j < groups.size(); j++)
+         {
+            QString qstr = qsetter->value(groups.at(j) + "/workstoreid").toString();
+            if (qstr == workstoreid)
+            {
+               quuid = groups.at(j);
+            }
+         }
+         delete qsetter;
+         ((WorkPacketWidget *)(all_wpw->at(i)))->updateUUID(quuid);
+         if (pct_b2c[i] == 100.)
+         {
+            char **workdata_ids = NULL;
+            char *stage_ids = NULL;
+            float *stage_pcts = NULL;
+            int noofwds = 0;
+            int retval2 = AcquireQueryAllWorkDataStatus(store_ids[i], &workdata_ids, &stage_ids, &stage_pcts, &noofwds);
+            if (retval2 == ACQUIRE_QUERY_ALL_WORK__SUCCESS)
+            {
+               float amt_b2c = 0.;
+               float amt_prg = 0.;
+               float amt_c2b = 0.;
+               for (int l = 0; l < noofwds; l++)
+               {
+                  printf("%s\t%s: %c-%d\n", store_ids[i], workdata_ids[l], stage_ids[l], stage_pcts[l]);
+                  switch (stage_ids[l])
+                  {
+                     case 'G': amt_c2b += (stage_pcts[l] / ((float)noofwds)); break;
+                     case 'F': amt_prg += (stage_pcts[l] / ((float)noofwds)); break;
+                     case 'E': amt_b2c += (stage_pcts[l] / ((float)noofwds)); break;
+                     default: break;
+                  }
+                  switch (stage_ids[l])
+                  {
+                     case 'H': amt_c2b += (100. / ((float)noofwds));
+                     case 'G': amt_prg += (100. / ((float)noofwds));
+                     case 'F': amt_b2c += (100. / ((float)noofwds));
+                     default: break;
+                  }
+               }
+               ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("In progress...");
+               ((WorkPacketWidget *)(all_wpw->at(i)))->updateAmounts(amt_b2c / 100., amt_prg / 100., amt_c2b / 100.);
+            } else
+            {
+               printf("acquire query all work data failed (code %d)\n", retval2);
+            }
+         } else
+         {
+            ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Uploading...");
+         }
+         if (pct_c2b[i] == 100.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Complete.");
+         ((WorkPacketWidget *)(all_wpw->at(i)))->computeAndUpdateUpload();
       }
-      QTableWidgetItem *new_item = new QTableWidgetItem("Create new...");
-      tableofworkstores->setItem(row, col, new_item);
+      ((WorkPacketWidget *)(all_wpw->at(noofws)))->updateText("Create new...");
+      ((WorkPacketWidget *)(all_wpw->at(noofws)))->updateAmounts(0., 0., 0.);
    } else
    {
       switch (retval)
@@ -128,8 +188,10 @@ void WorkPage::refreshWork()
    allUpdate();
 }
 
-void WorkPage::modifyWork(int row, int col)
+void NewWorkPage::modifyWork(int row, int col)
 {
+   
+   /*
    QTableWidgetItem *qwidget = tableofworkstores->item(row, col);
    if (qwidget == NULL) return;
    if (QString("Create new...") == qwidget->text())
@@ -145,17 +207,20 @@ void WorkPage::modifyWork(int row, int col)
    {
       emit( push(new WorkStorePage(qwidget->data(::Qt::UserRole).toString())));
    }
+   */
 }
 
-void WorkPage::makeWork()
+void NewWorkPage::makeWork()
 {
+   /*
    QStringList path;
    path << QString("%1/pmemd").arg(install_dir);
    Options opts = Options::fromXMLFile("pmemd.xml", path);
    emit( push( PagePointer(new ConfigDocument(opts))) );
+   */
 }
 
-void WorkPage::build()
+void NewWorkPage::build()
 {
     //this->setFlag(QGraphicsItem::ItemStacksBehindParent, true);
     
@@ -175,20 +240,21 @@ void WorkPage::build()
     
     QLabel *label_table = new QLabel(Conspire::tr("Active work:"));
     sub_rack->addWidget(label_table);
-
-    tableofworkstores = new QTableWidget(3, 3);
-    tableofworkstores->horizontalHeader()->hide();
-    tableofworkstores->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
-    tableofworkstores->verticalHeader()->hide();
-    tableofworkstores->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-    tableofworkstores->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
-    tableofworkstores->setFrameStyle(::QFrame::Sunken | ::QFrame::StyledPanel);
-
-    QTableWidgetItem *new_item = new QTableWidgetItem("Create new...");
-    tableofworkstores->setItem(0, 0, new_item);
-    connect(tableofworkstores, SIGNAL(cellClicked(int, int)), this, SLOT(modifyWork(int, int)));    
     
+    all_wpw = new QList<QGraphicsLayoutItem *>();
+
+    qgrid = new QGraphicsGridLayout();
+    WorkPacketWidget *none_wpw = new WorkPacketWidget("Create new...", 0, 0, NULL);
+    qgrid->addItem(none_wpw, 0, 0, 1, 1);
+    all_wpw->append(none_wpw);
+    connect(none_wpw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
+    tableofworkstores = new QGraphicsWidget();
+    tableofworkstores->setLayout(qgrid);
+    tableofworkstores->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+    tableofworkstores->setAutoFillBackground(true);
+        
     sub_rack->addWidget(tableofworkstores);
+    return_button = NULL;
     
     button = new Button(Conspire::tr("Refresh"));
     connect(button, SIGNAL(clicked()), this, SLOT(refreshWork()));
@@ -205,38 +271,45 @@ void WorkPage::build()
 
     rack->addWidget(stack);
     refreshWork();
+    refreshtimer = new QTimer(this);
+    connect(refreshtimer, SIGNAL(timeout()), this, SLOT(refreshWork()));
+    refreshtimer->start(1000);
 }
 
 /** Constructor */
-WorkPage::WorkPage(Page *parent) : Page(parent)
+NewWorkPage::NewWorkPage(Page *parent) : Page(parent)
 {
     build();
 }
 
 /** Destructor */
-WorkPage::~WorkPage()
+NewWorkPage::~NewWorkPage()
 {}
 
-void WorkPage::resizeEvent(QGraphicsSceneResizeEvent *e)
+void NewWorkPage::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
 }
 
-void WorkPage::moveEvent(QGraphicsSceneMoveEvent *e)
+void NewWorkPage::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
 }
 
-void WorkPage::paint(QPainter *painter, 
-                       const QStyleOptionGraphicsItem *option, 
-                       QWidget *widget)
+void NewWorkPage::paint(QPainter *painter, 
+                        const QStyleOptionGraphicsItem *option, 
+                        QWidget *widget)
 {
-    tableofworkstores->repaint();
+    for (int i = 0; i < all_wpw->size(); i++)
+    {
+       ((WorkPacketWidget *)(all_wpw->at(i)))->update();
+//       paint(painter, option, widget);
+    }
+    //tableofworkstores->paint();
     Page::paint(painter, option, widget);
 }
 
-void WorkPage::allUpdate()
+void NewWorkPage::allUpdate()
 {
-   
     QCoreApplication::processEvents();
 }

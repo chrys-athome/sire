@@ -27,7 +27,6 @@
 \*********************************************/
 
 #include "Conspire/GUI/accountpage.h"
-#include "Conspire/GUI/workpage.h"
 #include "Conspire/GUI/userpage.h"
 #include "Conspire/GUI/widgetrack.h"
 #include "Conspire/GUI/button.h"
@@ -66,11 +65,6 @@
 #include "Acquire/acquire_client.h"
 
 using namespace Conspire;
-
-void AccountPage::continueToWorkStores()
-{
-   emit( push( PagePointer( new WorkPage())));
-}
 
 void AccountPage::addSSHAccount()
 {
