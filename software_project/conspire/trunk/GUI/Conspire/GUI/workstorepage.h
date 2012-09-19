@@ -72,7 +72,7 @@ namespace Conspire
     private:
         void build();
         void allUpdate();
-        
+        bool removeDir(const QString &dirName);
         /** The options for the job to submit */
         Options opts;
         

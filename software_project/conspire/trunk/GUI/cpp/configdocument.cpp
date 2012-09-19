@@ -71,9 +71,31 @@ ConfigDocument::~ConfigDocument()
     //MAYBE MAKE SURE THAT THE DOCUMENT HAS BEEN SAVED
 }
 
+void ConfigDocument::buttonsmodegeom()
+{
+   if (buttonsmode)
+   {
+      double half_width = 0.5*this->geometry().width();
+      
+      submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                    half_width, MAIN_BUTTON_HEIGHT);
+
+      save_button->show();
+      save_button->setGeometry(half_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                    half_width, MAIN_BUTTON_HEIGHT);
+   } else
+   {
+      submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                    this->geometry().width(), MAIN_BUTTON_HEIGHT);
+      save_button->hide();
+   }
+
+}
+
 /** Build the widget */
 void ConfigDocument::build()
 {
+    buttonsmode = 1;
     disabled_view = 0;
     menu_visible = false;
     undo_stack = new QUndoStack(this);
@@ -103,14 +125,8 @@ void ConfigDocument::build()
 
     save_button = new Button(Conspire::tr("Save"), this);
     connect(save_button, SIGNAL(clicked()), this, SLOT(save()));
-
-    double half_width = 0.5*this->geometry().width();
     
-    submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
-                                  half_width, MAIN_BUTTON_HEIGHT);
-
-    save_button->setGeometry(half_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
-                                  half_width, MAIN_BUTTON_HEIGHT);
+    buttonsmodegeom();
     
     top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-MAIN_BUTTON_HEIGHT);
     top_view->pushed(view);
@@ -142,14 +158,8 @@ void ConfigDocument::toggleMenuVisible()
 void ConfigDocument::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
     Page::resizeEvent(e);
-
-    double half_width = 0.5*this->geometry().width();
     
-    submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
-                                  half_width, MAIN_BUTTON_HEIGHT);
-
-    save_button->setGeometry(half_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
-                                  half_width, MAIN_BUTTON_HEIGHT);
+    buttonsmodegeom();
 
     top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-MAIN_BUTTON_HEIGHT);
 }
@@ -160,11 +170,7 @@ void ConfigDocument::moveEvent(QGraphicsSceneMoveEvent *e)
 
     double half_width = 0.5*this->geometry().width();
     
-    submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
-                                  half_width, MAIN_BUTTON_HEIGHT);
-
-    save_button->setGeometry(half_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
-                                  half_width, MAIN_BUTTON_HEIGHT);
+    buttonsmodegeom();
 
     top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-MAIN_BUTTON_HEIGHT);
 }
@@ -243,15 +249,27 @@ void ConfigDocument::update(QString full_key, Obj new_value)
     }
 }
 
+void ConfigDocument::pop2()
+{
+   buttonsmode = 1;
+   //usleep(10000);
+   emit(pop(true));
+}
+
 /** Submit the current document for processing */
 void ConfigDocument::submit()
 {
     submit_button->disconnect();
     submit_button->setText(Conspire::tr("Cancel"));
 //    top_view->pushed( PagePointer( new UserPage(1, view) ) );
-    top_view->pushed( PagePointer( new SubmitPage(opts,"pmemd",view) ) );
+    SubmitPage *spagepntr = new SubmitPage(opts,"pmemd",view);
+    connect(this, SIGNAL(cancellation()), spagepntr, SLOT(cancellation()));
+    connect(spagepntr, SIGNAL(pop2()), this, SLOT(pop2()));
+    top_view->pushed( PagePointer( spagepntr ) );
     
     connect(submit_button, SIGNAL(clicked()), this, SLOT(cancel()));
+    buttonsmode = 0;
+    buttonsmodegeom();
 
     QGraphicsItem::update(this->geometry());
 }
@@ -262,8 +280,11 @@ void ConfigDocument::cancel()
     submit_button->disconnect();
     submit_button->setText(Conspire::tr("Submit"));
     top_view->popped(false);
+    emit( cancellation() );
     
     connect(submit_button, SIGNAL(clicked()), this, SLOT(submit()));
+    buttonsmode = 1;
+    buttonsmodegeom();
     
     QGraphicsItem::update(this->geometry());
 }

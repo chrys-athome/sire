@@ -92,6 +92,7 @@ void WorkStorePage::downloadItem(QListWidgetItem *titem)
    char *downloadid = strdup(titem->data(::Qt::UserRole).toString().toAscii().constData());
    printf("Item clicked %s\n", downloadid);
    QString thisDir = QFileDialog::getExistingDirectory(NULL, Conspire::tr("Select directory in which to download results"));
+   if (thisDir.isEmpty()) return;
    DownloadThread *downloadthread = new DownloadThread(workstoreid.toAscii().constData(), downloadid,
       thisDir.toAscii().constData());
    downloadarray->insert(workstoreid, downloadthread);
@@ -176,6 +177,30 @@ void WorkStorePage::refreshTimes()
    allUpdate();
 }
 
+bool WorkStorePage::removeDir(const QString &dirName)
+{
+    bool result = true;
+    QDir dir(dirName);
+ 
+    if (dir.exists(dirName)) {
+        Q_FOREACH(QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst)) {
+            if (info.isDir()) {
+                result = removeDir(info.absoluteFilePath());
+            }
+            else {
+                result = QFile::remove(info.absoluteFilePath());
+            }
+ 
+            if (!result) {
+                return result;
+            }
+        }
+        result = dir.rmdir(dirName);
+    }
+ 
+    return result;
+}
+
 void WorkStorePage::expungeWorkStore()
 {
    // need to shut down any download / upload threads running on this work store first!!!!!
@@ -204,6 +229,8 @@ void WorkStorePage::expungeWorkStore()
          QString qstr = qsetter->value(groups.at(i) + "/workstoreid").toString();
          if (qstr == workstoreid)
          {
+            QString uploaddir = qsetter->value(quuid + "/uploaddir").toString();
+            removeDir(uploaddir);
             qsetter->beginGroup(groups.at(i));
             qsetter->remove("");
             qsetter->endGroup();

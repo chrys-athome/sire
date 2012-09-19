@@ -101,6 +101,8 @@ void NewWorkPage::refreshWork()
          for (int i = 0; i < (noofws + 1); i++)
          {
             WorkPacketWidget *t_wpw = new WorkPacketWidget("", 0, 0, NULL);
+            qgrid->setRowFixedHeight(row, 100);
+            qgrid->setColumnFixedWidth(col, 100);
             qgrid->addItem(t_wpw, row, col, 1, 1);
             col++;
             if (col >= 3) { row++; col = 0; }
@@ -155,7 +157,11 @@ void NewWorkPage::refreshWork()
                      default: break;
                   }
                }
-               ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("In progress...");
+               ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Waiting...");
+               if (amt_b2c > 0.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Sending...");
+               if (amt_b2c == 100.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Computing...");
+               if (amt_prg == 100.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Computed...");
+               if (amt_c2b > 0.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Receiving...");
                ((WorkPacketWidget *)(all_wpw->at(i)))->updateAmounts(amt_b2c / 100., amt_prg / 100., amt_c2b / 100.);
             } else
             {
@@ -243,17 +249,25 @@ void NewWorkPage::build()
     
     all_wpw = new QList<QGraphicsLayoutItem *>();
 
+    qscene = new QGraphicsScene();
+    qview = new QGraphicsView(qscene);
+    qview->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+    qview->setAutoFillBackground(true);
+
     qgrid = new QGraphicsGridLayout();
+    qgrid->setRowFixedHeight(0, 100);
+    qgrid->setColumnFixedWidth(0, 100);
     WorkPacketWidget *none_wpw = new WorkPacketWidget("Create new...", 0, 0, NULL);
     qgrid->addItem(none_wpw, 0, 0, 1, 1);
     all_wpw->append(none_wpw);
     connect(none_wpw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
+//    tableofworkstores = new QGraphicsWidget();
     tableofworkstores = new QGraphicsWidget();
     tableofworkstores->setLayout(qgrid);
-    tableofworkstores->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
-    tableofworkstores->setAutoFillBackground(true);
-        
-    sub_rack->addWidget(tableofworkstores);
+    qscene->addItem(tableofworkstores);
+    connect(qscene, SIGNAL(mousePressEvent(QGraphicsSceneMouseEvent *)), tableofworkstores, SLOT(mousePressEvent(QGraphicsSceneMouseEvent *)));
+
+    sub_rack->addWidget(qview);
     return_button = NULL;
     
     button = new Button(Conspire::tr("Refresh"));

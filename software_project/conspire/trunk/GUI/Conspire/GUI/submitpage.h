@@ -52,9 +52,13 @@ namespace Conspire
         SubmitPage(Options options, QString job_class, Page *parent=0);
         
         ~SubmitPage();
-
+        
+    signals:
+        void pop2();
+        
     protected slots:
         void submit();
+        void cancellation();
         
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
@@ -67,6 +71,10 @@ namespace Conspire
     private:
         void build();
         void allUpdate();
+         bool removeDir(const QString &dirName);
+         void cleanWorkstoreLocal(QString quuid);
+        
+        int cancelled;
         
         /** The options for the job to submit */
         Options opts;

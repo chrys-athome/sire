@@ -173,6 +173,7 @@ void SubmitPage::build()
 /** Constructor */
 SubmitPage::SubmitPage(Page *parent) : Page(parent)
 {
+    cancelled = 0;
     build();
 }
 
@@ -180,12 +181,19 @@ SubmitPage::SubmitPage(Page *parent) : Page(parent)
 SubmitPage::SubmitPage(Options options, QString clas, Page *parent) 
            : Page(parent), opts(options), job_class(clas)
 {
+    cancelled = 0;
     build();
 }
 
 /** Destructor */
 SubmitPage::~SubmitPage()
 {}
+
+void SubmitPage::cancellation()
+{
+   cancelled = 1;
+   printf("cancellation triggered!\n");
+}
 
 void SubmitPage::resizeEvent(QGraphicsSceneResizeEvent *e)
 {
@@ -219,6 +227,41 @@ void SubmitPage::paint(QPainter *painter,
         
         painter->drawPie(rect, -int(0.5*span), span);
     }
+}
+
+bool SubmitPage::removeDir(const QString &dirName)
+{
+    bool result = true;
+    QDir dir(dirName);
+ 
+    if (dir.exists(dirName)) {
+        Q_FOREACH(QFileInfo info, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst)) {
+            if (info.isDir()) {
+                result = removeDir(info.absoluteFilePath());
+            }
+            else {
+                result = QFile::remove(info.absoluteFilePath());
+            }
+ 
+            if (!result) {
+                return result;
+            }
+        }
+        result = dir.rmdir(dirName);
+    }
+ 
+    return result;
+}
+
+void SubmitPage::cleanWorkstoreLocal(QString quuid)
+{
+   QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+   QString uploaddir = qsetter->value(quuid + "/uploaddir").toString();
+   removeDir(uploaddir);
+   qsetter->beginGroup(quuid);
+   qsetter->remove("");
+   qsetter->endGroup();
+   delete qsetter;
 }
 
 void SubmitPage::allUpdate()
@@ -434,12 +477,20 @@ void SubmitPage::submit()
         {
            if (lastblockscount != rsrvth->getCurrentBlock())
            {
+              if (cancelled) rsrvth->cancelReserve();
               status_label->setText( Conspire::tr("Compressing, encrypting and hashing block %1/%2...").arg(QString::number(rsrvth->getCurrentBlock()+1)).arg(QString::number(rsrvth->getTotalBlocks()+1)));
               progress_bar->setValue(52 + (95-52)*rsrvth->getBlockFraction());
               allUpdate();
+              if (cancelled) rsrvth->cancelReserve();
               lastblockscount = rsrvth->getCurrentBlock();
            }
            QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+        }
+        if ((cancelled) && (rsrvth->getFinalID() == NULL))
+        {
+           emit(pop(true));
+           cleanWorkstoreLocal(quuid);
+           return;
         }
         int blocks = rsrvth->getCurrentBlock();
         int64_t spaceused = rsrvth->getRemoteUsedSpace();
@@ -451,7 +502,7 @@ void SubmitPage::submit()
            QSettings *qsetter = new QSettings("UoB", "AcquireClient");
            qsetter->setValue(quuid + "/workstoreid", workstore);
            qsetter->setValue(quuid + "/remotespace", QString::number(spaceused));
-           qsetter->setValue(quuid + "/localspace", QString::number(spaceused));
+           qsetter->setValue(quuid + "/localspace", QString::number(localspaceused));
            qsetter->setValue(quuid + "/blocks", QString::number(blocks));
            qsetter->setValue(quuid + "/instances", QString::number(allinstances));
            delete qsetter;
@@ -470,7 +521,8 @@ void SubmitPage::submit()
            
         }
         
-        emit( pop() );
+        //emit( pop() );
+        emit( pop2() );
 
 /*        
         QSettings 

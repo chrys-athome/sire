@@ -25,6 +25,7 @@ class ReserveThread : public QRunnable
       const char *getFinalID();
       int64_t getLocalUsedSpace();
       int64_t getRemoteUsedSpace();
+      void cancelReserve();
    private:
       char *xmldescr;
       char *workdirectory;
@@ -33,6 +34,7 @@ class ReserveThread : public QRunnable
       int64_t directorysize;
       int64_t remotesize;
       int finished;
+      int cancel;
       int currblock;
       int totalblocks;
 };

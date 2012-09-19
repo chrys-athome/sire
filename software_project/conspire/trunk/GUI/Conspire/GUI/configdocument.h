@@ -90,6 +90,7 @@ namespace Conspire
                    QWidget *widget);
         
     signals:
+        void cancellation();
         void reread(Options options);
         
         void canUndoChanged(bool);
@@ -99,13 +100,17 @@ namespace Conspire
         void canForwardChanged(bool);
         void saveDocument(Options opts);
         
+    protected slots:
+        void pop2();
     protected:
+        void buttonsmodegeom();
         void resizeEvent(QGraphicsSceneResizeEvent *e);
         void moveEvent(QGraphicsSceneMoveEvent *e);
         
     private:
         void build();
 
+        int buttonsmode;
         /** The Options object being viewed and edited */
         Options opts;
 

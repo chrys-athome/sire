@@ -162,7 +162,7 @@ void WorkPacketWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *
    } else
    {
       painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                       16 * 0, (float)(16 * 360) * local_to_broker);
+                       16 * 90, -(float)(16 * 360) * local_to_broker);
    }
 
    if (broker_to_compute == 0.) goto addtext;
@@ -176,13 +176,13 @@ void WorkPacketWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *
    } else
    {
       painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                       16 * 0, (float)(16 * 360) * broker_to_compute);
+                       16 * 90, -(float)(16 * 360) * broker_to_compute);
    }
 
    if (computing == 0.) goto addtext;
 
-   painter->setPen(QColor(64, 128, 64, 255));
-   painter->setBrush(QColor(64, 128, 64, 255));
+   painter->setPen(QColor(96, 192, 96, 255));
+   painter->setBrush(QColor(96, 192, 96, 255));
    if (computing == 1.)
    {
       painter->drawChord(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
@@ -190,7 +190,7 @@ void WorkPacketWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *
    } else
    {
       painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                       16 * 0, (float)(16 * 360) * computing);
+                       16 * 90, -(float)(16 * 360) * computing);
    }
 
    if (compute_to_broker == 0.) goto addtext;
@@ -204,7 +204,7 @@ void WorkPacketWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *
    } else
    {
       painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                     16 * 0, (float)(16 * 360) * compute_to_broker);
+                     16 * 90, -(float)(16 * 360) * compute_to_broker);
    }
    
 addtext:

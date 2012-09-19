@@ -34,12 +34,26 @@ ReserveThread::ReserveThread(const char *ixmldescr, const char *iworkdirectory)
    // The block size - this should probably be changed to reflect a default block size in the headers
    totalblocks = (directorysize / 1048576) + 1;
    currblock = 0;
+   cancel = 0;
    finished = 0;
+   remotesize = 0;
+   store_id = NULL;
    setAutoDelete(false);
 }
 
 ReserveThread::~ReserveThread()
 {
+   if (cancel)
+   {
+      if (store_id)
+      {
+         int retval = AcquireDeleteWorkStore(store_id);
+         if (retval != ACQUIRE_DELETE_WORK_STORE__SUCCESS)
+         {
+            printf("there was an error deleting the cancelled work store reserve process!\n");
+         }
+      }
+   }
    if (xmldescr) free(xmldescr);
    xmldescr = NULL;
    if (workdirectory) free(workdirectory);
@@ -48,8 +62,13 @@ ReserveThread::~ReserveThread()
 
 void ReserveThread::run()
 {
-   store_id = AcquireReserveWorkStore(xmldescr, workdirectory, &remotesize, &currblock);
+   store_id = AcquireReserveWorkStore(xmldescr, workdirectory, &remotesize, &currblock, &cancel);
    finished = 1;
+}
+
+void ReserveThread::cancelReserve()
+{
+   cancel = 1;
 }
 
 int ReserveThread::getCurrentBlock()

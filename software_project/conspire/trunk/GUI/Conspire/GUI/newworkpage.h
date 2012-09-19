@@ -82,6 +82,8 @@ namespace Conspire
             the job run process */
         WidgetStack *stack;
         
+        QGraphicsView *qview;
+        QGraphicsScene *qscene;
         QList<QGraphicsLayoutItem *> *all_wpw;
         QGraphicsGridLayout *qgrid;
         QGraphicsWidget *tableofworkstores;
