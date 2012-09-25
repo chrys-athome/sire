@@ -28,7 +28,8 @@ endif()
 
 include_directories(${QT_QTCORE_INCLUDE_DIR}
                     ${QT_QTGUI_INCLUDE_DIR}
-                    ${QT_QTOPENGL_INCLUDE_DIR})
+                    ${QT_QTOPENGL_INCLUDE_DIR}
+                    ${CMAKE_CURRENT_BINARY_DIR})
 
 QT4_ADD_RESOURCES(Conspire_Images images/images.qrc)
 
@@ -150,6 +151,9 @@ set ( CONSPIRE_GUI_SOURCES
       ${CONSPIRE_GUI_MOC_SOURCES}
 
     )
+
+set(JOBCLASSESINSTALLD ${CMAKE_CURRENT_SOURCE_DIR}/../job_classes)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Conspire/GUI/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # generate the library and application
 add_library ( ConspireGUI ${CONSPIRE_GUI_SOURCES} ${Conspire_Images} )

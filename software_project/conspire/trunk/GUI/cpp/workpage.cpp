@@ -69,9 +69,6 @@
 
 using namespace Conspire;
 
-static QString install_dir 
-                = "/home/benlong/conspire/job_classes";
-
 void WorkPage::refreshWork()
 {
    printf("refresh work triggered\n");

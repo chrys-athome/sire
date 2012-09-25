@@ -20,8 +20,9 @@
 
 using namespace Conspire;
 
-static QString install_dir 
-                = "/home/benlong/conspire/job_classes";
+#include "config.h"
+
+static QString install_dir = JOB_CLASSES_INSTALLATION_DIR;
 
 JobClassWidget::JobClassWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
                                QString iid, QString ifullname, QString ifulldescr, QString iiconpath,

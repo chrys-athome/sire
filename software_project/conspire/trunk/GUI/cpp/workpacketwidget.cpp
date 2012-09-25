@@ -20,9 +20,6 @@
 
 using namespace Conspire;
 
-static QString install_dir 
-                = "/home/benlong/conspire/job_classes";
-
 WorkPacketWidget::WorkPacketWidget(const char *message, int col, int row,
    int iidx, QList<QGraphicsLayoutItem *> *iall_wpw, const char *iquuid,
    QGraphicsItem *parent, ::Qt::WindowFlags wFlags) : QGraphicsWidget(parent, wFlags)

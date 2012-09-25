@@ -39,8 +39,9 @@
 
 using namespace Conspire;
 
-static QString install_dir 
-                = "/home/benlong/conspire/job_classes";
+#include "config.h"
+
+static QString install_dir = JOB_CLASSES_INSTALLATION_DIR;
                 
 QMap<QString, UploadThread *> *uploadarray;
 QMap<QString, DownloadThread *> *downloadarray;

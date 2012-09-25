@@ -73,7 +73,6 @@
 
 using namespace Conspire;
 
-
 void WorkStorePage::downloadItem(QListWidgetItem *titem)
 {
    if (downloadarray->value(workstoreid))
