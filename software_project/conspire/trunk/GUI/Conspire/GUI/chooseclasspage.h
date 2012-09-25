@@ -1,5 +1,5 @@
-#ifndef CONSPIRE_USERPAGE_H
-#define CONSPIRE_USERPAGE_H
+#ifndef CONSPIRE_CHOOSECLASSPAGE_H
+#define CONSPIRE_CHOOSECLASSPAGE_H
 /********************************************\
   *
   *  Conspire
@@ -37,6 +37,11 @@ CONSPIRE_BEGIN_HEADER
 class QLabel;
 class QLineEdit;
 class QProgressBar;
+class QTableWidget;
+class QGraphicsView;
+class QGraphicsWidget;
+class QGraphicsLinearLayout;
+class QTimer;
 
 namespace Conspire
 {
@@ -44,26 +49,18 @@ namespace Conspire
     class WidgetStack;
 
     /** This is the page used to submit a job to Acquire */
-    class CONSPIRE_EXPORT UserPage : public Page
+    class CONSPIRE_EXPORT ChooseClassPage : public Page
     {
         Q_OBJECT
         
     public:
-        UserPage(int usemode, Page *parent=0);
+        ChooseClassPage(Page *parent=0);
         
-        ~UserPage();
+        ~ChooseClassPage();
 
     protected slots:
-        void login();
-        void sshadd();
-        void changeUser();
-        void continueToWorkStores();
-        void modifyAccount();
-        void updateKeys();
         
     protected:
-       QString addMachine(QString username, QString password, QString machinename, bool *loginsuccessful);
-       QString loginUser(QString username, QString password, bool *wassuccessful);
         void resizeEvent(QGraphicsSceneResizeEvent *e);
         void moveEvent(QGraphicsSceneMoveEvent *e);
 
@@ -74,20 +71,19 @@ namespace Conspire
     private:
         void build();
         void allUpdate();
-        
-        /** The mode in which the page is to be used **/
-        int usemode;
-        int submode;
-        
+                
         /** The options for the job to submit */
         Options opts;
-        QLabel *ifyouare_label_loggedin2;
-        QLabel *ifyouare_label_loggedin;
-        QLabel *hello_label_loggedin;
         
         /** The stack holding the different pages during
             the job run process */
         WidgetStack *stack;
+        
+        QGraphicsView *qview;
+        QGraphicsScene *qscene;
+        QList<QGraphicsLayoutItem *> *all_jcw;
+        QGraphicsLinearLayout *qlinear;
+        QGraphicsWidget *tableofworkstores;
 
         /** Text editor for host */
         QLineEdit *lineedit_host;
@@ -107,24 +103,10 @@ namespace Conspire
         /** The button used to submit the job */
         Button *button;
         
-        /** The button used to change user */
-        Button *button_knownuser;
-        
-        /** The button used to change user */
-        Button *chgusr1_button;
-        /** The button used to change user */
-        Button *chgusr2_button;
-        
-        Button *continuebutton;
-        
-        Button *modifybutton;
-        
+        QTimer *refreshtimer;
+                        
         Button *return_button;
-        
-        Button *updatebutton;
 
-        /** The last username that was logged in */
-        QString last_username;
     };
 
 }

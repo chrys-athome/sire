@@ -140,19 +140,11 @@ void WorkPage::modifyWork(int row, int col)
          login_label->setText("Please add some accessible clusters before creating work");
          return;
       }
-      makeWork();
+//      makeWork();
    } else
    {
       emit( push(new WorkStorePage(qwidget->data(::Qt::UserRole).toString())));
    }
-}
-
-void WorkPage::makeWork()
-{
-   QStringList path;
-   path << QString("%1/pmemd").arg(install_dir);
-   Options opts = Options::fromXMLFile("pmemd.xml", path);
-   emit( push( PagePointer(new ConfigDocument(opts))) );
 }
 
 void WorkPage::build()

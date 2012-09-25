@@ -1,0 +1,8 @@
+<options>
+  <option>
+    <key>trajectory file</key>
+    <description>The file containing the structure (topology) and parameters 
+                 of the molecules to be simulated.</description>
+    <value><file>molecules.top</file></value>
+  </option>
+</options>

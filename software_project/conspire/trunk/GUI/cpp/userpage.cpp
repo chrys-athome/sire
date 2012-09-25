@@ -77,6 +77,18 @@ void UserPage::modifyAccount()
    emit( push( PagePointer( new AccountPage())));
 }
 
+void UserPage::updateKeys()
+{
+   int retval = AcquireUpdateKeys();
+   if (retval)
+   {
+      login_label->setText("Key update successful.");
+   } else
+   {
+      login_label->setText("Key update failed.");
+   }      
+}
+
 void UserPage::build()
 {
 
@@ -181,6 +193,7 @@ void UserPage::build()
     ifyouare_label_loggedin2 = new QLabel(Conspire::tr("If you are not %1,"
        " or would like to use another account, please use the 'Change user' button below").arg(last_username));
     ifyouare_label_loggedin2->setWordWrap(true);
+    ifyouare_label_loggedin2->setMinimumSize(ifyouare_label_loggedin2->sizeHint());
     sub_rack2->addWidget(ifyouare_label_loggedin2);
 
     chgusr1_button = new Button(Conspire::tr("Change user..."));
@@ -196,6 +209,7 @@ void UserPage::build()
     ifyouare_label_loggedin = new QLabel(Conspire::tr("If you are not %1,"
        " or would like to use another account, please use the 'Change user' button below").arg(last_username));
     ifyouare_label_loggedin->setWordWrap(true);
+    ifyouare_label_loggedin->setMinimumSize(ifyouare_label_loggedin->sizeHint());
     sub_rack3->addWidget(ifyouare_label_loggedin);
     
     chgusr2_button = new Button(Conspire::tr("Change user..."));
@@ -209,6 +223,10 @@ void UserPage::build()
     modifybutton = new Button(Conspire::tr("Modify account..."));
     connect(modifybutton, SIGNAL(clicked()), this, SLOT(modifyAccount()));
     sub_rack3->addWidget(modifybutton);
+    
+    updatebutton = new Button(Conspire::tr("Update keys..."));
+    connect(updatebutton, SIGNAL(clicked()), this, SLOT(updateKeys()));
+    sub_rack3->addWidget(updatebutton);
     
     stack->addWidget(sub_rack3);
     

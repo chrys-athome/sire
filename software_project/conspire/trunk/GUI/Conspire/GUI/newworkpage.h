@@ -59,7 +59,6 @@ namespace Conspire
         ~NewWorkPage();
 
     protected slots:
-        void makeWork();
         void modifyWork(int row, int col);
         void refreshWork();
         

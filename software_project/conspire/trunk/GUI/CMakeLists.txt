@@ -38,12 +38,14 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/addpage.h
       Conspire/GUI/animation.h
       Conspire/GUI/button.h
+      Conspire/GUI/chooseclasspage.h
       Conspire/GUI/configdocument.h
       Conspire/GUI/configpage.h
       Conspire/GUI/configview.h
       Conspire/GUI/exceptionpage.h
       Conspire/GUI/filepage.h
       Conspire/GUI/helppage.h
+      Conspire/GUI/jobclasswidget.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
       Conspire/GUI/newworkpage.h
@@ -72,6 +74,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/addpage.h
       Conspire/GUI/animation.h
       Conspire/GUI/button.h
+      Conspire/GUI/chooseclasspage.h
       Conspire/GUI/configdocument.h
       Conspire/GUI/configpage.h  
       Conspire/GUI/configview.h
@@ -79,6 +82,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/exceptionpage.h
       Conspire/GUI/filepage.h
       Conspire/GUI/helppage.h
+      Conspire/GUI/jobclasswidget.h
       Conspire/GUI/mainbar.h
       Conspire/GUI/mainwindow.h
       Conspire/GUI/newworkpage.h
@@ -111,6 +115,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/addpage.cpp
       cpp/animation.cpp
       cpp/button.cpp
+      cpp/chooseclasspage.cpp
       cpp/configdocument.cpp
       cpp/configpage.cpp
       cpp/configview.cpp
@@ -118,6 +123,7 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/exceptionpage.cpp
       cpp/filepage.cpp
       cpp/helppage.cpp
+      cpp/jobclasswidget.cpp
       cpp/mainbar.cpp
       cpp/mainwindow.cpp
       cpp/newworkpage.cpp

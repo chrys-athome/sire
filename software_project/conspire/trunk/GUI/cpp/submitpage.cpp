@@ -397,6 +397,9 @@ void SubmitPage::submit()
 
         //now copy all support files needed for this class of job
         //into the temporary file
+        
+        
+        // HACK this needs to be updated to read the XML file!
         QDir class_dir(QString("%1/%2").arg(install_dir,job_class));
         class_dir.setFilter(QDir::Files);
         

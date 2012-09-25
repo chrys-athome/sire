@@ -8,6 +8,7 @@
 
 #include "Conspire/GUI/mainwindow.h"
 #include "Conspire/GUI/workpacketwidget.h"
+#include "Conspire/GUI/chooseclasspage.h"
 
 #include "Conspire/GUI/exceptionpage.h"
 #include "Conspire/GUI/configdocument.h"
@@ -22,7 +23,9 @@ using namespace Conspire;
 static QString install_dir 
                 = "/home/benlong/conspire/job_classes";
 
-WorkPacketWidget::WorkPacketWidget(const char *message, int col, int row, const char *iquuid, QGraphicsItem *parent, ::Qt::WindowFlags wFlags) : QGraphicsWidget(parent, wFlags)
+WorkPacketWidget::WorkPacketWidget(const char *message, int col, int row,
+   int iidx, QList<QGraphicsLayoutItem *> *iall_wpw, const char *iquuid,
+   QGraphicsItem *parent, ::Qt::WindowFlags wFlags) : QGraphicsWidget(parent, wFlags)
 {
    setFlag(QGraphicsItem::ItemStacksBehindParent, false);
    setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -30,6 +33,8 @@ WorkPacketWidget::WorkPacketWidget(const char *message, int col, int row, const 
    my_message = QString(message);
    my_width = 2*PIE_RADIUS;
    my_height = 2*PIE_RADIUS;
+   all_wpw = iall_wpw;
+   my_idx = iidx;
    setGeometry(col*my_width, row*my_height, my_width, my_height);
    if (iquuid)
       quuid = strdup(iquuid);
@@ -49,7 +54,6 @@ void WorkPacketWidget::modifyWork()
 {
    if (my_message == QString("Create new..."))
    {
-      printf("gets here!\n");
       const char *hadclusters = AcquireListOfAccessibleClusters();
       if ((hadclusters == NULL) || (strlen(hadclusters) == 0))
       {
@@ -59,12 +63,7 @@ void WorkPacketWidget::modifyWork()
                            Conspire::file_error( Conspire::tr("Cannot make new work."), CODELOC ) ) ) ) );
          return;
       }
-      QStringList path;
-      path << QString("%1/pmemd").arg(install_dir);
-      Options opts = Options::fromXMLFile("pmemd.xml", path);
-      conspireDebug() << "PUSH CONFIGDOC";
-      emit( push( PagePointer(new ConfigDocument(opts))) );
-      conspireDebug() << "PUSHED!";
+      emit( push( PagePointer(new ChooseClassPage())) );
    } else
    {
       emit( push( PagePointer(new WorkStorePage(workstoreid))) );
@@ -255,10 +254,22 @@ void WorkPacketWidget::mousePressEvent(QGraphicsSceneMouseEvent *event)
       printf("right button press\n");
    }
    */
+   
+   
    if (event->button() == ::Qt::LeftButton)
    {
+      const QRectF widg_geom = this->geometry();
+      if (widg_geom.contains(event->scenePos()))
+      {
+         modifyWork();
+      } else
+      {
+         int nextidx = (my_idx + 1) % (all_wpw->size());
+         ((WorkPacketWidget *)(all_wpw->at(nextidx)))->mousePressEvent(event);
+      }
+
       //printf("left button press\n");
-      emit ( clicked() );
+      //emit ( clicked() );
    }
 }
 

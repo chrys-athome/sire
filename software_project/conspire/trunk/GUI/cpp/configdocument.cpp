@@ -52,15 +52,17 @@
 using namespace Conspire;
 
 /** Construct an empty document */
-ConfigDocument::ConfigDocument(Page *parent) : Page(parent)
+ConfigDocument::ConfigDocument(QString itype, Page *parent) : Page(parent)
 {
+    jobtype = itype;
     build();
 }
 
 /** Construct a document to view and edit 'options' */
-ConfigDocument::ConfigDocument(Options options, Page *parent)
+ConfigDocument::ConfigDocument(QString itype, Options options, Page *parent)
                : Page(parent)
 {
+    jobtype = itype;
     build();
     this->setOptions(options);
 }
@@ -262,7 +264,7 @@ void ConfigDocument::submit()
     submit_button->disconnect();
     submit_button->setText(Conspire::tr("Cancel"));
 //    top_view->pushed( PagePointer( new UserPage(1, view) ) );
-    SubmitPage *spagepntr = new SubmitPage(opts,"pmemd",view);
+    SubmitPage *spagepntr = new SubmitPage(opts,jobtype,view);
     connect(this, SIGNAL(cancellation()), spagepntr, SLOT(cancellation()));
     connect(spagepntr, SIGNAL(pop2()), this, SLOT(pop2()));
     top_view->pushed( PagePointer( spagepntr ) );

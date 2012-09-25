@@ -55,8 +55,8 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        ConfigDocument(Page *parent=0);
-        ConfigDocument(Options options, Page *parent=0);
+        ConfigDocument(QString itype, Page *parent=0);
+        ConfigDocument(QString itype, Options options, Page *parent=0);
         
         ~ConfigDocument();
         
@@ -113,6 +113,7 @@ namespace Conspire
         int buttonsmode;
         /** The Options object being viewed and edited */
         Options opts;
+        QString jobtype;
 
         /** The context-sensitive button */
         Button *submit_button;

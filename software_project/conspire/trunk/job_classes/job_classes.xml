@@ -1,0 +1,19 @@
+
+<jobclasses>
+   <jobclassdescription id="pmemd">
+      <name>Amber 11 MD via PMEMD...</name>
+      <description>This workpacket ... Amber 11 is a package that provides ... molecular dynamics ...</description>
+      <icon>amberpic_gpu.jpg</icon>
+      <directory>pmemd</directory>
+      <optionsxml>pmemd.xml</optionsxml>
+      <optionsincludedirs>pmemd</optionsincludedirs>
+   </jobclassdescription>
+   <jobclassdescription id="sirebind">
+      <name>Time-dependant binding...</name>
+      <description>Given a trajectory ... at intervals ... calculate binding...</description>
+      <icon>inhib9-trans.preview.png</icon>
+      <directory>absbinding</directory>
+      <optionsxml>absbinding.xml</optionsxml>
+      <optionsincludedirs>absbinding</optionsincludedirs>
+   </jobclassdescription>
+</jobclasses>

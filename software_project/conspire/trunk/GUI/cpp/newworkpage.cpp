@@ -100,7 +100,7 @@ void NewWorkPage::refreshWork()
          int col = 0;
          for (int i = 0; i < (noofws + 1); i++)
          {
-            WorkPacketWidget *t_wpw = new WorkPacketWidget("", 0, 0, NULL);
+            WorkPacketWidget *t_wpw = new WorkPacketWidget("", 0, 0, i, all_wpw, NULL);
             qgrid->setRowFixedHeight(row, 100);
             qgrid->setColumnFixedWidth(col, 100);
             qgrid->addItem(t_wpw, row, col, 1, 1);
@@ -216,16 +216,6 @@ void NewWorkPage::modifyWork(int row, int col)
    */
 }
 
-void NewWorkPage::makeWork()
-{
-   /*
-   QStringList path;
-   path << QString("%1/pmemd").arg(install_dir);
-   Options opts = Options::fromXMLFile("pmemd.xml", path);
-   emit( push( PagePointer(new ConfigDocument(opts))) );
-   */
-}
-
 void NewWorkPage::build()
 {
     //this->setFlag(QGraphicsItem::ItemStacksBehindParent, true);
@@ -257,7 +247,7 @@ void NewWorkPage::build()
     qgrid = new QGraphicsGridLayout();
     qgrid->setRowFixedHeight(0, 100);
     qgrid->setColumnFixedWidth(0, 100);
-    WorkPacketWidget *none_wpw = new WorkPacketWidget("Create new...", 0, 0, NULL);
+    WorkPacketWidget *none_wpw = new WorkPacketWidget("Create new...", 0, 0, 0, all_wpw, NULL);
     qgrid->addItem(none_wpw, 0, 0, 1, 1);
     all_wpw->append(none_wpw);
     connect(none_wpw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
@@ -269,7 +259,7 @@ void NewWorkPage::build()
 
     sub_rack->addWidget(qview);
     return_button = NULL;
-    
+
     button = new Button(Conspire::tr("Refresh"));
     connect(button, SIGNAL(clicked()), this, SLOT(refreshWork()));
     sub_rack->addWidget(button);

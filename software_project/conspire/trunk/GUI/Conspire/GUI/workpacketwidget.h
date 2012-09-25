@@ -2,6 +2,7 @@
 #ifndef __WORK_PACKET_WIDGET_H
 #define __WORK_PACKET_WIDGET_H
 
+#include <QList>
 #include <QtGui/QGraphicsWidget>
 #include <QtGui/QGraphicsLayoutItem>
 #include <QtGui/QGraphicsSceneMouseEvent>
@@ -18,7 +19,9 @@ class WorkPacketWidget : public QGraphicsWidget
 {
    Q_OBJECT
    public:
-      WorkPacketWidget(const char *message, int col, int row, const char *iquuid, QGraphicsItem *parent = 0, ::Qt::WindowFlags wFlags = 0);
+      WorkPacketWidget(const char *message, int col, int row,
+         int iidx, QList<QGraphicsLayoutItem *> *iall_wpw, const char *iquuid,
+         QGraphicsItem *parent = 0, ::Qt::WindowFlags wFlags = 0);
       void computeAndUpdateUpload();
       void updateAmounts();
       void updateAmounts(float ibroker_to_compute,
@@ -40,6 +43,9 @@ class WorkPacketWidget : public QGraphicsWidget
       char *quuid;
       int my_width;
       int my_height;
+      int my_idx;
+      QList<QGraphicsLayoutItem *> *all_wpw;
+
       QString my_message;
       
       float local_to_broker;
