@@ -9,7 +9,6 @@
 set ( SUBDIRS SireBase
               SireCAS
               SireCluster
-              SireDB
               SireError
               SireFF
               SireID
@@ -23,9 +22,7 @@ set ( SUBDIRS SireBase
               SireSystem
               SireUnits
               SireVol
-              Siren
               Soiree
-              #Spier
               Squire
             )
 
