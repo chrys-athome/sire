@@ -29,6 +29,7 @@
   *
 \*********************************************/
 
+#include "Siren/siren.h"
 #include "Siren/exception.h"
 
 SIREN_BEGIN_HEADER

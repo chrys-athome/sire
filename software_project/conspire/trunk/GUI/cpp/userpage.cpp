@@ -115,7 +115,7 @@ void UserPage::build()
           "trusted machine logins must be added to your account. These are transparently appended "
           "to an encrypted remote keyring which can only be opened with your main password."));
        intro_label->setWordWrap(true);
-       intro_label->adjustSize();
+       intro_label->setMinimumSize(intro_label->sizeHint());
        sub_rack->addWidget(intro_label);
        QLabel *label_host = new QLabel(Conspire::tr("Machine to add to remote SSH keyring:"));
        label_host->setFocusPolicy(::Qt::NoFocus);

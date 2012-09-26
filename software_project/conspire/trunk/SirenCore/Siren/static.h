@@ -29,7 +29,7 @@
 \*********************************************/
 
 #include "Siren/siren.h"
-#include "Siren/assert.h"
+#include "Siren/siren_assert.h"
 
 SIREN_BEGIN_HEADER
 

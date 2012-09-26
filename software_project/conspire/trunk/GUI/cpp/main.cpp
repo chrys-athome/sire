@@ -27,10 +27,14 @@
 \*********************************************/
 
 #include "Conspire/GUI/mainwindow.h"
+#include "Conspire/GUI/global_var.h"
 
 #include "Conspire/conspire.h"
 #include "Conspire/option.h"
 #include "Conspire/exceptions.h"
+
+#include "Conspire/GUI/uploadthread.h"
+#include "Conspire/GUI/downloadthread.h"
 
 #include "Acquire/acquire_client.h"
 
@@ -42,9 +46,6 @@ using namespace Conspire;
 #include "config.h"
 
 static QString install_dir = JOB_CLASSES_INSTALLATION_DIR;
-                
-QMap<QString, UploadThread *> *uploadarray;
-QMap<QString, DownloadThread *> *downloadarray;
 
 int main(int argc, char **argv)
 {
@@ -58,9 +59,6 @@ int main(int argc, char **argv)
 
         Options opts;
         
-        uploadarray = new QMap<QString, UploadThread *>();
-        downloadarray = new QMap<QString, DownloadThread *>();
-
         if (argc <= 1)
         {
             QStringList path;
@@ -116,5 +114,8 @@ int main(int argc, char **argv)
     
     AcquireClientDestroy();
     
+    DestroyUploadArray();
+    DestroyDownloadArray();
+
     return 0;
 }

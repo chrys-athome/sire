@@ -7,6 +7,7 @@
 # Make sure that the Conspire 'Conspire' include directory is searched first
 # when looking for header files
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/SirenCore )
+include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/SirenCore/Siren )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/Conspire/third_party )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR} )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/GUI )
@@ -45,6 +46,7 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/configview.h
       Conspire/GUI/exceptionpage.h
       Conspire/GUI/filepage.h
+      Conspire/GUI/global_var.h
       Conspire/GUI/helppage.h
       Conspire/GUI/jobclasswidget.h
       Conspire/GUI/mainbar.h
@@ -82,6 +84,7 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/downloadthread.h
       Conspire/GUI/exceptionpage.h
       Conspire/GUI/filepage.h
+      Conspire/GUI/global_var.h
       Conspire/GUI/helppage.h
       Conspire/GUI/jobclasswidget.h
       Conspire/GUI/mainbar.h
@@ -123,8 +126,10 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/downloadthread.cpp
       cpp/exceptionpage.cpp
       cpp/filepage.cpp
+      cpp/global_var.cpp
       cpp/helppage.cpp
       cpp/jobclasswidget.cpp
+      cpp/main.cpp
       cpp/mainbar.cpp
       cpp/mainwindow.cpp
       cpp/newworkpage.cpp

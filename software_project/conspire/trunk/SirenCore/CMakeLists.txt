@@ -54,7 +54,7 @@ set ( SIREN_THIRD_PARTY_SOURCES
 
 set ( SIREN_PUBLIC_HEADERS
 
-      Siren/assert.h
+      Siren/siren_assert.h
       Siren/boostsupport.h
       Siren/class.h
       Siren/editor.h

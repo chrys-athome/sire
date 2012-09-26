@@ -37,6 +37,8 @@ set (BUILD_SHARED_LIBS ON)
 # when looking for header files
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/SirenCore )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/Conspire/third_party )
+#include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/SirenCore/Siren )
+include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/SirenCore/Siren/third_party )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR} )
 
 # Siren depends on >= Qt 4.4
@@ -53,9 +55,11 @@ endif()
 add_subdirectory (SirenCore)
 
 include_directories(${CMAKE_SOURCE_DIR}
-                    ${CMAKE_SOURCE_DIR}/SireCore/Siren
+                    ${CMAKE_SOURCE_DIR}/SirenCore/Siren
                     ${QT_QTCORE_INCLUDE_DIR}
                     ${QT_QTXML_INCLUDE_DIR})
+
+message("${CMAKE_SOURCE_DIR}")
 
 set ( CONSPIRE_THIRD_PARTY_SOURCES
 

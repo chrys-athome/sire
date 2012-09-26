@@ -32,6 +32,8 @@
 #include "Conspire/GUI/exceptionpage.h"
 #include "Conspire/GUI/widgetstack.h"
 #include "Conspire/GUI/uploadthread.h"
+#include "Conspire/GUI/downloadthread.h"
+#include "Conspire/GUI/global_var.h"
 #include "Conspire/GUI/workstorepage.h"
 #include "Conspire/GUI/mainwindow.h"
 #include "Conspire/GUI/reservethread.h"
@@ -516,7 +518,7 @@ void SubmitPage::submit()
            allUpdate();
            
            UploadThread *uploadthread = new UploadThread(workstore, datadir.toAscii().constData(), NULL, NULL, allinstances, 3600, blocks);
-           uploadarray->insert(workstore, uploadthread);
+           GetUploadArray()->insert(workstore, uploadthread);
            QThreadPool::globalInstance()->start(uploadthread);
                       
            status_label->setText( Conspire::tr("Started upload") );

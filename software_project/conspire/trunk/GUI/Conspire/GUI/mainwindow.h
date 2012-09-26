@@ -40,12 +40,6 @@ CONSPIRE_BEGIN_HEADER
 #include <QString>
 #include <QRunnable>
 
-#include "Conspire/GUI/uploadthread.h"
-#include "Conspire/GUI/downloadthread.h"
-
-extern QMap<QString, UploadThread *> *uploadarray;
-extern QMap<QString, DownloadThread *> *downloadarray;
-
 class QGraphicsRectItem;
 
 namespace Conspire

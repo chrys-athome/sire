@@ -14,6 +14,10 @@
 #include "Conspire/GUI/configdocument.h"
 #include "Conspire/GUI/workstorepage.h"
 
+#include "Conspire/GUI/uploadthread.h"
+#include "Conspire/GUI/downloadthread.h"
+#include "Conspire/GUI/global_var.h"
+
 #include "Acquire/acquire_client.h"
 
 #define PIE_RADIUS 48.
@@ -78,14 +82,14 @@ void WorkPacketWidget::computeAndUpdateUpload()
       local_to_broker = 1.;
    } else
    {
-       if (uploadarray->value(workstoreid))
+       if (GetUploadArray()->value(workstoreid))
        {
-          if (uploadarray->value(workstoreid)->isFinished())
+          if (GetUploadArray()->value(workstoreid)->isFinished())
           {
              local_to_broker = 1.;
           } else
           {
-             local_to_broker = uploadarray->value(workstoreid)->getBlockFraction();
+             local_to_broker = GetUploadArray()->value(workstoreid)->getBlockFraction();
              local_to_broker = (local_to_broker < 0.) ? 0. : ((local_to_broker > 1.) ? 1. : local_to_broker);
           }
        } else

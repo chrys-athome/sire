@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "Siren/assert.h"
+#include "Siren/siren_assert.h"
 #include "Siren/siren.hpp"
 
 using namespace Siren;

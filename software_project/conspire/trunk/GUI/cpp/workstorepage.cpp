@@ -36,7 +36,7 @@
 
 #include "Conspire/GUI/downloadthread.h"
 #include "Conspire/GUI/uploadthread.h"
-#include "Conspire/GUI/mainwindow.h"
+#include "Conspire/GUI/global_var.h"
 
 #include "Conspire/option.h"
 #include "Conspire/values.h"
@@ -75,11 +75,11 @@ using namespace Conspire;
 
 void WorkStorePage::downloadItem(QListWidgetItem *titem)
 {
-   if (downloadarray->value(workstoreid))
+   if (GetDownloadArray()->value(workstoreid))
    {
-      if (downloadarray->value(workstoreid)->isFinished())
+      if (GetDownloadArray()->value(workstoreid)->isFinished())
       {
-         DownloadThread *dth = downloadarray->take(workstoreid);
+         DownloadThread *dth = GetDownloadArray()->take(workstoreid);
          if (dth) delete dth;
       } else
       {
@@ -94,7 +94,7 @@ void WorkStorePage::downloadItem(QListWidgetItem *titem)
    if (thisDir.isEmpty()) return;
    DownloadThread *downloadthread = new DownloadThread(workstoreid.toAscii().constData(), downloadid,
       thisDir.toAscii().constData());
-   downloadarray->insert(workstoreid, downloadthread);
+   GetDownloadArray()->insert(workstoreid, downloadthread);
    QThreadPool::globalInstance()->start(downloadthread);
    free(downloadid);
 }
@@ -105,7 +105,7 @@ void WorkStorePage::restartUpload()
     QString uploaddir = qsetter->value(quuid + "/uploaddir").toString();
     int blocks = qsetter->value(quuid + "/blocks").toInt();
     UploadThread *uploadthread = new UploadThread(workstoreid.toAscii().constData(), uploaddir.toAscii().constData(), NULL, NULL, 1, 3600, blocks);
-    uploadarray->insert(workstoreid, uploadthread);
+    GetUploadArray()->insert(workstoreid, uploadthread);
     QThreadPool::globalInstance()->start(uploadthread);
     modifybutton->setText(Conspire::tr("Refresh"));
     disconnect(modifybutton, SIGNAL(clicked()));
@@ -204,14 +204,14 @@ void WorkStorePage::expungeWorkStore()
 {
    // need to shut down any download / upload threads running on this work store first!!!!!
    int localsetfound = 0;
-   UploadThread *uthread = uploadarray->value(workstoreid);
+   UploadThread *uthread = GetUploadArray()->value(workstoreid);
    if (uthread)
    {
       uthread->cancelUpload();
       while (!(uthread->isFinished())) sleep(0.1);
       delete uthread;
    }
-   DownloadThread *dthread = downloadarray->value(workstoreid);
+   DownloadThread *dthread = GetDownloadArray()->value(workstoreid);
    if (dthread)
    {
       dthread->cancelDownload();
@@ -285,13 +285,13 @@ void WorkStorePage::build()
     sub_rack->addWidget(instancelist);
     connect(instancelist, SIGNAL(itemClicked(QListWidgetItem *)), this, SLOT(downloadItem(QListWidgetItem *)));
     
-    if (uploadarray->value(workstoreid))
-       if (uploadarray->value(workstoreid)->isFinished())
+    if (GetUploadArray()->value(workstoreid))
+       if (GetUploadArray()->value(workstoreid)->isFinished())
        {
           QSettings *qsetter = new QSettings("UoB", "AcquireClient");
           qsetter->setValue(quuid + "/uploadComplete", 1);
           delete qsetter;
-          delete uploadarray->take(workstoreid);
+          delete GetUploadArray()->take(workstoreid);
        }
     
     QSettings *qsetter = new QSettings("UoB", "AcquireClient");
@@ -302,7 +302,7 @@ void WorkStorePage::build()
         sub_rack->addWidget(modifybutton);
     } else
     {
-        if (uploadarray->value(workstoreid) == NULL)
+        if (GetUploadArray()->value(workstoreid) == NULL)
         {
            modifybutton = new Button(Conspire::tr("Resume upload"));
            connect(modifybutton, SIGNAL(clicked()), this, SLOT(restartUpload()));
