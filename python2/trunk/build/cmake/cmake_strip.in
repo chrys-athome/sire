@@ -1,5 +1,0 @@
-#!/bin/bash
-
-echo "@SIRE_STRIP_COMMAND@ $1"
-
-@SIRE_STRIP_COMMAND@ $1
