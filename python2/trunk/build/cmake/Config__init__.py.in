@@ -1,0 +1,13 @@
+#################################
+#
+# Defines some variables that say
+# where Sire is installed etc.
+#
+
+binary_directory = "@SIRE_INSTALL_PREFIX@/@SIRE_BIN@"
+library_directory = "@SIRE_INSTALL_PREFIX@/@SIRE_LIBS@"
+include_directory = "@SIRE_INSTALL_PREFIX@/@SIRE_INCLUDES@"
+share_directory = "@SIRE_INSTALL_PREFIX@/@SIRE_SHARE@"
+parameter_directory = "@SIRE_INSTALL_PREFIX@/@SIRE_SHARE@/parameters"
+
+
