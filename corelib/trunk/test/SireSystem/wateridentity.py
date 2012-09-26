@@ -116,10 +116,10 @@ if os.path.exists("wateridentity_output"):
 
 os.makedirs("wateridentity_output")
 
-# Run 100 blocks of 10000 moves
-for i in range(0,100):
+# Run 10 blocks of 1000 moves
+for i in range(0,10):
     t.start()
-    sim = Simulation.run(system, moves, 10000)
+    sim = Simulation.run(system, moves, 1000)
     ms = t.elapsed()
 
     print "Block %3d complete - took %d ms" % (i+1, ms)

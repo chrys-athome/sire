@@ -94,7 +94,6 @@ def testStream(c):
     print header.requiredLibraries()
 
     print header.createdBy()
-    print header.createdWhen().toString()
     print header.createdWhere()
 
     print header.requiredMemory()

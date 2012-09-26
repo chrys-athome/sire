@@ -19,7 +19,7 @@ mincoords = Vector(-18.3854, -18.66855, -18.4445)
 maxcoords = Vector( 18.3854,  18.66855,  18.4445)
 
 vol = PeriodicBox(mincoords, maxcoords)
-switchfunc = HarmonicSwitchingFunction(15, 14.5)
+switchfunc = HarmonicSwitchingFunction(15*angstrom, 14.5*angstrom)
 
 cljff.setSpace(vol)
 cljff.setSwitchingFunction(switchfunc)
@@ -34,8 +34,8 @@ t.start()
 mol = mols.moleculeAt(0).molecule()
 
 mol = mol.edit().atom( AtomName("O00") ) \
-                    .setProperty("LJ", LJParameter(3.15363,  \
-                                                   0.1550)).molecule() \
+                    .setProperty("LJ", LJParameter(3.15363*angstrom,  \
+                                                   0.1550*kcal_per_mol)).molecule() \
                 .atom( AtomName("H01") ) \
                     .setProperty("charge", 0.520 * mod_electron).molecule() \
                 .atom( AtomName("H02") ) \
@@ -52,7 +52,7 @@ cljff.add(mol)
 for i in range(1, mols.nMolecules()):
     mol = mols.moleculeAt(i).molecule()
 
-    mol = mol.edit().rename( MolName("T4P") ) \
+    mol = mol.edit().rename("T4P") \
                     .setProperty("charge", charges) \
                     .setProperty("LJ", ljs) \
              .commit()
@@ -69,14 +69,9 @@ print forcefields.properties()
 x = Symbol("x")
 
 forcefields.setComponent(x, 32)
-print forcefields.getComponent(x)
-
-assert( forcefields.getComponent(x).isConstant() )
-assert( forcefields.getComponent(x).evaluate(Values()) == 32 )
+print forcefields.constant(x)
 
 forcefields.setComponent(x, cljff.components().coulomb() + cljff.components().lj())
-
-print forcefields.getComponent(x)
 
 lam = Symbol("lambda")
 
@@ -84,10 +79,9 @@ forcefields.setComponent(lam, 0.0)
 
 forcefields.setComponent(x, (1-lam)*cljff.components().coulomb() + lam*cljff.components().lj())
 
-print forcefields.getComponent(x)
+print forcefields.energyExpression(x)
 
 print forcefields.energy()
-print forcefields.energy( lam )
 print forcefields.energy( cljff.components().coulomb() )
 print forcefields.energy( cljff.components().lj() )
 print forcefields.energy( cljff.components().total() )

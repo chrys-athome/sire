@@ -1,10 +1,6 @@
 
 import sys
 
-if len(sys.argv) < 2:
-   print >>sys.stderr,"USAGE: getrdf.py file.pdb (file.xsc)"
-   sys.exit(-1)
-
 from Sire.Mol import *
 from Sire.IO import *
 from Sire.System import *
@@ -14,13 +10,9 @@ from Sire.Maths import *
 from Sire.Units import *
 
 #get the name of the PDB file containing the coordinates
-pdbfile = sys.argv[1]
+pdbfile = "test/io/water.pdb"
+xscfile = "test/io/water.xsc"
 
-#get the name of the xscfile containing the system space
-if len(sys.argv) >= 3:
-    xscfile = sys.argv[2]
-else:
-    xscfile = None
 
 #define the RDF to be collected - in this case;
 #  RDF extends from 0 A to 10 A with a bin size of 0.05 A

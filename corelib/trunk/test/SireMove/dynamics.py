@@ -85,7 +85,7 @@ mdmove.setTimeStep(1*femtosecond)
 
 print system.property("space")
 
-for i in range(0,250):
+for i in range(0,50):
     print "\nmove %d" % (i+1)
     mdmove.move(system, 20)
 

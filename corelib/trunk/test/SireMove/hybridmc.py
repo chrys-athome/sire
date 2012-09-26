@@ -80,7 +80,7 @@ hmcmove = HybridMC(salt, 100)
 
 print system.property("space")
 
-for i in range(0,250):
+for i in range(0,10):
     print "\nmove %d" % (i+1)
     hmcmove.move(system, 1)
 

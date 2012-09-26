@@ -17,7 +17,6 @@ set ( SUBDIRS SireBase
               SireMM
               SireMol
               SireMove
-              SireSim
               SireStream
               SireSystem
               SireUnits

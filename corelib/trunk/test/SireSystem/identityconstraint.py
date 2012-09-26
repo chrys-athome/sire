@@ -73,6 +73,7 @@ printMols( cljff, [0,1,10,20] )
 system = System()
 
 system.add(cljff)
+system.setProperty("space", Cartesian())
 
 t.start()
 nrg = system.energy()
@@ -96,7 +97,7 @@ def testConstraint(points, system):
     print "\nApplying the constraint..."
     t.start()
 
-    mols = idcons.update(system)
+    mols = idcons.apply(system)
 
     ms = t.elapsed()
 
@@ -139,67 +140,15 @@ printMolecules(mols)
 
 print "\nCOMPARISON TEST (centers[20], centers[10])"
 idcons = IdentityConstraint( [centers[20], centers[10]], system[MGIdx(0)] )
-mols = idcons.update(system)
+mols = idcons.apply(system)
 print "\nDEFAULT"
-print mols
-printMolecules(mols)
-
-print "\nFEWPOINTS"
-idcons.useFewPointsAlgorithm()
-mols = idcons.update(system)
-print mols
-printMolecules(mols)
-
-print "\nMANYPOINTS"
-idcons.useManyPointsAlgorithm()
-mols = idcons.update(system)
-print mols
-printMolecules(mols)
-
-print "\nREPEAT MANYPOINTS"
-mols = idcons.update(system)
-print mols
-printMolecules(mols)
-
-print "\nCOMPARISON TEST (centers[99])"
-idcons = IdentityConstraint( [centers[99]], system[MGIdx(0)] )
-mols = idcons.update(system)
-print "\nDEFAULT"
-print mols
-printMolecules(mols)
-
-print "\nSINGLEPOINT"
-idcons.useSinglePointAlgorithm()
-mols = idcons.update(system)
-print mols
-printMolecules(mols)
-
-print "\nFEWPOINTS"
-idcons.useFewPointsAlgorithm()
-mols = idcons.update(system)
-print mols
-printMolecules(mols)
-
-print "\nMANYPOINTS"
-idcons.useManyPointsAlgorithm()
-mols = idcons.update(system)
 print mols
 printMolecules(mols)
 
 print "\nAPPLICATION TEST"
 
 idcons = IdentityConstraint( [centers[99], centers[100], centers[101], centers[102]], system[MGIdx(0)] )
-mols = idcons.update(system)
+system = idcons.apply(system)
 print "\nDEFAULT"
-print mols
-printMolecules(mols)
-
-print "\nUPDATING SYSTEM"
-print system.version()
-system.update(mols)
-print system.version()
-
-mols = idcons.update(system)
-print "\nPOST-UPDATE"
-print mols
-printMolecules(mols)
+print system
+printMolecules(system)
