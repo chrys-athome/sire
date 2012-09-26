@@ -1,0 +1,6 @@
+#ifndef __CONFIG_AUTO_H
+#define __CONFIG_AUTO_H
+
+#define JOB_CLASSES_INSTALLATION_DIR "@JOBCLASSESINSTALLD@"
+
+#endif
