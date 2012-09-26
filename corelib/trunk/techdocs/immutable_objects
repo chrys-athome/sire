@@ -1,0 +1,25 @@
+
+Sire borrows the idea of immutable objects from Python. This makes
+a lot of things easier as pointers to immutable objects can be safely 
+passed to multiple parts of the program without worrying about part
+of the program changing the object behind the back of another part
+of the program. This is particularly important when you realise that
+the program is designed to run over multiple processes - this means
+that the code does not need to worry about one process changing an 
+immutable object.
+
+The following classes are immutable. Think very hard before
+you make them mutable. If you really want to do that, then perhaps
+consider making a mutable and non-mutable version (see LambdaHolder
+and LambdaConstHolder for example).
+
+Immutable object      |  Mutable version?
+
+NetPtr<T>                NetPtrWriter<T>
+LambdaConstHolder        LambdaHolder
+CLJMutator               no
+CLJPair
+CLJParameter
+LJParameter
+Window<T>
+

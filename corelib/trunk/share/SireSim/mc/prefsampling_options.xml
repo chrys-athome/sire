@@ -1,0 +1,24 @@
+  <options>
+    <option optional="true">
+      <key>preferential_sampling</key>
+      <description>
+        Turn on and configure preferential sampling. This focuses the choice of molecule for the Monte Carlo moves
+        so that more moves are performed near the specified molecule.
+      </description>
+      <value>
+        <options>
+          <option>
+            <key>molecule</key>
+            <description>The identity of the molecule around which to focus sampling.</description>
+            <value><molecule>file:1,molecule:1</molecule></value>
+          </option>
+          <option optional="true">
+            <key>constant</key>
+            <description>The preferential sampling constant. The higher the value, the less focussed the sampling.</description>
+            <value><area units="A^2">200</area></value>
+          </option>
+        </options>
+      </value>
+    </option>
+  </options>
+

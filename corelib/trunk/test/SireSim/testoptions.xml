@@ -1,0 +1,38 @@
+<xml>
+  <options>
+    <option>
+      <key>simulation_title</key>
+      <description>
+        The name of the simulation. This is printed in the output file so that you can label
+        the simulation that will be run.
+      </description>
+      <value><string>My Simulation</string></value>
+    </option>
+
+    <option allow_multiple="true" optional="true">
+      <key>input_directory</key>
+      <description>
+        The directory (or directories) that contain input files. These directories will be searched,
+        in order, for all input files that do not have an absolute file path.
+      </description> 
+      <value><directory>.</directory></value>
+    </option>
+
+    <option>
+      <key>output_directory</key>
+      <description>
+        The directory in which all simulation output will be written. Be careful, as files in the
+        output directory may be overwritten or removed during the simulation.
+      </description>
+      <value><directory>.</directory></value>
+    </option>
+
+    <option>
+      <key>output_basename</key>
+      <description>
+        This is the base name of all output files.
+      </description>
+      <value><string>output</string></value>
+    </option>
+  </options>
+</xml>
