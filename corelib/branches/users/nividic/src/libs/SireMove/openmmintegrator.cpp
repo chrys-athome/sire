@@ -356,12 +356,26 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	//OpenMM system
 
 	OpenMM::System system_openmm;
+	
+	//flag to extract information from the openmm system
+	
+	int infoMask = 0;
+
+	infoMask = OpenMM::State::Positions;
+
+	infoMask = infoMask + OpenMM::State::Velocities; 
+
+	infoMask = infoMask +  OpenMM::State::Energy;
+	
 
 	
 	//OpenMM non Bonded Forces
 	
 
 	OpenMM::NonbondedForce * nonbond_openmm = new OpenMM::NonbondedForce();
+	
+	
+	nonbond_openmm->setUseDispersionCorrection(false);
 	
 	/*****************************************************************IMPORTANT********************************************************************/
 
@@ -380,15 +394,16 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		if(free_energy_calculation == true){
 
 			
-			custom_bonded_openmm = new OpenMM::CustomBondForce( "Hc+Hl;"
-																"Hc=(lam_cl^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
-																"diff_cl=(1.0-lam_cl);"
+			custom_bonded_openmm = new OpenMM::CustomBondForce( "10.0*Hl+100.0*Hc;"
+																"Hc=((0.01*lam_cl)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+																"diff_cl=(1.0-lam_cl)*0.01;"
 																"lam_cl=min(1,max(0,lambda-1));"
-																"Hl=lam_lj*4.0*eps_avg*(LJ^2-LJ);"
-																"LJ=((sigma_avg^2)/soft)^3;"
-																"soft=(diff_lj*delta*sigma_avg+r^2);"
-																"diff_lj=(1.0-lam_lj);"
+																"Hl=0.1*lam_lj*4.0*eps_avg*(LJ*LJ-LJ);"
+																"LJ=((sigma_avg*sigma_avg)/soft)^3;"
+																"soft=(diff_lj*delta*sigma_avg+r*r);"
+																"diff_lj=(1.0-lam_lj)*0.1;"
 																"lam_lj=max(0,min(1,lambda))");
+																
 
 			custom_bonded_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
 			
@@ -428,16 +443,18 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		if(free_energy_calculation == true){
 
-			custom_bonded_openmm = new OpenMM::CustomBondForce( "withinCutoff*(Hc+Hl);"
+			custom_bonded_openmm = new OpenMM::CustomBondForce( "withinCutoff*(10.0*Hl+100.0*Hc);"
 																"withinCutoff=step(cutoff-r);"
-																"Hc=(lam_cl^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
-																"diff_cl=(1.0-lam_cl);"
+																"Hc=((0.01*lam_cl)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+																"diff_cl=(1.0-lam_cl)*0.01;"
 																"lam_cl=min(1,max(0,lambda-1));"
-																"Hl=lam_lj*4.0*eps_avg*(LJ^2-LJ);"
-																"LJ=((sigma_avg^2)/soft)^3;"
-																"soft=(diff_lj*delta*sigma_avg+r^2);"
-																"diff_lj=(1.0-lam_lj);"
+																"Hl=0.1*lam_lj*4.0*eps_avg*(LJ*LJ-LJ);"
+																"LJ=((sigma_avg*sigma_avg)/soft)^3;"
+																"soft=(diff_lj*delta*sigma_avg+r*r);"
+																"diff_lj=(1.0-lam_lj)*0.1;"
 																"lam_lj=max(0,min(1,lambda))");
+
+
 
 
 			custom_bonded_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
@@ -607,7 +624,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 	/*****************************************************************IMPORTANT********************************************************************/
 
-		bool boltz = true;//Generate velocities using Boltzmann Distribution (variance = 1 average = 0)
+		bool boltz = false;//Generate velocities using Boltzmann Distribution (variance = 1 average = 0)
 		
 		for (int j=0; j < nats_mol; ++j){
 
@@ -650,13 +667,13 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			/*cout << "\natom = " << system_index - 1  << " COORD X = " << c[j].x() 
 							    					 << " COORD Y = " << c[j].y() 
-							  						 << " COORD Z = " << c[j].z()<<"\n" ;*/
+							  						 << " COORD Z = " << c[j].z()<<"\n" ;
 
-			/*cout << "atom = " << system_index - 1  << " MOMENTA X = " << p[j].x() 
+			cout << "atom = " << system_index - 1  << " MOMENTA X = " << p[j].x() 
 												   << " MOMENTA Y = " << p[j].y() 
 												   << " MOMENTA Z = " << p[j].z()<<"\n" ;
 
-			cout << "atom = " << j << " MASS = " << m[j]<<"\n" ; */
+			cout << "atom = " << j << " MASS = " << m[j]<<"\n" ;*/ 
 
 
 		}
@@ -762,7 +779,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		if ( !hasConnectivity ){
 			num_atoms_till_i = num_atoms_till_i + num_atoms_molecule ;
-			cout << "\n Atoms = " <<  num_atoms_molecule << "Num atoms till i =" << num_atoms_till_i <<"\n";
+			cout << "\nAtoms = " <<  num_atoms_molecule << " Num atoms till i =" << num_atoms_till_i <<"\n";
 			cout << "\n*********************ION DETECTED**************************\n";
 
 			continue;
@@ -1115,10 +1132,10 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		create_inter_pairs(solute_list,nats,soft_core_list);
 		
-		//cout << "Solute List SIZE = "<< solute_list.size() <<" SIZE exluded list = " << soft_core_list.size() << "\n";
+		/*cout << "Solute List SIZE = "<< solute_list.size() <<" SIZE exluded list = " << soft_core_list.size() << "\n";
 
 
-		/*for(unsigned int i=0; i<soft_core_list.size();i++){
+		for(unsigned int i=0; i<soft_core_list.size();i++){
 
 			cout << "Excluded List = ( " << soft_core_list[i].first << " , " <<soft_core_list[i].second << " )";
 			cout << "\n";
@@ -1157,10 +1174,10 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		/*int num_exceptions = nonbond_openmm->getNumExceptions();
 		
-		cout << "NUM EXCEPTIONS = " << num_exceptions << "\n";*/
+		cout << "NUM EXCEPTIONS = " << num_exceptions << "\n";
 		
 		
-		/*for(int i=0;i<num_exceptions;i++){
+		for(int i=0;i<num_exceptions;i++){
 	
 			int p1,p2;
 			
@@ -1227,32 +1244,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	cout << "\n\nREMARK  Using OpenMM platform = " <<context_openmm.getPlatform().getName().c_str()<<"\n";
 
-	int infoMask = 0;
-
-	infoMask = OpenMM::State::Positions;
-
-	infoMask = infoMask + OpenMM::State::Velocities; 
-
-	infoMask = infoMask +  OpenMM::State::Energy;
-
-	OpenMM::State state_openmm=context_openmm.getState(infoMask);
-
-	double kinetic_energy = 0.0; 
-	double potential_energy = 0.0; 
 	
-	kinetic_energy = state_openmm.getKineticEnergy(); 
+	OpenMM::State state_openmm;
 	
-	potential_energy = state_openmm.getPotentialEnergy(); 
-	
-	cout<< "Before MD" <<"\n";
-	
-	cout <<"Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
-		 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
-		 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
-	
-	cout<<"\n";
-	
-
 	
 	//Time benchmark
 	
@@ -1306,14 +1300,14 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			lam_val = context_openmm.getParameter("lambda");
 
-			cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+			cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal/mol " << "\n";
 
 			for(int j=0;j<n_freq;j++){
 
-				/*QString name = file_name(j);
+				QString name = file_name(j);
 
 				integrator(name.toStdString().c_str(), context_openmm,integrator_openmm, positions_openmm, 
-						   velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);*/
+						   velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);
 				 
 				
 				integrator_openmm.step(frequency_energy);
@@ -1390,14 +1384,34 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	}else{/******************** MD ***********************/
 
 		timer_OUT.start();
+
+
+		state_openmm=context_openmm.getState(infoMask);
+
+		double kinetic_energy = 0.0; 
+		double potential_energy = 0.0; 
+	
+		kinetic_energy = state_openmm.getKineticEnergy(); 
+	
+		potential_energy = state_openmm.getPotentialEnergy(); 
+	
+		cout<< "Before MD " <<"\n";
+	
+		cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
+		 	 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
+			 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
+	
+		cout<<"\n";
+		
 		
 		int frequency_dcd = 10;
 		
-		bool dcd = true;
+		bool dcd = false;
 		
 		bool wrap = false;
 		
 		integrator("dynamic.dcd", context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , nmoves, frequency_dcd, flag_cutoff, nats);
+		
 		
 		
 		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
@@ -1420,7 +1434,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 		cout<< "After MD" <<"\n";
 	
-		cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
+		cout <<"Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
 		 	 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
 		 	 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
 	
