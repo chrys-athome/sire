@@ -104,6 +104,12 @@ inline uint qHash(const MonitorIdentifier &monid)
 
 }
 
+#include "monitorname.h"
+
+Q_DECLARE_METATYPE( SireID::Specify<SireSystem::MonitorID> )
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireSystem::MonitorID> )
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireSystem::MonitorID> )
+
 Q_DECLARE_METATYPE(SireSystem::MonitorIdentifier);
 
 #endif

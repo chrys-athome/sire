@@ -103,6 +103,15 @@ inline uint qHash(const SegIdentifier &segid)
 
 }
 
+#include "segidx.h"
+#include "atomidx.h"
+
+Q_DECLARE_METATYPE( SireID::Specify<SireMol::SegID> );
+Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::SegID> );
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::SegID> );
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::SegID> );
+
+
 Q_DECLARE_METATYPE(SireMol::SegIdentifier);
 
 #endif

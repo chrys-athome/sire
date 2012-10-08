@@ -90,21 +90,21 @@ struct SharedPolyPointerHelper
     template<class S>
     static bool isA(const T &obj)
     {
-        return obj.isA<S>();
+        return obj.template isA<S>();
     }
     
     /** Return 'obj' cast to an object of type 'S' */
     template<class S>
     static const S& asA(const T &obj)
     {
-        return obj.asA<S>();
+        return obj.template asA<S>();
     }
     
     /** Return 'obj' cast to an object of type 'S' */
     template<class S>
     static S& asA(const T &obj)
     {
-        return obj.asA<S>();
+        return obj.template asA<S>();
     }
 };
 
@@ -823,7 +823,7 @@ QDataStream& operator<<(QDataStream &ds,
     else
     {
         //get the object type name
-        QLatin1String objname( SireBase::SharedPolyPointerHelper<T>::what(*(ptr.d)) );
+        //QLatin1String objname( SireBase::SharedPolyPointerHelper<T>::what(*(ptr.d)) );
 
         SireBase::SharedPolyPointerBase::save(ds,
                       SireBase::SharedPolyPointerHelper<T>::what(*(ptr.d)), ptr.d);

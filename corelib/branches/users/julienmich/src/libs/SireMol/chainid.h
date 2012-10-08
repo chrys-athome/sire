@@ -171,15 +171,6 @@ protected:
 }
 
 #include "chainidentifier.h"
-#include "chainidx.h"
-#include "residx.h"
-#include "atomidx.h"
-
-Q_DECLARE_METATYPE( SireID::Specify<SireMol::ChainID> );
-Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ChainID> );
-Q_DECLARE_METATYPE( SireMol::ResIn<SireMol::ChainID> );
-Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::ChainID> );
-Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::ChainID> );
 
 SIRE_EXPOSE_CLASS( SireMol::ChainID )
 SIRE_EXPOSE_ALIAS( SireID::Specify<SireMol::ChainID>, SireMol::Specify_ChainID_ )

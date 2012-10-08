@@ -11,7 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMol
 set ( SIREMOL_HEADERS
-	  amberparameters.h
+      amberparameters.h
       angleid.h
       atom.h
       atombeading.h
@@ -35,6 +35,8 @@ set ( SIREMOL_HEADERS
       atomselection.h
       atomsin.hpp
       atomvelocities.h
+      beadid.h
+      beadidx.h
       beadnum.h
       bondhunter.h
       bondid.h
@@ -94,6 +96,7 @@ set ( SIREMOL_HEADERS
       molviewproperty.h
       mover.h
       mover.hpp
+      mover_metaid.h
       partialmolecule.h
       perturbation.h
       reseditor.h
@@ -139,7 +142,7 @@ set ( SIREMOL_SOURCES
       atommatcher.cpp
       atomproperty.cpp
       atomselection.cpp
-      beadnum.cpp
+      beadid.cpp
       bondhunter.cpp
       bondid.cpp
       cgatomidx.cpp

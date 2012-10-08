@@ -112,7 +112,6 @@ CGAtomIdx operator+(const SireID::Index &index, const CGIdx &cgidx);
     
 }
 
-Q_DECLARE_TYPEINFO(SireMol::CGIdx, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMol::CGIdx);
 
 SIRE_EXPOSE_CLASS( SireMol::CGIdx )

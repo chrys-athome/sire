@@ -104,6 +104,12 @@ inline uint qHash(const SysIdentifier &sysid)
 
 }
 
+#include "sysidx.h"
+
+Q_DECLARE_METATYPE( SireID::Specify<SireSystem::SysID> )
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireSystem::SysID> )
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireSystem::SysID> )
+
 Q_DECLARE_METATYPE(SireSystem::SysIdentifier);
 
 #endif

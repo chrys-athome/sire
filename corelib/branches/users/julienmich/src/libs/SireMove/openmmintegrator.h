@@ -30,11 +30,17 @@
 #define SIREMOVE_OPENMMINTEGRATOR_H
 
 #include "integrator.h"
-#include <OpenMM.h>
+
+#ifdef SIRE_USE_OPENMM
+  #include <OpenMM.h>   // CONDITIONAL_INCLUDE
+#endif
+
 #include <cstdio>
 #include "SireUnits/temperature.h"
 
 SIRE_BEGIN_HEADER
+
+#ifdef SIRE_USE_OPENMM
 
 namespace SireMove
 {
@@ -124,12 +130,13 @@ public:
 	QVector<double> getAlchemical_values(void);
 	void setAlchemical_values(QVector<double>);
 	
-	void setCMMremoval_frequency(int);
+	bool getRestraint(void);
+	void setRestraint(bool);
+	
 	int getCMMremoval_frequency(void);
-	
-	
-	
-	                                       
+	void setCMMremoval_frequency(int);
+
+
 private:
     /** Whether or not to save the velocities after every step, 
         or to save them at the end of all of the steps */
@@ -153,10 +160,29 @@ private:
     
     QString platform_type;
 
-    int CMMremoval_frequency;
-    
-    QVector<double> Alchemical_values;
-    
+	QString CutoffType;
+	SireUnits::Dimension::Length cutoff_distance;
+	double field_dielectric;
+
+	bool Andersen_flag;
+	double Andersen_frequency;
+
+	bool MCBarostat_flag;
+	int MCBarostat_frequency;
+
+	QString ConstraintType;
+
+	SireUnits::Dimension::Pressure Pressure;
+	SireUnits::Dimension::Temperature Temperature;
+
+	QString platform_type;
+
+	QVector<double> Alchemical_values;
+	
+	bool Restraint_flag;
+	
+	int CMMremoval_frequency;
+
 };
 
 
@@ -167,5 +193,26 @@ Q_DECLARE_METATYPE( SireMove::OpenMMIntegrator )
 SIRE_EXPOSE_CLASS( SireMove::OpenMMIntegrator )
 
 SIRE_END_HEADER
+
+#else // SIRE_USE_OPENMM
+
+namespace SireMove
+{
+
+    class OpenMMIntegrator
+    {
+    public:
+        OpenMMIntegrator(){}
+        ~OpenMMIntegrator(){}
+
+        static const char* typeName(){ return "SireMM::OpenMMIntegrator"; }
+
+    };
+
+}
+
+Q_DECLARE_METATYPE( SireMove::OpenMMIntegrator )
+
+#endif // SIRE_USE_OPENMM
 
 #endif

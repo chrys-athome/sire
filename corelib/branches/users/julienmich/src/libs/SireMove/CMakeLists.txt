@@ -21,7 +21,7 @@ set ( SIREMOVE_HEADERS
       hybridmc.h
       integrator.h
       integratorworkspace.h
-      #integratorworkspacejm.h
+      integratorworkspacejm.h
       internalmove.h
       internalmovesingle.h
       moldeleter.h
@@ -31,10 +31,9 @@ set ( SIREMOVE_HEADERS
       move.h
       moves.h
       mtsmc.h
-      #openmmintegrator.h	
       prefsampler.h
       rbworkspace.h 
-      #rbworkspacejm.h
+      rbworkspacejm.h
       repexmove.h
       replica.h
       replicas.h
@@ -63,6 +62,14 @@ set ( SIREMOVE_HEADERS
       zmatrix.h
     )
 
+set ( SIREMOVE_OPENMM_HEADERS
+      openmmintegrator.h
+    )
+
+set ( SIREMOVE_OPENMM_SOURCES
+      openmmintegrator.cpp
+    )
+
 set ( SIREMOVE_DEPRECATED_HEADERS
 
       deprecated/replicas.h
@@ -84,7 +91,7 @@ set ( SIREMOVE_SOURCES
       hybridmc.cpp
       integrator.cpp
       integratorworkspace.cpp
-      #integratorworkspacejm.cpp
+      integratorworkspacejm.cpp
       internalmove.cpp
       internalmovesingle.cpp
       moldeleter.cpp
@@ -94,10 +101,9 @@ set ( SIREMOVE_SOURCES
       move.cpp
       moves.cpp
       mtsmc.cpp
-      #openmmintegrator.cpp
       prefsampler.cpp
       rbworkspace.cpp
-      #rbworkspacejm.cpp
+      rbworkspacejm.cpp
       repexmove.cpp
       replica.cpp
       replicas.cpp
@@ -132,18 +138,19 @@ set ( SIREMOVE_SOURCES
       ${SIREMOVE_DEPRECATED_HEADERS}
     )
 
+if ( ${OpenMM_FOUND} )
+    message ( STATUS "Adding in OpenMM support to SireMove using OpenMM ${OpenMM_ROOT_DIR}" )
+    set ( SIREMOVE_SOURCES  ${SIREMOVE_SOURCES} ${SIREMOVE_OPENMM_SOURCES} )
+    set ( SIREMOVE_HEADERS  ${SIREMOVE_HEADERS} ${SIREMOVE_OPENMM_HEADERS} )
+    set ( SIRE_OPENMM_LIBRARIES ${OpenMM_LIBRARIES} )    
+    include_directories(${OpenMM_INCLUDE_DIR})
+    add_definitions( "-DSIRE_USE_OPENMM" )
+else()
+    message ( STATUS "OpenMM not found, so OpenMM support is disabled." )
+    set ( SIRE_OPENMM_LIBRARIES "" )
+endif()
+
 add_library (SireMove ${SIREMOVE_SOURCES})
-
-#set (Path "/home/julien/local/openmm-4.0/")
-
-#find_library(OPENMM_LIBRARY 
-#			NAMES 
-#			OpenMM 
-#			PATHS
-#			${Path}/lib)
-#
-#message ("Dir = ${OPENMM_LIBRARY}")
-
 
 set_target_properties (SireMove PROPERTIES
                        VERSION ${SIRE_VERSION}
@@ -156,7 +163,7 @@ target_link_libraries (SireMove
                        SireMaths
                        SireCluster
                        SireStream
-                       #${OPENMM_LIBRARY}
+                       ${SIRE_OPENMM_LIBRARIES}
                        )
 
 # installation
@@ -171,3 +178,6 @@ install( FILES ${SIREMOVE_HEADERS}
 
 install( FILES ${SIREMOVE_DEPRECATED_HEADERS}
          DESTINATION ${SIRE_INCLUDES}/SireMove/deprecated )
+
+install( FILES ${SIREMOVE_OPENMM_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireMove )

@@ -87,63 +87,109 @@ salt = salt.edit().add( CGName("1") ) \
 ion = ion.edit().atom(AtomName("Na")) \
                 .setProperty("coordinates", Vector(0,0,0)) \
                 .setProperty("element", Element("Sodium")) \
-                .setProperty("charge", 1*mod_electron) \
+                .setProperty("charge", 0.2*mod_electron) \
                 .setProperty("LJ", LJParameter(3.0522*angstrom,0.4598*kcal_per_mol)) \
                 .molecule().commit()
 
 salt = salt.edit().atom(AtomName("Na")) \
                   .setProperty("coordinates", Vector(0,0,0)) \
                   .setProperty("element", Element("Sodium")) \
-                  .setProperty("charge", 1*mod_electron) \
-                  .setProperty("LJ", LJParameter(3.0522*angstrom,0.4598*kcal_per_mol)) \
+                  .setProperty("charge", 0.2*mod_electron) \
+                  .setProperty("LJ", LJParameter(3.0522*angstrom,4.4598*kcal_per_mol)) \
                   .molecule() \
                   .atom(AtomName("Cl")) \
-                  .setProperty("coordinates", Vector(0,4,0)) \
+                  .setProperty("coordinates", Vector(0,2,0)) \
                   .setProperty("element", Element("Sodium")) \
-                  .setProperty("charge", -1*mod_electron) \
-                  .setProperty("LJ", LJParameter(3.0522*angstrom,0.4598*kcal_per_mol)) \
+                  .setProperty("charge", -0.2*mod_electron) \
+                  .setProperty("LJ", LJParameter(3.0522*angstrom,4.4598*kcal_per_mol)) \
                   .molecule() \
                   .commit()
+
+bonds = Connectivity(salt)
+bonds = bonds.edit().connect( AtomName("Na"), AtomName("Cl") ).commit()
+
+salt = salt.edit().setProperty("connectivity", bonds).commit()
+
+bondfuncs = TwoAtomFunctions(salt)
+
+internalff = InternalFF()
+
+r = internalff.symbols().bond().r()         
+bondfuncs.set( salt.atom(AtomName("Cl")).index(), salt.atom(AtomName("Na")).index(), 50 * ( 2.0 - r )**2 )
+
+salt = salt.edit().setProperty("bond", bondfuncs).commit()
+
+flexibility = Flexibility(salt)
+flexibility.add( BondID(AtomIdx(0),AtomIdx(1)), 0.1*angstrom )
+salt = salt.edit().setProperty("flexibility", flexibility).commit()
 
 m0 = salt
 m1 = salt.edit().renumber() \
          .atom(AtomName("Na")) \
-         .setProperty("coordinates", Vector(-5,2,5)) \
+         .setProperty("coordinates", Vector(4,2,1)) \
          .molecule().atom(AtomName("Cl")) \
-         .setProperty("coordinates", Vector(-5,2,9)) \
+         .setProperty("coordinates", Vector(4,4,1)) \
          .molecule().commit()
 
 m2 = salt.edit().renumber() \
          .atom(AtomName("Na")) \
-         .setProperty("coordinates", Vector(-6,4,0)) \
+         .setProperty("coordinates", Vector(8,5,-1)) \
          .molecule().atom(AtomName("Cl")) \
-         .setProperty("coordinates", Vector(-6,0,0)) \
+         .setProperty("coordinates", Vector(8,7,-0.5)) \
+         .molecule().commit()
+
+m3 = salt.edit().renumber() \
+         .atom(AtomName("Na")) \
+         .setProperty("coordinates", Vector(12,0,0)) \
+         .molecule().atom(AtomName("Cl")) \
+         .setProperty("coordinates", Vector(14,0,0)) \
          .molecule().commit()
 
 salt = MoleculeGroup("salt")
 salt.add(m0)
 salt.add(m1)
 salt.add(m2)
+salt.add(m3)
 #salt.add(c)
 #salt.add(c2)
 
 cljff = InterCLJFF("salt-salt")
 cljff.add(salt)
+internalff.add(salt)
 
 system = System()
 system.add(salt)
 system.add(cljff)
+system.add(internalff)
+
+system.setProperty("space", PeriodicBox( Vector(20,20,20) ) )
+
+system.add( SpaceWrapper(Vector(0,0,0),salt) )
 
 t.start()                                       
 print "Initial energy = %s" % system.energy()
 print "(took %d ms)" % t.elapsed()
 
-#mdmove = MolecularDynamics( salt, VelocityVerlet(), 
-#                            {"velocity generator":MaxwellBoltzmann(25*celsius)} )
+mdmove = MolecularDynamics( salt, VelocityVerlet(), 
+                            {"velocity generator":MaxwellBoltzmann(25*celsius)} )
 
-mdmove = MolecularDynamics(salt, DLMRigidBody())
+mdmove = MolecularDynamics(salt, DLMRigidBody() )
 
 mdmove.setTimeStep(1*femtosecond)
+do_mc = False
+
+intra_mcmove = InternalMove(salt)
+inter_mcmove = RigidBodyMC(salt)
+
+mcmove = WeightedMoves()
+mcmove.add(intra_mcmove)
+mcmove.add(inter_mcmove)
+
+do_mc = False
+
+hmcmove = HybridMC(salt, 4*femtosecond, 20)
+do_hmc = True
+do_hmc = False
 
 print system.property("space")
 
@@ -153,12 +199,28 @@ print mdmove.kineticEnergy()
 print system.energy() + mdmove.kineticEnergy()
 PDB().write(system.molecules(), "test%0004d.pdb" % 0)
 
-for i in range(1,250):
-    print "\nmove %d" % (i)
-    mdmove.move(system, 20)
+if do_mc:
+    for i in range(1,1000):
+        system = mcmove.move(system, 20, False)
 
-    print system.energy()
-    print mdmove.kineticEnergy()
-    print system.energy() + mdmove.kineticEnergy()
+        print i, system.energy()
 
-    PDB().write(system.molecules(), "test%0004d.pdb" % i)
+        PDB().write(system.molecules(), "test%0004d.pdb" % i)
+
+elif do_hmc:
+    for i in range(1,1000):
+        hmcmove.move(system, 1)
+
+        print i, system.energy()
+        PDB().write(system.molecules(), "test%0004d.pdb" % i)
+
+else:
+    for i in range(1,1000):
+        print "\nmove %d" % (i)
+        mdmove.move(system, 20)
+
+        print system.energy()
+        print mdmove.kineticEnergy()
+        print system.energy() + mdmove.kineticEnergy()
+
+        PDB().write(system.molecules(), "test%0004d.pdb" % i)

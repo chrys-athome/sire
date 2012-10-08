@@ -518,6 +518,9 @@ RDFMonitor& RDFMonitor::operator=(const RDFMonitor &other)
     return *this;
 }
 
+namespace SireMol
+{
+
 static bool operator==(const tuple<AtomIdentifier,AtomIdentifier> &pair0,
                        const tuple<AtomIdentifier,AtomIdentifier> &pair1)
 {
@@ -527,6 +530,8 @@ static bool operator==(const tuple<AtomIdentifier,AtomIdentifier> &pair0,
            (pair0.get<0>() == pair1.get<1>() and
             pair0.get<1>() == pair1.get<0>());
     
+}
+
 }
 
 /** Comparison operator */

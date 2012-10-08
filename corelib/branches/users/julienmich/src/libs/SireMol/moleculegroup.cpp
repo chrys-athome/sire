@@ -26,6 +26,21 @@
   *
 \*********************************************/
 
+#include <boost/tuple/tuple.hpp>
+
+#include "molnum.h"
+#include "SireID/index.h"
+
+namespace SireMol
+{
+static bool operator==(const boost::tuple<SireMol::MolNum,SireID::Index> &i0,
+                       const boost::tuple<SireMol::MolNum,SireID::Index> &i1)
+{
+    return i0.get<0>() == i1.get<0>() and
+           i0.get<1>() == i1.get<1>();
+}
+}
+
 #include <QMutex>
 #include <QVector>
 
@@ -92,12 +107,6 @@ MGNum MGNum::getUniqueNumber()
 ////////
 //////// Functions relating to the tuple<MolNum,Index>
 ////////
-
-static bool operator==(const tuple<MolNum,Index> &i0, const tuple<MolNum,Index> &i1)
-{
-    return i0.get<0>() == i1.get<0>() and 
-           i0.get<1>() == i1.get<1>();
-}
 
 static QDataStream& operator<<(QDataStream &ds, 
                                const tuple<MolNum,Index> &molviewidx)
@@ -1298,7 +1307,7 @@ void MoleculeGroup::add(const ViewsOfMol &molviews)
     
     quint32 nviews = dref.molecules.nViews(molnum);
     
-    for (quint32 i = nviews - molviews.count() - 1; i < nviews; ++i)
+    for (quint32 i = nviews - molviews.count(); i < nviews; ++i)
     {
         dref.molviewidx_to_num.append( tuple<MolNum,Index>(molnum,Index(i)) );
     }

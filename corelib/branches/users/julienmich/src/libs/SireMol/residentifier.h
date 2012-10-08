@@ -101,6 +101,14 @@ inline uint qHash(const ResIdentifier &resid)
 
 }
 
+#include "residx.h"
+#include "atomidx.h"
+
+Q_DECLARE_METATYPE( SireID::Specify<SireMol::ResID> );
+Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ResID> );
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::ResID> );
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::ResID> );
+
 Q_DECLARE_METATYPE(SireMol::ResIdentifier);
 
 #endif

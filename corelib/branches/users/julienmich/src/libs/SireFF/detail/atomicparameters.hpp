@@ -271,13 +271,17 @@ AtomicParameters<PARAM> AtomicParameters<PARAM>::applyMask(
     else if (idxs.isEmpty())
         //definitely nothing has been selected
         return AtomicParameters<PARAM>();
-        
+    
+    else if (idxs.count() == 1)
+        //return the single array
+        return AtomicParameters<PARAM>( params[ *(idxs.constBegin()) ] );
+    
     //otherwise, some are marked - apply the mask
     //mask by the indicies
     quint32 ngroups = params.count();
     
     QVector< typename Parameters::Array > group_params;
-    group_params.reserve(ngroups);
+    group_params.reserve(idxs.count());
     
     const typename Parameters::Array *this_array = params.constData();
     

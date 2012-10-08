@@ -23,6 +23,7 @@ set ( SIREMM_HEADERS
       errors.h
       fastintercljff.h
       fouratomfunctions.h
+      gridff.h
       intercljff.h
       intercoulombff.h
       interljff.h
@@ -72,6 +73,7 @@ set ( SIREMM_SOURCES
       errors.cpp
       fastintercljff.cpp
       fouratomfunctions.cpp
+      gridff.cpp
       intercljff.cpp
       intercoulombff.cpp
       interljff.cpp

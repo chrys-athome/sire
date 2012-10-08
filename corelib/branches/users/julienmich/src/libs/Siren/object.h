@@ -475,6 +475,14 @@ public:
     void stream(Stream &s);
 };
 
+}
+
+
+#include "mutex.h"
+
+namespace Siren
+{
+
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS
 
 //////

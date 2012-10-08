@@ -149,18 +149,6 @@ else()
   endif()
 endif()
 
-# SireMaths depends on >= GSL 1.6
-find_package(GSL 1.6 REQUIRED)
-
-message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} "
-                "${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
-
-list(APPEND SIREMATHS_EXTRA_LIBRARIES ${GSL_LIBRARIES})
-
-include_directories( BEFORE ${GSL_INCLUDE_DIR})
-
-save_sire_variable( "SIRE_GSL_INCLUDE_PATH" "${GSL_INCLUDE_DIR}" )
-
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 

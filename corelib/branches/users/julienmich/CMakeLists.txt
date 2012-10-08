@@ -177,6 +177,33 @@ else()
   message(FATAL_ERROR "Cannot find the boost libraries.")
 endif()  
 
+# Sire depends on >= GSL 1.6
+find_package(GSL 1.6 REQUIRED)
+
+message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} "
+                "${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
+          
+list(APPEND SIREMATHS_EXTRA_LIBRARIES ${GSL_LIBRARIES})
+                                  
+include_directories( BEFORE ${GSL_INCLUDE_DIR})
+                                   
+save_sire_variable( "SIRE_GSL_INCLUDE_PATH" "${GSL_INCLUDE_DIR}" )
+
+# Now look for OpenMM
+option (OPENMM_HOME "The location of the OpenMM installation" "$ENV{HOME}/local")
+FIND_PACKAGE( OpenMM )
+
+save_sire_variable( "SIRE_OpenMM_FOUND" "${OpenMM_FOUND}" )
+
+if ( ${OpenMM_FOUND} )
+    message( STATUS "Found OpenMM at ${OpenMM_ROOT_DIR}" )
+    save_sire_variable( "SIRE_OpenMM_INCLUDE_DIR" "${OpenMM_INCLUDE_DIR}" )
+    save_sire_variable( "SIRE_OpenMM_LIBRARIES" "${OpenMM_LIBRARIES}" )
+    save_sire_variable( "SIRE_OpenMM_LIBRARY_DIR" "${OpenMM_LIBRARY_DIR}" )
+else()
+    message( STATUS "Could not find OpenMM. OpenMM support is disabled." )
+endif()
+
 # Now look for BLAS and LAPACK - if these are not found then
 # a local version will have to be used instead
 set( BLA_STATIC OFF )
@@ -307,7 +334,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
 
     if ( HAVE_EMMINTRIN_H )
       # we have emmintrin.h so we have SSE
-      set ( SIRE_VECTOR_FLAGS "-msse2 -mfpmath=sse -DSIRE_USE_SSE" )
+      set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
     endif()
         
     # Now gcc 4 specific options
