@@ -69,7 +69,6 @@ set ( PYPP_SOURCES
        Replica.pypp.cpp
        NullSupraSubMove.pypp.cpp
        ZMatrixCoords.pypp.cpp
-       VelocityVerletBerendsen.pypp.cpp
        MolecularDynamics.pypp.cpp
        SupraMoves.pypp.cpp
        SireMove_containers.cpp

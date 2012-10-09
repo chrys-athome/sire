@@ -101,7 +101,6 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::SupraSubSimPacket >();
     ObjectRegistry::registerConverterFor< SireMove::NullMove >();
     ObjectRegistry::registerConverterFor< SireMove::VelocityVerlet >();
-    ObjectRegistry::registerConverterFor< SireMove::VelocityVerletBerendsen >();
     ObjectRegistry::registerConverterFor< SireMove::Ensemble >();
     ObjectRegistry::registerConverterFor< SireMove::NullGetPoint >();
     ObjectRegistry::registerConverterFor< SireMove::GetCOMPoint >();

@@ -135,8 +135,6 @@
 
 #include "VelocityVerlet.pypp.hpp"
 
-#include "VelocityVerletBerendsen.pypp.hpp"
-
 #include "VolumeChanger.pypp.hpp"
 
 #include "VolumeMove.pypp.hpp"
@@ -299,8 +297,6 @@ BOOST_PYTHON_MODULE(_Move){
     register_VelocitiesFromProperty_class();
 
     register_VelocityVerlet_class();
-
-    register_VelocityVerletBerendsen_class();
 
     register_VolumeMove_class();
 
