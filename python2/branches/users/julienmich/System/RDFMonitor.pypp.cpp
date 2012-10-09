@@ -38,9 +38,8 @@ void register_RDFMonitor_class(){
 
     { //::SireSystem::RDFMonitor
         typedef bp::class_< SireSystem::RDFMonitor, bp::bases< SireSystem::SystemMonitor, SireBase::Property > > RDFMonitor_exposer_t;
-        RDFMonitor_exposer_t RDFMonitor_exposer = RDFMonitor_exposer_t( "RDFMonitor" );
+        RDFMonitor_exposer_t RDFMonitor_exposer = RDFMonitor_exposer_t( "RDFMonitor", bp::init< >() );
         bp::scope RDFMonitor_scope( RDFMonitor_exposer );
-        RDFMonitor_exposer.def( bp::init< >() );
         RDFMonitor_exposer.def( bp::init< SireUnits::Dimension::Length const &, SireUnits::Dimension::Length const &, bp::optional< int > >(( bp::arg("min"), bp::arg("max"), bp::arg("nbins")=(int)(100) )) );
         RDFMonitor_exposer.def( bp::init< SireUnits::Dimension::Length const &, SireUnits::Dimension::Length const &, SireUnits::Dimension::Length const & >(( bp::arg("min"), bp::arg("max"), bp::arg("binwidth") )) );
         RDFMonitor_exposer.def( bp::init< SireMaths::HistogramRangeT< SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > > const & >(( bp::arg("range") )) );

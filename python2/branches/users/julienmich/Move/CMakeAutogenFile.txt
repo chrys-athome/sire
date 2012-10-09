@@ -6,7 +6,6 @@ set ( PYPP_SOURCES
        UniformSampler.pypp.cpp
        InternalMoveSingle.pypp.cpp
        DofID.pypp.cpp
-       OpenMMIntegrator.pypp.cpp
        Integrator.pypp.cpp
        NullGetPoint.pypp.cpp
        Dynamics.pypp.cpp

@@ -4,13 +4,13 @@
 
 #include "boost/python.hpp"
 #include "boost/python/suite/indexing/vector_indexing_suite.hpp"
-#include "vector_less__double__grate_.pypp.hpp"
+#include "vector_less__double__greater_.pypp.hpp"
 
 namespace bp = boost::python;
 
-void register_vector_less__double__grate__class(){
+void register_vector_less__double__greater__class(){
 
-    bp::class_< std::vector< double > >("vector_less__double__grate_")    
+    bp::class_< std::vector< double > >("vector_less__double__greater_")    
         .def( bp::vector_indexing_suite< ::std::vector< double >, true >() );
 
 }

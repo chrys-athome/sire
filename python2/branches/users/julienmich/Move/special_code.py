@@ -19,7 +19,14 @@ def fix_Moves(c):
         if str(decl).find("SimController") != -1:
             decl.exclude()
 
+skip_pyppfiles = [ "OpenMMIntegrator.pypp.cpp" ]
+
 special_code = { "SireMove::MovesBase" : fix_Moves,
                  "SireMove::SameMoves" : fix_Moves,
                  "SireMove::WeightedMoves" : fix_Moves
                }
+
+def fixMB(mb):   
+    mb.add_declaration_code("#ifndef SIRE_USE_OPENMM\n"
+                            "void register_OpenMMIntegrator_class(){}\n"
+                            "#endif")

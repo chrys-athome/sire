@@ -161,6 +161,10 @@ namespace bp = boost::python;
 
 #include "SireMove_properties.h"
 
+#ifndef SIRE_USE_OPENMM
+void register_OpenMMIntegrator_class(){}
+#endif
+
 BOOST_PYTHON_MODULE(_Move){
     register_SireMove_objects();
 

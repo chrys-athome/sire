@@ -87,6 +87,7 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::RepExMove >();
     ObjectRegistry::registerConverterFor< SireMove::RepExSubMove >();
     ObjectRegistry::registerConverterFor< SireMove::OpenMMIntegrator >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMIntegrator >();
     ObjectRegistry::registerConverterFor< SireMove::VolumeMove >();
     ObjectRegistry::registerConverterFor< SireMove::NullIntegratorWorkspaceJM >();
     ObjectRegistry::registerConverterFor< SireMove::AtomicVelocityWorkspaceJM >();

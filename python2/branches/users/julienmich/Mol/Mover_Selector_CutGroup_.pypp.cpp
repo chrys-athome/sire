@@ -7,33 +7,9 @@
 
 namespace bp = boost::python;
 
-#include "SireBase/errors.h"
+#include "mover_metaid.h"
 
-#include "SireStream/datastream.h"
-
-#include "SireStream/shareddatastream.h"
-
-#include "atom.h"
-
-#include "cgatomidx.h"
-
-#include "cgeditor.h"
-
-#include "cutgroup.h"
-
-#include "evaluator.h"
-
-#include "groupatomids.h"
-
-#include "molecule.h"
-
-#include "mover.hpp"
-
-#include "selector.hpp"
-
-#include <QDebug>
-
-#include "cutgroup.h"
+#include "mover_metaid.h"
 
 #include "SireMaths/axisset.h"
 

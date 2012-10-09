@@ -14,6 +14,8 @@ import string
 
 from glob import glob
 
+skip_pyppfiles = []
+
 def getFiles(dir, pattern):
     files = glob("%s/%s" % (dir,pattern))
 

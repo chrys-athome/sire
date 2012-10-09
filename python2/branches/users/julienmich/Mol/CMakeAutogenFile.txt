@@ -115,6 +115,7 @@ set ( PYPP_SOURCES
        CGEditor.pypp.cpp
        ResIdx.pypp.cpp
        Mover_Molecule_.pypp.cpp
+       BeadIdx.pypp.cpp
        CGAtomIdx.pypp.cpp
        AtomCutting.pypp.cpp
        ResEditor.pypp.cpp
@@ -193,6 +194,7 @@ set ( PYPP_SOURCES
        Mover_Residue_.pypp.cpp
        AtomID.pypp.cpp
        Perturbations.pypp.cpp
+       BeadID.pypp.cpp
        ChainsWithRes.pypp.cpp
        MoleculeGroup.pypp.cpp
        MGIdx.pypp.cpp

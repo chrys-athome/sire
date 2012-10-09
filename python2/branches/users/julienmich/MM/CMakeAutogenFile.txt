@@ -63,6 +63,7 @@ set ( PYPP_SOURCES
        BendBendSymbols.pypp.cpp
        IntraGroupLJFFBase.pypp.cpp
        DihedralSymbols.pypp.cpp
+       GridFF.pypp.cpp
        InternalComponent.pypp.cpp
        InterLJFFBase.pypp.cpp
        CLJProbe.pypp.cpp

@@ -29,6 +29,8 @@ namespace bp = boost::python;
 
 #include "mover.hpp"
 
+#include "mover_metaid.h"
+
 #include "reseditor.h"
 
 #include "residue.h"

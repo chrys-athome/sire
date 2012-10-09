@@ -31,6 +31,8 @@ namespace bp = boost::python;
 
 #include "SireMol/connectivity.h"
 
+#include "SireMol/mgname.h"
+
 #include "SireMol/molecule.h"
 
 #include "SireMol/moleculegroup.h"
@@ -57,9 +59,11 @@ namespace bp = boost::python;
 
 #include "ensemble.h"
 
+#include "fastio.h"
+
 #include "openmmintegrator.h"
 
-#include <fstream>
+#include <QDebug>
 
 #include <iomanip>
 
@@ -230,6 +234,16 @@ void register_OpenMMIntegrator_class(){
             OpenMMIntegrator_exposer.def( 
                 "getPressure"
                 , getPressure_function_value );
+        
+        }
+        { //::SireMove::OpenMMIntegrator::getRestraint
+        
+            typedef bool ( ::SireMove::OpenMMIntegrator::*getRestraint_function_type )(  ) ;
+            getRestraint_function_type getRestraint_function_value( &::SireMove::OpenMMIntegrator::getRestraint );
+            
+            OpenMMIntegrator_exposer.def( 
+                "getRestraint"
+                , getRestraint_function_value );
         
         }
         { //::SireMove::OpenMMIntegrator::getTemperature
@@ -406,6 +420,17 @@ void register_OpenMMIntegrator_class(){
             OpenMMIntegrator_exposer.def( 
                 "setPressure"
                 , setPressure_function_value
+                , ( bp::arg("arg0") ) );
+        
+        }
+        { //::SireMove::OpenMMIntegrator::setRestraint
+        
+            typedef void ( ::SireMove::OpenMMIntegrator::*setRestraint_function_type )( bool ) ;
+            setRestraint_function_type setRestraint_function_value( &::SireMove::OpenMMIntegrator::setRestraint );
+            
+            OpenMMIntegrator_exposer.def( 
+                "setRestraint"
+                , setRestraint_function_value
                 , ( bp::arg("arg0") ) );
         
         }

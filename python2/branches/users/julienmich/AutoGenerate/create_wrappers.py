@@ -507,6 +507,7 @@ if __name__ == "__main__":
     qtdir = os.getenv("QTDIR")
     boostdir = os.getenv("BOOSTDIR")
     gsldir = os.getenv("GSLDIR")
+    openmmdir = os.getenv("OPENMMDIR")
 
     need_input = False 
 
@@ -523,6 +524,11 @@ if __name__ == "__main__":
     if (gsldir is None):
         print "You must set the environmental variable GSLDIR to the location " + \
               "of the GSL header files"
+        need_input = True
+
+    if (openmmdir is None):
+        print "You must set the environmental variable OPENMMDIR to the location " + \
+              "of the OpenMM.h header file"
         need_input = True
 
     if (need_input):
@@ -545,13 +551,16 @@ if __name__ == "__main__":
 
     boost_include_dirs = [ boostdir ]
     gsl_include_dirs = [ gsldir ]
+    openmm_include_dirs = [ openmmdir ]
 
     #construct a module builder that will build all of the wrappers for this module
     mb = module_builder_t( files = [ "active_headers.h" ],
                            #cflags = "-m64",
                            include_paths = sire_include_dirs + qt_include_dirs +
-                                           boost_include_dirs + gsl_include_dirs,
+                                           boost_include_dirs + gsl_include_dirs +
+                                           openmm_include_dirs,
                            define_symbols = ["GCCXML_PARSE",
+                                             "SIRE_USE_OPENMM",
                                              "SIRE_SKIP_INLINE_FUNCTIONS",
                                              "SIREN_SKIP_INLINE_FUNCTIONS",
                                              "SIRE_INSTANTIATE_TEMPLATES",
@@ -653,7 +662,8 @@ if __name__ == "__main__":
     pyppfiles = glob("*.pypp.cpp")
 
     for pyppfile in pyppfiles:
-        print >>FILE,"       %s" % pyppfile
+        if not pyppfile in skip_pyppfiles:
+            print >>FILE,"       %s" % pyppfile
 
     if os.path.exists("%s_containers.cpp" % sourcedir):
         print >>FILE,"       %s_containers.cpp" % sourcedir
