@@ -90,12 +90,11 @@ public:
                    int nmoves, bool record_stats) const;
 
     IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
-    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,
-                                           const PropertyMap &map = PropertyMap()) const;
-                    
+    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,const PropertyMap &map = PropertyMap()) const;
+
     QString getCutoffType(void);
-	void setCutoffType(QString);                
-                                           
+	void setCutoffType(QString);
+
     SireUnits::Dimension::Length getCutoff_distance(void);
 	void setCutoff_distance(SireUnits::Dimension::Length);
 	
@@ -138,27 +137,9 @@ public:
 
 
 private:
-    /** Whether or not to save the velocities after every step, 
-        or to save them at the end of all of the steps */
-    
-    bool frequent_save_velocities;
+	/** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
 
-    QString CutoffType;
-    SireUnits::Dimension::Length cutoff_distance;
-    double field_dielectric;
-    
-    bool Andersen_flag;
-    double Andersen_frequency;
-    
-    bool MCBarostat_flag;
-    int MCBarostat_frequency;
-    
-    QString ConstraintType;
-    
-    SireUnits::Dimension::Pressure Pressure;
-    SireUnits::Dimension::Temperature Temperature;
-    
-    QString platform_type;
+	bool frequent_save_velocities;
 
 	QString CutoffType;
 	SireUnits::Dimension::Length cutoff_distance;

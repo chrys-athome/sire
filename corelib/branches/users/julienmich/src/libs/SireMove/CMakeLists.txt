@@ -16,6 +16,7 @@ set ( SIREMOVE_HEADERS
       ensemble.h
       errors.h
       getpoint.h
+      fastio.h
       flexibility.h
       gibbsmove.h
       hybridmc.h
