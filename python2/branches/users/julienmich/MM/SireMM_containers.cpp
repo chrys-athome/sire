@@ -47,8 +47,6 @@
 
 #include "SireBase/packedarray2d.hpp"
 
-#include "SireMM/cljpotentialjm.h"
-
 using namespace SireMM;
 
 using boost::python::register_tuple;
