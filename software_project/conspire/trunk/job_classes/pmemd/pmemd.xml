@@ -30,6 +30,12 @@
   </option>
 
   <option>
+    <key>number of blocks</key>
+    <description>Number of blocks of dynamics to perform.</description>
+    <value><integer>1</integer></value>
+  </option>
+
+  <option>
     <key>temperature</key>
     <description>The desired temperature of the simulation.</description>
     <value><temperature units="celsius">25.0</temperature></value>

@@ -19,22 +19,17 @@ try:
 except:
     ngpus = 0
 
-#we run the simulation in the current directory
-# - this may change in subsequent versions...
-rundir = "."
-os.chdir(rundir)
-
 # redirect all standard output and error to "run_md.log" in this directory
-sys.stdout = open("run_md.log", "wb", 0)
-sys.stderr = open("run_md.err", "wb", 0)
+sys.stdout = open("run_md.log", "w", 0)
+sys.stderr = open("run_md.err", "w", 0)
 
 # get the full, absolute path to the run directory
 rundir = os.getcwd()
 
 username = os.getenv("USER")
 
-print("User %s is running a simulation in directory %s" % (username, rundir))
-print(datetime.datetime.now())
+print ("User %s is running a simulation in directory %s" % (username, rundir))
+print (datetime.datetime.now())
 
 def readConfig(config_file):
     """Read the configuration file - this returns a dictionary 
@@ -58,21 +53,118 @@ def readConfig(config_file):
 
     return d
 
+def getOption(key, options, defaultVal=None):
+    try:
+        return options[key]
+    except:
+        return defaultVal
+
 options = readConfig("config")
 
-top_file = options["structure file"]
-restart_file = options["coordinate file"]
-output_name = options["output name"]
+def getFemtoseconds(time):
+    try:
+        words = time.split()
+        time = float(words[0])
+
+        if len(words) > 1:
+            units = words[1].lower()
+
+            if units.find("pico") != -1 or units == "ps":
+                return int( time * 1000 )
+
+            elif units.find("nano") != -1 or units == "ns":
+                return int( time * 1000000 )
+
+            elif units.find("micro") != -1:
+                return int( time * 1000000000 )
+
+            else:
+                return int(time)
+    except:
+        return None
+
+def getKelvin(temperature):
+    try:
+        words = temperature.split()
+        temperature = float(words[0])
+        
+        if len(words) > 1:
+            units = words[1].lower()
+            
+            if units.find("c") != -1:
+                #assume celsius
+                return temperature + 273.15
+
+            elif units.find("f") != -1:
+                #assume fahrenheit
+                return 273.15 + (5.0/9.0)*(temperature - 32)
+
+            else:
+                return temperature
+        else:
+            return temperature + 273.15
+
+    except:
+        return None
+
+def getAtmosphere(pressure):
+    try:
+        words = pressure.split()
+        pressure = float(words[0])
+
+        if len(words) > 1:
+            units = words[1].lower()
+
+            if units.find("a") == -1:
+                print "WARNING - PRESSURE UNITS NOT ATMOSPHERES????"
+
+        return pressure
+    except:
+        return None
+
+top_file = getOption("structure file", options, "molecules.top")
+restart_file = getOption("coordinate file", options, "molecules.rst")
+output_name = getOption("output name", options, "output")
+nblocks = int( getOption("number of blocks", options, 1) )
+mdin_file = getOption("command file", options)
+length_dynamics = getFemtoseconds(getOption("length of dynamics", options, "1 ps"))
 
 try:
-    nblocks = int(options["number of blocks"])
+    num_moves = int(length_dynamics / 2)
 except:
-    nblocks = 1
+    num_moves = 1
 
-try:
-    mdin_file = options["command file"]
-except:
-    mdin_file = "default_workpacket_mdin"
+temperature = getKelvin(getOption("temperature", options, "25"))
+pressure = getAtmosphere(getOption("pressure", options))
+
+if not mdin_file:
+    # we need to write the mdin file ourselves using the user's options
+    mdin_file = "mdin"
+    FILE = open(mdin_file, "w")
+
+    if pressure:
+        print >>FILE,"MD system -- Constant Temperature and Pressure"
+    else:
+        print >>FILE,"MD system -- Constant Temperature"
+
+    print >>FILE,"&cntrl"
+    print >>FILE," imin=0, irest=1, ntx=5, ntpr=10000, ntwr=0, ntwx=5000,"
+    print >>FILE," nstlim=%d, dt=0.002," % num_moves
+    print >>FILE," tempi=%.2f, temp0=%.2f, ntt=3, gamma_ln=5, ig=-1," % (temperature, temperature)
+    print >>FILE," ntb=2, cut=10.0,"
+
+    if pressure:
+        print >>FILE," ntp=1, pres0=%.2f," % pressure
+
+    print >>FILE," ntc=2, ntf=2,"  
+    print >>FILE," iwrap=1,"
+    print >>FILE,"&end"
+
+    print >>FILE,"&ewald"
+    print >>FILE,"  nfft1 = 128, nfft2 = 128, nfft3 = 128"
+    print >>FILE,"&end"
+
+    FILE.close()
 
 
 def getLastIteration(output_name):
@@ -110,61 +202,61 @@ def getTrajectoryName(output_name, iteration):
 last_iteration = getLastIteration(output_name)
 
 if last_iteration == 0:
-   print("No previous iterations have been run... Starting from block 1...")
+   print "No previous iterations have been run... Starting from block 1..."
 
 elif last_iteration >= nblocks:
-   print("All requested blocks have finished! Simulation is complete!")
+   print "All requested blocks have finished! Simulation is complete!"
    sys.exit(0)
 
 else:
-   print("Continuing the simulation from iteration %d..." % last_iteration)
+   print "Continuing the simulation from iteration %d..." % last_iteration
 
    # update the restart file to be the one from the last iteration
    restart_file = getRestartName(output_name, last_iteration)
 
-# now create a temporary directory based on the output name of the simulation
-# and the name of the user
-tempdir = tempfile.mkdtemp(suffix="_%s_%s_" % (username,output_name), \
-                           dir="/tmp")
+# Uncompress the files if needed
+if top_file.endswith(".bz2"):
+    os.system("bunzip2 %s" % top_file)
+    top_file = top_file[0:-4]
 
+if top_file.endswith(".gz"):
+    os.system("gunzip %s" % top_file)
+    top_file = top_file[0:-3]
+
+if top_file.endswith(".zip"):
+    os.system("unzip %s" % top_file)
+    top_file = top_file[0:-3]
+
+if restart_file.endswith(".bz2"):
+    os.system("bunzip2 %s" % restart_file)
+    restart_file = restart_file[0:-4]
+
+if restart_file.endswith(".gz"):
+    os.system("gunzip %s" % restart_file)
+    restart_file = restart_file[0:-3]
+
+if restart_file.endswith(".zip"):
+    os.system("unzip %s" % restart_file)
+    restart_file = restart_file[0:-4]
+
+if top_file.endswith(".bz2"):
+    os.system("bunzip2 %s" % top_file)
+    top_file = top_file[0:-4]
+
+if top_file.endswith(".gz"):
+    os.system("gunzip %s" % top_file)
+    top_file = top_file[0:-3]
+
+if top_file.endswith(".zip"):
+    os.system("unzip %s"  % top_file)
+    top_file = top_file[0:-4]
+
+# Now run the iterations one after another until the requested number
+# have been completed
 try:
-    # Copy the topology file, restart file and mdin file to the temporary directory
-    print("Copying input files to temporary run directory \"%s\"..." % tempdir)
-
-    try:
-        shutil.copyfile(top_file, "%s/%s" % (tempdir,top_file))
-    except:
-        shutil.copyfile("%s.bz2" % top_file, "%s/%s.bz2" % (tempdir,top_file))
-        top_file = "%s.bz2" % top_file
-
-    try:
-        shutil.copyfile(restart_file, "%s/%s" % (tempdir,restart_file))
-    except:
-        shutil.copyfile("%s.bz2" % restart_file, "%s/%s.bz2" % (tempdir,restart_file))
-        restart_file = "%s.bz2" % restart_file
-
-    shutil.copyfile(mdin_file, "%s/%s" % (tempdir,mdin_file))
-
-    print("...all files copied :-)")
-
-    # Change into the temp directory - writing files here should be quicker
-    # than writing to the home directory
-    os.chdir(tempdir)
-
-    # Uncompress the files if needed
-    if restart_file.endswith(".bz2"):
-        os.system("bunzip2 %s" % restart_file)
-        restart_file = restart_file[0:-4]
-
-    if top_file.endswith(".bz2"):
-        os.system("bunzip2 %s" % top_file)
-        top_file = top_file[0:-4]
-
-    # Now run the iterations one after another until the requested number
-    # have been completed
     for i in range(last_iteration+1, nblocks+1):
-        print("Running iteration %d of %d..." % (i, nblocks))
-        print(datetime.datetime.now())
+        print "Running iteration %d of %d..." % (i, nblocks)
+        print datetime.datetime.now()
 
         mdout = getOutputName(output_name, i)
         new_restart = getRestartName(output_name, i)
@@ -178,7 +270,7 @@ try:
         elif ngpus > 1:
             cmd = "mpirun -1sided -np %d $AMBERHOME/bin/pmemd.cuda_SPDP.MPI -O -i %s -o %s -p %s -c %s -ref %s -r %s -x %s -v mdvel" % \
                 (ngpus, mdin_file, mdout, top_file, restart_file, restart_file, \
-       	       	 new_restart, traj)
+                 new_restart, traj)
 
         elif ncpus == 1:
             cmd = "$AMBERHOME/bin/pmemd -O -i %s -o %s -p %s -c %s -ref %s -r %s -x %s -v mdvel" % \
@@ -190,47 +282,35 @@ try:
                 (ncpus, mdin_file, mdout, top_file, restart_file, restart_file, \
                  new_restart, traj)
 
-        print("(command = \"%s\")" % cmd)
+        print "(command = \"%s\")" % cmd
         exitval = os.system(cmd)
-        print("Finished :-)")
-        print(datetime.datetime.now())
+        print "Finished :-)"
+        print datetime.datetime.now()
 
         if exitval != 0:
-            print("WARNING: SOMETHING WENT WRONG WITH THE SIMULATION")
-            print("COPYING THE OUTPUT FILES TO filename_BROKEN")
-            os.system("cp %s %s/%s_BROKEN" % (mdout, rundir, mdout))
-            os.system("cp %s %s/%s_BROKEN" % (new_restart, rundir, new_restart))
-            os.system("cp %s %s/%s_BROKEN" % (traj, rundir, traj))
+            print "WARNING: SOMETHING WENT WRONG WITH THE SIMULATION"
+            print "MOVING THE OUTPUT FILES TO filename_BROKEN"
+            os.system("mv %s %s_BROKEN" % (mdout, mdout))
+            os.system("mv %s %s_BROKEN" % (new_restart, new_restart))
+            os.system("mv %s %s_BROKEN" % (traj, traj))
 
-            print("EXITING!!!")
+            print "EXITING!!!"
             break
 
-        # We don't need the old restart file any more
-        os.system("rm %s &" % restart_file)
+        # compress the old restart file
+        os.system("bzip2 %s &" % restart_file)
 
         # jump to the next restart file for the next iteration
         restart_file = new_restart
 
         # compress the output files to save space
         os.system("bzip2 %s %s" % (mdout, traj))
-        os.system("bzip2 -k %s" % (new_restart))  # we still need the uncompressed version
+   
+    # compress the last output restart file 
+    os.system("bzip2 %s" % restart_file)
 
-        # copy the output files back to the shared directory
-        copy_cmd = "cp %s.bz2 %s.bz2 %s.bz2 %s/" % (new_restart, mdout, traj, rundir)
-
-        # (do this in the background unless this is the last iteration)
-        if i == nblocks:
-            os.system(copy_cmd)
-        else:
-            os.system("%s &" % copy_cmd)
-
-    # Change back to the run directory and remove the temporary directory
-    os.chdir(rundir)
-
-    os.system("rm -rf %s" % tempdir)
-
-    print("All iterations completed :-)")
+    print "All iterations completed :-)"
 
 except:
-    print("SOMETHING WEIRD HAPPENED!!!")
-    os.system("rm -rf %s" % tempdir)
+    print "SOMETHING WEIRD HAPPENED!!!"
+    print "PLEASE LOOK AT THE OUTPUT AND LET US KNOW WHAT WENT WRONG"
