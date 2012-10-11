@@ -90,8 +90,26 @@ void WorkStorePage::downloadItem(QListWidgetItem *titem)
       
    char *downloadid = strdup(titem->data(::Qt::UserRole).toString().toAscii().constData());
    printf("Item clicked %s\n", downloadid);
-   QString thisDir = QFileDialog::getExistingDirectory(NULL, Conspire::tr("Select directory in which to download results"));
-   if (thisDir.isEmpty()) return;
+   
+   int successfully_chosen_a_directory = 0;
+   while (!successfully_chosen_a_directory)
+   {
+      QString thisDir = QFileDialog::getExistingDirectory(NULL, Conspire::tr("Select directory in which to download results"));
+      if (thisDir.isEmpty()) return;
+
+      QDir resultsdir( QString("%1/results").arg(thisDir) );
+      
+      int i = 1;
+      while (resultsdir.exists())
+      {
+         i += 1;
+         resultsdir = QDir( QString("%1/results%2").arg(thisDir).arg(i) );
+      }
+
+      successfully_chosen_a_directory = resultsdir.mkPath( resultsdir.absolutePath() );
+      thisDir = resultsdir.absolutePath();
+   }
+   
    DownloadThread *downloadthread = new DownloadThread(workstoreid.toAscii().constData(), downloadid,
       thisDir.toAscii().constData());
    GetDownloadArray()->insert(workstoreid, downloadthread);

@@ -11,7 +11,7 @@ include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/SirenCore/Siren )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/Conspire/third_party )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR} )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/GUI )
-include_directories( BEFORE SYSTEM /home/benlong/include )
+#include_directories( BEFORE SYSTEM /home/benlong/include )
 
 set (CMAKE_BUILD_TYPE Debug)
 
