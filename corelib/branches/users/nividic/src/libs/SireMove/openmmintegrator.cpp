@@ -71,6 +71,7 @@
 #include <iomanip>
 #include "fastio.h"
 #include <QDebug>
+#include <queue>
 
 /* defines used by write_dcdstep */
 #define NFILE_POS 8L
@@ -106,6 +107,9 @@ using namespace SireIO;
 //ADDED BY GAC
 using namespace std;
 
+typedef vector<pair<int,set<int> > > Vector_of_IntSet;
+typedef vector<pair<int,int> > Vector_of_IntInt;
+
 /* WRITE Macro to make porting easier */
 #define WRITE(fd, buf, size) fio_fwrite(((void *) buf), (size), 1, (fd))
 
@@ -127,11 +131,13 @@ QString file_name(int i);
 
 double gasdev(void);
 
-void create_inter_pairs(vector<int> solute_list, int N , vector<pair<int,int> > & soft_core_list);
+void create_solute_solvent_lists(Vector_of_IntSet & solute_solvent_inter_lists, Vector_of_IntInt & solute_solute, Vector_of_IntInt & solvent_solvent, Vector_of_IntInt & solute_solvent); 
 
-bool in(int i,vector<int> & solute_list);
+void create_intra_14_15_pairs(vector<pair<int,int> > & bond_pair, int N,  vector<pair<int,int> > & list_14, vector<pair<int,int> > & list_15); 
 
+void BFS(vector<set<int> > & bonded, int root, int nbonds, set<int> & list);
 
+void BFS_GE(vector<set<int> > & bonded, int root, int nbonds, set<int> & list);
 
 
 enum {
@@ -285,10 +291,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	bool free_energy_calculation;
 	
-	vector<int> solute_list; //Openmm index of solute atoms
-	
-	vector<pair<int,int> > soft_core_list;
-	
+	Vector_of_IntSet solute_solvent_inter_lists;
+
+		
 	const System & ptr_sys = ws.system();
 		
 	cout << "Save frequency velocities = " << frequent_save_velocities << "\n";
@@ -379,10 +384,17 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	/*****************************************************************IMPORTANT********************************************************************/
 
-	system_openmm.addForce(nonbond_openmm);
+	if(free_energy_calculation == false)
+		system_openmm.addForce(nonbond_openmm);
 
 
-	OpenMM::CustomBondForce * custom_bonded_openmm = NULL;
+	OpenMM::CustomNonbondedForce * custom_softcore_solute_solvent = NULL;
+	
+	
+	OpenMM::CustomNonbondedForce * custom_solute_solute_solvent_solvent = NULL;
+	
+	
+	OpenMM::CustomBondForce * custom_intra_14_15 = NULL;
 
 
 	//Long Range interaction non bonded force method setting
@@ -394,27 +406,50 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		if(free_energy_calculation == true){
 
 			
-			custom_bonded_openmm = new OpenMM::CustomBondForce( "10.0*Hl+100.0*Hc;"
-																"Hc=((0.01*lam_cl)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
-																"diff_cl=(1.0-lam_cl)*0.01;"
-																"lam_cl=min(1,max(0,lambda-1));"
-																"Hl=0.1*lam_lj*4.0*eps_avg*(LJ*LJ-LJ);"
-																"LJ=((sigma_avg*sigma_avg)/soft)^3;"
-																"soft=(diff_lj*delta*sigma_avg+r*r);"
-																"diff_lj=(1.0-lam_lj)*0.1;"
-																"lam_lj=max(0,min(1,lambda))");
+			custom_softcore_solute_solvent = new OpenMM::CustomNonbondedForce("(10.0*Hls+100.0*Hcs)*ZeroOne;"
+																			  "ZeroOne=((issolute1-issolute2))^2;"
+																			  "Hcs=((0.01*lam_cl)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+																			  "diff_cl=(1.0-lam_cl)*0.01;"
+																			  "lam_cl=min(1,max(0,lambda-1));"
+																			  "Hls=0.1*lam_lj*4.0*eps_avg*(LJ*LJ-LJ);"
+																			  "LJ=((sigma_avg*sigma_avg)/soft)^3;"
+																			  "soft=(diff_lj*delta*sigma_avg+r*r);"
+																			  "diff_lj=(1.0-lam_lj)*0.1;"
+																			  "lam_lj=max(0,min(1,lambda));"
+																			  "q_prod=q1*q2;"
+																			  "eps_avg=sqrt(eps1*eps2);"
+																			  "sigma_avg=0.5*(sigma1+sigma2)");
 																
 
-			custom_bonded_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
+			custom_softcore_solute_solvent->addGlobalParameter("lambda",Alchemical_values[0]);
 			
 			int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
 			double shift_Delta = ptr_sys.property("shiftDelta").toString().toDouble();
 			
-			custom_bonded_openmm->addGlobalParameter("delta",shift_Delta);
-			custom_bonded_openmm->addGlobalParameter("n",coulomb_Power);
-
-
+			custom_softcore_solute_solvent->addGlobalParameter("delta",shift_Delta);
+			custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_Power);
+			
+			custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
+			
+			custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*(1-ZeroOne);"
+																					"ZeroOne=((issolute1-issolute2))^2;"
+																					"Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
+																					"Hc=138.935456*q_prod/r;"
+																					"q_prod=q1*q2;"
+																					"eps_avg=sqrt(eps1*eps2);"
+																					"sigma_avg=0.5*(sigma1+sigma2)");
+			
+			
+			custom_solute_solute_solvent_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
+			
+			
+			custom_intra_14_15 = new OpenMM::CustomBondForce("Hl+Hc;"
+													   		 "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
+													   		 "Hc=138.935456*q_prod/r");
+		
+			
 			cout << "Lambda = " << Alchemical_values[0] << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
+			
 
 		}
 
@@ -443,29 +478,63 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		if(free_energy_calculation == true){
 
-			custom_bonded_openmm = new OpenMM::CustomBondForce( "withinCutoff*(10.0*Hl+100.0*Hc);"
-																"withinCutoff=step(cutoff-r);"
-																"Hc=((0.01*lam_cl)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
-																"diff_cl=(1.0-lam_cl)*0.01;"
-																"lam_cl=min(1,max(0,lambda-1));"
-																"Hl=0.1*lam_lj*4.0*eps_avg*(LJ*LJ-LJ);"
-																"LJ=((sigma_avg*sigma_avg)/soft)^3;"
-																"soft=(diff_lj*delta*sigma_avg+r*r);"
-																"diff_lj=(1.0-lam_lj)*0.1;"
-																"lam_lj=max(0,min(1,lambda))");
+			custom_softcore_solute_solvent = new OpenMM::CustomNonbondedForce("(10.0*Hls+100.0*Hcs)*ZeroOne;"
+																			  "ZeroOne=((issolute1-issolute2))^2;"
+																			  "Hcs=((0.01*lam_cl)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+																			  "diff_cl=(1.0-lam_cl)*0.01;"
+																			  "lam_cl=min(1,max(0,lambda-1));"
+																			  "Hls=0.1*lam_lj*4.0*eps_avg*(LJ*LJ-LJ);"
+																			  "LJ=((sigma_avg*sigma_avg)/soft)^3;"
+																			  "soft=(diff_lj*delta*sigma_avg+r*r);"
+																			  "diff_lj=(1.0-lam_lj)*0.1;"
+																			  "lam_lj=max(0,min(1,lambda));"
+																			  "q_prod=q1*q2;"
+																			  "eps_avg=sqrt(eps1*eps2);"
+																			  "sigma_avg=0.5*(sigma1+sigma2)");
+													
 
-
-
-
-			custom_bonded_openmm->addGlobalParameter("lambda",Alchemical_values[0]);
+			custom_softcore_solute_solvent->addGlobalParameter("lambda",Alchemical_values[0]);
 		
 			int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
 			double shift_Delta = ptr_sys.property("shiftDelta").toString().toDouble();
 			
-			custom_bonded_openmm->addGlobalParameter("delta",shift_Delta);
-			custom_bonded_openmm->addGlobalParameter("n",coulomb_Power);
-			custom_bonded_openmm->addGlobalParameter("cutoff",converted_cutoff_distance);
-
+			custom_softcore_solute_solvent->addGlobalParameter("delta",shift_Delta);
+			custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_Power);
+			custom_softcore_solute_solvent->addGlobalParameter("cutoff",converted_cutoff_distance);
+			
+			custom_softcore_solute_solvent->setCutoffDistance(converted_cutoff_distance);
+			
+			
+			custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*(1-ZeroOne);"
+																					"ZeroOne=((issolute1-issolute2))^2;"
+																					"Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
+																					"Hc=138.935456*q_prod/r;"
+																					"q_prod=q1*q2;"
+																					"eps_avg=sqrt(eps1*eps2);"
+																					"sigma_avg=0.5*(sigma1+sigma2)");
+																					
+			custom_solute_solute_solvent_solvent->setCutoffDistance(converted_cutoff_distance);
+			
+			
+			if(flag_cutoff == CUTOFFNONPERIODIC){
+				custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
+				custom_solute_solute_solvent_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
+				
+			}
+			else{
+				custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
+				custom_solute_solute_solvent_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
+			}
+			
+			
+			custom_intra_14_15 = new OpenMM::CustomBondForce("withinCutoff*(Hl+Hc);"
+															 "withinCutoff=step(cutoff-r);"
+															 "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
+														 	 "Hc=138.935456*q_prod/r");
+																  
+			custom_intra_14_15->addGlobalParameter("cutoff",converted_cutoff_distance);
+			
+		
 
 			cout << "Lambda = " << Alchemical_values[0] << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
 		
@@ -485,7 +554,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	/*****************************************************************IMPORTANT********************************************************************/
 	
 	if(free_energy_calculation == true){
-		system_openmm.addForce(custom_bonded_openmm);
+		system_openmm.addForce(custom_softcore_solute_solvent);
+		system_openmm.addForce(custom_solute_solute_solvent_solvent);
+		system_openmm.addForce(custom_intra_14_15);
 	}
 
 		
@@ -631,25 +702,25 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			positions_openmm[system_index] = OpenMM::Vec3(c[j].x() * (OpenMM::NmPerAngstrom) ,
 							c[j].y() * (OpenMM::NmPerAngstrom),c[j].z() * (OpenMM::NmPerAngstrom));
 
-		if(boltz == false){
+			if(boltz == false){
 		
-			velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
+				velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
 														   p[j].y()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
 														   p[j].z()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA);
 
-		}
-		else{
+			}
+			else{
 
-			double vx = gasdev();
-			double vy = gasdev();
-			double vz = gasdev();
-			velocities_openmm[system_index] = OpenMM::Vec3(vx,vy,vz);
+				double vx = gasdev();
+				double vy = gasdev();
+				double vz = gasdev();
+				velocities_openmm[system_index] = OpenMM::Vec3(vx,vy,vz);
 
 		}
 			
 			/*cout << "\natom = " << system_index  << " VELOCITY X = " << velocities_openmm[system_index][0] 
-												   << " VELOCITY Y = " << velocities_openmm[system_index][1] 
-												   << " VELOCITY Z = " << velocities_openmm[system_index][2];*/
+												 << " VELOCITY Y = " << velocities_openmm[system_index][1] 
+												 << " VELOCITY Z = " << velocities_openmm[system_index][2];*/
 
 
 			system_openmm.addParticle(m[j]) ;
@@ -657,9 +728,11 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			Atom at = molatoms.at(j);
 			AtomNum atnum = at.number();
 
-			//qDebug() << " openMM_index " << system_index << " Sire Atom Number " << atnum.toString();
+			//qDebug() << " openMM_index " << system_index << " Sire Atom Number " << atnum.value();
 
 			AtomNumToOpenMMIndex[atnum.value()] = system_index;
+
+			
 
 
 			system_index = system_index + 1;
@@ -673,11 +746,11 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 												   << " MOMENTA Y = " << p[j].y() 
 												   << " MOMENTA Z = " << p[j].z()<<"\n" ;
 
-			cout << "atom = " << j << " MASS = " << m[j]<<"\n" ;*/ 
+			cout << "atom = " << j << " MASS = " << m[j]<<"\n" ;*/
 
 
 		}
-
+		
 
 	}
 
@@ -686,20 +759,34 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	
 	MoleculeGroup solute_group;
+
+	
 	
 	if(free_energy_calculation == true){
 
-		custom_bonded_openmm->addPerBondParameter("q_prod");
-		custom_bonded_openmm->addPerBondParameter("sigma_avg");
-		custom_bonded_openmm->addPerBondParameter("eps_avg");
-
+		custom_softcore_solute_solvent->addPerParticleParameter("q");
+		custom_softcore_solute_solvent->addPerParticleParameter("sigma");
+		custom_softcore_solute_solvent->addPerParticleParameter("eps");
+		custom_softcore_solute_solvent->addPerParticleParameter("issolute");
+		
+		custom_solute_solute_solvent_solvent->addPerParticleParameter("q");
+		custom_solute_solute_solvent_solvent->addPerParticleParameter("sigma");
+		custom_solute_solute_solvent_solvent->addPerParticleParameter("eps");
+		custom_solute_solute_solvent_solvent->addPerParticleParameter("issolute");		
+		
+		
+		custom_intra_14_15->addPerBondParameter("q_prod");
+		custom_intra_14_15->addPerBondParameter("sigma_avg");
+		custom_intra_14_15->addPerBondParameter("eps_avg");
+		
 		const QString solute = "solute";
 
 		MGName Solute(solute);
 		
 		solute_group = ptr_sys[Solute];
-
+	
 	}
+
 
 
 	for (int i=0; i < nmols ; i++){
@@ -709,6 +796,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		Molecule molecule = molgroup.moleculeAt(i).molecule();
 		
 		int num_atoms_molecule = molecule.nAtoms();
+		
 		
 		
 		/*cout << "\nMOLECULE NUM = "<< i <<" N_ATOMS MOLECULE = " 
@@ -730,6 +818,11 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		QVector<SireUnits::Dimension::Charge> charges = atomcharges.toVector();
 		
 	
+		set<int> solvent;
+		
+		set<int> solute;
+		
+	
 		for(int j=0; j< ljparameters.size();j++){
 	
 			double sigma = ljparameters[j].sigma();
@@ -744,11 +837,48 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			Atom atom = molecule.molecule().atoms()[j];
 			
 			AtomNum atnum = atom.number();
+			
+			vector<double> params(4);
+			
+			
 
-			if(solute_group.contains(atom.molecule()))
-				solute_list.push_back(AtomNumToOpenMMIndex[atnum.value()]);
+			
+			
+			if(solute_group.contains(atom.molecule())){//solute atom
+			
+				if(free_energy_calculation == true){
+	
+					params[0]=charge;
+					params[1]=sigma * OpenMM::NmPerAngstrom;
+					params[2]=epsilon * OpenMM::KJPerKcal;
+					params[3]=1.0;
 
+					custom_softcore_solute_solvent->addParticle(params);
+					custom_solute_solute_solvent_solvent->addParticle(params);
+				}
+				
+				solute.insert(AtomNumToOpenMMIndex[atnum.value()]);
+				
+			}
+			else{//solvent atom
+				
+				if(free_energy_calculation == true){
+	
+					params[0]=charge;
+					params[1]=sigma * OpenMM::NmPerAngstrom;
+					params[2]=epsilon * OpenMM::KJPerKcal;
+					params[3]=0.0;
 
+					custom_softcore_solute_solvent->addParticle(params);
+					custom_solute_solute_solvent_solvent->addParticle(params);
+				}
+				
+				
+				solvent.insert(AtomNumToOpenMMIndex[atnum.value()]);
+			
+			}
+			
+		
 			//cout << "Sire Atom number = " << atnum.value() << " OpenMM index = " << AtomNumToOpenMMIndex[atnum.value()] << "\n";
 			
 			
@@ -765,8 +895,13 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			cout << "\n";*/
 		}
-
 		
+		if(solute.size() != 0)
+			solute_solvent_inter_lists.push_back(make_pair(1,solute));
+		else
+			solute_solvent_inter_lists.push_back(make_pair(0,solvent));
+
+
 		//BONDED TERMS
 
 
@@ -1103,6 +1238,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	}// end of loop over mols
 	
+	
 	//Exclude the 1-2, 1-3 bonded atoms from nonbonded forces, and scale down 1-4 bonded atoms
 	
 	nonbond_openmm->createExceptionsFromBonds(bondPairs, Coulob14Scale, LennardJones14Scale);
@@ -1129,22 +1265,70 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	
 	if(free_energy_calculation == true){
+	
+		Vector_of_IntInt solute_solute;
+		Vector_of_IntInt solvent_solvent;
+		Vector_of_IntInt solute_solvent;
 		
-		create_inter_pairs(solute_list,nats,soft_core_list);
+		create_solute_solvent_lists(solute_solvent_inter_lists, solute_solute, solvent_solvent, solute_solvent);
 		
-		/*cout << "Solute List SIZE = "<< solute_list.size() <<" SIZE exluded list = " << soft_core_list.size() << "\n";
+		
+		cout << "Solute Solute list  SIZE = " << solute_solute.size() << "\n";
+		cout << "Solvent Solvent list SIZE = " << solvent_solvent.size() << "\n";
+		cout << "Solute Solvent list SIZE = " << solute_solvent.size() << "\n";
 
 
-		for(unsigned int i=0; i<soft_core_list.size();i++){
+		/*cout << "\n\nSolute - Solute\n\n";
+	
+		for(unsigned int i=0;i<solute_solute.size();i++){
+	
+			cout << "( " << solute_solute[i].first << " , " << solute_solute[i].second << " )\n";
 
-			cout << "Excluded List = ( " << soft_core_list[i].first << " , " <<soft_core_list[i].second << " )";
-			cout << "\n";
 		}*/
 		
-		for(unsigned int i=0; i<soft_core_list.size();i++){
-			
-			int p1= soft_core_list[i].first;
-			int p2= soft_core_list[i].second;
+		/*cout << "\n\nSolvent - Solvent\n\n";
+	
+		for(unsigned int i=0;i<solvent_solvent.size();i++){
+	
+			cout << "( " << solvent_solvent[i].first << " , " << solvent_solvent[i].second << " )\n";
+
+		}*/
+		
+		/*cout << "\n\nSolute - Solvent\n\n";
+		
+		for(unsigned int i=0;i<solute_solvent.size();i++){
+	
+			cout << "( " << solute_solvent[i].first << " , " << solute_solvent[i].second << " )\n";
+
+		}*/
+		
+		
+		vector<pair<int,int> > list_14;
+		
+		vector<pair<int,int> > list_15;
+		
+		
+		create_intra_14_15_pairs(bondPairs, nats,list_14, list_15);
+		
+	
+		/*for(unsigned int i=0; i<list_14.size();i++){
+
+			cout << "14 List = ( " << list_14[i].first << " , " <<list_14[i].second << " )";
+			cout << "\n";
+		}
+		
+
+		for(unsigned int i=0; i<list_15.size();i++){
+
+			cout << "15 List = ( " << list_15[i].first << " , " <<list_15[i].second << " )";
+			cout << "\n";
+		}*/
+	
+		
+		for(unsigned int i=0; i<list_14.size();i++){
+		
+			int p1= list_14[i].first;
+			int p2= list_14[i].second;
 			
 			double  charge_p1=0;
 			double  sigma_p1=0;
@@ -1153,28 +1337,67 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			double  charge_p2=0;
 			double  sigma_p2=0;
 			double  epsilon_p2=0;
-
-
+		
 			nonbond_openmm->getParticleParameters(p1,charge_p1,sigma_p1,epsilon_p1);
 			
 			nonbond_openmm->getParticleParameters(p2,charge_p2,sigma_p2,epsilon_p2);
-			
+		
 			//cout << "p1 = " << p1 << " charge  p1 = " << charge_p1 << " sigma p1 = " << sigma_p1 << " epsilon p1 = " << epsilon_p1 <<"\n";
 			//cout << "p2 = " << p2 << " charge  p2 = " << charge_p2 << " sigma p2 = " << sigma_p2 << " epsilon p2 = " << epsilon_p1 <<"\n\n";
 			
-			double tmp[]={charge_p1*charge_p2,(sigma_p1+sigma_p2)*0.5,sqrt(epsilon_p1*epsilon_p2)};
+			
+			double tmp[]={Coulob14Scale*charge_p1*charge_p2,(sigma_p1+sigma_p2)*0.5, LennardJones14Scale*sqrt(epsilon_p1*epsilon_p2)};
 
 			const std::vector<double> params(tmp,tmp+3);
 
-			custom_bonded_openmm->addBond(p1,p2,params);
+			custom_intra_14_15->addBond(p1,p2,params);
 			
 			nonbond_openmm->addException(p1,p2,0.0,1.0,0.0,true);
-
+		
 		}
 		
-		/*int num_exceptions = nonbond_openmm->getNumExceptions();
+		if(list_14.size() !=0 )
+			cout << "\n\n14 list has been added\n\n";
 		
-		cout << "NUM EXCEPTIONS = " << num_exceptions << "\n";
+		
+		for(unsigned int i=0; i<list_15.size();i++){
+		
+			int p1= list_15[i].first;
+			int p2= list_15[i].second;
+			
+			double  charge_p1=0;
+			double  sigma_p1=0;
+			double  epsilon_p1=0;
+			
+			double  charge_p2=0;
+			double  sigma_p2=0;
+			double  epsilon_p2=0;
+		
+			nonbond_openmm->getParticleParameters(p1,charge_p1,sigma_p1,epsilon_p1);
+			
+			nonbond_openmm->getParticleParameters(p2,charge_p2,sigma_p2,epsilon_p2);
+		
+			//cout << "p1 = " << p1 << " charge  p1 = " << charge_p1 << " sigma p1 = " << sigma_p1 << " epsilon p1 = " << epsilon_p1 <<"\n";
+			//cout << "p2 = " << p2 << " charge  p2 = " << charge_p2 << " sigma p2 = " << sigma_p2 << " epsilon p2 = " << epsilon_p1 <<"\n\n";
+			
+			
+			double tmp[]={charge_p1*charge_p2,(sigma_p1+sigma_p2)*0.5, sqrt(epsilon_p1*epsilon_p2)};
+
+			const std::vector<double> params(tmp,tmp+3);
+
+			custom_intra_14_15->addBond(p1,p2,params);
+		
+			nonbond_openmm->addException(p1,p2,0.0,1.0,0.0,true);
+			
+		}
+		
+		if(list_15.size() !=0 )
+			cout << "\n\n15 list has been added\n\n";
+	
+				
+		int num_exceptions = nonbond_openmm->getNumExceptions();
+		
+		//cout << "NUM EXCEPTIONS = " << num_exceptions << "\n";
 		
 		
 		for(int i=0;i<num_exceptions;i++){
@@ -1186,11 +1409,13 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			nonbond_openmm->getExceptionParameters(i,p1,p2,charge_prod,sigma_avg,epsilon_avg);
 
-			cout << "Exception = " << i << " p1 = " << p1 << " p2 = " << p2 << " charge prod = " << charge_prod << 
-				    " sigma avg = " << sigma_avg << " epsilon_avg = " << epsilon_avg << "\n";
+			/*cout << "Exception = " << i << " p1 = " << p1 << " p2 = " << p2 << " charge prod = " << charge_prod << 
+				    " sigma avg = " << sigma_avg << " epsilon_avg = " << epsilon_avg << "\n";*/
+				    
+			custom_softcore_solute_solvent->addExclusion(p1,p2);
+			custom_solute_solute_solvent_solvent->addExclusion(p1,p2);
 
-
-		}*/
+		}
 
 	}
 
@@ -1301,16 +1526,17 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			lam_val = context_openmm.getParameter("lambda");
 
 			cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal/mol " << "\n";
+			
 
-			for(int j=0;j<n_freq;j++){
+			//cout  << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal/mol " << "\n";
+
+			/*for(int j=0;j<n_freq;j++){
 
 				QString name = file_name(j);
 
 				integrator(name.toStdString().c_str(), context_openmm,integrator_openmm, positions_openmm, 
 						   velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);
 				 
-				
-				integrator_openmm.step(frequency_energy);
 
 				cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
 
@@ -1368,7 +1594,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				context_openmm.setParameter("lambda",Alchemical_values[i]);
 
-			}
+			}*/
 
 
 			context_openmm.setPositions(positions_openmm_start);
@@ -2122,39 +2348,363 @@ double gasdev(void) {
 	}
 }
 
-bool in(int i, vector<int> & solute_list){
 
-	for(unsigned int k=0;k<solute_list.size();k++){
-		if(i == solute_list[k])
-			return true;
-	}
 
-	return false;
+
+typedef  std::pair<int, int> PairInt;
+
+bool compare(const PairInt &l,const PairInt &r)
+{
+  int lfirst = std::min(l.first,l.second);
+  int rfirst = std::min(r.first,r.second);
+  if (lfirst<rfirst) return true;
+  if (rfirst<lfirst) return false;
+  return std::max(l.first,l.second)<std::max(r.first,r.second);
 }
 
-void create_inter_pairs (vector<int> solute_list, int N, vector<pair<int,int> > & soft_core_list){
 
-	for(int i=0;i<N;i++){
+void create_intra_14_15_pairs(vector<pair<int,int> > & bondPairs, int Natoms, vector<pair<int,int> > & list_pairs_14, vector<pair<int,int> > & list_pairs_15){
 
-		for( int j=i+1; j<N; j++){
+	typedef std::set<PairInt,bool (*)(const PairInt &,const PairInt &)> IntSet;
+  	
+  	IntSet list14_pairs(compare);
 
-			bool i_in = in(i,solute_list);
-			bool j_in = in(j,solute_list);
+	IntSet list15_pairs(compare);
+	
+	
+	vector<set<int> > bonded(Natoms);
 
-			if(i_in==true && j_in==true)
-				continue;
+	for (int i = 0; i < (int) bondPairs.size(); i++) {
+		bonded[bondPairs[i].first].insert(bondPairs[i].second);
+		bonded[bondPairs[i].second].insert(bondPairs[i].first);
+	}
 
-			if(i_in==true && j_in==false){
-				soft_core_list.push_back(make_pair(i,j));
-				continue;
-			}
+	/*for( int i=0;i<(int) bonded.size(); i++){
+	
+			cout << "\nParticle = " << i << "\n";
+			
+			for (set<int>::const_iterator iter = bonded[i].begin(); iter != bonded[i].end(); ++iter){
+							
+					cout << " " << (*iter);								
+			}				
+	}*/
+	
+	
+	for(int i=0;i<Natoms;i++){
+	
+		set<int> list12;
+	
+		BFS(bonded, i, 1, list12);
+	
+		/*for (set<int>::const_iterator iter = list12.begin(); iter != list12.end(); ++iter){
 
-			if(j_in==true)
-					soft_core_list.push_back(make_pair(i,j));
+			cout << "\n12 = " << (*iter) << "\n";
+	
+		}*/
+	
+		set<int> list13;
+	
+		BFS(bonded, i, 2, list13);
+	
+	
+		for (set<int>::const_iterator iter = list13.begin(); iter != list13.end(); ++iter){
+	
+			set<int>::iterator it;
 
+			it = list12.find(*iter);
+		
+			if(it != list12.end())
+				list13.erase((*it));
+		
 		}
-	}
+	
+	
+		/*for (set<int>::const_iterator iter = list13.begin(); iter != list13.end(); ++iter){
+
+			cout << "\n13 = " << (*iter) << "\n";
+	
+		}*/
+	
+		set<int> list14;
+	
+		BFS(bonded, i, 3, list14);
+	
+	
+		for (set<int>::const_iterator iter = list14.begin(); iter != list14.end(); ++iter){
+	
+			set<int>::iterator it;
+
+			it = list12.find(*iter);
+		
+			if(it != list12.end())
+				list14.erase((*it));
+		}
+	
+
+		for (set<int>::const_iterator iter = list14.begin(); iter != list14.end(); ++iter){
+
+			set<int>::iterator it;
+
+			it = list13.find(*iter);
+		
+			if(it != list13.end())
+				list14.erase((*it));
+	
+		}
+	
+	
+		for (set<int>::const_iterator iter = list14.begin(); iter != list14.end(); ++iter){
+
+			list14_pairs.insert(PairInt(i,*iter));
+			
+			
+			//cout << "\n14 = " << (*iter) << "\n";
+	
+		}
+	
+	
+		
+	
+	
+		set<int> list15;
+	
+		BFS_GE(bonded, i, 4, list15);
+	
+
+	
+    	for (set<int>::const_iterator iter = list15.begin(); iter != list15.end(); ++iter){
+	
+			set<int>::iterator it;
+
+			it = list12.find(*iter);
+		
+			if(it != list12.end())
+				list15.erase((*it));
+		}
+	
+
+		for (set<int>::const_iterator iter = list15.begin(); iter != list15.end(); ++iter){
+
+			set<int>::iterator it;
+
+			it = list13.find(*iter);
+		
+			if(it != list13.end())
+				list15.erase((*it));
+		}
+
+		for (set<int>::const_iterator iter = list15.begin(); iter != list15.end(); ++iter){
+
+			set<int>::iterator it;
+
+			it = list14.find(*iter);
+		
+			if(it != list14.end())
+				list15.erase((*it));
+	
+		}	
+	
+	
+	
+		for (set<int>::const_iterator iter = list15.begin(); iter != list15.end(); ++iter){
+
+			
+			list15_pairs.insert(PairInt(i,*iter));
+			
+			//cout << "\n15 = " << (*iter) << "\n";
+	
+		}
+	
+	
+	}	
+	
+	
+	for (IntSet::const_iterator i=list14_pairs.begin(); i!=list14_pairs.end(); ++i) { 
+    	
+    	list_pairs_14.push_back(make_pair((*i).first,(*i).second));
+    	
+    	//cout << "( " << (*i).first << "," << (*i).second << " )" << "\n";
+  	
+  	
+  	} 
+  	
+  	
+  	for (IntSet::const_iterator i=list15_pairs.begin(); i!=list15_pairs.end(); ++i) { 
+  		
+  		list_pairs_15.push_back(make_pair((*i).first,(*i).second));
+    	
+    	//cout << "( " << (*i).first << "," << (*i).second << " )" << "\n";
+  	}
+  	
+
+	
 
 }
+
+
+
+void BFS(vector<set<int> > & bonded, int root, int nbonds, set<int> & list){
+
+	vector<int> visited;
+	
+	vector<int> distance;
+	
+	queue<int> Q;
+
+	for(unsigned int i=0; i< bonded.size(); i++){
+		visited.push_back(0);
+		distance.push_back(0);
+	}
+	
+	visited[root] = 1;
+	distance[root] = 0;
+	
+	Q.push(root);
+	
+	while(!Q.empty()){
+	
+		int u = Q.front();
+		Q.pop();
+		
+		for(set<int>::const_iterator v = bonded[u].begin(); v != bonded[u].end(); ++v){
+			
+			if(visited[*v] == 0){
+			
+				visited[*v] = 1;
+				
+				distance[*v] = distance[u]+1;
+				
+				if(distance[*v] == nbonds)
+					list.insert(*v);
+				
+				Q.push(*v);
+						
+			}
+		
+		} 	
+
+	}
+	
+	/*cout << "\n\nNODE = " << root << "\n\n";
+	
+	for(unsigned int i=0; i< distance.size(); i++){
+		cout << "distance (" << root << " , " << i << ") = "<< distance[i] << "\n";
+	}*/
+	
+}
+
+
+void BFS_GE(vector<set<int> > & bonded, int root, int nbonds, set<int> & list){
+
+	vector<int> visited;
+	
+	vector<int> distance;
+	
+	queue<int> Q;
+
+	for(unsigned int i=0; i< bonded.size(); i++){
+		visited.push_back(0);
+		distance.push_back(0);
+	}
+	
+	visited[root] = 1;
+	distance[root] = 0;
+	
+	Q.push(root);
+	
+	while(!Q.empty()){
+	
+		int u = Q.front();
+		Q.pop();
+		
+		for(set<int>::const_iterator v = bonded[u].begin(); v != bonded[u].end(); ++v){
+			
+			if(visited[*v] == 0){
+			
+				visited[*v] = 1;
+				
+				distance[*v] = distance[u]+1;
+				
+				if(distance[*v] >= nbonds)
+					list.insert(*v);
+				
+				Q.push(*v);
+						
+			}
+		
+		} 	
+
+	}
+	
+	/*cout << "\n\nNODE = " << root << "\n\n";
+	
+	for(unsigned int i=0; i< distance.size(); i++){
+		cout << "distance (" << root << " , " << i << ") = "<< distance[i] << "\n";
+	}*/
+	
+}
+
+void create_solute_solvent_lists(Vector_of_IntSet & solute_solvent_inter_lists, Vector_of_IntInt & solute_solute, Vector_of_IntInt & solvent_solvent, Vector_of_IntInt & solute_solvent){
+
+	unsigned int Nmolecules = solute_solvent_inter_lists.size();
+	
+	for(unsigned int i=0; i<Nmolecules; i++){
+	
+		int type_i = solute_solvent_inter_lists[i].first;
+		
+		for(unsigned int j=i+1;j<Nmolecules;j++){
+				
+				int type_j = solute_solvent_inter_lists[j].first;
+				
+				if(type_i == type_j){
+				
+					if(type_i == 0){//solvent-solvent
+					
+						for (set<int>::const_iterator k = solute_solvent_inter_lists[i].second.begin(); k != solute_solvent_inter_lists[i].second.end(); ++k){
+							
+							for (set<int>::const_iterator l = solute_solvent_inter_lists[j].second.begin(); l != solute_solvent_inter_lists[j].second.end(); ++l){
+							
+									solvent_solvent.push_back(make_pair(*k,*l));				
+												
+							}		
+								
+						}				
+				
+					}
+					
+					if(type_i == 1){//solute-solute
+						
+						for (set<int>::const_iterator k = solute_solvent_inter_lists[i].second.begin(); k != solute_solvent_inter_lists[i].second.end(); ++k){
+							
+							for (set<int>::const_iterator l = solute_solvent_inter_lists[j].second.begin(); l != solute_solvent_inter_lists[j].second.end(); ++l){
+							
+									solute_solute.push_back(make_pair(*k,*l));				
+												
+							}		
+								
+						}
+					}
+					
+				}
+				else{//solute-solvent
+					
+					for (set<int>::const_iterator k = solute_solvent_inter_lists[i].second.begin(); k != solute_solvent_inter_lists[i].second.end(); ++k){
+							
+							for (set<int>::const_iterator l = solute_solvent_inter_lists[j].second.begin(); l != solute_solvent_inter_lists[j].second.end(); ++l){
+									
+									solute_solvent.push_back(make_pair(*k,*l));				
+												
+							}				
+						}
+				}
+				
+		}
+	
+	}
+
+} 
+
+
+
 
 
