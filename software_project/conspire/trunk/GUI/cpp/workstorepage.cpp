@@ -91,10 +91,11 @@ void WorkStorePage::downloadItem(QListWidgetItem *titem)
    char *downloadid = strdup(titem->data(::Qt::UserRole).toString().toAscii().constData());
    printf("Item clicked %s\n", downloadid);
    
+   QString thisDir;
    int successfully_chosen_a_directory = 0;
    while (!successfully_chosen_a_directory)
    {
-      QString thisDir = QFileDialog::getExistingDirectory(NULL, Conspire::tr("Select directory in which to download results"));
+      thisDir = QFileDialog::getExistingDirectory(NULL, Conspire::tr("Select directory in which to download results"), QString(), QFileDialog::DontUseNativeDialog);
       if (thisDir.isEmpty()) return;
 
       QDir resultsdir( QString("%1/results").arg(thisDir) );
@@ -106,7 +107,7 @@ void WorkStorePage::downloadItem(QListWidgetItem *titem)
          resultsdir = QDir( QString("%1/results%2").arg(thisDir).arg(i) );
       }
 
-      successfully_chosen_a_directory = resultsdir.mkPath( resultsdir.absolutePath() );
+      successfully_chosen_a_directory = resultsdir.mkpath( resultsdir.absolutePath() );
       thisDir = resultsdir.absolutePath();
    }
    

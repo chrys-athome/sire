@@ -14,6 +14,8 @@ include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/GUI )
 #include_directories( BEFORE SYSTEM /home/benlong/include )
 
 set (CMAKE_BUILD_TYPE Debug)
+# This is bad and wrong. Need to write a proper cmake finding script.
+set (ACQUIRE_INCLUDE_DIR CACHE STRING /home/benlong/include )
 
 # Siren depends on >= Qt 4.4
 find_package( Qt4 4.4.0 COMPONENTS QtCore QtGui QtOpenGL )
@@ -30,7 +32,8 @@ endif()
 include_directories(${QT_QTCORE_INCLUDE_DIR}
                     ${QT_QTGUI_INCLUDE_DIR}
                     ${QT_QTOPENGL_INCLUDE_DIR}
-                    ${CMAKE_CURRENT_BINARY_DIR})
+                    ${CMAKE_CURRENT_BINARY_DIR}
+                    ${ACQUIRE_INCLUDE_DIR})
 
 QT4_ADD_RESOURCES(Conspire_Images images/images.qrc)
 
@@ -41,6 +44,9 @@ set ( CONSPIRE_GUI_MOC_HEADERS
       Conspire/GUI/animation.h
       Conspire/GUI/button.h
       Conspire/GUI/chooseclasspage.h
+      Conspire/GUI/chooseclusterpage.h
+      Conspire/GUI/clusterinputpage.h
+      Conspire/GUI/clusterswidget.h
       Conspire/GUI/configdocument.h
       Conspire/GUI/configpage.h
       Conspire/GUI/configview.h
@@ -78,6 +84,9 @@ set ( CONSPIRE_GUI_PUBLIC_HEADERS
       Conspire/GUI/animation.h
       Conspire/GUI/button.h
       Conspire/GUI/chooseclasspage.h
+      Conspire/GUI/chooseclusterpage.h
+      Conspire/GUI/clusterinputpage.h
+      Conspire/GUI/clusterswidget.h
       Conspire/GUI/configdocument.h
       Conspire/GUI/configpage.h  
       Conspire/GUI/configview.h
@@ -120,6 +129,9 @@ set ( CONSPIRE_GUI_SOURCES
       cpp/animation.cpp
       cpp/button.cpp
       cpp/chooseclasspage.cpp
+      cpp/chooseclusterpage.cpp
+      cpp/clusterinputpage.cpp
+      cpp/clusterswidget.cpp
       cpp/configdocument.cpp
       cpp/configpage.cpp
       cpp/configview.cpp

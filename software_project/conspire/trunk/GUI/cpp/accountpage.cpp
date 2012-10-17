@@ -32,6 +32,7 @@
 #include "Conspire/GUI/button.h"
 #include "Conspire/GUI/exceptionpage.h"
 #include "Conspire/GUI/widgetstack.h"
+#include "Conspire/GUI/chooseclusterpage.h"
 
 #include "Conspire/option.h"
 #include "Conspire/values.h"
@@ -68,7 +69,8 @@ using namespace Conspire;
 
 void AccountPage::addSSHAccount()
 {
-   emit( push( PagePointer( new UserPage(1))));
+//   emit( push( PagePointer( new UserPage(1))));
+   emit( push( PagePointer( new ChooseClusterPage())));
 }
 
 void AccountPage::refreshList()
@@ -132,8 +134,8 @@ void AccountPage::build()
     WidgetRack *sub_rack = new WidgetRack(this);
     sub_rack->setFocusPolicy(::Qt::NoFocus);
     
-    QLabel *intro_label = new QLabel(Conspire::tr("Remote machine accounts using SSH must be added"
-       " to Acquire in order to do work. Click here to add an SSH login:"));
+    QLabel *intro_label = new QLabel(Conspire::tr("Cluster accounts using SSH must be added"
+       " to Acquire in order to do work. Click here to add login details:"));
     intro_label->setWordWrap(true);
     intro_label->setMinimumSize(intro_label->sizeHint());
     sub_rack->addWidget(intro_label);

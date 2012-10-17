@@ -299,7 +299,7 @@ QString UserPage::addMachine(QString username, QString password, QString machine
    QString userathost = QString("%1@%2").arg(username, machinename);
    char *failed_hosts_list = NULL;
    if (loginsuccessful) *loginsuccessful = FALSE;
-   int retval = AcquireAddSSHHostToPool(userathost.toAscii().constData(), password.toAscii().constData(), &failed_hosts_list);
+   int retval = AcquireAddSSHHostToPool(userathost.toAscii().constData(), password.toAscii().constData(), &failed_hosts_list, NULL);
    switch (retval)
    {
       case ACQUIRE_USER_ADD_SSH__SSH_SUCCESS:
