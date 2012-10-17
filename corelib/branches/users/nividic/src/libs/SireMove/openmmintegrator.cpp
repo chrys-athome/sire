@@ -1273,9 +1273,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		create_solute_solvent_lists(solute_solvent_inter_lists, solute_solute, solvent_solvent, solute_solvent);
 		
 		
-		cout << "Solute Solute list  SIZE = " << solute_solute.size() << "\n";
+		/*cout << "Solute Solute list  SIZE = " << solute_solute.size() << "\n";
 		cout << "Solvent Solvent list SIZE = " << solvent_solvent.size() << "\n";
-		cout << "Solute Solvent list SIZE = " << solute_solvent.size() << "\n";
+		cout << "Solute Solvent list SIZE = " << solute_solvent.size() << "\n";*/
 
 
 		/*cout << "\n\nSolute - Solute\n\n";
@@ -1525,18 +1525,17 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			lam_val = context_openmm.getParameter("lambda");
 
-			cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal/mol " << "\n";
-			
+			cout << "Start - Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal/mol " << "\n";
+	
 
-			//cout  << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal/mol " << "\n";
-
-			/*for(int j=0;j<n_freq;j++){
+			for(int j=0;j<n_freq;j++){
 
 				QString name = file_name(j);
 
-				integrator(name.toStdString().c_str(), context_openmm,integrator_openmm, positions_openmm, 
-						   velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);
-				 
+				/*integrator(name.toStdString().c_str(), context_openmm,integrator_openmm, positions_openmm, 
+						   velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);*/
+
+				integrator_openmm.step(frequency_energy);
 
 				cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
 
@@ -1580,22 +1579,22 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 					exit(-1); 
 				}
 
-				double avg_GF = GF_acc /((double) j+1);
+				double avg_GF = GF_acc /((double) (j+1));
 
-				double avg_GB = GB_acc /((double) j+1);
+				double avg_GB = GB_acc /((double) (j+1));
 
 				double Energy_GF = -(1.0/beta)*log(avg_GF);
 
 				double Energy_GB = -(1.0/beta)*log(avg_GB);
 
-				double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2.0 * delta);
+				double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2 * delta);
 
 				cout << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
 
+
 				context_openmm.setParameter("lambda",Alchemical_values[i]);
 
-			}*/
-
+			}
 
 			context_openmm.setPositions(positions_openmm_start);
 
@@ -2502,7 +2501,8 @@ void create_intra_14_15_pairs(vector<pair<int,int> > & bondPairs, int Natoms, ve
 			if(it != list14.end())
 				list15.erase((*it));
 	
-		}	
+		}
+		
 	
 	
 	
@@ -2578,10 +2578,10 @@ void BFS(vector<set<int> > & bonded, int root, int nbonds, set<int> & list){
 					list.insert(*v);
 				
 				Q.push(*v);
-						
+
 			}
 		
-		} 	
+		}
 
 	}
 	
@@ -2653,23 +2653,23 @@ void create_solute_solvent_lists(Vector_of_IntSet & solute_solvent_inter_lists, 
 		int type_i = solute_solvent_inter_lists[i].first;
 		
 		for(unsigned int j=i+1;j<Nmolecules;j++){
-				
+
 				int type_j = solute_solvent_inter_lists[j].first;
 				
 				if(type_i == type_j){
-				
+
 					if(type_i == 0){//solvent-solvent
 					
 						for (set<int>::const_iterator k = solute_solvent_inter_lists[i].second.begin(); k != solute_solvent_inter_lists[i].second.end(); ++k){
 							
 							for (set<int>::const_iterator l = solute_solvent_inter_lists[j].second.begin(); l != solute_solvent_inter_lists[j].second.end(); ++l){
 							
-									solvent_solvent.push_back(make_pair(*k,*l));				
-												
-							}		
-								
-						}				
-				
+									solvent_solvent.push_back(make_pair(*k,*l));
+
+							}
+
+						}
+
 					}
 					
 					if(type_i == 1){//solute-solute
@@ -2678,13 +2678,13 @@ void create_solute_solvent_lists(Vector_of_IntSet & solute_solvent_inter_lists, 
 							
 							for (set<int>::const_iterator l = solute_solvent_inter_lists[j].second.begin(); l != solute_solvent_inter_lists[j].second.end(); ++l){
 							
-									solute_solute.push_back(make_pair(*k,*l));				
-												
-							}		
-								
+									solute_solute.push_back(make_pair(*k,*l));
+
+							}
+
 						}
 					}
-					
+
 				}
 				else{//solute-solvent
 					
@@ -2692,9 +2692,9 @@ void create_solute_solvent_lists(Vector_of_IntSet & solute_solvent_inter_lists, 
 							
 							for (set<int>::const_iterator l = solute_solvent_inter_lists[j].second.begin(); l != solute_solvent_inter_lists[j].second.end(); ++l){
 									
-									solute_solvent.push_back(make_pair(*k,*l));				
-												
-							}				
+									solute_solvent.push_back(make_pair(*k,*l));
+
+							}
 						}
 				}
 				
@@ -2702,9 +2702,5 @@ void create_solute_solvent_lists(Vector_of_IntSet & solute_solvent_inter_lists, 
 	
 	}
 
-} 
-
-
-
-
+}
 
