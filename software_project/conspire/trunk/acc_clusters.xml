@@ -1,0 +1,19 @@
+
+<accessibleclusters>
+   <clusterdescription id="pmemd">
+      <name>Emerald 11 MD via PMEMD...</name>
+      <description>This workpacket ... Emerald 11 is not a package that provides ... molecular dynamics ...</description>
+      <icon>amberpic_gpu.jpg</icon>
+      <directory>pmemd</directory>
+      <optionsxml>emerald</optionsxml>
+      <optionsincludedirs>pmemd</optionsincludedirs>
+   </clusterdescription>
+   <clusterdescription id="sirebind">
+      <name>Time-dependant binding...</name>
+      <description>Given a trajectory ... at intervals ... calculate binding...</description>
+      <icon>inhib9-trans.preview.png</icon>
+      <directory>absbinding</directory>
+      <optionsxml>absbinding.xml</optionsxml>
+      <optionsincludedirs>absbinding</optionsincludedirs>
+   </clusterdescription>
+</accessibleclusters>
