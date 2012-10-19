@@ -65,6 +65,8 @@ namespace Conspire
         
         ~MainWindow();
 
+        static MainWindow* testFrom(Options options);
+
     protected:
         void resizeEvent(QResizeEvent *e);
         

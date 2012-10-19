@@ -30,6 +30,7 @@
 #include "Conspire/GUI/configview.h"
 #include "Conspire/GUI/userpage.h"
 #include "Conspire/GUI/mainbar.h"
+#include "Conspire/GUI/optionspage.h"
 
 #include "Conspire/GUI/configdocument.h"
 
@@ -41,6 +42,22 @@ using namespace Conspire;
 MainWindow::MainWindow(QWidget *parent) : QGraphicsView(parent)
 {
     build();
+}
+
+MainWindow* MainWindow::testFrom(Options options)
+{
+    MainWindow *win = new MainWindow();
+
+    PageView *pageview = new PageView();
+    pageview->setTitleVisible(true);
+    win->view = PagePointer(pageview);
+
+    OptionsPage *page = new OptionsPage(options);
+    pageview->pushed(page);
+
+    win->scene()->addItem(win->view);    
+
+    return win;
 }
 
 /** Constructor, automatically loading an initial set of options */

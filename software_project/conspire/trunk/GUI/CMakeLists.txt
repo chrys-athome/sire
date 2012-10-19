@@ -11,7 +11,7 @@ include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/SirenCore/Siren )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/Conspire/third_party )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR} )
 include_directories( BEFORE SYSTEM ${CMAKE_SOURCE_DIR}/GUI )
-#include_directories( BEFORE SYSTEM /home/benlong/include )
+include_directories( BEFORE SYSTEM /Users/chris/local/include )
 
 set (CMAKE_BUILD_TYPE Debug)
 # This is bad and wrong. Need to write a proper cmake finding script.
@@ -175,6 +175,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Conspire/GUI/config.h.in ${CMAKE_CURR
 # generate the library and application
 add_library ( ConspireGUI ${CONSPIRE_GUI_SOURCES} ${Conspire_Images} )
 add_executable ( conspire_gui cpp/main.cpp )
+add_executable ( test_conspire cpp/test_main.cpp )
 
 set_target_properties (ConspireGUI PROPERTIES
                        VERSION ${CONSPIRE_VERSION_MAJOR}
@@ -191,9 +192,10 @@ target_link_libraries (ConspireGUI
                        ${ACQUIRE_LIBRARY})
 
 target_link_libraries ( conspire_gui ConspireGUI ${ACQUIRE_LIBRARY} )
+target_link_libraries ( test_conspire ConspireGUI ${ACQUIRE_LIBRARY} )
 
 # installation
-install( TARGETS ConspireGUI conspire_gui EXPORT ConspireGUI
+install( TARGETS ConspireGUI conspire_gui test_conspire EXPORT ConspireGUI
          RUNTIME DESTINATION bin
          LIBRARY DESTINATION lib
          ARCHIVE DESTINATION lib/static
