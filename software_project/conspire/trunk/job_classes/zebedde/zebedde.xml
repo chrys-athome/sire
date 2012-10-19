@@ -139,12 +139,12 @@
     <key>fragments</key>
     <value>
       <options>
-        <option>
+        <option optional="true">
           <key>library</key>
           <description>file containing the fragment library</description>
           <value><file>big_library.arc</file></value>
         </option>
-        <option>
+        <option optional="true">
           <key>forcefield</key>
           <description>file containing the forcefield parameters</description>
           <value><file>new_pcff07.frc</file></value>

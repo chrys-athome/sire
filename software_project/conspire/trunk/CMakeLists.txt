@@ -132,11 +132,3 @@ install( TARGETS Conspire EXPORT Conspire
 
 install( FILES ${CONSPIRE_PUBLIC_HEADERS}
          DESTINATION include/Conspire )
-
-install( DIRECTORY ${SOURCE_DIR}/Conspire/third_party
-         DESTINATION include/Conspire
-         PATTERN .svn EXCLUDE
-       )
-
-install( FILES ${CONSPIRE_PRIVATE_HEADERS}
-         DESTINATION include/Conspire/detail )

@@ -139,11 +139,3 @@ install( TARGETS Siren EXPORT Siren
 
 install( FILES ${SIREN_PUBLIC_HEADERS}
          DESTINATION include/Siren )
-
-install( DIRECTORY ${SOURCE_DIR}/Siren/third_party
-         DESTINATION include/Siren
-         PATTERN .svn EXCLUDE
-       )
-
-install( FILES ${SIREN_PRIVATE_HEADERS}
-         DESTINATION include/Siren/detail )

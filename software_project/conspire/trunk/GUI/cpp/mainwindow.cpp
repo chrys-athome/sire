@@ -30,8 +30,6 @@
 #include "Conspire/GUI/configview.h"
 #include "Conspire/GUI/userpage.h"
 #include "Conspire/GUI/mainbar.h"
-#include "Conspire/GUI/optionspage.h"
-
 #include "Conspire/GUI/configdocument.h"
 
 #include "Conspire/option.h"
@@ -49,15 +47,22 @@ MainWindow* MainWindow::testFrom(Options options)
     MainWindow *win = new MainWindow();
 
     PageView *pageview = new PageView();
-    pageview->setTitleVisible(true);
+    pageview->setTitleVisible(false);
     win->view = PagePointer(pageview);
 
-    OptionsPage *page = new OptionsPage(options);
+    ConfigDocument *page = new ConfigDocument("zebedde", options);
     pageview->pushed(page);
+
+    connect(page, SIGNAL(saveDocument(Options)), win, SLOT(testSave(Options)));
 
     win->scene()->addItem(win->view);    
 
     return win;
+}
+
+void MainWindow::testSave(Options opts)
+{
+    qDebug() << opts.toConfig(true);
 }
 
 /** Constructor, automatically loading an initial set of options */

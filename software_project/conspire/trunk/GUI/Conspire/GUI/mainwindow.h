@@ -69,6 +69,9 @@ namespace Conspire
 
     protected:
         void resizeEvent(QResizeEvent *e);
+
+    protected slots:
+        void testSave(Options opts);
         
     private:
         void build();
