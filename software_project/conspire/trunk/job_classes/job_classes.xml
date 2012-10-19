@@ -8,6 +8,14 @@
       <optionsxml>pmemd.xml</optionsxml>
       <optionsincludedirs>pmemd</optionsincludedirs>
    </jobclassdescription>
+   <jobclassdescription id="zebedde">
+      <name>Zeolite design using Zebedde</name>
+      <description>This workpacket runs a Zebedde calculation for zeolite design</description>
+      <icon>zebedde.jpg</icon>
+      <directory>zebedde</directory>
+      <optionsxml>zebedde.xml</optionsxml>
+      <optionsincludedirs>zebedde</optionsincludedirs>
+   </jobclassdescription>
    <jobclassdescription id="sirebind">
       <name>Time-dependant binding...</name>
       <description>Given a trajectory ... at intervals ... calculate binding...</description>

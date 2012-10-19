@@ -1,0 +1,151 @@
+# anything after a hash is now ignored
+# minimisers no longer work (interface to Accelrys uncertain!)
+# 
+title 
+Build templates for eu1 example
+initial_minimize template no 
+initial_minimize in_pore no 
+
+#
+# No longer need biosym logfiles!
+#
+logfile off
+
+#box limits
+#-1.0 1.0 -2.0 2.0 -3.0 3.0
+#box fraction 0.75
+
+#to centre or not to centre initial seed
+centre on  
+
+#testing probability NOW A REAL PERCENTAGE
+prob_test 100.0
+
+#concentration limits on each element
+# element (int) max conc in template 
+concentration 1
+N 2
+
+# list of forbidden bonds
+forbidden 1
+N N
+
+#initial increment
+weight hydrogen
+1 0
+
+#default paths for minimizers in data.h set for faraday
+#minimizer setup
+#minimizer minimizer_name
+#where     minimizer_name = discover : calls fdiscover from MSI
+#                         = c2discover : calls discovery running under c2.
+#                         = mopac    : calls Mopac 6.0 NB weighting of minimizer_inpore =0!!
+#                         = internal : calls Dave's in_development minimizer, not currently available
+
+#minimizer c2discover
+#discover path /usr/people/msi/400/irix6r8/biosym_exe/fdiscover
+#strategy template dummy_first.inp
+#strategy in_pore dummy_inp_first.inp
+#discover forcefield /disk5/dave/cff91_z/cff91_czeo.bin
+
+# to use the internal minimizer
+minimizer internal 
+
+#growth criteria
+vdw_scale 0.85
+stop -500.0
+
+#files
+pore eu1.car 
+convention XYZ
+#
+# verbose [on/off/debug] debug monitors which actions are being carried out and is extremely detailed
+#
+verbose off
+
+seed molecule methane_2.car
+
+#modification parameters
+modify attempts 100000
+maxtemplates   1 
+#
+# Cost function directive
+# cost_function [steric/non_bond/nonbond/energy]
+#
+# ONLY use non_bond OR steric at the moment
+#
+cost_function non_bond
+#
+nb_cutoff 6.5 
+#ch_cutoff 6.5 
+
+shake step 5.0
+rock step 45.0
+#
+#General weighting of items
+#Note need for end statement to delimit the weights lines.
+#
+#-------------------------------------------------------------------------
+# Build | Rotate_last_bond | Shake | Rock | Twist | Ring_formation | Minimise_gas_phase | Minimise_in_host
+weights action   
+    0            0             50      50     50            0                  0                   0
+end
+#
+# Temperature used in Monte Carlo testing
+#
+temperature 350.0
+#
+
+#Interval at which to produce a current template coordinate file (.pcar) file
+# peek now also controls the trajectory writing:
+# when the number of attempt cycles hits the value set the next
+# accepted structure is written. In the MC docking mode lots of
+# structures can appear so this is to limit the size of the trajectory
+# file. The energy is still output to the out file for every success.
+#
+peek 100
+#
+
+#fragment library control
+library fragment big_library.arc
+
+#arc file for accepted templates
+animate biosym eu1_dock_
+library template eu1_dock_
+
+#library for internal forcefield
+library forcefield new_pcff07.frc
+
+#methane  ethane  benzene  ammonia  ammonium propane pyrrole adamantane cyclohexane
+weights fragments
+    2         2      10         1        1       4       4         1      4
+end
+#
+# Allowed flexible torsions 
+#
+torsions 7
+H  C  N  H
+H  C  C  N
+H  C  N  C
+H  C  C  H
+C  C  C  C
+H  C  C  C
+N  C  C  C
+#
+#
+#symmetry of template
+#
+#n matrix + translations ie 3x3 rot + translation vector
+#translations can be given as a symbolic fraction
+#acceptable symbols 1/4, 1/3, 1/2, 2/3, 3/4
+#
+#symmetry 3
+# 1.0  0.0  0.0  1/2
+# 0.0 -1.0  0.0  0.0
+# 0.0  0.0 -1.0  0.0
+#-1.0  0.0  0.0  0.0
+# 0.0  1.0  0.0  1/2
+# 0.0  0.0 -1.0  0.0
+# 1.0  0.0  0.0  1/2
+# 0.0  1.0  0.0  1/2
+# 0.0  0.0  1.0  0.0
