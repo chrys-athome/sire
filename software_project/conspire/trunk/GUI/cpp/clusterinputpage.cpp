@@ -75,7 +75,11 @@ using namespace Conspire;
 
 void ClusterInputPage::browseForKey()
 {
-   QString keyfile = QFileDialog::getOpenFileName(NULL, Conspire::tr("Select the file containing the private key."), QString(), QString(), NULL, QFileDialog::DontUseNativeDialog);
+   QString homepath = QDir::homePath();
+   QString sshpath = QString("%1/%2").arg(homepath).arg(".ssh");
+   if (!(QDir(sshpath).exists())) sshpath = QString();
+
+   QString keyfile = QFileDialog::getOpenFileName(NULL, Conspire::tr("Select the file containing the private key."), sshpath, QString(), NULL, QFileDialog::DontUseNativeDialog);
    if (keyfile.isEmpty()) return;
    quuid = QString(keyfile);
    login_label->setText(QString("Selected keyfile '%1'.").arg(quuid));
