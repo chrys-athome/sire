@@ -1,0 +1,122 @@
+# Name of the job. This is also used to name the output files
+job name = eu1_dock
+
+# File containing the structure of the pore
+pore.filename = pore.car
+
+# The convention used when reading in the pore coordinates
+pore.convention = XYZ
+
+# The file containing the seed molecule
+seed.filename = seed.car
+
+# Whether or not to centre the initial seed
+seed.centre = true
+
+# Temperature of the simulation
+parameters.temperature = 350 kelvin
+
+# The cost function (non_bond or steric)
+parameters.cost function = non_bond
+
+# The nonbonded cutoff used for the energy function
+parameters.nonbonded cutoff = 6.5 angstroms
+
+# The maximum amount to shake (translate) the molecule
+parameters.maximum shake = 5 angstroms
+
+# The maximum amount to rock (rotate) the molecule
+parameters.maximum rock = 45
+
+# Verbosity of output (on/off/debug). Debug monitors which actions are being carried out and is extremely detailed
+parameters.verbose = on
+
+# Percentage testing probability
+parameters.testing probability = 100
+
+# Whether or not to perform an initial minimization of the template
+trajectory.initial minimize template = false
+
+# Whether or not to perform an initial minimization in the pore
+trajectory.initial minimize in pore = false
+
+# The maximum number of modification attempts
+trajectory.number of attempts = 100000
+
+# The maximum number of templates to attempt
+trajectory.number of templates = 1
+
+# VDW scale used for growth criteria
+trajectory.vdw scale = 0.85
+
+# Stop value used for growth criteria
+trajectory.stop = -500
+
+# Interval at which to produce a current template coordinate file (.pcar) file peek now also controls the trajectory writing. When the number of attempt cycles hits the peek value then the next accepted structure is written.
+trajectory.peek = 100
+
+# Concentration limit of each element in the template (element then limit)
+fragments.concentration limits.element = N 1
+
+# List of forbidden bonds (element then element)
+fragments.forbidden bonds.forbidden = N N
+
+# weight for the methane fragment
+fragments.weights.methane = 2
+
+# weight for the ethane fragment
+fragments.weights.ethane = 2
+
+# weight for the benzene fragment
+fragments.weights.benzene = 10
+
+# weight for the ammonia fragment
+fragments.weights.ammonia = 1
+
+# weight for the ammonium fragment
+fragments.weights.ammonium = 1
+
+# weight for the propane fragment
+fragments.weights.propane = 4
+
+# weight for the pyrrole fragment
+fragments.weights.pyrrole = 4
+
+# weight for the adamantane fragment
+fragments.weights.adamantane = 1
+
+# weight for the cyclohexane fragment
+fragments.weights.cyclohexane = 4
+
+# Allowed flexible torsions
+fragments.torsions.torsion[1] = H C N H
+fragments.torsions.torsion[2] = H C C N
+fragments.torsions.torsion[3] = H C N C
+fragments.torsions.torsion[4] = H C C H
+fragments.torsions.torsion[5] = C C C C
+fragments.torsions.torsion[6] = H C C C
+fragments.torsions.torsion[7] = N C C C
+
+# Weight of build steps
+weights.build = 0
+
+# Weight of rotate last bond steps
+weights.rotate last bond = 0
+
+# Weight of shake steps
+weights.shake = 50
+
+# Weight of rock steps
+weights.rock = 50
+
+# Weight of twist steps
+weights.twist = 50
+
+# Weight of ring formation steps
+weights.ring formation = 0
+
+# Weight of gas phase minimisation steps
+weights.minimise gas phase = 0
+
+# Weight of in-host minimisation steps
+weights.minimise in host = 0
