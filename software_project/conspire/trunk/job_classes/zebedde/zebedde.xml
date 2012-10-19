@@ -1,56 +1,292 @@
 <options>
 
   <option>
-    <key>structure file</key>
-    <description>The file containing the structure (topology) and parameters 
-                 of the molecules to be simulated.</description>
-    <value><file>molecules.top</file></value>
+    <key>job name</key>
+    <description>Name of the job. This is also used to name the output files</description>
+    <value><string>eu1_dock</string></value>
   </option>
 
   <option>
-    <key>coordinate file</key>
-    <description>The file containing the coordinates of the 
-                 molecules to be simulated. This is typically the 
-                 restart file from the last stage of setup or dynamics.
-    </description>
-    <value><file>molecules.rst</file></value>
+    <key>pore</key>
+    <value>
+      <options>
+        <option>
+          <key>filename</key>
+          <description>File containing the structure of the pore</description>
+          <value><file>pore.car</file></value>
+        </option>
+        <option>
+          <key>convention</key>
+          <description>The convention used when reading in the pore coordinates</description>
+          <value><string>XYZ</string></value>
+        </option>
+      </options>
+    </value>
   </option>
 
   <option>
-    <key>output name</key>
-    <description>The root name of the output files produced by the simulation.
-    </description>
-    <value><string>output</string></value>
+    <key>seed</key>
+    <value>
+      <options>
+        <option>
+          <key>filename</key>
+          <description>The file containing the seed molecule</description>
+          <value><file>seed.car</file></value>
+        </option>
+        <option>
+          <key>centre</key>
+          <description>Whether or not to centre the initial seed</description>
+          <value><bool>on</bool></value>
+        </option>
+      </options>
+    </value>
+  </option>
+      
+  <option>
+    <key>parameters</key>
+    <value>
+      <options>
+        <option>
+          <key>temperature</key>
+          <description>Temperature of the simulation</description>
+          <value><temperature units="kelvin">350</temperature></value>
+        </option>
+        <option>
+          <key>cost function</key>
+          <description>The cost function (non_bond or steric)</description>
+          <value>
+            <enum><item name="non_bond"/><item name="steric"/></enum>
+          </value>
+        </option>
+        <option>
+          <key>nonbonded cutoff</key>
+          <description>The nonbonded cutoff used for the energy function</description>
+          <value><length units="angstroms">6.5</length></value>
+        </option>
+        <option>
+          <key>maximum shake</key>
+          <description>The maximum amount to shake (translate) the molecule</description>
+          <value><length units="angstroms">5.0</length></value>
+        </option>
+        <option>
+          <key>maximum rock</key>
+          <description>The maximum amount to rock (rotate) the molecule</description>
+          <value><angle units="degrees">45</angle></value>
+        </option>
+        <option>
+          <key>verbose</key>
+          <description>Verbosity of output (on/off/debug). Debug monitors which actions are being carried out and is extremely detailed</description>
+          <value><enum><item name="on"/><item name="off"/><item name="debug"/></enum></value>
+        </option>
+        <option>
+          <key>testing probability</key>
+          <description>Percentage testing probability</description>
+          <value><float minimum="0" maximum="100">100</float></value>
+        </option>
+      </options>
+    </value>
   </option>
 
   <option>
-    <key>length of dynamics</key>
-    <description>Amount of dynamics you want to perform.</description>
-    <value><time units="ps">2 ps</time></value>
+    <key>trajectory</key>
+    <value>
+      <options>
+        <option>
+          <key>initial minimize template</key>
+          <description>Whether or not to perform an initial minimization of the template</description>
+          <value><bool>no</bool></value>
+        </option>
+        <option>
+          <key>initial minimize in pore</key>
+          <description>Whether or not to perform an initial minimization in the pore</description>
+          <value><bool>no</bool></value>
+        </option>
+        <option>
+          <key>number of attempts</key>
+          <description>The maximum number of modification attempts</description>
+          <value><integer>100000</integer></value>
+        </option>
+        <option>
+          <key>number of templates</key>
+          <description>The maximum number of templates to attempt</description>
+          <value><integer>1</integer></value>
+        </option>
+        <option>
+          <key>vdw scale</key>
+          <description>VDW scale used for growth criteria</description>
+          <value><float>0.85</float></value>
+        </option>
+        <option>
+          <key>stop</key>
+          <description>Stop value used for growth criteria</description>
+          <value><float>-500.0</float></value>
+        </option>
+        <option>
+          <key>peek</key>
+          <description>
+            Interval at which to produce a current template coordinate file (.pcar) file
+            peek now also controls the trajectory writing. When the number of attempt
+            cycles hits the peek value then the next accepted structure is written.
+          </description>
+          <value><integer>100</integer></value>
+        </option>
+      </options>
+    </value>
+  </option>
+
+
+  <option>
+    <key>fragments</key>
+    <value>
+      <options>
+        <option>
+          <key>library</key>
+          <description>file containing the fragment library</description>
+          <value><file>big_library.arc</file></value>
+        </option>
+        <option>
+          <key>forcefield</key>
+          <description>file containing the forcefield parameters</description>
+          <value><file>new_pcff07.frc</file></value>
+        </option>
+        <option>
+          <key>concentration limits</key>
+          <value>
+            <options>
+              <option allow_multiple="true">
+                <key>element</key>
+                <description>Concentration limit of each element in the template (element then limit)</description>
+                <value><string>N 1</string></value>
+              </option>
+            </options>
+          </value>
+        </option>
+        <option>
+          <key>forbidden bonds</key>
+          <value>
+            <options>
+              <option allow_multiple="true">
+                <key>forbidden</key>
+                <description>List of forbidden bonds (element then element)</description>
+                <value><string>N N</string></value>
+              </option>
+            </options>
+          </value>
+        </option>
+        <option>
+          <key>weights</key>
+          <value>
+            <options>
+              <option>
+                <key>methane</key>
+                <description>weight for the methane fragment</description>
+                <value><integer>2</integer></value>
+              </option>
+              <option>
+                <key>ethane</key>
+                <description>weight for the ethane fragment</description>
+                <value><integer>2</integer></value>
+              </option>
+              <option>
+                <key>benzene</key>
+                <description>weight for the benzene fragment</description>
+                <value><integer>10</integer></value>
+              </option>
+              <option>
+                <key>ammonia</key>
+                <description>weight for the ammonia fragment</description>
+                <value><integer>1</integer></value>
+              </option>
+              <option>
+                <key>ammonium</key>
+                <description>weight for the ammonium fragment</description>
+                <value><integer>1</integer></value>
+              </option>
+              <option>
+                <key>propane</key>
+                <description>weight for the propane fragment</description>
+                <value><integer>4</integer></value>
+              </option>
+              <option>
+                <key>pyrrole</key>
+                <description>weight for the pyrrole fragment</description>
+                <value><integer>4</integer></value>
+              </option>
+              <option>
+                <key>adamantane</key>
+                <description>weight for the adamantane fragment</description>
+                <value><integer>1</integer></value>
+              </option>
+              <option>
+                <key>cyclohexane</key>
+                <description>weight for the cyclohexane fragment</description>
+                <value><integer>4</integer></value>
+              </option>
+            </options>
+          </value>
+        </option>
+        <option>                      
+          <key>torsions</key>
+          <value>
+            <options>
+              <option allow_multiple="true">
+                <key>torsion</key>
+                <description>Allowed flexible torsions</description>
+                <value><string>H C N H</string></value>
+              </option>
+            </options>
+          </value>
+        </option>
+      </options>
+    </value>
   </option>
 
   <option>
-    <key>number of blocks</key>
-    <description>Number of blocks of dynamics to perform.</description>
-    <value><integer>1</integer></value>
-  </option>
-
-  <option>
-    <key>temperature</key>
-    <description>The desired temperature of the simulation.</description>
-    <value><temperature units="celsius">25.0</temperature></value>
-  </option>
-
-  <option>
-    <key>pressure</key>
-    <description>The desired pressure of the simulation.</description>
-    <value><pressure units="atmosphere">1.0</pressure></value>
-  </option>
-
-  <option optional="true">
-    <key>command file</key>
-    <description>Supply your own command file to set advanced pmemd options.</description>
-    <value><file>mdin</file></value>
+    <key>weights</key>
+    <value>
+      <options>
+        <option>
+          <key>build</key>
+          <description>Weight of build steps</description>
+          <value><integer>0</integer></value>
+        </option>
+        <option>
+          <key>rotate last bond</key>
+          <description>Weight of rotate last bond steps</description>
+          <value><integer>0</integer></value>
+        </option>
+        <option>
+          <key>shake</key>
+          <description>Weight of shake steps</description>
+          <value><integer>50</integer></value>
+        </option>
+        <option>
+          <key>rock</key>
+          <description>Weight of rock steps</description>
+          <value><integer>50</integer></value>
+        </option>
+        <option>
+          <key>twist</key>
+          <description>Weight of twist steps</description>
+          <value><integer>50</integer></value>
+        </option>
+        <option>
+          <key>ring formation</key>
+          <description>Weight of ring formation steps</description>
+          <value><integer>0</integer></value>
+        </option>
+        <option>
+          <key>minimise gas phase</key>
+          <description>Weight of gas phase minimisation steps</description>
+          <value><integer>0</integer></value>
+        </option>
+        <option>
+          <key>minimise in host</key>
+          <description>Weight of in-host minimisation steps</description>
+          <value><integer>0</integer></value>
+        </option>
+      </options>
+    </value>
   </option>
 
 </options>
