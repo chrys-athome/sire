@@ -93,6 +93,7 @@ void AccountPage::refreshList()
       if (strcmp(token, "pretend") == 0) cname = "My local testing cluster";
       if (strcmp(token, "bluecrystalp1") == 0) cname = "Bluecrystal Phase 1";
       if (strcmp(token, "bluecrystalp2") == 0) cname = "Bluecrystal Phase 2";
+      if (strcmp(token, "emerald") == 0) cname = "Emerald GPU cluster";
       if (cname)
       {
          sprintf(buffer, "%s (%s)", cname, token);
