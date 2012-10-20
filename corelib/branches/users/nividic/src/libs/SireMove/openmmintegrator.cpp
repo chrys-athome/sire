@@ -772,7 +772,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		custom_solute_solute_solvent_solvent->addPerParticleParameter("q");
 		custom_solute_solute_solvent_solvent->addPerParticleParameter("sigma");
 		custom_solute_solute_solvent_solvent->addPerParticleParameter("eps");
-		custom_solute_solute_solvent_solvent->addPerParticleParameter("issolute");		
+		custom_solute_solute_solvent_solvent->addPerParticleParameter("issolute");
 		
 		
 		custom_intra_14_15->addPerBondParameter("q_prod");
@@ -787,7 +787,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	}
 
-
+	int nions = 0;
 
 	for (int i=0; i < nmols ; i++){
 	
@@ -839,10 +839,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			AtomNum atnum = atom.number();
 			
 			vector<double> params(4);
-			
-			
 
-			
 			
 			if(solute_group.contains(atom.molecule())){//solute atom
 			
@@ -879,19 +876,19 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			}
 			
 		
-			//cout << "Sire Atom number = " << atnum.value() << " OpenMM index = " << AtomNumToOpenMMIndex[atnum.value()] << "\n";
+			/*cout << "Sire Atom number = " << atnum.value() << " OpenMM index = " << AtomNumToOpenMMIndex[atnum.value()] << "\n";
 			
 			
-			//cout << "Is Solute = "<< (double) solute_group.contains(atom.molecule()) <<" J = "<< j << "\n";
+			cout << "Is Solute = "<< (double) solute_group.contains(atom.molecule()) <<" J = "<< j << "\n";
 			
 
 			//qDebug()<< atomvdws.toString();
 	
-			/*cout << "sigma :" << sigma * OpenMM::NmPerAngstrom <<"\n";
+			cout << "sigma :" << sigma <<" A\n";
 		
-			cout << "epsilon :" << epsilon * OpenMM::KJPerKcal << "\n";
+			cout << "epsilon :" << epsilon << " kcal/mol\n";
 		
-			cout << "charges : " << charge << "\n";
+			cout << "charges : " << charge << " |e|\n";
 
 			cout << "\n";*/
 		}
@@ -914,9 +911,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		if ( !hasConnectivity ){
 			num_atoms_till_i = num_atoms_till_i + num_atoms_molecule ;
-			cout << "\nAtoms = " <<  num_atoms_molecule << " Num atoms till i =" << num_atoms_till_i <<"\n";
-			cout << "\n*********************ION DETECTED**************************\n";
-
+			/*cout << "\nAtoms = " <<  num_atoms_molecule << " Num atoms till i =" << num_atoms_till_i <<"\n";*/
+			//cout << "\nION DETECTED\n";
+			nions=nions+1;
 			continue;
 		}
 		
@@ -1238,6 +1235,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	}// end of loop over mols
 	
+	if(nions!=0)
+		cout << "\n\nNumber of ions = " << nions << "\n\n";
 	
 	//Exclude the 1-2, 1-3 bonded atoms from nonbonded forces, and scale down 1-4 bonded atoms
 	
@@ -1273,9 +1272,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		create_solute_solvent_lists(solute_solvent_inter_lists, solute_solute, solvent_solvent, solute_solvent);
 		
 		
-		/*cout << "Solute Solute list  SIZE = " << solute_solute.size() << "\n";
+		cout << "Solute Solute list  SIZE = " << solute_solute.size() << "\n";
 		cout << "Solvent Solvent list SIZE = " << solvent_solvent.size() << "\n";
-		cout << "Solute Solvent list SIZE = " << solute_solvent.size() << "\n";*/
+		cout << "Solute Solvent list SIZE = " << solute_solvent.size() << "\n";
 
 
 		/*cout << "\n\nSolute - Solute\n\n";
@@ -1360,7 +1359,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			cout << "\n\n14 list has been added\n\n";
 		
 		
-		for(unsigned int i=0; i<list_15.size();i++){
+		/*for(unsigned int i=0; i<list_15.size();i++){
 		
 			int p1= list_15[i].first;
 			int p2= list_15[i].second;
@@ -1392,20 +1391,20 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		}
 		
 		if(list_15.size() !=0 )
-			cout << "\n\n15 list has been added\n\n";
-	
-				
+			cout << "\n\n15 list has been added\n\n";*/
+
+
 		int num_exceptions = nonbond_openmm->getNumExceptions();
 		
 		//cout << "NUM EXCEPTIONS = " << num_exceptions << "\n";
 		
 		
 		for(int i=0;i<num_exceptions;i++){
-	
+
 			int p1,p2;
 			
 			double charge_prod,sigma_avg,epsilon_avg;
-	
+
 
 			nonbond_openmm->getExceptionParameters(i,p1,p2,charge_prod,sigma_avg,epsilon_avg);
 
@@ -1496,7 +1495,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		const double beta = 1.0 / (0.0083144621 * convertTo(Temperature.value(), kelvin));
 
-		cout << "\nBETA = " << beta <<"\n";
+		cout << "\nBETA = " << beta <<" mol/kJ\n";
 
 		int frequency_energy = 100; 
 
@@ -1543,6 +1542,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				lam_val = context_openmm.getParameter("lambda");
 
+
 				double potential_energy_lambda = state_openmm.getPotentialEnergy();
 
 				cout << "Lambda = " << lam_val << " Potential energy lambda MD = " << potential_energy_lambda  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
@@ -1573,6 +1573,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 
 				//cout << "\nGF accumulator partial = " << GF_acc << " -- GB accumulator partial = " << GB_acc << "\n\n";
+				
+				cout << "\nDifference +Delta= " << potential_energy_lambda_plus_delta - potential_energy_lambda << " Difference -Delta=  " << potential_energy_lambda_minus_delta - potential_energy_lambda  << "\n\n";
 
 				if(isnormal(GF_acc==0) || isnormal(GB_acc==0)){ 
 					cout << "\n\n ********************** ERROR NAN!! ****************************\n\n";
@@ -1593,8 +1595,12 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 
 				context_openmm.setParameter("lambda",Alchemical_values[i]);
-
+				state_openmm=context_openmm.getState(infoMask);
+                double dummy = state_openmm.getPotentialEnergy();
+				cout << "\nDifference dummy= " << dummy - potential_energy_lambda<< "\n\n";                
+                
 			}
+
 
 			context_openmm.setPositions(positions_openmm_start);
 
@@ -1829,6 +1835,7 @@ bool OpenMMIntegrator::getAndersen(void){
 	return 	Andersen_flag;
 	
 }
+
 
 
 /** Get the Andersen Thermostat frequency collision */
