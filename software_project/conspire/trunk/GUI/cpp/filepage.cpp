@@ -173,7 +173,7 @@ void FilePage::editingFinished()
 
 void FilePage::browse()
 {
-    QString filename = QFileDialog::getOpenFileName(0, Conspire::tr("Choose a file..."));
+    QString filename = QFileDialog::getOpenFileName(0, Conspire::tr("Choose a file..."), QString(), QString(), 0, QFileDialog::DontUseNativeDialog);
     
     if (not filename.isEmpty())
     {

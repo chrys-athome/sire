@@ -31,6 +31,7 @@
 #include <QGraphicsView>
 
 #include "Conspire/conspire.h"
+#include "Conspire/option.h"
 
 #include "Conspire/GUI/page.h"
 
