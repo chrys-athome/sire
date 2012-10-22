@@ -57,22 +57,10 @@ int main(int argc, char **argv)
 
         if (argc > 1)
         {
-            QString xmlfile = argv[1];
-            
-            QStringList path;
-            
+            Options opts = Options::fromXMLFile(argv[1]);
+
             if (argc > 2)
-            {
-                for (int i=2; i<argc; ++i)
-                {
-                    path.append( QString(argv[i]) );
-                }
-            }
-            
-            conspireDebug() << xmlfile;
-            conspireDebug() << path;
-            
-            Options opts = Options::fromXMLFile(xmlfile, path);
+                opts = opts.fromConfigFile(argv[2]);
 
             MainWindow *view = MainWindow::testFrom(opts);
             m->setCentralWidget(view);

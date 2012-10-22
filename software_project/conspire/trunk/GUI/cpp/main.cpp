@@ -86,8 +86,6 @@ int main(int argc, char **argv)
             opts = Options::fromXMLFile(xmlfile, path);
         }
 
-        conspireDebug() << opts.toString();
-        
         MainWindow *view = new MainWindow(opts, m);
 
         m->setCentralWidget(view);

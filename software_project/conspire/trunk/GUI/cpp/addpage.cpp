@@ -73,8 +73,6 @@ AddPage::~AddPage()
 /** Set the Options object that details the list of options that can be added */
 void AddPage::setOptions(Options options)
 {
-    conspireDebug() << options.addableKeys();
-    
     QStringList keys = options.addableKeys();
     
     while (buttons.count() > keys.count())

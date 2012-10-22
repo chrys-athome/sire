@@ -579,8 +579,6 @@ Option Option::getNestedOption(String key) const
     
     ParsedKey p(key);
     
-    conspireDebug() << p.key << " : " << p.index << " : " << p.tail;
-    
     if (not p.key.isEmpty())
     {
         if (p.key != k)
@@ -682,8 +680,6 @@ Obj Option::getNestedValue(String key) const
 
 void Option::setUserValue(int index, Obj value)
 {
-    conspireDebug() << "Option::setUserValue(" << index << "," << value.toString() << ")";
-
     if (index < 1 or ((allow_multiple == false) and index > 1))
         throw Conspire::invalid_index( Conspire::tr(
             "Cannot set the user value for %1[%2] as this index is invalid. "
@@ -726,8 +722,6 @@ void Option::setUserValue(int index, Obj value)
 /** Add the default value of this option to the key 'key' */
 Obj Option::addDefaultValue(String key) const
 {
-    conspireDebug() << "Option::addDefaultValue(" << key << ")";
-
     assertNotNull();
     
     ParsedKey p(key);
@@ -748,11 +742,8 @@ Obj Option::addDefaultValue(String key) const
     if (new_val.isNone())
         new_val = defaultValue();
     
-    conspireDebug() << "new_val ==" << new_val.toString();
-
     if (not p.tail.isEmpty())
     {
-        conspireDebug() << "tail == " << p.tail;
         new_val = new_val.asA<Value>().addDefaultValue(p.tail);
     }
     
@@ -1975,8 +1966,6 @@ Obj Options::getNestedValue(String key) const
 
 Obj Options::addDefaultValue(String key) const
 {
-    conspireDebug() << "Options::addDefaultValue(" << key << ")";
-
     int idx = getIndex(ParsedKey(key).key, kys);
     
     Obj old_option = opts.at(idx);

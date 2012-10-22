@@ -327,7 +327,9 @@ void SubmitPage::submit()
         
         foreach (QString key, all_keys)
         {
-            Option opt = opts[key];
+            qDebug() << "Getting option" << key;
+            Option opt = opts.getNestedOption(key);
+            qDebug() << "Got the option...";
             
             progress_value += progress_delta;
             progress_bar->setValue(progress_value);

@@ -60,6 +60,18 @@ void JobClassWidget::newJob()
    
    printf("joboptions %s\n", joboptions.toAscii().constData());
    Options opts = Options::fromXMLFile(QString("%1").arg(joboptions), path);
+
+   qDebug() << "Looking for a default config file...";
+   QFileInfo default_config( QString("%1/%2/default_config").arg(install_dir,jobdir) );
+
+   qDebug() << default_config.absoluteFilePath();
+
+   if (default_config.exists())
+   {
+       qDebug() << "Adding in options from the default configuration file...";
+       opts = opts.fromConfigFile( default_config.absoluteFilePath() );
+   }
+
    conspireDebug() << "PUSH CONFIGDOC";
    emit( push( PagePointer(new ConfigDocument(jobdir, opts))) );
    conspireDebug() << "PUSHED!";
