@@ -162,7 +162,7 @@ void WorkPage::build()
     WidgetRack *sub_rack = new WidgetRack(this);
     sub_rack->setFocusPolicy(::Qt::NoFocus);
     
-    QLabel *label_table = new QLabel(Conspire::tr("Active work:"));
+    QLabel *label_table = new QLabel(Conspire::tr("Your work currently in the Conspire cloud:"));
     sub_rack->addWidget(label_table);
 
     tableofworkstores = new QTableWidget(3, 3);

@@ -3,7 +3,7 @@
    <clusterdescription id="emerald">
       <name>Emerald GPU cluster</name>
       <description>Emerald is an HP system with 372 NVIDIA GPUs. It is housed at the STFC Rutherford Appleton Laboratory.</description>
-      <icon>amberpic_gpu.jpg</icon>
+      <icon>../emerald.jpg</icon>
       <directory>pmemd</directory>
       <optionsxml>emerald</optionsxml>
       <optionsincludedirs>pmemd</optionsincludedirs>
@@ -11,7 +11,7 @@
    <clusterdescription id="iridis">
       <name>Iridis CPU/GPU cluster</name>
       <description>Iridis is a cluster with approximately 1000 Intel Nehalem compute nodes each with two 4-core processors. It is the supercomputer of the University of Southampton.</description>
-      <icon>inhib9-trans.preview.png</icon>
+      <icon>../iridis.jpg</icon>
       <directory>absbinding</directory>
       <optionsxml>iridis</optionsxml>
       <optionsincludedirs>absbinding</optionsincludedirs>

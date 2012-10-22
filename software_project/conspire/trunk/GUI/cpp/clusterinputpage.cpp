@@ -236,8 +236,8 @@ void ClusterInputPage::refreshTimes()
          const char *downloadid = AcquireGetResultIDFromNumberWhenReady(i, workstoreid.toAscii().constData());
          if (downloadid)
          {
-            QString fmtinst = QString("Slot %1 ready for download").arg(QString::number(i));
-            QString sngleinst = QString("Click here to download");
+            QString fmtinst = QString("To download instance %1 results click here.").arg(QString::number(i));
+            QString sngleinst = QString("To download results click here.");
             QListWidgetItem *wid = new QListWidgetItem((instances == 1) ? sngleinst : fmtinst);
             wid->setData(::Qt::UserRole, QString(downloadid));
             instancelist->addItem(wid);

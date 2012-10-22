@@ -95,7 +95,7 @@ void ChooseClusterPage::build()
     WidgetRack *sub_rack = new WidgetRack(this);
     sub_rack->setFocusPolicy(::Qt::NoFocus);
     
-    QLabel *label_table = new QLabel(Conspire::tr("Choose the cluster that you would like to use:"));
+    QLabel *label_table = new QLabel(Conspire::tr("Choose the cluster that you would like Conspire to use:"));
     sub_rack->addWidget(label_table);
     
     int numberof = 0;

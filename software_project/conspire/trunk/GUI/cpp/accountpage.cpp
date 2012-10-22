@@ -105,7 +105,7 @@ void AccountPage::refreshList()
       clusterlist->addItem(wid);
       haveany = 1;
       token = strtok_r(NULL, ",", &remainder);
-      login_label->setText("Success");
+      login_label->setText("Network OK.");
    }
    if (haveany == 0)
    {
@@ -136,7 +136,7 @@ void AccountPage::build()
     sub_rack->setFocusPolicy(::Qt::NoFocus);
     
     QLabel *intro_label = new QLabel(Conspire::tr("Cluster accounts using SSH must be added"
-       " to Acquire in order to do work. Click here to add login details:"));
+       " to Conspire in order to do work. Click here to add login details:"));
     intro_label->setWordWrap(true);
     intro_label->setMinimumSize(intro_label->sizeHint());
     sub_rack->addWidget(intro_label);
@@ -146,7 +146,7 @@ void AccountPage::build()
     sub_rack->addWidget(modifybutton);
     
     QLabel *clusters_avail = new QLabel(Conspire::tr("Clusters currently available"
-       " to your account are listed below:"));
+       " to your Conspire account are listed below:"));
     clusters_avail->setWordWrap(true);
     clusters_avail->setMinimumSize(clusters_avail->sizeHint());
     sub_rack->addWidget(clusters_avail);

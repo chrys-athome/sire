@@ -111,7 +111,7 @@ void UserPage::build()
        lineedit_host = new QLineEdit();
     if (usemode == 1)
     {
-       QLabel *intro_label = new QLabel(Conspire::tr("For Acquire to push your work to a cluster, "
+       QLabel *intro_label = new QLabel(Conspire::tr("For Conspire to push your work to a cluster, "
           "trusted machine logins must be added to your account. These are transparently appended "
           "to an encrypted remote keyring which can only be opened with your main password."));
        intro_label->setWordWrap(true);
@@ -127,7 +127,7 @@ void UserPage::build()
     
     if (usemode == 0)
     {
-       QLabel *hello_label_unknown = new QLabel(Conspire::tr("Hello. Please log in."));
+       QLabel *hello_label_unknown = new QLabel(Conspire::tr("Hello. Please log in to Conspire."));
        sub_rack->addWidget(hello_label_unknown);
     }
     QLabel *label_username = new QLabel(Conspire::tr("Username:"));
@@ -180,7 +180,7 @@ void UserPage::build()
     last_username = qsetter->value("preferences/lastUsername", QString("")).toString();
     delete qsetter;
     
-    QLabel *hello_label_known = new QLabel(Conspire::tr("Hello %1. Please type your password.").arg(last_username));
+    QLabel *hello_label_known = new QLabel(Conspire::tr("Hello %1. Please type your Conspire password.").arg(last_username));
     sub_rack2->addWidget(hello_label_known);
     QLabel *label_password_known = new QLabel(Conspire::tr("Password:"));
     sub_rack2->addWidget(label_password_known);
@@ -190,6 +190,7 @@ void UserPage::build()
     lineedit_password_known->setPlaceholderText("Password");
     connect(lineedit_password_known, SIGNAL(returnPressed()), this, SLOT(login()));
     sub_rack2->addWidget(lineedit_password_known);
+        
     ifyouare_label_loggedin2 = new QLabel(Conspire::tr("If you are not %1,"
        " or would like to use another account, please use the 'Change user' button below").arg(last_username));
     ifyouare_label_loggedin2->setWordWrap(true);
@@ -204,25 +205,25 @@ void UserPage::build()
     
     WidgetRack *sub_rack3 = new WidgetRack(this);
     
-    hello_label_loggedin = new QLabel(Conspire::tr("Hello %1. You are logged in.").arg(last_username));
+    hello_label_loggedin = new QLabel(Conspire::tr("Hello %1. You are logged in to Conspire.").arg(last_username));
     sub_rack3->addWidget(hello_label_loggedin);
     ifyouare_label_loggedin = new QLabel(Conspire::tr("If you are not %1,"
        " or would like to use another account, please use the 'Change user' button below").arg(last_username));
     ifyouare_label_loggedin->setWordWrap(true);
     ifyouare_label_loggedin->setMinimumSize(ifyouare_label_loggedin->sizeHint());
     sub_rack3->addWidget(ifyouare_label_loggedin);
-    
-    chgusr2_button = new Button(Conspire::tr("Change user..."));
-    connect(chgusr2_button, SIGNAL(clicked()), this, SLOT(changeUser()));
-    sub_rack3->addWidget(chgusr2_button);
-    
-    continuebutton = new Button(Conspire::tr("To work..."));
+
+    continuebutton = new Button(Conspire::tr("My jobs..."));
     connect(continuebutton, SIGNAL(clicked()), this, SLOT(continueToWorkStores()));
     sub_rack3->addWidget(continuebutton);
     
     modifybutton = new Button(Conspire::tr("Modify account..."));
     connect(modifybutton, SIGNAL(clicked()), this, SLOT(modifyAccount()));
     sub_rack3->addWidget(modifybutton);
+    
+    chgusr2_button = new Button(Conspire::tr("Change user..."));
+    connect(chgusr2_button, SIGNAL(clicked()), this, SLOT(changeUser()));
+    sub_rack3->addWidget(chgusr2_button);
     
     updatebutton = new Button(Conspire::tr("Update keys..."));
     connect(updatebutton, SIGNAL(clicked()), this, SLOT(updateKeys()));
@@ -385,7 +386,7 @@ void UserPage::login()
        stack->switchTo(2);
        ifyouare_label_loggedin->setText(Conspire::tr("If you are not %1,"
           " or might like to use another account, please use the 'Change user' button below").arg(last_username));
-       hello_label_loggedin->setText(Conspire::tr("Hello %1. You are logged in.").arg(last_username));
+       hello_label_loggedin->setText(Conspire::tr("Hello %1. You are logged in to Conspire.").arg(last_username));
        submode = 2;
     } else
     {

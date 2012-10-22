@@ -85,8 +85,8 @@ void NewWorkPage::refreshWork()
    int retval = AcquireQueryAllWorkStatus(&store_ids, &pct_b2c, &pct_wrk, &pct_c2b, &noofws, &bytesfree);
    if ((retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) || (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK))
    {
-      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText(QString("Success. %1 bytes free").arg(QString::number(bytesfree)));
-      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Success. No work found. %1 bytes free").arg(QString::number(bytesfree)));
+      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText(QString("Network OK. %1K free on Conspire.").arg(QString::number(bytesfree/1024)));
+      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Network OK. No active jobs. %1K free on Conspire.").arg(QString::number(bytesfree/1024)));
       
       if (all_wpw->size() != (noofws + 1))
       {
@@ -234,7 +234,7 @@ void NewWorkPage::build()
     WidgetRack *sub_rack = new WidgetRack(this);
     sub_rack->setFocusPolicy(::Qt::NoFocus);
     
-    QLabel *label_table = new QLabel(Conspire::tr("Active work:"));
+    QLabel *label_table = new QLabel(Conspire::tr("Jobs that Conspire is currently tracking:"));
     sub_rack->addWidget(label_table);
     
     all_wpw = new QList<QGraphicsLayoutItem *>();
