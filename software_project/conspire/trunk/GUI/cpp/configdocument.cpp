@@ -42,6 +42,7 @@
 #include <QPainter>
 #include <QGraphicsScene>
 #include <QImage>
+#include <QFileDialog>
 
 #include <QGraphicsPixmapItem>
 #include <QGraphicsLinearLayout>
@@ -77,21 +78,25 @@ void ConfigDocument::buttonsmodegeom()
 {
    if (buttonsmode)
    {
-      double half_width = 0.5*this->geometry().width();
+      double fract_width = 0.333*this->geometry().width();
       
       submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
-                                    half_width, MAIN_BUTTON_HEIGHT);
+                                    fract_width, MAIN_BUTTON_HEIGHT);
+
+      load_button->show();
+      load_button->setGeometry(fract_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                    fract_width, MAIN_BUTTON_HEIGHT);
 
       save_button->show();
-      save_button->setGeometry(half_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
-                                    half_width, MAIN_BUTTON_HEIGHT);
+      save_button->setGeometry(2*fract_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                    fract_width, MAIN_BUTTON_HEIGHT);
    } else
    {
       submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
                                     this->geometry().width(), MAIN_BUTTON_HEIGHT);
+      load_button->hide();
       save_button->hide();
    }
-
 }
 
 /** Build the widget */
@@ -125,6 +130,9 @@ void ConfigDocument::build()
     submit_button = new Button(Conspire::tr("Submit"), this);
     connect(submit_button, SIGNAL(clicked()), this, SLOT(submit()));
 
+    load_button = new Button(Conspire::tr("Load"), this);
+    connect(load_button, SIGNAL(clicked()), this, SLOT(load()));
+    
     save_button = new Button(Conspire::tr("Save"), this);
     connect(save_button, SIGNAL(clicked()), this, SLOT(save()));
     
@@ -170,8 +178,6 @@ void ConfigDocument::moveEvent(QGraphicsSceneMoveEvent *e)
 {
     Page::moveEvent(e);
 
-    double half_width = 0.5*this->geometry().width();
-    
     buttonsmodegeom();
 
     top_view->setGeometry(0, 0, this->geometry().width(), this->geometry().height()-MAIN_BUTTON_HEIGHT);
@@ -348,6 +354,33 @@ void ConfigDocument::setOptions(Options options)
 void ConfigDocument::save()
 {
    printf("Save\n");
-   emit( saveDocument(opts) );
+   QString filename = QFileDialog::getSaveFileName(0, Conspire::tr("Save job options as:"), QString(), Conspire::tr("Options (*.xml)"), 0, QFileDialog::DontUseNativeDialog);
+   if (filename.isEmpty()) return;
+   QFile file(filename);
+   file.open(QIODevice::WriteOnly | QIODevice::Text);
+   file.write((const char *)opts.toXML().toAscii().data());
+   file.close();
    emit( pop(true) );
+}
+
+void ConfigDocument::load()
+{
+   printf("Load\n");
+   QString filename = QFileDialog::getOpenFileName(0, Conspire::tr("Job options to open:"), QString(), Conspire::tr("Options (*.xml)"), 0, QFileDialog::DontUseNativeDialog);
+   if (filename.isEmpty()) return;
+   QFile file(filename);
+   if (file.exists())
+   {
+      // HACK do not have the string list of paths here (need to be included)
+      QStringList strings;
+      if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+      {
+         QTextStream in(&file);
+         while (!in.atEnd())
+         {
+            strings += in.readLine();
+         }
+         opts = Options(strings.join(QString()));
+      }
+   }
 }

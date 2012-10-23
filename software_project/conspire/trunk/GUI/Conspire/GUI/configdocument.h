@@ -79,6 +79,7 @@ namespace Conspire
         void toggleMenuVisible();
         void setMenuVisible(bool display);
         
+        void load();
         void save();
         void submit();
         void cancel();
@@ -117,6 +118,7 @@ namespace Conspire
 
         /** The context-sensitive button */
         Button *submit_button;
+        Button *load_button;
         Button *save_button;
         
         /** The tabbed views of the Options object */
