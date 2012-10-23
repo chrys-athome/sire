@@ -169,6 +169,30 @@ void register_CLJPotentialInterface_IntraCLJPotential__class(){
                 , ( bp::arg("new_switchfunc") ) );
         
         }
+        { //::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::setUseAtomisticCutoff
+        
+            typedef SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential > exported_class_t;
+            typedef bool ( ::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::*setUseAtomisticCutoff_function_type )( bool ) ;
+            setUseAtomisticCutoff_function_type setUseAtomisticCutoff_function_value( &::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::setUseAtomisticCutoff );
+            
+            CLJPotentialInterface_IntraCLJPotential__exposer.def( 
+                "setUseAtomisticCutoff"
+                , setUseAtomisticCutoff_function_value
+                , ( bp::arg("switchatomistic") ) );
+        
+        }
+        { //::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::setUseGroupCutoff
+        
+            typedef SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential > exported_class_t;
+            typedef bool ( ::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::*setUseGroupCutoff_function_type )( bool ) ;
+            setUseGroupCutoff_function_type setUseGroupCutoff_function_value( &::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::setUseGroupCutoff );
+            
+            CLJPotentialInterface_IntraCLJPotential__exposer.def( 
+                "setUseGroupCutoff"
+                , setUseGroupCutoff_function_value
+                , ( bp::arg("switchgroup") ) );
+        
+        }
         { //::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::setUseReactionField
         
             typedef SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential > exported_class_t;
@@ -214,6 +238,28 @@ void register_CLJPotentialInterface_IntraCLJPotential__class(){
                 "switchingFunction"
                 , switchingFunction_function_value
                 , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        { //::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::useAtomisticCutoff
+        
+            typedef SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential > exported_class_t;
+            typedef bool ( ::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::*useAtomisticCutoff_function_type )(  ) const;
+            useAtomisticCutoff_function_type useAtomisticCutoff_function_value( &::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::useAtomisticCutoff );
+            
+            CLJPotentialInterface_IntraCLJPotential__exposer.def( 
+                "useAtomisticCutoff"
+                , useAtomisticCutoff_function_value );
+        
+        }
+        { //::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::useGroupCutoff
+        
+            typedef SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential > exported_class_t;
+            typedef bool ( ::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::*useGroupCutoff_function_type )(  ) const;
+            useGroupCutoff_function_type useGroupCutoff_function_value( &::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::useGroupCutoff );
+            
+            CLJPotentialInterface_IntraCLJPotential__exposer.def( 
+                "useGroupCutoff"
+                , useGroupCutoff_function_value );
         
         }
         { //::SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential >::useReactionField
