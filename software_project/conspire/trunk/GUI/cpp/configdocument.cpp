@@ -354,11 +354,20 @@ void ConfigDocument::setOptions(Options options)
 void ConfigDocument::save()
 {
    printf("Save\n");
-   QString filename = QFileDialog::getSaveFileName(0, Conspire::tr("Save job options as:"), QString(), Conspire::tr("Options (*.xml)"), 0, QFileDialog::DontUseNativeDialog);
+   QString extension = Conspire::tr("%1.cfg").arg(jobtype);
+   QFileDialog filed(0, Conspire::tr("Save job options as:"));
+   filed.setAcceptMode(QFileDialog::AcceptSave);
+   filed.setDefaultSuffix(extension);
+   filed.setFilter(Conspire::tr("%1 options (*.%2)").arg(jobtype).arg(extension));
+   filed.setOption(QFileDialog::DontUseNativeDialog);
+   filed.exec();
+   QStringList filenames = filed.selectedFiles();
+   if (filenames.isEmpty()) return;
+   QString filename = filenames.at(0);
    if (filename.isEmpty()) return;
    QFile file(filename);
    file.open(QIODevice::WriteOnly | QIODevice::Text);
-   file.write((const char *)opts.toXML().toAscii().data());
+   file.write((const char *)opts.toConfig().toAscii().data());
    file.close();
    emit( pop(true) );
 }
@@ -366,11 +375,14 @@ void ConfigDocument::save()
 void ConfigDocument::load()
 {
    printf("Load\n");
-   QString filename = QFileDialog::getOpenFileName(0, Conspire::tr("Job options to open:"), QString(), Conspire::tr("Options (*.xml)"), 0, QFileDialog::DontUseNativeDialog);
+   QString filename = QFileDialog::getOpenFileName(0, Conspire::tr("Job options to open:"), QString(), Conspire::tr("%1 options (*.%2.cfg)").arg(jobtype).arg(jobtype), 0, QFileDialog::DontUseNativeDialog);
    if (filename.isEmpty()) return;
    QFile file(filename);
    if (file.exists())
    {
+      opts = opts.fromConfigFile(filename);
+      this->setOptions(opts);
+      /*
       // HACK do not have the string list of paths here (need to be included)
       QStringList strings;
       if (file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -380,7 +392,7 @@ void ConfigDocument::load()
          {
             strings += in.readLine();
          }
-         opts = Options(strings.join(QString()));
-      }
+         opts.fromConfigFile(Options(strings.join(QString("\n"))));
+      }*/
    }
 }
