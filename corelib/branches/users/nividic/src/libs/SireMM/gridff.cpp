@@ -2082,4 +2082,3 @@ void GridFF::recalculateEnergy()
     
     this->setClean();
 }
-
