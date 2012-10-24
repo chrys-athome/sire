@@ -1265,7 +1265,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	if(free_energy_calculation == true){
 	
-		Vector_of_IntInt solute_solute;
+		/*Vector_of_IntInt solute_solute;
 		Vector_of_IntInt solvent_solvent;
 		Vector_of_IntInt solute_solvent;
 		
@@ -1277,29 +1277,29 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		cout << "Solute Solvent list SIZE = " << solute_solvent.size() << "\n";
 
 
-		/*cout << "\n\nSolute - Solute\n\n";
+		cout << "\n\nSolute - Solute\n\n";
 	
 		for(unsigned int i=0;i<solute_solute.size();i++){
 	
 			cout << "( " << solute_solute[i].first << " , " << solute_solute[i].second << " )\n";
 
-		}*/
+		}
 		
-		/*cout << "\n\nSolvent - Solvent\n\n";
+		cout << "\n\nSolvent - Solvent\n\n";
 	
 		for(unsigned int i=0;i<solvent_solvent.size();i++){
 	
 			cout << "( " << solvent_solvent[i].first << " , " << solvent_solvent[i].second << " )\n";
 
-		}*/
+		}
 		
-		/*cout << "\n\nSolute - Solvent\n\n";
+		cout << "\n\nSolute - Solvent\n\n";
 		
 		for(unsigned int i=0;i<solute_solvent.size();i++){
 	
 			cout << "( " << solute_solvent[i].first << " , " << solute_solvent[i].second << " )\n";
 
-		}*/
+		}
 		
 		
 		vector<pair<int,int> > list_14;
@@ -1310,7 +1310,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		create_intra_14_15_pairs(bondPairs, nats,list_14, list_15);
 		
 	
-		/*for(unsigned int i=0; i<list_14.size();i++){
+		for(unsigned int i=0; i<list_14.size();i++){
 
 			cout << "14 List = ( " << list_14[i].first << " , " <<list_14[i].second << " )";
 			cout << "\n";
@@ -1321,7 +1321,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			cout << "15 List = ( " << list_15[i].first << " , " <<list_15[i].second << " )";
 			cout << "\n";
-		}*/
+		}
 	
 		
 		for(unsigned int i=0; i<list_14.size();i++){
@@ -1351,35 +1351,33 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			custom_intra_14_15->addBond(p1,p2,params);
 			
-			nonbond_openmm->addException(p1,p2,0.0,1.0,0.0,true);
+			//nonbond_openmm->addException(p1,p2,0.0,1.0,0.0,true);
 		
 		}
 		
 		if(list_14.size() !=0 )
 			cout << "\n\n14 list has been added\n\n";
-		
-		
-		/*for(unsigned int i=0; i<list_15.size();i++){
-		
+
+		for(unsigned int i=0; i<list_15.size();i++){
+
 			int p1= list_15[i].first;
 			int p2= list_15[i].second;
-			
+
 			double  charge_p1=0;
 			double  sigma_p1=0;
 			double  epsilon_p1=0;
-			
+
 			double  charge_p2=0;
 			double  sigma_p2=0;
 			double  epsilon_p2=0;
-		
+
 			nonbond_openmm->getParticleParameters(p1,charge_p1,sigma_p1,epsilon_p1);
 			
 			nonbond_openmm->getParticleParameters(p2,charge_p2,sigma_p2,epsilon_p2);
-		
+
 			//cout << "p1 = " << p1 << " charge  p1 = " << charge_p1 << " sigma p1 = " << sigma_p1 << " epsilon p1 = " << epsilon_p1 <<"\n";
 			//cout << "p2 = " << p2 << " charge  p2 = " << charge_p2 << " sigma p2 = " << sigma_p2 << " epsilon p2 = " << epsilon_p1 <<"\n\n";
-			
-			
+
 			double tmp[]={charge_p1*charge_p2,(sigma_p1+sigma_p2)*0.5, sqrt(epsilon_p1*epsilon_p2)};
 
 			const std::vector<double> params(tmp,tmp+3);
@@ -1387,7 +1385,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			custom_intra_14_15->addBond(p1,p2,params);
 		
 			nonbond_openmm->addException(p1,p2,0.0,1.0,0.0,true);
-			
+
 		}
 		
 		if(list_15.size() !=0 )
@@ -1410,7 +1408,17 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			/*cout << "Exception = " << i << " p1 = " << p1 << " p2 = " << p2 << " charge prod = " << charge_prod << 
 				    " sigma avg = " << sigma_avg << " epsilon_avg = " << epsilon_avg << "\n";*/
-				    
+
+			if(charge_prod!=0 && sigma_avg!=1 && epsilon_avg!=0){//1-4 interactions
+			
+				double tmp[]={charge_prod,sigma_avg, epsilon_avg};
+
+				const std::vector<double> params(tmp,tmp+3);
+
+				custom_intra_14_15->addBond(p1,p2,params);
+
+			}
+
 			custom_softcore_solute_solvent->addExclusion(p1,p2);
 			custom_solute_solute_solvent_solvent->addExclusion(p1,p2);
 
@@ -1529,16 +1537,23 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			for(int j=0;j<n_freq;j++){
 
-				QString name = file_name(j);
+				/*QString name = file_name(j);
 
-				/*integrator(name.toStdString().c_str(), context_openmm,integrator_openmm, positions_openmm, 
-						   velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);*/
+				integrator(name.toStdString().c_str(), context_openmm,integrator_openmm, positions_openmm, 
+						   velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);
 
+				
+				state_openmm=context_openmm.getState(infoMask);
+				double potential_energy_lambda = state_openmm.getPotentialEnergy();
+				double kinetic_energy = state_openmm.getKineticEnergy();
+				cout << " Energy= " << (potential_energy_lambda + kinetic_energy)  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";*/
+				
 				integrator_openmm.step(frequency_energy);
+				
+				state_openmm=context_openmm.getState(infoMask);
 
 				cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
 
-				state_openmm=context_openmm.getState(infoMask);	
 
 				lam_val = context_openmm.getParameter("lambda");
 
@@ -1567,14 +1582,14 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				cout << "Lambda - delta = " << lam_val << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
 
-				GF_acc = GF_acc + exp(-beta*(potential_energy_lambda_plus_delta - potential_energy_lambda));
+				GF_acc = GF_acc + exp(-beta * potential_energy_lambda_plus_delta) * exp(beta * potential_energy_lambda);
 
-				GB_acc = GB_acc + exp(-beta*(potential_energy_lambda_minus_delta - potential_energy_lambda));
+				GB_acc = GB_acc + exp(-beta * potential_energy_lambda_minus_delta) * exp(beta * potential_energy_lambda);
 
 
 				//cout << "\nGF accumulator partial = " << GF_acc << " -- GB accumulator partial = " << GB_acc << "\n\n";
 				
-				cout << "\nDifference +Delta= " << potential_energy_lambda_plus_delta - potential_energy_lambda << " Difference -Delta=  " << potential_energy_lambda_minus_delta - potential_energy_lambda  << "\n\n";
+				//cout << "\nDifference +Delta= " << potential_energy_lambda_plus_delta - potential_energy_lambda  << " Difference -Delta=  " << potential_energy_lambda_minus_delta - potential_energy_lambda  << "\n\n";
 
 				if(isnormal(GF_acc==0) || isnormal(GB_acc==0)){ 
 					cout << "\n\n ********************** ERROR NAN!! ****************************\n\n";
@@ -1595,10 +1610,11 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 
 				context_openmm.setParameter("lambda",Alchemical_values[i]);
+
 				state_openmm=context_openmm.getState(infoMask);
-                double dummy = state_openmm.getPotentialEnergy();
-				cout << "\nDifference dummy= " << dummy - potential_energy_lambda<< "\n\n";                
-                
+				double dummy = state_openmm.getPotentialEnergy();
+				cout << "\nDifference dummy= " << dummy - potential_energy_lambda<< "\n\n";
+
 			}
 
 
@@ -1621,48 +1637,42 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		double kinetic_energy = 0.0; 
 		double potential_energy = 0.0; 
-	
+
 		kinetic_energy = state_openmm.getKineticEnergy(); 
-	
+
 		potential_energy = state_openmm.getPotentialEnergy(); 
-	
+
 		cout<< "Before MD " <<"\n";
-	
+
 		cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
 		 	 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
 			 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
-	
+
 		cout<<"\n";
-		
-		
+
 		int frequency_dcd = 10;
-		
+
 		bool dcd = false;
 		
 		bool wrap = false;
-		
+
 		integrator("dynamic.dcd", context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , nmoves, frequency_dcd, flag_cutoff, nats);
-		
-		
-		
+
+
 		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
-	
-	
+
 		state_openmm=context_openmm.getState(infoMask);
-	
+
 		positions_openmm = state_openmm.getPositions();
 		
 		velocities_openmm = state_openmm.getVelocities();
-	
-	
+
 		cout<< "Total Time = " << state_openmm.getTime() << " ps"<<"\n\n";
-	
-	
+
 		kinetic_energy = state_openmm.getKineticEnergy(); 
 	
 		potential_energy = state_openmm.getPotentialEnergy(); 
-	
-	
+
 		cout<< "After MD" <<"\n";
 	
 		cout <<"Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
@@ -2261,13 +2271,13 @@ void integrator(const char * filename, OpenMM::Context & context_openmm,OpenMM::
 
 					if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
 
-						//X[j] = X[j] - COG[0];
-						//Y[j] = Y[j] - COG[1];
-						//Z[j] = Z[j] - COG[2];
+						X[j] = X[j] - COG[0];
+						Y[j] = Y[j] - COG[1];
+						Z[j] = Z[j] - COG[2];
 
-						//X[j] = X[j] - box_dims[0]*round(X[j]/box_dims[0]);
-						//Y[j] = Y[j] - box_dims[2]*round(Y[j]/box_dims[2]);
-						//Z[j] = Z[j] - box_dims[5]*round(Z[j]/box_dims[5]);			
+						X[j] = X[j] - box_dims[0]*round(X[j]/box_dims[0]);
+						Y[j] = Y[j] - box_dims[2]*round(Y[j]/box_dims[2]);
+						Z[j] = Z[j] - box_dims[5]*round(Z[j]/box_dims[5]);
 
 					}
 
