@@ -75,7 +75,7 @@ using namespace Conspire;
 
 #include "config.h"
 
-static QString install_dir = JOB_CLASSES_INSTALLATION_DIR;
+static QString install_dir = STATIC_INSTALL_DIR;
 
 void ChooseClusterPage::build()
 {
@@ -112,26 +112,23 @@ void ChooseClusterPage::build()
     tableofworkstores = new QGraphicsWidget();
     tableofworkstores->setLayout(qlinear);
    
-    QFile *xmlFile = new QFile(QString("%1/%2").arg(install_dir).arg("../acc_clusters.xml"));
+    QFile *xmlFile = new QFile(QString("%1/clusterdata/acc_clusters.xml").arg(install_dir));
 
     if (!xmlFile->open(QIODevice::ReadOnly | QIODevice::Text))
     {
        emit( push( PagePointer( new ExceptionPage(
             Conspire::tr("Error opening job classes XML file"),
                         Conspire::file_error( Conspire::tr("Cannot open the "
-                           "file \"%1/%2\".")
-                              .arg(install_dir).arg("../acc_clusters.xml"), CODELOC ) ) ) ) );
+                           "file \"%1/clusterdata/acc_clusters.xml\".")
+                              .arg(install_dir), CODELOC ) ) ) ) );
     }
 
     QXmlStreamReader *xmlReader = new QXmlStreamReader(xmlFile);
 
-    QString t_jobclassid;
-    QString t_jobclassname;
-    QString t_jobclassdescription;
-    QString t_jobclassicon;
-    QString t_jobclassdirectory;
-    QString t_jobclassxml;
-    QStringList t_jobclassincludedirs;
+    QString t_clusterid;
+    QString t_clustername;
+    QString t_clusterdescription;
+    QString t_clustericon;
     
     while (!xmlReader->atEnd() && !xmlReader->hasError())
     {
@@ -141,15 +138,11 @@ void ChooseClusterPage::build()
         {
            if (xmlReader->name() == "clusterdescription")
            {
-              t_jobclassincludedirs.clear();
-              t_jobclassid = QString(*(xmlReader->attributes().value("id").string()));
+              t_clusterid = QString(*(xmlReader->attributes().value("id").string()));
            }
-           if (xmlReader->name() == "name") t_jobclassname = xmlReader->readElementText();
-           if (xmlReader->name() == "description") t_jobclassdescription = xmlReader->readElementText();
-           if (xmlReader->name() == "icon") t_jobclassicon = xmlReader->readElementText();
-           if (xmlReader->name() == "directory") t_jobclassdirectory = xmlReader->readElementText();
-           if (xmlReader->name() == "optionsxml") t_jobclassxml = xmlReader->readElementText();
-           if (xmlReader->name() == "optionsincludedirs") t_jobclassincludedirs << xmlReader->readElementText();
+           if (xmlReader->name() == "name") t_clustername = xmlReader->readElementText();
+           if (xmlReader->name() == "description") t_clusterdescription = xmlReader->readElementText();
+           if (xmlReader->name() == "icon") t_clustericon = xmlReader->readElementText();
         }
         if (token == QXmlStreamReader::EndElement)
         {
@@ -157,8 +150,7 @@ void ChooseClusterPage::build()
            {
               ClustersWidget *this_jcw =
                  new ClustersWidget(numberof, all_jcw,
-                                    t_jobclassid, t_jobclassname, t_jobclassdescription, t_jobclassicon,
-                                    t_jobclassdirectory, t_jobclassxml, t_jobclassincludedirs);
+                                    t_clusterid, t_clustername, t_clusterdescription, t_clustericon);
               qlinear->addItem(this_jcw);
               all_jcw->append(this_jcw);
               connect(this_jcw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
@@ -172,8 +164,8 @@ void ChooseClusterPage::build()
        emit( push( PagePointer( new ExceptionPage(
             Conspire::tr("Error in XML parsing."),
                         Conspire::file_error( Conspire::tr("Cannot open the "
-                           "file \"%1/%2\".")
-                              .arg(install_dir).arg("../acc_clusters.xml"), CODELOC ) ) ) ) );
+                           "file \"%1/clusterdata/acc_clusters.xml\".")
+                              .arg(install_dir), CODELOC ) ) ) ) );
     }
 
     xmlReader->clear();

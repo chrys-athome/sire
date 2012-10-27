@@ -23,11 +23,10 @@ using namespace Conspire;
 
 #include "config.h"
 
-static QString install_dir = JOB_CLASSES_INSTALLATION_DIR;
+static QString install_dir = STATIC_INSTALL_DIR;
 
-ClustersWidget::ClustersWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
+ClustersWidget::ClustersWidget(int row, QList<QGraphicsLayoutItem *> *iall_clw,
                                QString iid, QString ifullname, QString ifulldescr, QString iiconpath,
-                               QString ijobdir, QString ijoboptions, QStringList ijoboptionsincludedirs,
                                QGraphicsItem *parent, ::Qt::WindowFlags wFlags)
 {
    setFlag(QGraphicsItem::ItemStacksBehindParent, false);
@@ -36,11 +35,8 @@ ClustersWidget::ClustersWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
    fullname = QString(ifullname);
    fulldescr = QString(ifulldescr);
    iconpath = QString(iiconpath);
-   jobdir = QString(ijobdir);
-   joboptions = QString(ijoboptions);
-   joboptionsincludedirs = QStringList(ijoboptionsincludedirs);
-   theicon.load(QString("%1/%2").arg(install_dir).arg(iconpath));
-   all_jcw = iall_jcw;
+   theicon.load(QString("%1/clusterdata/%2").arg(install_dir).arg(iconpath));
+   all_clw = iall_clw;
    
    my_row = row;
    my_width = CLASSDISP_WIDTH;
@@ -54,10 +50,12 @@ ClustersWidget::ClustersWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
    connect(this, SIGNAL(clicked()), this, SLOT(newJob()));
 }
 
-void ClustersWidget::newJob()
+void ClustersWidget::newClusterCredentials()
 {
    conspireDebug() << "PUSH CLUSTERINPUT";
-   emit( push( PagePointer(new ClusterInputPage(joboptions))) );
+   conspireDebug() << id;
+   
+   emit( push( PagePointer(new ClusterInputPage(id))) );
    conspireDebug() << "PUSHED!";
 }
 
@@ -123,11 +121,11 @@ void ClustersWidget::mousePressEvent(QGraphicsSceneMouseEvent *event)
       const QRectF widg_geom = this->geometry();
       if (widg_geom.contains(event->scenePos()))
       {
-         newJob();
+         newClusterCredentials();
       } else
       {
-         int nextidx = (my_row + 1) % (all_jcw->size());
-         ((ClustersWidget *)(all_jcw->at(nextidx)))->mousePressEvent(event);
+         int nextidx = (my_row + 1) % (all_clw->size());
+         ((ClustersWidget *)(all_clw->at(nextidx)))->mousePressEvent(event);
       }
       setFocusPolicy(::Qt::NoFocus);
       //printf("left button press\n");

@@ -45,7 +45,7 @@ using namespace Conspire;
 
 #include "config.h"
 
-static QString install_dir = JOB_CLASSES_INSTALLATION_DIR;
+static QString install_dir = STATIC_INSTALL_DIR;
 
 int main(int argc, char **argv)
 {

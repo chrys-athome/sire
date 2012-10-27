@@ -45,7 +45,7 @@ using namespace Conspire;
 
 #include "config.h"
 
-static QString install_dir = JOB_CLASSES_INSTALLATION_DIR;
+static QString install_dir = STATIC_INSTALL_DIR;
 
 int main(int argc, char **argv)
 {
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
         if (argc <= 1)
         {
             QStringList path;
-            path << QString("%1/pmemd").arg(install_dir);
+            path << QString("%1/job_classes/pmemd").arg(install_dir);
             
             opts = Options::fromXMLFile("pmemd.xml", path);
         }

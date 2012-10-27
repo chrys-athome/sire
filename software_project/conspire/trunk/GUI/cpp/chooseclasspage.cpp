@@ -75,7 +75,7 @@ using namespace Conspire;
 
 #include "config.h"
 
-static QString install_dir = JOB_CLASSES_INSTALLATION_DIR;
+static QString install_dir = STATIC_INSTALL_DIR;
 
 void ChooseClassPage::build()
 {
@@ -112,7 +112,7 @@ void ChooseClassPage::build()
     tableofworkstores = new QGraphicsWidget();
     tableofworkstores->setLayout(qlinear);
    
-    QFile *xmlFile = new QFile(QString("%1/%2").arg(install_dir).arg("job_classes.xml"));
+    QFile *xmlFile = new QFile(QString("%1/job_classes/job_classes.xml").arg(install_dir));
 
     if (!xmlFile->open(QIODevice::ReadOnly | QIODevice::Text))
     {

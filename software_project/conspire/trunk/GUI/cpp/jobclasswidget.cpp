@@ -22,7 +22,7 @@ using namespace Conspire;
 
 #include "config.h"
 
-static QString install_dir = JOB_CLASSES_INSTALLATION_DIR;
+static QString install_dir = STATIC_INSTALL_DIR;
 
 JobClassWidget::JobClassWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
                                QString iid, QString ifullname, QString ifulldescr, QString iiconpath,
@@ -38,7 +38,7 @@ JobClassWidget::JobClassWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
    jobdir = QString(ijobdir);
    joboptions = QString(ijoboptions);
    joboptionsincludedirs = QStringList(ijoboptionsincludedirs);
-   theicon.load(QString("%1/%2").arg(install_dir).arg(iconpath));
+   theicon.load(QString("%1/job_classes/%2").arg(install_dir).arg(iconpath));
    all_jcw = iall_jcw;
    
    my_row = row;
@@ -56,13 +56,13 @@ JobClassWidget::JobClassWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
 void JobClassWidget::newJob()
 {
    QStringList path;
-   path << QString("%1/%2").arg(install_dir).arg(jobdir);
+   path << QString("%1/job_classes/%2").arg(install_dir).arg(jobdir);
    
    printf("joboptions %s\n", joboptions.toAscii().constData());
    Options opts = Options::fromXMLFile(QString("%1").arg(joboptions), path);
 
    qDebug() << "Looking for a default config file...";
-   QFileInfo default_config( QString("%1/%2/default_config").arg(install_dir,jobdir) );
+   QFileInfo default_config( QString("%1/job_classes/%2/default_config").arg(install_dir,jobdir) );
 
    qDebug() << default_config.absoluteFilePath();
 

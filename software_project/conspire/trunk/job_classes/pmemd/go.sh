@@ -11,5 +11,9 @@ fi
 if [ "$CONSPIRE_CLUSTERID" = "bluecrystalp2" ]; then
    module add apps/amber11-serial
 fi
+if [ "$CONSPIRE_CLUSTERID" = "emerald" ]; then
+   module add intel
+   module add cuda
+   module add amber
+fi
 python2 run_md.py . 0
-

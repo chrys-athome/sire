@@ -169,7 +169,7 @@ set ( CONSPIRE_GUI_SOURCES
 
     )
 
-set(JOBCLASSESINSTALLD ${CMAKE_CURRENT_SOURCE_DIR}/../job_classes)
+set(STATIC_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Conspire/GUI/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # generate the library and application

@@ -382,17 +382,5 @@ void ConfigDocument::load()
    {
       opts = opts.fromConfigFile(filename);
       this->setOptions(opts);
-      /*
-      // HACK do not have the string list of paths here (need to be included)
-      QStringList strings;
-      if (file.open(QIODevice::ReadOnly | QIODevice::Text))
-      {
-         QTextStream in(&file);
-         while (!in.atEnd())
-         {
-            strings += in.readLine();
-         }
-         opts.fromConfigFile(Options(strings.join(QString("\n"))));
-      }*/
    }
 }

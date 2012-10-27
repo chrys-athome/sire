@@ -17,16 +17,15 @@ class ClustersWidget : public QGraphicsWidget
 {
    Q_OBJECT
    public:
-      ClustersWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
+      ClustersWidget(int row, QList<QGraphicsLayoutItem *> *iall_clw,
                      QString iid, QString ifullname, QString ifulldescr, QString iiconpath,
-                     QString ijobdir, QString ijoboptions, QStringList ijoboptionsincludedirs,
                      QGraphicsItem *parent = 0, ::Qt::WindowFlags wFlags = 0);
       void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
    signals:
       void clicked();
       void push(PagePointer new_page);
    protected slots:
-      void newJob();
+      void newClusterCredentials();
    protected:
       virtual void mousePressEvent(QGraphicsSceneMouseEvent *event);
       virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
@@ -35,11 +34,8 @@ class ClustersWidget : public QGraphicsWidget
       QString fullname;
       QString fulldescr;
       QString iconpath;
-      QString jobdir;
-      QString joboptions;
-      QStringList joboptionsincludedirs;
       QImage theicon;
-      QList<QGraphicsLayoutItem *> *all_jcw;
+      QList<QGraphicsLayoutItem *> *all_clw;
       int my_width;
       int my_height;
       int my_row;
