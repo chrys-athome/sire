@@ -405,7 +405,7 @@ void SubmitPage::submit()
         
         
         // HACK this needs to be updated to read the XML file!
-        QDir class_dir(QString("%1/%2").arg(install_dir,job_class));
+        QDir class_dir(QString("%1/job_classes/%2").arg(install_dir,job_class));
         class_dir.setFilter(QDir::Files);
         
         if (not class_dir.exists())

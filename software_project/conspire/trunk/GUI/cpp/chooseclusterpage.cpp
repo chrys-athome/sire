@@ -138,7 +138,8 @@ void ChooseClusterPage::build()
         {
            if (xmlReader->name() == "clusterdescription")
            {
-              t_clusterid = QString(*(xmlReader->attributes().value("id").string()));
+              t_clusterid = QString((xmlReader->attributes().value("id")).toString());
+              conspireDebug() << t_clusterid;
            }
            if (xmlReader->name() == "name") t_clustername = xmlReader->readElementText();
            if (xmlReader->name() == "description") t_clusterdescription = xmlReader->readElementText();
