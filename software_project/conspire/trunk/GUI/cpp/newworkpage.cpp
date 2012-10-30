@@ -26,6 +26,7 @@
   *
 \*********************************************/
 
+#include <math.h>
 #include "Conspire/GUI/workstorepage.h"
 #include "Conspire/GUI/workpacketwidget.h"
 #include "Conspire/GUI/newworkpage.h"
@@ -72,6 +73,41 @@
 
 using namespace Conspire;
 
+QString getDataAmount(uint64_t data)
+{
+   double a = log10((double)data);
+   int l = int(floor(a));
+   switch (l)
+   {
+      case 0:
+      case 1:
+      case 2:
+         return QString("%1 bytes").arg(QString::number(data));
+      default: break;
+   }
+   const char ms[] = { 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', '\0' };
+   double data2 = data;
+   int count = 0;
+   while (ms[count] != '\0')
+   {
+      data2 = ((uint64_t)floor(data2)) / 1024.0;
+      a = log10(data2);
+      l = int(floor(a));
+      switch (l)
+      {
+         case 0:
+            return QString("%1%2").arg(QString::number(data2, 'f', 2)).arg(QString::fromAscii(&(ms[count]), 1));
+         case 1:
+            return QString("%1%2").arg(QString::number(data2, 'f', 1)).arg(QString::fromAscii(&(ms[count]), 1));
+         case 2:
+            return QString("%1%2").arg(QString::number(int(data2))).arg(QString::fromAscii(&(ms[count]), 1));
+         default: break;
+      }
+      count++;
+   }
+   return QString("Lots of space");
+}
+
 void NewWorkPage::refreshWork()
 {
    printf("refresh work triggered\n");
@@ -85,8 +121,8 @@ void NewWorkPage::refreshWork()
    int retval = AcquireQueryAllWorkStatus(&store_ids, &pct_b2c, &pct_wrk, &pct_c2b, &noofws, &bytesfree);
    if ((retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) || (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK))
    {
-      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText(QString("Network OK. %1K free on Conspire.").arg(QString::number(bytesfree/1024)));
-      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Network OK. No active jobs. %1K free on Conspire.").arg(QString::number(bytesfree/1024)));
+      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText(QString("Network OK. %1 free on Conspire.").arg(getDataAmount(bytesfree)));
+      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Network OK. No active jobs. %1 free on Conspire.").arg(getDataAmount(bytesfree)));
       
       if (all_wpw->size() != (noofws + 1))
       {
@@ -307,9 +343,7 @@ void NewWorkPage::paint(QPainter *painter,
     for (int i = 0; i < all_wpw->size(); i++)
     {
        ((WorkPacketWidget *)(all_wpw->at(i)))->update();
-//       paint(painter, option, widget);
     }
-    //tableofworkstores->paint();
     Page::paint(painter, option, widget);
 }
 

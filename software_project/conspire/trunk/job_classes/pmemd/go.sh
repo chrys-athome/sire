@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export NUMBER_AMBER_CPUS=1
+export NUMBER_AMBER_GPUS=0
 if [ "$CONSPIRE_CLUSTERID" = "pretend" ]; then
    if [ -z "$AMBERHOME" ]; then
       export AMBERHOME=$HOME/amber12
@@ -15,5 +17,6 @@ if [ "$CONSPIRE_CLUSTERID" = "emerald" ]; then
    module add intel
    module add cuda
    module add amber
+   export NUMBER_AMBER_GPUS=3
 fi
-python2 run_md.py . 0
+python2 run_md.py $NUMBER_AMBER_CPUS $NUMBER_AMBER_GPUS
