@@ -38,6 +38,10 @@ class QLabel;
 class QLineEdit;
 class QProgressBar;
 class QTableWidget;
+class QGraphicsView;
+class QGraphicsWidget;
+class QGraphicsGridLayout;
+class QTimer;
 
 namespace Conspire
 {
@@ -77,7 +81,11 @@ namespace Conspire
             the job run process */
         WidgetStack *stack;
         
-        QTableWidget *tableofworkstores;
+        QGraphicsView *qview;
+        QGraphicsScene *qscene;
+        QList<QGraphicsLayoutItem *> *all_wpw;
+        QGraphicsGridLayout *qgrid;
+        QGraphicsWidget *tableofworkstores;
 
         /** Text editor for host */
         QLineEdit *lineedit_host;
@@ -96,6 +104,8 @@ namespace Conspire
                 
         /** The button used to submit the job */
         Button *button;
+        
+        QTimer *refreshtimer;
                         
         Button *return_button;
 

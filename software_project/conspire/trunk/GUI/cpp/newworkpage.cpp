@@ -73,7 +73,7 @@
 
 using namespace Conspire;
 
-QString getDataAmount(uint64_t data)
+inline QString getDataAmount(uint64_t data)
 {
    double a = log10((double)data);
    int l = int(floor(a));
@@ -95,6 +95,7 @@ QString getDataAmount(uint64_t data)
       l = int(floor(a));
       switch (l)
       {
+         case -1:
          case 0:
             return QString("%1%2").arg(QString::number(data2, 'f', 2)).arg(QString::fromAscii(&(ms[count]), 1));
          case 1:

@@ -26,7 +26,9 @@
   *
 \*********************************************/
 
+#include <math.h>
 #include "Conspire/GUI/workstorepage.h"
+#include "Conspire/GUI/workpacketwidget.h"
 #include "Conspire/GUI/workpage.h"
 #include "Conspire/GUI/optionspage.h"
 #include "Conspire/GUI/widgetrack.h"
@@ -59,8 +61,10 @@
 #include <QLineEdit>
 #include <QPixmap>
 #include <QSettings>
-#include <QTableWidget>
 #include <QHeaderView>
+#include <QGraphicsView>
+#include <QGraphicsGridLayout>
+#include <QTimer>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -68,6 +72,42 @@
 #include "Acquire/acquire_client.h"
 
 using namespace Conspire;
+
+inline QString getDataAmount(uint64_t data)
+{
+   double a = log10((double)data);
+   int l = int(floor(a));
+   switch (l)
+   {
+      case 0:
+      case 1:
+      case 2:
+         return QString("%1 bytes").arg(QString::number(data));
+      default: break;
+   }
+   const char ms[] = { 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', '\0' };
+   double data2 = data;
+   int count = 0;
+   while (ms[count] != '\0')
+   {
+      data2 = ((uint64_t)floor(data2)) / 1024.0;
+      a = log10(data2);
+      l = int(floor(a));
+      switch (l)
+      {
+         case -1:
+         case 0:
+            return QString("%1%2").arg(QString::number(data2, 'f', 2)).arg(QString::fromAscii(&(ms[count]), 1));
+         case 1:
+            return QString("%1%2").arg(QString::number(data2, 'f', 1)).arg(QString::fromAscii(&(ms[count]), 1));
+         case 2:
+            return QString("%1%2").arg(QString::number(int(data2))).arg(QString::fromAscii(&(ms[count]), 1));
+         default: break;
+      }
+      count++;
+   }
+   return QString("Lots of space");
+}
 
 void WorkPage::refreshWork()
 {
@@ -82,31 +122,97 @@ void WorkPage::refreshWork()
    int retval = AcquireQueryAllWorkStatus(&store_ids, &pct_b2c, &pct_wrk, &pct_c2b, &noofws, &bytesfree);
    if ((retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) || (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK))
    {
-      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText(QString("Success. %1 bytes free").arg(QString::number(bytesfree)));
-      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Success. No work found. %1 bytes free").arg(QString::number(bytesfree)));
-      int row = 0;
-      int col = 0;
-      QTableWidgetItem *qttwi = tableofworkstores->item(row, col);
-      while (qttwi != NULL)
+      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText(QString("Network OK. %1 free on Conspire.").arg(getDataAmount(bytesfree)));
+      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Network OK. No active jobs. %1 free on Conspire.").arg(getDataAmount(bytesfree)));
+      
+      if (all_wpw->size() != (noofws + 1))
       {
-         tableofworkstores->removeCellWidget(row, col);
-         delete qttwi;
-         col++;
-         if (col >= 3) { col = 0; row++; }
-         qttwi = tableofworkstores->item(row, col);
+         for (int i = 0; i < all_wpw->size(); i++)
+         {
+            qgrid->removeItem(all_wpw->at(i));
+            delete all_wpw->at(i);
+         }
+         all_wpw->clear();
+         int row = 0;
+         int col = 0;
+         for (int i = 0; i < (noofws + 1); i++)
+         {
+            WorkPacketWidget *t_wpw = new WorkPacketWidget("", 0, 0, i, all_wpw, NULL);
+            qgrid->setRowFixedHeight(row, 100);
+            qgrid->setColumnFixedWidth(col, 100);
+            qgrid->addItem(t_wpw, row, col, 1, 1);
+            col++;
+            if (col >= 3) { row++; col = 0; }
+            connect(t_wpw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
+            all_wpw->append(t_wpw);
+         }
       }
-      row = 0;
-      col = 0;
+
       for (int i = 0; i < noofws; i++)
       {
-         qttwi = new QTableWidgetItem("Untitled work");
-         qttwi->setData(::Qt::UserRole, QString(store_ids[i]));
-         tableofworkstores->setItem(row, col, qttwi);
-         col++;
-         if (col >= 3) { col = 0; row++; }
+         QString quuid;
+         QString workstoreid = QString(store_ids[i]);
+         QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+         QStringList groups = qsetter->childGroups();
+         for (int j = 0; j < groups.size(); j++)
+         {
+            QString qstr = qsetter->value(groups.at(j) + "/workstoreid").toString();
+            if (qstr == workstoreid)
+            {
+               quuid = groups.at(j);
+            }
+         }
+         delete qsetter;
+         ((WorkPacketWidget *)(all_wpw->at(i)))->updateUUID(quuid);
+         if (pct_b2c[i] == 100.)
+         {
+            char **workdata_ids = NULL;
+            char *stage_ids = NULL;
+            float *stage_pcts = NULL;
+            int noofwds = 0;
+            int retval2 = AcquireQueryAllWorkDataStatus(store_ids[i], &workdata_ids, &stage_ids, &stage_pcts, &noofwds);
+            if (retval2 == ACQUIRE_QUERY_ALL_WORK__SUCCESS)
+            {
+               float amt_b2c = 0.;
+               float amt_prg = 0.;
+               float amt_c2b = 0.;
+               for (int l = 0; l < noofwds; l++)
+               {
+                  printf("%s\t%s: %c-%d\n", store_ids[i], workdata_ids[l], stage_ids[l], stage_pcts[l]);
+                  switch (stage_ids[l])
+                  {
+                     case 'G': amt_c2b += (stage_pcts[l] / ((float)noofwds)); break;
+                     case 'F': amt_prg += (stage_pcts[l] / ((float)noofwds)); break;
+                     case 'E': amt_b2c += (stage_pcts[l] / ((float)noofwds)); break;
+                     default: break;
+                  }
+                  switch (stage_ids[l])
+                  {
+                     case 'H': amt_c2b += (100. / ((float)noofwds));
+                     case 'G': amt_prg += (100. / ((float)noofwds));
+                     case 'F': amt_b2c += (100. / ((float)noofwds));
+                     default: break;
+                  }
+               }
+               ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Waiting...");
+               if (amt_b2c > 0.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Sending...");
+               if (amt_b2c == 100.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Computing...");
+               if (amt_prg == 100.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Computed...");
+               if (amt_c2b > 0.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Receiving...");
+               ((WorkPacketWidget *)(all_wpw->at(i)))->updateAmounts(amt_b2c / 100., amt_prg / 100., amt_c2b / 100.);
+            } else
+            {
+               printf("acquire query all work data failed (code %d)\n", retval2);
+            }
+         } else
+         {
+            ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Uploading...");
+         }
+         if (pct_c2b[i] == 100.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Complete.");
+         ((WorkPacketWidget *)(all_wpw->at(i)))->computeAndUpdateUpload();
       }
-      QTableWidgetItem *new_item = new QTableWidgetItem("Create new...");
-      tableofworkstores->setItem(row, col, new_item);
+      ((WorkPacketWidget *)(all_wpw->at(noofws)))->updateText("Create new...");
+      ((WorkPacketWidget *)(all_wpw->at(noofws)))->updateAmounts(0., 0., 0.);
    } else
    {
       switch (retval)
@@ -127,6 +233,8 @@ void WorkPage::refreshWork()
 
 void WorkPage::modifyWork(int row, int col)
 {
+   
+   /*
    QTableWidgetItem *qwidget = tableofworkstores->item(row, col);
    if (qwidget == NULL) return;
    if (QString("Create new...") == qwidget->text())
@@ -137,11 +245,12 @@ void WorkPage::modifyWork(int row, int col)
          login_label->setText("Please add some accessible clusters before creating work");
          return;
       }
-//      makeWork();
+      makeWork();
    } else
    {
       emit( push(new WorkStorePage(qwidget->data(::Qt::UserRole).toString())));
    }
+   */
 }
 
 void WorkPage::build()
@@ -162,23 +271,32 @@ void WorkPage::build()
     WidgetRack *sub_rack = new WidgetRack(this);
     sub_rack->setFocusPolicy(::Qt::NoFocus);
     
-    QLabel *label_table = new QLabel(Conspire::tr("Your work currently in the Conspire cloud:"));
+    QLabel *label_table = new QLabel(Conspire::tr("Jobs that Conspire is currently tracking:"));
     sub_rack->addWidget(label_table);
-
-    tableofworkstores = new QTableWidget(3, 3);
-    tableofworkstores->horizontalHeader()->hide();
-    tableofworkstores->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
-    tableofworkstores->verticalHeader()->hide();
-    tableofworkstores->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-    tableofworkstores->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
-    tableofworkstores->setFrameStyle(::QFrame::Sunken | ::QFrame::StyledPanel);
-
-    QTableWidgetItem *new_item = new QTableWidgetItem("Create new...");
-    tableofworkstores->setItem(0, 0, new_item);
-    connect(tableofworkstores, SIGNAL(cellClicked(int, int)), this, SLOT(modifyWork(int, int)));    
     
-    sub_rack->addWidget(tableofworkstores);
-    
+    all_wpw = new QList<QGraphicsLayoutItem *>();
+
+    qscene = new QGraphicsScene();
+    qview = new QGraphicsView(qscene);
+    qview->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+    qview->setAutoFillBackground(true);
+
+    qgrid = new QGraphicsGridLayout();
+    qgrid->setRowFixedHeight(0, 100);
+    qgrid->setColumnFixedWidth(0, 100);
+    WorkPacketWidget *none_wpw = new WorkPacketWidget("Create new...", 0, 0, 0, all_wpw, NULL);
+    qgrid->addItem(none_wpw, 0, 0, 1, 1);
+    all_wpw->append(none_wpw);
+    connect(none_wpw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
+//    tableofworkstores = new QGraphicsWidget();
+    tableofworkstores = new QGraphicsWidget();
+    tableofworkstores->setLayout(qgrid);
+    qscene->addItem(tableofworkstores);
+    connect(qscene, SIGNAL(mousePressEvent(QGraphicsSceneMouseEvent *)), tableofworkstores, SLOT(mousePressEvent(QGraphicsSceneMouseEvent *)));
+
+    sub_rack->addWidget(qview);
+    return_button = NULL;
+
     button = new Button(Conspire::tr("Refresh"));
     connect(button, SIGNAL(clicked()), this, SLOT(refreshWork()));
     sub_rack->addWidget(button);
@@ -194,6 +312,9 @@ void WorkPage::build()
 
     rack->addWidget(stack);
     refreshWork();
+    refreshtimer = new QTimer(this);
+    connect(refreshtimer, SIGNAL(timeout()), this, SLOT(refreshWork()));
+    refreshtimer->start(1000);
 }
 
 /** Constructor */
@@ -217,15 +338,17 @@ void WorkPage::moveEvent(QGraphicsSceneMoveEvent *e)
 }
 
 void WorkPage::paint(QPainter *painter, 
-                       const QStyleOptionGraphicsItem *option, 
-                       QWidget *widget)
+                        const QStyleOptionGraphicsItem *option, 
+                        QWidget *widget)
 {
-    tableofworkstores->repaint();
+    for (int i = 0; i < all_wpw->size(); i++)
+    {
+       ((WorkPacketWidget *)(all_wpw->at(i)))->update();
+    }
     Page::paint(painter, option, widget);
 }
 
 void WorkPage::allUpdate()
 {
-   
     QCoreApplication::processEvents();
 }
