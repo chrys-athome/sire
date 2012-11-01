@@ -19,6 +19,7 @@ class ClustersWidget : public QGraphicsWidget
    public:
       ClustersWidget(int row, QList<QGraphicsLayoutItem *> *iall_clw,
                      QString iid, QString ifullname, QString ifulldescr, QString iiconpath,
+                     QString iaddtype, QString igateways, QString ihostname,
                      QGraphicsItem *parent = 0, ::Qt::WindowFlags wFlags = 0);
       void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
    signals:
@@ -34,6 +35,9 @@ class ClustersWidget : public QGraphicsWidget
       QString fullname;
       QString fulldescr;
       QString iconpath;
+      QString addtype;
+      QString gateways;
+      QString hostname;
       QImage theicon;
       QList<QGraphicsLayoutItem *> *all_clw;
       int my_width;

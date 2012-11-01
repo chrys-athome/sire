@@ -178,7 +178,7 @@ void NewWorkPage::refreshWork()
                float amt_c2b = 0.;
                for (int l = 0; l < noofwds; l++)
                {
-                  printf("%s\t%s: %c-%d\n", store_ids[i], workdata_ids[l], stage_ids[l], stage_pcts[l]);
+                  printf("%s\t%s: %c-%f\n", store_ids[i], workdata_ids[l], stage_ids[l], stage_pcts[l]);
                   switch (stage_ids[l])
                   {
                      case 'G': amt_c2b += (stage_pcts[l] / ((float)noofwds)); break;

@@ -87,11 +87,7 @@ void ClusterInputPage::browseForKey()
 
 void ClusterInputPage::tryClusterAdd()
 {
-   QString machinename;
-   if (strcmp(workstoreid.toAscii().constData(), "emerald") == 0)
-   {
-      machinename = QString("emerald.einfrastructuresouth.ac.uk");
-   }
+   QString machinename = hostname;
    QString username = lineedit_username->text();
    QString password = lineedit_password->text();
    // try to add the cluster by doing the manipulations.
@@ -357,59 +353,61 @@ void ClusterInputPage::build()
     WidgetRack *sub_rack = new WidgetRack(this);
     sub_rack->setFocusPolicy(::Qt::NoFocus);
     
-    if (strcmp(workstoreid.toAscii().constData(), "emerald") == 0)
-    {
-        QLabel *intro_label = new QLabel(Conspire::tr("This page adds logins for gateways needed for Emerald."));
-        intro_label->setWordWrap(true);
-        sub_rack->addWidget(intro_label);
+      QLabel *intro_label = new QLabel(Conspire::tr("This page adds logins for the cluster '%1'.").arg(workstoreid));
+      intro_label->setWordWrap(true);
+      sub_rack->addWidget(intro_label);
 
-        QLabel *intro_label2 = new QLabel(Conspire::tr("Username:"));
-        intro_label2->setWordWrap(true);
-        sub_rack->addWidget(intro_label2);
+      QLabel *intro_label2 = new QLabel(Conspire::tr("Username:"));
+      intro_label2->setWordWrap(true);
+      sub_rack->addWidget(intro_label2);
 
-        lineedit_username = new QLineEdit();
-        lineedit_username->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
-        lineedit_username->setPlaceholderText("Username");
-        lineedit_username->setFocusPolicy(::Qt::StrongFocus);
-        sub_rack->addWidget(lineedit_username);
-        
-        modifybutton = new Button(Conspire::tr("Browse for key"));
-        connect(modifybutton, SIGNAL(clicked()), this, SLOT(browseForKey()));
-        sub_rack->addWidget(modifybutton);
-        
-        QLabel *intro_label3 = new QLabel(Conspire::tr("Password (for either key decryption or the account):"));
-        intro_label3->setWordWrap(true);
-        sub_rack->addWidget(intro_label3);
-        
-        lineedit_password = new QLineEdit();
-        lineedit_password->setEchoMode(QLineEdit::Password);
-        lineedit_password->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
-        lineedit_password->setPlaceholderText("Password");
-        lineedit_password->setFocusPolicy(::Qt::StrongFocus);
-        sub_rack->addWidget(lineedit_password);
-        
-        return_button = new Button(Conspire::tr("Add cluster"));
-        connect(return_button, SIGNAL(clicked()), this, SLOT(tryClusterAdd()));
-        sub_rack->addWidget(return_button);
-    }
+      lineedit_username = new QLineEdit();
+      lineedit_username->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+      lineedit_username->setPlaceholderText("Username");
+      lineedit_username->setFocusPolicy(::Qt::StrongFocus);
+      sub_rack->addWidget(lineedit_username);
+      
+      modifybutton = new Button(Conspire::tr("Browse for key"));
+      connect(modifybutton, SIGNAL(clicked()), this, SLOT(browseForKey()));
+      sub_rack->addWidget(modifybutton);
+      
+      QLabel *intro_label3 = new QLabel(Conspire::tr("Password (for either key decryption or the account):"));
+      intro_label3->setWordWrap(true);
+      sub_rack->addWidget(intro_label3);
+      
+      lineedit_password = new QLineEdit();
+      lineedit_password->setEchoMode(QLineEdit::Password);
+      lineedit_password->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+      lineedit_password->setPlaceholderText("Password");
+      lineedit_password->setFocusPolicy(::Qt::StrongFocus);
+      sub_rack->addWidget(lineedit_password);
+      
+      return_button = new Button(Conspire::tr("Add cluster"));
+      connect(return_button, SIGNAL(clicked()), this, SLOT(tryClusterAdd()));
+      sub_rack->addWidget(return_button);
         
     //AcquireAreResultsFromWorkStoreReady(const int nresultsarray, int *resultsarray, const char *store_id)
+      button = new Button(Conspire::tr("Return"));
+      connect(button, SIGNAL(clicked()), this, SLOT(returnPop()));
+      sub_rack->addWidget(button);
     
     login_label = new QLabel("");
+    
     sub_rack->addWidget(login_label);
 
     stack->addWidget(sub_rack);
     
     rack->addWidget(stack);
     
-    if (modifybutton->text() == Conspire::tr("Refresh"))
-       refreshTimes();
+    
 }
 
 /** Constructor */
-ClusterInputPage::ClusterInputPage(QString iclusterid, Page *parent) : Page(parent)
+ClusterInputPage::ClusterInputPage(QString iclusterid, QString igateways, QString ihostname, Page *parent) : Page(parent)
 {
     workstoreid = QString(iclusterid);
+    gateways = igateways;
+    hostname = ihostname;
     build();
 }
 
@@ -438,4 +436,9 @@ void ClusterInputPage::allUpdate()
 {
    
     QCoreApplication::processEvents();
+}
+
+void ClusterInputPage::returnPop()
+{
+   emit( pop(true) );
 }

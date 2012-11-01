@@ -129,6 +129,9 @@ void ChooseClusterPage::build()
     QString t_clustername;
     QString t_clusterdescription;
     QString t_clustericon;
+    QString t_clusteraddtype;
+    QString t_clustergateways;
+    QString t_clusterhostname;
     
     while (!xmlReader->atEnd() && !xmlReader->hasError())
     {
@@ -144,6 +147,9 @@ void ChooseClusterPage::build()
            if (xmlReader->name() == "name") t_clustername = xmlReader->readElementText();
            if (xmlReader->name() == "description") t_clusterdescription = xmlReader->readElementText();
            if (xmlReader->name() == "icon") t_clustericon = xmlReader->readElementText();
+           if (xmlReader->name() == "addtype") t_clusteraddtype = xmlReader->readElementText();
+           if (xmlReader->name() == "gateways") t_clustergateways = xmlReader->readElementText();
+           if (xmlReader->name() == "hostname") t_clusterhostname = xmlReader->readElementText();
         }
         if (token == QXmlStreamReader::EndElement)
         {
@@ -151,7 +157,7 @@ void ChooseClusterPage::build()
            {
               ClustersWidget *this_jcw =
                  new ClustersWidget(numberof, all_jcw,
-                                    t_clusterid, t_clustername, t_clusterdescription, t_clustericon);
+                                    t_clusterid, t_clustername, t_clusterdescription, t_clustericon, t_clusteraddtype, t_clustergateways, t_clusterhostname);
               qlinear->addItem(this_jcw);
               all_jcw->append(this_jcw);
               connect(this_jcw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));

@@ -51,7 +51,7 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        ClusterInputPage(QString iworkstoreid, Page *parent=0);
+        ClusterInputPage(QString iclusterid, QString igateways, QString ihostname, Page *parent=0);
         
         ~ClusterInputPage();
 
@@ -62,6 +62,7 @@ namespace Conspire
         void refreshTimes();
         void browseForKey();
         void tryClusterAdd();
+        void returnPop();
         
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
@@ -84,6 +85,8 @@ namespace Conspire
         
         QString workstoreid;
         QString quuid;
+        QString gateways;
+        QString hostname;
         
         QListWidget *instancelist;
 

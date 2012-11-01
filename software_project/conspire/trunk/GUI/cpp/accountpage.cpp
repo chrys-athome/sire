@@ -76,7 +76,7 @@ void AccountPage::addSSHAccount()
 void AccountPage::refreshList()
 {
    int items = clusterlist->count();
-   for (int i = 0; i < items; i++)
+   for (int i = items; i--; )
    {
       QListWidgetItem *wid = clusterlist->item(i);
       clusterlist->removeItemWidget(wid);

@@ -37,6 +37,7 @@ CONSPIRE_BEGIN_HEADER
 class QLabel;
 class QLineEdit;
 class QProgressBar;
+class QComboBox;
 
 namespace Conspire
 {
@@ -49,7 +50,8 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        UserPage(int usemode, Page *parent=0);
+        UserPage(Page *parent=0);
+        UserPage(QString clusterid, QString gateways, QString clusterhost, Page *parent=0);
         
         ~UserPage();
 
@@ -101,6 +103,12 @@ namespace Conspire
         /** Text editor for password */
         QLineEdit *lineedit_password_known;
         
+        QComboBox *gateways_box;
+        /** Gateway username */
+        QLineEdit *lineedit_gateway_username;
+        /** Gateway password */
+        QLineEdit *lineedit_gateway_password;
+        
         /** The status label for logging in */
         QLabel *login_label;
                 
@@ -125,6 +133,10 @@ namespace Conspire
 
         /** The last username that was logged in */
         QString last_username;
+        
+        QString this_clusterid;
+        QString this_gateways;
+        QString this_hostname;
     };
 
 }

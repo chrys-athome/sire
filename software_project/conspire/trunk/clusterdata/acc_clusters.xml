@@ -4,10 +4,16 @@
       <name>Emerald GPU cluster</name>
       <description>Emerald is an HP system with 372 NVIDIA GPUs. It is housed at the STFC Rutherford Appleton Laboratory.</description>
       <icon>emerald.jpg</icon>
+      <addtype>key</addtype>
+      <gateways></gateways>
+      <hostname>emerald.einfrastructuresouth.ac.uk</hostname>
    </clusterdescription>
-   <clusterdescription id="iridis">
-      <name>Iridis CPU/GPU cluster</name>
-      <description>Iridis is a cluster with approximately 1000 Intel Nehalem compute nodes each with two 4-core processors. It is the supercomputer of the University of Southampton.</description>
+   <clusterdescription id="bluecrystalp2">
+      <name>Bluecrystal Phase 2</name>
+      <description>This is Phase 2 of Bluecrystal, supercomputer for the University of Bristol.</description>
       <icon>iridis.jpg</icon>
+      <addtype>password</addtype>
+      <gateways>icy.cs.bris.ac.uk,snowy.cs.bris.ac.uk,curie.chm.bris.ac.uk</gateways>
+      <hostname>bluecrystalp2.bris.ac.uk</hostname>
    </clusterdescription>
 </accessibleclusters>

@@ -9,6 +9,7 @@
 #include "Conspire/GUI/mainwindow.h"
 #include "Conspire/GUI/clusterswidget.h"
 #include "Conspire/GUI/clusterinputpage.h"
+#include "Conspire/GUI/userpage.h"
 
 #include "Conspire/GUI/exceptionpage.h"
 #include "Conspire/GUI/configdocument.h"
@@ -27,6 +28,7 @@ static QString install_dir = STATIC_INSTALL_DIR;
 
 ClustersWidget::ClustersWidget(int row, QList<QGraphicsLayoutItem *> *iall_clw,
                                QString iid, QString ifullname, QString ifulldescr, QString iiconpath,
+                               QString iaddtype, QString igateways, QString ihostname,
                                QGraphicsItem *parent, ::Qt::WindowFlags wFlags)
 {
    setFlag(QGraphicsItem::ItemStacksBehindParent, false);
@@ -35,6 +37,9 @@ ClustersWidget::ClustersWidget(int row, QList<QGraphicsLayoutItem *> *iall_clw,
    fullname = QString(ifullname);
    fulldescr = QString(ifulldescr);
    iconpath = QString(iiconpath);
+   addtype = QString(iaddtype);
+   gateways = QString(igateways);
+   hostname = QString(ihostname);
    theicon.load(QString("%1/clusterdata/%2").arg(install_dir).arg(iconpath));
    all_clw = iall_clw;
    
@@ -54,8 +59,14 @@ void ClustersWidget::newClusterCredentials()
 {
    conspireDebug() << "PUSH CLUSTERINPUT";
    conspireDebug() << id;
-   
-   emit( push( PagePointer(new ClusterInputPage(id))) );
+   if (addtype == QString("key"))
+   {
+      emit( push( PagePointer(new ClusterInputPage(id, gateways, hostname))) );
+   }
+   if (addtype == QString("password"))
+   {
+      emit( push( PagePointer(new UserPage(id, gateways, hostname))) );
+   }
    conspireDebug() << "PUSHED!";
 }
 

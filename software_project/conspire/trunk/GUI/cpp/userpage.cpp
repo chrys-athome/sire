@@ -59,6 +59,7 @@
 #include <QLineEdit>
 #include <QPixmap>
 #include <QSettings>
+#include <QComboBox>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -111,18 +112,42 @@ void UserPage::build()
        lineedit_host = new QLineEdit();
     if (usemode == 1)
     {
-       QLabel *intro_label = new QLabel(Conspire::tr("For Conspire to push your work to a cluster, "
-          "trusted machine logins must be added to your account. These are transparently appended "
-          "to an encrypted remote keyring which can only be opened with your main password."));
+       QLabel *intro_label = new QLabel(Conspire::tr("Trusted machine logins must be added "
+          "to your account in order for Conspire to schedule your work.%1")
+           .arg((this_gateways.isEmpty()) ? "" : " This cluster requires a gateway login for access."));
        intro_label->setWordWrap(true);
-       intro_label->setMinimumSize(intro_label->sizeHint());
+       //intro_label->setMinimumSize(intro_label->sizeHint());
        sub_rack->addWidget(intro_label);
-       QLabel *label_host = new QLabel(Conspire::tr("Machine to add to remote SSH keyring:"));
+       if (not this_gateways.isEmpty())
+       {
+          QStringList qstr_gateways = this_gateways.split(",");
+          QLabel *label_h = new QLabel(Conspire::tr("Gateway%1 to use:").arg((qstr_gateways.size() > 1) ? "s" : ""));
+          label_h->setFocusPolicy(::Qt::NoFocus);
+          sub_rack->addWidget(label_h);
+          lineedit_gateway_username = new QLineEdit();
+          lineedit_gateway_username->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+          lineedit_gateway_username->setPlaceholderText("Gateway username");
+          lineedit_gateway_password = new QLineEdit();
+          lineedit_gateway_password->setEchoMode(QLineEdit::Password);
+          lineedit_gateway_password->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+          lineedit_gateway_password->setPlaceholderText("Gateway password");
+          gateways_box = new QComboBox();
+          for (int i = 0; i < qstr_gateways.size(); i++)
+          {
+             gateways_box->addItem(qstr_gateways.at(i));
+          }
+          sub_rack->addWidget(gateways_box);
+          sub_rack->addWidget(lineedit_gateway_username);
+          sub_rack->addWidget(lineedit_gateway_password);
+          lineedit_gateway_username->stackUnder(gateways_box);
+          lineedit_gateway_password->stackUnder(gateways_box);
+          gateways_box->raise();
+          lineedit_gateway_username->lower();
+          lineedit_gateway_password->lower();
+       }
+       QLabel *label_host = new QLabel(Conspire::tr("Login to %1 to add to remote keyring:").arg(this_hostname));
        label_host->setFocusPolicy(::Qt::NoFocus);
        sub_rack->addWidget(label_host);
-       lineedit_host->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
-       lineedit_host->setPlaceholderText("Hostname");
-       sub_rack->addWidget(lineedit_host);
     }
     
     if (usemode == 0)
@@ -130,18 +155,12 @@ void UserPage::build()
        QLabel *hello_label_unknown = new QLabel(Conspire::tr("Hello. Please log in to Conspire."));
        sub_rack->addWidget(hello_label_unknown);
     }
-    QLabel *label_username = new QLabel(Conspire::tr("Username:"));
-    label_username->setFocusPolicy(::Qt::NoFocus);
-    sub_rack->addWidget(label_username);
     lineedit_username = new QLineEdit();
     lineedit_username->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
     lineedit_username->setPlaceholderText("Username");
     lineedit_username->setFocusPolicy(::Qt::StrongFocus);
     sub_rack->addWidget(lineedit_username);
 
-    QLabel *label_password = new QLabel(Conspire::tr("Password:"));
-    label_password->setFocusPolicy(::Qt::NoFocus);
-    sub_rack->addWidget(label_password);
     lineedit_password = new QLineEdit();
     lineedit_password->setEchoMode(QLineEdit::Password);
     lineedit_password->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
@@ -256,9 +275,19 @@ void UserPage::build()
 }
 
 /** Constructor */
-UserPage::UserPage(int iusemode, Page *parent) : Page(parent)
+UserPage::UserPage(Page *parent) : Page(parent)
 {
-    usemode = iusemode;
+    usemode = 0;
+    build();
+}
+
+/** Constructor */
+UserPage::UserPage(QString clusterid, QString gateways, QString clusterhost, Page *parent) : Page(parent)
+{
+    usemode = 1;
+    this_clusterid = clusterid;
+    this_gateways = gateways;
+    this_hostname = clusterhost;
     build();
 }
 
@@ -398,15 +427,30 @@ void UserPage::login()
 
 void UserPage::sshadd()
 {
-    QString susername = lineedit_username->text();
-    QString machinename = lineedit_host->text();
-    QString spassword = lineedit_password->text();
-    
-    bool wasokay = FALSE;
-    QString sshadd_retstring = addMachine(susername, spassword, machinename, &wasokay);
+   if (not this_gateways.isEmpty())
+   {
+      QString gusername = lineedit_gateway_username->text();
+      QString gpassword = lineedit_gateway_password->text();
+      QString gmachinename = gateways_box->currentText();
 
-    if (wasokay) button->hide();
-    login_label->setText(sshadd_retstring);
-    allUpdate();
-    if (wasokay) emit( pop() );
+      bool wasokay = false;
+      QString sshadd_retstring_1 = addMachine(gusername, gpassword, gmachinename, &wasokay);
+      if (wasokay == false)
+      {
+         login_label->setText(QString("gateway: %1").arg(sshadd_retstring_1));
+         return;
+      }
+   }
+   bool wasokay2 = false;
+   
+   QString susername = lineedit_username->text();
+   QString machinename = this_hostname;
+   QString spassword = lineedit_password->text();
+    
+   QString sshadd_retstring_2 = addMachine(susername, spassword, machinename, &wasokay2);
+
+   if (wasokay2) button->hide();
+   login_label->setText(sshadd_retstring_2);
+   allUpdate();
+   if (wasokay2) emit( pop() );
 }
