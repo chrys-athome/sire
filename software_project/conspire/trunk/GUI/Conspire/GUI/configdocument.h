@@ -103,6 +103,8 @@ namespace Conspire
         
     protected slots:
         void pop2();
+        void viewPoppedPastBeginning();
+
     protected:
         void buttonsmodegeom();
         void resizeEvent(QGraphicsSceneResizeEvent *e);

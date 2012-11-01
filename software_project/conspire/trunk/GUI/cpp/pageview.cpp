@@ -66,10 +66,20 @@ PageView::~PageView()
 /** Go back to the last page in the history in the current tab */
 void PageView::back()
 {
-    this->popView(false);
+    conspireDebug() << "PageView::back()";
 
-    emit( canBackChanged(not page_history.isEmpty()) );
-    emit( canForwardChanged(not page_future.isEmpty()) );
+    if (not page_history.isEmpty())
+    {
+        conspireDebug() << "popView(false)";
+        this->popView(false);
+        emit( canBackChanged(not page_history.isEmpty()) );
+        emit( canForwardChanged(not page_future.isEmpty()) );
+    }
+    else
+    {
+        conspireDebug() << "poppedPastBeginning()";
+        emit( poppedPastBeginning() );
+    }
 }
 
 /** Go forward to the next page in the forward history in the current tab */
@@ -358,9 +368,9 @@ void PageView::build()
     connect(back_button, SIGNAL(clicked()), this, SLOT(back()));
     connect(forward_button, SIGNAL(clicked()), this, SLOT(forward()));
     
-    connect(this, SIGNAL(canBackChanged(bool)), back_button, SLOT(setEnabled(bool)));
-    connect(this, SIGNAL(canForwardChanged(bool)),
-            forward_button, SLOT(setEnabled(true)));
+    //connect(this, SIGNAL(canBackChanged(bool)), back_button, SLOT(setEnabled(bool)));
+    //connect(this, SIGNAL(canForwardChanged(bool)),
+    //        forward_button, SLOT(setEnabled(true)));
 
     title_text = 0;
 

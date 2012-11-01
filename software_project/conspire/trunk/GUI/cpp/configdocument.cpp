@@ -127,6 +127,8 @@ void ConfigDocument::build()
     connect(view, SIGNAL(canForwardChanged(bool)),
             this, SIGNAL(canForwardChanged(bool)));
 
+    connect(view, SIGNAL(poppedPastBeginning()), this, SLOT(viewPoppedPastBeginning()));
+
     submit_button = new Button(Conspire::tr("Submit"), this);
     connect(submit_button, SIGNAL(clicked()), this, SLOT(submit()));
 
@@ -234,6 +236,12 @@ void ConfigDocument::remove(QString full_key)
     
         setOptions(old_state);
     }
+}
+
+void ConfigDocument::viewPoppedPastBeginning()
+{
+    conspireDebug() << "View popped past beginning";
+    emit( pop(true) );
 }
 
 /** Update the option with key "full_key" to have the value "new_value" */

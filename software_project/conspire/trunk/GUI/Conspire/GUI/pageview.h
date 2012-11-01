@@ -82,6 +82,7 @@ namespace Conspire
     signals:
         void canBackChanged(bool);
         void canForwardChanged(bool);
+        void poppedPastBeginning();
         
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
