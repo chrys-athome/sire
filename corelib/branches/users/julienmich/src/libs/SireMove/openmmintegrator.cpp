@@ -63,6 +63,8 @@
 
 #include "SireMove/flexibility.h"
 
+#include "SireMaths/constants.h"
+
 //ADDED BY GAC
 #include "SireMaths/vector.h"
 #include "SireMol/mgname.h"
@@ -102,6 +104,7 @@ using namespace SireUnits::Dimension;
 //ADDED BY JM
 using namespace SireMM;
 using namespace SireIO;
+//using namespace SireMaths;
 
 //ADDED BY GAC
 using namespace std;
@@ -258,8 +261,11 @@ QString OpenMMIntegrator::toString() const
     \throw SireError::incompatible_error
 */
 void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) const{
+
+        bool Debug = false; 
 				       
-	cout << "In OpenMMIntegrator::integrate()\n\n" ;
+	if (Debug)
+	  cout << "In OpenMMIntegrator::integrate()\n\n" ;
 		
 	
 	// Initialise OpenMM
@@ -271,9 +277,10 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	const double dt = convertTo( timestep.value(), picosecond);
 	
-	cout << "time step = " << dt << " ps" << "\n";
-	
-	cout << "Number of moves = " << nmoves << "\n";
+	if (Debug) {
+	  cout << "time step = " << dt << " ps" << "\n";
+	  cout << "Number of moves = " << nmoves << "\n";
+	}
 
 	const int nmols = ws.nMolecules();
     
@@ -290,8 +297,10 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	vector<pair<int,int> > soft_core_list;
 	
 	const System & ptr_sys = ws.system();
-		
-	cout << "Save frequency velocities = " << frequent_save_velocities << "\n";
+	
+	if (Debug) {
+	  cout << "Save frequency velocities = " << frequent_save_velocities << "\n";
+	}
 	
 	if (CutoffType == "nocutoff")
 		flag_cutoff = NOCUTOFF;
@@ -321,19 +330,21 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	else
 		throw SireError::program_bug(QObject::tr(
             "The Constraints method has not been specified. Possible choises: none, hbonds, allbonds, hangles"), CODELOC);
-		
-	cout << "\nConstraint Type = " << ConstraintType.toStdString() << "\n";
-	
+
+	if (Debug)
+	  cout << "\nConstraint Type = " << ConstraintType.toStdString() << "\n";
 	
 	// Free energy calculation flag
 	
 	if(Alchemical_values.size() == 0){
 		free_energy_calculation = false;
-		cout << "\nFree Energy calculation = OFF\n\n";
+		if (Debug) 
+		  cout << "\nFree Energy calculation = OFF\n\n";
 	}
 	else{
 		free_energy_calculation = true;
-		cout << "\nFree Energy calculation = ON\n\n";
+		if (Debug)
+		  cout << "\nFree Energy calculation = ON\n\n";
 	}
 	
 	
@@ -341,7 +352,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		nats = nats + ws.nAtoms(i);
 	}
 
-	cout << "There are " << nats << " atoms " << "There are " << nmols << " molecules" <<"\n" ;
+	if (Debug)
+	  cout << "There are " << nats << " atoms " << "There are " << nmols << " molecules" <<"\n" ;
 	
 	// INITIALIZE OpenMM
 	
@@ -413,12 +425,12 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			custom_bonded_openmm->addGlobalParameter("delta",shift_Delta);
 			custom_bonded_openmm->addGlobalParameter("n",coulomb_Power);
 
-
-			cout << "Lambda = " << Alchemical_values[0] << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
+			if (Debug)
+			  cout << "Lambda = " << Alchemical_values[0] << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
 
 		}
-
-		cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
+		if (Debug)
+		  cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
 	}
 
 
@@ -466,17 +478,17 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			custom_bonded_openmm->addGlobalParameter("n",coulomb_Power);
 			custom_bonded_openmm->addGlobalParameter("cutoff",converted_cutoff_distance);
 
-
-			cout << "Lambda = " << Alchemical_values[0] << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
+			if (Debug)
+			  cout << "Lambda = " << Alchemical_values[0] << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
 		
 		}
 	
 	
-	
-		cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
-		cout << "CutOff distance = " << converted_cutoff_distance  << " Nm" << "\n";
-		cout << "Dielectric constant= " << field_dielectric << "\n\n";
-	
+		if (Debug) {
+		  cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
+		  cout << "CutOff distance = " << converted_cutoff_distance  << " Nm" << "\n";
+		  cout << "Dielectric constant= " << field_dielectric << "\n\n";
+		}
 	
 	
 	
@@ -499,9 +511,11 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		OpenMM::AndersenThermostat * thermostat = new OpenMM::AndersenThermostat(converted_Temperature, Andersen_frequency);
 		system_openmm.addForce(thermostat);
 		
-		cout << "\nAndersen Thermostat set\n";
-		cout << "Temperature = " << converted_Temperature << " K\n";
-		cout << "Frequency collisions = " << Andersen_frequency << " 1/ps\n";
+		if (Debug) {
+		  cout << "\nAndersen Thermostat set\n";
+		  cout << "Temperature = " << converted_Temperature << " K\n";
+		  cout << "Frequency collisions = " << Andersen_frequency << " 1/ps\n";
+		}
 	
 	}
 	
@@ -516,11 +530,12 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		OpenMM::MonteCarloBarostat * barostat = new OpenMM::MonteCarloBarostat(converted_Pressure, converted_Temperature, MCBarostat_frequency);
 		system_openmm.addForce(barostat);
 		
-		cout << "\nMonte Carlo Barostat set\n";
-		cout << "Temperature = " << converted_Temperature << " K\n";
-		cout << "Pressure = " << converted_Pressure << " bar\n";
-		cout << "Frequency every " << MCBarostat_frequency << " steps\n";
-		
+		if (Debug) {
+		  cout << "\nMonte Carlo Barostat set\n";
+		  cout << "Temperature = " << converted_Temperature << " K\n";
+		  cout << "Pressure = " << converted_Pressure << " bar\n";
+		  cout << "Frequency every " << MCBarostat_frequency << " steps\n";
+		}
 	}
 	
 	
@@ -565,7 +580,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		system_openmm.addForce(positionalRestraints_openmm);
 		
-		cout << "\nRestraint = ON\n\n";
+		if (Debug)
+		  cout << "\nRestraint = ON\n\n";
 	
 	}
 
@@ -631,25 +647,29 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			positions_openmm[system_index] = OpenMM::Vec3(c[j].x() * (OpenMM::NmPerAngstrom) ,
 							c[j].y() * (OpenMM::NmPerAngstrom),c[j].z() * (OpenMM::NmPerAngstrom));
 
-		if(boltz == false){
+			if(boltz == false){
 		
-			velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
-														   p[j].y()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
-														   p[j].z()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA);
-
-		}
-		else{
-
-			double vx = gasdev();
-			double vy = gasdev();
-			double vz = gasdev();
-			velocities_openmm[system_index] = OpenMM::Vec3(vx,vy,vz);
-
-		}
+			  if (m[j] < SireMaths::small) {
+			    velocities_openmm[system_index] = OpenMM::Vec3(0.0, 0.0, 0.0);
+			  }
+			  else{
+			    velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
+									   p[j].y()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
+									   p[j].z()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA);
+			  }
+			}
+			else{
+			  
+			  double vx = gasdev();
+			  double vy = gasdev();
+			  double vz = gasdev();
+			  velocities_openmm[system_index] = OpenMM::Vec3(vx,vy,vz);
+			  
+			}
 			
 			/*cout << "\natom = " << system_index  << " VELOCITY X = " << velocities_openmm[system_index][0] 
-												   << " VELOCITY Y = " << velocities_openmm[system_index][1] 
-												   << " VELOCITY Z = " << velocities_openmm[system_index][2];*/
+			  << " VELOCITY Y = " << velocities_openmm[system_index][1] 
+			  << " VELOCITY Z = " << velocities_openmm[system_index][2];*/
 
 
 			system_openmm.addParticle(m[j]) ;
@@ -661,6 +681,74 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			AtomNumToOpenMMIndex[atnum.value()] = system_index;
 
+			// JM Nov 12
+			// The code below implements a ThreeParticleAverageSite for virtual sites for EPW atoms present in a WAT residue
+			// This is very AMBER specific. 
+
+			AtomName atname = at.name();
+			if ( atname == AtomName("EPW") ) {
+			  ResName resname = at.residue().name();
+			  if ( resname == ResName("WAT") ) {
+
+			    Atom oatom = molatoms.select( AtomName("O") );
+			    Atom h1atom = molatoms.select( AtomName("H1") );
+			    Atom h2atom = molatoms.select( AtomName("H2") );
+			    
+			    AmberParameters amber_params = mol.property("amberparameters").asA<AmberParameters>();
+			    QList<BondID> bonds_ff = amber_params.getAllBonds();
+			    
+			    double distoh = -1.0;
+			    double disthh = -1.0;
+			    double distoe = -1.0;
+
+			    for (int k=0; k < bonds_ff.length() ; k++) {
+			      BondID bond_ff = bonds_ff[k];
+			      QList<double> bond_params = amber_params.getParams(bond_ff);
+
+			      double r0 = bond_params[1];
+
+			      AtomName at0name = mol.select( bond_ff.atom0() ).name();
+			      AtomName at1name = mol.select( bond_ff.atom1() ).name();
+
+
+			      // qDebug() << " at0name " << at0name.toString() << " at1name " << at1name.toString();
+			      
+			      if ( ( at0name == AtomName("O") and at1name == AtomName("H1") ) or
+				   ( at0name == AtomName("H1") and at1name == AtomName("O") ) ) {
+				distoh = r0;
+			      }
+			      else if ( ( at0name == AtomName("H1") and at1name == AtomName("H2") ) or
+					( at0name == AtomName("H2") and at1name == AtomName("H1") ) ) {
+				disthh = r0;
+			      }
+			      else if ( ( at0name == AtomName("EPW") and at1name== AtomName("O") ) or 
+					( at0name == AtomName("O") and at1name == AtomName("EPW") ) ) {
+				distoe = r0;
+			      }
+			    }
+			    
+			    if ( distoh < 0 or disthh < 0 or distoe < 0) {
+			      throw SireError::program_bug(QObject::tr(
+			   "Could not find expected atoms in TIP4P water molecule."), CODELOC);
+			    }
+			    
+			    //qDebug() << " distoe " << distoe << " distoh " << distoh << " disthh " << disthh;
+
+			    double weightH = distoe / sqrt( (distoh*distoh) - ( 0.25 * disthh*disthh) );
+
+			    int o_index = AtomNumToOpenMMIndex[oatom.number().value()];
+			    int h1_index = AtomNumToOpenMMIndex[h1atom.number().value()];
+			    int h2_index = AtomNumToOpenMMIndex[h2atom.number().value()];
+
+			    if (Debug)
+			      qDebug() << "virtual site " << system_index << " o " << o_index << " h1 " << h1_index << " h2 " << h2_index << " 1 - weightH " << 1 - weightH << " weightH/2 " << weightH/2 ;
+
+			    OpenMM::ThreeParticleAverageSite * vsite =  new OpenMM::ThreeParticleAverageSite(o_index, h1_index, h2_index, 1-weightH, weightH/2, weightH/2);
+			    
+			    system_openmm.setVirtualSite( system_index, vsite );
+
+			  }
+			};
 
 			system_index = system_index + 1;
 			
@@ -779,9 +867,10 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		if ( !hasConnectivity ){
 			num_atoms_till_i = num_atoms_till_i + num_atoms_molecule ;
-			cout << "\nAtoms = " <<  num_atoms_molecule << " Num atoms till i =" << num_atoms_till_i <<"\n";
-			cout << "\n*********************ION DETECTED**************************\n";
-
+			if (Debug) {
+			  cout << "\nAtoms = " <<  num_atoms_molecule << " Num atoms till i =" << num_atoms_till_i <<"\n";
+			  cout << "\n*********************ION DETECTED**************************\n";
+			}
 			continue;
 		}
 		
@@ -1066,8 +1155,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				Properties restrainedAtoms = molecule.property("restrainedatoms").asA<Properties>();
 
 				int nrestrainedatoms = restrainedAtoms.property(QString("nrestrainedatoms")).asA<VariantProperty>().toInt();
-
-				cout << " nrestrainedatoms " << nrestrainedatoms ;
+				if (Debug)
+				  cout << " nrestrainedatoms " << nrestrainedatoms ;
 
 				for (int i=0; i < nrestrainedatoms ; i++){
 
@@ -1080,7 +1169,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 					int openmmindex = AtomNumToOpenMMIndex[atomnum];
 
-					cout << " atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k;
+					if (Debug)
+					  cout << " atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k;
 
 					int posrestrdim = 4;
 
@@ -1123,7 +1213,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		system_openmm.addForce(cmmotionremover);
 
-		cout << "\n\nWill remove Center of Mass motion every " << CMMremoval_frequency << " steps\n\n";
+		if (Debug)
+		  cout << "\n\nWill remove Center of Mass motion every " << CMMremoval_frequency << " steps\n\n";
 	}
 
 
@@ -1223,13 +1314,14 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		const double Box_z_Edge_Length = space.dimensions()[2] * OpenMM::NmPerAngstrom; //units in nm
 
-		cout << "\nBOX SIZE [A] = (" << space.dimensions()[0] << " , " << space.dimensions()[1] << " ,  " << space.dimensions()[2] << ")\n\n";
+		if (Debug)
+		  cout << "\nBOX SIZE [A] = (" << space.dimensions()[0] << " , " << space.dimensions()[1] << " ,  " << space.dimensions()[2] << ")\n\n";
 
 		//Set Periodic Box Condition
 
 		context_openmm.setPeriodicBoxVectors(OpenMM::Vec3(Box_x_Edge_Length,0,0),
-											 OpenMM::Vec3(0,Box_y_Edge_Length,0),
-											 OpenMM::Vec3(0,0,Box_z_Edge_Length));
+						     OpenMM::Vec3(0,Box_y_Edge_Length,0),
+						     OpenMM::Vec3(0,0,Box_z_Edge_Length));
 
 	}
 
@@ -1242,7 +1334,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	//cout << "\nCOPY IN Simulation time = " << timer_IN.elapsed() / 1000.0 << " s"<<"\n\n";
 
-	cout << "\n\nREMARK  Using OpenMM platform = " <<context_openmm.getPlatform().getName().c_str()<<"\n";
+	if (Debug)
+	  cout << "\n\nREMARK  Using OpenMM platform = " <<context_openmm.getPlatform().getName().c_str()<<"\n";
 
 	
 	OpenMM::State state_openmm;
@@ -1271,13 +1364,15 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		const double beta = 1.0 / (0.0083144621 * convertTo(Temperature.value(), kelvin));
 
-		cout << "\nBETA = " << beta <<"\n";
+		if (Debug)
+		  cout << "\nBETA = " << beta <<"\n";
 
 		int frequency_energy = 100; 
 
 		int n_freq = nmoves/frequency_energy;
 
-		cout << "NFREQ = "<< n_freq << "\n\n";
+		if (Debug)
+		  cout << "NFREQ = "<< n_freq << "\n\n";
 
 		
 		bool dcd = false;
@@ -1300,7 +1395,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			lam_val = context_openmm.getParameter("lambda");
 
-			cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal/mol " << "\n";
+			if (Debug)
+			  cout << "Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal/mol " << "\n";
 
 			for(int j=0;j<n_freq;j++){
 
@@ -1312,7 +1408,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				
 				integrator_openmm.step(frequency_energy);
 
-				cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
+				if (Debug)
+				  cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
 
 				state_openmm=context_openmm.getState(infoMask);	
 
@@ -1320,7 +1417,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				double potential_energy_lambda = state_openmm.getPotentialEnergy();
 
-				cout << "Lambda = " << lam_val << " Potential energy lambda MD = " << potential_energy_lambda  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+				if (Debug)
+				  cout << "Lambda = " << lam_val << " Potential energy lambda MD = " << potential_energy_lambda  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
 
 				context_openmm.setParameter("lambda",Alchemical_values[i]+delta);
 
@@ -1330,7 +1428,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				lam_val = context_openmm.getParameter("lambda");
 
-				cout << "Lambda + delta = " << lam_val << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+				if (Debug)
+				  cout << "Lambda + delta = " << lam_val << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
 
 				context_openmm.setParameter("lambda",Alchemical_values[i]-delta);
 
@@ -1340,7 +1439,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				lam_val = context_openmm.getParameter("lambda");
 
-				cout << "Lambda - delta = " << lam_val << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
+				if (Debug)
+				  cout << "Lambda - delta = " << lam_val << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
 
 				GF_acc = GF_acc + exp(-beta*(potential_energy_lambda_plus_delta - potential_energy_lambda));
 
@@ -1364,7 +1464,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2.0 * delta);
 
-				cout << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
+				if (Debug)
+				  cout << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
 
 				context_openmm.setParameter("lambda",Alchemical_values[i]);
 
@@ -1395,13 +1496,13 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 		potential_energy = state_openmm.getPotentialEnergy(); 
 	
-		cout<< "Before MD " <<"\n";
-	
-		cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
-		 	 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
-			 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
-	
-		cout<<"\n";
+		if (Debug) {
+		  cout<< "Before MD " <<"\n";
+		  cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
+		       << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
+		       << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
+		  cout<<"\n";
+		}
 		
 		
 		int frequency_dcd = 10;
@@ -1423,22 +1524,23 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		velocities_openmm = state_openmm.getVelocities();
 	
-	
-		cout<< "Total Time = " << state_openmm.getTime() << " ps"<<"\n\n";
+		if (Debug)
+		  cout<< "Total Time = " << state_openmm.getTime() << " ps"<<"\n\n";
 	
 	
 		kinetic_energy = state_openmm.getKineticEnergy(); 
 	
 		potential_energy = state_openmm.getPotentialEnergy(); 
 	
+		if (Debug) {
+		  cout<< "After MD" <<"\n";
 	
-		cout<< "After MD" <<"\n";
-	
-		cout <<"Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
-		 	 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
-		 	 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
-	
-		cout<<"\n";
+		  cout <<"Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
+		       << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
+		       << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
+		  
+		  cout<<"\n";
+		}
 
 		//cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
 
@@ -1485,10 +1587,12 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		state_openmm.getPeriodicBoxVectors(a,b,c);
 
-		cout << "\n\nNEW BOX DIMENSIONS [A] = (" << a[0] * OpenMM::AngstromsPerNm << ", " 
-										   		 << b[1] * OpenMM::AngstromsPerNm << ", " 
-										   		 << c[2] * OpenMM::AngstromsPerNm << ")\n\n";
-										   		 
+		if (Debug) {
+		  cout << "\n\nNEW BOX DIMENSIONS [A] = (" << a[0] * OpenMM::AngstromsPerNm << ", " 
+		       << b[1] * OpenMM::AngstromsPerNm << ", " 
+		       << c[2] * OpenMM::AngstromsPerNm << ")\n\n";
+		}
+		
 		Vector new_dims = Vector(a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
 
 		System & ptr_sys = ws.nonConstsystem();
@@ -1541,8 +1645,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	}*/
 
 	
-	
-	cout << "\n---------------------------------------------\n";
+	if (Debug)
+	  cout << "\n---------------------------------------------\n";
 	
 
 	return;
