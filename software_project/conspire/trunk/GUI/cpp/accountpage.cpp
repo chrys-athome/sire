@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <vector>
+
 #include "Conspire/GUI/accountpage.h"
 #include "Conspire/GUI/userpage.h"
 #include "Conspire/GUI/widgetrack.h"
@@ -59,13 +61,17 @@
 #include <QPixmap>
 #include <QSettings>
 #include <QListWidget>
+#include <QXmlStreamReader>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
 
 #include "Acquire/acquire_client.h"
+#include "config.h"
 
 using namespace Conspire;
+
+static QString install_dir = STATIC_INSTALL_DIR;
 
 void AccountPage::addSSHAccount()
 {
@@ -75,6 +81,61 @@ void AccountPage::addSSHAccount()
 
 void AccountPage::refreshList()
 {
+   std::vector<QString> cluster_id_list;
+   std::vector<QString> cluster_name_list;
+       QFile *xmlFile = new QFile(QString("%1/clusterdata/acc_clusters.xml").arg(install_dir));
+
+    if (!xmlFile->open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+       emit( push( PagePointer( new ExceptionPage(
+            Conspire::tr("Error opening job classes XML file"),
+                        Conspire::file_error( Conspire::tr("Cannot open the "
+                           "file \"%1/clusterdata/acc_clusters.xml\".")
+                              .arg(install_dir), CODELOC ) ) ) ) );
+    }
+
+    QXmlStreamReader *xmlReader = new QXmlStreamReader(xmlFile);
+
+    QString t_clusterid;
+    QString t_clustername;
+    
+    while (!xmlReader->atEnd() && !xmlReader->hasError())
+    {
+        QXmlStreamReader::TokenType token = xmlReader->readNext();
+        if (token == QXmlStreamReader::StartDocument) continue;
+        if (token == QXmlStreamReader::StartElement)
+        {
+           if (xmlReader->name() == "clusterdescription")
+           {
+              t_clusterid = QString((xmlReader->attributes().value("id")).toString());
+              conspireDebug() << t_clusterid;
+           }
+           if (xmlReader->name() == "name") t_clustername = xmlReader->readElementText();
+        }
+        if (token == QXmlStreamReader::EndElement)
+        {
+           if (xmlReader->name() == "clusterdescription")
+           {
+              cluster_id_list.push_back(t_clusterid);
+              cluster_name_list.push_back(t_clustername);
+           }
+        }
+    }
+
+    if (xmlReader->hasError())
+    {
+       emit( push( PagePointer( new ExceptionPage(
+            Conspire::tr("Error in XML parsing."),
+                        Conspire::file_error( Conspire::tr("Cannot open the "
+                           "file \"%1/clusterdata/acc_clusters.xml\".")
+                              .arg(install_dir), CODELOC ) ) ) ) );
+    }
+
+    xmlReader->clear();
+    xmlFile->close();
+    delete xmlReader;
+    delete xmlFile;
+
    int items = clusterlist->count();
    for (int i = items; i--; )
    {
@@ -89,19 +150,20 @@ void AccountPage::refreshList()
    while (token != NULL)
    {
       char buffer[512];
-      const char *cname = NULL;
-      if (strcmp(token, "pretend") == 0) cname = "My local testing cluster";
-      if (strcmp(token, "bluecrystalp1") == 0) cname = "Bluecrystal Phase 1";
-      if (strcmp(token, "bluecrystalp2") == 0) cname = "Bluecrystal Phase 2";
-      if (strcmp(token, "emerald") == 0) cname = "Emerald GPU cluster";
-      if (cname)
+      QString this_cluster_name = QString();
+      QString this_cluster_id = QString(token);
+      for (int i = 0; i < cluster_id_list.size(); i++)
       {
-         sprintf(buffer, "%s (%s)", cname, token);
-      } else
-      {
-         sprintf(buffer, "%s", token);
+         if (this_cluster_id == cluster_id_list.at(i))
+         {
+            this_cluster_name = cluster_name_list.at(i);
+         }
       }
-      QListWidgetItem *wid = new QListWidgetItem(buffer);
+      if (this_cluster_name.isEmpty())
+      {
+         this_cluster_name = QString("Unknown cluster (%1)").arg(this_cluster_id);
+      }
+      QListWidgetItem *wid = new QListWidgetItem(this_cluster_name);
       clusterlist->addItem(wid);
       haveany = 1;
       token = strtok_r(NULL, ",", &remainder);

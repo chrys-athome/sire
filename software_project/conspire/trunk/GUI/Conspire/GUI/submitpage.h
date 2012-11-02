@@ -36,6 +36,7 @@ CONSPIRE_BEGIN_HEADER
 
 class QLabel;
 class QProgressBar;
+class QComboBox;
 
 namespace Conspire
 {
@@ -73,8 +74,10 @@ namespace Conspire
         void allUpdate();
          bool removeDir(const QString &dirName);
          void cleanWorkstoreLocal(QString quuid);
-        
+        std::vector<QString> *cluster_ids;
         int cancelled;
+        
+        QComboBox *clusters_box;
         
         /** The options for the job to submit */
         Options opts;

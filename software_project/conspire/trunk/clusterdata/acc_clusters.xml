@@ -13,7 +13,7 @@
       <description>This is Phase 2 of Bluecrystal, supercomputer for the University of Bristol.</description>
       <icon>iridis.jpg</icon>
       <addtype>password</addtype>
-      <gateways>icy.cs.bris.ac.uk,snowy.cs.bris.ac.uk,curie.chm.bris.ac.uk</gateways>
+      <gateways>seis.bris.ac.uk,icy.cs.bris.ac.uk,snowy.cs.bris.ac.uk,curie.chm.bris.ac.uk</gateways>
       <hostname>bluecrystalp2.bris.ac.uk</hostname>
    </clusterdescription>
 </accessibleclusters>

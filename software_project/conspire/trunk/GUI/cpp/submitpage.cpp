@@ -64,6 +64,7 @@
 #include <QUuid>
 #include <QSettings>
 #include <QThreadPool>
+#include <QXmlStreamReader>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -98,24 +99,114 @@ void SubmitPage::build()
     
     WidgetRack *sub_rack = new WidgetRack(this);
     
-    QLabel *label = new QLabel(Conspire::tr("When would you like the job to finish?"));
+   std::vector<QString> cluster_id_list;
+   std::vector<QString> cluster_name_list;
+       QFile *xmlFile = new QFile(QString("%1/clusterdata/acc_clusters.xml").arg(install_dir));
+
+    if (!xmlFile->open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+       emit( push( PagePointer( new ExceptionPage(
+            Conspire::tr("Error opening job classes XML file"),
+                        Conspire::file_error( Conspire::tr("Cannot open the "
+                           "file \"%1/clusterdata/acc_clusters.xml\".")
+                              .arg(install_dir), CODELOC ) ) ) ) );
+    }
+
+    QXmlStreamReader *xmlReader = new QXmlStreamReader(xmlFile);
+
+    QString t_clusterid;
+    QString t_clustername;
+    
+    while (!xmlReader->atEnd() && !xmlReader->hasError())
+    {
+        QXmlStreamReader::TokenType token = xmlReader->readNext();
+        if (token == QXmlStreamReader::StartDocument) continue;
+        if (token == QXmlStreamReader::StartElement)
+        {
+           if (xmlReader->name() == "clusterdescription")
+           {
+              t_clusterid = QString((xmlReader->attributes().value("id")).toString());
+              conspireDebug() << t_clusterid;
+           }
+           if (xmlReader->name() == "name") t_clustername = xmlReader->readElementText();
+        }
+        if (token == QXmlStreamReader::EndElement)
+        {
+           if (xmlReader->name() == "clusterdescription")
+           {
+              cluster_id_list.push_back(t_clusterid);
+              cluster_name_list.push_back(t_clustername);
+           }
+        }
+    }
+
+    if (xmlReader->hasError())
+    {
+       emit( push( PagePointer( new ExceptionPage(
+            Conspire::tr("Error in XML parsing."),
+                        Conspire::file_error( Conspire::tr("Cannot open the "
+                           "file \"%1/clusterdata/acc_clusters.xml\".")
+                              .arg(install_dir), CODELOC ) ) ) ) );
+    }
+
+    xmlReader->clear();
+    xmlFile->close();
+    delete xmlReader;
+    delete xmlFile;
+    
+    QLabel *label = new QLabel(Conspire::tr("Which cluster would you like this to run on?"));
     sub_rack->addWidget(label);
     
-    QComboBox *box = new QComboBox();
-    box->addItem(Conspire::tr("As soon as possible!"));
-    box->addItem(Conspire::tr("As soon as is practical."));
-    box->addItem(Conspire::tr("Whenever is cheapest."));
+    clusters_box = new QComboBox();
+    cluster_ids = new std::vector<QString>();
     
+   const char *listclust = AcquireListOfAccessibleClusters();
+   char *remainder = NULL;
+   const char *token = strtok_r((char *)listclust, ",", &remainder);
+   int haveany = 0;
+   while (token != NULL)
+   {
+      char buffer[512];
+      QString this_cluster_name = QString();
+      QString this_cluster_id = QString(token);
+      for (int i = 0; i < cluster_id_list.size(); i++)
+      {
+         if (this_cluster_id == cluster_id_list.at(i))
+         {
+            this_cluster_name = cluster_name_list.at(i);
+         }
+      }
+      if (this_cluster_name.isEmpty())
+      {
+         this_cluster_name = QString("Unknown cluster (%1)").arg(this_cluster_id);
+      }
+      clusters_box->addItem(this_cluster_name.toAscii().constData());
+      cluster_ids->push_back(this_cluster_id);
+      haveany = 1;
+      token = strtok_r(NULL, ",", &remainder);
+//      login_label->setText("Network OK.");
+   }
+   if (haveany == 0)
+   {
+      clusters_box->addItem("None available...");
+//      login_label->setText("No clusters available");
+   }
+   AcquireClientClearResults();
+        
     QGraphicsProxyWidget *box_proxy = new QGraphicsProxyWidget(this);
-    box_proxy->setWidget(box);
+    box_proxy->setWidget(clusters_box);
     box_proxy->setZValue(100);
     
     sub_rack->addWidget(box_proxy);
-    
+/*
+    box->addItem(Conspire::tr("As soon as possible!"));
+    box->addItem(Conspire::tr("As soon as is practical."));
+    box->addItem(Conspire::tr("Whenever is cheapest."));
+*/
     label = new QLabel(Conspire::tr("How energy efficient would you like to be?"));
     sub_rack->addWidget(label);
     
-    box = new QComboBox();
+    QComboBox *box = new QComboBox();
     box->addItem(Conspire::tr("Use as little electricity as possible!"));
     box->addItem(Conspire::tr("Use as little electricity as is practical."));
     box->addItem(Conspire::tr("Burn as much electricity as is needed!"));
@@ -519,7 +610,7 @@ void SubmitPage::submit()
            progress_bar->setValue(97);
            allUpdate();
            
-           UploadThread *uploadthread = new UploadThread(workstore, datadir.toAscii().constData(), NULL, NULL, allinstances, 3600, blocks);
+           UploadThread *uploadthread = new UploadThread(workstore, datadir.toAscii().constData(), (cluster_ids->at(clusters_box->currentIndex())).toAscii().constData(), NULL, allinstances, 3600, blocks);
            GetUploadArray()->insert(workstore, uploadthread);
            QThreadPool::globalInstance()->start(uploadthread);
                       
