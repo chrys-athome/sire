@@ -124,20 +124,26 @@ void UserPage::build()
           QLabel *label_h = new QLabel(Conspire::tr("Gateway%1 to use:").arg((qstr_gateways.size() > 1) ? "s" : ""));
           label_h->setFocusPolicy(::Qt::NoFocus);
           sub_rack->addWidget(label_h);
-          lineedit_gateway_username = new QLineEdit();
-          lineedit_gateway_username->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
-          lineedit_gateway_username->setPlaceholderText("Gateway username");
-          lineedit_gateway_password = new QLineEdit();
-          lineedit_gateway_password->setEchoMode(QLineEdit::Password);
-          lineedit_gateway_password->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
-          lineedit_gateway_password->setPlaceholderText("Gateway password");
+
           gateways_box = new QComboBox();
           for (int i = 0; i < qstr_gateways.size(); i++)
           {
              gateways_box->addItem(qstr_gateways.at(i));
           }
-          sub_rack->addWidget(gateways_box);
+
+          QGraphicsProxyWidget *box_proxy = new QGraphicsProxyWidget(this);
+          box_proxy->setWidget(gateways_box);
+          box_proxy->setZValue(100);
+          sub_rack->addWidget(box_proxy);
+          
+          lineedit_gateway_username = new QLineEdit();
+          lineedit_gateway_username->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+          lineedit_gateway_username->setPlaceholderText("Gateway username");
           sub_rack->addWidget(lineedit_gateway_username);
+          lineedit_gateway_password = new QLineEdit();
+          lineedit_gateway_password->setEchoMode(QLineEdit::Password);
+          lineedit_gateway_password->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+          lineedit_gateway_password->setPlaceholderText("Gateway password");
           sub_rack->addWidget(lineedit_gateway_password);
           lineedit_gateway_username->stackUnder(gateways_box);
           lineedit_gateway_password->stackUnder(gateways_box);
