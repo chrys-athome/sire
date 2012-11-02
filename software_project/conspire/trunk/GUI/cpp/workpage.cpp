@@ -211,8 +211,8 @@ void WorkPage::refreshWork()
          if (pct_c2b[i] == 100.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Complete.");
          ((WorkPacketWidget *)(all_wpw->at(i)))->computeAndUpdateUpload();
       }
-      ((WorkPacketWidget *)(all_wpw->at(noofws)))->updateText("Create new...");
-      ((WorkPacketWidget *)(all_wpw->at(noofws)))->updateAmounts(0., 0., 0.);
+      ((WorkPacketWidget *)(all_wpw->at(all_wpw->size() - 1)))->updateText("Create new...");
+      ((WorkPacketWidget *)(all_wpw->at(all_wpw->size() - 1)))->updateAmounts(0., 0., 0.);
    } else
    {
       switch (retval)

@@ -44,9 +44,11 @@ class WorkPacketWidget : public QGraphicsWidget
       int my_width;
       int my_height;
       int my_idx;
+      
       QList<QGraphicsLayoutItem *> *all_wpw;
 
       QString my_message;
+      QString my_name;
       
       float local_to_broker;
       float broker_to_compute;

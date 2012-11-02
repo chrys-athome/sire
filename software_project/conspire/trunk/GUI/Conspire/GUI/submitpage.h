@@ -50,7 +50,7 @@ namespace Conspire
         
     public:
         SubmitPage(Page *parent=0);
-        SubmitPage(Options options, QString job_class, Page *parent=0);
+        SubmitPage(Options options, QString job_class, QString iquuid, Page *parent=0);
         
         ~SubmitPage();
         
@@ -100,6 +100,9 @@ namespace Conspire
         
         /** The name of the file to which to save the results */
         QString output_name;
+        
+        /** The quuid of the job */
+        QString quuid;
         
         /** The ID number of the job (when it is running,
             it is -1 when the job is not running) */

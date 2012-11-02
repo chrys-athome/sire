@@ -57,6 +57,7 @@ namespace Conspire
     public:
         ConfigDocument(QString itype, Page *parent=0);
         ConfigDocument(QString itype, Options options, Page *parent=0);
+        ConfigDocument(QString itype, Options options, QString iquuid, Page *parent=0);
         
         ~ConfigDocument();
         
@@ -81,6 +82,7 @@ namespace Conspire
         
         void load();
         void save();
+        void rsave();
         void submit();
         void cancel();
         
@@ -117,11 +119,13 @@ namespace Conspire
         /** The Options object being viewed and edited */
         Options opts;
         QString jobtype;
+        QString quuid;
 
         /** The context-sensitive button */
         Button *submit_button;
         Button *load_button;
         Button *save_button;
+        Button *rsave_button;
         
         /** The tabbed views of the Options object */
         ConfigView *view;

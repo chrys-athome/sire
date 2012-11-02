@@ -54,12 +54,14 @@ namespace Conspire
         Q_OBJECT
         
     public:
+        ChooseClassPage(QString clstext, Page *parent=0);
         ChooseClassPage(Page *parent=0);
         
         ~ChooseClassPage();
 
     protected slots:
-        
+        void saveNewJobName(QString q);
+        void deleteNewJob();
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
         void moveEvent(QGraphicsSceneMoveEvent *e);
@@ -69,11 +71,12 @@ namespace Conspire
                    QWidget *widget);
 
     private:
-        void build();
+        void build(QString clstext);
         void allUpdate();
                 
         /** The options for the job to submit */
         Options opts;
+        QString quuid;
         
         /** The stack holding the different pages during
             the job run process */
@@ -86,16 +89,7 @@ namespace Conspire
         QGraphicsWidget *tableofworkstores;
 
         /** Text editor for host */
-        QLineEdit *lineedit_host;
-
-        /** Text editor for username */
-        QLineEdit *lineedit_username;
-
-        /** Text editor for password */
-        QLineEdit *lineedit_password;
-
-        /** Text editor for password */
-        QLineEdit *lineedit_password_known;
+        QLineEdit *lineedit_jobname;
         
         /** The status label for logging in */
         QLabel *login_label;

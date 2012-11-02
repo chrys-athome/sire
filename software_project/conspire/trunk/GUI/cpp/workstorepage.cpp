@@ -33,6 +33,8 @@
 #include "Conspire/GUI/button.h"
 #include "Conspire/GUI/exceptionpage.h"
 #include "Conspire/GUI/widgetstack.h"
+#include "Conspire/GUI/configdocument.h"
+#include "Conspire/GUI/chooseclasspage.h"
 
 #include "Conspire/GUI/downloadthread.h"
 #include "Conspire/GUI/uploadthread.h"
@@ -65,11 +67,15 @@
 #include <QListWidget>
 #include <QThreadPool>
 #include <QFileDialog>
+#include <QXmlStreamReader>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
 
 #include "Acquire/acquire_client.h"
+#include "config.h"
+
+static QString install_dir = STATIC_INSTALL_DIR;
 
 using namespace Conspire;
 
@@ -118,11 +124,122 @@ void WorkStorePage::downloadItem(QListWidgetItem *titem)
    free(downloadid);
 }
 
+void WorkStorePage::editWorkStore()
+{
+    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+    QString jobname = qsetter->value(quuid + "/jobname").toString();
+    QString jobclass = qsetter->value(quuid + "/jobclass").toString();
+    QString saveddata = qsetter->value(quuid + "/saveddata").toString();
+    QString uploaddir = qsetter->value(quuid + "/uploaddir").toString();
+    delete qsetter;
+    if (not uploaddir.isEmpty())
+    {
+        UploadThread *uploadthread = new UploadThread(workstoreid.toAscii().constData(), uploaddir.toAscii().constData(), NULL, NULL, 1, 3600, NULL);
+        GetUploadArray()->insert(workstoreid, uploadthread);
+        QThreadPool::globalInstance()->start(uploadthread);
+        emit( pop(true));
+        return;
+    }
+    if (not saveddata.isEmpty())
+    {
+        QFile file(saveddata);
+        if (file.exists())
+        {
+           Options toptions;
+            QFile *xmlFile = new QFile(QString("%1/job_classes/job_classes.xml").arg(install_dir));
+
+            if (!xmlFile->open(QIODevice::ReadOnly | QIODevice::Text))
+            {
+            emit( push( PagePointer( new ExceptionPage(
+                    Conspire::tr("Error opening job classes XML file"),
+                                Conspire::file_error( Conspire::tr("Cannot open the "
+                                "file \"%1/%2\".")
+                                    .arg(install_dir).arg("job_classes.xml"), CODELOC ) ) ) ) );
+            }
+
+            QXmlStreamReader *xmlReader = new QXmlStreamReader(xmlFile);
+
+            QString t_jobclassid;
+            QString t_jobclassdirectory;
+            QString t_jobclassxml;
+            QString t_jobclassincludedirs;
+            
+            while (!xmlReader->atEnd() && !xmlReader->hasError())
+            {
+                QXmlStreamReader::TokenType token = xmlReader->readNext();
+                if (token == QXmlStreamReader::StartDocument) continue;
+                if (token == QXmlStreamReader::StartElement)
+                {
+                    if (xmlReader->name() == "jobclassdescription")
+                    {
+                        t_jobclassid = xmlReader->attributes().value("id").toString();
+                    }
+                    if (xmlReader->name() == "directory") t_jobclassdirectory = xmlReader->readElementText();
+                    if (xmlReader->name() == "optionsxml") t_jobclassxml = xmlReader->readElementText();
+                    if (xmlReader->name() == "optionsincludedirs") t_jobclassincludedirs = xmlReader->readElementText();
+                }
+                if (token == QXmlStreamReader::EndElement)
+                {
+                    if (xmlReader->name() == "jobclassdescription")
+                    {
+                       if (t_jobclassid == jobclass) break;
+//                       conspireDebug() << t_jobclassid << jobclass;
+                    }
+                }
+            }
+
+            if (xmlReader->hasError())
+            {
+            emit( push( PagePointer( new ExceptionPage(
+                    Conspire::tr("Error in XML parsing."),
+                                Conspire::file_error( Conspire::tr("Cannot open the "
+                                "file \"%1/%2\".")
+                                    .arg(install_dir).arg("job_classes.xml"), CODELOC ) ) ) ) );
+            }
+
+            xmlReader->clear();
+            xmlFile->close();
+            delete xmlReader;
+            delete xmlFile;
+                
+                
+        QStringList path;
+        path << QString("%1/job_classes/%2").arg(install_dir).arg(t_jobclassdirectory);
+        
+        printf("joboptions %s\n", t_jobclassxml.toAscii().constData());
+        toptions = Options::fromXMLFile(QString("%1").arg(t_jobclassxml), path);
+
+        qDebug() << "Looking for a default config file...";
+        QFileInfo default_config( QString("%1/job_classes/%2/default_config").arg(install_dir,t_jobclassdirectory) );
+
+        qDebug() << default_config.absoluteFilePath();
+            
+        toptions = toptions.fromConfigFile(saveddata);
+        
+           emit(push( PagePointer( new ConfigDocument(jobclass, toptions, quuid) )));
+           return;
+        }
+    }
+    if (not jobclass.isEmpty())
+    {
+       Options toptions;
+       emit(push( PagePointer( new ConfigDocument(jobclass) )));
+       return;
+    }
+    if (not jobname.isEmpty())
+    {
+       emit(push( PagePointer( new ChooseClassPage(jobname) )));
+       return;
+    }
+    emit(push( PagePointer( new ChooseClassPage() )));
+}
+
 void WorkStorePage::restartUpload()
 {
     QSettings *qsetter = new QSettings("UoB", "AcquireClient");
     QString uploaddir = qsetter->value(quuid + "/uploaddir").toString();
     int blocks = qsetter->value(quuid + "/blocks").toInt();
+    delete qsetter;
     UploadThread *uploadthread = new UploadThread(workstoreid.toAscii().constData(), uploaddir.toAscii().constData(), NULL, NULL, 1, 3600, blocks);
     GetUploadArray()->insert(workstoreid, uploadthread);
     QThreadPool::globalInstance()->start(uploadthread);
@@ -221,56 +338,92 @@ bool WorkStorePage::removeDir(const QString &dirName)
 
 void WorkStorePage::expungeWorkStore()
 {
-   // need to shut down any download / upload threads running on this work store first!!!!!
-   int localsetfound = 0;
-   UploadThread *uthread = GetUploadArray()->value(workstoreid);
-   if (uthread)
+   if (not workstoreid.isEmpty())
    {
-      uthread->cancelUpload();
-      while (!(uthread->isFinished())) sleep(0.1);
-      delete uthread;
-   }
-   DownloadThread *dthread = GetDownloadArray()->value(workstoreid);
-   if (dthread)
-   {
-      dthread->cancelDownload();
-      while (!(dthread->isFinished())) sleep(0.1);
-      delete dthread;
-   }
-   int retval = AcquireDeleteWorkStore(workstoreid.toAscii().constData());
-   if (retval == ACQUIRE_DELETE_WORK_STORE__SUCCESS)
-   {
-      QSettings *qsetter = new QSettings("UoB", "AcquireClient");
-      QStringList groups = qsetter->childGroups();
-      for (int i = 0; i < groups.size(); i++)
+      // need to shut down any download / upload threads running on this work store first!!!!!
+      int localsetfound = 0;
+      UploadThread *uthread = GetUploadArray()->value(workstoreid);
+      if (uthread)
       {
-         QString qstr = qsetter->value(groups.at(i) + "/workstoreid").toString();
-         if (qstr == workstoreid)
-         {
-            QString uploaddir = qsetter->value(quuid + "/uploaddir").toString();
-            removeDir(uploaddir);
-            qsetter->beginGroup(groups.at(i));
-            qsetter->remove("");
-            qsetter->endGroup();
-            localsetfound = 1;
-         }
+         uthread->cancelUpload();
+         while (!(uthread->isFinished())) sleep(0.1);
+         delete uthread;
       }
-      delete qsetter;
-      if (localsetfound)
+      DownloadThread *dthread = GetDownloadArray()->value(workstoreid);
+      if (dthread)
       {
-         login_label->setText("Successfully deleted");
+         dthread->cancelDownload();
+         while (!(dthread->isFinished())) sleep(0.1);
+         delete dthread;
+      }
+      int retval = AcquireDeleteWorkStore(workstoreid.toAscii().constData());
+      if (retval == ACQUIRE_DELETE_WORK_STORE__SUCCESS)
+      {
+         QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+         QStringList groups = qsetter->childGroups();
+         for (int i = 0; i < groups.size(); i++)
+         {
+            QString qstr = qsetter->value(groups.at(i) + "/workstoreid").toString();
+            if (qstr == workstoreid)
+            {
+               QString jobfile = qsetter->value(quuid + "/saveddata").toString();
+               if (not jobfile.isEmpty())
+               {
+                  QFile file(jobfile);
+                  file.remove();
+               }
+               QString uploaddir = qsetter->value(quuid + "/uploaddir").toString();
+               removeDir(uploaddir);
+               qsetter->beginGroup(groups.at(i));
+               qsetter->remove("");
+               qsetter->endGroup();
+               localsetfound = 1;
+            }
+         }
+         delete qsetter;
+         if (localsetfound)
+         {
+            login_label->setText("Successfully deleted");
+         } else
+         {
+            login_label->setText("Remote deleted, but could not find local work data");
+            printf("warning: Remote data deleted, but could not find local work data\n");
+         }
+         conspireDebug() << QString("delete workstore");
+         emit( pop() );
       } else
       {
-         login_label->setText("Remote deleted, but could not find local work data");
-         printf("warning: Remote data deleted, but could not find local work data\n");
+         if (retval == ACQUIRE_DELETE_WORK_STORE__ACCESS_DENIED)
+            login_label->setText("Access denied");
+         if (retval == ACQUIRE_DELETE_WORK_STORE__UNKNOWN_ERROR)
+            login_label->setText("Unknown error (connection failed?)");
       }
-      emit( pop() );
    } else
    {
-      if (retval == ACQUIRE_DELETE_WORK_STORE__ACCESS_DENIED)
-         login_label->setText("Access denied");
-      if (retval == ACQUIRE_DELETE_WORK_STORE__UNKNOWN_ERROR)
-         login_label->setText("Unknown error (connection failed?)");
+      if (not quuid.isEmpty())
+      {
+         printf("my quuid %s\n", quuid.toAscii().constData());
+         QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+         QStringList groups = qsetter->childGroups();
+         for (int i = 0; i < groups.size(); i++)
+         {
+            if (groups.at(i) == quuid)
+            {
+               QString jobfile = qsetter->value(quuid + "/saveddata").toString();
+               if (not jobfile.isEmpty())
+               {
+                  QFile file(jobfile);
+                  file.remove();
+               }
+               qsetter->beginGroup(groups.at(i));
+               qsetter->remove("");
+               qsetter->endGroup();
+            }
+         }
+         delete qsetter;
+         conspireDebug() << QString("delete localstore") << quuid;
+         emit( pop() );
+      }
    }
 }
 
@@ -323,8 +476,8 @@ void WorkStorePage::build()
     {
         if (GetUploadArray()->value(workstoreid) == NULL)
         {
-           modifybutton = new Button(Conspire::tr("Resume upload"));
-           connect(modifybutton, SIGNAL(clicked()), this, SLOT(restartUpload()));
+           modifybutton = new Button(Conspire::tr("Edit"));
+           connect(modifybutton, SIGNAL(clicked()), this, SLOT(editWorkStore()));
            sub_rack->addWidget(modifybutton);
         } else
         {
@@ -355,18 +508,22 @@ void WorkStorePage::build()
 }
 
 /** Constructor */
-WorkStorePage::WorkStorePage(QString iworkstoreid, Page *parent) : Page(parent)
+WorkStorePage::WorkStorePage(QString iworkstoreid, QString iquuid, Page *parent) : Page(parent)
 {
+    quuid = iquuid;
     workstoreid = QString(iworkstoreid);
     QSettings *qsetter = new QSettings("UoB", "AcquireClient");
     QStringList groups = qsetter->childGroups();
-    for (int i = 0; i < groups.size(); i++)
+    if (not workstoreid.isEmpty())
     {
-       QString qstr = qsetter->value(groups.at(i) + "/workstoreid").toString();
-       if (qstr == workstoreid)
-       {
-          quuid = groups.at(i);
-       }
+        for (int i = 0; i < groups.size(); i++)
+        {
+            QString qstr = qsetter->value(groups.at(i) + "/workstoreid").toString();
+            if (qstr == workstoreid)
+            {
+                quuid = groups.at(i);
+            }
+        }
     }
     delete qsetter;
     build();

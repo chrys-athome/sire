@@ -43,12 +43,15 @@
 #include <QGraphicsScene>
 #include <QImage>
 #include <QFileDialog>
+#include <QSettings>
 
 #include <QGraphicsPixmapItem>
 #include <QGraphicsLinearLayout>
 #include <QGraphicsBlurEffect>
 
 #define MAIN_BUTTON_HEIGHT 40
+
+#include "config.h"
 
 using namespace Conspire;
 
@@ -68,17 +71,37 @@ ConfigDocument::ConfigDocument(QString itype, Options options, Page *parent)
     this->setOptions(options);
 }
 
+/** Construct a document to view and edit 'options', with an existing UUID */
+ConfigDocument::ConfigDocument(QString itype, Options options, QString iquuid, Page *parent)
+               : Page(parent)
+{
+    quuid = iquuid;
+    jobtype = itype;
+    build();
+    this->setOptions(options);
+}
+
 /** Destructor */
 ConfigDocument::~ConfigDocument()
 {
+   if (quuid.isEmpty()) return;
+   QString filename = QString(DYNAMIC_INSTALL_DIR "/%1.xml").arg(quuid);
+   QFile file(filename);
+   file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+   file.write((const char *)opts.toConfig().toAscii().data());
+   file.close();
+   QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+   qsetter->setValue(quuid + "/saveddata", filename);
+   delete qsetter;
     //MAYBE MAKE SURE THAT THE DOCUMENT HAS BEEN SAVED
+   // Yes. Yes, we do.
 }
 
 void ConfigDocument::buttonsmodegeom()
 {
    if (buttonsmode)
    {
-      double fract_width = 0.333*this->geometry().width();
+      double fract_width = 0.25*this->geometry().width();
       
       submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
                                     fract_width, MAIN_BUTTON_HEIGHT);
@@ -90,12 +113,17 @@ void ConfigDocument::buttonsmodegeom()
       save_button->show();
       save_button->setGeometry(2*fract_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
                                     fract_width, MAIN_BUTTON_HEIGHT);
+
+      rsave_button->show();
+      rsave_button->setGeometry(3*fract_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                    fract_width, MAIN_BUTTON_HEIGHT);
    } else
    {
       submit_button->setGeometry(0, this->geometry().height()-MAIN_BUTTON_HEIGHT,
                                     this->geometry().width(), MAIN_BUTTON_HEIGHT);
       load_button->hide();
       save_button->hide();
+      rsave_button->hide();
    }
 }
 
@@ -132,11 +160,14 @@ void ConfigDocument::build()
     submit_button = new Button(Conspire::tr("Submit"), this);
     connect(submit_button, SIGNAL(clicked()), this, SLOT(submit()));
 
-    load_button = new Button(Conspire::tr("Load"), this);
+    load_button = new Button(Conspire::tr("Import"), this);
     connect(load_button, SIGNAL(clicked()), this, SLOT(load()));
     
-    save_button = new Button(Conspire::tr("Save"), this);
+    save_button = new Button(Conspire::tr("Export"), this);
     connect(save_button, SIGNAL(clicked()), this, SLOT(save()));
+    
+    rsave_button = new Button(Conspire::tr("Save"), this);
+    connect(rsave_button, SIGNAL(clicked()), this, SLOT(rsave()));
     
     buttonsmodegeom();
     
@@ -265,6 +296,11 @@ void ConfigDocument::update(QString full_key, Obj new_value)
     }
 }
 
+void ConfigDocument::rsave()
+{
+   emit( pop(true));
+}
+
 void ConfigDocument::pop2()
 {
    buttonsmode = 1;
@@ -278,7 +314,7 @@ void ConfigDocument::submit()
     submit_button->disconnect();
     submit_button->setText(Conspire::tr("Cancel"));
 //    top_view->pushed( PagePointer( new UserPage(1, view) ) );
-    SubmitPage *spagepntr = new SubmitPage(opts,jobtype,view);
+    SubmitPage *spagepntr = new SubmitPage(opts,jobtype,quuid,view);
     connect(this, SIGNAL(cancellation()), spagepntr, SLOT(cancellation()));
     connect(spagepntr, SIGNAL(pop2()), this, SLOT(pop2()));
     top_view->pushed( PagePointer( spagepntr ) );

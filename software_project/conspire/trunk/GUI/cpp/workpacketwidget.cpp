@@ -67,7 +67,7 @@ void WorkPacketWidget::modifyWork()
       emit( push( PagePointer(new ChooseClassPage())) );
    } else
    {
-      emit( push( PagePointer(new WorkStorePage(workstoreid))) );
+      emit( push( PagePointer(new WorkStorePage(workstoreid, QString(quuid)))) );
    }
 }
 
@@ -76,6 +76,7 @@ void WorkPacketWidget::computeAndUpdateUpload()
    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
    int uploadComplete = qsetter->value(QString(quuid) + "/uploadComplete").toInt();
    workstoreid = qsetter->value(QString(quuid) + "/workstoreid").toString();
+   my_name = qsetter->value(QString(quuid) + "/jobname").toString();
    delete qsetter;
    if (uploadComplete)
    {
@@ -113,6 +114,7 @@ void WorkPacketWidget::updateAmounts()
 {
    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
    workstoreid = qsetter->value(QString(quuid) + "/workstoreid").toString();
+   my_name = qsetter->value(QString(quuid) + "/jobname").toString();
    delete qsetter;
    computeAndUpdateUpload();
    char **store_ids = NULL;
@@ -208,12 +210,28 @@ void WorkPacketWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *
    }
    
 addtext:
+
+   QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+   workstoreid = qsetter->value(QString(quuid) + "/workstoreid").toString();
+   my_name = qsetter->value(QString(quuid) + "/jobname").toString();
+   delete qsetter;
+   int movedown = 0;
+   if (not my_name.isEmpty())
+   {
+      movedown = 15;
+      QFont font("Times", 12);
+      font.setStyleStrategy(QFont::ForceOutline);
+      painter->setFont(font);
+      painter->setPen(QColor(0, 0, 0, 255));
+      painter->setBrush(QColor(0, 0, 0, 255));
+      painter->drawText(0, 40 - movedown, 100, 20, ::Qt::AlignHCenter, my_name, NULL);
+   }
    QFont font("Times", 12);
    font.setStyleStrategy(QFont::ForceOutline);
    painter->setFont(font);
    painter->setPen(QColor(0, 0, 0, 255));
    painter->setBrush(QColor(0, 0, 0, 255));
-   painter->drawText(0, 40, 100, 20, ::Qt::AlignHCenter, my_message, NULL);
+   painter->drawText(0, 40 + movedown, 100, 20, ::Qt::AlignHCenter, my_message, NULL);
    update();
 }
 

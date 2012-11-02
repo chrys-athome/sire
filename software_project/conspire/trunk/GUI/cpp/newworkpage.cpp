@@ -111,32 +111,33 @@ inline QString getDataAmount(uint64_t data)
 
 void NewWorkPage::refreshWork()
 {
-   printf("refresh work triggered\n");
-   login_label->setText("");
-   char **store_ids = NULL;
-   float *pct_b2c = NULL;
-   float *pct_wrk = NULL;
-   float *pct_c2b = NULL;
-   int noofws = 0;
-   int64_t bytesfree = 0;
-   int retval = AcquireQueryAllWorkStatus(&store_ids, &pct_b2c, &pct_wrk, &pct_c2b, &noofws, &bytesfree);
-   if ((retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) || (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK))
-   {
-      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText(QString("Network OK. %1 free on Conspire.").arg(getDataAmount(bytesfree)));
-      if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Network OK. No active jobs. %1 free on Conspire.").arg(getDataAmount(bytesfree)));
+    printf("refresh work triggered\n");
+    login_label->setText("");
+    char **store_ids = NULL;
+    float *pct_b2c = NULL;
+    float *pct_wrk = NULL;
+    float *pct_c2b = NULL;
+    int noofws = 0;
+    int64_t bytesfree = 0;
+   
+    int row = 0;
+    int col = 0;
+   
+    for (int i = all_wpw->size(); i--; )
+    {
+        qgrid->removeItem(all_wpw->at(i));
+        delete all_wpw->at(i);
+    }
+    all_wpw->clear();
       
-      if (all_wpw->size() != (noofws + 1))
-      {
-         for (int i = 0; i < all_wpw->size(); i++)
-         {
-            qgrid->removeItem(all_wpw->at(i));
-            delete all_wpw->at(i);
-         }
-         all_wpw->clear();
-         int row = 0;
-         int col = 0;
-         for (int i = 0; i < (noofws + 1); i++)
-         {
+    int retval = AcquireQueryAllWorkStatus(&store_ids, &pct_b2c, &pct_wrk, &pct_c2b, &noofws, &bytesfree);
+    if ((retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) || (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK))
+    {
+        if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS) login_label->setText(QString("Network OK. %1 free on Conspire.").arg(getDataAmount(bytesfree)));
+        if (retval == ACQUIRE_QUERY_ALL_WORK__SUCCESS_NO_WORK) login_label->setText(QString("Network OK. No active jobs. %1 free on Conspire.").arg(getDataAmount(bytesfree)));
+
+        for (int i = 0; i < (noofws); i++)
+        {
             WorkPacketWidget *t_wpw = new WorkPacketWidget("", 0, 0, i, all_wpw, NULL);
             qgrid->setRowFixedHeight(row, 100);
             qgrid->setColumnFixedWidth(col, 100);
@@ -145,9 +146,41 @@ void NewWorkPage::refreshWork()
             if (col >= 3) { row++; col = 0; }
             connect(t_wpw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
             all_wpw->append(t_wpw);
-         }
-      }
-
+        }
+        int numberofwpw = noofws;
+      
+        QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+        QStringList groups = qsetter->childGroups();
+        for (int i = 0; i < groups.size(); i++)
+        {
+            QString qstr = qsetter->value(groups.at(i) + "/workstoreid").toString();
+            if ((qstr.isEmpty()) && (QString(groups.at(i)) != QString("preferences")))
+            {
+                conspireDebug() << groups.at(i);
+                WorkPacketWidget *t_wpw =
+                    new WorkPacketWidget("", 0, 0, numberofwpw, all_wpw, groups.at(i).toAscii().constData());
+                qgrid->setRowFixedHeight(row, 100);
+                qgrid->setColumnFixedWidth(col, 100);
+                qgrid->addItem(t_wpw, row, col, 1, 1);
+                col++;
+                if (col >= 3) { row++; col = 0; }
+                connect(t_wpw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
+                all_wpw->append(t_wpw);
+                numberofwpw++;
+            }
+        }
+        delete qsetter;
+        WorkPacketWidget *t_wpw =
+            new WorkPacketWidget("Create new...", 0, 0, numberofwpw, all_wpw, NULL);
+        qgrid->setRowFixedHeight(row, 100);
+        qgrid->setColumnFixedWidth(col, 100);
+        qgrid->addItem(t_wpw, row, col, 1, 1);
+        col++;
+        if (col >= 3) { row++; col = 0; }
+        connect(t_wpw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
+        all_wpw->append(t_wpw);
+        numberofwpw++;
+      
       for (int i = 0; i < noofws; i++)
       {
          QString quuid;
@@ -163,7 +196,8 @@ void NewWorkPage::refreshWork()
             }
          }
          delete qsetter;
-         ((WorkPacketWidget *)(all_wpw->at(i)))->updateUUID(quuid);
+         int thiswpwno = numberofwpw - noofws + i;
+         ((WorkPacketWidget *)(all_wpw->at(thiswpwno)))->updateUUID(quuid);
          if (pct_b2c[i] == 100.)
          {
             char **workdata_ids = NULL;
@@ -194,25 +228,25 @@ void NewWorkPage::refreshWork()
                      default: break;
                   }
                }
-               ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Waiting...");
-               if (amt_b2c > 0.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Sending...");
-               if (amt_b2c == 100.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Computing...");
-               if (amt_prg == 100.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Computed...");
-               if (amt_c2b > 0.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Receiving...");
-               ((WorkPacketWidget *)(all_wpw->at(i)))->updateAmounts(amt_b2c / 100., amt_prg / 100., amt_c2b / 100.);
+               ((WorkPacketWidget *)(all_wpw->at(thiswpwno)))->updateText("Waiting...");
+               if (amt_b2c > 0.) ((WorkPacketWidget *)(all_wpw->at(thiswpwno)))->updateText("Sending...");
+               if (amt_b2c == 100.) ((WorkPacketWidget *)(all_wpw->at(thiswpwno)))->updateText("Computing...");
+               if (amt_prg == 100.) ((WorkPacketWidget *)(all_wpw->at(thiswpwno)))->updateText("Computed...");
+               if (amt_c2b > 0.) ((WorkPacketWidget *)(all_wpw->at(thiswpwno)))->updateText("Receiving...");
+               ((WorkPacketWidget *)(all_wpw->at(thiswpwno)))->updateAmounts(amt_b2c / 100., amt_prg / 100., amt_c2b / 100.);
             } else
             {
                printf("acquire query all work data failed (code %d)\n", retval2);
             }
          } else
          {
-            ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Uploading...");
+            ((WorkPacketWidget *)(all_wpw->at(thiswpwno)))->updateText("Uploading...");
          }
-         if (pct_c2b[i] == 100.) ((WorkPacketWidget *)(all_wpw->at(i)))->updateText("Complete.");
-         ((WorkPacketWidget *)(all_wpw->at(i)))->computeAndUpdateUpload();
+         if (pct_c2b[i] == 100.) ((WorkPacketWidget *)(all_wpw->at(thiswpwno)))->updateText("Complete.");
+         ((WorkPacketWidget *)(all_wpw->at(thiswpwno)))->computeAndUpdateUpload();
       }
-      ((WorkPacketWidget *)(all_wpw->at(noofws)))->updateText("Create new...");
-      ((WorkPacketWidget *)(all_wpw->at(noofws)))->updateAmounts(0., 0., 0.);
+      ((WorkPacketWidget *)(all_wpw->at(all_wpw->size() - 1)))->updateText("Create new...");
+      ((WorkPacketWidget *)(all_wpw->at(all_wpw->size() - 1)))->updateAmounts(0., 0., 0.);
    } else
    {
       switch (retval)

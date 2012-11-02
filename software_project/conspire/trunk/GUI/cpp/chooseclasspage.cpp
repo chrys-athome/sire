@@ -65,6 +65,7 @@
 #include <QGraphicsGridLayout>
 #include <QTimer>
 #include <QXmlStreamReader>
+#include <QUuid>
 
 #include <QGraphicsLinearLayout>
 #include <QGraphicsProxyWidget>
@@ -77,10 +78,32 @@ using namespace Conspire;
 
 static QString install_dir = STATIC_INSTALL_DIR;
 
-void ChooseClassPage::build()
+void ChooseClassPage::saveNewJobName(QString q)
+{
+   if ((lineedit_jobname->text()).isEmpty()) return;
+   QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+   qsetter->setValue(quuid + "/jobname", q);
+   delete qsetter;
+}
+
+void ChooseClassPage::deleteNewJob()
+{
+   /*
+   QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+   qsetter->beginGroup(quuid);
+   qsetter->remove("");
+   qsetter->endGroup();
+   delete qsetter;
+   */
+   emit( pop(true) );
+}
+
+void ChooseClassPage::build(QString clstext)
 {
     //this->setFlag(QGraphicsItem::ItemStacksBehindParent, true);
-    
+    QUuid uuidgen;
+    quuid = uuidgen.createUuid().toString().replace('{', ' ').replace('}', ' ').trimmed();
+
     WidgetRack *rack = new WidgetRack(this);
     
     QGraphicsLinearLayout *l = new QGraphicsLinearLayout(::Qt::Vertical, this);
@@ -94,6 +117,15 @@ void ChooseClassPage::build()
     
     WidgetRack *sub_rack = new WidgetRack(this);
     sub_rack->setFocusPolicy(::Qt::NoFocus);
+
+    lineedit_jobname = new QLineEdit();
+    lineedit_jobname->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+    lineedit_jobname->setPlaceholderText("Give this job a name");
+    lineedit_jobname->setFocusPolicy(::Qt::StrongFocus);
+    if (not clstext.isEmpty())
+       lineedit_jobname->setText(clstext);
+    sub_rack->addWidget(lineedit_jobname);
+    connect(lineedit_jobname, SIGNAL(textChanged(QString)), this, SLOT(saveNewJobName(QString)));
     
     QLabel *label_table = new QLabel(Conspire::tr("Choose the job that you would like to do:"));
     sub_rack->addWidget(label_table);
@@ -142,7 +174,7 @@ void ChooseClassPage::build()
            if (xmlReader->name() == "jobclassdescription")
            {
               t_jobclassincludedirs.clear();
-              t_jobclassid = QString(*(xmlReader->attributes().value("id").string()));
+              t_jobclassid = xmlReader->attributes().value("id").toString();
            }
            if (xmlReader->name() == "name") t_jobclassname = xmlReader->readElementText();
            if (xmlReader->name() == "description") t_jobclassdescription = xmlReader->readElementText();
@@ -158,7 +190,7 @@ void ChooseClassPage::build()
               JobClassWidget *this_jcw =
                  new JobClassWidget(numberof, all_jcw,
                                     t_jobclassid, t_jobclassname, t_jobclassdescription, t_jobclassicon,
-                                    t_jobclassdirectory, t_jobclassxml, t_jobclassincludedirs);
+                                    t_jobclassdirectory, t_jobclassxml, t_jobclassincludedirs, quuid);
               qlinear->addItem(this_jcw);
               all_jcw->append(this_jcw);
               connect(this_jcw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
@@ -191,6 +223,11 @@ void ChooseClassPage::build()
     connect(qscene, SIGNAL(mousePressEvent(QGraphicsSceneMouseEvent *)), tableofworkstores, SLOT(mousePressEvent(QGraphicsSceneMouseEvent *)));
 
     tableofworkstores->update();
+    QGraphicsProxyWidget *view_proxy = new QGraphicsProxyWidget(this);
+    view_proxy->setWidget(qview);
+    view_proxy->setZValue(-100);
+    sub_rack->addWidget(view_proxy);
+    
     sub_rack->addWidget(qview);
     return_button = NULL;
     
@@ -201,7 +238,7 @@ void ChooseClassPage::build()
     */
 
     return_button = new Button(Conspire::tr("Return"));
-    connect(return_button, SIGNAL(clicked()), this, SIGNAL(pop()));
+    connect(return_button, SIGNAL(clicked()), this, SLOT(deleteNewJob()));
     sub_rack->addWidget(return_button);
  
     login_label = new QLabel();
@@ -214,9 +251,15 @@ void ChooseClassPage::build()
 }
 
 /** Constructor */
+ChooseClassPage::ChooseClassPage(QString clstext, Page *parent) : Page(parent)
+{
+    build(clstext);
+}
+
+/** Constructor */
 ChooseClassPage::ChooseClassPage(Page *parent) : Page(parent)
 {
-    build();
+    build(QString());
 }
 
 /** Destructor */

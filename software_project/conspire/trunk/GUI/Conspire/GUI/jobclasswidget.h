@@ -20,6 +20,7 @@ class JobClassWidget : public QGraphicsWidget
       JobClassWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
                      QString iid, QString ifullname, QString ifulldescr, QString iiconpath,
                      QString ijobdir, QString ijoboptions, QStringList ijoboptionsincludedirs,
+                     QString iquuid,
                      QGraphicsItem *parent = 0, ::Qt::WindowFlags wFlags = 0);
       void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
    signals:
@@ -37,6 +38,7 @@ class JobClassWidget : public QGraphicsWidget
       QString iconpath;
       QString jobdir;
       QString joboptions;
+      QString quuid;
       QStringList joboptionsincludedirs;
       QImage theicon;
       QList<QGraphicsLayoutItem *> *all_jcw;

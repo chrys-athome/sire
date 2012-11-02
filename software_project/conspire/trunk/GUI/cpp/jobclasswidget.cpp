@@ -23,10 +23,12 @@ using namespace Conspire;
 #include "config.h"
 
 static QString install_dir = STATIC_INSTALL_DIR;
+static QString jobinfodir = DYNAMIC_INSTALL_DIR;
 
 JobClassWidget::JobClassWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
                                QString iid, QString ifullname, QString ifulldescr, QString iiconpath,
                                QString ijobdir, QString ijoboptions, QStringList ijoboptionsincludedirs,
+                               QString iquuid,
                                QGraphicsItem *parent, ::Qt::WindowFlags wFlags)
 {
    setFlag(QGraphicsItem::ItemStacksBehindParent, false);
@@ -38,6 +40,7 @@ JobClassWidget::JobClassWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
    jobdir = QString(ijobdir);
    joboptions = QString(ijoboptions);
    joboptionsincludedirs = QStringList(ijoboptionsincludedirs);
+   quuid = iquuid;
    theicon.load(QString("%1/job_classes/%2").arg(install_dir).arg(iconpath));
    all_jcw = iall_jcw;
    
@@ -55,6 +58,10 @@ JobClassWidget::JobClassWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
 
 void JobClassWidget::newJob()
 {
+   QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+   qsetter->setValue(quuid + "/jobclass", id);
+   delete qsetter;
+   
    QStringList path;
    path << QString("%1/job_classes/%2").arg(install_dir).arg(jobdir);
    
@@ -73,7 +80,7 @@ void JobClassWidget::newJob()
    }
 
    conspireDebug() << "PUSH CONFIGDOC";
-   emit( push( PagePointer(new ConfigDocument(jobdir, opts))) );
+   emit( push( PagePointer(new ConfigDocument(jobdir, opts, quuid))) );
    conspireDebug() << "PUSHED!";
 }
 

@@ -272,9 +272,10 @@ SubmitPage::SubmitPage(Page *parent) : Page(parent)
 }
 
 /** Construct, passing in the options used to submit the job */
-SubmitPage::SubmitPage(Options options, QString clas, Page *parent) 
+SubmitPage::SubmitPage(Options options, QString clas, QString iquuid, Page *parent) 
            : Page(parent), opts(options), job_class(clas)
 {
+    quuid = iquuid;
     cancelled = 0;
     build();
 }
@@ -390,8 +391,8 @@ void SubmitPage::submit()
                     
     conspireDebug() << overdatadir;
     
-    QUuid uuidgen;
-    QString quuid = uuidgen.createUuid().toString().replace('{', ' ').replace('}', ' ').trimmed();
+//    QUuid uuidgen;
+//    QString quuid = uuidgen.createUuid().toString().replace('{', ' ').replace('}', ' ').trimmed();
     
     QString datadir = overdatadir + "/input_" + quuid;
                 

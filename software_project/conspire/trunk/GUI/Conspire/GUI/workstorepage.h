@@ -51,7 +51,7 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        WorkStorePage(QString iworkstoreid, Page *parent=0);
+        WorkStorePage(QString iworkstoreid, QString iquuid, Page *parent=0);
         
         ~WorkStorePage();
 
@@ -60,6 +60,7 @@ namespace Conspire
         void restartUpload();
         void expungeWorkStore();
         void refreshTimes();
+        void editWorkStore();
         
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
