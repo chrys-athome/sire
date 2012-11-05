@@ -45,7 +45,7 @@ WorkPacketWidget::WorkPacketWidget(const char *message, int col, int row,
    if (iquuid)
    {
       quuid = strdup("");
-      updateUUID(QString(quuid));
+      updateUUID(QString(iquuid));
    } else
       quuid = NULL;
    local_to_broker = 0.;
@@ -140,7 +140,15 @@ void WorkPacketWidget::updateAmounts()
    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
    workstoreid = qsetter->value(QString(quuid) + "/workstoreid").toString();
    my_name = qsetter->value(QString(quuid) + "/jobname").toString();
+   QString my_class = qsetter->value(QString(quuid) + "/jobclass").toString();
    delete qsetter;
+   if ((not my_class.isEmpty()) && (theicon.isNull()))
+   {
+      quuid = strdup("");
+      char *quuidk = strdup(quuid);
+      updateUUID(QString(quuidk));
+      free(quuidk);
+   }
    computeAndUpdateUpload();
    char **store_ids = NULL;
    float *pct_b2c = NULL;
