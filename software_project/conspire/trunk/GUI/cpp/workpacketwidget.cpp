@@ -43,8 +43,10 @@ WorkPacketWidget::WorkPacketWidget(const char *message, int col, int row,
    my_idx = iidx;
    setGeometry(col*my_width, row*my_height, my_width, my_height);
    if (iquuid)
-      updateUUID(QString(iquuid));
-   else
+   {
+      quuid = strdup("");
+      updateUUID(QString(quuid));
+   } else
       quuid = NULL;
    local_to_broker = 0.;
    broker_to_compute = 0.;
@@ -206,7 +208,7 @@ void WorkPacketWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *
                                manycolours[stage*3+1],
                                manycolours[stage*3+2],
                                alpha));
-      painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
+      painter->drawChord(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
                        16 * 0, (float)(16 * 360));
    } else
    {
@@ -354,6 +356,8 @@ void WorkPacketWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
 void WorkPacketWidget::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
+    // Should add a check to make this stop after a
+    // certain number of jumps (so, all_wpw->size())
    /*
    if (event->button() == ::Qt::RightButton)
    {
