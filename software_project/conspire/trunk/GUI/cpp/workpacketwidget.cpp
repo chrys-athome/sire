@@ -229,7 +229,7 @@ void WorkPacketWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *
                                manycolours[stage*3+5],
                                alpha));
       painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                       16 * 0, (float)(16 * 360) * stage_progress);
+                       16 * 90, -(float)(16 * 360) * stage_progress);
       painter->setPen(QColor(manycolours[stage*3+0],
                              manycolours[stage*3+1],
                              manycolours[stage*3+2],
@@ -239,7 +239,7 @@ void WorkPacketWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *
                                manycolours[stage*3+2],
                                alpha));
       painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                       (float)(16 * 360) * stage_progress, (float)(16 * 360) * (1. - stage_progress));
+                       16 * 90 - (float)(16 * 360) * stage_progress, -(float)(16 * 360) * (1. - stage_progress));
    }
    
    
@@ -362,6 +362,22 @@ void WorkPacketWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
    */
 }
 
+void WorkPacketWidget::specialCountedMousePress(int idx, QGraphicsSceneMouseEvent *event)
+{
+    if (idx >= all_wpw->size()) return;
+   if (event->button() == ::Qt::LeftButton)
+   {
+      const QRectF widg_geom = this->geometry();
+      if (widg_geom.contains(event->scenePos()))
+      {
+         modifyWork();
+      }
+      //printf("left button press\n");
+      //emit ( clicked() );
+   }
+    ((WorkPacketWidget *)(all_wpw->at(idx+1)))->specialCountedMousePress(idx+1, event);
+}
+
 void WorkPacketWidget::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     // Should add a check to make this stop after a
@@ -382,12 +398,10 @@ void WorkPacketWidget::mousePressEvent(QGraphicsSceneMouseEvent *event)
          modifyWork();
       } else
       {
-         int nextidx = (my_idx + 1) % (all_wpw->size());
-         ((WorkPacketWidget *)(all_wpw->at(nextidx)))->mousePressEvent(event);
+         ((WorkPacketWidget *)(all_wpw->at(0)))->specialCountedMousePress(0, event);
       }
 
       //printf("left button press\n");
       //emit ( clicked() );
    }
 }
-

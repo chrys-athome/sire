@@ -32,6 +32,7 @@ class WorkPacketWidget : public QGraphicsWidget
       QString getWorkStoreID();
       void updateText(QString ttext);
       void updateUUID(QString iquuid);
+      void specialCountedMousePress(int idx, QGraphicsSceneMouseEvent *event);
    signals:
       void clicked();
       void push(PagePointer new_page);
