@@ -357,7 +357,8 @@ void WorkStorePage::expungeWorkStore()
          delete dthread;
       }
       int retval = AcquireDeleteWorkStore(workstoreid.toAscii().constData());
-      if (retval == ACQUIRE_DELETE_WORK_STORE__SUCCESS)
+      // HACK to allow deletion of non-broker work
+      if (1)//(retval == ACQUIRE_DELETE_WORK_STORE__SUCCESS)
       {
          QSettings *qsetter = new QSettings("UoB", "AcquireClient");
          QStringList groups = qsetter->childGroups();

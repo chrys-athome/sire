@@ -60,6 +60,7 @@ void JobClassWidget::newJob()
 {
    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
    qsetter->setValue(quuid + "/jobclass", id);
+   qsetter->setValue(quuid + "/user", QString(AcquireClientGetUsername()));
    delete qsetter;
    
    QStringList path;

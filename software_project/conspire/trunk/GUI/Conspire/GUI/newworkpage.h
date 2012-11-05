@@ -63,6 +63,8 @@ namespace Conspire
         void refreshWork();
         
     protected:
+        void refreshWorkPartial();
+        void refreshWorkFull();
         void resizeEvent(QGraphicsSceneResizeEvent *e);
         void moveEvent(QGraphicsSceneMoveEvent *e);
 

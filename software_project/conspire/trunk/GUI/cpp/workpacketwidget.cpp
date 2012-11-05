@@ -5,6 +5,7 @@
 #include <QBrush>
 #include <QCursor>
 #include <QSettings>
+#include <QXmlStreamReader>
 
 #include "Conspire/GUI/mainwindow.h"
 #include "Conspire/GUI/workpacketwidget.h"
@@ -20,9 +21,13 @@
 
 #include "Acquire/acquire_client.h"
 
+#include "config.h"
+
 #define PIE_RADIUS 48.
 
 using namespace Conspire;
+
+static QString install_dir = STATIC_INSTALL_DIR;
 
 WorkPacketWidget::WorkPacketWidget(const char *message, int col, int row,
    int iidx, QList<QGraphicsLayoutItem *> *iall_wpw, const char *iquuid,
@@ -38,13 +43,14 @@ WorkPacketWidget::WorkPacketWidget(const char *message, int col, int row,
    my_idx = iidx;
    setGeometry(col*my_width, row*my_height, my_width, my_height);
    if (iquuid)
-      quuid = strdup(iquuid);
+      updateUUID(QString(iquuid));
    else
       quuid = NULL;
    local_to_broker = 0.;
    broker_to_compute = 0.;
    computing = 0.;
    compute_to_broker = 0.;
+   broker_to_local = 0.;
    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
    workstoreid = qsetter->value(QString(quuid) + "/workstoreid").toString();
    delete qsetter;
@@ -100,6 +106,22 @@ void WorkPacketWidget::computeAndUpdateUpload()
    }
 }
 
+void WorkPacketWidget::computeAndUpdateDownload()
+{
+    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+    workstoreid = qsetter->value(QString(quuid) + "/workstoreid").toString();
+//    my_name = qsetter->value(QString(quuid) + "/jobname").toString();
+    delete qsetter;
+    if (GetDownloadArray()->value(workstoreid))
+    {
+        broker_to_local = GetDownloadArray()->value(workstoreid)->getBlockFraction();
+        broker_to_local = (broker_to_local < 0.) ? 0. : ((broker_to_local > 1.) ? 1. : broker_to_local);
+    } else
+    {
+        broker_to_local = 0.;
+    }
+}
+
 void WorkPacketWidget::updateAmounts(float ibroker_to_compute,
                                      float icomputing,
                                      float icompute_to_broker)
@@ -108,6 +130,7 @@ void WorkPacketWidget::updateAmounts(float ibroker_to_compute,
    broker_to_compute = ibroker_to_compute;
    computing = icomputing;
    compute_to_broker = icompute_to_broker;
+   computeAndUpdateDownload();
 }
 
 void WorkPacketWidget::updateAmounts()
@@ -141,73 +164,74 @@ void WorkPacketWidget::updateAmounts()
 
 void WorkPacketWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-   int alpha = 255;
-//   QPoint a = QCursor::pos();
-//   QPointF ab = mapFromScene(mview->mapToScene(mview->mapFromGlobal(a)));
+    unsigned char manycolours[] = { 0xFF, 0xFF, 0xFF,
+                                    0x7F, 0x3F, 0x3F,
+                                    0x7F, 0x7F, 0x3F,
+                                    0x5F, 0x7F, 0x5F,
+                                    0x3F, 0x7F, 0x7F,
+                                    0x5F, 0x5F, 0x7F,
+                                    0x7F, 0x3F, 0x7F };
+   int alpha = 192;
+   int stage = 0;
+   stage = (local_to_broker == 1.) ? 1 : stage;
+   stage = (broker_to_compute == 1.) ? 2 : stage;
+   stage = (computing == 1.) ? 3 : stage;
+   stage = (compute_to_broker == 1.) ? 4 : stage;
+   stage = (broker_to_local == 1.) ? 5 : stage;
+   
+   float stage_progress = 0.;
+   stage_progress = (stage == 0) ? local_to_broker : stage_progress;
+   stage_progress = (stage == 1) ? broker_to_compute : stage_progress;
+   stage_progress = (stage == 2) ? computing : stage_progress;
+   stage_progress = (stage == 3) ? compute_to_broker : stage_progress;
+   stage_progress = (stage == 4) ? broker_to_local : stage_progress;
+//   printf("%d %f\n", stage, stage_progress);
    painter->setRenderHint(QPainter::Antialiasing, true);
-
+   // Draw the background image
+   painter->drawImage(QRect(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS), theicon);
+   // Draw the faint grey outline
    QPen p = painter->pen();
    p.setColor(QColor(128, 128, 128, alpha));
    painter->setPen(p);
    painter->setBrush(QColor(0, 0, 0, 0));
    painter->drawChord(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
                     16 * 0, 16 * 360);
+   if (stage_progress == 0.)
+   {
+      painter->setPen(QColor(manycolours[stage*3+0],
+                             manycolours[stage*3+1],
+                             manycolours[stage*3+2],
+                             alpha));
+      painter->setBrush(QColor(manycolours[stage*3+0],
+                               manycolours[stage*3+1],
+                               manycolours[stage*3+2],
+                               alpha));
+      painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
+                       16 * 0, (float)(16 * 360));
+   } else
+   {
+      painter->setPen(QColor(manycolours[stage*3+3],
+                             manycolours[stage*3+4],
+                             manycolours[stage*3+5],
+                             alpha));
+      painter->setBrush(QColor(manycolours[stage*3+3],
+                               manycolours[stage*3+4],
+                               manycolours[stage*3+5],
+                               alpha));
+      painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
+                       16 * 0, (float)(16 * 360) * stage_progress);
+      painter->setPen(QColor(manycolours[stage*3+0],
+                             manycolours[stage*3+1],
+                             manycolours[stage*3+2],
+                             alpha));
+      painter->setBrush(QColor(manycolours[stage*3+0],
+                               manycolours[stage*3+1],
+                               manycolours[stage*3+2],
+                               alpha));
+      painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
+                       (float)(16 * 360) * stage_progress, (float)(16 * 360) * (1. - stage_progress));
+   }
    
-   if (local_to_broker == 0.) goto addtext;
-   
-   painter->setPen(QColor(128, 64, 64, 255));
-   painter->setBrush(QColor(128, 64, 64, 255));
-   if (local_to_broker == 1.)
-   {
-      painter->drawChord(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                       16 * 0, (float)(16 * 360) * local_to_broker);
-   } else
-   {
-      painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                       16 * 90, -(float)(16 * 360) * local_to_broker);
-   }
-
-   if (broker_to_compute == 0.) goto addtext;
-
-   painter->setPen(QColor(128, 128, 64, 255));
-   painter->setBrush(QColor(128, 128, 64, 255));
-   if (broker_to_compute == 1.)
-   {
-      painter->drawChord(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                       16 * 0, (float)(16 * 360) * broker_to_compute);
-   } else
-   {
-      painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                       16 * 90, -(float)(16 * 360) * broker_to_compute);
-   }
-
-   if (computing == 0.) goto addtext;
-
-   painter->setPen(QColor(96, 192, 96, 255));
-   painter->setBrush(QColor(96, 192, 96, 255));
-   if (computing == 1.)
-   {
-      painter->drawChord(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                       16 * 0, (float)(16 * 360) * computing);
-   } else
-   {
-      painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                       16 * 90, -(float)(16 * 360) * computing);
-   }
-
-   if (compute_to_broker == 0.) goto addtext;
-   
-   painter->setPen(QColor(64, 128, 128, 255));
-   painter->setBrush(QColor(64, 128, 128, 255));
-   if (compute_to_broker == 1.)
-   {
-      painter->drawChord(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                     16 * 0, (float)(16 * 360) * compute_to_broker);
-   } else
-   {
-      painter->drawPie(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
-                     16 * 90, -(float)(16 * 360) * compute_to_broker);
-   }
    
 addtext:
 
@@ -226,6 +250,8 @@ addtext:
       painter->setBrush(QColor(0, 0, 0, 255));
       painter->drawText(0, 40 - movedown, 100, 20, ::Qt::AlignHCenter, my_name, NULL);
    }
+   if ((stage == 4) && (stage_progress > 0.)) my_message = QString("Downloading...");
+   if (stage == 5) my_message = QString("Downloaded.");
    QFont font("Times", 12);
    font.setStyleStrategy(QFont::ForceOutline);
    painter->setFont(font);
@@ -247,6 +273,67 @@ void WorkPacketWidget::updateText(QString ttext)
 
 void WorkPacketWidget::updateUUID(QString iquuid)
 {
+   if (iquuid.isEmpty())
+   {
+       quuid = NULL;
+       return;
+   }
+   if ((!quuid) || (iquuid != QString(quuid)))
+   {
+       // Load a new QImage using the appropriate job class
+       QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+       QString jobclass = qsetter->value(iquuid + "/jobclass").toString();
+
+        QFile *xmlFile = new QFile(QString("%1/job_classes/job_classes.xml").arg(install_dir));
+
+        if (!xmlFile->open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+        emit( push( PagePointer( new ExceptionPage(
+                Conspire::tr("Error opening job classes XML file"),
+                            Conspire::file_error( Conspire::tr("Cannot open the "
+                            "file \"%1/%2\".")
+                                .arg(install_dir).arg("job_classes.xml"), CODELOC ) ) ) ) );
+        }
+
+        QXmlStreamReader *xmlReader = new QXmlStreamReader(xmlFile);
+
+        QString t_jobclassid;
+        
+        while (!xmlReader->atEnd() && !xmlReader->hasError())
+        {
+            QXmlStreamReader::TokenType token = xmlReader->readNext();
+            if (token == QXmlStreamReader::StartDocument) continue;
+            if (token == QXmlStreamReader::StartElement)
+            {
+                if (xmlReader->name() == "jobclassdescription")
+                {
+                    t_jobclassid = xmlReader->attributes().value("id").toString();
+                }
+                if (xmlReader->name() == "icon")
+                {
+                    if (t_jobclassid == jobclass)
+                        theicon.load(QString("%1/job_classes/%2").arg(install_dir).arg(xmlReader->readElementText()));
+                }
+            }
+        }
+
+        if (xmlReader->hasError())
+        {
+        emit( push( PagePointer( new ExceptionPage(
+                Conspire::tr("Error in XML parsing."),
+                            Conspire::file_error( Conspire::tr("Cannot open the "
+                            "file \"%1/%2\".")
+                                .arg(install_dir).arg("job_classes.xml"), CODELOC ) ) ) ) );
+        }
+
+        xmlReader->clear();
+        xmlFile->close();
+        delete xmlReader;
+        delete xmlFile;
+       
+       
+       delete qsetter;
+   }
    if (quuid)
    {
       free(quuid);

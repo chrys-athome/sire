@@ -83,6 +83,7 @@ void ChooseClassPage::saveNewJobName(QString q)
    if ((lineedit_jobname->text()).isEmpty()) return;
    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
    qsetter->setValue(quuid + "/jobname", q);
+   qsetter->setValue(quuid + "/user", QString(AcquireClientGetUsername()));
    delete qsetter;
 }
 

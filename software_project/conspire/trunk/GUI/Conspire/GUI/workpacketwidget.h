@@ -23,6 +23,7 @@ class WorkPacketWidget : public QGraphicsWidget
          int iidx, QList<QGraphicsLayoutItem *> *iall_wpw, const char *iquuid,
          QGraphicsItem *parent = 0, ::Qt::WindowFlags wFlags = 0);
       void computeAndUpdateUpload();
+      void computeAndUpdateDownload();
       void updateAmounts();
       void updateAmounts(float ibroker_to_compute,
                          float icomputing,
@@ -49,11 +50,13 @@ class WorkPacketWidget : public QGraphicsWidget
 
       QString my_message;
       QString my_name;
-      
+      QImage theicon;
+
       float local_to_broker;
       float broker_to_compute;
       float computing;
       float compute_to_broker;
+      float broker_to_local;
       
       QString workstoreid;
 };
