@@ -81,7 +81,7 @@ void JobClassWidget::newJob()
    }
 
    conspireDebug() << "PUSH CONFIGDOC";
-   emit( push( PagePointer(new ConfigDocument(jobdir, opts, quuid))) );
+   emit( push( PagePointer(new ConfigDocument(jobdir, opts, quuid)), true) );
    conspireDebug() << "PUSHED!";
 }
 

@@ -56,6 +56,7 @@ namespace Conspire
         
     public:
         ConfigDocument(QString itype, Page *parent=0);
+        ConfigDocument(QString itype, QString iquuid, Page *parent=0);
         ConfigDocument(QString itype, Options options, Page *parent=0);
         ConfigDocument(QString itype, Options options, QString iquuid, Page *parent=0);
         

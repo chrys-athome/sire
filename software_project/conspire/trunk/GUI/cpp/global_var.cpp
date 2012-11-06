@@ -27,12 +27,12 @@ QMap<QString, DownloadThread *> *GetDownloadArray()
 
 void DestroyUploadArray()
 {
-   free(uploadarray);
+   delete uploadarray;
    uploadarray = NULL;
 }
 
 void DestroyDownloadArray()
 {
-   free(downloadarray);
+   delete downloadarray;
    downloadarray = NULL;
 }

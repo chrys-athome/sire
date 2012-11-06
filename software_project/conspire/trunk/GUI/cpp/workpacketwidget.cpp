@@ -44,8 +44,8 @@ WorkPacketWidget::WorkPacketWidget(const char *message, int col, int row,
    setGeometry(col*my_width, row*my_height, my_width, my_height);
    if (iquuid)
    {
-      quuid = strdup("");
-      updateUUID(QString(iquuid));
+      quuid = strdup(iquuid);
+      tryReloadImage();
    } else
       quuid = NULL;
    local_to_broker = 0.;
@@ -72,10 +72,10 @@ void WorkPacketWidget::modifyWork()
                            Conspire::file_error( Conspire::tr("Cannot make new work."), CODELOC ) ) ) ) );
          return;
       }
-      emit( push( PagePointer(new ChooseClassPage())) );
+      emit( push( PagePointer(new ChooseClassPage(QString(), QString())), false) );
    } else
    {
-      emit( push( PagePointer(new WorkStorePage(workstoreid, QString(quuid)))) );
+      emit( push( PagePointer(new WorkStorePage(workstoreid, QString(quuid))), false) );
    }
 }
 
@@ -142,13 +142,7 @@ void WorkPacketWidget::updateAmounts()
    my_name = qsetter->value(QString(quuid) + "/jobname").toString();
    QString my_class = qsetter->value(QString(quuid) + "/jobclass").toString();
    delete qsetter;
-   if ((not my_class.isEmpty()) && (theicon.isNull()))
-   {
-      quuid = strdup("");
-      char *quuidk = strdup(quuid);
-      updateUUID(QString(quuidk));
-      free(quuidk);
-   }
+   tryReloadImage();
    computeAndUpdateUpload();
    char **store_ids = NULL;
    float *pct_b2c = NULL;
@@ -260,6 +254,14 @@ addtext:
       painter->setBrush(QColor(0, 0, 0, 255));
       painter->drawText(0, 40 - movedown, 100, 20, ::Qt::AlignHCenter, my_name, NULL);
    }
+   if ((stage == 0) && (stage_progress > 0.)) my_message = QString("Uploading...");
+   if (stage == 1) my_message = QString("Waiting...");
+   if ((stage == 1) && (stage_progress > 0.)) my_message = QString("Sending...");
+   if (stage == 2) my_message = QString("Starting...");
+   if ((stage == 2) && (stage_progress > 0.)) my_message = QString("Computing...");
+   if (stage == 3) my_message = QString("Computed.");
+   if ((stage == 3) && (stage_progress > 0.)) my_message = QString("Receiving...");
+   if (stage == 4) my_message = QString("Complete.");
    if ((stage == 4) && (stage_progress > 0.)) my_message = QString("Downloading...");
    if (stage == 5) my_message = QString("Downloaded.");
    QFont font("Times", 12);
@@ -281,19 +283,14 @@ void WorkPacketWidget::updateText(QString ttext)
    my_message = ttext;
 }
 
-void WorkPacketWidget::updateUUID(QString iquuid)
+void WorkPacketWidget::tryReloadImage()
 {
-   if (iquuid.isEmpty())
-   {
-       quuid = NULL;
-       return;
-   }
-   if ((!quuid) || (iquuid != QString(quuid)))
-   {
-       // Load a new QImage using the appropriate job class
-       QSettings *qsetter = new QSettings("UoB", "AcquireClient");
-       QString jobclass = qsetter->value(iquuid + "/jobclass").toString();
-
+    // Load a new QImage using the appropriate job class
+    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+    QString jobclass = qsetter->value(QString(quuid) + "/jobclass").toString();
+    delete qsetter;
+    if ((not jobclass.isEmpty()) && (theicon.isNull()))
+    {
         QFile *xmlFile = new QFile(QString("%1/job_classes/job_classes.xml").arg(install_dir));
 
         if (!xmlFile->open(QIODevice::ReadOnly | QIODevice::Text))
@@ -340,9 +337,19 @@ void WorkPacketWidget::updateUUID(QString iquuid)
         xmlFile->close();
         delete xmlReader;
         delete xmlFile;
-       
-       
-       delete qsetter;
+    }
+}
+
+void WorkPacketWidget::updateUUID(QString iquuid)
+{
+   if (iquuid.isEmpty())
+   {
+       quuid = NULL;
+       return;
+   }
+   if ((!quuid) || (iquuid != QString(quuid)))
+   {
+       tryReloadImage();
    }
    if (quuid)
    {
@@ -364,7 +371,6 @@ void WorkPacketWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
 void WorkPacketWidget::specialCountedMousePress(int idx, QGraphicsSceneMouseEvent *event)
 {
-    if (idx >= all_wpw->size()) return;
    if (event->button() == ::Qt::LeftButton)
    {
       const QRectF widg_geom = this->geometry();
@@ -375,7 +381,8 @@ void WorkPacketWidget::specialCountedMousePress(int idx, QGraphicsSceneMouseEven
       //printf("left button press\n");
       //emit ( clicked() );
    }
-    ((WorkPacketWidget *)(all_wpw->at(idx+1)))->specialCountedMousePress(idx+1, event);
+   if ((idx+1) >= all_wpw->size()) return;
+   ((WorkPacketWidget *)(all_wpw->at(idx+1)))->specialCountedMousePress(idx+1, event);
 }
 
 void WorkPacketWidget::mousePressEvent(QGraphicsSceneMouseEvent *event)

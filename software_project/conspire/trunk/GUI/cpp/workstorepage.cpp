@@ -216,19 +216,19 @@ void WorkStorePage::editWorkStore()
             
         toptions = toptions.fromConfigFile(saveddata);
         
-           emit(push( PagePointer( new ConfigDocument(jobclass, toptions, quuid) )));
+           emit(push( PagePointer( new ConfigDocument(jobclass, toptions, quuid) ), true));
            return;
         }
     }
     if (not jobclass.isEmpty())
     {
        Options toptions;
-       emit(push( PagePointer( new ConfigDocument(jobclass) )));
+       emit(push( PagePointer( new ConfigDocument(jobclass, toptions, quuid) ), true));
        return;
     }
     if (not jobname.isEmpty())
     {
-       emit(push( PagePointer( new ChooseClassPage(jobname) )));
+       emit(push( PagePointer( new ChooseClassPage(jobname, quuid) ), true));
        return;
     }
     emit(push( PagePointer( new ChooseClassPage() )));

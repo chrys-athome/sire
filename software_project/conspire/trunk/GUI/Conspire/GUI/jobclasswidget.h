@@ -25,7 +25,7 @@ class JobClassWidget : public QGraphicsWidget
       void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
    signals:
       void clicked();
-      void push(PagePointer new_page);
+      void push(PagePointer new_page, bool clear_current);
    protected slots:
       void newJob();
    protected:

@@ -57,6 +57,8 @@ namespace Conspire
         NewWorkPage(Page *parent=0);
         
         ~NewWorkPage();
+        
+        void getsFocus();
 
     protected slots:
         void modifyWork(int row, int col);

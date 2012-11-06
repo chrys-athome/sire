@@ -76,7 +76,7 @@ namespace Conspire
         
         virtual void home(bool clear_history=false);
         
-        virtual void pushed(PagePointer page);
+        virtual void pushed(PagePointer page, bool clear_current=false);
         virtual void popped(bool forget_page=false);
     
     signals:
@@ -105,7 +105,7 @@ namespace Conspire
         void checkDisconnectPage(PagePointer &page);
         void checkDisconnectPages(QStack<PagePointer> &pages);
         
-        void pushView(PagePointer view, bool clear_future=true);
+        void pushView(PagePointer view, bool clear_future=true, bool clear_current=false);
         PagePointer popView(bool forget_page=false);
 
         void animateSwitch(PagePointer old_view, PagePointer new_view, 

@@ -71,6 +71,15 @@ ConfigDocument::ConfigDocument(QString itype, Options options, Page *parent)
     this->setOptions(options);
 }
 
+/** Construct a document to view and edit 'options' */
+ConfigDocument::ConfigDocument(QString itype, QString iquuid, Page *parent)
+               : Page(parent)
+{
+    jobtype = itype;
+    quuid = iquuid;
+    build();
+}
+
 /** Construct a document to view and edit 'options', with an existing UUID */
 ConfigDocument::ConfigDocument(QString itype, Options options, QString iquuid, Page *parent)
                : Page(parent)

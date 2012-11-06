@@ -33,9 +33,10 @@ class WorkPacketWidget : public QGraphicsWidget
       void updateText(QString ttext);
       void updateUUID(QString iquuid);
       void specialCountedMousePress(int idx, QGraphicsSceneMouseEvent *event);
+      void tryReloadImage();
    signals:
       void clicked();
-      void push(PagePointer new_page);
+      void push(PagePointer new_page, bool clear_current=false);
    protected slots:
       void modifyWork();
    protected:

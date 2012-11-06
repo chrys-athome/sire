@@ -556,3 +556,11 @@ void NewWorkPage::allUpdate()
 {
     QCoreApplication::processEvents();
 }
+
+void NewWorkPage::getsFocus()
+{
+    for (int i = 0; i < all_wpw->size(); i++)
+    {
+       ((WorkPacketWidget *)(all_wpw->at(i)))->tryReloadImage();
+    }
+}

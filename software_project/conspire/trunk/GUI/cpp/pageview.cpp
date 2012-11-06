@@ -97,7 +97,7 @@ void PageView::forward()
         return;
     }
     
-    this->pushView(page, false);
+    this->pushView(page, false, false);
     
     emit( canBackChanged(not page_history.isEmpty()) );
     emit( canForwardChanged(not page_future.isEmpty()) );
@@ -116,14 +116,14 @@ void PageView::home(bool clear_history)
     {
         if (current_page != top_page)
         {
-            this->pushed(top_page);
+            this->pushed(top_page, false);
         }
     }
 }
 
 /** Push the passed page into the view. This displays the new
     page and pushes the previously viewed page into the view history. */
-void PageView::pushed(PagePointer page)
+void PageView::pushed(PagePointer page, bool clear_current)
 {
     if (not page or page->isBroken())
         return;
@@ -149,11 +149,13 @@ void PageView::pushed(PagePointer page)
     }
     else
     {
-        this->pushView(page);
+        this->pushView(page, true, clear_current);
     }
     
-    connect(page.data(), SIGNAL(push(PagePointer)), 
-            this, SLOT(pushed(PagePointer)));
+    connect(page.data(), SIGNAL(push(PagePointer, bool)), 
+            this, SLOT(pushed(PagePointer, bool)));
+//    connect(page.data(), SIGNAL(push(PagePointer)), 
+//            this, SLOT(pushed(PagePointer)));
     connect(page.data(), SIGNAL(pop(bool)), this, SLOT(popped(bool)));
 
     emit( canBackChanged(not page_history.isEmpty()) );
@@ -447,7 +449,7 @@ void PageView::moveEvent(QGraphicsSceneMoveEvent *e)
 }
 
 /** Internal function used to make the passed view visible */
-void PageView::pushView(PagePointer new_page, bool clear_future)
+void PageView::pushView(PagePointer new_page, bool clear_future, bool clear_current)
 {
     if ((not new_page) or new_page->isBroken())
         return;
@@ -472,8 +474,9 @@ void PageView::pushView(PagePointer new_page, bool clear_future)
         animateSwitch(current_page, new_page, true);
     }
 
-    page_history.push(current_page);
+    if (not clear_current) page_history.push(current_page);
     current_page = new_page;
+    current_page->getsFocus();
 
     emit( canBackChanged( not page_history.isEmpty() ) );
     emit( canForwardChanged( not page_future.isEmpty() ) );
@@ -524,6 +527,7 @@ PagePointer PageView::popView(bool forget_page)
         page_future.push(old_page);
         
     current_page = new_page;
+    current_page->getsFocus();
 
     emit( canBackChanged( not page_history.isEmpty() ) );
     emit( canForwardChanged( not page_future.isEmpty() ) );

@@ -84,7 +84,7 @@ namespace Conspire
         
         bool operator==(const PagePointer &other) const;
         bool operator!=(const PagePointer &other) const;
-
+        
     private:
         QPointer<Page> p;
     };
@@ -151,6 +151,8 @@ namespace Conspire
         QList<PagePointer> childPages() const;
 
         QImage toImage();
+        
+        virtual void getsFocus() {};
 
     public slots:
         void block();
@@ -175,7 +177,7 @@ namespace Conspire
     signals:
         /** Signal emitted when this page has created a new page that 
             it wants to be displayed to the user */
-        void push(PagePointer new_page);
+        void push(PagePointer new_page, bool clear_current=false);
         
         /** Signal emitted when this page no longer wants to be viewed. 
             If "forget_page" is true, then this page is removed from the

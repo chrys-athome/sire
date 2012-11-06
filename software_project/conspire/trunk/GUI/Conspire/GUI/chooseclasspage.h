@@ -54,7 +54,7 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        ChooseClassPage(QString clstext, Page *parent=0);
+        ChooseClassPage(QString clstext, QString iquuid, Page *parent=0);
         ChooseClassPage(Page *parent=0);
         
         ~ChooseClassPage();

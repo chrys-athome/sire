@@ -102,9 +102,12 @@ void ChooseClassPage::deleteNewJob()
 void ChooseClassPage::build(QString clstext)
 {
     //this->setFlag(QGraphicsItem::ItemStacksBehindParent, true);
-    QUuid uuidgen;
-    quuid = uuidgen.createUuid().toString().replace('{', ' ').replace('}', ' ').trimmed();
-
+    if (quuid.isEmpty())
+    {
+       QUuid uuidgen;
+       quuid = uuidgen.createUuid().toString().replace('{', ' ').replace('}', ' ').trimmed();
+    }
+    
     WidgetRack *rack = new WidgetRack(this);
     
     QGraphicsLinearLayout *l = new QGraphicsLinearLayout(::Qt::Vertical, this);
@@ -194,7 +197,7 @@ void ChooseClassPage::build(QString clstext)
                                     t_jobclassdirectory, t_jobclassxml, t_jobclassincludedirs, quuid);
               qlinear->addItem(this_jcw);
               all_jcw->append(this_jcw);
-              connect(this_jcw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
+              connect(this_jcw, SIGNAL(push(PagePointer, bool)), this, SIGNAL(push(PagePointer, bool)));
               numberof++;
            }
         }
@@ -252,8 +255,9 @@ void ChooseClassPage::build(QString clstext)
 }
 
 /** Constructor */
-ChooseClassPage::ChooseClassPage(QString clstext, Page *parent) : Page(parent)
+ChooseClassPage::ChooseClassPage(QString clstext, QString iquuid, Page *parent) : Page(parent)
 {
+    quuid = iquuid;
     build(clstext);
 }
 

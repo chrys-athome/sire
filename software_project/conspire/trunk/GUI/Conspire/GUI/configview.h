@@ -52,7 +52,7 @@ namespace Conspire
         ~ConfigView();
         
     public slots:
-        void pushed(PagePointer page);
+        void pushed(PagePointer page, bool clear_current=false);
         void reread(Options options);
 
     signals:
