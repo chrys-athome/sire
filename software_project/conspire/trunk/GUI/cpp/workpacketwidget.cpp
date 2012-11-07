@@ -63,15 +63,6 @@ void WorkPacketWidget::modifyWork()
 {
    if (my_message == QString("Create new..."))
    {
-      const char *hadclusters = AcquireListOfAccessibleClusters();
-      if ((hadclusters == NULL) || (strlen(hadclusters) == 0))
-      {
-         conspireDebug() << "ERROR";
-         emit( push( PagePointer( new ExceptionPage(
-               Conspire::tr("Please add some accessible clusters before creating work"),
-                           Conspire::file_error( Conspire::tr("Cannot make new work."), CODELOC ) ) ) ) );
-         return;
-      }
       emit( push( PagePointer(new ChooseClassPage(QString(), QString())), false) );
    } else
    {

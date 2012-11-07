@@ -164,7 +164,7 @@ void SubmitPage::build()
    char *remainder = NULL;
    const char *token = strtok_r((char *)listclust, ",", &remainder);
    int haveany = 0;
-   cluster_box->addItem("Any");
+   clusters_box->addItem("Any");
    cluster_ids->push_back(QString());
    while (token != NULL)
    {
