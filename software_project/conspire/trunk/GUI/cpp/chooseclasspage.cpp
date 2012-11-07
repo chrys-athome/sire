@@ -78,25 +78,122 @@ using namespace Conspire;
 
 static QString install_dir = STATIC_INSTALL_DIR;
 
-void ChooseClassPage::saveNewJobName(QString q)
+void ChooseClassPage::selectJobClass()
 {
-   if ((lineedit_jobname->text()).isEmpty()) return;
    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
-   qsetter->setValue(quuid + "/jobname", q);
+   QString t_jobclass = qsetter->value(quuid + "/jobclass").toString();
+   delete qsetter;
+   if (t_jobclass.isEmpty())
+   {
+       login_label->setText("Please select a job class to create.");
+       return;
+   }
+   if (lineedit_jobname->text().isEmpty())
+   {
+       login_label->setText("Please name your new job.");
+       return;
+   }
+   qsetter = new QSettings("UoB", "AcquireClient");
+   qsetter->setValue(quuid + "/jobname", lineedit_jobname->text());
    qsetter->setValue(quuid + "/user", QString(AcquireClientGetUsername()));
    delete qsetter;
+   
+
+    QFile *xmlFile = new QFile(QString("%1/job_classes/job_classes.xml").arg(install_dir));
+
+    if (!xmlFile->open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+       emit( push( PagePointer( new ExceptionPage(
+            Conspire::tr("Error opening job classes XML file"),
+                        Conspire::file_error( Conspire::tr("Cannot open the "
+                           "file \"%1/%2\".")
+                              .arg(install_dir).arg("job_classes.xml"), CODELOC ) ) ) ) );
+    }
+
+    QXmlStreamReader *xmlReader = new QXmlStreamReader(xmlFile);
+
+    QString t_jobclassid;
+    QString t_jobclassname;
+    QString t_jobclassdirectory;
+    QString t_jobclassxml;
+    QStringList t_jobclassincludedirs;
+    
+    while (!xmlReader->atEnd() && !xmlReader->hasError())
+    {
+        QXmlStreamReader::TokenType token = xmlReader->readNext();
+        if (token == QXmlStreamReader::StartDocument) continue;
+        if (token == QXmlStreamReader::StartElement)
+        {
+           if (xmlReader->name() == "jobclassdescription")
+           {
+              t_jobclassid = xmlReader->attributes().value("id").toString();
+           }
+           if (xmlReader->name() == "name") t_jobclassname = xmlReader->readElementText();
+           if (xmlReader->name() == "directory") t_jobclassdirectory = xmlReader->readElementText();
+           if (xmlReader->name() == "optionsxml") t_jobclassxml = xmlReader->readElementText();
+           if (xmlReader->name() == "optionsincludedirs") t_jobclassincludedirs << xmlReader->readElementText();
+        }
+        if (token == QXmlStreamReader::EndElement)
+        {
+           if (xmlReader->name() == "jobclassdescription")
+           {
+               if (t_jobclass == t_jobclassid)
+                  break;
+           }
+        }
+    }
+
+    if (xmlReader->hasError())
+    {
+       emit( push( PagePointer( new ExceptionPage(
+            Conspire::tr("Error in XML parsing."),
+                        Conspire::file_error( Conspire::tr("Cannot open the "
+                           "file \"%1/%2\".")
+                              .arg(install_dir).arg("job_classes.xml"), CODELOC ) ) ) ) );
+    }
+
+    xmlReader->clear();
+    xmlFile->close();
+    delete xmlReader;
+    delete xmlFile;
+   
+    QStringList path;
+    path << QString("%1/job_classes/%2").arg(install_dir).arg(t_jobclassdirectory);
+    
+    printf("joboptions %s\n", t_jobclassxml.toAscii().constData());
+    Options opts = Options::fromXMLFile(QString("%1").arg(t_jobclassxml), path);
+
+    qDebug() << "Looking for a default config file...";
+    QFileInfo default_config( QString("%1/job_classes/%2/default_config").arg(install_dir,t_jobclassdirectory) );
+
+    qDebug() << default_config.absoluteFilePath();
+
+    if (default_config.exists())
+    {
+        qDebug() << "Adding in options from the default configuration file...";
+        opts = opts.fromConfigFile( default_config.absoluteFilePath() );
+    }
+
+    conspireDebug() << "PUSH CONFIGDOC";
+    emit( push( PagePointer(new ConfigDocument(t_jobclassdirectory, opts, quuid)), true) );
+    conspireDebug() << "PUSHED!";
 }
 
 void ChooseClassPage::deleteNewJob()
 {
-   /*
-   QSettings *qsetter = new QSettings("UoB", "AcquireClient");
-   qsetter->beginGroup(quuid);
-   qsetter->remove("");
-   qsetter->endGroup();
-   delete qsetter;
-   */
-   emit( pop(true) );
+    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+    QString t_jobclass = qsetter->value(quuid + "/jobclass").toString();
+    QString t_jobname = qsetter->value(quuid + "/jobname").toString();
+    delete qsetter;
+    if ((t_jobclass.isEmpty()) && (t_jobname.isEmpty()))
+    {
+        QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+        qsetter->beginGroup(quuid);
+        qsetter->remove("");
+        qsetter->endGroup();
+        delete qsetter;
+    }
+    emit( pop(true) );
 }
 
 void ChooseClassPage::build(QString clstext)
@@ -235,11 +332,9 @@ void ChooseClassPage::build(QString clstext)
     sub_rack->addWidget(qview);
     return_button = NULL;
     
-    /*
-    button = new Button(Conspire::tr("Refresh"));
-    connect(button, SIGNAL(clicked()), this, SLOT(refreshWork()));
+    button = new Button(Conspire::tr("Select"));
+    connect(button, SIGNAL(clicked()), this, SLOT(selectJobClass()));
     sub_rack->addWidget(button);
-    */
 
     return_button = new Button(Conspire::tr("Return"));
     connect(return_button, SIGNAL(clicked()), this, SLOT(deleteNewJob()));

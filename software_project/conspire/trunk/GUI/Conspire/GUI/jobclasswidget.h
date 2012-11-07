@@ -32,6 +32,7 @@ class JobClassWidget : public QGraphicsWidget
       virtual void mousePressEvent(QGraphicsSceneMouseEvent *event);
       virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
    private:
+      void chainUnfocus(int idx, int row);
       QString id;
       QString fullname;
       QString fulldescr;
@@ -45,6 +46,7 @@ class JobClassWidget : public QGraphicsWidget
       int my_width;
       int my_height;
       int my_row;
+      int hasfocus;
 };
 
 }

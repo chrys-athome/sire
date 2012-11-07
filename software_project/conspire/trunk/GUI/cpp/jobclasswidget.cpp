@@ -31,6 +31,7 @@ JobClassWidget::JobClassWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
                                QString iquuid,
                                QGraphicsItem *parent, ::Qt::WindowFlags wFlags)
 {
+   hasfocus = 0;
    setFlag(QGraphicsItem::ItemStacksBehindParent, false);
    setFocusPolicy(::Qt::NoFocus);
    id = QString(iid);
@@ -58,31 +59,18 @@ JobClassWidget::JobClassWidget(int row, QList<QGraphicsLayoutItem *> *iall_jcw,
 
 void JobClassWidget::newJob()
 {
+   hasfocus ^= 1;
    QSettings *qsetter = new QSettings("UoB", "AcquireClient");
-   qsetter->setValue(quuid + "/jobclass", id);
+   if (hasfocus)
+   {
+      qsetter->setValue(quuid + "/jobclass", id);
+   } else
+   {
+      qsetter->remove(quuid + "/jobclass");
+   }
    qsetter->setValue(quuid + "/user", QString(AcquireClientGetUsername()));
    delete qsetter;
-   
-   QStringList path;
-   path << QString("%1/job_classes/%2").arg(install_dir).arg(jobdir);
-   
-   printf("joboptions %s\n", joboptions.toAscii().constData());
-   Options opts = Options::fromXMLFile(QString("%1").arg(joboptions), path);
-
-   qDebug() << "Looking for a default config file...";
-   QFileInfo default_config( QString("%1/job_classes/%2/default_config").arg(install_dir,jobdir) );
-
-   qDebug() << default_config.absoluteFilePath();
-
-   if (default_config.exists())
-   {
-       qDebug() << "Adding in options from the default configuration file...";
-       opts = opts.fromConfigFile( default_config.absoluteFilePath() );
-   }
-
-   conspireDebug() << "PUSH CONFIGDOC";
-   emit( push( PagePointer(new ConfigDocument(jobdir, opts, quuid)), true) );
-   conspireDebug() << "PUSHED!";
+   ((JobClassWidget *)(all_jcw->at(0)))->chainUnfocus(0, my_row);
 }
 
 void JobClassWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -96,7 +84,13 @@ void JobClassWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
    QPen p = painter->pen();
    p.setColor(QColor(128, 128, 128, alpha));
    painter->setPen(p);
-   painter->setBrush(QColor(0, 0, 0, 0));
+   if (hasfocus)
+   {
+        painter->setBrush(QColor(0x4F, 0x9F, 0xFF, 0xFF));
+   } else
+   {
+        painter->setBrush(QColor(0, 0, 0, 0));
+   }
    painter->drawRect(0, 0, my_width, my_height);
    painter->drawImage(QRect(0, 0, my_height, my_height), theicon);
 //   painter->drawChord(0, my_height - 2*PIE_RADIUS, 2*PIE_RADIUS, 2*PIE_RADIUS,
@@ -157,4 +151,14 @@ void JobClassWidget::mousePressEvent(QGraphicsSceneMouseEvent *event)
       //printf("left button press\n");
       //emit ( clicked() );
    }
+}
+
+void JobClassWidget::chainUnfocus(int idx, int row)
+{
+    if (idx != row)
+    {
+        hasfocus = 0;
+    }
+    if (idx >= (all_jcw->size() - 1)) return;
+    ((JobClassWidget *)(all_jcw->at(idx+1)))->chainUnfocus(idx+1, row);
 }

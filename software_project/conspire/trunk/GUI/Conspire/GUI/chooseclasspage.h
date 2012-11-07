@@ -60,8 +60,8 @@ namespace Conspire
         ~ChooseClassPage();
 
     protected slots:
-        void saveNewJobName(QString q);
         void deleteNewJob();
+        void selectJobClass();
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
         void moveEvent(QGraphicsSceneMoveEvent *e);
