@@ -155,6 +155,67 @@ enum {
 	
 };
 
+class DCD {
+
+	public:
+		DCD(const char * file_name,std::vector<OpenMM::Vec3> & coordinates, std::vector<OpenMM::Vec3> & velocities,
+			bool wrap_coord,int total_moves,int atoms,int frequency,bool cutoff_type,int free_energy_nsamples,OpenMM::Context & context,OpenMM::VerletIntegrator & integrator):
+			positions_openmm(coordinates),velocities_openmm(velocities), context_openmm(context),integrator_openmm(integrator)
+			{
+				filename=file_name;
+				wrap=wrap_coord;
+				nmoves=total_moves;
+				nats=atoms;
+				frequency_dcd=frequency;
+				flag_cutoff=cutoff_type;
+				free_energy_samples=free_energy_nsamples;
+				fio_open(file_name,FIO_WRITE, &fd);
+				
+				X = new float[nats];
+				Y = new float[nats];
+				Z = new float[nats];
+				
+				
+				for(int i=0; i<nats;i++){
+					X[i]=0.0;
+					Y[i]=0.0;
+					Z[i]=0.0;
+
+				}
+				
+				box_dims = new double[6];
+				
+				for(int i=0; i<5;i++){
+					box_dims[i]=0.0;
+				}
+
+
+			}
+
+	~DCD();
+
+	void integrateMD(void);
+	void integrateFreeEnergy(int curr);
+
+	private:
+		const char * filename;
+		bool wrap;
+		int nmoves;
+		int nats;
+		int frequency_dcd;
+		bool flag_cutoff;
+		int free_energy_samples; 
+		std::vector<OpenMM::Vec3> & positions_openmm;
+		std::vector<OpenMM::Vec3> & velocities_openmm;
+		OpenMM::Context & context_openmm;
+		OpenMM::VerletIntegrator & integrator_openmm;
+		fio_fd fd;
+		float *X;
+		float *Y;
+		float *Z;
+		double *box_dims;
+
+};
 
 
 static const RegisterMetaType<OpenMMIntegrator> r_openmmint;
@@ -292,6 +353,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	bool free_energy_calculation;
 	
 	Vector_of_IntSet solute_solvent_inter_lists;
+	
+	DCD * dcd_p=NULL;
 
 		
 	const System & ptr_sys = ws.system();
@@ -407,7 +470,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			
 			custom_softcore_solute_solvent = new OpenMM::CustomNonbondedForce("(10.0*Hls+100.0*Hcs)*ZeroOne;"
-																			  "ZeroOne=((issolute1-issolute2))^2;"
+																			  "ZeroOne=issolute1*(1-issolute2)+issolute2*(1-issolute1);"
 																			  "Hcs=((0.01*lam_cl)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
 																			  "diff_cl=(1.0-lam_cl)*0.01;"
 																			  "lam_cl=min(1,max(0,lambda-1));"
@@ -431,8 +494,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
 			
-			custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*(1-ZeroOne);"
-																					"ZeroOne=((issolute1-issolute2))^2;"
+			custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*ZeroOne;"
+																					"ZeroOne=(1-issolute1)*(1-issolute2)+issolute1*issolute2;"
 																					"Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
 																					"Hc=138.935456*q_prod/r;"
 																					"q_prod=q1*q2;"
@@ -479,7 +542,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		if(free_energy_calculation == true){
 
 			custom_softcore_solute_solvent = new OpenMM::CustomNonbondedForce("(10.0*Hls+100.0*Hcs)*ZeroOne;"
-																			  "ZeroOne=((issolute1-issolute2))^2;"
+																			  "ZeroOne=issolute1*(1-issolute2)+issolute2*(1-issolute1)"
 																			  "Hcs=((0.01*lam_cl)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
 																			  "diff_cl=(1.0-lam_cl)*0.01;"
 																			  "lam_cl=min(1,max(0,lambda-1));"
@@ -506,7 +569,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			
 			custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*(1-ZeroOne);"
-																					"ZeroOne=((issolute1-issolute2))^2;"
+																					"ZeroOne=(1-issolute1)*(1-issolute2)+issolute1*issolute2;"
 																					"Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
 																					"Hc=138.935456*q_prod/r;"
 																					"q_prod=q1*q2;"
@@ -1511,12 +1574,16 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		cout << "NFREQ = "<< n_freq << "\n\n";
 
-		
-		bool dcd = false;
+
+		bool dcd = true;
 		
 		bool wrap = false;
 
 		int frequency_dcd = 10;
+
+		/*if(dcd == true){
+			dcd_p = new DCD("dynamic.dcd",positions_openmm,velocities_openmm,wrap,nmoves,nats,
+							frequency_dcd,flag_cutoff,n_freq,context_openmm,integrator_openmm);*/
 
 		for (int i=0; i<Alchemical_values.size();i++){
 
@@ -1534,21 +1601,27 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			cout << "Start - Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal/mol " << "\n";
 	
+			double j=0.0;
+			
+			while(j<n_freq){
 
-			for(int j=0;j<n_freq;j++){
+				//QString name = file_name(j);
 
-				/*QString name = file_name(j);
+				if(dcd == true){
+					dcd_p->integrateFreeEnergy(j);
+				}
+				else
+					integrator_openmm.step(frequency_energy);
 
-				integrator(name.toStdString().c_str(), context_openmm,integrator_openmm, positions_openmm, 
-						   velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);
+				//integrator(name.toStdString().c_str(), context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);
 
 				
-				state_openmm=context_openmm.getState(infoMask);
+				/*state_openmm=context_openmm.getState(infoMask);
 				double potential_energy_lambda = state_openmm.getPotentialEnergy();
 				double kinetic_energy = state_openmm.getKineticEnergy();
 				cout << " Energy= " << (potential_energy_lambda + kinetic_energy)  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";*/
 				
-				integrator_openmm.step(frequency_energy);
+				//integrator_openmm.step(frequency_energy);
 				
 				state_openmm=context_openmm.getState(infoMask);
 
@@ -1566,6 +1639,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				state_openmm=context_openmm.getState(infoMask);
 
+
 				double potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
 
 				lam_val = context_openmm.getParameter("lambda");
@@ -1582,12 +1656,16 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				cout << "Lambda - delta = " << lam_val << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
 
-				GF_acc = GF_acc + exp(-beta * potential_energy_lambda_plus_delta) * exp(beta * potential_energy_lambda);
+				double pl =  exp(-beta * potential_energy_lambda_plus_delta) * exp(beta * potential_energy_lambda);
+				
+				double minu = exp(-beta * potential_energy_lambda_minus_delta) * exp(beta * potential_energy_lambda);
 
-				GB_acc = GB_acc + exp(-beta * potential_energy_lambda_minus_delta) * exp(beta * potential_energy_lambda);
+				GF_acc = GF_acc + pl;
+
+				GB_acc = GB_acc + minu;
 
 
-				//cout << "\nGF accumulator partial = " << GF_acc << " -- GB accumulator partial = " << GB_acc << "\n\n";
+				cout << "\npl = " << pl << " # minu = " << minu << "\n\n";
 				
 				//cout << "\nDifference +Delta= " << potential_energy_lambda_plus_delta - potential_energy_lambda  << " Difference -Delta=  " << potential_energy_lambda_minus_delta - potential_energy_lambda  << "\n\n";
 
@@ -1596,9 +1674,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 					exit(-1); 
 				}
 
-				double avg_GF = GF_acc /((double) (j+1));
+				double avg_GF = GF_acc /(j+1);
 
-				double avg_GB = GB_acc /((double) (j+1));
+				double avg_GB = GB_acc /(j+1);
 
 				double Energy_GF = -(1.0/beta)*log(avg_GF);
 
@@ -1613,8 +1691,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				state_openmm=context_openmm.getState(infoMask);
 				double dummy = state_openmm.getPotentialEnergy();
-				cout << "\nDifference dummy= " << dummy - potential_energy_lambda<< "\n\n";
-
+				cout << "\nDifference dummy = " << dummy - potential_energy_lambda<< "\n\n";
+				
+				j=j+1.0;
 			}
 
 
@@ -1652,11 +1731,22 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		int frequency_dcd = 10;
 
-		bool dcd = false;
+		bool dcd = true;
 		
 		bool wrap = false;
+		
+		if(dcd == true){
+			dcd_p = new DCD("dynamic.dcd",positions_openmm,velocities_openmm,wrap,nmoves,nats,
+							frequency_dcd,flag_cutoff,1,context_openmm,integrator_openmm);
+			
+			dcd_p->integrateMD();
 
-		integrator("dynamic.dcd", context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , nmoves, frequency_dcd, flag_cutoff, nats);
+		}
+		else
+			integrator_openmm.step(nmoves);
+
+
+		//integrator("dynamic.dcd", context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , nmoves, frequency_dcd, flag_cutoff, nats);
 
 
 		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
@@ -1700,7 +1790,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		const double *m = ws.massArray(i);
 
-		for(int j=0; j<ws.nAtoms(i);j++){	
+		for(int j=0; j<ws.nAtoms(i);j++){
 		
 			sire_coords[j] = Vector(positions_openmm[j+k][0] * (OpenMM::AngstromsPerNm),
 									positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),
@@ -2287,7 +2377,7 @@ void integrator(const char * filename, OpenMM::Context & context_openmm,OpenMM::
 
 				if(flag_cutoff == CUTOFFPERIODIC){
 
-					write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,box_dims, 1);		
+					write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,box_dims, 1);
 
 				}
 				else
@@ -2307,6 +2397,7 @@ void integrator(const char * filename, OpenMM::Context & context_openmm,OpenMM::
 
 		if(DCD == true)
 			fio_fclose(fd);
+			
 
 }
 
@@ -2720,4 +2811,265 @@ void create_solute_solvent_lists(Vector_of_IntSet & solute_solvent_inter_lists, 
 	}
 
 }
+
+void DCD::integrateMD(void){
+
+	int cycles = 0;
+
+	int steps;
+
+
+	double COG[3] = {0.0,0.0,0.0};
+
+	double dt = integrator_openmm.getStepSize();
+
+	int infoMask = 0;
+
+	infoMask = OpenMM::State::Positions;
+
+	infoMask = infoMask + OpenMM::State::Velocities; 
+
+	OpenMM::State state_openmm = context_openmm.getState(infoMask);
+
+
+	OpenMM::Vec3 a;
+	OpenMM::Vec3 b;
+	OpenMM::Vec3 c;
+
+
+	double delta = dt/0.0488821;
+
+	cycles = nmoves/frequency_dcd;
+
+	steps=frequency_dcd;
+
+	int box = 0;
+
+	if(flag_cutoff == CUTOFFPERIODIC){
+		box=1;
+	}
+
+	write_dcdheader(fd, "Created by OpenMM", nats,0,frequency_dcd, delta, box,1);
+
+	if(wrap == true){
+		for(unsigned int i=0;i<positions_openmm.size();i++){
+
+			COG[0] = COG[0] + positions_openmm[i][0]*(OpenMM::AngstromsPerNm); //X Cennter of Geometry
+			COG[1] = COG[1] + positions_openmm[i][1]*(OpenMM::AngstromsPerNm); //Y Cennter of Geometry
+			COG[2] = COG[2] + positions_openmm[i][2]*(OpenMM::AngstromsPerNm); //Z Cennter of Geometry
+		}
+
+		COG[0] = COG[0]/nats;
+		COG[1] = COG[1]/nats;
+		COG[2] = COG[2]/nats;
+
+		//cout << "\nCOG X = " << COG[0] << " GOG Y = " << COG[1] << " COG Z = " << COG[2] << "\n";
+
+	}
+
+
+	/*for(unsigned int i=0;i<positions_openmm.size();i++){
+
+
+		cout << "\natom = " << i << " COORD X = " << positions_openmm[i][0]*(OpenMM::AngstromsPerNm) 
+							   	 << " COORD Y = " << positions_openmm[i][1]*(OpenMM::AngstromsPerNm) 
+							     << " COORD Z = " << positions_openmm[i][2]*(OpenMM::AngstromsPerNm) <<"\n";
+	}*/
+
+	for(int i=0;i<cycles;i++){
+
+		integrator_openmm.step(steps);
+
+		state_openmm=context_openmm.getState(infoMask);	
+
+		positions_openmm = state_openmm.getPositions();
+
+		velocities_openmm = state_openmm.getVelocities();
+
+
+		if(flag_cutoff == CUTOFFPERIODIC){
+
+			state_openmm.getPeriodicBoxVectors(a,b,c);
+
+			box_dims[0]=a[0] * OpenMM::AngstromsPerNm;
+			box_dims[1]=0.0;
+			box_dims[2]=b[1] * OpenMM::AngstromsPerNm;
+			box_dims[3]=0.0;
+			box_dims[4]=0.0;
+			box_dims[5]=c[2] * OpenMM::AngstromsPerNm;
+
+		}
+
+		for(int j=0; j<nats;j++){
+
+			X[j] = positions_openmm[j][0]*OpenMM::AngstromsPerNm;
+			Y[j] = positions_openmm[j][1]*OpenMM::AngstromsPerNm;
+			Z[j] = positions_openmm[j][2]*OpenMM::AngstromsPerNm;
+
+			if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
+
+				X[j] = X[j] - COG[0];
+				Y[j] = Y[j] - COG[1];
+				Z[j] = Z[j] - COG[2];
+
+				X[j] = X[j] - box_dims[0]*round(X[j]/box_dims[0]);
+				Y[j] = Y[j] - box_dims[2]*round(Y[j]/box_dims[2]);
+				Z[j] = Z[j] - box_dims[5]*round(Z[j]/box_dims[5]);
+
+			}
+
+			//cout << "X = "<< X[j] << " Y = " << Y[j] << " Z = " << Z[j] << "\n";
+
+		}
+
+		if(flag_cutoff == CUTOFFPERIODIC){
+
+			write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,box_dims, 1);
+
+		}
+		else
+			write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,NULL, 1);
+
+	}//end for
+
+	fio_fclose(fd);
+
+	cout << "\nTrajectory file = " << filename << " has been written...." << "\n\n";
+
+}
+
+
+void DCD::integrateFreeEnergy(int curr){
+
+	int cycles = 0;
+
+	int steps;
+
+
+	double COG[3] = {0.0,0.0,0.0};
+
+	double dt = integrator_openmm.getStepSize();
+
+	int infoMask = 0;
+
+	infoMask = OpenMM::State::Positions;
+
+	infoMask = infoMask + OpenMM::State::Velocities; 
+
+	OpenMM::State state_openmm = context_openmm.getState(infoMask);
+
+
+	OpenMM::Vec3 a;
+	OpenMM::Vec3 b;
+	OpenMM::Vec3 c;
+
+
+	double delta = dt/0.0488821;
+
+	cycles = nmoves/frequency_dcd;
+
+	steps=frequency_dcd;
+
+	int box = 0;
+
+	if(flag_cutoff == CUTOFFPERIODIC){
+		box=1;
+	}
+
+	if(curr == 0)
+		write_dcdheader(fd, "Created by OpenMM", nats,0,frequency_dcd, delta, box,1);
+
+	if(wrap == true){
+		for(unsigned int i=0;i<positions_openmm.size();i++){
+
+			COG[0] = COG[0] + positions_openmm[i][0]*(OpenMM::AngstromsPerNm); //X Cennter of Geometry
+			COG[1] = COG[1] + positions_openmm[i][1]*(OpenMM::AngstromsPerNm); //Y Cennter of Geometry
+			COG[2] = COG[2] + positions_openmm[i][2]*(OpenMM::AngstromsPerNm); //Z Cennter of Geometry
+		}
+
+		COG[0] = COG[0]/nats;
+		COG[1] = COG[1]/nats;
+		COG[2] = COG[2]/nats;
+
+		//cout << "\nCOG X = " << COG[0] << " GOG Y = " << COG[1] << " COG Z = " << COG[2] << "\n";
+
+	}
+
+
+	/*for(unsigned int i=0;i<positions_openmm.size();i++){
+
+		cout << "\natom = " << i << " COORD X = " << positions_openmm[i][0]*(OpenMM::AngstromsPerNm) 
+							   	 << " COORD Y = " << positions_openmm[i][1]*(OpenMM::AngstromsPerNm) 
+							     << " COORD Z = " << positions_openmm[i][2]*(OpenMM::AngstromsPerNm) <<"\n";
+	}*/
+
+	for(int i=0;i<cycles;i++){
+
+		integrator_openmm.step(steps);
+
+		state_openmm=context_openmm.getState(infoMask);	
+
+		positions_openmm = state_openmm.getPositions();
+
+		velocities_openmm = state_openmm.getVelocities();
+
+
+
+		if(flag_cutoff == CUTOFFPERIODIC){
+
+			state_openmm.getPeriodicBoxVectors(a,b,c);
+
+			box_dims[0]=a[0] * OpenMM::AngstromsPerNm;
+			box_dims[1]=0.0;
+			box_dims[2]=b[1] * OpenMM::AngstromsPerNm;
+			box_dims[3]=0.0;
+			box_dims[4]=0.0;
+			box_dims[5]=c[2] * OpenMM::AngstromsPerNm;
+
+		}
+
+		for(int j=0; j<nats;j++){
+
+			X[j] = positions_openmm[j][0]*OpenMM::AngstromsPerNm;
+			Y[j] = positions_openmm[j][1]*OpenMM::AngstromsPerNm;
+			Z[j] = positions_openmm[j][2]*OpenMM::AngstromsPerNm;
+
+			if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
+
+				X[j] = X[j] - COG[0];
+				Y[j] = Y[j] - COG[1];
+				Z[j] = Z[j] - COG[2];
+
+				X[j] = X[j] - box_dims[0]*round(X[j]/box_dims[0]);
+				Y[j] = Y[j] - box_dims[2]*round(Y[j]/box_dims[2]);
+				Z[j] = Z[j] - box_dims[5]*round(Z[j]/box_dims[5]);
+
+			}
+
+			//cout << "X = "<< X[j] << " Y = " << Y[j] << " Z = " << Z[j] << "\n";
+
+		}
+
+		if(flag_cutoff == CUTOFFPERIODIC){
+
+			write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,box_dims, 1);
+
+		}
+		else
+			write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,NULL, 1);
+
+	}//end for
+
+	
+	if(curr == nfreq-1){
+		fio_fclose(fd);
+		cout << "\nTrajectory file = " << filename << " has been written...." << "\n\n";
+	}
+
+
+}
+
+
+
+
 
