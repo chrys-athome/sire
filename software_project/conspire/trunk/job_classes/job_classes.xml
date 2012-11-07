@@ -16,12 +16,12 @@
       <optionsxml>zebedde.xml</optionsxml>
       <optionsincludedirs>zebedde</optionsincludedirs>
    </jobclassdescription>
-   <jobclassdescription id="sirebind">
-      <name>Time-dependant binding...</name>
-      <description>Given a trajectory ... at intervals ... calculate binding...</description>
+   <jobclassdescription id="freenrg">
+      <name>Monte Carlo Binding Free Energy</name>
+      <description>Calculate protein-ligand binding free energies using Monte Carlo simulation</description>
       <icon>inhib9-trans.preview.png</icon>
-      <directory>absbinding</directory>
-      <optionsxml>absbinding.xml</optionsxml>
-      <optionsincludedirs>absbinding</optionsincludedirs>
+      <directory>freenrg</directory>
+      <optionsxml>freenrg.xml</optionsxml>
+      <optionsincludedirs>freenrg</optionsincludedirs>
    </jobclassdescription>
 </jobclasses>

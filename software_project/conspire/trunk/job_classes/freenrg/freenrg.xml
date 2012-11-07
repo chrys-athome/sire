@@ -1,0 +1,299 @@
+
+<options>
+
+  <option>
+    <key>input files</key>
+    <description>Specification of the input files used for the simulation</description>
+    <value>
+      <options>
+        <option>
+          <key>structure file</key>
+          <description>The file containing the structure (topology) and parameters 
+                       of the molecules to be simulated.</description>
+          <value><file>SYSTEM.top</file></value>
+        </option>
+
+        <option>
+          <key>coordinate file</key>
+          <description>The file containing the coordinates of the 
+                       molecules to be simulated. This is typically the 
+                       restart file from the last stage of setup or dynamics.
+          </description>
+          <value><file>SYSTEM.crd</file></value>
+        </option>
+
+        <option>
+          <key>perturbation file</key>
+          <description>This file provides the details for the perturbation
+                       to be performed during the free energy simulation</description>
+          <value><file>MORPH.pert</file></value>
+        </option>
+
+        <option>
+          <key>solute flexibility</key>
+          <description>Flexibility file describing how the solute is moved.</description>
+          <value><file>MORPH.flex</file></value>
+        </option>
+
+        <option>
+          <key>protein flexibility</key>
+          <description>Flexibility file describing how the protein residues are moved.</description>
+          <value><file>PROTEIN.flex</file></value>
+        </option>
+
+        <option optional="true">
+          <key>protein z-matrices</key>
+          <description>File containing the z-matricies used to control how protein 
+                       residues are moved.</description>
+          <value><file>amber.zmatrices</file></value>
+        </option>
+      </options>
+    </value>
+  </option>
+
+  <option>
+    <key>parameters</key>
+    <description>Parameters that affect the way the free energy simulations are performed</description>
+    <value>
+      <options>
+        <option>
+          <key>temperature</key>
+          <description>The temperature of the simulation</description>
+          <value><temperature units="celsius">25</temperature></value>
+        </option>
+        <option optional="true">
+          <key>pressure</key>
+          <description>The pressure of the simulation. If this is not specified the 
+                       simulation must be run in the gas phase.</description>
+          <value><pressure units="atmosphere">1.0</pressure></value>
+        </option>
+
+        <option>
+          <key>cutoff</key>
+          <description>The cutoff distance for the nonbonded interactions.</description>
+          <value><length units="angstrom">10.0</length></value>
+        </option>
+        <option>
+          <key>dielectric constant</key>
+          <description>The dielectric constant for the reaction field</description>
+          <value><float minimum="0">78.3</float></value>
+        </option>
+
+        <option optional="true">
+          <key>random seed</key>
+          <description>The seed used to initialise the random number generator. Simulations
+                       using the same random number seed should result in the same results.</description>
+          <value><integer minimum="1">42</integer></value>
+        </option>
+
+        <option>
+          <key>soft-core</key>
+          <description>The soft-core parameters.</description>
+          <value>
+            <options>
+              <option>
+                <key>coulomb power</key>
+                <description>The soft-core coulomb power parameter</description>
+                <value><integer minimum="0">0</integer></value>
+              </option>
+              <option>
+                <key>shift delta</key>
+                <description>The soft-core LJ shift delta parameter</description>
+                <value><float minimum="0">2.0</float></value>
+              </option>
+            </options>
+          </value>
+        </option>
+
+      </options>
+    </value>
+  </option>
+
+  <option>
+    <key>moves</key>
+    <description>Parameters that affect the number and choice of Monte Carlo move</description>
+    <value>
+      <options>
+        <option>
+          <key>number of moves</key>
+          <description>The number of Monte Carlo moves to perform per block of sampling</description>
+          <value><integer minimum="0">50000</integer></value>
+        </option>
+
+        <option optional="true">
+          <key>moves per energy</key>
+          <description>The number of moves between recording energy components.</description>
+          <value><integer minimum="0">50000</integer></value>
+        </option>
+
+        <option optional="true">
+          <key>moves per snapshot</key>
+          <description>The number of moves between recording a PDB snapshot of the system.
+                       Note that snapshots for intermediate states will be recorded every
+                       tenth snapshot (e.g. every 5 million moves, if the 500 thousand
+                       moves are made between snapshots)</description>
+          <value><integer minimum="0">500000</integer></value>
+        </option>
+
+        <option>
+          <key>maximum solvent translation</key>
+          <description>The maximum distance by which a solvent molecule can be moved in a single move.
+                        </description>
+          <value><length units="angstrom">0.15</length></value>
+        </option>
+
+        <option>
+          <key>maximum solvent rotation</key>
+          <description>The maximum angle by which a solvent molecule can be rotated in a single move.
+                        </description>
+          <value><float minimum="0" maximum="180">15</float></value>
+        </option>
+
+        <option>
+          <key>preferential constant</key>
+          <description>The preferential sampling constant used to focus sampling on solvent
+                       molecules that are close to the solute</description>
+          <value><float minimum="0">200</float></value>
+        </option>
+
+        <option>
+          <key>water sphere radius</key>
+          <description>Add a water sphere radius to turn on use of a reflection sphere for water moves.
+                       This will limit solvent sampling to a sphere of specified radius around the ligand.
+            </description>
+          <value><length minimum="0" units="angstroms">18</length></value>
+        </option>
+
+        <option>
+          <key>move weights</key>
+          <description>Options used to control the weights of different Monte Carlo moves</description>
+          <value>
+            <options>
+              <option>
+                <key>solute weight</key>
+                <description>The weight of the solute moves. The higher the number, the more
+                             frequently solute moves will be attempted.</description>
+                <value><integer minimum="0">50</integer></value>
+              </option>
+              <option>
+                <key>protein weight</key>
+                <description>The weight of the protein moves. The higher the number, the more
+                             frequently protein moves will be attempted.</description>
+                <value><integer minimum="0">500</integer></value>
+              </option>
+              <option>
+                <key>solvent weight factor</key>
+                <description>The scale factor for the solvent weight. The solvent weight will
+                             be this number multiplied by the number of moving solvent molecules.
+                             The higher the number, the more frequently solvent moves will be
+                             attempted.</description>
+                <value><float minimum="0">10</float></value>
+              </option>
+              <option optional="true">
+                <key>volume weight</key>
+                <description>The weight of volume moves. This only applies if the simulation
+                             is run at constant pressure, and can be used to increase the default
+                             weight of volume moves (1) to a higher value, so that you can increase
+                             the frequency of volume moves.</description>
+                <value><integer minimum="0">1</integer></value>
+              </option>
+            </options>
+          </value>
+        </option>
+
+      </options>
+    </value>
+  </option>
+
+  <option>
+    <key>lambda values</key>
+    <description>The set of lambda values to simulate.</description>
+    <value>
+      <options>
+        <option allow_multiple="true">
+          <key>lambda</key>
+          <description>A value of lambda to simulate</description>
+          <value><float minimum="0" maximum="1">0.0</float></value>
+        </option>
+      </options>
+    </value>
+  </option>
+
+  <option>
+    <key>naming scheme</key>
+    <description>Options used to set the names used for different parts of the system</description>
+    <value>
+      <options>
+        <option>
+          <key>solute residue names</key>
+          <description>Residue names used to identify solute molecules</description>
+          <value>
+            <options>
+              <option allow_multiple="true">
+                <key>name</key>
+                <description>Residue name used to identify a residue that is part of a solute molecule.
+                  </description>
+                <value><string>LIG</string></value>
+              </option>
+              <option optional="true">
+                <key>flexibility name</key>
+                <description>The name of the solute specified in the flexibility file. If the solute
+                             has a single residue, then the program will use that residue name to
+                             find the flexibility template in the flexibility file. If not, then
+                             the program will use the name you supply here.</description>
+                <value><string>MORPH</string></value>
+              </option>
+            </options>
+          </value>
+        </option>
+
+        <option>
+          <key>protein residue names</key>
+          <description>Residue names used to identify protein molecules</description>
+          <value>
+            <options>
+              <option allow_multiple="true">
+                <key>name</key>
+                <description>Residue name used to identify a residue that is part of a protein molecule.
+                  </description>
+                <value><string>GLH</string></value>
+              </option>
+            </options>
+          </value>
+        </option>  
+
+        <option>
+          <key>solvent residue names</key>
+          <description>Residue names used to identify solvent molecules</description>
+          <value>
+            <options>        
+              <option allow_multiple="true">
+                <key>name</key>
+                <description>Residue name used to identify a residue that is part of a solvent molecule.
+                  </description>
+                <value><string>WAT</string></value>
+              </option>
+            </options>
+          </value>
+        </option>
+
+        <option>
+          <key>ion residue names</key>
+          <description>Residue names used to identify ions</description>
+          <value>
+            <options>
+              <option allow_multiple="true">
+                <key>name</key>                   
+                <description>Residue name used to identify an ion.
+                  </description>
+                <value><string>Na+</string></value>
+              </option>
+            </options>
+          </value>
+        </option>
+
+      </options>
+    </value>
+  </option>
+
+</options>

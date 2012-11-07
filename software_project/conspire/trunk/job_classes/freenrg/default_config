@@ -1,0 +1,51 @@
+
+# Set the default lambda values
+lambda values.lambda[1] = 0
+lambda values.lambda[2] = 0.0495
+lambda values.lambda[3] = 0.1883
+lambda values.lambda[4] = 0.3887
+lambda values.lambda[5] = 0.6113
+lambda values.lambda[6] = 0.8117
+lambda values.lambda[7] = 0.9505
+lambda values.lambda[8] = 1.0000
+
+# Set the default ligand, protein and solvent names
+naming scheme.solute residue names.name[1] = LIG
+
+naming scheme.protein residue names.name[1] = GLH
+naming scheme.protein residue names.name[2] = ILE
+naming scheme.protein residue names.name[3] = GLN
+naming scheme.protein residue names.name[4] = GLY
+naming scheme.protein residue names.name[5] = GLU
+naming scheme.protein residue names.name[6] = CYS
+naming scheme.protein residue names.name[7] = HIS
+naming scheme.protein residue names.name[8] = HID
+naming scheme.protein residue names.name[9] = SER
+naming scheme.protein residue names.name[10] = LYS
+naming scheme.protein residue names.name[11] = LYN
+naming scheme.protein residue names.name[12] = PRO
+naming scheme.protein residue names.name[13] = CYX
+naming scheme.protein residue names.name[14] = HIE
+naming scheme.protein residue names.name[15] = ASH
+naming scheme.protein residue names.name[16] = ASN
+naming scheme.protein residue names.name[17] = HIP
+naming scheme.protein residue names.name[18] = VAL
+naming scheme.protein residue names.name[19] = THR
+naming scheme.protein residue names.name[20] = ASP
+naming scheme.protein residue names.name[21] = TRP
+naming scheme.protein residue names.name[22] = PHE
+naming scheme.protein residue names.name[23] = ALA
+naming scheme.protein residue names.name[24] = MET
+naming scheme.protein residue names.name[25] = LEU
+naming scheme.protein residue names.name[26] = ARG
+naming scheme.protein residue names.name[27] = TYR
+naming scheme.protein residue names.name[28] = NME
+naming scheme.protein residue names.name[29] = ACE
+
+naming scheme.solvent residue names.name[1] = WAT
+naming scheme.solvent residue names.name[2] = T3P
+naming scheme.solvent residue names.name[3] = T4P
+naming scheme.solvent residue names.name[4] = HOH
+
+naming scheme.ion residue names.name[1] = Na+
+naming scheme.ion residue names.name[2] = Cl-
