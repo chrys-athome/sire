@@ -120,6 +120,15 @@
           <value><integer minimum="0">50000</integer></value>
         </option>
 
+        <option>
+          <key>number of blocks</key>
+          <description>The number of blocks of Monte Carlo to perform. The calculation at
+                       each lambda value involves "number of blocks" times "number of moves"
+                       sets of Monte Carlo moves, with each block of moves accompanied
+                       by estimates of the free energies calculated from each block.</description>
+          <value><integer minimum="1">100</integer></value>
+        </option>
+
         <option optional="true">
           <key>moves per energy</key>
           <description>The number of moves between recording energy components.</description>

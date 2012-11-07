@@ -96,6 +96,7 @@ def writeConfig(file, params):
         print >>file,"random_seed = 0"
 
     print >>file,"nmoves = %s" % params["moves.number of moves"]
+    print >>file,"nblocks = %s" % params["moves.number of blocks"]
 
     if "moves.moves per energy" in params:
         print >>file,"nmoves_per_energy = %s" % params["moves.moves per energy"]
