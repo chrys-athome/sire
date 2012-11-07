@@ -197,11 +197,11 @@ def writeConfig(file, params):
     num_names = getCount(params, "naming scheme.ion residue names.name")
 
     if num_names == 0:
-        print >>file,"ION_RESNAMES = []"
+        print >>file,"IONS_RESNAMES = []"
     elif num_names == 1:
-        print >>file,"ION_RESNAMES = [ \"%s\" ]" % params["naming scheme.ion residue names.name"]
+        print >>file,"IONS_RESNAMES = [ \"%s\" ]" % params["naming scheme.ion residue names.name"]
     else:
-        print >>file,"ION_RESNAMES = [",
+        print >>file,"IONS_RESNAMES = [",
 
         for i in range(1,num_names+1):
             print >>file," \"%s\"" % params["naming scheme.ion residue names.name[%d]" % i],
