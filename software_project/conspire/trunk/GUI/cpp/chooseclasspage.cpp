@@ -185,7 +185,7 @@ void ChooseClassPage::deleteNewJob()
     QString t_jobclass = qsetter->value(quuid + "/jobclass").toString();
     QString t_jobname = qsetter->value(quuid + "/jobname").toString();
     delete qsetter;
-    if ((t_jobclass.isEmpty()) && (t_jobname.isEmpty()))
+    if (t_jobname.isEmpty())
     {
         QSettings *qsetter = new QSettings("UoB", "AcquireClient");
         qsetter->beginGroup(quuid);
@@ -332,11 +332,11 @@ void ChooseClassPage::build(QString clstext)
     sub_rack->addWidget(qview);
     return_button = NULL;
     
-    button = new Button(Conspire::tr("Select"));
+    button = new Button(Conspire::tr("Create"));
     connect(button, SIGNAL(clicked()), this, SLOT(selectJobClass()));
     sub_rack->addWidget(button);
 
-    return_button = new Button(Conspire::tr("Return"));
+    return_button = new Button(Conspire::tr("Cancel"));
     connect(return_button, SIGNAL(clicked()), this, SLOT(deleteNewJob()));
     sub_rack->addWidget(return_button);
  
