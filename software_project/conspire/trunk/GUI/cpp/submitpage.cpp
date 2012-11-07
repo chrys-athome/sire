@@ -164,6 +164,8 @@ void SubmitPage::build()
    char *remainder = NULL;
    const char *token = strtok_r((char *)listclust, ",", &remainder);
    int haveany = 0;
+   cluster_box->addItem("Any");
+   cluster_ids->push_back(QString());
    while (token != NULL)
    {
       char buffer[512];
@@ -186,11 +188,6 @@ void SubmitPage::build()
       token = strtok_r(NULL, ",", &remainder);
 //      login_label->setText("Network OK.");
    }
-   if (haveany == 0)
-   {
-      clusters_box->addItem("None available...");
-//      login_label->setText("No clusters available");
-   }
    AcquireClientClearResults();
         
     QGraphicsProxyWidget *box_proxy = new QGraphicsProxyWidget(this);
@@ -198,11 +195,20 @@ void SubmitPage::build()
     box_proxy->setZValue(100);
     
     sub_rack->addWidget(box_proxy);
-/*
+
+    label = new QLabel(Conspire::tr("When would you like your job to finish?"));
+    sub_rack->addWidget(label);
+
+    QComboBox *box = new QComboBox();
     box->addItem(Conspire::tr("As soon as possible!"));
     box->addItem(Conspire::tr("As soon as is practical."));
     box->addItem(Conspire::tr("Whenever is cheapest."));
-*/
+
+    box_proxy = new QGraphicsProxyWidget(this);
+    box_proxy->setWidget(box);
+    box_proxy->setZValue(100);
+
+/*
     label = new QLabel(Conspire::tr("How energy efficient would you like to be?"));
     sub_rack->addWidget(label);
     
@@ -214,7 +220,7 @@ void SubmitPage::build()
     box_proxy = new QGraphicsProxyWidget(this);
     box_proxy->setWidget(box);
     box_proxy->setZValue(100);
-
+*/
     sub_rack->addWidget(box_proxy);
     sub_rack->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
     sub_rack->setZValue(100);
@@ -370,6 +376,12 @@ void SubmitPage::submit()
 {
     if (job_class.isEmpty())
         return;
+    const char *listclust = AcquireListOfAccessibleClusters();
+    if ((listclust == NULL) || (strlen(listclust) <= 1))
+    {
+        status_label->setText("Can't submit, no clusters available.");
+        return;
+    }
 
     try
     {

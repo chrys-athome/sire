@@ -248,7 +248,7 @@ void NewWorkPage::refreshWorkFull()
     int i = 0;
     for (int j = 0; j < groups.size(); j++)
     {
-        if (QString(groups.at(j)) != QString("preferences"))
+        if ((QString(groups.at(j)) != QString("preferences")) && ((QString(AcquireClientGetUsername()) == (qsetter->value(groups.at(j) + "/user").toString()))))
         {
             WorkPacketWidget *t_wpw =
                 new WorkPacketWidget("", 0, 0, i, all_wpw, groups.at(j).toAscii().constData());
