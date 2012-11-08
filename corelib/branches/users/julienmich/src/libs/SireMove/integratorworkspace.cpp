@@ -1261,3 +1261,97 @@ void AtomicVelocityWorkspace::commitCoordinatesAndVelocities()
     
     IntegratorWorkspace::pvt_update(changed_mols);
 }
+
+/** Save both the coordinates and velocities back to the system */
+void AtomicVelocityWorkspace::commitBufferedCoordinatesAndVelocities(  QVector < QVector< QVector< Vector > > > &buffered_coords )
+{
+    qDebug() << " BIG BUFFER !! ";
+
+    int nmols = atom_coords.count();
+    
+    const MoleculeGroup &molgroup = moleculeGroup();
+    const Molecules &molecules = molgroup.molecules();
+    
+    BOOST_ASSERT( molgroup.nMolecules() == nmols );
+    
+    const QVector<Vector> *coords_array = atom_coords.constData();
+    const QVector<Vector> *mom_array = atom_momenta.constData();
+    const QVector<double> *mass_array = atom_masses.constData();
+    
+    PropertyName coords_property = coordinatesProperty();
+    PropertyName vels_property = velocitiesProperty();
+    
+    Molecules changed_mols;
+    changed_mols.reserve(nmols);
+    
+    //qDebug() << " buffered_coords has " << buffered_coords.size() << " elements ";// number of mols
+    //qDebug() << " buffered_coords[0] has " << buffered_coords[0].size() << " elements ";// number of atoms in mol 1
+    //qDebug() << " buffered_coords[0][0] has " << buffered_coords[0][0].size() << " elements "; // number of coords for atom
+
+    for (int i=0; i<nmols; ++i)
+    {
+      //qDebug() << " Doing mol " << i ;
+        MolNum molnum = molgroup.molNumAt(i);
+        
+        const ViewsOfMol &mol = molecules[molnum];
+        
+        AtomCoords coords = mol.data().property(coords_property)
+                                      .asA<AtomCoords>();
+
+	//qDebug() << " buffered_coords[0][ " << i << " ] has " << buffered_coords[0][i].size() << " elements ";
+	
+	QVector< AtomCoords > buffered_molcoords;
+	
+        AtomVelocities vels;
+        
+        if (mol.data().hasProperty(vels_property))
+        {
+            vels = mol.data().property(vels_property)
+                             .asA<AtomVelocities>();
+        }
+        else
+        {
+            vels = AtomVelocities(mol.data().info());
+        }
+                                          
+        if (mol.selectedAll())
+        {
+            coords.copyFrom(coords_array[i]);
+            vels.copyFrom( ::getVelocities(mom_array[i],mass_array[i]) );
+
+	    for (int k=0; k < buffered_coords.size() ; k++)
+	      {
+	    	AtomCoords framecoords = AtomCoords( mol.data().info() );
+	    	framecoords.copyFrom( buffered_coords[k][i] );
+	    	buffered_molcoords.append( framecoords );
+	      }
+        }
+        else
+        {
+            coords.copyFrom(coords_array[i], mol.selection());
+            vels.copyFrom( ::getVelocities(mom_array[i],mass_array[i]), 
+                           mol.selection() );
+        }
+
+	MolEditor editmol = mol.molecule().edit();
+	editmol.setProperty(coords_property, coords);
+	editmol.setProperty(vels_property, vels);
+
+	for (int k=0; k < buffered_molcoords.size() ; k++)
+	  {
+	    PropertyName buffered_property = PropertyName( "buffered_coord_" + QString::number(k) );
+	    editmol.setProperty(buffered_property, buffered_molcoords[k] );
+	  }
+	changed_mols.add( editmol.commit() );
+
+        //changed_mols.add( mol.molecule().edit()
+	//                             .setProperty(coords_property, coords)
+	//                             .setProperty(vels_property, vels)
+	//                             .commit() );
+
+	buffered_molcoords.clear();
+	//qDebug() << " Looping ";
+    }
+    
+    IntegratorWorkspace::pvt_update(changed_mols);
+}

@@ -65,9 +65,9 @@ friend QDataStream& ::operator<<(QDataStream&, const OpenMMMDIntegrator&);
 friend QDataStream& ::operator>>(QDataStream&, OpenMMMDIntegrator&);
 
 public:
- OpenMMMDIntegrator(bool frequent_save_velocities = false);
-
- OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool frequent_save_velocities = false);
+    OpenMMMDIntegrator(bool frequent_save_velocities = false);
+ 
+    OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool frequent_save_velocities = false);
     
     OpenMMMDIntegrator(const OpenMMMDIntegrator &other);
     
@@ -86,7 +86,6 @@ public:
     
     bool isTimeReversible() const;
     
-    //void initialise(const System &system);
     void initialise();
 
     void integrate(IntegratorWorkspace &workspace,
@@ -146,10 +145,11 @@ private:
     //OpenMM::Context* context;
 
     /**Try instead to...keep a copy of OpenMM::System */
-    OpenMM::System openmm_system;
-        
-    /** Whether the context has been initialised*/
+    OpenMM::System* openmm_system;
+    
+    /** Whether the openmm system has been initialised*/
     bool isInitialised;
+
     QString CutoffType;
     SireUnits::Dimension::Length cutoff_distance;
     double field_dielectric;

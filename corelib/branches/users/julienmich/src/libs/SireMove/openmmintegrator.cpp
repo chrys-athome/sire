@@ -1498,7 +1498,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 		potential_energy = state_openmm.getPotentialEnergy(); 
 	
-		if (Debug) {
+		//if (Debug) {
+                if (1) {
 		  cout<< "Before MD " <<"\n";
 		  cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
 		       << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
@@ -1534,7 +1535,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 		potential_energy = state_openmm.getPotentialEnergy(); 
 	
-		if (Debug) {
+		//if (Debug) {
+                if (1) {
 		  cout<< "After MD" <<"\n";
 	
 		  cout <<"Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "

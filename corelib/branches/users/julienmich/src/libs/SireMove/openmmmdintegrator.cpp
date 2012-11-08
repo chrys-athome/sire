@@ -71,6 +71,7 @@
 #include <iostream>
 /* include <QElapsedTimer> */
 #include <QDebug>
+#include <QTime>
 
 using namespace SireMove;
 using namespace SireSystem;
@@ -126,6 +127,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMMDIntegrato
     	<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency
     	<< static_cast<const Integrator&>(velver);
     
+    // Free OpenMM pointers??
         
     return ds;
 }
@@ -146,8 +148,11 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
 	    >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency
 	    >> static_cast<Integrator&>(velver);
 
-	// Maybe....need to reinitialise from molgroup because openmm context was not serialised...
+	// Maybe....need to reinitialise from molgroup because openmm system was not serialised...
 	velver.isInitialised = false;
+	
+	qDebug() << " Re-initialisation of openmmmdintegrator from datastream";
+
 	velver.initialise();
     }
     else
@@ -161,6 +166,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(bool frequent_save)
                : ConcreteProperty<OpenMMMDIntegrator,Integrator>(),
                  frequent_save_velocities(frequent_save), 
 		 molgroup(MoleculeGroup()),
+		 openmm_system(0),
                  CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
@@ -172,6 +178,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool
                : ConcreteProperty<OpenMMMDIntegrator,Integrator>(),
                  frequent_save_velocities(frequent_save), 
 		 molgroup(molecule_group),
+		 openmm_system(0),
                  CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
@@ -184,20 +191,20 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const OpenMMMDIntegrator &other)
                : ConcreteProperty<OpenMMMDIntegrator,Integrator>(other),
                  frequent_save_velocities(other.frequent_save_velocities),
 		 molgroup(other.molgroup),
+		 openmm_system(other.openmm_system),
                  CutoffType(other.CutoffType),cutoff_distance(other.cutoff_distance),
                  field_dielectric(other.field_dielectric), Andersen_flag(other.Andersen_flag),
                  Andersen_frequency(other.Andersen_frequency), MCBarostat_flag(other.MCBarostat_flag),
                  MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
                  Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
                  Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency)
-		 //openmm_system(other.openmm_system)
 
 {}
 
 /** Destructor */
 OpenMMMDIntegrator::~OpenMMMDIntegrator()
 {
-  //delete &openmm_system;
+  //delete openmm_system;
 }
 
 /** Copy assignment operator */
@@ -205,6 +212,21 @@ OpenMMMDIntegrator& OpenMMMDIntegrator::operator=(const OpenMMMDIntegrator &othe
 {
     Integrator::operator=(other);
     frequent_save_velocities = other.frequent_save_velocities;
+    molgroup = other.molgroup; 
+    openmm_system = other.openmm_system;
+    CutoffType = other.CutoffType;
+    cutoff_distance = other.cutoff_distance;
+    field_dielectric = other.field_dielectric;
+    Andersen_flag = other.Andersen_flag;
+    Andersen_frequency = other.Andersen_frequency;
+    MCBarostat_flag = other.MCBarostat_flag;
+    MCBarostat_frequency = other.MCBarostat_frequency;
+    ConstraintType = other.ConstraintType;
+    Pressure = other.Pressure;
+    Temperature = other.Temperature;
+    platform_type = other.platform_type;
+    Restraint_flag = other.Restraint_flag;
+    CMMremoval_frequency = other.CMMremoval_frequency;
     
     return *this;
 }
@@ -304,6 +326,7 @@ void OpenMMMDIntegrator::initialise()  {
   OpenMM::System *system_openmm = new OpenMM::System();
 
   OpenMM::NonbondedForce * nonbond_openmm = new OpenMM::NonbondedForce();
+
   nonbond_openmm->setUseDispersionCorrection(false);
 
   system_openmm->addForce(nonbond_openmm);
@@ -427,15 +450,15 @@ void OpenMMMDIntegrator::initialise()  {
     QHash<int, int> AtomNumToOpenMMIndex;
 	
     // Conversion factor because sire units of time are in AKMA, whereas OpenMM uses picoseconds
-    double AKMAPerPs = 0.04888821;
-    double PsPerAKMA = 1 / AKMAPerPs;
+    //double AKMAPerPs = 0.04888821;
+    //double PsPerAKMA = 1 / AKMAPerPs;
 
     for (int i=0; i < nmols; ++i)
       {
 	const int nats_mol = ws.nAtoms(i);
 
-	Vector *c = ws.coordsArray(i);
-	Vector *p = ws.momentaArray(i);
+	//Vector *c = ws.coordsArray(i);
+	//Vector *p = ws.momentaArray(i);
 	const double *m = ws.massArray(i);
 	
 	MolNum molnum = moleculegroup.molNumAt(i);
@@ -805,10 +828,10 @@ void OpenMMMDIntegrator::initialise()  {
 
     //OpenMM Integrator
     //double dt = 2.0;
-    //OpenMM::VerletIntegrator integrator_openmm(dt);//dt in pico seconds
+    //OpenMM::VerletIntegrator* integrator_openmm = new OpenMM::VerletIntegrator(0.0);//dt in pico seconds
     //OpenMM Context
     //OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString()); 
-    //OpenMM::Context context_openmm(system_openmm,integrator_openmm,platform_openmm); 
+    //OpenMM::Context * context_openmm = new OpenMM::Context( *system_openmm, *integrator_openmm, platform_openmm); 
     
     //if(flag_cutoff == CUTOFFPERIODIC)
     //  {
@@ -840,103 +863,260 @@ void OpenMMMDIntegrator::initialise()  {
     //if (Debug)
     //  cout << "\n\nREMARK  Using OpenMM platform = " <<context_openmm.getPlatform().getName().c_str()<<"\n";
 
-    this->openmm_system = *system_openmm;
+    this->openmm_system = system_openmm;
 
     this->isInitialised = true;
 }
 
 void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) const {
 
-        bool Debug = true; 
-				       
-	if (Debug)
-	  cout << "In OpenMMMDIntegrator::integrate()\n\n" ;
+  bool Debug = true; 
+
+  QTime timer;
+
+  timer.start();
+			       
+  if (Debug)
+    qDebug() << "In OpenMMMDIntegrator::integrate()\n\n" ;
 	
-	// Check that the openmm system has been initialised
-	// !! Should check that the workspace is compatible with molgroup
-	//if ( not this->isInitialised)
-	//  this->initialise();
+  // Check that the openmm system has been initialised
+  // !! Should check that the workspace is compatible with molgroup
+  if ( not this->isInitialised)
+    {
+      qDebug() << "Not initialised ! ";
+      throw SireError::program_bug(QObject::tr(
+       "OpenMMMDintegrator should have been initialised before calling integrate."), CODELOC);
+    }
+  else
+    {
+      qDebug() << " Is Initialised ";
+    }
+  //  this->initialise();
 
-	//OpenMM::Context context_openmm = *this->context;
-	OpenMM::System system_openmm = this->openmm_system;
-	int nats = system_openmm.getNumParticles();
+  OpenMM::System *system_openmm = openmm_system;
 
-	if (Debug)
-	  qDebug() << " openmm nats " << nats;
+  int nats = system_openmm->getNumParticles();
 
-	//int nats = 35200;
-	// Create here integrator + Platform, then context
+  if (Debug)
+    qDebug() << " openmm nats " << nats;
 
+  // Create here integrator + Platform, then context
+  const double dt = convertTo( timestep.value(), picosecond);
+  OpenMM::VerletIntegrator integrator_openmm(dt);//dt in pico seconds
+  OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString()); 	
+  
+  // Creating a context is the bottleneck in the setup step 
+  // Another implementation could have the context created once during initialisation. 
+  // But then have to figure out how to properly allocate/free context on the heap and make it 
+  // compatible with sire objects
+  OpenMM::Context context_openmm( *system_openmm, integrator_openmm, platform_openmm);  
 
-	//OpenMM vector coordinate
-	std::vector<OpenMM::Vec3> positions_openmm(nats);
-	//OpenMM vector momenta
-	std::vector<OpenMM::Vec3> velocities_openmm(nats);
+  if (Debug)
+    qDebug() << "\n Using OpenMM platform = " <<context_openmm.getPlatform().getName().c_str()<<"\n";
 
-	AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
-	const double dt = convertTo( timestep.value(), picosecond);	
+  // Now update coordinates / velocities / dimensions with sire data
 
-	// Conversion factor because sire units of time are in AKMA, whereas OpenMM uses picoseconds
-	double AKMAPerPs = 0.04888821;
-	double PsPerAKMA = 1 / AKMAPerPs;
+  //OpenMM vector coordinate
+  std::vector<OpenMM::Vec3> positions_openmm(nats);
+  //OpenMM vector momenta
+  std::vector<OpenMM::Vec3> velocities_openmm(nats);
+  
+  AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
 
-	const int nmols = ws.nMolecules();
+  // Conversion factor because sire units of time are in AKMA, whereas OpenMM uses picoseconds
+  double AKMAPerPs = 0.04888821;
+  double PsPerAKMA = 1 / AKMAPerPs;
+
+  const int nmols = ws.nMolecules();
 	
-	int system_index = 0;
+  int system_index = 0;
 
-	for (int i=0; i < nmols; ++i)
-	  {
-	    const int nats_mol = ws.nAtoms(i);
-	    
-	    Vector *c = ws.coordsArray(i);
-	    Vector *p = ws.momentaArray(i);
-	    const double *m = ws.massArray(i);
+  for (int i=0; i < nmols; ++i)
+    {
+      const int nats_mol = ws.nAtoms(i);
+      
+      Vector *c = ws.coordsArray(i);
+      Vector *p = ws.momentaArray(i);
+      const double *m = ws.massArray(i);
+      
+      for (int j=0; j < nats_mol; ++j)
+  	{
+  	  positions_openmm[system_index] = OpenMM::Vec3(c[j].x() * (OpenMM::NmPerAngstrom),
+  							c[j].y() * (OpenMM::NmPerAngstrom),
+  							c[j].z() * (OpenMM::NmPerAngstrom));
+  	  velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
+  							 p[j].y()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
+  							 p[j].z()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA);
+  	  system_index++;
+  	}
+  }
+  
+  if ( system_index != nats )
+   {
+     if (Debug)
+  	qDebug() << " system_index " << system_index << " nats " << nats;
+    throw SireError::program_bug(QObject::tr(
+	   "The number of atoms in the openmm system does not match the number of atoms in the sire workspace"), CODELOC);
+  }
+  
+  context_openmm.setPositions(positions_openmm);  
+  context_openmm.setVelocities(velocities_openmm);
 
-	    for (int j=0; j < nats_mol; ++j)
-	      {
-		positions_openmm[system_index] = OpenMM::Vec3(c[j].x() * (OpenMM::NmPerAngstrom),
-							      c[j].y() * (OpenMM::NmPerAngstrom),
-							      c[j].z() * (OpenMM::NmPerAngstrom));
-		velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
-							       p[j].y()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
-							       p[j].z()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA);
-		system_index++;
-	      }
-	  }
+  if ( CutoffType == "cutoffperiodic" )
+  {
+    const System & ptr_sys = ws.system();
+    const PropertyName &space_property = PropertyName("space");
+    const PeriodicBox &space = ptr_sys.property(space_property).asA<PeriodicBox>();
+  
+    const double Box_x_Edge_Length = space.dimensions()[0] * OpenMM::NmPerAngstrom; //units in nm
+    const double Box_y_Edge_Length = space.dimensions()[1] * OpenMM::NmPerAngstrom; //units in nm
+    const double Box_z_Edge_Length = space.dimensions()[2] * OpenMM::NmPerAngstrom; //units in nm
+    
+    if (Debug)
+  	qDebug() << "\nBOX SIZE [A] = (" << space.dimensions()[0] << " , " << space.dimensions()[1] << " ,  " << space.dimensions()[2] << ")\n\n";
+  	    
+    //Set Periodic Box Condition
+  
+    context_openmm.setPeriodicBoxVectors( OpenMM::Vec3(Box_x_Edge_Length,0,0),
+    					  OpenMM::Vec3(0,Box_y_Edge_Length,0),
+    					  OpenMM::Vec3(0,0,Box_z_Edge_Length) );
+  }
 
-	if ( system_index != nats )
-	  {
-	    if (Debug)
-	      qDebug() << " system_index " << system_index << " nats " << nats;
-	    throw SireError::program_bug(QObject::tr(
-		 "The number of atoms in the openmm system does not match the number of atoms in the sire workspace"), CODELOC);
-	  }
+  int infoMask = 0;
+  infoMask = OpenMM::State::Positions;
+  infoMask = infoMask + OpenMM::State::Velocities; 
+  infoMask = infoMask +  OpenMM::State::Energy;
 
-	//context_openmm.setPositions(positions_openmm);  
-	//context_openmm.setVelocities(velocities_openmm);
+  if (Debug)
+    qDebug() << " Setup dynamics, time elapsed ms " << timer.elapsed() << " ms ";
 
-	 if ( CutoffType == "cutoffperiodic" )
-	  {
-	    const System & ptr_sys = ws.system();
-	    const PropertyName &space_property = PropertyName("space");
-	    const PeriodicBox &space = ptr_sys.property(space_property).asA<PeriodicBox>();
+  /** Now perform some steps of dynamics */
+  timer.restart();
 
-	    const double Box_x_Edge_Length = space.dimensions()[0] * OpenMM::NmPerAngstrom; //units in nm
-	    const double Box_y_Edge_Length = space.dimensions()[1] * OpenMM::NmPerAngstrom; //units in nm
-	    const double Box_z_Edge_Length = space.dimensions()[2] * OpenMM::NmPerAngstrom; //units in nm
+  if (Debug)
+    qDebug() << " Doing " << nmoves << " steps of dynamics ";
 
-	    if (Debug)
-	      qDebug() << "\nBOX SIZE [A] = (" << space.dimensions()[0] << " , " << space.dimensions()[1] << " ,  " << space.dimensions()[2] << ")\n\n";
-	    
-	    //Set Periodic Box Condition
+  // Coordinates are buffered every coord_freq steps
+  int coord_freq = 50;
 
-	    //context_openmm.setPeriodicBoxVectors(OpenMM::Vec3(Box_x_Edge_Length,0,0),
-	    //				 OpenMM::Vec3(0,Box_y_Edge_Length,0),
-	    //					 OpenMM::Vec3(0,0,Box_z_Edge_Length));
-	  }
+  int MAXFRAMES = 100;
 
-	return;
+  int nframes = ( nmoves / coord_freq ) ;
 
+  if  ( nframes > MAXFRAMES ) 
+    {
+      throw SireError::program_bug(QObject::tr(
+					       "You are requesting to buffer %1 frames, which is above the hardcoded limit of %2.").arg(nframes, MAXFRAMES), CODELOC);
+    }
+
+  QVector< std::vector<OpenMM::Vec3> > buffered_positions;
+
+  //QVector< QVector< QVector < Vector > > > buffered_positions;
+
+  OpenMM::State state_openmm;
+
+  for (int i=0; i < nmoves ; i = i + coord_freq)
+    {
+      integrator_openmm.step(coord_freq);
+      if (Debug)
+	qDebug() << " i now " << i;
+
+      state_openmm = context_openmm.getState(infoMask);	
+      positions_openmm = state_openmm.getPositions();
+      buffered_positions.append( positions_openmm );
+    }
+
+  if (Debug)
+    qDebug() << " Done dynamics, time elapsed ms " << timer.elapsed() << " ms ";
+
+  /** Now update the sire coordinates/velocities and box dimensions */
+  timer.restart();
+  
+  if (Debug) 
+    {
+      double kinetic_energy = state_openmm.getKineticEnergy(); 
+      double potential_energy = state_openmm.getPotentialEnergy(); 
+      qDebug() << " After MD kinetic energy " << kinetic_energy << " potential " << potential_energy;
+    }
+
+  state_openmm = context_openmm.getState(infoMask);	
+  positions_openmm = state_openmm.getPositions();
+  velocities_openmm = state_openmm.getVelocities();
+
+  // Vector of Vector of molecules that are vector of atomic coordinates...
+  QVector< QVector< QVector< Vector > > > buffered_workspace(nframes);
+  for (int i=0; i < buffered_workspace.size() ; i++)
+    {
+      buffered_workspace[i].resize(nmols);
+      for (int j=0 ; j < nmols; j++)
+	{
+	  int nats = ws.nAtoms(j);
+	  buffered_workspace[i][j].resize(nats);
+	}
+    }
+
+  int k=0;
+  
+  //QVector< QVector < QVector <Vector> > > buffered_workspace;
+
+  for(int i=0; i<nmols;i++)
+    {
+      Vector *sire_coords = ws.coordsArray(i);
+      Vector *sire_momenta = ws.momentaArray(i);	
+      const double *m = ws.massArray(i);
+
+      //QVector < QVector <Vector> > buffered_molcoords;
+
+      for(int j=0; j < ws.nAtoms(i) ; j++)
+	{
+
+	  sire_coords[j] = Vector(positions_openmm[j+k][0] * (OpenMM::AngstromsPerNm),
+				  positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),
+				  positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
+
+	  //qDebug() << " nframes is " << nframes;
+
+	  //QVector< Vector > buffered_atcoords(nframes);
+
+	  for (int l=0; l < nframes ; l++)
+	    {
+	      //Vector *buffered_atcoords = &buffered_sire_coords[l][i][j] ;
+	  
+	      //qDebug() << " i " << i << " j " << j << " k " << k << " l " << l;
+	  
+	      //buffered_atcoords[0] = buffered_positions[l][j+k][0] * (OpenMM::AngstromsPerNm);
+	      //	      buffered_atcoords[1] = buffered_positions[l][j+k][1] * (OpenMM::AngstromsPerNm);
+	      //	      buffered_atcoords[2] = buffered_positions[l][j+k][2] * (OpenMM::AngstromsPerNm);	      
+	      Vector buffered_atcoord = Vector(  buffered_positions[l][j+k][0] * (OpenMM::AngstromsPerNm), 
+						 buffered_positions[l][j+k][1] * (OpenMM::AngstromsPerNm),
+						 buffered_positions[l][j+k][2] * (OpenMM::AngstromsPerNm) );
+	      //buffered_atcoords[l] = buffered_atcoord ;
+	      buffered_workspace[l][i][j] = buffered_atcoord;
+	      
+	    }
+	  //buffered_molcoords.append( buffered_atcoords );
+	  
+	  sire_momenta[j] = Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
+				   velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
+				   velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs);
+	}
+      //buffered_workspace.append( buffered_molcoords );
+
+      k= k + ws.nAtoms(i);
+    }
+  
+  //ws.commitCoordinates();
+  //ws.commitVelocities();
+  //ws.commitCoordinatesAndVelocities();
+
+  ws.commitBufferedCoordinatesAndVelocities( buffered_workspace );
+
+  buffered_workspace.clear();
+
+  if (Debug)
+    qDebug() << " Updating system coordinates, time elapsed ms " << timer.elapsed() << " ms ";
+
+  return;
 }
 
 
