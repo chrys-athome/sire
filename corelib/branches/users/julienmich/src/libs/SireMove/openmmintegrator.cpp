@@ -677,7 +677,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			Atom at = molatoms.at(j);
 			AtomNum atnum = at.number();
 
-			//qDebug() << " openMM_index " << system_index << " Sire Atom Number " << atnum.toString();
+			//if (Debug)
+			//  qDebug() << " openMM_index " << system_index << " Sire Atom Number " << atnum.toString();
 
 			AtomNumToOpenMMIndex[atnum.value()] = system_index;
 
@@ -1296,6 +1297,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	
 	OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString()); 
+
 
 	OpenMM::Context context_openmm(system_openmm,integrator_openmm,platform_openmm);  
 	

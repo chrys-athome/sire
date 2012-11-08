@@ -65,10 +65,12 @@ set ( SIREMOVE_HEADERS
 
 set ( SIREMOVE_OPENMM_HEADERS
       openmmintegrator.h
+      openmmmdintegrator.h
     )
 
 set ( SIREMOVE_OPENMM_SOURCES
       openmmintegrator.cpp
+      openmmmdintegrator.cpp
     )
 
 set ( SIREMOVE_DEPRECATED_HEADERS
@@ -152,6 +154,7 @@ else()
 endif()
 
 add_library (SireMove ${SIREMOVE_SOURCES})
+
 
 set_target_properties (SireMove PROPERTIES
                        VERSION ${SIRE_VERSION}
