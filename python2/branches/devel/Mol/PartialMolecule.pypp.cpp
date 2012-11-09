@@ -69,6 +69,16 @@ void register_PartialMolecule_class(){
                 , evaluate_function_value );
         
         }
+        { //::SireMol::PartialMolecule::extract
+        
+            typedef ::SireMol::PartialMolecule ( ::SireMol::PartialMolecule::*extract_function_type )(  ) const;
+            extract_function_type extract_function_value( &::SireMol::PartialMolecule::extract );
+            
+            PartialMolecule_exposer.def( 
+                "extract"
+                , extract_function_value );
+        
+        }
         { //::SireMol::PartialMolecule::hasMetadata
         
             typedef bool ( ::SireMol::PartialMolecule::*hasMetadata_function_type )( ::SireBase::PropertyName const & ) const;

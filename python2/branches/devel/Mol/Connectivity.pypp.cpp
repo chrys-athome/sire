@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "angleid.h"
 
+#include "atommatcher.h"
+
 #include "atomselection.h"
 
 #include "bondid.h"
@@ -48,7 +50,7 @@ SireMol::Connectivity __copy__(const SireMol::Connectivity &other){ return SireM
 void register_Connectivity_class(){
 
     { //::SireMol::Connectivity
-        typedef bp::class_< SireMol::Connectivity, bp::bases< SireMol::ConnectivityBase, SireBase::Property > > Connectivity_exposer_t;
+        typedef bp::class_< SireMol::Connectivity, bp::bases< SireMol::ConnectivityBase, SireMol::MolViewProperty, SireBase::Property > > Connectivity_exposer_t;
         Connectivity_exposer_t Connectivity_exposer = Connectivity_exposer_t( "Connectivity", bp::init< >() );
         bp::scope Connectivity_scope( Connectivity_exposer );
         Connectivity_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );

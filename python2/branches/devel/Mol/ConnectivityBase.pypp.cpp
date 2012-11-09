@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "angleid.h"
 
+#include "atommatcher.h"
+
 #include "atomselection.h"
 
 #include "bondid.h"
@@ -46,7 +48,7 @@ namespace bp = boost::python;
 void register_ConnectivityBase_class(){
 
     { //::SireMol::ConnectivityBase
-        typedef bp::class_< SireMol::ConnectivityBase, bp::bases< SireBase::Property >, boost::noncopyable > ConnectivityBase_exposer_t;
+        typedef bp::class_< SireMol::ConnectivityBase, bp::bases< SireMol::MolViewProperty, SireBase::Property >, boost::noncopyable > ConnectivityBase_exposer_t;
         ConnectivityBase_exposer_t ConnectivityBase_exposer = ConnectivityBase_exposer_t( "ConnectivityBase", bp::no_init );
         bp::scope ConnectivityBase_scope( ConnectivityBase_exposer );
         { //::SireMol::ConnectivityBase::areConnected
@@ -235,6 +237,17 @@ void register_ConnectivityBase_class(){
                 "getDihedrals"
                 , getDihedrals_function_value
                 , ( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::isCompatibleWith
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*isCompatibleWith_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            isCompatibleWith_function_type isCompatibleWith_function_value( &::SireMol::ConnectivityBase::isCompatibleWith );
+            
+            ConnectivityBase_exposer.def( 
+                "isCompatibleWith"
+                , isCompatibleWith_function_value
+                , ( bp::arg("molinfo") ) );
         
         }
         { //::SireMol::ConnectivityBase::nConnections
