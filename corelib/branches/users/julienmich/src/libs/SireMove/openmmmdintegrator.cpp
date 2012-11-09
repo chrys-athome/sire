@@ -124,7 +124,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMMDIntegrato
         << velver.CutoffType << velver.cutoff_distance << velver.field_dielectric
     	<< velver.Andersen_flag <<  velver.Andersen_frequency 
     	<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
-    	<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency
+    	<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency
     	<< static_cast<const Integrator&>(velver);
     
     // Free OpenMM pointers??
@@ -145,7 +145,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
 	    >> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric
 	    >> velver.Andersen_flag >>  velver.Andersen_frequency 
 	    >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
-	    >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency
+	    >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency
 	    >> static_cast<Integrator&>(velver);
 
 	// Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -170,7 +170,8 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(bool frequent_save)
                  CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
-                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),CMMremoval_frequency(0)
+                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
+		 CMMremoval_frequency(0), buffer_frequency(0)
 	        
 {}
 /** Constructor using the passed molecule group */
@@ -182,7 +183,8 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool
                  CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
-                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),CMMremoval_frequency(0)
+                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
+		 CMMremoval_frequency(0), buffer_frequency(0)
            
 {}
 
@@ -197,7 +199,8 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const OpenMMMDIntegrator &other)
                  Andersen_frequency(other.Andersen_frequency), MCBarostat_flag(other.MCBarostat_flag),
                  MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
                  Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
-                 Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency)
+                 Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
+		 buffer_frequency(other.buffer_frequency)
 
 {}
 
@@ -227,6 +230,7 @@ OpenMMMDIntegrator& OpenMMMDIntegrator::operator=(const OpenMMMDIntegrator &othe
     platform_type = other.platform_type;
     Restraint_flag = other.Restraint_flag;
     CMMremoval_frequency = other.CMMremoval_frequency;
+    buffer_frequency = other.buffer_frequency;
     
     return *this;
 }
@@ -261,7 +265,8 @@ QString OpenMMMDIntegrator::toString() const
 */
 
 void OpenMMMDIntegrator::initialise()  {
-  bool Debug = true;
+
+  bool Debug = false;
 
   if (Debug)
     qDebug() << " initialising OpenMMMDIntegrator";
@@ -870,7 +875,7 @@ void OpenMMMDIntegrator::initialise()  {
 
 void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) const {
 
-  bool Debug = true; 
+  bool Debug = false; 
 
   QTime timer;
 
@@ -887,10 +892,10 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
       throw SireError::program_bug(QObject::tr(
        "OpenMMMDintegrator should have been initialised before calling integrate."), CODELOC);
     }
-  else
-    {
-      qDebug() << " Is Initialised ";
-    }
+  //else
+  //  {
+  //    qDebug() << " Is Initialised ";
+  //  }
   //  this->initialise();
 
   OpenMM::System *system_openmm = openmm_system;
@@ -944,9 +949,16 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
   	  positions_openmm[system_index] = OpenMM::Vec3(c[j].x() * (OpenMM::NmPerAngstrom),
   							c[j].y() * (OpenMM::NmPerAngstrom),
   							c[j].z() * (OpenMM::NmPerAngstrom));
-  	  velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
-  							 p[j].y()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
-  							 p[j].z()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA);
+	  if (m[j] > SireMaths::small) 
+	    {
+	      velocities_openmm[system_index] = OpenMM::Vec3(p[j].x()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
+							     p[j].y()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA,
+							     p[j].z()/m[j] * (OpenMM::NmPerAngstrom) * PsPerAKMA);
+	    }
+	  else
+	    {
+	      velocities_openmm[system_index] =  OpenMM::Vec3(0.0, 0.0, 0.0);
+	    }
   	  system_index++;
   	}
   }
@@ -997,33 +1009,55 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     qDebug() << " Doing " << nmoves << " steps of dynamics ";
 
   // Coordinates are buffered every coord_freq steps
-  int coord_freq = 50;
+  int coord_freq = buffer_frequency;
 
-  int MAXFRAMES = 100;
+  int nframes;
+  int MAXFRAMES = 1000;
 
-  int nframes = ( nmoves / coord_freq ) ;
-
-  if  ( nframes > MAXFRAMES ) 
+  // Limit excessive internal buffering
+  if ( coord_freq > 0 )
     {
-      throw SireError::program_bug(QObject::tr(
-					       "You are requesting to buffer %1 frames, which is above the hardcoded limit of %2.").arg(nframes, MAXFRAMES), CODELOC);
+      nframes = ( nmoves / coord_freq ) ;
+
+      if  ( nframes > MAXFRAMES ) 
+	{
+	  throw SireError::program_bug(QObject::tr(
+	    "You are requesting to buffer %1 frames, which is above the hardcoded limit of %2.").arg(nframes, MAXFRAMES), CODELOC);
+	}
     }
-
+  else
+    {
+      nframes = 0;
+    }
+  
   QVector< std::vector<OpenMM::Vec3> > buffered_positions;
-
-  //QVector< QVector< QVector < Vector > > > buffered_positions;
+  QVector< Vector> buffered_dimensions;
 
   OpenMM::State state_openmm;
+  OpenMM::Vec3 a;
+  OpenMM::Vec3 b;
+  OpenMM::Vec3 c;
 
-  for (int i=0; i < nmoves ; i = i + coord_freq)
-    {
-      integrator_openmm.step(coord_freq);
-      if (Debug)
-	qDebug() << " i now " << i;
+  if ( coord_freq > 0 )
+    {/** Break nmoves in several steps to buffer coordinates*/
+      for (int i=0; i < nmoves ; i = i + coord_freq)
+	{
+	  integrator_openmm.step(coord_freq);
+	  if (Debug)
+	    qDebug() << " i now " << i;
 
-      state_openmm = context_openmm.getState(infoMask);	
-      positions_openmm = state_openmm.getPositions();
-      buffered_positions.append( positions_openmm );
+	  state_openmm = context_openmm.getState(infoMask);	
+	  positions_openmm = state_openmm.getPositions();
+	  buffered_positions.append( positions_openmm );
+      
+	  state_openmm.getPeriodicBoxVectors(a,b,c);
+	  Vector dims = Vector( a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
+	  buffered_dimensions.append( dims );
+	}
+    }
+  else
+    {/** No buffering*/
+       integrator_openmm.step(nmoves);
     }
 
   if (Debug)
@@ -1036,7 +1070,7 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     {
       double kinetic_energy = state_openmm.getKineticEnergy(); 
       double potential_energy = state_openmm.getPotentialEnergy(); 
-      qDebug() << " After MD kinetic energy " << kinetic_energy << " potential " << potential_energy;
+      qDebug() << " After MD kinetic energy " << kinetic_energy  * OpenMM::KcalPerKJ  << " kcal/mol potential " << potential_energy  * OpenMM::KcalPerKJ << " kcal/mol ";
     }
 
   state_openmm = context_openmm.getState(infoMask);	
@@ -1057,61 +1091,70 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
 
   int k=0;
   
-  //QVector< QVector < QVector <Vector> > > buffered_workspace;
-
   for(int i=0; i<nmols;i++)
     {
       Vector *sire_coords = ws.coordsArray(i);
       Vector *sire_momenta = ws.momentaArray(i);	
       const double *m = ws.massArray(i);
 
-      //QVector < QVector <Vector> > buffered_molcoords;
-
-      for(int j=0; j < ws.nAtoms(i) ; j++)
+       for(int j=0; j < ws.nAtoms(i) ; j++)
 	{
 
 	  sire_coords[j] = Vector(positions_openmm[j+k][0] * (OpenMM::AngstromsPerNm),
 				  positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),
 				  positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
 
-	  //qDebug() << " nframes is " << nframes;
-
-	  //QVector< Vector > buffered_atcoords(nframes);
 
 	  for (int l=0; l < nframes ; l++)
 	    {
-	      //Vector *buffered_atcoords = &buffered_sire_coords[l][i][j] ;
-	  
 	      //qDebug() << " i " << i << " j " << j << " k " << k << " l " << l;
 	  
-	      //buffered_atcoords[0] = buffered_positions[l][j+k][0] * (OpenMM::AngstromsPerNm);
-	      //	      buffered_atcoords[1] = buffered_positions[l][j+k][1] * (OpenMM::AngstromsPerNm);
-	      //	      buffered_atcoords[2] = buffered_positions[l][j+k][2] * (OpenMM::AngstromsPerNm);	      
 	      Vector buffered_atcoord = Vector(  buffered_positions[l][j+k][0] * (OpenMM::AngstromsPerNm), 
 						 buffered_positions[l][j+k][1] * (OpenMM::AngstromsPerNm),
 						 buffered_positions[l][j+k][2] * (OpenMM::AngstromsPerNm) );
-	      //buffered_atcoords[l] = buffered_atcoord ;
 	      buffered_workspace[l][i][j] = buffered_atcoord;
 	      
 	    }
-	  //buffered_molcoords.append( buffered_atcoords );
-	  
+
 	  sire_momenta[j] = Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
 				   velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
 				   velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs);
 	}
-      //buffered_workspace.append( buffered_molcoords );
 
       k= k + ws.nAtoms(i);
     }
   
   //ws.commitCoordinates();
   //ws.commitVelocities();
-  //ws.commitCoordinatesAndVelocities();
 
-  ws.commitBufferedCoordinatesAndVelocities( buffered_workspace );
+  if ( nframes <= 0 )
+    ws.commitCoordinatesAndVelocities();
+  else
+    ws.commitBufferedCoordinatesAndVelocities( buffered_workspace );
 
+  /** Now the box dimensions */
+  state_openmm.getPeriodicBoxVectors(a,b,c);
+
+  Vector new_dims = Vector(a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
+
+  System & ptr_sys = ws.nonConstsystem();
+  PeriodicBox  sp = ptr_sys.property("space").asA<PeriodicBox>();
+
+  sp.setDimensions(new_dims);
+  const QString string = "space" ;
+  ptr_sys.setProperty(string, sp);
+
+  /** Buffer dimensions if necessary */
+  for (int k=0; k < buffered_dimensions.size() ; k++)
+    {
+      const QString buffered_space = "buffered_space_" + QString::number(k) ;
+      PeriodicBox buff_space = PeriodicBox( buffered_dimensions[k] );
+      ptr_sys.setProperty( buffered_space, buff_space);
+    }
+
+  /** Clear all buffers */
   buffered_workspace.clear();
+  buffered_dimensions.clear();
 
   if (Debug)
     qDebug() << " Updating system coordinates, time elapsed ms " << timer.elapsed() << " ms ";
@@ -1293,6 +1336,18 @@ int OpenMMMDIntegrator::getCMMremoval_frequency(void){
 void OpenMMMDIntegrator::setCMMremoval_frequency(int frequency){
 
 	CMMremoval_frequency = frequency;
+}
+
+/** Get the frequency of buffering coordinates */
+int OpenMMMDIntegrator::getBufferFrequency(){
+
+	return buffer_frequency;
+}
+
+/** Set the Center of Mass motion removal frequency */
+void OpenMMMDIntegrator::setBufferFrequency(int frequency){
+
+	buffer_frequency = frequency;
 }
 
 

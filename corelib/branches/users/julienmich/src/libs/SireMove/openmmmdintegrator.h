@@ -135,6 +135,9 @@ public:
     int getCMMremoval_frequency(void);
     void setCMMremoval_frequency(int);
     
+    int getBufferFrequency();
+    void setBufferFrequency(int);
+
 
 private:
     /** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
@@ -170,6 +173,8 @@ private:
     bool Restraint_flag;
 	
     int CMMremoval_frequency;
+
+    int buffer_frequency;
 
 };
 

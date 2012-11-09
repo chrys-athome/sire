@@ -1265,8 +1265,6 @@ void AtomicVelocityWorkspace::commitCoordinatesAndVelocities()
 /** Save both the coordinates and velocities back to the system */
 void AtomicVelocityWorkspace::commitBufferedCoordinatesAndVelocities(  QVector < QVector< QVector< Vector > > > &buffered_coords )
 {
-    qDebug() << " BIG BUFFER !! ";
-
     int nmols = atom_coords.count();
     
     const MoleculeGroup &molgroup = moleculeGroup();
