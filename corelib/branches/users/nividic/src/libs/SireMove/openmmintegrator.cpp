@@ -114,19 +114,10 @@ typedef vector<pair<int,int> > Vector_of_IntInt;
 #define WRITE(fd, buf, size) fio_fwrite(((void *) buf), (size), 1, (fd))
 
 
-static int write_dcdheader(fio_fd fd, const char *remarks, int N, 
-			      int ISTART, int NSAVC, double DELTA, int with_unitcell,
-				  int charmm);				
+static int write_dcdheader(fio_fd fd, const char *remarks, int N, int ISTART, int NSAVC, double DELTA, int with_unitcell, int charmm);
 
-static int write_dcdstep(fio_fd fd, int curframe, int curstep, int N, 
-                  float *X, float *Y, float *Z, 
-				  const double *unitcell, int charmm);
-				  
-				  
-void integrator(const char * filename, OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & integrator_openmm, 
-				std::vector<OpenMM::Vec3> & positions_openmm, std::vector<OpenMM::Vec3> & velocities_openmm,
-				bool DCD,bool wrap, int nmoves, int frequency_dcd, int flag_cutoff,int nats);
-				
+static int write_dcdstep(fio_fd fd, int curframe, int curstep, int N, float *X, float *Y, float *Z, const double *unitcell, int charmm);
+
 QString file_name(int i);
 
 double gasdev(void);
@@ -159,18 +150,19 @@ class DCD {
 
 	public:
 		DCD(const char * file_name,std::vector<OpenMM::Vec3> & coordinates, std::vector<OpenMM::Vec3> & velocities,
-			bool wrap_coord,int total_moves,int atoms,int frequency,bool cutoff_type,int free_energy_nsamples,OpenMM::Context & context,OpenMM::VerletIntegrator & integrator):
-			positions_openmm(coordinates),velocities_openmm(velocities), context_openmm(context),integrator_openmm(integrator)
+			bool wrap_coord,int total_steps,int atoms,int frequency,int cutoff_type,int free_energy_nsamples,OpenMM::Context & context,
+			OpenMM::VerletIntegrator & integrator,AtomicVelocityWorkspace & work_space ,std::vector<double> & center):
+			positions_openmm(coordinates),velocities_openmm(velocities), context_openmm(context),integrator_openmm(integrator),ws(work_space),box_center(center)
 			{
 				filename=file_name;
 				wrap=wrap_coord;
-				nmoves=total_moves;
+				md_steps=total_steps;
 				nats=atoms;
 				frequency_dcd=frequency;
 				flag_cutoff=cutoff_type;
 				free_energy_samples=free_energy_nsamples;
 				fio_open(file_name,FIO_WRITE, &fd);
-				
+
 				X = new float[nats];
 				Y = new float[nats];
 				Z = new float[nats];
@@ -195,15 +187,15 @@ class DCD {
 	~DCD();
 
 	void integrateMD(void);
-	void integrateFreeEnergy(int curr);
+	void integrateFreeEnergy(int current_frame);
 
 	private:
 		const char * filename;
 		bool wrap;
-		int nmoves;
+		int md_steps;
 		int nats;
 		int frequency_dcd;
-		bool flag_cutoff;
+		int flag_cutoff;
 		int free_energy_samples; 
 		std::vector<OpenMM::Vec3> & positions_openmm;
 		std::vector<OpenMM::Vec3> & velocities_openmm;
@@ -214,6 +206,9 @@ class DCD {
 		float *Y;
 		float *Z;
 		double *box_dims;
+		std::vector<double> box_center;
+		AtomicVelocityWorkspace &ws;
+
 
 };
 
@@ -779,7 +774,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				double vz = gasdev();
 				velocities_openmm[system_index] = OpenMM::Vec3(vx,vy,vz);
 
-		}
+			}
 			
 			/*cout << "\natom = " << system_index  << " VELOCITY X = " << velocities_openmm[system_index][0] 
 												 << " VELOCITY Y = " << velocities_openmm[system_index][1] 
@@ -1549,6 +1544,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 	QElapsedTimer timer_OUT;
 
+
 	timer_MD.start();
 
 	//MD SIMULATION FOR NMOVES
@@ -1570,20 +1566,25 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		int frequency_energy = 100; 
 
-		int n_freq = nmoves/frequency_energy;
+		int n_samples = nmoves/frequency_energy;
+		
+		int md_steps_per_sample = 100;
 
-		cout << "NFREQ = "<< n_freq << "\n\n";
+		cout << "Number Energy Samples = "<< n_samples << "\n\n";
 
+		
 
 		bool dcd = true;
 		
 		bool wrap = false;
+		
+		vector<double> center (3,0.0);  
 
 		int frequency_dcd = 10;
 
-		/*if(dcd == true){
-			dcd_p = new DCD("dynamic.dcd",positions_openmm,velocities_openmm,wrap,nmoves,nats,
-							frequency_dcd,flag_cutoff,n_freq,context_openmm,integrator_openmm);*/
+		if(dcd == true)
+			dcd_p = new DCD("dynamic.dcd", positions_openmm, velocities_openmm, wrap, md_steps_per_sample, nats, 
+							frequency_dcd, flag_cutoff, n_samples, context_openmm, integrator_openmm,ws,center);
 
 		for (int i=0; i<Alchemical_values.size();i++){
 
@@ -1603,19 +1604,15 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	
 			double j=0.0;
 			
-			while(j<n_freq){
+			while(j<n_samples){
 
 				//QString name = file_name(j);
 
-				if(dcd == true){
+				if(dcd == true)
 					dcd_p->integrateFreeEnergy(j);
-				}
 				else
-					integrator_openmm.step(frequency_energy);
+					integrator_openmm.step(md_steps_per_sample);
 
-				//integrator(name.toStdString().c_str(), context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , frequency_energy, frequency_dcd, flag_cutoff, nats);
-
-				
 				/*state_openmm=context_openmm.getState(infoMask);
 				double potential_energy_lambda = state_openmm.getPotentialEnergy();
 				double kinetic_energy = state_openmm.getKineticEnergy();
@@ -1733,20 +1730,23 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		bool dcd = true;
 		
-		bool wrap = false;
+		bool wrap = true;
+		
+		vector<double> center;
+		
+		center.push_back(2.0);
+		center.push_back(2.0);
+		center.push_back(2.0); 
 		
 		if(dcd == true){
 			dcd_p = new DCD("dynamic.dcd",positions_openmm,velocities_openmm,wrap,nmoves,nats,
-							frequency_dcd,flag_cutoff,1,context_openmm,integrator_openmm);
+							frequency_dcd,flag_cutoff,1,context_openmm,integrator_openmm,ws,center);
 			
 			dcd_p->integrateMD();
 
 		}
 		else
 			integrator_openmm.step(nmoves);
-
-
-		//integrator("dynamic.dcd", context_openmm,integrator_openmm, positions_openmm, velocities_openmm, dcd,wrap , nmoves, frequency_dcd, flag_cutoff, nats);
 
 
 		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
@@ -2231,176 +2231,6 @@ static int write_dcdstep(fio_fd fd, int curframe, int curstep, int N,
 }
 
 
-void integrator(const char * filename, OpenMM::Context & context_openmm,OpenMM::VerletIntegrator & integrator_openmm, 
-				std::vector<OpenMM::Vec3> & positions_openmm, std::vector<OpenMM::Vec3> & velocities_openmm,
-				bool DCD, bool wrap, int nmoves, int frequency_dcd, int flag_cutoff,int nats){
-
-		int cycles = 0;
-
-		int steps = nmoves;
-
-		float X[nats];
-		float Y[nats];
-		float Z[nats];
-
-		double box_dims[6];
-
-		double COG[3] = {0.0,0.0,0.0};
-
-		fio_fd fd=NULL;
-
-		double dt = integrator_openmm.getStepSize();
-		
-		int infoMask = 0;
-
-		infoMask = OpenMM::State::Positions;
-
-		infoMask = infoMask + OpenMM::State::Velocities; 
-
-		infoMask = infoMask +  OpenMM::State::Energy;
-
-		OpenMM::State state_openmm = context_openmm.getState(infoMask);
-
-		double kinetic_energy = 0.0; 
-		double potential_energy = 0.0; 
-
-		OpenMM::Vec3 a;
-		OpenMM::Vec3 b;
-		OpenMM::Vec3 c;
-
-		if(DCD == true){
-
-			double delta = dt/0.0488821;
-
-			cycles = nmoves/frequency_dcd;
-
-			for(int i=0; i<nats;i++){
-				X[i]=0.0;
-				Y[i]=0.0;
-				Z[i]=0.0;
-
-			}
-
-
-			fio_open(filename,FIO_WRITE, &fd);
-
-			steps=frequency_dcd;
-
-			int box = 0;
-
-			if(flag_cutoff == CUTOFFPERIODIC){
-				box=1;
-			}
-
-			write_dcdheader(fd, "Created by OpenMM", nats,0,frequency_dcd, delta, box,1);
-
-			if(wrap == true){
-				for(unsigned int i=0;i<positions_openmm.size();i++){
-
-					COG[0] = COG[0] + positions_openmm[i][0]*(OpenMM::AngstromsPerNm); //X Cennter of Geometry
-					COG[1] = COG[1] + positions_openmm[i][1]*(OpenMM::AngstromsPerNm); //Y Cennter of Geometry
-					COG[2] = COG[2] + positions_openmm[i][2]*(OpenMM::AngstromsPerNm); //Z Cennter of Geometry
-				}
-
-				COG[0] = COG[0]/nats;
-				COG[1] = COG[1]/nats;
-				COG[2] = COG[2]/nats;
-
-				//cout << "\nCOG X = " << COG[0] << " GOG Y = " << COG[1] << " COG Z = " << COG[2] << "\n";
-
-			}
-
-		}
-		else
-			cycles=1;
-
-		/*for(unsigned int i=0;i<positions_openmm.size();i++){
-
-				cout << "\natom = " << i << " COORD X = " << positions_openmm[i][0]*(OpenMM::AngstromsPerNm) 
-									   	 << " COORD Y = " << positions_openmm[i][1]*(OpenMM::AngstromsPerNm) 
-									     << " COORD Z = " << positions_openmm[i][2]*(OpenMM::AngstromsPerNm) <<"\n";		 
-		}*/
-
-		for(int i=0;i<cycles;i++){
-
-			integrator_openmm.step(steps);
-
-			state_openmm=context_openmm.getState(infoMask);	
-
-			positions_openmm = state_openmm.getPositions();
-
-			velocities_openmm = state_openmm.getVelocities();
-
-			//cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
-
-			kinetic_energy = state_openmm.getKineticEnergy(); 
-
-			potential_energy = state_openmm.getPotentialEnergy(); 
-
-
-			if(DCD==true){
-
-				if(flag_cutoff == CUTOFFPERIODIC){
-
-					state_openmm.getPeriodicBoxVectors(a,b,c);
-
-					box_dims[0]=a[0] * OpenMM::AngstromsPerNm;
-					box_dims[1]=0.0;
-					box_dims[2]=b[1] * OpenMM::AngstromsPerNm;
-					box_dims[3]=0.0;
-					box_dims[4]=0.0;
-					box_dims[5]=c[2] * OpenMM::AngstromsPerNm;
-
-				}
-
-				for(int j=0; j<nats;j++){
-					
-					X[j] = positions_openmm[j][0]*OpenMM::AngstromsPerNm;
-					Y[j] = positions_openmm[j][1]*OpenMM::AngstromsPerNm;
-					Z[j] = positions_openmm[j][2]*OpenMM::AngstromsPerNm;
-
-					if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
-
-						X[j] = X[j] - COG[0];
-						Y[j] = Y[j] - COG[1];
-						Z[j] = Z[j] - COG[2];
-
-						X[j] = X[j] - box_dims[0]*round(X[j]/box_dims[0]);
-						Y[j] = Y[j] - box_dims[2]*round(Y[j]/box_dims[2]);
-						Z[j] = Z[j] - box_dims[5]*round(Z[j]/box_dims[5]);
-
-					}
-
-					//cout << "X = "<< X[j] << " Y = " << Y[j] << " Z = " << Z[j] << "\n";
-
-				}
-
-				if(flag_cutoff == CUTOFFPERIODIC){
-
-					write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,box_dims, 1);
-
-				}
-				else
-					write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,NULL, 1);
-
-			}
-
-			/*cout <<"*Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
-		 	 	<< " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
-		 	 	<< " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
-
-			cout<<"\n";*/
-			
-			//integrator_openmm.step(steps);
-
-		}//end for
-
-		if(DCD == true)
-			fio_fclose(fd);
-			
-
-}
-
 
 QString file_name(int i){
 
@@ -2818,9 +2648,14 @@ void DCD::integrateMD(void){
 
 	int steps;
 
+	const int nmols = ws.nMolecules();
+	
+	MoleculeGroup molgroup = ws.moleculeGroup();
 
-	double COG[3] = {0.0,0.0,0.0};
-
+	double COG[3] = {0.0,0.0,0.0};//center of geometry
+	
+	double COT[3] = {0.0,0.0,0.0};//center of translation
+	
 	double dt = integrator_openmm.getStepSize();
 
 	int infoMask = 0;
@@ -2839,7 +2674,7 @@ void DCD::integrateMD(void){
 
 	double delta = dt/0.0488821;
 
-	cycles = nmoves/frequency_dcd;
+	cycles = md_steps/frequency_dcd;
 
 	steps=frequency_dcd;
 
@@ -2868,13 +2703,15 @@ void DCD::integrateMD(void){
 	}
 
 
-	/*for(unsigned int i=0;i<positions_openmm.size();i++){
+	COT[0]=box_center[0]-COG[0];
+	COT[1]=box_center[1]-COG[1];
+	COT[2]=box_center[2]-COG[2];
 
+	cout << "Box[0] = " << box_center[0] << " Box[1] = " << box_center[1] << " Box [2] = " << box_center[2] << "\n\n";
 
-		cout << "\natom = " << i << " COORD X = " << positions_openmm[i][0]*(OpenMM::AngstromsPerNm) 
-							   	 << " COORD Y = " << positions_openmm[i][1]*(OpenMM::AngstromsPerNm) 
-							     << " COORD Z = " << positions_openmm[i][2]*(OpenMM::AngstromsPerNm) <<"\n";
-	}*/
+	cout << "COG[0] = " << COG[0] << " COG[1] = " << COG[1] << " COG[2] = " << COG[2] << "\n\n";
+
+	cout << "COT[0] = " << COT[0] << " COT[1] = " << COT[1] << " COT[2] = " << COT[2] << "\n\n";
 
 	for(int i=0;i<cycles;i++){
 
@@ -2900,37 +2737,80 @@ void DCD::integrateMD(void){
 
 		}
 
-		for(int j=0; j<nats;j++){
+		int num_atoms_till_l=0;
 
-			X[j] = positions_openmm[j][0]*OpenMM::AngstromsPerNm;
-			Y[j] = positions_openmm[j][1]*OpenMM::AngstromsPerNm;
-			Z[j] = positions_openmm[j][2]*OpenMM::AngstromsPerNm;
+		for (int l=0; l < nmols; ++l){
+
+			const int nats_mol = ws.nAtoms(l);
+			
+			double molecule_COG[3] = {0.0,0.0,0.0};
+			double T[3] = {0.0,0.0,0.0};//Translation vector
 
 			if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
 
-				X[j] = X[j] - COG[0];
-				Y[j] = Y[j] - COG[1];
-				Z[j] = Z[j] - COG[2];
+				for (int m=0; m < nats_mol; ++m){
+					int openmmindex = num_atoms_till_l+m;
 
-				X[j] = X[j] - box_dims[0]*round(X[j]/box_dims[0]);
-				Y[j] = Y[j] - box_dims[2]*round(Y[j]/box_dims[2]);
-				Z[j] = Z[j] - box_dims[5]*round(Z[j]/box_dims[5]);
+					//cout << "Molecule index = " << l << " Atom index = " << m <<" Openmm Index = " << openmmindex <<"\n\n";
+
+					molecule_COG[0] = molecule_COG[0] + positions_openmm[openmmindex][0]*OpenMM::AngstromsPerNm;;
+					molecule_COG[1] = molecule_COG[1] + positions_openmm[openmmindex][1]*OpenMM::AngstromsPerNm;;
+					molecule_COG[2] = molecule_COG[2] + positions_openmm[openmmindex][2]*OpenMM::AngstromsPerNm;;
+
+				}
+
+				molecule_COG[0] = molecule_COG[0]/nats_mol;
+				molecule_COG[1] = molecule_COG[1]/nats_mol;
+				molecule_COG[2] = molecule_COG[2]/nats_mol;
+				
+				molecule_COG[0] = molecule_COG[0] + COT[0];
+				molecule_COG[1] = molecule_COG[1] + COT[1];
+				molecule_COG[2] = molecule_COG[2] + COT[2];
+				
+				T[0] = molecule_COG[0] - box_dims[0]*round(molecule_COG[0]/box_dims[0]);
+				T[1] = molecule_COG[1] - box_dims[2]*round(molecule_COG[1]/box_dims[2]);
+				T[2] = molecule_COG[2] - box_dims[5]*round(molecule_COG[2]/box_dims[5]);
+				
+				T[0] = T[0] - molecule_COG[0];
+				T[1] = T[1] - molecule_COG[1];
+				T[2] = T[2] - molecule_COG[2];
+
+			}//end if wrap
+
+
+			for (int m=0; m < nats_mol; ++m){
+
+				int openmmindex = num_atoms_till_l+m;
+
+				X[openmmindex] = positions_openmm[openmmindex][0]*OpenMM::AngstromsPerNm;
+				Y[openmmindex] = positions_openmm[openmmindex][1]*OpenMM::AngstromsPerNm;
+				Z[openmmindex] = positions_openmm[openmmindex][2]*OpenMM::AngstromsPerNm;
+
+				if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
+
+					X[openmmindex] = X[openmmindex] + COT[0];
+					Y[openmmindex] = Y[openmmindex] + COT[1];
+					Z[openmmindex] = Z[openmmindex] + COT[2];
+
+					X[openmmindex] = X[openmmindex] + T[0];
+					Y[openmmindex] = Y[openmmindex] + T[1];
+					Z[openmmindex] = Z[openmmindex] + T[2];
+
+				}
 
 			}
 
-			//cout << "X = "<< X[j] << " Y = " << Y[j] << " Z = " << Z[j] << "\n";
-
-		}
-
-		if(flag_cutoff == CUTOFFPERIODIC){
-
+			num_atoms_till_l=num_atoms_till_l+nats_mol;
+		
+		}//end for molecules
+		
+		if(flag_cutoff == CUTOFFPERIODIC)
 			write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,box_dims, 1);
 
-		}
 		else
 			write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,NULL, 1);
 
-	}//end for
+	}//end for cycles
 
 	fio_fclose(fd);
 
@@ -2939,7 +2819,7 @@ void DCD::integrateMD(void){
 }
 
 
-void DCD::integrateFreeEnergy(int curr){
+void DCD::integrateFreeEnergy(int current_frame){
 
 	int cycles = 0;
 
@@ -2966,7 +2846,7 @@ void DCD::integrateFreeEnergy(int curr){
 
 	double delta = dt/0.0488821;
 
-	cycles = nmoves/frequency_dcd;
+	cycles = md_steps/frequency_dcd;
 
 	steps=frequency_dcd;
 
@@ -2976,7 +2856,7 @@ void DCD::integrateFreeEnergy(int curr){
 		box=1;
 	}
 
-	if(curr == 0)
+	if(current_frame == 0)
 		write_dcdheader(fd, "Created by OpenMM", nats,0,frequency_dcd, delta, box,1);
 
 	if(wrap == true){
@@ -3052,24 +2932,19 @@ void DCD::integrateFreeEnergy(int curr){
 
 		if(flag_cutoff == CUTOFFPERIODIC){
 
-			write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,box_dims, 1);
+			write_dcdstep(fd, current_frame*cycles + (i+1), current_frame*cycles + (i+1)*frequency_dcd, nats, X, Y, Z,box_dims, 1);
 
 		}
 		else
-			write_dcdstep(fd, i+1, (i+1)*frequency_dcd, nats, X, Y, Z,NULL, 1);
+			write_dcdstep(fd, current_frame*cycles + (i+1), current_frame*cycles + (i+1)*frequency_dcd, nats, X, Y, Z,NULL, 1);
 
 	}//end for
 
 	
-	if(curr == nfreq-1){
+	if(current_frame == free_energy_samples-1){
 		fio_fclose(fd);
 		cout << "\nTrajectory file = " << filename << " has been written...." << "\n\n";
 	}
 
 
 }
-
-
-
-
-
