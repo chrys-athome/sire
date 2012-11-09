@@ -188,6 +188,8 @@ public:
         return props;
     }
 
+    MoleculeData extract(const AtomSelection &selected_atoms) const;
+
     QStringList propertyKeys() const;
     
     QStringList metadataKeys() const;

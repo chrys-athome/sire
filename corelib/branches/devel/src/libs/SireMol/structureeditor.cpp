@@ -67,6 +67,8 @@
 #include "molname.h"
 #include "molnum.h"
 
+#include "atommatcher.h"
+
 #include "atomproperty.hpp"
 #include "cgproperty.hpp"
 #include "resproperty.hpp"
@@ -328,6 +330,8 @@ public:
     void assertHasSegMetadata(const QString &metakey) const;
     void assertHasSegMetadata(const QString &key, const QString &metakey) const;
     
+    QHash<AtomIdx,AtomIdx> getOldToNewAtomMapping() const;
+    
     MolName molname;
     MolNum molnum;
     
@@ -342,6 +346,11 @@ public:
     QList<quint32> res_by_index;
     QList<quint32> chains_by_index;
     QList<quint32> seg_by_index; 
+    
+    /** This stores the AtomIdx of each atom when the below
+        properties object was constructed. This allows properties
+        to be rebuilt by mapping from the old AtomIdx to the new AtomIdx */
+    QHash<quint32, AtomIdx> old_atomidxs;
     
     Properties properties;
 
@@ -625,6 +634,7 @@ QDataStream& operator<<(QDataStream &ds, const EditMolData &editmol)
         << editmol.atoms_by_index << editmol.cg_by_index
         << editmol.res_by_index << editmol.chains_by_index
         << editmol.seg_by_index
+        << editmol.old_atomidxs
         << editmol.properties << editmol.cached_molinfo
         << editmol.last_uid;
        
@@ -642,6 +652,7 @@ QDataStream& operator>>(QDataStream &ds, EditMolData &editmol)
         >> editmol.atoms_by_index >> editmol.cg_by_index
         >> editmol.res_by_index >> editmol.chains_by_index
         >> editmol.seg_by_index
+        >> editmol.old_atomidxs
         >> editmol.properties >> editmol.cached_molinfo
         >> editmol.last_uid;
        
@@ -1126,14 +1137,7 @@ void EditMolData::extractProperties(const Properties &props)
             
         else if (it.value()->isA<AtomSelection>())
             this->extractProperty(it.key(), it.value()->asA<AtomSelection>());
-            
-        else if (it.value()->isA<MolViewProperty>())
-        {
-            qDebug() << QObject::tr("Trying to edit an interesting "
-                         "MolViewProperty with key %1, and of type %2.")
-                                .arg(it.key(), it.value()->what());
-        }
-        
+                    
         //now do the same for all of the metadata attached to this
         //property
         const Properties &metadata = props.allMetadata(it.key());
@@ -1165,13 +1169,6 @@ void EditMolData::extractProperties(const Properties &props)
             else if (it2.value()->isA<AtomSelection>())
                 this->extractMetadata(it.key(), it2.key(),
                                       it2.value()->asA<AtomSelection>());
-            
-            else if (it2.value()->isA<MolViewProperty>())
-            {
-                qDebug() << QObject::tr("Trying to edit an interesting "
-                            "MolViewProperty with key %1, metakey %2, and of type %3.")
-                                    .arg(it.key(), it2.key(), it2.value()->what());
-            }
         }
     }
     
@@ -1201,13 +1198,6 @@ void EditMolData::extractProperties(const Properties &props)
             
         else if (it.value()->isA<AtomSelection>())
             this->extractMetadata(it.key(), it.value()->asA<AtomSelection>());
-            
-        else if (it.value()->isA<MolViewProperty>())
-        {
-            qDebug() << QObject::tr("Trying to edit an interesting "
-                         "MolViewProperty with metakey %1, and of type %2.")
-                                .arg(it.key(), it.value()->what());
-        }
     }
 }
 
@@ -1227,6 +1217,8 @@ EditMolData::EditMolData(const MoleculeData &moldata)
         quint32 uid = getNewUID();
         atoms.insert(uid, atom);
         atoms_by_index.append(uid);
+        
+        old_atomidxs.insert(uid, i);
     }
     
     int nres = molinfo.nResidues();
@@ -1308,6 +1300,7 @@ EditMolData::EditMolData(const EditMolData &other)
               res_by_index(other.res_by_index),
               chains_by_index(other.chains_by_index),
               seg_by_index(other.seg_by_index),
+              old_atomidxs(other.old_atomidxs),
               properties(other.properties),
               cached_molinfo(other.cached_molinfo),
               last_uid(other.last_uid)
@@ -2085,6 +2078,28 @@ SegVariantProperty EditMolData::segMetadata(const QString &key,
     }
     
     return values;
+}
+
+/** Return the mapping from the AtomIdx of the atom before editing to 
+    the AtomIdx in the current (new version) of the molecule. Note that 
+    this will only contain entries for atoms that exist both in the old
+    and new versions, and show how to map from the old AtomIdx to the new AtomIdx */
+QHash<AtomIdx,AtomIdx> EditMolData::getOldToNewAtomMapping() const
+{
+    QHash<AtomIdx,AtomIdx> mapping;
+    mapping.reserve(atoms_by_index.count());
+
+    for (int i=0; i<atoms_by_index.count(); ++i)
+    {
+        quint32 uid = atoms_by_index[i];
+        
+        if (old_atomidxs.contains(uid))
+        {
+            mapping.insert( old_atomidxs[uid], AtomIdx(i) );
+        }
+    }
+    
+    return mapping;
 }
 
 /////////
@@ -4790,6 +4805,76 @@ AtomSelection StructureEditor::extractAtomSelection(
     return selected_atoms;
 }
 
+/** This is a custom AtomMatcher that is used exclusively by
+    StructureEditor to migrate properties between different
+    versions of the same molecule
+    
+    @author Christopher Woods
+*/
+class StructureEditorAtomMatcher
+         : public SireBase::ConcreteProperty<StructureEditorAtomMatcher,AtomMatcher>
+{
+
+public:
+    StructureEditorAtomMatcher()
+          : SireBase::ConcreteProperty<StructureEditorAtomMatcher,AtomMatcher>()
+    {}
+    
+    StructureEditorAtomMatcher(const QHash<AtomIdx,AtomIdx> &map)
+          : SireBase::ConcreteProperty<StructureEditorAtomMatcher,AtomMatcher>(),
+            mapping(map)
+    {}
+    
+    StructureEditorAtomMatcher(const StructureEditorAtomMatcher &other)
+          : SireBase::ConcreteProperty<StructureEditorAtomMatcher,AtomMatcher>(other),
+            mapping(other.mapping)
+    {}
+    
+    ~StructureEditorAtomMatcher()
+    {}
+    
+    static const char* typeName()
+    {
+        return "SireMol::StructureEditorAtomMatcher";
+    }
+    
+    const char* what() const
+    {
+        return StructureEditorAtomMatcher::typeName();
+    }
+
+    StructureEditorAtomMatcher& operator=(const StructureEditorAtomMatcher &other)
+    {
+        mapping = other.mapping;
+        return *this;
+    }
+    
+    bool operator==(const StructureEditorAtomMatcher &other) const
+    {
+        return mapping == other.mapping;
+    }
+    
+    bool operator!=(const StructureEditorAtomMatcher &other) const
+    {
+        return mapping != other.mapping;
+    }
+    
+    bool unchangedAtomOrder(const MoleculeInfoData &molinfo0,
+                            const MoleculeInfoData &molinfo1) const
+    {
+        return false;
+    }
+    
+    QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &molinfo0,
+                                 const MoleculeInfoData &molinfo1) const
+    {
+        return mapping;
+    }
+
+private:
+    QHash<AtomIdx,AtomIdx> mapping;
+};
+
 /** Return the properties of this molecule - this is a slow function
     as it has to convert all of the properties from an editable to
     a fixed format. Also note that changing the molecule in any
@@ -4798,9 +4883,18 @@ Properties StructureEditor::properties() const
 {
     this->assertSane();
 
+    //make sure that the MoleculeInfo object is up to date
+    if (this->needsInfoRebuild())
+        const_cast<StructureEditor*>(this)->commitInfo();
+
+    //now get the mapping from the original AtomIdx indicies used when
+    //the old properties were constructed to the new AtomIdx indicies of the
+    //atoms in the edited molecule
+    StructureEditorAtomMatcher mapping( d->getOldToNewAtomMapping() );
+
     //go through each property in turn and extract it based
     //on its current type
-    Properties updated_properties = d->properties;
+    Properties updated_properties;
     
     for (Properties::const_iterator it = d->properties.constBegin();
          it != d->properties.constEnd();
@@ -4841,12 +4935,32 @@ Properties StructureEditor::properties() const
         }
         else if (updated_property->isA<MolViewProperty>())
         {
-            qDebug() << QObject::tr("Trying to update an interesting property "
-                         "at key %1, with type %2.")
+            try
+            {
+                updated_property = updated_property->asA<MolViewProperty>()
+                                            .makeCompatibleWith(this->info(), mapping);
+            }
+            catch(...)
+            {
+                qDebug() << QObject::tr("WARNING: Could not convert the old property "
+                                        "at key %1 with type %2 to match the new, edited "
+                                        "molecule. This property has been deleted.")
+                        .arg(key, updated_property->what());
+            
+                updated_property = NullProperty();
+            }
+        }
+        else
+        {
+            qDebug() << QObject::tr("WARNING: The old property at key %1 with type %2 "
+                                    "is not a molecule property (MolViewProperty) so has "
+                                    "not been edited by the change in molecule. This may mean "
+                                    "that this property is incompatible with the new molecule.")
                             .arg(key, updated_property->what());
         }
         
-        updated_properties.setProperty(key, updated_property, false);
+        if (not updated_property.isNull())
+            updated_properties.setProperty(key, updated_property, false);
         
         //now update all of the metadata for this particular property
         const Properties &metadata = d->properties.allMetadata(it.key());
@@ -4890,12 +5004,32 @@ Properties StructureEditor::properties() const
             }
             else if (updated_property->isA<MolViewProperty>())
             {
-                qDebug() << QObject::tr("Trying to update an interesting property "
-                            "at key %1, metakey %2, with type %3.")
-                                .arg(key, metakey, updated_property->what());
+                try
+                {
+                    updated_property = updated_property->asA<MolViewProperty>()
+                                                .makeCompatibleWith(this->info(), mapping);
+                }
+                catch(...)
+                {
+                    qDebug() << QObject::tr("WARNING: Could not convert the old metadata "
+                                            "at key %1:%3 with type %2 to match the new, edited "
+                                            "molecule. This metadata has been deleted.")
+                            .arg(key, updated_property->what(), metakey);
+                
+                    updated_property = 0;
+                }
+            }
+            else
+            {
+                qDebug() << QObject::tr("WARNING: The old metadata at key %1.%3 with type %2 "
+                                        "is not a molecule property (MolViewProperty) so has "
+                                        "not been edited by the change in molecule. This may mean "
+                                        "that this metadata is incompatible with the new molecule.")
+                                .arg(key, updated_property->what(), metakey);
             }
             
-            updated_properties.setMetadata(key, metakey, updated_property);
+            if (not updated_property.isNull())
+                updated_properties.setMetadata(key, metakey, updated_property);
         }
     }
     
@@ -4941,12 +5075,32 @@ Properties StructureEditor::properties() const
         }
         else if (updated_property->isA<MolViewProperty>())
         {
-            qDebug() << QObject::tr("Trying to update an interesting property "
-                         "at metakey %1, with type %2.")
+            try
+            {
+                updated_property = updated_property->asA<MolViewProperty>()
+                                            .makeCompatibleWith(this->info(), mapping);
+            }
+            catch(...)
+            {
+                qDebug() << QObject::tr("WARNING: Could not convert the old metadata "
+                                        "at key %1 with type %2 to match the new, edited "
+                                        "molecule. This metadata has been deleted.")
+                        .arg(metakey, updated_property->what());
+            
+                updated_property = 0;
+            }
+        }
+        else
+        {
+            qDebug() << QObject::tr("WARNING: The old metadata at key %1 with type %2 "
+                                    "is not a molecule property (MolViewProperty) so has "
+                                    "not been edited by the change in molecule. This may mean "
+                                    "that this metadata is incompatible with the new molecule.")
                             .arg(metakey, updated_property->what());
         }
         
-        updated_properties.setMetadata(metakey, updated_property);
+        if (not updated_property.isNull())
+            updated_properties.setMetadata(metakey, updated_property);
     }
     
     return updated_properties;

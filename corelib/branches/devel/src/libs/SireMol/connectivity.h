@@ -36,6 +36,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include "bondhunter.h"
+#include "molviewproperty.h"
 
 #include "SireBase/property.h"
 #include "SireBase/shareddatapointer.hpp"
@@ -85,7 +86,7 @@ class ConnectivityEditor;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ConnectivityBase : public SireBase::Property
+class SIREMOL_EXPORT ConnectivityBase : public MolViewProperty
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SireMol::ConnectivityBase&);
@@ -100,6 +101,8 @@ public:
     }
 
     QString toString() const;
+
+    bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
 
     bool areConnected(AtomIdx atom0, AtomIdx atom1) const;
     bool areConnected(const AtomID &atom0, const AtomID &atom1) const;
@@ -210,6 +213,10 @@ protected:
     bool operator!=(const ConnectivityBase &other) const;
 
     inline const MoleculeInfoData& info() const;
+
+    SireBase::PropertyPtr _pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                                  const AtomMatcher &atommatcher) const;
+
 
     /** The which atoms are connected to which other atoms
         in this molecule */

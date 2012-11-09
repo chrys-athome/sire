@@ -34,6 +34,7 @@
 #include "moleculedata.h"
 #include "moleculeinfodata.h"
 #include "moleculeview.h"
+#include "atommatcher.h"
 
 #include "angleid.h"
 #include "bondid.h"
@@ -62,12 +63,12 @@ static const RegisterMetaType<ConnectivityBase> r_conbase(MAGIC_ONLY,
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
                                        const ConnectivityBase &conbase)
 {
-    writeHeader(ds, r_conbase, 1);
+    writeHeader(ds, r_conbase, 2);
 
     SharedDataStream sds(ds);
 
     sds << conbase.connected_atoms << conbase.connected_res
-        << conbase.d << static_cast<const Property&>(conbase);
+        << conbase.d << static_cast<const MolViewProperty&>(conbase);
 
     return ds;
 }
@@ -78,7 +79,15 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 {
     VersionID v = readHeader(ds, r_conbase);
 
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> conbase.connected_atoms >> conbase.connected_res
+            >> conbase.d
+            >> static_cast<MolViewProperty&>(conbase);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
         
@@ -87,7 +96,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
             >> static_cast<Property&>(conbase);
     }
     else
-        throw version_error(v, "1", r_conbase, CODELOC);
+        throw version_error(v, "1,2", r_conbase, CODELOC);
 
     return ds;
 }
@@ -104,7 +113,7 @@ static SharedDataPointer<MoleculeInfoData> getNull()
 
 /** Null constructor */
 ConnectivityBase::ConnectivityBase()
-                 : Property(), d( ::getNull() )
+                 : MolViewProperty(), d( ::getNull() )
 {}
 
 const MoleculeInfoData& ConnectivityBase::info() const
@@ -115,7 +124,7 @@ const MoleculeInfoData& ConnectivityBase::info() const
 /** Construct the connectivity for molecule described by 
     the passed info object */
 ConnectivityBase::ConnectivityBase(const MoleculeData &moldata)
-                 : Property(), d(moldata.info())
+                 : MolViewProperty(), d(moldata.info())
 {
     if (info().nAtoms() > 0)
     {
@@ -132,7 +141,7 @@ ConnectivityBase::ConnectivityBase(const MoleculeData &moldata)
     
 /** Copy constructor */
 ConnectivityBase::ConnectivityBase(const ConnectivityBase &other)
-                 : Property(other),
+                 : MolViewProperty(other),
                    connected_atoms(other.connected_atoms),
                    connected_res(other.connected_res),
                    d(other.d)
@@ -167,6 +176,65 @@ bool ConnectivityBase::operator!=(const ConnectivityBase &other) const
 {
     return (d != other.d and *d != *(other.d)) or
            connected_atoms != other.connected_atoms;
+}
+
+bool ConnectivityBase::isCompatibleWith(const MoleculeInfoData &molinfo) const
+{
+    return molinfo == this->info();
+}
+
+PropertyPtr ConnectivityBase::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                                      const AtomMatcher &atommatcher) const
+{
+    try
+    {
+    if (atommatcher.unchangedAtomOrder(this->info(), molinfo))
+    {
+        //the order of the atoms remains the same - this means that the 
+        //AtomIdx indicies are still valid
+        Connectivity ret;
+        ret.connected_atoms = connected_atoms;
+        ret.connected_res = connected_res;
+        ret.d = molinfo;
+        return ret;
+    }
+
+    QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), molinfo);
+
+    ConnectivityEditor editor;
+    editor.d = molinfo;
+    editor.connected_atoms = QVector< QSet<AtomIdx> >( molinfo.nAtoms() );
+    editor.connected_res = QVector< QSet<ResIdx> >( molinfo.nResidues() );
+
+    for (int i=0; i<connected_atoms.count(); ++i)
+    {
+        AtomIdx old_idx(i);
+        
+        AtomIdx new_idx = matched_atoms.value(old_idx, AtomIdx(-1));
+        
+        if (new_idx != -1)
+        {
+            foreach (AtomIdx old_bond, this->connectionsTo(old_idx))
+            {
+                AtomIdx new_bond = matched_atoms.value(old_bond, AtomIdx(-1));
+                
+                if (new_bond != -1)
+                {
+                    if (new_bond > new_idx)
+                        editor.connect(new_idx, new_bond);
+                }
+            }
+        }
+    }
+
+    return editor.commit();
+    }
+    catch(const SireError::exception &e)
+    {
+        qDebug() << e.toString();
+        throw;
+        return Connectivity();
+    }
 }
 
 static QString atomString(const MoleculeInfoData &molinfo, AtomIdx atom)
