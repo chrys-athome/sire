@@ -7,6 +7,8 @@
 
 namespace bp = boost::python;
 
+#include "SireMaths/constants.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
@@ -35,6 +37,28 @@ void register_GridFF_class(){
         bp::scope GridFF_scope( GridFF_exposer );
         GridFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         GridFF_exposer.def( bp::init< SireMM::GridFF const & >(( bp::arg("other") )) );
+        { //::SireMM::GridFF::addFixedAtoms
+        
+            typedef void ( ::SireMM::GridFF::*addFixedAtoms_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
+            addFixedAtoms_function_type addFixedAtoms_function_value( &::SireMM::GridFF::addFixedAtoms );
+            
+            GridFF_exposer.def( 
+                "addFixedAtoms"
+                , addFixedAtoms_function_value
+                , ( bp::arg("fixed_atoms"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::GridFF::addFixedAtoms
+        
+            typedef void ( ::SireMM::GridFF::*addFixedAtoms_function_type )( ::SireMol::Molecules const &,::SireBase::PropertyMap const & ) ;
+            addFixedAtoms_function_type addFixedAtoms_function_value( &::SireMM::GridFF::addFixedAtoms );
+            
+            GridFF_exposer.def( 
+                "addFixedAtoms"
+                , addFixedAtoms_function_value
+                , ( bp::arg("fixed_atoms"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
         { //::SireMM::GridFF::buffer
         
             typedef ::SireUnits::Dimension::Length ( ::SireMM::GridFF::*buffer_function_type )(  ) const;
