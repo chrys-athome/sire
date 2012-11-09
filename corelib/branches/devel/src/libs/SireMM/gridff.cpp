@@ -29,7 +29,13 @@
 #include "gridff.h"
 #include "cljpotential.h"
 
+#include "SireMol/atomcoords.h"
+#include "SireMol/atomcharges.h"
+#include "atomljs.h"
+
 #include "SireMaths/constants.h"
+
+#include "SireUnits/units.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -56,13 +62,26 @@ static const RegisterMetaType<GridFF> r_gridff;
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridFF &gridff)
 {
-    writeHeader(ds, r_gridff, 2);
+    writeHeader(ds, r_gridff, 3);
     
     SharedDataStream sds(ds);
     
     sds << gridff.buffer_size << gridff.grid_spacing
         << gridff.coul_cutoff << gridff.lj_cutoff
-        << static_cast<const InterGroupCLJFF&>(gridff);
+        << gridff.fixedatoms_coords;
+    
+    //the number of CLJ parameters is the same as the number of coords
+    LJParameterDB::lock();
+
+    for (int i=0; i<gridff.fixedatoms_params.count(); ++i)
+    {
+        const SireMM::detail::CLJParameter &param = gridff.fixedatoms_params.constData()[i];
+        sds << param.reduced_charge << LJParameterDB::_locked_getLJParameter(param.ljid);
+    }
+    
+    LJParameterDB::unlock();
+    
+    sds << static_cast<const InterGroupCLJFF&>(gridff);
     
     return ds;
 }
@@ -71,18 +90,63 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
 {
     VersionID v = readHeader(ds, r_gridff);
     
-    if (v == 2)
+    if (v == 3)
     {
         SharedDataStream sds(ds);
         
         gridff = GridFF();
+        
+        gridff.fixedatoms_coords.clear();
+        gridff.fixedatoms_params.clear();
+        
+        sds >> gridff.buffer_size >> gridff.grid_spacing
+            >> gridff.coul_cutoff >> gridff.lj_cutoff
+            >> gridff.fixedatoms_coords;
+        
+        gridff.fixedatoms_params.resize(gridff.fixedatoms_coords.count());
+        
+        LJParameterDB::lock();
+        
+        try
+        {
+            for (int i=0; i<gridff.fixedatoms_coords.count(); ++i)
+            {
+                double reduced_chg;
+                LJParameter ljparam;
+                
+                sds >> reduced_chg >> ljparam;
+                
+                gridff.fixedatoms_params[i].reduced_charge = reduced_chg;
+                gridff.fixedatoms_params[i].ljid = LJParameterDB::_locked_addLJParameter(ljparam);
+            
+                LJParameterDB::unlock();
+            }
+            
+            gridff.need_update_ljpairs = true;
+        }
+        catch(...)
+        {
+            LJParameterDB::unlock();
+            throw;
+        }
+        
+        sds >> static_cast<InterGroupCLJFF&>(gridff);
+    }
+    else if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        gridff = GridFF();
+        
+        gridff.fixedatoms_coords.clear();
+        gridff.fixedatoms_params.clear();
         
         sds >> gridff.buffer_size >> gridff.grid_spacing
             >> gridff.coul_cutoff >> gridff.lj_cutoff
             >> static_cast<InterGroupCLJFF&>(gridff);
     }
     else
-        throw version_error(v, "2", r_gridff, CODELOC);
+        throw version_error(v, "2,3", r_gridff, CODELOC);
         
     return ds;
 }
@@ -112,7 +176,9 @@ GridFF::GridFF(const GridFF &other)
          buffer_size(other.buffer_size), grid_spacing(other.grid_spacing),
          coul_cutoff(other.coul_cutoff), lj_cutoff(other.lj_cutoff),
          dimx(other.dimx), dimy(other.dimy), dimz(other.dimz),
-         gridpot(other.gridpot), 
+         gridpot(other.gridpot),
+         fixedatoms_coords(other.fixedatoms_coords),
+         fixedatoms_params(other.fixedatoms_params),
          closemols_coords(other.closemols_coords),
          closemols_params(other.closemols_params),
          oldnrgs(other.oldnrgs)
@@ -148,6 +214,8 @@ GridFF& GridFF::operator=(const GridFF &other)
         dimy = other.dimy;
         dimz = other.dimz;
         gridpot = other.gridpot;
+        fixedatoms_coords = other.fixedatoms_coords;
+        fixedatoms_params = other.fixedatoms_params;
         closemols_coords = other.closemols_coords;
         closemols_params = other.closemols_params;
         oldnrgs = other.oldnrgs;
@@ -175,6 +243,119 @@ bool GridFF::operator!=(const GridFF &other) const
 GridFF* GridFF::clone() const
 {
     return new GridFF(*this);
+}
+
+/** Add fixed atoms to the grid. These are atoms that will never change
+    position or charge during the simulation, and that you wish to be
+    included in the energy expression. The atoms can be placed here, and
+    then do not need to be added to the simulation System. This is useful
+    if you are simulating a small cutout of the system and do not want to 
+    have all of the atoms loaded into the system during the simulation */
+void GridFF::addFixedAtoms(const MoleculeView &fixed_atoms, const PropertyMap &map)
+{
+    const PropertyName coords_property = map["coordinates"];
+    const PropertyName chg_property = map["charge"];
+    const PropertyName lj_property = map["LJ"];
+    
+    const QVector<Vector> coords = fixed_atoms.molecule().property(coords_property)
+                                      .asA<AtomCoords>().toVector(fixed_atoms.selection());
+
+    const QVector<SireUnits::Dimension::Charge> charges =
+                            fixed_atoms.molecule().property(chg_property)
+                                      .asA<AtomCharges>().toVector(fixed_atoms.selection());
+
+    const QVector<LJParameter> ljs = fixed_atoms.molecule().property(lj_property)
+                                      .asA<AtomLJs>().toVector(fixed_atoms.selection());
+    
+    int nats = coords.count();
+    
+    fixedatoms_coords.reserve( fixedatoms_coords.count() + nats );
+    fixedatoms_params.reserve( fixedatoms_params.count() + nats );
+    
+    fixedatoms_coords += coords;
+    
+    LJParameterDB::lock();
+    
+    const double sqrt_one_over_4pieps0 = std::sqrt(SireUnits::one_over_four_pi_eps0);
+    
+    for (int i=0; i<nats; ++i)
+    {
+        SireMM::detail::CLJParameter cljparam;
+        
+        cljparam.reduced_charge = charges[i] * sqrt_one_over_4pieps0;
+        cljparam.ljid = LJParameterDB::_locked_addLJParameter(ljs[i]);
+        
+        fixedatoms_params.append(cljparam);
+    }
+    
+    LJParameterDB::unlock();
+    
+    fixedatoms_coords.squeeze();
+    fixedatoms_params.squeeze();
+
+    need_update_ljpairs = true;
+
+    this->mustNowRecalculateFromScratch();
+}
+
+/** Add fixed atoms to the grid. These are atoms that will never change
+    position or charge during the simulation, and that you wish to be
+    included in the energy expression. The atoms can be placed here, and
+    then do not need to be added to the simulation System. This is useful
+    if you are simulating a small cutout of the system and do not want to 
+    have all of the atoms loaded into the system during the simulation */
+void GridFF::addFixedAtoms(const SireMol::Molecules &fixed_atoms, const PropertyMap &map)
+{
+    const PropertyName coords_property = map["coordinates"];
+    const PropertyName chg_property = map["charge"];
+    const PropertyName lj_property = map["LJ"];
+
+    const double sqrt_one_over_4pieps0 = std::sqrt(SireUnits::one_over_four_pi_eps0);
+    
+    LJParameterDB::lock();
+    
+    for (SireMol::Molecules::const_iterator it = fixed_atoms.constBegin();
+         it != fixed_atoms.constEnd();
+         ++it)
+    {
+        SireMol::Molecule mol = it->molecule();
+        AtomSelection selection = it->selection();
+        
+        const QVector<Vector> coords = mol.property(coords_property)
+                                        .asA<AtomCoords>().toVector(selection);
+        
+        const QVector<SireUnits::Dimension::Charge> charges = mol.property(chg_property)
+                                        .asA<AtomCharges>().toVector(selection);
+        
+        const QVector<LJParameter> ljs = mol.property(lj_property)
+                                            .asA<AtomLJs>().toVector(selection);
+
+        int nats = coords.count();
+        
+        fixedatoms_coords.reserve( fixedatoms_coords.count() + nats );
+        fixedatoms_params.reserve( fixedatoms_params.count() + nats );
+        
+        fixedatoms_coords += coords;
+        
+        for (int i=0; i<nats; ++i)
+        {
+            SireMM::detail::CLJParameter cljparam;
+            
+            cljparam.reduced_charge = charges[i] * sqrt_one_over_4pieps0;
+            cljparam.ljid = LJParameterDB::_locked_addLJParameter(ljs[i]);
+
+            fixedatoms_params.append(cljparam);
+        }
+    }
+    
+    LJParameterDB::unlock();
+
+    need_update_ljpairs = true;
+    
+    fixedatoms_coords.squeeze();
+    fixedatoms_params.squeeze();
+
+    this->mustNowRecalculateFromScratch();
 }
 
 /** Set the buffer when building the grid. This adds a buffer space
@@ -1088,112 +1269,157 @@ void GridFF::rebuildGrid()
     const ChunkedVector<CLJMolecule> &cljmols = mols[1].moleculesByIndex();
     
     const Space &spce = this->space();
-    Vector grid_center = group0_box.center();
+    Vector grid_center = gridbox.center();
     qDebug() << "Grid space equals:" << spce.toString();
     
     qDebug() << "Rebuilding the LJ parameter database...";
     CLJPotential::startEvaluation();
     CLJPotential::finishedEvaluation();
     
+    qDebug() << "Adding all of the fixed atom points to the grid...";
+    QVector<Vector4> far_mols;
+
+    int atomcount = 0;
+    
+    const double grid_lj_cutoff = gridbox.radius() + lj_cutoff;
+    
+    closemols_coords.reserve(fixedatoms_coords.count() / 2);
+    closemols_params.reserve(fixedatoms_coords.count() / 2);
+    
+    for (int i=0; i<fixedatoms_coords.count(); ++i)
+    {
+        const Vector &coords = fixedatoms_coords.constData()[i];
+        const SireMM::detail::CLJParameter &params = fixedatoms_params.constData()[i];
+        
+        //calculate the distance between this point and the center of the grid
+        double dist = Vector::distance(coords, grid_center);
+        
+        if (dist < grid_lj_cutoff)
+        {
+            atomcount += 1;
+            closemols_coords.append(coords);
+            closemols_params.append(params);
+        }
+        else
+        {
+            far_mols.append( Vector4(coords, params.reduced_charge) );
+            
+            if (far_mols.count() > 4096)
+            {
+                addToGrid(far_mols);
+                far_mols.clear();
+                qDebug() << "Added" << i+1 << "of" << fixedatoms_coords.count()
+                         << "fixed atoms to the grid...";
+            }
+        }
+    }
+    
+    addToGrid(far_mols);
+    qDebug() << "Added all of the first atoms to the grid. The number of explicitly "
+             << "evaluated fixed atoms is" << atomcount;
+    
     qDebug() 
       << "Building the list of close molecules and adding far molecules to the grid...";
 
-    QVector<Vector4> far_mols;
+    far_mols.clear();
     int molcount = 0;
-    int atomcount = 0;
+    atomcount = 0;
     t.start();
 
-    for (ChunkedVector<CLJMolecule>::const_iterator it = cljmols.constBegin();
-         it != cljmols.constEnd();
-         ++it)
+    if (not cljmols.isEmpty())
     {
-        const CLJMolecule &cljmol = *it;
-
-        //loop through each CutGroup of this molecule
-        const int ngroups = cljmol.coordinates().count();
-        
-        const CoordGroup *groups_array = cljmol.coordinates().constData();
-        
-        const CLJParameters::Array *params_array 
-                                = cljmol.parameters().atomicParameters().constData();
-
-        for (int igroup=0; igroup<ngroups; ++igroup)
+        for (ChunkedVector<CLJMolecule>::const_iterator it = cljmols.constBegin();
+             it != cljmols.constEnd();
+             ++it)
         {
-            const CoordGroup &coordgroup = groups_array[igroup];
-            const CLJParameters::Array &params = params_array[igroup];
-            
-            if (spce.isPeriodic())
-            {
-                CoordGroup minimum_image = spce.getMinimumImage(coordgroup,
-                                                                grid_center);
+            const CLJMolecule &cljmol = *it;
 
-                //get all copies of the CoordGroup within the cutoff distance
-                //of the molecules in group0
-                QList< boost::tuple<double,CoordGroup> > images =
-                    spce.getCopiesWithin(minimum_image, allcoords0, coul_cutoff);
-                    
-                //any CoordGroups that are within the LJ cutoff of the 
-                //molecules in group0 should be evaluated explicitly
-                for (QList< boost::tuple<double,CoordGroup> >::const_iterator
-                                                it = images.constBegin();
-                     it != images.constEnd();
-                     ++it)
+            //loop through each CutGroup of this molecule
+            const int ngroups = cljmol.coordinates().count();
+            
+            const CoordGroup *groups_array = cljmol.coordinates().constData();
+            
+            const CLJParameters::Array *params_array 
+                                    = cljmol.parameters().atomicParameters().constData();
+
+            for (int igroup=0; igroup<ngroups; ++igroup)
+            {
+                const CoordGroup &coordgroup = groups_array[igroup];
+                const CLJParameters::Array &params = params_array[igroup];
+                
+                if (spce.isPeriodic())
                 {
-                    if (it->get<0>() < lj_cutoff)
+                    CoordGroup minimum_image = spce.getMinimumImage(coordgroup,
+                                                                    grid_center);
+
+                    //get all copies of the CoordGroup within the cutoff distance
+                    //of the molecules in group0
+                    QList< boost::tuple<double,CoordGroup> > images =
+                        spce.getCopiesWithin(minimum_image, allcoords0, coul_cutoff);
+                        
+                    //any CoordGroups that are within the LJ cutoff of the 
+                    //molecules in group0 should be evaluated explicitly
+                    for (QList< boost::tuple<double,CoordGroup> >::const_iterator
+                                                    it = images.constBegin();
+                         it != images.constEnd();
+                         ++it)
                     {
-                        //this image should be evaluated explicitly
-                        closemols_coords += it->get<1>().toVector();
-                        closemols_params += params.toQVector();
+                        if (it->get<0>() < lj_cutoff)
+                        {
+                            //this image should be evaluated explicitly
+                            closemols_coords += it->get<1>().toVector();
+                            closemols_params += params.toQVector();
+                        }
+                        else if (it->get<0>() < coul_cutoff)
+                        {
+                            appendTo(far_mols, it->get<1>().constData(),
+                                               params.constData(), coordgroup.count());
+                        }
                     }
-                    else if (it->get<0>() < coul_cutoff)
+                }
+                else
+                {
+                    if (not spce.beyond(coul_cutoff, coordgroup, allcoords0))
                     {
-                        appendTo(far_mols, it->get<1>().constData(),
-                                           params.constData(), coordgroup.count());
+                        double mindist = spce.minimumDistance(coordgroup, allcoords0);
+
+                        if (mindist < lj_cutoff)
+                        {
+                            //this image should be evaluated explicitly
+                            closemols_coords += coordgroup.toVector();
+                            closemols_params += params.toQVector();
+                        }
+                        else if (mindist < coul_cutoff)
+                        {
+                            //evaluate the energy on each of the gridpoints...
+                            appendTo(far_mols, coordgroup.constData(),
+                                     params.constData(), coordgroup.count());
+                        }
                     }
                 }
             }
-            else
+            
+            molcount += 1;
+            
+            if (far_mols.count() > 4096)
             {
-                if (not spce.beyond(coul_cutoff, coordgroup, allcoords0))
-                {
-                    double mindist = spce.minimumDistance(coordgroup, allcoords0);
-
-                    if (mindist < lj_cutoff)
-                    {
-                        //this image should be evaluated explicitly
-                        closemols_coords += coordgroup.toVector();
-                        closemols_params += params.toQVector();
-                    }
-                    else if (mindist < coul_cutoff)
-                    {
-                        //evaluate the energy on each of the gridpoints...
-                        appendTo(far_mols, coordgroup.constData(),
-                                 params.constData(), coordgroup.count());
-                    }
-                }
+                atomcount += far_mols.count();
+                addToGrid(far_mols);
+                far_mols.clear();
+                qDebug() << "Added" << molcount << "of" << cljmols.count()
+                         << "molecules to the grid...";
             }
         }
         
-        molcount += 1;
-        
-        if (far_mols.count() > 4096)
+        if (not far_mols.isEmpty())
         {
             atomcount += far_mols.count();
             addToGrid(far_mols);
-            far_mols.clear();
             qDebug() << "Added" << molcount << "of" << cljmols.count()
                      << "molecules to the grid...";
         }
     }
-    
-    if (not far_mols.isEmpty())
-    {
-        atomcount += far_mols.count();
-        addToGrid(far_mols);
-        qDebug() << "Added" << molcount << "of" << cljmols.count()
-                 << "molecules to the grid...";
-    }
-    
+
     qDebug() << "Adding" << molcount << "molecules (" << atomcount
              << "atoms) to the grid took" << t.elapsed() << "ms in total";
     
@@ -1892,7 +2118,7 @@ void GridFF::_pvt_removedAll(quint32 groupid)
 /** Recalculate the total energy */
 void GridFF::recalculateEnergy()
 {
-    if (mols[0].isEmpty() or mols[1].isEmpty())
+    if (mols[0].isEmpty() or (mols[1].isEmpty() and fixedatoms_coords.isEmpty()))
     {
         //one of the two groups is empty, so the energy must be zero
         this->components().setEnergy(*this, CLJEnergy(0,0));
