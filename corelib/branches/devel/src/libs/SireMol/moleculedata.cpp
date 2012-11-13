@@ -166,7 +166,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
     return ds;
 }
 
-QHash< MolNum, boost::weak_ptr<MoleculeData::PropVersions> > 
+QHash< MolNum, boost::weak_ptr<MoleculeData::PropVersions> >
 MoleculeData::version_registry;
 
 QMutex MoleculeData::version_registry_mutex;
@@ -207,6 +207,27 @@ MoleculeData::registerMolecule(MolNum molnum)
     }
     
     return vrsns;
+}
+
+static Incremint last_registered_molnum(0);
+
+MolNum MoleculeData::createUniqueMolNum()
+{
+    QMutexLocker lkr(&version_registry_mutex);
+    
+    MolNum molnum( last_registered_molnum.increment() );
+    
+    while (version_registry.contains(molnum))
+    {
+        molnum = MolNum( last_registered_molnum.increment() );
+    }
+    
+    return molnum;
+}
+
+MolNum MolNum::getUniqueNumber()
+{
+    return MoleculeData::createUniqueMolNum();
 }
 
 /** Null constructor */

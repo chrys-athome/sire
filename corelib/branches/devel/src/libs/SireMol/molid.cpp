@@ -310,13 +310,6 @@ MolNum::MolNum(const MolNum &other) : SireID::Number(other), MolID(other)
 MolNum::~MolNum()
 {}
 
-static Incremint last_num(0);
-
-MolNum MolNum::getUniqueNumber()
-{
-    return MolNum( last_num.increment() );
-}
-
 bool MolNum::isNull() const
 {
     return SireID::Number::isNull();

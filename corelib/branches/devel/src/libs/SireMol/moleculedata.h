@@ -289,6 +289,9 @@ private:
         in a group */
     MolNum molnum;
 
+    friend class MolNum;
+    static MolNum createUniqueMolNum();
+
     class PropVersions
     {
     public:

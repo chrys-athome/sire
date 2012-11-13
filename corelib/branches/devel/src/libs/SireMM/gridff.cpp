@@ -1422,7 +1422,7 @@ void GridFF::rebuildGrid()
                 {
                     far_mols.append( Vector4(coords, params.reduced_charge) );
                 
-                    if (far_mols.count() > 4096)
+                    if (far_mols.count() > 1023)
                     {
                         addToGrid(far_mols);
                         gridcount += far_mols.count();
@@ -1501,7 +1501,7 @@ void GridFF::rebuildGrid()
                         {
                             far_mols.append( Vector4(coords, params.reduced_charge) );
                 
-                            if (far_mols.count() > 4096)
+                            if (far_mols.count() > 1023)
                             {
                                 addToGrid(far_mols);
                                 gridcount += far_mols.count();
