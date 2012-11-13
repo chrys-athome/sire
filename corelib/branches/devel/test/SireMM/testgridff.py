@@ -99,16 +99,4 @@ for i in range(1,11):
 
     PDB().write(system.molecules(), "test%0004d.pdb" % i)
 
-if not run_explicit:
-    gridff = system[FFName("gridff")]
-
-    print "Average total time saved = %f ms" % gridff.averageTotalTimeSaved()
-    print "Average delta time saved = %f ms" % gridff.averageDeltaTimeSaved()
-
-    print "\nCoulomb delta histogram"
-    print gridff.deltaCoulombErrorHistogram().toString()
-
-    print "\nLJ delta histogram"
-    print gridff.deltaLJErrorHistogram().toString()
-
 print "Done :-)"

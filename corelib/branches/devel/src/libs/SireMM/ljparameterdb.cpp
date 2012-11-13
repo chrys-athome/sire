@@ -81,7 +81,7 @@ const QString& LJParameterDB::toString(LJParameterDB::CombiningRules rule)
 /** Constructor */
 LJParameterDB::LJParameterDBData::LJParameterDBData()
 {
-    //add the null LJ parameter
+    //add the null LJ parameter - this has ID == 0
     ljparams_by_idx.append( LJParameter::dummy() );
     ljparams_by_value.insert( LJParameter::dummy(), 0 );
 }
