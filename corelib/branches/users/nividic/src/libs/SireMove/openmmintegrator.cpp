@@ -385,6 +385,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		throw SireError::program_bug(QObject::tr(
             "The Constraints method has not been specified. Possible choises: none, hbonds, allbonds, hangles"), CODELOC);
 		
+	
 	cout << "\nConstraint Type = " << ConstraintType.toStdString() << "\n";
 	
 	
@@ -537,7 +538,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		if(free_energy_calculation == true){
 
 			custom_softcore_solute_solvent = new OpenMM::CustomNonbondedForce("(10.0*Hls+100.0*Hcs)*ZeroOne;"
-																			  "ZeroOne=issolute1*(1-issolute2)+issolute2*(1-issolute1)"
+																			  "ZeroOne=issolute1*(1-issolute2)+issolute2*(1-issolute1);"
 																			  "Hcs=((0.01*lam_cl)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
 																			  "diff_cl=(1.0-lam_cl)*0.01;"
 																			  "lam_cl=min(1,max(0,lambda-1));"
@@ -563,7 +564,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			custom_softcore_solute_solvent->setCutoffDistance(converted_cutoff_distance);
 			
 			
-			custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*(1-ZeroOne);"
+			custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*ZeroOne;"
 																					"ZeroOne=(1-issolute1)*(1-issolute2)+issolute1*issolute2;"
 																					"Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
 																					"Hc=138.935456*q_prod/r;"
@@ -603,9 +604,6 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
 		cout << "CutOff distance = " << converted_cutoff_distance  << " Nm" << "\n";
 		cout << "Dielectric constant= " << field_dielectric << "\n\n";
-	
-	
-	
 	
 	}
 	
@@ -1574,7 +1572,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		
 
-		bool dcd = true;
+		bool dcd = false;
 		
 		bool wrap = false;
 		
@@ -1726,7 +1724,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		cout<<"\n";
 
-		int frequency_dcd = 10;
+		int frequency_dcd = 10;//save every frequency_dcd
 
 		bool dcd = true;
 		
@@ -1734,9 +1732,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 		vector<double> center;
 		
-		center.push_back(2.0);
-		center.push_back(2.0);
-		center.push_back(2.0); 
+		center.push_back(0.0);
+		center.push_back(0.0);
+		center.push_back(0.0); 
 		
 		if(dcd == true){
 			dcd_p = new DCD("dynamic.dcd",positions_openmm,velocities_openmm,wrap,nmoves,nats,
@@ -1820,6 +1818,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 										   		 << b[1] * OpenMM::AngstromsPerNm << ", " 
 										   		 << c[2] * OpenMM::AngstromsPerNm << ")\n\n";
 										   		 
+
 		Vector new_dims = Vector(a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
 
 		System & ptr_sys = ws.nonConstsystem();
@@ -2697,25 +2696,27 @@ void DCD::integrateMD(void){
 		COG[0] = COG[0]/nats;
 		COG[1] = COG[1]/nats;
 		COG[2] = COG[2]/nats;
+		
+		COT[0]=box_center[0]-COG[0];
+		COT[1]=box_center[1]-COG[1];
+		COT[2]=box_center[2]-COG[2];
 
-		//cout << "\nCOG X = " << COG[0] << " GOG Y = " << COG[1] << " COG Z = " << COG[2] << "\n";
+
+		
 
 	}
 
 
-	COT[0]=box_center[0]-COG[0];
-	COT[1]=box_center[1]-COG[1];
-	COT[2]=box_center[2]-COG[2];
-
-	cout << "Box[0] = " << box_center[0] << " Box[1] = " << box_center[1] << " Box [2] = " << box_center[2] << "\n\n";
+	
+	/*cout << "\n\nBox center[0] = " << box_center[0] << " Box center[1] = " << box_center[1] << " Box center[2] = " << box_center[2] << "\n\n";
 
 	cout << "COG[0] = " << COG[0] << " COG[1] = " << COG[1] << " COG[2] = " << COG[2] << "\n\n";
 
-	cout << "COT[0] = " << COT[0] << " COT[1] = " << COT[1] << " COT[2] = " << COT[2] << "\n\n";
+	cout << "COT[0] = " << COT[0] << " COT[1] = " << COT[1] << " COT[2] = " << COT[2] << "\n\n";*/
 
 	for(int i=0;i<cycles;i++){
 
-		integrator_openmm.step(steps);
+		integrator_openmm.step(steps);/******************************IMPORTANT*****************************************/
 
 		state_openmm=context_openmm.getState(infoMask);	
 
@@ -2748,7 +2749,8 @@ void DCD::integrateMD(void){
 
 			if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
 
-				for (int m=0; m < nats_mol; ++m){
+				for (int m=0; m < nats_mol; m++){
+					
 					int openmmindex = num_atoms_till_l+m;
 
 					//cout << "Molecule index = " << l << " Atom index = " << m <<" Openmm Index = " << openmmindex <<"\n\n";
@@ -2763,9 +2765,13 @@ void DCD::integrateMD(void){
 				molecule_COG[1] = molecule_COG[1]/nats_mol;
 				molecule_COG[2] = molecule_COG[2]/nats_mol;
 				
+				//cout << "molecule_COG[0] = " << molecule_COG[0] << " molecule_COG[1] = " << molecule_COG[1] << " molecule_COG[2] = " << molecule_COG[2] << "\n\n";
+				
 				molecule_COG[0] = molecule_COG[0] + COT[0];
 				molecule_COG[1] = molecule_COG[1] + COT[1];
 				molecule_COG[2] = molecule_COG[2] + COT[2];
+				
+				//cout << "molecule_COG_T[0] = " << molecule_COG[0] << " molecule_COG_T[1] = " << molecule_COG[1] << " molecule_COG_T[2] = " << molecule_COG[2] << "\n\n";
 				
 				T[0] = molecule_COG[0] - box_dims[0]*round(molecule_COG[0]/box_dims[0]);
 				T[1] = molecule_COG[1] - box_dims[2]*round(molecule_COG[1]/box_dims[2]);
@@ -2774,11 +2780,13 @@ void DCD::integrateMD(void){
 				T[0] = T[0] - molecule_COG[0];
 				T[1] = T[1] - molecule_COG[1];
 				T[2] = T[2] - molecule_COG[2];
+				
+				//cout << "T[0] = " << T[0] << " T[1] = " << T[1] << " T[2] = " << T[2] << "\n\n";
 
 			}//end if wrap
 
 
-			for (int m=0; m < nats_mol; ++m){
+			for (int m=0; m < nats_mol; m++){
 
 				int openmmindex = num_atoms_till_l+m;
 
@@ -2791,10 +2799,18 @@ void DCD::integrateMD(void){
 					X[openmmindex] = X[openmmindex] + COT[0];
 					Y[openmmindex] = Y[openmmindex] + COT[1];
 					Z[openmmindex] = Z[openmmindex] + COT[2];
+					
+					/*cout << "X[" << openmmindex << "] =" << X[openmmindex] <<
+						    " Y[" << openmmindex << "] = "<< Y[openmmindex] <<
+						    " Z[" << openmmindex << "] = " << Z[openmmindex] << "\n";*/
 
 					X[openmmindex] = X[openmmindex] + T[0];
 					Y[openmmindex] = Y[openmmindex] + T[1];
 					Z[openmmindex] = Z[openmmindex] + T[2];
+					
+					/*cout << "X[" << openmmindex << "] =" << X[openmmindex] <<
+						    " Y[" << openmmindex << "] = "<< Y[openmmindex] <<
+						    " Z[" << openmmindex << "] = " << Z[openmmindex] << "\n";*/
 
 				}
 
@@ -2825,10 +2841,15 @@ void DCD::integrateFreeEnergy(int current_frame){
 
 	int steps;
 
-
-	double COG[3] = {0.0,0.0,0.0};
+	static double COG[3] = {0.0,0.0,0.0};
+	
+	static double COT[3] = {0.0,0.0,0.0};//center of translation
 
 	double dt = integrator_openmm.getStepSize();
+	
+	const int nmols = ws.nMolecules();
+	
+	MoleculeGroup molgroup = ws.moleculeGroup();
 
 	int infoMask = 0;
 
@@ -2859,7 +2880,7 @@ void DCD::integrateFreeEnergy(int current_frame){
 	if(current_frame == 0)
 		write_dcdheader(fd, "Created by OpenMM", nats,0,frequency_dcd, delta, box,1);
 
-	if(wrap == true){
+	if(wrap == true && current_frame == 0){
 		for(unsigned int i=0;i<positions_openmm.size();i++){
 
 			COG[0] = COG[0] + positions_openmm[i][0]*(OpenMM::AngstromsPerNm); //X Cennter of Geometry
@@ -2870,29 +2891,29 @@ void DCD::integrateFreeEnergy(int current_frame){
 		COG[0] = COG[0]/nats;
 		COG[1] = COG[1]/nats;
 		COG[2] = COG[2]/nats;
+		
+		COT[0]=box_center[0]-COG[0];
+		COT[1]=box_center[1]-COG[1];
+		COT[2]=box_center[2]-COG[2];
+		
+		/*cout << "\n\nBox center[0] = " << box_center[0] << " Box center[1] = " << box_center[1] << " Box center[2] = " << box_center[2] << "\n\n";
 
-		//cout << "\nCOG X = " << COG[0] << " GOG Y = " << COG[1] << " COG Z = " << COG[2] << "\n";
+		cout << "COG[0] = " << COG[0] << " COG[1] = " << COG[1] << " COG[2] = " << COG[2] << "\n\n";
+
+		cout << "COT[0] = " << COT[0] << " COT[1] = " << COT[1] << " COT[2] = " << COT[2] << "\n\n";*/
 
 	}
 
 
-	/*for(unsigned int i=0;i<positions_openmm.size();i++){
-
-		cout << "\natom = " << i << " COORD X = " << positions_openmm[i][0]*(OpenMM::AngstromsPerNm) 
-							   	 << " COORD Y = " << positions_openmm[i][1]*(OpenMM::AngstromsPerNm) 
-							     << " COORD Z = " << positions_openmm[i][2]*(OpenMM::AngstromsPerNm) <<"\n";
-	}*/
-
 	for(int i=0;i<cycles;i++){
 
-		integrator_openmm.step(steps);
+		integrator_openmm.step(steps);/******************************IMPORTANT*****************************************/
 
-		state_openmm=context_openmm.getState(infoMask);	
+		state_openmm=context_openmm.getState(infoMask);
 
 		positions_openmm = state_openmm.getPositions();
 
 		velocities_openmm = state_openmm.getVelocities();
-
 
 
 		if(flag_cutoff == CUTOFFPERIODIC){
@@ -2908,43 +2929,99 @@ void DCD::integrateFreeEnergy(int current_frame){
 
 		}
 
-		for(int j=0; j<nats;j++){
+		int num_atoms_till_l=0;
 
-			X[j] = positions_openmm[j][0]*OpenMM::AngstromsPerNm;
-			Y[j] = positions_openmm[j][1]*OpenMM::AngstromsPerNm;
-			Z[j] = positions_openmm[j][2]*OpenMM::AngstromsPerNm;
+		for (int l=0; l < nmols; ++l){
+
+			const int nats_mol = ws.nAtoms(l);
+			
+			double molecule_COG[3] = {0.0,0.0,0.0};
+			double T[3] = {0.0,0.0,0.0};//Translation vector
 
 			if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
 
-				X[j] = X[j] - COG[0];
-				Y[j] = Y[j] - COG[1];
-				Z[j] = Z[j] - COG[2];
+				for (int m=0; m < nats_mol; m++){
+					
+					int openmmindex = num_atoms_till_l+m;
 
-				X[j] = X[j] - box_dims[0]*round(X[j]/box_dims[0]);
-				Y[j] = Y[j] - box_dims[2]*round(Y[j]/box_dims[2]);
-				Z[j] = Z[j] - box_dims[5]*round(Z[j]/box_dims[5]);
+					//cout << "Molecule index = " << l << " Atom index = " << m <<" Openmm Index = " << openmmindex <<"\n\n";
+
+					molecule_COG[0] = molecule_COG[0] + positions_openmm[openmmindex][0]*OpenMM::AngstromsPerNm;;
+					molecule_COG[1] = molecule_COG[1] + positions_openmm[openmmindex][1]*OpenMM::AngstromsPerNm;;
+					molecule_COG[2] = molecule_COG[2] + positions_openmm[openmmindex][2]*OpenMM::AngstromsPerNm;;
+
+				}
+
+				molecule_COG[0] = molecule_COG[0]/nats_mol;
+				molecule_COG[1] = molecule_COG[1]/nats_mol;
+				molecule_COG[2] = molecule_COG[2]/nats_mol;
+				
+				//cout << "molecule_COG[0] = " << molecule_COG[0] << " molecule_COG[1] = " << molecule_COG[1] << " molecule_COG[2] = " << molecule_COG[2] << "\n\n";
+				
+				molecule_COG[0] = molecule_COG[0] + COT[0];
+				molecule_COG[1] = molecule_COG[1] + COT[1];
+				molecule_COG[2] = molecule_COG[2] + COT[2];
+				
+				//cout << "molecule_COG_T[0] = " << molecule_COG[0] << " molecule_COG_T[1] = " << molecule_COG[1] << " molecule_COG_T[2] = " << molecule_COG[2] << "\n\n";
+				
+				T[0] = molecule_COG[0] - box_dims[0]*round(molecule_COG[0]/box_dims[0]);
+				T[1] = molecule_COG[1] - box_dims[2]*round(molecule_COG[1]/box_dims[2]);
+				T[2] = molecule_COG[2] - box_dims[5]*round(molecule_COG[2]/box_dims[5]);
+				
+				T[0] = T[0] - molecule_COG[0];
+				T[1] = T[1] - molecule_COG[1];
+				T[2] = T[2] - molecule_COG[2];
+				
+				//cout << "T[0] = " << T[0] << " T[1] = " << T[1] << " T[2] = " << T[2] << "\n\n";
+
+			}//end if wrap
+
+
+			for (int m=0; m < nats_mol; m++){
+
+				int openmmindex = num_atoms_till_l+m;
+
+				X[openmmindex] = positions_openmm[openmmindex][0]*OpenMM::AngstromsPerNm;
+				Y[openmmindex] = positions_openmm[openmmindex][1]*OpenMM::AngstromsPerNm;
+				Z[openmmindex] = positions_openmm[openmmindex][2]*OpenMM::AngstromsPerNm;
+
+				if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
+
+					X[openmmindex] = X[openmmindex] + COT[0];
+					Y[openmmindex] = Y[openmmindex] + COT[1];
+					Z[openmmindex] = Z[openmmindex] + COT[2];
+					
+					/*cout << "X[" << openmmindex << "] =" << X[openmmindex] <<
+						    " Y[" << openmmindex << "] = "<< Y[openmmindex] <<
+						    " Z[" << openmmindex << "] = " << Z[openmmindex] << "\n";*/
+
+					X[openmmindex] = X[openmmindex] + T[0];
+					Y[openmmindex] = Y[openmmindex] + T[1];
+					Z[openmmindex] = Z[openmmindex] + T[2];
+					
+					/*cout << "X[" << openmmindex << "] =" << X[openmmindex] <<
+						    " Y[" << openmmindex << "] = "<< Y[openmmindex] <<
+						    " Z[" << openmmindex << "] = " << Z[openmmindex] << "\n";*/
+
+				}
 
 			}
 
-			//cout << "X = "<< X[j] << " Y = " << Y[j] << " Z = " << Z[j] << "\n";
-
-		}
-
-		if(flag_cutoff == CUTOFFPERIODIC){
-
+			num_atoms_till_l=num_atoms_till_l+nats_mol;
+		
+		}//end for molecules
+		
+		if(flag_cutoff == CUTOFFPERIODIC)
 			write_dcdstep(fd, current_frame*cycles + (i+1), current_frame*cycles + (i+1)*frequency_dcd, nats, X, Y, Z,box_dims, 1);
-
-		}
 		else
 			write_dcdstep(fd, current_frame*cycles + (i+1), current_frame*cycles + (i+1)*frequency_dcd, nats, X, Y, Z,NULL, 1);
 
-	}//end for
+	}//end for cycles
 
 	
 	if(current_frame == free_energy_samples-1){
 		fio_fclose(fd);
 		cout << "\nTrajectory file = " << filename << " has been written...." << "\n\n";
 	}
-
 
 }
