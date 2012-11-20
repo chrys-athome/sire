@@ -559,7 +559,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			custom_softcore_solute_solvent->addGlobalParameter("delta",shift_Delta);
 			custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_Power);
-			custom_softcore_solute_solvent->addGlobalParameter("cutoff",converted_cutoff_distance);
+			//custom_softcore_solute_solvent->addGlobalParameter("cutoff",converted_cutoff_distance);
 			
 			custom_softcore_solute_solvent->setCutoffDistance(converted_cutoff_distance);
 			
@@ -575,15 +575,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			custom_solute_solute_solvent_solvent->setCutoffDistance(converted_cutoff_distance);
 			
 			
-			if(flag_cutoff == CUTOFFNONPERIODIC){
-				custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
-				custom_solute_solute_solvent_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
-				
-			}
-			else{
-				custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
-				custom_solute_solute_solvent_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
-			}
+			
 			
 			
 			custom_intra_14_15 = new OpenMM::CustomBondForce("withinCutoff*(Hl+Hc);"
@@ -1552,11 +1544,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	if(free_energy_calculation == true){
 
-		std::vector<OpenMM::Vec3> positions_openmm_start = positions_openmm;
-
-		std::vector<OpenMM::Vec3> velocities_openmm_start = velocities_openmm;
-	
-		double delta = 0.001;
+		double delta = 0.01;
 
 		const double beta = 1.0 / (0.0083144621 * convertTo(Temperature.value(), kelvin));
 
@@ -1604,20 +1592,21 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			while(j<n_samples){
 
-				//QString name = file_name(j);
+				/*state_openmm=context_openmm.getState(infoMask);
+				
+				double potential_energy = state_openmm.getPotentialEnergy();
+
+				cout << " Energy P  >>>>>>>>>>>>>>>>>>>> " << (potential_energy )  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";*/
+				
+
 
 				if(dcd == true)
 					dcd_p->integrateFreeEnergy(j);
 				else
 					integrator_openmm.step(md_steps_per_sample);
 
-				/*state_openmm=context_openmm.getState(infoMask);
-				double potential_energy_lambda = state_openmm.getPotentialEnergy();
-				double kinetic_energy = state_openmm.getKineticEnergy();
-				cout << " Energy= " << (potential_energy_lambda + kinetic_energy)  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";*/
-				
-				//integrator_openmm.step(frequency_energy);
-				
+
+
 				state_openmm=context_openmm.getState(infoMask);
 
 				cout<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
@@ -1625,43 +1614,91 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				lam_val = context_openmm.getParameter("lambda");
 
-
 				double potential_energy_lambda = state_openmm.getPotentialEnergy();
+				
+				double potential_energy_lambda_plus_delta;
+				
+				double potential_energy_lambda_minus_delta;
+				
+				double plus;
+				
+				double minus;
 
 				cout << "Lambda = " << lam_val << " Potential energy lambda MD = " << potential_energy_lambda  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
 
-				context_openmm.setParameter("lambda",Alchemical_values[i]+delta);
+				if((Alchemical_values[i]+delta)>2.0){
+					
+					context_openmm.setParameter("lambda",Alchemical_values[i]-delta);
+					
+					state_openmm=context_openmm.getState(infoMask);
 
-				state_openmm=context_openmm.getState(infoMask);
-
-
-				double potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
-
-				lam_val = context_openmm.getParameter("lambda");
-
-				cout << "Lambda + delta = " << lam_val << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
-
-				context_openmm.setParameter("lambda",Alchemical_values[i]-delta);
-
-				state_openmm=context_openmm.getState(infoMask);
-
-				double potential_energy_lambda_minus_delta = state_openmm.getPotentialEnergy();
-
-				lam_val = context_openmm.getParameter("lambda");
-
-				cout << "Lambda - delta = " << lam_val << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
-
-				double pl =  exp(-beta * potential_energy_lambda_plus_delta) * exp(beta * potential_energy_lambda);
+					potential_energy_lambda_minus_delta = state_openmm.getPotentialEnergy();
+					
+					minus =  exp(-beta * potential_energy_lambda_minus_delta) * exp(beta * potential_energy_lambda);
+					
+					plus = exp(beta * potential_energy_lambda_minus_delta) * exp(-beta*potential_energy_lambda);
+					
+					lam_val = context_openmm.getParameter("lambda");
+					
+					cout << "Lambda + delta > 2.0\n";
+					
+					cout << "Lambda - delta = " << lam_val << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
+				}
 				
-				double minu = exp(-beta * potential_energy_lambda_minus_delta) * exp(beta * potential_energy_lambda);
-
-				GF_acc = GF_acc + pl;
-
-				GB_acc = GB_acc + minu;
-
-
-				cout << "\npl = " << pl << " # minu = " << minu << "\n\n";
+				else if((Alchemical_values[i]-delta)<0.0){
+					
+					context_openmm.setParameter("lambda",Alchemical_values[i]+delta);
+					
+					state_openmm=context_openmm.getState(infoMask);
+					
+					potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
+					
+					plus = exp(-beta * potential_energy_lambda_plus_delta) * exp(beta * potential_energy_lambda);
+					
+					minus = exp(beta * potential_energy_lambda_plus_delta) * exp(-beta * potential_energy_lambda);
+					
+					lam_val = context_openmm.getParameter("lambda");
+					
+					cout << "Lambda + delta = " << lam_val << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
 				
+					cout << "Lambda - delta < 0.0\n";
+				}
+				
+				else{
+				
+					context_openmm.setParameter("lambda",Alchemical_values[i]+delta);
+
+					state_openmm=context_openmm.getState(infoMask);
+
+					potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
+
+					lam_val = context_openmm.getParameter("lambda");
+
+					cout << "Lambda + delta = " << lam_val << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+
+					context_openmm.setParameter("lambda",Alchemical_values[i]-delta);
+
+					state_openmm=context_openmm.getState(infoMask);
+
+					potential_energy_lambda_minus_delta = state_openmm.getPotentialEnergy();
+
+					plus = exp(-beta * potential_energy_lambda_plus_delta) * exp(beta * potential_energy_lambda);
+
+					minus =  exp(-beta * potential_energy_lambda_minus_delta) * exp(beta * potential_energy_lambda);
+
+					lam_val = context_openmm.getParameter("lambda");
+
+					cout << "Lambda - delta = " << lam_val << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
+				}
+
+
+				GF_acc = GF_acc + plus;
+
+				GB_acc = GB_acc + minus;
+
+
+				cout << "\nplus = " << plus << " # minus = " << minus << "\n\n";
+
 				//cout << "\nDifference +Delta= " << potential_energy_lambda_plus_delta - potential_energy_lambda  << " Difference -Delta=  " << potential_energy_lambda_minus_delta - potential_energy_lambda  << "\n\n";
 
 				if(isnormal(GF_acc==0) || isnormal(GB_acc==0)){ 
@@ -1691,16 +1728,34 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				j=j+1.0;
 			}
 
-
-			context_openmm.setPositions(positions_openmm_start);
-
-			context_openmm.setVelocities(velocities_openmm_start); 
-
-			context_openmm.setTime(0.0);
-
 		}
 
+		state_openmm=context_openmm.getState(infoMask);
+
+		positions_openmm = state_openmm.getPositions();
+		
+		velocities_openmm = state_openmm.getVelocities();
+
+		cout<< "Total Time = " << state_openmm.getTime() << " ps"<<"\n\n";
+		
+		double kinetic_energy = 0.0; 
+		double potential_energy = 0.0; 
+
+		kinetic_energy = state_openmm.getKineticEnergy(); 
+
+		potential_energy = state_openmm.getPotentialEnergy(); 
+
+		
+		cout<< "After MD" <<"\n";
+
+		cout <<"Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
+		 	 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
+		 	 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
+
+		cout<<"\n";
+
 		cout << "\nMD Simulation time = " << timer_MD.elapsed() / 1000.0 << " s"<<"\n\n";
+
 
 	}else{/******************** MD ***********************/
 
@@ -1726,9 +1781,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		int frequency_dcd = 10;//save every frequency_dcd
 
-		bool dcd = true;
+		bool dcd = false;
 		
-		bool wrap = true;
+		bool wrap = false;
 		
 		vector<double> center;
 		
@@ -1778,13 +1833,14 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	//Copy back to Sire positions and velocities 
 	
 	int k=0;
-	
+
+
 	for(int i=0; i<nmols;i++){
 
 		Vector *sire_coords = ws.coordsArray(i);
 
 
-		Vector *sire_momenta = ws.momentaArray(i);	
+		Vector *sire_momenta = ws.momentaArray(i);
 
 		const double *m = ws.massArray(i);
 
@@ -2100,6 +2156,7 @@ const char* OpenMMIntegrator::typeName()
 {
 	return QMetaType::typeName( qMetaTypeId<OpenMMIntegrator>() );
 }
+
 
 
 
