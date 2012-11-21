@@ -559,9 +559,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			custom_softcore_solute_solvent->addGlobalParameter("delta",shift_Delta);
 			custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_Power);
-			//custom_softcore_solute_solvent->addGlobalParameter("cutoff",converted_cutoff_distance);
+
+
 			
-			custom_softcore_solute_solvent->setCutoffDistance(converted_cutoff_distance);
 			
 			
 			custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*ZeroOne;"
@@ -572,11 +572,24 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 																					"eps_avg=sqrt(eps1*eps2);"
 																					"sigma_avg=0.5*(sigma1+sigma2)");
 																					
+			
+			
+			
+			if(flag_cutoff == CUTOFFNONPERIODIC){
+				custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
+				custom_solute_solute_solvent_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
+				
+			}
+			else{
+				custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
+				custom_solute_solute_solvent_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
+			}
+
+			custom_softcore_solute_solvent->setCutoffDistance(converted_cutoff_distance);
+			
 			custom_solute_solute_solvent_solvent->setCutoffDistance(converted_cutoff_distance);
 			
-			
-			
-			
+
 			
 			custom_intra_14_15 = new OpenMM::CustomBondForce("withinCutoff*(Hl+Hc);"
 															 "withinCutoff=step(cutoff-r);"
@@ -744,6 +757,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	/*****************************************************************IMPORTANT********************************************************************/
 
 		bool boltz = false;//Generate velocities using Boltzmann Distribution (variance = 1 average = 0)
+		
 		
 		for (int j=0; j < nats_mol; ++j){
 
@@ -1544,7 +1558,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	if(free_energy_calculation == true){
 
-		double delta = 0.01;
+		double delta = 0.001;
 
 		const double beta = 1.0 / (0.0083144621 * convertTo(Temperature.value(), kelvin));
 
@@ -1589,7 +1603,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			cout << "Start - Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal/mol " << "\n";
 	
 			double j=0.0;
-			
+
+
+
 			while(j<n_samples){
 
 				/*state_openmm=context_openmm.getState(infoMask);
@@ -1710,6 +1726,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 				double avg_GB = GB_acc /(j+1);
 
+
 				double Energy_GF = -(1.0/beta)*log(avg_GF);
 
 				double Energy_GB = -(1.0/beta)*log(avg_GB);
@@ -1819,6 +1836,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		cout<< "After MD" <<"\n";
 	
 		cout <<"Total Energy = " << (kinetic_energy + potential_energy) * OpenMM::KcalPerKJ << " Kcal/mol "
+
 		 	 << " Kinetic Energy = " << kinetic_energy  * OpenMM::KcalPerKJ << " Kcal/mol " 
 		 	 << " Potential Energy = " << potential_energy * OpenMM::KcalPerKJ << " Kcal/mol";
 	
