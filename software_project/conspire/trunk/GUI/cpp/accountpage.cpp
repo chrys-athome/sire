@@ -145,29 +145,32 @@ void AccountPage::refreshList()
    }
    const char *listclust = AcquireListOfAccessibleClusters();
    char *remainder = NULL;
-   const char *token = strtok_r((char *)listclust, ",", &remainder);
    int haveany = 0;
-   while (token != NULL)
+   if (listclust != NULL)
    {
-      char buffer[512];
-      QString this_cluster_name = QString();
-      QString this_cluster_id = QString(token);
-      for (int i = 0; i < cluster_id_list.size(); i++)
+      const char *token = strtok_r((char *)listclust, ",", &remainder);
+      while (token != NULL)
       {
-         if (this_cluster_id == cluster_id_list.at(i))
+         char buffer[512];
+         QString this_cluster_name = QString();
+         QString this_cluster_id = QString(token);
+         for (int i = 0; i < cluster_id_list.size(); i++)
          {
-            this_cluster_name = cluster_name_list.at(i);
+            if (this_cluster_id == cluster_id_list.at(i))
+            {
+               this_cluster_name = cluster_name_list.at(i);
+            }
          }
+         if (this_cluster_name.isEmpty())
+         {
+            this_cluster_name = QString("Unknown cluster (%1)").arg(this_cluster_id);
+         }
+         QListWidgetItem *wid = new QListWidgetItem(this_cluster_name);
+         clusterlist->addItem(wid);
+         haveany = 1;
+         token = strtok_r(NULL, ",", &remainder);
+         login_label->setText("Network OK.");
       }
-      if (this_cluster_name.isEmpty())
-      {
-         this_cluster_name = QString("Unknown cluster (%1)").arg(this_cluster_id);
-      }
-      QListWidgetItem *wid = new QListWidgetItem(this_cluster_name);
-      clusterlist->addItem(wid);
-      haveany = 1;
-      token = strtok_r(NULL, ",", &remainder);
-      login_label->setText("Network OK.");
    }
    if (haveany == 0)
    {

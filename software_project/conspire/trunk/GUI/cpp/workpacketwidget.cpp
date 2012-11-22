@@ -61,6 +61,11 @@ WorkPacketWidget::WorkPacketWidget(const char *message, int col, int row,
 
 void WorkPacketWidget::modifyWork()
 {
+   QSettings *qsetter = new QSettings("UoB", "AcquireClient");
+   workstoreid = qsetter->value(QString(quuid) + "/workstoreid").toString();
+   delete qsetter;
+   conspireDebug() << "QUUID" << quuid;
+   conspireDebug() << "WORKSTOREID" << workstoreid;
    if (my_message == QString("Create new..."))
    {
       emit( push( PagePointer(new ChooseClassPage(QString(), QString())), false) );
