@@ -550,10 +550,10 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 																			  "q_prod=q1*q2;"
 																			  "eps_avg=sqrt(eps1*eps2);"
 																			  "sigma_avg=0.5*(sigma1+sigma2)");
-													
+
 
 			custom_softcore_solute_solvent->addGlobalParameter("lambda",Alchemical_values[0]);
-		
+
 			int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
 			double shift_Delta = ptr_sys.property("shiftDelta").toString().toDouble();
 			
@@ -561,19 +561,35 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_Power);
 
 
-			
-			
-			
-			custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*ZeroOne;"
+			/*custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*ZeroOne;"
 																					"ZeroOne=(1-issolute1)*(1-issolute2)+issolute1*issolute2;"
 																					"Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
 																					"Hc=138.935456*q_prod/r;"
 																					"q_prod=q1*q2;"
 																					"eps_avg=sqrt(eps1*eps2);"
-																					"sigma_avg=0.5*(sigma1+sigma2)");
+																					"sigma_avg=0.5*(sigma1+sigma2)");*/
 																					
+																					
+			custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*ZeroOne;"
+																					"ZeroOne=(1-issolute1)*(1-issolute2)+issolute1*issolute2;"
+																					"Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
+																					"Hc=138.935456*q_prod*(1.0/r+(krf*r*r)-crf);"
+																					"q_prod=q1*q2;"
+																					"eps_avg=sqrt(eps1*eps2);"
+																					"sigma_avg=0.5*(sigma1+sigma2)");
+
+
+			double eps2 = (field_dielectric - 1.0)/(2*field_dielectric+1.0);
 			
+			double kvalue = eps2/(converted_cutoff_distance * converted_cutoff_distance * converted_cutoff_distance);
 			
+			custom_solute_solute_solvent_solvent->addGlobalParameter("krf",kvalue);
+			
+			double cvalue = (1.0/converted_cutoff_distance)*(3.0*field_dielectric)/(2.0*field_dielectric+1.0);
+			
+			custom_solute_solute_solvent_solvent->addGlobalParameter("crf",cvalue);
+
+
 			
 			if(flag_cutoff == CUTOFFNONPERIODIC){
 				custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
@@ -588,24 +604,21 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			custom_softcore_solute_solvent->setCutoffDistance(converted_cutoff_distance);
 			
 			custom_solute_solute_solvent_solvent->setCutoffDistance(converted_cutoff_distance);
-			
 
-			
+
 			custom_intra_14_15 = new OpenMM::CustomBondForce("withinCutoff*(Hl+Hc);"
 															 "withinCutoff=step(cutoff-r);"
 															 "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
 														 	 "Hc=138.935456*q_prod/r");
 																  
 			custom_intra_14_15->addGlobalParameter("cutoff",converted_cutoff_distance);
-			
-		
+
 
 			cout << "Lambda = " << Alchemical_values[0] << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
 		
 		}
-	
-	
-	
+
+
 		cout << "\nCut off type = " << CutoffType.toStdString() << "\n";
 		cout << "CutOff distance = " << converted_cutoff_distance  << " Nm" << "\n";
 		cout << "Dielectric constant= " << field_dielectric << "\n\n";
@@ -620,8 +633,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		system_openmm.addForce(custom_intra_14_15);
 	}
 
-		
-	
+
 	//Andersen thermostat
 	
 	if (Andersen_flag == true){
@@ -1600,6 +1612,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			lam_val = context_openmm.getParameter("lambda");
 
+			
 			cout << "Start - Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal/mol " << "\n";
 	
 			double j=0.0;
@@ -1722,9 +1735,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 					exit(-1); 
 				}
 
-				double avg_GF = GF_acc /(j+1);
+				double avg_GF = GF_acc /(j+1.0);
 
-				double avg_GB = GB_acc /(j+1);
+				double avg_GB = GB_acc /(j+1.0);
 
 
 				double Energy_GF = -(1.0/beta)*log(avg_GF);
