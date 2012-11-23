@@ -165,10 +165,9 @@ void SubmitPage::build()
    const char *token = strtok_r((char *)listclust, ",", &remainder);
    int haveany = 0;
    clusters_box->addItem("Any");
-   cluster_ids->push_back(QString(""));
+   cluster_ids->push_back(QString());
    while (token != NULL)
    {
-      char buffer[512];
       QString this_cluster_name = QString();
       QString this_cluster_id = QString(token);
       for (int i = 0; i < cluster_id_list.size(); i++)
@@ -624,7 +623,6 @@ void SubmitPage::submit()
            allUpdate();
            
            UploadThread *uploadthread = new UploadThread(workstore, datadir.toAscii().constData(), (cluster_ids->at(clusters_box->currentIndex())).toAscii().constData(), NULL, allinstances, 3600, blocks);
-           conspireDebug() << "Sending to" << (cluster_ids->at(clusters_box->currentIndex()));
            GetUploadArray()->insert(workstore, uploadthread);
            QThreadPool::globalInstance()->start(uploadthread);
                       

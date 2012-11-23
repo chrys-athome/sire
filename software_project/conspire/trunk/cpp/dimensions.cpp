@@ -338,7 +338,7 @@ namespace Conspire
             bool ok;
             int64 val = value.first.toLongLong(&ok);
             
-            if (not ok)
+            if (!(ok))
                 throw Conspire::parse_error( Conspire::tr(
                         "Cannot read an integer from the text \"%1\".")
                             .arg(text), CODELOC );
@@ -346,7 +346,7 @@ namespace Conspire
             return val * value.second;
         }
         
-        double CONSPIRE_EXPORT readFloat(String text)
+        double readFloat(String text)
         {
             text = text.trimmed();
         
@@ -363,7 +363,7 @@ namespace Conspire
             return val * value.second;
         }
         
-        Pair<double,String>::Type CONSPIRE_EXPORT readDimension(String value,
+        Pair<double,String>::Type readDimension(String value,
                                                                 StringList units)
         {
             value = value.trimmed();

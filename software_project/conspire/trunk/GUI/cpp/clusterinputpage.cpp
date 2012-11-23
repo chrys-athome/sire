@@ -71,6 +71,10 @@
 
 #include "Acquire/acquire_client.h"
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 using namespace Conspire;
 
 void ClusterInputPage::browseForKey()
@@ -287,14 +291,14 @@ void ClusterInputPage::expungeWorkStore()
    if (uthread)
    {
       uthread->cancelUpload();
-      while (!(uthread->isFinished())) sleep(0.1);
+      while (!(uthread->isFinished())) PRT_SLEEP(0.1);
       delete uthread;
    }
    DownloadThread *dthread = GetDownloadArray()->value(workstoreid);
    if (dthread)
    {
       dthread->cancelDownload();
-      while (!(dthread->isFinished())) sleep(0.1);
+      while (!(dthread->isFinished())) PRT_SLEEP(0.1);
       delete dthread;
    }
    int retval = AcquireDeleteWorkStore(workstoreid.toAscii().constData());

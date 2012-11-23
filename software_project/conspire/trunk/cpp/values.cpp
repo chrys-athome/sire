@@ -276,18 +276,18 @@ REGISTER_SIREN_CLASS(Conspire::IntegerValue)
 
 /** Constructor */
 IntegerValue::IntegerValue() 
-             : Value(), val(0), minval( std::numeric_limits<Qt::int64>::min() ),
-                                maxval( std::numeric_limits<Qt::int64>::max() )
+             : Value(), val(0), minval( std::numeric_limits<Conspire::Qt::int64>::min() ),
+                                maxval( std::numeric_limits<Conspire::Qt::int64>::max() )
 {}
 
 /** Construct, passing in a value */
-IntegerValue::IntegerValue(Qt::int64 value) 
-             : Value(), val(value), minval( std::numeric_limits<Qt::int64>::min() ),
-                                    maxval( std::numeric_limits<Qt::int64>::max() )
+IntegerValue::IntegerValue(Conspire::Qt::int64 value) 
+             : Value(), val(value), minval( std::numeric_limits<Conspire::Qt::int64>::min() ),
+                                    maxval( std::numeric_limits<Conspire::Qt::int64>::max() )
 {}
 
 /** Construct an IntegerValue with passed value, and specified minimum */
-IntegerValue IntegerValue::valueWithMinimum(Qt::int64 value, Qt::int64 minimum)
+IntegerValue IntegerValue::valueWithMinimum(Conspire::Qt::int64 value, Conspire::Qt::int64 minimum)
 {
     IntegerValue v;
     v.val = value;
@@ -300,7 +300,7 @@ IntegerValue IntegerValue::valueWithMinimum(Qt::int64 value, Qt::int64 minimum)
 }
 
 /** Construct an IntegerValue with passed value, and specified maximum */
-IntegerValue IntegerValue::valueWithMaximum(Qt::int64 value, Qt::int64 maximum)
+IntegerValue IntegerValue::valueWithMaximum(Conspire::Qt::int64 value, Conspire::Qt::int64 maximum)
 {
     IntegerValue v;
     v.val = value;
@@ -313,8 +313,8 @@ IntegerValue IntegerValue::valueWithMaximum(Qt::int64 value, Qt::int64 maximum)
 }
 
 /** Construct an IntegerValue with passed value and specified range */
-IntegerValue IntegerValue::valueWithRange(Qt::int64 value, Qt::int64 minimum, 
-                                          Qt::int64 maximum)
+IntegerValue IntegerValue::valueWithRange(Conspire::Qt::int64 value, Conspire::Qt::int64 minimum, 
+                                          Conspire::Qt::int64 maximum)
 {
     IntegerValue v;
     
@@ -345,10 +345,10 @@ DomElement IntegerValue::toDomElement(DomDocument doc) const
     DomElement elem = doc.createElement("integer");
     elem.appendChild( doc.createTextNode( String::number(val) ) );
     
-    if (minval != std::numeric_limits<Qt::int64>::min())
+    if (minval != std::numeric_limits<Conspire::Qt::int64>::min())
         elem.setAttribute("minimum", String::number(minval));
         
-    if (maxval != std::numeric_limits<Qt::int64>::max())
+    if (maxval != std::numeric_limits<Conspire::Qt::int64>::max())
         elem.setAttribute("maximum", String::number(maxval));
     
     return elem;
@@ -357,8 +357,8 @@ DomElement IntegerValue::toDomElement(DomDocument doc) const
 /** Construct from a QDomElement */
 IntegerValue::IntegerValue(DomElement elem) 
              : Value(), val(0),
-                        minval(std::numeric_limits<Qt::int64>::min()),
-                        maxval(std::numeric_limits<Qt::int64>::max())
+                        minval(std::numeric_limits<Conspire::Qt::int64>::min()),
+                        maxval(std::numeric_limits<Conspire::Qt::int64>::max())
 {
     if (elem.tagName() != "integer")
         throw Conspire::parse_error( Conspire::tr(
@@ -396,8 +396,8 @@ IntegerValue::IntegerValue(DomElement elem)
 /** Construct from a string */
 IntegerValue::IntegerValue(QString value)
              : Value(), val(readInt(value)),
-                        minval(std::numeric_limits<Qt::int64>::min()),
-                        maxval(std::numeric_limits<Qt::int64>::max())
+                        minval(std::numeric_limits<Conspire::Qt::int64>::min()),
+                        maxval(std::numeric_limits<Conspire::Qt::int64>::max())
 {}             
 
 /** Copy constructor */
@@ -442,7 +442,7 @@ String IntegerValue::toValueString() const
 
 Obj IntegerValue::fromValueString(String value) const
 {
-    Qt::int64 v = readInt(value);
+    Conspire::Qt::int64 v = readInt(value);
     
     if (v > maxval)
         v = maxval;

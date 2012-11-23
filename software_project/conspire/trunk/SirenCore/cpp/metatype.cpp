@@ -236,7 +236,7 @@ namespace Siren
             // this would cause the program to crash as it will
             // delete the underlying QString during static destruction
 
-            #warning NEED TO SOLVE MEMORY LEAK OF CLASS NAMES AT SYSTEM SHUTDOWN
+//            #warning NEED TO SOLVE MEMORY LEAK OF CLASS NAMES AT SYSTEM SHUTDOWN
 
             //String *ptr = type_name_string;
             //delete ptr;

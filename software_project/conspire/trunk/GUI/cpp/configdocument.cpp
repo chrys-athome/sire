@@ -284,6 +284,14 @@ void ConfigDocument::viewPoppedPastBeginning()
     emit( pop(true) );
 }
 
+template <class T> const T& patch_convert_to_T(const Obj &obj)
+{
+	const Object *object = obj;
+	const T *cast_object = dynamic_cast<const T*>(object);
+	if (not cast_object) { throw invalid_cast(); }
+	return *cast_object;
+}
+
 /** Update the option with key "full_key" to have the value "new_value" */
 void ConfigDocument::update(QString full_key, Obj new_value)
 {
@@ -292,7 +300,7 @@ void ConfigDocument::update(QString full_key, Obj new_value)
     try
     {
         undo_stack->push( new OptionsUpdateCommand(this,full_key,
-                                                   new_value.asA<Value>()) );
+                                                   patch_convert_to_T<Value>(new_value) ));
     }
     catch(const Conspire::Exception &e)
     {

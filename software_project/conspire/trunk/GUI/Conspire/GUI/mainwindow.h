@@ -34,6 +34,7 @@
 #include "Conspire/option.h"
 
 #include "Conspire/GUI/page.h"
+#include "Conspire/GUI/global_var.h"
 
 CONSPIRE_BEGIN_HEADER
 
@@ -56,7 +57,7 @@ namespace Conspire
         
         @author Christopher Woods
     */
-    class CONSPIRE_EXPORT MainWindow : public QGraphicsView
+    class CONSPIREGUI_EXPORT MainWindow : public QGraphicsView
     {
         Q_OBJECT
     

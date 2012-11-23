@@ -127,6 +127,14 @@ void OptionPage::moveEvent(QGraphicsSceneMoveEvent *e)
     rack->setGeometry(0, 0, this->geometry().width(), this->geometry().height());
 }
 
+template <class T> const T& patch_convert_to_T(const Obj &obj)
+{
+	const Object *object = obj;
+	const T *cast_object = dynamic_cast<const T*>(object);
+	if (not cast_object) { throw invalid_cast(); }
+	return *cast_object;
+}
+
 /** Function called when editing of the option is finished */
 void OptionPage::editingFinished()
 {
@@ -144,7 +152,7 @@ void OptionPage::editingFinished()
         Obj new_val = StringValue(value_edit->text());
 
         Options opts(opt);
-        opts.setNestedValue(shortKey(),new_val.asA<Value>());
+        opts.setNestedValue(shortKey(),patch_convert_to_T<Value>(new_val));
         
         conspireDebug() << "emit( update(" << fullKey() << "," << value_edit->text() 
                         << " ) )";

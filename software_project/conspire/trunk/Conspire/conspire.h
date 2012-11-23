@@ -55,7 +55,22 @@ namespace Conspire
     class Value;
     class Values;
 
-    #define CONSPIRE_EXPORT SIREN_EXPORT
+	#ifdef WIN32
+	   #ifdef Conspire_EXPORTS
+		  #define CONSPIRE_EXPORT Q_DECL_EXPORT
+		  #define CONSPIRE_IMPORT
+          #define SIREN_EXPORT Q_DECL_EXPORT
+          #define SIREN_IMPORT
+	   #else
+		  #define CONSPIRE_EXPORT
+		  #define CONSPIRE_IMPORT
+          #define SIREN_EXPORT
+          #define SIREN_IMPORT
+	   #endif
+	#else
+		#define CONSPIRE_EXPORT SIREN_EXPORT
+	#endif
+
     #define CONSPIRE_BEGIN_HEADER SIREN_BEGIN_HEADER
     #define CONSPIRE_END_HEADER SIREN_END_HEADER
     #define CONSPIRE_INLINE_TEMPLATE SIREN_INLINE_TEMPLATE

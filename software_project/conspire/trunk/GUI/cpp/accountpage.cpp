@@ -69,6 +69,10 @@
 #include "Acquire/acquire_client.h"
 #include "config.h"
 
+#ifdef WINBLOODY32
+#define strtok_r strtok_s
+#endif
+
 using namespace Conspire;
 
 static QString install_dir = STATIC_INSTALL_DIR;

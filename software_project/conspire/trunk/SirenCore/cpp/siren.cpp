@@ -208,12 +208,12 @@ namespace Siren
     }
 
 
-    Qt::String tr(const char* source_text, const char* comment, int n)
+    Qt::String SIREN_EXPORT tr(const char* source_text, const char* comment, int n)
     {
         return QObject::tr(source_text, comment, n);
     }
                          
-    Qt::String trUtf8(const char* source_text, const char* comment, int n)
+    Qt::String SIREN_EXPORT trUtf8(const char* source_text, const char* comment, int n)
     {
         return QObject::tr(source_text, comment, n);
     }

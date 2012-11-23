@@ -169,8 +169,8 @@ set ( CONSPIRE_GUI_SOURCES
 
     )
 
-set(STATIC_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../)
-set(DYNAMIC_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../)
+set(STATIC_INSTALL_DIR ../Conspire_data)
+set(DYNAMIC_INSTALL_DIR ../Conspire_data)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Conspire/GUI/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # generate the library and application

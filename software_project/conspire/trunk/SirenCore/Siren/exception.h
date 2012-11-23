@@ -93,7 +93,7 @@ namespace Siren
         Qt::StringList bt;
     };
 
-    int wrap_index(int i, int count, CODELOC_ARGS);
+    int SIREN_EXPORT wrap_index(int i, int count, CODELOC_ARGS);
 
 } // end of namespace Siren
 

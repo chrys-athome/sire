@@ -53,9 +53,6 @@
   #warning Cannot work out if this is a 32bit or 64bit compile!
 #endif
 
-/** Used to signify that the symbol for the class or function should be 
-    visible outside of the Siren library. */
-#define SIREN_EXPORT Q_DECL_EXPORT
 
 /** Macro used to assert that the passed argument is true at compile time */
 #define SIREN_STATIC_ASSERT BOOST_STATIC_ASSERT
@@ -82,6 +79,32 @@
 
 #define PASTE_TOKENS2(arg1,arg2) arg1 ## arg2
 #define PASTE_TOKENS(arg1,arg2) PASTE_TOKENS2(arg1,arg2)
+
+#ifdef WIN32
+#define WINBLOODY32
+#endif
+
+#ifdef WINBLOODY32
+   #ifdef Siren_EXPORTS
+      #define SIREN_EXPORT Q_DECL_EXPORT
+      #define SIREN_IMPORT
+   #else
+      #define SIREN_EXPORT
+      #define SIREN_IMPORT
+   #endif
+   #ifndef Q_MOC_RUN
+       #define not !
+       #define and &&
+       #define or ||
+   #endif
+   #define strtok_r strtok_s
+   #define PRT_SLEEP(s) Sleep((int)((s)*1000.0))
+   #define strdup _strdup
+#else
+   #define PRT_SLEEP(s) sleep(s)
+   #define SIREN_EXPORT
+   #define SIREN_IMPORT
+#endif
 
 /** Used to register a new concrete Siren Object class */
 #define REGISTER_SIREN_CLASS(classname)  \
@@ -153,7 +176,7 @@
         bool operator==(const classname &other) const { \
                    return classname::compare_object(other); } \
         bool operator!=(const classname &other) const { \
-                   return not classname::operator==(other); } \
+                   return !(classname::operator==(other)); } \
     protected: \
         void pvt_copy_object(const Siren::Object &other); \
         bool pvt_compare_object(const Siren::Object &other) const; \
@@ -174,7 +197,7 @@
         bool operator==(const classname &other) const { \
                    return Siren::Object::operator==(other); } \
         bool operator!=(const classname &other) const { \
-                   return not Object::operator==(other); } \
+                   return !(Object::operator==(other)); } \
     private:
     
 /** Use to register a new virtual Siren Object class */

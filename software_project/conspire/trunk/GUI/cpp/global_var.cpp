@@ -3,6 +3,7 @@
 #include <QString>
 #include "Conspire/GUI/uploadthread.h"
 #include "Conspire/GUI/downloadthread.h"
+#include "Conspire/GUI/global_var.h"
 
 static QMap<QString, UploadThread *> *uploadarray = NULL;
 static QMap<QString, DownloadThread *> *downloadarray = NULL;
@@ -25,13 +26,13 @@ QMap<QString, DownloadThread *> *GetDownloadArray()
    return downloadarray;
 }
 
-void DestroyUploadArray()
+CONSPIREGUI_EXPORT void DestroyUploadArray()
 {
    delete uploadarray;
    uploadarray = NULL;
 }
 
-void DestroyDownloadArray()
+CONSPIREGUI_EXPORT void DestroyDownloadArray()
 {
    delete downloadarray;
    downloadarray = NULL;

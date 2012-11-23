@@ -33,7 +33,13 @@
 using namespace Siren;
 using namespace Siren::Qt;
 
+#ifdef WIN32
+   #ifdef HAVE_BACKTRACE
+      #undef HAVE_BACKTRACE
+   #endif
+#else
 #define HAVE_BACKTRACE 1
+#endif
 #define HAVE_EXECINFO_H
 
 ////////////
@@ -267,10 +273,10 @@ void Exception::copy_object(const Exception &other)
 /** Comparison operator */
 bool Exception::compare_object(const Exception &other) const
 {
-    return err == other.err and
-           plce == other.plce and
-           date_time == other.date_time and
-           bt == other.bt and
+    return err == other.err &&
+           plce == other.plce &&
+           date_time == other.date_time &&
+           bt == other.bt &&
            super::compare_object(other);
 }
 

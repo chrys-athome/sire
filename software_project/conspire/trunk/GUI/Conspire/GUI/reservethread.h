@@ -3,6 +3,7 @@
 #ifndef __RESERVE_THREAD_H
 #define __RESERVE_THREAD_H
 
+#include <stdint.h>
 #include <QRunnable>
 
 /*

@@ -34,6 +34,12 @@
 
 CONSPIRE_BEGIN_HEADER
 
+#ifdef WIN32
+#define CONSPIRE_IMPORT CONSPIRE_EXPORT
+#else
+#define CONSPIRE_IMPORT
+#endif
+
 namespace Conspire
 {
     /** Constructor */
@@ -172,10 +178,10 @@ namespace Conspire
         readDimension(Qt::String value, Qt::StringList units);
         
         Qt::Pair<Qt::String,qint64>::Type 
-        getPostFactor(Qt::String value);
+        CONSPIRE_IMPORT getPostFactor(Qt::String value);
         
         double readFloat(Qt::String value);
-        Qt::int64 readInt(Qt::String value);
+        Qt::int64 CONSPIRE_IMPORT readInt(Qt::String value);
         bool readBool(Qt::String value);
     }
 

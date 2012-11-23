@@ -162,12 +162,20 @@ OptionsUpdateCommand::OptionsUpdateCommand(ConfigDocument *document,
 OptionsUpdateCommand::~OptionsUpdateCommand()
 {}
 
+template <class T> const T& patch_convert_to_T(const Obj &obj)
+{
+	const Object *object = obj;
+	const T *cast_object = dynamic_cast<const T*>(object);
+	if (not cast_object) { throw invalid_cast(); }
+	return *cast_object;
+}
+
 Options OptionsUpdateCommand::newState() const
 {
     if (k.isEmpty())
         return oldState();
     else
-        return oldState().setNestedValue(k, val.asA<Value>()).asA<Options>();
+        return oldState().setNestedValue(k, patch_convert_to_T<Value>(val)).asA<Options>();
 }
 
 /////////

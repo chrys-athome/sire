@@ -53,19 +53,19 @@ namespace Siren
 
     class Number;
 
-    int wrap_index(int i, int count);
+    int SIREN_EXPORT wrap_index(int i, int count);
 
-    Qt::String tr(const char* source_text,
+    Qt::String SIREN_EXPORT tr(const char* source_text,
                   const char* comment=0,
                   int n=-1);
                          
-    Qt::String trUtf8(const char* source_text,
+    Qt::String SIREN_EXPORT trUtf8(const char* source_text,
                       const char* comment=0,
                       int n=-1);
 
-    void init(int argc=0, const char **argv=0);
-    void loadLibrary(const char *library);
-    void fini();
+    void SIREN_EXPORT init(int argc=0, const char **argv=0);
+    void SIREN_EXPORT loadLibrary(const char *library);
+    void SIREN_EXPORT fini();
 
 } // end of namespace Siren
 

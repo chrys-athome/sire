@@ -86,7 +86,7 @@ void Class::copy_object(const Class &other)
 /** Comparison operator */
 bool Class::compare_object(const Class &other) const
 {
-    return d == other.d and super::compare_object(other);
+    return ((d == other.d) && (super::compare_object(other)));
 }
 
 /** Return a string representation of this class */
@@ -224,7 +224,7 @@ bool Class::canCast(const char *type_name) const
 /** Assert that is is possible to cast this type to the class "type_name" */
 void Class::assertCanCast(const String &type_name) const
 {
-    if (not this->canCast(type_name))
+    if (!(this->canCast(type_name)))
         sirenDebug() << "Cannot cast from type" << this->name() << "to" << type_name;
 }
 

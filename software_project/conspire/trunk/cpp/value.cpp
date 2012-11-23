@@ -221,7 +221,7 @@ Obj Value::getNestedValue(String key) const
 }
 
 /** Set the value from the passed line */
-Obj Value::fromConfig(detail::ParsedLine &line) const
+Obj Value::fromConfig(Conspire::detail::ParsedLine &line) const
 {
     if (not line.key.key.isEmpty())
         throw Conspire::invalid_key( QObject::tr(

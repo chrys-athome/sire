@@ -1732,7 +1732,7 @@ StringList Options::keysWithoutValue() const
         
         if (color != 0)
         {
-#warning DO I NEED TO CHECK FOR OPTIONAL COLOR OPTIONS? WHAT IF NO OPTION IS SET?
+//#warning DO I NEED TO CHECK FOR OPTIONAL COLOR OPTIONS? WHAT IF NO OPTION IS SET?
         
             //is this option excluded by other options?
             if (color_option.value(color,String::null) != opts[i].asA<Option>().key())
@@ -1759,7 +1759,7 @@ bool Options::canAddValues() const
         
         if (color != 0)
         {
-#warning DO I NEED TO CHECK FOR OPTIONAL COLOR OPTIONS? WHAT IF NO OPTION IS SET?
+//#warning DO I NEED TO CHECK FOR OPTIONAL COLOR OPTIONS? WHAT IF NO OPTION IS SET?
 
             //is this option excluded by other options?
             if (color_option.value(color,String::null) != opts[i].asA<Option>().key())
@@ -1790,7 +1790,7 @@ StringList Options::addableKeys() const
         
         if (color != 0)
         {
-#warning DO I NEED TO CHECK FOR OPTIONAL COLOR OPTIONS? WHAT IF NO OPTION IS SET?
+//#warning DO I NEED TO CHECK FOR OPTIONAL COLOR OPTIONS? WHAT IF NO OPTION IS SET?
 
             //is this option excluded by other options?
             if (color_option.value(color,String::null) != opts[i].asA<Option>().key())
