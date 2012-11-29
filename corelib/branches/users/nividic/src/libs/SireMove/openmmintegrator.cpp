@@ -537,9 +537,24 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		if(free_energy_calculation == true){
 
-			custom_softcore_solute_solvent = new OpenMM::CustomNonbondedForce("(10.0*Hls+100.0*Hcs)*ZeroOne;"
+			/*custom_softcore_solute_solvent = new OpenMM::CustomNonbondedForce("(10.0*Hls+100.0*Hcs)*ZeroOne;"
 																			  "ZeroOne=issolute1*(1-issolute2)+issolute2*(1-issolute1);"
 																			  "Hcs=((0.01*lam_cl)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+																			  "diff_cl=(1.0-lam_cl)*0.01;"
+																			  "lam_cl=min(1,max(0,lambda-1));"
+																			  "Hls=0.1*lam_lj*4.0*eps_avg*(LJ*LJ-LJ);"
+																			  "LJ=((sigma_avg*sigma_avg)/soft)^3;"
+																			  "soft=(diff_lj*delta*sigma_avg+r*r);"
+																			  "diff_lj=(1.0-lam_lj)*0.1;"
+																			  "lam_lj=max(0,min(1,lambda));"
+																			  "q_prod=q1*q2;"
+																			  "eps_avg=sqrt(eps1*eps2);"
+																			  "sigma_avg=0.5*(sigma1+sigma2)");*/
+																			  
+																			  
+			custom_softcore_solute_solvent = new OpenMM::CustomNonbondedForce("(10.0*Hls+100.0*Hcs)*ZeroOne;"
+																			  "ZeroOne=issolute1*(1-issolute2)+issolute2*(1-issolute1);"
+																			  "Hcs=((0.01*lam_cl)^(n+1))*138.935456*q_prod*(1/sqrt(diff_cl+r*r) + krf*(diff_cl+r*r)-crf);"
 																			  "diff_cl=(1.0-lam_cl)*0.01;"
 																			  "lam_cl=min(1,max(0,lambda-1));"
 																			  "Hls=0.1*lam_lj*4.0*eps_avg*(LJ*LJ-LJ);"
@@ -559,6 +574,16 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 			custom_softcore_solute_solvent->addGlobalParameter("delta",shift_Delta);
 			custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_Power);
+			
+			double eps2 = (field_dielectric - 1.0)/(2*field_dielectric+1.0);
+			
+			double kvalue = eps2/(converted_cutoff_distance * converted_cutoff_distance * converted_cutoff_distance);
+			
+			double cvalue = (1.0/converted_cutoff_distance)*(3.0*field_dielectric)/(2.0*field_dielectric+1.0);
+			
+			custom_softcore_solute_solvent->addGlobalParameter("krf",kvalue);
+
+			custom_softcore_solute_solvent->addGlobalParameter("crf",cvalue);
 
 
 			/*custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*ZeroOne;"
@@ -579,14 +604,9 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 																					"sigma_avg=0.5*(sigma1+sigma2)");
 
 
-			double eps2 = (field_dielectric - 1.0)/(2*field_dielectric+1.0);
-			
-			double kvalue = eps2/(converted_cutoff_distance * converted_cutoff_distance * converted_cutoff_distance);
 			
 			custom_solute_solute_solvent_solvent->addGlobalParameter("krf",kvalue);
-			
-			double cvalue = (1.0/converted_cutoff_distance)*(3.0*field_dielectric)/(2.0*field_dielectric+1.0);
-			
+
 			custom_solute_solute_solvent_solvent->addGlobalParameter("crf",cvalue);
 
 
@@ -768,7 +788,7 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		
 	/*****************************************************************IMPORTANT********************************************************************/
 
-		bool boltz = false;//Generate velocities using Boltzmann Distribution (variance = 1 average = 0)
+		bool boltz = true;//Generate velocities using Boltzmann Distribution (variance = 1 average = 0)
 		
 		
 		for (int j=0; j < nats_mol; ++j){
