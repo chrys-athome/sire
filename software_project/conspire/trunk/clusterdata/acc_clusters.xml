@@ -3,7 +3,7 @@
    <clusterdescription id="emerald">
       <name>Emerald GPU cluster</name>
       <description>Emerald is an HP system with 372 NVIDIA GPUs. It is housed at the STFC Rutherford Appleton Laboratory.</description>
-      <icon>emerald.jpg</icon>
+      <icon>emerald.png</icon>
       <addtype>key</addtype>
       <gateways></gateways>
       <hostname>emerald.einfrastructuresouth.ac.uk</hostname>
@@ -11,7 +11,7 @@
    <clusterdescription id="bluecrystalp2">
       <name>Bluecrystal Phase 2</name>
       <description>This is Phase 2 of Bluecrystal, supercomputer for the University of Bristol.</description>
-      <icon>iridis.jpg</icon>
+      <icon>iridis.png</icon>
       <addtype>password</addtype>
       <gateways>icy.cs.bris.ac.uk,snowy.cs.bris.ac.uk,curie.chm.bris.ac.uk</gateways>
       <hostname>bluecrystalp2.bris.ac.uk</hostname>

@@ -3,7 +3,7 @@
    <jobclassdescription id="pmemd">
       <name>Amber 11 MD via PMEMD...</name>
       <description>This workpacket ... Amber 11 is a package that provides ... molecular dynamics ...</description>
-      <icon>amberpic_gpu.jpg</icon>
+      <icon>amberpic_gpu.png</icon>
       <directory>pmemd</directory>
       <optionsxml>pmemd.xml</optionsxml>
       <optionsincludedirs>pmemd</optionsincludedirs>
@@ -11,7 +11,7 @@
    <jobclassdescription id="zebedde">
       <name>Zeolite design using Zebedde</name>
       <description>This workpacket runs a Zebedde calculation for zeolite design</description>
-      <icon>zebedde.jpg</icon>
+      <icon>zebedde.png</icon>
       <directory>zebedde</directory>
       <optionsxml>zebedde.xml</optionsxml>
       <optionsincludedirs>zebedde</optionsincludedirs>
