@@ -114,27 +114,27 @@ void ClusterInputPage::tryClusterAdd()
       case ACQUIRE_USER_ADD_SSH__SSH_SUCCESS:
       {
 //         if (loginsuccessful) *loginsuccessful = TRUE;
-         login_label->setText(QString("Successfuly added machine"));
+         login_label->setText(QString("<font color='Blue'>Successfuly added machine</font>"));
          emit ( pop(true) );
          return;
       }
       case ACQUIRE_USER_ADD_SSH__FINGERPRINT_UNTRUSTED:
-         login_label->setText(QString("The fingerprint for this machine has changed, contact administrator"));
+         login_label->setText(QString("<font color='Red'><b><center>Security fingerprint changed, contact admin</center></b></font>"));
          return;
       case ACQUIRE_USER_ADD_SSH__SSH_ROUTING_FAILED:
       {
          if ((failed_hosts_list == NULL) || (strlen(failed_hosts_list) <= 1))
          {
-            login_label->setText(QString("Bad password, machine not trusted or could not find machine (connection failed)"));
+            login_label->setText(QString("<font color='Red'><b><center>Bad password or untrusted machine (connection failed)</center></b></font>"));
             return;
          } else
          {
-            login_label->setText(QString(QObject::tr("Could not reach machine, failed to connect to %1").arg(failed_hosts_list)));
+            login_label->setText(QString(QObject::tr("<font color='Red'><b><center>Bad password or connection to %1</center></b></font>").arg(failed_hosts_list)));
             return;
          }
       }
    }
-   login_label->setText(QString("Failed to verify with machine"));
+   login_label->setText(QString("<font color='Red'><b><center>Failed to verify with machine</center></b></font>"));
 }
 
 void ClusterInputPage::downloadItem(QListWidgetItem *titem)
@@ -371,7 +371,7 @@ void ClusterInputPage::build()
       lineedit_username->setFocusPolicy(::Qt::StrongFocus);
       sub_rack->addWidget(lineedit_username);
       
-      modifybutton = new Button(Conspire::tr("Browse for key"));
+      modifybutton = new Button(Conspire::tr("Browse for SSH private key"));
       connect(modifybutton, SIGNAL(clicked()), this, SLOT(browseForKey()));
       sub_rack->addWidget(modifybutton);
       
@@ -391,7 +391,7 @@ void ClusterInputPage::build()
       sub_rack->addWidget(return_button);
         
     //AcquireAreResultsFromWorkStoreReady(const int nresultsarray, int *resultsarray, const char *store_id)
-      button = new Button(Conspire::tr("Return"));
+      button = new Button(Conspire::tr("Cancel"));
       connect(button, SIGNAL(clicked()), this, SLOT(returnPop()));
       sub_rack->addWidget(button);
     

@@ -51,6 +51,7 @@ namespace Conspire
         
     public:
         UserPage(Page *parent=0);
+        UserPage(int imode, Page *parent=0);
         UserPage(QString clusterid, QString gateways, QString clusterhost, Page *parent=0);
         
         ~UserPage();

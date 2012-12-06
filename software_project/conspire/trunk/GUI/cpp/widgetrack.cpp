@@ -101,17 +101,19 @@ void WidgetRack::build(::Qt::Orientation orient)
     scrollview->setContentsMargins(0,0,0,0);
     scrollview->setLayout( new QGraphicsLinearLayout(orient) );
     scrollview->setContentsMargins(0,0,0,0);
-    scrollview->setPos(0,0);
-    scrollview->resize(this->size());
 
     if (orient == ::Qt::Horizontal)
     {
+        scrollview->layout()->setContentsMargins(0,0,0,0);
+        scrollview->setPos(0,0);
         this->setMinimumHeight(scrollview->minimumHeight());
-        scrollview->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
-        this->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
+        //scrollview->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
+        //this->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
     }
     else
     {
+        scrollview->setPos(0,0);
+        scrollview->resize(this->size());
         this->setMinimumWidth(scrollview->minimumWidth());
         scrollview->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Expanding );
         this->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Expanding );

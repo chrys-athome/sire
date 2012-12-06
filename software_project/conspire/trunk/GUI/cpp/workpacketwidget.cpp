@@ -61,7 +61,7 @@ WorkPacketWidget::WorkPacketWidget(const char *message, int col, int row,
 
 void WorkPacketWidget::modifyWork()
 {
-   if (my_message == QString("Create new..."))
+   if (my_message == QString("Create job..."))
    {
       emit( push( PagePointer(new ChooseClassPage(QString(), QString())), false) );
    } else

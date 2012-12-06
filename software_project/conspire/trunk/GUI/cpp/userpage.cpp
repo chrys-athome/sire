@@ -34,6 +34,7 @@
 #include "Conspire/GUI/button.h"
 #include "Conspire/GUI/exceptionpage.h"
 #include "Conspire/GUI/widgetstack.h"
+#include "Conspire/GUI/chooseclusterpage.h"
 
 #include "Conspire/option.h"
 #include "Conspire/values.h"
@@ -109,19 +110,27 @@ void UserPage::build()
     WidgetRack *sub_rack = new WidgetRack(this);
     sub_rack->setFocusPolicy(::Qt::NoFocus);
     
-       lineedit_host = new QLineEdit();
+    lineedit_host = new QLineEdit();
+    WidgetRack *sub_sub_rack = NULL;
     if (usemode == 1)
     {
-       QLabel *intro_label = new QLabel(Conspire::tr("Trusted machine logins must be added "
-          "to your account in order for Conspire to schedule your work.%1")
-           .arg((this_gateways.isEmpty()) ? "" : " This cluster requires a gateway login for access."));
+       QLabel *intro_label = new QLabel(Conspire::tr("SSH logins to trusted machines must be added "
+          "to your account in order for Conspire to schedule your work."));
        intro_label->setWordWrap(true);
-       //intro_label->setMinimumSize(intro_label->sizeHint());
+       intro_label->setMinimumSize(intro_label->sizeHint());
        sub_rack->addWidget(intro_label);
+       if (!this_gateways.isEmpty())
+       {
+          QLabel *gateways_label = new QLabel("This cluster is firewalled. For Conspire to reach the cluster,"
+          " you must add another Internet-accessible SSH login that can be used to get through to it.");
+          gateways_label->setWordWrap(true);
+          gateways_label->setMinimumSize(gateways_label->sizeHint());
+          sub_rack->addWidget(gateways_label);
+       }
        if (not this_gateways.isEmpty())
        {
           QStringList qstr_gateways = this_gateways.split(",");
-          QLabel *label_h = new QLabel(Conspire::tr("Gateway%1 to use:").arg((qstr_gateways.size() > 1) ? "s" : ""));
+          QLabel *label_h = new QLabel(Conspire::tr("Choose a machine you can access to use as a gateway:"));
           label_h->setFocusPolicy(::Qt::NoFocus);
           sub_rack->addWidget(label_h);
 
@@ -136,42 +145,79 @@ void UserPage::build()
           box_proxy->setZValue(100);
           sub_rack->addWidget(box_proxy);
           
+          sub_sub_rack = new WidgetRack(::Qt::Horizontal);
+          QLabel *label_gateway_username = new QLabel("Gateway username: ");
+          //label_gateway_username->setSizePolicy( QSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum) );
+          sub_sub_rack->addWidget(label_gateway_username);
           lineedit_gateway_username = new QLineEdit();
-          lineedit_gateway_username->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+          //lineedit_gateway_username->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Minimum) );
           lineedit_gateway_username->setPlaceholderText("Gateway username");
-          sub_rack->addWidget(lineedit_gateway_username);
+          sub_sub_rack->addWidget(lineedit_gateway_username);
+          sub_rack->addWidget(sub_sub_rack);
+          sub_sub_rack = new WidgetRack(::Qt::Horizontal);
+          QLabel *label_gateway_password = new QLabel("Gateway password: ");
+          //label_gateway_password->setSizePolicy( QSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum) );
+          sub_sub_rack->addWidget(label_gateway_password);
           lineedit_gateway_password = new QLineEdit();
           lineedit_gateway_password->setEchoMode(QLineEdit::Password);
-          lineedit_gateway_password->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
+          //lineedit_gateway_password->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Minimum) );
           lineedit_gateway_password->setPlaceholderText("Gateway password");
-          sub_rack->addWidget(lineedit_gateway_password);
-          lineedit_gateway_username->stackUnder(gateways_box);
-          lineedit_gateway_password->stackUnder(gateways_box);
-          gateways_box->raise();
-          lineedit_gateway_username->lower();
-          lineedit_gateway_password->lower();
+          sub_sub_rack->addWidget(lineedit_gateway_password);
+          sub_rack->addWidget(sub_sub_rack);
        }
-       QLabel *label_host = new QLabel(Conspire::tr("Login to %1 to add to remote keyring:").arg(this_hostname));
+       QLabel *label_host = new QLabel(Conspire::tr("Login to %1 to add to Conspire:").arg(this_hostname));
        label_host->setFocusPolicy(::Qt::NoFocus);
        sub_rack->addWidget(label_host);
     }
     
     if (usemode == 0)
     {
-       QLabel *hello_label_unknown = new QLabel(Conspire::tr("Hello. Please log in to Conspire."));
+       QLabel *hello_label_unknown = new QLabel(Conspire::tr("Hello. Please log in to Conspire.\nIf this is your first login, choose a username and password."));
+       hello_label_unknown->setWordWrap(true);
+       hello_label_unknown->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
        sub_rack->addWidget(hello_label_unknown);
     }
+    
     lineedit_username = new QLineEdit();
     lineedit_username->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
     lineedit_username->setPlaceholderText("Username");
     lineedit_username->setFocusPolicy(::Qt::StrongFocus);
-    sub_rack->addWidget(lineedit_username);
+    if (usemode < 1)
+    {
+       sub_sub_rack = new WidgetRack(::Qt::Horizontal);
+       QLabel *label_username = new QLabel("Username: ");
+       sub_sub_rack->addWidget(label_username);
+       sub_sub_rack->addWidget(lineedit_username);
+       sub_rack->addWidget(sub_sub_rack);
+    } else
+    {
+       sub_sub_rack = new WidgetRack(::Qt::Horizontal);
+       QLabel *label_username = new QLabel("Cluster username: ");
+       sub_sub_rack->addWidget(label_username);
+       sub_sub_rack->addWidget(lineedit_username);
+       sub_rack->addWidget(sub_sub_rack);
+    }
 
     lineedit_password = new QLineEdit();
     lineedit_password->setEchoMode(QLineEdit::Password);
     lineedit_password->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
     lineedit_password->setPlaceholderText("Password");
     lineedit_password->setFocusPolicy(::Qt::StrongFocus);
+    if (usemode < 1)
+    {
+       sub_sub_rack = new WidgetRack(::Qt::Horizontal);
+       QLabel *label_password = new QLabel("Password: ");
+       sub_sub_rack->addWidget(label_password);
+       sub_sub_rack->addWidget(lineedit_password);
+       sub_rack->addWidget(sub_sub_rack);
+    } else
+    {
+       sub_sub_rack = new WidgetRack(::Qt::Horizontal);
+       QLabel *label_password = new QLabel("Cluster password: ");
+       sub_sub_rack->addWidget(label_password);
+       sub_sub_rack->addWidget(lineedit_password);
+       sub_rack->addWidget(sub_sub_rack);
+    }
     if (usemode == 1)
     {
        disconnect(lineedit_password, SIGNAL(returnPressed()));
@@ -184,14 +230,16 @@ void UserPage::build()
 
     if (usemode == 1)
     {
+        sub_sub_rack = new WidgetRack(::Qt::Horizontal);
         button = new Button(Conspire::tr("Add"), this);
-        sub_rack->addWidget(button);
+        sub_sub_rack->addWidget(button);
         disconnect(button, SIGNAL(clicked()));
         connect(button, SIGNAL(clicked()), this, SLOT(sshadd()));
         lineedit_host->setFocus();
         return_button = new Button(Conspire::tr("Cancel"));
         connect(return_button, SIGNAL(clicked()), this, SIGNAL(pop()));
-        sub_rack->addWidget(return_button);
+        sub_sub_rack->addWidget(return_button);
+        sub_rack->addWidget(sub_sub_rack);
     }
 
     login_label = new QLabel();
@@ -260,7 +308,7 @@ void UserPage::build()
     rack->addWidget(stack);
     
     submode = (strlen(last_username.toAscii().constData()) > 0);
-    
+    if (usemode == 2) stack->switchTo(2);
     if (usemode == 0)
     {
        stack->switchTo(submode);
@@ -285,6 +333,12 @@ UserPage::UserPage(Page *parent) : Page(parent)
 {
     usemode = 0;
     build();
+}
+
+UserPage::UserPage(int imode, Page *parent) : Page(parent)
+{
+   usemode = imode;
+   build();
 }
 
 /** Constructor */
@@ -371,8 +425,15 @@ QString UserPage::loginUser(QString username, QString password, bool *loginsucce
       qsetter->setValue("preferences/lastUsername", username);
       last_username = username;
       delete qsetter;
-      stack->switchTo(2);
-      submode = 2;
+      const char *listclust = AcquireListOfAccessibleClusters();
+      if ((listclust) && (strlen(listclust) > 1))
+      {
+         stack->switchTo(2);
+         submode = 2;
+      } else
+      {
+         emit( push( PagePointer( new ChooseClusterPage(1) ), true ) );
+      }
       return "Log in successful";
    } else
    {
@@ -423,11 +484,13 @@ void UserPage::login()
           " or might like to use another account, please use the 'Change user' button below").arg(last_username));
        hello_label_loggedin->setText(Conspire::tr("Hello %1. You are logged in to Conspire.").arg(last_username));
        submode = 2;
+       login_label->setText(QString("<font color='Black'>") + login_status + QString("</font>"));
     } else
     {
        printf("login failed?\n");
+       login_label->setText(QString("<font color='Red'><b><center>") + login_status + QString("</center></b></font>"));
     }
-    login_label->setText(login_status);
+    
     allUpdate();
 }
 
@@ -443,7 +506,7 @@ void UserPage::sshadd()
       QString sshadd_retstring_1 = addMachine(gusername, gpassword, gmachinename, &wasokay);
       if (wasokay == false)
       {
-         login_label->setText(QString("gateway: %1").arg(sshadd_retstring_1));
+         login_label->setText(QString("<font color='Red'><b><center>gateway: %1</center></b></font>").arg(sshadd_retstring_1));
          return;
       }
    }

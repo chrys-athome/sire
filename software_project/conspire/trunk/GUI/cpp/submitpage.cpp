@@ -378,7 +378,7 @@ void SubmitPage::submit()
     const char *listclust = AcquireListOfAccessibleClusters();
     if ((listclust == NULL) || (strlen(listclust) <= 1))
     {
-        status_label->setText("Can't submit, no clusters available.");
+        status_label->setText("<font color='Red'><b><center>Can't submit, no clusters available (have you added clusters?).</center></b></font>");
         return;
     }
 

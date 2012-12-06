@@ -93,7 +93,7 @@ void WorkStorePage::downloadItem(QListWidgetItem *titem)
          if (dth) delete dth;
       } else
       {
-         login_label->setText("Cannot download until previous download finished!");
+         login_label->setText("<font color='Red'><b><center>Cannot download until previous download finished!</center></b></font>");
          return;
       }
    }
@@ -263,11 +263,11 @@ void WorkStorePage::refreshTimes()
    switch (retval)
    {
       case -2:
-         login_label->setText("Access denied");
+         login_label->setText("<font color='Red'><b><center>Access denied</center></b></font>");
          free(resultsarray);
          return;
       case -1:
-         login_label->setText("Unknown error (connection problem?)");
+         login_label->setText("<font color='Red'><b><center>Unknown error (connection problem?)</center></b></font>");
          free(resultsarray);
          return;
       case 0:
@@ -309,7 +309,7 @@ void WorkStorePage::refreshTimes()
       login_label->setText("No results yet available");
    } else
    {
-      login_label->setText(QString("%1 set(s) of results ready for download").arg(QString::number(haveany)));
+      login_label->setText(QString("<font color='Blue'>%1 set(s) of results ready for download</font>").arg(QString::number(haveany)));
    }
    AcquireClientClearResults();
    free(resultsarray);
@@ -388,10 +388,10 @@ void WorkStorePage::expungeWorkStore()
          delete qsetter;
          if (localsetfound)
          {
-            login_label->setText("Successfully deleted");
+            login_label->setText("<font color='Blue'>Successfully deleted</font>");
          } else
          {
-            login_label->setText("Remote deleted, but could not find local work data");
+            login_label->setText("<font color='Red'><b><center>Remote deleted, but could not find local work data</center></b></font>");
             printf("warning: Remote data deleted, but could not find local work data\n");
          }
          conspireDebug() << QString("delete workstore");
@@ -399,9 +399,9 @@ void WorkStorePage::expungeWorkStore()
       } else
       {
          if (retval == ACQUIRE_DELETE_WORK_STORE__ACCESS_DENIED)
-            login_label->setText("Access denied");
+            login_label->setText("<font color='Red'><b><center>Access denied</center></b></font>");
          if (retval == ACQUIRE_DELETE_WORK_STORE__UNKNOWN_ERROR)
-            login_label->setText("Unknown error (connection failed?)");
+            login_label->setText("<font color='Red'><b><center>Unknown error (connection failed?)</center></b></font>");
       }
    } else
    {
@@ -481,7 +481,7 @@ void WorkStorePage::build()
     {
         if (GetUploadArray()->value(workstoreid) == NULL)
         {
-           modifybutton = new Button(Conspire::tr("Edit"));
+           modifybutton = new Button(Conspire::tr("Edit and/or Submit"));
            connect(modifybutton, SIGNAL(clicked()), this, SLOT(editWorkStore()));
            sub_rack->addWidget(modifybutton);
         } else
@@ -493,11 +493,11 @@ void WorkStorePage::build()
     }
     delete qsetter;
         
-    button = new Button(Conspire::tr("Expunge"));
+    button = new Button(Conspire::tr("Delete"));
     connect(button, SIGNAL(clicked()), this, SLOT(expungeWorkStore()));
     sub_rack->addWidget(button);
     
-    return_button = new Button(Conspire::tr("Return"));
+    return_button = new Button(Conspire::tr("Back to work page"));
     connect(return_button, SIGNAL(clicked()), this, SIGNAL(pop()));
     sub_rack->addWidget(return_button);
     

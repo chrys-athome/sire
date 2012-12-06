@@ -54,12 +54,12 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        ChooseClusterPage(Page *parent=0);
+        ChooseClusterPage(int imode, Page *parent=0);
         
         ~ChooseClusterPage();
 
     protected slots:
-        
+        void switchWithFirstPage();
     protected:
         void resizeEvent(QGraphicsSceneResizeEvent *e);
         void moveEvent(QGraphicsSceneMoveEvent *e);
@@ -71,6 +71,8 @@ namespace Conspire
     private:
         void build();
         void allUpdate();
+        
+        int mode;
                 
         /** The options for the job to submit */
         Options opts;

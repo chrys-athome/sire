@@ -35,6 +35,7 @@
 #include "Conspire/GUI/configdocument.h"
 #include "Conspire/GUI/exceptionpage.h"
 #include "Conspire/GUI/widgetstack.h"
+#include "Conspire/GUI/userpage.h"
 
 #include "Conspire/option.h"
 #include "Conspire/values.h"
@@ -76,6 +77,11 @@ using namespace Conspire;
 #include "config.h"
 
 static QString install_dir = STATIC_INSTALL_DIR;
+
+void ChooseClusterPage::switchWithFirstPage()
+{
+   emit( push( PagePointer(new UserPage(2)), true ) );
+}
 
 void ChooseClusterPage::build()
 {
@@ -199,8 +205,11 @@ void ChooseClusterPage::build()
     sub_rack->addWidget(button);
     */
 
-    return_button = new Button(Conspire::tr("Return"));
-    connect(return_button, SIGNAL(clicked()), this, SIGNAL(pop()));
+    return_button = new Button(Conspire::tr("Cancel"));
+    if (mode == 0)
+       connect(return_button, SIGNAL(clicked()), this, SIGNAL(pop()));
+    if (mode == 1)
+       connect(return_button, SIGNAL(clicked()), this, SLOT(switchWithFirstPage()));
     sub_rack->addWidget(return_button);
  
     login_label = new QLabel();
@@ -213,8 +222,9 @@ void ChooseClusterPage::build()
 }
 
 /** Constructor */
-ChooseClusterPage::ChooseClusterPage(Page *parent) : Page(parent)
+ChooseClusterPage::ChooseClusterPage(int imode, Page *parent) : Page(parent)
 {
+    mode = imode;
     build();
 }
 

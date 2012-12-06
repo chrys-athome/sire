@@ -5,6 +5,7 @@
       <description>This workpacket ... Amber 11 is a package that provides ... molecular dynamics ...</description>
       <icon>amberpic_gpu.png</icon>
       <directory>pmemd</directory>
+      <datadirectory>demos/amber_pmemd</datadirectory>
       <optionsxml>pmemd.xml</optionsxml>
       <optionsincludedirs>pmemd</optionsincludedirs>
    </jobclassdescription>
@@ -13,6 +14,7 @@
       <description>This workpacket runs a Zebedde calculation for zeolite design</description>
       <icon>zebedde.png</icon>
       <directory>zebedde</directory>
+      <datadirectory>demos/zeolites_zebedde</datadirectory>
       <optionsxml>zebedde.xml</optionsxml>
       <optionsincludedirs>zebedde</optionsincludedirs>
    </jobclassdescription>
@@ -21,6 +23,7 @@
       <description>Calculate protein-ligand binding free energies using Monte Carlo simulation</description>
       <icon>inhib9-trans.preview.png</icon>
       <directory>freenrg</directory>
+      <datadirectory>demos/free_energy</datadirectory>
       <optionsxml>freenrg.xml</optionsxml>
       <optionsincludedirs>freenrg</optionsincludedirs>
    </jobclassdescription>

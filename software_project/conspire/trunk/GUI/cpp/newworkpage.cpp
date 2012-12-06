@@ -209,7 +209,7 @@ void NewWorkPage::refreshWorkPartial()
                 i++;
             }
         }
-        ((WorkPacketWidget *)(all_wpw->at(all_wpw->size() - 1)))->updateText("Create new...");
+        ((WorkPacketWidget *)(all_wpw->at(all_wpw->size() - 1)))->updateText("Create job...");
         ((WorkPacketWidget *)(all_wpw->at(all_wpw->size() - 1)))->updateAmounts(0., 0., 0.);
         delete qsetter;
     } else
@@ -264,7 +264,7 @@ void NewWorkPage::refreshWorkFull()
     }
     delete qsetter;
     WorkPacketWidget *t_wpw =
-        new WorkPacketWidget("Create new...", 0, 0, i, all_wpw, NULL);
+        new WorkPacketWidget("Create job...", 0, 0, i, all_wpw, NULL);
     qgrid->setRowFixedHeight(row, 100);
     qgrid->setColumnFixedWidth(col, 100);
     qgrid->addItem(t_wpw, row, col, 1, 1);
@@ -488,7 +488,7 @@ void NewWorkPage::build()
     qgrid = new QGraphicsGridLayout();
     qgrid->setRowFixedHeight(0, 100);
     qgrid->setColumnFixedWidth(0, 100);
-    WorkPacketWidget *none_wpw = new WorkPacketWidget("Create new...", 0, 0, 0, all_wpw, NULL);
+    WorkPacketWidget *none_wpw = new WorkPacketWidget("Create job...", 0, 0, 0, all_wpw, NULL);
     qgrid->addItem(none_wpw, 0, 0, 1, 1);
     all_wpw->append(none_wpw);
     connect(none_wpw, SIGNAL(push(PagePointer)), this, SIGNAL(push(PagePointer)));
@@ -501,11 +501,11 @@ void NewWorkPage::build()
     sub_rack->addWidget(qview);
     return_button = NULL;
 
-    button = new Button(Conspire::tr("Refresh"));
-    connect(button, SIGNAL(clicked()), this, SLOT(refreshWork()));
-    sub_rack->addWidget(button);
+//    button = new Button(Conspire::tr("Refresh"));
+//    connect(button, SIGNAL(clicked()), this, SLOT(refreshWork()));
+//    sub_rack->addWidget(button);
 
-    return_button = new Button(Conspire::tr("Return"));
+    return_button = new Button(Conspire::tr("Back"));
     connect(return_button, SIGNAL(clicked()), this, SIGNAL(pop()));
     sub_rack->addWidget(return_button);
  

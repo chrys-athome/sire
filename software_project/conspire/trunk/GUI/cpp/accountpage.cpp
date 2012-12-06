@@ -79,8 +79,7 @@ static QString install_dir = STATIC_INSTALL_DIR;
 
 void AccountPage::addSSHAccount()
 {
-//   emit( push( PagePointer( new UserPage(1))));
-   emit( push( PagePointer( new ChooseClusterPage())));
+   emit( push( PagePointer( new ChooseClusterPage(0))));
 }
 
 void AccountPage::refreshList()
@@ -180,7 +179,7 @@ void AccountPage::refreshList()
    {
       QListWidgetItem *none_item = new QListWidgetItem("None available...");
       clusterlist->addItem(none_item);
-      login_label->setText("No clusters available");
+      login_label->setText("<font color='Red'><b><center>No clusters available.</center></b></font>");
    }
    AcquireClientClearResults();
 }
@@ -210,7 +209,7 @@ void AccountPage::build()
     intro_label->setMinimumSize(intro_label->sizeHint());
     sub_rack->addWidget(intro_label);
     
-    modifybutton = new Button(Conspire::tr("Add..."));
+    modifybutton = new Button(Conspire::tr("Add cluster..."));
     connect(modifybutton, SIGNAL(clicked()), this, SLOT(addSSHAccount()));
     sub_rack->addWidget(modifybutton);
     
@@ -229,7 +228,7 @@ void AccountPage::build()
     connect(button, SIGNAL(clicked()), this, SLOT(refreshList()));
     sub_rack->addWidget(button);
     
-    return_button = new Button(Conspire::tr("Return"));
+    return_button = new Button(Conspire::tr("Back to menu"));
     connect(return_button, SIGNAL(clicked()), this, SIGNAL(pop()));
     sub_rack->addWidget(return_button);
     

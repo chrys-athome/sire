@@ -85,12 +85,12 @@ void ChooseClassPage::selectJobClass()
    delete qsetter;
    if (t_jobclass.isEmpty())
    {
-       login_label->setText("Please select a job class to create.");
+       login_label->setText("<font color='Red'><b><center>Please select a job class to create.</center></b></font>");
        return;
    }
    if (lineedit_jobname->text().isEmpty())
    {
-       login_label->setText("Please name your new job.");
+       login_label->setText("<font color='Red'><b><center>Please name your new job.</center></b></font>");
        return;
    }
    qsetter = new QSettings("UoB", "AcquireClient");
@@ -219,13 +219,17 @@ void ChooseClassPage::build(QString clstext)
     WidgetRack *sub_rack = new WidgetRack(this);
     sub_rack->setFocusPolicy(::Qt::NoFocus);
 
+    WidgetRack *sub_sub_rack = new WidgetRack(::Qt::Horizontal, this);
+    QLabel *label_jobname = new QLabel("Job name: ");
+    sub_sub_rack->addWidget(label_jobname);
     lineedit_jobname = new QLineEdit();
     lineedit_jobname->setSizePolicy( QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding) );
     lineedit_jobname->setPlaceholderText("Give this job a name");
     lineedit_jobname->setFocusPolicy(::Qt::StrongFocus);
     if (not clstext.isEmpty())
        lineedit_jobname->setText(clstext);
-    sub_rack->addWidget(lineedit_jobname);
+    sub_sub_rack->addWidget(lineedit_jobname);
+    sub_rack->addWidget(sub_sub_rack);
     connect(lineedit_jobname, SIGNAL(textChanged(QString)), this, SLOT(saveNewJobName(QString)));
     
     QLabel *label_table = new QLabel(Conspire::tr("Choose the job that you would like to do:"));
@@ -332,6 +336,9 @@ void ChooseClassPage::build(QString clstext)
     sub_rack->addWidget(qview);
     return_button = NULL;
     
+    login_label = new QLabel();
+    sub_rack->addWidget(login_label);
+    
     button = new Button(Conspire::tr("Create"));
     connect(button, SIGNAL(clicked()), this, SLOT(selectJobClass()));
     sub_rack->addWidget(button);
@@ -340,9 +347,6 @@ void ChooseClassPage::build(QString clstext)
     connect(return_button, SIGNAL(clicked()), this, SLOT(deleteNewJob()));
     sub_rack->addWidget(return_button);
  
-    login_label = new QLabel();
-    sub_rack->addWidget(login_label);
-
     stack->addWidget(sub_rack);
 
     rack->addWidget(stack);
