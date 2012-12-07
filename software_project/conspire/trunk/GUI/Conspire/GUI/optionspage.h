@@ -52,8 +52,8 @@ namespace Conspire
     
     public:
         OptionsPage(Page *parent=0);
-        OptionsPage(Options options, Page *parent=0);
-        OptionsPage(Options options, QString root_key,
+        OptionsPage(QString *ibrowsedir, Options options, Page *parent=0);
+        OptionsPage(QString *ibrowsedir, Options options, QString root_key,
                     Page *parent=0);
         
         ~OptionsPage();
@@ -82,6 +82,8 @@ namespace Conspire
         void setOptions(Options options, QString root_key = QString::null);
         
         void pvt_reread(Options options);
+        
+        QString *browsedir;
         
         /** The options that can be edited by this page */
         Options opts;

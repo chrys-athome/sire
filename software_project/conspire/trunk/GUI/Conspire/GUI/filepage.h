@@ -49,7 +49,7 @@ namespace Conspire
     
     public:
         FilePage(Page *parent=0);
-        FilePage(Option option, QString root_key,
+        FilePage(QString *ibrowsedir, Option option, QString root_key,
                  Page *parent=0);
                      
         ~FilePage();
@@ -75,7 +75,9 @@ namespace Conspire
     private:
         void build();
         void setOption(Option option, QString key);
-    
+        
+        QString *browsedir;
+        
         Option opt;
         QString root_key;
         

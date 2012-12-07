@@ -55,10 +55,10 @@ namespace Conspire
         Q_OBJECT
         
     public:
-        ConfigDocument(QString itype, Page *parent=0);
-        ConfigDocument(QString itype, QString iquuid, Page *parent=0);
-        ConfigDocument(QString itype, Options options, Page *parent=0);
-        ConfigDocument(QString itype, Options options, QString iquuid, Page *parent=0);
+        ConfigDocument(QString ibrowsedir, QString itype, Page *parent=0);
+        ConfigDocument(QString ibrowsedir, QString itype, QString iquuid, Page *parent=0);
+        ConfigDocument(QString ibrowsedir, QString itype, Options options, Page *parent=0);
+        ConfigDocument(QString ibrowsedir, QString itype, Options options, QString iquuid, Page *parent=0);
         
         ~ConfigDocument();
         
@@ -121,6 +121,7 @@ namespace Conspire
         Options opts;
         QString jobtype;
         QString quuid;
+        QString browsedir;
 
         /** The context-sensitive button */
         Button *submit_button;

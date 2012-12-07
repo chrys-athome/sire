@@ -144,90 +144,93 @@ void WorkStorePage::editWorkStore()
         emit( pop(true));
         return;
     }
+   QFile *xmlFile = new QFile(QString("%1/job_classes/job_classes.xml").arg(install_dir));
+
+   if (!xmlFile->open(QIODevice::ReadOnly | QIODevice::Text))
+   {
+   emit( push( PagePointer( new ExceptionPage(
+            Conspire::tr("Error opening job classes XML file"),
+                        Conspire::file_error( Conspire::tr("Cannot open the "
+                        "file \"%1/%2\".")
+                           .arg(install_dir).arg("job_classes.xml"), CODELOC ) ) ) ) );
+   }
+
+   QXmlStreamReader *xmlReader = new QXmlStreamReader(xmlFile);
+
+   QString t_jobclassid;
+   QString t_jobclassdirectory;
+   QString t_jobclassdatadirectory;
+   QString t_jobclassxml;
+   QString t_jobclassincludedirs;
+   
+   while (!xmlReader->atEnd() && !xmlReader->hasError())
+   {
+         QXmlStreamReader::TokenType token = xmlReader->readNext();
+         if (token == QXmlStreamReader::StartDocument) continue;
+         if (token == QXmlStreamReader::StartElement)
+         {
+            if (xmlReader->name() == "jobclassdescription")
+            {
+               t_jobclassid = xmlReader->attributes().value("id").toString();
+            }
+            if (xmlReader->name() == "directory") t_jobclassdirectory = xmlReader->readElementText();
+            if (xmlReader->name() == "datadirectory") t_jobclassdatadirectory = xmlReader->readElementText();
+            if (xmlReader->name() == "optionsxml") t_jobclassxml = xmlReader->readElementText();
+            if (xmlReader->name() == "optionsincludedirs") t_jobclassincludedirs = xmlReader->readElementText();
+         }
+         if (token == QXmlStreamReader::EndElement)
+         {
+            if (xmlReader->name() == "jobclassdescription")
+            {
+               if (t_jobclassid == jobclass) break;
+//                       conspireDebug() << t_jobclassid << jobclass;
+            }
+         }
+   }
+
+   if (xmlReader->hasError())
+   {
+   emit( push( PagePointer( new ExceptionPage(
+            Conspire::tr("Error in XML parsing."),
+                        Conspire::file_error( Conspire::tr("Cannot open the "
+                        "file \"%1/%2\".")
+                           .arg(install_dir).arg("job_classes.xml"), CODELOC ) ) ) ) );
+   }
+
+   xmlReader->clear();
+   xmlFile->close();
+   delete xmlReader;
+   delete xmlFile;
     if (not saveddata.isEmpty())
     {
         QFile file(saveddata);
         if (file.exists())
         {
            Options toptions;
-            QFile *xmlFile = new QFile(QString("%1/job_classes/job_classes.xml").arg(install_dir));
-
-            if (!xmlFile->open(QIODevice::ReadOnly | QIODevice::Text))
-            {
-            emit( push( PagePointer( new ExceptionPage(
-                    Conspire::tr("Error opening job classes XML file"),
-                                Conspire::file_error( Conspire::tr("Cannot open the "
-                                "file \"%1/%2\".")
-                                    .arg(install_dir).arg("job_classes.xml"), CODELOC ) ) ) ) );
-            }
-
-            QXmlStreamReader *xmlReader = new QXmlStreamReader(xmlFile);
-
-            QString t_jobclassid;
-            QString t_jobclassdirectory;
-            QString t_jobclassxml;
-            QString t_jobclassincludedirs;
-            
-            while (!xmlReader->atEnd() && !xmlReader->hasError())
-            {
-                QXmlStreamReader::TokenType token = xmlReader->readNext();
-                if (token == QXmlStreamReader::StartDocument) continue;
-                if (token == QXmlStreamReader::StartElement)
-                {
-                    if (xmlReader->name() == "jobclassdescription")
-                    {
-                        t_jobclassid = xmlReader->attributes().value("id").toString();
-                    }
-                    if (xmlReader->name() == "directory") t_jobclassdirectory = xmlReader->readElementText();
-                    if (xmlReader->name() == "optionsxml") t_jobclassxml = xmlReader->readElementText();
-                    if (xmlReader->name() == "optionsincludedirs") t_jobclassincludedirs = xmlReader->readElementText();
-                }
-                if (token == QXmlStreamReader::EndElement)
-                {
-                    if (xmlReader->name() == "jobclassdescription")
-                    {
-                       if (t_jobclassid == jobclass) break;
-//                       conspireDebug() << t_jobclassid << jobclass;
-                    }
-                }
-            }
-
-            if (xmlReader->hasError())
-            {
-            emit( push( PagePointer( new ExceptionPage(
-                    Conspire::tr("Error in XML parsing."),
-                                Conspire::file_error( Conspire::tr("Cannot open the "
-                                "file \"%1/%2\".")
-                                    .arg(install_dir).arg("job_classes.xml"), CODELOC ) ) ) ) );
-            }
-
-            xmlReader->clear();
-            xmlFile->close();
-            delete xmlReader;
-            delete xmlFile;
                 
-                
-        QStringList path;
-        path << QString("%1/job_classes/%2").arg(install_dir).arg(t_jobclassdirectory);
-        
-        printf("joboptions %s\n", t_jobclassxml.toAscii().constData());
-        toptions = Options::fromXMLFile(QString("%1").arg(t_jobclassxml), path);
-
-        qDebug() << "Looking for a default config file...";
-        QFileInfo default_config( QString("%1/job_classes/%2/default_config").arg(install_dir,t_jobclassdirectory) );
-
-        qDebug() << default_config.absoluteFilePath();
+                  
+            QStringList path;
+            path << QString("%1/job_classes/%2").arg(install_dir).arg(t_jobclassdirectory);
             
-        toptions = toptions.fromConfigFile(saveddata);
+            printf("joboptions %s\n", t_jobclassxml.toAscii().constData());
+            toptions = Options::fromXMLFile(QString("%1").arg(t_jobclassxml), path);
+
+            qDebug() << "Looking for a default config file...";
+            QFileInfo default_config( QString("%1/job_classes/%2/default_config").arg(install_dir,t_jobclassdirectory) );
+
+            qDebug() << default_config.absoluteFilePath();
+            qDebug() << t_jobclassdatadirectory;
+                  
+            toptions = toptions.fromConfigFile(saveddata);
         
-           emit(push( PagePointer( new ConfigDocument(jobclass, toptions, quuid) ), true));
+           emit(push( PagePointer( new ConfigDocument(t_jobclassdatadirectory, jobclass, toptions, quuid) ), true));
            return;
         }
     }
     if (not jobclass.isEmpty())
     {
        Options toptions;
-       emit(push( PagePointer( new ConfigDocument(jobclass, toptions, quuid) ), true));
+       emit(push( PagePointer( new ConfigDocument(t_jobclassdatadirectory, jobclass, toptions, quuid) ), true));
        return;
     }
     if (not jobname.isEmpty())

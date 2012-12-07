@@ -56,34 +56,42 @@
 using namespace Conspire;
 
 /** Construct an empty document */
-ConfigDocument::ConfigDocument(QString itype, Page *parent) : Page(parent)
+ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, Page *parent) : Page(parent)
 {
+    browsedir = ibrowsedir;
+    conspireDebug() << ibrowsedir;
     jobtype = itype;
     build();
 }
 
 /** Construct a document to view and edit 'options' */
-ConfigDocument::ConfigDocument(QString itype, Options options, Page *parent)
+ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, Options options, Page *parent)
                : Page(parent)
 {
+    browsedir = ibrowsedir;
+    conspireDebug() << ibrowsedir;
     jobtype = itype;
     build();
     this->setOptions(options);
 }
 
 /** Construct a document to view and edit 'options' */
-ConfigDocument::ConfigDocument(QString itype, QString iquuid, Page *parent)
+ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, QString iquuid, Page *parent)
                : Page(parent)
 {
+    browsedir = ibrowsedir;
+    conspireDebug() << ibrowsedir;
     jobtype = itype;
     quuid = iquuid;
     build();
 }
 
 /** Construct a document to view and edit 'options', with an existing UUID */
-ConfigDocument::ConfigDocument(QString itype, Options options, QString iquuid, Page *parent)
+ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, Options options, QString iquuid, Page *parent)
                : Page(parent)
 {
+    browsedir = ibrowsedir;
+    conspireDebug() << ibrowsedir;
     quuid = iquuid;
     jobtype = itype;
     build();
@@ -393,7 +401,7 @@ void ConfigDocument::setOptions(Options options)
 {
     if (view->isEmpty())
     {
-        view->pushed( PagePointer(new OptionsPage(options,view)) );
+        view->pushed( PagePointer(new OptionsPage(&browsedir,options,view)) );
     }
     else
     {
@@ -403,7 +411,7 @@ void ConfigDocument::setOptions(Options options)
         }
         catch(const Conspire::Exception &e)
         {
-            view->pushed( PagePointer(new OptionsPage(options,view)) );
+            view->pushed( PagePointer(new OptionsPage(&browsedir,options,view)) );
         }
     }
     

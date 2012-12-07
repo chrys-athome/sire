@@ -114,6 +114,7 @@ void ChooseClassPage::selectJobClass()
 
     QString t_jobclassid;
     QString t_jobclassname;
+    QString t_jobclassdatadirectory;
     QString t_jobclassdirectory;
     QString t_jobclassxml;
     QStringList t_jobclassincludedirs;
@@ -129,6 +130,7 @@ void ChooseClassPage::selectJobClass()
               t_jobclassid = xmlReader->attributes().value("id").toString();
            }
            if (xmlReader->name() == "name") t_jobclassname = xmlReader->readElementText();
+           if (xmlReader->name() == "datadirectory") t_jobclassdatadirectory = xmlReader->readElementText();
            if (xmlReader->name() == "directory") t_jobclassdirectory = xmlReader->readElementText();
            if (xmlReader->name() == "optionsxml") t_jobclassxml = xmlReader->readElementText();
            if (xmlReader->name() == "optionsincludedirs") t_jobclassincludedirs << xmlReader->readElementText();
@@ -175,7 +177,7 @@ void ChooseClassPage::selectJobClass()
     }
 
     conspireDebug() << "PUSH CONFIGDOC";
-    emit( push( PagePointer(new ConfigDocument(t_jobclassdirectory, opts, quuid)), true) );
+    emit( push( PagePointer(new ConfigDocument(t_jobclassdatadirectory, t_jobclassdirectory, opts, quuid)), true) );
     conspireDebug() << "PUSHED!";
 }
 

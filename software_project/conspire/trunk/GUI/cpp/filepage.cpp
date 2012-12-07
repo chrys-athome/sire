@@ -43,16 +43,20 @@
 
 using namespace Conspire;
 
+#include "config.h"
+
 /** Constructor */
 FilePage::FilePage(Page *parent) : ConfigPage(parent)
 {
+    browsedir = NULL;
     build();
 }
 
 /** Constructor, passing in the option to edit, and the root key of that option */
-FilePage::FilePage(Option option, QString root_key, Page *parent)
+FilePage::FilePage(QString *ibrowsedir, Option option, QString root_key, Page *parent)
          : ConfigPage(parent)
 {
+    browsedir = ibrowsedir;
     build();
     setOption(option, root_key);
 }
@@ -181,12 +185,17 @@ void FilePage::editingFinished()
 
 void FilePage::browse()
 {
-    QString filename = QFileDialog::getOpenFileName(0, Conspire::tr("Choose a file..."), QString(), QString(), 0, QFileDialog::DontUseNativeDialog);
-    
+    QString filename;
+    filename = QFileDialog::getOpenFileName(0,
+        Conspire::tr("Choose a file..."),
+        (browsedir) ? (QString(STATIC_INSTALL_DIR "/%1").arg(*browsedir)) : QString(),
+        QString(), 0, QFileDialog::DontUseNativeDialog);
     if (not filename.isEmpty())
     {
         value_edit->setText(filename);
         this->editingFinished();
+        QDir d = QFileInfo(filename).absoluteDir();
+        *browsedir = d.absolutePath();
     }
 }
 

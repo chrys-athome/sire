@@ -53,18 +53,20 @@ OptionsPage::OptionsPage(Page *parent) : ConfigPage(parent)
 }
 
 /** Construct, passing in a top-level options object */
-OptionsPage::OptionsPage(Options options, Page *parent)
+OptionsPage::OptionsPage(QString *ibrowsedir, Options options, Page *parent)
             : ConfigPage(parent)
 {
+    browsedir = ibrowsedir;
     build();
     setOptions(options);
 }
 
 /** Construct, passing in an Opitons object that is a sub-options object,
     with root key 'root_key' */
-OptionsPage::OptionsPage(Options options, QString root_key, Page *parent)
+OptionsPage::OptionsPage(QString *ibrowsedir, Options options, QString root_key, Page *parent)
             : ConfigPage(parent)
 {
+    browsedir = ibrowsedir;
     build();
     setOptions(options, root_key);
 }
@@ -185,7 +187,7 @@ void OptionsPage::clicked(const QString &key)
             if (not root_key.isEmpty())
                 root.prepend(".").prepend(root_key);
 
-            OptionsPage *page = new OptionsPage(opt.value().asA<Options>(), root);
+            OptionsPage *page = new OptionsPage(browsedir, opt.value().asA<Options>(), root);
 
             page->setTitle(root);
             page->setDescription(opt.description());
@@ -197,7 +199,7 @@ void OptionsPage::clicked(const QString &key)
             ConfigPage *page;
             
             if (opt.value().isA<FileValue>())
-                page = new FilePage(opt, root_key);
+                page = new FilePage(browsedir, opt, root_key);
             else
                 page = new OptionPage(opt, root_key);
             
