@@ -138,6 +138,9 @@ public:
     int getBufferFrequency();
     void setBufferFrequency(int);
 
+    void setDeviceIndex(QString);
+    QString getDeviceIndex(void);
+
 
 private:
     /** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
@@ -175,6 +178,8 @@ private:
     int CMMremoval_frequency;
 
     int buffer_frequency;
+
+    QString device_index;
 
 };
 

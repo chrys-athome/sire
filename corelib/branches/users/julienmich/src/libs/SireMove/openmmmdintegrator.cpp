@@ -125,6 +125,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMMDIntegrato
     	<< velver.Andersen_flag <<  velver.Andersen_frequency 
     	<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
     	<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency
+	<< velver.device_index
     	<< static_cast<const Integrator&>(velver);
     
     // Free OpenMM pointers??
@@ -146,6 +147,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
 	    >> velver.Andersen_flag >>  velver.Andersen_frequency 
 	    >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
 	    >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency
+	    >> velver.device_index 
 	    >> static_cast<Integrator&>(velver);
 
 	// Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -171,7 +173,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(bool frequent_save)
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
                  Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-		 CMMremoval_frequency(0), buffer_frequency(0)
+		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0")
 	        
 {}
 /** Constructor using the passed molecule group */
@@ -184,7 +186,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
                  Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-		 CMMremoval_frequency(0), buffer_frequency(0)
+		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0")
            
 {}
 
@@ -200,7 +202,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const OpenMMMDIntegrator &other)
                  MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
                  Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
                  Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
-		 buffer_frequency(other.buffer_frequency)
+		 buffer_frequency(other.buffer_frequency),device_index(other.device_index) 
 
 {}
 
@@ -231,6 +233,7 @@ OpenMMMDIntegrator& OpenMMMDIntegrator::operator=(const OpenMMMDIntegrator &othe
     Restraint_flag = other.Restraint_flag;
     CMMremoval_frequency = other.CMMremoval_frequency;
     buffer_frequency = other.buffer_frequency;
+    device_index = other.device_index;
     
     return *this;
 }
@@ -496,8 +499,8 @@ void OpenMMMDIntegrator::initialise()  {
 	    Atom at = molatoms.at(j);
 	    AtomNum atnum = at.number();
 
-	    //if (Debug)
-	    //  qDebug() << " openMM_index " << system_index << " Sire Atom Number " << atnum.toString();
+	    if (Debug)
+	      qDebug() << " openMM_index " << system_index << " Sire Atom Number " << atnum.toString();
 
 	    AtomNumToOpenMMIndex[atnum.value()] = system_index;
 
@@ -506,6 +509,10 @@ void OpenMMMDIntegrator::initialise()  {
 	    // This is very AMBER specific. 
 	    
 	    AtomName atname = at.name();
+
+            if (Debug)
+                qDebug() << " atname " << atname.value() << " mol " << i;            
+
 	    if ( atname == AtomName("EPW") ) 
 	      {
 		ResName resname = at.residue().name();
@@ -602,6 +609,46 @@ void OpenMMMDIntegrator::initialise()  {
 			
 	    nonbond_openmm->addParticle(charge, sigma * OpenMM::NmPerAngstrom, epsilon * OpenMM::KJPerKcal);
 	  }
+
+
+        if(Restraint_flag == true)
+          {
+            bool hasRestrainedAtoms = molecule.hasProperty("restrainedatoms");
+
+            if(hasRestrainedAtoms)
+              {
+                Properties restrainedAtoms = molecule.property("restrainedatoms").asA<Properties>();
+
+                int nrestrainedatoms = restrainedAtoms.property(QString("nrestrainedatoms")).asA<VariantProperty>().toInt();
+                if (Debug)
+                  qDebug() << " nrestrainedatoms " << nrestrainedatoms ;
+
+                for (int i=0; i < nrestrainedatoms ; i++)
+                  {
+                    int atomnum = restrainedAtoms.property(QString("AtomNum(%1)").arg(i)).asA<VariantProperty>().toInt();
+                    double xref = restrainedAtoms.property(QString("x(%1)").arg(i)).asA<VariantProperty>().toDouble();
+                    double yref = restrainedAtoms.property(QString("y(%1)").arg(i)).asA<VariantProperty>().toDouble();
+                    double zref = restrainedAtoms.property(QString("z(%1)").arg(i)).asA<VariantProperty>().toDouble();
+                    double k = restrainedAtoms.property(QString("k(%1)").arg(i)).asA<VariantProperty>().toDouble();
+
+                    int openmmindex = AtomNumToOpenMMIndex[atomnum];
+
+                    if (Debug)
+                      qDebug() << " atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k;
+
+                    int posrestrdim = 4;
+                    std::vector<double> params(posrestrdim);
+
+                    params[0] = xref * OpenMM::NmPerAngstrom;
+                    params[1] = yref * OpenMM::NmPerAngstrom;
+                    params[2] = zref * OpenMM::NmPerAngstrom;
+                    params[3] = k  * ( OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm );
+
+                    positionalRestraints_openmm->addParticle(openmmindex, params);
+                  }
+              }
+          }//end of restraint flag
+
 	
 	// The bonded parameters
 	bool hasConnectivity = molecule.hasProperty("connectivity");
@@ -777,42 +824,6 @@ void OpenMMMDIntegrator::initialise()  {
 	      }
 	  }//end of impropers
 
-	if(Restraint_flag == true)
-	  {
-	    bool hasRestrainedAtoms = molecule.hasProperty("restrainedatoms");
-	    if(hasRestrainedAtoms)
-	      {
-		Properties restrainedAtoms = molecule.property("restrainedatoms").asA<Properties>();
-
-		int nrestrainedatoms = restrainedAtoms.property(QString("nrestrainedatoms")).asA<VariantProperty>().toInt();
-		if (Debug)
-		  qDebug() << " nrestrainedatoms " << nrestrainedatoms ;
-		
-		for (int i=0; i < nrestrainedatoms ; i++)
-		  {
-		    int atomnum = restrainedAtoms.property(QString("AtomNum(%1)").arg(i)).asA<VariantProperty>().toInt();
-		    double xref = restrainedAtoms.property(QString("x(%1)").arg(i)).asA<VariantProperty>().toDouble();
-		    double yref = restrainedAtoms.property(QString("y(%1)").arg(i)).asA<VariantProperty>().toDouble();
-		    double zref = restrainedAtoms.property(QString("z(%1)").arg(i)).asA<VariantProperty>().toDouble();
-		    double k = restrainedAtoms.property(QString("k(%1)").arg(i)).asA<VariantProperty>().toDouble();
-
-		    int openmmindex = AtomNumToOpenMMIndex[atomnum];
-
-		    if (Debug)
-		      qDebug() << " atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k;
-		    
-		    int posrestrdim = 4;
-		    std::vector<double> params(posrestrdim);
-		    
-		    params[0] = xref * OpenMM::NmPerAngstrom;
-		    params[1] = yref * OpenMM::NmPerAngstrom;
-		    params[2] = zref * OpenMM::NmPerAngstrom;
-		    params[3] = k  * ( OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm );
-		    
-		    positionalRestraints_openmm->addParticle(openmmindex, params);
-		  }
-	      }
-	  }//end of restraint flag
 	num_atoms_till_i = num_atoms_till_i + num_atoms_molecule ;
       }// end of loop over molecules
 
@@ -910,6 +921,19 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
   OpenMM::VerletIntegrator integrator_openmm(dt);//dt in pico seconds
   OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString()); 	
   
+  if (platform_type == "OpenCL")
+    {
+      const std::string prop = std::string("OpenCLDeviceIndex");
+      platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
+      qDebug() << " setting up OpenCL default Index to " << device_index;
+    }
+  else if (platform_type == "Cuda")
+    {
+      const std::string prop = std::string("CudaDeviceIndex");
+      platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );   
+    }
+  // JM Dec 12. Do we need to set for Reference?
+    
   // Creating a context is the bottleneck in the setup step 
   // Another implementation could have the context created once during initialisation. 
   // But then have to figure out how to properly allocate/free context on the heap and make it 
@@ -1310,6 +1334,20 @@ QString OpenMMMDIntegrator::getPlatform(void){
 void OpenMMMDIntegrator::setPlatform(QString platform){
 
 	platform_type = platform;
+
+}
+
+/** Get the OpenMMMD Platform: CUDA, OpenCL, CPU */
+QString OpenMMMDIntegrator::getDeviceIndex(void){
+
+	return device_index;
+
+}
+
+/** Set the OpenMM Platform: CUDA, OpenCL, CPU */
+void OpenMMMDIntegrator::setDeviceIndex(QString deviceidx){
+
+	device_index = deviceidx;
 
 }
 
