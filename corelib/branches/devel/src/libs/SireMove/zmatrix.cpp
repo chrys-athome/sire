@@ -1403,12 +1403,15 @@ ZMatrix ZMatrix::matchToSelection(const AtomSelection &selection) const
     selection.assertCompatibleWith(*molinfo);
 
     if (selection.selectedAll())
-        return *this;
-    
+    {
+        ZMatrix zmat(*this);
+        zmat.molinfo = selection.info();
+        return zmat;
+    }
     else if (selection.selectedNone())
     {
         ZMatrix zmatrix;
-        zmatrix.molinfo = molinfo;
+        zmatrix.molinfo = selection.info();
         return zmatrix;
     }
         
@@ -1450,6 +1453,7 @@ ZMatrix ZMatrix::matchToSelection(const AtomSelection &selection) const
 
     ZMatrix zmatrix(*this);
     zmatrix.zmat = new_zmat;
+    zmatrix.molinfo = selection.info();
     zmatrix.atomidx_to_zmat = new_index;
     zmatrix.rebuildOrder();
 

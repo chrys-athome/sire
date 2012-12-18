@@ -501,7 +501,7 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
                 const PartialMolecule &oldmol = mol_and_bias.get<0>();
                 old_bias = mol_and_bias.get<1>();
 
-                ZMatrixCoords zmatrix( oldmol, map );
+                ZMatrixCoords zmatrix( oldmol.molecule(), map );
 
                 //move the internal coordinates of selected atoms in the 
                 //z-matrix
