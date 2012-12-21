@@ -82,6 +82,8 @@ public:
     void addFixedAtoms(const SireMol::Molecules &fixed_atoms,
                        const SireBase::PropertyMap &map = SireBase::PropertyMap());
 
+    void addFixedAtoms(const GridFF &other);
+
     void setBuffer(SireUnits::Dimension::Length buffer);
     void setGridSpacing(SireUnits::Dimension::Length spacing);
 
