@@ -470,8 +470,65 @@ template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 void Inter2B2G3DFF<Potential>::energy(EnergyTable &energytable, const Symbol &symbol, double scale_energy)
 {
-    throw SireError::incomplete_code( QObject::tr(
-            "Inter2B2G3DFF does not yet support energy calculations!"), CODELOC );
+  //throw SireError::incomplete_code( QObject::tr(
+  //        "Inter2B2G3DFF does not yet support energy calculations!"), CODELOC );
+
+    if (scale_energy == 0)
+        return;
+
+    int nenergymols = energytable.count();
+    int nmols0 = this->mols[0].count();
+    int nmols1 = this->mols[1].count();
+    
+    typename Potential::EnergyWorkspace workspace;
+    
+    MolEnergyTable *energytable_array = energytable.data();
+    const ChunkedVector<typename Potential::Molecule> &mols0_array 
+                            = this->mols[0].moleculesByIndex();
+    const ChunkedVector<typename Potential::Molecule> &mols1_array
+                            = this->mols[1].moleculesByIndex();
+    
+    for (int i=0; i<nenergymols; ++i)
+    {
+        MolEnergyTable &moltable = energytable_array[i];
+        
+        MolNum molnum = moltable.molNum();
+        
+        if (this->mols[0].contains(molnum))
+        {
+            //calculate the energies on this molecule caused by group0
+            int imol = this->mols[0].indexOf(molnum);
+            const typename Potential::Molecule &mol0 = mols0_array[imol];
+            
+            for (int j=0; j<nmols1; ++j)
+            {
+                const typename Potential::Molecule &mol1 = mols1_array[j];
+                
+                //Potential::calculateEnergy(mol0, mol1, moltable,
+		//                         symbol, this->components(),
+		//                        workspace, scale_force);
+                Potential::calculateEnergy(mol0, mol1, moltable, workspace, scale_energy);		
+            }
+        }
+        
+        if (this->mols[1].contains(molnum))
+        {
+            //calculate the energies on this molecule caused by group1
+            int imol = this->mols[1].indexOf(molnum);
+            const typename Potential::Molecule &mol0 = mols1_array[imol];
+            
+            for (int j=0; j<nmols0; ++j)
+            {
+                const typename Potential::Molecule &mol1 = mols0_array[j];
+                
+                //Potential::calculateForce(mol0, mol1, moltable,
+		//                        symbol, this->components(),
+		//                        workspace, scale_force);
+		Potential::calculateEnergy(mol0, mol1, moltable, workspace, scale_energy);
+            }
+        }
+    }
+
 }
 
 /** Calculate the forces acting on the molecules in the passed forcetable

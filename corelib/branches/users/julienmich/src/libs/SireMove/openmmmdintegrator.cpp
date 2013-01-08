@@ -153,7 +153,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
 	// Maybe....need to reinitialise from molgroup because openmm system was not serialised...
 	velver.isInitialised = false;
 	
-	qDebug() << " Re-initialisation of openmmmdintegrator from datastream";
+	//qDebug() << " Re-initialisation of openmmmdintegrator from datastream";
 
 	velver.initialise();
     }
