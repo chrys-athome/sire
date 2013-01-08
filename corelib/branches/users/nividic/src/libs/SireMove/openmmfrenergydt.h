@@ -53,12 +53,12 @@ QDataStream& operator>>(QDataStream&, SireMove::OpenMMFrEnergyDT&);
 namespace SireMove
 {
 
-/** This class implements a "pure" MD integrator using OpenMM. No free energy methods are supported. 
+/** This class implements a free energy methods Using OpenMM. 
  
     @author Julien Michel and Gaetano Calabro
 */
 class SIREMOVE_EXPORT OpenMMFrEnergyDT
-          : public SireBase::ConcretePropertyOpenMMFrEnergyDT,Integrator>
+          : public SireBase::ConcreteProperty<OpenMMFrEnergyDT,Integrator>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const OpenMMFrEnergyDT&);

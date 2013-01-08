@@ -63,10 +63,12 @@ set ( SIREMOVE_HEADERS
 
 set ( SIREMOVE_OPENMM_HEADERS
       openmmintegrator.h
+      openmmfrenergydt.h
     )
 
 set ( SIREMOVE_OPENMM_SOURCES
       openmmintegrator.cpp
+      openmmfrenergydt.cpp
     )
 
 set ( SIREMOVE_DEPRECATED_HEADERS

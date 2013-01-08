@@ -296,6 +296,8 @@ public:
     
     void commitCoordinatesAndVelocities();
 
+    void commitBufferedCoordinatesAndVelocities(  QVector < QVector< QVector < Vector > > > &buffered_coords);
+
 protected:
     void changedProperty(const QString &property);
 
