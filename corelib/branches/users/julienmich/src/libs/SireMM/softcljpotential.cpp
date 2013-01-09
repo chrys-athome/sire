@@ -1173,7 +1173,7 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
 
                                     const double shift = ljpair.sigma() * delta[k];
                                 
-                                    double lj_denom = dist2 + shift;
+                                    double lj_denom = r2 + shift;
                                     lj_denom = lj_denom * lj_denom * lj_denom;
                                 
                                     const double sig6_over_denom = sig6 / lj_denom;
@@ -1470,7 +1470,7 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
 
                                     const double shift = ljpair.sigma() * delta[k];
                                 
-                                    double lj_denom = dist2 + shift;
+                                    double lj_denom = r2 + shift;
                                     lj_denom = lj_denom * lj_denom * lj_denom;
                                 
                                     const double sig6_over_denom = sig6 / lj_denom;
