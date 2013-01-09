@@ -444,8 +444,18 @@ bool AtomSelection::selectedAllAtoms() const
     one selected atom */
 bool AtomSelection::selectedAllCutGroups() const
 {
-    return (selected_atoms.isEmpty() and nselected > 0) or
-            selected_atoms.count() == info().nCutGroups();
+    if (selected_atoms.isEmpty() and nselected > 0)
+        return true;
+    
+    for (CGIdx i(0); i<info().nCutGroups(); ++i)
+    {
+        QSet<Index> atoms = selected_atoms.value(i, QSet<Index>());
+        
+        if (atoms.count() < info().nAtoms(i))
+            return false;
+    }
+    
+    return true;
 }
 
 /** Return whether all residues contain at least
