@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "SireMM/internalff.h"
 
+#include "SireMaths/constants.h"
+
 #include "SireMaths/rangenerator.h"
 
 #include "SireMaths/vector.h"

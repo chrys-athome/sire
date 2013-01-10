@@ -9,6 +9,7 @@ set ( PYPP_SOURCES
        Integrator.pypp.cpp
        NullGetPoint.pypp.cpp
        Dynamics.pypp.cpp
+       OpenMMMDIntegrator.pypp.cpp
        DLMRigidBody.pypp.cpp
        UniformInserter.pypp.cpp
        MaxwellBoltzmann.pypp.cpp

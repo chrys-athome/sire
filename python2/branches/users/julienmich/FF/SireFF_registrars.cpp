@@ -13,7 +13,6 @@
 #include "fieldtable.h"
 #include "forcefield.h"
 #include "ffidx.h"
-#include "ffid.h"
 #include "energytable.h"
 #include "point.h"
 #include "ffcomponent.h"
@@ -27,6 +26,9 @@ void register_SireFF_objects()
     ObjectRegistry::registerConverterFor< SireFF::ForceTable >();
     ObjectRegistry::registerConverterFor< SireFF::MolForceTable >();
     ObjectRegistry::registerConverterFor< SireFF::FFMolGroup >();
+    ObjectRegistry::registerConverterFor< SireID::Specify<SireFF::FFID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireFF::FFID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireFF::FFID> >();
     ObjectRegistry::registerConverterFor< SireFF::FFIdentifier >();
     ObjectRegistry::registerConverterFor< SireFF::PotentialTable >();
     ObjectRegistry::registerConverterFor< SireFF::GridPotentialTable >();
@@ -40,9 +42,6 @@ void register_SireFF_objects()
     ObjectRegistry::registerConverterFor< SireFF::MolFieldTable >();
     ObjectRegistry::registerConverterFor< SireFF::NullFF >();
     ObjectRegistry::registerConverterFor< SireFF::FFIdx >();
-    ObjectRegistry::registerConverterFor< SireID::Specify<SireFF::FFID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireFF::FFID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireFF::FFID> >();
     ObjectRegistry::registerConverterFor< SireFF::EnergyTable >();
     ObjectRegistry::registerConverterFor< SireFF::MolEnergyTable >();
     ObjectRegistry::registerConverterFor< SireFF::AtomPoint >();

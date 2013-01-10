@@ -19,6 +19,7 @@
 #include "replicas.h"
 #include "prefsampler.h"
 #include "suprasystem.h"
+#include "openmmmdintegrator.h"
 #include "moves.h"
 #include "velocitygenerator.h"
 #include "internalmovesingle.h"
@@ -71,6 +72,8 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::Replicas >();
     ObjectRegistry::registerConverterFor< SireMove::PrefSampler >();
     ObjectRegistry::registerConverterFor< SireMove::SupraSystem >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMMDIntegrator >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMMDIntegrator >();
     ObjectRegistry::registerConverterFor< SireMove::SameMoves >();
     ObjectRegistry::registerConverterFor< SireMove::NullVelocityGenerator >();
     ObjectRegistry::registerConverterFor< SireMove::VelocitiesFromProperty >();

@@ -22,6 +22,7 @@
 #include "moves.h"
 #include "mtsmc.h"
 #include "openmmintegrator.h"
+#include "openmmmdintegrator.h"
 #include "prefsampler.h"
 #include "rbworkspace.h"
 #include "rbworkspacejm.h"
