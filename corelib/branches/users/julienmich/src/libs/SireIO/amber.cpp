@@ -154,8 +154,9 @@ enum { UNKNOWN = 0, //a flag that is not known, e.g. in newer format top files
        RADIUS_SET = 38,
        RADII = 39,
        SCREEN = 40,
-       SCEE_SCALE_FACTOR = 41, 
-       SCNB_SCALE_FACTOR = 42
+       ATOMIC_NUMBER = 41
+       //       SCEE_SCALE_FACTOR = 41, 
+       //       SCNB_SCALE_FACTOR = 42
 };
 
 /** enumerates the POINTERS in a TOP file */
@@ -294,10 +295,14 @@ static void processFlagLine(const QStringList &words, int &flag)
         flag = RADII;
     else if (words[1] == "SCREEN")
         flag = SCREEN;
+    else if (words[1] == "ATOMIC_NUMBER")
+        flag = ATOMIC_NUMBER;
     else if (words[1] == "SCEE_SCALE_FACTOR")
-        flag = SCEE_SCALE_FACTOR;
+        flag = UNKNOWN;
     else if (words[1] == "SCNB_SCALE_FACTOR")
-        flag = SCNB_SCALE_FACTOR;
+        flag = UNKNOWN;
+    else if (words[1] == "IPOL")
+        flag = UNKNOWN;
     else
         throw SireError::unsupported( QObject::tr(
                   "The flag \"%1\" is not supported...").arg(words[1]), CODELOC );
@@ -1613,11 +1618,10 @@ FORMAT(5E18.8) (ATPOL1(i), i=1,NATOM)
                 case SCREEN:
                     processDoubleLine(line, currentFormat, screen);
                     break;
-                // JM Feb 12. The following entries are to set the 14 scale factors. Sire hardcodes the ones for all atom forcefields. Thus loading a 
-                /// united atom amber top file in sire will currently not use the correct scale factors.  
-                case SCEE_SCALE_FACTOR:
+                case ATOMIC_NUMBER:
+		    processIntegerLine(line, currentFormat, element);
                     break;
-                case SCNB_SCALE_FACTOR:
+            	case UNKNOWN:
                     break;
                 default:
                     throw SireError::program_bug( QObject::tr(
