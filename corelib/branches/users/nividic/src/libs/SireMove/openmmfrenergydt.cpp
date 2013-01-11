@@ -118,12 +118,12 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyDT 
 
 	SharedDataStream sds(ds);
 
-	sds << velver.frequent_save_velocities << velver.molgroup 
+	sds << velver.frequent_save_velocities << velver.molgroup << velver.solutegroup
 		<< velver.CutoffType << velver.cutoff_distance << velver.field_dielectric
 		<< velver.Andersen_flag <<  velver.Andersen_frequency 
 		<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
 		<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.energy_frequency
-		<< velver.device_index << velver.Alchemical_value
+		<< velver.device_index << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical
 		<< static_cast<const Integrator&>(velver);
 
 	// Free OpenMM pointers??
@@ -139,17 +139,17 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyDT &velve
 	if (v == 1){
 		SharedDataStream sds(ds);
 
-		sds >> velver.frequent_save_velocities >> velver.molgroup 
+		sds >> velver.frequent_save_velocities >> velver.molgroup >> velver.solutegroup
 		>> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric
 		>> velver.Andersen_flag >>  velver.Andersen_frequency 
 		>> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
 		>> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.energy_frequency
-		>> velver.device_index >> velver.Alchemical_value
+		>> velver.device_index >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical
 		>> static_cast<Integrator&>(velver);
 
 		// Maybe....need to reinitialise from molgroup because openmm system was not serialised...
 		velver.isInitialised = false;
-	
+		
 		qDebug() << " Re-initialisation of OpenMMFrEnergyDT from datastream";
 
 		velver.initialise();
@@ -164,38 +164,39 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyDT &velve
 OpenMMFrEnergyDT::OpenMMFrEnergyDT(bool frequent_save) 
 				: ConcreteProperty<OpenMMFrEnergyDT,Integrator>(),
 				frequent_save_velocities(frequent_save), 
-				molgroup(MoleculeGroup()),openmm_system(0),
+				molgroup(MoleculeGroup()),solutegroup(MoleculeGroup()), openmm_system(0), isInitialised(false), 
 				CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
 				Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
 				MCBarostat_frequency(25),ConstraintType("none"),
 				Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5)
+				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),shift_delta(2.0),delta_alchemical(0.001)
 {}
 
 /** Constructor using the passed molecule group */
-OpenMMFrEnergyDT::OpenMMFrEnergyDT(const MoleculeGroup &molecule_group, bool frequent_save) 
+OpenMMFrEnergyDT::OpenMMFrEnergyDT(const MoleculeGroup &molecule_group,const MoleculeGroup &solute_group, bool frequent_save) 
 				: ConcreteProperty<OpenMMFrEnergyDT,Integrator>(),
 				frequent_save_velocities(frequent_save), 
-				molgroup(molecule_group), openmm_system(0),
+				molgroup(molecule_group),solutegroup(solute_group) ,openmm_system(0), isInitialised(false), 
 				CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
 				Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
 				MCBarostat_frequency(25),ConstraintType("none"),
 				Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5)
+				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),shift_delta(2.0),delta_alchemical(0.001)
 {}
 
 /** Copy constructor */
 OpenMMFrEnergyDT::OpenMMFrEnergyDT(const OpenMMFrEnergyDT &other)
 				: ConcreteProperty<OpenMMFrEnergyDT,Integrator>(other),
 				frequent_save_velocities(other.frequent_save_velocities),
-				molgroup(other.molgroup), openmm_system(other.openmm_system),
+				molgroup(other.molgroup), solutegroup(other.solutegroup), openmm_system(other.openmm_system), isInitialised(other.isInitialised), 
 				CutoffType(other.CutoffType),cutoff_distance(other.cutoff_distance),
 				field_dielectric(other.field_dielectric), Andersen_flag(other.Andersen_flag),
 				Andersen_frequency(other.Andersen_frequency), MCBarostat_flag(other.MCBarostat_flag),
 				MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
 				Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
 				Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
-				energy_frequency(other.energy_frequency),device_index(other.device_index),Alchemical_value(other.Alchemical_value)
+				energy_frequency(other.energy_frequency),device_index(other.device_index),Alchemical_value(other.Alchemical_value),
+				coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),delta_alchemical(other.delta_alchemical)
 {}
 
 /** Destructor */
@@ -210,7 +211,9 @@ OpenMMFrEnergyDT& OpenMMFrEnergyDT::operator=(const OpenMMFrEnergyDT &other)
 	Integrator::operator=(other);
 	frequent_save_velocities = other.frequent_save_velocities;
 	molgroup = other.molgroup; 
+	solutegroup=other.solutegroup;
 	openmm_system = other.openmm_system;
+	isInitialised = other.isInitialised;
 	CutoffType = other.CutoffType;
 	cutoff_distance = other.cutoff_distance;
 	field_dielectric = other.field_dielectric;
@@ -227,6 +230,11 @@ OpenMMFrEnergyDT& OpenMMFrEnergyDT::operator=(const OpenMMFrEnergyDT &other)
 	energy_frequency = other.energy_frequency;
 	device_index = other.device_index;
 	Alchemical_value = other.Alchemical_value;
+	coulomb_power = other.coulomb_power;
+	shift_delta = other.shift_delta;
+	delta_alchemical = other.delta_alchemical;
+
+	
 	return *this;
 }
 
@@ -267,11 +275,19 @@ void OpenMMFrEnergyDT::initialise()  {
 
 
 
+	MoleculeGroup solute_group = this->solutegroup.read();
+	
+	if ( solute_group.isEmpty() ){
+		throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyDT because solute group has not been defined"), CODELOC);
+	}
+
+
 	AtomicVelocityWorkspace ws = this->createWorkspace(moleculegroup).read().asA<AtomicVelocityWorkspace>();
 
 	const int nmols = ws.nMolecules();
 
-	const System & ptr_sys = ws.system();
+	//const System & ptr_sys = ws.system();
+
 
 	int nats = 0;
 
@@ -330,8 +346,6 @@ void OpenMMFrEnergyDT::initialise()  {
 
 	OpenMM::CustomBondForce * custom_intra_14_15 = NULL;
 
-
-
 	if ( flag_cutoff == NOCUTOFF ){
 
 		custom_softcore_solute_solvent = new OpenMM::CustomNonbondedForce("(10.0*Hls+100.0*Hcs)*ZeroOne;"
@@ -351,11 +365,8 @@ void OpenMMFrEnergyDT::initialise()  {
 
 		custom_softcore_solute_solvent->addGlobalParameter("lambda",Alchemical_value);
 
-		int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
-		double shift_Delta = ptr_sys.property("shiftDelta").toString().toDouble();
-
-		custom_softcore_solute_solvent->addGlobalParameter("delta",shift_Delta);
-		custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_Power);
+		custom_softcore_solute_solvent->addGlobalParameter("delta",shift_delta);
+		custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_power);
 
 		custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
 
@@ -375,7 +386,7 @@ void OpenMMFrEnergyDT::initialise()  {
 
 		if (Debug){
 			qDebug() << "\nCut off type = " << CutoffType << "\n";
-			qDebug() <<  "Lambda = " << Alchemical_value << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
+			qDebug() <<  "Lambda = " << Alchemical_value << " Coulomb Power = " << coulomb_power << " Delta Shift = " << shift_delta <<"\n";
 		}
 	}
 	else{
@@ -400,11 +411,8 @@ void OpenMMFrEnergyDT::initialise()  {
 
 			custom_softcore_solute_solvent->addGlobalParameter("lambda",Alchemical_value);
 
-			int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
-			double shift_Delta = ptr_sys.property("shiftDelta").toString().toDouble();
-
-			custom_softcore_solute_solvent->addGlobalParameter("delta",shift_Delta);
-			custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_Power);
+			custom_softcore_solute_solvent->addGlobalParameter("delta",shift_delta);
+			custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_power);
 
 			double eps2 = (field_dielectric - 1.0)/(2*field_dielectric+1.0);
 
@@ -456,7 +464,7 @@ void OpenMMFrEnergyDT::initialise()  {
 			qDebug() << "\nCut off type = " << CutoffType << "\n";
 			qDebug() << "CutOff distance = " << converted_cutoff_distance  << " Nm" << "\n";
 			qDebug() << "Dielectric constant= " << field_dielectric << "\n\n";
-			qDebug() << "Lambda = " << Alchemical_value << " Coulomb Power = " << coulomb_Power << " Delta Shift = " << shift_Delta <<"\n";
+			qDebug() << "Lambda = " << Alchemical_value << " Coulomb Power = " << coulomb_power << " Delta Shift = " << shift_delta <<"\n";
 		}
 	}
 
@@ -539,8 +547,7 @@ void OpenMMFrEnergyDT::initialise()  {
 		system_openmm->addForce(positionalRestraints_openmm);
 
 		if (Debug)
-		
-		qDebug() << "\nRestraint = ON\n\n";
+			qDebug() << "\nRestraint = ON\n\n";
 	
 	}
 
@@ -668,7 +675,7 @@ void OpenMMFrEnergyDT::initialise()  {
 
 	int num_atoms_till_i = 0;
 
-	MoleculeGroup solute_group;
+
 
 	custom_softcore_solute_solvent->addPerParticleParameter("q");
 	custom_softcore_solute_solvent->addPerParticleParameter("sigma");
@@ -684,11 +691,14 @@ void OpenMMFrEnergyDT::initialise()  {
 	custom_intra_14_15->addPerBondParameter("sigma_avg");
 	custom_intra_14_15->addPerBondParameter("eps_avg");
 
-	const QString solute = "solute";
+
+	/*const QString solute = "solute";
 
 	MGName Solute(solute);
 
-	solute_group = ptr_sys[Solute];
+	MoleculeGroup solute_group = ptr_sys[Solute];*/
+
+
 
 	int nions = 0;
 
@@ -721,8 +731,9 @@ void OpenMMFrEnergyDT::initialise()  {
 			params[1]=sigma * OpenMM::NmPerAngstrom;
 			params[2]=epsilon * OpenMM::KJPerKcal;
 			
-			if(solute_group.contains(atom.molecule()))//solute atom
+			if(solute_group.contains(atom.molecule())){//solute atom
 				params[3]=1.0;
+			}
 			else
 				params[3]=0.0;
 
@@ -1004,22 +1015,29 @@ void OpenMMFrEnergyDT::initialise()  {
 
 	}
 
-
 	this->openmm_system = system_openmm;
 
 	this->isInitialised = true;
+	
+	qDebug() << "HERE ************************ " << this->isInitialised ;
 }
 
 void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) const {
 
-	bool Debug = false; 
+	bool Debug = true; 
 
 	QTime timer;
 
 	timer.start();
 
 	if (Debug)
-	qDebug() << "In OpenMMFeEnergyDT::integrate()\n\n" ;
+		qDebug() << "In OpenMMFeEnergyDT::integrate()\n\n" ;
+
+    if (Debug)
+       {
+        qDebug() << "Andersen freq " << this->Andersen_frequency << "\n";  
+        qDebug() << "shift delta " << this->shift_delta << "\n";  
+       }
 
 	// Check that the openmm system has been initialised
 	// !! Should check that the workspace is compatible with molgroup
@@ -1151,8 +1169,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	if(Debug)
 		qDebug() << "Number Energy Samples = "<< n_samples << "\n\n";
-		
-	double delta = 0.001;
+
 
 	const double beta = 1.0 / (0.0083144621 * convertTo(Temperature.value(), kelvin)); //mol/kJ
 
@@ -1204,9 +1221,9 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		if(Debug)
 			qDebug() << "Lambda = " << lam_val << " Potential energy lambda MD = " << potential_energy_lambda  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
 
-		if((Alchemical_value + delta)>2.0){
+		if((Alchemical_value + delta_alchemical)>2.0){
 
-			context_openmm.setParameter("lambda",Alchemical_value - delta);
+			context_openmm.setParameter("lambda",Alchemical_value - delta_alchemical);
 
 			state_openmm=context_openmm.getState(infoMask);
 
@@ -1223,9 +1240,9 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				qDebug() << "Lambda - delta = " << lam_val << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
 			}
 		}
-		else if((Alchemical_value - delta)<0.0){
+		else if((Alchemical_value - delta_alchemical)<0.0){
 
-			context_openmm.setParameter("lambda",Alchemical_value + delta);
+			context_openmm.setParameter("lambda",Alchemical_value + delta_alchemical);
 
 			state_openmm=context_openmm.getState(infoMask);
 
@@ -1243,7 +1260,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			}
 		}
 		else{
-			context_openmm.setParameter("lambda",Alchemical_value + delta);
+			context_openmm.setParameter("lambda",Alchemical_value + delta_alchemical);
 			
 			state_openmm=context_openmm.getState(infoMask);
 
@@ -1255,7 +1272,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				qDebug() << "Lambda + delta = " << lam_val << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
 			}
 
-			context_openmm.setParameter("lambda",Alchemical_value - delta);
+			context_openmm.setParameter("lambda",Alchemical_value - delta_alchemical);
 
 			state_openmm=context_openmm.getState(infoMask);
 
@@ -1290,7 +1307,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		double Energy_GB = -(1.0/beta)*log(avg_GB);
 
-		double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2 * delta);
+		double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2 * delta_alchemical);
 
 		if(Debug)
 			qDebug() << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
@@ -1307,8 +1324,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	}
 
 	if (Debug)
-
-	qDebug() << " Done dynamics, time elapsed ms " << timer.elapsed() << " ms ";
+		qDebug() << " Done dynamics, time elapsed ms " << timer.elapsed() << " ms ";
 
 	/** Now update the sire coordinates/velocities and box dimensions */
 	timer.restart();
@@ -1730,19 +1746,63 @@ void OpenMMFrEnergyDT::setEnergyFrequency(int frequency){
 	energy_frequency = frequency;
 }
 
-/** Get the alchemical values used to calculate the free energy change via TI method*/
+/** Get the alchemical value used to calculate the free energy change via TI method*/
 double OpenMMFrEnergyDT::getAlchemical_value(void){
 
 	return Alchemical_value;
 
 }
 
-/** Set the alchemical values used to calculate the free energy change via TI method*/
+/** Set the alchemical value used to calculate the free energy change via TI method*/
 void OpenMMFrEnergyDT::setAlchemical_value(double lambda_value){
 
 	Alchemical_value = lambda_value;
 
 }
+
+/** Get the coulomb power used in the soft core potential*/
+int OpenMMFrEnergyDT::getCoulomb_power(void){
+
+	return coulomb_power;
+
+}
+
+/** Set the coulomb power used in the soft core potential*/
+void OpenMMFrEnergyDT::setCoulomb_power(int coulomb){
+
+	coulomb_power = coulomb;
+
+}
+
+
+/** Get the shift used in the soft core potential*/
+double OpenMMFrEnergyDT::getShift_delta(void){
+
+	return shift_delta;
+
+}
+
+/** Set the shift used in the soft core potential*/
+void OpenMMFrEnergyDT::setShift_delta(double shiftdelta){
+
+	shift_delta = shiftdelta;
+
+}
+
+/** Get the delta alchemical used in the FEP method*/
+double OpenMMFrEnergyDT:: getDeltaAlchemical(void){
+
+	return delta_alchemical;
+
+}
+
+/** Set the delta alchemical used in the FEP method*/
+void OpenMMFrEnergyDT::setDeltatAlchemical(double deltaalchemical){
+
+	delta_alchemical = deltaalchemical;
+
+}
+
 
 /** Create an empty workspace */
 IntegratorWorkspacePtr OpenMMFrEnergyDT::createWorkspace(const PropertyMap &map) const

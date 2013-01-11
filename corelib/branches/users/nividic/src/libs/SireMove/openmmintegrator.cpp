@@ -482,8 +482,12 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			custom_softcore_solute_solvent->addGlobalParameter("lambda",Alchemical_values[0]);
 			
-			int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
-			double shift_Delta = ptr_sys.property("shiftDelta").toString().toDouble();
+			//int coulomb_Power = ptr_sys.property("coulombPower").toString().toInt();
+			//double shift_Delta = ptr_sys.property("shiftDelta").toString().toDouble();
+			
+			int coulomb_Power = 0;
+			double shift_Delta = 2.0;
+			
 			
 			custom_softcore_solute_solvent->addGlobalParameter("delta",shift_Delta);
 			custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_Power);

@@ -67,7 +67,7 @@ friend QDataStream& ::operator>>(QDataStream&, OpenMMFrEnergyDT&);
 public:
 	OpenMMFrEnergyDT(bool frequent_save_velocities = false);
 
-	OpenMMFrEnergyDT(const MoleculeGroup &molecule_group, bool frequent_save_velocities = false);
+	OpenMMFrEnergyDT(const MoleculeGroup &molecule_group, const MoleculeGroup &solute_group, bool frequent_save_velocities = false);
 
 	OpenMMFrEnergyDT(const OpenMMFrEnergyDT &other);
 
@@ -141,11 +141,23 @@ public:
 	double getAlchemical_value(void);
 	void setAlchemical_value(double);
 
+	int getCoulomb_power(void);
+	void setCoulomb_power(int);
+
+	double getShift_delta(void);
+	void setShift_delta(double);
+
+	double getDeltaAlchemical(void);
+	void setDeltatAlchemical(double);
+
 private:
 	/** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
 	bool frequent_save_velocities;
 	/** The Molecule Group on which the integrator operates */
 	MolGroupPtr molgroup;
+	/** The Solute Group on which the integrator operates */
+	MolGroupPtr solutegroup;
+
 	/** Pointer to OpenMM context that describes the desired simulation*/
 	//OpenMM::Context* context;
 
@@ -181,6 +193,12 @@ private:
 	QString device_index;
 
 	double Alchemical_value;
+
+	int coulomb_power;
+
+	double shift_delta;
+
+	double delta_alchemical;
 
 };
 
