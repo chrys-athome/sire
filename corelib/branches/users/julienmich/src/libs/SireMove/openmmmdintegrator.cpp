@@ -168,7 +168,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(bool frequent_save)
                : ConcreteProperty<OpenMMMDIntegrator,Integrator>(),
                  frequent_save_velocities(frequent_save), 
 		 molgroup(MoleculeGroup()),
-		 openmm_system(0),
+		 openmm_system(0),isInitialised(false),
                  CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
@@ -181,7 +181,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool
                : ConcreteProperty<OpenMMMDIntegrator,Integrator>(),
                  frequent_save_velocities(frequent_save), 
 		 molgroup(molecule_group),
-		 openmm_system(0),
+		 openmm_system(0),isInitialised(false),
                  CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
@@ -195,7 +195,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const OpenMMMDIntegrator &other)
                : ConcreteProperty<OpenMMMDIntegrator,Integrator>(other),
                  frequent_save_velocities(other.frequent_save_velocities),
 		 molgroup(other.molgroup),
-		 openmm_system(other.openmm_system),
+		 openmm_system(other.openmm_system),isInitialised(other.isInitialised),
                  CutoffType(other.CutoffType),cutoff_distance(other.cutoff_distance),
                  field_dielectric(other.field_dielectric), Andersen_flag(other.Andersen_flag),
                  Andersen_frequency(other.Andersen_frequency), MCBarostat_flag(other.MCBarostat_flag),
@@ -219,6 +219,7 @@ OpenMMMDIntegrator& OpenMMMDIntegrator::operator=(const OpenMMMDIntegrator &othe
     frequent_save_velocities = other.frequent_save_velocities;
     molgroup = other.molgroup; 
     openmm_system = other.openmm_system;
+    isInitialised = other.isInitialised;
     CutoffType = other.CutoffType;
     cutoff_distance = other.cutoff_distance;
     field_dielectric = other.field_dielectric;
