@@ -370,7 +370,6 @@ void G2FF::group_add(quint32 i, const MoleculeView &molview,
     {
         molgroup[i].add(molview);
         this->_pvt_added( i, PartialMolecule(molview), map );
-        
         FF::incrementVersion();
     }
     catch(...)

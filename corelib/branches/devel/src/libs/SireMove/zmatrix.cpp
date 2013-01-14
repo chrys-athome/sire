@@ -558,11 +558,18 @@ QString ZMatrix::toString() const
     {
         const ZMatrixLine &line = zmat.at(i);
     
-        lines.append( QObject::tr("%1-%2-%3-%4")
+        lines.append( QObject::tr("%1(%5)-%2(%6)-%3(%7)-%4(%8) : %9 %10 %11")
+                        .arg( info().name(line.atom()).value(),
+                              info().name(line.bond()).value(),
+                              info().name(line.angle()).value(),
+                              info().name(line.dihedral()).value() )
                         .arg(line.atom().value())
                         .arg(line.bond().value())
                         .arg(line.angle().value())
-                        .arg(line.dihedral().value()) );
+                        .arg(line.dihedral().value())
+                        .arg(line.bondDelta().to(angstroms))
+                        .arg(line.angleDelta().to(degrees))
+                        .arg(line.dihedralDelta().to(degrees)) );
     }
 
     return lines.join("\n");
@@ -1519,6 +1526,9 @@ PropertyPtr ZMatrix::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
             continue;
             
         ret.add( atm, bnd, ang, dih );
+        ret.setBondDelta( atm, line.bondDelta() );
+        ret.setAngleDelta( atm, line.angleDelta() );
+        ret.setDihedralDelta( atm, line.dihedralDelta() );
     }
     
     return ret;

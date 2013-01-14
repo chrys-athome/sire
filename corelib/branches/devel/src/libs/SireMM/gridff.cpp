@@ -561,11 +561,13 @@ void GridFF::appendTo(QVector<GridFF::Vector4> &coords_and_charges,
     }
 }
 
-inline QString toString(const __m128d &sseval)
-{
-    return QString("{ %1, %2 }").arg(*((const double*)&sseval))
-                                .arg(*( ((const double*)&sseval) + 1));
-}
+#ifdef SIRE_USE_SSE
+    inline QString toString(const __m128d &sseval)
+    {
+        return QString("{ %1, %2 }").arg(*((const double*)&sseval))
+                                    .arg(*( ((const double*)&sseval) + 1));
+    }
+#endif
 
 void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
 {
@@ -2487,50 +2489,143 @@ void GridFF::recalculateEnergy()
              it != this->changed_mols[0].constEnd();
              ++it)
         {
-            const CLJMolecule &cljmol = it->newMolecule();
-            
-            //loop through each CutGroup of this molecule
-            const int ngroups = cljmol.coordinates().count();
-        
-            const CoordGroup *groups_array = cljmol.coordinates().constData();
-        
-            const CLJParameters::Array *params_array 
-                                = cljmol.parameters().atomicParameters().constData();
-
-            double cnrg(0);
-            double ljnrg(0);
-        
-            for (int igroup=0; igroup<ngroups; ++igroup)
+            if (it->nothingChanged())
             {
-                const CoordGroup &group = groups_array[igroup];
+                continue;
+            }
+            else if (it->changedAll())
+            {
+                const CLJMolecule &cljmol = it->newMolecule();
+                
+                //loop through each CutGroup of this molecule
+                const int ngroups = cljmol.coordinates().count();
+            
+                const CoordGroup *groups_array = cljmol.coordinates().constData();
+            
+                const CLJParameters::Array *params_array 
+                                    = cljmol.parameters().atomicParameters().constData();
 
-                if (not gridbox.contains(group.aaBox()))
+                double cnrg(0);
+                double ljnrg(0);
+            
+                for (int igroup=0; igroup<ngroups; ++igroup)
                 {
-                    //this group lies outside the grid - we need to recalculate
-                    //the grid
-                    qDebug() << "MOLECULE" << cljmol.number().toString() << "HAS MOVED"
-                             << "OUTSIDE THE GRID. MUST RECALCULATE!";
-                    this->mustNowRecalculateFromScratch();
-                    this->recalculateEnergy();
-                    return;
+                    const CoordGroup &group = groups_array[igroup];
+
+                    if (not gridbox.contains(group.aaBox()))
+                    {
+                        //this group lies outside the grid - we need to recalculate
+                        //the grid
+                        qDebug() << "MOLECULE" << cljmol.number().toString() << "HAS MOVED"
+                                 << "OUTSIDE THE GRID. MUST RECALCULATE!";
+                        this->mustNowRecalculateFromScratch();
+                        this->recalculateEnergy();
+                        return;
+                    }
+
+                    double icnrg, iljnrg;
+                    calculateEnergy(group, params_array[igroup],
+                                    icnrg, iljnrg);
+                                
+                    cnrg += icnrg;
+                    ljnrg += iljnrg;
+
+                }
+                
+                CLJEnergy old_nrg = oldnrgs[cljmol.number()];
+                oldnrgs[cljmol.number()] = CLJEnergy(cnrg,ljnrg);
+                
+                delta_cnrg += (cnrg - old_nrg.coulomb());
+                delta_ljnrg += (ljnrg - old_nrg.lj());
+            }
+            else
+            {
+                //only calculate the change in energy for the part of the
+                //molecule that has changed
+                const CLJMolecule &oldmol = it->oldParts();
+                const CLJMolecule &newmol = it->newParts();
+                
+                //calculate the energy of the old parts
+                double old_cnrg(0);
+                double old_ljnrg(0);
+                {
+                    const int ngroups = oldmol.coordinates().count();
+            
+                    const CoordGroup *groups_array = oldmol.coordinates().constData();
+            
+                    const CLJParameters::Array *params_array
+                                    = oldmol.parameters().atomicParameters().constData();
+            
+                    for (int igroup=0; igroup<ngroups; ++igroup)
+                    {
+                        const CoordGroup &group = groups_array[igroup];
+
+                        if (not gridbox.contains(group.aaBox()))
+                        {
+                            //this group lies outside the grid - we need to recalculate
+                            //the grid
+                            qDebug() << "MOLECULE" << oldmol.number().toString() << "HAS MOVED"
+                                     << "OUTSIDE THE GRID. MUST RECALCULATE!";
+                            this->mustNowRecalculateFromScratch();
+                            this->recalculateEnergy();
+                            return;
+                        }
+
+                        double icnrg, iljnrg;
+                        calculateEnergy(group, params_array[igroup],
+                                        icnrg, iljnrg);
+                                    
+                        old_cnrg += icnrg;
+                        old_ljnrg += iljnrg;
+                    }
+                }
+                
+                //calculate the energy of the new parts
+                double new_cnrg(0);
+                double new_ljnrg(0);
+                {
+                    const int ngroups = newmol.coordinates().count();
+            
+                    const CoordGroup *groups_array = newmol.coordinates().constData();
+            
+                    const CLJParameters::Array *params_array
+                                    = newmol.parameters().atomicParameters().constData();
+            
+                    for (int igroup=0; igroup<ngroups; ++igroup)
+                    {
+                        const CoordGroup &group = groups_array[igroup];
+
+                        if (not gridbox.contains(group.aaBox()))
+                        {
+                            //this group lies outside the grid - we need to recalculate
+                            //the grid
+                            qDebug() << "MOLECULE" << newmol.number().toString() << "HAS MOVED"
+                                     << "OUTSIDE THE GRID. MUST RECALCULATE!";
+                            this->mustNowRecalculateFromScratch();
+                            this->recalculateEnergy();
+                            return;
+                        }
+
+                        double icnrg, iljnrg;
+                        calculateEnergy(group, params_array[igroup],
+                                        icnrg, iljnrg);
+                                    
+                        new_cnrg += icnrg;
+                        new_ljnrg += iljnrg;
+                    }
                 }
 
-                double icnrg, iljnrg;
-                calculateEnergy(group, params_array[igroup],
-                                icnrg, iljnrg);
-                            
-                cnrg += icnrg;
-                ljnrg += iljnrg;
-
+                CLJEnergy old_nrg = oldnrgs[oldmol.number()];
+                CLJEnergy new_nrg = CLJEnergy(old_nrg.coulomb() + new_cnrg - old_cnrg,
+                                              old_nrg.lj() + new_ljnrg - old_ljnrg);
+                
+                oldnrgs[oldmol.number()] = new_nrg;
+                
+                delta_cnrg += (new_nrg.coulomb() - old_nrg.coulomb());
+                delta_ljnrg += (new_nrg.lj() - old_nrg.lj());
             }
-            
-            CLJEnergy old_nrg = oldnrgs[cljmol.number()];
-            oldnrgs[cljmol.number()] = CLJEnergy(cnrg,ljnrg);
-            
-            delta_cnrg += (cnrg - old_nrg.coulomb());
-            delta_ljnrg += (ljnrg - old_nrg.lj());
         }
-         
+        
         //change the energy
         this->components().changeEnergy(*this, CLJEnergy(delta_cnrg,delta_ljnrg));
         
