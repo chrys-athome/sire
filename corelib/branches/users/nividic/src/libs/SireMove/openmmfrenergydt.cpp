@@ -123,7 +123,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyDT 
 		<< velver.Andersen_flag <<  velver.Andersen_frequency 
 		<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
 		<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.energy_frequency
-		<< velver.device_index << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical
+		<< velver.device_index << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical << velver.buffer_coords
 		<< static_cast<const Integrator&>(velver);
 
 	// Free OpenMM pointers??
@@ -144,7 +144,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyDT &velve
 		>> velver.Andersen_flag >>  velver.Andersen_frequency 
 		>> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
 		>> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.energy_frequency
-		>> velver.device_index >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical
+		>> velver.device_index >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical >> velver.buffer_coords
 		>> static_cast<Integrator&>(velver);
 
 		// Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -169,7 +169,7 @@ OpenMMFrEnergyDT::OpenMMFrEnergyDT(bool frequent_save)
 				Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
 				MCBarostat_frequency(25),ConstraintType("none"),
 				Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),shift_delta(2.0),delta_alchemical(0.001)
+				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false)
 {}
 
 /** Constructor using the passed molecule group */
@@ -181,7 +181,7 @@ OpenMMFrEnergyDT::OpenMMFrEnergyDT(const MoleculeGroup &molecule_group,const Mol
 				Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
 				MCBarostat_frequency(25),ConstraintType("none"),
 				Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),shift_delta(2.0),delta_alchemical(0.001)
+				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false)
 {}
 
 /** Copy constructor */
@@ -196,7 +196,7 @@ OpenMMFrEnergyDT::OpenMMFrEnergyDT(const OpenMMFrEnergyDT &other)
 				Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
 				Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
 				energy_frequency(other.energy_frequency),device_index(other.device_index),Alchemical_value(other.Alchemical_value),
-				coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),delta_alchemical(other.delta_alchemical)
+				coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords)
 {}
 
 /** Destructor */
@@ -233,7 +233,7 @@ OpenMMFrEnergyDT& OpenMMFrEnergyDT::operator=(const OpenMMFrEnergyDT &other)
 	coulomb_power = other.coulomb_power;
 	shift_delta = other.shift_delta;
 	delta_alchemical = other.delta_alchemical;
-
+	buffer_coords = other.buffer_coords;
 	
 	return *this;
 }
@@ -473,6 +473,7 @@ void OpenMMFrEnergyDT::initialise()  {
 	system_openmm->addForce(custom_softcore_solute_solvent);
 	system_openmm->addForce(custom_solute_solute_solvent_solvent);
 	system_openmm->addForce(custom_intra_14_15);
+
 
 
 	// Andersen thermostat
@@ -1019,7 +1020,6 @@ void OpenMMFrEnergyDT::initialise()  {
 
 	this->isInitialised = true;
 	
-	qDebug() << "HERE ************************ " << this->isInitialised ;
 }
 
 void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) const {
@@ -1032,12 +1032,6 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	if (Debug)
 		qDebug() << "In OpenMMFeEnergyDT::integrate()\n\n" ;
-
-    if (Debug)
-       {
-        qDebug() << "Andersen freq " << this->Andersen_frequency << "\n";  
-        qDebug() << "shift delta " << this->shift_delta << "\n";  
-       }
 
 	// Check that the openmm system has been initialised
 	// !! Should check that the workspace is compatible with molgroup
@@ -1161,14 +1155,33 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	if (Debug)
 		qDebug() << " Doing " << nmoves << " steps of dynamics ";
-		
+
+	
+	int n_samples = nmoves / energy_frequency;
+
 	if(nmoves < energy_frequency)
 		throw SireError::program_bug(QObject::tr("You are requesting to save energy every  %1 steps, which is above the total number of %2 steps.").arg(energy_frequency, nmoves), CODELOC);
-		
-	int n_samples = nmoves / energy_frequency;
 
 	if(Debug)
 		qDebug() << "Number Energy Samples = "<< n_samples << "\n\n";
+
+	int MAXSAMPLES = 1000;
+
+	// Limit excessive internal buffering
+	if ( buffer_coords){
+		if  ( n_samples > MAXSAMPLES ){
+			throw SireError::program_bug(QObject::tr("You are requesting to buffer %1 frames, which is above the hardcoded limit of %2.").arg(n_samples, MAXSAMPLES), CODELOC);
+		}
+	}
+	
+	QVector< std::vector<OpenMM::Vec3> > buffered_positions;
+	QVector< Vector> buffered_dimensions;
+
+	QVector<double> cumulative_gradient;
+
+	OpenMM::Vec3 a;
+	OpenMM::Vec3 b;
+	OpenMM::Vec3 c;
 
 
 	const double beta = 1.0 / (0.0083144621 * convertTo(Temperature.value(), kelvin)); //mol/kJ
@@ -1189,15 +1202,21 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	context_openmm.setParameter("lambda",Alchemical_value);
 
-	double j=0.0;
+	double sample_count=0.0;
 
 	if(Debug){
+
 		state_openmm=context_openmm.getState(infoMask);
+
 		lam_val = context_openmm.getParameter("lambda");
+
 		qDebug() << "Start - Lambda = " << lam_val << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal" << "\n";
+
+		if(buffer_coords)
+			qDebug() << "Saving atom coordinates every " << energy_frequency << "\n";
 	}
 
-	while(j<n_samples){
+	while(sample_count<n_samples){
 
 		integrator_openmm.step(energy_frequency);
 
@@ -1217,6 +1236,18 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		double plus;
 
 		double minus;
+
+		if(buffer_coords){
+
+			positions_openmm = state_openmm.getPositions();
+			buffered_positions.append( positions_openmm );
+
+			if (MCBarostat_flag == true){
+				state_openmm.getPeriodicBoxVectors(a,b,c);
+				Vector dims = Vector( a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
+				buffered_dimensions.append( dims );
+			}
+		}
 
 		if(Debug)
 			qDebug() << "Lambda = " << lam_val << " Potential energy lambda MD = " << potential_energy_lambda  * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
@@ -1294,13 +1325,12 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		GB_acc = GB_acc + minus;
 
 		if(isnormal(GF_acc==0) || isnormal(GB_acc==0)){ 
-			qDebug() << "\n\n ********************** ERROR NAN!! ****************************\n\n";
-			exit(-1); 
+			throw SireError::program_bug(QObject::tr("******************* Not a Number. Error! *******************"), CODELOC);
 		}
 
-		double avg_GF = GF_acc /(j+1.0);
+		double avg_GF = GF_acc /(sample_count + 1.0);
 
-		double avg_GB = GB_acc /(j+1.0);
+		double avg_GB = GB_acc /(sample_count + 1.0);
 
 
 		double Energy_GF = -(1.0/beta)*log(avg_GF);
@@ -1308,6 +1338,8 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		double Energy_GB = -(1.0/beta)*log(avg_GB);
 
 		double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2 * delta_alchemical);
+		
+		cumulative_gradient.append(Energy_Gradient_lamda);
 
 		if(Debug)
 			qDebug() << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
@@ -1319,231 +1351,120 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		double dummy = state_openmm.getPotentialEnergy();
 		cout << "\nDifference dummy = " << dummy - potential_energy_lambda<< "\n\n";*/
 
-		j=j+1.0;
+		sample_count=sample_count + 1.0;
 
 	}
 
 	if (Debug)
-		qDebug() << " Done dynamics, time elapsed ms " << timer.elapsed() << " ms ";
+		qDebug() << "Done dynamics, time elapsed " << timer.elapsed() << " ms\n";
 
-	/** Now update the sire coordinates/velocities and box dimensions */
+	// Now update the sire coordinates/velocities and box dimensions 
 	timer.restart();
 
-	int k=0;
+	state_openmm = context_openmm.getState(infoMask);
+	positions_openmm = state_openmm.getPositions();
+	velocities_openmm = state_openmm.getVelocities();
 
+	// Vector of Vector of molecules that are vector of atomic coordinates...
+
+	QVector< QVector< QVector< Vector > > > buffered_workspace(n_samples);
+
+	for (int i=0; i < buffered_workspace.size() ; i++){
+
+		buffered_workspace[i].resize(nmols);
+
+		for (int j=0 ; j < nmols; j++){
+
+			int nats = ws.nAtoms(j);
+
+			buffered_workspace[i][j].resize(nats);
+
+		}
+
+	}
+
+	int k=0;
 
 	for(int i=0; i<nmols;i++){
 
 		Vector *sire_coords = ws.coordsArray(i);
-
-
 		Vector *sire_momenta = ws.momentaArray(i);
 
 		const double *m = ws.massArray(i);
 
-		for(int j=0; j<ws.nAtoms(i);j++){
-		
-			sire_coords[j] = Vector(positions_openmm[j+k][0] * (OpenMM::AngstromsPerNm),
-									positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),
-									positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
+		for(int j=0; j < ws.nAtoms(i) ; j++){
 
-			sire_momenta[j] = Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
-									 velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
-									 velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs);
+			sire_coords[j] = Vector(positions_openmm[j+k][0] * (OpenMM::AngstromsPerNm),positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
+
+			if(buffer_coords){
+
+				for (int l=0; l < n_samples ; l++){
+
+					//qDebug() << " i " << i << " j " << j << " k " << k << " l " << l;
+
+					Vector buffered_atcoord = Vector(  buffered_positions[l][j+k][0] * (OpenMM::AngstromsPerNm), buffered_positions[l][j+k][1] * (OpenMM::AngstromsPerNm),buffered_positions[l][j+k][2] * (OpenMM::AngstromsPerNm));
+
+					buffered_workspace[l][i][j] = buffered_atcoord;
+
+
+				}
+
+			}
+
+			sire_momenta[j] = Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs, velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs);
 		}
 
-		k=k+ws.nAtoms(i);
-
+		k= k + ws.nAtoms(i);
 	}
 
-	ws.commitCoordinates();
-	ws.commitVelocities();
+	if ( buffer_coords == false)
+		ws.commitCoordinatesAndVelocities();
+	else
+		ws.commitBufferedCoordinatesAndVelocities( buffered_workspace );
+
+
+	//Now the box dimensions
 
 	if (MCBarostat_flag == true) {
 
-		OpenMM::Vec3 a;
-		OpenMM::Vec3 b;
-		OpenMM::Vec3 c;
-
 		state_openmm.getPeriodicBoxVectors(a,b,c);
-
-		if (Debug)
-			qDebug() << "\n\nNEW BOX DIMENSIONS [A] = (" << a[0] * OpenMM::AngstromsPerNm << ", " << b[1] * OpenMM::AngstromsPerNm << ", " << c[2] * OpenMM::AngstromsPerNm << ")\n\n";
 
 		Vector new_dims = Vector(a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
 
 		System & ptr_sys = ws.nonConstsystem();
-
 		PeriodicBox  sp = ptr_sys.property("space").asA<PeriodicBox>();
 
 		sp.setDimensions(new_dims);
-
-		//cout << "\nBOX SIZE GAC = (" << sp.dimensions()[0] << " , " << sp.dimensions()[1] << " ,  " << sp.dimensions()[2] << ")\n\n";
-
 		const QString string = "space" ;
+		ptr_sys.setProperty(string, sp);
 
-		ptr_sys.setProperty(string,sp);
+		// Buffer dimensions if necessary 
+
+		for (int k=0; k < buffered_dimensions.size() ; k++){
+
+			const QString buffered_space = "buffered_space_" + QString::number(k) ;
+
+			PeriodicBox buff_space = PeriodicBox( buffered_dimensions[k] );
+
+			ptr_sys.setProperty( buffered_space, buff_space);
+
+		}
+
+		if(Debug)
+			qDebug() << "NEW BOX DIMENSIONS [A] = (" << a[0] * OpenMM::AngstromsPerNm << ", " << b[1] * OpenMM::AngstromsPerNm << ", " << c[2] * OpenMM::AngstromsPerNm << ")\n\n";
 
 	}
 
+	// Clear all buffers 
+
+	buffered_workspace.clear();
+	buffered_dimensions.clear();
+
 	if (Debug)
-		qDebug() << " Updating system coordinates, time elapsed ms " << timer.elapsed() << " ms ";
+		qDebug() << "Updating system coordinates, time elapsed " << timer.elapsed() << " ms\n";
 
 	return;
 
-/*
-	// Coordinates are buffered every coord_freq steps
-  int coord_freq = buffer_frequency;
-
-  int nframes;
-  int MAXFRAMES = 1000;
-
-  // Limit excessive internal buffering
-  if ( coord_freq > 0 )
-    {
-      nframes = ( nmoves / coord_freq ) ;
-
-      if  ( nframes > MAXFRAMES ) 
-	{
-	  throw SireError::program_bug(QObject::tr(
-	    "You are requesting to buffer %1 frames, which is above the hardcoded limit of %2.").arg(nframes, MAXFRAMES), CODELOC);
-	}
-    }
-  else
-    {
-      nframes = 0;
-    }
-  
-  QVector< std::vector<OpenMM::Vec3> > buffered_positions;
-  QVector< Vector> buffered_dimensions;
-
-  OpenMM::State state_openmm;
-  OpenMM::Vec3 a;
-  OpenMM::Vec3 b;
-  OpenMM::Vec3 c;
-
-  if ( coord_freq > 0 )
-    {// Break nmoves in several steps to buffer coordinates
-      for (int i=0; i < nmoves ; i = i + coord_freq)
-	{
-	  integrator_openmm.step(coord_freq);
-	  if (Debug)
-	    qDebug() << " i now " << i;
-
-	  state_openmm = context_openmm.getState(infoMask);	
-	  positions_openmm = state_openmm.getPositions();
-	  buffered_positions.append( positions_openmm );
-      
-	  state_openmm.getPeriodicBoxVectors(a,b,c);
-	  Vector dims = Vector( a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
-	  buffered_dimensions.append( dims );
-	}
-    }
-  else
-    {//No buffering
-       integrator_openmm.step(nmoves);
-    }
-
-  if (Debug)
-    qDebug() << " Done dynamics, time elapsed ms " << timer.elapsed() << " ms ";
-
-  // Now update the sire coordinates/velocities and box dimensions 
-  timer.restart();
-  
-  if (Debug) 
-    {
-      double kinetic_energy = state_openmm.getKineticEnergy(); 
-      double potential_energy = state_openmm.getPotentialEnergy(); 
-      qDebug() << " After MD kinetic energy " << kinetic_energy  * OpenMM::KcalPerKJ  << " kcal/mol potential " << potential_energy  * OpenMM::KcalPerKJ << " kcal/mol ";
-    }
-
-  state_openmm = context_openmm.getState(infoMask);	
-  positions_openmm = state_openmm.getPositions();
-  velocities_openmm = state_openmm.getVelocities();
-
-  // Vector of Vector of molecules that are vector of atomic coordinates...
-  QVector< QVector< QVector< Vector > > > buffered_workspace(nframes);
-  for (int i=0; i < buffered_workspace.size() ; i++)
-    {
-      buffered_workspace[i].resize(nmols);
-      for (int j=0 ; j < nmols; j++)
-	{
-	  int nats = ws.nAtoms(j);
-	  buffered_workspace[i][j].resize(nats);
-	}
-    }
-
-  int k=0;
-  
-  for(int i=0; i<nmols;i++)
-    {
-      Vector *sire_coords = ws.coordsArray(i);
-      Vector *sire_momenta = ws.momentaArray(i);
-      const double *m = ws.massArray(i);
-
-       for(int j=0; j < ws.nAtoms(i) ; j++)
-	{
-
-	  sire_coords[j] = Vector(positions_openmm[j+k][0] * (OpenMM::AngstromsPerNm),
-				  positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),
-				  positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
-
-
-	  for (int l=0; l < nframes ; l++)
-	    {
-	      //qDebug() << " i " << i << " j " << j << " k " << k << " l " << l;
-	  
-	      Vector buffered_atcoord = Vector(  buffered_positions[l][j+k][0] * (OpenMM::AngstromsPerNm), 
-						 buffered_positions[l][j+k][1] * (OpenMM::AngstromsPerNm),
-						 buffered_positions[l][j+k][2] * (OpenMM::AngstromsPerNm) );
-	      buffered_workspace[l][i][j] = buffered_atcoord;
-	      
-	    }
-
-	  sire_momenta[j] = Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
-				   velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
-				   velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs);
-	}
-
-      k= k + ws.nAtoms(i);
-    }
-  
-  //ws.commitCoordinates();
-  //ws.commitVelocities();
-
-  if ( nframes <= 0 )
-    ws.commitCoordinatesAndVelocities();
-  else
-    ws.commitBufferedCoordinatesAndVelocities( buffered_workspace );
-
-  //Now the box dimensions 
-  state_openmm.getPeriodicBoxVectors(a,b,c);
-
-  Vector new_dims = Vector(a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
-
-  System & ptr_sys = ws.nonConstsystem();
-  PeriodicBox  sp = ptr_sys.property("space").asA<PeriodicBox>();
-
-  sp.setDimensions(new_dims);
-  const QString string = "space" ;
-  ptr_sys.setProperty(string, sp);
-
-  // Buffer dimensions if necessary 
-  for (int k=0; k < buffered_dimensions.size() ; k++)
-    {
-      const QString buffered_space = "buffered_space_" + QString::number(k) ;
-      PeriodicBox buff_space = PeriodicBox( buffered_dimensions[k] );
-      ptr_sys.setProperty( buffered_space, buff_space);
-    }
-
-  // Clear all buffers 
-  buffered_workspace.clear();
-  buffered_dimensions.clear();
-
-  if (Debug)
-    qDebug() << " Updating system coordinates, time elapsed ms " << timer.elapsed() << " ms ";
-
-  return;*/
 }
 
 
@@ -1802,6 +1723,23 @@ void OpenMMFrEnergyDT::setDeltatAlchemical(double deltaalchemical){
 	delta_alchemical = deltaalchemical;
 
 }
+
+/** Get the flag to buffer coordinate during the free energy calculation*/
+bool OpenMMFrEnergyDT::getBufferCoords(void){
+
+	return buffer_coords;
+
+
+}
+
+
+/** Set the flag to buffer coordinate during the free energy calculation*/
+void OpenMMFrEnergyDT::setBufferCoords(bool buffer){
+
+	 buffer_coords = buffer;
+
+}
+
 
 
 /** Create an empty workspace */

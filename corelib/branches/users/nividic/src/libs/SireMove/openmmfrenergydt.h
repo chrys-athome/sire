@@ -149,6 +149,9 @@ public:
 
 	double getDeltaAlchemical(void);
 	void setDeltatAlchemical(double);
+	
+	bool getBufferCoords(void);
+	void setBufferCoords(bool);
 
 private:
 	/** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
@@ -199,6 +202,8 @@ private:
 	double shift_delta;
 
 	double delta_alchemical;
+	
+	bool buffer_coords;
 
 };
 
