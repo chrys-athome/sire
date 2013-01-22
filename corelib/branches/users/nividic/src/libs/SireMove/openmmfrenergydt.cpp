@@ -172,7 +172,7 @@ OpenMMFrEnergyDT::OpenMMFrEnergyDT(bool frequent_save)
 				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false)
 {}
 
-/** Constructor using the passed molecule group */
+/** Constructor using the passed molecule groups */
 OpenMMFrEnergyDT::OpenMMFrEnergyDT(const MoleculeGroup &molecule_group,const MoleculeGroup &solute_group, bool frequent_save) 
 				: ConcreteProperty<OpenMMFrEnergyDT,Integrator>(),
 				frequent_save_velocities(frequent_save), 
@@ -676,7 +676,7 @@ void OpenMMFrEnergyDT::initialise()  {
 
 	int num_atoms_till_i = 0;
 
-
+	//Per atom variables
 
 	custom_softcore_solute_solvent->addPerParticleParameter("q");
 	custom_softcore_solute_solvent->addPerParticleParameter("sigma");
