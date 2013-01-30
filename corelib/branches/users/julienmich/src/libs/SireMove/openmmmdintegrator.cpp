@@ -108,6 +108,14 @@ enum {
 	
 };
 
+enum {
+  LANGEVIN = 0,
+  LEAPFROGVERLET = 1,
+  BROWNIAN = 2,
+  VARIABLELANGEVIN = 3,
+  VARIABLELEAPFROGVERLET = 4
+};
+
 
 
 static const RegisterMetaType<OpenMMMDIntegrator> r_openmmint;
@@ -121,6 +129,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMMDIntegrato
     SharedDataStream sds(ds);
     
     sds << velver.frequent_save_velocities << velver.molgroup 
+	<< velver.Integrator_type << velver.friction
         << velver.CutoffType << velver.cutoff_distance << velver.field_dielectric
     	<< velver.Andersen_flag <<  velver.Andersen_frequency 
     	<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
@@ -143,6 +152,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
         SharedDataStream sds(ds);
         
         sds >> velver.frequent_save_velocities >> velver.molgroup 
+	    >> velver.Integrator_type >> velver.friction
 	    >> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric
 	    >> velver.Andersen_flag >>  velver.Andersen_frequency 
 	    >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
@@ -169,6 +179,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(bool frequent_save)
                  frequent_save_velocities(frequent_save), 
 		 molgroup(MoleculeGroup()),
 		 openmm_system(0),isInitialised(false),
+		 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),
                  CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
@@ -182,6 +193,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool
                  frequent_save_velocities(frequent_save), 
 		 molgroup(molecule_group),
 		 openmm_system(0),isInitialised(false),
+		 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),
                  CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
@@ -196,6 +208,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const OpenMMMDIntegrator &other)
                  frequent_save_velocities(other.frequent_save_velocities),
 		 molgroup(other.molgroup),
 		 openmm_system(other.openmm_system),isInitialised(other.isInitialised),
+		 Integrator_type(other.Integrator_type),friction(other.friction),
                  CutoffType(other.CutoffType),cutoff_distance(other.cutoff_distance),
                  field_dielectric(other.field_dielectric), Andersen_flag(other.Andersen_flag),
                  Andersen_frequency(other.Andersen_frequency), MCBarostat_flag(other.MCBarostat_flag),
@@ -220,6 +233,8 @@ OpenMMMDIntegrator& OpenMMMDIntegrator::operator=(const OpenMMMDIntegrator &othe
     molgroup = other.molgroup; 
     openmm_system = other.openmm_system;
     isInitialised = other.isInitialised;
+    Integrator_type = other.Integrator_type;
+    friction = other.friction;
     CutoffType = other.CutoffType;
     cutoff_distance = other.cutoff_distance;
     field_dielectric = other.field_dielectric;
@@ -368,9 +383,16 @@ void OpenMMMDIntegrator::initialise()  {
       }
     }
     
-    // Andersen thermostat
+
+     // Andersen thermostat. Complain if NOT using Verlet
     if (Andersen_flag == true)
       {
+	if (Integrator_type != "leapfrogverlet" or Integrator_type != "variableleapfrogverlet") 
+	  {
+	    throw SireError::program_bug(QObject::tr(
+	       "The Andersen thermostat can only be used with the leapfrogverlet or variableleapfrogverlet integrators"), CODELOC);
+	  }
+
 	const double converted_Temperature = convertTo(Temperature.value(), kelvin);
 	
 	OpenMM::AndersenThermostat * thermostat = new OpenMM::AndersenThermostat(converted_Temperature, Andersen_frequency);
@@ -401,6 +423,8 @@ void OpenMMMDIntegrator::initialise()  {
 	    qDebug() << "Frequency every " << MCBarostat_frequency << " steps\n";
 	  }
       }
+
+
     //OpenMM Bonded Forces
 
     OpenMM::HarmonicBondForce * bondStretch_openmm = new OpenMM::HarmonicBondForce();
@@ -919,7 +943,35 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
 
   // Create here integrator + Platform, then context
   const double dt = convertTo( timestep.value(), picosecond);
-  OpenMM::VerletIntegrator integrator_openmm(dt);//dt in pico seconds
+  const double converted_Temperature = convertTo(Temperature.value(), kelvin);
+  const double converted_friction = convertTo( friction.value(), picosecond);
+  // Currently not exposed to Sire API
+  const double integration_tol = 0.001;
+
+  OpenMM::Integrator * integrator_openmm = NULL;
+
+  if (Integrator_type == "leapfrogverlet")
+    integrator_openmm = new OpenMM::VerletIntegrator(dt);//dt in picosecond
+  //OpenMM::VerletIntegrator integrator_openmm(dt);
+  else if (Integrator_type == "variableleapfrogverlet")
+    integrator_openmm = new OpenMM::VariableVerletIntegrator(integration_tol);//integration tolerance error unitless
+  //OpenMM::VariableVerletIntegrator integrator_openmm(integration_tol);// integrator tolerance error unitless
+  else if (Integrator_type == "langevin")
+    integrator_openmm = new OpenMM::LangevinIntegrator(converted_Temperature, converted_friction, dt);
+  //OpenMM::LangevinIntegrator integrator_openmm(converted_Temperature, converted_friction, dt);
+  else if (Integrator_type == "variablelangevin")
+    integrator_openmm = new OpenMM::VariableLangevinIntegrator(converted_Temperature, converted_friction, integration_tol);
+    //OpenMM::VariableLangevinIntegrator integrator_openmm(converted_Temperature, converted_friction, integration_tol);
+  else if (Integrator_type == "brownian")
+    integrator_openmm = new OpenMM::BrownianIntegrator(converted_Temperature, converted_friction, dt);
+  //OpenMM::BrownianIntegrator(converted_Temperature, converted_friction, dt);
+  else 
+    throw SireError::program_bug(QObject::tr(
+      "The user defined Integrator type is not supported. Available types are leapfrogverlet, variableleapfrogverlet, langevin, variablelangevin, brownian"), CODELOC);
+
+  if (Debug)
+    qDebug() << "Using Integrator; " << Integrator_type;
+
   OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString()); 	
   
   if (platform_type == "OpenCL")
@@ -939,7 +991,7 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
   // Another implementation could have the context created once during initialisation. 
   // But then have to figure out how to properly allocate/free context on the heap and make it 
   // compatible with sire objects
-  OpenMM::Context context_openmm( *system_openmm, integrator_openmm, platform_openmm);  
+  OpenMM::Context context_openmm( *system_openmm, *integrator_openmm, platform_openmm);  
 
   if (Debug)
     qDebug() << "\n Using OpenMM platform = " <<context_openmm.getPlatform().getName().c_str()<<"\n";
@@ -1062,15 +1114,19 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
   QVector< Vector> buffered_dimensions;
 
   OpenMM::State state_openmm;
+
   OpenMM::Vec3 a;
   OpenMM::Vec3 b;
   OpenMM::Vec3 c;
+
+
+  OpenMM::Integrator& context_integrator = context_openmm.getIntegrator();
 
   if ( coord_freq > 0 )
     {/** Break nmoves in several steps to buffer coordinates*/
       for (int i=0; i < nmoves ; i = i + coord_freq)
 	{
-	  integrator_openmm.step(coord_freq);
+	  context_integrator.step(coord_freq);
 	  if (Debug)
 	    qDebug() << " i now " << i;
 
@@ -1085,7 +1141,7 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     }
   else
     {/** No buffering*/
-       integrator_openmm.step(nmoves);
+       context_integrator.step(nmoves);
     }
 
   if (Debug)
@@ -1198,6 +1254,22 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
   return;
 }
 
+
+QString OpenMMMDIntegrator::getIntegrator(void) {
+  return Integrator_type;
+}
+
+void OpenMMMDIntegrator::setIntegrator(QString intgrator) {
+  Integrator_type = intgrator;
+}
+
+SireUnits::Dimension::Time OpenMMMDIntegrator::getFriction(void) {
+  return friction;
+}
+
+void OpenMMMDIntegrator::setFriction(SireUnits::Dimension::Time thefriction) {
+  friction = thefriction;
+} 
 
 /** Get the cufott type: nocutoff, cutoffnonperiodic, cutoffperiodic */
 QString OpenMMMDIntegrator::getCutoffType(void){

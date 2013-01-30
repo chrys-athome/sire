@@ -96,6 +96,12 @@ public:
     IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
     IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,const PropertyMap &map = PropertyMap()) const;
 
+    QString getIntegrator(void);
+    void setIntegrator(QString);
+
+    SireUnits::Dimension::Time getFriction(void);
+    void setFriction(SireUnits::Dimension::Time);
+
     QString getCutoffType(void);
     void setCutoffType(QString);
 
@@ -155,6 +161,9 @@ private:
     
     /** Whether the openmm system has been initialised*/
     bool isInitialised;
+
+    QString Integrator_type;
+    SireUnits::Dimension::Time friction;
 
     QString CutoffType;
     SireUnits::Dimension::Length cutoff_distance;
