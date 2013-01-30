@@ -999,6 +999,8 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
   context_openmm.setPositions(positions_openmm);  
   context_openmm.setVelocities(velocities_openmm);
 
+  bool isperiodic = false;
+
   if ( CutoffType == "cutoffperiodic" )
   {
     const System & ptr_sys = ws.system();
@@ -1017,6 +1019,7 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
     context_openmm.setPeriodicBoxVectors( OpenMM::Vec3(Box_x_Edge_Length,0,0),
     					  OpenMM::Vec3(0,Box_y_Edge_Length,0),
     					  OpenMM::Vec3(0,0,Box_z_Edge_Length) );
+    isperiodic = true;
   }
 
   int infoMask = 0;
@@ -1157,24 +1160,32 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
   else
     ws.commitBufferedCoordinatesAndVelocities( buffered_workspace );
 
-  /** Now the box dimensions */
-  state_openmm.getPeriodicBoxVectors(a,b,c);
-
-  Vector new_dims = Vector(a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
-
-  System & ptr_sys = ws.nonConstsystem();
-  PeriodicBox  sp = ptr_sys.property("space").asA<PeriodicBox>();
-
-  sp.setDimensions(new_dims);
-  const QString string = "space" ;
-  ptr_sys.setProperty(string, sp);
-
-  /** Buffer dimensions if necessary */
-  for (int k=0; k < buffered_dimensions.size() ; k++)
+  /** Now the box dimensions (if the simulation used a periodic space) */
+  if (isperiodic)
     {
-      const QString buffered_space = "buffered_space_" + QString::number(k) ;
-      PeriodicBox buff_space = PeriodicBox( buffered_dimensions[k] );
-      ptr_sys.setProperty( buffered_space, buff_space);
+
+      state_openmm.getPeriodicBoxVectors(a,b,c);
+
+      Vector new_dims = Vector(a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
+
+      if (Debug)
+	qDebug() << " a " << a[0] << " b " << b[1] << " c " << c[2];
+
+      System & ptr_sys = ws.nonConstsystem();
+      PeriodicBox  sp = ptr_sys.property("space").asA<PeriodicBox>();
+
+      sp.setDimensions(new_dims);
+      const QString string = "space" ;
+      ptr_sys.setProperty(string, sp);
+    
+
+      /** Buffer dimensions if necessary */
+      for (int k=0; k < buffered_dimensions.size() ; k++)
+	{
+	  const QString buffered_space = "buffered_space_" + QString::number(k) ;
+	  PeriodicBox buff_space = PeriodicBox( buffered_dimensions[k] );
+	  ptr_sys.setProperty( buffered_space, buff_space);
+	}
     }
 
   /** Clear all buffers */
