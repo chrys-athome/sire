@@ -36,6 +36,7 @@ set ( PYPP_SOURCES
        AtomStructureEditor.pypp.cpp
        AtomVariantProperty.pypp.cpp
        AtomVelocities.pypp.cpp
+       BeadID.pypp.cpp
        BeadIdx.pypp.cpp
        BeadNum.pypp.cpp
        BondHunter.pypp.cpp

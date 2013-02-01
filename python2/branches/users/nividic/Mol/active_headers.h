@@ -25,6 +25,7 @@
 #include "atomproperty.hpp"
 #include "atomselection.h"
 #include "atomvelocities.h"
+#include "beadid.h"
 #include "beadidx.h"
 #include "beadnum.h"
 #include "bondhunter.h"

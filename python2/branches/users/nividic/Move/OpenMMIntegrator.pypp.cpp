@@ -71,6 +71,8 @@ namespace bp = boost::python;
 
 #include <iostream>
 
+#include <queue>
+
 #include "openmmintegrator.h"
 
 SireMove::OpenMMIntegrator __copy__(const SireMove::OpenMMIntegrator &other){ return SireMove::OpenMMIntegrator(other); }

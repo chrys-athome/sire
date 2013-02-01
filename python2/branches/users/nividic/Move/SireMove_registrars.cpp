@@ -12,6 +12,7 @@
 #include "integrator.h"
 #include "suprasubsystem.h"
 #include "prefsampler.h"
+#include "openmmfrenergydt.h"
 #include "zmatmove.h"
 #include "suprasubmoves.h"
 #include "supramove.h"
@@ -59,6 +60,8 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::NullIntegrator >();
     ObjectRegistry::registerConverterFor< SireMove::SupraSubSystem >();
     ObjectRegistry::registerConverterFor< SireMove::PrefSampler >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMFrEnergyDT >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMFrEnergyDT >();
     ObjectRegistry::registerConverterFor< SireMove::ZMatMove >();
     ObjectRegistry::registerConverterFor< SireMove::SameSupraSubMoves >();
     ObjectRegistry::registerConverterFor< SireMove::NullSupraMove >();
@@ -82,6 +85,7 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::ScaleVolumeFromCenter >();
     ObjectRegistry::registerConverterFor< SireMove::RepExMove >();
     ObjectRegistry::registerConverterFor< SireMove::RepExSubMove >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMIntegrator >();
     ObjectRegistry::registerConverterFor< SireMove::OpenMMIntegrator >();
     ObjectRegistry::registerConverterFor< SireMove::VolumeMove >();
     ObjectRegistry::registerConverterFor< SireMove::UniformSampler >();

@@ -20,7 +20,7 @@ SireMol::BeadIdx __copy__(const SireMol::BeadIdx &other){ return SireMol::BeadId
 void register_BeadIdx_class(){
 
     { //::SireMol::BeadIdx
-        typedef bp::class_< SireMol::BeadIdx, bp::bases< SireID::ID, SireID::IndexBase > > BeadIdx_exposer_t;
+        typedef bp::class_< SireMol::BeadIdx, bp::bases< SireMol::BeadID, SireID::ID, SireID::IndexBase > > BeadIdx_exposer_t;
         BeadIdx_exposer_t BeadIdx_exposer = BeadIdx_exposer_t( "BeadIdx", bp::init< >() );
         bp::scope BeadIdx_scope( BeadIdx_exposer );
         BeadIdx_exposer.def( bp::init< qint32 >(( bp::arg("idx") )) );

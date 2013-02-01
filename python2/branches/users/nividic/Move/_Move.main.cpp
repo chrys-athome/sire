@@ -69,6 +69,8 @@
 
 #include "NullVolumeChanger.pypp.hpp"
 
+#include "OpenMMFrEnergyDT.pypp.hpp"
+
 #include "OpenMMIntegrator.pypp.hpp"
 
 #include "PrefSampler.pypp.hpp"
@@ -237,6 +239,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_VolumeChanger_class();
 
     register_NullVolumeChanger_class();
+
+    register_OpenMMFrEnergyDT_class();
 
     register_OpenMMIntegrator_class();
 

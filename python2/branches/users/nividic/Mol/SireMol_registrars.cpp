@@ -15,8 +15,8 @@
 #include "atombeading.h"
 #include "segidentifier.h"
 #include "moleditor.h"
-#include "chainresid.h"
 #include "evaluator.h"
+#include "chainresid.h"
 #include "geometryperturbation.h"
 #include "specifymol.h"
 #include "cgidx.h"
@@ -121,8 +121,8 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::SegIdentifier >();
     ObjectRegistry::registerConverterFor< SireMol::MolEditor >();
     ObjectRegistry::registerConverterFor< SireMol::MolStructureEditor >();
-    ObjectRegistry::registerConverterFor< SireMol::ChainResID >();
     ObjectRegistry::registerConverterFor< SireMol::Evaluator >();
+    ObjectRegistry::registerConverterFor< SireMol::ChainResID >();
     ObjectRegistry::registerConverterFor< SireMol::NullGeometryPerturbation >();
     ObjectRegistry::registerConverterFor< SireMol::GeometryPerturbations >();
     ObjectRegistry::registerConverterFor< SireMol::BondPerturbation >();
