@@ -80,6 +80,8 @@ public:
     
     const T& operator[](int i) const;
     
+    Vector3D<T>* clone() const;
+
     Vector3D<T>& operator+=(const Vector3D<T> &other);
     Vector3D<T>& operator-=(const Vector3D<T> &other);
     
@@ -207,6 +209,14 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Vector3D<T>::operator[](int i) const
 {
     return sc[ i % 3 ];
+}
+
+/** Return a clone of this vector */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Vector3D<T>* Vector3D<T>::clone() const
+{
+    return new Vector3D<T>(*this);
 }
 
 template<class T>
