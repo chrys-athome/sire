@@ -32,7 +32,7 @@ SireBase::VariantProperty __copy__(const SireBase::VariantProperty &other){ retu
 void register_VariantProperty_class(){
 
     { //::SireBase::VariantProperty
-        typedef bp::class_< SireBase::VariantProperty, bp::bases< SireBase::Property, QVariant > > VariantProperty_exposer_t;
+        typedef bp::class_< SireBase::VariantProperty, bp::bases< SireBase::Property > > VariantProperty_exposer_t;
         VariantProperty_exposer_t VariantProperty_exposer = VariantProperty_exposer_t( "VariantProperty", bp::init< >() );
         bp::scope VariantProperty_scope( VariantProperty_exposer );
         VariantProperty_exposer.def( bp::init< QVariant const & >(( bp::arg("value") )) );

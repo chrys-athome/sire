@@ -59,6 +59,17 @@ void register_GridFF_class(){
                 , ( bp::arg("fixed_atoms"), bp::arg("map")=SireBase::PropertyMap() ) );
         
         }
+        { //::SireMM::GridFF::addFixedAtoms
+        
+            typedef void ( ::SireMM::GridFF::*addFixedAtoms_function_type )( ::SireMM::GridFF const & ) ;
+            addFixedAtoms_function_type addFixedAtoms_function_value( &::SireMM::GridFF::addFixedAtoms );
+            
+            GridFF_exposer.def( 
+                "addFixedAtoms"
+                , addFixedAtoms_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::SireMM::GridFF::buffer
         
             typedef ::SireUnits::Dimension::Length ( ::SireMM::GridFF::*buffer_function_type )(  ) const;
