@@ -41,6 +41,7 @@
 #include "Base/convertpackedarray.hpp"
 
 #include "SireMove/move.h"
+#include "SireMove/supramove.h"
 #include "SireMove/zmatrix.h"
 
 using namespace SireMove;
@@ -50,6 +51,7 @@ using boost::python::register_tuple;
 void register_SireMove_containers()
 {
     register_list< QList<MovePtr> >();
+    register_list< QList<SupraMovePtr> >();
 
     register_list< QVector<ZMatrixLine> >();
     register_list< QVector<ZMatrixCoordsLine> >();

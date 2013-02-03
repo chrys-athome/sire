@@ -64,6 +64,8 @@ void register_IDAssigner_class(){
         bp::scope IDAssigner_scope( IDAssigner_exposer );
         IDAssigner_exposer.def( bp::init< SireFF::PointRef const &, SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("point"), bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         IDAssigner_exposer.def( bp::init< QVector< SireBase::PropPtr< SireFF::Point > > const &, SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("points"), bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
+        IDAssigner_exposer.def( bp::init< SireFF::PointRef const &, SireMol::MoleculeGroup const &, SireVol::Space const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("point"), bp::arg("molgroup"), bp::arg("space"), bp::arg("map")=SireBase::PropertyMap() )) );
+        IDAssigner_exposer.def( bp::init< QVector< SireBase::PropPtr< SireFF::Point > > const &, SireMol::MoleculeGroup const &, SireVol::Space const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("points"), bp::arg("molgroup"), bp::arg("space"), bp::arg("map")=SireBase::PropertyMap() )) );
         IDAssigner_exposer.def( bp::init< SireSystem::IDAssigner const & >(( bp::arg("other") )) );
         { //::SireSystem::IDAssigner::identifiedMolecules
         
