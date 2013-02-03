@@ -639,6 +639,7 @@ void RepExMove::clearStatistics()
 {
     naccept = 0;
     nreject = 0;
+    SupraMove::clearStatistics();
 }
 
 /** Set the random number generator used for the replica exchange tests */
@@ -903,9 +904,6 @@ void RepExMove::testAndSwap(Replicas &replicas, const QVector<RepExSubMove> &sub
                 ++nreject;
         }
     }
-
-    //if (record_stats)
-    //      replicas.collectSupraStatistics();
 }
 
 /** Internal function that performs a single block of sampling on all
@@ -915,7 +913,10 @@ void RepExMove::testAndSwap(Replicas &replicas, const QVector<RepExSubMove> &sub
 void RepExMove::performMove(Nodes &nodes, Replicas &replicas, bool record_stats)
 {
     //will we swap even pairs or odd pairs?
-    bool even_pairs = rangenerator.randBool();
+    bool even_pairs = true;
+    
+    if (replicas.nReplicas() > 2)
+        even_pairs = rangenerator.randBool();
 
     //submit all of the simulations
     QVector<SupraSubSim> subsims = ::submitSimulations(nodes, replicas,

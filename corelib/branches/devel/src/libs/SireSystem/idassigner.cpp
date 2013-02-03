@@ -68,11 +68,12 @@ static const RegisterMetaType<IDAssigner> r_idassigner;
 
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const IDAssigner &idassigner)
 {
-    writeHeader(ds, r_idassigner, 1);
+    writeHeader(ds, r_idassigner, 2);
     
     SharedDataStream sds(ds);
     
-    sds << idassigner.molgroup << idassigner.identity_points << idassigner.map;
+    sds << idassigner.molgroup << idassigner.identity_points
+        << idassigner.spce << idassigner.map;
     
     return ds;
 }
@@ -81,7 +82,20 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, IDAssigner &idassigne
 {
     VersionID v = readHeader(ds, r_idassigner);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        MolGroupPtr molgroup;
+        QVector<PointPtr> points;
+        SpacePtr space;
+        PropertyMap map;
+        
+        sds >> molgroup >> points >> space >> map;
+        
+        idassigner = IDAssigner(points, molgroup, space, map);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
         
@@ -94,7 +108,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, IDAssigner &idassigne
         idassigner = IDAssigner(points, molgroup, map);
     }
     else
-        throw version_error(v, "1", r_idassigner, CODELOC);
+        throw version_error(v, "1,2", r_idassigner, CODELOC);
         
     return ds;
 }
@@ -159,9 +173,10 @@ IDAssigner::IDAssigner()
     is matched to the ith point */
 IDAssigner::IDAssigner(const QVector<PointPtr> &points,
                        const MoleculeGroup &group,
+                       const Space &space,
                        const PropertyMap &property_map)
            : ConcreteProperty<IDAssigner,Property>(),
-             molgroup(group), identity_points(points), map(property_map),
+             molgroup(group), identity_points(points), spce(space), map(property_map),
              distances_changed(false)
 {
     this->validateGroup(group);
@@ -179,48 +194,50 @@ IDAssigner::IDAssigner(const QVector<PointPtr> &points,
         for (int i=0; i<npoints; ++i)
         {
             points_with_mols.append( CloseMols(identity_points.at(i), 
-                                               molgroup, npoints, map) );
+                                               molgroup, spce, npoints, map) );
         }
         
         points_with_mols.squeeze();
         
         this->rebuildMolToMolNum();
         this->recalculateDistances();
+        this->assignMoleculesToPoints();
     }
+}
+
+/** Construct to find the identity of the molecules from
+    'molgroup' that match the points in 'points' - 
+    this creates a list of n molecules, where the ith molecule 
+    is matched to the ith point */
+IDAssigner::IDAssigner(const QVector<PointPtr> &points,
+                       const MoleculeGroup &group,
+                       const PropertyMap &property_map)
+           : ConcreteProperty<IDAssigner,Property>()
+{
+    this->operator=( IDAssigner(points, group, Cartesian(), property_map) );
 }
 
 /** Constructor */
 IDAssigner::IDAssigner(const PointRef &point,
                        const MoleculeGroup &group,
                        const PropertyMap &property_map)
-           : ConcreteProperty<IDAssigner,Property>(),
-             molgroup(group), map(property_map), distances_changed(false)
+           : ConcreteProperty<IDAssigner,Property>()
 {
-    this->validateGroup(group);
-    identity_points.append( PointPtr(point) );
-    identity_points.squeeze();
+    QVector<PointPtr> points;
+    points.append( PointPtr(point) );
+    this->operator=( IDAssigner(points,group,property_map) );
+}
 
-    this->validatePoints(identity_points);
-
-    if (not identity_points.isEmpty())
-    {
-        const int npoints = identity_points.count();
-        
-        //construct a CloseMols to record the closest 'npoints' molecules
-        //to each of the identity points
-        points_with_mols.reserve(npoints);
-        
-        for (int i=0; i<npoints; ++i)
-        {
-            points_with_mols.append( CloseMols(identity_points.at(i), 
-                                               molgroup, npoints, map) );
-        }
-        
-        points_with_mols.squeeze();
-        
-        this->rebuildMolToMolNum();
-        this->recalculateDistances();
-    }
+/** Constructor */
+IDAssigner::IDAssigner(const PointRef &point,
+                       const MoleculeGroup &group,
+                       const Space &space,
+                       const PropertyMap &property_map)
+           : ConcreteProperty<IDAssigner,Property>()
+{
+    QVector<PointPtr> points;
+    points.append( PointPtr(point) );
+    this->operator=( IDAssigner(points,group,space,property_map) );
 }
   
 /** Copy constructor */                         
@@ -762,6 +779,20 @@ QVector<PartialMolecule> IDAssigner::identifiedMolecules() const
     //the match uses mol_to_molnum, as only a subset of molecules
     //are candidate molecules
     const MolNum *mol_to_molnum_array = mol_to_molnum.constData();
+    
+    if (mol_to_molnum.count() < n_to_match)
+        throw SireError::program_bug( QObject::tr(
+                "WEIRD: Number of matched molecules is greater than the number of "
+                "identified molecules? %1, %2, %3")
+                    .arg(n_to_match).arg(mol_to_molnum.count())
+                    .arg(Sire::toString(mol_to_molnum)), CODELOC );
+
+    if (point_to_mol.count() < n_to_match)
+        throw SireError::program_bug( QObject::tr(
+                "WEIRD: Number of point_to_mol matched molecules is less than the number of "
+                "identified molecules? %1, %2, %3")
+                    .arg(n_to_match).arg(point_to_mol.count())
+                    .arg(Sire::toString(point_to_mol)), CODELOC );
     
     for (int i=0; i<n_to_match; ++i)
     {

@@ -83,6 +83,16 @@ public:
                const MoleculeGroup &molgroup,
                const PropertyMap &map = PropertyMap());
     
+    IDAssigner(const PointRef &point,
+               const MoleculeGroup &molgroup,
+               const SireVol::Space &space,
+               const PropertyMap &map = PropertyMap());
+    
+    IDAssigner(const QVector<SireFF::PointPtr> &points,
+               const MoleculeGroup &molgroup,
+               const SireVol::Space &space,
+               const PropertyMap &map = PropertyMap());
+    
     IDAssigner(const IDAssigner &other);
 
     ~IDAssigner();

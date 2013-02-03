@@ -131,6 +131,12 @@ public:
     QVector<SireMol::PartialMolecule> views0() const;
     QVector<SireMol::PartialMolecule> views1() const;
 
+    const SireMol::MoleculeGroup& group0() const;
+    const SireMol::MoleculeGroup& group1() const;
+    
+    const IDAssigner& assigner0() const;
+    const IDAssigner& assigner1() const;
+
     SireBase::Array2D<SireMaths::AccumulatorPtr> coulombEnergies() const;
     SireBase::Array2D<SireMaths::AccumulatorPtr> ljEnergies() const;
 
