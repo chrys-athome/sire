@@ -62,14 +62,27 @@ static const RegisterMetaType<GridFF> r_gridff;
 
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridFF &gridff)
 {
-    writeHeader(ds, r_gridff, 4);
+    writeHeader(ds, r_gridff, 5);
     
     SharedDataStream sds(ds);
     
-    sds << gridff.buffer_size << gridff.grid_spacing
+    sds << gridff.gridbox << gridff.dimx << gridff.dimy << gridff.dimz
+        << gridff.gridpot
+        << gridff.buffer_size << gridff.grid_spacing
         << gridff.coul_cutoff << gridff.lj_cutoff
         << gridff.fixedatoms_coords
-        << gridff.fixedatoms_params;
+        << gridff.fixedatoms_params
+        << gridff.closemols_coords
+        << gridff.closemols_params;
+    
+    sds << quint32( gridff.oldnrgs.count() );
+    
+    for (QHash<MolNum,CLJEnergy>::const_iterator it = gridff.oldnrgs.constBegin();
+         it != gridff.oldnrgs.constEnd();
+         ++it)
+    {
+        sds << it.key() << it.value().coulomb() << it.value().lj();
+    }
     
     //collect together the used LJParameters and write those to the stream.
     //This will let us know if we need to update the LJIDs...
@@ -79,6 +92,11 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridFF &gridff)
     for (int i=0; i<gridff.fixedatoms_params.count(); ++i)
     {
         const SireMM::detail::CLJParameter &param = gridff.fixedatoms_params.constData()[i];
+        used_ljs.insert(param.ljid, LJParameterDB::_locked_getLJParameter(param.ljid));
+    }
+    for (int i=0; i<gridff.closemols_params.count(); ++i)
+    {
+        const SireMM::detail::CLJParameter &param = gridff.closemols_params.constData()[i];
         used_ljs.insert(param.ljid, LJParameterDB::_locked_getLJParameter(param.ljid));
     }
     LJParameterDB::unlock();
@@ -93,8 +111,81 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridFF &gridff)
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
 {
     VersionID v = readHeader(ds, r_gridff);
-    
-    if (v == 4)
+
+    if (v == 5)
+    {
+        SharedDataStream sds(ds);
+        
+        gridff = GridFF();
+        
+        gridff.fixedatoms_coords.clear();
+        gridff.fixedatoms_params.clear();
+        
+        QVector<SireMM::detail::CLJParameter> fixedatoms_params;
+        QVector<SireMM::detail::CLJParameter> closemols_params;
+        QHash<quint32,LJParameter> used_ljs;
+        
+        sds >> gridff.gridbox >> gridff.dimx >> gridff.dimy >> gridff.dimz
+            >> gridff.gridpot
+            >> gridff.buffer_size >> gridff.grid_spacing
+            >> gridff.coul_cutoff >> gridff.lj_cutoff
+            >> gridff.fixedatoms_coords
+            >> fixedatoms_params
+            >> gridff.closemols_coords
+            >> closemols_params;
+        
+        quint32 noldnrgs;
+        sds >> noldnrgs;
+        
+        gridff.oldnrgs.clear();
+        gridff.oldnrgs.reserve(noldnrgs);
+        
+        for (quint32 i=0; i<noldnrgs; ++i)
+        {
+            MolNum molnum;
+            double cnrg, ljnrg;
+            
+            sds >> molnum >> cnrg >> ljnrg;
+            gridff.oldnrgs.insert(molnum,CLJEnergy(cnrg,ljnrg));
+        }
+        
+        sds >> used_ljs;
+
+        QHash<quint32,quint32> ljidmap;
+
+        LJParameterDB::lock();
+        for (QHash<quint32,LJParameter>::const_iterator it = used_ljs.constBegin();
+             it != used_ljs.constEnd();
+             ++it)
+        {
+            quint32 newid = LJParameterDB::_locked_addLJParameter(it.value());
+            
+            if (it.key() != newid)
+                ljidmap.insert(it.key(), newid);
+        }
+        LJParameterDB::unlock();
+        
+        if (not ljidmap.isEmpty())
+        {
+            //some of the LJIDs have changed
+            for (int i=0; i<fixedatoms_params.count(); ++i)
+            {
+                SireMM::detail::CLJParameter &param = fixedatoms_params[i];
+                param.ljid = ljidmap.value(param.ljid, param.ljid);
+            }
+            for (int i=0; i<closemols_params.count(); ++i)
+            {
+                SireMM::detail::CLJParameter &param = closemols_params[i];
+                param.ljid = ljidmap.value(param.ljid, param.ljid);
+            }
+        }
+
+        gridff.fixedatoms_params = fixedatoms_params;
+        gridff.closemols_params = closemols_params;
+        
+        sds >> static_cast<InterGroupCLJFF&>(gridff);
+    }
+    else if (v == 4)
     {
         SharedDataStream sds(ds);
         
@@ -128,9 +219,6 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
         
         if (not ljidmap.isEmpty())
         {
-            qDebug() << "Some of the LJIDs have changed...";
-            qDebug() << ljidmap;
-        
             //some of the LJIDs have changed
             for (int i=0; i<fixedatoms_params.count(); ++i)
             {
@@ -199,7 +287,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
             >> static_cast<InterGroupCLJFF&>(gridff);
     }
     else
-        throw version_error(v, "2,3", r_gridff, CODELOC);
+        throw version_error(v, "2,3,4,5", r_gridff, CODELOC);
         
     return ds;
 }
@@ -1253,10 +1341,10 @@ void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
         #endif
     }
     
-    int ms = t.elapsed();
+    //int ms = t.elapsed();
     
-    qDebug() << "Added" << nats << "more atoms to" << npts << "grid points in"
-             << ms << "ms";
+    //qDebug() << "Added" << nats << "more atoms to" << npts << "grid points in"
+    //         << ms << "ms";
 }
 
 inline double getDist(double p, double minp, double maxp)
@@ -1506,8 +1594,8 @@ void GridFF::rebuildGrid()
                         addToGrid(far_mols);
                         gridcount += far_mols.count();
                         far_mols.clear();
-                        qDebug() << "Added" << i+1 << "of" << fixedatoms_coords.count()
-                                 << "fixed atoms to the grid...";
+                        //qDebug() << "Added" << i+1 << "of" << fixedatoms_coords.count()
+                        //         << "fixed atoms to the grid...";
                     }
                 }
             }
