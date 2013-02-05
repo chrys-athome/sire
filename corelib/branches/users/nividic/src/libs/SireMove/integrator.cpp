@@ -207,7 +207,7 @@ bool NullIntegrator::isTimeReversible() const
 void NullIntegrator::integrate(IntegratorWorkspace&, 
                                const Symbol&, 
                                SireUnits::Dimension::Time,
-                               int, bool) const
+                               int, bool)
 {}
 
 /** This returns a null workspace */

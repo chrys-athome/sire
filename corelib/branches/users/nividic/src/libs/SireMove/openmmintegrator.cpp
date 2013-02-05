@@ -319,7 +319,7 @@ QString OpenMMIntegrator::toString() const
     \throw SireError:invalid_cast
     \throw SireError::incompatible_error
 */
-void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) const{
+void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
 				       
 	cout << "In OpenMMIntegrator::integrate()\n\n" ;
 		

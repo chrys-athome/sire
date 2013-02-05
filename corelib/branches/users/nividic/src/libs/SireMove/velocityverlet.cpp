@@ -147,7 +147,7 @@ QString VelocityVerlet::toString() const
 void VelocityVerlet::integrate(IntegratorWorkspace &workspace,
                                const Symbol &nrg_component,
                                SireUnits::Dimension::Time timestep,
-                               int nmoves, bool record_stats) const
+                               int nmoves, bool record_stats)
 {
     AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
     
@@ -345,7 +345,7 @@ QString VelocityVerletBerendsen::toString() const
 void VelocityVerletBerendsen::integrate(IntegratorWorkspace &workspace,
 					const Symbol &nrg_component,
 					SireUnits::Dimension::Time timestep,
-					int nmoves, bool record_stats) const
+					int nmoves, bool record_stats)
 {
     AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
     

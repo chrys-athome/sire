@@ -140,7 +140,7 @@ bool DLMRigidBody::isTimeReversible() const
     statistics of every move if 'record_stats' is true */
 void DLMRigidBody::integrate(IntegratorWorkspace &workspace,
                              const Symbol &nrg_component, 
-                             Time timestep, int nmoves, bool record_stats) const
+                             Time timestep, int nmoves, bool record_stats)
 {
     RBWorkspace &ws = workspace.asA<RBWorkspace>();
     

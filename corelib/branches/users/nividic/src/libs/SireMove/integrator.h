@@ -133,7 +133,7 @@ public:
     virtual void integrate(IntegratorWorkspace &workspace, 
                            const Symbol &nrg_component,
                            SireUnits::Dimension::Time timestep,
-                           int nmoves, bool record_stats) const=0;
+                           int nmoves, bool record_stats)=0;
     
     virtual IntegratorWorkspacePtr createWorkspace(
                                         const PropertyMap &map = PropertyMap()) const=0;
@@ -182,7 +182,7 @@ public:
     
     void integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, 
                    SireUnits::Dimension::Time timestep, 
-                   int nmoves, bool record_stats) const;
+                   int nmoves, bool record_stats);
     
     IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
     

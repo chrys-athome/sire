@@ -87,7 +87,7 @@ public:
     void integrate(IntegratorWorkspace &workspace,
                    const Symbol &nrg_component, 
                    SireUnits::Dimension::Time timestep,
-                   int nmoves, bool record_stats) const;
+                   int nmoves, bool record_stats);
 
     IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
     IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,const PropertyMap &map = PropertyMap()) const;
