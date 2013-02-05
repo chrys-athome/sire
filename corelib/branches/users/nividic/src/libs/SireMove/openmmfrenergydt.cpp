@@ -124,6 +124,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyDT 
 		<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
 		<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.energy_frequency
 		<< velver.device_index << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical << velver.buffer_coords
+		<< velver.gradients
 		<< static_cast<const Integrator&>(velver);
 
 	// Free OpenMM pointers??
@@ -145,6 +146,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyDT &velve
 		>> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
 		>> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.energy_frequency
 		>> velver.device_index >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical >> velver.buffer_coords
+		>> velver.gradients
 		>> static_cast<Integrator&>(velver);
 
 		// Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -169,7 +171,8 @@ OpenMMFrEnergyDT::OpenMMFrEnergyDT(bool frequent_save)
 				Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
 				MCBarostat_frequency(25),ConstraintType("none"),
 				Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false)
+				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),
+				shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients()
 {}
 
 /** Constructor using the passed molecule groups */
@@ -181,7 +184,8 @@ OpenMMFrEnergyDT::OpenMMFrEnergyDT(const MoleculeGroup &molecule_group,const Mol
 				Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
 				MCBarostat_frequency(25),ConstraintType("none"),
 				Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false)
+				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),
+				shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients()
 {}
 
 /** Copy constructor */
@@ -196,7 +200,8 @@ OpenMMFrEnergyDT::OpenMMFrEnergyDT(const OpenMMFrEnergyDT &other)
 				Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
 				Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
 				energy_frequency(other.energy_frequency),device_index(other.device_index),Alchemical_value(other.Alchemical_value),
-				coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords)
+				coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),
+				delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients)
 {}
 
 /** Destructor */
@@ -234,7 +239,9 @@ OpenMMFrEnergyDT& OpenMMFrEnergyDT::operator=(const OpenMMFrEnergyDT &other)
 	shift_delta = other.shift_delta;
 	delta_alchemical = other.delta_alchemical;
 	buffer_coords = other.buffer_coords;
-	
+	gradients = other.gradients;
+
+
 	return *this;
 }
 
@@ -1029,7 +1036,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	QTime timer;
 
 	timer.start();
-
+	
 	if (Debug)
 		qDebug() << "In OpenMMFeEnergyDT::integrate()\n\n" ;
 
@@ -1175,9 +1182,8 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	}
 	
 	QVector< std::vector<OpenMM::Vec3> > buffered_positions;
-	QVector< Vector> buffered_dimensions;
+	QVector< Vector > buffered_dimensions;
 
-	QVector<double> cumulative_gradient;
 
 	OpenMM::Vec3 a;
 	OpenMM::Vec3 b;
@@ -1215,6 +1221,8 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		if(buffer_coords)
 			qDebug() << "Saving atom coordinates every " << energy_frequency << "\n";
 	}
+
+	QVector<double> cumulative;
 
 	while(sample_count<n_samples){
 
@@ -1339,7 +1347,8 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2 * delta_alchemical);
 		
-		cumulative_gradient.append(Energy_Gradient_lamda);
+		cumulative.append(Energy_Gradient_lamda);
+
 
 		if(Debug)
 			qDebug() << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
@@ -1354,6 +1363,9 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		sample_count=sample_count + 1.0;
 
 	}
+
+	//gradients = cumulative;
+
 
 	if (Debug)
 		qDebug() << "Done dynamics, time elapsed " << timer.elapsed() << " ms\n";
@@ -1737,6 +1749,13 @@ bool OpenMMFrEnergyDT::getBufferCoords(void){
 void OpenMMFrEnergyDT::setBufferCoords(bool buffer){
 
 	 buffer_coords = buffer;
+
+}
+
+
+QVector<double> OpenMMFrEnergyDT::getGradients(void){
+
+	return gradients;
 
 }
 

@@ -153,6 +153,9 @@ public:
 	bool getBufferCoords(void);
 	void setBufferCoords(bool);
 
+	QVector<double> getGradients(void);
+
+
 private:
 	/** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
 	bool frequent_save_velocities;
@@ -202,9 +205,10 @@ private:
 	double shift_delta;
 
 	double delta_alchemical;
-	
+
 	bool buffer_coords;
 
+	QVector<double> gradients;
 };
 
 
