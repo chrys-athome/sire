@@ -88,7 +88,7 @@ void register_VelocityVerlet_class(){
         }
         { //::SireMove::VelocityVerlet::integrate
         
-            typedef void ( ::SireMove::VelocityVerlet::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
+            typedef void ( ::SireMove::VelocityVerlet::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) ;
             integrate_function_type integrate_function_value( &::SireMove::VelocityVerlet::integrate );
             
             VelocityVerlet_exposer.def( 

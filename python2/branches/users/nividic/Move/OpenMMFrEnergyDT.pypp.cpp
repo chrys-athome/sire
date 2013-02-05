@@ -247,6 +247,16 @@ void register_OpenMMFrEnergyDT_class(){
                 , getField_dielectric_function_value );
         
         }
+        { //::SireMove::OpenMMFrEnergyDT::getGradients
+        
+            typedef ::QVector< double > ( ::SireMove::OpenMMFrEnergyDT::*getGradients_function_type )(  ) ;
+            getGradients_function_type getGradients_function_value( &::SireMove::OpenMMFrEnergyDT::getGradients );
+            
+            OpenMMFrEnergyDT_exposer.def( 
+                "getGradients"
+                , getGradients_function_value );
+        
+        }
         { //::SireMove::OpenMMFrEnergyDT::getMCBarostat
         
             typedef bool ( ::SireMove::OpenMMFrEnergyDT::*getMCBarostat_function_type )(  ) ;
@@ -329,7 +339,7 @@ void register_OpenMMFrEnergyDT_class(){
         }
         { //::SireMove::OpenMMFrEnergyDT::integrate
         
-            typedef void ( ::SireMove::OpenMMFrEnergyDT::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
+            typedef void ( ::SireMove::OpenMMFrEnergyDT::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) ;
             integrate_function_type integrate_function_value( &::SireMove::OpenMMFrEnergyDT::integrate );
             
             OpenMMFrEnergyDT_exposer.def( 

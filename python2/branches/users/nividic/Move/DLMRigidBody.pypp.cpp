@@ -70,7 +70,7 @@ void register_DLMRigidBody_class(){
         }
         { //::SireMove::DLMRigidBody::integrate
         
-            typedef void ( ::SireMove::DLMRigidBody::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
+            typedef void ( ::SireMove::DLMRigidBody::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) ;
             integrate_function_type integrate_function_value( &::SireMove::DLMRigidBody::integrate );
             
             DLMRigidBody_exposer.def( 

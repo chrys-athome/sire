@@ -88,7 +88,7 @@ void register_VelocityVerletBerendsen_class(){
         }
         { //::SireMove::VelocityVerletBerendsen::integrate
         
-            typedef void ( ::SireMove::VelocityVerletBerendsen::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
+            typedef void ( ::SireMove::VelocityVerletBerendsen::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) ;
             integrate_function_type integrate_function_value( &::SireMove::VelocityVerletBerendsen::integrate );
             
             VelocityVerletBerendsen_exposer.def( 
