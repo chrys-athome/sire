@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "openmmmdintegrator.h"
+#include "openmmacceleratedmdintegrator.h"
 #include "ensemble.h"
 
 #include "SireMol/moleculegroup.h"
@@ -108,11 +108,11 @@ enum {
 	
 };
 
-static const RegisterMetaType<OpenMMMDIntegrator> r_openmmint;
+static const RegisterMetaType<OpenMMAMDIntegrator> r_openmmint;
 
 
 /** Serialise to a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMMDIntegrator &velver)
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMAMDIntegrator &velver)
 {
     writeHeader(ds, r_openmmint, 1);
     
@@ -125,6 +125,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMMDIntegrato
     	<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
     	<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency
 	<< velver.device_index
+	<< velver.boosted_torsions << velver.etorsion << velver.alphatorsion 
     	<< static_cast<const Integrator&>(velver);
     
     // Free OpenMM pointers??
@@ -133,7 +134,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMMDIntegrato
 }
 
 /** Extract from a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &velver)
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMAMDIntegrator &velver)
 {
     VersionID v = readHeader(ds, r_openmmint);
     
@@ -148,6 +149,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
 	    >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
 	    >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency
 	    >> velver.device_index 
+	    >> velver.boosted_torsions >> velver.etorsion >> velver.alphatorsion
 	    >> static_cast<Integrator&>(velver);
 
 	// Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -164,8 +166,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
 }
 
 /** Constructor*/
-OpenMMMDIntegrator::OpenMMMDIntegrator(bool frequent_save) 
-               : ConcreteProperty<OpenMMMDIntegrator,Integrator>(),
+OpenMMAMDIntegrator::OpenMMAMDIntegrator(bool frequent_save) 
+               : ConcreteProperty<OpenMMAMDIntegrator,Integrator>(),
                  frequent_save_velocities(frequent_save), 
 		 molgroup(MoleculeGroup()),
 		 openmm_system(0),isInitialised(false),
@@ -174,12 +176,13 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(bool frequent_save)
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
                  Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0")
+		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0"),
+		 boosted_torsions(QList<DihedralID>()), etorsion( 0*kcal_per_mol ), alphatorsion(99999.0)
 	        
 {}
 /** Constructor using the passed molecule group */
-OpenMMMDIntegrator::OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool frequent_save) 
-               : ConcreteProperty<OpenMMMDIntegrator,Integrator>(),
+OpenMMAMDIntegrator::OpenMMAMDIntegrator(const MoleculeGroup &molecule_group, bool frequent_save) 
+               : ConcreteProperty<OpenMMAMDIntegrator,Integrator>(),
                  frequent_save_velocities(frequent_save), 
 		 molgroup(molecule_group),
 		 openmm_system(0),isInitialised(false),
@@ -188,13 +191,14 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
                  Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0")
+		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0"),
+		 boosted_torsions(QList<DihedralID>()), etorsion( 0*kcal_per_mol ), alphatorsion(99999.0)
            
 {}
 
 /** Copy constructor */
-OpenMMMDIntegrator::OpenMMMDIntegrator(const OpenMMMDIntegrator &other)
-               : ConcreteProperty<OpenMMMDIntegrator,Integrator>(other),
+OpenMMAMDIntegrator::OpenMMAMDIntegrator(const OpenMMAMDIntegrator &other)
+               : ConcreteProperty<OpenMMAMDIntegrator,Integrator>(other),
                  frequent_save_velocities(other.frequent_save_velocities),
 		 molgroup(other.molgroup),
 		 openmm_system(other.openmm_system),isInitialised(other.isInitialised),
@@ -205,18 +209,19 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const OpenMMMDIntegrator &other)
                  MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
                  Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
                  Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
-		 buffer_frequency(other.buffer_frequency),device_index(other.device_index) 
+		 buffer_frequency(other.buffer_frequency),device_index(other.device_index),
+		 boosted_torsions(other.boosted_torsions), etorsion(other.etorsion), alphatorsion(other.alphatorsion)
 
 {}
 
 /** Destructor */
-OpenMMMDIntegrator::~OpenMMMDIntegrator()
+OpenMMAMDIntegrator::~OpenMMAMDIntegrator()
 {
   //delete openmm_system;
 }
 
 /** Copy assignment operator */
-OpenMMMDIntegrator& OpenMMMDIntegrator::operator=(const OpenMMMDIntegrator &other)
+OpenMMAMDIntegrator& OpenMMAMDIntegrator::operator=(const OpenMMAMDIntegrator &other)
 {
     Integrator::operator=(other);
     frequent_save_velocities = other.frequent_save_velocities;
@@ -240,27 +245,30 @@ OpenMMMDIntegrator& OpenMMMDIntegrator::operator=(const OpenMMMDIntegrator &othe
     CMMremoval_frequency = other.CMMremoval_frequency;
     buffer_frequency = other.buffer_frequency;
     device_index = other.device_index;
-    
+    boosted_torsions = other.boosted_torsions;
+    etorsion = other.etorsion;
+    alphatorsion = other.alphatorsion;
+
     return *this;
 }
 
 /** Comparison operator */
-bool OpenMMMDIntegrator::operator==(const OpenMMMDIntegrator &other) const
+bool OpenMMAMDIntegrator::operator==(const OpenMMAMDIntegrator &other) const
 {
     return frequent_save_velocities == other.frequent_save_velocities and
            Integrator::operator==(other);
 }
 
 /** Comparison operator */
-bool OpenMMMDIntegrator::operator!=(const OpenMMMDIntegrator &other) const
+bool OpenMMAMDIntegrator::operator!=(const OpenMMAMDIntegrator &other) const
 {
-    return not OpenMMMDIntegrator::operator==(other);
+    return not OpenMMAMDIntegrator::operator==(other);
 }
 
 /** Return a string representation of this integrator */
-QString OpenMMMDIntegrator::toString() const
+QString OpenMMAMDIntegrator::toString() const
 {
-    return QObject::tr("OpenMMMDIntegrator()");
+    return QObject::tr("OpenMMAMDIntegrator()");
 }
                                                        
 /** Integrate the coordinates of the atoms in the molecules in 'molgroup'
@@ -273,12 +281,12 @@ QString OpenMMMDIntegrator::toString() const
     \throw SireError::incompatible_error
 */
 
-void OpenMMMDIntegrator::initialise()  {
+void OpenMMAMDIntegrator::initialise()  {
 
-  bool Debug = false;
+  bool Debug = true;
 
   if (Debug)
-    qDebug() << " initialising OpenMMMDIntegrator";
+    qDebug() << " initialising OpenMMAMDIntegrator";
 
   // Create a workspace using the stored molgroup
 
@@ -287,7 +295,7 @@ void OpenMMMDIntegrator::initialise()  {
   if ( moleculegroup.isEmpty() )
     {
       throw SireError::program_bug(QObject::tr(
-        "Cannot initialise OpenMMMDIntegrator because molgroup has not been defined"), CODELOC);
+        "Cannot initialise OpenMMAMDIntegrator because molgroup has not been defined"), CODELOC);
     }
 
   AtomicVelocityWorkspace ws = this->createWorkspace(moleculegroup).read().asA<AtomicVelocityWorkspace>();
@@ -377,10 +385,7 @@ void OpenMMMDIntegrator::initialise()  {
      // Andersen thermostat. Complain if NOT using Verlet
     if (Andersen_flag == true)
       {
-        if (Debug)
-            qDebug() << " Integrator_type " << Integrator_type;
-
-	if (Integrator_type != "leapfrogverlet" and Integrator_type != "variableleapfrogverlet" ) 
+	if (Integrator_type != "leapfrogverlet" or Integrator_type != "variableleapfrogverlet") 
 	  {
 	    throw SireError::program_bug(QObject::tr(
 	       "The Andersen thermostat can only be used with the leapfrogverlet or variableleapfrogverlet integrators"), CODELOC);
@@ -603,7 +608,6 @@ void OpenMMMDIntegrator::initialise()  {
 	  }// end of loop on atoms in molecule
       }//end of loop on molecules in workspace
     
-
     int num_atoms_till_i = 0;
     
     for (int i=0; i < nmols ; i++)
@@ -807,12 +811,23 @@ void OpenMMMDIntegrator::initialise()  {
 		double phase = dihedral_params[ k + 2 ];
 		
 		bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
-			
-		/*cout << "Dihedral between atom global index " << idx0 << " and " << idx1 << " and " << idx2 << " and " << idx3<<"\n";
-		  cout << "Amplitude_dih = " << v << " periodicity " << periodicity << " phase " << phase<<"\n";*/
-		//cout << "Dihedral local" << dihedral_ff.toString() << " v " << v << " periodicity " << periodicity << " phase " << phase;
-		//cout << "\n";
+		
+		if (Debug)
+		  {
+		    qDebug() << "Dihedral between atom global index " << idx0 << " and " << idx1 << " and " << idx2 << " and " << idx3;
+		    qDebug() << "Amplitude_dih = " << v << " periodicity " << periodicity << " phase " << phase;
+		    qDebug() << "Dihedral local" << dihedral_ff.toString() << " v " << v << " periodicity " << periodicity << " phase " << phase;
+		  }
 	      }
+
+	    // Check whether this torsion is in the list of torsions to boost
+	    // E is etorsion (in kcal/mol) alpha is alphatorsion (unitless)
+	    if ( boosted_torsions.contains(dihedral_ff) )
+	      {
+		qDebug() << " Must add a boost potential to that torsion ";
+	      }
+
+
 	  } // end of dihedrals
 
 	//Improper Dihedrals
@@ -902,7 +917,7 @@ void OpenMMMDIntegrator::initialise()  {
     this->isInitialised = true;
 }
 
-void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) const {
+void OpenMMAMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) const {
 
   bool Debug = false; 
 
@@ -911,7 +926,7 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
   timer.start();
 			       
   if (Debug)
-    qDebug() << "In OpenMMMDIntegrator::integrate()\n\n" ;
+    qDebug() << "In OpenMMAMDIntegrator::integrate()\n\n" ;
 	
   // Check that the openmm system has been initialised
   // !! Should check that the workspace is compatible with molgroup
@@ -1248,31 +1263,31 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
 }
 
 
-QString OpenMMMDIntegrator::getIntegrator(void) {
+QString OpenMMAMDIntegrator::getIntegrator(void) {
   return Integrator_type;
 }
 
-void OpenMMMDIntegrator::setIntegrator(QString intgrator) {
+void OpenMMAMDIntegrator::setIntegrator(QString intgrator) {
   Integrator_type = intgrator;
 }
 
-SireUnits::Dimension::Time OpenMMMDIntegrator::getFriction(void) {
+SireUnits::Dimension::Time OpenMMAMDIntegrator::getFriction(void) {
   return friction;
 }
 
-void OpenMMMDIntegrator::setFriction(SireUnits::Dimension::Time thefriction) {
+void OpenMMAMDIntegrator::setFriction(SireUnits::Dimension::Time thefriction) {
   friction = thefriction;
 } 
 
 /** Get the cufott type: nocutoff, cutoffnonperiodic, cutoffperiodic */
-QString OpenMMMDIntegrator::getCutoffType(void){
+QString OpenMMAMDIntegrator::getCutoffType(void){
 
 	return CutoffType;
 
 }
 
 /** Set the cufott type: nocutoff, cutoffnonperiodic, cutoffperiodic */
-void OpenMMMDIntegrator::setCutoffType(QString cutoff_type){
+void OpenMMAMDIntegrator::setCutoffType(QString cutoff_type){
 
 	CutoffType = cutoff_type;
 
@@ -1280,27 +1295,27 @@ void OpenMMMDIntegrator::setCutoffType(QString cutoff_type){
 
 
 /** Get the cutoff distance in A */
-SireUnits::Dimension::Length OpenMMMDIntegrator::getCutoff_distance(void){
+SireUnits::Dimension::Length OpenMMAMDIntegrator::getCutoff_distance(void){
 
 	return cutoff_distance;
 
 }
 
 /** Set the cutoff distance in A */
-void OpenMMMDIntegrator::setCutoff_distance(SireUnits::Dimension::Length distance){
+void OpenMMAMDIntegrator::setCutoff_distance(SireUnits::Dimension::Length distance){
 
 	cutoff_distance = distance;	
 
 }
 
 /** Get the dielectric constant */
-double OpenMMMDIntegrator::getField_dielectric(void){
+double OpenMMAMDIntegrator::getField_dielectric(void){
 
 	return field_dielectric;
 }
 
 /** Set the dielectric constant */
-void OpenMMMDIntegrator::setField_dielectric(double dielectric){
+void OpenMMAMDIntegrator::setField_dielectric(double dielectric){
 	
 	field_dielectric=dielectric;
 
@@ -1308,12 +1323,12 @@ void OpenMMMDIntegrator::setField_dielectric(double dielectric){
 
 /** Set Andersen thermostat */
 
-void OpenMMMDIntegrator::setAndersen(bool andersen){
+void OpenMMAMDIntegrator::setAndersen(bool andersen){
 	Andersen_flag = andersen;	
 }
 
 /** Get Andersen thermostat status on/off */
-bool OpenMMMDIntegrator::getAndersen(void){
+bool OpenMMAMDIntegrator::getAndersen(void){
 	
 	return 	Andersen_flag;
 	
@@ -1321,14 +1336,14 @@ bool OpenMMMDIntegrator::getAndersen(void){
 
 
 /** Get the Andersen Thermostat frequency collision */
-double OpenMMMDIntegrator::getAndersen_frequency(void){
+double OpenMMAMDIntegrator::getAndersen_frequency(void){
 	
 	return Andersen_frequency;
 	
 }
 
 /** Set the Andersen Thermostat frequency collision */
-void OpenMMMDIntegrator::setAndersen_frequency(double freq){
+void OpenMMAMDIntegrator::setAndersen_frequency(double freq){
 	
 	Andersen_frequency=freq;
 	
@@ -1336,163 +1351,199 @@ void OpenMMMDIntegrator::setAndersen_frequency(double freq){
 
 
 /** Get the bath Temperature */
-SireUnits::Dimension::Temperature OpenMMMDIntegrator::getTemperature(void){
+SireUnits::Dimension::Temperature OpenMMAMDIntegrator::getTemperature(void){
 		
 	return Temperature;
 }
 
 /** Set the Temperature */
-void OpenMMMDIntegrator::setTemperature(SireUnits::Dimension::Temperature temperature){
+void OpenMMAMDIntegrator::setTemperature(SireUnits::Dimension::Temperature temperature){
 		
 	Temperature = temperature;
 }
 
 /** Set Monte Carlo Barostat on/off */
-void OpenMMMDIntegrator::setMCBarostat(bool MCBarostat){
+void OpenMMAMDIntegrator::setMCBarostat(bool MCBarostat){
 	MCBarostat_flag = MCBarostat;
 }
 
 /** Get Andersen thermostat status on/off */
-bool OpenMMMDIntegrator::getMCBarostat(void){
+bool OpenMMAMDIntegrator::getMCBarostat(void){
 	
 	return 	MCBarostat_flag;
 	
 }
 
 /** Get the Monte Carlo Barostat frequency in time speps */
-int OpenMMMDIntegrator::getMCBarostat_frequency(void){
+int OpenMMAMDIntegrator::getMCBarostat_frequency(void){
 	
 	return  MCBarostat_frequency;
 	
 }
 
 /** Set the Monte Carlo Barostat frequency in time speps */
-void OpenMMMDIntegrator::setMCBarostat_frequency(int freq){
+void OpenMMAMDIntegrator::setMCBarostat_frequency(int freq){
 	
 	MCBarostat_frequency=freq;
 	
 }
 
 /** Get the Presure */
-SireUnits::Dimension::Pressure OpenMMMDIntegrator::getPressure(void){
+SireUnits::Dimension::Pressure OpenMMAMDIntegrator::getPressure(void){
 		
 	return Pressure;
 }
 
 /** Set the Pressure */
-void OpenMMMDIntegrator::setPressure(SireUnits::Dimension::Pressure pressure){
+void OpenMMAMDIntegrator::setPressure(SireUnits::Dimension::Pressure pressure){
 
 	Pressure = pressure;
 }
 
 
 /** Get the Constraint type: none, hbonds, allbonds, hangles */
-QString OpenMMMDIntegrator::getConstraintType(void){
+QString OpenMMAMDIntegrator::getConstraintType(void){
 
 	return ConstraintType;
 
 }
 
 /** Set the Constraint type: none, hbonds, allbonds, hangles */
-void OpenMMMDIntegrator::setConstraintType(QString constrain){
+void OpenMMAMDIntegrator::setConstraintType(QString constrain){
 
 	ConstraintType = constrain;
 
 }
 
 /** Get the OpenMMMD Platform: CUDA, OpenCL, CPU */
-QString OpenMMMDIntegrator::getPlatform(void){
+QString OpenMMAMDIntegrator::getPlatform(void){
 
 	return platform_type;
 
 }
 
 /** Set the OpenMM Platform: CUDA, OpenCL, CPU */
-void OpenMMMDIntegrator::setPlatform(QString platform){
+void OpenMMAMDIntegrator::setPlatform(QString platform){
 
 	platform_type = platform;
 
 }
 
 /** Get the OpenMMMD Platform: CUDA, OpenCL, CPU */
-QString OpenMMMDIntegrator::getDeviceIndex(void){
+QString OpenMMAMDIntegrator::getDeviceIndex(void){
 
 	return device_index;
 
 }
 
 /** Set the OpenMM Platform: CUDA, OpenCL, CPU */
-void OpenMMMDIntegrator::setDeviceIndex(QString deviceidx){
+void OpenMMAMDIntegrator::setDeviceIndex(QString deviceidx){
 
 	device_index = deviceidx;
 
 }
 
 /** Get the Restaint mode*/
-bool OpenMMMDIntegrator::getRestraint(void){
+bool OpenMMAMDIntegrator::getRestraint(void){
 
 	return Restraint_flag;
 
 }
 
 /** Set the Retraint mode */
-void OpenMMMDIntegrator::setRestraint(bool Restraint){
+void OpenMMAMDIntegrator::setRestraint(bool Restraint){
 
 	Restraint_flag = Restraint;
 }
 
 /** Get the Center of Mass motion removal frequency */
-int OpenMMMDIntegrator::getCMMremoval_frequency(void){
+int OpenMMAMDIntegrator::getCMMremoval_frequency(void){
 
 	return CMMremoval_frequency;
 }
 
 /** Set the Center of Mass motion removal frequency */
-void OpenMMMDIntegrator::setCMMremoval_frequency(int frequency){
+void OpenMMAMDIntegrator::setCMMremoval_frequency(int frequency){
 
 	CMMremoval_frequency = frequency;
 }
 
 /** Get the frequency of buffering coordinates */
-int OpenMMMDIntegrator::getBufferFrequency(){
+int OpenMMAMDIntegrator::getBufferFrequency(){
 
 	return buffer_frequency;
 }
 
 /** Set the Center of Mass motion removal frequency */
-void OpenMMMDIntegrator::setBufferFrequency(int frequency){
+void OpenMMAMDIntegrator::setBufferFrequency(int frequency){
 
 	buffer_frequency = frequency;
 }
 
+/** Set the torsions to boost **/
+void OpenMMAMDIntegrator::setBoostedTorsions( QList<DihedralID> torsions )
+{
+  boosted_torsions = torsions;
+}
+
+/** Get the torsions that are being boosted **/
+QList<DihedralID> OpenMMAMDIntegrator::getBoostedTorsions(void)
+{
+  return boosted_torsions;
+}
+
+/** Set the level of boosting (Energy)**/
+void OpenMMAMDIntegrator::setEtorsion( SireUnits::Dimension::MolarEnergy energy)
+{
+  etorsion = energy;
+}
+
+/** Get the level of boosting (energy) **/
+SireUnits::Dimension::MolarEnergy OpenMMAMDIntegrator::getEtorsion(void)
+{
+  return etorsion;
+}
+
+/** Set the boost acceleration (alpha) **/
+void OpenMMAMDIntegrator::setAlphatorsion(double alpha)
+{
+  alphatorsion = alpha;
+}
+
+/** Get the boost acceleration (alpha) **/
+double OpenMMAMDIntegrator::getAlphatorsion(void)
+{
+  return alphatorsion;
+}
+
 
 /** Create an empty workspace */
-IntegratorWorkspacePtr OpenMMMDIntegrator::createWorkspace(const PropertyMap &map) const
+IntegratorWorkspacePtr OpenMMAMDIntegrator::createWorkspace(const PropertyMap &map) const
 {
 	return IntegratorWorkspacePtr( new AtomicVelocityWorkspace(map) );
 }
 
 /** Return the ensemble of this integrator */
-Ensemble OpenMMMDIntegrator::ensemble() const
+Ensemble OpenMMAMDIntegrator::ensemble() const
 {
 	return Ensemble::NVE();
 }
 
 /** Return whether or not this integrator is time-reversible */
-bool OpenMMMDIntegrator::isTimeReversible() const
+bool OpenMMAMDIntegrator::isTimeReversible() const
 {
 	return true;
 }
 
 /** Create a workspace for this integrator for the molecule group 'molgroup' */
-IntegratorWorkspacePtr OpenMMMDIntegrator::createWorkspace(const MoleculeGroup &molgroup, const PropertyMap &map) const
+IntegratorWorkspacePtr OpenMMAMDIntegrator::createWorkspace(const MoleculeGroup &molgroup, const PropertyMap &map) const
 {
 	return IntegratorWorkspacePtr( new AtomicVelocityWorkspace(molgroup,map) );
 }
 
-const char* OpenMMMDIntegrator::typeName()
+const char* OpenMMAMDIntegrator::typeName()
 {
-	return QMetaType::typeName( qMetaTypeId<OpenMMMDIntegrator>() );
+	return QMetaType::typeName( qMetaTypeId<OpenMMAMDIntegrator>() );
 }
 
 
