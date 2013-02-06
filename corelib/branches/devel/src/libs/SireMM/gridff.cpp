@@ -184,6 +184,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
         gridff.closemols_params = closemols_params;
         
         sds >> static_cast<InterGroupCLJFF&>(gridff);
+
+        gridff.need_update_ljpairs = true;
     }
     else if (v == 4)
     {
@@ -230,6 +232,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
         gridff.fixedatoms_params = fixedatoms_params;
         
         sds >> static_cast<InterGroupCLJFF&>(gridff);
+
+        gridff.need_update_ljpairs = true;
     }
     else if (v == 3)
     {
@@ -1285,8 +1289,6 @@ void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
             double gy = minpoint.y();
             double gz = minpoint.z();
 
-            qDebug( ) << "atomistic non see grid";
-
             for (int ipt=0; ipt<npts; ++ipt)
             {
                 double total = 0;
@@ -1541,10 +1543,6 @@ void GridFF::rebuildGrid()
     
     const Space &spce = this->space();
     qDebug() << "Grid space equals:" << spce.toString();
-    
-    qDebug() << "Rebuilding the LJ parameter database...";
-    CLJPotential::startEvaluation();
-    CLJPotential::finishedEvaluation();
     
     QVector<Vector4> far_mols;
 
@@ -2440,10 +2438,13 @@ void GridFF::_pvt_removedAll(quint32 groupid)
 /** Recalculate the total energy */
 void GridFF::recalculateEnergy()
 {
+    CLJPotential::startEvaluation();
+
     if (mols[0].isEmpty() or (mols[1].isEmpty() and fixedatoms_coords.isEmpty()))
     {
         //one of the two groups is empty, so the energy must be zero
         this->components().setEnergy(*this, CLJEnergy(0,0));
+        CLJPotential::finishedEvaluation();
         this->setClean();
         return;
     }
@@ -2720,6 +2721,7 @@ void GridFF::recalculateEnergy()
         //clear the changed molecules
         this->changed_mols[0].clear();
     }
-    
+ 
+    CLJPotential::finishedEvaluation();
     this->setClean();
 }

@@ -296,7 +296,10 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
         cljpot.use_electrostatic_shifting = cljpot.props.property("shiftElectrostatics")
                                         .asA<VariantProperty>().convertTo<bool>();
-                                        
+        
+        cljpot.use_atomistic_cutoff = cljpot.props.property("useAtomisticCutoff")
+                                        .asA<VariantProperty>().convertTo<bool>();
+        
         cljpot.need_update_ljpairs = true;
     }
     else 

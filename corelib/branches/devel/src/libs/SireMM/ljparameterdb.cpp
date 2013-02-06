@@ -260,8 +260,10 @@ quint32 LJParameterDB::LJParameterDBData::_locked_addLJParameter(
                                     it = ljparams_by_value.constFind(ljparam);
                                     
     if (it != ljparams_by_value.constEnd())
+    {
         return it.value();
-        
+    }
+    
     //the parameter needs to be added
     quint32 idx = ljparams_by_idx.count();
     
