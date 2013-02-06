@@ -110,6 +110,7 @@ enum {
 
 static const RegisterMetaType<OpenMMFrEnergyDT> r_openmmint;
 
+int show_status (double current, int total);
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyDT &velver)
@@ -1031,7 +1032,7 @@ void OpenMMFrEnergyDT::initialise()  {
 
 void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
 
-	bool Debug = true; 
+	bool Debug = false; 
 
 	QTime timer;
 
@@ -1069,7 +1070,8 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
 
-		qDebug() << " setting up OpenCL default Index to " << device_index;
+		if (Debug)
+			qDebug() << "Setting up OpenCL default Index to " << device_index;
 	}
 	else if (platform_type == "Cuda"){
 		const std::string prop = std::string("CudaDeviceIndex");
@@ -1222,7 +1224,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			qDebug() << "Saving atom coordinates every " << energy_frequency << "\n";
 	}
 
-	QVector<double> cumulative;
+	show_status(sample_count, n_samples);
 
 	while(sample_count<n_samples){
 
@@ -1346,13 +1348,16 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		double Energy_GB = -(1.0/beta)*log(avg_GB);
 
 		double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2 * delta_alchemical);
-		
-		cumulative.append(Energy_Gradient_lamda);
 
 
 		if(Debug)
 			qDebug() << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
 
+
+		if(buffer_coords && sample_count!=(n_samples-1))
+			gradients.append(Energy_Gradient_lamda * OpenMM::KcalPerKJ);
+		if(sample_count==(n_samples-1))
+			gradients.append(Energy_Gradient_lamda * OpenMM::KcalPerKJ);
 
 		context_openmm.setParameter("lambda",Alchemical_value);
 
@@ -1361,11 +1366,10 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		cout << "\nDifference dummy = " << dummy - potential_energy_lambda<< "\n\n";*/
 
 		sample_count=sample_count + 1.0;
+		
+		show_status(sample_count, n_samples);
 
 	}
-
-	//gradients = cumulative;
-
 
 	if (Debug)
 		qDebug() << "Done dynamics, time elapsed " << timer.elapsed() << " ms\n";
@@ -1479,6 +1483,36 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 }
 
+int show_status (double current, int total)
+{
+
+	double percent = (( current)/((double) total))*100;
+
+	char buffer[102];
+
+
+	for(int i = 1; i < percent; i++){
+		buffer[i]='=';
+	}
+
+	buffer[(int) percent] = '>';
+
+	for(int i = percent+1 ; i< 100; i++)
+		buffer[i]=' ';
+
+	buffer[0] = '[';
+
+	buffer[100] = ']';
+
+	buffer[101] = ' ';
+
+	printf("%s %4.2f%%\r", buffer, percent);
+
+	if(percent == 100)
+		printf("\n\n");
+
+	return 0;
+}
 
 
 /** Get the cufott type: nocutoff, cutoffnonperiodic, cutoffperiodic */
