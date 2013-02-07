@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "openmmfrenergydt.h"
+#include "openmmfrenergyst.h"
 #include "ensemble.h"
 
 #include "SireMol/moleculegroup.h"
@@ -108,17 +108,16 @@ enum {
 	
 };
 
-static const RegisterMetaType<OpenMMFrEnergyDT> r_openmmint;
+static const RegisterMetaType<OpenMMFrEnergyST> r_openmmint;
 
-namespace frenergydt{
+namespace frenergyst{
 	int show_status (double current, int total);
 }
 
-
-using namespace frenergydt;
+using namespace frenergyst;
 
 /** Serialise to a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyDT &velver)
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST &velver)
 {
 	writeHeader(ds, r_openmmint, 1);
 
@@ -139,7 +138,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyDT 
 }
 
 /** Extract from a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyDT &velver)
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velver)
 {
 	VersionID v = readHeader(ds, r_openmmint);
 
@@ -158,7 +157,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyDT &velve
 		// Maybe....need to reinitialise from molgroup because openmm system was not serialised...
 		velver.isInitialised = false;
 		
-		qDebug() << " Re-initialisation of OpenMMFrEnergyDT from datastream";
+		qDebug() << " Re-initialisation of OpenMMFrEnergyST from datastream";
 
 		velver.initialise();
 	}
@@ -169,8 +168,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyDT &velve
 }
 
 /** Constructor*/
-OpenMMFrEnergyDT::OpenMMFrEnergyDT(bool frequent_save) 
-				: ConcreteProperty<OpenMMFrEnergyDT,Integrator>(),
+OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save) 
+				: ConcreteProperty<OpenMMFrEnergyST,Integrator>(),
 				frequent_save_velocities(frequent_save), 
 				molgroup(MoleculeGroup()),solutegroup(MoleculeGroup()), openmm_system(0), isInitialised(false), 
 				CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
@@ -182,8 +181,8 @@ OpenMMFrEnergyDT::OpenMMFrEnergyDT(bool frequent_save)
 {}
 
 /** Constructor using the passed molecule groups */
-OpenMMFrEnergyDT::OpenMMFrEnergyDT(const MoleculeGroup &molecule_group,const MoleculeGroup &solute_group, bool frequent_save) 
-				: ConcreteProperty<OpenMMFrEnergyDT,Integrator>(),
+OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group,const MoleculeGroup &solute_group, bool frequent_save) 
+				: ConcreteProperty<OpenMMFrEnergyST,Integrator>(),
 				frequent_save_velocities(frequent_save), 
 				molgroup(molecule_group),solutegroup(solute_group) ,openmm_system(0), isInitialised(false), 
 				CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
@@ -195,8 +194,8 @@ OpenMMFrEnergyDT::OpenMMFrEnergyDT(const MoleculeGroup &molecule_group,const Mol
 {}
 
 /** Copy constructor */
-OpenMMFrEnergyDT::OpenMMFrEnergyDT(const OpenMMFrEnergyDT &other)
-				: ConcreteProperty<OpenMMFrEnergyDT,Integrator>(other),
+OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
+				: ConcreteProperty<OpenMMFrEnergyST,Integrator>(other),
 				frequent_save_velocities(other.frequent_save_velocities),
 				molgroup(other.molgroup), solutegroup(other.solutegroup), openmm_system(other.openmm_system), isInitialised(other.isInitialised), 
 				CutoffType(other.CutoffType),cutoff_distance(other.cutoff_distance),
@@ -211,13 +210,13 @@ OpenMMFrEnergyDT::OpenMMFrEnergyDT(const OpenMMFrEnergyDT &other)
 {}
 
 /** Destructor */
-OpenMMFrEnergyDT::~OpenMMFrEnergyDT()
+OpenMMFrEnergyST::~OpenMMFrEnergyST()
 {
 	//delete openmm_system;
 }
 
 /** Copy assignment operator */
-OpenMMFrEnergyDT& OpenMMFrEnergyDT::operator=(const OpenMMFrEnergyDT &other)
+OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
 {
 	Integrator::operator=(other);
 	frequent_save_velocities = other.frequent_save_velocities;
@@ -252,38 +251,38 @@ OpenMMFrEnergyDT& OpenMMFrEnergyDT::operator=(const OpenMMFrEnergyDT &other)
 }
 
 /** Comparison operator */
-bool OpenMMFrEnergyDT::operator==(const OpenMMFrEnergyDT &other) const
+bool OpenMMFrEnergyST::operator==(const OpenMMFrEnergyST &other) const
 {
 	return frequent_save_velocities == other.frequent_save_velocities and Integrator::operator==(other);
 }
 
 /** Comparison operator */
-bool OpenMMFrEnergyDT::operator!=(const OpenMMFrEnergyDT &other) const
+bool OpenMMFrEnergyST::operator!=(const OpenMMFrEnergyST &other) const
 {
-	return not OpenMMFrEnergyDT::operator==(other);
+	return not OpenMMFrEnergyST::operator==(other);
 }
 
 /** Return a string representation of this integrator */
-QString OpenMMFrEnergyDT::toString() const
+QString OpenMMFrEnergyST::toString() const
 {
-	return QObject::tr("OpenMMFrEnergyDT()");
+	return QObject::tr("OpenMMFrEnergyST()");
 }
 
 
 
-void OpenMMFrEnergyDT::initialise()  {
+void OpenMMFrEnergyST::initialise()  {
 
 	bool Debug = false;
 
 	if (Debug)
-		qDebug() << " initialising OpenMMFrEnergyDT";
+		qDebug() << " initialising OpenMMFrEnergyST";
 
 	// Create a workspace using the stored molgroup
 
 	const MoleculeGroup moleculegroup = this->molgroup.read();
 
 	if ( moleculegroup.isEmpty() ){
-		throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyDT because molgroup has not been defined"), CODELOC);
+		throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because molgroup has not been defined"), CODELOC);
 	}
 
 
@@ -291,7 +290,7 @@ void OpenMMFrEnergyDT::initialise()  {
 	MoleculeGroup solute_group = this->solutegroup.read();
 	
 	if ( solute_group.isEmpty() ){
-		throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyDT because solute group has not been defined"), CODELOC);
+		throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because solute group has not been defined"), CODELOC);
 	}
 
 
@@ -1035,7 +1034,7 @@ void OpenMMFrEnergyDT::initialise()  {
 	
 }
 
-void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
+void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
 
 	bool Debug = false; 
 
@@ -1044,7 +1043,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	timer.start();
 	
 	if (Debug)
-		qDebug() << "In OpenMMFeEnergyDT::integrate()\n\n" ;
+		qDebug() << "In OpenMMFrEnergyST::integrate()\n\n" ;
 
 	// Check that the openmm system has been initialised
 	// !! Should check that the workspace is compatible with molgroup
@@ -1052,7 +1051,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	qDebug() << "Not initialised ! ";
 	throw SireError::program_bug(QObject::tr(
-		"OpenMMFrEnergyDT should have been initialised before calling integrate."), CODELOC);
+		"OpenMMFrEnergyST should have been initialised before calling integrate."), CODELOC);
 	}
 
 	OpenMM::System *system_openmm = openmm_system;
@@ -1488,7 +1487,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 }
 
-int frenergydt::show_status (double current, int total)
+int frenergyst::show_status (double current, int total)
 {
 
 	double percent = (( current)/((double) total))*100;
@@ -1521,41 +1520,41 @@ int frenergydt::show_status (double current, int total)
 
 
 /** Get the cufott type: nocutoff, cutoffnonperiodic, cutoffperiodic */
-QString OpenMMFrEnergyDT::getCutoffType(void){
+QString OpenMMFrEnergyST::getCutoffType(void){
 
 	return CutoffType;
 
 }
 
 /** Set the cufott type: nocutoff, cutoffnonperiodic, cutoffperiodic */
-void OpenMMFrEnergyDT::setCutoffType(QString cutoff_type){
+void OpenMMFrEnergyST::setCutoffType(QString cutoff_type){
 
 	CutoffType = cutoff_type;
 
 }
 
 /** Get the cutoff distance in A */
-SireUnits::Dimension::Length OpenMMFrEnergyDT::getCutoff_distance(void){
+SireUnits::Dimension::Length OpenMMFrEnergyST::getCutoff_distance(void){
 
 	return cutoff_distance;
 
 }
 
 /** Set the cutoff distance in A */
-void OpenMMFrEnergyDT::setCutoff_distance(SireUnits::Dimension::Length distance){
+void OpenMMFrEnergyST::setCutoff_distance(SireUnits::Dimension::Length distance){
 
 	cutoff_distance = distance;	
 
 }
 
 /** Get the dielectric constant */
-double OpenMMFrEnergyDT::getField_dielectric(void){
+double OpenMMFrEnergyST::getField_dielectric(void){
 
 	return field_dielectric;
 }
 
 /** Set the dielectric constant */
-void OpenMMFrEnergyDT::setField_dielectric(double dielectric){
+void OpenMMFrEnergyST::setField_dielectric(double dielectric){
 	
 	field_dielectric=dielectric;
 
@@ -1563,118 +1562,118 @@ void OpenMMFrEnergyDT::setField_dielectric(double dielectric){
 
 /** Set Andersen thermostat */
 
-void OpenMMFrEnergyDT::setAndersen(bool andersen){
+void OpenMMFrEnergyST::setAndersen(bool andersen){
 	Andersen_flag = andersen;	
 }
 
 /** Get Andersen thermostat status on/off */
-bool OpenMMFrEnergyDT::getAndersen(void){
+bool OpenMMFrEnergyST::getAndersen(void){
 	
 	return 	Andersen_flag;
 	
 }
 
 /** Get the Andersen Thermostat frequency collision */
-double OpenMMFrEnergyDT::getAndersen_frequency(void){
+double OpenMMFrEnergyST::getAndersen_frequency(void){
 	
 	return Andersen_frequency;
 	
 }
 
 /** Set the Andersen Thermostat frequency collision */
-void OpenMMFrEnergyDT::setAndersen_frequency(double freq){
+void OpenMMFrEnergyST::setAndersen_frequency(double freq){
 	
 	Andersen_frequency=freq;
 	
 }
 
 /** Get the bath Temperature */
-SireUnits::Dimension::Temperature OpenMMFrEnergyDT::getTemperature(void){
+SireUnits::Dimension::Temperature OpenMMFrEnergyST::getTemperature(void){
 		
 	return Temperature;
 }
 
 /** Set the Temperature */
-void OpenMMFrEnergyDT::setTemperature(SireUnits::Dimension::Temperature temperature){
+void OpenMMFrEnergyST::setTemperature(SireUnits::Dimension::Temperature temperature){
 		
 	Temperature = temperature;
 }
 
 /** Set Monte Carlo Barostat on/off */
-void OpenMMFrEnergyDT::setMCBarostat(bool MCBarostat){
+void OpenMMFrEnergyST::setMCBarostat(bool MCBarostat){
 	MCBarostat_flag = MCBarostat;
 }
 
 /** Get Andersen thermostat status on/off */
-bool OpenMMFrEnergyDT::getMCBarostat(void){
+bool OpenMMFrEnergyST::getMCBarostat(void){
 	
 	return 	MCBarostat_flag;
 	
 }
 
 /** Get the Monte Carlo Barostat frequency in time speps */
-int OpenMMFrEnergyDT::getMCBarostat_frequency(void){
+int OpenMMFrEnergyST::getMCBarostat_frequency(void){
 	
 	return  MCBarostat_frequency;
 	
 }
 
 /** Set the Monte Carlo Barostat frequency in time speps */
-void OpenMMFrEnergyDT::setMCBarostat_frequency(int freq){
+void OpenMMFrEnergyST::setMCBarostat_frequency(int freq){
 	
 	MCBarostat_frequency=freq;
 	
 }
 
 /** Get the Presure */
-SireUnits::Dimension::Pressure OpenMMFrEnergyDT::getPressure(void){
+SireUnits::Dimension::Pressure OpenMMFrEnergyST::getPressure(void){
 		
 	return Pressure;
 }
 
 /** Set the Pressure */
-void OpenMMFrEnergyDT::setPressure(SireUnits::Dimension::Pressure pressure){
+void OpenMMFrEnergyST::setPressure(SireUnits::Dimension::Pressure pressure){
 
 	Pressure = pressure;
 }
 
 /** Get the Constraint type: none, hbonds, allbonds, hangles */
-QString OpenMMFrEnergyDT::getConstraintType(void){
+QString OpenMMFrEnergyST::getConstraintType(void){
 
 	return ConstraintType;
 
 }
 
 /** Set the Constraint type: none, hbonds, allbonds, hangles */
-void OpenMMFrEnergyDT::setConstraintType(QString constrain){
+void OpenMMFrEnergyST::setConstraintType(QString constrain){
 
 	ConstraintType = constrain;
 
 }
 
 /** Get the OpenMMMD Platform: CUDA, OpenCL, CPU */
-QString OpenMMFrEnergyDT::getPlatform(void){
+QString OpenMMFrEnergyST::getPlatform(void){
 
 	return platform_type;
 
 }
 
 /** Set the OpenMM Platform: CUDA, OpenCL, CPU */
-void OpenMMFrEnergyDT::setPlatform(QString platform){
+void OpenMMFrEnergyST::setPlatform(QString platform){
 
 	platform_type = platform;
 
 }
 
 /** Get the OpenMMMD Platform: CUDA, OpenCL, CPU */
-QString OpenMMFrEnergyDT::getDeviceIndex(void){
+QString OpenMMFrEnergyST::getDeviceIndex(void){
 
 	return device_index;
 
 }
 
 /** Set the OpenMM Platform: CUDA, OpenCL, CPU */
-void OpenMMFrEnergyDT::setDeviceIndex(QString deviceidx){
+void OpenMMFrEnergyST::setDeviceIndex(QString deviceidx){
 
 	device_index = deviceidx;
 
@@ -1682,65 +1681,65 @@ void OpenMMFrEnergyDT::setDeviceIndex(QString deviceidx){
 
 
 /** Get the Restaint mode*/
-bool OpenMMFrEnergyDT::getRestraint(void){
+bool OpenMMFrEnergyST::getRestraint(void){
 
 	return Restraint_flag;
 
 }
 
 /** Set the Retraint mode */
-void OpenMMFrEnergyDT::setRestraint(bool Restraint){
+void OpenMMFrEnergyST::setRestraint(bool Restraint){
 
 	Restraint_flag = Restraint;
 }
 
 /** Get the Center of Mass motion removal frequency */
-int OpenMMFrEnergyDT::getCMMremoval_frequency(void){
+int OpenMMFrEnergyST::getCMMremoval_frequency(void){
 
 	return CMMremoval_frequency;
 }
 
 /** Set the Center of Mass motion removal frequency */
-void OpenMMFrEnergyDT::setCMMremoval_frequency(int frequency){
+void OpenMMFrEnergyST::setCMMremoval_frequency(int frequency){
 
 	CMMremoval_frequency = frequency;
 }
 
 /** Get the frequency of buffering coordinates */
-int OpenMMFrEnergyDT::getEnergyFrequency(){
+int OpenMMFrEnergyST::getEnergyFrequency(){
 
 	return energy_frequency;
 }
 
 /** Set the Center of Mass motion removal frequency */
-void OpenMMFrEnergyDT::setEnergyFrequency(int frequency){
+void OpenMMFrEnergyST::setEnergyFrequency(int frequency){
 
 	energy_frequency = frequency;
 }
 
 /** Get the alchemical value used to calculate the free energy change via TI method*/
-double OpenMMFrEnergyDT::getAlchemical_value(void){
+double OpenMMFrEnergyST::getAlchemical_value(void){
 
 	return Alchemical_value;
 
 }
 
 /** Set the alchemical value used to calculate the free energy change via TI method*/
-void OpenMMFrEnergyDT::setAlchemical_value(double lambda_value){
+void OpenMMFrEnergyST::setAlchemical_value(double lambda_value){
 
 	Alchemical_value = lambda_value;
 
 }
 
 /** Get the coulomb power used in the soft core potential*/
-int OpenMMFrEnergyDT::getCoulomb_power(void){
+int OpenMMFrEnergyST::getCoulomb_power(void){
 
 	return coulomb_power;
 
 }
 
 /** Set the coulomb power used in the soft core potential*/
-void OpenMMFrEnergyDT::setCoulomb_power(int coulomb){
+void OpenMMFrEnergyST::setCoulomb_power(int coulomb){
 
 	coulomb_power = coulomb;
 
@@ -1748,35 +1747,35 @@ void OpenMMFrEnergyDT::setCoulomb_power(int coulomb){
 
 
 /** Get the shift used in the soft core potential*/
-double OpenMMFrEnergyDT::getShift_delta(void){
+double OpenMMFrEnergyST::getShift_delta(void){
 
 	return shift_delta;
 
 }
 
 /** Set the shift used in the soft core potential*/
-void OpenMMFrEnergyDT::setShift_delta(double shiftdelta){
+void OpenMMFrEnergyST::setShift_delta(double shiftdelta){
 
 	shift_delta = shiftdelta;
 
 }
 
 /** Get the delta alchemical used in the FEP method*/
-double OpenMMFrEnergyDT:: getDeltaAlchemical(void){
+double OpenMMFrEnergyST:: getDeltaAlchemical(void){
 
 	return delta_alchemical;
 
 }
 
 /** Set the delta alchemical used in the FEP method*/
-void OpenMMFrEnergyDT::setDeltatAlchemical(double deltaalchemical){
+void OpenMMFrEnergyST::setDeltatAlchemical(double deltaalchemical){
 
 	delta_alchemical = deltaalchemical;
 
 }
 
 /** Get the flag to buffer coordinate during the free energy calculation*/
-bool OpenMMFrEnergyDT::getBufferCoords(void){
+bool OpenMMFrEnergyST::getBufferCoords(void){
 
 	return buffer_coords;
 
@@ -1785,14 +1784,14 @@ bool OpenMMFrEnergyDT::getBufferCoords(void){
 
 
 /** Set the flag to buffer coordinate during the free energy calculation*/
-void OpenMMFrEnergyDT::setBufferCoords(bool buffer){
+void OpenMMFrEnergyST::setBufferCoords(bool buffer){
 
 	 buffer_coords = buffer;
 
 }
 
 
-QVector<double> OpenMMFrEnergyDT::getGradients(void){
+QVector<double> OpenMMFrEnergyST::getGradients(void){
 
 	return gradients;
 
@@ -1801,30 +1800,30 @@ QVector<double> OpenMMFrEnergyDT::getGradients(void){
 
 
 /** Create an empty workspace */
-IntegratorWorkspacePtr OpenMMFrEnergyDT::createWorkspace(const PropertyMap &map) const
+IntegratorWorkspacePtr OpenMMFrEnergyST::createWorkspace(const PropertyMap &map) const
 {
 	return IntegratorWorkspacePtr( new AtomicVelocityWorkspace(map) );
 }
 
 /** Return the ensemble of this integrator */
-Ensemble OpenMMFrEnergyDT::ensemble() const
+Ensemble OpenMMFrEnergyST::ensemble() const
 {
 	return Ensemble::NVE();
 }
 
 /** Return whether or not this integrator is time-reversible */
-bool OpenMMFrEnergyDT::isTimeReversible() const
+bool OpenMMFrEnergyST::isTimeReversible() const
 {
 	return true;
 }
 
 /** Create a workspace for this integrator for the molecule group 'molgroup' */
-IntegratorWorkspacePtr OpenMMFrEnergyDT::createWorkspace(const MoleculeGroup &molgroup, const PropertyMap &map) const
+IntegratorWorkspacePtr OpenMMFrEnergyST::createWorkspace(const MoleculeGroup &molgroup, const PropertyMap &map) const
 {
 	return IntegratorWorkspacePtr( new AtomicVelocityWorkspace(molgroup,map) );
 }
 
-const char* OpenMMFrEnergyDT::typeName()
+const char* OpenMMFrEnergyST::typeName()
 {
-	return QMetaType::typeName( qMetaTypeId<OpenMMFrEnergyDT>() );
+	return QMetaType::typeName( qMetaTypeId<OpenMMFrEnergyST>() );
 }
