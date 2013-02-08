@@ -81,6 +81,8 @@ public:
                        const SireBase::PropertyMap &map = SireBase::PropertyMap());
     void addFixedAtoms(const SireMol::Molecules &fixed_atoms,
                        const SireBase::PropertyMap &map = SireBase::PropertyMap());
+    void addFixedAtoms(const SireMol::MoleculeGroup &fixed_atoms,
+                       const SireBase::PropertyMap &map = SireBase::PropertyMap());
 
     void addFixedAtoms(const GridFF &other);
 

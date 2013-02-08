@@ -51,7 +51,7 @@ exp_system.add(waters)
 
 gridff = GridFF("gridff")
 gridff.setBuffer(2 * angstrom)
-gridff.setGridSpacing( 0.5 * angstrom )
+gridff.setGridSpacing( 0.75 * angstrom )
 gridff.setLJCutoff( 10 * angstrom )
 gridff.setCoulombCutoff( 25 * angstrom )
 

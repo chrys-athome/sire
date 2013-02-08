@@ -527,6 +527,13 @@ void GridFF::addFixedAtoms(const SireMol::Molecules &fixed_atoms, const Property
     this->mustNowRecalculateFromScratch();
 }
 
+/** Add all of the atoms in the molecules in the passed molecule group to the set
+    of fixed atoms */
+void GridFF::addFixedAtoms(const MoleculeGroup &group, const PropertyMap &map)
+{
+    this->addFixedAtoms(group.molecules(), map);
+}
+
 /** Set the buffer when building the grid. This adds a buffer space
     around the grid when it is built, to try to reduce the number of
     times it needs to be rebuilt */
