@@ -55,9 +55,22 @@
 
 using namespace Conspire;
 
+/** Construct a document to view and edit 'options' */
+ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, Options options, int type, Page *parent)
+               : Page(parent)
+{
+    buttonsmode = 5;
+    browsedir = ibrowsedir;
+    conspireDebug() << ibrowsedir;
+    jobtype = itype;
+    build();
+    this->setOptions(options);
+}
+
 /** Construct an empty document */
 ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, Page *parent) : Page(parent)
 {
+    buttonsmode = 0;
     browsedir = ibrowsedir;
     conspireDebug() << ibrowsedir;
     jobtype = itype;
@@ -68,6 +81,7 @@ ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, Page *parent) 
 ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, Options options, Page *parent)
                : Page(parent)
 {
+    buttonsmode = 0;
     browsedir = ibrowsedir;
     conspireDebug() << ibrowsedir;
     jobtype = itype;
@@ -79,6 +93,7 @@ ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, Options option
 ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, QString iquuid, Page *parent)
                : Page(parent)
 {
+    buttonsmode = 0;
     browsedir = ibrowsedir;
     conspireDebug() << ibrowsedir;
     jobtype = itype;
@@ -90,6 +105,7 @@ ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, QString iquuid
 ConfigDocument::ConfigDocument(QString ibrowsedir, QString itype, Options options, QString iquuid, Page *parent)
                : Page(parent)
 {
+    buttonsmode = 0;
     browsedir = ibrowsedir;
     conspireDebug() << ibrowsedir;
     quuid = iquuid;
@@ -116,7 +132,19 @@ ConfigDocument::~ConfigDocument()
 
 void ConfigDocument::buttonsmodegeom()
 {
-   if (buttonsmode)
+   if (buttonsmode == 5)
+   {
+      double fract_width = 0.5*this->geometry().width();
+      submit_button->hide();
+      load_button->show();
+      load_button->setGeometry(0*fract_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                    fract_width, MAIN_BUTTON_HEIGHT);
+
+      save_button->show();
+      save_button->setGeometry(1*fract_width, this->geometry().height()-MAIN_BUTTON_HEIGHT,
+                                    fract_width, MAIN_BUTTON_HEIGHT);
+      rsave_button->hide();
+   } else if (buttonsmode)
    {
       double fract_width = 0.25*this->geometry().width();
       
@@ -147,7 +175,8 @@ void ConfigDocument::buttonsmodegeom()
 /** Build the widget */
 void ConfigDocument::build()
 {
-    buttonsmode = 1;
+   if (buttonsmode != 5)
+      buttonsmode = 1;
     disabled_view = 0;
     menu_visible = false;
     undo_stack = new QUndoStack(this);

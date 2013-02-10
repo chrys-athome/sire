@@ -50,7 +50,7 @@ MainWindow* MainWindow::testFrom(Options options)
     pageview->setTitleVisible(false);
     win->view = PagePointer(pageview);
 
-    ConfigDocument *page = new ConfigDocument(QString(), "zebedde", options);
+    ConfigDocument *page = new ConfigDocument(QString(), "zebedde", options, 1);
     pageview->pushed(page);
 
     connect(page, SIGNAL(saveDocument(Options)), win, SLOT(testSave(Options)));

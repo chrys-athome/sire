@@ -55,6 +55,7 @@ namespace Conspire
         Q_OBJECT
         
     public:
+        ConfigDocument(QString ibrowsedir, QString itype, Options options, int type, Page *parent=0);
         ConfigDocument(QString ibrowsedir, QString itype, Page *parent=0);
         ConfigDocument(QString ibrowsedir, QString itype, QString iquuid, Page *parent=0);
         ConfigDocument(QString ibrowsedir, QString itype, Options options, Page *parent=0);

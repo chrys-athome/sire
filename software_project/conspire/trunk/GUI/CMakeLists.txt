@@ -177,6 +177,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Conspire/GUI/config.h.in ${CMAKE_CURR
 add_library ( ConspireGUI ${CONSPIRE_GUI_SOURCES} ${Conspire_Images} )
 add_executable ( conspire_gui cpp/main.cpp )
 add_executable ( test_conspire cpp/test_main.cpp )
+add_executable ( zebedde_conspire cpp/zebedde_test_main.cpp )
 
 set_target_properties (ConspireGUI PROPERTIES
                        VERSION ${CONSPIRE_VERSION_MAJOR}
@@ -194,6 +195,7 @@ target_link_libraries (ConspireGUI
 
 target_link_libraries ( conspire_gui ConspireGUI ${ACQUIRE_LIBRARY} )
 target_link_libraries ( test_conspire ConspireGUI ${ACQUIRE_LIBRARY} )
+target_link_libraries ( zebedde_conspire ConspireGUI ${ACQUIRE_LIBRARY} )
 
 # installation
 install( TARGETS ConspireGUI conspire_gui test_conspire EXPORT ConspireGUI
