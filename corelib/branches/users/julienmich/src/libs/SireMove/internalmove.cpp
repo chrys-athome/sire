@@ -269,70 +269,132 @@ void InternalMove::move(System &system, int nmoves, bool record_stats)
             QList<AngleID> flex_angs = flex.flexibleAngles();
             QList<DihedralID> flex_dihs = flex.flexibleDihedrals();
 
-            int maxvar = flex.maximumVar();
+            int maxbondvar = flex.maximumBondVar();
+	    int maxanglevar = flex.maximumAngleVar();
+	    int maxdihedralvar = flex.maximumDihedralVar();
+
             int nbonds = flex_bonds.count();
             int nangles = flex_angs.count();
             int ndihedrals = flex_dihs.count();
-            int ndofs = nbonds + nangles + ndihedrals ;
+            //int ndofs = nbonds + nangles + ndihedrals ;
 
-            if ( ndofs == 0 || maxvar < 0 || maxvar >= ndofs  )
-            {
-                // We move everything in these cases..
-                moved_bonds = flex_bonds;
-                moved_angles = flex_angs;
-                moved_dihedrals = flex_dihs;
-            }
-            else
-            {
-                // draw a random number [0, bonds.size()+angles.size()+dihedrals.size()) 
-                // to find matching dof. 
-                // Add it to moved_bonds or moved_angles or moved_dihedrals
-                // if not already present	
-                int movecount = 0;
+	    // Select bonds
+	    if ( nbonds == 0  || maxbondvar < 0  || maxbondvar >= nbonds )
+	      {
+		moved_bonds = flex_bonds;
+	      }
+	    else
+	      {
+		int movecount = 0;
+		while (movecount < maxbondvar)
+		  {
+		    int rand = this->generator().randInt(0, nbonds - 1);
+		    const BondID &bond = flex_bonds.at( rand );
+		    if ( not moved_bonds.contains(bond) )
+		      {
+			moved_bonds.append(bond);
+			++movecount;
+		      }		    
+		  }
+	      }
+	    // Select angles
+	    if ( nangles == 0  || maxanglevar < 0  || maxanglevar >= nangles )
+	      {
+		moved_angles = flex_angs;
+	      }
+	    else
+	      {
+		int movecount = 0;
+		while (movecount < maxanglevar)
+		  {
+		    int rand = this->generator().randInt(0, nangles - 1);
+		    const AngleID &angle = flex_angs.at( rand );
+		    if ( not moved_angles.contains(angle) )
+		      {
+			moved_angles.append(angle);
+			++movecount;
+		      }		    
+		  }
+	      }
+	    // Select dihedrals
+	    if ( ndihedrals == 0  || maxdihedralvar < 0  || maxdihedralvar >= ndihedrals )
+	      {
+		moved_dihedrals = flex_dihs;
+	      }
+	    else
+	      {
+		int movecount = 0;
+		while (movecount < maxdihedralvar)
+		  {
+		    int rand = this->generator().randInt(0, ndihedrals - 1);
+		    const DihedralID &dihedral = flex_dihs.at( rand );
+		    if ( not moved_dihedrals.contains(dihedral) )
+		      {
+			moved_dihedrals.append(dihedral);
+			++movecount;
+		      }		    
+		  }
+	      }
+
+
+//             if ( ndofs == 0 || maxvar < 0 || maxvar >= ndofs  )
+//             {
+//                 // We move everything in these cases..
+//                 moved_bonds = flex_bonds;
+//                 moved_angles = flex_angs;
+//                 moved_dihedrals = flex_dihs;
+//             }
+//             else
+//             {
+//                 // draw a random number [0, bonds.size()+angles.size()+dihedrals.size()) 
+//                 // to find matching dof. 
+//                 // Add it to moved_bonds or moved_angles or moved_dihedrals
+//                 // if not already present	
+//                 int movecount = 0;
 	      
-                while (movecount < maxvar)
-                {
-                    int rand = this->generator().randInt(0, ndofs - 1);
-                    //qDebug() << " rand is " << rand;
+//                 while (movecount < maxvar)
+//                 {
+//                     int rand = this->generator().randInt(0, ndofs - 1);
+//                     //qDebug() << " rand is " << rand;
                     
-                    if ( rand < nbonds )
-                    {
-                        // it is a bond...
-                        const BondID &bond = flex_bonds.at( rand );
-                        if ( not moved_bonds.contains(bond) )
-                        {
-                            //qDebug() << " adding bond " << rand;
-                            moved_bonds.append(bond);
-                            ++movecount;
-                        }
-                    }
-                    else if ( rand < ( nbonds + nangles ) )
-                    {
-                        // it is an angle...
-                        const AngleID &angle = flex_angs.at( rand - nbonds );
+//                     if ( rand < nbonds )
+//                     {
+//                         // it is a bond...
+//                         const BondID &bond = flex_bonds.at( rand );
+//                         if ( not moved_bonds.contains(bond) )
+//                         {
+//                             //qDebug() << " adding bond " << rand;
+//                             moved_bonds.append(bond);
+//                             ++movecount;
+//                         }
+//                     }
+//                     else if ( rand < ( nbonds + nangles ) )
+//                     {
+//                         // it is an angle...
+//                         const AngleID &angle = flex_angs.at( rand - nbonds );
                         
-                        if ( not moved_angles.contains(angle) )
-                        {
-                            //qDebug() << " adding angle " << rand - nbonds;
-                            moved_angles.append(angle);
-                            ++movecount;
-                        }
-                    }
-                    else
-                    {
-                        // it is a dihedral...
-                        const DihedralID &dihedral = flex_dihs.at( 
-                                                            rand - nbonds - nangles );
+//                         if ( not moved_angles.contains(angle) )
+//                         {
+//                             //qDebug() << " adding angle " << rand - nbonds;
+//                             moved_angles.append(angle);
+//                             ++movecount;
+//                         }
+//                     }
+//                     else
+//                     {
+//                         // it is a dihedral...
+//                         const DihedralID &dihedral = flex_dihs.at( 
+//                                                             rand - nbonds - nangles );
                         
-                        if ( not moved_dihedrals.contains(dihedral) )
-                        {
-                            //qDebug() << " adding dihedral " << rand - nbonds - nangles;
-                            moved_dihedrals.append(dihedral);
-                            ++movecount;
-                        }
-                    }
-                }
-            }
+//                         if ( not moved_dihedrals.contains(dihedral) )
+//                         {
+//                             //qDebug() << " adding dihedral " << rand - nbonds - nangles;
+//                             moved_dihedrals.append(dihedral);
+//                             ++movecount;
+//                         }
+//                     }
+//                 }
+//             }
 
             // Now actually move the selected dofs
             Mover<Molecule> mol_mover = oldmol.molecule().move();

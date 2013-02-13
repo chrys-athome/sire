@@ -71,7 +71,8 @@ QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
     
     sds << flextemplate.name << flextemplate.translation 
-        << flextemplate.rotation << flextemplate.maxvar
+        << flextemplate.rotation << flextemplate.maxbondvar
+	<< flextemplate.maxanglevar << flextemplate.maxdihedralvar
         << flextemplate.bonds << flextemplate.angles
         << flextemplate.dihedrals;
         
@@ -87,7 +88,8 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, FlexibilityTemplate &flex
         SharedDataStream sds(ds);
         
         sds >> flextemplate.name >> flextemplate.translation
-            >> flextemplate.rotation >> flextemplate.maxvar
+            >> flextemplate.rotation >> flextemplate.maxbondvar
+	    >> flextemplate.maxanglevar >> flextemplate.maxdihedralvar
             >> flextemplate.bonds >> flextemplate.angles
             >> flextemplate.dihedrals;
     }
@@ -99,17 +101,18 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, FlexibilityTemplate &flex
 
 /** Constructor */
 FlexibilityTemplate::FlexibilityTemplate()
-                    : translation(0), rotation(0), maxvar(0)
+                    : translation(0), rotation(0), maxbondvar(0), maxanglevar(0), maxdihedralvar(0)
 {}
 
 FlexibilityTemplate::FlexibilityTemplate(const QString &name)
-                    : name(name), translation(0), rotation(0), maxvar(0)
+  : name(name), translation(0), rotation(0), maxbondvar(0), maxanglevar(0), maxdihedralvar(0)
 {}
 
 /** Copy constructor */
 FlexibilityTemplate::FlexibilityTemplate(const FlexibilityTemplate &other)
                     : name(other.name), translation(other.translation),
-                      rotation(other.rotation), maxvar(other.maxvar),
+                      rotation(other.rotation), maxbondvar(other.maxbondvar),
+		      maxanglevar(other.maxanglevar), maxdihedralvar(other.maxdihedralvar),
                       bonds(other.bonds), angles(other.angles), 
                       dihedrals(other.dihedrals)
 {}
@@ -131,7 +134,9 @@ FlexibilityTemplate& FlexibilityTemplate::operator=(const FlexibilityTemplate &o
         name = other.name;
         translation = other.translation;
         rotation = other.rotation;
-        maxvar = other.maxvar;
+        maxbondvar = other.maxbondvar;
+	maxanglevar = other.maxanglevar;
+	maxdihedralvar = other.maxdihedralvar;
         bonds = other.bonds;
         angles = other.angles;
         dihedrals = other.dihedrals;
@@ -145,7 +150,8 @@ bool FlexibilityTemplate::operator==(const FlexibilityTemplate &other) const
 {
     return this == &other or
            (name == other.name and translation == other.translation and
-            rotation == other.rotation and maxvar == other.maxvar and
+            rotation == other.rotation and maxbondvar == other.maxbondvar and
+	    maxanglevar == other.maxanglevar and maxdihedralvar == other.maxdihedralvar and
             bonds == other.bonds and angles == other.angles and
             dihedrals == other.dihedrals);
 }
@@ -171,10 +177,21 @@ void FlexibilityTemplate::setTranslation(const Length &translation)
     this->translation = translation;
 }
 
-void FlexibilityTemplate::setMaximumVar(int maxvar)
+void FlexibilityTemplate::setMaximumBondVar(int maxvar)
 {
-    this->maxvar = maxvar;
+    this->maxbondvar = maxvar;
 }
+
+void FlexibilityTemplate::setMaximumAngleVar(int maxvar)
+{
+    this->maxanglevar = maxvar;
+}
+
+void FlexibilityTemplate::setMaximumDihedralVar(int maxvar)
+{
+    this->maxdihedralvar = maxvar;
+}
+
 
 Angle FlexibilityTemplate::getRotation() const
 {
@@ -186,10 +203,21 @@ Length FlexibilityTemplate::getTranslation() const
     return this->translation;
 }
 
-int FlexibilityTemplate::getMaximumVar() const
+int FlexibilityTemplate::getMaximumBondVar() const
 {
-    return this->maxvar;
+    return this->maxbondvar;
 }
+
+int FlexibilityTemplate::getMaximumAngleVar() const
+{
+    return this->maxanglevar;
+}
+
+int FlexibilityTemplate::getMaximumDihedralVar() const
+{
+    return this->maxdihedralvar;
+}
+
 
 void FlexibilityTemplate::setBondDelta(const BondID &bond, const Length &delta)
 {
@@ -436,10 +464,18 @@ void FlexibilityLibrary::loadTemplates(const QString &templatefile)
             new_templates[current].setRotation( words[2].toDouble() * degrees );
             new_templates[current].setTranslation( words[4].toDouble() * angstroms );
         }
-        else if ( line.startsWith("maximumvariables") )
+        else if ( line.startsWith("maximumbondvariables") )
         {
-            new_templates[current].setMaximumVar( words[1].toInt() );
+            new_templates[current].setMaximumBondVar( words[1].toInt() );
         }
+        else if ( line.startsWith("maximumanglevariables") )
+        {
+            new_templates[current].setMaximumAngleVar( words[1].toInt() );
+        }
+        else if ( line.startsWith("maximumdihedralvariables") )
+        {
+            new_templates[current].setMaximumDihedralVar( words[1].toInt() );
+        }	
         else if ( line.startsWith("bond") )
         {
             new_templates[current].setBondDelta( BondID(AtomName(words[1]),
@@ -490,7 +526,9 @@ Flexibility FlexibilityLibrary::getFlexibility(const MoleculeView &molecule) con
 
     flexibility.setRotation(templ.getRotation());
     flexibility.setTranslation(templ.getTranslation());
-    flexibility.setMaximumVar(templ.getMaximumVar());
+    flexibility.setMaximumBondVar(templ.getMaximumBondVar());
+    flexibility.setMaximumAngleVar(templ.getMaximumAngleVar());
+    flexibility.setMaximumDihedralVar(templ.getMaximumDihedralVar());    
 
     for (QHash<BondID,Length>::const_iterator it = templ.getBondDeltas().constBegin();
          it != templ.getBondDeltas().constEnd();
