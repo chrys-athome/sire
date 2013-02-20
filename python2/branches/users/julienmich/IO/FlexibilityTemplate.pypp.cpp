@@ -128,14 +128,34 @@ void register_FlexibilityTemplate_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireIO::FlexibilityTemplate::getMaximumVar
+        { //::SireIO::FlexibilityTemplate::getMaximumAngleVar
         
-            typedef int ( ::SireIO::FlexibilityTemplate::*getMaximumVar_function_type )(  ) const;
-            getMaximumVar_function_type getMaximumVar_function_value( &::SireIO::FlexibilityTemplate::getMaximumVar );
+            typedef int ( ::SireIO::FlexibilityTemplate::*getMaximumAngleVar_function_type )(  ) const;
+            getMaximumAngleVar_function_type getMaximumAngleVar_function_value( &::SireIO::FlexibilityTemplate::getMaximumAngleVar );
             
             FlexibilityTemplate_exposer.def( 
-                "getMaximumVar"
-                , getMaximumVar_function_value );
+                "getMaximumAngleVar"
+                , getMaximumAngleVar_function_value );
+        
+        }
+        { //::SireIO::FlexibilityTemplate::getMaximumBondVar
+        
+            typedef int ( ::SireIO::FlexibilityTemplate::*getMaximumBondVar_function_type )(  ) const;
+            getMaximumBondVar_function_type getMaximumBondVar_function_value( &::SireIO::FlexibilityTemplate::getMaximumBondVar );
+            
+            FlexibilityTemplate_exposer.def( 
+                "getMaximumBondVar"
+                , getMaximumBondVar_function_value );
+        
+        }
+        { //::SireIO::FlexibilityTemplate::getMaximumDihedralVar
+        
+            typedef int ( ::SireIO::FlexibilityTemplate::*getMaximumDihedralVar_function_type )(  ) const;
+            getMaximumDihedralVar_function_type getMaximumDihedralVar_function_value( &::SireIO::FlexibilityTemplate::getMaximumDihedralVar );
+            
+            FlexibilityTemplate_exposer.def( 
+                "getMaximumDihedralVar"
+                , getMaximumDihedralVar_function_value );
         
         }
         { //::SireIO::FlexibilityTemplate::getName
@@ -215,14 +235,36 @@ void register_FlexibilityTemplate_class(){
                 , ( bp::arg("dihedralid"), bp::arg("delta") ) );
         
         }
-        { //::SireIO::FlexibilityTemplate::setMaximumVar
+        { //::SireIO::FlexibilityTemplate::setMaximumAngleVar
         
-            typedef void ( ::SireIO::FlexibilityTemplate::*setMaximumVar_function_type )( int ) ;
-            setMaximumVar_function_type setMaximumVar_function_value( &::SireIO::FlexibilityTemplate::setMaximumVar );
+            typedef void ( ::SireIO::FlexibilityTemplate::*setMaximumAngleVar_function_type )( int ) ;
+            setMaximumAngleVar_function_type setMaximumAngleVar_function_value( &::SireIO::FlexibilityTemplate::setMaximumAngleVar );
             
             FlexibilityTemplate_exposer.def( 
-                "setMaximumVar"
-                , setMaximumVar_function_value
+                "setMaximumAngleVar"
+                , setMaximumAngleVar_function_value
+                , ( bp::arg("maxvar") ) );
+        
+        }
+        { //::SireIO::FlexibilityTemplate::setMaximumBondVar
+        
+            typedef void ( ::SireIO::FlexibilityTemplate::*setMaximumBondVar_function_type )( int ) ;
+            setMaximumBondVar_function_type setMaximumBondVar_function_value( &::SireIO::FlexibilityTemplate::setMaximumBondVar );
+            
+            FlexibilityTemplate_exposer.def( 
+                "setMaximumBondVar"
+                , setMaximumBondVar_function_value
+                , ( bp::arg("maxvar") ) );
+        
+        }
+        { //::SireIO::FlexibilityTemplate::setMaximumDihedralVar
+        
+            typedef void ( ::SireIO::FlexibilityTemplate::*setMaximumDihedralVar_function_type )( int ) ;
+            setMaximumDihedralVar_function_type setMaximumDihedralVar_function_value( &::SireIO::FlexibilityTemplate::setMaximumDihedralVar );
+            
+            FlexibilityTemplate_exposer.def( 
+                "setMaximumDihedralVar"
+                , setMaximumDihedralVar_function_value
                 , ( bp::arg("maxvar") ) );
         
         }

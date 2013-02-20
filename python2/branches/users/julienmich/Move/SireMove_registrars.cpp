@@ -40,8 +40,9 @@
 #include "rbworkspacejm.h"
 #include "suprasubsimpacket.h"
 #include "move.h"
-#include "velocityverlet.h"
+#include "openmmacceleratedmdintegrator.h"
 #include "ensemble.h"
+#include "velocityverlet.h"
 #include "getpoint.h"
 #include "moldeleter.h"
 #include "simstore.h"
@@ -103,8 +104,10 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::RBWorkspaceJM >();
     ObjectRegistry::registerConverterFor< SireMove::SupraSubSimPacket >();
     ObjectRegistry::registerConverterFor< SireMove::NullMove >();
-    ObjectRegistry::registerConverterFor< SireMove::VelocityVerlet >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMAMDIntegrator >();
+    ObjectRegistry::registerConverterFor< SireMove::OpenMMAMDIntegrator >();
     ObjectRegistry::registerConverterFor< SireMove::Ensemble >();
+    ObjectRegistry::registerConverterFor< SireMove::VelocityVerlet >();
     ObjectRegistry::registerConverterFor< SireMove::NullGetPoint >();
     ObjectRegistry::registerConverterFor< SireMove::GetCOMPoint >();
     ObjectRegistry::registerConverterFor< SireMove::GetCOGPoint >();

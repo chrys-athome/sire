@@ -24,6 +24,7 @@ set ( PYPP_SOURCES
        MolInserter.pypp.cpp
        RigidBodyMC.pypp.cpp
        SameMoves.pypp.cpp
+       OpenMMAMDIntegrator.pypp.cpp
        VelocityGenerator.pypp.cpp
        SystemWideDeleter.pypp.cpp
        SupraSubSystem.pypp.cpp

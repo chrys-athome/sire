@@ -69,6 +69,8 @@
 
 #include "NullVolumeChanger.pypp.hpp"
 
+#include "OpenMMAMDIntegrator.pypp.hpp"
+
 #include "OpenMMIntegrator.pypp.hpp"
 
 #include "OpenMMMDIntegrator.pypp.hpp"
@@ -239,6 +241,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_VolumeChanger_class();
 
     register_NullVolumeChanger_class();
+
+    register_OpenMMAMDIntegrator_class();
 
     register_OpenMMIntegrator_class();
 
