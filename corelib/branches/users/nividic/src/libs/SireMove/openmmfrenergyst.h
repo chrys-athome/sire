@@ -67,7 +67,7 @@ friend QDataStream& ::operator>>(QDataStream&, OpenMMFrEnergyST&);
 public:
 	OpenMMFrEnergyST(bool frequent_save_velocities = false);
 
-	OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const MoleculeGroup &solute_group, bool frequent_save_velocities = false);
+	OpenMMFrEnergyST(const MoleculeGroup &molecule_group,const MoleculeGroup &solutes,const MoleculeGroup &solute_hard, const MoleculeGroup &solute_todummy, const MoleculeGroup & solute_fromdummy,bool frequent_save_velocities = false);
 
 	OpenMMFrEnergyST(const OpenMMFrEnergyST &other);
 
@@ -161,8 +161,14 @@ private:
 	bool frequent_save_velocities;
 	/** The Molecule Group on which the integrator operates */
 	MolGroupPtr molgroup;
+	/** The All solute group on which the integrator operates */
+	MolGroupPtr solutes;
 	/** The Solute Group on which the integrator operates */
-	MolGroupPtr solutegroup;
+	MolGroupPtr solutehard;
+	/** The To Dummy Solute Group on which the integrator operates */
+	MolGroupPtr solutetodummy;
+	/** The From Dummy Solute Group on which the integrator operates */
+	MolGroupPtr solutefromdummy;
 
 	/** Pointer to OpenMM context that describes the desired simulation*/
 	//OpenMM::Context* context;

@@ -953,12 +953,12 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				}
 				
 				solute.insert(AtomNumToOpenMMIndex[atnum.value()]);
-				
+
 			}
 			else{//solvent atom
 				
 				if(free_energy_calculation == true){
-	
+
 					params[0]=charge;
 					params[1]=sigma * OpenMM::NmPerAngstrom;
 					params[2]=epsilon * OpenMM::KJPerKcal;
@@ -972,8 +972,8 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 				solvent.insert(AtomNumToOpenMMIndex[atnum.value()]);
 			
 			}
-			
-		
+
+
 			/*cout << "Sire Atom number = " << atnum.value() << " OpenMM index = " << AtomNumToOpenMMIndex[atnum.value()] << "\n";
 			
 			
@@ -981,11 +981,11 @@ void OpenMMIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			
 
 			//qDebug()<< atomvdws.toString();
-	
+
 			cout << "sigma :" << sigma <<" A\n";
 		
 			cout << "epsilon :" << epsilon << " kcal/mol\n";
-		
+
 			cout << "charges : " << charge << " |e|\n";
 
 			cout << "\n";*/

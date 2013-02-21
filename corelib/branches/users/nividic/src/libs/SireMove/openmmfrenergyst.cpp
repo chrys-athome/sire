@@ -68,8 +68,9 @@
 //ADDED BY GAC
 #include "SireMaths/vector.h"
 #include "SireMol/mgname.h"
+#include "SireMol/perturbation.h"
+#include "SireMM/internalperturbation.h"
 #include <iostream>
-/* include <QElapsedTimer> */
 #include <QDebug>
 #include <QTime>
 
@@ -123,7 +124,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
 
 	SharedDataStream sds(ds);
 
-	sds << velver.frequent_save_velocities << velver.molgroup << velver.solutegroup
+	sds << velver.frequent_save_velocities << velver.molgroup << velver.solutes << velver.solutehard << velver.solutetodummy << velver.solutefromdummy
 		<< velver.CutoffType << velver.cutoff_distance << velver.field_dielectric
 		<< velver.Andersen_flag <<  velver.Andersen_frequency 
 		<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
@@ -145,7 +146,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
 	if (v == 1){
 		SharedDataStream sds(ds);
 
-		sds >> velver.frequent_save_velocities >> velver.molgroup >> velver.solutegroup
+		sds >> velver.frequent_save_velocities >> velver.molgroup >> velver.solutes >>velver.solutehard >> velver.solutetodummy >> velver.solutefromdummy
 		>> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric
 		>> velver.Andersen_flag >>  velver.Andersen_frequency 
 		>> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
@@ -171,7 +172,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
 OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save) 
 				: ConcreteProperty<OpenMMFrEnergyST,Integrator>(),
 				frequent_save_velocities(frequent_save), 
-				molgroup(MoleculeGroup()),solutegroup(MoleculeGroup()), openmm_system(0), isInitialised(false), 
+				molgroup(MoleculeGroup()), solutes(MoleculeGroup()) ,solutehard(MoleculeGroup()), solutetodummy(MoleculeGroup()), solutefromdummy(MoleculeGroup()), openmm_system(0), isInitialised(false), 
 				CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
 				Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
 				MCBarostat_frequency(25),ConstraintType("none"),
@@ -181,10 +182,10 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
 {}
 
 /** Constructor using the passed molecule groups */
-OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group,const MoleculeGroup &solute_group, bool frequent_save) 
+OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const MoleculeGroup &solute_group,const MoleculeGroup &solute_hard, const MoleculeGroup &solute_todummy, const MoleculeGroup &solute_fromdummy,bool frequent_save) 
 				: ConcreteProperty<OpenMMFrEnergyST,Integrator>(),
 				frequent_save_velocities(frequent_save), 
-				molgroup(molecule_group),solutegroup(solute_group) ,openmm_system(0), isInitialised(false), 
+				molgroup(molecule_group), solutes(solute_group),solutehard(solute_hard), solutetodummy(solute_todummy),solutefromdummy(solute_fromdummy),openmm_system(0), isInitialised(false), 
 				CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
 				Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
 				MCBarostat_frequency(25),ConstraintType("none"),
@@ -197,7 +198,9 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group,const Mol
 OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
 				: ConcreteProperty<OpenMMFrEnergyST,Integrator>(other),
 				frequent_save_velocities(other.frequent_save_velocities),
-				molgroup(other.molgroup), solutegroup(other.solutegroup), openmm_system(other.openmm_system), isInitialised(other.isInitialised), 
+				molgroup(other.molgroup), solutes(other.solutes), solutehard(other.solutehard), 
+				solutetodummy(other.solutetodummy), solutefromdummy(other.solutefromdummy),
+				openmm_system(other.openmm_system), isInitialised(other.isInitialised), 
 				CutoffType(other.CutoffType),cutoff_distance(other.cutoff_distance),
 				field_dielectric(other.field_dielectric), Andersen_flag(other.Andersen_flag),
 				Andersen_frequency(other.Andersen_frequency), MCBarostat_flag(other.MCBarostat_flag),
@@ -221,7 +224,10 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
 	Integrator::operator=(other);
 	frequent_save_velocities = other.frequent_save_velocities;
 	molgroup = other.molgroup; 
-	solutegroup=other.solutegroup;
+	solutes = other.solutes;
+	solutehard=other.solutehard;
+	solutetodummy=other.solutetodummy;
+	solutefromdummy=other.solutefromdummy;
 	openmm_system = other.openmm_system;
 	isInitialised = other.isInitialised;
 	CutoffType = other.CutoffType;
@@ -285,13 +291,28 @@ void OpenMMFrEnergyST::initialise()  {
 		throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because molgroup has not been defined"), CODELOC);
 	}
 
-
-
-	MoleculeGroup solute_group = this->solutegroup.read();
+	MoleculeGroup solutehard = this->solutehard.read();
 	
-	if ( solute_group.isEmpty() ){
-		throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because solute group has not been defined"), CODELOC);
+	if ( solutehard.isEmpty() ){
+		throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because hard solute group has not been defined"), CODELOC);
 	}
+	
+	MoleculeGroup solutetodummy = this->solutetodummy.read();
+	
+	/*if ( solutetodummy.isEmpty() ){
+		throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because to dummy solute group has not been defined"), CODELOC);
+	}*/
+	
+	MoleculeGroup solutefromdummy = this->solutefromdummy.read();
+	
+	/*if ( solutefromdummy.isEmpty() ){
+		throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because from dummy  solute group has not been defined"), CODELOC);
+	}*/
+
+
+
+
+
 
 
 	AtomicVelocityWorkspace ws = this->createWorkspace(moleculegroup).read().asA<AtomicVelocityWorkspace>();
@@ -408,8 +429,6 @@ void OpenMMFrEnergyST::initialise()  {
 																			"lam=max(0,min(1,lambda))");
 
 
-
-
 		custom_hard_solute_solvent->addGlobalParameter("lambda",Alchemical_value);
 		custom_fromdummy_solute_solvent->addGlobalParameter("lambda",Alchemical_value);
 		custom_todummy_solute_solvent->addGlobalParameter("lambda",Alchemical_value);
@@ -437,14 +456,11 @@ void OpenMMFrEnergyST::initialise()  {
 																				"sigma_avg=0.5*(sigma1+sigma2)");
 
 		custom_solute_solute_solvent_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
-		
-
 
 		custom_intra_14_15 = new OpenMM::CustomBondForce("Hl+Hc;"
 														"Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
 														"Hc=138.935456*q_prod/r");
 														
-
 
 		if (Debug){
 			qDebug() << "\nCut off type = " << CutoffType << "\n";
@@ -531,17 +547,16 @@ void OpenMMFrEnergyST::initialise()  {
 	}*/
 
 /***********************************************************************NON BONDED INTERACTIONS*****************************************************************/
-	qDebug() << "****************************************************GAC2********************************************"; 
-	system_openmm->addForce(custom_hard_solute_solvent);
 
-	/*system_openmm->addForce(custom_todummy_solute_solvent);
+	system_openmm->addForce(custom_hard_solute_solvent);
+	system_openmm->addForce(custom_todummy_solute_solvent);
 	system_openmm->addForce(custom_fromdummy_solute_solvent);
 	system_openmm->addForce(custom_solute_solute_solvent_solvent);
-	system_openmm->addForce(custom_intra_14_15);*/
+	system_openmm->addForce(custom_intra_14_15);
 
 
 	// Andersen thermostat
-	/*if (Andersen_flag == true){
+	if (Andersen_flag == true){
 		const double converted_Temperature = convertTo(Temperature.value(), kelvin);
 
 		OpenMM::AndersenThermostat * thermostat = new OpenMM::AndersenThermostat(converted_Temperature, Andersen_frequency);
@@ -571,7 +586,7 @@ void OpenMMFrEnergyST::initialise()  {
 			qDebug() << "Frequency every " << MCBarostat_frequency << " steps\n";
 		}
 
-	}*/
+	}
 
 	//OpenMM Bonded Forces
 
@@ -588,7 +603,7 @@ void OpenMMFrEnergyST::initialise()  {
 	system_openmm->addForce(bondTorsion_openmm);
 	
 	
-	/*OpenMM::CustomBondForce* solute_bond_perturbation = NULL;
+	OpenMM::CustomBondForce* solute_bond_perturbation = NULL;
 	
 	OpenMM::CustomAngleForce* solute_angle_perturbation = NULL;
 	
@@ -610,14 +625,14 @@ void OpenMMFrEnergyST::initialise()  {
 																"T=tstart*lam+(1.0-lam)*tend;"
 																"phieq=phistart*lam+(1.0-lam)*phiend;"
 																"N=nstart*lam+(1.0-lam)*nend;"
-																"lam=max(0,min(1,lambda))");*/
+																"lam=max(0,min(1,lambda))");
 
 
 /***********************************************************************BONDED INTERACTIONS****************************************************************/
 
-	/*system_openmm->addForce(solute_bond_perturbation);
+	system_openmm->addForce(solute_bond_perturbation);
 	system_openmm->addForce(solute_angle_perturbation);
-	system_openmm->addForce(solute_torsion_perturbation);*/
+	system_openmm->addForce(solute_torsion_perturbation);
 
 
 
@@ -773,14 +788,8 @@ void OpenMMFrEnergyST::initialise()  {
 
 	int num_atoms_till_i = 0;
 
-
-
 	/*NON BONDED PER PARTICLE PARAMETERS*/
 
-qDebug() << "****************************************************ANCORA********************************************"; 
-
-
-	custom_hard_solute_solvent->addPerParticleParameter("issolute");
 	custom_hard_solute_solvent->addPerParticleParameter("ishard");
 	custom_hard_solute_solvent->addPerParticleParameter("istodummy");
 	custom_hard_solute_solvent->addPerParticleParameter("isfromdummy");
@@ -790,9 +799,9 @@ qDebug() << "****************************************************ANCORA*********
 	custom_hard_solute_solvent->addPerParticleParameter("epend");
 	custom_hard_solute_solvent->addPerParticleParameter("sigmastart");
 	custom_hard_solute_solvent->addPerParticleParameter("sigmaend");
-	
-	
-	custom_todummy_solute_solvent->addPerParticleParameter("issolute");
+	custom_hard_solute_solvent->addPerParticleParameter("issolute");
+
+
 	custom_todummy_solute_solvent->addPerParticleParameter("ishard");
 	custom_todummy_solute_solvent->addPerParticleParameter("istodummy");
 	custom_todummy_solute_solvent->addPerParticleParameter("isfromdummy");
@@ -802,8 +811,9 @@ qDebug() << "****************************************************ANCORA*********
 	custom_todummy_solute_solvent->addPerParticleParameter("epend");
 	custom_todummy_solute_solvent->addPerParticleParameter("sigmastart");
 	custom_todummy_solute_solvent->addPerParticleParameter("sigmaend");
+	custom_todummy_solute_solvent->addPerParticleParameter("issolute");
 
-	custom_fromdummy_solute_solvent->addPerParticleParameter("issolute");
+
 	custom_fromdummy_solute_solvent->addPerParticleParameter("ishard");
 	custom_fromdummy_solute_solvent->addPerParticleParameter("istodummy");
 	custom_fromdummy_solute_solvent->addPerParticleParameter("isfromdummy");
@@ -813,6 +823,7 @@ qDebug() << "****************************************************ANCORA*********
 	custom_fromdummy_solute_solvent->addPerParticleParameter("epend");
 	custom_fromdummy_solute_solvent->addPerParticleParameter("sigmastart");
 	custom_fromdummy_solute_solvent->addPerParticleParameter("sigmaend");
+	custom_fromdummy_solute_solvent->addPerParticleParameter("issolute");
 
 	custom_solute_solute_solvent_solvent->addPerParticleParameter("q");
 	custom_solute_solute_solvent_solvent->addPerParticleParameter("sigma");
@@ -826,7 +837,7 @@ qDebug() << "****************************************************ANCORA*********
 	
 	/*BONDED PER PARTICLE PARAMETERS*/
 
-	/*solute_bond_perturbation->addPerBondParameter("bstart");
+	solute_bond_perturbation->addPerBondParameter("bstart");
 	solute_bond_perturbation->addPerBondParameter("bend");
 	solute_bond_perturbation->addPerBondParameter("rstart");
 	solute_bond_perturbation->addPerBondParameter("rend");
@@ -841,19 +852,7 @@ qDebug() << "****************************************************ANCORA*********
 	solute_torsion_perturbation->addPerTorsionParameter("phistart");
 	solute_torsion_perturbation->addPerTorsionParameter("phiend");
 	solute_torsion_perturbation->addPerTorsionParameter("nstart");
-	solute_torsion_perturbation->addPerTorsionParameter("nend");*/
-
-
-
-	//const System & ptr_sys = ws.system();
-	const QString solute = "solute_ref_todummy";
-	//MGName Solute(solute);
-	//MoleculeGroup gac_group = ptr_sys[Solute];
-
-
-	return;
-
-
+	solute_torsion_perturbation->addPerTorsionParameter("nend");
 
 
 
@@ -864,13 +863,35 @@ qDebug() << "****************************************************ANCORA*********
 		const Vector *c = ws.coordsArray(i);
 
 		Molecule molecule = moleculegroup.moleculeAt(i).molecule();
+
 		int num_atoms_molecule = molecule.nAtoms();
+
+		std::vector<double> solute_solute_solvent_solvent_params(4);
+		
+		std::vector<double> perturbation_params(10);
 
 		// The atomic parameters
 		AtomLJs atomvdws = molecule.property("LJ").asA<AtomLJs>();
 		AtomCharges atomcharges = molecule.property("charge").asA<AtomCharges>();
 		QVector<SireMM::LJParameter> ljparameters = atomvdws.toVector();
 		QVector<SireUnits::Dimension::Charge> charges = atomcharges.toVector();
+		
+		QVector<SireUnits::Dimension::Charge> start_charges;
+		QVector<SireUnits::Dimension::Charge> final_charges;
+		QVector<SireMM::LJParameter> start_LJs;
+		QVector<SireMM::LJParameter> final_LJs;
+
+		try{
+			AtomCharges atomcharges_start = molecule.property("initial_charge").asA<AtomCharges>();
+			AtomCharges atomcharges_final = molecule.property("final_charge").asA<AtomCharges>();
+			start_charges = atomcharges_start.toVector();
+			final_charges = atomcharges_final.toVector();
+			
+			AtomLJs atomvdws_start = molecule.property("initial_LJ").asA<AtomLJs>();
+			AtomLJs atomvdws_final = molecule.property("final_LJ").asA<AtomLJs>();
+			start_LJs = atomvdws_start.toVector();
+			final_LJs = atomvdws_final.toVector();
+		}catch(int e){cout << "default exception";}
 
 		for(int j=0; j< ljparameters.size();j++){
 
@@ -882,23 +903,116 @@ qDebug() << "****************************************************ANCORA*********
 		
 			Atom atom = molecule.molecule().atoms()[j];
 
-			std::vector<double> params(4);
-			
-			params[0]=charge;
-			params[1]=sigma * OpenMM::NmPerAngstrom;
-			params[2]=epsilon * OpenMM::KJPerKcal;
-			
-			if(solute_group.contains(atom.molecule())){//solute atom
-				params[3]=1.0;
-			}
-			else
-				params[3]=0.0;
+			solute_solute_solvent_solvent_params[0]=charge;
+			solute_solute_solvent_solvent_params[1]=sigma * OpenMM::NmPerAngstrom;
+			solute_solute_solvent_solvent_params[2]=epsilon * OpenMM::KJPerKcal;
 
-			//custom_softcore_solute_solvent->addParticle(params);
-			custom_solute_solute_solvent_solvent->addParticle(params);
+			if(solutehard.moleculeAt(0).atoms().contains(atom)){//hard solute atom
+
+				solute_solute_solvent_solvent_params[3]=1.0;
+
+				double charge_start = start_charges[j].value();
+				double charge_final = final_charges[j].value();
+				
+				double epsilon_start = start_LJs[j].epsilon();
+				double epsilon_final = final_LJs[j].epsilon();
+				double sigma_start = start_LJs[j].sigma();
+				double sigma_final = final_LJs[j].sigma();
+
+				perturbation_params[0]=1.0;
+				perturbation_params[1]=0.0;
+				perturbation_params[2]=0.0;
+				perturbation_params[3]=charge_start;
+				perturbation_params[4]=charge_final;
+				perturbation_params[5]=epsilon_start * OpenMM::KJPerKcal;
+				perturbation_params[6]=epsilon_final * OpenMM::KJPerKcal;
+				perturbation_params[7]=sigma_start * OpenMM::NmPerAngstrom;
+				perturbation_params[8]=sigma_final * OpenMM::NmPerAngstrom;
+				perturbation_params[9]=1.0;
+			
+				qDebug() << "hard solute = " << atom.index() << "\n";
+				
+			}
+			else if(solutetodummy.moleculeAt(0).atoms().contains(atom)){//to dummy solute atom
+
+				solute_solute_solvent_solvent_params[3]=1.0;
+
+				double charge_start = start_charges[j].value();
+				double charge_final = final_charges[j].value();
+				
+				double epsilon_start = start_LJs[j].epsilon();
+				double epsilon_final = final_LJs[j].epsilon();
+				double sigma_start = start_LJs[j].sigma();
+				double sigma_final = final_LJs[j].sigma();
+
+				perturbation_params[0]=0.0;
+				perturbation_params[1]=1.0;
+				perturbation_params[2]=0.0;
+				perturbation_params[3]=charge_start;
+				perturbation_params[4]=charge_final;
+				perturbation_params[5]=epsilon_start * OpenMM::KJPerKcal;
+				perturbation_params[6]=epsilon_final * OpenMM::KJPerKcal;
+				perturbation_params[7]=sigma_start * OpenMM::NmPerAngstrom;
+				perturbation_params[8]=sigma_final * OpenMM::NmPerAngstrom;
+				perturbation_params[9]=1.0;
+				
+				qDebug() << "to dummy solute = " << atom.index() << "\n";
+
+			}
+
+			else if(solutefromdummy.moleculeAt(0).atoms().contains(atom)){//from dummy solute atom 
+
+				solute_solute_solvent_solvent_params[3]=1.0;
+
+				double charge_start = start_charges[j].value();
+				double charge_final = final_charges[j].value();
+				
+				double epsilon_start = start_LJs[j].epsilon();
+				double epsilon_final = final_LJs[j].epsilon();
+				double sigma_start = start_LJs[j].sigma();
+				double sigma_final = final_LJs[j].sigma();
+
+				perturbation_params[0]=0.0;
+				perturbation_params[1]=0.0;
+				perturbation_params[2]=1.0;
+				perturbation_params[3]=charge_start;
+				perturbation_params[4]=charge_final;
+				perturbation_params[5]=epsilon_start * OpenMM::KJPerKcal;
+				perturbation_params[6]=epsilon_final * OpenMM::KJPerKcal;
+				perturbation_params[7]=sigma_start * OpenMM::NmPerAngstrom;
+				perturbation_params[8]=sigma_final * OpenMM::NmPerAngstrom;
+				perturbation_params[9]=1.0;
+
+				qDebug() << "from dummy solute = " << atom.index() << "\n";
+
+			}
+
+			else{//solvent atom
+
+				solute_solute_solvent_solvent_params[3]=0.0;
+
+				perturbation_params[0]=0.0;
+				perturbation_params[1]=0.0;
+				perturbation_params[2]=0.0;
+				perturbation_params[3]=charge;
+				perturbation_params[4]=charge;
+				perturbation_params[5]=epsilon * OpenMM::KJPerKcal;
+				perturbation_params[6]=epsilon * OpenMM::KJPerKcal;
+				perturbation_params[7]=sigma * OpenMM::NmPerAngstrom;
+				perturbation_params[8]=sigma * OpenMM::NmPerAngstrom;
+				perturbation_params[9]=0.0;
+				
+				qDebug() << "Solvent = " << atom.index() << "\n";
+
+			}
+
+			custom_solute_solute_solvent_solvent->addParticle(solute_solute_solvent_solvent_params);
+
+			custom_hard_solute_solvent->addParticle(perturbation_params);
+			custom_todummy_solute_solvent->addParticle(perturbation_params);
+			custom_fromdummy_solute_solvent->addParticle(perturbation_params);
 
 		}
-
 
 		if(Restraint_flag == true){
 
@@ -958,10 +1072,48 @@ qDebug() << "****************************************************ANCORA*********
 		}
 
 
+
+
+
+
+
+
+
+
+
+		//BONDED TERMS
+
 		// The bonded parameters are stored in "amberparameters"
 		AmberParameters amber_params = molecule.property("amberparameters").asA<AmberParameters>();
 
-		//Bonds
+
+
+		Perturbations pert_params = molecule.property("perturbations").asA<Perturbations>();
+
+		QList< PropPtr<Perturbation> > perturbation_list = pert_params.perturbations();
+
+		TwoAtomPerturbation * perturbation = (TwoAtomPerturbation * ) perturbation_list[2].data();
+
+		perturbation->initialForms()[Symbol("r0")].toString();
+
+
+
+
+		qDebug() << " >>>>>>>>>>>>>>>>>>>>>>>>>>>> " << perturbation->initialForms()[Symbol("r0")].toString();
+
+
+
+
+
+
+		qDebug() << "****************************************************GAC HERE************************************************************"; 
+
+		return;
+
+
+		
+		
+		
 
 		QList<BondID> bonds_ff = amber_params.getAllBonds();
 
@@ -970,6 +1122,13 @@ qDebug() << "****************************************************ANCORA*********
 		for (int j=0; j < bonds_ff.length() ; j++){
 
 			BondID bond_ff = bonds_ff[j];
+
+
+
+
+
+
+
 
 			QList<double> bond_params = amber_params.getParams(bond_ff);
 
