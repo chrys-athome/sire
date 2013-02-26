@@ -239,6 +239,105 @@ void register_ConnectivityBase_class(){
                 , ( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2") ) );
         
         }
+        { //::SireMol::ConnectivityBase::inRing
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*inRing_function_type )( ::SireMol::AtomIdx,::SireMol::AtomIdx ) const;
+            inRing_function_type inRing_function_value( &::SireMol::ConnectivityBase::inRing );
+            
+            ConnectivityBase_exposer.def( 
+                "inRing"
+                , inRing_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::inRing
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*inRing_function_type )( ::SireMol::AtomIdx,::SireMol::AtomIdx,::SireMol::AtomIdx ) const;
+            inRing_function_type inRing_function_value( &::SireMol::ConnectivityBase::inRing );
+            
+            ConnectivityBase_exposer.def( 
+                "inRing"
+                , inRing_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::inRing
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*inRing_function_type )( ::SireMol::AtomIdx,::SireMol::AtomIdx,::SireMol::AtomIdx,::SireMol::AtomIdx ) const;
+            inRing_function_type inRing_function_value( &::SireMol::ConnectivityBase::inRing );
+            
+            ConnectivityBase_exposer.def( 
+                "inRing"
+                , inRing_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::inRing
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*inRing_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            inRing_function_type inRing_function_value( &::SireMol::ConnectivityBase::inRing );
+            
+            ConnectivityBase_exposer.def( 
+                "inRing"
+                , inRing_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::inRing
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*inRing_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            inRing_function_type inRing_function_value( &::SireMol::ConnectivityBase::inRing );
+            
+            ConnectivityBase_exposer.def( 
+                "inRing"
+                , inRing_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::inRing
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*inRing_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const &,::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            inRing_function_type inRing_function_value( &::SireMol::ConnectivityBase::inRing );
+            
+            ConnectivityBase_exposer.def( 
+                "inRing"
+                , inRing_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::inRing
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*inRing_function_type )( ::SireMol::BondID const & ) const;
+            inRing_function_type inRing_function_value( &::SireMol::ConnectivityBase::inRing );
+            
+            ConnectivityBase_exposer.def( 
+                "inRing"
+                , inRing_function_value
+                , ( bp::arg("bond") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::inRing
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*inRing_function_type )( ::SireMol::AngleID const & ) const;
+            inRing_function_type inRing_function_value( &::SireMol::ConnectivityBase::inRing );
+            
+            ConnectivityBase_exposer.def( 
+                "inRing"
+                , inRing_function_value
+                , ( bp::arg("angle") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::inRing
+        
+            typedef bool ( ::SireMol::ConnectivityBase::*inRing_function_type )( ::SireMol::DihedralID const & ) const;
+            inRing_function_type inRing_function_value( &::SireMol::ConnectivityBase::inRing );
+            
+            ConnectivityBase_exposer.def( 
+                "inRing"
+                , inRing_function_value
+                , ( bp::arg("dihedral") ) );
+        
+        }
         { //::SireMol::ConnectivityBase::isCompatibleWith
         
             typedef bool ( ::SireMol::ConnectivityBase::*isCompatibleWith_function_type )( ::SireMol::MoleculeInfoData const & ) const;
