@@ -110,6 +110,19 @@ public:
     bool areConnected(ResIdx res0, ResIdx res1) const;
     bool areConnected(const ResID &res0, const ResID &res1) const;
 
+    bool inRing(AtomIdx atom0, AtomIdx atom1) const;
+    bool inRing(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2) const;
+    bool inRing(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2, AtomIdx atom3) const;
+    
+    bool inRing(const AtomID &atom0, const AtomID &atom1) const;
+    bool inRing(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2) const;
+    bool inRing(const AtomID &atom0, const AtomID &atom1,
+                const AtomID &atom2, const AtomID &atom3) const;
+
+    bool inRing(const BondID &bond) const;
+    bool inRing(const AngleID &angle) const;
+    bool inRing(const DihedralID &dihedral) const;
+
     int nConnections() const;
     int nConnections(AtomIdx atomidx) const;
     int nConnections(const AtomID &atomid) const;
@@ -231,15 +244,13 @@ protected:
 private:
     const QSet<AtomIdx>& _pvt_connectedTo(AtomIdx atomidx) const;
     
-    void traceRoute(AtomIdx start, AtomIdx root,
-                    const QSet<AtomIdx> &exclude,
+    void traceRoute(AtomIdx start, QSet<AtomIdx> &root,
                     QSet<AtomIdx> &group) const;
     
     void traceRoute(const AtomSelection &selected_atoms,
-                    AtomIdx start, AtomIdx root,
-                    const QSet<AtomIdx> &exclude,
+                    AtomIdx start, QSet<AtomIdx> &root,
                     QSet<AtomIdx> &group) const;
-                                                    
+    
     tuple<AtomSelection,AtomSelection> 
     selectGroups(const QSet<AtomIdx> &group0, 
                  const QSet<AtomIdx> &group1) const;
@@ -290,6 +301,10 @@ public:
     bool operator!=(const Connectivity &other) const;
 
     ConnectivityEditor edit() const;
+
+protected:
+    friend class ConnectivityBase;
+    Connectivity(const ConnectivityBase &other);
 
 private:
     void squeeze();

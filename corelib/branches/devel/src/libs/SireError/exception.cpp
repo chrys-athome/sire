@@ -233,7 +233,10 @@ QString exception::toString() const throw()
                        "Thrown from %4\n"
                        "__Backtrace__\n"
                        "%5\n"
-                       "__EndTrace__")
+                       "__EndTrace__\n"
+                       "Exception '%1' thrown by the thread '%2'.\n"
+                       "%3\n"
+                       "Thrown from %4")
              .arg(what()).arg(pid()).arg(why()).arg(where()).arg(bt.join("\n"));
 }
 

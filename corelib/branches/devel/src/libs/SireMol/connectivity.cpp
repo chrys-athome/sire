@@ -46,6 +46,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "tostring.h"
+
 #include <QDebug>
 
 using namespace SireStream;
@@ -506,21 +508,85 @@ const QSet<AtomIdx>& ConnectivityBase::_pvt_connectedTo(AtomIdx atom) const
     return connected_atoms.constData()[atom];
 }
 
+/** This function returns whether or not the two passed atoms are part of
+    the same ring */
+bool ConnectivityBase::inRing(AtomIdx atom0, AtomIdx atom1) const
+{
+    return false;
+}
+
+/** This function returns whether or not the three passed atoms are all part of
+    the same ring */
+bool ConnectivityBase::inRing(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2) const
+{
+    return false;
+}
+
+/** This function returns whether or not the four passed atoms are part of
+    the same ring */
+bool ConnectivityBase::inRing(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2, AtomIdx atom3) const
+{
+    return false;
+}
+
+/** This function returns whether or not the two passed atoms are part of
+    the same ring */
+bool ConnectivityBase::inRing(const AtomID &atom0, const AtomID &atom1) const
+{
+    return this->inRing( info().atomIdx(atom0), info().atomIdx(atom1) );
+}
+
+/** This function returns whether or not the three passed atoms are all part of
+    the same ring */
+bool ConnectivityBase::inRing(const AtomID &atom0, const AtomID &atom1, const AtomID &atom2) const
+{
+    return this->inRing( info().atomIdx(atom0), info().atomIdx(atom1),
+                         info().atomIdx(atom2) );
+}
+
+/** This function returns whether or not the two passed atoms are part of
+    the same ring */
+bool ConnectivityBase::inRing(const AtomID &atom0, const AtomID &atom1,
+                              const AtomID &atom2, const AtomID &atom3) const
+{
+    return this->inRing( info().atomIdx(atom0), info().atomIdx(atom1),
+                         info().atomIdx(atom2), info().atomIdx(atom3) );
+}
+
+/** This function returns whether or not the two atoms in the passed bond
+    are both part of the same ring */
+bool ConnectivityBase::inRing(const BondID &bond) const
+{
+    return this->inRing(bond.atom0(), bond.atom1());
+}
+
+/** This function returns whether or not the three atoms in the passed angle
+    are all part of the same ring */
+bool ConnectivityBase::inRing(const AngleID &angle) const
+{
+    return this->inRing(angle.atom0(), angle.atom1(), angle.atom2());
+}
+
+/** This function returns whether or not the four atoms in the passed dihedral
+    are all part of the same ring */
+bool ConnectivityBase::inRing(const DihedralID &dihedral) const
+{
+    return this->inRing(dihedral.atom0(), dihedral.atom1(),
+                        dihedral.atom2(), dihedral.atom3());
+}
+
 /** This is a recursive function that traces all atoms that can trace their bonding
-    to 'strt', and are in the same residue as 'strt', but that don't go through 'root',
-    and to add those atoms to 'group'. If any atoms are found that are in 'exclude' then
-    an exception is thrown, as this indicates that the atoms found form part
-    of a ring. This is an internal function that is only intended to be used
-    by the splitMolecule and splitResidue functions.
+    to 'strt' but that don't go through any of the atoms in 'root',
+    and to add those atoms to 'group'.
 
     \throw SireMol::ring_error
 */
-void ConnectivityBase::traceRoute(AtomIdx start, AtomIdx root,
-                                  const QSet<AtomIdx> &exclude,
+void ConnectivityBase::traceRoute(AtomIdx start, QSet<AtomIdx> &root,
                                   QSet<AtomIdx> &group) const
 {
     //add this atom to the group
     group.insert(start);
+    root.insert(start);
 
     //now see if any of its bonded atoms need to be added
     const QSet<AtomIdx> &bonded_atoms = this->_pvt_connectedTo(start);
@@ -530,35 +596,22 @@ void ConnectivityBase::traceRoute(AtomIdx start, AtomIdx root,
          it != bonded_atoms.constEnd();
          ++it)
     {
-        //if this is the root atom then ignore it, as we don't
-        //want to move backwards!
-        if (*it == root)
+        //if this is a root atom then ignore it, as we don't
+        //want to build a path through this atom
+        if (root.contains(*it))
         {
             continue;
         }
-        //has this atom or residue already been selected?
+        //has this atom already been selected?
         else if (group.contains(*it))
         {
-            //yes, this atom or residue is already included!
+            //yes, this atom is already included!
             continue;
-        }
-        //is this atom already excluded?
-        else if (exclude.contains(*it))
-        {
-            //ok, we've just found a ring!
-            throw SireMol::ring_error( QObject::tr(
-                "Atoms %1-%2-%3 "
-                " form part of ring and cannot be "
-                "unambiguously split.")
-                    .arg( ::atomString(info(),start), 
-                          ::atomString(info(), *it), 
-                          ::atomString(info(), root) ),
-                        CODELOC );
         }
         else
         {
             //now we can trace the atoms from the 'other' atom...
-            this->traceRoute(*it, start, exclude, group);
+            this->traceRoute(*it, root, group);
         }
     }
 
@@ -566,21 +619,16 @@ void ConnectivityBase::traceRoute(AtomIdx start, AtomIdx root,
     //have finished with this atom, so we can return.
     return;
 }
-
+    
 /** This is a recursive function that traces all atoms that can trace their bonding
-    to 'strt', and are in the same residue as 'strt', but that don't go through 'root',
-    and to add those atoms to 'group'. If any atoms are found that are in 'exclude' then
-    an exception is thrown, as this indicates that the atoms found form part
-    of a ring. This is an internal function that is only intended to be used
-    by the splitMolecule and splitResidue functions.
-
-    This only searches atoms that are selected in 'selected_atoms'
+    to 'strt' but that don't go through any of the atoms in 'root',
+    and to add those atoms to 'group'. This traces only atoms that are contained
+    in 'selected_atoms'
 
     \throw SireMol::ring_error
 */
 void ConnectivityBase::traceRoute(const AtomSelection &selected_atoms,
-                                  AtomIdx start, AtomIdx root,
-                                  const QSet<AtomIdx> &exclude,
+                                  AtomIdx start, QSet<AtomIdx> &root,
                                   QSet<AtomIdx> &group) const
 {
     if (not selected_atoms.selected(start))
@@ -589,6 +637,7 @@ void ConnectivityBase::traceRoute(const AtomSelection &selected_atoms,
 
     //add this atom to the group
     group.insert(start);
+    root.insert(start);
 
     //now see if any of its bonded atoms need to be added
     const QSet<AtomIdx> &bonded_atoms = this->_pvt_connectedTo(start);
@@ -598,9 +647,9 @@ void ConnectivityBase::traceRoute(const AtomSelection &selected_atoms,
          it != bonded_atoms.constEnd();
          ++it)
     {
-        //if this is the root atom then ignore it, as we don't
+        //if this is a root atom then ignore it, as we don't
         //want to move backwards!
-        if (*it == root)
+        if (root.contains(*it))
             continue;
     
         //has this atom or residue already been selected?
@@ -608,24 +657,9 @@ void ConnectivityBase::traceRoute(const AtomSelection &selected_atoms,
             //yes, this atom or residue is already included!
             continue;
 
-        //is this atom already excluded?
-        else if (exclude.contains(*it))
-        {
-            //ok, we've just found a ring!
-            throw SireMol::ring_error( QObject::tr(
-                "Atoms %1-%2-%3 "
-                " form part of ring and cannot be "
-                "unambiguously split.")
-                    .arg( ::atomString(info(),start), 
-                          ::atomString(info(), *it), 
-                          ::atomString(info(), root) ),
-                        CODELOC );
-        }
         else
-        {
             //now we can trace the atoms from the 'other' atom...
-            this->traceRoute(selected_atoms, *it, start, exclude, group);
-        }
+            this->traceRoute(selected_atoms, *it, root, group);
     }
 
     //ok - we have added all of the atoms that are connected to this atom. We
@@ -663,18 +697,15 @@ ConnectivityBase::selectGroups(const QSet<AtomIdx> &group0,
 
     Splitting C4 and C5 would result in two groups, {C1,C2,C3,C4} and {C5}
 
-    However splitting C1 and C5 would add a bond between C1 and C5. This would mean
-    than C1-C4-C5 would form a ring, so an exception would be thrown.
-
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
-    \throw SireMol::ring_error
 */   
 tuple<AtomSelection,AtomSelection> 
 ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1) const
 {
     QSet<AtomIdx> group0, group1;
+    QSet<AtomIdx> root0, root1;
 
     //map the atoms
     int nats = d->nAtoms();
@@ -691,38 +722,97 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1) const
     //the bonds
     group0.reserve(nats);
     group1.reserve(nats);
+    root0.reserve(nats);
+    root1.reserve(nats);
     
     //add the two atoms to their respective groups
     group0.insert(atom0);
     group1.insert(atom1);
+    root0.insert(atom0);
+    root0.insert(atom1);
+    root1.insert(atom1);
+    root1.insert(atom0);
     
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
     {
         if (bonded_atom != atom1)
         {
-            this->traceRoute(bonded_atom, atom0, group1, group0);
+            this->traceRoute(bonded_atom, root0, group0);
         }
     }
     
+    //remove atom1 from group0, in case it was found as part of a ring
+    group0.remove(atom1);
+    
     //now add the atoms bonded to atom1 to group1
+    bool has_rings = false;
+    
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom1))
     {
         if (bonded_atom != atom0)
         {
             if (group0.contains(bonded_atom))
-                throw SireMol::ring_error( QObject::tr(
-                    "Atoms %1-%2-%3 form part of ring and cannot be "
-                    "unambiguously split.")
-                        .arg( ::atomString(info(),atom0), 
-                              ::atomString(info(),bonded_atom), 
-                              ::atomString(info(),atom1) ), CODELOC );
+            {
+                has_rings = true;
+            }
 
-            this->traceRoute(bonded_atom, atom1, group0, group1);
+            this->traceRoute(bonded_atom, root1, group1);
         }
     }
     
-    return this->selectGroups(group0, group1);
+    group1.remove(atom0);
+    
+    //if there is any overlap in the two sets then that means that
+    //the two atoms are part of a ring
+    if (has_rings)
+    {
+        ConnectivityEditor editor = Connectivity(*this).edit();
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+        {
+            if (bonded_atom != atom1 and group1.contains(bonded_atom))
+            {
+                editor.disconnect(atom0, bonded_atom);
+                //qDebug() << "DISCONNECTING(0)" << d->name(bonded_atom) << d->name(atom0);
+            }
+        }
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom1))
+        {
+            if (bonded_atom != atom0 and group0.contains(bonded_atom))
+            {
+                editor.disconnect(atom1, bonded_atom);
+                //qDebug() << "DISCONNECTING(1)" << d->name(bonded_atom) << d->name(atom1);
+            }
+        }
+        
+        //release memory to make sure that we don't recursively fill up the stack
+        group0 = group1 = root0 = root1 = QSet<AtomIdx>();
+        
+        //split the molecule again, with the ring bonds now broken
+        return editor.commit().split(atom0, atom1);
+    }
+    else
+    {
+        /*QSet<AtomName> names0;
+        QSet<AtomName> names1;
+        
+        foreach (const AtomIdx &atom, group0)
+        {
+            names0.insert( d->name(atom) );
+        }
+        
+        foreach (const AtomIdx &atom, group1)
+        {
+            names1.insert( d->name(atom) );
+        }
+    
+        qDebug() << "group0" << Sire::toString(names0);
+        qDebug() << "group1" << Sire::toString(names1);*/
+        
+        return this->selectGroups(group0, group1);
+    }
 }
 
 /** Split the molecule into two parts about the bond between atom0 and atom1.
@@ -791,12 +881,15 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     selected_atoms.assertSelected(atom1);
 
     QSet<AtomIdx> group0, group1;
+    QSet<AtomIdx> root0, root1;
 
     //make sure that there is sufficient space for the
     //selections - this prevents mallocs while tracing
     //the bonds
     group0.reserve(selected_atoms.nSelected());
     group1.reserve(selected_atoms.nSelected());
+    root0.reserve(selected_atoms.nSelected());
+    root1.reserve(selected_atoms.nSelected());
     
     //map the atoms
     atom0 = atom0.map(d->nAtoms());
@@ -810,6 +903,10 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     //add the two atoms to their respective groups
     group0.insert(atom0);
     group1.insert(atom1);
+    root0.insert(atom0);
+    root0.insert(atom1);
+    root1.insert(atom1);
+    root1.insert(atom0);
     
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
@@ -817,31 +914,51 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
         if ( (bonded_atom != atom1) and 
              selected_atoms.selected(bonded_atom) )
         {
-            this->traceRoute(selected_atoms, bonded_atom, 
-                             atom0, group1, group0);
+            this->traceRoute(selected_atoms, bonded_atom, root0, group0);
         }
     }
     
     //now add the atoms bonded to atom1 to group1
+    bool has_rings = false;
+    
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom1))
     {
         if ( (bonded_atom != atom0) and
              selected_atoms.selected(bonded_atom) )
         {
             if (group0.contains(bonded_atom))
-                throw SireMol::ring_error( QObject::tr(
-                    "Atoms %1-%2-%3 form part of ring and cannot be "
-                    "unambiguously split.")
-                        .arg( ::atomString(info(),atom0), 
-                              ::atomString(info(),bonded_atom), 
-                              ::atomString(info(),atom1) ), CODELOC );
+                has_rings = true;
                     
-            this->traceRoute(selected_atoms, bonded_atom,
-                             atom1, group0, group1);
+            this->traceRoute(selected_atoms, bonded_atom, root1, group1);
         }
     }
     
-    return this->selectGroups(group0, group1);    
+    //if there is any overlap in the two sets then that means that
+    //the two atoms are part of a ring
+    if (has_rings)
+    {
+        ConnectivityEditor editor = Connectivity(*this).edit();
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+        {
+            if (bonded_atom != atom1 and group1.contains(bonded_atom))
+                editor.disconnect(atom0, bonded_atom);
+        }
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom1))
+        {
+            if (bonded_atom != atom0 and group0.contains(bonded_atom))
+                editor.disconnect(atom1, bonded_atom);
+        }
+        
+        //release memory to make sure that we don't recursively fill up the stack
+        group0 = group1 = root0 = root1 = QSet<AtomIdx>();
+        
+        //split the molecule again, with the ring bonds now broken
+        return editor.commit().split(atom0, atom1);
+    }
+    else
+        return this->selectGroups(group0, group1);
 }
 
 /** Split the selected atoms of this molecule about the atoms 
@@ -879,9 +996,6 @@ ConnectivityBase::split(const BondID &bond, const AtomSelection &selected_atoms)
 
 /** Split this molecule into three parts about the atoms
     'atom0', 'atom1' and 'atom2'.
-    
-    An exception will be thrown if it is not possible to split the molecule
-    unambiguously in two, as the angle is part of a ring.
 
     For example;
 
@@ -897,12 +1011,12 @@ ConnectivityBase::split(const BondID &bond, const AtomSelection &selected_atoms)
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
-    \throw SireMol::ring_error
 */   
 tuple<AtomSelection,AtomSelection> 
 ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2) const
 {
     QSet<AtomIdx> group0, group1;
+    QSet<AtomIdx> root0, root1;
 
     //map the atoms
     int nats = d->nAtoms();
@@ -923,39 +1037,92 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2) const
     //the bonds
     group0.reserve(nats);
     group1.reserve(nats);
+    root0.reserve(nats);
+    root1.reserve(nats);
     
     //add the end atoms to their respective groups
     group0.insert(atom0);
     group1.insert(atom2);
+    root0.insert(atom0);
+    root0.insert(atom1);
+    root0.insert(atom2);
+    root1.insert(atom2);
+    root1.insert(atom1);
+    root1.insert(atom0);
     
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
     {
         if (bonded_atom != atom1)
         {
-            this->traceRoute(bonded_atom, atom0, group1, group0);
+            this->traceRoute(bonded_atom, root0, group0);
         }
     }
     
     //now add the atoms bonded to atom1 to group1
+    bool has_rings = false;
+    
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom2))
     {
         if (bonded_atom != atom1)
         {
             if (group0.contains(bonded_atom))
-                throw SireMol::ring_error( QObject::tr(
-                    "Atoms %1-%2-%3-%4 form part of ring and cannot be "
-                    "unambiguously split.")
-                        .arg(::atomString(info(),atom0), 
-                             ::atomString(info(),bonded_atom), 
-                             ::atomString(info(),atom1), 
-                             ::atomString(info(),atom2)), CODELOC );
+                has_rings = true;
 
-            this->traceRoute(bonded_atom, atom2, group0, group1);
+            this->traceRoute(bonded_atom, root1, group1);
         }
     }
     
-    return this->selectGroups(group0, group1);
+    //if there is any overlap in the two sets then that means that
+    //the two atoms are part of a ring
+    if (has_rings)
+    {
+        ConnectivityEditor editor = Connectivity(*this).edit();
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+        {
+            if (group1.contains(bonded_atom))
+            {
+                editor.disconnect(atom0, bonded_atom);
+                //qDebug() << "DISCONNECTING(0)" << d->name(bonded_atom) << d->name(atom0);
+            }
+        }
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom2))
+        {
+            if (group0.contains(bonded_atom))
+            {
+                editor.disconnect(atom2, bonded_atom);
+                //qDebug() << "DISCONNECTING(1)" << d->name(bonded_atom) << d->name(atom2);
+            }
+        }
+        
+        //release memory to make sure that we don't recursively fill up the stack
+        group0 = group1 = root0 = root1 = QSet<AtomIdx>();
+        
+        //split the molecule again, with the ring bonds now broken
+        return editor.commit().split(atom0, atom1, atom2);
+    }
+    else
+    {
+        /*QSet<AtomName> names0;
+        QSet<AtomName> names1;
+        
+        foreach (const AtomIdx &atom, group0)
+        {
+            names0.insert( d->name(atom) );
+        }
+        
+        foreach (const AtomIdx &atom, group1)
+        {
+            names1.insert( d->name(atom) );
+        }
+    
+        qDebug() << "group0" << Sire::toString(names0);
+        qDebug() << "group1" << Sire::toString(names1);*/
+        
+        return this->selectGroups(group0, group1);
+    }
 }
 
 /** Split the molecule into two parts based on the three supplied atoms
@@ -1025,12 +1192,15 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2,
     selected_atoms.assertSelected(atom2);
 
     QSet<AtomIdx> group0, group1;
+    QSet<AtomIdx> root0, root1;
 
     //make sure that there is sufficient space for the
     //selections - this prevents mallocs while tracing
     //the bonds
     group0.reserve(selected_atoms.nSelected());
     group1.reserve(selected_atoms.nSelected());
+    root0.reserve(selected_atoms.nSelected());
+    root1.reserve(selected_atoms.nSelected());
     
     //map the atoms
     atom0 = atom0.map(d->nAtoms());
@@ -1049,38 +1219,87 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2,
     group0.insert(atom0);
     group1.insert(atom2);
     
+    root0.insert(atom0);
+    root0.insert(atom1);
+    root0.insert(atom2);
+    root1.insert(atom2);
+    root1.insert(atom1);
+    root1.insert(atom0);
+    
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
     {
         if ( (bonded_atom != atom1) and 
              selected_atoms.selected(bonded_atom) )
         {
-            this->traceRoute(selected_atoms, bonded_atom, 
-                             atom0, group1, group0);
+            this->traceRoute(selected_atoms, bonded_atom, root0, group0);
         }
     }
     
     //now add the atoms bonded to atom1 to group1
+    bool has_rings = false;
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom2))
     {
         if ( (bonded_atom != atom1) and
              selected_atoms.selected(bonded_atom) )
         {
             if (group0.contains(bonded_atom))
-                throw SireMol::ring_error( QObject::tr(
-                    "Atoms %1-%2-%3-%4 form part of ring and cannot be "
-                    "unambiguously split.")
-                        .arg(::atomString(info(),atom0), 
-                             ::atomString(info(),bonded_atom), 
-                             ::atomString(info(),atom1), 
-                             ::atomString(info(),atom2)), CODELOC );
-                    
-            this->traceRoute(selected_atoms, bonded_atom,
-                             atom2, group0, group1);
+                has_rings = true;
+                
+            this->traceRoute(selected_atoms, bonded_atom, root1, group1);
         }
     }
     
-    return this->selectGroups(group0, group1);
+    //if there is any overlap in the two sets then that means that
+    //the two atoms are part of a ring
+    if (has_rings)
+    {
+        ConnectivityEditor editor = Connectivity(*this).edit();
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+        {
+            if (group1.contains(bonded_atom))
+            {
+                editor.disconnect(atom0, bonded_atom);
+                //qDebug() << "DISCONNECTING(0)" << d->name(bonded_atom) << d->name(atom0);
+            }
+        }
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom2))
+        {
+            if (group0.contains(bonded_atom))
+            {
+                editor.disconnect(atom2, bonded_atom);
+                //qDebug() << "DISCONNECTING(1)" << d->name(bonded_atom) << d->name(atom2);
+            }
+        }
+        
+        //release memory to make sure that we don't recursively fill up the stack
+        group0 = group1 = root0 = root1 = QSet<AtomIdx>();
+        
+        //split the molecule again, with the ring bonds now broken
+        return editor.commit().split(atom0, atom1, atom2);
+    }
+    else
+    {
+        /*QSet<AtomName> names0;
+        QSet<AtomName> names1;
+        
+        foreach (const AtomIdx &atom, group0)
+        {
+            names0.insert( d->name(atom) );
+        }
+        
+        foreach (const AtomIdx &atom, group1)
+        {
+            names1.insert( d->name(atom) );
+        }
+    
+        qDebug() << "group0" << Sire::toString(names0);
+        qDebug() << "group1" << Sire::toString(names1);*/
+        
+        return this->selectGroups(group0, group1);
+    }
 }
 
 /** Split the selected atoms of the molecule into two groups around the 
@@ -1123,9 +1342,6 @@ ConnectivityBase::split(const AngleID &angle,
     This splits the molecule between atom0 and atom3, ignoring 
     atom1 and atom2.
 
-    An exception will be thrown if it is not possible to split the molecule
-    unambiguously in two, as the dihedral is part of a ring.
-
     C1   C4--C5--C6
       \ /
       C2    C8--C9
@@ -1142,13 +1358,13 @@ ConnectivityBase::split(const AngleID &angle,
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
-    \throw SireMol::ring_error
 */      
 tuple<AtomSelection,AtomSelection>
 ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, 
                         AtomIdx atom2, AtomIdx atom3) const
 {
     QSet<AtomIdx> group0, group1;
+    QSet<AtomIdx> root0, root1;
 
     //map the atoms
     int nats = d->nAtoms();
@@ -1173,40 +1389,95 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     //the bonds
     group0.reserve(nats);
     group1.reserve(nats);
+    root0.reserve(nats);
+    root1.reserve(nats);
     
     //add the end atoms to their respective groups
     group0.insert(atom0);
     group1.insert(atom3);
+    
+    root0.insert(atom0);
+    root0.insert(atom1);
+    root0.insert(atom2);
+    root0.insert(atom3);
+    
+    root1.insert(atom3);
+    root1.insert(atom2);
+    root1.insert(atom1);
+    root1.insert(atom0);
     
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
     {
         if (bonded_atom != atom1)
         {
-            this->traceRoute(bonded_atom, atom0, group1, group0);
+            this->traceRoute(bonded_atom, root0, group0);
         }
     }
     
     //now add the atoms bonded to atom1 to group1
+    bool has_rings = false;
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom3))
     {
         if (bonded_atom != atom2)
         {
             if (group0.contains(bonded_atom))
-                throw SireMol::ring_error( QObject::tr(
-                    "Atoms %1-%2-%3-%4-%5 form part of ring and cannot be "
-                    "unambiguously split.")
-                        .arg(::atomString(info(),atom0), 
-                             ::atomString(info(),bonded_atom), 
-                             ::atomString(info(),atom1), 
-                             ::atomString(info(),atom2))
-                        .arg(::atomString(info(),atom3)), CODELOC );
+                has_rings = true;
 
-            this->traceRoute(bonded_atom, atom3, group0, group1);
+            this->traceRoute(bonded_atom, root1, group1);
         }
     }
+
+    //if there is any overlap in the two sets then that means that
+    //the two atoms are part of a ring
+    if (has_rings)
+    {
+        ConnectivityEditor editor = Connectivity(*this).edit();
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+        {
+            if (group1.contains(bonded_atom))
+            {
+                editor.disconnect(atom0, bonded_atom);
+                //qDebug() << "DISCONNECTING(0)" << d->name(bonded_atom) << d->name(atom0);
+            }
+        }
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom3))
+        {
+            if (group0.contains(bonded_atom))
+            {
+                editor.disconnect(atom3, bonded_atom);
+                //qDebug() << "DISCONNECTING(1)" << d->name(bonded_atom) << d->name(atom3);
+            }
+        }
+        
+        //release memory to make sure that we don't recursively fill up the stack
+        group0 = group1 = root0 = root1 = QSet<AtomIdx>();
+        
+        //split the molecule again, with the ring bonds now broken
+        return editor.commit().split(atom0, atom1, atom2, atom3);
+    }
+    else
+    {
+        /*QSet<AtomName> names0;
+        QSet<AtomName> names1;
+        
+        foreach (const AtomIdx &atom, group0)
+        {
+            names0.insert( d->name(atom) );
+        }
+        
+        foreach (const AtomIdx &atom, group1)
+        {
+            names1.insert( d->name(atom) );
+        }
     
-    return this->selectGroups(group0, group1);
+        qDebug() << "group0" << Sire::toString(names0);
+        qDebug() << "group1" << Sire::toString(names1);*/
+        
+        return this->selectGroups(group0, group1);
+    }
 }
 
 /** Split this molecule into two parts based on the passed atoms. 
@@ -1252,9 +1523,6 @@ ConnectivityBase::split(const DihedralID &dihedral) const
     All four atoms must be selected in 'selected_atoms' or else
     a missing_atom exception will be thrown
 
-    An exception will be thrown if it is not possible to split the molecule
-    unambiguously in two, as the dihedral is part of a ring.
-
     C1   C4--C5--C6
       \ /
       C2    C8--C9
@@ -1272,7 +1540,6 @@ ConnectivityBase::split(const DihedralID &dihedral) const
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
-    \throw SireMol::ring_error
 */      
 tuple<AtomSelection,AtomSelection>
 ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, 
@@ -1290,12 +1557,15 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     selected_atoms.assertSelected(atom3);
 
     QSet<AtomIdx> group0, group1;
+    QSet<AtomIdx> root0, root1;
 
     //make sure that there is sufficient space for the
     //selections - this prevents mallocs while tracing
     //the bonds
     group0.reserve(selected_atoms.nSelected());
     group1.reserve(selected_atoms.nSelected());
+    root0.reserve(selected_atoms.nSelected());
+    root1.reserve(selected_atoms.nSelected());
     
     //map the atoms
     atom0 = atom0.map(d->nAtoms());
@@ -1318,39 +1588,90 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     group0.insert(atom0);
     group1.insert(atom3);
     
+    root0.insert(atom0);
+    root0.insert(atom1);
+    root0.insert(atom2);
+    root0.insert(atom3);
+    
+    root1.insert(atom3);
+    root1.insert(atom2);
+    root1.insert(atom1);
+    root1.insert(atom0);
+    
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
     {
         if ( (bonded_atom != atom1) and 
              selected_atoms.selected(bonded_atom) )
         {
-            this->traceRoute(selected_atoms, bonded_atom, 
-                             atom0, group1, group0);
+            this->traceRoute(selected_atoms, bonded_atom, root0, group0);
         }
     }
     
     //now add the atoms bonded to atom1 to group1
+    bool has_rings = true;
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom3))
     {
         if ( (bonded_atom != atom2) and
              selected_atoms.selected(bonded_atom) )
         {
             if (group0.contains(bonded_atom))
-                throw SireMol::ring_error( QObject::tr(
-                    "Atoms %1-%2-%3-%4-%5 form part of ring and cannot be "
-                    "unambiguously split.")
-                        .arg(::atomString(info(),atom0), 
-                             ::atomString(info(),bonded_atom), 
-                             ::atomString(info(),atom1), 
-                             ::atomString(info(),atom2))
-                        .arg(::atomString(info(),atom3)), CODELOC );
-                    
-            this->traceRoute(selected_atoms, bonded_atom,
-                             atom3, group0, group1);
+                has_rings = true;
+                
+            this->traceRoute(selected_atoms, bonded_atom, root1, group1);
         }
     }
     
-    return this->selectGroups(group0, group1);
+    //if there is any overlap in the two sets then that means that
+    //the two atoms are part of a ring
+    if (has_rings)
+    {
+        ConnectivityEditor editor = Connectivity(*this).edit();
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
+        {
+            if (group1.contains(bonded_atom))
+            {
+                editor.disconnect(atom0, bonded_atom);
+                //qDebug() << "DISCONNECTING(0)" << d->name(bonded_atom) << d->name(atom0);
+            }
+        }
+        
+        foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom3))
+        {
+            if (group0.contains(bonded_atom))
+            {
+                editor.disconnect(atom3, bonded_atom);
+                //qDebug() << "DISCONNECTING(1)" << d->name(bonded_atom) << d->name(atom3);
+            }
+        }
+        
+        //release memory to make sure that we don't recursively fill up the stack
+        group0 = group1 = root0 = root1 = QSet<AtomIdx>();
+        
+        //split the molecule again, with the ring bonds now broken
+        return editor.commit().split(atom0, atom1, atom2, atom3);
+    }
+    else
+    {
+        /*QSet<AtomName> names0;
+        QSet<AtomName> names1;
+        
+        foreach (const AtomIdx &atom, group0)
+        {
+            names0.insert( d->name(atom) );
+        }
+        
+        foreach (const AtomIdx &atom, group1)
+        {
+            names1.insert( d->name(atom) );
+        }
+    
+        qDebug() << "group0" << Sire::toString(names0);
+        qDebug() << "group1" << Sire::toString(names1);*/
+        
+        return this->selectGroups(group0, group1);
+    }
 }
       
 /** Split the selected atoms 'selected_atoms' of this molecule
@@ -1760,6 +2081,11 @@ Connectivity::Connectivity(const ConnectivityEditor &editor)
 {
     this->squeeze();
 }
+
+/** Private constructor allowing a ConnectivityBase to become a Connectivity */
+Connectivity::Connectivity(const ConnectivityBase &base)
+             : ConcreteProperty<Connectivity,ConnectivityBase>(base)
+{}
 
 /** Copy constructor */
 Connectivity::Connectivity(const Connectivity &other)
