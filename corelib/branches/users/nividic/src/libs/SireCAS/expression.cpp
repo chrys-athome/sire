@@ -554,6 +554,34 @@ QString Expression::toString() const
     }
 }
 
+
+/*ADDED BY GAC*/
+QString Expression::toOpenMM() const
+{
+    if (isConstant())
+        return evaluate(ComplexValues()).toString();
+    else
+    {
+        QString basestr = exbase.toString();
+
+        if ( SireMaths::areEqual(fac,1.0) )
+            return basestr;
+        else if ( SireMaths::areEqual(fac,-1.0) )
+        {
+            if (this->isCompound())
+                return QString("-(%1)").arg(basestr);
+            else
+                return QString("-%1").arg(basestr);
+        }
+        else if (this->isCompound())
+            return QString("%1 (%2)").arg(fac).arg(basestr);
+        else
+            return QString("%1 %2").arg(fac).arg(basestr);
+    }
+}
+
+
+
 /** Return the ExpressionBase base-part of this expression */
 const ExpressionBase& Expression::base() const
 {

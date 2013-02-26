@@ -161,9 +161,9 @@ private:
 	bool frequent_save_velocities;
 	/** The Molecule Group on which the integrator operates */
 	MolGroupPtr molgroup;
-	/** The All solute group on which the integrator operates */
-	MolGroupPtr solutes;
-	/** The Solute Group on which the integrator operates */
+	/** The solute group on which the integrator operates */
+	MolGroupPtr solute;
+	/** The Solute hard Group on which the integrator operates */
 	MolGroupPtr solutehard;
 	/** The To Dummy Solute Group on which the integrator operates */
 	MolGroupPtr solutetodummy;
