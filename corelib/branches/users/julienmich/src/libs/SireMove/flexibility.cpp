@@ -216,7 +216,7 @@ static const RegisterMetaType<Flexibility> r_flex;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Flexibility &flex)
 {
-    writeHeader(ds, r_flex, 1);
+    writeHeader(ds, r_flex, 2);
     
     SharedDataStream sds(ds);
     
@@ -234,7 +234,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Flexibility &flex)
 {
     VersionID v = readHeader(ds, r_flex);
     
-    if (v == 1)
+    if (v == 2)
     {
         SharedDataStream sds(ds);
         
@@ -244,8 +244,23 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Flexibility &flex)
             >> flex.bond_deltas >> flex.angle_deltas
             >> static_cast<MoleculeProperty&>(flex);
     }
+    else if (v == 1)
+    {
+        SharedDataStream sds(ds);
+
+        qint32 maxvar;
+
+        sds >> flex.molinfo >> flex.maxtranslation
+            >> flex.maxrotation >> maxvar 
+            >> flex.bond_deltas >> flex.angle_deltas
+            >> static_cast<MoleculeProperty&>(flex);
+
+        flex.maxbondvar = maxvar;
+        flex.maxanglevar = maxvar;
+        flex.maxdihedralvar = maxvar;
+    }
     else
-        throw version_error(v, "1", r_flex, CODELOC);
+        throw version_error(v, "1,2", r_flex, CODELOC);
         
     return ds;
 }

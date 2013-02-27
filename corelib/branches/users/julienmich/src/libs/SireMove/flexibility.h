@@ -213,13 +213,13 @@ private:
     Angle maxrotation;
 
     /** The maximum number of bond dofs to sample in one move */
-    int maxbondvar;
+    qint32 maxbondvar;
 
     /** The maximum number of angle dofs to sample in one move */
-    int maxanglevar;
+    qint32 maxanglevar;
 
     /** The maximum number of dihedral dofs to sample in one move */
-    int maxdihedralvar;
+    qint32 maxdihedralvar;
     
     /** The list of delta values for bonds*/
     QHash<DofID,Length> bond_deltas;
