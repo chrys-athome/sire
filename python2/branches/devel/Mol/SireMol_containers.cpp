@@ -75,6 +75,7 @@ using boost::python::register_tuple;
 void register_SireMol_containers()
 {
     register_list< QList<AtomIdx> >();
+    register_list< QList< QList<AtomIdx> > >();
     register_list< QList<AtomNum> >();
     register_list< QVector<AtomIdx> >();
 

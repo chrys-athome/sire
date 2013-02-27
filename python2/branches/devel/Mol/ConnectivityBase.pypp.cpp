@@ -143,6 +143,50 @@ void register_ConnectivityBase_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::SireMol::ConnectivityBase::findPath
+        
+            typedef ::QList< SireMol::AtomIdx > ( ::SireMol::ConnectivityBase::*findPath_function_type )( ::SireMol::AtomIdx,::SireMol::AtomIdx ) const;
+            findPath_function_type findPath_function_value( &::SireMol::ConnectivityBase::findPath );
+            
+            ConnectivityBase_exposer.def( 
+                "findPath"
+                , findPath_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::findPath
+        
+            typedef ::QList< SireMol::AtomIdx > ( ::SireMol::ConnectivityBase::*findPath_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            findPath_function_type findPath_function_value( &::SireMol::ConnectivityBase::findPath );
+            
+            ConnectivityBase_exposer.def( 
+                "findPath"
+                , findPath_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::findPaths
+        
+            typedef ::QList< QList< SireMol::AtomIdx > > ( ::SireMol::ConnectivityBase::*findPaths_function_type )( ::SireMol::AtomIdx,::SireMol::AtomIdx ) const;
+            findPaths_function_type findPaths_function_value( &::SireMol::ConnectivityBase::findPaths );
+            
+            ConnectivityBase_exposer.def( 
+                "findPaths"
+                , findPaths_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1") ) );
+        
+        }
+        { //::SireMol::ConnectivityBase::findPaths
+        
+            typedef ::QList< QList< SireMol::AtomIdx > > ( ::SireMol::ConnectivityBase::*findPaths_function_type )( ::SireMol::AtomID const &,::SireMol::AtomID const & ) const;
+            findPaths_function_type findPaths_function_value( &::SireMol::ConnectivityBase::findPaths );
+            
+            ConnectivityBase_exposer.def( 
+                "findPaths"
+                , findPaths_function_value
+                , ( bp::arg("atom0"), bp::arg("atom1") ) );
+        
+        }
         { //::SireMol::ConnectivityBase::getAngles
         
             typedef ::QList< SireMol::AngleID > ( ::SireMol::ConnectivityBase::*getAngles_function_type )(  ) const;
