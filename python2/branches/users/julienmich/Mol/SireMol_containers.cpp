@@ -58,6 +58,7 @@
 #include "SireMol/partialmolecule.h"
 #include "SireMol/perturbation.h"
 #include "SireMol/geometryperturbation.h"
+#include "SireMol/improperid.h"
 
 #include "Base/convertpackedarray.hpp"
 #include "SireBase/packedarray2d.hpp"
@@ -65,7 +66,6 @@
 #include "SireMol/bondid.h"
 #include "SireMol/angleid.h"
 #include "SireMol/dihedralid.h"
-#include "SireMol/improperid.h"
 
 #include "SireVol/space.h"
 
@@ -76,6 +76,8 @@ using boost::python::register_tuple;
 void register_SireMol_containers()
 {
     register_list< QList<AtomIdx> >();
+    register_list< QList< QList<AtomIdx> > >();
+    register_list< QList<AtomNum> >();
     register_list< QVector<AtomIdx> >();
 
     register_list< QList<BondID> >(); 
@@ -116,6 +118,8 @@ void register_SireMol_containers()
     register_list< QVector< boost::tuple<MolNum,SireID::Index> > >(); 
 
     register_list< QList<MGIDsAndMaps> >();
+
+    register_list< QVector<PartialMolecule> >();
 
     register_tuple< boost::tuple<AtomIdx,AtomIdx> >();
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx> >();
