@@ -508,17 +508,136 @@ const QSet<AtomIdx>& ConnectivityBase::_pvt_connectedTo(AtomIdx atom) const
     return connected_atoms.constData()[atom];
 }
 
+/** Internal recursive function used to find all paths between two atoms */
+QList< QList<AtomIdx> > ConnectivityBase::_pvt_findPaths(AtomIdx cursor, const AtomIdx end_atom,
+                                                         QSet<AtomIdx> &done) const
+{
+    //create the list containing all paths from the cursor atom to the end atom
+    QList< QList<AtomIdx> > all_paths;
+
+    if (not done.contains(cursor))
+    {
+        //we have not traced through this atom before...
+        done.insert(cursor);
+
+        //loop through all atoms bonded to the cursor
+        foreach (const AtomIdx &bonded_to_cursor, this->_pvt_connectedTo(cursor))
+        {
+            if (bonded_to_cursor == end_atom)
+            {
+                //we have found a path to the end atom. Return a single list containing
+                //cursor and end_atom, so that the functions that call this can then add their
+                //atoms to create all of the paths
+                QList< QList<AtomIdx> > paths;
+                QList<AtomIdx> path;
+                path.append(cursor);
+                path.append(end_atom);
+                paths.append(path);
+                all_paths.append(paths);
+            }
+            else
+            {
+                QList< QList<AtomIdx> > paths = this->_pvt_findPaths(bonded_to_cursor,
+                                                                     end_atom, done);
+        
+                if (not paths.isEmpty())
+                {
+                    for (QList< QList<AtomIdx> >::iterator it = paths.begin();
+                         it != paths.end();
+                         ++it)
+                    {
+                        (*it).prepend(cursor);
+                    }
+            
+                    all_paths.append(paths);
+                }
+            }
+        }
+    }
+    
+    return all_paths;
+}
+
+/** Return all possible bonded paths between two atoms. This returns an empty
+    list if there are no bonded paths between the two atoms */
+QList< QList<AtomIdx> > ConnectivityBase::findPaths(AtomIdx atom0, AtomIdx atom1) const
+{
+    atom0 = atom0.map( d->nAtoms() );
+    atom1 = atom1.map( d->nAtoms() );
+    
+    if (atom0 == atom1)
+        return QList< QList<AtomIdx> >();
+    
+    QSet<AtomIdx> done;
+    done.reserve(d->nAtoms());
+    
+    return this->_pvt_findPaths(atom0, atom1, done);
+}
+
+/** Find the shortest bonded path between two atoms. This returns an empty
+    list if there is no bonded path between these two atoms */
+QList<AtomIdx> ConnectivityBase::findPath(AtomIdx atom0, AtomIdx atom1) const
+{
+    QList< QList<AtomIdx> > paths = findPaths(atom0, atom1);
+    
+    QList<AtomIdx> shortest;
+    
+    foreach (const QList<AtomIdx> &path, paths)
+    {
+        if (shortest.isEmpty())
+            shortest = path;
+        
+        else if (shortest.count() > path.count())
+            shortest = path;
+    }
+    
+    return shortest;
+}
+
+/** Return all possible bonded paths between two atoms. This returns an empty
+    list if there are no bonded paths between the two atoms */
+QList<AtomIdx> ConnectivityBase::findPath(const AtomID &atom0, const AtomID &atom1) const
+{
+    return this->findPath( d->atomIdx(atom0), d->atomIdx(atom1) );
+}
+
+/** Find the shortest bonded path between two atoms. This returns an empty
+    list if there is no bonded path between these two atoms */
+QList< QList<AtomIdx> > ConnectivityBase::findPaths(const AtomID &atom0, const AtomID &atom1) const
+{
+    return this->findPaths( d->atomIdx(atom0), d->atomIdx(atom1) );
+}
+
 /** This function returns whether or not the two passed atoms are part of
     the same ring */
 bool ConnectivityBase::inRing(AtomIdx atom0, AtomIdx atom1) const
 {
-    return false;
+    QList< QList<AtomIdx> > paths = findPaths(atom0, atom1);
+    
+    //if there is more than one path between the atoms then they must
+    //be part of a ring
+    return (paths.count() > 1);
 }
 
 /** This function returns whether or not the three passed atoms are all part of
     the same ring */
 bool ConnectivityBase::inRing(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2) const
 {
+    QList< QList<AtomIdx> > paths = findPaths(atom0, atom2);
+    
+    atom1 = atom1.map(d->nAtoms());
+    
+    if (paths.count() > 1)
+    {
+        //the three are part of the same ring if any of the paths contains
+        //atom1
+        foreach (const QList<AtomIdx> &path, paths)
+        {
+            if (path.contains(atom1))
+                return true;
+        }
+    }
+    
     return false;
 }
 
@@ -526,6 +645,36 @@ bool ConnectivityBase::inRing(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2) const
     the same ring */
 bool ConnectivityBase::inRing(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2, AtomIdx atom3) const
 {
+    QList< QList<AtomIdx> > paths = findPaths(atom0, atom3);
+    
+    atom1 = atom1.map(d->nAtoms());
+    atom2 = atom2.map(d->nAtoms());
+    
+    if (paths.count() > 1)
+    {
+        //the four are part of the same ring if atom1 and atom2 are contained
+        //in any of the paths
+        bool have_atom1 = false;
+        bool have_atom2 = false;
+        
+        foreach (const QList<AtomIdx> &path, paths)
+        {
+            if (path.contains(atom1))
+            {
+                have_atom1 = true;
+                if (have_atom2)
+                    return true;
+            }
+            
+            if (path.contains(atom2))
+            {
+                have_atom2 = true;
+                if (have_atom1)
+                    return true;
+            }
+        }
+    }
+    
     return false;
 }
 
