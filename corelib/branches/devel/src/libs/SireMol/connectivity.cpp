@@ -537,8 +537,10 @@ QList< QList<AtomIdx> > ConnectivityBase::_pvt_findPaths(AtomIdx cursor, const A
             }
             else
             {
+                QSet<AtomIdx> new_done = done;
+            
                 QList< QList<AtomIdx> > paths = this->_pvt_findPaths(bonded_to_cursor,
-                                                                     end_atom, done);
+                                                                     end_atom, new_done);
         
                 if (not paths.isEmpty())
                 {
