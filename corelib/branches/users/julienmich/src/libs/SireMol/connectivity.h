@@ -359,6 +359,8 @@ public:
     ConnectivityEditor& disconnectAll(const AtomID &atomid);
     ConnectivityEditor& disconnectAll(const ResID &resid);
     
+    ConnectivityEditor& disconnectAll();
+    
     Connectivity commit() const;
 };
 

@@ -516,8 +516,9 @@ Vector Vector::cross(const Vector &v0, const Vector &v1)
     double nz = v0.sc[0]*v1.sc[1] - v0.sc[1]*v1.sc[0];
 
     Vector vec(nx,ny,nz);
-
-    if ( vec.isZero() )
+    double length = std::sqrt(nx*nx + ny*ny + nz*nz);
+    
+    if (SireMaths::isZero(length))
     {
         //these two vectors are parallel - we need to choose just
         //one perpendicular vector
@@ -545,7 +546,49 @@ Vector Vector::cross(const Vector &v0, const Vector &v1)
         }
     }
     else
-        return vec.normalise();
+    {
+        double invlength = double(1)/length;
+        Vector normal( vec.x()*invlength, vec.y()*invlength, vec.z()*invlength );
+        double checklength = normal.x()*normal.x() + normal.y()*normal.y() + normal.z()*normal.z();
+        
+        if (checklength > 1.1 or checklength < 0.9)
+        {
+            //something went wrong with normalisation
+            qDebug() << "WEIRD ERROR WITH NORMALISING VECTOR" << vec.toString() << checklength;
+            qDebug() << normal.toString();
+            qDebug() << "AUTOMATICALLY FIXING THE ERROR...";
+
+            //these two vectors are parallel - we need to choose just
+            //one perpendicular vector
+            if (v0.isZero())
+            {
+                if (v1.isZero())
+                    //both are null vectors. Just return a unit vector along the x axis
+                    normal = Vector(1.0, 0.0, 0.0);
+                else
+                {
+                    //do this by creating a copy of v0 with two elements swapped
+                    if ( SireMaths::isZero(v1.x()) )
+                        normal = Vector(v1.x(),v1.z(),v1.y()).normalise();
+                    else
+                        normal = Vector(v1.y(),v1.x(),v1.z()).normalise();
+                }
+            }
+            else
+            {
+                //do this by creating a copy of v0 with two elements swapped
+                if ( SireMaths::isZero(v0.x()) )
+                    normal = Vector(v0.x(),v0.z(),v0.y()).normalise();
+                else
+                    normal =Vector(v0.y(),v0.x(),v0.z()).normalise();
+            }
+
+            qDebug() << "Fixed cross product of vectors" << v0.toString() << ":" << v1.toString();
+            qDebug() << "equals" << normal.toString();
+        }
+        
+        return normal;
+    }
 }
 
 /** Return the manhattan length of the vector */
