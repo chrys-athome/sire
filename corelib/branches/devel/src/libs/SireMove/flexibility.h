@@ -209,7 +209,7 @@ private:
     Angle maxrotation;
 
     /** The maximum number of dofs to sample in one move */
-    int maxvar;
+    qint32 maxvar;
 
     /** The list of delta values for bonds*/
     QHash<DofID,Length> bond_deltas;

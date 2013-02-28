@@ -802,8 +802,10 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
     const Vector &coords2 = coords[moldata.info().cgAtomIdx(atom2)];
 
     //get the vector perpendicular to the angle
+    // This function contains lots of checks to ensure that a parallel
+    // vector is always returned, even for co-linear or co-located atoms
     Vector perp = Vector::cross( coords2-coords0, coords1-coords0 );
-
+    
     //rotate the two groups
     if (weight0 != 0)
         MoverBase::rotate(coords, group0,

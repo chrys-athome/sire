@@ -49,6 +49,8 @@ set ( SIREMOVE_HEADERS
       suprasubsimpacket.h
       suprasubsystem.h
       suprasystem.h
+      titrationmove.h
+      titrator.h
       uniformsampler.h
       velocitygenerator.h
       velocityverlet.h
@@ -108,6 +110,8 @@ set ( SIREMOVE_SOURCES
       suprasubsimpacket.cpp
       suprasubsystem.cpp
       suprasystem.cpp
+      titrationmove.cpp
+      titrator.cpp
       uniformsampler.cpp
       weightedmoves.cpp
       velocitygenerator.cpp

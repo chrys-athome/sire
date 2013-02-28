@@ -2461,6 +2461,27 @@ ConnectivityEditor& ConnectivityEditor::disconnectAll(AtomIdx atomidx)
     return *this;
 }
 
+/** Remove all bonds from this molecule */
+ConnectivityEditor& ConnectivityEditor::disconnectAll()
+{
+    connected_atoms.clear();
+    connected_res.clear();
+
+    if (info().nAtoms() > 0)
+    {
+        connected_atoms.resize(info().nAtoms());
+        connected_atoms.squeeze();
+    }
+    
+    if (info().nResidues() > 0)
+    {
+        connected_res.resize(info().nResidues());
+        connected_res.squeeze();
+    }
+    
+    return *this;
+}
+
 /** Remove all of the connections to the atom identified by 'atomid' 
 
     \throw SireMol::missing_atom
