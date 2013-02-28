@@ -5,7 +5,7 @@
 
 #include "moleculardynamics.h"
 #include "suprasimpacket.h"
-#include "replica.h"
+#include "volumemove.h"
 #include "suprasubmove.h"
 #include "hybridmc.h"
 #include "mtsmc.h"
@@ -16,17 +16,19 @@
 #include "suprasubmoves.h"
 #include "supramove.h"
 #include "replicas.h"
+#include "replica.h"
 #include "zmatrix.h"
 #include "suprasystem.h"
 #include "moves.h"
 #include "velocitygenerator.h"
 #include "supramoves.h"
 #include "rigidbodymc.h"
+#include "titrationmove.h"
 #include "flexibility.h"
 #include "weightedmoves.h"
 #include "volumechanger.h"
 #include "repexmove.h"
-#include "volumemove.h"
+#include "titrator.h"
 #include "uniformsampler.h"
 #include "internalmove.h"
 #include "rbworkspace.h"
@@ -49,7 +51,7 @@ void register_SireMove_objects()
 
     ObjectRegistry::registerConverterFor< SireMove::MolecularDynamics >();
     ObjectRegistry::registerConverterFor< SireMove::SupraSimPacket >();
-    ObjectRegistry::registerConverterFor< SireMove::Replica >();
+    ObjectRegistry::registerConverterFor< SireMove::VolumeMove >();
     ObjectRegistry::registerConverterFor< SireMove::NullSupraSubMove >();
     ObjectRegistry::registerConverterFor< SireMove::HybridMC >();
     ObjectRegistry::registerConverterFor< SireMove::HMCGenerator >();
@@ -61,6 +63,7 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::SameSupraSubMoves >();
     ObjectRegistry::registerConverterFor< SireMove::NullSupraMove >();
     ObjectRegistry::registerConverterFor< SireMove::Replicas >();
+    ObjectRegistry::registerConverterFor< SireMove::Replica >();
     ObjectRegistry::registerConverterFor< SireMove::ZMatrix >();
     ObjectRegistry::registerConverterFor< SireMove::ZMatrixLine >();
     ObjectRegistry::registerConverterFor< SireMove::ZMatrixCoords >();
@@ -72,6 +75,7 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::MaxwellBoltzmann >();
     ObjectRegistry::registerConverterFor< SireMove::SameSupraMoves >();
     ObjectRegistry::registerConverterFor< SireMove::RigidBodyMC >();
+    ObjectRegistry::registerConverterFor< SireMove::TitrationMove >();
     ObjectRegistry::registerConverterFor< SireMove::DofID >();
     ObjectRegistry::registerConverterFor< SireMove::Flexibility >();
     ObjectRegistry::registerConverterFor< SireMove::WeightedMoves >();
@@ -79,7 +83,7 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::ScaleVolumeFromCenter >();
     ObjectRegistry::registerConverterFor< SireMove::RepExMove >();
     ObjectRegistry::registerConverterFor< SireMove::RepExSubMove >();
-    ObjectRegistry::registerConverterFor< SireMove::VolumeMove >();
+    ObjectRegistry::registerConverterFor< SireMove::Titrator >();
     ObjectRegistry::registerConverterFor< SireMove::UniformSampler >();
     ObjectRegistry::registerConverterFor< SireMove::InternalMove >();
     ObjectRegistry::registerConverterFor< SireMove::RBWorkspace >();

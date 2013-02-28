@@ -154,6 +154,7 @@ set ( PYPP_SOURCES
        Mover_ViewsOfMol_.pypp.cpp
        MoverBase.pypp.cpp
        NullBeading.pypp.cpp
+       NullBondHunter.pypp.cpp
        NullGeometryPerturbation.pypp.cpp
        NullPerturbation.pypp.cpp
        PartialMolecule.pypp.cpp

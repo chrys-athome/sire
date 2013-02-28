@@ -33,6 +33,8 @@ namespace bp = boost::python;
 
 #include "moleculeview.h"
 
+#include "tostring.h"
+
 #include <QDataStream>
 
 #include <QDebug>
@@ -158,6 +160,17 @@ void register_ConnectivityEditor_class(){
                 "disconnectAll"
                 , disconnectAll_function_value
                 , ( bp::arg("resid") )
+                , bp::return_self< >() );
+        
+        }
+        { //::SireMol::ConnectivityEditor::disconnectAll
+        
+            typedef ::SireMol::ConnectivityEditor & ( ::SireMol::ConnectivityEditor::*disconnectAll_function_type )(  ) ;
+            disconnectAll_function_type disconnectAll_function_value( &::SireMol::ConnectivityEditor::disconnectAll );
+            
+            ConnectivityEditor_exposer.def( 
+                "disconnectAll"
+                , disconnectAll_function_value
                 , bp::return_self< >() );
         
         }

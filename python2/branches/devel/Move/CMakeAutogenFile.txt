@@ -56,6 +56,8 @@ set ( PYPP_SOURCES
        SupraSubSystem.pypp.cpp
        SupraSystem.pypp.cpp
        SystemWideDeleter.pypp.cpp
+       TitrationMove.pypp.cpp
+       Titrator.pypp.cpp
        UniformInserter.pypp.cpp
        UniformSampler.pypp.cpp
        VelocitiesFromProperty.pypp.cpp

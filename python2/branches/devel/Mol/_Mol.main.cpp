@@ -315,6 +315,8 @@
 
 #include "NullBeading.pypp.hpp"
 
+#include "NullBondHunter.pypp.hpp"
+
 #include "NullGeometryPerturbation.pypp.hpp"
 
 #include "NullPerturbation.pypp.hpp"
@@ -819,6 +821,8 @@ BOOST_PYTHON_MODULE(_Mol){
     register_Mover_ViewsOfMol__class();
 
     register_NullBeading_class();
+
+    register_NullBondHunter_class();
 
     register_NullGeometryPerturbation_class();
 

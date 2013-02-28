@@ -119,6 +119,10 @@
 
 #include "SystemWideDeleter.pypp.hpp"
 
+#include "TitrationMove.pypp.hpp"
+
+#include "Titrator.pypp.hpp"
+
 #include "UniformInserter.pypp.hpp"
 
 #include "UniformSampler.pypp.hpp"
@@ -273,6 +277,10 @@ BOOST_PYTHON_MODULE(_Move){
     register_SupraSubSimPacket_class();
 
     register_SystemWideDeleter_class();
+
+    register_TitrationMove_class();
+
+    register_Titrator_class();
 
     register_UniformInserter_class();
 

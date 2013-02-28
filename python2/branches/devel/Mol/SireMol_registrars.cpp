@@ -260,6 +260,7 @@ void register_SireMol_objects()
     ObjectRegistry::registerConverterFor< SireMol::ResVariantProperty >();
     ObjectRegistry::registerConverterFor< SireMol::Molecule >();
     ObjectRegistry::registerConverterFor< SireMol::Mover<SireMol::Molecule> >();
+    ObjectRegistry::registerConverterFor< SireMol::NullBondHunter >();
     ObjectRegistry::registerConverterFor< SireMol::CovalentBondHunter >();
     ObjectRegistry::registerConverterFor< SireMol::ChemicalBondHunter >();
     ObjectRegistry::registerConverterFor< SireMol::MoleculeData >();

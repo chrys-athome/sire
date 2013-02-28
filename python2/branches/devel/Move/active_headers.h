@@ -39,6 +39,8 @@
 #include "suprasubsimpacket.h"
 #include "suprasubsystem.h"
 #include "suprasystem.h"
+#include "titrationmove.h"
+#include "titrator.h"
 #include "uniformsampler.h"
 #include "velocitygenerator.h"
 #include "velocityverlet.h"

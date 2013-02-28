@@ -55,7 +55,7 @@ void register_BondHunter_class(){
         bp::scope BondHunter_scope( BondHunter_exposer );
         { //::SireMol::BondHunter::null
         
-            typedef ::SireMol::CovalentBondHunter const & ( *null_function_type )(  );
+            typedef ::SireMol::NullBondHunter const & ( *null_function_type )(  );
             null_function_type null_function_value( &::SireMol::BondHunter::null );
             
             BondHunter_exposer.def( 

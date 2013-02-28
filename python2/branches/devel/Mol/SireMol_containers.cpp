@@ -58,6 +58,7 @@
 #include "SireMol/partialmolecule.h"
 #include "SireMol/perturbation.h"
 #include "SireMol/geometryperturbation.h"
+#include "SireMol/improperid.h"
 
 #include "Base/convertpackedarray.hpp"
 #include "SireBase/packedarray2d.hpp"
@@ -82,6 +83,7 @@ void register_SireMol_containers()
     register_list< QList<BondID> >(); 
     register_list< QList<AngleID> >();
     register_list< QList<DihedralID> >();
+    register_list< QList<ImproperID> >();
     register_list< QList<CGIdx> >();
     register_list< QList<ResIdx> >();
     register_list< QList<ChainIdx> >();
