@@ -665,14 +665,14 @@ bool ConnectivityBase::inRing(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2, AtomI
             {
                 have_atom1 = true;
                 if (have_atom2)
-                    return true;
+                    return this->inRing(atom1,atom2);
             }
             
             if (path.contains(atom2))
             {
                 have_atom2 = true;
                 if (have_atom1)
-                    return true;
+                    return this->inRing(atom1,atom2);
             }
         }
     }
