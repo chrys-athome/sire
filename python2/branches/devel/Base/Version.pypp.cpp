@@ -7,11 +7,15 @@
 
 namespace bp = boost::python;
 
+#include "SireStream/datastream.h"
+
 #include "majorminorversion.h"
 
 #include "majorminorversion.h"
 
 SireBase::Version __copy__(const SireBase::Version &other){ return SireBase::Version(other); }
+
+#include "Qt/qdatastream.hpp"
 
 #include "Helpers/str.hpp"
 
@@ -66,9 +70,34 @@ void register_Version_class(){
                 , toString_function_value );
         
         }
+        { //::SireBase::Version::typeName
+        
+            typedef char const * ( *typeName_function_type )(  );
+            typeName_function_type typeName_function_value( &::SireBase::Version::typeName );
+            
+            Version_exposer.def( 
+                "typeName"
+                , typeName_function_value );
+        
+        }
+        { //::SireBase::Version::what
+        
+            typedef char const * ( ::SireBase::Version::*what_function_type )(  ) const;
+            what_function_type what_function_value( &::SireBase::Version::what );
+            
+            Version_exposer.def( 
+                "what"
+                , what_function_value );
+        
+        }
+        Version_exposer.staticmethod( "typeName" );
         Version_exposer.def( "__copy__", &__copy__);
         Version_exposer.def( "__deepcopy__", &__copy__);
         Version_exposer.def( "clone", &__copy__);
+        Version_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireBase::Version >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
+        Version_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireBase::Version >,
+                            bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         Version_exposer.def( "__str__", &__str__< ::SireBase::Version > );
         Version_exposer.def( "__repr__", &__str__< ::SireBase::Version > );
     }

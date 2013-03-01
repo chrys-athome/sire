@@ -21,6 +21,7 @@ void register_SireBase_objects()
     ObjectRegistry::registerConverterFor< SireBase::PropertyName >();
     ObjectRegistry::registerConverterFor< SireBase::PropertyMap >();
     ObjectRegistry::registerConverterFor< SireBase::MajorMinorVersion >();
+    ObjectRegistry::registerConverterFor< SireBase::Version >();
     ObjectRegistry::registerConverterFor< SireBase::NoMangling >();
     ObjectRegistry::registerConverterFor< SireBase::TrimString >();
     ObjectRegistry::registerConverterFor< SireBase::UpperCaseString >();

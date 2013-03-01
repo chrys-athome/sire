@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "titrationmove.h"
 
+#include "titrator.h"
+
 #include <QDebug>
 
 #include "titrationmove.h"

@@ -9,6 +9,7 @@ set ( PYPP_SOURCES
        Incremint.pypp.cpp
        LinkToProperty.pypp.cpp
        LowerCaseString.pypp.cpp
+       MajorMinorVersion.pypp.cpp
        MemInfo.pypp.cpp
        NoMangling.pypp.cpp
        NullProperty.pypp.cpp

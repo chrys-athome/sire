@@ -25,6 +25,8 @@
 
 #include "LowerCaseString.pypp.hpp"
 
+#include "MajorMinorVersion.pypp.hpp"
+
 #include "MemInfo.pypp.hpp"
 
 #include "NoMangling.pypp.hpp"
@@ -115,6 +117,8 @@ BOOST_PYTHON_MODULE(_Base){
     register_StringMangler_class();
 
     register_LowerCaseString_class();
+
+    register_MajorMinorVersion_class();
 
     register_MemInfo_class();
 
