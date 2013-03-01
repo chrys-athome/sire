@@ -77,6 +77,9 @@ public:
     QString toString() const;
     
     void move(System &system, int nmoves, bool record_stats=true);
+
+protected:
+    void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
 };
 
 } // end of namespace SireMove

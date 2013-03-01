@@ -42,6 +42,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireBase
 {
+    class Version;
+}
+
+QDataStream& operator<<(QDataStream&, const SireBase::Version&);
+QDataStream& operator>>(QDataStream&, SireBase::Version&);
+
+namespace SireBase
+{
 
 namespace detail
 {
@@ -71,11 +79,27 @@ public:
 /** This is a simple class that holds a major and minor version number */
 class SIREBASE_EXPORT Version
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const Version&);
+friend QDataStream& ::operator>>(QDataStream&, Version&);
+
 public:
     Version(quint64 major=0, quint64 minor=0);
     Version(const Version &other);
     
     ~Version();
+    
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return Version::typeName();
+    }
+    
+    Version* clone() const
+    {
+        return new Version(*this);
+    }
     
     Version& operator=(const Version &other);
     
@@ -331,8 +355,10 @@ MajorMinorVersion VersionRegistry<T>::registerObject(const T &key)
 } // end of namespace SireBase
 
 Q_DECLARE_METATYPE( SireBase::MajorMinorVersion )
+Q_DECLARE_METATYPE( SireBase::Version )
 
 SIRE_EXPOSE_CLASS( SireBase::Version )
+SIRE_EXPOSE_CLASS( SireBase::MajorMinorVersion )
 
 SIRE_END_HEADER
 

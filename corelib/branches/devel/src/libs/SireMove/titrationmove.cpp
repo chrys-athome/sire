@@ -29,6 +29,9 @@
 #include "titrationmove.h"
 #include "titrator.h"
 
+#include "SireUnits/units.h"
+#include "SireUnits/temperature.h"
+
 #include "SireSystem/system.h"
 
 #include "SireStream/datastream.h"
@@ -39,6 +42,7 @@
 using namespace SireMove;
 using namespace SireSystem;
 using namespace SireBase;
+using namespace SireUnits;
 using namespace SireStream;
 
 static RegisterMetaType<TitrationMove> r_titrationmove;
@@ -68,7 +72,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, TitrationMove &move)
 
 /** Null constructor */
 TitrationMove::TitrationMove() : ConcreteProperty<TitrationMove,MonteCarlo>()
-{}
+{
+    MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
+}
 
 /** Copy constructor */
 TitrationMove::TitrationMove(const TitrationMove &other)
@@ -78,6 +84,11 @@ TitrationMove::TitrationMove(const TitrationMove &other)
 /** Destructor */
 TitrationMove::~TitrationMove()
 {}
+
+void TitrationMove::_pvt_setTemperature(const Temperature &temperature)
+{
+    MonteCarlo::setEnsemble( Ensemble::NVT(temperature) );
+}
 
 const char* TitrationMove::typeName()
 {
@@ -115,7 +126,7 @@ bool TitrationMove::operator!=(const TitrationMove &other) const
 /** Return a string representation of the move */
 QString TitrationMove::toString() const
 {
-    return QObject::tr("TitrationMove( nAccept() == %d, nReject() == %d )")
+    return QObject::tr("TitrationMove( nAccept() == %1, nReject() == %2 )")
                 .arg(this->nAccepted()).arg(this->nRejected());
 }
 
@@ -124,7 +135,7 @@ void TitrationMove::move(System &system, int nmoves, bool record_stats)
 {
     if (nmoves <= 0)
         return;
- /*
+ 
     //save our, and the system's, current state
     TitrationMove old_state(*this);
     System old_system_state(system);
@@ -154,12 +165,12 @@ void TitrationMove::move(System &system, int nmoves, bool record_stats)
             double new_bias = 1;
 
             //now choose two random groups from the set of titratable groups
-            int ion_index = generator().randInt(0, titrator.nIons());
-            int neutral_index = generator().randInt(0, titrator.nNeutrals());
-    
-            //tell the titrator to swap the titration states of the two groups
-            titrator.makeIon( neutral_index );
-            titrator.makeNeutral( ion_index );
+            int ion_index = titrator.getIonIndex( generator().randInt(0, titrator.nIons()-1) );
+            int neutral_index = titrator.getNeutralIndex(
+                                            generator().randInt(0, titrator.nNeutrals()-1) );
+
+            //swap the charges of these two groups
+            titrator.swapCharge(neutral_index, ion_index);
     
             //apply the titrator to the system. This will update
             //the charges of the titratable groups and will update
@@ -194,5 +205,5 @@ void TitrationMove::move(System &system, int nmoves, bool record_stats)
         this->operator=(old_state);
         system = old_system_state;
         throw;
-    }*/
+    }
 }
