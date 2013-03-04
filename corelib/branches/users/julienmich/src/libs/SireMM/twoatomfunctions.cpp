@@ -311,7 +311,10 @@ void TwoAtomFunctions::set(const BondID &bondid, const Expression &expression)
 {
     AtomIdx atom0 = info().atomIdx(bondid.atom0());
     AtomIdx atom1 = info().atomIdx(bondid.atom1());
-    
+
+    if (atom0 < atom1)
+      qSwap(atom0,atom1);
+
     this->clear(atom0, atom1);
     this->clear(atom1, atom0);
 

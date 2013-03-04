@@ -790,7 +790,9 @@ static void setDihedrals(MolEditor &editmol, int pointer,
 
         // Actually, we just save the terms in an array of atom indices 
         // because some dihedrals may have multi-term
-        if (improper and k > 0.00001) 
+	// JM Feb 13. Maybe better to create improper/dihedral functions with null terms in case they are changed by a perturbation?
+        //if (improper and k > 0.00001) 
+	if (improper)
         {
             //qDebug() << "IMPROPER" << atom0.name().value() << atom1.name().value() 
             //         << atom2.name().value() << atom3.name().value() << " K "
@@ -803,7 +805,8 @@ static void setDihedrals(MolEditor &editmol, int pointer,
             else
                 improper_hash.insert(improperid, dihedral_func);
         }
-        else if ( k > 0.00001)
+        //else if ( k > 0.00001)
+	else
         {
             //qDebug() << " DIHEDRAL " << atom0.name().value() << atom1.name().value() 
             //         << atom2.name().value() << atom3.name().value() << " K " 

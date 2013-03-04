@@ -332,6 +332,9 @@ void ThreeAtomFunctions::set(const AngleID &angleid, const Expression &expressio
     AtomIdx atom1 = info().atomIdx(angleid.atom1());
     AtomIdx atom2 = info().atomIdx(angleid.atom2());
     
+    if (atom2 < atom0) 
+      qSwap( atom2, atom0 );
+
     this->clear(atom0, atom1, atom2);
     this->clear(atom2, atom1, atom0);
     

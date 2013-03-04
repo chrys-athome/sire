@@ -432,14 +432,28 @@ void InternalMove::move(System &system, int nmoves, bool record_stats)
             {
                 // We rotate by picking the central bond of the dihedral to 
                 // handle concerted motions
-                BondID centralbond;
-                centralbond = BondID(dihedral.atom1(), dihedral.atom2());
+                //BondID centralbond;
+                //centralbond = BondID(dihedral.atom1(), dihedral.atom2());
                 
                 //const Angle angle_delta_value = flex.angle_deltas[dihedral];
                 double angle_delta_value = flex.delta(dihedral);
                 dihedral_delta =  Angle( this->generator().rand(-angle_delta_value,
                                                                  angle_delta_value) );
-                mol_mover.change(centralbond, dihedral_delta);
+                //mol_mover.change(centralbond, dihedral_delta);
+
+		// 50% chance to either rotate around central bond or to just change that dihedral
+                if (this->generator().randBool())
+                {                                 
+                    //move only this specific dihedral
+                    mol_mover.change(dihedral, dihedral_delta);
+                }
+                else
+                {
+                    BondID centralbond;
+                    centralbond = BondID(dihedral.atom1(), dihedral.atom2());
+                    mol_mover.change(centralbond, dihedral_delta);
+                }
+
             }
 
             //update the system with the new coordinates

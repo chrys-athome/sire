@@ -343,6 +343,12 @@ void FourAtomFunctions::set(const DihedralID &dihedralid, const Expression &expr
     AtomIdx atom2 = info().atomIdx(dihedralid.atom2());
     AtomIdx atom3 = info().atomIdx(dihedralid.atom3());
     
+    if (atom3 < atom0)
+      { 
+	qSwap(atom3, atom0); 
+	qSwap(atom2, atom1); 
+      }
+
     this->clear(atom0, atom1, atom2, atom3);
     this->clear(atom3, atom2, atom1, atom0);
     
