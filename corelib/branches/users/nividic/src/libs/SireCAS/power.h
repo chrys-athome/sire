@@ -97,6 +97,8 @@ public:
     }
 
     QString toString() const;
+    QString toOpenMMString() const;
+
     Expression substitute(const Identities &identities) const;
 
     Expression differentiate(const Symbol &symbol) const;

@@ -93,6 +93,8 @@ public:
     }
 
     QString toString() const;
+    
+    QString toOpenMMString() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;

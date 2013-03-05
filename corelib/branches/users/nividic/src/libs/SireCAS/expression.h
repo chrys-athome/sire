@@ -160,8 +160,7 @@ public:
     bool isComplex() const;
 
     QString toString() const;
-    QString toOpenMM() const;
-    
+    QString toOpenMMString() const;
 
     uint hash() const
     {

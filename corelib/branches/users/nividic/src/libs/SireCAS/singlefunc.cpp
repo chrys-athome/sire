@@ -126,6 +126,14 @@ QString SingleFunc::toString() const
     return QString("%1(%2)").arg(stringRep(), ex.toString());
 }
 
+
+/** Return a string representation of this function in the OpenMM syntax*/
+QString SingleFunc::toOpenMMString() const
+{
+    return QString("%1(%2)").arg(stringRep(), ex.toString());
+}
+
+
 /** Substitute into this expression */
 Expression SingleFunc::substitute(const Identities &identities) const
 {

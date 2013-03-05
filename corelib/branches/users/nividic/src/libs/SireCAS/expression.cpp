@@ -554,15 +554,15 @@ QString Expression::toString() const
     }
 }
 
-
-/*ADDED BY GAC*/
-QString Expression::toOpenMM() const
+/** Return a string representation of this expression in the OpenMM syntax*/
+QString Expression::toOpenMMString() const
 {
+
     if (isConstant())
         return evaluate(ComplexValues()).toString();
     else
     {
-        QString basestr = exbase.toString();
+        QString basestr = exbase.toOpenMMString();
 
         if ( SireMaths::areEqual(fac,1.0) )
             return basestr;
@@ -574,12 +574,11 @@ QString Expression::toOpenMM() const
                 return QString("-%1").arg(basestr);
         }
         else if (this->isCompound())
-            return QString("%1 (%2)").arg(fac).arg(basestr);
+            return QString("%1 * (%2)").arg(fac).arg(basestr);
         else
-            return QString("%1 %2").arg(fac).arg(basestr);
+            return QString("%1 * %2").arg(fac).arg(basestr);
     }
 }
-
 
 
 /** Return the ExpressionBase base-part of this expression */

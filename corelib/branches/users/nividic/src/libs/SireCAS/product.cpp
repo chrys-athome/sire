@@ -615,6 +615,79 @@ QString Product::toString() const
     }
 }
 
+
+/** Return a string representation of this Product in the OpenMM syntax*/
+QString Product::toOpenMMString() const
+{
+    if (isConstant())
+        return evaluate(ComplexValues()).toString();
+
+    QString top("");
+
+    bool strtval_is_one = SireMaths::areEqual(strtval,1.0);
+    bool strtval_is_minus_one = SireMaths::areEqual(strtval,-1.0);
+
+    if (numparts.count() == 0)
+    {
+        top = QString::number(strtval);
+    }
+    else if (numparts.count() == 1)
+    {
+        Expression toppart = numparts.values()[0];
+
+        if ( not toppart.isCompound() or
+             (denomparts.count() == 0 and (strtval_is_one or strtval_is_minus_one)) )
+            top = toppart.toOpenMMString();
+        else
+            top = QString("(%1)").arg(toppart.toOpenMMString());
+    }
+    else
+    {
+        for (QHash<Expression,Expression>::const_iterator it = numparts.begin();
+            it != numparts.end();
+            ++it)
+        {
+            if (it->base().isCompound())
+                top = QString("%1  (%2)").arg(top,it->toOpenMMString());
+            else
+                top = QString("%1 * %2").arg(top,it->toOpenMMString());
+        }
+    }
+
+    if (strtval_is_minus_one)
+        top = QString("-%1").arg(top);
+    else if ( not (strtval_is_one or numparts.count() == 0) )
+        top = QString("%1 * %2").arg(strtval).arg(top);
+
+    if (denomparts.count() == 0)
+        return top.simplified();
+    else if (denomparts.count() == 1)
+    {
+        Expression bottom = denomparts.values()[0];
+        if (bottom.base().isCompound())
+            return QString("%1 / (%2)").arg(top.simplified(),bottom.toOpenMMString());
+        else
+            return QString("%1 / %2").arg(top.simplified(),bottom.toOpenMMString());
+    }
+    else
+    {
+        QString bottom("");
+
+        for (QHash<Expression,Expression>::const_iterator it = denomparts.begin();
+             it != denomparts.end();
+             ++it)
+        {
+            if (it->base().isCompound())
+                bottom = QString("%1 * (%2)").arg(bottom,it->toOpenMMString());
+            else
+                bottom = QString("%1 * %2").arg(bottom,it->toOpenMMString());
+        }
+
+        return QString("%1 / (%2)").arg(top.simplified(),bottom.simplified());
+    }
+}
+
+
 /** Return whether this is a constant */
 bool Product::isConstant() const
 {

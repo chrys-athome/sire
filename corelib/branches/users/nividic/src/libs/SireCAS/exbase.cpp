@@ -166,6 +166,15 @@ bool ExBase::isCompound() const
     return false;
 }
 
+
+QString ExBase::toOpenMMString() const{
+
+    return this->toString();
+}
+
+
+
+
 namespace SireCAS
 {
 

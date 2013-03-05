@@ -215,6 +215,13 @@ QString ExpressionBase::toString() const
         return "WARNING: NULL EXPRESSIONBASE";
 }
 
+QString ExpressionBase::toOpenMMString() const{
+
+    return d->toOpenMMString();
+
+}
+
+
 /** Evaluate this ExBase using values 'values'. Any
     missing symbols are assumed to equal zero.
 
