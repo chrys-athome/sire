@@ -1095,7 +1095,7 @@ void OpenMMFrEnergyST::initialise()  {
 			{
 			    const InternalPerturbation &ipert = pert.asA<InternalPerturbation>();
 				//qDebug() << ipert.toString();
-				qDebug() << ipert.perturbExpression().toOpenMM();
+				qDebug() << ipert.perturbExpression().toOpenMMString();
 				
 				//qDebug() << "initial" << ipert.initialForms().toString();
 				//qDebug() << "final" << ipert.finalForms().toString();

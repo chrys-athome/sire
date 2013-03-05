@@ -647,10 +647,18 @@ QString Product::toOpenMMString() const
             it != numparts.end();
             ++it)
         {
-            if (it->base().isCompound())
-                top = QString("%1  (%2)").arg(top,it->toOpenMMString());
-            else
-                top = QString("%1 * %2").arg(top,it->toOpenMMString());
+            if(top.isEmpty()){
+                 if (it->base().isCompound())
+                    top = QString("(%1)").arg(it->toOpenMMString());
+                else
+                    top = it->toOpenMMString();
+            }
+            else{
+                if (it->base().isCompound())
+                    top = QString("%1 * (%2)").arg(top,it->toOpenMMString());
+                else
+                    top = QString("%1 * %2").arg(top,it->toOpenMMString());
+            }
         }
     }
 
