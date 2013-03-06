@@ -1080,31 +1080,9 @@ void OpenMMFrEnergyST::initialise()  {
 
 
 
+		//TwoAtomPerturbation * perturbation = (TwoAtomPerturbation * ) perturbation_list[2].data();
 
-		Perturbations pert_params = molecule.property("perturbations").asA<Perturbations>();
-
-		QList< PropPtr<Perturbation> > perturbation_list = pert_params.perturbations();
-		
-		for (QList< PropPtr<Perturbation> >::const_iterator it = perturbation_list.constBegin();
-		     it != perturbation_list.constEnd();
-		     ++it)
-		{
-			const Perturbation &pert = *it;
-			
-			if (pert.isA<InternalPerturbation>())
-			{
-			    const InternalPerturbation &ipert = pert.asA<InternalPerturbation>();
-				//qDebug() << ipert.toString();
-				qDebug() << ipert.perturbExpression().toOpenMMString();
-				
-				//qDebug() << "initial" << ipert.initialForms().toString();
-				//qDebug() << "final" << ipert.finalForms().toString();
-			}
-		}
-
-		TwoAtomPerturbation * perturbation = (TwoAtomPerturbation * ) perturbation_list[2].data();
-
-		perturbation->initialForms()[Symbol("r0")].toString();
+		//perturbation->initialForms()[Symbol("r0")].toString();
 
 
 
@@ -1116,13 +1094,89 @@ void OpenMMFrEnergyST::initialise()  {
 		//qDebug() << " >>>>>>>>>>>>>>>>>>>>>>>>>>>> " << perturbation->perturbExpression().toString();
 
 
-		qDebug() << "****************************************************GAC HERE************************************************************"; 
-
-		return;
 
 
 
-		if(molecule.isSameMolecule(solutemol)){//Solute molecule
+
+        if(molecule.isSameMolecule(solutemol)){//Solute molecule
+
+            Perturbations pert_params = molecule.property("perturbations").asA<Perturbations>();
+
+            QList< PropPtr<Perturbation> > perturbation_list = pert_params.perturbations();
+
+            std::vector<double> solute_bond_perturbation_params(4);
+            std::vector<double> solute_angle_perturbation_params(4);
+
+            for (QList< PropPtr<Perturbation> >::const_iterator it = perturbation_list.constBegin();it != perturbation_list.constEnd();++it){
+
+                const Perturbation &pert = *it;
+
+                if (pert.isA<InternalPerturbation>()){
+                    const InternalPerturbation &ipert = pert.asA<InternalPerturbation>();
+                    //qDebug() << ipert.toString();
+                    //qDebug() << ipert.perturbExpression().toOpenMMString();
+                    //qDebug() << pert.what();
+                    
+                    QString str = pert.what();
+                    
+                    if(str == "SireMM::TwoAtomPerturbation"){
+                        const TwoAtomPerturbation &two = pert.asA<TwoAtomPerturbation>();
+                        
+                        
+                        int idx0 = two.atom0().asA<AtomIdx>().value() + num_atoms_till_i;
+                        int idx1 = two.atom1().asA<AtomIdx>().value() + num_atoms_till_i;
+                        double rstart = two.initialForms()[Symbol("r0")].toString().toDouble();
+                        double bstart = two.initialForms()[Symbol("k")].toString().toDouble();
+                        double rend = two.finalForms()[Symbol("r0")].toString().toDouble();
+                        double bend = two.finalForms()[Symbol("k")].toString().toDouble();
+
+                        solute_bond_perturbation_params[0]=bstart * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm;
+                        solute_bond_perturbation_params[1]=bend * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm;
+                        solute_bond_perturbation_params[2]=rstart * OpenMM::NmPerAngstrom;
+                        solute_bond_perturbation_params[3]=rend * OpenMM::NmPerAngstrom;
+
+                        solute_bond_perturbation->addBond(idx0,idx1,solute_bond_perturbation_params);
+
+
+                        qDebug() << "Atom0 = " << two.atom0().asA<AtomIdx>().value() << "Atom1 = "<< two.atom1().asA<AtomIdx>().value() << "\n";
+                        qDebug() << "rstart = " <<two.initialForms()[Symbol("r0")].toString().toDouble() << " rend = " << two.finalForms()[Symbol("r0")].toString().toDouble() ;
+                        qDebug() << "bstart = " <<two.initialForms()[Symbol("k")].toString().toDouble() << " bend = " << two.finalForms()[Symbol("k")].toString().toDouble() ;
+                    }
+                    if(str == "SireMM::ThreeAtomPerturbation"){
+                        const ThreeAtomPerturbation &three = pert.asA<ThreeAtomPerturbation>();
+
+                        int idx0 = three.atom0().asA<AtomIdx>().value() + num_atoms_till_i;
+                        int idx1 = three.atom1().asA<AtomIdx>().value() + num_atoms_till_i;
+                        int idx2 = three.atom2().asA<AtomIdx>().value() + num_atoms_till_i;
+                        double astart = three.initialForms()[Symbol("k")].toString().toDouble();
+                        double thetastart = three.initialForms()[Symbol("theta0")].toString().toDouble();
+                        double aend = three.finalForms()[Symbol("k")].toString().toDouble();
+                        double thetaend = three.finalForms()[Symbol("theta0")].toString().toDouble();
+                        
+                        solute_angle_perturbation_params[0] = astart * 2.0 * OpenMM::KJPerKcal; 
+                        solute_angle_perturbation_params[1] = aend * 2.0 * OpenMM::KJPerKcal;
+                        solute_angle_perturbation_params[2] = thetastart;
+                        solute_angle_perturbation_params[3] = thetaend;
+                        
+                        solute_angle_perturbation->addAngle(idx0,idx1,idx2,solute_angle_perturbation_params);
+
+                        qDebug() << "Atom0 = " << three.atom0().asA<AtomIdx>().value() << "Atom1 = "<< three.atom1().asA<AtomIdx>().value() << "Atom2 = "<< three.atom2().asA<AtomIdx>().value() << "\n";
+                        qDebug() << "astart = " <<three.initialForms()[Symbol("k")].toString().toDouble() << " aend = " << three.finalForms()[Symbol("k")].toString().toDouble() << "\n";
+                        qDebug() << "thetastart = " <<three.initialForms()[Symbol("theta0")].toString().toDouble() << " thetaend = " << three.finalForms()[Symbol("theta0")].toString().toDouble() << "\n";
+                    
+                    }
+                    if(str == "SireMM::FourAtomPerturbation"){
+                    
+                    
+
+                    
+                    }
+                    
+                    
+				//qDebug() << "initial" << ipert.initialForms().toString();
+				//qDebug() << "final" << ipert.finalForms().toString();
+                }
+            }//end for perturbations
 
 		}
 		else{//Solvent molecule
@@ -1133,7 +1187,9 @@ void OpenMMFrEnergyST::initialise()  {
 
 
 
+		qDebug() << "****************************************************GAC HERE************************************************************"; 
 
+		return;
 
 		// The bonded parameters are stored in "amberparameters"
 		AmberParameters amber_params = molecule.property("amberparameters").asA<AmberParameters>();
