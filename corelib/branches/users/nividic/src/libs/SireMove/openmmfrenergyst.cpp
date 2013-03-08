@@ -1041,7 +1041,7 @@ void OpenMMFrEnergyST::initialise()  {
 		}//end of restraint flag
 
 
-		// The bonded parameters
+		// IONS
 
 
 		bool hasConnectivity = molecule.hasProperty("connectivity");
@@ -1066,7 +1066,7 @@ void OpenMMFrEnergyST::initialise()  {
         QList< DihedralID > dihedral_pert_list;
         QList< DihedralID > dihedral_pert_swap_list;
 
-        if(molecule.isSameMolecule(solutemol)){//Solute molecule
+        if(molecule.isSameMolecule(solutemol)){//Solute molecule perturbation
 
             Perturbations pert_params = molecule.property("perturbations").asA<Perturbations>();
 
@@ -1170,31 +1170,10 @@ void OpenMMFrEnergyST::initialise()  {
                                     "Atom3 = " << four.atom3().asA<AtomIdx>().value() << "\n";
                     }
 
-
-
-
-
-
-
-
-
-
                 }
             }//end for perturbations
 
-		}
-		else{//Solvent molecule
-			
-
-
-		}
-
-
-
-
-		qDebug() << "****************************************************GAC HERE************************************************************"; 
-
-		return;
+		}//end solute molecule perturbation
 
 		// The bonded parameters are stored in "amberparameters"
 		AmberParameters amber_params = molecule.property("amberparameters").asA<AmberParameters>();
@@ -1205,29 +1184,30 @@ void OpenMMFrEnergyST::initialise()  {
 		for (int j=0; j < bonds_ff.length() ; j++){
 
 			BondID bond_ff = bonds_ff[j];
+            QList<double> bond_params = amber_params.getParams(bond_ff);
+			double k = bond_params[0];
+			double r0 = bond_params[1];
 
-			double k;
-			double r0;
-			int idx0;
-			int idx1;
+            int idx0 = bonds[j].atom0().asA<AtomIdx>().value();
+            int idx1 = bonds[j].atom1().asA<AtomIdx>().value();
 
-			if(molecule.isSameMolecule(solutemol)){//Solute molecule
-			
-				
-			
-			
+			if(molecule.isSameMolecule(solutemol)){
+
+                if(bond_pert_list.indexOf(bond_ff) != -1){//Solute molecule. Check if the current solute bond is in the perturbed bond list
+                    qDebug() << "Found Perturbed Bond\n";
+                    continue;
+                }
+                else{
+
+                    qDebug() << "No Perturbed Bond - Atom0 = "<< idx0 << "Atom1 = " << idx1 << "\n";
+                    idx0 = idx0 + num_atoms_till_i;
+                    idx1 = idx1 + num_atoms_till_i;
+                    bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm);
+                    bondPairs.push_back(std::make_pair(idx0,idx1));
+                    continue;
+                }
+
 			}
-			else{
-				QList<double> bond_params = amber_params.getParams(bond_ff);
-				k = bond_params[0];
-				r0 = bond_params[1];
-
-				idx0 = bonds[j].atom0().asA<AtomIdx>().value();
-				idx1 = bonds[j].atom1().asA<AtomIdx>().value();
-
-			}
-
-
 
 			//Select the atom type
 			QString atom0 =  molecule.atom(AtomIdx(idx0)).toString();
@@ -1264,27 +1244,6 @@ void OpenMMFrEnergyST::initialise()  {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 		//Angles
 
 		QList<AngleID> angles_ff = amber_params.getAllAngles();
@@ -1295,12 +1254,31 @@ void OpenMMFrEnergyST::initialise()  {
 			AngleID angle_ff = angles_ff[j];
 			QList<double> angle_params = amber_params.getParams(angle_ff);
 
+
 			double k = angle_params[0];
 			double theta0 = angle_params[1];// It is already in radiant
 
 			int idx0 = angles[j].atom0().asA<AtomIdx>().value();
 			int idx1 = angles[j].atom1().asA<AtomIdx>().value();
 			int idx2= angles[j].atom2().asA<AtomIdx>().value();
+
+
+			if(molecule.isSameMolecule(solutemol)){
+
+			 if(angle_pert_list.indexOf(angle_ff) != -1){//Solute molecule. Check if the current solute angle is in the perturbed angle list
+                    qDebug() << "Found Perturbed Angle\n";
+                    continue;
+                }
+                else{
+
+                    qDebug() << "No Perturbed Angle - Atom0 = "<< idx0 << "Atom1 = " << idx1 << "Atom2 = " << idx2 <<"\n";
+                    idx0 = idx0 + num_atoms_till_i;
+                    idx1 = idx1 + num_atoms_till_i;
+                    idx2 = idx2 + num_atoms_till_i;
+                    bondBend_openmm->addAngle(idx0,idx1,idx2, theta0 , k * 2.0 * OpenMM::KJPerKcal);
+                    continue;
+                }
+			}
 
 			QString atom0 =  molecule.atom(AtomIdx(idx0)).toString();
 			QString atom1 =  molecule.atom(AtomIdx(idx1)).toString();
@@ -1329,6 +1307,14 @@ void OpenMMFrEnergyST::initialise()  {
 				bondBend_openmm->addAngle(idx0,idx1,idx2, theta0 , k * 2.0 * OpenMM::KJPerKcal);
 			}
 		}//end of angles
+
+
+
+		qDebug() << "****************************************************GAC HERE************************************************************"; 
+
+		return;
+
+
 
 		//Dihedrals
 
@@ -1359,6 +1345,9 @@ void OpenMMFrEnergyST::initialise()  {
 				//cout << "\n";
 			}
 		} // end of dihedrals
+
+
+
 
 		//Improper Dihedrals
 
