@@ -298,6 +298,12 @@ void ThreeAtomFunctions::set(AtomIdx atom0, AtomIdx atom1,
             "(%1-%2-%3)")
                 .arg(atm0).arg(atm1).arg(atm2), CODELOC );
 
+    if (atom2 < atom0) 
+      qSwap( atom2, atom0 );
+
+    this->clear(atom0, atom1, atom2);
+    this->clear(atom2, atom1, atom0);
+
     potentials_by_atoms.insert( IDTriple(atm0,atm1,atm2), expression );
     AtomFunctions::addSymbols(expression.symbols());
 }
@@ -328,17 +334,7 @@ void ThreeAtomFunctions::set(const AtomID &atom0, const AtomID &atom1,
 */
 void ThreeAtomFunctions::set(const AngleID &angleid, const Expression &expression)
 {
-    AtomIdx atom0 = info().atomIdx(angleid.atom0());
-    AtomIdx atom1 = info().atomIdx(angleid.atom1());
-    AtomIdx atom2 = info().atomIdx(angleid.atom2());
-    
-    if (atom2 < atom0) 
-      qSwap( atom2, atom0 );
-
-    this->clear(atom0, atom1, atom2);
-    this->clear(atom2, atom1, atom0);
-    
-    this->set( atom0, atom1, atom2, expression );
+  this->set( angleid.atom0(), angleid.atom1(), angleid.atom2(), expression );
 }
 
 /** Check if any of the symbols in 'symbols' need to be removed... */
