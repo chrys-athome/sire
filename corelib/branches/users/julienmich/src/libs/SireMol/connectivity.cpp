@@ -2039,7 +2039,7 @@ QList<DihedralID> ConnectivityBase::getDihedrals() const
 		{
 		  foreach (AtomIdx atom3idx, this->connectionsTo(atom2idx))
 		    {
-		      if (atom3idx != atom1idx or atom3idx != atom0idx)
+		      if (atom3idx != atom1idx and atom3idx != atom0idx)
 			{
 			  DihedralID dihedral = DihedralID( atom0idx, atom1idx, atom2idx, atom3idx);
 			  if ( not ( dihedrals.contains(dihedral) or dihedrals.contains(dihedral.mirror()) ) )
