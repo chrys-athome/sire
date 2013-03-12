@@ -916,8 +916,8 @@ void OpenMMFrEnergyST::initialise()  {
 				non_bonded_perturbation_params[7]=sigma_start * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[8]=sigma_final * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[9]=1.0;
-			
-				qDebug() << "hard solute = " << atom.index() << "\n";
+			    if(Debug)
+				    qDebug() << "hard solute = " << atom.index() << "\n";
 				
 			}
 			else if(solutetodummy.moleculeAt(0).atoms().contains(atom)){//to dummy solute atom
@@ -943,7 +943,8 @@ void OpenMMFrEnergyST::initialise()  {
 				non_bonded_perturbation_params[8]=sigma_final * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[9]=1.0;
 				
-				qDebug() << "to dummy solute = " << atom.index() << "\n";
+				if(Debug)
+				    qDebug() << "to dummy solute = " << atom.index() << "\n";
 
 			}
 
@@ -969,8 +970,9 @@ void OpenMMFrEnergyST::initialise()  {
 				non_bonded_perturbation_params[7]=sigma_start * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[8]=sigma_final * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[9]=1.0;
-
-				qDebug() << "from dummy solute = " << atom.index() << "\n";
+                
+                if(Debug)
+				    qDebug() << "from dummy solute = " << atom.index() << "\n";
 
 			}
 
@@ -988,8 +990,8 @@ void OpenMMFrEnergyST::initialise()  {
 				non_bonded_perturbation_params[7]=sigma * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[8]=sigma * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[9]=0.0;
-				
-				qDebug() << "Solvent = " << atom.index() << "\n";
+				if(Debug)
+				    qDebug() << "Solvent = " << atom.index() << "\n";
 
 			}
 
@@ -1106,13 +1108,14 @@ void OpenMMFrEnergyST::initialise()  {
                         bond_pert_list.append(BondID(two.atom0(),two.atom1()));
 
                         bondPairs.push_back(std::make_pair(idx0,idx1));
-
-                        qDebug() << "Atom0 = " << two.atom0().asA<AtomIdx>().value() << 
-                                    "Atom1 = "<< two.atom1().asA<AtomIdx>().value() ;
-                        qDebug() << "rstart = " <<two.initialForms()[Symbol("r0")].toString().toDouble() << 
-                                    "rend = " << two.finalForms()[Symbol("r0")].toString().toDouble() ;
-                        qDebug() << "bstart = " <<two.initialForms()[Symbol("k")].toString().toDouble() << 
-                                    "bend = " << two.finalForms()[Symbol("k")].toString().toDouble() << "\n";
+                        if(Debug){
+                            qDebug() << "Atom0 = " << two.atom0().asA<AtomIdx>().value() << 
+                                        "Atom1 = "<< two.atom1().asA<AtomIdx>().value() ;
+                            qDebug() << "rstart = " <<two.initialForms()[Symbol("r0")].toString().toDouble() << 
+                                        "rend = " << two.finalForms()[Symbol("r0")].toString().toDouble() ;
+                            qDebug() << "bstart = " <<two.initialForms()[Symbol("k")].toString().toDouble() << 
+                                        "bend = " << two.finalForms()[Symbol("k")].toString().toDouble() << "\n";
+                        }
                     }
                     if(str == "SireMM::ThreeAtomPerturbation"){
                         const ThreeAtomPerturbation &three = pert.asA<ThreeAtomPerturbation>();
@@ -1133,16 +1136,18 @@ void OpenMMFrEnergyST::initialise()  {
                         solute_angle_perturbation->addAngle(idx0,idx1,idx2,solute_angle_perturbation_params);
                         
                         angle_pert_list.append(AngleID(three.atom0(),three.atom1(),three.atom2()));
+                        
+                        if(Debug){
+                            qDebug() << "Atom0 = " << three.atom0().asA<AtomIdx>().value() << 
+                                        "Atom1 = "<< three.atom1().asA<AtomIdx>().value() << 
+                                        "Atom2 = "<< three.atom2().asA<AtomIdx>().value() ;
 
-                        qDebug() << "Atom0 = " << three.atom0().asA<AtomIdx>().value() << 
-                                    "Atom1 = "<< three.atom1().asA<AtomIdx>().value() << 
-                                    "Atom2 = "<< three.atom2().asA<AtomIdx>().value() ;
+                            qDebug() << "astart = " <<three.initialForms()[Symbol("k")].toString().toDouble() << 
+                                        "aend = " << three.finalForms()[Symbol("k")].toString().toDouble();
 
-                        qDebug() << "astart = " <<three.initialForms()[Symbol("k")].toString().toDouble() << 
-                                    "aend = " << three.finalForms()[Symbol("k")].toString().toDouble();
-
-                        qDebug() << "thetastart = " <<three.initialForms()[Symbol("theta0")].toString().toDouble() << 
-                                    "thetaend = " << three.finalForms()[Symbol("theta0")].toString().toDouble() << "\n";
+                            qDebug() << "thetastart = " <<three.initialForms()[Symbol("theta0")].toString().toDouble() << 
+                                        "thetaend = " << three.finalForms()[Symbol("theta0")].toString().toDouble() << "\n";
+                        }
                     
                     }
                     if(str == "SireMM::FourAtomPerturbation"){
@@ -1155,6 +1160,10 @@ void OpenMMFrEnergyST::initialise()  {
                         
                         std::string openmm_str = four.perturbExpression().toOpenMMString().toStdString();
 
+                        if(Debug){
+                            qDebug() << "Dihedral String = " << openmm_str.c_str();
+                        }
+                        
                         qDebug() << "Dihedral String = " << openmm_str.c_str();
 
                         solute_torsion_perturbation = new OpenMM::CustomTorsionForce(openmm_str);
@@ -1170,11 +1179,12 @@ void OpenMMFrEnergyST::initialise()  {
                         
                         improper_pert_list.append(ImproperID(four.atom0(),four.atom1(),four.atom2(),four.atom3()));
                         improper_pert_swap_list.append(ImproperID(four.atom3(),four.atom1(),four.atom2(),four.atom0()));
-
-                        qDebug() << "Atom0 = " << four.atom0().asA<AtomIdx>().value() << 
-                                    "Atom1 = " << four.atom1().asA<AtomIdx>().value() << 
-                                    "Atom2 = " << four.atom2().asA<AtomIdx>().value() << 
-                                    "Atom3 = " << four.atom3().asA<AtomIdx>().value() << "\n";
+                        if(Debug){
+                            qDebug() << "Atom0 = " << four.atom0().asA<AtomIdx>().value() << 
+                                        "Atom1 = " << four.atom1().asA<AtomIdx>().value() << 
+                                        "Atom2 = " << four.atom2().asA<AtomIdx>().value() << 
+                                        "Atom3 = " << four.atom3().asA<AtomIdx>().value() << "\n";
+                        }
                     }
 
                 }
@@ -1203,12 +1213,12 @@ void OpenMMFrEnergyST::initialise()  {
 			if(molecule.isSameMolecule(solutemol)){
 
                 if(bond_pert_list.indexOf(bond_ff) != -1){//Solute molecule. Check if the current solute bond is in the perturbed bond list
-                    qDebug() << "Found Perturbed Bond\n";
+                    //qDebug() << "Found Perturbed Bond\n";
                     continue;
                 }
                 else{
 
-                    qDebug() << "Solute normal Bond - Atom0 = "<< idx0 << "Atom1 = " << idx1 << "\n";
+                    //qDebug() << "Solute normal Bond - Atom0 = "<< idx0 << "Atom1 = " << idx1 << "\n";
                     idx0 = idx0 + num_atoms_till_i;
                     idx1 = idx1 + num_atoms_till_i;
                     bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm);
@@ -1275,12 +1285,12 @@ void OpenMMFrEnergyST::initialise()  {
 			if(molecule.isSameMolecule(solutemol)){
 
 			 if(angle_pert_list.indexOf(angle_ff) != -1){//Solute molecule. Check if the current solute angle is in the perturbed angle list
-                    qDebug() << "Found Perturbed Angle\n";
+                    //qDebug() << "Found Perturbed Angle\n";
                     continue;
                 }
                 else{
 
-                    qDebug() << "Solute normal Angle - Atom0 = "<< idx0 << "Atom1 = " << idx1 << "Atom2 = " << idx2 <<"\n";
+                    //qDebug() << "Solute normal Angle - Atom0 = "<< idx0 << "Atom1 = " << idx1 << "Atom2 = " << idx2 <<"\n";
                     idx0 = idx0 + num_atoms_till_i;
                     idx1 = idx1 + num_atoms_till_i;
                     idx2 = idx2 + num_atoms_till_i;
@@ -1289,7 +1299,7 @@ void OpenMMFrEnergyST::initialise()  {
                 }
 			}
 
-            qDebug() << "Angle - Atom0 = "<< idx0 << "Atom1 = " << idx1 << "Atom2 = " << idx2 <<"\n";
+            //qDebug() << "Angle - Atom0 = "<< idx0 << "Atom1 = " << idx1 << "Atom2 = " << idx2 <<"\n";
 
 			QString atom0 =  molecule.atom(AtomIdx(idx0)).toString();
 			QString atom1 =  molecule.atom(AtomIdx(idx1)).toString();
@@ -1339,7 +1349,8 @@ void OpenMMFrEnergyST::initialise()  {
 
 			if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed dihedral list
 			    if(dihedral_pert_list.indexOf(dihedral_ff)!=-1 || dihedral_pert_swap_list.indexOf(dihedral_ff)!=-1){
-			        qDebug() << "Found Perturbed Dihedral\n";
+			        if(Debug)
+			            qDebug() << "Found Perturbed Dihedral\n";
                     continue;
 			    }
 			}
@@ -1350,13 +1361,13 @@ void OpenMMFrEnergyST::initialise()  {
 				int periodicity = dihedral_params[ k + 1 ];
 				double phase = dihedral_params[ k + 2 ];
 				bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
-
-				qDebug() << "Dihedral between atom global index " << idx0 - num_atoms_till_i<< 
-				            " and " << idx1 - num_atoms_till_i << 
-				            " and " << idx2 - num_atoms_till_i << 
-				            " and " << idx3 - num_atoms_till_i <<"\n";
-				qDebug() << "Amplitude_dih = " << v << " periodicity " << periodicity << " phase " << phase<<"\n";
-
+                if(Debug){
+				    qDebug() << "Dihedral between atom global index " << idx0 - num_atoms_till_i<< 
+				                " and " << idx1 - num_atoms_till_i << 
+				                " and " << idx2 - num_atoms_till_i << 
+				                " and " << idx3 - num_atoms_till_i <<"\n";
+				   qDebug() << "Amplitude_dih = " << v << " periodicity " << periodicity << " phase " << phase<<"\n";
+                }
 			}
 		} // end of dihedrals
 
@@ -1379,7 +1390,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 			if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed improper list
 			    if(improper_pert_list.indexOf(improper_ff)!=-1 || improper_pert_swap_list.indexOf(improper_ff)!=-1){
-			        qDebug() << "Found Perturbed Improper\n";
+			        //qDebug() << "Found Perturbed Improper\n";
                     continue;
 			    }
 			}
@@ -1391,13 +1402,13 @@ void OpenMMFrEnergyST::initialise()  {
 				double phase = improper_params[ k + 2 ];
 
 				bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
-
-				qDebug() << "Improper between atom global index " << idx0 - num_atoms_till_i<< 
-				            " and " << idx1 - num_atoms_till_i << 
-				            " and " << idx2 - num_atoms_till_i << 
-				            " and " << idx3 - num_atoms_till_i <<"\n";
-				qDebug() << "Amplitude_dih = " << v << " periodicity " << periodicity << " phase " << phase<<"\n";
-
+                if(Debug){
+				    qDebug() << "Improper between atom global index " << idx0 - num_atoms_till_i<< 
+				                " and " << idx1 - num_atoms_till_i << 
+				                " and " << idx2 - num_atoms_till_i << 
+				                " and " << idx3 - num_atoms_till_i <<"\n";
+				   qDebug() << "Amplitude_dih = " << v << " periodicity " << periodicity << " phase " << phase<<"\n";
+                }
 			}
 		}//end of impropers
 
