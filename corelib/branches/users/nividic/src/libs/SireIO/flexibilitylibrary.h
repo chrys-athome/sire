@@ -103,7 +103,9 @@ public:
     
     void setRotation(const Angle &angle);
     void setTranslation(const Length &distance);
-    void setMaximumVar(int maxvar);
+    void setMaximumBondVar(int maxvar);
+    void setMaximumAngleVar(int maxvar);
+    void setMaximumDihedralVar(int maxvar);
 
     void setBondDelta(const BondID &bondid, const Length &delta);
     void setAngleDelta(const AngleID &angleid, const Angle &delta);
@@ -111,7 +113,9 @@ public:
     
     Length getTranslation() const;
     Angle getRotation() const;
-    int getMaximumVar() const;
+    int getMaximumBondVar() const;
+    int getMaximumAngleVar() const;
+    int getMaximumDihedralVar() const;
     
     Length getDelta(const BondID &bondid) const;
     Angle getDelta(const AngleID &angleid) const;
@@ -125,7 +129,9 @@ private:
     QString name;
     Length translation;
     Angle rotation;
-    qint32 maxvar;
+    qint32 maxbondvar;
+    qint32 maxanglevar;
+    qint32 maxdihedralvar;
     
     QHash<BondID,Length> bonds;
     QHash<AngleID,Angle> angles;

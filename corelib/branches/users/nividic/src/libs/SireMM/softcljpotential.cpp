@@ -1173,7 +1173,7 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
 
                                     const double shift = ljpair.sigma() * delta[k];
                                 
-                                    double lj_denom = dist2 + shift;
+                                    double lj_denom = r2 + shift;
                                     lj_denom = lj_denom * lj_denom * lj_denom;
                                 
                                     const double sig6_over_denom = sig6 / lj_denom;
@@ -1470,7 +1470,7 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
 
                                     const double shift = ljpair.sigma() * delta[k];
                                 
-                                    double lj_denom = dist2 + shift;
+                                    double lj_denom = r2 + shift;
                                     lj_denom = lj_denom * lj_denom * lj_denom;
                                 
                                     const double sig6_over_denom = sig6 / lj_denom;
@@ -3196,8 +3196,117 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         if (cljscl.coulomb() == 0 and cljscl.lj() == 0)
             return;
 
+	// JM Jan 13
+	if (use_reaction_field)
+	{
+	  double Rc = switchfunc->electrostaticCutoffDistance();
+    
+	  if (Rc != switchfunc->vdwCutoffDistance())
+            throw SireError::unsupported( QObject::tr(
+                    "The IntraSoftCLJ potentials do not support having a reaction field  "
+                    "together with a different coulomb and vdw cutoff distance."), CODELOC );
+
+	  if (Rc > 1e9)
+            Rc = 1e9;
+    
+	  double sRc[nalpha];
+	  double k_rf[nalpha];
+	  double c_rf[nalpha];
+        
+          for (int i=0; i<nalpha; ++i)
+	  {
+            sRc[i] = std::sqrt(alfa[i] + Rc*Rc);
+            k_rf[i] = (1.0 / pow_3(sRc[i])) * ( (rf_dielectric_constant-1) /
+                                                (2*rf_dielectric_constant + 1) );
+            c_rf[i] = (1.0 / sRc[i]) * ( (3*rf_dielectric_constant) /
+                                         (2*rf_dielectric_constant + 1) );
+	  }
+
+	  for (quint32 i=0; i<nats0; ++i)
+          {
+            distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+	    
+            if (param0.ljid == 0)
+            {
+                //null LJ parameter - only add on the coulomb energy
+	      for (quint32 j=0; j<nats1; ++j)
+		{
+		  const double dist2 = distmat[j];
+		  const double q2 = cljscl.coulomb() * 
+		    param0.reduced_charge * params1_array[j].reduced_charge;
+		  for (int k=0; k<nalpha; ++k)
+		    {
+		      const double sr = std::sqrt(alfa[k] + dist2);
+		      const double one_over_sr = double(1) / sr;
+ 
+		      // JM Jan 13. No reaction field on 1,4 atoms?
+		      if (sr < sRc[k])
+			{
+			  if (cljscl.coulomb() != 1)
+			    icnrg[k] += q2 * (one_over_sr);
+			  else
+			    icnrg[k] += q2 * (one_over_sr + sr*sr*k_rf[k] - c_rf[k]);
+			}
+		    }	
+		}
+	    }
+	    else// do both
+	      {
+		for (quint32 j=0; j<nats1; ++j)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param1 = params1_array[j];
+
+		    const double dist2 = distmat[j];
+		    const double q2 = cljscl.coulomb() * 
+		      param0.reduced_charge * param1.reduced_charge;
+                        
+		    for (int k=0; k<nalpha; ++k)
+		      {
+			const double sr = std::sqrt(alfa[k] + dist2);
+			const double one_over_sr = double(1) / sr;
+ 
+			// JM Jan 13. No reaction field on 1,4 atoms?
+			if (sr < sRc[k])
+			  {
+			    if (cljscl.coulomb() != 1)
+			      icnrg[k] += q2 * (one_over_sr);
+			    else
+			      icnrg[k] += q2 * (one_over_sr + sr*sr*k_rf[k] - c_rf[k]);
+			  }
+		      }	
+		    
+                    if (param1.ljid != 0)
+                    {
+		      const LJPair &ljpair = ljpairs.constData()[
+                                                  ljpairs.map(param0.ljid,
+                                                              param1.ljid)];
+		      const double sig2 = ljpair.sigma() * ljpair.sigma();
+		      const double sig6 = sig2 * sig2 * sig2;
+		      		      for (int k=0; k<nalpha; ++k)
+			{
+			  const double shift = ljpair.sigma() * delta[k];
+			  
+			  double lj_denom = dist2 + shift;
+			  lj_denom = lj_denom * lj_denom * lj_denom;
+			  
+			  const double sig6_over_denom = sig6 / lj_denom;
+			  const double sig12_over_denom2 = sig6_over_denom *
+			    sig6_over_denom;
+			  
+			  iljnrg[k] += cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 - 
+									 sig6_over_denom);
+			}
+		    }
+		}// quint j
+	      }//do both
+	  }//quint i
+	}
+	else
+	{
         for (quint32 i=0; i<nats0; ++i)
-        {
+          {
             distmat.setOuterIndex(i);
             const Parameter &param0 = params0_array[i];
                 
@@ -3304,13 +3413,102 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                     }
                 }
             }
-        } 
+          }
+	}
     }
     else
     {
         //there are different nb scale factors between
         //the atoms. We need to calculate the energies using
         //them...
+      if (use_reaction_field)
+      {
+	double Rc = switchfunc->electrostaticCutoffDistance();
+    
+        if (Rc != switchfunc->vdwCutoffDistance())
+            throw SireError::unsupported( QObject::tr(
+                    "The IntraSoftCLJ potentials do not support having a reaction field  "
+                    "together with a different coulomb and vdw cutoff distance."), CODELOC );
+
+        if (Rc > 1e9)
+            Rc = 1e9;
+    
+        double sRc[nalpha];
+        double k_rf[nalpha];
+        double c_rf[nalpha];
+        
+        for (int i=0; i<nalpha; ++i)
+        {
+            sRc[i] = std::sqrt(alfa[i] + Rc*Rc);
+            k_rf[i] = (1.0 / pow_3(sRc[i])) * ( (rf_dielectric_constant-1) /
+                                                (2*rf_dielectric_constant + 1) );
+            c_rf[i] = (1.0 / sRc[i]) * ( (3*rf_dielectric_constant) /
+                                         (2*rf_dielectric_constant + 1) );
+        }
+	
+        for (quint32 i=0; i<nats0; ++i)
+        {
+            distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+                
+	    for (quint32 j=0; j<nats1; ++j)
+	      {
+		  const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+		  if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                  {
+		    const Parameter &param1 = params1_array[j];
+		    
+		    const double dist2 = distmat[j];
+  		        
+		    const double q2 = cljscl.coulomb() * 
+		      param0.reduced_charge * params1_array[j].reduced_charge;
+
+		    // ADAPT FOR RF HERE
+		    for (int k=0; k<nalpha; ++k)
+			  {
+			    const double sr = std::sqrt(alfa[k] + dist2);
+			    const double one_over_sr = double(1) / sr;
+ 
+			    // JM Jan 13. No reaction field on 1,4 atoms?
+			    if (sr < sRc[k])
+                                {
+				  if (cljscl.coulomb() != 1)
+				    icnrg[k] += q2 * (one_over_sr);
+				  else
+				    icnrg[k] += q2 * (one_over_sr + sr*sr*k_rf[k] - c_rf[k]);
+				}
+			  }
+		    
+		    if (cljscl.lj() != 0 and param1.ljid != 0)
+                        {
+			  const LJPair &ljpair = ljpairs.constData()[
+								     ljpairs.map(param0.ljid,
+										 param1.ljid)];
+			  const double sig2 = ljpair.sigma() * ljpair.sigma();
+			  const double sig6 = sig2 * sig2 * sig2;
+			  
+			  for (int k=0; k<nalpha; ++k)
+			    {
+			      const double shift = ljpair.sigma() * delta[k];
+			        
+			      double lj_denom = dist2 + shift;
+			      lj_denom = lj_denom * lj_denom * lj_denom;
+			        
+			      const double sig6_over_denom = sig6 / lj_denom;
+			      const double sig12_over_denom2 = sig6_over_denom *
+				sig6_over_denom;
+			        
+			      iljnrg[k] += cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 - 
+									     sig6_over_denom);
+			    }
+			}
+		  }
+	      }//for (quint32 j
+	}// for quint 32 i
+      }
+      else//JM normal group based cutoff
+      {
         for (quint32 i=0; i<nats0; ++i)
         {
             distmat.setOuterIndex(i);
@@ -3449,6 +3647,7 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                 }
             }
         }
+      }//JM
     }
 }
 
@@ -3472,6 +3671,88 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         if (cljscl.coulomb() == 0 and cljscl.lj() == 0)
             return;
         
+	if (use_reaction_field)
+	{
+	  double Rc = switchfunc->electrostaticCutoffDistance();
+    
+	  if (Rc != switchfunc->vdwCutoffDistance())
+            throw SireError::unsupported( QObject::tr(
+						      "The IntraSoftCLJ potentials do not support having a reaction field  "
+						      "together with a different coulomb and vdw cutoff distance."), CODELOC );
+
+	  if (Rc > 1e9)
+            Rc = 1e9;
+    
+	  double sRc[nalpha];
+	  double k_rf[nalpha];
+	  double c_rf[nalpha];
+        
+	  for (int i=0; i<nalpha; ++i)
+	    {
+	      sRc[i] = std::sqrt(alfa[i] + Rc*Rc);
+	      k_rf[i] = (1.0 / pow_3(sRc[i])) * ( (rf_dielectric_constant-1) /
+						  (2*rf_dielectric_constant + 1) );
+	      c_rf[i] = (1.0 / sRc[i]) * ( (3*rf_dielectric_constant) /
+					   (2*rf_dielectric_constant + 1) );
+	    }
+	  
+	  foreach (Index i, atoms0)
+	    {
+            distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+	    
+	    foreach (Index j, atoms1)
+                {
+		  //do both coulomb and LJ
+		  const Parameter &param1 = params1_array[j];
+		  const double dist2 = distmat[j];
+                        
+		  const double q2 = cljscl.coulomb() * 
+		    param0.reduced_charge * param1.reduced_charge;
+                        
+		  for (int k=0; k<nalpha; ++k)
+		    {
+		      const double sr = std::sqrt(alfa[k] + dist2);
+		      const double one_over_sr = double(1) / sr;
+ 
+		      // JM Jan 13. No reaction field on 1,4 atoms?
+		      if (sr < sRc[k])
+			{
+			  if (cljscl.coulomb() != 1)
+			    icnrg[k] += q2 * (one_over_sr);
+			  else
+			    icnrg[k] += q2 * (one_over_sr + sr*sr*k_rf[k] - c_rf[k]);
+			}		      
+		    }
+		  
+		  if (param1.ljid != 0)
+		      {
+                        const LJPair &ljpair = ljpairs.constData()[
+								   ljpairs.map(param0.ljid,
+									       param1.ljid)];
+			                        const double sig2 = ljpair.sigma() * ljpair.sigma();
+			const double sig6 = sig2 * sig2 * sig2;
+			                        
+			for (int k=0; k<nalpha; ++k)
+			  {
+			    const double shift = ljpair.sigma() * delta[k];
+			    
+			    double lj_denom = dist2 + shift;
+			    lj_denom = lj_denom * lj_denom * lj_denom;
+			    
+			    const double sig6_over_denom = sig6 / lj_denom;
+			    const double sig12_over_denom2 = sig6_over_denom *
+			      sig6_over_denom;
+			    
+			    iljnrg[k] +=  cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 - 
+									    sig6_over_denom);
+			  }
+		      }
+		}// for each j
+	    }//for each i
+	}
+	else//JM
+	{
         foreach (Index i, atoms0)
         {
             distmat.setOuterIndex(i);
@@ -3562,6 +3843,7 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                     }
                 }
             }
+	  }
         } 
     }
     else
@@ -3569,6 +3851,128 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         //there are different nb scale factors between
         //the atoms. We need to calculate the energies using
         //them...
+      if (use_reaction_field)
+      {
+	double Rc = switchfunc->electrostaticCutoffDistance();
+    
+        if (Rc != switchfunc->vdwCutoffDistance())
+            throw SireError::unsupported( QObject::tr(
+                    "The IntraSoftCLJ potentials do not support having a reaction field  "
+                    "together with a different coulomb and vdw cutoff distance."), CODELOC );
+
+        if (Rc > 1e9)
+            Rc = 1e9;
+    
+        double sRc[nalpha];
+        double k_rf[nalpha];
+        double c_rf[nalpha];
+        
+        for (int i=0; i<nalpha; ++i)
+        {
+            sRc[i] = std::sqrt(alfa[i] + Rc*Rc);
+            k_rf[i] = (1.0 / pow_3(sRc[i])) * ( (rf_dielectric_constant-1) /
+                                                (2*rf_dielectric_constant + 1) );
+            c_rf[i] = (1.0 / sRc[i]) * ( (3*rf_dielectric_constant) /
+                                         (2*rf_dielectric_constant + 1) );
+        }
+	
+	foreach (Index i, atoms0)
+	  {
+	    distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+
+	    if (param0.ljid == 0)
+	      {
+		foreach (Index j, atoms1)
+                {
+                    const CLJScaleFactor &cljscl = group_pairs(i,j);
+                            
+                    if (cljscl.coulomb() != 0)
+		      {
+			const double dist2 = distmat[j];
+			
+			const double q2 = cljscl.coulomb() * 
+			  param0.reduced_charge * params1_array[j].reduced_charge;
+			
+			for (int k=0; k<nalpha; ++k)
+			  {
+			    const double sr = std::sqrt(alfa[k] + dist2);
+			    const double one_over_sr = double(1) / sr;
+ 
+			    // JM Jan 13. No reaction field on 1,4 atoms?
+			    if (sr < sRc[k])
+			      {
+				if (cljscl.coulomb() != 1)
+				  icnrg[k] += q2 * (one_over_sr);
+				else
+				  icnrg[k] += q2 * (one_over_sr + sr*sr*k_rf[k] - c_rf[k]);
+			      }
+			  }			
+
+		      }
+		}//foreach j
+	      }
+	    else//do both
+	      {
+		//do both coulomb and LJ
+		foreach (Index j, atoms1)
+		{
+		  const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+		  if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+		  {
+		    const Parameter &param1 = params1_array[j];
+		    
+		    const double dist2 = distmat[j];
+			
+		    const double q2 = cljscl.coulomb() * 
+		      param0.reduced_charge * params1_array[j].reduced_charge;
+			
+		    for (int k=0; k<nalpha; ++k)
+		      {
+			const double sr = std::sqrt(alfa[k] + dist2);
+			const double one_over_sr = double(1) / sr;
+ 
+			// JM Jan 13. No reaction field on 1,4 atoms?
+			if (sr < sRc[k])
+			  {
+			    if (cljscl.coulomb() != 1)
+			      icnrg[k] += q2 * (one_over_sr);
+			    else
+			      icnrg[k] += q2 * (one_over_sr + sr*sr*k_rf[k] - c_rf[k]);
+			  }
+		      }
+
+		    if (cljscl.lj() != 0 and param1.ljid != 0)
+		      {
+			const LJPair &ljpair = ljpairs.constData()[
+                                                     ljpairs.map(param0.ljid,
+                                                                 param1.ljid)];
+			const double sig2 = ljpair.sigma() * ljpair.sigma();
+			const double sig6 = sig2 * sig2 * sig2;
+			                            
+			for (int k=0; k<nalpha; ++k)
+			  {
+			    const double shift = ljpair.sigma() * delta[k];
+			    
+			    double lj_denom = dist2 + shift;
+			    lj_denom = lj_denom * lj_denom * lj_denom;
+			    
+			    const double sig6_over_denom = sig6 / lj_denom;
+			    const double sig12_over_denom2 = sig6_over_denom *
+			      sig6_over_denom;
+			    
+			    iljnrg[k] +=  cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 - 
+									    sig6_over_denom);
+			  }
+		      }
+		  }
+		}//for each j
+	      }//else do both
+	  }//for each i
+      }//if use reacton field
+      else//JM
+      {
         foreach (Index i, atoms0)
         {
             distmat.setOuterIndex(i);
@@ -3666,6 +4070,7 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                 }
             }
         }
+      }
     }
 }
 
@@ -3826,7 +4231,17 @@ void IntraSoftCLJPotential::calculateEnergy(const IntraSoftCLJPotential::Molecul
 	      }
             //now add these energies onto the total for the molecule,
             //scaled by any non-bonded feather factor
-            if (mindist > switchfunc->featherDistance())
+
+	    // JM JAN 13. Make sure RF does not use the code below
+	    if (use_reaction_field)
+	    {
+	      for (int i=0; i<nalpha; ++i)
+		{
+		  cnrg[i] += icnrg[i];
+		  ljnrg[i] += iljnrg[i];
+		}  
+	    }
+            else if (mindist > switchfunc->featherDistance())
             {
 	      //cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
 	      //ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
@@ -4082,7 +4497,16 @@ void IntraSoftCLJPotential::calculateEnergy(const IntraSoftCLJPotential::Molecul
 
             //now add these energies onto the total for the molecule,
             //scaled by any non-bonded feather factor
-            if (mindist > switchfunc->featherDistance())
+	    // JM JAN 13. Make sure RF does not use code below
+	    if (use_reaction_field)
+	    {
+	      for (int i=0; i<nalpha; ++i)
+		{
+		  cnrg[i] += icnrg[i];
+		  ljnrg[i] += iljnrg[i];
+		}  
+	    }
+            else if (mindist > switchfunc->featherDistance())
             {
 	      //cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
 	      // ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;

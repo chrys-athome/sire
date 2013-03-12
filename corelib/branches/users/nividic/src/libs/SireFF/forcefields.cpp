@@ -1208,14 +1208,20 @@ void FFSymbolExpression::expandInTermsOf(const QSet<Symbol> &ffsymbols)
     
     if (not remainder.isZero())
     {
-        qDebug() << QObject::tr(
-                "You may have a forcefield expression that contains a free "
-                "term (%1) that is not dependent on a forcefield component. "
-                "This is because each term must have dimensions of energy, and "
-                "the addition of a constant dimensionless value is not "
-                "dimensionally correct. Please check that the remainder is zero.")
-                    .arg(remainder.toString());
-                    
+
+      /* JM Jan 2013. Temporarily avoid output of this debug statement*/
+      bool debug = 0;
+
+      if (debug)
+	{
+	  qDebug() << QObject::tr(
+				  "You may have a forcefield expression that contains a free "
+				  "term (%1) that is not dependent on a forcefield component. "
+				  "This is because each term must have dimensions of energy, and "
+				  "the addition of a constant dimensionless value is not "
+				  "dimensionally correct. Please check that the remainder is zero.")
+	    .arg(remainder.toString());
+	}
         remainder = 0;
     }
 }

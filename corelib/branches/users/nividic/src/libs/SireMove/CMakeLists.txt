@@ -66,6 +66,7 @@ set ( SIREMOVE_OPENMM_HEADERS
       openmmfrenergydt.h
       openmmfrenergyst.h
       openmmacceleratedmdintegrator.h
+
     )
 
 set ( SIREMOVE_OPENMM_SOURCES
@@ -73,6 +74,7 @@ set ( SIREMOVE_OPENMM_SOURCES
       openmmfrenergydt.cpp
       openmmfrenergyst.cpp
       openmmacceleratedmdintegrator.cpp
+
     )
 
 set ( SIREMOVE_DEPRECATED_HEADERS
@@ -154,6 +156,7 @@ else()
 endif()
 
 add_library (SireMove ${SIREMOVE_SOURCES})
+
 
 set_target_properties (SireMove PROPERTIES
                        VERSION ${SIRE_VERSION}

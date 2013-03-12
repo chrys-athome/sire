@@ -303,11 +303,13 @@ void GridFF::appendTo(QVector<GridFF::Vector4> &coords_and_charges,
     }
 }
 
-inline QString toString(const __m128d &sseval)
-{
-    return QString("{ %1, %2 }").arg(*((const double*)&sseval))
-                                .arg(*( ((const double*)&sseval) + 1));
-}
+#ifdef SIRE_USE_SSE
+    inline QString toString(const __m128d &sseval)
+    {
+        return QString("{ %1, %2 }").arg(*((const double*)&sseval))
+                                    .arg(*( ((const double*)&sseval) + 1));
+    }
+#endif
 
 void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
 {

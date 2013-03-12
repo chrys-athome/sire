@@ -1007,6 +1007,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    rf = words[1].toDouble();
 	    continue;
 	  }
+	// IMPROPERS NOT PARSED FROM THE PERT FILE
 	if ( line.startsWith("initial_expression") and indihedral )
 	  {
 	    QByteArray b = words[1].toAscii();
@@ -1052,8 +1053,8 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	    DihedralID dihedral = DihedralID( AtomName(atom0), AtomName(atom1), AtomName(atom2), AtomName(atom3) );
 	    
 	    //qDebug() << "SETTING DIHEDRAL " << dihedral.toString() ;
-	    //qDebug() << " INIT POT " << init_pot.toString();
-	    //qDebug() << " FINAL POT " << final_pot.toString();
+	    //qDebug() << " INIT FORM " << init_form;
+	    //qDebug() << " FINAL FORM " << final_form;
 
             new_templates[current].setInitDihPotential( dihedral, init_pot);
             new_templates[current].setFinalDihPotential( dihedral, final_pot);
@@ -1063,9 +1064,21 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
 	if ( line.startsWith("endimproper") )
 	  {
 	    ImproperID improper = ImproperID( AtomName(atom0), AtomName(atom1), AtomName(atom2), AtomName(atom3) );
-	    //qDebug() << improper.toString() << atom0 << atom1 << atom2 << atom3 << k0i << ni << phasei << k0f << nf << phasef;
             new_templates[current].setInitImpPotential( improper, init_pot);
             new_templates[current].setFinalImpPotential( improper, final_pot);
+
+	    //qDebug() << " SETING IMPROPER" ;
+	    //qDebug() << improper.toString() << init_form << final_form;
+	    
+	    //atom0 << atom1 << atom2 << atom3 << k0i << ni << phasei << k0f << nf << phasef;
+
+            //new_templates[current].setInitImpPotential( improper, init_pot);
+            //new_templates[current].setFinalImpPotential( improper, final_pot);
+
+            new_templates[current].setInitImpParams( improper, init_form);
+            new_templates[current].setFinalImpParams( improper, final_form);
+	    
+	    // JM 02/13 WHY IS THE ABOVE COMMENTED OUT??
 
 	    indihedral = false;
 	    continue;

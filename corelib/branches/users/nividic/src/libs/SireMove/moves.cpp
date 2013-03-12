@@ -429,8 +429,8 @@ void Moves::preCheck(System &system) const
         
         ++ntries;
 
-        qDebug() << "WARNING - constraints not satisfied\n"
-                 << unsatisfied_constraints.join("\n");
+        //qDebug() << "WARNING - constraints not satisfied\n"
+	//                 << unsatisfied_constraints.join("\n");
 
         if (ntries > 5)
             throw SireSystem::constraint_error( QObject::tr(

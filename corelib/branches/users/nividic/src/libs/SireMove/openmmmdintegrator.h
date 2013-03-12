@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMOVE_OPENMMINTEGRATOR_H
-#define SIREMOVE_OPENMMINTEGRATOR_H
+#ifndef SIREMOVE_OPENMMMDINTEGRATOR_H
+#define SIREMOVE_OPENMMMDINTEGRATOR_H
 
 #include "integrator.h"
 
@@ -37,44 +37,46 @@
 
 #include <cstdio>
 #include "SireUnits/temperature.h"
-
+#include "SireSystem/system.h"
 SIRE_BEGIN_HEADER
 
 #ifdef SIRE_USE_OPENMM
 
 namespace SireMove
 {
-class OpenMMIntegrator;
+class OpenMMMDIntegrator;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMove::OpenMMIntegrator&);
-QDataStream& operator>>(QDataStream&, SireMove::OpenMMIntegrator&);
+QDataStream& operator<<(QDataStream&, const SireMove::OpenMMMDIntegrator&);
+QDataStream& operator>>(QDataStream&, SireMove::OpenMMMDIntegrator&);
 
 namespace SireMove
 {
 
-/** This class implements an MD integrator using OpenMM 
+/** This class implements a "pure" MD integrator using OpenMM. No free energy methods are supported. 
  
     @author Julien Michel and Gaetano Calabro
 */
-class SIREMOVE_EXPORT OpenMMIntegrator
-          : public SireBase::ConcreteProperty<OpenMMIntegrator,Integrator>
+class SIREMOVE_EXPORT OpenMMMDIntegrator
+          : public SireBase::ConcreteProperty<OpenMMMDIntegrator,Integrator>
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const OpenMMIntegrator&);
-friend QDataStream& ::operator>>(QDataStream&, OpenMMIntegrator&);
+friend QDataStream& ::operator<<(QDataStream&, const OpenMMMDIntegrator&);
+friend QDataStream& ::operator>>(QDataStream&, OpenMMMDIntegrator&);
 
 public:
-    OpenMMIntegrator(bool frequent_save_velocities = false);
+    OpenMMMDIntegrator(bool frequent_save_velocities = false);
+ 
+    OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool frequent_save_velocities = false);
     
-    OpenMMIntegrator(const OpenMMIntegrator &other);
+    OpenMMMDIntegrator(const OpenMMMDIntegrator &other);
     
-    ~OpenMMIntegrator();
+    ~OpenMMMDIntegrator();
     
-    OpenMMIntegrator& operator=(const OpenMMIntegrator &other);
+    OpenMMMDIntegrator& operator=(const OpenMMMDIntegrator &other);
     
-    bool operator==(const OpenMMIntegrator &other) const;
-    bool operator!=(const OpenMMIntegrator &other) const;
+    bool operator==(const OpenMMMDIntegrator &other) const;
+    bool operator!=(const OpenMMMDIntegrator &other) const;
     
     static const char* typeName();
     
@@ -84,17 +86,24 @@ public:
     
     bool isTimeReversible() const;
     
+    void initialise();
+
     void integrate(IntegratorWorkspace &workspace,
                    const Symbol &nrg_component, 
                    SireUnits::Dimension::Time timestep,
-                   int nmoves, bool record_stats);
+                   int nmoves, bool record_stats) const;
 
     IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
     IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,const PropertyMap &map = PropertyMap()) const;
 
-    QString getCutoffType(void);
+    QString getIntegrator(void);
+    void setIntegrator(QString);
 
-	void setCutoffType(QString);
+    SireUnits::Dimension::Time getFriction(void);
+    void setFriction(SireUnits::Dimension::Time);
+
+    QString getCutoffType(void);
+    void setCutoffType(QString);
 
     SireUnits::Dimension::Length getCutoff_distance(void);
     void setCutoff_distance(SireUnits::Dimension::Length);
@@ -107,7 +116,7 @@ public:
 	
     double getAndersen_frequency(void);
     void setAndersen_frequency(double);
-	
+
     bool getMCBarostat(void);
     void setMCBarostat(bool);
 	
@@ -126,52 +135,69 @@ public:
     QString getPlatform(void);
     void setPlatform(QString);
 	
-    QVector<double> getAlchemical_values(void);
-    void setAlchemical_values(QVector<double>);
-	
     bool getRestraint(void);
     void setRestraint(bool);
 	
     int getCMMremoval_frequency(void);
     void setCMMremoval_frequency(int);
+    
+    int getBufferFrequency();
+    void setBufferFrequency(int);
+
+    void setDeviceIndex(QString);
+    QString getDeviceIndex(void);
 
 
 private:
-	/** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
+    /** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
+    bool frequent_save_velocities;
+    /** The Molecule Group on which the integrator operates */
+    MolGroupPtr molgroup;
+    /** Pointer to OpenMM context that describes the desired simulation*/
+    //OpenMM::Context* context;
 
-	bool frequent_save_velocities;
+    /**Try instead to...keep a copy of OpenMM::System */
+    OpenMM::System* openmm_system;
+    
+    /** Whether the openmm system has been initialised*/
+    bool isInitialised;
 
-	QString CutoffType;
-	SireUnits::Dimension::Length cutoff_distance;
-	double field_dielectric;
+    QString Integrator_type;
+    SireUnits::Dimension::Time friction;
 
-	bool Andersen_flag;
-	double Andersen_frequency;
+    QString CutoffType;
+    SireUnits::Dimension::Length cutoff_distance;
+    double field_dielectric;
 
-	bool MCBarostat_flag;
-	int MCBarostat_frequency;
+    bool Andersen_flag;
+    double Andersen_frequency;
 
-	QString ConstraintType;
+    bool MCBarostat_flag;
+    int MCBarostat_frequency;
 
-	SireUnits::Dimension::Pressure Pressure;
-	SireUnits::Dimension::Temperature Temperature;
-
-	QString platform_type;
-
-	QVector<double> Alchemical_values;
+    QString ConstraintType;
 	
-	bool Restraint_flag;
+    SireUnits::Dimension::Pressure Pressure;
+    SireUnits::Dimension::Temperature Temperature;
+
+    QString platform_type;
+
+    bool Restraint_flag;
 	
-	int CMMremoval_frequency;
+    int CMMremoval_frequency;
+
+    int buffer_frequency;
+
+    QString device_index;
 
 };
 
 
 }
 
-Q_DECLARE_METATYPE( SireMove::OpenMMIntegrator )
+Q_DECLARE_METATYPE( SireMove::OpenMMMDIntegrator )
 
-SIRE_EXPOSE_CLASS( SireMove::OpenMMIntegrator )
+SIRE_EXPOSE_CLASS( SireMove::OpenMMMDIntegrator )
 
 SIRE_END_HEADER
 
@@ -180,19 +206,19 @@ SIRE_END_HEADER
 namespace SireMove
 {
 
-    class OpenMMIntegrator
+    class OpenMMMDIntegrator
     {
     public:
-        OpenMMIntegrator(){}
-        ~OpenMMIntegrator(){}
+        OpenMMMDIntegrator(){}
+        ~OpenMMMDIntegrator(){}
 
-        static const char* typeName(){ return "SireMM::OpenMMIntegrator"; }
+        static const char* typeName(){ return "SireMM::OpenMMMDIntegrator"; }
 
     };
 
 }
 
-Q_DECLARE_METATYPE( SireMove::OpenMMIntegrator )
+Q_DECLARE_METATYPE( SireMove::OpenMMMDIntegrator )
 
 #endif // SIRE_USE_OPENMM
 

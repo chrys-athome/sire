@@ -523,7 +523,8 @@ void TwoAtomPerturbation::perturbMolecule(MolEditor &molecule,
 
     if (new_property or (new_function != old_function))
     {
-        funcs.set(atm0, atm1, new_function);
+      //funcs.set(atm0, atm1, new_function);
+        funcs.set( BondID(atm0, atm1), new_function);
         molecule.setProperty(param_property, funcs);
     }
 }
@@ -790,7 +791,8 @@ void ThreeAtomPerturbation::perturbMolecule(MolEditor &molecule,
 
     if (new_property or (new_function != old_function))
     {
-        funcs.set(atm0, atm1, atm2, new_function);
+      //funcs.set(atm0, atm1, atm2, new_function);
+        funcs.set(AngleID(atm0, atm1, atm2), new_function);
         molecule.setProperty(param_property, funcs);
     }
 }
@@ -1065,7 +1067,9 @@ void FourAtomPerturbation::perturbMolecule(MolEditor &molecule,
 
     if (new_property or (new_function != old_function))
     {
-        funcs.set(atm0, atm1, atm2, atm3, new_function);
+        //funcs.set(atm0, atm1, atm2, atm3, new_function);
+      // What if this is dealing with impropers?
+        funcs.set( DihedralID(atm0, atm1, atm2, atm3), new_function);
         molecule.setProperty(param_property, funcs);
     }
 }
