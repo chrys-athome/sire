@@ -120,8 +120,12 @@ public:
     void setFinalAngleK(const AngleID &angle, const double &k);
     void setFinalAngleT(const AngleID &angle, const double &r);
 
-    void setInitDihPotential(const DihedralID &dihedral, const Expression &pot);
-    void setFinalDihPotential(const DihedralID &dihedral, const Expression &pot);
+    //void setInitDihPotential(const DihedralID &dihedral, const Expression &pot);
+    //void setFinalDihPotential(const DihedralID &dihedral, const Expression &pot);
+
+    void setInitDihParams(const DihedralID &dihedral, const QList<double> &params);
+    void setFinalDihParams(const DihedralID &dihedral, const QList<double> &params);
+
     //void setInitDihedralK0(const DihedralID &dihedral, const double &k0);
     //void setInitDihedralN(const DihedralID &dihedral, const int &n);
     //void setInitDihedralPhase(const DihedralID &dihedral, const double &phase);
@@ -129,8 +133,11 @@ public:
     //void setFinalDihedralN(const DihedralID &dihedral, const int &n);
     //void setFinalDihedralPhase(const DihedralID &dihedral, const double &phase);
 
-    void setInitImpPotential(const ImproperID &improper, const Expression &pot);
-    void setFinalImpPotential(const ImproperID &improper, const Expression &pot);
+    //void setInitImpPotential(const ImproperID &improper, const Expression &pot);
+    //void setFinalImpPotential(const ImproperID &improper, const Expression &pot);
+
+    void setInitImpParams(const ImproperID &improper, const QList<double> &params);
+    void setFinalImpParams(const ImproperID &improper, const QList<double> &params);
 
     //void setInitImproperK0(const ImproperID &improper, const double &k0);
     //void setInitImproperN(const ImproperID &improper, const int &n);
@@ -159,8 +166,11 @@ public:
     double getFinalAngleT(const AngleID &angle) const;
 
     QList<DihedralID> getDihedrals() const;
-    Expression getInitDihPotential(const DihedralID &dihedral) const;
-    Expression getFinalDihPotential(const DihedralID &dihedral) const;
+    //Expression getInitDihPotential(const DihedralID &dihedral) const;
+    //Expression getFinalDihPotential(const DihedralID &dihedral) const;
+
+    QList<double> getInitDihParams(const DihedralID &dihedral) const;
+    QList<double> getFinalDihParams(const DihedralID &dihedral) const;
     
     //double getInitDihedralK0(const DihedralID &dihedral) const;
     //int getInitDihedralN(const DihedralID &dihedral) const;
@@ -170,8 +180,12 @@ public:
     //double getFinalDihedralPhase(const DihedralID &dihedral) const;
 
     QList<ImproperID> getImpropers() const;
-    Expression getInitImpPotential(const ImproperID &improper) const;
-    Expression getFinalImpPotential(const ImproperID &improper) const;
+    //Expression getInitImpPotential(const ImproperID &improper) const;
+    //Expression getFinalImpPotential(const ImproperID &improper) const;
+
+    QList<double> getInitImpParams(const ImproperID &improper) const;
+    QList<double> getFinalImpParams(const ImproperID &improper) const;
+    
     //double getInitImproperK0(const ImproperID &improper) const;
     //int getInitImproperN(const ImproperID &improper) const;
     //double getInitImproperPhase(const ImproperID &improper) const;
@@ -201,8 +215,11 @@ private:
     QHash<AngleID,double> finalanglesk;
     QHash<AngleID,double> finalanglest;
     // The dihedral parameters
-    QHash<DihedralID,Expression> initdihpotential;
-    QHash<DihedralID,Expression> finaldihpotential;
+    //QHash<DihedralID,Expression> initdihpotential;
+    //QHash<DihedralID,Expression> finaldihpotential;
+
+    QHash<DihedralID,QList<double> > initdihparams;
+    QHash<DihedralID,QList<double> > finaldihparams;
     //QHash<DihedralID,double> initdihedralsk0;
     //QHash<DihedralID,double> initdihedralsn;    
     //QHash<DihedralID,double> initdihedralsphase;
@@ -210,8 +227,11 @@ private:
     //QHash<DihedralID,double> finaldihedralsn;    
     //QHash<DihedralID,double> finaldihedralsphase;
     // The improper parameters
-    QHash<ImproperID,Expression> initimppotential;
-    QHash<ImproperID,Expression> finalimppotential;
+    //QHash<ImproperID,Expression> initimppotential;
+    //QHash<ImproperID,Expression> finalimppotential;
+
+    QHash<ImproperID,QList<double> > initimpparams;
+    QHash<ImproperID,QList<double> > finalimpparams;
     //QHash<ImproperID,double> initimpropersk0;
     //QHash<ImproperID,double> initimpropersn;    
     //QHash<ImproperID,double> initimpropersphase;

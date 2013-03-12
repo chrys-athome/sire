@@ -93,47 +93,47 @@ public:
     IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,const PropertyMap &map = PropertyMap()) const;
 
     QString getCutoffType(void);
-
 	void setCutoffType(QString);
 
     SireUnits::Dimension::Length getCutoff_distance(void);
-    void setCutoff_distance(SireUnits::Dimension::Length);
+	void setCutoff_distance(SireUnits::Dimension::Length);
 	
-    double getField_dielectric(void);
-    void setField_dielectric(double);
+	double getField_dielectric(void);
+	void setField_dielectric(double);
 	
-    bool getAndersen(void);
-    void setAndersen(bool);
+	bool getAndersen(void);
+	void setAndersen(bool);
 	
-    double getAndersen_frequency(void);
-    void setAndersen_frequency(double);
+	double getAndersen_frequency(void);
+	void setAndersen_frequency(double);
 	
-    bool getMCBarostat(void);
-    void setMCBarostat(bool);
 	
-    void setMCBarostat_frequency(int);
-    int getMCBarostat_frequency(void);
+	bool getMCBarostat(void);
+	void setMCBarostat(bool);
 	
-    QString getConstraintType(void);
-    void setConstraintType(QString);    
+	void setMCBarostat_frequency(int);
+	int getMCBarostat_frequency(void);
+	
+	QString getConstraintType(void);
+	void setConstraintType(QString);    
 
-    SireUnits::Dimension::Pressure getPressure(void);
-    void setPressure(SireUnits::Dimension::Pressure);
+	SireUnits::Dimension::Pressure getPressure(void);
+	void setPressure(SireUnits::Dimension::Pressure);
 	
-    SireUnits::Dimension::Temperature getTemperature(void);
-    void setTemperature(SireUnits::Dimension::Temperature);
+	SireUnits::Dimension::Temperature getTemperature(void);
+	void setTemperature(SireUnits::Dimension::Temperature);
 	
-    QString getPlatform(void);
-    void setPlatform(QString);
+	QString getPlatform(void);
+	void setPlatform(QString);
 	
-    QVector<double> getAlchemical_values(void);
-    void setAlchemical_values(QVector<double>);
+	QVector<double> getAlchemical_values(void);
+	void setAlchemical_values(QVector<double>);
 	
-    bool getRestraint(void);
-    void setRestraint(bool);
+	bool getRestraint(void);
+	void setRestraint(bool);
 	
-    int getCMMremoval_frequency(void);
-    void setCMMremoval_frequency(int);
+	int getCMMremoval_frequency(void);
+	void setCMMremoval_frequency(int);
 
 
 private:
