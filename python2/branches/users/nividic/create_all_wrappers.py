@@ -31,3 +31,11 @@ for dir in dirs:
 #os.chdir("Qt")
 #os.system("python create_qt_wrappers.py")
 #os.chdir("..")
+
+
+#
+# Custom wrappers
+# 
+cmd = "cp custom/Base/VariantProperty.pypp.cpp Base/"
+os.system(cmd)
+
