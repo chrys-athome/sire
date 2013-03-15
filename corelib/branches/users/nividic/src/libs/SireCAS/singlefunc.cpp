@@ -130,7 +130,7 @@ QString SingleFunc::toString() const
 /** Return a string representation of this function in the OpenMM syntax*/
 QString SingleFunc::toOpenMMString() const
 {
-    return QString("%1(%2)").arg(stringRep(), ex.toString());
+    return QString("%1(%2)").arg(stringRep(), ex.toOpenMMString());
 }
 
 
