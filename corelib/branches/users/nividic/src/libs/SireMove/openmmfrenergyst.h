@@ -137,6 +137,9 @@ public:
 
 	void setDeviceIndex(QString);
 	QString getDeviceIndex(void);
+	
+	void setPrecision(QString);
+	QString getPrecision(void);
 
 	double getAlchemical_value(void);
 	void setAlchemical_value(double);
@@ -203,6 +206,8 @@ private:
 	int energy_frequency;
 
 	QString device_index;
+	
+	QString precision;
 
 	double Alchemical_value;
 

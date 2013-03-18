@@ -124,7 +124,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMMDIntegrato
     	<< velver.Andersen_flag <<  velver.Andersen_frequency 
     	<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
     	<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency
-	<< velver.device_index
+	<< velver.device_index << velver.LJ_dispersion << velver.precision
     	<< static_cast<const Integrator&>(velver);
     
     // Free OpenMM pointers??
@@ -147,7 +147,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
 	    >> velver.Andersen_flag >>  velver.Andersen_frequency 
 	    >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
 	    >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency
-	    >> velver.device_index 
+	    >> velver.device_index >> velver.LJ_dispersion >> velver.precision
 	    >> static_cast<Integrator&>(velver);
 
 	// Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -174,7 +174,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(bool frequent_save)
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
                  Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0")
+		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0"),LJ_dispersion(true),precision("single")
 	        
 {}
 /** Constructor using the passed molecule group */
@@ -188,7 +188,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
                  Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0")
+		 CMMremoval_frequency(0), buffer_frequency(0),device_index("0"),LJ_dispersion(true),precision("single")
            
 {}
 
@@ -205,7 +205,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const OpenMMMDIntegrator &other)
                  MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
                  Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
                  Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
-		 buffer_frequency(other.buffer_frequency),device_index(other.device_index) 
+		 buffer_frequency(other.buffer_frequency),device_index(other.device_index),LJ_dispersion(other.LJ_dispersion), precision(other.precision)
 
 {}
 
@@ -240,6 +240,8 @@ OpenMMMDIntegrator& OpenMMMDIntegrator::operator=(const OpenMMMDIntegrator &othe
     CMMremoval_frequency = other.CMMremoval_frequency;
     buffer_frequency = other.buffer_frequency;
     device_index = other.device_index;
+    LJ_dispersion = other.LJ_dispersion;
+    precision=other.precision;
     
     return *this;
 }
@@ -341,8 +343,6 @@ void OpenMMMDIntegrator::initialise()  {
 
   OpenMM::NonbondedForce * nonbond_openmm = new OpenMM::NonbondedForce();
 
-  nonbond_openmm->setUseDispersionCorrection(false);
-
   system_openmm->addForce(nonbond_openmm);
 
   if ( flag_cutoff == NOCUTOFF )
@@ -402,11 +402,12 @@ void OpenMMMDIntegrator::initialise()  {
     // Monte Carlo Barostat
     if (MCBarostat_flag == true) 
       {
-	const double converted_Temperature = convertTo(Temperature.value(), kelvin);
-	const double converted_Pressure = convertTo(Pressure.value(), bar);
+	    const double converted_Temperature = convertTo(Temperature.value(), kelvin);
+	    const double converted_Pressure = convertTo(Pressure.value(), bar);
+	    nonbond_openmm->setUseDispersionCorrection(LJ_dispersion);
 	
-	OpenMM::MonteCarloBarostat * barostat = new OpenMM::MonteCarloBarostat(converted_Pressure, converted_Temperature, MCBarostat_frequency);
-	system_openmm->addForce(barostat);
+	    OpenMM::MonteCarloBarostat * barostat = new OpenMM::MonteCarloBarostat(converted_Pressure, converted_Temperature, MCBarostat_frequency);
+	    system_openmm->addForce(barostat);
 		
 	if (Debug) 
 	  {
@@ -414,6 +415,7 @@ void OpenMMMDIntegrator::initialise()  {
 	    qDebug() << "Temperature = " << converted_Temperature << " K\n";
 	    qDebug() << "Pressure = " << converted_Pressure << " bar\n";
 	    qDebug() << "Frequency every " << MCBarostat_frequency << " steps\n";
+	    qDebug() << "Lennard Jones Dispersion term set to " << LJ_dispersion << "\n";
 	  }
       }
 
@@ -969,14 +971,29 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
   
   if (platform_type == "OpenCL")
     {
-      const std::string prop = std::string("OpenCLDeviceIndex");
-      platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
-      //qDebug() << " setting up OpenCL default Index to " << device_index;
+		const std::string prop = std::string("OpenCLDeviceIndex");
+		const std::string prec = std::string("OpenCLPrecision");
+
+		platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
+        platform_openmm.setPropertyDefaultValue(prec, precision.toStdString() );
+        
+		if (Debug){
+			qDebug() << "Setting up OpenCL default Index to " << device_index;
+			qDebug() << "Setting up OpenCL precision to" << precision;
+		}
     }
-  else if (platform_type == "Cuda")
+  else if (platform_type == "CUDA")
     {
-      const std::string prop = std::string("CudaDeviceIndex");
-      platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );   
+		const std::string prop = std::string("CudaDeviceIndex");
+		const std::string prec = std::string("CudaPrecision");
+		platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
+		platform_openmm.setPropertyDefaultValue(prec, precision.toStdString() );
+
+		if (Debug){
+			qDebug() << "Setting up CUDA default Index to " << device_index;
+			qDebug() << "Setting up CUDA precision to" << precision;
+		}
+
     }
   // JM Dec 12. Do we need to set for Reference?
     
@@ -1428,6 +1445,37 @@ void OpenMMMDIntegrator::setDeviceIndex(QString deviceidx){
 
 }
 
+
+/** Set the OpenMM Precision */
+void OpenMMMDIntegrator::setPrecision(QString prec){
+
+	precision = prec;
+
+}
+
+
+/** Get the OpenMMMD Precision */
+QString OpenMMMDIntegrator::getPrecision(void){
+
+	return precision;
+
+}
+
+
+/** Get the Restaint mode*/
+bool OpenMMMDIntegrator::getLJDispersion(void){
+
+	return LJ_dispersion;
+
+}
+
+/** Set the Retraint mode */
+void OpenMMMDIntegrator::setLJDispersion(bool LJ_disp){
+
+	LJ_dispersion = LJ_disp;
+}
+
+
 /** Get the Restaint mode*/
 bool OpenMMMDIntegrator::getRestraint(void){
 
@@ -1494,16 +1542,3 @@ const char* OpenMMMDIntegrator::typeName()
 {
 	return QMetaType::typeName( qMetaTypeId<OpenMMMDIntegrator>() );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

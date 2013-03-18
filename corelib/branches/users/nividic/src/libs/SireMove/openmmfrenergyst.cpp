@@ -130,7 +130,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
 		<< velver.Andersen_flag <<  velver.Andersen_frequency 
 		<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
 		<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.energy_frequency
-		<< velver.device_index << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical << velver.buffer_coords
+		<< velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical << velver.buffer_coords
 		<< velver.gradients
 		<< static_cast<const Integrator&>(velver);
 
@@ -152,7 +152,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
 		>> velver.Andersen_flag >>  velver.Andersen_frequency 
 		>> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
 		>> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.energy_frequency
-		>> velver.device_index >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical >> velver.buffer_coords
+		>> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical >> velver.buffer_coords
 		>> velver.gradients
 		>> static_cast<Integrator&>(velver);
 
@@ -178,7 +178,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
 				Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
 				MCBarostat_frequency(25),ConstraintType("none"),
 				Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),
+				CMMremoval_frequency(0), energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
 				shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients()
 {}
 
@@ -191,7 +191,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const Mo
 				Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
 				MCBarostat_frequency(25),ConstraintType("none"),
 				Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),Alchemical_value(0.5),coulomb_power(0),
+				CMMremoval_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
 				shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients()
 {}
 
@@ -208,7 +208,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
 				MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
 				Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
 				Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
-				energy_frequency(other.energy_frequency),device_index(other.device_index),Alchemical_value(other.Alchemical_value),
+				energy_frequency(other.energy_frequency),device_index(other.device_index),precision(other.precision),Alchemical_value(other.Alchemical_value),
 				coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),
 				delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients)
 {}
@@ -246,6 +246,7 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
 	CMMremoval_frequency = other.CMMremoval_frequency;
 	energy_frequency = other.energy_frequency;
 	device_index = other.device_index;
+	precision = other.precision;
 	Alchemical_value = other.Alchemical_value;
 	coulomb_power = other.coulomb_power;
 	shift_delta = other.shift_delta;
@@ -590,9 +591,9 @@ void OpenMMFrEnergyST::initialise()  {
 
 	system_openmm->addForce(bondStretch_openmm);
 
-	system_openmm->addForce(bondBend_openmm);
+	//system_openmm->addForce(bondBend_openmm);
 
-	system_openmm->addForce(bondTorsion_openmm);
+	//system_openmm->addForce(bondTorsion_openmm);
 
 
 	OpenMM::CustomBondForce* solute_bond_perturbation = NULL;
@@ -762,7 +763,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 				}
 			}
-			
+
 			system_index = system_index + 1;
 
 		}// end of loop on atoms in molecule
@@ -1163,7 +1164,7 @@ void OpenMMFrEnergyST::initialise()  {
                         tmp.replace(QString("phi"),QString("theta"));
                         std::string openmm_str = tmp.toStdString();
 
-                        if(false){
+                        if(Debug){
                             qDebug() << "Dihedral String = " << openmm_str.c_str();
                         }
 
@@ -1214,12 +1215,12 @@ void OpenMMFrEnergyST::initialise()  {
 			if(molecule.isSameMolecule(solutemol)){
 
                 if(bond_pert_list.indexOf(bond_ff) != -1 || bond_pert_swap_list.indexOf(bond_ff) != -1 ){//Solute molecule. Check if the current solute bond is in the perturbed bond list
-                    if(true)
+                    if(Debug)
                         qDebug() << "Found Perturbed Bond\n";
                     continue;
                 }
                 else{
-                    if(true)
+                    if(Debug)
                         qDebug() << "Solute normal Bond - Atom0 = "<< idx0 << "Atom1 = " << idx1 << "\n";
 
                     idx0 = idx0 + num_atoms_till_i;
@@ -1284,7 +1285,6 @@ void OpenMMFrEnergyST::initialise()  {
 			int idx1 = angles[j].atom1().asA<AtomIdx>().value();
 			int idx2= angles[j].atom2().asA<AtomIdx>().value();
 
-
 			if(molecule.isSameMolecule(solutemol)){
 
 			 if(angle_pert_list.indexOf(angle_ff) != -1 || angle_pert_swap_list.indexOf(angle_ff) != -1){//Solute molecule. Check if the current solute angle is in the perturbed angle list
@@ -1336,8 +1336,6 @@ void OpenMMFrEnergyST::initialise()  {
 		}//end of angles
 
 
-
-
 		//Dihedrals
 
 		QList<DihedralID> dihedrals_ff = amber_params.getAllDihedrals();
@@ -1378,7 +1376,6 @@ void OpenMMFrEnergyST::initialise()  {
 		} // end of dihedrals
 
 
-
 		//Improper Dihedrals
 
 		QList<ImproperID> impropers_ff = amber_params.getAllImpropers();
@@ -1396,7 +1393,8 @@ void OpenMMFrEnergyST::initialise()  {
 
 			if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed improper list
 			    if(improper_pert_list.indexOf(improper_ff)!=-1 || improper_pert_swap_list.indexOf(improper_ff)!=-1){
-			        //qDebug() << "Found Perturbed Improper\n";
+			        if(Debug)
+			            qDebug() << "Found Perturbed Improper\n";
                     continue;
 			    }
 			}
@@ -1524,15 +1522,27 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 	if (platform_type == "OpenCL"){
 
 		const std::string prop = std::string("OpenCLDeviceIndex");
+		const std::string prec = std::string("OpenCLPrecision");
 
 		platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
-
-		if (Debug)
+        platform_openmm.setPropertyDefaultValue(prec, precision.toStdString() );
+        
+		if (Debug){
 			qDebug() << "Setting up OpenCL default Index to " << device_index;
+			qDebug() << "Setting up OpenCL precision to" << precision;
+		}
 	}
-	else if (platform_type == "Cuda"){
+	else if (platform_type == "CUDA"){
 		const std::string prop = std::string("CudaDeviceIndex");
-		platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );   
+		const std::string prec = std::string("CudaPrecision");
+		platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
+		platform_openmm.setPropertyDefaultValue(prec, precision.toStdString() );
+
+		if (Debug){
+			qDebug() << "Setting up CUDA default Index to " << device_index;
+			qDebug() << "Setting up CUDA precision to" << precision;
+		}
+		
 	}
 	// JM Dec 12. Do we need to set for Reference?
 
@@ -2134,12 +2144,30 @@ QString OpenMMFrEnergyST::getDeviceIndex(void){
 
 }
 
+/** Set the OpenMM Precision */
+void OpenMMFrEnergyST::setPrecision(QString prec){
+
+	precision = prec;
+
+}
+
+
+/** Get the OpenMMMD Precision */
+QString OpenMMFrEnergyST::getPrecision(void){
+
+	return precision;
+
+}
+
 /** Set the OpenMM Platform: CUDA, OpenCL, CPU */
 void OpenMMFrEnergyST::setDeviceIndex(QString deviceidx){
 
 	device_index = deviceidx;
 
 }
+
+
+
 
 
 /** Get the Restaint mode*/

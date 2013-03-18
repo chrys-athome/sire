@@ -146,6 +146,12 @@ public:
 
     void setDeviceIndex(QString);
     QString getDeviceIndex(void);
+    
+    void setLJDispersion(bool);
+    bool getLJDispersion(void);
+    
+    void setPrecision(QString);
+	QString getPrecision(void);
 
 
 private:
@@ -176,19 +182,23 @@ private:
     int MCBarostat_frequency;
 
     QString ConstraintType;
-	
+
     SireUnits::Dimension::Pressure Pressure;
     SireUnits::Dimension::Temperature Temperature;
 
     QString platform_type;
 
     bool Restraint_flag;
-	
+
     int CMMremoval_frequency;
 
     int buffer_frequency;
 
     QString device_index;
+
+    bool LJ_dispersion;
+
+    QString precision;
 
 };
 
