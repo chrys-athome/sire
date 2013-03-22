@@ -305,10 +305,6 @@ void OpenMMFrEnergyST::initialise()  {
 
 	const MoleculeGroup solutefromdummy = this->solutefromdummy.read();
 
-
-
-
-
 	AtomicVelocityWorkspace ws = this->createWorkspace(moleculegroup).read().asA<AtomicVelocityWorkspace>();
 
 	const int nmols = ws.nMolecules();
@@ -582,14 +578,14 @@ void OpenMMFrEnergyST::initialise()  {
 
 	//OpenMM Bonded Forces
 
-	//OpenMM::HarmonicBondForce * bondStretch_openmm = new OpenMM::HarmonicBondForce();
+	OpenMM::HarmonicBondForce * bondStretch_openmm = new OpenMM::HarmonicBondForce();
 
 	//OpenMM::HarmonicAngleForce * bondBend_openmm = new OpenMM::HarmonicAngleForce();
 
 	OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
 
 
-	//system_openmm->addForce(bondStretch_openmm);
+	system_openmm->addForce(bondStretch_openmm);
 
 	//system_openmm->addForce(bondBend_openmm);
 
@@ -1205,7 +1201,7 @@ void OpenMMFrEnergyST::initialise()  {
 		QVector<BondID> bonds = bonds_ff.toVector();
 		
 
-		/*for (int j=0; j < bonds_ff.length() ; j++){
+		for (int j=0; j < bonds_ff.length() ; j++){
 
 			BondID bond_ff = bonds_ff[j];
             QList<double> bond_params = amber_params.getParams(bond_ff);
@@ -1266,7 +1262,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 			//Bond exclusion List
 			bondPairs.push_back(std::make_pair(idx0,idx1));
-		}*/
+		}
 
 
 
@@ -1297,7 +1293,7 @@ void OpenMMFrEnergyST::initialise()  {
                 }
                 else{
 
-                    if(true)
+                    if(Debug)
                         qDebug() << "Solute normal Angle - Atom0 = "<< idx0 << "Atom1 = " << idx1 << "Atom2 = " << idx2 <<"theta0 = "<< theta0 <<" k = "<< k << "\n";
 
                     idx0 = idx0 + num_atoms_till_i;

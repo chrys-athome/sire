@@ -110,6 +110,9 @@ public:
 	
     double getField_dielectric(void);
     void setField_dielectric(double);
+    
+    double getTollerandeEwaldPME(void);
+    void setTollerandeEwaldPME(double);
 	
     bool getAndersen(void);
     void setAndersen(bool);
@@ -175,6 +178,8 @@ private:
     SireUnits::Dimension::Length cutoff_distance;
     double field_dielectric;
 
+    double tollerance_ewald_pme;
+
     bool Andersen_flag;
     double Andersen_frequency;
 
@@ -199,6 +204,7 @@ private:
     bool LJ_dispersion;
 
     QString precision;
+
 
 };
 

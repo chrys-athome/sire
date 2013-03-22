@@ -96,7 +96,9 @@ using namespace std;
 enum {
 	NOCUTOFF = 0,
 	CUTOFFNONPERIODIC = 1,
-	CUTOFFPERIODIC = 2
+	CUTOFFPERIODIC = 2,
+	EWALD = 3,
+	PME = 4
 };
 
 enum {
@@ -120,7 +122,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMMDIntegrato
     
     sds << velver.frequent_save_velocities << velver.molgroup 
 	<< velver.Integrator_type << velver.friction
-        << velver.CutoffType << velver.cutoff_distance << velver.field_dielectric
+        << velver.CutoffType << velver.cutoff_distance << velver.field_dielectric << velver.tollerance_ewald_pme
     	<< velver.Andersen_flag <<  velver.Andersen_frequency 
     	<< velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
     	<<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency
@@ -143,7 +145,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMMDIntegrator &vel
         
         sds >> velver.frequent_save_velocities >> velver.molgroup 
 	    >> velver.Integrator_type >> velver.friction
-	    >> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric
+	    >> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric >> velver.tollerance_ewald_pme
 	    >> velver.Andersen_flag >>  velver.Andersen_frequency 
 	    >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
 	    >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency
@@ -170,7 +172,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(bool frequent_save)
 		 molgroup(MoleculeGroup()),
 		 openmm_system(0),isInitialised(false),
 		 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),
-                 CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
+                 CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),tollerance_ewald_pme(0.0001),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
                  Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
@@ -184,7 +186,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const MoleculeGroup &molecule_group, bool
 		 molgroup(molecule_group),
 		 openmm_system(0),isInitialised(false),
 		 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),
-                 CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),
+                 CutoffType("nocutoff"), cutoff_distance(1.0 * nanometer),field_dielectric(78.3),tollerance_ewald_pme(0.0001),
                  Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                  MCBarostat_frequency(25),ConstraintType("none"),
                  Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
@@ -200,7 +202,7 @@ OpenMMMDIntegrator::OpenMMMDIntegrator(const OpenMMMDIntegrator &other)
 		 openmm_system(other.openmm_system),isInitialised(other.isInitialised),
 		 Integrator_type(other.Integrator_type),friction(other.friction),
                  CutoffType(other.CutoffType),cutoff_distance(other.cutoff_distance),
-                 field_dielectric(other.field_dielectric), Andersen_flag(other.Andersen_flag),
+                 field_dielectric(other.field_dielectric), tollerance_ewald_pme(other.tollerance_ewald_pme),Andersen_flag(other.Andersen_flag),
                  Andersen_frequency(other.Andersen_frequency), MCBarostat_flag(other.MCBarostat_flag),
                  MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
                  Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
@@ -228,6 +230,7 @@ OpenMMMDIntegrator& OpenMMMDIntegrator::operator=(const OpenMMMDIntegrator &othe
     CutoffType = other.CutoffType;
     cutoff_distance = other.cutoff_distance;
     field_dielectric = other.field_dielectric;
+    tollerance_ewald_pme = other.tollerance_ewald_pme;
     Andersen_flag = other.Andersen_flag;
     Andersen_frequency = other.Andersen_frequency;
     MCBarostat_flag = other.MCBarostat_flag;
@@ -314,9 +317,13 @@ void OpenMMMDIntegrator::initialise()  {
     flag_cutoff = CUTOFFNONPERIODIC;
   else if (CutoffType == "cutoffperiodic")
     flag_cutoff = CUTOFFPERIODIC;
+  else if (CutoffType == "ewald")
+    flag_cutoff = EWALD;
+  else if (CutoffType == "pme")
+    flag_cutoff = PME;
   else
     throw SireError::program_bug(QObject::tr(
-     "The CutOff method has not been specified. Possible choises: nocutoff, cutoffnonperiodic, cutoffperiodic"), CODELOC);
+     "The CutOff method has not been specified. Possible choises: nocutoff, cutoffnonperiodic, cutoffperiodic,ewal,pme"), CODELOC);
 		
   if (Debug)
     qDebug() << "\nCutoffType = " << CutoffType << "\n";
@@ -356,20 +363,34 @@ void OpenMMMDIntegrator::initialise()  {
     {
       const double converted_cutoff_distance = convertTo(cutoff_distance.value(), nanometer);
       
-      if( flag_cutoff == CUTOFFNONPERIODIC )
-	nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffNonPeriodic);
-      else
-	nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffPeriodic);
-     
+        if( flag_cutoff == CUTOFFNONPERIODIC ){
+            nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffNonPeriodic);
+           //Set Dielectric constant media
+           nonbond_openmm->setReactionFieldDielectric(field_dielectric);
+        }
+        else if (flag_cutoff == CUTOFFPERIODIC){
+            nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::CutoffPeriodic);
+            //Set Dielectric constant media
+           nonbond_openmm->setReactionFieldDielectric(field_dielectric);
+        }
+        else if (flag_cutoff == EWALD){
+            nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::Ewald);
+            nonbond_openmm->setEwaldErrorTolerance(tollerance_ewald_pme);
+        }
+        else if (flag_cutoff == PME){
+            nonbond_openmm->setNonbondedMethod(OpenMM::NonbondedForce::PME);
+            nonbond_openmm->setEwaldErrorTolerance(tollerance_ewald_pme);
+        }
+
       nonbond_openmm->setCutoffDistance(converted_cutoff_distance);
 
-      //Set Dielectric constant media
-      nonbond_openmm->setReactionFieldDielectric(field_dielectric);
-      
       if (Debug) {
-	qDebug() << "\nCut off type = " << CutoffType << "\n";
-	qDebug() << "CutOff distance = " << converted_cutoff_distance  << " Nm" << "\n";
-	qDebug() << "Dielectric constant= " << field_dielectric << "\n\n";
+	    qDebug() << "\nCut off type = " << CutoffType << "\n";
+	    qDebug() << "CutOff distance = " << converted_cutoff_distance  << " Nm" << "\n";
+        if(flag_cutoff == CUTOFFNONPERIODIC || flag_cutoff == CUTOFFPERIODIC)
+	        qDebug() << "Dielectric constant = " << field_dielectric << "\n\n";
+	    else if (flag_cutoff == EWALD || flag_cutoff == PME)
+	        qDebug() << "Tollerance EWALD/PME = " << tollerance_ewald_pme << "\n\n";
       }
     }
     
@@ -1063,7 +1084,7 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
 
   bool isperiodic = false;
 
-  if ( CutoffType == "cutoffperiodic" )
+  if ( CutoffType == "cutoffperiodic" || CutoffType == "ewald" || CutoffType == "pme")
   {
     const System & ptr_sys = ws.system();
     const PropertyName &space_property = PropertyName("space");
@@ -1322,6 +1343,20 @@ void OpenMMMDIntegrator::setField_dielectric(double dielectric){
 	field_dielectric=dielectric;
 
 }
+
+/** Set the Ewald or PME tollerance */
+double OpenMMMDIntegrator::getTollerandeEwaldPME(void){
+
+    return  tollerance_ewald_pme;
+
+}
+
+void OpenMMMDIntegrator::setTollerandeEwaldPME(double toll){
+
+    tollerance_ewald_pme = toll;
+
+}
+
 
 /** Set Andersen thermostat */
 
