@@ -584,40 +584,40 @@ void OpenMMFrEnergyST::initialise()  {
 
 	//OpenMM::HarmonicBondForce * bondStretch_openmm = new OpenMM::HarmonicBondForce();
 
-	OpenMM::HarmonicAngleForce * bondBend_openmm = new OpenMM::HarmonicAngleForce();
+	//OpenMM::HarmonicAngleForce * bondBend_openmm = new OpenMM::HarmonicAngleForce();
 
-	//OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
+	OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
 
 
 	//system_openmm->addForce(bondStretch_openmm);
 
-	system_openmm->addForce(bondBend_openmm);
+	//system_openmm->addForce(bondBend_openmm);
 
-	//system_openmm->addForce(bondTorsion_openmm);
+	system_openmm->addForce(bondTorsion_openmm);
 
 
 	//OpenMM::CustomBondForce* solute_bond_perturbation = NULL;
 
-	OpenMM::CustomAngleForce* solute_angle_perturbation = NULL;
+	/*OpenMM::CustomAngleForce* solute_angle_perturbation = NULL;
 
 
-	/*solute_bond_perturbation = new OpenMM::CustomBondForce("B*(r-req)^2;"
+	solute_bond_perturbation = new OpenMM::CustomBondForce("B*(r-req)^2;"
 															"B=bend*lam+(1.0-lam)*bstart;"
 															"req=rend*lam+(1.0-lam)*rstart;"
 															"lam=max(0,min(1,lambda))");
 	
-	solute_bond_perturbation->addGlobalParameter("lambda",Alchemical_value);*/
+	solute_bond_perturbation->addGlobalParameter("lambda",Alchemical_value);
 	
 	solute_angle_perturbation = new OpenMM::CustomAngleForce("A*(theta-thetaeq)^2;"
 															"A=aend*lam+(1.0-lam)*astart;"
 															"thetaeq=thetaend*lam+(1.0-lam)*thetastart;"
 															"lam=max(0,min(1,lambda))");
 
-    solute_angle_perturbation->addGlobalParameter("lambda",Alchemical_value);
+    solute_angle_perturbation->addGlobalParameter("lambda",Alchemical_value);*/
 
 
 	//system_openmm->addForce(solute_bond_perturbation);
-	system_openmm->addForce(solute_angle_perturbation);
+	//system_openmm->addForce(solute_angle_perturbation);
 
 
 
@@ -825,12 +825,12 @@ void OpenMMFrEnergyST::initialise()  {
 	/*solute_bond_perturbation->addPerBondParameter("bstart");
 	solute_bond_perturbation->addPerBondParameter("bend");
 	solute_bond_perturbation->addPerBondParameter("rstart");
-	solute_bond_perturbation->addPerBondParameter("rend");*/
+	solute_bond_perturbation->addPerBondParameter("rend");
 
 	solute_angle_perturbation->addPerAngleParameter("astart");
 	solute_angle_perturbation->addPerAngleParameter("aend");
 	solute_angle_perturbation->addPerAngleParameter("thetastart");
-	solute_angle_perturbation->addPerAngleParameter("thetaend");
+	solute_angle_perturbation->addPerAngleParameter("thetaend");*/
 
 
 	Molecule solutemol = solute.moleculeAt(0).molecule();
@@ -1135,12 +1135,12 @@ void OpenMMFrEnergyST::initialise()  {
                         solute_angle_perturbation_params[2] = thetastart;
                         solute_angle_perturbation_params[3] = thetaend;
                         
-                        solute_angle_perturbation->addAngle(idx0,idx1,idx2,solute_angle_perturbation_params);
+                        //solute_angle_perturbation->addAngle(idx0,idx1,idx2,solute_angle_perturbation_params);
                         
                         angle_pert_list.append(AngleID(three.atom0(),three.atom1(),three.atom2()));
                         angle_pert_swap_list.append(AngleID(three.atom2(),three.atom1(),three.atom0()));
 
-                        if(true){
+                        if(Debug){
                             qDebug() << "Atom0 = " << three.atom0().asA<AtomIdx>().value() << 
                                         "Atom1 = "<< three.atom1().asA<AtomIdx>().value() << 
                                         "Atom2 = "<< three.atom2().asA<AtomIdx>().value() ;
@@ -1162,19 +1162,22 @@ void OpenMMFrEnergyST::initialise()  {
                         
                         QString tmp = four.perturbExpression().toOpenMMString();
                         tmp.replace(QString("phi"),QString("theta"));
+                        tmp = "( " + tmp + " ) * " + "KJPerKcal";
+                        
                         std::string openmm_str = tmp.toStdString();
 
-                        if(Debug){
+                        if(true){
                             qDebug() << "Dihedral String = " << openmm_str.c_str();
+                            //qDebug() << "Dihedral Normal String = " << four.perturbExpression().toString();
                         }
 
-                        /*solute_torsion_perturbation = new OpenMM::CustomTorsionForce(openmm_str);
-                        solute_torsion_perturbation->addPerTorsionParameter("dummy_param");
-                        solute_torsion_perturbation_params[0]=1.0;
-                        solute_torsion_perturbation->addGlobalParameter("lambda",Alchemical_value * OpenMM::KJPerKcal);
-                        solute_torsion_perturbation->addTorsion(idx0,idx1,idx2,idx3,solute_torsion_perturbation_params);*/
+                        OpenMM::CustomTorsionForce * solute_torsion_perturbation = new OpenMM::CustomTorsionForce(openmm_str);
+                        solute_torsion_perturbation->addPerTorsionParameter("KJPerKcal");
+                        solute_torsion_perturbation_params[0]=4.184;
+                        solute_torsion_perturbation->addGlobalParameter("lambda",Alchemical_value);
+                        solute_torsion_perturbation->addTorsion(idx0,idx1,idx2,idx3,solute_torsion_perturbation_params);
 
-                       // system_openmm->addForce(solute_torsion_perturbation);
+                        system_openmm->addForce(solute_torsion_perturbation);
 
                         dihedral_pert_list.append(DihedralID(four.atom0(),four.atom1(),four.atom2(),four.atom3()));
                         dihedral_pert_swap_list.append(DihedralID(four.atom3(),four.atom1(),four.atom2(),four.atom0()));
@@ -1272,7 +1275,7 @@ void OpenMMFrEnergyST::initialise()  {
 		QList<AngleID> angles_ff = amber_params.getAllAngles();
 		QVector<AngleID> angles = angles_ff.toVector();
 
-		for (int j=0; j < angles_ff.length() ; j++){
+		/*for (int j=0; j < angles_ff.length() ; j++){
 
 			AngleID angle_ff = angles_ff[j];
 			QList<double> angle_params = amber_params.getParams(angle_ff);
@@ -1304,7 +1307,7 @@ void OpenMMFrEnergyST::initialise()  {
                     continue;
                 }
 			}
-          /*  if(Debug)
+            if(Debug)
                 qDebug() << "Angle - Atom0 = "<< idx0 << "Atom1 = " << idx1 << "Atom2 = " << idx2 <<"\n";
 
 			QString atom0 =  molecule.atom(AtomIdx(idx0)).toString();
@@ -1332,16 +1335,16 @@ void OpenMMFrEnergyST::initialise()  {
 			}
 			else{
 				bondBend_openmm->addAngle(idx0,idx1,idx2, theta0 , k * 2.0 * OpenMM::KJPerKcal);
-			}*/
+			}
 		}//end of angles
-    
+        */
 
 		//Dihedrals
 
 		QList<DihedralID> dihedrals_ff = amber_params.getAllDihedrals();
 		QVector<DihedralID> dihedrals = dihedrals_ff.toVector();
 
-		/*for (int j=0; j < dihedrals_ff.length() ; j++ ){
+		for (int j=0; j < dihedrals_ff.length() ; j++ ){
 
 			DihedralID dihedral_ff = dihedrals_ff[j];
 			QList<double> dihedral_params = amber_params.getParams(dihedral_ff);
@@ -1354,7 +1357,7 @@ void OpenMMFrEnergyST::initialise()  {
 			if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed dihedral list
 			    if(dihedral_pert_list.indexOf(dihedral_ff)!=-1 || dihedral_pert_swap_list.indexOf(dihedral_ff)!=-1){
 			        if(Debug)
-			            qDebug() << "Found Perturbed Dihedral\n";
+                    qDebug() << "Found Perturbed Dihedral\n";
                     continue;
 			    }
 			}
@@ -1366,11 +1369,11 @@ void OpenMMFrEnergyST::initialise()  {
 				double phase = dihedral_params[ k + 2 ];
 				bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
                 if(Debug){
-				    qDebug() << "Dihedral between atom global index " << idx0 - num_atoms_till_i<< 
+                        qDebug() << "Dihedral between atom global index " << idx0 - num_atoms_till_i<< 
 				                " and " << idx1 - num_atoms_till_i << 
 				                " and " << idx2 - num_atoms_till_i << 
 				                " and " << idx3 - num_atoms_till_i <<"\n";
-				    qDebug() << "Amplitude_dih = " << v << " periodicity " << periodicity << " phase " << phase<<"\n";
+                        qDebug() << "Amplitude_dih = " << v << " periodicity " << periodicity << " phase " << phase<<"\n";
                 }
 			}
 		} // end of dihedrals
@@ -1406,15 +1409,15 @@ void OpenMMFrEnergyST::initialise()  {
 				double phase = improper_params[ k + 2 ];
 
 				bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
-                if(Debug){
-				    qDebug() << "Improper between atom global index " << idx0 - num_atoms_till_i<< 
+                if(true){
+                        qDebug() << "Improper between atom global index " << idx0 - num_atoms_till_i<< 
 				                " and " << idx1 - num_atoms_till_i << 
 				                " and " << idx2 - num_atoms_till_i << 
 				                " and " << idx3 - num_atoms_till_i <<"\n";
-				    qDebug() << "Amplitude_imp = " << v << " periodicity " << periodicity << " phase " << phase<<"\n";
+                        qDebug() << "Amplitude_imp = " << v << " periodicity " << periodicity << " phase " << phase<<"\n";
                 }
 			}
-		}//end of impropers*/
+		}//end of impropers
 
 		num_atoms_till_i = num_atoms_till_i + num_atoms_molecule ;
 
