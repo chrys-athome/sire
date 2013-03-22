@@ -1078,7 +1078,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 		if (Debug)
 			qDebug() << "Setting up OpenCL default Index to " << device_index;
 	}
-	else if (platform_type == "Cuda"){
+	else if (platform_type == "CUDA"){
 		const std::string prop = std::string("CudaDeviceIndex");
 		platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );   
 	}
@@ -1324,9 +1324,9 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 			potential_energy_lambda_minus_delta = state_openmm.getPotentialEnergy();
 
-			plus = exp(-beta * potential_energy_lambda_plus_delta) * exp(beta * potential_energy_lambda);
+			plus = exp(-beta * (potential_energy_lambda_plus_delta - potential_energy_lambda));
 
-			minus =  exp(-beta * potential_energy_lambda_minus_delta) * exp(beta * potential_energy_lambda);
+			minus =  exp(-beta * (potential_energy_lambda_minus_delta - potential_energy_lambda));
 
 			lam_val = context_openmm.getParameter("lambda");
 
@@ -1338,6 +1338,7 @@ void OpenMMFrEnergyDT::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 		GF_acc = GF_acc + plus;
 		GB_acc = GB_acc + minus;
+		
 
 		if(isnormal(GF_acc==0) || isnormal(GB_acc==0)){ 
 			throw SireError::program_bug(QObject::tr("******************* Not a Number. Error! *******************"), CODELOC);
