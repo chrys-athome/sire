@@ -299,8 +299,9 @@ void OpenMMFrEnergyST::initialise()  {
 		throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because solute group has not been defined"), CODELOC);
 	}
 
-	const MoleculeGroup solutehard = this->solutehard.read();
 
+	const MoleculeGroup solutehard = this->solutehard.read();
+	
 	const MoleculeGroup solutetodummy = this->solutetodummy.read();
 
 	const MoleculeGroup solutefromdummy = this->solutefromdummy.read();
@@ -615,8 +616,6 @@ void OpenMMFrEnergyST::initialise()  {
 	system_openmm->addForce(solute_bond_perturbation);
 	system_openmm->addForce(solute_angle_perturbation);
 
-
-
 	// Check whether positional restraints have been defined for a set of atoms in that molecule.
 	// You can get the information out by getting the property and casting to VariantProperty
 	//From VariantProperty you have the QVariant, so you can call .toDouble() and .toInt() there
@@ -913,10 +912,9 @@ void OpenMMFrEnergyST::initialise()  {
 				non_bonded_perturbation_params[9]=1.0;
 			    if(Debug)
 				    qDebug() << "hard solute = " << atom.index() << "\n";
-				
-			}
-			else if(solutetodummy.moleculeAt(0).atoms().contains(atom)){//to dummy solute atom
 
+			}
+			/*else if(solutetodummy.moleculeAt(0).atoms().contains(atom)){//to dummy solute atom
 				solute_solute_solvent_solvent_params[3]=1.0;
 
 				double charge_start = start_charges[j].value();
@@ -941,10 +939,10 @@ void OpenMMFrEnergyST::initialise()  {
 				if(Debug)
 				    qDebug() << "to dummy solute = " << atom.index() << "\n";
 
-			}
+			}*/
 
 			else if(solutefromdummy.moleculeAt(0).atoms().contains(atom)){//from dummy solute atom 
-
+qDebug() << "*****************************************************HERE*****************************************";
 				solute_solute_solvent_solvent_params[3]=1.0;
 
 				double charge_start = start_charges[j].value();
@@ -966,7 +964,7 @@ void OpenMMFrEnergyST::initialise()  {
 				non_bonded_perturbation_params[8]=sigma_final * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[9]=1.0;
                 
-                if(Debug)
+                if(true)
 				    qDebug() << "from dummy solute = " << atom.index() << "\n";
 
 			}
@@ -1054,8 +1052,6 @@ void OpenMMFrEnergyST::initialise()  {
 			nions=nions+1;
 			continue;
 		}
-
-
 		//BONDED TERMS
 
         QList< BondID > bond_pert_list;
