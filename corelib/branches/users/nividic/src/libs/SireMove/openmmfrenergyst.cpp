@@ -888,7 +888,7 @@ void OpenMMFrEnergyST::initialise()  {
 			solute_solute_solvent_solvent_params[1]=sigma * OpenMM::NmPerAngstrom;
 			solute_solute_solvent_solvent_params[2]=epsilon * OpenMM::KJPerKcal;
 
-			if(solutehard.moleculeAt(0).atoms().contains(atom)){//hard solute atom
+			if(!solutehard.isEmpty() && solutehard.moleculeAt(0).atoms().contains(atom)){//hard solute atom
 
 				solute_solute_solvent_solvent_params[3]=1.0;
 
@@ -914,7 +914,7 @@ void OpenMMFrEnergyST::initialise()  {
 				    qDebug() << "hard solute = " << atom.index() << "\n";
 
 			}
-			/*else if(solutetodummy.moleculeAt(0).atoms().contains(atom)){//to dummy solute atom
+			else if(!solutetodummy.isEmpty() && solutetodummy.moleculeAt(0).atoms().contains(atom)){//to dummy solute atom
 				solute_solute_solvent_solvent_params[3]=1.0;
 
 				double charge_start = start_charges[j].value();
@@ -939,10 +939,10 @@ void OpenMMFrEnergyST::initialise()  {
 				if(Debug)
 				    qDebug() << "to dummy solute = " << atom.index() << "\n";
 
-			}*/
+			}
 
-			else if(solutefromdummy.moleculeAt(0).atoms().contains(atom)){//from dummy solute atom 
-qDebug() << "*****************************************************HERE*****************************************";
+			else if(!solutefromdummy.isEmpty() && solutefromdummy.moleculeAt(0).atoms().contains(atom)){//from dummy solute atom
+                
 				solute_solute_solvent_solvent_params[3]=1.0;
 
 				double charge_start = start_charges[j].value();
@@ -964,7 +964,7 @@ qDebug() << "*****************************************************HERE**********
 				non_bonded_perturbation_params[8]=sigma_final * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[9]=1.0;
                 
-                if(true)
+                if(Debug)
 				    qDebug() << "from dummy solute = " << atom.index() << "\n";
 
 			}
