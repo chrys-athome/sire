@@ -599,16 +599,15 @@ void OpenMMFrEnergyST::initialise()  {
 
 
 	solute_bond_perturbation = new OpenMM::CustomBondForce("B*(r-req)^2;"
-															"B=bend*lam+(1.0-lam)*bstart;"
-															"req=rend*lam+(1.0-lam)*rstart;"
-															"lam=max(0,min(1,lambda))");
-	
+															"B=bend*lambda+(1.0-lambda)*bstart;"
+															"req=rend*lambda+(1.0-lambda)*rstart");
+
+
 	solute_bond_perturbation->addGlobalParameter("lambda",Alchemical_value);
-	
+
 	solute_angle_perturbation = new OpenMM::CustomAngleForce("A*(theta-thetaeq)^2;"
-															"A=aend*lam+(1.0-lam)*astart;"
-															"thetaeq=thetaend*lam+(1.0-lam)*thetastart;"
-															"lam=max(0,min(1,lambda))");
+															"A=aend*lambda+(1.0-lambda)*astart;"
+															"thetaeq=thetaend*lambda+(1.0-lambda)*thetastart");
 
     solute_angle_perturbation->addGlobalParameter("lambda",Alchemical_value);
 
@@ -2222,7 +2221,7 @@ double OpenMMFrEnergyST::getAlchemical_value(void){
 /** Set the alchemical value used to calculate the free energy change via TI method*/
 void OpenMMFrEnergyST::setAlchemical_value(double lambda_value){
 
-	Alchemical_value = lambda_value;
+	Alchemical_value = max(0.0,min(1.0,lambda_value));
 
 }
 
