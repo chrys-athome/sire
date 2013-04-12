@@ -583,14 +583,14 @@ void OpenMMFrEnergyST::initialise()  {
 
 	//OpenMM::HarmonicAngleForce * bondBend_openmm = new OpenMM::HarmonicAngleForce();
 
-	//OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
+	OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
 
 
 	//system_openmm->addForce(bondStretch_openmm);
 
 	//system_openmm->addForce(bondBend_openmm);
 
-	//system_openmm->addForce(bondTorsion_openmm);
+	system_openmm->addForce(bondTorsion_openmm);
 
 
 	//OpenMM::CustomBondForce* solute_bond_perturbation = NULL;
@@ -1103,7 +1103,7 @@ void OpenMMFrEnergyST::initialise()  {
                         bond_pert_swap_list.append(BondID(two.atom1(),two.atom0()));
 
                         bondPairs.push_back(std::make_pair(idx0,idx1));
-                        if(true){
+                        if(Debug){
                             qDebug() << "Atom0 = " << two.atom0().asA<AtomIdx>().value() << 
                                         "Atom1 = "<< two.atom1().asA<AtomIdx>().value() ;
                             qDebug() << "IDX0 = " << idx0 <<  "IDX1 = " << idx1  << "\n";
@@ -1162,21 +1162,21 @@ void OpenMMFrEnergyST::initialise()  {
                         
                         std::string openmm_str = tmp.toStdString();
 
-                        if(Debug){
-                            qDebug() << "Dihedral String = " << openmm_str.c_str();
+                        if(true){
                             qDebug() << "IDX0 = " << idx0 <<  "IDX1 = " << idx1 <<  "IDX2 = " << idx2 <<  "IDX3 = " << idx3;
-                            qDebug() << "Dihedral Normal String = " << four.perturbExpression().toString();
+                            qDebug() << "Dihedral String = " << openmm_str.c_str();
+                            qDebug() << "Dihedral Normal String = " << four.perturbExpression().toString() << "\n";
                         }
 
-                        /*OpenMM::CustomTorsionForce* solute_torsion_perturbation = NULL;
-                        
+                        OpenMM::CustomTorsionForce* solute_torsion_perturbation = NULL;
+ 
                         solute_torsion_perturbation = new OpenMM::CustomTorsionForce(openmm_str);
                         solute_torsion_perturbation->addPerTorsionParameter("KJPerKcal");
                         solute_torsion_perturbation_params[0]=4.184;
                         solute_torsion_perturbation->addGlobalParameter("lambda",Alchemical_value);
                         solute_torsion_perturbation->addTorsion(idx0,idx1,idx2,idx3,solute_torsion_perturbation_params);
 
-                        system_openmm->addForce(solute_torsion_perturbation);*/
+                        system_openmm->addForce(solute_torsion_perturbation);
 
                         dihedral_pert_list.append(DihedralID(four.atom0(),four.atom1(),four.atom2(),four.atom3()));
                         dihedral_pert_swap_list.append(DihedralID(four.atom3(),four.atom1(),four.atom2(),four.atom0()));
@@ -1354,6 +1354,14 @@ void OpenMMFrEnergyST::initialise()  {
 			int idx2 = dihedrals[j].atom2().asA<AtomIdx>().value() + num_atoms_till_i;
 			int idx3 = dihedrals[j].atom3().asA<AtomIdx>().value() + num_atoms_till_i;
 
+
+			if(true){
+                        qDebug() << "TOTAL Dihedral between atom global index " << idx0 - num_atoms_till_i << 
+				                " and " << idx1 - num_atoms_till_i << 
+				                " and " << idx2 - num_atoms_till_i << 
+				                " and " << idx3 - num_atoms_till_i <<"\n";
+            }
+
 			if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed dihedral list
 			    if(dihedral_pert_list.indexOf(dihedral_ff)!=-1 || dihedral_pert_swap_list.indexOf(dihedral_ff)!=-1){
 			        if(true)
@@ -1368,7 +1376,7 @@ void OpenMMFrEnergyST::initialise()  {
 				int periodicity = dihedral_params[ k + 1 ];
 				double phase = dihedral_params[ k + 2 ];
 				bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
-                if(Debug){
+                if(true){
                         qDebug() << "Dihedral between atom global index " << idx0 - num_atoms_till_i << 
 				                " and " << idx1 - num_atoms_till_i << 
 				                " and " << idx2 - num_atoms_till_i << 
@@ -1393,11 +1401,19 @@ void OpenMMFrEnergyST::initialise()  {
 			int idx1 = impropers[j].atom1().asA<AtomIdx>().value() + num_atoms_till_i;
 			int idx2 = impropers[j].atom2().asA<AtomIdx>().value() + num_atoms_till_i;
 			int idx3 = impropers[j].atom3().asA<AtomIdx>().value() + num_atoms_till_i;
+			
+			if(true){
+                        qDebug() << "TOTAL Improper between atom global index " << idx0 - num_atoms_till_i<< 
+				                " and " << idx1 - num_atoms_till_i << 
+				                " and " << idx2 - num_atoms_till_i << 
+				                " and " << idx3 - num_atoms_till_i <<"\n";
+                       
+            }
 
 
 			if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed improper list
 			    if(improper_pert_list.indexOf(improper_ff)!=-1 || improper_pert_swap_list.indexOf(improper_ff)!=-1){
-			        if(Debug)
+			        if(true)
 			            qDebug() << "Found Perturbed Improper\n";
                     continue;
 			    }
@@ -1410,7 +1426,7 @@ void OpenMMFrEnergyST::initialise()  {
 				double phase = improper_params[ k + 2 ];
 
 				bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
-                if(Debug){
+                if(true){
                         qDebug() << "Improper between atom global index " << idx0 - num_atoms_till_i<< 
 				                " and " << idx1 - num_atoms_till_i << 
 				                " and " << idx2 - num_atoms_till_i << 
