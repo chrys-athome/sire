@@ -363,6 +363,14 @@ void OpenMMFrEnergyST::initialise()  {
 	nonbond_openmm->setUseDispersionCorrection(false);
 
 	//CUSTOM NON BONDED FORCE FIELD
+    
+    
+    OpenMM::CustomNonbondedForce * custom_force_fied = NULL;
+    
+    //OpenMM::CustomBondForce * custom_intra_14_clj = NULL;
+    
+    //OpenMM::CustomBondForce * custom_intra_14_soft_clj = NULL;
+    
 
 	/*OpenMM::CustomNonbondedForce * custom_solute_solute_solvent_solvent = NULL;
 
@@ -376,6 +384,50 @@ void OpenMMFrEnergyST::initialise()  {
 
 	if ( flag_cutoff == NOCUTOFF ){
 
+        
+        custom_force_fied = new OpenMM::CustomNonbondedForce("Hsoft * ZeroOne + Hclj * (1-ZeroOne);"
+                                                             "ZeroOne = isSoften1 * isSoften2;"
+                                                             "Hsoft = (10.0*Hls+100.0*Hcs);"
+                                                             "Hcs = ((0.01*lam)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+                                                             "diff_cl=(1.0-lam)*0.01;"
+                                                             "Hls=0.1*lam*4.0*eps_avg*(LJ*LJ-LJ);"
+                                                             "LJ=((sigma_avg*sigma_avg)/soft)^3;"
+                                                             "soft=(diff_lj*delta*sigma_avg+r*r);"
+                                                             "diff_lj=(1.0-lam)*0.1;"
+                                                             "Hclj =(Hl+Hc);"
+                                                             "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
+                                                             "Hc=138.935456*q_prod/r;"
+                                                             "q_prod=(qend1*lam+(1.0-lam)*qstart1)*(qend2*lam+(1.0-lam)*qstart2);"
+                                                             "eps_avg=sqrt((epend1*lam+(1.0-lam)*epstart1)*(epend2*lam+(1.0-lam)*epstart2));"
+                                                             "sigma_avg=0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");
+        
+        custom_force_fied->addGlobalParameter("lam",Alchemical_value);
+        custom_force_fied->addGlobalParameter("delta",shift_delta);
+		custom_force_fied->addGlobalParameter("n",coulomb_power);
+        
+        custom_force_fied->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
+        
+        if (true){
+			qDebug() << "\nCut off type = " << CutoffType << "\n";
+			qDebug() <<  "Lambda = " << Alchemical_value << " Coulomb Power = " << coulomb_power << " Delta Shift = " << shift_delta <<"\n";
+		}
+        
+        
+        /*custom_intra_14_clj = new OpenMM::CustomBondForce("Hl+Hc;"
+                                                          "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
+                                                          "Hc=138.935456*q_prod/r");
+
+        
+        custom_intra_14_soft_clj = new OpenMM::CustomBondForce("Hsoft=(10.0*Hls+100.0*Hcs);"
+                                                               "Hcs=((0.01*lam)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+                                                               "soft=(diff_lj*delta*sigma_avg+r*r);"
+                                                               "diff_lj=(1.0-lam)*0.1");
+        
+        custom_intra_14_soft_clj->addGlobalParameter("lam",Alchemical_value);
+        custom_intra_14_soft_clj->addGlobalParameter("delta",shift_delta);
+		custom_intra_14_soft_clj->addGlobalParameter("n",coulomb_power);*/
+        
+    
 		/*custom_hard_solute_solvent =  new OpenMM::CustomNonbondedForce("(Hl+Hc)*ZeroOne*Hard;"
 																		"ZeroOne=(1-issolute1)*(1-issolute2)+issolute1*issolute2;"
 																		"Hard=(issolute1*ishard1*(1-istodummy1)*(1-isfromdummy1)+issolute2*ishard2*(1-istodummy2)*(1-isfromdummy2));"
@@ -536,7 +588,12 @@ void OpenMMFrEnergyST::initialise()  {
 
 /***********************************************************************NON BONDED INTERACTIONS*****************************************************************/
 
-	/*system_openmm->addForce(custom_hard_solute_solvent);
+	
+    system_openmm->addForce(custom_force_fied);
+    //system_openmm->addForce(custom_intra_14_clj);
+    //system_openmm->addForce(custom_intra_14_soft_clj);
+    
+    /*system_openmm->addForce(custom_hard_solute_solvent);
 	system_openmm->addForce(custom_todummy_solute_solvent);
 	system_openmm->addForce(custom_fromdummy_solute_solvent);
 	system_openmm->addForce(custom_solute_solute_solvent_solvent);
@@ -583,14 +640,14 @@ void OpenMMFrEnergyST::initialise()  {
 
 	//OpenMM::HarmonicAngleForce * bondBend_openmm = new OpenMM::HarmonicAngleForce();
 
-	OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
+	//OpenMM::PeriodicTorsionForce * bondTorsion_openmm = new OpenMM::PeriodicTorsionForce();
 
 
 	//system_openmm->addForce(bondStretch_openmm);
 
 	//system_openmm->addForce(bondBend_openmm);
 
-	system_openmm->addForce(bondTorsion_openmm);
+	//system_openmm->addForce(bondTorsion_openmm);
 
 
 	//OpenMM::CustomBondForce* solute_bond_perturbation = NULL;
@@ -770,6 +827,22 @@ void OpenMMFrEnergyST::initialise()  {
 	int num_atoms_till_i = 0;
 
 	/*NON BONDED PER PARTICLE PARAMETERS*/
+    
+    custom_force_fied->addPerParticleParameter("qstart");
+	custom_force_fied->addPerParticleParameter("qend");
+	custom_force_fied->addPerParticleParameter("epstart");
+	custom_force_fied->addPerParticleParameter("epend");
+	custom_force_fied->addPerParticleParameter("sigmastart");
+	custom_force_fied->addPerParticleParameter("sigmaend");
+    custom_force_fied->addPerParticleParameter("isSoften");
+    
+    /*custom_intra_14_clj->addPerBondParameter("q_prod");
+	custom_intra_14_clj->addPerBondParameter("sigma_avg");
+	custom_intra_14_clj->addPerBondParameter("eps_avg");
+    
+    custom_intra_14_soft_clj->addPerBondParameter("q_prod");
+	custom_intra_14_soft_clj->addPerBondParameter("sigma_avg");
+	custom_intra_14_soft_clj->addPerBondParameter("eps_avg");*/
 
 	/*custom_hard_solute_solvent->addPerParticleParameter("ishard");
 	custom_hard_solute_solvent->addPerParticleParameter("istodummy");
@@ -842,15 +915,16 @@ void OpenMMFrEnergyST::initialise()  {
 
 		int num_atoms_molecule = molecule.nAtoms();
 
-		std::vector<double> solute_solute_solvent_solvent_params(4);
+		//std::vector<double> solute_solute_solvent_solvent_params(4);
 
-		std::vector<double> non_bonded_perturbation_params(10);
+		//std::vector<double> non_bonded_perturbation_params(10);
 
-		std::vector<double> bonded_bond_anlge_perturbation_params(4);
+		//std::vector<double> bonded_bond_anlge_perturbation_params(4);
+        
+        std::vector<double> custom_non_bonded_params(7);
 
 
 		// NON BONDED TERMS
-
 
 		// The atomic parameters
 		AtomLJs atomvdws = molecule.property("LJ").asA<AtomLJs>();
@@ -873,7 +947,7 @@ void OpenMMFrEnergyST::initialise()  {
 			AtomLJs atomvdws_final = molecule.property("final_LJ").asA<AtomLJs>();
 			start_LJs = atomvdws_start.toVector();
 			final_LJs = atomvdws_final.toVector();
-		}catch(int e){cout << "default exception";}
+		}catch(int e){cout << "Solvent Molecule";}
 
 		for(int j=0; j< ljparameters.size();j++){
 
@@ -885,13 +959,13 @@ void OpenMMFrEnergyST::initialise()  {
 
 			Atom atom = molecule.molecule().atoms()[j];
 
-			solute_solute_solvent_solvent_params[0]=charge;
-			solute_solute_solvent_solvent_params[1]=sigma * OpenMM::NmPerAngstrom;
-			solute_solute_solvent_solvent_params[2]=epsilon * OpenMM::KJPerKcal;
+			//solute_solute_solvent_solvent_params[0]=charge;
+			//solute_solute_solvent_solvent_params[1]=sigma * OpenMM::NmPerAngstrom;
+			//solute_solute_solvent_solvent_params[2]=epsilon * OpenMM::KJPerKcal;
 
 			if(!solutehard.isEmpty() && solutehard.moleculeAt(0).atoms().contains(atom)){//hard solute atom
 
-				solute_solute_solvent_solvent_params[3]=1.0;
+				//solute_solute_solvent_solvent_params[3]=1.0;
 
 				double charge_start = start_charges[j].value();
 				double charge_final = final_charges[j].value();
@@ -900,8 +974,16 @@ void OpenMMFrEnergyST::initialise()  {
 				double epsilon_final = final_LJs[j].epsilon();
 				double sigma_start = start_LJs[j].sigma();
 				double sigma_final = final_LJs[j].sigma();
+                
+                custom_non_bonded_params[0] = charge_start;
+                custom_non_bonded_params[1] = charge_final;
+                custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
+                custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal; 
+                custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[6] = 0.0;
 
-				non_bonded_perturbation_params[0]=1.0;
+				/*non_bonded_perturbation_params[0]=1.0;
 				non_bonded_perturbation_params[1]=0.0;
 				non_bonded_perturbation_params[2]=0.0;
 				non_bonded_perturbation_params[3]=charge_start;
@@ -910,13 +992,15 @@ void OpenMMFrEnergyST::initialise()  {
 				non_bonded_perturbation_params[6]=epsilon_final * OpenMM::KJPerKcal;
 				non_bonded_perturbation_params[7]=sigma_start * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[8]=sigma_final * OpenMM::NmPerAngstrom;
-				non_bonded_perturbation_params[9]=1.0;
-			    if(Debug)
+				non_bonded_perturbation_params[9]=1.0;*/
+			    
+                if(true)
 				    qDebug() << "hard solute = " << atom.index() << "\n";
 
 			}
 			else if(!solutetodummy.isEmpty() && solutetodummy.moleculeAt(0).atoms().contains(atom)){//to dummy solute atom
-				solute_solute_solvent_solvent_params[3]=1.0;
+				
+                //solute_solute_solvent_solvent_params[3]=1.0;
 
 				double charge_start = start_charges[j].value();
 				double charge_final = final_charges[j].value();
@@ -925,8 +1009,17 @@ void OpenMMFrEnergyST::initialise()  {
 				double epsilon_final = final_LJs[j].epsilon();
 				double sigma_start = start_LJs[j].sigma();
 				double sigma_final = final_LJs[j].sigma();
-
-				non_bonded_perturbation_params[0]=0.0;
+                
+                
+                custom_non_bonded_params[0] = charge_start;
+                custom_non_bonded_params[1] = charge_final;
+                custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
+                custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
+                custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[6] = 1.0;
+                
+				/*non_bonded_perturbation_params[0]=0.0;
 				non_bonded_perturbation_params[1]=1.0;
 				non_bonded_perturbation_params[2]=0.0;
 				non_bonded_perturbation_params[3]=charge_start;
@@ -935,16 +1028,16 @@ void OpenMMFrEnergyST::initialise()  {
 				non_bonded_perturbation_params[6]=epsilon_final * OpenMM::KJPerKcal;
 				non_bonded_perturbation_params[7]=sigma_start * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[8]=sigma_final * OpenMM::NmPerAngstrom;
-				non_bonded_perturbation_params[9]=1.0;
+				non_bonded_perturbation_params[9]=1.0;*/
 				
-				if(Debug)
+				if(true)
 				    qDebug() << "to dummy solute = " << atom.index() << "\n";
 
 			}
 
 			else if(!solutefromdummy.isEmpty() && solutefromdummy.moleculeAt(0).atoms().contains(atom)){//from dummy solute atom
                 
-				solute_solute_solvent_solvent_params[3]=1.0;
+				//solute_solute_solvent_solvent_params[3]=1.0;
 
 				double charge_start = start_charges[j].value();
 				double charge_final = final_charges[j].value();
@@ -953,8 +1046,16 @@ void OpenMMFrEnergyST::initialise()  {
 				double epsilon_final = final_LJs[j].epsilon();
 				double sigma_start = start_LJs[j].sigma();
 				double sigma_final = final_LJs[j].sigma();
-
-				non_bonded_perturbation_params[0]=0.0;
+                
+                custom_non_bonded_params[0] = charge_start;
+                custom_non_bonded_params[1] = charge_final;
+                custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
+                custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
+                custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[6] = 1.0;
+            
+				/*non_bonded_perturbation_params[0]=0.0;
 				non_bonded_perturbation_params[1]=0.0;
 				non_bonded_perturbation_params[2]=1.0;
 				non_bonded_perturbation_params[3]=charge_start;
@@ -963,18 +1064,26 @@ void OpenMMFrEnergyST::initialise()  {
 				non_bonded_perturbation_params[6]=epsilon_final * OpenMM::KJPerKcal;
 				non_bonded_perturbation_params[7]=sigma_start * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[8]=sigma_final * OpenMM::NmPerAngstrom;
-				non_bonded_perturbation_params[9]=1.0;
+				non_bonded_perturbation_params[9]=1.0;*/
                 
-                if(Debug)
+                if(true)
 				    qDebug() << "from dummy solute = " << atom.index() << "\n";
 
 			}
 
 			else{//solvent atom
 
-				solute_solute_solvent_solvent_params[3]=0.0;
+				//solute_solute_solvent_solvent_params[3]=0.0;
+                
+                custom_non_bonded_params[0] = charge;
+                custom_non_bonded_params[1] = charge;
+                custom_non_bonded_params[2] = epsilon * OpenMM::KJPerKcal;
+                custom_non_bonded_params[3] = epsilon * OpenMM::KJPerKcal;
+                custom_non_bonded_params[4] = sigma * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[5] = sigma * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[6] = 0.0;
 
-				non_bonded_perturbation_params[0]=0.0;
+				/*non_bonded_perturbation_params[0]=0.0;
 				non_bonded_perturbation_params[1]=0.0;
 				non_bonded_perturbation_params[2]=0.0;
 				non_bonded_perturbation_params[3]=charge;
@@ -983,12 +1092,15 @@ void OpenMMFrEnergyST::initialise()  {
 				non_bonded_perturbation_params[6]=epsilon * OpenMM::KJPerKcal;
 				non_bonded_perturbation_params[7]=sigma * OpenMM::NmPerAngstrom;
 				non_bonded_perturbation_params[8]=sigma * OpenMM::NmPerAngstrom;
-				non_bonded_perturbation_params[9]=0.0;
-				if(Debug)
+				non_bonded_perturbation_params[9]=0.0;*/
+				
+                if(true)
 				    qDebug() << "Solvent = " << atom.index() << "\n";
 
 			}
 
+            custom_force_fied->addParticle(custom_non_bonded_params);
+            
 			/*custom_solute_solute_solvent_solvent->addParticle(solute_solute_solvent_solvent_params);
 
 			custom_hard_solute_solvent->addParticle(non_bonded_perturbation_params);
@@ -1053,7 +1165,9 @@ void OpenMMFrEnergyST::initialise()  {
 			nions=nions+1;
 			continue;
 		}
-		//BONDED TERMS
+		
+        
+        //BONDED TERMS
 
         QList< BondID > bond_pert_list;
         QList< BondID > bond_pert_swap_list;
@@ -1103,6 +1217,7 @@ void OpenMMFrEnergyST::initialise()  {
                         bond_pert_swap_list.append(BondID(two.atom1(),two.atom0()));
 
                         bondPairs.push_back(std::make_pair(idx0,idx1));
+                        
                         if(Debug){
                             qDebug() << "Atom0 = " << two.atom0().asA<AtomIdx>().value() << 
                                         "Atom1 = "<< two.atom1().asA<AtomIdx>().value() ;
@@ -1162,13 +1277,13 @@ void OpenMMFrEnergyST::initialise()  {
                         
                         std::string openmm_str = tmp.toStdString();
 
-                        if(true){
+                        if(Debug){
                             qDebug() << "IDX0 = " << idx0 <<  "IDX1 = " << idx1 <<  "IDX2 = " << idx2 <<  "IDX3 = " << idx3;
                             qDebug() << "Dihedral String = " << openmm_str.c_str();
                             qDebug() << "Dihedral Normal String = " << four.perturbExpression().toString() << "\n";
                         }
 
-                        OpenMM::CustomTorsionForce* solute_torsion_perturbation = NULL;
+                        /*OpenMM::CustomTorsionForce* solute_torsion_perturbation = NULL;
  
                         solute_torsion_perturbation = new OpenMM::CustomTorsionForce(openmm_str);
                         solute_torsion_perturbation->addPerTorsionParameter("KJPerKcal");
@@ -1176,7 +1291,7 @@ void OpenMMFrEnergyST::initialise()  {
                         solute_torsion_perturbation->addGlobalParameter("lambda",Alchemical_value);
                         solute_torsion_perturbation->addTorsion(idx0,idx1,idx2,idx3,solute_torsion_perturbation_params);
 
-                        system_openmm->addForce(solute_torsion_perturbation);
+                        system_openmm->addForce(solute_torsion_perturbation);*/
 
                         dihedral_pert_list.append(DihedralID(four.atom0(),four.atom1(),four.atom2(),four.atom3()));
                         dihedral_pert_swap_list.append(DihedralID(four.atom3(),four.atom1(),four.atom2(),four.atom0()));
@@ -1205,7 +1320,7 @@ void OpenMMFrEnergyST::initialise()  {
 		
         //BOND
 
-		/*for (int j=0; j < bonds_ff.length() ; j++){
+		for (int j=0; j < bonds_ff.length() ; j++){
 
 			BondID bond_ff = bonds_ff[j];
             QList<double> bond_params = amber_params.getParams(bond_ff);
@@ -1223,12 +1338,12 @@ void OpenMMFrEnergyST::initialise()  {
                     continue;
                 }
                 else{
-                    if(Debug)
+                    if(true)
                         qDebug() << "Solute normal Bond - Atom0 = "<< idx0 << "Atom1 = " << idx1 << " r0 = "<< r0 << "k = " << k <<"\n";
 
                     idx0 = idx0 + num_atoms_till_i;
                     idx1 = idx1 + num_atoms_till_i;
-                    bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm);
+                    //******** ATTENTION   TO BE ADDED  bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm);
                     bondPairs.push_back(std::make_pair(idx0,idx1));
                     continue;
                 }
@@ -1236,7 +1351,7 @@ void OpenMMFrEnergyST::initialise()  {
 			}
 
 			//Select the atom type
-			QString atom0 =  molecule.atom(AtomIdx(idx0)).toString();
+			/*QString atom0 =  molecule.atom(AtomIdx(idx0)).toString();
 			QString atom1 =  molecule.atom(AtomIdx(idx1)).toString();
 
 			idx0 = idx0 + num_atoms_till_i;
@@ -1265,9 +1380,9 @@ void OpenMMFrEnergyST::initialise()  {
 			}
 
 			//Bond exclusion List
-			bondPairs.push_back(std::make_pair(idx0,idx1));
+			bondPairs.push_back(std::make_pair(idx0,idx1));*/
 		}
-        */
+        
 
 
 		//Angles
@@ -1466,7 +1581,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 	int num_exceptions = nonbond_openmm->getNumExceptions();
 
-	if(Debug)
+	if(true)
 		qDebug() << "NUM EXCEPTIONS = " << num_exceptions << "\n";
 
 
@@ -1479,19 +1594,46 @@ void OpenMMFrEnergyST::initialise()  {
 
 			nonbond_openmm->getExceptionParameters(i,p1,p2,charge_prod,sigma_avg,epsilon_avg);
 
-			if(Debug)
+			if(true)
 				qDebug() << "Exception = " << i << " p1 = " << p1 << " p2 = " << p2 << " charge prod = " << charge_prod << " sigma avg = " << sigma_avg << " epsilon_avg = " << epsilon_avg << "\n";
 
 			if(charge_prod!=0 && sigma_avg!=1 && epsilon_avg!=0){//1-4 interactions
+                
+                std::vector<double> p1_params(7);
+                std::vector<double> p2_params(7);
+                
+                int isSoften_p1;
+                int isSoften_p2;
+                
 			
 				double tmp[]={charge_prod,sigma_avg, epsilon_avg};
 
 				const std::vector<double> params(tmp,tmp+3);
+                
+                custom_force_fied->getParticleParameters(p1,p1_params);
+                custom_force_fied->getParticleParameters(p2,p2_params);
+                
+                isSoften_p1 = p1_params[6];
+                isSoften_p2 = p2_params[6];
+                
+                if(true){
+                    
+                    qDebug() << "Particle p1 = " << p1 << " isSoften = " << isSoften_p1;
+                    qDebug() << "Particle p2 = " << p2 << " isSoften = " << isSoften_p2 << "\n";                    
+                    
+                }
+                
+                /*if(isSoften_p1 * isSoften_p2 == 0)
+                    custom_intra_14_clj->addBond(p1,p2,params);
+                else
+                    custom_intra_14_soft_clj->addBond(p1,p2,params);*/
 
 				//custom_intra_14_15->addBond(p1,p2,params);
 
 			}
 
+            custom_force_fied->addExclusion(p1,p2);
+        
 			/*custom_hard_solute_solvent->addExclusion(p1,p2);
 			custom_todummy_solute_solvent->addExclusion(p1,p2);
 			custom_fromdummy_solute_solvent->addExclusion(p1,p2);
