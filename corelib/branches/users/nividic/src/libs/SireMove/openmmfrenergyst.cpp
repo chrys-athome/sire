@@ -423,13 +423,9 @@ void OpenMMFrEnergyST::initialise()  {
                                                           "Hc=138.935456*q_prod/r");
 
         
-        custom_intra_14_todummy = new OpenMM::CustomBondForce("10.0*0.0+100.0*Hcs;"
+        custom_intra_14_todummy = new OpenMM::CustomBondForce("100.0*Hcs;"
                                                                "Hcs=((0.01*lam)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
-                                                               "diff_cl=(1.0-lam)*0.01;"
-                                                               "Hls=0.1*lam*4.0*eps_avg*(LJ*LJ-LJ);"
-                                                               "LJ=((sigma_avg*sigma_avg)/soft)^3;"
-                                                               "soft=(diff_lj*delta*sigma_avg+r*r);"
-                                                               "diff_lj=(1.0-lam)*0.1");
+                                                               "diff_cl=(1.0-lam)*0.01;");
         
         
         /*custom_intra_14_soft_clj = new OpenMM::CustomBondForce("10.0*Hls+100.0*Hcs;"
@@ -531,7 +527,7 @@ void OpenMMFrEnergyST::initialise()  {
 /***********************************************************************NON BONDED INTERACTIONS*****************************************************************/
 
 	
-    system_openmm->addForce(custom_force_fied);
+    //system_openmm->addForce(custom_force_fied);
     //system_openmm->addForce(custom_intra_14_clj);
     system_openmm->addForce(custom_intra_14_todummy);
 
@@ -1442,39 +1438,39 @@ void OpenMMFrEnergyST::initialise()  {
                 custom_force_fied->getParticleParameters(p1,p1_params);
                 custom_force_fied->getParticleParameters(p2,p2_params);
                 
-                int Qstart_p1 = p1_params[0];
-                int Qend_p1 = p1_params[1];
-                int Epstart_p1 = p1_params[2];
-                int Epend_p1 = p1_params[3];
-                int Sigstart_p1 = p1_params[4];
-                int Sigend_p1 = p1_params[5];
-                int isHard_p1 = p1_params[6];
-                int isTodummy_p1 = p1_params[7];
-                int isFromdummy_p1 = p1_params[8];
+                double Qstart_p1 = p1_params[0];
+                double Qend_p1 = p1_params[1];
+                double Epstart_p1 = p1_params[2];
+                double Epend_p1 = p1_params[3];
+                double Sigstart_p1 = p1_params[4];
+                double Sigend_p1 = p1_params[5];
+                double isHard_p1 = p1_params[6];
+                double isTodummy_p1 = p1_params[7];
+                double isFromdummy_p1 = p1_params[8];
               
-                int Qstart_p2 = p2_params[0];
-                int Qend_p2 = p2_params[1];
-                int Epstart_p2 = p2_params[2];
-                int Epend_p2 = p2_params[3];
-                int Sigstart_p2 = p2_params[4];
-                int Sigend_p2 = p2_params[5];
-                int isHard_p2 = p2_params[6];
-                int isTodummy_p2 = p2_params[7];
-                int isFromdummy_p2 = p2_params[8];
+                double Qstart_p2 = p2_params[0];
+                double Qend_p2 = p2_params[1];
+                double Epstart_p2 = p2_params[2];
+                double Epend_p2 = p2_params[3];
+                double Sigstart_p2 = p2_params[4];
+                double Sigend_p2 = p2_params[5];
+                double isHard_p2 = p2_params[6];
+                double isTodummy_p2 = p2_params[7];
+                double isFromdummy_p2 = p2_params[8];
                 
-                double charge_prod_todummy,sigma_avg_todummy,epsilon_avg_todummy;
+                double charge_prod,sigma_avg,epsilon_avg;
                 
-                charge_prod_todummy = (Qend_p1 * (1.0 - Alchemical_value) + Alchemical_value * Qstart_p1) *
-                              (Qend_p2 * (1.0 - Alchemical_value) + Alchemical_value * Qstart_p2) * Coulomb14Scale;
+                charge_prod = (Qend_p1 * Alchemical_value + (1.0 - Alchemical_value) * Qstart_p1) *
+                              (Qend_p2 * Alchemical_value + (1.0 - Alchemical_value) * Qstart_p2) * Coulomb14Scale;
                 
-                sigma_avg_todummy = (((Sigend_p1 * (1.0 - Alchemical_value) + Alchemical_value * Sigstart_p1) +
-                              (Sigend_p2 * (1.0 - Alchemical_value) + Alchemical_value * Sigstart_p2)) / 2.0);
+                sigma_avg = (((Sigend_p1 * Alchemical_value + (1.0 - Alchemical_value) * Sigstart_p1) +
+                              (Sigend_p2 * Alchemical_value + (1.0 - Alchemical_value) * Sigstart_p2)) / 2.0);
                 
-                epsilon_avg_todummy = sqrt(((Epend_p1 * (1.0 - Alchemical_value) + Alchemical_value * Epstart_p1) *
-                                (Epend_p2 * (1.0 - Alchemical_value) + Alchemical_value * Epstart_p2))) * LennardJones14Scale;
+                epsilon_avg = sqrt(((Epend_p1 * Alchemical_value + (1.0 - Alchemical_value) * Epstart_p1) *
+                                (Epend_p2 * Alchemical_value + (1.0 - Alchemical_value) * Epstart_p2))) * LennardJones14Scale;
                 
                 
-                double tmp[]={charge_prod_todummy,sigma_avg_todummy,epsilon_avg_todummy};
+                double tmp[]={charge_prod,sigma_avg,epsilon_avg};
                 
 				const std::vector<double> params(tmp,tmp+3);
                 
@@ -1491,9 +1487,9 @@ void OpenMMFrEnergyST::initialise()  {
                              << " isHard = " << isHard_p2 << " isTodummy = " << isTodummy_p2 << " isFromdummy = " << isFromdummy_p2;
                     
                 
-                    qDebug() << "Charge Prod to dummy = " << charge_prod_todummy <<
-                                " Sigma avg to dummy = " << sigma_avg_todummy <<
-                                " Epsilon avg to dummy = " << epsilon_avg_todummy << "\n";
+                    qDebug() << "Charge Prod to dummy = " << charge_prod <<
+                                " Sigma avg to dummy = " << sigma_avg <<
+                                " Epsilon avg to dummy = " << epsilon_avg << "\n";
                 }
                 
                 if((isHard_p1 == 0 && isHard_p2 == 0)){
