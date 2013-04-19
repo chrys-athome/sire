@@ -1014,7 +1014,7 @@ void OpenMMFrEnergyDT::initialise()  {
 			if(Debug)
 				qDebug() << "Exception = " << i << " p1 = " << p1 << " p2 = " << p2 << " charge prod = " << charge_prod << " sigma avg = " << sigma_avg << " epsilon_avg = " << epsilon_avg << "\n";
 
-			if(charge_prod!=0 && sigma_avg!=1 && epsilon_avg!=0){//1-4 interactions
+			if(!(charge_prod==0 && sigma_avg==1 && epsilon_avg==0)){//1-4 interactions
 			
 				double tmp[]={charge_prod,sigma_avg, epsilon_avg};
 

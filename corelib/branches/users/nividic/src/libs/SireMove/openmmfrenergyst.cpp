@@ -369,21 +369,36 @@ void OpenMMFrEnergyST::initialise()  {
     
     OpenMM::CustomBondForce * custom_intra_14_clj = NULL;
     
-    OpenMM::CustomBondForce * custom_intra_14_soft_clj = NULL;
+    OpenMM::CustomBondForce * custom_intra_14_todummy = NULL;
     
 
 	if ( flag_cutoff == NOCUTOFF ){
 
         
-        custom_force_fied = new OpenMM::CustomNonbondedForce("Hsoft * ZeroOne + Hclj * (1-ZeroOne);"
-                                                             "ZeroOne = isSoften1 * isSoften2;"
+        custom_force_fied = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) + Hclj * isHARD;"
+                                                             "isHARD = isHD1 * isHD2;"
                                                              "Hsoft = (10.0*Hls+100.0*Hcs);"
-                                                             "Hcs = ((0.01*lam)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
-                                                             "diff_cl=(1.0-lam)*0.01;"
-                                                             "Hls=0.1*lam*4.0*eps_avg*(LJ*LJ-LJ);"
+                                                             "Hcs = ((0.01*lambda)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+                                                             "diff_cl=(1.0-lambda)*0.01;"
+                                                             "Hls=0.1*lambda*4.0*eps_avg*(LJ*LJ-LJ);"
                                                              "LJ=((sigma_avg*sigma_avg)/soft)^3;"
                                                              "soft=(diff_lj*delta*sigma_avg+r*r);"
-                                                             "diff_lj=(1.0-lam)*0.1;"
+                                                             "diff_lj=(1.0-lambda)*0.1;"
+                                                             "lambda = Logic_lam * lam + Logic_om_lam * (1-lam) + Logic_mix_lam * lam * lam;"
+                                                             "Logic_om_lam = max((1-isHD1)*(1-isHD2)*isTD1*isTD2*(1-isFD1)*(1-isFD2), B_om_lam);"
+                                                             "B_om_lam = max(isHD1*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), C_om_lam);"
+                                                             "C_om_lam = max(isHD1*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2) , D_om_lam);"
+                                                             "D_om_lam = max((1-isHD1)*isHD2*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), E_om_lam);"
+                                                             "E_om_lam = (1-isHD1)*isHD2*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2);"
+                                                             "Logic_lam = max((1-isHD1)*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*isFD2, B_lam);"
+                                                             "B_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), C_lam);"
+                                                             "C_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2 , D_lam);"
+                                                             "D_lam = max((1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), E_lam);"
+                                                             "E_lam = (1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2;"
+                                                             "Logic_mix_lam = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*isFD1*(1-isFD2), B_mix);"
+                                                             "B_mix = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*isFD2, C_mix);"
+                                                             "C_mix = max((1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*isFD1*(1-isFD2) , D_mix);"
+                                                             "D_mix= (1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*isFD2;"
                                                              "Hclj =(Hl+Hc);"
                                                              "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
                                                              "Hc=138.935456*q_prod/r;"
@@ -408,7 +423,7 @@ void OpenMMFrEnergyST::initialise()  {
                                                           "Hc=138.935456*q_prod/r");
 
         
-        custom_intra_14_soft_clj = new OpenMM::CustomBondForce("10.0*0.0+100.0*Hcs;"
+        custom_intra_14_todummy = new OpenMM::CustomBondForce("10.0*0.0+100.0*Hcs;"
                                                                "Hcs=((0.01*lam)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
                                                                "diff_cl=(1.0-lam)*0.01;"
                                                                "Hls=0.1*lam*4.0*eps_avg*(LJ*LJ-LJ);"
@@ -428,9 +443,9 @@ void OpenMMFrEnergyST::initialise()  {
         
         
         
-        custom_intra_14_soft_clj->addGlobalParameter("lam",Alchemical_value);
-        custom_intra_14_soft_clj->addGlobalParameter("delta",shift_delta);
-		custom_intra_14_soft_clj->addGlobalParameter("n",coulomb_power);
+        custom_intra_14_todummy->addGlobalParameter("lam",1.0 - Alchemical_value);
+        custom_intra_14_todummy->addGlobalParameter("delta",shift_delta);
+		custom_intra_14_todummy->addGlobalParameter("n",coulomb_power);
         
     
 	}
@@ -516,9 +531,9 @@ void OpenMMFrEnergyST::initialise()  {
 /***********************************************************************NON BONDED INTERACTIONS*****************************************************************/
 
 	
-    //system_openmm->addForce(custom_force_fied);
+    system_openmm->addForce(custom_force_fied);
     //system_openmm->addForce(custom_intra_14_clj);
-    system_openmm->addForce(custom_intra_14_soft_clj);
+    system_openmm->addForce(custom_intra_14_todummy);
 
 
 	// Andersen thermostat
@@ -755,15 +770,17 @@ void OpenMMFrEnergyST::initialise()  {
 	custom_force_fied->addPerParticleParameter("epend");
 	custom_force_fied->addPerParticleParameter("sigmastart");
 	custom_force_fied->addPerParticleParameter("sigmaend");
-    custom_force_fied->addPerParticleParameter("isSoften");
+    custom_force_fied->addPerParticleParameter("isHD");
+    custom_force_fied->addPerParticleParameter("isTD");
+    custom_force_fied->addPerParticleParameter("isFD");
     
     custom_intra_14_clj->addPerBondParameter("q_prod");
 	custom_intra_14_clj->addPerBondParameter("sigma_avg");
 	custom_intra_14_clj->addPerBondParameter("eps_avg");
     
-    custom_intra_14_soft_clj->addPerBondParameter("q_prod");
-	custom_intra_14_soft_clj->addPerBondParameter("sigma_avg");
-	custom_intra_14_soft_clj->addPerBondParameter("eps_avg");
+    custom_intra_14_todummy->addPerBondParameter("q_prod");
+	custom_intra_14_todummy->addPerBondParameter("sigma_avg");
+	custom_intra_14_todummy->addPerBondParameter("eps_avg");
 	
 	
 	/*BONDED PER PARTICLE PARAMETERS*/
@@ -792,7 +809,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 		int num_atoms_molecule = molecule.nAtoms();
         
-        std::vector<double> custom_non_bonded_params(7);
+        std::vector<double> custom_non_bonded_params(9);
 
 
 		// NON BONDED TERMS
@@ -846,7 +863,9 @@ void OpenMMFrEnergyST::initialise()  {
                 custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal; 
                 custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
                 custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[6] = 0.0;
+                custom_non_bonded_params[6] = 1.0;
+                custom_non_bonded_params[7] = 0.0;
+                custom_non_bonded_params[8] = 0.0;
 
 			    
                 if(true)
@@ -870,7 +889,9 @@ void OpenMMFrEnergyST::initialise()  {
                 custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
                 custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
                 custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[6] = 1.0;
+                custom_non_bonded_params[6] = 0.0;
+                custom_non_bonded_params[7] = 1.0;
+                custom_non_bonded_params[8] = 0.0;
                 
 				
 				if(true)
@@ -894,14 +915,16 @@ void OpenMMFrEnergyST::initialise()  {
                 custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
                 custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
                 custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[6] = 1.0;
+                custom_non_bonded_params[6] = 0.0;
+                custom_non_bonded_params[7] = 0.0;
+                custom_non_bonded_params[8] = 1.0;
                 
                 if(true)
 				    qDebug() << "from dummy solute = " << atom.index() << "\n";
 
 			}
 
-			else{//solvent atom
+			else{//solvent atom like hard
                 
                 custom_non_bonded_params[0] = charge;
                 custom_non_bonded_params[1] = charge;
@@ -909,7 +932,9 @@ void OpenMMFrEnergyST::initialise()  {
                 custom_non_bonded_params[3] = epsilon * OpenMM::KJPerKcal;
                 custom_non_bonded_params[4] = sigma * OpenMM::NmPerAngstrom;
                 custom_non_bonded_params[5] = sigma * OpenMM::NmPerAngstrom;
-                custom_non_bonded_params[6] = 0.0;
+                custom_non_bonded_params[6] = 1.0;
+                custom_non_bonded_params[7] = 0.0;
+                custom_non_bonded_params[8] = 0.0;
 
 
                 if(true)
@@ -1411,57 +1436,75 @@ void OpenMMFrEnergyST::initialise()  {
 
 			if(!(charge_prod==0 && sigma_avg==1 && epsilon_avg==0)){//1-4 interactions
                 
-                std::vector<double> p1_params(7);
-                std::vector<double> p2_params(7);
-                
-                int isSoften_p1;
-                int isSoften_p2;
+                std::vector<double> p1_params(9);
+                std::vector<double> p2_params(9);
                 
                 custom_force_fied->getParticleParameters(p1,p1_params);
                 custom_force_fied->getParticleParameters(p2,p2_params);
                 
-                isSoften_p1 = p1_params[6];
-                isSoften_p2 = p2_params[6];
+                int Qstart_p1 = p1_params[0];
+                int Qend_p1 = p1_params[1];
+                int Epstart_p1 = p1_params[2];
+                int Epend_p1 = p1_params[3];
+                int Sigstart_p1 = p1_params[4];
+                int Sigend_p1 = p1_params[5];
+                int isHard_p1 = p1_params[6];
+                int isTodummy_p1 = p1_params[7];
+                int isFromdummy_p1 = p1_params[8];
+              
+                int Qstart_p2 = p2_params[0];
+                int Qend_p2 = p2_params[1];
+                int Epstart_p2 = p2_params[2];
+                int Epend_p2 = p2_params[3];
+                int Sigstart_p2 = p2_params[4];
+                int Sigend_p2 = p2_params[5];
+                int isHard_p2 = p2_params[6];
+                int isTodummy_p2 = p2_params[7];
+                int isFromdummy_p2 = p2_params[8];
                 
-                charge_prod = (p1_params[1] * Alchemical_value + (1.0 - Alchemical_value) * p1_params[0]) *
-                              (p2_params[1] * Alchemical_value + (1.0 - Alchemical_value) * p2_params[0]) * Coulomb14Scale;
+                double charge_prod_todummy,sigma_avg_todummy,epsilon_avg_todummy;
                 
-                sigma_avg = (((p1_params[5] * Alchemical_value + (1.0 - Alchemical_value) * p1_params[4]) +
-                              (p2_params[5] * Alchemical_value + (1.0 - Alchemical_value) * p2_params[4])) / 2.0);
+                charge_prod_todummy = (Qend_p1 * (1.0 - Alchemical_value) + Alchemical_value * Qstart_p1) *
+                              (Qend_p2 * (1.0 - Alchemical_value) + Alchemical_value * Qstart_p2) * Coulomb14Scale;
                 
-                epsilon_avg = sqrt(((p1_params[3] * Alchemical_value + (1.0 - Alchemical_value) * p1_params[2]) *
-                                (p2_params[3] * Alchemical_value + (1.0 - Alchemical_value) * p2_params[2]))) * LennardJones14Scale;
+                sigma_avg_todummy = (((Sigend_p1 * (1.0 - Alchemical_value) + Alchemical_value * Sigstart_p1) +
+                              (Sigend_p2 * (1.0 - Alchemical_value) + Alchemical_value * Sigstart_p2)) / 2.0);
+                
+                epsilon_avg_todummy = sqrt(((Epend_p1 * (1.0 - Alchemical_value) + Alchemical_value * Epstart_p1) *
+                                (Epend_p2 * (1.0 - Alchemical_value) + Alchemical_value * Epstart_p2))) * LennardJones14Scale;
                 
                 
-                double tmp[]={charge_prod,sigma_avg,epsilon_avg};
+                double tmp[]={charge_prod_todummy,sigma_avg_todummy,epsilon_avg_todummy};
                 
 				const std::vector<double> params(tmp,tmp+3);
                 
                 
                 if(true){
                     
-                    qDebug() << "Particle p1 = " << p1 << " Qstart = " << p1_params[0] << " Qend = " << p1_params[1]
-                             << " Epstart = " << p1_params[2] << " Epend = " << p1_params[3]
-                             << " Sgstart = " << p1_params[4] << " Sgend = " << p1_params[5]
-                             << " isSoften = " << isSoften_p1;
-                    qDebug() << "Particle p2 = " << p2 << " Qstart = " << p2_params[0] << " Qend = " << p2_params[1]
-                             << " Epstart = " << p2_params[2] << " Epend = " << p2_params[3]
-                             << " Sgstart = " << p2_params[4] << " Sgend = " << p2_params[5]
-                             << " isSoften = " << isSoften_p2;
+                    qDebug() << "Particle p1 = " << p1 << " Qstart = " << Qstart_p1 << " Qend = " << Qend_p1
+                             << " Epstart = " << Epstart_p1 << " Epend = " << Epend_p1
+                             << " Sgstart = " << Sigstart_p1 << " Sgend = " << Sigend_p1
+                             << " isHard = " << isHard_p1 << " isTodummy = " << isTodummy_p1 << " isFromdummy = " << isFromdummy_p1;
+                    qDebug() << "Particle p2 = " << p2 << " Qstart = " << Qstart_p2 << " Qend = " << Qend_p2
+                             << " Epstart = " << Epstart_p2 << " Epend = " << Epend_p2
+                             << " Sgstart = " << Sigstart_p2 << " Sgend = " << Sigend_p2
+                             << " isHard = " << isHard_p2 << " isTodummy = " << isTodummy_p2 << " isFromdummy = " << isFromdummy_p2;
                     
                 
-                    qDebug() << "Charge Prod = " << charge_prod << " Sigma avg = " << sigma_avg << " Epsilon avg = " << epsilon_avg << "\n";
+                    qDebug() << "Charge Prod to dummy = " << charge_prod_todummy <<
+                                " Sigma avg to dummy = " << sigma_avg_todummy <<
+                                " Epsilon avg to dummy = " << epsilon_avg_todummy << "\n";
                 }
                 
-                if((isSoften_p1 == 0 && isSoften_p2 == 0)){
+                if((isHard_p1 == 0 && isHard_p2 == 0)){
                     custom_intra_14_clj->addBond(p1,p2,params);
                     if(true)
-                        qDebug() << " Added CLJ 1-4";
+                        qDebug() << " Added HARD CLJ 1-4";
                 }
                 else{
-                    custom_intra_14_soft_clj->addBond(p1,p2,params);
+                    custom_intra_14_todummy->addBond(p1,p2,params);
                     if(true)
-                        qDebug() << " Added SOFT CLJ 1-4";
+                        qDebug() << " Added SOFT TO DUMMY 1-4";
                 }
 			}
 
