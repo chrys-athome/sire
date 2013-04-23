@@ -379,16 +379,48 @@ void OpenMMFrEnergyST::initialise()  {
 	if ( flag_cutoff == NOCUTOFF ){
 
         
-        custom_force_fied = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) + Hclj * isHARD;"
+        /*custom_force_fied = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) + Hclj * isHARD;"
                                                              "isHARD = isHD1 * isHD2;"
-                                                             "Hsoft = (10.0*Hls+100.0*Hcs);"
-                                                             "Hcs = ((0.01*lambda)^(n+1))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+                                                             "Hsoft = Hls + Hcs;"
+                                                             "Hcs = (lambda^n)*138.935456*q_prod/sqrt(diff_cl+r^2);"
                                                              "diff_cl=(1.0-lambda)*0.01;"
-                                                             "Hls=0.1*lambda*4.0*eps_avg*(LJ*LJ-LJ);"
+                                                             "Hls=4.0*eps_avg*(LJ*LJ-LJ);"
                                                              "LJ=((sigma_avg*sigma_avg)/soft)^3;"
                                                              "soft=(diff_lj*delta*sigma_avg+r*r);"
                                                              "diff_lj=(1.0-lambda)*0.1;"
-                                                             "lambda = Logic_lam * lam + Logic_om_lam * (1-lam) + Logic_mix_lam * lam * lam;"
+                                                             "lambda = Logic_lam * lam + Logic_om_lam * (1-lam) + Logic_mix_lam * max(lam,1-lam);"
+                                                             "Logic_om_lam = max((1-isHD1)*(1-isHD2)*isTD1*isTD2*(1-isFD1)*(1-isFD2), B_om_lam);"
+                                                             "B_om_lam = max(isHD1*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), C_om_lam);"
+                                                             "C_om_lam = max(isHD1*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2) , D_om_lam);"
+                                                             "D_om_lam = max((1-isHD1)*isHD2*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), E_om_lam);"
+                                                             "E_om_lam = (1-isHD1)*isHD2*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2);"
+                                                             "Logic_lam = max((1-isHD1)*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*isFD2, B_lam);"
+                                                             "B_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), C_lam);"
+                                                             "C_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2 , D_lam);"
+                                                             "D_lam = max((1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), E_lam);"
+                                                             "E_lam = (1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2;"
+                                                             "Logic_mix_lam = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*isFD1*(1-isFD2), B_mix);"
+                                                             "B_mix = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*isFD2, C_mix);"
+                                                             "C_mix = max((1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*isFD1*(1-isFD2) , D_mix);"
+                                                             "D_mix= (1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*isFD2;"
+                                                             "Hclj =(Hl+Hc);"
+                                                             "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
+                                                             "Hc=138.935456*q_prod/r;"
+                                                             "q_prod=(qend1*lam+(1.0-lam)*qstart1)*(qend2*lam+(1.0-lam)*qstart2);"
+                                                             "eps_avg=sqrt((epend1*lam+(1.0-lam)*epstart1)*(epend2*lam+(1.0-lam)*epstart2));"
+                                                             "sigma_avg=0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");*/
+
+
+        custom_force_fied = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) * 0.0 + Hclj * isHARD;"
+                                                             "isHARD = isHD1 * isHD2;"
+                                                             "Hsoft = Hls + Hcs;"
+                                                             "Hcs = (lambda^n)*138.935456*q_prod/sqrt(diff_cl+r^2);"
+                                                             "diff_cl=(1.0-lambda)*0.01;"
+                                                             "Hls=4.0*eps_avg*(LJ*LJ-LJ);"
+                                                             "LJ=((sigma_avg*sigma_avg)/soft)^3;"
+                                                             "soft=(diff_lj*delta*sigma_avg+r*r);"
+                                                             "diff_lj=(1.0-lambda)*0.1;"
+                                                             "lambda = Logic_lam * lam + Logic_om_lam * (1-lam) + Logic_mix_lam * max(lam,1-lam);"
                                                              "Logic_om_lam = max((1-isHD1)*(1-isHD2)*isTD1*isTD2*(1-isFD1)*(1-isFD2), B_om_lam);"
                                                              "B_om_lam = max(isHD1*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), C_om_lam);"
                                                              "C_om_lam = max(isHD1*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2) , D_om_lam);"
@@ -409,7 +441,11 @@ void OpenMMFrEnergyST::initialise()  {
                                                              "q_prod=(qend1*lam+(1.0-lam)*qstart1)*(qend2*lam+(1.0-lam)*qstart2);"
                                                              "eps_avg=sqrt((epend1*lam+(1.0-lam)*epstart1)*(epend2*lam+(1.0-lam)*epstart2));"
                                                              "sigma_avg=0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");
-        
+
+
+
+
+
         custom_force_fied->addGlobalParameter("lam",Alchemical_value);
         custom_force_fied->addGlobalParameter("delta",shift_delta);
 		custom_force_fied->addGlobalParameter("n",coulomb_power);
@@ -420,55 +456,61 @@ void OpenMMFrEnergyST::initialise()  {
 			qDebug() << "\nCut off type = " << CutoffType << "\n";
 			qDebug() <<  "Lambda = " << Alchemical_value << " Coulomb Power = " << coulomb_power << " Delta Shift = " << shift_delta <<"\n";
 		}
-        
-        
+
+
         custom_intra_14_clj = new OpenMM::CustomBondForce("Hl+Hc;"
                                                           "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
                                                           "Hc=138.935456*q_prod/r;");
 
 
-        
-        custom_intra_14_todummy = new OpenMM::CustomBondForce("(10.0^n) * Hcs + Hls;"
+        /*custom_intra_14_todummy = new OpenMM::CustomBondForce("(10^n) * Hcs + Hls;"
                                                               "Hcs=((0.1*lam)^(n))*138.935456*q_prod/sqrt(diff_cl+r^2);"
                                                               "diff_cl=(1.0-lam)*0.01;"
                                                               "Hls=4.0*eps_avg*(LJ*LJ-LJ);"
                                                               "LJ=((sigma_avg*sigma_avg)/soft)^3;"
                                                               "soft=(diff_lj*delta*sigma_avg+r*r);"
+                                                              "diff_lj=(1.0-lam)*0.1");*/
+                                                              
+                                                              
+        custom_intra_14_todummy = new OpenMM::CustomBondForce("Hcs + Hls;"
+                                                              "Hcs=(lam^n)*138.935456*q_prod/sqrt(diff_cl+r^2);"
+                                                              "diff_cl=(1.0-lam)*0.01;"
+                                                              "Hls=4.0*eps_avg*(LJ*LJ-LJ);"
+                                                              "LJ=((sigma_avg*sigma_avg)/soft)^3;"
+                                                              "soft=(diff_lj*delta*sigma_avg+r*r);"
                                                               "diff_lj=(1.0-lam)*0.1");
-        
+
+
         custom_intra_14_todummy->addGlobalParameter("lam",1.0 - Alchemical_value);
         custom_intra_14_todummy->addGlobalParameter("delta",shift_delta);
-		custom_intra_14_todummy->addGlobalParameter("n",coulomb_power);
+		custom_intra_14_todummy->addGlobalParameter("n", coulomb_power);
         
         
-        custom_intra_14_fromdummy = new OpenMM::CustomBondForce("(10.0^n) * Hcs + Hls;"
-                                                                "Hcs=((0.1*lam)^(n))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+        custom_intra_14_fromdummy = new OpenMM::CustomBondForce("Hcs + Hls;"
+                                                                "Hcs=(lam^n)*138.935456*q_prod/sqrt(diff_cl+r^2);"
                                                                 "diff_cl=(1.0-lam)*0.01;"
                                                                 "Hls=4.0*eps_avg*(LJ*LJ-LJ);"
                                                                 "LJ=((sigma_avg*sigma_avg)/soft)^3;"
                                                                 "soft=(diff_lj*delta*sigma_avg+r*r);"
                                                                 "diff_lj=(1.0-lam)*0.1");
-        
-        
+
         custom_intra_14_fromdummy->addGlobalParameter("lam",Alchemical_value);
         custom_intra_14_fromdummy->addGlobalParameter("delta",shift_delta);
         custom_intra_14_fromdummy->addGlobalParameter("n",coulomb_power);
         
         
-        custom_intra_14_fromdummy_todummy = new OpenMM::CustomBondForce("(10.0^n) * Hcs + Hls;"
-                                                                        "Hcs=((0.1*lam)^(n))*138.935456*q_prod/sqrt(diff_cl+r^2);"
+        custom_intra_14_fromdummy_todummy = new OpenMM::CustomBondForce("Hcs + Hls;"
+                                                                        "Hcs=(lam^n)*138.935456*q_prod/sqrt(diff_cl+r^2);"
                                                                         "diff_cl=(1.0-lam)*0.01;"
                                                                         "Hls=4.0*eps_avg*(LJ*LJ-LJ);"
                                                                         "LJ=((sigma_avg*sigma_avg)/soft)^3;"
                                                                         "soft=(diff_lj*delta*sigma_avg+r*r);"
                                                                         "diff_lj=(1.0-lam)*0.1");
-        
-        
+
         custom_intra_14_fromdummy_todummy->addGlobalParameter("lam",max(Alchemical_value,1.0 - Alchemical_value));
         custom_intra_14_fromdummy_todummy->addGlobalParameter("delta",shift_delta);
         custom_intra_14_fromdummy_todummy->addGlobalParameter("n",coulomb_power);
-        
-    
+
 	}
 	/*else{
 
@@ -551,10 +593,10 @@ void OpenMMFrEnergyST::initialise()  {
 
 /***********************************************************************NON BONDED INTERACTIONS*****************************************************************/
 
-	
-    //system_openmm->addForce(custom_force_fied);
-    //system_openmm->addForce(custom_intra_14_clj);
-    system_openmm->addForce(custom_intra_14_todummy);
+
+    system_openmm->addForce(custom_force_fied);
+    system_openmm->addForce(custom_intra_14_clj);
+    //system_openmm->addForce(custom_intra_14_todummy);
     //system_openmm->addForce(custom_intra_14_fromdummy);
     //system_openmm->addForce(custom_intra_14_fromdummy_todummy);
 
