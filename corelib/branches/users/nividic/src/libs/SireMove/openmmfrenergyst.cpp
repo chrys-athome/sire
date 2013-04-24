@@ -411,36 +411,9 @@ void OpenMMFrEnergyST::initialise()  {
                                                              "sigma_avg=0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");*/
 
 
-        custom_force_fied = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) * 0.0 + Hclj * isHARD;"
-                                                             "isHARD = isHD1 * isHD2;"
-                                                             "Hsoft = Hls + Hcs;"
-                                                             "Hcs = (lambda^n)*138.935456*q_prod/sqrt(diff_cl+r^2);"
-                                                             "diff_cl=(1.0-lambda)*0.01;"
-                                                             "Hls=4.0*eps_avg*(LJ*LJ-LJ);"
-                                                             "LJ=((sigma_avg*sigma_avg)/soft)^3;"
-                                                             "soft=(diff_lj*delta*sigma_avg+r*r);"
-                                                             "diff_lj=(1.0-lambda)*0.1;"
-                                                             "lambda = Logic_lam * lam + Logic_om_lam * (1-lam) + Logic_mix_lam * max(lam,1-lam);"
-                                                             "Logic_om_lam = max((1-isHD1)*(1-isHD2)*isTD1*isTD2*(1-isFD1)*(1-isFD2), B_om_lam);"
-                                                             "B_om_lam = max(isHD1*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), C_om_lam);"
-                                                             "C_om_lam = max(isHD1*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2) , D_om_lam);"
-                                                             "D_om_lam = max((1-isHD1)*isHD2*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), E_om_lam);"
-                                                             "E_om_lam = (1-isHD1)*isHD2*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2);"
-                                                             "Logic_lam = max((1-isHD1)*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*isFD2, B_lam);"
-                                                             "B_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), C_lam);"
-                                                             "C_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2 , D_lam);"
-                                                             "D_lam = max((1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), E_lam);"
-                                                             "E_lam = (1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2;"
-                                                             "Logic_mix_lam = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*isFD1*(1-isFD2), B_mix);"
-                                                             "B_mix = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*isFD2, C_mix);"
-                                                             "C_mix = max((1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*isFD1*(1-isFD2) , D_mix);"
-                                                             "D_mix= (1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*isFD2;"
-                                                             "Hclj =(Hl+Hc);"
-                                                             "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
-                                                             "Hc=138.935456*q_prod/r;"
-                                                             "q_prod=(qend1*lam+(1.0-lam)*qstart1)*(qend2*lam+(1.0-lam)*qstart2);"
-                                                             "eps_avg=sqrt((epend1*lam+(1.0-lam)*epstart1)*(epend2*lam+(1.0-lam)*epstart2));"
-                                                             "sigma_avg=0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");
+        custom_force_fied = new OpenMM::CustomNonbondedForce("Hc;"
+                                                             "Hc=138.935456 * q_prod/r;"
+                                                             "q_prod=(qend1 * lam+(1.0-lam) * qstart1) * (qend2 * lam+(1.0-lam) * qstart2)");
 
 
 
@@ -943,7 +916,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 			    
                 if(true)
-				    qDebug() << "hard solute = " << atom.index() << "\n";
+				    qDebug() << "hard solute = " << atom.index();
 
 			}
 			else if(!solutetodummy.isEmpty() && solutetodummy.moleculeAt(0).atoms().contains(atom)){//to dummy solute atom
@@ -969,7 +942,7 @@ void OpenMMFrEnergyST::initialise()  {
                 
 				
 				if(true)
-				    qDebug() << "to dummy solute = " << atom.index() << "\n";
+				    qDebug() << "to dummy solute = " << atom.index();
 
 			}
 
@@ -994,7 +967,7 @@ void OpenMMFrEnergyST::initialise()  {
                 custom_non_bonded_params[8] = 1.0;//isFromdummy
                 
                 if(true)
-				    qDebug() << "from dummy solute = " << atom.index() << "\n";
+				    qDebug() << "from dummy solute = " << atom.index();
 
 			}
 
@@ -1012,10 +985,22 @@ void OpenMMFrEnergyST::initialise()  {
 
 
                 if(true)
-				    qDebug() << "Solvent = " << atom.index() << "\n";
+				    qDebug() << "Solvent = " << atom.index();
 
 			}
 
+            if(true){
+                qDebug() << "Charge start = " << custom_non_bonded_params[0];
+                qDebug() << "Charge end = " << custom_non_bonded_params[1];
+                qDebug() << "Eps start = " << custom_non_bonded_params[2];
+                qDebug() << "Eps end = " << custom_non_bonded_params[3];
+                qDebug() << "Sig start = " << custom_non_bonded_params[4];
+                qDebug() << "Sig end = " << custom_non_bonded_params[5];
+                qDebug() << "is Hard = " << custom_non_bonded_params[6];
+                qDebug() << "is To dummy = " << custom_non_bonded_params[7];
+                qDebug() << "is From dummy = " << custom_non_bonded_params[8] << "\n";
+            }
+            
             custom_force_fied->addParticle(custom_non_bonded_params);
 
 		}
@@ -1555,19 +1540,19 @@ void OpenMMFrEnergyST::initialise()  {
                 
                 if(true){
                     
-                    qDebug() << "Particle p1 = " << p1 << " Qstart = " << Qstart_p1 << " Qend = " << Qend_p1
-                             << " Epstart = " << Epstart_p1 << " Epend = " << Epend_p1
-                             << " Sgstart = " << Sigstart_p1 << " Sgend = " << Sigend_p1
-                             << " isHard = " << isHard_p1 << " isTodummy = " << isTodummy_p1 << " isFromdummy = " << isFromdummy_p1;
-                    qDebug() << "Particle p2 = " << p2 << " Qstart = " << Qstart_p2 << " Qend = " << Qend_p2
-                             << " Epstart = " << Epstart_p2 << " Epend = " << Epend_p2
-                             << " Sgstart = " << Sigstart_p2 << " Sgend = " << Sigend_p2
-                             << " isHard = " << isHard_p2 << " isTodummy = " << isTodummy_p2 << " isFromdummy = " << isFromdummy_p2;
+                    qDebug() << "Particle p1 = " << p1 << "\nQstart = " << Qstart_p1 << "\nQend = " << Qend_p1
+                             << "\nEpstart = " << Epstart_p1 << "\nEpend = " << Epend_p1
+                             << "\nSgstart = " << Sigstart_p1 << "\nSgend = " << Sigend_p1
+                             << "\nisHard = " << isHard_p1 << "\nisTodummy = " << isTodummy_p1 << "\nisFromdummy = " << isFromdummy_p1 <<"\n";
+                    qDebug() << "Particle p2 = " << p2 << "\nQstart = " << Qstart_p2 << "\nQend = " << Qend_p2
+                             << "\nEpstart = " << Epstart_p2 << "\nEpend = " << Epend_p2
+                             << "\nSgstart = " << Sigstart_p2 << "\nSgend = " << Sigend_p2
+                             << "\nisHard = " << isHard_p2 << "\nisTodummy = " << isTodummy_p2 << "\nisFromdummy = " << isFromdummy_p2 <<"\n";
                     
                 
-                    qDebug() << "Charge Prod to dummy = " << charge_prod <<
-                                " Sigma avg to dummy = " << sigma_avg <<
-                                " Epsilon avg to dummy = " << epsilon_avg << "\n";
+                    qDebug() << "Charge Prod = " << charge_prod <<
+                                " Sigma avg = " << sigma_avg <<
+                                " Epsilon avg = " << epsilon_avg;
                 }
                 
                 
@@ -1577,14 +1562,14 @@ void OpenMMFrEnergyST::initialise()  {
                     custom_intra_14_clj->addBond(p1,p2,params);
                     
                     if(true)
-                        qDebug() << " Added clj Hard 1-4";
+                        qDebug() << "Added clj Hard 1-4\n";
                 }
                 else if((isTodummy_p1 == 1.0 && isTodummy_p2 == 1.0) || (isHard_p1 == 1.0 && isTodummy_p2 == 1.0) || (isHard_p2 == 1.0 && isTodummy_p1 == 1.0)){
                     
                     custom_intra_14_todummy->addBond(p1,p2,params);
                     
                     if(true)
-                        qDebug() << " Added soft TO dummy 1-4";
+                        qDebug() << "Added soft TO dummy 1-4\n";
                 }
                 
                 else if((isFromdummy_p1 == 1.0 && isFromdummy_p2 == 1.0) || (isHard_p1 == 1.0 && isFromdummy_p2 == 1.0) || (isHard_p2 == 1.0 && isFromdummy_p1 == 1.0)){
@@ -1592,7 +1577,7 @@ void OpenMMFrEnergyST::initialise()  {
                     custom_intra_14_fromdummy->addBond(p1,p2,params);
                     
                     if(true)
-                        qDebug() << " Added soft FROM dummy 1-4";
+                        qDebug() << "Added soft FROM dummy 1-4\n";
                     
                 }
                 
@@ -1601,7 +1586,7 @@ void OpenMMFrEnergyST::initialise()  {
                     custom_intra_14_fromdummy_todummy->addBond(p1,p2,params);
                     
                     if(true)
-                        qDebug() << " Added soft FROM dummy TO dummy 1-4";
+                        qDebug() << "Added soft FROM dummy TO dummy 1-4\n";
                     
                 }
                 
