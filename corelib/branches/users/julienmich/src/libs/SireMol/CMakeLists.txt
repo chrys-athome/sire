@@ -221,7 +221,6 @@ target_link_libraries (SireMol
                        SireVol
                        SireCAS
                        SireID
-                       SireDB
                        SireStream
                        )
 

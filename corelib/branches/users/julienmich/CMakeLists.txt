@@ -146,7 +146,7 @@ endif()
 option( SIRE_DISABLE_MPI "Turn off MPI compilation and linking" OFF )
 
 # Sire depends on >= Qt 4.2
-find_package( Qt4 4.2.0 COMPONENTS QtCore QtXml QtGui QtOpenGL QtWebKit )
+find_package( Qt4 4.2.0 COMPONENTS QtCore )
 
 if ( ${QT_QTCORE_FOUND} )
    include (${QT_USE_FILE})
