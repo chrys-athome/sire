@@ -411,9 +411,36 @@ void OpenMMFrEnergyST::initialise()  {
                                                              "sigma_avg=0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");*/
 
 
-        custom_force_fied = new OpenMM::CustomNonbondedForce("Hc;"
-                                                             "Hc=138.935456 * q_prod/r;"
-                                                             "q_prod=(qend1 * lam+(1.0-lam) * qstart1) * (qend2 * lam+(1.0-lam) * qstart2)");
+        custom_force_fied = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) + Hclj * isHARD;"
+                                                             "isHARD = isHD1 * isHD2;"
+                                                             "Hsoft = Hls + Hcs;"
+                                                             "Hcs = (lam^n) * 138.935456 * q_prod/sqrt(diff_cl+r^2);"
+                                                             "diff_cl = (1.0-lambda) * 0.01;"
+                                                             "Hls = 4.0 * eps_avg * (LJ*LJ-LJ);"
+                                                             "LJ=((sigma_avg * sigma_avg)/soft)^3;"
+                                                             "soft=(diff_lj*delta*sigma_avg + r*r);"
+                                                             "diff_lj=(1.0-lambda) * 0.1;"
+                                                             "lambda = Logic_lam * lam + Logic_om_lam * (1-lam) + Logic_mix_lam * max(lam,1-lam);"
+                                                             "Logic_om_lam = max((1-isHD1)*(1-isHD2)*isTD1*isTD2*(1-isFD1)*(1-isFD2), B_om_lam);"
+                                                             "B_om_lam = max(isHD1*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), C_om_lam);"
+                                                             "C_om_lam = max(isHD1*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2) , D_om_lam);"
+                                                             "D_om_lam = max((1-isHD1)*isHD2*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), E_om_lam);"
+                                                             "E_om_lam = (1-isHD1)*isHD2*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2);"
+                                                             "Logic_lam = max((1-isHD1)*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*isFD2, B_lam);"
+                                                             "B_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), C_lam);"
+                                                             "C_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2 , D_lam);"
+                                                             "D_lam = max((1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), E_lam);"
+                                                             "E_lam = (1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2;"
+                                                             "Logic_mix_lam = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*isFD1*(1-isFD2), B_mix);"
+                                                             "B_mix = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*isFD2, C_mix);"
+                                                             "C_mix = max((1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*isFD1*(1-isFD2) , D_mix);"
+                                                             "D_mix= (1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*isFD2;"
+                                                             "Hclj = Hl + Hc;"
+                                                             "Hl = 4 * eps_avg * ((sigma_avg/r)^12-(sigma_avg/r)^6);"
+                                                             "Hc = 138.935456 * q_prod/r;"
+                                                             "q_prod = (qend1 * lam+(1.0-lam) * qstart1) * (qend2 * lam+(1.0-lam) * qstart2);"
+                                                             "eps_avg = sqrt((epend1*lam+(1.0-lam)*epstart1)*(epend2*lam+(1.0-lam)*epstart2));"
+                                                             "sigma_avg = 0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");
 
 
 
@@ -989,7 +1016,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 			}
 
-            if(true){
+            if(Debug){
                 qDebug() << "Charge start = " << custom_non_bonded_params[0];
                 qDebug() << "Charge end = " << custom_non_bonded_params[1];
                 qDebug() << "Eps start = " << custom_non_bonded_params[2];
@@ -1538,7 +1565,7 @@ void OpenMMFrEnergyST::initialise()  {
 				const std::vector<double> params(tmp,tmp+3);
                 
                 
-                if(true){
+                if(Debug){
                     
                     qDebug() << "Particle p1 = " << p1 << "\nQstart = " << Qstart_p1 << "\nQend = " << Qend_p1
                              << "\nEpstart = " << Epstart_p1 << "\nEpend = " << Epend_p1
