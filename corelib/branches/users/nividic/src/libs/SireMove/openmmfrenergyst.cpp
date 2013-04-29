@@ -365,7 +365,7 @@ void OpenMMFrEnergyST::initialise()  {
 	//CUSTOM NON BONDED FORCE FIELD
     
     
-    OpenMM::CustomNonbondedForce * custom_force_fied = NULL;
+    OpenMM::CustomNonbondedForce * custom_force_field = NULL;
     
     
     
@@ -379,7 +379,7 @@ void OpenMMFrEnergyST::initialise()  {
 	if ( flag_cutoff == NOCUTOFF ){
 
         
-        /*custom_force_fied = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) + Hclj * isHARD;"
+        /*custom_force_field = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) + Hclj * isHARD;"
                                                              "isHARD = isHD1 * isHD2;"
                                                              "Hsoft = Hls + Hcs;"
                                                              "Hcs = (lambda^n)*138.935456*q_prod/sqrt(diff_cl+r^2);"
@@ -411,7 +411,7 @@ void OpenMMFrEnergyST::initialise()  {
                                                              "sigma_avg=0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");*/
 
 
-        custom_force_fied = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) + Hclj * isHARD;"
+        custom_force_field = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) + Hclj * isHARD;"
                                                              "isHARD = isHD1 * isHD2;"
                                                              "Hsoft = Hls + Hcs;"
                                                              "Hcs = (lam^n) * 138.935456 * q_prod/sqrt(diff_cl+r^2);"
@@ -446,11 +446,11 @@ void OpenMMFrEnergyST::initialise()  {
 
 
 
-        custom_force_fied->addGlobalParameter("lam",Alchemical_value);
-        custom_force_fied->addGlobalParameter("delta",shift_delta);
-		custom_force_fied->addGlobalParameter("n",coulomb_power);
+        custom_force_field->addGlobalParameter("lam",Alchemical_value);
+        custom_force_field->addGlobalParameter("delta",shift_delta);
+		custom_force_field->addGlobalParameter("n",coulomb_power);
         
-        custom_force_fied->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
+        custom_force_field->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
         
         if (true){
 			qDebug() << "\nCut off type = " << CutoffType << "\n";
@@ -594,12 +594,13 @@ void OpenMMFrEnergyST::initialise()  {
 /***********************************************************************NON BONDED INTERACTIONS*****************************************************************/
 
 
-    system_openmm->addForce(custom_force_fied);
-    system_openmm->addForce(custom_intra_14_clj);
-    //system_openmm->addForce(custom_intra_14_todummy);
-    //system_openmm->addForce(custom_intra_14_fromdummy);
-    //system_openmm->addForce(custom_intra_14_fromdummy_todummy);
 
+    /*system_openmm->addForce(custom_intra_14_clj);
+    system_openmm->addForce(custom_intra_14_todummy);
+    system_openmm->addForce(custom_intra_14_fromdummy);
+    system_openmm->addForce(custom_intra_14_fromdummy_todummy);*/
+
+    //system_openmm->addForce(custom_force_field);
 
 	// Andersen thermostat
 	if (Andersen_flag == true){
@@ -675,7 +676,16 @@ void OpenMMFrEnergyST::initialise()  {
 
 
 
-	// Check whether positional restraints have been defined for a set of atoms in that molecule.
+	// Check whether positional restraints have been defined for a set of atoms in that molecu/***********************************************************************NON BONDED INTERACTIONS*****************************************************************/
+
+
+
+    /*system_openmm->addForce(custom_intra_14_clj);
+    system_openmm->addForce(custom_intra_14_todummy);
+    system_openmm->addForce(custom_intra_14_fromdummy);
+    system_openmm->addForce(custom_intra_14_fromdummy_todummy);*/
+
+    //system_openmm->addForce(custom_force_field);le.
 	// You can get the information out by getting the property and casting to VariantProperty
 	//From VariantProperty you have the QVariant, so you can call .toDouble() and .toInt() there
 	//so VariantProperty num = mol.property(QString("AtomNum(%1)").arg(i)).asA<VariantProperty>();
@@ -829,15 +839,15 @@ void OpenMMFrEnergyST::initialise()  {
 
 	/*NON BONDED PER PARTICLE PARAMETERS*/
     
-    custom_force_fied->addPerParticleParameter("qstart");
-	custom_force_fied->addPerParticleParameter("qend");
-	custom_force_fied->addPerParticleParameter("epstart");
-	custom_force_fied->addPerParticleParameter("epend");
-	custom_force_fied->addPerParticleParameter("sigmastart");
-	custom_force_fied->addPerParticleParameter("sigmaend");
-    custom_force_fied->addPerParticleParameter("isHD");
-    custom_force_fied->addPerParticleParameter("isTD");
-    custom_force_fied->addPerParticleParameter("isFD");
+    custom_force_field->addPerParticleParameter("qstart");
+	custom_force_field->addPerParticleParameter("qend");
+	custom_force_field->addPerParticleParameter("epstart");
+	custom_force_field->addPerParticleParameter("epend");
+	custom_force_field->addPerParticleParameter("sigmastart");
+	custom_force_field->addPerParticleParameter("sigmaend");
+    custom_force_field->addPerParticleParameter("isHD");
+    custom_force_field->addPerParticleParameter("isTD");
+    custom_force_field->addPerParticleParameter("isFD");
     
     
     
@@ -1028,7 +1038,7 @@ void OpenMMFrEnergyST::initialise()  {
                 qDebug() << "is From dummy = " << custom_non_bonded_params[8] << "\n";
             }
             
-            custom_force_fied->addParticle(custom_non_bonded_params);
+            custom_force_field->addParticle(custom_non_bonded_params);
 
 		}
 
@@ -1525,8 +1535,8 @@ void OpenMMFrEnergyST::initialise()  {
                 std::vector<double> p1_params(9);
                 std::vector<double> p2_params(9);
                 
-                custom_force_fied->getParticleParameters(p1,p1_params);
-                custom_force_fied->getParticleParameters(p2,p2_params);
+                custom_force_field->getParticleParameters(p1,p1_params);
+                custom_force_field->getParticleParameters(p2,p2_params);
                 
                 double Qstart_p1 = p1_params[0];
                 double Qend_p1 = p1_params[1];
@@ -1620,9 +1630,21 @@ void OpenMMFrEnergyST::initialise()  {
               
 			}
 
-            custom_force_fied->addExclusion(p1,p2);
+            custom_force_field->addExclusion(p1,p2);
 
 	}
+
+	/***********************************************************************NON BONDED INTERACTIONS*****************************************************************/
+
+
+    system_openmm->addForce(custom_force_field);
+
+    system_openmm->addForce(custom_intra_14_clj);
+    system_openmm->addForce(custom_intra_14_todummy);
+    system_openmm->addForce(custom_intra_14_fromdummy);
+    system_openmm->addForce(custom_intra_14_fromdummy_todummy);
+
+
 
 	this->openmm_system = system_openmm;
 
