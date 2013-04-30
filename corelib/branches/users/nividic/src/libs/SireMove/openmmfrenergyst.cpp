@@ -1637,13 +1637,14 @@ void OpenMMFrEnergyST::initialise()  {
 	/***********************************************************************NON BONDED INTERACTIONS*****************************************************************/
 
 
-    system_openmm->addForce(custom_force_field);
+    //system_openmm->addForce(custom_intra_14_clj);
 
-    system_openmm->addForce(custom_intra_14_clj);
     system_openmm->addForce(custom_intra_14_todummy);
     system_openmm->addForce(custom_intra_14_fromdummy);
-    system_openmm->addForce(custom_intra_14_fromdummy_todummy);
 
+    //system_openmm->addForce(custom_intra_14_fromdummy_todummy);
+
+    //system_openmm->addForce(custom_force_field);
 
 
 	this->openmm_system = system_openmm;
