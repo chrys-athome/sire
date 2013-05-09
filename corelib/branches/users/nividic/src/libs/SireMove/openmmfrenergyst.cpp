@@ -282,8 +282,11 @@ void OpenMMFrEnergyST::initialise()  {
 
 	bool Debug = false;
 
-	if (Debug)
+	if (true){
 		qDebug() << " initialising OpenMMFrEnergyST";
+		const std::string version = OpenMM::Platform::getOpenMMVersion();
+		qDebug() << "OpenMM Version: " << QString::fromUtf8( version.data(), version.size() );
+    }
 
 	// Create a workspace using the stored molgroup
 
@@ -752,7 +755,7 @@ void OpenMMFrEnergyST::initialise()  {
 			AtomNum atnum = at.number();
 
 			if (Debug)
-				qDebug() << " openMM_index " << system_index << " Sire Atom Number " << atnum.toString();
+				qDebug() << " openMM_index " << system_index << " Sire Atom Number " << atnum.toString() << " Mass particle = " << m[j];
 
 			AtomNumToOpenMMIndex[atnum.value()] = system_index;
 
@@ -1636,20 +1639,35 @@ void OpenMMFrEnergyST::initialise()  {
 
 	/***********************************************************************NON BONDED INTERACTIONS*****************************************************************/
 
+    int npairs = (custom_force_field->getNumParticles() * (custom_force_field->getNumParticles() - 1))/2;
 
-    //system_openmm->addForce(custom_intra_14_clj);
+    if(true){
+        qDebug() << "Num pairs  = " << npairs;
+        qDebug() << "Num bonds 1-4 Hard = " << custom_intra_14_clj->getNumBonds();
+        qDebug() << "Num bonds 1-4 To Dummy = " << custom_intra_14_todummy->getNumBonds();
+        qDebug() << "Num bonds 1-4 From Dummy = " << custom_intra_14_fromdummy->getNumBonds();
+        qDebug() << "Num bonds 1-4 From Dummy To Dummy = " << custom_intra_14_fromdummy_todummy->getNumBonds();
+    }
 
-    system_openmm->addForce(custom_intra_14_todummy);
-    system_openmm->addForce(custom_intra_14_fromdummy);
+    if(custom_intra_14_clj->getNumBonds() != 0)
+        system_openmm->addForce(custom_intra_14_clj);
+ 
+    if(custom_intra_14_todummy->getNumBonds() != 0)
+        system_openmm->addForce(custom_intra_14_todummy);
 
-    //system_openmm->addForce(custom_intra_14_fromdummy_todummy);
+    if(custom_intra_14_fromdummy->getNumBonds() != 0)
+        system_openmm->addForce(custom_intra_14_fromdummy);
 
-    //system_openmm->addForce(custom_force_field);
+    if(custom_intra_14_fromdummy_todummy->getNumBonds() != 0)
+        system_openmm->addForce(custom_intra_14_fromdummy_todummy);
+
+    if(npairs != num_exceptions)
+        system_openmm->addForce(custom_force_field);
 
 
-	this->openmm_system = system_openmm;
+    this->openmm_system = system_openmm;
 
-	this->isInitialised = true;
+    this->isInitialised = true;
 
 }
 
@@ -1760,6 +1778,15 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 			else{
 				velocities_openmm[system_index] =  OpenMM::Vec3(0.0, 0.0, 0.0);
 			}
+			
+			if(false){
+			
+			    qDebug() << "Particle num " << system_index;
+			    qDebug() << "X = " << positions_openmm[system_index][0] << " Y = " << positions_openmm[system_index][1] << " Z = " << positions_openmm[system_index][2];
+			    qDebug() << "Vx = " << velocities_openmm[system_index][0] << " Vy = " << velocities_openmm[system_index][1] << " Vz = " << velocities_openmm[system_index][2] << "\n";
+			}
+			
+			
 			system_index++;
 		}
 	}
