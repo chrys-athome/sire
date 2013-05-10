@@ -248,6 +248,8 @@ add_subdirectory (System)
 add_subdirectory (Units)
 add_subdirectory (Vol)
 
+add_subdirectory (Tools)
+
 #also compile the sire_python executable
 add_subdirectory (sire_python)
 
