@@ -783,7 +783,7 @@ AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
 
     ret.cgpairs = SireBase::SparseMatrix< CGAtomPairs<T> >(cgpairs.defaultValue());
 
-    int nats = molinfo.nAtoms();
+    int nats = this->nAtoms();
     
     for (AtomIdx i(0); i<nats-1; ++i)
     {
@@ -791,6 +791,8 @@ AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
     
         if (new_i == -1)
             continue;
+    
+        ret.set(new_i, new_i, this->get(i,i));
     
         for (AtomIdx j(i+1); j<nats; ++j)
         {

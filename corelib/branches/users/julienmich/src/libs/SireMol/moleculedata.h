@@ -188,6 +188,8 @@ public:
         return props;
     }
 
+    MoleculeData extract(const AtomSelection &selected_atoms) const;
+
     QStringList propertyKeys() const;
     
     QStringList metadataKeys() const;
@@ -286,6 +288,9 @@ private:
     /** The ID number of this molecule. This is used to identify a molecule
         in a group */
     MolNum molnum;
+
+    friend class MolNum;
+    static MolNum createUniqueMolNum();
 
     class PropVersions
     {

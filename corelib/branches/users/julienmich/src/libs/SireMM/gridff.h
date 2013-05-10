@@ -77,6 +77,15 @@ public:
     
     GridFF* clone() const;
 
+    void addFixedAtoms(const MoleculeView &fixed_atoms,
+                       const SireBase::PropertyMap &map = SireBase::PropertyMap());
+    void addFixedAtoms(const SireMol::Molecules &fixed_atoms,
+                       const SireBase::PropertyMap &map = SireBase::PropertyMap());
+    void addFixedAtoms(const SireMol::MoleculeGroup &fixed_atoms,
+                       const SireBase::PropertyMap &map = SireBase::PropertyMap());
+
+    void addFixedAtoms(const GridFF &other);
+
     void setBuffer(SireUnits::Dimension::Length buffer);
     void setGridSpacing(SireUnits::Dimension::Length spacing);
 
@@ -181,6 +190,13 @@ private:
 
     /** The grid of coulomb potentials */
     QVector<double> gridpot;
+    
+    /** The set of coordinates and parameters for the fixed atoms.
+        These are atoms which exist only in this GridFF, thereby
+        allowing them to be present in the energy expression without
+        needing to be present in the system */
+    QVector<SireMaths::Vector> fixedatoms_coords;
+    QVector<detail::CLJParameter> fixedatoms_params;
     
     /** The set of coordinates and parameters of group 2 
         molecules that are within the LJ cutoff of the center of the grid */

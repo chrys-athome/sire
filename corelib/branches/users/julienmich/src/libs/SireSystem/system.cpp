@@ -43,6 +43,8 @@
 #include "SireFF/potentialtable.h"
 #include "SireFF/probe.h"
 
+#include "SireMM/ljparameterdb.h"
+
 #include "SireMol/partialmolecule.h"
 #include "SireMol/molecule.h"
 #include "SireMol/molecules.h"
@@ -150,7 +152,7 @@ static const RegisterMetaType<System> r_system;
 /** Serialise to a binary datastream */
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
 {
-    writeHeader(ds, r_system, 2);
+    writeHeader(ds, r_system, 3);
     
     if (system.subversion != 0)
         throw SireError::program_bug( QObject::tr(
@@ -161,6 +163,11 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
     
     SharedDataStream sds(ds);
     
+    //first try to save all of the loaded LJ parameter types. This will
+    //help ensure that the LJID of parameters don't change too much between
+    //save and loads, which will help with memory consumption...
+    SireMM::LJDBIOLock dblock = SireMM::LJParameterDB::saveParameters(sds);
+
     sds << system.uid << system.sysname
         << system.molgroups[0] << system.molgroups[1] 
         << system.sysmonitors
@@ -175,7 +182,24 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, System &system)
 {
     VersionID v = readHeader(ds, r_system);
     
-    if (v == 2)
+    if (v == 3)
+    {
+        SharedDataStream sds(ds);
+
+        SireMM::LJDBIOLock dblock = SireMM::LJParameterDB::loadParameters(sds);
+
+        sds >> system.uid >> system.sysname
+            >> system.molgroups[0] >> system.molgroups[1]
+            >> system.sysmonitors
+            >> system.cons
+            >> static_cast<MolGroupsBase&>(system);
+
+        system.rebuildIndex();
+
+        system.sysversion = systemRegistry().registerObject(system.uid);
+        system.subversion = 0;
+    }
+    else if (v == 2)
     {
         SharedDataStream sds(ds);
         
