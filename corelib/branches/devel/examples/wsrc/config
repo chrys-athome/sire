@@ -1,0 +1,31 @@
+
+# Give the name of the input amber topology and coordinate files
+# that contain the solvated, bound protein-ligand system
+protein topfile = proteinbox.top
+protein crdfile = proteinbox.crd
+
+## Specify the name of one of the residues in the ligand to be swapped.
+# The WSRC module will find the ligand molecule by looking for the first
+# molecule loaded that contains a residue with this name
+ligand name = ose
+
+# Specify the radius of the reflection sphere
+reflection radius = 10 * angstroms
+
+# Specify the temperature of the simulation
+temperature = 25 * celsius
+
+# Specify the lambda values to use
+lambda values = [ 0.001, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99, 0.999 ]
+
+# Specify the number of RETI iterations
+nmoves = 100
+
+# Specify the number of Monte Carlo moves to perform per RETI iteration
+nsubmoves = 10000
+
+# Specify the number of equilibration moves to perform when setting up the system
+nequilmoves = 0
+
+# Specify the frequency of updating the residue- and water-based energy monitors
+energy monitor frequency = 5
