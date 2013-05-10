@@ -8,6 +8,8 @@ set ( PYPP_SOURCES
        Constraint.pypp.cpp
        PolariseChargesFF.pypp.cpp
        IDAndSet_MonitorID_.pypp.cpp
+       IDAssigner.pypp.cpp
+       EnergyMonitor.pypp.cpp
        MonitorProperty.pypp.cpp
        MonitorIdx.pypp.cpp
        MonitorComponent.pypp.cpp

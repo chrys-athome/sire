@@ -38,9 +38,8 @@ void register_ThreeAtomFunction_class(){
 
     { //::SireMM::ThreeAtomFunction
         typedef bp::class_< SireMM::ThreeAtomFunction, bp::bases< SireMM::AtomFunction > > ThreeAtomFunction_exposer_t;
-        ThreeAtomFunction_exposer_t ThreeAtomFunction_exposer = ThreeAtomFunction_exposer_t( "ThreeAtomFunction" );
+        ThreeAtomFunction_exposer_t ThreeAtomFunction_exposer = ThreeAtomFunction_exposer_t( "ThreeAtomFunction", bp::init< >() );
         bp::scope ThreeAtomFunction_scope( ThreeAtomFunction_exposer );
-        ThreeAtomFunction_exposer.def( bp::init< >() );
         ThreeAtomFunction_exposer.def( bp::init< SireMol::CGAtomIdx const &, SireMol::CGAtomIdx const &, SireMol::CGAtomIdx const &, SireCAS::Expression const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("function") )) );
         ThreeAtomFunction_exposer.def( bp::init< SireMM::ThreeAtomFunction const & >(( bp::arg("other") )) );
         { //::SireMM::ThreeAtomFunction::atom0

@@ -40,9 +40,8 @@ void register_StretchStretchSymbols_class(){
 
     { //::SireMM::StretchStretchSymbols
         typedef bp::class_< SireMM::StretchStretchSymbols, bp::bases< SireMM::InternalSymbolsBase > > StretchStretchSymbols_exposer_t;
-        StretchStretchSymbols_exposer_t StretchStretchSymbols_exposer = StretchStretchSymbols_exposer_t( "StretchStretchSymbols" );
+        StretchStretchSymbols_exposer_t StretchStretchSymbols_exposer = StretchStretchSymbols_exposer_t( "StretchStretchSymbols", bp::init< >() );
         bp::scope StretchStretchSymbols_scope( StretchStretchSymbols_exposer );
-        StretchStretchSymbols_exposer.def( bp::init< >() );
         { //::SireMM::StretchStretchSymbols::r01
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::StretchStretchSymbols::*r01_function_type )(  ) const;

@@ -40,9 +40,8 @@ void register_BendBendSymbols_class(){
 
     { //::SireMM::BendBendSymbols
         typedef bp::class_< SireMM::BendBendSymbols, bp::bases< SireMM::InternalSymbolsBase > > BendBendSymbols_exposer_t;
-        BendBendSymbols_exposer_t BendBendSymbols_exposer = BendBendSymbols_exposer_t( "BendBendSymbols" );
+        BendBendSymbols_exposer_t BendBendSymbols_exposer = BendBendSymbols_exposer_t( "BendBendSymbols", bp::init< >() );
         bp::scope BendBendSymbols_scope( BendBendSymbols_exposer );
-        BendBendSymbols_exposer.def( bp::init< >() );
         { //::SireMM::BendBendSymbols::theta012
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::BendBendSymbols::*theta012_function_type )(  ) const;

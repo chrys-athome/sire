@@ -37,6 +37,9 @@
 
 #include "IDOrSet_SysID_.pypp.hpp"
 
+#include "IDAssigner.pypp.hpp"
+#include "EnergyMonitor.pypp.hpp"
+
 #include "IdentityConstraint.pypp.hpp"
 
 #include "MoleculeConstraint.pypp.hpp"
@@ -151,6 +154,9 @@ BOOST_PYTHON_MODULE(_System){
     register_SystemMonitor_class();
 
     register_MonitorComponent_class();
+
+    register_EnergyMonitor_class();
+    register_IDAssigner_class();
 
     register_MonitorComponents_class();
 

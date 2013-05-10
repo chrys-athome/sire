@@ -40,9 +40,8 @@ void register_StretchBendSymbols_class(){
 
     { //::SireMM::StretchBendSymbols
         typedef bp::class_< SireMM::StretchBendSymbols, bp::bases< SireMM::InternalSymbolsBase > > StretchBendSymbols_exposer_t;
-        StretchBendSymbols_exposer_t StretchBendSymbols_exposer = StretchBendSymbols_exposer_t( "StretchBendSymbols" );
+        StretchBendSymbols_exposer_t StretchBendSymbols_exposer = StretchBendSymbols_exposer_t( "StretchBendSymbols", bp::init< >() );
         bp::scope StretchBendSymbols_scope( StretchBendSymbols_exposer );
-        StretchBendSymbols_exposer.def( bp::init< >() );
         { //::SireMM::StretchBendSymbols::r01
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::StretchBendSymbols::*r01_function_type )(  ) const;

@@ -33,11 +33,54 @@ void register_GridFF_class(){
 
     { //::SireMM::GridFF
         typedef bp::class_< SireMM::GridFF, bp::bases< SireFF::Inter2B2G3DFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >, SireFF::FF3D, SireFF::Inter2B2GFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >, SireMM::CLJPotentialInterface<SireMM::InterCLJPotential>, SireFF::G2FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > GridFF_exposer_t;
-        GridFF_exposer_t GridFF_exposer = GridFF_exposer_t( "GridFF" );
+        GridFF_exposer_t GridFF_exposer = GridFF_exposer_t( "GridFF", bp::init< >() );
         bp::scope GridFF_scope( GridFF_exposer );
-        GridFF_exposer.def( bp::init< >() );
         GridFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         GridFF_exposer.def( bp::init< SireMM::GridFF const & >(( bp::arg("other") )) );
+        { //::SireMM::GridFF::addFixedAtoms
+        
+            typedef void ( ::SireMM::GridFF::*addFixedAtoms_function_type )( ::SireMol::MoleculeView const &,::SireBase::PropertyMap const & ) ;
+            addFixedAtoms_function_type addFixedAtoms_function_value( &::SireMM::GridFF::addFixedAtoms );
+            
+            GridFF_exposer.def( 
+                "addFixedAtoms"
+                , addFixedAtoms_function_value
+                , ( bp::arg("fixed_atoms"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::GridFF::addFixedAtoms
+        
+            typedef void ( ::SireMM::GridFF::*addFixedAtoms_function_type )( ::SireMol::Molecules const &,::SireBase::PropertyMap const & ) ;
+            addFixedAtoms_function_type addFixedAtoms_function_value( &::SireMM::GridFF::addFixedAtoms );
+            
+            GridFF_exposer.def( 
+                "addFixedAtoms"
+                , addFixedAtoms_function_value
+                , ( bp::arg("fixed_atoms"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::GridFF::addFixedAtoms
+        
+            typedef void ( ::SireMM::GridFF::*addFixedAtoms_function_type )( ::SireMol::MoleculeGroup const &,::SireBase::PropertyMap const & ) ;
+            addFixedAtoms_function_type addFixedAtoms_function_value( &::SireMM::GridFF::addFixedAtoms );
+            
+            GridFF_exposer.def( 
+                "addFixedAtoms"
+                , addFixedAtoms_function_value
+                , ( bp::arg("fixed_atoms"), bp::arg("map")=SireBase::PropertyMap() ) );
+        
+        }
+        { //::SireMM::GridFF::addFixedAtoms
+        
+            typedef void ( ::SireMM::GridFF::*addFixedAtoms_function_type )( ::SireMM::GridFF const & ) ;
+            addFixedAtoms_function_type addFixedAtoms_function_value( &::SireMM::GridFF::addFixedAtoms );
+            
+            GridFF_exposer.def( 
+                "addFixedAtoms"
+                , addFixedAtoms_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::SireMM::GridFF::buffer
         
             typedef ::SireUnits::Dimension::Length ( ::SireMM::GridFF::*buffer_function_type )(  ) const;

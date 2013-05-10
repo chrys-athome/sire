@@ -54,9 +54,8 @@ void register_PartialMolecule_class(){
 
     { //::SireMol::PartialMolecule
         typedef bp::class_< SireMol::PartialMolecule, bp::bases< SireMol::MoleculeView, SireBase::Property > > PartialMolecule_exposer_t;
-        PartialMolecule_exposer_t PartialMolecule_exposer = PartialMolecule_exposer_t( "PartialMolecule" );
+        PartialMolecule_exposer_t PartialMolecule_exposer = PartialMolecule_exposer_t( "PartialMolecule", bp::init< >() );
         bp::scope PartialMolecule_scope( PartialMolecule_exposer );
-        PartialMolecule_exposer.def( bp::init< >() );
         PartialMolecule_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molecule") )) );
         PartialMolecule_exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::AtomSelection const & >(( bp::arg("moldata"), bp::arg("atoms") )) );
         PartialMolecule_exposer.def( bp::init< SireMol::PartialMolecule const & >(( bp::arg("other") )) );
@@ -68,6 +67,16 @@ void register_PartialMolecule_class(){
             PartialMolecule_exposer.def( 
                 "evaluate"
                 , evaluate_function_value );
+        
+        }
+        { //::SireMol::PartialMolecule::extract
+        
+            typedef ::SireMol::PartialMolecule ( ::SireMol::PartialMolecule::*extract_function_type )(  ) const;
+            extract_function_type extract_function_value( &::SireMol::PartialMolecule::extract );
+            
+            PartialMolecule_exposer.def( 
+                "extract"
+                , extract_function_value );
         
         }
         { //::SireMol::PartialMolecule::hasMetadata
