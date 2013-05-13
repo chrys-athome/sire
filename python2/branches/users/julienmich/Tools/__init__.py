@@ -53,6 +53,88 @@ def readParams( filename ):
 
     return params
 
+class Parameter:
+    """This class is used to help manage all script-level user-definable
+       parameters. You create a new parameter using;
+
+       my_val = Parameter("my value", default_value, "A test variable")
+
+       When you run the script call resolve to set all of the user variables;
+       
+       Parameter.push( user_params )
+
+       Now you can get the user-supplied value using
+
+       my_val.val
+
+       When you have finished running the function, call
+
+       Parameter.pop()
+
+       to clear the set of parameters and restore the previous set.
+
+       Note that the "resolveParameters" decorator does this for
+       you automatically
+    """
+
+    _old_user_params = []
+    _user_params = {}
+    _all_params = {}
+
+    @staticmethod
+    def push(params):
+        Parameter._old_user_params.append(Parameter._user_params)
+        Parameter._user_params = params
+
+    @staticmethod
+    def pop():
+        Parameter._user_params = Parameter._old_user_params.pop()
+
+    @staticmethod
+    def printAll():
+        keys = Parameter._all_params.keys()
+        keys.sort()
+
+        for key in keys:
+            print Parameter._all_params[key]
+
+    def __init__(self, key, default_value, description):
+        """Create a new parameter with specified key, default value
+           and variable description"""
+        self._key = key
+        self._default_value = default_value
+        self._desc = description
+        Parameter._all_params[key] = self
+
+    def __str__(self):
+        print "%s = %s" % (self._key, self.val)
+
+    @property
+    def val(self):
+        if self._key in Parameter._user_params:
+            return Parameter._user_params[key]
+        else:
+            return self._default_value
+
+def resolveParameters(func):
+    """Decorator that automatically pushes the "params" user-supplied
+       variables onto the Parameter stack before the wrapped function
+       is called, and pops them off after"""
+    def inner(params = {}):
+        print "Pushing parameters..."
+        Parameter.push(params)
+        try:
+            retval = func()
+        except:
+            print "Error running the function..."
+            Parameter.pop()
+            raise
+
+        print "Popping parameters..."
+        Parameter.pop()
+
+    return inner
+
 #now import every tool, so that someone writing "import Sire.Tools" will
 #get access to everything
 
