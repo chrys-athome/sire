@@ -15,6 +15,8 @@ import Sire.Error
 
 from Sire.Units import *
 
+import string
+
 # Create a "readParams" function that reads a text file and returns a dictionary
 # of key - value pairs
 def readParams( filename ):
@@ -91,23 +93,29 @@ class Parameter:
         Parameter._user_params = Parameter._old_user_params.pop()
 
     @staticmethod
-    def printAll():
+    def printAll(verbose=False):
         keys = Parameter._all_params.keys()
         keys.sort()
 
         for key in keys:
             print Parameter._all_params[key]
+            if verbose:
+                print "%s\n" % Parameter._all_params[key].description
 
     def __init__(self, key, default_value, description):
         """Create a new parameter with specified key, default value
            and variable description"""
         self._key = key
         self._default_value = default_value
-        self._desc = description
+        self._desc = string.join(description.replace("\n", " ").split(), " ")
         Parameter._all_params[key] = self
 
     def __str__(self):
-        print "%s = %s" % (self._key, self.val)
+        return "%s = %s" % (self._key, self.val)
+
+    @property
+    def description(self):
+        return self._desc
 
     @property
     def val(self):
