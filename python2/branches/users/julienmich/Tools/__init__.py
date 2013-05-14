@@ -120,7 +120,7 @@ class Parameter:
     @property
     def val(self):
         if self._key in Parameter._user_params:
-            return Parameter._user_params[key]
+            return Parameter._user_params[self._key]
         else:
             return self._default_value
 

@@ -1,3 +1,6 @@
+#!/bin/env python
+# -*- coding: utf-8 -*-
+
 import os,re, sys, shutil
 
 from Sire.IO import *
@@ -22,10 +25,12 @@ import Sire.Stream
 ##### This is how we can have the script specify all of the 
 ##### user-controllable parameters
 
-sphere_radius = Parameter("spherical boundary radius", 10*angstrom,
+sphere_radius = Parameter("spherical boundary radius", None,
                           """The radius for the spherical boundary conditions.
                              Set to "None" if you don't want to use spherical
                              boundary conditions.""")
+
+sphere_center = None # this parameter will be calculated and set in the script
 
 grid_spacing = Parameter("grid spacing", 0.5*angstrom,
                          """The spacing between grid points if a grid is used""")
@@ -66,7 +71,7 @@ nmoves_per_pdb = Parameter("number of structure snapshots", 1,
                            """The number of times during the simulation that you want the 
                                     structure to be recorded (as a PDB).""")
 
-nmoves_per_pdb_intermediates = Parameter("number of intermediate structure snapshots", 0,
+nmoves_per_pdb_intermediates = Parameter("number of intermediate structure snapshots", None,
                                          """The number of times during an intermediate simulation to save 
                                             the structure (as a PDB).""")
 
@@ -122,6 +127,10 @@ compress = Parameter("compression method", "bzip2 -f",
                      """Command used to compress output files.""")
 
 lam_val = Parameter("lambda", 0.0, """Value of lambda for the simulation""")
+
+print_nrgs = Parameter("print energies", None, 
+                       """Whether or not to print all energy components after loading 
+                          the restart file or starting the simulation. Useful for debugging.""")
 
 def adjustPerturbedDOFs( molecule ):
     
@@ -192,7 +201,7 @@ def getDummies(molecule):
     return to_dummies, from_dummies
 
 
-def createSystem(molecules):
+def createSystem(molecules, space):
     print "Applying flexibility and zmatrix templates..."
 
     moleculeNumbers = molecules.molNums()
@@ -334,37 +343,6 @@ def createSystem(molecules):
     perturbed_solutes.add(solute_fwd)
     perturbed_solutes.add(solute_bwd)
 
-    solvent = MoleculeGroup("solvent")
-    for molecule in moleculeList[1:]:
-        solvent.add(molecule)
-
-    all = MoleculeGroup("all")
-    all.add(solutes)
-
-    all.add(perturbed_solutes)
-
-    all.add(solute_grp_ref)
-    all.add(solute_grp_fwd)
-    all.add(solute_grp_bwd)
-
-    all.add(solute_grp_ref_hard)
-    all.add(solute_grp_ref_todummy)
-    all.add(solute_grp_ref_fromdummy)
-
-    all.add(solute_grp_fwd_hard)
-    all.add(solute_grp_fwd_todummy)
-    all.add(solute_grp_fwd_fromdummy)
-
-    all.add(solute_grp_bwd_hard)
-    all.add(solute_grp_bwd_todummy)
-    all.add(solute_grp_bwd_fromdummy)
-
-    all.add(solvent)
-
-    traj = MoleculeGroup("traj")
-    traj.add(solute)
-    traj.add(solvent)
-
     # Add these groups to the System
     system = System()
 
@@ -388,13 +366,90 @@ def createSystem(molecules):
     system.add(solute_grp_bwd_todummy)
     system.add(solute_grp_bwd_fromdummy)
 
-    system.add(solvent)
+    # Now sort out the solvent group - how we do this depends on the 
+    # type of boundary conditions
 
-    system.add(all)
+    if sphere_radius.val:
+        # we are using spherical boundary conditions. Need to divide the system
+        # into mobile and fixed solvent molecules
+        solvent = MoleculeGroup("solvent")
+        fixed_solvent = MoleculeGroup("fixed_solvent")
 
-    system.add(traj)
+        # get the center of the solute (this is the center for the spherical
+        # boundary conditions) (this sets the global "sphere_center" variable)
+        global sphere_center
+        sphere_center = solute.evaluate().center()
+
+        # get the cutoff - all solvent molecules whose centers are within this radius
+        # are mobile
+        cutoff = sphere_radius.val.to(angstrom)
+        print "Using a reflection sphere of radius %f A centered at %s." % (cutoff, sphere_center)
+
+        for molecule in moleculeList[1:]:
+            # get the center of the solvent
+            solv_center = molecule.evaluate().center()
+
+            # wrap the solvent molecule into the same space as the solute
+            wrapped_solv_center = space.getMinimumImage(solv_center, sphere_center)
+
+            if wrapped_solv_center != solv_center:
+                molecule = molecule.move().translate( wrapped_solv_center - solv_center ).commit()
+                solv_center = molecule.evaluate().center()
+                print "Wrapped - two vectors should be equal: %s vs. %s" % (solv_center, wrapped_solv_center)
+
+            if Vector.distance(solv_center, sphere_center) <= cutoff:
+                solvent.add(molecule)
+            else:
+                fixed_solvent.add(molecule)
+
+        traj = MoleculeGroup("traj")
+        traj.add(solute)
+        traj.add(solvent)
+
+        system.add(solvent)
+        system.add(fixed_solvent)
+        system.add(traj)
+
+    else:
+        # we are using periodic boundary conditions. All solvent molecules can
+        # be moved, and we have to create a group to handle volume moves
+        solvent = MoleculeGroup("solvent")
+        for molecule in moleculeList[1:]:
+            solvent.add(molecule)
+
+        all = MoleculeGroup("all")
+        all.add(solutes)
+
+        all.add(perturbed_solutes)
+
+        all.add(solute_grp_ref)
+        all.add(solute_grp_fwd)
+        all.add(solute_grp_bwd)
+
+        all.add(solute_grp_ref_hard)
+        all.add(solute_grp_ref_todummy)
+        all.add(solute_grp_ref_fromdummy)
+
+        all.add(solute_grp_fwd_hard)
+        all.add(solute_grp_fwd_todummy)
+        all.add(solute_grp_fwd_fromdummy)
+
+        all.add(solute_grp_bwd_hard)
+        all.add(solute_grp_bwd_todummy)
+        all.add(solute_grp_bwd_fromdummy)
+
+        all.add(solvent)
+
+        traj = MoleculeGroup("traj")
+        traj.add(solute)
+        traj.add(solvent)
+
+        system.add(solvent)
+        system.add(all)
+        system.add(traj)
 
     return system
+
 
 def setupForcefields(system, space):
 
@@ -419,7 +474,10 @@ def setupForcefields(system, space):
 
     solvent = system[ MGName("solvent") ]
 
-    all = system[ MGName("all") ]
+    if sphere_radius.val:
+        fixed_solvent = system[ MGName("fixed_solvent") ]
+    else:
+        all = system[ MGName("all") ]
 
     # - first solvent-solvent coulomb/LJ (CLJ) energy
     solventff = InterCLJFF("solvent:solvent")
@@ -633,13 +691,13 @@ def setupForcefields(system, space):
     system.add( ComponentConstraint( lam_bwd, Max( lam - delta_lambda.val, 0 ) ) )
 
     # Add a monitor that records the value of all energy components
-    system.add( "energies", MonitorComponents(RecordValues()), nmoves_per_energy.val )
+    system.add( "energies", MonitorComponents(RecordValues()), nmoves.val / nmoves_per_energy.val )
     
     # Add a monitor that records the coordinates of the system
     if (lam_val.val < 0.001 or lam_val.val > 0.999):
-        system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves_per_pdb.val )
-    else:
-        system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves_per_pdb_intermediates.val )
+        system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves.val / nmoves_per_pdb.val )
+    elif not (nmoves_per_pdb_intermediates.val is None):
+        system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves.val / nmoves_per_pdb_intermediates.val )
 
     # Alpha constraints for the soft force fields
 
@@ -692,15 +750,11 @@ def setupMoves(system, random_seed):
     solute_ref = system[ MGName("solute_ref") ]
 
     solvent = system[ MGName("solvent") ]
-
-    all = system[ MGName("all") ]
     
     print "Setting up moves..."
     # Setup Moves
-    max_volume_change = 0.50 * solvent.nMolecules() * angstrom3
 
     solute_moves = RigidBodyMC( solutes ) 
-
 
     # No translation for a solvation calculation
     solute_moves.setMaximumTranslation( 0.0 * angstrom )
@@ -722,18 +776,22 @@ def setupMoves(system, random_seed):
     
     moves = WeightedMoves()
 
-    if False:  #  not (reflection_sphere_radius.val is None):
+    if sphere_radius.val:
         # Do not use preferential sampling with the reflection sphere. Preferential
         # sampling causes volume expansion around the solute, which would push the
         # solvent towards the boundary of the sphere. Given we have already really
         # reduced the number of moving solvent molecules, preferential sampling 
         # is not needed
         solvent_moves = RigidBodyMC(solvent)
-        solvent_moves.setReflectionSphereRadius(reflection_sphere_radius)
+        solvent_moves.setReflectionSphere(sphere_center, sphere_radius.val)
+        solute_moves.setReflectionSphere(sphere_center, sphere_radius.val)
 
     else:
         solvent_moves = RigidBodyMC( PrefSampler(solute_ref[MolIdx(0)],
-                                             solvent, pref_constant.val) )
+                                                 solvent, pref_constant.val) )
+
+        all = system[ MGName("all") ]
+        max_volume_change = 0.50 * solvent.nMolecules() * angstrom3
 
         volume_moves = VolumeMove(all)
         volume_moves.setMaximumVolumeChange(max_volume_change)
@@ -741,16 +799,21 @@ def setupMoves(system, random_seed):
 
     solvent_moves.setMaximumTranslation(max_solvent_translation.val)
     solvent_moves.setMaximumRotation(max_solvent_rotation.val)
-    solvent_moves.setCenterOfRotation(GetCOGPoint( AtomName("O") ) )
 
     moves.add( solute_moves, solute_mc_weight.val / 2 )
     moves.add( solute_intra_moves, solute_mc_weight.val / 2)
     moves.add( solvent_moves, solvent.nMolecules() * solvent_mc_weight_factor.val)
 
     moves.setTemperature(temperature.val)
-    moves.setPressure(pressure.val)
+    print "Using a temperature of %f C" % temperature.val.to(celsius)
 
-    if (not random_seed):
+    if not sphere_radius.val:
+        moves.setPressure(pressure.val)
+        print "Using a pressure of %f atm" % pressure.val.to(atm)
+
+    if (random_seed):
+      print "Using supplied random seed %d" % random_seed.val
+    else:
 	random_seed = RanGenerator().randInt(100000,1000000)
 	print "Generated random seed number %d " % random_seed
 
@@ -865,7 +928,7 @@ def run():
 
         molecules, space = amber.readCrdTop(crd_file.val,top_file.val)
 
-        system = createSystem(molecules)
+        system = createSystem(molecules, space)
 
         system = setupForcefields(system, space)
 
@@ -884,7 +947,8 @@ def run():
 
     print "Performing simulation for block number %d " % block_number
 
-    printComponents(system.energies())
+    if print_nrgs.val:
+        printComponents(system.energies())
     
     system = moves.move(system, nmoves.val, True)
 
