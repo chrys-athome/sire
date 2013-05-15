@@ -16,6 +16,7 @@ import Sire.Error
 from Sire.Units import *
 
 import string
+import sys
 
 # Create a "readParams" function that reads a text file and returns a dictionary
 # of key - value pairs
@@ -129,16 +130,14 @@ def resolveParameters(func):
        variables onto the Parameter stack before the wrapped function
        is called, and pops them off after"""
     def inner(params = {}):
-        print "Pushing parameters..."
         Parameter.push(params)
         try:
             retval = func()
         except:
-            print "Error running the function..."
+            sys.exc_info()[0]
             Parameter.pop()
             raise
 
-        print "Popping parameters..."
         Parameter.pop()
 
     return inner

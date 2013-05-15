@@ -33,7 +33,10 @@ sphere_radius = Parameter("spherical boundary radius", 10*angstrom,
 
 sphere_center = None # this parameter will be calculated and set in the script
 
-use_grid = Parameter("use grid", True,
+use_softcore = Parameter("use softcore", True,
+                       """Whether or not to use a soft-core potential for the perturbed solute.""")
+
+use_grid = Parameter("use grid", False,
                      """Whether or not to use a grid for the interactions with atoms 
                         that are beyond the spherical boundary""")
 
@@ -56,6 +59,9 @@ cutoff_scheme = Parameter("cutoff scheme", "group",
                              (3) group : This is the default, and uses a group-based cutoff with a feather. Note that this is 
                                          incompatible with a grid, so an error will be raised if you try
                                          to use a group-based cutoff with a grid.""")
+
+rf_dielectric = Parameter("dielectric", 78.3,
+                          """The dielectric constant to use with the reaction field cutoff method.""")
 
 top_file = Parameter("topology file", "../../SYSTEM.top",
                      """The name of the topology file that contains the solvated solute.""")
@@ -222,6 +228,25 @@ def getDummies(molecule):
 
 
 def createSystem(molecules, space):
+    # First, sanity check that the cutoff is not greater than half the box length for
+    # periodic spaces...
+    if space.isPeriodic():
+        cutoff = coul_cutoff.val.to(angstrom)
+
+        if lj_cutoff.val.to(angstrom) > cutoff:
+            cutoff = lj_cutoff.val.to(angstrom)
+
+        eps_cutoff = cutoff - 1e-6
+
+        ok_x = (space.getMinimumImage(Vector(eps_cutoff,0,0), Vector(0)).length() <= cutoff)
+        ok_y = (space.getMinimumImage(Vector(0,eps_cutoff,0), Vector(0)).length() <= cutoff)
+        ok_z = (space.getMinimumImage(Vector(0,0,eps_cutoff), Vector(0)).length() <= cutoff)
+
+        if not (ok_x and ok_y and ok_z):
+            print >>sys.stderr,"The cutoff (%f A) is too large for periodic box %s" % \
+                        (cutoff, space)
+            raise RuntimeError()
+
     print "Applying flexibility and zmatrix templates..."
 
     moleculeNumbers = molecules.molNums()
@@ -402,8 +427,25 @@ def createSystem(molecules, space):
 
         # get the cutoff - all solvent molecules whose centers are within this radius
         # are mobile
-        cutoff = sphere_radius.val.to(angstrom)
-        print "Using a reflection sphere of radius %f A centered at %s." % (cutoff, sphere_center)
+        radius = sphere_radius.val.to(angstrom)
+        print "Using a reflection sphere of radius %f A centered at %s." % (radius, sphere_center)
+
+        if space.isPeriodic():
+            eps_radius = cutoff + radius - 1e-6
+
+            ok_x = (space.getMinimumImage(Vector(eps_radius,0,0), Vector(0)).length() > radius)
+            ok_y = (space.getMinimumImage(Vector(0,eps_radius,0), Vector(0)).length() > radius)
+            ok_z = (space.getMinimumImage(Vector(0,0,eps_radius), Vector(0)).length() > radius)
+
+            if not (ok_x and ok_y and ok_z):
+                print >>sys.stderr,"The sphere radius (%f A) plus non-bonded cutoff (%f A) is too large for periodic box %s" \
+                                 % (radius, cutoff, space)
+                print >>sys.stderr, \
+                         "Two times the sphere radius plus the cutoff distance cannot exceed the dimension of the box."
+
+                raise RuntimeError()
+
+        num_images = 0
 
         for molecule in moleculeList[1:]:
             # get the center of the solvent
@@ -415,14 +457,47 @@ def createSystem(molecules, space):
             if wrapped_solv_center != solv_center:
                 molecule = molecule.move().translate( wrapped_solv_center - solv_center ).commit()
                 solv_center = molecule.evaluate().center()
-                print "Wrapped - two vectors should be equal: %s vs. %s" % (solv_center, wrapped_solv_center)
 
-            if Vector.distance(solv_center, sphere_center) <= cutoff:
+            if Vector.distance(solv_center, sphere_center) <= radius:
                 solvent.add(molecule)
             else:
                 fixed_solvent.add(molecule)
 
-        print "There are %d fixed solvent molecules." % fixed_solvent.nMolecules()
+                # if we are in a periodic space, we need to manually mirror this molecule
+                # into each of the periodic boxes and keep those images that lie within cutoff+sphere_radius
+                # of the solute (since these images will be seen by mobile solvent molecules on the 
+                # edge of the sphere
+                if space.isPeriodic():
+                    image_cutoff = cutoff + radius
+
+                    for i in (-1,0,1):
+                        for j in (-1,0,1):
+                            for k in (-1,0,1):
+                                delta = Vector(i * radius, j * radius, k * radius)
+
+                                if delta.length() == 0:
+                                    #skip the central box
+                                    next
+
+                                # get the image of the solvent molecule in this box
+                                image_solv_center = space.getMinimumImage(solv_center, sphere_center+delta)
+
+                                delta = image_solv_center - solv_center
+
+                                if delta.length() > 0:
+                                    #there is a periodic image available here - is it within non-bonded cutoff?
+                                    if (image_solv_center - sphere_center).length() <= image_cutoff:
+                                        # it is within cutoff, so a copy of this molecule should be added
+                                        image = molecule.edit().renumber().move().translate(delta).commit()
+                                        fixed_solvent.add(image)
+                                        num_images += 1
+
+        print "There are %d fixed solvent molecules (%d of these are periodic images)." % \
+                      (fixed_solvent.nMolecules(), num_images)
+
+        # print out a PDB containing all fixed atoms. This will be useful when visualising
+        # the system
+        PDB().write(fixed_solvent, "fixed_solvent.pdb")
 
         traj = MoleculeGroup("traj")
         traj.add(solute)
@@ -682,7 +757,7 @@ def setupForcefields(system, space):
             elif cutoff_scheme.val == "group":
                 print >>sys.stderr,"You cannot use a group-based cutoff with a grid!"
                 print >>sys.stderr,"Please choose either the shift_electrostatics or reaction_field cutoff schemes."
-                sys.exit(-1)
+                raise RuntimeError()
 
             else:
                 print "WARNING. Unrecognised cutoff scheme. Using \"shift_electrostatics\"."
@@ -904,16 +979,16 @@ def setupForcefields(system, space):
     if use_sphere.val:
         # add in the extra terms for the fixed forcefield
         total_nrg += solvent_fixedff.components().total() + solute_fixed_solventff.components().total() + \
-                     (1-lam) * solute_todummy_fixed_solventff.components().total() + \
-                      lam * solute_fromdummy_fixed_solventff.components().total()
+                      solute_todummy_fixed_solventff.components().total() + \
+                      solute_fromdummy_fixed_solventff.components().total()
 
         fwd_nrg += solvent_fixedff.components().total() + solute_fwd_fixed_solventff.components().total() + \
-                     (1-lam) * solute_fwd_todummy_fixed_solventff.components().total() + \
-                      lam * solute_fwd_fromdummy_fixed_solventff.components().total()
+                      solute_fwd_todummy_fixed_solventff.components().total() + \
+                      solute_fwd_fromdummy_fixed_solventff.components().total()
 
         bwd_nrg += solvent_fixedff.components().total() + solute_bwd_fixed_solventff.components().total() + \
-                      (1-lam) * solute_bwd_todummy_fixed_solventff.components().total() + \
-                       lam * solute_bwd_fromdummy_fixed_solventff.components().total()
+                       solute_bwd_todummy_fixed_solventff.components().total() + \
+                       solute_bwd_fromdummy_fixed_solventff.components().total()
 
     e_total = system.totalComponent()
     e_fwd = Symbol("E_{fwd}")
@@ -958,30 +1033,34 @@ def setupForcefields(system, space):
         system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves.val / nmoves_per_pdb_intermediates.val )
 
     # Alpha constraints for the soft force fields
+    if use_softcore.val:
+        system.add( PropertyConstraint( "alpha0", FFName("solute_todummy_intraclj"), lam ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_fromdummy_intraclj"), 1 - lam ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_hard:todummy_intraclj"), lam ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_hard:fromdummy_intraclj"), 1 - lam ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:fromdummy_intraclj"), Min( lam, 1 - lam )  ) ) 
+        system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:solvent"), lam ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_fromdummy:solvent"), 1 - lam ) )
 
-    system.add( PropertyConstraint( "alpha0", FFName("solute_todummy_intraclj"), lam ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_fromdummy_intraclj"), 1 - lam ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_hard:todummy_intraclj"), lam ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_hard:fromdummy_intraclj"), 1 - lam ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:fromdummy_intraclj"), Min( lam, 1 - lam )  ) ) 
-    system.add( PropertyConstraint( "alpha0", FFName("solute_todummy:solvent"), lam ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_fromdummy:solvent"), 1 - lam ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_todummy_intraclj"), lam_fwd ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_fromdummy_intraclj"), 1 - lam_fwd ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_hard:todummy_intraclj"), lam_fwd ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_hard:fromdummy_intraclj"), 1 - lam_fwd ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_todummy:fromdummy_intraclj"), Min( lam_fwd, 1 - lam_fwd ) ) ) 
+        system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_todummy:solvent"), lam_fwd ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_fromdummy:solvent"), 1 - lam_fwd ) )
 
-    system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_todummy_intraclj"), lam_fwd ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_fromdummy_intraclj"), 1 - lam_fwd ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_hard:todummy_intraclj"), lam_fwd ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_hard:fromdummy_intraclj"), 1 - lam_fwd ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_todummy:fromdummy_intraclj"), Min( lam_fwd, 1 - lam_fwd ) ) ) 
-    system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_todummy:solvent"), lam_fwd ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_fwd_fromdummy:solvent"), 1 - lam_fwd ) )
-
-    system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_todummy_intraclj"), lam_bwd ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_fromdummy_intraclj"), 1 - lam_bwd ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_hard:todummy_intraclj"), lam_bwd ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_hard:fromdummy_intraclj"), 1 - lam_bwd ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_todummy:fromdummy_intraclj"), Min( lam_bwd, 1 - lam_bwd ) ) ) 
-    system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_todummy:solvent"), lam_bwd ) )
-    system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_fromdummy:solvent"), 1 - lam_bwd ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_todummy_intraclj"), lam_bwd ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_fromdummy_intraclj"), 1 - lam_bwd ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_hard:todummy_intraclj"), lam_bwd ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_hard:fromdummy_intraclj"), 1 - lam_bwd ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_todummy:fromdummy_intraclj"), Min( lam_bwd, 1 - lam_bwd ) ) ) 
+        system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_todummy:solvent"), lam_bwd ) )
+        system.add( PropertyConstraint( "alpha0", FFName("solute_bwd_fromdummy:solvent"), 1 - lam_bwd ) )
+    else:
+        # Setting alpha to 0 makes all of the soft-core forcefields hard
+        print "Using a purely hard potential"
+        system.setProperty("alpha0", VariantProperty(0))
 
     system.setComponent( lam, lam_val.val )
 
@@ -1127,7 +1206,12 @@ def writeSystemData(system, moves, block):
     nmoves = moves.nMoves()
     monitors = system.monitors()
 
-    pdb = monitors[MonitorName("trajectory")]
+    try:
+        pdb = monitors[MonitorName("trajectory")]
+        pdb.writeToDisk("output%0009d.pdb" % block)
+    except:
+        pass
+
     energies = monitors[MonitorName("energies")]
     total_energy = monitors[MonitorName("total_energy")]
     
@@ -1138,8 +1222,6 @@ def writeSystemData(system, moves, block):
     dg_bwd = dg_bwd.accumulator().average() / delta_lambda.val
 
     system.clearStatistics()
-    
-    pdb.writeToDisk("output%0009d.pdb" % block )
 
     if os.path.exists("energies.dat.bz2"):
         os.system("bunzip2 -f energies.dat.bz2")
