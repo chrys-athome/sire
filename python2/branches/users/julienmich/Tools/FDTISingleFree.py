@@ -25,19 +25,37 @@ import Sire.Stream
 ##### This is how we can have the script specify all of the 
 ##### user-controllable parameters
 
-sphere_radius = Parameter("spherical boundary radius", None,
-                          """The radius for the spherical boundary conditions.
-                             Set to "None" if you don't want to use spherical
-                             boundary conditions.""")
+use_sphere = Parameter("use sphere", False,
+                       """Whether or not to use sphereical boundary conditions""")
+
+sphere_radius = Parameter("spherical boundary radius", 10*angstrom,
+                          """The radius for the spherical boundary conditions.""")
 
 sphere_center = None # this parameter will be calculated and set in the script
-
-grid_spacing = Parameter("grid spacing", 0.5*angstrom,
-                         """The spacing between grid points if a grid is used""")
 
 use_grid = Parameter("use grid", True,
                      """Whether or not to use a grid for the interactions with atoms 
                         that are beyond the spherical boundary""")
+
+grid_spacing = Parameter("grid spacing", 0.5*angstrom,
+                         """The spacing between grid points if a grid is used""")
+
+grid_buffer = Parameter("grid buffer", 3*angstrom,
+                        """The grid is generated to enclose all of the molecules in group 0,
+                           plus a buffer specified by this parameter. The larger this buffer,
+                           the larger the grid, but also the lower the chance that the grid
+                           will need to be recalculated as the molecules in group 0 move.""")
+
+cutoff_scheme = Parameter("cutoff scheme", "group",
+                          """The method used to apply the non-bonded cutoff. Choices are;
+                             (1) shift_electrostatics : This should become the default, and uses an atomistic cutoff
+                                                        with a force-shifted cutoff.
+                             (2) reaction_field : This uses the atomistic reaction field cutoff. You can
+                                                  set the reaction field dielectric using the "dielectric"
+                                                  parameter.
+                             (3) group : This is the default, and uses a group-based cutoff with a feather. Note that this is 
+                                         incompatible with a grid, so an error will be raised if you try
+                                         to use a group-based cutoff with a grid.""")
 
 top_file = Parameter("topology file", "../../SYSTEM.top",
                      """The name of the topology file that contains the solvated solute.""")
@@ -81,17 +99,19 @@ pressure = Parameter("pressure", 1 * atm,
                      """The pressure of the simulation. Note that this is ignored if you
                         are using spherical boundary conditions.""")
 
-coulomb_cutoff = Parameter("coulomb cutoff", 10*angstrom,
-                           """The cutoff radius for non-bonded coulomb interactions""")
+coul_cutoff = Parameter("coulomb cutoff", 10*angstrom,
+                        """The cutoff radius for non-bonded coulomb interactions""")
 
-coulomb_feather = Parameter("coulomb feather", 9.5*angstrom,
-                            """The feather radius for the non-bonded coulomb interactions""")
+coul_feather = Parameter("coulomb feather", 0.5*angstrom,
+                         """The feather radius for the non-bonded coulomb interactions
+                            (only needed if a group-based cutoff is used)""")
 
 lj_cutoff = Parameter("lj cutoff", 10*angstrom,
                       """The cutoff radius for non-bonded LJ interactions""")
 
-lj_feather = Parameter("lj feather", 9.5*angstrom,
-                       """The feather radius for the non-bonded LJ interactions""")
+lj_feather = Parameter("lj feather", 0.5*angstrom,
+                       """The feather radius for the non-bonded LJ interactions
+                          (only needed if a group-based cutoff is used)""")
 
 coulomb_power = Parameter("coulomb power", 0,
                           """The soft-core coulomb power parameter""")
@@ -369,7 +389,7 @@ def createSystem(molecules, space):
     # Now sort out the solvent group - how we do this depends on the 
     # type of boundary conditions
 
-    if sphere_radius.val:
+    if use_sphere.val:
         # we are using spherical boundary conditions. Need to divide the system
         # into mobile and fixed solvent molecules
         solvent = MoleculeGroup("solvent")
@@ -401,6 +421,8 @@ def createSystem(molecules, space):
                 solvent.add(molecule)
             else:
                 fixed_solvent.add(molecule)
+
+        print "There are %d fixed solvent molecules." % fixed_solvent.nMolecules()
 
         traj = MoleculeGroup("traj")
         traj.add(solute)
@@ -474,14 +496,19 @@ def setupForcefields(system, space):
 
     solvent = system[ MGName("solvent") ]
 
-    if sphere_radius.val:
+    if use_sphere.val:
         fixed_solvent = system[ MGName("fixed_solvent") ]
     else:
         all = system[ MGName("all") ]
 
+    # The list of all coulomb/LJ forcefields - we keep a list of
+    # all of these so that we can set the cutoff scheme to use for them all at once
+    clj_ffs = []
+
     # - first solvent-solvent coulomb/LJ (CLJ) energy
     solventff = InterCLJFF("solvent:solvent")
     solventff.add(solvent)
+    clj_ffs.append(solventff)
 
     # Now solute bond, angle, dihedral energy
     solute_intraff = InternalFF("solute_intraff")
@@ -574,6 +601,10 @@ def setupForcefields(system, space):
     solute_fromdummy_solventff.add(solute_fromdummy, MGIdx(0))
     solute_fromdummy_solventff.add(solvent, MGIdx(1))
 
+    clj_ffs.append(solute_hard_solventff)
+    clj_ffs.append(solute_todummy_solventff)
+    clj_ffs.append(solute_fromdummy_solventff)
+
     #Now the forwards solute-solvent CLJ energy
     solute_fwd_hard_solventff = InterGroupCLJFF("solute_fwd_hard:solvent")
     solute_fwd_hard_solventff.add(solute_fwd_hard, MGIdx(0))
@@ -587,6 +618,10 @@ def setupForcefields(system, space):
     solute_fwd_fromdummy_solventff.add(solute_fwd_fromdummy, MGIdx(0))
     solute_fwd_fromdummy_solventff.add(solvent, MGIdx(1))
 
+    clj_ffs.append(solute_fwd_hard_solventff)
+    clj_ffs.append(solute_fwd_todummy_solventff)
+    clj_ffs.append(solute_fwd_fromdummy_solventff)
+
     # Now the backwards solute-solvent CLJ energy
     solute_bwd_hard_solventff = InterGroupCLJFF("solute_bwd_hard:solvent")
     solute_bwd_hard_solventff.add(solute_bwd_hard, MGIdx(0))
@@ -599,6 +634,10 @@ def setupForcefields(system, space):
     solute_bwd_fromdummy_solventff = InterGroupSoftCLJFF("solute_bwd_fromdummy:solvent")
     solute_bwd_fromdummy_solventff.add(solute_bwd_fromdummy, MGIdx(0))
     solute_bwd_fromdummy_solventff.add(solvent, MGIdx(1))
+
+    clj_ffs.append(solute_bwd_hard_solventff)
+    clj_ffs.append(solute_bwd_todummy_solventff)
+    clj_ffs.append(solute_bwd_fromdummy_solventff)
 
     # Here is the list of all forcefields
     forcefields = [ solute_intraff, solute_fwd_intraff, solute_bwd_intraff,
@@ -616,24 +655,232 @@ def setupForcefields(system, space):
                     solute_fwd_hard_solventff, solute_fwd_todummy_solventff, solute_fwd_fromdummy_solventff,
                     solute_bwd_hard_solventff, solute_bwd_todummy_solventff, solute_bwd_fromdummy_solventff ]
     
+    if use_sphere.val:
+        # we need to add on the energy of interaction between the fixed and mobile atoms
+        fixed_solvent = system[MGName("fixed_solvent")]
+
+        if use_grid.val:
+            # interactions with fixed atoms are calculated on a grid
+
+            # Start by creating a template GridFF forcefield, which can be duplicated
+            # for each grid. This ensures that only a single copy of the fixed atoms
+            # will be saved in the system, saving space and improving efficiency
+            gridff = GridFF("template")
+            gridff.addFixedAtoms(fixed_solvent)
+            gridff.setGridSpacing( grid_spacing.val )
+            gridff.setBuffer( grid_buffer.val )
+            gridff.setCoulombCutoff( coul_cutoff.val )
+            gridff.setLJCutoff( lj_cutoff.val )
+            
+            if cutoff_scheme.val == "shift_electrostatics":
+                gridff.setShiftElectrostatics(True)
+
+            elif cutoff_scheme.val == "reaction_field":
+                gridff.setUseReactionField(True)
+                gridff.setReactionFieldDielectric(rf_dielectric.val)
+
+            elif cutoff_scheme.val == "group":
+                print >>sys.stderr,"You cannot use a group-based cutoff with a grid!"
+                print >>sys.stderr,"Please choose either the shift_electrostatics or reaction_field cutoff schemes."
+                sys.exit(-1)
+
+            else:
+                print "WARNING. Unrecognised cutoff scheme. Using \"shift_electrostatics\"."
+                gridff.setShiftElectrostatics(True)
+
+            # solvent - fixed_solvent energy
+            solvent_fixedff = gridff.clone()
+            solvent_fixedff.setName("solvent:solvent_fixed")
+            solvent_fixedff.add(solvent, MGIdx(0))
+
+            forcefields.append(solvent_fixedff)
+
+            # Now the solute-solvent CLJ energy (note that we don't need to use
+            # soft-core as the fixed solvent is a long way away from the solute)
+            solute_fixed_solventff = gridff.clone()
+            solute_fixed_solventff.setName("solute:solvent_fixed")
+            solute_fixed_solventff.add(solute_hard, MGIdx(0))
+
+            solute_todummy_fixed_solventff = gridff.clone()
+            solute_todummy_fixed_solventff.setName("solute_todummy:solvent_fixed")
+            solute_todummy_fixed_solventff.add(solute_todummy, MGIdx(0))
+
+            solute_fromdummy_fixed_solventff = gridff.clone()
+            solute_fromdummy_fixed_solventff.setName("solute_fromdummy:solvent_fixed")
+            solute_fromdummy_fixed_solventff.add(solute_fromdummy, MGIdx(0))
+
+            forcefields.append(solute_fixed_solventff)
+            forcefields.append(solute_todummy_fixed_solventff)
+            forcefields.append(solute_fromdummy_fixed_solventff)
+
+            #Now the forwards solute-solvent CLJ energy
+            solute_fwd_fixed_solventff = gridff.clone()
+            solute_fwd_fixed_solventff.setName("solute_fwd_hard:fixed_solvent")
+            solute_fwd_fixed_solventff.add(solute_fwd_hard, MGIdx(0))
+
+            solute_fwd_todummy_fixed_solventff = gridff.clone()
+            solute_fwd_todummy_fixed_solventff.setName("solute_fwd_todummy:fixed_solvent")
+            solute_fwd_todummy_fixed_solventff.add(solute_fwd_todummy, MGIdx(0))
+
+            solute_fwd_fromdummy_fixed_solventff = gridff.clone()
+            solute_fwd_fromdummy_fixed_solventff.setName("solute_fwd_fromdummy:fixed_solvent")
+            solute_fwd_fromdummy_fixed_solventff.add(solute_fwd_fromdummy, MGIdx(0))
+
+            forcefields.append(solute_fwd_fixed_solventff)
+            forcefields.append(solute_fwd_todummy_fixed_solventff)
+            forcefields.append(solute_fwd_fromdummy_fixed_solventff)
+
+            # Now the backwards solute-solvent CLJ energy
+            solute_bwd_fixed_solventff = gridff.clone()
+            solute_bwd_fixed_solventff.setName("solute_bwd_hard:fixed_solvent")
+            solute_bwd_fixed_solventff.add(solute_bwd_hard, MGIdx(0))
+
+            solute_bwd_todummy_fixed_solventff = gridff.clone()
+            solute_bwd_todummy_fixed_solventff.setName("solute_bwd_todummy:fixed_solvent")
+            solute_bwd_todummy_fixed_solventff.add(solute_bwd_todummy, MGIdx(0))
+
+            solute_bwd_fromdummy_fixed_solventff = gridff.clone()
+            solute_bwd_fromdummy_fixed_solventff.setName("solute_bwd_fromdummy:fixed_solvent")
+            solute_bwd_fromdummy_fixed_solventff.add(solute_bwd_fromdummy, MGIdx(0))
+
+            forcefields.append(solute_bwd_fixed_solventff)
+            forcefields.append(solute_bwd_todummy_fixed_solventff)
+            forcefields.append(solute_bwd_fromdummy_fixed_solventff)
+
+            # Now remove the "fixed_solvent" group from the system. This will remove
+            # all copies of these molecules from the system, leaving their data in the 
+            # "fixed_atoms" arrays in each of the GridFF forcefields. 
+            system.remove( MGName("fixed_solvent") )
+
+        else:
+            # interactions with fixed atoms are calculated explicitly
+
+            # solvent - fixed_solvent energy
+            solvent_fixedff = InterGroupCLJFF("solvent:solvent_fixed")
+            solvent_fixedff.add(solvent, MGIdx(0))
+            solvent_fixedff.add(fixed_solvent, MGIdx(1))
+
+            forcefields.append(solvent_fixedff)
+            clj_ffs.append(solvent_fixedff)
+
+            # Now the solute-solvent CLJ energy (note that we don't need to use
+            # soft-core as the fixed solvent is a long way away from the solute)
+            solute_fixed_solventff = InterGroupCLJFF("solute:solvent_fixed")
+            solute_fixed_solventff.add(solute_hard, MGIdx(0))
+            solute_fixed_solventff.add(fixed_solvent, MGIdx(1))
+
+            solute_todummy_fixed_solventff = InterGroupCLJFF("solute_todummy:solvent_fixed")
+            solute_todummy_fixed_solventff.add(solute_todummy, MGIdx(0))
+            solute_todummy_fixed_solventff.add(fixed_solvent, MGIdx(1))
+
+            solute_fromdummy_fixed_solventff = InterGroupCLJFF("solute_fromdummy:solvent_fixed")
+            solute_fromdummy_fixed_solventff.add(solute_fromdummy, MGIdx(0))
+            solute_fromdummy_fixed_solventff.add(fixed_solvent, MGIdx(1))
+
+            forcefields.append(solute_fixed_solventff)
+            forcefields.append(solute_todummy_fixed_solventff)
+            forcefields.append(solute_fromdummy_fixed_solventff)
+
+            clj_ffs.append(solute_fixed_solventff)
+            clj_ffs.append(solute_todummy_fixed_solventff)
+            clj_ffs.append(solute_fromdummy_fixed_solventff)
+
+            #Now the forwards solute-solvent CLJ energy
+            solute_fwd_fixed_solventff = InterGroupCLJFF("solute_fwd_hard:fixed_solvent")
+            solute_fwd_fixed_solventff.add(solute_fwd_hard, MGIdx(0))
+            solute_fwd_fixed_solventff.add(fixed_solvent, MGIdx(1))
+
+            solute_fwd_todummy_fixed_solventff = InterGroupCLJFF("solute_fwd_todummy:fixed_solvent")
+            solute_fwd_todummy_fixed_solventff.add(solute_fwd_todummy, MGIdx(0))
+            solute_fwd_todummy_fixed_solventff.add(fixed_solvent, MGIdx(1))
+
+            solute_fwd_fromdummy_fixed_solventff = InterGroupCLJFF("solute_fwd_fromdummy:fixed_solvent")
+            solute_fwd_fromdummy_fixed_solventff.add(solute_fwd_fromdummy, MGIdx(0))
+            solute_fwd_fromdummy_fixed_solventff.add(fixed_solvent, MGIdx(1))
+
+            forcefields.append(solute_fwd_fixed_solventff)
+            forcefields.append(solute_fwd_todummy_fixed_solventff)
+            forcefields.append(solute_fwd_fromdummy_fixed_solventff)
+
+            clj_ffs.append(solute_fwd_fixed_solventff)
+            clj_ffs.append(solute_fwd_todummy_fixed_solventff)
+            clj_ffs.append(solute_fwd_fromdummy_fixed_solventff)
+
+            # Now the backwards solute-solvent CLJ energy
+            solute_bwd_fixed_solventff = InterGroupCLJFF("solute_bwd_hard:fixed_solvent")
+            solute_bwd_fixed_solventff.add(solute_bwd_hard, MGIdx(0))
+            solute_bwd_fixed_solventff.add(fixed_solvent, MGIdx(1))
+
+            solute_bwd_todummy_fixed_solventff = InterGroupCLJFF("solute_bwd_todummy:fixed_solvent")
+            solute_bwd_todummy_fixed_solventff.add(solute_bwd_todummy, MGIdx(0))
+            solute_bwd_todummy_fixed_solventff.add(fixed_solvent, MGIdx(1))
+
+            solute_bwd_fromdummy_fixed_solventff = InterGroupCLJFF("solute_bwd_fromdummy:fixed_solvent")
+            solute_bwd_fromdummy_fixed_solventff.add(solute_bwd_fromdummy, MGIdx(0))
+            solute_bwd_fromdummy_fixed_solventff.add(fixed_solvent, MGIdx(1))
+
+            forcefields.append(solute_bwd_fixed_solventff)
+            forcefields.append(solute_bwd_todummy_fixed_solventff)
+            forcefields.append(solute_bwd_fromdummy_fixed_solventff)
+
+            clj_ffs.append(solute_bwd_fixed_solventff)
+            clj_ffs.append(solute_bwd_todummy_fixed_solventff)
+            clj_ffs.append(solute_bwd_fromdummy_fixed_solventff)
+
+        #   # end of "if use_grid.val"
+
+        # end of "if use_sphere.val"
+
+    if cutoff_scheme.val == "shift_electrostatics":
+        for ff in clj_ffs:
+            ff.setShiftElectrostatics(True)
+            ff.setSwitchingFunction(HarmonicSwitchingFunction( coul_cutoff.val, coul_cutoff.val,
+                                                               lj_cutoff.val, lj_cutoff.val) )
+
+    elif cutoff_scheme.val == "reaction_field":
+        for ff in clj_ffs:
+            ff.setUseReactionField(True)
+            ff.setReactionFieldDielectric(rf_dielectric.val)
+            ff.setSwitchingFunction(HarmonicSwitchingFunction( coul_cutoff.val, coul_cutoff.val,
+                                                               lj_cutoff.val, lj_cutoff.val) )
+
+    elif cutoff_scheme.val == "group":
+        for ff in clj_ffs:
+            ff.setUseGroupCutoff(True)
+            ff.setSwitchingFunction(HarmonicSwitchingFunction( coul_cutoff.val, coul_cutoff.val - coul_feather.val,
+                                                               lj_cutoff.val, lj_cutoff.val - lj_feather.val) )
+
+    else:
+        print "WARNING. Unrecognised cutoff scheme. Using \"shift_electrostatics\"."
+        for ff in clj_ffs:
+            ff.setShiftElectrostatics(True)
+            ff.setSwitchingFunction(HarmonicSwitchingFunction( coul_cutoff.val, coul_cutoff.val,
+                                                               lj_cutoff.val, lj_cutoff.val) )
+
     for forcefield in forcefields:
         system.add(forcefield)
 
-    system.setProperty( "space", space )
-    system.setProperty( "switchingFunction", 
-                        HarmonicSwitchingFunction(coulomb_cutoff.val, coulomb_feather.val,
-                                                  lj_cutoff.val, lj_feather.val) )
+    # We only use a "space" if we are using periodic boundaries
+    if not (use_sphere.val):
+        # Setting the "space" property
+        print "Setting space to %s" % space
+        system.setProperty( "space", space )
+
     system.setProperty( "combiningRules", VariantProperty(combining_rules.val) )
     system.setProperty( "coulombPower", VariantProperty(coulomb_power.val) )
     system.setProperty( "shiftDelta", VariantProperty(shift_delta.val) )
+
+    lam = Symbol("lambda")
+    lam_fwd = Symbol("lambda_{fwd}")
+    lam_bwd = Symbol("lambda_{bwd}")
     
-    total_nrg = solute_intraff.components().total() + solute_hard_intraclj.components().total() +\
-        solute_todummy_intraclj.components().total(0) + solute_fromdummy_intraclj.components().total(0) +\
-        solute_hard_todummy_intraclj.components().total(0) + solute_hard_fromdummy_intraclj.components().total(0) +\
-        solute_todummy_fromdummy_intraclj.components().total(0) +\
-        solventff.components().total() +\
-        solute_hard_solventff.components().total() +\
-        solute_todummy_solventff.components().total(0) +\
+    total_nrg = solute_intraff.components().total() + solute_hard_intraclj.components().total() + \
+        solute_todummy_intraclj.components().total(0) + solute_fromdummy_intraclj.components().total(0) + \
+        solute_hard_todummy_intraclj.components().total(0) + solute_hard_fromdummy_intraclj.components().total(0) + \
+        solute_todummy_fromdummy_intraclj.components().total(0) + \
+        solventff.components().total() + \
+        solute_hard_solventff.components().total() + \
+        solute_todummy_solventff.components().total(0) + \
         solute_fromdummy_solventff.components().total(0)
 
     fwd_nrg = solute_fwd_intraff.components().total() + solute_fwd_hard_intraclj.components().total() +\
@@ -654,13 +901,23 @@ def setupForcefields(system, space):
         solute_bwd_todummy_solventff.components().total(0) +\
         solute_bwd_fromdummy_solventff.components().total(0)
 
+    if use_sphere.val:
+        # add in the extra terms for the fixed forcefield
+        total_nrg += solvent_fixedff.components().total() + solute_fixed_solventff.components().total() + \
+                     (1-lam) * solute_todummy_fixed_solventff.components().total() + \
+                      lam * solute_fromdummy_fixed_solventff.components().total()
+
+        fwd_nrg += solvent_fixedff.components().total() + solute_fwd_fixed_solventff.components().total() + \
+                     (1-lam) * solute_fwd_todummy_fixed_solventff.components().total() + \
+                      lam * solute_fwd_fromdummy_fixed_solventff.components().total()
+
+        bwd_nrg += solvent_fixedff.components().total() + solute_bwd_fixed_solventff.components().total() + \
+                      (1-lam) * solute_bwd_todummy_fixed_solventff.components().total() + \
+                       lam * solute_bwd_fromdummy_fixed_solventff.components().total()
+
     e_total = system.totalComponent()
     e_fwd = Symbol("E_{fwd}")
     e_bwd = Symbol("E_{bwd}")
-
-    lam = Symbol("lambda")
-    lam_fwd = Symbol("lambda_{fwd}")
-    lam_bwd = Symbol("lambda_{bwd}")
 
     system.setComponent( e_total, total_nrg )
     system.setComponent( e_fwd, fwd_nrg )
@@ -677,10 +934,11 @@ def setupForcefields(system, space):
     system.setComponent( de_bwd, total_nrg - bwd_nrg )
 
     # Add a space wrapper that wraps all molecules into the box centered at (0,0,0)
-    # system.add( SpaceWrapper(Vector(0,0,0), all) )
+    #if not (use_sphere.val):
+    #    system.add( SpaceWrapper(Vector(0,0,0), all) )
 
     # Add a monitor that calculates the average total energy and average energy
-    # deltas - we will collect both a mean average and an zwanzig average
+    # deltas - we will collect both a mean average and a zwanzig average
     system.add( "total_energy", MonitorComponent(e_total, Average()) )
     system.add( "dg_fwd", MonitorComponent(de_fwd, FreeEnergyAverage(temperature.val)) )
     system.add( "dg_bwd", MonitorComponent(de_bwd, FreeEnergyAverage(temperature.val)) )
@@ -729,6 +987,7 @@ def setupForcefields(system, space):
 
     return system
 
+
 def getAtomNearCOG( molecule ):
 
     mol_centre = molecule.evaluate().center()
@@ -743,6 +1002,7 @@ def getAtomNearCOG( molecule ):
             nearest_atom = atom
 
     return nearest_atom
+
 
 def setupMoves(system, random_seed):
 
@@ -776,7 +1036,7 @@ def setupMoves(system, random_seed):
     
     moves = WeightedMoves()
 
-    if sphere_radius.val:
+    if use_sphere.val:
         # Do not use preferential sampling with the reflection sphere. Preferential
         # sampling causes volume expansion around the solute, which would push the
         # solvent towards the boundary of the sphere. Given we have already really
@@ -785,6 +1045,9 @@ def setupMoves(system, random_seed):
         solvent_moves = RigidBodyMC(solvent)
         solvent_moves.setReflectionSphere(sphere_center, sphere_radius.val)
         solute_moves.setReflectionSphere(sphere_center, sphere_radius.val)
+
+        # Cannot translate the solute when using spherical boundary conditions
+        solute_moves.setMaximumTranslation( 0.0 * angstrom )
 
     else:
         solvent_moves = RigidBodyMC( PrefSampler(solute_ref[MolIdx(0)],
@@ -807,7 +1070,7 @@ def setupMoves(system, random_seed):
     moves.setTemperature(temperature.val)
     print "Using a temperature of %f C" % temperature.val.to(celsius)
 
-    if not sphere_radius.val:
+    if not use_sphere.val:
         moves.setPressure(pressure.val)
         print "Using a pressure of %f atm" % pressure.val.to(atm)
 
