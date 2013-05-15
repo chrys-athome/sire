@@ -366,11 +366,8 @@ void OpenMMFrEnergyST::initialise()  {
 	nonbond_openmm->setUseDispersionCorrection(false);
 
 	//CUSTOM NON BONDED FORCE FIELD
-    
-    
+
     OpenMM::CustomNonbondedForce * custom_force_field = NULL;
-    
-    
     
     //1-4 interactions
     OpenMM::CustomBondForce * custom_intra_14_clj = NULL;
@@ -440,43 +437,43 @@ void OpenMMFrEnergyST::initialise()  {
                                                               
                                                               
         custom_intra_14_todummy = new OpenMM::CustomBondForce("Hcs + Hls;"
-                                                              "Hcs=(lam^n)*138.935456*q_prod/sqrt(diff_cl+r^2);"
-                                                              "diff_cl=(1.0-lam)*0.01;"
+                                                              "Hcs=(lamtd^ntd)*138.935456*q_prod/sqrt(diff_cl+r^2);"
+                                                              "diff_cl=(1.0-lamtd)*0.01;"
                                                               "Hls=4.0*eps_avg*(LJ*LJ-LJ);"
                                                               "LJ=((sigma_avg*sigma_avg)/soft)^3;"
-                                                              "soft=(diff_lj*delta*sigma_avg+r*r);"
-                                                              "diff_lj=(1.0-lam)*0.1");
+                                                              "soft=(diff_lj*deltatd*sigma_avg+r*r);"
+                                                              "diff_lj=(1.0-lamtd)*0.1");
 
 
-        custom_intra_14_todummy->addGlobalParameter("lam",1.0 - Alchemical_value);
-        custom_intra_14_todummy->addGlobalParameter("delta",shift_delta);
-		custom_intra_14_todummy->addGlobalParameter("n", coulomb_power);
+        custom_intra_14_todummy->addGlobalParameter("lamtd",1.0 - Alchemical_value);
+        custom_intra_14_todummy->addGlobalParameter("deltatd",shift_delta);
+		custom_intra_14_todummy->addGlobalParameter("ntd", coulomb_power);
         
         
         custom_intra_14_fromdummy = new OpenMM::CustomBondForce("Hcs + Hls;"
-                                                                "Hcs=(lam^n)*138.935456*q_prod/sqrt(diff_cl+r^2);"
-                                                                "diff_cl=(1.0-lam)*0.01;"
+                                                                "Hcs=(lamfd^nfd)*138.935456*q_prod/sqrt(diff_cl+r^2);"
+                                                                "diff_cl=(1.0-lamfd)*0.01;"
                                                                 "Hls=4.0*eps_avg*(LJ*LJ-LJ);"
                                                                 "LJ=((sigma_avg*sigma_avg)/soft)^3;"
-                                                                "soft=(diff_lj*delta*sigma_avg+r*r);"
-                                                                "diff_lj=(1.0-lam)*0.1");
+                                                                "soft=(diff_lj*deltafd*sigma_avg+r*r);"
+                                                                "diff_lj=(1.0-lamfd)*0.1");
 
-        custom_intra_14_fromdummy->addGlobalParameter("lam",Alchemical_value);
-        custom_intra_14_fromdummy->addGlobalParameter("delta",shift_delta);
-        custom_intra_14_fromdummy->addGlobalParameter("n",coulomb_power);
+        custom_intra_14_fromdummy->addGlobalParameter("lamfd",Alchemical_value);
+        custom_intra_14_fromdummy->addGlobalParameter("deltafd",shift_delta);
+        custom_intra_14_fromdummy->addGlobalParameter("nfd",coulomb_power);
         
         
         custom_intra_14_fromdummy_todummy = new OpenMM::CustomBondForce("Hcs + Hls;"
-                                                                        "Hcs=(lam^n)*138.935456*q_prod/sqrt(diff_cl+r^2);"
-                                                                        "diff_cl=(1.0-lam)*0.01;"
+                                                                        "Hcs=(lamftd^nftd)*138.935456*q_prod/sqrt(diff_cl+r^2);"
+                                                                        "diff_cl=(1.0-lamftd)*0.01;"
                                                                         "Hls=4.0*eps_avg*(LJ*LJ-LJ);"
                                                                         "LJ=((sigma_avg*sigma_avg)/soft)^3;"
-                                                                        "soft=(diff_lj*delta*sigma_avg+r*r);"
-                                                                        "diff_lj=(1.0-lam)*0.1");
+                                                                        "soft=(diff_lj*deltaftd*sigma_avg+r*r);"
+                                                                        "diff_lj=(1.0-lamftd)*0.1");
 
-        custom_intra_14_fromdummy_todummy->addGlobalParameter("lam",max(Alchemical_value,1.0 - Alchemical_value));
-        custom_intra_14_fromdummy_todummy->addGlobalParameter("delta",shift_delta);
-        custom_intra_14_fromdummy_todummy->addGlobalParameter("n",coulomb_power);
+        custom_intra_14_fromdummy_todummy->addGlobalParameter("lamftd",max(Alchemical_value,1.0 - Alchemical_value));
+        custom_intra_14_fromdummy_todummy->addGlobalParameter("deltaftd",shift_delta);
+        custom_intra_14_fromdummy_todummy->addGlobalParameter("nftd",coulomb_power);
 
 	}
 	/*else{
@@ -993,7 +990,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 			}
 
-            if(true){
+            if(Debug){
                 qDebug() << "Charge start = " << custom_non_bonded_params[0];
                 qDebug() << "Charge end = " << custom_non_bonded_params[1];
                 qDebug() << "Eps start = " << custom_non_bonded_params[2];
@@ -1537,9 +1534,17 @@ void OpenMMFrEnergyST::initialise()  {
                                 (Epend_p2 * Alchemical_value + (1.0 - Alchemical_value) * Epstart_p2))) * LennardJones14Scale;
                 
                 
-                double tmp[]={charge_prod,sigma_avg,epsilon_avg};
                 
-				const std::vector<double> params(tmp,tmp+3);
+                
+                //double tmp[]={charge_prod,sigma_avg,epsilon_avg};
+                
+				//const std::vector<double> params(tmp,tmp+3);
+                
+                std::vector<double> params(3);
+                
+                params[0] = charge_prod;
+                params[1] = sigma_avg;
+                params[2] = epsilon_avg;
                 
                 
                 if(Debug){
@@ -1565,14 +1570,14 @@ void OpenMMFrEnergyST::initialise()  {
                     
                     custom_intra_14_clj->addBond(p1,p2,params);
                     
-                    if(true)
+                    if(Debug)
                         qDebug() << "Added clj Hard 1-4\n";
                 }
                 else if((isTodummy_p1 == 1.0 && isTodummy_p2 == 1.0) || (isHard_p1 == 1.0 && isTodummy_p2 == 1.0) || (isHard_p2 == 1.0 && isTodummy_p1 == 1.0)){
                     
                     custom_intra_14_todummy->addBond(p1,p2,params);
                     
-                    if(true)
+                    if(Debug)
                         qDebug() << "Added soft TO dummy 1-4\n";
                 }
                 
@@ -1580,7 +1585,7 @@ void OpenMMFrEnergyST::initialise()  {
                     
                     custom_intra_14_fromdummy->addBond(p1,p2,params);
                     
-                    if(true)
+                    if(Debug)
                         qDebug() << "Added soft FROM dummy 1-4\n";
                     
                 }
@@ -1589,7 +1594,7 @@ void OpenMMFrEnergyST::initialise()  {
                     
                     custom_intra_14_fromdummy_todummy->addBond(p1,p2,params);
                     
-                    if(true)
+                    if(Debug)
                         qDebug() << "Added soft FROM dummy TO dummy 1-4\n";
                     
                 }
@@ -1605,7 +1610,7 @@ void OpenMMFrEnergyST::initialise()  {
 
     int npairs = (custom_force_field->getNumParticles() * (custom_force_field->getNumParticles() - 1))/2;
 
-    if(true){
+    if(Debug){
         qDebug() << "Num pairs  = " << npairs;
         qDebug() << "Num bonds 1-4 Hard = " << custom_intra_14_clj->getNumBonds();
         qDebug() << "Num bonds 1-4 To Dummy = " << custom_intra_14_todummy->getNumBonds();
@@ -1615,28 +1620,32 @@ void OpenMMFrEnergyST::initialise()  {
 
     if(npairs != num_exceptions){
         system_openmm->addForce(custom_force_field);
-        if(true)
+        if(Debug)
             qDebug() << "Added 1-5";
     }
+    
     if(custom_intra_14_clj->getNumBonds() != 0){
         system_openmm->addForce(custom_intra_14_clj);
-        if(true)
+        if(Debug)
             qDebug() << "Added 1-4 CLJ";
     }
+    
     if(custom_intra_14_todummy->getNumBonds() != 0){
         system_openmm->addForce(custom_intra_14_todummy);
-        if(true)
+        if(Debug)
             qDebug() << "Added 1-4 To Dummy";
     }
+    
+    
     if(custom_intra_14_fromdummy->getNumBonds() != 0){
         system_openmm->addForce(custom_intra_14_fromdummy);
-        if(true)
+        if(Debug)
             qDebug() << "Added 1-4 From Dummy";
 
     }
     if(custom_intra_14_fromdummy_todummy->getNumBonds() != 0){
         system_openmm->addForce(custom_intra_14_fromdummy_todummy);
-        if(true)
+        if(Debug)
             qDebug() << "Added 1-4 From Dummy To Dummy";
     }
 
@@ -1845,9 +1854,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	double lam_val = 0.0;
 
-    //context_openmm.setParameter("lambda",Alchemical_value);
+    //context_openmm.setParameter("lam",Alchemical_value);
 
 	double sample_count=0.0;
+    
 
 	if(true){
 
@@ -1856,6 +1866,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         //lam_val = context_openmm.getParameter("lambda");
         
         printf("*Potential energy lambda  = %f kcal/mol" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
+        
+        //qDebug()  <<"*Lambda = " << context_openmm.getParameter("lam") << " Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " Kcal/mol \n";
+        
 
 		//qDebug() << "*Potential energy lambda  = " << state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " [A + A^2] kcal" << "\n";
 
