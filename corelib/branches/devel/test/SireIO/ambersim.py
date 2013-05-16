@@ -298,3 +298,9 @@ for x in range(0,10):
 print moves
 
 system.monitor( MonitorName("trajectory") ).writeToDisk("outputXXXXXX.pdb")
+
+print system.energy()
+print system.energies()
+system.mustNowRecalculateFromScratch()
+print system.energy()
+print system.energies()
