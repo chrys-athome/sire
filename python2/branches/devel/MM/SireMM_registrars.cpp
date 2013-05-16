@@ -13,6 +13,7 @@
 #include "interljff.h"
 #include "cljnbpairs.h"
 #include "intercoulombff.h"
+#include "intrasoftcljff.h"
 #include "switchingfunction.h"
 #include "threeatomfunctions.h"
 #include "cljcomponent.h"
@@ -62,6 +63,10 @@ void register_SireMM_objects()
     ObjectRegistry::registerConverterFor< SireMM::InterCoulombFF >();
     ObjectRegistry::registerConverterFor< SireMM::InterGroupCoulombFFBase >();
     ObjectRegistry::registerConverterFor< SireMM::InterGroupCoulombFF >();
+    ObjectRegistry::registerConverterFor< SireMM::IntraSoftCLJFFBase >();
+    ObjectRegistry::registerConverterFor< SireMM::IntraSoftCLJFF >();
+    ObjectRegistry::registerConverterFor< SireMM::IntraGroupSoftCLJFFBase >();
+    ObjectRegistry::registerConverterFor< SireMM::IntraGroupSoftCLJFF >();
     ObjectRegistry::registerConverterFor< SireMM::NoCutoff >();
     ObjectRegistry::registerConverterFor< SireMM::HarmonicSwitchingFunction >();
     ObjectRegistry::registerConverterFor< SireMM::CHARMMSwitchingFunction >();

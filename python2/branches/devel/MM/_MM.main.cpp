@@ -55,6 +55,8 @@
 
 #include "CLJPotentialInterface_IntraCLJPotential_.pypp.hpp"
 
+#include "CLJPotentialInterface_IntraSoftCLJPotential_.pypp.hpp"
+
 #include "CLJProbe.pypp.hpp"
 
 #include "CLJScaleFactor.pypp.hpp"
@@ -177,9 +179,17 @@
 
 #include "IntraGroupLJFFBase.pypp.hpp"
 
+#include "IntraGroupSoftCLJFF.pypp.hpp"
+
+#include "IntraGroupSoftCLJFFBase.pypp.hpp"
+
 #include "IntraLJFF.pypp.hpp"
 
 #include "IntraLJFFBase.pypp.hpp"
+
+#include "IntraSoftCLJFF.pypp.hpp"
+
+#include "IntraSoftCLJFFBase.pypp.hpp"
 
 #include "LJComponent.pypp.hpp"
 
@@ -222,6 +232,8 @@
 #include "SoftCLJComponent.pypp.hpp"
 
 #include "SoftCLJPotentialInterface_InterSoftCLJPotential_.pypp.hpp"
+
+#include "SoftCLJPotentialInterface_IntraSoftCLJPotential_.pypp.hpp"
 
 #include "StretchBendComponent.pypp.hpp"
 
@@ -334,6 +346,14 @@ BOOST_PYTHON_MODULE(_MM){
 
     register_IntraGroupLJFF_class();
 
+    register_CLJPotentialInterface_IntraSoftCLJPotential__class();
+
+    register_SoftCLJPotentialInterface_IntraSoftCLJPotential__class();
+
+    register_IntraGroupSoftCLJFFBase_class();
+
+    register_IntraGroupSoftCLJFF_class();
+
     register_IntraCLJFFBase_class();
 
     register_IntraCLJFF_class();
@@ -345,6 +365,10 @@ BOOST_PYTHON_MODULE(_MM){
     register_IntraLJFFBase_class();
 
     register_IntraLJFF_class();
+
+    register_IntraSoftCLJFFBase_class();
+
+    register_IntraSoftCLJFF_class();
 
     register_AngleComponent_class();
 

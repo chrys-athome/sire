@@ -26,6 +26,7 @@ set ( PYPP_SOURCES
        CLJPotentialInterface_InterCLJPotential_.pypp.cpp
        CLJPotentialInterface_InterSoftCLJPotential_.pypp.cpp
        CLJPotentialInterface_IntraCLJPotential_.pypp.cpp
+       CLJPotentialInterface_IntraSoftCLJPotential_.pypp.cpp
        CLJProbe.pypp.cpp
        CLJScaleFactor.pypp.cpp
        CoulombComponent.pypp.cpp
@@ -85,8 +86,12 @@ set ( PYPP_SOURCES
        IntraGroupCoulombFFBase.pypp.cpp
        IntraGroupLJFF.pypp.cpp
        IntraGroupLJFFBase.pypp.cpp
+       IntraGroupSoftCLJFF.pypp.cpp
+       IntraGroupSoftCLJFFBase.pypp.cpp
        IntraLJFF.pypp.cpp
        IntraLJFFBase.pypp.cpp
+       IntraSoftCLJFF.pypp.cpp
+       IntraSoftCLJFFBase.pypp.cpp
        LJComponent.pypp.cpp
        LJNBPairs.pypp.cpp
        LJParameter.pypp.cpp
@@ -108,6 +113,7 @@ set ( PYPP_SOURCES
        ScaledLJParameterNames3D.pypp.cpp
        SoftCLJComponent.pypp.cpp
        SoftCLJPotentialInterface_InterSoftCLJPotential_.pypp.cpp
+       SoftCLJPotentialInterface_IntraSoftCLJPotential_.pypp.cpp
        StretchBendComponent.pypp.cpp
        StretchBendParameterName.pypp.cpp
        StretchBendSymbols.pypp.cpp
