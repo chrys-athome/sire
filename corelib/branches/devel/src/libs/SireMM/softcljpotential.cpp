@@ -3226,7 +3226,112 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         if (cljscl.coulomb() == 0 and cljscl.lj() == 0)
             return;
 
-        if (use_reaction_field)
+        if (use_electrostatic_shifting)
+        {
+            const double Rcoul = switchfunc->electrostaticCutoffDistance();
+            const double Rlj = switchfunc->vdwCutoffDistance();
+            const double Rlj2 = Rlj*Rlj;
+            
+            const double one_over_Rcoul = double(1) / Rcoul;
+            const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
+
+            double sRcoul[nalpha];
+            double one_over_sRcoul[nalpha];
+            double one_over_sRcoul2[nalpha];
+        
+            for (int i=0; i<nalpha; ++i)
+            {
+                sRcoul[i] = std::sqrt(alfa[i] + Rcoul*Rcoul);
+                one_over_sRcoul[i] = double(1) / sRcoul[i];
+                one_over_sRcoul2[i] = double(1) / (sRcoul[i]*sRcoul[i]);
+            }
+
+            for (quint32 i=0; i<nats0; ++i)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+	    
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const double dist2 = distmat[j];
+                        const double q2 = cljscl.coulomb() *
+                            param0.reduced_charge * params1_array[j].reduced_charge;
+
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            const double sr = std::sqrt(alfa[k] + dist2);
+                            const double one_over_sr = double(1) / sr;
+ 
+                            // JM Jan 13. No reaction field on 1,4 atoms?
+                            if (sr < sRcoul[k])
+                            {
+                                if (cljscl.coulomb() != 1)
+                                    icnrg[k] += q2 * (one_over_sr);
+                                else
+                                    icnrg[k] += q2 * (one_over_sr - one_over_sRcoul[k] +
+                                                      one_over_sRcoul2[k]*(sr-sRcoul[k]));
+                            }
+                        }
+                    }
+                }
+                else  // do both
+                {
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        //do both coulomb and LJ
+                        const Parameter &param1 = params1_array[j];
+
+                        const double dist2 = distmat[j];
+                        const double q2 = cljscl.coulomb() *
+                                param0.reduced_charge * param1.reduced_charge;
+                        
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            const double sr = std::sqrt(alfa[k] + dist2);
+                            const double one_over_sr = double(1) / sr;
+ 
+                            // JM Jan 13. No reaction field on 1,4 atoms?
+                            if (sr < sRcoul[k])
+                            {
+                                if (cljscl.coulomb() != 1)
+                                    icnrg[k] += q2 * (one_over_sr);
+                                else
+                                    icnrg[k] += q2 * (one_over_sr - one_over_sRcoul[k] +
+                                                      one_over_sRcoul2[k]*(sr-sRcoul[k]));
+                            }
+                        }
+		    
+                        if (param1.ljid != 0 and dist2 < Rlj2)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                        ljpairs.map(param0.ljid,
+                                                                    param1.ljid)];
+                            const double sig2 = ljpair.sigma() * ljpair.sigma();
+                            const double sig6 = sig2 * sig2 * sig2;
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double shift = ljpair.sigma() * delta[k];
+			  
+                                double lj_denom = dist2 + shift;
+                                lj_denom = lj_denom * lj_denom * lj_denom;
+			  
+                                const double sig6_over_denom = sig6 / lj_denom;
+                                const double sig12_over_denom2 = sig6_over_denom *
+                                                                 sig6_over_denom;
+			  
+                                iljnrg[k] += cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 -
+                                                sig6_over_denom);
+                            }
+                        }
+                    }// quint j
+                }//do both
+            }//quint i
+        }
+        else if (use_reaction_field)
         {
             const double Rcoul = switchfunc->electrostaticCutoffDistance();
             const double Rlj = switchfunc->vdwCutoffDistance();
@@ -3298,6 +3403,90 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                                     icnrg[k] += q2 * (one_over_sr);
                                 else
                                     icnrg[k] += q2 * (one_over_sr + sr*sr*k_rf[k] - c_rf[k]);
+                            }
+                        }
+		    
+                        if (param1.ljid != 0 and dist2 < Rlj2)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                        ljpairs.map(param0.ljid,
+                                                                    param1.ljid)];
+                            const double sig2 = ljpair.sigma() * ljpair.sigma();
+                            const double sig6 = sig2 * sig2 * sig2;
+                            
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double shift = ljpair.sigma() * delta[k];
+			  
+                                double lj_denom = dist2 + shift;
+                                lj_denom = lj_denom * lj_denom * lj_denom;
+			  
+                                const double sig6_over_denom = sig6 / lj_denom;
+                                const double sig12_over_denom2 = sig6_over_denom *
+                                                                 sig6_over_denom;
+			  
+                                iljnrg[k] += cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 -
+                                                sig6_over_denom);
+                            }
+                        }
+                    }// quint j
+                }//do both
+            }//quint i
+        }
+        else if (use_atomistic_cutoff)
+        {
+            const double Rcoul = switchfunc->electrostaticCutoffDistance();
+            const double Rlj = switchfunc->vdwCutoffDistance();
+            const double Rlj2 = Rlj*Rlj;
+            const double Rcoul2 = Rcoul*Rcoul;
+    
+            for (quint32 i=0; i<nats0; ++i)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+	    
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        const double dist2 = distmat[j];
+                        const double q2 = cljscl.coulomb() *
+                            param0.reduced_charge * params1_array[j].reduced_charge;
+
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            const double sr = std::sqrt(alfa[k] + dist2);
+                            const double one_over_sr = double(1) / sr;
+ 
+                            // JM Jan 13. No reaction field on 1,4 atoms?
+                            if (dist2 < Rcoul2)
+                            {
+                                icnrg[k] += q2 * (one_over_sr);
+                            }
+                        }
+                    }
+                }
+                else  // do both
+                {
+                    for (quint32 j=0; j<nats1; ++j)
+                    {
+                        //do both coulomb and LJ
+                        const Parameter &param1 = params1_array[j];
+
+                        const double dist2 = distmat[j];
+                        const double q2 = cljscl.coulomb() *
+                                param0.reduced_charge * param1.reduced_charge;
+                        
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            const double sr = std::sqrt(alfa[k] + dist2);
+                            const double one_over_sr = double(1) / sr;
+ 
+                            // JM Jan 13. No reaction field on 1,4 atoms?
+                            if (dist2 < Rcoul2)
+                            {
+                                icnrg[k] += q2 * (one_over_sr);
                             }
                         }
 		    
@@ -3400,7 +3589,87 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         //there are different nb scale factors between
         //the atoms. We need to calculate the energies using
         //them...
-        if (use_reaction_field)
+        if (use_electrostatic_shifting)
+        {
+            const double Rcoul = switchfunc->electrostaticCutoffDistance();
+            const double Rlj = switchfunc->vdwCutoffDistance();
+            const double Rlj2 = Rlj*Rlj;
+    
+            double sRcoul[nalpha];
+            double one_over_sRcoul[nalpha];
+            double one_over_sRcoul2[nalpha];
+        
+            for (int i=0; i<nalpha; ++i)
+            {
+                sRcoul[i] = std::sqrt(alfa[i] + Rcoul*Rcoul);
+                one_over_sRcoul[i] = double(1) / sRcoul[i];
+                one_over_sRcoul2[i] = double(1) / (sRcoul[i]*sRcoul[i]);
+            }
+	
+            for (quint32 i=0; i<nats0; ++i)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                
+                for (quint32 j=0; j<nats1; ++j)
+                {
+                    const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+                    if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                    {
+                        const Parameter &param1 = params1_array[j];
+		    
+                        const double dist2 = distmat[j];
+  		        
+                        const double q2 = cljscl.coulomb() *
+                            param0.reduced_charge * params1_array[j].reduced_charge;
+
+                        // ADAPT FOR RF HERE
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            const double sr = std::sqrt(alfa[k] + dist2);
+                            const double one_over_sr = double(1) / sr;
+ 
+                            // JM Jan 13. No reaction field on 1,4 atoms?
+                            if (sr < sRcoul[k])
+                            {
+                                if (cljscl.coulomb() != 1)
+                                    icnrg[k] += q2 * (one_over_sr);
+                                else
+                                    icnrg[k] += q2 * (one_over_sr - one_over_sRcoul[k] +
+                                                      one_over_sRcoul2[k]*(sr-sRcoul[k]));
+                            }
+                        }
+		    
+                        if (cljscl.lj() != 0 and param1.ljid != 0 and dist2 < Rlj2)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                        ljpairs.map(param0.ljid,
+                                                                    param1.ljid)];
+                            
+                            const double sig2 = ljpair.sigma() * ljpair.sigma();
+                            const double sig6 = sig2 * sig2 * sig2;
+			  
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double shift = ljpair.sigma() * delta[k];
+			        
+                                double lj_denom = dist2 + shift;
+                                lj_denom = lj_denom * lj_denom * lj_denom;
+			        
+                                const double sig6_over_denom = sig6 / lj_denom;
+                                const double sig12_over_denom2 = sig6_over_denom *
+                                                                 sig6_over_denom;
+			        
+                                iljnrg[k] += cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 -
+                                                                               sig6_over_denom);
+                            }
+                        }
+                    }
+                }//for (quint32 j
+            }// for quint 32 i
+        }
+        else if (use_reaction_field)
         {
             const double Rcoul = switchfunc->electrostaticCutoffDistance();
             const double Rlj = switchfunc->vdwCutoffDistance();
@@ -3450,6 +3719,72 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                                     icnrg[k] += q2 * (one_over_sr);
                                 else
                                     icnrg[k] += q2 * (one_over_sr + sr*sr*k_rf[k] - c_rf[k]);
+                            }
+                        }
+		    
+                        if (cljscl.lj() != 0 and param1.ljid != 0 and dist2 < Rlj2)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                        ljpairs.map(param0.ljid,
+                                                                    param1.ljid)];
+                            
+                            const double sig2 = ljpair.sigma() * ljpair.sigma();
+                            const double sig6 = sig2 * sig2 * sig2;
+			  
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double shift = ljpair.sigma() * delta[k];
+			        
+                                double lj_denom = dist2 + shift;
+                                lj_denom = lj_denom * lj_denom * lj_denom;
+			        
+                                const double sig6_over_denom = sig6 / lj_denom;
+                                const double sig12_over_denom2 = sig6_over_denom *
+                                                                 sig6_over_denom;
+			        
+                                iljnrg[k] += cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 -
+                                                                               sig6_over_denom);
+                            }
+                        }
+                    }
+                }//for (quint32 j
+            }// for quint 32 i
+        }
+        else if (use_atomistic_cutoff)
+        {
+            const double Rcoul = switchfunc->electrostaticCutoffDistance();
+            const double Rlj = switchfunc->vdwCutoffDistance();
+            const double Rlj2 = Rlj*Rlj;
+            const double Rcoul2 = Rcoul*Rcoul;
+    
+            for (quint32 i=0; i<nats0; ++i)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                
+                for (quint32 j=0; j<nats1; ++j)
+                {
+                    const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+                    if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                    {
+                        const Parameter &param1 = params1_array[j];
+		    
+                        const double dist2 = distmat[j];
+  		        
+                        const double q2 = cljscl.coulomb() *
+                            param0.reduced_charge * params1_array[j].reduced_charge;
+
+                        // ADAPT FOR RF HERE
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            const double sr = std::sqrt(alfa[k] + dist2);
+                            const double one_over_sr = double(1) / sr;
+ 
+                            // JM Jan 13. No reaction field on 1,4 atoms?
+                            if (dist2 < Rcoul2)
+                            {
+                                icnrg[k] += q2 * (one_over_sr);
                             }
                         }
 		    
@@ -3581,7 +3916,84 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         if (cljscl.coulomb() == 0 and cljscl.lj() == 0)
             return;
         
-        if (use_reaction_field)
+        if (use_electrostatic_shifting)
+        {
+            const double Rcoul = switchfunc->electrostaticCutoffDistance();
+            const double Rlj = switchfunc->vdwCutoffDistance();
+            const double Rlj2 = Rlj*Rlj;
+    
+            double sRcoul[nalpha];
+            double one_over_sRcoul[nalpha];
+            double one_over_sRcoul2[nalpha];
+        
+            for (int i=0; i<nalpha; ++i)
+            {
+                sRcoul[i] = std::sqrt(alfa[i] + Rcoul*Rcoul);
+                one_over_sRcoul[i] = double(1) / sRcoul[i];
+                one_over_sRcoul2[i] = double(1) / (sRcoul[i]*sRcoul[i]);
+            }
+	  
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+	    
+                foreach (Index j, atoms1)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param1 = params1_array[j];
+                    const double dist2 = distmat[j];
+                        
+                    const double q2 = cljscl.coulomb() *
+                    param0.reduced_charge * param1.reduced_charge;
+                        
+                    for (int k=0; k<nalpha; ++k)
+                    {
+                        //coulomb calculation
+                        {
+                            const double sr = std::sqrt(alfa[k] + dist2);
+                            const double one_over_sr = double(1) / sr;
+ 
+                            // JM Jan 13. No reaction field on 1,4 atoms?
+                            if (sr < sRcoul[k])
+                            {
+                                if (cljscl.coulomb() != 1)
+                                    icnrg[k] += q2 * (one_over_sr);
+                                else
+                                    icnrg[k] += q2 * (one_over_sr - one_over_sRcoul[k] +
+                                                      one_over_sRcoul2[k]*(sr-sRcoul[k]));
+                            }
+                        }
+		  
+                        //lj calculation
+                        if (param1.ljid != 0 and dist2 < Rlj2)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                        ljpairs.map(param0.ljid,
+                                                    param1.ljid)];
+                            const double sig2 = ljpair.sigma() * ljpair.sigma();
+                            const double sig6 = sig2 * sig2 * sig2;
+			                        
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double shift = ljpair.sigma() * delta[k];
+			    
+                                double lj_denom = dist2 + shift;
+                                lj_denom = lj_denom * lj_denom * lj_denom;
+			    
+                                const double sig6_over_denom = sig6 / lj_denom;
+                                const double sig12_over_denom2 = sig6_over_denom *
+                                                                 sig6_over_denom;
+			    
+                                iljnrg[k] +=  cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 -
+                                                                                sig6_over_denom);
+                            }
+                        }
+                    }
+                }// for each j
+            }//for each i
+        }
+        else if (use_reaction_field)
         {
             const double Rcoul = switchfunc->electrostaticCutoffDistance();
             const double Rlj = switchfunc->vdwCutoffDistance();
@@ -3628,6 +4040,69 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                                     icnrg[k] += q2 * (one_over_sr);
                                 else
                                     icnrg[k] += q2 * (one_over_sr + sr*sr*k_rf[k] - c_rf[k]);
+                            }
+                        }
+		  
+                        //lj calculation
+                        if (param1.ljid != 0 and dist2 < Rlj2)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                        ljpairs.map(param0.ljid,
+                                                    param1.ljid)];
+                            const double sig2 = ljpair.sigma() * ljpair.sigma();
+                            const double sig6 = sig2 * sig2 * sig2;
+			                        
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double shift = ljpair.sigma() * delta[k];
+			    
+                                double lj_denom = dist2 + shift;
+                                lj_denom = lj_denom * lj_denom * lj_denom;
+			    
+                                const double sig6_over_denom = sig6 / lj_denom;
+                                const double sig12_over_denom2 = sig6_over_denom *
+                                                                 sig6_over_denom;
+			    
+                                iljnrg[k] +=  cljscl.lj() * ljpair.epsilon() * (sig12_over_denom2 -
+                                                                                sig6_over_denom);
+                            }
+                        }
+                    }
+                }// for each j
+            }//for each i
+        }
+        else if (use_atomistic_cutoff)
+        {
+            const double Rcoul = switchfunc->electrostaticCutoffDistance();
+            const double Rlj = switchfunc->vdwCutoffDistance();
+            const double Rlj2 = Rlj*Rlj;
+            const double Rcoul2 = Rcoul*Rcoul;
+	  
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+	    
+                foreach (Index j, atoms1)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param1 = params1_array[j];
+                    const double dist2 = distmat[j];
+                        
+                    const double q2 = cljscl.coulomb() *
+                    param0.reduced_charge * param1.reduced_charge;
+                        
+                    for (int k=0; k<nalpha; ++k)
+                    {
+                        //coulomb calculation
+                        {
+                            const double sr = std::sqrt(alfa[k] + dist2);
+                            const double one_over_sr = double(1) / sr;
+ 
+                            // JM Jan 13. No reaction field on 1,4 atoms?
+                            if (dist2 < Rcoul2)
+                            {
+                                icnrg[k] += q2 * (one_over_sr);
                             }
                         }
 		  
@@ -3732,7 +4207,120 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         //there are different nb scale factors between
         //the atoms. We need to calculate the energies using
         //them...
-        if (use_reaction_field)
+        if (use_electrostatic_shifting)
+        {
+            const double Rcoul = switchfunc->electrostaticCutoffDistance();
+            const double Rlj = switchfunc->vdwCutoffDistance();
+            const double Rlj2 = Rlj*Rlj;
+    
+            double sRcoul[nalpha];
+            double one_over_sRcoul[nalpha];
+            double one_over_sRcoul2[nalpha];
+        
+            for (int i=0; i<nalpha; ++i)
+            {
+                sRcoul[i] = std::sqrt(alfa[i] + Rcoul*Rcoul);
+                one_over_sRcoul[i] = double(1) / sRcoul[i];
+                one_over_sRcoul2[i] = double(1) / (sRcoul[i]*sRcoul[i]);
+            }
+	
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+
+                if (param0.ljid == 0)
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                            
+                        if (cljscl.coulomb() != 0)
+                        {
+                            const double dist2 = distmat[j];
+			
+                            const double q2 = cljscl.coulomb() *
+                                param0.reduced_charge * params1_array[j].reduced_charge;
+			
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double sr = std::sqrt(alfa[k] + dist2);
+                                const double one_over_sr = double(1) / sr;
+ 
+                                // JM Jan 13. No reaction field on 1,4 atoms?
+                                if (sr < sRcoul[k])
+                                {
+                                    if (cljscl.coulomb() != 1)
+                                        icnrg[k] += q2 * (one_over_sr);
+                                    else
+                                        icnrg[k] += q2 * (one_over_sr - one_over_sRcoul[k] +
+                                                          one_over_sRcoul2[k]*(sr-sRcoul[k]));
+                                }
+                            }
+                        }
+                    }//foreach j
+                }
+                else //do both
+                {
+                    //do both coulomb and LJ
+                    foreach (Index j, atoms1)
+                    {
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+                        if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                        {
+                            const Parameter &param1 = params1_array[j];
+		    
+                            const double dist2 = distmat[j];
+			
+                            const double q2 = cljscl.coulomb() *
+                                param0.reduced_charge * params1_array[j].reduced_charge;
+			
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double sr = std::sqrt(alfa[k] + dist2);
+                                const double one_over_sr = double(1) / sr;
+ 
+                                // JM Jan 13. No reaction field on 1,4 atoms?
+                                if (sr < sRcoul[k])
+                                {
+                                    if (cljscl.coulomb() != 1)
+                                        icnrg[k] += q2 * (one_over_sr);
+                                    else
+                                        icnrg[k] += q2 * (one_over_sr - one_over_sRcoul[k] +
+                                                          one_over_sRcoul2[k]*(sr-sRcoul[k]));
+                                }
+                            }
+
+                            if (cljscl.lj() != 0 and param1.ljid != 0 and dist2 < Rlj2)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                        ljpairs.map(param0.ljid,
+                                                                    param1.ljid)];
+                                const double sig2 = ljpair.sigma() * ljpair.sigma();
+                                const double sig6 = sig2 * sig2 * sig2;
+			                            
+                                for (int k=0; k<nalpha; ++k)
+                                {
+                                    const double shift = ljpair.sigma() * delta[k];
+			    
+                                    double lj_denom = dist2 + shift;
+                                    lj_denom = lj_denom * lj_denom * lj_denom;
+			    
+                                    const double sig6_over_denom = sig6 / lj_denom;
+                                    const double sig12_over_denom2 = sig6_over_denom *
+                                                                     sig6_over_denom;
+			    
+                                    iljnrg[k] +=  cljscl.lj() * ljpair.epsilon() *
+                                                    (sig12_over_denom2 - sig6_over_denom);
+                                }
+                            }
+                        }
+                    } //for each j
+                }
+            }//for each i
+        }
+        else if (use_reaction_field)
         {
             const double Rcoul = switchfunc->electrostaticCutoffDistance();
             const double Rlj = switchfunc->vdwCutoffDistance();
@@ -3814,6 +4402,101 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                                         icnrg[k] += q2 * (one_over_sr);
                                     else
                                         icnrg[k] += q2 * (one_over_sr + sr*sr*k_rf[k] - c_rf[k]);
+                                }
+                            }
+
+                            if (cljscl.lj() != 0 and param1.ljid != 0 and dist2 < Rlj2)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                        ljpairs.map(param0.ljid,
+                                                                    param1.ljid)];
+                                const double sig2 = ljpair.sigma() * ljpair.sigma();
+                                const double sig6 = sig2 * sig2 * sig2;
+			                            
+                                for (int k=0; k<nalpha; ++k)
+                                {
+                                    const double shift = ljpair.sigma() * delta[k];
+			    
+                                    double lj_denom = dist2 + shift;
+                                    lj_denom = lj_denom * lj_denom * lj_denom;
+			    
+                                    const double sig6_over_denom = sig6 / lj_denom;
+                                    const double sig12_over_denom2 = sig6_over_denom *
+                                                                     sig6_over_denom;
+			    
+                                    iljnrg[k] +=  cljscl.lj() * ljpair.epsilon() *
+                                                    (sig12_over_denom2 - sig6_over_denom);
+                                }
+                            }
+                        }
+                    } //for each j
+                }
+            }//for each i
+        }
+        else if (use_atomistic_cutoff)
+        {
+            const double Rcoul = switchfunc->electrostaticCutoffDistance();
+            const double Rlj = switchfunc->vdwCutoffDistance();
+            const double Rlj2 = Rlj*Rlj;
+            const double Rcoul2 = Rcoul*Rcoul;
+	
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+
+                if (param0.ljid == 0)
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                            
+                        if (cljscl.coulomb() != 0)
+                        {
+                            const double dist2 = distmat[j];
+			
+                            const double q2 = cljscl.coulomb() *
+                                param0.reduced_charge * params1_array[j].reduced_charge;
+			
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double sr = std::sqrt(alfa[k] + dist2);
+                                const double one_over_sr = double(1) / sr;
+ 
+                                // JM Jan 13. No reaction field on 1,4 atoms?
+                                if (dist2 < Rcoul2)
+                                {
+                                    icnrg[k] += q2 * (one_over_sr);
+                                }
+                            }
+                        }
+                    }//foreach j
+                }
+                else //do both
+                {
+                    //do both coulomb and LJ
+                    foreach (Index j, atoms1)
+                    {
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+                        if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                        {
+                            const Parameter &param1 = params1_array[j];
+		    
+                            const double dist2 = distmat[j];
+			
+                            const double q2 = cljscl.coulomb() *
+                                param0.reduced_charge * params1_array[j].reduced_charge;
+			
+                            for (int k=0; k<nalpha; ++k)
+                            {
+                                const double sr = std::sqrt(alfa[k] + dist2);
+                                const double one_over_sr = double(1) / sr;
+ 
+                                // JM Jan 13. No reaction field on 1,4 atoms?
+                                if (dist2 < Rcoul2)
+                                {
+                                    icnrg[k] += q2 * (one_over_sr);
                                 }
                             }
 
