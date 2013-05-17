@@ -57,7 +57,7 @@
     #endif
 #endif
 
-#undef SIRE_USE_SSE
+//#undef SIRE_USE_SSE
 
 #include <QDebug>
 
@@ -1084,7 +1084,7 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                                                                                  sig6_over_denom);
                                                   
                                     //calculate LJ energy (the factor of 4 is added later)
-                                    nrg = _mm_sub_pd(sig12_over_denom2, sig6_over_denom);
+                                    __m128d nrg = _mm_sub_pd(sig12_over_denom2, sig6_over_denom);
                                                          
                                     nrg = _mm_mul_pd(sse_eps, nrg);
                                     nrg = _mm_and_pd(nrg, sse_in_cutoff);
@@ -1121,6 +1121,7 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                                         icnrg[k] += q2 *
                                                 (one_over_sr - one_over_sRcoul[k] +
                                                  one_over_sRcoul2[k]*(sr-sRcoul[k]));
+                                    }
                                 }
                                 
                                 //lj energy
@@ -5139,7 +5140,7 @@ void IntraSoftCLJPotential::calculatePotential(const IntraSoftCLJPotential::Mole
                 "and LJ potentials has not yet been written..."), CODELOC );
 }
 
-void IntraSoftCLJPotential::calculatePotential(const IntraSoftCLJPotential::Molecule &mol, 
+void IntraSoftCLJPotential::calculatePotential(const IntraSoftCLJPotential::Molecule &mol,
                         const CLJProbe &probe,
                         GridPotentialTable &potentials,
                         const Symbol &symbol,
