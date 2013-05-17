@@ -872,6 +872,12 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
         cnrg[i] = 0;
         ljnrg[i] = 0;
     }
+
+    const double Rcoul = qMax(1e-5,qMin(1e9,
+                            switchfunc->electrostaticCutoffDistance().to(angstrom)));
+    const double Rlj = qMax(1e-5,qMin(1e9, switchfunc->vdwCutoffDistance().to(angstrom)) );
+    const double Rc = qMax(Rcoul,Rlj);
+    const double Rlj2 = Rlj*Rlj;
     
     //this uses the following potentials
     //           Zacharias and McCammon, J. Chem. Phys., 1994, and also,
@@ -914,12 +920,6 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
 
     if (use_electrostatic_shifting)
     {
-        const double Rcoul = switchfunc->electrostaticCutoffDistance();
-        const double Rlj = switchfunc->vdwCutoffDistance();
-        const double Rlj2 = Rlj*Rlj;
-        
-        const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-    
         double sRcoul[nalpha];
         double one_over_sRcoul[nalpha];
         double one_over_sRcoul2[nalpha];
@@ -1225,13 +1225,6 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
         // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
         // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
         // c = (1/r_c) * (3 eps)/(2 eps + 1)
-
-        const double Rcoul = switchfunc->electrostaticCutoffDistance();
-        const double Rlj = switchfunc->vdwCutoffDistance();
-        const double Rlj2 = Rlj*Rlj;
-        
-        const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-    
         double sRcoul[nalpha];
         double k_rf[nalpha];
         double c_rf[nalpha];
@@ -1537,12 +1530,6 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
     else if (use_atomistic_cutoff)
     {
         //use a straight atomistic cutoff
-        const double Rcoul = switchfunc->electrostaticCutoffDistance();
-        const double Rlj = switchfunc->vdwCutoffDistance();
-        const double Rlj2 = Rlj*Rlj;
-        
-        const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-    
         //loop over all pairs of CutGroups in the two molecules
         for (quint32 igroup=0; igroup<ngroups0; ++igroup)
         {
@@ -3218,6 +3205,12 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
 						 double icnrg[], double iljnrg[],
 						 const double alfa[], double delta[], const int nalpha) const
 {
+    const double Rcoul = qMax(1e-5,qMin(1e9,
+                            switchfunc->electrostaticCutoffDistance().to(angstrom)));
+    const double Rlj = qMax(1e-5,qMin(1e9, switchfunc->vdwCutoffDistance().to(angstrom)) );
+    const double Rlj2 = Rlj*Rlj;
+    const double Rcoul2 = Rcoul*Rcoul;
+
     if (group_pairs.isEmpty())
     {
         //there is a constant scale factor between groups
@@ -3228,13 +3221,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
 
         if (use_electrostatic_shifting)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-            
-            const double one_over_Rcoul = double(1) / Rcoul;
-            const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
-
             double sRcoul[nalpha];
             double one_over_sRcoul[nalpha];
             double one_over_sRcoul2[nalpha];
@@ -3333,10 +3319,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         }
         else if (use_reaction_field)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-    
             double sRcoul[nalpha];
             double k_rf[nalpha];
             double c_rf[nalpha];
@@ -3435,11 +3417,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         }
         else if (use_atomistic_cutoff)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-            const double Rcoul2 = Rcoul*Rcoul;
-    
             for (quint32 i=0; i<nats0; ++i)
             {
                 distmat.setOuterIndex(i);
@@ -3591,10 +3568,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         //them...
         if (use_electrostatic_shifting)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-    
             double sRcoul[nalpha];
             double one_over_sRcoul[nalpha];
             double one_over_sRcoul2[nalpha];
@@ -3671,10 +3644,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         }
         else if (use_reaction_field)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-    
             double sRcoul[nalpha];
             double k_rf[nalpha];
             double c_rf[nalpha];
@@ -3752,11 +3721,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         }
         else if (use_atomistic_cutoff)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-            const double Rcoul2 = Rcoul*Rcoul;
-    
             for (quint32 i=0; i<nats0; ++i)
             {
                 distmat.setOuterIndex(i);
@@ -3908,6 +3872,12 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
     if (atoms0.isEmpty() or atoms1.isEmpty())
         return;
 
+    const double Rcoul = qMax(1e-5,qMin(1e9,
+                            switchfunc->electrostaticCutoffDistance().to(angstrom)));
+    const double Rlj = qMax(1e-5,qMin(1e9, switchfunc->vdwCutoffDistance().to(angstrom)) );
+    const double Rlj2 = Rlj*Rlj;
+    const double Rcoul2 = Rcoul*Rcoul;
+
     if (group_pairs.isEmpty())
     {
         //there is a constant scale factor between groups
@@ -3918,10 +3888,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         
         if (use_electrostatic_shifting)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-    
             double sRcoul[nalpha];
             double one_over_sRcoul[nalpha];
             double one_over_sRcoul2[nalpha];
@@ -3995,10 +3961,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         }
         else if (use_reaction_field)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-    
             double sRcoul[nalpha];
             double k_rf[nalpha];
             double c_rf[nalpha];
@@ -4073,11 +4035,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         }
         else if (use_atomistic_cutoff)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-            const double Rcoul2 = Rcoul*Rcoul;
-	  
             foreach (Index i, atoms0)
             {
                 distmat.setOuterIndex(i);
@@ -4209,10 +4166,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         //them...
         if (use_electrostatic_shifting)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-    
             double sRcoul[nalpha];
             double one_over_sRcoul[nalpha];
             double one_over_sRcoul2[nalpha];
@@ -4322,10 +4275,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         }
         else if (use_reaction_field)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-    
             double sRcoul[nalpha];
             double k_rf[nalpha];
             double c_rf[nalpha];
@@ -4435,11 +4384,6 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
         }
         else if (use_atomistic_cutoff)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-            const double Rlj2 = Rlj*Rlj;
-            const double Rcoul2 = Rcoul*Rcoul;
-	
             foreach (Index i, atoms0)
             {
                 distmat.setOuterIndex(i);

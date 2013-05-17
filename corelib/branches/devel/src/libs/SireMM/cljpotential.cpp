@@ -67,6 +67,8 @@ using namespace SireMM::detail;
 using namespace SireFF;
 using namespace SireFF::detail;
 
+using namespace SireUnits;
+
 using namespace SireMol;
 using namespace SireVol;
 
@@ -995,6 +997,11 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     int nflops = 0;
     #endif
 
+    const double Rcoul = qMax(1e-5,qMin(1e9,
+                            switchfunc->electrostaticCutoffDistance().to(angstrom)));
+    const double Rlj = qMax(1e-5,qMin(1e9,switchfunc->vdwCutoffDistance().to(angstrom)) );
+    const double Rc = qMax(Rcoul,Rlj);
+
     //loop over all pairs of CutGroups in the two molecules
     if (use_electrostatic_shifting)
     {
@@ -1003,12 +1010,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
         //We use alpha=0, as I have seen that a 25 A cutoff gives stable results
         //with alpha=0, and this way we avoid changing the hamiltonian significantly
         //by having an erfc function
-        
-        const double Rcoul = switchfunc->electrostaticCutoffDistance();
-        const double Rlj = switchfunc->vdwCutoffDistance();
-        
-        const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-        
         const double one_over_Rcoul = double(1) / Rcoul;
         const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
         
@@ -1228,11 +1229,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     }
     else if (use_atomistic_cutoff)
     {
-        const double Rcoul = switchfunc->electrostaticCutoffDistance();
-        const double Rlj = switchfunc->vdwCutoffDistance();
-        
-        const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-        
         for (quint32 igroup=0; igroup<ngroups0; ++igroup)
         {
             const Parameters::Array &params0 = molparams0_array[igroup];
@@ -1444,12 +1440,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
         // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
         // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
         // c = (1/r_c) * (3 eps)/(2 eps + 1)
-        
-        const double Rcoul = switchfunc->electrostaticCutoffDistance();
-        const double Rlj = switchfunc->vdwCutoffDistance();
-        
-        const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-
         const double k_rf = (1.0 / pow_3(Rcoul)) * ( (rf_dielectric_constant-1) /
                                                      (2*rf_dielectric_constant + 1) );
         const double c_rf = (1.0 / Rcoul) * ( (3*rf_dielectric_constant) /
@@ -1673,11 +1663,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     else
     {
         //using the group-based cutoff with feather function
-        const double Rcoul = switchfunc->electrostaticCutoffDistance();
-        const double Rlj = switchfunc->vdwCutoffDistance();
-        
-        const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-    
         for (quint32 igroup=0; igroup<ngroups0; ++igroup)
         {
             const Parameters::Array &params0 = molparams0_array[igroup];
@@ -4966,6 +4951,11 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
     double icnrg = 0;
     double iljnrg = 0;
 
+    const double Rcoul = qMax(1e-5,qMin(1e9,
+                            switchfunc->electrostaticCutoffDistance().to(angstrom)));
+    const double Rlj = qMax(1e-5,qMin(1e9, switchfunc->vdwCutoffDistance().to(angstrom)) );
+    const double Rc = qMax(Rcoul,Rlj);
+        
     if (group_pairs.isEmpty())
     {
         //there is a constant scale factor between groups
@@ -4976,11 +4966,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
         if (use_electrostatic_shifting)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-            
             const double one_over_Rcoul = double(1) / Rcoul;
             const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
         
@@ -5056,11 +5041,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_reaction_field)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-            
             const double k_rf = (1.0 / pow_3(Rcoul)) * ( (rf_dielectric_constant-1) /
                                                          (2*rf_dielectric_constant + 1) );
             const double c_rf = (1.0 / Rcoul) * ( (3*rf_dielectric_constant) /
@@ -5138,11 +5118,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_atomistic_cutoff)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-        
             for (quint32 i=0; i<nats0; ++i)
             {
                 distmat.setOuterIndex(i);
@@ -5261,11 +5236,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         //them...
         if (use_electrostatic_shifting)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-            
             const double one_over_Rcoul = double(1) / Rcoul;
             const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
         
@@ -5352,11 +5322,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_reaction_field)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-            
             const double k_rf = (1.0 / pow_3(Rcoul)) * ( (rf_dielectric_constant-1) /
                                                          (2*rf_dielectric_constant + 1) );
             const double c_rf = (1.0 / Rcoul) * ( (3*rf_dielectric_constant) /
@@ -5443,11 +5408,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_atomistic_cutoff)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-        
             for (quint32 i=0; i<nats0; ++i)
             {
                 distmat.setOuterIndex(i);
@@ -5595,6 +5555,11 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
     double icnrg = 0;
     double iljnrg = 0;
 
+    const double Rcoul = qMax(1e-5,qMin(1e9,
+                            switchfunc->electrostaticCutoffDistance().to(angstrom)));
+    const double Rlj = qMax(1e-5,qMin(1e9, switchfunc->vdwCutoffDistance().to(angstrom)) );
+    const double Rc = qMax(Rcoul,Rlj);
+
     if (group_pairs.isEmpty())
     {
         //there is a constant scale factor between groups
@@ -5605,11 +5570,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
         if (use_electrostatic_shifting)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-            
             const double one_over_Rcoul = double(1) / Rcoul;
             const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
         
@@ -5685,11 +5645,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_reaction_field)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-            
             const double k_rf = (1.0 / pow_3(Rcoul)) * ( (rf_dielectric_constant-1) /
                                                          (2*rf_dielectric_constant + 1) );
             const double c_rf = (1.0 / Rcoul) * ( (3*rf_dielectric_constant) /
@@ -5767,11 +5722,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_atomistic_cutoff)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-        
             foreach (Index i, atoms0)
             {
                 distmat.setOuterIndex(i);
@@ -5891,11 +5841,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         //them...
         if (use_electrostatic_shifting)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-            
             const double one_over_Rcoul = double(1) / Rcoul;
             const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
 
@@ -5980,11 +5925,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_reaction_field)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-            
             const double k_rf = (1.0 / pow_3(Rcoul)) * ( (rf_dielectric_constant-1) /
                                                          (2*rf_dielectric_constant + 1) );
             const double c_rf = (1.0 / Rcoul) * ( (3*rf_dielectric_constant) /
@@ -6071,11 +6011,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_atomistic_cutoff)
         {
-            const double Rcoul = switchfunc->electrostaticCutoffDistance();
-            const double Rlj = switchfunc->vdwCutoffDistance();
-        
-            const double Rc = qMax( 1e9, qMax(Rcoul,Rlj) );
-
             foreach (Index i, atoms0)
             {
                 distmat.setOuterIndex(i);
