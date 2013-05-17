@@ -42,9 +42,8 @@ void register_QMMMFF_class(){
 
     { //::Squire::QMMMFF
         typedef bp::class_< Squire::QMMMFF, bp::bases< SireFF::FF3D, SireFF::G2FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > QMMMFF_exposer_t;
-        QMMMFF_exposer_t QMMMFF_exposer = QMMMFF_exposer_t( "QMMMFF" );
+        QMMMFF_exposer_t QMMMFF_exposer = QMMMFF_exposer_t( "QMMMFF", bp::init< >() );
         bp::scope QMMMFF_scope( QMMMFF_exposer );
-        QMMMFF_exposer.def( bp::init< >() );
         QMMMFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         QMMMFF_exposer.def( bp::init< Squire::QMMMFF const & >(( bp::arg("other") )) );
         { //::Squire::QMMMFF::components
@@ -69,28 +68,6 @@ void register_QMMMFF_class(){
                 , ( bp::arg("name") ) );
         
         }
-        { //::Squire::QMMMFF::energy
-        
-            typedef void ( ::Squire::QMMMFF::*energy_function_type )( ::SireFF::EnergyTable &,double ) ;
-            energy_function_type energy_function_value( &::Squire::QMMMFF::energy );
-            
-            QMMMFF_exposer.def( 
-                "energy"
-                , energy_function_value
-                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
-        
-        }
-        { //::Squire::QMMMFF::energy
-        
-            typedef void ( ::Squire::QMMMFF::*energy_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
-            energy_function_type energy_function_value( &::Squire::QMMMFF::energy );
-            
-            QMMMFF_exposer.def( 
-                "energy"
-                , energy_function_value
-                , ( bp::arg("energytable"), bp::arg("symbol"), bp::arg("scale_energy")=1 ) );
-        
-        }
         { //::Squire::QMMMFF::energyCommandFile
         
             typedef ::QString ( ::Squire::QMMMFF::*energyCommandFile_function_type )(  ) const;
@@ -99,6 +76,28 @@ void register_QMMMFF_class(){
             QMMMFF_exposer.def( 
                 "energyCommandFile"
                 , energyCommandFile_function_value );
+        
+        }
+        { //::Squire::QMMMFF::energyTable
+        
+            typedef void ( ::Squire::QMMMFF::*energyTable_function_type )( ::SireFF::EnergyTable &,double ) ;
+            energyTable_function_type energyTable_function_value( &::Squire::QMMMFF::energyTable );
+            
+            QMMMFF_exposer.def( 
+                "energyTable"
+                , energyTable_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::Squire::QMMMFF::energyTable
+        
+            typedef void ( ::Squire::QMMMFF::*energyTable_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
+            energyTable_function_type energyTable_function_value( &::Squire::QMMMFF::energyTable );
+            
+            QMMMFF_exposer.def( 
+                "energyTable"
+                , energyTable_function_value
+                , ( bp::arg("energytable"), bp::arg("symbol"), bp::arg("scale_energy")=1 ) );
         
         }
         { //::Squire::QMMMFF::field

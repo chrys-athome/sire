@@ -13,6 +13,7 @@
 #include "distancecomponent.h"
 #include "energymonitor.h"
 #include "geometrycomponent.h"
+#include "idassigner.h"
 #include "identityconstraint.h"
 #include "moleculeconstraint.h"
 #include "monitorcomponent.h"

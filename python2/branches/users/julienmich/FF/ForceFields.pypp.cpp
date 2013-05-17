@@ -84,9 +84,8 @@ void register_ForceFields_class(){
 
     { //::SireFF::ForceFields
         typedef bp::class_< SireFF::ForceFields, bp::bases< SireMol::MolGroupsBase, SireBase::Property > > ForceFields_exposer_t;
-        ForceFields_exposer_t ForceFields_exposer = ForceFields_exposer_t( "ForceFields" );
+        ForceFields_exposer_t ForceFields_exposer = ForceFields_exposer_t( "ForceFields", bp::init< >() );
         bp::scope ForceFields_scope( ForceFields_exposer );
-        ForceFields_exposer.def( bp::init< >() );
         ForceFields_exposer.def( bp::init< SireFF::FF const & >(( bp::arg("forcefield") )) );
         ForceFields_exposer.def( bp::init< QList< SireBase::PropPtr< SireFF::FF > > const & >(( bp::arg("forcefields") )) );
         ForceFields_exposer.def( bp::init< QVector< SireBase::PropPtr< SireFF::FF > > const & >(( bp::arg("forcefields") )) );
@@ -604,28 +603,6 @@ void register_ForceFields_class(){
                 , ( bp::arg("component") ) );
         
         }
-        { //::SireFF::ForceFields::energy
-        
-            typedef void ( ::SireFF::ForceFields::*energy_function_type )( ::SireFF::EnergyTable &,double ) ;
-            energy_function_type energy_function_value( &::SireFF::ForceFields::energy );
-            
-            ForceFields_exposer.def( 
-                "energy"
-                , energy_function_value
-                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
-        
-        }
-        { //::SireFF::ForceFields::energy
-        
-            typedef void ( ::SireFF::ForceFields::*energy_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
-            energy_function_type energy_function_value( &::SireFF::ForceFields::energy );
-            
-            ForceFields_exposer.def( 
-                "energy"
-                , energy_function_value
-                , ( bp::arg("energytable"), bp::arg("component"), bp::arg("scale_energy")=1 ) );
-        
-        }
         { //::SireFF::ForceFields::energyComponents
         
             typedef ::SireCAS::Values ( ::SireFF::ForceFields::*energyComponents_function_type )(  ) ;
@@ -676,6 +653,28 @@ void register_ForceFields_class(){
             ForceFields_exposer.def( 
                 "energySymbols"
                 , energySymbols_function_value );
+        
+        }
+        { //::SireFF::ForceFields::energyTable
+        
+            typedef void ( ::SireFF::ForceFields::*energyTable_function_type )( ::SireFF::EnergyTable &,double ) ;
+            energyTable_function_type energyTable_function_value( &::SireFF::ForceFields::energyTable );
+            
+            ForceFields_exposer.def( 
+                "energyTable"
+                , energyTable_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::SireFF::ForceFields::energyTable
+        
+            typedef void ( ::SireFF::ForceFields::*energyTable_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
+            energyTable_function_type energyTable_function_value( &::SireFF::ForceFields::energyTable );
+            
+            ForceFields_exposer.def( 
+                "energyTable"
+                , energyTable_function_value
+                , ( bp::arg("energytable"), bp::arg("component"), bp::arg("scale_energy")=1 ) );
         
         }
         { //::SireFF::ForceFields::ffIdx

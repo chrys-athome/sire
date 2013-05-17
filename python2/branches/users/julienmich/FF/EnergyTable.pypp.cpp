@@ -37,9 +37,8 @@ void register_EnergyTable_class(){
 
     { //::SireFF::EnergyTable
         typedef bp::class_< SireFF::EnergyTable > EnergyTable_exposer_t;
-        EnergyTable_exposer_t EnergyTable_exposer = EnergyTable_exposer_t( "EnergyTable" );
+        EnergyTable_exposer_t EnergyTable_exposer = EnergyTable_exposer_t( "EnergyTable", bp::init< >() );
         bp::scope EnergyTable_scope( EnergyTable_exposer );
-        EnergyTable_exposer.def( bp::init< >() );
         EnergyTable_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         EnergyTable_exposer.def( bp::init< SireFF::EnergyTable const & >(( bp::arg("other") )) );
         { //::SireFF::EnergyTable::add

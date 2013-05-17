@@ -6,21 +6,15 @@ set ( PYPP_SOURCES
        CloseMols.pypp.cpp
        ComponentConstraint.pypp.cpp
        Constraint.pypp.cpp
-       PolariseChargesFF.pypp.cpp
-       IDAndSet_MonitorID_.pypp.cpp
-       IDAssigner.pypp.cpp
-       EnergyMonitor.pypp.cpp
-       MonitorProperty.pypp.cpp
-       MonitorIdx.pypp.cpp
-       MonitorComponent.pypp.cpp
-       SystemMonitor.pypp.cpp
        Constraints.pypp.cpp
        DihedralComponent.pypp.cpp
        DistanceComponent.pypp.cpp
        DoubleDistanceComponent.pypp.cpp
+       EnergyMonitor.pypp.cpp
        GeometryComponent.pypp.cpp
        IDAndSet_MonitorID_.pypp.cpp
        IDAndSet_SysID_.pypp.cpp
+       IDAssigner.pypp.cpp
        IdentityConstraint.pypp.cpp
        IDOrSet_MonitorID_.pypp.cpp
        IDOrSet_SysID_.pypp.cpp

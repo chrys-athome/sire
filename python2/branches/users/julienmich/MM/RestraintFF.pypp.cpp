@@ -113,25 +113,25 @@ void register_RestraintFF_class(){
                 , ( bp::arg("symbol") ) );
         
         }
-        { //::SireMM::RestraintFF::energy
+        { //::SireMM::RestraintFF::energyTable
         
-            typedef void ( ::SireMM::RestraintFF::*energy_function_type )( ::SireFF::EnergyTable &,double ) ;
-            energy_function_type energy_function_value( &::SireMM::RestraintFF::energy );
+            typedef void ( ::SireMM::RestraintFF::*energyTable_function_type )( ::SireFF::EnergyTable &,double ) ;
+            energyTable_function_type energyTable_function_value( &::SireMM::RestraintFF::energyTable );
             
             RestraintFF_exposer.def( 
-                "energy"
-                , energy_function_value
+                "energyTable"
+                , energyTable_function_value
                 , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
         
         }
-        { //::SireMM::RestraintFF::energy
+        { //::SireMM::RestraintFF::energyTable
         
-            typedef void ( ::SireMM::RestraintFF::*energy_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
-            energy_function_type energy_function_value( &::SireMM::RestraintFF::energy );
+            typedef void ( ::SireMM::RestraintFF::*energyTable_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
+            energyTable_function_type energyTable_function_value( &::SireMM::RestraintFF::energyTable );
             
             RestraintFF_exposer.def( 
-                "energy"
-                , energy_function_value
+                "energyTable"
+                , energyTable_function_value
                 , ( bp::arg("energytable"), bp::arg("symbol"), bp::arg("scale_energy")=1 ) );
         
         }

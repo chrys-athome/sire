@@ -9,9 +9,17 @@ namespace bp = boost::python;
 
 #include "SireMaths/constants.h"
 
+#include "SireMol/atomcharges.h"
+
+#include "SireMol/atomcoords.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"
+
+#include "SireUnits/units.h"
+
+#include "atomljs.h"
 
 #include "cljpotential.h"
 

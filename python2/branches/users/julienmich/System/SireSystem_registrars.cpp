@@ -5,7 +5,9 @@
 
 #include "distancecomponent.h"
 #include "perturbationconstraint.h"
+#include "energymonitor.h"
 #include "rdfmonitor.h"
+#include "idassigner.h"
 #include "monitormonitor.h"
 #include "spacewrapper.h"
 #include "monitoridx.h"
@@ -17,7 +19,6 @@
 #include "monitorcomponent.h"
 #include "dihedralcomponent.h"
 #include "systemmonitor.h"
-#include "sysid.h"
 #include "constraint.h"
 #include "checkpoint.h"
 #include "closemols.h"
@@ -27,8 +28,8 @@
 #include "monitorcomponents.h"
 #include "sysidentifier.h"
 #include "identityconstraint.h"
+#include "polarisecharges.h"
 #include "sysname.h"
-#include "monitorid.h"
 
 #include "Helpers/objectregistry.hpp"
 
@@ -39,8 +40,10 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::DoubleDistanceComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::TripleDistanceComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::PerturbationConstraint >();
+    ObjectRegistry::registerConverterFor< SireSystem::EnergyMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::RDF >();
     ObjectRegistry::registerConverterFor< SireSystem::RDFMonitor >();
+    ObjectRegistry::registerConverterFor< SireSystem::IDAssigner >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorMonitor >();
     ObjectRegistry::registerConverterFor< SireSystem::SpaceWrapper >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorIdx >();
@@ -52,25 +55,27 @@ void register_SireSystem_objects()
     ObjectRegistry::registerConverterFor< SireSystem::MonitorComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::DihedralComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::NullMonitor >();
-    ObjectRegistry::registerConverterFor< SireID::Specify<SireSystem::SysID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireSystem::SysID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireSystem::SysID> >();
     ObjectRegistry::registerConverterFor< SireSystem::NullConstraint >();
     ObjectRegistry::registerConverterFor< SireSystem::PropertyConstraint >();
     ObjectRegistry::registerConverterFor< SireSystem::ComponentConstraint >();
     ObjectRegistry::registerConverterFor< SireSystem::WindowedComponent >();
     ObjectRegistry::registerConverterFor< SireSystem::CheckPoint >();
     ObjectRegistry::registerConverterFor< SireSystem::CloseMols >();
+    ObjectRegistry::registerConverterFor< SireID::Specify<SireSystem::MonitorID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireSystem::MonitorID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireSystem::MonitorID> >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorIdentifier >();
     ObjectRegistry::registerConverterFor< SireSystem::SystemMonitors >();
     ObjectRegistry::registerConverterFor< SireSystem::System >();
     ObjectRegistry::registerConverterFor< SireSystem::MonitorComponents >();
+    ObjectRegistry::registerConverterFor< SireID::Specify<SireSystem::SysID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireSystem::SysID> >();
+    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireSystem::SysID> >();
     ObjectRegistry::registerConverterFor< SireSystem::SysIdentifier >();
     ObjectRegistry::registerConverterFor< SireSystem::IdentityConstraint >();
+    ObjectRegistry::registerConverterFor< SireSystem::PolariseCharges >();
+    ObjectRegistry::registerConverterFor< SireSystem::PolariseChargesFF >();
     ObjectRegistry::registerConverterFor< SireSystem::SysName >();
-    ObjectRegistry::registerConverterFor< SireID::Specify<SireSystem::MonitorID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireSystem::MonitorID> >();
-    ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireSystem::MonitorID> >();
 
 }
 

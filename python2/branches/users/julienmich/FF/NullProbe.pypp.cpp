@@ -25,9 +25,8 @@ void register_NullProbe_class(){
 
     { //::SireFF::NullProbe
         typedef bp::class_< SireFF::NullProbe, bp::bases< SireFF::Probe, SireBase::Property > > NullProbe_exposer_t;
-        NullProbe_exposer_t NullProbe_exposer = NullProbe_exposer_t( "NullProbe" );
+        NullProbe_exposer_t NullProbe_exposer = NullProbe_exposer_t( "NullProbe", bp::init< >() );
         bp::scope NullProbe_scope( NullProbe_exposer );
-        NullProbe_exposer.def( bp::init< >() );
         NullProbe_exposer.def( bp::init< SireFF::NullProbe const & >(( bp::arg("other") )) );
         NullProbe_exposer.def( bp::self != bp::self );
         { //::SireFF::NullProbe::operator=

@@ -39,9 +39,8 @@ void register_ChargeElementParameterNames3D_class(){
 
     { //::Squire::ChargeElementParameterNames3D
         typedef bp::class_< Squire::ChargeElementParameterNames3D, bp::bases< SireMM::ChargeParameterName, Squire::ElementParameterName > > ChargeElementParameterNames3D_exposer_t;
-        ChargeElementParameterNames3D_exposer_t ChargeElementParameterNames3D_exposer = ChargeElementParameterNames3D_exposer_t( "ChargeElementParameterNames3D" );
+        ChargeElementParameterNames3D_exposer_t ChargeElementParameterNames3D_exposer = ChargeElementParameterNames3D_exposer_t( "ChargeElementParameterNames3D", bp::init< >() );
         bp::scope ChargeElementParameterNames3D_scope( ChargeElementParameterNames3D_exposer );
-        ChargeElementParameterNames3D_exposer.def( bp::init< >() );
         ChargeElementParameterNames3D_exposer.def( "__copy__", &__copy__);
         ChargeElementParameterNames3D_exposer.def( "__deepcopy__", &__copy__);
         ChargeElementParameterNames3D_exposer.def( "clone", &__copy__);

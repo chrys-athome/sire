@@ -80,25 +80,25 @@ void register_InternalFF_class(){
                 , ( bp::arg("name") ) );
         
         }
-        { //::SireMM::InternalFF::energy
+        { //::SireMM::InternalFF::energyTable
         
-            typedef void ( ::SireMM::InternalFF::*energy_function_type )( ::SireFF::EnergyTable &,double ) ;
-            energy_function_type energy_function_value( &::SireMM::InternalFF::energy );
+            typedef void ( ::SireMM::InternalFF::*energyTable_function_type )( ::SireFF::EnergyTable &,double ) ;
+            energyTable_function_type energyTable_function_value( &::SireMM::InternalFF::energyTable );
             
             InternalFF_exposer.def( 
-                "energy"
-                , energy_function_value
+                "energyTable"
+                , energyTable_function_value
                 , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
         
         }
-        { //::SireMM::InternalFF::energy
+        { //::SireMM::InternalFF::energyTable
         
-            typedef void ( ::SireMM::InternalFF::*energy_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
-            energy_function_type energy_function_value( &::SireMM::InternalFF::energy );
+            typedef void ( ::SireMM::InternalFF::*energyTable_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
+            energyTable_function_type energyTable_function_value( &::SireMM::InternalFF::energyTable );
             
             InternalFF_exposer.def( 
-                "energy"
-                , energy_function_value
+                "energyTable"
+                , energyTable_function_value
                 , ( bp::arg("energytable"), bp::arg("symbol"), bp::arg("scale_energy")=1 ) );
         
         }

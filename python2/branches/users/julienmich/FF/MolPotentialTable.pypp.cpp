@@ -39,9 +39,8 @@ void register_MolPotentialTable_class(){
 
     { //::SireFF::MolPotentialTable
         typedef bp::class_< SireFF::MolPotentialTable > MolPotentialTable_exposer_t;
-        MolPotentialTable_exposer_t MolPotentialTable_exposer = MolPotentialTable_exposer_t( "MolPotentialTable" );
+        MolPotentialTable_exposer_t MolPotentialTable_exposer = MolPotentialTable_exposer_t( "MolPotentialTable", bp::init< >() );
         bp::scope MolPotentialTable_scope( MolPotentialTable_exposer );
-        MolPotentialTable_exposer.def( bp::init< >() );
         MolPotentialTable_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molview") )) );
         MolPotentialTable_exposer.def( bp::init< SireFF::MolPotentialTable const & >(( bp::arg("other") )) );
         { //::SireFF::MolPotentialTable::add
@@ -175,9 +174,9 @@ void register_MolPotentialTable_class(){
         MolPotentialTable_exposer.def( bp::self != bp::self );
         MolPotentialTable_exposer.def( bp::self * bp::other< double >() );
         MolPotentialTable_exposer.def( bp::self + bp::self );
-        MolPotentialTable_exposer.def( bp::self + bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > >() );
+        MolPotentialTable_exposer.def( bp::self + bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, -1, 0 > >() );
         MolPotentialTable_exposer.def( bp::self - bp::self );
-        MolPotentialTable_exposer.def( bp::self - bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > >() );
+        MolPotentialTable_exposer.def( bp::self - bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, -1, 0 > >() );
         MolPotentialTable_exposer.def( -bp::self );
         MolPotentialTable_exposer.def( bp::self / bp::other< double >() );
         { //::SireFF::MolPotentialTable::operator=
@@ -283,7 +282,7 @@ void register_MolPotentialTable_class(){
         }
         { //::SireFF::MolPotentialTable::toVector
         
-            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > ( ::SireFF::MolPotentialTable::*toVector_function_type )(  ) const;
+            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, -1, 0 > > ( ::SireFF::MolPotentialTable::*toVector_function_type )(  ) const;
             toVector_function_type toVector_function_value( &::SireFF::MolPotentialTable::toVector );
             
             MolPotentialTable_exposer.def( 
@@ -293,7 +292,7 @@ void register_MolPotentialTable_class(){
         }
         { //::SireFF::MolPotentialTable::toVector
         
-            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > > ( ::SireFF::MolPotentialTable::*toVector_function_type )( ::SireMol::AtomSelection const & ) const;
+            typedef ::QVector< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, -1, 0 > > ( ::SireFF::MolPotentialTable::*toVector_function_type )( ::SireMol::AtomSelection const & ) const;
             toVector_function_type toVector_function_value( &::SireFF::MolPotentialTable::toVector );
             
             MolPotentialTable_exposer.def( 

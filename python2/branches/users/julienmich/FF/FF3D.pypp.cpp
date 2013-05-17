@@ -21,25 +21,25 @@ void register_FF3D_class(){
         typedef bp::class_< SireFF::FF3D, boost::noncopyable > FF3D_exposer_t;
         FF3D_exposer_t FF3D_exposer = FF3D_exposer_t( "FF3D", bp::no_init );
         bp::scope FF3D_scope( FF3D_exposer );
-        { //::SireFF::FF3D::energy
+        { //::SireFF::FF3D::energyTable
         
-            typedef void ( ::SireFF::FF3D::*energy_function_type )( ::SireFF::EnergyTable &,double ) ;
-            energy_function_type energy_function_value( &::SireFF::FF3D::energy );
+            typedef void ( ::SireFF::FF3D::*energyTable_function_type )( ::SireFF::EnergyTable &,double ) ;
+            energyTable_function_type energyTable_function_value( &::SireFF::FF3D::energyTable );
             
             FF3D_exposer.def( 
-                "energy"
-                , energy_function_value
+                "energyTable"
+                , energyTable_function_value
                 , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
         
         }
-        { //::SireFF::FF3D::energy
+        { //::SireFF::FF3D::energyTable
         
-            typedef void ( ::SireFF::FF3D::*energy_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
-            energy_function_type energy_function_value( &::SireFF::FF3D::energy );
+            typedef void ( ::SireFF::FF3D::*energyTable_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
+            energyTable_function_type energyTable_function_value( &::SireFF::FF3D::energyTable );
             
             FF3D_exposer.def( 
-                "energy"
-                , energy_function_value
+                "energyTable"
+                , energyTable_function_value
                 , ( bp::arg("forcetable"), bp::arg("component"), bp::arg("scale_energy")=1 ) );
         
         }

@@ -13,7 +13,6 @@
 #include "coulombpotential.h"
 #include "dihedralrestraint.h"
 #include "distancerestraint.h"
-#include "fastintercljff.h"
 #include "fouratomfunctions.h"
 #include "gridff.h"
 #include "intercljff.h"
