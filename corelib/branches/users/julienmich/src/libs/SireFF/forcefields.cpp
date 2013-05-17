@@ -985,7 +985,7 @@ void FFSymbolFF::energy(EnergyTable &energytable, QVector<FFPtr> &forcefields,
             "not provide an energy function.")
                 .arg(ffield->what()), CODELOC );
 
-    ffield.edit().asA<FF3D>().energy(energytable, this->symbol(), scale_energy);
+    ffield.edit().asA<FF3D>().energyTable(energytable, this->symbol(), scale_energy);
 }
 
 void FFSymbolFF::force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
@@ -1563,7 +1563,7 @@ void FFTotalExpression::energy(EnergyTable &energytable,
         FFPtr &ffield = ffields_array[i];
         
         if (ffield->isA<FF3D>())
-            ffield.edit().asA<FF3D>().energy(energytable, scale_energy);
+            ffield.edit().asA<FF3D>().energyTable(energytable, scale_energy);
     }
 }
 
@@ -2992,8 +2992,8 @@ QHash<Symbol,Expression> ForceFields::componentExpressions() const
 }
 
 
-void ForceFields::energy(EnergyTable &energytable, const Symbol &component,
-                        double scale_energy)
+void ForceFields::energyTable(EnergyTable &energytable, const Symbol &component,
+                              double scale_energy)
 {
     FFSymbolPtr comp = ffsymbols.value(component);
 
@@ -3013,14 +3013,14 @@ void ForceFields::energy(EnergyTable &energytable, const Symbol &component,
 
     //    qDebug() << " in ForceFields::energy(EnergyTable &energytable, const Symbol &component, double scale_energy)";
     comp->energy(energytable, ffields_by_idx, 
-                ffsymbols, scale_energy);
+                 ffsymbols, scale_energy);
 }
 
 /** Add the energies due to the forcefields in this set to the molecules
     in the energy table 'energytable', scaled by 'scale_energy' */
-void ForceFields::energy(EnergyTable &energytable, double scale_energy)
+void ForceFields::energyTable(EnergyTable &energytable, double scale_energy)
 {
-    this->energy(energytable, this->totalComponent(), scale_energy);
+    this->energyTable(energytable, this->totalComponent(), scale_energy);
 }
 
 

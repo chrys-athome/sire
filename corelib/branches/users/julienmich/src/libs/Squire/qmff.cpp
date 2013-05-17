@@ -237,13 +237,13 @@ void QMFF::changedPotential()
     this->mustNowRecalculateFromScratch();
 }
 
-void QMFF::energy(EnergyTable &energytable, double scale_energy)
+void QMFF::energyTable(EnergyTable &energytable, double scale_energy)
 {
     throw SireError::incomplete_code( QObject::tr(
             "QMFF does not yet support energy calculations!"), CODELOC );
 }
 
-void QMFF::energy(EnergyTable &energytable, const Symbol &symbol,
+void QMFF::energyTable(EnergyTable &energytable, const Symbol &symbol,
                            double scale_energy)
 {
     throw SireError::incomplete_code( QObject::tr(

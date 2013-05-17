@@ -67,6 +67,8 @@ using namespace SireMM::detail;
 using namespace SireFF;
 using namespace SireFF::detail;
 
+using namespace SireUnits;
+
 using namespace SireMol;
 using namespace SireVol;
 
@@ -967,7 +969,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                              InterCLJPotential::EnergyWorkspace &distmat,
                                              double scale_energy) const
 {
-
     const quint32 ngroups0 = mol0.coordinates().count();
     const quint32 ngroups1 = mol1.coordinates().count();
     
@@ -996,6 +997,11 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     int nflops = 0;
     #endif
 
+    const double Rcoul = qMax(1e-5,qMin(1e9,
+                            switchfunc->electrostaticCutoffDistance().to(angstrom)));
+    const double Rlj = qMax(1e-5,qMin(1e9,switchfunc->vdwCutoffDistance().to(angstrom)) );
+    const double Rc = qMax(Rcoul,Rlj);
+
     //loop over all pairs of CutGroups in the two molecules
     if (use_electrostatic_shifting)
     {
@@ -1004,21 +1010,8 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
         //We use alpha=0, as I have seen that a 25 A cutoff gives stable results
         //with alpha=0, and this way we avoid changing the hamiltonian significantly
         //by having an erfc function
-        
-        double Rc = switchfunc->electrostaticCutoffDistance();
-        
-        if (Rc != switchfunc->vdwCutoffDistance())
-            throw SireError::unsupported( QObject::tr(
-                    "This code does not support having electrostatic shifting together "
-                    "with different coulomb and vdw cutoffs..."), CODELOC );
-        
-        if (Rc > 1e9)
-        {
-            Rc = 1e9;
-        }
-        
-        const double one_over_Rc = double(1) / Rc;
-        const double one_over_Rc2 = double(1) / (Rc*Rc);
+        const double one_over_Rcoul = double(1) / Rcoul;
+        const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
         
         for (quint32 igroup=0; igroup<ngroups0; ++igroup)
         {
@@ -1067,9 +1060,12 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                     __m128d sse_ljnrg = { 0, 0 };
 
                     const __m128d sse_one = { 1.0, 1.0 };
-                    const __m128d sse_Rc = { Rc, Rc };
-                    const __m128d sse_one_over_Rc = { one_over_Rc, one_over_Rc };
-                    const __m128d sse_one_over_Rc2 = { one_over_Rc2, one_over_Rc2 };
+
+                    const __m128d sse_Rcoul = _mm_set1_pd(Rcoul);
+                    const __m128d sse_one_over_Rcoul = _mm_set1_pd(one_over_Rcoul);
+                    const __m128d sse_one_over_Rcoul2 = _mm_set1_pd(one_over_Rcoul2);
+
+                    const __m128d sse_Rlj = _mm_set1_pd(Rlj);
                     
                     for (quint32 i=0; i<nats0; ++i)
                     {
@@ -1087,13 +1083,15 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             
                             const __m128d sse_r = _mm_set_pd( distmat[j], distmat[j+1] );
                             const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
-                            const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
 
+                            //coulomb calculation
                             {
-                                __m128d nrg = _mm_sub_pd(sse_r, sse_Rc);
-                                nrg = _mm_mul_pd(nrg, sse_one_over_Rc2);
+                                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rcoul);
+
+                                __m128d nrg = _mm_sub_pd(sse_r, sse_Rcoul);
+                                nrg = _mm_mul_pd(nrg, sse_one_over_Rcoul2);
                                 nrg = _mm_add_pd(nrg, sse_one_over_r);
-                                nrg = _mm_sub_pd(nrg, sse_one_over_Rc);
+                                nrg = _mm_sub_pd(nrg, sse_one_over_Rcoul);
 
                                 __m128d sse_chg = _mm_set_pd( param10.reduced_charge,
                                                               param11.reduced_charge );
@@ -1105,39 +1103,44 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                 
                                 sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
                             }
-                                               
-                            const LJPair &ljpair0 = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param10.ljid)];
+                            
+                            //LJ calculation
+                            {
+                                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rlj);
+
+                                const LJPair &ljpair0 = ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                        param10.ljid)];
                         
-                            const LJPair &ljpair1 = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param11.ljid)];
+                                const LJPair &ljpair1 = ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                        param11.ljid)];
                         
-                            __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
-                            __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
-                                                          ljpair1.epsilon() );
+                                __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                                __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(),
+                                                              ljpair1.epsilon() );
                                                         
-                            //calculate (sigma/r)^6 and (sigma/r)^12
-                            __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_one_over_r);
-                            sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,  
-                                                             sse_sig_over_dist2 );
+                                //calculate (sigma/r)^6 and (sigma/r)^12
+                                __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_one_over_r);
+                                sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,
+                                                                 sse_sig_over_dist2 );
                                                          
-                            __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
-                                                                    sse_sig_over_dist2);
+                                __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
+                                                                        sse_sig_over_dist2);
                                                             
-                            sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
-                                                            sse_sig_over_dist2);
+                                sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
+                                                                sse_sig_over_dist2);
                                                          
-                            __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
-                                                                     sse_sig_over_dist6);
+                                __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
+                                                                         sse_sig_over_dist6);
                                                   
-                            __m128d nrg = _mm_sub_pd(sse_sig_over_dist12,
-                                                     sse_sig_over_dist6);
+                                __m128d nrg = _mm_sub_pd(sse_sig_over_dist12,
+                                                         sse_sig_over_dist6);
                                                      
-                            nrg = _mm_mul_pd(nrg, sse_eps);
-                            nrg = _mm_and_pd(nrg, sse_in_cutoff);
-                            sse_ljnrg = _mm_add_pd(sse_ljnrg, nrg);
+                                nrg = _mm_mul_pd(nrg, sse_eps);
+                                nrg = _mm_and_pd(nrg, sse_in_cutoff);
+                                sse_ljnrg = _mm_add_pd(sse_ljnrg, nrg);
+                            }
                         }
                               
                         if (remainder == 1)
@@ -1150,18 +1153,24 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             {
                                 const double one_over_r = double(1) / r;
 
-                                icnrg += param0.reduced_charge * param1.reduced_charge *
-                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                if (r < Rcoul)
+                                {
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                         (one_over_r - one_over_Rcoul + one_over_Rcoul2*(r-Rcoul));
+                                }
 
-                                const LJPair &ljpair = ljpairs.constData()[
-                                                        ljpairs.map(param0.ljid,
-                                                                    param1.ljid)];
+                                if (r < Rlj)
+                                {
+                                    const LJPair &ljpair = ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                        param1.ljid)];
 
-                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                                double sig_over_dist12 = pow_2(sig_over_dist6);
+                                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                    double sig_over_dist12 = pow_2(sig_over_dist6);
             
-                                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                              sig_over_dist6);
+                                    iljnrg += ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                                }
                             }
                         }
                     }
@@ -1189,18 +1198,24 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             {
                                 const double one_over_r = double(1) / r;
                             
-                                icnrg += param0.reduced_charge * param1.reduced_charge *
-                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                if (r < Rcoul)
+                                {
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r - one_over_Rcoul + one_over_Rcoul2*(r-Rcoul));
+                                }
 
-                                const LJPair &ljpair = ljpairs.constData()[
-                                                        ljpairs.map(param0.ljid,
-                                                                    param1.ljid)];
+                                if (r < Rlj)
+                                {
+                                    const LJPair &ljpair = ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                        param1.ljid)];
 
-                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                                double sig_over_dist12 = pow_2(sig_over_dist6);
+                                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                    double sig_over_dist12 = pow_2(sig_over_dist6);
             
-                                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                              sig_over_dist6);
+                                    iljnrg += ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                                }
                             }
                         }
                     }
@@ -1214,14 +1229,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     }
     else if (use_atomistic_cutoff)
     {
-        //use a simple atomistic cutoff
-        double Rc = switchfunc->electrostaticCutoffDistance();
-        
-        if (Rc != switchfunc->vdwCutoffDistance())
-            throw SireError::unsupported( QObject::tr(
-                    "This code does not support having an atomistic cutoff together "
-                    "with different coulomb and vdw cutoffs..."), CODELOC );
-        
         for (quint32 igroup=0; igroup<ngroups0; ++igroup)
         {
             const Parameters::Array &params0 = molparams0_array[igroup];
@@ -1269,7 +1276,8 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                     __m128d sse_ljnrg = { 0, 0 };
 
                     const __m128d sse_one = { 1.0, 1.0 };
-                    const __m128d sse_Rc = _mm_set1_pd(Rc);
+                    const __m128d sse_Rcoul = _mm_set1_pd(Rcoul);
+                    const __m128d sse_Rlj = _mm_set1_pd(Rlj);
                     
                     for (quint32 i=0; i<nats0; ++i)
                     {
@@ -1287,8 +1295,11 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             
                             const __m128d sse_r = _mm_set_pd( distmat[j], distmat[j+1] );
                             const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
-                            const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
+
+                            // coulomb calculation
                             {
+                                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rcoul);
+
                                 __m128d nrg = _mm_set_pd( param10.reduced_charge,
                                                           param11.reduced_charge );
                         
@@ -1299,39 +1310,44 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                 
                                 sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
                             }
-                                               
-                            const LJPair &ljpair0 = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param10.ljid)];
+                            
+                            // lj calculation
+                            {
+                                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rlj);
+
+                                const LJPair &ljpair0 = ljpairs.constData()[
+                                                         ljpairs.map(param0.ljid,
+                                                                     param10.ljid)];
                         
-                            const LJPair &ljpair1 = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param11.ljid)];
+                                const LJPair &ljpair1 = ljpairs.constData()[
+                                                         ljpairs.map(param0.ljid,
+                                                                     param11.ljid)];
                         
-                            __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
-                            __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
-                                                          ljpair1.epsilon() );
+                                __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                                __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(),
+                                                              ljpair1.epsilon() );
                                                         
-                            //calculate (sigma/r)^6 and (sigma/r)^12
-                            __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_one_over_r);
-                            sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,  
-                                                             sse_sig_over_dist2 );
+                                //calculate (sigma/r)^6 and (sigma/r)^12
+                                __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_one_over_r);
+                                sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,
+                                                                 sse_sig_over_dist2 );
                                                          
-                            __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
-                                                                    sse_sig_over_dist2);
+                                __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
+                                                                        sse_sig_over_dist2);
                                                             
-                            sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
-                                                            sse_sig_over_dist2);
+                                sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
+                                                                sse_sig_over_dist2);
                                                          
-                            __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
-                                                                     sse_sig_over_dist6);
+                                __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
+                                                                         sse_sig_over_dist6);
                                                   
-                            __m128d nrg = _mm_sub_pd(sse_sig_over_dist12,
-                                                     sse_sig_over_dist6);
+                                __m128d nrg = _mm_sub_pd(sse_sig_over_dist12,
+                                                         sse_sig_over_dist6);
                                                      
-                            nrg = _mm_mul_pd(nrg, sse_eps);
-                            nrg = _mm_and_pd(nrg, sse_in_cutoff);
-                            sse_ljnrg = _mm_add_pd(sse_ljnrg, nrg);
+                                nrg = _mm_mul_pd(nrg, sse_eps);
+                                nrg = _mm_and_pd(nrg, sse_in_cutoff);
+                                sse_ljnrg = _mm_add_pd(sse_ljnrg, nrg);
+                            }
                         }
                               
                         if (remainder == 1)
@@ -1344,18 +1360,24 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             {
                                 const double one_over_r = double(1) / r;
                             
-                                icnrg += param0.reduced_charge * param1.reduced_charge *
-                                            one_over_r;
+                                if (r < Rcoul)
+                                {
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                one_over_r;
+                                }
 
-                                const LJPair &ljpair = ljpairs.constData()[
-                                                        ljpairs.map(param0.ljid,
-                                                                    param1.ljid)];
+                                if (r < Rlj)
+                                {
+                                    const LJPair &ljpair = ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                        param1.ljid)];
 
-                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                                double sig_over_dist12 = pow_2(sig_over_dist6);
+                                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                    double sig_over_dist12 = pow_2(sig_over_dist6);
             
-                                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                              sig_over_dist6);
+                                    iljnrg += ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                                }
                             }
                         }
                     }
@@ -1383,18 +1405,24 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             {
                                 const double one_over_r = double(1) / r;
                             
-                                icnrg += param0.reduced_charge * param1.reduced_charge *
-                                            one_over_r;
+                                if (r < Rcoul)
+                                {
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                one_over_r;
+                                }
 
-                                const LJPair &ljpair = ljpairs.constData()[
-                                                        ljpairs.map(param0.ljid,
-                                                                    param1.ljid)];
+                                if (r < Rlj)
+                                {
+                                    const LJPair &ljpair = ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                        param1.ljid)];
 
-                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                                double sig_over_dist12 = pow_2(sig_over_dist6);
+                                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                    double sig_over_dist12 = pow_2(sig_over_dist6);
             
-                                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                              sig_over_dist6);
+                                    iljnrg += ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                                }
                             }
                         }
                     }
@@ -1412,23 +1440,10 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
         // E = (q1 q2 / 4 pi eps_0) * ( 1/r + k r^2 - c )
         // where k = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
         // c = (1/r_c) * (3 eps)/(2 eps + 1)
-        
-        double Rc = switchfunc->electrostaticCutoffDistance();
-        
-        if (Rc != switchfunc->vdwCutoffDistance())
-            throw SireError::unsupported( QObject::tr(
-                    "This code does not support having electrostatic shifting together "
-                    "with different coulomb and vdw cutoffs..."), CODELOC );
-        
-        if (Rc > 1e9)
-        {
-            Rc = 1e9;
-        }
-
-        const double k_rf = (1.0 / pow_3(Rc)) * ( (rf_dielectric_constant-1) /
-                                                  (2*rf_dielectric_constant + 1) );
-        const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric_constant) /
-                                           (2*rf_dielectric_constant + 1) );
+        const double k_rf = (1.0 / pow_3(Rcoul)) * ( (rf_dielectric_constant-1) /
+                                                     (2*rf_dielectric_constant + 1) );
+        const double c_rf = (1.0 / Rcoul) * ( (3*rf_dielectric_constant) /
+                                              (2*rf_dielectric_constant + 1) );
         
         for (quint32 igroup=0; igroup<ngroups0; ++igroup)
         {
@@ -1477,7 +1492,10 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                     __m128d sse_ljnrg = { 0, 0 };
 
                     const __m128d sse_one = { 1.0, 1.0 };
-                    const __m128d sse_Rc = _mm_set1_pd(Rc);
+                    
+                    const __m128d sse_Rcoul = _mm_set1_pd(Rcoul);
+                    const __m128d sse_Rlj = _mm_set1_pd(Rlj);
+                    
                     const __m128d sse_k_rf = _mm_set1_pd(k_rf);
                     const __m128d sse_c_rf = _mm_set1_pd(c_rf);
                     
@@ -1497,8 +1515,11 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             
                             const __m128d sse_r = _mm_set_pd( distmat[j], distmat[j+1] );
                             const __m128d sse_one_over_r = _mm_div_pd(sse_one, sse_r);
-                            const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rc);
+
+                            //coulomb calculation
                             {
+                                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rcoul);
+                                
                                 __m128d nrg = _mm_mul_pd(sse_r, sse_r);
                                 nrg = _mm_mul_pd(nrg, sse_k_rf);
                                 nrg = _mm_sub_pd(nrg, sse_c_rf);
@@ -1515,39 +1536,44 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                 
                                 sse_cnrg = _mm_add_pd(sse_cnrg, nrg);
                             }
-                                               
-                            const LJPair &ljpair0 = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param10.ljid)];
+                            
+                            //lj calculation
+                            {
+                                const __m128d sse_in_cutoff = _mm_cmplt_pd(sse_r, sse_Rlj);
+
+                                const LJPair &ljpair0 = ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                        param10.ljid)];
                         
-                            const LJPair &ljpair1 = ljpairs.constData()[
-                                                    ljpairs.map(param0.ljid,
-                                                                param11.ljid)];
+                                const LJPair &ljpair1 = ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                        param11.ljid)];
                         
-                            __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
-                            __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
-                                                          ljpair1.epsilon() );
+                                __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                                __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(),
+                                                              ljpair1.epsilon() );
                                                         
-                            //calculate (sigma/r)^6 and (sigma/r)^12
-                            __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_one_over_r);
-                            sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,  
-                                                             sse_sig_over_dist2 );
+                                //calculate (sigma/r)^6 and (sigma/r)^12
+                                __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_one_over_r);
+                                sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,
+                                                                 sse_sig_over_dist2 );
                                                          
-                            __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
-                                                                    sse_sig_over_dist2);
+                                __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
+                                                                        sse_sig_over_dist2);
                                                             
-                            sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
-                                                            sse_sig_over_dist2);
+                                sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
+                                                                sse_sig_over_dist2);
                                                          
-                            __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
-                                                                     sse_sig_over_dist6);
+                                __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
+                                                                         sse_sig_over_dist6);
                                                   
-                            __m128d nrg = _mm_sub_pd(sse_sig_over_dist12,
-                                                     sse_sig_over_dist6);
+                                __m128d nrg = _mm_sub_pd(sse_sig_over_dist12,
+                                                         sse_sig_over_dist6);
                                                      
-                            nrg = _mm_mul_pd(nrg, sse_eps);
-                            nrg = _mm_and_pd(nrg, sse_in_cutoff);
-                            sse_ljnrg = _mm_add_pd(sse_ljnrg, nrg);
+                                nrg = _mm_mul_pd(nrg, sse_eps);
+                                nrg = _mm_and_pd(nrg, sse_in_cutoff);
+                                sse_ljnrg = _mm_add_pd(sse_ljnrg, nrg);
+                            }
                         }
                               
                         if (remainder == 1)
@@ -1560,18 +1586,24 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             {
                                 const double one_over_r = double(1) / r;
                             
-                                icnrg += param0.reduced_charge * param1.reduced_charge *
-                                            (one_over_r + k_rf*r*r - c_rf);
+                                if (r < Rcoul)
+                                {
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r + k_rf*r*r - c_rf);
+                                }
 
-                                const LJPair &ljpair = ljpairs.constData()[
-                                                        ljpairs.map(param0.ljid,
-                                                                    param1.ljid)];
+                                if (r < Rlj)
+                                {
+                                    const LJPair &ljpair = ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                        param1.ljid)];
 
-                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                                double sig_over_dist12 = pow_2(sig_over_dist6);
+                                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                    double sig_over_dist12 = pow_2(sig_over_dist6);
             
-                                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                              sig_over_dist6);
+                                    iljnrg += ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                                }
                             }
                         }
                     }
@@ -1599,18 +1631,24 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             {
                                 const double one_over_r = double(1) / r;
                             
-                                icnrg += param0.reduced_charge * param1.reduced_charge *
-                                            (one_over_r + k_rf*r*r - c_rf);
+                                if (r < Rcoul)
+                                {
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r + k_rf*r*r - c_rf);
+                                }
 
-                                const LJPair &ljpair = ljpairs.constData()[
-                                                        ljpairs.map(param0.ljid,
-                                                                    param1.ljid)];
+                                if (r < Rlj)
+                                {
+                                    const LJPair &ljpair = ljpairs.constData()[
+                                                            ljpairs.map(param0.ljid,
+                                                                        param1.ljid)];
 
-                                double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
-                                double sig_over_dist12 = pow_2(sig_over_dist6);
+                                    double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
+                                    double sig_over_dist12 = pow_2(sig_over_dist6);
             
-                                iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
-                                                              sig_over_dist6);
+                                    iljnrg += ljpair.epsilon() * (sig_over_dist12 -
+                                                                  sig_over_dist6);
+                                }
                             }
                         }
                     }
@@ -1624,6 +1662,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     }
     else
     {
+        //using the group-based cutoff with feather function
         for (quint32 igroup=0; igroup<ngroups0; ++igroup)
         {
             const Parameters::Array &params0 = molparams0_array[igroup];
@@ -1642,8 +1681,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                 //(if there is only one CutGroup in both molecules then this
                 //test has already been performed and passed)
                 const bool within_cutoff = (ngroups0 == 1 and ngroups1 == 1) or not
-                                            spce->beyond(switchfunc->cutoffDistance(), 
-                                                         aabox0, group1.aaBox());
+                                            spce->beyond(Rc,aabox0, group1.aaBox());
                 
                 if (not within_cutoff)
                     //this CutGroup is either the cutoff distance
@@ -1652,7 +1690,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                 //calculate all of the interatomic distances
                 const double mindist = spce->calcDist(group0, group1, distmat);
                 
-                if (mindist > switchfunc->cutoffDistance())
+                if (mindist > Rc)
                 {
                     //all of the atoms are definitely beyond cutoff
                     continue;
@@ -1711,10 +1749,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             tmp = _mm_mul_pd(tmp, sse_dist);
                             sse_cnrg = _mm_add_pd(sse_cnrg, tmp);
                             
-                            #ifdef SIRE_TIME_ROUTINES
-                            nflops += 8;
-                            #endif
-                            
                             //calculate (sigma/r)^6 and (sigma/r)^12
                             __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_dist);
                             sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,  
@@ -1735,10 +1769,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                                      
                             tmp = _mm_mul_pd(tmp, sse_eps);
                             sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
-                                                    
-                            #ifdef SIRE_TIME_ROUTINES
-                            nflops += 16;
-                            #endif
                         }
                               
                         if (remainder == 1)
@@ -1749,10 +1779,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             
                             icnrg += param0.reduced_charge * param1.reduced_charge 
                                         * invdist;
-                        
-                            #ifdef SIRE_TIME_ROUTINES
-                            nflops += 4;
-                            #endif
 
                             const LJPair &ljpair = ljpairs.constData()[
                                                     ljpairs.map(param0.ljid,
@@ -1763,10 +1789,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
         
                             iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
                                                           sig_over_dist6);
-                                                              
-                            #ifdef SIRE_TIME_ROUTINES
-                            nflops += 8;
-                            #endif
                         }
                     }
                     
@@ -1791,10 +1813,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                             
                             icnrg += param0.reduced_charge * param1.reduced_charge 
                                         * invdist;
-                        
-                            #ifdef SIRE_TIME_ROUTINES
-                            nflops += 4;
-                            #endif
 
                             const LJPair &ljpair = ljpairs.constData()[
                                                     ljpairs.map(param0.ljid,
@@ -1805,10 +1823,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
         
                             iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
                                                           sig_over_dist6);
-                                                              
-                            #ifdef SIRE_TIME_ROUTINES
-                            nflops += 8;
-                            #endif
                         }
                     }
                 }
@@ -1816,23 +1830,22 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                 
                 //now add these energies onto the total for the molecule,
                 //scaled by any non-bonded feather factor
-                if (mindist > switchfunc->featherDistance())
+                if (mindist > switchfunc->electrostaticFeatherDistance())
                 {
                     cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
-                    ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
-                    
-                    #ifdef SIRE_TIME_ROUTINES
-                    nflops += 4;
-                    #endif
                 }
                 else
                 {
                     cnrg += icnrg;
+                }
+                
+                if (mindist > switchfunc->vdwFeatherDistance())
+                {
+                    ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
+                }
+                else
+                {
                     ljnrg += iljnrg;
-                    
-                    #ifdef SIRE_TIME_ROUTINES
-                    nflops += 2;
-                    #endif
                 }
             }
         }
@@ -1844,11 +1857,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
 
     //energy += Energy(scale_energy * cnrg, 4 * scale_energy * ljnrg);
     energy = energy + cljnrg;
-    
-    #ifdef SIRE_TIME_ROUTINES
-    nflops += 5;
-    ADD_FLOPS(nflops);
-    #endif
 }
 
 /** Add to the energies in 'energies0' the energy on 'mol0' caused
@@ -5439,6 +5447,11 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
     double icnrg = 0;
     double iljnrg = 0;
 
+    const double Rcoul = qMax(1e-5,qMin(1e9,
+                            switchfunc->electrostaticCutoffDistance().to(angstrom)));
+    const double Rlj = qMax(1e-5,qMin(1e9, switchfunc->vdwCutoffDistance().to(angstrom)) );
+    const double Rc = qMax(Rcoul,Rlj);
+        
     if (group_pairs.isEmpty())
     {
         //there is a constant scale factor between groups
@@ -5449,20 +5462,8 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
         if (use_electrostatic_shifting)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-            
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having electrostatic shifting together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-            
-            if (Rc > 1e9)
-            {
-                Rc = 1e9;
-            }
-            
-            const double one_over_Rc = double(1) / Rc;
-            const double one_over_Rc2 = double(1) / (Rc*Rc);
+            const double one_over_Rcoul = double(1) / Rcoul;
+            const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
         
             for (quint32 i=0; i<nats0; ++i)
             {
@@ -5478,7 +5479,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
                         const double r = distmat[j];
                         
-                        if (r < Rc)
+                        if (r < Rcoul)
                         {
                             const double one_over_r = double(1) / r;
                         
@@ -5488,7 +5489,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                                                 one_over_r;
                             else
                                 icnrg += param0.reduced_charge * param1.reduced_charge *
-                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                        (one_over_r - one_over_Rcoul + one_over_Rcoul2*(r-Rcoul));
                         }
                     }
                 }
@@ -5504,16 +5505,19 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         if (r < Rc)
                         {
                             const double one_over_r = double(1) / r;
-                        
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() *
+
+                            if (r < Rcoul)
+                            {
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
                                             param0.reduced_charge * param1.reduced_charge *
                                                 one_over_r;
-                            else
-                                icnrg += param0.reduced_charge * param1.reduced_charge *
-                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r - one_over_Rcoul + one_over_Rcoul2*(r-Rcoul));
+                            }
 
-                            if (param1.ljid != 0)
+                            if (param1.ljid != 0 and r < Rlj)
                             {
                                 const LJPair &ljpair = ljpairs.constData()[
                                                           ljpairs.map(param0.ljid,
@@ -5533,22 +5537,10 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_reaction_field)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-            
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having a reaction field together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-            
-            if (Rc > 1e9)
-            {
-                Rc = 1e9;
-            }
-            
-            const double k_rf = (1.0 / pow_3(Rc)) * ( (rf_dielectric_constant-1) /
-                                                      (2*rf_dielectric_constant + 1) );
-            const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric_constant) /
-                                                (2*rf_dielectric_constant + 1) );
+            const double k_rf = (1.0 / pow_3(Rcoul)) * ( (rf_dielectric_constant-1) /
+                                                         (2*rf_dielectric_constant + 1) );
+            const double c_rf = (1.0 / Rcoul) * ( (3*rf_dielectric_constant) /
+                                                  (2*rf_dielectric_constant + 1) );
         
             for (quint32 i=0; i<nats0; ++i)
             {
@@ -5564,7 +5556,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
                         const double r = distmat[j];
                         
-                        if (r < Rc)
+                        if (r < Rcoul)
                         {
                             const double one_over_r = double(1) / r;
                         
@@ -5591,15 +5583,18 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         {
                             const double one_over_r = double(1) / r;
                             
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() *
-                                            param0.reduced_charge * param1.reduced_charge *
-                                                one_over_r;
-                            else
-                                icnrg += param0.reduced_charge * param1.reduced_charge *
-                                                (one_over_r + k_rf*r*r - c_rf);
+                            if (r < Rcoul)
+                            {
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                    (one_over_r + k_rf*r*r - c_rf);
+                            }
                                   
-                            if (param1.ljid != 0)
+                            if (param1.ljid != 0 and r < Rlj)
                             {
                                 const LJPair &ljpair = ljpairs.constData()[
                                                           ljpairs.map(param0.ljid,
@@ -5619,14 +5614,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_atomistic_cutoff)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-            
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having an atomistic cutoff together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-            
-        
             for (quint32 i=0; i<nats0; ++i)
             {
                 distmat.setOuterIndex(i);
@@ -5641,7 +5628,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
                         const double r = distmat[j];
                         
-                        if (r < Rc)
+                        if (r < Rcoul)
                         {
                             const double one_over_r = double(1) / r;
                         
@@ -5663,12 +5650,15 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         if (r < Rc)
                         {
                             const double one_over_r = double(1) / r;
+
+                            if (r < Rcoul)
+                            {
+                                icnrg += cljscl.coulomb() *
+                                            param0.reduced_charge * param1.reduced_charge *
+                                                one_over_r;
+                            }
                             
-                            icnrg += cljscl.coulomb() *
-                                        param0.reduced_charge * param1.reduced_charge *
-                                            one_over_r;
-                            
-                            if (param1.ljid != 0)
+                            if (param1.ljid != 0 and r < Rlj)
                             {
                                 const LJPair &ljpair = ljpairs.constData()[
                                                           ljpairs.map(param0.ljid,
@@ -5686,8 +5676,9 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                 }
             }
         }
-        else // if use_electrostatic_shifting
+        else
         {
+            //group-based feathered cutoff
             for (quint32 i=0; i<nats0; ++i)
             {
                 distmat.setOuterIndex(i);
@@ -5741,20 +5732,8 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         //them...
         if (use_electrostatic_shifting)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-            
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having electrostatic shifting together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-            
-            if (Rc > 1e9)
-            {
-                Rc = 1e9;
-            }
-            
-            const double one_over_Rc = double(1) / Rc;
-            const double one_over_Rc2 = double(1) / (Rc*Rc);
+            const double one_over_Rcoul = double(1) / Rcoul;
+            const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
         
             for (quint32 i=0; i<nats0; ++i)
             {
@@ -5774,7 +5753,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
                             const double r = distmat[j];
                             
-                            if (r < Rc)
+                            if (r < Rcoul)
                             {
                                 const double one_over_r = double(1) / r;
                             
@@ -5784,7 +5763,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                                                     one_over_r;
                                 else
                                     icnrg += param0.reduced_charge * param1.reduced_charge *
-                                                (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                        (one_over_r - one_over_Rcoul + one_over_Rcoul2*(r-Rcoul));
                             }
                         }
                     }
@@ -5806,25 +5785,30 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             {
                                 const double one_over_r = double(1) / r;
                             
-                                if (cljscl.coulomb() != 1)
-                                    icnrg += cljscl.coulomb() *
-                                                param0.reduced_charge * param1.reduced_charge *
-                                                    one_over_r;
-                                else
-                                    icnrg += param0.reduced_charge * param1.reduced_charge *
-                                                (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
-
-                                if (cljscl.lj() != 0 and param1.ljid != 0)
+                                //coulomb
+                                if (r < Rcoul)
+                                {
+                                    if (cljscl.coulomb() != 1)
+                                        icnrg += cljscl.coulomb() *
+                                                    param0.reduced_charge * param1.reduced_charge *
+                                                        one_over_r;
+                                    else
+                                        icnrg += param0.reduced_charge * param1.reduced_charge *
+                                          (one_over_r - one_over_Rcoul + one_over_Rcoul2*(r-Rcoul));
+                                }
+                            
+                                //lj
+                                if (cljscl.lj() != 0 and param1.ljid != 0 and r < Rlj)
                                 {
                                     const LJPair &ljpair = ljpairs.constData()[
-                                                             ljpairs.map(param0.ljid,
-                                                                         param1.ljid)];
+                                                                ljpairs.map(param0.ljid,
+                                                                            param1.ljid)];
                                 
                                     double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
                                     double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                                    iljnrg += cljscl.lj() * ljpair.epsilon() * 
-                                               (sig_over_dist12 - sig_over_dist6);
+                                    iljnrg += cljscl.lj() * ljpair.epsilon() *
+                                            (sig_over_dist12 - sig_over_dist6);
                                 }
                             }
                         }
@@ -5834,22 +5818,10 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_reaction_field)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having electrostatic shifting together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-            
-            if (Rc > 1e9)
-            {
-                Rc = 1e9;
-            }
-            
-            const double k_rf = (1.0 / pow_3(Rc)) * ( (rf_dielectric_constant-1) /
-                                                      (2*rf_dielectric_constant + 1) );
-            const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric_constant) /
-                                                (2*rf_dielectric_constant + 1) );
+            const double k_rf = (1.0 / pow_3(Rcoul)) * ( (rf_dielectric_constant-1) /
+                                                         (2*rf_dielectric_constant + 1) );
+            const double c_rf = (1.0 / Rcoul) * ( (3*rf_dielectric_constant) /
+                                                  (2*rf_dielectric_constant + 1) );
         
             for (quint32 i=0; i<nats0; ++i)
             {
@@ -5869,7 +5841,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
                             const double r = distmat[j];
                             
-                            if (r < Rc)
+                            if (r < Rcoul)
                             {
                                 const double one_over_r = double(1) / r;
                             
@@ -5896,30 +5868,33 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             const Parameter &param1 = params1_array[j];
 
                             const double r = distmat[j];
-                            
+
                             if (r < Rc)
                             {
                                 const double one_over_r = double(1) / r;
                             
-                                if (cljscl.coulomb() != 1)
-                                    icnrg += cljscl.coulomb() *
-                                                param0.reduced_charge * param1.reduced_charge *
-                                                    one_over_r;
-                                else
-                                    icnrg += param0.reduced_charge * param1.reduced_charge *
-                                                (one_over_r + k_rf*r*r - c_rf);
+                                if (r < Rcoul)
+                                {
+                                    if (cljscl.coulomb() != 1)
+                                        icnrg += cljscl.coulomb() *
+                                                    param0.reduced_charge * param1.reduced_charge *
+                                                        one_over_r;
+                                    else
+                                        icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                    (one_over_r + k_rf*r*r - c_rf);
+                                }
 
-                                if (cljscl.lj() != 0 and param1.ljid != 0)
+                                if (cljscl.lj() != 0 and param1.ljid != 0 and r < Rlj)
                                 {
                                     const LJPair &ljpair = ljpairs.constData()[
-                                                             ljpairs.map(param0.ljid,
-                                                                         param1.ljid)];
+                                                            ljpairs.map(param0.ljid,
+                                                                        param1.ljid)];
                                 
                                     double sig_over_dist6 = pow_6(ljpair.sigma()*one_over_r);
                                     double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                                    iljnrg += cljscl.lj() * ljpair.epsilon() * 
-                                               (sig_over_dist12 - sig_over_dist6);
+                                    iljnrg += cljscl.lj() * ljpair.epsilon() *
+                                            (sig_over_dist12 - sig_over_dist6);
                                 }
                             }
                         }
@@ -5929,13 +5904,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_atomistic_cutoff)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having an atomistic cutoff together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-        
             for (quint32 i=0; i<nats0; ++i)
             {
                 distmat.setOuterIndex(i);
@@ -5954,7 +5922,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
                             const double r = distmat[j];
                             
-                            if (r < Rc)
+                            if (r < Rcoul)
                             {
                                 const double one_over_r = double(1) / r;
                             
@@ -5982,11 +5950,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             {
                                 const double one_over_r = double(1) / r;
                             
-                                icnrg += cljscl.coulomb() *
-                                            param0.reduced_charge * param1.reduced_charge *
-                                                one_over_r;
+                                if (r < Rcoul)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
 
-                                if (cljscl.lj() != 0 and param1.ljid != 0)
+                                if (cljscl.lj() != 0 and param1.ljid != 0 and r < Rlj)
                                 {
                                     const LJPair &ljpair = ljpairs.constData()[
                                                              ljpairs.map(param0.ljid,
@@ -6006,6 +5975,8 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else // if use_electrostatic_shifting
         {
+            //using the group-based feathered cutoff
+        
             for (quint32 i=0; i<nats0; ++i)
             {
                 distmat.setOuterIndex(i);
@@ -6080,6 +6051,11 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
     double icnrg = 0;
     double iljnrg = 0;
 
+    const double Rcoul = qMax(1e-5,qMin(1e9,
+                            switchfunc->electrostaticCutoffDistance().to(angstrom)));
+    const double Rlj = qMax(1e-5,qMin(1e9, switchfunc->vdwCutoffDistance().to(angstrom)) );
+    const double Rc = qMax(Rcoul,Rlj);
+
     if (group_pairs.isEmpty())
     {
         //there is a constant scale factor between groups
@@ -6090,20 +6066,8 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
         if (use_electrostatic_shifting)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-            
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having electrostatic shifting together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-            
-            if (Rc > 1e9)
-            {
-                Rc = 1e9;
-            }
-            
-            const double one_over_Rc = double(1) / Rc;
-            const double one_over_Rc2 = double(1) / (Rc*Rc);
+            const double one_over_Rcoul = double(1) / Rcoul;
+            const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
         
             foreach (Index i, atoms0)
             {
@@ -6119,7 +6083,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
                         const double r = distmat[j];
                         
-                        if (r < Rc)
+                        if (r < Rcoul)
                         {
                             const double one_over_r = double(1) / r;
                         
@@ -6129,7 +6093,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                                                 one_over_r;
                             else
                                 icnrg += param0.reduced_charge * param1.reduced_charge *
-                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                    (one_over_r - one_over_Rcoul + one_over_Rcoul2*(r-Rcoul));
                         }
                     }
                 }
@@ -6146,15 +6110,18 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         {
                             const double one_over_r = double(1) / r;
                         
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() *
-                                            param0.reduced_charge * param1.reduced_charge *
-                                                one_over_r;
-                            else
-                                icnrg += param0.reduced_charge * param1.reduced_charge *
-                                            (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
-                                  
-                            if (param1.ljid != 0)
+                            if (r < Rcoul)
+                            {
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                        (one_over_r - one_over_Rcoul + one_over_Rcoul2*(r-Rcoul));
+                            }
+                            
+                            if (param1.ljid != 0 and r < Rlj)
                             {
                                 const LJPair &ljpair = ljpairs.constData()[
                                                           ljpairs.map(param0.ljid,
@@ -6174,22 +6141,10 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_reaction_field)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-            
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having reaction field together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-            
-            if (Rc > 1e9)
-            {
-                Rc = 1e9;
-            }
-            
-            const double k_rf = (1.0 / pow_3(Rc)) * ( (rf_dielectric_constant-1) /
-                                                      (2*rf_dielectric_constant + 1) );
-            const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric_constant) /
-                                                (2*rf_dielectric_constant + 1) );
+            const double k_rf = (1.0 / pow_3(Rcoul)) * ( (rf_dielectric_constant-1) /
+                                                         (2*rf_dielectric_constant + 1) );
+            const double c_rf = (1.0 / Rcoul) * ( (3*rf_dielectric_constant) /
+                                                  (2*rf_dielectric_constant + 1) );
         
             foreach (Index i, atoms0)
             {
@@ -6205,7 +6160,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
                         const double r = distmat[j];
                         
-                        if (r < Rc)
+                        if (r < Rcoul)
                         {
                             const double one_over_r = double(1) / r;
                         
@@ -6232,15 +6187,18 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         {
                             const double one_over_r = double(1) / r;
                         
-                            if (cljscl.coulomb() != 1)
-                                icnrg += cljscl.coulomb() *
-                                            param0.reduced_charge * param1.reduced_charge *
-                                                one_over_r;
-                            else
-                                icnrg += param0.reduced_charge * param1.reduced_charge *
-                                            (one_over_r + k_rf*r*r - c_rf);
-                                  
-                            if (param1.ljid != 0)
+                            if (r < Rcoul)
+                            {
+                                if (cljscl.coulomb() != 1)
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                else
+                                    icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                (one_over_r + k_rf*r*r - c_rf);
+                            }
+                            
+                            if (param1.ljid != 0 and r < Rlj)
                             {
                                 const LJPair &ljpair = ljpairs.constData()[
                                                           ljpairs.map(param0.ljid,
@@ -6260,13 +6218,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_atomistic_cutoff)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-            
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having an atomistic cutoff together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-        
             foreach (Index i, atoms0)
             {
                 distmat.setOuterIndex(i);
@@ -6281,7 +6232,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
                         const double r = distmat[j];
                         
-                        if (r < Rc)
+                        if (r < Rcoul)
                         {
                             const double one_over_r = double(1) / r;
                         
@@ -6304,11 +6255,14 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         {
                             const double one_over_r = double(1) / r;
                         
-                            icnrg += cljscl.coulomb() *
-                                        param0.reduced_charge * param1.reduced_charge *
-                                            one_over_r;
+                            if (r < Rcoul)
+                            {
+                                icnrg += cljscl.coulomb() *
+                                            param0.reduced_charge * param1.reduced_charge *
+                                                one_over_r;
+                            }
                                   
-                            if (param1.ljid != 0)
+                            if (param1.ljid != 0 and r < Rlj)
                             {
                                 const LJPair &ljpair = ljpairs.constData()[
                                                           ljpairs.map(param0.ljid,
@@ -6326,8 +6280,10 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                 }
             }
         }
-        else // if use_electrostatic_shifting
+        else
         {
+            //group-based feathered cutoff
+        
             foreach (Index i, atoms0)
             {
                 distmat.setOuterIndex(i);
@@ -6381,20 +6337,8 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         //them...
         if (use_electrostatic_shifting)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-            
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having electrostatic shifting together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-            
-            if (Rc > 1e9)
-            {
-                Rc = 1e9;
-            }
-            
-            const double one_over_Rc = double(1) / Rc;
-            const double one_over_Rc2 = double(1) / (Rc*Rc);
+            const double one_over_Rcoul = double(1) / Rcoul;
+            const double one_over_Rcoul2 = double(1) / (Rcoul*Rcoul);
 
             foreach (Index i, atoms0)
             {
@@ -6414,7 +6358,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
                             const double r = distmat[j];
                             
-                            if (r < Rc)
+                            if (r < Rcoul)
                             {
                                 const double one_over_r = double(1) / r;
                             
@@ -6424,7 +6368,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                                                     one_over_r;
                                 else
                                     icnrg += param0.reduced_charge * param1.reduced_charge *
-                                                (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                         (one_over_r - one_over_Rcoul + one_over_Rcoul2*(r-Rcoul));
                             }
                         }
                     }
@@ -6446,15 +6390,18 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             {
                                 const double one_over_r = double(1) / r;
                             
-                                if (cljscl.coulomb() != 1)
-                                    icnrg += cljscl.coulomb() *
-                                                param0.reduced_charge * param1.reduced_charge *
-                                                    one_over_r;
-                                else
-                                    icnrg += param0.reduced_charge * param1.reduced_charge *
-                                                (one_over_r - one_over_Rc + one_over_Rc2*(r-Rc));
+                                if (cljscl.coulomb() != 0 and r < Rcoul)
+                                {
+                                    if (cljscl.coulomb() != 1)
+                                        icnrg += cljscl.coulomb() *
+                                                    param0.reduced_charge * param1.reduced_charge *
+                                                        one_over_r;
+                                    else
+                                        icnrg += param0.reduced_charge * param1.reduced_charge *
+                                         (one_over_r - one_over_Rcoul + one_over_Rcoul2*(r-Rcoul));
+                                }
 
-                                if (cljscl.lj() != 0 and param1.ljid != 0)
+                                if (cljscl.lj() != 0 and param1.ljid != 0 and r < Rlj)
                                 {
                                     const LJPair &ljpair = ljpairs.constData()[
                                                              ljpairs.map(param0.ljid,
@@ -6474,22 +6421,10 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_reaction_field)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-            
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having a reaction field together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-            
-            if (Rc > 1e9)
-            {
-                Rc = 1e9;
-            }
-            
-            const double k_rf = (1.0 / pow_3(Rc)) * ( (rf_dielectric_constant-1) /
-                                                        (2*rf_dielectric_constant + 1) );
-            const double c_rf = (1.0 / Rc) * ( (3*rf_dielectric_constant) /
-                                                    (2*rf_dielectric_constant + 1) );
+            const double k_rf = (1.0 / pow_3(Rcoul)) * ( (rf_dielectric_constant-1) /
+                                                         (2*rf_dielectric_constant + 1) );
+            const double c_rf = (1.0 / Rcoul) * ( (3*rf_dielectric_constant) /
+                                                  (2*rf_dielectric_constant + 1) );
 
             foreach (Index i, atoms0)
             {
@@ -6541,15 +6476,18 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             {
                                 const double one_over_r = double(1) / r;
                             
-                                if (cljscl.coulomb() != 1)
-                                    icnrg += cljscl.coulomb() *
-                                                param0.reduced_charge * param1.reduced_charge *
-                                                    one_over_r;
-                                else
-                                    icnrg += param0.reduced_charge * param1.reduced_charge *
-                                                (one_over_r + k_rf*r*r - c_rf);
-                                      
-                                if (cljscl.lj() != 0 and param1.ljid != 0)
+                                if (cljscl.coulomb() != 0 and r < Rcoul)
+                                {
+                                    if (cljscl.coulomb() != 1)
+                                        icnrg += cljscl.coulomb() *
+                                                    param0.reduced_charge * param1.reduced_charge *
+                                                        one_over_r;
+                                    else
+                                        icnrg += param0.reduced_charge * param1.reduced_charge *
+                                                    (one_over_r + k_rf*r*r - c_rf);
+                                }
+                                
+                                if (cljscl.lj() != 0 and param1.ljid != 0 and r < Rlj)
                                 {
                                     const LJPair &ljpair = ljpairs.constData()[
                                                              ljpairs.map(param0.ljid,
@@ -6569,13 +6507,6 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
         }
         else if (use_atomistic_cutoff)
         {
-            double Rc = switchfunc->electrostaticCutoffDistance();
-            
-            if (Rc != switchfunc->vdwCutoffDistance())
-                throw SireError::unsupported( QObject::tr(
-                        "This code does not support having an atomistic cutoff together "
-                        "with different coulomb and vdw cutoffs..."), CODELOC );
-
             foreach (Index i, atoms0)
             {
                 distmat.setOuterIndex(i);
@@ -6594,7 +6525,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
                             const double r = distmat[j];
                             
-                            if (r < Rc)
+                            if (r < Rcoul)
                             {
                                 const double one_over_r = double(1) / r;
                             
@@ -6622,11 +6553,14 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                             {
                                 const double one_over_r = double(1) / r;
                             
-                                icnrg += cljscl.coulomb() *
-                                            param0.reduced_charge * param1.reduced_charge *
-                                                one_over_r;
+                                if (cljscl.coulomb() != 0 and r < Rcoul)
+                                {
+                                    icnrg += cljscl.coulomb() *
+                                                param0.reduced_charge * param1.reduced_charge *
+                                                    one_over_r;
+                                }
                                       
-                                if (cljscl.lj() != 0 and param1.ljid != 0)
+                                if (cljscl.lj() != 0 and param1.ljid != 0 and r < Rlj)
                                 {
                                     const LJPair &ljpair = ljpairs.constData()[
                                                              ljpairs.map(param0.ljid,
@@ -6644,8 +6578,10 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                 }
             }
         }
-        else // if use_electrostatic_shifting
+        else
         {
+            //group-based feathered cutoff
+        
             foreach (Index i, atoms0)
             {
                 distmat.setOuterIndex(i);
@@ -6789,12 +6725,26 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
             }
 
             //now add these energies onto the total for the molecule,
-            //scaled by any non-bonded feather factor
-            if ((not (use_electrostatic_shifting or use_reaction_field or use_atomistic_cutoff))
-                        and (mindist > switchfunc->featherDistance()))
+            //scaled by any non-bonded feather factor if using the group-based cutoff
+            if (not (use_electrostatic_shifting or use_reaction_field or use_atomistic_cutoff))
             {
-                cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
-                ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
+                if (mindist > switchfunc->electrostaticFeatherDistance())
+                {
+                    cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
+                }
+                else
+                {
+                    cnrg += icnrg;
+                }
+                
+                if (mindist > switchfunc->vdwFeatherDistance())
+                {
+                    ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
+                }
+                else
+                {
+                    ljnrg += iljnrg;
+                }
             }
             else
             {
@@ -6942,12 +6892,26 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
             }
 
             //now add these energies onto the total for the molecule,
-            //scaled by any non-bonded feather factor
-            if ((not (use_electrostatic_shifting or use_reaction_field or use_atomistic_cutoff))
-                        and (mindist > switchfunc->featherDistance()))
+            //scaled by any non-bonded feather factor if using the group-based cutoff
+            if (not (use_electrostatic_shifting or use_reaction_field or use_atomistic_cutoff))
             {
-                cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
-                ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
+                if (mindist > switchfunc->electrostaticFeatherDistance())
+                {
+                    cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
+                }
+                else
+                {
+                    cnrg += icnrg;
+                }
+                
+                if (mindist > switchfunc->vdwFeatherDistance())
+                {
+                    ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
+                }
+                else
+                {
+                    ljnrg += iljnrg;
+                }
             }
             else
             {

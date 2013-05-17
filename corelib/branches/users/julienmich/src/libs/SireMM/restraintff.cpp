@@ -913,13 +913,13 @@ bool RestraintFF::remove(const Restraint3D &restraint)
     return false;
 }
 
-void RestraintFF::energy(EnergyTable &energytable, double scale_energy)
+void RestraintFF::energyTable(EnergyTable &energytable, double scale_energy)
 {
     throw SireError::incomplete_code( QObject::tr(
             "RestraintFF does not yet support energy calculations!"), CODELOC );
 }
 
-void RestraintFF::energy(EnergyTable &energytable, const Symbol &symbol,
+void RestraintFF::energyTable(EnergyTable &energytable, const Symbol &symbol,
                            double scale_energy)
 {
     throw SireError::incomplete_code( QObject::tr(

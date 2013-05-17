@@ -474,10 +474,10 @@ public:
     bool containsProperty(const QString &name) const;
     const Properties& properties() const;
 
-    void energy(EnergyTable &energytable, double scale_energy=1);
+    void energyTable(EnergyTable &energytable, double scale_energy=1);
     
-    void energy(EnergyTable &energytable, const Symbol &symbol,
-               double scale_energy=1);
+    void energyTable(EnergyTable &energytable, const Symbol &symbol,
+                     double scale_energy=1);
 
     void force(ForceTable &forcetable, double scale_force=1);
     

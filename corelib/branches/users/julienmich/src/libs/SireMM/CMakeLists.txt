@@ -21,7 +21,6 @@ set ( SIREMM_HEADERS
       dihedralrestraint.h
       distancerestraint.h
       errors.h
-      fastintercljff.h
       fouratomfunctions.h
       gridff.h
       intercljff.h
@@ -71,7 +70,6 @@ set ( SIREMM_SOURCES
       dihedralrestraint.cpp
       distancerestraint.cpp
       errors.cpp
-      fastintercljff.cpp
       fouratomfunctions.cpp
       gridff.cpp
       intercljff.cpp

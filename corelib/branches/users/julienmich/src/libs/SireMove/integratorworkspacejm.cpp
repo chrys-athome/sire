@@ -411,7 +411,7 @@ bool IntegratorWorkspaceJM::calculateForces(const Symbol &nrg_component)
 	molenergies.initialiseTables();
 
 	//qDebug() << " CALLING sys.energy(molenergies, nrg_component) ";
-	sys.energy(molenergies, nrg_component);
+	sys.energyTable(molenergies, nrg_component);
 
 	//qDebug() << " OUT OF sys.energy()..";
 	//MolEnergyTable *energytable_array = molenergies.data();

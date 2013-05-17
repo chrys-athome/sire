@@ -529,8 +529,8 @@ private:
                                used to scale the intramolecular coulomb and LJ
                                energies, must be a property of type CLJNBPairs
 
-    @author Julien Michel */
-
+    @author Julien Michel 
+*/
 class SIREMM_EXPORT IntraSoftCLJPotential : public SoftCLJPotential
 {
   friend QDataStream& ::operator<<(QDataStream&, const IntraSoftCLJPotential&);

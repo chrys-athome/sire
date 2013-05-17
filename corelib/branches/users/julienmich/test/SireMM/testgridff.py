@@ -60,36 +60,27 @@ gridff.add(waters, MGIdx(1))
 gridff.setSpace( Cartesian() )
 gridff.setShiftElectrostatics(True)
 
-cff = InterGroupCLJFF("cff")
-cff.setSwitchingFunction( HarmonicSwitchingFunction(25*angstrom) )
-cff.add(swapwaters, MGIdx(0))
-cff.add(waters, MGIdx(1))
-cff.setSpace( Cartesian() )
-cff.setShiftElectrostatics(True)
-
-ljff = InterGroupCLJFF("ljff")
-ljff.setSwitchingFunction( HarmonicSwitchingFunction(10*angstrom) )
-ljff.add(swapwaters, MGIdx(0))
-ljff.add(waters, MGIdx(1))
-ljff.setSpace( Cartesian() )
-ljff.setUseAtomisticCutoff(True)
+cljff = InterGroupCLJFF("cljff")
+cljff.setSwitchingFunction( HarmonicSwitchingFunction(25*angstrom, 25*angstrom, 10*angstrom, 10*angstrom) )
+cljff.add(swapwaters, MGIdx(0))
+cljff.add(waters, MGIdx(1))
+cljff.setSpace( Cartesian() )
+cljff.setShiftElectrostatics(True)
 
 swap_swapff = InterCLJFF("swap-swap")
 swap_swapff.setSpace(Cartesian())
-swap_swapff.setSwitchingFunction(NoCutoff())
+swap_swapff.setSwitchingFunction( HarmonicSwitchingFunction(25*angstrom, 25*angstrom, 10*angstrom, 10*angstrom) )
 swap_swapff.add(swapwaters)
 grid_system.add(swap_swapff)
 exp_system.add(swap_swapff)
 
 grid_system.add(gridff)
-exp_system.add(cff)
-exp_system.add(ljff)
+exp_system.add(cljff)
 
 grid_system.setComponent( grid_system.totalComponent(),  \
                           gridff.components().total() + swap_swapff.components().total() )
 exp_system.setComponent( exp_system.totalComponent(), \
-                              cff.components().coulomb() + ljff.components().lj() + \
-                              swap_swapff.components().total() )
+                              cljff.components().total() + swap_swapff.components().total() )
 
 print grid_system.energies()
 print exp_system.energies()

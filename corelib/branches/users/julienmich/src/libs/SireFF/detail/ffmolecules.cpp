@@ -267,6 +267,12 @@ bool FFMoleculeBase::add(const AtomSelection &added_atoms)
         return false;
         
     mol = PartialMolecule(mol.data(), mol.selection() + added_atoms);
+
+    if (mol.selection().selectedAllCutGroups())
+        idx_to_cgidx = QList<CGIdx>();
+    else
+        idx_to_cgidx = mol.selection().selectedCutGroups();
+
     return true;
 }
 
@@ -287,11 +293,18 @@ bool FFMoleculeBase::remove(const AtomSelection &removed_atoms)
     {
         //we are removing the entire molecule
         mol = PartialMolecule();
+        idx_to_cgidx = QList<CGIdx>();
         return true;
     }
     else
     {
         mol = PartialMolecule(mol.data(), mol.selection() - removed_atoms);
+
+        if (mol.selection().selectedAllCutGroups())
+            idx_to_cgidx = QList<CGIdx>();
+        else
+            idx_to_cgidx = mol.selection().selectedCutGroups();
+
         return true;
     }
 }
