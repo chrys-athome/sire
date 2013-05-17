@@ -484,16 +484,13 @@ void OpenMMFrEnergyST::initialise()  {
         double kvalue = eps2/(converted_cutoff_distance * converted_cutoff_distance * converted_cutoff_distance);
         double cvalue = (1.0/converted_cutoff_distance)*(3.0*field_dielectric)/(2.0*field_dielectric+1.0);
 
-        
-        
-        //Hcs=((0.01*lam_cl)^(n+1))*138.935456*q_prod*(1/sqrt(diff_cl+r*r) + krf*(diff_cl+r*r)-crf);
-        
-        
-        
         custom_force_field = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) + Hclj * isHARD;"
                                                              "isHARD = isHD1 * isHD2;"
                                                              "Hsoft = Hls + Hcs;"
-                                                             "Hcs = (lambda^n) * 138.935456 * q_prod*(1/sqrt(diff_cl+r*r) + krf*(diff_cl+r*r)-crf);"
+                                                             "Hcs = (lambda^n) * 138.935456 * q_prod*(1/sqrt(diff_cl+r*r) + krflam*(diff_cl+r*r)-crflam);"
+                                                             "crflam = crf * src;"
+                                                             "krflam = krf * src * src * src;"
+                                                             "src = cutoff/sqrt(diff_cl + cutoff*cutoff);"
                                                              "diff_cl = (1.0-lambda) * 0.01;"
                                                              "Hls = 4.0 * eps_avg * (LJ*LJ-LJ);"
                                                              "LJ=((sigma_avg * sigma_avg)/soft)^3;"
@@ -524,10 +521,10 @@ void OpenMMFrEnergyST::initialise()  {
 
         custom_force_field->addGlobalParameter("lam",Alchemical_value);
         custom_force_field->addGlobalParameter("delta",shift_delta);
-		custom_force_field->addGlobalParameter("n",coulomb_power);
+        custom_force_field->addGlobalParameter("n",coulomb_power);
         custom_force_field->addGlobalParameter("krf",kvalue);
         custom_force_field->addGlobalParameter("crf",cvalue);
-
+        custom_force_field->addGlobalParameter("cutoff",converted_cutoff_distance);
         
         
         if(flag_cutoff == CUTOFFNONPERIODIC){
@@ -615,7 +612,7 @@ void OpenMMFrEnergyST::initialise()  {
 		if (true) {
 			qDebug() << "\nCut off type = " << CutoffType;
 			qDebug() << "CutOff distance = " << converted_cutoff_distance  << " Nm";
-			qDebug() << "Krf = " << kvalue << "Crf = " << cvalue << " Dielectric constant = " << field_dielectric;
+			qDebug() << "Dielectric constant = " << field_dielectric;
 			qDebug() << "Lambda = " << Alchemical_value << " Coulomb Power = " << coulomb_power << " Delta Shift = " << shift_delta;
   
 		}
