@@ -539,17 +539,6 @@ void OpenMMFrEnergyST::initialise()  {
 
         //NO REACTION FIELD IS APPLIED TO 1-4 INTERACTIONS
         
-        /*custom_intra_14_clj = new OpenMM::CustomBondForce("withinCutoff*(Hl+Hc);"
-                                                          "withinCutoff=step(cutoff-r);"
-                                                          "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
-                                                          "Hc=138.935456*q_prod*(1/r + krf * r*r -crf);");
-
-        custom_intra_14_clj->addGlobalParameter("krf",kvalue);
-        custom_intra_14_clj->addGlobalParameter("crf",cvalue);
-        custom_intra_14_clj->addGlobalParameter("cutoff",converted_cutoff_distance);*/
-
-
-        
         
         custom_intra_14_clj = new OpenMM::CustomBondForce("withinCutoff*(Hl+Hc);"
                                                           "withinCutoff=step(cutoff-r);"
@@ -619,81 +608,6 @@ void OpenMMFrEnergyST::initialise()  {
 
 
 
-		/*custom_softcore_solute_solvent = new OpenMM::CustomNonbondedForce("(10.0*Hls+100.0*Hcs)*ZeroOne;"
-																			"ZeroOne=issolute1*(1-issolute2)+issolute2*(1-issolute1);"
-																			"Hcs=((0.01*lam_cl)^(n+1))*138.935456*q_prod*(1/sqrt(diff_cl+r*r) + krf*(diff_cl+r*r)-crf);"
-																			"diff_cl=(1.0-lam_cl)*0.01;"
-																			"lam_cl=min(1,max(0,lambda-1));"
-																			"Hls=0.1*lam_lj*4.0*eps_avg*(LJ*LJ-LJ);"
-																			"LJ=((sigma_avg*sigma_avg)/soft)^3;"
-																			"soft=(diff_lj*delta*sigma_avg+r*r);"
-																			"diff_lj=(1.0-lam_lj)*0.1;"
-																			"lam_lj=max(0,min(1,lambda));"
-																			"q_prod=q1*q2;"
-																			"eps_avg=sqrt(eps1*eps2);"
-																			"sigma_avg=0.5*(sigma1+sigma2)");
-
-
-			const double converted_cutoff_distance = convertTo(cutoff_distance.value(), nanometer);
-
-
-			custom_softcore_solute_solvent->addGlobalParameter("lambda",Alchemical_value);
-
-			custom_softcore_solute_solvent->addGlobalParameter("delta",shift_delta);
-			custom_softcore_solute_solvent->addGlobalParameter("n",coulomb_power);
-
-			double eps2 = (field_dielectric - 1.0)/(2*field_dielectric+1.0);
-
-			double kvalue = eps2/(converted_cutoff_distance * converted_cutoff_distance * converted_cutoff_distance);
-
-			double cvalue = (1.0/converted_cutoff_distance)*(3.0*field_dielectric)/(2.0*field_dielectric+1.0);
-
-			custom_softcore_solute_solvent->addGlobalParameter("krf",kvalue);
-
-			custom_softcore_solute_solvent->addGlobalParameter("crf",cvalue);
-
-			custom_solute_solute_solvent_solvent = new OpenMM::CustomNonbondedForce("(Hl+Hc)*ZeroOne;"
-																					"ZeroOne=(1-issolute1)*(1-issolute2)+issolute1*issolute2;"
-																					"Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
-																					"Hc=138.935456*q_prod*(1.0/r+(krf*r*r)-crf);"
-																					"q_prod=q1*q2;"
-																					"eps_avg=sqrt(eps1*eps2);"
-																					"sigma_avg=0.5*(sigma1+sigma2)");
-
-			custom_solute_solute_solvent_solvent->addGlobalParameter("krf",kvalue);
-
-			custom_solute_solute_solvent_solvent->addGlobalParameter("crf",cvalue);
-		
-		
-			if(flag_cutoff == CUTOFFNONPERIODIC){
-				custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
-				custom_solute_solute_solvent_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
-				
-			}
-			else{
-				custom_softcore_solute_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
-				custom_solute_solute_solvent_solvent->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffPeriodic);
-			}
-
-			custom_softcore_solute_solvent->setCutoffDistance(converted_cutoff_distance);
-			
-			custom_solute_solute_solvent_solvent->setCutoffDistance(converted_cutoff_distance);
-
-
-			custom_intra_14_15 = new OpenMM::CustomBondForce("withinCutoff*(Hl+Hc);"
-															 "withinCutoff=step(cutoff-r);"
-															 "Hl=4*eps_avg*((sigma_avg/r)^12-(sigma_avg/r)^6);"
-														 	 "Hc=138.935456*q_prod/r");
-																  
-			custom_intra_14_15->addGlobalParameter("cutoff",converted_cutoff_distance);
-
-
-		if (Debug) {
-			qDebug() << "\nCut off type = " << CutoffType << "\n";
-			qDebug() << "CutOff distance = " << converted_cutoff_distance  << " Nm" << "\n";
-			qDebug() << "Dielectric constant= " << field_dielectric << "\n\n";
-			qDebug() << "Lambda = " << Alchemical_value << " Coulomb Power = " << coulomb_power << " Delta Shift = " << shift_delta <<"\n";
-		}*/
 	}
 
 
@@ -1121,7 +1035,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 			}
 
-            if(true){
+            if(Debug){
                 qDebug() << "Charge start = " << custom_non_bonded_params[0];
                 qDebug() << "Charge end = " << custom_non_bonded_params[1];
                 qDebug() << "Eps start = " << custom_non_bonded_params[2];
