@@ -1069,6 +1069,7 @@ void OpenMMFrEnergyST::initialise()  {
         }
         
 
+
         //BONDED TERMS
 
         QList< BondID > bond_pert_list;
