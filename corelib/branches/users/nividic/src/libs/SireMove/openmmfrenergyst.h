@@ -220,6 +220,8 @@ private:
 	bool buffer_coords;
 
 	QVector<double> gradients;
+
+	QVector< QVector<double> > perturbed_14;
 };
 
 
