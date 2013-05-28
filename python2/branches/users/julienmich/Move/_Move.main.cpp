@@ -165,6 +165,8 @@ namespace bp = boost::python;
 
 #ifndef SIRE_USE_OPENMM
 void register_OpenMMIntegrator_class(){}
+void register_OpenMMMDIntegrator_class(){}
+void register_OpenMMAMDIntegrator_class(){}
 #endif
 
 BOOST_PYTHON_MODULE(_Move){

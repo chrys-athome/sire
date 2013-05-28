@@ -180,8 +180,9 @@ def adjustPerturbedDOFs( molecule ):
                 mover = molecule.move()
                 try:
                     mover.set(bond, r)
-                except UserWarning as error:
+                except UserWarning:
                     # extract the type of the errror
+                    _, error, _ = sys.exc_info()
                     error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
                     if error_type == "SireMol::ring_error":
                         continue
@@ -197,8 +198,9 @@ def adjustPerturbedDOFs( molecule ):
                 mover = molecule.move()
                 try:                
                     mover.set(angle, theta)
-                except UserWarning as error:
+                except UserWarning:
                     # extract the type of the errror
+                    _, err, _ = sys.exc_info()
                     error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
                     if error_type == "SireMol::ring_error":
                         continue
@@ -328,7 +330,6 @@ def createSystem(molecules, space):
     # non dummy to non dummy --> the hard group, uses a normal intermolecular FF
     # non dummy to dummy --> the todummy group, uses SoftFF with alpha = Lambda
     # dummy to non dummy --> the fromdummy group, uses SoftFF with alpha = 1 - Lambda
-    # We start assuming all atoms are hard atoms. Then we call getDummies to find which atoms 
     # start/end as dummies and update the hard, todummy and fromdummy groups accordingly
 
     solute_grp_ref = MoleculeGroup("solute_ref", solute)
