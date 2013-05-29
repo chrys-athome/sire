@@ -1715,9 +1715,9 @@ ZMatrixCoords& ZMatrixCoords::operator=(const ZMatrixCoords &other)
 bool ZMatrixCoords::operator==(const ZMatrixCoords &other) const
 {
     return this == &other or
-           zmat == other.zmat and internal_coords == other.internal_coords and
-           cartesian_coords == other.cartesian_coords and
-           need_rebuild == other.need_rebuild;
+           (zmat == other.zmat and internal_coords == other.internal_coords and
+            cartesian_coords == other.cartesian_coords and
+            need_rebuild == other.need_rebuild);
 }
 
 /** Comparison operator */

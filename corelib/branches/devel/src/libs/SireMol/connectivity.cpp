@@ -528,12 +528,10 @@ QList< QList<AtomIdx> > ConnectivityBase::_pvt_findPaths(AtomIdx cursor, const A
                 //we have found a path to the end atom. Return a single list containing
                 //cursor and end_atom, so that the functions that call this can then add their
                 //atoms to create all of the paths
-                QList< QList<AtomIdx> > paths;
                 QList<AtomIdx> path;
                 path.append(cursor);
                 path.append(end_atom);
-                paths.append(path);
-                all_paths.append(paths);
+                all_paths.append(path);
             }
             else
             {
@@ -549,9 +547,8 @@ QList< QList<AtomIdx> > ConnectivityBase::_pvt_findPaths(AtomIdx cursor, const A
                          ++it)
                     {
                         (*it).prepend(cursor);
+                        all_paths.append( *it );
                     }
-            
-                    all_paths.append(paths);
                 }
             }
         }
