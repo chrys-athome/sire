@@ -22,6 +22,16 @@ from Sire.Tools import Parameter, resolveParameters
 
 import Sire.Stream
 
+# Import "next" function for python 2.5 support
+_sentinel = object()
+def next(it, default=_sentinel):
+    try:                
+        return it.next()
+    except StopIteration:
+        if default is _sentinel:
+            raise
+        return default
+
 ##### This is how we can have the script specify all of the 
 ##### user-controllable parameters
 

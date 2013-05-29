@@ -16,10 +16,113 @@ import Sire.Config
 import Sire.Stream
 
 from Sire.Tools.AmberLoader import *
+from Sire.Tools import Parameter, resolveParameters
 
 import os
 
 wsrc_tools_dir = "%s/Tools/WSRC" % Sire.Config.share_directory
+
+####################################################
+# ALL OF THE GLOBAL USER-AVAILABLE WSRC PARAMETERS #
+####################################################
+
+cutoff_method = Parameter("cutoff method", "shift electrostatics",
+                          """Method used to apply the non-bonded electrostatic cutoff.""")
+
+rf_dielectric = Parameter("reaction field dielectric", 78.3,
+                          """Dielectric constant to use if the reaction field cutoff method is used.""")
+
+coul_cutoff = Parameter("coulomb cutoff", 25*angstrom,
+                        """Coulomb cutoff length""")
+
+lj_cutoff = Parameter("LJ cutoff", 10*angstrom,
+                      """Lennard Jones cutoff length""")
+
+grid_spacing = Parameter("grid spacing", 1.0*angstrom,
+                         """Grid spacing used for the grid-based forcefields""")
+grid_buffer = Parameter("grid buffer", 2*angstrom,
+                        """Buffer around the grid used to prevent recalculation
+                           in the grid-based forcefields.""")
+
+disable_grid = Parameter("disable grid", False, """Whether or not to disable use of the grid""")
+
+coul_power = Parameter("coulomb power", 0, """Soft-core coulomb power parameter""") 
+shift_delta = Parameter("shift delta", 0.25, """Soft-core LJ shift delta parameter""")
+
+temperature = Parameter("temperature", 25*celsius, """Simulation temperature""")
+random_seed = Parameter("random seed", None, """Random number seed. Set this if you
+                         want to have reproducible simulations.""")
+
+identity_atoms = Parameter("identity atoms", None,
+                           """The list of atom names in the ligand on which to place
+                              identity points. If this is not set, then the identity atoms 
+                              will be generated automatically.""")
+
+alpha_scale = Parameter("alpha_scale", 1.0,
+                        """Amount by which to scale the alpha parameter. The lower the value,
+                           the less softening with lambda, while the higher the value, the
+                           more softening""")
+
+delta_lambda = Parameter("delta_lambda", 0.001,
+                         """Value of delta lambda used in the finite difference thermodynamic
+                            integration algorithm used to calculate the free energy""")
+
+water_monitor_distance = Parameter("water monitor distance", 5.0*angstrom,
+                                   """The distance up to which the free energy of water molecules
+                                      interacting with the ligand should be recorded.""")
+
+nrgmon_frequency = Parameter("energy monitor frequency", 1000, 
+                             """The number of steps between each evaluation of the energy monitors.""")
+
+lambda_values = Parameter("lambda values", [0.001, 0.999],
+                          """The values of lambda to use in the RETI free energy simulation.""")
+nsubmoves = Parameter("nsubmoves", 50000,
+                      """The number of moves to perform between each RETI move.""")
+
+ligand_name = Parameter("ligand name", "LIG",
+                        """The name of the ligand. This should be the name of one of the residues
+                           in the ligand, so that this program can find the correct molecule.""")
+reflection_radius = Parameter("reflection radius", None,
+                              """The radius of the reflection sphere""")
+protein_topfile = Parameter("protein topfile", "proteinbox.top",
+                            """Name of the topology file containing the solvated protein-ligand complex.""")
+protein_crdfile = Parameter("protein crdfile", "proteinbox.crd",
+                            """Name of the coordinate file containing the coordinates of the 
+                               solvated protein-ligand complex.""")
+protein_s3file = Parameter("protein s3file", "proteinbox.s3",
+                           """Name to use for the intermediate s3 file that will contain the 
+                              solvated protein-ligand complex after it has been loaded from the top/crd files.""")
+water_topfile = Parameter("water topfile", "%s/waterbox.top" % wsrc_tools_dir,
+                          """Name of the topology file containing the water box.""")
+water_crdfile = Parameter("water crdfile", "%s/waterbox.crd" % wsrc_tools_dir,
+                          """Name of the coordinate file containing the coordinates of the water box.""")
+water_s3file = Parameter("water s3file", "waterbox.s3",
+                         """Name to use for the intermediate s3 file that will contain the 
+                            water box after it has been loaded from the top/crd files.""")
+
+outdir = Parameter("output directory", "output",
+                   """Name of the directory in which to place all of the output files.""")
+
+restart_file = Parameter("restart file", "wsrc_restart.s3",
+                         """Name of the restart file to use to save progress during the simulation.""")
+
+sysmoves_file = Parameter("sysmoves file", "wsrc_sysmoves.s3",
+                          """Name of the file to save the initial WSRC pre-simulation system.""")
+nequilmoves = Parameter("nequilmoves", 5000,
+                        """Number of equilibration moves to perform before setting up the free energy simulation.""")
+
+nmoves = Parameter("nmoves", 5, """Number of RETI moves to perform during the simulation.""")
+
+coulomb_power = Parameter("coulomb power", 0,
+                          """The soft-core coulomb power parameter""")
+
+shift_delta = Parameter("shift delta", 1.2,
+                        """The soft-core shift delta parameter""")
+
+save_pdb = Parameter("save pdb", False,
+                     """Whether or not to write a PDB of the system after each iteration.""")
+
+####################################################
 
 def getIdentityPoints(ligand):
     
@@ -88,63 +191,49 @@ def getMinimumDistance(mol0, mol1):
                                  CoordGroup(mol1.molecule().property("coordinates").array()))
 
 
-def setCLJProperties(forcefield, params):
-    cutoff_method = readConfig("cutoff method", params, "shift electrostatics")
-
-    try:
-        forcefield.setUseAtomisticCutoff(True)
-    except:
-        pass
-
-    if cutoff_method.lower().find("shift electrostatics") != -1:
+def setCLJProperties(forcefield):
+    if cutoff_method.val.find("shift electrostatics") != -1:
         forcefield.setShiftElectrostatics(True)
 
-    elif cutoff_method.lower().find("reaction field") != -1:
+    elif cutoff_method.val.find("reaction field") != -1:
         forcefield.setUseReactionField(True)
-        rf_dielectric = readConfig("reaction field dielectric", params, 78.3)
-        forcefield.setReactionFieldDielectric(rf_dielectric)
+        forcefield.setReactionFieldDielectric(rf_dielectric.val)
+
+    else:
+        print >>sys.stderr,"Cannot interpret the cutoff method from \"%s\"" % cutoff_method.val
 
     forcefield.setSpace(Cartesian())
-    forcefield.setSwitchingFunction(NoCutoff())
+    forcefield.setSwitchingFunction( HarmonicSwitchingFunction(coul_cutoff.val,coul_cutoff.val,
+                                                               lj_cutoff.val,lj_cutoff.val) )
 
     return forcefield
 
 
-def setFakeGridProperties(forcefield_cl, forcefield_lj, params):
-    lj_cutoff = readConfig("LJ cutoff", params, 10*angstrom)
-    coul_cutoff = readConfig("coulomb cutoff", params, 30*angstrom)
-
-    forcefield_cl.setSwitchingFunction( HarmonicSwitchingFunction(coul_cutoff) )
-    forcefield_lj.setSwitchingFunction( HarmonicSwitchingFunction(lj_cutoff) )
-
-    return (forcefield_cl, forcefield_lj)
-
-
-def setGridProperties(forcefield, params, extra_buffer=0*angstrom):
-    grid_spacing = readConfig("grid spacing", params, 0.5*angstrom)
-    grid_buffer = readConfig("grid buffer", params, 2*angstrom)
-    lj_cutoff = readConfig("LJ cutoff", params, 10*angstrom)
-    coul_cutoff = readConfig("coulomb cutoff", params, 30*angstrom)
-
-    forcefield.setGridSpacing(grid_spacing)
-    forcefield.setBuffer(grid_buffer + extra_buffer)
-    forcefield.setLJCutoff(lj_cutoff)
-    forcefield.setCoulombCutoff(coul_cutoff)
+def setFakeGridProperties(forcefield):
+    forcefield.setSwitchingFunction( HarmonicSwitchingFunction(coul_cutoff.val,coul_cutoff.val,
+                                                               lj_cutoff.val,lj_cutoff.val) )
+    forcefield.setSpace(Cartesian())
 
     return forcefield
 
 
-def setSoftCoreProperties(forcefield, params):
-    forcefield.setCoulombPower(0)
-    forcefield.setShiftDelta(0.25)
+def setGridProperties(forcefield, extra_buffer=0*angstrom):
+    forcefield.setGridSpacing(grid_spacing.val)
+    forcefield.setBuffer(grid_buffer.val + extra_buffer)
+    forcefield.setLJCutoff(lj_cutoff.val)
+    forcefield.setCoulombCutoff(coul_cutoff.val)
 
     return forcefield
 
 
-def createWSRCMoves(system, params=None):
-    temperature = readConfig("temperature", params, 25*celsius)
-    random_seed = readConfig("random seed", params, None)
+def setSoftCoreProperties(forcefield):
+    forcefield.setCoulombPower(coul_power.val)
+    forcefield.setShiftDelta(shift_delta.val)
 
+    return forcefield
+
+
+def createWSRCMoves(system):
     # pull out all of the molecule groups for the mobile parts of the system
     mobile_solvent = system[MGName("mobile_solvent")]
     mobile_sidechains = system[MGName("mobile_sidechains")]
@@ -220,15 +309,17 @@ def createWSRCMoves(system, params=None):
 
         moves.add(rb_moves, 4 * mobile_solvent.nViews())
 
-    moves.setTemperature(temperature)
+    moves.setTemperature(temperature.val)
 
-    if random_seed is None:
-        random_seed = RanGenerator().randInt(100000,1000000)
-        print "Using generated random number seed %d" % random_seed
+    seed = random_seed.val
+
+    if seed is None:
+        seed = RanGenerator().randInt(100000,1000000)
+        print "Using generated random number seed %d" % seed
     else:
-        print "Using supplied random number seed %d" % random_seed
+        print "Using supplied random number seed %d" % seed
     
-    moves.setGenerator( RanGenerator(random_seed) )
+    moves.setGenerator( RanGenerator(seed) )
 
     return moves    
 
@@ -243,7 +334,7 @@ def renumberMolecules(molgroup):
     return newgroup
 
 
-def mergeSystems(protein_system, water_system, ligand_mol, params=None):
+def mergeSystems(protein_system, water_system, ligand_mol):
     
     print "Merging the protein box and water box to create the WSRC system..."
 
@@ -275,8 +366,6 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     if protein_system.containsProperty("average solute rotation delta"):
         system.setProperty("average solute rotation delta", \
                        protein_system.property("average solute rotation delta"))
-
-    add_groups = []
 
     # create a molecule group for the ligand
     ligand_group = MoleculeGroup("ligand")
@@ -315,6 +404,14 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     fixed_bound_group = MoleculeGroup("fixed_bound")
     if MGName("fixed_molecules") in protein_system.mgNames():
         fixed_bound_group.add( protein_system[ MGName("fixed_molecules") ] )
+
+    if save_pdb.val:
+        # write a PDB of the fixed atoms in the bound and free legs
+        if not os.path.exists(outdir.val):
+            os.makedirs(outdir.val)
+
+        PDB().write(fixed_bound_group, "%s/bound_fixed.pdb" % outdir.val)
+        PDB().write(fixed_free_water_group, "%s/free_fixed.pdb" % outdir.val)
 
     # create a group to hold all of the mobile solute molecules in the bound leg
     mobile_bound_solutes_group = MoleculeGroup("mobile_bound_solutes")
@@ -466,14 +563,13 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
 
     # get the identity points for the ligand
     print "\nObtaining the identity points..."
-    identity_atoms = readConfig("identity atoms", params, None)
 
-    if identity_atoms is None:
+    if identity_atoms.val is None:
         print "Auto-identifying the identiy atoms..."
         identity_points = getIdentityPoints(ligand_mol)
     else:
         identity_points = []
-        for identity_atom in identity_atoms:
+        for identity_atom in identity_atoms.val:
             identity_points.append( ligand_mol.atom( AtomName(identity_atom) ) )
 
     print "Using identity points:"
@@ -546,7 +642,7 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     
     # intramolecular energy of the ligand
     ligand_intraclj = IntraCLJFF("ligand:intraclj")
-    ligand_intraclj = setCLJProperties(ligand_intraclj, params)
+    ligand_intraclj = setCLJProperties(ligand_intraclj)
     ligand_intraclj.add(ligand_mols)
 
     ligand_intraff = InternalFF("ligand:intra")
@@ -554,7 +650,7 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
 
     # intramolecular energy of the swap water cluster
     swap_interclj = InterCLJFF("swap:interclj")
-    swap_interclj = setCLJProperties(swap_interclj, params)
+    swap_interclj = setCLJProperties(swap_interclj)
     swap_interclj.add(swap_water_mols)
 
     ###
@@ -564,8 +660,8 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     # forcefield holding the energy between the ligand and the mobile atoms in the
     # bound leg
     bound_ligand_mobile = InterGroupSoftCLJFF("bound:ligand-mobile")
-    bound_ligand_mobile = setCLJProperties(bound_ligand_mobile, params)
-    bound_ligand_mobile = setSoftCoreProperties(bound_ligand_mobile, params)
+    bound_ligand_mobile = setCLJProperties(bound_ligand_mobile)
+    bound_ligand_mobile = setSoftCoreProperties(bound_ligand_mobile)
 
     bound_ligand_mobile.add(ligand_mols, MGIdx(0))
     bound_ligand_mobile.add(mobile_bound_mols, MGIdx(1))
@@ -573,15 +669,13 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     # forcefield holding the energy between the swap water cluster and the mobile
     # atoms in the bound leg
     bound_swap_mobile = InterGroupSoftCLJFF("bound:swap-mobile")
-    bound_swap_mobile = setCLJProperties(bound_swap_mobile, params)
-    bound_swap_mobile = setSoftCoreProperties(bound_swap_mobile, params)
+    bound_swap_mobile = setCLJProperties(bound_swap_mobile)
+    bound_swap_mobile = setSoftCoreProperties(bound_swap_mobile)
 
     bound_swap_mobile.add(swap_water_mols, MGIdx(0))
     bound_swap_mobile.add(mobile_bound_mols, MGIdx(1))
 
     # Whether or not to disable the grid and calculate all energies atomisticly
-    disable_grid = readConfig("disable grid", params, False)
-
     if disable_grid:
         # we need to renumber all of the fixed molecules so that they don't clash
         # with the mobile molecules
@@ -591,21 +685,16 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
 
     # forcefield holding the energy between the ligand and the fixed atoms in the bound leg
     if disable_grid:
-        bound_ligand_fixed_cl = InterGroupCLJFF("bound:ligand-fixed-cl")
-        bound_ligand_fixed_lj = InterGroupCLJFF("bound:ligand-fixed-lj")
-        bound_ligand_fixed_cl = setCLJProperties(bound_ligand_fixed_cl, params)
-        bound_ligand_fixed_lj = setCLJProperties(bound_ligand_fixed_lj, params)
-        (bound_ligand_fixed_cl, bound_ligand_fixed_lj) \
-            = setFakeGridProperties(bound_ligand_fixed_cl, bound_ligand_fixed_lj, params)
+        bound_ligand_fixed = InterGroupCLJFF("bound:ligand-fixed")
+        bound_ligand_fixed = setCLJProperties(bound_ligand_fixed)
+        bound_ligand_fixed = setFakeGridProperties(bound_ligand_fixed)
 
-        bound_ligand_fixed_cl.add(ligand_mols, MGIdx(0))
-        bound_ligand_fixed_lj.add(ligand_mols, MGIdx(0))
-        bound_ligand_fixed_cl.add(fixed_bound_group, MGIdx(1))
-        bound_ligand_fixed_lj.add(fixed_bound_group, MGIdx(1))
+        bound_ligand_fixed.add(ligand_mols, MGIdx(0))
+        bound_ligand_fixed.add(fixed_bound_group, MGIdx(1))
     else:
         bound_ligand_fixed = GridFF("bound:ligand-fixed")
-        bound_ligand_fixed = setCLJProperties(bound_ligand_fixed, params)
-        bound_ligand_fixed = setGridProperties(bound_ligand_fixed, params)
+        bound_ligand_fixed = setCLJProperties(bound_ligand_fixed)
+        bound_ligand_fixed = setGridProperties(bound_ligand_fixed)
 
         bound_ligand_fixed.add(ligand_mols, MGIdx(0))
         bound_ligand_fixed.addFixedAtoms( fixed_bound_group )
@@ -613,22 +702,17 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     # forcefield holding the energy between the swap water cluster and the
     # fixed atoms in the bound leg
     if disable_grid:
-        bound_swap_fixed_cl = InterGroupCLJFF("bound:swap-fixed_cl")
-        bound_swap_fixed_lj = InterGroupCLJFF("bound:swap-fixed_lj")
-        bound_swap_fixed_cl = setCLJProperties(bound_swap_fixed_cl, params)
-        bound_swap_fixed_lj = setCLJProperties(bound_swap_fixed_lj, params)
-        (bound_swap_fixed_cl, bound_swap_fixed_lj) = \
-                setFakeGridProperties(bound_swap_fixed_cl, bound_swap_fixed_lj, params)
+        bound_swap_fixed = InterGroupCLJFF("bound:swap-fixed")
+        bound_swap_fixed = setCLJProperties(bound_swap_fixed)
+        bound_swap_fixed = setFakeGridProperties(bound_swap_fixed)
 
-        bound_swap_fixed_cl.add(swap_water_mols, MGIdx(0))
-        bound_swap_fixed_lj.add(swap_water_mols, MGIdx(0))
-        bound_swap_fixed_cl.add( fixed_bound_group, MGIdx(1) )
-        bound_swap_fixed_lj.add( fixed_bound_group, MGIdx(1) )
+        bound_swap_fixed.add(swap_water_mols, MGIdx(0))
+        bound_swap_fixed.add( fixed_bound_group, MGIdx(1) )
     else:
         bound_swap_fixed = GridFF("bound:swap-fixed")
-        bound_swap_fixed = setCLJProperties(bound_swap_fixed, params)
+        bound_swap_fixed = setCLJProperties(bound_swap_fixed)
         # The swap water cluster is more mobile, so needs a bigger grid buffer
-        bound_swap_fixed = setGridProperties(bound_swap_fixed, params, 6*angstrom)
+        bound_swap_fixed = setGridProperties(bound_swap_fixed, 6*angstrom)
 
         bound_swap_fixed.add(swap_water_mols, MGIdx(0))
         bound_swap_fixed.addFixedAtoms(fixed_bound_group)
@@ -640,8 +724,8 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     # forcefield holding the energy between the ligand and the mobile atoms
     # in the free leg
     free_ligand_mobile = InterGroupSoftCLJFF("free:ligand-mobile")
-    free_ligand_mobile = setCLJProperties(free_ligand_mobile, params)
-    free_ligand_mobile = setSoftCoreProperties(free_ligand_mobile, params)
+    free_ligand_mobile = setCLJProperties(free_ligand_mobile)
+    free_ligand_mobile = setSoftCoreProperties(free_ligand_mobile)
 
     free_ligand_mobile.add(ligand_mols, MGIdx(0))
     free_ligand_mobile.add(mobile_free_mols, MGIdx(1))
@@ -649,53 +733,43 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     # forcefield holding the energy between the swap water cluster and the
     # mobile atoms of the free leg
     free_swap_mobile = InterGroupSoftCLJFF("free:swap-mobile")
-    free_swap_mobile = setCLJProperties(free_swap_mobile, params)
-    free_swap_mobile = setSoftCoreProperties(free_swap_mobile, params)
+    free_swap_mobile = setCLJProperties(free_swap_mobile)
+    free_swap_mobile = setSoftCoreProperties(free_swap_mobile)
 
     free_swap_mobile.add(swap_water_mols, MGIdx(0))
     free_swap_mobile.add(mobile_free_mols, MGIdx(1))
 
     # forcefield holding the energy between the ligand and the fixed atoms
     # in the free leg
-    if disable_grid:
-        free_ligand_fixed_cl = InterGroupCLJFF("free:ligand_fixed-cl")
-        free_ligand_fixed_lj = InterGroupCLJFF("free:ligand_fixed-lj")
-        free_ligand_fixed_cl = setCLJProperties(free_ligand_fixed_cl, params)
-        free_ligand_fixed_lj = setCLJProperties(free_ligand_fixed_lj, params)
-        (free_ligand_fixed_cl,free_ligand_fixed_lj) = \
-             setFakeGridProperties(free_ligand_fixed_cl,free_ligand_fixed_lj, params)
+    if disable_grid.val:
+        free_ligand_fixed = InterGroupCLJFF("free:ligand_fixed")
+        free_ligand_fixed = setCLJProperties(free_ligand_fixed)
+        free_ligand_fixed = setFakeGridProperties(free_ligand_fixed)
 
-        free_ligand_fixed_cl.add(ligand_mols, MGIdx(0))
-        free_ligand_fixed_lj.add(ligand_mols, MGIdx(0))
-        free_ligand_fixed_cl.add(fixed_free_group, MGIdx(1))
-        free_ligand_fixed_lj.add(fixed_free_group, MGIdx(1))
+        free_ligand_fixed.add(ligand_mols, MGIdx(0))
+        free_ligand_fixed.add(fixed_free_group, MGIdx(1))
     else:
         free_ligand_fixed = GridFF("free:ligand-fixed")
-        free_ligand_fixed = setCLJProperties(free_ligand_fixed, params)
-        free_ligand_fixed = setGridProperties(free_ligand_fixed, params)
+        free_ligand_fixed = setCLJProperties(free_ligand_fixed)
+        free_ligand_fixed = setGridProperties(free_ligand_fixed)
 
         free_ligand_fixed.add(ligand_mols, MGIdx(0))
         free_ligand_fixed.addFixedAtoms(fixed_free_group)
 
     # forcefield holding the energy between the swap water cluster and the 
     # fixed atoms in the free leg
-    if disable_grid:
-        free_swap_fixed_cl = InterGroupCLJFF("free:swap-fixed-cl")
-        free_swap_fixed_lj = InterGroupCLJFF("free:swap-fixed-lj")
-        free_swap_fixed_cl = setCLJProperties(free_swap_fixed_cl, params)
-        free_swap_fixed_lj = setCLJProperties(free_swap_fixed_lj, params)
-        (free_swap_fixed_cl,free_swap_fixed_lj) = \
-            setFakeGridProperties(free_swap_fixed_cl,free_swap_fixed_lj,params)
+    if disable_grid.val:
+        free_swap_fixed = InterGroupCLJFF("free:swap-fixed")
+        free_swap_fixed = setCLJProperties(free_swap_fixed)
+        free_swap_fixed = setFakeGridProperties(free_swap_fixed)
 
-        free_swap_fixed_cl.add(swap_water_mols, MGIdx(0))
-        free_swap_fixed_lj.add(swap_water_mols, MGIdx(0))
-        free_swap_fixed_cl.add(fixed_free_group, MGIdx(1))
-        free_swap_fixed_lj.add(fixed_free_group, MGIdx(1))
+        free_swap_fixed.add(swap_water_mols, MGIdx(0))
+        free_swap_fixed.add(fixed_free_group, MGIdx(1))
     else:
         free_swap_fixed = GridFF("free:swap-fixed")
-        free_swap_fixed = setCLJProperties(free_swap_fixed, params)
+        free_swap_fixed = setCLJProperties(free_swap_fixed)
         # The swap water cluster is more mobile so needs a bigger grid buffer
-        free_swap_fixed = setGridProperties(free_swap_fixed, params, 6*angstrom)
+        free_swap_fixed = setGridProperties(free_swap_fixed, 6*angstrom)
 
         free_swap_fixed.add(swap_water_mols, MGIdx(0))
         free_swap_fixed.addFixedAtoms(fixed_free_group)
@@ -704,30 +778,20 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     ### FORCEFIELDS LOCAL ONLY TO THE BOUND LEG
     ###
     bound_forcefields = []
-    bound_forcefields_cl = []
-    bound_forcefields_lj = []
 
     # forcefield holding the energy between the bound leg mobile atoms and  
     # the bound leg fixed atoms
-    if disable_grid:
-        bound_mobile_fixed_cl = InterGroupCLJFF("bound:mobile-fixed-cl")
-        bound_mobile_fixed_lj = InterGroupCLJFF("bound:mobile-fixed-lj")
-        bound_mobile_fixed_cl = setCLJProperties(bound_mobile_fixed_cl, params)
-        bound_mobile_fixed_lj = setCLJProperties(bound_mobile_fixed_lj, params)
-        (bound_mobile_fixed_cl,bound_mobile_fixed_lj) = \
-           setFakeGridProperties(bound_mobile_fixed_cl,bound_mobile_fixed_lj,params)
-
-        bound_mobile_fixed_cl.add(mobile_buffered_bound_mols, MGIdx(0))
-        bound_mobile_fixed_lj.add(mobile_buffered_bound_mols, MGIdx(0))
-        bound_mobile_fixed_cl.add(fixed_bound_group, MGIdx(1))
-        bound_mobile_fixed_lj.add(fixed_bound_group, MGIdx(1))
-
-        bound_forcefields_cl.append(bound_mobile_fixed_cl)
-        bound_forcefields_lj.append(bound_mobile_fixed_lj)
+    if disable_grid.val:
+        bound_mobile_fixed = InterGroupCLJFF("bound:mobile-fixed")
+        bound_mobile_fixed = setCLJProperties(bound_mobile_fixed)
+        bound_mobile_fixed = setFakeGridProperties(bound_mobile_fixed)
+        bound_mobile_fixed.add(mobile_buffered_bound_mols, MGIdx(0))
+        bound_mobile_fixed.add(fixed_bound_group, MGIdx(1))
+        bound_forcefields.append(bound_mobile_fixed)
     else:
         bound_mobile_fixed = GridFF("bound:mobile-fixed")
-        bound_mobile_fixed = setCLJProperties(bound_mobile_fixed, params)
-        bound_mobile_fixed = setGridProperties(bound_mobile_fixed, params)
+        bound_mobile_fixed = setCLJProperties(bound_mobile_fixed)
+        bound_mobile_fixed = setGridProperties(bound_mobile_fixed)
 
         # we use mobile_buffered_bound_group as this group misses out atoms that are bonded
         # to fixed atoms (thus preventing large energies caused by incorrect non-bonded calculations)
@@ -738,7 +802,7 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
 
     # forcefield holding the intermolecular energy between all bound molecules
     bound_mobile_mobile = InterCLJFF("bound:mobile-mobile")
-    bound_mobile_mobile = setCLJProperties(bound_mobile_mobile, params)
+    bound_mobile_mobile = setCLJProperties(bound_mobile_mobile)
 
     bound_mobile_mobile.add(mobile_bound_mols)
 
@@ -747,7 +811,7 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     # intramolecular energy of the protein
     if bound_protein_intra_mols.nMolecules() > 0:
         protein_intraclj = IntraCLJFF("bound:protein_intraclj")
-        protein_intraclj = setCLJProperties(protein_intraclj, params)
+        protein_intraclj = setCLJProperties(protein_intraclj)
 
         protein_intraff = InternalFF("bound:protein_intra")
 
@@ -762,7 +826,7 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     # intramolecular energy of any other solutes
     if bound_solute_intra_mols.nMolecules() > 0:
         solute_intraclj = IntraCLJFF("bound:solute_intraclj")
-        solute_intraclj = setCLJProperties(solute_intraclj, params)
+        solute_intraclj = setCLJProperties(solute_intraclj)
 
         solute_intraff = InternalFF("bound:solute_intra")
 
@@ -778,30 +842,21 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     ### FORCEFIELDS LOCAL ONLY TO THE FREE LEG
     ###
     free_forcefields = []
-    free_forcefields_cl = []
-    free_forcefields_lj = []    
 
     # forcefield holding the energy between the mobile free molecules and the
     # fixed free molecules
     if disable_grid:
-        free_mobile_fixed_cl = InterGroupCLJFF("free:mobile-fixed-cl")
-        free_mobile_fixed_lj = InterGroupCLJFF("free:mobile-fixed-lj")
-        free_mobile_fixed_cl = setCLJProperties(free_mobile_fixed_cl, params)
-        free_mobile_fixed_lj = setCLJProperties(free_mobile_fixed_lj, params)
-        (free_mobile_fixed_cl,free_mobile_fixed_lj) = \
-            setFakeGridProperties(free_mobile_fixed_cl,free_mobile_fixed_lj,params)
+        free_mobile_fixed = InterGroupCLJFF("free:mobile-fixed")
+        free_mobile_fixed = setCLJProperties(free_mobile_fixed)
+        free_mobile_fixed = setFakeGridProperties(free_mobile_fixed)
 
-        free_mobile_fixed_cl.add(mobile_free_mols, MGIdx(0))
-        free_mobile_fixed_lj.add(mobile_free_mols, MGIdx(0))
-        free_mobile_fixed_cl.add(fixed_free_group, MGIdx(1))
-        free_mobile_fixed_lj.add(fixed_free_group, MGIdx(1))
-
-        free_forcefields_cl.append(free_mobile_fixed_cl)
-        free_forcefields_lj.append(free_mobile_fixed_lj)
+        free_mobile_fixed.add(mobile_free_mols, MGIdx(0))
+        free_mobile_fixed.add(fixed_free_group, MGIdx(1))
+        free_forcefields.append(free_mobile_fixed)
     else:
         free_mobile_fixed = GridFF("free:mobile-fixed")
-        free_mobile_fixed = setCLJProperties(free_mobile_fixed, params)
-        free_mobile_fixed = setGridProperties(free_mobile_fixed, params)
+        free_mobile_fixed = setCLJProperties(free_mobile_fixed)
+        free_mobile_fixed = setGridProperties(free_mobile_fixed)
 
         free_mobile_fixed.add(mobile_free_mols, MGIdx(0))
         free_mobile_fixed.addFixedAtoms(fixed_free_group)
@@ -810,7 +865,7 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     
     # forcefield holding the intermolecular energy between the mobile free molecules
     free_mobile_mobile = InterCLJFF("free:mobile-mobile")
-    free_mobile_mobile = setCLJProperties(free_mobile_mobile, params)
+    free_mobile_mobile = setCLJProperties(free_mobile_mobile)
 
     free_mobile_mobile.add(mobile_free_mols)
 
@@ -823,20 +878,10 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     ### SETTING THE FORCEFIELD EXPRESSIONS
     ###
 
-    if disable_grid:
-        bound_ligand_fixed_nrg = bound_ligand_fixed_cl.components().coulomb() + \
-                                 bound_ligand_fixed_lj.components().lj()
-        free_ligand_fixed_nrg = free_ligand_fixed_cl.components().coulomb() + \
-                                free_ligand_fixed_lj.components().lj()
-        bound_swap_fixed_nrg = bound_swap_fixed_cl.components().coulomb() + \
-                               bound_swap_fixed_lj.components().lj()
-        free_swap_fixed_nrg = free_swap_fixed_cl.components().coulomb() + \
-                              free_swap_fixed_lj.components().lj()
-    else:
-        bound_ligand_fixed_nrg = bound_ligand_fixed.components().total()
-        free_ligand_fixed_nrg = free_ligand_fixed.components().total()
-        bound_swap_fixed_nrg = bound_swap_fixed.components().total()
-        free_swap_fixed_nrg = free_swap_fixed.components().total()
+    bound_ligand_fixed_nrg = bound_ligand_fixed.components().total()
+    free_ligand_fixed_nrg = free_ligand_fixed.components().total()
+    bound_swap_fixed_nrg = bound_swap_fixed.components().total()
+    free_swap_fixed_nrg = free_swap_fixed.components().total()
 
     ligand_bound_nrg_sym = Symbol("E_{ligand:bound}")
 
@@ -927,21 +972,10 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     system.add(bound_swap_mobile)
     system.add(free_ligand_mobile)
     system.add(free_swap_mobile)
-
-    if disable_grid:
-        system.add(bound_ligand_fixed_cl)
-        system.add(bound_swap_fixed_cl)
-        system.add(free_ligand_fixed_cl)
-        system.add(free_swap_fixed_cl)
-        system.add(bound_ligand_fixed_lj)
-        system.add(bound_swap_fixed_lj)
-        system.add(free_ligand_fixed_lj)
-        system.add(free_swap_fixed_lj)
-    else:
-        system.add(bound_ligand_fixed)
-        system.add(bound_swap_fixed)
-        system.add(free_ligand_fixed)
-        system.add(free_swap_fixed)
+    system.add(bound_ligand_fixed)
+    system.add(bound_swap_fixed)
+    system.add(free_ligand_fixed)
+    system.add(free_swap_fixed)
 
     system.setConstant(lam, 0.0)
     system.setConstant(lam_f, 0.0)
@@ -976,14 +1010,6 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
 
         system.add(bound_forcefield)
 
-    for bound_forcefield in bound_forcefields_cl:
-        bound_bound_nrg = bound_bound_nrg + bound_forcefield.components().coulomb()
-        system.add(bound_forcefield)
-
-    for bound_forcefield in bound_forcefields_lj:
-        bound_bound_nrg = bound_bound_nrg + bound_forcefield.components().lj()
-        system.add(bound_forcefield)
-
     system.setComponent(bound_bound_nrg_sym, bound_bound_nrg)
 
     free_free_nrg_sym = Symbol("E_{free-free}")
@@ -995,14 +1021,6 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
         else:
             free_free_nrg = free_free_nrg + free_forcefield.components().total()
 
-        system.add(free_forcefield)
-
-    for free_forcefield in free_forcefields_cl:
-        free_free_nrg = free_free_nrg + free_forcefield.components().coulomb()
-        system.add(free_forcefield)
-
-    for free_forcefield in free_forcefields_lj:
-        free_free_nrg = free_free_nrg + free_forcefield.components().lj()
         system.add(free_forcefield)
 
     system.setComponent(free_free_nrg_sym, free_free_nrg)
@@ -1056,15 +1074,15 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
 
     # Add the constraint that lambda_f is lambda + delta_lambda and
     # lambda_b is lambda - delta_lambda (kept to between 0 and 1)
-    delta_lambda = readConfig("delta_lambda", params, 0.001)
+    dlam = delta_lambda.val
 
-    if delta_lambda > 1 or delta_lambda < 0.0000001:
-        print "Weird value of delta_lambda (%s). Setting it to 0.001" % delta_lambda
-        delta_lambda = 0.001
+    if dlam > 1 or dlam < 0.0000001:
+        print "Weird value of delta_lambda (%s). Setting it to 0.001" % dlam
+        dlam = 0.001
 
-    system.setConstant( Symbol("delta_lambda"), delta_lambda )
-    system.add( ComponentConstraint( lam_f, Min( lam + delta_lambda, 1 ) ) )
-    system.add( ComponentConstraint( lam_b, Max( lam - delta_lambda, 0 ) ) )
+    system.setConstant( Symbol("delta_lambda"), dlam )
+    system.add( ComponentConstraint( lam_f, Min( lam + dlam, 1 ) ) )
+    system.add( ComponentConstraint( lam_b, Max( lam - dlam, 0 ) ) )
 
     # now add alpha variables that can be used by the EnergyMonitors
     alpha_on = Symbol("alpha_on")
@@ -1073,32 +1091,31 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     system.setConstant(alpha_on, 0)
     system.setConstant(alpha_off, 1)
 
-    alpha_scale = readConfig("alpha_scale", params, 1.0)
-    system.setConstant( Symbol("alpha_scale"), alpha_scale )
-    system.add( ComponentConstraint( alpha_on, alpha_scale * lam ) )
-    system.add( ComponentConstraint( alpha_off, alpha_scale * (1-lam) ) )
+    system.setConstant( Symbol("alpha_scale"), alpha_scale.val )
+    system.add( ComponentConstraint( alpha_on, alpha_scale.val * lam ) )
+    system.add( ComponentConstraint( alpha_off, alpha_scale.val * (1-lam) ) )
 
     # Now constrain alpha to follow lambda
     # First, the reference state (alpha0)
-    system.add( PropertyConstraint( "alpha0", FFName("free:swap-mobile"), alpha_scale * lam ) )
-    system.add( PropertyConstraint( "alpha0", FFName("bound:swap-mobile"), alpha_scale * (1 - lam) ) )
+    system.add( PropertyConstraint( "alpha0", FFName("free:swap-mobile"), alpha_scale.val * lam ) )
+    system.add( PropertyConstraint( "alpha0", FFName("bound:swap-mobile"), alpha_scale.val * (1 - lam) ) )
 
-    system.add( PropertyConstraint( "alpha0", FFName("bound:ligand-mobile"), alpha_scale * lam ) )
-    system.add( PropertyConstraint( "alpha0", FFName("free:ligand-mobile"), alpha_scale * (1 - lam) ) )
+    system.add( PropertyConstraint( "alpha0", FFName("bound:ligand-mobile"), alpha_scale.val * lam ) )
+    system.add( PropertyConstraint( "alpha0", FFName("free:ligand-mobile"), alpha_scale.val * (1 - lam) ) )
 
     # Now the forwards perturbed state (alpha1)
-    system.add( PropertyConstraint( "alpha1", FFName("free:swap-mobile"),  alpha_scale * lam_f ) )
-    system.add( PropertyConstraint( "alpha1", FFName("bound:swap-mobile"),  alpha_scale * (1 - lam_f) ) )
+    system.add( PropertyConstraint( "alpha1", FFName("free:swap-mobile"),  alpha_scale.val * lam_f ) )
+    system.add( PropertyConstraint( "alpha1", FFName("bound:swap-mobile"),  alpha_scale.val * (1 - lam_f) ) )
 
-    system.add( PropertyConstraint( "alpha1", FFName("bound:ligand-mobile"),  alpha_scale * lam_f ) )
-    system.add( PropertyConstraint( "alpha1", FFName("free:ligand-mobile"),  alpha_scale * (1 - lam_f) ) )
+    system.add( PropertyConstraint( "alpha1", FFName("bound:ligand-mobile"),  alpha_scale.val * lam_f ) )
+    system.add( PropertyConstraint( "alpha1", FFName("free:ligand-mobile"),  alpha_scale.val * (1 - lam_f) ) )
 
     # Now the backwards perturbed state (alpha2)
-    system.add( PropertyConstraint( "alpha2", FFName("free:swap-mobile"),  alpha_scale * lam_b ) )
-    system.add( PropertyConstraint( "alpha2", FFName("bound:swap-mobile"),  alpha_scale * (1 - lam_b) ) )
+    system.add( PropertyConstraint( "alpha2", FFName("free:swap-mobile"),  alpha_scale.val * lam_b ) )
+    system.add( PropertyConstraint( "alpha2", FFName("bound:swap-mobile"),  alpha_scale.val * (1 - lam_b) ) )
 
-    system.add( PropertyConstraint( "alpha2", FFName("bound:ligand-mobile"),  alpha_scale * lam_b ) )
-    system.add( PropertyConstraint( "alpha2", FFName("free:ligand-mobile"),  alpha_scale * (1 - lam_b) ) )
+    system.add( PropertyConstraint( "alpha2", FFName("bound:ligand-mobile"),  alpha_scale.val * lam_b ) )
+    system.add( PropertyConstraint( "alpha2", FFName("free:ligand-mobile"),  alpha_scale.val * (1 - lam_b) ) )
 
     # Now lets create all of the groups for moves based on the above
 
@@ -1166,13 +1183,12 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
 
     # Now we need to add the monitors...
     print "\nAdding system monitors..."
-    temperature = readConfig(params, "temperature", 25*celsius)
 
     system.add( "delta_g^{F}", MonitorComponent( Symbol("delta_nrg^{F}"),
-                                                 FreeEnergyAverage(temperature) ) )
+                                                 FreeEnergyAverage(temperature.val) ) )
 
     system.add( "delta_g^{B}", MonitorComponent( Symbol("delta_nrg^{B}"),
-                                                 FreeEnergyAverage(temperature) ) )
+                                                 FreeEnergyAverage(temperature.val) ) )
     
     # we will monitor the average energy between the swap cluster/ligand and each
     # residue with mobile sidechain, and each mobile solute
@@ -1204,20 +1220,21 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     boundwater_points = []
     freewater_points = []
 
-    water_monitor_distance = readConfig("water monitor distance", params, 5.0)
+    if water_monitor_distance.val:
+        dist = water_monitor_distance.val.to(angstrom)
 
-    for molnum in mobile_bound_water_group.molNums():
-        water_mol = mobile_bound_water_group[molnum].molecule()
-        if getMinimumDistance(ligand_mol,water_mol) < water_monitor_distance:
-            # we should monitor this water
-            boundwater_points.append( VectorPoint(water_mol.evaluate().center()) )
+        for molnum in mobile_bound_water_group.molNums():
+            water_mol = mobile_bound_water_group[molnum].molecule()
+            if getMinimumDistance(ligand_mol,water_mol) < dist:
+                # we should monitor this water
+                boundwater_points.append( VectorPoint(water_mol.evaluate().center()) )
     
-    for molnum in mobile_free_water_group.molNums():
-        #this is a mobile water, so a candidate for monitoring
-        water_mol = mobile_free_water_group[molnum].molecule()
-        if getMinimumDistance(ligand_mol,water_mol) < water_monitor_distance:
-            # we should monitor this water
-            freewater_points.append( VectorPoint(water_mol.evaluate().center()) )
+        for molnum in mobile_free_water_group.molNums():
+            #this is a mobile water, so a candidate for monitoring
+            water_mol = mobile_free_water_group[molnum].molecule()
+            if getMinimumDistance(ligand_mol,water_mol) < dist:
+                # we should monitor this water
+                freewater_points.append( VectorPoint(water_mol.evaluate().center()) )
 
     system.add(mobile_bound_water_group)
     system.add(mobile_free_water_group)
@@ -1247,49 +1264,43 @@ def mergeSystems(protein_system, water_system, ligand_mol, params=None):
     nrgmons["ligand_freewater_nrgmon"] = ligand_freewater_nrgmon
     nrgmons["swapwater_freewater_nrgmon"] = swapwater_freewater_nrgmon
 
-    coulomb_power = readConfig("coulomb power", params, 0)
-    shift_delta = readConfig("shift delta", params, 1.2)
-    nrgmon_frequency = readConfig("energy monitor frequency", params, 1000)
-
     for key in nrgmons.keys():
-        nrgmons[key].setCoulombPower(coulomb_power)
-        nrgmons[key].setShiftDelta(shift_delta)
+        nrgmons[key].setCoulombPower(coulomb_power.val)
+        nrgmons[key].setShiftDelta(shift_delta.val)
 
-        system.add(key, nrgmons[key], nrgmon_frequency)
+        system.add(key, nrgmons[key], nrgmon_frequency.val)
 
     return system
 
 
-def makeRETI(system, moves, params):
+def makeRETI(system, moves):
     """This function replicates 'system' over each of the supplied lambda values
        and uses 'moves' to sample each of the replicated systems. This uses RETI
        to perform replica exchange moves across lambda"""
 
     lam = Symbol("lambda")
-    lambda_values = readConfig("lambda values", params, [0.001, 0.999])
-    nsubmoves = readConfig("nsubmoves", params, 50000)
 
-    replicas = Replicas( len(lambda_values) )
+    replicas = Replicas( len(lambda_values.val) )
 
     replicas.setSubSystem(system)
     replicas.setSubMoves(moves)
-    replicas.setNSubMoves(nsubmoves)
+    replicas.setNSubMoves(nsubmoves.val)
     replicas.setLambdaComponent(lam)
     replicas.setRecordAllStatistics(True)        
 
-    random_seed = readConfig("random seed", params)
+    seed = random_seed.val
     
-    if random_seed is None:
-        random_seed = RanGenerator().randInt(100000,1000000)
-        print "RETI system using generated random number seed %d" % random_seed
+    if seed is None:
+        seed = RanGenerator().randInt(100000,1000000)
+        print "RETI system using generated random number seed %d" % seed
     else:
-        print "RETI system using supplied random number seed %d" % random_seed
+        print "RETI system using supplied random number seed %d" % seed
     
-    replicas.setGenerator( RanGenerator(random_seed+5) )
+    replicas.setGenerator( RanGenerator(seed+5) )
 
-    for i in range(0, len(lambda_values)):
+    for i in range(0, len(lambda_values.val)):
         # set the initial lambda value for this replica
-        replicas.setLambdaValue(i, lambda_values[i])
+        replicas.setLambdaValue(i, lambda_values.val[i])
 
     # Now add monitors for each replica that will copy back
     nrgmons = [ "delta_g^{F}", "delta_g^{B}",
@@ -1302,7 +1313,7 @@ def makeRETI(system, moves, params):
 
     # now create the replica exchange moves for the replicas
     replica_moves = RepExMove()
-    replica_moves.setGenerator( RanGenerator(random_seed+7) )
+    replica_moves.setGenerator( RanGenerator(seed+7) )
 
     print "\nReturning the WSRC RETI replicas and moves..."
     return (replicas, replica_moves)
@@ -1466,86 +1477,76 @@ def writeMonitoredGroups(replica, filename):
     print "Written the monitored group to file %s" % filename
 
 
-def loadWSRC(params):
+def loadWSRC():
     # Load the WSRC system and moves using the passed parameters
     # This returns (wsrc_system, wsrc_moves), ready for simulation
 
-    ligand_name = readConfig("ligand name", params, "LIG")
-    reflection_radius = readConfig("reflection radius", params, None)
-    protein_topfile = readConfig("protein topfile", params, "proteinbox.top")
-    protein_crdfile = readConfig("protein crdfile", params, "proteinbox.crd")
-    protein_s3file = readConfig("protein s3file", params, "proteinbox.s3")
-    water_topfile = readConfig("water topfile", params, "%s/waterbox.top" % wsrc_tools_dir)
-    water_crdfile = readConfig("water crdfile", params, "%s/waterbox.crd" % wsrc_tools_dir)
-    water_s3file = readConfig("water s3file", params, "waterbox.s3")
-
     print "Loading the protein box system..."
 
-    if os.path.exists(protein_s3file):
-        print "Loading existing s3 file %s..." % protein_s3file
-        proteinsys = Sire.Stream.load(protein_s3file)
+    if os.path.exists(protein_s3file.val):
+        print "Loading existing s3 file %s..." % protein_s3file.val
+        proteinsys = Sire.Stream.load(protein_s3file.val)
 
     else:
-        print "Loading from Amber files %s / %s..." % (protein_topfile, protein_crdfile)
+        print "Loading from Amber files %s / %s..." % (protein_topfile.val, protein_crdfile.val)
         # Add the name of the ligand to the list of solute molecules
         proteinsys_scheme = NamingScheme()
-        proteinsys_scheme.addSoluteResidueName(ligand_name)
+        proteinsys_scheme.addSoluteResidueName(ligand_name.val)
 
         # Load up the system. This will automatically find the protein, solute, water, solvent
         # and ion molecules and assign them to different groups
-        proteinsys = createSystem(protein_topfile, protein_crdfile, proteinsys_scheme)
-        ligand_mol = findMolecule(proteinsys, ligand_name)
+        proteinsys = createSystem(protein_topfile.val, protein_crdfile.val, proteinsys_scheme)
+        ligand_mol = findMolecule(proteinsys, ligand_name.val)
 
         if ligand_mol is None:
-            print "Cannot find the ligand (%s) in the set of loaded molecules!" % ligand_name
+            print "Cannot find the ligand (%s) in the set of loaded molecules!" % ligand_name.val
             sys.exit(-1)
 
         # Center the system with the ligand at (0,0,0)
         proteinsys = centerSystem(proteinsys, ligand_mol)
         ligand_mol = proteinsys[ligand_mol.number()].molecule()
 
-        proteinsys = addFlexibility(proteinsys, Vector(0,0,0), reflection_radius, proteinsys_scheme )
-        Sire.Stream.save(proteinsys, protein_s3file)
+        proteinsys = addFlexibility(proteinsys, Vector(0,0,0), reflection_radius.val, proteinsys_scheme )
+        Sire.Stream.save(proteinsys, protein_s3file.val)
 
-    ligand_mol = findMolecule(proteinsys, ligand_name)
+    ligand_mol = findMolecule(proteinsys, ligand_name.val)
 
     if ligand_mol is None:
-        print "Cannot find the ligand (%s) in the set of loaded molecules!" % ligand_name
+        print "Cannot find the ligand (%s) in the set of loaded molecules!" % ligand_name.val
         sys.exit(-1)
 
     print "Loading the water box system..."
 
-    if os.path.exists(water_s3file):
-        print "Loading from existing s3 file %s..." % water_s3file
-        watersys = Sire.Stream.load(water_s3file)
+    if os.path.exists(water_s3file.val):
+        print "Loading from existing s3 file %s..." % water_s3file.val
+        watersys = Sire.Stream.load(water_s3file.val)
     else:
-        print "Loading from Amber files %s / %s..." % (water_topfile, water_crdfile)
-        watersys = createSystem(water_topfile, water_crdfile)
-        watersys = addFlexibility(watersys, Vector(0,0,0), reflection_radius)
-        Sire.Stream.save(watersys, water_s3file)
+        print "Loading from Amber files %s / %s..." % (water_topfile.val, water_crdfile.val)
+        watersys = createSystem(water_topfile.val, water_crdfile.val)
+        watersys = addFlexibility(watersys, Vector(0,0,0), reflection_radius.val)
+        Sire.Stream.save(watersys, water_s3file.val)
 
     print "Building the WSRC forcefields"
 
-    wsrc_system = mergeSystems(proteinsys, watersys, ligand_mol, params)
-    wsrc_moves = createWSRCMoves(wsrc_system, params)
+    wsrc_system = mergeSystems(proteinsys, watersys, ligand_mol)
+    wsrc_moves = createWSRCMoves(wsrc_system)
 
     return (wsrc_system, wsrc_moves)
 
 
-def analyseWSRC(replicas, iteration, params):
+def analyseWSRC(replicas, iteration):
     """This function is used to perform all analysis of iteration 'it' of the passed WSRC system"""
 
     print "Analysing iteration %d..." % iteration
-    outdir = readConfig("output directory", params, "output")
 
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
+    if not os.path.exists(outdir.val):
+        os.makedirs(outdir.val)
 
     # read the value of delta_lambda from the first system
     system = replicas[0].subSystem()
     delta_lambda = system.constant(Symbol("delta_lambda"))
 
-    logfile = "%s/results_%0004d.log" % (outdir, iteration)
+    logfile = "%s/results_%0004d.log" % (outdir.val, iteration)
 
     FILE = open(logfile, "w")
 
@@ -1577,6 +1578,15 @@ def analyseWSRC(replicas, iteration, params):
         monitors = replica.monitors()
         lamval = replica.lambdaValue()
         lambda_values.append(lamval)
+
+        if save_pdb.val:
+            # Save a PDB of the final configuration for the bound and free legs for each lambda value
+            system = replica.subSystem()
+            bound_leg = system[MGName("bound_leg")]
+            free_leg = system[MGName("free_leg")]
+
+            PDB().write(bound_leg, "%s/bound_mobile_%000006d_%.5f.pdb" % (outdir.val, iteration, lamval))
+            PDB().write(free_leg, "%s/free_mobile_%000006d_%.5f.pdb" % (outdir.val, iteration, lamval))
 
         dg = monitors[MonitorName("delta_g^{F}")][-1]
         dg_f[lamval] = dg.accumulator().average() / delta_lambda
@@ -1733,45 +1743,42 @@ def analyseWSRC(replicas, iteration, params):
     print >>FILE,"\n==================================="
 
 
-def runSimulation(params):
+@resolveParameters
+def run():
     """This is a very high level function that does everything to run a WSRC simulation"""
 
-    restart_file = readConfig("restart file", params, "wsrc_restart.s3")
-
-    if os.path.exists(restart_file):
-        (wsrc_system, wsrc_moves) = Sire.Stream.load(restart_file)
+    if os.path.exists(restart_file.val):
+        (wsrc_system, wsrc_moves) = Sire.Stream.load(restart_file.val)
     else:
         # Load the WSRC protein and water boxes from the topology and coordinate
         # files and merge together into the WSRC system and moves object
-        sysmoves_file = readConfig("sysmoves file", params, "wsrc_sysmoves.s3")
-
-        if os.path.exists(sysmoves_file):
-            (wsrc_system, wsrc_moves) = Sire.Stream.load(sysmoves_file)
+        if os.path.exists(sysmoves_file.val):
+            (wsrc_system, wsrc_moves) = Sire.Stream.load(sysmoves_file.val)
         else:
-            (wsrc_system, wsrc_moves) = loadWSRC(params)
+            (wsrc_system, wsrc_moves) = loadWSRC()
 
             Sire.Stream.save( (wsrc_system, wsrc_moves), "pre_equil.s3")
 
             # Should add in some equilibration here...
-            nequilmoves = readConfig("nequilmoves", params, 5000)
-            print "Equilibrating the system (number of moves: %d)..." % nequilmoves
-            wsrc_system = wsrc_moves.move(wsrc_system, nequilmoves, False)
-            print "...equilibration complete"
-            Sire.Stream.save( (wsrc_system, wsrc_moves), sysmoves_file)
+            if nequilmoves.val:
+                print "Equilibrating the system (number of moves: %d)..." % nequilmoves.val
+                wsrc_system = wsrc_moves.move(wsrc_system, nequilmoves.val, False)
+                print "...equilibration complete"
+            
+            Sire.Stream.save( (wsrc_system, wsrc_moves), sysmoves_file.val)
 
         # Now replicate the WSRC system across all lambda values so that we
         # can run a RETI simulation
-        (wsrc_system, wsrc_moves) = makeRETI(wsrc_system, wsrc_moves, params)
+        (wsrc_system, wsrc_moves) = makeRETI(wsrc_system, wsrc_moves)
 
-        Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file )
+        Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )
 
     # see how many blocks of moves we still need to perform...
     nattempted = wsrc_moves.nMoves()
-    nmoves = readConfig("nmoves", params, 300)
 
-    print "Number of iterations to perform: %d. Number of iterations completed: %d." % (nmoves, nattempted)
+    print "Number of iterations to perform: %d. Number of iterations completed: %d." % (nmoves.val, nattempted)
 
-    for i in range(nattempted+1, nmoves+1):
+    for i in range(nattempted+1, nmoves.val+1):
         print "Performing iteration %d..." % i
         sim = SupraSim.run( wsrc_system, wsrc_moves, 1, True )
         sim.wait()
@@ -1780,13 +1787,13 @@ def runSimulation(params):
         wsrc_moves = sim.moves()
 
         print "...iteration complete"
-        analyseWSRC(wsrc_system, i, params)
+        analyseWSRC(wsrc_system, i)
         wsrc_system.clearAllStatistics()
 
         # write a restart file every 5 moves in case of crash or run out of time
         if i % 5 == 0:
             print "Saving the restart file from iteration %d." % i
-            Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file )
+            Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )
 
     print "All iterations complete. Saving the final state restart file."
-    Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file )
+    Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )

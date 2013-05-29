@@ -22,13 +22,28 @@ from Sire.Config import *
 
 import Sire.Stream
 
+from Sire.Tools import Parameter, resolveParameters
 
-def readConfig(key, config, default=None):
-    try:
-        return config[key]
-    except:
-        return default
+###################################
+# Parameters used by this module  #
+###################################
 
+dobonds = Parameter("move bonds", True, """Whether or not to move the ligands bonds""")
+doangles = Parameter("move angles", True, """Whether or not to move the ligands angles""")
+dodihedrals = Parameter("move dihedrals", True, """Whether or not to move the ligands dihedrals""")
+
+BASE_DIHEDRALH_FLEX = Parameter("h dihedral flex", 30*degrees, "Base dihedral rotation for H")
+BASE_DIHEDRAL_FLEX = Parameter("dihedral flex", 20*degrees, "Base dihedral rotation")
+BASE_ANGLE_FLEX = Parameter("angle flex", 0.25*degrees, "Base angle rotation")
+BASE_BOND_FLEX = Parameter("bond flex", 0.025*angstroms, "Base bond stretch amount")
+BASE_TRANSLATION = Parameter("translation", 0.5*angstroms, "Base translation delta amount")
+BASE_ROTATION = Parameter("rotation", 30*degrees, "Base rigid body rotation")
+BASE_MAXVAR = Parameter("maxvar", 10, "Maximum number of degrees of freedom to move at once")
+BASE_MAXVAR_B = Parameter("maxvar bonds", 2, "Maximum number of bonds to move at once")
+BASE_MAXVAR_A = Parameter("maxvar angles", 4, "Maximum number of angles to move at once")
+BASE_MAXVAR_D = Parameter("maxvar dihedrals", 4, "Maximum number of dihedrals to move at once")
+
+###################################
 
 def getResidueNames(molecule):
     nres = molecule.nResidues()
@@ -314,30 +329,18 @@ def centerSystem(system, molecule):
     return system
 
 
-def guessTranslation( solute, BASE_TRANSLATION ):
+def guessTranslation( solute ):
     natoms = solute.nAtoms()
-    return (BASE_TRANSLATION) / ( natoms / 5 + 1)
+    return (BASE_TRANSLATION.val) / ( natoms / 5 + 1)
 
 
-def guessRotation( solute, BASE_ROTATION ):
+def guessRotation( solute ):
     natoms = solute.nAtoms()
     sphere_radius = solute.evaluate().boundingSphere().radius()
-    return (BASE_ROTATION) / ( sphere_radius ** 2)
+    return (BASE_ROTATION.val) / ( sphere_radius ** 2)
 
 
-def generateFlexibility(solute, config=None):
-
-    dobonds = readConfig("move bonds", config, True)
-    doangles = readConfig("move angles", config, True)
-    dodihedrals = readConfig("move dihedrals", config, True)
-
-    BASE_DIHEDRALH_FLEX = readConfig("h dihedral flex", config, 30*degrees)
-    BASE_DIHEDRAL_FLEX = readConfig("dihedral flex", config, 20*degrees)
-    BASE_ANGLE_FLEX = readConfig("angle flex", config, 0.25*degrees)
-    BASE_BOND_FLEX = readConfig("bond flex", config, 0.025*angstroms)
-    BASE_TRANSLATION = readConfig("translation", config, 0.5*angstroms)
-    BASE_ROTATION = readConfig("rotation", config, 30*degrees)
-    BASE_MAXVAR = readConfig("maxvar", config, 10)
+def generateFlexibility(solute):
 
     connectivity = solute.property('connectivity')
     all_bonds = connectivity.getBonds()
@@ -345,22 +348,22 @@ def generateFlexibility(solute, config=None):
     all_dihedrals = connectivity.getDihedrals()
 
     flexibility = Flexibility(solute)
-    flexibility.setRotation( guessRotation(solute, BASE_ROTATION) )
-    flexibility.setTranslation( guessTranslation(solute, BASE_TRANSLATION) )
+    flexibility.setRotation( guessRotation(solute) )
+    flexibility.setTranslation( guessTranslation(solute) )
 
     try:
-        flexibility.setMaximumVar(10)
+        flexibility.setMaximumVar( BASE_MAXVAR.val )
     except:
-        flexibility.setMaximumBondVar(2)
-        flexibility.setMaximumAngleVar(4)
-        flexibility.setMaximumDihedralVar(4)
+        flexibility.setMaximumBondVar( BASE_MAXVAR_B.val )
+        flexibility.setMaximumAngleVar( BASE_MAXVAR_A.val )
+        flexibility.setMaximumDihedralVar( BASE_MAXVAR_D.val )
 
     # Redundant torsions are discarded according to the following algorithm
     # 1) Do not sample a torsion at0-at1-at2-at3 if a variable torsion has 
     # already been defined around at1-at2 or at2-at1.
     # 2) Do not sample a torsion if it would break a ring
     #
-    if dodihedrals:
+    if dodihedrals.val:
         var_dihedrals = []
 
         for dihedral in all_dihedrals:
@@ -412,11 +415,11 @@ def generateFlexibility(solute, config=None):
                 smallgroup = smallgroup.subtract(at2)
                 factor = smallgroup.nSelected()
 
-                flexibility.add(dihedral, BASE_DIHEDRAL_FLEX/factor)
+                flexibility.add(dihedral, BASE_DIHEDRAL_FLEX.val/factor)
                 var_dihedrals.append(dihedral)
 
     # And the angles ....
-    if doangles:
+    if doangles.val:
         moved_atoms = []
 
         for angle in all_angles:
@@ -450,7 +453,7 @@ def generateFlexibility(solute, config=None):
                 smallgroup = gr1
 
             factor = smallgroup.nSelected()
-            flexibility.add(angle, BASE_ANGLE_FLEX/factor)
+            flexibility.add(angle, BASE_ANGLE_FLEX.val/factor)
 
             if at0 not in moved_atoms:
                 moved_atoms.append(at0)
@@ -458,7 +461,7 @@ def generateFlexibility(solute, config=None):
                 moved_atoms.append(at2)    
 
     # And the bonds...
-    if dobonds:
+    if dobonds.val:
         for bond in all_bonds:
             try:
                 solute.move().change(bond,1*angstrom)
@@ -481,7 +484,7 @@ def generateFlexibility(solute, config=None):
                 smallgroup = gr1
 
             factor = smallgroup.nSelected()
-            flexibility.add(bond, BASE_BOND_FLEX/factor)
+            flexibility.add(bond, BASE_BOND_FLEX.val/factor)
 
     return flexibility
 
