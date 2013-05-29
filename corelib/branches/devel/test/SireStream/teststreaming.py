@@ -94,7 +94,7 @@ def testStream(c):
     print header.requiredLibraries()
 
     print header.createdBy()
-    print header.createdWhen().toString()
+    print header.createdWhen()
     print header.createdWhere()
 
     print header.requiredMemory()
@@ -118,13 +118,11 @@ data = Sire.Stream.save(system)
 
 print "Probing the system..."
 print system.energy()
-print system.components()
 print system.energies()
 
 system = Sire.Stream.load(data)
 
 print system.energy()
-print system.components()
 print system.energies()
 
 print "\nGetting data info..."
@@ -146,7 +144,7 @@ print header.dataType()
 print header.requiredLibraries()
 
 print header.createdBy()
-print header.createdWhen().toString()
+print header.createdWhen()
 print header.createdWhere()
 
 print header.requiredMemory()

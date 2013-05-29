@@ -10,5 +10,4 @@ import sys
 
 params = readParams(sys.argv[1])
 
-WSRC.runSimulation(params)
-
+WSRC.run(params)

@@ -34,19 +34,22 @@ params["lambda values"] = [ 0.001, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 
                             0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99, 0.999 ]
 
 # Specify the number of RETI iterations
-params["nmoves"] = 100
+params["nmoves"] = 10
 
 # Specify the number of Monte Carlo moves to perform per RETI iteration
-params["nsubmoves"] = 10000
+params["nsubmoves"] = 10
 
 # Specify the number of equilibration moves to perform when setting up the system
-params["nequilmoves"] = 50000
+params["nequilmoves"] = 50
 
 # Specify the frequency of updating the residue- and water-based energy monitors
 params["energy monitor frequency"] = 5
 
+# I want to save the PDBs for debugging...
+params["save pdb"] = True
+
 # Actually run the simulation :-)
-WSRC.runSimulation(params)
+WSRC.run(params)
 
 # Note that you can resume the simulation by rerunning this script. The script
 # records its progress so will always resume from where it last finished. This
