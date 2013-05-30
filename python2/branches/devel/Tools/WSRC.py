@@ -116,8 +116,13 @@ nmoves = Parameter("nmoves", 5, """Number of RETI moves to perform during the si
 coulomb_power = Parameter("coulomb power", 0,
                           """The soft-core coulomb power parameter""")
 
-shift_delta = Parameter("shift delta", 1.2,
+shift_delta = Parameter("shift delta", 1.1,
                         """The soft-core shift delta parameter""")
+
+soften_water = Parameter("soften water", 1.2, 
+                         """The amount by which to scale the water-water electrostatic interactions in 
+                            the swap-water cluster between lambda=0 and lambda=1. This helps keep the cluster
+                            together as it is swapped between the two boxes.""")
 
 save_pdb = Parameter("save pdb", False,
                      """Whether or not to write a PDB of the system after each iteration.""")
@@ -1004,7 +1009,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.setConstant(lam_f, 0.0)
     system.setConstant(lam_b, 0.0)
 
-    system.setComponent(S_sym, 0)
+    system.setComponent(S_sym, soften_water.val)
 
     system.setComponent(ligand_bound_nrg_sym, ligand_bound_nrg)
     system.setComponent(ligand_bound_nrg_f_sym, ligand_bound_nrg_f)
