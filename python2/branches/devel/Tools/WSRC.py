@@ -63,7 +63,7 @@ alpha_scale = Parameter("alpha_scale", 1.0,
                            the less softening with lambda, while the higher the value, the
                            more softening""")
 
-delta_lambda = Parameter("delta_lambda", 0.001,
+delta_lambda = Parameter("delta_lambda", 0.01,
                          """Value of delta lambda used in the finite difference thermodynamic
                             integration algorithm used to calculate the free energy""")
 
@@ -74,7 +74,7 @@ water_monitor_distance = Parameter("water monitor distance", 5.0*angstrom,
 nrgmon_frequency = Parameter("energy monitor frequency", 1000, 
                              """The number of steps between each evaluation of the energy monitors.""")
 
-lambda_values = Parameter("lambda values", [0.001, 0.999],
+lambda_values = Parameter("lambda values", [0.01, 0.99],
                           """The values of lambda to use in the RETI free energy simulation.""")
 nsubmoves = Parameter("nsubmoves", 50000,
                       """The number of moves to perform between each RETI move.""")
@@ -119,7 +119,7 @@ coulomb_power = Parameter("coulomb power", 0,
 shift_delta = Parameter("shift delta", 1.1,
                         """The soft-core shift delta parameter""")
 
-soften_water = Parameter("soften water", 1.2, 
+soften_water = Parameter("soften water", 1.1, 
                          """The amount by which to scale the water-water electrostatic interactions in 
                             the swap-water cluster between lambda=0 and lambda=1. This helps keep the cluster
                             together as it is swapped between the two boxes.""")
@@ -1105,8 +1105,8 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     dlam = delta_lambda.val
 
     if dlam > 1 or dlam < 0.0000001:
-        print "Weird value of delta_lambda (%s). Setting it to 0.001" % dlam
-        dlam = 0.001
+        print "Weird value of delta_lambda (%s). Setting it to 0.01" % dlam
+        dlam = 0.01
 
     system.setConstant( Symbol("delta_lambda"), dlam )
     system.add( ComponentConstraint( lam_f, Min( lam + dlam, 1 ) ) )
@@ -1675,15 +1675,16 @@ def analyseWSRC(replicas, iteration):
     waterbox_pmfs_lj = calculatePMFs(waterbox_dg_lj)
 
     # First, output the potential of mean force along the WSRC
-    print >>FILE,"\nPotential of mean force (binding free energy)"
+    print >>FILE,"\nPotential of mean force (binding free energy) (plus gradients)"
 
     lamvals = pmf_f.keys()
     lamvals.sort()
 
-    print >>FILE,"Lambda    Forwards    Backwards"
+    print >>FILE,"Lambda    Forwards    Backwards   dG_F      dG_B"
 
     for lamval in lamvals:
-        print >>FILE,"%f   %f   %f" % (lamval, pmf_f[lamval], pmf_b[lamval])
+        print >>FILE,"%f   %f   %f   %f   %f" % (lamval, pmf_f[lamval], pmf_b[lamval],
+                                                         dg_f[lamval], dg_b[lamval])
 
     bind_f = pmf_f[lamvals[-1]]
     bind_b = pmf_b[lamvals[-1]]
