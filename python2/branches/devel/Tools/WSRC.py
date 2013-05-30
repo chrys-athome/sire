@@ -513,6 +513,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
             
             if protein_mol.selectedAll():
                 bound_protein_intra_group.add(protein_mol)
+                bound_leg.add(protein_mol)
 
                 mobile_protein = None                
 
@@ -534,6 +535,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
                 if not (mobile_protein is None):
                     mobile_bound_proteins_group.add( mobile_protein.join() )
+
             else:
                 # only some of the atoms have been selected. We will extract
                 # the mobile atoms and will then update all of the other selections
@@ -543,6 +545,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
                                         (new_protein_mol.nAtoms(), protein_mol.molecule().nAtoms())
 
                 bound_protein_intra_group.add(new_protein_mol)
+                bound_leg.add( new_protein_mol )
 
                 mobile_protein_view = new_protein_mol.selection()
                 mobile_protein_view = mobile_protein_view.selectNone()
@@ -585,7 +588,6 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
                 if mobile_protein_view.nSelected() > 0:
                     mobile_bound_proteins_group.add( PartialMolecule(new_protein_mol, mobile_protein_view) )
-                    bound_leg.add( PartialMolecule(new_protein_mol, mobile_protein_view) )
 
     # finished adding in all of the protein groups
 
