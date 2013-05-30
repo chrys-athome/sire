@@ -221,7 +221,6 @@ private:
 
 	QVector<double> gradients;
 
-	QVector< QVector<double> > perturbed_14;
 };
 
 
