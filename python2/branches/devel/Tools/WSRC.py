@@ -258,14 +258,31 @@ def createWSRCMoves(system):
         bb_moves.setCenterOfRotation( GetCOGPoint( AtomName("CA", CaseInsensitive),
                                                    AtomName("N", CaseInsensitive) ) )
 
-        bb_moves.setMaximumTranslation(0.015*angstrom)
-        bb_moves.setMaximumRotation(0.5*degrees)
+        bb_moves.setMaximumTranslation(0.030*angstrom)
+        bb_moves.setMaximumRotation(1.0*degrees)
         moves.add( bb_moves, mobile_backbones.nViews() )
 
     if mobile_ligand.nViews() > 0:
-        # we do not translate or rotate the ligand - just move its internals
+        scale_moves = 10
+
+        # get the amount to translate and rotate from the ligand's flexibility object
+        flex = mobile_ligand.moleculeAt(0).molecule().property("flexibility")
+
+        if (flex.translation().value() != 0 or flex.rotation().value() != 0):
+            rb_moves = RigidBodyMC(mobile_ligand)
+            rb_moves.setMaximumTranslation(flex.translation())
+            rb_moves.setMaximumRotation(flex.rotation())
+
+            if system.containsProperty("reflection sphere radius"):
+                reflection_radius = float(str(system.property("reflection sphere radius"))) * angstroms
+                reflection_center = system.property("reflection center").toVector()[0]
+                rb_moves.setReflectionSphere(reflection_center, reflection_radius)
+
+            scale_moves = scale_moves / 2
+            moves.add( rb_moves, scale_moves * mobile_ligand.nViews() )
+
         intra_moves = InternalMove(mobile_ligand)
-        moves.add( intra_moves, 10 * mobile_ligand.nViews() )
+        moves.add( intra_moves, scale_moves * mobile_ligand.nViews() )
 
     if mobile_solutes.nViews() > 0:
         rb_moves = RigidBodyMC(mobile_solutes)
@@ -283,6 +300,12 @@ def createWSRCMoves(system):
         if translation_delta > 0 and rotation_delta > 0:
             rb_moves.setMaximumTranslation(translation_delta * angstroms)
             rb_moves.setMaximumRotation(rotation_delta * degrees)
+
+            if system.containsProperty("reflection sphere radius"):
+                reflection_radius = float(str(system.property("reflection sphere radius"))) * angstroms
+                reflection_center = system.property("reflection center").toVector()[0]
+                rb_moves.setReflectionSphere(reflection_center, reflection_radius)
+
             moves.add(rb_moves, 4 * mobile_solutes.nViews())
 
         intra_moves = InternalMove(solute_group)
@@ -565,7 +588,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     print "\nObtaining the identity points..."
 
     if identity_atoms.val is None:
-        print "Auto-identifying the identiy atoms..."
+        print "Auto-identifying the identity atoms..."
         identity_points = getIdentityPoints(ligand_mol)
     else:
         identity_points = []
