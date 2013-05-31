@@ -82,20 +82,32 @@ nsubmoves = Parameter("nsubmoves", 50000,
 ligand_name = Parameter("ligand name", "LIG",
                         """The name of the ligand. This should be the name of one of the residues
                            in the ligand, so that this program can find the correct molecule.""")
+
 reflection_radius = Parameter("reflection radius", None,
                               """The radius of the reflection sphere""")
+
+ligand_reflection_radius = Parameter("ligand reflection radius", 2*angstrom,
+                                     """The reflection radius of the ligand. This is used to constrain the ligand
+                                        to remain in the active site. This is needed to define the accessible volume
+                                        of the bound state.""")
+
 protein_topfile = Parameter("protein topfile", "proteinbox.top",
                             """Name of the topology file containing the solvated protein-ligand complex.""")
+
 protein_crdfile = Parameter("protein crdfile", "proteinbox.crd",
                             """Name of the coordinate file containing the coordinates of the 
                                solvated protein-ligand complex.""")
+
 protein_s3file = Parameter("protein s3file", "proteinbox.s3",
                            """Name to use for the intermediate s3 file that will contain the 
                               solvated protein-ligand complex after it has been loaded from the top/crd files.""")
+
 water_topfile = Parameter("water topfile", "%s/waterbox.top" % wsrc_tools_dir,
                           """Name of the topology file containing the water box.""")
+
 water_crdfile = Parameter("water crdfile", "%s/waterbox.crd" % wsrc_tools_dir,
                           """Name of the coordinate file containing the coordinates of the water box.""")
+
 water_s3file = Parameter("water s3file", "waterbox.s3",
                          """Name to use for the intermediate s3 file that will contain the 
                             water box after it has been loaded from the top/crd files.""")
@@ -116,7 +128,7 @@ nmoves = Parameter("nmoves", 5, """Number of RETI moves to perform during the si
 coulomb_power = Parameter("coulomb power", 0,
                           """The soft-core coulomb power parameter""")
 
-shift_delta = Parameter("shift delta", 1.1,
+shift_delta = Parameter("shift delta", 1.2,
                         """The soft-core shift delta parameter""")
 
 soften_water = Parameter("soften water", 1.1, 
@@ -126,6 +138,10 @@ soften_water = Parameter("soften water", 1.1,
 
 save_pdb = Parameter("save pdb", False,
                      """Whether or not to write a PDB of the system after each iteration.""")
+
+save_all_pdbs = Parameter("save all pdbs", False,
+                          """Whether or not to write all of the PDBs. If not, only PDBs at the two 
+                             end points of the simulation will be written.""")
 
 ####################################################
 
@@ -278,10 +294,11 @@ def createWSRCMoves(system):
             rb_moves.setMaximumTranslation(flex.translation())
             rb_moves.setMaximumRotation(flex.rotation())
 
-            if system.containsProperty("reflection sphere radius"):
-                reflection_radius = float(str(system.property("reflection sphere radius"))) * angstroms
-                reflection_center = system.property("reflection center").toVector()[0]
-                rb_moves.setReflectionSphere(reflection_center, reflection_radius)
+            # the ligand is not allowed to move away from its original position,
+            # as we don't want to sample "unbound" states
+            if not ligand_reflection_radius.val is None:
+                rb_moves.setReflectionSphere(mobile_ligand.moleculeAt(0).molecule().evaluate().center(), 
+                                             ligand_reflection_radius.val)
 
             scale_moves = scale_moves / 2
             moves.add( rb_moves, scale_moves * mobile_ligand.nViews() )
@@ -1059,19 +1076,19 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     bound_nrg = bound_bound_nrg_sym + ((1-lam) * ligand_bound_nrg_sym) + (lam * swap_bound_nrg_sym)
 
     bound_nrg_f_sym = Symbol("E_{bound_{f}}")
-    bound_nrg_f = bound_bound_nrg_sym + ((1-lam) * ligand_bound_nrg_f_sym) + (lam * swap_bound_nrg_f_sym)
+    bound_nrg_f = bound_bound_nrg_sym + ((1-lam_f) * ligand_bound_nrg_f_sym) + (lam_f * swap_bound_nrg_f_sym)
 
     bound_nrg_b_sym = Symbol("E_{bound_{b}}")
-    bound_nrg_b = bound_bound_nrg_sym + ((1-lam) * ligand_bound_nrg_b_sym) + (lam * swap_bound_nrg_b_sym)
+    bound_nrg_b = bound_bound_nrg_sym + ((1-lam_b) * ligand_bound_nrg_b_sym) + (lam_b * swap_bound_nrg_b_sym)
     
     free_nrg_sym = Symbol("E_{free}")
     free_nrg = free_free_nrg_sym + (lam * ligand_free_nrg_sym) + ((1-lam) * swap_free_nrg_sym)
 
     free_nrg_f_sym = Symbol("E_{free_{f}}")
-    free_nrg_f = free_free_nrg_sym + (lam * ligand_free_nrg_f_sym) + ((1-lam) * swap_free_nrg_f_sym)
+    free_nrg_f = free_free_nrg_sym + (lam_f * ligand_free_nrg_f_sym) + ((1-lam_f) * swap_free_nrg_f_sym)
 
     free_nrg_b_sym = Symbol("E_{free_{b}}")
-    free_nrg_b = free_free_nrg_sym + (lam * ligand_free_nrg_b_sym) + ((1-lam) * swap_free_nrg_b_sym)
+    free_nrg_b = free_free_nrg_sym + (lam_b * ligand_free_nrg_b_sym) + ((1-lam_b) * swap_free_nrg_b_sym)
 
     total_nrg_sym = system.totalComponent()
     total_nrg = bound_nrg_sym + free_nrg_sym
@@ -1610,13 +1627,14 @@ def analyseWSRC(replicas, iteration):
         lambda_values.append(lamval)
 
         if save_pdb.val:
-            # Save a PDB of the final configuration for the bound and free legs for each lambda value
-            system = replica.subSystem()
-            bound_leg = system[MGName("bound_leg")]
-            free_leg = system[MGName("free_leg")]
+            if save_all_pdbs.val or (i == 0) or (i == nreplicas-1):
+                # Save a PDB of the final configuration for the bound and free legs for each lambda value
+                system = replica.subSystem()
+                bound_leg = system[MGName("bound_leg")]
+                free_leg = system[MGName("free_leg")]
 
-            PDB().write(bound_leg, "%s/bound_mobile_%000006d_%.5f.pdb" % (outdir.val, iteration, lamval))
-            PDB().write(free_leg, "%s/free_mobile_%000006d_%.5f.pdb" % (outdir.val, iteration, lamval))
+                PDB().write(bound_leg, "%s/bound_mobile_%000006d_%.5f.pdb" % (outdir.val, iteration, lamval))
+                PDB().write(free_leg, "%s/free_mobile_%000006d_%.5f.pdb" % (outdir.val, iteration, lamval))
 
         dg = monitors[MonitorName("delta_g^{F}")][-1]
         dg_f[lamval] = dg.accumulator().average() / delta_lambda
@@ -1699,47 +1717,47 @@ def analyseWSRC(replicas, iteration):
     waterbox_bind_coul = []
     waterbox_bind_lj = []
 
-    print >>FILE,"\n==============================="
-    print >>FILE,"PROTEIN BOX FREE ENERGIES"
-    print >>FILE,"===============================\n"
-
-    # Now output the group-decomposed RDFs
+    #print >>FILE,"\n==============================="
+    #print >>FILE,"PROTEIN BOX FREE ENERGIES"
+    #print >>FILE,"===============================\n"
+    #
+    #Now output the group-decomposed RDFs
     for i in range(0,len(proteinbox_views)):
-        print >>FILE,"\nPotential of mean force for protein box group %d | %s" \
-                                    % (i+1, getName(proteinbox_views[i]))
-
-        print >>FILE,"Lambda   Total   Coulomb   LJ"
-
+    #    print >>FILE,"\nPotential of mean force for protein box group %d | %s" \
+    #                                % (i+1, getName(proteinbox_views[i]))
+    #
+    #    print >>FILE,"Lambda   Total   Coulomb   LJ"
+    #
         lamvals = proteinbox_pmfs[i].keys()
         lamvals.sort()
-
-        for lamval in lamvals:
-            print >>FILE,"%f    %f    %f    %f" % \
-               (lamval, proteinbox_pmfs[i][lamval], proteinbox_pmfs_coul[i][lamval],
-                        proteinbox_pmfs_lj[i][lamval])
-
+    
+    #    for lamval in lamvals:
+    #        print >>FILE,"%f    %f    %f    %f" % \
+    #           (lamval, proteinbox_pmfs[i][lamval], proteinbox_pmfs_coul[i][lamval],
+    #                    proteinbox_pmfs_lj[i][lamval])
+    #
         proteinbox_bind.append( proteinbox_pmfs[i][lamvals[-1]] )
         proteinbox_bind_coul.append( proteinbox_pmfs_coul[i][lamvals[-1]] )
         proteinbox_bind_lj.append( proteinbox_pmfs_lj[i][lamvals[-1]] )
 
-    print >>FILE,"\n==============================="
-    print >>FILE,"WATER BOX FREE ENERGIES"
-    print >>FILE,"===============================\n"
-
+    #print >>FILE,"\n==============================="
+    #print >>FILE,"WATER BOX FREE ENERGIES"
+    #print >>FILE,"===============================\n"
+    #
     # Now output the group-decomposed RDFs
     for i in range(0,len(waterbox_views)):
-        print >>FILE,"\nPotential of mean force for water box group %d | %s" \
-                                    % (i+1, getName(waterbox_views[i]))
-
-        print >>FILE,"Lambda   Total   Coulomb   LJ"
-
+    #    print >>FILE,"\nPotential of mean force for water box group %d | %s" \
+    #                                % (i+1, getName(waterbox_views[i]))
+    #
+    #    print >>FILE,"Lambda   Total   Coulomb   LJ"
+    
         lamvals = waterbox_pmfs[i].keys()
         lamvals.sort()
 
-        for lamval in lamvals:
-            print >>FILE,"%f    %f    %f    %f" % \
-               (lamval, waterbox_pmfs[i][lamval], waterbox_pmfs_coul[i][lamval],
-                        waterbox_pmfs_lj[i][lamval])
+    #    for lamval in lamvals:
+    #        print >>FILE,"%f    %f    %f    %f" % \
+    #           (lamval, waterbox_pmfs[i][lamval], waterbox_pmfs_coul[i][lamval],
+    #                    waterbox_pmfs_lj[i][lamval])
 
         waterbox_bind.append( waterbox_pmfs[i][lamvals[-1]] )
         waterbox_bind_coul.append( waterbox_pmfs_coul[i][lamvals[-1]] )
