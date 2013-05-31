@@ -1696,7 +1696,7 @@ void OpenMMFrEnergyST::initialise()  {
 
                 if((isHard_p1 == 1.0 && isHard_p2 == 1.0)){
                     
-                    int bond_id = custom_intra_14_clj->addBond(p1,p2,params);
+                    custom_intra_14_clj->addBond(p1,p2,params);
     
 
                     if(Debug)
@@ -1704,7 +1704,7 @@ void OpenMMFrEnergyST::initialise()  {
                 }
                 else if((isTodummy_p1 == 1.0 && isTodummy_p2 == 1.0) || (isHard_p1 == 1.0 && isTodummy_p2 == 1.0) || (isHard_p2 == 1.0 && isTodummy_p1 == 1.0)){
 
-                    int bond_id = custom_intra_14_todummy->addBond(p1,p2,params);
+                    custom_intra_14_todummy->addBond(p1,p2,params);
                 
                     if(Debug)
                         qDebug() << "Added soft TO dummy 1-4\n";
@@ -1712,7 +1712,7 @@ void OpenMMFrEnergyST::initialise()  {
                 
                 else if((isFromdummy_p1 == 1.0 && isFromdummy_p2 == 1.0) || (isHard_p1 == 1.0 && isFromdummy_p2 == 1.0) || (isHard_p2 == 1.0 && isFromdummy_p1 == 1.0)){
                     
-                    int bond_id = custom_intra_14_fromdummy->addBond(p1,p2,params);
+                    custom_intra_14_fromdummy->addBond(p1,p2,params);
                                         
                     if(Debug)
                         qDebug() << "Added soft FROM dummy 1-4\n";
@@ -1721,7 +1721,7 @@ void OpenMMFrEnergyST::initialise()  {
                 
                 else if((isFromdummy_p1 == 1.0 && isTodummy_p2 == 1.0) || (isFromdummy_p2 == 1.0 && isTodummy_p1 == 1.0)) {
 
-                    int bond_id = custom_intra_14_fromdummy_todummy->addBond(p1,p2,params);
+                    custom_intra_14_fromdummy_todummy->addBond(p1,p2,params);
 
                     if(Debug)
                         qDebug() << "Added soft FROM dummy TO dummy 1-4\n";
@@ -2040,6 +2040,11 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 
     //show_status(sample_count, n_samples);
+
+    if(true){
+        for(unsigned int i=0;i<perturbed_energies.size();i++)
+            qDebug() << "Perturbed energy flag index" << i << " Value = " << perturbed_energies[i];
+    }
 
     while(sample_count<n_samples){
 
