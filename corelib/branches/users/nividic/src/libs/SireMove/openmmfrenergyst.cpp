@@ -967,7 +967,7 @@ void OpenMMFrEnergyST::initialise()  {
     QVector<bool> perturbed_energies_tmp(8);
     
     for(unsigned int i = 0; i<perturbed_energies_tmp.size();i++)
-        perturbed_energies_tmp[i] = 0;
+        perturbed_energies_tmp[i] = false;
     
     
     for (int i=0; i < nmols ; i++){
@@ -2041,7 +2041,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     //show_status(sample_count, n_samples);
 
-    if(true){
+    if(Debug){
         for(unsigned int i=0;i<perturbed_energies.size();i++)
             qDebug() << "Perturbed energy flag index" << i << " Value = " << perturbed_energies[i];
     }
@@ -2057,7 +2057,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         
 
         double potential_energy_lambda = state_openmm.getPotentialEnergy();
-
+        
         double potential_energy_lambda_plus_delta;
 
         double potential_energy_lambda_minus_delta;
@@ -2082,7 +2082,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             qDebug() << "\nLambda = " << Alchemical_value;
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
         }
-
+     
         
         if((Alchemical_value + delta_alchemical)>1.0){
                         
@@ -2103,7 +2103,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             if(perturbed_energies[5])
                 context_openmm.setParameter("lambond",Alchemical_value - delta_alchemical);//Bonds
             if(perturbed_energies[6])
-                context_openmm.setParameter("lamanlge",Alchemical_value - delta_alchemical);//Angles
+                context_openmm.setParameter("lamangle",Alchemical_value - delta_alchemical);//Angles
             if(perturbed_energies[7])
                 context_openmm.setParameter("lambda",Alchemical_value - delta_alchemical);//Torsions
 
@@ -2118,7 +2118,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             minus =  exp(-beta * (potential_energy_lambda_minus_delta - potential_energy_lambda));
             plus = exp(beta * (potential_energy_lambda_minus_delta - potential_energy_lambda));
 
-            if(true){
+            if(Debug){
                 qDebug() << "Lambda + delta > 1.0\n";
                 qDebug() << "Lambda - delta = " << Alchemical_value - delta_alchemical << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
             }
@@ -2143,7 +2143,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             if(perturbed_energies[5])
                 context_openmm.setParameter("lambond",Alchemical_value + delta_alchemical);//Bonds
             if(perturbed_energies[6])
-                context_openmm.setParameter("lamanlge",Alchemical_value + delta_alchemical);//Angles
+                context_openmm.setParameter("lamangle",Alchemical_value + delta_alchemical);//Angles
             if(perturbed_energies[7])
                 context_openmm.setParameter("lambda",Alchemical_value + delta_alchemical);//Torsions
             
@@ -2157,7 +2157,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             plus = exp(-beta * (potential_energy_lambda_plus_delta - potential_energy_lambda));
             minus = exp(beta * (potential_energy_lambda_plus_delta - potential_energy_lambda));
 
-            if(true){
+            if(Debug){
                 qDebug() << "Lambda + delta = " << Alchemical_value + delta_alchemical << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
                 qDebug() << "Lambda - delta < 0.0\n";
             }
@@ -2182,7 +2182,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             if(perturbed_energies[5])
                 context_openmm.setParameter("lambond",Alchemical_value + delta_alchemical);//Bonds
             if(perturbed_energies[6])
-                context_openmm.setParameter("lamanlge",Alchemical_value + delta_alchemical);//Angles
+                context_openmm.setParameter("lamangle",Alchemical_value + delta_alchemical);//Angles
             if(perturbed_energies[7])
                 context_openmm.setParameter("lambda",Alchemical_value + delta_alchemical);//Torsions
 
@@ -2191,10 +2191,11 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
 
             
-            if(true){
+            if(Debug){
                 qDebug() << "Lambda + delta = " << Alchemical_value + delta_alchemical << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
             }
 
+            
             //NON BONDED TERMS
             if(perturbed_energies[0])
                 context_openmm.setParameter("lam",Alchemical_value - delta_alchemical);//1-5 HD
@@ -2212,7 +2213,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             if(perturbed_energies[5])
                 context_openmm.setParameter("lambond",Alchemical_value - delta_alchemical);//Bonds
             if(perturbed_energies[6])
-                context_openmm.setParameter("lamanlge",Alchemical_value - delta_alchemical);//Angles
+                context_openmm.setParameter("lamangle",Alchemical_value - delta_alchemical);//Angles
             if(perturbed_energies[7])
                 context_openmm.setParameter("lambda",Alchemical_value - delta_alchemical);//Torsions
 
@@ -2228,7 +2229,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             minus = exp(-beta * (potential_energy_lambda_minus_delta - potential_energy_lambda));
             
 
-            if(true){
+            if(Debug){
                 qDebug() << "Lambda - delta = " << Alchemical_value - delta_alchemical << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
             }
             
@@ -2255,7 +2256,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2 * delta_alchemical);
 
 
-        if(true)
+        if(Debug)
             qDebug() << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
 
 
@@ -2282,7 +2283,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         if(perturbed_energies[5])
             context_openmm.setParameter("lambond",Alchemical_value);//Bonds
         if(perturbed_energies[6])
-            context_openmm.setParameter("lamanlge",Alchemical_value);//Angles
+            context_openmm.setParameter("lamangle",Alchemical_value);//Angles
         if(perturbed_energies[7])
             context_openmm.setParameter("lambda",Alchemical_value);//Torsions
 
