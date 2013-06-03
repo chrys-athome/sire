@@ -2024,8 +2024,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     double GB_acc = 0.0;
 
-    double lam_val = 0.0;
-
     double sample_count=0.0;
 
     //state_openmm=context_openmm.getState(infoMask);
@@ -2048,13 +2046,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     while(sample_count<n_samples){
 
-        // ***************************IMPORTANT  TO BE ENABLE TO PERFORM MD STEPS  integrator_openmm.step(energy_frequency);
+        //*********************MD STEPS****************************
+        integrator_openmm.step(energy_frequency);
 
         state_openmm=context_openmm.getState(infoMask);
 
         if(Debug)
             qDebug()<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
-        
+
 
         double potential_energy_lambda = state_openmm.getPotentialEnergy();
         
@@ -2078,7 +2077,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             }
         }
 
-        if(true){
+        if(Debug){
             qDebug() << "\nLambda = " << Alchemical_value;
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
         }
@@ -2288,9 +2287,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             context_openmm.setParameter("lambda",Alchemical_value);//Torsions
 
         
-        //state_openmm=context_openmm.getState(infoMask);
-        //double dummy = state_openmm.getPotentialEnergy();
-        //qDebug() << "\nDifference dummy = " << dummy - potential_energy_lambda<< "\n\n";
+        /*state_openmm=context_openmm.getState(infoMask);
+        double dummy = state_openmm.getPotentialEnergy();
+        qDebug() << "\nDifference dummy = " << dummy - potential_energy_lambda<< "\n\n";*/
 
         sample_count=sample_count + 1.0;
         
