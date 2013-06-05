@@ -157,6 +157,19 @@ public:
 	void setBufferCoords(bool);
 
 	QVector<double> getGradients(void);
+	
+	QString getIntegrator(void);
+	
+	void setIntegrator(QString);
+	
+	SireUnits::Dimension::Time getFriction(void);
+	
+	void setFriction(SireUnits::Dimension::Time);
+	
+	double getIntegration_tollerance(void);
+	
+	void setIntegration_tollerance(double tollerance);
+
 
 
 private:
@@ -172,9 +185,6 @@ private:
 	MolGroupPtr solutetodummy;
 	/** The From Dummy Solute Group on which the integrator operates */
 	MolGroupPtr solutefromdummy;
-
-	/** Pointer to OpenMM context that describes the desired simulation*/
-	//OpenMM::Context* context;
 
 	/**Try instead to...keep a copy of OpenMM::System */
 	OpenMM::System* openmm_system;
@@ -219,10 +229,15 @@ private:
 
 	bool buffer_coords;
 
-	QVector<double> gradients;
-    
+    QVector<double> gradients;
+
     QVector<bool> perturbed_energies;
 
+    QString Integrator_type;
+
+    SireUnits::Dimension::Time friction;
+
+    double integration_tol;
 };
 
 

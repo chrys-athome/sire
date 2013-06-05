@@ -131,7 +131,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
         << velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
         <<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.energy_frequency
         << velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical << velver.buffer_coords
-        << velver.gradients <<velver.perturbed_energies
+        << velver.gradients <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol
         << static_cast<const Integrator&>(velver);
 
     // Free OpenMM pointers??
@@ -153,7 +153,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
         >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
         >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.energy_frequency
         >> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical >> velver.buffer_coords
-        >> velver.gradients >>velver.perturbed_energies
+        >> velver.gradients >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol
         >> static_cast<Integrator&>(velver);
 
         // Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -179,7 +179,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
                 CMMremoval_frequency(0), energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
-                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),perturbed_energies()
+                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),perturbed_energies(),
+                Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001)
 {}
 
 /** Constructor using the passed molecule groups */
@@ -192,7 +193,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const Mo
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
                 CMMremoval_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
-                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),perturbed_energies()
+                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),perturbed_energies(),
+                Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001)
 {}
 
 /** Copy constructor */
@@ -210,7 +212,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
                 Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
                 energy_frequency(other.energy_frequency),device_index(other.device_index),precision(other.precision),Alchemical_value(other.Alchemical_value),
                 coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),
-                delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients),perturbed_energies(other.perturbed_energies)
+                delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients),perturbed_energies(other.perturbed_energies),
+                Integrator_type(other.Integrator_type),friction(other.friction),integration_tol(other.integration_tol)
 {}
 
 /** Destructor */
@@ -254,7 +257,9 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     buffer_coords = other.buffer_coords;
     gradients = other.gradients;
     perturbed_energies = other.perturbed_energies;
-
+    Integrator_type = other.Integrator_type;
+    friction = other.friction;
+    integration_tol = other.integration_tol;
 
     return *this;
 }
@@ -966,7 +971,7 @@ void OpenMMFrEnergyST::initialise()  {
     
     QVector<bool> perturbed_energies_tmp(8);
     
-    for(unsigned int i = 0; i<perturbed_energies_tmp.size();i++)
+    for(int i = 0; i<perturbed_energies_tmp.size();i++)
         perturbed_energies_tmp[i] = false;
     
     
@@ -1854,11 +1859,41 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     if (Debug)
         qDebug() << " openmm nats " << nats;
 
-    // Create here integrator + Platform, then context
-
+    // Integrator 
+    
     const double dt = convertTo( timestep.value(), picosecond);
+    const double converted_Temperature = convertTo(Temperature.value(), kelvin);
+    const double converted_friction = convertTo( friction.value(), picosecond);
 
-    OpenMM::VerletIntegrator integrator_openmm(dt);//dt in pico seconds
+
+    OpenMM::Integrator * integrator_openmm = NULL;
+
+    if (Integrator_type == "leapfrogverlet")
+        integrator_openmm = new OpenMM::VerletIntegrator(dt);//dt in picosecond
+    else if (Integrator_type == "variableleapfrogverlet")
+        integrator_openmm = new OpenMM::VariableVerletIntegrator(integration_tol);//integration tolerance error unitless
+    else if (Integrator_type == "langevin")
+        integrator_openmm = new OpenMM::LangevinIntegrator(converted_Temperature, converted_friction, dt);
+    else if (Integrator_type == "variablelangevin")
+        integrator_openmm = new OpenMM::VariableLangevinIntegrator(converted_Temperature, converted_friction, integration_tol);
+    else if (Integrator_type == "brownian")
+        integrator_openmm = new OpenMM::BrownianIntegrator(converted_Temperature, converted_friction, dt);
+    else 
+        throw SireError::program_bug(QObject::tr("The user defined Integrator type is not supported. Available types are leapfrogverlet, variableleapfrogverlet, langevin, variablelangevin, brownian"), CODELOC);
+
+    if (Debug){
+        qDebug() << "Using Integrator: " << Integrator_type;
+
+        qDebug() << "Integration step = " << dt <<" ps";
+
+        if(Integrator_type == "variablelangevin" || Integrator_type == "variableleapfrogverlet"){
+            qDebug() << "Integration Tol = " << integration_tol;
+        }
+        if(Integrator_type == "langevin" || Integrator_type == "variablelangevin" || Integrator_type == "brownian"){
+            qDebug() << "Friction = " << friction << " ps";
+        }
+     }
+
     OpenMM::Platform& platform_openmm = OpenMM::Platform::getPlatformByName(platform_type.toStdString());
 
     if (platform_type == "OpenCL"){
@@ -1892,7 +1927,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     // Another implementation could have the context created once during initialisation. 
     // But then have to figure out how to properly allocate/free context on the heap and make it 
     // compatible with sire objects
-    OpenMM::Context context_openmm( *system_openmm, integrator_openmm, platform_openmm);  
+    OpenMM::Context context_openmm( *system_openmm, *integrator_openmm, platform_openmm);  
 
     if (Debug)
         qDebug() << "\n Using OpenMM platform = " <<context_openmm.getPlatform().getName().c_str()<<"\n";
@@ -2040,14 +2075,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     //show_status(sample_count, n_samples);
 
     if(Debug){
-        for(unsigned int i=0;i<perturbed_energies.size();i++)
+        for( int i=0;i<perturbed_energies.size();i++)
             qDebug() << "Perturbed energy flag index" << i << " Value = " << perturbed_energies[i];
     }
 
     while(sample_count<n_samples){
 
         //*********************MD STEPS****************************
-        integrator_openmm.step(energy_frequency);
+        integrator_openmm->step(energy_frequency);
 
         state_openmm=context_openmm.getState(infoMask);
 
@@ -2619,9 +2654,6 @@ void OpenMMFrEnergyST::setDeviceIndex(QString deviceidx){
 }
 
 
-
-
-
 /** Get the Restaint mode*/
 bool OpenMMFrEnergyST::getRestraint(void){
 
@@ -2732,13 +2764,46 @@ void OpenMMFrEnergyST::setBufferCoords(bool buffer){
 
 }
 
-
+/** Calculated Gradient*/
 QVector<double> OpenMMFrEnergyST::getGradients(void){
 
     return gradients;
 
 }
 
+/** Get the Integrator type*/
+QString OpenMMFrEnergyST::getIntegrator(void) {
+  return Integrator_type;
+}
+
+/** Set the Integrator type*/
+void OpenMMFrEnergyST::setIntegrator(QString intgrator) {
+  Integrator_type = intgrator;
+}
+
+/** Get the friction used in specific Integrator type*/
+SireUnits::Dimension::Time OpenMMFrEnergyST::getFriction(void) {
+  return friction;
+}
+
+/** Set the friction used in specific Integrator type*/
+void OpenMMFrEnergyST::setFriction(SireUnits::Dimension::Time thefriction) {
+  friction = thefriction;
+} 
+
+/** Get the integration tollerance */
+double OpenMMFrEnergyST::getIntegration_tollerance(void){
+
+    return integration_tol;
+
+}
+
+/** Set the integration tollerance*/
+void OpenMMFrEnergyST::setIntegration_tollerance(double tollerance){
+
+    integration_tol = tollerance;
+
+}
 
 
 /** Create an empty workspace */
