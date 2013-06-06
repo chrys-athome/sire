@@ -14,6 +14,7 @@ set ( SIREBASE_HEADERS
 
       array2d.hpp
       array2d.h
+      arrayproperty.hpp
       chunkedhash.hpp
       chunkedvector.hpp
       combineproperties.h
@@ -26,6 +27,7 @@ set ( SIREBASE_HEADERS
       linktoproperty.h
       majorminorversion.h
       meminfo.h
+      numberproperty.h
       packedarray2d.h
       packedarray2d.hpp
       packedarrays.h
@@ -33,6 +35,7 @@ set ( SIREBASE_HEADERS
       process.h
       properties.h
       property.h
+      propertylist.h
       propertymap.h
       quickcopy.hpp
       qvariant_metatype.h
@@ -42,6 +45,7 @@ set ( SIREBASE_HEADERS
       sharedpolypointer_cast.hpp
       sparsematrix.hpp
       stringmangler.h
+      stringproperty.h
       tempdir.h
       trigarray2d.h
       trigarray2d.hpp
@@ -64,14 +68,17 @@ set ( SIREBASE_SOURCES
       linktoproperty.cpp
       majorminorversion.cpp
       meminfo.cpp
+      numberproperty.cpp
       packedarray2d.cpp
       process.cpp
       properties.cpp
       property.cpp
+      propertylist.cpp
       propertymap.cpp
       savestate.cpp
       sharedpolypointer.cpp
-      stringmangler.cpp     
+      stringmangler.cpp 
+      stringproperty.cpp    
       tempdir.cpp
       trigarray2d.cpp 
 

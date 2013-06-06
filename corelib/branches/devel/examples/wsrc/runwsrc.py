@@ -30,14 +30,16 @@ params["reflection radius"] = 10 * angstroms
 params["temperature"] = 25 * celsius
 
 # Specify the lambda values to use
-params["lambda values"] = [ 0.001, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5,
-                            0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99, 0.999 ]
+params["lambda values"] = [ 0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.49,
+                            0.51, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99 ]
+
+params["delta_lambda"] = 0.01
 
 # Specify the number of RETI iterations
 params["nmoves"] = 10
 
 # Specify the number of Monte Carlo moves to perform per RETI iteration
-params["nsubmoves"] = 10
+params["nsubmoves"] = 100
 
 # Specify the number of equilibration moves to perform when setting up the system
 params["nequilmoves"] = 50

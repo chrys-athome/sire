@@ -860,9 +860,15 @@ bool RepExMove::testPair(const Replica &replica_a, const RepExSubMove &move_a,
         
         double delta = beta_b * ( H_b_i - H_b_j + p_b*(V_b_i - V_b_j) ) +
                        beta_a * ( H_a_i - H_a_j + p_a*(V_a_i - V_a_j) );
-                       
+        
+        qDebug() << "beta" << beta_a << beta_b;
+        qDebug() << "i" << H_a_i << H_a_j << (H_a_j - H_a_i);
+        qDebug() << "j" << H_b_i << H_b_j << (H_b_j - H_b_i);
+        
         bool move_passed = ( delta > 0 or (std::exp(delta) >= rangenerator.rand()) );
-                       
+        
+        qDebug() << "Passed?" << move_passed;
+        
         return move_passed;
     }
     else
@@ -893,6 +899,8 @@ void RepExMove::testAndSwap(Replicas &replicas, const QVector<RepExSubMove> &sub
         //loop over all pairs
         for (int i=start; i<nreplicas-1; i+=2)
         {
+            qDebug() << "Test replicas" << i << (i+1);
+        
             if (this->testPair(replicas[i], submoves.at(i),
                                replicas[i+1], submoves.at(i+1) ))
             {

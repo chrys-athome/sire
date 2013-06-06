@@ -194,6 +194,7 @@ set ( SIREMATHS_HEADERS
       trigmatrix.h
       vector.h
       vector3d.hpp
+      vectorproperty.h
 
       sire_blas.h
       sire_lapack.h
@@ -231,6 +232,7 @@ set ( SIREMATHS_SOURCES
       triangle.cpp
       trigmatrix.cpp
       vector.cpp
+      vectorproperty.cpp
 
       sire_blas.cpp
       sire_lapack.cpp
