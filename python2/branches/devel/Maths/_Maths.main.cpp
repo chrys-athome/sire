@@ -89,6 +89,10 @@
 
 #include "Vector.pypp.hpp"
 
+#include "VectorArrayProperty.pypp.hpp"
+
+#include "VectorProperty.pypp.hpp"
+
 #include "_Maths_free_functions.pypp.hpp"
 
 namespace bp = boost::python;
@@ -189,6 +193,10 @@ BOOST_PYTHON_MODULE(_Maths){
     register_Triangle_class();
 
     register_TrigMatrix_class();
+
+    register_VectorArrayProperty_class();
+
+    register_VectorProperty_class();
 
     register_SireMaths_properties();
 

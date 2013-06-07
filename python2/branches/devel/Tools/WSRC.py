@@ -1601,6 +1601,9 @@ def analyseWSRC(replicas, iteration):
     print >>FILE," Results for iteration %d" % iteration
     print >>FILE,"==========================="
 
+    print >>FILE,"\ndelta_lambda == %f" % delta_lambda
+    print >>FILE,"temperature == %f K\n" % replicas[0].subMoves().temperature().to(kelvin) 
+
     nreplicas = replicas.nReplicas()
 
     # extract all of the monitors from the replicas

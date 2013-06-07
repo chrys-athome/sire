@@ -3,6 +3,7 @@
 
 #include "SireMaths_registrars.h"
 
+#include "vectorproperty.h"
 #include "freeenergyaverage.h"
 #include "quaternion.h"
 #include "histogram.h"
@@ -28,6 +29,8 @@
 void register_SireMaths_objects()
 {
 
+    ObjectRegistry::registerConverterFor< SireMaths::VectorProperty >();
+    ObjectRegistry::registerConverterFor< SireMaths::VectorArrayProperty >();
     ObjectRegistry::registerConverterFor< SireMaths::FreeEnergyAverage >();
     ObjectRegistry::registerConverterFor< SireMaths::Quaternion >();
     ObjectRegistry::registerConverterFor< SireMaths::Histogram >();

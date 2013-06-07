@@ -163,6 +163,36 @@ namespace bp = boost::python;
 
 #include "linearap.h"
 
+#include "SireMaths/vectorproperty.h"
+
+#include "SireStream/datastream.h"
+
+#include "SireStream/shareddatastream.h"
+
+#include "vectorproperty.h"
+
+#include "vectorproperty.h"
+
+#include "SireMaths/vectorproperty.h"
+
+#include "SireStream/datastream.h"
+
+#include "SireStream/shareddatastream.h"
+
+#include "vectorproperty.h"
+
+#include "vectorproperty.h"
+
+#include "SireMaths/vectorproperty.h"
+
+#include "SireStream/datastream.h"
+
+#include "SireStream/shareddatastream.h"
+
+#include "vectorproperty.h"
+
+#include "vectorproperty.h"
+
 void register_free_functions(){
 
     { //::SireMaths::Gamma
@@ -342,6 +372,42 @@ void register_free_functions(){
             "solve_linear_assignment"
             , solve_linear_assignment_function_value
             , ( bp::arg("costs"), bp::arg("check_result")=(bool)(false) ) );
+    
+    }
+
+    { //::SireMaths::wrap
+    
+        typedef ::SireBase::PropertyPtr ( *wrap_function_type )( ::QList< SireMaths::Vector > const & );
+        wrap_function_type wrap_function_value( &::SireMaths::wrap );
+        
+        bp::def( 
+            "wrap"
+            , wrap_function_value
+            , ( bp::arg("vector") ) );
+    
+    }
+
+    { //::SireMaths::wrap
+    
+        typedef ::SireBase::PropertyPtr ( *wrap_function_type )( ::QVector< SireMaths::Vector > const & );
+        wrap_function_type wrap_function_value( &::SireMaths::wrap );
+        
+        bp::def( 
+            "wrap"
+            , wrap_function_value
+            , ( bp::arg("vector") ) );
+    
+    }
+
+    { //::SireMaths::wrap
+    
+        typedef ::SireBase::PropertyPtr ( *wrap_function_type )( ::SireMaths::Vector const & );
+        wrap_function_type wrap_function_value( &::SireMaths::wrap );
+        
+        bp::def( 
+            "wrap"
+            , wrap_function_value
+            , ( bp::arg("vector") ) );
     
     }
 

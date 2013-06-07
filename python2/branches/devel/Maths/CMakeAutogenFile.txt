@@ -43,6 +43,8 @@ set ( PYPP_SOURCES
        TrigArray2D_Vector_.pypp.cpp
        TrigMatrix.pypp.cpp
        Vector.pypp.cpp
+       VectorArrayProperty.pypp.cpp
+       VectorProperty.pypp.cpp
        SireMaths_containers.cpp
        SireMaths_properties.cpp
        SireMaths_registrars.cpp

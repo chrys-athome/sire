@@ -17,9 +17,13 @@
 
 #include "CombineProperties.pypp.hpp"
 
+#include "DoubleArrayProperty.pypp.hpp"
+
 #include "FlopsMark.pypp.hpp"
 
 #include "Incremint.pypp.hpp"
+
+#include "IntegerArrayProperty.pypp.hpp"
 
 #include "LinkToProperty.pypp.hpp"
 
@@ -32,6 +36,8 @@
 #include "NoMangling.pypp.hpp"
 
 #include "NullProperty.pypp.hpp"
+
+#include "NumberProperty.pypp.hpp"
 
 #include "PackedArray2D_QString_.pypp.hpp"
 
@@ -55,11 +61,17 @@
 
 #include "Property.pypp.hpp"
 
+#include "PropertyList.pypp.hpp"
+
 #include "PropertyMap.pypp.hpp"
 
 #include "PropertyName.pypp.hpp"
 
+#include "StringArrayProperty.pypp.hpp"
+
 #include "StringMangler.pypp.hpp"
+
+#include "StringProperty.pypp.hpp"
 
 #include "TempDir.pypp.hpp"
 
@@ -108,9 +120,13 @@ BOOST_PYTHON_MODULE(_Base){
 
     register_CombineProperties_class();
 
+    register_DoubleArrayProperty_class();
+
     register_FlopsMark_class();
 
     register_Incremint_class();
+
+    register_IntegerArrayProperty_class();
 
     register_LinkToProperty_class();
 
@@ -126,6 +142,8 @@ BOOST_PYTHON_MODULE(_Base){
 
     register_NullProperty_class();
 
+    register_NumberProperty_class();
+
     register_PackedArray2D_QString__class();
 
     register_PackedArray2D_QVariant__class();
@@ -138,9 +156,15 @@ BOOST_PYTHON_MODULE(_Base){
 
     register_Properties_class();
 
+    register_PropertyList_class();
+
     register_PropertyMap_class();
 
     register_PropertyName_class();
+
+    register_StringArrayProperty_class();
+
+    register_StringProperty_class();
 
     register_TempDir_class();
 
