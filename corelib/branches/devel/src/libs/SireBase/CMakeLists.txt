@@ -58,6 +58,7 @@ set ( SIREBASE_SOURCES
       register_sirebase.cpp
 
       array2d.cpp
+      arrayproperty.cpp
       chunkedhash.cpp
       chunkedvector.cpp
       combineproperties.cpp

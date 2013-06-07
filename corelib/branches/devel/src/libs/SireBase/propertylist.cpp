@@ -43,14 +43,6 @@ using namespace SireStream;
 
 static const RegisterMetaType<PropertyList> r_proplist;
 
-template class SireBase::ArrayProperty<qint64>;
-template class SireBase::ArrayProperty<double>;
-template class SireBase::ArrayProperty<QString>;
-
-static const RegisterMetaType< ArrayProperty<qint64> > r_intarray;
-static const RegisterMetaType< ArrayProperty<double> > r_doublearray;
-static const RegisterMetaType< ArrayProperty<QString> > r_stringarray;
-
 /////////
 ///////// Implementation of SireBase::wrap
 /////////
@@ -59,7 +51,7 @@ namespace SireBase
 {
     namespace detail
     {
-        int checkIndex(int i, int count)
+        int SIREBASE_EXPORT checkIndex(int i, int count)
         {
             int idx = i;
         
@@ -110,12 +102,12 @@ namespace SireBase
             ivals.append(value);
         }
     
-        return ArrayProperty<qint64>(ivals);
+        return IntegerArrayProperty(ivals);
     }
     
     PropertyPtr SIREBASE_EXPORT wrap(const QList<double> &values)
     {
-        return ArrayProperty<double>(values);
+        return DoubleArrayProperty(values);
     }
 
     PropertyPtr SIREBASE_EXPORT wrap(const QVector<int> &values)
@@ -128,22 +120,22 @@ namespace SireBase
             ivals.append(value);
         }
 
-        return ArrayProperty<qint64>(ivals);
+        return IntegerArrayProperty(ivals);
     }
     
     PropertyPtr SIREBASE_EXPORT wrap(const QVector<double> &values)
     {
-        return ArrayProperty<double>(values);
+        return DoubleArrayProperty(values);
     }
     
     PropertyPtr SIREBASE_EXPORT wrap(const QList<QString> &values)
     {
-        return ArrayProperty<QString>(values);
+        return StringArrayProperty(values);
     }
     
     PropertyPtr SIREBASE_EXPORT wrap(const QVector<QString> &values)
     {
-        return ArrayProperty<QString>(values);
+        return StringArrayProperty(values);
     }
 }
 

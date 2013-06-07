@@ -30,16 +30,29 @@
 #define SIREBASE_PROPERTYLIST_H
 
 #include "SireBase/property.h"
+#include "SireBase/arrayproperty.hpp"
 
 SIRE_BEGIN_HEADER
 
 namespace SireBase
 {
 class PropertyList;
+class DoubleArrayProperty;
+class IntegerArrayProperty;
+class StringArrayProperty;
 }
 
 QDataStream& operator<<(QDataStream&, const SireBase::PropertyList&);
 QDataStream& operator>>(QDataStream&, SireBase::PropertyList&);
+
+QDataStream& operator<<(QDataStream&, const SireBase::DoubleArrayProperty&);
+QDataStream& operator>>(QDataStream&, SireBase::DoubleArrayProperty&);
+
+QDataStream& operator<<(QDataStream&, const SireBase::IntegerArrayProperty&);
+QDataStream& operator>>(QDataStream&, SireBase::IntegerArrayProperty&);
+
+QDataStream& operator<<(QDataStream&, const SireBase::StringArrayProperty&);
+QDataStream& operator>>(QDataStream&, SireBase::StringArrayProperty&);
 
 namespace SireBase
 {
@@ -136,6 +149,84 @@ private:
     QList<PropertyPtr> l;
 };
 
+class SIREMATHS_EXPORT DoubleArrayProperty
+        : public ConcreteProperty<DoubleArrayProperty,ArrayProperty<double> >
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const DoubleArrayProperty&);
+friend QDataStream& ::operator>>(QDataStream&, DoubleArrayProperty&);
+
+public:
+    DoubleArrayProperty();
+    DoubleArrayProperty(const QList<double> &array);
+    DoubleArrayProperty(const QVector<double> &array);
+    DoubleArrayProperty(const DoubleArrayProperty &other);
+    
+    ~DoubleArrayProperty();
+    
+    static const char* typeName();
+    
+    DoubleArrayProperty& operator=(const DoubleArrayProperty &other);
+    
+    bool operator==(const DoubleArrayProperty &other) const;
+    bool operator!=(const DoubleArrayProperty &other) const;
+
+    DoubleArrayProperty operator+(const DoubleArrayProperty &other) const;
+    DoubleArrayProperty& operator+=(const DoubleArrayProperty &other);
+};
+
+class SIREMATHS_EXPORT IntegerArrayProperty
+        : public ConcreteProperty<IntegerArrayProperty,ArrayProperty<qint64> >
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const IntegerArrayProperty&);
+friend QDataStream& ::operator>>(QDataStream&, IntegerArrayProperty&);
+
+public:
+    IntegerArrayProperty();
+    IntegerArrayProperty(const QList<qint64> &array);
+    IntegerArrayProperty(const QVector<qint64> &array);
+    IntegerArrayProperty(const IntegerArrayProperty &other);
+    
+    ~IntegerArrayProperty();
+    
+    static const char* typeName();
+    
+    IntegerArrayProperty& operator=(const IntegerArrayProperty &other);
+    
+    bool operator==(const IntegerArrayProperty &other) const;
+    bool operator!=(const IntegerArrayProperty &other) const;
+
+    IntegerArrayProperty operator+(const IntegerArrayProperty &other) const;
+    IntegerArrayProperty& operator+=(const IntegerArrayProperty &other);
+};
+
+class SIREMATHS_EXPORT StringArrayProperty
+        : public ConcreteProperty<StringArrayProperty,ArrayProperty<QString> >
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const StringArrayProperty&);
+friend QDataStream& ::operator>>(QDataStream&, StringArrayProperty&);
+
+public:
+    StringArrayProperty();
+    StringArrayProperty(const QList<QString> &array);
+    StringArrayProperty(const QVector<QString> &array);
+    StringArrayProperty(const StringArrayProperty &other);
+    
+    ~StringArrayProperty();
+    
+    static const char* typeName();
+    
+    StringArrayProperty& operator=(const StringArrayProperty &other);
+    
+    bool operator==(const StringArrayProperty &other) const;
+    bool operator!=(const StringArrayProperty &other) const;
+
+    StringArrayProperty operator+(const StringArrayProperty &other) const;
+    StringArrayProperty& operator+=(const StringArrayProperty &other);
+};
+
 PropertyPtr wrap(const Property &value);
 PropertyPtr wrap(const QList<PropertyPtr> &value);
 PropertyPtr wrap(const QString &value);
@@ -149,16 +240,19 @@ PropertyPtr wrap(const QVector<double> &values);
 PropertyPtr wrap(const QList<QString> &values);
 PropertyPtr wrap(const QVector<QString> &values);
 
-/* In SireMaths I will need
-    namespace SireBase {    PropPtr wrap(const Vector &value)  }
-   and will then need to play with python to get this to work
-*/
-
 }
 
 SIRE_EXPOSE_FUNCTION( SireBase::wrap )
 
+Q_DECLARE_METATYPE( SireBase::DoubleArrayProperty )
+Q_DECLARE_METATYPE( SireBase::IntegerArrayProperty )
+Q_DECLARE_METATYPE( SireBase::StringArrayProperty )
 Q_DECLARE_METATYPE( SireBase::PropertyList )
+
+SIRE_EXPOSE_CLASS( SireBase::DoubleArrayProperty )
+SIRE_EXPOSE_CLASS( SireBase::IntegerArrayProperty )
+SIRE_EXPOSE_CLASS( SireBase::StringArrayProperty )
+SIRE_EXPOSE_CLASS( SireBase::PropertyList )
 
 SIRE_END_HEADER
 

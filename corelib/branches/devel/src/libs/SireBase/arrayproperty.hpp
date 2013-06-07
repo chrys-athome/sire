@@ -61,30 +61,15 @@ namespace detail
     @author Christopher Woods
 */
 template<class T>
-class SIREBASE_EXPORT ArrayProperty : public ConcreteProperty<ArrayProperty<T>,Property>
+class SIREBASE_EXPORT ArrayProperty : public Property
 {
-
-friend QDataStream& ::operator<<<>(QDataStream&, const ArrayProperty<T>&);
-friend QDataStream& ::operator>><>(QDataStream&, ArrayProperty<T>&);
 
 public:
     ArrayProperty();
-    ArrayProperty(const QList<T> &array);
-    ArrayProperty(const QVector<T> &array);
-    ArrayProperty(const ArrayProperty<T> &other);
     
     ~ArrayProperty();
     
-    static const char* typeName();
-    
-    ArrayProperty<T>& operator=(const ArrayProperty &other);
-    
-    bool operator==(const ArrayProperty &other) const;
-    bool operator!=(const ArrayProperty &other) const;
-
-    ArrayProperty<T> operator+(const ArrayProperty<T> &other) const;
-    ArrayProperty<T>& operator+=(const ArrayProperty<T> &other);
-    const T& operator[](int i) const;
+    T operator[](int i) const;
 
     QString toString() const;
 
@@ -93,17 +78,17 @@ public:
     int count() const;
     int size() const;
 
-    void append(const T &value);
+    void append(T value);
     void append(const ArrayProperty<T> &values);
     
-    const T& at(int i) const;
+    T at(int i) const;
     
     void clear();
     
     bool empty() const;
     bool isEmpty() const;
 
-    void insert(int i, const T &value);
+    void insert(int i, T value);
     
     ArrayProperty<T> mid(int pos, int length=-1) const;
     
@@ -111,15 +96,15 @@ public:
     
     void pop_back();
     void pop_front();
-    void prepend(const T &value);
-    void push_back(const T &value);
-    void push_front(const T &value);
+    void prepend(T value);
+    void push_back(T value);
+    void push_front(T value);
     
     void removeAt(int i);
     void removeFirst();
     void removeLast();
     
-    void replace(int i, const T &value);
+    void replace(int i, T value);
 
     void swap(ArrayProperty<T> &other);
     
@@ -133,32 +118,40 @@ public:
     QVector<T> toVector() const;
     
     T value(int i) const;
-    T value(int i, const T &default_value) const;
+    T value(int i, T default_value) const;
     
     operator QVector<T>() const;
+ 
+protected:
+    /** These functions must be reimplemented by the deriving class */
+    ArrayProperty(const QList<T> &array);
+    ArrayProperty(const QVector<T> &array);
+    ArrayProperty(const ArrayProperty<T> &other);
     
-private:
+    ArrayProperty<T>& operator=(const ArrayProperty &other);
+    
+    bool operator==(const ArrayProperty &other) const;
+    bool operator!=(const ArrayProperty &other) const;
+
+    QVector<T> operator+(const ArrayProperty<T> &other) const;
+    ArrayProperty<T>& operator+=(const ArrayProperty<T> &other);
+
     /** The actual array */
     QVector<T> a;
 };
-
-typedef ArrayProperty<qint64> IntegerArrayProperty;
-typedef ArrayProperty<double> DoubleArrayProperty;
-typedef ArrayProperty<QString> StringArrayProperty;
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-ArrayProperty<T>::ArrayProperty() : ConcreteProperty<ArrayProperty<T>,Property>()
+ArrayProperty<T>::ArrayProperty() : Property()
 {}
 
 /** Construct from the passed list */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-ArrayProperty<T>::ArrayProperty(const QList<T> &array)
-                 : ConcreteProperty<ArrayProperty<T>,Property>()
+ArrayProperty<T>::ArrayProperty(const QList<T> &array) : Property()
 {
     if (not array.isEmpty())
     {
@@ -177,15 +170,14 @@ ArrayProperty<T>::ArrayProperty(const QList<T> &array)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ArrayProperty<T>::ArrayProperty(const QVector<T> &array)
-                 : ConcreteProperty<ArrayProperty<T>,Property>(),
-                   a(array)
+                 : Property(), a(array)
 {}
 
 /** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ArrayProperty<T>::ArrayProperty(const ArrayProperty<T> &other)
-                 : ConcreteProperty<ArrayProperty<T>,Property>(other), a(other.a)
+                 : Property(other), a(other.a)
 {}
 
 /** Destructor */
@@ -193,13 +185,6 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 ArrayProperty<T>::~ArrayProperty()
 {}
-
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-const char* ArrayProperty<T>::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId< ArrayProperty<T> >() );
-}
 
 /** Copy assignment operator */
 template<class T>
@@ -229,9 +214,9 @@ bool ArrayProperty<T>::operator!=(const ArrayProperty &other) const
 /** Return the sum of the two arrays (join them together) */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-ArrayProperty<T> ArrayProperty<T>::operator+(const ArrayProperty<T> &other) const
+QVector<T> ArrayProperty<T>::operator+(const ArrayProperty<T> &other) const
 {
-    return ArrayProperty<T>( a + other.a );
+    return a + other.a;
 }
 
 /** Add the contents of the other array onto this array */
@@ -246,7 +231,7 @@ ArrayProperty<T>& ArrayProperty<T>::operator+=(const ArrayProperty<T> &other)
 /** Return the ith element of the array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T& ArrayProperty<T>::operator[](int i) const
+T ArrayProperty<T>::operator[](int i) const
 {
     return a.constData()[ detail::checkIndex(i, a.count()) ];
 }
@@ -284,7 +269,7 @@ int ArrayProperty<T>::size() const
 /** Append the passed value onto the array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void ArrayProperty<T>::append(const T &value)
+void ArrayProperty<T>::append(T value)
 {
     a.append(value);
 }
@@ -308,7 +293,7 @@ void ArrayProperty<T>::append(const ArrayProperty<T> &values)
 /** Return the ith element of the array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T& ArrayProperty<T>::at(int i) const
+T ArrayProperty<T>::at(int i) const
 {
     return a.constData()[ detail::checkIndex(i,a.count()) ];
 }
@@ -340,7 +325,7 @@ bool ArrayProperty<T>::isEmpty() const
 /** Insert the passed value into the array at index i */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void ArrayProperty<T>::insert(int i, const T &value)
+void ArrayProperty<T>::insert(int i, T value)
 {
     a.insert(i, value);
 }
@@ -388,7 +373,7 @@ void ArrayProperty<T>::pop_front()
 /** Prepend the passed value onto the beginning of the array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void ArrayProperty<T>::prepend(const T &value)
+void ArrayProperty<T>::prepend(T value)
 {
     a.prepend(value);
 }
@@ -396,7 +381,7 @@ void ArrayProperty<T>::prepend(const T &value)
 /** Push the passed value onto the back of the array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void ArrayProperty<T>::push_back(const T &value)
+void ArrayProperty<T>::push_back(T value)
 {
     a.push_back(value);
 }
@@ -404,7 +389,7 @@ void ArrayProperty<T>::push_back(const T &value)
 /** Push the passed value onto the front of the array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void ArrayProperty<T>::push_front(const T &value)
+void ArrayProperty<T>::push_front(T value)
 {
     a.push_front(value);
 }
@@ -444,7 +429,7 @@ void ArrayProperty<T>::removeLast()
 /** Replace the item at index 'i' with the passed value */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void ArrayProperty<T>::replace(int i, const T &value)
+void ArrayProperty<T>::replace(int i, T value)
 {
     a.replace( detail::checkIndex(i,a.count()), value );
 }
@@ -537,7 +522,7 @@ QVector<T> ArrayProperty<T>::toVector() const
     is an invalid index */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T ArrayProperty<T>::value(int i, const T &default_value) const
+T ArrayProperty<T>::value(int i, T default_value) const
 {
     int idx = i;
     
@@ -569,22 +554,6 @@ ArrayProperty<T>::operator QVector<T>() const
 #endif
 
 }
-
-Q_DECLARE_METATYPE( SireBase::IntegerArrayProperty )
-Q_DECLARE_METATYPE( SireBase::DoubleArrayProperty )
-Q_DECLARE_METATYPE( SireBase::StringArrayProperty )
-
-SIRE_EXPOSE_ALIAS( SireBase::ArrayProperty<qint64>, IntegerArrayProperty )
-SIRE_EXPOSE_ALIAS( SireBase::ArrayProperty<double>, DoubleArrayProperty )
-SIRE_EXPOSE_ALIAS( SireBase::ArrayProperty<QString>, StringArrayProperty )
-
-#ifdef SIRE_INSTANTIATE_TEMPLATES
-
-template class SireBase::ArrayProperty<qint64>;
-template class SireBase::ArrayProperty<double>;
-template class SireBase::ArrayProperty<QString>;
-
-#endif //SIRE_INSTANTIATE_TEMPLATES
 
 SIRE_END_HEADER
 
