@@ -67,7 +67,7 @@ set ( SIREMOVE_OPENMM_HEADERS
       openmmfrenergydt.h
       openmmfrenergyst.h
       openmmacceleratedmdintegrator.h
-
+      dcd_writer.h
     )
 
 set ( SIREMOVE_OPENMM_SOURCES
@@ -76,7 +76,7 @@ set ( SIREMOVE_OPENMM_SOURCES
       openmmfrenergydt.cpp
       openmmfrenergyst.cpp
       openmmacceleratedmdintegrator.cpp
-
+      dcd_writer.cpp
     )
 
 set ( SIREMOVE_DEPRECATED_HEADERS

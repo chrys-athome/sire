@@ -73,6 +73,7 @@
 #include <iostream>
 #include <QDebug>
 #include <QTime>
+#include "dcd_writer.h"
 
 
 using namespace SireMove;
@@ -2079,10 +2080,27 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             qDebug() << "Perturbed energy flag index" << i << " Value = " << perturbed_energies[i];
     }
 
+
+
+
+    vector<double> center(3);
+    center[0] = 0.0;
+    center[1] = 0.0;
+    center[2] = 0.0; 
+
+
+    int dcd_freq  = 10;
+    DCD dcd("traj.dcd", false, NOCUTOFF, center, dcd_freq, nats, dt,  context_openmm, ws );
+
+
+
+
     while(sample_count<n_samples){
 
         //*********************MD STEPS****************************
         integrator_openmm->step(energy_frequency);
+
+        dcd.write((int) sample_count);//Save a frame
 
         state_openmm=context_openmm.getState(infoMask);
 
@@ -2332,8 +2350,12 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 
     }//end while
-    
-    
+
+
+    /**********************************************TO BE REMOVED*****************************************/
+    dcd.close();
+
+
     if (Debug)
         qDebug() << "Done dynamics, time elapsed " << timer.elapsed() << " ms\n";
 
