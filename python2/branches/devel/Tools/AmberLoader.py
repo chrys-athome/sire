@@ -23,6 +23,7 @@ from Sire.Config import *
 import Sire.Stream
 
 from Sire.Tools import Parameter, resolveParameters
+from Sire.Tools.WaterChanger import convertTip3PtoTip4P
 
 ###################################
 # Parameters used by this module  #
@@ -31,6 +32,12 @@ from Sire.Tools import Parameter, resolveParameters
 dobonds = Parameter("move bonds", True, """Whether or not to move the ligands bonds""")
 doangles = Parameter("move angles", True, """Whether or not to move the ligands angles""")
 dodihedrals = Parameter("move dihedrals", True, """Whether or not to move the ligands dihedrals""")
+
+water_model = Parameter("water model", None,
+                        """The water model to use. Note, by default the water model is read from
+                           the protein and water crd/top files. If you want to force a change
+                           in water model, then set it here, e.g. if you are loading a TIP3P box
+                           but want to use TIP4P, then set this parameter to "tip4p".""")
 
 BASE_DIHEDRALH_FLEX = Parameter("h dihedral flex", 30*degrees, "Base dihedral rotation for H")
 BASE_DIHEDRAL_FLEX = Parameter("dihedral flex", 20*degrees, "Base dihedral rotation")
@@ -210,6 +217,42 @@ def createSystem(top_file, crd_file, naming_scheme = NamingScheme()):
     print "Loading the molecules from the Amber files \"%s\" and \"%s\"..." % \
                   (crd_file, top_file)
     (molecules, space) = amber.readCrdTop(crd_file, top_file)
+
+    # If requested, change the water model for all water molecules
+    if water_model.val == "tip4p":
+        molnums = molecules.molNums()
+        new_molecules = Molecules()
+
+        print "Forcing all water molecules to use the %s water model..." % water_model.val
+        print "Converting %d molecules..." % len(molnums)
+        i = 0
+        for molnum in molnums:
+            molecule = molecules[molnum].molecule()
+
+            if i % 100 == 0:
+                print "%d" % i                
+                sys.stdout.flush()
+
+            elif i % 10 == 0:
+                print ".",
+                sys.stdout.flush()
+
+            i += 1
+
+            if molecule.nAtoms() == 3:
+                # this could be a TIP3P water
+                resname =str(molecule.residue().name().value()).lower()
+
+                if resname == "wat" or resname == "t3p":
+                    new_molecule = convertTip3PtoTip4P(molecule)
+                    if new_molecule:
+                        molecule = new_molecule
+
+            new_molecules.add(molecule)
+
+        print "%d" % i
+
+        molecules = new_molecules
 
     nmols = molecules.nMolecules()
 
