@@ -44,6 +44,9 @@ params["nsubmoves"] = 100
 # Specify the number of equilibration moves to perform when setting up the system
 params["nequilmoves"] = 50
 
+# Switch to use the TIP4P water model
+params["water model"] = "tip4p"
+
 # Specify the frequency of updating the residue- and water-based energy monitors
 params["energy monitor frequency"] = 5
 
