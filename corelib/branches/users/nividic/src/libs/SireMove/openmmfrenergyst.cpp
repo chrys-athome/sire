@@ -1890,7 +1890,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             qDebug() << "Integration Tol = " << integration_tol;
         }
         if(Integrator_type == "langevin" || Integrator_type == "variablelangevin" || Integrator_type == "brownian"){
-            qDebug() << "Friction = " << friction << " ps";
+            qDebug() << "Converted Friction = " << converted_friction << "1/ps";
         }
      }
 
@@ -2086,7 +2086,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         state_openmm=context_openmm.getState(infoMask);
 
-        if(Debug)
+        if(true)
             qDebug()<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
 
 
@@ -2290,7 +2290,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2 * delta_alchemical);
 
 
-        if(Debug)
+        if(true)
             qDebug() << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
 
 
