@@ -593,6 +593,8 @@ void OpenMMFrEnergyST::initialise()  {
                                                               "sigma_avg = 0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");
 
 
+        custom_force_field->setCutoffDistance(converted_cutoff_distance);
+
         custom_force_field->addGlobalParameter("lam",Alchemical_value);
         custom_force_field->addGlobalParameter("delta",shift_delta);
         custom_force_field->addGlobalParameter("n",coulomb_power);
@@ -694,6 +696,9 @@ void OpenMMFrEnergyST::initialise()  {
 
         OpenMM::AndersenThermostat * thermostat = new OpenMM::AndersenThermostat(converted_Temperature, Andersen_frequency);
 
+         //Set The random seed
+        thermostat->setRandomNumberSeed(1234567);
+
         system_openmm->addForce(thermostat);
 
         if (Debug){
@@ -710,6 +715,9 @@ void OpenMMFrEnergyST::initialise()  {
         const double converted_Pressure = convertTo(Pressure.value(), bar);
 
         OpenMM::MonteCarloBarostat * barostat = new OpenMM::MonteCarloBarostat(converted_Pressure, converted_Temperature, MCBarostat_frequency);
+        //Set The random seed
+        barostat->setRandomNumberSeed(1234567);
+
         system_openmm->addForce(barostat);
 
         if (Debug){
@@ -2062,9 +2070,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     double sample_count=0.0;
 
-    //state_openmm=context_openmm.getState(infoMask);
-
-    //printf("*Potential energy lambda  = %f kcal/mol" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
+    /*state_openmm=context_openmm.getState(infoMask);
+    qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ;
+    qDebug() << "Potential Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ;
+    qDebug() << "Kinetic Energy = " <<  state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ;*/
 
     //qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
 
@@ -2084,13 +2093,12 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 
     vector<double> center(3);
-    center[0] = 0.0;
-    center[1] = 0.0;
-    center[2] = 0.0; 
+    center[0] = 14.0;
+    center[1] = 14.0;
+    center[2] = 14.0; 
 
+    DCD dcd("traj.dcd", true,CUTOFFPERIODIC, center, energy_frequency, nats, dt,  context_openmm, ws );
 
-    int dcd_freq  = 10;
-    DCD dcd("traj.dcd", false, NOCUTOFF, center, dcd_freq, nats, dt,  context_openmm, ws );
 
 
 
@@ -2130,11 +2138,15 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             }
         }
 
-        if(Debug){
+        if(true){
             qDebug() << "\nLambda = " << Alchemical_value;
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
         }
      
+        if(potential_energy_lambda > 1000000.0){
+            qDebug() << "*********************HERE ENERGY ERROR*******************";
+            exit(-1);
+        }
         
         if((Alchemical_value + delta_alchemical)>1.0){
                         
@@ -2243,7 +2255,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
 
             
-            if(Debug){
+            if(true){
                 qDebug() << "Lambda + delta = " << Alchemical_value + delta_alchemical << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
             }
 
@@ -2281,7 +2293,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             minus = exp(-beta * (potential_energy_lambda_minus_delta - potential_energy_lambda));
             
 
-            if(Debug){
+            if(true){
                 qDebug() << "Lambda - delta = " << Alchemical_value - delta_alchemical << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
             }
             

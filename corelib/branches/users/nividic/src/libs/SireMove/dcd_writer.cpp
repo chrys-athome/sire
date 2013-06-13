@@ -62,8 +62,8 @@ void DCD::write(int current_frame){
     double delta = tstep/0.0488821;
 
 
-    qDebug() << "N atoms = " << natoms;
-    qDebug() << "time step = " << tstep << "ps";
+    //qDebug() << "N atoms = " << natoms;
+    //qDebug() << "time step = " << tstep << "ps";
 
 
     if(flag_cutoff == CUTOFFPERIODIC){
@@ -113,6 +113,9 @@ void DCD::write(int current_frame){
     }
 
     int num_atoms_till_l=0;
+    
+    
+
 
     for (int l=0; l < nmols; ++l){
 
@@ -163,6 +166,7 @@ void DCD::write(int current_frame){
             Z[openmmindex] = positions_openmm[openmmindex][2]*OpenMM::AngstromsPerNm;
 
             if((wrap == true) && (flag_cutoff == CUTOFFPERIODIC)){
+
 
                 X[openmmindex] = X[openmmindex] + COT[0];
                 Y[openmmindex] = Y[openmmindex] + COT[1];
