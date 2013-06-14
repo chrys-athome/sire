@@ -10,6 +10,10 @@ namespace bp = boost::python;
 
 #include "SireMaths/quaternion.h"
 
+#include "SireMaths/vectorproperty.h"
+
+#include "SireMol/molecule.h"
+
 #include "SireMol/partialmolecule.h"
 
 #include "SireStream/datastream.h"

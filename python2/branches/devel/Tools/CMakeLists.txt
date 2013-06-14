@@ -9,6 +9,7 @@
 set ( SCRIPTS
         __init__.py
         AmberLoader.py
+        FDTISingleBound.py
         FDTISingleFree.py
         WaterChanger.py
         WSRC.py

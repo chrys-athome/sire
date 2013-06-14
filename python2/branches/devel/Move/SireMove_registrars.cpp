@@ -21,6 +21,7 @@
 #include "suprasystem.h"
 #include "moves.h"
 #include "velocitygenerator.h"
+#include "internalmovesingle.h"
 #include "supramoves.h"
 #include "rigidbodymc.h"
 #include "titrationmove.h"
@@ -73,6 +74,7 @@ void register_SireMove_objects()
     ObjectRegistry::registerConverterFor< SireMove::NullVelocityGenerator >();
     ObjectRegistry::registerConverterFor< SireMove::VelocitiesFromProperty >();
     ObjectRegistry::registerConverterFor< SireMove::MaxwellBoltzmann >();
+    ObjectRegistry::registerConverterFor< SireMove::InternalMoveSingle >();
     ObjectRegistry::registerConverterFor< SireMove::SameSupraMoves >();
     ObjectRegistry::registerConverterFor< SireMove::RigidBodyMC >();
     ObjectRegistry::registerConverterFor< SireMove::TitrationMove >();

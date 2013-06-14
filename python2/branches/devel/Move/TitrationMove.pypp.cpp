@@ -13,6 +13,10 @@ namespace bp = boost::python;
 
 #include "SireSystem/system.h"
 
+#include "SireUnits/temperature.h"
+
+#include "SireUnits/units.h"
+
 #include "titrationmove.h"
 
 #include "titrator.h"

@@ -33,6 +33,8 @@
 
 #include "InternalMove.pypp.hpp"
 
+#include "InternalMoveSingle.pypp.hpp"
+
 #include "MTSMC.pypp.hpp"
 
 #include "MaxwellBoltzmann.pypp.hpp"
@@ -193,6 +195,8 @@ BOOST_PYTHON_MODULE(_Move){
     register_HybridMC_class();
 
     register_InternalMove_class();
+
+    register_InternalMoveSingle_class();
 
     register_MTSMC_class();
 

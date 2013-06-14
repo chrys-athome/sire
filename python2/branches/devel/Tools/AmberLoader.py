@@ -74,9 +74,9 @@ class NamingScheme:
 
         self._water_names = [ "WAT", "T3P", "T4P", "HOH" ]
 
-        self._ion_names = [ "NA+", "CA+", "CAL", "CL-" ]
+        self._ion_names = [ "NA+", "Na+", "CA+", "Ca+", "CAL", "CL-", "Cl-" ]
 
-        self._solute_names = []
+        self._solute_names = [ "LIG" ]
 
     def proteinsGroupName(self):
         return MGName("protein")
@@ -172,7 +172,10 @@ class NamingScheme:
             if resnam in names:
                 return True
 
-        return False
+        if str(molecule.name().value()).upper() in names:
+            return True
+        else:
+            return False
 
     def isProtein(self, molecule):
         return self._isType(molecule, self._protein_names)

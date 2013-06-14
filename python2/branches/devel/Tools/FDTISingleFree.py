@@ -73,6 +73,9 @@ cutoff_scheme = Parameter("cutoff scheme", "group",
 rf_dielectric = Parameter("dielectric", 78.3,
                           """The dielectric constant to use with the reaction field cutoff method.""")
 
+out_dir = Parameter("output directory", "output",
+                    """The directory in which to place all output files.""")
+
 top_file = Parameter("topology file", "../../SYSTEM.top",
                      """The name of the topology file that contains the solvated solute.""")
 
@@ -187,8 +190,9 @@ def adjustPerturbedDOFs( molecule ):
                 mover = molecule.move()
                 try:
                     mover.set(bond, r)
-                except UserWarning as error:
+                except UserWarning:
                     # extract the type of the errror
+                    _, error, _ = sys.exc_info()
                     error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
                     if error_type == "SireMol::ring_error":
                         continue
@@ -204,8 +208,9 @@ def adjustPerturbedDOFs( molecule ):
                 mover = molecule.move()
                 try:                
                     mover.set(angle, theta)
-                except UserWarning as error:
+                except UserWarning:
                     # extract the type of the errror
+                    _, err, _ = sys.exc_info()
                     error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
                     if error_type == "SireMol::ring_error":
                         continue
@@ -280,6 +285,23 @@ def createSystem(molecules, space):
 
     #print lig_name
     solute = solute.edit().rename(ligand_name).commit()
+
+    # if the space is periodic, then translate everything so that the solute
+    # is in the center of the box
+    if space.isPeriodic():
+        print "Centering the system so that the solute is at (0,0,0)..."
+        center = solute.evaluate().center()
+        delta = -center
+
+        solute = solute.move().translate(delta).commit()
+        moleculeList[0] = solute
+
+        for i in range(1,len(moleculeList)):
+            mol = moleculeList[i].move().translate(delta).commit()
+            center = mol.evaluate().center()
+            image = space.getMinimumImage(center, Vector(0))
+            moleculeList[i] = mol.move().translate(image-center).commit()
+
     #print solute
     # This will add the property "flexibility" to the solute
     flexibility_lib = FlexibilityLibrary(ligand_flex_file.val)
@@ -318,7 +340,6 @@ def createSystem(molecules, space):
     # non dummy to non dummy --> the hard group, uses a normal intermolecular FF
     # non dummy to dummy --> the todummy group, uses SoftFF with alpha = Lambda
     # dummy to non dummy --> the fromdummy group, uses SoftFF with alpha = 1 - Lambda
-    # We start assuming all atoms are hard atoms. Then we call getDummies to find which atoms 
     # start/end as dummies and update the hard, todummy and fromdummy groups accordingly
 
     solute_grp_ref = MoleculeGroup("solute_ref", solute)
@@ -1215,10 +1236,14 @@ def writeComponents(components, filename):
 def writeSystemData(system, moves, block):
     nmoves = moves.nMoves()
     monitors = system.monitors()
+    outdir = out_dir.val
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
     try:
         pdb = monitors[MonitorName("trajectory")]
-        pdb.writeToDisk("output%0009d.pdb" % block)
+        pdb.writeToDisk("%s/output%0009d.pdb" % (outdir,block))
     except:
         pass
 
@@ -1233,10 +1258,10 @@ def writeSystemData(system, moves, block):
 
     system.clearStatistics()
 
-    if os.path.exists("energies.dat.bz2"):
-        os.system("bunzip2 -f energies.dat.bz2")
+    if os.path.exists("%s/energies.dat.bz2" % outdir):
+        os.system("bunzip2 -f %s/energies.dat.bz2" % outdir)
 
-    writeComponents( energies, "energies.dat" )
+    writeComponents( energies, "%s/energies.dat" % outdir )
 
     # Ugly
     lam = system.constantExpression(Symbol("lambda")).toString().toDouble()    
@@ -1251,10 +1276,10 @@ def writeSystemData(system, moves, block):
 
     #print dg_avg
 
-    FILE = open("gradients.dat" , 'a')
+    FILE = open("%s/gradients.dat" % outdir , 'a')
     print >>FILE, "%9d %12.8f " % ( block, dg_avg)
    
-    FILE = open("moves.dat", "w")
+    FILE = open("%s/moves.dat" % outdir, "w")
     print >>FILE, "%s" % moves
 
 def printComponents(nrgs):
@@ -1275,7 +1300,7 @@ def run():
 
     # Setup the system from scratch if no restart file is available
 
-    if not os.path.exists(restart_file.val):
+    if not os.path.exists("%s/%s" % (out_dir.val,restart_file.val)):
         print "New run. Loading input and creating restart"
         print "Lambda is %5.3f" % lam_val.val       
 
@@ -1289,10 +1314,14 @@ def run():
 
         moves = setupMoves(system, random_seed.val)
         print "Saving restart"
-        Sire.Stream.save( [system, moves], restart_file.val )
+
+        if not os.path.exists(out_dir.val):
+            os.makedirs(out_dir.val)
+
+        Sire.Stream.save( [system, moves], "%s/%s" % (out_dir.val,restart_file.val) )
 
 
-    system, moves = Sire.Stream.load(restart_file.val)
+    system, moves = Sire.Stream.load("%s/%s" % (out_dir.val,restart_file.val))
     print "Loaded a restart file on wich we have performed %d moves." % moves.nMoves()
     block_number = moves.nMoves() / nmoves.val  + 1
     s1 = timer.elapsed()/1000.
@@ -1313,11 +1342,11 @@ def run():
     # Update statistics and save restart
     writeSystemData(system, moves, block_number) 
 
-    Sire.Stream.save( [system, moves], restart_file.val )
+    Sire.Stream.save( [system, moves], "%s/%s" % (out_dir.val,restart_file.val) )
 
     # Compress some output files
-    outpdb = "./output%0009d.pdb" % block_number
+    outpdb = "%s/output%0009d.pdb" % (out_dir.val,block_number)
     if os.path.exists(outpdb):
-        os.system( "%s output%0009d*" % (compress.val, block_number) )
+        os.system( "%s %s/output%0009d*" % (compress.val, out_dir.val, block_number) )
     if os.path.exists("energies.dat"):
-        os.system(" %s energies.dat" % compress.val )
+        os.system(" %s %s/energies.dat" % (out_dir.val,compress.val) )

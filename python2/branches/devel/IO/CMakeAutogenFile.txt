@@ -9,6 +9,8 @@ set ( PYPP_SOURCES
        NullIO.pypp.cpp
        PDB.pypp.cpp
        PDBParameters.pypp.cpp
+       PerturbationsLibrary.pypp.cpp
+       PerturbationsTemplate.pypp.cpp
        ProtoMS.pypp.cpp
        ProtoMSParameters.pypp.cpp
        Tinker.pypp.cpp

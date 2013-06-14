@@ -13,6 +13,7 @@ set ( PYPP_SOURCES
        HybridMC.pypp.cpp
        Integrator.pypp.cpp
        InternalMove.pypp.cpp
+       InternalMoveSingle.pypp.cpp
        MaxwellBoltzmann.pypp.cpp
        MolDeleter.pypp.cpp
        MolecularDynamics.pypp.cpp

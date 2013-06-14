@@ -4,6 +4,7 @@
 #include "SireIO_registrars.h"
 
 #include "trajectorymonitor.h"
+#include "perturbationslibrary.h"
 #include "protoms.h"
 #include "zmatrixmaker.h"
 #include "amber.h"
@@ -18,6 +19,8 @@ void register_SireIO_objects()
 {
 
     ObjectRegistry::registerConverterFor< SireIO::TrajectoryMonitor >();
+    ObjectRegistry::registerConverterFor< SireIO::PerturbationsLibrary >();
+    ObjectRegistry::registerConverterFor< SireIO::PerturbationsTemplate >();
     ObjectRegistry::registerConverterFor< SireIO::ProtoMS >();
     ObjectRegistry::registerConverterFor< SireIO::ZmatrixMaker >();
     ObjectRegistry::registerConverterFor< SireIO::Amber >();

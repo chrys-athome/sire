@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "SireID/index.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireMol/atomcharges.h"
 
 #include "SireMol/editor.hpp"

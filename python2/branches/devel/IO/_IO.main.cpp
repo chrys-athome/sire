@@ -23,6 +23,10 @@
 
 #include "PDBParameters.pypp.hpp"
 
+#include "PerturbationsLibrary.pypp.hpp"
+
+#include "PerturbationsTemplate.pypp.hpp"
+
 #include "ProtoMS.pypp.hpp"
 
 #include "ProtoMSParameters.pypp.hpp"
@@ -61,6 +65,10 @@ BOOST_PYTHON_MODULE(_IO){
     register_PDB_class();
 
     register_PDBParameters_class();
+
+    register_PerturbationsLibrary_class();
+
+    register_PerturbationsTemplate_class();
 
     register_ProtoMS_class();
 

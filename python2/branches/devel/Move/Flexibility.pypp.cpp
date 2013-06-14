@@ -206,14 +206,34 @@ void register_Flexibility_class(){
                 , ( bp::arg("molinfo") ) );
         
         }
-        { //::SireMove::Flexibility::maximumVar
+        { //::SireMove::Flexibility::maximumAngleVar
         
-            typedef int ( ::SireMove::Flexibility::*maximumVar_function_type )(  ) const;
-            maximumVar_function_type maximumVar_function_value( &::SireMove::Flexibility::maximumVar );
+            typedef int ( ::SireMove::Flexibility::*maximumAngleVar_function_type )(  ) const;
+            maximumAngleVar_function_type maximumAngleVar_function_value( &::SireMove::Flexibility::maximumAngleVar );
             
             Flexibility_exposer.def( 
-                "maximumVar"
-                , maximumVar_function_value );
+                "maximumAngleVar"
+                , maximumAngleVar_function_value );
+        
+        }
+        { //::SireMove::Flexibility::maximumBondVar
+        
+            typedef int ( ::SireMove::Flexibility::*maximumBondVar_function_type )(  ) const;
+            maximumBondVar_function_type maximumBondVar_function_value( &::SireMove::Flexibility::maximumBondVar );
+            
+            Flexibility_exposer.def( 
+                "maximumBondVar"
+                , maximumBondVar_function_value );
+        
+        }
+        { //::SireMove::Flexibility::maximumDihedralVar
+        
+            typedef int ( ::SireMove::Flexibility::*maximumDihedralVar_function_type )(  ) const;
+            maximumDihedralVar_function_type maximumDihedralVar_function_value( &::SireMove::Flexibility::maximumDihedralVar );
+            
+            Flexibility_exposer.def( 
+                "maximumDihedralVar"
+                , maximumDihedralVar_function_value );
         
         }
         Flexibility_exposer.def( bp::self != bp::self );
@@ -306,14 +326,36 @@ void register_Flexibility_class(){
                 , ( bp::arg("dihedral"), bp::arg("delta") ) );
         
         }
-        { //::SireMove::Flexibility::setMaximumVar
+        { //::SireMove::Flexibility::setMaximumAngleVar
         
-            typedef void ( ::SireMove::Flexibility::*setMaximumVar_function_type )( int ) ;
-            setMaximumVar_function_type setMaximumVar_function_value( &::SireMove::Flexibility::setMaximumVar );
+            typedef void ( ::SireMove::Flexibility::*setMaximumAngleVar_function_type )( int ) ;
+            setMaximumAngleVar_function_type setMaximumAngleVar_function_value( &::SireMove::Flexibility::setMaximumAngleVar );
             
             Flexibility_exposer.def( 
-                "setMaximumVar"
-                , setMaximumVar_function_value
+                "setMaximumAngleVar"
+                , setMaximumAngleVar_function_value
+                , ( bp::arg("maxvar") ) );
+        
+        }
+        { //::SireMove::Flexibility::setMaximumBondVar
+        
+            typedef void ( ::SireMove::Flexibility::*setMaximumBondVar_function_type )( int ) ;
+            setMaximumBondVar_function_type setMaximumBondVar_function_value( &::SireMove::Flexibility::setMaximumBondVar );
+            
+            Flexibility_exposer.def( 
+                "setMaximumBondVar"
+                , setMaximumBondVar_function_value
+                , ( bp::arg("maxvar") ) );
+        
+        }
+        { //::SireMove::Flexibility::setMaximumDihedralVar
+        
+            typedef void ( ::SireMove::Flexibility::*setMaximumDihedralVar_function_type )( int ) ;
+            setMaximumDihedralVar_function_type setMaximumDihedralVar_function_value( &::SireMove::Flexibility::setMaximumDihedralVar );
+            
+            Flexibility_exposer.def( 
+                "setMaximumDihedralVar"
+                , setMaximumDihedralVar_function_value
                 , ( bp::arg("maxvar") ) );
         
         }
