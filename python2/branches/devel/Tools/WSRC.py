@@ -153,11 +153,22 @@ def getIdentityPoints(ligand):
 
     for atom in atoms:
         # skip small atoms
-        if atom.property("element").nProtons() >= 6:
-            have_point[str(atom.name().value())] = True
+        try:
+            if atom.property("element").nProtons() >= 6:
+                have_point[str(atom.name().value())] = True
 
-        else:
-            have_point[str(atom.name().value())] = False
+            else:
+                have_point[str(atom.name().value())] = False
+        except:
+            try:
+                if atom.property("mass").value() >= 12:
+                    have_point[str(atom.name().value())] = True
+
+                else:
+                    have_point[str(atom.name().value())] = False
+            except:
+                print "Atom %s has neither a mass or element. Cannot add an identity point." % str(atom)
+                have_point[str(atom.name().value())] = False
 
     if ligand.hasProperty("connectivity"):
         connectivity = ligand.property("connectivity")
