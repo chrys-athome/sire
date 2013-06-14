@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "internalmove.h"
+#include "internalmovesingle.h"
 #include "flexibility.h"
 #include "ensemble.h"
 
@@ -60,26 +60,27 @@ using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
-static const RegisterMetaType<InternalMove> r_internalmove;
+static const RegisterMetaType<InternalMoveSingle> r_internalmovesingle;
 
 /** Serialise to a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const InternalMove &internalmove)
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const InternalMoveSingle &internalmove)
 {
-    writeHeader(ds, r_internalmove, 1);
+    writeHeader(ds, r_internalmovesingle, 1);
     
     SharedDataStream sds(ds);
     
     sds << internalmove.smplr 
         << internalmove.flexibility_property
+	<< internalmove.synched_molgroup 
         << static_cast<const MonteCarlo&>(internalmove);
     
     return ds;
 }
 
 /** Extract from a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, InternalMove &internalmove)
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, InternalMoveSingle &internalmove)
 {
-    VersionID v = readHeader(ds, r_internalmove);
+    VersionID v = readHeader(ds, r_internalmovesingle);
 
     if (v == 1)
     {
@@ -87,25 +88,26 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, InternalMove &internalm
     
         sds >> internalmove.smplr 
             >> internalmove.flexibility_property
+	    >> internalmove.synched_molgroup
             >> static_cast<MonteCarlo&>(internalmove);
     }
     else
-        throw version_error(v, "1", r_internalmove, CODELOC);
+        throw version_error(v, "1", r_internalmovesingle, CODELOC);
 
     return ds;
 }
 
 /** Null constructor */
-InternalMove::InternalMove(const PropertyMap &map) 
-             : ConcreteProperty<InternalMove,MonteCarlo>(map)
+InternalMoveSingle::InternalMoveSingle(const PropertyMap &map) 
+             : ConcreteProperty<InternalMoveSingle,MonteCarlo>(map)
 {
     flexibility_property = map["flexibility"];
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
 }
 
-/** Construct the mover move for the passed group of molecules */
-InternalMove::InternalMove(const MoleculeGroup &molgroup, const PropertyMap &map)
-             : ConcreteProperty<InternalMove,MonteCarlo>(),
+/** Construct the internal move for the passed group of molecules */
+InternalMoveSingle::InternalMoveSingle(const MoleculeGroup &molgroup, const PropertyMap &map)
+             : ConcreteProperty<InternalMoveSingle,MonteCarlo>(),
                smplr( UniformSampler(molgroup) )
 {
     flexibility_property = map["flexibility"];
@@ -115,8 +117,8 @@ InternalMove::InternalMove(const MoleculeGroup &molgroup, const PropertyMap &map
 
 /** Construct the mover move that samples molecules from the
     passed sampler */
-InternalMove::InternalMove(const Sampler &sampler, const PropertyMap &map)
-             : ConcreteProperty<InternalMove,MonteCarlo>(),
+InternalMoveSingle::InternalMoveSingle(const Sampler &sampler, const PropertyMap &map)
+             : ConcreteProperty<InternalMoveSingle,MonteCarlo>(),
                smplr(sampler)
 {
     flexibility_property = map["flexibility"];
@@ -125,52 +127,55 @@ InternalMove::InternalMove(const Sampler &sampler, const PropertyMap &map)
 }
 
 /** Copy constructor */
-InternalMove::InternalMove(const InternalMove &other)
-             : ConcreteProperty<InternalMove,MonteCarlo>(other),
+InternalMoveSingle::InternalMoveSingle(const InternalMoveSingle &other)
+             : ConcreteProperty<InternalMoveSingle,MonteCarlo>(other),
                smplr(other.smplr),
-               flexibility_property(other.flexibility_property)
+               flexibility_property(other.flexibility_property),
+	       synched_molgroup(other.synched_molgroup)
 {}
 
 /** Destructor */
-InternalMove::~InternalMove()
+InternalMoveSingle::~InternalMoveSingle()
 {}
 
 /** Copy assignment operator */
-InternalMove& InternalMove::operator=(const InternalMove &other)
+InternalMoveSingle& InternalMoveSingle::operator=(const InternalMoveSingle &other)
 {
     if (this != &other)
     {
         MonteCarlo::operator=(other);
         smplr = other.smplr;
         flexibility_property = other.flexibility_property;
+	synched_molgroup = other.synched_molgroup;
     }
     
     return *this;
 }
 
 /** Comparison operator */
-bool InternalMove::operator==(const InternalMove &other) const
+bool InternalMoveSingle::operator==(const InternalMoveSingle &other) const
 {
     return MonteCarlo::operator==(other) and smplr == other.smplr and
-           flexibility_property == other.flexibility_property;
+           flexibility_property == other.flexibility_property and 
+           synched_molgroup == other.synched_molgroup ;
 }
 
 /** Comparison operator */
-bool InternalMove::operator!=(const InternalMove &other) const
+bool InternalMoveSingle::operator!=(const InternalMoveSingle &other) const
 {
-    return not InternalMove::operator==(other);
+    return not InternalMoveSingle::operator==(other);
 }
 
 /** Return a string representation of this move */
-QString InternalMove::toString() const
+QString InternalMoveSingle::toString() const
 {
-    return QObject::tr("InternalMove( nAccepted() = %1 nRejected() == %2 )")
+    return QObject::tr("InternalMoveSingle( nAccepted() = %1 nRejected() == %2 )")
                             .arg( this->nAccepted() )
                             .arg( this->nRejected() );
 }
 
 /** Set the sampler used to sample molecules for this move */
-void InternalMove::setSampler(const Sampler &sampler)
+void InternalMoveSingle::setSampler(const Sampler &sampler)
 {
     smplr = sampler;
     smplr.edit().setGenerator( this->generator() );
@@ -178,31 +183,31 @@ void InternalMove::setSampler(const Sampler &sampler)
 
 /** Set the sampler so that it draws molecules uniformly from the
     molecule group 'molgroup' */
-void InternalMove::setSampler(const MoleculeGroup &molgroup)
+void InternalMoveSingle::setSampler(const MoleculeGroup &molgroup)
 {
     this->setSampler( UniformSampler(molgroup) );
 }
 
 /** Return the sampler used to sample molecules to move */
-const Sampler& InternalMove::sampler() const
+const Sampler& InternalMoveSingle::sampler() const
 {
     return smplr;
 }
 
 /** Return the molecule group that is sampled for this move */
-const MoleculeGroup& InternalMove::moleculeGroup() const
+const MoleculeGroup& InternalMoveSingle::moleculeGroup() const
 {
     return smplr->group();
 }
 
 /** Return the property used to find the flexibility of each molecule*/
-const PropertyName& InternalMove::flexibilityProperty() const
+const PropertyName& InternalMoveSingle::flexibilityProperty() const
 {
     return flexibility_property;
 }
 
 /** Set the name of the property used to find the flexibility of each molecule */
-void InternalMove::setFlexibilityProperty(const PropertyName &property)
+void InternalMoveSingle::setFlexibilityProperty(const PropertyName &property)
 {
     flexibility_property = property;
     Move::setProperty("flexibility", flexibility_property);
@@ -210,15 +215,25 @@ void InternalMove::setFlexibilityProperty(const PropertyName &property)
 
 /** Set the random number generator used to generate the random
     number used for this move */
-void InternalMove::setGenerator(const RanGenerator &rangenerator)
+void InternalMoveSingle::setGenerator(const RanGenerator &rangenerator)
 {
     MonteCarlo::setGenerator(rangenerator);
     smplr.edit().setGenerator(this->generator());
 }
 
+void InternalMoveSingle::setSynchronisedCoordinates(const MoleculeGroup &molgroup)
+{
+  synched_molgroup = molgroup;
+}
+
+const MoleculeGroup& InternalMoveSingle::synchronisedMols() const
+{
+  return synched_molgroup;
+}
+
 /** Internal function used to set the ensemble based on the
     passed temperature */
-void InternalMove::_pvt_setTemperature(const Temperature &temperature)
+void InternalMoveSingle::_pvt_setTemperature(const Temperature &temperature)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(temperature) );
 }
@@ -226,12 +241,12 @@ void InternalMove::_pvt_setTemperature(const Temperature &temperature)
 /** Actually perform 'nmoves' moves of the molecules in the 
     system 'system', optionally recording simulation statistics
     if 'record_stats' is true */
-void InternalMove::move(System &system, int nmoves, bool record_stats)
+void InternalMoveSingle::move(System &system, int nmoves, bool record_stats)
 {
     if (nmoves <= 0)
         return;
 
-    InternalMove old_state(*this);
+    InternalMoveSingle old_state(*this);
     System old_system_state(system);
 
     try
@@ -276,7 +291,7 @@ void InternalMove::move(System &system, int nmoves, bool record_stats)
             int nbonds = flex_bonds.count();
             int nangles = flex_angs.count();
             int ndihedrals = flex_dihs.count();
-            //int ndofs = nbonds + nangles + ndihedrals ;
+//             int ndofs = nbonds + nangles + ndihedrals ;
 
 	    // Select bonds
 	    if ( nbonds == 0  || maxbondvar < 0  || maxbondvar >= nbonds )
@@ -335,7 +350,6 @@ void InternalMove::move(System &system, int nmoves, bool record_stats)
 		      }		    
 		  }
 	      }
-
 
 //             if ( ndofs == 0 || maxvar < 0 || maxvar >= ndofs  )
 //             {
@@ -440,8 +454,6 @@ void InternalMove::move(System &system, int nmoves, bool record_stats)
                 dihedral_delta =  Angle( this->generator().rand(-angle_delta_value,
                                                                  angle_delta_value) );
                 //mol_mover.change(centralbond, dihedral_delta);
-
-		// 50% chance to either rotate around central bond or to just change that dihedral
                 if (this->generator().randBool())
                 {                                 
                     //move only this specific dihedral
@@ -453,12 +465,58 @@ void InternalMove::move(System &system, int nmoves, bool record_stats)
                     centralbond = BondID(dihedral.atom1(), dihedral.atom2());
                     mol_mover.change(centralbond, dihedral_delta);
                 }
-
             }
 
             //update the system with the new coordinates
             Molecule newmol = mol_mover.commit();
-            system.update(newmol);
+
+            //system.update(newmol);
+	    
+	    //JM 03/11 test if molecule coordinates synched with others
+	    // if so, for each synched mol, set coordinates to those of newmol
+	    // This only works if all molecules have identical topology
+	    // --> This should be a constraint ? 
+	    
+	    //qDebug() << "HELLO " << synched_molgroup.molecules().toString();
+
+	    // Get the synched_molgroup from system using the name of the stored synched_molgroup
+	    // We have to look up by names at numbers may have changed if for instance 
+	    // two replicas have been swapped
+
+	    const MGName &sync_name = synched_molgroup.name();
+	    
+	    synched_molgroup = system[ sync_name ];
+
+	    if (not synched_molgroup.molecules().isEmpty()) 
+	      {
+		const PropertyName &coords_property = map["coordinates"];
+		const AtomCoords &coords = newmol.data().property(coords_property)
+                                         		  .asA<AtomCoords>();
+
+		Molecules new_molecules = synched_molgroup.molecules();
+		
+		for (Molecules::const_iterator it = synched_molgroup.molecules().constBegin();
+		     it != synched_molgroup.molecules().constEnd(); 
+		     ++it)
+		  {
+		    //qDebug() << it;
+		    new_molecules.update( it->molecule().edit()
+					  .setProperty( map["coordinates"],
+							coords )
+					  .commit() ) ;
+		    //qDebug() << molecule.toString();
+		    //MolEditor editmol = molecule.edit()
+		  }
+
+		new_molecules.add(newmol);
+
+		system.update(new_molecules);
+	      }
+	    else
+	      {
+		//update the system with the new coordinates
+		system.update(newmol);
+	      }
 
             //get the new bias on this molecule
             smplr.edit().updateFrom(system);
@@ -466,6 +524,9 @@ void InternalMove::move(System &system, int nmoves, bool record_stats)
             new_bias = smplr.read().probabilityOf( PartialMolecule(newmol,
 			                                                       oldmol.selection()) );
 
+	    // JM DEBUG THERE IS A BUG AND THE INTRAGROUP FORCEFIELDS ENERGIES OF THE MOVED MOLECULE 
+	    // ARE NOT UPDATED ( BUT THE PERTURBED ENERGIES ARE CORRECT ! ) 
+	    //system.mustNowRecalculateFromScratch();
             //calculate the energy of the system
             double new_nrg = system.energy( this->energyComponent() );
 	
@@ -492,7 +553,7 @@ void InternalMove::move(System &system, int nmoves, bool record_stats)
     }
 }
 
-const char* InternalMove::typeName()
+const char* InternalMoveSingle::typeName()
 {
-    return QMetaType::typeName( qMetaTypeId<InternalMove>() );
+    return QMetaType::typeName( qMetaTypeId<InternalMoveSingle>() );
 }

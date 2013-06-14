@@ -15,6 +15,7 @@ set ( SIREIO_HEADERS
       flexibilitylibrary.h
       iobase.h
       pdb.h
+      perturbationslibrary.h
       protoms.h
       tinker.h
       trajectorymonitor.h
@@ -32,6 +33,7 @@ set ( SIREIO_SOURCES
       flexibilitylibrary.cpp
       iobase.cpp
       pdb.cpp
+      perturbationslibrary.cpp
       protoms.cpp
       tinker.cpp
       trajectorymonitor.cpp    

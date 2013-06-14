@@ -168,11 +168,15 @@ public:
 
     void setRotation(const Angle &rotation);
     void setTranslation(const Length &translation);
-    void setMaximumVar(int maxvar);
+    void setMaximumBondVar(int maxvar);
+    void setMaximumAngleVar(int maxvar);
+    void setMaximumDihedralVar(int maxvar);
 
     Length translation() const;
     Angle rotation() const;
-    int maximumVar() const;
+    int maximumBondVar() const;
+    int maximumAngleVar() const;
+    int maximumDihedralVar() const;   
 
     void add(const BondID &bond, const Length &delta);
     void add(const AngleID &angle, const Angle &delta);
@@ -208,9 +212,15 @@ private:
     /** The maximum rotation for that molecule */
     Angle maxrotation;
 
-    /** The maximum number of dofs to sample in one move */
-    qint32 maxvar;
+    /** The maximum number of bond dofs to sample in one move */
+    qint32 maxbondvar;
 
+    /** The maximum number of angle dofs to sample in one move */
+    qint32 maxanglevar;
+
+    /** The maximum number of dihedral dofs to sample in one move */
+    qint32 maxdihedralvar;
+    
     /** The list of delta values for bonds*/
     QHash<DofID,Length> bond_deltas;
 
