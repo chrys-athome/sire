@@ -42,6 +42,8 @@
 #include "SireMaths/quaternion.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/axisset.h"
+#include "SireMaths/vectorproperty.h"
+#include "SireMaths/rotate.h"
 
 #include "SireVol/coordgroup.h"
 #include "SireVol/space.h"
@@ -51,6 +53,7 @@
 #include "SireMol/errors.h"
 
 using namespace SireMol;
+using namespace SireMaths;
 using namespace SireVol;
 using namespace SireUnits;
 
@@ -78,7 +81,6 @@ MoverBase& MoverBase::operator=(const MoverBase &other)
     movable_atoms = other.movable_atoms;
     return *this;
 }
-
 
 /** Set the movable atoms of this Mover */
 void MoverBase::setMovableAtoms(const AtomSelection &selection)
@@ -382,6 +384,9 @@ void MoverBase::translate(MoleculeData &moldata,
                           const Vector &delta,
                           const PropertyMap &map)
 {
+    if (delta.isZero())
+        return;
+
     //which property contains the coordinates?
     PropertyName coord_property = map["coordinates"];
 
@@ -394,6 +399,18 @@ void MoverBase::translate(MoleculeData &moldata,
     //set the new property
     if (coord_property.hasSource())
         moldata.setProperty(coord_property.source(), coords);
+
+    //if we have translated all atoms, then update the center point
+    //of the molecule, if one has been set
+    if (selected_atoms.selectedAll())
+    {
+        PropertyName center_property = map["center"];
+        if (center_property.hasSource() and moldata.hasProperty(center_property))
+        {
+            Vector center = moldata.property(center_property).asA<VectorProperty>();
+            moldata.setProperty(center_property.source(), VectorProperty( center + delta ));
+        }
+    }
 }
 
 /** Rotate the selected atoms in the molecule whose data
@@ -425,6 +442,21 @@ void MoverBase::rotate(MoleculeData &moldata,
     //set the new property
     if (coord_property.hasSource())
         moldata.setProperty(coord_property.source(), coords);
+
+    //if we have rotated all atoms, then update the center point
+    //of the molecule, if one has been set
+    if (selected_atoms.selectedAll())
+    {
+        PropertyName center_property = map["center"];
+        if (center_property.hasSource() and moldata.hasProperty(center_property))
+        {
+            Vector center = moldata.property(center_property).asA<VectorProperty>();
+            
+            if (center != point)
+                moldata.setProperty(center_property.source(),
+                                    VectorProperty(SireMaths::rotate(center, rotmat, point)));
+        }
+    }
 }
 
 /** This function maps the selected atoms from their current
@@ -451,6 +483,19 @@ void MoverBase::mapInto(MoleculeData &moldata,
     //save the new coordinates
     if (coord_property.hasSource())
         moldata.setProperty(coord_property.source(), coords);
+
+    //if we have mapped all atoms, then update the center point
+    //of the molecule, if one has been set
+    if (selected_atoms.selectedAll())
+    {
+        PropertyName center_property = map["center"];
+        if (center_property.hasSource() and moldata.hasProperty(center_property))
+        {
+            Vector center = moldata.property(center_property).asA<VectorProperty>();
+            moldata.setProperty(center_property.source(),
+                                VectorProperty(axes.fromIdentity(center)));
+        }
+    }
 }
 
 /** This function maps the selected atoms from the frame
@@ -478,6 +523,19 @@ void MoverBase::changeFrame(MoleculeData &moldata,
     //save the new coordinates
     if (coord_property.hasSource())
         moldata.setProperty(coord_property.source(), coords);
+
+    //if we changed the frame of all atoms, then update the center point
+    //of the molecule, if one has been set
+    if (selected_atoms.selectedAll())
+    {
+        PropertyName center_property = map["center"];
+        if (center_property.hasSource() and moldata.hasProperty(center_property))
+        {
+            Vector center = moldata.property(center_property).asA<VectorProperty>();
+            moldata.setProperty(center_property.source(),
+                                VectorProperty(from_frame.toFrame(to_frame,center)));
+        }
+    }
 }
 
 /** Map the atoms we are allowed to move into the passed axes,

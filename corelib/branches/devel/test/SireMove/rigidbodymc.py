@@ -71,6 +71,7 @@ for i in range(1, mols.nMolecules()):
     mol = mol.edit().rename("T4P") \
                     .setProperty("charge", charges) \
                     .setProperty("LJ", ljs) \
+                    .setProperty("center", wrap(mol.evaluate().center())) \
              .commit()
 
     solvent.add(mol)
@@ -152,8 +153,8 @@ moves.clearStatistics()
 t.start()
 moves.setGenerator( RanGenerator(42) )
 
-print "Running 1000 moves"
-system2 = moves.move(system2, 1000, False)
+print "Running 5000 moves"
+system2 = moves.move(system2, 5000, False)
 print "Energy = %s" % system2.energy()
 
 ms = t.elapsed()
@@ -198,3 +199,16 @@ mc = moves.moves()[0]
 
 print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
                             mc.nRejected(), 100 * mc.acceptanceRatio())
+
+# Check that there is no drift in the center of the molecules
+for molnum in system2.molNums():
+    water = system2[molnum].molecule()
+
+    if water.hasProperty("center"):
+        center = water.property("center")
+        eval_center = water.evaluate().center()
+        distance = Vector.distance(center, eval_center)
+
+        if distance > 0.1:
+            print "WARNING: Drift in atom center: %s %s %s" % (center, eval_center, distance)
+
