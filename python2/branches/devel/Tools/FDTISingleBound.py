@@ -1226,12 +1226,16 @@ def run():
 
         amber = Amber()
 
+        print "Reading in coordinate and topology file..."
         molecules, space = amber.readCrdTop(crd_file.val, top_file.val)
 
+        print "Creating the simulation system..."
         system = createSystem(molecules, space)
 
+        print "Setting up the forcefields..."
         system = setupForcefields(system, space)
 
+        print "Setting up the moves..."
         moves = setupMoves(system, random_seed.val)
         print "Saving restart"
 

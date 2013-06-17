@@ -39,6 +39,10 @@ namespace bp = boost::python;
 
 #include "SireMaths/quaternion.h"
 
+#include "SireMaths/rotate.h"
+
+#include "SireMaths/vectorproperty.h"
+
 #include "SireMol/errors.h"
 
 #include "SireUnits/units.h"

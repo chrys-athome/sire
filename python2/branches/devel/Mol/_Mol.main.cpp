@@ -11,6 +11,8 @@
 
 #include "AbsFromNumber.pypp.hpp"
 
+#include "AmberParameters.pypp.hpp"
+
 #include "AngleID.pypp.hpp"
 
 #include "AnglePerturbation.pypp.hpp"
@@ -22,6 +24,8 @@
 #include "AtomCharges.pypp.hpp"
 
 #include "AtomCoords.pypp.hpp"
+
+#include "AtomCutting.pypp.hpp"
 
 #include "AtomEditor.pypp.hpp"
 
@@ -524,6 +528,12 @@ BOOST_PYTHON_MODULE(_Mol){
 
     register_AbsFromNumber_class();
 
+    register_MolViewProperty_class();
+
+    register_MoleculeProperty_class();
+
+    register_AmberParameters_class();
+
     register_AngleID_class();
 
     register_Perturbation_class();
@@ -535,6 +545,10 @@ BOOST_PYTHON_MODULE(_Mol){
     register_MoleculeView_class();
 
     register_Atom_class();
+
+    register_CuttingFunction_class();
+
+    register_AtomCutting_class();
 
     register_AtomEditorBase_class();
 
@@ -551,8 +565,6 @@ BOOST_PYTHON_MODULE(_Mol){
     register_AtomNameMatcher_class();
 
     register_AtomNum_class();
-
-    register_MolViewProperty_class();
 
     register_AtomProp_class();
 
@@ -581,8 +593,6 @@ BOOST_PYTHON_MODULE(_Mol){
     register_AtomFloatProperty_class();
 
     register_AtomIntProperty_class();
-
-    register_MoleculeProperty_class();
 
     register_AtomSelection_class();
 
@@ -695,8 +705,6 @@ BOOST_PYTHON_MODULE(_Mol){
     register_ConnectivityEditor_class();
 
     register_CovalentBondHunterParameters_class();
-
-    register_CuttingFunction_class();
 
     register_DihedralID_class();
 

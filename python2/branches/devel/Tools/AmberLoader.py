@@ -172,9 +172,12 @@ class NamingScheme:
             if resnam in names:
                 return True
 
-        if str(molecule.name().value()).upper() in names:
-            return True
-        else:
+        try:
+            if str(molecule.name().value()).upper() in names:
+                return True
+            else:
+                return False
+        except:
             return False
 
     def isProtein(self, molecule):

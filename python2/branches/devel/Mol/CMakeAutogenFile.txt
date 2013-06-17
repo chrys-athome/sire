@@ -2,12 +2,14 @@
 set ( PYPP_SOURCES
        AbsFromMass.pypp.cpp
        AbsFromNumber.pypp.cpp
+       AmberParameters.pypp.cpp
        AngleID.pypp.cpp
        AnglePerturbation.pypp.cpp
        Atom.pypp.cpp
        AtomBeads.pypp.cpp
        AtomCharges.pypp.cpp
        AtomCoords.pypp.cpp
+       AtomCutting.pypp.cpp
        AtomEditor.pypp.cpp
        AtomEditorBase.pypp.cpp
        AtomElements.pypp.cpp

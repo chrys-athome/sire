@@ -3,11 +3,13 @@
 
 #ifdef GCCXML_PARSE
 
+#include "amberparameters.h"
 #include "angleid.h"
 #include "atom.h"
 #include "atombeads.h"
 #include "atomcharges.h"
 #include "atomcoords.h"
+#include "atomcutting.h"
 #include "atomeditor.h"
 #include "atomelements.h"
 #include "atomenergies.h"
