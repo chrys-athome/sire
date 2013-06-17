@@ -262,8 +262,9 @@ def adjustPerturbedDOFs( molecule ):
                 mover = molecule.move()
                 try:
                     mover.set(bond, r)
-                except UserWarning as error:
+                except UserWarning:
                     # extract the type of the errror
+                    _, error, _ = sys.exc_info()
                     error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
                     if error_type == "SireMol::ring_error":
                         continue
@@ -279,8 +280,9 @@ def adjustPerturbedDOFs( molecule ):
                 mover = molecule.move()
                 try:                
                     mover.set(angle, theta)
-                except UserWarning as error:
+                except UserWarning:
                     # extract the type of the errror
+                    _, err, _ = sys.exc_info()
                     error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
                     if error_type == "SireMol::ring_error":
                         continue
