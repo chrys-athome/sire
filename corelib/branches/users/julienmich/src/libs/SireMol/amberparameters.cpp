@@ -57,9 +57,9 @@ QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, const AmberParameters &am
 
     SharedDataStream sds(ds);
 
-    sds << amberparam.molinfo << amberparam.bonds 
-	<< amberparam.angles << amberparam.dihedrals 
-	<< amberparam.impropers << static_cast<const MoleculeProperty&>(amberparam); 
+    sds << amberparam.molinfo << amberparam.bonds
+        << amberparam.angles << amberparam.dihedrals
+        << amberparam.impropers << static_cast<const MoleculeProperty&>(amberparam);
 
     return ds;
 }
@@ -70,19 +70,19 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, AmberParameters &amberpar
     //empty class so nothing to stream
 
     VersionID v = readHeader(ds, r_amberparam);
-    
+
     if (v != 1)
         throw version_error( v, "1", r_amberparam, CODELOC );
     else
-      {
-	SharedDataStream sds(ds);
+    {
+        SharedDataStream sds(ds);
 
-	sds >> amberparam.molinfo >> amberparam.bonds
-	    >> amberparam.angles >> amberparam.dihedrals 
-	    >> amberparam.impropers >> static_cast<MoleculeProperty&>(amberparam); 
-      }
-    
-        
+        sds >> amberparam.molinfo >> amberparam.bonds
+            >> amberparam.angles >> amberparam.dihedrals
+            >> amberparam.impropers >> static_cast<MoleculeProperty&>(amberparam);
+    }
+
+
     return ds;
 }
 
@@ -92,16 +92,16 @@ AmberParameters::AmberParameters() : ConcreteProperty<AmberParameters,MoleculePr
 
 /** Constructor for the passed molecule*/
 AmberParameters::AmberParameters(const MoleculeData &molecule)
-            : ConcreteProperty<AmberParameters,MoleculeProperty>(),
-              molinfo(molecule.info())
+    : ConcreteProperty<AmberParameters,MoleculeProperty>(),
+      molinfo(molecule.info())
 {}
 
 
 /** Copy constructor */
 AmberParameters::AmberParameters(const AmberParameters &other)
-                : ConcreteProperty<AmberParameters,MoleculeProperty>(),
-		  bonds(other.bonds),angles(other.angles),dihedrals(other.dihedrals),
-		  impropers(other.impropers)
+    : ConcreteProperty<AmberParameters,MoleculeProperty>(),
+      bonds(other.bonds),angles(other.angles),dihedrals(other.dihedrals),
+      impropers(other.impropers)
 {}
 
 /** Copy assignment operator */
@@ -111,12 +111,12 @@ AmberParameters& AmberParameters::operator=(const AmberParameters &other)
     {
         MoleculeProperty::operator=(other);
         molinfo = other.molinfo;
-	bonds = other.bonds;
-	angles = other.angles;
-	dihedrals = other.dihedrals;
-	impropers = other.impropers;
+        bonds = other.bonds;
+        angles = other.angles;
+        dihedrals = other.dihedrals;
+        impropers = other.impropers;
     }
-  
+
     return *this;
 }
 
@@ -127,8 +127,8 @@ AmberParameters::~AmberParameters()
 /** Comparison operator */
 bool AmberParameters::operator==(const AmberParameters &other) const
 {
-  return (molinfo == other.molinfo and bonds == other.bonds and angles == other.angles 
-	  and dihedrals == other.dihedrals and impropers == other.impropers);
+    return (molinfo == other.molinfo and bonds == other.bonds and angles == other.angles
+            and dihedrals == other.dihedrals and impropers == other.impropers);
 }
 
 /** Comparison operator */
@@ -148,7 +148,7 @@ const MoleculeInfoData& AmberParameters::info() const
         return *molinfo;
 }
 
-/** Return whether or not this flexibility is compatible with the molecule 
+/** Return whether or not this flexibility is compatible with the molecule
     whose info is in 'molinfo' */
 bool AmberParameters::isCompatibleWith(const SireMol::MoleculeInfoData &molinfo) const
 {
@@ -160,128 +160,138 @@ const char* AmberParameters::typeName()
     return QMetaType::typeName(qMetaTypeId<AmberParameters>());
 }
 
-void AmberParameters::add(const BondID &bond, const double &k, const double &r0) 
+void AmberParameters::add(const BondID &bond, const double &k, const double &r0)
 {
-  QList<double> params;
-  params.append(k);
-  params.append(r0);
+    QList<double> params;
+    params.append(k);
+    params.append(r0);
 
-  bonds.insert( bond, params);
+    bonds.insert( bond, params);
 }
 
 void AmberParameters::remove(const BondID &bond)
 {
-  bonds.remove( bond );
+    bonds.remove( bond );
 }
 
 QList<double> AmberParameters::getParams(const BondID &bond)
 {
-  return bonds.value(bond);
+    return bonds.value(bond);
 }
 
 QList<BondID> AmberParameters::getAllBonds()
 {
-  return bonds.keys();
+    return bonds.keys();
 }
 
-void AmberParameters::add(const AngleID &angle, const double &k, const double &theta0) 
+void AmberParameters::add(const AngleID &angle, const double &k, const double &theta0)
 {
-  QList<double> params;
-  params.append(k);
-  params.append(theta0);
+    QList<double> params;
+    params.append(k);
+    params.append(theta0);
 
-  angles.insert( angle, params);
+    angles.insert( angle, params);
 }
 
 void AmberParameters::remove(const AngleID &angle)
 {
-  angles.remove( angle );
+    angles.remove( angle );
 }
 
 QList<double> AmberParameters::getParams(const AngleID &angle)
 {
-  return angles.value(angle);
+    return angles.value(angle);
 }
 
 QList<AngleID> AmberParameters::getAllAngles()
 {
-  return angles.keys();
+    return angles.keys();
 }
 
-void AmberParameters::add(const DihedralID &dihedral, const double &v, const double &periodicity, const double &phase) 
+void AmberParameters::add(const DihedralID &dihedral, const double &v, const double &periodicity,
+                          const double &phase)
 {
 
-  QList<double> params;
+    QList<double> params;
 
-
-  // If dihedral already exists, we will append parameters
-  QList<DihedralID> keys = dihedrals.keys();
-  for ( int i=0 ; i < keys.length() ; i++ )
+    if (dihedrals.contains(dihedral))
     {
-      DihedralID dict_dih = keys[i];
-      if ( dict_dih == dihedral or dict_dih == dihedral.mirror()  )
-	{
-	  params = dihedrals.value( dict_dih);
-	  break;
-	}
+        params = dihedrals.value(dihedral);
+    }
+    else if (dihedrals.contains(dihedral.mirror()))
+    {
+        params = dihedrals.value(dihedral.mirror());
     }
 
-  params.append(v);
-  params.append(periodicity);
-  params.append(phase);
+    // If dihedral already exists, we will append parameters
+    /*QList<DihedralID> keys = dihedrals.keys();
+    for ( int i=0 ; i < keys.length() ; i++ )
+    {
+        DihedralID dict_dih = keys[i];
+        if ( dict_dih == dihedral or dict_dih == dihedral.mirror()  )
+        {
+            params = dihedrals.value( dict_dih);
+            break;
+        }
+    }*/
 
-  dihedrals.insert( dihedral, params);
+    params.append(v);
+    params.append(periodicity);
+    params.append(phase);
+
+    dihedrals.insert( dihedral, params );
 }
 
 void AmberParameters::remove(const DihedralID &dihedral)
 {
-  dihedrals.remove( dihedral );
+    dihedrals.remove( dihedral );
 }
 
 QList<double> AmberParameters::getParams(const DihedralID &dihedral)
 {
-  return dihedrals.value(dihedral);
+    return dihedrals.value(dihedral);
 }
 
 QList<DihedralID> AmberParameters::getAllDihedrals()
 {
-  return dihedrals.keys();
+    return dihedrals.keys();
 }
 
-void AmberParameters::add(const ImproperID &improper, const double &v, const double &periodicity, const double &phase) 
+void AmberParameters::add(const ImproperID &improper, const double &v, const double &periodicity,
+                          const double &phase)
 {
-  QList<double> params;
+    QList<double> params;
 
-  // If improper already exists, we will append parameters
-  QList<ImproperID> keys = impropers.keys();
-  for ( int i=0 ; i < keys.length() ; i++ )
+    // If improper already exists, we will append parameters
+    QList<ImproperID> keys = impropers.keys();
+    for ( int i=0 ; i < keys.length() ; i++ )
     {
-      ImproperID dict_dih = keys[i];
-      if ( dict_dih == improper ) //or dict_dih == improper.mirror()  )
-	{
-	  params = impropers.value( dict_dih);
-	  break;
-	}
+        ImproperID dict_dih = keys[i];
+        if ( dict_dih == improper ) //or dict_dih == improper.mirror()  )
+        {
+            params = impropers.value( dict_dih);
+            break;
+        }
     }
 
-  params.append(v);
-  params.append(periodicity);
-  params.append(phase);
+    params.append(v);
+    params.append(periodicity);
+    params.append(phase);
 
-  impropers.insert( improper, params);
+    impropers.insert( improper, params);
 }
 
 void AmberParameters::remove(const ImproperID &improper)
 {
-  impropers.remove( improper );
+    impropers.remove( improper );
 }
 
 QList<double> AmberParameters::getParams(const ImproperID &improper)
 {
-  return impropers.value( improper );
+    return impropers.value( improper );
 }
 
 QList<ImproperID> AmberParameters::getAllImpropers()
 {
-  return impropers.keys();
+    return impropers.keys();
 }

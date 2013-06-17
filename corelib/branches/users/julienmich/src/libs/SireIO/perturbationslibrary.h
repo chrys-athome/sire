@@ -58,38 +58,38 @@ QDataStream& operator>>(QDataStream&, SireIO::PerturbationsTemplate&);
 
 namespace SireMM
 {
-  class LJParameter;
+class LJParameter;
 }
 
 namespace SireIO
-{  
+{
 
-  using SireCAS::Expression;
-  using SireMol::BondID;
-  using SireMol::AngleID;
-  using SireMol::DihedralID;
-  using SireMol::ImproperID;
-  using SireMol::Molecule;
+using SireCAS::Expression;
+using SireMol::BondID;
+using SireMol::AngleID;
+using SireMol::DihedralID;
+using SireMol::ImproperID;
+using SireMol::Molecule;
 
-  using SireMM::LJParameter;
-  using SireUnits::Dimension::Charge;
+using SireMM::LJParameter;
+using SireUnits::Dimension::Charge;
 
 /** Internal class used to store the data describing a single perturbations template
-    
+
     @author Julien Michel
 */
 class SIREIO_EXPORT PerturbationsTemplate
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const PerturbationsTemplate&);
-friend QDataStream& ::operator>>(QDataStream&, PerturbationsTemplate&);
+    friend QDataStream& ::operator<<(QDataStream&, const PerturbationsTemplate&);
+    friend QDataStream& ::operator>>(QDataStream&, PerturbationsTemplate&);
 
 public:
     PerturbationsTemplate();
     PerturbationsTemplate(const QString &name);
-    
+
     PerturbationsTemplate(const PerturbationsTemplate &other);
-    
+
     ~PerturbationsTemplate();
 
     static const char* typeName();
@@ -100,7 +100,7 @@ public:
     bool operator!=(const PerturbationsTemplate &other) const;
 
     const QString getName();
-    
+
     void setInitCharge(const QString &atomname, const Charge &atomcharge);
     void setFinalCharge(const QString &atomname, const Charge &atomcharge);
 
@@ -146,6 +146,13 @@ public:
     //void setFinalImproperN(const ImproperID &improper, const int &n);
     //void setFinalImproperPhase(const ImproperID &improper, const double &phase);
 
+    bool containsInitCharge(const QString &atomname) const;
+    bool containsFinalCharge(const QString &atomname) const;
+    bool containsInitLJ(const QString &atomname) const;
+    bool containsFinalLJ(const QString &atomname) const;
+    bool containsInitType(const QString &atomname) const;
+    bool containsFinalType(const QString &atomname) const;
+
     Charge getInitCharge(const QString &atomname) const;
     Charge getFinalCharge(const QString &atomname) const;
     LJParameter getInitLJ(const QString &atomname) const;
@@ -154,12 +161,24 @@ public:
     QString getFinalType(const QString &atomname) const;
 
     QList<BondID> getBonds() const;
+    
+    bool containsInitBondK(const BondID &bond) const;
+    bool containsInitBondR(const BondID &bond) const;
+    bool containsFinalBondK(const BondID &bond) const;
+    bool containsFinalBondR(const BondID &bond) const;
+
     double getInitBondK(const BondID &bond) const;
     double getInitBondR(const BondID &bond) const;
     double getFinalBondK(const BondID &bond) const;
     double getFinalBondR(const BondID &bond) const;
 
     QList<AngleID> getAngles() const;
+
+    bool containsInitAngleK(const AngleID &angle) const;
+    bool containsInitAngleT(const AngleID &angle) const;
+    bool containsFinalAngleK(const AngleID &angle) const;
+    bool containsFinalAngleT(const AngleID &angle) const;
+
     double getInitAngleK(const AngleID &angle) const;
     double getInitAngleT(const AngleID &angle) const;
     double getFinalAngleK(const AngleID &angle) const;
@@ -169,9 +188,12 @@ public:
     //Expression getInitDihPotential(const DihedralID &dihedral) const;
     //Expression getFinalDihPotential(const DihedralID &dihedral) const;
 
+    bool containsInitDihParams(const DihedralID &dihedral) const;
+    bool containsFinalDihParams(const DihedralID &dihedral) const;
+
     QList<double> getInitDihParams(const DihedralID &dihedral) const;
     QList<double> getFinalDihParams(const DihedralID &dihedral) const;
-    
+
     //double getInitDihedralK0(const DihedralID &dihedral) const;
     //int getInitDihedralN(const DihedralID &dihedral) const;
     //double getInitDihedralPhase(const DihedralID &dihedral) const;
@@ -183,9 +205,12 @@ public:
     //Expression getInitImpPotential(const ImproperID &improper) const;
     //Expression getFinalImpPotential(const ImproperID &improper) const;
 
+    bool containsInitImpParams(const ImproperID &improper) const;
+    bool containsFinalImpParams(const ImproperID &improper) const;
+
     QList<double> getInitImpParams(const ImproperID &improper) const;
     QList<double> getFinalImpParams(const ImproperID &improper) const;
-    
+
     //double getInitImproperK0(const ImproperID &improper) const;
     //int getInitImproperN(const ImproperID &improper) const;
     //double getInitImproperPhase(const ImproperID &improper) const;
@@ -195,7 +220,7 @@ public:
 
 private:
     QString name;
-    // The atom charges 
+    // The atom charges
     QHash<QString,Charge> initcharges;
     QHash<QString,Charge> finalcharges;
     // The atom LJs
@@ -206,12 +231,12 @@ private:
     QHash<QString,QString> finalatypes;
     // The bond parameters
     QHash<BondID,double> initbondsk;
-    QHash<BondID,double> initbondsr;    
+    QHash<BondID,double> initbondsr;
     QHash<BondID,double> finalbondsk;
     QHash<BondID,double> finalbondsr;
     // The angle parameters
     QHash<AngleID,double> initanglesk;
-    QHash<AngleID,double> initanglest;    
+    QHash<AngleID,double> initanglest;
     QHash<AngleID,double> finalanglesk;
     QHash<AngleID,double> finalanglest;
     // The dihedral parameters
@@ -221,10 +246,10 @@ private:
     QHash<DihedralID,QList<double> > initdihparams;
     QHash<DihedralID,QList<double> > finaldihparams;
     //QHash<DihedralID,double> initdihedralsk0;
-    //QHash<DihedralID,double> initdihedralsn;    
+    //QHash<DihedralID,double> initdihedralsn;
     //QHash<DihedralID,double> initdihedralsphase;
     //QHash<DihedralID,double> finaldihedralsk0;
-    //QHash<DihedralID,double> finaldihedralsn;    
+    //QHash<DihedralID,double> finaldihedralsn;
     //QHash<DihedralID,double> finaldihedralsphase;
     // The improper parameters
     //QHash<ImproperID,Expression> initimppotential;
@@ -233,37 +258,37 @@ private:
     QHash<ImproperID,QList<double> > initimpparams;
     QHash<ImproperID,QList<double> > finalimpparams;
     //QHash<ImproperID,double> initimpropersk0;
-    //QHash<ImproperID,double> initimpropersn;    
+    //QHash<ImproperID,double> initimpropersn;
     //QHash<ImproperID,double> initimpropersphase;
     //QHash<ImproperID,double> finalimpropersk0;
-    //QHash<ImproperID,double> finalimpropersn;    
+    //QHash<ImproperID,double> finalimpropersn;
     //QHash<ImproperID,double> finalimpropersphase;
 
 };
 
-/** This class is used to read templates describing how a 
+/** This class is used to read templates describing how a
     molecule can be perturbed
 
     @author Julien Michel
 */
 
-class SIREIO_EXPORT PerturbationsLibrary 
-        : public SireBase::ConcreteProperty<PerturbationsLibrary,SireBase::Property>
+class SIREIO_EXPORT PerturbationsLibrary
+    : public SireBase::ConcreteProperty<PerturbationsLibrary,SireBase::Property>
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const SireIO::PerturbationsLibrary&);
-friend QDataStream& ::operator>>(QDataStream&, SireIO::PerturbationsLibrary&);
+    friend QDataStream& ::operator<<(QDataStream&, const SireIO::PerturbationsLibrary&);
+    friend QDataStream& ::operator>>(QDataStream&, SireIO::PerturbationsLibrary&);
 
 public:
     PerturbationsLibrary();
     PerturbationsLibrary(const QString &file);
-    
+
     PerturbationsLibrary(const PerturbationsLibrary &other);
-    
+
     ~PerturbationsLibrary();
-    
+
     static const char* typeName();
-    
+
     PerturbationsLibrary& operator=(const PerturbationsLibrary &other);
 
     bool operator==(const PerturbationsLibrary &other) const;
@@ -274,18 +299,18 @@ public:
     PerturbationsLibrary& operator+=(const PerturbationsLibrary &other);
 
     PerturbationsLibrary operator+(const PerturbationsLibrary &other) const;
-    
+
     void add(const PerturbationsLibrary &other);
-    
+
     const PerturbationsTemplate& getTemplate(const QString &key);
-    
+
     void setTemplate(const QString &key, const PerturbationsTemplate &tmplate);
-    
+
     Molecule applyTemplate(const Molecule &molecule) const;
 
 private:
     /** The perturbations templates, indexed by molecule name*/
-    QHash<QString,PerturbationsTemplate> templates; 
+    QHash<QString,PerturbationsTemplate> templates;
 };
 
 } // end of namespace SireIO
