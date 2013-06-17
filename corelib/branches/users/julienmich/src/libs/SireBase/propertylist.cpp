@@ -270,7 +270,8 @@ void PropertyList::append(const Property &property)
 /** Append the list of properties onto the end of this list */
 void PropertyList::append(const QList<PropertyPtr> &props)
 {
-    l.append(props);
+    foreach (const PropertyPtr &prop, props)
+        l.append(prop);
 }
 
 /** Return the element at index i */
@@ -393,7 +394,9 @@ void PropertyList::replace(int i, const Property &value)
 /** Swap this list with 'other' */
 void PropertyList::swap(PropertyList &other)
 {
-    l.swap(other.l);
+    QList<PropertyPtr> tmp = l;
+    l = other.l;
+    other.l = tmp;
 }
 
 /** Swap elements 'i' and 'j' */
