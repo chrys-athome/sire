@@ -120,8 +120,10 @@ exception::exception()
 */
 exception::exception(QString error, QString place) : err(error), plce(place)
 {
-    bt = getBackTrace();
-    pidstr = getPIDString();
+    #ifdef SIRE_ENABLE_BACKTRACE
+        bt = getBackTrace();
+        pidstr = getPIDString();
+    #endif
 }
 
 /** Copy constructor */
@@ -237,7 +239,7 @@ QString exception::toString() const throw()
                        "Exception '%1' thrown by the thread '%2'.\n"
                        "%3\n"
                        "Thrown from %4")
-             .arg(what()).arg(pid()).arg(why()).arg(where()).arg(bt.join("\n"));
+             .arg(what()).arg(pid()).arg(why()).arg(where()).arg(trace().join("\n"));
 }
 
 /** Return the error message associated with this exception.
@@ -262,7 +264,16 @@ QString exception::from() const throw()
 /** Return the function backtrace when the exception was constructed */
 QStringList exception::trace() const throw()
 {
-    return bt;
+    #ifdef SIRE_ENABLE_BACKTRACE
+        return bt;
+    #else
+        QStringList btrace;
+        btrace.append( QObject::tr("No backtrace available. "
+                "Recompile the SireError library with -DSIRE_ENABLE_BACKTRACE "
+                "to enable backtraces.") );
+    
+        return btrace;
+    #endif
 }
 
 /** Overloaded functions to give logical names... */
