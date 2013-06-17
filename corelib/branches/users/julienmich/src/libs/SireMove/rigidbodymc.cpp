@@ -33,10 +33,12 @@
 #include "SireSystem/system.h"
 
 #include "SireMol/partialmolecule.h"
+#include "SireMol/molecule.h"
 
 #include "SireVol/space.h"
 
 #include "SireMaths/quaternion.h"
+#include "SireMaths/vectorproperty.h"
 
 #include "SireUnits/units.h"
 #include "SireUnits/temperature.h"
@@ -411,6 +413,8 @@ void RigidBodyMC::performMove(System &system,
                               double &old_bias, double &new_bias,
                               const PropertyMap &map)
 {
+    const PropertyName &center_property = map["center"];
+
     //update the sampler with the latest version of the molecules
     smplr.edit().updateFrom(system);
 
@@ -428,14 +432,31 @@ void RigidBodyMC::performMove(System &system,
 
         const PartialMolecule &oldmol = mol_and_bias.get<0>();
         old_bias = mol_and_bias.get<1>();
+        
+        const bool has_center_property = (oldmol.selectedAll() and
+                                          oldmol.hasProperty(center_property));
 
         //move the molecule
-        PartialMolecule newmol = oldmol.move()
-                                       .rotate(rotdelta,
-                                               center_function.read()(oldmol,map),
-                                               map)
-                                       .translate(delta, map)
-                                       .commit();
+        PartialMolecule newmol;
+        
+        if (has_center_property)
+        {
+            newmol = oldmol.move()
+                           .rotate(rotdelta,
+                                   oldmol.property(center_property).asA<VectorProperty>(),
+                                   map)
+                           .translate(delta, map)
+                           .commit();
+        }
+        else
+        {
+            newmol = oldmol.move()
+                           .rotate(rotdelta,
+                                   center_function.read()(oldmol,map),
+                                   map)
+                           .translate(delta, map)
+                           .commit();
+        }
 
         //if we are reflecting moves in a sphere, then check that this move
         //won't take us out of the sphere.
@@ -446,7 +467,16 @@ void RigidBodyMC::performMove(System &system,
             //the sphere, then the molecule will bounce off the edge of 
             //the sphere and back into the sphere volume
 
-            Vector old_center = oldmol.evaluate().center();
+            Vector old_center;
+            
+            if (has_center_property)
+            {
+                old_center = oldmol.property(center_property).asA<VectorProperty>();
+            }
+            else
+            {
+                old_center = oldmol.evaluate().center();
+            }
 
             if ( (old_center-reflect_center).length() > reflect_radius )
             {
@@ -458,7 +488,16 @@ void RigidBodyMC::performMove(System &system,
                 return;
             }
 
-            Vector new_center = newmol.evaluate().center();
+            Vector new_center;
+            
+            if (has_center_property)
+            {
+                new_center = newmol.property(center_property).asA<VectorProperty>();
+            }
+            else
+            {
+                new_center = newmol.evaluate().center();
+            }
 
             double dist = (new_center - reflect_center).length();
 
@@ -596,8 +635,16 @@ void RigidBodyMC::performMove(System &system,
                     newmol = newmol.move().translate( 
                             (1.01*(dist-reflect_radius))
                                 * ((reflect_center-new_center).normalise()) ).commit();
-                            
-                    new_center = newmol.evaluate().center();
+                    
+                    if (has_center_property)
+                    {
+                        new_center = newmol.property(center_property).asA<VectorProperty>();
+                    }
+                    else
+                    {
+                        new_center = newmol.evaluate().center();
+                    }
+                    
                     dist = (new_center - reflect_center).length();
                     
                     check_count += 1;
@@ -642,7 +689,14 @@ void RigidBodyMC::performMove(System &system,
                      it != molecules.constEnd();
                      ++it)
                 {
-                    box += center_function.read()(*it,map);
+                    if (it->selectedAll() and it->molecule().hasProperty(center_property))
+                    {
+                        box += it->molecule().property(center_property).asA<VectorProperty>();
+                    }
+                    else
+                    {
+                        box += center_function.read()(*it,map);
+                    }
                 }
                 
                 for (Molecules::const_iterator it = molecules.constBegin();
@@ -705,11 +759,24 @@ void RigidBodyMC::performMove(System &system,
             const PartialMolecule &oldmol = mol_and_bias.get<0>();
             old_bias = mol_and_bias.get<1>();
 
-            PartialMolecule newmol = oldmol.move()
-                                          .rotate(rotdelta,
-                                                  center_function.read()(oldmol,map),
-                                                  map)
-                                          .commit();
+            PartialMolecule newmol;
+            
+            if (oldmol.selectedAll() and oldmol.hasProperty(center_property))
+            {
+                newmol = oldmol.move()
+                               .rotate(rotdelta,
+                                       oldmol.property(center_property).asA<VectorProperty>(),
+                                       map)
+                               .commit();
+            }
+            else
+            {
+                newmol = oldmol.move()
+                               .rotate(rotdelta,
+                                       center_function.read()(oldmol,map),
+                                       map)
+                               .commit();
+            }
 
             //update the system with the new coordinates
             system.update(newmol);
@@ -744,7 +811,14 @@ void RigidBodyMC::performMove(System &system,
                      it != molecules.constEnd();
                      ++it)
                 {
-                    box += center_function.read()(*it,map);
+                    if (it->selectedAll() and it->molecule().hasProperty(center_property))
+                    {
+                        box += it->molecule().property(center_property).asA<VectorProperty>();
+                    }
+                    else
+                    {
+                        box += center_function.read()(*it,map);
+                    }
                 }
             
                 for (Molecules::const_iterator it = molecules.constBegin();
@@ -765,13 +839,27 @@ void RigidBodyMC::performMove(System &system,
                  it != molecules.constEnd();
                  ++it)
             {
-                PartialMolecule newmol = it->move()
-                                            .rotate(rotdelta,
-                                                    center_function.read()(*it,map),
-                                                    map)
-                                            .commit();
-
-                new_molecules.update(newmol);
+                if (it->selectedAll() and it->molecule().hasProperty(center_property))
+                {
+                    PartialMolecule newmol = it->move()
+                                                .rotate(rotdelta,
+                                                        it->molecule().property(center_property)
+                                                                .asA<VectorProperty>(),
+                                                        map)
+                                                .commit();
+                    
+                    new_molecules.update(newmol);
+                }
+                else
+                {
+                    PartialMolecule newmol = it->move()
+                                                .rotate(rotdelta,
+                                                        center_function.read()(*it,map),
+                                                        map)
+                                                .commit();
+                    
+                    new_molecules.update(newmol);
+                }
             }
         }
 

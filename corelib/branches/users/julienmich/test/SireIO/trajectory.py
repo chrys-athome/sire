@@ -83,7 +83,6 @@ print system.property("switchingFunction")
 
 print system.groupNumbers()
 print system.groupNames()
-print system.components()
 
 mc = RigidBodyMC(solvent)
 

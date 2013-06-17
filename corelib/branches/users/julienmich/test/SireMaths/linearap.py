@@ -17,6 +17,8 @@ for i in range(0,costs.nRows()):
         d = rand.rand(0,5)
         costs.set(i,j, d*d)
 
+costs = NMatrix(costs)
+
 ms = t.elapsed()
 
 print "...took %d ms" % ms

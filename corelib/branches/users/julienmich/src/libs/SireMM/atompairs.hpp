@@ -805,6 +805,15 @@ AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
         }
     }
 
+    if (nats != 0)
+    {
+        AtomIdx i(nats-1);
+        AtomIdx new_i = matched_atoms.value(i, AtomIdx(-1));
+        
+        if (new_i != -1)
+            ret.set(new_i, new_i, this->get(i,i));
+    }
+
     return ret;
 }
 

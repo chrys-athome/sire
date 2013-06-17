@@ -15,7 +15,7 @@ print header.dataType()
 print header.requiredLibraries()
 
 print header.createdBy()
-print header.createdWhen().toString()
+print header.createdWhen()
 print header.createdWhere()
 
 print header.requiredMemory()
