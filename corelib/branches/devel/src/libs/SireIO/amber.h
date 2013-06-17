@@ -29,8 +29,15 @@
 #ifndef SIREIO_AMBER_H
 #define SIREIO_AMBER_H
 
+#include "SireBase/propertymap.h"
+#include "SireBase/shareddatapointer.hpp"
+
+#include "SireMol/atomidx.h"
+#include "SireMol/molviewproperty.h"
+
 #include "iobase.h"
 #include "SireVol/space.h"
+
 
 SIRE_BEGIN_HEADER
 
@@ -86,7 +93,8 @@ public:
     const char* what() const;
   
     tuple<Molecules,SpacePtr> readCrdTop(const QString &crdfile, 
-                                         const QString &topfile) const;
+                                         const QString &topfile,
+                                         QString flag_cutting="perresidue") const;
 };
 
 }
