@@ -562,6 +562,7 @@ void OpenMMFrEnergyST::initialise()  {
 */
 
 
+
         custom_force_field = new OpenMM::CustomNonbondedForce("Hls + Hcs;"
                                                               "Hcs = (lambda^n) * 138.935456 * q_prod*(1/sqrt(diff_cl+r*r) + krflam*(diff_cl+r*r)-crflam);"
                                                               "crflam = crf * src;"
@@ -689,7 +690,6 @@ void OpenMMFrEnergyST::initialise()  {
 
     }
 
-
     // Andersen thermostat
     if (Andersen_flag == true){
         const double converted_Temperature = convertTo(Temperature.value(), kelvin);
@@ -697,7 +697,7 @@ void OpenMMFrEnergyST::initialise()  {
         OpenMM::AndersenThermostat * thermostat = new OpenMM::AndersenThermostat(converted_Temperature, Andersen_frequency);
 
          //Set The random seed
-        thermostat->setRandomNumberSeed(1234567);
+        //thermostat->setRandomNumberSeed(1234567);
 
         system_openmm->addForce(thermostat);
 
@@ -716,7 +716,7 @@ void OpenMMFrEnergyST::initialise()  {
 
         OpenMM::MonteCarloBarostat * barostat = new OpenMM::MonteCarloBarostat(converted_Pressure, converted_Temperature, MCBarostat_frequency);
         //Set The random seed
-        barostat->setRandomNumberSeed(1234567);
+        //barostat->setRandomNumberSeed(1234567);
 
         system_openmm->addForce(barostat);
 
@@ -2090,17 +2090,12 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     }
 
 
-
-
-    vector<double> center(3);
+    /*vector<double> center(3);
     center[0] = 14.0;
     center[1] = 14.0;
     center[2] = 14.0; 
 
-    DCD dcd("traj.dcd", true,CUTOFFPERIODIC, center, energy_frequency, nats, dt,  context_openmm, ws );
-
-
-
+    DCD dcd("traj.dcd", true,CUTOFFPERIODIC, center, energy_frequency, nats, dt,  context_openmm, ws );*/
 
 
     while(sample_count<n_samples){
@@ -2108,11 +2103,11 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         //*********************MD STEPS****************************
         integrator_openmm->step(energy_frequency);
 
-        dcd.write((int) sample_count);//Save a frame
+        //dcd.write((int) sample_count);//Save a frame
 
         state_openmm=context_openmm.getState(infoMask);
 
-        if(true)
+        if(Debug)
             qDebug()<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
 
 
@@ -2138,13 +2133,13 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             }
         }
 
-        if(true){
+        if(Debug){
             qDebug() << "\nLambda = " << Alchemical_value;
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
         }
      
         if(potential_energy_lambda > 1000000.0){
-            qDebug() << "*********************HERE ENERGY ERROR*******************";
+            throw SireError::program_bug(QObject::tr("********************* Energy Too High. Error! *******************"), CODELOC);
             exit(-1);
         }
         
@@ -2255,7 +2250,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
 
             
-            if(true){
+            if(Debug){
                 qDebug() << "Lambda + delta = " << Alchemical_value + delta_alchemical << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
             }
 
@@ -2293,7 +2288,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             minus = exp(-beta * (potential_energy_lambda_minus_delta - potential_energy_lambda));
             
 
-            if(true){
+            if(Debug){
                 qDebug() << "Lambda - delta = " << Alchemical_value - delta_alchemical << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
             }
             
@@ -2303,10 +2298,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         GF_acc = GF_acc + plus;
         GB_acc = GB_acc + minus;
-
-        if(isnormal(GF_acc==0) || isnormal(GB_acc==0)){ 
-            throw SireError::program_bug(QObject::tr("******************* Not a Number. Error! *******************"), CODELOC);
-        }
 
         double avg_GF = GF_acc /(sample_count + 1.0);
 
@@ -2320,7 +2311,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2 * delta_alchemical);
 
 
-        if(true)
+        if(Debug)
             qDebug() << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
 
 
@@ -2365,7 +2356,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 
     /**********************************************TO BE REMOVED*****************************************/
-    dcd.close();
+    //dcd.close();
 
 
     if (Debug)
