@@ -45,9 +45,8 @@ void register_ResidueCutting_class(){
 
     { //::SireMol::ResidueCutting
         typedef bp::class_< SireMol::ResidueCutting, bp::bases< SireMol::CuttingFunction, SireBase::Property > > ResidueCutting_exposer_t;
-        ResidueCutting_exposer_t ResidueCutting_exposer = ResidueCutting_exposer_t( "ResidueCutting" );
+        ResidueCutting_exposer_t ResidueCutting_exposer = ResidueCutting_exposer_t( "ResidueCutting", bp::init< >() );
         bp::scope ResidueCutting_scope( ResidueCutting_exposer );
-        ResidueCutting_exposer.def( bp::init< >() );
         ResidueCutting_exposer.def( bp::init< SireMol::ResidueCutting const & >(( bp::arg("other") )) );
         ResidueCutting_exposer.def( bp::self != bp::self );
         { //::SireMol::ResidueCutting::operator()

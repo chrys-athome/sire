@@ -13,6 +13,10 @@ namespace bp = boost::python;
 
 #include "SireMaths/quaternion.h"
 
+#include "SireMaths/rotate.h"
+
+#include "SireMaths/vectorproperty.h"
+
 #include "SireMol/errors.h"
 
 #include "SireUnits/units.h"
@@ -51,9 +55,8 @@ void register_MoverBase_class(){
 
     { //::SireMol::MoverBase
         typedef bp::class_< SireMol::MoverBase > MoverBase_exposer_t;
-        MoverBase_exposer_t MoverBase_exposer = MoverBase_exposer_t( "MoverBase" );
+        MoverBase_exposer_t MoverBase_exposer = MoverBase_exposer_t( "MoverBase", bp::init< >() );
         bp::scope MoverBase_scope( MoverBase_exposer );
-        MoverBase_exposer.def( bp::init< >() );
         MoverBase_exposer.def( bp::init< SireMol::MoverBase const & >(( bp::arg("other") )) );
         { //::SireMol::MoverBase::operator=
         

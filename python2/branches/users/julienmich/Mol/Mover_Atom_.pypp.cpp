@@ -51,6 +51,10 @@ namespace bp = boost::python;
 
 #include "SireMaths/quaternion.h"
 
+#include "SireMaths/rotate.h"
+
+#include "SireMaths/vectorproperty.h"
+
 #include "SireMol/errors.h"
 
 #include "SireUnits/units.h"
@@ -89,9 +93,8 @@ void register_Mover_Atom__class(){
 
     { //::SireMol::Mover< SireMol::Atom >
         typedef bp::class_< SireMol::Mover< SireMol::Atom >, bp::bases< SireMol::MoverBase, SireMol::Atom, SireMol::MoleculeView, SireBase::Property > > Mover_Atom__exposer_t;
-        Mover_Atom__exposer_t Mover_Atom__exposer = Mover_Atom__exposer_t( "Mover_Atom_" );
+        Mover_Atom__exposer_t Mover_Atom__exposer = Mover_Atom__exposer_t( "Mover_Atom_", bp::init< >() );
         bp::scope Mover_Atom__scope( Mover_Atom__exposer );
-        Mover_Atom__exposer.def( bp::init< >() );
         Mover_Atom__exposer.def( bp::init< SireMol::Atom const & >(( bp::arg("view") )) );
         Mover_Atom__exposer.def( bp::init< SireMol::Atom const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Atom__exposer.def( bp::init< SireMol::Mover< SireMol::Atom > const & >(( bp::arg("other") )) );

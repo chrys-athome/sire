@@ -144,12 +144,17 @@ def has_function(c, funcname):
 
 def find_class(mb, classname):
    for clas in mb.classes():
-       if str(clas).find("%s [class]" % classname) != -1:
+       if str(clas).find("%s [class]" % classname) != -1 or \
+          str(clas).find("%s [struct]" % classname) != -1 or \
+          str(clas).find("%s [typedef]" % classname) != -1:
            return clas
-       elif str(clas).find("%s [struct]" % classname) != -1:
-           return clas
-       elif clas.alias == classname:
-           return clas
+       else:
+           for alias in clas.aliases:
+               if str(alias).find("%s [class]" % classname) != -1 or \
+                  str(alias).find("%s [struct]" % classname) != -1 or \
+                  str(alias).find("%s [typedef]" % classname) != -1:
+                   print "Found %s as alias %s of %s" % (classname, clas, alias)
+                   return clas
 
    print "Cannot find the class %s" % classname
    raise "Cannot find the class %s" % classname
@@ -207,6 +212,8 @@ def fix_Index_T_(c):
        pass
 
 
+has_copy_function = {}
+
 def export_class(mb, classname, aliases, includes, special_code, auto_str_function=True):
    """Do all the work necessary to allow the class called 'classname'
       to be exported, using the supplied aliases, and using the 
@@ -249,10 +256,7 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
        pass
 
    for f in funs:
-       print f
-
        if has_clone_function(f.return_type):
-           print "HAS CLONE FUNCTION"
            f.call_policies = call_policies.custom_call_policies( \
                  "bp::return_value_policy<bp::clone_const_reference>", \
                  "Helpers/clone_const_reference.hpp" )
@@ -265,11 +269,8 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
        pass
 
    for f in funs:
-       print f
-
        if (str(f).find("[]") != -1) or (str(f).find("()") != -1):
            if has_clone_function(f.return_type):
-               print "HAS CLONE FUNCTION"
                f.call_policies = call_policies.custom_call_policies( \
                    "bp::return_value_policy<bp::clone_const_reference>", \
                    "Helpers/clone_const_reference.hpp" )
@@ -306,24 +307,35 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
       #it is exposed!
       decls = c.decls()
       
+      made_copy_function = False
+
       for decl in decls:
+          if made_copy_function:
+              break
+
           try:
               if decl.is_copy_constructor:
                   #create a __copy__ function
                   class_name = re.sub(r"\s\[class\]","",str(c))
                   class_name = re.sub(r"\s\[struct\]","",class_name)
                   
-                  c.add_declaration_code( \
-                       "%s __copy__(const %s &other){ return %s(other); }" \
-                          % (class_name, class_name, class_name) )
-                       
-                  c.add_registration_code( "def( \"__copy__\", &__copy__)" )
-                  
-                  c.add_registration_code( "def( \"__deepcopy__\", &__copy__)" )
-                  c.add_registration_code( "def( \"clone\", &__copy__)" )
+                  if not (class_name in has_copy_function):
+                      has_copy_function[class_name] = True
 
-                  #only do this once for the class
-                  break
+                      print "Creating a copy function for class %s" % class_name
+                      made_copy_function = True
+
+                      c.add_declaration_code( \
+                           "%s __copy__(const %s &other){ return %s(other); }" \
+                              % (class_name, class_name, class_name) )
+                       
+                      c.add_registration_code( "def( \"__copy__\", &__copy__)" )
+                  
+                      c.add_registration_code( "def( \"__deepcopy__\", &__copy__)" )
+                      c.add_registration_code( "def( \"clone\", &__copy__)" )
+
+                      #only do this once for the class
+                      break
                   
           except AttributeError:
               pass

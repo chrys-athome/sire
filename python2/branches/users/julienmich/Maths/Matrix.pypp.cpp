@@ -47,9 +47,8 @@ void register_Matrix_class(){
 
     { //::SireMaths::Matrix
         typedef bp::class_< SireMaths::Matrix > Matrix_exposer_t;
-        Matrix_exposer_t Matrix_exposer = Matrix_exposer_t( "Matrix" );
+        Matrix_exposer_t Matrix_exposer = Matrix_exposer_t( "Matrix", bp::init< >() );
         bp::scope Matrix_scope( Matrix_exposer );
-        Matrix_exposer.def( bp::init< >() );
         Matrix_exposer.def( bp::init< double >(( bp::arg("diagonal_value") )) );
         Matrix_exposer.def( bp::init< double, double, double, double, double, double, double, double, double >(( bp::arg("xx"), bp::arg("xy"), bp::arg("xz"), bp::arg("yx"), bp::arg("yy"), bp::arg("yz"), bp::arg("zx"), bp::arg("zy"), bp::arg("zz") )) );
         Matrix_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("r1"), bp::arg("r2"), bp::arg("r3") )) );

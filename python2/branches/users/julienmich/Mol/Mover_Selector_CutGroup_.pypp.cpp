@@ -17,6 +17,10 @@ namespace bp = boost::python;
 
 #include "SireMaths/quaternion.h"
 
+#include "SireMaths/rotate.h"
+
+#include "SireMaths/vectorproperty.h"
+
 #include "SireMol/errors.h"
 
 #include "SireUnits/units.h"
@@ -55,9 +59,8 @@ void register_Mover_Selector_CutGroup__class(){
 
     { //::SireMol::Mover< SireMol::Selector< SireMol::CutGroup > >
         typedef bp::class_< SireMol::Mover< SireMol::Selector< SireMol::CutGroup > >, bp::bases< SireMol::MoverBase, SireMol::Selector<SireMol::CutGroup>, SireMol::MoleculeView, SireBase::Property > > Mover_Selector_CutGroup__exposer_t;
-        Mover_Selector_CutGroup__exposer_t Mover_Selector_CutGroup__exposer = Mover_Selector_CutGroup__exposer_t( "Mover_Selector_CutGroup_" );
+        Mover_Selector_CutGroup__exposer_t Mover_Selector_CutGroup__exposer = Mover_Selector_CutGroup__exposer_t( "Mover_Selector_CutGroup_", bp::init< >() );
         bp::scope Mover_Selector_CutGroup__scope( Mover_Selector_CutGroup__exposer );
-        Mover_Selector_CutGroup__exposer.def( bp::init< >() );
         Mover_Selector_CutGroup__exposer.def( bp::init< SireMol::Selector< SireMol::CutGroup > const & >(( bp::arg("view") )) );
         Mover_Selector_CutGroup__exposer.def( bp::init< SireMol::Selector< SireMol::CutGroup > const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Selector_CutGroup__exposer.def( bp::init< SireMol::Mover< SireMol::Selector< SireMol::CutGroup > > const & >(( bp::arg("other") )) );

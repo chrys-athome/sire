@@ -37,9 +37,8 @@ void register_AtomSelection_class(){
 
     { //::SireMol::AtomSelection
         typedef bp::class_< SireMol::AtomSelection, bp::bases< SireMol::MoleculeProperty, SireMol::MolViewProperty, SireBase::Property > > AtomSelection_exposer_t;
-        AtomSelection_exposer_t AtomSelection_exposer = AtomSelection_exposer_t( "AtomSelection" );
+        AtomSelection_exposer_t AtomSelection_exposer = AtomSelection_exposer_t( "AtomSelection", bp::init< >() );
         bp::scope AtomSelection_scope( AtomSelection_exposer );
-        AtomSelection_exposer.def( bp::init< >() );
         AtomSelection_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molecule") )) );
         AtomSelection_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         AtomSelection_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
@@ -492,6 +491,17 @@ void register_AtomSelection_class(){
                 "deselectAll"
                 , deselectAll_function_value
                 , bp::return_self< >() );
+        
+        }
+        { //::SireMol::AtomSelection::info
+        
+            typedef ::SireMol::MoleculeInfoData const & ( ::SireMol::AtomSelection::*info_function_type )(  ) const;
+            info_function_type info_function_value( &::SireMol::AtomSelection::info );
+            
+            AtomSelection_exposer.def( 
+                "info"
+                , info_function_value
+                , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
         { //::SireMol::AtomSelection::intersect

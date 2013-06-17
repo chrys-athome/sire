@@ -63,9 +63,8 @@ void register_IDAndSet_ResID__class(){
 
     { //::SireID::IDAndSet< SireMol::ResID >
         typedef bp::class_< SireID::IDAndSet< SireMol::ResID >, bp::bases< SireMol::ResID, SireID::ID > > IDAndSet_ResID__exposer_t;
-        IDAndSet_ResID__exposer_t IDAndSet_ResID__exposer = IDAndSet_ResID__exposer_t( "IDAndSet_ResID_" );
+        IDAndSet_ResID__exposer_t IDAndSet_ResID__exposer = IDAndSet_ResID__exposer_t( "IDAndSet_ResID_", bp::init< >() );
         bp::scope IDAndSet_ResID__scope( IDAndSet_ResID__exposer );
-        IDAndSet_ResID__exposer.def( bp::init< >() );
         IDAndSet_ResID__exposer.def( bp::init< SireMol::ResID const & >(( bp::arg("id") )) );
         IDAndSet_ResID__exposer.def( bp::init< SireMol::ResID const &, SireMol::ResID const & >(( bp::arg("id0"), bp::arg("id1") )) );
         IDAndSet_ResID__exposer.def( bp::init< QList< SireMol::ResIdentifier > const & >(( bp::arg("ids") )) );

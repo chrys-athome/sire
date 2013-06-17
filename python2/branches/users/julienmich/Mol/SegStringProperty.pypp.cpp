@@ -23,9 +23,8 @@ void register_SegStringProperty_class(){
 
     { //::SireMol::SegProperty< QString >
         typedef bp::class_< SireMol::SegProperty< QString >, bp::bases< SireMol::SegProp, SireMol::MolViewProperty, SireBase::Property > > SegStringProperty_exposer_t;
-        SegStringProperty_exposer_t SegStringProperty_exposer = SegStringProperty_exposer_t( "SegStringProperty" );
+        SegStringProperty_exposer_t SegStringProperty_exposer = SegStringProperty_exposer_t( "SegStringProperty", bp::init< >() );
         bp::scope SegStringProperty_scope( SegStringProperty_exposer );
-        SegStringProperty_exposer.def( bp::init< >() );
         SegStringProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         SegStringProperty_exposer.def( bp::init< QVector< QString > const & >(( bp::arg("values") )) );
         SegStringProperty_exposer.def( bp::init< SireMol::SegProperty< QString > const & >(( bp::arg("other") )) );

@@ -52,9 +52,8 @@ void register_ResStructureEditor_class(){
 
     { //::SireMol::ResStructureEditor
         typedef bp::class_< SireMol::ResStructureEditor > ResStructureEditor_exposer_t;
-        ResStructureEditor_exposer_t ResStructureEditor_exposer = ResStructureEditor_exposer_t( "ResStructureEditor" );
+        ResStructureEditor_exposer_t ResStructureEditor_exposer = ResStructureEditor_exposer_t( "ResStructureEditor", bp::init< >() );
         bp::scope ResStructureEditor_scope( ResStructureEditor_exposer );
-        ResStructureEditor_exposer.def( bp::init< >() );
         ResStructureEditor_exposer.def( bp::init< SireMol::Residue const & >(( bp::arg("residue") )) );
         ResStructureEditor_exposer.def( bp::init< SireMol::StructureEditor const &, SireMol::ResIdx >(( bp::arg("data"), bp::arg("residx") )) );
         ResStructureEditor_exposer.def( bp::init< SireMol::ResStructureEditor const & >(( bp::arg("other") )) );

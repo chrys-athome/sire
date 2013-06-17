@@ -51,9 +51,8 @@ void register_CovalentBondHunterParameters_class(){
 
     { //::SireMol::CovalentBondHunterParameters
         typedef bp::class_< SireMol::CovalentBondHunterParameters > CovalentBondHunterParameters_exposer_t;
-        CovalentBondHunterParameters_exposer_t CovalentBondHunterParameters_exposer = CovalentBondHunterParameters_exposer_t( "CovalentBondHunterParameters" );
+        CovalentBondHunterParameters_exposer_t CovalentBondHunterParameters_exposer = CovalentBondHunterParameters_exposer_t( "CovalentBondHunterParameters", bp::init< >() );
         bp::scope CovalentBondHunterParameters_scope( CovalentBondHunterParameters_exposer );
-        CovalentBondHunterParameters_exposer.def( bp::init< >() );
         { //::SireMol::CovalentBondHunterParameters::coordinates
         
             typedef ::SireBase::PropertyName const & ( *coordinates_function_type )(  );

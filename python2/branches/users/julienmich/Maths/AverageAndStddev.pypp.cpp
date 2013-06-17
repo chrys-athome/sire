@@ -35,9 +35,8 @@ void register_AverageAndStddev_class(){
 
     { //::SireMaths::AverageAndStddev
         typedef bp::class_< SireMaths::AverageAndStddev, bp::bases< SireMaths::Average, SireMaths::Accumulator, SireBase::Property > > AverageAndStddev_exposer_t;
-        AverageAndStddev_exposer_t AverageAndStddev_exposer = AverageAndStddev_exposer_t( "AverageAndStddev" );
+        AverageAndStddev_exposer_t AverageAndStddev_exposer = AverageAndStddev_exposer_t( "AverageAndStddev", bp::init< >() );
         bp::scope AverageAndStddev_scope( AverageAndStddev_exposer );
-        AverageAndStddev_exposer.def( bp::init< >() );
         AverageAndStddev_exposer.def( bp::init< SireMaths::AverageAndStddev const & >(( bp::arg("other") )) );
         { //::SireMaths::AverageAndStddev::accumulate
         

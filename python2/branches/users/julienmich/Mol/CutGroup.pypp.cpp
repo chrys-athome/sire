@@ -78,9 +78,8 @@ void register_CutGroup_class(){
 
     { //::SireMol::CutGroup
         typedef bp::class_< SireMol::CutGroup, bp::bases< SireMol::MoleculeView, SireBase::Property > > CutGroup_exposer_t;
-        CutGroup_exposer_t CutGroup_exposer = CutGroup_exposer_t( "CutGroup" );
+        CutGroup_exposer_t CutGroup_exposer = CutGroup_exposer_t( "CutGroup", bp::init< >() );
         bp::scope CutGroup_scope( CutGroup_exposer );
-        CutGroup_exposer.def( bp::init< >() );
         CutGroup_exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::CGID const & >(( bp::arg("moldata"), bp::arg("cgid") )) );
         CutGroup_exposer.def( bp::init< SireMol::CutGroup const & >(( bp::arg("other") )) );
         { //::SireMol::CutGroup::assertContainsMetadata

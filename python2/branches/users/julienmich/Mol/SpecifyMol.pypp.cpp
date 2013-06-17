@@ -35,9 +35,8 @@ void register_SpecifyMol_class(){
 
     { //::SireMol::SpecifyMol
         typedef bp::class_< SireMol::SpecifyMol, bp::bases< SireMol::MolID, SireID::ID > > SpecifyMol_exposer_t;
-        SpecifyMol_exposer_t SpecifyMol_exposer = SpecifyMol_exposer_t( "SpecifyMol" );
+        SpecifyMol_exposer_t SpecifyMol_exposer = SpecifyMol_exposer_t( "SpecifyMol", bp::init< >() );
         bp::scope SpecifyMol_scope( SpecifyMol_exposer );
-        SpecifyMol_exposer.def( bp::init< >() );
         SpecifyMol_exposer.def( bp::init< SireMol::MolID const & >(( bp::arg("molid") )) );
         SpecifyMol_exposer.def( bp::init< SireMol::MolID const &, int >(( bp::arg("molid"), bp::arg("i") )) );
         SpecifyMol_exposer.def( bp::init< SireMol::MolID const &, int, int >(( bp::arg("molid"), bp::arg("i"), bp::arg("j") )) );

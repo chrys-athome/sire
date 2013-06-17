@@ -21,9 +21,8 @@ void register_BeadIdx_class(){
 
     { //::SireMol::BeadIdx
         typedef bp::class_< SireMol::BeadIdx, bp::bases< SireMol::BeadID, SireID::ID, SireID::IndexBase > > BeadIdx_exposer_t;
-        BeadIdx_exposer_t BeadIdx_exposer = BeadIdx_exposer_t( "BeadIdx" );
+        BeadIdx_exposer_t BeadIdx_exposer = BeadIdx_exposer_t( "BeadIdx", bp::init< >() );
         bp::scope BeadIdx_scope( BeadIdx_exposer );
-        BeadIdx_exposer.def( bp::init< >() );
         BeadIdx_exposer.def( bp::init< qint32 >(( bp::arg("idx") )) );
         BeadIdx_exposer.def( bp::init< SireMol::BeadIdx const & >(( bp::arg("other") )) );
         { //::SireMol::BeadIdx::hash

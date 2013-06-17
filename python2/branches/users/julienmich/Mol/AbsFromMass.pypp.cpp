@@ -39,9 +39,8 @@ void register_AbsFromMass_class(){
 
     { //::SireMol::AbsFromMass
         typedef bp::class_< SireMol::AbsFromMass, bp::bases< SireMol::WeightFunction, SireBase::Property > > AbsFromMass_exposer_t;
-        AbsFromMass_exposer_t AbsFromMass_exposer = AbsFromMass_exposer_t( "AbsFromMass" );
+        AbsFromMass_exposer_t AbsFromMass_exposer = AbsFromMass_exposer_t( "AbsFromMass", bp::init< >() );
         bp::scope AbsFromMass_scope( AbsFromMass_exposer );
-        AbsFromMass_exposer.def( bp::init< >() );
         AbsFromMass_exposer.def( bp::init< SireMol::AbsFromMass const & >(( bp::arg("other") )) );
         AbsFromMass_exposer.def( bp::self != bp::self );
         { //::SireMol::AbsFromMass::operator()

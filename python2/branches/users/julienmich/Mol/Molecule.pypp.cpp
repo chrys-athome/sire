@@ -48,9 +48,8 @@ void register_Molecule_class(){
 
     { //::SireMol::Molecule
         typedef bp::class_< SireMol::Molecule, bp::bases< SireMol::MoleculeView, SireBase::Property > > Molecule_exposer_t;
-        Molecule_exposer_t Molecule_exposer = Molecule_exposer_t( "Molecule" );
+        Molecule_exposer_t Molecule_exposer = Molecule_exposer_t( "Molecule", bp::init< >() );
         bp::scope Molecule_scope( Molecule_exposer );
-        Molecule_exposer.def( bp::init< >() );
         Molecule_exposer.def( bp::init< QString const & >(( bp::arg("molname") )) );
         Molecule_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         Molecule_exposer.def( bp::init< SireMol::Molecule const & >(( bp::arg("other") )) );

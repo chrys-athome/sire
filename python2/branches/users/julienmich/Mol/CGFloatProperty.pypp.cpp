@@ -23,9 +23,8 @@ void register_CGFloatProperty_class(){
 
     { //::SireMol::CGProperty< double >
         typedef bp::class_< SireMol::CGProperty< double >, bp::bases< SireMol::CGProp, SireMol::MolViewProperty, SireBase::Property > > CGFloatProperty_exposer_t;
-        CGFloatProperty_exposer_t CGFloatProperty_exposer = CGFloatProperty_exposer_t( "CGFloatProperty" );
+        CGFloatProperty_exposer_t CGFloatProperty_exposer = CGFloatProperty_exposer_t( "CGFloatProperty", bp::init< >() );
         bp::scope CGFloatProperty_scope( CGFloatProperty_exposer );
-        CGFloatProperty_exposer.def( bp::init< >() );
         CGFloatProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         CGFloatProperty_exposer.def( bp::init< QVector< double > const & >(( bp::arg("values") )) );
         CGFloatProperty_exposer.def( bp::init< SireMol::CGProperty< double > const & >(( bp::arg("other") )) );

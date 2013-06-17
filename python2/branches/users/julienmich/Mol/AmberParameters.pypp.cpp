@@ -39,9 +39,8 @@ void register_AmberParameters_class(){
 
     { //::SireMol::AmberParameters
         typedef bp::class_< SireMol::AmberParameters, bp::bases< SireMol::MoleculeProperty, SireMol::MolViewProperty, SireBase::Property > > AmberParameters_exposer_t;
-        AmberParameters_exposer_t AmberParameters_exposer = AmberParameters_exposer_t( "AmberParameters" );
+        AmberParameters_exposer_t AmberParameters_exposer = AmberParameters_exposer_t( "AmberParameters", bp::init< >() );
         bp::scope AmberParameters_scope( AmberParameters_exposer );
-        AmberParameters_exposer.def( bp::init< >() );
         AmberParameters_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("molecule") )) );
         AmberParameters_exposer.def( bp::init< SireMol::AmberParameters const & >(( bp::arg("other") )) );
         { //::SireMol::AmberParameters::add

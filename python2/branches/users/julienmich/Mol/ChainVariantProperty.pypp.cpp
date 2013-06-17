@@ -23,9 +23,8 @@ void register_ChainVariantProperty_class(){
 
     { //::SireMol::ChainProperty< QVariant >
         typedef bp::class_< SireMol::ChainProperty< QVariant >, bp::bases< SireMol::ChainProp, SireMol::MolViewProperty, SireBase::Property > > ChainVariantProperty_exposer_t;
-        ChainVariantProperty_exposer_t ChainVariantProperty_exposer = ChainVariantProperty_exposer_t( "ChainVariantProperty" );
+        ChainVariantProperty_exposer_t ChainVariantProperty_exposer = ChainVariantProperty_exposer_t( "ChainVariantProperty", bp::init< >() );
         bp::scope ChainVariantProperty_scope( ChainVariantProperty_exposer );
-        ChainVariantProperty_exposer.def( bp::init< >() );
         ChainVariantProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         ChainVariantProperty_exposer.def( bp::init< QVector< QVariant > const & >(( bp::arg("values") )) );
         ChainVariantProperty_exposer.def( bp::init< SireMol::ChainProperty< QVariant > const & >(( bp::arg("other") )) );

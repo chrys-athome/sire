@@ -21,9 +21,8 @@ void register_PackedArray2D_double__class(){
 
     { //::SireBase::PackedArray2D< double >
         typedef bp::class_< SireBase::PackedArray2D< double > > PackedArray2D_double__exposer_t;
-        PackedArray2D_double__exposer_t PackedArray2D_double__exposer = PackedArray2D_double__exposer_t( "PackedArray2D_double_" );
+        PackedArray2D_double__exposer_t PackedArray2D_double__exposer = PackedArray2D_double__exposer_t( "PackedArray2D_double_", bp::init< >() );
         bp::scope PackedArray2D_double__scope( PackedArray2D_double__exposer );
-        PackedArray2D_double__exposer.def( bp::init< >() );
         PackedArray2D_double__exposer.def( bp::init< SireBase::detail::PackedArray2D_Array< double > const & >(( bp::arg("array") )) );
         PackedArray2D_double__exposer.def( bp::init< QVector< SireBase::detail::PackedArray2D_Array< double > > const & >(( bp::arg("arrays") )) );
         PackedArray2D_double__exposer.def( bp::init< QVector< double > const & >(( bp::arg("values") )) );

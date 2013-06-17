@@ -33,9 +33,8 @@ void register_NVector_class(){
 
     { //::SireMaths::NVector
         typedef bp::class_< SireMaths::NVector > NVector_exposer_t;
-        NVector_exposer_t NVector_exposer = NVector_exposer_t( "NVector" );
+        NVector_exposer_t NVector_exposer = NVector_exposer_t( "NVector", bp::init< >() );
         bp::scope NVector_scope( NVector_exposer );
-        NVector_exposer.def( bp::init< >() );
         NVector_exposer.def( bp::init< int >(( bp::arg("nrows") )) );
         NVector_exposer.def( bp::init< int, double >(( bp::arg("nrows"), bp::arg("initial_value") )) );
         NVector_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("vector") )) );

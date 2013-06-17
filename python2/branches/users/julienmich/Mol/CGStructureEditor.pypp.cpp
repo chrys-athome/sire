@@ -54,9 +54,8 @@ void register_CGStructureEditor_class(){
 
     { //::SireMol::CGStructureEditor
         typedef bp::class_< SireMol::CGStructureEditor > CGStructureEditor_exposer_t;
-        CGStructureEditor_exposer_t CGStructureEditor_exposer = CGStructureEditor_exposer_t( "CGStructureEditor" );
+        CGStructureEditor_exposer_t CGStructureEditor_exposer = CGStructureEditor_exposer_t( "CGStructureEditor", bp::init< >() );
         bp::scope CGStructureEditor_scope( CGStructureEditor_exposer );
-        CGStructureEditor_exposer.def( bp::init< >() );
         CGStructureEditor_exposer.def( bp::init< SireMol::CutGroup const & >(( bp::arg("cutgroup") )) );
         CGStructureEditor_exposer.def( bp::init< SireMol::StructureEditor const &, SireMol::CGIdx >(( bp::arg("data"), bp::arg("cgidx") )) );
         CGStructureEditor_exposer.def( bp::init< SireMol::CGStructureEditor const & >(( bp::arg("other") )) );

@@ -33,6 +33,8 @@ namespace bp = boost::python;
 
 #include "moleculeview.h"
 
+#include "tostring.h"
+
 #include <QDataStream>
 
 #include <QDebug>

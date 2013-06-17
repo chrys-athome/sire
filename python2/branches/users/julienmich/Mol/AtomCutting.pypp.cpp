@@ -45,9 +45,8 @@ void register_AtomCutting_class(){
 
     { //::SireMol::AtomCutting
         typedef bp::class_< SireMol::AtomCutting, bp::bases< SireMol::CuttingFunction, SireBase::Property > > AtomCutting_exposer_t;
-        AtomCutting_exposer_t AtomCutting_exposer = AtomCutting_exposer_t( "AtomCutting" );
+        AtomCutting_exposer_t AtomCutting_exposer = AtomCutting_exposer_t( "AtomCutting", bp::init< >() );
         bp::scope AtomCutting_scope( AtomCutting_exposer );
-        AtomCutting_exposer.def( bp::init< >() );
         AtomCutting_exposer.def( bp::init< SireMol::AtomCutting const & >(( bp::arg("other") )) );
         AtomCutting_exposer.def( bp::self != bp::self );
         { //::SireMol::AtomCutting::operator()

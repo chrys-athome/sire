@@ -53,9 +53,8 @@ void register_CGEditor_class(){
 
     { //::SireMol::CGEditor
         typedef bp::class_< SireMol::CGEditor, bp::bases< SireMol::Editor<SireMol::CGEditor, SireMol::CutGroup>, SireMol::CutGroup, SireMol::MoleculeView, SireBase::Property > > CGEditor_exposer_t;
-        CGEditor_exposer_t CGEditor_exposer = CGEditor_exposer_t( "CGEditor" );
+        CGEditor_exposer_t CGEditor_exposer = CGEditor_exposer_t( "CGEditor", bp::init< >() );
         bp::scope CGEditor_scope( CGEditor_exposer );
-        CGEditor_exposer.def( bp::init< >() );
         CGEditor_exposer.def( bp::init< SireMol::CutGroup const & >(( bp::arg("cutgroup") )) );
         CGEditor_exposer.def( bp::init< SireMol::CGEditor const & >(( bp::arg("other") )) );
         { //::SireMol::CGEditor::add

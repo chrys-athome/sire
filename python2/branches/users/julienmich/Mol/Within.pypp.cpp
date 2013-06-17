@@ -41,9 +41,8 @@ void register_Within_class(){
 
     { //::SireMol::Within
         typedef bp::class_< SireMol::Within, bp::bases< SireMol::AtomID, SireID::ID > > Within_exposer_t;
-        Within_exposer_t Within_exposer = Within_exposer_t( "Within" );
+        Within_exposer_t Within_exposer = Within_exposer_t( "Within", bp::init< >() );
         bp::scope Within_scope( Within_exposer );
-        Within_exposer.def( bp::init< >() );
         Within_exposer.def( bp::init< SireUnits::Dimension::Length, SireMaths::Vector const & >(( bp::arg("distance"), bp::arg("point") )) );
         Within_exposer.def( bp::init< SireUnits::Dimension::Length, SireMol::AtomID const & >(( bp::arg("distance"), bp::arg("atomid") )) );
         Within_exposer.def( bp::init< SireMol::Within const & >(( bp::arg("other") )) );

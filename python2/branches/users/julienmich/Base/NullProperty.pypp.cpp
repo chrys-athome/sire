@@ -33,9 +33,8 @@ void register_NullProperty_class(){
 
     { //::SireBase::NullProperty
         typedef bp::class_< SireBase::NullProperty, bp::bases< SireBase::Property > > NullProperty_exposer_t;
-        NullProperty_exposer_t NullProperty_exposer = NullProperty_exposer_t( "NullProperty" );
+        NullProperty_exposer_t NullProperty_exposer = NullProperty_exposer_t( "NullProperty", bp::init< >() );
         bp::scope NullProperty_scope( NullProperty_exposer );
-        NullProperty_exposer.def( bp::init< >() );
         NullProperty_exposer.def( bp::init< SireBase::NullProperty const & >(( bp::arg("other") )) );
         { //::SireBase::NullProperty::toString
         

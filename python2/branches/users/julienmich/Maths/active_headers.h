@@ -27,6 +27,7 @@
 #include "triangle.h"
 #include "trigmatrix.h"
 #include "vector.h"
+#include "vectorproperty.h"
 
 #endif
 

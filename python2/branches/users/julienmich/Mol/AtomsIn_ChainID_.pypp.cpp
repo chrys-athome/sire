@@ -59,9 +59,8 @@ void register_AtomsIn_ChainID__class(){
 
     { //::SireMol::AtomsIn< SireMol::ChainID >
         typedef bp::class_< SireMol::AtomsIn< SireMol::ChainID >, bp::bases< SireMol::AtomID, SireID::ID > > AtomsIn_ChainID__exposer_t;
-        AtomsIn_ChainID__exposer_t AtomsIn_ChainID__exposer = AtomsIn_ChainID__exposer_t( "AtomsIn_ChainID_" );
+        AtomsIn_ChainID__exposer_t AtomsIn_ChainID__exposer = AtomsIn_ChainID__exposer_t( "AtomsIn_ChainID_", bp::init< >() );
         bp::scope AtomsIn_ChainID__scope( AtomsIn_ChainID__exposer );
-        AtomsIn_ChainID__exposer.def( bp::init< >() );
         AtomsIn_ChainID__exposer.def( bp::init< SireMol::ChainID const & >(( bp::arg("id") )) );
         AtomsIn_ChainID__exposer.def( bp::init< SireMol::ChainID const &, qint32 >(( bp::arg("id"), bp::arg("i") )) );
         AtomsIn_ChainID__exposer.def( bp::init< SireMol::ChainID const &, qint32, qint32 >(( bp::arg("id"), bp::arg("i"), bp::arg("j") )) );

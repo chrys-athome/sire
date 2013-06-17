@@ -14,3 +14,10 @@
 
 from Sire.Base._Base import *
 
+import Sire.Maths
+
+def wrap(value):
+    try:
+        return Sire.Base._Base.wrap(value)
+    except:
+        return Sire.Maths.wrap(value)

@@ -59,9 +59,8 @@ void register_ResIn_ChainID__class(){
 
     { //::SireMol::ResIn< SireMol::ChainID >
         typedef bp::class_< SireMol::ResIn< SireMol::ChainID >, bp::bases< SireMol::ResID, SireID::ID > > ResIn_ChainID__exposer_t;
-        ResIn_ChainID__exposer_t ResIn_ChainID__exposer = ResIn_ChainID__exposer_t( "ResIn_ChainID_" );
+        ResIn_ChainID__exposer_t ResIn_ChainID__exposer = ResIn_ChainID__exposer_t( "ResIn_ChainID_", bp::init< >() );
         bp::scope ResIn_ChainID__scope( ResIn_ChainID__exposer );
-        ResIn_ChainID__exposer.def( bp::init< >() );
         ResIn_ChainID__exposer.def( bp::init< SireMol::ChainID const & >(( bp::arg("id") )) );
         ResIn_ChainID__exposer.def( bp::init< SireMol::ChainID const &, qint32 >(( bp::arg("id"), bp::arg("i") )) );
         ResIn_ChainID__exposer.def( bp::init< SireMol::ChainID const &, qint32, qint32 >(( bp::arg("id"), bp::arg("i"), bp::arg("j") )) );

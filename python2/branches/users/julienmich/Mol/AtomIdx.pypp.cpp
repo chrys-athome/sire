@@ -67,9 +67,8 @@ void register_AtomIdx_class(){
 
     { //::SireMol::AtomIdx
         typedef bp::class_< SireMol::AtomIdx, bp::bases< SireMol::AtomID, SireID::ID, SireID::IndexBase > > AtomIdx_exposer_t;
-        AtomIdx_exposer_t AtomIdx_exposer = AtomIdx_exposer_t( "AtomIdx" );
+        AtomIdx_exposer_t AtomIdx_exposer = AtomIdx_exposer_t( "AtomIdx", bp::init< >() );
         bp::scope AtomIdx_scope( AtomIdx_exposer );
-        AtomIdx_exposer.def( bp::init< >() );
         AtomIdx_exposer.def( bp::init< qint32 >(( bp::arg("idx") )) );
         AtomIdx_exposer.def( bp::init< SireMol::AtomIdx const & >(( bp::arg("other") )) );
         { //::SireMol::AtomIdx::hash

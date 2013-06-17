@@ -27,9 +27,8 @@ void register_PropertyMap_class(){
 
     { //::SireBase::PropertyMap
         typedef bp::class_< SireBase::PropertyMap > PropertyMap_exposer_t;
-        PropertyMap_exposer_t PropertyMap_exposer = PropertyMap_exposer_t( "PropertyMap" );
+        PropertyMap_exposer_t PropertyMap_exposer = PropertyMap_exposer_t( "PropertyMap", bp::init< >() );
         bp::scope PropertyMap_scope( PropertyMap_exposer );
-        PropertyMap_exposer.def( bp::init< >() );
         PropertyMap_exposer.def( bp::init< QString const &, SireBase::PropertyName const & >(( bp::arg("property"), bp::arg("propname") )) );
         PropertyMap_exposer.def( bp::init< QHash< QString, SireBase::PropertyName > const & >(( bp::arg("propnames") )) );
         PropertyMap_exposer.def( bp::init< SireBase::PropertyMap const & >(( bp::arg("other") )) );
