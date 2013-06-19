@@ -1025,6 +1025,8 @@ def getAtomNearCOG( molecule ):
 
 def setupMoves(system, random_seed):
 
+    moves = WeightedMoves()
+
     solutes = system[ MGName("solutes") ]
     solute_ref = system[ MGName("solute_ref") ]
 
@@ -1062,6 +1064,7 @@ def setupMoves(system, random_seed):
     solute_moves.setSynchronisedTranslation(True)
     solute_moves.setSynchronisedRotation(True)
     #solute_moves.setSharedRotationCenter(True)
+    moves.add( solute_moves, solute_mc_weight.val / 2 )
 
     solute_intra_moves = InternalMoveSingle( solute_ref )
 
@@ -1069,38 +1072,40 @@ def setupMoves(system, random_seed):
     # Each molecule in perturbed_solutes will have its coordinates set to those 
     # of solute_ref after the move
     solute_intra_moves.setSynchronisedCoordinates(perturbed_solutes)
+    moves.add( solute_intra_moves, solute_mc_weight.val / 2)
     
     # Solvent moves, split in water and ions
-    #water_moves = RigidBodyMC( PrefSampler(solute_ref[MolIdx(0)], water, pref_constant.val) )
-    water_moves = RigidBodyMC( PrefSampler(solute_ref[MolIdx(0)], 
+    if water.nMolecules() > 0:
+        #water_moves = RigidBodyMC( PrefSampler(solute_ref[MolIdx(0)], water, pref_constant.val) )
+        water_moves = RigidBodyMC( PrefSampler(solute_ref[MolIdx(0)], 
                                            mobilewater, pref_constant.val) )    
-    water_moves.setMaximumTranslation(max_solvent_translation.val)
-    water_moves.setMaximumRotation(max_solvent_rotation.val)
-    water_moves.setReflectionSphere(sphere_center, sphere_radius.val)
+        water_moves.setMaximumTranslation(max_solvent_translation.val)
+        water_moves.setMaximumRotation(max_solvent_rotation.val)
+        water_moves.setReflectionSphere(sphere_center, sphere_radius.val)
+        moves.add( water_moves, mobilewater.nMolecules()*solvent_mc_weight_factor.val )
 
     #ion_moves = RigidBodyMC( PrefSampler(solute_ref[MolIdx(0)], ion, pref_constant.val) )
-    ion_moves = RigidBodyMC( PrefSampler(solute_ref[MolIdx(0)], mobileion, pref_constant.val) )
-    ion_moves.setMaximumTranslation(max_solvent_translation.val)
-    ion_moves.setMaximumRotation(max_solvent_rotation.val)
-    ion_moves.setReflectionSphere(sphere_center, sphere_radius.val)
+    if mobileion.nMolecules() > 0:
+        ion_moves = RigidBodyMC( PrefSampler(solute_ref[MolIdx(0)], mobileion, pref_constant.val) )
+        ion_moves.setMaximumTranslation(max_solvent_translation.val)
+        ion_moves.setMaximumRotation(max_solvent_rotation.val)
+        ion_moves.setReflectionSphere(sphere_center, sphere_radius.val)
+        moves.add( ion_moves, ion.nMolecules() )
 
     # Protein intra moves
-    protein_intra_moves = ZMatMove( PrefSampler(solute_ref[MolIdx(0)], residues, pref_constant.val) ) 
+    if residues.nMolecules() > 0:
+        protein_intra_moves = ZMatMove( PrefSampler(solute_ref[MolIdx(0)], residues, pref_constant.val) ) 
+        moves.add( protein_intra_moves, protein_mc_weight.val / 2)
     
     # Now add protein backbone moves
-    bbmoves = RigidBodyMC(bbresidues)
-    bbmoves.setMaximumTranslation(0.025*angstrom)
-    bbmoves.setMaximumRotation(1*degrees)
-    bbmoves.setCenterOfRotation( GetCOGPoint( AtomName("CA", CaseInsensitive),
-                                              AtomName("N", CaseInsensitive) ) )
+    if bbresidues.nMolecules() > 0:
+        bbmoves = RigidBodyMC(bbresidues)
+        bbmoves.setMaximumTranslation(0.025*angstrom)
+        bbmoves.setMaximumRotation(1*degrees)
+        bbmoves.setCenterOfRotation( GetCOGPoint( AtomName("CA", CaseInsensitive),
+                                                  AtomName("N", CaseInsensitive) ) )
     
-    moves = WeightedMoves()
-    moves.add( solute_moves, solute_mc_weight.val / 2 )
-    moves.add( solute_intra_moves, solute_mc_weight.val / 2)
-    moves.add( protein_intra_moves, protein_mc_weight.val / 2)
-    moves.add( bbmoves, protein_mc_weight.val / 2 )
-    moves.add( water_moves, mobilewater.nMolecules()*solvent_mc_weight_factor.val )
-    moves.add( ion_moves, ion.nMolecules() )
+        moves.add( bbmoves, protein_mc_weight.val / 2 )
 
     moves.setTemperature(temperature.val)
 
