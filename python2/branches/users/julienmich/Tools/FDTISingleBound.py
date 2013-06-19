@@ -962,13 +962,19 @@ def setupForcefields(system, space):
     system.add( ComponentConstraint( lam_bwd, Max( lam - delta_lambda.val, 0 ) ) )
 
     # Add a monitor that records the value of all energy components
-    system.add( "energies", MonitorComponents(RecordValues()), nmoves_per_energy.val )
+    if nmoves_per_energy.val:
+        if nmoves_per_energy.val > 0:
+            system.add( "energies", MonitorComponents(RecordValues()), nmoves.val / nmoves_per_energy.val )
     
+
     # Add a monitor that records the coordinates of the system
     if (lam_val.val < 0.001 or lam_val.val > 0.999):
-        system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves.val / nmoves_per_pdb.val )
+        if nmoves_per_pdb.val:
+            if nmoves_per_pdb.val > 0:
+                system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves.val / nmoves_per_pdb.val )
     elif not (nmoves_per_pdb_intermediates.val is None):
-        system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves_per_pdb_intermediates.val )
+        if nmoves_per_pdb_intermediates.val > 0:
+            system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves_per_pdb_intermediates.val )
 
     # Alpha constraints for the soft force fields
 
@@ -1172,7 +1178,15 @@ def writeSystemData( system, moves, block):
     except:
         pass
 
-    energies = monitors[MonitorName("energies")]
+    try:
+        energies = monitors[MonitorName("energies")]
+        if os.path.exists("%s/energies.dat.bz2" % outdir):
+            os.system("bunzip2 -f %s/energies.dat.bz2" % outdir)
+
+        writeComponents( energies, "%s/energies.dat" % outdir )
+    except:
+        pass
+
     total_energy = monitors[MonitorName("total_energy")]
     
     dg_fwd = monitors[MonitorName("dg_fwd")]
@@ -1183,11 +1197,6 @@ def writeSystemData( system, moves, block):
 
     system.clearStatistics()
     
-    if os.path.exists("%s/energies.dat.bz2" % outdir):
-        os.system("bunzip2 -f %s/energies.dat.bz2" % outdir)
-
-    writeComponents( energies, "%s/energies.dat" % outdir )
-
     # Ugly
     lam = system.constantExpression(Symbol("lambda")).toString().toDouble()    
     #print dg_bwd, dg_fwd, lam
