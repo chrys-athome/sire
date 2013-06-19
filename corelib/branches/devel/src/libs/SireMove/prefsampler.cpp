@@ -754,6 +754,21 @@ tuple<PartialMolecule,double> PrefSampler::sample() const
 {
     const_cast<PrefSampler*>(this)->recalculateWeights();
     
+    if (molweights.isEmpty())
+    {
+        qDebug() << "No available molecules!!!";
+        return tuple<PartialMolecule,double>(PartialMolecule(),0);
+    }
+    else if (molweights.count() == 1)
+    {
+        return tuple<PartialMolecule,double>(this->group().viewAt(0), 1.0);
+    }
+    else if (max_weight <= 0)
+    {
+        qDebug() << "SOMETHING WRONG WITH THE MAXIMUM WEIGHT";
+        return tuple<PartialMolecule,double>(PartialMolecule(),0);
+    }
+    
     //sample the molecule
 
     //use the von Neumann rejection method to choose a random molecule
@@ -762,8 +777,6 @@ tuple<PartialMolecule,double> PrefSampler::sample() const
     //  molecule, then choose random number from 0 to max_prob. If
     //  probability of the molecule <= the random number, then accept
     //  this molecule, else go back to the beginning and try again...
-
-    BOOST_ASSERT(max_weight > 0);
 
     //pick a random molecule...
     while (true)

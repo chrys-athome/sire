@@ -433,6 +433,14 @@ void RigidBodyMC::performMove(System &system,
         const PartialMolecule &oldmol = mol_and_bias.get<0>();
         old_bias = mol_and_bias.get<1>();
         
+        if (oldmol.isEmpty())
+        {
+            qDebug() << "Sampler returned an empty molecule in RigidBodyMC" << this->toString()
+                     << this->moleculeGroup().toString()
+                     << this->moleculeGroup().nMolecules() << smplr.read().toString();
+            return;
+        }
+        
         const bool has_center_property = (oldmol.selectedAll() and
                                           oldmol.hasProperty(center_property));
 
