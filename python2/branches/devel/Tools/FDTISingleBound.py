@@ -359,10 +359,14 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
     protein = MoleculeGroup("protein")
     bbgroup = MoleculeGroup("bbresidues")
     residues = MoleculeGroup("residues")
+    protein_and_buffer = MoleculeGroup("protein_and_buffer")
 
     solvent = MoleculeGroup("solvent")
+    mobile_solvent = MoleculeGroup("solvent")
     water = MoleculeGroup( "water")
     ion = MoleculeGroup( "ion")
+
+    fixed_atoms = MoleculeGroup("fixed_atoms")
 
     # We will need those to set properties
     zmat_maker = ZmatrixMaker()
@@ -376,22 +380,8 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
 
     for molecule in moleculeList:
         if naming_scheme.isProtein(molecule):
-            # This will add the property "z-matrix" to the protein
-
-            molecule = zmat_maker.applyTemplates( molecule )
-
-            # Update the MoleculeGroup used to perform backbone moves
-            # on the protein
-            createBBMoveGroup(molecule, bbgroup, bb_flex)
-
-            for i in range(0, molecule.nResidues()):
-                res = molecule.residue( ResIdx(i) )
-                # Skip residues that have not been flagged as flexible
-                if ( not res.number() in sc_flex ):
-                    continue
-                residues.add(res)
-
-            protein.add(molecule)
+            # we process the protein later...
+            pass
 
         elif naming_scheme.isWater(molecule):
             # Separate water from ions
@@ -562,8 +552,10 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
         wat = water.molecule(water_molnum).molecule()
         if Vector.distance(sphere_center, wat.evaluate().center() ) < sphere_radius.val.value():
             mobilewater.add(wat)
+            mobile_solvent.add(wat)
         else:
             fixwater.add(wat)
+            fixed_atoms.add(wat)
 
     # Select mobile/fix ions
     ion_molnums = ion.molecules().molNums()
@@ -573,9 +565,204 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
     for ion_molnum in ion_molnums:
         io = ion.molecule(ion_molnum).molecule()
         if Vector.distance(sphere_center, io.evaluate().center() ) < sphere_radius.val.value():
-            mobileion.add(wat)
+            mobileion.add(ion)
+            mobile_solvent.add(ion)
         else:
-            fixion.add(wat)
+            fixion.add(ion)
+            fixed_atoms.add(ion)
+
+    # Now process all of the protein molecules - this has to be done after we have got
+    # the ligand as we need to modify the protein if it has residues that are outside
+    # the reflection sphere
+    print "Processing the protein..."
+    for molecule in moleculeList:
+        if naming_scheme.isProtein(molecule):
+            # This will add the property "z-matrix" to the protein
+
+            molecule = zmat_maker.applyTemplates( molecule )
+
+            if use_grid.val:
+                # loop through all residues and find all those with at least one
+                # atom in the reflection sphere
+                space = Cartesian()
+                sphere_resnums = []
+
+                # the extra atoms moved as part of a backbone move
+                hn_atoms = AtomName("N", CaseInsensitive) * AtomName("H", CaseInsensitive) * \
+                           AtomName("HN", CaseInsensitive) * AtomName("HN1", CaseInsensitive) * \
+                           AtomName("HN2", CaseInsensitive) * AtomName("HN3", CaseInsensitive)
+
+                for i in range(0, molecule.nResidues()):
+                    res = molecule.residue( ResIdx(i) )
+                    distance = space.minimumDistance(CoordGroup(1,sphere_center), getCoordGroup(res.atoms()))
+          
+                    if distance < sphere_radius.val.value():
+                        sphere_resnums.append( res.number() )
+                        protein_and_buffer.add(res)
+                        protein.add(res)
+
+                        if ( res.number() in sc_flex ):
+                            # add the residue to the mobile sidechains group
+                            residues.add(res)
+
+                        if ( res.number() in bb_flex ):
+                            # now add the atoms needed from the residue to the mobile backbones group
+                            atoms = molecule.select(ResIdx(i)).selection()
+    
+                            if i < (molecule.nResidues()-1):
+                                try:
+                                    atoms.deselect( hn_atoms + ResIdx(i) )
+                                except:
+                                    pass
+
+                            if i > 0:
+                                try:
+                                    atoms.select( hn_atoms + ResIdx(i+1) )
+                                except:
+                                    pass
+
+                            bbgroup.add( PartialMolecule(molecule, atoms) )
+
+                # now loop over all of the residues and work out which ones are fixed, and which ones
+                # are bonded to sphere residues
+                connectivity = molecule.property("connectivity")
+
+                for i in range(0, molecule.nResidues()):
+                    res = molecule.residue( ResIdx(i) )
+
+                    if not res.number() in sphere_resnums:
+                        # is this residue bonded to any of the sphere residues? If so, then it is a boundary residue
+                        is_boundary = False
+
+                        for bonded_res in connectivity.connectionsTo( res.number() ):
+                            bonded_resnum = molecule.residue(bonded_res).number()
+
+                            if bonded_resnum in sphere_resnums:
+                                is_boundary = True
+                                break
+
+                        if is_boundary:
+                            protein_and_buffer.add(res)
+                        else:
+                            fixed_atoms.add(res)
+
+                # now the fun part - we need to split the protein into two parts so that the fixed
+                # atoms can be removed from the main code. This significantly improves the efficiency
+                # of the code
+                new_protein = MoleculeGroup("protein")
+                new_bbgroup = MoleculeGroup("bbresidues")
+                new_residues = MoleculeGroup("residues")
+                new_protein_and_buffer = MoleculeGroup("protein_and_buffer")
+                
+                for molnum in protein_and_buffer.molNums():
+                    protein_mol = protein_and_buffer[molnum].join()
+
+                    if protein_mol.selectedAll():
+                        new_protein_and_buffer.add( protein_mol )
+
+                        # the protein hasn't changed, so just copy across the existing protein into the new groups
+                        try:
+                            new_protein.add( protein[molnum] )
+                        except:
+                            pass
+
+                        try:
+                            new_residues.add( residues[molnum] )
+                        except:
+                            pass
+
+                        try:
+                            new_bbgroup.add( bbgroup[molnum] )
+                        except:
+                            pass
+
+                    else:
+                        # some of the protein is fixed, so we need to extract only the part
+                        # that is in the reflection sphere
+                        new_protein_mol = protein_mol.extract()
+
+                        new_protein_and_buffer.add(new_protein_mol)
+
+                        # copy the selection from the old groups using the new_protein extracted molecule
+                        try:
+                            protein_views = protein[molnum]
+
+                            for i in range(0,protein_views.nViews()):
+                                view = new_protein_mol.selection()
+                                view = view.selectNone()
+
+                                for atomid in protein_views.viewAt(i).selectedAtoms():
+                                    atom = protein_mol.atom(atomid)
+                                    resatomid = ResAtomID( atom.residue().number(), atom.name() )
+                                    view = view.select( resatomid )
+
+                                if view.nSelected() > 0:
+                                    new_protein.add( PartialMolecule(new_protein_mol, view) )
+                        except:
+                            print "ERROR IN PROTEIN"
+                            _, error, _ = sys.exc_info()
+                            print error
+                            pass
+
+
+                        try:
+                            residue_views = residues[molnum]
+
+                            for i in range(0,residue_views.nViews()):
+                                view = new_protein_mol.selection()
+                                view = view.selectNone()
+
+                                for atomid in residue_views.viewAt(i).selectedAtoms():
+                                    atom = protein_mol.atom(atomid)
+                                    resatomid = ResAtomID( atom.residue().number(), atom.name() )
+                                    view = view.select( resatomid )
+
+                                if view.nSelected() > 0:
+                                    new_residues.add( PartialMolecule(new_protein_mol, view) )
+                        except:
+                            print "ERROR IN RESIDUES"
+                            _, error, _ = sys.exc_info()
+                            print error
+                            pass
+
+                        try:
+                            bb_views = bbgroup[molnum]
+
+                            for i in range(0,bb_views.nViews()):
+                                view = new_protein_mol.selection()
+                                view = view.selectNone()
+
+                                for atomid in bb_views.viewAt(i).selectedAtoms():
+                                    atom = protein_mol.atom(atomid)
+                                    resatomid = ResAtomID( atom.residue().number(), atom.name() )
+                                    view = view.select( resatomid )
+
+                                if view.nSelected() > 0:
+                                    new_bbgroup.add( PartialMolecule(new_protein_mol, view) )
+                        except:
+                            print "ERROR IN BBGROUP"
+                            _, error, _ = sys.exc_info()
+                            print error
+                            pass
+
+                protein = new_protein
+                bbgroup = new_bbgroup
+                residues = new_residues
+                protein_and_buffer = new_protein_and_buffer
+
+            else:
+                # Update the MoleculeGroup used to perform backbone moves
+                # on the protein
+                createBBMoveGroup(molecule, bbgroup, bb_flex)
+
+                for i in range(0, molecule.nResidues()):
+                    res = molecule.residue( ResIdx(i) )
+                    # Skip residues that have not been flagged as flexible
+                    if ( not res.number() in sc_flex ):
+                        continue
+                    residues.add(res)
+
+                protein.add(molecule)
 
     all.add(solutes)
     
@@ -597,18 +784,48 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
     all.add(solute_grp_bwd_todummy)
     all.add(solute_grp_bwd_fromdummy)
 
-    all.add(solvent)
-    all.add(water)
-    all.add(ion) 
+    traj = MoleculeGroup("traj")
 
-    all.add(protein)
+    traj.add(solute)
+
+    if use_grid.val:
+        # don't save the fixed molecules as these will take up space
+        # and slow down the simulation
+        all.add(mobilewater)
+        all.add(mobileion)
+        all.add(protein_and_buffer)
+
+        traj.add(mobilewater)
+        traj.add(mobileion)
+        traj.add(protein_and_buffer)
+
+        system.add(mobile_solvent)
+        system.add(mobilewater)
+        system.add(mobileion)
+        system.add(protein_and_buffer)
+        system.add(protein)
+    else:
+        all.add(water)
+        all.add(ion) 
+        all.add(protein)
+
+        traj.add(water)
+        traj.add(ion)
+        traj.add(protein)
+
+        system.add(solvent)
+        system.add(water)
+        system.add(ion)
+
+        system.add(mobilewater)
+        system.add(fixwater)
+
+        system.add(mobileion)
+        system.add(fixion)
+    
+        system.add(protein)
 
     # NOT SURE NEED TO ADD REDUNDANT GRPS TO ALL...
-
-    traj = MoleculeGroup("traj")
-    traj.add(solute)
-    traj.add(protein)
-    traj.add(solvent)
 
     # Add these groups to the System
     system.add(solutes)
@@ -631,23 +848,17 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
     system.add(solute_grp_bwd_todummy)
     system.add(solute_grp_bwd_fromdummy)
 
-    system.add(solvent)
-    system.add(water)
-    system.add(ion)
-
-    system.add(mobilewater)
-    system.add(fixwater)
-
-    system.add(mobileion)
-    system.add(fixion)
-    
-    system.add(protein)
     system.add(residues)
     system.add(bbgroup)
 
     system.add(all)
 
     system.add(traj)
+
+    if use_grid.val:
+        # add the fixed atoms as a system property, so that they are not included
+        # in the main simulated system
+        system.setProperty("fixed_atoms", fixed_atoms)
 
     return system
 
@@ -1036,26 +1247,15 @@ def setupMoves(system, random_seed):
     solutes = system[ MGName("solutes") ]
     solute_ref = system[ MGName("solute_ref") ]
 
-    solvent = system[ MGName("solvent") ]
-    water = system[ MGName("water") ]
-    ion = system[ MGName("ion") ]
-
     mobilewater = system[ MGName("mobilewater") ]
-    fixwater = system[ MGName("fixwater") ]
-
     mobileion = system[ MGName("mobileion") ]
-    fixion = system[ MGName("fixion") ]
 
     protein = system[ MGName("protein") ]
     residues = system[ MGName("residues") ]
     bbresidues = system[ MGName("bbresidues") ]
-
-    all = system[ MGName("all") ]
     
     print "Setting up moves..."
     # Setup Moves
-    max_volume_change = 0.10 * solvent.nMolecules() * angstrom3
-
     solute_moves = RigidBodyMC( solutes ) 
     solute_moves.setMaximumTranslation(solutes[MolIdx(0)].molecule().property('flexibility').translation() )
     solute_moves.setMaximumRotation(solutes[MolIdx(0)].molecule().property('flexibility').rotation() )
@@ -1081,8 +1281,7 @@ def setupMoves(system, random_seed):
     moves.add( solute_intra_moves, solute_mc_weight.val / 2)
     
     # Solvent moves, split in water and ions
-    if water.nMolecules() > 0:
-        #water_moves = RigidBodyMC( PrefSampler(solute_ref[MolIdx(0)], water, pref_constant.val) )
+    if mobilewater.nMolecules() > 0:
         water_moves = RigidBodyMC( PrefSampler(solute_ref[MolIdx(0)], 
                                            mobilewater, pref_constant.val) )    
         water_moves.setMaximumTranslation(max_solvent_translation.val)
@@ -1171,6 +1370,11 @@ def writeSystemData( system, moves, block):
 
     if not os.path.exists(outdir):
         os.makedirs(outdir)
+
+    if use_grid.val and block == 1:
+        # write out the coordinates of the fixed atoms to the output directory
+        print "Saving the fixed atoms as %s/fixed_atoms.pdb" % outdir
+        PDB.write( system.property("fixed_atoms"), "%s/fixed_atoms.pdb" % outdir )
 
     try:
         pdb = monitors[MonitorName("trajectory")]
