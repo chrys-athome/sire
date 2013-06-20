@@ -23,16 +23,6 @@ from Sire.Tools import Parameter, resolveParameters
 
 import Sire.Stream
 
-# Import "next" function for python 2.5 support
-_sentinel = object()
-def next(it, default=_sentinel):
-    try:                
-        return it.next()
-    except StopIteration:
-        if default is _sentinel:
-            raise
-        return default
-
 ##### This is how we can have the script specify all of the 
 ##### user-controllable parameters
 
@@ -317,12 +307,14 @@ def getDummies(molecule):
 def createSystem(molecules, space, naming_scheme=NamingScheme()):
     # First, sanity check that the cutoff is not greater than half the box length for
     # periodic spaces...
+    radius = sphere_radius.val.to(angstrom)
+
+    cutoff = coul_cutoff.val.to(angstrom)
+
+    if lj_cutoff.val.to(angstrom) > cutoff:
+        cutoff = lj_cutoff.val.to(angstrom)
+
     if space.isPeriodic():
-        cutoff = coul_cutoff.val.to(angstrom)
-
-        if lj_cutoff.val.to(angstrom) > cutoff:
-            cutoff = lj_cutoff.val.to(angstrom)
-
         eps_cutoff = cutoff - 1e-6
 
         ok_x = (space.getMinimumImage(Vector(eps_cutoff,0,0), Vector(0)).length() <= cutoff)
@@ -333,6 +325,21 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
             print >>sys.stderr,"The cutoff (%f A) is too large for periodic box %s" % \
                         (cutoff, space)
             raise RuntimeError()
+
+        if use_grid.val:
+            eps_radius = cutoff + radius - 1e-6
+
+            ok_x = (space.getMinimumImage(Vector(eps_radius,0,0), Vector(0)).length() > radius)
+            ok_y = (space.getMinimumImage(Vector(0,eps_radius,0), Vector(0)).length() > radius)
+            ok_z = (space.getMinimumImage(Vector(0,0,eps_radius), Vector(0)).length() > radius)
+
+            if not (ok_x and ok_y and ok_z):
+                print >>sys.stderr,"The sphere radius (%f A) plus non-bonded cutoff (%f A) is too large for periodic box %s" \
+                                 % (radius, cutoff, space)
+                print >>sys.stderr, \
+                         "Two times the sphere radius plus the cutoff distance cannot exceed the dimension of the box."
+
+                raise RuntimeError()
 
     # add the ligand name to the naming scheme
     naming_scheme.addSoluteResidueName(lig_name.val)
@@ -366,6 +373,12 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
     water = MoleculeGroup( "water")
     ion = MoleculeGroup( "ion")
 
+    mobilewater = MoleculeGroup("mobilewater")
+    fixwater = MoleculeGroup("fixwater")
+
+    mobileion = MoleculeGroup("mobileion")
+    fixion = MoleculeGroup("fixion")
+
     fixed_atoms = MoleculeGroup("fixed_atoms")
 
     # We will need those to set properties
@@ -378,27 +391,16 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
     # Read the list of flexible sidechains and backbones
     sc_flex , bb_flex = readProteinFlexibility(protein_flex_file.val)
 
+    # First, we need to find the solute molecule
     for molecule in moleculeList:
-        if naming_scheme.isProtein(molecule):
-            # we process the protein later...
-            pass
-
-        elif naming_scheme.isWater(molecule):
-            # Separate water from ions
-            water.add(molecule)
-            solvent.add(molecule)
-
-        elif naming_scheme.isIon(molecule):
-            ion.add(molecule)
-            solvent.add(molecule)
-        
-        elif naming_scheme.isSolute(molecule):
+        if naming_scheme.isSolute(molecule):
             #
             # SOLUTE SETUP
             #
             if not solutes.isEmpty():
                 print "This simulation script only supports one solute molecule."
                 sys.exit(-1)
+
             # Solute...
             solute = molecule
             # If ligname has not been defined, and there is a single residue,
@@ -528,10 +530,6 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
             perturbed_solutes.add(solute_fwd)
             perturbed_solutes.add(solute_bwd)
 
-        else:
-            print "Oops, script does not know in what kind of molecule this residue is %s " % (molecule.residues()[0].name().value())
-            raise RunTimeError()
-
     ligand = solutes[MolIdx(0)].molecule()
     
     global sphere_center
@@ -542,40 +540,52 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
     solutes.update(ligand)
     molecules.update(ligand)
 
-    # Select mobile/fix water
-    water_molnums = water.molecules().molNums()
+    num_images = 0
 
-    mobilewater = MoleculeGroup("mobilewater")
-    fixwater = MoleculeGroup("fixwater")
-
-    for water_molnum in water_molnums:
-        wat = water.molecule(water_molnum).molecule()
-        if Vector.distance(sphere_center, wat.evaluate().center() ) < sphere_radius.val.value():
-            mobilewater.add(wat)
-            mobile_solvent.add(wat)
-        else:
-            fixwater.add(wat)
-            fixed_atoms.add(wat)
-
-    # Select mobile/fix ions
-    ion_molnums = ion.molecules().molNums()
-    mobileion = MoleculeGroup("mobileion")
-    fixion = MoleculeGroup("fixion")
-    
-    for ion_molnum in ion_molnums:
-        io = ion.molecule(ion_molnum).molecule()
-        if Vector.distance(sphere_center, io.evaluate().center() ) < sphere_radius.val.value():
-            mobileion.add(ion)
-            mobile_solvent.add(ion)
-        else:
-            fixion.add(ion)
-            fixed_atoms.add(ion)
-
-    # Now process all of the protein molecules - this has to be done after we have got
-    # the ligand as we need to modify the protein if it has residues that are outside
-    # the reflection sphere
-    print "Processing the protein..."
     for molecule in moleculeList:
+        # get the center of the solvent
+        mol_center = molecule.evaluate().center()
+
+        if not naming_scheme.isSolute(molecule):
+            # first, if this is a periodic space, then wrap the molecule
+            # into the same periodic box as the ligand
+            if space.isPeriodic():
+                # wrap the molecule into the same space as the solute
+                wrapped_mol_center = space.getMinimumImage(mol_center, sphere_center)
+
+                if wrapped_mol_center != mol_center:
+                    molecule = molecule.move().translate( wrapped_mol_center - mol_center ).commit()
+                    mol_center = molecule.evaluate().center()
+
+                # next, if we are using a grid, then we need to manually add the images of this
+                # molecule from the neighbouring periodic boxes
+
+                if use_grid.val:
+                    image_cutoff = cutoff + radius
+
+                    if Vector.distance(mol_center, sphere_center) > radius:
+                        # this will be one of the fixed molecules, so may will need to be manually wrapped
+                        for i in (-1,0,1):
+                            for j in (-1,0,1):
+                                for k in (-1,0,1):
+                                    delta = Vector(i * radius, j * radius, k * radius)
+
+                                    if delta.length() != 0:
+                                        # get the image of the solvent molecule in this box
+                                        image_solv_center = space.getMinimumImage(solv_center, sphere_center+delta)
+
+                                        delta = image_solv_center - solv_center
+
+                                        if delta.length() > 0:
+                                            #there is a periodic image available here - is it within non-bonded cutoff?
+                                            if (image_solv_center - sphere_center).length() <= image_cutoff:
+                                               # it is within cutoff, so a copy of this molecule should be added
+                                               image = molecule.edit().renumber().move().translate(delta).commit()
+                                               fixed_atoms.add(image)
+                                               num_images += 1
+
+        # Ok, we have wrapped the molecule into the same box as the solute and have added any necessary images.
+        # Now lets process each molecule according to its type...
         if naming_scheme.isProtein(molecule):
             # This will add the property "z-matrix" to the protein
 
@@ -596,7 +606,7 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
                     res = molecule.residue( ResIdx(i) )
                     distance = space.minimumDistance(CoordGroup(1,sphere_center), getCoordGroup(res.atoms()))
           
-                    if distance < sphere_radius.val.value():
+                    if distance < radius:
                         sphere_resnums.append( res.number() )
                         protein_and_buffer.add(res)
                         protein.add(res)
@@ -646,110 +656,6 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
                         else:
                             fixed_atoms.add(res)
 
-                # now the fun part - we need to split the protein into two parts so that the fixed
-                # atoms can be removed from the main code. This significantly improves the efficiency
-                # of the code
-                new_protein = MoleculeGroup("protein")
-                new_bbgroup = MoleculeGroup("bbresidues")
-                new_residues = MoleculeGroup("residues")
-                new_protein_and_buffer = MoleculeGroup("protein_and_buffer")
-                
-                for molnum in protein_and_buffer.molNums():
-                    protein_mol = protein_and_buffer[molnum].join()
-
-                    if protein_mol.selectedAll():
-                        new_protein_and_buffer.add( protein_mol )
-
-                        # the protein hasn't changed, so just copy across the existing protein into the new groups
-                        try:
-                            new_protein.add( protein[molnum] )
-                        except:
-                            pass
-
-                        try:
-                            new_residues.add( residues[molnum] )
-                        except:
-                            pass
-
-                        try:
-                            new_bbgroup.add( bbgroup[molnum] )
-                        except:
-                            pass
-
-                    else:
-                        # some of the protein is fixed, so we need to extract only the part
-                        # that is in the reflection sphere
-                        new_protein_mol = protein_mol.extract()
-
-                        new_protein_and_buffer.add(new_protein_mol)
-
-                        # copy the selection from the old groups using the new_protein extracted molecule
-                        try:
-                            protein_views = protein[molnum]
-
-                            for i in range(0,protein_views.nViews()):
-                                view = new_protein_mol.selection()
-                                view = view.selectNone()
-
-                                for atomid in protein_views.viewAt(i).selectedAtoms():
-                                    atom = protein_mol.atom(atomid)
-                                    resatomid = ResAtomID( atom.residue().number(), atom.name() )
-                                    view = view.select( resatomid )
-
-                                if view.nSelected() > 0:
-                                    new_protein.add( PartialMolecule(new_protein_mol, view) )
-                        except:
-                            print "ERROR IN PROTEIN"
-                            _, error, _ = sys.exc_info()
-                            print error
-                            pass
-
-
-                        try:
-                            residue_views = residues[molnum]
-
-                            for i in range(0,residue_views.nViews()):
-                                view = new_protein_mol.selection()
-                                view = view.selectNone()
-
-                                for atomid in residue_views.viewAt(i).selectedAtoms():
-                                    atom = protein_mol.atom(atomid)
-                                    resatomid = ResAtomID( atom.residue().number(), atom.name() )
-                                    view = view.select( resatomid )
-
-                                if view.nSelected() > 0:
-                                    new_residues.add( PartialMolecule(new_protein_mol, view) )
-                        except:
-                            print "ERROR IN RESIDUES"
-                            _, error, _ = sys.exc_info()
-                            print error
-                            pass
-
-                        try:
-                            bb_views = bbgroup[molnum]
-
-                            for i in range(0,bb_views.nViews()):
-                                view = new_protein_mol.selection()
-                                view = view.selectNone()
-
-                                for atomid in bb_views.viewAt(i).selectedAtoms():
-                                    atom = protein_mol.atom(atomid)
-                                    resatomid = ResAtomID( atom.residue().number(), atom.name() )
-                                    view = view.select( resatomid )
-
-                                if view.nSelected() > 0:
-                                    new_bbgroup.add( PartialMolecule(new_protein_mol, view) )
-                        except:
-                            print "ERROR IN BBGROUP"
-                            _, error, _ = sys.exc_info()
-                            print error
-                            pass
-
-                protein = new_protein
-                bbgroup = new_bbgroup
-                residues = new_residues
-                protein_and_buffer = new_protein_and_buffer
-
             else:
                 # Update the MoleculeGroup used to perform backbone moves
                 # on the protein
@@ -763,6 +669,146 @@ def createSystem(molecules, space, naming_scheme=NamingScheme()):
                     residues.add(res)
 
                 protein.add(molecule)
+
+        elif naming_scheme.isWater(molecule):
+            # Separate water from ions
+            water.add(molecule)
+            solvent.add(molecule)
+
+            if Vector.distance(mol_center, sphere_center) < radius:
+                mobilewater.add(molecule)
+                mobile_solvent.add(molecule)
+            else:
+                fixwater.add(molecule)
+                fixed_atoms.add(molecule)
+
+        elif naming_scheme.isIon(molecule):
+            ion.add(molecule)
+            solvent.add(molecule)
+
+            if Vector.distance(mol_center, sphere_center) < radius:
+                mobileions.add(molecule)
+                mobile_solvent.add(molecule)
+            else:
+                fixion.add(molecule)
+                fixed_atoms.add(molecule)
+        
+        elif naming_scheme.isSolute(molecule):
+            # already processed the solute
+            pass
+
+        else:
+            print "Oops, script does not know in what kind of molecule this residue is %s " % (molecule.residues()[0].name().value())
+            raise RunTimeError()
+
+
+    if use_grid.val:
+        # now the fun part - we need to split the protein into two parts so that the fixed
+        # atoms can be removed from the main code. This significantly improves the efficiency
+        # of the code
+
+        new_protein = MoleculeGroup("protein")
+        new_bbgroup = MoleculeGroup("bbresidues")
+        new_residues = MoleculeGroup("residues")
+        new_protein_and_buffer = MoleculeGroup("protein_and_buffer")
+
+        for molnum in protein_and_buffer.molNums():
+            protein_mol = protein_and_buffer[molnum].join()
+
+            if protein_mol.selectedAll():
+                new_protein_and_buffer.add( protein_mol )
+
+                # the protein hasn't changed, so just copy across the existing protein into the new groups
+                try:
+                    new_protein.add( protein[molnum] )
+                except:
+                    pass
+
+                try:
+                    new_residues.add( residues[molnum] )
+                except:
+                    pass
+
+                try:
+                    new_bbgroup.add( bbgroup[molnum] )
+                except:
+                    pass
+
+            else:
+                # some of the protein is fixed, so we need to extract only the part
+                # that is in the reflection sphere. Also renumber the molecule, to prevent
+                # clashes with the original
+                new_protein_mol = protein_mol.extract().molecule().edit().renumber().commit()
+
+                new_protein_and_buffer.add(new_protein_mol)
+
+                # copy the selection from the old groups using the new_protein extracted molecule
+                try:
+                    protein_views = protein[molnum]
+
+                    for i in range(0,protein_views.nViews()):
+                        view = new_protein_mol.selection()
+                        view = view.selectNone()
+
+                        for atomid in protein_views.viewAt(i).selectedAtoms():
+                            atom = protein_mol.atom(atomid)
+                            resatomid = ResAtomID( atom.residue().number(), atom.name() )
+                            view = view.select( resatomid )
+
+                        if view.nSelected() > 0:
+                            new_protein.add( PartialMolecule(new_protein_mol, view) )
+                except:
+                    print "ERROR IN PROTEIN"
+                    _, error, _ = sys.exc_info()
+                    print error
+                    pass
+
+
+                try:
+                    residue_views = residues[molnum]
+
+                    for i in range(0,residue_views.nViews()):
+                        view = new_protein_mol.selection()
+                        view = view.selectNone()
+
+                        for atomid in residue_views.viewAt(i).selectedAtoms():
+                            atom = protein_mol.atom(atomid)
+                            resatomid = ResAtomID( atom.residue().number(), atom.name() )
+                            view = view.select( resatomid )
+
+                        if view.nSelected() > 0:
+                            new_residues.add( PartialMolecule(new_protein_mol, view) )
+                except:
+                    print "ERROR IN RESIDUES"
+                    _, error, _ = sys.exc_info()
+                    print error
+                    pass
+
+                try:
+                    bb_views = bbgroup[molnum]
+
+                    for i in range(0,bb_views.nViews()):
+                        view = new_protein_mol.selection()
+                        view = view.selectNone()
+
+                        for atomid in bb_views.viewAt(i).selectedAtoms():
+                            atom = protein_mol.atom(atomid)
+                            resatomid = ResAtomID( atom.residue().number(), atom.name() )
+                            view = view.select( resatomid )
+
+                        if view.nSelected() > 0:
+                            new_bbgroup.add( PartialMolecule(new_protein_mol, view) )
+                except:
+                    print "ERROR IN BBGROUP"
+                    _, error, _ = sys.exc_info()
+                    print error
+                    pass
+
+        protein = new_protein
+        bbgroup = new_bbgroup
+        residues = new_residues
+        protein_and_buffer = new_protein_and_buffer
+        print "Number of images == %d" % num_images
 
     all.add(solutes)
     
@@ -888,213 +934,333 @@ def setupForcefields(system, space):
 
     protein = system[ MGName("protein") ]
 
-    residues = system[ MGName("residues") ]
+    # As we build forcefields, keep a list of each type so we can 
+    # easily set parameters etc.
+    cljffs = []
+    gridffs = []
+    intraffs = []
 
-    all = system[ MGName("all") ]
+    if use_grid.val:
+        protein = system[ MGName("protein_and_buffer") ]
+        fixed_atoms = system.property("fixed_atoms")
+            
+        # Start by creating a template GridFF forcefield, which can be duplicated
+        # for each grid. This ensures that only a single copy of the fixed atoms
+        # will be saved in the system, saving space and improving efficiency
+        gridff = GridFF("template")
+        gridff.addFixedAtoms(fixed_atoms)
+        gridff.setGridSpacing( grid_spacing.val )
+        gridff.setBuffer( grid_buffer.val )
+        gridff.setCoulombCutoff( coul_cutoff.val )
+        gridff.setLJCutoff( lj_cutoff.val )
+        gridff.setProperty("combiningRules", VariantProperty(combining_rules.val) )
+        gridff.setProperty("space", Cartesian())
+           
+        if cutoff_scheme.val == "shift_electrostatics":
+            gridff.setShiftElectrostatics(True)
+
+        elif cutoff_scheme.val == "reaction_field":
+            gridff.setUseReactionField(True)
+            gridff.setReactionFieldDielectric(rf_dielectric.val)
+
+        elif cutoff_scheme.val == "group":
+            print >>sys.stderr,"You cannot use a group-based cutoff with a grid!"
+            print >>sys.stderr,"Please choose either the shift_electrostatics or reaction_field cutoff schemes."
+            raise RuntimeError()
+
+        else:
+            print "WARNING. Unrecognised cutoff scheme. Using \"shift_electrostatics\"."
+            gridff.setShiftElectrostatics(True)
+
+    residues = system[ MGName("residues") ]
 
     # - first solvent-solvent coulomb/LJ (CLJ) energy
     solventff = InterCLJFF("solvent:solvent")
     solventff.add(solvent)
+    cljffs.append(solventff)
 
     # The protein bond, angle, dihedral energy
     protein_intraff = InternalFF("protein_intraff")
     protein_intraff.add(protein)
+    intraffs.append(protein_intraff)
 
     # The protein intramolecular CLJ energy
     protein_intraclj = IntraCLJFF("protein_intraclj")
     protein_intraclj.add(protein)
+    cljffs.append(protein_intraclj)
 
     # The protein-solvent energy 
     protein_solventff = InterGroupCLJFF("protein:solvent")
     protein_solventff.add(protein, MGIdx(0))
     protein_solventff.add(solvent, MGIdx(1))
+    cljffs.append(protein_solventff)
+
+    # now the energy between the protein+solvent and the fixed atoms
+    if use_grid.val:
+        protein_solvent_fixedff = gridff.clone()
+        protein_solvent_fixedff.setName("protein_solvent:fixed")
+        protein_solvent_fixedff.add(protein, MGIdx(0))
+        protein_solvent_fixedff.add(solvent, MGIdx(0))
+        gridffs.append(protein_solvent_fixedff)
 
     # Now solute bond, angle, dihedral energy
     solute_intraff = InternalFF("solute_intraff")
     solute_intraff.add(solute)
-    
+    intraffs.append(solute_intraff)    
+
     solute_fwd_intraff = InternalFF("solute_fwd_intraff")
     solute_fwd_intraff.add(solute_fwd)
+    intraffs.append(solute_fwd_intraff)
 
     solute_bwd_intraff = InternalFF("solute_bwd_intraff")
     solute_bwd_intraff.add(solute_bwd)
+    intraffs.append(solute_bwd_intraff)
 
     # Now solute intramolecular CLJ energy
     solute_hard_intraclj = IntraCLJFF("solute_hard_intraclj")
     solute_hard_intraclj.add(solute_hard)
+    cljffs.append(solute_hard_intraclj)
 
     solute_todummy_intraclj = IntraSoftCLJFF("solute_todummy_intraclj")
     solute_todummy_intraclj.add(solute_todummy)
+    cljffs.append(solute_todummy_intraclj)
 
     solute_fromdummy_intraclj = IntraSoftCLJFF("solute_fromdummy_intraclj")
     solute_fromdummy_intraclj.add(solute_fromdummy)
+    cljffs.append(solute_fromdummy_intraclj)
 
     solute_hard_todummy_intraclj = IntraGroupSoftCLJFF("solute_hard:todummy_intraclj")
     solute_hard_todummy_intraclj.add(solute_hard, MGIdx(0))
     solute_hard_todummy_intraclj.add(solute_todummy, MGIdx(1))
+    cljffs.append(solute_hard_todummy_intraclj)
 
     solute_hard_fromdummy_intraclj = IntraGroupSoftCLJFF("solute_hard:fromdummy_intraclj")
     solute_hard_fromdummy_intraclj.add(solute_hard, MGIdx(0))
     solute_hard_fromdummy_intraclj.add(solute_fromdummy, MGIdx(1))
+    cljffs.append(solute_hard_fromdummy_intraclj)
 
     solute_todummy_fromdummy_intraclj = IntraGroupSoftCLJFF("solute_todummy:fromdummy_intraclj")
     solute_todummy_fromdummy_intraclj.add(solute_todummy, MGIdx(0))
     solute_todummy_fromdummy_intraclj.add(solute_fromdummy, MGIdx(1))
+    cljffs.append(solute_todummy_fromdummy_intraclj)
 
     # The forwards intramolecular CLJ energy
 
     solute_fwd_hard_intraclj = IntraCLJFF("solute_fwd_hard_intraclj")
     solute_fwd_hard_intraclj.add(solute_fwd_hard)
+    cljffs.append(solute_fwd_hard_intraclj)
 
     solute_fwd_todummy_intraclj = IntraSoftCLJFF("solute_fwd_todummy_intraclj")
     solute_fwd_todummy_intraclj.add(solute_fwd_todummy)
+    cljffs.append(solute_fwd_todummy_intraclj)
 
     solute_fwd_fromdummy_intraclj = IntraSoftCLJFF("solute_fwd_fromdummy_intraclj")
     solute_fwd_fromdummy_intraclj.add(solute_fwd_fromdummy)
+    cljffs.append(solute_fwd_fromdummy_intraclj)
 
     solute_fwd_hard_todummy_intraclj = IntraGroupSoftCLJFF("solute_fwd_hard:todummy_intraclj")
     solute_fwd_hard_todummy_intraclj.add(solute_fwd_hard, MGIdx(0))
     solute_fwd_hard_todummy_intraclj.add(solute_fwd_todummy, MGIdx(1))
+    cljffs.append(solute_fwd_hard_todummy_intraclj)
 
     solute_fwd_hard_fromdummy_intraclj = IntraGroupSoftCLJFF("solute_fwd_hard:fromdummy_intraclj")
     solute_fwd_hard_fromdummy_intraclj.add(solute_fwd_hard, MGIdx(0))
     solute_fwd_hard_fromdummy_intraclj.add(solute_fwd_fromdummy, MGIdx(1))
+    cljffs.append(solute_fwd_hard_fromdummy_intraclj)
 
     solute_fwd_todummy_fromdummy_intraclj = IntraGroupSoftCLJFF("solute_fwd_todummy:fromdummy_intraclj")
     solute_fwd_todummy_fromdummy_intraclj.add(solute_fwd_todummy, MGIdx(0))
     solute_fwd_todummy_fromdummy_intraclj.add(solute_fwd_fromdummy, MGIdx(1))
+    cljffs.append(solute_fwd_todummy_fromdummy_intraclj)
 
     # The backwards intramolecular CLJ energy
 
     solute_bwd_hard_intraclj = IntraCLJFF("solute_bwd_hard_intraclj")
     solute_bwd_hard_intraclj.add(solute_bwd_hard)
+    cljffs.append(solute_bwd_hard_intraclj)
 
     solute_bwd_todummy_intraclj = IntraSoftCLJFF("solute_bwd_todummy_intraclj")
     solute_bwd_todummy_intraclj.add(solute_bwd_todummy)
+    cljffs.append(solute_bwd_todummy_intraclj)
 
     solute_bwd_fromdummy_intraclj = IntraSoftCLJFF("solute_bwd_fromdummy_intraclj")
     solute_bwd_fromdummy_intraclj.add(solute_bwd_fromdummy)
+    cljffs.append(solute_bwd_fromdummy_intraclj)
 
     solute_bwd_hard_todummy_intraclj = IntraGroupSoftCLJFF("solute_bwd_hard:todummy_intraclj")
     solute_bwd_hard_todummy_intraclj.add(solute_bwd_hard, MGIdx(0))
     solute_bwd_hard_todummy_intraclj.add(solute_bwd_todummy, MGIdx(1))
+    cljffs.append(solute_bwd_hard_todummy_intraclj)
 
     solute_bwd_hard_fromdummy_intraclj = IntraGroupSoftCLJFF("solute_bwd_hard:fromdummy_intraclj")
     solute_bwd_hard_fromdummy_intraclj.add(solute_bwd_hard, MGIdx(0))
     solute_bwd_hard_fromdummy_intraclj.add(solute_bwd_fromdummy, MGIdx(1))
+    cljffs.append(solute_bwd_hard_fromdummy_intraclj)
 
     solute_bwd_todummy_fromdummy_intraclj = IntraGroupSoftCLJFF("solute_bwd_todummy:fromdummy_intraclj")
     solute_bwd_todummy_fromdummy_intraclj.add(solute_bwd_todummy, MGIdx(0))
     solute_bwd_todummy_fromdummy_intraclj.add(solute_bwd_fromdummy, MGIdx(1))
+    cljffs.append(solute_bwd_todummy_fromdummy_intraclj)
 
     # Now the solute-solvent CLJ energy
     solute_hard_solventff = InterGroupCLJFF("solute_hard:solvent")
     solute_hard_solventff.add(solute_hard, MGIdx(0))
     solute_hard_solventff.add(solvent, MGIdx(1))
+    cljffs.append(solute_hard_solventff)
 
     solute_todummy_solventff = InterGroupSoftCLJFF("solute_todummy:solvent")
     solute_todummy_solventff.add(solute_todummy, MGIdx(0))
     solute_todummy_solventff.add(solvent, MGIdx(1))
+    cljffs.append(solute_todummy_solventff)
 
     solute_fromdummy_solventff = InterGroupSoftCLJFF("solute_fromdummy:solvent")
     solute_fromdummy_solventff.add(solute_fromdummy, MGIdx(0))
     solute_fromdummy_solventff.add(solvent, MGIdx(1))
+    cljffs.append(solute_fromdummy_solventff)
+
+    if use_grid.val:
+        solute_fixedff = gridff.clone()
+        solute_fixedff.setName("solute:fixed")
+        solute_fixedff.add(solute_hard, MGIdx(0))
+        solute_fixedff.add(solute_todummy, MGIdx(0))
+        solute_fixedff.add(solute_fromdummy, MGIdx(0))
+        gridffs.append(solute_fixedff)
 
     # Now the forwards solute-solvent CLJ energy
     solute_fwd_hard_solventff = InterGroupCLJFF("solute_fwd_hard:solvent")
     solute_fwd_hard_solventff.add(solute_fwd_hard, MGIdx(0))
     solute_fwd_hard_solventff.add(solvent, MGIdx(1))
+    cljffs.append(solute_fwd_hard_solventff)
 
     solute_fwd_todummy_solventff = InterGroupSoftCLJFF("solute_fwd_todummy:solvent")
     solute_fwd_todummy_solventff.add(solute_fwd_todummy, MGIdx(0))
     solute_fwd_todummy_solventff.add(solvent, MGIdx(1))
+    cljffs.append(solute_fwd_todummy_solventff)
 
     solute_fwd_fromdummy_solventff = InterGroupSoftCLJFF("solute_fwd_fromdummy:solvent")
     solute_fwd_fromdummy_solventff.add(solute_fwd_fromdummy, MGIdx(0))
     solute_fwd_fromdummy_solventff.add(solvent, MGIdx(1))
+    cljffs.append(solute_fwd_fromdummy_solventff)
+
+    if use_grid.val:
+        solute_fwd_fixedff = gridff.clone()
+        solute_fwd_fixedff.setName("solute_fwd:fixed")
+        solute_fwd_fixedff.add(solute_fwd_hard, MGIdx(0))
+        solute_fwd_fixedff.add(solute_fwd_todummy, MGIdx(0))
+        solute_fwd_fixedff.add(solute_fwd_fromdummy, MGIdx(0))
+        gridffs.append(solute_fwd_fixedff)
 
     # Now the backwards solute-solvent CLJ energy
     solute_bwd_hard_solventff = InterGroupCLJFF("solute_bwd_hard:solvent")
     solute_bwd_hard_solventff.add(solute_bwd_hard, MGIdx(0))
     solute_bwd_hard_solventff.add(solvent, MGIdx(1))
+    cljffs.append(solute_bwd_hard_solventff)
 
     solute_bwd_todummy_solventff = InterGroupSoftCLJFF("solute_bwd_todummy:solvent")
     solute_bwd_todummy_solventff.add(solute_bwd_todummy, MGIdx(0))
     solute_bwd_todummy_solventff.add(solvent, MGIdx(1))
+    cljffs.append(solute_bwd_todummy_solventff)
 
     solute_bwd_fromdummy_solventff = InterGroupSoftCLJFF("solute_bwd_fromdummy:solvent")
     solute_bwd_fromdummy_solventff.add(solute_bwd_fromdummy, MGIdx(0))
     solute_bwd_fromdummy_solventff.add(solvent, MGIdx(1))
+    cljffs.append(solute_bwd_fromdummy_solventff)
+
+    if use_grid.val:
+        solute_bwd_fixedff = gridff.clone()
+        solute_bwd_fixedff.setName("solute_bwd:fixed")
+        solute_bwd_fixedff.add(solute_bwd_hard, MGIdx(0))
+        solute_bwd_fixedff.add(solute_bwd_todummy, MGIdx(0))
+        solute_bwd_fixedff.add(solute_bwd_fromdummy, MGIdx(0))
+        gridffs.append(solute_bwd_fixedff)
 
     # Now the solute-protein ( soft-core ) CLJ energy
     solute_hard_proteinff = InterGroupCLJFF("solute_hard:protein")
     solute_hard_proteinff.add(solute_hard, MGIdx(0))
     solute_hard_proteinff.add(protein, MGIdx(1))
+    cljffs.append(solute_hard_proteinff)
 
     solute_todummy_proteinff = InterGroupSoftCLJFF("solute_todummy:protein")
     solute_todummy_proteinff.add(solute_todummy, MGIdx(0))
     solute_todummy_proteinff.add(protein, MGIdx(1))
+    cljffs.append(solute_todummy_proteinff)
 
     solute_fromdummy_proteinff = InterGroupSoftCLJFF("solute_fromdummy:protein")
     solute_fromdummy_proteinff.add(solute_fromdummy, MGIdx(0))
     solute_fromdummy_proteinff.add(protein, MGIdx(1))
+    cljffs.append(solute_fromdummy_proteinff)
 
     # Now the forwards solute-protein CLJ energy
     solute_fwd_hard_proteinff = InterGroupCLJFF("solute_fwd_hard:protein")
     solute_fwd_hard_proteinff.add(solute_fwd_hard, MGIdx(0))
     solute_fwd_hard_proteinff.add(protein, MGIdx(1))
+    cljffs.append(solute_fwd_hard_proteinff)
 
     solute_fwd_todummy_proteinff = InterGroupSoftCLJFF("solute_fwd_todummy:protein")
     solute_fwd_todummy_proteinff.add(solute_fwd_todummy, MGIdx(0))
     solute_fwd_todummy_proteinff.add(protein, MGIdx(1))
+    cljffs.append(solute_fwd_todummy_proteinff)
 
     solute_fwd_fromdummy_proteinff = InterGroupSoftCLJFF("solute_fwd_fromdummy:protein")
     solute_fwd_fromdummy_proteinff.add(solute_fwd_fromdummy, MGIdx(0))
     solute_fwd_fromdummy_proteinff.add(protein, MGIdx(1))
+    cljffs.append(solute_fwd_fromdummy_proteinff)
 
     # Now the backwards solute-protein CLJ energy
     solute_bwd_hard_proteinff = InterGroupCLJFF("solute_bwd_hard:protein")
     solute_bwd_hard_proteinff.add(solute_bwd_hard, MGIdx(0))
     solute_bwd_hard_proteinff.add(protein, MGIdx(1))
+    cljffs.append(solute_bwd_hard_proteinff)
 
     solute_bwd_todummy_proteinff = InterGroupSoftCLJFF("solute_bwd_todummy:protein")
     solute_bwd_todummy_proteinff.add(solute_bwd_todummy, MGIdx(0))
     solute_bwd_todummy_proteinff.add(protein, MGIdx(1))
+    cljffs.append(solute_bwd_todummy_proteinff)
 
     solute_bwd_fromdummy_proteinff = InterGroupSoftCLJFF("solute_bwd_fromdummy:protein")
     solute_bwd_fromdummy_proteinff.add(solute_bwd_fromdummy, MGIdx(0))
     solute_bwd_fromdummy_proteinff.add(protein, MGIdx(1))
+    cljffs.append(solute_bwd_fromdummy_proteinff)
 
-    # Here is the list of all forcefields
-    forcefields = [ solute_intraff, solute_fwd_intraff, solute_bwd_intraff,
-                    solute_hard_intraclj, solute_todummy_intraclj, solute_fromdummy_intraclj,
-                    solute_hard_todummy_intraclj, solute_hard_fromdummy_intraclj, 
-                    solute_todummy_fromdummy_intraclj,
-                    solute_fwd_hard_intraclj, solute_fwd_todummy_intraclj, solute_fwd_fromdummy_intraclj,
-                    solute_fwd_hard_todummy_intraclj, solute_fwd_hard_fromdummy_intraclj, 
-                    solute_fwd_todummy_fromdummy_intraclj,
-                    solute_bwd_hard_intraclj, solute_bwd_todummy_intraclj, solute_bwd_fromdummy_intraclj,
-                    solute_bwd_hard_todummy_intraclj, solute_bwd_hard_fromdummy_intraclj, 
-                    solute_bwd_todummy_fromdummy_intraclj,
-                    solventff, 
-                    solute_hard_solventff, solute_todummy_solventff, solute_fromdummy_solventff,
-                    solute_fwd_hard_solventff, solute_fwd_todummy_solventff, solute_fwd_fromdummy_solventff,
-                    solute_bwd_hard_solventff, solute_bwd_todummy_solventff, solute_bwd_fromdummy_solventff,
-                    protein_intraff, protein_intraclj, protein_solventff, 
-                    solute_hard_proteinff, solute_todummy_proteinff, solute_fromdummy_proteinff,
-                    solute_fwd_hard_proteinff, solute_fwd_todummy_proteinff, solute_fwd_fromdummy_proteinff,
-                    solute_bwd_hard_proteinff, solute_bwd_todummy_proteinff, solute_bwd_fromdummy_proteinff ]
-    
-    for forcefield in forcefields:
-        system.add(forcefield)
+    for cljff in cljffs:
+        try:
+            if use_grid.val:
+                cljff.setProperty("space", Cartesian())
+            else:
+                cljff.setProperty("space", space)
 
-    system.setProperty( "space", space )
-    system.setProperty( "switchingFunction", 
-                        HarmonicSwitchingFunction(coul_cutoff.val, coul_feather.val,
-                                                  lj_cutoff.val, lj_feather.val) )
-    system.setProperty( "combiningRules", VariantProperty(combining_rules.val) )
-    system.setProperty( "coulombPower", VariantProperty(coulomb_power.val) )
-    system.setProperty( "shiftDelta", VariantProperty(shift_delta.val) )
+            cljff.setProperty("switchingFunction", HarmonicSwitchingFunction(coul_cutoff.val, coul_feather.val,
+                                                                             lj_cutoff.val, lj_feather.val) )
+            cljff.setProperty("combiningRules", VariantProperty(combining_rules.val) )
+            cljff.setProperty("coulombPower", VariantProperty(coulomb_power.val) )
+            cljff.setProperty("shiftDelta", VariantProperty(shift_delta.val) )
+        except:
+            pass
+
+        try:
+            if cutoff_scheme.val == "shift_electrostatics":
+                cljff.setShiftElectrostatics(True)
+
+            elif cutoff_scheme.val == "reaction_field":
+                cljff.setUseReactionField(True)
+                cljff.setReactionFieldDielectric(rf_dielectric.val)
+
+            elif cutoff_scheme.val == "group":
+                cljff.setUseGroupCutoff(True)
+
+            else:
+                print "WARNING. Unrecognised cutoff scheme. Using \"shift_electrostatics\"."
+                gridff.setShiftElectrostatics(True)
+        except:
+            pass
+
+        system.add(cljff)
+
+    for gridff in gridffs:
+        system.add(gridff)
+
+    for intraff in intraffs:
+        system.add(intraff)
     
     total_nrg = solute_intraff.components().total() + solute_hard_intraclj.components().total() +\
         solute_todummy_intraclj.components().total(0) + solute_fromdummy_intraclj.components().total(0) +\
@@ -1135,6 +1301,10 @@ def setupForcefields(system, space):
         solute_bwd_todummy_proteinff.components().total(0) +\
         solute_bwd_fromdummy_proteinff.components().total(0) 
 
+    if use_grid.val:
+        total_nrg += protein_solvent_fixedff.components().total() + solute_fixedff.components().total()
+        fwd_nrg += protein_solvent_fixedff.components().total() + solute_fwd_fixedff.components().total()
+        bwd_nrg += protein_solvent_fixedff.components().total() + solute_bwd_fixedff.components().total()
 
     e_total = system.totalComponent()
     e_fwd = Symbol("E_{fwd}")
@@ -1158,9 +1328,6 @@ def setupForcefields(system, space):
     system.setComponent( de_fwd, fwd_nrg - total_nrg )
     system.setComponent( de_bwd, total_nrg - bwd_nrg )
 
-    # Add a space wrapper that wraps all molecules into the box centered at (0,0,0)
-    # system.add( SpaceWrapper(Vector(0,0,0), all) )
-
     # Add a monitor that calculates the average total energy and average energy
     # deltas - we will collect both a mean average and an zwanzig average
     system.add( "total_energy", MonitorComponent(e_total, Average()) )
@@ -1177,7 +1344,6 @@ def setupForcefields(system, space):
         if nmoves_per_energy.val > 0:
             system.add( "energies", MonitorComponents(RecordValues()), nmoves.val / nmoves_per_energy.val )
     
-
     # Add a monitor that records the coordinates of the system
     if (lam_val.val < 0.001 or lam_val.val > 0.999):
         if nmoves_per_pdb.val:
@@ -1374,7 +1540,7 @@ def writeSystemData( system, moves, block):
     if use_grid.val and block == 1:
         # write out the coordinates of the fixed atoms to the output directory
         print "Saving the fixed atoms as %s/fixed_atoms.pdb" % outdir
-        PDB.write( system.property("fixed_atoms"), "%s/fixed_atoms.pdb" % outdir )
+        PDB().write( system.property("fixed_atoms"), "%s/fixed_atoms.pdb" % outdir )
 
     try:
         pdb = monitors[MonitorName("trajectory")]

@@ -496,22 +496,19 @@ def createSystem(molecules, space):
                             for k in (-1,0,1):
                                 delta = Vector(i * radius, j * radius, k * radius)
 
-                                if delta.length() == 0:
-                                    #skip the central box
-                                    next
+                                if delta.length() != 0:
+                                    # get the image of the solvent molecule in this box
+                                    image_solv_center = space.getMinimumImage(solv_center, sphere_center+delta)
 
-                                # get the image of the solvent molecule in this box
-                                image_solv_center = space.getMinimumImage(solv_center, sphere_center+delta)
+                                    delta = image_solv_center - solv_center
 
-                                delta = image_solv_center - solv_center
-
-                                if delta.length() > 0:
-                                    #there is a periodic image available here - is it within non-bonded cutoff?
-                                    if (image_solv_center - sphere_center).length() <= image_cutoff:
-                                        # it is within cutoff, so a copy of this molecule should be added
-                                        image = molecule.edit().renumber().move().translate(delta).commit()
-                                        fixed_solvent.add(image)
-                                        num_images += 1
+                                    if delta.length() > 0:
+                                        #there is a periodic image available here - is it within non-bonded cutoff?
+                                        if (image_solv_center - sphere_center).length() <= image_cutoff:
+                                            # it is within cutoff, so a copy of this molecule should be added
+                                            image = molecule.edit().renumber().move().translate(delta).commit()
+                                            fixed_solvent.add(image)
+                                            num_images += 1
 
         print "There are %d fixed solvent molecules (%d of these are periodic images)." % \
                       (fixed_solvent.nMolecules(), num_images)
