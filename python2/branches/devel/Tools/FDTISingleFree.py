@@ -1054,7 +1054,7 @@ def setupForcefields(system, space):
                 system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves.val / nmoves_per_pdb.val )
     elif not (nmoves_per_pdb_intermediates.val is None):
         if nmoves_per_pdb_intermediates.val > 0:
-            system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves_per_pdb_intermediates.val )
+            system.add( "trajectory", TrajectoryMonitor(MGName("traj")), nmoves.val / nmoves_per_pdb_intermediates.val )
 
     # Alpha constraints for the soft force fields
     if use_softcore.val:
