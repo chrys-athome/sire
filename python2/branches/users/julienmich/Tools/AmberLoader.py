@@ -172,9 +172,12 @@ class NamingScheme:
             if resnam in names:
                 return True
 
-        if str(molecule.name().value()).upper() in names:
-            return True
-        else:
+        try:
+            if str(molecule.name().value()).upper() in names:
+                return True
+            else:
+                return False
+        except:
             return False
 
     def isProtein(self, molecule):
@@ -538,7 +541,8 @@ def generateFlexibility(solute):
 def getCoordGroup(atoms, coords_property="coordinates"):
     coords = []
 
-    for atom in atoms:
+    for i in range(0, atoms.count()):
+        atom = atoms[i]
         coords.append(atom.property(coords_property))
 
     return CoordGroup(coords)
