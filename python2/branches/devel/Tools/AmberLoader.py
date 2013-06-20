@@ -541,7 +541,8 @@ def generateFlexibility(solute):
 def getCoordGroup(atoms, coords_property="coordinates"):
     coords = []
 
-    for atom in atoms:
+    for i in range(0, atoms.count()):
+        atom = atoms[i]
         coords.append(atom.property(coords_property))
 
     return CoordGroup(coords)
