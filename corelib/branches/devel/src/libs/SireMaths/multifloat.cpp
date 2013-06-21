@@ -166,6 +166,123 @@ MultiFloat& MultiFloat::operator=(const MultiFloat &other)
 MultiFloat::~MultiFloat()
 {}
 
+/** Create an array of MultiFloats from the passed array of doubles. This
+    will pad the end of the array with zeroes if necessary */
+QVector<MultiFloat> MultiFloat::fromArray(const QVector<double> &array)
+{
+    if (array.isEmpty())
+        return QVector<MultiFloat>();
+
+    float tmp[MULTIFLOAT_SIZE];
+    
+    QVector<MultiFloat> marray;
+    
+    int nvecs = array.count() / MULTIFLOAT_SIZE;
+    int nremain = array.count() % MULTIFLOAT_SIZE;
+    
+    marray.reserve(nvecs + ( (nremain == 1) ? 1 : 0 ));
+    
+    int idx = 0;
+    
+    for (int i=0; i<nvecs; ++i)
+    {
+        for (int j=0; j<MULTIFLOAT_SIZE; ++j)
+        {
+            tmp[j] = array.constData()[idx];
+            ++idx;
+        }
+    
+        marray.append( MultiFloat((float*)(&tmp), MULTIFLOAT_SIZE) );
+    }
+    
+    if (nremain > 0)
+    {
+        for (int j=0; j<nremain; ++j)
+        {
+            tmp[j] = array.constData()[idx];
+            ++idx;
+        }
+        
+        marray.append( MultiFloat((float*)(&tmp), nremain) );
+    }
+    
+    return marray;
+}
+
+/** Create an array of MultiFloats from the passed array of floats. This will
+    pad the end of the array with zeroes if necessary */
+QVector<MultiFloat> MultiFloat::fromArray(const QVector<float> &array)
+{
+    if (array.isEmpty())
+        return QVector<MultiFloat>();
+
+    QVector<MultiFloat> marray;
+    
+    int nvecs = array.count() / MULTIFLOAT_SIZE;
+    int nremain = array.count() % MULTIFLOAT_SIZE;
+    
+    marray.reserve(nvecs + ( (nremain == 1) ? 1 : 0 ));
+    
+    int idx = 0;
+    
+    for (int i=0; i<nvecs; ++i)
+    {
+        marray.append( MultiFloat((float*)(&(array.constData()[idx])), MULTIFLOAT_SIZE) );
+        idx += MULTIFLOAT_SIZE;
+    }
+    
+    if (nremain > 0)
+    {
+        marray.append( MultiFloat((float*)(&(array.constData()[idx])), nremain) );
+    }
+    
+    return marray;
+}
+
+/** Return the passed MultiFloat converted back into a normal array */
+QVector<float> MultiFloat::toArray(const QVector<MultiFloat> &array)
+{
+    if (array.isEmpty())
+        return QVector<float>();
+    
+    QVector<float> ret;
+    ret.reserve( array.count() * MULTIFLOAT_SIZE );
+    
+    for (int i=0; i<array.count(); ++i)
+    {
+        const MultiFloat &f = array.constData()[i];
+        
+        for (int j=0; j<MULTIFLOAT_SIZE; ++j)
+        {
+            ret.append(f[j]);
+        }
+    }
+    
+    return ret;
+}
+
+/** Return the passed MultiFloat converted back into a normal array of doubles */
+QVector<double> MultiFloat::toDoubleArray(const QVector<MultiFloat> &array)
+{
+    if (array.isEmpty())
+        return QVector<double>();
+    
+    QVector<double> ret;
+    ret.reserve( array.count() * MULTIFLOAT_SIZE );
+    
+    for (int i=0; i<array.count(); ++i)
+    {
+        const MultiFloat &f = array.constData()[i];
+        
+        for (int j=0; j<MULTIFLOAT_SIZE; ++j)
+        {
+            ret.append(f[j]);
+        }
+    }
+    
+    return ret;
+}
+
 /** Comparison operator - only returns true if all elements are equal */
 bool MultiFloat::operator==(const MultiFloat &other) const
 {

@@ -79,6 +79,12 @@ public:
     
     ~MultiFloat();
     
+    static QVector<MultiFloat> fromArray(const QVector<double> &array);
+    static QVector<MultiFloat> fromArray(const QVector<float> &array);
+    
+    static QVector<float> toArray(const QVector<MultiFloat> &array);
+    static QVector<double> toDoubleArray(const QVector<MultiFloat> &array);
+    
     MultiFloat& operator=(const MultiFloat &other);
     
     bool operator==(const MultiFloat &other) const;
