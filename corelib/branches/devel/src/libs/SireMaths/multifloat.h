@@ -32,6 +32,8 @@
 #include "sireglobal.h"
 #include <cmath>
 
+#include <QVector>
+
 //#undef SIRE_USE_SSE
 
 #ifdef SIRE_USE_SSE
@@ -66,21 +68,42 @@ class SIREMATHS_EXPORT MultiFloat
 {
 public:
     MultiFloat();
-    MultiFloat(float *array, int size);
+    
+    MultiFloat(float value);
+    
+    MultiFloat(const float *array, int size);
+    MultiFloat(const QVector<float> &array);
+    MultiFloat(const QVector<double> &array);
+    
     MultiFloat(const MultiFloat &other);
     
     ~MultiFloat();
     
     MultiFloat& operator=(const MultiFloat &other);
     
-    MultiFloat operator==(const MultiFloat &other) const;
-    MultiFloat operator!=(const MultiFloat &other) const;
+    bool operator==(const MultiFloat &other) const;
+    bool operator!=(const MultiFloat &other) const;
     
-    MultiFloat operator<(const MultiFloat &other) const;
-    MultiFloat operator>(const MultiFloat &other) const;
+    bool operator<(const MultiFloat &other) const;
+    bool operator>(const MultiFloat &other) const;
     
-    MultiFloat operator<=(const MultiFloat &other) const;
-    MultiFloat operator>=(const MultiFloat &other) const;
+    bool operator<=(const MultiFloat &other) const;
+    bool operator>=(const MultiFloat &other) const;
+    
+    MultiFloat compareEqual(const MultiFloat &other) const;
+    MultiFloat compareNotEqual(const MultiFloat &other) const;
+
+    MultiFloat compareLess(const MultiFloat &other) const;
+    MultiFloat compareGreater(const MultiFloat &other) const;
+    
+    MultiFloat compareLessEqual(const MultiFloat &other) const;
+    MultiFloat compareGreaterEqual(const MultiFloat &other) const;
+    
+    const char* what() const;
+    static const char* typeName();
+    
+    QString toString() const;
+    QString toBinaryString() const;
     
     static int size();
     static int count();
@@ -89,6 +112,8 @@ public:
     
     void set(int i, float value);
     float get(int i) const;
+    
+    MultiFloat operator-() const;
     
     MultiFloat operator+(const MultiFloat &other) const;
     MultiFloat operator-(const MultiFloat &other) const;
@@ -99,6 +124,23 @@ public:
     MultiFloat& operator-=(const MultiFloat &other);
     MultiFloat& operator*=(const MultiFloat &other);
     MultiFloat& operator/=(const MultiFloat &other);
+    
+    MultiFloat operator!() const;
+    MultiFloat operator&(const MultiFloat &other) const;
+    MultiFloat operator|(const MultiFloat &other) const;
+    MultiFloat operator^(const MultiFloat &other) const;
+
+    MultiFloat& operator&=(const MultiFloat &other);
+    MultiFloat& operator|=(const MultiFloat &other);
+    MultiFloat& operator^=(const MultiFloat &other);
+
+    MultiFloat logicalNot() const;
+    
+    MultiFloat logicalAnd(const MultiFloat &other) const;
+    MultiFloat logicalAndNot(const MultiFloat &other) const;
+    
+    MultiFloat logicalOr(const MultiFloat &other) const;
+    MultiFloat logicalXor(const MultiFloat &other) const;
     
     MultiFloat& multiplyAdd(const MultiFloat &val0, const MultiFloat &val1);
     
@@ -116,63 +158,52 @@ public:
 
 private:
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        __m128 x;
+        union
+        {
+            __m128 x;
+            float a[4];
+        } v;
         #define MULTIFLOAT_SIZE 4
 
         #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-        MultiFloat(__m128 v) : x(v){}
+        MultiFloat(__m128 sse_val)
+        {
+            v.x = sse_val;
+        }
         #endif
     #else
-        float x[4];
+        union
+        {
+            float a[4];
+        } v;
         #define MULTIFLOAT_SIZE 4
+        #define MULTIFLOAT_BINONE getBinaryOne()
+
+        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+        static float getBinaryOne()
+        {
+            const unsigned int x = 0xFFFFFFFF;
+            return *(reinterpret_cast<const float*>(&x));
+        }
+        #endif
     #endif
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
-/** Copy constructor */
-inline
-MultiFloat::MultiFloat(const MultiFloat &other)
-{
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        x = other.x;
-    #else
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            x[i] = other.x[i];
-        }
-    #endif
-}
-
-/** Assignment operator */
-inline
-MultiFloat& MultiFloat::operator=(const MultiFloat &other)
-{
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        x = other.x;
-    #else
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            x[i] = other.x[i];
-        }
-    #endif
-    
-    return *this;
-}
-
 /** Comparison operator. This will return a MultiFloat with elements
     set to zero for each float that is not equal */
 inline
-MultiFloat MultiFloat::operator==(const MultiFloat &other) const
+MultiFloat MultiFloat::compareEqual(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_cmpeq_ps(x, other.x) );
+        return MultiFloat( _mm_cmpeq_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
 
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = (x[i] == other.x[i]) ? 1.0 : 0.0;
+            ret.v.a[i] = (v.a[i] == other.v.a[i]) ? MULTIFLOAT_BINONE : 0x0;
         }
     
         return ret;
@@ -181,16 +212,16 @@ MultiFloat MultiFloat::operator==(const MultiFloat &other) const
 
 /** Not equals comparison operator */
 inline
-MultiFloat MultiFloat::operator!=(const MultiFloat &other) const
+MultiFloat MultiFloat::compareNotEqual(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_cmpneq_ps(x, other.x) );
+        return MultiFloat( _mm_cmpneq_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
     
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = (x[i] != other.x[i]) ? 1.0 : 0.0;
+            ret.v.a[i] = (v.a[i] != other.v.a[i]) ? MULTIFLOAT_BINONE : 0x0;
         }
     
         return ret;
@@ -199,16 +230,16 @@ MultiFloat MultiFloat::operator!=(const MultiFloat &other) const
 
 /** Less than comparison operator */
 inline
-MultiFloat MultiFloat::operator<(const MultiFloat &other) const
+MultiFloat MultiFloat::compareLess(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_cmplt_ps(x, other.x) );
+        return MultiFloat( _mm_cmplt_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
     
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = (x[i] < other.x[i]) ? 1.0 : 0.0;
+            ret.v.a[i] = (v.a[i] < other.v.a[i]) ? MULTIFLOAT_BINONE : 0x0;
         }
     
         return ret;
@@ -217,16 +248,16 @@ MultiFloat MultiFloat::operator<(const MultiFloat &other) const
 
 /** Greater than comparison operator */
 inline
-MultiFloat MultiFloat::operator>(const MultiFloat &other) const
+MultiFloat MultiFloat::compareGreater(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_cmpgt_ps(x, other.x) );
+        return MultiFloat( _mm_cmpgt_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
     
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = (x[i] > other.x[i]) ? 1.0 : 0.0;
+            ret.v.a[i] = (v.a[i] > other.v.a[i]) ? MULTIFLOAT_BINONE : 0x0;
         }
     
         return ret;
@@ -235,16 +266,16 @@ MultiFloat MultiFloat::operator>(const MultiFloat &other) const
 
 /** Less than or equal comparison */
 inline
-MultiFloat MultiFloat::operator<=(const MultiFloat &other) const
+MultiFloat MultiFloat::compareLessEqual(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_cmple_ps(x, other.x) );
+        return MultiFloat( _mm_cmple_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
     
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = (x[i] <= other.x[i]) ? 1.0 : 0.0;
+            ret.v.a[i] = (v.a[i] <= other.v.a[i]) ? MULTIFLOAT_BINONE : 0x0;
         }
     
         return ret;
@@ -253,16 +284,16 @@ MultiFloat MultiFloat::operator<=(const MultiFloat &other) const
 
 /** Greater than or equal comparison */
 inline
-MultiFloat MultiFloat::operator>=(const MultiFloat &other) const
+MultiFloat MultiFloat::compareGreaterEqual(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_cmpge_ps(x, other.x) );
+        return MultiFloat( _mm_cmpge_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
     
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = (x[i] >= other.x[i]) ? 1.0 : 0.0;
+            ret.v.a[i] = (v.a[i] >= other.v.a[i]) ? MULTIFLOAT_BINONE : 0x0;
         }
     
         return ret;
@@ -288,12 +319,12 @@ inline
 MultiFloat MultiFloat::operator+(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_add_ps(x, other.x) );
+        return MultiFloat( _mm_add_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = x[i] + other.x[i];
+            ret.v.a[i] = v.a[i] + other.v.a[i];
         }
         return ret;
     #endif
@@ -304,12 +335,12 @@ inline
 MultiFloat MultiFloat::operator-(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_sub_ps(x, other.x) );
+        return MultiFloat( _mm_sub_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = x[i] - other.x[i];
+            ret.v.a[i] = v.a[i] - other.v.a[i];
         }
         return ret;
     #endif
@@ -320,12 +351,12 @@ inline
 MultiFloat MultiFloat::operator*(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_mul_ps(x, other.x) );
+        return MultiFloat( _mm_mul_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = x[i] * other.x[i];
+            ret.v.a[i] = v.a[i] * other.v.a[i];
         }
         return ret;
     #endif
@@ -336,12 +367,12 @@ inline
 MultiFloat MultiFloat::operator/(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_div_ps(x, other.x) );
+        return MultiFloat( _mm_div_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = x[i] / other.x[i];
+            ret.v.a[i] = v.a[i] / other.v.a[i];
         }
         return ret;
     #endif
@@ -352,11 +383,11 @@ inline
 MultiFloat& MultiFloat::operator+=(const MultiFloat &other)
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        x = _mm_add_ps(x, other.x);
+        v.x = _mm_add_ps(v.x, other.v.x);
     #else
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            x[i] += other.x[i];
+            v.a[i] += other.v.a[i];
         }
     #endif
 
@@ -368,11 +399,11 @@ inline
 MultiFloat& MultiFloat::operator-=(const MultiFloat &other)
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        x = _mm_sub_ps(x, other.x);
+        v.x = _mm_sub_ps(v.x, other.v.x);
     #else
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            x[i] -= other.x[i];
+            v.a[i] -= other.v.a[i];
         }
     #endif
 
@@ -384,11 +415,11 @@ inline
 MultiFloat& MultiFloat::operator*=(const MultiFloat &other)
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        x = _mm_mul_ps(x, other.x);
+        v.x = _mm_mul_ps(v.x, other.v.x);
     #else
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            x[i] *= other.x[i];
+            v.a[i] *= other.v.a[i];
         }
     #endif
 
@@ -400,11 +431,232 @@ inline
 MultiFloat& MultiFloat::operator/=(const MultiFloat &other)
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        x = _mm_div_ps(x, other.x);
+        v.x = _mm_div_ps(v.x, other.v.x);
     #else
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            x[i] /= other.x[i];
+            v.a[i] /= other.v.a[i];
+        }
+    #endif
+
+    return *this;
+}
+
+/** Bitwise logical "and" comparison */
+inline
+MultiFloat MultiFloat::logicalAnd(const MultiFloat &other) const
+{
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiFloat( _mm_and_ps(v.x, other.v.x) );
+    #else
+        MultiFloat ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                ret_char_v[j] = char_v[j] & other_char_v[j];
+            }
+        }
+    
+        return ret;
+    #endif
+}
+
+/** Bitwise logical "and not" */
+inline
+MultiFloat MultiFloat::logicalAndNot(const MultiFloat &other) const
+{
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiFloat( _mm_andnot_ps(v.x, other.v.x) );
+    #else
+        MultiFloat ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                ret_char_v[j] = !(char_v[j] & other_char_v[j]);
+            }
+        }
+    
+        return ret;
+    #endif
+}
+
+/** Bitwise logical or operator */
+inline
+MultiFloat MultiFloat::logicalOr(const MultiFloat &other) const
+{
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiFloat( _mm_or_ps(v.x, other.v.x) );
+    #else
+        MultiFloat ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                ret_char_v[j] = char_v[j] | other_char_v[j];
+            }
+        }
+    
+        return ret;
+    #endif
+}
+
+/** Bitwise logical xor */
+inline
+MultiFloat MultiFloat::logicalXor(const MultiFloat &other) const
+{
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return MultiFloat( _mm_xor_ps(v.x, other.v.x) );
+    #else
+        MultiFloat ret;
+    
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+            const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                ret_char_v[j] = char_v[j] ^ other_char_v[j];
+            }
+        }
+    
+        return ret;
+    #endif
+}
+
+/** Logical not operator */
+inline
+MultiFloat MultiFloat::logicalNot() const
+{
+    MultiFloat ret;
+
+    for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+    {
+        unsigned char *ret_char_v = reinterpret_cast<unsigned char*>(&(ret.v.a[i]));
+        const unsigned char *char_v = reinterpret_cast<const unsigned char*>(&(v.a[i]));
+
+        for (unsigned int j=0; j<sizeof(float); ++j)
+        {
+            ret_char_v[j] = !char_v[j];
+        }
+    }
+
+    return ret;
+}
+
+/** Logical not operator */
+inline
+MultiFloat MultiFloat::operator!() const
+{
+    return this->logicalNot();
+}
+
+/** Logical and operator */
+inline
+MultiFloat MultiFloat::operator&(const MultiFloat &other) const
+{
+    return this->logicalAnd(other);
+}
+
+/** Logical or operator */
+inline
+MultiFloat MultiFloat::operator|(const MultiFloat &other) const
+{
+    return this->logicalOr(other);
+}
+
+/** Logical xor operator */
+inline
+MultiFloat MultiFloat::operator^(const MultiFloat &other) const
+{
+    return this->logicalXor(other);
+}
+
+/** In place logical and */
+inline
+MultiFloat& MultiFloat::operator&=(const MultiFloat &other)
+{
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_and_ps(v.x, other.v.x);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                char_v[j] &= other_char_v[j];
+            }
+        }
+    #endif
+
+    return *this;
+}
+
+/** In-place logical or */
+inline
+MultiFloat& MultiFloat::operator|=(const MultiFloat &other)
+{
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_or_ps(v.x, other.v.x);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                char_v[j] |= other_char_v[j];
+            }
+        }
+    #endif
+
+    return *this;
+}
+
+/** In-place logical xor */
+inline
+MultiFloat& MultiFloat::operator^=(const MultiFloat &other)
+{
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_xor_ps(v.x, other.v.x);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            unsigned char *char_v = reinterpret_cast<unsigned char*>(&(v.a[i]));
+            const unsigned char *other_char_v
+                        = reinterpret_cast<const unsigned char*>(&(other.v.a[i]));
+
+            for (unsigned int j=0; j<sizeof(float); ++j)
+            {
+                char_v[j] ^= other_char_v[j];
+            }
         }
     #endif
 
@@ -416,11 +668,11 @@ inline
 MultiFloat& MultiFloat::multiplyAdd(const MultiFloat &v0, const MultiFloat &v1)
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        x = _mm_add_ps(x, _mm_mul_ps(v0.x, v1.x));
+        v.x = _mm_add_ps(v.x, _mm_mul_ps(v0.v.x, v1.v.x));
     #else
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            x[i] += v0.x[i] * v1.x[i];
+            v.a[i] += v0.v.a[i] * v1.v.a[i];
         }
     #endif
 
@@ -432,12 +684,12 @@ inline
 MultiFloat MultiFloat::max(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_max_ps(x, other.x) );
+        return MultiFloat( _mm_max_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = std::max(x[i], other.x[i]);
+            ret.v.a[i] = std::max(v.a[i], other.v.a[i]);
         }
         return ret;
     #endif
@@ -448,12 +700,12 @@ inline
 MultiFloat MultiFloat::min(const MultiFloat &other) const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_min_ps(x, other.x) );
+        return MultiFloat( _mm_min_ps(v.x, other.v.x) );
     #else
         MultiFloat ret;
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = std::min(x[i], other.x[i]);
+            ret.v.a[i] = std::min(v.a[i], other.v.a[i]);
         }
         return ret;
     #endif
@@ -464,12 +716,12 @@ inline
 MultiFloat MultiFloat::reciprocal() const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_rcp_ps(x) );
+        return MultiFloat( _mm_rcp_ps(v.x) );
     #else
         MultiFloat ret;
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = float(1) / x[i];
+            ret.v.a[i] = float(1) / v.a[i];
         }
         return ret;
     #endif
@@ -480,12 +732,12 @@ inline
 MultiFloat MultiFloat::sqrt() const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_sqrt_ps(x) );
+        return MultiFloat( _mm_sqrt_ps(v.x) );
     #else
         MultiFloat ret;
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = std::sqrt(x[i]);
+            ret.v.a[i] = std::sqrt(v.a[i]);
         }
         return ret;
     #endif
@@ -496,12 +748,12 @@ inline
 MultiFloat MultiFloat::rsqrt() const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiFloat( _mm_rsqrt_ps(x) );
+        return MultiFloat( _mm_rsqrt_ps(v.x) );
     #else
         MultiFloat ret;
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            ret.x[i] = float(1) / std::sqrt(x[i]);
+            ret.v.a[i] = float(1) / std::sqrt(v.a[i]);
         }
         return ret;
     #endif
@@ -514,20 +766,13 @@ MultiFloat MultiFloat::rotate() const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         // there must be an SSE intrinsic to rotate left...
-        float tmp[4];
-    
-        tmp[0] = *( ((const float*)&x) + 1 );
-        tmp[1] = *( ((const float*)&x) + 2 );
-        tmp[2] = *( ((const float*)&x) + 3 );
-        tmp[3] = *( ((const float*)&x) );
-    
-        return MultiFloat( _mm_set_ps(tmp[0], tmp[1], tmp[2], tmp[3]) );
+        return MultiFloat( _mm_set_ps(v.a[0], v.a[3], v.a[2], v.a[1]) );
     #else
         MultiFloat ret;
-        ret.x[0] = x[1];
-        ret.x[1] = x[2];
-        ret.x[2] = x[3];
-        ret.x[3] = x[0];
+        ret.v.a[0] = v.a[1];
+        ret.v.a[1] = v.a[2];
+        ret.v.a[2] = v.a[3];
+        ret.v.a[3] = v.a[0];
         return ret;
     #endif
 }
@@ -537,15 +782,12 @@ inline
 float MultiFloat::sum() const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return *( ((const float*)&x) ) +
-               *( ((const float*)&x) + 1 ) +
-               *( ((const float*)&x) + 2 ) +
-               *( ((const float*)&x) + 3 );
+        return v.a[0] + v.a[1] + v.a[2] + v.a[3];
     #else
         float sum = 0;
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
-            sum += x[i];
+            sum += v.a[i];
         }
         return sum;
     #endif
@@ -554,6 +796,8 @@ float MultiFloat::sum() const
 #endif // #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 }
+
+SIRE_EXPOSE_CLASS( SireMaths::MultiFloat )
 
 SIRE_END_HEADER
 

@@ -32,6 +32,8 @@
 #include "intercljff.h"
 #include "SireMaths/histogram.h"
 
+SIRE_BEGIN_HEADER
+
 namespace SireMM
 {
 class GridFF;
@@ -212,5 +214,7 @@ private:
 Q_DECLARE_METATYPE( SireMM::GridFF )
 
 SIRE_EXPOSE_CLASS( SireMM::GridFF )
+
+SIRE_END_HEADER
 
 #endif
