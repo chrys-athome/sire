@@ -17,3 +17,5 @@ from Sire.Maths._Maths import *
 # Now define some pure Python functions and classes that are part of
 # this library...
 
+# No QVector<float> exposed (would have horrible casting bugs)
+MultiFloat.toArray = staticmethod( MultiFloat.toDoubleArray )

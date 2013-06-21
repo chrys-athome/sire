@@ -104,6 +104,28 @@ void register_MultiFloat_class(){
                 , count_function_value );
         
         }
+        { //::SireMaths::MultiFloat::fromArray
+        
+            typedef ::QVector< SireMaths::MultiFloat > ( *fromArray_function_type )( ::QVector< double > const & );
+            fromArray_function_type fromArray_function_value( &::SireMaths::MultiFloat::fromArray );
+            
+            MultiFloat_exposer.def( 
+                "fromArray"
+                , fromArray_function_value
+                , ( bp::arg("array") ) );
+        
+        }
+        { //::SireMaths::MultiFloat::fromArray
+        
+            typedef ::QVector< SireMaths::MultiFloat > ( *fromArray_function_type )( ::QVector< float > const & );
+            fromArray_function_type fromArray_function_value( &::SireMaths::MultiFloat::fromArray );
+            
+            MultiFloat_exposer.def( 
+                "fromArray"
+                , fromArray_function_value
+                , ( bp::arg("array") ) );
+        
+        }
         { //::SireMaths::MultiFloat::get
         
             typedef float ( ::SireMaths::MultiFloat::*get_function_type )( int ) const;
@@ -312,6 +334,17 @@ void register_MultiFloat_class(){
                 , sum_function_value );
         
         }
+        { //::SireMaths::MultiFloat::toArray
+        
+            typedef ::QVector< float > ( *toArray_function_type )( ::QVector< SireMaths::MultiFloat > const & );
+            toArray_function_type toArray_function_value( &::SireMaths::MultiFloat::toArray );
+            
+            MultiFloat_exposer.def( 
+                "toArray"
+                , toArray_function_value
+                , ( bp::arg("array") ) );
+        
+        }
         { //::SireMaths::MultiFloat::toBinaryString
         
             typedef ::QString ( ::SireMaths::MultiFloat::*toBinaryString_function_type )(  ) const;
@@ -320,6 +353,17 @@ void register_MultiFloat_class(){
             MultiFloat_exposer.def( 
                 "toBinaryString"
                 , toBinaryString_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::toDoubleArray
+        
+            typedef ::QVector< double > ( *toDoubleArray_function_type )( ::QVector< SireMaths::MultiFloat > const & );
+            toDoubleArray_function_type toDoubleArray_function_value( &::SireMaths::MultiFloat::toDoubleArray );
+            
+            MultiFloat_exposer.def( 
+                "toDoubleArray"
+                , toDoubleArray_function_value
+                , ( bp::arg("array") ) );
         
         }
         { //::SireMaths::MultiFloat::toString
@@ -353,7 +397,10 @@ void register_MultiFloat_class(){
         
         }
         MultiFloat_exposer.staticmethod( "count" );
+        MultiFloat_exposer.staticmethod( "fromArray" );
         MultiFloat_exposer.staticmethod( "size" );
+        MultiFloat_exposer.staticmethod( "toArray" );
+        MultiFloat_exposer.staticmethod( "toDoubleArray" );
         MultiFloat_exposer.staticmethod( "typeName" );
         MultiFloat_exposer.def( "__copy__", &__copy__);
         MultiFloat_exposer.def( "__deepcopy__", &__copy__);

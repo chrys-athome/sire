@@ -44,6 +44,7 @@
 #include "SireMaths/nmatrix.h"
 #include "SireMaths/nvector.h"
 #include "SireMaths/accumulator.h"
+#include "SireMaths/multifloat.h"
 
 using namespace SireMaths;
 
@@ -53,6 +54,9 @@ void register_SireMaths_containers()
 {
     register_list< QList<Vector> >();
     register_list< QVector<Vector> >();
+
+    register_list< QVector<MultiFloat> >();
+
     register_pair< NVector,NMatrix >();
 
     register_tuple< boost::tuple<Vector,Vector,Vector> >();
