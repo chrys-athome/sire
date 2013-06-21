@@ -180,6 +180,9 @@ set ( SIREMATHS_HEADERS
       linearap.h
       maths.h
       matrix.h
+      multidouble.h
+      multifloat.h
+      multiint.h
       nmatrix.h
       nvector.h
       n4matrix.h
@@ -220,6 +223,9 @@ set ( SIREMATHS_SOURCES
       line.cpp
       linearap.cpp
       matrix.cpp
+      multidouble.cpp
+      multifloat.cpp
+      multiint.cpp
       nmatrix.cpp
       nvector.cpp
       n4matrix.cpp
