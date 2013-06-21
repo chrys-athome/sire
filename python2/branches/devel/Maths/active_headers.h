@@ -14,6 +14,7 @@
 #include "line.h"
 #include "linearap.h"
 #include "matrix.h"
+#include "multifloat.h"
 #include "n4matrix.h"
 #include "nmatrix.h"
 #include "nvector.h"

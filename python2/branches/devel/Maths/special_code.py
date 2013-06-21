@@ -1,6 +1,8 @@
 
 import re
 
+from pyplusplus.module_builder import call_policies
+
 def findGlobals():
     #read in the information about this module
     lines = open("module_info", "r").readlines()
@@ -46,7 +48,11 @@ def fix_Array2D(c):
 
    c.add_declaration_code( "#include \"SireBase/array2d.hpp\"" )
 
-special_code = { "SireBase::Array2D<SireBase::PropPtr<SireMaths::Accumulator> >" : fix_Array2D }
+def fix_Multi(c):
+   c.decls( "multiplyAdd" ).call_policies = call_policies.return_self()
+
+special_code = { "SireBase::Array2D<SireBase::PropPtr<SireMaths::Accumulator> >" : fix_Array2D,
+                 "SireMaths::MultiFloat" : fix_Multi }
 
 def fixMB(mb):
    mb.add_declaration_code("#include \"_Maths_global_variables.pyman.hpp\"")
