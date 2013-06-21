@@ -772,7 +772,7 @@ MultiFloat MultiFloat::rotate() const
 {
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         // there must be an SSE intrinsic to rotate left...
-        return MultiFloat( _mm_set_ps(v.a[0], v.a[3], v.a[2], v.a[1]) );
+        return MultiFloat( _mm_shuffle_ps(v.x, v.x, _MM_SHUFFLE(0,3,2,1)) );
     #else
         MultiFloat ret;
         ret.v.a[0] = v.a[1];
