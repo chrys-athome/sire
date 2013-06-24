@@ -137,6 +137,16 @@ void register_MultiFloat_class(){
                 , ( bp::arg("i") ) );
         
         }
+        { //::SireMaths::MultiFloat::isAligned
+        
+            typedef bool ( ::SireMaths::MultiFloat::*isAligned_function_type )(  ) const;
+            isAligned_function_type isAligned_function_value( &::SireMaths::MultiFloat::isAligned );
+            
+            MultiFloat_exposer.def( 
+                "isAligned"
+                , isAligned_function_value );
+        
+        }
         { //::SireMaths::MultiFloat::logicalAnd
         
             typedef ::SireMaths::MultiFloat ( ::SireMaths::MultiFloat::*logicalAnd_function_type )( ::SireMaths::MultiFloat const & ) const;
