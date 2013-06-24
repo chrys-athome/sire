@@ -242,6 +242,7 @@ check_function_exists( lseek64 HAVE_LSEEK64 )
 
 check_include_files( malloc/malloc.h HAVE_MALLOC_MALLOC_H )
 check_include_files( emmintrin.h HAVE_EMMINTRIN_H )
+check_include_files( immintrin.h HAVE_IMMINTRIN_H )
 check_include_files( execinfo.h HAVE_EXECINFO_H )
 check_function_exists( mstats HAVE_MSTATS )
 check_function_exists( mallinfo HAVE_MALLINFO )
@@ -316,8 +317,13 @@ if ( CMAKE_COMPILER_IS_GNUCC )
     set ( SIRE_PLATFORM_FLAGS "-pipe" )
     set ( SIRE_STATIC_LINK_FLAGS "-static" )
 
-    if ( HAVE_EMMINTRIN_H )
+    if ( HAVE_IMMINTRIN_H )
+      # we have immintrin.h so we have AVX
+      message( STATUS "Compiling with AVX enabled. Resulting binary will only work on newer intel CPUs" )
+      set ( SIRE_VECTOR_FLAGS "-mavx -DSIRE_USE_AVX" )
+    elseif ( HAVE_EMMINTRIN_H )
       # we have emmintrin.h so we have SSE
+      message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
       set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
     endif()
         
@@ -343,6 +349,42 @@ if ( CMAKE_COMPILER_IS_GNUCC )
     else()
       set ( SIRE_VISIBILITY_FLAGS "-DSIRE_NO_VISIBILITY_AVAILABLE" ) 
     endif()
+
+    # Ensure that the libraries don't contain any undefined symbols
+    if(APPLE)
+        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -Wl" )
+    else(UNIX)
+        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
+    endif()
+
+elseif ( ${CMAKE_CXX_COMPILER} MATCHES "clang" )
+
+    message( STATUS "Detected and using clang C and C++ compilers" )
+
+    set ( SIRE_SMALL_FLAGS  "-Os" )
+    set ( SIRE_WARNALL_FLAGS  "-Wall" )
+    set ( SIRE_DEBUG_FLAGS   "-g" )
+
+    set ( SIRE_RELEASE_FLAGS "-O3 -ffast-math" )
+
+    # -fomit-frame-pointer breaks backtrace on an apple
+    set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
+
+    set ( SIRE_OPENMP_FLAGS "-fopenmp" )
+    set ( SIRE_PLATFORM_FLAGS "-pipe" )
+    set ( SIRE_STATIC_LINK_FLAGS "-static" )
+
+    if ( HAVE_IMMINTRIN_H )
+      # we have immintrin.h so we have AVX
+      message( STATUS "Compiling with AVX enabled. Resulting binary will only work on newer intel CPUs" )
+      set ( SIRE_VECTOR_FLAGS "-mavx -DSIRE_USE_AVX" )
+    elseif ( HAVE_EMMINTRIN_H )
+      # we have emmintrin.h so we have SSE
+      message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
+      set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+    endif()
+        
+    set ( SIRE_VISIBILITY_FLAGS "-DSIRE_VISIBILITY_AVAILABLE -fvisibility=hidden -fvisibility-inlines-hidden" )
 
     # Ensure that the libraries don't contain any undefined symbols
     if(APPLE)

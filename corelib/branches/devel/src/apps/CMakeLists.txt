@@ -7,3 +7,4 @@
 
 # Add each application
 add_subdirectory (sire)
+add_subdirectory (testmulti)
