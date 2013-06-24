@@ -770,6 +770,8 @@ void OpenMMFrEnergyST::initialise()  {
     //QVector< QPair<AtomNum,Vector> > vals;
     //vals.append( QPair<AtomNum,Vector>(AtomNum(num.toInt()), Vector(x,y,z) ) );
 
+/***************************************************************************RESTRAINTS************************************************************/
+
     OpenMM::CustomExternalForce * positionalRestraints_openmm = NULL;
 
     if (Restraint_flag == true){
@@ -783,8 +785,8 @@ void OpenMMFrEnergyST::initialise()  {
 
         system_openmm->addForce(positionalRestraints_openmm);
 
-        if (Debug)
-            qDebug() << "\nRestraint = ON\n\n";
+        if (true)
+            qDebug() << "\n\nRestraint is ON\n\n";
     
     }
 
@@ -1143,6 +1145,9 @@ void OpenMMFrEnergyST::initialise()  {
 
         }
 
+
+/****************************************************RESTRAINTS*******************************************************/
+
         if(Restraint_flag == true){
 
             bool hasRestrainedAtoms = molecule.hasProperty("restrainedatoms");
@@ -1153,7 +1158,7 @@ void OpenMMFrEnergyST::initialise()  {
 
                 int nrestrainedatoms = restrainedAtoms.property(QString("nrestrainedatoms")).asA<VariantProperty>().toInt();
 
-                if (Debug)
+                if (true)
                     qDebug() << " nrestrainedatoms " << nrestrainedatoms ;
 
                     for (int i=0; i < nrestrainedatoms ; i++){
@@ -1166,9 +1171,12 @@ void OpenMMFrEnergyST::initialise()  {
 
                         int openmmindex = AtomNumToOpenMMIndex[atomnum];
 
-                        if (Debug)
-                            qDebug() << " atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k;
-
+                        if (true){
+                            qDebug() << "atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k;
+                            qDebug() << "Atom name =  " << molecule.atom(AtomIdx(openmmindex)).toString();
+                        }
+                        
+                        
                         int posrestrdim = 4;
                         std::vector<double> params(posrestrdim);
 
@@ -2074,10 +2082,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     double sample_count=0.0;
 
     /*state_openmm=context_openmm.getState(infoMask);
-    qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ;
-    qDebug() << "Potential Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ;
-    qDebug() << "Kinetic Energy = " <<  state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ;*/
-
+    qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
+    qDebug() << "Potential Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
+    qDebug() << "Kinetic Energy = " <<  state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
+    return;*/
     //qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
 
 
@@ -2093,10 +2101,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     }
 
 
-    /*vector<double> center(3);
-    center[0] = 14.0;
-    center[1] = 14.0;
-    center[2] = 14.0; 
+/*    vector<double> center(3);
+    center[0] = 0.0;
+    center[1] = 0.0;
+    center[2] = 0.0; 
 
     DCD dcd("traj.dcd", true,CUTOFFPERIODIC, center, energy_frequency, nats, dt,  context_openmm, ws );*/
 
@@ -2131,11 +2139,11 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         state_openmm=context_openmm.getState(infoMask);
 
         if(Debug)
-            qDebug()<< "\nTotal Time = " << state_openmm.getTime() << " ps"<<"\n\n";
+            qDebug()<< "Total Time = " << state_openmm.getTime() << " ps";
 
 
         double potential_energy_lambda = state_openmm.getPotentialEnergy();
-        
+
         double potential_energy_lambda_plus_delta;
 
         double potential_energy_lambda_minus_delta;
@@ -2160,12 +2168,13 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             qDebug() << "\nLambda = " << Alchemical_value;
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
         }
-     
+
+
         if(potential_energy_lambda > 1000000.0){
             throw SireError::program_bug(QObject::tr("********************* Energy Too High. Error! *******************"), CODELOC);
             exit(-1);
         }
-        
+
         if((Alchemical_value + delta_alchemical)>1.0){
                         
             //NON BONDED TERMS
@@ -2189,7 +2198,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             if(perturbed_energies[7])
                 context_openmm.setParameter("lambda",Alchemical_value - delta_alchemical);//Torsions
 
-            
             state_openmm=context_openmm.getState(infoMask);
 
             potential_energy_lambda_minus_delta = state_openmm.getPotentialEnergy();
