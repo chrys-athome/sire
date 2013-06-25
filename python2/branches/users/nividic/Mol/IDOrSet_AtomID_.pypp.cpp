@@ -63,8 +63,9 @@ void register_IDOrSet_AtomID__class(){
 
     { //::SireID::IDOrSet< SireMol::AtomID >
         typedef bp::class_< SireID::IDOrSet< SireMol::AtomID >, bp::bases< SireMol::AtomID, SireID::ID > > IDOrSet_AtomID__exposer_t;
-        IDOrSet_AtomID__exposer_t IDOrSet_AtomID__exposer = IDOrSet_AtomID__exposer_t( "IDOrSet_AtomID_", bp::init< >() );
+        IDOrSet_AtomID__exposer_t IDOrSet_AtomID__exposer = IDOrSet_AtomID__exposer_t( "IDOrSet_AtomID_" );
         bp::scope IDOrSet_AtomID__scope( IDOrSet_AtomID__exposer );
+        IDOrSet_AtomID__exposer.def( bp::init< >() );
         IDOrSet_AtomID__exposer.def( bp::init< SireMol::AtomID const & >(( bp::arg("id") )) );
         IDOrSet_AtomID__exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("id0"), bp::arg("id1") )) );
         IDOrSet_AtomID__exposer.def( bp::init< QList< SireMol::AtomIdentifier > const & >(( bp::arg("ids") )) );

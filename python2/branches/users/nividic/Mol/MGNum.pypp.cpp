@@ -31,8 +31,9 @@ void register_MGNum_class(){
 
     { //::SireMol::MGNum
         typedef bp::class_< SireMol::MGNum, bp::bases< SireMol::MGID, SireID::ID, SireID::Number > > MGNum_exposer_t;
-        MGNum_exposer_t MGNum_exposer = MGNum_exposer_t( "MGNum", bp::init< >() );
+        MGNum_exposer_t MGNum_exposer = MGNum_exposer_t( "MGNum" );
         bp::scope MGNum_scope( MGNum_exposer );
+        MGNum_exposer.def( bp::init< >() );
         MGNum_exposer.def( bp::init< quint32 >(( bp::arg("num") )) );
         MGNum_exposer.def( bp::init< SireMol::MGNum const & >(( bp::arg("other") )) );
         { //::SireMol::MGNum::getUniqueNumber

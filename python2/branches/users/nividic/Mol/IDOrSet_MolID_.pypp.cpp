@@ -55,8 +55,9 @@ void register_IDOrSet_MolID__class(){
 
     { //::SireID::IDOrSet< SireMol::MolID >
         typedef bp::class_< SireID::IDOrSet< SireMol::MolID >, bp::bases< SireMol::MolID, SireID::ID > > IDOrSet_MolID__exposer_t;
-        IDOrSet_MolID__exposer_t IDOrSet_MolID__exposer = IDOrSet_MolID__exposer_t( "IDOrSet_MolID_", bp::init< >() );
+        IDOrSet_MolID__exposer_t IDOrSet_MolID__exposer = IDOrSet_MolID__exposer_t( "IDOrSet_MolID_" );
         bp::scope IDOrSet_MolID__scope( IDOrSet_MolID__exposer );
+        IDOrSet_MolID__exposer.def( bp::init< >() );
         IDOrSet_MolID__exposer.def( bp::init< SireMol::MolID const & >(( bp::arg("id") )) );
         IDOrSet_MolID__exposer.def( bp::init< SireMol::MolID const &, SireMol::MolID const & >(( bp::arg("id0"), bp::arg("id1") )) );
         IDOrSet_MolID__exposer.def( bp::init< QList< SireMol::MolIdentifier > const & >(( bp::arg("ids") )) );

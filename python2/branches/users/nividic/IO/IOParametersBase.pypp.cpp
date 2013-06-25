@@ -35,8 +35,9 @@ void register_IOParametersBase_class(){
 
     { //::SireIO::IOParametersBase
         typedef bp::class_< SireIO::IOParametersBase > IOParametersBase_exposer_t;
-        IOParametersBase_exposer_t IOParametersBase_exposer = IOParametersBase_exposer_t( "IOParametersBase", bp::init< >() );
+        IOParametersBase_exposer_t IOParametersBase_exposer = IOParametersBase_exposer_t( "IOParametersBase" );
         bp::scope IOParametersBase_scope( IOParametersBase_exposer );
+        IOParametersBase_exposer.def( bp::init< >() );
         { //::SireIO::IOParametersBase::coordinates
         
             typedef ::SireBase::PropertyName const & ( ::SireIO::IOParametersBase::*coordinates_function_type )(  ) const;

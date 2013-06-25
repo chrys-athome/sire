@@ -59,8 +59,9 @@ void register_Specify_CGID__class(){
 
     { //::SireID::Specify< SireMol::CGID >
         typedef bp::class_< SireID::Specify< SireMol::CGID >, bp::bases< SireMol::CGID, SireID::ID > > Specify_CGID__exposer_t;
-        Specify_CGID__exposer_t Specify_CGID__exposer = Specify_CGID__exposer_t( "Specify_CGID_", bp::init< >() );
+        Specify_CGID__exposer_t Specify_CGID__exposer = Specify_CGID__exposer_t( "Specify_CGID_" );
         bp::scope Specify_CGID__scope( Specify_CGID__exposer );
+        Specify_CGID__exposer.def( bp::init< >() );
         Specify_CGID__exposer.def( bp::init< SireMol::CGID const &, qint32 >(( bp::arg("id"), bp::arg("i") )) );
         Specify_CGID__exposer.def( bp::init< SireMol::CGID const &, qint32, qint32 >(( bp::arg("id"), bp::arg("i"), bp::arg("j") )) );
         Specify_CGID__exposer.def( bp::init< SireID::Specify< SireMol::CGID > const & >(( bp::arg("other") )) );

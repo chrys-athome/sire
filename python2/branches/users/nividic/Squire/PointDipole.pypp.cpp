@@ -23,8 +23,9 @@ void register_PointDipole_class(){
 
     { //::Squire::PointDipole
         typedef bp::class_< Squire::PointDipole > PointDipole_exposer_t;
-        PointDipole_exposer_t PointDipole_exposer = PointDipole_exposer_t( "PointDipole", bp::init< >() );
+        PointDipole_exposer_t PointDipole_exposer = PointDipole_exposer_t( "PointDipole" );
         bp::scope PointDipole_scope( PointDipole_exposer );
+        PointDipole_exposer.def( bp::init< >() );
         PointDipole_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("coords"), bp::arg("dipole") )) );
         PointDipole_exposer.def( bp::init< Squire::PointDipole const & >(( bp::arg("other") )) );
         { //::Squire::PointDipole::center

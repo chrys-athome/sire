@@ -31,8 +31,9 @@ void register_Tan_class(){
 
     { //::SireCAS::Tan
         typedef bp::class_< SireCAS::Tan, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Tan_exposer_t;
-        Tan_exposer_t Tan_exposer = Tan_exposer_t( "Tan", bp::init< >() );
+        Tan_exposer_t Tan_exposer = Tan_exposer_t( "Tan" );
         bp::scope Tan_scope( Tan_exposer );
+        Tan_exposer.def( bp::init< >() );
         Tan_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Tan_exposer.def( bp::init< SireCAS::Tan const & >(( bp::arg("other") )) );
         { //::SireCAS::Tan::evaluate

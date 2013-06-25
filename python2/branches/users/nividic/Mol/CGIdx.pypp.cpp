@@ -25,8 +25,9 @@ void register_CGIdx_class(){
 
     { //::SireMol::CGIdx
         typedef bp::class_< SireMol::CGIdx, bp::bases< SireMol::CGID, SireID::ID, SireID::IndexBase > > CGIdx_exposer_t;
-        CGIdx_exposer_t CGIdx_exposer = CGIdx_exposer_t( "CGIdx", bp::init< >() );
+        CGIdx_exposer_t CGIdx_exposer = CGIdx_exposer_t( "CGIdx" );
         bp::scope CGIdx_scope( CGIdx_exposer );
+        CGIdx_exposer.def( bp::init< >() );
         CGIdx_exposer.def( bp::init< qint32 >(( bp::arg("idx") )) );
         CGIdx_exposer.def( bp::init< SireMol::CGIdx const & >(( bp::arg("other") )) );
         { //::SireMol::CGIdx::hash

@@ -53,8 +53,9 @@ void register_Expression_class(){
 
     { //::SireCAS::Expression
         typedef bp::class_< SireCAS::Expression > Expression_exposer_t;
-        Expression_exposer_t Expression_exposer = Expression_exposer_t( "Expression", bp::init< >() );
+        Expression_exposer_t Expression_exposer = Expression_exposer_t( "Expression" );
         bp::scope Expression_scope( Expression_exposer );
+        Expression_exposer.def( bp::init< >() );
         Expression_exposer.def( bp::init< int >(( bp::arg("constant") )) );
         Expression_exposer.def( bp::init< SireMaths::Rational const & >(( bp::arg("constant") )) );
         Expression_exposer.def( bp::init< double >(( bp::arg("constant") )) );
@@ -567,6 +568,16 @@ void register_Expression_class(){
             Expression_exposer.def( 
                 "symbols"
                 , symbols_function_value );
+        
+        }
+        { //::SireCAS::Expression::toOpenMMString
+        
+            typedef ::QString ( ::SireCAS::Expression::*toOpenMMString_function_type )(  ) const;
+            toOpenMMString_function_type toOpenMMString_function_value( &::SireCAS::Expression::toOpenMMString );
+            
+            Expression_exposer.def( 
+                "toOpenMMString"
+                , toOpenMMString_function_value );
         
         }
         { //::SireCAS::Expression::toString

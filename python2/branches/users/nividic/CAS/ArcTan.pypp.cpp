@@ -35,8 +35,9 @@ void register_ArcTan_class(){
 
     { //::SireCAS::ArcTan
         typedef bp::class_< SireCAS::ArcTan, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > ArcTan_exposer_t;
-        ArcTan_exposer_t ArcTan_exposer = ArcTan_exposer_t( "ArcTan", bp::init< >() );
+        ArcTan_exposer_t ArcTan_exposer = ArcTan_exposer_t( "ArcTan" );
         bp::scope ArcTan_scope( ArcTan_exposer );
+        ArcTan_exposer.def( bp::init< >() );
         ArcTan_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         ArcTan_exposer.def( bp::init< SireCAS::ArcTan const & >(( bp::arg("other") )) );
         { //::SireCAS::ArcTan::evaluate

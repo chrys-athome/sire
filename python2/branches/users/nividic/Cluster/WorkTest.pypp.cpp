@@ -31,8 +31,9 @@ void register_WorkTest_class(){
 
     { //::SireCluster::WorkTest
         typedef bp::class_< SireCluster::WorkTest, bp::bases< SireCluster::WorkPacketBase > > WorkTest_exposer_t;
-        WorkTest_exposer_t WorkTest_exposer = WorkTest_exposer_t( "WorkTest", bp::init< >() );
+        WorkTest_exposer_t WorkTest_exposer = WorkTest_exposer_t( "WorkTest" );
         bp::scope WorkTest_scope( WorkTest_exposer );
+        WorkTest_exposer.def( bp::init< >() );
         WorkTest_exposer.def( bp::init< int, int, bp::optional< int > >(( bp::arg("start"), bp::arg("end"), bp::arg("step")=(int)(1) )) );
         WorkTest_exposer.def( bp::init< SireCluster::WorkTest const & >(( bp::arg("other") )) );
         { //::SireCluster::WorkTest::approximatePacketSize

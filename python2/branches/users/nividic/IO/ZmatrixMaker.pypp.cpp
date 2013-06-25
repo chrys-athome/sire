@@ -57,8 +57,9 @@ void register_ZmatrixMaker_class(){
 
     { //::SireIO::ZmatrixMaker
         typedef bp::class_< SireIO::ZmatrixMaker > ZmatrixMaker_exposer_t;
-        ZmatrixMaker_exposer_t ZmatrixMaker_exposer = ZmatrixMaker_exposer_t( "ZmatrixMaker", bp::init< >() );
+        ZmatrixMaker_exposer_t ZmatrixMaker_exposer = ZmatrixMaker_exposer_t( "ZmatrixMaker" );
         bp::scope ZmatrixMaker_scope( ZmatrixMaker_exposer );
+        ZmatrixMaker_exposer.def( bp::init< >() );
         { //::SireIO::ZmatrixMaker::applyTemplates
         
             typedef ::SireMol::Molecule ( ::SireIO::ZmatrixMaker::*applyTemplates_function_type )( ::SireMol::Molecule & ) ;

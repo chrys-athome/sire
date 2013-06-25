@@ -55,8 +55,9 @@ void register_ZMatrixLine_class(){
 
     { //::SireMove::ZMatrixLine
         typedef bp::class_< SireMove::ZMatrixLine > ZMatrixLine_exposer_t;
-        ZMatrixLine_exposer_t ZMatrixLine_exposer = ZMatrixLine_exposer_t( "ZMatrixLine", bp::init< >() );
+        ZMatrixLine_exposer_t ZMatrixLine_exposer = ZMatrixLine_exposer_t( "ZMatrixLine" );
         bp::scope ZMatrixLine_scope( ZMatrixLine_exposer );
+        ZMatrixLine_exposer.def( bp::init< >() );
         ZMatrixLine_exposer.def( bp::init< SireMol::AtomIdx, SireMol::AtomIdx, SireMol::AtomIdx, SireMol::AtomIdx >(( bp::arg("atom"), bp::arg("bond"), bp::arg("angle"), bp::arg("dihedral") )) );
         ZMatrixLine_exposer.def( bp::init< SireMove::ZMatrixLine const & >(( bp::arg("other") )) );
         { //::SireMove::ZMatrixLine::angle

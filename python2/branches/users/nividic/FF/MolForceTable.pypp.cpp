@@ -31,7 +31,7 @@ SireFF::MolForceTable __copy__(const SireFF::MolForceTable &other){ return SireF
 
 #include "Qt/qdatastream.hpp"
 
-const char* pvt_get_name(const SireFF::MolForceTable&){ return "SireFF::MolForceTable";}
+#include "Helpers/str.hpp"
 
 void register_MolForceTable_class(){
 
@@ -328,8 +328,8 @@ void register_MolForceTable_class(){
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
         MolForceTable_exposer.def( "__rrshift__", &__rrshift__QDataStream< ::SireFF::MolForceTable >,
                             bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() );
-        MolForceTable_exposer.def( "__str__", &pvt_get_name);
-        MolForceTable_exposer.def( "__repr__", &pvt_get_name);
+        MolForceTable_exposer.def( "__str__", &__str__< ::SireFF::MolForceTable > );
+        MolForceTable_exposer.def( "__repr__", &__str__< ::SireFF::MolForceTable > );
     }
 
 }

@@ -26,8 +26,9 @@ void register_SegsWithAtoms_class(){
 
     { //::SireMol::SegsWithAtoms
         typedef bp::class_< SireMol::SegsWithAtoms, bp::bases< SireMol::SegID, SireID::ID > > SegsWithAtoms_exposer_t;
-        SegsWithAtoms_exposer_t SegsWithAtoms_exposer = SegsWithAtoms_exposer_t( "SegsWithAtoms", bp::init< >() );
+        SegsWithAtoms_exposer_t SegsWithAtoms_exposer = SegsWithAtoms_exposer_t( "SegsWithAtoms" );
         bp::scope SegsWithAtoms_scope( SegsWithAtoms_exposer );
+        SegsWithAtoms_exposer.def( bp::init< >() );
         SegsWithAtoms_exposer.def( bp::init< SireMol::AtomID const & >(( bp::arg("atomid") )) );
         SegsWithAtoms_exposer.def( bp::init< SireMol::SegsWithAtoms const & >(( bp::arg("other") )) );
         { //::SireMol::SegsWithAtoms::atomID

@@ -40,8 +40,9 @@ void register_DoubleDistanceRestraint_class(){
 
     { //::SireMM::DoubleDistanceRestraint
         typedef bp::class_< SireMM::DoubleDistanceRestraint, bp::bases< SireMM::Restraint3D, SireMM::Restraint, SireBase::Property > > DoubleDistanceRestraint_exposer_t;
-        DoubleDistanceRestraint_exposer_t DoubleDistanceRestraint_exposer = DoubleDistanceRestraint_exposer_t( "DoubleDistanceRestraint", bp::init< >() );
+        DoubleDistanceRestraint_exposer_t DoubleDistanceRestraint_exposer = DoubleDistanceRestraint_exposer_t( "DoubleDistanceRestraint" );
         bp::scope DoubleDistanceRestraint_scope( DoubleDistanceRestraint_exposer );
+        DoubleDistanceRestraint_exposer.def( bp::init< >() );
         DoubleDistanceRestraint_exposer.def( bp::init< SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("restraint") )) );
         DoubleDistanceRestraint_exposer.def( bp::init< SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, SireCAS::Values const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("restraint"), bp::arg("values") )) );
         DoubleDistanceRestraint_exposer.def( bp::init< SireMM::DoubleDistanceRestraint const & >(( bp::arg("other") )) );

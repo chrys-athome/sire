@@ -35,8 +35,9 @@ void register_NullAccumulator_class(){
 
     { //::SireMaths::NullAccumulator
         typedef bp::class_< SireMaths::NullAccumulator, bp::bases< SireMaths::Accumulator, SireBase::Property > > NullAccumulator_exposer_t;
-        NullAccumulator_exposer_t NullAccumulator_exposer = NullAccumulator_exposer_t( "NullAccumulator", bp::init< >() );
+        NullAccumulator_exposer_t NullAccumulator_exposer = NullAccumulator_exposer_t( "NullAccumulator" );
         bp::scope NullAccumulator_scope( NullAccumulator_exposer );
+        NullAccumulator_exposer.def( bp::init< >() );
         NullAccumulator_exposer.def( bp::init< SireMaths::NullAccumulator const & >(( bp::arg("other") )) );
         { //::SireMaths::NullAccumulator::accumulate
         

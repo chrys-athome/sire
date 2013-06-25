@@ -37,8 +37,9 @@ void register_CHARMMSwitchingFunction_class(){
 
     { //::SireMM::CHARMMSwitchingFunction
         typedef bp::class_< SireMM::CHARMMSwitchingFunction, bp::bases< SireMM::SwitchingFunction, SireBase::Property > > CHARMMSwitchingFunction_exposer_t;
-        CHARMMSwitchingFunction_exposer_t CHARMMSwitchingFunction_exposer = CHARMMSwitchingFunction_exposer_t( "CHARMMSwitchingFunction", bp::init< >() );
+        CHARMMSwitchingFunction_exposer_t CHARMMSwitchingFunction_exposer = CHARMMSwitchingFunction_exposer_t( "CHARMMSwitchingFunction" );
         bp::scope CHARMMSwitchingFunction_scope( CHARMMSwitchingFunction_exposer );
+        CHARMMSwitchingFunction_exposer.def( bp::init< >() );
         CHARMMSwitchingFunction_exposer.def( bp::init< SireUnits::Dimension::Length >(( bp::arg("cutoffdist") )) );
         CHARMMSwitchingFunction_exposer.def( bp::init< SireUnits::Dimension::Length, SireUnits::Dimension::Length >(( bp::arg("cutoffdist"), bp::arg("featherdist") )) );
         CHARMMSwitchingFunction_exposer.def( bp::init< SireUnits::Dimension::Length, SireUnits::Dimension::Length, SireUnits::Dimension::Length >(( bp::arg("cutoffdist"), bp::arg("elecfeather"), bp::arg("vdwfeather") )) );

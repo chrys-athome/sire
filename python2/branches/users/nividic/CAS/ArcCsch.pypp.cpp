@@ -39,8 +39,9 @@ void register_ArcCsch_class(){
 
     { //::SireCAS::ArcCsch
         typedef bp::class_< SireCAS::ArcCsch, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > ArcCsch_exposer_t;
-        ArcCsch_exposer_t ArcCsch_exposer = ArcCsch_exposer_t( "ArcCsch", bp::init< >() );
+        ArcCsch_exposer_t ArcCsch_exposer = ArcCsch_exposer_t( "ArcCsch" );
         bp::scope ArcCsch_scope( ArcCsch_exposer );
+        ArcCsch_exposer.def( bp::init< >() );
         ArcCsch_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         ArcCsch_exposer.def( bp::init< SireCAS::ArcCsch const & >(( bp::arg("other") )) );
         { //::SireCAS::ArcCsch::evaluate

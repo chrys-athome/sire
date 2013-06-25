@@ -35,8 +35,9 @@ void register_RecordValues_class(){
 
     { //::SireMaths::RecordValues
         typedef bp::class_< SireMaths::RecordValues, bp::bases< SireMaths::Accumulator, SireBase::Property > > RecordValues_exposer_t;
-        RecordValues_exposer_t RecordValues_exposer = RecordValues_exposer_t( "RecordValues", bp::init< >() );
+        RecordValues_exposer_t RecordValues_exposer = RecordValues_exposer_t( "RecordValues" );
         bp::scope RecordValues_scope( RecordValues_exposer );
+        RecordValues_exposer.def( bp::init< >() );
         RecordValues_exposer.def( bp::init< SireMaths::RecordValues const & >(( bp::arg("other") )) );
         { //::SireMaths::RecordValues::accumulate
         

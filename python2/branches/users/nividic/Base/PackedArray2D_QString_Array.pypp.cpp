@@ -21,8 +21,9 @@ void register_PackedArray2D_QString_Array_class(){
 
     { //::SireBase::detail::PackedArray2D_Array< QString >
         typedef bp::class_< SireBase::detail::PackedArray2D_Array< QString > > PackedArray2D_QString_Array_exposer_t;
-        PackedArray2D_QString_Array_exposer_t PackedArray2D_QString_Array_exposer = PackedArray2D_QString_Array_exposer_t( "PackedArray2D_QString_Array", bp::init< >() );
+        PackedArray2D_QString_Array_exposer_t PackedArray2D_QString_Array_exposer = PackedArray2D_QString_Array_exposer_t( "PackedArray2D_QString_Array" );
         bp::scope PackedArray2D_QString_Array_scope( PackedArray2D_QString_Array_exposer );
+        PackedArray2D_QString_Array_exposer.def( bp::init< >() );
         PackedArray2D_QString_Array_exposer.def( bp::init< quint32 >(( bp::arg("sz") )) );
         PackedArray2D_QString_Array_exposer.def( bp::init< quint32, QString const & >(( bp::arg("sz"), bp::arg("value") )) );
         PackedArray2D_QString_Array_exposer.def( bp::init< QVector< QString > const & >(( bp::arg("values") )) );

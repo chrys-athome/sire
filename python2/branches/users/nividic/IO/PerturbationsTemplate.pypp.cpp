@@ -85,8 +85,9 @@ void register_PerturbationsTemplate_class(){
 
     { //::SireIO::PerturbationsTemplate
         typedef bp::class_< SireIO::PerturbationsTemplate > PerturbationsTemplate_exposer_t;
-        PerturbationsTemplate_exposer_t PerturbationsTemplate_exposer = PerturbationsTemplate_exposer_t( "PerturbationsTemplate", bp::init< >() );
+        PerturbationsTemplate_exposer_t PerturbationsTemplate_exposer = PerturbationsTemplate_exposer_t( "PerturbationsTemplate" );
         bp::scope PerturbationsTemplate_scope( PerturbationsTemplate_exposer );
+        PerturbationsTemplate_exposer.def( bp::init< >() );
         PerturbationsTemplate_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         PerturbationsTemplate_exposer.def( bp::init< SireIO::PerturbationsTemplate const & >(( bp::arg("other") )) );
         { //::SireIO::PerturbationsTemplate::getAngles
@@ -174,25 +175,25 @@ void register_PerturbationsTemplate_class(){
                 , ( bp::arg("atomname") ) );
         
         }
-        { //::SireIO::PerturbationsTemplate::getFinalDihPotential
+        { //::SireIO::PerturbationsTemplate::getFinalDihParams
         
-            typedef ::SireCAS::Expression ( ::SireIO::PerturbationsTemplate::*getFinalDihPotential_function_type )( ::SireMol::DihedralID const & ) const;
-            getFinalDihPotential_function_type getFinalDihPotential_function_value( &::SireIO::PerturbationsTemplate::getFinalDihPotential );
+            typedef ::QList< double > ( ::SireIO::PerturbationsTemplate::*getFinalDihParams_function_type )( ::SireMol::DihedralID const & ) const;
+            getFinalDihParams_function_type getFinalDihParams_function_value( &::SireIO::PerturbationsTemplate::getFinalDihParams );
             
             PerturbationsTemplate_exposer.def( 
-                "getFinalDihPotential"
-                , getFinalDihPotential_function_value
+                "getFinalDihParams"
+                , getFinalDihParams_function_value
                 , ( bp::arg("dihedral") ) );
         
         }
-        { //::SireIO::PerturbationsTemplate::getFinalImpPotential
+        { //::SireIO::PerturbationsTemplate::getFinalImpParams
         
-            typedef ::SireCAS::Expression ( ::SireIO::PerturbationsTemplate::*getFinalImpPotential_function_type )( ::SireMol::ImproperID const & ) const;
-            getFinalImpPotential_function_type getFinalImpPotential_function_value( &::SireIO::PerturbationsTemplate::getFinalImpPotential );
+            typedef ::QList< double > ( ::SireIO::PerturbationsTemplate::*getFinalImpParams_function_type )( ::SireMol::ImproperID const & ) const;
+            getFinalImpParams_function_type getFinalImpParams_function_value( &::SireIO::PerturbationsTemplate::getFinalImpParams );
             
             PerturbationsTemplate_exposer.def( 
-                "getFinalImpPotential"
-                , getFinalImpPotential_function_value
+                "getFinalImpParams"
+                , getFinalImpParams_function_value
                 , ( bp::arg("improper") ) );
         
         }
@@ -283,25 +284,25 @@ void register_PerturbationsTemplate_class(){
                 , ( bp::arg("atomname") ) );
         
         }
-        { //::SireIO::PerturbationsTemplate::getInitDihPotential
+        { //::SireIO::PerturbationsTemplate::getInitDihParams
         
-            typedef ::SireCAS::Expression ( ::SireIO::PerturbationsTemplate::*getInitDihPotential_function_type )( ::SireMol::DihedralID const & ) const;
-            getInitDihPotential_function_type getInitDihPotential_function_value( &::SireIO::PerturbationsTemplate::getInitDihPotential );
+            typedef ::QList< double > ( ::SireIO::PerturbationsTemplate::*getInitDihParams_function_type )( ::SireMol::DihedralID const & ) const;
+            getInitDihParams_function_type getInitDihParams_function_value( &::SireIO::PerturbationsTemplate::getInitDihParams );
             
             PerturbationsTemplate_exposer.def( 
-                "getInitDihPotential"
-                , getInitDihPotential_function_value
+                "getInitDihParams"
+                , getInitDihParams_function_value
                 , ( bp::arg("dihedral") ) );
         
         }
-        { //::SireIO::PerturbationsTemplate::getInitImpPotential
+        { //::SireIO::PerturbationsTemplate::getInitImpParams
         
-            typedef ::SireCAS::Expression ( ::SireIO::PerturbationsTemplate::*getInitImpPotential_function_type )( ::SireMol::ImproperID const & ) const;
-            getInitImpPotential_function_type getInitImpPotential_function_value( &::SireIO::PerturbationsTemplate::getInitImpPotential );
+            typedef ::QList< double > ( ::SireIO::PerturbationsTemplate::*getInitImpParams_function_type )( ::SireMol::ImproperID const & ) const;
+            getInitImpParams_function_type getInitImpParams_function_value( &::SireIO::PerturbationsTemplate::getInitImpParams );
             
             PerturbationsTemplate_exposer.def( 
-                "getInitImpPotential"
-                , getInitImpPotential_function_value
+                "getInitImpParams"
+                , getInitImpParams_function_value
                 , ( bp::arg("improper") ) );
         
         }
@@ -406,26 +407,26 @@ void register_PerturbationsTemplate_class(){
                 , ( bp::arg("atomname"), bp::arg("atomcharge") ) );
         
         }
-        { //::SireIO::PerturbationsTemplate::setFinalDihPotential
+        { //::SireIO::PerturbationsTemplate::setFinalDihParams
         
-            typedef void ( ::SireIO::PerturbationsTemplate::*setFinalDihPotential_function_type )( ::SireMol::DihedralID const &,::SireCAS::Expression const & ) ;
-            setFinalDihPotential_function_type setFinalDihPotential_function_value( &::SireIO::PerturbationsTemplate::setFinalDihPotential );
+            typedef void ( ::SireIO::PerturbationsTemplate::*setFinalDihParams_function_type )( ::SireMol::DihedralID const &,::QList< double > const & ) ;
+            setFinalDihParams_function_type setFinalDihParams_function_value( &::SireIO::PerturbationsTemplate::setFinalDihParams );
             
             PerturbationsTemplate_exposer.def( 
-                "setFinalDihPotential"
-                , setFinalDihPotential_function_value
-                , ( bp::arg("dihedral"), bp::arg("pot") ) );
+                "setFinalDihParams"
+                , setFinalDihParams_function_value
+                , ( bp::arg("dihedral"), bp::arg("params") ) );
         
         }
-        { //::SireIO::PerturbationsTemplate::setFinalImpPotential
+        { //::SireIO::PerturbationsTemplate::setFinalImpParams
         
-            typedef void ( ::SireIO::PerturbationsTemplate::*setFinalImpPotential_function_type )( ::SireMol::ImproperID const &,::SireCAS::Expression const & ) ;
-            setFinalImpPotential_function_type setFinalImpPotential_function_value( &::SireIO::PerturbationsTemplate::setFinalImpPotential );
+            typedef void ( ::SireIO::PerturbationsTemplate::*setFinalImpParams_function_type )( ::SireMol::ImproperID const &,::QList< double > const & ) ;
+            setFinalImpParams_function_type setFinalImpParams_function_value( &::SireIO::PerturbationsTemplate::setFinalImpParams );
             
             PerturbationsTemplate_exposer.def( 
-                "setFinalImpPotential"
-                , setFinalImpPotential_function_value
-                , ( bp::arg("improper"), bp::arg("pot") ) );
+                "setFinalImpParams"
+                , setFinalImpParams_function_value
+                , ( bp::arg("improper"), bp::arg("params") ) );
         
         }
         { //::SireIO::PerturbationsTemplate::setFinalLJ
@@ -505,26 +506,26 @@ void register_PerturbationsTemplate_class(){
                 , ( bp::arg("atomname"), bp::arg("atomcharge") ) );
         
         }
-        { //::SireIO::PerturbationsTemplate::setInitDihPotential
+        { //::SireIO::PerturbationsTemplate::setInitDihParams
         
-            typedef void ( ::SireIO::PerturbationsTemplate::*setInitDihPotential_function_type )( ::SireMol::DihedralID const &,::SireCAS::Expression const & ) ;
-            setInitDihPotential_function_type setInitDihPotential_function_value( &::SireIO::PerturbationsTemplate::setInitDihPotential );
+            typedef void ( ::SireIO::PerturbationsTemplate::*setInitDihParams_function_type )( ::SireMol::DihedralID const &,::QList< double > const & ) ;
+            setInitDihParams_function_type setInitDihParams_function_value( &::SireIO::PerturbationsTemplate::setInitDihParams );
             
             PerturbationsTemplate_exposer.def( 
-                "setInitDihPotential"
-                , setInitDihPotential_function_value
-                , ( bp::arg("dihedral"), bp::arg("pot") ) );
+                "setInitDihParams"
+                , setInitDihParams_function_value
+                , ( bp::arg("dihedral"), bp::arg("params") ) );
         
         }
-        { //::SireIO::PerturbationsTemplate::setInitImpPotential
+        { //::SireIO::PerturbationsTemplate::setInitImpParams
         
-            typedef void ( ::SireIO::PerturbationsTemplate::*setInitImpPotential_function_type )( ::SireMol::ImproperID const &,::SireCAS::Expression const & ) ;
-            setInitImpPotential_function_type setInitImpPotential_function_value( &::SireIO::PerturbationsTemplate::setInitImpPotential );
+            typedef void ( ::SireIO::PerturbationsTemplate::*setInitImpParams_function_type )( ::SireMol::ImproperID const &,::QList< double > const & ) ;
+            setInitImpParams_function_type setInitImpParams_function_value( &::SireIO::PerturbationsTemplate::setInitImpParams );
             
             PerturbationsTemplate_exposer.def( 
-                "setInitImpPotential"
-                , setInitImpPotential_function_value
-                , ( bp::arg("improper"), bp::arg("pot") ) );
+                "setInitImpParams"
+                , setInitImpParams_function_value
+                , ( bp::arg("improper"), bp::arg("params") ) );
         
         }
         { //::SireIO::PerturbationsTemplate::setInitLJ

@@ -25,8 +25,9 @@ void register_SimPacket_class(){
 
     { //::SireMove::SimPacket
         typedef bp::class_< SireMove::SimPacket, bp::bases< SireCluster::WorkPacketBase > > SimPacket_exposer_t;
-        SimPacket_exposer_t SimPacket_exposer = SimPacket_exposer_t( "SimPacket", bp::init< >() );
+        SimPacket_exposer_t SimPacket_exposer = SimPacket_exposer_t( "SimPacket" );
         bp::scope SimPacket_scope( SimPacket_exposer );
+        SimPacket_exposer.def( bp::init< >() );
         SimPacket_exposer.def( bp::init< SireSystem::System const &, SireMove::Moves const &, int, bp::optional< bool > >(( bp::arg("system"), bp::arg("moves"), bp::arg("nmoves"), bp::arg("record_stats")=(bool)(true) )) );
         SimPacket_exposer.def( bp::init< SireSystem::System const &, SireMove::Moves const &, int, int, bp::optional< bool > >(( bp::arg("system"), bp::arg("moves"), bp::arg("nmoves"), bp::arg("nmoves_per_chunk"), bp::arg("record_stats")=(bool)(true) )) );
         SimPacket_exposer.def( bp::init< SireMove::SimStore const &, int, bp::optional< bool > >(( bp::arg("simstore"), bp::arg("nmoves"), bp::arg("record_stats")=(bool)(true) )) );

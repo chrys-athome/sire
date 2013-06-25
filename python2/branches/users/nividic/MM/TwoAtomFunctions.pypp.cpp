@@ -41,8 +41,9 @@ void register_TwoAtomFunctions_class(){
 
     { //::SireMM::TwoAtomFunctions
         typedef bp::class_< SireMM::TwoAtomFunctions, bp::bases< SireMM::AtomFunctions, SireMol::MoleculeProperty, SireMol::MolViewProperty, SireBase::Property > > TwoAtomFunctions_exposer_t;
-        TwoAtomFunctions_exposer_t TwoAtomFunctions_exposer = TwoAtomFunctions_exposer_t( "TwoAtomFunctions", bp::init< >() );
+        TwoAtomFunctions_exposer_t TwoAtomFunctions_exposer = TwoAtomFunctions_exposer_t( "TwoAtomFunctions" );
         bp::scope TwoAtomFunctions_scope( TwoAtomFunctions_exposer );
+        TwoAtomFunctions_exposer.def( bp::init< >() );
         TwoAtomFunctions_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         TwoAtomFunctions_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         TwoAtomFunctions_exposer.def( bp::init< SireMM::TwoAtomFunctions const & >(( bp::arg("other") )) );

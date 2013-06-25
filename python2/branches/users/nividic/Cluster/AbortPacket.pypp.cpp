@@ -31,8 +31,9 @@ void register_AbortPacket_class(){
 
     { //::SireCluster::AbortPacket
         typedef bp::class_< SireCluster::AbortPacket, bp::bases< SireCluster::WorkPacketBase > > AbortPacket_exposer_t;
-        AbortPacket_exposer_t AbortPacket_exposer = AbortPacket_exposer_t( "AbortPacket", bp::init< >() );
+        AbortPacket_exposer_t AbortPacket_exposer = AbortPacket_exposer_t( "AbortPacket" );
         bp::scope AbortPacket_scope( AbortPacket_exposer );
+        AbortPacket_exposer.def( bp::init< >() );
         AbortPacket_exposer.def( bp::init< SireCluster::AbortPacket const & >(( bp::arg("other") )) );
         { //::SireCluster::AbortPacket::hasFinished
         

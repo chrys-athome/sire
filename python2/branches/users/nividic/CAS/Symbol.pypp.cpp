@@ -43,8 +43,9 @@ void register_Symbol_class(){
 
     { //::SireCAS::Symbol
         typedef bp::class_< SireCAS::Symbol, bp::bases< SireCAS::ExBase > > Symbol_exposer_t;
-        Symbol_exposer_t Symbol_exposer = Symbol_exposer_t( "Symbol", bp::init< >() );
+        Symbol_exposer_t Symbol_exposer = Symbol_exposer_t( "Symbol" );
         bp::scope Symbol_scope( Symbol_exposer );
+        Symbol_exposer.def( bp::init< >() );
         Symbol_exposer.def( bp::init< SireCAS::SymbolID >(( bp::arg("symid") )) );
         Symbol_exposer.def( bp::init< QString const & >(( bp::arg("rep") )) );
         Symbol_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("other") )) );

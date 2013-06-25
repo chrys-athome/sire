@@ -49,8 +49,9 @@ void register_SegEditor_class(){
 
     { //::SireMol::SegEditor
         typedef bp::class_< SireMol::SegEditor, bp::bases< SireMol::Editor<SireMol::SegEditor, SireMol::Segment>, SireMol::Segment, SireMol::MoleculeView, SireBase::Property > > SegEditor_exposer_t;
-        SegEditor_exposer_t SegEditor_exposer = SegEditor_exposer_t( "SegEditor", bp::init< >() );
+        SegEditor_exposer_t SegEditor_exposer = SegEditor_exposer_t( "SegEditor" );
         bp::scope SegEditor_scope( SegEditor_exposer );
+        SegEditor_exposer.def( bp::init< >() );
         SegEditor_exposer.def( bp::init< SireMol::Segment const & >(( bp::arg("residue") )) );
         SegEditor_exposer.def( bp::init< SireMol::SegEditor const & >(( bp::arg("other") )) );
         { //::SireMol::SegEditor::add

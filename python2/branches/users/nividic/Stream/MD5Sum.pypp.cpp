@@ -29,8 +29,9 @@ void register_MD5Sum_class(){
 
     { //::SireStream::MD5Sum
         typedef bp::class_< SireStream::MD5Sum > MD5Sum_exposer_t;
-        MD5Sum_exposer_t MD5Sum_exposer = MD5Sum_exposer_t( "MD5Sum", bp::init< >() );
+        MD5Sum_exposer_t MD5Sum_exposer = MD5Sum_exposer_t( "MD5Sum" );
         bp::scope MD5Sum_scope( MD5Sum_exposer );
+        MD5Sum_exposer.def( bp::init< >() );
         MD5Sum_exposer.def( bp::init< QByteArray const & >(( bp::arg("buffer") )) );
         MD5Sum_exposer.def( bp::init< char const *, unsigned int >(( bp::arg("buffer"), bp::arg("sz") )) );
         MD5Sum_exposer.def( bp::init< QString const & >(( bp::arg("file") )) );

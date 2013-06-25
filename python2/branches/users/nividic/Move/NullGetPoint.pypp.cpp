@@ -41,8 +41,9 @@ void register_NullGetPoint_class(){
 
     { //::SireMove::NullGetPoint
         typedef bp::class_< SireMove::NullGetPoint, bp::bases< SireMove::GetPoint, SireBase::Property > > NullGetPoint_exposer_t;
-        NullGetPoint_exposer_t NullGetPoint_exposer = NullGetPoint_exposer_t( "NullGetPoint", bp::init< >() );
+        NullGetPoint_exposer_t NullGetPoint_exposer = NullGetPoint_exposer_t( "NullGetPoint" );
         bp::scope NullGetPoint_scope( NullGetPoint_exposer );
+        NullGetPoint_exposer.def( bp::init< >() );
         NullGetPoint_exposer.def( bp::init< SireMove::NullGetPoint const & >(( bp::arg("other") )) );
         { //::SireMove::NullGetPoint::getPoint
         

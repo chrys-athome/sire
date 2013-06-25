@@ -37,8 +37,9 @@ void register_Perturbations_class(){
 
     { //::SireMol::Perturbations
         typedef bp::class_< SireMol::Perturbations, bp::bases< SireMol::Perturbation, SireBase::Property > > Perturbations_exposer_t;
-        Perturbations_exposer_t Perturbations_exposer = Perturbations_exposer_t( "Perturbations", bp::init< >() );
+        Perturbations_exposer_t Perturbations_exposer = Perturbations_exposer_t( "Perturbations" );
         bp::scope Perturbations_scope( Perturbations_exposer );
+        Perturbations_exposer.def( bp::init< >() );
         Perturbations_exposer.def( bp::init< SireMol::Perturbation const & >(( bp::arg("perturbation") )) );
         Perturbations_exposer.def( bp::init< QList< SireBase::PropPtr< SireMol::Perturbation > > const & >(( bp::arg("perturbations") )) );
         Perturbations_exposer.def( bp::init< SireMol::Perturbations const & >(( bp::arg("other") )) );

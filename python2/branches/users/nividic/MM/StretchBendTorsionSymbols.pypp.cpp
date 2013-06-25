@@ -40,8 +40,9 @@ void register_StretchBendTorsionSymbols_class(){
 
     { //::SireMM::StretchBendTorsionSymbols
         typedef bp::class_< SireMM::StretchBendTorsionSymbols, bp::bases< SireMM::InternalSymbolsBase > > StretchBendTorsionSymbols_exposer_t;
-        StretchBendTorsionSymbols_exposer_t StretchBendTorsionSymbols_exposer = StretchBendTorsionSymbols_exposer_t( "StretchBendTorsionSymbols", bp::init< >() );
+        StretchBendTorsionSymbols_exposer_t StretchBendTorsionSymbols_exposer = StretchBendTorsionSymbols_exposer_t( "StretchBendTorsionSymbols" );
         bp::scope StretchBendTorsionSymbols_scope( StretchBendTorsionSymbols_exposer );
+        StretchBendTorsionSymbols_exposer.def( bp::init< >() );
         { //::SireMM::StretchBendTorsionSymbols::phi
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::StretchBendTorsionSymbols::*phi_function_type )(  ) const;

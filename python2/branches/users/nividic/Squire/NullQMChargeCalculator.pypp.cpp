@@ -33,8 +33,9 @@ void register_NullQMChargeCalculator_class(){
 
     { //::Squire::NullQMChargeCalculator
         typedef bp::class_< Squire::NullQMChargeCalculator, bp::bases< Squire::QMChargeCalculator, SireBase::Property > > NullQMChargeCalculator_exposer_t;
-        NullQMChargeCalculator_exposer_t NullQMChargeCalculator_exposer = NullQMChargeCalculator_exposer_t( "NullQMChargeCalculator", bp::init< >() );
+        NullQMChargeCalculator_exposer_t NullQMChargeCalculator_exposer = NullQMChargeCalculator_exposer_t( "NullQMChargeCalculator" );
         bp::scope NullQMChargeCalculator_scope( NullQMChargeCalculator_exposer );
+        NullQMChargeCalculator_exposer.def( bp::init< >() );
         NullQMChargeCalculator_exposer.def( bp::init< Squire::NullQMChargeCalculator const & >(( bp::arg("other") )) );
         { //::Squire::NullQMChargeCalculator::mayChangeCharges
         

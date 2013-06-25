@@ -81,8 +81,9 @@ void register_Mover_Chain__class(){
 
     { //::SireMol::Mover< SireMol::Chain >
         typedef bp::class_< SireMol::Mover< SireMol::Chain >, bp::bases< SireMol::MoverBase, SireMol::Chain, SireMol::MoleculeView, SireBase::Property > > Mover_Chain__exposer_t;
-        Mover_Chain__exposer_t Mover_Chain__exposer = Mover_Chain__exposer_t( "Mover_Chain_", bp::init< >() );
+        Mover_Chain__exposer_t Mover_Chain__exposer = Mover_Chain__exposer_t( "Mover_Chain_" );
         bp::scope Mover_Chain__scope( Mover_Chain__exposer );
+        Mover_Chain__exposer.def( bp::init< >() );
         Mover_Chain__exposer.def( bp::init< SireMol::Chain const & >(( bp::arg("view") )) );
         Mover_Chain__exposer.def( bp::init< SireMol::Chain const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Chain__exposer.def( bp::init< SireMol::Mover< SireMol::Chain > const & >(( bp::arg("other") )) );

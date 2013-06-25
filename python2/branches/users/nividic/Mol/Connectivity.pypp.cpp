@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "angleid.h"
 
+#include "atommatcher.h"
+
 #include "atomselection.h"
 
 #include "bondid.h"
@@ -30,6 +32,8 @@ namespace bp = boost::python;
 #include "moleculeinfodata.h"
 
 #include "moleculeview.h"
+
+#include "tostring.h"
 
 #include <QDataStream>
 
@@ -48,9 +52,10 @@ SireMol::Connectivity __copy__(const SireMol::Connectivity &other){ return SireM
 void register_Connectivity_class(){
 
     { //::SireMol::Connectivity
-        typedef bp::class_< SireMol::Connectivity, bp::bases< SireMol::ConnectivityBase, SireBase::Property > > Connectivity_exposer_t;
-        Connectivity_exposer_t Connectivity_exposer = Connectivity_exposer_t( "Connectivity", bp::init< >() );
+        typedef bp::class_< SireMol::Connectivity, bp::bases< SireMol::ConnectivityBase, SireMol::MolViewProperty, SireBase::Property > > Connectivity_exposer_t;
+        Connectivity_exposer_t Connectivity_exposer = Connectivity_exposer_t( "Connectivity" );
         bp::scope Connectivity_scope( Connectivity_exposer );
+        Connectivity_exposer.def( bp::init< >() );
         Connectivity_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         Connectivity_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireMol::BondHunter const &, SireBase::PropertyMap const & > >(( bp::arg("molview"), bp::arg("bondhunter")=SireMol::CovalentBondHunter(1.100000000000000088817841970012523233890533447265625e+0), bp::arg("map")=SireBase::PropertyMap() )) );
         Connectivity_exposer.def( bp::init< SireMol::ConnectivityEditor const & >(( bp::arg("editor") )) );

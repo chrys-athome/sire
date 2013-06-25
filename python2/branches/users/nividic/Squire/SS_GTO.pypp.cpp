@@ -35,8 +35,9 @@ void register_SS_GTO_class(){
 
     { //::Squire::SS_GTO
         typedef bp::class_< Squire::SS_GTO, bp::bases< Squire::GTOPair, Squire::ShellPair, SireBase::Property > > SS_GTO_exposer_t;
-        SS_GTO_exposer_t SS_GTO_exposer = SS_GTO_exposer_t( "SS_GTO", bp::init< >() );
+        SS_GTO_exposer_t SS_GTO_exposer = SS_GTO_exposer_t( "SS_GTO" );
         bp::scope SS_GTO_scope( SS_GTO_exposer );
+        SS_GTO_exposer.def( bp::init< >() );
         SS_GTO_exposer.def( bp::init< SireMaths::Vector const &, Squire::S_GTO const &, SireMaths::Vector const &, Squire::S_GTO const & >(( bp::arg("A"), bp::arg("a"), bp::arg("B"), bp::arg("b") )) );
         SS_GTO_exposer.def( bp::init< Squire::SS_GTO const & >(( bp::arg("other") )) );
         { //::Squire::SS_GTO::angularMomentum0

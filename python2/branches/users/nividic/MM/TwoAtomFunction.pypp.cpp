@@ -40,8 +40,9 @@ void register_TwoAtomFunction_class(){
 
     { //::SireMM::TwoAtomFunction
         typedef bp::class_< SireMM::TwoAtomFunction, bp::bases< SireMM::AtomFunction > > TwoAtomFunction_exposer_t;
-        TwoAtomFunction_exposer_t TwoAtomFunction_exposer = TwoAtomFunction_exposer_t( "TwoAtomFunction", bp::init< >() );
+        TwoAtomFunction_exposer_t TwoAtomFunction_exposer = TwoAtomFunction_exposer_t( "TwoAtomFunction" );
         bp::scope TwoAtomFunction_scope( TwoAtomFunction_exposer );
+        TwoAtomFunction_exposer.def( bp::init< >() );
         TwoAtomFunction_exposer.def( bp::init< SireMol::CGAtomIdx const &, SireMol::CGAtomIdx const &, SireCAS::Expression const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("function") )) );
         TwoAtomFunction_exposer.def( bp::init< SireMM::TwoAtomFunction const & >(( bp::arg("other") )) );
         { //::SireMM::TwoAtomFunction::atom0

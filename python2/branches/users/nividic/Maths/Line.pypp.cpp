@@ -25,8 +25,9 @@ void register_Line_class(){
 
     { //::SireMaths::Line
         typedef bp::class_< SireMaths::Line > Line_exposer_t;
-        Line_exposer_t Line_exposer = Line_exposer_t( "Line", bp::init< >() );
+        Line_exposer_t Line_exposer = Line_exposer_t( "Line" );
         bp::scope Line_scope( Line_exposer );
+        Line_exposer.def( bp::init< >() );
         Line_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("point0"), bp::arg("point1") )) );
         { //::SireMaths::Line::at
         

@@ -23,8 +23,9 @@ void register_IntraCoulombFF_class(){
 
     { //::SireFF::Intra2B3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >
         typedef bp::class_< SireFF::Intra2B3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >, bp::bases< SireFF::FF3D, SireFF::Intra2BFF<SireMM::CoulombPotentialInterface<SireMM::IntraCoulombPotential> >, SireMM::CoulombPotentialInterface<SireMM::IntraCoulombPotential>, SireFF::G1FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > IntraCoulombFF_exposer_t;
-        IntraCoulombFF_exposer_t IntraCoulombFF_exposer = IntraCoulombFF_exposer_t( "IntraCoulombFF", bp::init< >() );
+        IntraCoulombFF_exposer_t IntraCoulombFF_exposer = IntraCoulombFF_exposer_t( "IntraCoulombFF" );
         bp::scope IntraCoulombFF_scope( IntraCoulombFF_exposer );
+        IntraCoulombFF_exposer.def( bp::init< >() );
         IntraCoulombFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         IntraCoulombFF_exposer.def( bp::init< SireFF::Intra2B3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > > const & >(( bp::arg("other") )) );
         { //::SireFF::Intra2B3DFF< SireMM::CoulombPotentialInterface< SireMM::IntraCoulombPotential > >::energy

@@ -27,8 +27,9 @@ void register_LengthHistogramValue_class(){
 
     { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > >
         typedef bp::class_< SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > >, bp::bases< SireMaths::HistogramValue, SireMaths::HistogramBin > > LengthHistogramValue_exposer_t;
-        LengthHistogramValue_exposer_t LengthHistogramValue_exposer = LengthHistogramValue_exposer_t( "LengthHistogramValue", bp::init< >() );
+        LengthHistogramValue_exposer_t LengthHistogramValue_exposer = LengthHistogramValue_exposer_t( "LengthHistogramValue" );
         bp::scope LengthHistogramValue_scope( LengthHistogramValue_exposer );
+        LengthHistogramValue_exposer.def( bp::init< >() );
         LengthHistogramValue_exposer.def( bp::init< SireMaths::HistogramBinT< SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > > const &, double >(( bp::arg("bin"), bp::arg("value") )) );
         LengthHistogramValue_exposer.def( bp::init< SireMaths::HistogramValue const & >(( bp::arg("other") )) );
         LengthHistogramValue_exposer.def( bp::init< SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 0, 1, 0, 0, 0, 0, 0 > > const & >(( bp::arg("other") )) );

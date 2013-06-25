@@ -35,8 +35,9 @@ void register_Node_class(){
 
     { //::SireCluster::Node
         typedef bp::class_< SireCluster::Node > Node_exposer_t;
-        Node_exposer_t Node_exposer = Node_exposer_t( "Node", bp::init< >() );
+        Node_exposer_t Node_exposer = Node_exposer_t( "Node" );
         bp::scope Node_scope( Node_exposer );
+        Node_exposer.def( bp::init< >() );
         Node_exposer.def( bp::init< SireCluster::Node const & >(( bp::arg("other") )) );
         { //::SireCluster::Node::UID
         

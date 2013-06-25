@@ -42,8 +42,9 @@ void register_ScaleVolumeFromCenter_class(){
 
     { //::SireMove::ScaleVolumeFromCenter
         typedef bp::class_< SireMove::ScaleVolumeFromCenter, bp::bases< SireMove::VolumeChanger, SireBase::Property > > ScaleVolumeFromCenter_exposer_t;
-        ScaleVolumeFromCenter_exposer_t ScaleVolumeFromCenter_exposer = ScaleVolumeFromCenter_exposer_t( "ScaleVolumeFromCenter", bp::init< >() );
+        ScaleVolumeFromCenter_exposer_t ScaleVolumeFromCenter_exposer = ScaleVolumeFromCenter_exposer_t( "ScaleVolumeFromCenter" );
         bp::scope ScaleVolumeFromCenter_scope( ScaleVolumeFromCenter_exposer );
+        ScaleVolumeFromCenter_exposer.def( bp::init< >() );
         ScaleVolumeFromCenter_exposer.def( bp::init< SireMol::MGID const & >(( bp::arg("mgid") )) );
         ScaleVolumeFromCenter_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         ScaleVolumeFromCenter_exposer.def( bp::init< SireMol::MGID const &, SireFF::PointRef const & >(( bp::arg("mgid"), bp::arg("point") )) );

@@ -38,8 +38,9 @@ void register_FourAtomFunction_class(){
 
     { //::SireMM::FourAtomFunction
         typedef bp::class_< SireMM::FourAtomFunction, bp::bases< SireMM::AtomFunction > > FourAtomFunction_exposer_t;
-        FourAtomFunction_exposer_t FourAtomFunction_exposer = FourAtomFunction_exposer_t( "FourAtomFunction", bp::init< >() );
+        FourAtomFunction_exposer_t FourAtomFunction_exposer = FourAtomFunction_exposer_t( "FourAtomFunction" );
         bp::scope FourAtomFunction_scope( FourAtomFunction_exposer );
+        FourAtomFunction_exposer.def( bp::init< >() );
         FourAtomFunction_exposer.def( bp::init< SireMol::CGAtomIdx const &, SireMol::CGAtomIdx const &, SireMol::CGAtomIdx const &, SireMol::CGAtomIdx const &, SireCAS::Expression const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3"), bp::arg("function") )) );
         FourAtomFunction_exposer.def( bp::init< SireMM::FourAtomFunction const & >(( bp::arg("other") )) );
         { //::SireMM::FourAtomFunction::atom0

@@ -36,8 +36,9 @@ void register_WeightedMoves_class(){
 
     { //::SireMove::WeightedMoves
         typedef bp::class_< SireMove::WeightedMoves, bp::bases< SireMove::Moves, SireBase::Property > > WeightedMoves_exposer_t;
-        WeightedMoves_exposer_t WeightedMoves_exposer = WeightedMoves_exposer_t( "WeightedMoves", bp::init< >() );
+        WeightedMoves_exposer_t WeightedMoves_exposer = WeightedMoves_exposer_t( "WeightedMoves" );
         bp::scope WeightedMoves_scope( WeightedMoves_exposer );
+        WeightedMoves_exposer.def( bp::init< >() );
         WeightedMoves_exposer.def( bp::init< SireMove::WeightedMoves const & >(( bp::arg("other") )) );
         { //::SireMove::WeightedMoves::add
         

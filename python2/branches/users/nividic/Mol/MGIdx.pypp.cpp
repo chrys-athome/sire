@@ -31,8 +31,9 @@ void register_MGIdx_class(){
 
     { //::SireMol::MGIdx
         typedef bp::class_< SireMol::MGIdx, bp::bases< SireMol::MGID, SireID::ID, SireID::IndexBase > > MGIdx_exposer_t;
-        MGIdx_exposer_t MGIdx_exposer = MGIdx_exposer_t( "MGIdx", bp::init< >() );
+        MGIdx_exposer_t MGIdx_exposer = MGIdx_exposer_t( "MGIdx" );
         bp::scope MGIdx_scope( MGIdx_exposer );
+        MGIdx_exposer.def( bp::init< >() );
         MGIdx_exposer.def( bp::init< qint32 >(( bp::arg("idx") )) );
         MGIdx_exposer.def( bp::init< SireMol::MGIdx const & >(( bp::arg("other") )) );
         { //::SireMol::MGIdx::hash

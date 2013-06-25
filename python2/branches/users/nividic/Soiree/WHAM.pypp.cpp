@@ -38,8 +38,9 @@ void register_WHAM_class(){
 
     { //::Soiree::WHAM
         typedef bp::class_< Soiree::WHAM > WHAM_exposer_t;
-        WHAM_exposer_t WHAM_exposer = WHAM_exposer_t( "WHAM", bp::init< >() );
+        WHAM_exposer_t WHAM_exposer = WHAM_exposer_t( "WHAM" );
         bp::scope WHAM_scope( WHAM_exposer );
+        WHAM_exposer.def( bp::init< >() );
         WHAM_exposer.def( bp::init< SireCAS::Symbol const & >(( bp::arg("coordinate") )) );
         WHAM_exposer.def( bp::init< SireCAS::Symbol const &, SireUnits::Dimension::Temperature >(( bp::arg("coordinate"), bp::arg("temperature") )) );
         WHAM_exposer.def( bp::init< QVector< SireCAS::Symbol > const & >(( bp::arg("coordinates") )) );

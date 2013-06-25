@@ -43,8 +43,9 @@ void register_Power_class(){
 
     { //::SireCAS::Power
         typedef bp::class_< SireCAS::Power, bp::bases< SireCAS::PowerFunction, SireCAS::ExBase > > Power_exposer_t;
-        Power_exposer_t Power_exposer = Power_exposer_t( "Power", bp::init< >() );
+        Power_exposer_t Power_exposer = Power_exposer_t( "Power" );
         bp::scope Power_scope( Power_exposer );
+        Power_exposer.def( bp::init< >() );
         Power_exposer.def( bp::init< SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("base"), bp::arg("power") )) );
         Power_exposer.def( bp::init< SireCAS::Power const & >(( bp::arg("other") )) );
         { //::SireCAS::Power::core

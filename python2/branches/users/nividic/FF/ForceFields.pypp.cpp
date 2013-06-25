@@ -40,6 +40,8 @@ namespace bp = boost::python;
 
 #include "SireStream/shareddatastream.h"
 
+#include "energytable.h"
+
 #include "ff3d.h"
 
 #include "ffidx.h"
@@ -598,6 +600,28 @@ void register_ForceFields_class(){
                 "energy"
                 , energy_function_value
                 , ( bp::arg("component") ) );
+        
+        }
+        { //::SireFF::ForceFields::energy
+        
+            typedef void ( ::SireFF::ForceFields::*energy_function_type )( ::SireFF::EnergyTable &,double ) ;
+            energy_function_type energy_function_value( &::SireFF::ForceFields::energy );
+            
+            ForceFields_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("scale_energy")=1 ) );
+        
+        }
+        { //::SireFF::ForceFields::energy
+        
+            typedef void ( ::SireFF::ForceFields::*energy_function_type )( ::SireFF::EnergyTable &,::SireCAS::Symbol const &,double ) ;
+            energy_function_type energy_function_value( &::SireFF::ForceFields::energy );
+            
+            ForceFields_exposer.def( 
+                "energy"
+                , energy_function_value
+                , ( bp::arg("energytable"), bp::arg("component"), bp::arg("scale_energy")=1 ) );
         
         }
         { //::SireFF::ForceFields::energyComponents

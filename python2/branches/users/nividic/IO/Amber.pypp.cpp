@@ -91,8 +91,9 @@ void register_Amber_class(){
 
     { //::SireIO::Amber
         typedef bp::class_< SireIO::Amber > Amber_exposer_t;
-        Amber_exposer_t Amber_exposer = Amber_exposer_t( "Amber", bp::init< >() );
+        Amber_exposer_t Amber_exposer = Amber_exposer_t( "Amber" );
         bp::scope Amber_scope( Amber_exposer );
+        Amber_exposer.def( bp::init< >() );
         { //::SireIO::Amber::readCrdTop
         
             typedef ::boost::tuples::tuple< SireMol::Molecules, SireBase::PropPtr< SireVol::Space >, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::SireIO::Amber::*readCrdTop_function_type )( ::QString const &,::QString const &,::QString ) const;

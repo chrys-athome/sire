@@ -38,8 +38,9 @@ void register_DihedralID_class(){
 
     { //::SireMol::DihedralID
         typedef bp::class_< SireMol::DihedralID, bp::bases< SireID::ID > > DihedralID_exposer_t;
-        DihedralID_exposer_t DihedralID_exposer = DihedralID_exposer_t( "DihedralID", bp::init< >() );
+        DihedralID_exposer_t DihedralID_exposer = DihedralID_exposer_t( "DihedralID" );
         bp::scope DihedralID_scope( DihedralID_exposer );
+        DihedralID_exposer.def( bp::init< >() );
         DihedralID_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3") )) );
         DihedralID_exposer.def( bp::init< SireMol::DihedralID const & >(( bp::arg("other") )) );
         { //::SireMol::DihedralID::atom0

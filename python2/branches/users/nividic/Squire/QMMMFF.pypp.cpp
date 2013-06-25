@@ -42,8 +42,9 @@ void register_QMMMFF_class(){
 
     { //::Squire::QMMMFF
         typedef bp::class_< Squire::QMMMFF, bp::bases< SireFF::FF3D, SireFF::G2FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > QMMMFF_exposer_t;
-        QMMMFF_exposer_t QMMMFF_exposer = QMMMFF_exposer_t( "QMMMFF", bp::init< >() );
+        QMMMFF_exposer_t QMMMFF_exposer = QMMMFF_exposer_t( "QMMMFF" );
         bp::scope QMMMFF_scope( QMMMFF_exposer );
+        QMMMFF_exposer.def( bp::init< >() );
         QMMMFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         QMMMFF_exposer.def( bp::init< Squire::QMMMFF const & >(( bp::arg("other") )) );
         { //::Squire::QMMMFF::components

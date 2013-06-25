@@ -43,8 +43,9 @@ void register_Sum_class(){
 
     { //::SireCAS::Sum
         typedef bp::class_< SireCAS::Sum, bp::bases< SireCAS::ExBase > > Sum_exposer_t;
-        Sum_exposer_t Sum_exposer = Sum_exposer_t( "Sum", bp::init< >() );
+        Sum_exposer_t Sum_exposer = Sum_exposer_t( "Sum" );
         bp::scope Sum_scope( Sum_exposer );
+        Sum_exposer.def( bp::init< >() );
         Sum_exposer.def( bp::init< SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("ex0"), bp::arg("ex1") )) );
         Sum_exposer.def( bp::init< SireCAS::Expressions const & >(( bp::arg("expressions") )) );
         Sum_exposer.def( bp::init< SireCAS::Sum const & >(( bp::arg("other") )) );
@@ -236,6 +237,16 @@ void register_Sum_class(){
             Sum_exposer.def( 
                 "symbols"
                 , symbols_function_value );
+        
+        }
+        { //::SireCAS::Sum::toOpenMMString
+        
+            typedef ::QString ( ::SireCAS::Sum::*toOpenMMString_function_type )(  ) const;
+            toOpenMMString_function_type toOpenMMString_function_value( &::SireCAS::Sum::toOpenMMString );
+            
+            Sum_exposer.def( 
+                "toOpenMMString"
+                , toOpenMMString_function_value );
         
         }
         { //::SireCAS::Sum::toString

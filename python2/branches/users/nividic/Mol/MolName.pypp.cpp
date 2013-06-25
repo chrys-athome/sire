@@ -35,8 +35,9 @@ void register_MolName_class(){
 
     { //::SireMol::MolName
         typedef bp::class_< SireMol::MolName, bp::bases< SireMol::MolID, SireID::ID, SireID::Name > > MolName_exposer_t;
-        MolName_exposer_t MolName_exposer = MolName_exposer_t( "MolName", bp::init< >() );
+        MolName_exposer_t MolName_exposer = MolName_exposer_t( "MolName" );
         bp::scope MolName_scope( MolName_exposer );
+        MolName_exposer.def( bp::init< >() );
         MolName_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         MolName_exposer.def( bp::init< QString const &, SireID::CaseSensitivity >(( bp::arg("name"), bp::arg("case_sensitivity") )) );
         MolName_exposer.def( bp::init< SireMol::MolName const & >(( bp::arg("other") )) );

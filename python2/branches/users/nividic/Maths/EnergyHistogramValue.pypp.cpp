@@ -25,40 +25,41 @@ SireMaths::HistogramValueT<SireUnits::Dimension::PhysUnit<1, 2, -2, 0, 0, 0, 0> 
 
 void register_EnergyHistogramValue_class(){
 
-    { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >
-        typedef bp::class_< SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >, bp::bases< SireMaths::HistogramValue, SireMaths::HistogramBin > > EnergyHistogramValue_exposer_t;
-        EnergyHistogramValue_exposer_t EnergyHistogramValue_exposer = EnergyHistogramValue_exposer_t( "EnergyHistogramValue", bp::init< >() );
+    { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >
+        typedef bp::class_< SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >, bp::bases< SireMaths::HistogramValue, SireMaths::HistogramBin > > EnergyHistogramValue_exposer_t;
+        EnergyHistogramValue_exposer_t EnergyHistogramValue_exposer = EnergyHistogramValue_exposer_t( "EnergyHistogramValue" );
         bp::scope EnergyHistogramValue_scope( EnergyHistogramValue_exposer );
-        EnergyHistogramValue_exposer.def( bp::init< SireMaths::HistogramBinT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > const &, double >(( bp::arg("bin"), bp::arg("value") )) );
+        EnergyHistogramValue_exposer.def( bp::init< >() );
+        EnergyHistogramValue_exposer.def( bp::init< SireMaths::HistogramBinT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > const &, double >(( bp::arg("bin"), bp::arg("value") )) );
         EnergyHistogramValue_exposer.def( bp::init< SireMaths::HistogramValue const & >(( bp::arg("other") )) );
-        EnergyHistogramValue_exposer.def( bp::init< SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > const & >(( bp::arg("other") )) );
-        { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::maximum
+        EnergyHistogramValue_exposer.def( bp::init< SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > const & >(( bp::arg("other") )) );
+        { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::maximum
         
-            typedef SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > ( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*maximum_function_type )(  ) const;
-            maximum_function_type maximum_function_value( &::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::maximum );
+            typedef SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > ( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*maximum_function_type )(  ) const;
+            maximum_function_type maximum_function_value( &::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::maximum );
             
             EnergyHistogramValue_exposer.def( 
                 "maximum"
                 , maximum_function_value );
         
         }
-        { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::middle
+        { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::middle
         
-            typedef SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > ( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*middle_function_type )(  ) const;
-            middle_function_type middle_function_value( &::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::middle );
+            typedef SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > ( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*middle_function_type )(  ) const;
+            middle_function_type middle_function_value( &::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::middle );
             
             EnergyHistogramValue_exposer.def( 
                 "middle"
                 , middle_function_value );
         
         }
-        { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::minimum
+        { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::minimum
         
-            typedef SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > ( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*minimum_function_type )(  ) const;
-            minimum_function_type minimum_function_value( &::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::minimum );
+            typedef SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > ( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*minimum_function_type )(  ) const;
+            minimum_function_type minimum_function_value( &::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::minimum );
             
             EnergyHistogramValue_exposer.def( 
                 "minimum"
@@ -66,11 +67,11 @@ void register_EnergyHistogramValue_class(){
         
         }
         EnergyHistogramValue_exposer.def( bp::self != bp::self );
-        { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::operator=
+        { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::operator=
         
-            typedef SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > & ( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*assign_function_type )( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > const & ) ;
-            assign_function_type assign_function_value( &::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::operator= );
+            typedef SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > & ( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*assign_function_type )( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > const & ) ;
+            assign_function_type assign_function_value( &::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::operator= );
             
             EnergyHistogramValue_exposer.def( 
                 "assign"
@@ -80,11 +81,11 @@ void register_EnergyHistogramValue_class(){
         
         }
         EnergyHistogramValue_exposer.def( bp::self == bp::self );
-        { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::toString
+        { //::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::toString
         
-            typedef SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > > exported_class_t;
-            typedef ::QString ( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::*toString_function_type )(  ) const;
-            toString_function_type toString_function_value( &::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, 0, 0 > >::toString );
+            typedef SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > > exported_class_t;
+            typedef ::QString ( ::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMaths::HistogramValueT< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, 0, 0 > >::toString );
             
             EnergyHistogramValue_exposer.def( 
                 "toString"

@@ -178,6 +178,16 @@ void register_PowerFunction_class(){
                 , symbols_function_value );
         
         }
+        { //::SireCAS::PowerFunction::toOpenMMString
+        
+            typedef ::QString ( ::SireCAS::PowerFunction::*toOpenMMString_function_type )(  ) const;
+            toOpenMMString_function_type toOpenMMString_function_value( &::SireCAS::PowerFunction::toOpenMMString );
+            
+            PowerFunction_exposer.def( 
+                "toOpenMMString"
+                , toOpenMMString_function_value );
+        
+        }
         { //::SireCAS::PowerFunction::toString
         
             typedef ::QString ( ::SireCAS::PowerFunction::*toString_function_type )(  ) const;

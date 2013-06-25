@@ -89,8 +89,9 @@ void register_PDBParameters_class(){
 
     { //::SireIO::PDBParameters
         typedef bp::class_< SireIO::PDBParameters, bp::bases< SireIO::IOParametersBase > > PDBParameters_exposer_t;
-        PDBParameters_exposer_t PDBParameters_exposer = PDBParameters_exposer_t( "PDBParameters", bp::init< >() );
+        PDBParameters_exposer_t PDBParameters_exposer = PDBParameters_exposer_t( "PDBParameters" );
         bp::scope PDBParameters_scope( PDBParameters_exposer );
+        PDBParameters_exposer.def( bp::init< >() );
         { //::SireIO::PDBParameters::alternatives
         
             typedef ::SireBase::PropertyName const & ( ::SireIO::PDBParameters::*alternatives_function_type )(  ) const;

@@ -26,8 +26,9 @@ void register_ChainsWithAtoms_class(){
 
     { //::SireMol::ChainsWithAtoms
         typedef bp::class_< SireMol::ChainsWithAtoms, bp::bases< SireMol::ChainID, SireID::ID > > ChainsWithAtoms_exposer_t;
-        ChainsWithAtoms_exposer_t ChainsWithAtoms_exposer = ChainsWithAtoms_exposer_t( "ChainsWithAtoms", bp::init< >() );
+        ChainsWithAtoms_exposer_t ChainsWithAtoms_exposer = ChainsWithAtoms_exposer_t( "ChainsWithAtoms" );
         bp::scope ChainsWithAtoms_scope( ChainsWithAtoms_exposer );
+        ChainsWithAtoms_exposer.def( bp::init< >() );
         ChainsWithAtoms_exposer.def( bp::init< SireMol::AtomID const & >(( bp::arg("atomid") )) );
         ChainsWithAtoms_exposer.def( bp::init< SireMol::ChainsWithAtoms const & >(( bp::arg("other") )) );
         { //::SireMol::ChainsWithAtoms::atomID

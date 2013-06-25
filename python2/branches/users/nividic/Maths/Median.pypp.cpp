@@ -35,8 +35,9 @@ void register_Median_class(){
 
     { //::SireMaths::Median
         typedef bp::class_< SireMaths::Median, bp::bases< SireMaths::Accumulator, SireBase::Property > > Median_exposer_t;
-        Median_exposer_t Median_exposer = Median_exposer_t( "Median", bp::init< >() );
+        Median_exposer_t Median_exposer = Median_exposer_t( "Median" );
         bp::scope Median_scope( Median_exposer );
+        Median_exposer.def( bp::init< >() );
         Median_exposer.def( bp::init< SireMaths::Median const & >(( bp::arg("other") )) );
         { //::SireMaths::Median::accumulate
         

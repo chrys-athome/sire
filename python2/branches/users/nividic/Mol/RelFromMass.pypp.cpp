@@ -39,8 +39,9 @@ void register_RelFromMass_class(){
 
     { //::SireMol::RelFromMass
         typedef bp::class_< SireMol::RelFromMass, bp::bases< SireMol::WeightFunction, SireBase::Property > > RelFromMass_exposer_t;
-        RelFromMass_exposer_t RelFromMass_exposer = RelFromMass_exposer_t( "RelFromMass", bp::init< >() );
+        RelFromMass_exposer_t RelFromMass_exposer = RelFromMass_exposer_t( "RelFromMass" );
         bp::scope RelFromMass_scope( RelFromMass_exposer );
+        RelFromMass_exposer.def( bp::init< >() );
         RelFromMass_exposer.def( bp::init< SireMol::RelFromMass const & >(( bp::arg("other") )) );
         RelFromMass_exposer.def( bp::self != bp::self );
         { //::SireMol::RelFromMass::operator()

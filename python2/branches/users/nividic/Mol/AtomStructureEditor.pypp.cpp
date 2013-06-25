@@ -60,8 +60,9 @@ void register_AtomStructureEditor_class(){
 
     { //::SireMol::AtomStructureEditor
         typedef bp::class_< SireMol::AtomStructureEditor > AtomStructureEditor_exposer_t;
-        AtomStructureEditor_exposer_t AtomStructureEditor_exposer = AtomStructureEditor_exposer_t( "AtomStructureEditor", bp::init< >() );
+        AtomStructureEditor_exposer_t AtomStructureEditor_exposer = AtomStructureEditor_exposer_t( "AtomStructureEditor" );
         bp::scope AtomStructureEditor_scope( AtomStructureEditor_exposer );
+        AtomStructureEditor_exposer.def( bp::init< >() );
         AtomStructureEditor_exposer.def( bp::init< SireMol::Atom const & >(( bp::arg("atom") )) );
         AtomStructureEditor_exposer.def( bp::init< SireMol::StructureEditor const &, SireMol::AtomIdx >(( bp::arg("data"), bp::arg("atomidx") )) );
         AtomStructureEditor_exposer.def( bp::init< SireMol::AtomStructureEditor const & >(( bp::arg("other") )) );

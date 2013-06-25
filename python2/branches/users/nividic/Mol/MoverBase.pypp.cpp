@@ -51,8 +51,9 @@ void register_MoverBase_class(){
 
     { //::SireMol::MoverBase
         typedef bp::class_< SireMol::MoverBase > MoverBase_exposer_t;
-        MoverBase_exposer_t MoverBase_exposer = MoverBase_exposer_t( "MoverBase", bp::init< >() );
+        MoverBase_exposer_t MoverBase_exposer = MoverBase_exposer_t( "MoverBase" );
         bp::scope MoverBase_scope( MoverBase_exposer );
+        MoverBase_exposer.def( bp::init< >() );
         MoverBase_exposer.def( bp::init< SireMol::MoverBase const & >(( bp::arg("other") )) );
         { //::SireMol::MoverBase::operator=
         

@@ -43,8 +43,9 @@ void register_GreaterOrEqualThan_class(){
 
     { //::SireCAS::GreaterOrEqualThan
         typedef bp::class_< SireCAS::GreaterOrEqualThan, bp::bases< SireCAS::Condition, SireCAS::ExBase > > GreaterOrEqualThan_exposer_t;
-        GreaterOrEqualThan_exposer_t GreaterOrEqualThan_exposer = GreaterOrEqualThan_exposer_t( "GreaterOrEqualThan", bp::init< >() );
+        GreaterOrEqualThan_exposer_t GreaterOrEqualThan_exposer = GreaterOrEqualThan_exposer_t( "GreaterOrEqualThan" );
         bp::scope GreaterOrEqualThan_scope( GreaterOrEqualThan_exposer );
+        GreaterOrEqualThan_exposer.def( bp::init< >() );
         GreaterOrEqualThan_exposer.def( bp::init< SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("left_hand_side"), bp::arg("right_hand_side") )) );
         GreaterOrEqualThan_exposer.def( bp::init< SireCAS::GreaterOrEqualThan const & >(( bp::arg("other") )) );
         { //::SireCAS::GreaterOrEqualThan::alwaysFalse

@@ -25,8 +25,9 @@ void register_ComplexValues_class(){
 
     { //::SireCAS::ComplexValues
         typedef bp::class_< SireCAS::ComplexValues > ComplexValues_exposer_t;
-        ComplexValues_exposer_t ComplexValues_exposer = ComplexValues_exposer_t( "ComplexValues", bp::init< >() );
+        ComplexValues_exposer_t ComplexValues_exposer = ComplexValues_exposer_t( "ComplexValues" );
         bp::scope ComplexValues_scope( ComplexValues_exposer );
+        ComplexValues_exposer.def( bp::init< >() );
         ComplexValues_exposer.def( bp::init< QList< SireCAS::SymbolComplex > const & >(( bp::arg("values") )) );
         ComplexValues_exposer.def( bp::init< QHash< SireCAS::Symbol, SireMaths::Complex > const & >(( bp::arg("values") )) );
         ComplexValues_exposer.def( bp::init< SireCAS::SymbolComplex const & >(( bp::arg("symval0") )) );

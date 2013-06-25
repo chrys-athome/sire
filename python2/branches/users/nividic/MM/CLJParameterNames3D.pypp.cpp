@@ -47,8 +47,9 @@ void register_CLJParameterNames3D_class(){
 
     { //::SireMM::CLJParameterNames3D
         typedef bp::class_< SireMM::CLJParameterNames3D, bp::bases< SireMM::CLJParameterNames, SireMM::LJParameterName, SireMM::ChargeParameterName > > CLJParameterNames3D_exposer_t;
-        CLJParameterNames3D_exposer_t CLJParameterNames3D_exposer = CLJParameterNames3D_exposer_t( "CLJParameterNames3D", bp::init< >() );
+        CLJParameterNames3D_exposer_t CLJParameterNames3D_exposer = CLJParameterNames3D_exposer_t( "CLJParameterNames3D" );
         bp::scope CLJParameterNames3D_scope( CLJParameterNames3D_exposer );
+        CLJParameterNames3D_exposer.def( bp::init< >() );
         CLJParameterNames3D_exposer.def( "__copy__", &__copy__);
         CLJParameterNames3D_exposer.def( "__deepcopy__", &__copy__);
         CLJParameterNames3D_exposer.def( "clone", &__copy__);

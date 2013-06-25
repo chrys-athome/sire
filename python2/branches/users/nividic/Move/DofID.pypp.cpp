@@ -51,8 +51,9 @@ void register_DofID_class(){
 
     { //::SireMove::DofID
         typedef bp::class_< SireMove::DofID > DofID_exposer_t;
-        DofID_exposer_t DofID_exposer = DofID_exposer_t( "DofID", bp::init< >() );
+        DofID_exposer_t DofID_exposer = DofID_exposer_t( "DofID" );
         bp::scope DofID_scope( DofID_exposer );
+        DofID_exposer.def( bp::init< >() );
         DofID_exposer.def( bp::init< SireMol::AtomIdx const &, SireMol::AtomIdx const & >(( bp::arg("atom0"), bp::arg("atom1") )) );
         DofID_exposer.def( bp::init< SireMol::AtomIdx const &, SireMol::AtomIdx const &, SireMol::AtomIdx const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2") )) );
         DofID_exposer.def( bp::init< SireMol::AtomIdx const &, SireMol::AtomIdx const &, SireMol::AtomIdx const &, SireMol::AtomIdx const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3") )) );

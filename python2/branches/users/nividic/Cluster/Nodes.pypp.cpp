@@ -51,8 +51,9 @@ void register_Nodes_class(){
 
     { //::SireCluster::Nodes
         typedef bp::class_< SireCluster::Nodes > Nodes_exposer_t;
-        Nodes_exposer_t Nodes_exposer = Nodes_exposer_t( "Nodes", bp::init< >() );
+        Nodes_exposer_t Nodes_exposer = Nodes_exposer_t( "Nodes" );
         bp::scope Nodes_scope( Nodes_exposer );
+        Nodes_exposer.def( bp::init< >() );
         Nodes_exposer.def( bp::init< SireCluster::Nodes const & >(( bp::arg("other") )) );
         { //::SireCluster::Nodes::add
         

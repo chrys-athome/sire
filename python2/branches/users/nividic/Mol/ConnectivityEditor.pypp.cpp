@@ -15,6 +15,8 @@ namespace bp = boost::python;
 
 #include "angleid.h"
 
+#include "atommatcher.h"
+
 #include "atomselection.h"
 
 #include "bondid.h"
@@ -30,6 +32,8 @@ namespace bp = boost::python;
 #include "moleculeinfodata.h"
 
 #include "moleculeview.h"
+
+#include "tostring.h"
 
 #include <QDataStream>
 
@@ -48,9 +52,10 @@ SireMol::ConnectivityEditor __copy__(const SireMol::ConnectivityEditor &other){ 
 void register_ConnectivityEditor_class(){
 
     { //::SireMol::ConnectivityEditor
-        typedef bp::class_< SireMol::ConnectivityEditor, bp::bases< SireMol::ConnectivityBase, SireBase::Property > > ConnectivityEditor_exposer_t;
-        ConnectivityEditor_exposer_t ConnectivityEditor_exposer = ConnectivityEditor_exposer_t( "ConnectivityEditor", bp::init< >() );
+        typedef bp::class_< SireMol::ConnectivityEditor, bp::bases< SireMol::ConnectivityBase, SireMol::MolViewProperty, SireBase::Property > > ConnectivityEditor_exposer_t;
+        ConnectivityEditor_exposer_t ConnectivityEditor_exposer = ConnectivityEditor_exposer_t( "ConnectivityEditor" );
         bp::scope ConnectivityEditor_scope( ConnectivityEditor_exposer );
+        ConnectivityEditor_exposer.def( bp::init< >() );
         ConnectivityEditor_exposer.def( bp::init< SireMol::Connectivity const & >(( bp::arg("connectivity") )) );
         ConnectivityEditor_exposer.def( bp::init< SireMol::ConnectivityEditor const & >(( bp::arg("other") )) );
         { //::SireMol::ConnectivityEditor::commit
@@ -156,6 +161,17 @@ void register_ConnectivityEditor_class(){
                 "disconnectAll"
                 , disconnectAll_function_value
                 , ( bp::arg("resid") )
+                , bp::return_self< >() );
+        
+        }
+        { //::SireMol::ConnectivityEditor::disconnectAll
+        
+            typedef ::SireMol::ConnectivityEditor & ( ::SireMol::ConnectivityEditor::*disconnectAll_function_type )(  ) ;
+            disconnectAll_function_type disconnectAll_function_value( &::SireMol::ConnectivityEditor::disconnectAll );
+            
+            ConnectivityEditor_exposer.def( 
+                "disconnectAll"
+                , disconnectAll_function_value
                 , bp::return_self< >() );
         
         }

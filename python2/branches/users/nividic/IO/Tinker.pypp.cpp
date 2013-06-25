@@ -47,8 +47,9 @@ void register_Tinker_class(){
 
     { //::SireIO::Tinker
         typedef bp::class_< SireIO::Tinker, bp::bases< SireIO::IOBase, SireBase::Property > > Tinker_exposer_t;
-        Tinker_exposer_t Tinker_exposer = Tinker_exposer_t( "Tinker", bp::init< >() );
+        Tinker_exposer_t Tinker_exposer = Tinker_exposer_t( "Tinker" );
         bp::scope Tinker_scope( Tinker_exposer );
+        Tinker_exposer.def( bp::init< >() );
         Tinker_exposer.def( bp::init< SireIO::Tinker const & >(( bp::arg("other") )) );
         { //::SireIO::Tinker::loadParameters
         

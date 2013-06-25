@@ -39,8 +39,9 @@ void register_AbsFromNumber_class(){
 
     { //::SireMol::AbsFromNumber
         typedef bp::class_< SireMol::AbsFromNumber, bp::bases< SireMol::WeightFunction, SireBase::Property > > AbsFromNumber_exposer_t;
-        AbsFromNumber_exposer_t AbsFromNumber_exposer = AbsFromNumber_exposer_t( "AbsFromNumber", bp::init< >() );
+        AbsFromNumber_exposer_t AbsFromNumber_exposer = AbsFromNumber_exposer_t( "AbsFromNumber" );
         bp::scope AbsFromNumber_scope( AbsFromNumber_exposer );
+        AbsFromNumber_exposer.def( bp::init< >() );
         AbsFromNumber_exposer.def( bp::init< SireMol::AbsFromNumber const & >(( bp::arg("other") )) );
         AbsFromNumber_exposer.def( bp::self != bp::self );
         { //::SireMol::AbsFromNumber::operator()

@@ -31,8 +31,9 @@ void register_Abs_class(){
 
     { //::SireCAS::Abs
         typedef bp::class_< SireCAS::Abs, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Abs_exposer_t;
-        Abs_exposer_t Abs_exposer = Abs_exposer_t( "Abs", bp::init< >() );
+        Abs_exposer_t Abs_exposer = Abs_exposer_t( "Abs" );
         bp::scope Abs_scope( Abs_exposer );
+        Abs_exposer.def( bp::init< >() );
         Abs_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("power") )) );
         Abs_exposer.def( bp::init< SireCAS::Abs const & >(( bp::arg("other") )) );
         { //::SireCAS::Abs::evaluate

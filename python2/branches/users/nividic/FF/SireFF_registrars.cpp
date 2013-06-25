@@ -3,49 +3,54 @@
 
 #include "SireFF_registrars.h"
 
+#include "probe.h"
 #include "forcetable.h"
-#include "ffname.h"
-#include "ffidentifier.h"
-#include "forcefields.h"
-#include "ffmolgroup.h"
 #include "potentialtable.h"
+#include "forcefields.h"
+#include "ffname.h"
+#include "ffparameters.h"
 #include "fieldtable.h"
 #include "ffidx.h"
-#include "probe.h"
-#include "point.h"
+#include "energytable.h"
+#include "ffmolgroup.h"
 #include "ffcomponent.h"
+#include "point.h"
 #include "forcefield.h"
-#include "ffid.h"
+#include "ffidentifier.h"
 
 #include "Helpers/objectregistry.hpp"
 
 void register_SireFF_objects()
 {
 
+    ObjectRegistry::registerConverterFor< SireFF::NullProbe >();
     ObjectRegistry::registerConverterFor< SireFF::ForceTable >();
     ObjectRegistry::registerConverterFor< SireFF::MolForceTable >();
-    ObjectRegistry::registerConverterFor< SireFF::FFName >();
-    ObjectRegistry::registerConverterFor< SireFF::FFIdentifier >();
-    ObjectRegistry::registerConverterFor< SireFF::ForceFields >();
-    ObjectRegistry::registerConverterFor< SireFF::FFMolGroup >();
     ObjectRegistry::registerConverterFor< SireFF::PotentialTable >();
     ObjectRegistry::registerConverterFor< SireFF::GridPotentialTable >();
     ObjectRegistry::registerConverterFor< SireFF::MolPotentialTable >();
+    ObjectRegistry::registerConverterFor< SireFF::ForceFields >();
+    ObjectRegistry::registerConverterFor< SireFF::FFName >();
+    ObjectRegistry::registerConverterFor< SireFF::NullFFParameters >();
+    ObjectRegistry::registerConverterFor< SireFF::NullFFParametersArray >();
     ObjectRegistry::registerConverterFor< SireFF::FieldTable >();
     ObjectRegistry::registerConverterFor< SireFF::GridFieldTable >();
     ObjectRegistry::registerConverterFor< SireFF::MolFieldTable >();
     ObjectRegistry::registerConverterFor< SireFF::FFIdx >();
-    ObjectRegistry::registerConverterFor< SireFF::NullProbe >();
+    ObjectRegistry::registerConverterFor< SireFF::EnergyTable >();
+    ObjectRegistry::registerConverterFor< SireFF::MolEnergyTable >();
+    ObjectRegistry::registerConverterFor< SireFF::FFMolGroup >();
+    ObjectRegistry::registerConverterFor< SireFF::SingleComponent >();
     ObjectRegistry::registerConverterFor< SireFF::AtomPoint >();
     ObjectRegistry::registerConverterFor< SireFF::VectorPoint >();
     ObjectRegistry::registerConverterFor< SireFF::Center >();
     ObjectRegistry::registerConverterFor< SireFF::CenterOfGeometry >();
     ObjectRegistry::registerConverterFor< SireFF::CenterOfMass >();
-    ObjectRegistry::registerConverterFor< SireFF::SingleComponent >();
     ObjectRegistry::registerConverterFor< SireFF::NullFF >();
     ObjectRegistry::registerConverterFor< SireID::Specify<SireFF::FFID> >();
     ObjectRegistry::registerConverterFor< SireID::IDAndSet<SireFF::FFID> >();
     ObjectRegistry::registerConverterFor< SireID::IDOrSet<SireFF::FFID> >();
+    ObjectRegistry::registerConverterFor< SireFF::FFIdentifier >();
 
 }
 

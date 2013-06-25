@@ -29,8 +29,9 @@ void register_CombineSpaces_class(){
 
     { //::SireVol::CombineSpaces
         typedef bp::class_< SireVol::CombineSpaces, bp::bases< SireBase::CombineProperties, SireBase::Property > > CombineSpaces_exposer_t;
-        CombineSpaces_exposer_t CombineSpaces_exposer = CombineSpaces_exposer_t( "CombineSpaces", bp::init< >() );
+        CombineSpaces_exposer_t CombineSpaces_exposer = CombineSpaces_exposer_t( "CombineSpaces" );
         bp::scope CombineSpaces_scope( CombineSpaces_exposer );
+        CombineSpaces_exposer.def( bp::init< >() );
         CombineSpaces_exposer.def( bp::init< SireBase::PropertyName const & >(( bp::arg("source") )) );
         CombineSpaces_exposer.def( bp::init< SireBase::PropertyName const &, SireBase::PropertyName const & >(( bp::arg("source0"), bp::arg("source1") )) );
         CombineSpaces_exposer.def( bp::init< QList< SireBase::PropertyName > const & >(( bp::arg("sources") )) );

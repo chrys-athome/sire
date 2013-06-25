@@ -45,8 +45,9 @@ void register_TinkerParameters_class(){
 
     { //::SireIO::TinkerParameters
         typedef bp::class_< SireIO::TinkerParameters, bp::bases< SireIO::IOParametersBase > > TinkerParameters_exposer_t;
-        TinkerParameters_exposer_t TinkerParameters_exposer = TinkerParameters_exposer_t( "TinkerParameters", bp::init< >() );
+        TinkerParameters_exposer_t TinkerParameters_exposer = TinkerParameters_exposer_t( "TinkerParameters" );
         bp::scope TinkerParameters_scope( TinkerParameters_exposer );
+        TinkerParameters_exposer.def( bp::init< >() );
         TinkerParameters_exposer.def( "__copy__", &__copy__);
         TinkerParameters_exposer.def( "__deepcopy__", &__copy__);
         TinkerParameters_exposer.def( "clone", &__copy__);

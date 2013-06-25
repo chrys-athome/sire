@@ -27,8 +27,9 @@ void register_MGIDsAndMaps_class(){
 
     { //::SireMol::MGIDsAndMaps
         typedef bp::class_< SireMol::MGIDsAndMaps, bp::bases< SireBase::Property > > MGIDsAndMaps_exposer_t;
-        MGIDsAndMaps_exposer_t MGIDsAndMaps_exposer = MGIDsAndMaps_exposer_t( "MGIDsAndMaps", bp::init< >() );
+        MGIDsAndMaps_exposer_t MGIDsAndMaps_exposer = MGIDsAndMaps_exposer_t( "MGIDsAndMaps" );
         bp::scope MGIDsAndMaps_scope( MGIDsAndMaps_exposer );
+        MGIDsAndMaps_exposer.def( bp::init< >() );
         MGIDsAndMaps_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("mgroup") )) );
         MGIDsAndMaps_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireBase::PropertyMap const & >(( bp::arg("mgroup"), bp::arg("map") )) );
         MGIDsAndMaps_exposer.def( bp::init< boost::tuples::tuple< SireBase::PropPtr< SireMol::MoleculeGroup >, SireBase::PropertyMap, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > >(( bp::arg("group_and_map") )) );

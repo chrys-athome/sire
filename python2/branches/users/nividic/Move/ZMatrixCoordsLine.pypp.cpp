@@ -55,8 +55,9 @@ void register_ZMatrixCoordsLine_class(){
 
     { //::SireMove::ZMatrixCoordsLine
         typedef bp::class_< SireMove::ZMatrixCoordsLine, bp::bases< SireMove::ZMatrixLine > > ZMatrixCoordsLine_exposer_t;
-        ZMatrixCoordsLine_exposer_t ZMatrixCoordsLine_exposer = ZMatrixCoordsLine_exposer_t( "ZMatrixCoordsLine", bp::init< >() );
+        ZMatrixCoordsLine_exposer_t ZMatrixCoordsLine_exposer = ZMatrixCoordsLine_exposer_t( "ZMatrixCoordsLine" );
         bp::scope ZMatrixCoordsLine_scope( ZMatrixCoordsLine_exposer );
+        ZMatrixCoordsLine_exposer.def( bp::init< >() );
         ZMatrixCoordsLine_exposer.def( bp::init< SireMove::ZMatrixLine const & >(( bp::arg("line") )) );
         ZMatrixCoordsLine_exposer.def( bp::init< SireMove::ZMatrixLine const &, SireUnits::Dimension::Length const &, SireUnits::Dimension::Angle const &, SireUnits::Dimension::Angle const & >(( bp::arg("line"), bp::arg("bond"), bp::arg("angle"), bp::arg("dihedral") )) );
         ZMatrixCoordsLine_exposer.def( bp::init< SireMove::ZMatrixCoordsLine const & >(( bp::arg("other") )) );

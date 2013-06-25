@@ -55,8 +55,9 @@ void register_FileHeader_class(){
 
     { //::SireStream::FileHeader
         typedef bp::class_< SireStream::FileHeader > FileHeader_exposer_t;
-        FileHeader_exposer_t FileHeader_exposer = FileHeader_exposer_t( "FileHeader", bp::init< >() );
+        FileHeader_exposer_t FileHeader_exposer = FileHeader_exposer_t( "FileHeader" );
         bp::scope FileHeader_scope( FileHeader_exposer );
+        FileHeader_exposer.def( bp::init< >() );
         FileHeader_exposer.def( bp::init< SireStream::FileHeader const & >(( bp::arg("other") )) );
         { //::SireStream::FileHeader::assertCompatible
         

@@ -44,8 +44,9 @@ void register_RestraintFF_class(){
 
     { //::SireMM::RestraintFF
         typedef bp::class_< SireMM::RestraintFF, bp::bases< SireFF::FF3D, SireFF::G1FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > RestraintFF_exposer_t;
-        RestraintFF_exposer_t RestraintFF_exposer = RestraintFF_exposer_t( "RestraintFF", bp::init< >() );
+        RestraintFF_exposer_t RestraintFF_exposer = RestraintFF_exposer_t( "RestraintFF" );
         bp::scope RestraintFF_scope( RestraintFF_exposer );
+        RestraintFF_exposer.def( bp::init< >() );
         RestraintFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         RestraintFF_exposer.def( bp::init< SireMM::RestraintFF const & >(( bp::arg("other") )) );
         { //::SireMM::RestraintFF::add

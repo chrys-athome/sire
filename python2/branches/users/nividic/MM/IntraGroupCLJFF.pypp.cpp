@@ -23,8 +23,9 @@ void register_IntraGroupCLJFF_class(){
 
     { //::SireFF::Intra2B2G3DFF< SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential > >
         typedef bp::class_< SireFF::Intra2B2G3DFF< SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential > >, bp::bases< SireFF::FF3D, SireFF::Intra2B2GFF<SireMM::CLJPotentialInterface<SireMM::IntraCLJPotential> >, SireMM::CLJPotentialInterface<SireMM::IntraCLJPotential>, SireFF::G2FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > IntraGroupCLJFF_exposer_t;
-        IntraGroupCLJFF_exposer_t IntraGroupCLJFF_exposer = IntraGroupCLJFF_exposer_t( "IntraGroupCLJFF", bp::init< >() );
+        IntraGroupCLJFF_exposer_t IntraGroupCLJFF_exposer = IntraGroupCLJFF_exposer_t( "IntraGroupCLJFF" );
         bp::scope IntraGroupCLJFF_scope( IntraGroupCLJFF_exposer );
+        IntraGroupCLJFF_exposer.def( bp::init< >() );
         IntraGroupCLJFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         IntraGroupCLJFF_exposer.def( bp::init< SireFF::Intra2B2G3DFF< SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential > > const & >(( bp::arg("other") )) );
         { //::SireFF::Intra2B2G3DFF< SireMM::CLJPotentialInterface< SireMM::IntraCLJPotential > >::energy

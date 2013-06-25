@@ -85,8 +85,9 @@ void register_PerturbationsLibrary_class(){
 
     { //::SireIO::PerturbationsLibrary
         typedef bp::class_< SireIO::PerturbationsLibrary, bp::bases< SireBase::Property > > PerturbationsLibrary_exposer_t;
-        PerturbationsLibrary_exposer_t PerturbationsLibrary_exposer = PerturbationsLibrary_exposer_t( "PerturbationsLibrary", bp::init< >() );
+        PerturbationsLibrary_exposer_t PerturbationsLibrary_exposer = PerturbationsLibrary_exposer_t( "PerturbationsLibrary" );
         bp::scope PerturbationsLibrary_scope( PerturbationsLibrary_exposer );
+        PerturbationsLibrary_exposer.def( bp::init< >() );
         PerturbationsLibrary_exposer.def( bp::init< QString const & >(( bp::arg("file") )) );
         PerturbationsLibrary_exposer.def( bp::init< SireIO::PerturbationsLibrary const & >(( bp::arg("other") )) );
         { //::SireIO::PerturbationsLibrary::add

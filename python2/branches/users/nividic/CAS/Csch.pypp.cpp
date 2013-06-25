@@ -33,8 +33,9 @@ void register_Csch_class(){
 
     { //::SireCAS::Csch
         typedef bp::class_< SireCAS::Csch, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Csch_exposer_t;
-        Csch_exposer_t Csch_exposer = Csch_exposer_t( "Csch", bp::init< >() );
+        Csch_exposer_t Csch_exposer = Csch_exposer_t( "Csch" );
         bp::scope Csch_scope( Csch_exposer );
+        Csch_exposer.def( bp::init< >() );
         Csch_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Csch_exposer.def( bp::init< SireCAS::Csch const & >(( bp::arg("other") )) );
         { //::SireCAS::Csch::evaluate

@@ -31,8 +31,9 @@ void register_Cos_class(){
 
     { //::SireCAS::Cos
         typedef bp::class_< SireCAS::Cos, bp::bases< SireCAS::SingleFunc, SireCAS::ExBase > > Cos_exposer_t;
-        Cos_exposer_t Cos_exposer = Cos_exposer_t( "Cos", bp::init< >() );
+        Cos_exposer_t Cos_exposer = Cos_exposer_t( "Cos" );
         bp::scope Cos_scope( Cos_exposer );
+        Cos_exposer.def( bp::init< >() );
         Cos_exposer.def( bp::init< SireCAS::Expression const & >(( bp::arg("ex") )) );
         Cos_exposer.def( bp::init< SireCAS::Cos const & >(( bp::arg("other") )) );
         { //::SireCAS::Cos::evaluate

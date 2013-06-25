@@ -41,20 +41,21 @@ SireMol::AtomProperty<long long> __copy__(const SireMol::AtomProperty<long long>
 
 void register_AtomIntProperty_class(){
 
-    { //::SireMol::AtomProperty< long long >
-        typedef bp::class_< SireMol::AtomProperty< long long >, bp::bases< SireMol::AtomProp, SireMol::MolViewProperty, SireBase::Property > > AtomIntProperty_exposer_t;
-        AtomIntProperty_exposer_t AtomIntProperty_exposer = AtomIntProperty_exposer_t( "AtomIntProperty", bp::init< >() );
+    { //::SireMol::AtomProperty< long long int >
+        typedef bp::class_< SireMol::AtomProperty< long long int >, bp::bases< SireMol::AtomProp, SireMol::MolViewProperty, SireBase::Property > > AtomIntProperty_exposer_t;
+        AtomIntProperty_exposer_t AtomIntProperty_exposer = AtomIntProperty_exposer_t( "AtomIntProperty" );
         bp::scope AtomIntProperty_scope( AtomIntProperty_exposer );
+        AtomIntProperty_exposer.def( bp::init< >() );
         AtomIntProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         AtomIntProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const &, long long int const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomIntProperty_exposer.def( bp::init< long long int const & >(( bp::arg("value") )) );
-        AtomIntProperty_exposer.def( bp::init< SireBase::PackedArray2D< long long > const & >(( bp::arg("values") )) );
-        AtomIntProperty_exposer.def( bp::init< SireMol::AtomProperty< long long > const & >(( bp::arg("other") )) );
-        { //::SireMol::AtomProperty< long long >::array
+        AtomIntProperty_exposer.def( bp::init< SireBase::PackedArray2D< long long int > const & >(( bp::arg("values") )) );
+        AtomIntProperty_exposer.def( bp::init< SireMol::AtomProperty< long long int > const & >(( bp::arg("other") )) );
+        { //::SireMol::AtomProperty< long long int >::array
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::SireBase::PackedArray2D< long long > const & ( ::SireMol::AtomProperty< long long >::*array_function_type )(  ) const;
-            array_function_type array_function_value( &::SireMol::AtomProperty< long long >::array );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireBase::PackedArray2D< long long int > const & ( ::SireMol::AtomProperty< long long int >::*array_function_type )(  ) const;
+            array_function_type array_function_value( &::SireMol::AtomProperty< long long int >::array );
             
             AtomIntProperty_exposer.def( 
                 "array"
@@ -62,11 +63,11 @@ void register_AtomIntProperty_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMol::AtomProperty< long long >::assertCanConvert
+        { //::SireMol::AtomProperty< long long int >::assertCanConvert
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef void ( ::SireMol::AtomProperty< long long >::*assertCanConvert_function_type )( ::QVariant const & ) const;
-            assertCanConvert_function_type assertCanConvert_function_value( &::SireMol::AtomProperty< long long >::assertCanConvert );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef void ( ::SireMol::AtomProperty< long long int >::*assertCanConvert_function_type )( ::QVariant const & ) const;
+            assertCanConvert_function_type assertCanConvert_function_value( &::SireMol::AtomProperty< long long int >::assertCanConvert );
             
             AtomIntProperty_exposer.def( 
                 "assertCanConvert"
@@ -74,11 +75,11 @@ void register_AtomIntProperty_class(){
                 , ( bp::arg("value") ) );
         
         }
-        { //::SireMol::AtomProperty< long long >::assignFrom
+        { //::SireMol::AtomProperty< long long int >::assignFrom
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef void ( ::SireMol::AtomProperty< long long >::*assignFrom_function_type )( ::SireMol::AtomProperty< QVariant > const & ) ;
-            assignFrom_function_type assignFrom_function_value( &::SireMol::AtomProperty< long long >::assignFrom );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef void ( ::SireMol::AtomProperty< long long int >::*assignFrom_function_type )( ::SireMol::AtomProperty< QVariant > const & ) ;
+            assignFrom_function_type assignFrom_function_value( &::SireMol::AtomProperty< long long int >::assignFrom );
             
             AtomIntProperty_exposer.def( 
                 "assignFrom"
@@ -86,11 +87,11 @@ void register_AtomIntProperty_class(){
                 , ( bp::arg("values") ) );
         
         }
-        { //::SireMol::AtomProperty< long long >::at
+        { //::SireMol::AtomProperty< long long int >::at
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::SireBase::detail::PackedArray2D_Array< long long int > const & ( ::SireMol::AtomProperty< long long >::*at_function_type )( ::SireMol::CGIdx ) const;
-            at_function_type at_function_value( &::SireMol::AtomProperty< long long >::at );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireBase::detail::PackedArray2D_Array< long long int > const & ( ::SireMol::AtomProperty< long long int >::*at_function_type )( ::SireMol::CGIdx ) const;
+            at_function_type at_function_value( &::SireMol::AtomProperty< long long int >::at );
             
             AtomIntProperty_exposer.def( 
                 "at"
@@ -99,11 +100,11 @@ void register_AtomIntProperty_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMol::AtomProperty< long long >::at
+        { //::SireMol::AtomProperty< long long int >::at
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef long long int const & ( ::SireMol::AtomProperty< long long >::*at_function_type )( ::SireMol::CGAtomIdx const & ) const;
-            at_function_type at_function_value( &::SireMol::AtomProperty< long long >::at );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef long long int const & ( ::SireMol::AtomProperty< long long int >::*at_function_type )( ::SireMol::CGAtomIdx const & ) const;
+            at_function_type at_function_value( &::SireMol::AtomProperty< long long int >::at );
             
             AtomIntProperty_exposer.def( 
                 "at"
@@ -112,11 +113,11 @@ void register_AtomIntProperty_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMol::AtomProperty< long long >::canConvert
+        { //::SireMol::AtomProperty< long long int >::canConvert
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef bool ( ::SireMol::AtomProperty< long long >::*canConvert_function_type )( ::QVariant const & ) const;
-            canConvert_function_type canConvert_function_value( &::SireMol::AtomProperty< long long >::canConvert );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef bool ( ::SireMol::AtomProperty< long long int >::*canConvert_function_type )( ::QVariant const & ) const;
+            canConvert_function_type canConvert_function_value( &::SireMol::AtomProperty< long long int >::canConvert );
             
             AtomIntProperty_exposer.def( 
                 "canConvert"
@@ -124,11 +125,11 @@ void register_AtomIntProperty_class(){
                 , ( bp::arg("value") ) );
         
         }
-        { //::SireMol::AtomProperty< long long >::copyFrom
+        { //::SireMol::AtomProperty< long long int >::copyFrom
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef void ( ::SireMol::AtomProperty< long long >::*copyFrom_function_type )( ::QVector< long long > const & ) ;
-            copyFrom_function_type copyFrom_function_value( &::SireMol::AtomProperty< long long >::copyFrom );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef void ( ::SireMol::AtomProperty< long long int >::*copyFrom_function_type )( ::QVector< long long int > const & ) ;
+            copyFrom_function_type copyFrom_function_value( &::SireMol::AtomProperty< long long int >::copyFrom );
             
             AtomIntProperty_exposer.def( 
                 "copyFrom"
@@ -136,11 +137,11 @@ void register_AtomIntProperty_class(){
                 , ( bp::arg("values") ) );
         
         }
-        { //::SireMol::AtomProperty< long long >::copyFrom
+        { //::SireMol::AtomProperty< long long int >::copyFrom
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef void ( ::SireMol::AtomProperty< long long >::*copyFrom_function_type )( ::QVector< long long > const &,::SireMol::AtomSelection const & ) ;
-            copyFrom_function_type copyFrom_function_value( &::SireMol::AtomProperty< long long >::copyFrom );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef void ( ::SireMol::AtomProperty< long long int >::*copyFrom_function_type )( ::QVector< long long int > const &,::SireMol::AtomSelection const & ) ;
+            copyFrom_function_type copyFrom_function_value( &::SireMol::AtomProperty< long long int >::copyFrom );
             
             AtomIntProperty_exposer.def( 
                 "copyFrom"
@@ -148,22 +149,22 @@ void register_AtomIntProperty_class(){
                 , ( bp::arg("values"), bp::arg("selection") ) );
         
         }
-        { //::SireMol::AtomProperty< long long >::count
+        { //::SireMol::AtomProperty< long long int >::count
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef int ( ::SireMol::AtomProperty< long long >::*count_function_type )(  ) const;
-            count_function_type count_function_value( &::SireMol::AtomProperty< long long >::count );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef int ( ::SireMol::AtomProperty< long long int >::*count_function_type )(  ) const;
+            count_function_type count_function_value( &::SireMol::AtomProperty< long long int >::count );
             
             AtomIntProperty_exposer.def( 
                 "count"
                 , count_function_value );
         
         }
-        { //::SireMol::AtomProperty< long long >::fromVariant
+        { //::SireMol::AtomProperty< long long int >::fromVariant
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::SireMol::AtomProperty< long long > ( *fromVariant_function_type )( ::SireMol::AtomProperty< QVariant > const & );
-            fromVariant_function_type fromVariant_function_value( &::SireMol::AtomProperty< long long >::fromVariant );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireMol::AtomProperty< long long int > ( *fromVariant_function_type )( ::SireMol::AtomProperty< QVariant > const & );
+            fromVariant_function_type fromVariant_function_value( &::SireMol::AtomProperty< long long int >::fromVariant );
             
             AtomIntProperty_exposer.def( 
                 "fromVariant"
@@ -171,11 +172,11 @@ void register_AtomIntProperty_class(){
                 , ( bp::arg("variant") ) );
         
         }
-        { //::SireMol::AtomProperty< long long >::get
+        { //::SireMol::AtomProperty< long long int >::get
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::SireBase::detail::PackedArray2D_Array< long long int > const & ( ::SireMol::AtomProperty< long long >::*get_function_type )( ::SireMol::CGIdx ) const;
-            get_function_type get_function_value( &::SireMol::AtomProperty< long long >::get );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireBase::detail::PackedArray2D_Array< long long int > const & ( ::SireMol::AtomProperty< long long int >::*get_function_type )( ::SireMol::CGIdx ) const;
+            get_function_type get_function_value( &::SireMol::AtomProperty< long long int >::get );
             
             AtomIntProperty_exposer.def( 
                 "get"
@@ -184,11 +185,11 @@ void register_AtomIntProperty_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMol::AtomProperty< long long >::get
+        { //::SireMol::AtomProperty< long long int >::get
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef long long int const & ( ::SireMol::AtomProperty< long long >::*get_function_type )( ::SireMol::CGAtomIdx const & ) const;
-            get_function_type get_function_value( &::SireMol::AtomProperty< long long >::get );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef long long int const & ( ::SireMol::AtomProperty< long long int >::*get_function_type )( ::SireMol::CGAtomIdx const & ) const;
+            get_function_type get_function_value( &::SireMol::AtomProperty< long long int >::get );
             
             AtomIntProperty_exposer.def( 
                 "get"
@@ -197,11 +198,11 @@ void register_AtomIntProperty_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMol::AtomProperty< long long >::isCompatibleWith
+        { //::SireMol::AtomProperty< long long int >::isCompatibleWith
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef bool ( ::SireMol::AtomProperty< long long >::*isCompatibleWith_function_type )( ::SireMol::MoleculeInfoData const & ) const;
-            isCompatibleWith_function_type isCompatibleWith_function_value( &::SireMol::AtomProperty< long long >::isCompatibleWith );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef bool ( ::SireMol::AtomProperty< long long int >::*isCompatibleWith_function_type )( ::SireMol::MoleculeInfoData const & ) const;
+            isCompatibleWith_function_type isCompatibleWith_function_value( &::SireMol::AtomProperty< long long int >::isCompatibleWith );
             
             AtomIntProperty_exposer.def( 
                 "isCompatibleWith"
@@ -209,22 +210,22 @@ void register_AtomIntProperty_class(){
                 , ( bp::arg("molinfo") ) );
         
         }
-        { //::SireMol::AtomProperty< long long >::isEmpty
+        { //::SireMol::AtomProperty< long long int >::isEmpty
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef bool ( ::SireMol::AtomProperty< long long >::*isEmpty_function_type )(  ) const;
-            isEmpty_function_type isEmpty_function_value( &::SireMol::AtomProperty< long long >::isEmpty );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef bool ( ::SireMol::AtomProperty< long long int >::*isEmpty_function_type )(  ) const;
+            isEmpty_function_type isEmpty_function_value( &::SireMol::AtomProperty< long long int >::isEmpty );
             
             AtomIntProperty_exposer.def( 
                 "isEmpty"
                 , isEmpty_function_value );
         
         }
-        { //::SireMol::AtomProperty< long long >::matchToSelection
+        { //::SireMol::AtomProperty< long long int >::matchToSelection
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::SireMol::AtomProperty< long long > ( ::SireMol::AtomProperty< long long >::*matchToSelection_function_type )( ::SireMol::AtomSelection const & ) const;
-            matchToSelection_function_type matchToSelection_function_value( &::SireMol::AtomProperty< long long >::matchToSelection );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireMol::AtomProperty< long long int > ( ::SireMol::AtomProperty< long long int >::*matchToSelection_function_type )( ::SireMol::AtomSelection const & ) const;
+            matchToSelection_function_type matchToSelection_function_value( &::SireMol::AtomProperty< long long int >::matchToSelection );
             
             AtomIntProperty_exposer.def( 
                 "matchToSelection"
@@ -232,22 +233,22 @@ void register_AtomIntProperty_class(){
                 , ( bp::arg("selection") ) );
         
         }
-        { //::SireMol::AtomProperty< long long >::nAtoms
+        { //::SireMol::AtomProperty< long long int >::nAtoms
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef int ( ::SireMol::AtomProperty< long long >::*nAtoms_function_type )(  ) const;
-            nAtoms_function_type nAtoms_function_value( &::SireMol::AtomProperty< long long >::nAtoms );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef int ( ::SireMol::AtomProperty< long long int >::*nAtoms_function_type )(  ) const;
+            nAtoms_function_type nAtoms_function_value( &::SireMol::AtomProperty< long long int >::nAtoms );
             
             AtomIntProperty_exposer.def( 
                 "nAtoms"
                 , nAtoms_function_value );
         
         }
-        { //::SireMol::AtomProperty< long long >::nAtoms
+        { //::SireMol::AtomProperty< long long int >::nAtoms
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef int ( ::SireMol::AtomProperty< long long >::*nAtoms_function_type )( ::SireMol::CGIdx ) const;
-            nAtoms_function_type nAtoms_function_value( &::SireMol::AtomProperty< long long >::nAtoms );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef int ( ::SireMol::AtomProperty< long long int >::*nAtoms_function_type )( ::SireMol::CGIdx ) const;
+            nAtoms_function_type nAtoms_function_value( &::SireMol::AtomProperty< long long int >::nAtoms );
             
             AtomIntProperty_exposer.def( 
                 "nAtoms"
@@ -255,11 +256,11 @@ void register_AtomIntProperty_class(){
                 , ( bp::arg("cgidx") ) );
         
         }
-        { //::SireMol::AtomProperty< long long >::nCutGroups
+        { //::SireMol::AtomProperty< long long int >::nCutGroups
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef int ( ::SireMol::AtomProperty< long long >::*nCutGroups_function_type )(  ) const;
-            nCutGroups_function_type nCutGroups_function_value( &::SireMol::AtomProperty< long long >::nCutGroups );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef int ( ::SireMol::AtomProperty< long long int >::*nCutGroups_function_type )(  ) const;
+            nCutGroups_function_type nCutGroups_function_value( &::SireMol::AtomProperty< long long int >::nCutGroups );
             
             AtomIntProperty_exposer.def( 
                 "nCutGroups"
@@ -267,11 +268,11 @@ void register_AtomIntProperty_class(){
         
         }
         AtomIntProperty_exposer.def( bp::self != bp::self );
-        { //::SireMol::AtomProperty< long long >::operator=
+        { //::SireMol::AtomProperty< long long int >::operator=
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::SireMol::AtomProperty< long long > & ( ::SireMol::AtomProperty< long long >::*assign_function_type )( ::SireMol::AtomProperty< long long > const & ) ;
-            assign_function_type assign_function_value( &::SireMol::AtomProperty< long long >::operator= );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireMol::AtomProperty< long long int > & ( ::SireMol::AtomProperty< long long int >::*assign_function_type )( ::SireMol::AtomProperty< long long int > const & ) ;
+            assign_function_type assign_function_value( &::SireMol::AtomProperty< long long int >::operator= );
             
             AtomIntProperty_exposer.def( 
                 "assign"
@@ -281,11 +282,11 @@ void register_AtomIntProperty_class(){
         
         }
         AtomIntProperty_exposer.def( bp::self == bp::self );
-        { //::SireMol::AtomProperty< long long >::operator[]
+        { //::SireMol::AtomProperty< long long int >::operator[]
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::SireBase::detail::PackedArray2D_Array< long long int > const & ( ::SireMol::AtomProperty< long long >::*__getitem___function_type )( ::SireMol::CGIdx ) const;
-            __getitem___function_type __getitem___function_value( &::SireMol::AtomProperty< long long >::operator[] );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireBase::detail::PackedArray2D_Array< long long int > const & ( ::SireMol::AtomProperty< long long int >::*__getitem___function_type )( ::SireMol::CGIdx ) const;
+            __getitem___function_type __getitem___function_value( &::SireMol::AtomProperty< long long int >::operator[] );
             
             AtomIntProperty_exposer.def( 
                 "__getitem__"
@@ -294,11 +295,11 @@ void register_AtomIntProperty_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMol::AtomProperty< long long >::operator[]
+        { //::SireMol::AtomProperty< long long int >::operator[]
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef long long int const & ( ::SireMol::AtomProperty< long long >::*__getitem___function_type )( ::SireMol::CGAtomIdx const & ) const;
-            __getitem___function_type __getitem___function_value( &::SireMol::AtomProperty< long long >::operator[] );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef long long int const & ( ::SireMol::AtomProperty< long long int >::*__getitem___function_type )( ::SireMol::CGAtomIdx const & ) const;
+            __getitem___function_type __getitem___function_value( &::SireMol::AtomProperty< long long int >::operator[] );
             
             AtomIntProperty_exposer.def( 
                 "__getitem__"
@@ -307,11 +308,11 @@ void register_AtomIntProperty_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
-        { //::SireMol::AtomProperty< long long >::set
+        { //::SireMol::AtomProperty< long long int >::set
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::SireMol::AtomProperty< long long > & ( ::SireMol::AtomProperty< long long >::*set_function_type )( ::SireMol::CGAtomIdx const &,long long int const & ) ;
-            set_function_type set_function_value( &::SireMol::AtomProperty< long long >::set );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireMol::AtomProperty< long long int > & ( ::SireMol::AtomProperty< long long int >::*set_function_type )( ::SireMol::CGAtomIdx const &,long long int const & ) ;
+            set_function_type set_function_value( &::SireMol::AtomProperty< long long int >::set );
             
             AtomIntProperty_exposer.def( 
                 "set"
@@ -320,11 +321,11 @@ void register_AtomIntProperty_class(){
                 , bp::return_self< >() );
         
         }
-        { //::SireMol::AtomProperty< long long >::set
+        { //::SireMol::AtomProperty< long long int >::set
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::SireMol::AtomProperty< long long > & ( ::SireMol::AtomProperty< long long >::*set_function_type )( ::SireMol::CGIdx,::QVector< long long > const & ) ;
-            set_function_type set_function_value( &::SireMol::AtomProperty< long long >::set );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireMol::AtomProperty< long long int > & ( ::SireMol::AtomProperty< long long int >::*set_function_type )( ::SireMol::CGIdx,::QVector< long long int > const & ) ;
+            set_function_type set_function_value( &::SireMol::AtomProperty< long long int >::set );
             
             AtomIntProperty_exposer.def( 
                 "set"
@@ -333,55 +334,55 @@ void register_AtomIntProperty_class(){
                 , bp::return_self< >() );
         
         }
-        { //::SireMol::AtomProperty< long long >::size
+        { //::SireMol::AtomProperty< long long int >::size
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef int ( ::SireMol::AtomProperty< long long >::*size_function_type )(  ) const;
-            size_function_type size_function_value( &::SireMol::AtomProperty< long long >::size );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef int ( ::SireMol::AtomProperty< long long int >::*size_function_type )(  ) const;
+            size_function_type size_function_value( &::SireMol::AtomProperty< long long int >::size );
             
             AtomIntProperty_exposer.def( 
                 "size"
                 , size_function_value );
         
         }
-        { //::SireMol::AtomProperty< long long >::toString
+        { //::SireMol::AtomProperty< long long int >::toString
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::QString ( ::SireMol::AtomProperty< long long >::*toString_function_type )(  ) const;
-            toString_function_type toString_function_value( &::SireMol::AtomProperty< long long >::toString );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::QString ( ::SireMol::AtomProperty< long long int >::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMol::AtomProperty< long long int >::toString );
             
             AtomIntProperty_exposer.def( 
                 "toString"
                 , toString_function_value );
         
         }
-        { //::SireMol::AtomProperty< long long >::toVariant
+        { //::SireMol::AtomProperty< long long int >::toVariant
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::SireMol::AtomProperty< QVariant > ( ::SireMol::AtomProperty< long long >::*toVariant_function_type )(  ) const;
-            toVariant_function_type toVariant_function_value( &::SireMol::AtomProperty< long long >::toVariant );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::SireMol::AtomProperty< QVariant > ( ::SireMol::AtomProperty< long long int >::*toVariant_function_type )(  ) const;
+            toVariant_function_type toVariant_function_value( &::SireMol::AtomProperty< long long int >::toVariant );
             
             AtomIntProperty_exposer.def( 
                 "toVariant"
                 , toVariant_function_value );
         
         }
-        { //::SireMol::AtomProperty< long long >::toVector
+        { //::SireMol::AtomProperty< long long int >::toVector
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::QVector< long long > ( ::SireMol::AtomProperty< long long >::*toVector_function_type )(  ) const;
-            toVector_function_type toVector_function_value( &::SireMol::AtomProperty< long long >::toVector );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::QVector< long long int > ( ::SireMol::AtomProperty< long long int >::*toVector_function_type )(  ) const;
+            toVector_function_type toVector_function_value( &::SireMol::AtomProperty< long long int >::toVector );
             
             AtomIntProperty_exposer.def( 
                 "toVector"
                 , toVector_function_value );
         
         }
-        { //::SireMol::AtomProperty< long long >::toVector
+        { //::SireMol::AtomProperty< long long int >::toVector
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
-            typedef ::QVector< long long > ( ::SireMol::AtomProperty< long long >::*toVector_function_type )( ::SireMol::AtomSelection const & ) const;
-            toVector_function_type toVector_function_value( &::SireMol::AtomProperty< long long >::toVector );
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
+            typedef ::QVector< long long int > ( ::SireMol::AtomProperty< long long int >::*toVector_function_type )( ::SireMol::AtomSelection const & ) const;
+            toVector_function_type toVector_function_value( &::SireMol::AtomProperty< long long int >::toVector );
             
             AtomIntProperty_exposer.def( 
                 "toVector"
@@ -389,11 +390,11 @@ void register_AtomIntProperty_class(){
                 , ( bp::arg("selection") ) );
         
         }
-        { //::SireMol::AtomProperty< long long >::typeName
+        { //::SireMol::AtomProperty< long long int >::typeName
         
-            typedef SireMol::AtomProperty< long long > exported_class_t;
+            typedef SireMol::AtomProperty< long long int > exported_class_t;
             typedef char const * ( *typeName_function_type )(  );
-            typeName_function_type typeName_function_value( &::SireMol::AtomProperty< long long >::typeName );
+            typeName_function_type typeName_function_value( &::SireMol::AtomProperty< long long int >::typeName );
             
             AtomIntProperty_exposer.def( 
                 "typeName"

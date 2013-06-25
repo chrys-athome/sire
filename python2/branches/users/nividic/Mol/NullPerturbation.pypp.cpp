@@ -37,8 +37,9 @@ void register_NullPerturbation_class(){
 
     { //::SireMol::NullPerturbation
         typedef bp::class_< SireMol::NullPerturbation, bp::bases< SireMol::Perturbation, SireBase::Property > > NullPerturbation_exposer_t;
-        NullPerturbation_exposer_t NullPerturbation_exposer = NullPerturbation_exposer_t( "NullPerturbation", bp::init< >() );
+        NullPerturbation_exposer_t NullPerturbation_exposer = NullPerturbation_exposer_t( "NullPerturbation" );
         bp::scope NullPerturbation_scope( NullPerturbation_exposer );
+        NullPerturbation_exposer.def( bp::init< >() );
         NullPerturbation_exposer.def( bp::init< SireMol::NullPerturbation const & >(( bp::arg("other") )) );
         NullPerturbation_exposer.def( bp::self != bp::self );
         { //::SireMol::NullPerturbation::operator=

@@ -45,8 +45,9 @@ void register_MaxwellBoltzmann_class(){
 
     { //::SireMove::MaxwellBoltzmann
         typedef bp::class_< SireMove::MaxwellBoltzmann, bp::bases< SireMove::VelocityGenerator, SireBase::Property > > MaxwellBoltzmann_exposer_t;
-        MaxwellBoltzmann_exposer_t MaxwellBoltzmann_exposer = MaxwellBoltzmann_exposer_t( "MaxwellBoltzmann", bp::init< >() );
+        MaxwellBoltzmann_exposer_t MaxwellBoltzmann_exposer = MaxwellBoltzmann_exposer_t( "MaxwellBoltzmann" );
         bp::scope MaxwellBoltzmann_scope( MaxwellBoltzmann_exposer );
+        MaxwellBoltzmann_exposer.def( bp::init< >() );
         MaxwellBoltzmann_exposer.def( bp::init< SireUnits::Dimension::Temperature >(( bp::arg("temperature") )) );
         MaxwellBoltzmann_exposer.def( bp::init< SireMove::MaxwellBoltzmann const & >(( bp::arg("other") )) );
         { //::SireMove::MaxwellBoltzmann::generate

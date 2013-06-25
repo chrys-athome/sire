@@ -31,8 +31,9 @@ void register_ErrorPacket_class(){
 
     { //::SireCluster::ErrorPacket
         typedef bp::class_< SireCluster::ErrorPacket, bp::bases< SireCluster::WorkPacketBase > > ErrorPacket_exposer_t;
-        ErrorPacket_exposer_t ErrorPacket_exposer = ErrorPacket_exposer_t( "ErrorPacket", bp::init< >() );
+        ErrorPacket_exposer_t ErrorPacket_exposer = ErrorPacket_exposer_t( "ErrorPacket" );
         bp::scope ErrorPacket_scope( ErrorPacket_exposer );
+        ErrorPacket_exposer.def( bp::init< >() );
         ErrorPacket_exposer.def( bp::init< SireError::exception const & >(( bp::arg("e") )) );
         ErrorPacket_exposer.def( bp::init< SireCluster::ErrorPacket const & >(( bp::arg("other") )) );
         { //::SireCluster::ErrorPacket::approximatePacketSize

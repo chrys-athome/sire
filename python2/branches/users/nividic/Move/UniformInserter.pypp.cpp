@@ -39,8 +39,9 @@ void register_UniformInserter_class(){
 
     { //::SireMove::UniformInserter
         typedef bp::class_< SireMove::UniformInserter, bp::bases< SireMove::MolInserter, SireBase::Property > > UniformInserter_exposer_t;
-        UniformInserter_exposer_t UniformInserter_exposer = UniformInserter_exposer_t( "UniformInserter", bp::init< >() );
+        UniformInserter_exposer_t UniformInserter_exposer = UniformInserter_exposer_t( "UniformInserter" );
         bp::scope UniformInserter_scope( UniformInserter_exposer );
+        UniformInserter_exposer.def( bp::init< >() );
         UniformInserter_exposer.def( bp::init< SireMol::MGIDsAndMaps const & >(( bp::arg("mgids") )) );
         UniformInserter_exposer.def( bp::init< SireMove::UniformInserter const & >(( bp::arg("other") )) );
         { //::SireMove::UniformInserter::insert

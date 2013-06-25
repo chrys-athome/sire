@@ -33,8 +33,9 @@ void register_GridFF_class(){
 
     { //::SireMM::GridFF
         typedef bp::class_< SireMM::GridFF, bp::bases< SireFF::Inter2B2G3DFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >, SireFF::FF3D, SireFF::Inter2B2GFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >, SireMM::CLJPotentialInterface<SireMM::InterCLJPotential>, SireFF::G2FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > GridFF_exposer_t;
-        GridFF_exposer_t GridFF_exposer = GridFF_exposer_t( "GridFF", bp::init< >() );
+        GridFF_exposer_t GridFF_exposer = GridFF_exposer_t( "GridFF" );
         bp::scope GridFF_scope( GridFF_exposer );
+        GridFF_exposer.def( bp::init< >() );
         GridFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         GridFF_exposer.def( bp::init< SireMM::GridFF const & >(( bp::arg("other") )) );
         { //::SireMM::GridFF::buffer

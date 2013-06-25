@@ -23,8 +23,9 @@ void register_SegCGID_class(){
 
     { //::SireMol::GroupGroupID< SireMol::SegID, SireMol::CGID >
         typedef bp::class_< SireMol::GroupGroupID< SireMol::SegID, SireMol::CGID >, bp::bases< SireMol::GroupAtomIDBase, SireMol::AtomID, SireID::ID > > SegCGID_exposer_t;
-        SegCGID_exposer_t SegCGID_exposer = SegCGID_exposer_t( "SegCGID", bp::init< >() );
+        SegCGID_exposer_t SegCGID_exposer = SegCGID_exposer_t( "SegCGID" );
         bp::scope SegCGID_scope( SegCGID_exposer );
+        SegCGID_exposer.def( bp::init< >() );
         SegCGID_exposer.def( bp::init< SireMol::SegID const &, SireMol::CGID const & >(( bp::arg("group0"), bp::arg("group1") )) );
         SegCGID_exposer.def( bp::init< SireMol::GroupGroupID< SireMol::SegID, SireMol::CGID > const & >(( bp::arg("other") )) );
         { //::SireMol::GroupGroupID< SireMol::SegID, SireMol::CGID >::hash

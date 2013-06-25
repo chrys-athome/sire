@@ -54,8 +54,9 @@ void register_ViewsOfMol_class(){
 
     { //::SireMol::ViewsOfMol
         typedef bp::class_< SireMol::ViewsOfMol, bp::bases< SireMol::MoleculeView, SireBase::Property > > ViewsOfMol_exposer_t;
-        ViewsOfMol_exposer_t ViewsOfMol_exposer = ViewsOfMol_exposer_t( "ViewsOfMol", bp::init< >() );
+        ViewsOfMol_exposer_t ViewsOfMol_exposer = ViewsOfMol_exposer_t( "ViewsOfMol" );
         bp::scope ViewsOfMol_scope( ViewsOfMol_exposer );
+        ViewsOfMol_exposer.def( bp::init< >() );
         ViewsOfMol_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         ViewsOfMol_exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::AtomSelection const & >(( bp::arg("moldata"), bp::arg("selected_atoms") )) );
         ViewsOfMol_exposer.def( bp::init< SireMol::MoleculeData const &, QList< SireMol::AtomSelection > const & >(( bp::arg("moldata"), bp::arg("views") )) );

@@ -27,8 +27,9 @@ void register_LJParameter_class(){
 
     { //::SireMM::LJParameter
         typedef bp::class_< SireMM::LJParameter > LJParameter_exposer_t;
-        LJParameter_exposer_t LJParameter_exposer = LJParameter_exposer_t( "LJParameter", bp::init< >() );
+        LJParameter_exposer_t LJParameter_exposer = LJParameter_exposer_t( "LJParameter" );
         bp::scope LJParameter_scope( LJParameter_exposer );
+        LJParameter_exposer.def( bp::init< >() );
         LJParameter_exposer.def( bp::init< SireUnits::Dimension::Length, SireUnits::Dimension::MolarEnergy >(( bp::arg("sigma"), bp::arg("epsilon") )) );
         LJParameter_exposer.def( bp::init< SireMM::LJPair const & >(( bp::arg("ljpair") )) );
         LJParameter_exposer.def( bp::init< SireMM::LJParameter const & >(( bp::arg("param") )) );

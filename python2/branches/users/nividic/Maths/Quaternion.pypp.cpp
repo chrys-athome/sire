@@ -33,8 +33,9 @@ void register_Quaternion_class(){
 
     { //::SireMaths::Quaternion
         typedef bp::class_< SireMaths::Quaternion > Quaternion_exposer_t;
-        Quaternion_exposer_t Quaternion_exposer = Quaternion_exposer_t( "Quaternion", bp::init< >() );
+        Quaternion_exposer_t Quaternion_exposer = Quaternion_exposer_t( "Quaternion" );
         bp::scope Quaternion_scope( Quaternion_exposer );
+        Quaternion_exposer.def( bp::init< >() );
         Quaternion_exposer.def( bp::init< SireMaths::Quaternion const & >(( bp::arg("p1") )) );
         Quaternion_exposer.def( bp::init< SireUnits::Dimension::Angle, SireMaths::Vector const & >(( bp::arg("angle"), bp::arg("axis") )) );
         Quaternion_exposer.def( bp::init< SireMaths::Matrix const & >(( bp::arg("m") )) );

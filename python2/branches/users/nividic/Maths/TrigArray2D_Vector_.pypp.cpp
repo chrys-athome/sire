@@ -45,8 +45,9 @@ void register_TrigArray2D_Vector__class(){
 
     { //::SireBase::TrigArray2D< SireMaths::Vector >
         typedef bp::class_< SireBase::TrigArray2D< SireMaths::Vector >, bp::bases< SireBase::TrigArray2DBase > > TrigArray2D_Vector__exposer_t;
-        TrigArray2D_Vector__exposer_t TrigArray2D_Vector__exposer = TrigArray2D_Vector__exposer_t( "TrigArray2D_Vector_", bp::init< >() );
+        TrigArray2D_Vector__exposer_t TrigArray2D_Vector__exposer = TrigArray2D_Vector__exposer_t( "TrigArray2D_Vector_" );
         bp::scope TrigArray2D_Vector__scope( TrigArray2D_Vector__exposer );
+        TrigArray2D_Vector__exposer.def( bp::init< >() );
         TrigArray2D_Vector__exposer.def( bp::init< int >(( bp::arg("dimension") )) );
         TrigArray2D_Vector__exposer.def( bp::init< int, SireMaths::Vector const & >(( bp::arg("dimension"), bp::arg("default_value") )) );
         TrigArray2D_Vector__exposer.def( bp::init< SireBase::TrigArray2D< SireMaths::Vector > const & >(( bp::arg("other") )) );

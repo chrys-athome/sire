@@ -37,8 +37,9 @@ void register_NoCutoff_class(){
 
     { //::SireMM::NoCutoff
         typedef bp::class_< SireMM::NoCutoff, bp::bases< SireMM::SwitchingFunction, SireBase::Property > > NoCutoff_exposer_t;
-        NoCutoff_exposer_t NoCutoff_exposer = NoCutoff_exposer_t( "NoCutoff", bp::init< >() );
+        NoCutoff_exposer_t NoCutoff_exposer = NoCutoff_exposer_t( "NoCutoff" );
         bp::scope NoCutoff_scope( NoCutoff_exposer );
+        NoCutoff_exposer.def( bp::init< >() );
         NoCutoff_exposer.def( bp::init< SireMM::NoCutoff const & >(( bp::arg("other") )) );
         { //::SireMM::NoCutoff::dElectrostaticScaleFactor
         

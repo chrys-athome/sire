@@ -44,8 +44,9 @@ void register_Conditional_class(){
 
     { //::SireCAS::Conditional
         typedef bp::class_< SireCAS::Conditional, bp::bases< SireCAS::ExBase > > Conditional_exposer_t;
-        Conditional_exposer_t Conditional_exposer = Conditional_exposer_t( "Conditional", bp::init< >() );
+        Conditional_exposer_t Conditional_exposer = Conditional_exposer_t( "Conditional" );
         bp::scope Conditional_scope( Conditional_exposer );
+        Conditional_exposer.def( bp::init< >() );
         Conditional_exposer.def( bp::init< SireCAS::Condition const &, SireCAS::Expression const &, SireCAS::Expression const & >(( bp::arg("condition"), bp::arg("true_expression"), bp::arg("false_expression") )) );
         Conditional_exposer.def( bp::init< SireCAS::Conditional const & >(( bp::arg("other") )) );
         { //::SireCAS::Conditional::children

@@ -45,8 +45,9 @@ void register_HF_class(){
 
     { //::Squire::HF
         typedef bp::class_< Squire::HF > HF_exposer_t;
-        HF_exposer_t HF_exposer = HF_exposer_t( "HF", bp::init< >() );
+        HF_exposer_t HF_exposer = HF_exposer_t( "HF" );
         bp::scope HF_scope( HF_exposer );
+        HF_exposer.def( bp::init< >() );
         { //::Squire::HF::add
         
             typedef void ( ::Squire::HF::*add_function_type )( ::Squire::Orbital const & ) ;

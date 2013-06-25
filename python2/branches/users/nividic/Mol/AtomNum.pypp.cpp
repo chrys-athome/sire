@@ -67,8 +67,9 @@ void register_AtomNum_class(){
 
     { //::SireMol::AtomNum
         typedef bp::class_< SireMol::AtomNum, bp::bases< SireMol::AtomID, SireID::ID, SireID::Number > > AtomNum_exposer_t;
-        AtomNum_exposer_t AtomNum_exposer = AtomNum_exposer_t( "AtomNum", bp::init< >() );
+        AtomNum_exposer_t AtomNum_exposer = AtomNum_exposer_t( "AtomNum" );
         bp::scope AtomNum_scope( AtomNum_exposer );
+        AtomNum_exposer.def( bp::init< >() );
         AtomNum_exposer.def( bp::init< quint32 >(( bp::arg("num") )) );
         AtomNum_exposer.def( bp::init< SireMol::AtomNum const & >(( bp::arg("other") )) );
         { //::SireMol::AtomNum::hash

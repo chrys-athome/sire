@@ -43,8 +43,9 @@ void register_AtomFloatProperty_class(){
 
     { //::SireMol::AtomProperty< double >
         typedef bp::class_< SireMol::AtomProperty< double >, bp::bases< SireMol::AtomProp, SireMol::MolViewProperty, SireBase::Property > > AtomFloatProperty_exposer_t;
-        AtomFloatProperty_exposer_t AtomFloatProperty_exposer = AtomFloatProperty_exposer_t( "AtomFloatProperty", bp::init< >() );
+        AtomFloatProperty_exposer_t AtomFloatProperty_exposer = AtomFloatProperty_exposer_t( "AtomFloatProperty" );
         bp::scope AtomFloatProperty_scope( AtomFloatProperty_exposer );
+        AtomFloatProperty_exposer.def( bp::init< >() );
         AtomFloatProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         AtomFloatProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const &, double const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomFloatProperty_exposer.def( bp::init< double const & >(( bp::arg("value") )) );

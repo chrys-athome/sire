@@ -39,8 +39,9 @@ void register_CoordGroup_class(){
 
     { //::SireVol::CoordGroup
         typedef bp::class_< SireVol::CoordGroup, bp::bases< SireVol::CoordGroupBase > > CoordGroup_exposer_t;
-        CoordGroup_exposer_t CoordGroup_exposer = CoordGroup_exposer_t( "CoordGroup", bp::init< >() );
+        CoordGroup_exposer_t CoordGroup_exposer = CoordGroup_exposer_t( "CoordGroup" );
         bp::scope CoordGroup_scope( CoordGroup_exposer );
+        CoordGroup_exposer.def( bp::init< >() );
         CoordGroup_exposer.def( bp::init< quint32 >(( bp::arg("size") )) );
         CoordGroup_exposer.def( bp::init< quint32, SireMaths::Vector const & >(( bp::arg("size"), bp::arg("value") )) );
         CoordGroup_exposer.def( bp::init< quint32, SireMaths::Vector const * >(( bp::arg("size"), bp::arg("values") )) );
