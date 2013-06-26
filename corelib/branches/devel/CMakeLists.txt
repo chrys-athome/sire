@@ -386,10 +386,8 @@ elseif ( ${CMAKE_CXX_COMPILER} MATCHES "clang" )
         
     set ( SIRE_VISIBILITY_FLAGS "-DSIRE_VISIBILITY_AVAILABLE -fvisibility=hidden -fvisibility-inlines-hidden" )
 
-    # Ensure that the libraries don't contain any undefined symbols
-    if(APPLE)
-        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -Wl" )
-    else(UNIX)
+    if (APPLE)
+    elseif(UNIX)
         set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
     endif()
 

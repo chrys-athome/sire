@@ -55,6 +55,8 @@ public:
     MultiDouble(const QVector<float> &array);
     MultiDouble(const QVector<double> &array);
     
+    MultiDouble(const MultiFloat &other);
+    
     MultiDouble(const MultiDouble &other);
     
     ~MultiDouble();
@@ -64,10 +66,14 @@ public:
     static QVector<MultiDouble> fromArray(const QVector<double> &array);
     static QVector<MultiDouble> fromArray(const QVector<float> &array);
     
+    static QVector<MultiDouble> fromArray(const double *array, int size);
+    static QVector<MultiDouble> fromArray(const float *array, int size);
+    
     static QVector<double> toArray(const QVector<MultiDouble> &array);
     static QVector<double> toDoubleArray(const QVector<MultiDouble> &array);
     
     MultiDouble& operator=(const MultiDouble &other);
+    MultiDouble& operator=(const MultiFloat &other);
     
     bool operator==(const MultiDouble &other) const;
     bool operator!=(const MultiDouble &other) const;
@@ -146,6 +152,12 @@ public:
     double doubleSum() const;
 
 private:
+    /* Give other Multi??? classes access to the raw vector */
+    friend class MultiFloat;
+    friend class MultiFixed;
+
+    #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
         union
         {
@@ -176,7 +188,7 @@ private:
         }
         #endif
     #else
-        union
+        __declspec(align(32)) union
         {
             double a[MULTIFLOAT_SIZE];
         } v;
@@ -191,6 +203,8 @@ private:
         #endif
     #endif
     #endif
+    
+    #endif // #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -206,7 +220,7 @@ MultiDouble MultiDouble::compareEqual(const MultiDouble &other) const
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiDouble( _mm_cmpeq_pd(v.x[0], other.v.x[0]),
-                            _mm_cmpeq_pd(v.x[1], other.v.x[1] );
+                            _mm_cmpeq_pd(v.x[1], other.v.x[1]) );
     #else
         MultiDouble ret;
 

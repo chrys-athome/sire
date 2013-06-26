@@ -47,8 +47,19 @@ int main(int argc, const char **argv)
     MultiFloat mf(vals);
     MultiDouble md(vals);
 
+    MultiFloat mf2(md);
+    MultiDouble md2(mf);
+
     qDebug() << mf.toString();
     qDebug() << md.toString();    
+    qDebug() << mf2.toString();
+    qDebug() << md2.toString();
+
+    mf2 = md;
+    md2 = mf;
+
+    qDebug() << mf2.toString();
+    qDebug() << md2.toString();
 
     qDebug() << "ROTATE";
     for (int i=1; i<=MultiFloat::size(); ++i)

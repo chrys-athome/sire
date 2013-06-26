@@ -34,7 +34,10 @@
 
 #include <QVector>
 
+//#undef SIRE_USE_AVX
+//#define SIRE_USE_SSE 1
 //#undef SIRE_USE_SSE
+
 #ifdef SIRE_USE_AVX
     #ifdef __AVX__
         #include <immintrin.h>   // CONDITIONAL_INCLUDE
@@ -73,6 +76,9 @@ SIRE_BEGIN_HEADER
 namespace SireMaths
 {
 
+class MultiFixed;
+class MultiDouble;
+
 /** This class provides a vectorised float. This represents
     a single vector of floats on the compiled machine, e.g.
     4 floats if we use SSE2, 8 floats for AVX
@@ -90,6 +96,7 @@ public:
     MultiFloat(const QVector<float> &array);
     MultiFloat(const QVector<double> &array);
     
+    MultiFloat(const MultiDouble &other);
     MultiFloat(const MultiFloat &other);
     
     ~MultiFloat();
@@ -99,10 +106,14 @@ public:
     static QVector<MultiFloat> fromArray(const QVector<double> &array);
     static QVector<MultiFloat> fromArray(const QVector<float> &array);
     
+    static QVector<MultiFloat> fromArray(const double *array, int size);
+    static QVector<MultiFloat> fromArray(const float *array, int size);
+    
     static QVector<float> toArray(const QVector<MultiFloat> &array);
     static QVector<double> toDoubleArray(const QVector<MultiFloat> &array);
     
     MultiFloat& operator=(const MultiFloat &other);
+    MultiFloat& operator=(const MultiDouble &other);
     
     bool operator==(const MultiFloat &other) const;
     bool operator!=(const MultiFloat &other) const;
@@ -181,6 +192,13 @@ public:
     double doubleSum() const;
 
 private:
+    /* Make the other Multi?? classes friends, so that they
+       can read the vector data directly */
+    friend class MultiDouble;
+    friend class MultiFixed;
+
+    #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
         union
         {
@@ -211,11 +229,11 @@ private:
         }
         #endif
     #else
-        union
+        __declspec(align(32)) union
         {
-            float a[4];
+            float a[8];
         } v;
-        #define MULTIFLOAT_SIZE 4
+        #define MULTIFLOAT_SIZE 8
         #define MULTIFLOAT_BINONE getBinaryOne()
 
         #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -227,6 +245,11 @@ private:
         #endif
     #endif
     #endif
+    
+    #else
+        #define MULTIFLOAT_SIZE 16
+    #endif //#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS

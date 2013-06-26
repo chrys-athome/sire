@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "multifloat.h"
+#include "multidouble.h"
 
 #include <QStringList>
 
@@ -63,6 +64,19 @@ using namespace SireMaths;
                     "An unaligned MultiFloat has been created! %1")
                         .arg((uintptr_t)pointer % size_t(16)), place );
     }
+#else
+    static inline bool isAligned32(const void *pointer)
+    {
+        return (uintptr_t)pointer % size_t(32) == 0;
+    }
+
+    static void assertAligned32(const void *pointer, QString place)
+    {
+        if (not isAligned32(pointer))
+            throw SireError::program_bug( QObject::tr(
+                    "An unaligned MultiFloat has been created! %1")
+                        .arg((uintptr_t)pointer % size_t(32)), place );
+    }
 #endif
 #endif
 
@@ -77,6 +91,7 @@ MultiFloat::MultiFloat()
         assertAligned16(this, CODELOC);
         v.x = _mm_set1_ps(0);
     #else
+        assertAligned32(this, CODELOC);
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
             v.a[i] = 0;
@@ -96,6 +111,7 @@ MultiFloat::MultiFloat(float val)
         assertAligned16(this, CODELOC);
         v.x = _mm_set1_ps(val);
     #else
+        assertAligned32(this, CODELOC);
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
             v.a[i] = val;
@@ -114,6 +130,8 @@ MultiFloat::MultiFloat(const float *array, int size)
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         assertAligned16(this, CODELOC);
+    #else
+        assertAligned32(this, CODELOC);
     #endif
     #endif
 
@@ -138,7 +156,7 @@ MultiFloat::MultiFloat(const float *array, int size)
         #endif
     }
     else if (size == MULTIFLOAT_SIZE)
-    {
+    {/*
         #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
             v.x = _mm256_set_ps(array[7], array[6], array[5], array[4],
                                 array[3], array[2], array[1], array[0]);
@@ -146,13 +164,13 @@ MultiFloat::MultiFloat(const float *array, int size)
         #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
             //note that SSE packs things the 'wrong' way around
             v.x = _mm_set_ps(array[3], array[2], array[1], array[0]);
-        #else
+        #else*/
             for (int i=0; i<MULTIFLOAT_SIZE; ++i)
             {
                 v.a[i] = array[i];
             }
-        #endif
-        #endif
+       /* #endif
+        #endif*/
     }
     else
     {
@@ -193,6 +211,8 @@ MultiFloat::MultiFloat(const QVector<float> &array)
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         assertAligned16(this, CODELOC);
+    #else
+        assertAligned32(this, CODELOC);
     #endif
     #endif
 
@@ -207,6 +227,8 @@ MultiFloat::MultiFloat(const QVector<double> &array)
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         assertAligned16(this, CODELOC);
+    #else
+        assertAligned32(this, CODELOC);
     #endif
     #endif
 
@@ -221,6 +243,32 @@ MultiFloat::MultiFloat(const QVector<double> &array)
     this->operator=( MultiFloat(farray) );
 }
 
+/** Copy construct from a MultiDouble */
+MultiFloat::MultiFloat(const MultiDouble &other)
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        assertAligned32(this, CODELOC);
+    
+        __m128 *o = (__m128*)&(v.x);
+    
+        o[0] = _mm256_cvtpd_ps(other.v.x[0]);
+        o[1] = _mm256_cvtpd_ps(other.v.x[1]);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        assertAligned16(this, CODELOC);
+    
+        v.x = _mm_movelh_ps( _mm_cvtpd_ps(other.v.x[0]),
+                             _mm_cvtpd_ps(other.v.x[1]) );
+    #else
+        assertAligned32(this, CODELOC);
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = other.v.a[i];
+        }
+    #endif
+    #endif
+}
+
 /** Copy constructor */
 MultiFloat::MultiFloat(const MultiFloat &other)
 {
@@ -232,7 +280,8 @@ MultiFloat::MultiFloat(const MultiFloat &other)
         assertAligned16(this,CODELOC);
         v.x = other.v.x;
     #else
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+       assertAligned32(this, CODELOC);
+       for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
             v.a[i] = other.v.a[i];
         }
@@ -262,6 +311,29 @@ MultiFloat& MultiFloat::operator=(const MultiFloat &other)
     return *this;
 }
 
+/** Assignment operator */
+MultiFloat& MultiFloat::operator=(const MultiDouble &other)
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        __m128 *o = (__m128*)&(v.x);
+    
+        o[0] = _mm256_cvtpd_ps(other.v.x[0]);
+        o[1] = _mm256_cvtpd_ps(other.v.x[1]);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_movelh_ps( _mm_cvtpd_ps(other.v.x[0]),
+                             _mm_cvtpd_ps(other.v.x[1]) );
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = other.v.a[i];
+        }
+    #endif
+    #endif
+
+    return *this;
+}
+
 /** Destructor */
 MultiFloat::~MultiFloat()
 {}
@@ -281,21 +353,22 @@ bool MultiFloat::isAligned() const
     #endif
 }
 
-/** Create an array of MultiFloats from the passed array of doubles. This
-    will pad the end of the array with zeroes if necessary */
-QVector<MultiFloat> MultiFloat::fromArray(const QVector<double> &array)
+QVector<MultiFloat> MultiFloat::fromArray(const double *array, int size)
 {
-    if (array.isEmpty())
+    if (size == 0)
         return QVector<MultiFloat>();
 
-    float tmp[MULTIFLOAT_SIZE];
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        __declspec(align(16)) float tmp[MULTIFLOAT_SIZE];
+    #else
+        __declspec(align(32)) float tmp[MULTIFLOAT_SIZE];
+    #endif
     
-    QVector<MultiFloat> marray;
-    
-    int nvecs = array.count() / MULTIFLOAT_SIZE;
-    int nremain = array.count() % MULTIFLOAT_SIZE;
-    
-    marray.reserve(nvecs + ( (nremain == 1) ? 1 : 0 ));
+    int nvecs = size / MULTIFLOAT_SIZE;
+    int nremain = size % MULTIFLOAT_SIZE;
+
+    QVector<MultiFloat> marray(nvecs + ( (nremain == 1) ? 1 : 0 ));
+    MultiFloat *a = marray.data();
     
     int idx = 0;
     
@@ -303,22 +376,22 @@ QVector<MultiFloat> MultiFloat::fromArray(const QVector<double> &array)
     {
         for (int j=0; j<MULTIFLOAT_SIZE; ++j)
         {
-            tmp[j] = array.constData()[idx];
+            tmp[j] = array[idx];
             ++idx;
         }
     
-        marray.append( MultiFloat((float*)(&tmp), MULTIFLOAT_SIZE) );
+        a[i] = MultiFloat((float*)(&tmp), MULTIFLOAT_SIZE);
     }
     
     if (nremain > 0)
     {
         for (int j=0; j<nremain; ++j)
         {
-            tmp[j] = array.constData()[idx];
+            tmp[j] = array[idx];
             ++idx;
         }
         
-        marray.append( MultiFloat((float*)(&tmp), nremain) );
+        a[marray.count()-1] = MultiFloat((float*)(&tmp), nremain);
     }
     
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
@@ -326,9 +399,126 @@ QVector<MultiFloat> MultiFloat::fromArray(const QVector<double> &array)
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         assertAligned16(marray.constData(), CODELOC);
+    #else
+        assertAligned32(marray.constData(), CODELOC);
     #endif
     #endif
 
+    return marray;
+}
+
+/** Create an array of MultiFloats from the passed array of doubles. This
+    will pad the end of the array with zeroes if necessary */
+QVector<MultiFloat> MultiFloat::fromArray(const QVector<double> &array)
+{
+    return MultiFloat::fromArray(array.constData(), array.count());
+}
+
+QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
+{
+    if (size == 0)
+        return QVector<MultiFloat>();
+    
+    int nvecs = size / MULTIFLOAT_SIZE;
+    int nremain = size % MULTIFLOAT_SIZE;
+    
+    QVector<MultiFloat> marray(nvecs + ( (nremain == 1) ? 1 : 0 ));
+    MultiFloat *ma = marray.data();
+    
+    int idx = 0;
+    
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        if (isAligned16(array))
+        {
+            for (int i=0; i<nvecs; ++i)
+            {
+                ma[i] = MultiFloat(array+idx, MULTIFLOAT_SIZE);
+                idx += MULTIFLOAT_SIZE;
+            }
+    
+            if (nremain > 0)
+            {
+                ma[marray.count()-1] = MultiFloat(array+idx, nremain);
+            }
+        }
+        else
+        {
+            __declspec(align(16)) float tmp[MULTIFLOAT_SIZE];
+
+            for (int i=0; i<nvecs; ++i)
+            {
+                for (int j=0; j<MULTIFLOAT_SIZE; ++j)
+                {
+                    tmp[j] = array[idx];
+                    ++idx;
+                }
+            
+                ma[i] = MultiFloat((float*)(&tmp), MULTIFLOAT_SIZE);
+            }
+            
+            if (nremain > 0)
+            {
+                for (int j=0; j<nremain; ++j)
+                {
+                    tmp[j] = array[idx];
+                    ++idx;
+                }
+                
+                ma[marray.count()-1] = MultiFloat((float*)(&tmp), nremain);
+            }
+        }
+    #else
+        if (isAligned32(array))
+        {
+            for (int i=0; i<nvecs; ++i)
+            {
+                ma[i] = MultiFloat(array+idx, MULTIFLOAT_SIZE);
+                idx += MULTIFLOAT_SIZE;
+            }
+    
+            if (nremain > 0)
+            {
+                ma[marray.count()-1] = MultiFloat(array+idx, nremain);
+            }
+        }
+        else
+        {
+            __declspec(align(32)) float tmp[MULTIFLOAT_SIZE];
+
+            for (int i=0; i<nvecs; ++i)
+            {
+                for (int j=0; j<MULTIFLOAT_SIZE; ++j)
+                {
+                    tmp[j] = array[idx];
+                    ++idx;
+                }
+            
+                ma[i] = MultiFloat((float*)(&tmp), MULTIFLOAT_SIZE);
+            }
+            
+            if (nremain > 0)
+            {
+                for (int j=0; j<nremain; ++j)
+                {
+                    tmp[j] = array[idx];
+                    ++idx;
+                }
+                
+                ma[marray.count()-1] = MultiFloat((float*)(&tmp), nremain);
+            }
+        }
+    #endif
+
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        assertAligned32(marray.constData(), CODELOC);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        assertAligned16(marray.constData(), CODELOC);
+    #else
+        assertAligned32(marray.constData(), CODELOC);
+    #endif
+    #endif
+    
     return marray;
 }
 
@@ -336,38 +526,7 @@ QVector<MultiFloat> MultiFloat::fromArray(const QVector<double> &array)
     pad the end of the array with zeroes if necessary */
 QVector<MultiFloat> MultiFloat::fromArray(const QVector<float> &array)
 {
-    if (array.isEmpty())
-        return QVector<MultiFloat>();
-
-    QVector<MultiFloat> marray;
-    
-    int nvecs = array.count() / MULTIFLOAT_SIZE;
-    int nremain = array.count() % MULTIFLOAT_SIZE;
-    
-    marray.reserve(nvecs + ( (nremain == 1) ? 1 : 0 ));
-    
-    int idx = 0;
-    
-    for (int i=0; i<nvecs; ++i)
-    {
-        marray.append( MultiFloat((float*)(&(array.constData()[idx])), MULTIFLOAT_SIZE) );
-        idx += MULTIFLOAT_SIZE;
-    }
-    
-    if (nremain > 0)
-    {
-        marray.append( MultiFloat((float*)(&(array.constData()[idx])), nremain) );
-    }
-
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        assertAligned32(marray.constData(), CODELOC);
-    #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        assertAligned16(marray.constData(), CODELOC);
-    #endif
-    #endif
-    
-    return marray;
+    return MultiFloat::fromArray(array.constData(), array.count());
 }
 
 /** Return the passed MultiFloat converted back into a normal array */
