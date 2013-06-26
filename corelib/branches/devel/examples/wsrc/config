@@ -9,6 +9,8 @@ protein crdfile = proteinbox.crd
 # molecule loaded that contains a residue with this name
 ligand name = ose
 
+waterbox only = True
+
 # Specify the radius of the reflection sphere
 reflection radius = 10 * angstroms
 

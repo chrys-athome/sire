@@ -41,6 +41,8 @@ params["nmoves"] = 10
 # Specify the number of Monte Carlo moves to perform per RETI iteration
 params["nsubmoves"] = 100
 
+params["waterbox only"] = True
+
 # Specify the number of equilibration moves to perform when setting up the system
 params["nequilmoves"] = 50
 

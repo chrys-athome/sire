@@ -72,27 +72,6 @@ SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
-class MultiFloat;
-}
-
-namespace SireMaths
-{
-
-/*
-WILL CONVERT TO INTEGER USING MAGIC NUMBER METHOD
-First, convert float to double. Ensures addition and scaling
-don't overflow the float.
-Next work out what precision I want.
-Divide into two parts (32 bit each)
-Then add the high value onto the float and read out the value to the high
-32bit integer. This will get the high part of the mantissa.
-Then add the low value onto the float and read out the value to the low
-32bit integer. This will get the low part of the mantissa.
-The 64bit integer will then be the high * 2^32 + low (or bit copy into place)
-
-Should have MultiFixed which can be initialised from a MultiFloat or
-from a MultiDouble
-*/
 
 /** This class provides a vectorised float. This represents
     a single vector of floats on the compiled machine, e.g.
@@ -199,6 +178,7 @@ public:
     MultiFloat rotate() const;
     
     float sum() const;
+    double doubleSum() const;
 
 private:
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
@@ -965,6 +945,27 @@ float MultiFloat::sum() const
         for (int i=0; i<MULTIFLOAT_SIZE; ++i)
         {
             sum += v.a[i];
+        }
+        return sum;
+    #endif
+    #endif
+}
+
+/** Return the sum of all elements of this vector, using doubles for the sum */
+inline
+double MultiFloat::doubleSum() const
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        return double(v.a[0]) + double(v.a[1]) + double(v.a[2]) + double(v.a[3]) +
+               double(v.a[4]) + double(v.a[5]) + double(v.a[6]) + double(v.a[7]);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        return double(v.a[0]) + double(v.a[1]) + double(v.a[2]) + double(v.a[3]);
+    #else
+        double sum = 0;
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            sum += double(v.a[i]);
         }
         return sum;
     #endif
