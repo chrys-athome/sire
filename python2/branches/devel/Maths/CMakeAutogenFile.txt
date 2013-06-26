@@ -28,6 +28,7 @@ set ( PYPP_SOURCES
        Line.pypp.cpp
        Matrix.pypp.cpp
        Median.pypp.cpp
+       MultiFixed.pypp.cpp
        MultiFloat.pypp.cpp
        N4Matrix.pypp.cpp
        NMatrix.pypp.cpp

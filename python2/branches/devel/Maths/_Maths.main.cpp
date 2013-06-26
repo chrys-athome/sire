@@ -59,6 +59,8 @@
 
 #include "Median.pypp.hpp"
 
+#include "MultiFixed.pypp.hpp"
+
 #include "MultiFloat.pypp.hpp"
 
 #include "N4Matrix.pypp.hpp"
@@ -171,6 +173,8 @@ BOOST_PYTHON_MODULE(_Maths){
     register_Matrix_class();
 
     register_Median_class();
+
+    register_MultiFixed_class();
 
     register_MultiFloat_class();
 

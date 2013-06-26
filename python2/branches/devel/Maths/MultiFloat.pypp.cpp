@@ -11,6 +11,10 @@ namespace bp = boost::python;
 
 #include "multifloat.h"
 
+#include <QDebug>
+
+#include <QStringList>
+
 #include "multifloat.h"
 
 SireMaths::MultiFloat __copy__(const SireMaths::MultiFloat &other){ return SireMaths::MultiFloat(other); }
@@ -102,6 +106,16 @@ void register_MultiFloat_class(){
             MultiFloat_exposer.def( 
                 "count"
                 , count_function_value );
+        
+        }
+        { //::SireMaths::MultiFloat::doubleSum
+        
+            typedef double ( ::SireMaths::MultiFloat::*doubleSum_function_type )(  ) const;
+            doubleSum_function_type doubleSum_function_value( &::SireMaths::MultiFloat::doubleSum );
+            
+            MultiFloat_exposer.def( 
+                "doubleSum"
+                , doubleSum_function_value );
         
         }
         { //::SireMaths::MultiFloat::fromArray

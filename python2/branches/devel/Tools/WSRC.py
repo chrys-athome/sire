@@ -71,6 +71,9 @@ water_monitor_distance = Parameter("water monitor distance", 5.0*angstrom,
                                    """The distance up to which the free energy of water molecules
                                       interacting with the ligand should be recorded.""")
 
+waterbox_only = Parameter("waterbox only", False,
+                          """Whether or not to select water molecules only from the water box.""")
+
 nrgmon_frequency = Parameter("energy monitor frequency", 1000, 
                              """The number of steps between each evaluation of the energy monitors.""")
 
@@ -1225,7 +1228,12 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     # The mobile water *must* contain the swap waters, so that they can be swapped
     mobile_water.add(swap_water_group)
     mobile_water.add(mobile_free_water_group)
-    mobile_water.add(mobile_bound_water_group)
+
+    if waterbox_only.val:
+        print "Choosing water molecules only from the free water box."
+    else:
+        print "Choosing swap waters from both the protein box and water box."
+        mobile_water.add(mobile_bound_water_group)
 
     print "The number of candidates for the swap water equals: %d" % mobile_water.nMolecules()
 
