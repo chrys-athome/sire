@@ -921,10 +921,14 @@ MultiFloat MultiFloat::rotate() const
         return MultiFloat( _mm_shuffle_ps(v.x, v.x, _MM_SHUFFLE(0,3,2,1)) );
     #else
         MultiFloat ret;
-        ret.v.a[0] = v.a[1];
-        ret.v.a[1] = v.a[2];
-        ret.v.a[2] = v.a[3];
-        ret.v.a[3] = v.a[0];
+        
+        for (int i=1; i<MULTIFLOAT_SIZE; ++i)
+        {
+            ret.v.a[i-1] = v.a[i];
+        }
+        
+        ret.v.a[MULTIFLOAT_SIZE-1] = v.a[0];
+
         return ret;
     #endif
     #endif

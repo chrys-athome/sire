@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "SireMaths/multifloat.h"
+#include "SireMaths/multidouble.h"
 
 #include <QDebug>
 
@@ -43,30 +44,37 @@ int main(int argc, const char **argv)
         vals.append( i );
     }
 
-    MultiFloat m(vals);
+    MultiFloat mf(vals);
+    MultiDouble md(vals);
 
-    qDebug() << m.toString();
-    
+    qDebug() << mf.toString();
+    qDebug() << md.toString();    
+
     qDebug() << "ROTATE";
     for (int i=1; i<=MultiFloat::size(); ++i)
     {
-        m = m.rotate();
-        qDebug() << i << m.toString();
+        mf = mf.rotate();
+        md = md.rotate();
+        qDebug() << i << mf.toString();
+        qDebug() << i << md.toString();
     }
 
     qDebug() << "SQRT";
-    qDebug() << m.sqrt().toString();
+    qDebug() << mf.sqrt().toString();
+    qDebug() << md.sqrt().toString();
 
     for (int i=MultiFloat::count()+1; i<= 101; ++i)
     {
         vals.append(i);
     }
 
-    QVector<MultiFloat> array = MultiFloat::fromArray(vals);
+    QVector<MultiFloat> mfarray = MultiFloat::fromArray(vals);
+    QVector<MultiDouble> mdarray = MultiDouble::fromArray(vals);
 
-    foreach (const MultiFloat &a, array)
+    for (int i=0; i<mfarray.count(); ++i)
     {
-        qDebug() << a.toString();
+        qDebug() << mfarray[i].toString();
+        qDebug() << mdarray[i].toString();
     }
 
     return 0;
