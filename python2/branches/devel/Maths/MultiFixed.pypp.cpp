@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "multifixed.h"
 
+#include <QDebug>
+
 #include "multifixed.h"
 
 SireMaths::MultiFixed __copy__(const SireMaths::MultiFixed &other){ return SireMaths::MultiFixed(other); }
