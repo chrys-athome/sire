@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "multidouble.h"
+
 #include "multifloat.h"
 
 #include <QDebug>
@@ -31,6 +33,7 @@ void register_MultiFloat_class(){
         MultiFloat_exposer.def( bp::init< float const *, int >(( bp::arg("array"), bp::arg("size") )) );
         MultiFloat_exposer.def( bp::init< QVector< float > const & >(( bp::arg("array") )) );
         MultiFloat_exposer.def( bp::init< QVector< double > const & >(( bp::arg("array") )) );
+        MultiFloat_exposer.def( bp::init< SireMaths::MultiDouble const & >(( bp::arg("other") )) );
         MultiFloat_exposer.def( bp::init< SireMaths::MultiFloat const & >(( bp::arg("other") )) );
         { //::SireMaths::MultiFloat::compareEqual
         
@@ -138,6 +141,28 @@ void register_MultiFloat_class(){
                 "fromArray"
                 , fromArray_function_value
                 , ( bp::arg("array") ) );
+        
+        }
+        { //::SireMaths::MultiFloat::fromArray
+        
+            typedef ::QVector< SireMaths::MultiFloat > ( *fromArray_function_type )( double const *,int );
+            fromArray_function_type fromArray_function_value( &::SireMaths::MultiFloat::fromArray );
+            
+            MultiFloat_exposer.def( 
+                "fromArray"
+                , fromArray_function_value
+                , ( bp::arg("array"), bp::arg("size") ) );
+        
+        }
+        { //::SireMaths::MultiFloat::fromArray
+        
+            typedef ::QVector< SireMaths::MultiFloat > ( *fromArray_function_type )( float const *,int );
+            fromArray_function_type fromArray_function_value( &::SireMaths::MultiFloat::fromArray );
+            
+            MultiFloat_exposer.def( 
+                "fromArray"
+                , fromArray_function_value
+                , ( bp::arg("array"), bp::arg("size") ) );
         
         }
         { //::SireMaths::MultiFloat::get
@@ -262,6 +287,18 @@ void register_MultiFloat_class(){
         { //::SireMaths::MultiFloat::operator=
         
             typedef ::SireMaths::MultiFloat & ( ::SireMaths::MultiFloat::*assign_function_type )( ::SireMaths::MultiFloat const & ) ;
+            assign_function_type assign_function_value( &::SireMaths::MultiFloat::operator= );
+            
+            MultiFloat_exposer.def( 
+                "assign"
+                , assign_function_value
+                , ( bp::arg("other") )
+                , bp::return_self< >() );
+        
+        }
+        { //::SireMaths::MultiFloat::operator=
+        
+            typedef ::SireMaths::MultiFloat & ( ::SireMaths::MultiFloat::*assign_function_type )( ::SireMaths::MultiDouble const & ) ;
             assign_function_type assign_function_value( &::SireMaths::MultiFloat::operator= );
             
             MultiFloat_exposer.def( 

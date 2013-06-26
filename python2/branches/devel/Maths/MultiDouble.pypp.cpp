@@ -31,6 +31,7 @@ void register_MultiDouble_class(){
         MultiDouble_exposer.def( bp::init< double const *, int >(( bp::arg("array"), bp::arg("size") )) );
         MultiDouble_exposer.def( bp::init< QVector< float > const & >(( bp::arg("array") )) );
         MultiDouble_exposer.def( bp::init< QVector< double > const & >(( bp::arg("array") )) );
+        MultiDouble_exposer.def( bp::init< SireMaths::MultiFloat const & >(( bp::arg("other") )) );
         MultiDouble_exposer.def( bp::init< SireMaths::MultiDouble const & >(( bp::arg("other") )) );
         { //::SireMaths::MultiDouble::compareEqual
         
@@ -138,6 +139,28 @@ void register_MultiDouble_class(){
                 "fromArray"
                 , fromArray_function_value
                 , ( bp::arg("array") ) );
+        
+        }
+        { //::SireMaths::MultiDouble::fromArray
+        
+            typedef ::QVector< SireMaths::MultiDouble > ( *fromArray_function_type )( double const *,int );
+            fromArray_function_type fromArray_function_value( &::SireMaths::MultiDouble::fromArray );
+            
+            MultiDouble_exposer.def( 
+                "fromArray"
+                , fromArray_function_value
+                , ( bp::arg("array"), bp::arg("size") ) );
+        
+        }
+        { //::SireMaths::MultiDouble::fromArray
+        
+            typedef ::QVector< SireMaths::MultiDouble > ( *fromArray_function_type )( float const *,int );
+            fromArray_function_type fromArray_function_value( &::SireMaths::MultiDouble::fromArray );
+            
+            MultiDouble_exposer.def( 
+                "fromArray"
+                , fromArray_function_value
+                , ( bp::arg("array"), bp::arg("size") ) );
         
         }
         { //::SireMaths::MultiDouble::get
@@ -262,6 +285,18 @@ void register_MultiDouble_class(){
         { //::SireMaths::MultiDouble::operator=
         
             typedef ::SireMaths::MultiDouble & ( ::SireMaths::MultiDouble::*assign_function_type )( ::SireMaths::MultiDouble const & ) ;
+            assign_function_type assign_function_value( &::SireMaths::MultiDouble::operator= );
+            
+            MultiDouble_exposer.def( 
+                "assign"
+                , assign_function_value
+                , ( bp::arg("other") )
+                , bp::return_self< >() );
+        
+        }
+        { //::SireMaths::MultiDouble::operator=
+        
+            typedef ::SireMaths::MultiDouble & ( ::SireMaths::MultiDouble::*assign_function_type )( ::SireMaths::MultiFloat const & ) ;
             assign_function_type assign_function_value( &::SireMaths::MultiDouble::operator= );
             
             MultiDouble_exposer.def( 
