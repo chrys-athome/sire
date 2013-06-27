@@ -1,52 +1,104 @@
 Macbook Air 1.8 GHz Core i5 (2012 model)
+Theoretical peak is 1.8*8 = 14.4 GFLOPs per core
 
-AVX
-Creating an array of 1000000 random floating point numbers... 
+AVX, check alignment
+Calculating the coulomb energy between two groups of 25000 particles. This involves calculating and summing  625000000 coulomb interaction energies. 
 Generating the random numbers... 
-Generating the random numbers took 35 ms 
+Generating the random numbers took 6 ms 
 Converting to MultiFloat... 
-Took 484 ms 
+Took 0 ms 
 Converting to MultiDouble... 
-Took 480 ms 
-Calculating all of the floating point square roots... 
-Sum "{ 1.67772e+07, 1.67772e+07, 1.67772e+07, 1.67772e+07, 1.67772e+07, 1.67772e+07, 1.67772e+07, 1.67772e+07 }" 
-took 659 ms 
-Speed is 3.0349 GFLOPS 
-Calculating all of the double precision square roots... 
-Sum "{ 8.33011e+07, 8.33144e+07, 8.34719e+07, 8.34006e+07, 8.33349e+07, 8.35005e+07, 8.33811e+07, 8.33624e+07 }" 
-took 2584 ms 
-Speed is 0.773994 GFLOPS 
+Took 54 ms 
+Calculating the coulomb energy using floats... 
+Energies "{ -9263.12, 70490, -90430, -36133.5, -51843.8, -2367.92, -5558.97, 74504.6 }" TOTAL -50602.6 
+took 542 ms 
+Speed is 13.8376 GFLOPS 
+Calculating the coulomb energy using doubles... 
+Energies "{ -9263.14, 70489.9, -90430.1, -36133.5, -51843.9, -2367.94, -5559, 74504.8 }" TOTAL -50602.7 
+took 6555 ms 
+Speed is 1.14416 GFLOPS 
 
-SSE2
-Creating an array of 1000000 random floating point numbers... 
+AVX, don't check alignment
+Calculating the coulomb energy between two groups of 25000 particles. This involves calculating and summing  625000000 coulomb interaction energies. 
 Generating the random numbers... 
-Generating the random numbers took 30 ms 
+Generating the random numbers took 7 ms 
 Converting to MultiFloat... 
-Took 947 ms 
+Took 1 ms 
 Converting to MultiDouble... 
-Took 942 ms 
-Calculating all of the floating point square roots... 
-Sum "{ 1.67772e+07, 1.67772e+07, 1.67772e+07, 1.67772e+07 }" 
-took 922 ms 
-Speed is 2.1692 GFLOPS 
-Calculating all of the double precision square roots... 
-Sum "{ 1.6677e+08, 1.66655e+08, 1.6689e+08, 1.66598e+08 }" 
-took 2554 ms 
-Speed is 0.783085 GFLOPS 
+Took 53 ms 
+Calculating the coulomb energy using floats... 
+Energies "{ -9263.12, 70490, -90430, -36133.5, -51843.8, -2367.92, -5558.97, 74504.6 }" TOTAL -50602.6 
+took 539 ms 
+Speed is 13.9147 GFLOPS 
+Calculating the coulomb energy using doubles... 
+Energies "{ -9263.14, 70489.9, -90430.1, -36133.5, -51843.9, -2367.94, -5559, 74504.8 }" TOTAL -50602.7 
+took 5541 ms 
+Speed is 1.35355 GFLOPS 
 
-No explicit SSE or AVX
-Creating an array of 10000 random floating point numbers... 
+SSE, check alignment
+Calculating the coulomb energy between two groups of 25000 particles. This involves calculating and summing  625000000 coulomb interaction energies. 
 Generating the random numbers... 
-Generating the random numbers took 1 ms 
+Generating the random numbers took 7 ms 
 Converting to MultiFloat... 
-Took 5 ms 
+Took 0 ms 
 Converting to MultiDouble... 
-Took 5 ms 
-Calculating all of the floating point square roots... 
-Sum "{ 842884, 836328, 834415, 833753, 823742, 825647, 823186, 827769 }" 
-took 2381 ms 
-Speed is 0.00839983 GFLOPS 
-Calculating all of the double precision square roots... 
-Sum "{ 843044, 836332, 834120, 833585, 823668, 825363, 823012, 827692 }" 
-took 2370 ms 
-Speed is 0.00843882 GFLOPS 
+Took 107 ms 
+Calculating the coulomb energy using floats... 
+Energies "{ -61106.9, 68122.1, -95988.9, 38371.1 }" TOTAL -50602.6 
+took 589 ms 
+Speed is 12.7334 GFLOPS 
+Calculating the coulomb energy using doubles... 
+Energies "{ -61107, 68122, -95989.1, 38371.4 }" TOTAL -50602.7 
+took 5645 ms 
+Speed is 1.32861 GFLOPS 
+
+SSE, don't check alignment
+Calculating the coulomb energy between two groups of 25000 particles. This involves calculating and summing  625000000 coulomb interaction energies. 
+Generating the random numbers... 
+Generating the random numbers took 6 ms 
+Converting to MultiFloat... 
+Took 1 ms 
+Converting to MultiDouble... 
+Took 106 ms 
+Calculating the coulomb energy using floats... 
+Energies "{ -61106.9, 68122.1, -95988.9, 38371.1 }" TOTAL -50602.6 
+took 590 ms 
+Speed is 12.7119 GFLOPS 
+Calculating the coulomb energy using doubles... 
+Energies "{ -61107, 68122, -95989.1, 38371.4 }" TOTAL -50602.7 
+took 5217 ms 
+Speed is 1.43761 GFLOPS 
+
+Vanilla code, check alignment
+Calculating the coulomb energy between two groups of 25000 particles. This involves calculating and summing  625000000 coulomb interaction energies. 
+Generating the random numbers... 
+Generating the random numbers took 6 ms 
+Converting to MultiFloat... 
+Took 1 ms 
+Converting to MultiDouble... 
+Took 51 ms 
+Calculating the coulomb energy using floats... 
+Energies "{ -9263.14, 70489.9, -90430.1, -36133.5, -51843.9, -2367.94, -5559, 74504.8 }" TOTAL -50602.7 
+took 7357 ms 
+Speed is 1.01944 GFLOPS 
+Calculating the coulomb energy using doubles... 
+Energies "{ -9263.14, 70489.9, -90430.1, -36133.5, -51843.9, -2367.94, -5559, 74504.8 }" TOTAL -50602.7 
+took 10082 ms 
+Speed is 0.7439 GFLOPS 
+
+Vanilla code, don't check alignment
+Calculating the coulomb energy between two groups of 25000 particles. This involves calculating and summing  625000000 coulomb interaction energies. 
+Generating the random numbers... 
+Generating the random numbers took 6 ms 
+Converting to MultiFloat... 
+Took 1 ms 
+Converting to MultiDouble... 
+Took 54 ms 
+Calculating the coulomb energy using floats... 
+Energies "{ -9263.14, 70489.9, -90430.1, -36133.5, -51843.9, -2367.94, -5559, 74504.8 }" TOTAL -50602.7 
+took 8326 ms 
+Speed is 0.900793 GFLOPS 
+Calculating the coulomb energy using doubles... 
+Energies "{ -9263.14, 70489.9, -90430.1, -36133.5, -51843.9, -2367.94, -5559, 74504.8 }" TOTAL -50602.7 
+took 12035 ms 
+Speed is 0.623182 GFLOPS 

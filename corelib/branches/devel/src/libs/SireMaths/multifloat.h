@@ -38,6 +38,9 @@
 //#define SIRE_USE_SSE 1
 //#undef SIRE_USE_SSE
 
+#define MULTIFLOAT_CHECK_ALIGNMENT 1
+//#undef MULTIFLOAT_CHECK_ALIGNMENT
+
 #ifdef SIRE_USE_AVX
     #ifdef __AVX__
         #include <immintrin.h>   // CONDITIONAL_INCLUDE
@@ -197,7 +200,13 @@ private:
     friend class MultiDouble;
     friend class MultiFixed;
 
+    static void assertAligned(const void *ptr, size_t size);
+
     #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+        #ifndef MULTIFLOAT_CHECK_ALIGNMENT
+            void assertAligned(){}
+        #endif
 
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
         union
@@ -212,6 +221,13 @@ private:
         {
             v.x = avx_val;
         }
+            #ifdef MULTIFLOAT_CHECK_ALIGNMENT
+                void assertAligned()
+                {
+                    if (uintptr_t(this) % 32 != 0)
+                        assertAligned(this, 32);
+                }
+            #endif
         #endif
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
@@ -227,6 +243,13 @@ private:
         {
             v.x = sse_val;
         }
+            #ifdef MULTIFLOAT_CHECK_ALIGNMENT
+                void assertAligned()
+                {
+                    if (uintptr_t(this) % 16 != 0)
+                        assertAligned(this, 16);
+                }
+            #endif
         #endif
     #else
         __declspec(align(32)) union
@@ -242,6 +265,13 @@ private:
             const unsigned int x = 0xFFFFFFFF;
             return *(reinterpret_cast<const float*>(&x));
         }
+            #ifdef MULTIFLOAT_CHECK_ALIGNMENT
+                void assertAligned()
+                {
+                    if (uintptr_t(this) % 32 != 0)
+                        assertAligned(this, 32);
+                }
+            #endif
         #endif
     #endif
     #endif
@@ -253,6 +283,94 @@ private:
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+static const MultiFloat MULTIFLOAT_ONE(1);
+
+/** Constructor. This creates a MultiFloat with an undefined initial state */
+inline
+MultiFloat::MultiFloat()
+{
+    assertAligned();
+
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        v.x = _mm256_set1_ps(0);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_set1_ps(0);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = 0;
+        }
+    #endif
+    #endif
+}
+
+/** Construct a MultiFloat with all values equal to 'val' */
+inline
+MultiFloat::MultiFloat(float val)
+{
+    assertAligned();
+
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        v.x = _mm256_set1_ps(val);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_set1_ps(val);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = val;
+        }
+    #endif
+    #endif
+}
+
+/** Copy constructor */
+inline
+MultiFloat::MultiFloat(const MultiFloat &other)
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        v.x = other.v.x;
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = other.v.x;
+    #else
+       for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+       {
+           v.a[i] = other.v.a[i];
+       }
+    #endif
+    #endif
+}
+
+/** Assignment operator */
+inline
+MultiFloat& MultiFloat::operator=(const MultiFloat &other)
+{
+    if (this != &other)
+    {
+        #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+            v.x = other.v.x;
+        #else
+        #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+            v.x = other.v.x;
+        #else
+            for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+            {
+                v.a[i] = other.v.a[i];
+            }
+        #endif
+        #endif
+    }
+    
+    return *this;
+}
+
+/** Destructor */
+inline
+MultiFloat::~MultiFloat()
+{}
 
 /** Comparison operator. This will return a MultiFloat with elements
     set to zero for each float that is not equal */
@@ -880,12 +998,7 @@ MultiFloat MultiFloat::reciprocal() const
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiFloat( _mm_rcp_ps(v.x) );
     #else
-        MultiFloat ret;
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            ret.v.a[i] = float(1) / v.a[i];
-        }
-        return ret;
+        return MULTIFLOAT_ONE.operator/(*this);
     #endif
     #endif
 }
@@ -920,12 +1033,7 @@ MultiFloat MultiFloat::rsqrt() const
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
         return MultiFloat( _mm_rsqrt_ps(v.x) );
     #else
-        MultiFloat ret;
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            ret.v.a[i] = float(1) / std::sqrt(v.a[i]);
-        }
-        return ret;
+        return MULTIFLOAT_ONE.operator/(this->sqrt());
     #endif
     #endif
 }

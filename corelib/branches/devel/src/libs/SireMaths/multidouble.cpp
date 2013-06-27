@@ -79,48 +79,14 @@ using namespace SireMaths;
 #endif
 #endif
 
-/** Constructor. This initialises the float to 0 */
-MultiDouble::MultiDouble()
+void MultiDouble::assertAligned(const void *ptr, size_t size)
 {
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        assertAligned32(this, CODELOC);
-        v.x[0] = _mm256_set1_pd(0);
-        v.x[1] = _mm256_set1_pd(0);
-    #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        assertAligned16(this, CODELOC);
-        v.x[0] = _mm_set1_pd(0);
-        v.x[1] = _mm_set1_pd(0);
-    #else
-        assertAligned32(this, CODELOC);
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            v.a[i] = 0;
-        }
-    #endif
-    #endif
-}
-
-/** Construct a vector with all values equal to 'val' */
-MultiDouble::MultiDouble(double val)
-{
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        assertAligned32(this, CODELOC);
-        v.x[0] = _mm256_set1_pd(val);
-        v.x[1] = _mm256_set1_pd(val);
-    #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        assertAligned16(this, CODELOC);
-        v.x[0] = _mm_set1_pd(val);
-        v.x[1] = _mm_set1_pd(val);
-    #else
-        assertAligned32(this, CODELOC);
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            v.a[i] = val;
-        }
-    #endif
-    #endif
+    if ( (uintptr_t)ptr % size != 0 )
+        throw SireError::program_bug( QObject::tr(
+                "An unaligned MultiDouble has been created! %1, %2, %3")
+                    .arg((uintptr_t)ptr)
+                    .arg((uintptr_t)ptr % size)
+                    .arg(size), CODELOC );
 }
 
 /** Construct from the passed array. If size is greater than MultiDouble::size()
@@ -249,105 +215,6 @@ MultiDouble::MultiDouble(const QVector<double> &array)
 
     this->operator=( MultiDouble(array.constData(), array.size()) );
 }
-
-/** Copy construct from a MultiFloat */
-MultiDouble::MultiDouble(const MultiFloat &other)
-{
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        assertAligned32(this, CODELOC);
-    
-        const __m128 *o = (const __m128*)&(other.v.x);
-    
-        v.x[0] = _mm256_cvtps_pd( o[0] );
-        v.x[1] = _mm256_cvtps_pd( o[1] );
-    #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        assertAligned16(this, CODELOC);
-    
-        v.x[0] = _mm_cvtps_pd( other.v.x );
-        v.x[1] = _mm_cvtps_pd( _mm_movehl_ps(other.v.x,other.v.x) );
-    #else
-        assertAligned32(this, CODELOC);
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            v.a[i] = other.v.a[i];
-        }
-    #endif
-    #endif
-}
-
-/** Copy constructor */
-MultiDouble::MultiDouble(const MultiDouble &other)
-{
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        assertAligned32(this, CODELOC);
-        v.x[0] = other.v.x[0];
-        v.x[1] = other.v.x[1];
-    #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        assertAligned16(this,CODELOC);
-        v.x[0] = other.v.x[0];
-        v.x[1] = other.v.x[1];
-    #else
-        assertAligned32(this, CODELOC);
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            v.a[i] = other.v.a[i];
-        }
-    #endif
-    #endif
-}
-
-/** Assignment operator */
-MultiDouble& MultiDouble::operator=(const MultiDouble &other)
-{
-    if (this != &other)
-    {
-        #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-            v.x[0] = other.v.x[0];
-            v.x[1] = other.v.x[1];
-        #else
-        #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-            v.x[0] = other.v.x[0];
-            v.x[1] = other.v.x[1];
-        #else
-            for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-            {
-                v.a[i] = other.v.a[i];
-            }
-        #endif
-        #endif
-    }
-    
-    return *this;
-}
-
-/** Assignment operator */
-MultiDouble& MultiDouble::operator=(const MultiFloat &other)
-{
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        const __m128 *o = (const __m128*)&(other.v.x);
-    
-        v.x[0] = _mm256_cvtps_pd( o[0] );
-        v.x[1] = _mm256_cvtps_pd( o[1] );
-    #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        v.x[0] = _mm_cvtps_pd( other.v.x );
-        v.x[1] = _mm_cvtps_pd( _mm_movehl_ps(other.v.x,other.v.x) );
-    #else
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            v.a[i] = other.v.a[i];
-        }
-    #endif
-    #endif
-
-    return *this;
-}
-
-/** Destructor */
-MultiDouble::~MultiDouble()
-{}
 
 /** Return whether or not this MultiDouble is correctly aligned. If it is not,
     then any SSE/AVX operations will fail */

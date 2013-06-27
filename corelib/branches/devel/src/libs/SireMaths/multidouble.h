@@ -156,7 +156,13 @@ private:
     friend class MultiFloat;
     friend class MultiFixed;
 
+    static void assertAligned(const void *ptr, size_t alignment);
+
     #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+    #ifndef MULTIFLOAT_CHECK_ALIGNMENT
+        void assertAligned(){}
+    #endif
 
     #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
         union
@@ -171,6 +177,14 @@ private:
             v.x[0] = avx_val0;
             v.x[1] = avx_val1;
         }
+    
+            #ifdef MULTIFLOAT_CHECK_ALIGNMENT
+                void assertAligned()
+                {
+                    if ((uintptr_t)this % 32 != 0)
+                        assertAligned(this, 32);
+                }
+            #endif
         #endif
     #else
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
@@ -186,6 +200,14 @@ private:
             v.x[0] = sse_val0;
             v.x[1] = sse_val1;
         }
+
+            #ifdef MULTIFLOAT_CHECK_ALIGNMENT
+                void assertAligned()
+                {
+                    if ((uintptr_t)this % 16 != 0)
+                        assertAligned(this, 16);
+                }
+            #endif
         #endif
     #else
         __declspec(align(32)) union
@@ -200,6 +222,14 @@ private:
             const quint64 x = 0xFFFFFFFFFFFFFFFF;
             return *(reinterpret_cast<const double*>(&x));
         }
+    
+            #ifdef MULTIFLOAT_CHECK_ALIGNMENT
+                void assertAligned()
+                {
+                    if ((uintptr_t)this % 32 != 0)
+                        assertAligned(this, 32);
+                }
+            #endif
         #endif
     #endif
     #endif
@@ -208,6 +238,185 @@ private:
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+static const MultiDouble MULTIDOUBLE_ONE(1);
+
+/** Constructor. This creates a MultiDouble with an undefined initial state */
+inline
+MultiDouble::MultiDouble()
+{
+    assertAligned();
+}
+
+/** Construct a vector with all values equal to 'val' */
+inline
+MultiDouble::MultiDouble(double val)
+{
+    assertAligned();
+
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        v.x[0] = _mm256_set1_pd(val);
+        v.x[1] = _mm256_set1_pd(val);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x[0] = _mm_set1_pd(val);
+        v.x[1] = _mm_set1_pd(val);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = val;
+        }
+    #endif
+    #endif
+}
+
+/** Copy construct from a MultiFloat */
+inline
+MultiDouble::MultiDouble(const MultiFloat &other)
+{
+    assertAligned();
+
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        const __m128 *o = (const __m128*)&(other.v.x);
+    
+        v.x[0] = _mm256_cvtps_pd( o[0] );
+        v.x[1] = _mm256_cvtps_pd( o[1] );
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x[0] = _mm_cvtps_pd( other.v.x );
+        v.x[1] = _mm_cvtps_pd( _mm_movehl_ps(other.v.x,other.v.x) );
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = other.v.a[i];
+        }
+    #endif
+    #endif
+}
+
+/** Copy construct from a MultiDouble */
+inline
+MultiFloat::MultiFloat(const MultiDouble &other)
+{
+    assertAligned();
+
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        __m128 *o = (__m128*)&(v.x);
+    
+        o[0] = _mm256_cvtpd_ps(other.v.x[0]);
+        o[1] = _mm256_cvtpd_ps(other.v.x[1]);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_movelh_ps( _mm_cvtpd_ps(other.v.x[0]),
+                             _mm_cvtpd_ps(other.v.x[1]) );
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = other.v.a[i];
+        }
+    #endif
+    #endif
+}
+
+/** Copy constructor */
+inline
+MultiDouble::MultiDouble(const MultiDouble &other)
+{
+    assertAligned();
+
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        v.x[0] = other.v.x[0];
+        v.x[1] = other.v.x[1];
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x[0] = other.v.x[0];
+        v.x[1] = other.v.x[1];
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = other.v.a[i];
+        }
+    #endif
+    #endif
+}
+
+/** Destructor */
+inline
+MultiDouble::~MultiDouble()
+{}
+
+/** Assignment operator */
+inline
+MultiDouble& MultiDouble::operator=(const MultiDouble &other)
+{
+    if (this != &other)
+    {
+        #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+            v.x[0] = other.v.x[0];
+            v.x[1] = other.v.x[1];
+        #else
+        #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+            v.x[0] = other.v.x[0];
+            v.x[1] = other.v.x[1];
+        #else
+            for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+            {
+                v.a[i] = other.v.a[i];
+            }
+        #endif
+        #endif
+    }
+    
+    return *this;
+}
+
+/** Assignment operator */
+inline
+MultiFloat& MultiFloat::operator=(const MultiDouble &other)
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        __m128 *o = (__m128*)&(v.x);
+    
+        o[0] = _mm256_cvtpd_ps(other.v.x[0]);
+        o[1] = _mm256_cvtpd_ps(other.v.x[1]);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_movelh_ps( _mm_cvtpd_ps(other.v.x[0]),
+                             _mm_cvtpd_ps(other.v.x[1]) );
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = other.v.a[i];
+        }
+    #endif
+    #endif
+
+    return *this;
+}
+
+/** Assignment operator */
+inline
+MultiDouble& MultiDouble::operator=(const MultiFloat &other)
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        const __m128 *o = (const __m128*)&(other.v.x);
+    
+        v.x[0] = _mm256_cvtps_pd( o[0] );
+        v.x[1] = _mm256_cvtps_pd( o[1] );
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x[0] = _mm_cvtps_pd( other.v.x );
+        v.x[1] = _mm_cvtps_pd( _mm_movehl_ps(other.v.x,other.v.x) );
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = other.v.a[i];
+        }
+    #endif
+    #endif
+
+    return *this;
+}
 
 /** Comparison operator. This will return a MultiDouble with elements
     set to zero for each double that is not equal */
@@ -877,20 +1086,7 @@ MultiDouble MultiDouble::min(const MultiDouble &other) const
 inline
 MultiDouble MultiDouble::reciprocal() const
 {
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiDouble(1) / *this;
-    #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiDouble(1) / *this;
-    #else
-        MultiDouble ret;
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            ret.v.a[i] = double(1) / v.a[i];
-        }
-        return ret;
-    #endif
-    #endif
+    return MULTIDOUBLE_ONE.operator/(*this);
 }
 
 /** Return the square root of this vector */
@@ -919,20 +1115,7 @@ MultiDouble MultiDouble::sqrt() const
 inline
 MultiDouble MultiDouble::rsqrt() const
 {
-    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
-        return MultiDouble(1) / this->sqrt();
-    #else
-    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        return MultiDouble(1) / this->sqrt();
-    #else
-        MultiDouble ret;
-        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
-        {
-            ret.v.a[i] = double(1) / std::sqrt(v.a[i]);
-        }
-        return ret;
-    #endif
-    #endif
+    return MULTIDOUBLE_ONE.operator/(this->sqrt());
 }
 
 /** Rotate this vector. This moves each element one space to the left, moving the
