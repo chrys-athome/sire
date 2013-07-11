@@ -3219,7 +3219,7 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
             return;
 
         if (use_electrostatic_shifting)
-        {
+          {
             double sRcoul[nalpha];
             double one_over_sRcoul[nalpha];
             double one_over_sRcoul2[nalpha];
@@ -3856,6 +3856,7 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                 }
             }
         }
+      }//JM
     }
 }
 
@@ -4156,6 +4157,7 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                     }
                 }
             }
+	  }
         } 
     }
     else
@@ -4548,6 +4550,7 @@ void IntraSoftCLJPotential::_pvt_calculateEnergy(const CLJNBPairs::CGPairs &grou
                 }
             }
         }
+      }
     }
 }
 

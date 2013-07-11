@@ -952,7 +952,9 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
             atom1 = " " ;
             atom2 = " ";
             atom3 = " ";
-
+	    
+	    init_form.clear();
+	    final_form.clear();
             init_form.clear();
             final_form.clear();
             init_pot = Expression(0);

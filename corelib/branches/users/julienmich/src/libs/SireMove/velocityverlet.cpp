@@ -243,7 +243,3 @@ const char* VelocityVerlet::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<VelocityVerlet>() );
 }
-
-
-
-
