@@ -184,7 +184,8 @@ def has_clone_function(t):
     c = None
 
     try:
-        c = mb.class_( string.join(str(t.base).split(" ")[0:-1], " ").split("::")[1] )
+        fullname = string.join(str(t.base).split(" ")[0:-1])
+        c = find_class(mb, fullname)
     except:
         print "WARNING!!! Couldn't find the class for %s" % (t)
         return False
@@ -211,8 +212,8 @@ def fix_Index_T_(c):
    except:
        pass
 
-
 has_copy_function = {}
+
 
 def export_class(mb, classname, aliases, includes, special_code, auto_str_function=True):
    """Do all the work necessary to allow the class called 'classname'
@@ -347,7 +348,6 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
    #if this class can be streamed to a QDataStream then add
    #streaming operators
    if has_datastream_operators(mb,c):
-       print "%s has streaming operators!" % c
        c.add_declaration_code( "#include \"Qt/qdatastream.hpp\"" )
 
        c.add_registration_code(
@@ -567,10 +567,10 @@ if __name__ == "__main__":
 
     #construct a module builder that will build all of the wrappers for this module
     mb = module_builder_t( files = [ "active_headers.h" ],
-                           #cflags = "-m64",
+                           cflags = "-m64",
                            include_paths = sire_include_dirs + qt_include_dirs +
-                                           boost_include_dirs + gsl_include_dirs +
-                                           openmm_include_dirs,
+                                           openmm_include_dirs + 
+                                           boost_include_dirs + gsl_include_dirs,
                            define_symbols = ["GCCXML_PARSE",
                                              "SIRE_USE_OPENMM",
                                              "SIRE_SKIP_INLINE_FUNCTIONS",
