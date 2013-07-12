@@ -82,6 +82,8 @@ public:
     bool isCompound() const;
 
     QString toString() const;
+    QString toOpenMMString() const;
+
 
     Expression substitute(const Identities &identities) const;
     Symbols symbols() const;

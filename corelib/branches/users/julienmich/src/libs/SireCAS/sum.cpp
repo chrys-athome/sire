@@ -180,6 +180,54 @@ QString Sum::toString() const
     return ret;
 }
 
+/** Return a string representation of the sum */
+QString Sum::toOpenMMString() const
+{
+    if (posparts.count() == 0 and negparts.count() == 0)
+        return QString::number(strtval);
+
+    QString ret;
+
+    int i = 0;
+
+    for (QHash<ExpressionBase,Expression>::const_iterator it = posparts.begin();
+         it != posparts.end();
+         ++it)
+    {
+        if (i == 0)
+            ret = it->toOpenMMString();
+        else
+            ret = QString("%1 + %2").arg(ret,it->toOpenMMString());
+
+        ++i;
+    }
+
+    for (QHash<ExpressionBase,Expression>::const_iterator it = negparts.begin();
+         it != negparts.end();
+         ++it)
+    {
+        if (i == 0)
+            ret = QString("-%1").arg(it->toOpenMMString());
+        else
+            ret = QString("%1 - %2").arg(ret,it->toOpenMMString());
+
+        ++i;
+    }
+
+    if (not SireMaths::isZero(strtval))
+    {
+        if (i == 0)
+            ret = QString::number(strtval);
+        else if (strtval < 0)
+            ret = QString("%1 - %2").arg(ret).arg(-strtval);
+        else
+            ret = QString("%1 + %2").arg(ret).arg(strtval);
+    }
+
+    return ret;
+}
+
+
 /** Remove the current version of 'ex', which will contain its current factor.
     Expression(0) will be returned if this expression is not in this Sum. */
 Expression Sum::take(const ExpressionBase &ex)

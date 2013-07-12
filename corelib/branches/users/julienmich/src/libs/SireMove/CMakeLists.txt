@@ -11,7 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMove
 set ( SIREMOVE_HEADERS
-      dlmrigidbody.h
+#      dlmrigidbody.h
       dynamics.h
       ensemble.h
       errors.h
@@ -19,7 +19,7 @@ set ( SIREMOVE_HEADERS
       fastio.h
       flexibility.h
       gibbsmove.h
-      hybridmc.h
+#      hybridmc.h
       integrator.h
       integratorworkspace.h
       integratorworkspacejm.h
@@ -64,7 +64,10 @@ set ( SIREMOVE_HEADERS
     )
 
 set ( SIREMOVE_OPENMM_HEADERS
-      openmmintegrator.h
+      dcd_writer.h      
+#      openmmfrenergydt.h
+      openmmfrenergyst.h      
+#      openmmintegrator.h
       openmmmdintegrator.h
       openmmfrenergydt.h
       openmmfrenergyst.h
@@ -73,7 +76,10 @@ set ( SIREMOVE_OPENMM_HEADERS
     )
 
 set ( SIREMOVE_OPENMM_SOURCES
-      openmmintegrator.cpp
+      dcd_writer.cpp      
+#      openmmfrenergydt.cpp
+      openmmfrenergyst.cpp 
+#      openmmintegrator.cpp
       openmmmdintegrator.cpp
       openmmfrenergydt.cpp
       openmmfrenergyst.cpp
@@ -91,15 +97,14 @@ set ( SIREMOVE_DEPRECATED_HEADERS
 set ( SIREMOVE_SOURCES
 
       register_siremove.cpp
-
-      dlmrigidbody.cpp
+#      dlmrigidbody.cpp
       dynamics.cpp
       ensemble.cpp
       errors.cpp
       getpoint.cpp
       flexibility.cpp
       gibbsmove.cpp
-      hybridmc.cpp
+#      hybridmc.cpp
       integrator.cpp
       integratorworkspace.cpp
       integratorworkspacejm.cpp

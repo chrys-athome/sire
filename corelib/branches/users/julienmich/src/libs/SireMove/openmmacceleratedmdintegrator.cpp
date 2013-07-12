@@ -917,7 +917,7 @@ void OpenMMAMDIntegrator::initialise()  {
     this->isInitialised = true;
 }
 
-void OpenMMAMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) const {
+void OpenMMAMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
 
   bool Debug = false; 
 

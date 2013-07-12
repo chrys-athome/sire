@@ -420,7 +420,7 @@ void MolecularDynamics::move(System &system, int nmoves, bool record_stats)
     {
         wspace.edit().setSystem(system);
 
-        intgrator.read().integrate(wspace.edit(), this->energyComponent(),
+        intgrator.edit().integrate(wspace.edit(), this->energyComponent(),
                                    timestep, nmoves, record_stats);
 
         system = wspace.read().system();

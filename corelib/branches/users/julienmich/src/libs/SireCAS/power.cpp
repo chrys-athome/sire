@@ -137,6 +137,71 @@ QString PowerFunction::toString() const
     }
 }
 
+
+
+/** Return a string representation of this power in the OpenMM syntax */
+QString PowerFunction::toOpenMMString() const
+{
+    Expression pwr = power();
+
+    if (pwr.isZero())
+        return "1";
+    else
+    {
+        Expression ex = core();
+
+        if (pwr.isConstant() and ex.isConstant())
+            return this->evaluate(ComplexValues()).toString();
+        else if (pwr.isConstant())
+        {
+            Complex pwrval = pwr.evaluate(ComplexValues());
+
+            if (pwrval.isReal())
+            {
+                double realpwr = pwrval.real();
+
+                if ( SireMaths::areEqual(realpwr,1.0) )
+                    return ex.toOpenMMString();
+                else if (ex.isCompound())
+                    return QString("(%1)^%2").arg(ex.toOpenMMString()).arg(realpwr);
+                else
+                    return QString("%1^%2").arg(ex.toOpenMMString()).arg(realpwr);
+            }
+            else if ( SireMaths::isZero(pwrval.real()) )
+            {
+                if ( ex.isCompound() )
+                    return QString("(%1)^%2").arg(ex.toOpenMMString(),pwrval.toString());
+                else
+                    return QString("%1^%2").arg(ex.toOpenMMString(),pwrval.toString());
+            }
+            else
+            {
+                if ( ex.isCompound() )
+                    return QString("(%1)^(%2)").arg(ex.toOpenMMString(),pwrval.toString());
+                else
+                    return QString("%1^(%2)").arg(ex.toOpenMMString(),pwrval.toString());
+            }
+        }
+        else
+        {
+            QString ret;
+            if (ex.isConstant())
+                ret = ex.evaluate(ComplexValues()).toString();
+            else if (ex.isCompound())
+                ret = QString("(%1)").arg(ex.toOpenMMString());
+            else
+                ret = ex.toString();
+
+            if (pwr.isCompound())
+                return QString("%1^(%2)").arg(ret, pwr.toOpenMMString());
+            else
+                return QString("%1^%2").arg(ret, pwr.toOpenMMString());
+        }
+    }
+}
+
+
+
 /** Return this expression with the supplied substitutions */
 Expression PowerFunction::substitute(const Identities &identities) const
 {

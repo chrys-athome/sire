@@ -143,6 +143,9 @@ public:
     virtual bool isComplex() const;
     virtual bool isCompound() const;
 
+    /** Return a string representation of this object in the OpenMM syntax*/
+    virtual QString toOpenMMString() const;
+
     ///////
     /////// Pure-virtual functions - these must be overridden
     /////// in your derived class
@@ -167,6 +170,7 @@ public:
 
     /** Return a string representation of this object */
     virtual QString toString() const=0;
+
 
     /** Return a clone of this object */
     virtual ExBase* clone() const=0;
