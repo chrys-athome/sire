@@ -43,8 +43,9 @@ void register_IDOrSet_MGID__class(){
 
     { //::SireID::IDOrSet< SireMol::MGID >
         typedef bp::class_< SireID::IDOrSet< SireMol::MGID >, bp::bases< SireMol::MGID, SireID::ID > > IDOrSet_MGID__exposer_t;
-        IDOrSet_MGID__exposer_t IDOrSet_MGID__exposer = IDOrSet_MGID__exposer_t( "IDOrSet_MGID_", bp::init< >() );
+        IDOrSet_MGID__exposer_t IDOrSet_MGID__exposer = IDOrSet_MGID__exposer_t( "IDOrSet_MGID_" );
         bp::scope IDOrSet_MGID__scope( IDOrSet_MGID__exposer );
+        IDOrSet_MGID__exposer.def( bp::init< >() );
         IDOrSet_MGID__exposer.def( bp::init< SireMol::MGID const & >(( bp::arg("id") )) );
         IDOrSet_MGID__exposer.def( bp::init< SireMol::MGID const &, SireMol::MGID const & >(( bp::arg("id0"), bp::arg("id1") )) );
         IDOrSet_MGID__exposer.def( bp::init< QList< SireMol::MGIdentifier > const & >(( bp::arg("ids") )) );

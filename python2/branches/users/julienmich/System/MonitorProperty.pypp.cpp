@@ -40,8 +40,9 @@ void register_MonitorProperty_class(){
 
     { //::SireSystem::MonitorProperty
         typedef bp::class_< SireSystem::MonitorProperty, bp::bases< SireSystem::SystemMonitor, SireBase::Property > > MonitorProperty_exposer_t;
-        MonitorProperty_exposer_t MonitorProperty_exposer = MonitorProperty_exposer_t( "MonitorProperty", bp::init< >() );
+        MonitorProperty_exposer_t MonitorProperty_exposer = MonitorProperty_exposer_t( "MonitorProperty" );
         bp::scope MonitorProperty_scope( MonitorProperty_exposer );
+        MonitorProperty_exposer.def( bp::init< >() );
         MonitorProperty_exposer.def( bp::init< QString const & >(( bp::arg("property") )) );
         MonitorProperty_exposer.def( bp::init< QString const &, SireMol::MoleculeGroup const & >(( bp::arg("property"), bp::arg("molgroup") )) );
         MonitorProperty_exposer.def( bp::init< QString const &, SireMol::MGID const & >(( bp::arg("property"), bp::arg("mgid") )) );

@@ -31,8 +31,9 @@ void register_IDAndSet_FFID__class(){
 
     { //::SireID::IDAndSet< SireFF::FFID >
         typedef bp::class_< SireID::IDAndSet< SireFF::FFID >, bp::bases< SireFF::FFID, SireID::ID > > IDAndSet_FFID__exposer_t;
-        IDAndSet_FFID__exposer_t IDAndSet_FFID__exposer = IDAndSet_FFID__exposer_t( "IDAndSet_FFID_", bp::init< >() );
+        IDAndSet_FFID__exposer_t IDAndSet_FFID__exposer = IDAndSet_FFID__exposer_t( "IDAndSet_FFID_" );
         bp::scope IDAndSet_FFID__scope( IDAndSet_FFID__exposer );
+        IDAndSet_FFID__exposer.def( bp::init< >() );
         IDAndSet_FFID__exposer.def( bp::init< SireFF::FFID const & >(( bp::arg("id") )) );
         IDAndSet_FFID__exposer.def( bp::init< SireFF::FFID const &, SireFF::FFID const & >(( bp::arg("id0"), bp::arg("id1") )) );
         IDAndSet_FFID__exposer.def( bp::init< QList< SireFF::FFIdentifier > const & >(( bp::arg("ids") )) );

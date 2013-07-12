@@ -27,8 +27,9 @@ void register_NumberProperty_class(){
 
     { //::SireBase::NumberProperty
         typedef bp::class_< SireBase::NumberProperty, bp::bases< SireBase::Property > > NumberProperty_exposer_t;
-        NumberProperty_exposer_t NumberProperty_exposer = NumberProperty_exposer_t( "NumberProperty", bp::init< >() );
+        NumberProperty_exposer_t NumberProperty_exposer = NumberProperty_exposer_t( "NumberProperty" );
         bp::scope NumberProperty_scope( NumberProperty_exposer );
+        NumberProperty_exposer.def( bp::init< >() );
         NumberProperty_exposer.def( bp::init< double >(( bp::arg("value") )) );
         NumberProperty_exposer.def( bp::init< int >(( bp::arg("value") )) );
         NumberProperty_exposer.def( bp::init< qint64 >(( bp::arg("value") )) );

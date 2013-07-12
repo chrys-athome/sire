@@ -84,8 +84,9 @@ void register_ForceFields_class(){
 
     { //::SireFF::ForceFields
         typedef bp::class_< SireFF::ForceFields, bp::bases< SireMol::MolGroupsBase, SireBase::Property > > ForceFields_exposer_t;
-        ForceFields_exposer_t ForceFields_exposer = ForceFields_exposer_t( "ForceFields", bp::init< >() );
+        ForceFields_exposer_t ForceFields_exposer = ForceFields_exposer_t( "ForceFields" );
         bp::scope ForceFields_scope( ForceFields_exposer );
+        ForceFields_exposer.def( bp::init< >() );
         ForceFields_exposer.def( bp::init< SireFF::FF const & >(( bp::arg("forcefield") )) );
         ForceFields_exposer.def( bp::init< QList< SireBase::PropPtr< SireFF::FF > > const & >(( bp::arg("forcefields") )) );
         ForceFields_exposer.def( bp::init< QVector< SireBase::PropPtr< SireFF::FF > > const & >(( bp::arg("forcefields") )) );

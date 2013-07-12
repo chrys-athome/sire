@@ -49,8 +49,9 @@ void register_LJParameterName_class(){
 
     { //::SireMM::LJParameterName
         typedef bp::class_< SireMM::LJParameterName > LJParameterName_exposer_t;
-        LJParameterName_exposer_t LJParameterName_exposer = LJParameterName_exposer_t( "LJParameterName", bp::init< >() );
+        LJParameterName_exposer_t LJParameterName_exposer = LJParameterName_exposer_t( "LJParameterName" );
         bp::scope LJParameterName_scope( LJParameterName_exposer );
+        LJParameterName_exposer.def( bp::init< >() );
         { //::SireMM::LJParameterName::lj
         
             typedef ::QString const & ( ::SireMM::LJParameterName::*lj_function_type )(  ) const;

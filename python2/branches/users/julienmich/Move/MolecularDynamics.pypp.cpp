@@ -83,7 +83,7 @@ void register_MolecularDynamics_class(){
             MolecularDynamics_exposer.def( 
                 "integrator"
                 , integrator_function_value
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , bp::return_value_policy< bp::clone_const_reference >() );
         
         }
         { //::SireMove::MolecularDynamics::kineticEnergy

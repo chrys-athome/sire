@@ -37,8 +37,9 @@ void register_AtomSelection_class(){
 
     { //::SireMol::AtomSelection
         typedef bp::class_< SireMol::AtomSelection, bp::bases< SireMol::MoleculeProperty, SireMol::MolViewProperty, SireBase::Property > > AtomSelection_exposer_t;
-        AtomSelection_exposer_t AtomSelection_exposer = AtomSelection_exposer_t( "AtomSelection", bp::init< >() );
+        AtomSelection_exposer_t AtomSelection_exposer = AtomSelection_exposer_t( "AtomSelection" );
         bp::scope AtomSelection_scope( AtomSelection_exposer );
+        AtomSelection_exposer.def( bp::init< >() );
         AtomSelection_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molecule") )) );
         AtomSelection_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         AtomSelection_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );

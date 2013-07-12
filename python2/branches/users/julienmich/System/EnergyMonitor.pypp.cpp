@@ -48,8 +48,9 @@ void register_EnergyMonitor_class(){
 
     { //::SireSystem::EnergyMonitor
         typedef bp::class_< SireSystem::EnergyMonitor, bp::bases< SireSystem::SystemMonitor, SireBase::Property > > EnergyMonitor_exposer_t;
-        EnergyMonitor_exposer_t EnergyMonitor_exposer = EnergyMonitor_exposer_t( "EnergyMonitor", bp::init< >() );
+        EnergyMonitor_exposer_t EnergyMonitor_exposer = EnergyMonitor_exposer_t( "EnergyMonitor" );
         bp::scope EnergyMonitor_scope( EnergyMonitor_exposer );
+        EnergyMonitor_exposer.def( bp::init< >() );
         EnergyMonitor_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireMol::MoleculeGroup const & >(( bp::arg("group0"), bp::arg("group1") )) );
         EnergyMonitor_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireMol::MoleculeGroup const &, SireMaths::Accumulator const & >(( bp::arg("group0"), bp::arg("group1"), bp::arg("accum") )) );
         EnergyMonitor_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireSystem::IDAssigner const & >(( bp::arg("group0"), bp::arg("group1") )) );

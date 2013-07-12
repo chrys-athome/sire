@@ -39,8 +39,9 @@ void register_FieldTable_class(){
 
     { //::SireFF::FieldTable
         typedef bp::class_< SireFF::FieldTable > FieldTable_exposer_t;
-        FieldTable_exposer_t FieldTable_exposer = FieldTable_exposer_t( "FieldTable", bp::init< >() );
+        FieldTable_exposer_t FieldTable_exposer = FieldTable_exposer_t( "FieldTable" );
         bp::scope FieldTable_scope( FieldTable_exposer );
+        FieldTable_exposer.def( bp::init< >() );
         FieldTable_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         FieldTable_exposer.def( bp::init< SireVol::Grid const & >(( bp::arg("grid") )) );
         FieldTable_exposer.def( bp::init< QVector< SireBase::PropPtr< SireVol::Grid > > const & >(( bp::arg("grids") )) );

@@ -38,8 +38,9 @@ void register_ComponentConstraint_class(){
 
     { //::SireSystem::ComponentConstraint
         typedef bp::class_< SireSystem::ComponentConstraint, bp::bases< SireSystem::Constraint, SireBase::Property > > ComponentConstraint_exposer_t;
-        ComponentConstraint_exposer_t ComponentConstraint_exposer = ComponentConstraint_exposer_t( "ComponentConstraint", bp::init< >() );
+        ComponentConstraint_exposer_t ComponentConstraint_exposer = ComponentConstraint_exposer_t( "ComponentConstraint" );
         bp::scope ComponentConstraint_scope( ComponentConstraint_exposer );
+        ComponentConstraint_exposer.def( bp::init< >() );
         ComponentConstraint_exposer.def( bp::init< SireCAS::Symbol const &, SireCAS::Expression const & >(( bp::arg("component"), bp::arg("expression") )) );
         ComponentConstraint_exposer.def( bp::init< SireSystem::ComponentConstraint const & >(( bp::arg("other") )) );
         { //::SireSystem::ComponentConstraint::component

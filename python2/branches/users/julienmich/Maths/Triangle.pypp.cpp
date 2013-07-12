@@ -27,8 +27,9 @@ void register_Triangle_class(){
 
     { //::SireMaths::Triangle
         typedef bp::class_< SireMaths::Triangle > Triangle_exposer_t;
-        Triangle_exposer_t Triangle_exposer = Triangle_exposer_t( "Triangle", bp::init< >() );
+        Triangle_exposer_t Triangle_exposer = Triangle_exposer_t( "Triangle" );
         bp::scope Triangle_scope( Triangle_exposer );
+        Triangle_exposer.def( bp::init< >() );
         Triangle_exposer.def( bp::init< SireMaths::Vector const &, SireMaths::Vector const &, SireMaths::Vector const & >(( bp::arg("point0"), bp::arg("point1"), bp::arg("point2") )) );
         Triangle_exposer.def( bp::init< SireMaths::Triangle const & >(( bp::arg("other") )) );
         { //::SireMaths::Triangle::angle

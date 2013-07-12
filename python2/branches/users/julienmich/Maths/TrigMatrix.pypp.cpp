@@ -41,8 +41,9 @@ void register_TrigMatrix_class(){
 
     { //::SireMaths::TrigMatrix
         typedef bp::class_< SireMaths::TrigMatrix > TrigMatrix_exposer_t;
-        TrigMatrix_exposer_t TrigMatrix_exposer = TrigMatrix_exposer_t( "TrigMatrix", bp::init< >() );
+        TrigMatrix_exposer_t TrigMatrix_exposer = TrigMatrix_exposer_t( "TrigMatrix" );
         bp::scope TrigMatrix_scope( TrigMatrix_exposer );
+        TrigMatrix_exposer.def( bp::init< >() );
         TrigMatrix_exposer.def( bp::init< int >(( bp::arg("dimension") )) );
         TrigMatrix_exposer.def( bp::init< int, double >(( bp::arg("dimension"), bp::arg("initial_value") )) );
         TrigMatrix_exposer.def( bp::init< SireMaths::NMatrix const &, bp::optional< bool > >(( bp::arg("matrix"), bp::arg("take_upper")=(bool)(true) )) );

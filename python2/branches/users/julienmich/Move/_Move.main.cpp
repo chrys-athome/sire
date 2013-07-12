@@ -7,8 +7,6 @@
 
 #include "Helpers/clone_const_reference.hpp"
 
-#include "DLMRigidBody.pypp.hpp"
-
 #include "DofID.pypp.hpp"
 
 #include "Dynamics.pypp.hpp"
@@ -22,12 +20,6 @@
 #include "GetCOMPoint.pypp.hpp"
 
 #include "GetPoint.pypp.hpp"
-
-#include "HMCGenerator.pypp.hpp"
-
-#include "HMCVelGen.pypp.hpp"
-
-#include "HybridMC.pypp.hpp"
 
 #include "Integrator.pypp.hpp"
 
@@ -71,7 +63,7 @@
 
 #include "OpenMMAMDIntegrator.pypp.hpp"
 
-#include "OpenMMIntegrator.pypp.hpp"
+#include "OpenMMFrEnergyST.pypp.hpp"
 
 #include "OpenMMMDIntegrator.pypp.hpp"
 
@@ -165,18 +157,12 @@ namespace bp = boost::python;
 
 #ifndef SIRE_USE_OPENMM
 void register_OpenMMIntegrator_class(){}
-void register_OpenMMMDIntegrator_class(){}
-void register_OpenMMAMDIntegrator_class(){}
 #endif
 
 BOOST_PYTHON_MODULE(_Move){
     register_SireMove_objects();
 
     register_SireMove_containers();
-
-    register_Integrator_class();
-
-    register_DLMRigidBody_class();
 
     register_DofID_class();
 
@@ -194,21 +180,17 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_GetCOMPoint_class();
 
-    register_VelocityGenerator_class();
-
-    register_HMCVelGen_class();
-
-    register_HMCGenerator_class();
+    register_Integrator_class();
 
     register_MonteCarlo_class();
-
-    register_HybridMC_class();
 
     register_InternalMove_class();
 
     register_InternalMoveSingle_class();
 
     register_MTSMC_class();
+
+    register_VelocityGenerator_class();
 
     register_MaxwellBoltzmann_class();
 
@@ -246,7 +228,7 @@ BOOST_PYTHON_MODULE(_Move){
 
     register_OpenMMAMDIntegrator_class();
 
-    register_OpenMMIntegrator_class();
+    register_OpenMMFrEnergyST_class();
 
     register_OpenMMMDIntegrator_class();
 

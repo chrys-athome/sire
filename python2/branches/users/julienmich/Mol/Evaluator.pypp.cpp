@@ -59,8 +59,9 @@ void register_Evaluator_class(){
 
     { //::SireMol::Evaluator
         typedef bp::class_< SireMol::Evaluator, bp::bases< SireMol::MoleculeView, SireBase::Property > > Evaluator_exposer_t;
-        Evaluator_exposer_t Evaluator_exposer = Evaluator_exposer_t( "Evaluator", bp::init< >() );
+        Evaluator_exposer_t Evaluator_exposer = Evaluator_exposer_t( "Evaluator" );
         bp::scope Evaluator_scope( Evaluator_exposer );
+        Evaluator_exposer.def( bp::init< >() );
         Evaluator_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molecule") )) );
         Evaluator_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         Evaluator_exposer.def( bp::init< SireMol::MoleculeView const &, SireMol::AtomSelection const & >(( bp::arg("molecule"), bp::arg("selected_atoms") )) );

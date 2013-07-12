@@ -63,8 +63,9 @@ void register_CGName_class(){
 
     { //::SireMol::CGName
         typedef bp::class_< SireMol::CGName, bp::bases< SireMol::CGID, SireID::ID, SireID::Name > > CGName_exposer_t;
-        CGName_exposer_t CGName_exposer = CGName_exposer_t( "CGName", bp::init< >() );
+        CGName_exposer_t CGName_exposer = CGName_exposer_t( "CGName" );
         bp::scope CGName_scope( CGName_exposer );
+        CGName_exposer.def( bp::init< >() );
         CGName_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         CGName_exposer.def( bp::init< QString const &, SireID::CaseSensitivity >(( bp::arg("name"), bp::arg("case_sensitivity") )) );
         CGName_exposer.def( bp::init< SireMol::CGName const & >(( bp::arg("other") )) );

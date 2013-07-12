@@ -26,8 +26,9 @@ void register_ChainsWithRes_class(){
 
     { //::SireMol::ChainsWithRes
         typedef bp::class_< SireMol::ChainsWithRes, bp::bases< SireMol::ChainID, SireID::ID > > ChainsWithRes_exposer_t;
-        ChainsWithRes_exposer_t ChainsWithRes_exposer = ChainsWithRes_exposer_t( "ChainsWithRes", bp::init< >() );
+        ChainsWithRes_exposer_t ChainsWithRes_exposer = ChainsWithRes_exposer_t( "ChainsWithRes" );
         bp::scope ChainsWithRes_scope( ChainsWithRes_exposer );
+        ChainsWithRes_exposer.def( bp::init< >() );
         ChainsWithRes_exposer.def( bp::init< SireMol::ResID const & >(( bp::arg("resid") )) );
         ChainsWithRes_exposer.def( bp::init< SireMol::ChainsWithRes const & >(( bp::arg("other") )) );
         { //::SireMol::ChainsWithRes::hash

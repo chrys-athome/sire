@@ -38,8 +38,9 @@ void register_DihedralPerturbation_class(){
 
     { //::SireMol::DihedralPerturbation
         typedef bp::class_< SireMol::DihedralPerturbation, bp::bases< SireMol::GeometryPerturbation, SireMol::Perturbation, SireBase::Property > > DihedralPerturbation_exposer_t;
-        DihedralPerturbation_exposer_t DihedralPerturbation_exposer = DihedralPerturbation_exposer_t( "DihedralPerturbation", bp::init< >() );
+        DihedralPerturbation_exposer_t DihedralPerturbation_exposer = DihedralPerturbation_exposer_t( "DihedralPerturbation" );
         bp::scope DihedralPerturbation_scope( DihedralPerturbation_exposer );
+        DihedralPerturbation_exposer.def( bp::init< >() );
         DihedralPerturbation_exposer.def( bp::init< SireMol::DihedralID const &, SireUnits::Dimension::Angle const &, SireUnits::Dimension::Angle const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("dihedral"), bp::arg("start"), bp::arg("end"), bp::arg("map")=SireBase::PropertyMap() )) );
         DihedralPerturbation_exposer.def( bp::init< SireMol::DihedralID const &, SireUnits::Dimension::Angle const &, SireUnits::Dimension::Angle const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("dihedral"), bp::arg("start"), bp::arg("end"), bp::arg("mapping_function"), bp::arg("map")=SireBase::PropertyMap() )) );
         DihedralPerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const &, SireUnits::Dimension::Angle const &, SireUnits::Dimension::Angle const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2"), bp::arg("atom3"), bp::arg("start"), bp::arg("end"), bp::arg("map")=SireBase::PropertyMap() )) );

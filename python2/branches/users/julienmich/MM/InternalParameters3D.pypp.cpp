@@ -41,8 +41,9 @@ void register_InternalParameters3D_class(){
 
     { //::SireMM::InternalParameters3D
         typedef bp::class_< SireMM::InternalParameters3D, bp::bases< SireMM::InternalParameters > > InternalParameters3D_exposer_t;
-        InternalParameters3D_exposer_t InternalParameters3D_exposer = InternalParameters3D_exposer_t( "InternalParameters3D", bp::init< >() );
+        InternalParameters3D_exposer_t InternalParameters3D_exposer = InternalParameters3D_exposer_t( "InternalParameters3D" );
         bp::scope InternalParameters3D_scope( InternalParameters3D_exposer );
+        InternalParameters3D_exposer.def( bp::init< >() );
         InternalParameters3D_exposer.def( bp::init< SireMol::PartialMolecule const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, bool >(( bp::arg("molecule"), bp::arg("coords_property"), bp::arg("bond_params"), bp::arg("angle_params"), bp::arg("dihedral_params"), bp::arg("improper_params"), bp::arg("ub_params"), bp::arg("ss_params"), bp::arg("sb_params"), bp::arg("bb_params"), bp::arg("sbt_params"), bp::arg("isstrict") )) );
         InternalParameters3D_exposer.def( bp::init< SireMM::InternalParameters3D const & >(( bp::arg("other") )) );
         { //::SireMM::InternalParameters3D::addChangedGroups

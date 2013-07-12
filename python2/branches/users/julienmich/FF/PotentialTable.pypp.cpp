@@ -39,8 +39,9 @@ void register_PotentialTable_class(){
 
     { //::SireFF::PotentialTable
         typedef bp::class_< SireFF::PotentialTable > PotentialTable_exposer_t;
-        PotentialTable_exposer_t PotentialTable_exposer = PotentialTable_exposer_t( "PotentialTable", bp::init< >() );
+        PotentialTable_exposer_t PotentialTable_exposer = PotentialTable_exposer_t( "PotentialTable" );
         bp::scope PotentialTable_scope( PotentialTable_exposer );
+        PotentialTable_exposer.def( bp::init< >() );
         PotentialTable_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         PotentialTable_exposer.def( bp::init< SireVol::Grid const & >(( bp::arg("grid") )) );
         PotentialTable_exposer.def( bp::init< QVector< SireBase::PropPtr< SireVol::Grid > > const & >(( bp::arg("grids") )) );
@@ -280,9 +281,9 @@ void register_PotentialTable_class(){
         PotentialTable_exposer.def( bp::self != bp::self );
         PotentialTable_exposer.def( bp::self * bp::other< double >() );
         PotentialTable_exposer.def( bp::self + bp::self );
-        PotentialTable_exposer.def( bp::self + bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, -1, 0 > >() );
+        PotentialTable_exposer.def( bp::self + bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > >() );
         PotentialTable_exposer.def( bp::self - bp::self );
-        PotentialTable_exposer.def( bp::self - bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -2, 0, 0, -1, 0 > >() );
+        PotentialTable_exposer.def( bp::self - bp::other< SireUnits::Dimension::PhysUnit< 1, 2, -0x00000000000000002, 0, 0, -0x00000000000000001, 0 > >() );
         PotentialTable_exposer.def( -bp::self );
         PotentialTable_exposer.def( bp::self / bp::other< double >() );
         { //::SireFF::PotentialTable::operator=

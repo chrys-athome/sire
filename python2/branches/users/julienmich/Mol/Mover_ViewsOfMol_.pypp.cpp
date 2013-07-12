@@ -91,8 +91,9 @@ void register_Mover_ViewsOfMol__class(){
 
     { //::SireMol::Mover< SireMol::ViewsOfMol >
         typedef bp::class_< SireMol::Mover< SireMol::ViewsOfMol >, bp::bases< SireMol::MoverBase, SireMol::ViewsOfMol, SireMol::MoleculeView, SireBase::Property > > Mover_ViewsOfMol__exposer_t;
-        Mover_ViewsOfMol__exposer_t Mover_ViewsOfMol__exposer = Mover_ViewsOfMol__exposer_t( "Mover_ViewsOfMol_", bp::init< >() );
+        Mover_ViewsOfMol__exposer_t Mover_ViewsOfMol__exposer = Mover_ViewsOfMol__exposer_t( "Mover_ViewsOfMol_" );
         bp::scope Mover_ViewsOfMol__scope( Mover_ViewsOfMol__exposer );
+        Mover_ViewsOfMol__exposer.def( bp::init< >() );
         Mover_ViewsOfMol__exposer.def( bp::init< SireMol::ViewsOfMol const & >(( bp::arg("view") )) );
         Mover_ViewsOfMol__exposer.def( bp::init< SireMol::ViewsOfMol const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_ViewsOfMol__exposer.def( bp::init< SireMol::Mover< SireMol::ViewsOfMol > const & >(( bp::arg("other") )) );

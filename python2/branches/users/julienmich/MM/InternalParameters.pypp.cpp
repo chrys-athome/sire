@@ -41,8 +41,9 @@ void register_InternalParameters_class(){
 
     { //::SireMM::InternalParameters
         typedef bp::class_< SireMM::InternalParameters > InternalParameters_exposer_t;
-        InternalParameters_exposer_t InternalParameters_exposer = InternalParameters_exposer_t( "InternalParameters", bp::init< >() );
+        InternalParameters_exposer_t InternalParameters_exposer = InternalParameters_exposer_t( "InternalParameters" );
         bp::scope InternalParameters_scope( InternalParameters_exposer );
+        InternalParameters_exposer.def( bp::init< >() );
         InternalParameters_exposer.def( bp::init< SireMol::PartialMolecule const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, SireBase::PropertyName const &, bool >(( bp::arg("molecule"), bp::arg("bond_params"), bp::arg("angle_params"), bp::arg("dihedral_params"), bp::arg("improper_params"), bp::arg("ub_params"), bp::arg("ss_params"), bp::arg("sb_params"), bp::arg("bb_params"), bp::arg("sbt_params"), bp::arg("isstrict") )) );
         InternalParameters_exposer.def( bp::init< SireMM::InternalParameters const & >(( bp::arg("other") )) );
         { //::SireMM::InternalParameters::addChangedGroups

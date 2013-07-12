@@ -23,8 +23,9 @@ void register_CGStringProperty_class(){
 
     { //::SireMol::CGProperty< QString >
         typedef bp::class_< SireMol::CGProperty< QString >, bp::bases< SireMol::CGProp, SireMol::MolViewProperty, SireBase::Property > > CGStringProperty_exposer_t;
-        CGStringProperty_exposer_t CGStringProperty_exposer = CGStringProperty_exposer_t( "CGStringProperty", bp::init< >() );
+        CGStringProperty_exposer_t CGStringProperty_exposer = CGStringProperty_exposer_t( "CGStringProperty" );
         bp::scope CGStringProperty_scope( CGStringProperty_exposer );
+        CGStringProperty_exposer.def( bp::init< >() );
         CGStringProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         CGStringProperty_exposer.def( bp::init< QVector< QString > const & >(( bp::arg("values") )) );
         CGStringProperty_exposer.def( bp::init< SireMol::CGProperty< QString > const & >(( bp::arg("other") )) );

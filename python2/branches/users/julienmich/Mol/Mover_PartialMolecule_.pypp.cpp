@@ -91,8 +91,9 @@ void register_Mover_PartialMolecule__class(){
 
     { //::SireMol::Mover< SireMol::PartialMolecule >
         typedef bp::class_< SireMol::Mover< SireMol::PartialMolecule >, bp::bases< SireMol::MoverBase, SireMol::PartialMolecule, SireMol::MoleculeView, SireBase::Property > > Mover_PartialMolecule__exposer_t;
-        Mover_PartialMolecule__exposer_t Mover_PartialMolecule__exposer = Mover_PartialMolecule__exposer_t( "Mover_PartialMolecule_", bp::init< >() );
+        Mover_PartialMolecule__exposer_t Mover_PartialMolecule__exposer = Mover_PartialMolecule__exposer_t( "Mover_PartialMolecule_" );
         bp::scope Mover_PartialMolecule__scope( Mover_PartialMolecule__exposer );
+        Mover_PartialMolecule__exposer.def( bp::init< >() );
         Mover_PartialMolecule__exposer.def( bp::init< SireMol::PartialMolecule const & >(( bp::arg("view") )) );
         Mover_PartialMolecule__exposer.def( bp::init< SireMol::PartialMolecule const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_PartialMolecule__exposer.def( bp::init< SireMol::Mover< SireMol::PartialMolecule > const & >(( bp::arg("other") )) );

@@ -45,8 +45,9 @@ void register_ChargeParameterName_class(){
 
     { //::SireMM::ChargeParameterName
         typedef bp::class_< SireMM::ChargeParameterName > ChargeParameterName_exposer_t;
-        ChargeParameterName_exposer_t ChargeParameterName_exposer = ChargeParameterName_exposer_t( "ChargeParameterName", bp::init< >() );
+        ChargeParameterName_exposer_t ChargeParameterName_exposer = ChargeParameterName_exposer_t( "ChargeParameterName" );
         bp::scope ChargeParameterName_scope( ChargeParameterName_exposer );
+        ChargeParameterName_exposer.def( bp::init< >() );
         { //::SireMM::ChargeParameterName::charge
         
             typedef ::QString const & ( ::SireMM::ChargeParameterName::*charge_function_type )(  ) const;

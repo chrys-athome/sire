@@ -23,8 +23,9 @@ void register_SegVariantProperty_class(){
 
     { //::SireMol::SegProperty< QVariant >
         typedef bp::class_< SireMol::SegProperty< QVariant >, bp::bases< SireMol::SegProp, SireMol::MolViewProperty, SireBase::Property > > SegVariantProperty_exposer_t;
-        SegVariantProperty_exposer_t SegVariantProperty_exposer = SegVariantProperty_exposer_t( "SegVariantProperty", bp::init< >() );
+        SegVariantProperty_exposer_t SegVariantProperty_exposer = SegVariantProperty_exposer_t( "SegVariantProperty" );
         bp::scope SegVariantProperty_scope( SegVariantProperty_exposer );
+        SegVariantProperty_exposer.def( bp::init< >() );
         SegVariantProperty_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         SegVariantProperty_exposer.def( bp::init< QVector< QVariant > const & >(( bp::arg("values") )) );
         SegVariantProperty_exposer.def( bp::init< SireMol::SegProperty< QVariant > const & >(( bp::arg("other") )) );

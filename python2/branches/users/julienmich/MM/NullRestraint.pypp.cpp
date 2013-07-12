@@ -45,8 +45,9 @@ void register_NullRestraint_class(){
 
     { //::SireMM::NullRestraint
         typedef bp::class_< SireMM::NullRestraint, bp::bases< SireMM::Restraint3D, SireMM::Restraint, SireBase::Property > > NullRestraint_exposer_t;
-        NullRestraint_exposer_t NullRestraint_exposer = NullRestraint_exposer_t( "NullRestraint", bp::init< >() );
+        NullRestraint_exposer_t NullRestraint_exposer = NullRestraint_exposer_t( "NullRestraint" );
         bp::scope NullRestraint_scope( NullRestraint_exposer );
+        NullRestraint_exposer.def( bp::init< >() );
         NullRestraint_exposer.def( bp::init< SireMM::NullRestraint const & >(( bp::arg("other") )) );
         { //::SireMM::NullRestraint::builtinSymbols
         

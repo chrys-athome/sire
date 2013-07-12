@@ -63,8 +63,9 @@ void register_SegIdx_class(){
 
     { //::SireMol::SegIdx
         typedef bp::class_< SireMol::SegIdx, bp::bases< SireMol::SegID, SireID::ID, SireID::IndexBase > > SegIdx_exposer_t;
-        SegIdx_exposer_t SegIdx_exposer = SegIdx_exposer_t( "SegIdx", bp::init< >() );
+        SegIdx_exposer_t SegIdx_exposer = SegIdx_exposer_t( "SegIdx" );
         bp::scope SegIdx_scope( SegIdx_exposer );
+        SegIdx_exposer.def( bp::init< >() );
         SegIdx_exposer.def( bp::init< quint32 >(( bp::arg("idx") )) );
         SegIdx_exposer.def( bp::init< SireMol::SegIdx const & >(( bp::arg("other") )) );
         { //::SireMol::SegIdx::hash

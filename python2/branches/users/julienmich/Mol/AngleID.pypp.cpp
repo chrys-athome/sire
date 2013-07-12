@@ -38,8 +38,9 @@ void register_AngleID_class(){
 
     { //::SireMol::AngleID
         typedef bp::class_< SireMol::AngleID, bp::bases< SireID::ID > > AngleID_exposer_t;
-        AngleID_exposer_t AngleID_exposer = AngleID_exposer_t( "AngleID", bp::init< >() );
+        AngleID_exposer_t AngleID_exposer = AngleID_exposer_t( "AngleID" );
         bp::scope AngleID_scope( AngleID_exposer );
+        AngleID_exposer.def( bp::init< >() );
         AngleID_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("atom2") )) );
         AngleID_exposer.def( bp::init< SireMol::AngleID const & >(( bp::arg("other") )) );
         { //::SireMol::AngleID::atom0

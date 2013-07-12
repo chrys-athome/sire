@@ -27,8 +27,9 @@ void register_NoMangling_class(){
 
     { //::SireBase::NoMangling
         typedef bp::class_< SireBase::NoMangling, bp::bases< SireBase::StringMangler, SireBase::Property > > NoMangling_exposer_t;
-        NoMangling_exposer_t NoMangling_exposer = NoMangling_exposer_t( "NoMangling", bp::init< >() );
+        NoMangling_exposer_t NoMangling_exposer = NoMangling_exposer_t( "NoMangling" );
         bp::scope NoMangling_scope( NoMangling_exposer );
+        NoMangling_exposer.def( bp::init< >() );
         NoMangling_exposer.def( bp::init< SireBase::NoMangling const & >(( bp::arg("other") )) );
         { //::SireBase::NoMangling::mangle
         

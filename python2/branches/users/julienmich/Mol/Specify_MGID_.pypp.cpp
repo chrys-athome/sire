@@ -43,8 +43,9 @@ void register_Specify_MGID__class(){
 
     { //::SireID::Specify< SireMol::MGID >
         typedef bp::class_< SireID::Specify< SireMol::MGID >, bp::bases< SireMol::MGID, SireID::ID > > Specify_MGID__exposer_t;
-        Specify_MGID__exposer_t Specify_MGID__exposer = Specify_MGID__exposer_t( "Specify_MGID_", bp::init< >() );
+        Specify_MGID__exposer_t Specify_MGID__exposer = Specify_MGID__exposer_t( "Specify_MGID_" );
         bp::scope Specify_MGID__scope( Specify_MGID__exposer );
+        Specify_MGID__exposer.def( bp::init< >() );
         Specify_MGID__exposer.def( bp::init< SireMol::MGID const &, qint32 >(( bp::arg("id"), bp::arg("i") )) );
         Specify_MGID__exposer.def( bp::init< SireMol::MGID const &, qint32, qint32 >(( bp::arg("id"), bp::arg("i"), bp::arg("j") )) );
         Specify_MGID__exposer.def( bp::init< SireID::Specify< SireMol::MGID > const & >(( bp::arg("other") )) );

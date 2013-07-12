@@ -38,8 +38,9 @@ void register_SpaceWrapper_class(){
 
     { //::SireSystem::SpaceWrapper
         typedef bp::class_< SireSystem::SpaceWrapper, bp::bases< SireSystem::MoleculeConstraint, SireSystem::Constraint, SireBase::Property > > SpaceWrapper_exposer_t;
-        SpaceWrapper_exposer_t SpaceWrapper_exposer = SpaceWrapper_exposer_t( "SpaceWrapper", bp::init< >() );
+        SpaceWrapper_exposer_t SpaceWrapper_exposer = SpaceWrapper_exposer_t( "SpaceWrapper" );
         bp::scope SpaceWrapper_scope( SpaceWrapper_exposer );
+        SpaceWrapper_exposer.def( bp::init< >() );
         SpaceWrapper_exposer.def( bp::init< SireFF::PointRef const &, SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("point"), bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         SpaceWrapper_exposer.def( bp::init< SireSystem::SpaceWrapper const & >(( bp::arg("other") )) );
         { //::SireSystem::SpaceWrapper::moleculeGroup

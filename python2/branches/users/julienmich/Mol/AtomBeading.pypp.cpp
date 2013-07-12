@@ -24,8 +24,9 @@ void register_AtomBeading_class(){
 
     { //::SireMol::AtomProperty< SireMol::BeadNum >
         typedef bp::class_< SireMol::AtomProperty< SireMol::BeadNum >, bp::bases< SireMol::AtomProp, SireMol::MolViewProperty, SireBase::Property > > AtomBeading_exposer_t;
-        AtomBeading_exposer_t AtomBeading_exposer = AtomBeading_exposer_t( "AtomBeading", bp::init< >() );
+        AtomBeading_exposer_t AtomBeading_exposer = AtomBeading_exposer_t( "AtomBeading" );
         bp::scope AtomBeading_scope( AtomBeading_exposer );
+        AtomBeading_exposer.def( bp::init< >() );
         AtomBeading_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         AtomBeading_exposer.def( bp::init< SireMol::MoleculeInfoData const &, SireMol::BeadNum const & >(( bp::arg("molinfo"), bp::arg("default_value") )) );
         AtomBeading_exposer.def( bp::init< SireMol::BeadNum const & >(( bp::arg("value") )) );

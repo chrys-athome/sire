@@ -34,8 +34,9 @@ void register_DistanceComponent_class(){
 
     { //::SireSystem::DistanceComponent
         typedef bp::class_< SireSystem::DistanceComponent, bp::bases< SireSystem::GeometryComponent, SireSystem::Constraint, SireBase::Property > > DistanceComponent_exposer_t;
-        DistanceComponent_exposer_t DistanceComponent_exposer = DistanceComponent_exposer_t( "DistanceComponent", bp::init< >() );
+        DistanceComponent_exposer_t DistanceComponent_exposer = DistanceComponent_exposer_t( "DistanceComponent" );
         bp::scope DistanceComponent_scope( DistanceComponent_exposer );
+        DistanceComponent_exposer.def( bp::init< >() );
         DistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("map")=SireBase::PropertyMap() )) );
         DistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("geometry_expression"), bp::arg("map")=SireBase::PropertyMap() )) );
         DistanceComponent_exposer.def( bp::init< SireSystem::DistanceComponent const & >(( bp::arg("other") )) );

@@ -31,8 +31,9 @@ void register_IDOrSet_FFID__class(){
 
     { //::SireID::IDOrSet< SireFF::FFID >
         typedef bp::class_< SireID::IDOrSet< SireFF::FFID >, bp::bases< SireFF::FFID, SireID::ID > > IDOrSet_FFID__exposer_t;
-        IDOrSet_FFID__exposer_t IDOrSet_FFID__exposer = IDOrSet_FFID__exposer_t( "IDOrSet_FFID_", bp::init< >() );
+        IDOrSet_FFID__exposer_t IDOrSet_FFID__exposer = IDOrSet_FFID__exposer_t( "IDOrSet_FFID_" );
         bp::scope IDOrSet_FFID__scope( IDOrSet_FFID__exposer );
+        IDOrSet_FFID__exposer.def( bp::init< >() );
         IDOrSet_FFID__exposer.def( bp::init< SireFF::FFID const & >(( bp::arg("id") )) );
         IDOrSet_FFID__exposer.def( bp::init< SireFF::FFID const &, SireFF::FFID const & >(( bp::arg("id0"), bp::arg("id1") )) );
         IDOrSet_FFID__exposer.def( bp::init< QList< SireFF::FFIdentifier > const & >(( bp::arg("ids") )) );

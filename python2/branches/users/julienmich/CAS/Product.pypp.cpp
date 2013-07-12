@@ -267,6 +267,16 @@ void register_Product_class(){
                 , symbols_function_value );
         
         }
+        { //::SireCAS::Product::toOpenMMString
+        
+            typedef ::QString ( ::SireCAS::Product::*toOpenMMString_function_type )(  ) const;
+            toOpenMMString_function_type toOpenMMString_function_value( &::SireCAS::Product::toOpenMMString );
+            
+            Product_exposer.def( 
+                "toOpenMMString"
+                , toOpenMMString_function_value );
+        
+        }
         { //::SireCAS::Product::toString
         
             typedef ::QString ( ::SireCAS::Product::*toString_function_type )(  ) const;

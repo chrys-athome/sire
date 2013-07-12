@@ -27,8 +27,9 @@ void register_TrigArray2D_double__class(){
 
     { //::SireBase::TrigArray2D< double >
         typedef bp::class_< SireBase::TrigArray2D< double >, bp::bases< SireBase::TrigArray2DBase > > TrigArray2D_double__exposer_t;
-        TrigArray2D_double__exposer_t TrigArray2D_double__exposer = TrigArray2D_double__exposer_t( "TrigArray2D_double_", bp::init< >() );
+        TrigArray2D_double__exposer_t TrigArray2D_double__exposer = TrigArray2D_double__exposer_t( "TrigArray2D_double_" );
         bp::scope TrigArray2D_double__scope( TrigArray2D_double__exposer );
+        TrigArray2D_double__exposer.def( bp::init< >() );
         TrigArray2D_double__exposer.def( bp::init< int >(( bp::arg("dimension") )) );
         TrigArray2D_double__exposer.def( bp::init< int, double const & >(( bp::arg("dimension"), bp::arg("default_value") )) );
         TrigArray2D_double__exposer.def( bp::init< SireBase::TrigArray2D< double > const & >(( bp::arg("other") )) );

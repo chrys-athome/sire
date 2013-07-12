@@ -40,8 +40,9 @@ void register_GridFieldTable_class(){
 
     { //::SireFF::GridFieldTable
         typedef bp::class_< SireFF::GridFieldTable > GridFieldTable_exposer_t;
-        GridFieldTable_exposer_t GridFieldTable_exposer = GridFieldTable_exposer_t( "GridFieldTable", bp::init< >() );
+        GridFieldTable_exposer_t GridFieldTable_exposer = GridFieldTable_exposer_t( "GridFieldTable" );
         bp::scope GridFieldTable_scope( GridFieldTable_exposer );
+        GridFieldTable_exposer.def( bp::init< >() );
         GridFieldTable_exposer.def( bp::init< SireVol::Grid const & >(( bp::arg("grid") )) );
         GridFieldTable_exposer.def( bp::init< SireFF::GridFieldTable const & >(( bp::arg("other") )) );
         { //::SireFF::GridFieldTable::add

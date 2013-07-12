@@ -329,7 +329,7 @@ void register_OpenMMAMDIntegrator_class(){
         }
         { //::SireMove::OpenMMAMDIntegrator::integrate
         
-            typedef void ( ::SireMove::OpenMMAMDIntegrator::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
+            typedef void ( ::SireMove::OpenMMAMDIntegrator::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) ;
             integrate_function_type integrate_function_value( &::SireMove::OpenMMAMDIntegrator::integrate );
             
             OpenMMAMDIntegrator_exposer.def( 

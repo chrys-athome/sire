@@ -68,8 +68,9 @@ void register_PolariseChargesFF_class(){
 
     { //::SireSystem::PolariseChargesFF
         typedef bp::class_< SireSystem::PolariseChargesFF, bp::bases< SireFF::G1FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > PolariseChargesFF_exposer_t;
-        PolariseChargesFF_exposer_t PolariseChargesFF_exposer = PolariseChargesFF_exposer_t( "PolariseChargesFF", bp::init< >() );
+        PolariseChargesFF_exposer_t PolariseChargesFF_exposer = PolariseChargesFF_exposer_t( "PolariseChargesFF" );
         bp::scope PolariseChargesFF_scope( PolariseChargesFF_exposer );
+        PolariseChargesFF_exposer.def( bp::init< >() );
         PolariseChargesFF_exposer.def( bp::init< SireSystem::PolariseCharges const & >(( bp::arg("constraint") )) );
         PolariseChargesFF_exposer.def( bp::init< QString const &, SireSystem::PolariseCharges const & >(( bp::arg("name"), bp::arg("constraint") )) );
         PolariseChargesFF_exposer.def( bp::init< SireSystem::PolariseChargesFF const & >(( bp::arg("other") )) );

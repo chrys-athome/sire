@@ -82,8 +82,9 @@ void register_MoleculeGroups_class(){
 
     { //::SireMol::MoleculeGroups
         typedef bp::class_< SireMol::MoleculeGroups, bp::bases< SireMol::MolGroupsBase, SireBase::Property > > MoleculeGroups_exposer_t;
-        MoleculeGroups_exposer_t MoleculeGroups_exposer = MoleculeGroups_exposer_t( "MoleculeGroups", bp::init< >() );
+        MoleculeGroups_exposer_t MoleculeGroups_exposer = MoleculeGroups_exposer_t( "MoleculeGroups" );
         bp::scope MoleculeGroups_scope( MoleculeGroups_exposer );
+        MoleculeGroups_exposer.def( bp::init< >() );
         MoleculeGroups_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         MoleculeGroups_exposer.def( bp::init< QList< SireBase::PropPtr< SireMol::MoleculeGroup > > const & >(( bp::arg("molgroups") )) );
         MoleculeGroups_exposer.def( bp::init< SireMol::MoleculeGroups const & >(( bp::arg("other") )) );

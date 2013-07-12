@@ -37,8 +37,9 @@ void register_PropertyConstraint_class(){
 
     { //::SireSystem::PropertyConstraint
         typedef bp::class_< SireSystem::PropertyConstraint, bp::bases< SireSystem::Constraint, SireBase::Property > > PropertyConstraint_exposer_t;
-        PropertyConstraint_exposer_t PropertyConstraint_exposer = PropertyConstraint_exposer_t( "PropertyConstraint", bp::init< >() );
+        PropertyConstraint_exposer_t PropertyConstraint_exposer = PropertyConstraint_exposer_t( "PropertyConstraint" );
         bp::scope PropertyConstraint_scope( PropertyConstraint_exposer );
+        PropertyConstraint_exposer.def( bp::init< >() );
         PropertyConstraint_exposer.def( bp::init< QString const &, SireCAS::Expression const & >(( bp::arg("name"), bp::arg("expression") )) );
         PropertyConstraint_exposer.def( bp::init< QString const &, SireFF::FFID const &, SireCAS::Expression const & >(( bp::arg("name"), bp::arg("ffid"), bp::arg("expression") )) );
         PropertyConstraint_exposer.def( bp::init< SireSystem::PropertyConstraint const & >(( bp::arg("other") )) );

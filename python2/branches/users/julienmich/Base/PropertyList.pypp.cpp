@@ -36,8 +36,9 @@ void register_PropertyList_class(){
 
     { //::SireBase::PropertyList
         typedef bp::class_< SireBase::PropertyList, bp::bases< SireBase::Property > > PropertyList_exposer_t;
-        PropertyList_exposer_t PropertyList_exposer = PropertyList_exposer_t( "PropertyList", bp::init< >() );
+        PropertyList_exposer_t PropertyList_exposer = PropertyList_exposer_t( "PropertyList" );
         bp::scope PropertyList_scope( PropertyList_exposer );
+        PropertyList_exposer.def( bp::init< >() );
         PropertyList_exposer.def( bp::init< QList< SireBase::PropPtr< SireBase::Property > > const & >(( bp::arg("props") )) );
         PropertyList_exposer.def( bp::init< SireBase::PropertyList const & >(( bp::arg("other") )) );
         { //::SireBase::PropertyList::append

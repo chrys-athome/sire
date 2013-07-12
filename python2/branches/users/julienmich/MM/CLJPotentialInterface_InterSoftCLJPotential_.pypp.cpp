@@ -169,30 +169,6 @@ void register_CLJPotentialInterface_InterSoftCLJPotential__class(){
                 , ( bp::arg("new_switchfunc") ) );
         
         }
-        { //::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::setUseAtomisticCutoff
-        
-            typedef SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential > exported_class_t;
-            typedef bool ( ::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::*setUseAtomisticCutoff_function_type )( bool ) ;
-            setUseAtomisticCutoff_function_type setUseAtomisticCutoff_function_value( &::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::setUseAtomisticCutoff );
-            
-            CLJPotentialInterface_InterSoftCLJPotential__exposer.def( 
-                "setUseAtomisticCutoff"
-                , setUseAtomisticCutoff_function_value
-                , ( bp::arg("switchatomistic") ) );
-        
-        }
-        { //::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::setUseGroupCutoff
-        
-            typedef SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential > exported_class_t;
-            typedef bool ( ::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::*setUseGroupCutoff_function_type )( bool ) ;
-            setUseGroupCutoff_function_type setUseGroupCutoff_function_value( &::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::setUseGroupCutoff );
-            
-            CLJPotentialInterface_InterSoftCLJPotential__exposer.def( 
-                "setUseGroupCutoff"
-                , setUseGroupCutoff_function_value
-                , ( bp::arg("switchgroup") ) );
-        
-        }
         { //::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::setUseReactionField
         
             typedef SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential > exported_class_t;
@@ -238,28 +214,6 @@ void register_CLJPotentialInterface_InterSoftCLJPotential__class(){
                 "switchingFunction"
                 , switchingFunction_function_value
                 , bp::return_value_policy<bp::clone_const_reference>() );
-        
-        }
-        { //::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::useAtomisticCutoff
-        
-            typedef SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential > exported_class_t;
-            typedef bool ( ::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::*useAtomisticCutoff_function_type )(  ) const;
-            useAtomisticCutoff_function_type useAtomisticCutoff_function_value( &::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::useAtomisticCutoff );
-            
-            CLJPotentialInterface_InterSoftCLJPotential__exposer.def( 
-                "useAtomisticCutoff"
-                , useAtomisticCutoff_function_value );
-        
-        }
-        { //::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::useGroupCutoff
-        
-            typedef SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential > exported_class_t;
-            typedef bool ( ::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::*useGroupCutoff_function_type )(  ) const;
-            useGroupCutoff_function_type useGroupCutoff_function_value( &::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::useGroupCutoff );
-            
-            CLJPotentialInterface_InterSoftCLJPotential__exposer.def( 
-                "useGroupCutoff"
-                , useGroupCutoff_function_value );
         
         }
         { //::SireMM::CLJPotentialInterface< SireMM::InterSoftCLJPotential >::useReactionField

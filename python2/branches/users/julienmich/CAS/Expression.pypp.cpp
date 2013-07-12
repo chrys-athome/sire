@@ -570,6 +570,16 @@ void register_Expression_class(){
                 , symbols_function_value );
         
         }
+        { //::SireCAS::Expression::toOpenMMString
+        
+            typedef ::QString ( ::SireCAS::Expression::*toOpenMMString_function_type )(  ) const;
+            toOpenMMString_function_type toOpenMMString_function_value( &::SireCAS::Expression::toOpenMMString );
+            
+            Expression_exposer.def( 
+                "toOpenMMString"
+                , toOpenMMString_function_value );
+        
+        }
         { //::SireCAS::Expression::toString
         
             typedef ::QString ( ::SireCAS::Expression::*toString_function_type )(  ) const;

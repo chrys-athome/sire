@@ -35,8 +35,9 @@ void register_StringArrayProperty_class(){
 
     { //::SireBase::StringArrayProperty
         typedef bp::class_< SireBase::StringArrayProperty, bp::bases< SireBase::Property > > StringArrayProperty_exposer_t;
-        StringArrayProperty_exposer_t StringArrayProperty_exposer = StringArrayProperty_exposer_t( "StringArrayProperty", bp::init< >() );
+        StringArrayProperty_exposer_t StringArrayProperty_exposer = StringArrayProperty_exposer_t( "StringArrayProperty" );
         bp::scope StringArrayProperty_scope( StringArrayProperty_exposer );
+        StringArrayProperty_exposer.def( bp::init< >() );
         StringArrayProperty_exposer.def( bp::init< QList< QString > const & >(( bp::arg("array") )) );
         StringArrayProperty_exposer.def( bp::init< QVector< QString > const & >(( bp::arg("array") )) );
         StringArrayProperty_exposer.def( bp::init< SireBase::StringArrayProperty const & >(( bp::arg("other") )) );

@@ -74,8 +74,9 @@ void register_System_class(){
 
     { //::SireSystem::System
         typedef bp::class_< SireSystem::System, bp::bases< SireMol::MolGroupsBase, SireBase::Property > > System_exposer_t;
-        System_exposer_t System_exposer = System_exposer_t( "System", bp::init< >() );
+        System_exposer_t System_exposer = System_exposer_t( "System" );
         bp::scope System_scope( System_exposer );
+        System_exposer.def( bp::init< >() );
         System_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         System_exposer.def( bp::init< SireSystem::System const & >(( bp::arg("other") )) );
         { //::SireSystem::System::UID

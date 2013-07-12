@@ -35,8 +35,9 @@ void register_Average_class(){
 
     { //::SireMaths::Average
         typedef bp::class_< SireMaths::Average, bp::bases< SireMaths::Accumulator, SireBase::Property > > Average_exposer_t;
-        Average_exposer_t Average_exposer = Average_exposer_t( "Average", bp::init< >() );
+        Average_exposer_t Average_exposer = Average_exposer_t( "Average" );
         bp::scope Average_scope( Average_exposer );
+        Average_exposer.def( bp::init< >() );
         Average_exposer.def( bp::init< SireMaths::Average const & >(( bp::arg("other") )) );
         { //::SireMaths::Average::accumulate
         

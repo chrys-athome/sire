@@ -37,8 +37,9 @@ void register_ForceTable_class(){
 
     { //::SireFF::ForceTable
         typedef bp::class_< SireFF::ForceTable > ForceTable_exposer_t;
-        ForceTable_exposer_t ForceTable_exposer = ForceTable_exposer_t( "ForceTable", bp::init< >() );
+        ForceTable_exposer_t ForceTable_exposer = ForceTable_exposer_t( "ForceTable" );
         bp::scope ForceTable_scope( ForceTable_exposer );
+        ForceTable_exposer.def( bp::init< >() );
         ForceTable_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("molgroup") )) );
         ForceTable_exposer.def( bp::init< SireFF::ForceTable const & >(( bp::arg("other") )) );
         { //::SireFF::ForceTable::add

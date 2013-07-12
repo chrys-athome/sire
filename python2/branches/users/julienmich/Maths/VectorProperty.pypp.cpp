@@ -27,8 +27,9 @@ void register_VectorProperty_class(){
 
     { //::SireMaths::VectorProperty
         typedef bp::class_< SireMaths::VectorProperty, bp::bases< SireMaths::Vector, SireBase::Property > > VectorProperty_exposer_t;
-        VectorProperty_exposer_t VectorProperty_exposer = VectorProperty_exposer_t( "VectorProperty", bp::init< >() );
+        VectorProperty_exposer_t VectorProperty_exposer = VectorProperty_exposer_t( "VectorProperty" );
         bp::scope VectorProperty_scope( VectorProperty_exposer );
+        VectorProperty_exposer.def( bp::init< >() );
         VectorProperty_exposer.def( bp::init< SireMaths::Vector const & >(( bp::arg("value") )) );
         VectorProperty_exposer.def( bp::init< SireMaths::VectorProperty const & >(( bp::arg("value") )) );
         VectorProperty_exposer.def( bp::self != bp::self );

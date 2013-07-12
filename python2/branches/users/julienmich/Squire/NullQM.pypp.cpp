@@ -33,8 +33,9 @@ void register_NullQM_class(){
 
     { //::Squire::NullQM
         typedef bp::class_< Squire::NullQM, bp::bases< Squire::QMProgram, SireBase::Property > > NullQM_exposer_t;
-        NullQM_exposer_t NullQM_exposer = NullQM_exposer_t( "NullQM", bp::init< >() );
+        NullQM_exposer_t NullQM_exposer = NullQM_exposer_t( "NullQM" );
         bp::scope NullQM_scope( NullQM_exposer );
+        NullQM_exposer.def( bp::init< >() );
         NullQM_exposer.def( bp::init< Squire::NullQM const & >(( bp::arg("other") )) );
         NullQM_exposer.def( bp::self != bp::self );
         { //::Squire::NullQM::operator=

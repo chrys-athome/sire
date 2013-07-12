@@ -68,8 +68,9 @@ void register_PolariseCharges_class(){
 
     { //::SireSystem::PolariseCharges
         typedef bp::class_< SireSystem::PolariseCharges, bp::bases< SireSystem::ChargeConstraint, SireSystem::MoleculeConstraint, SireSystem::Constraint, SireBase::Property > > PolariseCharges_exposer_t;
-        PolariseCharges_exposer_t PolariseCharges_exposer = PolariseCharges_exposer_t( "PolariseCharges", bp::init< >() );
+        PolariseCharges_exposer_t PolariseCharges_exposer = PolariseCharges_exposer_t( "PolariseCharges" );
         bp::scope PolariseCharges_scope( PolariseCharges_exposer );
+        PolariseCharges_exposer.def( bp::init< >() );
         PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("map")=SireBase::PropertyMap() )) );
         PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireFF::Probe const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("probe"), bp::arg("map")=SireBase::PropertyMap() )) );
         PolariseCharges_exposer.def( bp::init< SireMol::MoleculeGroup const &, SireCAS::Symbol const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molgroup"), bp::arg("field_component"), bp::arg("map")=SireBase::PropertyMap() )) );

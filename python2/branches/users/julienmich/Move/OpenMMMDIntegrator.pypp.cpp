@@ -299,7 +299,7 @@ void register_OpenMMMDIntegrator_class(){
         }
         { //::SireMove::OpenMMMDIntegrator::integrate
         
-            typedef void ( ::SireMove::OpenMMMDIntegrator::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) const;
+            typedef void ( ::SireMove::OpenMMMDIntegrator::*integrate_function_type )( ::SireMove::IntegratorWorkspace &,::SireCAS::Symbol const &,::SireUnits::Dimension::Time,int,bool ) ;
             integrate_function_type integrate_function_value( &::SireMove::OpenMMMDIntegrator::integrate );
             
             OpenMMMDIntegrator_exposer.def( 

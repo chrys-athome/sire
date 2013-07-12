@@ -36,8 +36,9 @@ void register_PerturbationSymbols_class(){
 
     { //::SireMol::PerturbationSymbols
         typedef bp::class_< SireMol::PerturbationSymbols > PerturbationSymbols_exposer_t;
-        PerturbationSymbols_exposer_t PerturbationSymbols_exposer = PerturbationSymbols_exposer_t( "PerturbationSymbols", bp::init< >() );
+        PerturbationSymbols_exposer_t PerturbationSymbols_exposer = PerturbationSymbols_exposer_t( "PerturbationSymbols" );
         bp::scope PerturbationSymbols_scope( PerturbationSymbols_exposer );
+        PerturbationSymbols_exposer.def( bp::init< >() );
         { //::SireMol::PerturbationSymbols::final
         
             typedef ::SireCAS::Symbol const & ( ::SireMol::PerturbationSymbols::*final_function_type )(  ) const;

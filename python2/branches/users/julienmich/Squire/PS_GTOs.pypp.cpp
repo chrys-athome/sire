@@ -33,8 +33,9 @@ void register_PS_GTOs_class(){
 
     { //::Squire::PS_GTOs
         typedef bp::class_< Squire::PS_GTOs > PS_GTOs_exposer_t;
-        PS_GTOs_exposer_t PS_GTOs_exposer = PS_GTOs_exposer_t( "PS_GTOs", bp::init< >() );
+        PS_GTOs_exposer_t PS_GTOs_exposer = PS_GTOs_exposer_t( "PS_GTOs" );
         bp::scope PS_GTOs_scope( PS_GTOs_exposer );
+        PS_GTOs_exposer.def( bp::init< >() );
         PS_GTOs_exposer.def( bp::init< QVector< Squire::S_GTO > const &, QVector< SireMaths::Vector > const &, QVector< Squire::P_GTO > const &, QVector< SireMaths::Vector > const & >(( bp::arg("s_gtos"), bp::arg("s_centers"), bp::arg("p_gtos"), bp::arg("p_centers") )) );
         PS_GTOs_exposer.def( bp::init< QVector< Squire::P_GTO > const &, QVector< SireMaths::Vector > const &, QVector< Squire::S_GTO > const &, QVector< SireMaths::Vector > const & >(( bp::arg("p_gtos"), bp::arg("p_centers"), bp::arg("s_gtos"), bp::arg("s_centers") )) );
         PS_GTOs_exposer.def( bp::init< Squire::PS_GTOs const & >(( bp::arg("other") )) );

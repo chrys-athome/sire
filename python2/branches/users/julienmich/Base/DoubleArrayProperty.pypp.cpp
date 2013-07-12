@@ -35,8 +35,9 @@ void register_DoubleArrayProperty_class(){
 
     { //::SireBase::DoubleArrayProperty
         typedef bp::class_< SireBase::DoubleArrayProperty, bp::bases< SireBase::Property > > DoubleArrayProperty_exposer_t;
-        DoubleArrayProperty_exposer_t DoubleArrayProperty_exposer = DoubleArrayProperty_exposer_t( "DoubleArrayProperty", bp::init< >() );
+        DoubleArrayProperty_exposer_t DoubleArrayProperty_exposer = DoubleArrayProperty_exposer_t( "DoubleArrayProperty" );
         bp::scope DoubleArrayProperty_scope( DoubleArrayProperty_exposer );
+        DoubleArrayProperty_exposer.def( bp::init< >() );
         DoubleArrayProperty_exposer.def( bp::init< QList< double > const & >(( bp::arg("array") )) );
         DoubleArrayProperty_exposer.def( bp::init< QVector< double > const & >(( bp::arg("array") )) );
         DoubleArrayProperty_exposer.def( bp::init< SireBase::DoubleArrayProperty const & >(( bp::arg("other") )) );

@@ -17,9 +17,9 @@ if (${SIRE_OpenMM_FOUND})
     add_definitions( "-DSIRE_USE_OPENMM" )
     set( SIRE_OPENMM_LIBRARIES ${SIRE_OpenMM_LIBRARIES} )
     set( SIRE_OPENMM_WRAPPERS 
-              OpenMMIntegrator.pypp.cpp 
               OpenMMMDIntegrator.pypp.cpp
               OpenMMAMDIntegrator.pypp.cpp
+              OpenMMFrEnergyST.pypp.cpp
        )
 
 else()

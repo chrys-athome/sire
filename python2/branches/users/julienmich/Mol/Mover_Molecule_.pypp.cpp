@@ -85,8 +85,9 @@ void register_Mover_Molecule__class(){
 
     { //::SireMol::Mover< SireMol::Molecule >
         typedef bp::class_< SireMol::Mover< SireMol::Molecule >, bp::bases< SireMol::MoverBase, SireMol::Molecule, SireMol::MoleculeView, SireBase::Property > > Mover_Molecule__exposer_t;
-        Mover_Molecule__exposer_t Mover_Molecule__exposer = Mover_Molecule__exposer_t( "Mover_Molecule_", bp::init< >() );
+        Mover_Molecule__exposer_t Mover_Molecule__exposer = Mover_Molecule__exposer_t( "Mover_Molecule_" );
         bp::scope Mover_Molecule__scope( Mover_Molecule__exposer );
+        Mover_Molecule__exposer.def( bp::init< >() );
         Mover_Molecule__exposer.def( bp::init< SireMol::Molecule const & >(( bp::arg("view") )) );
         Mover_Molecule__exposer.def( bp::init< SireMol::Molecule const &, SireMol::AtomSelection const & >(( bp::arg("view"), bp::arg("movable_atoms") )) );
         Mover_Molecule__exposer.def( bp::init< SireMol::Mover< SireMol::Molecule > const & >(( bp::arg("other") )) );

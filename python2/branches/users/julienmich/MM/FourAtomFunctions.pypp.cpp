@@ -39,8 +39,9 @@ void register_FourAtomFunctions_class(){
 
     { //::SireMM::FourAtomFunctions
         typedef bp::class_< SireMM::FourAtomFunctions, bp::bases< SireMM::AtomFunctions, SireMol::MoleculeProperty, SireMol::MolViewProperty, SireBase::Property > > FourAtomFunctions_exposer_t;
-        FourAtomFunctions_exposer_t FourAtomFunctions_exposer = FourAtomFunctions_exposer_t( "FourAtomFunctions", bp::init< >() );
+        FourAtomFunctions_exposer_t FourAtomFunctions_exposer = FourAtomFunctions_exposer_t( "FourAtomFunctions" );
         bp::scope FourAtomFunctions_scope( FourAtomFunctions_exposer );
+        FourAtomFunctions_exposer.def( bp::init< >() );
         FourAtomFunctions_exposer.def( bp::init< SireMol::MoleculeData const & >(( bp::arg("moldata") )) );
         FourAtomFunctions_exposer.def( bp::init< SireMol::MoleculeInfoData const & >(( bp::arg("molinfo") )) );
         FourAtomFunctions_exposer.def( bp::init< SireMM::FourAtomFunctions const & >(( bp::arg("other") )) );

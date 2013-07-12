@@ -35,8 +35,9 @@ void register_PP_GTO_class(){
 
     { //::Squire::PP_GTO
         typedef bp::class_< Squire::PP_GTO, bp::bases< Squire::GTOPair, Squire::ShellPair, SireBase::Property > > PP_GTO_exposer_t;
-        PP_GTO_exposer_t PP_GTO_exposer = PP_GTO_exposer_t( "PP_GTO", bp::init< >() );
+        PP_GTO_exposer_t PP_GTO_exposer = PP_GTO_exposer_t( "PP_GTO" );
         bp::scope PP_GTO_scope( PP_GTO_exposer );
+        PP_GTO_exposer.def( bp::init< >() );
         PP_GTO_exposer.def( bp::init< SireMaths::Vector const &, Squire::P_GTO const &, SireMaths::Vector const &, Squire::P_GTO const & >(( bp::arg("A"), bp::arg("a"), bp::arg("B"), bp::arg("b") )) );
         PP_GTO_exposer.def( bp::init< Squire::PP_GTO const & >(( bp::arg("other") )) );
         { //::Squire::PP_GTO::P_minus_A

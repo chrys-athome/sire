@@ -38,8 +38,9 @@ void register_BondPerturbation_class(){
 
     { //::SireMol::BondPerturbation
         typedef bp::class_< SireMol::BondPerturbation, bp::bases< SireMol::GeometryPerturbation, SireMol::Perturbation, SireBase::Property > > BondPerturbation_exposer_t;
-        BondPerturbation_exposer_t BondPerturbation_exposer = BondPerturbation_exposer_t( "BondPerturbation", bp::init< >() );
+        BondPerturbation_exposer_t BondPerturbation_exposer = BondPerturbation_exposer_t( "BondPerturbation" );
         bp::scope BondPerturbation_scope( BondPerturbation_exposer );
+        BondPerturbation_exposer.def( bp::init< >() );
         BondPerturbation_exposer.def( bp::init< SireMol::BondID const &, SireUnits::Dimension::Length const &, SireUnits::Dimension::Length const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("bond"), bp::arg("start"), bp::arg("end"), bp::arg("map")=SireBase::PropertyMap() )) );
         BondPerturbation_exposer.def( bp::init< SireMol::BondID const &, SireUnits::Dimension::Length const &, SireUnits::Dimension::Length const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("bond"), bp::arg("start"), bp::arg("end"), bp::arg("mapping_function"), bp::arg("map")=SireBase::PropertyMap() )) );
         BondPerturbation_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const &, SireUnits::Dimension::Length const &, SireUnits::Dimension::Length const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("atom0"), bp::arg("atom1"), bp::arg("start"), bp::arg("end"), bp::arg("map")=SireBase::PropertyMap() )) );

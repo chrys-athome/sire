@@ -35,8 +35,9 @@ void register_Array2D_NMatrix__class(){
 
     { //::SireBase::Array2D< SireMaths::NMatrix >
         typedef bp::class_< SireBase::Array2D< SireMaths::NMatrix >, bp::bases< SireBase::Array2DBase > > Array2D_NMatrix__exposer_t;
-        Array2D_NMatrix__exposer_t Array2D_NMatrix__exposer = Array2D_NMatrix__exposer_t( "Array2D_NMatrix_", bp::init< >() );
+        Array2D_NMatrix__exposer_t Array2D_NMatrix__exposer = Array2D_NMatrix__exposer_t( "Array2D_NMatrix_" );
         bp::scope Array2D_NMatrix__scope( Array2D_NMatrix__exposer );
+        Array2D_NMatrix__exposer.def( bp::init< >() );
         Array2D_NMatrix__exposer.def( bp::init< int, int >(( bp::arg("nrows"), bp::arg("ncolumns") )) );
         Array2D_NMatrix__exposer.def( bp::init< int, int, SireMaths::NMatrix const & >(( bp::arg("nrows"), bp::arg("ncolumns"), bp::arg("default_value") )) );
         Array2D_NMatrix__exposer.def( bp::init< SireBase::Array2D< SireMaths::NMatrix > const & >(( bp::arg("other") )) );

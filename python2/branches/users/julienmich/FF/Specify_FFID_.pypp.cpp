@@ -31,8 +31,9 @@ void register_Specify_FFID__class(){
 
     { //::SireID::Specify< SireFF::FFID >
         typedef bp::class_< SireID::Specify< SireFF::FFID >, bp::bases< SireFF::FFID, SireID::ID > > Specify_FFID__exposer_t;
-        Specify_FFID__exposer_t Specify_FFID__exposer = Specify_FFID__exposer_t( "Specify_FFID_", bp::init< >() );
+        Specify_FFID__exposer_t Specify_FFID__exposer = Specify_FFID__exposer_t( "Specify_FFID_" );
         bp::scope Specify_FFID__scope( Specify_FFID__exposer );
+        Specify_FFID__exposer.def( bp::init< >() );
         Specify_FFID__exposer.def( bp::init< SireFF::FFID const &, qint32 >(( bp::arg("id"), bp::arg("i") )) );
         Specify_FFID__exposer.def( bp::init< SireFF::FFID const &, qint32, qint32 >(( bp::arg("id"), bp::arg("i"), bp::arg("j") )) );
         Specify_FFID__exposer.def( bp::init< SireID::Specify< SireFF::FFID > const & >(( bp::arg("other") )) );

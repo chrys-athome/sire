@@ -37,8 +37,9 @@ void register_MolEnergyTable_class(){
 
     { //::SireFF::MolEnergyTable
         typedef bp::class_< SireFF::MolEnergyTable > MolEnergyTable_exposer_t;
-        MolEnergyTable_exposer_t MolEnergyTable_exposer = MolEnergyTable_exposer_t( "MolEnergyTable", bp::init< >() );
+        MolEnergyTable_exposer_t MolEnergyTable_exposer = MolEnergyTable_exposer_t( "MolEnergyTable" );
         bp::scope MolEnergyTable_scope( MolEnergyTable_exposer );
+        MolEnergyTable_exposer.def( bp::init< >() );
         MolEnergyTable_exposer.def( bp::init< SireMol::MoleculeView const & >(( bp::arg("molview") )) );
         MolEnergyTable_exposer.def( bp::init< SireFF::MolEnergyTable const & >(( bp::arg("other") )) );
         { //::SireFF::MolEnergyTable::add

@@ -4,7 +4,7 @@ import os
 dirs = [ "Base", \
          "CAS", \
          "Cluster", \
-         "DB", \
+#         "DB", \
          "FF", \
          "ID", \
          "IO", \
@@ -13,7 +13,7 @@ dirs = [ "Base", \
          "Mol", \
          "Move", \
          "Soiree", \
-         "Spier", \
+#         "Spier", \
          "Squire", \
          "Stream", \
          "System", \

@@ -40,8 +40,9 @@ void register_DihedralSymbols_class(){
 
     { //::SireMM::DihedralSymbols
         typedef bp::class_< SireMM::DihedralSymbols, bp::bases< SireMM::InternalSymbolsBase > > DihedralSymbols_exposer_t;
-        DihedralSymbols_exposer_t DihedralSymbols_exposer = DihedralSymbols_exposer_t( "DihedralSymbols", bp::init< >() );
+        DihedralSymbols_exposer_t DihedralSymbols_exposer = DihedralSymbols_exposer_t( "DihedralSymbols" );
         bp::scope DihedralSymbols_scope( DihedralSymbols_exposer );
+        DihedralSymbols_exposer.def( bp::init< >() );
         { //::SireMM::DihedralSymbols::phi
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::DihedralSymbols::*phi_function_type )(  ) const;

@@ -36,8 +36,9 @@ void register_BondID_class(){
 
     { //::SireMol::BondID
         typedef bp::class_< SireMol::BondID, bp::bases< SireID::ID > > BondID_exposer_t;
-        BondID_exposer_t BondID_exposer = BondID_exposer_t( "BondID", bp::init< >() );
+        BondID_exposer_t BondID_exposer = BondID_exposer_t( "BondID" );
         bp::scope BondID_scope( BondID_exposer );
+        BondID_exposer.def( bp::init< >() );
         BondID_exposer.def( bp::init< SireMol::AtomID const &, SireMol::AtomID const & >(( bp::arg("atom0"), bp::arg("atom1") )) );
         BondID_exposer.def( bp::init< SireMol::BondID const & >(( bp::arg("other") )) );
         { //::SireMol::BondID::atom0

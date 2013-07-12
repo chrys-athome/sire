@@ -43,8 +43,9 @@ void register_CenterOfMass_class(){
 
     { //::SireFF::CenterOfMass
         typedef bp::class_< SireFF::CenterOfMass, bp::bases< SireFF::Point, SireBase::Property > > CenterOfMass_exposer_t;
-        CenterOfMass_exposer_t CenterOfMass_exposer = CenterOfMass_exposer_t( "CenterOfMass", bp::init< >() );
+        CenterOfMass_exposer_t CenterOfMass_exposer = CenterOfMass_exposer_t( "CenterOfMass" );
         bp::scope CenterOfMass_scope( CenterOfMass_exposer );
+        CenterOfMass_exposer.def( bp::init< >() );
         CenterOfMass_exposer.def( bp::init< SireMol::MoleculeView const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molview"), bp::arg("map")=SireBase::PropertyMap() )) );
         CenterOfMass_exposer.def( bp::init< SireMol::Molecules const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("molecules"), bp::arg("map")=SireBase::PropertyMap() )) );
         CenterOfMass_exposer.def( bp::init< SireFF::CenterOfMass const & >(( bp::arg("other") )) );

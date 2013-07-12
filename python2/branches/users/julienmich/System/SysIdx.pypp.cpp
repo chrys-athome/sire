@@ -21,8 +21,9 @@ void register_SysIdx_class(){
 
     { //::SireSystem::SysIdx
         typedef bp::class_< SireSystem::SysIdx, bp::bases< SireSystem::SysID, SireID::ID, SireID::IndexBase > > SysIdx_exposer_t;
-        SysIdx_exposer_t SysIdx_exposer = SysIdx_exposer_t( "SysIdx", bp::init< >() );
+        SysIdx_exposer_t SysIdx_exposer = SysIdx_exposer_t( "SysIdx" );
         bp::scope SysIdx_scope( SysIdx_exposer );
+        SysIdx_exposer.def( bp::init< >() );
         SysIdx_exposer.def( bp::init< qint32 >(( bp::arg("idx") )) );
         SysIdx_exposer.def( bp::init< SireSystem::SysIdx const & >(( bp::arg("other") )) );
         { //::SireSystem::SysIdx::hash

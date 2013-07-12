@@ -34,8 +34,9 @@ void register_DoubleDistanceComponent_class(){
 
     { //::SireSystem::DoubleDistanceComponent
         typedef bp::class_< SireSystem::DoubleDistanceComponent, bp::bases< SireSystem::GeometryComponent, SireSystem::Constraint, SireBase::Property > > DoubleDistanceComponent_exposer_t;
-        DoubleDistanceComponent_exposer_t DoubleDistanceComponent_exposer = DoubleDistanceComponent_exposer_t( "DoubleDistanceComponent", bp::init< >() );
+        DoubleDistanceComponent_exposer_t DoubleDistanceComponent_exposer = DoubleDistanceComponent_exposer_t( "DoubleDistanceComponent" );
         bp::scope DoubleDistanceComponent_scope( DoubleDistanceComponent_exposer );
+        DoubleDistanceComponent_exposer.def( bp::init< >() );
         DoubleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("map")=SireBase::PropertyMap() )) );
         DoubleDistanceComponent_exposer.def( bp::init< SireCAS::Symbol const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireFF::PointRef const &, SireCAS::Expression const &, bp::optional< SireBase::PropertyMap const & > >(( bp::arg("constrained_symbol"), bp::arg("point0"), bp::arg("point1"), bp::arg("point2"), bp::arg("point3"), bp::arg("geometry_expression"), bp::arg("map")=SireBase::PropertyMap() )) );
         DoubleDistanceComponent_exposer.def( bp::init< SireSystem::DoubleDistanceComponent const & >(( bp::arg("other") )) );

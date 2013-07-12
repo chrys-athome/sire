@@ -48,8 +48,9 @@ void register_FFMolGroup_class(){
 
     { //::SireFF::FFMolGroup
         typedef bp::class_< SireFF::FFMolGroup, bp::bases< SireMol::MoleculeGroup, SireBase::Property > > FFMolGroup_exposer_t;
-        FFMolGroup_exposer_t FFMolGroup_exposer = FFMolGroup_exposer_t( "FFMolGroup", bp::init< >() );
+        FFMolGroup_exposer_t FFMolGroup_exposer = FFMolGroup_exposer_t( "FFMolGroup" );
         bp::scope FFMolGroup_scope( FFMolGroup_exposer );
+        FFMolGroup_exposer.def( bp::init< >() );
         FFMolGroup_exposer.def( bp::init< SireFF::detail::FFMolGroupPvt const & >(( bp::arg("ffmolgroup") )) );
         FFMolGroup_exposer.def( bp::init< SireMol::MoleculeGroup const & >(( bp::arg("other") )) );
         FFMolGroup_exposer.def( bp::init< SireFF::FFMolGroup const & >(( bp::arg("other") )) );

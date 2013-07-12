@@ -23,8 +23,9 @@ void register_InterSoftCLJFF_class(){
 
     { //::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >
         typedef bp::class_< SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >, bp::bases< SireFF::FF3D, SireFF::Inter2BFF<SireMM::SoftCLJPotentialInterface<SireMM::InterSoftCLJPotential> >, SireMM::SoftCLJPotentialInterface<SireMM::InterSoftCLJPotential>, SireMM::CLJPotentialInterface<SireMM::InterSoftCLJPotential>, SireFF::G1FF, SireFF::FF, SireMol::MolGroupsBase, SireBase::Property > > InterSoftCLJFF_exposer_t;
-        InterSoftCLJFF_exposer_t InterSoftCLJFF_exposer = InterSoftCLJFF_exposer_t( "InterSoftCLJFF", bp::init< >() );
+        InterSoftCLJFF_exposer_t InterSoftCLJFF_exposer = InterSoftCLJFF_exposer_t( "InterSoftCLJFF" );
         bp::scope InterSoftCLJFF_scope( InterSoftCLJFF_exposer );
+        InterSoftCLJFF_exposer.def( bp::init< >() );
         InterSoftCLJFF_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         InterSoftCLJFF_exposer.def( bp::init< SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > > const & >(( bp::arg("other") )) );
         { //::SireFF::Inter2B3DFF< SireMM::SoftCLJPotentialInterface< SireMM::InterSoftCLJPotential > >::energyTable

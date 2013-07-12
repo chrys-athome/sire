@@ -63,8 +63,9 @@ void register_ChainName_class(){
 
     { //::SireMol::ChainName
         typedef bp::class_< SireMol::ChainName, bp::bases< SireMol::ChainID, SireID::ID, SireID::Name > > ChainName_exposer_t;
-        ChainName_exposer_t ChainName_exposer = ChainName_exposer_t( "ChainName", bp::init< >() );
+        ChainName_exposer_t ChainName_exposer = ChainName_exposer_t( "ChainName" );
         bp::scope ChainName_scope( ChainName_exposer );
+        ChainName_exposer.def( bp::init< >() );
         ChainName_exposer.def( bp::init< QString const & >(( bp::arg("name") )) );
         ChainName_exposer.def( bp::init< QString const &, SireID::CaseSensitivity >(( bp::arg("name"), bp::arg("case_sensitivity") )) );
         ChainName_exposer.def( bp::init< SireMol::ChainName const & >(( bp::arg("other") )) );

@@ -34,8 +34,9 @@ void register_Properties_class(){
 
     { //::SireBase::Properties
         typedef bp::class_< SireBase::Properties, bp::bases< SireBase::Property > > Properties_exposer_t;
-        Properties_exposer_t Properties_exposer = Properties_exposer_t( "Properties", bp::init< >() );
+        Properties_exposer_t Properties_exposer = Properties_exposer_t( "Properties" );
         bp::scope Properties_scope( Properties_exposer );
+        Properties_exposer.def( bp::init< >() );
         Properties_exposer.def( bp::init< SireBase::Properties const & >(( bp::arg("other") )) );
         { //::SireBase::Properties::allMetadata
         

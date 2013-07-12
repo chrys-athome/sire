@@ -40,8 +40,9 @@ void register_AngleSymbols_class(){
 
     { //::SireMM::AngleSymbols
         typedef bp::class_< SireMM::AngleSymbols, bp::bases< SireMM::InternalSymbolsBase > > AngleSymbols_exposer_t;
-        AngleSymbols_exposer_t AngleSymbols_exposer = AngleSymbols_exposer_t( "AngleSymbols", bp::init< >() );
+        AngleSymbols_exposer_t AngleSymbols_exposer = AngleSymbols_exposer_t( "AngleSymbols" );
         bp::scope AngleSymbols_scope( AngleSymbols_exposer );
+        AngleSymbols_exposer.def( bp::init< >() );
         { //::SireMM::AngleSymbols::theta
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::AngleSymbols::*theta_function_type )(  ) const;

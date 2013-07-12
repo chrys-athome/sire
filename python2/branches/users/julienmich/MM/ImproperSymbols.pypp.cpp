@@ -40,8 +40,9 @@ void register_ImproperSymbols_class(){
 
     { //::SireMM::ImproperSymbols
         typedef bp::class_< SireMM::ImproperSymbols, bp::bases< SireMM::InternalSymbolsBase > > ImproperSymbols_exposer_t;
-        ImproperSymbols_exposer_t ImproperSymbols_exposer = ImproperSymbols_exposer_t( "ImproperSymbols", bp::init< >() );
+        ImproperSymbols_exposer_t ImproperSymbols_exposer = ImproperSymbols_exposer_t( "ImproperSymbols" );
         bp::scope ImproperSymbols_scope( ImproperSymbols_exposer );
+        ImproperSymbols_exposer.def( bp::init< >() );
         { //::SireMM::ImproperSymbols::phi
         
             typedef ::SireCAS::Symbol const & ( ::SireMM::ImproperSymbols::*phi_function_type )(  ) const;

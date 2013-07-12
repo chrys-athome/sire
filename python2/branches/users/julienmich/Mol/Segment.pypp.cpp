@@ -74,8 +74,9 @@ void register_Segment_class(){
 
     { //::SireMol::Segment
         typedef bp::class_< SireMol::Segment, bp::bases< SireMol::MoleculeView, SireBase::Property > > Segment_exposer_t;
-        Segment_exposer_t Segment_exposer = Segment_exposer_t( "Segment", bp::init< >() );
+        Segment_exposer_t Segment_exposer = Segment_exposer_t( "Segment" );
         bp::scope Segment_scope( Segment_exposer );
+        Segment_exposer.def( bp::init< >() );
         Segment_exposer.def( bp::init< SireMol::MoleculeData const &, SireMol::SegID const & >(( bp::arg("data"), bp::arg("segid") )) );
         Segment_exposer.def( bp::init< SireMol::Segment const & >(( bp::arg("other") )) );
         { //::SireMol::Segment::assertContainsMetadata

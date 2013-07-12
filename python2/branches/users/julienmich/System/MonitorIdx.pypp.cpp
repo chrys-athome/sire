@@ -25,8 +25,9 @@ void register_MonitorIdx_class(){
 
     { //::SireSystem::MonitorIdx
         typedef bp::class_< SireSystem::MonitorIdx, bp::bases< SireSystem::MonitorID, SireID::ID, SireID::IndexBase > > MonitorIdx_exposer_t;
-        MonitorIdx_exposer_t MonitorIdx_exposer = MonitorIdx_exposer_t( "MonitorIdx", bp::init< >() );
+        MonitorIdx_exposer_t MonitorIdx_exposer = MonitorIdx_exposer_t( "MonitorIdx" );
         bp::scope MonitorIdx_scope( MonitorIdx_exposer );
+        MonitorIdx_exposer.def( bp::init< >() );
         MonitorIdx_exposer.def( bp::init< qint32 >(( bp::arg("idx") )) );
         MonitorIdx_exposer.def( bp::init< SireSystem::MonitorIdx const & >(( bp::arg("other") )) );
         { //::SireSystem::MonitorIdx::hash

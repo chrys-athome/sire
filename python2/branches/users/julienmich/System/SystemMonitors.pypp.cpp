@@ -36,8 +36,9 @@ void register_SystemMonitors_class(){
 
     { //::SireSystem::SystemMonitors
         typedef bp::class_< SireSystem::SystemMonitors > SystemMonitors_exposer_t;
-        SystemMonitors_exposer_t SystemMonitors_exposer = SystemMonitors_exposer_t( "SystemMonitors", bp::init< >() );
+        SystemMonitors_exposer_t SystemMonitors_exposer = SystemMonitors_exposer_t( "SystemMonitors" );
         bp::scope SystemMonitors_scope( SystemMonitors_exposer );
+        SystemMonitors_exposer.def( bp::init< >() );
         SystemMonitors_exposer.def( bp::init< SireSystem::SystemMonitors const & >(( bp::arg("other") )) );
         { //::SireSystem::SystemMonitors::add
         

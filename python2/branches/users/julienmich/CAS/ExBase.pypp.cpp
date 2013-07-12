@@ -231,6 +231,16 @@ void register_ExBase_class(){
                 , symbols_function_value );
         
         }
+        { //::SireCAS::ExBase::toOpenMMString
+        
+            typedef ::QString ( ::SireCAS::ExBase::*toOpenMMString_function_type )(  ) const;
+            toOpenMMString_function_type toOpenMMString_function_value( &::SireCAS::ExBase::toOpenMMString );
+            
+            ExBase_exposer.def( 
+                "toOpenMMString"
+                , toOpenMMString_function_value );
+        
+        }
         { //::SireCAS::ExBase::toString
         
             typedef ::QString ( ::SireCAS::ExBase::*toString_function_type )(  ) const;

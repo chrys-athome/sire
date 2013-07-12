@@ -53,8 +53,9 @@ void register_ChemicalBondHunter_class(){
 
     { //::SireMol::ChemicalBondHunter
         typedef bp::class_< SireMol::ChemicalBondHunter, bp::bases< SireMol::CovalentBondHunter, SireMol::BondHunter, SireBase::Property > > ChemicalBondHunter_exposer_t;
-        ChemicalBondHunter_exposer_t ChemicalBondHunter_exposer = ChemicalBondHunter_exposer_t( "ChemicalBondHunter", bp::init< >() );
+        ChemicalBondHunter_exposer_t ChemicalBondHunter_exposer = ChemicalBondHunter_exposer_t( "ChemicalBondHunter" );
         bp::scope ChemicalBondHunter_scope( ChemicalBondHunter_exposer );
+        ChemicalBondHunter_exposer.def( bp::init< >() );
         ChemicalBondHunter_exposer.def( bp::init< double >(( bp::arg("tolerance") )) );
         ChemicalBondHunter_exposer.def( bp::init< SireMol::ChemicalBondHunter const & >(( bp::arg("other") )) );
         { //::SireMol::ChemicalBondHunter::operator()
