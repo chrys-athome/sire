@@ -65,23 +65,20 @@ set ( SIREMOVE_HEADERS
 
 set ( SIREMOVE_OPENMM_HEADERS
       dcd_writer.h      
-#      openmmfrenergydt.h
       openmmfrenergyst.h      
 #      openmmintegrator.h
       openmmmdintegrator.h
-      openmmfrenergydt.h
-      openmmfrenergyst.h
+#      openmmfrenergydt.h
       openmmacceleratedmdintegrator.h
       dcd_writer.h
     )
 
 set ( SIREMOVE_OPENMM_SOURCES
       dcd_writer.cpp      
-#      openmmfrenergydt.cpp
       openmmfrenergyst.cpp 
 #      openmmintegrator.cpp
       openmmmdintegrator.cpp
-      openmmfrenergydt.cpp
+#      openmmfrenergydt.cpp
       openmmfrenergyst.cpp
       openmmacceleratedmdintegrator.cpp
       dcd_writer.cpp

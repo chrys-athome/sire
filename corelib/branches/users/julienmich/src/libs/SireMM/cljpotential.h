@@ -206,11 +206,6 @@ public:
     bool setShiftElectrostatics(bool switchelectro);
     bool setCombiningRules(const QString &combiningrules);
     bool setUseReactionField(bool switchrf);
-    bool setUseAtomisticCutoff(bool switchatomistic);
-    bool setUseGroupCutoff(bool switchgroup);
-
-    bool useAtomisticCutoff() const;
-    bool useGroupCutoff() const;
     
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
@@ -267,9 +262,6 @@ protected:
         (this shifts the entire electrostatic potential so that it
         is zero at the cutoff distance) */
     bool use_electrostatic_shifting;
-
-    /** Whether or not to use an atomistic cutoff */
-    bool use_atomistic_cutoff;
 };
 
 /** This class provides all of the functions and containers  
@@ -1185,25 +1177,6 @@ public:
         return CLJPot::reactionFieldDielectric();
     }
 
-    bool setUseAtomisticCutoff(bool switchatomistic)
-    {
-        return CLJPot::setUseAtomisticCutoff(switchatomistic);
-    }
-                          
-    bool setUseGroupCutoff(bool switchgroup)
-    {
-        return CLJPot::setUseGroupCutoff(switchgroup);
-    }
-
-    bool useAtomisticCutoff() const
-    {
-        return CLJPot::useAtomisticCutoff();
-    }
-
-    bool useGroupCutoff() const
-    {
-        return CLJPot::useGroupCutoff();
-    }
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
