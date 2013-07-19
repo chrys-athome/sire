@@ -11,7 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in Soiree
 set ( SOIREE_HEADERS
-      wham.h
+      ti.h
     )
 
 # Define the sources in SireSystem
@@ -19,7 +19,9 @@ set ( SOIREE_SOURCES
 
       register_soiree.cpp
 
-      wham.cpp
+      ti.cpp
+
+      third_party/regress.cpp
 
       ${SOIREE_HEADERS}
     )

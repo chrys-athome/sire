@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2008  Christopher Woods
+  *  Copyright (C) 2008-2013  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@
 
 #include "histogram.h"
 
+#include "SireMaths/maths.h"
+
 #include "SireID/index.h"
 
 #include "SireError/errors.h"
@@ -38,6 +40,7 @@
 using namespace SireMaths;
 using namespace SireID;
 using namespace SireUnits::Dimension;
+using namespace SireBase;
 using namespace SireStream;
 
 ///////////
@@ -197,177 +200,6 @@ QString HistogramValue::toString() const
 }
 
 ///////////
-/////////// Implementation of HistogramRange
-///////////
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds,
-                                         const HistogramRange &range)
-{
-    ds << range.minval << range.invwidth << range.nbins;
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, 
-                                         HistogramRange &range)
-{
-    ds >> range.minval >> range.invwidth >> range.nbins;
-    return ds;
-}
-
-/** Null constructor */
-HistogramRange::HistogramRange() : minval(0), invwidth(1), nbins(0)
-{}
-
-/** Construct a histogram range from min <= value < max, using 'nbins' bins */
-HistogramRange::HistogramRange(double min, double max, int numbins)
-               : nbins(numbins)
-{
-    if (min > max)
-    {
-        qSwap(min, max);
-    }
-    
-    minval = min;
- 
-    if (nbins <= 0)
-    {
-        nbins = 0;
-        invwidth = 1;
-    }
-    else
-    {
-        invwidth = double(nbins) / (max - min);
-    }
-}
-
-/** Construct a histogram range from min <= value < max, using a bin width
-    of 'binwidth' */
-HistogramRange::HistogramRange(double min, double max, double binwidth)
-{
-    if (min > max)
-    {
-        qSwap(min, max);
-    }
-    
-    minval = min;
-    
-    if (binwidth <= 0)
-    {
-        nbins = 0;
-        invwidth = 1;
-    }
-    else
-    {
-        invwidth = 1.0 / binwidth;
-        nbins = 0.5 + ((max - min) * invwidth);
-    }
-}
-
-/** Copy constructor */
-HistogramRange::HistogramRange(const HistogramRange &other)
-               : minval(other.minval), invwidth(other.invwidth), nbins(other.nbins)
-{}
-
-/** Destructor */
-HistogramRange::~HistogramRange()
-{}
-
-/** Copy assignment operator */
-HistogramRange& HistogramRange::operator=(const HistogramRange &other)
-{
-    minval = other.minval;
-    invwidth = other.invwidth;
-    nbins = other.nbins;
-    return *this;
-}
-
-/** Comparison operator */
-bool HistogramRange::operator==(const HistogramRange &other) const
-{
-    return minval == other.minval and invwidth == other.invwidth
-               and nbins == other.nbins;
-}
-
-/** Comparison operator */
-bool HistogramRange::operator!=(const HistogramRange &other) const
-{
-    return minval != other.minval or invwidth != other.invwidth or
-           nbins != other.nbins;
-}
-
-/** Return the 'ith' bin
-
-    \throw SireError::invalid_index
-*/
-HistogramBin HistogramRange::operator[](int i) const
-{
-    i = Index(i).map(nbins);
-    
-    double binwidth = 1.0 / invwidth;
-    
-    double min = minval + (i * binwidth);
-    
-    return HistogramBin(min, min + binwidth);
-}
-
-/** Return the maximum value of the histogram */
-double HistogramRange::maximum() const
-{
-    return minval + (double(nbins) / invwidth);
-}
-
-/** Return the minimum value of the histogram */
-double HistogramRange::minimum() const
-{
-    return minval;
-}
-
-/** Return the middle value of the histogram */
-double HistogramRange::middle() const
-{
-    return 0.5*minimum() + 0.5*maximum();
-}
-
-/** Return the number of bins in the histogram */
-int HistogramRange::nBins() const
-{
-    return nbins;
-}
-
-/** Return the number of bins in the histogram */
-int HistogramRange::count() const
-{
-    return nBins();
-}
-
-/** Return the width of each bin in the histogram */
-double HistogramRange::binWidth() const
-{
-    return 1.0 / invwidth;
-}
-
-/** Return the index of the bin that contains the value 'value'. 
-    This returns '-1' if this value does not fit in this histogram */
-int HistogramRange::bin(double value) const
-{
-    int idx = int( (value - minval) * invwidth );
-
-    if (idx < 0 or idx >= int(nbins))
-        return -1;
-        
-    return idx;
-}
-
-/** Return a string representation */
-QString HistogramRange::toString() const
-{
-    return QObject::tr("Range[ %1 <= x < %2 : nBins() == %3 ]")
-                    .arg( minimum() ).arg( maximum() ).arg(nBins());
-}
-
-///////////
 /////////// Implementation of Histogram
 ///////////
 
@@ -376,11 +208,14 @@ static const RegisterMetaType<Histogram> r_histogram;
 /** Serialise to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Histogram &histogram)
 {
-    writeHeader(ds, r_histogram, 1);
+    writeHeader(ds, r_histogram, 2);
     
     SharedDataStream sds(ds);
     
-    sds << histogram.binvals << static_cast<const HistogramRange&>(histogram);
+    sds << histogram.binvals << histogram.binwidth
+        << histogram.avgval << histogram.avgval2
+        << histogram.sum_of_bins
+        << static_cast<const Property&>(histogram);
     
     return ds;
 }
@@ -390,80 +225,58 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Histogram &histogram)
 {
     VersionID v = readHeader(ds, r_histogram);
     
-    if (v == 1)
+    if (v == 2)
     {
         SharedDataStream sds(ds);
-        
-        sds >> histogram.binvals >> static_cast<HistogramRange&>(histogram);
+
+        sds >> histogram.binvals >> histogram.binwidth
+            >> histogram.avgval >> histogram.avgval2
+            >> histogram.sum_of_bins
+            >> static_cast<Property&>(histogram);
     }
     else
-        throw version_error( v, "1", r_histogram, CODELOC );
+        throw version_error( v, "2", r_histogram, CODELOC );
         
     return ds;
 }
 
-/** Null constructor */
-Histogram::Histogram() : HistogramRange()
+/** Construct an empty histogram with a bin spacing of 1.0 */
+Histogram::Histogram()
+          : ConcreteProperty<Histogram,Property>(),
+            binwidth(1), avgval(0), avgval2(0), sum_of_bins(0)
 {}
 
-static QVector<double> create(const HistogramRange &range)
+/** Construct an empty histogram with specified bin width */
+Histogram::Histogram(double width)
+          : ConcreteProperty<Histogram,Property>(),
+            binwidth(width), avgval(0), avgval2(0), sum_of_bins(0)
 {
-    if (range.nBins() > 0)
-    {
-        QVector<double> bins(range.nBins(), 0.0);
-        bins.squeeze();
-        return bins;
-    }
-    else
-        return QVector<double>();
+    if (width <= 0)
+        width = 0.1;
+    else if (width > 1e20)
+        width = 1e20;
 }
 
-/** Construct a histogram that can hold values from min <= value < max, 
-    using 'nbins' bins */
-Histogram::Histogram(double min, double max, int nbins)
-          : HistogramRange(min, max, nbins)
+/** Construct a histogram of specified bin width, and populating it with 
+    the passed values (which are all assumed to have weight "1") */
+Histogram::Histogram(double width, const QVector<double> &values)
+          : ConcreteProperty<Histogram,Property>(),
+            binwidth(width), avgval(0), avgval2(0), sum_of_bins(0)
 {
-    binvals = ::create(*this);
-}
+    if (width <= 0)
+        width = 0.1;
+    else if (width > 1e20)
+        width = 1e20;
 
-/** Construct a histogram that can hold values from min <= value < max,
-    using a bin width of 'binwidth' */
-Histogram::Histogram(double min, double max, double binwidth)
-          : HistogramRange(min, max, binwidth)
-{
-    binvals = ::create(*this);
-}
-
-/** Construct a histogram using the passed range */
-Histogram::Histogram(const HistogramRange &range)
-          : HistogramRange(range), binvals( ::create(range) )
-{}
-
-/** Construct a histogram using the passed range, initially assigning
-    all bins with the value 'value' */
-Histogram::Histogram(const HistogramRange &range, double value)
-          : HistogramRange(range), binvals(range.nBins(), value)
-{}
-
-/** Construct a histogram using the passed range and values 
-
-    \throw SireError::incompatible_error
-*/
-Histogram::Histogram(const HistogramRange &range,
-                     const QVector<double> &values)
-          : HistogramRange(range), binvals(values)
-{
-    if (range.nBins() != values.count())
-        throw SireError::incompatible_error( QObject::tr(
-            "The histogram is incompatible with the array of passed values "
-            "because the number of values (%1) is not equal to the number "
-            "of histogram bins (%2).")
-                .arg(binvals.count()).arg(range.nBins()), CODELOC );
+    this->operator+=(values);
 }
 
 /** Copy constructor */
 Histogram::Histogram(const Histogram &other)
-          : HistogramRange(other), binvals(other.binvals)
+          : ConcreteProperty<Histogram,Property>(other),
+            binvals(other.binvals), binwidth(other.binwidth),
+            avgval(other.avgval), avgval2(other.avgval2),
+            sum_of_bins(other.sum_of_bins)
 {}
 
 /** Destructor */
@@ -473,174 +286,16 @@ Histogram::~Histogram()
 /** Copy assignment operator */
 Histogram& Histogram::operator=(const Histogram &other)
 {
-    binvals = other.binvals;
-    HistogramRange::operator=(other);
+    if (this != &other)
+    {
+        binvals = other.binvals;
+        binwidth = other.binwidth;
+        avgval = other.avgval;
+        avgval2 = other.avgval2;
+        sum_of_bins = other.sum_of_bins;
+    }
+    
     return *this;
-}
-
-/** Comparison operator */
-bool Histogram::operator==(const Histogram &other) const
-{
-    return HistogramRange::operator==(other) and binvals == other.binvals;
-}
-
-/** Comparison operator */
-bool Histogram::operator!=(const Histogram &other) const
-{
-    return HistogramRange::operator!=(other) or binvals != other.binvals;
-}
-
-/** Return the value of the ith bin
-
-    \throw SireError::invalid_index
-*/
-HistogramValue Histogram::operator[](int i) const
-{
-    i = Index(i).map( this->nBins() );
-
-    return HistogramValue( HistogramRange::operator[](i),
-                           binvals.constData()[i] );
-}
-
-/** Return a raw pointer to the values in this histogram */
-double* Histogram::data()
-{
-    return binvals.data();
-}
-
-/** Return a raw pointer to the values in this histogram */
-const double* Histogram::data() const
-{
-    return binvals.constData();
-}
-
-/** Return a raw pointer to the values in this histogram */
-const double* Histogram::constData() const
-{
-    return binvals.constData();
-}
-
-/** Return the sum over all bins */
-double Histogram::sumOverBins() const
-{
-    double sum = 0;
-    
-    for (QVector<double>::const_iterator it = binvals.constData();
-         it != binvals.constEnd();
-         ++it)
-    {
-        sum += *it;
-    }
-    
-    return sum;
-}
-
-Histogram* Histogram::clone() const
-{
-    return new Histogram(*this);
-}
-
-/** Add 'weight' to the histogram bin 'i'
-    
-    \throw SireError::invalid_index
-*/
-void Histogram::add(int i, double weight)
-{
-    binvals.data()[ Index(i).map(binvals.count()) ] += weight;
-}
-
-/** Accumulate the value 'value' (with a weight of 'weight') */
-void Histogram::accumulate(double value, double weight)
-{
-    int idx = this->bin(value);
-    
-    if (idx != -1)
-        binvals[idx] += weight;
-}
-
-/** Accumulate the value 'value' (with a weight of 1.0) */
-void Histogram::accumulate(double value)
-{
-    this->accumulate(value, 1);
-}
-
-/** Accumulte the values in the passed histogram into this one */
-void Histogram::accumulate(const Histogram &other)
-{
-    if ( static_cast<const HistogramRange&>(*this).operator==(other) )
-    {
-        //we have the same range - just add the values
-        for (int i=0; i<this->nBins(); ++i)
-        {
-            binvals[i] += other.binvals.at(i);
-        }
-        
-        return;
-    }
-
-    for (int i=0; i<other.nBins(); ++i)
-    {
-        int min_idx = this->bin( other.minimum() );
-        int max_idx = this->bin( other.maximum() );
-        
-        if (min_idx == -1)
-        {
-            if (max_idx == -1)
-                continue;
-                
-            //put all of the values into the max bin
-            min_idx = 0;
-        }
-        else if (max_idx == -1)
-        {
-            max_idx = this->nBins() - 1;
-        }
-        
-        double val = other.binvals.at(i) / double(max_idx - min_idx + 1);
-        
-        for (int j=min_idx; j<=max_idx; ++j)
-        {
-            this->binvals[j] += val;
-        }
-    }
-}
-
-HistogramValue Histogram::at(int i) const
-{
-    return this->operator[](i);
-}
-
-/** Return a string representation */
-QString Histogram::toString() const
-{
-    QStringList lines;
-    lines.append( QString("#Histogram[ %1 <= x < %2 : nBins() == %3 ]")
-                    .arg( minimum() ).arg( maximum() ).arg( nBins() ) );
-
-    for (int i=0; i<nBins(); ++i)
-    {
-        HistogramValue bin = this->at(i);
-        
-        lines.append( QString("%1  %2").arg(bin.middle()).arg(bin.value()) );
-    }
-    
-    return lines.join("\n");
-}
-
-/** Normalise this histogram (scale so that the sum of bins is 1) */
-void Histogram::normalise()
-{
-    double sum = this->sumOverBins();
-    
-    if (sum != 0)
-    {
-        for (QVector<double>::iterator it = binvals.begin();
-             it != binvals.end();
-             ++it)
-        {
-            *it /= sum;
-        }
-    }
 }
 
 const char* Histogram::typeName()
@@ -648,19 +303,469 @@ const char* Histogram::typeName()
     return QMetaType::typeName( qMetaTypeId<Histogram>() );
 }
 
-//// Fully instantiate the Length and Energy histogram classes
-
-namespace SireMaths
+const char* Histogram::what() const
 {
+    return Histogram::typeName();
+}
 
-template class HistogramT<Length>;
-template class HistogramBinT<Length>;
-template class HistogramValueT<Length>;
-template class HistogramRangeT<Length>;
+Histogram* Histogram::clone() const
+{
+    return new Histogram(*this);
+}
 
-template class HistogramT<Energy>;
-template class HistogramBinT<Energy>;
-template class HistogramValueT<Energy>;
-template class HistogramRangeT<Energy>;
+/** Comparison operator */
+bool Histogram::operator==(const Histogram &other) const
+{
+    return this == &other or
+           (binvals == other.binvals and binwidth == other.binwidth and
+            avgval == other.avgval and sum_of_bins == other.sum_of_bins and
+            avgval2 == other.avgval2);
+}
 
+/** Comparison operator */
+bool Histogram::operator!=(const Histogram &other) const
+{
+    return not Histogram::operator==(other);
+}
+
+/** Add the contects of the passed histogram into this histogram */
+Histogram& Histogram::operator+=(const Histogram &other)
+{
+    this->accumulate(other);
+    return *this;
+}
+
+/** Add the passed value into this histogram */
+Histogram& Histogram::operator+=(double value)
+{
+    this->accumulate(value);
+    return *this;
+}
+
+/** Add the passed array of values onto this histogram */
+Histogram& Histogram::operator+=(const QVector<double> &values)
+{
+    this->accumulate(values);
+    return *this;
+}
+
+/** Return the accumulation of the two passed histograms. Note that the
+    returned histogram will have a bin width that is equal to the smallest
+    bin width of this or other */
+Histogram Histogram::operator+(const Histogram &other) const
+{
+    if (binwidth <= other.binwidth)
+    {
+        Histogram ret(*this);
+        ret += other;
+        return ret;
+    }
+    else
+    {
+        Histogram ret(other);
+        ret += *this;
+        return ret;
+    }
+}
+
+/** Return the histogram that is a copy of this, but on which 'value' has 
+    been added */
+Histogram Histogram::operator+(double value) const
+{
+    Histogram ret(*this);
+    ret += value;
+    return ret;
+}
+
+/** Return the histogram that is a copy of this, but on which the passed
+    values have been added */
+Histogram Histogram::operator+(const QVector<double> &values) const
+{
+    Histogram ret(*this);
+    ret += values;
+    return ret;
+}
+
+/** Return a string representation of this histogram */
+QString Histogram::toString() const
+{
+    return QObject::tr("Histogram( binWidth() => %1, mean() => %2, sumOfBins() => %3 )")
+                .arg(binWidth()).arg(mean()).arg(sumOfBins());
+}
+
+/** Return the ith bin in the histogram */
+HistogramValue Histogram::operator[](int i) const
+{
+    i = Index(i).map(binvals.count());
+    return values().at(i);
+}
+
+/** Return the ith bin in the histogram */
+HistogramValue Histogram::at(int i) const
+{
+    return this->operator[](i);
+}
+
+/** Return the number of bins in the histogram */
+int Histogram::count() const
+{
+    return binvals.count();
+}
+
+/** Return the number of bins in the histogram */
+int Histogram::size() const
+{
+    return this->count();
+}
+
+/** Return the set of all bins and values in the histogram. The bins
+    will be returned in numerical order */
+QVector<HistogramValue> Histogram::values() const
+{
+    if (binvals.isEmpty())
+        return QVector<HistogramValue>();
+
+    QList<qint64> bins = binvals.keys();
+    qSort(bins);
+    
+    QVector<HistogramValue> vals(binvals.count());
+    HistogramValue *val = vals.data();
+    
+    foreach (qint64 bin, bins)
+    {
+        *val = HistogramValue( HistogramBin(bin*binwidth, (bin+1)*binwidth),
+                               binvals[bin] );
+        
+        val += 1;
+    }
+    
+    return vals;
+}
+
+/** Return the idealised normal distribution for the values in the histogram,
+    based on the current mean and standard deviation, and the sum of weights */
+QVector<HistogramValue> Histogram::normalDistribution() const
+{
+    if (binvals.isEmpty())
+        return QVector<HistogramValue>();
+    
+    QList<qint64> bins = binvals.keys();
+    qSort(bins);
+    
+    QVector<HistogramValue> vals(binvals.count());
+    HistogramValue *val = vals.data();
+    
+    const double avg = this->mean();
+    const double stdev = this->standardDeviation();
+    const double denom = 1.0 / (2*stdev*stdev);
+    double norm = 0;
+    int nnorm = 0;
+
+    foreach (qint64 bin, bins)
+    {
+        double x = (bin+0.5)*binwidth;
+        
+        if (std::abs( avg - x ) < stdev)
+        {
+            norm += binvals.value(bin) / std::exp( -pow_2(x-avg) * denom );
+            nnorm += 1;
+        }
+    }
+
+    if (nnorm > 0)
+    {
+        norm /= nnorm;
+    }
+    else
+    {
+        foreach (qint64 bin, bins)
+        {
+            double x = (bin+0.5)*binwidth;
+            norm += binvals.value(bin) / std::exp( -pow_2(x-avg) * denom );
+        }
+        
+        norm /= binvals.count();
+    }
+    
+    foreach (qint64 bin, bins)
+    {
+        double x = (bin+0.5)*binwidth;
+        
+        *val = HistogramValue( HistogramBin(bin*binwidth, (bin+1)*binwidth),
+                               norm * std::exp( -pow_2(x-avg) * denom ) );
+        
+        val += 1;
+    }
+
+    return vals;
+}
+
+/** Accumulate 'value' onto the histogram */
+void Histogram::accumulate(double value)
+{
+    this->accumulate(value, 1.0);
+}
+
+/** Accumulate 'value' with the passed 'weight' onto the histogram */
+void Histogram::accumulate(double value, double weight)
+{
+    //we cannot add negative weight to the histogram
+    if (weight <= 0)
+        return;
+    
+    //first, calculate the average of the
+    if (sum_of_bins == 0)
+    {
+        avgval = value;
+        avgval2 = value*value;
+        sum_of_bins = weight;
+    }
+    else
+    {
+        const double bigratio = sum_of_bins / (sum_of_bins + weight);
+        const double smallratio = 1.0 - bigratio;
+    
+        avgval = bigratio*avgval + smallratio*value;
+        avgval2 = bigratio*avgval2 + smallratio*value*value;
+        sum_of_bins += weight;
+    }
+    
+    //now histogram the data
+    qint64 bin = qint64(value / binwidth);
+    
+    binvals.insert(bin, binvals.value(bin,0) + weight);
+}
+
+/** Accumulate the passed values onto this histogram */
+void Histogram::accumulate(const QVector<double> &values)
+{
+    foreach (double value, values)
+    {
+        this->accumulate(value, 1);
+    }
+}
+
+/** Accumulate the data from the passed histogram onto this histogram */
+void Histogram::accumulate(const Histogram &other)
+{
+    Histogram resized = other.resize( this->binWidth() );
+    
+    for (QHash<qint64,double>::const_iterator it = resized.binvals.constBegin();
+         it != resized.binvals.constEnd();
+         ++it)
+    {
+        this->accumulate( (it.key() + 0.5)*resized.binwidth, it.value() );
+    }
+}
+
+/** Add 'value' onto the histogram */
+void Histogram::add(double value)
+{
+    this->accumulate(value);
+}
+
+/** Add the passed values on this histogram */
+void Histogram::add(const QVector<double> &values)
+{
+    this->accumulate(values);
+}
+
+/** Add 'value' with the passed 'weight' onto the histogram */
+void Histogram::add(double value, double weight)
+{
+    this->accumulate(value, weight);
+}
+
+/** Add the passed histogram onto this histogram. This will match the
+    bin width of the passed histogram to this histogram */
+void Histogram::add(const Histogram &other)
+{
+    this->accumulate(other);
+}
+
+/** Return the sum of the weights over all of the bins */
+double Histogram::sumOfBins() const
+{
+    return sum_of_bins;
+}
+
+/** Return the width of the bins */
+double Histogram::binWidth() const
+{
+    return binwidth;
+}
+
+/** Return the mean average of all values added to the histogram. This
+    is calculated exactly from the added data */
+double Histogram::mean() const
+{
+    return avgval;
+}
+
+/** Return the standard deviation of all values added to the histogram.
+    This is calculated exactly from the added data */
+double Histogram::standardDeviation() const
+{
+    if (binvals.isEmpty())
+        return 0;
+
+    return std::sqrt(avgval2 - (avgval*avgval));
+}
+
+/** Return the median of all values added to the histogram. This is
+    estimated based on the actual histogram of added data */
+double Histogram::median() const
+{
+    if (binvals.isEmpty())
+        return 0;
+
+    double sum = 0;
+    const double half_full = 0.5 * sumOfBins();
+    
+    QList<qint64> bins = binvals.keys();
+    qSort(bins);
+    
+    foreach (qint64 bin, bins)
+    {
+        sum += binvals[bin];
+        
+        if (sum > half_full)
+            return (bin+0.5)*binwidth;
+    }
+    
+    throw SireError::program_bug( QObject::tr(
+            "It should not be possible to reach here...!"), CODELOC );
+    
+    return 0;
+}
+
+/** Return the mode of all values added to the histogram. This is 
+    estimated based on the actual histogram of added data */
+double Histogram::mode() const
+{
+    if (binvals.isEmpty())
+        return 0;
+    
+    double maxval = 0;
+    qint64 maxbin = 0;
+    
+    for (QHash<qint64,double>::const_iterator it = binvals.constBegin();
+         it != binvals.constEnd();
+         ++it)
+    {
+        if (it.value() > maxval)
+        {
+            maxval = it.value();
+            maxbin = it.key();
+        }
+    }
+    
+    return (maxbin+0.5) * binwidth;
+}
+
+/** Return the highest value in the histogram */
+double Histogram::maximumValue() const
+{
+    if (binvals.isEmpty())
+        return 0;
+    
+    QList<qint64> bins = binvals.keys();
+    qSort(bins);
+    
+    return (bins.last() + 1) * binwidth;
+}
+
+/** Return the lowest values in the histogram */
+double Histogram::minimumValue() const
+{
+    if (binvals.isEmpty())
+        return 0;
+    
+    QList<qint64> bins = binvals.keys();
+    qSort(bins);
+    
+    return bins.first() * binwidth;
+}
+
+/** Return the range for the data in the histogram */
+double Histogram::range() const
+{
+    if (binvals.isEmpty())
+        return 0;
+    
+    QList<qint64> bins = binvals.keys();
+    qSort(bins);
+    
+    return (bins.last() - bins.first() + 1) * binwidth;
+}
+
+/** Return a normalised version of this histogram */
+Histogram Histogram::normalise() const
+{
+    if (binvals.isEmpty())
+        return Histogram();
+
+    else if (sum_of_bins == 1)
+        return *this;
+
+    Histogram ret(*this);
+    
+    foreach (qint64 bin, ret.binvals.keys())
+    {
+        ret.binvals.insert(bin, ret.binvals.value(bin) / sum_of_bins);
+    }
+    
+    ret.sum_of_bins = 1;
+    
+    return ret;
+}
+
+/** Return a resized copy of this histogram with the passed new binwidth */
+Histogram Histogram::resize(double width) const
+{
+    if (width <= 0)
+        width = 0.1;
+
+    if (width == binwidth)
+        return *this;
+
+    Histogram ret;
+    ret.binwidth = width;
+    ret.avgval = avgval;
+    ret.avgval2 = avgval2;
+    ret.sum_of_bins = sum_of_bins;
+    
+    for (QHash<qint64,double>::const_iterator it = binvals.constBegin();
+         it != binvals.constEnd();
+         ++it)
+    {
+        double weight = it.value();
+    
+        double old_minval = it.key() * binwidth;
+        double old_maxval = old_minval + binwidth;
+
+        qint64 bin = qint64(old_minval / width);
+
+        while (weight > 0)
+        {
+            double new_maxval = (bin+1)*width;
+        
+            if (new_maxval < old_maxval)
+            {
+                double partial_weight = weight * (new_maxval - old_minval) / binwidth;
+                ret.binvals.insert( bin, ret.binvals.value(bin,0) + partial_weight );
+                weight -= partial_weight;
+                old_minval = new_maxval;
+            }
+            else
+            {
+                ret.binvals.insert( bin, ret.binvals.value(bin,0) + weight );
+                weight = 0;
+            }
+            
+            bin += 1;
+        }
+    }
+    
+    return ret;
 }
