@@ -10,6 +10,8 @@ namespace bp = boost::python;
 
 #include "SireBase/array2d.hpp"
 
+#include "SireError/errors.h"
+
 #include "SireMM/atomljs.h"
 
 #include "SireMM/ljpair.h"

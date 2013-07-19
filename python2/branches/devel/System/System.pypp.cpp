@@ -28,6 +28,8 @@ namespace bp = boost::python;
 
 #include "SireFF/probe.h"
 
+#include "SireMM/ljparameterdb.h"
+
 #include "SireMol/atomcoords.h"
 
 #include "SireMol/errors.h"
@@ -1903,7 +1905,7 @@ void register_System_class(){
             System_exposer.def( 
                 "version"
                 , version_function_value
-                , bp::return_value_policy< bp::copy_const_reference >() );
+                , bp::return_value_policy<bp::clone_const_reference>() );
         
         }
         System_exposer.staticmethod( "null" );

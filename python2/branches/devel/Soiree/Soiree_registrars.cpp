@@ -3,14 +3,9 @@
 
 #include "Soiree_registrars.h"
 
-#include "wham.h"
-
 #include "Helpers/objectregistry.hpp"
 
 void register_Soiree_objects()
 {
-
-    ObjectRegistry::registerConverterFor< Soiree::WHAM >();
-
 }
 

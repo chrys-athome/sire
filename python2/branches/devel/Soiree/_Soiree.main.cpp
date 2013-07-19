@@ -5,17 +5,11 @@
 
 #include "boost/python.hpp"
 
-#include "Helpers/clone_const_reference.hpp"
-
-#include "WHAM.pypp.hpp"
-
 namespace bp = boost::python;
 
 #include "Soiree_registrars.h"
 
 BOOST_PYTHON_MODULE(_Soiree){
     register_Soiree_objects();
-
-    register_WHAM_class();
 }
 

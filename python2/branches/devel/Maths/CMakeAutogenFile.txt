@@ -11,20 +11,11 @@ set ( PYPP_SOURCES
        AxisSet.pypp.cpp
        Complex.pypp.cpp
        DistVector.pypp.cpp
-       EnergyHistogram.pypp.cpp
-       EnergyHistogramBin.pypp.cpp
-       EnergyHistogramRange.pypp.cpp
-       EnergyHistogramValue.pypp.cpp
        ExpAverage.pypp.cpp
        FreeEnergyAverage.pypp.cpp
        Histogram.pypp.cpp
        HistogramBin.pypp.cpp
-       HistogramRange.pypp.cpp
        HistogramValue.pypp.cpp
-       LengthHistogram.pypp.cpp
-       LengthHistogramBin.pypp.cpp
-       LengthHistogramRange.pypp.cpp
-       LengthHistogramValue.pypp.cpp
        Line.pypp.cpp
        Matrix.pypp.cpp
        Median.pypp.cpp

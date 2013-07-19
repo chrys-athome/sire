@@ -71,10 +71,6 @@
 
 #include "PropertyConstraint.pypp.hpp"
 
-#include "RDF.pypp.hpp"
-
-#include "RDFMonitor.pypp.hpp"
-
 #include "SpaceWrapper.pypp.hpp"
 
 #include "Specify_MonitorID_.pypp.hpp"
@@ -181,10 +177,6 @@ BOOST_PYTHON_MODULE(_System){
     register_PolariseChargesFF_class();
 
     register_PropertyConstraint_class();
-
-    register_RDF_class();
-
-    register_RDFMonitor_class();
 
     register_SpaceWrapper_class();
 

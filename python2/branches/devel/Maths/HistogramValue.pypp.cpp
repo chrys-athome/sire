@@ -11,6 +11,8 @@ namespace bp = boost::python;
 
 #include "SireID/index.h"
 
+#include "SireMaths/maths.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireStream/shareddatastream.h"

@@ -32,8 +32,6 @@ set ( PYPP_SOURCES
        PolariseCharges.pypp.cpp
        PolariseChargesFF.pypp.cpp
        PropertyConstraint.pypp.cpp
-       RDF.pypp.cpp
-       RDFMonitor.pypp.cpp
        SpaceWrapper.pypp.cpp
        Specify_MonitorID_.pypp.cpp
        Specify_SysID_.pypp.cpp

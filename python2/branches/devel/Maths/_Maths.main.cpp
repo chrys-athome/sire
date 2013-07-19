@@ -25,14 +25,6 @@
 
 #include "DistVector.pypp.hpp"
 
-#include "EnergyHistogram.pypp.hpp"
-
-#include "EnergyHistogramBin.pypp.hpp"
-
-#include "EnergyHistogramRange.pypp.hpp"
-
-#include "EnergyHistogramValue.pypp.hpp"
-
 #include "ExpAverage.pypp.hpp"
 
 #include "FreeEnergyAverage.pypp.hpp"
@@ -41,17 +33,7 @@
 
 #include "HistogramBin.pypp.hpp"
 
-#include "HistogramRange.pypp.hpp"
-
 #include "HistogramValue.pypp.hpp"
-
-#include "LengthHistogram.pypp.hpp"
-
-#include "LengthHistogramBin.pypp.hpp"
-
-#include "LengthHistogramRange.pypp.hpp"
-
-#include "LengthHistogramValue.pypp.hpp"
 
 #include "Line.pypp.hpp"
 
@@ -146,29 +128,11 @@ BOOST_PYTHON_MODULE(_Maths){
 
     register_FreeEnergyAverage_class();
 
-    register_HistogramRange_class();
-
     register_Histogram_class();
 
     register_HistogramBin_class();
 
-    register_LengthHistogramBin_class();
-
-    register_EnergyHistogramBin_class();
-
-    register_LengthHistogramRange_class();
-
-    register_EnergyHistogramRange_class();
-
-    register_LengthHistogram_class();
-
-    register_EnergyHistogram_class();
-
     register_HistogramValue_class();
-
-    register_LengthHistogramValue_class();
-
-    register_EnergyHistogramValue_class();
 
     register_Line_class();
 
