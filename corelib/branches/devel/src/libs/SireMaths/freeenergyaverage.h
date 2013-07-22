@@ -79,6 +79,10 @@ public:
     bool operator==(const FreeEnergyAverage &other) const;
     bool operator!=(const FreeEnergyAverage &other) const;
     
+    FreeEnergyAverage operator+(const FreeEnergyAverage &other) const;
+    
+    FreeEnergyAverage& operator+=(const FreeEnergyAverage &other);
+    
     static const char* typeName();
 
     SireUnits::Dimension::Temperature temperature() const;

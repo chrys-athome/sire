@@ -32,6 +32,8 @@
 
 #include "SireStream/datastream.h"
 
+#include <QDebug>
+
 using namespace SireMaths;
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
@@ -141,6 +143,22 @@ bool FreeEnergyAverage::operator==(const FreeEnergyAverage &other) const
 bool FreeEnergyAverage::operator!=(const FreeEnergyAverage &other) const
 {
     return not operator==(other);
+}
+
+/** Combine the passed average onto this average */
+FreeEnergyAverage& FreeEnergyAverage::operator+=(const FreeEnergyAverage &other)
+{
+    ExpAverage::operator+=(other);
+    hist += other.hist;
+    return *this;
+}
+
+/** Return the combination of this average plus other */
+FreeEnergyAverage FreeEnergyAverage::operator+(const FreeEnergyAverage &other) const
+{
+    FreeEnergyAverage ret(*this);
+    ret += other;
+    return ret;
 }
 
 /** Return the temperature at which the free energy average

@@ -114,6 +114,8 @@ protected:
     bool operator==(const Accumulator &other) const;
     bool operator!=(const Accumulator &other) const;
 
+    void add(int nsteps);
+
 private:
     /** The number of values that have been accumulated */
     quint32 nvalues;
@@ -173,6 +175,9 @@ public:
     bool operator==(const Average &other) const;
     bool operator!=(const Average &other) const;
     
+    Average operator+(const Average &other) const;
+    Average& operator+=(const Average &other);
+    
     void clear();
     
     void accumulate(double value);
@@ -206,6 +211,9 @@ public:
     ~AverageAndStddev();
     
     AverageAndStddev& operator=(const AverageAndStddev &other);
+    
+    AverageAndStddev operator+(const AverageAndStddev &other) const;
+    AverageAndStddev& operator+=(const AverageAndStddev &other);
     
     static const char* typeName();
     
@@ -252,6 +260,9 @@ public:
     ~ExpAverage();
     
     ExpAverage& operator=(const ExpAverage &other);
+    
+    ExpAverage operator+(const ExpAverage &other) const;
+    ExpAverage& operator+=(const ExpAverage &other);
     
     static const char* typeName();
     

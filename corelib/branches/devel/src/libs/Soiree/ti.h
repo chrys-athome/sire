@@ -31,6 +31,8 @@
 
 #include "SireMaths/freeenergyaverage.h"
 
+#include "SireUnits/dimensions.h"
+
 #include <boost/tuple/tuple.hpp>
 
 SIRE_BEGIN_HEADER
@@ -38,15 +40,85 @@ SIRE_BEGIN_HEADER
 namespace Soiree
 {
 class TI;
+class Gradients;
 }
 
 QDataStream& operator<<(QDataStream&, const Soiree::TI&);
 QDataStream& operator>>(QDataStream&, Soiree::TI&);
 
+QDataStream& operator<<(QDataStream&, const Soiree::Gradients&);
+QDataStream& operator>>(QDataStream&, Soiree::Gradients&);
+
 namespace Soiree
 {
 
 using SireMaths::FreeEnergyAverage;
+using SireUnits::Dimension::MolarEnergy;
+
+/** This class contains the free energy gradients from a TI simulation
+
+    @author Christopher Woods
+*/
+class SOIREE_EXPORT Gradients
+        : public SireBase::ConcreteProperty<Gradients,SireBase::Property>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Gradients&);
+friend QDataStream& ::operator>>(QDataStream&, Gradients&);
+
+public:
+    Gradients();
+    Gradients(const QMap<double,FreeEnergyAverage> &gradients);
+    Gradients(const QMap<double,FreeEnergyAverage> &gradients,
+              double delta_lambda);
+    Gradients(const QMap<double,FreeEnergyAverage> &forwards,
+              const QMap<double,FreeEnergyAverage> &backwards,
+              double delta_lambda);
+    
+    Gradients(const Gradients &other);
+    
+    ~Gradients();
+    
+    Gradients& operator=(const Gradients &other);
+    
+    bool operator==(const Gradients &other) const;
+    bool operator!=(const Gradients &other) const;
+
+    MolarEnergy operator[](double lam) const;
+
+    static const char* typeName();
+    
+    const char* what() const;
+    
+    bool isEmpty() const;
+    
+    static Gradients merge(const QList<Gradients> &gradients);
+
+    QList<double> lambdaValues() const;
+    QList<double> keys() const;
+
+    int nLambdaValues() const;
+    qint64 nSamples() const;
+
+    double deltaLambda() const;
+    
+    QMap<double,FreeEnergyAverage> forwardsData() const;
+    QMap<double,FreeEnergyAverage> backwardsData() const;
+
+    MolarEnergy forwards(double lam) const;
+    MolarEnergy backwards(double lam) const;
+    MolarEnergy gradient(double lam) const;
+
+private:
+    /** The forwards values */
+    QMap<double,FreeEnergyAverage> fwds;
+
+    /** The backwards values */
+    QMap<double,FreeEnergyAverage> bwds;
+
+    /** The value of delta lambda */
+    double delta_lam;
+};
 
 /** This class is used to analyse the free energies that are
     calculated during a thermodynamic integration simulation
@@ -61,6 +133,8 @@ friend QDataStream& ::operator>>(QDataStream&, TI&);
 
 public:
     TI();
+    TI(const Gradients &gradients);
+    TI(const QList<Gradients> &gradients);
     
     TI(const TI &other);
     
@@ -84,6 +158,8 @@ public:
              const QMap<double,FreeEnergyAverage> &backwards,
              double delta_lambda);
     
+    void add(const Gradients &gradients);
+    
     int nIterations() const;
     int nLambdaValues() const;
     qint64 nSamples() const;
@@ -93,13 +169,10 @@ public:
     
     QList<double> lambdaValues() const;
     
-    boost::tuple< QMap<double,FreeEnergyAverage>,
-                  QMap<double,FreeEnergyAverage>,
-                  double > operator[](int i) const;
+    Gradients operator[](int i) const;
+    Gradients at(int i) const;
     
-    boost::tuple< QMap<double,FreeEnergyAverage>,
-                  QMap<double,FreeEnergyAverage>,
-                  double > at(int i) const;
+    QList<Gradients> gradients() const;
     
     void set(int i, const QMap<double,FreeEnergyAverage> &gradients);
     void set(int i, const QMap<double,FreeEnergyAverage> &gradients,
@@ -108,25 +181,30 @@ public:
     void set(int i, const QMap<double,FreeEnergyAverage> &forwards,
                     const QMap<double,FreeEnergyAverage> &backwards,
                     double delta_lambda);
+
+    void set(int i, const Gradients &gradients);
+    
+    Gradients merge(int start, int end);
+    Gradients merge(QList<int> indicies);
+    
+    QList<Gradients> rollingAverage(int niterations) const;
     
     void removeAt(int i);
     void removeRange(int start, int end);
     
-private:
-    /** The set of delta lambdas for each iteration */
-    QList<double> delta_lams;
-
-    /** The forwards free energy gradients for each iteration */
-    QList< QMap<double,FreeEnergyAverage> > fwds_grads;
+    void clear();
     
-    /** The backwards free energy gradients for each iteration */
-    QList< QMap<double,FreeEnergyAverage> > bwds_grads;
+private:
+    /** The set of gradients for each iteration */
+    QList<Gradients> grads;
 };
 
 }
 
+Q_DECLARE_METATYPE( Soiree::Gradients )
 Q_DECLARE_METATYPE( Soiree::TI )
 
+SIRE_EXPOSE_CLASS( Soiree::Gradients )
 SIRE_EXPOSE_CLASS( Soiree::TI )
 
 SIRE_END_HEADER

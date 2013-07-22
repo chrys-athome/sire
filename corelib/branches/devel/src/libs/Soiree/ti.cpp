@@ -30,8 +30,12 @@
 
 #include "SireID/index.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
+
+#include "tostring.h"
 
 using namespace Soiree;
 using namespace SireMaths;
@@ -40,6 +44,439 @@ using namespace SireBase;
 using namespace SireStream;
 using namespace SireUnits::Dimension;
 
+/////////
+///////// Implementation of Gradients
+/////////
+
+static const RegisterMetaType<Gradients> r_grads;
+
+QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const Gradients &grads)
+{
+    writeHeader(ds, r_grads, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << grads.fwds << grads.bwds << grads.delta_lam;
+    
+    return ds;
+}
+
+QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, Gradients &grads)
+{
+    VersionID v = readHeader(ds, r_grads);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> grads.fwds >> grads.bwds >> grads.delta_lam;
+    }
+    else
+        throw version_error(v, "1", r_grads, CODELOC);
+    
+    return ds;
+}
+
+/** Constructor */
+Gradients::Gradients() : ConcreteProperty<Gradients,Property>(), delta_lam(0)
+{}
+
+/** Construct from the passed full TI gradients */
+Gradients::Gradients(const QMap<double,FreeEnergyAverage> &gradients)
+          : ConcreteProperty<Gradients,Property>(),
+            fwds(gradients), bwds(gradients), delta_lam(0)
+{}
+
+/** Construct from the passed finite difference TI gradients, using the passed
+    value of delta lambda */
+Gradients::Gradients(const QMap<double,FreeEnergyAverage> &gradients,
+                     double delta_lambda)
+          : ConcreteProperty<Gradients,Property>(),
+            fwds(gradients), bwds(gradients), delta_lam(delta_lambda)
+{
+    if (delta_lam <= 0)
+        throw SireError::invalid_arg( QObject::tr(
+                "How can you have finite difference gradients with a value of "
+                "delta lambda that is less than or equal to zero? %1")
+                    .arg(delta_lam), CODELOC );
+}
+
+/** Construct from the passed finite difference TI forwards and backwards
+    gradients, using the passed value of delta lambda. Note that the
+    forwards gradients should be the zwanzig free energies from 
+    lambda->lambda+delta_lambda, while the backwards gradients should
+    be the zwanzig free energies from lambda-delta_lambda->lambda */
+Gradients::Gradients(const QMap<double,FreeEnergyAverage> &forwards,
+                     const QMap<double,FreeEnergyAverage> &backwards,
+                     double delta_lambda)
+          : ConcreteProperty<Gradients,Property>(),
+            fwds(forwards), bwds(backwards), delta_lam(delta_lambda)
+{
+    if (delta_lam <= 0)
+        throw SireError::invalid_arg( QObject::tr(
+                "How can you have finite difference gradients with a value of "
+                "delta lambda that is less than or equal to zero? %1")
+                    .arg(delta_lam), CODELOC );
+
+    //if the lambda values don't match, then copy the gradients from the
+    //partners set
+    if (backwards.isEmpty())
+        bwds = fwds;
+    
+    else if (forwards.isEmpty())
+        fwds = bwds;
+    
+    else
+    {
+        for (QMap<double,FreeEnergyAverage>::const_iterator it = bwds.constBegin();
+             it != bwds.constEnd();
+             ++it)
+        {
+            if (not fwds.contains(it.key()))
+                fwds.insert( it.key(), it.value() );
+        }
+        
+        for (QMap<double,FreeEnergyAverage>::const_iterator it = fwds.constBegin();
+             it != fwds.constEnd();
+             ++it)
+        {
+            if (not bwds.contains(it.key()))
+                bwds.insert( it.key(), it.value() );
+        }
+    }
+}
+
+/** Copy constructor */
+Gradients::Gradients(const Gradients &other)
+          : ConcreteProperty<Gradients,Property>(other),
+            fwds(other.fwds), bwds(other.bwds), delta_lam(other.delta_lam)
+{}
+
+/** Destructor */
+Gradients::~Gradients()
+{}
+
+/** Return whether or not this is empty */
+bool Gradients::isEmpty() const
+{
+    return (fwds.isEmpty() and bwds.isEmpty());
+}
+
+/** Copy assignment operator */
+Gradients& Gradients::operator=(const Gradients &other)
+{
+    if (this != &other)
+    {
+        fwds = other.fwds;
+        bwds = other.bwds;
+        delta_lam = other.delta_lam;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool Gradients::operator==(const Gradients &other) const
+{
+    return fwds == other.fwds and bwds == other.bwds and delta_lam == other.delta_lam;
+}
+
+/** Comparison operator */
+bool Gradients::operator!=(const Gradients &other) const
+{
+    return not operator==(other);
+}
+
+/** Return the value of the gradient at the passed lambda value */
+MolarEnergy Gradients::operator[](double lam) const
+{
+    return gradient(lam);
+}
+
+const char* Gradients::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Gradients>() );
+}
+
+const char* Gradients::what() const
+{
+    return Gradients::typeName();
+}
+
+/** Merge together the passed list of Gradients into a single object.
+    Note that all of the passed gradients must be compatible, e.g.
+    have the same temperature and delta lambda values */
+Gradients Gradients::merge(const QList<Gradients> &gradients)
+{
+    if (gradients.isEmpty())
+        return Gradients();
+    else if (gradients.count() == 1)
+        return gradients.at(0);
+    
+    bool have_first = false;
+    double delta_lam;
+    Temperature temperature;
+    
+    QMap<double,FreeEnergyAverage> fwds;
+    QMap<double,FreeEnergyAverage> bwds;
+    
+    foreach (const Gradients &grads, gradients)
+    {
+        if (have_first)
+        {
+            if (grads.delta_lam != delta_lam)
+                throw SireError::incompatible_error( QObject::tr(
+                        "Cannot combine together this set of free energy Gradients "
+                        "as the values of delta lambda in the set are different. %1 vs. %2.")
+                            .arg(delta_lam).arg(grads.delta_lam), CODELOC );
+        }
+    
+        for (QMap<double,FreeEnergyAverage>::const_iterator it = grads.fwds.constBegin();
+             it != grads.fwds.constEnd();
+             ++it)
+        {
+            double lam = it.key();
+            const FreeEnergyAverage &grad = it.value();
+            
+            if (not grad.nSamples() == 0)
+            {
+                if (have_first)
+                {
+                    if (grad.temperature() != temperature)
+                        throw SireError::incompatible_error( QObject::tr(
+                            "Cannot combine together this set of free energy Gradients "
+                            "as the temperatures of some of the set are different. %1 vs. %2.")
+                                .arg(temperature.toString())
+                                .arg(grad.temperature().toString()), CODELOC );
+                }
+                else
+                {
+                    have_first = true;
+                    delta_lam = grads.delta_lam;
+                    temperature = grad.temperature();
+                }
+                
+                if (fwds.contains(lam))
+                {
+                    fwds[lam] += grad;
+                }
+                else
+                {
+                    fwds.insert(lam, grad);
+                }
+            }
+        }
+        
+        if (grads.fwds == grads.bwds)
+        {
+            bwds = fwds;
+        }
+        else
+        {
+            for (QMap<double,FreeEnergyAverage>::const_iterator it = grads.bwds.constBegin();
+                 it != grads.bwds.constEnd();
+                 ++it)
+            {
+                double lam = it.key();
+                const FreeEnergyAverage &grad = it.value();
+                
+                if (not grad.nSamples() == 0)
+                {
+                    if (have_first)
+                    {
+                        if (grad.temperature() != temperature)
+                            throw SireError::incompatible_error( QObject::tr(
+                                "Cannot combine together this set of free energy Gradients "
+                                "as the temperatures of some of the set are different. %1 vs. %2.")
+                                    .arg(temperature.toString())
+                                    .arg(grad.temperature().toString()), CODELOC );
+                    }
+                    else
+                    {
+                        have_first = true;
+                        delta_lam = grads.delta_lam;
+                        temperature = grad.temperature();
+                    }
+                    
+                    if (bwds.contains(lam))
+                    {
+                        bwds[lam] += grad;
+                    }
+                    else
+                    {
+                        bwds.insert(lam, grad);
+                    }
+                }
+            }
+        }
+    }
+    
+    Gradients ret;
+    ret.fwds = fwds;
+    ret.bwds = bwds;
+    ret.delta_lam = delta_lam;
+    
+    return ret;
+}
+
+/** Return the (sorted) list of the lambda values */
+QList<double> Gradients::lambdaValues() const
+{
+    if (delta_lam == 0 or fwds == bwds)
+    {
+        QList<double> lams = fwds.keys();
+        qSort(lams);
+        return lams;
+    }
+    else
+    {
+        QMap<double,int> lams;
+        
+        foreach (double lam, fwds.keys())
+        {
+            lams.insert(lam, 1);
+        }
+        
+        foreach (double lam, bwds.keys())
+        {
+            lams.insert(lam, 1);
+        }
+        
+        QList<double> l = lams.keys();
+        qSort(l);
+        
+        return l;
+    }
+}
+
+/** Return the (sorted) list of all lambda values */
+QList<double> Gradients::keys() const
+{
+    return lambdaValues();
+}
+
+/** Return the total number of lambda values */
+int Gradients::nLambdaValues() const
+{
+    return lambdaValues().count();
+}
+
+/** Return the total number of samples used to calculate these gradients */
+qint64 Gradients::nSamples() const
+{
+    qint64 n = 0;
+
+    if (delta_lam == 0 or fwds == bwds)
+    {
+        for (QMap<double,FreeEnergyAverage>::const_iterator it = fwds.constBegin();
+             it != fwds.constEnd();
+             ++it)
+        {
+            n += it.value().nSamples();
+        }
+    }
+    else
+    {
+        for (QMap<double,FreeEnergyAverage>::const_iterator it = fwds.constBegin();
+             it != fwds.constEnd();
+             ++it)
+        {
+            n += it.value().nSamples();
+        }
+
+        for (QMap<double,FreeEnergyAverage>::const_iterator it = bwds.constBegin();
+             it != bwds.constEnd();
+             ++it)
+        {
+            n += it.value().nSamples();
+        }
+    }
+    
+    return n;
+}
+
+/** Return the forwards gradient for the passed lambda value */
+MolarEnergy Gradients::forwards(double lam) const
+{
+    if (not fwds.contains(lam))
+        throw SireError::invalid_key( QObject::tr(
+                "There is no gradient value at lambda == %1. Available lambda values "
+                "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
+    
+    if (delta_lam == 0)
+        //pure TI, so just need the normal average energy
+        return MolarEnergy( fwds[lam].histogram().mean() );
+    else
+    {
+        //finite difference TI, so take the average of the forwards and backwards
+        //values and divide by delta lambda
+        return MolarEnergy( fwds[lam].average() / delta_lam );
+    }
+}
+
+/** Return the backwards gradient for the passed lambda value */
+MolarEnergy Gradients::backwards(double lam) const
+{
+    if (not fwds.contains(lam))
+        throw SireError::invalid_key( QObject::tr(
+                "There is no gradient value at lambda == %1. Available lambda values "
+                "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
+    
+    if (delta_lam == 0)
+        //pure TI, so just need the normal average energy
+        return MolarEnergy( fwds[lam].histogram().mean() );
+    else
+    {
+        //finite difference TI, so take the average of the forwards and backwards
+        //values and divide by delta lambda
+        return MolarEnergy( bwds[lam].average() / delta_lam );
+    }
+}
+
+/** Return the gradient at the passed lambda value. This is the 
+    average of the forwards and backwards gradient if finite difference
+    is used */
+MolarEnergy Gradients::gradient(double lam) const
+{
+    if (not fwds.contains(lam))
+        throw SireError::invalid_key( QObject::tr(
+                "There is no gradient value at lambda == %1. Available lambda values "
+                "are %2.").arg(lam).arg( Sire::toString(lambdaValues()) ), CODELOC );
+    
+    if (delta_lam == 0)
+        //pure TI, so just need the normal average energy
+        return MolarEnergy( fwds[lam].histogram().mean() );
+    else
+    {
+        //finite difference TI, so take the average of the forwards and backwards
+        //values and divide by delta lambda
+        return MolarEnergy( 0.5 * (fwds[lam].average() + bwds[lam].average()) / delta_lam );
+    }
+}
+
+/** Return the value of delta lambda. This will be zero if these are 
+    pure TI gradients */
+double Gradients::deltaLambda() const
+{
+    return delta_lam;
+}
+
+/** Return the raw data for the forwards free energy gradients */
+QMap<double,FreeEnergyAverage> Gradients::forwardsData() const
+{
+    return fwds;
+}
+
+/** Return the raw data for the backwards free energy gradients */
+QMap<double,FreeEnergyAverage> Gradients::backwardsData() const
+{
+    return bwds;
+}
+
+/////////
+///////// Implementation of TI
+/////////
+
 static const RegisterMetaType<TI> r_ti;
 
 QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const TI &ti)
@@ -47,7 +484,7 @@ QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const TI &ti)
     writeHeader(ds, r_ti, 1);
     
     SharedDataStream sds(ds);
-    sds << ti.delta_lams << ti.fwds_grads << ti.bwds_grads;
+    sds << ti.grads;
     
     return ds;
 }
@@ -60,7 +497,7 @@ QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, TI &ti)
     {
         SharedDataStream sds(ds);
         
-        sds >> ti.delta_lams >> ti.fwds_grads >> ti.bwds_grads;
+        sds >> ti.grads;
     }
     else
         throw version_error(v, "1", r_ti, CODELOC);
@@ -72,11 +509,25 @@ QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, TI &ti)
 TI::TI() : ConcreteProperty<TI,Property>()
 {}
 
+/** Construct from the passed set of gradients */
+TI::TI(const Gradients &gradients) : ConcreteProperty<TI,Property>()
+{
+    if (not gradients.isEmpty())
+        grads.append(gradients);
+}
+
+/** Construct from the passed list of gradients from each iteration */
+TI::TI(const QList<Gradients> &gradients) : ConcreteProperty<TI,Property>()
+{
+    foreach (const Gradients &g, gradients)
+    {
+        if (not g.isEmpty())
+            grads.append(g);
+    }
+}
+
 /** Copy constructor */
-TI::TI(const TI &other) : ConcreteProperty<TI,Property>(other),
-                          delta_lams(other.delta_lams),
-                          fwds_grads(other.fwds_grads),
-                          bwds_grads(other.bwds_grads)
+TI::TI(const TI &other) : ConcreteProperty<TI,Property>(other), grads(other.grads)
 {}
 
 /** Destructor */
@@ -86,23 +537,14 @@ TI::~TI()
 /** Copy assignment operator */
 TI& TI::operator=(const TI &other)
 {
-    if (this != &other)
-    {
-        delta_lams = other.delta_lams;
-        fwds_grads = other.fwds_grads;
-        bwds_grads = other.bwds_grads;
-    }
-    
+    grads = other.grads;
     return *this;
 }
 
 /** Comparison operator */
 bool TI::operator==(const TI &other) const
 {
-    return this == &other or
-           (delta_lams == other.delta_lams and
-            fwds_grads == other.fwds_grads and
-            bwds_grads == other.bwds_grads);
+    return grads == other.grads;
 }
 
 /** Comparison operator */
@@ -121,17 +563,19 @@ const char* TI::what() const
     return TI::typeName();
 }
 
+/** Return the raw list of gradients */
+QList<Gradients> TI::gradients() const
+{
+    return grads;
+}
+
 /** Add the passed free energy gradients to the TI calculation. The gradients
     are in a dictionary, indexed by lambda value, and are "pure" TI gradients, 
     i.e. they have been calculated exactly with an infinitesimal delta lambda */
 void TI::add(const QMap<double,FreeEnergyAverage> &gradients)
 {
     if (not gradients.isEmpty())
-    {
-        delta_lams.append( 0 );
-        fwds_grads.append( gradients );
-        bwds_grads.append( gradients );
-    }
+        grads.append( Gradients(gradients) );
 }
 
 /** Add the passed free energy gradients to the TI calcualtion. The gradients
@@ -143,15 +587,7 @@ void TI::add(const QMap<double,FreeEnergyAverage> &gradients,
              double delta_lambda)
 {
     if (not gradients.isEmpty())
-    {
-        if (delta_lambda <= 0)
-            delta_lams.append(0);
-        else
-            delta_lams.append(delta_lambda);
-
-        fwds_grads.append(gradients);
-        bwds_grads.append(gradients);
-    }
+        grads.append( Gradients(gradients, delta_lambda) );
 }
 
 /** Add the passed free energy gradients to the TI calculation. The gradients
@@ -166,48 +602,22 @@ void TI::add(const QMap<double,FreeEnergyAverage> &forwards,
              const QMap<double,FreeEnergyAverage> &backwards,
              double delta_lambda)
 {
-    if (forwards.isEmpty())
+    if (not (forwards.isEmpty() and backwards.isEmpty()))
     {
-        if (not backwards.isEmpty())
-        {
-            if (delta_lambda <= 0)
-                delta_lams.append(0);
-            else
-                delta_lams.append(delta_lambda);
-
-            fwds_grads.append(backwards);
-            bwds_grads.append(backwards);
-        }
+        grads.append( Gradients(forwards, backwards, delta_lambda) );
     }
-    else if (backwards.isEmpty())
-    {
-        if (not forwards.isEmpty())
-        {
-            if (delta_lambda <= 0)
-                delta_lams.append(0);
-            else
-                delta_lams.append(delta_lambda);
+}
 
-            fwds_grads.append(forwards);
-            bwds_grads.append(backwards);
-        }
-    }
-    else
-    {
-        if (delta_lambda <= 0)
-            delta_lams.append(0);
-        else
-            delta_lams.append(delta_lambda);
-
-        fwds_grads.append(forwards);
-        bwds_grads.append(backwards);
-    }
+void TI::add(const Gradients &gradients)
+{
+    if (not gradients.isEmpty())
+        grads.append(gradients);
 }
 
 /** Return the number of iterations (number of sets of gradients that have been added) */
 int TI::nIterations() const
 {
-    return delta_lams.count();
+    return grads.count();
 }
 
 /** Return all values of lambda that have data. The values are returned 
@@ -216,14 +626,9 @@ QList<double> TI::lambdaValues() const
 {
     QMap<double,int> vals;
     
-    for (int i=0; i<fwds_grads.count(); ++i)
+    for (int i=0; i<grads.count(); ++i)
     {
-        foreach (double lam, fwds_grads[i].keys())
-        {
-            vals.insert(lam, 0);
-        }
-        
-        foreach (double lam, bwds_grads[i].keys())
+        foreach (double lam, grads.at(i).lambdaValues())
         {
             vals.insert(lam, 0);
         }
@@ -241,40 +646,14 @@ int TI::nLambdaValues() const
     return lambdaValues().count();
 }
 
-static qint64 count( const QMap<double,FreeEnergyAverage> &grads )
-{
-    qint64 n = 0;
-    
-    for (QMap<double,FreeEnergyAverage>::const_iterator it = grads.constBegin();
-         it != grads.constEnd();
-         ++it)
-    {
-        n += it.value().nSamples();
-    }
-    
-    return n;
-}
-
 /** Return the total number of samples in this calculation */
 qint64 TI::nSamples() const
 {
     qint64 n = 0;
     
-    for (int i=0; i<delta_lams.count(); ++i)
+    for (int i=0; i<grads.count(); ++i)
     {
-        if (delta_lams[i] == 0)
-        {
-            n += ::count(fwds_grads[i]);
-        }
-        else if (fwds_grads[i] == bwds_grads[i])
-        {
-            n += ::count(fwds_grads[i]);
-        }
-        else
-        {
-            n += ::count(fwds_grads[i]);
-            n += ::count(bwds_grads[i]);
-        }
+        n += grads.at(i).nSamples();
     }
     
     return n;
@@ -296,25 +675,17 @@ int TI::size() const
     a tuple of the forwards gradients, backwards gradients and the value
     of delta lambda. Note that for pure TI calculations, the forwards and
     backwards gradients will be equal and the value of delta lambda will be 0 */
-boost::tuple< QMap<double,FreeEnergyAverage>,
-              QMap<double,FreeEnergyAverage>,
-              double> TI::operator[](int i) const
+Gradients TI::operator[](int i) const
 {
-    i = Index(i).map(delta_lams.count());
-
-    return boost::tuple< QMap<double,FreeEnergyAverage>,
-                         QMap<double,FreeEnergyAverage>,
-                         double>( fwds_grads.at(i), bwds_grads.at(i),
-                                  delta_lams.at(i) );
+    i = Index(i).map(grads.count());
+    return grads.at(i);
 }
 
 /** Return the free energy gradient data for the ith iteration. This returns
     a tuple of the forwards gradients, backwards gradients and the value
     of delta lambda. Note that for pure TI calculations, the forwards and
     backwards gradients will be equal and the value of delta lambda will be 0 */
-boost::tuple< QMap<double,FreeEnergyAverage>,
-              QMap<double,FreeEnergyAverage>,
-              double> TI::at(int i) const
+Gradients TI::at(int i) const
 {
     return operator[](i);
 }
@@ -326,15 +697,12 @@ void TI::set(int i, const QMap<double,FreeEnergyAverage> &gradients)
     if (gradients.isEmpty())
         return;
 
-    if (i == delta_lams.count())
+    if (i == grads.count())
         this->add(gradients);
     else
     {
-        i = Index(i).map(delta_lams.count());
-        
-        delta_lams[i] = 0;
-        fwds_grads[i] = gradients;
-        bwds_grads[i] = gradients;
+        i = Index(i).map(grads.count());
+        grads[i] = Gradients(gradients);
     }
 }
 
@@ -347,19 +715,12 @@ void TI::set(int i, const QMap<double,FreeEnergyAverage> &gradients,
     if (gradients.isEmpty())
         return;
     
-    if (i == delta_lams.count())
+    if (i == grads.count())
         this->add(gradients, delta_lambda);
     else
     {
-        i = Index(i).map(delta_lams.count());
-        
-        if (delta_lambda <= 0)
-            delta_lams[i] = 0;
-        else
-            delta_lams[i] = delta_lambda;
-
-        fwds_grads[i] = gradients;
-        bwds_grads[i] = gradients;
+        i = Index(i).map(grads.count());
+        grads[i] = Gradients(gradients, delta_lambda);
     }
 }
 
@@ -375,63 +736,117 @@ void TI::set(int i, const QMap<double,FreeEnergyAverage> &forwards,
     if (forwards.isEmpty() and backwards.isEmpty())
         return;
     
-    else if (i == delta_lams.count())
+    else if (i == grads.count())
     {
         this->add(forwards, backwards, delta_lambda);
         return;
     }
     else
     {
-        i = Index(i).map(delta_lams.count());
-    
-        if (forwards.isEmpty())
-        {
-            fwds_grads[i] = backwards;
-            bwds_grads[i] = backwards;
-        }
-        else if (backwards.isEmpty())
-        {
-            fwds_grads[i] = forwards;
-            bwds_grads[i] = forwards;
-        }
-        else
-        {
-            fwds_grads[i] = forwards;
-            bwds_grads[i] = backwards;
-        }
-        
-        if (delta_lambda <= 0)
-            delta_lams[i] = 0;
-        else
-            delta_lams[i] = delta_lambda;
+        i = Index(i).map(grads.count());
+        grads.append(Gradients(forwards, backwards, delta_lambda));
+    }
+}
+
+void TI::set(int i, const Gradients &gradients)
+{
+    if (not gradients.isEmpty())
+    {
+        i = Index(i).map(grads.count());
+        grads[i] = gradients;
     }
 }
 
 /** Remove the data for iteration 'i' */
 void TI::removeAt(int i)
 {
-    i = Index(i).map(delta_lams.count());
-    
-    delta_lams.removeAt(i);
-    fwds_grads.removeAt(i);
-    bwds_grads.removeAt(i);
+    i = Index(i).map(grads.count());
+    grads.removeAt(i);
 }
 
 /** Remove every iteration from 'start' to 'end' (inclusively) */
 void TI::removeRange(int start, int end)
 {
-    start = Index(start).map(delta_lams.count());
-    end = Index(end).map(delta_lams.count());
+    start = Index(start).map(grads.count());
+    end = Index(end).map(grads.count());
     
     if (start > end)
         qSwap(start, end);
     
     for (int i = start; i <= end; ++i)
     {
-        delta_lams.removeAt(start);
-        fwds_grads.removeAt(start);
-        bwds_grads.removeAt(start);
+        grads.removeAt(start);
     }
+}
+
+/** Remove all values from the histogram */
+void TI::clear()
+{
+    this->operator=( TI() );
+}
+
+/** Merge (average) together the gradients from iteration "start" to iteration
+    "end" inclusive */
+Gradients TI::merge(int start, int end)
+{
+    start = Index(start).map(grads.count());
+    end = Index(end).map(grads.count());
+    
+    QList<Gradients> set;
+    
+    for (int i=start; i<=end; ++i)
+    {
+        set.append( grads.at(i) );
+    }
+    
+    return Gradients::merge(set);
+}
+
+/** Merge together the gradients from the iterations with the passed indicies */
+Gradients TI::merge(QList<int> indicies)
+{
+    QList<Gradients> set;
+    
+    foreach (int idx, indicies)
+    {
+        set.append( grads.at( Index(idx).map(grads.count()) ) );
+    }
+ 
+    return Gradients::merge(set);
+}
+    
+/** Return a list of Gradients that represents the rolling average over 'niterations'
+    iterations over this TI data set. If this data set contains 100 iterations, and 
+    we calculate the rolling average over 50 iterations, then the returned Gradients
+    will be the average from 1-50, then 2-51, 3-52.....51-100 */
+QList<Gradients> TI::rollingAverage(int niterations) const
+{
+    QList<Gradients> merged;
+
+    if (niterations >= grads.count())
+        merged.append( Gradients::merge(grads) );
+
+    else if (niterations <= 0)
+        merged = grads;
+    
+    else
+    {
+        QList<Gradients> set;
+        
+        for (int i=0; i<niterations; ++i)
+            set.append(grads.at(i));
+        
+        merged.append( Gradients::merge(set) );
+        
+        for (int i=niterations; i<grads.count(); ++i)
+        {
+            set.removeFirst();
+            set.append(grads.at(i));
+            merged.append( Gradients::merge(set) );
+        }
+    }
+    
+    return merged;
 }
 
 QString TI::toString() const

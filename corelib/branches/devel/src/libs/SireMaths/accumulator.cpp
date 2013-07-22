@@ -125,6 +125,12 @@ void Accumulator::clear()
     nvalues = 0;
 }
 
+/** Internal function used to increment the number of samples */
+void Accumulator::add(int nsteps)
+{
+    nvalues += nsteps;
+}
+
 /** Internal copy assignment operator */
 Accumulator& Accumulator::operator=(const Accumulator &other)
 {
@@ -302,6 +308,35 @@ bool Average::operator!=(const Average &other) const
     return not this->operator==(other);
 }
 
+/** Self-addition operator */
+Average& Average::operator+=(const Average &other)
+{
+    if (nSamples() == 0)
+        this->operator=(other);
+    
+    else if (other.nSamples() > 0)
+    {
+        double nsteps = nSamples() + other.nSamples();
+        
+        double my_ratio = nSamples() / nsteps;
+        double other_ratio = other.nSamples() / nsteps;
+        
+        avgval = avgval * my_ratio + other.avgval * other_ratio;
+        
+        Accumulator::add(other.nSamples());
+    }
+    
+    return *this;
+}
+
+/** Addition operator */
+Average Average::operator+(const Average &other) const
+{
+    Average ret(*this);
+    ret += other;
+    return ret;
+}
+
 /** Completely clear the statistics in this accumulator */
 void Average::clear()
 {
@@ -413,6 +448,35 @@ bool AverageAndStddev::operator==(const AverageAndStddev &other) const
 bool AverageAndStddev::operator!=(const AverageAndStddev &other) const
 {
     return not this->operator==(other);
+}
+
+/** Self-addition operator */
+AverageAndStddev& AverageAndStddev::operator+=(const AverageAndStddev &other)
+{
+    if (nSamples() == 0)
+        this->operator=(other);
+
+    else if (other.nSamples() > 0)
+    {
+        Average::operator+=(other);
+        
+        double nsteps = nSamples() + other.nSamples();
+        
+        double my_ratio = nSamples() / nsteps;
+        double other_ratio = other.nSamples() / nsteps;
+        
+        avgval2 = avgval2 * my_ratio + other.avgval2 * other_ratio;
+    }
+    
+    return *this;
+}
+
+/** Addition operator */
+AverageAndStddev AverageAndStddev::operator+(const AverageAndStddev &other) const
+{
+    AverageAndStddev ret(*this);
+    ret += other;
+    return ret;
 }
 
 /** Completely clear the statistics in this accumulator */
@@ -550,6 +614,41 @@ bool ExpAverage::operator==(const ExpAverage &other) const
 bool ExpAverage::operator!=(const ExpAverage &other) const
 {
     return not this->operator==(other);
+}
+
+/** Self-addition operator */
+ExpAverage& ExpAverage::operator+=(const ExpAverage &other)
+{
+    if (sclfac != other.sclfac)
+        throw SireError::incompatible_error( QObject::tr(
+                "Cannot add together these two ExpAverage objects as their scale "
+                "factors are different. %1 vs. %2.")
+                    .arg(sclfac).arg(other.sclfac), CODELOC );
+    
+    if (nSamples() == 0)
+        this->operator=(other);
+    
+    else if (other.nSamples() > 0)
+    {
+        double nsteps = nSamples() + other.nSamples();
+        
+        double my_ratio = nSamples() / nsteps;
+        double other_ratio = other.nSamples() / nsteps;
+        
+        avgval = avgval * my_ratio + other.avgval * other_ratio;
+
+        Accumulator::add(other.nSamples());
+    }
+    
+    return *this;
+}
+
+/** Addition operator */
+ExpAverage ExpAverage::operator+(const ExpAverage &other) const
+{
+    ExpAverage ret(*this);
+    ret += other;
+    return ret;
 }
 
 /** Completely clear the statistics in this accumulator */
