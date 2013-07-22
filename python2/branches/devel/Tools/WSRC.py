@@ -8,6 +8,7 @@ from Sire.MM import *
 from Sire.FF import *
 from Sire.CAS import *
 from Sire.Maths import *
+from Sire.Soiree import *
 from Sire.System import *
 from Sire.Base import *
 from Sire.Units import *
@@ -145,6 +146,10 @@ save_pdb = Parameter("save pdb", False,
 save_all_pdbs = Parameter("save all pdbs", False,
                           """Whether or not to write all of the PDBs. If not, only PDBs at the two 
                              end points of the simulation will be written.""")
+
+binwidth = Parameter("free energy bin width", 0.1 * kcal_per_mol,
+                     """The size of the bins used in the histogram of energies collected
+                        as part of creating the free energy average""")
 
 ####################################################
 
@@ -1251,10 +1256,12 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     print "\nAdding system monitors..."
 
     system.add( "delta_g^{F}", MonitorComponent( Symbol("delta_nrg^{F}"),
-                                                 FreeEnergyAverage(temperature.val) ) )
+                                                 FreeEnergyAverage(temperature.val,
+                                                                   binwidth.val) ) )
 
     system.add( "delta_g^{B}", MonitorComponent( Symbol("delta_nrg^{B}"),
-                                                 FreeEnergyAverage(temperature.val) ) )
+                                                 FreeEnergyAverage(temperature.val,
+                                                                   binwidth.val) ) )
     
     # we will monitor the average energy between the swap cluster/ligand and each
     # residue with mobile sidechain, and each mobile solute
@@ -1631,6 +1638,9 @@ def analyseWSRC(replicas, iteration):
     dg_f = {}
     dg_b = {}
 
+    dg_accum_f = {}
+    dg_accum_b = {}
+
     proteinbox_dg = {}
     proteinbox_dg_coul = {}
     proteinbox_dg_lj = {}
@@ -1660,9 +1670,11 @@ def analyseWSRC(replicas, iteration):
 
         dg = monitors[MonitorName("delta_g^{F}")][-1]
         dg_f[lamval] = dg.accumulator().average() / delta_lambda
- 
+        dg_accum_f[lamval] = dg.accumulator() 
+
         dg = monitors[MonitorName("delta_g^{B}")][-1]
         dg_b[lamval] = dg.accumulator().average() / delta_lambda
+        dg_accum_b[lamval] = dg.accumulator()
 
         ligand_protein_nrgmon = monitors[MonitorName("ligand_protein_solute_nrgmon")][-1]
         ligand_boundwater_nrgmon = monitors[MonitorName("ligand_boundwater_nrgmon")][-1]
@@ -1704,6 +1716,18 @@ def analyseWSRC(replicas, iteration):
         waterbox_dg_coul[lamval] = delta_nrgs[1][0]
         waterbox_dg_lj[lamval] = delta_nrgs[1][1]
         waterbox_dg[lamval] = delta_nrgs[1][2]
+
+
+    freenrgs_file = "%s/freenrgs.s3" % outdir.val
+
+    if not os.path.exists(freenrgs_file):
+        freenrgs = TI()
+    else:
+        freenrgs = Sire.Stream.load(freenrgs_file)
+
+    freenrgs.add( dg_accum_f, dg_accum_b, delta_lambda )
+
+    Sire.Stream.save( freenrgs, freenrgs_file )
 
     pmf_f = calculatePMF(dg_f)
     pmf_b = calculatePMF(dg_b)

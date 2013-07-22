@@ -3,6 +3,7 @@
 // (C) Christopher Woods, GPL >= 2 License
 
 #include "boost/python.hpp"
+#include "Helpers/clone_const_reference.hpp"
 #include "FreeEnergyAverage.pypp.hpp"
 
 namespace bp = boost::python;
@@ -28,7 +29,42 @@ void register_FreeEnergyAverage_class(){
         FreeEnergyAverage_exposer_t FreeEnergyAverage_exposer = FreeEnergyAverage_exposer_t( "FreeEnergyAverage", bp::init< >() );
         bp::scope FreeEnergyAverage_scope( FreeEnergyAverage_exposer );
         FreeEnergyAverage_exposer.def( bp::init< SireUnits::Dimension::Temperature const & >(( bp::arg("temperature") )) );
+        FreeEnergyAverage_exposer.def( bp::init< SireUnits::Dimension::MolarEnergy const & >(( bp::arg("binwidth") )) );
+        FreeEnergyAverage_exposer.def( bp::init< SireUnits::Dimension::Temperature const &, SireUnits::Dimension::MolarEnergy const & >(( bp::arg("temperature"), bp::arg("binwidth") )) );
         FreeEnergyAverage_exposer.def( bp::init< SireMaths::FreeEnergyAverage const & >(( bp::arg("other") )) );
+        { //::SireMaths::FreeEnergyAverage::accumulate
+        
+            typedef void ( ::SireMaths::FreeEnergyAverage::*accumulate_function_type )( double ) ;
+            accumulate_function_type accumulate_function_value( &::SireMaths::FreeEnergyAverage::accumulate );
+            
+            FreeEnergyAverage_exposer.def( 
+                "accumulate"
+                , accumulate_function_value
+                , ( bp::arg("value") ) );
+        
+        }
+        { //::SireMaths::FreeEnergyAverage::clear
+        
+            typedef void ( ::SireMaths::FreeEnergyAverage::*clear_function_type )(  ) ;
+            clear_function_type clear_function_value( &::SireMaths::FreeEnergyAverage::clear );
+            
+            FreeEnergyAverage_exposer.def( 
+                "clear"
+                , clear_function_value );
+        
+        }
+        { //::SireMaths::FreeEnergyAverage::histogram
+        
+            typedef ::SireMaths::Histogram const & ( ::SireMaths::FreeEnergyAverage::*histogram_function_type )(  ) const;
+            histogram_function_type histogram_function_value( &::SireMaths::FreeEnergyAverage::histogram );
+            
+            FreeEnergyAverage_exposer.def( 
+                "histogram"
+                , histogram_function_value
+                , bp::return_value_policy<bp::clone_const_reference>() );
+        
+        }
+        FreeEnergyAverage_exposer.def( bp::self != bp::self );
         { //::SireMaths::FreeEnergyAverage::operator=
         
             typedef ::SireMaths::FreeEnergyAverage & ( ::SireMaths::FreeEnergyAverage::*assign_function_type )( ::SireMaths::FreeEnergyAverage const & ) ;
@@ -41,6 +77,7 @@ void register_FreeEnergyAverage_class(){
                 , bp::return_self< >() );
         
         }
+        FreeEnergyAverage_exposer.def( bp::self == bp::self );
         { //::SireMaths::FreeEnergyAverage::temperature
         
             typedef ::SireUnits::Dimension::Temperature ( ::SireMaths::FreeEnergyAverage::*temperature_function_type )(  ) const;
@@ -49,6 +86,16 @@ void register_FreeEnergyAverage_class(){
             FreeEnergyAverage_exposer.def( 
                 "temperature"
                 , temperature_function_value );
+        
+        }
+        { //::SireMaths::FreeEnergyAverage::toString
+        
+            typedef ::QString ( ::SireMaths::FreeEnergyAverage::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::SireMaths::FreeEnergyAverage::toString );
+            
+            FreeEnergyAverage_exposer.def( 
+                "toString"
+                , toString_function_value );
         
         }
         { //::SireMaths::FreeEnergyAverage::typeName

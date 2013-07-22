@@ -13,7 +13,7 @@ _pvt_load = load
 
 _pvt_modules = { "SireBase"   : "Sire.Base", 
                  "SireCAS"    : "Sire.CAS",
-                 "SireDB"     : "Sire.DB",
+                 "SireCluster": "Sire.Cluster",
                  "SireError"  : "Sire.Error",
                  "SireFF"     : "Sire.FF",
                  "SireID"     : "Sire.ID",
@@ -25,7 +25,8 @@ _pvt_modules = { "SireBase"   : "Sire.Base",
                  "SireSystem" : "Sire.System",
                  "SireUnits"  : "Sire.Units",
                  "SireVol"    : "Sire.Vol",
-                 "Squire"     : "Sire.Squire" }
+                 "Squire"     : "Sire.Squire",
+                 "Soiree"     : "Sire.Soiree" }
 
 def _pvt_loadLibrary(lib):
 

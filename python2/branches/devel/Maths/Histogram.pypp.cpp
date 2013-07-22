@@ -155,6 +155,16 @@ void register_Histogram_class(){
                 , count_function_value );
         
         }
+        { //::SireMaths::Histogram::kirtosis
+        
+            typedef double ( ::SireMaths::Histogram::*kirtosis_function_type )(  ) const;
+            kirtosis_function_type kirtosis_function_value( &::SireMaths::Histogram::kirtosis );
+            
+            Histogram_exposer.def( 
+                "kirtosis"
+                , kirtosis_function_value );
+        
+        }
         { //::SireMaths::Histogram::maximumValue
         
             typedef double ( ::SireMaths::Histogram::*maximumValue_function_type )(  ) const;
@@ -282,6 +292,16 @@ void register_Histogram_class(){
             Histogram_exposer.def( 
                 "size"
                 , size_function_value );
+        
+        }
+        { //::SireMaths::Histogram::skew
+        
+            typedef double ( ::SireMaths::Histogram::*skew_function_type )(  ) const;
+            skew_function_type skew_function_value( &::SireMaths::Histogram::skew );
+            
+            Histogram_exposer.def( 
+                "skew"
+                , skew_function_value );
         
         }
         { //::SireMaths::Histogram::standardDeviation

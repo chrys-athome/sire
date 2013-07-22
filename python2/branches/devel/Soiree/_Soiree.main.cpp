@@ -5,11 +5,19 @@
 
 #include "boost/python.hpp"
 
+#include "TI.pypp.hpp"
+
 namespace bp = boost::python;
+
+#include "Soiree_containers.h"
 
 #include "Soiree_registrars.h"
 
 BOOST_PYTHON_MODULE(_Soiree){
     register_Soiree_objects();
+
+    register_Soiree_containers();
+
+    register_TI_class();
 }
 
