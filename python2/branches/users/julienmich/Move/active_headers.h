@@ -3,12 +3,10 @@
 
 #ifdef GCCXML_PARSE
 
-#include "dlmrigidbody.h"
 #include "dynamics.h"
 #include "ensemble.h"
 #include "flexibility.h"
 #include "getpoint.h"
-#include "hybridmc.h"
 #include "integrator.h"
 #include "integratorworkspace.h"
 #include "integratorworkspacejm.h"
@@ -23,7 +21,6 @@
 #include "mtsmc.h"
 #include "openmmacceleratedmdintegrator.h"
 #include "openmmfrenergyst.h"
-#include "openmmintegrator.h"
 #include "openmmmdintegrator.h"
 #include "prefsampler.h"
 #include "rbworkspace.h"

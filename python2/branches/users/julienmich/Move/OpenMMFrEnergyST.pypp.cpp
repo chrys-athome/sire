@@ -163,6 +163,16 @@ void register_OpenMMFrEnergyST_class(){
                 , getBufferCoords_function_value );
         
         }
+        { //::SireMove::OpenMMFrEnergyST::getBufferFrequency
+        
+            typedef int ( ::SireMove::OpenMMFrEnergyST::*getBufferFrequency_function_type )(  ) ;
+            getBufferFrequency_function_type getBufferFrequency_function_value( &::SireMove::OpenMMFrEnergyST::getBufferFrequency );
+            
+            OpenMMFrEnergyST_exposer.def( 
+                "getBufferFrequency"
+                , getBufferFrequency_function_value );
+        
+        }
         { //::SireMove::OpenMMFrEnergyST::getCMMremoval_frequency
         
             typedef int ( ::SireMove::OpenMMFrEnergyST::*getCMMremoval_frequency_function_type )(  ) ;
@@ -469,6 +479,17 @@ void register_OpenMMFrEnergyST_class(){
             OpenMMFrEnergyST_exposer.def( 
                 "setBufferCoords"
                 , setBufferCoords_function_value
+                , ( bp::arg("arg0") ) );
+        
+        }
+        { //::SireMove::OpenMMFrEnergyST::setBufferFrequency
+        
+            typedef void ( ::SireMove::OpenMMFrEnergyST::*setBufferFrequency_function_type )( int ) ;
+            setBufferFrequency_function_type setBufferFrequency_function_value( &::SireMove::OpenMMFrEnergyST::setBufferFrequency );
+            
+            OpenMMFrEnergyST_exposer.def( 
+                "setBufferFrequency"
+                , setBufferFrequency_function_value
                 , ( bp::arg("arg0") ) );
         
         }
