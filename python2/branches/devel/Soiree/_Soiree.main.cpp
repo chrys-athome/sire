@@ -5,6 +5,8 @@
 
 #include "boost/python.hpp"
 
+#include "Gradients.pypp.hpp"
+
 #include "TI.pypp.hpp"
 
 namespace bp = boost::python;
@@ -17,6 +19,8 @@ BOOST_PYTHON_MODULE(_Soiree){
     register_Soiree_objects();
 
     register_Soiree_containers();
+
+    register_Gradients_class();
 
     register_TI_class();
 }

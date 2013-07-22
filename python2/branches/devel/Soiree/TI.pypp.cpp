@@ -7,6 +7,8 @@
 
 namespace bp = boost::python;
 
+#include "SireError/errors.h"
+
 #include "SireID/index.h"
 
 #include "SireStream/datastream.h"
@@ -14,6 +16,8 @@ namespace bp = boost::python;
 #include "SireStream/shareddatastream.h"
 
 #include "ti.h"
+
+#include "tostring.h"
 
 #include "ti.h"
 
@@ -29,6 +33,8 @@ void register_TI_class(){
         typedef bp::class_< Soiree::TI, bp::bases< SireBase::Property > > TI_exposer_t;
         TI_exposer_t TI_exposer = TI_exposer_t( "TI", bp::init< >() );
         bp::scope TI_scope( TI_exposer );
+        TI_exposer.def( bp::init< Soiree::Gradients const & >(( bp::arg("gradients") )) );
+        TI_exposer.def( bp::init< QList< Soiree::Gradients > const & >(( bp::arg("gradients") )) );
         TI_exposer.def( bp::init< Soiree::TI const & >(( bp::arg("other") )) );
         { //::Soiree::TI::add
         
@@ -63,15 +69,36 @@ void register_TI_class(){
                 , ( bp::arg("forwards"), bp::arg("backwards"), bp::arg("delta_lambda") ) );
         
         }
+        { //::Soiree::TI::add
+        
+            typedef void ( ::Soiree::TI::*add_function_type )( ::Soiree::Gradients const & ) ;
+            add_function_type add_function_value( &::Soiree::TI::add );
+            
+            TI_exposer.def( 
+                "add"
+                , add_function_value
+                , ( bp::arg("gradients") ) );
+        
+        }
         { //::Soiree::TI::at
         
-            typedef ::boost::tuples::tuple< QMap< double, SireMaths::FreeEnergyAverage >, QMap< double, SireMaths::FreeEnergyAverage >, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::Soiree::TI::*at_function_type )( int ) const;
+            typedef ::Soiree::Gradients ( ::Soiree::TI::*at_function_type )( int ) const;
             at_function_type at_function_value( &::Soiree::TI::at );
             
             TI_exposer.def( 
                 "at"
                 , at_function_value
                 , ( bp::arg("i") ) );
+        
+        }
+        { //::Soiree::TI::clear
+        
+            typedef void ( ::Soiree::TI::*clear_function_type )(  ) ;
+            clear_function_type clear_function_value( &::Soiree::TI::clear );
+            
+            TI_exposer.def( 
+                "clear"
+                , clear_function_value );
         
         }
         { //::Soiree::TI::count
@@ -84,6 +111,16 @@ void register_TI_class(){
                 , count_function_value );
         
         }
+        { //::Soiree::TI::gradients
+        
+            typedef ::QList< Soiree::Gradients > ( ::Soiree::TI::*gradients_function_type )(  ) const;
+            gradients_function_type gradients_function_value( &::Soiree::TI::gradients );
+            
+            TI_exposer.def( 
+                "gradients"
+                , gradients_function_value );
+        
+        }
         { //::Soiree::TI::lambdaValues
         
             typedef ::QList< double > ( ::Soiree::TI::*lambdaValues_function_type )(  ) const;
@@ -92,6 +129,28 @@ void register_TI_class(){
             TI_exposer.def( 
                 "lambdaValues"
                 , lambdaValues_function_value );
+        
+        }
+        { //::Soiree::TI::merge
+        
+            typedef ::Soiree::Gradients ( ::Soiree::TI::*merge_function_type )( int,int ) ;
+            merge_function_type merge_function_value( &::Soiree::TI::merge );
+            
+            TI_exposer.def( 
+                "merge"
+                , merge_function_value
+                , ( bp::arg("start"), bp::arg("end") ) );
+        
+        }
+        { //::Soiree::TI::merge
+        
+            typedef ::Soiree::Gradients ( ::Soiree::TI::*merge_function_type )( ::QList< int > ) ;
+            merge_function_type merge_function_value( &::Soiree::TI::merge );
+            
+            TI_exposer.def( 
+                "merge"
+                , merge_function_value
+                , ( bp::arg("indicies") ) );
         
         }
         { //::Soiree::TI::nIterations
@@ -140,7 +199,7 @@ void register_TI_class(){
         TI_exposer.def( bp::self == bp::self );
         { //::Soiree::TI::operator[]
         
-            typedef ::boost::tuples::tuple< QMap< double, SireMaths::FreeEnergyAverage >, QMap< double, SireMaths::FreeEnergyAverage >, double, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type > ( ::Soiree::TI::*__getitem___function_type )( int ) const;
+            typedef ::Soiree::Gradients ( ::Soiree::TI::*__getitem___function_type )( int ) const;
             __getitem___function_type __getitem___function_value( &::Soiree::TI::operator[] );
             
             TI_exposer.def( 
@@ -169,6 +228,17 @@ void register_TI_class(){
                 "removeRange"
                 , removeRange_function_value
                 , ( bp::arg("start"), bp::arg("end") ) );
+        
+        }
+        { //::Soiree::TI::rollingAverage
+        
+            typedef ::QList< Soiree::Gradients > ( ::Soiree::TI::*rollingAverage_function_type )( int ) const;
+            rollingAverage_function_type rollingAverage_function_value( &::Soiree::TI::rollingAverage );
+            
+            TI_exposer.def( 
+                "rollingAverage"
+                , rollingAverage_function_value
+                , ( bp::arg("niterations") ) );
         
         }
         { //::Soiree::TI::set
@@ -202,6 +272,17 @@ void register_TI_class(){
                 "set"
                 , set_function_value
                 , ( bp::arg("i"), bp::arg("forwards"), bp::arg("backwards"), bp::arg("delta_lambda") ) );
+        
+        }
+        { //::Soiree::TI::set
+        
+            typedef void ( ::Soiree::TI::*set_function_type )( int,::Soiree::Gradients const & ) ;
+            set_function_type set_function_value( &::Soiree::TI::set );
+            
+            TI_exposer.def( 
+                "set"
+                , set_function_value
+                , ( bp::arg("i"), bp::arg("gradients") ) );
         
         }
         { //::Soiree::TI::size

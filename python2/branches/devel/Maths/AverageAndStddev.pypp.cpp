@@ -70,6 +70,7 @@ void register_AverageAndStddev_class(){
         
         }
         AverageAndStddev_exposer.def( bp::self != bp::self );
+        AverageAndStddev_exposer.def( bp::self + bp::self );
         { //::SireMaths::AverageAndStddev::operator=
         
             typedef ::SireMaths::AverageAndStddev & ( ::SireMaths::AverageAndStddev::*assign_function_type )( ::SireMaths::AverageAndStddev const & ) ;

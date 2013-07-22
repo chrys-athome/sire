@@ -70,6 +70,7 @@ void register_ExpAverage_class(){
         
         }
         ExpAverage_exposer.def( bp::self != bp::self );
+        ExpAverage_exposer.def( bp::self + bp::self );
         { //::SireMaths::ExpAverage::operator=
         
             typedef ::SireMaths::ExpAverage & ( ::SireMaths::ExpAverage::*assign_function_type )( ::SireMaths::ExpAverage const & ) ;

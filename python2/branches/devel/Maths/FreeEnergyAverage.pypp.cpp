@@ -65,6 +65,7 @@ void register_FreeEnergyAverage_class(){
         
         }
         FreeEnergyAverage_exposer.def( bp::self != bp::self );
+        FreeEnergyAverage_exposer.def( bp::self + bp::self );
         { //::SireMaths::FreeEnergyAverage::operator=
         
             typedef ::SireMaths::FreeEnergyAverage & ( ::SireMaths::FreeEnergyAverage::*assign_function_type )( ::SireMaths::FreeEnergyAverage const & ) ;

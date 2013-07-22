@@ -64,7 +64,7 @@ alpha_scale = Parameter("alpha_scale", 1.0,
                            the less softening with lambda, while the higher the value, the
                            more softening""")
 
-delta_lambda = Parameter("delta_lambda", 0.01,
+delta_lambda = Parameter("delta_lambda", 0.001,
                          """Value of delta lambda used in the finite difference thermodynamic
                             integration algorithm used to calculate the free energy""")
 
@@ -147,9 +147,9 @@ save_all_pdbs = Parameter("save all pdbs", False,
                           """Whether or not to write all of the PDBs. If not, only PDBs at the two 
                              end points of the simulation will be written.""")
 
-binwidth = Parameter("free energy bin width", 0.1 * kcal_per_mol,
+binwidth = Parameter("free energy bin width", 10 * kcal_per_mol,
                      """The size of the bins used in the histogram of energies collected
-                        as part of creating the free energy average""")
+                        as part of creating the free energy average, in multiples of delta lambda""")
 
 ####################################################
 
@@ -1143,7 +1143,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     dlam = delta_lambda.val
 
     if dlam > 1 or dlam < 0.0000001:
-        print "Weird value of delta_lambda (%s). Setting it to 0.01" % dlam
+        print "WARNING: Weird value of delta_lambda (%s). Setting it to 0.01" % dlam
         dlam = 0.01
 
     system.setConstant( Symbol("delta_lambda"), dlam )
@@ -1257,11 +1257,11 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
     system.add( "delta_g^{F}", MonitorComponent( Symbol("delta_nrg^{F}"),
                                                  FreeEnergyAverage(temperature.val,
-                                                                   binwidth.val) ) )
+                                                                   dlam * binwidth.val) ) )
 
     system.add( "delta_g^{B}", MonitorComponent( Symbol("delta_nrg^{B}"),
                                                  FreeEnergyAverage(temperature.val,
-                                                                   binwidth.val) ) )
+                                                                   dlam * binwidth.val) ) )
     
     # we will monitor the average energy between the swap cluster/ligand and each
     # residue with mobile sidechain, and each mobile solute

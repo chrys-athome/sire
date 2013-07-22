@@ -70,6 +70,7 @@ void register_Average_class(){
         
         }
         Average_exposer.def( bp::self != bp::self );
+        Average_exposer.def( bp::self + bp::self );
         { //::SireMaths::Average::operator=
         
             typedef ::SireMaths::Average & ( ::SireMaths::Average::*assign_function_type )( ::SireMaths::Average const & ) ;

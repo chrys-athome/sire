@@ -50,9 +50,7 @@ using boost::python::register_tuple;
 
 void register_Soiree_containers()
 {
-    register_tuple< boost::tuple< QMap<double,FreeEnergyAverage>,
-                                  QMap<double,FreeEnergyAverage>,
-                                  double > >();
+    register_list< QList<Gradients> >();
 
     #if QT_VERSION >= 0x402000
     register_dict< QMap<double,FreeEnergyAverage> >();

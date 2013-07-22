@@ -10,6 +10,7 @@
 void register_Soiree_objects()
 {
 
+    ObjectRegistry::registerConverterFor< Soiree::Gradients >();
     ObjectRegistry::registerConverterFor< Soiree::TI >();
 
 }
