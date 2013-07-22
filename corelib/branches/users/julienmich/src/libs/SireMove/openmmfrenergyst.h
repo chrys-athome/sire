@@ -132,6 +132,9 @@ public:
     int getCMMremoval_frequency(void);
     void setCMMremoval_frequency(int);
 
+    int getBufferFrequency();
+    void setBufferFrequency(int);
+
     int getEnergyFrequency();
     void setEnergyFrequency(int);
 
@@ -215,6 +218,8 @@ private:
     bool Restraint_flag;
 
     int CMMremoval_frequency;
+   
+    int buffer_frequency;
 
     int energy_frequency;
 

@@ -130,7 +130,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
         << velver.CutoffType << velver.cutoff_distance << velver.field_dielectric
         << velver.Andersen_flag <<  velver.Andersen_frequency 
         << velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
-        <<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.energy_frequency
+        <<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency << velver.energy_frequency
         << velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical << velver.buffer_coords
         << velver.gradients <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol << velver.timeskip
         << static_cast<const Integrator&>(velver);
@@ -151,8 +151,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
         sds >> velver.frequent_save_velocities >> velver.molgroup >> velver.solute >>velver.solutehard >> velver.solutetodummy >> velver.solutefromdummy
         >> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric
         >> velver.Andersen_flag >>  velver.Andersen_frequency 
-        >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
-        >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.energy_frequency
+        >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature 
+	>> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency >> velver.energy_frequency
         >> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical >> velver.buffer_coords
         >> velver.gradients >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol >> velver.timeskip
         >> static_cast<Integrator&>(velver);
@@ -179,7 +179,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
                 Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-                CMMremoval_frequency(0), energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
+	        CMMremoval_frequency(0), buffer_frequency(0),energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
                 shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond)
 {}
@@ -193,7 +193,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const Mo
                 Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-                CMMremoval_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
+                CMMremoval_frequency(0), buffer_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
                 shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond)
 {}
@@ -211,7 +211,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
                 MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
                 Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
                 Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
-                energy_frequency(other.energy_frequency),device_index(other.device_index),precision(other.precision),Alchemical_value(other.Alchemical_value),
+	        buffer_frequency(other.buffer_frequency), energy_frequency(other.energy_frequency),device_index(other.device_index),precision(other.precision),Alchemical_value(other.Alchemical_value),
                 coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),
                 delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients),perturbed_energies(other.perturbed_energies),
                 Integrator_type(other.Integrator_type),friction(other.friction),integration_tol(other.integration_tol),timeskip(other.timeskip)
@@ -248,6 +248,7 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     platform_type = other.platform_type;
     Restraint_flag = other.Restraint_flag;
     CMMremoval_frequency = other.CMMremoval_frequency;
+    buffer_frequency = other.buffer_frequency;
     energy_frequency = other.energy_frequency;
     device_index = other.device_index;
     precision = other.precision;
@@ -1853,7 +1854,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
 
-    bool Debug = true; 
+    bool Debug = false; 
 
     QTime timer;
 
@@ -2037,7 +2038,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     if (Debug)
         qDebug() << " Doing " << nmoves << " steps of dynamics ";
-
     
     int n_samples = nmoves / energy_frequency;
 
@@ -2047,14 +2047,34 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     if(Debug)
         qDebug() << "Number Energy Samples = "<< n_samples << "\n\n";
 
-    int MAXSAMPLES = 1000;
+    int coord_freq = buffer_frequency;
+    int nframes;
+    int MAXFRAMES = 1000;
+
+    if ( coord_freq > 0 )
+      {
+	nframes = ( nmoves / coord_freq );
+	// Check that we are saving snapshots modulo frequency
+        int remainder = buffer_frequency % energy_frequency;
+	if ( buffer_frequency < energy_frequency or remainder != 0 )
+	  throw SireError::program_bug(QObject::tr("You are requesting to buffer snapshots every %1 steps, but this must number must be a positive integer multiple of the frequency of saving energies %2").arg(buffer_frequency, energy_frequency), CODELOC);
+      }
+
+    if (buffer_frequency > nmoves)
+        throw SireError::program_bug(QObject::tr("You are requesting to buffer snapshots every  %1 steps, which is above the total number of %2 steps.").arg(buffer_frequency, nmoves), CODELOC);
 
     // Limit excessive internal buffering
-    if ( buffer_coords){
-        if  ( n_samples > MAXSAMPLES ){
-            throw SireError::program_bug(QObject::tr("You are requesting to buffer %1 frames, which is above the hardcoded limit of %2.").arg(n_samples, MAXSAMPLES), CODELOC);
+    if ( coord_freq > 0)
+      {
+      if  ( nframes > MAXFRAMES )
+	{
+	  throw SireError::program_bug(QObject::tr("You are requesting to buffer %1 frames, which is above the hardcoded limit of %2.").arg(n_samples, MAXFRAMES), CODELOC);
         }
-    }
+      }
+    else
+      {
+	nframes = 0;
+      }
     
     QVector< std::vector<OpenMM::Vec3> > buffered_positions;
     QVector< Vector > buffered_dimensions;
@@ -2079,7 +2099,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     double GB_acc = 0.0;
 
-    double sample_count=0.0;
+    int sample_count=1;
 
     /*state_openmm=context_openmm.getState(infoMask);
     qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
@@ -2089,9 +2109,8 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     //qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
 
 
-    if(buffer_coords)
-        qDebug() << "Saving atom coordinates every " << energy_frequency << "\n";
-
+    if(coord_freq > 0)
+        qDebug() << "Saving atom coordinates every " << coord_freq << "\n";
 
     //show_status(sample_count, n_samples);
 
@@ -2129,7 +2148,8 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         n_samples = (nmoves - new_nmoves) / energy_frequency;
     }
 
-    while(sample_count<n_samples){
+    // Why is sample_count double precision?
+    while(sample_count<=n_samples){
 
         //*********************MD STEPS****************************
         integrator_openmm->step(energy_frequency);
@@ -2152,30 +2172,43 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         double minus;
 
-        if(buffer_coords){
+	// Because looping from 1 to n_samples
+	int modulo =  sample_count % ( (coord_freq / energy_frequency ) );
+
+	if (Debug)
+	  qDebug() << "modulo is " << modulo;
+     
+        if( coord_freq > 0 and modulo == 0 )
+	  {
+	    if (Debug)
+	      qDebug() << "buffering coordinates and dimensions";
 
             positions_openmm = state_openmm.getPositions();
             buffered_positions.append( positions_openmm );
 
-            if (MCBarostat_flag == true){
+            if (MCBarostat_flag == true)
+	      {
                 state_openmm.getPeriodicBoxVectors(a,b,c);
                 Vector dims = Vector( a[0] * OpenMM::AngstromsPerNm, b[1] * OpenMM::AngstromsPerNm, c[2] * OpenMM::AngstromsPerNm);
                 buffered_dimensions.append( dims );
-            }
-        }
+	      }
+	  }
 
-        if(Debug){
+        if(Debug)
+	  {
             qDebug() << "\nLambda = " << Alchemical_value;
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
-        }
+	  }
 
 
-        if(potential_energy_lambda > 1000000.0){
+        if(potential_energy_lambda > 1000000.0)
+	  {
             throw SireError::program_bug(QObject::tr("********************* Energy Too High. Error! *******************"), CODELOC);
             exit(-1);
-        }
+	  }
 
-        if((Alchemical_value + delta_alchemical)>1.0){
+        if((Alchemical_value + delta_alchemical)>1.0)
+	  {
                         
             //NON BONDED TERMS
             if(perturbed_energies[0])
@@ -2208,13 +2241,15 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             minus =  exp(-beta * (potential_energy_lambda_minus_delta - potential_energy_lambda));
             plus = exp(beta * (potential_energy_lambda_minus_delta - potential_energy_lambda));
 
-            if(Debug){
+            if(Debug)
+	      {
                 qDebug() << "Lambda + delta > 1.0\n";
                 qDebug() << "Lambda - delta = " << Alchemical_value - delta_alchemical << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
-            }
+	      }
             
-        }
-        else if((Alchemical_value - delta_alchemical)<0.0){
+	  }
+        else if((Alchemical_value - delta_alchemical)<0.0)
+	  {
 
             //NON BONDED TERMS
             if(perturbed_energies[0])
@@ -2247,13 +2282,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             plus = exp(-beta * (potential_energy_lambda_plus_delta - potential_energy_lambda));
             minus = exp(beta * (potential_energy_lambda_plus_delta - potential_energy_lambda));
 
-            if(Debug){
+            if(Debug)
+	      {
                 qDebug() << "Lambda + delta = " << Alchemical_value + delta_alchemical << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
                 qDebug() << "Lambda - delta < 0.0\n";
-            }
-            
-        }
-        else{
+	      }
+	  }
+        else
+	  {
             
             //NON BONDED TERMS
             if(perturbed_energies[0])
@@ -2281,9 +2317,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
 
             
-            if(Debug){
+            if(Debug)
+	      {
 	      printf("*Lambda + Delta_Lambda %f potential_energy %f kcal/mol\n", Alchemical_value + delta_alchemical, potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ) ;
-            }
+	      }
 
             
             //NON BONDED TERMS
@@ -2319,20 +2356,21 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             minus = exp(-beta * (potential_energy_lambda_minus_delta - potential_energy_lambda));
             
 
-            if(Debug){
+            if(Debug)
+	      {
 	      printf("*Lambda - Delta_Lambda %f potential_energy %f kcal/mol\n", Alchemical_value - delta_alchemical, potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ) ;
-	    }
+	      }
             
 
-        }//end else
+	  }//end else
 
 
         GF_acc = GF_acc + plus;
         GB_acc = GB_acc + minus;
 
-        double avg_GF = GF_acc /(sample_count + 1.0);
+        double avg_GF = GF_acc /(sample_count);
 
-        double avg_GB = GB_acc /(sample_count + 1.0);
+        double avg_GB = GB_acc /(sample_count);
 
 
         double Energy_GF = -(1.0/beta)*log(avg_GF);
@@ -2346,9 +2384,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             qDebug() << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
 
 
-        if(buffer_coords && sample_count!=(n_samples-1))
+	// JM why buffer_coords is used to store gradients?
+        if(buffer_coords && sample_count!=(n_samples))
             gradients.append(Energy_Gradient_lamda * OpenMM::KcalPerKJ);
-        if(sample_count==(n_samples-1))
+        if(sample_count==(n_samples))
             gradients.append(Energy_Gradient_lamda * OpenMM::KcalPerKJ);
 
         
@@ -2378,7 +2417,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         double dummy = state_openmm.getPotentialEnergy();
         qDebug() << "\nDifference dummy = " << dummy - potential_energy_lambda<< "\n\n";*/
 
-        sample_count=sample_count + 1.0;
+        sample_count= sample_count + 1;
         
         //show_status(sample_count, n_samples);
 
@@ -2401,62 +2440,55 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     velocities_openmm = state_openmm.getVelocities();
 
     // Vector of Vector of molecules that are vector of atomic coordinates...
-
-    QVector< QVector< QVector< Vector > > > buffered_workspace(n_samples);
-
-    for (int i=0; i < buffered_workspace.size() ; i++){
-
+    QVector< QVector< QVector< Vector > > > buffered_workspace(nframes);
+    for (int i=0; i < buffered_workspace.size() ; i++)
+      {
         buffered_workspace[i].resize(nmols);
-
-        for (int j=0 ; j < nmols; j++){
-
+        for (int j=0 ; j < nmols; j++)
+	  {
             int nats = ws.nAtoms(j);
-
             buffered_workspace[i][j].resize(nats);
-
-        }
-
-    }
+	  }
+      }
 
     int k=0;
-
-    for(int i=0; i<nmols;i++){
-
+    for(int i=0; i<nmols;i++)
+      {
         Vector *sire_coords = ws.coordsArray(i);
         Vector *sire_momenta = ws.momentaArray(i);
-
         const double *m = ws.massArray(i);
 
-        for(int j=0; j < ws.nAtoms(i) ; j++){
+        for(int j=0; j < ws.nAtoms(i) ; j++)
+	  {
 
-            sire_coords[j] = Vector(positions_openmm[j+k][0] * (OpenMM::AngstromsPerNm),positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
+            sire_coords[j] = Vector(positions_openmm[j+k][0] * (OpenMM::AngstromsPerNm),
+				    positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),
+				    positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
 
-            if(buffer_coords){
+	    for (int l=0; l < nframes ; l++)
+	      {
 
-                for (int l=0; l < n_samples ; l++){
+		//qDebug() << " i " << i << " j " << j << " k " << k << " l " << l;
+		
+		Vector buffered_atcoord = Vector(  buffered_positions[l][j+k][0] * (OpenMM::AngstromsPerNm), 
+						   buffered_positions[l][j+k][1] * (OpenMM::AngstromsPerNm),
+						   buffered_positions[l][j+k][2] * (OpenMM::AngstromsPerNm));
 
-                    //qDebug() << " i " << i << " j " << j << " k " << k << " l " << l;
+		buffered_workspace[l][i][j] = buffered_atcoord;
+	      }
 
-                    Vector buffered_atcoord = Vector(  buffered_positions[l][j+k][0] * (OpenMM::AngstromsPerNm), buffered_positions[l][j+k][1] * (OpenMM::AngstromsPerNm),buffered_positions[l][j+k][2] * (OpenMM::AngstromsPerNm));
+            sire_momenta[j] = Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
+				     velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs, 
+				     velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs);
 
-                    buffered_workspace[l][i][j] = buffered_atcoord;
-
-
-                }
-
-            }
-
-            sire_momenta[j] = Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs, velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs);
-        }
-
+	  }
         k= k + ws.nAtoms(i);
-    }
-
-    if ( buffer_coords == false)
+      }
+    
+    if ( nframes <= 0)
         ws.commitCoordinatesAndVelocities();
     else
         ws.commitBufferedCoordinatesAndVelocities( buffered_workspace );
-
 
     //Now the box dimensions
 
@@ -2474,7 +2506,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         ptr_sys.setProperty(string, sp);
 
         // Buffer dimensions if necessary 
-
         for (int k=0; k < buffered_dimensions.size() ; k++){
 
             const QString buffered_space = "buffered_space_" + QString::number(k) ;
@@ -2733,6 +2764,18 @@ int OpenMMFrEnergyST::getCMMremoval_frequency(void){
 void OpenMMFrEnergyST::setCMMremoval_frequency(int frequency){
 
     CMMremoval_frequency = frequency;
+}
+
+/** Get the frequency of buffering coordinates */
+int OpenMMFrEnergyST::getBufferFrequency(){
+
+	return buffer_frequency;
+}
+
+/** Set the Center of Mass motion removal frequency */
+void OpenMMFrEnergyST::setBufferFrequency(int frequency){
+
+	buffer_frequency = frequency;
 }
 
 /** Get the frequency of buffering coordinates */

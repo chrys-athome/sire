@@ -304,7 +304,7 @@ static void processFlagLine(const QStringList &words, int &flag)
     else
         throw SireError::unsupported( QObject::tr(
                                           "The flag \"%1\" is not supported...").arg(words[1]), CODELOC );
-}
+ }
 
 /** Processes a line that starts with %FORMAT*/
 static void processFormatLine(const QStringList &words, FortranFormat &format)
@@ -408,13 +408,18 @@ static void processStringLine(const QString &line, const FortranFormat &format,
 
     for (int i= 0 ; i < line.size() ; i = i + format.size )
     {
-        if ( ++count > format.repeat || (i + format.size) > line.size() )
-            break;
+      //HERE 
+
+      // JM July 13. This causes code to crash if attempting to read text that uses less than the allowed format size. Apparently varying input options to leap can 
+      // cause inconsistent output of the top file that break this parser
+      //if ( ++count > format.repeat || (i + format.size) > line.size() )
+      //    break;
 
         QString str = line.mid(i, format.size );
         // Should we remove trailing spaces?
         str = str.trimmed();
         // Terminate if empty string
+	//qDebug() << "str.size() is " << str.size();
 
         if (str.size() == 0)
             break;
@@ -1784,7 +1789,7 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
 
             // Be careful not to overflow
             int end_atom;
-            //qDebug() << " atomStart " << atomStart << " pointers[NRES] "
+            //qDebug() << " start_atom " << start_atom << " pointers[NRES] "
             //         << pointers[NRES] ;
 
             if ( resnum < ( pointers[NRES] ) )
@@ -1796,7 +1801,8 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
             //         << start_atom << " end " << end_atom;
 
             // create an empty residue. Use RESIDUE_LABEL for the name
-            ResStructureEditor resstructeditor = molstructeditor.add( ResNum(resnum) );
+
+	    ResStructureEditor resstructeditor = molstructeditor.add( ResNum(resnum) );
             resstructeditor.rename( ResName( res_label[resnum - 1]) );
 
             for (int j=start_atom; j <= end_atom; ++j)
@@ -1849,7 +1855,7 @@ tuple<Molecules,SpacePtr> Amber::readCrdTop(const QString &crdfile,
 
         for (int i=0; i < natoms ; ++i)
         {
-            //qDebug() << " Parameterizing atom " << i;
+	    //qDebug() << " Parameterizing atom " << i;
             // Now that the structure of the molecule has been built, we assign the
             // following atom properties: coordinates, charge, mass, lj , amber_atom_type
             // and element (if element is available)
