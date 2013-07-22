@@ -322,6 +322,16 @@ bool Histogram::operator==(const Histogram &other) const
             avgval2 == other.avgval2);
 }
 
+static qint64 getBin(double x, double binwidth)
+{
+    if (x == 0)
+        return 0;
+    else if (x > 0)
+        return qint64( x / binwidth );
+    else
+        return qint64( x / binwidth ) - 1;
+}
+
 /** Comparison operator */
 bool Histogram::operator!=(const Histogram &other) const
 {
@@ -531,7 +541,7 @@ void Histogram::accumulate(double value, double weight)
     }
     
     //now histogram the data
-    qint64 bin = qint64(value / binwidth);
+    qint64 bin = getBin(value, binwidth);
     
     binvals.insert(bin, binvals.value(bin,0) + weight);
 }
@@ -612,6 +622,47 @@ double Histogram::standardDeviation() const
     return std::sqrt(avgval2 - (avgval*avgval));
 }
 
+/** Return the skew of the data. This is estimated based on the histogram
+    of the data */
+double Histogram::skew() const
+{
+    double avg = mean();
+    double stdev = standardDeviation();
+    double denom = 1.0 / (sum_of_bins*pow_3(stdev));
+    
+    double skew = 0;
+    
+    for (QHash<qint64,double>::const_iterator it = binvals.constBegin();
+         it != binvals.constEnd();
+         ++it)
+    {
+        skew += denom * it.value() * pow_3((it.key()+0.5) * binwidth - avg);
+    }
+    
+    return skew;
+}
+
+/** Return the excess kirtosis of the data. This is estimated based on the histogram
+    of the data (this is the kirtosis minus 3, so that the normal distribution
+    has a kirtosis of 0) */
+double Histogram::kirtosis() const
+{
+    double avg = mean();
+    double stdev = standardDeviation();
+    double denom = 1.0 / (sum_of_bins*pow_4(stdev));
+    
+    double kirt = 0;
+    
+    for (QHash<qint64,double>::const_iterator it = binvals.constBegin();
+         it != binvals.constEnd();
+         ++it)
+    {
+        kirt += denom * it.value() * pow_4( (it.key() + 0.5)*binwidth - avg );
+    }
+    
+    return kirt - 3;
+}
+
 /** Return the median of all values added to the histogram. This is
     estimated based on the actual histogram of added data */
 double Histogram::median() const
@@ -630,7 +681,12 @@ double Histogram::median() const
         sum += binvals[bin];
         
         if (sum > half_full)
-            return (bin+0.5)*binwidth;
+        {
+            //by how much have we gone over...
+            double amount = (sum - half_full) / binvals[bin];
+            
+            return (bin+amount)*binwidth;
+        }
     }
     
     throw SireError::program_bug( QObject::tr(
@@ -699,23 +755,25 @@ double Histogram::range() const
     return (bins.last() - bins.first() + 1) * binwidth;
 }
 
-/** Return a normalised version of this histogram */
+/** Return a normalised version of this histogram. The histogram
+    is normalised so that the sum under the curve is 1 (e.g.
+    sum_of_bins * bin_width is 1) */
 Histogram Histogram::normalise() const
 {
     if (binvals.isEmpty())
         return Histogram();
 
-    else if (sum_of_bins == 1)
+    else if (binwidth / sum_of_bins == 1)
         return *this;
 
     Histogram ret(*this);
     
     foreach (qint64 bin, ret.binvals.keys())
     {
-        ret.binvals.insert(bin, ret.binvals.value(bin) / sum_of_bins);
+        ret.binvals.insert(bin, ret.binvals.value(bin) / (binwidth*sum_of_bins));
     }
     
-    ret.sum_of_bins = 1;
+    ret.sum_of_bins = binwidth;
     
     return ret;
 }
@@ -744,7 +802,7 @@ Histogram Histogram::resize(double width) const
         double old_minval = it.key() * binwidth;
         double old_maxval = old_minval + binwidth;
 
-        qint64 bin = qint64(old_minval / width);
+        qint64 bin = getBin(old_minval, width);
 
         while (weight > 0)
         {
@@ -765,6 +823,30 @@ Histogram Histogram::resize(double width) const
             
             bin += 1;
         }
+    }
+    
+    if (width < binwidth)
+    {
+        //the new histogram has a higher resolution, so will need to be smoothed
+        QHash<qint64,double> smoothed = ret.binvals;
+        QList<qint64> bins = smoothed.keys();
+        qSort(bins);
+        
+        for (int i=1; i<bins.count()-1; ++i)
+        {
+            smoothed[ bins[i] ] = 0.25*ret.binvals[bins[i-1]] + 0.5 * ret.binvals[bins[i]]
+                                      + 0.25*ret.binvals[bins[i+1]];
+        }
+        
+        smoothed[bins[0]] = 0.75*ret.binvals[bins[0]] + 0.25*ret.binvals[bins[1]];
+        
+        if (bins.count() > 1)
+        {
+            smoothed[bins[bins.count()-1]] = 0.75*ret.binvals[bins[bins.count()-1]] +
+                                0.25 * ret.binvals[bins[bins.count()-2]];
+        }
+        
+        ret.binvals = smoothed;
     }
     
     return ret;

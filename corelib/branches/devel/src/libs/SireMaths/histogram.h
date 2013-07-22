@@ -190,6 +190,9 @@ public:
     double median() const;
     double mode() const;
 
+    double skew() const;
+    double kirtosis() const;
+
     double range() const;
 
     double standardDeviation() const;

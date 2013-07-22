@@ -30,7 +30,9 @@
 #define SIREMATHS_FREEENERGYAVERAGE_H
 
 #include "accumulator.h"
+#include "histogram.h"
 
+#include "SireUnits/dimensions.h"
 #include "SireUnits/temperature.h"
 
 SIRE_BEGIN_HEADER
@@ -46,8 +48,10 @@ QDataStream& operator>>(QDataStream&, SireMaths::FreeEnergyAverage&);
 namespace SireMaths
 {
 
-/** This class provides a shortcut to accumulating the free energy
-    average (this is just an ExpAverage with a more directed interface)
+/** This class is used to accumulate the free energy
+    average. As well as calculating the average, it also
+    records a histogram of values that can be used for
+    error analysis
     
     @author Christopher Woods
 */
@@ -62,15 +66,36 @@ public:
     FreeEnergyAverage();
     FreeEnergyAverage(const SireUnits::Dimension::Temperature &temperature);
     
+    FreeEnergyAverage(const SireUnits::Dimension::MolarEnergy &binwidth);
+    FreeEnergyAverage(const SireUnits::Dimension::Temperature &temperature,
+                      const SireUnits::Dimension::MolarEnergy &binwidth);
+    
     FreeEnergyAverage(const FreeEnergyAverage &other);
     
     ~FreeEnergyAverage();
     
     FreeEnergyAverage& operator=(const FreeEnergyAverage &other);
     
+    bool operator==(const FreeEnergyAverage &other) const;
+    bool operator!=(const FreeEnergyAverage &other) const;
+    
     static const char* typeName();
 
     SireUnits::Dimension::Temperature temperature() const;
+
+    QString toString() const;
+
+    const Histogram& histogram() const;
+
+    void clear();
+    
+    void accumulate(double value);
+
+private:
+    /** A histogram of all of the energy values. This allows the free energy
+        average to be monitored and the error, and corrected values to be 
+        calculated */
+    Histogram hist;
 };
 
 }

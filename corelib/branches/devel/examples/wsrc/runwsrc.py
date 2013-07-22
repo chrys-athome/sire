@@ -32,6 +32,7 @@ params["temperature"] = 25 * celsius
 # Specify the lambda values to use
 params["lambda values"] = [ 0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.49,
                             0.51, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99 ]
+params["lambda values"] = [ 0.01, 0.99 ]
 
 params["delta_lambda"] = 0.01
 

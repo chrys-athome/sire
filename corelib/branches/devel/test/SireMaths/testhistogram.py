@@ -6,7 +6,7 @@ from nose.tools import assert_almost_equal
 
 rand = RanGenerator()
 
-rand_mean = 15
+rand_mean = 20
 rand_variance = 5
 
 h = Histogram(0.2)
@@ -32,9 +32,11 @@ print "RANGE", h.range()
 print "MINVAL", h.minimumValue()
 print "MAXVAL", h.maximumValue()
 print "STDEV", h.standardDeviation(), "vs.", rand_variance
+print "SKEW", h.skew(), "vs.", 0.0
+print "KIRTOSIS", h.kirtosis(), "vs.", 0.0
 
-vals = h.values()
-gaus = h.normalDistribution()
+vals = h.normalise().values()
+gaus = h.normalise().normalDistribution()
 
 assert len(vals) == len(gaus)
 
@@ -54,7 +56,7 @@ axes.plot(x, y2, "r-")
 
 x = []
 y = []
-vals = h.resize(0.4).values()
+vals = h.resize(0.4).normalise().values()
 
 for i in range(0,len(vals)):
     x.append( vals[i].middle() )
@@ -64,7 +66,7 @@ axes.plot(x, y, "g-")
 
 x = []
 y = []
-vals = h.resize(0.1).values()
+vals = h.resize(0.1).normalise().values()
 
 for i in range(0,len(vals)):
     x.append( vals[i].middle() )
