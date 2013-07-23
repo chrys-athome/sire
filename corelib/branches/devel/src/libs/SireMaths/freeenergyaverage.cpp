@@ -194,7 +194,7 @@ const char* FreeEnergyAverage::typeName()
 /** Clear all data from the accumulator */
 void FreeEnergyAverage::clear()
 {
-    hist = Histogram();
+    hist = Histogram( hist.binWidth() );
     ExpAverage::clear();
 }
 

@@ -41,6 +41,7 @@ namespace Soiree
 {
 class TI;
 class Gradients;
+class DataPoint;
 }
 
 QDataStream& operator<<(QDataStream&, const Soiree::TI&);
@@ -49,11 +50,74 @@ QDataStream& operator>>(QDataStream&, Soiree::TI&);
 QDataStream& operator<<(QDataStream&, const Soiree::Gradients&);
 QDataStream& operator>>(QDataStream&, Soiree::Gradients&);
 
+QDataStream& operator<<(QDataStream&, const Soiree::DataPoint&);
+QDataStream& operator>>(QDataStream&, Soiree::DataPoint&);
+
 namespace Soiree
 {
 
 using SireMaths::FreeEnergyAverage;
 using SireUnits::Dimension::MolarEnergy;
+
+/** This class represents a single datapoint on an x,y graph. The point
+    has associated errors (small and large) on both the x and y axes
+    
+    @author Christopher Woods
+*/
+class SOIREE_EXPORT DataPoint
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const DataPoint&);
+friend QDataStream& ::operator>>(QDataStream&, DataPoint&);
+
+public:
+    DataPoint();
+    DataPoint(double x, double y);
+    DataPoint(double x, double y,
+              double xerror, double yerror);
+    DataPoint(double x, double y,
+              double xminerror, double yminerror,
+              double xmaxerror, double ymaxerror);
+    
+    DataPoint(const DataPoint &other);
+    
+    ~DataPoint();
+    
+    DataPoint& operator=(const DataPoint &other);
+    
+    bool operator==(const DataPoint &other) const;
+    bool operator!=(const DataPoint &other) const;
+    
+    const char* what() const;
+    static const char* typeName();
+   
+    QString toString() const;
+    
+    double x() const;
+    double y() const;
+    
+    double xError() const;
+    double yError() const;
+    
+    double xMinError() const;
+    double yMinError() const;
+    
+    double xMaxError() const;
+    double yMaxError() const;
+    
+    bool hasError() const;
+    
+    bool hasXError() const;
+    bool hasYError() const;
+    
+    bool equalWithinError(const DataPoint &other) const;
+    bool equalWithinMinError(const DataPoint &other) const;
+    bool equalWithinMaxError(const DataPoint &other) const;
+    
+private:
+    /** The individual values of the data point */
+    double _x, _y, _xminerr, _yminerr, _xmaxerr, _ymaxerr;
+};
 
 /** This class contains the free energy gradients from a TI simulation
 
@@ -102,6 +166,11 @@ public:
 
     double deltaLambda() const;
     
+    QVector<DataPoint> values() const;
+    
+    QVector<DataPoint> forwardsValues() const;
+    QVector<DataPoint> backwardsValues() const;
+
     QMap<double,FreeEnergyAverage> forwardsData() const;
     QMap<double,FreeEnergyAverage> backwardsData() const;
 
@@ -203,9 +272,11 @@ private:
 
 Q_DECLARE_METATYPE( Soiree::Gradients )
 Q_DECLARE_METATYPE( Soiree::TI )
+Q_DECLARE_METATYPE( Soiree::DataPoint )
 
 SIRE_EXPOSE_CLASS( Soiree::Gradients )
 SIRE_EXPOSE_CLASS( Soiree::TI )
+SIRE_EXPOSE_CLASS( Soiree::DataPoint )
 
 SIRE_END_HEADER
 

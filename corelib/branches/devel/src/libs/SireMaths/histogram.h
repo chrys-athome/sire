@@ -196,6 +196,12 @@ public:
     double range() const;
 
     double standardDeviation() const;
+
+    double tValue(int nsamples, double level) const;
+    double tValue(double level) const;
+
+    double standardError() const;
+    double standardError(double level) const;
     
     double maximumValue() const;
     double minimumValue() const;
