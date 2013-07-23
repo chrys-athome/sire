@@ -314,6 +314,27 @@ void register_Histogram_class(){
                 , standardDeviation_function_value );
         
         }
+        { //::SireMaths::Histogram::standardError
+        
+            typedef double ( ::SireMaths::Histogram::*standardError_function_type )(  ) const;
+            standardError_function_type standardError_function_value( &::SireMaths::Histogram::standardError );
+            
+            Histogram_exposer.def( 
+                "standardError"
+                , standardError_function_value );
+        
+        }
+        { //::SireMaths::Histogram::standardError
+        
+            typedef double ( ::SireMaths::Histogram::*standardError_function_type )( double ) const;
+            standardError_function_type standardError_function_value( &::SireMaths::Histogram::standardError );
+            
+            Histogram_exposer.def( 
+                "standardError"
+                , standardError_function_value
+                , ( bp::arg("level") ) );
+        
+        }
         { //::SireMaths::Histogram::sumOfBins
         
             typedef double ( ::SireMaths::Histogram::*sumOfBins_function_type )(  ) const;
@@ -322,6 +343,28 @@ void register_Histogram_class(){
             Histogram_exposer.def( 
                 "sumOfBins"
                 , sumOfBins_function_value );
+        
+        }
+        { //::SireMaths::Histogram::tValue
+        
+            typedef double ( ::SireMaths::Histogram::*tValue_function_type )( int,double ) const;
+            tValue_function_type tValue_function_value( &::SireMaths::Histogram::tValue );
+            
+            Histogram_exposer.def( 
+                "tValue"
+                , tValue_function_value
+                , ( bp::arg("nsamples"), bp::arg("level") ) );
+        
+        }
+        { //::SireMaths::Histogram::tValue
+        
+            typedef double ( ::SireMaths::Histogram::*tValue_function_type )( double ) const;
+            tValue_function_type tValue_function_value( &::SireMaths::Histogram::tValue );
+            
+            Histogram_exposer.def( 
+                "tValue"
+                , tValue_function_value
+                , ( bp::arg("level") ) );
         
         }
         { //::SireMaths::Histogram::toString

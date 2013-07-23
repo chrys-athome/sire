@@ -19,6 +19,8 @@ namespace bp = boost::python;
 
 #include "tostring.h"
 
+#include <cmath>
+
 #include "ti.h"
 
 Soiree::Gradients __copy__(const Soiree::Gradients &other){ return Soiree::Gradients(other); }
@@ -58,6 +60,16 @@ void register_Gradients_class(){
                 , backwardsData_function_value );
         
         }
+        { //::Soiree::Gradients::backwardsValues
+        
+            typedef ::QVector< Soiree::DataPoint > ( ::Soiree::Gradients::*backwardsValues_function_type )(  ) const;
+            backwardsValues_function_type backwardsValues_function_value( &::Soiree::Gradients::backwardsValues );
+            
+            Gradients_exposer.def( 
+                "backwardsValues"
+                , backwardsValues_function_value );
+        
+        }
         { //::Soiree::Gradients::deltaLambda
         
             typedef double ( ::Soiree::Gradients::*deltaLambda_function_type )(  ) const;
@@ -87,6 +99,16 @@ void register_Gradients_class(){
             Gradients_exposer.def( 
                 "forwardsData"
                 , forwardsData_function_value );
+        
+        }
+        { //::Soiree::Gradients::forwardsValues
+        
+            typedef ::QVector< Soiree::DataPoint > ( ::Soiree::Gradients::*forwardsValues_function_type )(  ) const;
+            forwardsValues_function_type forwardsValues_function_value( &::Soiree::Gradients::forwardsValues );
+            
+            Gradients_exposer.def( 
+                "forwardsValues"
+                , forwardsValues_function_value );
         
         }
         { //::Soiree::Gradients::gradient
@@ -194,6 +216,16 @@ void register_Gradients_class(){
             Gradients_exposer.def( 
                 "typeName"
                 , typeName_function_value );
+        
+        }
+        { //::Soiree::Gradients::values
+        
+            typedef ::QVector< Soiree::DataPoint > ( ::Soiree::Gradients::*values_function_type )(  ) const;
+            values_function_type values_function_value( &::Soiree::Gradients::values );
+            
+            Gradients_exposer.def( 
+                "values"
+                , values_function_value );
         
         }
         { //::Soiree::Gradients::what

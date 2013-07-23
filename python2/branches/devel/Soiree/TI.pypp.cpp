@@ -19,6 +19,8 @@ namespace bp = boost::python;
 
 #include "tostring.h"
 
+#include <cmath>
+
 #include "ti.h"
 
 Soiree::TI __copy__(const Soiree::TI &other){ return Soiree::TI(other); }

@@ -14,6 +14,8 @@ namespace bp = boost::python;
 
 #include "freeenergyaverage.h"
 
+#include <QDebug>
+
 #include "freeenergyaverage.h"
 
 SireMaths::FreeEnergyAverage __copy__(const SireMaths::FreeEnergyAverage &other){ return SireMaths::FreeEnergyAverage(other); }
