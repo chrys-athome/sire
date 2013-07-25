@@ -289,7 +289,7 @@ QString OpenMMFrEnergyST::toString() const
 
 void OpenMMFrEnergyST::initialise()  {
 
-    bool Debug = false;
+    bool Debug = true;
 
     if (true){
         qDebug() << "Initialising OpenMMFrEnergyST";
@@ -307,9 +307,9 @@ void OpenMMFrEnergyST::initialise()  {
 
     const MoleculeGroup solute = this->solute.read();
     
-    if ( solute.isEmpty() ){
-        throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because solute group has not been defined"), CODELOC);
-    }
+    //if ( solute.isEmpty() ){
+    //    throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because solute group has not been defined"), CODELOC);
+    //}
 
 
     const MoleculeGroup solutehard = this->solutehard.read();
@@ -777,12 +777,16 @@ void OpenMMFrEnergyST::initialise()  {
 
     if (Restraint_flag == true){
 
-        positionalRestraints_openmm = new OpenMM::CustomExternalForce("k*( (x-xref)^2 + (y-yref)^2 + (z-zref)^2 )");
+      //positionalRestraints_openmm = new OpenMM::CustomExternalForce("k*( (x-xref)^2 + (y-yref)^2 + (z-zref)^2 )");
+	positionalRestraints_openmm = new OpenMM::CustomExternalForce("k*d2;"
+								      "d2 = max(0, d1 - d^2);"
+								      "d1 = (x-xref)^2 + (y-yref)^2  + (z-zref)^2 ");
 
         positionalRestraints_openmm->addPerParticleParameter("xref");
         positionalRestraints_openmm->addPerParticleParameter("yref");
         positionalRestraints_openmm->addPerParticleParameter("zref");
         positionalRestraints_openmm->addPerParticleParameter("k");
+	positionalRestraints_openmm->addPerParticleParameter("d");
 
         system_openmm->addForce(positionalRestraints_openmm);
 
@@ -810,7 +814,7 @@ void OpenMMFrEnergyST::initialise()  {
 
     for (int i=0; i < nmols; ++i){
 
-        const int nats_mol = ws.nAtoms(i);
+      const int nats_mol = ws.nAtoms(i);
 
         const double *m = ws.massArray(i);
 
@@ -977,7 +981,8 @@ void OpenMMFrEnergyST::initialise()  {
     solute_angle_perturbation->addPerAngleParameter("thetaend");
 
 
-    Molecule solutemol = solute.moleculeAt(0).molecule();
+    // JM July 13. This also needs to be changed because there could be more than one perturbed molecule
+    //Molecule solutemol = solute.moleculeAt(0).molecule();
 
 
     int nions = 0;
@@ -997,7 +1002,7 @@ void OpenMMFrEnergyST::initialise()  {
         const Vector *c = ws.coordsArray(i);
 
         Molecule molecule = moleculegroup.moleculeAt(i).molecule();
-
+	
         int num_atoms_molecule = molecule.nAtoms();
         
         std::vector<double> custom_non_bonded_params(9);
@@ -1038,16 +1043,77 @@ void OpenMMFrEnergyST::initialise()  {
 
             Atom atom = molecule.molecule().atoms()[j];
 
-            if(molecule.hasProperty("perturbations")){
-                if(!solutehard.isEmpty() && solutehard.moleculeAt(0).atoms().contains(atom)){//hard solute atom
+            if(molecule.hasProperty("perturbations"))
+	      {
+		// Is atom a hard, from dummy or to dummy type?
+		bool ishard = false;
+		bool istodummy = false;
+		bool isfromdummy = false;
 
-                    double charge_start = start_charges[j].value();
-                    double charge_final = final_charges[j].value();
+		for (int l=0; l < solutehard.nViews() ; l++ )
+		  {
+		    Selector<Atom> view_atoms = solutehard.viewAt(l).atoms();
+		    for (int m=0; m < view_atoms.count() ; m++)
+		      {
+			Atom view_atom = view_atoms.at(m);
+			if (atom == view_atom)
+			  {
+			  ishard = true;
+			  break;
+			  }
+		      }
+		    if (ishard)
+		      break;
+		  }
+		// if not hard check if to_dummy
+		if (!ishard)
+		  {
+		    for (int l=0; l < solutetodummy.nViews() ; l++ )
+		      {
+			Selector<Atom> view_atoms = solutetodummy.viewAt(l).atoms();
+			for (int m=0; m < view_atoms.count() ; m++)
+			  {
+			    Atom view_atom = view_atoms.at(m);
+			    if (atom == view_atom)
+			      {
+				istodummy = true;
+				break;
+			      }
+			  }
+			if (istodummy)
+			  break;
+		      }
+		  }
+		// if not todummy, check if fromdummy
+		if (!istodummy)
+		  {
+		    for (int l=0; l < solutefromdummy.nViews() ; l++ )
+		      {
+			Selector<Atom> view_atoms = solutefromdummy.viewAt(l).atoms();
+			for (int m=0; m < view_atoms.count() ; m++)
+			  {
+			    Atom view_atom = view_atoms.at(m);
+			    if (atom == view_atom)
+			      {
+				isfromdummy = true;
+				break;
+			      }
+			  }
+			if (isfromdummy)
+			  break;
+		      }
+		  }
+		
+		//if(!solutehard.isEmpty() && solutehard.moleculeAt(0).atoms().contains(atom))
+		if (ishard)
+		  {//hard solute atom
+		    double charge_start = start_charges[j].value();
+		    double charge_final = final_charges[j].value();
                 
-                    double epsilon_start = start_LJs[j].epsilon();
-                    double epsilon_final = final_LJs[j].epsilon();
-                    double sigma_start = start_LJs[j].sigma();
-                    double sigma_final = final_LJs[j].sigma();
+		    double epsilon_start = start_LJs[j].epsilon();
+		    double epsilon_final = final_LJs[j].epsilon();
+		    double sigma_start = start_LJs[j].sigma();
+		    double sigma_final = final_LJs[j].sigma();
                 
                     custom_non_bonded_params[0] = charge_start;
                     custom_non_bonded_params[1] = charge_final;
@@ -1060,11 +1126,13 @@ void OpenMMFrEnergyST::initialise()  {
                     custom_non_bonded_params[8] = 0.0;//isFromdummy
 
                     if(Debug)
-                        qDebug() << "hard solute = " << atom.index();
-
-                }
-                else if(!solutetodummy.isEmpty() && solutetodummy.moleculeAt(0).atoms().contains(atom)){//to dummy solute atom
-
+		      qDebug() << "hard solute = " << atom.index();
+		  }
+		// JM July 13 THIS NEEDS FIXING TO DEAL WITH GROUPS THAT CONTAIN MORE THAN ONE MOLECULE
+                //else if(!solutetodummy.isEmpty() && solutetodummy.moleculeAt(0).atoms().contains(atom))
+		else if (istodummy)
+		  {//to dummy solute atom
+		  
                     double charge_start = start_charges[j].value();
                     double charge_final = final_charges[j].value();
                 
@@ -1086,9 +1154,10 @@ void OpenMMFrEnergyST::initialise()  {
 
                     if(Debug)
                         qDebug() << "to dummy solute = " << atom.index();
-
                 }
-                else if(!solutefromdummy.isEmpty() && solutefromdummy.moleculeAt(0).atoms().contains(atom)){//from dummy solute atom
+                //else if(!solutefromdummy.isEmpty() && solutefromdummy.moleculeAt(0).atoms().contains(atom))
+		else if (isfromdummy)
+		  {//from dummy solute atom
 
                     double charge_start = start_charges[j].value();
                     double charge_final = final_charges[j].value();
@@ -1110,10 +1179,25 @@ void OpenMMFrEnergyST::initialise()  {
 
                     if(Debug)
                         qDebug() << "from dummy solute = " << atom.index();
+		  }
+		else//What if some atoms were not perturbed at all in the pert file? Use default params
+		  {
+		    custom_non_bonded_params[0] = charge;
+		    custom_non_bonded_params[1] = charge;
+		    custom_non_bonded_params[2] = epsilon * OpenMM::KJPerKcal;
+		    custom_non_bonded_params[3] = epsilon * OpenMM::KJPerKcal;
+		    custom_non_bonded_params[4] = sigma * OpenMM::NmPerAngstrom;
+		    custom_non_bonded_params[5] = sigma * OpenMM::NmPerAngstrom;
+		    custom_non_bonded_params[6] = 1.0;//isHard
+		    custom_non_bonded_params[7] = 0.0;//isTodummy
+		    custom_non_bonded_params[8] = 0.0;//isFromdummy
 
-                }
-            }
-            else{//solvent atom like hard
+		    if (Debug)
+		      qDebug() << " unperturbed solute atom " << atom.index();
+		  }
+	      }
+            else
+	      {//solvent atom like hard
 
                 custom_non_bonded_params[0] = charge;
                 custom_non_bonded_params[1] = charge;
@@ -1128,10 +1212,11 @@ void OpenMMFrEnergyST::initialise()  {
                 if(Debug)
                     qDebug() << "Solvent = " << atom.index();
 
-            }
+	      }
 
-            if(Debug){
-                qDebug() << "Charge start = " << custom_non_bonded_params[0];
+            if(Debug)
+	      {
+		qDebug() << "Charge start = " << custom_non_bonded_params[0];
                 qDebug() << "Charge end = " << custom_non_bonded_params[1];
                 qDebug() << "Eps start = " << custom_non_bonded_params[2];
                 qDebug() << "Eps end = " << custom_non_bonded_params[3];
@@ -1140,10 +1225,10 @@ void OpenMMFrEnergyST::initialise()  {
                 qDebug() << "is Hard = " << custom_non_bonded_params[6];
                 qDebug() << "is To dummy = " << custom_non_bonded_params[7];
                 qDebug() << "is From dummy = " << custom_non_bonded_params[8] << "\n";
-            }
+	      }
             
             custom_force_field->addParticle(custom_non_bonded_params);
-
+	    
         }
 
 
@@ -1169,24 +1254,27 @@ void OpenMMFrEnergyST::initialise()  {
                         double yref = restrainedAtoms.property(QString("y(%1)").arg(i)).asA<VariantProperty>().toDouble();
                         double zref = restrainedAtoms.property(QString("z(%1)").arg(i)).asA<VariantProperty>().toDouble();
                         double k = restrainedAtoms.property(QString("k(%1)").arg(i)).asA<VariantProperty>().toDouble();
+			double d = restrainedAtoms.property(QString("d(%1)").arg(i)).asA<VariantProperty>().toDouble();
 
                         int openmmindex = AtomNumToOpenMMIndex[atomnum];
 
                         if (true){
-                            qDebug() << "atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k;
-                            qDebug() << "Atom name =  " << molecule.atom(AtomIdx(openmmindex)).toString();
+			  qDebug() << "atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k << " d " << d;
+			  //qDebug() << "Atom name =  " << molecule.atom(AtomIdx(openmmindex)).toString();
                         }
                         
                         
-                        int posrestrdim = 4;
+                        int posrestrdim = 5;
                         std::vector<double> params(posrestrdim);
 
                         params[0] = xref * OpenMM::NmPerAngstrom;
                         params[1] = yref * OpenMM::NmPerAngstrom;
                         params[2] = zref * OpenMM::NmPerAngstrom;
                         params[3] = k  * ( OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm );
+			params[4] = d * OpenMM::NmPerAngstrom;
 
                         positionalRestraints_openmm->addParticle(openmmindex, params);
+
                     }
             }
         }//end of restraint flag
@@ -1222,8 +1310,8 @@ void OpenMMFrEnergyST::initialise()  {
         QList< ImproperID > improper_pert_list;
         QList< ImproperID > improper_pert_swap_list;
 
-        if(molecule.isSameMolecule(solutemol)){//Solute molecule perturbation
-
+        //if(molecule.isSameMolecule(solutemol)){//Solute molecule perturbation
+	if (solute.contains(molecule)) {
             Perturbations pert_params = molecule.property("perturbations").asA<Perturbations>();
 
             QList< PropPtr<Perturbation> > perturbation_list = pert_params.perturbations();
@@ -1377,7 +1465,8 @@ void OpenMMFrEnergyST::initialise()  {
             int idx0 = bonds[j].atom0().asA<AtomIdx>().value();
             int idx1 = bonds[j].atom1().asA<AtomIdx>().value();
 
-            if(molecule.isSameMolecule(solutemol)){
+            //if(molecule.isSameMolecule(solutemol)){
+	    if (solute.contains(molecule)) {
 
                 if(bond_pert_list.indexOf(bond_ff) != -1 || bond_pert_swap_list.indexOf(bond_ff) != -1 ){//Solute molecule. Check if the current solute bond is in the perturbed bond list
                     if(Debug)
@@ -1449,8 +1538,8 @@ void OpenMMFrEnergyST::initialise()  {
             int idx1 = angles[j].atom1().asA<AtomIdx>().value();
             int idx2 = angles[j].atom2().asA<AtomIdx>().value();
 
-            if(molecule.isSameMolecule(solutemol)){
-
+            //if(molecule.isSameMolecule(solutemol)){
+	    if (solute.contains(molecule)) {
              if(angle_pert_list.indexOf(angle_ff) != -1 || angle_pert_swap_list.indexOf(angle_ff) != -1){//Solute molecule. Check if the current solute angle is in the perturbed angle list
                     if(Debug)
                         qDebug() << "Found Perturbed Angle\n";
@@ -1522,7 +1611,8 @@ void OpenMMFrEnergyST::initialise()  {
                                 " and " << idx3 - num_atoms_till_i <<"\n";
             }
 
-            if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed dihedral list
+            //if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed dihedral list
+	    if (solute.contains(molecule)){
                 if(dihedral_pert_list.indexOf(dihedral_ff)!=-1 || dihedral_pert_swap_list.indexOf(dihedral_ff)!=-1){
                     if(Debug)
                         qDebug() << "Found Perturbed Dihedral\n";
@@ -1571,7 +1661,8 @@ void OpenMMFrEnergyST::initialise()  {
             }
 
 
-            if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed improper list
+            //if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed improper list
+	    if (solute.contains(molecule)){
                 if(improper_pert_list.indexOf(improper_ff)!=-1 || improper_pert_swap_list.indexOf(improper_ff)!=-1){
                     if(Debug)
                         qDebug() << "Found Perturbed Improper\n";
@@ -1639,8 +1730,8 @@ void OpenMMFrEnergyST::initialise()  {
 
             nonbond_openmm->getExceptionParameters(i,p1,p2,charge_prod,sigma_avg,epsilon_avg);
 
-            if(Debug)
-                qDebug() << "Exception = " << i << " p1 = " << p1 << " p2 = " << p2 << " charge prod = " << charge_prod << " sigma avg = " << sigma_avg << " epsilon_avg = " << epsilon_avg << "\n";
+            //if(Debug)
+            //    qDebug() << "Exception = " << i << " p1 = " << p1 << " p2 = " << p2 << " charge prod = " << charge_prod << " sigma avg = " << sigma_avg << " epsilon_avg = " << epsilon_avg << "\n";
 
             if(!(charge_prod==0 && sigma_avg==1 && epsilon_avg==0)){//1-4 interactions
                 
@@ -1854,7 +1945,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
 
-    bool Debug = false; 
+    bool Debug = true; 
 
     QTime timer;
 
@@ -2048,7 +2139,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         qDebug() << "Number Energy Samples = "<< n_samples << "\n\n";
 
     int coord_freq = buffer_frequency;
-    int nframes;
+    int nframes=0;
     int MAXFRAMES = 1000;
 
     if ( coord_freq > 0 )
@@ -2161,7 +2252,15 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         if(Debug)
             qDebug()<< "Total Time = " << state_openmm.getTime() << " ps";
 
-
+	if (Debug) 
+	  {
+	    positions_openmm = state_openmm.getPositions();
+	    for (int i=0; i < 500; i++)
+	      {
+		qDebug()<< " at " << i << " x " << positions_openmm[i][0] << " y " << positions_openmm[i][1] << " z " << positions_openmm[i][2] ;
+	      }
+	  }
+	    
         double potential_energy_lambda = state_openmm.getPotentialEnergy();
 
         double potential_energy_lambda_plus_delta;

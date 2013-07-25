@@ -446,12 +446,16 @@ void OpenMMMDIntegrator::initialise()  {
 
     if (Restraint_flag == true)
       {
-	positionalRestraints_openmm = new OpenMM::CustomExternalForce("k*( (x-xref)^2 + (y-yref)^2 + (z-zref)^2 )");
-		
+	//positionalRestraints_openmm = new OpenMM::CustomExternalForce("k*( (x-xref)^2 + (y-yref)^2 + (z-zref)^2 )");
+	positionalRestraints_openmm = new OpenMM::CustomExternalForce("k*d2;"
+								      "d2 = max(0, d1 - d^2);"
+								      "d1 = (x-xref)^2 + (y-yref)^2  + (z-zref)^2 ");
+	
 	positionalRestraints_openmm->addPerParticleParameter("xref");
 	positionalRestraints_openmm->addPerParticleParameter("yref");
 	positionalRestraints_openmm->addPerParticleParameter("zref");
 	positionalRestraints_openmm->addPerParticleParameter("k");
+	positionalRestraints_openmm->addPerParticleParameter("d");
 
 	system_openmm->addForce(positionalRestraints_openmm);
 		
@@ -648,19 +652,21 @@ void OpenMMMDIntegrator::initialise()  {
                     double yref = restrainedAtoms.property(QString("y(%1)").arg(i)).asA<VariantProperty>().toDouble();
                     double zref = restrainedAtoms.property(QString("z(%1)").arg(i)).asA<VariantProperty>().toDouble();
                     double k = restrainedAtoms.property(QString("k(%1)").arg(i)).asA<VariantProperty>().toDouble();
+		    double d = restrainedAtoms.property(QString("d(%1)").arg(i)).asA<VariantProperty>().toDouble();
 
                     int openmmindex = AtomNumToOpenMMIndex[atomnum];
 
                     if (Debug)
-                      qDebug() << " atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k;
+                      qDebug() << " atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k << " d " << d;
 
-                    int posrestrdim = 4;
+                    int posrestrdim = 5;
                     std::vector<double> params(posrestrdim);
 
                     params[0] = xref * OpenMM::NmPerAngstrom;
                     params[1] = yref * OpenMM::NmPerAngstrom;
                     params[2] = zref * OpenMM::NmPerAngstrom;
                     params[3] = k  * ( OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm );
+		    params[4] = d * OpenMM::NmPerAngstrom;
 
                     positionalRestraints_openmm->addParticle(openmmindex, params);
                   }
