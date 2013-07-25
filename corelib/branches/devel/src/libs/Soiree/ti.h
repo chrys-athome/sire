@@ -42,6 +42,7 @@ namespace Soiree
 class TI;
 class Gradients;
 class DataPoint;
+class PMF;
 }
 
 QDataStream& operator<<(QDataStream&, const Soiree::TI&);
@@ -52,6 +53,9 @@ QDataStream& operator>>(QDataStream&, Soiree::Gradients&);
 
 QDataStream& operator<<(QDataStream&, const Soiree::DataPoint&);
 QDataStream& operator>>(QDataStream&, Soiree::DataPoint&);
+
+QDataStream& operator<<(QDataStream&, const Soiree::PMF&);
+QDataStream& operator>>(QDataStream&, Soiree::PMF&);
 
 namespace Soiree
 {
@@ -106,9 +110,13 @@ public:
     double yMaxError() const;
     
     bool hasError() const;
+    bool hasErrorRange() const;
     
     bool hasXError() const;
     bool hasYError() const;
+    
+    bool hasXErrorRange() const;
+    bool hasYErrorRange() const;
     
     bool equalWithinError(const DataPoint &other) const;
     bool equalWithinMinError(const DataPoint &other) const;
@@ -117,6 +125,81 @@ public:
 private:
     /** The individual values of the data point */
     double _x, _y, _xminerr, _yminerr, _xmaxerr, _ymaxerr;
+};
+
+/** This class contains the complete potential of mean force
+    that has been created by integrating the TI gradients
+    
+    @author Christopher Woods
+*/
+class SOIREE_EXPORT PMF : public SireBase::ConcreteProperty<PMF,SireBase::Property>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const PMF&);
+friend QDataStream& ::operator>>(QDataStream&, PMF&);
+
+public:
+    PMF();
+    PMF(int order);
+    
+    PMF(double min_x, double max_x);
+    PMF(double min_x, double max_x, int order);
+    
+    PMF(const PMF &other);
+    
+    ~PMF();
+    
+    PMF& operator=(const PMF &other);
+    
+    bool operator==(const PMF &other) const;
+    bool operator!=(const PMF &other) const;
+    
+    const char* what() const;
+    static const char* typeName();
+
+    QString toString() const;
+
+    QVector<DataPoint> values() const;
+
+    QVector<DataPoint> gradients() const;
+    QVector<DataPoint> smoothedGradients() const;
+
+    void setOrder(qint32 order);
+    void setRange(double min_x, double max_x);
+
+    void setGradients(const QVector<DataPoint> &gradients);
+    
+    int order() const;
+    
+    double rangeMin() const;
+    double rangeMax() const;
+    
+    double integral() const;
+    double quadrature() const;
+
+private:
+    void recalculate();
+
+    /** The raw x,y points of the PMF gradients, complete with errors */
+    QVector<DataPoint> grads;
+    
+    /** The smoothed x,y gradients, with errors */
+    QVector<DataPoint> smoothed_grads;
+    
+    /** The smoothed x,y points of the PMF, with errors */
+    QVector<DataPoint> vals;
+    
+    /** The minimum value of the range of the PMF */
+    double range_min;
+    
+    /** The maximum value of the range of the PMF */
+    double range_max;
+    
+    /** The free energy from quadrature */
+    double quad_value;
+    
+    /** The number of polynomials to use to fit the gradients */
+    qint32 npoly;
 };
 
 /** This class contains the free energy gradients from a TI simulation
@@ -177,6 +260,13 @@ public:
     MolarEnergy forwards(double lam) const;
     MolarEnergy backwards(double lam) const;
     MolarEnergy gradient(double lam) const;
+
+    PMF integrate() const;
+    PMF integrate(int order) const;
+    
+    PMF integrate(double range_min, double range_max) const;
+    PMF integrate(double range_min, double range_max, int order) const;
+    
 
 private:
     /** The forwards values */
@@ -273,10 +363,12 @@ private:
 Q_DECLARE_METATYPE( Soiree::Gradients )
 Q_DECLARE_METATYPE( Soiree::TI )
 Q_DECLARE_METATYPE( Soiree::DataPoint )
+Q_DECLARE_METATYPE( Soiree::PMF )
 
 SIRE_EXPOSE_CLASS( Soiree::Gradients )
 SIRE_EXPOSE_CLASS( Soiree::TI )
 SIRE_EXPOSE_CLASS( Soiree::DataPoint )
+SIRE_EXPOSE_CLASS( Soiree::PMF )
 
 SIRE_END_HEADER
 

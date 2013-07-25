@@ -35,6 +35,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "third_party/regress.h"  // CONDITIONAL_INCLUDE
+
 #include <cmath>
 
 #include "tostring.h"
@@ -260,16 +262,34 @@ bool DataPoint::hasError() const
     return _xminerr > 0 or _yminerr > 0;
 }
 
+/** Return whether or not this data point has an error range */
+bool DataPoint::hasErrorRange() const
+{
+    return _xminerr != _xmaxerr or _yminerr != _ymaxerr;
+}
+
 /** Return whether or not there is any error in the x value */
 bool DataPoint::hasXError() const
 {
     return _xminerr > 0;
 }
 
+/** Return whether or not there is an error range on the x value */
+bool DataPoint::hasXErrorRange() const
+{
+    return _xminerr != _xmaxerr;
+}
+
 /** Return whether or not there is any error in the y value */
 bool DataPoint::hasYError() const
 {
     return _yminerr > 0;
+}
+
+/** Return whether or not there is an error range on the x value */
+bool DataPoint::hasYErrorRange() const
+{
+    return _yminerr != _ymaxerr;
 }
 
 /** Return whether or not this data point is equal to the other, within
@@ -303,6 +323,521 @@ bool DataPoint::equalWithinMaxError(const DataPoint &other) const
     
            y() + yMaxError() >= other.y() - other.yMaxError() and
            y() - yMaxError() <= other.y() + other.yMaxError();
+}
+
+/////////
+///////// Implementation of PMF
+/////////
+
+static const RegisterMetaType<PMF> r_pmf;
+
+QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const PMF &pmf)
+{
+    writeHeader(ds, r_pmf, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << pmf.grads << pmf.range_min << pmf.range_max << pmf.npoly;
+    
+    return ds;
+}
+
+QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, PMF &pmf)
+{
+    VersionID v = readHeader(ds, r_pmf);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> pmf.grads >> pmf.range_min >> pmf.range_max >> pmf.npoly;
+        pmf.recalculate();
+    }
+    else
+        throw version_error(v, "1", r_pmf, CODELOC);
+    
+    return ds;
+}
+
+/** Construct a PMF that will use 10 polynomials to fit
+    and integrate the gradients between 0 and 1 */
+PMF::PMF() : ConcreteProperty<PMF,Property>(),
+             range_min(0), range_max(1), quad_value(0), npoly(10)
+{}
+
+/** Construct a PMF that will use the passed number of polynomials
+    to fit and integrate the gradients between 0 and 1 */
+PMF::PMF(int order) : ConcreteProperty<PMF,Property>(),
+                      range_min(0), range_max(1), quad_value(0), npoly(order)
+{
+    if (order <= 0)
+        npoly = 1;
+    else if (order > 100)
+        npoly = 100;
+}
+
+/** Construct a PMF that will use 10 polynomials to fit and integrate
+    the gradients in the passed range */
+PMF::PMF(double rmin, double rmax)
+    : ConcreteProperty<PMF,Property>(),
+      range_min(rmin), range_max(rmax), quad_value(0), npoly(10)
+{
+    if (range_min > range_max)
+        qSwap(range_min, range_max);
+}
+
+/** Construct a PMF that will use the passed number of polynomials to fit and
+    integrate the gradients in the passed range */
+PMF::PMF(double min, double max, int order)
+    : ConcreteProperty<PMF,Property>(),
+      range_min(min), range_max(max), quad_value(0), npoly(order)
+{
+    if (order <= 0)
+        npoly = 1;
+    else if (order > 100)
+        npoly = 100;
+
+    if (range_min > range_max)
+        qSwap(range_min, range_max);
+}
+
+/** Set the order (number of polynomials) to fit the gradients for
+    PMF integration */
+void PMF::setOrder(int order)
+{
+    if (order <= 0)
+        npoly = 1;
+    else if (order > 100)
+        npoly = 100;
+    else
+        npoly = order;
+    
+    recalculate();
+}
+
+/** Set the range of integration */
+void PMF::setRange(double min_x, double max_x)
+{
+    range_min = min_x;
+    range_max = max_x;
+    
+    if (range_min > range_max)
+        qSwap(range_min, range_max);
+    
+    recalculate();
+}
+
+/** Set the raw gradients to be integrated */
+void PMF::setGradients(const QVector<DataPoint> &gradients)
+{
+    grads = gradients;
+    
+    //ensure that the gradients are in sorted x numerical order
+    bool sorted = false;
+    
+    while (not sorted)
+    {
+        sorted = true;
+    
+        //bubble sort - compare neighbours and swap if in the wrong order
+        for (int i=1; i<grads.count(); ++i)
+        {
+            if (grads[i-1].x() > grads[i].x())
+            {
+                qSwap(grads[i-1], grads[i]);
+                sorted = false;
+            }
+        }
+    }
+    
+    recalculate();
+}
+
+/** Return the order (number of polynomials) used to integrate
+    the gradients to get the PMF */
+int PMF::order() const
+{
+    return npoly;
+}
+
+/** Return the minimum value of the range of integration */
+double PMF::rangeMin() const
+{
+    return range_min;
+}
+
+/** Return the maximum value of the range of integration */
+double PMF::rangeMax() const
+{
+    return range_max;
+}
+
+/** Internal function used to fit the raw gradients to a set
+    of polynomials and to then integrate those to obtain the PMF */
+void PMF::recalculate()
+{
+    if (grads.isEmpty())
+    {
+        smoothed_grads = QVector<DataPoint>();
+        vals = QVector<DataPoint>();
+        quad_value = 0;
+        return;
+    }
+
+    //we will integrate these gradients using curve fitting to the underlying
+    //gradients - this uses the "regress" code in third_party/regress.h
+    // (author Conrad Shyu)
+    std::list<stREGRESS> regress_grads;
+    std::list<stREGRESS> max_regress_grads;
+    std::list<stREGRESS> min_regress_grads;
+    std::list<stREGRESS> max_max_regress_grads;
+    std::list<stREGRESS> min_min_regress_grads;
+    {
+        stREGRESS val;
+        
+        foreach (const DataPoint &grad, grads)
+        {
+            val.x = grad.x();
+            val.y = grad.y();
+        
+            regress_grads.push_back(val);
+
+            val.y = grad.y() + grad.yMinError();
+            max_regress_grads.push_back(val);
+            val.y = grad.y() + grad.yMaxError();
+            max_max_regress_grads.push_back(val);
+            
+            val.y = grad.y() - grad.yMinError();
+            min_regress_grads.push_back(val);
+            val.y = grad.y() - grad.yMaxError();
+            min_min_regress_grads.push_back(val);
+        }
+        
+        //if the range extends before the first available gradient, then
+        //we assume that this gradient is constant in this range
+        if (false) // grads.first().x() > range_min)
+        {
+            const DataPoint &grad = grads.first();
+
+            val.x = range_min;
+            val.y = grad.y();
+        
+            regress_grads.push_front(val);
+
+            val.y = grad.y() + grad.yMinError();
+            max_regress_grads.push_front(val);
+            val.y = grad.y() + grad.yMaxError();
+            max_max_regress_grads.push_front(val);
+            
+            val.y = grad.y() - grad.yMinError();
+            min_regress_grads.push_front(val);
+            val.y = grad.y() - grad.yMaxError();
+            min_min_regress_grads.push_front(val);
+        }
+        
+        //similarly, if the range extends beyond the last datapoint, then
+        //continue this gradient
+        if (false) //grads.last().x() < range_max)
+        {
+            const DataPoint &grad = grads.last();
+
+            val.x = range_max;
+            val.y = grad.y();
+        
+            regress_grads.push_back(val);
+
+            val.y = grad.y() + grad.yMinError();
+            max_regress_grads.push_back(val);
+            val.y = grad.y() + grad.yMaxError();
+            max_max_regress_grads.push_back(val);
+            
+            val.y = grad.y() - grad.yMinError();
+            min_regress_grads.push_back(val);
+            val.y = grad.y() - grad.yMaxError();
+            min_min_regress_grads.push_back(val);
+        }
+    }
+
+    Regress regress(regress_grads, npoly);
+    Regress max_regress(max_regress_grads, npoly);
+    Regress max_max_regress(max_max_regress_grads, npoly);
+    Regress min_regress(min_regress_grads, npoly);
+    Regress min_min_regress(min_min_regress_grads, npoly);
+    
+    //get the coefficients of the polynomial
+    std::vector<double> coeffs = regress.GetPolynomial();
+    std::vector<double> max_coeffs = max_regress.GetPolynomial();
+    std::vector<double> max_max_coeffs = max_max_regress.GetPolynomial();
+    std::vector<double> min_coeffs = min_regress.GetPolynomial();
+    std::vector<double> min_min_coeffs = min_min_regress.GetPolynomial();
+
+    //now calculate the values of this polynomial
+    //across lambda to get the smoothed gradients
+    if (range_min != range_max)
+    {
+        smoothed_grads.clear();
+    
+        double x = range_min;
+        double y = 0;
+        double max_y = 0;
+        double max_max_y = 0;
+        double min_y = 0;
+        double min_min_y = 0;
+        double step = (range_max - range_min) * 0.01;
+
+        while (x < range_max)
+        {
+            y = 0;
+            max_y = 0;
+            max_max_y = 0;
+            min_y = 0;
+            min_min_y = 0;
+        
+            for (int i=0; i<coeffs.size(); ++i)
+            {
+                double power = i;
+                y += ( std::pow( x, power ) * coeffs[ i ] );
+                max_y += ( std::pow( x, power ) * max_coeffs[ i ] );
+                max_max_y += ( std::pow( x, power ) * max_max_coeffs[ i ] );
+                min_y += ( std::pow( x, power ) * min_coeffs[ i ] );
+                min_min_y += ( std::pow( x, power ) * min_min_coeffs[ i ] );
+            }
+
+            double err = qMax( std::abs(max_y-y), std::abs(y-min_y) );
+            double max_err = qMax( std::abs(max_max_y-y), std::abs(y-min_min_y) );
+
+            smoothed_grads.append( DataPoint(x,y,0,err,0,max_err) );
+            x += step;
+        }
+
+        x = range_max;
+        y = 0;
+        max_y = 0;
+        max_max_y = 0;
+        min_y = 0;
+        min_min_y = 0;
+    
+        for (int i=0; i<coeffs.size(); ++i)
+        {
+            double power = i;
+            y += ( std::pow( x, power ) * coeffs[ i ] );
+            max_y += ( std::pow( x, power ) * max_coeffs[ i ] );
+            max_max_y += ( std::pow( x, power ) * max_max_coeffs[ i ] );
+            min_y += ( std::pow( x, power ) * min_coeffs[ i ] );
+            min_min_y += ( std::pow( x, power ) * min_min_coeffs[ i ] );
+        }
+
+        double err = qMax( std::abs(max_y-y), std::abs(y-min_y) );
+        double max_err = qMax( std::abs(max_max_y-y), std::abs(y-min_min_y) );
+
+        smoothed_grads.append( DataPoint(x,y,0,err,0,max_err) );
+    }
+
+    //now numerically integrate the gradients
+    //across lambda to get the PMF
+    if (range_min != range_max)
+    {
+        vals.clear();
+    
+        double x = range_min;
+        double y = 0;
+        double max_y = 0;
+        double max_max_y = 0;
+        double min_y = 0;
+        double min_min_y = 0;
+        double step = (range_max - range_min) * 0.01;
+
+        vals.append( DataPoint(x,y) );
+
+        double xmin, xmax;
+
+        while (x < range_max)
+        {
+            xmin = x;
+            xmax = x+step;
+        
+            double area = 0;
+            double max_area = 0;
+            double max_max_area = 0;
+            double min_area = 0;
+            double min_min_area = 0;
+        
+            for (int i=0; i<coeffs.size(); ++i)
+            {
+                double power = double(i + 1);
+                
+                area += ( ( pow( xmax, power ) / power ) * coeffs[ i ] -
+                          ( pow( xmin, power ) / power ) * coeffs[ i ] );
+
+                max_area += ( ( pow( xmax, power ) / power ) * max_coeffs[ i ] -
+                              ( pow( xmin, power ) / power ) * max_coeffs[ i ] );
+                
+                max_max_area += ( ( pow( xmax, power ) / power ) * max_max_coeffs[ i ] -
+                                  ( pow( xmin, power ) / power ) * max_max_coeffs[ i ] );
+                
+                min_area += ( ( pow( xmax, power ) / power ) * min_coeffs[ i ] -
+                              ( pow( xmin, power ) / power ) * min_coeffs[ i ] );
+                
+                min_min_area += ( ( pow( xmax, power ) / power ) * min_min_coeffs[ i ] -
+                                  ( pow( xmin, power ) / power ) * min_min_coeffs[ i ] );
+            }
+
+            y += area;
+            max_y += max_area;
+            max_max_y += max_max_area;
+            min_y += min_area;
+            min_min_y += min_min_area;
+            
+            double err = qMax( std::abs(max_y-y), std::abs(y-min_y) );
+            double max_err = qMax( std::abs(max_max_y-y), std::abs(y-min_min_y) );
+
+            vals.append( DataPoint(x,y,0,err,0,max_err) );
+
+            x = xmax;
+        }
+
+        xmax = range_max;
+
+        if (x != xmax)
+        {
+            xmin = x;
+        
+            double area = 0;
+            double max_area = 0;
+            double max_max_area = 0;
+            double min_area = 0;
+            double min_min_area = 0;
+        
+            for (int i=0; i<coeffs.size(); ++i)
+            {
+                double power = double(i + 1);
+                
+                area += ( ( pow( xmax, power ) / power ) * coeffs[ i ] -
+                          ( pow( xmin, power ) / power ) * coeffs[ i ] );
+
+                max_area += ( ( pow( xmax, power ) / power ) * max_coeffs[ i ] -
+                              ( pow( xmin, power ) / power ) * max_coeffs[ i ] );
+                
+                max_max_area += ( ( pow( xmax, power ) / power ) * max_max_coeffs[ i ] -
+                                  ( pow( xmin, power ) / power ) * max_max_coeffs[ i ] );
+                
+                min_area += ( ( pow( xmax, power ) / power ) * min_coeffs[ i ] -
+                              ( pow( xmin, power ) / power ) * min_coeffs[ i ] );
+                
+                min_min_area += ( ( pow( xmax, power ) / power ) * min_min_coeffs[ i ] -
+                                  ( pow( xmin, power ) / power ) * min_min_coeffs[ i ] );
+            }
+
+            y += area;
+            max_y += max_area;
+            max_max_y += max_max_area;
+            min_y += min_area;
+            min_min_y += min_min_area;
+            
+            double err = qMax( std::abs(max_y-y), std::abs(y-min_y) );
+            double max_err = qMax( std::abs(max_max_y-y), std::abs(y-min_min_y) );
+
+            vals.append( DataPoint(x,y,0,err,0,max_err) );
+        }
+        
+        quad_value = regress.DoQuadrature();
+    }
+}
+
+/** Copy constructor */
+PMF::PMF(const PMF &other)
+    : ConcreteProperty<PMF,Property>(other),
+      grads(other.grads), smoothed_grads(other.smoothed_grads),
+      vals(other.vals), range_min(other.range_min), range_max(other.range_max),
+      quad_value(other.quad_value), npoly(other.npoly)
+{}
+
+/** Destructor */
+PMF::~PMF()
+{}
+
+/** Copy assignment operator */
+PMF& PMF::operator=(const PMF &other)
+{
+    if (this != &other)
+    {
+        grads = other.grads;
+        vals = other.vals;
+        smoothed_grads = other.smoothed_grads;
+        range_min = other.range_min;
+        range_max = other.range_max;
+        quad_value = other.quad_value;
+        npoly = other.npoly;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool PMF::operator==(const PMF &other) const
+{
+    return grads == other.grads and range_min == other.range_min and
+           range_max == other.range_max and npoly == other.npoly;
+}
+
+/** Comparison operator */
+bool PMF::operator!=(const PMF &other) const
+{
+    return not operator==(other);
+}
+
+const char* PMF::what() const
+{
+    return PMF::typeName();
+}
+
+const char* PMF::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<PMF>() );
+}
+
+/** Return the free energy calculated using integration of the 
+    polynomial fitted to the gradients */
+double PMF::integral() const
+{
+    if (vals.isEmpty())
+        return 0;
+    else
+        return vals.back().y();
+}
+
+/** Return the free energy calculated using trapezium quadrature
+    from the raw gradients */
+double PMF::quadrature() const
+{
+    return quad_value;
+}
+
+QString PMF::toString() const
+{
+    if (vals.isEmpty())
+        return QString("PMF()");
+    else
+        return QString("PMF( { integral() == %1, quadrature() == %2 } )")
+                    .arg(integral()).arg(quadrature());
+}
+
+/** Return the raw data for the PMF */
+QVector<DataPoint> PMF::values() const
+{
+    return vals;
+}
+
+/** Return the raw gradients used to calculate the PMF */
+QVector<DataPoint> PMF::gradients() const
+{
+    return grads;
+}
+
+/** Return the smoothed (fitted) gradients used to calculate the PMF */
+QVector<DataPoint> PMF::smoothedGradients() const
+{
+    return smoothed_grads;
 }
 
 /////////
@@ -859,6 +1394,39 @@ QVector<DataPoint> Gradients::backwardsValues() const
     }
     
     return points;
+}
+
+/** Integrate these gradients between 'range_min' to 'range_max' using
+    a polynomial of passed order and return them as a potential of mean force (PMF) */
+PMF Gradients::integrate(double range_min, double range_max, int order) const
+{
+    PMF pmf(range_min, range_max, order);
+    
+    if (not this->isEmpty())
+        pmf.setGradients(this->values());
+    
+    return pmf;
+}
+
+/** Integrate these gradients between 'range_min' to 'range_max' using
+    a polynomial of order 10 and return them as a potential of mean force (PMF) */
+PMF Gradients::integrate(double range_min, double range_max) const
+{
+    return this->integrate(range_min, range_max, qMax(2, fwds.count() - 2));
+}
+
+/** Integrate these gradients between 0 and 1 using a polynomial
+    of passed order and return them as a potential of mean force (PMF) */
+PMF Gradients::integrate(int order) const
+{
+    return this->integrate(0, 1, order);
+}
+
+/** Integrate these gradients between 0 and 1 using a polynomial of 
+    order ngradients-2 and return them as a potential of mean force (PMF) */
+PMF Gradients::integrate() const
+{
+    return this->integrate(0, 1, qMax(2, fwds.count() - 2));
 }
 
 /////////

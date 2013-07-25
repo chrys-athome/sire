@@ -75,5 +75,3 @@ for i in range(0,len(vals)):
 axes.plot(x, y, "y-")
 
 pyplot.show()
-
-
