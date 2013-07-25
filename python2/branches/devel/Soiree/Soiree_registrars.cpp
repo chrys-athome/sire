@@ -13,6 +13,7 @@ void register_Soiree_objects()
     ObjectRegistry::registerConverterFor< Soiree::Gradients >();
     ObjectRegistry::registerConverterFor< Soiree::TI >();
     ObjectRegistry::registerConverterFor< Soiree::DataPoint >();
+    ObjectRegistry::registerConverterFor< Soiree::PMF >();
 
 }
 

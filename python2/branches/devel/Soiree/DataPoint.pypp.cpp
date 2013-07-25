@@ -82,6 +82,16 @@ void register_DataPoint_class(){
                 , hasError_function_value );
         
         }
+        { //::Soiree::DataPoint::hasErrorRange
+        
+            typedef bool ( ::Soiree::DataPoint::*hasErrorRange_function_type )(  ) const;
+            hasErrorRange_function_type hasErrorRange_function_value( &::Soiree::DataPoint::hasErrorRange );
+            
+            DataPoint_exposer.def( 
+                "hasErrorRange"
+                , hasErrorRange_function_value );
+        
+        }
         { //::Soiree::DataPoint::hasXError
         
             typedef bool ( ::Soiree::DataPoint::*hasXError_function_type )(  ) const;
@@ -92,6 +102,16 @@ void register_DataPoint_class(){
                 , hasXError_function_value );
         
         }
+        { //::Soiree::DataPoint::hasXErrorRange
+        
+            typedef bool ( ::Soiree::DataPoint::*hasXErrorRange_function_type )(  ) const;
+            hasXErrorRange_function_type hasXErrorRange_function_value( &::Soiree::DataPoint::hasXErrorRange );
+            
+            DataPoint_exposer.def( 
+                "hasXErrorRange"
+                , hasXErrorRange_function_value );
+        
+        }
         { //::Soiree::DataPoint::hasYError
         
             typedef bool ( ::Soiree::DataPoint::*hasYError_function_type )(  ) const;
@@ -100,6 +120,16 @@ void register_DataPoint_class(){
             DataPoint_exposer.def( 
                 "hasYError"
                 , hasYError_function_value );
+        
+        }
+        { //::Soiree::DataPoint::hasYErrorRange
+        
+            typedef bool ( ::Soiree::DataPoint::*hasYErrorRange_function_type )(  ) const;
+            hasYErrorRange_function_type hasYErrorRange_function_value( &::Soiree::DataPoint::hasYErrorRange );
+            
+            DataPoint_exposer.def( 
+                "hasYErrorRange"
+                , hasYErrorRange_function_value );
         
         }
         DataPoint_exposer.def( bp::self != bp::self );

@@ -122,6 +122,49 @@ void register_Gradients_class(){
                 , ( bp::arg("lam") ) );
         
         }
+        { //::Soiree::Gradients::integrate
+        
+            typedef ::Soiree::PMF ( ::Soiree::Gradients::*integrate_function_type )(  ) const;
+            integrate_function_type integrate_function_value( &::Soiree::Gradients::integrate );
+            
+            Gradients_exposer.def( 
+                "integrate"
+                , integrate_function_value );
+        
+        }
+        { //::Soiree::Gradients::integrate
+        
+            typedef ::Soiree::PMF ( ::Soiree::Gradients::*integrate_function_type )( int ) const;
+            integrate_function_type integrate_function_value( &::Soiree::Gradients::integrate );
+            
+            Gradients_exposer.def( 
+                "integrate"
+                , integrate_function_value
+                , ( bp::arg("order") ) );
+        
+        }
+        { //::Soiree::Gradients::integrate
+        
+            typedef ::Soiree::PMF ( ::Soiree::Gradients::*integrate_function_type )( double,double ) const;
+            integrate_function_type integrate_function_value( &::Soiree::Gradients::integrate );
+            
+            Gradients_exposer.def( 
+                "integrate"
+                , integrate_function_value
+                , ( bp::arg("range_min"), bp::arg("range_max") ) );
+        
+        }
+        { //::Soiree::Gradients::integrate
+        
+            typedef ::Soiree::PMF ( ::Soiree::Gradients::*integrate_function_type )( double,double,int ) const;
+            integrate_function_type integrate_function_value( &::Soiree::Gradients::integrate );
+            
+            Gradients_exposer.def( 
+                "integrate"
+                , integrate_function_value
+                , ( bp::arg("range_min"), bp::arg("range_max"), bp::arg("order") ) );
+        
+        }
         { //::Soiree::Gradients::isEmpty
         
             typedef bool ( ::Soiree::Gradients::*isEmpty_function_type )(  ) const;

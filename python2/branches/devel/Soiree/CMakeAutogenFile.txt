@@ -2,6 +2,7 @@
 set ( PYPP_SOURCES
        DataPoint.pypp.cpp
        Gradients.pypp.cpp
+       PMF.pypp.cpp
        TI.pypp.cpp
        Soiree_containers.cpp
        Soiree_registrars.cpp

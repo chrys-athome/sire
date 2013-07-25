@@ -9,6 +9,8 @@
 
 #include "Gradients.pypp.hpp"
 
+#include "PMF.pypp.hpp"
+
 #include "TI.pypp.hpp"
 
 namespace bp = boost::python;
@@ -25,6 +27,8 @@ BOOST_PYTHON_MODULE(_Soiree){
     register_DataPoint_class();
 
     register_Gradients_class();
+
+    register_PMF_class();
 
     register_TI_class();
 }
