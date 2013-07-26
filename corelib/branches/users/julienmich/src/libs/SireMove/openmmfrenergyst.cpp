@@ -996,8 +996,8 @@ void OpenMMFrEnergyST::initialise()  {
     
     for (int i=0; i < nmols ; i++){
 
-        if(Debug)
-            qDebug()<< "Molecule number = " << i;
+      //if(Debug)
+      //    qDebug()<< "Molecule number = " << i;
             
         const Vector *c = ws.coordsArray(i);
 
@@ -1021,6 +1021,10 @@ void OpenMMFrEnergyST::initialise()  {
         QVector<SireMM::LJParameter> final_LJs;
 
         if(molecule.hasProperty("perturbations")){
+
+	  if(Debug)
+	    qDebug()<< "Molecule number = " << i;
+
             AtomCharges atomcharges_start = molecule.property("initial_charge").asA<AtomCharges>();
             AtomCharges atomcharges_final = molecule.property("final_charge").asA<AtomCharges>();
             
@@ -1085,7 +1089,7 @@ void OpenMMFrEnergyST::initialise()  {
 		      }
 		  }
 		// if not todummy, check if fromdummy
-		if (!istodummy)
+		if (!istodummy and !ishard)
 		  {
 		    for (int l=0; l < solutefromdummy.nViews() ; l++ )
 		      {
@@ -1209,23 +1213,23 @@ void OpenMMFrEnergyST::initialise()  {
                 custom_non_bonded_params[7] = 0.0;//isTodummy
                 custom_non_bonded_params[8] = 0.0;//isFromdummy
 
-                if(Debug)
-                    qDebug() << "Solvent = " << atom.index();
+		// if(Debug)
+                //    qDebug() << "Solvent = " << atom.index();
 
 	      }
 
-            if(Debug)
-	      {
-		qDebug() << "Charge start = " << custom_non_bonded_params[0];
-                qDebug() << "Charge end = " << custom_non_bonded_params[1];
-                qDebug() << "Eps start = " << custom_non_bonded_params[2];
-                qDebug() << "Eps end = " << custom_non_bonded_params[3];
-                qDebug() << "Sig start = " << custom_non_bonded_params[4];
-                qDebug() << "Sig end = " << custom_non_bonded_params[5];
-                qDebug() << "is Hard = " << custom_non_bonded_params[6];
-                qDebug() << "is To dummy = " << custom_non_bonded_params[7];
-                qDebug() << "is From dummy = " << custom_non_bonded_params[8] << "\n";
-	      }
+            //if(Debug)
+	    // {
+	    //	qDebug() << "Charge start = " << custom_non_bonded_params[0];
+	    //   qDebug() << "Charge end = " << custom_non_bonded_params[1];
+	    //   qDebug() << "Eps start = " << custom_non_bonded_params[2];
+	    //   qDebug() << "Eps end = " << custom_non_bonded_params[3];
+	    //   qDebug() << "Sig start = " << custom_non_bonded_params[4];
+	    //   qDebug() << "Sig end = " << custom_non_bonded_params[5];
+	    //   qDebug() << "is Hard = " << custom_non_bonded_params[6];
+	    //   qDebug() << "is To dummy = " << custom_non_bonded_params[7];
+	    //   qDebug() << "is From dummy = " << custom_non_bonded_params[8] << "\n";
+	    // }
             
             custom_force_field->addParticle(custom_non_bonded_params);
 	    
@@ -2252,14 +2256,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         if(Debug)
             qDebug()<< "Total Time = " << state_openmm.getTime() << " ps";
 
-	if (Debug) 
-	  {
-	    positions_openmm = state_openmm.getPositions();
-	    for (int i=0; i < 500; i++)
-	      {
-		qDebug()<< " at " << i << " x " << positions_openmm[i][0] << " y " << positions_openmm[i][1] << " z " << positions_openmm[i][2] ;
-	      }
-	  }
+	//if (Debug) 
+	// {
+	//   positions_openmm = state_openmm.getPositions();
+	//   for (int i=0; i < 500; i++)
+	//     {
+	//	qDebug()<< " at " << i << " x " << positions_openmm[i][0] << " y " << positions_openmm[i][1] << " z " << positions_openmm[i][2] ;
+	//     }
+	// }
 	    
         double potential_energy_lambda = state_openmm.getPotentialEnergy();
 
@@ -2272,7 +2276,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         double minus;
 
 	// Because looping from 1 to n_samples
-	int modulo =  sample_count % ( (coord_freq / energy_frequency ) );
+	int modulo = 1;
+	if (coord_freq > 0)
+	  modulo =  sample_count % ( (coord_freq / energy_frequency ) );
 
 	if (Debug)
 	  qDebug() << "modulo is " << modulo;
