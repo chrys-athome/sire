@@ -963,8 +963,10 @@ static void setNonBondedPairs(MolEditor &editmol, int pointer,
 
             nbpairs.set( atom0.cgAtomIdx(), atom1.cgAtomIdx(),
                          CLJScaleFactor(cscl, ljscl) );
-            nbpairs.set( atom1.cgAtomIdx(), atom0.cgAtomIdx(),
-                         CLJScaleFactor(cscl, ljscl) );
+            
+            // setting atom0/atom1 automatically sets atom1/atom0
+            //nbpairs.set( atom1.cgAtomIdx(), atom0.cgAtomIdx(),
+            //             CLJScaleFactor(cscl, ljscl) );
         }
     }
 

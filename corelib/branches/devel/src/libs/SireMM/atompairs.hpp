@@ -604,7 +604,8 @@ const T& AtomPairs<T>::get(const AtomID &atm0, const AtomID &atm1) const
     return this->operator()(atm0,atm1);
 }
 
-/** Set the value for the atom-pair 'atm0'-'atm1' */
+/** Set the value for the atom-pair 'atm0'-'atm1'. This also sets the value
+    for the pair 'atm1'-'atm0' (as the pairs must be symmetric) */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void AtomPairs<T>::set(const CGAtomIdx &atm0, const CGAtomIdx &atm1,
@@ -616,22 +617,18 @@ void AtomPairs<T>::set(const CGAtomIdx &atm0, const CGAtomIdx &atm1,
     quint32 atom0 = atm0.atom().map(molinfo->nAtoms(atm0.cutGroup()));
     quint32 atom1 = atm1.atom().map(molinfo->nAtoms(atm1.cutGroup()));
 
-    CGAtomPairs<T> cgpair = cgpairs(cg0,cg1);
+    CGAtomPairs<T> &cgpair = cgpairs.edit(cg0,cg1);
 
     cgpair.set(atom0, atom1, value);
 
     if (cg0 == cg1)
     {
         cgpair.set(atom1, atom0, value);
-        cgpairs.set(cg0, cg0, cgpair);
     }
     else
     {
-        cgpairs.set(cg0, cg1, cgpair);
-
-        cgpair = cgpairs.get(cg1, cg0);
-        cgpair.set(atom1, atom0, value);
-        cgpairs.set(cg1, cg0, cgpair);
+        CGAtomPairs<T> &mirror = cgpairs.edit(cg1,cg0);
+        mirror.set(atom1, atom0, value);
     }
 }
 

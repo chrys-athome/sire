@@ -38,12 +38,12 @@ params["lambda values"] = [ 0.01, 0.3, 0.7, 0.99 ]
 params["nmoves"] = 10
 
 # Specify the number of Monte Carlo moves to perform per RETI iteration
-params["nsubmoves"] = 10000
+params["nsubmoves"] = 100
 
 params["waterbox only"] = True
 
 # Specify the number of equilibration moves to perform when setting up the system
-params["nequilmoves"] = 10000
+params["nequilmoves"] = 50
 
 # Switch to use the TIP4P water model
 # params["water model"] = "tip4p"
