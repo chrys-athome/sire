@@ -204,3 +204,10 @@ void FreeEnergyAverage::accumulate(double value)
     ExpAverage::accumulate(value);
     hist.accumulate(value);
 }
+
+/** Return the Taylor series expansion estimate the difference in free energy */
+double FreeEnergyAverage::taylorExpansion() const
+{
+    return hist.mean() - 0.5*k_boltz*temperature() *
+              ( hist.meanOfSquares() - (hist.mean()*hist.mean()) );
+}

@@ -95,6 +95,8 @@ public:
     
     void accumulate(double value);
 
+    double taylorExpansion() const;
+
 private:
     /** A histogram of all of the energy values. This allows the free energy
         average to be monitored and the error, and corrected values to be 

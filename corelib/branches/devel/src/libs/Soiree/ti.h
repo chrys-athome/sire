@@ -177,6 +177,8 @@ public:
     double integral() const;
     double quadrature() const;
 
+    PMF dropEndPoints() const;
+
 private:
     void recalculate();
 

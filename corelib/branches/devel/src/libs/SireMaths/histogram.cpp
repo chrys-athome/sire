@@ -612,6 +612,12 @@ double Histogram::mean() const
     return avgval;
 }
 
+/** Return the mean of the square values */
+double Histogram::meanOfSquares() const
+{
+    return avgval2;
+}
+
 /** Return the standard deviation of all values added to the histogram.
     This is calculated exactly from the added data */
 double Histogram::standardDeviation() const

@@ -193,6 +193,8 @@ public:
     double skew() const;
     double kirtosis() const;
 
+    double meanOfSquares() const;
+
     double range() const;
 
     double standardDeviation() const;

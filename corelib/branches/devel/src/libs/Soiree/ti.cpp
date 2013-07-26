@@ -488,6 +488,7 @@ void PMF::recalculate()
     //gradients - this uses the "regress" code in third_party/regress.h
     // (author Conrad Shyu)
     std::list<stREGRESS> regress_grads;
+    std::list<stREGRESS> regress_grads_plus_endpoints;
     std::list<stREGRESS> max_regress_grads;
     std::list<stREGRESS> min_regress_grads;
     std::list<stREGRESS> max_max_regress_grads;
@@ -501,6 +502,7 @@ void PMF::recalculate()
             val.y = grad.y();
         
             regress_grads.push_back(val);
+            regress_grads_plus_endpoints.push_back(val);
 
             val.y = grad.y() + grad.yMinError();
             max_regress_grads.push_back(val);
@@ -515,14 +517,14 @@ void PMF::recalculate()
         
         //if the range extends before the first available gradient, then
         //we assume that this gradient is constant in this range
-        if (false) // grads.first().x() > range_min)
+        if (grads.first().x() > range_min)
         {
             const DataPoint &grad = grads.first();
 
             val.x = range_min;
             val.y = grad.y();
         
-            regress_grads.push_front(val);
+            regress_grads_plus_endpoints.push_front(val);
 
             val.y = grad.y() + grad.yMinError();
             max_regress_grads.push_front(val);
@@ -537,14 +539,14 @@ void PMF::recalculate()
         
         //similarly, if the range extends beyond the last datapoint, then
         //continue this gradient
-        if (false) //grads.last().x() < range_max)
+        if (grads.last().x() < range_max)
         {
             const DataPoint &grad = grads.last();
 
             val.x = range_max;
             val.y = grad.y();
         
-            regress_grads.push_back(val);
+            regress_grads_plus_endpoints.push_back(val);
 
             val.y = grad.y() + grad.yMinError();
             max_regress_grads.push_back(val);
@@ -559,6 +561,7 @@ void PMF::recalculate()
     }
 
     Regress regress(regress_grads, npoly);
+    Regress regress_plus_endpoints(regress_grads_plus_endpoints, npoly);
     Regress max_regress(max_regress_grads, npoly);
     Regress max_max_regress(max_max_regress_grads, npoly);
     Regress min_regress(min_regress_grads, npoly);
@@ -740,7 +743,7 @@ void PMF::recalculate()
             vals.append( DataPoint(x,y,0,err,0,max_err) );
         }
         
-        quad_value = regress.DoQuadrature();
+        quad_value = regress_plus_endpoints.DoQuadrature();
     }
 }
 
@@ -838,6 +841,26 @@ QVector<DataPoint> PMF::gradients() const
 QVector<DataPoint> PMF::smoothedGradients() const
 {
     return smoothed_grads;
+}
+
+/** Return a copy of the PMF where the gradients at the end points
+    (the first and last gradients) have been removed. This can be used
+    to estimate the effect of end-point error */
+PMF PMF::dropEndPoints() const
+{
+    PMF ret(*this);
+    
+    QVector<DataPoint> reduced_grads = grads;
+    
+    if (not reduced_grads.isEmpty())
+        reduced_grads.pop_front();
+    
+    if (not reduced_grads.isEmpty())
+        reduced_grads.pop_back();
+    
+    ret.setGradients(reduced_grads);
+    
+    return ret;
 }
 
 /////////
@@ -1300,20 +1323,35 @@ QVector<DataPoint> Gradients::values() const
             
             if (fwdsavg == bwdsavg)
             {
-                points[i] = DataPoint(lam, fwdsavg.average() / delta_lam, 0,
-                                      fwdsavg.histogram().standardError(90) / delta_lam);
+                double fwdsval = fwdsavg.average() / delta_lam;
+                double fwdstay = fwdsavg.taylorExpansion() / delta_lam;
+                double fwdserr = fwdsavg.histogram().standardError(90) / delta_lam;
+                
+                double val = 0.5 * (fwdsavg + fwdstay);
+                double maxerr = std::abs(fwdsval - fwdstay);
+                
+                if (fwdserr > maxerr)
+                    qSwap(fwdserr, maxerr);
+            
+                points[i] = DataPoint(lam, val, 0, fwdserr, 0, maxerr);
             }
             else
             {
                 double fwdsval = fwdsavg.average() / delta_lam;
                 double bwdsval = bwdsavg.average() / delta_lam;
+                double fwdstay = fwdsavg.taylorExpansion() / delta_lam;
+                double bwdstay = bwdsavg.taylorExpansion() / delta_lam;
+                
                 double fwdserr = fwdsavg.histogram().standardError(90) / delta_lam;
                 double bwdserr = bwdsavg.histogram().standardError(90) / delta_lam;
                 
-                double val = 0.5 * (fwdsval + bwdsval);
-                double maxerr = 0.5 * (fwdserr + bwdserr);
+                double val = 0.25 * (fwdsval + bwdsval + fwdstay + bwdstay);
+                double maxerr = qMax(fwdserr, bwdserr);
                 
-                double minerr = 0.5 * std::abs(fwdsval - bwdsval);
+                //get the biggest difference between the four estimates of
+                //the free energy
+                double minerr = 0.5 * ( qMax(fwdsval,qMax(bwdsval,qMax(fwdstay,bwdstay))) -
+                                        qMin(fwdsval,qMin(bwdsval,qMin(fwdstay,bwdstay))) );
                 
                 if (maxerr < minerr)
                     qSwap(maxerr, minerr);
@@ -1353,8 +1391,17 @@ QVector<DataPoint> Gradients::forwardsValues() const
         {
             const FreeEnergyAverage &fwdsavg = *(fwds.constFind(lam));
             
-            points[i] = DataPoint(lam, fwdsavg.average() / delta_lam, 0,
-                                  fwdsavg.histogram().standardError(90) / delta_lam);
+            double fwdsval = fwdsavg.average() / delta_lam;
+            double fwdstay = fwdsavg.taylorExpansion() / delta_lam;
+            double fwdserr = fwdsavg.histogram().standardError(90) / delta_lam;
+            
+            double val = 0.5 * (fwdsavg + fwdstay);
+            double maxerr = std::abs(fwdsval - fwdstay);
+            
+            if (fwdserr > maxerr)
+                qSwap(fwdserr, maxerr);
+        
+            points[i] = DataPoint(lam, val, 0, fwdserr, 0, maxerr);
         }
     }
     
@@ -1388,8 +1435,17 @@ QVector<DataPoint> Gradients::backwardsValues() const
         {
             const FreeEnergyAverage &bwdsavg = *(bwds.constFind(lam));
             
-            points[i] = DataPoint(lam, bwdsavg.average() / delta_lam, 0,
-                                  bwdsavg.histogram().standardError(90) / delta_lam);
+            double bwdsval = bwdsavg.average() / delta_lam;
+            double bwdstay = bwdsavg.taylorExpansion() / delta_lam;
+            double bwdserr = bwdsavg.histogram().standardError(90) / delta_lam;
+            
+            double val = 0.5 * (bwdsavg + bwdstay);
+            double maxerr = std::abs(bwdsval - bwdstay);
+            
+            if (bwdserr > maxerr)
+                qSwap(bwdserr, maxerr);
+        
+            points[i] = DataPoint(lam, val, 0, bwdserr, 0, maxerr);
         }
     }
     
