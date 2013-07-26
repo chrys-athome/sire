@@ -20,6 +20,7 @@ from Sire.Tools.AmberLoader import *
 from Sire.Tools import Parameter, resolveParameters
 
 import os
+import shutil
 
 wsrc_tools_dir = "%s/Tools/WSRC" % Sire.Config.share_directory
 
@@ -1726,6 +1727,12 @@ def analyseWSRC(replicas, iteration):
         freenrgs = Sire.Stream.load(freenrgs_file)
 
     freenrgs.add( dg_accum_f, dg_accum_b, delta_lambda )
+
+    # save the old file to a backup
+    try:
+        shutil.copy(freenrgs_file, "%s.bak" % freenrgs_file)
+    except:
+        pass
 
     Sire.Stream.save( freenrgs, freenrgs_file )
 
