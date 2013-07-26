@@ -185,6 +185,16 @@ void register_Histogram_class(){
                 , mean_function_value );
         
         }
+        { //::SireMaths::Histogram::meanOfSquares
+        
+            typedef double ( ::SireMaths::Histogram::*meanOfSquares_function_type )(  ) const;
+            meanOfSquares_function_type meanOfSquares_function_value( &::SireMaths::Histogram::meanOfSquares );
+            
+            Histogram_exposer.def( 
+                "meanOfSquares"
+                , meanOfSquares_function_value );
+        
+        }
         { //::SireMaths::Histogram::median
         
             typedef double ( ::SireMaths::Histogram::*median_function_type )(  ) const;

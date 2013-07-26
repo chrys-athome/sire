@@ -81,6 +81,16 @@ void register_FreeEnergyAverage_class(){
         
         }
         FreeEnergyAverage_exposer.def( bp::self == bp::self );
+        { //::SireMaths::FreeEnergyAverage::taylorExpansion
+        
+            typedef double ( ::SireMaths::FreeEnergyAverage::*taylorExpansion_function_type )(  ) const;
+            taylorExpansion_function_type taylorExpansion_function_value( &::SireMaths::FreeEnergyAverage::taylorExpansion );
+            
+            FreeEnergyAverage_exposer.def( 
+                "taylorExpansion"
+                , taylorExpansion_function_value );
+        
+        }
         { //::SireMaths::FreeEnergyAverage::temperature
         
             typedef ::SireUnits::Dimension::Temperature ( ::SireMaths::FreeEnergyAverage::*temperature_function_type )(  ) const;

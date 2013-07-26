@@ -39,6 +39,16 @@ void register_PMF_class(){
         PMF_exposer.def( bp::init< double, double >(( bp::arg("min_x"), bp::arg("max_x") )) );
         PMF_exposer.def( bp::init< double, double, int >(( bp::arg("min_x"), bp::arg("max_x"), bp::arg("order") )) );
         PMF_exposer.def( bp::init< Soiree::PMF const & >(( bp::arg("other") )) );
+        { //::Soiree::PMF::dropEndPoints
+        
+            typedef ::Soiree::PMF ( ::Soiree::PMF::*dropEndPoints_function_type )(  ) const;
+            dropEndPoints_function_type dropEndPoints_function_value( &::Soiree::PMF::dropEndPoints );
+            
+            PMF_exposer.def( 
+                "dropEndPoints"
+                , dropEndPoints_function_value );
+        
+        }
         { //::Soiree::PMF::gradients
         
             typedef ::QVector< Soiree::DataPoint > ( ::Soiree::PMF::*gradients_function_type )(  ) const;
