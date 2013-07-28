@@ -976,7 +976,9 @@ void OpenMMMDIntegrator::integrate(IntegratorWorkspace &workspace, const Symbol 
   if (platform_type == "OpenCL")
     {
       const std::string prop = std::string("OpenCLDeviceIndex");
+      const std::string prec = std::string("OpenCLPrecision");
       platform_openmm.setPropertyDefaultValue(prop, device_index.toStdString() );
+      platform_openmm.setPropertyDefaultValue(prec, "mixed" );
       //qDebug() << " setting up OpenCL default Index to " << device_index;
     }
   else if (platform_type == "Cuda")

@@ -1213,23 +1213,23 @@ void OpenMMFrEnergyST::initialise()  {
                 custom_non_bonded_params[7] = 0.0;//isTodummy
                 custom_non_bonded_params[8] = 0.0;//isFromdummy
 
-		// if(Debug)
-                //    qDebug() << "Solvent = " << atom.index();
+		 if(Debug)
+                    qDebug() << "Solvent = " << atom.index();
 
 	      }
 
-            //if(Debug)
-	    // {
-	    //	qDebug() << "Charge start = " << custom_non_bonded_params[0];
-	    //   qDebug() << "Charge end = " << custom_non_bonded_params[1];
-	    //   qDebug() << "Eps start = " << custom_non_bonded_params[2];
-	    //   qDebug() << "Eps end = " << custom_non_bonded_params[3];
-	    //   qDebug() << "Sig start = " << custom_non_bonded_params[4];
-	    //   qDebug() << "Sig end = " << custom_non_bonded_params[5];
-	    //   qDebug() << "is Hard = " << custom_non_bonded_params[6];
-	    //   qDebug() << "is To dummy = " << custom_non_bonded_params[7];
-	    //   qDebug() << "is From dummy = " << custom_non_bonded_params[8] << "\n";
-	    // }
+            if(Debug)
+	     {
+	    	qDebug() << "Charge start = " << custom_non_bonded_params[0];
+	       qDebug() << "Charge end = " << custom_non_bonded_params[1];
+	       qDebug() << "Eps start = " << custom_non_bonded_params[2];
+	       qDebug() << "Eps end = " << custom_non_bonded_params[3];
+	       qDebug() << "Sig start = " << custom_non_bonded_params[4];
+	       qDebug() << "Sig end = " << custom_non_bonded_params[5];
+	       qDebug() << "is Hard = " << custom_non_bonded_params[6];
+	       qDebug() << "is To dummy = " << custom_non_bonded_params[7];
+	       qDebug() << "is From dummy = " << custom_non_bonded_params[8] << "\n";
+	     }
             
             custom_force_field->addParticle(custom_non_bonded_params);
 	    
@@ -1473,21 +1473,24 @@ void OpenMMFrEnergyST::initialise()  {
 	    if (solute.contains(molecule)) {
 
                 if(bond_pert_list.indexOf(bond_ff) != -1 || bond_pert_swap_list.indexOf(bond_ff) != -1 ){//Solute molecule. Check if the current solute bond is in the perturbed bond list
+		  // JM July 13 --> Note, we should still have the ability to constrain the bond to its r(lambda) equilibrium distance
                     if(Debug)
                         qDebug() << "Found Perturbed Bond\n";
                     continue;
                 }
-                else{
-                    if(Debug)
-                        qDebug() << "Solute normal Bond - Atom0 = "<< idx0 << "Atom1 = " << idx1 << " r0 = "<< r0 << "k = " << k <<"\n";
-
-                    idx0 = idx0 + num_atoms_till_i;
-                    idx1 = idx1 + num_atoms_till_i;
-                    bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm);
-                    bondPairs.push_back(std::make_pair(idx0,idx1));
-                    continue;
-                }
-
+                //else{
+		  // JM July 13 problem seems to be that the perturbation code does not allow constraints on solute bonds
+		  // Correct behavior may be to proceed as usual for this dof  
+                  //  if(Debug)
+                  //      qDebug() << "Solute normal Bond - Atom0 = "<< idx0 << "Atom1 = " << idx1 << " r0 = "<< r0 << "k = " << k <<"\n";
+		  //
+                  //  idx0 = idx0 + num_atoms_till_i;
+                  //  idx1 = idx1 + num_atoms_till_i;
+                  //  bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm);
+                  //  bondPairs.push_back(std::make_pair(idx0,idx1));
+		  //
+                  //  continue;
+                //}
             }
 
             //Select the atom type
@@ -1497,6 +1500,9 @@ void OpenMMFrEnergyST::initialise()  {
             idx0 = idx0 + num_atoms_till_i;
             idx1 = idx1 + num_atoms_till_i;
 
+	    // JM July 13. The constraint code has to be revised to handle massless particles so TIP4P can be dealt with. 
+	    // --> Should check if a constraint involves an atom with a null mass, and if so skip constraint. 
+
             if(flag_constraint == NONE ){
 
                 bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm); 
@@ -1505,7 +1511,7 @@ void OpenMMFrEnergyST::initialise()  {
             }
             else if ( flag_constraint == ALLBONDS || flag_constraint == HANGLES ){
                 system_openmm->addConstraint(idx0,idx1, r0 *  OpenMM::NmPerAngstrom);
-                //cout << "\nALLBONDS or HANGLES ADDED BOND CONSTRAINT TO " << atom0.toStdString() << " AND " << atom1.toStdString() << "\n";
+                cout << "\nALLBONDS or HANGLES ADDED BOND CONSTRAINT TO " << atom0.toStdString() << " AND " << atom1.toStdString() << "\n";
             }
             else if ( flag_constraint == HBONDS ){
 
@@ -1949,7 +1955,7 @@ void OpenMMFrEnergyST::initialise()  {
 
 void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &nrg_component, SireUnits::Dimension::Time timestep, int nmoves, bool record_stats) {
 
-    bool Debug = true; 
+    bool Debug = false; 
 
     QTime timer;
 
