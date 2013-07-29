@@ -132,7 +132,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
         << velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
         <<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency << velver.energy_frequency
         << velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical << velver.buffer_coords
-        << velver.gradients <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol << velver.timeskip
+        << velver.gradients << velver.energies <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol << velver.timeskip
         << static_cast<const Integrator&>(velver);
 
     // Free OpenMM pointers??
@@ -154,7 +154,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
         >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature 
 	>> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency >> velver.energy_frequency
         >> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical >> velver.buffer_coords
-        >> velver.gradients >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol >> velver.timeskip
+	>> velver.gradients >> velver.energies >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol >> velver.timeskip
         >> static_cast<Integrator&>(velver);
 
         // Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -180,7 +180,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
 	        CMMremoval_frequency(0), buffer_frequency(0),energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
-                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),perturbed_energies(),
+		  shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond)
 {}
 
@@ -194,7 +194,7 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const Mo
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
                 CMMremoval_frequency(0), buffer_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
-                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),perturbed_energies(),
+		  shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond)
 {}
 
@@ -213,7 +213,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
                 Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
 	        buffer_frequency(other.buffer_frequency), energy_frequency(other.energy_frequency),device_index(other.device_index),precision(other.precision),Alchemical_value(other.Alchemical_value),
                 coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),
-                delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients),perturbed_energies(other.perturbed_energies),
+		  delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients),energies(other.energies), 
+		  perturbed_energies(other.perturbed_energies),
                 Integrator_type(other.Integrator_type),friction(other.friction),integration_tol(other.integration_tol),timeskip(other.timeskip)
 {}
 
@@ -258,6 +259,7 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     delta_alchemical = other.delta_alchemical;
     buffer_coords = other.buffer_coords;
     gradients = other.gradients;
+    energies = other.energies;
     perturbed_energies = other.perturbed_energies;
     Integrator_type = other.Integrator_type;
     friction = other.friction;
@@ -289,7 +291,7 @@ QString OpenMMFrEnergyST::toString() const
 
 void OpenMMFrEnergyST::initialise()  {
 
-    bool Debug = true;
+    bool Debug = false;
 
     if (true){
         qDebug() << "Initialising OpenMMFrEnergyST";
@@ -2200,6 +2202,8 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     double GB_acc = 0.0;
 
+    double pot_energy_acc = 0.0;
+
     int sample_count=1;
 
     /*state_openmm=context_openmm.getState(infoMask);
@@ -2311,12 +2315,12 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
 	  }
 
-
-        if(potential_energy_lambda > 1000000.0)
-	  {
-            throw SireError::program_bug(QObject::tr("********************* Energy Too High. Error! *******************"), CODELOC);
-            exit(-1);
-	  }
+        // JM July 13 commenting out this block because in the system I am simulating atm a high energy is actually possible...
+        //if(potential_energy_lambda > 1000000.0)
+	//  {
+        //    throw SireError::program_bug(QObject::tr("********************* Energy Too High. Error! *******************"), CODELOC);
+        //    exit(-1);
+	//  }
 
         if((Alchemical_value + delta_alchemical)>1.0)
 	  {
@@ -2478,11 +2482,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         GF_acc = GF_acc + plus;
         GB_acc = GB_acc + minus;
+	pot_energy_acc = pot_energy_acc + potential_energy_lambda;
+	
 
         double avg_GF = GF_acc /(sample_count);
 
         double avg_GB = GB_acc /(sample_count);
 
+	double avg_pot_energy_lambda = pot_energy_acc / (sample_count);
 
         double Energy_GF = -(1.0/beta)*log(avg_GF);
 
@@ -2497,9 +2504,15 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
 	// JM why buffer_coords is used to store gradients?
         if(buffer_coords && sample_count!=(n_samples))
+	  {
             gradients.append(Energy_Gradient_lamda * OpenMM::KcalPerKJ);
+	    energies.append(avg_pot_energy_lambda * OpenMM::KcalPerKJ);
+	  }
         if(sample_count==(n_samples))
+	  {
             gradients.append(Energy_Gradient_lamda * OpenMM::KcalPerKJ);
+	    energies.append(avg_pot_energy_lambda * OpenMM::KcalPerKJ);
+	  }
 
         
         //NON BONDED TERMS
@@ -2916,14 +2929,18 @@ void OpenMMFrEnergyST::setAlchemical_value(double lambda_value){
 }
 
 /** Get the coulomb power used in the soft core potential*/
-int OpenMMFrEnergyST::getCoulomb_power(void){
+//int OpenMMFrEnergyST::getCoulomb_power(void)
+float OpenMMFrEnergyST::getCoulomb_power(void)
+{
 
     return coulomb_power;
 
 }
 
 /** Set the coulomb power used in the soft core potential*/
-void OpenMMFrEnergyST::setCoulomb_power(int coulomb){
+//void OpenMMFrEnergyST::setCoulomb_power(int coulomb)
+void OpenMMFrEnergyST::setCoulomb_power(float coulomb)
+{
 
     coulomb_power = coulomb;
 
@@ -2978,6 +2995,12 @@ void OpenMMFrEnergyST::setBufferCoords(bool buffer){
 QVector<double> OpenMMFrEnergyST::getGradients(void){
 
     return gradients;
+
+}
+/** Average energies*/
+QVector<double> OpenMMFrEnergyST::getEnergies(void){
+
+    return energies;
 
 }
 

@@ -147,8 +147,10 @@ public:
     double getAlchemical_value(void);
     void setAlchemical_value(double);
 
-    int getCoulomb_power(void);
-    void setCoulomb_power(int);
+    //int getCoulomb_power(void);
+    float getCoulomb_power(void);
+    //void setCoulomb_power(int);
+    void setCoulomb_power(float);
 
     double getShift_delta(void);
     void setShift_delta(double);
@@ -160,6 +162,7 @@ public:
     void setBufferCoords(bool);
 
     QVector<double> getGradients(void);
+    QVector<double> getEnergies(void);
 
     QString getIntegrator(void);
 
@@ -229,7 +232,8 @@ private:
 
     double Alchemical_value;
 
-    int coulomb_power;
+    //int coulomb_power;
+    float coulomb_power;
 
     double shift_delta;
 
@@ -238,6 +242,8 @@ private:
     bool buffer_coords;
 
     QVector<double> gradients;
+
+    QVector<double> energies; 
 
     QVector<bool> perturbed_energies;
 
