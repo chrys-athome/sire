@@ -296,12 +296,14 @@ public:
     
     int nIterations() const;
     int nLambdaValues() const;
+    int nWindows() const;
     qint64 nSamples() const;
     
     int count() const;
     int size() const;
     
     QList<double> lambdaValues() const;
+    QList<double> windows() const;
     
     FEPDeltas operator[](int i) const;
     FEPDeltas at(int i) const;

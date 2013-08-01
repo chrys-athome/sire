@@ -1651,7 +1651,7 @@ QList<Gradients> TI::rollingAverage(int niterations) const
     if (niterations >= grads.count())
         merged.append( Gradients::merge(grads) );
 
-    else if (niterations <= 0)
+    else if (niterations <= 1)
         merged = grads;
     
     else

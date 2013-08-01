@@ -30,6 +30,8 @@
 
 #include "SireMaths/maths.h"
 
+#include "SireID/index.h"
+
 #include "SireError/errors.h"
 
 #include "SireStream/shareddatastream.h"
@@ -39,6 +41,7 @@
 using namespace Soiree;
 using namespace SireMaths;
 using namespace SireBase;
+using namespace SireID;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
@@ -1120,4 +1123,341 @@ PMF FEPDeltas::sum() const
 PMF FEPDeltas::integrate() const
 {
     return sum();
+}
+
+//////////////
+////////////// Implementation of FEP
+//////////////
+
+static const RegisterMetaType<FEP> r_fep;
+
+QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const FEP &fep)
+{
+    writeHeader(ds, r_fep, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << fep.dltas;
+    
+    return ds;
+}
+
+QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, FEP &fep)
+{
+    VersionID v = readHeader(ds, r_fep);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> fep.dltas;
+    }
+    else
+        throw version_error(v, "1", r_fep, CODELOC);
+    
+    return ds;
+}
+
+/** Constructor */
+FEP::FEP() : ConcreteProperty<FEP,Property>()
+{}
+
+/** Construct to use the passed set of windows, with the free energy deltas from
+    each window to the window above */
+FEP::FEP(const QList<double> &windows, const QMap<double,FreeEnergyAverage> &deltas)
+    : ConcreteProperty<FEP,Property>()
+{
+    this->add( FEPDeltas(windows,deltas) );
+}
+
+/** Construct to use the passed windows, with the free energy deltas from 
+    each window to the window above in 'forwards_deltas' and from the window
+    below to each window in 'backwards_deltas' */
+FEP::FEP(const QList<double> &windows,
+         const QMap<double,FreeEnergyAverage> &forwards_deltas,
+         const QMap<double,FreeEnergyAverage> &backwards_deltas)
+    : ConcreteProperty<FEP,Property>()
+{
+    this->add( FEPDeltas(windows,forwards_deltas,backwards_deltas) );
+}
+
+/** Construct to use the passed FEP deltas */
+FEP::FEP(const FEPDeltas &deltas)
+    : ConcreteProperty<FEP,Property>()
+{
+    this->add(deltas);
+}
+
+/** Copy constructor */
+FEP::FEP(const FEP &other) : ConcreteProperty<FEP,Property>(other), dltas(other.dltas)
+{}
+
+/** Destructor */
+FEP::~FEP()
+{}
+
+/** Copy assignment operator */
+FEP& FEP::operator=(const FEP &other)
+{
+    dltas = other.dltas;
+    return *this;
+}
+
+/** Comparison operator */
+bool FEP::operator==(const FEP &other) const
+{
+    return dltas == other.dltas;
+}
+
+/** Comparison operator */
+bool FEP::operator!=(const FEP &other) const
+{
+    return not operator==(other);
+}
+
+const char* FEP::what() const
+{
+    return FEP::typeName();
+}
+
+const char* FEP::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<FEP>() );
+}
+
+QString FEP::toString() const
+{
+    return QObject::tr("FEP( nWindows() == %1, nIterations() == %2, nSamples() == %3 )")
+                .arg(nWindows()).arg(nIterations()).arg(nSamples());
+}
+
+/** Add the data for the next iteration, which contains the deltas for the passed windows,
+    with the free energy being for each window to the next window */
+void FEP::add(const QList<double> &windows,
+              const QMap<double,FreeEnergyAverage> &deltas)
+{
+    this->add( FEPDeltas(windows,deltas) );
+}
+
+/** Add the data for the next iteration, which contains the deltas for the passed windows,
+    with forwards_deltas containing the free energy from each window to the next window,
+    and backwards_deltas containing the free energy from the previous window to each window */
+void FEP::add(const QList<double> &windows,
+              const QMap<double,FreeEnergyAverage> &forwards_deltas,
+              const QMap<double,FreeEnergyAverage> &backwards_deltas)
+{
+    this->add( FEPDeltas(windows,forwards_deltas,backwards_deltas) );
+}
+
+/** Add the data for the next iteration */
+void FEP::add(const FEPDeltas &deltas)
+{
+    if (not deltas.isEmpty())
+        dltas.append(deltas);
+}
+
+/** Return the number of iterations */
+int FEP::nIterations() const
+{
+    return dltas.count();
+}
+
+/** Return the number of windows */
+int FEP::nWindows() const
+{
+    return windows().count();
+}
+
+/** Return the number of lambda values (windows) */
+int FEP::nLambdaValues() const
+{
+    return nWindows();
+}
+
+/** Return the total number of samples in the simulation */
+qint64 FEP::nSamples() const
+{
+    quint64 n = 0;
+    
+    foreach (const FEPDeltas &delta, dltas)
+    {
+        n += delta.nSamples();
+    }
+    
+    return n;
+}
+
+/** Return the number of iterations */
+int FEP::count() const
+{
+    return dltas.count();
+}
+
+/** Return the number of iterations */
+int FEP::size() const
+{
+    return dltas.count();
+}
+
+/** Return the values of all windows */
+QList<double> FEP::lambdaValues() const
+{
+    return windows();
+}
+
+/** Return the value of all windows */
+QList<double> FEP::windows() const
+{
+    QMap<double,int> vals;
+    
+    foreach (const FEPDeltas &delta, dltas)
+    {
+        foreach (double window, delta.windows())
+        {
+            vals.insert(window,1);
+        }
+    }
+    
+    QList<double> wdows = vals.keys();
+    qSort(wdows);
+    return wdows;
+}
+
+/** Return the deltas for the ith iteration */
+FEPDeltas FEP::operator[](int i) const
+{
+    return dltas.at( Index(i).map(dltas.count()) );
+}
+
+/** Return the deltas for the ith iteration */
+FEPDeltas FEP::at(int i) const
+{
+    return operator[](i);
+}
+
+/** Return the deltas for all iterations */
+QList<FEPDeltas> FEP::deltas() const
+{
+    return dltas;
+}
+
+/** Set the deltas for the ith iteration */
+void FEP::set(int i, const QList<double> &windows,
+              const QMap<double,FreeEnergyAverage> &deltas)
+{
+    set(i, FEPDeltas(windows,deltas));
+}
+
+/** Set the deltas for the ith iteration */
+void FEP::set(int i, const QList<double> &windows,
+              const QMap<double,FreeEnergyAverage> &forwards_deltas,
+              const QMap<double,FreeEnergyAverage> &backwards_deltas)
+{
+    set(i, FEPDeltas(windows,forwards_deltas,backwards_deltas));
+}
+
+/** Set the deltas for the ith iteration */
+void FEP::set(int i, const FEPDeltas &deltas)
+{
+    if (deltas.isEmpty())
+        return;
+
+    if (i == dltas.count())
+        this->add(deltas);
+    else
+    {
+        i = Index(i).map(dltas.count());
+        dltas[i] = deltas;
+    }
+}
+
+/** Merge the deltas for iterations start->end */
+FEPDeltas FEP::merge(int start, int end)
+{
+    start = Index(start).map(dltas.count());
+    end = Index(end).map(dltas.count());
+    
+    QList<FEPDeltas> set;
+    
+    for (int i=start; i<=end; ++i)
+    {
+        set.append( dltas.at(i) );
+    }
+    
+    return FEPDeltas::merge(set);
+}
+
+/** Merge the deltas at the passed indicies */
+FEPDeltas FEP::merge(QList<int> indicies)
+{
+    QList<FEPDeltas> set;
+    
+    foreach (int idx, indicies)
+    {
+        set.append( dltas.at( Index(idx).map(dltas.count()) ) );
+    }
+ 
+    return FEPDeltas::merge(set);
+}
+
+/** Return a list of Gradients that represents the rolling average over 'niterations'
+    iterations over this TI data set. If this data set contains 100 iterations, and 
+    we calculate the rolling average over 50 iterations, then the returned Gradients
+    will be the average from 1-50, then 2-51, 3-52.....51-100 */
+QList<FEPDeltas> FEP::rollingAverage(int niterations) const
+{
+    QList<FEPDeltas> merged;
+
+    if (niterations >= dltas.count())
+        merged.append( FEPDeltas::merge(dltas) );
+
+    else if (niterations <= 1)
+        merged = dltas;
+    
+    else
+    {
+        QList<FEPDeltas> set;
+        
+        for (int i=0; i<niterations; ++i)
+            set.append(dltas.at(i));
+        
+        merged.append( FEPDeltas::merge(set) );
+        
+        for (int i=niterations; i<dltas.count(); ++i)
+        {
+            set.removeFirst();
+            set.append(dltas.at(i));
+            merged.append( FEPDeltas::merge(set) );
+        }
+    }
+    
+    return merged;
+}
+
+/** Remove the data for iteration 'i' */
+void FEP::removeAt(int i)
+{
+    i = Index(i).map(dltas.count());
+    dltas.removeAt(i);
+}
+
+/** Remove every iteration from 'start' to 'end' (inclusively) */
+void FEP::removeRange(int start, int end)
+{
+    start = Index(start).map(dltas.count());
+    end = Index(end).map(dltas.count());
+    
+    if (start > end)
+        qSwap(start, end);
+    
+    for (int i = start; i <= end; ++i)
+    {
+        dltas.removeAt(start);
+    }
+}
+
+/** Remove all values from the histogram */
+void FEP::clear()
+{
+    this->operator=( FEP() );
 }
