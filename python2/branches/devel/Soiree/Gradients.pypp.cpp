@@ -124,7 +124,7 @@ void register_Gradients_class(){
         }
         { //::Soiree::Gradients::integrate
         
-            typedef ::Soiree::PMF ( ::Soiree::Gradients::*integrate_function_type )(  ) const;
+            typedef ::Soiree::TIPMF ( ::Soiree::Gradients::*integrate_function_type )(  ) const;
             integrate_function_type integrate_function_value( &::Soiree::Gradients::integrate );
             
             Gradients_exposer.def( 
@@ -134,7 +134,7 @@ void register_Gradients_class(){
         }
         { //::Soiree::Gradients::integrate
         
-            typedef ::Soiree::PMF ( ::Soiree::Gradients::*integrate_function_type )( int ) const;
+            typedef ::Soiree::TIPMF ( ::Soiree::Gradients::*integrate_function_type )( int ) const;
             integrate_function_type integrate_function_value( &::Soiree::Gradients::integrate );
             
             Gradients_exposer.def( 
@@ -145,7 +145,7 @@ void register_Gradients_class(){
         }
         { //::Soiree::Gradients::integrate
         
-            typedef ::Soiree::PMF ( ::Soiree::Gradients::*integrate_function_type )( double,double ) const;
+            typedef ::Soiree::TIPMF ( ::Soiree::Gradients::*integrate_function_type )( double,double ) const;
             integrate_function_type integrate_function_value( &::Soiree::Gradients::integrate );
             
             Gradients_exposer.def( 
@@ -156,7 +156,7 @@ void register_Gradients_class(){
         }
         { //::Soiree::Gradients::integrate
         
-            typedef ::Soiree::PMF ( ::Soiree::Gradients::*integrate_function_type )( double,double,int ) const;
+            typedef ::Soiree::TIPMF ( ::Soiree::Gradients::*integrate_function_type )( double,double,int ) const;
             integrate_function_type integrate_function_value( &::Soiree::Gradients::integrate );
             
             Gradients_exposer.def( 
@@ -227,6 +227,7 @@ void register_Gradients_class(){
         
         }
         Gradients_exposer.def( bp::self != bp::self );
+        Gradients_exposer.def( bp::self + bp::self );
         { //::Soiree::Gradients::operator=
         
             typedef ::Soiree::Gradients & ( ::Soiree::Gradients::*assign_function_type )( ::Soiree::Gradients const & ) ;
@@ -249,6 +250,26 @@ void register_Gradients_class(){
                 "__getitem__"
                 , __getitem___function_value
                 , ( bp::arg("lam") ) );
+        
+        }
+        { //::Soiree::Gradients::temperature
+        
+            typedef ::SireUnits::Dimension::Temperature ( ::Soiree::Gradients::*temperature_function_type )(  ) const;
+            temperature_function_type temperature_function_value( &::Soiree::Gradients::temperature );
+            
+            Gradients_exposer.def( 
+                "temperature"
+                , temperature_function_value );
+        
+        }
+        { //::Soiree::Gradients::toString
+        
+            typedef ::QString ( ::Soiree::Gradients::*toString_function_type )(  ) const;
+            toString_function_type toString_function_value( &::Soiree::Gradients::toString );
+            
+            Gradients_exposer.def( 
+                "toString"
+                , toString_function_value );
         
         }
         { //::Soiree::Gradients::typeName

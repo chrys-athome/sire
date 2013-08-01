@@ -7,11 +7,17 @@
 
 #include "DataPoint.pypp.hpp"
 
+#include "FEP.pypp.hpp"
+
+#include "FEPDeltas.pypp.hpp"
+
 #include "Gradients.pypp.hpp"
 
 #include "PMF.pypp.hpp"
 
 #include "TI.pypp.hpp"
+
+#include "TIPMF.pypp.hpp"
 
 namespace bp = boost::python;
 
@@ -26,10 +32,16 @@ BOOST_PYTHON_MODULE(_Soiree){
 
     register_DataPoint_class();
 
+    register_FEP_class();
+
+    register_FEPDeltas_class();
+
     register_Gradients_class();
 
     register_PMF_class();
 
     register_TI_class();
+
+    register_TIPMF_class();
 }
 

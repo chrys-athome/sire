@@ -9,19 +9,15 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
-#include "SireID/index.h"
-
-#include "SireStream/datastream.h"
+#include "SireMaths/maths.h"
 
 #include "SireStream/shareddatastream.h"
 
-#include "ti.h"
+#include "fep.h"
 
 #include "tostring.h"
 
-#include <cmath>
-
-#include "ti.h"
+#include "fep.h"
 
 Soiree::PMF __copy__(const Soiree::PMF &other){ return Soiree::PMF(other); }
 
@@ -35,38 +31,36 @@ void register_PMF_class(){
         typedef bp::class_< Soiree::PMF, bp::bases< SireBase::Property > > PMF_exposer_t;
         PMF_exposer_t PMF_exposer = PMF_exposer_t( "PMF", bp::init< >() );
         bp::scope PMF_scope( PMF_exposer );
-        PMF_exposer.def( bp::init< int >(( bp::arg("order") )) );
-        PMF_exposer.def( bp::init< double, double >(( bp::arg("min_x"), bp::arg("max_x") )) );
-        PMF_exposer.def( bp::init< double, double, int >(( bp::arg("min_x"), bp::arg("max_x"), bp::arg("order") )) );
+        PMF_exposer.def( bp::init< QVector< Soiree::DataPoint > const & >(( bp::arg("values") )) );
         PMF_exposer.def( bp::init< Soiree::PMF const & >(( bp::arg("other") )) );
-        { //::Soiree::PMF::dropEndPoints
+        { //::Soiree::PMF::deltaG
         
-            typedef ::Soiree::PMF ( ::Soiree::PMF::*dropEndPoints_function_type )(  ) const;
-            dropEndPoints_function_type dropEndPoints_function_value( &::Soiree::PMF::dropEndPoints );
+            typedef double ( ::Soiree::PMF::*deltaG_function_type )(  ) const;
+            deltaG_function_type deltaG_function_value( &::Soiree::PMF::deltaG );
             
             PMF_exposer.def( 
-                "dropEndPoints"
-                , dropEndPoints_function_value );
+                "deltaG"
+                , deltaG_function_value );
         
         }
-        { //::Soiree::PMF::gradients
+        { //::Soiree::PMF::error
         
-            typedef ::QVector< Soiree::DataPoint > ( ::Soiree::PMF::*gradients_function_type )(  ) const;
-            gradients_function_type gradients_function_value( &::Soiree::PMF::gradients );
+            typedef double ( ::Soiree::PMF::*error_function_type )(  ) const;
+            error_function_type error_function_value( &::Soiree::PMF::error );
             
             PMF_exposer.def( 
-                "gradients"
-                , gradients_function_value );
+                "error"
+                , error_function_value );
         
         }
-        { //::Soiree::PMF::integral
+        { //::Soiree::PMF::isEmpty
         
-            typedef double ( ::Soiree::PMF::*integral_function_type )(  ) const;
-            integral_function_type integral_function_value( &::Soiree::PMF::integral );
+            typedef bool ( ::Soiree::PMF::*isEmpty_function_type )(  ) const;
+            isEmpty_function_type isEmpty_function_value( &::Soiree::PMF::isEmpty );
             
             PMF_exposer.def( 
-                "integral"
-                , integral_function_value );
+                "isEmpty"
+                , isEmpty_function_value );
         
         }
         PMF_exposer.def( bp::self != bp::self );
@@ -83,26 +77,6 @@ void register_PMF_class(){
         
         }
         PMF_exposer.def( bp::self == bp::self );
-        { //::Soiree::PMF::order
-        
-            typedef int ( ::Soiree::PMF::*order_function_type )(  ) const;
-            order_function_type order_function_value( &::Soiree::PMF::order );
-            
-            PMF_exposer.def( 
-                "order"
-                , order_function_value );
-        
-        }
-        { //::Soiree::PMF::quadrature
-        
-            typedef double ( ::Soiree::PMF::*quadrature_function_type )(  ) const;
-            quadrature_function_type quadrature_function_value( &::Soiree::PMF::quadrature );
-            
-            PMF_exposer.def( 
-                "quadrature"
-                , quadrature_function_value );
-        
-        }
         { //::Soiree::PMF::rangeMax
         
             typedef double ( ::Soiree::PMF::*rangeMax_function_type )(  ) const;
@@ -121,49 +95,6 @@ void register_PMF_class(){
             PMF_exposer.def( 
                 "rangeMin"
                 , rangeMin_function_value );
-        
-        }
-        { //::Soiree::PMF::setGradients
-        
-            typedef void ( ::Soiree::PMF::*setGradients_function_type )( ::QVector< Soiree::DataPoint > const & ) ;
-            setGradients_function_type setGradients_function_value( &::Soiree::PMF::setGradients );
-            
-            PMF_exposer.def( 
-                "setGradients"
-                , setGradients_function_value
-                , ( bp::arg("gradients") ) );
-        
-        }
-        { //::Soiree::PMF::setOrder
-        
-            typedef void ( ::Soiree::PMF::*setOrder_function_type )( ::qint32 ) ;
-            setOrder_function_type setOrder_function_value( &::Soiree::PMF::setOrder );
-            
-            PMF_exposer.def( 
-                "setOrder"
-                , setOrder_function_value
-                , ( bp::arg("order") ) );
-        
-        }
-        { //::Soiree::PMF::setRange
-        
-            typedef void ( ::Soiree::PMF::*setRange_function_type )( double,double ) ;
-            setRange_function_type setRange_function_value( &::Soiree::PMF::setRange );
-            
-            PMF_exposer.def( 
-                "setRange"
-                , setRange_function_value
-                , ( bp::arg("min_x"), bp::arg("max_x") ) );
-        
-        }
-        { //::Soiree::PMF::smoothedGradients
-        
-            typedef ::QVector< Soiree::DataPoint > ( ::Soiree::PMF::*smoothedGradients_function_type )(  ) const;
-            smoothedGradients_function_type smoothedGradients_function_value( &::Soiree::PMF::smoothedGradients );
-            
-            PMF_exposer.def( 
-                "smoothedGradients"
-                , smoothedGradients_function_value );
         
         }
         { //::Soiree::PMF::toString

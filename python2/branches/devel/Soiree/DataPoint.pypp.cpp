@@ -9,19 +9,15 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
-#include "SireID/index.h"
-
-#include "SireStream/datastream.h"
+#include "SireMaths/maths.h"
 
 #include "SireStream/shareddatastream.h"
 
-#include "ti.h"
+#include "fep.h"
 
 #include "tostring.h"
 
-#include <cmath>
-
-#include "ti.h"
+#include "fep.h"
 
 Soiree::DataPoint __copy__(const Soiree::DataPoint &other){ return Soiree::DataPoint(other); }
 
