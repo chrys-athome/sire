@@ -21,6 +21,7 @@ from Sire.Tools import Parameter, resolveParameters
 
 import os
 import shutil
+import copy
 
 wsrc_tools_dir = "%s/Tools/WSRC" % Sire.Config.share_directory
 
@@ -969,6 +970,18 @@ def mergeSystems(protein_system, water_system, ligand_mol):
                          bound_ligand_mobile.components().total(2) + \
                          bound_ligand_fixed_nrg
 
+    ligand_bound_nrg_next_sym = Symbol("E_{ligand:bound_{next}}")
+    ligand_bound_nrg_next = ligand_intraclj.components().total() + \
+                            ligand_intraff.components().total() + \
+                            bound_ligand_mobile.components().total(3) + \
+                            bound_ligand_fixed_nrg
+
+    ligand_bound_nrg_prev_sym = Symbol("E_{ligand:bound_{prev}}")
+    ligand_bound_nrg_prev = ligand_intraclj.components().total() + \
+                            ligand_intraff.components().total() + \
+                            bound_ligand_mobile.components().total(4) + \
+                            bound_ligand_fixed_nrg
+
     ligand_free_nrg_sym = Symbol("E_{ligand:free}")
     ligand_free_nrg = ligand_intraclj.components().total() + \
                       ligand_intraff.components().total() + \
@@ -987,14 +1000,30 @@ def mergeSystems(protein_system, water_system, ligand_mol):
                         free_ligand_mobile.components().total(2) + \
                         free_ligand_fixed_nrg
 
+    ligand_free_nrg_next_sym = Symbol("E_{ligand:free_{next}}")
+    ligand_free_nrg_next = ligand_intraclj.components().total() + \
+                           ligand_intraff.components().total() + \
+                           free_ligand_mobile.components().total(3) + \
+                           free_ligand_fixed_nrg
+
+    ligand_free_nrg_prev_sym = Symbol("E_{ligand:free_{prev}}")
+    ligand_free_nrg_prev = ligand_intraclj.components().total() + \
+                           ligand_intraff.components().total() + \
+                           free_ligand_mobile.components().total(4) + \
+                           free_ligand_fixed_nrg
+
     lam = Symbol("lambda")
     lam_f = Symbol("lambda_{f}")
     lam_b = Symbol("lambda_{b}")
+    lam_next = Symbol("lambda_{next}")
+    lam_prev = Symbol("lambda_{prev}")
 
     S_sym = Symbol("S")
     S_scl = S_sym - 4*(S_sym-1)*(lam-0.5)**2
     S_scl_f = S_sym - 4*(S_sym-1)*(lam_f-0.5)**2
     S_scl_b = S_sym - 4*(S_sym-1)*(lam_b-0.5)**2
+    S_scl_next = S_sym - 4*(S_sym-1)*(lam_next-0.5)**2
+    S_scl_prev = S_sym - 4*(S_sym-1)*(lam_prev-0.5)**2
 
     swap_bound_nrg_sym = Symbol("E_{swap:bound}")
     swap_bound_nrg = ((S_scl) * swap_interclj.components().coulomb()) + \
@@ -1014,6 +1043,18 @@ def mergeSystems(protein_system, water_system, ligand_mol):
                         bound_swap_mobile.components().total(2) + \
                         bound_swap_fixed_nrg
 
+    swap_bound_nrg_next_sym = Symbol("E_{swap:bound_{next}}")
+    swap_bound_nrg_next = ((S_scl_next) * swap_interclj.components().coulomb()) + \
+                                          swap_interclj.components().lj() + \
+                             bound_swap_mobile.components().total(3) + \
+                             bound_swap_fixed_nrg
+
+    swap_bound_nrg_prev_sym = Symbol("E_{swap:bound_{prev}}")
+    swap_bound_nrg_prev = ((S_scl_prev) * swap_interclj.components().coulomb()) + \
+                                          swap_interclj.components().lj() + \
+                            bound_swap_mobile.components().total(4) + \
+                            bound_swap_fixed_nrg
+
     swap_free_nrg_sym = Symbol("E_{swap:free}")
     swap_free_nrg = ((S_scl) * swap_interclj.components().coulomb()) + \
                                 swap_interclj.components().lj() + \
@@ -1032,6 +1073,18 @@ def mergeSystems(protein_system, water_system, ligand_mol):
                         free_swap_mobile.components().total(2) + \
                         free_swap_fixed_nrg
 
+    swap_free_nrg_next_sym = Symbol("E_{swap:free_{next}}")
+    swap_free_nrg_next = ((S_scl_next) * swap_interclj.components().coulomb()) + \
+                                         swap_interclj.components().lj() + \
+                             free_swap_mobile.components().total(3) + \
+                             free_swap_fixed_nrg
+
+    swap_free_nrg_prev_sym = Symbol("E_{swap:free_{prev}}")
+    swap_free_nrg_prev = ((S_scl_b) * swap_interclj.components().coulomb()) + \
+                                      swap_interclj.components().lj() + \
+                            free_swap_mobile.components().total(4) + \
+                            free_swap_fixed_nrg
+
     system.add(ligand_intraclj)
     system.add(ligand_intraff)
     system.add(swap_interclj)
@@ -1047,24 +1100,34 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.setConstant(lam, 0.0)
     system.setConstant(lam_f, 0.0)
     system.setConstant(lam_b, 0.0)
+    system.setConstant(lam_next, 0.0)
+    system.setConstant(lam_prev, 0.0)
 
     system.setComponent(S_sym, soften_water.val)
 
     system.setComponent(ligand_bound_nrg_sym, ligand_bound_nrg)
     system.setComponent(ligand_bound_nrg_f_sym, ligand_bound_nrg_f)
     system.setComponent(ligand_bound_nrg_b_sym, ligand_bound_nrg_b)
+    system.setComponent(ligand_bound_nrg_next_sym, ligand_bound_nrg_next)
+    system.setComponent(ligand_bound_nrg_prev_sym, ligand_bound_nrg_prev)
 
     system.setComponent(ligand_free_nrg_sym, ligand_free_nrg)
     system.setComponent(ligand_free_nrg_f_sym, ligand_free_nrg_f)
     system.setComponent(ligand_free_nrg_b_sym, ligand_free_nrg_b)
+    system.setComponent(ligand_free_nrg_next_sym, ligand_free_nrg_next)
+    system.setComponent(ligand_free_nrg_prev_sym, ligand_free_nrg_prev)
 
     system.setComponent(swap_bound_nrg_sym, swap_bound_nrg)
     system.setComponent(swap_bound_nrg_f_sym, swap_bound_nrg_f)
     system.setComponent(swap_bound_nrg_b_sym, swap_bound_nrg_b)
+    system.setComponent(swap_bound_nrg_next_sym, swap_bound_nrg_next)
+    system.setComponent(swap_bound_nrg_prev_sym, swap_bound_nrg_prev)
 
     system.setComponent(swap_free_nrg_sym, swap_free_nrg)
     system.setComponent(swap_free_nrg_f_sym, swap_free_nrg_f)
     system.setComponent(swap_free_nrg_b_sym, swap_free_nrg_b)
+    system.setComponent(swap_free_nrg_next_sym, swap_free_nrg_next)
+    system.setComponent(swap_free_nrg_prev_sym, swap_free_nrg_prev)
 
     bound_bound_nrg_sym = Symbol("E_{bound-bound}")
     bound_bound_nrg = None
@@ -1100,6 +1163,12 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
     bound_nrg_b_sym = Symbol("E_{bound_{b}}")
     bound_nrg_b = bound_bound_nrg_sym + ((1-lam_b) * ligand_bound_nrg_b_sym) + (lam_b * swap_bound_nrg_b_sym)
+
+    bound_nrg_next_sym = Symbol("E_{bound_{next}}")
+    bound_nrg_next = bound_bound_nrg_sym + ((1-lam_next) * ligand_bound_nrg_next_sym) + (lam_next * swap_bound_nrg_next_sym)
+
+    bound_nrg_prev_sym = Symbol("E_{bound_{prev}}")
+    bound_nrg_prev = bound_bound_nrg_sym + ((1-lam_prev) * ligand_bound_nrg_prev_sym) + (lam_prev * swap_bound_nrg_prev_sym)
     
     free_nrg_sym = Symbol("E_{free}")
     free_nrg = free_free_nrg_sym + (lam * ligand_free_nrg_sym) + ((1-lam) * swap_free_nrg_sym)
@@ -1110,6 +1179,12 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     free_nrg_b_sym = Symbol("E_{free_{b}}")
     free_nrg_b = free_free_nrg_sym + (lam_b * ligand_free_nrg_b_sym) + ((1-lam_b) * swap_free_nrg_b_sym)
 
+    free_nrg_next_sym = Symbol("E_{free_{next}}")
+    free_nrg_next = free_free_nrg_sym + (lam_next * ligand_free_nrg_next_sym) + ((1-lam_next) * swap_free_nrg_next_sym)
+
+    free_nrg_prev_sym = Symbol("E_{free_{prev}}")
+    free_nrg_prev = free_free_nrg_sym + (lam_prev * ligand_free_nrg_prev_sym) + ((1-lam_prev) * swap_free_nrg_prev_sym)
+
     total_nrg_sym = system.totalComponent()
     total_nrg = bound_nrg_sym + free_nrg_sym
 
@@ -1119,20 +1194,34 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     total_nrg_b_sym = Symbol("E_{total_{b}}")
     total_nrg_b = bound_nrg_b_sym + free_nrg_b_sym
 
+    total_nrg_next_sym = Symbol("E_{total_{next}}")
+    total_nrg_next = bound_nrg_next_sym + free_nrg_next_sym
+
+    total_nrg_prev_sym = Symbol("E_{total_{prev}}")
+    total_nrg_prev = bound_nrg_prev_sym + free_nrg_prev_sym
+
     system.setComponent(bound_nrg_sym, bound_nrg)
     system.setComponent(bound_nrg_f_sym, bound_nrg_f)
     system.setComponent(bound_nrg_b_sym, bound_nrg_b)
+    system.setComponent(bound_nrg_next_sym, bound_nrg_next)
+    system.setComponent(bound_nrg_prev_sym, bound_nrg_prev)
 
     system.setComponent(free_nrg_sym, free_nrg)
     system.setComponent(free_nrg_f_sym, free_nrg_f)
     system.setComponent(free_nrg_b_sym, free_nrg_b)
+    system.setComponent(free_nrg_next_sym, free_nrg_next)
+    system.setComponent(free_nrg_prev_sym, free_nrg_prev)
 
     system.setComponent(total_nrg_sym, total_nrg)
     system.setComponent(total_nrg_f_sym, total_nrg_f)
     system.setComponent(total_nrg_b_sym, total_nrg_b)
+    system.setComponent(total_nrg_next_sym, total_nrg_next)
+    system.setComponent(total_nrg_prev_sym, total_nrg_prev)
 
     system.setComponent( Symbol("delta_nrg^{F}"), (total_nrg_f_sym - total_nrg_sym) )
     system.setComponent( Symbol("delta_nrg^{B}"), (total_nrg_sym - total_nrg_b_sym) )
+    system.setComponent( Symbol("delta_nrg^{next}"), (total_nrg_next_sym - total_nrg_sym) )
+    system.setComponent( Symbol("delta_nrg^{prev}"), (total_nrg_sym - total_nrg_prev_sym) )
 
     # Now add constraints. These are used to keep the identity of the 
     # swap water, to keep all lambda values between 0 and 1, and to
@@ -1147,9 +1236,25 @@ def mergeSystems(protein_system, water_system, ligand_mol):
         print "WARNING: Weird value of delta_lambda (%s). Setting it to 0.01" % dlam
         dlam = 0.01
 
-    system.setConstant( Symbol("delta_lambda"), dlam )
-    system.add( ComponentConstraint( lam_f, Min( lam + dlam, 1 ) ) )
-    system.add( ComponentConstraint( lam_b, Max( lam - dlam, 0 ) ) )
+    # Constrain lam_f and lam_b to lie with delta_lambda of lambda
+    dlam_sym = Symbol("delta_lambda")
+    system.setConstant( dlam_sym, dlam )
+    system.add( ComponentConstraint( lam_f, Min( lam + dlam_sym, 1 ) ) )
+    system.add( ComponentConstraint( lam_b, Max( lam - dlam_sym, 0 ) ) )
+
+    # Constrain lam_next and lam_prev to be equal to the next and previous
+    # windows lambda values
+    lamvals = copy.deepcopy( lambda_values.val )
+
+    if lamvals[-1] != 1:
+        lamvals.append(1)
+
+    if lamvals[0] != 0:
+        lamvals.insert(0,0)
+
+    system.add( WindowedComponent( lam_next, lam, lamvals, 1 ) )
+    system.add( WindowedComponent( lam_prev, lam, lamvals, -1 ) )
+    system.setConstant( lam, lambda_values.val[0] )
 
     # now add alpha variables that can be used by the EnergyMonitors
     alpha_on = Symbol("alpha_on")
@@ -1183,6 +1288,20 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
     system.add( PropertyConstraint( "alpha2", FFName("bound:ligand-mobile"),  alpha_scale.val * lam_b ) )
     system.add( PropertyConstraint( "alpha2", FFName("free:ligand-mobile"),  alpha_scale.val * (1 - lam_b) ) )
+
+    # Now the next window perturbed state (alpha3)
+    system.add( PropertyConstraint( "alpha3", FFName("free:swap-mobile"),  alpha_scale.val * lam_next ) )
+    system.add( PropertyConstraint( "alpha3", FFName("bound:swap-mobile"),  alpha_scale.val * (1 - lam_next) ) )
+
+    system.add( PropertyConstraint( "alpha3", FFName("bound:ligand-mobile"),  alpha_scale.val * lam_next ) )
+    system.add( PropertyConstraint( "alpha3", FFName("free:ligand-mobile"),  alpha_scale.val * (1 - lam_next) ) )
+
+    # Now the previous window perturbed state (alpha4)
+    system.add( PropertyConstraint( "alpha4", FFName("free:swap-mobile"),  alpha_scale.val * lam_prev ) )
+    system.add( PropertyConstraint( "alpha4", FFName("bound:swap-mobile"),  alpha_scale.val * (1 - lam_prev) ) )
+
+    system.add( PropertyConstraint( "alpha4", FFName("bound:ligand-mobile"),  alpha_scale.val * lam_prev ) )
+    system.add( PropertyConstraint( "alpha4", FFName("free:ligand-mobile"),  alpha_scale.val * (1 - lam_prev) ) )
 
     # Now lets create all of the groups for moves based on the above
 
@@ -1263,6 +1382,14 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.add( "delta_g^{B}", MonitorComponent( Symbol("delta_nrg^{B}"),
                                                  FreeEnergyAverage(temperature.val,
                                                                    dlam * binwidth.val) ) )
+
+    system.add( "delta_g^{next}", MonitorComponent( Symbol("delta_nrg^{next}"),
+                                                    FreeEnergyAverage(temperature.val,
+                                                                      0.1 * binwidth.val) ) )
+
+    system.add( "delta_g^{prev}", MonitorComponent( Symbol("delta_nrg^{prev}"),
+                                                    FreeEnergyAverage(temperature.val,
+                                                                      0.1 * binwidth.val) ) )
     
     # we will monitor the average energy between the swap cluster/ligand and each
     # residue with mobile sidechain, and each mobile solute
@@ -1377,7 +1504,7 @@ def makeRETI(system, moves):
         replicas.setLambdaValue(i, lambda_values.val[i])
 
     # Now add monitors for each replica that will copy back
-    nrgmons = [ "delta_g^{F}", "delta_g^{B}",
+    nrgmons = [ "delta_g^{F}", "delta_g^{B}", "delta_g^{next}", "delta_g^{prev}",
                 "ligand_protein_solute_nrgmon", "swapwater_protein_solute_nrgmon",
                 "ligand_boundwater_nrgmon", "swapwater_boundwater_nrgmon",
                 "ligand_freewater_nrgmon", "swapwater_freewater_nrgmon" ]
@@ -1642,6 +1769,9 @@ def analyseWSRC(replicas, iteration):
     dg_accum_f = {}
     dg_accum_b = {}
 
+    dg_accum_next = {}
+    dg_accum_prev = {}
+
     proteinbox_dg = {}
     proteinbox_dg_coul = {}
     proteinbox_dg_lj = {}
@@ -1676,6 +1806,12 @@ def analyseWSRC(replicas, iteration):
         dg = monitors[MonitorName("delta_g^{B}")][-1]
         dg_b[lamval] = dg.accumulator().average() / delta_lambda
         dg_accum_b[lamval] = dg.accumulator()
+
+        dg = monitors[MonitorName("delta_g^{next}")][-1]
+        dg_accum_next[lamval] = dg.accumulator()
+
+        dg = monitors[MonitorName("delta_g^{prev}")][-1]
+        dg_accum_prev[lamval] = dg.accumulator()
 
         ligand_protein_nrgmon = monitors[MonitorName("ligand_protein_solute_nrgmon")][-1]
         ligand_boundwater_nrgmon = monitors[MonitorName("ligand_boundwater_nrgmon")][-1]
@@ -1722,11 +1858,22 @@ def analyseWSRC(replicas, iteration):
     freenrgs_file = "%s/freenrgs.s3" % outdir.val
 
     if not os.path.exists(freenrgs_file):
-        freenrgs = TI()
+        ti_freenrgs = TI()
+        fep_freenrgs = FEP()
     else:
-        freenrgs = Sire.Stream.load(freenrgs_file)
+        [ti_freenrgs, fep_freenrgs] = Sire.Stream.load(freenrgs_file)
 
-    freenrgs.add( dg_accum_f, dg_accum_b, delta_lambda )
+    windows = copy.deepcopy(lambda_values)
+    windows.sort()
+
+    if windows[-1] != 1:
+        windows.append(1)
+
+    if windows[0] != 0:
+        windows.insert(0,0)
+
+    ti_freenrgs.add( dg_accum_f, dg_accum_b, delta_lambda )
+    fep_freenrgs.add( windows, dg_accum_next, dg_accum_prev )
 
     # save the old file to a backup
     try:
@@ -1734,7 +1881,7 @@ def analyseWSRC(replicas, iteration):
     except:
         pass
 
-    Sire.Stream.save( freenrgs, freenrgs_file )
+    Sire.Stream.save( [ti_freenrgs, fep_freenrgs], freenrgs_file )
 
     pmf_f = calculatePMF(dg_f)
     pmf_b = calculatePMF(dg_b)
