@@ -49,326 +49,52 @@ using namespace SireStream;
 using namespace SireUnits::Dimension;
 
 /////////
-///////// Implementation of DataPoint
+///////// Implementation of TIPMF
 /////////
 
-static const RegisterMetaType<DataPoint> r_dp;
+static const RegisterMetaType<TIPMF> r_tipmf;
 
-QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const DataPoint &dp)
+QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const TIPMF &pmf)
 {
-    writeHeader(ds, r_dp, 1);
-    
-    ds << dp._x << dp._y
-       << dp._xminerr << dp._yminerr
-       << dp._xmaxerr << dp._ymaxerr;
-    
-    return ds;
-}
-
-QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, DataPoint &dp)
-{
-    VersionID v = readHeader(ds, r_dp);
-    
-    if (v == 1)
-    {
-        ds >> dp._x >> dp._y
-           >> dp._xminerr >> dp._yminerr
-           >> dp._xmaxerr >> dp._ymaxerr;
-    }
-    else
-        throw version_error(v, "1", r_dp, CODELOC);
-    
-    return ds;
-}
-
-/** Constructor. This constructs the point (0,0) with no error */
-DataPoint::DataPoint()
-          : _x(0), _y(0), _xminerr(0), _yminerr(0), _xmaxerr(0), _ymaxerr(0)
-{}
-
-/** Construct the point (x,y) with no error */
-DataPoint::DataPoint(double x, double y)
-          : _x(x), _y(y), _xminerr(0), _yminerr(0), _xmaxerr(0), _ymaxerr(0)
-{}
-
-/** Construct the point (x,y) with error (xerror,yerror) */
-DataPoint::DataPoint(double x, double y, double xerror, double yerror)
-          : _x(x), _y(y), _xminerr(std::abs(xerror)), _yminerr(std::abs(yerror)),
-            _xmaxerr(std::abs(xerror)), _ymaxerr(std::abs(yerror))
-{}
-
-/** Construct the point (x,y) with a minimum error of (xminerror,yminerror)
-    and a maximum error of (xmaxerror,ymaxerror). This is for situations where
-    there may be multiple different error measures on a point and you want
-    to store the range of errors (based on a range of error estimates) */
-DataPoint::DataPoint(double x, double y, double xminerror, double yminerror,
-                     double xmaxerror, double ymaxerror)
-          : _x(x), _y(y),
-            _xminerr(std::abs(xminerror)), _yminerr(std::abs(yminerror)),
-            _xmaxerr(std::abs(xmaxerror)), _ymaxerr(std::abs(ymaxerror))
-{
-    if (_xminerr > _xmaxerr)
-        qSwap(_xminerr, _xmaxerr);
-    
-    if (_yminerr > _ymaxerr)
-        qSwap(_yminerr, _ymaxerr);
-}
-
-/** Copy constructor */
-DataPoint::DataPoint(const DataPoint &other)
-          : _x(other._x), _y(other._y),
-            _xminerr(other._xminerr), _yminerr(other._yminerr),
-            _xmaxerr(other._xmaxerr), _ymaxerr(other._ymaxerr)
-{}
-
-/** Destructor */
-DataPoint::~DataPoint()
-{}
-
-/** Copy assignment operator */
-DataPoint& DataPoint::operator=(const DataPoint &other)
-{
-    if (this != &other)
-    {
-        _x = other._x;
-        _y = other._y;
-        _xminerr = other._xminerr;
-        _yminerr = other._yminerr;
-        _xmaxerr = other._xmaxerr;
-        _ymaxerr = other._ymaxerr;
-    }
-    
-    return *this;
-}
-
-/** Comparison operator */
-bool DataPoint::operator==(const DataPoint &other) const
-{
-    return _x == other._x and _y == other._y and
-           _xminerr == other._xminerr and _yminerr == other._yminerr and
-           _xmaxerr == other._xmaxerr and _ymaxerr == other._ymaxerr;
-}
-
-/** Comparison operator */
-bool DataPoint::operator!=(const DataPoint &other) const
-{
-    return not operator==(other);
-}
-
-const char* DataPoint::what() const
-{
-    return DataPoint::typeName();
-}
-
-const char* DataPoint::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<DataPoint>() );
-}
-
-QString DataPoint::toString() const
-{
-    if (hasError())
-    {
-        QString xstr;
-        QString ystr;
-    
-        if (hasXError())
-        {
-            if (xMinError() != xMaxError())
-            {
-                xstr = QString("%1 +/- %2 [%3]").arg(x()).arg(xMinError()).arg(xMaxError());
-            }
-            else
-            {
-                xstr = QString("%1 +/- %2").arg(x()).arg(xError());
-            }
-        }
-        else
-            xstr = QString("%1").arg(x());
-
-        if (hasYError())
-        {
-            if (yMinError() != yMaxError())
-            {
-                ystr = QString("%1 +/- %2 [%3]").arg(y()).arg(yMinError()).arg(yMaxError());
-            }
-            else
-            {
-                ystr = QString("%1 +/- %2").arg(y()).arg(yError());
-            }
-        }
-        else
-            ystr = QString("%1").arg(y());
-        
-        return QString("DataPoint( %1, %2 )").arg(xstr, ystr);
-    }
-    else
-        return QString("DataPoint( %1, %2 )").arg(x()).arg(y());
-}
-
-/** Return the x value of the point */
-double DataPoint::x() const
-{
-    return _x;
-}
-
-/** Return the y value of the point */
-double DataPoint::y() const
-{
-    return _y;
-}
-
-/** Return the error on the x value. This is the average
-    of the minimum and maximum error */
-double DataPoint::xError() const
-{
-    return 0.5 * (_xminerr + _xmaxerr);
-}
-
-/** Return the error on the y value. This is the average
-    of the minimum and maximum error */
-double DataPoint::yError() const
-{
-    return 0.5 * (_yminerr + _ymaxerr);
-}
-
-/** Return the minimum size of the error on the x value */
-double DataPoint::xMinError() const
-{
-    return _xminerr;
-}
-
-/** Return the minimum size of the error on the y value */
-double DataPoint::yMinError() const
-{
-    return _yminerr;
-}
-
-/** Return the maximum size of the error on the x value */
-double DataPoint::xMaxError() const
-{
-    return _xmaxerr;
-}
-
-/** Return the maximum size of the error on the y value */
-double DataPoint::yMaxError() const
-{
-    return _ymaxerr;
-}
-
-/** Return whether or not this data point has any error */
-bool DataPoint::hasError() const
-{
-    return _xminerr > 0 or _yminerr > 0;
-}
-
-/** Return whether or not this data point has an error range */
-bool DataPoint::hasErrorRange() const
-{
-    return _xminerr != _xmaxerr or _yminerr != _ymaxerr;
-}
-
-/** Return whether or not there is any error in the x value */
-bool DataPoint::hasXError() const
-{
-    return _xminerr > 0;
-}
-
-/** Return whether or not there is an error range on the x value */
-bool DataPoint::hasXErrorRange() const
-{
-    return _xminerr != _xmaxerr;
-}
-
-/** Return whether or not there is any error in the y value */
-bool DataPoint::hasYError() const
-{
-    return _yminerr > 0;
-}
-
-/** Return whether or not there is an error range on the x value */
-bool DataPoint::hasYErrorRange() const
-{
-    return _yminerr != _ymaxerr;
-}
-
-/** Return whether or not this data point is equal to the other, within
-    the error range of the two points */
-bool DataPoint::equalWithinError(const DataPoint &other) const
-{
-    return x() + xError() >= other.x() - other.xError() and
-           x() - xError() <= other.x() + other.xError() and
-    
-           y() + yError() >= other.y() - other.yError() and
-           y() - yError() <= other.y() + other.yError();
-}
-
-/** Return whether or not this data point in equal to the other, within
-    the minimum error range of the two points */
-bool DataPoint::equalWithinMinError(const DataPoint &other) const
-{
-    return x() + xMinError() >= other.x() - other.xMinError() and
-           x() - xMinError() <= other.x() + other.xMinError() and
-    
-           y() + yMinError() >= other.y() - other.yMinError() and
-           y() - yMinError() <= other.y() + other.yMinError();
-}
-
-/** Return whether or not this data point in equal to the other, within
-    the maximum error range of the two points */
-bool DataPoint::equalWithinMaxError(const DataPoint &other) const
-{
-    return x() + xMaxError() >= other.x() - other.xMaxError() and
-           x() - xMaxError() <= other.x() + other.xMaxError() and
-    
-           y() + yMaxError() >= other.y() - other.yMaxError() and
-           y() - yMaxError() <= other.y() + other.yMaxError();
-}
-
-/////////
-///////// Implementation of PMF
-/////////
-
-static const RegisterMetaType<PMF> r_pmf;
-
-QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const PMF &pmf)
-{
-    writeHeader(ds, r_pmf, 1);
+    writeHeader(ds, r_tipmf, 1);
     
     SharedDataStream sds(ds);
     
-    sds << pmf.grads << pmf.range_min << pmf.range_max << pmf.npoly;
+    sds << pmf.grads << pmf.range_min << pmf.range_max << pmf.npoly
+        << static_cast<const PMF&>(pmf);
     
     return ds;
 }
 
-QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, PMF &pmf)
+QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, TIPMF &pmf)
 {
-    VersionID v = readHeader(ds, r_pmf);
+    VersionID v = readHeader(ds, r_tipmf);
     
     if (v == 1)
     {
         SharedDataStream sds(ds);
         
-        sds >> pmf.grads >> pmf.range_min >> pmf.range_max >> pmf.npoly;
+        sds >> pmf.grads >> pmf.range_min >> pmf.range_max >> pmf.npoly
+            >> static_cast<PMF&>(pmf);
+        
         pmf.recalculate();
     }
     else
-        throw version_error(v, "1", r_pmf, CODELOC);
+        throw version_error(v, "1", r_tipmf, CODELOC);
     
     return ds;
 }
 
 /** Construct a PMF that will use 10 polynomials to fit
     and integrate the gradients between 0 and 1 */
-PMF::PMF() : ConcreteProperty<PMF,Property>(),
-             range_min(0), range_max(1), quad_value(0), npoly(10)
+TIPMF::TIPMF() : ConcreteProperty<TIPMF,PMF>(),
+                 range_min(0), range_max(1), quad_value(0), npoly(10)
 {}
 
 /** Construct a PMF that will use the passed number of polynomials
     to fit and integrate the gradients between 0 and 1 */
-PMF::PMF(int order) : ConcreteProperty<PMF,Property>(),
-                      range_min(0), range_max(1), quad_value(0), npoly(order)
+TIPMF::TIPMF(int order) : ConcreteProperty<TIPMF,PMF>(),
+                          range_min(0), range_max(1), quad_value(0), npoly(order)
 {
     if (order <= 0)
         npoly = 1;
@@ -378,9 +104,9 @@ PMF::PMF(int order) : ConcreteProperty<PMF,Property>(),
 
 /** Construct a PMF that will use 10 polynomials to fit and integrate
     the gradients in the passed range */
-PMF::PMF(double rmin, double rmax)
-    : ConcreteProperty<PMF,Property>(),
-      range_min(rmin), range_max(rmax), quad_value(0), npoly(10)
+TIPMF::TIPMF(double rmin, double rmax)
+      : ConcreteProperty<TIPMF,PMF>(),
+        range_min(rmin), range_max(rmax), quad_value(0), npoly(10)
 {
     if (range_min > range_max)
         qSwap(range_min, range_max);
@@ -388,9 +114,9 @@ PMF::PMF(double rmin, double rmax)
 
 /** Construct a PMF that will use the passed number of polynomials to fit and
     integrate the gradients in the passed range */
-PMF::PMF(double min, double max, int order)
-    : ConcreteProperty<PMF,Property>(),
-      range_min(min), range_max(max), quad_value(0), npoly(order)
+TIPMF::TIPMF(double min, double max, int order)
+      : ConcreteProperty<TIPMF,PMF>(),
+        range_min(min), range_max(max), quad_value(0), npoly(order)
 {
     if (order <= 0)
         npoly = 1;
@@ -403,7 +129,7 @@ PMF::PMF(double min, double max, int order)
 
 /** Set the order (number of polynomials) to fit the gradients for
     PMF integration */
-void PMF::setOrder(int order)
+void TIPMF::setOrder(int order)
 {
     if (order <= 0)
         npoly = 1;
@@ -416,7 +142,7 @@ void PMF::setOrder(int order)
 }
 
 /** Set the range of integration */
-void PMF::setRange(double min_x, double max_x)
+void TIPMF::setRange(double min_x, double max_x)
 {
     range_min = min_x;
     range_max = max_x;
@@ -428,7 +154,7 @@ void PMF::setRange(double min_x, double max_x)
 }
 
 /** Set the raw gradients to be integrated */
-void PMF::setGradients(const QVector<DataPoint> &gradients)
+void TIPMF::setGradients(const QVector<DataPoint> &gradients)
 {
     grads = gradients;
     
@@ -455,34 +181,36 @@ void PMF::setGradients(const QVector<DataPoint> &gradients)
 
 /** Return the order (number of polynomials) used to integrate
     the gradients to get the PMF */
-int PMF::order() const
+int TIPMF::order() const
 {
     return npoly;
 }
 
 /** Return the minimum value of the range of integration */
-double PMF::rangeMin() const
+double TIPMF::rangeMin() const
 {
     return range_min;
 }
 
 /** Return the maximum value of the range of integration */
-double PMF::rangeMax() const
+double TIPMF::rangeMax() const
 {
     return range_max;
 }
 
 /** Internal function used to fit the raw gradients to a set
     of polynomials and to then integrate those to obtain the PMF */
-void PMF::recalculate()
+void TIPMF::recalculate()
 {
     if (grads.isEmpty())
     {
         smoothed_grads = QVector<DataPoint>();
-        vals = QVector<DataPoint>();
         quad_value = 0;
+        setValues(QVector<DataPoint>());
         return;
     }
+
+    QVector<DataPoint> vals;
 
     //we will integrate these gradients using curve fitting to the underlying
     //gradients - this uses the "regress" code in third_party/regress.h
@@ -745,27 +473,28 @@ void PMF::recalculate()
         
         quad_value = regress_plus_endpoints.DoQuadrature();
     }
+    
+    setValues(vals);
 }
 
 /** Copy constructor */
-PMF::PMF(const PMF &other)
-    : ConcreteProperty<PMF,Property>(other),
-      grads(other.grads), smoothed_grads(other.smoothed_grads),
-      vals(other.vals), range_min(other.range_min), range_max(other.range_max),
-      quad_value(other.quad_value), npoly(other.npoly)
+TIPMF::TIPMF(const TIPMF &other)
+      : ConcreteProperty<TIPMF,PMF>(other),
+        grads(other.grads), smoothed_grads(other.smoothed_grads),
+        range_min(other.range_min), range_max(other.range_max),
+        quad_value(other.quad_value), npoly(other.npoly)
 {}
 
 /** Destructor */
-PMF::~PMF()
+TIPMF::~TIPMF()
 {}
 
 /** Copy assignment operator */
-PMF& PMF::operator=(const PMF &other)
+TIPMF& TIPMF::operator=(const TIPMF &other)
 {
     if (this != &other)
     {
         grads = other.grads;
-        vals = other.vals;
         smoothed_grads = other.smoothed_grads;
         range_min = other.range_min;
         range_max = other.range_max;
@@ -777,68 +506,65 @@ PMF& PMF::operator=(const PMF &other)
 }
 
 /** Comparison operator */
-bool PMF::operator==(const PMF &other) const
+bool TIPMF::operator==(const TIPMF &other) const
 {
     return grads == other.grads and range_min == other.range_min and
-           range_max == other.range_max and npoly == other.npoly;
+           range_max == other.range_max and npoly == other.npoly and
+           PMF::operator==(other);
 }
 
 /** Comparison operator */
-bool PMF::operator!=(const PMF &other) const
+bool TIPMF::operator!=(const TIPMF &other) const
 {
     return not operator==(other);
 }
 
-const char* PMF::what() const
+const char* TIPMF::what() const
 {
-    return PMF::typeName();
+    return TIPMF::typeName();
 }
 
-const char* PMF::typeName()
+const char* TIPMF::typeName()
 {
-    return QMetaType::typeName( qMetaTypeId<PMF>() );
+    return QMetaType::typeName( qMetaTypeId<TIPMF>() );
 }
 
 /** Return the free energy calculated using integration of the 
     polynomial fitted to the gradients */
-double PMF::integral() const
+double TIPMF::integral() const
 {
-    if (vals.isEmpty())
+    if (this->isEmpty())
         return 0;
     else
-        return vals.back().y();
+        return values().back().y();
 }
 
 /** Return the free energy calculated using trapezium quadrature
     from the raw gradients */
-double PMF::quadrature() const
+double TIPMF::quadrature() const
 {
     return quad_value;
 }
 
-QString PMF::toString() const
+QString TIPMF::toString() const
 {
-    if (vals.isEmpty())
-        return QString("PMF()");
+    if (this->isEmpty())
+        return QString("TIPMF()");
     else
-        return QString("PMF( { integral() == %1, quadrature() == %2 } )")
-                    .arg(integral()).arg(quadrature());
-}
-
-/** Return the raw data for the PMF */
-QVector<DataPoint> PMF::values() const
-{
-    return vals;
+        return QString("TIPMF( { integral() == %1, quadrature() == %2, "
+                       "deltaG() == %3, error() == %4 } )")
+                    .arg(integral()).arg(quadrature())
+                    .arg(deltaG()).arg(error());
 }
 
 /** Return the raw gradients used to calculate the PMF */
-QVector<DataPoint> PMF::gradients() const
+QVector<DataPoint> TIPMF::gradients() const
 {
     return grads;
 }
 
 /** Return the smoothed (fitted) gradients used to calculate the PMF */
-QVector<DataPoint> PMF::smoothedGradients() const
+QVector<DataPoint> TIPMF::smoothedGradients() const
 {
     return smoothed_grads;
 }
@@ -846,9 +572,9 @@ QVector<DataPoint> PMF::smoothedGradients() const
 /** Return a copy of the PMF where the gradients at the end points
     (the first and last gradients) have been removed. This can be used
     to estimate the effect of end-point error */
-PMF PMF::dropEndPoints() const
+TIPMF TIPMF::dropEndPoints() const
 {
-    PMF ret(*this);
+    TIPMF ret(*this);
     
     QVector<DataPoint> reduced_grads = grads;
     
@@ -900,11 +626,57 @@ QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, Gradients &grads)
 Gradients::Gradients() : ConcreteProperty<Gradients,Property>(), delta_lam(0)
 {}
 
+void Gradients::checkSane() const
+{
+    Temperature t;
+    bool have_first = false;
+    
+    for (QMap<double,FreeEnergyAverage>::const_iterator it = fwds.constBegin();
+         it != fwds.constEnd();
+         ++it)
+    {
+        if (not have_first)
+        {
+            t = it.value().temperature();
+            have_first = true;
+        }
+        else if (it.value().temperature() != t)
+        {
+            throw SireError::invalid_arg( QObject::tr(
+                "You cannot construct a set of TI gradients using free energy "
+                "averages collected at different temperatures. %1 vs. %2")
+                    .arg(t.toString()).arg(it.value().temperature().toString()),
+                        CODELOC );
+        }
+    }
+
+    for (QMap<double,FreeEnergyAverage>::const_iterator it = bwds.constBegin();
+         it != bwds.constEnd();
+         ++it)
+    {
+        if (not have_first)
+        {
+            t = it.value().temperature();
+            have_first = true;
+        }
+        else if (it.value().temperature() != t)
+        {
+            throw SireError::invalid_arg( QObject::tr(
+                "You cannot construct a set of TI gradients using free energy "
+                "averages collected at different temperatures. %1 vs. %2")
+                    .arg(t.toString()).arg(it.value().temperature().toString()),
+                        CODELOC );
+        }
+    }
+}
+
 /** Construct from the passed full TI gradients */
 Gradients::Gradients(const QMap<double,FreeEnergyAverage> &gradients)
           : ConcreteProperty<Gradients,Property>(),
             fwds(gradients), bwds(gradients), delta_lam(0)
-{}
+{
+    checkSane();
+}
 
 /** Construct from the passed finite difference TI gradients, using the passed
     value of delta lambda */
@@ -918,6 +690,8 @@ Gradients::Gradients(const QMap<double,FreeEnergyAverage> &gradients,
                 "How can you have finite difference gradients with a value of "
                 "delta lambda that is less than or equal to zero? %1")
                     .arg(delta_lam), CODELOC );
+
+    checkSane();
 }
 
 /** Construct from the passed finite difference TI forwards and backwards
@@ -963,6 +737,8 @@ Gradients::Gradients(const QMap<double,FreeEnergyAverage> &forwards,
                 bwds.insert( it.key(), it.value() );
         }
     }
+
+    checkSane();
 }
 
 /** Copy constructor */
@@ -1012,6 +788,26 @@ MolarEnergy Gradients::operator[](double lam) const
     return gradient(lam);
 }
 
+/** Return the temperature at which the gradients were collected */
+Temperature Gradients::temperature() const
+{
+    if (this->isEmpty())
+        return Temperature(0);
+    else
+    {
+        if (not fwds.isEmpty())
+            return fwds.constBegin()->temperature();
+        else
+            return bwds.constBegin()->temperature();
+    }
+}
+
+QString Gradients::toString() const
+{
+    return QObject::tr("Gradients( nLambdaValues() == %1, nSamples() == %2, temperature() == %3 )")
+                .arg(nLambdaValues()).arg(nSamples()).arg(temperature().toString());
+}
+
 const char* Gradients::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Gradients>() );
@@ -1020,6 +816,99 @@ const char* Gradients::typeName()
 const char* Gradients::what() const
 {
     return Gradients::typeName();
+}
+
+/** Self-addition operator */
+Gradients& Gradients::operator+=(const Gradients &other)
+{
+    if (this->isEmpty())
+    {
+        this->operator=(other);
+        return *this;
+    }
+    else if (other.isEmpty())
+    {
+        return *this;
+    }
+    else
+    {
+        if (delta_lam != other.delta_lam)
+            throw SireError::incompatible_error( QObject::tr(
+                    "Cannot combine together these free energy Gradients "
+                    "as the values of delta lambda are different. %1 vs. %2.")
+                        .arg(delta_lam).arg(other.delta_lam), CODELOC );
+
+        if (temperature() != other.temperature())
+            throw SireError::incompatible_error( QObject::tr(
+                "Cannot combine together these two free energy Gradients "
+                "as the temperatures are different. %1 vs. %2.")
+                    .arg(temperature().toString())
+                    .arg(other.temperature().toString()), CODELOC );
+        
+        QMap<double,FreeEnergyAverage> new_fwds = fwds;
+        QMap<double,FreeEnergyAverage> new_bwds = bwds;
+    
+        for (QMap<double,FreeEnergyAverage>::const_iterator it = other.fwds.constBegin();
+             it != other.fwds.constEnd();
+             ++it)
+        {
+            double lam = it.key();
+            const FreeEnergyAverage &grad = it.value();
+            
+            if (not grad.nSamples() == 0)
+            {
+                if (new_fwds.contains(lam))
+                {
+                    new_fwds[lam] += grad;
+                }
+                else
+                {
+                    new_fwds.insert(lam, grad);
+                }
+            }
+        }
+        
+        for (QMap<double,FreeEnergyAverage>::const_iterator it = other.bwds.constBegin();
+             it != other.bwds.constEnd();
+             ++it)
+        {
+            double lam = it.key();
+            const FreeEnergyAverage &grad = it.value();
+            
+            if (not grad.nSamples() == 0)
+            {
+                if (new_bwds.contains(lam))
+                {
+                    new_bwds[lam] += grad;
+                }
+                else
+                {
+                    new_bwds.insert(lam, grad);
+                }
+            }
+        }
+        
+        if (new_fwds == new_bwds)
+        {
+            fwds = new_fwds;
+            bwds = new_fwds;
+        }
+        else
+        {
+            fwds = new_fwds;
+            bwds = new_bwds;
+        }
+        
+        return *this;
+    }
+}
+
+/** Addition operator */
+Gradients Gradients::operator+(const Gradients &other) const
+{
+    Gradients ret(*this);
+    ret += other;
+    return ret;
 }
 
 /** Merge together the passed list of Gradients into a single object.
@@ -1032,108 +921,12 @@ Gradients Gradients::merge(const QList<Gradients> &gradients)
     else if (gradients.count() == 1)
         return gradients.at(0);
     
-    bool have_first = false;
-    double delta_lam;
-    Temperature temperature;
+    Gradients ret = gradients.at(0);
     
-    QMap<double,FreeEnergyAverage> fwds;
-    QMap<double,FreeEnergyAverage> bwds;
-    
-    foreach (const Gradients &grads, gradients)
+    for (int i=1; i<gradients.count(); ++i)
     {
-        if (have_first)
-        {
-            if (grads.delta_lam != delta_lam)
-                throw SireError::incompatible_error( QObject::tr(
-                        "Cannot combine together this set of free energy Gradients "
-                        "as the values of delta lambda in the set are different. %1 vs. %2.")
-                            .arg(delta_lam).arg(grads.delta_lam), CODELOC );
-        }
-    
-        for (QMap<double,FreeEnergyAverage>::const_iterator it = grads.fwds.constBegin();
-             it != grads.fwds.constEnd();
-             ++it)
-        {
-            double lam = it.key();
-            const FreeEnergyAverage &grad = it.value();
-            
-            if (not grad.nSamples() == 0)
-            {
-                if (have_first)
-                {
-                    if (grad.temperature() != temperature)
-                        throw SireError::incompatible_error( QObject::tr(
-                            "Cannot combine together this set of free energy Gradients "
-                            "as the temperatures of some of the set are different. %1 vs. %2.")
-                                .arg(temperature.toString())
-                                .arg(grad.temperature().toString()), CODELOC );
-                }
-                else
-                {
-                    have_first = true;
-                    delta_lam = grads.delta_lam;
-                    temperature = grad.temperature();
-                }
-                
-                if (fwds.contains(lam))
-                {
-                    fwds[lam] += grad;
-                }
-                else
-                {
-                    fwds.insert(lam, grad);
-                }
-            }
-        }
-        
-        if (grads.fwds == grads.bwds)
-        {
-            bwds = fwds;
-        }
-        else
-        {
-            for (QMap<double,FreeEnergyAverage>::const_iterator it = grads.bwds.constBegin();
-                 it != grads.bwds.constEnd();
-                 ++it)
-            {
-                double lam = it.key();
-                const FreeEnergyAverage &grad = it.value();
-                
-                if (not grad.nSamples() == 0)
-                {
-                    if (have_first)
-                    {
-                        if (grad.temperature() != temperature)
-                            throw SireError::incompatible_error( QObject::tr(
-                                "Cannot combine together this set of free energy Gradients "
-                                "as the temperatures of some of the set are different. %1 vs. %2.")
-                                    .arg(temperature.toString())
-                                    .arg(grad.temperature().toString()), CODELOC );
-                    }
-                    else
-                    {
-                        have_first = true;
-                        delta_lam = grads.delta_lam;
-                        temperature = grad.temperature();
-                    }
-                    
-                    if (bwds.contains(lam))
-                    {
-                        bwds[lam] += grad;
-                    }
-                    else
-                    {
-                        bwds.insert(lam, grad);
-                    }
-                }
-            }
-        }
+        ret += gradients.at(i);
     }
-    
-    Gradients ret;
-    ret.fwds = fwds;
-    ret.bwds = bwds;
-    ret.delta_lam = delta_lam;
     
     return ret;
 }
@@ -1312,22 +1105,36 @@ QVector<DataPoint> Gradients::values() const
         if (delta_lam == 0)
         {
             //pure TI data
-            const FreeEnergyAverage &avg = *(fwds.constFind(lam));
-            points[i] = DataPoint(lam, avg.histogram().mean(), 0,
-                                       avg.histogram().standardError(90));
+            if (fwds.contains(lam))
+            {
+                const FreeEnergyAverage &avg = *(fwds.constFind(lam));
+                points[i] = DataPoint(lam, avg.histogram().mean(), 0,
+                                           avg.histogram().standardError(90));
+            }
         }
         else
         {
-            const FreeEnergyAverage &fwdsavg = *(fwds.constFind(lam));
-            const FreeEnergyAverage &bwdsavg = *(bwds.constFind(lam));
+            const FreeEnergyAverage *fwdsavg = 0;
+            const FreeEnergyAverage *bwdsavg = 0;
             
-            if (fwdsavg == bwdsavg)
+            if (fwds.contains(lam))
+                fwdsavg = &(*(fwds.constFind(lam)));
+            
+            if (bwds.contains(lam))
+                bwdsavg = &(*(bwds.constFind(lam)));
+
+            if (bwdsavg == 0)
+                bwdsavg = fwdsavg;
+            else if (fwdsavg == 0)
+                fwdsavg = bwdsavg;
+            
+            if (fwdsavg == bwdsavg or (*fwdsavg == *bwdsavg))
             {
-                double fwdsval = fwdsavg.average() / delta_lam;
-                double fwdstay = fwdsavg.taylorExpansion() / delta_lam;
-                double fwdserr = fwdsavg.histogram().standardError(90) / delta_lam;
+                double fwdsval = fwdsavg->average() / delta_lam;
+                double fwdstay = fwdsavg->taylorExpansion() / delta_lam;
+                double fwdserr = fwdsavg->histogram().standardError(90) / delta_lam;
                 
-                double val = 0.5 * (fwdsavg + fwdstay);
+                double val = 0.5 * (fwdsval + fwdstay);
                 double maxerr = std::abs(fwdsval - fwdstay);
                 
                 if (fwdserr > maxerr)
@@ -1337,13 +1144,13 @@ QVector<DataPoint> Gradients::values() const
             }
             else
             {
-                double fwdsval = fwdsavg.average() / delta_lam;
-                double bwdsval = bwdsavg.average() / delta_lam;
-                double fwdstay = fwdsavg.taylorExpansion() / delta_lam;
-                double bwdstay = bwdsavg.taylorExpansion() / delta_lam;
+                double fwdsval = fwdsavg->average() / delta_lam;
+                double bwdsval = bwdsavg->average() / delta_lam;
+                double fwdstay = fwdsavg->taylorExpansion() / delta_lam;
+                double bwdstay = bwdsavg->taylorExpansion() / delta_lam;
                 
-                double fwdserr = fwdsavg.histogram().standardError(90) / delta_lam;
-                double bwdserr = bwdsavg.histogram().standardError(90) / delta_lam;
+                double fwdserr = fwdsavg->histogram().standardError(90) / delta_lam;
+                double bwdserr = bwdsavg->histogram().standardError(90) / delta_lam;
                 
                 double val = 0.25 * (fwdsval + bwdsval + fwdstay + bwdstay);
                 double maxerr = qMax(fwdserr, bwdserr);
@@ -1380,28 +1187,31 @@ QVector<DataPoint> Gradients::forwardsValues() const
     {
         double lam = lamvals[i];
     
-        if (delta_lam == 0)
+        if (fwds.contains(lam))
         {
-            //pure TI data
-            const FreeEnergyAverage &avg = *(fwds.constFind(lam));
-            points[i] = DataPoint(lam, avg.histogram().mean(), 0,
-                                       avg.histogram().standardError(90));
-        }
-        else
-        {
-            const FreeEnergyAverage &fwdsavg = *(fwds.constFind(lam));
+            if (delta_lam == 0)
+            {
+                //pure TI data
+                const FreeEnergyAverage &avg = *(fwds.constFind(lam));
+                points[i] = DataPoint(lam, avg.histogram().mean(), 0,
+                                           avg.histogram().standardError(90));
+            }
+            else
+            {
+                const FreeEnergyAverage &fwdsavg = *(fwds.constFind(lam));
+                
+                double fwdsval = fwdsavg.average() / delta_lam;
+                double fwdstay = fwdsavg.taylorExpansion() / delta_lam;
+                double fwdserr = fwdsavg.histogram().standardError(90) / delta_lam;
+                
+                double val = 0.5 * (fwdsavg + fwdstay);
+                double maxerr = std::abs(fwdsval - fwdstay);
+                
+                if (fwdserr > maxerr)
+                    qSwap(fwdserr, maxerr);
             
-            double fwdsval = fwdsavg.average() / delta_lam;
-            double fwdstay = fwdsavg.taylorExpansion() / delta_lam;
-            double fwdserr = fwdsavg.histogram().standardError(90) / delta_lam;
-            
-            double val = 0.5 * (fwdsavg + fwdstay);
-            double maxerr = std::abs(fwdsval - fwdstay);
-            
-            if (fwdserr > maxerr)
-                qSwap(fwdserr, maxerr);
-        
-            points[i] = DataPoint(lam, val, 0, fwdserr, 0, maxerr);
+                points[i] = DataPoint(lam, val, 0, fwdserr, 0, maxerr);
+            }
         }
     }
     
@@ -1424,28 +1234,31 @@ QVector<DataPoint> Gradients::backwardsValues() const
     {
         double lam = lamvals[i];
     
-        if (delta_lam == 0)
+        if (bwds.contains(lam))
         {
-            //pure TI data
-            const FreeEnergyAverage &avg = *(bwds.constFind(lam));
-            points[i] = DataPoint(lam, avg.histogram().mean(), 0,
-                                       avg.histogram().standardError(90));
-        }
-        else
-        {
-            const FreeEnergyAverage &bwdsavg = *(bwds.constFind(lam));
+            if (delta_lam == 0)
+            {
+                //pure TI data
+                const FreeEnergyAverage &avg = *(bwds.constFind(lam));
+                points[i] = DataPoint(lam, avg.histogram().mean(), 0,
+                                           avg.histogram().standardError(90));
+            }
+            else
+            {
+                const FreeEnergyAverage &bwdsavg = *(bwds.constFind(lam));
+                
+                double bwdsval = bwdsavg.average() / delta_lam;
+                double bwdstay = bwdsavg.taylorExpansion() / delta_lam;
+                double bwdserr = bwdsavg.histogram().standardError(90) / delta_lam;
+                
+                double val = 0.5 * (bwdsavg + bwdstay);
+                double maxerr = std::abs(bwdsval - bwdstay);
+                
+                if (bwdserr > maxerr)
+                    qSwap(bwdserr, maxerr);
             
-            double bwdsval = bwdsavg.average() / delta_lam;
-            double bwdstay = bwdsavg.taylorExpansion() / delta_lam;
-            double bwdserr = bwdsavg.histogram().standardError(90) / delta_lam;
-            
-            double val = 0.5 * (bwdsavg + bwdstay);
-            double maxerr = std::abs(bwdsval - bwdstay);
-            
-            if (bwdserr > maxerr)
-                qSwap(bwdserr, maxerr);
-        
-            points[i] = DataPoint(lam, val, 0, bwdserr, 0, maxerr);
+                points[i] = DataPoint(lam, val, 0, bwdserr, 0, maxerr);
+            }
         }
     }
     
@@ -1454,9 +1267,9 @@ QVector<DataPoint> Gradients::backwardsValues() const
 
 /** Integrate these gradients between 'range_min' to 'range_max' using
     a polynomial of passed order and return them as a potential of mean force (PMF) */
-PMF Gradients::integrate(double range_min, double range_max, int order) const
+TIPMF Gradients::integrate(double range_min, double range_max, int order) const
 {
-    PMF pmf(range_min, range_max, order);
+    TIPMF pmf(range_min, range_max, order);
     
     if (not this->isEmpty())
         pmf.setGradients(this->values());
@@ -1466,21 +1279,21 @@ PMF Gradients::integrate(double range_min, double range_max, int order) const
 
 /** Integrate these gradients between 'range_min' to 'range_max' using
     a polynomial of order 10 and return them as a potential of mean force (PMF) */
-PMF Gradients::integrate(double range_min, double range_max) const
+TIPMF Gradients::integrate(double range_min, double range_max) const
 {
     return this->integrate(range_min, range_max, qMax(2, fwds.count() - 2));
 }
 
 /** Integrate these gradients between 0 and 1 using a polynomial
     of passed order and return them as a potential of mean force (PMF) */
-PMF Gradients::integrate(int order) const
+TIPMF Gradients::integrate(int order) const
 {
     return this->integrate(0, 1, order);
 }
 
 /** Integrate these gradients between 0 and 1 using a polynomial of 
     order ngradients-2 and return them as a potential of mean force (PMF) */
-PMF Gradients::integrate() const
+TIPMF Gradients::integrate() const
 {
     return this->integrate(0, 1, qMax(2, fwds.count() - 2));
 }

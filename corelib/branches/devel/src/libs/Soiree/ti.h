@@ -29,11 +29,7 @@
 #ifndef SOIREE_TI_H
 #define SOIREE_TI_H
 
-#include "SireMaths/freeenergyaverage.h"
-
-#include "SireUnits/dimensions.h"
-
-#include <boost/tuple/tuple.hpp>
+#include "Soiree/fep.h"
 
 SIRE_BEGIN_HEADER
 
@@ -41,8 +37,7 @@ namespace Soiree
 {
 class TI;
 class Gradients;
-class DataPoint;
-class PMF;
+class TIPMF;
 }
 
 QDataStream& operator<<(QDataStream&, const Soiree::TI&);
@@ -51,11 +46,8 @@ QDataStream& operator>>(QDataStream&, Soiree::TI&);
 QDataStream& operator<<(QDataStream&, const Soiree::Gradients&);
 QDataStream& operator>>(QDataStream&, Soiree::Gradients&);
 
-QDataStream& operator<<(QDataStream&, const Soiree::DataPoint&);
-QDataStream& operator>>(QDataStream&, Soiree::DataPoint&);
-
-QDataStream& operator<<(QDataStream&, const Soiree::PMF&);
-QDataStream& operator>>(QDataStream&, Soiree::PMF&);
+QDataStream& operator<<(QDataStream&, const Soiree::TIPMF&);
+QDataStream& operator>>(QDataStream&, Soiree::TIPMF&);
 
 namespace Soiree
 {
@@ -63,103 +55,37 @@ namespace Soiree
 using SireMaths::FreeEnergyAverage;
 using SireUnits::Dimension::MolarEnergy;
 
-/** This class represents a single datapoint on an x,y graph. The point
-    has associated errors (small and large) on both the x and y axes
-    
-    @author Christopher Woods
-*/
-class SOIREE_EXPORT DataPoint
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const DataPoint&);
-friend QDataStream& ::operator>>(QDataStream&, DataPoint&);
-
-public:
-    DataPoint();
-    DataPoint(double x, double y);
-    DataPoint(double x, double y,
-              double xerror, double yerror);
-    DataPoint(double x, double y,
-              double xminerror, double yminerror,
-              double xmaxerror, double ymaxerror);
-    
-    DataPoint(const DataPoint &other);
-    
-    ~DataPoint();
-    
-    DataPoint& operator=(const DataPoint &other);
-    
-    bool operator==(const DataPoint &other) const;
-    bool operator!=(const DataPoint &other) const;
-    
-    const char* what() const;
-    static const char* typeName();
-   
-    QString toString() const;
-    
-    double x() const;
-    double y() const;
-    
-    double xError() const;
-    double yError() const;
-    
-    double xMinError() const;
-    double yMinError() const;
-    
-    double xMaxError() const;
-    double yMaxError() const;
-    
-    bool hasError() const;
-    bool hasErrorRange() const;
-    
-    bool hasXError() const;
-    bool hasYError() const;
-    
-    bool hasXErrorRange() const;
-    bool hasYErrorRange() const;
-    
-    bool equalWithinError(const DataPoint &other) const;
-    bool equalWithinMinError(const DataPoint &other) const;
-    bool equalWithinMaxError(const DataPoint &other) const;
-    
-private:
-    /** The individual values of the data point */
-    double _x, _y, _xminerr, _yminerr, _xmaxerr, _ymaxerr;
-};
-
 /** This class contains the complete potential of mean force
     that has been created by integrating the TI gradients
-    
+  
     @author Christopher Woods
 */
-class SOIREE_EXPORT PMF : public SireBase::ConcreteProperty<PMF,SireBase::Property>
+class SOIREE_EXPORT TIPMF : public SireBase::ConcreteProperty<TIPMF,PMF>
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const PMF&);
-friend QDataStream& ::operator>>(QDataStream&, PMF&);
+friend QDataStream& ::operator<<(QDataStream&, const TIPMF&);
+friend QDataStream& ::operator>>(QDataStream&, TIPMF&);
 
 public:
-    PMF();
-    PMF(int order);
+    TIPMF();
+    TIPMF(int order);
     
-    PMF(double min_x, double max_x);
-    PMF(double min_x, double max_x, int order);
+    TIPMF(double min_x, double max_x);
+    TIPMF(double min_x, double max_x, int order);
     
-    PMF(const PMF &other);
+    TIPMF(const TIPMF &other);
     
-    ~PMF();
+    ~TIPMF();
     
-    PMF& operator=(const PMF &other);
+    TIPMF& operator=(const TIPMF &other);
     
-    bool operator==(const PMF &other) const;
-    bool operator!=(const PMF &other) const;
+    bool operator==(const TIPMF &other) const;
+    bool operator!=(const TIPMF &other) const;
     
     const char* what() const;
     static const char* typeName();
 
     QString toString() const;
-
-    QVector<DataPoint> values() const;
 
     QVector<DataPoint> gradients() const;
     QVector<DataPoint> smoothedGradients() const;
@@ -177,7 +103,7 @@ public:
     double integral() const;
     double quadrature() const;
 
-    PMF dropEndPoints() const;
+    TIPMF dropEndPoints() const;
 
 private:
     void recalculate();
@@ -187,9 +113,6 @@ private:
     
     /** The smoothed x,y gradients, with errors */
     QVector<DataPoint> smoothed_grads;
-    
-    /** The smoothed x,y points of the PMF, with errors */
-    QVector<DataPoint> vals;
     
     /** The minimum value of the range of the PMF */
     double range_min;
@@ -241,7 +164,14 @@ public:
     
     bool isEmpty() const;
     
+    QString toString() const;
+    
+    Gradients& operator+=(const Gradients &other);
+    Gradients operator+(const Gradients &other) const;
+    
     static Gradients merge(const QList<Gradients> &gradients);
+
+    SireUnits::Dimension::Temperature temperature() const;
 
     QList<double> lambdaValues() const;
     QList<double> keys() const;
@@ -263,14 +193,15 @@ public:
     MolarEnergy backwards(double lam) const;
     MolarEnergy gradient(double lam) const;
 
-    PMF integrate() const;
-    PMF integrate(int order) const;
+    TIPMF integrate() const;
+    TIPMF integrate(int order) const;
     
-    PMF integrate(double range_min, double range_max) const;
-    PMF integrate(double range_min, double range_max, int order) const;
-    
+    TIPMF integrate(double range_min, double range_max) const;
+    TIPMF integrate(double range_min, double range_max, int order) const;
 
 private:
+    void checkSane() const;
+
     /** The forwards values */
     QMap<double,FreeEnergyAverage> fwds;
 
@@ -364,13 +295,11 @@ private:
 
 Q_DECLARE_METATYPE( Soiree::Gradients )
 Q_DECLARE_METATYPE( Soiree::TI )
-Q_DECLARE_METATYPE( Soiree::DataPoint )
-Q_DECLARE_METATYPE( Soiree::PMF )
+Q_DECLARE_METATYPE( Soiree::TIPMF )
 
 SIRE_EXPOSE_CLASS( Soiree::Gradients )
 SIRE_EXPOSE_CLASS( Soiree::TI )
-SIRE_EXPOSE_CLASS( Soiree::DataPoint )
-SIRE_EXPOSE_CLASS( Soiree::PMF )
+SIRE_EXPOSE_CLASS( Soiree::TIPMF )
 
 SIRE_END_HEADER
 

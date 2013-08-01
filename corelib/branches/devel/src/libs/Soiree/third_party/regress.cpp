@@ -34,6 +34,8 @@
 
 #include "regress.h"
 
+#include "SireMaths/errors.h"
+
 /*
  * class constructor
 */
@@ -218,7 +220,9 @@ void Regress::DoPolynomial(
     {
         if ( !SetPivot( s ) )
         {
-            cout << "Error: matrix is singular" << endl; exit( 1 );
+            throw SireMaths::math_error( QObject::tr(
+                   "Cannot fit the polynomial as the matrix is singular."), CODELOC );
+            // cout << "Error: matrix is singular" << endl; // exit( 1 );
         }   // apply partial pivoting to the matrix and check for singularity
 
         for ( unsigned int i = ( s + 1 ); i < factor.size(); ++i )

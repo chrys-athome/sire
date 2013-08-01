@@ -843,7 +843,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
         QStringList words = line.split(" ", QString::SkipEmptyParts);
         //qDebug() << line;
         //qDebug() << words;
-        if ( words.length() < 1 )
+        if ( words.count() < 1 )
             continue;
         if ( line.startsWith("molecule") )
         {
@@ -1002,7 +1002,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
         }
         if ( line.startsWith("initial_form") and indihedral )
         {
-            for (int i=1 ; i < words.length() ; i++)
+            for (int i=1 ; i < words.count() ; i++)
             {
                 double parameter = words[i].toDouble();
                 init_form.append(parameter);
@@ -1011,7 +1011,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
         }
         if ( line.startsWith("final_form") and indihedral )
         {
-            for (int i=1 ; i < words.length() ; i++)
+            for (int i=1 ; i < words.count() ; i++)
             {
                 double parameter = words[i].toDouble();
                 final_form.append(parameter);

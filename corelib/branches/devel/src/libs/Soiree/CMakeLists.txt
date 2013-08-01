@@ -11,6 +11,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in Soiree
 set ( SOIREE_HEADERS
+      bennets.h
+      fep.h
       ti.h
     )
 
@@ -19,6 +21,8 @@ set ( SOIREE_SOURCES
 
       register_soiree.cpp
 
+      bennets.cpp
+      fep.cpp
       ti.cpp
 
       third_party/regress.cpp
