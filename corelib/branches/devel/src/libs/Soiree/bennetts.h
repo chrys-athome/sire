@@ -48,6 +48,8 @@ QDataStream& operator>>(QDataStream&, Soiree::BennettsRatios&);
 namespace Soiree
 {
 
+using SireMaths::BennettsFreeEnergyAverage;
+
 /** This class is used to hold a set of Bennets acceptance ratios
     for a single iteration
     
@@ -63,8 +65,8 @@ friend QDataStream& ::operator>>(QDataStream&, BennettsRatios&);
 public:
     BennettsRatios();
     BennettsRatios(const QList<double> &windows,
-                   const QMap<double,BennetsFreeEnergyAverage> &forwards_ratios,
-                   const QMap<double,BennetsFreeEnergyAverage> &backwards_ratios);
+                   const QMap<double,BennettsFreeEnergyAverage> &forwards_ratios,
+                   const QMap<double,BennettsFreeEnergyAverage> &backwards_ratios);
     
     BennettsRatios(const BennettsRatios &other);
     
@@ -99,8 +101,8 @@ public:
 
     QVector<DataPoint> values() const;
 
-    QVector<DataPoint> forwardsValues() const;
-    QVector<DataPoint> backwardsValues() const;
+    QVector<DataPoint> numerators() const;
+    QVector<DataPoint> denominators() const;
 
     QMap<double,BennettsFreeEnergyAverage> forwardsData() const;
     QMap<double,BennettsFreeEnergyAverage> backwardsData() const;
@@ -141,9 +143,9 @@ friend QDataStream& ::operator>>(QDataStream&, Bennetts&);
 public:
     Bennetts();
     
-    Bennets(const QList<double> &windows,
-            const QMap<double,BennettsFreeEnergyAverage> &forwards_ratios,
-            const QMap<double,BennettsFreeEnergyAverage> &backwards_ratios);
+    Bennetts(const QList<double> &windows,
+             const QMap<double,BennettsFreeEnergyAverage> &forwards_ratios,
+             const QMap<double,BennettsFreeEnergyAverage> &backwards_ratios);
 
     Bennetts(const BennettsRatios &ratios);
     
