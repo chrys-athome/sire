@@ -324,7 +324,7 @@ void TIPMF::recalculate()
             min_y = 0;
             min_min_y = 0;
         
-            for (int i=0; i<coeffs.size(); ++i)
+            for (size_t i=0; i<coeffs.size(); ++i)
             {
                 double power = i;
                 y += ( std::pow( x, power ) * coeffs[ i ] );
@@ -348,7 +348,7 @@ void TIPMF::recalculate()
         min_y = 0;
         min_min_y = 0;
     
-        for (int i=0; i<coeffs.size(); ++i)
+        for (size_t i=0; i<coeffs.size(); ++i)
         {
             double power = i;
             y += ( std::pow( x, power ) * coeffs[ i ] );
@@ -393,7 +393,7 @@ void TIPMF::recalculate()
             double min_area = 0;
             double min_min_area = 0;
         
-            for (int i=0; i<coeffs.size(); ++i)
+            for (size_t i=0; i<coeffs.size(); ++i)
             {
                 double power = double(i + 1);
                 
@@ -439,7 +439,7 @@ void TIPMF::recalculate()
             double min_area = 0;
             double min_min_area = 0;
         
-            for (int i=0; i<coeffs.size(); ++i)
+            for (size_t i=0; i<coeffs.size(); ++i)
             {
                 double power = double(i + 1);
                 
