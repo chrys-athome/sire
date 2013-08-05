@@ -538,9 +538,9 @@ static const RegisterMetaType<ExpAverage> r_expavg;
 /** Serialise to a binary datastream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const ExpAverage &expavg)
 {
-    writeHeader(ds, r_expavg, 1);
+    writeHeader(ds, r_expavg, 2);
     
-    ds << expavg.avgval << expavg.sclfac
+    ds << expavg.avgval << expavg.avgval2 << expavg.sclfac
        << static_cast<const Accumulator&>(expavg);
     
     return ds;
@@ -551,13 +551,20 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, ExpAverage &expavg)
 {
     VersionID v = readHeader(ds, r_expavg);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        ds >> expavg.avgval >> expavg.avgval2 >> expavg.sclfac
+           >> static_cast<Accumulator&>(expavg);
+    }
+    else if (v == 1)
     {
         ds >> expavg.avgval >> expavg.sclfac
            >> static_cast<Accumulator&>(expavg);
+        
+        expavg.avgval2 = expavg.avgval * expavg.avgval;;
     }
     else
-        throw version_error(v, "1", r_expavg, CODELOC);
+        throw version_error(v, "1,2", r_expavg, CODELOC);
         
     return ds;
 }
@@ -569,15 +576,7 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, ExpAverage &expavg)
 ExpAverage::ExpAverage(double scale_factor) 
            : ConcreteProperty<ExpAverage,Accumulator>(), 
              avgval(0), sclfac(scale_factor)
-{
-    if (scale_factor == 0)
-        throw SireError::invalid_arg( QObject::tr(
-            "You cannot construct an exponential average using a scale "
-            "factor of zero."), CODELOC );
-            
-    //take the inverse of the scale factor
-    sclfac = 1.0 / sclfac;
-}
+{}
 
 /** Copy constructor */
 ExpAverage::ExpAverage(const ExpAverage &other)
@@ -672,6 +671,8 @@ void ExpAverage::accumulate(double value)
     double small_ratio = 1.0 / nsteps;
     
     avgval = (big_ratio * avgval) + (small_ratio * expvalue);
+    avgval2 = (big_ratio * avgval) + (small_ratio * expvalue*expvalue);
+    
     Accumulator::accumulate(value);
 }
 
@@ -679,6 +680,12 @@ void ExpAverage::accumulate(double value)
 double ExpAverage::average() const
 {
     return ( 1.0 / sclfac ) * std::log(avgval);
+}
+
+/** Return the average of the squared value */
+double ExpAverage::average2() const
+{
+    return ( 1.0 / sclfac ) * std::log(std::sqrt(avgval2));
 }
 
 /** Allow automatic casting to a double to retrieve the average value */
@@ -690,7 +697,7 @@ ExpAverage::operator double() const
 /** Internal function used to return the scale factor */
 double ExpAverage::scaleFactor() const
 {
-    return 1.0 / sclfac;
+    return sclfac;
 }
 
 const char* ExpAverage::typeName()

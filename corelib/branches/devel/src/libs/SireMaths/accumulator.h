@@ -274,6 +274,7 @@ public:
     void accumulate(double value);
 
     double average() const;
+    double average2() const;
 
     operator double() const;
 
@@ -283,6 +284,9 @@ protected:
 private:
     /** The intermediate in the average calculation */
     double avgval;
+    
+    /** The average of the squared value in the calculation */
+    double avgval2;
     
     /** The scaling factor */
     double sclfac;

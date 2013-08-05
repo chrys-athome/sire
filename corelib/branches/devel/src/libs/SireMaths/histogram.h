@@ -199,7 +199,7 @@ public:
 
     double standardDeviation() const;
 
-    double tValue(int nsamples, double level) const;
+    static double tValue(int nsamples, double level);
     double tValue(double level) const;
 
     double standardError() const;

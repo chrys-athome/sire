@@ -640,7 +640,7 @@ double Histogram::standardError() const
 
 /** Return the students t-value for the passed confidence level
     for the passed number of samples for the mean */
-double Histogram::tValue(int nsamples, double level) const
+double Histogram::tValue(int nsamples, double level)
 {
     // data copied from wikipedia - "http://en.wikipedia.org/wiki/Student's_t-distribution"
     // see t_values and make_tvalues.py in the same directory as this source
