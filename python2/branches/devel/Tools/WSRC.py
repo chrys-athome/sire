@@ -1384,12 +1384,12 @@ def mergeSystems(protein_system, water_system, ligand_mol):
                                                                    dlam * binwidth.val) ) )
 
     system.add( "delta_g^{next}", MonitorComponent( Symbol("delta_nrg^{next}"),
-                                                    FreeEnergyAverage(temperature.val,
-                                                                      0.1 * binwidth.val) ) )
+                                                    BennettsFreeEnergyAverage(temperature.val,
+                                                                              0.1 * binwidth.val) ) )
 
     system.add( "delta_g^{prev}", MonitorComponent( Symbol("delta_nrg^{prev}"),
-                                                    FreeEnergyAverage(temperature.val,
-                                                                      0.1 * binwidth.val) ) )
+                                                    BennettsFreeEnergyAverage(temperature.val,
+                                                                              0.1 * binwidth.val) ) )
     
     # we will monitor the average energy between the swap cluster/ligand and each
     # residue with mobile sidechain, and each mobile solute
@@ -1858,10 +1858,11 @@ def analyseWSRC(replicas, iteration):
     freenrgs_file = "%s/freenrgs.s3" % outdir.val
 
     if not os.path.exists(freenrgs_file):
-        ti_freenrgs = TI()
+        bennetts_freenrgs = Bennetts()
         fep_freenrgs = FEP()
+        ti_freenrgs = TI()
     else:
-        [ti_freenrgs, fep_freenrgs] = Sire.Stream.load(freenrgs_file)
+        [bennetts_freenrgs, fep_freenrgs, ti_freenrgs] = Sire.Stream.load(freenrgs_file)
 
     windows = copy.deepcopy(lambda_values)
     windows.sort()
@@ -1872,8 +1873,9 @@ def analyseWSRC(replicas, iteration):
     if windows[0] != 0:
         windows.insert(0,0)
 
-    ti_freenrgs.add( dg_accum_f, dg_accum_b, delta_lambda )
+    bennetts_freenrgs.add( windows, dg_accum_next, dg_accum_prev )
     fep_freenrgs.add( windows, dg_accum_next, dg_accum_prev )
+    ti_freenrgs.add( dg_accum_f, dg_accum_b, delta_lambda )
 
     # save the old file to a backup
     try:
@@ -1881,7 +1883,7 @@ def analyseWSRC(replicas, iteration):
     except:
         pass
 
-    Sire.Stream.save( [ti_freenrgs, fep_freenrgs], freenrgs_file )
+    Sire.Stream.save( [bennetts_freenrgs, fep_freenrgs, ti_freenrgs], freenrgs_file )
 
     pmf_f = calculatePMF(dg_f)
     pmf_b = calculatePMF(dg_b)

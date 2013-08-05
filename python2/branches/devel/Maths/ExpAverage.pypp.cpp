@@ -59,6 +59,16 @@ void register_ExpAverage_class(){
                 , average_function_value );
         
         }
+        { //::SireMaths::ExpAverage::average2
+        
+            typedef double ( ::SireMaths::ExpAverage::*average2_function_type )(  ) const;
+            average2_function_type average2_function_value( &::SireMaths::ExpAverage::average2 );
+            
+            ExpAverage_exposer.def( 
+                "average2"
+                , average2_function_value );
+        
+        }
         { //::SireMaths::ExpAverage::clear
         
             typedef void ( ::SireMaths::ExpAverage::*clear_function_type )(  ) ;

@@ -8,6 +8,10 @@
 
 namespace bp = boost::python;
 
+#include "SireMaths/histogram.h"
+
+#include "SireMaths/maths.h"
+
 #include "SireStream/datastream.h"
 
 #include "SireUnits/units.h"

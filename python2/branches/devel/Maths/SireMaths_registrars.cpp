@@ -32,6 +32,7 @@ void register_SireMaths_objects()
     ObjectRegistry::registerConverterFor< SireMaths::VectorProperty >();
     ObjectRegistry::registerConverterFor< SireMaths::VectorArrayProperty >();
     ObjectRegistry::registerConverterFor< SireMaths::FreeEnergyAverage >();
+    ObjectRegistry::registerConverterFor< SireMaths::BennettsFreeEnergyAverage >();
     ObjectRegistry::registerConverterFor< SireMaths::Quaternion >();
     ObjectRegistry::registerConverterFor< SireMaths::Histogram >();
     ObjectRegistry::registerConverterFor< SireMaths::N4Matrix >();

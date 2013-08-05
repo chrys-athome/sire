@@ -357,7 +357,7 @@ void register_Histogram_class(){
         }
         { //::SireMaths::Histogram::tValue
         
-            typedef double ( ::SireMaths::Histogram::*tValue_function_type )( int,double ) const;
+            typedef double ( *tValue_function_type )( int,double );
             tValue_function_type tValue_function_value( &::SireMaths::Histogram::tValue );
             
             Histogram_exposer.def( 
@@ -417,6 +417,7 @@ void register_Histogram_class(){
                 , what_function_value );
         
         }
+        Histogram_exposer.staticmethod( "tValue" );
         Histogram_exposer.staticmethod( "typeName" );
         Histogram_exposer.def( "__copy__", &__copy__);
         Histogram_exposer.def( "__deepcopy__", &__copy__);

@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "SireError/errors.h"
 
+#include "SireID/index.h"
+
 #include "SireMaths/maths.h"
 
 #include "SireStream/shareddatastream.h"
@@ -171,6 +173,16 @@ void register_FEP_class(){
                 , nSamples_function_value );
         
         }
+        { //::Soiree::FEP::nWindows
+        
+            typedef int ( ::Soiree::FEP::*nWindows_function_type )(  ) const;
+            nWindows_function_type nWindows_function_value( &::Soiree::FEP::nWindows );
+            
+            FEP_exposer.def( 
+                "nWindows"
+                , nWindows_function_value );
+        
+        }
         FEP_exposer.def( bp::self != bp::self );
         { //::Soiree::FEP::operator=
         
@@ -300,6 +312,16 @@ void register_FEP_class(){
             FEP_exposer.def( 
                 "what"
                 , what_function_value );
+        
+        }
+        { //::Soiree::FEP::windows
+        
+            typedef ::QList< double > ( ::Soiree::FEP::*windows_function_type )(  ) const;
+            windows_function_type windows_function_value( &::Soiree::FEP::windows );
+            
+            FEP_exposer.def( 
+                "windows"
+                , windows_function_value );
         
         }
         FEP_exposer.staticmethod( "typeName" );

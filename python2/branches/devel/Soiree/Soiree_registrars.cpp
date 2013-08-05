@@ -3,6 +3,7 @@
 
 #include "Soiree_registrars.h"
 
+#include "bennetts.h"
 #include "fep.h"
 #include "ti.h"
 
@@ -11,6 +12,8 @@
 void register_Soiree_objects()
 {
 
+    ObjectRegistry::registerConverterFor< Soiree::BennettsRatios >();
+    ObjectRegistry::registerConverterFor< Soiree::Bennetts >();
     ObjectRegistry::registerConverterFor< Soiree::FEP >();
     ObjectRegistry::registerConverterFor< Soiree::FEPDeltas >();
     ObjectRegistry::registerConverterFor< Soiree::DataPoint >();

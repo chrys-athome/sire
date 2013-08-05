@@ -5,6 +5,10 @@
 
 #include "boost/python.hpp"
 
+#include "Bennetts.pypp.hpp"
+
+#include "BennettsRatios.pypp.hpp"
+
 #include "DataPoint.pypp.hpp"
 
 #include "FEP.pypp.hpp"
@@ -29,6 +33,10 @@ BOOST_PYTHON_MODULE(_Soiree){
     register_Soiree_objects();
 
     register_Soiree_containers();
+
+    register_Bennetts_class();
+
+    register_BennettsRatios_class();
 
     register_DataPoint_class();
 

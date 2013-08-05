@@ -56,9 +56,11 @@ void register_Soiree_containers()
 
     #if QT_VERSION >= 0x402000
     register_dict< QMap<double,FreeEnergyAverage> >();
+    register_dict< QMap<double,BennettsFreeEnergyAverage> >();
 
     #else
     register_dict< QMap<double,FreeEnergyAverage>, double, FreeEnergyAverage >();
+    register_dict< QMap<double,BennettsFreeEnergyAverage>, double, BennettsFreeEnergyAverage >();
 
     #endif    
 }

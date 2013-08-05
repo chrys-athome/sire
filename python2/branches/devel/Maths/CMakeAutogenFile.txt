@@ -9,6 +9,7 @@ set ( PYPP_SOURCES
        Average.pypp.cpp
        AverageAndStddev.pypp.cpp
        AxisSet.pypp.cpp
+       BennettsFreeEnergyAverage.pypp.cpp
        Complex.pypp.cpp
        DistVector.pypp.cpp
        ExpAverage.pypp.cpp

@@ -23,6 +23,8 @@
 
 #include "AxisSet.pypp.hpp"
 
+#include "BennettsFreeEnergyAverage.pypp.hpp"
+
 #include "Complex.pypp.hpp"
 
 #include "DistVector.pypp.hpp"
@@ -122,13 +124,15 @@ BOOST_PYTHON_MODULE(_Maths){
 
     register_AxisSet_class();
 
-    register_Complex_class();
-
-    register_DistVector_class();
-
     register_ExpAverage_class();
 
     register_FreeEnergyAverage_class();
+
+    register_BennettsFreeEnergyAverage_class();
+
+    register_Complex_class();
+
+    register_DistVector_class();
 
     register_Histogram_class();
 
