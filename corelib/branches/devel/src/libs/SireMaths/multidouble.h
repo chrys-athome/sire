@@ -210,10 +210,10 @@ private:
             #endif
         #endif
     #else
-        __declspec(align(32)) union
+        union
         {
             double a[MULTIFLOAT_SIZE];
-        } v;
+        } _ALIGNED(32) v;
         #define MULTIDOUBLE_BINONE getBinaryOne()
 
         #ifndef SIRE_SKIP_INLINE_FUNCTIONS

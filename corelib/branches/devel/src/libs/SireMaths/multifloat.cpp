@@ -209,9 +209,9 @@ QVector<MultiFloat> MultiFloat::fromArray(const double *array, int size)
         return QVector<MultiFloat>();
 
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        __declspec(align(16)) float tmp[MULTIFLOAT_SIZE];
+        float _ALIGNED(16) tmp[MULTIFLOAT_SIZE];
     #else
-        __declspec(align(32)) float tmp[MULTIFLOAT_SIZE];
+        float _ALIGNED(32) tmp[MULTIFLOAT_SIZE];
     #endif
     
     int nvecs = size / MULTIFLOAT_SIZE;
@@ -293,7 +293,7 @@ QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
         }
         else
         {
-            __declspec(align(16)) float tmp[MULTIFLOAT_SIZE];
+            float _ALIGNED(16) tmp[MULTIFLOAT_SIZE];
 
             for (int i=0; i<nvecs; ++i)
             {
@@ -333,7 +333,7 @@ QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
         }
         else
         {
-            __declspec(align(32)) float tmp[MULTIFLOAT_SIZE];
+            float _ALIGNED(32) tmp[MULTIFLOAT_SIZE];
 
             for (int i=0; i<nvecs; ++i)
             {

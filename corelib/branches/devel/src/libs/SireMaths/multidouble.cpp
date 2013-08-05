@@ -260,7 +260,7 @@ QVector<MultiDouble> MultiDouble::fromArray(const double *array, int size)
         }
         else
         {
-            __declspec(align(16)) double tmp[MULTIFLOAT_SIZE];
+            double _ALIGNED(16) tmp[MULTIFLOAT_SIZE];
 
             for (int i=0; i<nvecs; ++i)
             {
@@ -300,7 +300,7 @@ QVector<MultiDouble> MultiDouble::fromArray(const double *array, int size)
         }
         else
         {
-            __declspec(align(32)) double tmp[MULTIFLOAT_SIZE];
+            double _ALIGNED(32) tmp[MULTIFLOAT_SIZE];
 
             for (int i=0; i<nvecs; ++i)
             {
@@ -352,9 +352,9 @@ QVector<MultiDouble> MultiDouble::fromArray(const float *array, int size)
         return QVector<MultiDouble>();
 
     #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
-        __declspec(align(16)) double tmp[MULTIFLOAT_SIZE];
+        double _ALIGNED(16) tmp[MULTIFLOAT_SIZE];
     #else
-        __declspec(align(32)) double tmp[MULTIFLOAT_SIZE];
+        double _ALIGNED(32) tmp[MULTIFLOAT_SIZE];
     #endif
     
     int nvecs = size / MULTIFLOAT_SIZE;

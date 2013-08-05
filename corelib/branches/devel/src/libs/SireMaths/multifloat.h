@@ -34,6 +34,21 @@
 
 #include <QVector>
 
+#if defined(_MSC_VER)
+#define _ALIGNED(x) __declspec(align(x))
+#else
+#if defined(__clang__)
+#define _ALIGNED(x) __declspec(align(x))
+#else
+#if defined(__GNUC__)
+#define _ALIGNED(x) __attribute__ ((aligned(x)))
+#message GCC ALIGNMENT
+#else
+#define _ALIGNED(x)
+#endif
+#endif
+#endif
+
 //#undef SIRE_USE_AVX
 //#define SIRE_USE_SSE 1
 //#undef SIRE_USE_SSE
@@ -252,10 +267,10 @@ private:
             #endif
         #endif
     #else
-        __declspec(align(32)) union
+        union
         {
             float a[8];
-        } v;
+        } _ALIGNED(32) v;
         #define MULTIFLOAT_SIZE 8
         #define MULTIFLOAT_BINONE getBinaryOne()
 
