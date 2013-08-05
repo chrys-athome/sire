@@ -42,7 +42,6 @@
 #else
 #if defined(__GNUC__)
 #define _ALIGNED(x) __attribute__ ((aligned(x)))
-#message GCC ALIGNMENT
 #else
 #define _ALIGNED(x)
 #endif

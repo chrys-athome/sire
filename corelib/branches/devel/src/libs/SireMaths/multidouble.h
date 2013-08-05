@@ -195,7 +195,7 @@ private:
         } v;
 
         #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-        MultiDouble(__m128 sse_val0, __m128 sse_val1)
+        MultiDouble(__m128d sse_val0, __m128d sse_val1)
         {
             v.x[0] = sse_val0;
             v.x[1] = sse_val1;
