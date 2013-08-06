@@ -149,9 +149,15 @@ save_all_pdbs = Parameter("save all pdbs", False,
                           """Whether or not to write all of the PDBs. If not, only PDBs at the two 
                              end points of the simulation will be written.""")
 
+pdb_frequency = Parameter("pdb frequency", 1,
+                          """The frequency (number of iterations between) saving PDBs""")
+
 binwidth = Parameter("free energy bin width", 10 * kcal_per_mol,
                      """The size of the bins used in the histogram of energies collected
                         as part of creating the free energy average, in multiples of delta lambda""")
+
+restart_frequency = Parameter("restart frequency", 5,
+                              """The frequency (number of iterations between) saving the restart file for the simulation.""")
 
 ####################################################
 
@@ -1783,13 +1789,18 @@ def analyseWSRC(replicas, iteration):
     proteinbox_views = None
     waterbox_views = None
 
+    write_pdbs = (save_pdb.val) and (iteration % pdb_frequency.val == 0)
+
+    if write_pdbs:
+        print "Saving PDBs of the system at iteration %d..." % iteration
+
     for i in range(0, nreplicas):
         replica = replicas[i]
         monitors = replica.monitors()
         lamval = replica.lambdaValue()
         lambda_values.append(lamval)
 
-        if save_pdb.val:
+        if write_pdbs:
             if save_all_pdbs.val or (i == 0) or (i == nreplicas-1):
                 # Save a PDB of the final configuration for the bound and free legs for each lambda value
                 system = replica.subSystem()
@@ -2042,9 +2053,14 @@ def run():
         wsrc_system.clearAllStatistics()
 
         # write a restart file every 5 moves in case of crash or run out of time
-        if i % 5 == 0:
+        if i % restart_frequency.val == 0 or i == nmoves.val:
             print "Saving the restart file from iteration %d." % i
+            # save the old file to a backup
+            try:
+                shutil.copy(restart_file.val, "%s.bak" % restart_file.val)
+            except:
+                pass
+
             Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )
 
-    print "All iterations complete. Saving the final state restart file."
-    Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )
+    print "All iterations complete."

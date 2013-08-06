@@ -42,6 +42,7 @@
 
 #include "SireMaths/freeenergyaverage.h"
 #include "Soiree/ti.h"
+#include "Soiree/bennetts.h"
 
 using namespace SireMaths;
 using namespace Soiree;
@@ -51,6 +52,8 @@ using boost::python::register_tuple;
 void register_Soiree_containers()
 {
     register_list< QList<Gradients> >();
+    register_list< QList<FEPDeltas> >();
+    register_list< QList<BennettsRatios> >();
     register_list< QVector<DataPoint> >();
     register_list< QList<DataPoint> >();
 
