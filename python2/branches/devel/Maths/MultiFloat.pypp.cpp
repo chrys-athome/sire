@@ -308,6 +308,18 @@ void register_MultiFloat_class(){
                 , bp::return_self< >() );
         
         }
+        { //::SireMaths::MultiFloat::operator=
+        
+            typedef ::SireMaths::MultiFloat & ( ::SireMaths::MultiFloat::*assign_function_type )( float ) ;
+            assign_function_type assign_function_value( &::SireMaths::MultiFloat::operator= );
+            
+            MultiFloat_exposer.def( 
+                "assign"
+                , assign_function_value
+                , ( bp::arg("value") )
+                , bp::return_self< >() );
+        
+        }
         MultiFloat_exposer.def( bp::self == bp::self );
         MultiFloat_exposer.def( bp::self > bp::self );
         MultiFloat_exposer.def( bp::self >= bp::self );

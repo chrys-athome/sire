@@ -306,6 +306,18 @@ void register_MultiDouble_class(){
                 , bp::return_self< >() );
         
         }
+        { //::SireMaths::MultiDouble::operator=
+        
+            typedef ::SireMaths::MultiDouble & ( ::SireMaths::MultiDouble::*assign_function_type )( double ) ;
+            assign_function_type assign_function_value( &::SireMaths::MultiDouble::operator= );
+            
+            MultiDouble_exposer.def( 
+                "assign"
+                , assign_function_value
+                , ( bp::arg("value") )
+                , bp::return_self< >() );
+        
+        }
         MultiDouble_exposer.def( bp::self == bp::self );
         MultiDouble_exposer.def( bp::self > bp::self );
         MultiDouble_exposer.def( bp::self >= bp::self );
