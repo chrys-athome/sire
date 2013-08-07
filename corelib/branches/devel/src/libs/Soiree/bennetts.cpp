@@ -389,6 +389,22 @@ qint64 BennettsRatios::nSamples() const
     return n;
 }
 
+const DataPoint& getPoint(const QVector<DataPoint> &points, double lam, bool *found)
+{
+    foreach (const DataPoint &point, points)
+    {
+        if (point.x() == lam)
+        {
+            *found = true;
+            return point;
+        }
+    }
+    
+    static DataPoint empty;
+    *found = false;
+    return empty;
+}
+
 /** Return the values between windows. This returns the average of the 
     forwards and backwards values */
 QVector<DataPoint> BennettsRatios::values() const
@@ -397,22 +413,90 @@ QVector<DataPoint> BennettsRatios::values() const
     QVector<DataPoint> denoms = denominators();
 
     QVector<DataPoint> vals;
-    
-    foreach (const DataPoint &num, nums)
+
+    for (int i=0; i<lamvals.count(); ++i)
     {
-        foreach (const DataPoint &denom, denoms)
+        double lamval = lamvals.at(i);
+        
+        bool found_num;
+        bool found_denom;
+        
+        const DataPoint &num = getPoint(nums, lamval, &found_num);
+        const DataPoint &denom = getPoint(denoms, lamval, &found_denom);
+        
+        if (found_num and found_denom)
         {
-            if (denom.x() == num.x())
-            {
-                //we have found a matched pair - calculate the ratio, and minimum
-                //and maximum values
-                double val = num.y() / denom.y();
-                double minerr = std::abs( (num.y()+num.yMinError())/(denom.y()-denom.yMinError()) );
-                double maxerr = std::abs( (num.y()+num.yMaxError())/(denom.y()-denom.yMaxError()) );
-                
-                vals.append( DataPoint(num.x(),val, 0,minerr, 0,maxerr) );
-                break;
-            }
+            //we have found a matched pair - calculate the ratio, and minimum
+            //and maximum values
+            double val = num.y() / denom.y();
+            double minerr = std::abs( (num.y()+num.yMinError())/(denom.y()-denom.yMinError())
+                                                - val );
+            double maxerr = std::abs( (num.y()+num.yMaxError())/(denom.y()-denom.yMaxError())
+                                                - val );
+            
+            vals.append( DataPoint(num.x(),val, 0,minerr, 0,maxerr) );
+        }
+        else if (found_num)
+        {
+            //there is a forwards FEP value available from this lambda value to the next
+            if (not fwds_ratios.contains(lamval))
+                throw SireError::program_bug( QObject::tr(
+                        "No forwards value for lambda %1? %2")
+                            .arg(lamval).arg(Sire::toString(fwds_ratios.keys())),
+                                CODELOC );
+
+            const BennettsFreeEnergyAverage &fwds = *(fwds_ratios.constFind(lamval));
+        
+            double fwdsval = fwds.average();
+            double fwdstay = fwds.taylorExpansion();
+            
+            double maxerr = fwds.histogram().standardError(90);
+            
+            double val = 0.5 * (fwdsval + fwdstay);
+            
+            //get the biggest difference between the four estimates of
+            //the free energy
+            double minerr = 0.5 * ( qMax(fwdsval,fwdstay) -
+                                    qMin(fwdsval,fwdstay) );
+            
+            if (maxerr < minerr)
+                qSwap(maxerr, minerr);
+            
+            vals.append( DataPoint(lamval, val, 0, minerr, 0, maxerr) );
+        }
+        else if (found_denom)
+        {
+            //there is a backwards FEP value available from the lambda value
+            //above back down to this lambda value
+            if (not bwds_ratios.contains( lamvals.at(i+1) ))
+                throw SireError::program_bug( QObject::tr(
+                        "No backwards value for lambda %1? %2")
+                            .arg(lamvals.at(i+1)).arg(Sire::toString(bwds_ratios.keys())),
+                                CODELOC );
+            
+            const FreeEnergyAverage &bwds = *(bwds_ratios.constFind(lamvals.at(i+1)));
+        
+            double bwdsval = bwds.average();
+            double bwdstay = bwds.taylorExpansion();
+            
+            double maxerr = bwds.histogram().standardError(90);
+            
+            double val = 0.5 * (bwdsval + bwdstay);
+            
+            //get the biggest difference between the four estimates of
+            //the free energy
+            double minerr = 0.5 * ( qMax(bwdsval,bwdstay) -
+                                    qMin(bwdsval,bwdstay) );
+            
+            if (maxerr < minerr)
+                qSwap(maxerr, minerr);
+            
+            vals.append( DataPoint(lamval, val, 0, minerr, 0, maxerr) );
+        }
+        else
+        {
+            //no value for this lambda window is available
+            vals.append( DataPoint(lamval, 0) );
         }
     }
     

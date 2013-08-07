@@ -54,6 +54,10 @@ params["energy monitor frequency"] = 5
 # I want to save the PDBs for debugging...
 params["save pdb"] = True
 
+params["pdb frequency"] = 5
+
+params["restart	frequency"] = 6
+
 # Actually run the simulation :-)
 WSRC.run(params)
 

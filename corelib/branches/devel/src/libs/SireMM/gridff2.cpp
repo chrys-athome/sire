@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "gridff.h"
+#include "gridff2.h"
 #include "cljpotential.h"
 
 #include "SireMol/atomcoords.h"
@@ -58,27 +58,27 @@ using namespace SireMol;
 using namespace SireMaths;
 using namespace SireBase;
 
-static const RegisterMetaType<GridFF> r_gridff;
+static const RegisterMetaType<GridFF2> r_gridff2;
 
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridFF &gridff)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridFF2 &gridff2)
 {
-    writeHeader(ds, r_gridff, 5);
+    writeHeader(ds, r_gridff2, 1);
     
     SharedDataStream sds(ds);
     
-    sds << gridff.gridbox << gridff.dimx << gridff.dimy << gridff.dimz
-        << gridff.gridpot
-        << gridff.buffer_size << gridff.grid_spacing
-        << gridff.coul_cutoff << gridff.lj_cutoff
-        << gridff.fixedatoms_coords
-        << gridff.fixedatoms_params
-        << gridff.closemols_coords
-        << gridff.closemols_params;
+    sds << gridff2.gridbox << gridff2.dimx << gridff2.dimy << gridff2.dimz
+        << gridff2.gridpot
+        << gridff2.buffer_size << gridff2.grid_spacing
+        << gridff2.coul_cutoff << gridff2.lj_cutoff
+        << gridff2.fixedatoms_coords
+        << gridff2.fixedatoms_params
+        << gridff2.closemols_coords
+        << gridff2.closemols_params;
     
-    sds << quint32( gridff.oldnrgs.count() );
+    sds << quint32( gridff2.oldnrgs.count() );
     
-    for (QHash<MolNum,CLJEnergy>::const_iterator it = gridff.oldnrgs.constBegin();
-         it != gridff.oldnrgs.constEnd();
+    for (QHash<MolNum,CLJEnergy>::const_iterator it = gridff2.oldnrgs.constBegin();
+         it != gridff2.oldnrgs.constEnd();
          ++it)
     {
         sds << it.key() << it.value().coulomb() << it.value().lj();
@@ -89,56 +89,56 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const GridFF &gridff)
     QHash<quint32,LJParameter> used_ljs;
     
     LJParameterDB::lock();
-    for (int i=0; i<gridff.fixedatoms_params.count(); ++i)
+    for (int i=0; i<gridff2.fixedatoms_params.count(); ++i)
     {
-        const SireMM::detail::CLJParameter &param = gridff.fixedatoms_params.constData()[i];
+        const SireMM::detail::CLJParameter &param = gridff2.fixedatoms_params.constData()[i];
         used_ljs.insert(param.ljid, LJParameterDB::_locked_getLJParameter(param.ljid));
     }
-    for (int i=0; i<gridff.closemols_params.count(); ++i)
+    for (int i=0; i<gridff2.closemols_params.count(); ++i)
     {
-        const SireMM::detail::CLJParameter &param = gridff.closemols_params.constData()[i];
+        const SireMM::detail::CLJParameter &param = gridff2.closemols_params.constData()[i];
         used_ljs.insert(param.ljid, LJParameterDB::_locked_getLJParameter(param.ljid));
     }
     LJParameterDB::unlock();
 
     sds << used_ljs;
     
-    sds << static_cast<const InterGroupCLJFF&>(gridff);
+    sds << static_cast<const InterGroupCLJFF&>(gridff2);
     
     return ds;
 }
 
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF2 &gridff2)
 {
-    VersionID v = readHeader(ds, r_gridff);
+    VersionID v = readHeader(ds, r_gridff2);
 
-    if (v == 5)
+    if (v == 1)
     {
         SharedDataStream sds(ds);
         
-        gridff = GridFF();
+        gridff2 = GridFF2();
         
-        gridff.fixedatoms_coords.clear();
-        gridff.fixedatoms_params.clear();
+        gridff2.fixedatoms_coords.clear();
+        gridff2.fixedatoms_params.clear();
         
         QVector<SireMM::detail::CLJParameter> fixedatoms_params;
         QVector<SireMM::detail::CLJParameter> closemols_params;
         QHash<quint32,LJParameter> used_ljs;
         
-        sds >> gridff.gridbox >> gridff.dimx >> gridff.dimy >> gridff.dimz
-            >> gridff.gridpot
-            >> gridff.buffer_size >> gridff.grid_spacing
-            >> gridff.coul_cutoff >> gridff.lj_cutoff
-            >> gridff.fixedatoms_coords
+        sds >> gridff2.gridbox >> gridff2.dimx >> gridff2.dimy >> gridff2.dimz
+            >> gridff2.gridpot
+            >> gridff2.buffer_size >> gridff2.grid_spacing
+            >> gridff2.coul_cutoff >> gridff2.lj_cutoff
+            >> gridff2.fixedatoms_coords
             >> fixedatoms_params
-            >> gridff.closemols_coords
+            >> gridff2.closemols_coords
             >> closemols_params;
         
         quint32 noldnrgs;
         sds >> noldnrgs;
         
-        gridff.oldnrgs.clear();
-        gridff.oldnrgs.reserve(noldnrgs);
+        gridff2.oldnrgs.clear();
+        gridff2.oldnrgs.reserve(noldnrgs);
         
         for (quint32 i=0; i<noldnrgs; ++i)
         {
@@ -146,7 +146,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
             double cnrg, ljnrg;
             
             sds >> molnum >> cnrg >> ljnrg;
-            gridff.oldnrgs.insert(molnum,CLJEnergy(cnrg,ljnrg));
+            gridff2.oldnrgs.insert(molnum,CLJEnergy(cnrg,ljnrg));
         }
         
         sds >> used_ljs;
@@ -180,125 +180,22 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, GridFF &gridff)
             }
         }
 
-        gridff.fixedatoms_params = fixedatoms_params;
-        gridff.closemols_params = closemols_params;
+        gridff2.fixedatoms_params = fixedatoms_params;
+        gridff2.closemols_params = closemols_params;
         
-        sds >> static_cast<InterGroupCLJFF&>(gridff);
+        sds >> static_cast<InterGroupCLJFF&>(gridff2);
 
-        gridff.need_update_ljpairs = true;
-    }
-    else if (v == 4)
-    {
-        SharedDataStream sds(ds);
-        
-        gridff = GridFF();
-        
-        gridff.fixedatoms_coords.clear();
-        gridff.fixedatoms_params.clear();
-        
-        QVector<SireMM::detail::CLJParameter> fixedatoms_params;
-        QHash<quint32,LJParameter> used_ljs;
-        
-        sds >> gridff.buffer_size >> gridff.grid_spacing
-            >> gridff.coul_cutoff >> gridff.lj_cutoff
-            >> gridff.fixedatoms_coords
-            >> fixedatoms_params
-            >> used_ljs;
-
-        QHash<quint32,quint32> ljidmap;
-
-        LJParameterDB::lock();
-        for (QHash<quint32,LJParameter>::const_iterator it = used_ljs.constBegin();
-             it != used_ljs.constEnd();
-             ++it)
-        {
-            quint32 newid = LJParameterDB::_locked_addLJParameter(it.value());
-            
-            if (it.key() != newid)
-                ljidmap.insert(it.key(), newid);
-        }
-        LJParameterDB::unlock();
-        
-        if (not ljidmap.isEmpty())
-        {
-            //some of the LJIDs have changed
-            for (int i=0; i<fixedatoms_params.count(); ++i)
-            {
-                SireMM::detail::CLJParameter &param = fixedatoms_params[i];
-                param.ljid = ljidmap.value(param.ljid, param.ljid);
-            }
-        }
-
-        gridff.fixedatoms_params = fixedatoms_params;
-        
-        sds >> static_cast<InterGroupCLJFF&>(gridff);
-
-        gridff.need_update_ljpairs = true;
-    }
-    else if (v == 3)
-    {
-        SharedDataStream sds(ds);
-        
-        gridff = GridFF();
-        
-        gridff.fixedatoms_coords.clear();
-        gridff.fixedatoms_params.clear();
-        
-        sds >> gridff.buffer_size >> gridff.grid_spacing
-            >> gridff.coul_cutoff >> gridff.lj_cutoff
-            >> gridff.fixedatoms_coords;
-        
-        gridff.fixedatoms_params.resize(gridff.fixedatoms_coords.count());
-        
-        LJParameterDB::lock();
-        
-        try
-        {
-            for (int i=0; i<gridff.fixedatoms_coords.count(); ++i)
-            {
-                double reduced_chg;
-                LJParameter ljparam;
-                
-                sds >> reduced_chg >> ljparam;
-                
-                gridff.fixedatoms_params[i].reduced_charge = reduced_chg;
-                gridff.fixedatoms_params[i].ljid = LJParameterDB::_locked_addLJParameter(ljparam);
-            
-                LJParameterDB::unlock();
-            }
-            
-            gridff.need_update_ljpairs = true;
-        }
-        catch(...)
-        {
-            LJParameterDB::unlock();
-            throw;
-        }
-        
-        sds >> static_cast<InterGroupCLJFF&>(gridff);
-    }
-    else if (v == 2)
-    {
-        SharedDataStream sds(ds);
-        
-        gridff = GridFF();
-        
-        gridff.fixedatoms_coords.clear();
-        gridff.fixedatoms_params.clear();
-        
-        sds >> gridff.buffer_size >> gridff.grid_spacing
-            >> gridff.coul_cutoff >> gridff.lj_cutoff
-            >> static_cast<InterGroupCLJFF&>(gridff);
+        gridff2.need_update_ljpairs = true;
     }
     else
-        throw version_error(v, "2,3,4,5", r_gridff, CODELOC);
+        throw version_error(v, "1", r_gridff2, CODELOC);
         
     return ds;
 }
 
 /** Empty constructor */
-GridFF::GridFF() 
-       : ConcreteProperty<GridFF,InterGroupCLJFF>(),
+GridFF2::GridFF2() 
+       : ConcreteProperty<GridFF2,InterGroupCLJFF>(),
          buffer_size(2.5), grid_spacing(1.0), 
          coul_cutoff(50), lj_cutoff(7.5)
 {
@@ -306,8 +203,8 @@ GridFF::GridFF()
 }
 
 /** Construct a grid forcefield with a specified name */
-GridFF::GridFF(const QString &name) 
-       : ConcreteProperty<GridFF,InterGroupCLJFF>(name),
+GridFF2::GridFF2(const QString &name) 
+       : ConcreteProperty<GridFF2,InterGroupCLJFF>(name),
          buffer_size(2.5), grid_spacing(1.0), 
          coul_cutoff(50), lj_cutoff(7.5)
 {
@@ -315,8 +212,8 @@ GridFF::GridFF(const QString &name)
 }
 
 /** Copy constructor */
-GridFF::GridFF(const GridFF &other)
-       : ConcreteProperty<GridFF,InterGroupCLJFF>(other),
+GridFF2::GridFF2(const GridFF2 &other)
+       : ConcreteProperty<GridFF2,InterGroupCLJFF>(other),
          gridbox(other.gridbox),
          buffer_size(other.buffer_size), grid_spacing(other.grid_spacing),
          coul_cutoff(other.coul_cutoff), lj_cutoff(other.lj_cutoff),
@@ -332,21 +229,21 @@ GridFF::GridFF(const GridFF &other)
 }
 
 /** Destructor */
-GridFF::~GridFF()
+GridFF2::~GridFF2()
 {}
 
-const char* GridFF::typeName()
+const char* GridFF2::typeName()
 {
-    return QMetaType::typeName( qMetaTypeId<GridFF>() );
+    return QMetaType::typeName( qMetaTypeId<GridFF2>() );
 }
 
-const char* GridFF::what() const
+const char* GridFF2::what() const
 {
-    return GridFF::typeName();
+    return GridFF2::typeName();
 }
 
 /** Copy assignment operator */
-GridFF& GridFF::operator=(const GridFF &other)
+GridFF2& GridFF2::operator=(const GridFF2 &other)
 {
     if (this != &other)
     {
@@ -372,7 +269,7 @@ GridFF& GridFF::operator=(const GridFF &other)
 }
 
 /** Comparison operator */
-bool GridFF::operator==(const GridFF &other) const
+bool GridFF2::operator==(const GridFF2 &other) const
 {
     return buffer_size == other.buffer_size and
            grid_spacing == other.grid_spacing and
@@ -380,20 +277,20 @@ bool GridFF::operator==(const GridFF &other) const
 }
 
 /** Comparison operator */
-bool GridFF::operator!=(const GridFF &other) const
+bool GridFF2::operator!=(const GridFF2 &other) const
 {
-    return not GridFF::operator==(other);
+    return not GridFF2::operator==(other);
 }
 
-GridFF* GridFF::clone() const
+GridFF2* GridFF2::clone() const
 {
-    return new GridFF(*this);
+    return new GridFF2(*this);
 }
 
 /** Add fixed atoms to the grid. This will copy the fixed atoms from 
-    the passed GridFF. This allows multiple grid forcefields to share the
+    the passed GridFF2. This allows multiple grid forcefields to share the
     memory cost of a shared set of fixed atoms */
-void GridFF::addFixedAtoms(const GridFF &other)
+void GridFF2::addFixedAtoms(const GridFF2 &other)
 {
     if (other.fixedatoms_coords.isEmpty())
         return;
@@ -420,7 +317,7 @@ void GridFF::addFixedAtoms(const GridFF &other)
     then do not need to be added to the simulation System. This is useful
     if you are simulating a small cutout of the system and do not want to 
     have all of the atoms loaded into the system during the simulation */
-void GridFF::addFixedAtoms(const MoleculeView &fixed_atoms, const PropertyMap &map)
+void GridFF2::addFixedAtoms(const MoleculeView &fixed_atoms, const PropertyMap &map)
 {
     const PropertyName coords_property = map["coordinates"];
     const PropertyName chg_property = map["charge"];
@@ -473,7 +370,7 @@ void GridFF::addFixedAtoms(const MoleculeView &fixed_atoms, const PropertyMap &m
     then do not need to be added to the simulation System. This is useful
     if you are simulating a small cutout of the system and do not want to 
     have all of the atoms loaded into the system during the simulation */
-void GridFF::addFixedAtoms(const SireMol::Molecules &fixed_atoms, const PropertyMap &map)
+void GridFF2::addFixedAtoms(const SireMol::Molecules &fixed_atoms, const PropertyMap &map)
 {
     const PropertyName coords_property = map["coordinates"];
     const PropertyName chg_property = map["charge"];
@@ -529,7 +426,7 @@ void GridFF::addFixedAtoms(const SireMol::Molecules &fixed_atoms, const Property
 
 /** Add all of the atoms in the molecules in the passed molecule group to the set
     of fixed atoms */
-void GridFF::addFixedAtoms(const MoleculeGroup &group, const PropertyMap &map)
+void GridFF2::addFixedAtoms(const MoleculeGroup &group, const PropertyMap &map)
 {
     this->addFixedAtoms(group.molecules(), map);
 }
@@ -537,7 +434,7 @@ void GridFF::addFixedAtoms(const MoleculeGroup &group, const PropertyMap &map)
 /** Set the buffer when building the grid. This adds a buffer space
     around the grid when it is built, to try to reduce the number of
     times it needs to be rebuilt */
-void GridFF::setBuffer(SireUnits::Dimension::Length buffer)
+void GridFF2::setBuffer(SireUnits::Dimension::Length buffer)
 {
     buffer_size = buffer.value();
 }
@@ -545,7 +442,7 @@ void GridFF::setBuffer(SireUnits::Dimension::Length buffer)
 /** Set the grid spacing (the distance between grid points). The
     smaller the spacing the more memory is required to hold the grid,
     but the more accurate the energy */
-void GridFF::setGridSpacing(SireUnits::Dimension::Length spacing)
+void GridFF2::setGridSpacing(SireUnits::Dimension::Length spacing)
 {
     if (grid_spacing != spacing.value())
     {
@@ -556,7 +453,7 @@ void GridFF::setGridSpacing(SireUnits::Dimension::Length spacing)
 
 /** Set the cutoff for the coulomb energy - this can be greater
     than the box size as multiple periodic images can be used */
-void GridFF::setCoulombCutoff(SireUnits::Dimension::Length cutoff)
+void GridFF2::setCoulombCutoff(SireUnits::Dimension::Length cutoff)
 {
     if (coul_cutoff != cutoff.value())
     {
@@ -567,7 +464,7 @@ void GridFF::setCoulombCutoff(SireUnits::Dimension::Length cutoff)
 
 /** Set the cutoff for the LJ energy - this can be greater than
     the box size as multiple periodic images can be used */
-void GridFF::setLJCutoff(SireUnits::Dimension::Length cutoff)
+void GridFF2::setLJCutoff(SireUnits::Dimension::Length cutoff)
 {
     if (lj_cutoff != cutoff.value())
     {
@@ -577,7 +474,7 @@ void GridFF::setLJCutoff(SireUnits::Dimension::Length cutoff)
 }
 
 /** Turn on or off use of the force shifted potential */
-bool GridFF::setShiftElectrostatics(bool on)
+bool GridFF2::setShiftElectrostatics(bool on)
 {
     if (InterGroupCLJFF::setShiftElectrostatics(on))
     {
@@ -589,7 +486,7 @@ bool GridFF::setShiftElectrostatics(bool on)
 }
 
 /** Turn on or off the use of the reaction field */
-bool GridFF::setUseReactionField(bool on)
+bool GridFF2::setUseReactionField(bool on)
 {
     if (InterGroupCLJFF::setUseReactionField(on))
     {
@@ -601,7 +498,7 @@ bool GridFF::setUseReactionField(bool on)
 }
 
 /** Set the dielectric constant to use with the reaction field potential */
-bool GridFF::setReactionFieldDielectric(double dielectric)
+bool GridFF2::setReactionFieldDielectric(double dielectric)
 {
     if (InterGroupCLJFF::setReactionFieldDielectric(dielectric))
     {
@@ -613,34 +510,34 @@ bool GridFF::setReactionFieldDielectric(double dielectric)
 }
 
 /** Return the buffer size used when building grids */
-SireUnits::Dimension::Length GridFF::buffer() const
+SireUnits::Dimension::Length GridFF2::buffer() const
 {
     return SireUnits::Dimension::Length(buffer_size);
 }
 
 /** Return the spacing between grid points */
-SireUnits::Dimension::Length GridFF::spacing() const
+SireUnits::Dimension::Length GridFF2::spacing() const
 {
     return SireUnits::Dimension::Length(grid_spacing);
 }
 
 /** Return the cutoff for the coulomb energy */
-SireUnits::Dimension::Length GridFF::coulombCutoff() const
+SireUnits::Dimension::Length GridFF2::coulombCutoff() const
 {
     return SireUnits::Dimension::Length(coul_cutoff);
 }
 
 /** Return the cutoff for the LJ energy */
-SireUnits::Dimension::Length GridFF::ljCutoff() const
+SireUnits::Dimension::Length GridFF2::ljCutoff() const
 {
     return SireUnits::Dimension::Length(lj_cutoff);
 }
 
-inline GridFF::Vector4::Vector4(const Vector &v, double chg)
+inline GridFF2::Vector4::Vector4(const Vector &v, double chg)
               : x(v.x()), y(v.y()), z(v.z()), q(chg)
 {}
 
-void GridFF::appendTo(QVector<GridFF::Vector4> &coords_and_charges,
+void GridFF2::appendTo(QVector<GridFF2::Vector4> &coords_and_charges,
                       const Vector *coords, const detail::CLJParameter *params,
                       int nats)
 {
@@ -668,7 +565,7 @@ void GridFF::appendTo(QVector<GridFF::Vector4> &coords_and_charges,
     }
 #endif
 
-void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
+void GridFF2::addToGrid(const QVector<GridFF2::Vector4> &coords_and_charges)
 {
     double *pot = gridpot.data();
     const Vector4 *array = coords_and_charges.constData();
@@ -1450,7 +1347,7 @@ static double minimumDistanceToGrid(const Vector &coords, const AABox &gridbox)
 }
 
 /** Internal function used to rebuild the coulomb potential grid */
-void GridFF::rebuildGrid()
+void GridFF2::rebuildGrid()
 {
     QTime t;
 
@@ -1699,8 +1596,8 @@ void GridFF::rebuildGrid()
     closemols_params.squeeze();
 }
 
-void GridFF::calculateEnergy(const CoordGroup &coords0, 
-                             const GridFF::CLJParameters::Array &params0,
+void GridFF2::calculateEnergy(const CoordGroup &coords0, 
+                             const GridFF2::CLJParameters::Array &params0,
                              double &cnrg, double &ljnrg)
 {
     double icnrg = 0;
@@ -2398,7 +2295,7 @@ void GridFF::calculateEnergy(const CoordGroup &coords0,
 }
 
 /** Ensure that the next energy evaluation is from scratch */
-void GridFF::mustNowRecalculateFromScratch()
+void GridFF2::mustNowRecalculateFromScratch()
 {
     gridpot.clear();
     closemols_coords.clear();
@@ -2409,7 +2306,7 @@ void GridFF::mustNowRecalculateFromScratch()
 }
 
 /** Any additions mean that the forcefield must be recalculated from scratch */
-void GridFF::_pvt_added(quint32 groupid, const PartialMolecule &mol, 
+void GridFF2::_pvt_added(quint32 groupid, const PartialMolecule &mol, 
                         const PropertyMap &map)
 {
     this->mustNowRecalculateFromScratch();
@@ -2417,33 +2314,33 @@ void GridFF::_pvt_added(quint32 groupid, const PartialMolecule &mol,
 }
 
 /** Any removals mean that the forcefield must be recalculated from scratch */
-void GridFF::_pvt_removed(quint32 groupid, const PartialMolecule &mol)
+void GridFF2::_pvt_removed(quint32 groupid, const PartialMolecule &mol)
 {
     this->mustNowRecalculateFromScratch();
     InterGroupCLJFF::_pvt_removed(groupid, mol);
 }
 
 /** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
-void GridFF::_pvt_changed(quint32 groupid, const SireMol::Molecule &molecule)
+void GridFF2::_pvt_changed(quint32 groupid, const SireMol::Molecule &molecule)
 {
     InterGroupCLJFF::_pvt_changed(groupid, molecule);
 }
 
 /** Any changes to group 1 mean that the forcefield must be recalculated from scratch */
-void GridFF::_pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules)
+void GridFF2::_pvt_changed(quint32 groupid, const QList<SireMol::Molecule> &molecules)
 {
     InterGroupCLJFF::_pvt_changed(groupid, molecules);
 }
 
 /** Any removals mean that the forcefield must be recalculated from scratch */
-void GridFF::_pvt_removedAll(quint32 groupid)
+void GridFF2::_pvt_removedAll(quint32 groupid)
 {
     this->mustNowRecalculateFromScratch();
     InterGroupCLJFF::_pvt_removedAll(groupid);
 }
 
 /** Recalculate the total energy */
-void GridFF::recalculateEnergy()
+void GridFF2::recalculateEnergy()
 {
     CLJPotential::startEvaluation();
 
