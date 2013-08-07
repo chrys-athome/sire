@@ -239,7 +239,8 @@ QVector<MultiDouble> MultiDouble::fromArray(const double *array, int size)
     int nvecs = size / MULTIFLOAT_SIZE;
     int nremain = size % MULTIFLOAT_SIZE;
     
-    QVector<MultiDouble> marray(nvecs + ( (nremain == 1) ? 1 : 0 ));
+    QVector<MultiDouble> marray(nvecs + ( (nremain > 0) ? 1 : 0 ));
+    
     MultiDouble *ma = marray.data();
     
     int idx = 0;
@@ -360,7 +361,7 @@ QVector<MultiDouble> MultiDouble::fromArray(const float *array, int size)
     int nvecs = size / MULTIFLOAT_SIZE;
     int nremain = size % MULTIFLOAT_SIZE;
 
-    QVector<MultiDouble> marray(nvecs + ( (nremain == 1) ? 1 : 0 ));
+    QVector<MultiDouble> marray(nvecs + ( (nremain > 0) ? 1 : 0 ));
     MultiDouble *a = marray.data();
     
     int idx = 0;

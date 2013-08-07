@@ -131,6 +131,7 @@ public:
     
     MultiFloat& operator=(const MultiFloat &other);
     MultiFloat& operator=(const MultiDouble &other);
+    MultiFloat& operator=(float value);
     
     bool operator==(const MultiFloat &other) const;
     bool operator!=(const MultiFloat &other) const;
@@ -377,6 +378,26 @@ MultiFloat& MultiFloat::operator=(const MultiFloat &other)
         #endif
         #endif
     }
+    
+    return *this;
+}
+
+/** Assignment operator */
+inline
+MultiFloat& MultiFloat::operator=(float value)
+{
+    #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
+        v.x = _mm256_set1_ps(value);
+    #else
+    #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
+        v.x = _mm_set1_ps(value);
+    #else
+        for (int i=0; i<MULTIFLOAT_SIZE; ++i)
+        {
+            v.a[i] = value;
+        }
+    #endif
+    #endif
     
     return *this;
 }

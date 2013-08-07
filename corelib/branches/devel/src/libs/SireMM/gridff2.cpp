@@ -567,18 +567,54 @@ void GridFF2::appendTo(QVector<GridFF2::Vector4> &coords_and_charges,
     }
 #endif
 
+/** Convert the index 'ipt' for a 1-dimensional array into the indicies
+    ix, iy, iz for the 3-dimensional array of dimension dimx, dimy, dimz */
+static void arrayIndexToGridIndex(int ipt, int dimx, int dimy, int dimz,
+                                  int &ix, int &iy, int &iz)
+{
+    ix = ipt / (dimy*dimz);
+    ipt -= ix*dimy*dimz;
+
+    iy = ipt / dimz;
+    ipt -= iy*dimz;
+    
+    iz = ipt;
+
+/*    ix = ipt / (dimy*dimz);
+    iy = (ipt - ix*dimy*dimz) / dimz;
+    iz = ipt % dimz;*/
+}
+
+/** Convert the indicies ix, iy, iz for the 3-dimensional array of dimension
+    dimx, dimy, dimz into the returned index into the corresponding 1-dimensional array */
+static int gridIndexToArrayIndex(int ix, int iy, int iz, int dimx, int dimy, int dimz)
+{
+    return ix*(dimy*dimz) + iy*dimz + iz;
+}
+
+void getGridPoint(int ipt, const Vector &min, int dimx, int dimy, int dimz,
+                  double grid_spacing, MultiDouble &x, MultiDouble &y, MultiDouble &z)
+{
+    int ix, iy, iz;
+    arrayIndexToGridIndex(ipt, dimx, dimy, dimz, ix, iy, iz);
+
+    x = MultiDouble( min.x() + ix*grid_spacing );
+    y = MultiDouble( min.y() + iy*grid_spacing );
+    z = MultiDouble( min.z() + iz*grid_spacing );
+}
+
 void getGridPoint(int ipt, const Vector &min, int dimx, int dimy, int dimz,
                   double grid_spacing, MultiFloat &x, MultiFloat &y, MultiFloat &z)
 {
-    int iz = ipt / (dimx*dimy);
-    int iy = (ipt - iz*dimx*dimy) / dimx;
-    int ix = ipt % dimx;
+    int ix, iy, iz;
+    arrayIndexToGridIndex(ipt, dimx, dimy, dimz, ix, iy, iz);
 
     x = MultiFloat( min.x() + ix*grid_spacing );
     y = MultiFloat( min.y() + iy*grid_spacing );
     z = MultiFloat( min.z() + iz*grid_spacing );
 }
 
+/** Function used to add the potential from the passed points to the grid */
 void GridFF2::addToGrid(const QVector<float> &vx,
                         const QVector<float> &vy,
                         const QVector<float> &vz,
@@ -603,33 +639,126 @@ void GridFF2::addToGrid(const QVector<float> &vx,
     QTime t;
     t.start();
     
+    const MultiFloat Rc( coul_cutoff );
+    MultiFloat r, tmp;
+    MultiFloat gx, gy, gz;
+    MultiDouble cnrg;
+    
     if (shiftElectrostatics())
     {
-        MultiFloat delta, dist2;
-        MultiFloat x, y, z, q, gx, gy, gz;
+        const MultiFloat one_over_Rc( 1.0 / coul_cutoff );
+        const MultiFloat one_over_Rc2( 1.0 / (coul_cutoff*coul_cutoff) );
 
         //loop over each grid point
         for (int ipt=0; ipt<npts; ++ipt)
         {
-            getGridPoint(ipt, minpoint, dimx, dimy, dimy, grid_spacing, gx, gy, gz);
+            getGridPoint(ipt, minpoint, dimx, dimy, dimz, grid_spacing, gx, gy, gz);
             
-            MultiDouble cnrg(0);
+            cnrg = 0;
             
             for (int ivec=0; ivec<nvecs; ++ivec)
             {
-                x = ax[ivec];
-                y = ay[ivec];
-                z = az[ivec];
-                q = aq[ivec];
+                //calculate the distance between the atom and grid point (r)
+                tmp = ax[ivec] - gx;
+                r = tmp * tmp;
+                tmp = ay[ivec] - gy;
+                r.multiplyAdd(tmp, tmp);
+                tmp = az[ivec] - gz;
+                r.multiplyAdd(tmp, tmp);
+                r = r.sqrt();
                 
-                delta = x - gx;
-                dist2 = delta * delta;
-                delta = y - gy;
-                dist2.multiplyAdd(delta, delta);
-                delta = z - gz;
-                dist2.multiplyAdd(delta, delta);
+                //calculate the coulomb energy using shift-electrostatics
+                // energy = q * { 1/r - 1/Rc + 1/Rc^2 [r - Rc] }
+                tmp = r - Rc;
+                tmp *= one_over_Rc2;
+                tmp -= one_over_Rc;
+                tmp += r.reciprocal();
+                tmp *= aq[ivec];
                 
-                cnrg = q * dist2.rsqrt();
+                //apply the cutoff - compare r against Rc. This will
+                //return 1 if r is less than Rc, or 0 otherwise. Logical
+                //and will then remove all energies where r >= Rc
+                cnrg += tmp.logicalAnd( r.compareLess(Rc) );
+            }
+            
+            pot[ipt] += cnrg.sum();
+        }
+    }
+    else if (useReactionField())
+    {
+        const MultiFloat rf_dielectric( reactionFieldDielectric() );
+        const MultiFloat k_rf( (1.0 / pow_3(coul_cutoff)) * ( (reactionFieldDielectric()-1) /
+                                                      (2*reactionFieldDielectric() + 1) ) );
+        const MultiFloat c_rf( (1.0 / coul_cutoff) * ( (3*reactionFieldDielectric()) /
+                                                      (2*reactionFieldDielectric() + 1) ) );
+
+        //loop over each grid point
+        for (int ipt=0; ipt<npts; ++ipt)
+        {
+            getGridPoint(ipt, minpoint, dimx, dimy, dimz, grid_spacing, gx, gy, gz);
+            
+            cnrg = 0;
+            
+            for (int ivec=0; ivec<nvecs; ++ivec)
+            {
+                //calculate the distance between the atom and grid point (r)
+                tmp = ax[ivec] - gx;
+                r = tmp * tmp;
+                tmp = ay[ivec] - gy;
+                r.multiplyAdd(tmp, tmp);
+                tmp = az[ivec] - gz;
+                r.multiplyAdd(tmp, tmp);
+                
+                //calculate the coulomb energy using reaction field
+                // energy = q * { 1/r - c_rf + k_rf * r^2 }
+                // where k_rf = (1 / r_c^3) * (eps - 1)/(2 eps + 1)
+                // c_rf = (1/r_c) * (3 eps)/(2 eps + 1)
+                tmp = r;
+                r = r.sqrt();
+                tmp *= k_rf;
+                tmp -= c_rf;
+                tmp += r.reciprocal();
+                tmp *= aq[ivec];
+                
+                //apply the cutoff - compare r against Rc. This will
+                //return 1 if r is less than Rc, or 0 otherwise. Logical
+                //and will then remove all energies where r >= Rc
+                cnrg += tmp.logicalAnd( r.compareLess(Rc) );
+            }
+            
+            pot[ipt] += cnrg.sum();
+        }
+    }
+    else
+    {
+        //use the simple atomistic cutoff
+
+        //loop over each grid point
+        for (int ipt=0; ipt<npts; ++ipt)
+        {
+            getGridPoint(ipt, minpoint, dimx, dimy, dimz, grid_spacing, gx, gy, gz);
+            
+            cnrg = 0;
+            
+            for (int ivec=0; ivec<nvecs; ++ivec)
+            {
+                //calculate the distance between the atom and grid point (r)
+                tmp = ax[ivec] - gx;
+                r = tmp * tmp;
+                tmp = ay[ivec] - gy;
+                r.multiplyAdd(tmp, tmp);
+                tmp = az[ivec] - gz;
+                r.multiplyAdd(tmp, tmp);
+                r = r.sqrt();
+                
+                //calculate the coulomb energy using coulomb's law
+                // energy = q * { 1/r }
+                tmp = aq[ivec] / r;
+                
+                //apply the cutoff - compare r against Rc. This will
+                //return 1 if r is less than Rc, or 0 otherwise. Logical
+                //and will then remove all energies where r >= Rc
+                cnrg += tmp.logicalAnd( r.compareLess(Rc) );
             }
             
             pot[ipt] += cnrg.sum();
@@ -1006,7 +1135,18 @@ void GridFF2::rebuildGrid()
         qDebug() << "The number of explicitly evaluated atoms is now" << atomcount;
         qDebug() << "The number of grid evaluated atoms is now" << gridcount;
     }
-    
+ 
+    {
+        double grid_sum = 0;
+        
+        for (int ipt=0; ipt<(dimx*dimy*dimz); ++ipt)
+        {
+            grid_sum += gridpot.at(ipt);
+        }
+        
+        qDebug() << "Sum of grid potentials is" << grid_sum;
+    }
+
     closemols_coords.squeeze();
     closemols_params.squeeze();
 }
@@ -1683,14 +1823,14 @@ void GridFF2::calculateEnergy(const CoordGroup &coords0,
             const double S = RST.y();
             const double T = RST.z();
             
-            int i000 = (i_0  ) * (dimy*dimz) + (j_0  )*dimz + (k_0  );
-            int i001 = (i_0  ) * (dimy*dimz) + (j_0  )*dimz + (k_0+1);
-            int i010 = (i_0  ) * (dimy*dimz) + (j_0+1)*dimz + (k_0  );
-            int i100 = (i_0+1) * (dimy*dimz) + (j_0  )*dimz + (k_0  );
-            int i011 = (i_0  ) * (dimy*dimz) + (j_0+1)*dimz + (k_0+1);
-            int i101 = (i_0+1) * (dimy*dimz) + (j_0  )*dimz + (k_0+1);
-            int i110 = (i_0+1) * (dimy*dimz) + (j_0+1)*dimz + (k_0  );
-            int i111 = (i_0+1) * (dimy*dimz) + (j_0+1)*dimz + (k_0+1);
+            int i000 = gridIndexToArrayIndex(i_0  , j_0  , k_0  , dimx, dimy, dimz);
+            int i001 = gridIndexToArrayIndex(i_0  , j_0  , k_0+1, dimx, dimy, dimz);
+            int i010 = gridIndexToArrayIndex(i_0  , j_0+1, k_0  , dimx, dimy, dimz);
+            int i100 = gridIndexToArrayIndex(i_0+1, j_0  , k_0  , dimx, dimy, dimz);
+            int i011 = gridIndexToArrayIndex(i_0  , j_0+1, k_0+1, dimx, dimy, dimz);
+            int i101 = gridIndexToArrayIndex(i_0+1, j_0  , k_0+1, dimx, dimy, dimz);
+            int i110 = gridIndexToArrayIndex(i_0+1, j_0+1, k_0  , dimx, dimy, dimz);
+            int i111 = gridIndexToArrayIndex(i_0+1, j_0+1, k_0+1, dimx, dimy, dimz);
             
             double phi = (gridpot_array[i000] * (1-R)*(1-S)*(1-T)) + 
                          (gridpot_array[i001] * (1-R)*(1-S)*(  T)) +

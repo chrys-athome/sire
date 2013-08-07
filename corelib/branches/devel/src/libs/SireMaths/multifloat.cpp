@@ -217,7 +217,7 @@ QVector<MultiFloat> MultiFloat::fromArray(const double *array, int size)
     int nvecs = size / MULTIFLOAT_SIZE;
     int nremain = size % MULTIFLOAT_SIZE;
 
-    QVector<MultiFloat> marray(nvecs + ( (nremain == 1) ? 1 : 0 ));
+    QVector<MultiFloat> marray(nvecs + ( (nremain > 0) ? 1 : 0 ));
     MultiFloat *a = marray.data();
     
     int idx = 0;
@@ -272,7 +272,7 @@ QVector<MultiFloat> MultiFloat::fromArray(const float *array, int size)
     int nvecs = size / MULTIFLOAT_SIZE;
     int nremain = size % MULTIFLOAT_SIZE;
     
-    QVector<MultiFloat> marray(nvecs + ( (nremain == 1) ? 1 : 0 ));
+    QVector<MultiFloat> marray(nvecs + ( (nremain > 0) ? 1 : 0 ));
     MultiFloat *ma = marray.data();
     
     int idx = 0;

@@ -41,8 +41,12 @@ for molnum in molnums:
         if Vector.distance(center_point, water.evaluate().center()) < 7.5:
             water = water.residue().edit().setProperty("PDB-residue-name", "SWP").commit()
             swapwaters.add(water)
+#            if swapwaters.isEmpty():
+#                swapwaters.add(water)
         else:
-            waters.add(water)
+             waters.add(water)
+#            if waters.isEmpty():
+#                waters.add(water)
 
 grid_system.add(swapwaters)
 grid_system.add(waters)
@@ -51,25 +55,29 @@ grid_system2.add(waters)
 
 gridff = GridFF("gridff")
 gridff.setBuffer(2 * angstrom)
-gridff.setGridSpacing( 0.75 * angstrom )
+gridff.setGridSpacing( 0.25 * angstrom )
 gridff.setLJCutoff( 10 * angstrom )
-gridff.setCoulombCutoff( 25 * angstrom )
+gridff.setCoulombCutoff( 15 * angstrom )
 
 gridff.add(swapwaters, MGIdx(0))
 gridff.add(waters, MGIdx(1))
 gridff.setSpace( Cartesian() )
 gridff.setShiftElectrostatics(True)
+#gridff.setUseReactionField(True)
+#gridff.setUseAtomisticCutoff(True)
 
 gridff2 = GridFF2("gridff2")
 gridff2.setBuffer(2 * angstrom)
-gridff2.setGridSpacing( 0.75 * angstrom )
+gridff2.setGridSpacing( 0.25 * angstrom )
 gridff2.setLJCutoff( 10 * angstrom )
-gridff2.setCoulombCutoff( 25 * angstrom )
+gridff2.setCoulombCutoff( 15 * angstrom )
 
 gridff2.add(swapwaters, MGIdx(0))
 gridff2.add(waters, MGIdx(1))
 gridff2.setSpace( Cartesian() )
 gridff2.setShiftElectrostatics(True)
+#gridff2.setUseReactionField(True)
+#gridff2.setUseAtomisticCutoff(True)
 
 swap_swapff = InterCLJFF("swap-swap")
 swap_swapff.setSpace(Cartesian())

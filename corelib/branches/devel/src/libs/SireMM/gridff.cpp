@@ -1137,7 +1137,6 @@ void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
     else
     {
         //we use a simple atom-based cutoff
-    
         #ifdef SIRE_USE_SSE
         {
             const int remainder = npts % 2;
@@ -1318,7 +1317,7 @@ void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
                 }
                         
                 pot[ipt] += total;
-                
+
                 k += 1;
                 gz += grid_spacing;
                 
@@ -1693,6 +1692,17 @@ void GridFF::rebuildGrid()
         qDebug() << "Added all of the group 1 molecules to the grid.";
         qDebug() << "The number of explicitly evaluated atoms is now" << atomcount;
         qDebug() << "The number of grid evaluated atoms is now" << gridcount;
+    }
+
+    {
+        double grid_sum = 0;
+        
+        for (int ipt=0; ipt<(dimx*dimy*dimz); ++ipt)
+        {
+            grid_sum += gridpot.at(ipt);
+        }
+        
+        qDebug() << "Sum of grid potentials is" << grid_sum;
     }
     
     closemols_coords.squeeze();
