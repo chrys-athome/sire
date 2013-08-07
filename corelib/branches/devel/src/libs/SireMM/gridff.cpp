@@ -1350,10 +1350,10 @@ void GridFF::addToGrid(const QVector<GridFF::Vector4> &coords_and_charges)
         #endif
     }
     
-    //int ms = t.elapsed();
+    int ms = t.elapsed();
     
-    //qDebug() << "Added" << nats << "more atoms to" << npts << "grid points in"
-    //         << ms << "ms";
+    qDebug() << "Added" << nats << "more atoms to" << npts << "grid points in"
+             << ms << "ms";
 }
 
 inline double getDist(double p, double minp, double maxp)

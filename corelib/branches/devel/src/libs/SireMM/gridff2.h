@@ -166,7 +166,8 @@ private:
                          const detail::CLJParameter *params,
                          int nats);
                          
-    void addToGrid(const QVector<Vector4> &coords_and_charges);
+    void addToGrid(const QVector<float> &vx, const QVector<float> &vy,
+                   const QVector<float> &vz, const QVector<float> &vq);
 
     /** The AABox that describes the grid */
     SireVol::AABox gridbox;
