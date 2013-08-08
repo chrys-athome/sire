@@ -130,9 +130,9 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
         << velver.CutoffType << velver.cutoff_distance << velver.field_dielectric
         << velver.Andersen_flag <<  velver.Andersen_frequency 
         << velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
-        <<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.energy_frequency
+        <<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency << velver.energy_frequency
         << velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical << velver.buffer_coords
-        << velver.gradients <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol << velver.timeskip
+        << velver.gradients << velver.energies <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol << velver.timeskip
         << static_cast<const Integrator&>(velver);
 
     // Free OpenMM pointers??
@@ -151,10 +151,10 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
         sds >> velver.frequent_save_velocities >> velver.molgroup >> velver.solute >>velver.solutehard >> velver.solutetodummy >> velver.solutefromdummy
         >> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric
         >> velver.Andersen_flag >>  velver.Andersen_frequency 
-        >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature
-        >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.energy_frequency
+        >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature 
+	>> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency >> velver.energy_frequency
         >> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical >> velver.buffer_coords
-        >> velver.gradients >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol >> velver.timeskip
+	>> velver.gradients >> velver.energies >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol >> velver.timeskip
         >> static_cast<Integrator&>(velver);
 
         // Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -179,8 +179,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
                 Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-                CMMremoval_frequency(0), energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
-                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),perturbed_energies(),
+	        CMMremoval_frequency(0), buffer_frequency(0),energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
+		  shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond)
 {}
 
@@ -193,8 +193,8 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const Mo
                 Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-                CMMremoval_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
-                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),perturbed_energies(),
+                CMMremoval_frequency(0), buffer_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
+		  shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
                 Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond)
 {}
 
@@ -211,9 +211,10 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
                 MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
                 Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
                 Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
-                energy_frequency(other.energy_frequency),device_index(other.device_index),precision(other.precision),Alchemical_value(other.Alchemical_value),
+	        buffer_frequency(other.buffer_frequency), energy_frequency(other.energy_frequency),device_index(other.device_index),precision(other.precision),Alchemical_value(other.Alchemical_value),
                 coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),
-                delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients),perturbed_energies(other.perturbed_energies),
+		  delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients),energies(other.energies), 
+		  perturbed_energies(other.perturbed_energies),
                 Integrator_type(other.Integrator_type),friction(other.friction),integration_tol(other.integration_tol),timeskip(other.timeskip)
 {}
 
@@ -248,6 +249,7 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     platform_type = other.platform_type;
     Restraint_flag = other.Restraint_flag;
     CMMremoval_frequency = other.CMMremoval_frequency;
+    buffer_frequency = other.buffer_frequency;
     energy_frequency = other.energy_frequency;
     device_index = other.device_index;
     precision = other.precision;
@@ -257,6 +259,7 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     delta_alchemical = other.delta_alchemical;
     buffer_coords = other.buffer_coords;
     gradients = other.gradients;
+    energies = other.energies;
     perturbed_energies = other.perturbed_energies;
     Integrator_type = other.Integrator_type;
     friction = other.friction;
@@ -306,9 +309,9 @@ void OpenMMFrEnergyST::initialise()  {
 
     const MoleculeGroup solute = this->solute.read();
     
-    if ( solute.isEmpty() ){
-        throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because solute group has not been defined"), CODELOC);
-    }
+    //if ( solute.isEmpty() ){
+    //    throw SireError::program_bug(QObject::tr("Cannot initialise OpenMMFrEnergyST because solute group has not been defined"), CODELOC);
+    //}
 
 
     const MoleculeGroup solutehard = this->solutehard.read();
@@ -386,70 +389,39 @@ void OpenMMFrEnergyST::initialise()  {
 
     if ( flag_cutoff == NOCUTOFF ){
 
-/*        custom_force_field = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) + Hclj * isHARD;"
-                                                             "isHARD = isHD1 * isHD2;"
-                                                             "Hsoft = Hls + Hcs;"
-                                                             "Hcs = (lambda^n) * 138.935456 * q_prod/sqrt(diff_cl+r^2);"
-                                                             "diff_cl = (1.0-lambda) * 0.01;"
-                                                             "Hls = 4.0 * eps_avg * (LJ*LJ-LJ);"
-                                                             "LJ=((sigma_avg * sigma_avg)/soft)^3;"
-                                                             "soft=(diff_lj*delta*sigma_avg + r*r);"
-                                                             "diff_lj=(1.0-lambda) * 0.1;"
-                                                             "lambda = Logic_lam * lam + Logic_om_lam * (1-lam) + Logic_mix_lam * max(lam,1-lam);"
-                                                             "Logic_om_lam = max((1-isHD1)*(1-isHD2)*isTD1*isTD2*(1-isFD1)*(1-isFD2), B_om_lam);"
-                                                             "B_om_lam = max(isHD1*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), C_om_lam);"
-                                                             "C_om_lam = max(isHD1*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2) , D_om_lam);"
-                                                             "D_om_lam = max((1-isHD1)*isHD2*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), E_om_lam);"
-                                                             "E_om_lam = (1-isHD1)*isHD2*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2);"
-                                                             "Logic_lam = max((1-isHD1)*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*isFD2, B_lam);"
-                                                             "B_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), C_lam);"
-                                                             "C_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2 , D_lam);"
-                                                             "D_lam = max((1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), E_lam);"
-                                                             "E_lam = (1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2;"
-                                                             "Logic_mix_lam = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*isFD1*(1-isFD2), B_mix);"
-                                                             "B_mix = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*isFD2, C_mix);"
-                                                             "C_mix = max((1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*isFD1*(1-isFD2) , D_mix);"
-                                                             "D_mix= (1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*isFD2;"
-                                                             "Hclj = Hl + Hc;"
-                                                             "Hl = 4 * eps_avg * ((sigma_avg/r)^12-(sigma_avg/r)^6);"
-                                                             "Hc = 138.935456 * q_prod/r;"
-                                                             "q_prod = (qend1 * lam+(1.0-lam) * qstart1) * (qend2 * lam+(1.0-lam) * qstart2);"
-                                                             "eps_avg = sqrt((epend1*lam+(1.0-lam)*epstart1)*(epend2*lam+(1.0-lam)*epstart2));"
-                                                             "sigma_avg = 0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");
-*/
 
-        custom_force_field = new OpenMM::CustomNonbondedForce("Hls + Hcs;"
+        custom_force_field = new OpenMM::CustomNonbondedForce("(1.0 - isSolvent1 * isSolvent2 * SSOnOff) * (Hls + Hcs);"
                                                               "Hcs = (lambda^n) * 138.935456 * q_prod/sqrt(diff_cl+r^2);"
                                                               "diff_cl = (1.0-lambda) * 0.01;"
                                                               "Hls = 4.0 * eps_avg * (LJ*LJ-LJ);"
                                                               "LJ=((sigma_avg * sigma_avg)/soft)^3;"
                                                               "soft=(diff_lj*delta*sigma_avg + r*r);"
                                                               "diff_lj=(1.0-lambda) * 0.1;"
-                                                              "lambda = Logic_lam * lam + Logic_om_lam * (1-lam) + Logic_mix_lam * max(lam,1-lam) + Logic_hard;"
-                                                              "Logic_hard = isHD1 * isHD2 * (1-isTD1) * (1-isTD2) * (1-isFD1) * (1-isFD2);"
-                                                              "Logic_om_lam = max((1-isHD1)*(1-isHD2)*isTD1*isTD2*(1-isFD1)*(1-isFD2), B_om_lam);"
-                                                              "B_om_lam = max(isHD1*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), C_om_lam);"
-                                                              "C_om_lam = max(isHD1*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2) , D_om_lam);"
-                                                              "D_om_lam = max((1-isHD1)*isHD2*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), E_om_lam);"
-                                                              "E_om_lam = (1-isHD1)*isHD2*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2);"
-                                                              "Logic_lam = max((1-isHD1)*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*isFD2, B_lam);"
-                                                              "B_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), C_lam);"
-                                                              "C_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2 , D_lam);"
-                                                              "D_lam = max((1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), E_lam);"
-                                                              "E_lam = (1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2;"
-                                                              "Logic_mix_lam = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*isFD1*(1-isFD2), B_mix);"
-                                                              "B_mix = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*isFD2, C_mix);"
-                                                              "C_mix = max((1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*isFD1*(1-isFD2) , D_mix);"
-                                                              "D_mix= (1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*isFD2;"
+                                                              "lambda = Logic_lam * lam + Logic_om_lam * (1.0-lam) + Logic_mix_lam * max(lam,1.0-lam) + Logic_hard;"
+                                                              "Logic_hard = isHD1 * isHD2 * (1.0-isTD1) * (1.0-isTD2) * (1.0-isFD1) * (1.0-isFD2);"
+                                                              "Logic_om_lam = max((1.0-isHD1)*(1.0-isHD2)*isTD1*isTD2*(1.0-isFD1)*(1.0-isFD2), B_om_lam);"
+                                                              "B_om_lam = max(isHD1*(1.0-isHD2)*isTD1*(1.0-isTD2)*(1.0-isFD1)*(1.0-isFD2), C_om_lam);"
+                                                              "C_om_lam = max(isHD1*(1.0-isHD2)*(1.0-isTD1)*isTD2*(1.0-isFD1)*(1.0-isFD2) , D_om_lam);"
+                                                              "D_om_lam = max((1.0-isHD1)*isHD2*isTD1*(1.0-isTD2)*(1.0-isFD1)*(1.0-isFD2), E_om_lam);"
+                                                              "E_om_lam = (1.0-isHD1)*isHD2*(1.0-isTD1)*isTD2*(1.0-isFD1)*(1.0-isFD2);"
+                                                              "Logic_lam = max((1.0-isHD1)*(1.0-isHD2)*(1.0-isTD1)*(1.0-isTD2)*isFD1*isFD2, B_lam);"
+                                                              "B_lam = max(isHD1*(1.0-isHD2)*(1.0-isTD1)*(1.0-isTD2)*isFD1*(1.0-isFD2), C_lam);"
+                                                              "C_lam = max(isHD1*(1.0-isHD2)*(1.0-isTD1)*(1.0-isTD2)*(1.0-isFD1)*isFD2 , D_lam);"
+                                                              "D_lam = max((1.0-isHD1)*isHD2*(1.0-isTD1)*(1.0-isTD2)*isFD1*(1.0-isFD2), E_lam);"
+                                                              "E_lam = (1.0-isHD1)*isHD2*(1.0-isTD1)*(1.0-isTD2)*(1.0-isFD1)*isFD2;"
+                                                              "Logic_mix_lam = max((1.0-isHD1)*(1.0-isHD2)*isTD1*(1.0-isTD2)*isFD1*(1.0-isFD2), B_mix);"
+                                                              "B_mix = max((1.0-isHD1)*(1.0-isHD2)*isTD1*(1.0-isTD2)*(1.0-isFD1)*isFD2, C_mix);"
+                                                              "C_mix = max((1.0-isHD1)*(1.0-isHD2)*(1.0-isTD1)*isTD2*isFD1*(1.0-isFD2) , D_mix);"
+                                                              "D_mix= (1.0-isHD1)*(1.0-isHD2)*(1.0-isTD1)*isTD2*(1.0-isFD1)*isFD2;"
                                                               "q_prod = (qend1 * lam+(1.0-lam) * qstart1) * (qend2 * lam+(1.0-lam) * qstart2);"
                                                               "eps_avg = sqrt((epend1*lam+(1.0-lam)*epstart1)*(epend2*lam+(1.0-lam)*epstart2));"
                                                               "sigma_avg = 0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");
 
-
         custom_force_field->addGlobalParameter("lam",Alchemical_value);
         custom_force_field->addGlobalParameter("delta",shift_delta);
         custom_force_field->addGlobalParameter("n",coulomb_power);
-        
+        custom_force_field->addGlobalParameter("SSOnOff",0.0);
+
         custom_force_field->setNonbondedMethod(OpenMM::CustomNonbondedForce::NoCutoff);
 
 
@@ -526,45 +498,8 @@ void OpenMMFrEnergyST::initialise()  {
         double kvalue = eps2/(converted_cutoff_distance * converted_cutoff_distance * converted_cutoff_distance);
         double cvalue = (1.0/converted_cutoff_distance)*(3.0*field_dielectric)/(2.0*field_dielectric+1.0);
 
-/*
-        custom_force_field = new OpenMM::CustomNonbondedForce("Hsoft * (1.0 - isHARD) + Hclj * isHARD;"
-                                                             "isHARD = isHD1 * isHD2;"
-                                                             "Hsoft = Hls + Hcs;"
-                                                             "Hcs = (lambda^n) * 138.935456 * q_prod*(1/sqrt(diff_cl+r*r) + krflam*(diff_cl+r*r)-crflam);"
-                                                             "crflam = crf * src;"
-                                                             "krflam = krf * src * src * src;"
-                                                             "src = cutoff/sqrt(diff_cl + cutoff*cutoff);"
-                                                             "diff_cl = (1.0-lambda) * 0.01;"
-                                                             "Hls = 4.0 * eps_avg * (LJ*LJ-LJ);"
-                                                             "LJ=((sigma_avg * sigma_avg)/soft)^3;"
-                                                             "soft=(diff_lj*delta*sigma_avg + r*r);"
-                                                             "diff_lj=(1.0-lambda) * 0.1;"
-                                                             "lambda = Logic_lam * lam + Logic_om_lam * (1-lam) + Logic_mix_lam * max(lam,1-lam);"
-                                                             "Logic_om_lam = max((1-isHD1)*(1-isHD2)*isTD1*isTD2*(1-isFD1)*(1-isFD2), B_om_lam);"
-                                                             "B_om_lam = max(isHD1*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), C_om_lam);"
-                                                             "C_om_lam = max(isHD1*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2) , D_om_lam);"
-                                                             "D_om_lam = max((1-isHD1)*isHD2*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), E_om_lam);"
-                                                             "E_om_lam = (1-isHD1)*isHD2*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2);"
-                                                             "Logic_lam = max((1-isHD1)*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*isFD2, B_lam);"
-                                                             "B_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), C_lam);"
-                                                             "C_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2 , D_lam);"
-                                                             "D_lam = max((1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), E_lam);"
-                                                             "E_lam = (1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2;"
-                                                             "Logic_mix_lam = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*isFD1*(1-isFD2), B_mix);"
-                                                             "B_mix = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*isFD2, C_mix);"
-                                                             "C_mix = max((1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*isFD1*(1-isFD2) , D_mix);"
-                                                             "D_mix= (1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*isFD2;"
-                                                             "Hclj = Hl + Hc;"
-                                                             "Hl = 4 * eps_avg * ((sigma_avg/r)^12-(sigma_avg/r)^6);"
-                                                             "Hc = 138.935456 * q_prod*(1/r + krf * r*r - crf);"
-                                                             "q_prod = (qend1 * lam+(1.0-lam) * qstart1) * (qend2 * lam+(1.0-lam) * qstart2);"
-                                                             "eps_avg = sqrt((epend1*lam+(1.0-lam)*epstart1)*(epend2*lam+(1.0-lam)*epstart2));"
-                                                             "sigma_avg = 0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");
-*/
 
-
-
-        custom_force_field = new OpenMM::CustomNonbondedForce("Hls + Hcs;"
+        custom_force_field = new OpenMM::CustomNonbondedForce("(1.0 - isSolvent1 * isSolvent2 * SSOnOff) * (Hls + Hcs);"
                                                               "Hcs = (lambda^n) * 138.935456 * q_prod*(1/sqrt(diff_cl+r*r) + krflam*(diff_cl+r*r)-crflam);"
                                                               "crflam = crf * src;"
                                                               "krflam = krf * src * src * src;"
@@ -574,26 +509,25 @@ void OpenMMFrEnergyST::initialise()  {
                                                               "LJ=((sigma_avg * sigma_avg)/soft)^3;"
                                                               "soft=(diff_lj*delta*sigma_avg + r*r);"
                                                               "diff_lj=(1.0-lambda) * 0.1;"
-                                                              "lambda = Logic_lam * lam + Logic_om_lam * (1-lam) + Logic_mix_lam * max(lam,1-lam) + Logic_hard;"
-                                                              "Logic_hard = isHD1 * isHD2 * (1-isTD1) * (1-isTD2) * (1-isFD1) * (1-isFD2);"
-                                                              "Logic_om_lam = max((1-isHD1)*(1-isHD2)*isTD1*isTD2*(1-isFD1)*(1-isFD2), B_om_lam);"
-                                                              "B_om_lam = max(isHD1*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), C_om_lam);"
-                                                              "C_om_lam = max(isHD1*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2) , D_om_lam);"
-                                                              "D_om_lam = max((1-isHD1)*isHD2*isTD1*(1-isTD2)*(1-isFD1)*(1-isFD2), E_om_lam);"
-                                                              "E_om_lam = (1-isHD1)*isHD2*(1-isTD1)*isTD2*(1-isFD1)*(1-isFD2);"
-                                                              "Logic_lam = max((1-isHD1)*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*isFD2, B_lam);"
-                                                              "B_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), C_lam);"
-                                                              "C_lam = max(isHD1*(1-isHD2)*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2 , D_lam);"
-                                                              "D_lam = max((1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*isFD1*(1-isFD2), E_lam);"
-                                                              "E_lam = (1-isHD1)*isHD2*(1-isTD1)*(1-isTD2)*(1-isFD1)*isFD2;"
-                                                              "Logic_mix_lam = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*isFD1*(1-isFD2), B_mix);"
-                                                              "B_mix = max((1-isHD1)*(1-isHD2)*isTD1*(1-isTD2)*(1-isFD1)*isFD2, C_mix);"
-                                                              "C_mix = max((1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*isFD1*(1-isFD2) , D_mix);"
-                                                              "D_mix= (1-isHD1)*(1-isHD2)*(1-isTD1)*isTD2*(1-isFD1)*isFD2;"
+                                                              "lambda = Logic_lam * lam + Logic_om_lam * (1.0-lam) + Logic_mix_lam * max(lam,1.0-lam) + Logic_hard;"
+                                                              "Logic_hard = isHD1 * isHD2 * (1.0-isTD1) * (1.0-isTD2) * (1.0-isFD1) * (1.0-isFD2);"
+                                                              "Logic_om_lam = max((1.0-isHD1)*(1.0-isHD2)*isTD1*isTD2*(1.0-isFD1)*(1.0-isFD2), B_om_lam);"
+                                                              "B_om_lam = max(isHD1*(1.0-isHD2)*isTD1*(1.0-isTD2)*(1.0-isFD1)*(1.0-isFD2), C_om_lam);"
+                                                              "C_om_lam = max(isHD1*(1.0-isHD2)*(1.0-isTD1)*isTD2*(1.0-isFD1)*(1.0-isFD2) , D_om_lam);"
+                                                              "D_om_lam = max((1.0-isHD1)*isHD2*isTD1*(1.0-isTD2)*(1.0-isFD1)*(1.0-isFD2), E_om_lam);"
+                                                              "E_om_lam = (1.0-isHD1)*isHD2*(1.0-isTD1)*isTD2*(1.0-isFD1)*(1.0-isFD2);"
+                                                              "Logic_lam = max((1.0-isHD1)*(1.0-isHD2)*(1.0-isTD1)*(1.0-isTD2)*isFD1*isFD2, B_lam);"
+                                                              "B_lam = max(isHD1*(1.0-isHD2)*(1.0-isTD1)*(1.0-isTD2)*isFD1*(1.0-isFD2), C_lam);"
+                                                              "C_lam = max(isHD1*(1.0-isHD2)*(1.0-isTD1)*(1.0-isTD2)*(1.0-isFD1)*isFD2 , D_lam);"
+                                                              "D_lam = max((1.0-isHD1)*isHD2*(1.0-isTD1)*(1.0-isTD2)*isFD1*(1.0-isFD2), E_lam);"
+                                                              "E_lam = (1.0-isHD1)*isHD2*(1.0-isTD1)*(1.0-isTD2)*(1.0-isFD1)*isFD2;"
+                                                              "Logic_mix_lam = max((1.0-isHD1)*(1.0-isHD2)*isTD1*(1.0-isTD2)*isFD1*(1.0-isFD2), B_mix);"
+                                                              "B_mix = max((1.0-isHD1)*(1.0-isHD2)*isTD1*(1.0-isTD2)*(1.0-isFD1)*isFD2, C_mix);"
+                                                              "C_mix = max((1.0-isHD1)*(1.0-isHD2)*(1.0-isTD1)*isTD2*isFD1*(1.0-isFD2) , D_mix);"
+                                                              "D_mix= (1.0-isHD1)*(1.0-isHD2)*(1.0-isTD1)*isTD2*(1.0-isFD1)*isFD2;"
                                                               "q_prod = (qend1 * lam+(1.0-lam) * qstart1) * (qend2 * lam+(1.0-lam) * qstart2);"
                                                               "eps_avg = sqrt((epend1*lam+(1.0-lam)*epstart1)*(epend2*lam+(1.0-lam)*epstart2));"
                                                               "sigma_avg = 0.5*((sigmaend1*lam+(1.0-lam)*sigmastart1)+(sigmaend2*lam+(1.0-lam)*sigmastart2))");
-
 
         custom_force_field->setCutoffDistance(converted_cutoff_distance);
 
@@ -603,8 +537,9 @@ void OpenMMFrEnergyST::initialise()  {
         custom_force_field->addGlobalParameter("krf",kvalue);
         custom_force_field->addGlobalParameter("crf",cvalue);
         custom_force_field->addGlobalParameter("cutoff",converted_cutoff_distance);
-        
-        
+        custom_force_field->addGlobalParameter("SSOnOff",0.0);
+
+
         if(flag_cutoff == CUTOFFNONPERIODIC){
             custom_force_field->setNonbondedMethod(OpenMM::CustomNonbondedForce::CutoffNonPeriodic);
             
@@ -776,18 +711,21 @@ void OpenMMFrEnergyST::initialise()  {
 
     if (Restraint_flag == true){
 
-        positionalRestraints_openmm = new OpenMM::CustomExternalForce("k*( (x-xref)^2 + (y-yref)^2 + (z-zref)^2 )");
+      //positionalRestraints_openmm = new OpenMM::CustomExternalForce("k*( (x-xref)^2 + (y-yref)^2 + (z-zref)^2 )");
+        positionalRestraints_openmm = new OpenMM::CustomExternalForce("k*d2;"
+                                                                      "d2 = max(0.0, d1 - d^2);"
+                                                                      "d1 = (x-xref)^2 + (y-yref)^2  + (z-zref)^2");
 
         positionalRestraints_openmm->addPerParticleParameter("xref");
         positionalRestraints_openmm->addPerParticleParameter("yref");
         positionalRestraints_openmm->addPerParticleParameter("zref");
         positionalRestraints_openmm->addPerParticleParameter("k");
+        positionalRestraints_openmm->addPerParticleParameter("d");
 
         system_openmm->addForce(positionalRestraints_openmm);
 
         if (true)
             qDebug() << "\n\nRestraint is ON\n\n";
-    
     }
 
 
@@ -809,7 +747,7 @@ void OpenMMFrEnergyST::initialise()  {
 
     for (int i=0; i < nmols; ++i){
 
-        const int nats_mol = ws.nAtoms(i);
+      const int nats_mol = ws.nAtoms(i);
 
         const double *m = ws.massArray(i);
 
@@ -925,7 +863,8 @@ void OpenMMFrEnergyST::initialise()  {
     custom_force_field->addPerParticleParameter("isHD");
     custom_force_field->addPerParticleParameter("isTD");
     custom_force_field->addPerParticleParameter("isFD");
-    
+    custom_force_field->addPerParticleParameter("isSolvent");
+
     custom_intra_14_clj->addPerBondParameter("qpstart");
     custom_intra_14_clj->addPerBondParameter("qpend");
     custom_intra_14_clj->addPerBondParameter("qmix");
@@ -976,30 +915,29 @@ void OpenMMFrEnergyST::initialise()  {
     solute_angle_perturbation->addPerAngleParameter("thetaend");
 
 
-    Molecule solutemol = solute.moleculeAt(0).molecule();
+    // JM July 13. This also needs to be changed because there could be more than one perturbed molecule
+    //Molecule solutemol = solute.moleculeAt(0).molecule();
 
 
     int nions = 0;
-    
-    
+
     QVector<bool> perturbed_energies_tmp(8);
-    
+
     for(int i = 0; i<perturbed_energies_tmp.size();i++)
         perturbed_energies_tmp[i] = false;
-    
-    
+
     for (int i=0; i < nmols ; i++){
 
-        if(Debug)
-            qDebug()<< "Molecule number = " << i;
-            
         const Vector *c = ws.coordsArray(i);
 
         Molecule molecule = moleculegroup.moleculeAt(i).molecule();
 
         int num_atoms_molecule = molecule.nAtoms();
         
-        std::vector<double> custom_non_bonded_params(9);
+        std::vector<double> custom_non_bonded_params(10);
+
+        if(Debug)
+            qDebug()<< "Molecule number = " << i;
 
         // NON BONDED TERMS
 
@@ -1015,6 +953,10 @@ void OpenMMFrEnergyST::initialise()  {
         QVector<SireMM::LJParameter> final_LJs;
 
         if(molecule.hasProperty("perturbations")){
+
+            if(Debug)
+                qDebug()<< "Molecule Perturbed number = " << i;
+
             AtomCharges atomcharges_start = molecule.property("initial_charge").asA<AtomCharges>();
             AtomCharges atomcharges_final = molecule.property("final_charge").asA<AtomCharges>();
             
@@ -1038,81 +980,149 @@ void OpenMMFrEnergyST::initialise()  {
             Atom atom = molecule.molecule().atoms()[j];
 
             if(molecule.hasProperty("perturbations")){
-                if(!solutehard.isEmpty() && solutehard.moleculeAt(0).atoms().contains(atom)){//hard solute atom
 
-                    double charge_start = start_charges[j].value();
-                    double charge_final = final_charges[j].value();
-                
-                    double epsilon_start = start_LJs[j].epsilon();
-                    double epsilon_final = final_LJs[j].epsilon();
-                    double sigma_start = start_LJs[j].sigma();
-                    double sigma_final = final_LJs[j].sigma();
-                
-                    custom_non_bonded_params[0] = charge_start;
-                    custom_non_bonded_params[1] = charge_final;
-                    custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
-                    custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal; 
-                    custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
-                    custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
-                    custom_non_bonded_params[6] = 1.0;//isHard
-                    custom_non_bonded_params[7] = 0.0;//isTodummy
-                    custom_non_bonded_params[8] = 0.0;//isFromdummy
+                // Is atom a hard, from dummy or to dummy type?
+                bool ishard = false;
+                bool istodummy = false;
+                bool isfromdummy = false;
 
-                    if(Debug)
-                        qDebug() << "hard solute = " << atom.index();
+                for (int l=0; l < solutehard.nViews() ; l++ ){
 
+                    Selector<Atom> view_atoms = solutehard.viewAt(l).atoms();
+
+                    for (int m=0; m < view_atoms.count() ; m++){
+
+                        Atom view_atom = view_atoms.at(m);
+
+                        if (atom == view_atom){
+                            ishard = true;
+                            break;
+                        }
+                    }//end for
+
+                    if (ishard)
+                      break;
+                }//end for
+
+                // if not hard check if to_dummy
+                if (!ishard){
+
+                    for (int l=0; l < solutetodummy.nViews() ; l++ ){
+
+                        Selector<Atom> view_atoms = solutetodummy.viewAt(l).atoms();
+
+                        for (int m=0; m < view_atoms.count() ; m++){
+
+                            Atom view_atom = view_atoms.at(m);
+
+                            if (atom == view_atom){
+                                istodummy = true;
+                                break;
+                            }
+                        }//end for
+                        if (istodummy)
+                            break;
+                    }//end for
                 }
-                else if(!solutetodummy.isEmpty() && solutetodummy.moleculeAt(0).atoms().contains(atom)){//to dummy solute atom
 
-                    double charge_start = start_charges[j].value();
-                    double charge_final = final_charges[j].value();
-                
-                    double epsilon_start = start_LJs[j].epsilon();
-                    double epsilon_final = final_LJs[j].epsilon();
-                    double sigma_start = start_LJs[j].sigma();
-                    double sigma_final = final_LJs[j].sigma();
-                
-                
-                    custom_non_bonded_params[0] = charge_start;
-                    custom_non_bonded_params[1] = charge_final;
-                    custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
-                    custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
-                    custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
-                    custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
-                    custom_non_bonded_params[6] = 0.0;//isHard
-                    custom_non_bonded_params[7] = 1.0;//isTodummy
-                    custom_non_bonded_params[8] = 0.0;//isFromdummy
+                // if not todummy, check if fromdummy
+                if (!istodummy && !ishard){
 
-                    if(Debug)
-                        qDebug() << "to dummy solute = " << atom.index();
+                    for (int l=0; l < solutefromdummy.nViews() ; l++ ){
 
+                        Selector<Atom> view_atoms = solutefromdummy.viewAt(l).atoms();
+
+                        for (int m=0; m < view_atoms.count() ; m++){
+
+                            Atom view_atom = view_atoms.at(m);
+
+                            if (atom == view_atom){
+                                isfromdummy = true;
+                                break;
+                            }
+                        }//end for
+                        if (isfromdummy)
+                            break;
+                    }//end for
                 }
-                else if(!solutefromdummy.isEmpty() && solutefromdummy.moleculeAt(0).atoms().contains(atom)){//from dummy solute atom
 
-                    double charge_start = start_charges[j].value();
-                    double charge_final = final_charges[j].value();
+            //if(!solutehard.isEmpty() && solutehard.moleculeAt(0).atoms().contains(atom))
+            if (ishard){//hard solute atom
 
-                    double epsilon_start = start_LJs[j].epsilon();
-                    double epsilon_final = final_LJs[j].epsilon();
-                    double sigma_start = start_LJs[j].sigma();
-                    double sigma_final = final_LJs[j].sigma();
-                
-                    custom_non_bonded_params[0] = charge_start;
-                    custom_non_bonded_params[1] = charge_final;
-                    custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
-                    custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
-                    custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
-                    custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
-                    custom_non_bonded_params[6] = 0.0;//isHard
-                    custom_non_bonded_params[7] = 0.0;//isTodummy
-                    custom_non_bonded_params[8] = 1.0;//isFromdummy
+                double charge_start = start_charges[j].value();
+                double charge_final = final_charges[j].value();
 
-                    if(Debug)
-                        qDebug() << "from dummy solute = " << atom.index();
+                double epsilon_start = start_LJs[j].epsilon();
+                double epsilon_final = final_LJs[j].epsilon();
+                double sigma_start = start_LJs[j].sigma();
+                double sigma_final = final_LJs[j].sigma();
 
-                }
+                custom_non_bonded_params[0] = charge_start;
+                custom_non_bonded_params[1] = charge_final;
+                custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
+                custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal; 
+                custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[6] = 1.0;//isHard
+                custom_non_bonded_params[7] = 0.0;//isTodummy
+                custom_non_bonded_params[8] = 0.0;//isFromdummy
+                custom_non_bonded_params[9] = 0.0;//isSolvent
+
+                if(Debug)
+                  qDebug() << "hard solute = " << atom.index();
             }
-            else{//solvent atom like hard
+            // JM July 13 THIS NEEDS FIXING TO DEAL WITH GROUPS THAT CONTAIN MORE THAN ONE MOLECULE
+            //else if(!solutetodummy.isEmpty() && solutetodummy.moleculeAt(0).atoms().contains(atom))
+            else if (istodummy){//to dummy solute atom
+
+                double charge_start = start_charges[j].value();
+                double charge_final = final_charges[j].value();
+                double epsilon_start = start_LJs[j].epsilon();
+                double epsilon_final = final_LJs[j].epsilon();
+                double sigma_start = start_LJs[j].sigma();
+                double sigma_final = final_LJs[j].sigma();
+
+                custom_non_bonded_params[0] = charge_start;
+                custom_non_bonded_params[1] = charge_final;
+                custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
+                custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
+                custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[6] = 0.0;//isHard
+                custom_non_bonded_params[7] = 1.0;//isTodummy
+                custom_non_bonded_params[8] = 0.0;//isFromdummy
+                custom_non_bonded_params[9] = 0.0;//isSolvent
+
+                if(Debug)
+                    qDebug() << "to dummy solute = " << atom.index();
+            }
+
+            //else if(!solutefromdummy.isEmpty() && solutefromdummy.moleculeAt(0).atoms().contains(atom))
+            else if (isfromdummy){//from dummy solute atom
+
+                double charge_start = start_charges[j].value();
+                double charge_final = final_charges[j].value();
+                double epsilon_start = start_LJs[j].epsilon();
+                double epsilon_final = final_LJs[j].epsilon();
+                double sigma_start = start_LJs[j].sigma();
+                double sigma_final = final_LJs[j].sigma();
+
+                custom_non_bonded_params[0] = charge_start;
+                custom_non_bonded_params[1] = charge_final;
+                custom_non_bonded_params[2] = epsilon_start * OpenMM::KJPerKcal;
+                custom_non_bonded_params[3] = epsilon_final * OpenMM::KJPerKcal;
+                custom_non_bonded_params[4] = sigma_start * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[5] = sigma_final * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[6] = 0.0;//isHard
+                custom_non_bonded_params[7] = 0.0;//isTodummy
+                custom_non_bonded_params[8] = 1.0;//isFromdummy
+                custom_non_bonded_params[9] = 0.0;//isSolvent
+
+                if(Debug)
+                    qDebug() << "from dummy solute = " << atom.index();
+                }
+
+            else{//What if some atoms were not perturbed at all in the pert file? Use default params
 
                 custom_non_bonded_params[0] = charge;
                 custom_non_bonded_params[1] = charge;
@@ -1123,25 +1133,44 @@ void OpenMMFrEnergyST::initialise()  {
                 custom_non_bonded_params[6] = 1.0;//isHard
                 custom_non_bonded_params[7] = 0.0;//isTodummy
                 custom_non_bonded_params[8] = 0.0;//isFromdummy
+                custom_non_bonded_params[9] = 0.0;//isSolvent
+
+                if (Debug)
+                  qDebug() << " unperturbed solute atom " << atom.index();
+            }
+        }//end if perturbation section
+        else{//solvent atom like hard
+
+                custom_non_bonded_params[0] = charge;
+                custom_non_bonded_params[1] = charge;
+                custom_non_bonded_params[2] = epsilon * OpenMM::KJPerKcal;
+                custom_non_bonded_params[3] = epsilon * OpenMM::KJPerKcal;
+                custom_non_bonded_params[4] = sigma * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[5] = sigma * OpenMM::NmPerAngstrom;
+                custom_non_bonded_params[6] = 1.0;//isHard
+                custom_non_bonded_params[7] = 0.0;//isTodummy
+                custom_non_bonded_params[8] = 0.0;//isFromdummy
+                custom_non_bonded_params[9] = 1.0;//isSolvent
 
                 if(Debug)
                     qDebug() << "Solvent = " << atom.index();
 
-            }
+        }
 
-            if(Debug){
-                qDebug() << "Charge start = " << custom_non_bonded_params[0];
-                qDebug() << "Charge end = " << custom_non_bonded_params[1];
-                qDebug() << "Eps start = " << custom_non_bonded_params[2];
-                qDebug() << "Eps end = " << custom_non_bonded_params[3];
-                qDebug() << "Sig start = " << custom_non_bonded_params[4];
-                qDebug() << "Sig end = " << custom_non_bonded_params[5];
-                qDebug() << "is Hard = " << custom_non_bonded_params[6];
-                qDebug() << "is To dummy = " << custom_non_bonded_params[7];
-                qDebug() << "is From dummy = " << custom_non_bonded_params[8] << "\n";
-            }
-            
-            custom_force_field->addParticle(custom_non_bonded_params);
+        if(Debug){
+            qDebug() << "Charge start = " << custom_non_bonded_params[0];
+            qDebug() << "Charge end = " << custom_non_bonded_params[1];
+            qDebug() << "Eps start = " << custom_non_bonded_params[2];
+            qDebug() << "Eps end = " << custom_non_bonded_params[3];
+            qDebug() << "Sig start = " << custom_non_bonded_params[4];
+            qDebug() << "Sig end = " << custom_non_bonded_params[5];
+            qDebug() << "is Hard = " << custom_non_bonded_params[6];
+            qDebug() << "is To dummy = " << custom_non_bonded_params[7];
+            qDebug() << "is From dummy = " << custom_non_bonded_params[8];
+            qDebug() << "is Solvent = " << custom_non_bonded_params[9] << "\n";
+        }
+
+        custom_force_field->addParticle(custom_non_bonded_params);
 
         }
 
@@ -1161,32 +1190,33 @@ void OpenMMFrEnergyST::initialise()  {
                 if (true)
                     qDebug() << " nrestrainedatoms " << nrestrainedatoms ;
 
-                    for (int i=0; i < nrestrainedatoms ; i++){
+                for (int i=0; i < nrestrainedatoms ; i++){
 
-                        int atomnum = restrainedAtoms.property(QString("AtomNum(%1)").arg(i)).asA<VariantProperty>().toInt();
-                        double xref = restrainedAtoms.property(QString("x(%1)").arg(i)).asA<VariantProperty>().toDouble();
-                        double yref = restrainedAtoms.property(QString("y(%1)").arg(i)).asA<VariantProperty>().toDouble();
-                        double zref = restrainedAtoms.property(QString("z(%1)").arg(i)).asA<VariantProperty>().toDouble();
-                        double k = restrainedAtoms.property(QString("k(%1)").arg(i)).asA<VariantProperty>().toDouble();
+                    int atomnum = restrainedAtoms.property(QString("AtomNum(%1)").arg(i)).asA<VariantProperty>().toInt();
+                    double xref = restrainedAtoms.property(QString("x(%1)").arg(i)).asA<VariantProperty>().toDouble();
+                    double yref = restrainedAtoms.property(QString("y(%1)").arg(i)).asA<VariantProperty>().toDouble();
+                    double zref = restrainedAtoms.property(QString("z(%1)").arg(i)).asA<VariantProperty>().toDouble();
+                    double k = restrainedAtoms.property(QString("k(%1)").arg(i)).asA<VariantProperty>().toDouble();
+                    double d = restrainedAtoms.property(QString("d(%1)").arg(i)).asA<VariantProperty>().toDouble();
 
-                        int openmmindex = AtomNumToOpenMMIndex[atomnum];
+                    int openmmindex = AtomNumToOpenMMIndex[atomnum];
 
-                        if (true){
-                            qDebug() << "atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k;
-                            qDebug() << "Atom name =  " << molecule.atom(AtomIdx(openmmindex)).toString();
-                        }
-                        
-                        
-                        int posrestrdim = 4;
-                        std::vector<double> params(posrestrdim);
-
-                        params[0] = xref * OpenMM::NmPerAngstrom;
-                        params[1] = yref * OpenMM::NmPerAngstrom;
-                        params[2] = zref * OpenMM::NmPerAngstrom;
-                        params[3] = k  * ( OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm );
-
-                        positionalRestraints_openmm->addParticle(openmmindex, params);
+                    if (true){
+                        qDebug() << "atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k << " d " << d;
+                        qDebug() << "Atom name =  " << molecule.atom(AtomIdx(openmmindex)).toString();
                     }
+
+                    int posrestrdim = 5;
+                    std::vector<double> params(posrestrdim);
+
+                    params[0] = xref * OpenMM::NmPerAngstrom;
+                    params[1] = yref * OpenMM::NmPerAngstrom;
+                    params[2] = zref * OpenMM::NmPerAngstrom;
+                    params[3] = k  * ( OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm );
+                    params[4] = d * OpenMM::NmPerAngstrom;
+
+                    positionalRestraints_openmm->addParticle(openmmindex, params);
+                }
             }
         }//end of restraint flag
 
@@ -1207,7 +1237,7 @@ void OpenMMFrEnergyST::initialise()  {
             nions=nions+1;
             continue;
         }
-        
+
 
 
         //BONDED TERMS
@@ -1221,8 +1251,8 @@ void OpenMMFrEnergyST::initialise()  {
         QList< ImproperID > improper_pert_list;
         QList< ImproperID > improper_pert_swap_list;
 
-        if(molecule.isSameMolecule(solutemol)){//Solute molecule perturbation
-
+        //if(molecule.isSameMolecule(solutemol)){//Solute molecule perturbation
+        if (solute.contains(molecule)) {
             Perturbations pert_params = molecule.property("perturbations").asA<Perturbations>();
 
             QList< PropPtr<Perturbation> > perturbation_list = pert_params.perturbations();
@@ -1260,7 +1290,7 @@ void OpenMMFrEnergyST::initialise()  {
                         bond_pert_swap_list.append(BondID(two.atom1(),two.atom0()));
 
                         bondPairs.push_back(std::make_pair(idx0,idx1));
-                        
+
                         if(Debug){
                             qDebug() << "Atom0 = " << two.atom0().asA<AtomIdx>().value() << 
                                         "Atom1 = "<< two.atom1().asA<AtomIdx>().value() ;
@@ -1336,7 +1366,7 @@ void OpenMMFrEnergyST::initialise()  {
 
                         //********************************BONDED ENERGY TORSIONS ARE ADDED TO THE SYSTEM*****************************
                         system_openmm->addForce(solute_torsion_perturbation);
-                        
+
                         perturbed_energies_tmp[7] = true; //Torsions are added to the system
 
                         dihedral_pert_list.append(DihedralID(four.atom0(),four.atom1(),four.atom2(),four.atom3()));
@@ -1363,7 +1393,7 @@ void OpenMMFrEnergyST::initialise()  {
         AmberParameters amber_params = molecule.property("amberparameters").asA<AmberParameters>();
         QList<BondID> bonds_ff = amber_params.getAllBonds();
         QVector<BondID> bonds = bonds_ff.toVector();
-        
+
         //BOND
 
         for (int j=0; j < bonds_ff.length() ; j++){
@@ -1376,24 +1406,26 @@ void OpenMMFrEnergyST::initialise()  {
             int idx0 = bonds[j].atom0().asA<AtomIdx>().value();
             int idx1 = bonds[j].atom1().asA<AtomIdx>().value();
 
-            if(molecule.isSameMolecule(solutemol)){
+            //if(molecule.isSameMolecule(solutemol)){
+            if (solute.contains(molecule)) {
 
                 if(bond_pert_list.indexOf(bond_ff) != -1 || bond_pert_swap_list.indexOf(bond_ff) != -1 ){//Solute molecule. Check if the current solute bond is in the perturbed bond list
+                    // JM July 13 --> Note, we should still have the ability to constrain the bond to its r(lambda) equilibrium distance
                     if(Debug)
                         qDebug() << "Found Perturbed Bond\n";
                     continue;
                 }
-                else{
+                /*else{
+                // JM July 13 problem seems to be that the perturbation code does not allow constraints on solute bonds
+                // Correct behavior may be to proceed as usual for this dof  
                     if(Debug)
                         qDebug() << "Solute normal Bond - Atom0 = "<< idx0 << "Atom1 = " << idx1 << " r0 = "<< r0 << "k = " << k <<"\n";
-
-                    idx0 = idx0 + num_atoms_till_i;
-                    idx1 = idx1 + num_atoms_till_i;
-                    bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm);
-                    bondPairs.push_back(std::make_pair(idx0,idx1));
-                    continue;
-                }
-
+                     idx0 = idx0 + num_atoms_till_i;
+                     idx1 = idx1 + num_atoms_till_i;
+                     bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm);
+                     bondPairs.push_back(std::make_pair(idx0,idx1));
+                     continue;
+                }*/
             }
 
             //Select the atom type
@@ -1403,6 +1435,9 @@ void OpenMMFrEnergyST::initialise()  {
             idx0 = idx0 + num_atoms_till_i;
             idx1 = idx1 + num_atoms_till_i;
 
+            // JM July 13. The constraint code has to be revised to handle massless particles so TIP4P can be dealt with. 
+            // Should check if a constraint involves an atom with a null mass, and if so skip constraint. 
+
             if(flag_constraint == NONE ){
 
                 bondStretch_openmm->addBond(idx0,idx1,r0 * OpenMM::NmPerAngstrom, k * 2.0 * OpenMM::KJPerKcal * OpenMM::AngstromsPerNm * OpenMM::AngstromsPerNm); 
@@ -1411,7 +1446,7 @@ void OpenMMFrEnergyST::initialise()  {
             }
             else if ( flag_constraint == ALLBONDS || flag_constraint == HANGLES ){
                 system_openmm->addConstraint(idx0,idx1, r0 *  OpenMM::NmPerAngstrom);
-                //cout << "\nALLBONDS or HANGLES ADDED BOND CONSTRAINT TO " << atom0.toStdString() << " AND " << atom1.toStdString() << "\n";
+                cout << "\nALLBONDS or HANGLES ADDED BOND CONSTRAINT TO " << atom0.toStdString() << " AND " << atom1.toStdString() << "\n";
             }
             else if ( flag_constraint == HBONDS ){
 
@@ -1448,8 +1483,8 @@ void OpenMMFrEnergyST::initialise()  {
             int idx1 = angles[j].atom1().asA<AtomIdx>().value();
             int idx2 = angles[j].atom2().asA<AtomIdx>().value();
 
-            if(molecule.isSameMolecule(solutemol)){
-
+            //if(molecule.isSameMolecule(solutemol)){
+        if (solute.contains(molecule)) {
              if(angle_pert_list.indexOf(angle_ff) != -1 || angle_pert_swap_list.indexOf(angle_ff) != -1){//Solute molecule. Check if the current solute angle is in the perturbed angle list
                     if(Debug)
                         qDebug() << "Found Perturbed Angle\n";
@@ -1521,8 +1556,9 @@ void OpenMMFrEnergyST::initialise()  {
                                 " and " << idx3 - num_atoms_till_i <<"\n";
             }
 
-            if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed dihedral list
-                if(dihedral_pert_list.indexOf(dihedral_ff)!=-1 || dihedral_pert_swap_list.indexOf(dihedral_ff)!=-1){
+            //if(molecule.isSameMolecule(solutemol)){
+            if (solute.contains(molecule)){
+                if(dihedral_pert_list.indexOf(dihedral_ff)!=-1 || dihedral_pert_swap_list.indexOf(dihedral_ff)!=-1){//Solute molecule. Check if the current solute dihedral is in the perturbed dihedral list
                     if(Debug)
                         qDebug() << "Found Perturbed Dihedral\n";
                     continue;
@@ -1555,22 +1591,21 @@ void OpenMMFrEnergyST::initialise()  {
             ImproperID improper_ff = impropers_ff[j];
             QList<double> improper_params = amber_params.getParams(improper_ff);
 
-    
             int idx0 = impropers[j].atom0().asA<AtomIdx>().value() + num_atoms_till_i;
             int idx1 = impropers[j].atom1().asA<AtomIdx>().value() + num_atoms_till_i;
             int idx2 = impropers[j].atom2().asA<AtomIdx>().value() + num_atoms_till_i;
             int idx3 = impropers[j].atom3().asA<AtomIdx>().value() + num_atoms_till_i;
             
             if(Debug){
-                        qDebug() << "TOTAL Improper between atom global index " << idx0 - num_atoms_till_i<< 
-                                " and " << idx1 - num_atoms_till_i << 
-                                " and " << idx2 - num_atoms_till_i << 
-                                " and " << idx3 - num_atoms_till_i <<"\n";
-                       
+                qDebug() << "TOTAL Improper between atom global index " << idx0 - num_atoms_till_i<< 
+                            " and " << idx1 - num_atoms_till_i << 
+                            " and " << idx2 - num_atoms_till_i << 
+                            " and " << idx3 - num_atoms_till_i <<"\n";
             }
 
 
-            if(molecule.isSameMolecule(solutemol)){//Solute molecule. Check if the current solute dihedral is in the perturbed improper list
+            //if(molecule.isSameMolecule(solutemol)){
+            if (solute.contains(molecule)){//Solute molecule. Check if the current solute dihedral is in the perturbed improper list
                 if(improper_pert_list.indexOf(improper_ff)!=-1 || improper_pert_swap_list.indexOf(improper_ff)!=-1){
                     if(Debug)
                         qDebug() << "Found Perturbed Improper\n";
@@ -1586,11 +1621,11 @@ void OpenMMFrEnergyST::initialise()  {
 
                 bondTorsion_openmm->addTorsion(idx0, idx1, idx2, idx3, periodicity, phase , v * OpenMM::KJPerKcal);
                 if(Debug){
-                        qDebug() << "Improper between atom global index " << idx0 - num_atoms_till_i<< 
+                    qDebug() << "Improper between atom global index " << idx0 - num_atoms_till_i<< 
                                 " and " << idx1 - num_atoms_till_i << 
                                 " and " << idx2 - num_atoms_till_i << 
                                 " and " << idx3 - num_atoms_till_i <<"\n";
-                        qDebug() << "Amplitude_imp = " << v << " periodicity " << periodicity << " phase " << phase<<"\n";
+                    qDebug() << "Amplitude_imp = " << v << " periodicity " << periodicity << " phase " << phase<<"\n";
                 }
             }
         }//end of impropers
@@ -1627,7 +1662,6 @@ void OpenMMFrEnergyST::initialise()  {
 
     if(Debug)
         qDebug() << "NUM EXCEPTIONS = " << num_exceptions << "\n";
-    
 
     for(int i=0;i<num_exceptions;i++){
 
@@ -1991,13 +2025,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             }
             
             if(Debug){
-            
                 qDebug() << "Particle num " << system_index;
                 qDebug() << "X = " << positions_openmm[system_index][0] << " Y = " << positions_openmm[system_index][1] << " Z = " << positions_openmm[system_index][2];
                 qDebug() << "Vx = " << velocities_openmm[system_index][0] << " Vy = " << velocities_openmm[system_index][1] << " Vz = " << velocities_openmm[system_index][2] << "\n";
             }
-            
-            
             system_index++;
         }
     }
@@ -2037,7 +2068,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     if (Debug)
         qDebug() << " Doing " << nmoves << " steps of dynamics ";
-
     
     int n_samples = nmoves / energy_frequency;
 
@@ -2047,23 +2077,37 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     if(Debug)
         qDebug() << "Number Energy Samples = "<< n_samples << "\n\n";
 
-    int MAXSAMPLES = 1000;
+    int coord_freq = buffer_frequency;
+    int nframes=0;
+    int MAXFRAMES = 1000;
+
+    if ( coord_freq > 0 ){
+        nframes = ( nmoves / coord_freq );
+        // Check that we are saving snapshots modulo frequency
+        int remainder = buffer_frequency % energy_frequency;
+        if ( buffer_frequency < energy_frequency or remainder != 0 )
+            throw SireError::program_bug(QObject::tr("You are requesting to buffer snapshots every %1 steps, but this must number must be a positive integer multiple of the frequency of saving energies %2").arg(buffer_frequency, energy_frequency), CODELOC);
+    }
+
+    if (buffer_frequency > nmoves)
+        throw SireError::program_bug(QObject::tr("You are requesting to buffer snapshots every  %1 steps, which is above the total number of %2 steps.").arg(buffer_frequency, nmoves), CODELOC);
 
     // Limit excessive internal buffering
-    if ( buffer_coords){
-        if  ( n_samples > MAXSAMPLES ){
-            throw SireError::program_bug(QObject::tr("You are requesting to buffer %1 frames, which is above the hardcoded limit of %2.").arg(n_samples, MAXSAMPLES), CODELOC);
+    if ( coord_freq > 0){
+        if  ( nframes > MAXFRAMES ){
+            throw SireError::program_bug(QObject::tr("You are requesting to buffer %1 frames, which is above the hardcoded limit of %2.").arg(n_samples, MAXFRAMES), CODELOC);
         }
     }
-    
+    else{
+        nframes = 0;
+    }
+
     QVector< std::vector<OpenMM::Vec3> > buffered_positions;
     QVector< Vector > buffered_dimensions;
-
 
     OpenMM::Vec3 a;
     OpenMM::Vec3 b;
     OpenMM::Vec3 c;
-
 
     const double beta = 1.0 / (0.0083144621 * convertTo(Temperature.value(), kelvin)); //mol/kJ
 
@@ -2079,7 +2123,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     double GB_acc = 0.0;
 
-    double sample_count=0.0;
+    double pot_energy_acc = 0.0;
+
+    int sample_count=1;
 
     /*state_openmm=context_openmm.getState(infoMask);
     qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
@@ -2089,9 +2135,8 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     //qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
 
 
-    if(buffer_coords)
-        qDebug() << "Saving atom coordinates every " << energy_frequency << "\n";
-
+    if(coord_freq > 0)
+        qDebug() << "Saving atom coordinates every " << coord_freq << "\n";
 
     //show_status(sample_count, n_samples);
 
@@ -2100,14 +2145,12 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             qDebug() << "Perturbed energy flag index" << i << " Value = " << perturbed_energies[i];
     }
 
-
-/*    vector<double> center(3);
+    /*vector<double> center(3);
     center[0] = 0.0;
     center[1] = 0.0;
     center[2] = 0.0; 
 
     DCD dcd("traj.dcd", true,CUTOFFPERIODIC, center, energy_frequency, nats, dt,  context_openmm, ws );*/
-
 
     //Time skipping
     const double time_skip = convertTo( timeskip.value(), picosecond);
@@ -2129,10 +2172,13 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         n_samples = (nmoves - new_nmoves) / energy_frequency;
     }
 
-    while(sample_count<n_samples){
+    // Why is sample_count double precision?
+    while(sample_count<=n_samples){
 
         //*********************MD STEPS****************************
         integrator_openmm->step(energy_frequency);
+        
+        context_openmm.setParameter("SSOnOff",1.0);//Solvent-Solvent OFF
 
         //dcd.write((int) sample_count);//Save a frame
 
@@ -2141,6 +2187,12 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         if(Debug)
             qDebug()<< "Total Time = " << state_openmm.getTime() << " ps";
 
+        /*if (Debug) {
+            positions_openmm = state_openmm.getPositions();
+            for (int i=0; i < 500; i++){
+                qDebug()<< " at " << i << " x " << positions_openmm[i][0] << " y " << positions_openmm[i][1] << " z " << positions_openmm[i][2] ;
+            }
+        }*/
 
         double potential_energy_lambda = state_openmm.getPotentialEnergy();
 
@@ -2152,7 +2204,17 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         double minus;
 
-        if(buffer_coords){
+        // Because looping from 1 to n_samples
+        int modulo = 1;
+        if (coord_freq > 0)
+        modulo =  sample_count % ( (coord_freq / energy_frequency ) );
+
+        if (Debug)
+        qDebug() << "modulo is " << modulo;
+
+        if( coord_freq > 0 and modulo == 0 ){
+            if (Debug)
+              qDebug() << "buffering coordinates and dimensions";
 
             positions_openmm = state_openmm.getPositions();
             buffered_positions.append( positions_openmm );
@@ -2169,14 +2231,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
         }
 
-
-        if(potential_energy_lambda > 1000000.0){
+        // JM July 13 commenting out this block because in the system I am simulating atm a high energy is actually possible...
+        /*if(potential_energy_lambda > 1000000.0){
             throw SireError::program_bug(QObject::tr("********************* Energy Too High. Error! *******************"), CODELOC);
             exit(-1);
-        }
+        }*/
 
         if((Alchemical_value + delta_alchemical)>1.0){
-                        
+
             //NON BONDED TERMS
             if(perturbed_energies[0])
                 context_openmm.setParameter("lam",Alchemical_value - delta_alchemical);//1-5 HD
@@ -2212,7 +2274,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
                 qDebug() << "Lambda + delta > 1.0\n";
                 qDebug() << "Lambda - delta = " << Alchemical_value - delta_alchemical << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
             }
-            
+
         }
         else if((Alchemical_value - delta_alchemical)<0.0){
 
@@ -2251,10 +2313,9 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
                 qDebug() << "Lambda + delta = " << Alchemical_value + delta_alchemical << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
                 qDebug() << "Lambda - delta < 0.0\n";
             }
-            
-        }
+      }
         else{
-            
+
             //NON BONDED TERMS
             if(perturbed_energies[0])
                 context_openmm.setParameter("lam",Alchemical_value + delta_alchemical);//1-5 HD
@@ -2280,12 +2341,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
             potential_energy_lambda_plus_delta = state_openmm.getPotentialEnergy();
 
-            
             if(Debug){
-                qDebug() << "Lambda + delta = " << Alchemical_value + delta_alchemical << " Potential energy plus  = " << potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ << " kcal/mol" << "\n";
+                printf("*Lambda + Delta_Lambda %f potential_energy %f kcal/mol\n", Alchemical_value + delta_alchemical, potential_energy_lambda_plus_delta * OpenMM::KcalPerKJ) ;
             }
 
-            
             //NON BONDED TERMS
             if(perturbed_energies[0])
                 context_openmm.setParameter("lam",Alchemical_value - delta_alchemical);//1-5 HD
@@ -2298,7 +2357,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
                 context_openmm.setParameter("lamfd",Alchemical_value - delta_alchemical);//1-4 From Dummy
             if(perturbed_energies[4])
                 context_openmm.setParameter("lamftd",Alchemical_value - delta_alchemical);//1-4 From Dummy to Dummy
-        
+
             //BONDED PERTURBED TERMS
             if(perturbed_energies[5])
                 context_openmm.setParameter("lambond",Alchemical_value - delta_alchemical);//Bonds
@@ -2307,7 +2366,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             if(perturbed_energies[7])
                 context_openmm.setParameter("lambda",Alchemical_value - delta_alchemical);//Torsions
 
-                                            
             state_openmm=context_openmm.getState(infoMask);
 
             potential_energy_lambda_minus_delta = state_openmm.getPotentialEnergy();
@@ -2317,23 +2375,24 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
             plus = exp(-beta * (potential_energy_lambda_plus_delta - potential_energy_lambda));
             minus = exp(-beta * (potential_energy_lambda_minus_delta - potential_energy_lambda));
-            
+
 
             if(Debug){
-                qDebug() << "Lambda - delta = " << Alchemical_value - delta_alchemical << " Potential energy minus  = " << potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ  << " kcal/mol" << "\n"; 
+                printf("*Lambda - Delta_Lambda %f potential_energy %f kcal/mol\n", Alchemical_value - delta_alchemical, potential_energy_lambda_minus_delta * OpenMM::KcalPerKJ) ;
             }
-            
 
         }//end else
 
 
         GF_acc = GF_acc + plus;
         GB_acc = GB_acc + minus;
+        pot_energy_acc = pot_energy_acc + potential_energy_lambda;
 
-        double avg_GF = GF_acc /(sample_count + 1.0);
+        double avg_GF = GF_acc /(sample_count);
 
-        double avg_GB = GB_acc /(sample_count + 1.0);
+        double avg_GB = GB_acc /(sample_count);
 
+        double avg_pot_energy_lambda = pot_energy_acc / (sample_count);
 
         double Energy_GF = -(1.0/beta)*log(avg_GF);
 
@@ -2341,17 +2400,20 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2 * delta_alchemical);
 
-
         if(Debug)
             qDebug() << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
 
 
-        if(buffer_coords && sample_count!=(n_samples-1))
+        // JM why buffer_coords is used to store gradients?
+        if(buffer_coords && sample_count!=(n_samples)){
             gradients.append(Energy_Gradient_lamda * OpenMM::KcalPerKJ);
-        if(sample_count==(n_samples-1))
+            energies.append(avg_pot_energy_lambda * OpenMM::KcalPerKJ);
+        }
+        if(sample_count==(n_samples)){
             gradients.append(Energy_Gradient_lamda * OpenMM::KcalPerKJ);
+            energies.append(avg_pot_energy_lambda * OpenMM::KcalPerKJ);
+        }
 
-        
         //NON BONDED TERMS
         if(perturbed_energies[0])
             context_openmm.setParameter("lam",Alchemical_value);//1-5 HD
@@ -2364,7 +2426,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             context_openmm.setParameter("lamfd",Alchemical_value);//1-4 From Dummy
         if(perturbed_energies[4])
             context_openmm.setParameter("lamftd",Alchemical_value);//1-4 From Dummy to Dummy
-        
+
         //BONDED PERTURBED TERMS
         if(perturbed_energies[5])
             context_openmm.setParameter("lambond",Alchemical_value);//Bonds
@@ -2373,14 +2435,16 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         if(perturbed_energies[7])
             context_openmm.setParameter("lambda",Alchemical_value);//Torsions
 
-        
+
         /*state_openmm=context_openmm.getState(infoMask);
         double dummy = state_openmm.getPotentialEnergy();
         qDebug() << "\nDifference dummy = " << dummy - potential_energy_lambda<< "\n\n";*/
 
-        sample_count=sample_count + 1.0;
-        
+        sample_count= sample_count + 1.0;
+
         //show_status(sample_count, n_samples);
+
+        context_openmm.setParameter("SSOnOff",0.0);//Solvent-Solvent ON
 
 
     }//end while
@@ -2401,21 +2465,15 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     velocities_openmm = state_openmm.getVelocities();
 
     // Vector of Vector of molecules that are vector of atomic coordinates...
-
-    QVector< QVector< QVector< Vector > > > buffered_workspace(n_samples);
-
+    QVector< QVector< QVector< Vector > > > buffered_workspace(nframes);
     for (int i=0; i < buffered_workspace.size() ; i++){
 
         buffered_workspace[i].resize(nmols);
 
         for (int j=0 ; j < nmols; j++){
-
             int nats = ws.nAtoms(j);
-
             buffered_workspace[i][j].resize(nats);
-
         }
-
     }
 
     int k=0;
@@ -2424,39 +2482,35 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         Vector *sire_coords = ws.coordsArray(i);
         Vector *sire_momenta = ws.momentaArray(i);
-
         const double *m = ws.massArray(i);
 
         for(int j=0; j < ws.nAtoms(i) ; j++){
 
-            sire_coords[j] = Vector(positions_openmm[j+k][0] * (OpenMM::AngstromsPerNm),positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
+            sire_coords[j] = Vector(positions_openmm[j+k][0] * (OpenMM::AngstromsPerNm),
+            positions_openmm[j+k][1] * (OpenMM::AngstromsPerNm),
+            positions_openmm[j+k][2] * (OpenMM::AngstromsPerNm));
 
-            if(buffer_coords){
+            for (int l=0; l < nframes ; l++){
+                //qDebug() << " i " << i << " j " << j << " k " << k << " l " << l;
+                Vector buffered_atcoord = Vector(  buffered_positions[l][j+k][0] * (OpenMM::AngstromsPerNm), 
+                buffered_positions[l][j+k][1] * (OpenMM::AngstromsPerNm),
+                buffered_positions[l][j+k][2] * (OpenMM::AngstromsPerNm));
 
-                for (int l=0; l < n_samples ; l++){
-
-                    //qDebug() << " i " << i << " j " << j << " k " << k << " l " << l;
-
-                    Vector buffered_atcoord = Vector(  buffered_positions[l][j+k][0] * (OpenMM::AngstromsPerNm), buffered_positions[l][j+k][1] * (OpenMM::AngstromsPerNm),buffered_positions[l][j+k][2] * (OpenMM::AngstromsPerNm));
-
-                    buffered_workspace[l][i][j] = buffered_atcoord;
-
-
-                }
-
+                buffered_workspace[l][i][j] = buffered_atcoord;
             }
 
-            sire_momenta[j] = Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs, velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs);
-        }
+            sire_momenta[j] = Vector(velocities_openmm[j+k][0] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs,
+                            velocities_openmm[j+k][1] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs, 
+                            velocities_openmm[j+k][2] * m[j] * (OpenMM::AngstromsPerNm) * AKMAPerPs);
 
+        }
         k= k + ws.nAtoms(i);
     }
 
-    if ( buffer_coords == false)
+    if ( nframes <= 0)
         ws.commitCoordinatesAndVelocities();
     else
         ws.commitBufferedCoordinatesAndVelocities( buffered_workspace );
-
 
     //Now the box dimensions
 
@@ -2474,7 +2528,6 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         ptr_sys.setProperty(string, sp);
 
         // Buffer dimensions if necessary 
-
         for (int k=0; k < buffered_dimensions.size() ; k++){
 
             const QString buffered_space = "buffered_space_" + QString::number(k) ;
@@ -2736,6 +2789,18 @@ void OpenMMFrEnergyST::setCMMremoval_frequency(int frequency){
 }
 
 /** Get the frequency of buffering coordinates */
+int OpenMMFrEnergyST::getBufferFrequency(){
+
+	return buffer_frequency;
+}
+
+/** Set the Center of Mass motion removal frequency */
+void OpenMMFrEnergyST::setBufferFrequency(int frequency){
+
+	buffer_frequency = frequency;
+}
+
+/** Get the frequency of buffering coordinates */
 int OpenMMFrEnergyST::getEnergyFrequency(){
 
     return energy_frequency;
@@ -2762,14 +2827,18 @@ void OpenMMFrEnergyST::setAlchemical_value(double lambda_value){
 }
 
 /** Get the coulomb power used in the soft core potential*/
-int OpenMMFrEnergyST::getCoulomb_power(void){
+//int OpenMMFrEnergyST::getCoulomb_power(void)
+float OpenMMFrEnergyST::getCoulomb_power(void)
+{
 
     return coulomb_power;
 
 }
 
 /** Set the coulomb power used in the soft core potential*/
-void OpenMMFrEnergyST::setCoulomb_power(int coulomb){
+//void OpenMMFrEnergyST::setCoulomb_power(int coulomb)
+void OpenMMFrEnergyST::setCoulomb_power(float coulomb)
+{
 
     coulomb_power = coulomb;
 
@@ -2824,6 +2893,12 @@ void OpenMMFrEnergyST::setBufferCoords(bool buffer){
 QVector<double> OpenMMFrEnergyST::getGradients(void){
 
     return gradients;
+
+}
+/** Average energies*/
+QVector<double> OpenMMFrEnergyST::getEnergies(void){
+
+    return energies;
 
 }
 

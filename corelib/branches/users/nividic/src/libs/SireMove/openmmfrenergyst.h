@@ -53,7 +53,7 @@ QDataStream& operator>>(QDataStream&, SireMove::OpenMMFrEnergyST&);
 namespace SireMove
 {
 
-/** This class implements a free energy methods Using OpenMM. 
+/** This class implements single topology a free energy method Using OpenMM. 
  
     @author Julien Michel and Gaetano Calabro
 */
@@ -88,7 +88,7 @@ public:
 
     void initialise();
 
-    void integrate(IntegratorWorkspace &workspace,const Symbol &nrg_component, SireUnits::Dimension::Time timestep,int nmoves, bool record_stats);
+    void integrate(IntegratorWorkspace &workspace,const Symbol &nrg_component, SireUnits::Dimension::Time timestep,int nmoves, bool record_stats) ;
 
     IntegratorWorkspacePtr createWorkspace(const PropertyMap &map = PropertyMap()) const;
     IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup,const PropertyMap &map = PropertyMap()) const;
@@ -132,6 +132,9 @@ public:
     int getCMMremoval_frequency(void);
     void setCMMremoval_frequency(int);
 
+    int getBufferFrequency();
+    void setBufferFrequency(int);
+
     int getEnergyFrequency();
     void setEnergyFrequency(int);
 
@@ -144,8 +147,10 @@ public:
     double getAlchemical_value(void);
     void setAlchemical_value(double);
 
-    int getCoulomb_power(void);
-    void setCoulomb_power(int);
+    //int getCoulomb_power(void);
+    float getCoulomb_power(void);
+    //void setCoulomb_power(int);
+    void setCoulomb_power(float);
 
     double getShift_delta(void);
     void setShift_delta(double);
@@ -157,6 +162,7 @@ public:
     void setBufferCoords(bool);
 
     QVector<double> getGradients(void);
+    QVector<double> getEnergies(void);
 
     QString getIntegrator(void);
 
@@ -215,6 +221,8 @@ private:
     bool Restraint_flag;
 
     int CMMremoval_frequency;
+   
+    int buffer_frequency;
 
     int energy_frequency;
 
@@ -224,7 +232,8 @@ private:
 
     double Alchemical_value;
 
-    int coulomb_power;
+    //int coulomb_power;
+    float coulomb_power;
 
     double shift_delta;
 
@@ -233,6 +242,8 @@ private:
     bool buffer_coords;
 
     QVector<double> gradients;
+
+    QVector<double> energies; 
 
     QVector<bool> perturbed_energies;
 
