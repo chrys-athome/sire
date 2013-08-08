@@ -90,6 +90,8 @@ set (SIRE_BUNDLED_LIBS "lib/Sire/bundled" )
 set (SIRE_ARCHIVES "lib/static")
 # Include (header) files install dir
 set (SIRE_INCLUDES "include/Sire")
+# Bundled include (header) files install dir
+set (SIRE_BUNDLED_INCLUDES "include/Sire/bundled")
 # CMake install files install dir
 set (SIRE_CMAKEFILES "include/Sire/cmake")
 # Sire share directory (for parameters etc.)
@@ -164,6 +166,231 @@ endif()
 #  on the head node, and yet you still want to run tests!)
 option( SIRE_DISABLE_MPI "Turn off MPI compilation and linking" ON )
 
+#############
+############# PLATFORM TESTS
+#############
+
+# Now run some platform tests - the results will be placed in config.h
+include (CheckIncludeFiles)
+include (CheckSymbolExists)
+include (CheckFunctionExists)
+
+check_include_files( unistd.h HAVE_UNISTD_H )
+check_function_exists( lseek64 HAVE_LSEEK64 )
+
+check_include_files( malloc/malloc.h HAVE_MALLOC_MALLOC_H )
+check_include_files( emmintrin.h HAVE_EMMINTRIN_H )
+check_include_files( immintrin.h HAVE_IMMINTRIN_H )
+check_include_files( execinfo.h HAVE_EXECINFO_H )
+check_function_exists( mstats HAVE_MSTATS )
+check_function_exists( mallinfo HAVE_MALLINFO )
+check_function_exists( sysctl HAVE_SYSCTL )
+check_function_exists( cbrt HAVE_CUBEROOT )
+check_symbol_exists( backtrace "execinfo.h" HAVE_BACKTRACE )
+
+#create config.h
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_config.h.in 
+               ${CMAKE_CURRENT_BINARY_DIR}/sire_config.h)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/siren_config.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/siren_config.h)
+
+#  We need to get the compiler flags for different options
+set( SIRE_SMALL_FLAGS "" CACHE INTERNAL "Compiler flags to produce small code" )
+set( SIRE_WARNALL_FLAGS "" CACHE INTERNAL "Compiler flags to turn on all warnings" )
+set( SIRE_DEBUG_FLAGS "" CACHE INTERNAL "Compiler flags to produce debugging code" )
+set( SIRE_RELEASE_FLAGS "" CACHE INTERNAL "Compiler flags to produce optimised release code" )
+set( SIRE_OPENMP_FLAGS "" CACHE INTERNAL "Compiler flags to activate OpenMP" )
+set( SIRE_VECTOR_FLAGS "" CACHE INTERNAL "Compiler flags to vectorise code (e.g. SSE)" )
+set( SIRE_VISIBILITY_FLAGS "" CACHE INTERNAL "Compiler flags to activate symbol visibility" )
+set( SIRE_PLATFORM_FLAGS "" CACHE INTERNAL "Additional flags needed by the compiler" )
+set( SIRE_SHARE_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link shared libraries" )
+set( SIRE_STATIC_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link static libraries" )
+set( SIRE_EXE_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link executables" )
+
+#############
+############# DETECTING AND CONFIGURING THE COMPILER
+#############
+
+include (CheckCXXCompilerFlag)
+
+set( SIRE_COMPILER "UNKNOWN" )
+
+# Add compiler specific flags
+if ( CMAKE_COMPILER_IS_GNUCC )
+
+    message( STATUS "Detected and using GCC C and C++ compilers" )
+    set( SIRE_COMPILER "GCC" )
+
+    # get the compiler version (via gcc -dumpversion)
+    # (I'll assume that we are using the same version
+    # of compiler for C and C++...)
+    EXEC_PROGRAM( ${CMAKE_CXX_COMPILER}
+                  ARGS -dumpversion
+                  OUTPUT_VARIABLE exe_output )
+
+    # These two regexps are copied from the Chicken CMake
+    # files (which provide a very useful cmake tutorial - thanks :-)                  
+    SET( VERSION_BUILD_REGEX "^([0-9]+)[.]([0-9]+).*$" )
+    STRING( REGEX REPLACE ${VERSION_BUILD_REGEX} "\\1"
+            GCC_MAJOR_VERSION ${exe_output} )
+    STRING( REGEX REPLACE ${VERSION_BUILD_REGEX} "\\2"
+            GCC_MINOR_VERSION ${exe_output} )
+        
+    message( STATUS "Using GCC version "
+                    "${GCC_MAJOR_VERSION}.${GCC_MINOR_VERSION}" )
+
+    # First, we need at least GCC 3.0, as I don't think that
+    # GCC 2.x can handle the template code that I use
+    if ( GCC_MAJOR_VERSION LESS 3 )
+       message( FATAL_ERROR "Sire requires GCC >= 3.0. Please upgrade "
+                      "your version of GCC." )
+    endif()
+
+    set ( SIRE_SMALL_FLAGS  "-Os" )
+    set ( SIRE_WARNALL_FLAGS  "-Wall" )
+    set ( SIRE_DEBUG_FLAGS   "-g" )
+
+    set ( SIRE_RELEASE_FLAGS "-O3 -ffast-math" )
+
+    if ( NOT APPLE )
+      # -fomit-frame-pointer breaks backtrace on an apple
+      set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
+    endif()
+
+    set ( SIRE_OPENMP_FLAGS "-fopenmp" )
+    set ( SIRE_PLATFORM_FLAGS "-pipe" )
+    set ( SIRE_STATIC_LINK_FLAGS "-static" )
+
+    if ( HAVE_IMMINTRIN_H )
+      # we have immintrin.h so we have AVX
+      message( STATUS "Compiling with AVX enabled. Resulting binary will only work on newer intel CPUs" )
+      set ( SIRE_VECTOR_FLAGS "-mavx -DSIRE_USE_AVX" )
+    elseif ( HAVE_EMMINTRIN_H )
+      # we have emmintrin.h so we have SSE
+      message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
+      set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+    endif()
+        
+    # Now gcc 4 specific options
+    if ( GCC_MAJOR_VERSION GREATER 3 )
+      # remove warnings about strict aliasing (lots from Qt4
+      # when compiling with GCC 4, and they are annoying!)
+      set( SIRE_PLATFORM_FLAGS "${SIRE_PLATFORM_FLAGS} -Wno-strict-aliasing" )
+
+      # gcc-4.2 and above has openMP - turn it on (except for Mac as libgomp is broken!)
+      if (GCC_MINOR_VERSION GREATER 1)
+          if (SIRE_OPENMP)
+              if (APPLE)
+                message( STATUS "OpenMP support is unavailable as OpenMP + pthreads "
+                                "is broken in Apple gcc4" )
+                set( SIRE_OPENMP_FLAGS "-fno-openmp" )
+              endif()
+          endif()
+      endif()
+
+      set ( SIRE_VISIBILITY_FLAGS "-DSIRE_VISIBILITY_AVAILABLE -fvisibility=hidden -fvisibility-inlines-hidden" )
+  
+    else()
+      set ( SIRE_VISIBILITY_FLAGS "-DSIRE_NO_VISIBILITY_AVAILABLE" ) 
+    endif()
+
+    # Ensure that the libraries don't contain any undefined symbols
+    if(APPLE)
+        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -Wl" )
+    else(UNIX)
+        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
+    endif()
+
+elseif ( ${CMAKE_CXX_COMPILER} MATCHES "clang" )
+
+    message( STATUS "Detected and using clang C and C++ compilers" )
+    set( SIRE_COMPILER "CLANG" )
+
+    set ( SIRE_SMALL_FLAGS  "-Os" )
+    set ( SIRE_WARNALL_FLAGS  "-Wall" )
+    set ( SIRE_DEBUG_FLAGS   "-g" )
+
+    set ( SIRE_RELEASE_FLAGS "-O3 -ffast-math" )
+
+    # -fomit-frame-pointer breaks backtrace on an apple
+    set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
+
+    set ( SIRE_OPENMP_FLAGS "-fopenmp" )
+    set ( SIRE_PLATFORM_FLAGS "-pipe" )
+    set ( SIRE_STATIC_LINK_FLAGS "-static" )
+
+    if ( HAVE_IMMINTRIN_H )
+      # we have immintrin.h so we have AVX
+      message( STATUS "Compiling with AVX enabled. Resulting binary will only work on newer intel CPUs" )
+      set ( SIRE_VECTOR_FLAGS "-mavx -DSIRE_USE_AVX" )
+    elseif ( HAVE_EMMINTRIN_H )
+      # we have emmintrin.h so we have SSE
+      message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
+      set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+    endif()
+        
+    set ( SIRE_VISIBILITY_FLAGS "-DSIRE_VISIBILITY_AVAILABLE -fvisibility=hidden -fvisibility-inlines-hidden" )
+
+    if (APPLE)
+    elseif(UNIX)
+        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
+    endif()
+
+elseif ( ${CMAKE_CXX_COMPILER} MATCHES "xlC" )
+   
+    message( STATUS "Detected the xlc and xlC C and C++ compilers" ) 
+    set( SIRE_COMPILER "XLC" )
+
+    set ( SIRE_SMALL_FLAGS  "-qcompact" )
+    set ( SIRE_WARNALL_FLAGS  "-qwarn64 -qflag=w:w" )
+    set ( SIRE_RELEASE_FLAGS "-O3 -qstrict" )
+    set ( SIRE_DEBUG_FLAGS   "-g" )
+    set ( SIRE_VISIBILITY_FLAGS "-DSIRE_NO_VISIBILITY_AVAILABLE" )
+    set ( SIRE_PLATFORM_FLAGS "-qrtti=all -qthreaded" )
+
+    set ( SIRE_SHARE_LINK_FLAGS "-qmkshrobj" )
+
+    # Turn off Fortran code because this produces weird link errors!
+    message( STATUS "Disabling Fortran code as this leads to link errors!" )
+    message( STATUS "This will disable sire_blas, sire_lapack and sire_linpack" )
+    set ( SIRE_DISABLE_FORTRAN ON )
+
+    # This is a hack to automatically turn on MPI support on HPCx
+    if ( NOT SIRE_DISABLE_MPI )
+      if ( NOT SIRE_USE_MPI )
+        set( SIRE_USE_MPI ON )
+        set( MPI_INCLUDE_PATH "/usr/lpp/ppe.poe/include;/opt/rsct/lapi/include" )
+        set( MPI_LIBRARY "-L/usr/lpp/ppe.poe/lib -L/usr/lpp/ppe.poe/lib/ip -lmpi_r -lvtd_r -llapi_r -binitfini:poe_remote_main" )
+        set( MPI_EXTRA_LIBRARY "-L/usr/lpp/ppe.poe/lib/threads -lpthreads" )
+        set( MPI_DEFINITIONS "-D_MPI_CPP_BINDINGS" )
+      endif()
+    endif()
+
+elseif( ${CMAKE_CXX_COMPILER} MATCHES "icpc" )
+
+    message( STATUS "Detected the Intel C++ and C compilers" )
+    set( SIRE_COMPILER ICPC )
+
+    set ( SIRE_SMALL_FLAGS  "-Os" )
+    set ( SIRE_WARNALL_FLAGS  "-w1" )
+    set ( SIRE_RELEASE_FLAGS  "-O3 -fomit-frame-pointer -inline-level=2" )
+    set ( SIRE_VECTOR_FLAGS  "-DSIRE_USE_SSE -msse3" )
+    set ( SIRE_DEBUG_FLAGS   "-g" )
+    set ( SIRE_VISIBILITY_FLAGS "-DSIRE_NO_VISIBILITY_AVAILABLE" )    
+    set ( SIRE_OPENMP_FLAGS "-openmp" )
+    set ( SIRE_SHARE_LINK_FLAGS "-shared" )
+    set ( SIRE_STATIC_LINK_FLAGS "-static" )
+
+else()
+    message( STATUS "CMAKE_SYSTEM_NAME == ${CMAKE_SYSTEM_NAME}" )
+    message( STATUS "CMAKE_C_COMPILER == ${CMAKE_C_COMPILER}" )
+    message( STATUS "CMAKE_CXX_COMPILER == ${CMAKE_CXX_COMPILER}" )
+    message( FATAL_ERROR "Could not detect compiler type - cannot set compiler options." )
+endif()
+
+save_sire_variable( "SIRE_COMPILER" "${SIRE_COMPILER}" )
+
 ################
 ################ SORTING OUT ALL OF SIRE'S DEPENDENCIES
 ################
@@ -196,7 +423,6 @@ if ( ${SIRE_ENABLE_BUNDLING} )
 
     if ( ${SIRE_BUNDLE_TBB} )
       include( "src/bundled/install_tbb.cmake" )
-      message( STATUS "TEST ${SIRE_FOUND_TBB}" )
     endif()
 endif()
 
@@ -294,223 +520,6 @@ else()
     message( STATUS "MPI could not be found. MPI support switched off" )
     set ( SIRE_USE_MPI OFF )
   endif()
-endif()
-
-#############
-############# PLATFORM TESTS
-#############
-
-# Now run some platform tests - the results will be placed in config.h
-include (CheckIncludeFiles)
-include (CheckSymbolExists)
-include (CheckFunctionExists)
-
-check_include_files( unistd.h HAVE_UNISTD_H )
-check_function_exists( lseek64 HAVE_LSEEK64 )
-
-check_include_files( malloc/malloc.h HAVE_MALLOC_MALLOC_H )
-check_include_files( emmintrin.h HAVE_EMMINTRIN_H )
-check_include_files( immintrin.h HAVE_IMMINTRIN_H )
-check_include_files( execinfo.h HAVE_EXECINFO_H )
-check_function_exists( mstats HAVE_MSTATS )
-check_function_exists( mallinfo HAVE_MALLINFO )
-check_function_exists( sysctl HAVE_SYSCTL )
-check_function_exists( cbrt HAVE_CUBEROOT )
-check_symbol_exists( backtrace "execinfo.h" HAVE_BACKTRACE )
-
-#create config.h
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_config.h.in 
-               ${CMAKE_CURRENT_BINARY_DIR}/sire_config.h)
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/siren_config.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/siren_config.h)
-
-#  We need to get the compiler flags for different options
-set( SIRE_SMALL_FLAGS "" CACHE INTERNAL "Compiler flags to produce small code" )
-set( SIRE_WARNALL_FLAGS "" CACHE INTERNAL "Compiler flags to turn on all warnings" )
-set( SIRE_DEBUG_FLAGS "" CACHE INTERNAL "Compiler flags to produce debugging code" )
-set( SIRE_RELEASE_FLAGS "" CACHE INTERNAL "Compiler flags to produce optimised release code" )
-set( SIRE_OPENMP_FLAGS "" CACHE INTERNAL "Compiler flags to activate OpenMP" )
-set( SIRE_VECTOR_FLAGS "" CACHE INTERNAL "Compiler flags to vectorise code (e.g. SSE)" )
-set( SIRE_VISIBILITY_FLAGS "" CACHE INTERNAL "Compiler flags to activate symbol visibility" )
-set( SIRE_PLATFORM_FLAGS "" CACHE INTERNAL "Additional flags needed by the compiler" )
-set( SIRE_SHARE_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link shared libraries" )
-set( SIRE_STATIC_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link static libraries" )
-set( SIRE_EXE_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link executables" )
-
-#############
-############# DETECTING AND CONFIGURING THE COMPILER
-#############
-
-include (CheckCXXCompilerFlag)
-
-# Add compiler specific flags
-if ( CMAKE_COMPILER_IS_GNUCC )
-
-    message( STATUS "Detected and using GCC C and C++ compilers" )
-
-    # get the compiler version (via gcc -dumpversion)
-    # (I'll assume that we are using the same version
-    # of compiler for C and C++...)
-    EXEC_PROGRAM( ${CMAKE_CXX_COMPILER}
-                  ARGS -dumpversion
-                  OUTPUT_VARIABLE exe_output )
-
-    # These two regexps are copied from the Chicken CMake
-    # files (which provide a very useful cmake tutorial - thanks :-)                  
-    SET( VERSION_BUILD_REGEX "^([0-9]+)[.]([0-9]+).*$" )
-    STRING( REGEX REPLACE ${VERSION_BUILD_REGEX} "\\1"
-            GCC_MAJOR_VERSION ${exe_output} )
-    STRING( REGEX REPLACE ${VERSION_BUILD_REGEX} "\\2"
-            GCC_MINOR_VERSION ${exe_output} )
-        
-    message( STATUS "Using GCC version "
-                    "${GCC_MAJOR_VERSION}.${GCC_MINOR_VERSION}" )
-
-    # First, we need at least GCC 3.0, as I don't think that
-    # GCC 2.x can handle the template code that I use
-    if ( GCC_MAJOR_VERSION LESS 3 )
-       message( FATAL_ERROR "Sire requires GCC >= 3.0. Please upgrade "
-                      "your version of GCC." )
-    endif()
-
-    set ( SIRE_SMALL_FLAGS  "-Os" )
-    set ( SIRE_WARNALL_FLAGS  "-Wall" )
-    set ( SIRE_DEBUG_FLAGS   "-g" )
-
-    set ( SIRE_RELEASE_FLAGS "-O3 -ffast-math" )
-
-    if ( NOT APPLE )
-      # -fomit-frame-pointer breaks backtrace on an apple
-      set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
-    endif()
-
-    set ( SIRE_OPENMP_FLAGS "-fopenmp" )
-    set ( SIRE_PLATFORM_FLAGS "-pipe" )
-    set ( SIRE_STATIC_LINK_FLAGS "-static" )
-
-    if ( HAVE_IMMINTRIN_H )
-      # we have immintrin.h so we have AVX
-      message( STATUS "Compiling with AVX enabled. Resulting binary will only work on newer intel CPUs" )
-      set ( SIRE_VECTOR_FLAGS "-mavx -DSIRE_USE_AVX" )
-    elseif ( HAVE_EMMINTRIN_H )
-      # we have emmintrin.h so we have SSE
-      message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
-      set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
-    endif()
-        
-    # Now gcc 4 specific options
-    if ( GCC_MAJOR_VERSION GREATER 3 )
-      # remove warnings about strict aliasing (lots from Qt4
-      # when compiling with GCC 4, and they are annoying!)
-      set( SIRE_PLATFORM_FLAGS "${SIRE_PLATFORM_FLAGS} -Wno-strict-aliasing" )
-
-      # gcc-4.2 and above has openMP - turn it on (except for Mac as libgomp is broken!)
-      if (GCC_MINOR_VERSION GREATER 1)
-          if (SIRE_OPENMP)
-              if (APPLE)
-                message( STATUS "OpenMP support is unavailable as OpenMP + pthreads "
-                                "is broken in Apple gcc4" )
-                set( SIRE_OPENMP_FLAGS "-fno-openmp" )
-              endif()
-          endif()
-      endif()
-
-      set ( SIRE_VISIBILITY_FLAGS "-DSIRE_VISIBILITY_AVAILABLE -fvisibility=hidden -fvisibility-inlines-hidden" )
-  
-    else()
-      set ( SIRE_VISIBILITY_FLAGS "-DSIRE_NO_VISIBILITY_AVAILABLE" ) 
-    endif()
-
-    # Ensure that the libraries don't contain any undefined symbols
-    if(APPLE)
-        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -Wl" )
-    else(UNIX)
-        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
-    endif()
-
-elseif ( ${CMAKE_CXX_COMPILER} MATCHES "clang" )
-
-    message( STATUS "Detected and using clang C and C++ compilers" )
-
-    set ( SIRE_SMALL_FLAGS  "-Os" )
-    set ( SIRE_WARNALL_FLAGS  "-Wall" )
-    set ( SIRE_DEBUG_FLAGS   "-g" )
-
-    set ( SIRE_RELEASE_FLAGS "-O3 -ffast-math" )
-
-    # -fomit-frame-pointer breaks backtrace on an apple
-    set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
-
-    set ( SIRE_OPENMP_FLAGS "-fopenmp" )
-    set ( SIRE_PLATFORM_FLAGS "-pipe" )
-    set ( SIRE_STATIC_LINK_FLAGS "-static" )
-
-    if ( HAVE_IMMINTRIN_H )
-      # we have immintrin.h so we have AVX
-      message( STATUS "Compiling with AVX enabled. Resulting binary will only work on newer intel CPUs" )
-      set ( SIRE_VECTOR_FLAGS "-mavx -DSIRE_USE_AVX" )
-    elseif ( HAVE_EMMINTRIN_H )
-      # we have emmintrin.h so we have SSE
-      message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
-      set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
-    endif()
-        
-    set ( SIRE_VISIBILITY_FLAGS "-DSIRE_VISIBILITY_AVAILABLE -fvisibility=hidden -fvisibility-inlines-hidden" )
-
-    if (APPLE)
-    elseif(UNIX)
-        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
-    endif()
-
-elseif ( ${CMAKE_CXX_COMPILER} MATCHES "xlC" )
-   
-    message( STATUS "Detected the xlc and xlC C and C++ compilers" ) 
-
-    set ( SIRE_SMALL_FLAGS  "-qcompact" )
-    set ( SIRE_WARNALL_FLAGS  "-qwarn64 -qflag=w:w" )
-    set ( SIRE_RELEASE_FLAGS "-O3 -qstrict" )
-    set ( SIRE_DEBUG_FLAGS   "-g" )
-    set ( SIRE_VISIBILITY_FLAGS "-DSIRE_NO_VISIBILITY_AVAILABLE" )
-    set ( SIRE_PLATFORM_FLAGS "-qrtti=all -qthreaded" )
-
-    set ( SIRE_SHARE_LINK_FLAGS "-qmkshrobj" )
-
-    # Turn off Fortran code because this produces weird link errors!
-    message( STATUS "Disabling Fortran code as this leads to link errors!" )
-    message( STATUS "This will disable sire_blas, sire_lapack and sire_linpack" )
-    set ( SIRE_DISABLE_FORTRAN ON )
-
-    # This is a hack to automatically turn on MPI support on HPCx
-    if ( NOT SIRE_DISABLE_MPI )
-      if ( NOT SIRE_USE_MPI )
-        set( SIRE_USE_MPI ON )
-        set( MPI_INCLUDE_PATH "/usr/lpp/ppe.poe/include;/opt/rsct/lapi/include" )
-        set( MPI_LIBRARY "-L/usr/lpp/ppe.poe/lib -L/usr/lpp/ppe.poe/lib/ip -lmpi_r -lvtd_r -llapi_r -binitfini:poe_remote_main" )
-        set( MPI_EXTRA_LIBRARY "-L/usr/lpp/ppe.poe/lib/threads -lpthreads" )
-        set( MPI_DEFINITIONS "-D_MPI_CPP_BINDINGS" )
-      endif()
-    endif()
-
-elseif( ${CMAKE_CXX_COMPILER} MATCHES "icpc" )
-
-    message( STATUS "Detected the Intel C++ and C compilers" )
-
-    set ( SIRE_SMALL_FLAGS  "-Os" )
-    set ( SIRE_WARNALL_FLAGS  "-w1" )
-    set ( SIRE_RELEASE_FLAGS  "-O3 -fomit-frame-pointer -inline-level=2" )
-    set ( SIRE_VECTOR_FLAGS  "-DSIRE_USE_SSE -msse3" )
-    set ( SIRE_DEBUG_FLAGS   "-g" )
-    set ( SIRE_VISIBILITY_FLAGS "-DSIRE_NO_VISIBILITY_AVAILABLE" )    
-    set ( SIRE_OPENMP_FLAGS "-openmp" )
-    set ( SIRE_SHARE_LINK_FLAGS "-shared" )
-    set ( SIRE_STATIC_LINK_FLAGS "-static" )
-
-else()
-    message( STATUS "CMAKE_SYSTEM_NAME == ${CMAKE_SYSTEM_NAME}" )
-    message( STATUS "CMAKE_C_COMPILER == ${CMAKE_C_COMPILER}" )
-    message( STATUS "CMAKE_CXX_COMPILER == ${CMAKE_CXX_COMPILER}" )
-    message( FATAL_ERROR "Could not detect compiler type - cannot set compiler options." )
 endif()
 
 ###########
