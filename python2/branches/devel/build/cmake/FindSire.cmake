@@ -11,6 +11,7 @@
 # SIRE_EXTRA_INCLUDES contains the paths to the header files
 # of the dependencies of Sire (GSL, Boost and MPI)
 #
+#  SIRE_INSTALL_PREFIX - the installation prefix to the installed corelib
 #  SIRE_INCLUDE_DIR    - where to find the Sire include files
 #  SIRE_EXTRA_INCLUDES - where to find the header files of the dependencies
 #  SIRE_FOUND          - True if Sire found.
@@ -23,30 +24,31 @@ set (SIRE_ROOT ${Sire_ROOT})
 set (SIRE_INCLUDEDIR ${Sire_INCLUDEDIR})
 set (SIRE_FIND_REQUIRED ${Sire_FIND_REQUIRED})
 
-
-# If SIRE_ROOT was defined in the environment, use it.
-if (NOT SIRE_ROOT AND NOT $ENV{SIRE_ROOT} STREQUAL "")
-    set(SIRE_ROOT $ENV{SIRE_ROOT})
-endif(NOT SIRE_ROOT AND NOT $ENV{SIRE_ROOT} STREQUAL "")
+# If SIRE_INSTALL_PREFIX was defined in the environment, use it.
+if (NOT SIRE_INSTALL_PREFIX AND NOT $ENV{SIRE_INSTALL_PREFIX} STREQUAL "")
+    set(SIRE_INSTALL_PREFIX $ENV{SIRE_INSTALL_PREFIX})
+endif(NOT SIRE_INSTALL_PREFIX AND NOT $ENV{SIRE_INSTALL_PREFIX} STREQUAL "")
 
 # If SIRE_INCLUDEDIR was defined in the environment, use it.
 if ( NOT $ENV{SIRE_INCLUDEDIR} STREQUAL "" )
     set(SIRE_INCLUDEDIR $ENV{SIRE_INCLUDEDIR})
 endif( NOT $ENV{SIRE_INCLUDEDIR} STREQUAL "" )
 
-if ( SIRE_ROOT )
-    file(TO_CMAKE_PATH ${SIRE_ROOT} SIRE_ROOT)
+if ( SIRE_INSTALL_PREFIX )
+    file(TO_CMAKE_PATH ${SIRE_INSTALL_PREFIX} SIRE_INSTALL_PREFIX)
     set(_SIRE_INCLUDE_SEARCH_DIRS 
-                 ${SIRE_ROOT}/include 
-                 ${SIRE_ROOT}
+                 ${SIRE_INSTALL_PREFIX}/include 
+                 ${SIRE_INSTALL_PREFIX}
                  ${_SIRE_INCLUDE_SEARCH_DIRS})
-endif ( SIRE_ROOT )
+endif ( SIRE_INSTALL_PREFIX )
 
 if ( SIRE_INCLUDEDIR )
     file(TO_CMAKE_PATH ${SIRE_INCLUDEDIR} SIRE_INCLUDEDIR)
     set(_SIRE_INCLUDE_SEARCH_DIRS 
                  ${SIRE_INCLUDEDIR} ${_SIRE_INCLUDE_SEARCH_DIRS})
 endif ( SIRE_INCLUDEDIR )
+
+message(STATUS "${SIRE_INCLUDE_DIR}")
 
 #Now find the sire_version.h file - this is in the same directory
 #as the cmake directory that contains the cmake files necessary

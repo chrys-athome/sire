@@ -76,6 +76,8 @@ int main(int argc, char **argv)
 
     int status = 0;
 
+    setenv("PYTHONPATH", "/Users/chris/sire.app/lib/python2.7/site-packages", 1);
+
     //start Python - ABSOLUTELY must use multi-threaded python
     Py_Initialize();
     

@@ -11,37 +11,58 @@
 # (or run 'make VERBOSE=1')
 # set (CMAKE_VERBOSE_MAKEFILE ON)
 
-# require cmake >= 2.6.0
-cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
+# require cmake >= 2.8.0
+cmake_minimum_required(VERSION 2.8.0 FATAL_ERROR)
+cmake_policy(VERSION 2.8)
 
-#use loose loop syntax in CMakeLists files
+# use loose loop syntax in CMakeLists files
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
-macro( FATAL_MESSAGE )
-  set( m "" )
-  foreach ( ARG ${ARGV} )
-    set( m "${m} ${ARG}" )
-  endforeach()
+# Option to set the install directory of Sire
+set( SIRE_INCLUDE_DIR "$ENV{HOME}/sire.app/include/Sire" CACHE PATH
+        "The directory containing the Sire header files. This directory must contain
+         the file cmake/SireCompileVariables.cmake so that the python wrappers can
+         be compiled against the correct copy of Sire." )
 
-  message( FATAL_ERROR "\n *** ERROR *** \n ${m} \n *************\n" )
-endmacro( FATAL_MESSAGE )
+set ( SIRE_COMP_CMAKE "${SIRE_INCLUDE_DIR}/cmake/SireCompileVariables.cmake" )
 
-macro( WARNING_MESSAGE )
-  set( m "" )
-  foreach ( ARG ${ARGV} )
-    set( m "${m} ${ARG}" )
-  endforeach()
+# Look for the "SireCompileVariables.cmake" file in the install directory
+if (EXISTS "${SIRE_COMP_CMAKE}")
+  include( "${SIRE_COMP_CMAKE}" )  
+else()
+  message( FATAL_ERROR "Cannot find ${SIRE_COMP_CMAKE}. Has Sire been installed correctly?" )
+endif()
 
-  message( STATUS "\n *** WARNING *** \n ${m} \n ***************\n" )
-endmacro( WARNING_MESSAGE )
+# Now set the C++, C and Fortran compilers to be used to compile the wrappers
+# These have to be the same as used to compile corelib
+set(CMAKE_C_COMPILER "${SIRE_C_COMPILER}")
+set(CMAKE_CXX_COMPILER "${SIRE_CXX_COMPILER}")
 
-# Absolutely can't run cmake in the source directory!
-if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
-  fatal_message( "You must run CMake in a different directory to the source!" ) 
-endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
+message( STATUS "Setting C compiler to ${SIRE_C_COMPILER} and C++ compiler to ${SIRE_CXX_COMPILER}" )
 
 # name the project
 project (SirePython2)
+
+set(CMAKE_INSTALL_PREFIX "${SIRE_INSTALL_PREFIX}" CACHE INTERNAL
+         "Prefix prepended to install directories" FORCE )
+
+message( STATUS "Sire will be compiled and installed to directory ${CMAKE_INSTALL_PREFIX}" )
+
+# Add these directories to the RPATH variable for the libraries / executables,
+# so that they can find each other when loading
+set (CMAKE_SKIP_BUILD_RPATH FALSE)
+set (CMAKE_INSTALL_RPATH "@rpath/../${SIRE_LIBS}")
+set (CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+if (APPLE)
+  set (CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${SIRE_LIBS}")
+endif()
+
+# Absolutely can't run cmake in the source directory!
+if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
+  message( FATAL_ERROR "You must run CMake in a different directory to the source!" ) 
+endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
 
 # Path to the project's extra cmake files
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
@@ -50,7 +71,7 @@ set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 find_package (Sire 0.0.1 REQUIRED)
 
 if (NOT SIRE_FOUND)
-   fatal_message("The required version of Sire was not found.")
+   message( FATAL_ERROR "The required version of Sire was not found.")
 endif()
 
 message( STATUS "Found Sire version ${SIRE_VERSION}" )
