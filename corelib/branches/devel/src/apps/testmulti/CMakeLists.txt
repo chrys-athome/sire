@@ -35,8 +35,6 @@ target_link_libraries (sire_testmulti
 # installation
 install( TARGETS sire_testmulti
          RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
 set_target_properties (sire_multispeedtest PROPERTIES

@@ -6,19 +6,25 @@
 #
 ################################
 
-# require cmake >= 2.6.4
-cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
+############
+############ SETTING INITIAL SIRE VARIABLES
+############
 
-# however, ensure we are compatible with cmake 2.8
-if("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.6)
-   set ( USING_CMAKE_2_6 OFF )
-   cmake_policy(VERSION 2.8)
-else()
-   set ( USING_CMAKE_2_6 ON )
-endif()
+# require cmake >= 2.8.0
+cmake_minimum_required(VERSION 2.8.0 FATAL_ERROR)
+cmake_policy(VERSION 2.8)
 
 # use loose loop syntax in CMakeLists files
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
+
+# Option to set the install directory of Sire
+set( SIRE_INSTALL_PREFIX "$ENV{HOME}/sire.app" CACHE PATH
+        "Install directory for Sire. This directory can be moved after compilation" )
+
+set(CMAKE_INSTALL_PREFIX "${SIRE_INSTALL_PREFIX}" CACHE INTERNAL
+         "Prefix prepended to install directories" FORCE ) 
+
+message( STATUS "Sire will be compiled and installed to directory ${CMAKE_INSTALL_PREFIX}" )
 
 # Absolutely can't run cmake in the source directory!
 if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
@@ -56,17 +62,15 @@ save_sire_variable( "SIRE_VERSION_MINOR" "${SIRE_VERSION_MINOR}" )
 save_sire_variable( "SIRE_VERSION_PATCH" "${SIRE_VERSION_PATCH}" )
 save_sire_variable( "SIRE_VERSION" "${SIRE_VERSION}" )
 save_sire_variable( "SIRE_VERSION_STRING" "${SIRE_VERSION_STRING}" )
+save_sire_variable( "SIRE_APP_DIR" "${CMAKE_INSTALL_PREFIX}" )
 
 # Ensure that the Sire's directories are searched for header files
 # before the system directories - this prevents problems in case
 # an older version of Sire is already installed on the system
 INCLUDE_DIRECTORIES( BEFORE ${SIRE_SOURCE_DIR} )
 
-# Turn off FLOP counting (timing) by default - this adds a small runtime penalty
-option (SIRE_TIME_FLOPS "Turn on floating point timing" OFF)
-save_sire_variable( "SIRE_TIME_FLOPS" "${SIRE_TIME_FLOPS}" )
-
-# Build shared libraries by default
+# Sire must be built as a set of shared libraries
+# (otherwise the modules cannot be loaded in python)
 set (BUILD_SHARED_LIBS ON)
 
 # This is where you set your own compiler flags
@@ -80,6 +84,8 @@ save_sire_variable( "SIRE_USER_CPPFLAGS", "${SIRE_USER_CPPFLAGS}" )
 set (SIRE_BIN "bin")
 # Shared library install dir
 set (SIRE_LIBS "lib")
+# Bundled shared library install dir
+set (SIRE_BUNDLED_LIBS "lib/Sire/bundled" )
 # Static library install dir
 set (SIRE_ARCHIVES "lib/static")
 # Include (header) files install dir
@@ -89,9 +95,21 @@ set (SIRE_CMAKEFILES "include/Sire/cmake")
 # Sire share directory (for parameters etc.)
 set (SIRE_SHARE "share/Sire")
 
+# Add these directories to the RPATH variable for the libraries / executables,
+# so that they can find each other when loading
+set (CMAKE_SKIP_BUILD_RPATH FALSE)
+set (CMAKE_INSTALL_RPATH "@rpath/../${SIRE_LIBS}")
+set (CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+if (APPLE)
+  set (CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${SIRE_LIBS}")
+endif()
+
 save_sire_variable( "SIRE_INSTALL_PREFIX" "${CMAKE_INSTALL_PREFIX}" )
 save_sire_variable( "SIRE_BIN" "${SIRE_BIN}" )
 save_sire_variable( "SIRE_LIBS" "${SIRE_LIBS}" )
+save_sire_variable( "SIRE_BUNDLED_LIBS" "${SIRE_BUNDLED_LIBS}" )
 save_sire_variable( "SIRE_ARCHIVES" "${SIRE_ARCHIVES}" )
 save_sire_variable( "SIRE_INCLUDES" "${SIRE_INCLUDES}" )
 save_sire_variable( "SIRE_SHARE" "${SIRE_SHARE}" )
@@ -123,98 +141,144 @@ set ( CMAKE_STRIP "${CMAKE_CURRENT_BINARY_DIR}/cmake_strip" )
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 save_sire_variable( "SIRE_SYMBOL_HIDING" "${SIRE_SYMBOL_HIDING}" )
 
-# Add option to turn on or off OpenMP compilation
-option ( SIRE_OPENMP "Turn on OpenMP support" ON )
-save_sire_variable( "SIRE_OPENMP" "${SIRE_OPENMP}" )
-
 # Add option to turn on or off vectorisation of the code
 option ( SIRE_VECTORISE "Turn on code vectorisation" ON )
 save_sire_variable( "SIRE_VECTORISE" "${SIRE_VECTORISE}" )
 
+# Add option to disable use of SSE
+option ( SIRE_DISABLE_SSE "Prevent use of SSE when compiling" OFF )
+
+# Add option to disable use of AVX
+option ( SIRE_DISABLE_AVX "Prevent use of AVX when compiling" OFF )
+
 # Add an option to force off Fortran compilation and linking
-# (it may not work on this platform!)
-option ( SIRE_DISABLE_FORTRAN "Turn off Fortran compilation and linking" OFF )
+option ( SIRE_DISABLE_FORTRAN "Turn off Fortran compilation and linking" ON )
 save_sire_variable( "SIRE_DISABLE_FORTRAN" "${SIRE_DISABLE_FORTRAN}" )
 
 if (SIRE_DISABLE_FORTRAN)
-  message( STATUS "Disabling any code that requires compilation of linking to Fortran" )
+  message( STATUS "Disabling any code that requires compilation or linking to Fortran" )
 endif()
 
 # Add an option to force the compilation to ignore any MPI libraries
 # (this is useful on clusters where the MPI-enabled build cannot run
 #  on the head node, and yet you still want to run tests!)
-option( SIRE_DISABLE_MPI "Turn off MPI compilation and linking" OFF )
+option( SIRE_DISABLE_MPI "Turn off MPI compilation and linking" ON )
 
-# Sire depends on >= Qt 4.2
-find_package( Qt4 4.2.0 COMPONENTS QtCore )
+################
+################ SORTING OUT ALL OF SIRE'S DEPENDENCIES
+################
 
-if ( ${QT_QTCORE_FOUND} )
-   include (${QT_USE_FILE})
-   message( STATUS "Using Qt version ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH} "
-                   "(${QT_LIBRARIES})" )
+# Option to disable all bundles
+option( SIRE_ENABLE_BUNDLING "Allow Sire to use bundled libraries" ON )
 
-   save_sire_variable( "SIRE_QT_VERSION_MAJOR" "${QT_VERSION_MAJOR}" )
-   save_sire_variable( "SIRE_QT_VERSION_MINOR" "${QT_VERSION_MINOR}" )
-   save_sire_variable( "SIRE_QT_VERSION_PATCH" "${QT_VERSION_PATCH}" )
-else()
-   message( FATAL_ERROR "Qt >= 4.2 is required by Sire" )
+# Fine-grain control of bundling each dependency
+option( SIRE_BUNDLE_TBB "Whether Sire should use its bundled copy of TBB" ON )
+option( SIRE_BUNDLE_GSL "Whether Sire should use its bundled copy of GSL" ON )
+option( SIRE_BUNDLE_BOOST "Whether Sire should use its bundled copy of Boost" ON )
+option( SIRE_BUNDLE_BLASLAPACK "Whether Sire should use its bundled copy of BLAS and LAPACK" ON )
+option( SIRE_BUNDLE_QT "Whether Sire should use its bundled copy of Qt" ON )
+
+save_sire_variable( "SIRE_ENABLE_BUNDLING" "${SIRE_ENABLE_BUNDLING}" )
+save_sire_variable( "SIRE_BUNDLE_TBB" "${SIRE_BUNDLE_TBB}" )
+save_sire_variable( "SIRE_BUNDLE_GSL" "${SIRE_BUNDLE_GSL}" )
+save_sire_variable( "SIRE_BUNDLE_BOOST" "${SIRE_BUNDLE_BOOST}" )
+save_sire_variable( "SIRE_BUNDLE_BLASLAPACK" "${SIRE_BUNDLE_BLASLAPACK}" )
+save_sire_variable( "SIRE_BUNDLE_QT" "${SIRE_BUNDLE_QT}" )
+
+set (SIRE_FOUND_TBB FALSE)
+set (SIRE_FOUND_GSL FALSE)
+set (SIRE_FOUND_BOOST FALSE)
+set (SIRE_FOUND_BLASLAPACK FALSE)
+set (SIRE_FOUND_QT FALSE)
+
+if ( ${SIRE_ENABLE_BUNDLING} )
+    message( STATUS "Sire will be compiled to use its own copy of bundled libraries." )
+
+    if ( ${SIRE_BUNDLE_TBB} )
+      include( "src/bundled/install_tbb.cmake" )
+      message( STATUS "TEST ${SIRE_FOUND_TBB}" )
+    endif()
 endif()
 
-# Sire depends on >= boost 1.31 - all libraries must be dynamically linked
-set (BOOST_ALL_DYN_LINK "YES")
-set (Boost_ADDITIONAL_VERSIONS "1.39" "1.39.0")
-FIND_PACKAGE ( Boost 1.31 REQUIRED )
+if ( NOT ${SIRE_FOUND_QT} )
+  # Sire depends on >= Qt 4.2
+  find_package( Qt4 4.2.0 COMPONENTS QtCore )
 
-if (Boost_FOUND)
-  message(STATUS "Boost paths ${Boost_LIBRARY_DIRS} | ${Boost_INCLUDE_DIR}" )
-  set ( BOOST_INCLUDE_DIRS "${Boost_INCLUDE_DIR}" )
-  include_directories( ${Boost_INCLUDE_DIR} )
+  if ( ${QT_QTCORE_FOUND} )
+    include (${QT_USE_FILE})
+    message( STATUS "Using Qt version ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH} "
+                    "(${QT_LIBRARIES})" )
 
-  #save the path to this include directory so that it can be
-  #used by anything compiling against Sire
-  save_sire_variable( "SIRE_Boost_INCLUDE_DIR" "${Boost_INCLUDE_DIR}" )
-else()
-  message(FATAL_ERROR "Cannot find the boost libraries.")
-endif()  
+    save_sire_variable( "SIRE_QT_VERSION_MAJOR" "${QT_VERSION_MAJOR}" )
+    save_sire_variable( "SIRE_QT_VERSION_MINOR" "${QT_VERSION_MINOR}" )
+    save_sire_variable( "SIRE_QT_VERSION_PATCH" "${QT_VERSION_PATCH}" )
+  else()
+    message( FATAL_ERROR "Qt >= 4.2 is required by Sire" )
+  endif()
+endif()
 
-# Sire depends on >= GSL 1.6
-find_package(GSL 1.6 REQUIRED)
+if (NOT ${SIRE_FOUND_BOOST})
+  # Sire depends on >= boost 1.31 - all libraries must be dynamically linked
+  set (BOOST_ALL_DYN_LINK "YES")
+  set (Boost_ADDITIONAL_VERSIONS "1.39" "1.39.0")
+  FIND_PACKAGE ( Boost 1.31 REQUIRED )
 
-message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} "
-                "${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
+  if (Boost_FOUND)
+    message(STATUS "Boost paths ${Boost_LIBRARY_DIRS} | ${Boost_INCLUDE_DIR}" )
+    set ( BOOST_INCLUDE_DIRS "${Boost_INCLUDE_DIR}" )
+    include_directories( ${Boost_INCLUDE_DIR} )
+
+    #save the path to this include directory so that it can be
+    #used by anything compiling against Sire
+    save_sire_variable( "SIRE_Boost_INCLUDE_DIR" "${Boost_INCLUDE_DIR}" )
+  else()
+    message(FATAL_ERROR "Cannot find the boost libraries.")
+  endif()  
+endif()
+
+if (NOT ${SIRE_FOUND_GSL})
+  # Sire depends on >= GSL 1.6
+  find_package(GSL 1.6 REQUIRED)
+
+  message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} "
+                  "${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
          
-list(APPEND SIREMATHS_EXTRA_LIBRARIES ${GSL_LIBRARIES})
+  list(APPEND SIREMATHS_EXTRA_LIBRARIES ${GSL_LIBRARIES})
                                   
-include_directories( BEFORE ${GSL_INCLUDE_DIR})
+  include_directories( BEFORE ${GSL_INCLUDE_DIR})
                                   
-save_sire_variable( "SIRE_GSL_INCLUDE_PATH" "${GSL_INCLUDE_DIR}" )
-# Now look for BLAS and LAPACK - if these are not found then
-# a local version will have to be used instead
-set( BLA_STATIC OFF )
-find_package( BLAS )
-find_package( LAPACK )
-
-if (BLAS_FOUND)
-  message( STATUS "Found BLAS library ${BLAS_LIBRARIES}" )
-  set( SIRE_USE_BLAS ON )
-  save_sire_variable( "SIRE_BLAS_LIBRARIES" "${BLAS_LIBRARIES}" )
-else()
-  message( STATUS "Using internal (non-optimal) BLAS functions." )
-  save_sire_variable( SIRE_USE_BLAS OFF )
+  save_sire_variable( "SIRE_GSL_INCLUDE_PATH" "${GSL_INCLUDE_DIR}" )
 endif()
 
-save_sire_variable( "SIRE_USE_BLAS" "${SIRE_USE_BLAS}" )
+if (NOT ${SIRE_FOUND_BLASLAPACK})
+  # Now look for BLAS and LAPACK - if these are not found then
+  # a local version will have to be used instead
+  set( BLA_STATIC OFF )
+  find_package( BLAS )
+  find_package( LAPACK )
 
-if (LAPACK_FOUND)
-  message( STATUS "Found LAPACK library ${LAPACK_LIBRARIES}" )
-  set( SIRE_USE_LAPACK ON )
-  save_sire_variable( "SIRE_LAPACK_LIBRARIES" "${LAPACK_LIBRARIES}" )
-else()
-  message( STATUS "Using internal (non-optimal) LAPACK functions." )
-  set( SIRE_USE_LAPACK OFF )
+  if (BLAS_FOUND)
+    message( STATUS "Found BLAS library ${BLAS_LIBRARIES}" )
+    set( SIRE_USE_BLAS ON )
+    save_sire_variable( "SIRE_BLAS_LIBRARIES" "${BLAS_LIBRARIES}" )
+  else()
+    message( STATUS "Using internal (non-optimal) BLAS functions." )
+    save_sire_variable( SIRE_USE_BLAS OFF )
+  endif()
+
+  save_sire_variable( "SIRE_USE_BLAS" "${SIRE_USE_BLAS}" )
+
+  if (LAPACK_FOUND)
+    message( STATUS "Found LAPACK library ${LAPACK_LIBRARIES}" )
+    set( SIRE_USE_LAPACK ON )
+    save_sire_variable( "SIRE_LAPACK_LIBRARIES" "${LAPACK_LIBRARIES}" )
+  else()
+    message( STATUS "Using internal (non-optimal) LAPACK functions." )
+    set( SIRE_USE_LAPACK OFF )
+  endif()
+
+  save_sire_variable( "SIRE_USE_LAPACK" "${SIRE_USE_LAPACK}" )
 endif()
-
-save_sire_variable( "SIRE_USE_LAPACK" "${SIRE_USE_LAPACK}" )
 
 if (SIRE_DISABLE_MPI)
   message( STATUS "Disabling MPI support in Sire" )
@@ -231,6 +295,10 @@ else()
     set ( SIRE_USE_MPI OFF )
   endif()
 endif()
+
+#############
+############# PLATFORM TESTS
+#############
 
 # Now run some platform tests - the results will be placed in config.h
 include (CheckIncludeFiles)
@@ -269,6 +337,10 @@ set( SIRE_PLATFORM_FLAGS "" CACHE INTERNAL "Additional flags needed by the compi
 set( SIRE_SHARE_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link shared libraries" )
 set( SIRE_STATIC_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link static libraries" )
 set( SIRE_EXE_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link executables" )
+
+#############
+############# DETECTING AND CONFIGURING THE COMPILER
+#############
 
 include (CheckCXXCompilerFlag)
 
@@ -441,6 +513,10 @@ else()
     message( FATAL_ERROR "Could not detect compiler type - cannot set compiler options." )
 endif()
 
+###########
+########### PRINTING OUT SETTINGS AND FINALISING COMPILE FLAGS
+###########
+
 message( STATUS  "CMAKE_SYSTEM_NAME      == ${CMAKE_SYSTEM_NAME}" )
 message( STATUS  "CMAKE_C_COMPILER       == ${CMAKE_C_COMPILER}" )
 message( STATUS  "CMAKE_CXX_COMPILER     == ${CMAKE_CXX_COMPILER}" )
@@ -459,14 +535,6 @@ message ( STATUS "SIRE_STATIC_LINK_FLAGS == ${SIRE_STATIC_LINK_FLAGS}" )
 message ( STATUS "SIRE_EXE_LINK_FLAGS    == ${SIRE_EXE_LINK_FLAGS}" )
 
 set( SIRE_COMPILE_FLAGS "${SIRE_WARNALL_FLAGS} ${SIRE_PLATFORM_FLAGS}" )
-
-if ( SIRE_TIME_FLOPS )
-  set ( SIRE_COMPILE_FLAGS "${SIRE_COMPILE_FLAGS} -DSIRE_TIME_ROUTINES" )
-endif()
-
-if ( SIRE_OPENMP )
-  set ( SIRE_COMPILE_FLAGS "${SIRE_COMPILE_FLAGS} ${SIRE_OPENMP_FLAGS}" )
-endif()
 
 if ( SIRE_SYMBOL_HIDING )
   set ( SIRE_COMPILE_FLAGS "${SIRE_COMPILE_FLAGS} ${SIRE_VISIBILITY_FLAGS}" )
@@ -538,6 +606,10 @@ save_sire_variable( "SIRE_PLATFORM_FLAGS" "${SIRE_PLATFORM_FLAGS}" )
 #include the build directory so that we can get sire_config.h and sire_version.h
 include_directories(${CMAKE_BINARY_DIR})
 
+################
+################ TELLING CMAKE WHERE THE SOURCE IS LOCATED
+################
+
 # Add the compiler test directory - this allows us to run some compiler
 # tests to make sure that Sire will compile properly
 add_subdirectory (build/test_compiler)
@@ -545,6 +617,10 @@ add_subdirectory (build/test_compiler)
 # Recurse into the src/libs and src/apps subdirectories
 add_subdirectory (src/libs)
 add_subdirectory (src/apps)
+
+################
+################ CONFIG FILES AND INSTALLATION INSTRUCTIONS
+################
 
 # Finally, write the version header file and finish off the component dependencies file
 include( GetSvnVersion )
