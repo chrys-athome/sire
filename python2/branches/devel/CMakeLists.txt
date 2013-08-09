@@ -48,16 +48,25 @@ set(CMAKE_INSTALL_PREFIX "${SIRE_INSTALL_PREFIX}" CACHE INTERNAL
 
 message( STATUS "Sire will be compiled and installed to directory ${CMAKE_INSTALL_PREFIX}" )
 
-# Add these directories to the RPATH variable for the libraries / executables,
-# so that they can find each other when loading
+set( CMAKE_SKIP_RPATH FALSE )
 set (CMAKE_SKIP_BUILD_RPATH FALSE)
-set (CMAKE_INSTALL_RPATH "@rpath/../${SIRE_LIBS}")
-set (CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if (APPLE)
-  set (CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${SIRE_LIBS}")
+  # make sure that all libraries are named "@rpath/library.dylib". This will allow
+  # the library to be found as long as the executable can substitute @rpath with the 
+  # path to the library
+  set (CMAKE_INSTALL_NAME_DIR "@rpath")
+
+  # Add the two passed directories to the @rpaths to search for libraries. @executable_path
+  # is the directory containing the executable, so the libraries are included in 
+  # @exeutable_path/../${SIRE_LIBS} and @exeutable_path/../${SIRE_BUNDLED_LIBS}
+  set (SIRE_INSTALL_RPATH "@executable_path/../${SIRE_LIBS}:@executable_path/../${SIRE_BUNDLED_LIBS}")
+else()
+  set (SIRE_INSTALL_RPATH "\$ORIGIN/../${SIRE_LIBS}:\$ORIGIN/../${SIRE_BUNDLED_LIBS}")
 endif()
+
+set (CMAKE_INSTALL_RPATH "${SIRE_INSTALL_RPATH}")
+set (CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 
 # Absolutely can't run cmake in the source directory!
 if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )

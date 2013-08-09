@@ -31,8 +31,8 @@ add_library (SirePython2 ${WRAPHELPERS_SOURCES})
 
 set_target_properties (SirePython2  
                        PROPERTIES
-                         VERSION ${SIRE_VERSION}
-                         SOVERSION ${SIRE_VERSION_MAJOR}
+                       VERSION ${SIRE_VERSION}
+                       SOVERSION ${SIRE_VERSION_MAJOR}
 		       )
 		       
 target_link_libraries (SirePython2
