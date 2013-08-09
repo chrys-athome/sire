@@ -59,6 +59,6 @@ if (APPLE)
   add_custom_command(TARGET sire_python
       POST_BUILD
       COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../lib" sire_python
-      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../Sire/bundled" sire_python)
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../lib/Sire/bundled" sire_python)
 endif()
 
