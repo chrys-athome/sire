@@ -7,6 +7,9 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# This library uses Intel Threaded Building blocks
+include_directories(${TBB_INCLUDE_DIR})
+
 # Define the headers in SireMM
 set ( SIREMM_HEADERS
       anglerestraint.h
@@ -112,6 +115,7 @@ add_library (SireMM ${SIREMM_SOURCES})
 set_target_properties (SireMM PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
+                       INSTALL_RPATH "@loader_path/../${SIRE_BUNDLED_LIBS}"
                       )
 
 # Link to other Sire libraries
@@ -123,6 +127,8 @@ target_link_libraries (SireMM
                        SireMaths
                        SireUnits
                        SireStream
+                       ${TBB_LIBRARY}
+                       ${TBB_MALLOC_LIBRARY}
                        )
 
 # installation

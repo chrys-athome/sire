@@ -75,6 +75,12 @@ if (EXISTS "${TBB_ZIPFILE}")
     message( STATUS "Using TBB from ${TBB_INCLUDE_DIR}" )
     message( STATUS "Libraries ${TBB_LIBRARY} | ${TBB_MALLOC_LIBRARY}" )
 
+    # need to set the install name so that we can find the library when it is 
+    # placed into the bundle directory
+    set(NAME_COMMAND "install_name_tool -id \"@loader_path/../${SIRE_BUNDLED_LIBS}/libtbb.dylib\" ${TBB_LIBRARY}")
+    message(STATUS ${NAME_COMMAND})
+    execute_process( COMMAND ${NAME_COMMAND} WORKING_DIRECTORY ${TBB_BUILD_DIR} )
+
     # add install targets so that the headers are installed to the bundled include directory,
     # and the library is installed to the bundled library directory
     install( PROGRAMS ${TBB_LIBRARY} ${TBB_MALLOC_LIBRARY} 

@@ -60,3 +60,11 @@ install( TARGETS sire
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+if (APPLE)
+  add_custom_command(TARGET sire
+      POST_BUILD
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../lib" sire
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../Sire/bundled" sire)
+endif()
+

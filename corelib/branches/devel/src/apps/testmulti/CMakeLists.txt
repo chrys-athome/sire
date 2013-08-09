@@ -40,6 +40,7 @@ install( TARGETS sire_testmulti
 set_target_properties (sire_multispeedtest PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
+                       INSTALL_RPATH ${SIRE_INSTALL_RPATH}
                       )
 
 # Link to other Sire libraries
@@ -54,3 +55,13 @@ install( TARGETS sire_multispeedtest
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
+if (APPLE)
+  add_custom_command(TARGET sire_testmulti
+      POST_BUILD 
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../lib" sire_testmulti 
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../Sire/bundled" sire_testmulti)
+  add_custom_command(TARGET sire_multispeedtest
+      POST_BUILD       
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../lib" sire_multispeedtest
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../Sire/bundled" sire_multispeedtest)
+endif() 
