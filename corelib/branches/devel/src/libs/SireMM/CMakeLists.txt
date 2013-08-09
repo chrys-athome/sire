@@ -115,7 +115,6 @@ add_library (SireMM ${SIREMM_SOURCES})
 set_target_properties (SireMM PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
-                       INSTALL_RPATH "@loader_path/../${SIRE_BUNDLED_LIBS}"
                       )
 
 # Link to other Sire libraries
