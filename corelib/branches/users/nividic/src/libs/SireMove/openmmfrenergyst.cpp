@@ -1201,9 +1201,8 @@ void OpenMMFrEnergyST::initialise()  {
 
                     int openmmindex = AtomNumToOpenMMIndex[atomnum];
 
-                    if (true){
+                    if (Debug){
                         qDebug() << "atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k << " d " << d;
-                        qDebug() << "Atom name =  " << molecule.atom(AtomIdx(openmmindex)).toString();
                     }
 
                     int posrestrdim = 5;
