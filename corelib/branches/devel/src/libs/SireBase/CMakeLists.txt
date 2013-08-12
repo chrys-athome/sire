@@ -21,6 +21,7 @@ set ( SIREBASE_HEADERS
       countflops.h
       errors.h
       findexe.h
+      getinstalldir.h
       globalsharedpointer.hpp
       increment.h
       incremint.h
@@ -65,6 +66,7 @@ set ( SIREBASE_SOURCES
       countflops.cpp
       errors.cpp
       findexe.cpp
+      getinstalldir.cpp
       globalsharedpointer.cpp
       linktoproperty.cpp
       majorminorversion.cpp

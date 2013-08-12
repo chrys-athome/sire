@@ -22,4 +22,10 @@
 
 #cmakedefine HAVE_EXECINFO_H 1
 
+/** Paths used to locate the Sire libraries etc. */
+#define SIRE_BIN_DIR "@SIRE_BIN@"
+#define SIRE_LIBS_DIR "@SIRE_LIBS@"
+#define SIRE_BUNDLED_LIBS_DIR "@SIRE_BUNDLED_LIBS@"
+#define SIRE_SHARE_DIR "@SIRE_SHARE@"
+
 #endif
