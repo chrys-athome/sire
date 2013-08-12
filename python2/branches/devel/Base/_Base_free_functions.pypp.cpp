@@ -21,9 +21,93 @@ namespace bp = boost::python;
 
 #include "findexe.h"
 
+#include "SireError/errors.h"
+
+#include "getinstalldir.h"
+
+#include "sire_config.h"
+
+#include <QDir>
+
+#include <QFileInfo>
+
+#include "getinstalldir.h"
+
+#include "SireError/errors.h"
+
+#include "getinstalldir.h"
+
+#include "sire_config.h"
+
+#include <QDir>
+
+#include <QFileInfo>
+
+#include "getinstalldir.h"
+
+#include "SireError/errors.h"
+
+#include "getinstalldir.h"
+
+#include "sire_config.h"
+
+#include <QDir>
+
+#include <QFileInfo>
+
+#include "getinstalldir.h"
+
+#include "SireError/errors.h"
+
+#include "getinstalldir.h"
+
+#include "sire_config.h"
+
+#include <QDir>
+
+#include <QFileInfo>
+
+#include "getinstalldir.h"
+
+#include "SireError/errors.h"
+
+#include "getinstalldir.h"
+
+#include "sire_config.h"
+
+#include <QDir>
+
+#include <QFileInfo>
+
+#include "getinstalldir.h"
+
+#include "SireError/errors.h"
+
+#include "getinstalldir.h"
+
+#include "sire_config.h"
+
+#include <QDir>
+
+#include <QFileInfo>
+
+#include "getinstalldir.h"
+
 #include "increment.h"
 
 #include "increment.h"
+
+#include "SireError/errors.h"
+
+#include "getinstalldir.h"
+
+#include "sire_config.h"
+
+#include <QDir>
+
+#include <QFileInfo>
+
+#include "getinstalldir.h"
 
 #include "SireError/errors.h"
 
@@ -237,6 +321,73 @@ void register_free_functions(){
     
     }
 
+    { //::SireBase::getBinDir
+    
+        typedef ::QString ( *getBinDir_function_type )(  );
+        getBinDir_function_type getBinDir_function_value( &::SireBase::getBinDir );
+        
+        bp::def( 
+            "getBinDir"
+            , getBinDir_function_value );
+    
+    }
+
+    { //::SireBase::getBundledLibDir
+    
+        typedef ::QString ( *getBundledLibDir_function_type )(  );
+        getBundledLibDir_function_type getBundledLibDir_function_value( &::SireBase::getBundledLibDir );
+        
+        bp::def( 
+            "getBundledLibDir"
+            , getBundledLibDir_function_value );
+    
+    }
+
+    { //::SireBase::getInstallDir
+    
+        typedef ::QString ( *getInstallDir_function_type )(  );
+        getInstallDir_function_type getInstallDir_function_value( &::SireBase::getInstallDir );
+        
+        bp::def( 
+            "getInstallDir"
+            , getInstallDir_function_value );
+    
+    }
+
+    { //::SireBase::getLibDir
+    
+        typedef ::QString ( *getLibDir_function_type )(  );
+        getLibDir_function_type getLibDir_function_value( &::SireBase::getLibDir );
+        
+        bp::def( 
+            "getLibDir"
+            , getLibDir_function_value );
+    
+    }
+
+    { //::SireBase::getShareDir
+    
+        typedef ::QString ( *getShareDir_function_type )(  );
+        getShareDir_function_type getShareDir_function_value( &::SireBase::getShareDir );
+        
+        bp::def( 
+            "getShareDir"
+            , getShareDir_function_value );
+    
+    }
+
+    { //::SireBase::getSireDir
+    
+        typedef ::QString ( *getSireDir_function_type )( ::QString const &,bool );
+        getSireDir_function_type getSireDir_function_value( &::SireBase::getSireDir );
+        
+        bp::def( 
+            "getSireDir"
+            , getSireDir_function_value
+            , ( bp::arg("path"), bp::arg("assert_exists")=(bool)(true) ) );
+    
+    }
+
     { //::SireBase::increment
     
         typedef ::QString ( *increment_function_type )( ::QString );
@@ -246,6 +397,18 @@ void register_free_functions(){
             "increment"
             , increment_function_value
             , ( bp::arg("name") ) );
+    
+    }
+
+    { //::SireBase::setInstallDir
+    
+        typedef void ( *setInstallDir_function_type )( ::QString );
+        setInstallDir_function_type setInstallDir_function_value( &::SireBase::setInstallDir );
+        
+        bp::def( 
+            "setInstallDir"
+            , setInstallDir_function_value
+            , ( bp::arg("dir") ) );
     
     }
 

@@ -9,6 +9,7 @@
 #include "combineproperties.h"
 #include "countflops.h"
 #include "findexe.h"
+#include "getinstalldir.h"
 #include "increment.h"
 #include "incremint.h"
 #include "linktoproperty.h"

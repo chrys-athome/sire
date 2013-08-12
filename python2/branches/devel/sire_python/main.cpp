@@ -8,6 +8,8 @@
 
 #include <cstdio>
 
+#include <QDir>
+
 #include "SireError/errors.h"
 #include "SireError/printerror.h"
 
@@ -17,12 +19,16 @@
 #include "SireCluster/promise.h"
 
 #include "SireBase/process.h"
+#include "SireBase/getinstalldir.h"
 
 #include "Helpers/pythonpacket.h"
+
+#include "sire_python2_config.h"
 
 using std::printf;
 
 using namespace SireCluster;
+using namespace SireBase;
 
 #include <QDebug>
 
@@ -76,7 +82,24 @@ int main(int argc, char **argv)
 
     int status = 0;
 
-    setenv("PYTHONPATH", "/Users/chris/sire.app/lib/python2.7/site-packages", 1);
+    QDir site_packages( QString("%1/%2").arg( getInstallDir(), SIRE_PYTHON2_DIR ) );
+
+    if (not site_packages.exists())
+        throw SireError::file_error( QObject::tr(
+            "Cannot find the directory containing the Sire python modules (%1). "
+            "Please check your installation of Sire in directory %2.")
+                .arg(site_packages.absolutePath()).arg(getInstallDir()), CODELOC );
+
+    QString pythonpath = qgetenv("PYTHONPATH");
+
+    if (pythonpath.isEmpty())
+        pythonpath = site_packages.canonicalPath();
+    else
+        pythonpath = QString("%1:%2").arg(site_packages.canonicalPath()).arg(pythonpath);
+
+    qDebug() << "Setting PYTHONPATH to" << pythonpath;
+
+    qputenv("PYTHONPATH", pythonpath.toUtf8());
 
     //start Python - ABSOLUTELY must use multi-threaded python
     Py_Initialize();

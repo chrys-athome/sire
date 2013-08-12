@@ -145,6 +145,7 @@ endif()
 
 # Now add the paths to the header files of the dependencies of Sire
 include_directories (BEFORE ${SIRE_INCLUDE_DIR})
+include_directories( BEFORE ${CMAKE_CURRENT_BINARY_DIR} )
 
 # Sire depends on >= Qt 4.2
 find_package( Qt4 4.2.0 COMPONENTS QtCore )
@@ -289,6 +290,13 @@ add_subdirectory (sire_ipython)
 install( FILES __init__.py
          DESTINATION ${SIRE_PYTHON}/Sire 
        )
+
+# Create the sire_python2_config.h to tell Sire where the
+# python libraries will be installed
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_python2_config.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/sire_python2_config.h"
+  IMMEDIATE @ONLY)
 
 # These commands are used to create an 'uninstall' target
 # (this is copied from the vtk.org wiki)
