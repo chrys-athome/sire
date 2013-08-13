@@ -3,18 +3,9 @@
 // (C) Christopher Woods, GPL >= 2 License
 
 #include "boost/python.hpp"
-#include <QString>
 #include <QByteArray>
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
-#include <QTextStream>
 #include <QDateTime>
-#include <QLocale>
 #include <QUuid>
-#include <qnamespace.h>
-#include <QVariant>
-#include <QUrl>
 #include <QBitArray>
 #include "QDateTime.pypp.hpp"
 
@@ -30,10 +21,12 @@ void register_QDateTime_class(){
         typedef bp::class_< QDateTime > QDateTime_exposer_t;
         QDateTime_exposer_t QDateTime_exposer = QDateTime_exposer_t( "QDateTime", bp::init< >() );
         bp::scope QDateTime_scope( QDateTime_exposer );
+        QDateTime_exposer.def( bp::init< QDate const & >(( bp::arg("arg0") )) );
+        QDateTime_exposer.def( bp::init< QDate const &, QTime const &, bp::optional< Qt::TimeSpec > >(( bp::arg("arg0"), bp::arg("arg1"), bp::arg("spec")=::Qt::LocalTime )) );
         QDateTime_exposer.def( bp::init< QDateTime const & >(( bp::arg("other") )) );
         { //::QDateTime::addDays
         
-            typedef ::QDateTime ( ::QDateTime::*addDays_function_type )( int ) const;
+            typedef ::QDateTime ( ::QDateTime::*addDays_function_type )( ::qint64 ) const;
             addDays_function_type addDays_function_value( &::QDateTime::addDays );
             
             QDateTime_exposer.def( 
@@ -66,7 +59,7 @@ void register_QDateTime_class(){
         }
         { //::QDateTime::addSecs
         
-            typedef ::QDateTime ( ::QDateTime::*addSecs_function_type )( int ) const;
+            typedef ::QDateTime ( ::QDateTime::*addSecs_function_type )( ::qint64 ) const;
             addSecs_function_type addSecs_function_value( &::QDateTime::addSecs );
             
             QDateTime_exposer.def( 
@@ -96,6 +89,26 @@ void register_QDateTime_class(){
                 , currentDateTime_function_value );
         
         }
+        { //::QDateTime::currentDateTimeUtc
+        
+            typedef ::QDateTime ( *currentDateTimeUtc_function_type )(  );
+            currentDateTimeUtc_function_type currentDateTimeUtc_function_value( &::QDateTime::currentDateTimeUtc );
+            
+            QDateTime_exposer.def( 
+                "currentDateTimeUtc"
+                , currentDateTimeUtc_function_value );
+        
+        }
+        { //::QDateTime::currentMSecsSinceEpoch
+        
+            typedef ::qint64 ( *currentMSecsSinceEpoch_function_type )(  );
+            currentMSecsSinceEpoch_function_type currentMSecsSinceEpoch_function_value( &::QDateTime::currentMSecsSinceEpoch );
+            
+            QDateTime_exposer.def( 
+                "currentMSecsSinceEpoch"
+                , currentMSecsSinceEpoch_function_value );
+        
+        }
         { //::QDateTime::date
         
             typedef ::QDate ( ::QDateTime::*date_function_type )(  ) const;
@@ -108,13 +121,35 @@ void register_QDateTime_class(){
         }
         { //::QDateTime::daysTo
         
-            typedef int ( ::QDateTime::*daysTo_function_type )( ::QDateTime const & ) const;
+            typedef ::qint64 ( ::QDateTime::*daysTo_function_type )( ::QDateTime const & ) const;
             daysTo_function_type daysTo_function_value( &::QDateTime::daysTo );
             
             QDateTime_exposer.def( 
                 "daysTo"
                 , daysTo_function_value
                 , ( bp::arg("arg0") ) );
+        
+        }
+        { //::QDateTime::fromMSecsSinceEpoch
+        
+            typedef ::QDateTime ( *fromMSecsSinceEpoch_function_type )( ::qint64 );
+            fromMSecsSinceEpoch_function_type fromMSecsSinceEpoch_function_value( &::QDateTime::fromMSecsSinceEpoch );
+            
+            QDateTime_exposer.def( 
+                "fromMSecsSinceEpoch"
+                , fromMSecsSinceEpoch_function_value
+                , ( bp::arg("msecs") ) );
+        
+        }
+        { //::QDateTime::fromString
+        
+            typedef ::QDateTime ( *fromString_function_type )( ::QString const &,::Qt::DateFormat );
+            fromString_function_type fromString_function_value( &::QDateTime::fromString );
+            
+            QDateTime_exposer.def( 
+                "fromString"
+                , fromString_function_value
+                , ( bp::arg("s"), bp::arg("f")=::Qt::TextDate ) );
         
         }
         { //::QDateTime::fromString
@@ -159,6 +194,17 @@ void register_QDateTime_class(){
                 , isValid_function_value );
         
         }
+        { //::QDateTime::msecsTo
+        
+            typedef ::qint64 ( ::QDateTime::*msecsTo_function_type )( ::QDateTime const & ) const;
+            msecsTo_function_type msecsTo_function_value( &::QDateTime::msecsTo );
+            
+            QDateTime_exposer.def( 
+                "msecsTo"
+                , msecsTo_function_value
+                , ( bp::arg("arg0") ) );
+        
+        }
         QDateTime_exposer.def( bp::self != bp::self );
         QDateTime_exposer.def( bp::self < bp::self );
         QDateTime_exposer.def( bp::self <= bp::self );
@@ -179,7 +225,7 @@ void register_QDateTime_class(){
         QDateTime_exposer.def( bp::self >= bp::self );
         { //::QDateTime::secsTo
         
-            typedef int ( ::QDateTime::*secsTo_function_type )( ::QDateTime const & ) const;
+            typedef ::qint64 ( ::QDateTime::*secsTo_function_type )( ::QDateTime const & ) const;
             secsTo_function_type secsTo_function_value( &::QDateTime::secsTo );
             
             QDateTime_exposer.def( 
@@ -199,6 +245,17 @@ void register_QDateTime_class(){
                 , ( bp::arg("date") ) );
         
         }
+        { //::QDateTime::setMSecsSinceEpoch
+        
+            typedef void ( ::QDateTime::*setMSecsSinceEpoch_function_type )( ::qint64 ) ;
+            setMSecsSinceEpoch_function_type setMSecsSinceEpoch_function_value( &::QDateTime::setMSecsSinceEpoch );
+            
+            QDateTime_exposer.def( 
+                "setMSecsSinceEpoch"
+                , setMSecsSinceEpoch_function_value
+                , ( bp::arg("msecs") ) );
+        
+        }
         { //::QDateTime::setTime
         
             typedef void ( ::QDateTime::*setTime_function_type )( ::QTime const & ) ;
@@ -208,6 +265,17 @@ void register_QDateTime_class(){
                 "setTime"
                 , setTime_function_value
                 , ( bp::arg("time") ) );
+        
+        }
+        { //::QDateTime::setTimeSpec
+        
+            typedef void ( ::QDateTime::*setTimeSpec_function_type )( ::Qt::TimeSpec ) ;
+            setTimeSpec_function_type setTimeSpec_function_value( &::QDateTime::setTimeSpec );
+            
+            QDateTime_exposer.def( 
+                "setTimeSpec"
+                , setTimeSpec_function_value
+                , ( bp::arg("spec") ) );
         
         }
         { //::QDateTime::setTime_t
@@ -221,6 +289,28 @@ void register_QDateTime_class(){
                 , ( bp::arg("secsSince1Jan1970UTC") ) );
         
         }
+        { //::QDateTime::setUtcOffset
+        
+            typedef void ( ::QDateTime::*setUtcOffset_function_type )( int ) ;
+            setUtcOffset_function_type setUtcOffset_function_value( &::QDateTime::setUtcOffset );
+            
+            QDateTime_exposer.def( 
+                "setUtcOffset"
+                , setUtcOffset_function_value
+                , ( bp::arg("seconds") ) );
+        
+        }
+        { //::QDateTime::swap
+        
+            typedef void ( ::QDateTime::*swap_function_type )( ::QDateTime & ) ;
+            swap_function_type swap_function_value( &::QDateTime::swap );
+            
+            QDateTime_exposer.def( 
+                "swap"
+                , swap_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::QDateTime::time
         
             typedef ::QTime ( ::QDateTime::*time_function_type )(  ) const;
@@ -229,6 +319,16 @@ void register_QDateTime_class(){
             QDateTime_exposer.def( 
                 "time"
                 , time_function_value );
+        
+        }
+        { //::QDateTime::timeSpec
+        
+            typedef ::Qt::TimeSpec ( ::QDateTime::*timeSpec_function_type )(  ) const;
+            timeSpec_function_type timeSpec_function_value( &::QDateTime::timeSpec );
+            
+            QDateTime_exposer.def( 
+                "timeSpec"
+                , timeSpec_function_value );
         
         }
         { //::QDateTime::toLocalTime
@@ -241,6 +341,27 @@ void register_QDateTime_class(){
                 , toLocalTime_function_value );
         
         }
+        { //::QDateTime::toMSecsSinceEpoch
+        
+            typedef ::qint64 ( ::QDateTime::*toMSecsSinceEpoch_function_type )(  ) const;
+            toMSecsSinceEpoch_function_type toMSecsSinceEpoch_function_value( &::QDateTime::toMSecsSinceEpoch );
+            
+            QDateTime_exposer.def( 
+                "toMSecsSinceEpoch"
+                , toMSecsSinceEpoch_function_value );
+        
+        }
+        { //::QDateTime::toString
+        
+            typedef ::QString ( ::QDateTime::*toString_function_type )( ::Qt::DateFormat ) const;
+            toString_function_type toString_function_value( &::QDateTime::toString );
+            
+            QDateTime_exposer.def( 
+                "toString"
+                , toString_function_value
+                , ( bp::arg("f")=::Qt::TextDate ) );
+        
+        }
         { //::QDateTime::toString
         
             typedef ::QString ( ::QDateTime::*toString_function_type )( ::QString const & ) const;
@@ -250,6 +371,17 @@ void register_QDateTime_class(){
                 "toString"
                 , toString_function_value
                 , ( bp::arg("format") ) );
+        
+        }
+        { //::QDateTime::toTimeSpec
+        
+            typedef ::QDateTime ( ::QDateTime::*toTimeSpec_function_type )( ::Qt::TimeSpec ) const;
+            toTimeSpec_function_type toTimeSpec_function_value( &::QDateTime::toTimeSpec );
+            
+            QDateTime_exposer.def( 
+                "toTimeSpec"
+                , toTimeSpec_function_value
+                , ( bp::arg("spec") ) );
         
         }
         { //::QDateTime::toTime_t
@@ -272,7 +404,20 @@ void register_QDateTime_class(){
                 , toUTC_function_value );
         
         }
+        { //::QDateTime::utcOffset
+        
+            typedef int ( ::QDateTime::*utcOffset_function_type )(  ) const;
+            utcOffset_function_type utcOffset_function_value( &::QDateTime::utcOffset );
+            
+            QDateTime_exposer.def( 
+                "utcOffset"
+                , utcOffset_function_value );
+        
+        }
         QDateTime_exposer.staticmethod( "currentDateTime" );
+        QDateTime_exposer.staticmethod( "currentDateTimeUtc" );
+        QDateTime_exposer.staticmethod( "currentMSecsSinceEpoch" );
+        QDateTime_exposer.staticmethod( "fromMSecsSinceEpoch" );
         QDateTime_exposer.staticmethod( "fromString" );
         QDateTime_exposer.staticmethod( "fromTime_t" );
         QDateTime_exposer.def( "__copy__", &__copy__);

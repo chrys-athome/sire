@@ -147,36 +147,6 @@ endif()
 include_directories (BEFORE ${SIRE_INCLUDE_DIR})
 include_directories( BEFORE ${CMAKE_CURRENT_BINARY_DIR} )
 
-# Sire depends on >= Qt 4.2
-find_package( Qt4 4.2.0 COMPONENTS QtCore )
-
-if ( ${QT_QTCORE_FOUND} )
-   include (${QT_USE_FILE})
-   message( STATUS "Using Qt version ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH} "
-                   "(${QT_LIBRARIES})" )
-
-   compare_values( SAME_QT_MAJOR ${QT_VERSION_MAJOR} ${SIRE_QT_VERSION_MAJOR} )
-   compare_values( SAME_QT_MINOR ${QT_VERSION_MINOR} ${SIRE_QT_VERSION_MINOR} )
-   compare_values( SAME_QT_PATCH ${QT_VERSION_PATCH} ${SIRE_QT_VERSION_PATCH} )
-
-   if ( NOT SAME_QT_MAJOR )
-      fatal_message( "Compiling the python wrappers against a different major"
-                     "version of Qt (${QT_VERSION_MAJOR}) than Sire (${SIRE_QT_VERSION_MAJOR})"
-                     "is not supported." )
-   
-   elseif ( NOT SAME_QT_MINOR AND SAME_QT_PATCH )
-
-      warning_message( "Compiling the python wrappers with a version of Qt"
-                       "(${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH})"
-                       "which is different to the Sire Qt version" 
-                       "(${SIRE_QT_VERSION_MAJOR}.${SIRE_QT_VERSION_MINOR}.${SIRE_QT_VERSION_PATCH})"
-                       "is not recommended!!!" )
-   endif()
-
-else()                                          
-   fatal_message( "Qt >= 4.2 is required by Sire" )
-endif()
-
 # Build shared libraries by default
 option (BUILD_SHARED_LIBS "Build shared python modules" ON)
 
@@ -205,6 +175,11 @@ include_directories( ${PYTHON_INCLUDE_DIR} )
 
 # set the location to install the python modules
 set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
+
+# Use the same Qt library as was used to build corelib
+message( STATUS "Looking for Qt5Core in directory ${SIRE_QT5CORE_DIR}" )
+set( Qt5Core_DIR "${SIRE_QT5CORE_DIR}" )
+find_package( Qt5Core REQUIRED )
 
 # Sire depends on >= boost 1.31 - all libraries must be dynamically linked
 # (else we could end up with multiple boost::python libraries linked, which
@@ -246,6 +221,19 @@ set( CMAKE_CXX_FLAGS ${SIRE_CXX_FLAGS_SMALL} )
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_SHARE_LINK_FLAGS}" )
 set( CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} ${SIRE_STATIC_LINK_FLAGS}" )
 set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_EXE_LINK_FLAGS}" )
+
+include (CheckCXXCompilerFlag)
+
+CHECK_CXX_COMPILER_FLAG( "-Wno-unused-variable" SIRE_HAS_NO_UNUSED_VARIABLE )
+CHECK_CXX_COMPILER_FLAG( "-Woverloaded-virtual" SIRE_HAS_NO_OVERLOADED_VIRTUAL )
+
+if (SIRE_HAS_NO_UNUSED_VARIABLE)
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-variable")
+endif()
+
+if (SIRE_HAS_NO_OVERLOADED_VIRTUAL)
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual")
+endif()
 
 message( STATUS  "CMAKE_SYSTEM_NAME      == ${CMAKE_SYSTEM_NAME}" )
 message( STATUS  "CMAKE_C_COMPILER       == ${CMAKE_C_COMPILER}" )

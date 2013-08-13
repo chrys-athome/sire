@@ -74,16 +74,10 @@ void register_SireQt_containers()
     register_list< QList<QString> >();
     register_list< QStringList >();
 
-    register_list< QVector<QFileInfo> >();
-    register_list< QList<QFileInfo> >();
-
     register_list< QVector<QByteArray> >();
     register_list< QList<QByteArray> >();
 
     register_list< QList<QUuid> >();
-
-    register_list< QVector<QVariant> >();
-    register_list< QList<QVariant> >();
 
     register_tuple< boost::tuple<double,double,double> >();
 

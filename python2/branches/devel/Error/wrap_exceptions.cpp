@@ -40,12 +40,12 @@ namespace SireError
 
 void out_of_range( const SireError::invalid_index &ex )
 {
-    PyErr_SetString(PyExc_StopIteration,ex.toString().toAscii());
+    PyErr_SetString(PyExc_StopIteration,ex.toString().toUtf8());
 }
 
 void exception_translator( const SireError::exception &ex )
 {
-    PyErr_SetString(PyExc_UserWarning,ex.toString().toAscii());
+    PyErr_SetString(PyExc_UserWarning,ex.toString().toUtf8());
 }
 
 void SIREERROR_EXPORT export_exceptions()

@@ -30,7 +30,6 @@ set ( WRAPQT_SOURCES
 add_library (Qt ${WRAPQT_SOURCES})
 
 target_link_libraries (Qt
-                       ${QT_QTCORE_LIBRARY}
                        SIRE_SireBase
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}

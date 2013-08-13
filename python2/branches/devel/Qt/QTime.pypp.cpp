@@ -3,18 +3,9 @@
 // (C) Christopher Woods, GPL >= 2 License
 
 #include "boost/python.hpp"
-#include <QString>
 #include <QByteArray>
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
-#include <QTextStream>
 #include <QDateTime>
-#include <QLocale>
 #include <QUuid>
-#include <qnamespace.h>
-#include <QVariant>
-#include <QUrl>
 #include <QBitArray>
 #include "QTime.pypp.hpp"
 
@@ -71,6 +62,17 @@ void register_QTime_class(){
             QTime_exposer.def( 
                 "elapsed"
                 , elapsed_function_value );
+        
+        }
+        { //::QTime::fromString
+        
+            typedef ::QTime ( *fromString_function_type )( ::QString const &,::Qt::DateFormat );
+            fromString_function_type fromString_function_value( &::QTime::fromString );
+            
+            QTime_exposer.def( 
+                "fromString"
+                , fromString_function_value
+                , ( bp::arg("s"), bp::arg("f")=::Qt::TextDate ) );
         
         }
         { //::QTime::fromString
@@ -212,6 +214,17 @@ void register_QTime_class(){
             QTime_exposer.def( 
                 "start"
                 , start_function_value );
+        
+        }
+        { //::QTime::toString
+        
+            typedef ::QString ( ::QTime::*toString_function_type )( ::Qt::DateFormat ) const;
+            toString_function_type toString_function_value( &::QTime::toString );
+            
+            QTime_exposer.def( 
+                "toString"
+                , toString_function_value
+                , ( bp::arg("f")=::Qt::TextDate ) );
         
         }
         { //::QTime::toString

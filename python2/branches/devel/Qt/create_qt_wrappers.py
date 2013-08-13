@@ -13,37 +13,16 @@ from pygccxml import declarations
 sys.path.append("../AutoGenerate")
 from create_wrappers import *
 
-wrap_classes = [ "QBool",
-                 "QByteArray",
-                 "QChar",
-                 "QDataStream",
+wrap_classes = [ "QByteArray",
                  "QDate",
                  "QDateTime",
-                 "QDir",
-                 "QFile",
-                 "QFileInfo",
-                 "QIODevice",
-                 "QLocale",
-                 "QString",
                  "QTime",
-                 "QUuid",
-                 "QVariant",
-
-                 "QFlags<QDir::SortFlag>",
-                 "QFlags<QDir::Filter>",
-                 "QFlags<QFile::Permission>",
-                 "QFlags<QIODevice::OpenModeFlag>"
-                 #"QFlags<QTextStream::NumberFlag>"
+                 "QUuid"
                ]
 
 huge_classes = []
 
-aliases = { "QFlags<QDir::SortFlag" : "SortFlags",
-            "QFlags<QDir::Filter" : "Filters",
-            "QFlags<QFile::Permission" : "Permissions",
-            "QFlags<QIODevice::OpenModeFlag" : "OpenMode",
-            "QFlags<QTextStream::NumberFlag" : "NumberFlags" 
-          }
+aliases = { }
 
 def fix_QByteArray(c):
     c.decls( "fill" ).call_policies = call_policies.return_self()
@@ -53,49 +32,12 @@ def fix_QByteArray(c):
     c.decls( "remove" ).call_policies = call_policies.return_self()
     c.decls( "replace" ).call_policies = call_policies.return_self()
     c.decls( "setNum" ).call_policies = call_policies.return_self()
+    c.decls( "setRawData" ).exclude()
+    c.decls( "data_ptr" ).exclude()
 
-def fix_QString(c):
-    c.decls( "fill" ).call_policies = call_policies.return_self()
-    c.decls( "insert" ).call_policies = call_policies.return_self()
-    c.decls( "prepend" ).call_policies = call_policies.return_self()
-    c.decls( "append" ).call_policies = call_policies.return_self()
-    c.decls( "remove" ).call_policies = call_policies.return_self()
-    c.decls( "replace" ).call_policies = call_policies.return_self()
-    c.decls( "setUnicode" ).call_policies = call_policies.return_self()
-    c.decls( "setNum" ).call_policies = call_policies.return_self()
+special_code = { "QByteArray" : fix_QByteArray }
 
-    c.add_declaration_code("PyObject* QString__str__(QString const& s);")
-    c.add_declaration_code("PyObject* convert(QString const& s);")
-
-    c.add_registration_code("def(\"__str__\", &QString__str__ )")
-    c.add_registration_code("def(\"__repr__\", &QString__str__ )")
-    c.add_registration_code("def(\"__unicode__\", &convert )")
-
-def fix_QChar(c):
-    c.add_declaration_code("PyObject* convert(QChar const& c);")
-    c.add_registration_code("def(\"__str__\", &convert )")
-    c.add_registration_code("def(\"__repr__\", &convert )")
-
-special_code = { "QByteArray" : fix_QByteArray, 
-                 "QString" : fix_QString,
-                 "QChar" : fix_QChar }
-
-aliases = { "QFlags<QDir::SortFlag>" : "SortFlags",
-            "QFlags<QDir::Filter>" : "Filters",
-            "QFlags<QFile::Permission>" : "Permissions",
-            "QFlags<QIODevice::OpenModeFlag>" : "OpenMode",
-            "QFlags<QTextStream::NumberFlag>" : "NumberFlags" 
-          }
-
-implicitly_convertible = [ ("QDir::SortFlag", "QFlags<QDir::SortFlag>"),
-                           ("QDir::Filter", "QFlags<QDir::Filter>"),
-                           ("QFile::Permission", "QFlags<QFile::Permission>"),
-                           ("QIODevice::OpenModeFlag", "QFlags<QIODevice::OpenModeFlag>"),
-                           ("QTextStream::NumberFlag", "QFlags<QTextStream::NumberFlag>"),
-                           ("QString", "QFileInfo"),
-                           ("QString", "QFile"),
-                           ("QString", "QDir")
-                         ]
+implicitly_convertible = []
 
 #give the namespace and header files for the module to export
 modulename = "Qt"
@@ -137,10 +79,7 @@ for calldef in mb.calldefs():
 mb.add_declaration_code( "#include \"sireqt_containers.h\"" )
 mb.add_registration_code( "register_SireQt_containers();", tail=False )
 
-include_files = [ "<QString>", "<QByteArray>", "<QFile>", "<QFileInfo>", 
-                  "<QDir>", "<QTextStream>", "<QDateTime>", "<QLocale>",
-                  "<QUuid>", "<qnamespace.h>", "<QVariant>", "<QUrl>",
-                  "<QBitArray>" ]
+include_files = [ "<QByteArray>", "<QDateTime>", "<QUuid>",  "<QBitArray>" ]
 
 mb.enums().include()
 

@@ -72,7 +72,7 @@ inline const char* getString<const char*>(const char *value)
 template<>
 inline const char* getString<QString>(QString value)
 {
-    return value.toAscii().constData();
+    return value.toUtf8().constData();
 }
 
 template<class T>

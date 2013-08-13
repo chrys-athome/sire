@@ -3,18 +3,9 @@
 // (C) Christopher Woods, GPL >= 2 License
 
 #include "boost/python.hpp"
-#include <QString>
 #include <QByteArray>
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
-#include <QTextStream>
 #include <QDateTime>
-#include <QLocale>
 #include <QUuid>
-#include <qnamespace.h>
-#include <QVariant>
-#include <QUrl>
 #include <QBitArray>
 #include "QByteArray.pypp.hpp"
 
@@ -28,12 +19,13 @@ void register_QByteArray_class(){
 
     { //::QByteArray
         typedef bp::class_< QByteArray > QByteArray_exposer_t;
-        QByteArray_exposer_t QByteArray_exposer = QByteArray_exposer_t( "QByteArray", bp::init< >() );
+        QByteArray_exposer_t QByteArray_exposer = QByteArray_exposer_t( "QByteArray", bp::init< char const *, bp::optional< int > >(( bp::arg("arg0"), bp::arg("size")=(int)(-0x00000000000000001) )) );
         bp::scope QByteArray_scope( QByteArray_exposer );
-        QByteArray_exposer.def( bp::init< char const * >(( bp::arg("arg0") )) );
-        QByteArray_exposer.def( bp::init< char const *, int >(( bp::arg("arg0"), bp::arg("size") )) );
         QByteArray_exposer.def( bp::init< int, char >(( bp::arg("size"), bp::arg("c") )) );
-        QByteArray_exposer.def( bp::init< QByteArray const & >(( bp::arg("arg0") )) );
+        QByteArray_exposer.def( bp::init< int, Qt::Initialization >(( bp::arg("size"), bp::arg("arg1") )) );
+        QByteArray_exposer.def( bp::init< QByteArrayDataPtr >(( bp::arg("dd") )) );
+        QByteArray_exposer.def( bp::init< >() );
+        QByteArray_exposer.def( bp::init< QByteArray const & >(( bp::arg("a") )) );
         { //::QByteArray::append
         
             typedef ::QByteArray & ( ::QByteArray::*append_function_type )( char ) ;
@@ -60,6 +52,18 @@ void register_QByteArray_class(){
         }
         { //::QByteArray::append
         
+            typedef ::QByteArray & ( ::QByteArray::*append_function_type )( char const *,int ) ;
+            append_function_type append_function_value( &::QByteArray::append );
+            
+            QByteArray_exposer.def( 
+                "append"
+                , append_function_value
+                , ( bp::arg("s"), bp::arg("len") )
+                , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::append
+        
             typedef ::QByteArray & ( ::QByteArray::*append_function_type )( ::QByteArray const & ) ;
             append_function_type append_function_value( &::QByteArray::append );
             
@@ -70,6 +74,39 @@ void register_QByteArray_class(){
                 , bp::return_self< >() );
         
         }
+        { //::QByteArray::append
+        
+            typedef ::QByteArray & ( ::QByteArray::*append_function_type )( ::QString const & ) ;
+            append_function_type append_function_value( &::QByteArray::append );
+            
+            QByteArray_exposer.def( 
+                "append"
+                , append_function_value
+                , ( bp::arg("s") )
+                , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::at
+        
+            typedef char ( ::QByteArray::*at_function_type )( int ) const;
+            at_function_type at_function_value( &::QByteArray::at );
+            
+            QByteArray_exposer.def( 
+                "at"
+                , at_function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::QByteArray::begin
+        
+            typedef char const * ( ::QByteArray::*begin_function_type )(  ) const;
+            begin_function_type begin_function_value( &::QByteArray::begin );
+            
+            QByteArray_exposer.def( 
+                "begin"
+                , begin_function_value );
+        
+        }
         { //::QByteArray::capacity
         
             typedef int ( ::QByteArray::*capacity_function_type )(  ) const;
@@ -78,6 +115,26 @@ void register_QByteArray_class(){
             QByteArray_exposer.def( 
                 "capacity"
                 , capacity_function_value );
+        
+        }
+        { //::QByteArray::cbegin
+        
+            typedef char const * ( ::QByteArray::*cbegin_function_type )(  ) const;
+            cbegin_function_type cbegin_function_value( &::QByteArray::cbegin );
+            
+            QByteArray_exposer.def( 
+                "cbegin"
+                , cbegin_function_value );
+        
+        }
+        { //::QByteArray::cend
+        
+            typedef char const * ( ::QByteArray::*cend_function_type )(  ) const;
+            cend_function_type cend_function_value( &::QByteArray::cend );
+            
+            QByteArray_exposer.def( 
+                "cend"
+                , cend_function_value );
         
         }
         { //::QByteArray::chop
@@ -101,6 +158,16 @@ void register_QByteArray_class(){
                 , clear_function_value );
         
         }
+        { //::QByteArray::constBegin
+        
+            typedef char const * ( ::QByteArray::*constBegin_function_type )(  ) const;
+            constBegin_function_type constBegin_function_value( &::QByteArray::constBegin );
+            
+            QByteArray_exposer.def( 
+                "constBegin"
+                , constBegin_function_value );
+        
+        }
         { //::QByteArray::constData
         
             typedef char const * ( ::QByteArray::*constData_function_type )(  ) const;
@@ -111,9 +178,19 @@ void register_QByteArray_class(){
                 , constData_function_value );
         
         }
+        { //::QByteArray::constEnd
+        
+            typedef char const * ( ::QByteArray::*constEnd_function_type )(  ) const;
+            constEnd_function_type constEnd_function_value( &::QByteArray::constEnd );
+            
+            QByteArray_exposer.def( 
+                "constEnd"
+                , constEnd_function_value );
+        
+        }
         { //::QByteArray::contains
         
-            typedef ::QBool ( ::QByteArray::*contains_function_type )( char ) const;
+            typedef bool ( ::QByteArray::*contains_function_type )( char ) const;
             contains_function_type contains_function_value( &::QByteArray::contains );
             
             QByteArray_exposer.def( 
@@ -124,18 +201,18 @@ void register_QByteArray_class(){
         }
         { //::QByteArray::contains
         
-            typedef ::QBool ( ::QByteArray::*contains_function_type )( char const * ) const;
+            typedef bool ( ::QByteArray::*contains_function_type )( char const * ) const;
             contains_function_type contains_function_value( &::QByteArray::contains );
             
             QByteArray_exposer.def( 
                 "contains"
                 , contains_function_value
-                , ( bp::arg("a") ) );
+                , ( bp::arg("c") ) );
         
         }
         { //::QByteArray::contains
         
-            typedef ::QBool ( ::QByteArray::*contains_function_type )( ::QByteArray const & ) const;
+            typedef bool ( ::QByteArray::*contains_function_type )( ::QByteArray const & ) const;
             contains_function_type contains_function_value( &::QByteArray::contains );
             
             QByteArray_exposer.def( 
@@ -207,6 +284,16 @@ void register_QByteArray_class(){
                 , detach_function_value );
         
         }
+        { //::QByteArray::end
+        
+            typedef char const * ( ::QByteArray::*end_function_type )(  ) const;
+            end_function_type end_function_value( &::QByteArray::end );
+            
+            QByteArray_exposer.def( 
+                "end"
+                , end_function_value );
+        
+        }
         { //::QByteArray::endsWith
         
             typedef bool ( ::QByteArray::*endsWith_function_type )( ::QByteArray const & ) const;
@@ -263,6 +350,28 @@ void register_QByteArray_class(){
                 , ( bp::arg("base64") ) );
         
         }
+        { //::QByteArray::fromHex
+        
+            typedef ::QByteArray ( *fromHex_function_type )( ::QByteArray const & );
+            fromHex_function_type fromHex_function_value( &::QByteArray::fromHex );
+            
+            QByteArray_exposer.def( 
+                "fromHex"
+                , fromHex_function_value
+                , ( bp::arg("hexEncoded") ) );
+        
+        }
+        { //::QByteArray::fromPercentEncoding
+        
+            typedef ::QByteArray ( *fromPercentEncoding_function_type )( ::QByteArray const &,char );
+            fromPercentEncoding_function_type fromPercentEncoding_function_value( &::QByteArray::fromPercentEncoding );
+            
+            QByteArray_exposer.def( 
+                "fromPercentEncoding"
+                , fromPercentEncoding_function_value
+                , ( bp::arg("pctEncoded"), bp::arg("percent")=(char)('%') ) );
+        
+        }
         { //::QByteArray::fromRawData
         
             typedef ::QByteArray ( *fromRawData_function_type )( char const *,int );
@@ -307,6 +416,17 @@ void register_QByteArray_class(){
                 , ( bp::arg("a"), bp::arg("from")=(int)(0) ) );
         
         }
+        { //::QByteArray::indexOf
+        
+            typedef int ( ::QByteArray::*indexOf_function_type )( ::QString const &,int ) const;
+            indexOf_function_type indexOf_function_value( &::QByteArray::indexOf );
+            
+            QByteArray_exposer.def( 
+                "indexOf"
+                , indexOf_function_value
+                , ( bp::arg("s"), bp::arg("from")=(int)(0) ) );
+        
+        }
         { //::QByteArray::insert
         
             typedef ::QByteArray & ( ::QByteArray::*insert_function_type )( int,char ) ;
@@ -333,6 +453,18 @@ void register_QByteArray_class(){
         }
         { //::QByteArray::insert
         
+            typedef ::QByteArray & ( ::QByteArray::*insert_function_type )( int,char const *,int ) ;
+            insert_function_type insert_function_value( &::QByteArray::insert );
+            
+            QByteArray_exposer.def( 
+                "insert"
+                , insert_function_value
+                , ( bp::arg("i"), bp::arg("s"), bp::arg("len") )
+                , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::insert
+        
             typedef ::QByteArray & ( ::QByteArray::*insert_function_type )( int,::QByteArray const & ) ;
             insert_function_type insert_function_value( &::QByteArray::insert );
             
@@ -340,6 +472,18 @@ void register_QByteArray_class(){
                 "insert"
                 , insert_function_value
                 , ( bp::arg("i"), bp::arg("a") )
+                , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::insert
+        
+            typedef ::QByteArray & ( ::QByteArray::*insert_function_type )( int,::QString const & ) ;
+            insert_function_type insert_function_value( &::QByteArray::insert );
+            
+            QByteArray_exposer.def( 
+                "insert"
+                , insert_function_value
+                , ( bp::arg("i"), bp::arg("s") )
                 , bp::return_self< >() );
         
         }
@@ -373,6 +517,17 @@ void register_QByteArray_class(){
                 , isNull_function_value );
         
         }
+        { //::QByteArray::isSharedWith
+        
+            typedef bool ( ::QByteArray::*isSharedWith_function_type )( ::QByteArray const & ) const;
+            isSharedWith_function_type isSharedWith_function_value( &::QByteArray::isSharedWith );
+            
+            QByteArray_exposer.def( 
+                "isSharedWith"
+                , isSharedWith_function_value
+                , ( bp::arg("other") ) );
+        
+        }
         { //::QByteArray::lastIndexOf
         
             typedef int ( ::QByteArray::*lastIndexOf_function_type )( char,int ) const;
@@ -404,6 +559,17 @@ void register_QByteArray_class(){
                 "lastIndexOf"
                 , lastIndexOf_function_value
                 , ( bp::arg("a"), bp::arg("from")=(int)(-0x00000000000000001) ) );
+        
+        }
+        { //::QByteArray::lastIndexOf
+        
+            typedef int ( ::QByteArray::*lastIndexOf_function_type )( ::QString const &,int ) const;
+            lastIndexOf_function_type lastIndexOf_function_value( &::QByteArray::lastIndexOf );
+            
+            QByteArray_exposer.def( 
+                "lastIndexOf"
+                , lastIndexOf_function_value
+                , ( bp::arg("s"), bp::arg("from")=(int)(-0x00000000000000001) ) );
         
         }
         { //::QByteArray::left
@@ -473,6 +639,28 @@ void register_QByteArray_class(){
         }
         { //::QByteArray::number
         
+            typedef ::QByteArray ( *number_function_type )( ::qlonglong,int );
+            number_function_type number_function_value( &::QByteArray::number );
+            
+            QByteArray_exposer.def( 
+                "number"
+                , number_function_value
+                , ( bp::arg("arg0"), bp::arg("base")=(int)(10) ) );
+        
+        }
+        { //::QByteArray::number
+        
+            typedef ::QByteArray ( *number_function_type )( ::qulonglong,int );
+            number_function_type number_function_value( &::QByteArray::number );
+            
+            QByteArray_exposer.def( 
+                "number"
+                , number_function_value
+                , ( bp::arg("arg0"), bp::arg("base")=(int)(10) ) );
+        
+        }
+        { //::QByteArray::number
+        
             typedef ::QByteArray ( *number_function_type )( double,char,int );
             number_function_type number_function_value( &::QByteArray::number );
             
@@ -482,6 +670,9 @@ void register_QByteArray_class(){
                 , ( bp::arg("arg0"), bp::arg("f")=(char)('g'), bp::arg("prec")=(int)(6) ) );
         
         }
+        QByteArray_exposer.def( bp::self != bp::other< QString >() );
+        QByteArray_exposer.def( bp::self < bp::other< QString >() );
+        QByteArray_exposer.def( bp::self <= bp::other< QString >() );
         { //::QByteArray::operator=
         
             typedef ::QByteArray & ( ::QByteArray::*assign_function_type )( ::QByteArray const & ) ;
@@ -490,8 +681,67 @@ void register_QByteArray_class(){
             QByteArray_exposer.def( 
                 "assign"
                 , assign_function_value
-                , ( bp::arg("other") )
+                , ( bp::arg("arg0") )
                 , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::operator=
+        
+            typedef ::QByteArray & ( ::QByteArray::*assign_function_type )( char const * ) ;
+            assign_function_type assign_function_value( &::QByteArray::operator= );
+            
+            QByteArray_exposer.def( 
+                "assign"
+                , assign_function_value
+                , ( bp::arg("str") )
+                , bp::return_self< >() );
+        
+        }
+        QByteArray_exposer.def( bp::self == bp::other< QString >() );
+        QByteArray_exposer.def( bp::self > bp::other< QString >() );
+        QByteArray_exposer.def( bp::self >= bp::other< QString >() );
+        { //::QByteArray::operator[]
+        
+            typedef char ( ::QByteArray::*__getitem___function_type )( int ) const;
+            __getitem___function_type __getitem___function_value( &::QByteArray::operator[] );
+            
+            QByteArray_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::QByteArray::operator[]
+        
+            typedef char ( ::QByteArray::*__getitem___function_type )( ::uint ) const;
+            __getitem___function_type __getitem___function_value( &::QByteArray::operator[] );
+            
+            QByteArray_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::QByteArray::operator[]
+        
+            typedef ::QByteRef ( ::QByteArray::*__getitem___function_type )( int ) ;
+            __getitem___function_type __getitem___function_value( &::QByteArray::operator[] );
+            
+            QByteArray_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("i") ) );
+        
+        }
+        { //::QByteArray::operator[]
+        
+            typedef ::QByteRef ( ::QByteArray::*__getitem___function_type )( ::uint ) ;
+            __getitem___function_type __getitem___function_value( &::QByteArray::operator[] );
+            
+            QByteArray_exposer.def( 
+                "__getitem__"
+                , __getitem___function_value
+                , ( bp::arg("i") ) );
         
         }
         { //::QByteArray::prepend
@@ -515,6 +765,18 @@ void register_QByteArray_class(){
                 "prepend"
                 , prepend_function_value
                 , ( bp::arg("s") )
+                , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::prepend
+        
+            typedef ::QByteArray & ( ::QByteArray::*prepend_function_type )( char const *,int ) ;
+            prepend_function_type prepend_function_value( &::QByteArray::prepend );
+            
+            QByteArray_exposer.def( 
+                "prepend"
+                , prepend_function_value
+                , ( bp::arg("s"), bp::arg("len") )
                 , bp::return_self< >() );
         
         }
@@ -608,6 +870,17 @@ void register_QByteArray_class(){
                 , bp::return_self< >() );
         
         }
+        { //::QByteArray::repeated
+        
+            typedef ::QByteArray ( ::QByteArray::*repeated_function_type )( int ) const;
+            repeated_function_type repeated_function_value( &::QByteArray::repeated );
+            
+            QByteArray_exposer.def( 
+                "repeated"
+                , repeated_function_value
+                , ( bp::arg("times") ) );
+        
+        }
         { //::QByteArray::replace
         
             typedef ::QByteArray & ( ::QByteArray::*replace_function_type )( int,int,char const * ) ;
@@ -617,6 +890,18 @@ void register_QByteArray_class(){
                 "replace"
                 , replace_function_value
                 , ( bp::arg("index"), bp::arg("len"), bp::arg("s") )
+                , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::replace
+        
+            typedef ::QByteArray & ( ::QByteArray::*replace_function_type )( int,int,char const *,int ) ;
+            replace_function_type replace_function_value( &::QByteArray::replace );
+            
+            QByteArray_exposer.def( 
+                "replace"
+                , replace_function_value
+                , ( bp::arg("index"), bp::arg("len"), bp::arg("s"), bp::arg("alen") )
                 , bp::return_self< >() );
         
         }
@@ -640,7 +925,7 @@ void register_QByteArray_class(){
             QByteArray_exposer.def( 
                 "replace"
                 , replace_function_value
-                , ( bp::arg("before"), bp::arg("after") )
+                , ( bp::arg("before"), bp::arg("c") )
                 , bp::return_self< >() );
         
         }
@@ -670,6 +955,18 @@ void register_QByteArray_class(){
         }
         { //::QByteArray::replace
         
+            typedef ::QByteArray & ( ::QByteArray::*replace_function_type )( char const *,int,char const *,int ) ;
+            replace_function_type replace_function_value( &::QByteArray::replace );
+            
+            QByteArray_exposer.def( 
+                "replace"
+                , replace_function_value
+                , ( bp::arg("before"), bp::arg("bsize"), bp::arg("after"), bp::arg("asize") )
+                , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::replace
+        
             typedef ::QByteArray & ( ::QByteArray::*replace_function_type )( ::QByteArray const &,::QByteArray const & ) ;
             replace_function_type replace_function_value( &::QByteArray::replace );
             
@@ -688,7 +985,7 @@ void register_QByteArray_class(){
             QByteArray_exposer.def( 
                 "replace"
                 , replace_function_value
-                , ( bp::arg("before"), bp::arg("after") )
+                , ( bp::arg("before"), bp::arg("c") )
                 , bp::return_self< >() );
         
         }
@@ -716,6 +1013,42 @@ void register_QByteArray_class(){
                 , bp::return_self< >() );
         
         }
+        { //::QByteArray::replace
+        
+            typedef ::QByteArray & ( ::QByteArray::*replace_function_type )( ::QString const &,char const * ) ;
+            replace_function_type replace_function_value( &::QByteArray::replace );
+            
+            QByteArray_exposer.def( 
+                "replace"
+                , replace_function_value
+                , ( bp::arg("before"), bp::arg("after") )
+                , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::replace
+        
+            typedef ::QByteArray & ( ::QByteArray::*replace_function_type )( char,::QString const & ) ;
+            replace_function_type replace_function_value( &::QByteArray::replace );
+            
+            QByteArray_exposer.def( 
+                "replace"
+                , replace_function_value
+                , ( bp::arg("c"), bp::arg("after") )
+                , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::replace
+        
+            typedef ::QByteArray & ( ::QByteArray::*replace_function_type )( ::QString const &,::QByteArray const & ) ;
+            replace_function_type replace_function_value( &::QByteArray::replace );
+            
+            QByteArray_exposer.def( 
+                "replace"
+                , replace_function_value
+                , ( bp::arg("before"), bp::arg("after") )
+                , bp::return_self< >() );
+        
+        }
         { //::QByteArray::reserve
         
             typedef void ( ::QByteArray::*reserve_function_type )( int ) ;
@@ -724,7 +1057,7 @@ void register_QByteArray_class(){
             QByteArray_exposer.def( 
                 "reserve"
                 , reserve_function_value
-                , ( bp::arg("size") ) );
+                , ( bp::arg("asize") ) );
         
         }
         { //::QByteArray::resize
@@ -768,7 +1101,7 @@ void register_QByteArray_class(){
             QByteArray_exposer.def( 
                 "setNum"
                 , setNum_function_value
-                , ( bp::arg("arg0"), bp::arg("base")=(int)(10) )
+                , ( bp::arg("n"), bp::arg("base")=(int)(10) )
                 , bp::return_self< >() );
         
         }
@@ -780,7 +1113,7 @@ void register_QByteArray_class(){
             QByteArray_exposer.def( 
                 "setNum"
                 , setNum_function_value
-                , ( bp::arg("arg0"), bp::arg("base")=(int)(10) )
+                , ( bp::arg("n"), bp::arg("base")=(int)(10) )
                 , bp::return_self< >() );
         
         }
@@ -792,13 +1125,37 @@ void register_QByteArray_class(){
             QByteArray_exposer.def( 
                 "setNum"
                 , setNum_function_value
-                , ( bp::arg("arg0"), bp::arg("base")=(int)(10) )
+                , ( bp::arg("n"), bp::arg("base")=(int)(10) )
                 , bp::return_self< >() );
         
         }
         { //::QByteArray::setNum
         
             typedef ::QByteArray & ( ::QByteArray::*setNum_function_type )( ::uint,int ) ;
+            setNum_function_type setNum_function_value( &::QByteArray::setNum );
+            
+            QByteArray_exposer.def( 
+                "setNum"
+                , setNum_function_value
+                , ( bp::arg("n"), bp::arg("base")=(int)(10) )
+                , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::setNum
+        
+            typedef ::QByteArray & ( ::QByteArray::*setNum_function_type )( ::qlonglong,int ) ;
+            setNum_function_type setNum_function_value( &::QByteArray::setNum );
+            
+            QByteArray_exposer.def( 
+                "setNum"
+                , setNum_function_value
+                , ( bp::arg("arg0"), bp::arg("base")=(int)(10) )
+                , bp::return_self< >() );
+        
+        }
+        { //::QByteArray::setNum
+        
+            typedef ::QByteArray & ( ::QByteArray::*setNum_function_type )( ::qulonglong,int ) ;
             setNum_function_type setNum_function_value( &::QByteArray::setNum );
             
             QByteArray_exposer.def( 
@@ -816,7 +1173,7 @@ void register_QByteArray_class(){
             QByteArray_exposer.def( 
                 "setNum"
                 , setNum_function_value
-                , ( bp::arg("arg0"), bp::arg("f")=(char)('g'), bp::arg("prec")=(int)(6) )
+                , ( bp::arg("n"), bp::arg("f")=(char)('g'), bp::arg("prec")=(int)(6) )
                 , bp::return_self< >() );
         
         }
@@ -906,6 +1263,92 @@ void register_QByteArray_class(){
                 , ( bp::arg("c") ) );
         
         }
+        { //::QByteArray::swap
+        
+            typedef void ( ::QByteArray::*swap_function_type )( ::QByteArray & ) ;
+            swap_function_type swap_function_value( &::QByteArray::swap );
+            
+            QByteArray_exposer.def( 
+                "swap"
+                , swap_function_value
+                , ( bp::arg("other") ) );
+        
+        }
+        { //::QByteArray::toBase64
+        
+            typedef ::QByteArray ( ::QByteArray::*toBase64_function_type )(  ) const;
+            toBase64_function_type toBase64_function_value( &::QByteArray::toBase64 );
+            
+            QByteArray_exposer.def( 
+                "toBase64"
+                , toBase64_function_value );
+        
+        }
+        { //::QByteArray::toDouble
+        
+            typedef double ( ::QByteArray::*toDouble_function_type )( bool * ) const;
+            toDouble_function_type toDouble_function_value( &::QByteArray::toDouble );
+            
+            QByteArray_exposer.def( 
+                "toDouble"
+                , toDouble_function_value
+                , ( bp::arg("ok")=bp::object() ) );
+        
+        }
+        { //::QByteArray::toFloat
+        
+            typedef float ( ::QByteArray::*toFloat_function_type )( bool * ) const;
+            toFloat_function_type toFloat_function_value( &::QByteArray::toFloat );
+            
+            QByteArray_exposer.def( 
+                "toFloat"
+                , toFloat_function_value
+                , ( bp::arg("ok")=bp::object() ) );
+        
+        }
+        { //::QByteArray::toHex
+        
+            typedef ::QByteArray ( ::QByteArray::*toHex_function_type )(  ) const;
+            toHex_function_type toHex_function_value( &::QByteArray::toHex );
+            
+            QByteArray_exposer.def( 
+                "toHex"
+                , toHex_function_value );
+        
+        }
+        { //::QByteArray::toInt
+        
+            typedef int ( ::QByteArray::*toInt_function_type )( bool *,int ) const;
+            toInt_function_type toInt_function_value( &::QByteArray::toInt );
+            
+            QByteArray_exposer.def( 
+                "toInt"
+                , toInt_function_value
+                , ( bp::arg("ok")=bp::object(), bp::arg("base")=(int)(10) ) );
+        
+        }
+        { //::QByteArray::toLong
+        
+            typedef long int ( ::QByteArray::*toLong_function_type )( bool *,int ) const;
+            toLong_function_type toLong_function_value( &::QByteArray::toLong );
+            
+            QByteArray_exposer.def( 
+                "toLong"
+                , toLong_function_value
+                , ( bp::arg("ok")=bp::object(), bp::arg("base")=(int)(10) ) );
+        
+        }
+        { //::QByteArray::toLongLong
+        
+            typedef ::qlonglong ( ::QByteArray::*toLongLong_function_type )( bool *,int ) const;
+            toLongLong_function_type toLongLong_function_value( &::QByteArray::toLongLong );
+            
+            QByteArray_exposer.def( 
+                "toLongLong"
+                , toLongLong_function_value
+                , ( bp::arg("ok")=bp::object(), bp::arg("base")=(int)(10) ) );
+        
+        }
         { //::QByteArray::toLower
         
             typedef ::QByteArray ( ::QByteArray::*toLower_function_type )(  ) const;
@@ -914,6 +1357,72 @@ void register_QByteArray_class(){
             QByteArray_exposer.def( 
                 "toLower"
                 , toLower_function_value );
+        
+        }
+        { //::QByteArray::toPercentEncoding
+        
+            typedef ::QByteArray ( ::QByteArray::*toPercentEncoding_function_type )( ::QByteArray const &,::QByteArray const &,char ) const;
+            toPercentEncoding_function_type toPercentEncoding_function_value( &::QByteArray::toPercentEncoding );
+            
+            QByteArray_exposer.def( 
+                "toPercentEncoding"
+                , toPercentEncoding_function_value
+                , ( bp::arg("exclude")=::QByteArray( ), bp::arg("include")=::QByteArray( ), bp::arg("percent")=(char)('%') ) );
+        
+        }
+        { //::QByteArray::toShort
+        
+            typedef short int ( ::QByteArray::*toShort_function_type )( bool *,int ) const;
+            toShort_function_type toShort_function_value( &::QByteArray::toShort );
+            
+            QByteArray_exposer.def( 
+                "toShort"
+                , toShort_function_value
+                , ( bp::arg("ok")=bp::object(), bp::arg("base")=(int)(10) ) );
+        
+        }
+        { //::QByteArray::toUInt
+        
+            typedef ::uint ( ::QByteArray::*toUInt_function_type )( bool *,int ) const;
+            toUInt_function_type toUInt_function_value( &::QByteArray::toUInt );
+            
+            QByteArray_exposer.def( 
+                "toUInt"
+                , toUInt_function_value
+                , ( bp::arg("ok")=bp::object(), bp::arg("base")=(int)(10) ) );
+        
+        }
+        { //::QByteArray::toULong
+        
+            typedef ::ulong ( ::QByteArray::*toULong_function_type )( bool *,int ) const;
+            toULong_function_type toULong_function_value( &::QByteArray::toULong );
+            
+            QByteArray_exposer.def( 
+                "toULong"
+                , toULong_function_value
+                , ( bp::arg("ok")=bp::object(), bp::arg("base")=(int)(10) ) );
+        
+        }
+        { //::QByteArray::toULongLong
+        
+            typedef ::qulonglong ( ::QByteArray::*toULongLong_function_type )( bool *,int ) const;
+            toULongLong_function_type toULongLong_function_value( &::QByteArray::toULongLong );
+            
+            QByteArray_exposer.def( 
+                "toULongLong"
+                , toULongLong_function_value
+                , ( bp::arg("ok")=bp::object(), bp::arg("base")=(int)(10) ) );
+        
+        }
+        { //::QByteArray::toUShort
+        
+            typedef ::ushort ( ::QByteArray::*toUShort_function_type )( bool *,int ) const;
+            toUShort_function_type toUShort_function_value( &::QByteArray::toUShort );
+            
+            QByteArray_exposer.def( 
+                "toUShort"
+                , toUShort_function_value
+                , ( bp::arg("ok")=bp::object(), bp::arg("base")=(int)(10) ) );
         
         }
         { //::QByteArray::toUpper
@@ -948,6 +1457,8 @@ void register_QByteArray_class(){
         
         }
         QByteArray_exposer.staticmethod( "fromBase64" );
+        QByteArray_exposer.staticmethod( "fromHex" );
+        QByteArray_exposer.staticmethod( "fromPercentEncoding" );
         QByteArray_exposer.staticmethod( "fromRawData" );
         QByteArray_exposer.staticmethod( "number" );
         QByteArray_exposer.def( "__copy__", &__copy__);
