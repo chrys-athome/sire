@@ -102,16 +102,6 @@
        Please recompile Qt with QTextStream enabled.
 #endif
 
-//sire requires that at least the QtCore and QtSql modules
-//are available
-#if  !(QT_EDITION & QT_MODULE_CORE)
-#error Sire requires that the QtCore module is enabled.
-#endif
-
-#if !(QT_EDITION & QT_MODULE_SQL)
-#error Sire requires that the QtSql module is enabled.
-#endif
-
 /** These functions convert a pointer into an integer.
 
     toInt(void*) : Returns an integer from the pointer. Returns

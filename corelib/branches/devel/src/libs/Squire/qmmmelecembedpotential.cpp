@@ -52,7 +52,10 @@ using namespace SireUnits::Dimension;
 using namespace SireMM::detail;
 using namespace SireStream;
 
-template class QMMMPotential<QMPotential,InterCoulombPotential>;
+namespace Squire
+{
+    template class QMMMPotential<QMPotential,InterCoulombPotential>;
+}
 
 static const RegisterMetaType<QMMMElecEmbedPotential> r_qmmm( MAGIC_ONLY,
                                                 "Squire::QMMMElecEmbedPotential" );

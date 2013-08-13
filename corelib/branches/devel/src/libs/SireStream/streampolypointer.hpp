@@ -122,7 +122,7 @@ void loadPolyPointer(QDataStream &ds, boost::shared_ptr<T> &ptr)
                   "with QMetaType.").arg(type_name), CODELOC );
 
         //create a default-constructed object of this type
-        ptr.reset( static_cast<T*>(QMetaType::construct(id,0)) );
+        ptr.reset( static_cast<T*>(QMetaType::create(id,0)) );
 
         if (ptr.get() == 0)
             throw SireError::program_bug( QObject::tr(

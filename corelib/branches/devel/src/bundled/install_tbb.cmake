@@ -24,23 +24,29 @@ if (EXISTS "${TBB_ZIPFILE}")
     )
   endif()
 
+  if ( SIRE_HAS_CPP_LIB )
+    set( TBB_OPTIONS "${TBB_OPTIONS};stdlib=libc++" )
+  endif()
+
   if ( ${SIRE_COMPILER} MATCHES "ICPC" )
     if (WINDOWS)
-      set( TBB_COMPILER "icl" )
+      set( TBB_OPTIONS "${TBB_OPTIONS};compiler=icl" )
     else()
-      set( TBB_COMPILER "icc" )
+      set( TBB_OPTIONS "${TBB_OPTIONS};compiler=icc" )
     endif()
   elseif ( ${SIRE_COMPILER} MATCHES "GCC" )
-    set( TBB_COMPILER "gcc" )
+    set( TBB_OPTIONS "${TBB_OPTIONS};compiler=gcc" )
   elseif ( ${SIRE_COMPILER} MATCHES "CLANG" )
-    set( TBB_COMPILER "clang" )
+    set( TBB_OPTIONS "${TBB_OPTIONS};compiler=clang" )
   else()
     message( FATAL_ERROR "Cannot compile TBB as need either the Intel, GCC or CLANG compilers." )
   endif()
 
-  execute_process( COMMAND make compiler=${TBB_COMPILER} info
+  execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} ${TBB_OPTIONS} info
                    WORKING_DIRECTORY ${TBB_BUILD_DIR}
                    OUTPUT_VARIABLE TBB_INFO )
+
+  message(STATUS "EXECUTE INFO_COMMAND GET ${TBB_INFO}")
 
   string(REGEX MATCH "tbb_build_prefix=(.+)" TBB_BUILD_PREFIX ${TBB_INFO})
 
@@ -53,13 +59,13 @@ if (EXISTS "${TBB_ZIPFILE}")
   message( STATUS "TBB will be built in the directory ${TBB_INSTALL_DIR}" )
 
   message( STATUS "Patience... Compiling TBB from source...")
-  execute_process( COMMAND make compiler=${TBB_COMPILER} tbb
+  execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} ${TBB_OPTIONS} tbb
                    WORKING_DIRECTORY ${TBB_BUILD_DIR}
                  )
   message( STATUS "...complete" )
 
   message( STATUS "Patience... Compiling TBB malloc from source...")
-  execute_process( COMMAND make compiler=${TBB_COMPILER} tbbmalloc
+  execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} ${TBB_OPTIONS} tbbmalloc
                    WORKING_DIRECTORY ${TBB_BUILD_DIR}
                   )
   message( STATUS "...complete" )

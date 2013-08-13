@@ -628,7 +628,12 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
     //The CGArrayArrayData object is at the beginning of this storage array
     CGArrayArrayData *cgarrayarray = (CGArrayArrayData*) storage;
     
-    if (cgarrayarray->ref != 1)
+    if (cgarrayarray->ref.testAndSetRelaxed(1,1))
+    {
+        //only one reference, so no need to clone
+        return this_ptr;
+    }
+    else
     {
         //there is more than one reference to this data - it will have to 
         //be cloned - get the size of memory to be cloned
@@ -700,11 +705,6 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
 
         //return a pointer to the clone
         return new_storage + this_idx;
-    }
-    else
-    {
-        //only one reference, so no need to clone
-        return this_ptr;
     }
 }
 

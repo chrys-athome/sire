@@ -62,12 +62,6 @@ set ( SIREMOVE_HEADERS
       zmatrix.h
     )
 
-set ( SIREMOVE_DEPRECATED_HEADERS
-
-      deprecated/replicas.h
-      deprecated/repexreplicas.h
-    )
-
 # Define the sources in SireMove
 set ( SIREMOVE_SOURCES
 
@@ -123,11 +117,7 @@ set ( SIREMOVE_SOURCES
       zmatmove.cpp
       zmatrix.cpp   
 
-      deprecated/replicas.cpp
-      deprecated/repexreplicas.cpp
-
       ${SIREMOVE_HEADERS}
-      ${SIREMOVE_DEPRECATED_HEADERS}
     )
 
 add_library (SireMove ${SIREMOVE_SOURCES})

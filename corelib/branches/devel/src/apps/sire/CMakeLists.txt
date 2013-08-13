@@ -26,7 +26,7 @@ set ( SIRE_RCCS
       sire.qrc
     )
 
-QT4_ADD_RESOURCES( SIRE_RCC_SRCS ${SIRE_RCCS} )
+qt5_add_resources( SIRE_RCC_SRCS ${SIRE_RCCS} )
 
 set ( SIRE_SOURCES
 
@@ -64,7 +64,6 @@ install( TARGETS sire
 if (APPLE)
   add_custom_command(TARGET sire
       POST_BUILD
-      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../lib" sire
-      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../Sire/bundled" sire)
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_LIBS}" sire
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_BUNDLED_LIBS}" sire)
 endif()
-

@@ -29,6 +29,9 @@
 #ifndef SIREUNITS_DIMENSIONS_H
 #define SIREUNITS_DIMENSIONS_H
 
+#include <QString>
+#include <QDataStream>
+
 #include "SireMaths/constants.h"
 
 #include <boost/static_assert.hpp>

@@ -158,15 +158,15 @@ Matrix::Matrix(const NMatrix &m)
 /** Copy constructor */
 Matrix::Matrix(const Matrix &m)
 {
-    qMemCopy(this->data(), m.constData(), 9*sizeof(double));
+    memcpy(this->data(), m.constData(), 9*sizeof(double));
 }
 
 /** Construct a matrix from three vectors - each vector is a row */
 Matrix::Matrix(const Vector &r1, const Vector &r2, const Vector &r3)
 {
-    qMemCopy(this->data(), r1.constData(), 3*sizeof(double));
-    qMemCopy(this->data()+3, r2.constData(), 3*sizeof(double));
-    qMemCopy(this->data()+6, r3.constData(), 3*sizeof(double));
+    memcpy(this->data(), r1.constData(), 3*sizeof(double));
+    memcpy(this->data()+3, r2.constData(), 3*sizeof(double));
+    memcpy(this->data()+6, r3.constData(), 3*sizeof(double));
 }
 
 /** Construct a matrix from a tuple of three vectors - each
@@ -177,9 +177,9 @@ Matrix::Matrix(const tuple<Vector,Vector,Vector> &rows)
     const Vector &r2 = rows.get<1>();
     const Vector &r3 = rows.get<2>();
     
-    qMemCopy(this->data(), r1.constData(), 3*sizeof(double));
-    qMemCopy(this->data()+3, r2.constData(), 3*sizeof(double));
-    qMemCopy(this->data()+6, r3.constData(), 3*sizeof(double));
+    memcpy(this->data(), r1.constData(), 3*sizeof(double));
+    memcpy(this->data()+3, r2.constData(), 3*sizeof(double));
+    memcpy(this->data()+6, r3.constData(), 3*sizeof(double));
 }
 
 /** Destructor */
@@ -329,7 +329,7 @@ Matrix& Matrix::operator=(const Matrix &other)
 {
     if (this != &other)
     {
-        qMemCopy(array, other.array, 9*sizeof(double));
+        memcpy(array, other.array, 9*sizeof(double));
     }
     
     return *this;
@@ -554,7 +554,7 @@ Matrix Matrix::getPrincipalAxes() const
     //now use the GNU Scientific Library to solve the eigenvalue
     //problem for this matrix
     double new_array[9];
-    qMemCopy(new_array, array, 9*sizeof(double));
+    memcpy(new_array, array, 9*sizeof(double));
 
     gsl_matrix_view m = gsl_matrix_view_array(new_array,3,3);
 

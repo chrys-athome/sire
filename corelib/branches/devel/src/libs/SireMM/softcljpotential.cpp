@@ -82,14 +82,20 @@ using namespace SireStream;
 /////// Completely instantiate the SoftCLJPotential ancillary classes
 ///////
 
-template
-class FFMolecule3D<InterSoftCLJPotential>;
+namespace SireFF
+{
+    namespace detail
+    {
+        template
+        class FFMolecule3D<InterSoftCLJPotential>;
 
-template
-class FFMolecules3D<InterSoftCLJPotential>;
+        template
+        class FFMolecules3D<InterSoftCLJPotential>;
 
-template
-class ChangedMolecule<InterSoftCLJPotential::Molecule>;
+        template
+        class ChangedMolecule<InterSoftCLJPotential::Molecule>;
+    }
+}
 
 /////////////
 ///////////// Implementation of SoftCLJPotential

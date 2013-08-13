@@ -123,7 +123,7 @@ void GlobalSharedPointerBase::unregisterObject(const T *obj_ptr)
     {
         //we can only remove this from the registry if this is a unique
         //pointer
-        if (obj_ptr->ref == 1)
+        if (obj_ptr->ref.testAndSetRelaxed(1,1))
             registry.remove(obj_ptr);
     }
 }

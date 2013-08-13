@@ -54,10 +54,13 @@ using namespace SireStream;
 
 namespace SireFF
 {
-    template class AtomicParameters3D<Element>;
-    template class FFMolecule3D<QMPotential>;
-    template class FFMolecules3D<QMPotential>;
-    template class ChangedMolecule<QMPotential::Molecule>;
+    namespace detail
+    {
+        template class AtomicParameters3D<Element>;
+        template class FFMolecule3D<QMPotential>;
+        template class FFMolecules3D<QMPotential>;
+        template class ChangedMolecule<QMPotential::Molecule>;
+    }
 }
 
 /////////

@@ -148,7 +148,7 @@ exception* exception::clone() const
             "registered with QMetaType. It cannot be cloned! (%2, %3)")
                 .arg(this->what()).arg(id).arg(QMetaType::isRegistered(id)), CODELOC);
 
-    return static_cast<exception*>( QMetaType::construct(id,this) );
+    return static_cast<exception*>( QMetaType::create(id,this) );
 }
 
 /** Pack this exception into a binary QByteArray - this packs the exception
@@ -207,7 +207,7 @@ boost::shared_ptr<SireError::exception> exception::unpack(const QByteArray &data
     
     //construct an exception of this type
     boost::shared_ptr<exception> ptr(  
-                        static_cast<exception*>(QMetaType::construct(id,0)) );
+                        static_cast<exception*>(QMetaType::create(id,0)) );
                         
     //load the object from the datastream
     if ( not QMetaType::load(ds, id, ptr.get()) )

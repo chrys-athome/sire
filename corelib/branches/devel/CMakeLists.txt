@@ -10,8 +10,8 @@
 ############ SETTING INITIAL SIRE VARIABLES
 ############
 
-# require cmake >= 2.8.0
-cmake_minimum_required(VERSION 2.8.0 FATAL_ERROR)
+# require cmake >= 2.8.11
+cmake_minimum_required(VERSION 2.8.11 FATAL_ERROR)
 cmake_policy(VERSION 2.8)
 
 # use loose loop syntax in CMakeLists files
@@ -134,7 +134,7 @@ save_sire_variable( "SIRE_INSTALL_RPATH" "${SIRE_INSTALL_RPATH}" )
 # set (CMAKE_VERBOSE_MAKEFILE ON)
 
 # Path to the project's extra cmake files
-set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
+set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake ${CMAKE_SOURCE_DIR}/build/cmake/cmake_cxx11)
 
 # Options to pass to 'strip' when stripping the libraries
 # (on linux, aix and mac need to use '-x' to ensure we leave
@@ -226,10 +226,39 @@ set( SIRE_EXE_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link executables" )
 
 include (CheckCXXCompilerFlag)
 
+CHECK_CXX_COMPILER_FLAG( "-stdlib=libc++" SIRE_HAS_CPP_LIB )
+CHECK_CXX_COMPILER_FLAG( "-std=c++11" SIRE_HAS_CPP_11 )
+
+save_sire_variable( "SIRE_HAS_CPP_LIB" "${SIRE_HAS_CPP_LIB}" )
+save_sire_variable( "SIRE_HAS_CPP_11" "${SIRE_HAS_CPP_11}" )
+
+if (SIRE_HAS_CPP_LIB)
+  message(STATUS "Using libc++ in place of libstdc++")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
+
+if (SIRE_HAS_CPP_11)
+  message(STATUS "Compiler supports C++ 2011")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
+# Find which C++ 2011 features are supported
+include (CheckCXX11Features)
+
+message( STATUS "C++11 supported features: ${CXX11_FEATURE_LIST}" )
+
 set( SIRE_COMPILER "UNKNOWN" )
 
+if (NOT ${CMAKE_C_COMPILER_ID} STREQUAL ${CMAKE_CXX_COMPILER_ID})
+  message( WARNING "It is not sensible to compile Sire using different C and C++ compilers. "
+                   "You are using ${CMAKE_C_COMPILER} (${CMAKE_C_COMPILER_ID}) and "
+                   "${CMAKE_CXX_COMPILER} (${CMAKE_CXX_COMPILER_ID})")
+endif()
+
+string( TOUPPER ${CMAKE_CXX_COMPILER_ID} SIRE_CXX_COMPILER_ID )
+
 # Add compiler specific flags
-if ( CMAKE_COMPILER_IS_GNUCC )
+if ( ${SIRE_CXX_COMPILER_ID} MATCHES "GNU" )
 
     message( STATUS "Detected and using GCC C and C++ compilers" )
     set( SIRE_COMPILER "GCC" )
@@ -286,8 +315,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
         
     # Now gcc 4 specific options
     if ( GCC_MAJOR_VERSION GREATER 3 )
-      # remove warnings about strict aliasing (lots from Qt4
-      # when compiling with GCC 4, and they are annoying!)
+      # remove warnings about strict aliasing
       set( SIRE_PLATFORM_FLAGS "${SIRE_PLATFORM_FLAGS} -Wno-strict-aliasing" )
 
       # gcc-4.2 and above has openMP - turn it on (except for Mac as libgomp is broken!)
@@ -314,7 +342,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
         set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
     endif()
 
-elseif ( ${CMAKE_CXX_COMPILER} MATCHES "clang" )
+elseif ( ${SIRE_CXX_COMPILER_ID} MATCHES "CLANG" )
 
     message( STATUS "Detected and using clang C and C++ compilers" )
     set( SIRE_COMPILER "CLANG" )
@@ -398,6 +426,7 @@ else()
     message( STATUS "CMAKE_SYSTEM_NAME == ${CMAKE_SYSTEM_NAME}" )
     message( STATUS "CMAKE_C_COMPILER == ${CMAKE_C_COMPILER}" )
     message( STATUS "CMAKE_CXX_COMPILER == ${CMAKE_CXX_COMPILER}" )
+    message( STATUS "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
     message( FATAL_ERROR "Could not detect compiler type - cannot set compiler options." )
 endif()
 
@@ -406,6 +435,13 @@ save_sire_variable( "SIRE_COMPILER" "${SIRE_COMPILER}" )
 ################
 ################ SORTING OUT ALL OF SIRE'S DEPENDENCIES
 ################
+
+# Tell CMake to run moc when necessary
+set(CMAKE_AUTOMOC ON)
+
+# As moc files are generated in the binary dir, tell CMake
+# to always look for includes there:
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Option to disable all bundles
 option( SIRE_ENABLE_BUNDLING "Allow Sire to use bundled libraries" ON )
@@ -436,23 +472,17 @@ if ( ${SIRE_ENABLE_BUNDLING} )
     if ( ${SIRE_BUNDLE_TBB} )
       include( "src/bundled/install_tbb.cmake" )
     endif()
+
+    if ( ${SIRE_BUNDLE_QT} )
+      set( Qt5Core_DIR "${CMAKE_BINARY_DIR}/bundled/qt5/lib/cmake/Qt5Core" )
+      find_package( Qt5Core REQUIRED )
+      set(SIRE_FOUND_QT TRUE)
+    endif()
 endif()
 
 if ( NOT ${SIRE_FOUND_QT} )
-  # Sire depends on >= Qt 4.2
-  find_package( Qt4 4.2.0 COMPONENTS QtCore )
-
-  if ( ${QT_QTCORE_FOUND} )
-    include (${QT_USE_FILE})
-    message( STATUS "Using Qt version ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH} "
-                    "(${QT_LIBRARIES})" )
-
-    save_sire_variable( "SIRE_QT_VERSION_MAJOR" "${QT_VERSION_MAJOR}" )
-    save_sire_variable( "SIRE_QT_VERSION_MINOR" "${QT_VERSION_MINOR}" )
-    save_sire_variable( "SIRE_QT_VERSION_PATCH" "${QT_VERSION_PATCH}" )
-  else()
-    message( FATAL_ERROR "Qt >= 4.2 is required by Sire" )
-  endif()
+    # look for Qt5 in the system
+    find_package( Qt5Core REQUIRED )
 endif()
 
 if (NOT ${SIRE_FOUND_BOOST})
@@ -587,8 +617,8 @@ if ( CMAKE_BUILD_TYPE )
     message( STATUS "Compiling Sire using ${CMAKE_BUILD_TYPE}" )
 else()
     message( STATUS "Compiling Sire using a default (RELEASE) build" )
-    set (CMAKE_C_FLAGS "${SIRE_C_FLAGS_RELEASE}" )
-    set (CMAKE_CXX_FLAGS "${SIRE_CXX_FLAGS_RELEASE}" )
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS_RELEASE} ${SIRE_C_FLAGS_RELEASE}" )
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} ${SIRE_CXX_FLAGS_RELEASE}" )
 endif()
 
 message ( STATUS "C compiler flags       == ${CMAKE_C_FLAGS}" )
@@ -606,12 +636,12 @@ message( STATUS "Executable link flags   == ${CMAKE_EXE_LINKER_FLAGS}" )
 # Now save the compile variables so that they can be re-used by libraries that use Sire
 save_sire_variable( "SIRE_C_COMPILER" "${CMAKE_C_COMPILER}" )
 save_sire_variable( "SIRE_CXX_COMPILER" "${CMAKE_CXX_COMPILER}" )
-save_sire_variable( "SIRE_C_FLAGS_RELEASE" "${SIRE_C_FLAGS_RELEASE}" )
-save_sire_variable( "SIRE_CXX_FLAGS_RELEASE" "${SIRE_CXX_FLAGS_RELEASE}" )
-save_sire_variable( "SIRE_C_FLAGS_SMALL" "${SIRE_C_FLAGS_SMALL}" )
-save_sire_variable( "SIRE_CXX_FLAGS_SMALL" "${SIRE_CXX_FLAGS_SMALL}" )
-save_sire_variable( "SIRE_C_FLAGS_DEBUG" "${SIRE_C_FLAGS_DEBUG}" )
-save_sire_variable( "SIRE_CXX_FLAGS_DEBUG" "${SIRE_CXX_FLAGS_DEBUG}" )
+save_sire_variable( "SIRE_C_FLAGS_RELEASE" "${CMAKE_C_FLAGS_RELEASE}" )
+save_sire_variable( "SIRE_CXX_FLAGS_RELEASE" "${CMAKE_CXX_FLAGS_RELEASE}" )
+save_sire_variable( "SIRE_C_FLAGS_SMALL" "${CMAKE_C_FLAGS_SMALL}" )
+save_sire_variable( "SIRE_CXX_FLAGS_SMALL" "${CMAKE_CXX_FLAGS_SMALL}" )
+save_sire_variable( "SIRE_C_FLAGS_DEBUG" "${CMAKE_C_FLAGS_DEBUG}" )
+save_sire_variable( "SIRE_CXX_FLAGS_DEBUG" "${CMAKE_CXX_FLAGS_DEBUG}" )
 save_sire_variable( "SIRE_SHARE_LINK_FLAGS" "${SIRE_SHARE_LINK_FLAGS}" )
 save_sire_variable( "SIRE_STATIC_LINK_FLAGS" "${SIRE_STATIC_LINK_FLAGS}" )
 save_sire_variable( "SIRE_EXE_LINK_FLAGS" "${SIRE_EXE_LINK_FLAGS}" )

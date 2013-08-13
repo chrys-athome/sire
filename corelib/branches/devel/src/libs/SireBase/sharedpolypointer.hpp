@@ -292,9 +292,9 @@ SharedPolyPointer<T>::SharedPolyPointer(const T &obj)
     obj_ptr->ref.ref();
     
     //if this object is already pointed to by a SharedPolyPointer
-    //then the reference count of the QSharedData part will now be
-    //greater than one
-    if ( int(obj_ptr->ref) > 1 )
+    //then the reference count of the QSharedData before we add 1
+    //will be greater than 0
+    if ( obj_ptr->ref.fetchAndAddRelaxed(1) > 0 )
     {
         //this is held by another SharedPolyPointer
         d = obj_ptr;
@@ -395,12 +395,7 @@ SharedPolyPointer<T>::SharedPolyPointer(const S &obj)
     //if this object is already pointed to by a SharedPolyPointer
     //then the reference count of the QSharedData part will now be
     //greater than one
-    if ( int(obj_ptr->ref) > 1 )
-    {
-        //this is held by another SharedPolyPointer
-        d = obj_ptr;
-    }
-    else
+    if ( obj_ptr->ref.testAndSetRelaxed(1,1) )
     {
         //the reference count was zero - this implies that
         //this object is not held by another SharedPolyPointer,
@@ -413,6 +408,11 @@ SharedPolyPointer<T>::SharedPolyPointer(const S &obj)
         //reduce the reference count of the original object
         obj_ptr->ref.deref();
     }
+    else
+    {
+        //this is held by another SharedPolyPointer
+        d = obj_ptr;
+    }
 }
 
 /** Destructor */
@@ -420,8 +420,8 @@ template<class T>
 Q_INLINE_TEMPLATE
 SharedPolyPointer<T>::~SharedPolyPointer()
 { 
-    if (d && !d->ref.deref()) 
-        delete d; 
+    if (d and not d->ref.deref())
+        delete d;
 }
 
 /** Null assignment operator - allows you to write ptr = 0 to 
@@ -476,20 +476,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const T &obj)
         //if this object is already pointed to by a SharedPolyPointer
         //then the reference count of the QSharedData part will now be
         //greater than one
-        if ( int(obj_ptr->ref) > 1 )
-        {
-            //this is held by another SharedPolyPointer
-            if (d)
-            {
-                qAtomicAssign(d, obj_ptr);
-            
-                //remove the extra reference count
-                d->ref.deref();
-            }
-            else
-                d = obj_ptr;
-        }
-        else
+        if ( obj_ptr->ref.testAndSetRelaxed(1,1) )
         {
             //the reference count was zero - this implies that
             //this object is not held by another SharedPolyPointer,
@@ -506,6 +493,19 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const T &obj)
                 d = obj_ptr;
                 d->ref.ref();
             }
+        }
+        else
+        {
+            //this is held by another SharedPolyPointer
+            if (d)
+            {
+                qAtomicAssign(d, obj_ptr);
+            
+                //remove the extra reference count
+                d->ref.deref();
+            }
+            else
+                d = obj_ptr;
         }
     }
     
@@ -621,23 +621,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
         //if this object is already pointed to by a SharedPolyPointer
         //then the reference count of the QSharedData part will now be
         //greater than one
-        if ( int(obj_ptr->ref) > 1 )
-        {
-            //this is held by another SharedPolyPointer
-            if (d)
-            {
-                qAtomicAssign(d, obj_ptr);
-            
-                //remove the extra reference count
-                d->ref.deref();
-            }
-            else
-            {
-                d = obj_ptr;
-                d->ref.ref();
-            }
-        }
-        else
+        if (obj_ptr->ref.testAndSetRelaxed(1,1) )
         {
             //the reference count was zero - this implies that
             //this object is not held by another SharedPolyPointer,
@@ -657,6 +641,22 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
                 d->ref.ref();
             }
         }
+        else
+        {
+            //this is held by another SharedPolyPointer
+            if (d)
+            {
+                qAtomicAssign(d, obj_ptr);
+            
+                //remove the extra reference count
+                d->ref.deref();
+            }
+            else
+            {
+                d = obj_ptr;
+                d->ref.ref();
+            }
+        }
     }
     
     return *this;
@@ -667,7 +667,7 @@ template <class T>
 Q_INLINE_TEMPLATE
 void SharedPolyPointer<T>::detach() 
 {
-    if (d && d->ref != 1)
+    if (not this->unique())
     {
         T *x = SharedPolyPointerHelper<T>::clone(*d);
         qAtomicAssign(d, x);
@@ -679,7 +679,8 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 bool SharedPolyPointer<T>::unique() const
 {
-    return (d and d->ref == 1);
+    //test that we have a value and that the reference count is 1
+    return (d and d->ref.testAndSetRelaxed(1,1));
 }
 
 /** Dereference this pointer */

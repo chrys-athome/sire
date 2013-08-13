@@ -94,7 +94,7 @@ NVector::NVector(const Vector &vector) : array(3)
 {
     array.squeeze();
     
-    qMemCopy(array.data(), vector.constData(), 3*sizeof(double));
+    memcpy(array.data(), vector.constData(), 3*sizeof(double));
 }
 
 /** Construct from the passed vector */

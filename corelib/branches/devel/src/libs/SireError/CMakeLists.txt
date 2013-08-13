@@ -40,7 +40,7 @@ set_target_properties (SireError PROPERTIES
                       )
 
 target_link_libraries (SireError
-                       ${QT_QTCORE_LIBRARY}
+                       Qt5::Core
                       )
 
 # installation

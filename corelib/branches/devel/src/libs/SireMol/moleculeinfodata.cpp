@@ -846,7 +846,7 @@ void MoleculeInfoData::assertEqualTo(const MoleculeInfoData &other) const
         throw SireError::incompatible_error( QObject::tr(
             "The two passed molecule layouts are incompatible "
             "as they have different UIDs! (%1 vs. %2)")
-                .arg(uid).arg(other.uid), CODELOC );
+                .arg(uid.toString()).arg(other.uid.toString()), CODELOC );
 }
 
 /** Use this function to minimise memory usage - this function
@@ -1722,7 +1722,7 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(ResIdx residx,
         throw SireMol::missing_atom( QObject::tr(
             "There is no atom called \"%1\" in the residue at index %2 "
             "in the layout \"%3\".")
-                .arg(name).arg(residx).arg(uid), CODELOC );
+                .arg(name).arg(residx).arg(uid.toString()), CODELOC );
                 
     if (atomidxs.count() > 1)
         qSort(atomidxs);
@@ -1759,7 +1759,7 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(const ResID &resid,
         throw SireMol::missing_atom( QObject::tr(
             "There are no atoms called \"%1\" in the residues matching "
             "%2 in the layout \"%3\".")
-                .arg(name, resid.toString()).arg(uid), CODELOC );
+                .arg(name, resid.toString()).arg(uid.toString()), CODELOC );
 
     return atomidxs;
 }                                            
@@ -1798,7 +1798,7 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(ChainIdx chainidx,
         throw SireMol::missing_atom( QObject::tr(
             "There are no atoms called \"%1\" in the chain at index "
             "%2 in the layout \"%3\".")
-                .arg(name).arg(chainidx).arg(uid), CODELOC );
+                .arg(name).arg(chainidx).arg(uid.toString()), CODELOC );
                 
     return atomidxs;
 }
@@ -1815,7 +1815,7 @@ QList<AtomIdx> MoleculeInfoData::getAtomsIn(const ChainID &chainid,
         throw SireMol::missing_atom( QObject::tr(
             "There are no atoms called \"%1\" in the chains matching "
             "%2 in the layout \"%3\".")
-                .arg(name, chainid.toString()).arg(uid), CODELOC );
+                .arg(name, chainid.toString()).arg(uid.toString()), CODELOC );
     
     return atomidxs;
 }
@@ -2774,7 +2774,7 @@ QList<ResIdx> MoleculeInfoData::map(const ResName &name) const
         throw SireMol::missing_residue( QObject::tr(
             "There is no residue called \"%1\" in the layout \"%2\". "
             "Available residues are %3.")
-                .arg(name).arg(uid)
+                .arg(name).arg(uid.toString())
                 .arg(Sire::toString(res_by_name.keys())), CODELOC );
                 
     qSort(residxs);
@@ -2799,7 +2799,7 @@ QList<ResIdx> MoleculeInfoData::map(ResNum num) const
     if (residxs.isEmpty())
         throw SireMol::missing_residue( QObject::tr(
             "There is no residue with the number \"%1\" in the layout \"%2\".")
-                .arg(num).arg(uid), CODELOC );
+                .arg(num).arg(uid.toString()), CODELOC );
                 
     qSort(residxs);
     return residxs;
@@ -2874,7 +2874,7 @@ QList<ChainIdx> MoleculeInfoData::map(const ChainName &name) const
     if (chainidxs.isEmpty())
         throw SireMol::missing_chain( QObject::tr(
             "There is no chain called \"%1\" in the layout \"%2\".")
-                .arg(name).arg(uid), CODELOC );
+                .arg(name).arg(uid.toString()), CODELOC );
                 
     qSort(chainidxs);
     return chainidxs;
@@ -2941,7 +2941,7 @@ QList<SegIdx> MoleculeInfoData::map(const SegName &name) const
     if (segidxs.isEmpty())
         throw SireMol::missing_segment( QObject::tr(
             "There is no segment called \"%1\" in the layout \"%2\".")
-                .arg(name).arg(uid), CODELOC );
+                .arg(name).arg(uid.toString()), CODELOC );
                 
     qSort(segidxs);
     return segidxs;
@@ -3008,7 +3008,7 @@ QList<CGIdx> MoleculeInfoData::map(const CGName &name) const
     if (cgidxs.isEmpty())
         throw SireMol::missing_cutgroup( QObject::tr(
             "There is no CutGroup called \"%1\" in the layout \"%2\".")
-                .arg(name).arg(uid), CODELOC );
+                .arg(name).arg(uid.toString()), CODELOC );
                 
     qSort(cgidxs);
     return cgidxs;
@@ -3075,7 +3075,7 @@ QList<AtomIdx> MoleculeInfoData::map(const AtomName &name) const
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
             "There is no atom called \"%1\" in the layout \"%2\".")
-                .arg(name).arg(uid), CODELOC );
+                .arg(name).arg(uid.toString()), CODELOC );
                 
     qSort(atomidxs);
     return atomidxs;
@@ -3095,7 +3095,7 @@ QList<AtomIdx> MoleculeInfoData::map(AtomNum num) const
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(
             "There is no atom with the number \"%1\" in the layout \"%2\".")
-                .arg(num).arg(uid), CODELOC );
+                .arg(num).arg(uid.toString()), CODELOC );
                 
     qSort(atomidxs);
     return atomidxs;
@@ -3145,7 +3145,7 @@ void MoleculeInfoData::assertContains(AtomIdx atomidx) const
         throw SireError::invalid_index( QObject::tr(
             "There is no atom at index %1. nAtoms() == %2 for the "
             "molecule layout with UID %3.")
-                .arg(atomidx).arg(nAtoms()).arg(UID()), CODELOC );
+                .arg(atomidx).arg(nAtoms()).arg(UID().toString()), CODELOC );
     }
 }
 
@@ -3164,7 +3164,7 @@ void MoleculeInfoData::assertContains(CGIdx cgidx) const
         throw SireError::invalid_index( QObject::tr(
             "There is no CutGroup at index %1. nCutGroups() == %2 for the "
             "molecule layout with UID %3.")
-                .arg(cgidx).arg(nCutGroups()).arg(UID()), CODELOC );
+                .arg(cgidx).arg(nCutGroups()).arg(UID().toString()), CODELOC );
     }
 }
 
@@ -3183,7 +3183,7 @@ void MoleculeInfoData::assertContains(ResIdx residx) const
         throw SireError::invalid_index( QObject::tr(
             "There is no residue at index %1. nResidues() == %2 for the "
             "molecule layout with UID %3.")
-                .arg(residx).arg(nResidues()).arg(UID()), CODELOC );
+                .arg(residx).arg(nResidues()).arg(UID().toString()), CODELOC );
     }
 }
 
@@ -3202,7 +3202,7 @@ void MoleculeInfoData::assertContains(ChainIdx chainidx) const
         throw SireError::invalid_index( QObject::tr(
             "There is no chain at index %1. nChains() == %2 for the "
             "molecule layout with UID %3.")
-                .arg(chainidx).arg(nChains()).arg(UID()), CODELOC );
+                .arg(chainidx).arg(nChains()).arg(UID().toString()), CODELOC );
     }
 }
 
@@ -3221,7 +3221,7 @@ void MoleculeInfoData::assertContains(SegIdx segidx) const
         throw SireError::invalid_index( QObject::tr(
             "There is no atom at index %1. nSegments() == %2 for the "
             "molecule layout with UID %3.")
-                .arg(segidx).arg(nSegments()).arg(UID()), CODELOC );
+                .arg(segidx).arg(nSegments()).arg(UID().toString()), CODELOC );
     }
 }
 

@@ -68,9 +68,15 @@ using namespace SireStream;
 //////// Fully instantiate template classes
 ////////
 
-template class FFMolecule<InternalPotential>;
-template class FFMolecules<InternalPotential>;
-template class ChangedMolecule<InternalPotential::Molecule>;
+namespace SireFF
+{
+    namespace detail
+    {
+        template class FFMolecule<InternalPotential>;
+        template class FFMolecules<InternalPotential>;
+        template class ChangedMolecule<InternalPotential::Molecule>;
+    }
+}
 
 //////// Parameter names
 

@@ -243,8 +243,8 @@ bool FFMoleculeBase::change(const SireMol::Molecule &molecule)
                 "Cannot change the molecule %1 as its molecule layout "
                 "ID has changed (%2 to %3), and only part of the molecule "
                 "exists in the forcefield.")
-                    .arg(mol.number()).arg(mol.data().info().UID())
-                    .arg(molecule.data().info().UID()), CODELOC );
+                    .arg(mol.number()).arg(mol.data().info().UID().toString())
+                    .arg(molecule.data().info().UID().toString()), CODELOC );
         }
     
         mol = PartialMolecule(molecule.data(), mol.selection());

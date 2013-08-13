@@ -231,7 +231,7 @@ void Beads::update(const MoleculeData &moldata)
     {
         new_beading = moldata.property(beading_property).asA<Beading>();
     }
-    else if (data().hasProperty(beading_property));
+    else if (data().hasProperty(beading_property))
     {
         new_beading = ResidueBeading();
     }

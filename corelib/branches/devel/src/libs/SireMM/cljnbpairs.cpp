@@ -43,14 +43,17 @@ static const RegisterMetaType<CLJNBPairs> r_cljnbpairs;
 //////// Fully instantiate the template class
 ////////
 
-template class AtomPairs<CoulombScaleFactor>;
-template class CGAtomPairs<CoulombScaleFactor>;
+namespace SireMM
+{
+    template class AtomPairs<CoulombScaleFactor>;
+    template class CGAtomPairs<CoulombScaleFactor>;
 
-template class AtomPairs<LJScaleFactor>;
-template class CGAtomPairs<LJScaleFactor>;
+    template class AtomPairs<LJScaleFactor>;
+    template class CGAtomPairs<LJScaleFactor>;
 
-template class AtomPairs<CLJScaleFactor>;
-template class CGAtomPairs<CLJScaleFactor>;
+    template class AtomPairs<CLJScaleFactor>;
+    template class CGAtomPairs<CLJScaleFactor>;
+}
 
 ////////
 //////// Implementation of CoulombScaleFactor

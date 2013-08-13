@@ -10,6 +10,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 add_executable ( test_openmp main.cpp)
 
 target_link_libraries (test_openmp
-                       ${QT_QTCORE_LIBRARY}
+                       Qt5::Core
                       )
 

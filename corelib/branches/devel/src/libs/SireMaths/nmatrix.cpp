@@ -126,9 +126,9 @@ NMatrix::NMatrix(const Matrix &matrix)
     
     double *data = array.data();
     
-    qMemCopy(data, matrix.column0().constData(), 3*sizeof(double));
-    qMemCopy(data+3, matrix.column1().constData(), 3*sizeof(double));
-    qMemCopy(data+6, matrix.column2().constData(), 3*sizeof(double));
+    memcpy(data, matrix.column0().constData(), 3*sizeof(double));
+    memcpy(data+3, matrix.column1().constData(), 3*sizeof(double));
+    memcpy(data+6, matrix.column2().constData(), 3*sizeof(double));
 }
 
 /** Construct from the passed Array */
@@ -142,7 +142,7 @@ NMatrix::NMatrix(const SireBase::Array2D<double> &array2d)
         array = QVector<double>(sz);
         array.squeeze();
         
-        qMemCopy(array.data(), array2d.constData(), sz*sizeof(double));
+        memcpy(array.data(), array2d.constData(), sz*sizeof(double));
     }
 }
 
@@ -190,7 +190,7 @@ NMatrix::NMatrix(const Vector &vector, bool transpose)
     array = QVector<double>(3);
     array.squeeze();
     
-    qMemCopy(array.data(), vector.constData(), 3*sizeof(double));
+    memcpy(array.data(), vector.constData(), 3*sizeof(double));
     
     if (transpose)
     {
@@ -215,7 +215,7 @@ NMatrix::NMatrix(const NVector &vector, bool transpose)
         array = QVector<double>(vector.count());
         array.squeeze();
         
-        qMemCopy(array.data(), vector.constData(), vector.count()*sizeof(double));
+        memcpy(array.data(), vector.constData(), vector.count()*sizeof(double));
 
         if (transpose)
         {
@@ -841,7 +841,7 @@ NVector NMatrix::row(int i) const
     if (is_transpose)
     {
         //row-major storage
-        qMemCopy( v.data(), array.constData()+i*ncolumns, ncolumns*sizeof(double) );
+        memcpy( v.data(), array.constData()+i*ncolumns, ncolumns*sizeof(double) );
     }
     else
     {
@@ -882,7 +882,7 @@ NVector NMatrix::column(int j) const
     else
     {
         //column-major storage
-        qMemCopy( v.data(), array.constData()+j*nrows, nrows*sizeof(double) );
+        memcpy( v.data(), array.constData()+j*nrows, nrows*sizeof(double) );
     }
 
     return v;
@@ -928,7 +928,7 @@ void NMatrix::setRow(int i, const NVector &row)
     
     if (is_transpose)
     {
-        qMemCopy(d + offset(i,0), v, ncolumns*sizeof(double));
+        memcpy(d + offset(i,0), v, ncolumns*sizeof(double));
     }
     else
     {
@@ -977,7 +977,7 @@ void NMatrix::setColumn(int j, const NVector &column)
     }
     else
     {
-        qMemCopy(d + offset(0,j), v, nrows*sizeof(double));
+        memcpy(d + offset(0,j), v, nrows*sizeof(double));
     }
 }
 

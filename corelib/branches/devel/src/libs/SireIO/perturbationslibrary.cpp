@@ -1021,7 +1021,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
         // IMPROPERS NOT PARSED FROM THE PERT FILE
         if ( line.startsWith("initial_expression") and indihedral )
         {
-            QByteArray b = words[1].toAscii();
+            QByteArray b = words[1].toUtf8();
             QByteArray b2 = QByteArray::fromBase64(b);
 
             init_pot = SireStream::loadType<Expression>(b2);
@@ -1030,7 +1030,7 @@ void PerturbationsLibrary::loadTemplates(const QString &templatefile)
         }
         if ( line.startsWith("final_expression") and indihedral )
         {
-            QByteArray b = words[1].toAscii();
+            QByteArray b = words[1].toUtf8();
             QByteArray b2 = QByteArray::fromBase64(b);
 
             final_pot = SireStream::loadType<Expression>(b2);

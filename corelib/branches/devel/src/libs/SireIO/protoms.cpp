@@ -268,7 +268,7 @@ QString ProtoMS::writeCommandFile(const TempDir &tmpdir,
         QFile f( QString("%1/%2").arg(tmpdir.path(),name) );
         f.open(QIODevice::WriteOnly);
 
-        f.write( QString("header %1\n").arg(name).toAscii().constData() );
+        f.write( QString("header %1\n").arg(name).toUtf8().constData() );
         
         PDB().write( molecule, f );
         

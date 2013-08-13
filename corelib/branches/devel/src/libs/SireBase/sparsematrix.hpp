@@ -30,6 +30,7 @@
 #define SIREBASE_SPARSEMATRIX_HPP
 
 #include <QHash>
+#include <QDataStream>
 
 #include "sireglobal.h"
 

@@ -184,7 +184,7 @@ namespace detail
     void print(const char *txt, const T *data, int dim)
     {
         QVector<T> d(dim);
-        qMemCopy(d.data(), data, dim*sizeof(T));
+        memcpy(d.data(), data, dim*sizeof(T));
         
         qDebug() << txt << d;
     }

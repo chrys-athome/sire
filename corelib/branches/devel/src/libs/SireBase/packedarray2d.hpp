@@ -708,7 +708,7 @@ char* PackedArray2DMemory<T>::detach(char *this_ptr, quint32 this_idx)
     //The PackedArray2DData object is at the beginning of this storage array
     PackedArray2DData<T> *arraydata = (PackedArray2DData<T>*) storage;
     
-    if (arraydata->ref != 1)
+    if (not arraydata->ref.testAndSetRelaxed(1,1))
     {
         //there is more than one reference to this data - it will have to 
         //be cloned - get the size of memory to be cloned
@@ -746,7 +746,7 @@ char* PackedArray2DMemory<T>::detach(char *this_ptr, quint32 this_idx)
         }
         
         //set the reference count of this copy to 1
-        new_arraydata->ref = 1;
+        new_arraydata->ref = QAtomicInt(1);
 
         //now loose a reference to the original
         PackedArray2DMemory<T>::decref(this_ptr, this_idx);

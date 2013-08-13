@@ -90,27 +90,33 @@ QString LJParameterName::lj_param( "LJ" );
 
 namespace SireFF
 {
-    template class AtomicParameters3D<LJParamID>;
+    namespace detail
+    {
+        template class AtomicParameters3D<LJParamID>;
 
-    template class FFMolecule3D<InterLJPotential>;
+        template class FFMolecule3D<InterLJPotential>;
 
-    template class FFMolecules3D<InterLJPotential>;
+        template class FFMolecules3D<InterLJPotential>;
 
-    template class ChangedMolecule<InterLJPotential::Molecule>;
+        template class ChangedMolecule<InterLJPotential::Molecule>;
 
-    template class FFMolecule3D<IntraLJPotential>;
+        template class FFMolecule3D<IntraLJPotential>;
 
-    template class FFMolecules3D<IntraLJPotential>;
+        template class FFMolecules3D<IntraLJPotential>;
 
-    template class ChangedMolecule<IntraLJPotential::Molecule>;
+        template class ChangedMolecule<IntraLJPotential::Molecule>;
+    }
 }
 
 namespace SireMM
 {
-    template class IntraScaledParameters<LJNBPairs>;
+    namespace detail
+    {
+        template class IntraScaledParameters<LJNBPairs>;
 
-    template class IntraScaledAtomicParameters< AtomicParameters3D<LJParamID>,
-                                                IntraScaledParameters<LJNBPairs> >;
+        template class IntraScaledAtomicParameters< AtomicParameters3D<LJParamID>,
+                                                    IntraScaledParameters<LJNBPairs> >;
+    }
 }
 
 /** Streaming functions for LJParamID - these must convert the 

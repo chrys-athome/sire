@@ -62,11 +62,7 @@ public:
 
 private:
     /** The volatile integer that is being incremented */
-    #if QT_VERSION >= 0x040400
     QAtomicInt atomic_int;
-    #elif QT_VERSION >= 0x040100
-    volatile int atomic_int;
-    #endif
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -87,31 +83,8 @@ inline Incremint::~Incremint()
 /** Increment the Incremint and return its new value */
 inline int Incremint::increment()
 {
-    #if QT_VERSION >= 0x040400
-    
-        register int oldValue;
-        
-        do
-        {
-            oldValue = atomic_int;
-        
-        } while (not atomic_int.testAndSetAcquire(oldValue, oldValue+1));
-        
-        return oldValue + 1;
-    
-    #elif QT_VERSION >= 0x040100
-
-        register int oldValue;
-    
-        do
-        {
-            oldValue = atomic_int;
- 
-        } while ( not q_atomic_test_and_set_int(&atomic_int, oldValue, oldValue+1) );
-    
-        return oldValue + 1;
-    
-    #endif
+    int value = atomic_int.fetchAndAddRelaxed(1);
+    return value+1;
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

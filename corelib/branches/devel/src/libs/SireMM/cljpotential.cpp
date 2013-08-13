@@ -88,33 +88,45 @@ QString IntraScaleParameterName::nbscl_param( "intrascale" );
 /////// Completely instantiate the CLJPotential ancillary classes
 ///////
 
-template
-class AtomicParameters3D<CLJParameter>;
+namespace SireMM
+{
+    namespace detail
+    {
+        template
+        class IntraScaledParameters<CLJNBPairs>;
 
-template
-class IntraScaledParameters<CLJNBPairs>;
+        template
+        class IntraScaledAtomicParameters< AtomicParameters3D<CLJParameter>,
+                                           IntraScaledParameters<CLJNBPairs> >;
+    }
+}
 
-template
-class IntraScaledAtomicParameters< AtomicParameters3D<CLJParameter>,
-                                   IntraScaledParameters<CLJNBPairs> >;
+namespace SireFF
+{
+    namespace detail
+    {
+        template
+        class AtomicParameters3D<CLJParameter>;
 
-template
-class FFMolecule3D<InterCLJPotential>;
+        template
+        class FFMolecule3D<InterCLJPotential>;
 
-template
-class FFMolecules3D<InterCLJPotential>;
+        template
+        class FFMolecules3D<InterCLJPotential>;
 
-template
-class ChangedMolecule<InterCLJPotential::Molecule>;
+        template
+        class ChangedMolecule<InterCLJPotential::Molecule>;
 
-template
-class FFMolecule3D<IntraCLJPotential>;
+        template
+        class FFMolecule3D<IntraCLJPotential>;
 
-template
-class FFMolecules3D<IntraCLJPotential>;
+        template
+        class FFMolecules3D<IntraCLJPotential>;
 
-template
-class ChangedMolecule<IntraCLJPotential::Molecule>;
+        template
+        class ChangedMolecule<IntraCLJPotential::Molecule>;
+    }
+}
 
 /** Streaming functions for CLJParameter */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, 

@@ -39,8 +39,11 @@ using namespace SireStream;
 Q_DECLARE_METATYPE( AtomicFFParameters<double> );
 Q_DECLARE_METATYPE( AtomicFFParametersArray<double> );
 
-template class AtomicFFParameters<double>;
-template class AtomicFFParametersArray<double>;
+namespace SireFF
+{
+    template class AtomicFFParameters<double>;
+    template class AtomicFFParametersArray<double>;
+}
 
 ////////////
 //////////// Implementation of FFParameters

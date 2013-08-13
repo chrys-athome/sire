@@ -1534,7 +1534,7 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
                     "with QMetaType.").arg(datatype), CODELOC );
         
             //create a default-constructed object of this type
-            shared_ptr<void> ptr( QMetaType::construct(id,0), detail::void_deleter(id) );
+            shared_ptr<void> ptr( QMetaType::create(id,0), detail::void_deleter(id) );
 
             if (ptr.get() == 0)
                 throw SireError::program_bug( QObject::tr(

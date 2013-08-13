@@ -593,7 +593,7 @@ void IDAssigner::assignMoleculesToPoints()
             
             const NVector &distances = it.value();
             
-            qMemCopy( new_row.data(), distances.constData(), npoints*sizeof(double) );
+            memcpy( new_row.data(), distances.constData(), npoints*sizeof(double) );
             
             distmatrix.setRow( i, new_row );
         }
