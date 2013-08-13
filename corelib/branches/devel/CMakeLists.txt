@@ -469,14 +469,39 @@ set (SIRE_FOUND_QT FALSE)
 if ( ${SIRE_ENABLE_BUNDLING} )
     message( STATUS "Sire will be compiled to use its own copy of bundled libraries." )
 
+    set( BUNDLE_BUILDDIR "${CMAKE_BINARY_DIR}/build_bundled" )
+    set( BUNDLE_STAGEDIR "${CMAKE_BINARY_DIR}/bundled" )
+
+    if (NOT EXISTS "${BUNDLE_BUILDDIR}")
+      file(MAKE_DIRECTORY ${BUNDLE_BUILDDIR})
+    endif()
+
+    if (NOT EXISTS "${BUNDLE_STAGEDIR}")
+      file(MAKE_DIRECTORY ${BUNDLE_STAGEDIR})
+    endif()
+    
+    if (NOT EXISTS "${BUNDLE_STAGEDIR}/lib")
+      file(MAKE_DIRECTORY ${BUNDLE_STAGEDIR}/lib)
+    endif()
+          
+    if (NOT EXISTS "${BUNDLE_STAGEDIR}/include")
+      file(MAKE_DIRECTORY ${BUNDLE_STAGEDIR}/include)
+    endif()
+
     if ( ${SIRE_BUNDLE_TBB} )
       include( "src/bundled/install_tbb.cmake" )
     endif()
 
+    if ( ${SIRE_BUNDLE_GSL} )
+      include( "src/bundled/install_gsl.cmake" )
+    endif()
+
+    if ( ${SIRE_BUNDLE_BOOST} )
+      include( "src/bundled/install_boost.cmake" )
+    endif()
+
     if ( ${SIRE_BUNDLE_QT} )
-      set( Qt5Core_DIR "${CMAKE_BINARY_DIR}/bundled/qt5/lib/cmake/Qt5Core" )
-      find_package( Qt5Core REQUIRED )
-      set(SIRE_FOUND_QT TRUE)
+      include( "src/bundled/install_qtbase.cmake" )
     endif()
 endif()
 
@@ -498,7 +523,7 @@ if (NOT ${SIRE_FOUND_BOOST})
 
     #save the path to this include directory so that it can be
     #used by anything compiling against Sire
-    save_sire_variable( "SIRE_Boost_INCLUDE_DIR" "${Boost_INCLUDE_DIR}" )
+    save_sire_variable( "SIRE_BOOST_INCLUDE_DIR" "${Boost_INCLUDE_DIR}" )
   else()
     message(FATAL_ERROR "Cannot find the boost libraries.")
   endif()  
@@ -638,8 +663,8 @@ save_sire_variable( "SIRE_C_COMPILER" "${CMAKE_C_COMPILER}" )
 save_sire_variable( "SIRE_CXX_COMPILER" "${CMAKE_CXX_COMPILER}" )
 save_sire_variable( "SIRE_C_FLAGS_RELEASE" "${CMAKE_C_FLAGS_RELEASE}" )
 save_sire_variable( "SIRE_CXX_FLAGS_RELEASE" "${CMAKE_CXX_FLAGS_RELEASE}" )
-save_sire_variable( "SIRE_C_FLAGS_SMALL" "${CMAKE_C_FLAGS_SMALL}" )
-save_sire_variable( "SIRE_CXX_FLAGS_SMALL" "${CMAKE_CXX_FLAGS_SMALL}" )
+save_sire_variable( "SIRE_C_FLAGS_SMALL" "${CMAKE_C_FLAGS_MINSIZEREL}" )
+save_sire_variable( "SIRE_CXX_FLAGS_SMALL" "${CMAKE_CXX_FLAGS_MINSIZEREL}" )
 save_sire_variable( "SIRE_C_FLAGS_DEBUG" "${CMAKE_C_FLAGS_DEBUG}" )
 save_sire_variable( "SIRE_CXX_FLAGS_DEBUG" "${CMAKE_CXX_FLAGS_DEBUG}" )
 save_sire_variable( "SIRE_SHARE_LINK_FLAGS" "${SIRE_SHARE_LINK_FLAGS}" )
