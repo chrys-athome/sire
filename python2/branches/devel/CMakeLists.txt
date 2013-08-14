@@ -1,28 +1,33 @@
 ################################
 #
 #  CMake Project file for Sire
-#    Python 2 wrappers
+#    Python 3 wrappers
 #
 #   (C) Christopher Woods
 #
 ################################
 
-# Uncomment for more verbose compiling/linking
-# (or run 'make VERBOSE=1')
-# set (CMAKE_VERBOSE_MAKEFILE ON)
+############
+############ SETTING INITIAL SIRE VARIABLES
+############
 
-# require cmake >= 2.8.0
-cmake_minimum_required(VERSION 2.8.0 FATAL_ERROR)
+# require cmake >= 2.8.11
+cmake_minimum_required(VERSION 2.8.11 FATAL_ERROR)
 cmake_policy(VERSION 2.8)
 
 # use loose loop syntax in CMakeLists files
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
+# Absolutely can't run cmake in the source directory!
+if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
+  message( FATAL_ERROR "You must run CMake in a different directory to the source!" ) 
+endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
+
 # Option to set the install directory of Sire
-set( SIRE_INCLUDE_DIR "$ENV{HOME}/sire.app/include/Sire" CACHE PATH
-        "The directory containing the Sire header files. This directory must contain
-         the file cmake/SireCompileVariables.cmake so that the python wrappers can
-         be compiled against the correct copy of Sire." )
+set( SIRE_APP "$ENV{HOME}/sire.app" CACHE PATH
+        "The full path to the sire.app installed Sire application." )
+
+set( SIRE_INCLUDE_DIR "${SIRE_APP}/include/Sire" )
 
 set ( SIRE_COMP_CMAKE "${SIRE_INCLUDE_DIR}/cmake/SireCompileVariables.cmake" )
 
@@ -30,7 +35,7 @@ set ( SIRE_COMP_CMAKE "${SIRE_INCLUDE_DIR}/cmake/SireCompileVariables.cmake" )
 if (EXISTS "${SIRE_COMP_CMAKE}")
   include( "${SIRE_COMP_CMAKE}" )  
 else()
-  message( FATAL_ERROR "Cannot find ${SIRE_COMP_CMAKE}. Has Sire been installed correctly?" )
+  message( FATAL_ERROR "You need to provide the full path to sire.app and check that it contains the file ${SIRE_COMP_CMAKE}" )
 endif()
 
 # Now set the C++, C and Fortran compilers to be used to compile the wrappers
@@ -41,7 +46,7 @@ set(CMAKE_CXX_COMPILER "${SIRE_CXX_COMPILER}")
 message( STATUS "Setting C compiler to ${SIRE_C_COMPILER} and C++ compiler to ${SIRE_CXX_COMPILER}" )
 
 # name the project
-project (SirePython2)
+project (SirePython2 CXX C)
 
 set(CMAKE_INSTALL_PREFIX "${SIRE_INSTALL_PREFIX}" CACHE INTERNAL
          "Prefix prepended to install directories" FORCE )
@@ -145,73 +150,88 @@ endif()
 
 # Now add the paths to the header files of the dependencies of Sire
 include_directories (BEFORE ${SIRE_INCLUDE_DIR})
-include_directories( BEFORE ${CMAKE_CURRENT_BINARY_DIR} )
+include_directories (BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories (BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
-# Build shared libraries by default
-option (BUILD_SHARED_LIBS "Build shared python modules" ON)
+# MUST build shared libraries
+set (BUILD_SHARED_LIBS ON)
 
-# Sire depends on >= Python 2.2
-set (PYTHON_MIN_VERSION "2.2")
-find_package( Python )
+# Uncomment for more verbose compiling/linking
+# (or run 'make VERBOSE=1')
+# set (CMAKE_VERBOSE_MAKEFILE ON)
 
-if (NOT PYTHON_LIBS_FOUND)
-    if (PYTHON_INSTALLED_VERSION_TOO_OLD)
-        fatal_message( "Installed version of Python (${PYTHON_VERSION}) is too old."
-                       "Sire requires at least Python ${PYTHON_MIN_VERSION}" )
-    else()
-        fatal_message( "The python libraries were not found. These are necessary to build" 
-                       "the python bindings." )
-    endif()
+# Option to disable all bundles
+option( SIRE_PYTHON_ENABLE_BUNDLING "Allow Sire Python to use bundled libraries and python interpreter" ON )
+
+# Fine-grain control of bundling each dependency
+option( SIRE_BUNDLE_PYTHON "Whether Sire should use its bundled copy of Python 3" ON )
+option( SIRE_BUNDLE_BOOST_PYTHON "Whether Sire should use its bundled copy of boost::python" ON )
+
+if ( SIRE_PYTHON_ENABLE_BUNDLING )
+  message( STATUS "Sire Python will be compiled to use its own copy of bundled libraries." )
+
+  set( BUNDLE_BUILDDIR "${CMAKE_BINARY_DIR}/build_bundled" )
+
+  # We want to install the bundled libs directly into the sire.app directory
+  set( BUNDLE_STAGEDIR "${SIRE_APP}/${SIRE_BUNDLED_DIR}" )
+
+  if (NOT EXISTS "${BUNDLE_BUILDDIR}")
+    file(MAKE_DIRECTORY ${BUNDLE_BUILDDIR})
+  endif()
+
+  if (NOT EXISTS "${BUNDLE_STAGEDIR}")
+   file(MAKE_DIRECTORY ${BUNDLE_STAGEDIR})
+  endif()
+    
+  if (NOT EXISTS "${BUNDLE_STAGEDIR}/lib")
+    file(MAKE_DIRECTORY ${BUNDLE_STAGEDIR}/lib)
+  endif()
+          
+  if (NOT EXISTS "${BUNDLE_STAGEDIR}/include")
+    file(MAKE_DIRECTORY ${BUNDLE_STAGEDIR}/include)
+  endif()
+
+  if ( SIRE_BUNDLE_PYTHON )
+    include( "bundled/install_python.cmake" )
+  endif()
+
+  if (NOT ${SIRE_FOUND_PYTHON})
+    # Need to find python before we compile the boost python wrappers
+    find_package( PythonLibs 3.2 REQUIRED )
+  endif()
+
+  if ( SIRE_BUNDLE_BOOST_PYTHON )
+    include( "bundled/install_boost_python.cmake" )
+  endif()
 endif()
 
-if ( NOT ${PYTHON_MAJOR_VERSION} EQUAL 2 )
-   fatal_message( "The python 2 wrappers can only be built for a python 2 interpreter."  
-                  "The found python intepreter (${PYTHON_EXECUTABLE}) is version"
-                  "${PYTHON_MAJOR_VERSION}.")
-endif() 
+if (NOT ${SIRE_FOUND_PYTHON})
+  find_package( PythonLibs 3.2 REQUIRED )
+endif()
+
+if (NOT ${SIRE_FOUND_BOOST_PYTHON})
+  # Sire depends on >= boost 1.31 - all libraries must be dynamically linked
+  # (else we could end up with multiple boost::python libraries linked, which
+  #  causes problems for RTTI and exceptions)
+  set (BOOST_ALL_DYN_LINK "YES")
+  find_package( Boost 1.31 COMPONENTS python REQUIRED )
+  set ( BOOST_PYTHON_LIBRARY "${Boost_PYTHON_LIBRARY}" )
+  set ( BOOST_PYTHON_HEADERS "${Boost_INCLUDE_DIR}" )
+endif()
 
 message( STATUS "Python paths ${PYTHON_LIBRARIES} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
 include_directories( ${PYTHON_INCLUDE_DIR} )
+include_directories( ${BOOST_PYTHON_HEADERS} )
+
+message( STATUS "boost::python library ${BOOST_PYTHON_LIBRARY} | ${BOOST_PYTHON_HEADERS}" )
 
 # set the location to install the python modules
 set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
 
 # Use the same Qt library as was used to build corelib
 message( STATUS "Looking for Qt5Core in directory ${SIRE_QT5CORE_DIR}" )
-set( Qt5Core_DIR "${SIRE_QT5CORE_DIR}" )
+set( Qt5Core_DIR "${SIRE_QT5CORE_DIR}/cmake/Qt5Core" )
 find_package( Qt5Core REQUIRED )
-
-# Sire depends on >= boost 1.31 - all libraries must be dynamically linked
-# (else we could end up with multiple boost::python libraries linked, which
-#  causes problems for RTTI and exceptions)
-set (BOOST_ALL_DYN_LINK "YES")
-FIND_PACKAGE ( Boost 1.31 COMPONENTS python )
-
-if (Boost_FOUND)
-  message(STATUS "Boost paths ${Boost_LIBRARY_DIRS} | ${Boost_INCLUDE_DIR}" )
-
-  compare_strings( SAME_BOOST_INCLUDE ${SIRE_Boost_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )
-
-  if ( NOT SAME_BOOST_INCLUDE )
-    warning_message( "It is not a good idea to compile the python wrappers against"
-                     "boost libraries with headers in ${Boost_INCLUDE_DIR} when"
-                     "Sire was built using different boost headers in ${SIRE_Boost_INCLUDE_DIR}." )
-  endif()
-
-  set ( BOOST_INCLUDE_DIRS "${Boost_INCLUDE_DIR}" )
-  
-  include_directories( ${Boost_INCLUDE_DIR} )
-
-  if (Boost_PYTHON_FOUND)
-    message(STATUS "Using boost::python library ${Boost_PYTHON_LIBRARY}")
-    set ( BOOST_PYTHON_LIBRARY "${Boost_PYTHON_LIBRARY}" )
-  else()
-    fatal_message( "Cannot find the boost::python library, even though"
-                   "boost has been found.")
-  endif()
-else()
-  fatal_message("Cannot find the boost libraries.")
-endif()  
 
 # We will use the small compiler flags (as the wrappers are too big and don't need optimising)
 message( STATUS "Compiling the python 2 wrappers using a SMALL build." )
