@@ -84,14 +84,12 @@ save_sire_variable( "SIRE_USER_CPPFLAGS", "${SIRE_USER_CPPFLAGS}" )
 set (SIRE_BIN "bin")
 # Shared library install dir
 set (SIRE_LIBS "lib")
-# Bundled shared library install dir
-set (SIRE_BUNDLED_LIBS "bundled/lib" )
+# Where to install all bundled components
+set (SIRE_BUNDLED_DIR "bundled" )
 # Static library install dir
 set (SIRE_ARCHIVES "lib/static")
 # Include (header) files install dir
 set (SIRE_INCLUDES "include/Sire")
-# Bundled include (header) files install dir
-set (SIRE_BUNDLED_INCLUDES "bundled/include")
 # CMake install files install dir
 set (SIRE_CMAKEFILES "include/Sire/cmake")
 # Sire share directory (for parameters etc.)
@@ -122,7 +120,7 @@ set (CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 save_sire_variable( "SIRE_INSTALL_PREFIX" "${CMAKE_INSTALL_PREFIX}" )
 save_sire_variable( "SIRE_BIN" "${SIRE_BIN}" )
 save_sire_variable( "SIRE_LIBS" "${SIRE_LIBS}" )
-save_sire_variable( "SIRE_BUNDLED_LIBS" "${SIRE_BUNDLED_LIBS}" )
+save_sire_variable( "SIRE_BUNDLED_DIR" "${SIRE_BUNDLED_DIR}" )
 save_sire_variable( "SIRE_ARCHIVES" "${SIRE_ARCHIVES}" )
 save_sire_variable( "SIRE_INCLUDES" "${SIRE_INCLUDES}" )
 save_sire_variable( "SIRE_SHARE" "${SIRE_SHARE}" )
@@ -235,11 +233,13 @@ save_sire_variable( "SIRE_HAS_CPP_11" "${SIRE_HAS_CPP_11}" )
 if (SIRE_HAS_CPP_LIB)
   message(STATUS "Using libc++ in place of libstdc++")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  set(SIRE_CXX11_FLAGS "${SIRE_CXX11_FLAGS} -stdlib=libc++")
 endif()
 
 if (SIRE_HAS_CPP_11)
   message(STATUS "Compiler supports C++ 2011")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(SIRE_CXX11_FLAGS "${SIRE_CXX11_FLAGS} -std=c++11")
 endif()
 
 # Find which C++ 2011 features are supported
@@ -470,7 +470,7 @@ if ( ${SIRE_ENABLE_BUNDLING} )
     message( STATUS "Sire will be compiled to use its own copy of bundled libraries." )
 
     set( BUNDLE_BUILDDIR "${CMAKE_BINARY_DIR}/build_bundled" )
-    set( BUNDLE_STAGEDIR "${CMAKE_BINARY_DIR}/bundled" )
+    set( BUNDLE_STAGEDIR "${CMAKE_BINARY_DIR}/${SIRE_BUNDLED_DIR}" )
 
     if (NOT EXISTS "${BUNDLE_BUILDDIR}")
       file(MAKE_DIRECTORY ${BUNDLE_BUILDDIR})
@@ -512,7 +512,7 @@ if ( ${SIRE_ENABLE_BUNDLING} )
 
     # All of the bundled objects are built into the directory ${CMAKE_BINARY_DIR}/bundled
     # This directory must be installed into the sire.app/ directory
-    install( DIRECTORY ${CMAKE_BINARY_DIR}/bundled 
+    install( DIRECTORY ${BUNDLE_STAGEDIR} 
              DESTINATION ${CMAKE_INSTALL_PREFIX}
              USE_SOURCE_PERMISSIONS )
 endif()
@@ -521,6 +521,11 @@ if ( NOT ${SIRE_FOUND_QT} )
     # look for Qt5 in the system
     find_package( Qt5Core REQUIRED )
 endif()
+
+get_target_property(QT5_LOCATION Qt5::Core LOCATION)
+get_filename_component(SIRE_QT5CORE_DIR ${QT5_LOCATION} PATH)
+message( STATUS "Qt5Core location ${SIRE_QT5CORE_DIR}" )
+save_sire_variable( "SIRE_QT5CORE_DIR" "${SIRE_QT5CORE_DIR}" )
 
 if (NOT ${SIRE_FOUND_BOOST})
   # Sire depends on >= boost 1.31 - all libraries must be dynamically linked
@@ -585,22 +590,6 @@ if (NOT ${SIRE_FOUND_BLASLAPACK})
   save_sire_variable( "SIRE_USE_LAPACK" "${SIRE_USE_LAPACK}" )
 endif()
 
-if (SIRE_DISABLE_MPI)
-  message( STATUS "Disabling MPI support in Sire" )
-
-else()
-  # Now look for MPI libraries
-  find_package( MPI )
-
-  if (MPI_FOUND)
-    message( STATUS "Found MPI, so switching MPI support on" )
-    set ( SIRE_USE_MPI ON )
-  else()
-    message( STATUS "MPI could not be found. MPI support switched off" )
-    set ( SIRE_USE_MPI OFF )
-  endif()
-endif()
-
 ###########
 ########### PRINTING OUT SETTINGS AND FINALISING COMPILE FLAGS
 ###########
@@ -610,6 +599,7 @@ message( STATUS  "CMAKE_C_COMPILER       == ${CMAKE_C_COMPILER}" )
 message( STATUS  "CMAKE_CXX_COMPILER     == ${CMAKE_CXX_COMPILER}" )
 message( STATUS  "CMAKE_Fortran_COMPILER == ${CMAKE_Fortran_COMPILER}" )
 
+message ( STATUS "SIRE_CXX11_FLAGS       == ${SIRE_CXX11_FLAGS}" )
 message ( STATUS "SIRE_SMALL_FLAGS       == ${SIRE_SMALL_FLAGS}" )
 message ( STATUS "SIRE_WARNALL_FLAGS     == ${SIRE_WARNALL_FLAGS}" )
 message ( STATUS "SIRE_DEBUG_FLAGS       == ${SIRE_DEBUG_FLAGS}" )
@@ -634,13 +624,13 @@ if ( SIRE_VECTORISE )
 endif()
 
 set( SIRE_C_FLAGS_RELEASE "${SIRE_COMPILE_FLAGS} ${SIRE_RELEASE_FLAGS} ${SIRE_USER_CFLAGS}" )
-set( SIRE_CXX_FLAGS_RELEASE "${SIRE_COMPILE_FLAGS} ${SIRE_RELEASE_FLAGS}  ${SIRE_USER_CPPFLAGS}" )
+set( SIRE_CXX_FLAGS_RELEASE "${SIRE_COMPILE_FLAGS} ${SIRE_CXX11_FLAGS} ${SIRE_RELEASE_FLAGS}  ${SIRE_USER_CPPFLAGS}" )
 
 set( SIRE_C_FLAGS_DEBUG "${SIRE_COMPILE_FLAGS} ${SIRE_DEBUG_FLAGS} ${SIRE_USER_CFLAGS}" )
-set( SIRE_CXX_FLAGS_DEBUG "${SIRE_COMPILE_FLAGS} ${SIRE_DEBUG_FLAGS} ${SIRE_USER_CPPFLAGS}" )
+set( SIRE_CXX_FLAGS_DEBUG "${SIRE_COMPILE_FLAGS} ${SIRE_CXX11_FLAGS} ${SIRE_DEBUG_FLAGS} ${SIRE_USER_CPPFLAGS}" )
 
 set( SIRE_C_FLAGS_SMALL "${SIRE_COMPILE_FLAGS} ${SIRE_SMALL_FLAGS} ${SIRE_USER_CFLAGS}" )
-set( SIRE_CXX_FLAGS_SMALL "${SIRE_COMPILE_FLAGS} ${SIRE_SMALL_FLAGS} ${SIRE_USER_CPPFLAGS}" )
+set( SIRE_CXX_FLAGS_SMALL "${SIRE_COMPILE_FLAGS} ${SIRE_CXX11_FLAGS} ${SIRE_SMALL_FLAGS} ${SIRE_USER_CPPFLAGS}" )
 
 # Copy the Sire compile flags to CMake
 set( CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${SIRE_C_FLAGS_RELEASE}" )
