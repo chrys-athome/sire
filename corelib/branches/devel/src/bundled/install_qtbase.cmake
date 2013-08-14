@@ -51,6 +51,7 @@ else()
       # placed into the bundle directory
       if (APPLE)
         execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libQt5Core.dylib" ${BUNDLE_STAGEDIR}/lib/libQt5Core.dylib )
+        execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libQt5Core_debug.dylib" ${BUNDLE_STAGEDIR}/lib/libQt5Core_debug.dylib )
       endif()
     endif()
   endif()

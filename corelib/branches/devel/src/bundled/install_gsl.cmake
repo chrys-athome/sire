@@ -12,7 +12,6 @@ find_library( GSL_CBLAS_LIBRARY "gslcblas" PATHS ${BUNDLE_STAGEDIR}/lib NO_DEFAU
 
 if ( GSL_LIBRARY AND GSL_CBLAS_LIBRARY )
   message( STATUS "Have already compiled a bundled version of GSL")
-
 else()
   message( STATUS "Compiling and installing a bundled version of the GNU Scientific Library (GSL)" )
 
@@ -44,23 +43,19 @@ else()
     execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} install
                    WORKING_DIRECTORY ${GSL_BUILD_DIR} )
 
-    unset(GSL_LIBRARY CACHE)
-    unset(GSL_CBLAS_LIBRARY CACHE)
-    find_library( GSL_LIBRARY "gsl" PATHS ${BUNDLE_STAGEDIR}/lib NO_DEFAULT_PATH )
-    find_library( GSL_CBLAS_LIBRARY "gslcblas" PATHS ${BUNDLE_STAGEDIR}/lib NO_DEFAULT_PATH )
-
-    if ( GSL_LIBRARY )
-      # need to set the install name so that we can find the library when it is 
-      # placed into the bundle directory
-      if (APPLE)
-        execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libgsl.0.dylib" ${GSL_LIBRARY} )
-        execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libgslcblas.0.dylib" ${GSL_CBLAS_LIBRARY} )
-      endif()
+    if (APPLE)
+      set( GSL_LIBRARY "${BUNDLE_STAGEDIR}/lib/libgsl.dylib" )
+      set( GSL_CBLAS_LIBRARY "${BUNDLE_STAGEDIR}/lib/libgslcblas.dylib" )
+      execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libgsl.0.dylib" ${GSL_LIBRARY} )
+      execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libgslcblas.0.dylib" ${GSL_CBLAS_LIBRARY} )
+    else()
+      set( GSL_LIBRARY "${BUNDLE_STAGEDIR}/lib/libgsl.so" )
+      set( GSL_CBLAS_LIBRARY "${BUNDLE_STAGEDIR}/lib/libgslcblas.so" )
     endif()
   endif()
 endif()
 
-if ( GSL_LIBRARY AND GSL_CBLAS_LIBRARY )
+if ( GSL_LIBRARY )
   message( STATUS "Using GSL from ${GSL_LIBRARY} | ${GSL_CBLAS_LIBRARY}" )
 
   set( GSL_LIBRARIES "${GSL_LIBRARY};${GSL_CBLAS_LIBRARY}" )
@@ -68,6 +63,5 @@ if ( GSL_LIBRARY AND GSL_CBLAS_LIBRARY )
 
   set( SIRE_FOUND_GSL TRUE )
 else()
-  message( STATUS "Strange? Cannot find the file containing GSL's source (${GSL_ZIPFILE}).
-                   We cannot compile it, so will need to rely on the system version..." )
+  message( STATUS "Strange? Cannot find the installed GSL library. We cannot compile it, so will need to rely on the system version..." )
 endif()

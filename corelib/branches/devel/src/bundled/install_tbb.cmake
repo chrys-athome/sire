@@ -84,21 +84,22 @@ else()
 
       execute_process( COMMAND ${CMAKE_COMMAND} -E copy_directory ${TBB_BUILD_DIR}/include ${BUNDLE_STAGEDIR}/include )
 
-      unset(TBB_LIBRARY CACHE)
-      unset(TBB_MALLOC_LIBRARY CACHE)
-      find_library( TBB_LIBRARY "tbb" PATHS ${BUNDLE_STAGEDIR}/lib NO_DEFAULT_PATH )
-      find_library( TBB_MALLOC_LIBRARY "tbbmalloc" PATHS ${BUNDLE_STAGEDIR}/lib NO_DEFAULT_PATH )
-    endif()
+      get_filename_component(TBB_NAME ${TBB_LIBRARY} NAME)
+      get_filename_component(TBB_MALLOC_NAME ${TBB_MALLOC_LIBRARY} NAME)
 
-    if ( TBB_LIBRARY )
+      set( TBB_LIBRARY "${BUNDLE_STAGEDIR}/lib/${TBB_NAME}" )
+      set( TBB_MALLOC_LIBRARY "${BUNDLE_STAGEDIR}/lib/${TBB_MALLOC_NAME}" )
+
       set( TBB_INCLUDE_DIR "${BUNDLE_STAGEDIR}/include" )
 
-      # need to set the install name so that we can find the library when it is 
+      # need to set the install name so that we can find the library when it is
       # placed into the bundle directory
       if (APPLE)
         execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libtbb.dylib" ${TBB_LIBRARY} )
         execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libtbbmalloc.dylib" ${TBB_MALLOC_LIBRARY} )
       endif()
+    else()
+      message( STATUS "WARNING: TBB library was not built in the expected directory.")
     endif()
   endif()
 endif()
@@ -108,6 +109,5 @@ if ( TBB_LIBRARY AND TBB_MALLOC_LIBRARY )
   message( STATUS "Libraries ${TBB_LIBRARY} | ${TBB_MALLOC_LIBRARY}" )
   set( SIRE_FOUND_TBB TRUE )
 else()
-  message( STATUS "Strange? Cannot find the file containing TBB's source (${TBB_ZIPFILE}).
-                   We cannot compile it, so will need to rely on the system version..." )
+  message( STATUS "Strange? Cannot find the compiled TBB library. We cannot compile it, so will need to rely on the system version..." )
 endif()

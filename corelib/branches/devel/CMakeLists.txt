@@ -85,13 +85,13 @@ set (SIRE_BIN "bin")
 # Shared library install dir
 set (SIRE_LIBS "lib")
 # Bundled shared library install dir
-set (SIRE_BUNDLED_LIBS "lib/Sire/bundled" )
+set (SIRE_BUNDLED_LIBS "bundled/lib" )
 # Static library install dir
 set (SIRE_ARCHIVES "lib/static")
 # Include (header) files install dir
 set (SIRE_INCLUDES "include/Sire")
 # Bundled include (header) files install dir
-set (SIRE_BUNDLED_INCLUDES "include/Sire/bundled")
+set (SIRE_BUNDLED_INCLUDES "bundled/include")
 # CMake install files install dir
 set (SIRE_CMAKEFILES "include/Sire/cmake")
 # Sire share directory (for parameters etc.)
@@ -494,6 +494,12 @@ if ( ${SIRE_ENABLE_BUNDLING} )
 
     if ( ${SIRE_BUNDLE_GSL} )
       include( "src/bundled/install_gsl.cmake" )
+
+      if (${SIRE_FOUND_GSL})
+        list(APPEND SIREMATHS_EXTRA_LIBRARIES ${GSL_LIBRARY})
+        list(APPEND SIREMATHS_EXTRA_LIBRARIES ${GSL_CBLAS_LIBRARY})
+      endif()
+
     endif()
 
     if ( ${SIRE_BUNDLE_BOOST} )
@@ -503,6 +509,12 @@ if ( ${SIRE_ENABLE_BUNDLING} )
     if ( ${SIRE_BUNDLE_QT} )
       include( "src/bundled/install_qtbase.cmake" )
     endif()
+
+    # All of the bundled objects are built into the directory ${CMAKE_BINARY_DIR}/bundled
+    # This directory must be installed into the sire.app/ directory
+    install( DIRECTORY ${CMAKE_BINARY_DIR}/bundled 
+             DESTINATION ${CMAKE_INSTALL_PREFIX}
+             USE_SOURCE_PERMISSIONS )
 endif()
 
 if ( NOT ${SIRE_FOUND_QT} )
