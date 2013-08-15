@@ -9,4 +9,4 @@ import Sire.Maths
 import Sire.CAS
 import Sire.Units
 
-from Sire.Soiree._Soiree import *
+from Sire.Analysis._Analysis import *

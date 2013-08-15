@@ -11,6 +11,7 @@
 #include "SireBase/process.h"
 #include "SireBase/getinstalldir.h"
 
+#include "sire_config.h"
 #include "sire_python_config.h"
 
 #include <boost/scoped_array.hpp>
@@ -118,9 +119,19 @@ int main(int argc, char **argv)
     else
         pythonpath = QString("%1:%2").arg(site_packages.canonicalPath()).arg(pythonpath);
 
+    QDir python_home( QString("%1/%2/..").arg( getInstallDir(), SIRE_BUNDLED_LIBS_DIR ) ); 
+
+    if (not python_home.exists())
+        throw SireError::file_error( QObject::tr(
+            "Cannot find the directory containing the bundled files (%1). "
+            "Please check your installations of Sire in directory %2.")
+                .arg(python_home.absolutePath()).arg(getInstallDir()), CODELOC );
+
     qDebug() << "Setting PYTHONPATH to" << pythonpath;
+    qDebug() << "Setting PYTHONHOME to" << python_home.canonicalPath();
 
     qputenv("PYTHONPATH", pythonpath.toUtf8());
+    qputenv("PYTHONHOME", python_home.canonicalPath().toUtf8());
 
     printf("Starting %ls: number of threads equals %d\n", python_argv[0], ppn);
 

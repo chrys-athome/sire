@@ -8,5 +8,5 @@
 #
 ########################
 
-from  _Units import *
+from  Sire.Units._Units import *
 

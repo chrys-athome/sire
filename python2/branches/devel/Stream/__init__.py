@@ -44,7 +44,7 @@ def load(data):
     for lib in header.requiredLibraries():
         _pvt_loadLibrary(lib)
 
-    print "Done!"
+    sys.stdout.write("Done!")
 
     return _pvt_load(data)
 
