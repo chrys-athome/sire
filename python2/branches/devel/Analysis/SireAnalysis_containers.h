@@ -25,10 +25,10 @@
   *  at http://siremol.org
   *
 \*********************************************/
-#ifndef PYWRAP_SOIREE_CONTAINERS_H
-#define PYWRAP_SOIREE_CONTAINERS_H
+#ifndef PYWRAP_SIREANALYSIS_CONTAINERS_H
+#define PYWRAP_SIREANALYSIS_CONTAINERS_H
 
-void register_Soiree_containers();
+void register_SireAnalysis_containers();
 
 #endif
 

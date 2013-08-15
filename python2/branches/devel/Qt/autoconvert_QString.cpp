@@ -40,25 +40,28 @@ using namespace boost::python;
 /** This function converts a QString to a python unicode object
 
 */
-PyObject* convert(QString const& s)
+struct qstring_to_python_string
 {
-    //get Qt to encode the string as UTF8, which python can then decode
-    // - this is probably not as efficient as it could be, but Sire
-    //   is not a text processing app ;-)
-    QByteArray utf8 = s.toUtf8();
-
-    if (utf8.isEmpty())
-        return PyUnicode_DecodeUTF8(0, 0, "strict");
-    else
+    static PyObject* convert(const QString &cpp_string)
     {
-        return PyUnicode_DecodeUTF8(utf8.constData(), utf8.count(), "strict");
+        //get Qt to encode the string as UTF8, which python can then decode
+        // - this is probably not as efficient as it could be, but Sire
+        //   is not a text processing app ;-)
+        QByteArray utf8 = cpp_string.toUtf8();
+
+        if (utf8.isEmpty())
+            return PyUnicode_DecodeUTF8(0, 0, "strict");
+        else
+        {
+            return PyUnicode_DecodeUTF8(utf8.constData(), utf8.count(), "strict");
+        }
     }
-}
+};
 
 /** This is the QString __str__ function */
 PyObject* QString__str__(QString const& s)
 {
-    PyObject *unicode_object = convert(s);
+    PyObject *unicode_object = qstring_to_python_string::convert(s);
 
     PyObject *str_object = PyUnicode_AsUTF8String(unicode_object);
 
@@ -173,6 +176,6 @@ struct QString_from_python
 */
 void autoconvert_QString()
 {
-    //code to get a QString from a python object
     QString_from_python();
+    to_python_converter< QString, qstring_to_python_string >();
 }

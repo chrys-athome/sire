@@ -9,6 +9,6 @@ set ( PYPP_SOURCES
        PMF.pypp.cpp
        TI.pypp.cpp
        TIPMF.pypp.cpp
-       Soiree_containers.cpp
-       Soiree_registrars.cpp
+       SireAnalysis_containers.cpp
+       SireAnalysis_registrars.cpp
     )

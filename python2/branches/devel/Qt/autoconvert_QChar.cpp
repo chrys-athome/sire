@@ -38,15 +38,25 @@
 
 using namespace boost::python;
 
-PyObject* convert(QString const& s);
-
 /** This function converts a QChar to a python (8 bit) str object
-
 */
-PyObject* convert(QChar const& c)
+struct qchar_to_python_string
 {
-    return convert( QString(c) );
-}
+    static PyObject* convert(const QChar &cpp_string)
+    {
+        //get Qt to encode the string as UTF8, which python can then decode
+        // - this is probably not as efficient as it could be, but Sire
+        //   is not a text processing app ;-)
+        QByteArray utf8 = QString(cpp_string).toUtf8();
+
+        if (utf8.isEmpty())
+            return PyUnicode_DecodeUTF8(0, 0, "strict");
+        else
+        {
+            return PyUnicode_DecodeUTF8(utf8.constData(), utf8.count(), "strict");
+        }
+    }
+};
 
 /** This function convert a python string or unicode to a QChar */
 void QChar_from_python_str_or_unicode( PyObject* obj_ptr,
@@ -155,4 +165,5 @@ void autoconvert_QChar()
 {
     //code to get a QString from a python object
     QChar_from_python();
+    to_python_converter< QChar, qchar_to_python_string >();
 }

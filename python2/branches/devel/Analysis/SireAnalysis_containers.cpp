@@ -41,15 +41,15 @@
 #include "Base/convertpackedarray.hpp"
 
 #include "SireMaths/freeenergyaverage.h"
-#include "Soiree/ti.h"
-#include "Soiree/bennetts.h"
+#include "SireAnalysis/ti.h"
+#include "SireAnalysis/bennetts.h"
 
 using namespace SireMaths;
-using namespace Soiree;
+using namespace SireAnalysis;
 
 using boost::python::register_tuple;
 
-void register_Soiree_containers()
+void register_SireAnalysis_containers()
 {
     register_list< QList<Gradients> >();
     register_list< QList<FEPDeltas> >();

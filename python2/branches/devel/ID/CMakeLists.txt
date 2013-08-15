@@ -40,7 +40,7 @@ set_target_properties (ID
 		       )
 		       
 target_link_libraries (ID
-                       SirePython2
+                       SirePython
                        SIRE_SireID
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}

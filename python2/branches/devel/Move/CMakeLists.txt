@@ -41,7 +41,7 @@ set_target_properties (Move
 		       )
 		       
 target_link_libraries (Move
-                       SirePython2
+                       SirePython
                        SIRE_SireMove
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}

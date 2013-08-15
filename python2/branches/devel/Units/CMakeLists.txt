@@ -45,7 +45,7 @@ set_target_properties (Units
 		       )
 		       
 target_link_libraries (Units
-                       SirePython2
+                       SirePython
                        SIRE_SireUnits
                        SIRE_SireBase
                        ${BOOST_PYTHON_LIBRARY}

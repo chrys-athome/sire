@@ -63,6 +63,11 @@ if ( PYTHON_LIBRARY )
   set( PYTHON_SITE_DIR "${SIRE_BUNDLED_DIR}/lib/python${PYTHON_VERSION}/site-packages" )
   set( PYTHON_MODULE_EXTENSION ".so" )
 
+  if (APPLE)
+    execute_process( COMMAND chmod u+w ${PYTHON_LIBRARY} )
+    execute_process( COMMAND ${CMAKE_INSTALL_NAME_TOOL} -id "@rpath/libpython${PYTHON_VERSION}${PYTHON_ABIFLAGS}.dylib" ${PYTHON_LIBRARY} )
+  endif()
+
   message( STATUS "Using bundled python in ${PYTHON_LIBRARIES} | ${PYTHON_INCLUDE_DIR}" )
   message( STATUS "Python modules will be installed to ${PYTHON_SITE_DIR}" )
 

@@ -42,7 +42,7 @@ set_target_properties (MM
 		       )
 		       
 target_link_libraries (MM
-                       SirePython2
+                       SirePython
                        SIRE_SireMM
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}

@@ -45,7 +45,7 @@ set_target_properties (Maths
 		       )
 		       
 target_link_libraries (Maths 
-                       SirePython2
+                       SirePython
                        SIRE_SireMaths
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}

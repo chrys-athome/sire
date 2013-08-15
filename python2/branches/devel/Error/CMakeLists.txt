@@ -34,7 +34,7 @@ set_target_properties (Error
 		          )
 		       
 target_link_libraries (Error
-                       SirePython2
+                       SirePython
                        SIRE_SireError
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}

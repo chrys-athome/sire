@@ -310,7 +310,8 @@ def scanFiles(dir, module_dir, atom_properties, cg_properties,
 
 if __name__ == "__main__":
     
-    modules = { "Base" : "SireBase",
+    modules = { "Analysis" : "SireAnalysis",
+                "Base" : "SireBase",
                 "CAS" : "SireCAS",
                 "Cluster" : "SireCluster",
                 "FF" : "SireFF",
@@ -320,7 +321,6 @@ if __name__ == "__main__":
                 "MM" : "SireMM",
                 "Mol" : "SireMol",
                 "Move" : "SireMove",
-                "Soiree" : "Soiree",
                 "Squire" : "Squire",
                 "Stream" : "SireStream",
                 "System" : "SireSystem",

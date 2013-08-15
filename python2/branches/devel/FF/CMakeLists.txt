@@ -41,7 +41,7 @@ set_target_properties (FF
 		       )
 		       
 target_link_libraries (FF
-                       SirePython2
+                       SirePython
                        SIRE_SireFF
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}

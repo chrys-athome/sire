@@ -1,7 +1,7 @@
 ########################################
 #
-# CMake file for Python 2 Helper Library
-#   (SirePython2)
+# CMake file for Python Helper Library
+#   (SirePython)
 #
 ########################################
 
@@ -24,15 +24,15 @@ set ( WRAPHELPERS_SOURCES
     )
 
 # Create the library that holds all of the class wrappers
-add_library (SirePython2 ${WRAPHELPERS_SOURCES})
+add_library (SirePython ${WRAPHELPERS_SOURCES})
 
-set_target_properties (SirePython2  
+set_target_properties (SirePython  
                        PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
 		       )
 		       
-target_link_libraries (SirePython2
+target_link_libraries (SirePython
                        SIRE_SireCluster
                        SIRE_SireStream
                        SIRE_SireError
@@ -41,7 +41,7 @@ target_link_libraries (SirePython2
                       )
 
 # installation
-install( TARGETS SirePython2
+install( TARGETS SirePython
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

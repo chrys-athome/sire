@@ -28,37 +28,33 @@ set ( SIREPYTHON_SOURCES
     )
 
 # Create the library that holds all of the class wrappers
-add_executable (sire_python ${SIREPYTHON_SOURCES})
+add_executable (python ${SIREPYTHON_SOURCES})
 
-set_target_properties (sire_python
-                       PROPERTIES
-                       VERSION ${SIRE_VERSION}
-                      )
-		       
-target_link_libraries (sire_python
-                       SirePython2
+target_link_libraries (python
+                       SirePython
                        SIRE_SireCluster
                        SIRE_Squire
                        SIRE_SireMol
                        SIRE_SireMove
                        SIRE_SireSystem
                        SIRE_SireIO
+                       SIRE_SireAnalysis
                        SIRE_SireError
                        ${SIRECLUSTER_EXTRA_LIBRARIES}
                        ${PYTHON_LIBRARIES}
                       )
 
 # installation
-install( TARGETS sire_python
+install( TARGETS python
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
 if (APPLE)
-  add_custom_command(TARGET sire_python
+  add_custom_command(TARGET python
       POST_BUILD
-      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_LIBS}" sire_python
-      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_BUNDLED_LIBS}" sire_python )
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_LIBS}" python
+      COMMAND ${CMAKE_INSTALL_NAME_TOOL} -add_rpath "@executable_path/../${SIRE_BUNDLED_LIBS}" python )
 endif()
 

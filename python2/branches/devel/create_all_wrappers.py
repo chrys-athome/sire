@@ -1,7 +1,8 @@
 
 import os
 
-dirs = [ "Base", \
+dirs = [ "Analysis", \
+         "Base", \
          "CAS", \
          "Cluster", \
          "DB", \
@@ -12,8 +13,6 @@ dirs = [ "Base", \
          "Maths", \
          "Mol", \
          "Move", \
-         "Soiree", \
-         "Spier", \
          "Squire", \
          "Stream", \
          "System", \

@@ -11,7 +11,7 @@
 #include "SireBase/process.h"
 #include "SireBase/getinstalldir.h"
 
-#include "sire_python2_config.h"
+#include "sire_python_config.h"
 
 #include <boost/scoped_array.hpp>
 

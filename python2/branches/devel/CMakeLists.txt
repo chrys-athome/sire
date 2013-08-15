@@ -281,6 +281,7 @@ add_subdirectory (Helpers)
 # Recurse into the module subdirectories 
 add_subdirectory (Qt)
 add_subdirectory (Error)
+add_subdirectory (Analysis)
 add_subdirectory (Base)
 add_subdirectory (CAS)
 add_subdirectory (Cluster)
@@ -292,7 +293,6 @@ add_subdirectory (MM)
 add_subdirectory (Mol)
 add_subdirectory (Move)
 add_subdirectory (Stream)
-add_subdirectory (Soiree)
 add_subdirectory (Squire)
 add_subdirectory (System)
 add_subdirectory (Units)
@@ -300,11 +300,8 @@ add_subdirectory (Vol)
 
 add_subdirectory (Tools)
 
-#also compile the sire_python executable
-add_subdirectory (sire_python)
-
-#and the sire_ipython executable
-add_subdirectory (sire_ipython)
+#also compile Sire's python executable
+add_subdirectory (python)
 
 install( FILES __init__.py
          DESTINATION ${SIRE_PYTHON}/Sire 
@@ -313,8 +310,8 @@ install( FILES __init__.py
 # Create the sire_python2_config.h to tell Sire where the
 # python libraries will be installed
 configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_python2_config.h.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/sire_python2_config.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_python_config.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/sire_python_config.h"
   IMMEDIATE @ONLY)
 
 # These commands are used to create an 'uninstall' target

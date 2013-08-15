@@ -25,14 +25,14 @@
 
 namespace bp = boost::python;
 
-#include "Soiree_containers.h"
+#include "SireAnalysis_containers.h"
 
-#include "Soiree_registrars.h"
+#include "SireAnalysis_registrars.h"
 
-BOOST_PYTHON_MODULE(_Soiree){
-    register_Soiree_objects();
+BOOST_PYTHON_MODULE(_Analysis){
+    register_SireAnalysis_objects();
 
-    register_Soiree_containers();
+    register_SireAnalysis_containers();
 
     register_Bennetts_class();
 

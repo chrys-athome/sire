@@ -543,18 +543,7 @@ if __name__ == "__main__":
 
     qt_include_dirs = []
 
-    mac = False
-
-    if mac:
-        qt_include_dirs = [ "%s/QtCore.framework/Headers" % qtdir,
-                            "%s/QtXml.framework/Headers" % qtdir,
-                            "%s/QtGui.framework/Headers" % qtdir, 
-                            "%s/QtOpenGL.framework/Headers" % qtdir ]
-    else:
-        qt_include_dirs = [ qtdir, "%s/QtCore" % qtdir, "%s/QtGui" % qtdir,
-                                   "%s/QtXml" % qtdir,  "%s/QtOpenGL" % qtdir ]
-
-
+    qt_include_dirs = [ qtdir, "%s/QtCore" % qtdir ]
     boost_include_dirs = [ boostdir ]
     gsl_include_dirs = [ gsldir ]
 

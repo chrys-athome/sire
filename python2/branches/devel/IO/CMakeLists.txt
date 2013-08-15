@@ -41,7 +41,7 @@ set_target_properties (IO
 		       )
 		       
 target_link_libraries (IO
-                       SirePython2
+                       SirePython
                        SIRE_SireIO
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
