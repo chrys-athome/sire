@@ -82,14 +82,14 @@ grid_system.setComponent( grid_system.totalComponent(),  \
 exp_system.setComponent( exp_system.totalComponent(), \
                               cljff.components().total() + swap_swapff.components().total() )
 
-print grid_system.energies()
-print exp_system.energies()
+print(grid_system.energies())
+print(exp_system.energies())
 
-print "\nGrid energy equals: %s. Explicit energy equals: %s." % \
-          (grid_system.energy(), exp_system.energy())
+print("\nGrid energy equals: %s. Explicit energy equals: %s." % \
+          (grid_system.energy(), exp_system.energy()))
 
 diff = grid_system.energy() - exp_system.energy()
-print "The difference is %s\n" % diff
+print("The difference is %s\n" % diff)
 
 rbmc = RigidBodyMC(swapwaters)
 rbmc.setReflectionSphere(center_point, 7.5*angstrom)
@@ -101,97 +101,97 @@ PDB().write(grid_system.molecules(), "test0000.pdb")
 t = QTime()
 
 for i in range(1,11):
-    print "Moving the system..."
+    print("Moving the system...")
     t.start()
     grid_system = moves.move(grid_system, 1000, False)
     ms = t.elapsed()
-    print "Moves complete! Took %d ms" % ms
-    print "GRID: ",grid_system.energies()
+    print("Moves complete! Took %d ms" % ms)
+    print("GRID: ",grid_system.energies())
     exp_system.update( grid_system.molecules() )
-    print "EXPT: ",exp_system.energies()
+    print("EXPT: ",exp_system.energies())
 
-    print "\nGrid energy equals: %s. Explicit energy equals: %s." % \
-          (grid_system.energy(), exp_system.energy())
+    print("\nGrid energy equals: %s. Explicit energy equals: %s." % \
+          (grid_system.energy(), exp_system.energy()))
 
     diff = grid_system.energy() - exp_system.energy()
-    print "The difference is %s\n" % diff
+    print("The difference is %s\n" % diff)
 
     PDB().write(grid_system.molecules(), "test%0004d.pdb" % i)
 
 # Save and restore the two systems from binary
 import Sire.Stream
-print "Saving the grid system..."
+print("Saving the grid system...")
 Sire.Stream.save( (grid_system, exp_system), "test/SireMM/testgrid.s3" )
-print "Reloading the grid system..."
+print("Reloading the grid system...")
 (grid_system, exp_system) = Sire.Stream.load("test/SireMM/testgrid.s3")
 
 
-print grid_system.energies()
-print exp_system.energies()
-print "\nGrid energy equals: %s. Explicit energy equals: %s." % \
-          (grid_system.energy(), exp_system.energy())
+print(grid_system.energies())
+print(exp_system.energies())
+print("\nGrid energy equals: %s. Explicit energy equals: %s." % \
+          (grid_system.energy(), exp_system.energy()))
 
 diff = grid_system.energy() - exp_system.energy()
-print "The difference is %s\n" % diff
+print("The difference is %s\n" % diff)
 
 for i in range(1,11):
-    print "Moving the system..."
+    print("Moving the system...")
     t.start()
     grid_system = moves.move(grid_system, 1000, False)
     ms = t.elapsed()
-    print "Moves complete! Took %d ms" % ms
-    print "GRID: ",grid_system.energies()
+    print("Moves complete! Took %d ms" % ms)
+    print("GRID: ",grid_system.energies())
     exp_system.update( grid_system.molecules() )
-    print "EXPT: ",exp_system.energies()
+    print("EXPT: ",exp_system.energies())
 
-    print "\nGrid energy equals: %s. Explicit energy equals: %s." % \
-          (grid_system.energy(), exp_system.energy())
+    print("\nGrid energy equals: %s. Explicit energy equals: %s." % \
+          (grid_system.energy(), exp_system.energy()))
 
     diff = grid_system.energy() - exp_system.energy()
-    print "The difference is %s\n" % diff
+    print("The difference is %s\n" % diff)
 
     PDB().write(grid_system.molecules(), "test%0004d.pdb" % (i+10))
 
-print "\nTriggering recalculation from scratch..."
+print("\nTriggering recalculation from scratch...")
 grid_system.mustNowRecalculateFromScratch()
 exp_system.mustNowRecalculateFromScratch()
 
-print grid_system.energies()
-print exp_system.energies()
-print "\nGrid energy equals: %s. Explicit energy equals: %s." % \
-          (grid_system.energy(), exp_system.energy())
+print(grid_system.energies())
+print(exp_system.energies())
+print("\nGrid energy equals: %s. Explicit energy equals: %s." % \
+          (grid_system.energy(), exp_system.energy()))
 
 diff = grid_system.energy() - exp_system.energy()
-print "The difference is %s\n" % diff
+print("The difference is %s\n" % diff)
 
 for i in range(1,11):
-    print "Moving the system..."
+    print("Moving the system...")
     t.start()
     grid_system = moves.move(grid_system, 1000, False)
     ms = t.elapsed()
-    print "Moves complete! Took %d ms" % ms
-    print "GRID: ",grid_system.energies()
+    print("Moves complete! Took %d ms" % ms)
+    print("GRID: ",grid_system.energies())
     exp_system.update( grid_system.molecules() )
-    print "EXPT: ",exp_system.energies()
+    print("EXPT: ",exp_system.energies())
 
-    print "\nGrid energy equals: %s. Explicit energy equals: %s." % \
-          (grid_system.energy(), exp_system.energy())
+    print("\nGrid energy equals: %s. Explicit energy equals: %s." % \
+          (grid_system.energy(), exp_system.energy()))
 
     diff = grid_system.energy() - exp_system.energy()
-    print "The difference is %s\n" % diff
+    print("The difference is %s\n" % diff)
     
     PDB().write(grid_system.molecules(), "test%0004d.pdb" % (i+20))
 
-print "\nTriggering recalculation from scratch..."
+print("\nTriggering recalculation from scratch...")
 grid_system.mustNowRecalculateFromScratch()
 exp_system.mustNowRecalculateFromScratch()
     
-print grid_system.energies()
-print exp_system.energies()
-print "\nGrid energy equals: %s. Explicit energy equals: %s." % \
-          (grid_system.energy(), exp_system.energy())
+print(grid_system.energies())
+print(exp_system.energies())
+print("\nGrid energy equals: %s. Explicit energy equals: %s." % \
+          (grid_system.energy(), exp_system.energy()))
     
 diff = grid_system.energy() - exp_system.energy()
-print "The difference is %s\n" % diff
+print("The difference is %s\n" % diff)
 
-print "Done :-)"
+print("Done :-)")
