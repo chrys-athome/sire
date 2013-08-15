@@ -29,7 +29,7 @@ message( STATUS "Sire will be compiled and installed to directory ${CMAKE_INSTAL
 # Absolutely can't run cmake in the source directory!
 if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
   message( FATAL_ERROR "You must run CMake in a different directory to the source!" ) 
-endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
+endif()
 
 # name the project
 project (SIRE CXX C Fortran)
@@ -86,6 +86,7 @@ set (SIRE_BIN "bin")
 set (SIRE_LIBS "lib")
 # Where to install all bundled components
 set (SIRE_BUNDLED_DIR "bundled" )
+set (SIRE_BUNDLED_LIBS "${SIRE_BUNDLED_DIR}/lib")
 # Static library install dir
 set (SIRE_ARCHIVES "lib/static")
 # Include (header) files install dir
@@ -121,6 +122,7 @@ save_sire_variable( "SIRE_INSTALL_PREFIX" "${CMAKE_INSTALL_PREFIX}" )
 save_sire_variable( "SIRE_BIN" "${SIRE_BIN}" )
 save_sire_variable( "SIRE_LIBS" "${SIRE_LIBS}" )
 save_sire_variable( "SIRE_BUNDLED_DIR" "${SIRE_BUNDLED_DIR}" )
+save_sire_variable( "SIRE_BUNDLED_LIBS" "${SIRE_BUNDLED_LIBS}" )
 save_sire_variable( "SIRE_ARCHIVES" "${SIRE_ARCHIVES}" )
 save_sire_variable( "SIRE_INCLUDES" "${SIRE_INCLUDES}" )
 save_sire_variable( "SIRE_SHARE" "${SIRE_SHARE}" )
@@ -241,6 +243,8 @@ if (SIRE_HAS_CPP_11)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   set(SIRE_CXX11_FLAGS "${SIRE_CXX11_FLAGS} -std=c++11")
 endif()
+
+save_sire_variable( "SIRE_CXX11_FLAGS" "${SIRE_CXX11_FLAGS}" )
 
 # Find which C++ 2011 features are supported
 include (CheckCXX11Features)
@@ -470,7 +474,7 @@ if ( ${SIRE_ENABLE_BUNDLING} )
     message( STATUS "Sire will be compiled to use its own copy of bundled libraries." )
 
     set( BUNDLE_BUILDDIR "${CMAKE_BINARY_DIR}/build_bundled" )
-    set( BUNDLE_STAGEDIR "${CMAKE_BINARY_DIR}/${SIRE_BUNDLED_DIR}" )
+    set( BUNDLE_STAGEDIR "${CMAKE_INSTALL_PREFIX}/${SIRE_BUNDLED_DIR}" )
 
     if (NOT EXISTS "${BUNDLE_BUILDDIR}")
       file(MAKE_DIRECTORY ${BUNDLE_BUILDDIR})
@@ -510,11 +514,13 @@ if ( ${SIRE_ENABLE_BUNDLING} )
       include( "src/bundled/install_qtbase.cmake" )
     endif()
 
-    # All of the bundled objects are built into the directory ${CMAKE_BINARY_DIR}/bundled
-    # This directory must be installed into the sire.app/ directory
-    install( DIRECTORY ${BUNDLE_STAGEDIR} 
-             DESTINATION ${CMAKE_INSTALL_PREFIX}
-             USE_SOURCE_PERMISSIONS )
+    if ( NOT ${BUNDLE_STAGEDIR} STREQUAL "${CMAKE_INSTALL_PREFIX}/${SIRE_BUNDLED_DIR}" )
+      # All of the bundled objects are built into the directory ${CMAKE_BINARY_DIR}/bundled
+      # This directory must be installed into the sire.app/ directory
+      install( DIRECTORY ${BUNDLE_STAGEDIR} 
+               DESTINATION ${CMAKE_INSTALL_PREFIX}
+               USE_SOURCE_PERMISSIONS )
+    endif()
 endif()
 
 if ( NOT ${SIRE_FOUND_QT} )
