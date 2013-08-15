@@ -19,10 +19,7 @@ include_directories(${CMAKE_SOURCE_DIR})
 set ( WRAPHELPERS_SOURCES
 
       objectregistry.hpp
-      pythonpacket.h
-
       objectregistry.cpp
-      pythonpacket.cpp
 
     )
 

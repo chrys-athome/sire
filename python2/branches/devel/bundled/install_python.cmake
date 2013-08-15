@@ -60,7 +60,7 @@ endif()
 if ( PYTHON_LIBRARY )
   set( PYTHON_LIBRARIES "${PYTHON_LIBRARY}" )
   set( PYTHON_INCLUDE_DIR "${BUNDLE_STAGEDIR}/include/python${PYTHON_VERSION}${PYTHON_ABIFLAGS}")
-  set( PYTHON_SITE_DIR "${BUNDLE_STAGEDIR}/lib/python${PYTHON_VERSION}/site-packages" )
+  set( PYTHON_SITE_DIR "${SIRE_BUNDLED_DIR}/lib/python${PYTHON_VERSION}/site-packages" )
   set( PYTHON_MODULE_EXTENSION ".so" )
 
   message( STATUS "Using bundled python in ${PYTHON_LIBRARIES} | ${PYTHON_INCLUDE_DIR}" )

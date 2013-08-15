@@ -160,6 +160,38 @@ set (BUILD_SHARED_LIBS ON)
 # (or run 'make VERBOSE=1')
 # set (CMAKE_VERBOSE_MAKEFILE ON)
 
+
+# We will use the small compiler flags (as the wrappers are too big and don't need optimising)
+message( STATUS "Compiling the python 2 wrappers using a SMALL build." )
+set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_SMALL} )
+set( CMAKE_CXX_FLAGS ${SIRE_CXX_FLAGS_SMALL} )
+
+set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_SHARE_LINK_FLAGS}" )
+set( CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} ${SIRE_STATIC_LINK_FLAGS}" )
+set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_EXE_LINK_FLAGS}" )
+
+include (CheckCXXCompilerFlag)
+
+CHECK_CXX_COMPILER_FLAG( "-Wno-unused-variable" SIRE_HAS_NO_UNUSED_VARIABLE )
+CHECK_CXX_COMPILER_FLAG( "-Woverloaded-virtual" SIRE_HAS_NO_OVERLOADED_VIRTUAL )
+
+if (SIRE_HAS_NO_UNUSED_VARIABLE)
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-variable")
+endif()
+
+if (SIRE_HAS_NO_OVERLOADED_VIRTUAL)
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual")
+endif()
+
+message( STATUS  "CMAKE_SYSTEM_NAME      == ${CMAKE_SYSTEM_NAME}" )
+message( STATUS  "CMAKE_C_COMPILER       == ${CMAKE_C_COMPILER}" )
+message( STATUS  "CMAKE_CXX_COMPILER     == ${CMAKE_CXX_COMPILER}" )
+message( STATUS  "C compiler flags       == ${CMAKE_C_FLAGS}" )
+message( STATUS  "C++ compiler flags     == ${CMAKE_CXX_FLAGS}" )
+message( STATUS  "Shared library flags   == ${CMAKE_SHARED_LINKER_FLAGS}" )
+message( STATUS  "Static library flags   == ${CMAKE_STATIC_LINKER_FLAGS}" )
+message( STATUS  "Executable link flags  == ${CMAKE_EXE_LINKER_FLAGS}" )
+
 # Option to disable all bundles
 option( SIRE_PYTHON_ENABLE_BUNDLING "Allow Sire Python to use bundled libraries and python interpreter" ON )
 
@@ -203,6 +235,14 @@ if ( SIRE_PYTHON_ENABLE_BUNDLING )
   if ( SIRE_BUNDLE_BOOST_PYTHON )
     include( "bundled/install_boost_python.cmake" )
   endif()
+
+  if ( NOT ${BUNDLE_STAGEDIR} STREQUAL ${CMAKE_INSTALL_PREFIX} )
+    # All of the bundled objects are built into the directory ${CMAKE_BINARY_DIR}/bundled
+    # This directory must be installed into the sire.app/ directory
+    install( DIRECTORY ${BUNDLE_STAGEDIR} 
+             DESTINATION ${CMAKE_INSTALL_PREFIX}
+             USE_SOURCE_PERMISSIONS )
+  endif()
 endif()
 
 if (NOT ${SIRE_FOUND_PYTHON})
@@ -232,37 +272,8 @@ set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
 message( STATUS "Looking for Qt5Core in directory ${SIRE_QT5CORE_DIR}" )
 set( Qt5Core_DIR "${SIRE_QT5CORE_DIR}/cmake/Qt5Core" )
 find_package( Qt5Core REQUIRED )
-
-# We will use the small compiler flags (as the wrappers are too big and don't need optimising)
-message( STATUS "Compiling the python 2 wrappers using a SMALL build." )
-set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_SMALL} )
-set( CMAKE_CXX_FLAGS ${SIRE_CXX_FLAGS_SMALL} )
-
-set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_SHARE_LINK_FLAGS}" )
-set( CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} ${SIRE_STATIC_LINK_FLAGS}" )
-set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_EXE_LINK_FLAGS}" )
-
-include (CheckCXXCompilerFlag)
-
-CHECK_CXX_COMPILER_FLAG( "-Wno-unused-variable" SIRE_HAS_NO_UNUSED_VARIABLE )
-CHECK_CXX_COMPILER_FLAG( "-Woverloaded-virtual" SIRE_HAS_NO_OVERLOADED_VIRTUAL )
-
-if (SIRE_HAS_NO_UNUSED_VARIABLE)
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-variable")
-endif()
-
-if (SIRE_HAS_NO_OVERLOADED_VIRTUAL)
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual")
-endif()
-
-message( STATUS  "CMAKE_SYSTEM_NAME      == ${CMAKE_SYSTEM_NAME}" )
-message( STATUS  "CMAKE_C_COMPILER       == ${CMAKE_C_COMPILER}" )
-message( STATUS  "CMAKE_CXX_COMPILER     == ${CMAKE_CXX_COMPILER}" )
-message( STATUS  "C compiler flags       == ${CMAKE_C_FLAGS}" )
-message( STATUS  "C++ compiler flags     == ${CMAKE_CXX_FLAGS}" )
-message( STATUS  "Shared library flags   == ${CMAKE_SHARED_LINKER_FLAGS}" )
-message( STATUS  "Static library flags   == ${CMAKE_STATIC_LINKER_FLAGS}" )
-message( STATUS  "Executable link flags  == ${CMAKE_EXE_LINKER_FLAGS}" )
+get_target_property(QT5_LOCATION Qt5::Core LOCATION)
+message( STATUS "Using Qt5Core in ${QT5_LOCATION}" )
 
 # Add the helper library
 add_subdirectory (Helpers)

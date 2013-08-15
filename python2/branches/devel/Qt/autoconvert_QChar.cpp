@@ -60,7 +60,7 @@ void QChar_from_python_str_or_unicode( PyObject* obj_ptr,
         unicode_object = obj_ptr;
         Py_INCREF(unicode_object);
     }
-    else if (PyString_Check(obj_ptr))
+    else if (PyBytes_Check(obj_ptr))
     {
         // Coerce the `str' to `unicode' using UTF-8. UnicodeDecodeError
         // is thrown if the string doesn't make sense in that encoding.
@@ -85,15 +85,15 @@ void QChar_from_python_str_or_unicode( PyObject* obj_ptr,
         boost::python::throw_error_already_set();
 
     //get the raw buffer from the string
-    char *utf8_string = PyString_AS_STRING(utf8);
+    char *utf8_string;
+    Py_ssize_t utf8_nchars;
+    int ok = PyBytes_AsStringAndSize(utf8, &utf8_string, &utf8_nchars);
 
-    if (utf8_string == 0)
+    if (ok != 0)
     {
         Py_DECREF(utf8);
         boost::python::throw_error_already_set();
     }
-
-    int utf8_nchars = PyString_GET_SIZE(utf8);
 
     //use Qt to convert the UTF8 string to QString unicode
     QString unicode_qstring;
@@ -128,9 +128,9 @@ struct QChar_from_python
     */
     static void* convertible(PyObject* obj_ptr)
     {
-        if ( PyString_Check(obj_ptr) )
+        if ( PyBytes_Check(obj_ptr) )
         {
-             if (PyString_GET_SIZE(obj_ptr) == 1){ return obj_ptr; }
+             if (PyBytes_GET_SIZE(obj_ptr) == 1){ return obj_ptr; }
              else{ return 0; }
         }
         else if ( PyUnicode_Check(obj_ptr) )

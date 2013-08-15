@@ -25,10 +25,6 @@
 
 #include "QUuid.pypp.hpp"
 
-#include "_Qt_enumerations.pypp.hpp"
-
-#include "_Qt_global_variables.pypp.hpp"
-
 namespace bp = boost::python;
 
 #include "sireqt_containers.h"
@@ -38,8 +34,6 @@ void autoconvert_QChar();
 void autoconvert_QString();
 
 BOOST_PYTHON_MODULE(_Qt){
-    register_enumerations();
-
     register_SireQt_containers();
 
     register_QByteArray_class();
@@ -53,8 +47,6 @@ BOOST_PYTHON_MODULE(_Qt){
     autoconvert_QChar();
 
     autoconvert_QString();
-
-    register_global_variables();
 
     register_QUuid_class();
 }
