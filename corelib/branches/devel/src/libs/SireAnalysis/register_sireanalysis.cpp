@@ -29,4 +29,4 @@
 #include "SireStream/streamdata.hpp"
 using namespace SireStream;
 
-static const RegisterLibrary *registry = new RegisterLibrary( QString("Soiree"), 1, 1 );
+static const RegisterLibrary *registry = new RegisterLibrary( QString("SireAnalysis"), 1, 1 );

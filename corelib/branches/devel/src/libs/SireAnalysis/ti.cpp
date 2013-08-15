@@ -41,7 +41,7 @@
 
 #include "tostring.h"
 
-using namespace Soiree;
+using namespace SireAnalysis;
 using namespace SireMaths;
 using namespace SireID;
 using namespace SireBase;
@@ -54,7 +54,7 @@ using namespace SireUnits::Dimension;
 
 static const RegisterMetaType<TIPMF> r_tipmf;
 
-QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const TIPMF &pmf)
+QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const TIPMF &pmf)
 {
     writeHeader(ds, r_tipmf, 1);
     
@@ -66,7 +66,7 @@ QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const TIPMF &pmf)
     return ds;
 }
 
-QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, TIPMF &pmf)
+QDataStream SIREANALYSIS_EXPORT &operator>>(QDataStream &ds, TIPMF &pmf)
 {
     VersionID v = readHeader(ds, r_tipmf);
     
@@ -595,7 +595,7 @@ TIPMF TIPMF::dropEndPoints() const
 
 static const RegisterMetaType<Gradients> r_grads;
 
-QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const Gradients &grads)
+QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const Gradients &grads)
 {
     writeHeader(ds, r_grads, 1);
     
@@ -606,7 +606,7 @@ QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const Gradients &grads)
     return ds;
 }
 
-QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, Gradients &grads)
+QDataStream SIREANALYSIS_EXPORT &operator>>(QDataStream &ds, Gradients &grads)
 {
     VersionID v = readHeader(ds, r_grads);
     
@@ -1304,7 +1304,7 @@ TIPMF Gradients::integrate() const
 
 static const RegisterMetaType<TI> r_ti;
 
-QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const TI &ti)
+QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const TI &ti)
 {
     writeHeader(ds, r_ti, 1);
     
@@ -1314,7 +1314,7 @@ QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const TI &ti)
     return ds;
 }
 
-QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, TI &ti)
+QDataStream SIREANALYSIS_EXPORT &operator>>(QDataStream &ds, TI &ti)
 {
     VersionID v = readHeader(ds, r_ti);
     

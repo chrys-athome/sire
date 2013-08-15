@@ -1,6 +1,6 @@
 ########################################
 #
-# CMake file for library:Soiree
+# CMake file for library:SireAnalysis
 #
 ########################################
 
@@ -9,17 +9,17 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
-# Define the headers in Soiree
-set ( SOIREE_HEADERS
+# Define the headers in SireAnalysis
+set ( SIREANALYSIS_HEADERS
       bennetts.h
       fep.h
       ti.h
     )
 
-# Define the sources in SireSystem
-set ( SOIREE_SOURCES
+# Define the sources in SireAnalysis
+set ( SIREANALYSIS_SOURCES
 
-      register_soiree.cpp
+      register_sireanalysis.cpp
 
       bennetts.cpp
       fep.cpp
@@ -27,18 +27,18 @@ set ( SOIREE_SOURCES
 
       third_party/regress.cpp
 
-      ${SOIREE_HEADERS}
+      ${SIREANALYSIS_HEADERS}
     )
 
-add_library (Soiree ${SOIREE_SOURCES})
+add_library (SireAnalysis ${SIREANALYSIS_SOURCES})
 
-set_target_properties (Soiree PROPERTIES
+set_target_properties (SireAnalysis PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
                       )
 
 # Link to other Sire libraries
-target_link_libraries (Soiree
+target_link_libraries (SireAnalysis
                        SireCAS
                        SireMaths
                        SireBase
@@ -46,12 +46,12 @@ target_link_libraries (Soiree
                        )
 
 # installation
-install( TARGETS Soiree EXPORT SireLibraries
+install( TARGETS SireAnalysis EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
-install( FILES ${SOIREE_HEADERS}
-         DESTINATION ${SIRE_INCLUDES}/Soiree )
+install( FILES ${SIREANALYSIS_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireAnalysis )
 

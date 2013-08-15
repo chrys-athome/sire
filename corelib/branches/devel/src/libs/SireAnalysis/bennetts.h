@@ -26,26 +26,26 @@
   *
 \*********************************************/
 
-#ifndef SOIREE_BENNETS_H
-#define SOIREE_BENNETS_H
+#ifndef SIREANALYSIS_BENNETS_H
+#define SIREANALYSIS_BENNETS_H
 
 #include "fep.h"
 
 SIRE_BEGIN_HEADER
 
-namespace Soiree
+namespace SireAnalysis
 {
 class Bennetts;
 class BennettsRatios;
 }
 
-QDataStream& operator<<(QDataStream&, const Soiree::Bennetts&);
-QDataStream& operator>>(QDataStream&, Soiree::Bennetts&);
+QDataStream& operator<<(QDataStream&, const SireAnalysis::Bennetts&);
+QDataStream& operator>>(QDataStream&, SireAnalysis::Bennetts&);
 
-QDataStream& operator<<(QDataStream&, const Soiree::BennettsRatios&);
-QDataStream& operator>>(QDataStream&, Soiree::BennettsRatios&);
+QDataStream& operator<<(QDataStream&, const SireAnalysis::BennettsRatios&);
+QDataStream& operator>>(QDataStream&, SireAnalysis::BennettsRatios&);
 
-namespace Soiree
+namespace SireAnalysis
 {
 
 using SireMaths::BennettsFreeEnergyAverage;
@@ -55,7 +55,7 @@ using SireMaths::BennettsFreeEnergyAverage;
     
     @author Christopher Woods
 */
-class SOIREE_EXPORT BennettsRatios
+class SIREANALYSIS_EXPORT BennettsRatios
         : public SireBase::ConcreteProperty<BennettsRatios,SireBase::Property>
 {
 
@@ -134,7 +134,7 @@ private:
     
     @author Christopher Woods
 */
-class SOIREE_EXPORT Bennetts : public SireBase::ConcreteProperty<Bennetts,SireBase::Property>
+class SIREANALYSIS_EXPORT Bennetts : public SireBase::ConcreteProperty<Bennetts,SireBase::Property>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Bennetts&);
@@ -209,11 +209,11 @@ private:
 
 }
 
-Q_DECLARE_METATYPE( Soiree::BennettsRatios )
-Q_DECLARE_METATYPE( Soiree::Bennetts )
+Q_DECLARE_METATYPE( SireAnalysis::BennettsRatios )
+Q_DECLARE_METATYPE( SireAnalysis::Bennetts )
 
-SIRE_EXPOSE_CLASS( Soiree::BennettsRatios )
-SIRE_EXPOSE_CLASS( Soiree::Bennetts )
+SIRE_EXPOSE_CLASS( SireAnalysis::BennettsRatios )
+SIRE_EXPOSE_CLASS( SireAnalysis::Bennetts )
 
 SIRE_END_HEADER
 

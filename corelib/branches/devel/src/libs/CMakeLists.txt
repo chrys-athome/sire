@@ -6,7 +6,8 @@
 ###############################
 
 # List of each subdirectory
-set ( SUBDIRS SireBase
+set ( SUBDIRS SireAnalysis
+              SireBase
               SireCAS
               SireCluster
               SireError
@@ -21,7 +22,6 @@ set ( SUBDIRS SireBase
               SireSystem
               SireUnits
               SireVol
-              Soiree
               Squire
             )
 

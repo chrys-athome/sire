@@ -38,7 +38,7 @@
 
 #include "tostring.h"
 
-using namespace Soiree;
+using namespace SireAnalysis;
 using namespace SireMaths;
 using namespace SireBase;
 using namespace SireID;
@@ -52,7 +52,7 @@ using namespace SireStream;
 
 static const RegisterMetaType<DataPoint> r_dp;
 
-QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const DataPoint &dp)
+QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const DataPoint &dp)
 {
     writeHeader(ds, r_dp, 1);
     
@@ -63,7 +63,7 @@ QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const DataPoint &dp)
     return ds;
 }
 
-QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, DataPoint &dp)
+QDataStream SIREANALYSIS_EXPORT &operator>>(QDataStream &ds, DataPoint &dp)
 {
     VersionID v = readHeader(ds, r_dp);
     
@@ -329,7 +329,7 @@ bool DataPoint::equalWithinMaxError(const DataPoint &other) const
 
 static const RegisterMetaType<PMF> r_pmf;
 
-QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const PMF &pmf)
+QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const PMF &pmf)
 {
     writeHeader(ds, r_pmf, 2);
     
@@ -340,7 +340,7 @@ QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const PMF &pmf)
     return ds;
 }
 
-QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, PMF &pmf)
+QDataStream SIREANALYSIS_EXPORT &operator>>(QDataStream &ds, PMF &pmf)
 {
     VersionID v = readHeader(ds, r_pmf);
     
@@ -498,7 +498,7 @@ QVector<DataPoint> PMF::values() const
 
 static const RegisterMetaType<FEPDeltas> r_deltas;
 
-QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const FEPDeltas &deltas)
+QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const FEPDeltas &deltas)
 {
     writeHeader(ds, r_deltas, 1);
     
@@ -509,7 +509,7 @@ QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const FEPDeltas &deltas)
     return ds;
 }
 
-QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, FEPDeltas &deltas)
+QDataStream SIREANALYSIS_EXPORT &operator>>(QDataStream &ds, FEPDeltas &deltas)
 {
     VersionID v = readHeader(ds, r_deltas);
     
@@ -1131,7 +1131,7 @@ PMF FEPDeltas::integrate() const
 
 static const RegisterMetaType<FEP> r_fep;
 
-QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const FEP &fep)
+QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const FEP &fep)
 {
     writeHeader(ds, r_fep, 1);
     
@@ -1142,7 +1142,7 @@ QDataStream SOIREE_EXPORT &operator<<(QDataStream &ds, const FEP &fep)
     return ds;
 }
 
-QDataStream SOIREE_EXPORT &operator>>(QDataStream &ds, FEP &fep)
+QDataStream SIREANALYSIS_EXPORT &operator>>(QDataStream &ds, FEP &fep)
 {
     VersionID v = readHeader(ds, r_fep);
     

@@ -26,30 +26,30 @@
   *
 \*********************************************/
 
-#ifndef SOIREE_TI_H
-#define SOIREE_TI_H
+#ifndef SIREANALYSIS_TI_H
+#define SIREANALYSIS_TI_H
 
-#include "Soiree/fep.h"
+#include "SireAnalysis/fep.h"
 
 SIRE_BEGIN_HEADER
 
-namespace Soiree
+namespace SireAnalysis
 {
 class TI;
 class Gradients;
 class TIPMF;
 }
 
-QDataStream& operator<<(QDataStream&, const Soiree::TI&);
-QDataStream& operator>>(QDataStream&, Soiree::TI&);
+QDataStream& operator<<(QDataStream&, const SireAnalysis::TI&);
+QDataStream& operator>>(QDataStream&, SireAnalysis::TI&);
 
-QDataStream& operator<<(QDataStream&, const Soiree::Gradients&);
-QDataStream& operator>>(QDataStream&, Soiree::Gradients&);
+QDataStream& operator<<(QDataStream&, const SireAnalysis::Gradients&);
+QDataStream& operator>>(QDataStream&, SireAnalysis::Gradients&);
 
-QDataStream& operator<<(QDataStream&, const Soiree::TIPMF&);
-QDataStream& operator>>(QDataStream&, Soiree::TIPMF&);
+QDataStream& operator<<(QDataStream&, const SireAnalysis::TIPMF&);
+QDataStream& operator>>(QDataStream&, SireAnalysis::TIPMF&);
 
-namespace Soiree
+namespace SireAnalysis
 {
 
 using SireMaths::FreeEnergyAverage;
@@ -60,7 +60,7 @@ using SireUnits::Dimension::MolarEnergy;
   
     @author Christopher Woods
 */
-class SOIREE_EXPORT TIPMF : public SireBase::ConcreteProperty<TIPMF,PMF>
+class SIREANALYSIS_EXPORT TIPMF : public SireBase::ConcreteProperty<TIPMF,PMF>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const TIPMF&);
@@ -131,7 +131,7 @@ private:
 
     @author Christopher Woods
 */
-class SOIREE_EXPORT Gradients
+class SIREANALYSIS_EXPORT Gradients
         : public SireBase::ConcreteProperty<Gradients,SireBase::Property>
 {
 
@@ -217,7 +217,7 @@ private:
     
     @author Christopher Woods
 */
-class SOIREE_EXPORT TI : public SireBase::ConcreteProperty<TI,SireBase::Property>
+class SIREANALYSIS_EXPORT TI : public SireBase::ConcreteProperty<TI,SireBase::Property>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const TI&);
@@ -293,13 +293,13 @@ private:
 
 }
 
-Q_DECLARE_METATYPE( Soiree::Gradients )
-Q_DECLARE_METATYPE( Soiree::TI )
-Q_DECLARE_METATYPE( Soiree::TIPMF )
+Q_DECLARE_METATYPE( SireAnalysis::Gradients )
+Q_DECLARE_METATYPE( SireAnalysis::TI )
+Q_DECLARE_METATYPE( SireAnalysis::TIPMF )
 
-SIRE_EXPOSE_CLASS( Soiree::Gradients )
-SIRE_EXPOSE_CLASS( Soiree::TI )
-SIRE_EXPOSE_CLASS( Soiree::TIPMF )
+SIRE_EXPOSE_CLASS( SireAnalysis::Gradients )
+SIRE_EXPOSE_CLASS( SireAnalysis::TI )
+SIRE_EXPOSE_CLASS( SireAnalysis::TIPMF )
 
 SIRE_END_HEADER
 

@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SOIREE_FEP_H
-#define SOIREE_FEP_H
+#ifndef SIREANALYSIS_FEP_H
+#define SIREANALYSIS_FEP_H
 
 #include "SireMaths/freeenergyaverage.h"
 
@@ -35,7 +35,7 @@
 
 SIRE_BEGIN_HEADER
 
-namespace Soiree
+namespace SireAnalysis
 {
 class FEP;
 class FEPDeltas;
@@ -43,19 +43,19 @@ class DataPoint;
 class PMF;
 }
 
-QDataStream& operator<<(QDataStream&, const Soiree::FEP&);
-QDataStream& operator>>(QDataStream&, Soiree::FEP&);
+QDataStream& operator<<(QDataStream&, const SireAnalysis::FEP&);
+QDataStream& operator>>(QDataStream&, SireAnalysis::FEP&);
 
-QDataStream& operator<<(QDataStream&, const Soiree::FEPDeltas&);
-QDataStream& operator>>(QDataStream&, Soiree::FEPDeltas&);
+QDataStream& operator<<(QDataStream&, const SireAnalysis::FEPDeltas&);
+QDataStream& operator>>(QDataStream&, SireAnalysis::FEPDeltas&);
 
-QDataStream& operator<<(QDataStream&, const Soiree::DataPoint&);
-QDataStream& operator>>(QDataStream&, Soiree::DataPoint&);
+QDataStream& operator<<(QDataStream&, const SireAnalysis::DataPoint&);
+QDataStream& operator>>(QDataStream&, SireAnalysis::DataPoint&);
 
-QDataStream& operator<<(QDataStream&, const Soiree::PMF&);
-QDataStream& operator>>(QDataStream&, Soiree::PMF&);
+QDataStream& operator<<(QDataStream&, const SireAnalysis::PMF&);
+QDataStream& operator>>(QDataStream&, SireAnalysis::PMF&);
 
-namespace Soiree
+namespace SireAnalysis
 {
 
 using SireMaths::FreeEnergyAverage;
@@ -65,7 +65,7 @@ using SireMaths::FreeEnergyAverage;
     
     @author Christopher Woods
 */
-class SOIREE_EXPORT DataPoint
+class SIREANALYSIS_EXPORT DataPoint
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const DataPoint&);
@@ -128,7 +128,7 @@ private:
     
     @author Christopher Woods
 */
-class SOIREE_EXPORT PMF : public SireBase::ConcreteProperty<PMF,SireBase::Property>
+class SIREANALYSIS_EXPORT PMF : public SireBase::ConcreteProperty<PMF,SireBase::Property>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const PMF&);
@@ -175,7 +175,7 @@ private:
     
     @author Christopher Woods
 */
-class SOIREE_EXPORT FEPDeltas
+class SIREANALYSIS_EXPORT FEPDeltas
       : public SireBase::ConcreteProperty<FEPDeltas,SireBase::Property>
 {
 
@@ -255,7 +255,7 @@ private:
     
     @author Christopher Woods
 */
-class SOIREE_EXPORT FEP : public SireBase::ConcreteProperty<FEP,SireBase::Property>
+class SIREANALYSIS_EXPORT FEP : public SireBase::ConcreteProperty<FEP,SireBase::Property>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const FEP&);
@@ -336,15 +336,15 @@ private:
 
 }
 
-Q_DECLARE_METATYPE( Soiree::FEP )
-Q_DECLARE_METATYPE( Soiree::FEPDeltas)
-Q_DECLARE_METATYPE( Soiree::DataPoint )
-Q_DECLARE_METATYPE( Soiree::PMF )
+Q_DECLARE_METATYPE( SireAnalysis::FEP )
+Q_DECLARE_METATYPE( SireAnalysis::FEPDeltas)
+Q_DECLARE_METATYPE( SireAnalysis::DataPoint )
+Q_DECLARE_METATYPE( SireAnalysis::PMF )
 
-SIRE_EXPOSE_CLASS( Soiree::FEP )
-SIRE_EXPOSE_CLASS( Soiree::FEPDeltas )
-SIRE_EXPOSE_CLASS( Soiree::DataPoint )
-SIRE_EXPOSE_CLASS( Soiree::PMF )
+SIRE_EXPOSE_CLASS( SireAnalysis::FEP )
+SIRE_EXPOSE_CLASS( SireAnalysis::FEPDeltas )
+SIRE_EXPOSE_CLASS( SireAnalysis::DataPoint )
+SIRE_EXPOSE_CLASS( SireAnalysis::PMF )
 
 SIRE_END_HEADER
 
