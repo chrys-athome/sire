@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2008  Christopher Woods
+  *  Copyright (C) 2013  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,10 +26,37 @@
   *
 \*********************************************/
 
-#include "SireStream/streamdata.hpp"
-using namespace SireStream;
+#ifndef SIRESTREAM_REGISTERALTERNATIVENAME_H
+#define SIRESTREAM_REGISTERALTERNATIVENAME_H
 
-static const RegisterLibrary *registry = new RegisterLibrary( QString("SireAnalysis"), 1, 1 );
+#include "sireglobal.h"
 
-/** This library used to be called Soiree */
-static const RegisterLibrary *registry2 = new RegisterLibrary( QString("Soiree"), 1, 1 );
+SIRE_BEGIN_HEADER
+
+namespace SireStream
+{
+    void registerAlternativeName(const char *type_name, const char *alternative);
+
+    /** This class is used for static initialisation to register alternative names */
+    template<class T>
+    class SIRESTREAM_EXPORT RegisterAlternativeName
+    {
+    public:
+        RegisterAlternativeName(const char *alternative)
+        {
+            registerAlternativeName(T::typeName(), alternative);
+        }
+        
+        ~RegisterAlternativeName()
+        {}
+    };
+    
+    namespace detail
+    {
+        QSet<QString> getAlternativeNames(QString type_name);
+    }
+}
+
+SIRE_END_HEADER
+
+#endif

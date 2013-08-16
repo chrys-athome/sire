@@ -47,6 +47,7 @@
 #include "tostring.h"
 
 #include "shareddatastream.h"
+#include "registeralternativename.h"
 
 #include "sire_version.h"        // CONDITIONAL_INCLUDE
 
@@ -1527,11 +1528,28 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
             int id = QMetaType::type( datatype.toLatin1().constData() );
 
             if ( id == 0 or not QMetaType::isRegistered(id) )
-                throw SireError::unknown_type( QObject::tr(
-                    "Cannot deserialise an object of type \"%1\". "
-                    "Ensure that the library or module containing "
-                    "this type has been loaded and that it has been registered "
-                    "with QMetaType.").arg(datatype), CODELOC );
+            {
+                // check for renamed classes
+                QSet<QString> altnames = getAlternativeNames(datatype);
+                
+                foreach (QString altname, altnames)
+                {
+                    id = QMetaType::type(altname.toLatin1().constData());
+                    
+                    if (id != 0 and QMetaType::isRegistered(id))
+                    {
+                        datatype = altname;
+                        break;
+                    }
+                }
+            
+                if (id == 0 or not QMetaType::isRegistered(id))
+                    throw SireError::unknown_type( QObject::tr(
+                        "Cannot deserialise an object of type \"%1\". "
+                        "Ensure that the library or module containing "
+                        "this type has been loaded and that it has been registered "
+                        "with QMetaType.").arg(datatype), CODELOC );
+            }
         
             //create a default-constructed object of this type
             shared_ptr<void> ptr( QMetaType::create(id,0), detail::void_deleter(id) );

@@ -35,6 +35,7 @@
 #include "SireError/errors.h"
 
 #include "SireStream/shareddatastream.h"
+#include "SireStream/registeralternativename.h"
 
 #include "tostring.h"
 
@@ -50,6 +51,7 @@ using namespace SireStream;
 ///////////
 
 static const RegisterMetaType<BennettsRatios> r_ratios;
+static const RegisterAlternativeName<BennettsRatios> r_altratios("Soiree::BennettsRatios");
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const BennettsRatios &ratios)
 {
@@ -627,6 +629,7 @@ PMF BennettsRatios::integrate() const
 ///////////
 
 static const RegisterMetaType<Bennetts> r_bennetts;
+static const RegisterAlternativeName<Bennetts> r_altbennets("Soiree::Bennetts");
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const Bennetts &bennetts)
 {

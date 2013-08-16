@@ -11,6 +11,7 @@ set ( SIRESTREAM_HEADERS
       errors.h
       magic_error.h
       md5sum.h
+      registeralternativename.h
       shareddatastream.h
       sharestrings.h
       streamdata.hpp

@@ -35,6 +35,7 @@
 #include "SireError/errors.h"
 
 #include "SireStream/shareddatastream.h"
+#include "SireStream/registeralternativename.h"
 
 #include "tostring.h"
 
@@ -51,6 +52,7 @@ using namespace SireStream;
 /////////
 
 static const RegisterMetaType<DataPoint> r_dp;
+static const RegisterAlternativeName<DataPoint> r_altdp("Soiree::DataPoint");
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const DataPoint &dp)
 {
@@ -328,6 +330,7 @@ bool DataPoint::equalWithinMaxError(const DataPoint &other) const
 /////////
 
 static const RegisterMetaType<PMF> r_pmf;
+static const RegisterAlternativeName<PMF> r_altpmf("Soiree::PMF");
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const PMF &pmf)
 {
@@ -497,6 +500,7 @@ QVector<DataPoint> PMF::values() const
 /////////
 
 static const RegisterMetaType<FEPDeltas> r_deltas;
+static const RegisterAlternativeName<FEPDeltas> r_altdeltas("Soiree::FEPDeltas");
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const FEPDeltas &deltas)
 {
@@ -1130,6 +1134,7 @@ PMF FEPDeltas::integrate() const
 //////////////
 
 static const RegisterMetaType<FEP> r_fep;
+static const RegisterAlternativeName<FEP> r_altfep("Soiree::FEP");
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const FEP &fep)
 {

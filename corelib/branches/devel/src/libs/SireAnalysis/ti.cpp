@@ -34,6 +34,7 @@
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
+#include "SireStream/registeralternativename.h"
 
 #include "third_party/regress.h"  // CONDITIONAL_INCLUDE
 
@@ -53,6 +54,7 @@ using namespace SireUnits::Dimension;
 /////////
 
 static const RegisterMetaType<TIPMF> r_tipmf;
+static const RegisterAlternativeName<TIPMF> r_alttipmf("Soiree::TIPMF");
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const TIPMF &pmf)
 {
@@ -594,6 +596,7 @@ TIPMF TIPMF::dropEndPoints() const
 /////////
 
 static const RegisterMetaType<Gradients> r_grads;
+static const RegisterAlternativeName<Gradients> r_altgrads("Soiree::Gradients");
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const Gradients &grads)
 {
@@ -1303,6 +1306,7 @@ TIPMF Gradients::integrate() const
 /////////
 
 static const RegisterMetaType<TI> r_ti;
+static const RegisterAlternativeName<TI> r_altti("Soiree::TI");
 
 QDataStream SIREANALYSIS_EXPORT &operator<<(QDataStream &ds, const TI &ti)
 {

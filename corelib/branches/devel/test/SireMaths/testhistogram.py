@@ -16,7 +16,7 @@ assert h.binWidth() == 0.2
 nvals = 100000
 weight = 0.6
 
-print "Generating random numbers..."
+print("Generating random numbers...")
 for i in range(0,nvals):
     h.accumulate( rand.randNorm(rand_mean, rand_variance), weight )
 
@@ -24,18 +24,18 @@ assert_almost_equal( h.sumOfBins(), nvals * weight, 1 )
 assert_almost_equal( h.mean(), rand_mean, 1 )
 assert_almost_equal( h.standardDeviation(), rand_variance, 1 )
 
-print h
-print "MEAN", h.mean(), "vs.", rand_mean
-print "MEDIAN", h.median()
-print "MODE", h.mode()
-print "RANGE", h.range()
-print "MINVAL", h.minimumValue()
-print "MAXVAL", h.maximumValue()
-print "STDEV", h.standardDeviation(), "vs.", rand_variance
-print "SKEW", h.skew(), "vs.", 0.0
-print "KIRTOSIS", h.kirtosis(), "vs.", 0.0
+print(h)
+print("MEAN", h.mean(), "vs.", rand_mean)
+print("MEDIAN", h.median())
+print("MODE", h.mode())
+print("RANGE", h.range())
+print("MINVAL", h.minimumValue())
+print("MAXVAL", h.maximumValue())
+print("STDEV", h.standardDeviation(), "vs.", rand_variance)
+print("SKEW", h.skew(), "vs.", 0.0)
+print("KIRTOSIS", h.kirtosis(), "vs.", 0.0)
 
-vals = h.normalise().values()
+vals = list(h.normalise().values())
 gaus = h.normalise().normalDistribution()
 
 assert len(vals) == len(gaus)
@@ -56,7 +56,7 @@ axes.plot(x, y2, "r-")
 
 x = []
 y = []
-vals = h.resize(0.4).normalise().values()
+vals = list(h.resize(0.4).normalise().values())
 
 for i in range(0,len(vals)):
     x.append( vals[i].middle() )
@@ -66,7 +66,7 @@ axes.plot(x, y, "g-")
 
 x = []
 y = []
-vals = h.resize(0.1).normalise().values()
+vals = list(h.resize(0.1).normalise().values())
 
 for i in range(0,len(vals)):
     x.append( vals[i].middle() )
