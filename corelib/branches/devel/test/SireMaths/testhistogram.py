@@ -1,5 +1,9 @@
 
 from Sire.Maths import *
+
+import matplotlib
+matplotlib.use('TkAgg')
+
 from matplotlib import pyplot
 
 from nose.tools import assert_almost_equal

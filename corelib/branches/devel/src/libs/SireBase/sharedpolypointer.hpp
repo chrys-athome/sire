@@ -286,20 +286,9 @@ Q_INLINE_TEMPLATE
 SharedPolyPointer<T>::SharedPolyPointer(const T &obj)
                      : SharedPolyPointerBase()
 {
-    //increment the reference count of this object - this 
-    //stops if from being deleted
     T *obj_ptr = const_cast<T*>(&obj);
-    obj_ptr->ref.ref();
     
-    //if this object is already pointed to by a SharedPolyPointer
-    //then the reference count of the QSharedData before we add 1
-    //will be greater than 0
-    if ( obj_ptr->ref.fetchAndAddRelaxed(1) > 0 )
-    {
-        //this is held by another SharedPolyPointer
-        d = obj_ptr;
-    }
-    else
+    if ( obj_ptr->ref.testAndSetOrdered(0,0) )
     {
         //the reference count was zero - this implies that
         //this object is not held by another SharedPolyPointer,
@@ -308,9 +297,12 @@ SharedPolyPointer<T>::SharedPolyPointer(const T &obj)
         //of this object.
         d = SharedPolyPointerHelper<T>::clone(obj);
         d->ref.ref();
-    
-        //reduce the reference count of the original object
-        obj_ptr->ref.deref();
+    }
+    else
+    {
+        //this is held by another SharedPolyPointer - increment the reference count
+        d = obj_ptr;
+        d->ref.ref();
     }
 }
 
@@ -390,12 +382,7 @@ SharedPolyPointer<T>::SharedPolyPointer(const S &obj)
         throwInvalidCast( SharedPolyPointerHelper<S>::what(obj),
                           SharedPolyPointerHelper<T>::typeName() );
     
-    obj_ptr->ref.ref();
-    
-    //if this object is already pointed to by a SharedPolyPointer
-    //then the reference count of the QSharedData part will now be
-    //greater than one
-    if ( obj_ptr->ref.testAndSetRelaxed(1,1) )
+    if ( obj_ptr->ref.testAndSetOrdered(0,0) )
     {
         //the reference count was zero - this implies that
         //this object is not held by another SharedPolyPointer,
@@ -404,14 +391,12 @@ SharedPolyPointer<T>::SharedPolyPointer(const S &obj)
         //of this object.
         d = SharedPolyPointerHelper<T>::clone(*obj_ptr);
         d->ref.ref();
-    
-        //reduce the reference count of the original object
-        obj_ptr->ref.deref();
     }
     else
     {
         //this is held by another SharedPolyPointer
         d = obj_ptr;
+        d->ref.ref();
     }
 }
 
@@ -419,9 +404,11 @@ SharedPolyPointer<T>::SharedPolyPointer(const S &obj)
 template<class T>
 Q_INLINE_TEMPLATE
 SharedPolyPointer<T>::~SharedPolyPointer()
-{ 
+{
     if (d and not d->ref.deref())
+    {
         delete d;
+    }
 }
 
 /** Null assignment operator - allows you to write ptr = 0 to 
@@ -430,7 +417,7 @@ template<class T>
 Q_INLINE_TEMPLATE
 SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(int)
 {
-    if (d && !d->ref.deref())
+    if (d and not d->ref.deref())
         delete d;
         
     d = 0;
@@ -468,22 +455,15 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const T &obj)
 {
     if (d != &obj)
     {
-        //increment the reference count of this object - this 
-        //stops if from being deleted
         T *obj_ptr = const_cast<T*>(&obj);
-        obj_ptr->ref.ref();
     
-        //if this object is already pointed to by a SharedPolyPointer
-        //then the reference count of the QSharedData part will now be
-        //greater than one
-        if ( obj_ptr->ref.testAndSetRelaxed(1,1) )
+        if ( obj_ptr->ref.testAndSetOrdered(0,0) )
         {
             //the reference count was zero - this implies that
             //this object is not held by another SharedPolyPointer,
             //(it is probably on the stack) so it is not
             //safe to use this object directly - point to a clone
             //of this object.
-            obj_ptr->ref.deref();
             obj_ptr = SharedPolyPointerHelper<T>::clone(obj);
             
             if (d)
@@ -498,14 +478,12 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const T &obj)
         {
             //this is held by another SharedPolyPointer
             if (d)
-            {
                 qAtomicAssign(d, obj_ptr);
-            
-                //remove the extra reference count
-                d->ref.deref();
-            }
             else
+            {
                 d = obj_ptr;
+                d->ref.ref();
+            }
         }
     }
     
@@ -616,25 +594,17 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
             throwInvalidCast( SharedPolyPointerHelper<S>::what(obj),
                               SharedPolyPointerHelper<T>::typeName() );
         
-        obj_ptr->ref.ref();
-    
-        //if this object is already pointed to by a SharedPolyPointer
-        //then the reference count of the QSharedData part will now be
-        //greater than one
-        if (obj_ptr->ref.testAndSetRelaxed(1,1) )
+        if (obj_ptr->ref.testAndSetOrdered(0,0) )
         {
             //the reference count was zero - this implies that
             //this object is not held by another SharedPolyPointer,
             //(it is probably on the stack) so it is not
             //safe to use this object directly - point to a clone
             //of this object.
-            obj_ptr->ref.deref();
             obj_ptr = SharedPolyPointerHelper<T>::clone(*obj_ptr);
             
             if (d)
-            {
                 qAtomicAssign(d, obj_ptr);
-            }
             else
             {
                 d = obj_ptr;
@@ -645,12 +615,7 @@ SharedPolyPointer<T>& SharedPolyPointer<T>::operator=(const S &obj)
         {
             //this is held by another SharedPolyPointer
             if (d)
-            {
                 qAtomicAssign(d, obj_ptr);
-            
-                //remove the extra reference count
-                d->ref.deref();
-            }
             else
             {
                 d = obj_ptr;
@@ -680,7 +645,7 @@ SIRE_INLINE_TEMPLATE
 bool SharedPolyPointer<T>::unique() const
 {
     //test that we have a value and that the reference count is 1
-    return (d and d->ref.testAndSetRelaxed(1,1));
+    return (d and d->ref.testAndSetOrdered(1,1));
 }
 
 /** Dereference this pointer */

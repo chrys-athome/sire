@@ -1,5 +1,7 @@
 
 from Sire.Maths import *
+import matplotlib
+matplotlib.use('TkAgg')
 from matplotlib import pyplot
 
 from nose.tools import assert_almost_equal
@@ -15,7 +17,7 @@ h2 = Histogram(0.1)
 nvals = 100000
 weight = 1
 
-print "Generating random numbers..."
+print("Generating random numbers...")
 for i in range(0,nvals):
     h1.accumulate( rand.randNorm(rand_mean, rand_variance), weight )
     h2.accumulate( rand.randNorm(rand_mean+20, rand_variance), weight )
@@ -26,7 +28,7 @@ def plot(axes, hist, type):
     x = []
     y = []
 
-    for value in hist.values():
+    for value in list(hist.values()):
         x.append( value.middle() )
         y.append( value.value() )
 

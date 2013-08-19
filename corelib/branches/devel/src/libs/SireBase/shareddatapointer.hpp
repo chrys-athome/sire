@@ -125,15 +125,9 @@ template<class T>
 Q_INLINE_TEMPLATE
 SharedDataPointer<T>::SharedDataPointer(const T &obj)
 {
-    //increment the reference count of this object - this 
-    //stops if from being deleted
     T *obj_ptr = const_cast<T*>(&obj);
-    obj_ptr->ref.ref();
     
-    //if this object is already pointed to by a SharedDataPointer
-    //then the reference count of the QSharedData part will now be
-    //greater than one
-    if ( obj_ptr->ref.testAndSetRelaxed(1,1) )
+    if ( obj_ptr->ref.testAndSetOrdered(0,0) )
     {
         //the reference count was zero - this implies that
         //this object is not held by another SharedDataPointer,
@@ -142,14 +136,12 @@ SharedDataPointer<T>::SharedDataPointer(const T &obj)
         //of this object.
         d = new T(obj);
         d->ref.ref();
-    
-        //reduce the reference count of the original object
-        obj_ptr->ref.deref();
     }
     else
     {
         //this is held by another SharedDataPointer
         d = obj_ptr;
+        d->ref.ref();
     }
 }
 
@@ -216,22 +208,15 @@ SharedDataPointer<T>& SharedDataPointer<T>::operator=(const T &obj)
 {
     if (d != &obj)
     {
-        //increment the reference count of this object - this 
-        //stops if from being deleted
         T *obj_ptr = const_cast<T*>(&obj);
-        obj_ptr->ref.ref();
     
-        //if this object is already pointed to by a SharedDataPointer
-        //then the reference count of the QSharedData part will now be
-        //greater than one
-        if ( obj_ptr->ref.testAndSetRelaxed(1,1) )
+        if ( obj_ptr->ref.testAndSetOrdered(0,0) )
         {
             //the reference count was zero - this implies that
             //this object is not held by another SharedDataPointer,
             //(it is probably on the stack) so it is not
             //safe to use this object directly - point to a clone
             //of this object.
-            obj_ptr->ref.deref();
             obj_ptr = new T(obj);
             
             if (d)
@@ -246,14 +231,12 @@ SharedDataPointer<T>& SharedDataPointer<T>::operator=(const T &obj)
         {
             //this is held by another SharedDataPointer
             if (d)
-            {
                 qAtomicAssign(d, obj_ptr);
-            
-                //remove the extra reference count
-                d->ref.deref();
-            }
             else
+            {
                 d = obj_ptr;
+                d->ref.ref();
+            }
         }
     }
     
@@ -284,7 +267,7 @@ template <class T>
 Q_INLINE_TEMPLATE
 void SharedDataPointer<T>::detach() 
 {
-    if (d and not d->ref.testAndSetRelaxed(1,1))
+    if (d and not d->ref.testAndSetOrdered(1,1))
     {
         T *x = new T(*d);
         qAtomicAssign(d, x);
