@@ -4,7 +4,7 @@ from Sire.Qt import *
 
 props = Properties()
 
-p = VariantProperty( QVariant("mieow") )
+p = StringProperty("mieow")
 
 props.setProperty( "cat", p )
 props.setMetadata( "cat", p )
@@ -13,15 +13,15 @@ props.setMetadata( "tiger", p )
 
 data = save(props)
 
-print "Properties takes up %d bytes" % data.size()
+print("Properties takes up %d bytes" % data.size())
 
-print "Loading the properties..."
+print("Loading the properties...")
 p2 = load(data)
-print "...complete!"
+print("...complete!")
 
-print props
-print p2
+print(props)
+print(p2)
 
-print props.property("cat")
-print p2.property("cat")
+print(props.property("cat"))
+print(p2.property("cat"))
 

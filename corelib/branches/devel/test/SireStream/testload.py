@@ -9,32 +9,31 @@ filename = "test/SireStream/tmp_testdata.sire"
 t.start()
 header = Sire.Stream.getDataHeader(filename)
 
-print "Getting the header took %d ms" % t.elapsed()
+print(("Getting the header took %d ms" % t.elapsed()))
 
-print header.dataType()
-print header.requiredLibraries()
+print((header.dataType()))
+print((header.requiredLibraries()))
 
-print header.createdBy()
-print header.createdWhen().toString()
-print header.createdWhere()
+print((header.createdBy()))
+print((header.createdWhere()))
 
-print header.requiredMemory()
-print header.compressionRatio()
-print header.digest()
-print header.repository()
-print header.buildVersion()
-print header.systemInfo()
+print((header.requiredMemory()))
+print((header.compressionRatio()))
+print((header.digest()))
+print((header.repository()))
+print((header.buildVersion()))
+print((header.systemInfo()))
 
-print "Loading the system..."
+print("Loading the system...")
 t.start()
 system = Sire.Stream.load(filename)
 
-print system.energies()
+print((system.energies()))
 
-print "Loading the first time took %d ms" % t.elapsed()
+print(("Loading the first time took %d ms" % t.elapsed()))
 
-print "\nLoading the system again..."
+print("\nLoading the system again...")
 t.start()
 system = Sire.Stream.load(filename)
 
-print "Loading the second time took %d ms" % t.elapsed()
+print(("Loading the second time took %d ms" % t.elapsed()))

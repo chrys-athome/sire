@@ -169,6 +169,10 @@ QString LibraryInfo::getSupportReport(const QList< tuple<QString,quint32> > &lib
     
         if (not libraryInfo().library_info.contains(library))
         {
+            if (library == "SireDB")
+                //this is one of the old, and now removed libraries
+                continue;
+        
             problems.append( QObject::tr(
                 "  (%1) The required library \"%2\" is missing.")
                     .arg(problems.count() + 1).arg(library) );
@@ -278,6 +282,11 @@ QByteArray LibraryInfo::getLibraryHeader()
     used when writing the binary data */
 QList< tuple<QString,quint32> > LibraryInfo::readLibraryHeader(const QByteArray &header)
 {
+    if (header.isEmpty())
+        throw SireError::program_bug( QObject::tr(
+                "For some reason, the library header file is empty! This means that Sire "
+                "is unable to read the saved file."), CODELOC );
+
     QByteArray unpacked_header = qUncompress(header);
 
     QDataStream ds(unpacked_header);
@@ -386,7 +395,7 @@ QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds,
     QByteArray data;
     QDataStream ds2(&data, QIODevice::WriteOnly);
     
-    ds.setVersion(QDataStream::Qt_4_2);
+    ds2.setVersion(QDataStream::Qt_4_2);
     
     ds2 << header.created_by
         << header.created_when
@@ -414,7 +423,7 @@ QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds,
         << header.data_digest
         << header.compressed_size
         << header.uncompressed_size;
-        
+
     ds << qCompress(data, 9);
     
     return ds;
@@ -512,7 +521,7 @@ static const QString& getSystemInfo()
 
     QStringList lines;
     
-    #ifdef Q_WS_MAC
+    #ifdef Q_OS_MAC
         lines.append( "Platform: Mac OS" );
     
         switch (QSysInfo::MacintoshVersion)
@@ -997,7 +1006,7 @@ const QLocale& FileHeader::locale() const
 /** Return the list of libraries required to load this data */
 QStringList FileHeader::requiredLibraries() const
 {
-    QList< tuple<QString,quint32> > libs = 
+    QList< tuple<QString,quint32> > libs =
                     detail::LibraryInfo::readLibraryHeader(required_libraries);
                     
     QStringList libraries;
@@ -1030,7 +1039,7 @@ bool FileHeader::requireLibrary(const QString &library) const
     returns 0 if this library isn't required. */
 quint32 FileHeader::requiredVersion(const QString &library) const
 {
-    QList< tuple<QString,quint32> > libs = 
+    QList< tuple<QString,quint32> > libs =
                     detail::LibraryInfo::readLibraryHeader(required_libraries);
                     
     for (QList< tuple<QString,quint32> >::const_iterator it = libs.constBegin();
