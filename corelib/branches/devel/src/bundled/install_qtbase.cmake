@@ -16,6 +16,7 @@ else()
   message( STATUS "THIS WILL TAKE A VERY LONG TIME" )
 
   set( QT_ZIPFILE "${CMAKE_SOURCE_DIR}/src/bundled/qtbase.tar.gz" )
+  set( QT_PATCHFILE "${CMAKE_SOURCE_DIR}/src/bundled/qtbase_patch.tar.gz" )
 
   if (EXISTS "${QT_ZIPFILE}")
     set( QT_BUILD_DIR "${BUNDLE_BUILDDIR}/qtbase" )
@@ -26,22 +27,84 @@ else()
           COMMAND ${CMAKE_COMMAND} -E tar xzf ${QT_ZIPFILE}
           WORKING_DIRECTORY ${BUNDLE_BUILDDIR}
       )
+
+      if (EXISTS "${QT_PATCHFILE}")
+        message( STATUS "Unzipping ${QT_PATCHFILE} to ${QT_BUILD_DIR}" )
+        execute_process(
+          COMMAND ${CMAKE_COMMAND} -E tar xzf ${QT_PATCHFILE}
+          WORKING_DIRECTORY ${BUNDLE_BUILDDIR}
+        )
+      endif()
     endif()
 
-    set( QT_OPTIONS "-no-javascript-jit;-no-glib;-no-framework;-no-opengl;-no-kms;-no-dbus;-no-pch;-no-icu;-no-iconv;-no-cups;-no-nis;-no-widgets;-no-gui;-no-rpath;-no-linuxfb;-no-directfb;-no-eglfs;-no-xcb;-qt-pcre;-no-openssl;-no-gif;-qt-zlib;-no-pkg-config;-c++11;-confirm-license;-opensource;-prefix;${BUNDLE_STAGEDIR}" )
+    list( APPEND QT_OPTIONS "-no-javascript-jit")
+    list( APPEND QT_OPTIONS "-no-glib")
+    list( APPEND QT_OPTIONS "-no-opengl")
+    list( APPEND QT_OPTIONS "-no-kms")
+    list( APPEND QT_OPTIONS "-no-dbus")
+    list( APPEND QT_OPTIONS "-no-pch")
+    list( APPEND QT_OPTIONS "-no-icu")
+    list( APPEND QT_OPTIONS "-no-iconv")
+    list( APPEND QT_OPTIONS "-no-cups")
+    list( APPEND QT_OPTIONS "-no-nis")
+    list( APPEND QT_OPTIONS "-no-widgets")
+    list( APPEND QT_OPTIONS "-no-gui")
+    list( APPEND QT_OPTIONS "-no-rpath")
+    list( APPEND QT_OPTIONS "-no-linuxfb")
+    list( APPEND QT_OPTIONS "-no-directfb")
+    list( APPEND QT_OPTIONS "-no-eglfs")
+    list( APPEND QT_OPTIONS "-no-xcb")
+    list( APPEND QT_OPTIONS "-qt-pcre")
+    list( APPEND QT_OPTIONS "-no-openssl")
+    list( APPEND QT_OPTIONS "-no-gif")
+    list( APPEND QT_OPTIONS "-qt-zlib")
+    list( APPEND QT_OPTIONS "-no-pkg-config")
+
+    if (SIRE_HAS_CPP_11)
+      list( APPEND QT_OPTIONS "-c++11")
+
+      if (NEED_UNDEF_STRICT_ANSI)
+        set(ENV{CXXFLAGS} "-U__STRICT_ANSI__")
+      endif()
+    endif()
+
+    list( APPEND QT_OPTIONS "-nomake;examples")
+    list( APPEND QT_OPTIONS "-confirm-license")
+    list( APPEND QT_OPTIONS "-opensource")
+    list( APPEND QT_OPTIONS "-prefix;${BUNDLE_STAGEDIR}")
+
+    if (APPLE)
+      list( APPEND QT_OPTIONS "-no-framework")
+    endif()
+
     message( STATUS "${QT_OPTIONS}" )
 
     message( STATUS "Patience... Configuring QtCore..." )
     execute_process( COMMAND ${QT_BUILD_DIR}/configure ${QT_OPTIONS}
-                     WORKING_DIRECTORY ${QT_BUILD_DIR} )
+                     WORKING_DIRECTORY ${QT_BUILD_DIR}
+                     RESULT_VARIABLE QT_CONFIGURE_FAILED )
+
+    if (QT_CONFIGURE_FAILED)
+      message( FATAL_ERROR "Cannot configure Qt5. Please go to the mailing list for help.")
+    endif()
 
     message( STATUS "Patience... Compiling QtCore..." )
     execute_process( COMMAND ${CMAKE_MAKE_PROGRAM}
-                     WORKING_DIRECTORY ${QT_BUILD_DIR} )
+                     WORKING_DIRECTORY ${QT_BUILD_DIR}
+                     RESULT_VARIABLE QT_BUILD_FAILED )
+
+    if (QT_BUILD_FAILED)
+      message( FATAL_ERROR "Cannot build Qt5. Please go to the mailing list for help.")
+    endif()
 
     message( STATUS "Patience... Installing QtCore..." )
     execute_process( COMMAND ${CMAKE_MAKE_PROGRAM} install
-                   WORKING_DIRECTORY ${QT_BUILD_DIR} )
+                     WORKING_DIRECTORY ${QT_BUILD_DIR}
+                     RESULT_VARIABLE QT_INSTALL_FAILED )
+
+    if (QT_INSTALL_FAILED)
+      message( FATAL_ERROR "Cannot install Qt5. Please go to the mailing list for help.")
+    endif()
 
     set( Qt5Core_DIR "${BUNDLE_STAGEDIR}/lib/cmake/Qt5Core" )
     find_package( Qt5Core )

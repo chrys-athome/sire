@@ -238,10 +238,17 @@ if (SIRE_HAS_CPP_LIB)
   set(SIRE_CXX11_FLAGS "${SIRE_CXX11_FLAGS} -stdlib=libc++")
 endif()
 
+set(NEED_UNDEF_STRICT_ANSI FALSE)
+
 if (SIRE_HAS_CPP_11)
   message(STATUS "Compiler supports C++ 2011")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   set(SIRE_CXX11_FLAGS "${SIRE_CXX11_FLAGS} -std=c++11")
+
+  if (NEED_UNDEF_STRICT_ANSI)
+    message( STATUS "Undefining __STRICT_ANSI__ because of compile problems")
+    set(SIRE_CXX11_FLAGS "${SIRE_CXX11_FLAGS} -U__STRICT_ANSI__")
+  endif()
 endif()
 
 save_sire_variable( "SIRE_CXX11_FLAGS" "${SIRE_CXX11_FLAGS}" )
@@ -307,16 +314,24 @@ if ( ${SIRE_CXX_COMPILER_ID} MATCHES "GNU" )
     set ( SIRE_PLATFORM_FLAGS "-pipe" )
     set ( SIRE_STATIC_LINK_FLAGS "-static" )
 
-    if ( HAVE_IMMINTRIN_H )
-      # we have immintrin.h so we have AVX
-      message( STATUS "Compiling with AVX enabled. Resulting binary will only work on newer intel CPUs" )
-      set ( SIRE_VECTOR_FLAGS "-mavx -DSIRE_USE_AVX" )
-    elseif ( HAVE_EMMINTRIN_H )
-      # we have emmintrin.h so we have SSE
-      message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
-      set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+    if ( NOT SIRE_DISABLE_AVX)
+      if ( HAVE_IMMINTRIN_H )
+        # we have immintrin.h so we have AVX
+        message( STATUS "Compiling with AVX enabled. Resulting binary will only work on newer intel CPUs" )
+        set ( SIRE_VECTOR_FLAGS "-mavx -DSIRE_USE_AVX" )
+      elseif ( HAVE_EMMINTRIN_H )
+        # we have emmintrin.h so we have SSE
+        message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
+        set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+      endif()
+    elseif (NOT SIRE_DISABLE_SSE)   
+      if ( HAVE_EMMINTRIN_H )
+        # we have emmintrin.h so we have SSE
+        message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
+        set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+      endif()
     endif()
-        
+
     # Now gcc 4 specific options
     if ( GCC_MAJOR_VERSION GREATER 3 )
       # remove warnings about strict aliasing
@@ -364,16 +379,24 @@ elseif ( ${SIRE_CXX_COMPILER_ID} MATCHES "CLANG" )
     set ( SIRE_PLATFORM_FLAGS "-pipe" )
     set ( SIRE_STATIC_LINK_FLAGS "-static" )
 
-    if ( HAVE_IMMINTRIN_H )
-      # we have immintrin.h so we have AVX
-      message( STATUS "Compiling with AVX enabled. Resulting binary will only work on newer intel CPUs" )
-      set ( SIRE_VECTOR_FLAGS "-mavx -DSIRE_USE_AVX" )
-    elseif ( HAVE_EMMINTRIN_H )
-      # we have emmintrin.h so we have SSE
-      message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
-      set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+    if ( NOT SIRE_DISABLE_AVX )
+      if ( HAVE_IMMINTRIN_H )
+        # we have immintrin.h so we have AVX
+        message( STATUS "Compiling with AVX enabled. Resulting binary will only work on newer intel CPUs" )
+        set ( SIRE_VECTOR_FLAGS "-mavx -DSIRE_USE_AVX" )
+      elseif ( HAVE_EMMINTRIN_H )
+        # we have emmintrin.h so we have SSE
+        message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
+        set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+      endif()
+    elseif( NOT SIRE_DISABLE_SSE )
+      if ( HAVE_EMMINTRIN_H )
+        # we have emmintrin.h so we have SSE
+        message( STATUS "Compiling with SSE2 enabled. Resulting binary will not work on really old intel CPUs" )
+        set ( SIRE_VECTOR_FLAGS "-msse2 -DSIRE_USE_SSE" )
+      endif()
     endif()
-        
+       
     set ( SIRE_VISIBILITY_FLAGS "-DSIRE_VISIBILITY_AVAILABLE -fvisibility=hidden -fvisibility-inlines-hidden" )
 
     if (APPLE)
