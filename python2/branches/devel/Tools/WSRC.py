@@ -8,7 +8,7 @@ from Sire.MM import *
 from Sire.FF import *
 from Sire.CAS import *
 from Sire.Maths import *
-from Sire.Soiree import *
+from Sire.Analysis import *
 from Sire.System import *
 from Sire.Base import *
 from Sire.Units import *
@@ -183,7 +183,7 @@ def getIdentityPoints(ligand):
                 else:
                     have_point[str(atom.name().value())] = False
             except:
-                print "Atom %s has neither a mass or element. Cannot add an identity point." % str(atom)
+                print("Atom %s has neither a mass or element. Cannot add an identity point." % str(atom))
                 have_point[str(atom.name().value())] = False
 
     if ligand.hasProperty("connectivity"):
@@ -191,7 +191,7 @@ def getIdentityPoints(ligand):
     else:
         connectivity = Connectivity(ligand)
 
-    for key in have_point.keys():
+    for key in list(have_point.keys()):
         if have_point[key]:
             # if this is bonded to 3+ atoms that also have 
             # identity points, then get rid of this point
@@ -207,7 +207,7 @@ def getIdentityPoints(ligand):
                         n += 1
 
                 if n >= 3:
-                    print "Skipping %s as it is bonded to 3 or more points..." % atom.name()
+                    print("Skipping %s as it is bonded to 3 or more points..." % atom.name())
                     have_point[key] = False
 
     identity_points = []
@@ -216,7 +216,7 @@ def getIdentityPoints(ligand):
     # skip every 8th point
     iskip = 0
 
-    for key in have_point.keys():
+    for key in list(have_point.keys()):
         if have_point[key]:
             iskip += 1
 
@@ -228,7 +228,7 @@ def getIdentityPoints(ligand):
 
     k2.sort()
 
-    print "Using %d identity points: %s" % (len(k2), str(k2))
+    print("Using %d identity points: %s" % (len(k2), str(k2)))
 
     return identity_points
 
@@ -248,7 +248,7 @@ def setCLJProperties(forcefield):
         forcefield.setReactionFieldDielectric(rf_dielectric.val)
 
     else:
-        print >>sys.stderr,"Cannot interpret the cutoff method from \"%s\"" % cutoff_method.val
+        print("Cannot interpret the cutoff method from \"%s\"" % cutoff_method.val, file=sys.stderr)
 
     forcefield.setSpace(Cartesian())
     forcefield.setSwitchingFunction( HarmonicSwitchingFunction(coul_cutoff.val,coul_cutoff.val,
@@ -290,7 +290,7 @@ def createWSRCMoves(system):
     mobile_ligand = system[MGName("mobile_ligand")]
     mobile_swap = system[MGName("mobile_swap_water")]
 
-    print "Creating the Monte Carlo moves to sample the WSRC system..."
+    print("Creating the Monte Carlo moves to sample the WSRC system...")
 
     # create the global set of moves that will be applied to
     # the system
@@ -387,9 +387,9 @@ def createWSRCMoves(system):
 
     if seed is None:
         seed = RanGenerator().randInt(100000,1000000)
-        print "Using generated random number seed %d" % seed
+        print("Using generated random number seed %d" % seed)
     else:
-        print "Using supplied random number seed %d" % seed
+        print("Using supplied random number seed %d" % seed)
     
     moves.setGenerator( RanGenerator(seed) )
 
@@ -408,7 +408,7 @@ def renumberMolecules(molgroup):
 
 def mergeSystems(protein_system, water_system, ligand_mol):
     
-    print "Merging the protein box and water box to create the WSRC system..."
+    print("Merging the protein box and water box to create the WSRC system...")
 
     system = System("WSRC system")
 
@@ -421,10 +421,10 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
         if prot_reflection_center != wat_reflection_center or \
            prot_reflection_radius != wat_reflection_radius:
-            print "Disagreement of the reflection sphere in the protein and water boxes!"
-            print "Protein: %s and %s    Water: %s and %s" % \
+            print("Disagreement of the reflection sphere in the protein and water boxes!")
+            print("Protein: %s and %s    Water: %s and %s" % \
                     (prot_reflection_center,prot_reflection_radius,
-                     wat_reflection_center,wat_reflection_radius)
+                     wat_reflection_center,wat_reflection_radius))
 
             sys.exit(-1)
 
@@ -519,8 +519,8 @@ def mergeSystems(protein_system, water_system, ligand_mol):
                 # compatible with the water in the water box
                 mobile_bound_solvents_group.add(solvent_mol)
 
-        print "The number of bound leg mobile solvent molecules is %d." % mobile_bound_solvents_group.nMolecules()
-        print "The number of these which are compatible water molecules is %d." % mobile_bound_water_group.nMolecules()
+        print("The number of bound leg mobile solvent molecules is %d." % mobile_bound_solvents_group.nMolecules())
+        print("The number of these which are compatible water molecules is %d." % mobile_bound_water_group.nMolecules())
 
     # create the groups to hold all of the protein molecules. We will use "extract" to 
     # pull out only those protein atoms that are in the mobile region
@@ -583,10 +583,10 @@ def mergeSystems(protein_system, water_system, ligand_mol):
             else:
                 # only some of the atoms have been selected. We will extract
                 # the mobile atoms and will then update all of the other selections
-                print "Extracting the mobile atoms of protein %s" % protein_mol
+                print("Extracting the mobile atoms of protein %s" % protein_mol)
                 new_protein_mol = protein_mol.extract()
-                print "Extracted %d mobile atoms from %d total atoms..." % \
-                                        (new_protein_mol.nAtoms(), protein_mol.molecule().nAtoms())
+                print("Extracted %d mobile atoms from %d total atoms..." % \
+                                        (new_protein_mol.nAtoms(), protein_mol.molecule().nAtoms()))
 
                 bound_protein_intra_group.add(new_protein_mol)
                 bound_leg.add( new_protein_mol )
@@ -636,20 +636,20 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     # finished adding in all of the protein groups
 
     # get the identity points for the ligand
-    print "\nObtaining the identity points..."
+    print("\nObtaining the identity points...")
 
     if identity_atoms.val is None:
-        print "Auto-identifying the identity atoms..."
+        print("Auto-identifying the identity atoms...")
         identity_points = getIdentityPoints(ligand_mol)
     else:
         identity_points = []
         for identity_atom in identity_atoms.val:
             identity_points.append( ligand_mol.atom( AtomName(identity_atom) ) )
 
-    print "Using identity points:"
-    print identity_points
+    print("Using identity points:")
+    print(identity_points)
 
-    print "\nIdentifying the swap-water cluster..."
+    print("\nIdentifying the swap-water cluster...")
     swap_water_group = MoleculeGroup("swap water")
     mobile_free_water_group = IdentityConstraint.constrain( mobile_free_water_group, identity_points )
 
@@ -676,7 +676,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     system.add(free_leg)
 
     # now add in the forcefields for the system...
-    print "Creating the forcefields for the WSRC system..."
+    print("Creating the forcefields for the WSRC system...")
 
     # first, group together the molecules grouped above into convenient
     # groups for the forcefields
@@ -753,7 +753,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     if disable_grid:
         # we need to renumber all of the fixed molecules so that they don't clash
         # with the mobile molecules
-        print "Renumbering fixed molecules..."
+        print("Renumbering fixed molecules...")
         fixed_bound_group = renumberMolecules(fixed_bound_group)
         fixed_free_group = renumberMolecules(fixed_free_group)
 
@@ -1232,14 +1232,14 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     # Now add constraints. These are used to keep the identity of the 
     # swap water, to keep all lambda values between 0 and 1, and to
     # map the alpha values of the softcore forcefields to lambda
-    print "\nCreating WSRC system constraints...\n"
+    print("\nCreating WSRC system constraints...\n")
 
     # Add the constraint that lambda_f is lambda + delta_lambda and
     # lambda_b is lambda - delta_lambda (kept to between 0 and 1)
     dlam = delta_lambda.val
 
     if dlam > 1 or dlam < 0.0000001:
-        print "WARNING: Weird value of delta_lambda (%s). Setting it to 0.01" % dlam
+        print("WARNING: Weird value of delta_lambda (%s). Setting it to 0.01" % dlam)
         dlam = 0.01
 
     # Constrain lam_f and lam_b to lie with delta_lambda of lambda
@@ -1348,7 +1348,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
 
     system.add( mobile_swap )
 
-    print "Adding the identity constraint..."
+    print("Adding the identity constraint...")
 
     # Now add the constraint that keeps the identities of the
     # swap molecules. The swap molecules are chosen from all available mobile
@@ -1361,12 +1361,12 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     mobile_water.add(mobile_free_water_group)
 
     if waterbox_only.val:
-        print "Choosing water molecules only from the free water box."
+        print("Choosing water molecules only from the free water box.")
     else:
-        print "Choosing swap waters from both the protein box and water box."
+        print("Choosing swap waters from both the protein box and water box.")
         mobile_water.add(mobile_bound_water_group)
 
-    print "The number of candidates for the swap water equals: %d" % mobile_water.nMolecules()
+    print("The number of candidates for the swap water equals: %d" % mobile_water.nMolecules())
 
     system.add(mobile_water)
     system.add( IdentityConstraint(identity_points, mobile_water, { "space" : Cartesian() } ) )
@@ -1379,7 +1379,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     ###
 
     # Now we need to add the monitors...
-    print "\nAdding system monitors..."
+    print("\nAdding system monitors...")
 
     system.add( "delta_g^{F}", MonitorComponent( Symbol("delta_nrg^{F}"),
                                                  FreeEnergyAverage(temperature.val,
@@ -1471,7 +1471,7 @@ def mergeSystems(protein_system, water_system, ligand_mol):
     nrgmons["ligand_freewater_nrgmon"] = ligand_freewater_nrgmon
     nrgmons["swapwater_freewater_nrgmon"] = swapwater_freewater_nrgmon
 
-    for key in nrgmons.keys():
+    for key in list(nrgmons.keys()):
         nrgmons[key].setCoulombPower(coulomb_power.val)
         nrgmons[key].setShiftDelta(shift_delta.val)
 
@@ -1499,9 +1499,9 @@ def makeRETI(system, moves):
     
     if seed is None:
         seed = RanGenerator().randInt(100000,1000000)
-        print "RETI system using generated random number seed %d" % seed
+        print("RETI system using generated random number seed %d" % seed)
     else:
-        print "RETI system using supplied random number seed %d" % seed
+        print("RETI system using supplied random number seed %d" % seed)
     
     replicas.setGenerator( RanGenerator(seed+5) )
 
@@ -1522,7 +1522,7 @@ def makeRETI(system, moves):
     replica_moves = RepExMove()
     replica_moves.setGenerator( RanGenerator(seed+7) )
 
-    print "\nReturning the WSRC RETI replicas and moves..."
+    print("\nReturning the WSRC RETI replicas and moves...")
     return (replicas, replica_moves)
 
 
@@ -1532,7 +1532,7 @@ def calculatePMF(gradients):
 
     pmf = {}
 
-    lamvals = gradients.keys()
+    lamvals = list(gradients.keys())
     lamvals.sort()
 
     if lamvals[0] != 0:
@@ -1564,7 +1564,7 @@ def calculatePMFs(gradients):
     
     pmfs = []
 
-    lamvals = gradients.keys()
+    lamvals = list(gradients.keys())
 
     npmfs = len(gradients[lamvals[0]])
 
@@ -1681,21 +1681,21 @@ def writeMonitoredGroups(replica, filename):
 
     pdbgroup = None
 
-    print "Written the monitored group to file %s" % filename
+    print("Written the monitored group to file %s" % filename)
 
 
 def loadWSRC():
     # Load the WSRC system and moves using the passed parameters
     # This returns (wsrc_system, wsrc_moves), ready for simulation
 
-    print "Loading the protein box system..."
+    print("Loading the protein box system...")
 
     if os.path.exists(protein_s3file.val):
-        print "Loading existing s3 file %s..." % protein_s3file.val
+        print("Loading existing s3 file %s..." % protein_s3file.val)
         proteinsys = Sire.Stream.load(protein_s3file.val)
 
     else:
-        print "Loading from Amber files %s / %s..." % (protein_topfile.val, protein_crdfile.val)
+        print("Loading from Amber files %s / %s..." % (protein_topfile.val, protein_crdfile.val))
         # Add the name of the ligand to the list of solute molecules
         proteinsys_scheme = NamingScheme()
         proteinsys_scheme.addSoluteResidueName(ligand_name.val)
@@ -1706,7 +1706,7 @@ def loadWSRC():
         ligand_mol = findMolecule(proteinsys, ligand_name.val)
 
         if ligand_mol is None:
-            print "Cannot find the ligand (%s) in the set of loaded molecules!" % ligand_name.val
+            print("Cannot find the ligand (%s) in the set of loaded molecules!" % ligand_name.val)
             sys.exit(-1)
 
         # Center the system with the ligand at (0,0,0)
@@ -1719,21 +1719,21 @@ def loadWSRC():
     ligand_mol = findMolecule(proteinsys, ligand_name.val)
 
     if ligand_mol is None:
-        print "Cannot find the ligand (%s) in the set of loaded molecules!" % ligand_name.val
+        print("Cannot find the ligand (%s) in the set of loaded molecules!" % ligand_name.val)
         sys.exit(-1)
 
-    print "Loading the water box system..."
+    print("Loading the water box system...")
 
     if os.path.exists(water_s3file.val):
-        print "Loading from existing s3 file %s..." % water_s3file.val
+        print("Loading from existing s3 file %s..." % water_s3file.val)
         watersys = Sire.Stream.load(water_s3file.val)
     else:
-        print "Loading from Amber files %s / %s..." % (water_topfile.val, water_crdfile.val)
+        print("Loading from Amber files %s / %s..." % (water_topfile.val, water_crdfile.val))
         watersys = createSystem(water_topfile.val, water_crdfile.val)
         watersys = addFlexibility(watersys, Vector(0,0,0), reflection_radius.val)
         Sire.Stream.save(watersys, water_s3file.val)
 
-    print "Building the WSRC forcefields"
+    print("Building the WSRC forcefields")
 
     wsrc_system = mergeSystems(proteinsys, watersys, ligand_mol)
     wsrc_moves = createWSRCMoves(wsrc_system)
@@ -1744,7 +1744,7 @@ def loadWSRC():
 def analyseWSRC(replicas, iteration):
     """This function is used to perform all analysis of iteration 'it' of the passed WSRC system"""
 
-    print "Analysing iteration %d..." % iteration
+    print("Analysing iteration %d..." % iteration)
 
     if not os.path.exists(outdir.val):
         os.makedirs(outdir.val)
@@ -1757,12 +1757,12 @@ def analyseWSRC(replicas, iteration):
 
     FILE = open(logfile, "w")
 
-    print >>FILE,"==========================="
-    print >>FILE," Results for iteration %d" % iteration
-    print >>FILE,"==========================="
+    print("===========================", file=FILE)
+    print(" Results for iteration %d" % iteration, file=FILE)
+    print("===========================", file=FILE)
 
-    print >>FILE,"\ndelta_lambda == %f" % delta_lambda
-    print >>FILE,"temperature == %f K\n" % replicas[0].subMoves().temperature().to(kelvin) 
+    print("\ndelta_lambda == %f" % delta_lambda, file=FILE)
+    print("temperature == %f K\n" % replicas[0].subMoves().temperature().to(kelvin), file=FILE) 
 
     nreplicas = replicas.nReplicas()
 
@@ -1792,7 +1792,7 @@ def analyseWSRC(replicas, iteration):
     write_pdbs = (save_pdb.val) and (iteration % pdb_frequency.val == 0)
 
     if write_pdbs:
-        print "Saving PDBs of the system at iteration %d..." % iteration
+        print("Saving PDBs of the system at iteration %d..." % iteration)
 
     for i in range(0, nreplicas):
         replica = replicas[i]
@@ -1908,16 +1908,16 @@ def analyseWSRC(replicas, iteration):
     waterbox_pmfs_lj = calculatePMFs(waterbox_dg_lj)
 
     # First, output the potential of mean force along the WSRC
-    print >>FILE,"\nPotential of mean force (binding free energy) (plus gradients)"
+    print("\nPotential of mean force (binding free energy) (plus gradients)", file=FILE)
 
-    lamvals = pmf_f.keys()
+    lamvals = list(pmf_f.keys())
     lamvals.sort()
 
-    print >>FILE,"Lambda    Forwards    Backwards   dG_F      dG_B"
+    print("Lambda    Forwards    Backwards   dG_F      dG_B", file=FILE)
 
     for lamval in lamvals:
-        print >>FILE,"%f   %f   %f   %f   %f" % (lamval, pmf_f[lamval], pmf_b[lamval],
-                                                         dg_f[lamval], dg_b[lamval])
+        print("%f   %f   %f   %f   %f" % (lamval, pmf_f[lamval], pmf_b[lamval],
+                                                         dg_f[lamval], dg_b[lamval]), file=FILE)
 
     bind_f = pmf_f[lamvals[-1]]
     bind_b = pmf_b[lamvals[-1]]
@@ -1941,7 +1941,7 @@ def analyseWSRC(replicas, iteration):
     #
     #    print >>FILE,"Lambda   Total   Coulomb   LJ"
     #
-        lamvals = proteinbox_pmfs[i].keys()
+        lamvals = list(proteinbox_pmfs[i].keys())
         lamvals.sort()
     
     #    for lamval in lamvals:
@@ -1964,7 +1964,7 @@ def analyseWSRC(replicas, iteration):
     #
     #    print >>FILE,"Lambda   Total   Coulomb   LJ"
     
-        lamvals = waterbox_pmfs[i].keys()
+        lamvals = list(waterbox_pmfs[i].keys())
         lamvals.sort()
 
     #    for lamval in lamvals:
@@ -1978,31 +1978,31 @@ def analyseWSRC(replicas, iteration):
 
 
     # Now write out the final binding free energies
-    print >>FILE,"\n==================================="
-    print >>FILE,"  BINDING FREE ENERGIES"
-    print >>FILE,"===================================\n"       
+    print("\n===================================", file=FILE)
+    print("  BINDING FREE ENERGIES", file=FILE)
+    print("===================================\n", file=FILE)       
 
-    print >>FILE,"Protein box binding free energies\n"
+    print("Protein box binding free energies\n", file=FILE)
 
     for i in range(0,len(proteinbox_views)):
-        print >>FILE,"%s : %f kcal mol-1 (Coulomb = %f , LJ = %f )" \
+        print("%s : %f kcal mol-1 (Coulomb = %f , LJ = %f )" \
                  % (getName(proteinbox_views[i]), -proteinbox_bind[i], \
-                    -proteinbox_bind_coul[i], -proteinbox_bind_lj[i])
+                    -proteinbox_bind_coul[i], -proteinbox_bind_lj[i]), file=FILE)
 
-    print >>FILE,"\nWater box binding free energies\n"
+    print("\nWater box binding free energies\n", file=FILE)
 
     for i in range(0,len(waterbox_views)):
-        print >>FILE,"%s : %f kcal mol-1 (Coulomb = %f , LJ = %f )" \
+        print("%s : %f kcal mol-1 (Coulomb = %f , LJ = %f )" \
                  % (getName(waterbox_views[i]), -waterbox_bind[i], \
-                    -waterbox_bind_coul[i], -waterbox_bind_lj[i])
+                    -waterbox_bind_coul[i], -waterbox_bind_lj[i]), file=FILE)
 
     bind = -0.5 * (bind_f + bind_b)
     error = abs( 0.5*(bind_f - bind_b) )
 
-    print >>FILE,"\nTotal Binding Free Energy = %f +/- %f kcal mol-1" \
-                 % (bind, error)
+    print("\nTotal Binding Free Energy = %f +/- %f kcal mol-1" \
+                 % (bind, error), file=FILE)
 
-    print >>FILE,"\n==================================="
+    print("\n===================================", file=FILE)
 
 
 @resolveParameters
@@ -2023,9 +2023,9 @@ def run():
 
             # Should add in some equilibration here...
             if nequilmoves.val:
-                print "Equilibrating the system (number of moves: %d)..." % nequilmoves.val
+                print("Equilibrating the system (number of moves: %d)..." % nequilmoves.val)
                 wsrc_system = wsrc_moves.move(wsrc_system, nequilmoves.val, False)
-                print "...equilibration complete"
+                print("...equilibration complete")
             
             Sire.Stream.save( (wsrc_system, wsrc_moves), sysmoves_file.val)
 
@@ -2038,23 +2038,23 @@ def run():
     # see how many blocks of moves we still need to perform...
     nattempted = wsrc_moves.nMoves()
 
-    print "Number of iterations to perform: %d. Number of iterations completed: %d." % (nmoves.val, nattempted)
+    print("Number of iterations to perform: %d. Number of iterations completed: %d." % (nmoves.val, nattempted))
 
     for i in range(nattempted+1, nmoves.val+1):
-        print "Performing iteration %d..." % i
+        print("Performing iteration %d..." % i)
         sim = SupraSim.run( wsrc_system, wsrc_moves, 1, True )
         sim.wait()
 
         wsrc_system = sim.system()
         wsrc_moves = sim.moves()
 
-        print "...iteration complete"
+        print("...iteration complete")
         analyseWSRC(wsrc_system, i)
         wsrc_system.clearAllStatistics()
 
         # write a restart file every 5 moves in case of crash or run out of time
         if i % restart_frequency.val == 0 or i == nmoves.val:
-            print "Saving the restart file from iteration %d." % i
+            print("Saving the restart file from iteration %d." % i)
             # save the old file to a backup
             try:
                 shutil.copy(restart_file.val, "%s.bak" % restart_file.val)
@@ -2063,4 +2063,4 @@ def run():
 
             Sire.Stream.save( (wsrc_system, wsrc_moves), restart_file.val )
 
-    print "All iterations complete."
+    print("All iterations complete.")

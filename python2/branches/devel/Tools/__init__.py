@@ -26,7 +26,7 @@ def readParams( filename ):
 
     params = {}
 
-    print "Reading in parameters..."
+    print("Reading in parameters...")
 
     for line in lines:
         # format is "key = value", "#" is used for commenting
@@ -49,10 +49,10 @@ def readParams( filename ):
             except:
                 pass
 
-            print "%s = %s" % (key, value)
+            print("%s = %s" % (key, value))
             params[key] = value
 
-    print "\n",
+    print("\n", end=' ')
 
     return params
 
@@ -95,13 +95,13 @@ class Parameter:
 
     @staticmethod
     def printAll(verbose=False):
-        keys = Parameter._all_params.keys()
+        keys = list(Parameter._all_params.keys())
         keys.sort()
 
         for key in keys:
-            print Parameter._all_params[key]
+            print(Parameter._all_params[key])
             if verbose:
-                print "%s\n" % Parameter._all_params[key].description
+                print("%s\n" % Parameter._all_params[key].description)
 
     def __init__(self, key, default_value, description):
         """Create a new parameter with specified key, default value
@@ -141,14 +141,3 @@ def resolveParameters(func):
         Parameter.pop()
 
     return inner
-
-#now import every tool, so that someone writing "import Sire.Tools" will
-#get access to everything
-
-# Module to simplify loading and setting up systems from Amber
-# coordinate and topology files
-import AmberLoader
-
-# Module to perform waterswap calculations for protein-ligand
-# binding free energies
-import WSRC

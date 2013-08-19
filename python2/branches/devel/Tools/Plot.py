@@ -1,13 +1,15 @@
 
+import matplotlib
+matplotlib.use('TkAgg')
 from matplotlib import pyplot
 
 from Sire.Maths import Histogram, HistogramValue
-from Sire.Soiree import DataPoint
+from Sire.Analysis import DataPoint
 
 def _plotHistogram(histogram):
     x = []
     y = []
-    for value in histogram.values():
+    for value in list(histogram.values()):
         x.append(value.minimum())
         y.append(0)
         x.append(value.minimum())

@@ -75,7 +75,7 @@ def convertTip3PtoTip4P(tip3p):
     h2_coords = None
 
     if tip3p.nAtoms() != 3:
-        print "Why does this TIP3P water not have three atoms? %d" % tip3p.nAtoms()
+        print("Why does this TIP3P water not have three atoms? %d" % tip3p.nAtoms())
         return None
 
     for atom in tip3p.atoms():
@@ -89,11 +89,11 @@ def convertTip3PtoTip4P(tip3p):
             # this is the oxygen
             o_coords = atom.property("coordinates")
         else:
-            print "Why is a non oxygen or hydrogen atom in TIP3P? %s" % atom
+            print("Why is a non oxygen or hydrogen atom in TIP3P? %s" % atom)
             return None
 
     if o_coords is None or h1_coords is None or h2_coords is None:
-        print "Why is this TIP3P molecule missing two hydrogens and an oxygen?"
+        print("Why is this TIP3P molecule missing two hydrogens and an oxygen?")
         return None
 
     # The M03 atom is 0.15 A along the bond that lies in the plane

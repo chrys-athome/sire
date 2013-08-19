@@ -220,8 +220,8 @@ def createSystem(top_file, crd_file, naming_scheme = NamingScheme()):
     # Load all of the molecules and their parameters from
     # the topology and coordinate files
     amber = Amber()
-    print "Loading the molecules from the Amber files \"%s\" and \"%s\"..." % \
-                  (crd_file, top_file)
+    print("Loading the molecules from the Amber files \"%s\" and \"%s\"..." % \
+                  (crd_file, top_file))
     (molecules, space) = amber.readCrdTop(crd_file, top_file)
 
     # If requested, change the water model for all water molecules
@@ -229,18 +229,18 @@ def createSystem(top_file, crd_file, naming_scheme = NamingScheme()):
         molnums = molecules.molNums()
         new_molecules = Molecules()
 
-        print "Forcing all water molecules to use the %s water model..." % water_model.val
-        print "Converting %d molecules..." % len(molnums)
+        print("Forcing all water molecules to use the %s water model..." % water_model.val)
+        print("Converting %d molecules..." % len(molnums))
         i = 0
         for molnum in molnums:
             molecule = molecules[molnum].molecule()
 
             if i % 100 == 0:
-                print "%d" % i                
+                print("%d" % i)                
                 sys.stdout.flush()
 
             elif i % 10 == 0:
-                print ".",
+                print(".", end=' ')
                 sys.stdout.flush()
 
             i += 1
@@ -256,19 +256,19 @@ def createSystem(top_file, crd_file, naming_scheme = NamingScheme()):
 
             new_molecules.add(molecule)
 
-        print "%d" % i
+        print("%d" % i)
 
         molecules = new_molecules
 
     nmols = molecules.nMolecules()
 
-    print "Number of molecules == %s" % nmols
-    print "System space == %s" % space
+    print("Number of molecules == %s" % nmols)
+    print("System space == %s" % space)
 
     if nmols == 0:
         return system
 
-    print "Assigning molecules to molecule groups..."
+    print("Assigning molecules to molecule groups...")
     solute_group = MoleculeGroup(naming_scheme.solutesGroupName().value())
     protein_group = MoleculeGroup(naming_scheme.proteinsGroupName().value())
     solvent_group = MoleculeGroup(naming_scheme.solventsGroupName().value())
@@ -349,26 +349,26 @@ def createSystem(top_file, crd_file, naming_scheme = NamingScheme()):
     if ion_group.nMolecules() > 0:
         system.add(ion_group)    
 
-    print "Number of solute molecules == %s" % solute_group.nMolecules() 
-    print "Number of protein molecules == %s" % protein_group.nMolecules()
-    print "Number of ions == %s" % ion_group.nMolecules()
-    print "Number of water molecules == %s" % water_group.nMolecules()
-    print "Number of solvent molecules == %s" % solvent_group.nMolecules()
-    print "(solvent group is waters + ions + unidentified single-residue molecules)"
+    print("Number of solute molecules == %s" % solute_group.nMolecules()) 
+    print("Number of protein molecules == %s" % protein_group.nMolecules())
+    print("Number of ions == %s" % ion_group.nMolecules())
+    print("Number of water molecules == %s" % water_group.nMolecules())
+    print("Number of solvent molecules == %s" % solvent_group.nMolecules())
+    print("(solvent group is waters + ions + unidentified single-residue molecules)")
 
     system.setProperty("space", space)
     system.add( SpaceWrapper( Vector(0), all_group ) )
     system.applyConstraints()
 
-    print "Returning the constructed system"
+    print("Returning the constructed system")
 
     return system
 
 
 def centerSystem(system, molecule):
-    print "Setting the origin of the system to the center of molecule %s (%s)..." % (molecule, molecule.number())
+    print("Setting the origin of the system to the center of molecule %s (%s)..." % (molecule, molecule.number()))
     center = molecule.evaluate().center()
-    print "This requires translating everything by %s..." % (-center)    
+    print("This requires translating everything by %s..." % (-center))    
     
     for molnum in system.molNums():
         molecule = system[molnum].molecule()
@@ -438,7 +438,7 @@ def generateFlexibility(solute):
                     dihbond = BondID(at1, at2)
                     #print dihbond
                     solute.move().change(dihbond,1*degrees)
-                except UserWarning, error:
+                except UserWarning as error:
                     # extract the type of the errror
                     error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
                     if error_type == "SireMol::ring_error":
@@ -482,7 +482,7 @@ def generateFlexibility(solute):
             # Test if the angle breaks a ring, if so do not sample it
             try:
                 solute.move().change(angle,1*degrees)
-            except UserWarning, error:
+            except UserWarning as error:
                 # extract the type of the errror
                 error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
                 if error_type == "SireMol::ring_error":
@@ -514,7 +514,7 @@ def generateFlexibility(solute):
         for bond in all_bonds:
             try:
                 solute.move().change(bond,1*angstrom)
-            except UserWarning, error:
+            except UserWarning as error:
                 # extract the type of the errror
                 error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
                 if error_type == "SireMol::ring_error":
@@ -567,7 +567,7 @@ def getAtomNearCOG( molecule ):
 def addFlexibility(system, reflection_center=None, reflection_radius=None, \
                            naming_scheme=NamingScheme()):
     
-    print "Adding flexibility to the system..."
+    print("Adding flexibility to the system...")
 
     # create a group for all of the fixed molecules and residues
     fixed_group = MoleculeGroup( naming_scheme.fixedMoleculesGroupName().value() )
@@ -576,8 +576,8 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
     boundary_group = MoleculeGroup( naming_scheme.boundaryMoleculesGroupName().value() )
 
     if reflection_center and reflection_radius:
-        print ("Only moving molecules/residues that are within a distance %s A "
-               "of the point %s.") % (reflection_radius.value(), reflection_center)
+        print(("Only moving molecules/residues that are within a distance %s A "
+               "of the point %s.") % (reflection_radius.value(), reflection_center))
 
         system.setProperty("reflection center", AtomCoords(CoordGroup(1,reflection_center)))
         system.setProperty("reflection sphere radius", VariantProperty(reflection_radius.to(angstroms)))
@@ -609,7 +609,7 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
         for molnum in protein_group.molNums():
             protein_mol = protein_group[molnum].molecule()
 
-            print "Applying residue templates for protein %s" % molnum
+            print("Applying residue templates for protein %s" % molnum)
 
             protein_mol = zmat_maker.applyTemplates(protein_mol)
 
@@ -621,7 +621,7 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
                 mobile_resnums = []
 
                 # only move side chains within "sc_radius" and backbones within "bb_radius" of the ligand molecule
-                print "Looking for which residues are within the reflection sphere..."
+                print("Looking for which residues are within the reflection sphere...")
                 for i in range(0, protein_mol.nResidues()):
                     res = protein_mol.residue( ResIdx(i) )
                     distance = space.minimumDistance(CoordGroup(1,reflection_center), getCoordGroup(res.atoms()))
@@ -699,10 +699,10 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
         if mobile_bb_group.nMolecules() > 0:
             system.add(mobile_bb_group)
 
-        print "The number of residues with flexible sidechains equals %s" % mobile_sc_group.nViews()
-        print "The number of residues with flexible backbones equals %s" % mobile_bb_group.nViews()
-        print "The number of boundary residues equals %s" % boundary_group.nViews()
-        print "The number of fixed residues equals %s" % fixed_group.nViews()
+        print("The number of residues with flexible sidechains equals %s" % mobile_sc_group.nViews())
+        print("The number of residues with flexible backbones equals %s" % mobile_bb_group.nViews())
+        print("The number of boundary residues equals %s" % boundary_group.nViews())
+        print("The number of fixed residues equals %s" % fixed_group.nViews())
 
     # add all of the mobile solute molecules to the mobile_solute_group and auto-generate
     # the z-matricies of all of the mobile solutes
@@ -726,16 +726,16 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
                                   solute_mol.evaluate().center()) < reflection_radius.value())
 
             if move_solute:
-                print "\nAuto-detecting the flexible degrees of freedom for solute %s" % molnum
+                print("\nAuto-detecting the flexible degrees of freedom for solute %s" % molnum)
 
                 # auto-generate the flexibility - bonds, angles and dihedrals
                 flexibility = generateFlexibility(solute_mol)
 
                 solute_mol = solute_mol.edit().setProperty("flexibility", flexibility).commit()
 
-                print "\nFlexibility of solute %s equals:" % molnum
+                print("\nFlexibility of solute %s equals:" % molnum)
                 flex = solute_mol.property("flexibility")
-                print flex
+                print(flex)
 
                 avg_trans_delta += flex.translation().to(angstrom)
                 avg_rot_delta += flex.rotation().to(degrees)
@@ -744,7 +744,7 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
 
                 mobile_solute_group.add(solute_mol)
             else:
-                print "Not moving solute %s as it is outside the spherical solvent cutoff of the ligand." % solute_mol
+                print("Not moving solute %s as it is outside the spherical solvent cutoff of the ligand." % solute_mol)
                 fixed_group.add(solute_mol)
 
         if mobile_solute_group.nMolecules() > 0:
@@ -754,7 +754,7 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
             system.setProperty("average solute rotation delta", \
                                  VariantProperty(avg_rot_delta / mobile_solute_group.nMolecules()))
 
-        print "\nNumber of mobile solute molecules equals %s" % mobile_solute_group.nMolecules()
+        print("\nNumber of mobile solute molecules equals %s" % mobile_solute_group.nMolecules())
 
     # add all of the mobile solvent molecules to the mobile_solvent_group
     if naming_scheme.solventsGroupName() in system.mgNames():
@@ -762,7 +762,7 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
 
         mobile_solvent_group = MoleculeGroup( naming_scheme.mobileSolventsGroupName().value() )
 
-        print "Adding flexibility to the solvent..."
+        print("Adding flexibility to the solvent...")
 
         if reflection_radius:
             for molnum in solvent_group.molNums():
@@ -778,7 +778,7 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
         if mobile_solvent_group.nMolecules() > 0:
             system.add(mobile_solvent_group)
 
-        print "\nNumber of mobile solvent molecules equals %s" % mobile_solvent_group.nMolecules()
+        print("\nNumber of mobile solvent molecules equals %s" % mobile_solvent_group.nMolecules())
 
     # All finished - just need to add in the fixed and boundary groups
     if fixed_group.nMolecules() > 0:
@@ -787,14 +787,14 @@ def addFlexibility(system, reflection_center=None, reflection_radius=None, \
     if boundary_group.nMolecules() > 0:
         system.add(boundary_group)    
 
-    print "\nNumber of fixed (or partially fixed) molecules equals %s" % fixed_group.nMolecules()
+    print("\nNumber of fixed (or partially fixed) molecules equals %s" % fixed_group.nMolecules())
 
     return system
 
 def printGroupInfo(system, group_name):
     try:
         group = system[MGName(group_name)]
-        print "%s : nMolecules() == %d" % (str(group), group.nMolecules())
+        print("%s : nMolecules() == %d" % (str(group), group.nMolecules()))
     except:
-        print "There is no group called \"%s\"" % group_name
+        print("There is no group called \"%s\"" % group_name)
 
