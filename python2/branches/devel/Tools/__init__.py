@@ -15,7 +15,6 @@ import Sire.Error
 
 from Sire.Units import *
 
-import string
 import sys
 
 # Create a "readParams" function that reads a text file and returns a dictionary
@@ -108,7 +107,7 @@ class Parameter:
            and variable description"""
         self._key = key
         self._default_value = default_value
-        self._desc = string.join(description.replace("\n", " ").split(), " ")
+        self._desc = " ".join(description.replace("\n", " ").split())
         Parameter._all_params[key] = self
 
     def __str__(self):

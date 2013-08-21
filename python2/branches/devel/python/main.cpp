@@ -68,10 +68,11 @@ int main(int argc, char **argv)
     {
 
     //run through the command line arguments and filter out the ones we want
-    boost::scoped_array<wchar_t*> python_argv( new wchar_t*[argc] );
+    boost::scoped_array<wchar_t*> python_argv( new wchar_t*[argc+1] );
     int python_argc = 0;
 
     bool ignore_pythonpath = false;
+    bool ignore_ipython = false;
     int ppn = 1;
 
     QList< std::wstring > warg_strings;
@@ -83,10 +84,23 @@ int main(int argc, char **argv)
 
         if (arg.startsWith("--ppn"))
         {
+            QStringList parts = arg.split("=", QString::SkipEmptyParts);
+
+            if (parts.count() > 1)
+            {
+                bool ok;
+                int num = parts.last().toInt(&ok);
+                if (ok and num > 0)
+                    ppn = num;
+            }
         }
         else if (arg == "--ignore-pythonpath")
         {
             ignore_pythonpath = true;
+        }
+        else if (arg == "--ignore-ipython")
+        {
+            ignore_ipython = true;
         }
         else
         {
@@ -132,6 +146,27 @@ int main(int argc, char **argv)
 
     qputenv("PYTHONPATH", pythonpath.toUtf8());
     qputenv("PYTHONHOME", python_home.canonicalPath().toUtf8());
+
+    if (not ignore_ipython)
+    {
+        //if ipython is installed in sire.app/bundled/bin/ipython3 then automatically
+        //run that as the first script. This will provide a nice environment for running
+        //sire scripts
+        QFileInfo ipython_file( python_home, "bin/ipython3" );
+
+        if (ipython_file.exists())
+        {
+            qDebug() << "Running all scripts through ipython in" << ipython_file.absoluteFilePath();
+            for (int i=python_argc; i>1; --i)
+            {
+                python_argv[i] = python_argv[i-1];
+            }
+
+            warg_strings.append(ipython_file.absoluteFilePath().toStdWString());
+            python_argv[1] = const_cast<wchar_t*>(warg_strings.last().data());
+            python_argc += 1;
+        }
+    }
 
     printf("Starting %ls: number of threads equals %d\n", python_argv[0], ppn);
 

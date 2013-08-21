@@ -141,7 +141,7 @@ void register_QDateTime_class(){
                 , ( bp::arg("msecs") ) );
         
         }
-        { //::QDateTime::fromString
+   /*     { //::QDateTime::fromString
         
             typedef ::QDateTime ( *fromString_function_type )( ::QString const &,::Qt::DateFormat );
             fromString_function_type fromString_function_value( &::QDateTime::fromString );
@@ -151,7 +151,7 @@ void register_QDateTime_class(){
                 , fromString_function_value
                 , ( bp::arg("s"), bp::arg("f")=::Qt::TextDate ) );
         
-        }
+        } */
         { //::QDateTime::fromString
         
             typedef ::QDateTime ( *fromString_function_type )( ::QString const &,::QString const & );
@@ -351,7 +351,7 @@ void register_QDateTime_class(){
                 , toMSecsSinceEpoch_function_value );
         
         }
-        { //::QDateTime::toString
+ /*       { //::QDateTime::toString
         
             typedef ::QString ( ::QDateTime::*toString_function_type )( ::Qt::DateFormat ) const;
             toString_function_type toString_function_value( &::QDateTime::toString );
@@ -361,7 +361,7 @@ void register_QDateTime_class(){
                 , toString_function_value
                 , ( bp::arg("f")=::Qt::TextDate ) );
         
-        }
+        }  */
         { //::QDateTime::toString
         
             typedef ::QString ( ::QDateTime::*toString_function_type )( ::QString const & ) const;

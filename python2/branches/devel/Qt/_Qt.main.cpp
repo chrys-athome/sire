@@ -39,12 +39,12 @@ BOOST_PYTHON_MODULE(_Qt){
 
     register_QByteArray_class();
    
- /*   register_QDate_class();
+    register_QDate_class();
  
-    register_QDateTime_class();
+   /* register_QDateTime_class(); */
 
     register_QTime_class();
-*/
+
     autoconvert_QChar();
     
     autoconvert_QString();

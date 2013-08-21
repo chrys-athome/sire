@@ -64,7 +64,7 @@ void register_QTime_class(){
                 , elapsed_function_value );
         
         }
-        { //::QTime::fromString
+  /*      { //::QTime::fromString
         
             typedef ::QTime ( *fromString_function_type )( ::QString const &,::Qt::DateFormat );
             fromString_function_type fromString_function_value( &::QTime::fromString );
@@ -74,7 +74,7 @@ void register_QTime_class(){
                 , fromString_function_value
                 , ( bp::arg("s"), bp::arg("f")=::Qt::TextDate ) );
         
-        }
+        } */
         { //::QTime::fromString
         
             typedef ::QTime ( *fromString_function_type )( ::QString const &,::QString const & );
@@ -216,7 +216,7 @@ void register_QTime_class(){
                 , start_function_value );
         
         }
-        { //::QTime::toString
+   /*     { //::QTime::toString
         
             typedef ::QString ( ::QTime::*toString_function_type )( ::Qt::DateFormat ) const;
             toString_function_type toString_function_value( &::QTime::toString );
@@ -226,7 +226,7 @@ void register_QTime_class(){
                 , toString_function_value
                 , ( bp::arg("f")=::Qt::TextDate ) );
         
-        }
+        } */
         { //::QTime::toString
         
             typedef ::QString ( ::QTime::*toString_function_type )( ::QString const & ) const;

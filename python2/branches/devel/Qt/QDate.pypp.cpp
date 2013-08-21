@@ -3,9 +3,18 @@
 // (C) Christopher Woods, GPL >= 2 License
 
 #include "boost/python.hpp"
+#include <QString>
 #include <QByteArray>
+#include <QFile>
+#include <QFileInfo>
+#include <QDir>
+#include <QTextStream>
 #include <QDateTime>
+#include <QLocale>
 #include <QUuid>
+#include <qnamespace.h>
+#include <QVariant>
+#include <QUrl>
 #include <QBitArray>
 #include "QDate.pypp.hpp"
 
@@ -21,15 +30,10 @@ void register_QDate_class(){
         typedef bp::class_< QDate > QDate_exposer_t;
         QDate_exposer_t QDate_exposer = QDate_exposer_t( "QDate", bp::init< >() );
         bp::scope QDate_scope( QDate_exposer );
-        bp::enum_< QDate::MonthNameType>("MonthNameType")
-            .value("DateFormat", QDate::DateFormat)
-            .value("StandaloneFormat", QDate::StandaloneFormat)
-            .export_values()
-            ;
         QDate_exposer.def( bp::init< int, int, int >(( bp::arg("y"), bp::arg("m"), bp::arg("d") )) );
         { //::QDate::addDays
         
-            typedef ::QDate ( ::QDate::*addDays_function_type )( ::qint64 ) const;
+            typedef ::QDate ( ::QDate::*addDays_function_type )( qint64 ) const;
             addDays_function_type addDays_function_value( &::QDate::addDays );
             
             QDate_exposer.def( 
@@ -122,7 +126,7 @@ void register_QDate_class(){
         }
         { //::QDate::daysTo
         
-            typedef ::qint64 ( ::QDate::*daysTo_function_type )( ::QDate const & ) const;
+            typedef qint64 ( ::QDate::*daysTo_function_type )( ::QDate const & ) const;
             daysTo_function_type daysTo_function_value( &::QDate::daysTo );
             
             QDate_exposer.def( 
@@ -133,24 +137,13 @@ void register_QDate_class(){
         }
         { //::QDate::fromJulianDay
         
-            typedef ::QDate ( *fromJulianDay_function_type )( ::qint64 );
+            typedef ::QDate ( *fromJulianDay_function_type )( qint64 );
             fromJulianDay_function_type fromJulianDay_function_value( &::QDate::fromJulianDay );
             
             QDate_exposer.def( 
                 "fromJulianDay"
                 , fromJulianDay_function_value
                 , ( bp::arg("jd") ) );
-        
-        }
-        { //::QDate::fromString
-        
-            typedef ::QDate ( *fromString_function_type )( ::QString const &,::Qt::DateFormat );
-            fromString_function_type fromString_function_value( &::QDate::fromString );
-            
-            QDate_exposer.def( 
-                "fromString"
-                , fromString_function_value
-                , ( bp::arg("s"), bp::arg("f")=::Qt::TextDate ) );
         
         }
         { //::QDate::fromString
@@ -162,17 +155,6 @@ void register_QDate_class(){
                 "fromString"
                 , fromString_function_value
                 , ( bp::arg("s"), bp::arg("format") ) );
-        
-        }
-        { //::QDate::getDate
-        
-            typedef void ( ::QDate::*getDate_function_type )( int *,int *,int * ) ;
-            getDate_function_type getDate_function_value( &::QDate::getDate );
-            
-            QDate_exposer.def( 
-                "getDate"
-                , getDate_function_value
-                , ( bp::arg("year"), bp::arg("month"), bp::arg("day") ) );
         
         }
         { //::QDate::isLeapYear
@@ -219,24 +201,24 @@ void register_QDate_class(){
         }
         { //::QDate::longDayName
         
-            typedef ::QString ( *longDayName_function_type )( int,::QDate::MonthNameType );
+            typedef ::QString ( *longDayName_function_type )( int, QDate::MonthNameType );
             longDayName_function_type longDayName_function_value( &::QDate::longDayName );
             
             QDate_exposer.def( 
                 "longDayName"
                 , longDayName_function_value
-                , ( bp::arg("weekday"), bp::arg("type")=::QDate::DateFormat ) );
+                , ( bp::arg("weekday") ) );
         
         }
         { //::QDate::longMonthName
         
-            typedef ::QString ( *longMonthName_function_type )( int,::QDate::MonthNameType );
+            typedef ::QString ( *longMonthName_function_type )( int, QDate::MonthNameType );
             longMonthName_function_type longMonthName_function_value( &::QDate::longMonthName );
             
             QDate_exposer.def( 
                 "longMonthName"
                 , longMonthName_function_value
-                , ( bp::arg("month"), bp::arg("type")=::QDate::DateFormat ) );
+                , ( bp::arg("month") ) );
         
         }
         { //::QDate::month
@@ -263,50 +245,39 @@ void register_QDate_class(){
             QDate_exposer.def( 
                 "setDate"
                 , setDate_function_value
-                , ( bp::arg("year"), bp::arg("month"), bp::arg("day") ) );
+                , ( bp::arg("year"), bp::arg("month"), bp::arg("date") ) );
         
         }
         { //::QDate::shortDayName
         
-            typedef ::QString ( *shortDayName_function_type )( int,::QDate::MonthNameType );
+            typedef ::QString ( *shortDayName_function_type )( int, QDate::MonthNameType );
             shortDayName_function_type shortDayName_function_value( &::QDate::shortDayName );
             
             QDate_exposer.def( 
                 "shortDayName"
                 , shortDayName_function_value
-                , ( bp::arg("weekday"), bp::arg("type")=::QDate::DateFormat ) );
+                , ( bp::arg("weekday") ) );
         
         }
         { //::QDate::shortMonthName
         
-            typedef ::QString ( *shortMonthName_function_type )( int,::QDate::MonthNameType );
+            typedef ::QString ( *shortMonthName_function_type )( int, QDate::MonthNameType );
             shortMonthName_function_type shortMonthName_function_value( &::QDate::shortMonthName );
             
             QDate_exposer.def( 
                 "shortMonthName"
                 , shortMonthName_function_value
-                , ( bp::arg("month"), bp::arg("type")=::QDate::DateFormat ) );
+                , ( bp::arg("month") ) );
         
         }
         { //::QDate::toJulianDay
         
-            typedef ::qint64 ( ::QDate::*toJulianDay_function_type )(  ) const;
+            typedef qint64 ( ::QDate::*toJulianDay_function_type )(  ) const;
             toJulianDay_function_type toJulianDay_function_value( &::QDate::toJulianDay );
             
             QDate_exposer.def( 
                 "toJulianDay"
                 , toJulianDay_function_value );
-        
-        }
-        { //::QDate::toString
-        
-            typedef ::QString ( ::QDate::*toString_function_type )( ::Qt::DateFormat ) const;
-            toString_function_type toString_function_value( &::QDate::toString );
-            
-            QDate_exposer.def( 
-                "toString"
-                , toString_function_value
-                , ( bp::arg("f")=::Qt::TextDate ) );
         
         }
         { //::QDate::toString
