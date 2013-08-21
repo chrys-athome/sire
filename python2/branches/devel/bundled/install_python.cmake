@@ -33,7 +33,15 @@ else()
       )
     endif()
 
-    set( PYTHON_OPTIONS "--enable-shared;--prefix=${BUNDLE_STAGEDIR};CC=${CMAKE_C_COMPILER};CXX=${CMAKE_CXX_COMPILER}" )
+    list( APPEND PYTHON_OPTIONS "--enable-shared" )
+    list( APPEND PYTHON_OPTIONS "--prefix=${BUNDLE_STAGEDIR}" )
+    list( APPEND PYTHON_OPTIONS	"CC=${CMAKE_C_COMPILER}" )
+    list( APPEND PYTHON_OPTIONS	"CXX=${CMAKE_CXX_COMPILER}" )
+
+    if (NOT APPLE)
+      list( APPEND PYTHON_OPTIONS "LDFLAGS=-Wl,-rpath='$$ORIGIN/../lib'" )
+    endif()
+
     message( STATUS "${PYTHON_OPTIONS}" )
 
     message( STATUS "Patience... Configuring Python..." )
