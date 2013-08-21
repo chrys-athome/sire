@@ -35,7 +35,8 @@ set ( SIRE_COMP_CMAKE "${SIRE_INCLUDE_DIR}/cmake/SireCompileVariables.cmake" )
 if (EXISTS "${SIRE_COMP_CMAKE}")
   include( "${SIRE_COMP_CMAKE}" )  
 else()
-  message( FATAL_ERROR "You need to provide the full path to sire.app and check that it contains the file ${SIRE_COMP_CMAKE}" )
+  message( STATUS "You need to provide the full path to sire.app and check that it contains the file ${SIRE_COMP_CMAKE}" )
+  message( FATAL_ERROR "Do this by running 'cmake -DSIRE_APP=/path/to/sire.app /path/to/python/source'" )
 endif()
 
 # Now set the C++, C and Fortran compilers to be used to compile the wrappers
