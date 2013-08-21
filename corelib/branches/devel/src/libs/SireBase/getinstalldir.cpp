@@ -121,7 +121,7 @@ namespace SireBase
             QFileInfo f( "/proc/curproc/file" );
         
             if (not f.exists())
-                throw SireError::program_bug( QObject:::tr(
+                throw SireError::program_bug( QObject::tr(
                         "For some reason /proc/curproc/file does not exist for your "
                         "version of Linux. Let the developers know and we will get it "
                         "working for you."), CODELOC );

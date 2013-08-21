@@ -182,7 +182,7 @@ private:
             #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                 void assertAligned()
                 {
-                    if ((uintptr_t)this % 32 != 0)
+                    if ((quintptr)this % 32 != 0)
                         assertAligned(this, 32);
                 }
             #endif
@@ -205,7 +205,7 @@ private:
             #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                 void assertAligned()
                 {
-                    if ((uintptr_t)this % 16 != 0)
+                    if ((quintptr)this % 16 != 0)
                         assertAligned(this, 16);
                 }
             #endif
@@ -227,7 +227,7 @@ private:
             #ifdef MULTIFLOAT_CHECK_ALIGNMENT
                 void assertAligned()
                 {
-                    if ((uintptr_t)this % 32 != 0)
+                    if ((quintptr)this % 32 != 0)
                         assertAligned(this, 32);
                 }
             #endif

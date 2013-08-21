@@ -39,7 +39,7 @@ using namespace SireMaths;
 #ifdef MULTIFLOAT_AVX_IS_AVAILABLE
     static inline bool isAligned32(const void *pointer)
     {
-        return (uintptr_t)pointer % size_t(32) == 0;
+        return (quintptr)pointer % size_t(32) == 0;
     }
 
     static void assertAligned32(const void *pointer, QString place)
@@ -47,13 +47,13 @@ using namespace SireMaths;
         if (not isAligned32(pointer))
             throw SireError::program_bug( QObject::tr(
                     "An unaligned MultiDouble has been created! %1")
-                        .arg((uintptr_t)pointer % size_t(32)), place );
+                        .arg((quintptr)pointer % size_t(32)), place );
     }
 #else
 #ifdef MULTIFLOAT_SSE_IS_AVAILABLE
     static inline bool isAligned16(const void *pointer)
     {
-        return (uintptr_t)pointer % size_t(16) == 0;
+        return (quintptr)pointer % size_t(16) == 0;
     }
 
     static void assertAligned16(const void *pointer, QString place)
@@ -61,12 +61,12 @@ using namespace SireMaths;
         if (not isAligned16(pointer))
             throw SireError::program_bug( QObject::tr(
                     "An unaligned MultiDouble has been created! %1")
-                        .arg((uintptr_t)pointer % size_t(16)), place );
+                        .arg((quintptr)pointer % size_t(16)), place );
     }
 #else
     static inline bool isAligned32(const void *pointer)
     {
-        return (uintptr_t)pointer % size_t(32) == 0;
+        return (quintptr)pointer % size_t(32) == 0;
     }
 
     static void assertAligned32(const void *pointer, QString place)
@@ -74,18 +74,18 @@ using namespace SireMaths;
         if (not isAligned32(pointer))
             throw SireError::program_bug( QObject::tr(
                     "An unaligned MultiDouble has been created! %1")
-                        .arg((uintptr_t)pointer % size_t(32)), place );
+                        .arg((quintptr)pointer % size_t(32)), place );
     }
 #endif
 #endif
 
 void MultiDouble::assertAligned(const void *ptr, size_t size)
 {
-    if ( (uintptr_t)ptr % size != 0 )
+    if ( (quintptr)ptr % size != 0 )
         throw SireError::program_bug( QObject::tr(
                 "An unaligned MultiDouble has been created! %1, %2, %3")
-                    .arg((uintptr_t)ptr)
-                    .arg((uintptr_t)ptr % size)
+                    .arg((quintptr)ptr)
+                    .arg((quintptr)ptr % size)
                     .arg(size), CODELOC );
 }
 

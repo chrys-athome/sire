@@ -78,7 +78,19 @@ else()
     find_library( TBB_LIBRARY "tbb" PATHS ${TBB_INSTALL_DIR} NO_DEFAULT_PATH )
     find_library( TBB_MALLOC_LIBRARY "tbbmalloc" PATHS ${TBB_INSTALL_DIR} NO_DEFAULT_PATH )
 
+    if ( TBB_MALLOC_LIBRARY )
+      if (EXISTS "${TBB_MALLOC_LIBRARY}.2" )
+        # On Linux, the library is libtbb_malloc.so.2, not libtbb_malloc.so
+        set( TBB_MALLOC_LIBRARY "${TBB_MALLOC_LIBRARY}.2" )
+      endif()
+    endif()
+
     if ( TBB_LIBRARY )
+      if (EXISTS "${TBB_LIBRARY}.2")
+        # On Linux, the library is libtbb.so.2, not libtbb.so
+        set( TBB_LIBRARY "${TBB_LIBRARY}.2" )
+      endif()
+
       execute_process( COMMAND ${CMAKE_COMMAND} -E copy ${TBB_LIBRARY} ${BUNDLE_STAGEDIR}/lib )
       execute_process( COMMAND ${CMAKE_COMMAND} -E copy ${TBB_MALLOC_LIBRARY} ${BUNDLE_STAGEDIR}/lib )
 
