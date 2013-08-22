@@ -51,6 +51,9 @@ install( TARGETS python
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
+install( FILES make_sire_run.py
+         DESTINATION ${SIRE_BIN} )
+
 if (APPLE)
   add_custom_command(TARGET python
       POST_BUILD
