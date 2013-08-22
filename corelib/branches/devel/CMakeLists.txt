@@ -743,7 +743,16 @@ install (FILES ${CMAKE_CURRENT_BINARY_DIR}/sire_config.h
 # install the parameters file (containing forcefield parameters) into
 # share/Sire
 install (DIRECTORY ${CMAKE_SOURCE_DIR}/parameters
-         DESTINATION ${SIRE_SHARE})
+         DESTINATION ${SIRE_SHARE}
+         USE_SOURCE_PERMISSIONS
+         PATTERN ".svn" EXCLUDE
+        )
+
+install (DIRECTORY ${CMAKE_SOURCE_DIR}/share/build
+         DESTINATION ${SIRE_SHARE}
+         USE_SOURCE_PERMISSIONS
+         PATTERN ".svn" EXCLUDE
+        )
 
 # These commands are used to create an 'uninstall' target
 # (this is copied from the vtk.org wiki)
