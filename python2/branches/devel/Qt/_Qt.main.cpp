@@ -21,6 +21,10 @@
 
 #include "QDateTime.pypp.hpp"
 
+#include "QDir.pypp.hpp"
+
+#include "QFileInfo.pypp.hpp"
+
 #include "QTime.pypp.hpp"
 
 #include "QUuid.pypp.hpp"
@@ -42,6 +46,10 @@ BOOST_PYTHON_MODULE(_Qt){
     register_QDate_class();
  
    /* register_QDateTime_class(); */
+
+   /* register_QDir_class(); */
+
+    register_QFileInfo_class();
 
     register_QTime_class();
 

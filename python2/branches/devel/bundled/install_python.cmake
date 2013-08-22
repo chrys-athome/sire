@@ -63,6 +63,56 @@ else()
       set( PYTHON_LIBRARY "${BUNDLE_STAGEDIR}/lib/libpython${PYTHON_VERSION}${PYTHON_ABIFLAGS}.so" )
     endif()
   endif()
+
+  # Now lets unpack and install setuptools and pip, so that we can easily
+  # install other python modules
+  set( SETUPTOOLS_ZIPFILE "${CMAKE_SOURCE_DIR}/bundled/setuptools.tar.gz" )
+  set( PIP_ZIPFILE "${CMAKE_SOURCE_DIR}/bundled/pip.tar.gz" )
+
+  if (EXISTS "${SETUPTOOLS_ZIPFILE}")
+    set( SETUPTOOLS_BUILD_DIR "${BUNDLE_BUILDDIR}/setuptools" )
+
+    if (NOT EXISTS "${SETUPTOOLS_BUILD_DIR}")
+      message( STATUS "Unzipping ${SETUPTOOLS_ZIPFILE} to ${SETUPTOOLS_BUILD_DIR}" )
+      execute_process(
+          COMMAND ${CMAKE_COMMAND} -E tar xzf ${SETUPTOOLS_ZIPFILE}
+          WORKING_DIRECTORY ${BUNDLE_BUILDDIR}
+      )
+
+      execute_process(
+          COMMAND ${BUNDLE_STAGEDIR}/bin/python3 setup.py build
+          WORKING_DIRECTORY ${SETUPTOOLS_BUILD_DIR}
+      )
+
+      execute_process(
+          COMMAND ${BUNDLE_STAGEDIR}/bin/python3 setup.py install
+          WORKING_DIRECTORY ${SETUPTOOLS_BUILD_DIR}
+      )
+    endif()
+  endif()
+
+  if (EXISTS "${PIP_ZIPFILE}")
+    set( PIP_BUILD_DIR "${BUNDLE_BUILDDIR}/pip" )
+
+    if (NOT EXISTS "${PIP_BUILD_DIR}")
+      message( STATUS "Unzipping ${PIP_ZIPFILE} to ${PIP_BUILD_DIR}" )
+      execute_process(
+          COMMAND ${CMAKE_COMMAND} -E tar xzf ${PIP_ZIPFILE}
+          WORKING_DIRECTORY ${BUNDLE_BUILDDIR}
+      )
+
+      execute_process(
+          COMMAND ${BUNDLE_STAGEDIR}/bin/python3 setup.py build
+          WORKING_DIRECTORY ${PIP_BUILD_DIR}
+      )
+
+      execute_process(
+          COMMAND ${BUNDLE_STAGEDIR}/bin/python3 setup.py install
+          WORKING_DIRECTORY ${PIP_BUILD_DIR}
+      )
+    endif()
+  endif()
+
 endif()
 
 if ( PYTHON_LIBRARY )

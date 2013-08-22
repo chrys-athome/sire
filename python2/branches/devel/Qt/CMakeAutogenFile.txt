@@ -3,6 +3,8 @@ set ( PYPP_SOURCES
        QByteArray.pypp.cpp
        QDate.pypp.cpp
        QDateTime.pypp.cpp
+       QDir.pypp.cpp
+       QFileInfo.pypp.cpp
        QTime.pypp.cpp
        QUuid.pypp.cpp
        autoconvert_QChar.cpp
