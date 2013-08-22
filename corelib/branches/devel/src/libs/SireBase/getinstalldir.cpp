@@ -118,11 +118,11 @@ namespace SireBase
             return install_dir;
         #else
         #ifdef Q_OS_LINUX
-            QFileInfo f( "/proc/curproc/file" );
+            QFileInfo f( "/proc/self/exe" );
         
             if (not f.exists())
                 throw SireError::program_bug( QObject::tr(
-                        "For some reason /proc/curproc/file does not exist for your "
+                        "For some reason /proc/self/exe does not exist for your "
                         "version of Linux. Let the developers know and we will get it "
                         "working for you."), CODELOC );
         
