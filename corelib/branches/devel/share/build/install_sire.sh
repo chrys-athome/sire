@@ -22,9 +22,15 @@ else
     fi
 fi
 
+if [ -d "$install_dir/sire.app" ]; then
+    echo "There is already a version of Sire installed at $install_dir/sire.app"
+    echo "Please remove it, or choose another installation directory"
+    exit -1
+fi
+
 echo " "
 echo "Installing Sire to $install_dir"
-mv sire.app $install_dir
+mv tmp_sire.app $install_dir/sire.app
 
 if [ ! -d "$install_dir/sire.app" ]; then
   echo " "
