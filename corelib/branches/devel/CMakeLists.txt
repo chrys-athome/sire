@@ -476,12 +476,14 @@ option( SIRE_ENABLE_BUNDLING "Allow Sire to use bundled libraries" ON )
 # Fine-grain control of bundling each dependency
 option( SIRE_BUNDLE_TBB "Whether Sire should use its bundled copy of TBB" ON )
 option( SIRE_BUNDLE_GSL "Whether Sire should use its bundled copy of GSL" ON )
+option( SIRE_BUNDLE_CPUID "Whether Sire should use its bundled copy of libcpuid" ON )
 option( SIRE_BUNDLE_BOOST "Whether Sire should use its bundled copy of Boost" ON )
 option( SIRE_BUNDLE_BLASLAPACK "Whether Sire should use its bundled copy of BLAS and LAPACK" ON )
 option( SIRE_BUNDLE_QT "Whether Sire should use its bundled copy of Qt" ON )
 
 save_sire_variable( "SIRE_ENABLE_BUNDLING" "${SIRE_ENABLE_BUNDLING}" )
 save_sire_variable( "SIRE_BUNDLE_TBB" "${SIRE_BUNDLE_TBB}" )
+save_sire_variable( "SIRE_BUNDLE_CPUID" "${SIRE_BUNDLE_CPUID}" )
 save_sire_variable( "SIRE_BUNDLE_GSL" "${SIRE_BUNDLE_GSL}" )
 save_sire_variable( "SIRE_BUNDLE_BOOST" "${SIRE_BUNDLE_BOOST}" )
 save_sire_variable( "SIRE_BUNDLE_BLASLAPACK" "${SIRE_BUNDLE_BLASLAPACK}" )
@@ -517,6 +519,10 @@ if ( ${SIRE_ENABLE_BUNDLING} )
 
     if ( ${SIRE_BUNDLE_TBB} )
       include( "src/bundled/install_tbb.cmake" )
+    endif()
+
+    if ( ${SIRE_BUNDLE_CPUID} )
+      include( "src/bundled/install_cpuid.cmake" )
     endif()
 
     if ( ${SIRE_BUNDLE_GSL} )
@@ -617,6 +623,10 @@ if (NOT ${SIRE_FOUND_BLASLAPACK})
   endif()
 
   save_sire_variable( "SIRE_USE_LAPACK" "${SIRE_USE_LAPACK}" )
+endif()
+
+if (NOT ${SIRE_FOUND_CPUID})
+  message( STATUS "Cannot find libcpuid. Will disable CPU detection code." )
 endif()
 
 ###########

@@ -9,6 +9,11 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+if (SIRE_FOUND_CPUID)
+  add_definitions( "-DSIRE_FOUND_CPUID" )
+  include_directories( ${CPUID_INCLUDE_DIR} )
+endif()
+
 # Define the header files for SireBase
 set ( SIREBASE_HEADERS
 
@@ -19,6 +24,7 @@ set ( SIREBASE_HEADERS
       chunkedvector.hpp
       combineproperties.h
       countflops.h
+      cpuid.h
       errors.h
       findexe.h
       getinstalldir.h
@@ -64,6 +70,7 @@ set ( SIREBASE_SOURCES
       chunkedvector.cpp
       combineproperties.cpp
       countflops.cpp
+      cpuid.cpp
       errors.cpp
       findexe.cpp
       getinstalldir.cpp
@@ -100,6 +107,10 @@ target_link_libraries (SireBase
                        SireID
                        SireStream
                        )
+
+if (SIRE_FOUND_CPUID)
+  target_link_libraries( SireBase ${CPUID_LIBRARY} )
+endif()
 
 # installation
 install( TARGETS SireBase EXPORT SireLibraries

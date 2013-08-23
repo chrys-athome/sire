@@ -73,5 +73,3 @@ echo "## If you have any problems or questions please get in touch"
 echo "##"
 echo "##############################################################################"
 echo " "
-
-rm install_sire.sh
