@@ -13,6 +13,8 @@
 
 #include "Array2D_double_.pypp.hpp"
 
+#include "CPUID.pypp.hpp"
+
 #include "ChunkedVector_double_.pypp.hpp"
 
 #include "CombineProperties.pypp.hpp"
@@ -114,9 +116,11 @@ BOOST_PYTHON_MODULE(_Base){
 
     register_Array2D_double__class();
 
-    register_ChunkedVector_double__class();
-
     register_Property_class();
+
+    register_CPUID_class();
+
+    register_ChunkedVector_double__class();
 
     register_CombineProperties_class();
 

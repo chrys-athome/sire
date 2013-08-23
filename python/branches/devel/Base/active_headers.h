@@ -8,6 +8,7 @@
 #include "chunkedvector.hpp"
 #include "combineproperties.h"
 #include "countflops.h"
+#include "cpuid.h"
 #include "findexe.h"
 #include "getinstalldir.h"
 #include "increment.h"

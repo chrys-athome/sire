@@ -5,6 +5,7 @@ set ( PYPP_SOURCES
        Array2DBase.pypp.cpp
        ChunkedVector_double_.pypp.cpp
        CombineProperties.pypp.cpp
+       CPUID.pypp.cpp
        DoubleArrayProperty.pypp.cpp
        FlopsMark.pypp.cpp
        Incremint.pypp.cpp

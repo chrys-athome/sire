@@ -3,6 +3,7 @@
 
 #include "SireBase_registrars.h"
 
+#include "cpuid.h"
 #include "property.h"
 #include "stringproperty.h"
 #include "propertymap.h"
@@ -18,6 +19,7 @@
 void register_SireBase_objects()
 {
 
+    ObjectRegistry::registerConverterFor< SireBase::CPUID >();
     ObjectRegistry::registerConverterFor< SireBase::NullProperty >();
     ObjectRegistry::registerConverterFor< SireBase::VariantProperty >();
     ObjectRegistry::registerConverterFor< SireBase::StringProperty >();

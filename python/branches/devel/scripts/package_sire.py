@@ -38,8 +38,8 @@ install_sire = join(getShareDir(), "build", "install_sire.sh")
 with tempfile.TemporaryDirectory() as tempdir:
     print("Copying %s to %s" % (getInstallDir(),join(tempdir,"tmp_sire.app")))
     shutil.copytree(getInstallDir(), "%s" % (join(tempdir,"tmp_sire.app")), symlinks=True)
-    print("Copying %s to %s" % (install_sire, join(tempdir,"install_sire.sh")))
-    shutil.copyfile(install_sire, "%s" % join(tempdir,"install_sire.sh"))
+    #print("Copying %s to %s" % (install_sire, join(tempdir,"install_sire.sh")))
+    #shutil.copyfile(install_sire, "%s" % join(tempdir,"install_sire.sh"))
 
     # Remove all of the .pyc and .pyo files as these can be regenerated and
     # take up too much space
@@ -83,7 +83,7 @@ with tempfile.TemporaryDirectory() as tempdir:
     shutil.rmtree(develdir, ignore_errors=True)
 
     print("Using 'makeself' to create the self-extracting installer...")
-    os.system("%s --current %s %s \"Sire Molecular Simulation Framework\" ./install_sire.sh" \
+    os.system("%s --current %s %s \"Sire Molecular Simulation Framework\" ./tmp_sire.app/share/Sire/build/install_sire.sh" \
                    % (makeself, tempdir, sire_run))
 
 print( "\nAll done :-). Just type %s to install Sire." % sire_run )
