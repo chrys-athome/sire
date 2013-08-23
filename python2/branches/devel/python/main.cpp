@@ -66,119 +66,135 @@ int main(int argc, char **argv)
 
     try
     {
+        //run through the command line arguments and filter out the ones we want
+        //(we add 5 to the length as we may add arguments to the list)
+        boost::scoped_array<wchar_t*> python_argv( new wchar_t*[argc+5] );
+        int python_argc = 0;
 
-    //run through the command line arguments and filter out the ones we want
-    boost::scoped_array<wchar_t*> python_argv( new wchar_t*[argc+1] );
-    int python_argc = 0;
+        bool ignore_pythonpath = false;
+        bool ignore_ipython = false;
+        int ppn = 1;
 
-    bool ignore_pythonpath = false;
-    bool ignore_ipython = false;
-    int ppn = 1;
+        QList< std::wstring > warg_strings;
 
-    QList< std::wstring > warg_strings;
-
-    for (int i=0; i<argc; ++i)
-    {
-        QString arg = argv[i];
-        //qDebug() << "ARG" << i << arg;
-
-        if (arg.startsWith("--ppn"))
+        for (int i=0; i<argc; ++i)
         {
-            QStringList parts = arg.split("=", QString::SkipEmptyParts);
+            QString arg = argv[i];
+            //qDebug() << "ARG" << i << arg;
 
-            if (parts.count() > 1)
+            if (arg.startsWith("--ppn"))
             {
-                bool ok;
-                int num = parts.last().toInt(&ok);
-                if (ok and num > 0)
-                    ppn = num;
+                QStringList parts = arg.split("=", QString::SkipEmptyParts);
+
+                if (parts.count() > 1)
+                {
+                    bool ok;
+                    int num = parts.last().toInt(&ok);
+                    if (ok and num > 0)
+                        ppn = num;
+                }
+            }
+            else if (arg == "--ignore-pythonpath")
+            {
+                ignore_pythonpath = true;
+            }
+            else if (arg == "--ignore-ipython")
+            {
+                ignore_ipython = true;
+            }
+            else
+            {
+                warg_strings.append(arg.toStdWString());
+                python_argv[python_argc] = const_cast<wchar_t*>(warg_strings.last().data());
+                python_argc += 1;
             }
         }
-        else if (arg == "--ignore-pythonpath")
-        {
-            ignore_pythonpath = true;
-        }
-        else if (arg == "--ignore-ipython")
-        {
-            ignore_ipython = true;
-        }
+
+        #ifdef Q_OS_UNIX
+            signal(SIGINT, fatal_error_signal);
+            signal(SIGTERM, fatal_error_signal);
+        #endif // Q_OS_UNIX
+
+        QDir site_packages( QString("%1/%2").arg( getInstallDir(), SIRE_PYTHON2_DIR ) );
+
+        if (not site_packages.exists())
+            throw SireError::file_error( QObject::tr(
+                "Cannot find the directory containing the Sire python modules (%1). "
+                "Please check your installation of Sire in directory %2.")
+                    .arg(site_packages.absolutePath()).arg(getInstallDir()), CODELOC );
+
+        QString pythonpath;
+
+        if (not ignore_pythonpath)
+            pythonpath = qgetenv("PYTHONPATH");
+
+        if (pythonpath.isEmpty())
+            pythonpath = site_packages.canonicalPath();
         else
-        {
-            warg_strings.append(arg.toStdWString());
-            python_argv[python_argc] = const_cast<wchar_t*>(warg_strings.last().data());
-            python_argc += 1;
-        }
-    }
+            pythonpath = QString("%1:%2").arg(site_packages.canonicalPath()).arg(pythonpath);
 
-    #ifdef Q_OS_UNIX
-        signal(SIGINT, fatal_error_signal);
-        signal(SIGTERM, fatal_error_signal);
-    #endif // Q_OS_UNIX
+        QDir python_home( QString("%1/%2/..").arg( getInstallDir(), SIRE_BUNDLED_LIBS_DIR ) ); 
 
-    QDir site_packages( QString("%1/%2").arg( getInstallDir(), SIRE_PYTHON2_DIR ) );
-
-    if (not site_packages.exists())
-        throw SireError::file_error( QObject::tr(
-            "Cannot find the directory containing the Sire python modules (%1). "
-            "Please check your installation of Sire in directory %2.")
-                .arg(site_packages.absolutePath()).arg(getInstallDir()), CODELOC );
-
-    QString pythonpath;
-
-    if (not ignore_pythonpath)
-        pythonpath = qgetenv("PYTHONPATH");
-
-    if (pythonpath.isEmpty())
-        pythonpath = site_packages.canonicalPath();
-    else
-        pythonpath = QString("%1:%2").arg(site_packages.canonicalPath()).arg(pythonpath);
-
-    QDir python_home( QString("%1/%2/..").arg( getInstallDir(), SIRE_BUNDLED_LIBS_DIR ) ); 
-
-    if (not python_home.exists())
+        if (not python_home.exists())
         throw SireError::file_error( QObject::tr(
             "Cannot find the directory containing the bundled files (%1). "
             "Please check your installations of Sire in directory %2.")
                 .arg(python_home.absolutePath()).arg(getInstallDir()), CODELOC );
 
-    qDebug() << "Setting PYTHONPATH to" << pythonpath;
-    qDebug() << "Setting PYTHONHOME to" << python_home.canonicalPath();
+        qputenv("PYTHONPATH", pythonpath.toUtf8());
+        qputenv("PYTHONHOME", python_home.canonicalPath().toUtf8());
 
-    qputenv("PYTHONPATH", pythonpath.toUtf8());
-    qputenv("PYTHONHOME", python_home.canonicalPath().toUtf8());
+        //now look at the name of the executable. If there is a script with this
+        //name in share/scripts then run that script
+        QDir scripts_dir( QString("%1/scripts").arg(getShareDir()) );
 
-    if (not ignore_ipython)
-    {
-        //if ipython is installed in sire.app/bundled/bin/ipython3 then automatically
-        //run that as the first script. This will provide a nice environment for running
-        //sire scripts
-        QFileInfo ipython_file( python_home, "bin/ipython3" );
-
-        if (ipython_file.exists())
+        if (scripts_dir.exists())
         {
-            qDebug() << "Running all scripts through ipython in" << ipython_file.absoluteFilePath();
-            for (int i=python_argc; i>1; --i)
+            QFileInfo my_script( scripts_dir, QString("%1.py").arg( QString(argv[0]).split("/").last() ) );
+            qDebug() << my_script.absoluteFilePath();
+
+            if (my_script.exists())
             {
-                python_argv[i] = python_argv[i-1];
+                //there is a matching script, so automatically run this script
+                for (int i=python_argc; i>1; --i)
+                {
+                    python_argv[i] = python_argv[i-1];
+                }
+
+                warg_strings.append(my_script.absoluteFilePath().toStdWString());
+                python_argv[1] = const_cast<wchar_t*>(warg_strings.last().data());
+                python_argc += 1;
             }
-
-            warg_strings.append(ipython_file.absoluteFilePath().toStdWString());
-            python_argv[1] = const_cast<wchar_t*>(warg_strings.last().data());
-            python_argc += 1;
         }
-    }
 
-    printf("Starting %ls: number of threads equals %d\n", python_argv[0], ppn);
+        printf("Starting %ls: number of threads equals %d\n", python_argv[0], ppn);
 
-    //name this process and thread
-    SireError::setProcessString("master");
-    SireError::setThreadString("main");
+        if (not ignore_ipython)
+        {
+            //if ipython is installed in sire.app/bundled/bin/ipython3 then automatically
+            //run that as the first script. This will provide a nice environment for running
+            //sire scripts
+            QFileInfo ipython_file( python_home, "bin/ipython3" );
 
-    // run the standard python interpreter
-    qDebug() << "Entering python main...";
-    status = Py_Main(python_argc, python_argv.get());
-    qDebug() << "Leaving python main...";
+            if (ipython_file.exists())
+            {
+                for (int i=python_argc; i>1; --i)
+                {
+                    python_argv[i] = python_argv[i-1];
+                }
 
+                warg_strings.append(ipython_file.absoluteFilePath().toStdWString());
+                python_argv[1] = const_cast<wchar_t*>(warg_strings.last().data());
+                python_argc += 1;
+            }
+        }
+
+        //name this process and thread
+        SireError::setProcessString("master");
+        SireError::setThreadString("main");
+
+        // run the standard python interpreter
+        status = Py_Main(python_argc, python_argv.get());
     }
     catch(const SireError::exception &e)
     {

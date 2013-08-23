@@ -330,3 +330,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/Config__init__.py.in
 
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/__init__.py
          DESTINATION ${SIRE_PYTHON}/Sire/Config/)
+
+install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/scripts
+         DESTINATION ${SIRE_SHARE})
