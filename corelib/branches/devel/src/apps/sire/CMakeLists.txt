@@ -38,11 +38,6 @@ set ( SIRE_SOURCES
 # generate the application
 add_executable ( sire ${SIRE_SOURCES} ${SIRE_RCC_SRCS} )
 
-set_target_properties (sire PROPERTIES
-                       VERSION ${SIRE_VERSION}
-                       SOVERSION ${SIRE_VERSION_MAJOR}
-                      )
-
 # Link to other Sire libraries
 target_link_libraries (sire
                        SireIO
