@@ -11,6 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 if (SIRE_FOUND_CPUID)
   add_definitions( "-DSIRE_FOUND_CPUID" )
+  add_definitions( "${CPUID_DEFINITIONS}" )
   include_directories( ${CPUID_INCLUDE_DIR} )
 endif()
 

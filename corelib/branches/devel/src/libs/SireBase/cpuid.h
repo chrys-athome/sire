@@ -75,9 +75,28 @@ public:
     
     QString toString() const;
     
+    bool supports(const QString &feature) const;
+
+    QStringList supportableFeatures() const;
+    
+    QStringList supportedFeatures() const;
+    
+    QString vendor() const;
+    QString brand() const;
+    
+    int clockSpeed() const;
+    int numCores() const;
+    
+    bool supportsSSE2() const;
+    bool supportsAVX() const;
+    
 private:
+    QHash<QString,QString>* getCPUID();
+
     /** A simple dictionary of key-value pairs for the CPU */
     QHash<QString,QString> props;
+    
+    static QHash<QString,QString> *global_props;
 };
 
 }

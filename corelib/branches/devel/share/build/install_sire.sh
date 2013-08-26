@@ -12,7 +12,7 @@ echo "Full Path to Install directory ($HOME/sire.app): "
 
 read install_dir
 
-if [ "x$install_dir" == "x" ]; then
+if [ "x$install_dir" = "x" ]; then
     echo "Using default install directory: $HOME/sire.app"
     install_dir="$HOME/sire.app"
 fi
