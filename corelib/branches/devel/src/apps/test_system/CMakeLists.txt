@@ -28,9 +28,6 @@ if (SIRE_FOUND_CPUID)
 
   add_executable( get_cpuid get_cpuid.c )
 
-  set_target_properties(get_cpuid PROPERTIES LINK_SEARCH_START_STATIC 1)
-  set_target_properties(get_cpuid PROPERTIES LINK_SEARCH_END_STATIC 1)
-
   target_link_libraries( get_cpuid ${CPUID_LIBRARY} )
 
   install( TARGETS get_cpuid RUNTIME DESTINATION ${SIRE_BIN}/support )
