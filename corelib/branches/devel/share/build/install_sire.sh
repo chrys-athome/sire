@@ -8,35 +8,33 @@ echo "#      directory you want after installation"
 echo "#######################################################\n"
 echo " "
 
-echo "Full Path to Install directory ($HOME): "
+echo "Full Path to Install directory ($HOME/sire.app): "
 
 read install_dir
 
-if [ -z "$install_dir" ]; then
-    set install_dir = $HOME
-
-else 
-    if [ ! -d "$install_dir" ]; then
-        echo "Directory $install_dir does not exist! Please create it or provide a valid path."
-        exit -1
-    fi
+if [ "x$install_dir" == "x" ]; then
+    echo "Using default install directory: $HOME/sire.app"
+    install_dir="$HOME/sire.app"
 fi
 
-if [ -d "$install_dir/sire.app" ]; then
-    echo "There is already a version of Sire installed at $install_dir/sire.app"
+echo "Going to install Sire to $install_dir"
+
+if [ -d "$install_dir" ]; then
+    echo "There is already a version of Sire installed at $install_dir"
     echo "Please remove it, or choose another installation directory"
     exit -1
 fi
 
 echo " "
 echo "Installing Sire to $install_dir"
-mv tmp_sire.app $install_dir/sire.app
+mv tmp_sire.app $install_dir
 
-if [ ! -d "$install_dir/sire.app" ]; then
+if [ ! -d "$install_dir" ]; then
   echo " "
   echo "************************************************"
   echo "* WARNING - INSTALLATION FAILED"
-  echo "* PLEASE GET IN TOUCH WITH THE SIRE DEVELOPERS"
+  echo "* PLEASE CHECK THAT YOU CAN WRITE TO $install_dir"
+  echo "* IF YOU CAN, PLEASE CONTACT THE DEVELOPERS AT"
   echo "* http://siremol.org"
   echo "************************************************"
   echo " "
@@ -58,7 +56,7 @@ echo "##"
 echo "## You can copy or move this directory if you want, and Sire will still work"
 echo "## Everything is contained in this directory, so you can delete Sire by"
 echo "## deleting this directory"
-echo "## (e.g. rm -rf $install_dir/sire.app)"
+echo "## e.g. rm -rf $install_dir/sire.app"
 echo "##"
 echo "## If you have never used Sire before, please take a look at the "
 echo "## Sire tutorial at http://siremol.org/tutorial"

@@ -31,6 +31,10 @@ else()
     list( APPEND CPUID_OPTIONS "--prefix=${BUNDLE_STAGEDIR}" )
     list( APPEND CPUID_OPTIONS "CC=${CMAKE_C_COMPILER}" )
 
+    if (HAVE_STDINT_H)
+      list( APPEND CPUID_OPTIONS "CFLAGS=-DHAVE_STDINT_H" )
+    endif()
+
     message( STATUS "${CPUID_OPTIONS}" )
 
     message( STATUS "Patience... Configuring libcpuid..." )
@@ -58,6 +62,10 @@ if ( CPUID_LIBRARY )
   message( STATUS "Using libcpuid from ${CPUID_LIBRARY}" )
 
   set( CPUID_INCLUDE_DIR "${BUNDLED_STAGEDIR}/include")
+
+  if (HAVE_STDINT_H)
+    set( CPUID_DEFINITIONS "-DHAVE_STDINT_H" )
+  endif()
 
   set( SIRE_FOUND_CPUID TRUE )
 else()
