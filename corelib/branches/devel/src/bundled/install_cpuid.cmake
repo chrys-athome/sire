@@ -61,7 +61,7 @@ endif()
 if ( CPUID_LIBRARY )
   message( STATUS "Using libcpuid from ${CPUID_LIBRARY}" )
 
-  set( CPUID_INCLUDE_DIR "${BUNDLED_STAGEDIR}/include")
+  set( CPUID_INCLUDE_DIR "${BUNDLE_STAGEDIR}/include")
 
   if (HAVE_STDINT_H)
     set( CPUID_DEFINITIONS "-DHAVE_STDINT_H" )

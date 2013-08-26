@@ -465,7 +465,7 @@ save_sire_variable( "SIRE_COMPILER" "${SIRE_COMPILER}" )
 ################
 
 # Tell CMake to run moc when necessary
-set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOMOC OFF)
 
 # As moc files are generated in the binary dir, tell CMake
 # to always look for includes there:
