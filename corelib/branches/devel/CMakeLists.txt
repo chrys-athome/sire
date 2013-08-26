@@ -95,6 +95,8 @@ set (SIRE_INCLUDES "include/Sire")
 set (SIRE_CMAKEFILES "include/Sire/cmake")
 # Sire share directory (for parameters etc.)
 set (SIRE_SHARE "share/Sire")
+# Where will the test files be saved?
+set (SIRE_TEST "test")
 
 # Add these directories to the RPATH variable for the libraries / executables,
 # so that they can find each other when loading
@@ -110,9 +112,9 @@ if (APPLE)
   # Add the two passed directories to the @rpaths to search for libraries. @executable_path
   # is the directory containing the executable, so the libraries are included in 
   # @exeutable_path/../${SIRE_LIBS} and @exeutable_path/../${SIRE_BUNDLED_LIBS}
-  set (SIRE_INSTALL_RPATH "@executable_path/../${SIRE_LIBS}:@executable_path/../${SIRE_BUNDLED_LIBS}")
+  set (SIRE_INSTALL_RPATH "@executable_path/.:@executable_path/../${SIRE_LIBS}:@executable_path/../${SIRE_BUNDLED_LIBS}")
 else()
-  set (SIRE_INSTALL_RPATH "\$ORIGIN/../${SIRE_LIBS}:\$ORIGIN/../${SIRE_BUNDLED_LIBS}")
+  set (SIRE_INSTALL_RPATH "\$ORIGIN/.:\$ORIGIN/../${SIRE_LIBS}:\$ORIGIN/../${SIRE_BUNDLED_LIBS}")
 endif()
 
 set (CMAKE_INSTALL_RPATH "${SIRE_INSTALL_RPATH}")
@@ -128,6 +130,7 @@ save_sire_variable( "SIRE_INCLUDES" "${SIRE_INCLUDES}" )
 save_sire_variable( "SIRE_SHARE" "${SIRE_SHARE}" )
 save_sire_variable( "SIRE_CMAKEFILES" "${SIRE_CMAKEFILES}" )
 save_sire_variable( "SIRE_INSTALL_RPATH" "${SIRE_INSTALL_RPATH}" )
+save_sire_variable( "SIRE_TEST" "${SIRE_TEST}" )
 
 # Uncomment for more verbose compiling/linking
 # (or run 'make VERBOSE=1')
