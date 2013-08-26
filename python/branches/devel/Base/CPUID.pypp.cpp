@@ -30,6 +30,36 @@ void register_CPUID_class(){
         CPUID_exposer_t CPUID_exposer = CPUID_exposer_t( "CPUID", bp::init< >() );
         bp::scope CPUID_scope( CPUID_exposer );
         CPUID_exposer.def( bp::init< SireBase::CPUID const & >(( bp::arg("other") )) );
+        { //::SireBase::CPUID::brand
+        
+            typedef ::QString ( ::SireBase::CPUID::*brand_function_type )(  ) const;
+            brand_function_type brand_function_value( &::SireBase::CPUID::brand );
+            
+            CPUID_exposer.def( 
+                "brand"
+                , brand_function_value );
+        
+        }
+        { //::SireBase::CPUID::clockSpeed
+        
+            typedef int ( ::SireBase::CPUID::*clockSpeed_function_type )(  ) const;
+            clockSpeed_function_type clockSpeed_function_value( &::SireBase::CPUID::clockSpeed );
+            
+            CPUID_exposer.def( 
+                "clockSpeed"
+                , clockSpeed_function_value );
+        
+        }
+        { //::SireBase::CPUID::numCores
+        
+            typedef int ( ::SireBase::CPUID::*numCores_function_type )(  ) const;
+            numCores_function_type numCores_function_value( &::SireBase::CPUID::numCores );
+            
+            CPUID_exposer.def( 
+                "numCores"
+                , numCores_function_value );
+        
+        }
         CPUID_exposer.def( bp::self != bp::self );
         { //::SireBase::CPUID::operator=
         
@@ -44,6 +74,57 @@ void register_CPUID_class(){
         
         }
         CPUID_exposer.def( bp::self == bp::self );
+        { //::SireBase::CPUID::supportableFeatures
+        
+            typedef ::QStringList ( ::SireBase::CPUID::*supportableFeatures_function_type )(  ) const;
+            supportableFeatures_function_type supportableFeatures_function_value( &::SireBase::CPUID::supportableFeatures );
+            
+            CPUID_exposer.def( 
+                "supportableFeatures"
+                , supportableFeatures_function_value );
+        
+        }
+        { //::SireBase::CPUID::supportedFeatures
+        
+            typedef ::QStringList ( ::SireBase::CPUID::*supportedFeatures_function_type )(  ) const;
+            supportedFeatures_function_type supportedFeatures_function_value( &::SireBase::CPUID::supportedFeatures );
+            
+            CPUID_exposer.def( 
+                "supportedFeatures"
+                , supportedFeatures_function_value );
+        
+        }
+        { //::SireBase::CPUID::supports
+        
+            typedef bool ( ::SireBase::CPUID::*supports_function_type )( ::QString const & ) const;
+            supports_function_type supports_function_value( &::SireBase::CPUID::supports );
+            
+            CPUID_exposer.def( 
+                "supports"
+                , supports_function_value
+                , ( bp::arg("feature") ) );
+        
+        }
+        { //::SireBase::CPUID::supportsAVX
+        
+            typedef bool ( ::SireBase::CPUID::*supportsAVX_function_type )(  ) const;
+            supportsAVX_function_type supportsAVX_function_value( &::SireBase::CPUID::supportsAVX );
+            
+            CPUID_exposer.def( 
+                "supportsAVX"
+                , supportsAVX_function_value );
+        
+        }
+        { //::SireBase::CPUID::supportsSSE2
+        
+            typedef bool ( ::SireBase::CPUID::*supportsSSE2_function_type )(  ) const;
+            supportsSSE2_function_type supportsSSE2_function_value( &::SireBase::CPUID::supportsSSE2 );
+            
+            CPUID_exposer.def( 
+                "supportsSSE2"
+                , supportsSSE2_function_value );
+        
+        }
         { //::SireBase::CPUID::toString
         
             typedef ::QString ( ::SireBase::CPUID::*toString_function_type )(  ) const;
@@ -62,6 +143,16 @@ void register_CPUID_class(){
             CPUID_exposer.def( 
                 "typeName"
                 , typeName_function_value );
+        
+        }
+        { //::SireBase::CPUID::vendor
+        
+            typedef ::QString ( ::SireBase::CPUID::*vendor_function_type )(  ) const;
+            vendor_function_type vendor_function_value( &::SireBase::CPUID::vendor );
+            
+            CPUID_exposer.def( 
+                "vendor"
+                , vendor_function_value );
         
         }
         { //::SireBase::CPUID::what
