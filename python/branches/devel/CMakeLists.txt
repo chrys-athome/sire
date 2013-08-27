@@ -301,6 +301,9 @@ add_subdirectory (Vol)
 
 add_subdirectory (Tools)
 
+#also install of the unit tests
+add_subdirectory (tests)
+
 #also compile Sire's python executable
 add_subdirectory (python)
 

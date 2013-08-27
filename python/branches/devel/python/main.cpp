@@ -71,7 +71,7 @@ int main(int argc, char **argv)
         boost::scoped_array<wchar_t*> python_argv( new wchar_t*[argc+5] );
         int python_argc = 0;
 
-        bool ignore_pythonpath = false;
+        bool ignore_pythonpath = true;
         bool ignore_ipython = false;
         int ppn = 1;
 
@@ -94,9 +94,9 @@ int main(int argc, char **argv)
                         ppn = num;
                 }
             }
-            else if (arg == "--ignore-pythonpath")
+            else if (arg == "--include-pythonpath")
             {
-                ignore_pythonpath = true;
+                ignore_pythonpath = false;
             }
             else if (arg == "--ignore-ipython")
             {

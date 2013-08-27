@@ -4,10 +4,11 @@
 # where Sire is installed etc.
 #
 
-binary_directory = "@SIRE_INSTALL_PREFIX@/@SIRE_BIN@"
-library_directory = "@SIRE_INSTALL_PREFIX@/@SIRE_LIBS@"
-include_directory = "@SIRE_INSTALL_PREFIX@/@SIRE_INCLUDES@"
-share_directory = "@SIRE_INSTALL_PREFIX@/@SIRE_SHARE@"
-parameter_directory = "@SIRE_INSTALL_PREFIX@/@SIRE_SHARE@/parameters"
+import Sire.Base
 
-
+binary_directory = Sire.Base.getBinDir()
+library_directory = Sire.Base.getLibDir()
+include_directory = "%s/include" % Sire.Base.getInstallDir()
+share_directory = Sire.Base.getShareDir()
+parameter_directory = "%s/parameters" % share_directory
+test_directory = "%s/test" % Sire.Base.getInstallDir()
