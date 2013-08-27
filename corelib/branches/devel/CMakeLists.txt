@@ -32,7 +32,7 @@ if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
 endif()
 
 # name the project
-project (SIRE CXX C Fortran)
+project (SIRE CXX C)
 
 # Create a file in which we can save the values of all useful variables.
 # This will mean that projects using Sire won't have to set these variables

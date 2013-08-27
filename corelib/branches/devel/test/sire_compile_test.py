@@ -3,6 +3,14 @@ import os
 import sys
 import shutil
 
+rebuild = False
+
+try:
+    if sys.argv[1] == "--rebuild":
+        rebuild = True
+except:
+    pass
+
 home = os.getenv("HOME")
 testdir = "%s/sire_test" % home
 
@@ -43,13 +51,19 @@ else:
         print("Failed to update the source for the python wrappers")
         sys.exit(-1)
 
-if os.path.exists("build"):
-    print("Removing existing build directory...")
-    shutil.rmtree("./build")
+if rebuild:
+    if os.path.exists("build"):
+        print("Removing existing build directory...")
+        shutil.rmtree("./build")
 
-os.mkdir("build")
-os.mkdir("build/corelib")
-os.mkdir("build/python")
+if not os.path.exists("build"):
+    os.mkdir("build")
+
+if not os.path.exists("build/corelib"):
+    os.mkdir("build/corelib")
+
+if not os.path.exists("build/python"):
+    os.mkdir("build/python")
 
 sire_app = "%s/sire.app" % testdir
 print("Compiling Sire to install in %s" % sire_app)
