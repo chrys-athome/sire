@@ -17,7 +17,7 @@ import sys
 timer = QTime()
 
 #read in the solute molecule
-print "Loading the tip4p solute..."
+print("Loading the tip4p solute...")
 tip4p = PDB().readMolecule("test/io/tip4p.pdb")
 
 #specify the space in which the molecules are placed
@@ -81,9 +81,9 @@ for i in range(0,5000):
     moves = system.run(mtsmc, 20)
 
     mtsmc = moves.moves()[0].clone()
-    print "%d accepted, %d rejected, ratio = %f %%" % \
-             (mtsmc.nAccepted(), mtsmc.nRejected(), 100 * mtsmc.acceptanceRatio())
+    print("%d accepted, %d rejected, ratio = %f %%" % \
+             (mtsmc.nAccepted(), mtsmc.nRejected(), 100 * mtsmc.acceptanceRatio()))
          
-    print "AVGENERGY: %f" % system.monitors().monitor(ffields.total()).average()
-    print "ENERGY: %f" % system.forceFields().energy()
+    print("AVGENERGY: %f" % system.monitors().monitor(ffields.total()).average())
+    print("ENERGY: %f" % system.forceFields().energy())
     sys.stdout.flush()

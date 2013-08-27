@@ -34,14 +34,14 @@ cff = InterCoulombFF("CoulombFF")
 cff.add(hcl)
 cff.add(hcl2)
 
-print "Energy is %s : Should be about -10.9634 kcal mol-1" % cff.energy()
+print("Energy is %s : Should be about -10.9634 kcal mol-1" % cff.energy())
 
 pottable = PotentialTable(hcl2_group)
 
 cff.potential(pottable)
 
-print "Potential is %s : Should be about [ -47.342 kcal mol-1, -15.380 kcal mol-1 ]" % \
-          (str(pottable.getTable(hcl2.number()).toVector()))
+print("Potential is %s : Should be about [ -47.342 kcal mol-1, -15.380 kcal mol-1 ]" % \
+          (str(pottable.getTable(hcl2.number()).toVector())))
 
 pol = PolariseCharges(hcl2_group)
 
@@ -55,6 +55,6 @@ system.applyConstraints()
 
 hcl2 = system[hcl2.number()].molecule()
 
-print system.energies()
+print(system.energies())
 
-print hcl2.property("induced_charge")
+print(hcl2.property("induced_charge"))

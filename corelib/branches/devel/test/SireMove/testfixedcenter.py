@@ -13,7 +13,7 @@ from Sire.Units import *
 ligand = Sire.Stream.load("test/io/osel.s3")
 ligand = ligand.edit().setProperty("center", wrap(ligand.evaluate().center())).commit()
 
-print "Original center = %s" % ligand.property("center")
+print("Original center = %s" % ligand.property("center"))
 
 intraff = InternalFF("intraff")
 intraff.add(ligand)
@@ -39,11 +39,11 @@ moves.add(rbmove, 1)
 
 for i in range(0,10):
     system = moves.move(system, 250, False)
-    print "Completed 250 moves..."
+    print("Completed 250 moves...")
     PDB().write(system.molecules(), "test%0004d.pdb" % (i+1))
 
     ligand = system[ligand.number()].molecule()
 
-    print "New center = %s" % ligand.property("center")
+    print("New center = %s" % ligand.property("center"))
 
-print "Complete"
+print("Complete")

@@ -72,19 +72,19 @@ moves.add(mc, 125)
 moves.add(volmc, 1)
 
 for i in range(1,1001):
-    print "Running block %d" % i
+    print("Running block %d" % i)
     timer.start()
     moves = system.run(moves, 100000)
     
-    print "Took %d ms" % timer.elapsed()
-    print "Energy = %f | Volume = %f" % (system.forceFields().energy(),    
-                                         system.info().space().volume())
+    print("Took %d ms" % timer.elapsed())
+    print("Energy = %f | Volume = %f" % (system.forceFields().energy(),    
+                                         system.info().space().volume()))
                                          
-    print "MC Accept %d Reject %d" % (moves.moves()[0].clone().nAccepted(),
-                                      moves.moves()[0].clone().nRejected())
+    print("MC Accept %d Reject %d" % (moves.moves()[0].clone().nAccepted(),
+                                      moves.moves()[0].clone().nRejected()))
     
-    print "VMC Accept %d Reject %d" % (moves.moves()[1].clone().nAccepted(),
-                                       moves.moves()[1].clone().nRejected())
+    print("VMC Accept %d Reject %d" % (moves.moves()[1].clone().nAccepted(),
+                                       moves.moves()[1].clone().nRejected()))
     
     
     

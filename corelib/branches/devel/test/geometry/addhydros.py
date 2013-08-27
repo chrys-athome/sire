@@ -10,21 +10,21 @@ mols = PDB().read("test/geometry/dioxin.pdb")
 if (mols.count() > 0):
     dioxin = mols[0]
     
-print "DIOXIN, no hydrogens"
+print("DIOXIN, no hydrogens")
 for atom in dioxin_noh[0]:
-    print atom
+    print(atom)
 
 dioxin_noh[0].applyTemplate(dioxin[0],TmplType(TmplTypeEnum.MATCHATOMS))
 
-print "DIOXIN"
+print("DIOXIN")
 for atom in dioxin[0]:
-    print atom
+    print(atom)
     
-print "NEW DIOXIN, added hydrogens!"
+print("NEW DIOXIN, added hydrogens!")
 for atom in dioxin_noh[0]:
-    print atom
+    print(atom)
 
 PDB().write(dioxin_noh,"test.pdb")
 
-print "Done!"
+print("Done!")
 

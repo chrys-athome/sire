@@ -21,4 +21,4 @@ for water in tip4pwaters:
 #finally, write out the converted solvent box
 PDB().write(tip4pwaters,"spcbox.pdb")
 
-print "Done!"
+print("Done!")

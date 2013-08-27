@@ -29,7 +29,7 @@ cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
                                                 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -72,7 +72,7 @@ system = System()
 
 system.add(cljff)
 
-print "Initial energy = %s" % system.energy()
+print("Initial energy = %s" % system.energy())
 
 sampler = PrefSampler(mol0, cljff[MGIdx(0)], 200*angstrom2)
 sampler.updateFrom(system)
@@ -85,7 +85,7 @@ p0 = sampler.probabilityOf(mol0)
 p1 = sampler.probabilityOf(mol1)
 p2 = sampler.probabilityOf(mol2)
 
-print p0, p1, p2, p0+p1+p2 
+print(p0, p1, p2, p0+p1+p2) 
 
 mol1 = mol1.move().translate( Vector(1,0,0) ).commit()
 
@@ -96,7 +96,7 @@ p0 = sampler.probabilityOf(mol0)
 p1 = sampler.probabilityOf(mol1)
 p2 = sampler.probabilityOf(mol2)
 
-print p0, p1, p2, p0+p1+p2
+print(p0, p1, p2, p0+p1+p2)
 
 mol0 = mol0.move().translate( Vector(1,0,0) ).commit()
 
@@ -107,5 +107,5 @@ p0 = sampler.probabilityOf(mol0)
 p1 = sampler.probabilityOf(mol1)
 p2 = sampler.probabilityOf(mol2)
                                                    
-print p0, p1, p2, p0+p1+p2
+print(p0, p1, p2, p0+p1+p2)
 

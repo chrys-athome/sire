@@ -27,8 +27,8 @@ umbrella = []
 for c in coords:
     umbrella.append( 10 * (1-c) * kcal_per_mol )
 
-print w.solve( HistogramRange(0,1,0.1) )
+print(w.solve( HistogramRange(0,1,0.1) ))
 
 w.add( coords, umbrella )
 
-print w.solve( HistogramRange(0,1,0.1) )
+print(w.solve( HistogramRange(0,1,0.1) ))

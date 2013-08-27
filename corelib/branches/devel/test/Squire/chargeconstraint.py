@@ -22,7 +22,7 @@ protoms.addParameterFile("test/ff/solvents.ff")
 
 mol = protoms.parameterise(mol, ProtoMS.SOLUTE)
 
-print mol.property("charge").array()
+print(mol.property("charge").array())
 
 qmff = QMFF("MopacFF")
 qmff.setQuantumProgram( Mopac() )
@@ -35,12 +35,12 @@ intraff.add(mol)
 intraclj = IntraCLJFF("IntraCLJ")
 intraclj.add(mol)
 
-print intraff.energy()
-print intraclj.energy()
+print(intraff.energy())
+print(intraclj.energy())
 
-print intraff.energy() + intraclj.energy()
+print(intraff.energy() + intraclj.energy())
 
-print qmff.energy()
+print(qmff.energy())
 
 solute = MoleculeGroup("solute")
 solute.add(mol)
@@ -53,22 +53,22 @@ system.add(intraclj)
 
 system.add(solute)
 
-print system.energy()
+print(system.energy())
 
 chg_constraint = QMChargeConstraint(solute)
 chg_constraint.setChargeCalculator( AM1BCC() )
 
 system.add(chg_constraint)
 
-print system.constraintsSatisfied()
+print(system.constraintsSatisfied())
 
-print system.energy()
+print(system.energy())
 
-print system.constraintsSatisfied()
+print(system.constraintsSatisfied())
 
 mol = system[ MGIdx(0) ][ mol.number() ].molecule()
 
-print mol.property("charge").array()
+print(mol.property("charge").array())
 
 water = PDB().read("test/io/water.pdb")
 
@@ -119,11 +119,11 @@ moves.add(rbmc, 500)
 moves.add(zmatmc)
 
 for i in range(0,100):
-    print "MOVE"
+    print("MOVE")
     system = moves.move( system, 500, True )
-    print "ENERGY = %f kcal mol-1" % (system.energy().to(kcal_per_mol))
-    print moves
+    print("ENERGY = %f kcal mol-1" % (system.energy().to(kcal_per_mol)))
+    print(moves)
 
     mol = system[ solute.name() ][ MolIdx(0) ].molecule()
-    print "CHARGES ",mol.property("charge")
+    print("CHARGES ",mol.property("charge"))
 

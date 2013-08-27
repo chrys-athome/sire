@@ -41,6 +41,6 @@ moves = SameMoves(zmat_move)
 import Sire.Stream
 Sire.Stream.save( (system,moves), "test/Squire/mopacsim.s3" )
 
-print "Energy before == %f kcal mol-1" % system.energy().to(kcal_per_mol)
+print("Energy before == %f kcal mol-1" % system.energy().to(kcal_per_mol))
 system = moves.move(system)
-print "Energy after == %f kcal mol-1" % system.energy().to(kcal_per_mol)
+print("Energy after == %f kcal mol-1" % system.energy().to(kcal_per_mol))

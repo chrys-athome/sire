@@ -87,11 +87,11 @@ def MoverInspector(solute=None):
     # 1) Do not sample a torsion at0-at1-at2-at3 if a variable torsion has 
     # already been defined around at1-at2. 
     # 2) Do not sample a torsion if it would break a ring
-    print all_dihedrals,len(all_dihedrals)
+    print(all_dihedrals,len(all_dihedrals))
     var_dihedrals = []
     for dihedral in all_dihedrals:
         tomove = True
-        print dihedral
+        print(dihedral)
         at0 = dihedral.atom0()
         at1 = dihedral.atom1()
         at2 = dihedral.atom2()
@@ -111,7 +111,7 @@ def MoverInspector(solute=None):
             # extract the type of the errror
             error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
             if error_type == "SireMol::ring_error":
-                print "This dof would move a ring and is therefore skipped"
+                print("This dof would move a ring and is therefore skipped")
                 tomove = False
             else:
                 # re-throw the exception
@@ -119,15 +119,15 @@ def MoverInspector(solute=None):
         if tomove:
             var_dihedrals.append(dihedral)
             angle_deltas[dihedral] = 5.0*degrees
-    print "TORSIONS TO SAMPLE"
+    print("TORSIONS TO SAMPLE")
     for var in var_dihedrals:
-        print var
+        print(var)
     # And the angles ....
-    print all_angles,len(all_angles)
+    print(all_angles,len(all_angles))
     var_angles = []
     moved_atoms = []
     for angle in all_angles:
-        print angle
+        print(angle)
         at0 = angle.atom0()
         at2 = angle.atom2()
         # Do not sample that dof if an existing dof would already move this atom
@@ -140,7 +140,7 @@ def MoverInspector(solute=None):
             # extract the type of the errror
             error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
             if error_type == "SireMol::ring_error":
-                print "This dof would move a ring and is therefore skipped"
+                print("This dof would move a ring and is therefore skipped")
                 continue
             else:
                 # re-throw the exception
@@ -151,8 +151,8 @@ def MoverInspector(solute=None):
             moved_atoms.append(at0)
         if at2 not in moved_atoms:
             moved_atoms.append(at2)    
-    print moved_atoms
-    print var_angles,len(var_angles)
+    print(moved_atoms)
+    print(var_angles,len(var_angles))
     # And the bonds...
     var_bonds = []
     for bond in all_bonds:
@@ -162,7 +162,7 @@ def MoverInspector(solute=None):
             # extract the type of the errror
             error_type = re.search(r"(Sire\w*::\w*)", str(error)).group(0)
             if error_type == "SireMol::ring_error":
-                print "This dof would move a ring and is therefore skipped"
+                print("This dof would move a ring and is therefore skipped")
                 continue
             else:
                 # re-throw the exception
@@ -270,43 +270,43 @@ system.add( "trajectory", TrajectoryMonitor(system[MGIdx(0)]), 100 )
 # In a more complex simulation, we should also monitor the acceptance rate of the 
 # translations/rotations of the solute. Statistics should not be recorded during
 # equilibration as changing the delta values breaks detailed balance.
-print "Equilibration"
+print("Equilibration")
 for i in range(0,nblocks_eq):
-    print "Running block %d " % i
+    print("Running block %d " % i)
     system = moves.move(system, nmoves_eq, False)
     solute_mover = moves[0]
     acc_rate = solute_mover.acceptanceRatio()
     solute_mover.clearStatistics()
-    print acc_rate
+    print(acc_rate)
     if (acc_rate > 0.5):
-        print "Increasing deltas..."
+        print("Increasing deltas...")
         stability = 0
         solute_mover.changeDeltas(prob=0.25, scale=1.25)
     elif (acc_rate < 0.3):
-        print "Decreasing deltas..."
+        print("Decreasing deltas...")
         stability = 0
         solute_mover.changeDeltas(prob=0.25, scale=0.75)
     else:
-        print "Acceptance rate was in range "
+        print("Acceptance rate was in range ")
         stability += 1
         if (stability > 5):
-            print "The acceptance rate is stable."
+            print("The acceptance rate is stable.")
             break
     moves = SameMoves(solute_mover)
 
-print "Production"
+print("Production")
 for i in range(0,nblocks):
-    print "Running block %d " % i
+    print("Running block %d " % i)
     system = moves.move(system, nmoves, True)
 #sys.exit(-1)
-print "Analysis..."
+print("Analysis...")
 # make an histogram...
 nbins=31
 
 for bond in var_bonds:
     bmonitor = "b_%s_%s" % (bond.atom0().value(),bond.atom1().value()) 
     histoAnalysis(nbins=nbins,
-                  values=system.monitor( MonitorName(bmonitor) ).accumulator().values(),
+                  values=list(system.monitor( MonitorName(bmonitor) ).accumulator().values()),
                   avgnrg = system.monitor( MonitorName("total_energy") ).accumulator().average(),
                   mode="bond",
                   output="BOND-%s.dat" % bmonitor)
@@ -317,7 +317,7 @@ for angle in var_angles:
                                angle.atom1().value(),
                                angle.atom2().value() ) 
     histoAnalysis(nbins=nbins,
-                  values=system.monitor( MonitorName(amonitor) ).accumulator().values(),
+                  values=list(system.monitor( MonitorName(amonitor) ).accumulator().values()),
                   avgnrg = system.monitor( MonitorName("total_energy") ).accumulator().average(),
                   mode="angle",
                   output="ANGLE-%s.dat" % amonitor)
@@ -328,7 +328,7 @@ for dihedral in var_dihedrals:
                                   dihedral.atom2().value(),
                                   dihedral.atom3().value() ) 
     histoAnalysis(nbins=nbins,
-                  values=system.monitor( MonitorName(dmonitor) ).accumulator().values(),
+                  values=list(system.monitor( MonitorName(dmonitor) ).accumulator().values()),
                   avgnrg = system.monitor( MonitorName("total_energy") ).accumulator().average(),
                   mode="angle",
                   output="DIHEDRAL-%s.dat" % dmonitor)

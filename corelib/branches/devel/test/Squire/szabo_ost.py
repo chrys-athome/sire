@@ -23,18 +23,18 @@ for i in range(0,3):
 s0 = CS_GTO( A1, coef )
 s1 = CS_GTO( A2, coef )
 
-print s0.alpha() 
-print s0.scale()
-print s1.alpha()
-print s1.scale()
-print Vector.distance(p0,p1), Vector.distance2(p0,p1)
+print(s0.alpha()) 
+print(s0.scale())
+print(s1.alpha())
+print(s1.scale())
+print(Vector.distance(p0,p1), Vector.distance2(p0,p1))
 
 n0 = PointCharge( Vector(0,0,0), 2*mod_electron )
 n1 = PointCharge( Vector(1.4632,0,0), 1*mod_electron )
 
-print overlap_integral( CSS_GTO(p0,s0, p0,s0) )
-print overlap_integral( CSS_GTO(p0,s0, p1,s1) )
-print overlap_integral( CSS_GTO(p1,s1, p1,s1) )
+print(overlap_integral( CSS_GTO(p0,s0, p0,s0) ))
+print(overlap_integral( CSS_GTO(p0,s0, p1,s1) ))
+print(overlap_integral( CSS_GTO(p1,s1, p1,s1) ))
 
 hf = HF()
 

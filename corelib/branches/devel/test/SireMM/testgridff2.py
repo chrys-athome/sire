@@ -81,10 +81,10 @@ cljff.setShiftElectrostatics(True)
 #cljff.setUseReactionField(True)
 cljff.setSpace( Cartesian() )
 
-print gridff.energies()
-print gridff2.energies()
+print(gridff.energies())
+print(gridff2.energies())
 
-print "\nEnergies"
-print gridff.energies()
-print gridff2.energies()
-print cljff.energies()
+print("\nEnergies")
+print(gridff.energies())
+print(gridff2.energies())
+print(cljff.energies())

@@ -11,12 +11,12 @@ from Sire.Units import *
 timer = QTime()
 
 #read in all of the molecules
-print "Loading the molecules..."
+print("Loading the molecules...")
 timer.start()
 mols = PDB().read("test/io/water.pdb")
 
 ms = timer.elapsed()
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
 #specify the space in which the molecules are placed
 space = Cartesian()
@@ -32,7 +32,7 @@ switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 cljff = InterCLJFF( space, switchfunc )
 
 #parametise each molecule and add it to the forcefield
-print "Parametising the molecules..."
+print("Parametising the molecules...")
 
 chgs = AtomicCharges( [0.0, 0.52 * mod_electron,
                             0.52 * mod_electron,
@@ -59,20 +59,20 @@ for mol in mols:
                       cljff.parameters().lj() : "ljs"})
 
 ms = timer.elapsed()
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
       
 #now calculate the energy of the forcefield
-print "Calculating the energy..."
+print("Calculating the energy...")
 
 timer.start()
 nrg = cljff.energy()
 ms = timer.elapsed()
 
-print "InterCLJFF ",cljff.energy(), "kcal mol-1"
-print "    Coulomb = ", cljff.energy(cljff.components().coulomb())
-print "         LJ = ", cljff.energy(cljff.components().lj())
+print("InterCLJFF ",cljff.energy(), "kcal mol-1")
+print("    Coulomb = ", cljff.energy(cljff.components().coulomb()))
+print("         LJ = ", cljff.energy(cljff.components().lj()))
 
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
 timer.start()
 
@@ -83,6 +83,6 @@ for i in range(0,nmoves):
 
 ms = timer.elapsed()
 
-print "InterCLJFF ",cljff.energy(), "kcal mol-1"
-print "... took %d ms (%f moves per second)" % (ms, nmoves*1000.0/ms)
+print("InterCLJFF ",cljff.energy(), "kcal mol-1")
+print("... took %d ms (%f moves per second)" % (ms, nmoves*1000.0/ms))
 

@@ -18,11 +18,11 @@ t.start()
 
 p38params = ffdb.getMMAtomParameters(p38, LamPosition.LAM_ANY)
 
-print "Total charge on molecule = %f" % p38params.totalCharge()
+print("Total charge on molecule = %f" % p38params.totalCharge())
 
 for residue in p38:
-    print "Total charge on residue %s (%d) = %f" % (residue.name(), residue.number(), p38params.totalCharge(residue.number()))
+    print("Total charge on residue %s (%d) = %f" % (residue.name(), residue.number(), p38params.totalCharge(residue.number())))
 
 ms = t.elapsed()
 
-print "Parametisation took %d ms" % ms
+print("Parametisation took %d ms" % ms)

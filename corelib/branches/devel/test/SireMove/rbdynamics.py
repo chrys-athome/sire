@@ -167,8 +167,8 @@ system.setProperty("space", PeriodicBox( Vector(20,20,20) ) )
 system.add( SpaceWrapper(Vector(0,0,0),salt) )
 
 t.start()                                       
-print "Initial energy = %s" % system.energy()
-print "(took %d ms)" % t.elapsed()
+print("Initial energy = %s" % system.energy())
+print("(took %d ms)" % t.elapsed())
 
 mdmove = MolecularDynamics( salt, VelocityVerlet(), 
                             {"velocity generator":MaxwellBoltzmann(25*celsius)} )
@@ -191,19 +191,19 @@ hmcmove = HybridMC(salt, 4*femtosecond, 20)
 do_hmc = True
 do_hmc = False
 
-print system.property("space")
+print(system.property("space"))
 
-print "\nMove 0"
-print system.energy()
-print mdmove.kineticEnergy()
-print system.energy() + mdmove.kineticEnergy()
+print("\nMove 0")
+print(system.energy())
+print(mdmove.kineticEnergy())
+print(system.energy() + mdmove.kineticEnergy())
 PDB().write(system.molecules(), "test%0004d.pdb" % 0)
 
 if do_mc:
     for i in range(1,1000):
         system = mcmove.move(system, 20, False)
 
-        print i, system.energy()
+        print(i, system.energy())
 
         PDB().write(system.molecules(), "test%0004d.pdb" % i)
 
@@ -211,16 +211,16 @@ elif do_hmc:
     for i in range(1,1000):
         hmcmove.move(system, 1)
 
-        print i, system.energy()
+        print(i, system.energy())
         PDB().write(system.molecules(), "test%0004d.pdb" % i)
 
 else:
     for i in range(1,1000):
-        print "\nmove %d" % (i)
+        print("\nmove %d" % (i))
         mdmove.move(system, 20)
 
-        print system.energy()
-        print mdmove.kineticEnergy()
-        print system.energy() + mdmove.kineticEnergy()
+        print(system.energy())
+        print(mdmove.kineticEnergy())
+        print(system.energy() + mdmove.kineticEnergy())
 
         PDB().write(system.molecules(), "test%0004d.pdb" % i)

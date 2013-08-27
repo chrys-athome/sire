@@ -38,7 +38,7 @@ solvent = MoleculeGroup("solvent")
 
 mols = PDB().read("test/io/water.pdb")
                                                 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -86,7 +86,7 @@ for i in range(1, mols.nMolecules()):
         cljff_a_b.add( mol, MGIdx(1) )
 
 ms = t.elapsed()
-print "Parameterised all of the water molecules (in %d ms)!" % ms
+print("Parameterised all of the water molecules (in %d ms)!" % ms)
 
 system = System()
 system.add(solvent)
@@ -94,10 +94,10 @@ system.add(solvent)
 system.add(cljff)
 
 t.start()
-print "Initial energy = %s" % system.energy()
-print "(took %d ms)" % t.elapsed()
-print system.property("space")
-print system.property("switchingFunction")
+print("Initial energy = %s" % system.energy())
+print("(took %d ms)" % t.elapsed())
+print(system.property("space"))
+print(system.property("switchingFunction"))
 
 system2 = System()
 system2.add(solvent)
@@ -106,20 +106,20 @@ system2.add(cljff_a)
 system2.add(cljff_b)
 system2.add(cljff_a_b)
 
-print system.groupNumbers()
-print system.groupNames()
-print system.energies()
-print system2.groupNumbers()
-print system2.groupNames()
-print system2.energies()
+print(system.groupNumbers())
+print(system.groupNames())
+print(system.energies())
+print(system2.groupNumbers())
+print(system2.groupNames())
+print(system2.energies())
 
 data = save(system2)
 
 t.start()
-print "Other initial energy = %s" % system2.energy()
-print "(took %d ms)" % t.elapsed()
-print system2.property("space")
-print system2.property("switchingFunction")
+print("Other initial energy = %s" % system2.energy())
+print("(took %d ms)" % t.elapsed())
+print(system2.property("space"))
+print(system2.property("switchingFunction"))
 
 mc = RigidBodyMC(solvent)
 
@@ -130,22 +130,22 @@ moves.setGenerator( RanGenerator(42) )
 
 for i in range(0,10):
     system = moves.move(system, 1, False)
-    print "Energy = %s" % system.energy()
+    print("Energy = %s" % system.energy())
 
 ms = t.elapsed()
 
-print "Done!"
+print("Done!")
 
-print "Final energy = %s" % system.energy()
+print("Final energy = %s" % system.energy())
 
 system.mustNowRecalculateFromScratch();
 
-print "Are we sure? = %s" % system.energy()
+print("Are we sure? = %s" % system.energy())
 
 mc = moves.moves()[0]
 
-print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
-                            mc.nRejected(), 100 * mc.acceptanceRatio())
+print("nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio()))
 
 moves = SameMoves(mc)
 moves.clearStatistics()
@@ -153,27 +153,27 @@ moves.clearStatistics()
 t.start()
 moves.setGenerator( RanGenerator(42) )
 
-print "Running 5000 moves"
+print("Running 5000 moves")
 system2 = moves.move(system2, 5000, False)
-print "Energy = %s" % system2.energy()
+print("Energy = %s" % system2.energy())
 
 ms = t.elapsed()
 
-print "Done! - took %d ms" % ms
+print("Done! - took %d ms" % ms)
 
-print "Final energy (2) = %s" % system2.energy()
+print("Final energy (2) = %s" % system2.energy())
 
 system2.mustNowRecalculateFromScratch();
 
-print "Are we sure? (2) = %s" % system2.energy()
+print("Are we sure? (2) = %s" % system2.energy())
 
 mc = moves.moves()[0]
 
-print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
-                            mc.nRejected(), 100 * mc.acceptanceRatio())
+print("nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio()))
 
 system3 = load(data)
-print system3.energies()
+print(system3.energies())
 
 moves = SameMoves(mc)
 moves.clearStatistics()
@@ -183,22 +183,22 @@ moves.setGenerator( RanGenerator(42) )
 
 for i in range(0,10):
     system3 = moves.move(system3, 1, False)
-    print "Energy = %s" % system3.energy()
+    print("Energy = %s" % system3.energy())
 
 ms = t.elapsed()
                             
-print "Done!"
+print("Done!")
 
-print "Final energy = %s" % system3.energy()
+print("Final energy = %s" % system3.energy())
 
 system3.mustNowRecalculateFromScratch();
 
-print "Are we sure? = %s" % system3.energy()
+print("Are we sure? = %s" % system3.energy())
 
 mc = moves.moves()[0]
 
-print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
-                            mc.nRejected(), 100 * mc.acceptanceRatio())
+print("nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio()))
 
 # Check that there is no drift in the center of the molecules
 for molnum in system2.molNums():
@@ -210,5 +210,5 @@ for molnum in system2.molNums():
         distance = Vector.distance(center, eval_center)
 
         if distance > 0.1:
-            print "WARNING: Drift in atom center: %s %s %s" % (center, eval_center, distance)
+            print("WARNING: Drift in atom center: %s %s %s" % (center, eval_center, distance))
 

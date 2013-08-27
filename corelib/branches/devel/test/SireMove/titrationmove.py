@@ -83,12 +83,12 @@ system.add(cljff)
 system.add(solvent)
 system.setProperty("space", space)
 
-print "Initialising the ions..."
+print("Initialising the ions...")
 titrator.applyTo(system)
-print "Randomising the location of ions..."
+print("Randomising the location of ions...")
 titrator.randomiseCharge(3)
 titrator.applyTo(system)
-print "System is ready for simulation :-)"
+print("System is ready for simulation :-)")
 
 PDB().write(system.molecules(), "test0000.pdb")
 
@@ -101,12 +101,12 @@ moves.add(move, 1)
 move = RigidBodyMC(solvent)
 moves.add(move, 1)
 
-print "Start: %s" % system.energies()
+print("Start: %s" % system.energies())
 
 for i in range(1,11):
     system = moves.move(system, 1000, False)
-    print "%5d: %s" % (i, system.energies())
+    print("%5d: %s" % (i, system.energies()))
     PDB().write(system.molecules(), "test%0004d.pdb" % i)
 
-print moves
+print(moves)
 

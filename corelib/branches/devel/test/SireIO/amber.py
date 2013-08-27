@@ -27,14 +27,14 @@ lj_feather = 999.5 * angstrom
 
 top_file = "test/io/SYSTEM.top"
 crd_file = "test/io/SYSTEM.crd"
-print "Solvated protein/ligand complex: Loading a top file..."
+print("Solvated protein/ligand complex: Loading a top file...")
 timer = QTime()
 timer.start()
 
 amber = Amber()
 molecules, space = amber.readCrdTop(crd_file, top_file)
 ms = timer.elapsed()
-print "...took %d s" % (ms/1000.)
+print("...took %d s" % (ms/1000.))
 # Overload, we want to calc the energy in a non periodic box for comparison with Sander
 space = Cartesian()
 
@@ -125,32 +125,32 @@ system.setComponent( e_total, total_nrg )
 # Add a space wrapper that wraps all molecules into the box centered at (0,0,0)
 #system.add( SpaceWrapper(Vector(0,0,0), all) )
 
-print "\nTotal energy "
-print system.energy()
+print("\nTotal energy ")
+print(system.energy())
 
-print "Components energies "
-for component in system.energyComponents().keys():
-    print component, system.energyComponents().value(component) * kcal_per_mol
+print("Components energies ")
+for component in list(system.energyComponents().keys()):
+    print(component, system.energyComponents().value(component) * kcal_per_mol)
 
 # Note that tip3p water are likely to have bonds between hydrogen atoms.
 PDB().write(all, "out.pdb")
 
-print "The AMBER11/sander energies for this system are " 
-print """
+print("The AMBER11/sander energies for this system are ") 
+print("""
 # NSTEP =        0   TIME(PS) =       0.000  TEMP(K) =     0.00  PRESS =     0.0
 # Etot   =    -47010.2216  EKtot   =         0.0000  EPtot      =    -47010.2216
 # BOND   =       898.1982  ANGLE   =      5310.2620  DIHED      =      2922.5644
 # 1-4 NB =       790.8755  1-4 EEL =      7702.0145  VDWAALS    =      7345.0484
 # EELEC  =    -71979.1846  EHBOND  =         0.0000  RESTRAINT  =         0.0000
 # EKCMT  =         0.0000  VIRIAL  =         0.0000  VOLUME     =   1856243.3813
-"""
+""")
 
 
-print "The total energies differ by %12.8f kcal/mol" % ( system.energy().value() - -47010.2216 ) 
-print """Some difference is expected in the coulombic energies due to the 
+print("The total energies differ by %12.8f kcal/mol" % ( system.energy().value() - -47010.2216 )) 
+print("""Some difference is expected in the coulombic energies due to the 
 use of different constants by Sander ( %12.8f ) and Sire ( %12.8f ). 
 The other terms should be in excellent agreement. """ % (18.2223*18.2223, 
-                                                         one_over_four_pi_eps0)  
+                                                         one_over_four_pi_eps0))  
 
 #############################################################
 

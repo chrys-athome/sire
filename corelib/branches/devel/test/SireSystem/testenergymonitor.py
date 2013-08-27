@@ -21,7 +21,7 @@ cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
                                                 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -58,8 +58,8 @@ system = System()
 
 system.add(cljff)
 
-print "System energy equals..."
-print system.energy()
+print("System energy equals...")
+print(system.energy())
 
 group0 = MoleculeGroup("group0")
 group1 = MoleculeGroup("group1")
@@ -77,17 +77,17 @@ cljff2.add( group1, MGIdx(1) )
 cljff2.setSpace(vol)
 cljff2.setSwitchingFunction(switchfunc)
 
-print cljff2.energy()
+print(cljff2.energy())
 
 system.add(cljff2)
 system.add(group0)
 system.add(group1)
 
-print system.energies()
+print(system.energies())
 
 nrgmon = EnergyMonitor(group0, group1)
 
-print nrgmon
+print(nrgmon)
 
 nrgmon.monitor(system)
 
@@ -96,10 +96,10 @@ ljnrgs = nrgmon.ljEnergies()
 
 for i in range(0,cnrgs.nRows()):
     for j in range(0,cnrgs.nColumns()):
-        print i,j,cnrgs(i,j).average(),ljnrgs(i,j).average()
+        print(i,j,cnrgs(i,j).average(),ljnrgs(i,j).average())
 
-print nrgmon.views0()
-print nrgmon.views1()
+print(nrgmon.views0())
+print(nrgmon.views1())
 
 nrgmon.monitor(system)
 
@@ -108,6 +108,6 @@ ljnrgs = nrgmon.ljEnergies()
 
 for i in range(0,cnrgs.nRows()):  
     for j in range(0,cnrgs.nColumns()):
-        print i,j,cnrgs(i,j).average(),ljnrgs(i,j).average()
-        print i,j,cnrgs(i,j).nSamples(),ljnrgs(i,j).nSamples()
+        print(i,j,cnrgs(i,j).average(),ljnrgs(i,j).average())
+        print(i,j,cnrgs(i,j).nSamples(),ljnrgs(i,j).nSamples())
 

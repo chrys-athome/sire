@@ -20,7 +20,7 @@ import sys
 timer = QTime()
 
 #read in all of the molecules
-print "Loading and parameterising the molecules..."
+print("Loading and parameterising the molecules...")
 timer.start()
 mols = PDB().read("test/io/water.pdb")
 
@@ -41,7 +41,7 @@ charges = mol.property("charge")
 ljs = mol.property("LJ")
 
 ms = timer.elapsed()
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
 #specify the space in which the molecules are placed
 space = Cartesian()
@@ -65,11 +65,11 @@ qmff.setProperty("quantum program", molpro)
 
 qmff.add(mols.moleculeAt(0))
 
-print "QM energy in current thread"
+print("QM energy in current thread")
 
 qmnrg = qmff.energy()
 
-print qmnrg
+print(qmnrg)
 
 qmmmff = QMMMFF("qmmmff")
 
@@ -100,23 +100,23 @@ mmnrg = mmff.energy( mmff.components().coulomb() )
 
 FILE = open("molpro.cmd", "w")
 
-print >>FILE,qmmmff.energyCommandFile()
+print(qmmmff.energyCommandFile(), file=FILE)
 
 FILE.close()
 
 sys.exit(0)
 
-print qmmmnrg
-print qmmmnrg - qmnrg
-print mmnrg
-print qmmmnrg - qmnrg - mmnrg
-print mmff.energy( mmff.components().lj() )
+print(qmmmnrg)
+print(qmmmnrg - qmnrg)
+print(mmnrg)
+print(qmmmnrg - qmnrg - mmnrg)
+print(mmff.energy( mmff.components().lj() ))
 
 
 for i in range(0,100):
-     print "Step %d" % i
+     print("Step %d" % i)
      qmmmff.mustNowRecalculateFromScratch()
-     print qmmmff.energy()
+     print(qmmmff.energy())
 
 sys.exit(0)
 
@@ -124,7 +124,7 @@ system = System()
 
 system.add(qmmmff)
 
-print "Initial energy = %s" % system.energy()
+print("Initial energy = %s" % system.energy())
 
 system.mustNowRecalculateFromScratch()
 
@@ -134,30 +134,30 @@ moves = SameMoves(mc)
 
 mtsmc = MTSMC()
 
-print "Running 5 moves using MPI"
+print("Running 5 moves using MPI")
 nodes = MPINodes()
 node = nodes.getFreeNode()
-print "node rank = %d of %d" % (node.rank(), nodes.nNodes())
+print("node rank = %d of %d" % (node.rank(), nodes.nNodes()))
 
 sim = Simulation.run(node, system, moves, 5)
 
-print "Job submitted. Waiting..."
+print("Job submitted. Waiting...")
 
 sim.wait()
 
-print "Job complete!"
+print("Job complete!")
 
 system = sim.system()
 
-print "Final energy = %s" % system.energy()
+print("Final energy = %s" % system.energy())
 
 system.mustNowRecalculateFromScratch();
 
-print "Are we sure? = %s" % system.energy()
+print("Are we sure? = %s" % system.energy())
 
 mc = sim.moves().moves()[0]
 
-print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
-                            mc.nRejected(), 100 * mc.acceptanceRatio())
+print("nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio()))
 
-print "Took %d ms" % ms
+print("Took %d ms" % ms)

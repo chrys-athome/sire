@@ -11,13 +11,13 @@ qmff = QMFF()
 
 mopac = Mopac()
 
-print mopac.chargeCommandFile(water), "\n"
+print(mopac.chargeCommandFile(water), "\n")
 
 qmff.setQuantumProgram( mopac )
 
 qmff.add(water)
 
-print qmff.energyCommandFile(), "\n"
+print(qmff.energyCommandFile(), "\n")
 
 t = QTime()
 
@@ -25,14 +25,14 @@ t.start()
 nrg = qmff.energy()
 ms = t.elapsed()
 
-print "\nMopac energy = %s kcal mol-1" % nrg.to(kcal_per_mol)
-print "Took %d ms" % ms
+print("\nMopac energy = %s kcal mol-1" % nrg.to(kcal_per_mol))
+print("Took %d ms" % ms)
 
 t.start()
 chgs = mopac.calculateCharges(water, {})
 ms = t.elapsed()
 
-print chgs
-print chgs.array()
-print "Took %d ms" % ms
+print(chgs)
+print(chgs.array())
+print("Took %d ms" % ms)
 

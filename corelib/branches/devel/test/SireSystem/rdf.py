@@ -29,7 +29,7 @@ cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
                                                 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -63,7 +63,7 @@ for i in range(1, mols.nMolecules()):
     cljff.add(mol)
 
 ms = t.elapsed()
-print "Parameterised all of the water molecules (in %d ms)!" % ms
+print("Parameterised all of the water molecules (in %d ms)!" % ms)
 
 system = System()
 
@@ -83,19 +83,19 @@ system.collectStats()
 
 ms = t.elapsed()
 
-print "Collecting stats took %d ms" % ms
+print("Collecting stats took %d ms" % ms)
 
 rdf = system.monitor( MonitorName("O-O RDF") )
 
-print "\nO-O RDF"
+print("\nO-O RDF")
 
 for i in range(0,rdf.nBins()):
-    print rdf[i].middle().to(angstrom), rdf[i].value()
+    print(rdf[i].middle().to(angstrom), rdf[i].value())
 
 rdf = system.monitor( MonitorName("O-H RDF") )
 
-print "\nO-H RDF"
+print("\nO-H RDF")
 
 for i in range(0,rdf.nBins()):
-    print rdf[i].middle().to(angstrom), rdf[i].value()
+    print(rdf[i].middle().to(angstrom), rdf[i].value())
 

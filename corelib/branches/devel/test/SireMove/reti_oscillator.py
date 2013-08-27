@@ -13,7 +13,7 @@ import Sire.Stream
 
 protodir = "/Users/chris/Work/ProtoMS/"
 
-print "Parameterising the oscillator..."
+print("Parameterising the oscillator...")
 
 oscillator = PDB().readMolecule("test/io/oscillator.pdb")
 oscillator = oscillator.edit().rename("harm1t2").commit()
@@ -24,7 +24,7 @@ protoms.addParameterFile( "test/io/oscillators.ff" )
 
 oscillator = protoms.parameterise(oscillator, ProtoMS.SOLUTE)
 
-print "...parameterisation complete!"
+print("...parameterisation complete!")
 
 internalff = InternalFF("InternalFF")
 
@@ -61,7 +61,7 @@ replicas.setNSubMoves(nsubmoves)
 # Average energy should be 1/2 kT
 theo_nrg = 0.5 * gasr * 298
 
-print "Running a simulation - initial energy = %f kcal mol-1" % system.energy().to(kcal_per_mol)
+print("Running a simulation - initial energy = %f kcal mol-1" % system.energy().to(kcal_per_mol))
 
 repexmove = RepExMove()
 
@@ -81,14 +81,14 @@ def printInfo(replicas):
         system = replica.subSystem()
         zmatmove = replica.subMoves()[0]
 
-        print "Replica %d: lambda = %f: ID = %d" % (j, replica.lambdaValue(), ids[j])
-        print "%d : Energy = %f kcal mol-1" % ( (i+1)*replica.nSubMoves(), \
-                                            system.energy().to(kcal_per_mol) )
+        print("Replica %d: lambda = %f: ID = %d" % (j, replica.lambdaValue(), ids[j]))
+        print("%d : Energy = %f kcal mol-1" % ( (i+1)*replica.nSubMoves(), \
+                                            system.energy().to(kcal_per_mol) ))
 
         avg_nrg = system[MonitorName("average energy")].accumulator().average()
 
-        print "      Average energy = %f kcal mol-1 : error = %f kcal mol-1" % (avg_nrg, theo_nrg-avg_nrg)
-        print "      Acceptance ratio = %f %%" % (100 * zmatmove.acceptanceRatio())
+        print("      Average energy = %f kcal mol-1 : error = %f kcal mol-1" % (avg_nrg, theo_nrg-avg_nrg))
+        print("      Acceptance ratio = %f %%" % (100 * zmatmove.acceptanceRatio()))
 
 printInfo(replicas)
 
@@ -102,13 +102,13 @@ for i in range(0,10):
 
     printInfo(replicas)
 
-    print "      Replica exchange acceptance ratio: %f %%" % (100*repexmove.acceptanceRatio())
+    print("      Replica exchange acceptance ratio: %f %%" % (100*repexmove.acceptanceRatio()))
 
-print "\nReplica trajectory"
+print("\nReplica trajectory")
 for i in range(0, len(lambda_trajectory)):
-    print "%d " % i,
+    print("%d " % i, end=' ')
 
     for lamval in lambda_trajectory[i]:
-        print "%f " % lamval,
+        print("%f " % lamval, end=' ')
 
-    print "\n", 
+    print("\n", end=' ') 

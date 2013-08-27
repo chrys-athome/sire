@@ -22,10 +22,10 @@ mol = protoms.parameterise(mol, ProtoMS.SOLUTE)
 
 perturbations = mol.property("perturbations")
 
-print perturbations
+print(perturbations)
 
-print perturbations.requiredSymbols()
-print perturbations.requiredProperties()
+print(perturbations.requiredSymbols())
+print(perturbations.requiredProperties())
 
 lam = perturbations.symbols().Lambda()
 
@@ -38,7 +38,7 @@ system.add(solute)
 system.setConstant(lam, 0.0)
 system.add( PerturbationConstraint(solute) )
 
-print system.constraintsSatisfied()
+print(system.constraintsSatisfied())
 
 for i in range(0,101,10):
     system.setConstant(lam, 0.01 * i)

@@ -7,8 +7,8 @@ def convertPDB2MCT(filename):
     lines = f.readlines()
     f.close()
     
-    print "%MCT-version_1.0"
-    print "INFO produced_by pdb2mct.py, and will be broken!"
+    print("%MCT-version_1.0")
+    print("INFO produced_by pdb2mct.py, and will be broken!")
     
     oldmol = 0
     newmol = True
@@ -23,12 +23,12 @@ def convertPDB2MCT(filename):
             if (newmol):
                 oldmol = oldmol + 1
                 newmol = False
-                print "molecule %d filename" % oldmol
+                print("molecule %d filename" % oldmol)
 
             #see if the residue number has changed
             if (oldres != int(words[4])):
                 oldres = int(words[4])
-                print "residue %d %s" % (oldres,words[3])
+                print("residue %d %s" % (oldres,words[3]))
             
             #get the element name
             elsym = "?"
@@ -39,8 +39,8 @@ def convertPDB2MCT(filename):
                 elsym = words[2][0:1]
             
             #now print out the atom info
-            print "atom %4s %1s %8.3f %8.3f %8.3f" % (words[2],elsym, \
-                                       float(words[5]),float(words[6]),float(words[7]))
+            print("atom %4s %1s %8.3f %8.3f %8.3f" % (words[2],elsym, \
+                                       float(words[5]),float(words[6]),float(words[7])))
         elif (line[0:3] == "TER"):
             newmol = True
         elif (line[0:3] == "END"):
@@ -54,7 +54,7 @@ if (__name__ == "__main__"):
     args = sys.argv
 
     if (len(args) < 2):
-        print "USAGE: pdb2mct.py file.pdb > file.mct"
+        print("USAGE: pdb2mct.py file.pdb > file.mct")
         sys.exit(0)
     
     convertPDB2MCT(args[1])

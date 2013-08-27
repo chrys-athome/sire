@@ -13,12 +13,12 @@ import copy
 timer = QTime()
 
 #read in all of the molecules
-print "Loading the molecules..."
+print("Loading the molecules...")
 timer.start()
 mols = PDB().read("test/io/water.pdb")
 
 ms = timer.elapsed()
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
 #specify the space in which the molecules are placed
 space = Cartesian()
@@ -52,7 +52,7 @@ coulff_b = InterCoulombFF(space, switchfunc)
 coulff_a_b = InterGroupCoulombFF(space, switchfunc)
 
 #parametise each molecule and add it to the forcefield
-print "Parametising the molecules..."
+print("Parametising the molecules...")
 
 chgs = AtomicCharges( [0.0, 0.52 * mod_electron,
                             0.52 * mod_electron,
@@ -125,73 +125,73 @@ for mol in mols:
       ljff.add(mol, {ljff.parameters().lj() : "ljs"})
 
 ms = timer.elapsed()
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
       
-print "(%d molecules in group A, %d in group B)" % (n_in_a, n_in_b)
+print("(%d molecules in group A, %d in group B)" % (n_in_a, n_in_b))
       
 #now calculate the energy of the forcefield
-print "Calculating the energy..."
+print("Calculating the energy...")
 
 timer.start()
 nrg = cljff.energy()
 ms = timer.elapsed()
 
-print "InterCLJFF ",cljff.energy(), "kcal mol-1"
-print "    Coulomb = ", cljff.energy(cljff.components().coulomb())
-print "         LJ = ", cljff.energy(cljff.components().lj())
+print("InterCLJFF ",cljff.energy(), "kcal mol-1")
+print("    Coulomb = ", cljff.energy(cljff.components().coulomb()))
+print("         LJ = ", cljff.energy(cljff.components().lj()))
 
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
 timer.start()
 nrg = coulff.energy()
 ms = timer.elapsed()
 
-print "InterCoulombFF ",coulff.energy(), "kcal mol-1"
-print "   Coulomb = ", coulff.energy(coulff.components().coulomb())
+print("InterCoulombFF ",coulff.energy(), "kcal mol-1")
+print("   Coulomb = ", coulff.energy(coulff.components().coulomb()))
 
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
 
 timer.start()
 nrg = ljff.energy()
 ms = timer.elapsed()
 
-print "InterLJFF ",ljff.energy(), "kcal mol-1"
-print "         LJ = ", ljff.energy(ljff.components().lj())
+print("InterLJFF ",ljff.energy(), "kcal mol-1")
+print("         LJ = ", ljff.energy(ljff.components().lj()))
 
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
-print "Calculating the energy..."
+print("Calculating the energy...")
 
 # sum up the partial forcefields
 timer.start()
 nrg = cljff_a.energy() + cljff_b.energy() + cljff_a_b.energy()
 ms = timer.elapsed()
 
-print "CLJ_partials ",nrg,"kcal mol-1"
-print "   Coulomb = ",cljff_a.energy(cljff_a.components().coulomb()) + \
+print("CLJ_partials ",nrg,"kcal mol-1")
+print("   Coulomb = ",cljff_a.energy(cljff_a.components().coulomb()) + \
                       cljff_b.energy(cljff_b.components().coulomb()) + \
-                      cljff_a_b.energy(cljff_a_b.components().coulomb())
+                      cljff_a_b.energy(cljff_a_b.components().coulomb()))
                       
-print "        LJ = ",cljff_a.energy(cljff_a.components().lj()) + \
+print("        LJ = ",cljff_a.energy(cljff_a.components().lj()) + \
                       cljff_b.energy(cljff_b.components().lj()) + \
-                      cljff_a_b.energy(cljff_a_b.components().lj())
+                      cljff_a_b.energy(cljff_a_b.components().lj()))
 
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
 timer.start()
 nrg = ljff_a.energy() + ljff_b.energy() + ljff_a_b.energy()
 ms = timer.elapsed()
 
-print "LJ_partials ",nrg,"kcal mol-1"
-print "... took %d ms" % ms
+print("LJ_partials ",nrg,"kcal mol-1")
+print("... took %d ms" % ms)
 
 timer.start()
 nrg = coulff_a.energy() + coulff_b.energy() + coulff_a_b.energy()
 ms = timer.elapsed()
 
-print "Coulomb partials ",nrg,"kcal mol-1"
-print "... took %d ms" % ms
+print("Coulomb partials ",nrg,"kcal mol-1")
+print("... took %d ms" % ms)
 
 timer.start()
 
@@ -202,8 +202,8 @@ for i in range(0,nmoves):
 
 ms = timer.elapsed()
 
-print "InterCLJFF ",cljff.energy(), "kcal mol-1"
-print "... took %d ms (%f moves per second)" % (ms, nmoves*1000.0/ms)
+print("InterCLJFF ",cljff.energy(), "kcal mol-1")
+print("... took %d ms (%f moves per second)" % (ms, nmoves*1000.0/ms))
 
 tip4p = Molecule(tip4p.move().translate( (1.0,0.0,0.0) ))
 
@@ -214,26 +214,26 @@ ljff.change(tip4p)
 
 ms = timer.elapsed()
 
-print "Changing took %d ms" % ms
+print("Changing took %d ms" % ms)
 
 timer.start()
 nrg = cljff.energy()
 ms = timer.elapsed()
 
-print "InterCLJFF ",cljff.energy(), "kcal mol-1"
-print "    Coulomb = ", cljff.energy(cljff.components().coulomb())
-print "         LJ = ", cljff.energy(cljff.components().lj())
+print("InterCLJFF ",cljff.energy(), "kcal mol-1")
+print("    Coulomb = ", cljff.energy(cljff.components().coulomb()))
+print("         LJ = ", cljff.energy(cljff.components().lj()))
 
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
 timer.start()
 nrg = ljff.energy()
 ms = timer.elapsed()
 
-print "InterLJFF ",ljff.energy(), "kcal mol-1"
-print "         LJ = ", ljff.energy(ljff.components().lj())
+print("InterLJFF ",ljff.energy(), "kcal mol-1")
+print("         LJ = ", ljff.energy(ljff.components().lj()))
 
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
 timer.start()
 
@@ -245,7 +245,7 @@ for i in range(0,nmoves):
 
 ms = timer.elapsed()
 
-print "%d moves of InterCLJFF took %d ms" % (nmoves, ms)
+print("%d moves of InterCLJFF took %d ms" % (nmoves, ms))
 
 timer.start()
 
@@ -265,24 +265,24 @@ for i in range(0,nmoves):
     nrg = coulff.energy()
 
     if (nrg == old_nrg):
-       print "Energies are wrongly the same!!!"
+       print("Energies are wrongly the same!!!")
     
     if (coulff.version() == old_version):
-       print "Versions are wrongly the same!!!"
+       print("Versions are wrongly the same!!!")
     
     coulff = old_coulff
     
     nrg = coulff.energy()
     
     if (nrg != old_nrg):
-       print "Energies are wrongly different!!!"
+       print("Energies are wrongly different!!!")
 
     if (coulff.version() != old_version):
-       print "Versions are wrongly different!!!"
+       print("Versions are wrongly different!!!")
 
 ms = timer.elapsed()
 
-print "%d moves of InterCoulombFF took %d ms" % (nmoves, ms)
+print("%d moves of InterCoulombFF took %d ms" % (nmoves, ms))
 
 timer.start()
 
@@ -302,24 +302,24 @@ for i in range(0,nmoves):
     nrg = ljff.energy()
 
     if (nrg == old_nrg):
-       print "Energies are wrongly the same!!!"
+       print("Energies are wrongly the same!!!")
     
     if (ljff.version() == old_version):
-       print "Versions are wrongly the same!!!"
+       print("Versions are wrongly the same!!!")
     
     ljff = old_ljff
     
     nrg = ljff.energy()
     
     if (nrg != old_nrg):
-       print "Energies are wrongly different!!!"
+       print("Energies are wrongly different!!!")
 
     if (ljff.version() != old_version):
-       print "Versions are wrongly different!!!"
+       print("Versions are wrongly different!!!")
 
 ms = timer.elapsed()
 
-print "%d moves of InterLJFF took %d ms" % (nmoves, ms)
+print("%d moves of InterLJFF took %d ms" % (nmoves, ms))
 
 timer.start()
 
@@ -343,7 +343,7 @@ for i in range(0,nmoves):
     nrg = cljff_a.energy() + cljff_b.energy() + cljff_a_b.energy()
 
     if (nrg == old_nrg):
-       print "Energies are wrongly the same!!!"
+       print("Energies are wrongly the same!!!")
     
     cljff_a = old_cljff_a
     cljff_b = old_cljff_b
@@ -352,11 +352,11 @@ for i in range(0,nmoves):
     nrg = cljff_a.energy() + cljff_b.energy() + cljff_a_b.energy()
     
     if (nrg != old_nrg):
-       print "Energies are wrongly different!!!"
+       print("Energies are wrongly different!!!")
 
 ms = timer.elapsed()
 
-print "%d moves of CLJ_partials took %d ms" % (nmoves, ms)
+print("%d moves of CLJ_partials took %d ms" % (nmoves, ms))
 
 timer.start()
 
@@ -380,7 +380,7 @@ for i in range(0,nmoves):
     nrg = coulff_a.energy() + coulff_b.energy() + coulff_a_b.energy()
 
     if (nrg == old_nrg):
-       print "Energies are wrongly the same!!!"
+       print("Energies are wrongly the same!!!")
     
     coulff_a = old_coulff_a
     coulff_b = old_coulff_b
@@ -389,11 +389,11 @@ for i in range(0,nmoves):
     nrg = coulff_a.energy() + coulff_b.energy() + coulff_a_b.energy()
     
     if (nrg != old_nrg):
-       print "Energies are wrongly different!!!"
+       print("Energies are wrongly different!!!")
 
 ms = timer.elapsed()
 
-print "%d moves of Coulomb_partials took %d ms" % (nmoves, ms)
+print("%d moves of Coulomb_partials took %d ms" % (nmoves, ms))
 
 timer.start()
 
@@ -417,7 +417,7 @@ for i in range(0,nmoves):
     nrg = ljff_a.energy() + ljff_b.energy() + ljff_a_b.energy()
 
     if (nrg == old_nrg):
-       print "Energies are wrongly the same!!!"
+       print("Energies are wrongly the same!!!")
     
     ljff_a = old_ljff_a
     ljff_b = old_ljff_b
@@ -426,8 +426,8 @@ for i in range(0,nmoves):
     nrg = ljff_a.energy() + ljff_b.energy() + ljff_a_b.energy()
     
     if (nrg != old_nrg):
-       print "Energies are wrongly different!!!"
+       print("Energies are wrongly different!!!")
 
 ms = timer.elapsed()
 
-print "%d moves of LJ_partials took %d ms" % (nmoves, ms)
+print("%d moves of LJ_partials took %d ms" % (nmoves, ms))

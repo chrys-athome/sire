@@ -16,7 +16,7 @@ while (line):
       
       if (m):
           natoms = int(m.group(1))
-          print "natoms = %d" % natoms
+          print("natoms = %d" % natoms)
           break
           
       line = molpro.readline()
@@ -34,12 +34,12 @@ while (line and natoms > 0):
             natoms = natoms - 1
             npdb = npdb + 1
 
-            print "ATOM %6d  %3s %4s %4d   %8.3f%8.3f%8.3f" % \
+            print("ATOM %6d  %3s %4s %4d   %8.3f%8.3f%8.3f" % \
                      (npdb, m.group(1), "QM", 1, float(m.group(2)),
                                                  float(m.group(3)),
-                                                 float(m.group(4)))
+                                                 float(m.group(4))))
 
-print "TER"
+print("TER")
 
 while line:
     line = molpro.readline()
@@ -60,11 +60,11 @@ while line:
     if m:
         #must convert MM coordinates from bohr radii to angstrom
         npdb = npdb + 1
-        print "ATOM %6d  %3s %4s %4d   %8.3f%8.3f%8.3f" % \
+        print("ATOM %6d  %3s %4s %4d   %8.3f%8.3f%8.3f" % \
                      (npdb, "DUM", "MM", 2, float(m.group(1)) * 0.529177249,
                                             float(m.group(2)) * 0.529177249,
-                                            float(m.group(3)) * 0.529177249)
+                                            float(m.group(3)) * 0.529177249))
 
     line = molpro.readline()
 
-print "END"
+print("END")

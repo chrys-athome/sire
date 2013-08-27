@@ -9,7 +9,7 @@ from Sire.Units import *
 from Sire.MM import *
 from Sire.Move import *
 
-print "Loading the molecules..."
+print("Loading the molecules...")
 solute = PDB().readMolecule("test/io/methanol.pdb")
 
 solute_params = { 3010 : ( 0.117, 3.3997, 0.1094),
@@ -89,7 +89,7 @@ system.add(solute_solvent_cljff)
 system.setProperty("space", PeriodicBox( Vector(-18.3854,-18.66855,-18.4445),
                                          Vector( 18.3854, 18.66855, 18.4445) ) )
 
-print "Equilibrating the system..."
+print("Equilibrating the system...")
 
 solvent_move = RigidBodyMC( PrefSampler(solute.moleculeAt(0), solvent, 200*angstrom2) )
 solvent_move.setMaximumTranslation( 0.2 * angstrom )
@@ -106,13 +106,13 @@ moves.add( solute_move, 1 )
 for i in range(1,11):
     system = moves.move(system, 5000, False )
     #system = moves.move(system, 50, False)
-    print "Step %d of 10: Energy = %s" % (i, system.energy())
+    print("Step %d of 10: Energy = %s" % (i, system.energy()))
 
     PDB().write(system.molecules(), "test_equil_%0004d.pdb" % i)
 
-print "Equilibration complete"
+print("Equilibration complete")
 
-print "Adding energy monitors..."
+print("Adding energy monitors...")
 
 identity_points = []
 
@@ -168,13 +168,13 @@ def view(nrgmon, id):
         this_cnrg = coul_nrgs(0,i).average()
         this_ljnrg = lj_nrgs(0,i).average()
 
-        print views1[i], this_cnrg, this_ljnrg, (this_cnrg+this_ljnrg)
+        print(views1[i], this_cnrg, this_ljnrg, (this_cnrg+this_ljnrg))
 
         beta_cnrg = getBeta(this_cnrg)
         beta_ljnrg = getBeta(this_ljnrg)
         beta_total = getBeta(this_cnrg + this_ljnrg)
 
-        print "(",beta_cnrg,beta_ljnrg,beta_total,")"
+        print("(",beta_cnrg,beta_ljnrg,beta_total,")")
 
         cnrg += coul_nrgs(0,i).average()
         ljnrg += lj_nrgs(0,i).average()
@@ -199,13 +199,13 @@ def view(nrgmon, id):
         lj_group.update(lj_mol)
         total_group.update(total_mol)
 
-    print "Total energies: %f  %f  %f" % (cnrg, ljnrg, cnrg+ljnrg)
+    print("Total energies: %f  %f  %f" % (cnrg, ljnrg, cnrg+ljnrg))
 
     PDB().write(coul_group, "test_coul_%0004d.pdb" % id)
     PDB().write(lj_group, "test_lj_%0004d.pdb" % id)
     PDB().write(total_group, "test_total_%0004d.pdb" % id)
 
-print "Running a simulation..."
+print("Running a simulation...")
 
 for i in range(1,11):
     system = moves.move(system, 2000, True)
@@ -216,6 +216,6 @@ for i in range(1,11):
 
     system.clearStatistics()
 
-    print "Step %d of 10: Energy = %s" % (i, system.energy())
+    print("Step %d of 10: Energy = %s" % (i, system.energy()))
 
     view(nrgmon, i)

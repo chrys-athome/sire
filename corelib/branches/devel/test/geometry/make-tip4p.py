@@ -10,15 +10,15 @@ tip4p.add( ResNum(1), "WTR" )
 
 residue = tip4p[ ResNum(1) ]
 
-print residue
+print(residue)
 
 residue.add("H01")
 residue.add("H02")
 residue.add("O00")
 residue.add("M03")
 
-print residue
-print tip4p
+print(residue)
+print(tip4p)
 
 #for atom in residue:
 #    print atom.name()
@@ -47,8 +47,8 @@ residue.set(Angle("M03","O00","H01",ResNum(1)), 0.5*hoh, anchors)
 #check_angle = residue.measure("M03","O00","H01","H02")
 #print "Improper angle = %f degrees." % check_angle.toDegrees()
 
-print tip4p
-print residue
+print(tip4p)
+print(residue)
 
 PDB().write(tip4p, "tip4p.pdb")
 

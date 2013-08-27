@@ -28,7 +28,7 @@ fast_cljff.setPatching( BoxPatching(vol, 15*angstrom) )
 
 mols = PDB().read("test/io/water.pdb")
 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -66,7 +66,7 @@ for i in range(1, mols.nMolecules()):
 solvent = MoleculeGroup("solvent", cljff.molecules())
 
 delta = vol.dimensions()
-print "Space == %s" % delta
+print("Space == %s" % delta)
 
 #for i in range(-1,1):
 #    for j in range(-1,1):
@@ -88,7 +88,7 @@ print "Space == %s" % delta
 #            fast_cljff.add(add_mols)
 
 ms = t.elapsed()
-print "Parameterised all of the water molecules (in %d ms)!" % ms
+print("Parameterised all of the water molecules (in %d ms)!" % ms)
 
 mols = cljff.molecules()
 
@@ -102,7 +102,7 @@ mols = cljff.molecules()
 t.start()
 cljff.packCoordinates()
 ms = t.elapsed()
-print "Packing the coordinates took %d ms" % ms
+print("Packing the coordinates took %d ms" % ms)
 
 #get the benchmark times
 benchmark = 0.000001 * FlopsMark.benchmark() + 0.0001
@@ -110,12 +110,12 @@ benchmark_sum = 0.000001 * FlopsMark.benchmarkSum() + 0.0001
 benchmark_quot = 0.000001 * FlopsMark.benchmarkQuotient() + 0.0001
 benchmark_prod = 0.000001 * FlopsMark.benchmarkProduct() + 0.0001
 
-print "\nThis machine can run at; %.1f MFLOPS for sum, %.1f MFLOPS for sum+product," % \
-                (benchmark_sum, benchmark_prod)
-print "%.1f MFLOPS for sum+quotient and %.1f MFLOPS for sum+product+sqrt.\n" % \
-                (benchmark_quot, benchmark)
+print("\nThis machine can run at; %.1f MFLOPS for sum, %.1f MFLOPS for sum+product," % \
+                (benchmark_sum, benchmark_prod))
+print("%.1f MFLOPS for sum+quotient and %.1f MFLOPS for sum+product+sqrt.\n" % \
+                (benchmark_quot, benchmark))
 
-print cljff.property("space")
+print(cljff.property("space"))
 
 for i in range(0,1):
     t.start()
@@ -124,47 +124,47 @@ for i in range(0,1):
     nrg = cljff.energy()
     after_energy = FlopsMark()
     ms = t.elapsed()
-    print nrg
-    print nrg.value()
+    print(nrg)
+    print(nrg.value())
 
     mflops = 0.000001 * (after_energy - before_energy)
 
-    print "Took %d ms. " % ms,
-    print "Speed is at least %.1f MFLOPS" % mflops
+    print("Took %d ms. " % ms, end=' ')
+    print("Speed is at least %.1f MFLOPS" % mflops)
 
     for j in range(0,before_energy.nThreads()):
         mflops_j = 0.000001 * (after_energy[j] - before_energy[j])
-        print "%.1f MFLOPS for thread %d " % (mflops_j, j),
+        print("%.1f MFLOPS for thread %d " % (mflops_j, j), end=' ')
 
-    print "\n",
+    print("\n", end=' ')
 
-    print "(This is %.2f %% of the benchmark  (%.2f %%, %.2f %%, %.2f %%))" % \
+    print("(This is %.2f %% of the benchmark  (%.2f %%, %.2f %%, %.2f %%))" % \
              ( 100 * (mflops / benchmark), 100 * (mflops / benchmark_quot), \
-               100 * (mflops / benchmark_sum), 100 * (mflops / benchmark_prod) )
+               100 * (mflops / benchmark_sum), 100 * (mflops / benchmark_prod) ))
 
-    print fast_cljff.patching()
+    print(fast_cljff.patching())
     t.start()
     fast_cljff.mustNowRecalculateFromScratch()
     before_energy = FlopsMark()
     nrg = fast_cljff.energy()
     after_energy = FlopsMark()
     ms = t.elapsed()
-    print nrg
-    print nrg.value()
+    print(nrg)
+    print(nrg.value())
 
     mflops = 0.000001 * (after_energy - before_energy)
 
-    print "FastInterCLJFF Took %d ms. " % ms,
-    print "Speed is at least %.1f MFLOPS" % mflops
+    print("FastInterCLJFF Took %d ms. " % ms, end=' ')
+    print("Speed is at least %.1f MFLOPS" % mflops)
 
     for j in range(0,before_energy.nThreads()):
         mflops_j = 0.000001 * (after_energy[j] - before_energy[j])
-        print "%.1f MFLOPS for thread %d " % (mflops_j, j),
+        print("%.1f MFLOPS for thread %d " % (mflops_j, j), end=' ')
 
-    print "\n",
+    print("\n", end=' ')
     
 
-print "Done!"
+print("Done!")
 
 #now how long does it take to calculate a change in energy?
 mols = cljff.molecules()
@@ -172,11 +172,11 @@ molnums = mols.molNums()
 
 mol0 = mols[molnums[0]]
 
-print mol0.evaluate().center()
+print(mol0.evaluate().center())
 
 newmol = mol0.move().translate( Vector(1,0,0) ).commit()
 
-print mol0.evaluate().center()
+print(mol0.evaluate().center())
 
 cljff.update( newmol )
 fast_cljff.update( newmol )
@@ -189,30 +189,30 @@ t.start()
 nrg = fast_cljff.energy()
 ms2 = t.elapsed()
 
-print ms1, ms2
+print(ms1, ms2)
 
-print "SLOW %s  (%f)" % (cljff.energy(), cljff.energy().value())
-print "FAST %s  (%f)" % (fast_cljff.energy(), fast_cljff.energy().value())
+print("SLOW %s  (%f)" % (cljff.energy(), cljff.energy().value()))
+print("FAST %s  (%f)" % (fast_cljff.energy(), fast_cljff.energy().value()))
 
 cljff.update( mol0 )
 fast_cljff.update( mol0 )
 
-print "SLOW %s  (%f)" % (cljff.energy(), cljff.energy().value())
-print "FAST %s  (%f)" % (fast_cljff.energy(), fast_cljff.energy().value())
+print("SLOW %s  (%f)" % (cljff.energy(), cljff.energy().value()))
+print("FAST %s  (%f)" % (fast_cljff.energy(), fast_cljff.energy().value()))
 
-print "Move two..."
+print("Move two...")
 
 mol1 = mols[molnums[1]]
 
-print mol1.evaluate().center()
+print(mol1.evaluate().center())
 
 mol1 = mol1.move().translate( Vector(1,0,0) ).commit()
 
-print mol1.evaluate().center()
+print(mol1.evaluate().center())
 
 mol0 = mol0.move().translate( Vector(2,0,0) ).commit()
 
-print mol0.evaluate().center()
+print(mol0.evaluate().center())
 
 cljff.update(mol0)
 cljff.update(mol1)
@@ -228,11 +228,11 @@ t.start()
 nrg2 = fast_cljff.energy()
 ms2 = t.elapsed()
 
-print "REAL %f kcal mol-1, VERSUS %f jcal mol-1" \
-           % (nrg1.to(kcal_per_mol), nrg2.to(kcal_per_mol))
+print("REAL %f kcal mol-1, VERSUS %f jcal mol-1" \
+           % (nrg1.to(kcal_per_mol), nrg2.to(kcal_per_mol)))
 
-print "TOOK %d versus %d milliseconds" % (ms1, ms2)
+print("TOOK %d versus %d milliseconds" % (ms1, ms2))
       
 fast_cljff.mustNowRecalculateFromScratch();
-print fast_cljff.energy()
+print(fast_cljff.energy())
 

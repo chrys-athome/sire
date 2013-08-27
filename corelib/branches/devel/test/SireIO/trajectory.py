@@ -31,7 +31,7 @@ solvent = MoleculeGroup("solvent")
 
 mols = PDB().read("test/io/water.pdb")
                                                 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -69,21 +69,21 @@ for i in range(1, mols.nMolecules()):
     cljff.add(mol)
 
 ms = t.elapsed()
-print "Parameterised all of the water molecules (in %d ms)!" % ms
+print("Parameterised all of the water molecules (in %d ms)!" % ms)
 
 system = System()
 system.add(solvent)
 system.add(cljff)
 
 t.start()
-print "Initial energy = %s" % system.energy()
-print "(took %d ms)" % t.elapsed()
-print system.property("space")
-print system.property("switchingFunction")
+print("Initial energy = %s" % system.energy())
+print("(took %d ms)" % t.elapsed())
+print(system.property("space"))
+print(system.property("switchingFunction"))
 
-print system.groupNumbers()
-print system.groupNames()
-print system.components()
+print(system.groupNumbers())
+print(system.groupNames())
+print(system.energies())
 
 mc = RigidBodyMC(solvent)
 
@@ -91,35 +91,35 @@ moves = SameMoves(mc)
 
 moves.setGenerator( RanGenerator(42) )
 
-print "Running 10000 moves without saving the trajectory..."
+print("Running 10000 moves without saving the trajectory...")
 t.start()
 system = moves.move(system, 10000, True)
 ms = t.elapsed()
-print "Done! (took %d ms)" % ms
+print("Done! (took %d ms)" % ms)
 
 system.add( "trajectory", TrajectoryMonitor(solvent), 1000 )
 
-print "Running 10000 moves with saving the trajectory..."
+print("Running 10000 moves with saving the trajectory...")
 t.start()
 system = moves.move(system, 10000, True)
 ms = t.elapsed()
-print "Done! (took %d ms)" % ms
+print("Done! (took %d ms)" % ms)
 
-print "Writing the trajectory to disk..."
+print("Writing the trajectory to disk...")
 t.start()
 
 system[ MonitorName("trajectory") ].writeToDisk("tempXXXXXX.pdb")
 
 ms = t.elapsed()
-print "Took %d ms" % ms
+print("Took %d ms" % ms)
 
-print "Final energy = %s" % system.energy()
+print("Final energy = %s" % system.energy())
 
 system.mustNowRecalculateFromScratch();
 
-print "Are we sure? = %s" % system.energy()
+print("Are we sure? = %s" % system.energy())
 
 mc = moves.moves()[0]
 
-print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
-                            mc.nRejected(), 100 * mc.acceptanceRatio())
+print("nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio()))

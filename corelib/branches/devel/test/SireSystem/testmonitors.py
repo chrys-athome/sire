@@ -128,26 +128,26 @@ t.start()
 
 # Run the simulation
 for i in range(0,nblocks):
-   print "Running nmove..."
+   print("Running nmove...")
    t.restart()
    system = moves.move(system, nmoves, True)
-   print "...took %d ms" % t.elapsed()
+   print("...took %d ms" % t.elapsed())
 
-print "Analysis..."
+print("Analysis...")
 # make an histogram...
 nbins=31
 histoAnalysis(nbins=nbins,
-              values=system.monitor( MonitorName("bond12") ).accumulator().values(),
+              values=list(system.monitor( MonitorName("bond12") ).accumulator().values()),
               mode="bond",
               output="BOND-A1A2.dat")
 
 histoAnalysis(nbins=nbins,
-              values=system.monitor( MonitorName("bond23") ).accumulator().values(),
+              values=list(system.monitor( MonitorName("bond23") ).accumulator().values()),
               mode="bond",
               output="BOND-A2A3.dat")
 
 histoAnalysis(nbins=nbins,
-              values=system.monitor( MonitorName("angle123") ).accumulator().values(),
+              values=list(system.monitor( MonitorName("angle123") ).accumulator().values()),
               mode="angle",
               output="ANGLE-A1A2A3.dat")
 

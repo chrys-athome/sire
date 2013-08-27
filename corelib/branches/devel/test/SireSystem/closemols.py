@@ -26,7 +26,7 @@ cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -60,7 +60,7 @@ for i in range(1, mols.nMolecules()):
     cljff.add(mol)    
 
 ms = t.elapsed()
-print "Parameterised all of the water molecules (in %d ms)!" % ms
+print("Parameterised all of the water molecules (in %d ms)!" % ms)
 
 system = System()
 
@@ -70,7 +70,7 @@ t.start()
 nrg = system.energy()
 ms = t.elapsed()
 
-print "Energy = %f kcal mol-1 - took %d ms" % (nrg.to(kcal_per_mol), ms)
+print("Energy = %f kcal mol-1 - took %d ms" % (nrg.to(kcal_per_mol), ms))
 
 closemols1 = CloseMols( Vector(0,0,0), cljff[MGIdx(0)], 10 )
 closemols2 = CloseMols( Vector(0,0,0), cljff[MGIdx(0)], 20 )
@@ -80,21 +80,21 @@ closemols1.update(system)
 closemols2.update(system)
 closemols3.update(system)
 
-mols1 = closemols1.closeMolecules().keys()
+mols1 = list(closemols1.closeMolecules().keys())
 mols1.sort()
 
-mols2 = closemols2.closeMolecules().keys()
+mols2 = list(closemols2.closeMolecules().keys())
 mols2.sort()
 
-mols3 = closemols3.closeMolecules().keys()
+mols3 = list(closemols3.closeMolecules().keys())
 mols3.sort()
 
-print "CLOSEMOLS1: ",mols1
-print "CLOSEMOLS2: ",mols2
-print "CLOSEMOLS3: ",mols3
+print("CLOSEMOLS1: ",mols1)
+print("CLOSEMOLS2: ",mols2)
+print("CLOSEMOLS3: ",mols3)
 
 move = RigidBodyMC( cljff[MGIdx(0)] )
 
 move.move(system, 100)
 
-print "New energy = %f kcal mol-1" % (system.energy().to(kcal_per_mol))
+print("New energy = %f kcal mol-1" % (system.energy().to(kcal_per_mol)))

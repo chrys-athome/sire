@@ -24,14 +24,14 @@ water = water.edit().setProperty("center", wrap(center)) \
                     .setProperty("copies", wrap(1)).commit()
 
 
-print(water.property("center"))
-print(water.property("dblarray"))
-print(water.property("intarray"))
-print(water.property("vecarray"))
-print(water.property("strarray"))
-print(water.property("type"))
-print(water.property("alpha"))
-print(water.property("copies"))
+print((water.property("center")))
+print((water.property("dblarray")))
+print((water.property("intarray")))
+print((water.property("vecarray")))
+print((water.property("strarray")))
+print((water.property("type")))
+print((water.property("alpha")))
+print((water.property("copies")))
 
-print(water.properties())
+print((water.properties()))
 

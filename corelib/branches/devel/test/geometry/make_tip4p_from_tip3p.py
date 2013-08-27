@@ -12,7 +12,7 @@ tip3p.addAutoBonds()
 tip3p[0].add("M03",Vector(0.0))
 
 for atm in tip3p.atoms():
-    print atm
+    print(atm)
 
 #we need to set the coordinates of the M atom...
 
@@ -35,11 +35,11 @@ AI = AtomIndex
 hoh = tip3p.angle(AI("H01",1),AI("O00",1),AI("H02",1))
 hom = tip3p.angle(AI("H01",1),AI("O00",1),AI("M03",1))
 
-print hoh
-print hom
+print(hoh)
+print(hom)
 
 for atm in tip3p.atoms():
-    print atm
+    print(atm)
 
 
-print "Done!"
+print("Done!")

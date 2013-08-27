@@ -139,10 +139,10 @@ system.add( "total_energy", MonitorComponent(e_total, Average()) )
 
 # Run the simulation
 for i in range(0,nblocks):
-    print "Running nmove..."
+    print("Running nmove...")
     system = moves.move(system, nmoves, True)
 
-print "Analysis..."
+print("Analysis...")
 # make an histogram...
 nbins=31
 #histoAnalysis(nbins=nbins,
@@ -172,7 +172,7 @@ nbins=31
 #              output="ANGLE-A2A3A4.dat")
 histoAnalysis(nbins=nbins,
               avgnrg = system.monitor( MonitorName("total_energy") ).accumulator().average(),
-              values=system.monitor( MonitorName("phi1234") ).accumulator().values(),
+              values=list(system.monitor( MonitorName("phi1234") ).accumulator().values()),
               mode="angle",
               output="DIHEDRAL-A1A2A3A4.dat")
 

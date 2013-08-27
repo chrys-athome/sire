@@ -43,9 +43,9 @@ def printComponents(energies):
     components = energies.symbols()
     
     for component in components:
-        print "%s == %f kcal mol-1" % (component, energies[component])
+        print("%s == %f kcal mol-1" % (component, energies[component]))
     
-    print "\n",
+    print("\n", end=' ')
 
 printComponents( clj.energies() )
 

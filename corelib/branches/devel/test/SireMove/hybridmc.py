@@ -73,17 +73,17 @@ system.add(salt)
 system.add(cljff)
 
 t.start()                                       
-print "Initial energy = %s" % system.energy()
-print "(took %d ms)" % t.elapsed()
+print("Initial energy = %s" % system.energy())
+print("(took %d ms)" % t.elapsed())
 
 hmcmove = HybridMC(salt, 100)
 
-print system.property("space")
+print(system.property("space"))
 
 for i in range(0,250):
-    print "\nmove %d" % (i+1)
+    print("\nmove %d" % (i+1))
     hmcmove.move(system, 1)
 
-    print system.energy()
+    print(system.energy())
 
     PDB().write(system.molecules(), "test%0004d.pdb" % i)

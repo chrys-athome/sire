@@ -11,18 +11,18 @@ c = CoordGroup(30000)
 
 for i in range(0,10000):
   
-  print >>sys.stderr, i
+  print(i, file=sys.stderr)
   
-  print >>sys.stderr, "Copy..."
+  print("Copy...", file=sys.stderr)
   c2 = copy.deepcopy(c)
   
-  print >>sys.stderr, "Edit..."
+  print("Edit...", file=sys.stderr)
   editor = c.edit()
   
-  print >>sys.stderr, "Translate..."
+  print("Translate...", file=sys.stderr)
   editor.translate( Vector(1,0,0) )
   
-  print >>sys.stderr, "Commit..."
+  print("Commit...", file=sys.stderr)
   c = editor.commit()
   
   #time.sleep(0.5)

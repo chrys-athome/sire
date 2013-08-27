@@ -8,5 +8,5 @@ for i in range(1,101):
 
 array = MultiFixed.fromArray(array)
 
-print array
+print(array)
 

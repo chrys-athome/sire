@@ -12,7 +12,7 @@ from Sire.Units import *
 
 import os
 
-print "Loading the water molecules..."
+print("Loading the water molecules...")
 waters = PDB().read("test/io/water.pdb")
 
 tip4p = waters.moleculeAt(0).molecule()
@@ -21,7 +21,7 @@ protoms_dir = "%s/Work/ProtoMS" % os.getenv("HOME")
 
 tip4p = tip4p.edit().rename("T4P").commit()
 
-print "Parameterising the water as TIP4P..."
+print("Parameterising the water as TIP4P...")
 protoms = ProtoMS("%s/protoms2" % protoms_dir)
 protoms.addParameterFile("%s/parameter/solvents.ff" % protoms_dir)
 
@@ -56,7 +56,7 @@ connectivity = connectivity.edit() \
                            .disconnect(AtomName("M03"), AtomName("H02")) \
                            .commit()
 
-print connectivity
+print(connectivity)
 
 tip4p_chgs = tip4p.property("charge")
 tip4p_fix = tip4p.property("fixed_charge")
@@ -74,7 +74,7 @@ for i in range(0, waters.nMolecules()):
 
     waters.update(water)
 
-print "Constructing the forcefields..."
+print("Constructing the forcefields...")
 
 switchfunc = HarmonicSwitchingFunction( 15*angstrom, 14.5*angstrom )
 words = open("test/io/water.xsc", "r").readline().split()
@@ -97,8 +97,8 @@ system.add(qmff)
 system.setProperty("switchingFunction", switchfunc)
 system.setProperty("space", space)
 
-print "Calculating the system energies..."
-print system.energies()
+print("Calculating the system energies...")
+print(system.energies())
 
 polchgs = PolariseCharges(waters, qmff.components().total(),
                           CoulombProbe(1*mod_electron))
@@ -106,23 +106,23 @@ polchgs = PolariseCharges(waters, qmff.components().total(),
 system.add(polchgs)
 system.add(polchgs.selfEnergyFF())
 
-print "Applying the polarisation constraint..."
+print("Applying the polarisation constraint...")
 system.applyConstraints()
 
-print "Recalculating the energies..."
-print system.energies()
+print("Recalculating the energies...")
+print(system.energies())
 
 waters = system[qmff[MGIdx(1)].number()].molecules()
 
 for molnum in waters.molNums():
     water = waters[molnum].molecule()
-    print molnum, water
-    print "MM charges\n",water.property("charge"), \
-                         water.evaluate().charge({"charge":"charge"})
-    print "Fixed charges\n",water.property("fixed_charge"), \
-                            water.evaluate().charge({"charge":"fixed_charge"})
-    print "Induced charges\n",water.property("induced_charge"), \
-                              water.evaluate().charge({"charge":"induced_charge"})
-    print "New charges\n",water.property("charge"), \
-                          water.evaluate().charge({"charge":"charge"})
+    print(molnum, water)
+    print("MM charges\n",water.property("charge"), \
+                         water.evaluate().charge({"charge":"charge"}))
+    print("Fixed charges\n",water.property("fixed_charge"), \
+                            water.evaluate().charge({"charge":"fixed_charge"}))
+    print("Induced charges\n",water.property("induced_charge"), \
+                              water.evaluate().charge({"charge":"induced_charge"}))
+    print("New charges\n",water.property("charge"), \
+                          water.evaluate().charge({"charge":"charge"}))
 

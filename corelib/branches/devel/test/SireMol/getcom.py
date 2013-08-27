@@ -12,5 +12,5 @@ for atom in protein.atoms( AtomName("CA", CaseInsensitive) ):
     com += atom.property("coordinates") * atom.property("element").mass().value()
     mass += atom.property("element").mass().value()
 
-print "Center of mass = %s" % (com / mass)
+print("Center of mass = %s" % (com / mass))
 

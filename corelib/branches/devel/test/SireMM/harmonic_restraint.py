@@ -32,10 +32,10 @@ restraint = DistanceRestraint.harmonic(atom, point, k)
 # represent the distance between the two points of the
 # restraint
 
-print restraint.energy()
+print(restraint.energy())
 
 water = water.move().translate( Vector(1,0,0) ).commit()
 
 restraint.update(water)
 
-print restraint.energy()
+print(restraint.energy())

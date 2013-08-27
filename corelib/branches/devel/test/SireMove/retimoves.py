@@ -29,7 +29,7 @@ cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -63,19 +63,19 @@ for i in range(1, mols.nMolecules()):
     cljff.add(mol)
 
 ms = t.elapsed()
-print "Parameterised all of the water molecules (in %d ms)!" % ms
+print("Parameterised all of the water molecules (in %d ms)!" % ms)
 
 system = System()
 
 system.add(cljff)
 
-print "Initial energy = %s" % system.energy()
+print("Initial energy = %s" % system.energy())
 
 data = save(system)
 
 system = load(data)
 
-print "Saved energy = %s" % system.energy()
+print("Saved energy = %s" % system.energy())
 
 mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
@@ -88,10 +88,10 @@ system.setComponent( system.totalComponent(), cljff.components().lj() + \
                                               lam * cljff.components().coulomb() )
 
 system.setComponent( lam, 0.0 )
-print system.energies()
+print(system.energies())
 
 system.setComponent( lam, 1.0 )
-print system.energies()
+print(system.energies())
 
 #create 5 replicas that map from lambda=0 to lambda=1
 replicas = Replicas(system, 5)
@@ -104,26 +104,26 @@ for i in range(0, 5):
     replicas.setLambdaValue( i, i*0.0025 )
 
 for i in range(0,5):
-    print i, replicas[i].lambdaValue(), replicas[i].energy(), \
-             replicas[i].subSystem().constant(lam)
+    print(i, replicas[i].lambdaValue(), replicas[i].energy(), \
+             replicas[i].subSystem().constant(lam))
 
 data = save(replicas)
 
 replicas = load(data)
 
 for i in range(0,5):
-    print i, replicas[i].lambdaValue(), replicas[i].energy()
+    print(i, replicas[i].lambdaValue(), replicas[i].energy())
 
 repmove = RepExMove()
 
-print "Running the replica exchange moves"
+print("Running the replica exchange moves")
 sim = SupraSim.run( replicas, repmove, 1, True )
 
 replicas = sim.system()
 repmove = sim.moves()
 
-print "Accepted ",repmove[0].nAccepted(), "Rejected ",repmove[0].nRejected()
+print("Accepted ",repmove[0].nAccepted(), "Rejected ",repmove[0].nRejected())
 
 for i in range(0,5):
-    print i, replicas[i].lambdaValue(), replicas[i].energy(), \
-             replicas[i].subSystem().constant(lam)
+    print(i, replicas[i].lambdaValue(), replicas[i].energy(), \
+             replicas[i].subSystem().constant(lam))

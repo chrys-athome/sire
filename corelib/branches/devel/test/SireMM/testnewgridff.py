@@ -94,14 +94,14 @@ grid_system.setComponent( grid_system.totalComponent(),  \
 grid_system2.setComponent( grid_system2.totalComponent(), \
                            gridff2.components().total() + swap_swapff.components().total() )
 
-print grid_system.energies()
-print grid_system2.energies()
+print(grid_system.energies())
+print(grid_system2.energies())
 
-print "\nOld Grid energy equals: %s. New GridFF energy equals: %s." % \
-          (grid_system.energy(), grid_system2.energy())
+print("\nOld Grid energy equals: %s. New GridFF energy equals: %s." % \
+          (grid_system.energy(), grid_system2.energy()))
 
 diff = grid_system.energy() - grid_system2.energy()
-print "The difference is %s\n" % diff
+print("The difference is %s\n" % diff)
 
 rbmc = RigidBodyMC(swapwaters)
 rbmc.setReflectionSphere(center_point, 7.5*angstrom)
@@ -113,97 +113,97 @@ PDB().write(grid_system2.molecules(), "test0000.pdb")
 t = QTime()
 
 for i in range(1,11):
-    print "Moving the system..."
+    print("Moving the system...")
     t.start()
     grid_system2 = moves.move(grid_system2, 1000, False)
     ms = t.elapsed()
-    print "Moves complete! Took %d ms" % ms
-    print "NEW GRIDFF: ",grid_system2.energies()
+    print("Moves complete! Took %d ms" % ms)
+    print("NEW GRIDFF: ",grid_system2.energies())
     grid_system.update( grid_system2.molecules() )
-    print "OLD GRIDFF: ",grid_system.energies()
+    print("OLD GRIDFF: ",grid_system.energies())
 
-    print "\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
-          (grid_system.energy(), grid_system2.energy())
+    print("\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
+          (grid_system.energy(), grid_system2.energy()))
 
     diff = grid_system.energy() - grid_system2.energy()
-    print "The difference is %s\n" % diff
+    print("The difference is %s\n" % diff)
 
     PDB().write(grid_system2.molecules(), "test%0004d.pdb" % i)
 
 # Save and restore the two systems from binary
 import Sire.Stream
-print "Saving the systems..."
+print("Saving the systems...")
 Sire.Stream.save( (grid_system, grid_system2), "test/SireMM/testgrid.s3" )
-print "Reloading the grid system..."
+print("Reloading the grid system...")
 (grid_system, grid_system2) = Sire.Stream.load("test/SireMM/testgrid.s3")
 
 
-print grid_system.energies()
-print grid_system2.energies()
-print "\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
-          (grid_system.energy(), grid_system2.energy())
+print(grid_system.energies())
+print(grid_system2.energies())
+print("\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
+          (grid_system.energy(), grid_system2.energy()))
 
 diff = grid_system.energy() - grid_system2.energy()
-print "The difference is %s\n" % diff
+print("The difference is %s\n" % diff)
 
 for i in range(1,11):
-    print "Moving the system..."
+    print("Moving the system...")
     t.start()
     grid_system2 = moves.move(grid_system2, 1000, False)
     ms = t.elapsed()
-    print "Moves complete! Took %d ms" % ms
-    print "NEW GRIDFF: ",grid_system2.energies()
+    print("Moves complete! Took %d ms" % ms)
+    print("NEW GRIDFF: ",grid_system2.energies())
     grid_system.update( grid_system2.molecules() )
-    print "OLD GRIDFF: ",grid_system.energies()
+    print("OLD GRIDFF: ",grid_system.energies())
 
-    print "\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
-          (grid_system.energy(), grid_system2.energy())
+    print("\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
+          (grid_system.energy(), grid_system2.energy()))
 
     diff = grid_system.energy() - grid_system2.energy()
-    print "The difference is %s\n" % diff
+    print("The difference is %s\n" % diff)
 
     PDB().write(grid_system2.molecules(), "test%0004d.pdb" % (i+10))
 
-print "\nTriggering recalculation from scratch..."
+print("\nTriggering recalculation from scratch...")
 grid_system.mustNowRecalculateFromScratch()
 grid_system2.mustNowRecalculateFromScratch()
 
-print grid_system.energies()
-print grid_system2.energies()
-print "\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
-          (grid_system.energy(), grid_system2.energy())
+print(grid_system.energies())
+print(grid_system2.energies())
+print("\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
+          (grid_system.energy(), grid_system2.energy()))
 
 diff = grid_system.energy() - grid_system2.energy()
-print "The difference is %s\n" % diff
+print("The difference is %s\n" % diff)
 
 for i in range(1,11):
-    print "Moving the system..."
+    print("Moving the system...")
     t.start()
     grid_system2 = moves.move(grid_system2, 1000, False)
     ms = t.elapsed()
-    print "Moves complete! Took %d ms" % ms
-    print "NEW GRIDFF: ",grid_system2.energies()
+    print("Moves complete! Took %d ms" % ms)
+    print("NEW GRIDFF: ",grid_system2.energies())
     grid_system.update( grid_system2.molecules() )
-    print "OLD GRIDFF: ",grid_system.energies()
+    print("OLD GRIDFF: ",grid_system.energies())
 
-    print "\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
-          (grid_system.energy(), grid_system2.energy())
+    print("\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
+          (grid_system.energy(), grid_system2.energy()))
 
     diff = grid_system.energy() - grid_system2.energy()
-    print "The difference is %s\n" % diff
+    print("The difference is %s\n" % diff)
     
     PDB().write(grid_system2.molecules(), "test%0004d.pdb" % (i+20))
 
-print "\nTriggering recalculation from scratch..."
+print("\nTriggering recalculation from scratch...")
 grid_system.mustNowRecalculateFromScratch()
 grid_system2.mustNowRecalculateFromScratch()
     
-print grid_system.energies()
-print grid_system2.energies()
-print "\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
-          (grid_system.energy(), grid_system2.energy())
+print(grid_system.energies())
+print(grid_system2.energies())
+print("\nOld GridFF energy equals: %s. New GridFF energy equals: %s." % \
+          (grid_system.energy(), grid_system2.energy()))
     
 diff = grid_system.energy() - grid_system2.energy()
-print "The difference is %s\n" % diff
+print("The difference is %s\n" % diff)
 
-print "Done :-)"
+print("Done :-)")

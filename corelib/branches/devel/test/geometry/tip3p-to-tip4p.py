@@ -9,21 +9,21 @@ tip3p = mols[0]
 mols = PDB().read("test/geometry/tip4p.pdb")
 tip4p = mols[0]
     
-print tip3p
-print tip4p
+print(tip3p)
+print(tip4p)
 
-print "OLD TIP3P"
+print("OLD TIP3P")
 for atom in tip3p[0]:
-    print atom
+    print(atom)
 
 tip3p[0].applyTemplate(tip4p[0],TmplType(TmplTypeEnum.MATCHATOMS))
 
-print "TIP4P"
+print("TIP4P")
 for atom in tip4p[0]:
-    print atom
+    print(atom)
     
-print "NEW TIP3P"
+print("NEW TIP3P")
 for atom in tip3p[0]:
-    print atom
+    print(atom)
 
-print "Done!"
+print("Done!")

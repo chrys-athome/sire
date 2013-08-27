@@ -65,7 +65,7 @@ for i in range(0, waters.nMolecules()):
     waters.update(water)
 
 ms = t.elapsed()
-print "Parameterised all of the water molecules (in %d ms)!" % ms
+print("Parameterised all of the water molecules (in %d ms)!" % ms)
 
 switchfunc = HarmonicSwitchingFunction(15*angstrom, 14.5*angstrom)
 
@@ -89,8 +89,8 @@ for i in range(0,3):
 
 system.add( IdentityConstraint(points, waters) )
 
-print "Calculating the starting energy... (should be -16364.5 kcal mol-1)"
-print "...Initial energy = %s" % system.energy()
+print("Calculating the starting energy... (should be -16364.5 kcal mol-1)")
+print("...Initial energy = %s" % system.energy())
 
 rbmc = RigidBodyMC(waters)
 rbmc.setMaximumTranslation( 0.15*angstrom )
@@ -111,7 +111,7 @@ import os
 import shutil
 
 if os.path.exists("wateridentity_output"):
-    print "Output directory already exists - removing it!"
+    print("Output directory already exists - removing it!")
     shutil.rmtree("wateridentity_output", True)
 
 os.makedirs("wateridentity_output")
@@ -122,12 +122,12 @@ for i in range(0,100):
     sim = Simulation.run(system, moves, 10000)
     ms = t.elapsed()
 
-    print "Block %3d complete - took %d ms" % (i+1, ms)
+    print("Block %3d complete - took %d ms" % (i+1, ms))
 
     system = sim.system()
     moves = sim.moves()
 
-    print "Block %3d: Energy = %f kcal mol-1" % (i+1, system.energy().to(kcal_per_mol))
+    print("Block %3d: Energy = %f kcal mol-1" % (i+1, system.energy().to(kcal_per_mol)))
 
     PDB().write( system[MGName("waters")], "wateridentity_output/output%003d.pdb" % (i+1) )
 
@@ -138,5 +138,5 @@ for i in range(0,100):
     #print >>xscfile,"%f %f %f  %f %f %f" % (mincoords[0], mincoords[1], mincoords[2], 
     #                                        maxcoords[0], maxcoords[1], maxcoords[2])
 
-print "Simulation complete!"
+print("Simulation complete!")
 

@@ -34,10 +34,10 @@ cljff = InterCLJFF()
 cljff.add(na)
 cljff.add(cl)
 
-print cljff.energy()
+print(cljff.energy())
 
 grid = RegularGrid(na.evaluate().center(), 50, 0.1*angstrom)
-print grid
+print(grid)
 
 naff = InterCLJFF()
 naff.add(na)

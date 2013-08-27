@@ -6,12 +6,12 @@ from Sire.Maths import *
 from Sire.Units import *
 from Sire.Qt import *
 
-print "Loading a box of water..."
+print("Loading a box of water...")
 mols = PDB().read("test/io/water.pdb")
 
 internalff = InternalFF()
 
-print "Parameterising the molecules..."
+print("Parameterising the molecules...")
 for i in range(0, mols.nMolecules()):
     tip4p = mols.moleculeAt(i).molecule()
 
@@ -43,19 +43,19 @@ for i in range(0, mols.nMolecules()):
 
     internalff.add( tip4p )
 
-print "Calculating the intramolecular energy of the waters..."
+print("Calculating the intramolecular energy of the waters...")
 
 t = QTime()
 t.start()
-print internalff.energy()
+print(internalff.energy())
 ms = t.elapsed()
 
-print internalff.energy( internalff.components().bond() )
-print internalff.energy( internalff.components().angle() )
+print(internalff.energy( internalff.components().bond() ))
+print(internalff.energy( internalff.components().angle() ))
 
-print "Calculation took %d ms" % ms
+print("Calculation took %d ms" % ms)
 
-print "\nManually calculating the energy for comparison..."
+print("\nManually calculating the energy for comparison...")
 
 bndnrg = 0
 angnrg = 0
@@ -75,13 +75,13 @@ for i in range(0,mols.nMolecules()):
 
 ms = t.elapsed()
 
-print bndnrg
-print angnrg
-print bndnrg + angnrg
+print(bndnrg)
+print(angnrg)
+print(bndnrg + angnrg)
 
-print "Manual calculation took %d ms" % ms
+print("Manual calculation took %d ms" % ms)
 
-print "\nTesting some moves...\n"
+print("\nTesting some moves...\n")
 
 tip4p = internalff.molecule(MolIdx(0)).molecule()
 
@@ -90,26 +90,26 @@ new_tip4p = tip4p.move().change( BondID(AtomName("O00"),AtomName("H01")), 0.3 * 
 internalff.update(new_tip4p)
 
 t.start()
-print internalff.energy()
+print(internalff.energy())
 ms = t.elapsed()
 
-print internalff.energy( internalff.components().bond() )
-print internalff.energy( internalff.components().angle() )
+print(internalff.energy( internalff.components().bond() ))
+print(internalff.energy( internalff.components().angle() ))
 
-print "Calculation took %d ms" % ms
+print("Calculation took %d ms" % ms)
 
 internalff.update(tip4p)
 
 t.start()
-print internalff.energy()
+print(internalff.energy())
 ms = t.elapsed()
 
-print internalff.energy( internalff.components().bond() )
-print internalff.energy( internalff.components().angle() )
+print(internalff.energy( internalff.components().bond() ))
+print(internalff.energy( internalff.components().angle() ))
 
-print "Calculation took %d ms" % ms
+print("Calculation took %d ms" % ms)
 
-print "\nTesting by running lots of moves...\n"
+print("\nTesting by running lots of moves...\n")
 
 rand = RanGenerator()
 
@@ -128,21 +128,21 @@ for i in range(0,1000):
     #nrg = internalff.energy()
 
 ms = t.elapsed()
-print "\nMoves took %d ms\n" % ms
+print("\nMoves took %d ms\n" % ms)
 
 t.start()
-print internalff.energy()
+print(internalff.energy())
 ms = t.elapsed()
-print internalff.energy( internalff.components().bond() )
-print internalff.energy( internalff.components().angle() )
-print "Took %d ms" % ms
+print(internalff.energy( internalff.components().bond() ))
+print(internalff.energy( internalff.components().angle() ))
+print("Took %d ms" % ms)
 
 internalff.mustNowRecalculateFromScratch()
 
-print "\n",
+print("\n", end=' ')
 t.start()
-print internalff.energy()
+print(internalff.energy())
 ms = t.elapsed()
-print internalff.energy( internalff.components().bond() )
-print internalff.energy( internalff.components().angle() )
-print "Took %d ms" % ms
+print(internalff.energy( internalff.components().bond() ))
+print(internalff.energy( internalff.components().angle() ))
+print("Took %d ms" % ms)

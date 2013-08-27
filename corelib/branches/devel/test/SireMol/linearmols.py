@@ -14,7 +14,7 @@ mol = mol.edit().add( CGName("1") ) \
                 .add( AtomName("H2") ).cutGroup() \
                 .molecule().commit()
 
-print mol, mol.nAtoms()
+print(mol, mol.nAtoms())
 
 mol = mol.edit() \
          .atom(AtomName("H1")).setProperty("coordinates", Vector(0,0,0)) \

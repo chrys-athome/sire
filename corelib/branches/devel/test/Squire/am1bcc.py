@@ -28,10 +28,10 @@ t.start()
 am1bcc_chgs = am1bcc(mol)
 ms = t.elapsed()
 
-print "Getting QM charges took %d ms" % ms
+print("Getting QM charges took %d ms" % ms)
 
-print "MM charges == ",mol.property("charge").array()
-print "QM charges == ",am1bcc_chgs.array()
+print("MM charges == ",mol.property("charge").array())
+print("QM charges == ",am1bcc_chgs.array())
 
 water = PDB().read("test/io/water.pdb")
 
@@ -55,9 +55,9 @@ cljff = InterGroupCLJFF()
 cljff.add( mol, MGIdx(0) )
 cljff.add( water, MGIdx(1) )
 
-print "MM energy == %f kcal mol-1" % (cljff.energy().to(kcal_per_mol))
-print "  coulomb == %f, LJ == %f" % (cljff.energy(cljff.components().coulomb()).to(kcal_per_mol),
-                                     cljff.energy(cljff.components().lj()).to(kcal_per_mol))
+print("MM energy == %f kcal mol-1" % (cljff.energy().to(kcal_per_mol)))
+print("  coulomb == %f, LJ == %f" % (cljff.energy(cljff.components().coulomb()).to(kcal_per_mol),
+                                     cljff.energy(cljff.components().lj()).to(kcal_per_mol)))
 
 newmol = mol.edit().setProperty("charge", am1bcc_chgs).commit()
 cljff.update(newmol)
@@ -65,27 +65,27 @@ cljff.update(newmol)
 mol = mol.move().translate(Vector(10,0,0)).commit()
 
 t.start()
-print am1bcc.mayChangeCharges(mol, newmol)
+print(am1bcc.mayChangeCharges(mol, newmol))
 ms = t.elapsed()
 
-print "Checking for need to recalculate charges took %d ms" % ms
+print("Checking for need to recalculate charges took %d ms" % ms)
 
 mol = mol.move().rotate( Quaternion(25*degrees, Vector(1,1,1)),  Vector(0,0,0) ).commit()
 
 t.start()
-print am1bcc.mayChangeCharges(mol, newmol)
+print(am1bcc.mayChangeCharges(mol, newmol))
 ms = t.elapsed()
 
-print "Checking for need to recalculate charges took %d ms" % ms
+print("Checking for need to recalculate charges took %d ms" % ms)
 
 mol = mol.atom(AtomIdx(5)).move().translate( Vector(3,3,3) ).commit().molecule()
 
 t.start()
-print am1bcc.mayChangeCharges(mol, newmol)
+print(am1bcc.mayChangeCharges(mol, newmol))
 ms = t.elapsed()
 
-print "Checking for need to recalculate charges took %d ms" % ms
+print("Checking for need to recalculate charges took %d ms" % ms)
 
-print "QM energy == %f kcal mol-1" % (cljff.energy().to(kcal_per_mol))
-print "  coulomb == %f, LJ == %f" % (cljff.energy(cljff.components().coulomb()).to(kcal_per_mol),
-                                     cljff.energy(cljff.components().lj()).to(kcal_per_mol))
+print("QM energy == %f kcal mol-1" % (cljff.energy().to(kcal_per_mol)))
+print("  coulomb == %f, LJ == %f" % (cljff.energy(cljff.components().coulomb()).to(kcal_per_mol),
+                                     cljff.energy(cljff.components().lj()).to(kcal_per_mol)))

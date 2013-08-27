@@ -10,7 +10,7 @@ from Sire.Units import *
 
 import os
 
-print "Loading the water molecules..."
+print("Loading the water molecules...")
 waters = PDB().read("test/io/water.pdb")
 
 tip4p = waters.moleculeAt(0).molecule()
@@ -19,7 +19,7 @@ protoms_dir = "%s/Work/ProtoMS" % os.getenv("HOME")
 
 tip4p = tip4p.edit().rename("T4P").commit()
 
-print "Parameterising the water as TIP4P..."
+print("Parameterising the water as TIP4P...")
 protoms = ProtoMS("%s/protoms2" % protoms_dir)
 protoms.addParameterFile("%s/parameter/solvents.ff" % protoms_dir)
 
@@ -54,7 +54,7 @@ connectivity = connectivity.edit() \
                            .disconnect(AtomName("M03"), AtomName("H02")) \
                            .commit()
 
-print connectivity
+print(connectivity)
 
 tip4p_chgs = tip4p.property("charge")
 tip4p_fix = tip4p.property("fixed_charge")
@@ -72,7 +72,7 @@ for i in range(0, waters.nMolecules()):
 
     waters.update(water)
 
-print "Constructing the forcefields..."
+print("Constructing the forcefields...")
 
 pol_tip4p = waters.moleculeAt(0).molecule()
 waters.remove(pol_tip4p)
@@ -84,7 +84,7 @@ cljff.add(waters, MGIdx(1))
 system = System()
 system.add(cljff)
 
-print system.energies()
+print(system.energies())
 
 polchgs = PolariseCharges(cljff[MGIdx(0)], cljff.components().coulomb(),
                           CoulombProbe(1*mod_electron))
@@ -92,21 +92,21 @@ polchgs = PolariseCharges(cljff[MGIdx(0)], cljff.components().coulomb(),
 system.add(polchgs)
 system.add(polchgs.selfEnergyFF())
 
-print "Applying the polarisation constraint..."
+print("Applying the polarisation constraint...")
 system.applyConstraints()
 
-print system.energies()
+print(system.energies())
 
 pol_tip4p = system[MGIdx(0)][pol_tip4p.number()].molecule()
 
-print "MM charges\n",tip4p.property("charge"), \
-                     tip4p.evaluate().charge({"charge":"charge"})
-print "Fixed charges\n",pol_tip4p.property("fixed_charge"), \
-                        pol_tip4p.evaluate().charge({"charge":"fixed_charge"})
-print "Induced charges\n",pol_tip4p.property("induced_charge"), \
-                          pol_tip4p.evaluate().charge({"charge":"induced_charge"})
-print "New charges\n",pol_tip4p.property("charge"), \
-                      pol_tip4p.evaluate().charge({"charge":"charge"})
+print("MM charges\n",tip4p.property("charge"), \
+                     tip4p.evaluate().charge({"charge":"charge"}))
+print("Fixed charges\n",pol_tip4p.property("fixed_charge"), \
+                        pol_tip4p.evaluate().charge({"charge":"fixed_charge"}))
+print("Induced charges\n",pol_tip4p.property("induced_charge"), \
+                          pol_tip4p.evaluate().charge({"charge":"induced_charge"}))
+print("New charges\n",pol_tip4p.property("charge"), \
+                      pol_tip4p.evaluate().charge({"charge":"charge"}))
 
 grid = RegularGrid(tip4p.evaluate().center(), 10, 1.0*angstrom)
 

@@ -29,7 +29,7 @@ cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
                                                 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -71,13 +71,13 @@ for i in range(1, mols.nMolecules()):
         sync_mols.add(mol)
 
 ms = t.elapsed()
-print "Parameterised all of the water molecules (in %d ms)!" % ms
+print("Parameterised all of the water molecules (in %d ms)!" % ms)
 
 system = System()
 
 system.add(cljff)
 
-print "Initial energy = %s" % system.energy()
+print("Initial energy = %s" % system.energy())
 
 mc = RigidBodyMC(free_mols)
 sync_mc = RigidBodyMC(sync_mols)
@@ -92,7 +92,7 @@ moves.add(mc, 2)
 moves.add(sync_mc, 1)
 
 for i in range(0,10):
-    print i+1
+    print(i+1)
     node = nodes.getNode()
     sim = Simulation.run(node, system, moves, 1000)
 

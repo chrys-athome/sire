@@ -15,7 +15,7 @@ ProtoMS().read("/home/chris/ProtoMC/trunk/parameter/opls96.ff", m)
 ProtoMS().read("/home/chris/ProtoMC/trunk/parameter/opls96-residues.ff", m)
 
 ms = t.elapsed()
-print "Reading parameter files took %d ms" % ms
+print("Reading parameter files took %d ms" % ms)
 
 t.start()
 
@@ -23,9 +23,9 @@ m.dump("test.db")
 
 ms = t.elapsed()
 
-print "Dumping database took %d ms" % ms
+print("Dumping database took %d ms" % ms)
 
-print "nrelationships = %d, nparameters = %d" % (m.nRelationships(),m.nParameters())
+print("nrelationships = %d, nparameters = %d" % (m.nRelationships(),m.nParameters()))
 
 m2 = ParameterDB()
 
@@ -35,7 +35,7 @@ m2.load("test.db")
 
 ms = t.elapsed()
 
-print "Loading database took %d ms" % ms
+print("Loading database took %d ms" % ms)
 
 t.start()
 
@@ -43,11 +43,11 @@ m2.dump("test2.db")
 
 ms = t.elapsed()
 
-print "Dumping second database took %d ms" % ms
+print("Dumping second database took %d ms" % ms)
 
-print "nrelationships = %d, nparameters = %d" % (m2.nRelationships(),m2.nParameters())
+print("nrelationships = %d, nparameters = %d" % (m2.nRelationships(),m2.nParameters()))
 
-print "test.db and test2.db should be identical - check using diff"
+print("test.db and test2.db should be identical - check using diff")
 
 ################
 ## Timings

@@ -33,14 +33,14 @@ def printPaths(paths):
     return str(names)
 
 # check that these are in the ring
-print "%s is in a ring? %s { %s }" % (bond, connectivity.inRing(bond), \
-                                        printPaths(connectivity.findPaths(bond.atom0(), bond.atom1())))
+print("%s is in a ring? %s { %s }" % (bond, connectivity.inRing(bond), \
+                                        printPaths(connectivity.findPaths(bond.atom0(), bond.atom1()))))
 
-print "%s is in a ring? %s { %s }" % (angle, connectivity.inRing(angle), \
-                                        printPaths(connectivity.findPaths(angle.atom0(), angle.atom2())))
+print("%s is in a ring? %s { %s }" % (angle, connectivity.inRing(angle), \
+                                        printPaths(connectivity.findPaths(angle.atom0(), angle.atom2()))))
 
-print "%s is in a ring? %s { %s }" % (dihedral, connectivity.inRing(dihedral), \
-                                        printPaths(connectivity.findPaths(dihedral.atom0(), dihedral.atom3())))
+print("%s is in a ring? %s { %s }" % (dihedral, connectivity.inRing(dihedral), \
+                                        printPaths(connectivity.findPaths(dihedral.atom0(), dihedral.atom3()))))
 
 osel = osel.move().change(bond, 0.3*angstrom, map).commit()
 

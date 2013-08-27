@@ -16,12 +16,12 @@ import time
 timer = QTime()
 
 #read in all of the molecules
-print "Loading the molecules..."
+print("Loading the molecules...")
 timer.start()
 mols = PDB().read("test/io/water.pdb")
 
 ms = timer.elapsed()
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
 #specify the space in which the molecules are placed
 space = Cartesian()
@@ -45,7 +45,7 @@ molproff2.setMolproExe(molproexe)
 molproff3.setMolproExe(molproexe)
 
 #parametise each molecule and add it to the forcefield
-print "Parametising the molecules..."
+print("Parametising the molecules...")
 
 chgs = AtomicCharges( [0.0, 0.52 * mod_electron, \
                             0.52 * mod_electron, \
@@ -74,7 +74,7 @@ molproff2.addToQM(qm_mol)
 molproff3.addToQM(qm_mol)
 
 ms = timer.elapsed()
-print "... took %d ms" % ms
+print("... took %d ms" % ms)
 
 timer.start()
 
@@ -85,26 +85,26 @@ threadproc2 = FFThreadProcessor(molproff2)
 active_threadproc1 = threadproc1.activate()
 active_threadproc2 = threadproc2.activate()
 
-print "Starting background calculation..."
+print("Starting background calculation...")
 active_threadproc1.recalculateEnergy()
 active_threadproc2.recalculateEnergy()
 
-print "Off it goes...."
-print "Da de da da da..."
+print("Off it goes....")
+print("Da de da da da...")
 
 #create an FFProcessor, and place the cljff onto it...
 ffproc1 = FFProcessor(molproff3)
 
-print "Is active?", ffproc1.isActive()
+print("Is active?", ffproc1.isActive())
 
 active_ffproc1 = ffproc1.activate()
 
-print "Is active?", ffproc1.isActive()
+print("Is active?", ffproc1.isActive())
 
-print "MAIN THREAD PROCESS"
-print "Total energy == ",active_threadproc1.energy()
-print "Total energy == ",active_threadproc2.energy()
-print "Total energy == ",active_ffproc1.energy()
+print("MAIN THREAD PROCESS")
+print("Total energy == ",active_threadproc1.energy())
+print("Total energy == ",active_threadproc2.energy())
+print("Total energy == ",active_ffproc1.energy())
 
-print "Took %d ms" % timer.elapsed()
+print("Took %d ms" % timer.elapsed())
 

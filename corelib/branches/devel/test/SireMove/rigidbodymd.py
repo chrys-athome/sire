@@ -16,7 +16,7 @@ import sys
 
 mols = PDB().read("test/io/water.pdb")
                                                 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 mol = mols.moleculeAt(0).molecule()
 
@@ -56,7 +56,7 @@ system = System()
 system.add(solvent)
 system.add(cljff)
 
-print system.energy()
+print(system.energy())
 
 rbmove = MolecularDynamics( solvent, DLMRigidBody(), 1*femtosecond )
 
@@ -66,8 +66,8 @@ PDB().write(system.molecules(), "test0000.pdb")
 
 for i in range(1,1000):
     rbmove.move(system, 10)
-    print i, system.energy()
-    print rbmove.kineticEnergy(), (system.energy() + rbmove.kineticEnergy())
+    print(i, system.energy())
+    print(rbmove.kineticEnergy(), (system.energy() + rbmove.kineticEnergy()))
 
     PDB().write(system.molecules(), "test%0004d.pdb" % i)
 

@@ -25,7 +25,7 @@ cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
                                                 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -59,7 +59,7 @@ for i in range(1, mols.nMolecules()):
     cljff.add(mol)
 
 ms = t.elapsed()
-print "Parameterised all of the water molecules (in %d ms)!" % ms
+print("Parameterised all of the water molecules (in %d ms)!" % ms)
 
 system = System()
 
@@ -69,7 +69,7 @@ t.start()
 nrg = system.energy()
 ms = t.elapsed()
 
-print "System energy = %s  -  took %d ms" % (nrg, ms)
+print("System energy = %s  -  took %d ms" % (nrg, ms))
 
 copy_system = system.__copy__()
 
@@ -77,4 +77,4 @@ t.start()
 nrg = system.energy()
 ms = t.elapsed()
 
-print "System energy = %s  -  took %d ms" % (nrg, ms)
+print("System energy = %s  -  took %d ms" % (nrg, ms))

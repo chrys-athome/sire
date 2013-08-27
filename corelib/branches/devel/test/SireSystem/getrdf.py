@@ -2,7 +2,7 @@
 import sys
 
 if len(sys.argv) < 2:
-   print >>sys.stderr,"USAGE: getrdf.py file.pdb (file.xsc)"
+   print("USAGE: getrdf.py file.pdb (file.xsc)", file=sys.stderr)
    sys.exit(-1)
 
 from Sire.Mol import *
@@ -77,8 +77,8 @@ addRDF(rdf, pdbfile, xscfile)
 #    addRDF(rdf, pdbfile[i], xscfile[i])
 
 #Now print out the RDF
-print "#RDF"
+print("#RDF")
 
 for i in range(0,rdf.nBins()):
-    print rdf[i].middle().to(angstrom), rdf[i].value()
+    print(rdf[i].middle().to(angstrom), rdf[i].value())
 

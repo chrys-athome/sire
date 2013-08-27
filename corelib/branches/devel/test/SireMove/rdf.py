@@ -30,6 +30,6 @@ for mol in solvent:
                             mol[oxygen] )
     
 for point in rdf.normalise():
-    print "%f  %f" % point
+    print("%f  %f" % point)
 
 

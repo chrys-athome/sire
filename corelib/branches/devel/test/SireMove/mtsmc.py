@@ -18,11 +18,11 @@ import sys
 timer = QTime()
 
 #read in the solute molecule
-print "Loading the tip4p solute..."
+print("Loading the tip4p solute...")
 tip4p = PDB().read("test/io/tip4p.pdb")[0]
 
 #read in all of the solvent molecules
-print "Loading the solvent..."
+print("Loading the solvent...")
 solvent = PDB().read("test/io/water.pdb")
 
 #renumber the the residues of the solvent so that they all have number 1
@@ -64,7 +64,7 @@ qmff.setProgram("HF\nMP2")
 qmff.setBasisSet("AVDZ")
 
 #parametise each molecule and add it to the forcefields
-print "Parametising the molecules..."
+print("Parametising the molecules...")
 
 chgs = AtomicCharges( [0.0, 0.52 * mod_electron,
                             0.52 * mod_electron,
@@ -212,7 +212,7 @@ PDB().write(system.info().groups().molecules(), "test000.pdb")
 for i in range(1,21):
     nmoves = 1000
 
-    print "Block %d: Running %d moves" % (i, nmoves)
+    print("Block %d: Running %d moves" % (i, nmoves))
 
     timer.start()
 
@@ -220,14 +220,14 @@ for i in range(1,21):
 
     ms = timer.elapsed()
 
-    print "%d moves took %d ms" % (nmoves, ms)
+    print("%d moves took %d ms" % (nmoves, ms))
 
     PDB().write(system.info().groups().molecules(), "test%3.3d.pdb" % i)
 
 mtsmc = moves.moves()[0].clone()
 
-print "%d accepted, %d rejected, ratio == %f %%" % \
-           (mtsmc.nAccepted(), mtsmc.nRejected(), mtsmc.acceptanceRatio())
+print("%d accepted, %d rejected, ratio == %f %%" % \
+           (mtsmc.nAccepted(), mtsmc.nRejected(), mtsmc.acceptanceRatio()))
 
 # check that the QM and MM energies have been conserved...
 new_molpro = MolproFF(space, switchfunc)
@@ -240,42 +240,42 @@ new_molpro.addToQM( system_qmff.molecules(qmff.groups().qm()) )
 new_molpro.addToMM( system_qmff.molecules(qmff.groups().mm()), 
                     {new_molpro.parameters().coulomb() : "charges"} )
 
-print "QM energy = %f, new molproff = %f" % \
+print("QM energy = %f, new molproff = %f" % \
             ( system.forceFields().forceField(qmff.ID()).energy(),
-              new_molpro.energy() )
+              new_molpro.energy() ))
 
 qmff.change(system.forceFields().molecules())
 
-print "qmff == %f" % qmff.energy()
+print("qmff == %f" % qmff.energy())
 
 # get the RDFs
 rdfmonitor = system.monitors().monitor(Symbol("RDF"))
 
 rdf = rdfmonitor.getRDF( oxygen, oxygen )
 
-print "OXYGEN-OXYGEN"
+print("OXYGEN-OXYGEN")
 
 for point in rdf.normalise():
-    print "%f  %f" % point
+    print("%f  %f" % point)
 
-print "\nOXYGEN-HYDROGEN"
+print("\nOXYGEN-HYDROGEN")
 
 rdf = rdfmonitor.getRDF( oxygen, hydrogen )
 
 for point in rdf.normalise():
-   print "%f  %f" % point
+   print("%f  %f" % point)
 
-print "\nHYDROGEN-OXYGEN"
+print("\nHYDROGEN-OXYGEN")
 
 rdf = rdfmonitor.getRDF( hydrogen, oxygen )
 
 for point in rdf.normalise():
-   print "%f  %f" % point
+   print("%f  %f" % point)
 
-print "\nHYDROGEN-HYDROGEN"
+print("\nHYDROGEN-HYDROGEN")
 
 rdf = rdfmonitor.getRDF( hydrogen, hydrogen )
 
 for point in rdf.normalise():
-   print "%f  %f" % point
+   print("%f  %f" % point)
 

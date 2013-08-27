@@ -48,9 +48,9 @@ ethane = ethane.edit() \
                .atom(AtomName("H08")).setProperty("beading", BeadNum(2)).molecule() \
                .commit()
 
-print bonds.potentials()
-print angles.potentials()
-print dihedrals.potentials()
+print(bonds.potentials())
+print(angles.potentials())
+print(dihedrals.potentials())
 
 intraff = InternalFF("intraff")
 #intraclj = IntraCLJFF("intraclj")
@@ -74,5 +74,5 @@ PDB().write(system.molecules(), "test0000.pdb")
 
 for i in range(1,250):
     md.move(system, 10)
-    print system.energy(), md.kineticEnergy(), (system.energy()+md.kineticEnergy())
+    print(system.energy(), md.kineticEnergy(), (system.energy()+md.kineticEnergy()))
     PDB().write(system.molecules(), "test%0004d.pdb" % i)

@@ -29,7 +29,7 @@ cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
                                                 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -63,82 +63,82 @@ for i in range(1, mols.nMolecules()):
     cljff.add(mol)
 
 ms = t.elapsed()
-print "Parameterised all of the water molecules (in %d ms)!" % ms
+print("Parameterised all of the water molecules (in %d ms)!" % ms)
 
 system = System()
 
 system.add(cljff)
 
-print "Initial energy = %s" % system.energy()
+print("Initial energy = %s" % system.energy())
 
 mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
-print "Running 1000 moves directly..."
+print("Running 1000 moves directly...")
 t.start()
 system = moves.move(system, 1000, True)
 ms = t.elapsed()
-print "Direct moves took %d ms" % ms
+print("Direct moves took %d ms" % ms)
 
-print "Running 1000 simulation moves..."
+print("Running 1000 simulation moves...")
 
 t.start()
 sim = Simulation.run(system, moves, 1000)
 ms = t.elapsed()
 
-print "Done! - took %d ms" % ms
+print("Done! - took %d ms" % ms)
 
-print sim.hasFinished()
-print sim.isRunning()
+print(sim.hasFinished())
+print(sim.isRunning())
 
-print "Running 1000 moves on a Cluster node"
+print("Running 1000 moves on a Cluster node")
 nodes = Cluster.getNode()
 this_thread = nodes.borrowThisThread()
 
 if nodes.isEmpty():
    this_thread = nodes.borrowThisThread()
 
-print nodes
+print(nodes)
 
 node = nodes.getNode()
 
-print node
+print(node)
 
 t.start()
 sim = Simulation.run(node, system, moves, 1000)
 ms = t.elapsed()
 
-print "Submitted in %d ms" % ms
+print("Submitted in %d ms" % ms)
 
-print sim.hasFinished()
-print sim.isRunning()
+print(sim.hasFinished())
+print(sim.isRunning())
 
-print "Waiting..."
+print("Waiting...")
 sim.wait()
 ms = t.elapsed()
 
 system = sim.system()
 
-print "Final energy = %s" % system.energy()
+print("Final energy = %s" % system.energy())
 
 system.mustNowRecalculateFromScratch();
 
-print "Are we sure? = %s" % system.energy()
+print("Are we sure? = %s" % system.energy())
 
 mc = sim.moves().moves()[0]
 
-print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
-                            mc.nRejected(), 100 * mc.acceptanceRatio())
+print("nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio()))
 
-print "Took %d ms" % ms
+print("Took %d ms" % ms)
 
 #mc.setSynchronisedTranslation(True)
 #mc.setSynchronisedRotation(True)
 #moves = SameMoves(mc)
 
 for i in range(0,10):
-    print i+1
+    print(i+1)
     #node = nodes.getNode()
     #sim = Simulation.run(node, system, moves, 1)
 
@@ -147,6 +147,6 @@ for i in range(0,10):
 
     system = moves.move(system, 1000, False)
 
-    print moves
+    print(moves)
 
     PDB().write(system.molecules(), "test%003d.pdb" % (i+1))

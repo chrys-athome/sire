@@ -25,7 +25,7 @@ cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
 
-print "Read in %d molecules!" % mols.nMolecules()
+print("Read in %d molecules!" % mols.nMolecules())
 
 i = 0
 
@@ -59,15 +59,15 @@ for i in range(1, mols.nMolecules()):
     cljff.add(mol)    
 
 ms = t.elapsed()
-print "Parameterised all of the water molecules (in %d ms)!" % ms
+print("Parameterised all of the water molecules (in %d ms)!" % ms)
 
 def printMols( mols, molrange ):
 
    for i in molrange:
        mol_i = mols[ MolIdx(i) ]
-       print i, mol_i, mol_i.evaluate().center()
+       print(i, mol_i, mol_i.evaluate().center())
 
-print "\nHERE ARE MOLECULES 0, 1, 10 and 20"
+print("\nHERE ARE MOLECULES 0, 1, 10 and 20")
 printMols( cljff, [0,1,10,20] )
 
 system = System()
@@ -78,11 +78,11 @@ t.start()
 nrg = system.energy()
 ms = t.elapsed()
 
-print "\nEnergy = %f kcal mol-1 - took %d ms" % (nrg.to(kcal_per_mol), ms)
+print("\nEnergy = %f kcal mol-1 - took %d ms" % (nrg.to(kcal_per_mol), ms))
 
 def testConstraint(points, system):
 
-    print "Creating the identity constraint..."
+    print("Creating the identity constraint...")
     t.start()
 
     if len(points) == 0:
@@ -91,16 +91,16 @@ def testConstraint(points, system):
         idcons = IdentityConstraint( points, system[MGIdx(0)] )
 
     ms = t.elapsed()
-    print "...took %d ms" % ms
+    print("...took %d ms" % ms)
 
-    print "\nApplying the constraint..."
+    print("\nApplying the constraint...")
     t.start()
 
     mols = idcons.update(system)
 
     ms = t.elapsed()
 
-    print "...took %d ms" % ms
+    print("...took %d ms" % ms)
 
     return mols
 
@@ -112,94 +112,94 @@ for i in range(0,system.nMolecules()):
 def printMolecules(mols):
     for molnum in mols.molNums():
         mol = mols[molnum]
-        print molnum, mol, mol.evaluate().center()
+        print(molnum, mol, mol.evaluate().center())
 
-print "\nHere are the coordinates of the centers of molecules 10 and 20"
-print centers[10], centers[20]
+print("\nHere are the coordinates of the centers of molecules 10 and 20")
+print(centers[10], centers[20])
 
-print "\nTesting centers[0], centers[1]"
+print("\nTesting centers[0], centers[1]")
 mols = testConstraint( [centers[0], centers[1]], system )
-print mols
+print(mols)
 printMolecules(mols)
 
-print "\nTesting centers[10], centers[20]"
+print("\nTesting centers[10], centers[20]")
 mols = testConstraint( [centers[10], centers[20]], system )
-print mols
+print(mols)
 printMolecules(mols)
 
-print "\nTesting centers[20], centers[10]"
+print("\nTesting centers[20], centers[10]")
 mols = testConstraint( [centers[20], centers[10]], system )
-print mols            
+print(mols)            
 printMolecules(mols)
 
-print "\nTesting []"
+print("\nTesting []")
 mols = testConstraint( [], system )
-print mols
+print(mols)
 printMolecules(mols)
 
-print "\nCOMPARISON TEST (centers[20], centers[10])"
+print("\nCOMPARISON TEST (centers[20], centers[10])")
 idcons = IdentityConstraint( [centers[20], centers[10]], system[MGIdx(0)] )
 mols = idcons.update(system)
-print "\nDEFAULT"
-print mols
+print("\nDEFAULT")
+print(mols)
 printMolecules(mols)
 
-print "\nFEWPOINTS"
+print("\nFEWPOINTS")
 idcons.useFewPointsAlgorithm()
 mols = idcons.update(system)
-print mols
+print(mols)
 printMolecules(mols)
 
-print "\nMANYPOINTS"
+print("\nMANYPOINTS")
 idcons.useManyPointsAlgorithm()
 mols = idcons.update(system)
-print mols
+print(mols)
 printMolecules(mols)
 
-print "\nREPEAT MANYPOINTS"
+print("\nREPEAT MANYPOINTS")
 mols = idcons.update(system)
-print mols
+print(mols)
 printMolecules(mols)
 
-print "\nCOMPARISON TEST (centers[99])"
+print("\nCOMPARISON TEST (centers[99])")
 idcons = IdentityConstraint( [centers[99]], system[MGIdx(0)] )
 mols = idcons.update(system)
-print "\nDEFAULT"
-print mols
+print("\nDEFAULT")
+print(mols)
 printMolecules(mols)
 
-print "\nSINGLEPOINT"
+print("\nSINGLEPOINT")
 idcons.useSinglePointAlgorithm()
 mols = idcons.update(system)
-print mols
+print(mols)
 printMolecules(mols)
 
-print "\nFEWPOINTS"
+print("\nFEWPOINTS")
 idcons.useFewPointsAlgorithm()
 mols = idcons.update(system)
-print mols
+print(mols)
 printMolecules(mols)
 
-print "\nMANYPOINTS"
+print("\nMANYPOINTS")
 idcons.useManyPointsAlgorithm()
 mols = idcons.update(system)
-print mols
+print(mols)
 printMolecules(mols)
 
-print "\nAPPLICATION TEST"
+print("\nAPPLICATION TEST")
 
 idcons = IdentityConstraint( [centers[99], centers[100], centers[101], centers[102]], system[MGIdx(0)] )
 mols = idcons.update(system)
-print "\nDEFAULT"
-print mols
+print("\nDEFAULT")
+print(mols)
 printMolecules(mols)
 
-print "\nUPDATING SYSTEM"
-print system.version()
+print("\nUPDATING SYSTEM")
+print(system.version())
 system.update(mols)
-print system.version()
+print(system.version())
 
 mols = idcons.update(system)
-print "\nPOST-UPDATE"
-print mols
+print("\nPOST-UPDATE")
+print(mols)
 printMolecules(mols)
