@@ -164,6 +164,9 @@ int main(int argc, char **argv)
                 warg_strings.append(my_script.absoluteFilePath().toStdWString());
                 python_argv[1] = const_cast<wchar_t*>(warg_strings.last().data());
                 python_argc += 1;
+
+                //we must not now run ipython
+                ignore_ipython = true;
             }
         }
 
