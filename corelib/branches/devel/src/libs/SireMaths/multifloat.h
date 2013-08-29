@@ -277,7 +277,7 @@ private:
         #ifndef SIRE_SKIP_INLINE_FUNCTIONS
         static float getBinaryOne()
         {
-            const unsigned int x = 0xFFFFFFFF;
+            const quint32 x = 0xFFFFFFFF;
             return *(reinterpret_cast<const float*>(&x));
         }
             #ifdef MULTIFLOAT_CHECK_ALIGNMENT

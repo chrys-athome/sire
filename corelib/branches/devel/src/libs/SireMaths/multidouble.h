@@ -220,7 +220,7 @@ private:
         #ifndef SIRE_SKIP_INLINE_FUNCTIONS
         static double getBinaryOne()
         {
-            const quint64 x = 0xFFFFFFFFFFFFFFFF;
+            const quint64 x = 0xFFFFFFFFFFFFFFFFULL;
             return *(reinterpret_cast<const double*>(&x));
         }
     
