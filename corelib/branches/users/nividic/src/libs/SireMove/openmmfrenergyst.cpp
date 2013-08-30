@@ -390,7 +390,7 @@ void OpenMMFrEnergyST::initialise()  {
     if ( flag_cutoff == NOCUTOFF ){
 
 
-        custom_force_field = new OpenMM::CustomNonbondedForce("(1.0 - isSolvent1 * isSolvent2 * SSOnOff) * (Hls + Hcs);"
+        custom_force_field = new OpenMM::CustomNonbondedForce("(1.0 - isSolvent1 * isSolvent2 * SSOnOff) * (Hcs + Hls);"
                                                               "Hcs = (lambda^n) * 138.935456 * q_prod/sqrt(diff_cl+r^2);"
                                                               "diff_cl = (1.0-lambda) * 0.01;"
                                                               "Hls = 4.0 * eps_avg * (LJ*LJ-LJ);"
@@ -704,6 +704,7 @@ void OpenMMFrEnergyST::initialise()  {
     //double y = ...; double z = ...;
     //QVector< QPair<AtomNum,Vector> > vals;
     //vals.append( QPair<AtomNum,Vector>(AtomNum(num.toInt()), Vector(x,y,z) ) );
+
 
 /***************************************************************************RESTRAINTS************************************************************/
 
@@ -1188,7 +1189,7 @@ void OpenMMFrEnergyST::initialise()  {
                 int nrestrainedatoms = restrainedAtoms.property(QString("nrestrainedatoms")).asA<VariantProperty>().toInt();
 
                 if (true)
-                    qDebug() << " nrestrainedatoms " << nrestrainedatoms ;
+                    qDebug() << "nrestrainedatoms = " << nrestrainedatoms ;
 
                 for (int i=0; i < nrestrainedatoms ; i++){
 
@@ -1201,7 +1202,7 @@ void OpenMMFrEnergyST::initialise()  {
 
                     int openmmindex = AtomNumToOpenMMIndex[atomnum];
 
-                    if (Debug){
+                    if (true){
                         qDebug() << "atomnum " << atomnum << " openmmindex " << openmmindex << " x " << xref << " y " << yref << " z " << zref << " k " << k << " d " << d;
                     }
 
@@ -1445,7 +1446,7 @@ void OpenMMFrEnergyST::initialise()  {
             }
             else if ( flag_constraint == ALLBONDS || flag_constraint == HANGLES ){
                 system_openmm->addConstraint(idx0,idx1, r0 *  OpenMM::NmPerAngstrom);
-                cout << "\nALLBONDS or HANGLES ADDED BOND CONSTRAINT TO " << atom0.toStdString() << " AND " << atom1.toStdString() << "\n";
+                //cout << "\nALLBONDS or HANGLES ADDED BOND CONSTRAINT TO " << atom0.toStdString() << " AND " << atom1.toStdString() << "\n";
             }
             else if ( flag_constraint == HBONDS ){
 
@@ -1934,7 +1935,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
     else 
         throw SireError::program_bug(QObject::tr("The user defined Integrator type is not supported. Available types are leapfrogverlet, variableleapfrogverlet, langevin, variablelangevin, brownian"), CODELOC);
 
-    if (Debug){
+    if (true){
         qDebug() << "Using Integrator: " << Integrator_type;
 
         qDebug() << "Integration step = " << dt <<" ps";
@@ -2126,12 +2127,14 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     int sample_count=1;
 
+
     /*state_openmm=context_openmm.getState(infoMask);
-    qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
-    qDebug() << "Potential Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
-    qDebug() << "Kinetic Energy = " <<  state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
+    //qDebug() << "TOTAL Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ + state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
+    //qDebug() << "Potential Energy = " <<  state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
+    //qDebug() << "Kinetic Energy = " <<  state_openmm.getKineticEnergy() * OpenMM::KcalPerKJ << " kcal/mol";
+    
+    qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
     return;*/
-    //qDebug()  <<"*Lambda = " << Alchemical_value << " Potential energy lambda  = " << QString::number(state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ,'g',9) << " [A + A^2] kcal" << "\n";
 
 
     if(coord_freq > 0)
@@ -2144,8 +2147,12 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             qDebug() << "Perturbed energy flag index" << i << " Value = " << perturbed_energies[i];
     }
 
-    /*vector<double> center(3);
-    center[0] = 0.0;
+    vector<double> center(3);
+    /*center[0] = 23.7816;
+    center[1] = 36.3938;
+    center[2] = 31.8975; */
+    
+    /*center[0] = 0.0;
     center[1] = 0.0;
     center[2] = 0.0; 
 
@@ -2171,27 +2178,38 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         n_samples = (nmoves - new_nmoves) / energy_frequency;
     }
 
+    bool switch_step = true;
     // Why is sample_count double precision?
     while(sample_count<=n_samples){
 
         //*********************MD STEPS****************************
         integrator_openmm->step(energy_frequency);
-        
+
         context_openmm.setParameter("SSOnOff",1.0);//Solvent-Solvent OFF
+
+       /* qDebug() << "********************************************HERE*************************************";
+
+        return;*/
 
         //dcd.write((int) sample_count);//Save a frame
 
         state_openmm=context_openmm.getState(infoMask);
 
-        if(Debug)
-            qDebug()<< "Total Time = " << state_openmm.getTime() << " ps";
 
-        /*if (Debug) {
-            positions_openmm = state_openmm.getPositions();
-            for (int i=0; i < 500; i++){
-                qDebug()<< " at " << i << " x " << positions_openmm[i][0] << " y " << positions_openmm[i][1] << " z " << positions_openmm[i][2] ;
-            }
-        }*/
+
+        double time;
+        if(true){
+            time = state_openmm.getTime();
+            qDebug()<< "Total Time = " << time << " ps";
+        }
+        
+        if(time > 10.0 && switch_step == true){
+            qDebug() << "New time step  = 2 ps";
+            switch_step = false;
+            integrator_openmm->setStepSize(0.002);
+        }
+
+
 
         double potential_energy_lambda = state_openmm.getPotentialEnergy();
 
@@ -2230,11 +2248,15 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
             printf("*Potential energy lambda = %f kcal/mol\n" , state_openmm.getPotentialEnergy() * OpenMM::KcalPerKJ);
         }
 
-        // JM July 13 commenting out this block because in the system I am simulating atm a high energy is actually possible...
-        /*if(potential_energy_lambda > 1000000.0){
+        if(potential_energy_lambda > 1000000.0){
             throw SireError::program_bug(QObject::tr("********************* Energy Too High. Error! *******************"), CODELOC);
             exit(-1);
-        }*/
+        }
+        
+          if(potential_energy_lambda != potential_energy_lambda){
+            throw SireError::program_bug(QObject::tr("********************* NAN Error! *******************"), CODELOC);
+            exit(-1);
+        }
 
         if((Alchemical_value + delta_alchemical)>1.0){
 
@@ -2397,10 +2419,13 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         double Energy_GB = -(1.0/beta)*log(avg_GB);
 
-        double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2 * delta_alchemical);
+        double Energy_Gradient_lamda = (Energy_GF - Energy_GB) / (2.0 * delta_alchemical);
 
-        if(Debug)
-            qDebug() << "\n\n*Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
+
+        if(true){
+            qDebug() << "\n\n*Cumulative Energy Gradient = " << Energy_Gradient_lamda * OpenMM::KcalPerKJ << " kcal/(mol lambda)" ;
+            qDebug() << "*Istantaneus Energy Gradient = " << -1.0/(2.0*delta_alchemical*beta) * log(plus / minus) * OpenMM::KcalPerKJ << " kcal/(mol lambda)" << "\n\n";
+        }
 
 
         // JM why buffer_coords is used to store gradients?
