@@ -180,6 +180,17 @@ public:
 
     void setTimetoSkip(SireUnits::Dimension::Time);
 
+    void setMinimization(bool);
+
+    double getMinimizeTol(void);
+
+    void setMinimizeTol(double);
+
+    int getMinimizeIterations(void);
+
+    void setMinimizeIterations(int);
+
+
 
 private:
     /** Whether or not to save the velocities after every step, or to save them at the end of all of the steps */
@@ -254,6 +265,12 @@ private:
     double integration_tol;
 
     SireUnits::Dimension::Time timeskip;
+
+    bool minimize;
+
+    double minimize_tol;
+
+    int minimize_iterations;
 };
 
 

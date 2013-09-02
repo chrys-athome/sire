@@ -132,7 +132,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const OpenMMFrEnergyST 
         << velver.MCBarostat_flag << velver.MCBarostat_frequency << velver.ConstraintType << velver.Pressure << velver.Temperature
         <<velver.platform_type << velver.Restraint_flag << velver.CMMremoval_frequency << velver.buffer_frequency << velver.energy_frequency
         << velver.device_index <<velver.precision << velver.Alchemical_value << velver.coulomb_power << velver.shift_delta << velver.delta_alchemical << velver.buffer_coords
-        << velver.gradients << velver.energies <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol << velver.timeskip
+        << velver.gradients << velver.energies <<velver.perturbed_energies <<  velver.Integrator_type << velver.friction << velver.integration_tol << velver.timeskip 
+        << velver.minimize << velver.minimize_tol << velver.minimize_iterations
         << static_cast<const Integrator&>(velver);
 
     // Free OpenMM pointers??
@@ -152,9 +153,10 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, OpenMMFrEnergyST &velve
         >> velver.CutoffType >> velver.cutoff_distance >> velver.field_dielectric
         >> velver.Andersen_flag >>  velver.Andersen_frequency 
         >> velver.MCBarostat_flag >> velver.MCBarostat_frequency >> velver.ConstraintType >> velver.Pressure >> velver.Temperature 
-	>> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency >> velver.energy_frequency
+        >> velver.platform_type >> velver.Restraint_flag >> velver.CMMremoval_frequency >> velver.buffer_frequency >> velver.energy_frequency
         >> velver.device_index >> velver.precision >> velver.Alchemical_value >> velver.coulomb_power >> velver.shift_delta >> velver.delta_alchemical >> velver.buffer_coords
-	>> velver.gradients >> velver.energies >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol >> velver.timeskip
+        >> velver.gradients >> velver.energies >> velver.perturbed_energies >> velver.Integrator_type >> velver.friction >> velver.integration_tol >> velver.timeskip
+        >> velver.minimize >> velver.minimize_tol >> velver.minimize_iterations
         >> static_cast<Integrator&>(velver);
 
         // Maybe....need to reinitialise from molgroup because openmm system was not serialised...
@@ -179,9 +181,10 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(bool frequent_save)
                 Andersen_flag(false),Andersen_frequency(90.0), MCBarostat_flag(false),
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
-	        CMMremoval_frequency(0), buffer_frequency(0),energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
-		  shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
-                Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond)
+                CMMremoval_frequency(0), buffer_frequency(0),energy_frequency(100),device_index("0"), precision("single"), Alchemical_value(0.5),coulomb_power(0),
+                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
+                Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
+                minimize(false),minimize_tol(1.0),minimize_iterations(0)
 {}
 
 /** Constructor using the passed molecule groups */
@@ -194,8 +197,9 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const MoleculeGroup &molecule_group, const Mo
                 MCBarostat_frequency(25),ConstraintType("none"),
                 Pressure(1.0 * bar),Temperature(300.0 * kelvin),platform_type("Reference"),Restraint_flag(false),
                 CMMremoval_frequency(0), buffer_frequency(0), energy_frequency(100),device_index("0"),precision("single"),Alchemical_value(0.5),coulomb_power(0),
-		  shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
-                Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond)
+                shift_delta(2.0),delta_alchemical(0.001),buffer_coords(false),gradients(),energies(), perturbed_energies(),
+                Integrator_type("leapfrogverlet"),friction(1.0 / picosecond ),integration_tol(0.001),timeskip(0.0 * picosecond),
+                minimize(false),minimize_tol(1.0),minimize_iterations(0)
 {}
 
 /** Copy constructor */
@@ -211,11 +215,12 @@ OpenMMFrEnergyST::OpenMMFrEnergyST(const OpenMMFrEnergyST &other)
                 MCBarostat_frequency(other.MCBarostat_frequency),ConstraintType(other.ConstraintType), 
                 Pressure(other.Pressure), Temperature(other.Temperature),platform_type(other.platform_type),
                 Restraint_flag(other.Restraint_flag),CMMremoval_frequency(other.CMMremoval_frequency),
-	        buffer_frequency(other.buffer_frequency), energy_frequency(other.energy_frequency),device_index(other.device_index),precision(other.precision),Alchemical_value(other.Alchemical_value),
+                buffer_frequency(other.buffer_frequency), energy_frequency(other.energy_frequency),device_index(other.device_index),precision(other.precision),Alchemical_value(other.Alchemical_value),
                 coulomb_power(other.coulomb_power),shift_delta(other.shift_delta),
-		  delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients),energies(other.energies), 
-		  perturbed_energies(other.perturbed_energies),
-                Integrator_type(other.Integrator_type),friction(other.friction),integration_tol(other.integration_tol),timeskip(other.timeskip)
+                delta_alchemical(other.delta_alchemical),buffer_coords(other.buffer_coords),gradients(other.gradients),energies(other.energies), 
+                perturbed_energies(other.perturbed_energies),
+                Integrator_type(other.Integrator_type),friction(other.friction),integration_tol(other.integration_tol),timeskip(other.timeskip),
+                minimize(other.minimize),minimize_tol(other.minimize_tol),minimize_iterations(other.minimize_iterations)
 {}
 
 /** Destructor */
@@ -265,6 +270,9 @@ OpenMMFrEnergyST& OpenMMFrEnergyST::operator=(const OpenMMFrEnergyST &other)
     friction = other.friction;
     integration_tol = other.integration_tol;
     timeskip=other.timeskip;
+    minimize=other.minimize;
+    minimize_tol=other.minimize_tol;
+    minimize_iterations=other.minimize_iterations;
 
     return *this;
 }
@@ -2158,6 +2166,17 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     DCD dcd("traj.dcd", true,CUTOFFPERIODIC, center, energy_frequency, nats, dt,  context_openmm, ws );*/
 
+
+    if(minimize){
+        if(true){
+            qDebug() << "\nStarting minimization";
+            qDebug() << "Minimization tollerance = " << minimize_tol;
+            qDebug() << "Max number of minimitazion iterations (0 = untill tollerance is reached) = " << minimize_iterations << "\n"; 
+        }
+        OpenMM::LocalEnergyMinimizer::minimize(context_openmm,minimize_tol,minimize_iterations);
+    }
+
+
     //Time skipping
     const double time_skip = convertTo( timeskip.value(), picosecond);
 
@@ -2178,7 +2197,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         n_samples = (nmoves - new_nmoves) / energy_frequency;
     }
 
-    bool switch_step = true;
+
     // Why is sample_count double precision?
     while(sample_count<=n_samples){
 
@@ -2195,21 +2214,7 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
         state_openmm=context_openmm.getState(infoMask);
 
-
-
-        double time;
-        if(true){
-            time = state_openmm.getTime();
-            qDebug()<< "Total Time = " << time << " ps";
-        }
-        
-        if(time > 10.0 && switch_step == true){
-            qDebug() << "New time step  = 2 ps";
-            switch_step = false;
-            integrator_openmm->setStepSize(0.002);
-        }
-
-
+        qDebug()<< "Total Time = " << state_openmm.getTime() << " ps";
 
         double potential_energy_lambda = state_openmm.getPotentialEnergy();
 
@@ -2224,10 +2229,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
         // Because looping from 1 to n_samples
         int modulo = 1;
         if (coord_freq > 0)
-        modulo =  sample_count % ( (coord_freq / energy_frequency ) );
+            modulo =  sample_count % ( (coord_freq / energy_frequency ) );
 
         if (Debug)
-        qDebug() << "modulo is " << modulo;
+            qDebug() << "modulo is " << modulo;
 
         if( coord_freq > 0 and modulo == 0 ){
             if (Debug)
@@ -2476,6 +2481,10 @@ void OpenMMFrEnergyST::integrate(IntegratorWorkspace &workspace, const Symbol &n
 
     /**********************************************TO BE REMOVED*****************************************/
     //dcd.close();
+
+    //Disable Minimization because of multiple cycles
+    if(minimize)
+        minimize=false;
 
 
     if (Debug)
@@ -2960,15 +2969,55 @@ void OpenMMFrEnergyST::setIntegration_tollerance(double tollerance){
 
 }
 
+/** Get total time to skip*/
 SireUnits::Dimension::Time OpenMMFrEnergyST::getTimetoSkip(void){
 
     return timeskip;
 
 }
 
+/** Get total time to skip*/
 void OpenMMFrEnergyST::setTimetoSkip(SireUnits::Dimension::Time skip){
 
     timeskip = skip;
+
+}
+
+
+
+/** Set Minimization stage on/off*/
+void OpenMMFrEnergyST::setMinimization(bool on_off){
+
+    minimize = on_off;
+
+}
+
+
+/** Get Minimization Tollerance*/
+double OpenMMFrEnergyST::getMinimizeTol(void){
+
+    return minimize_tol;
+
+}
+
+/** Set Minimization Tollerance*/
+void OpenMMFrEnergyST::setMinimizeTol(double tollerance){
+
+    minimize_tol =  tollerance;
+
+}
+
+/** Get the maximum number of iterations in the minimization stage*/
+int OpenMMFrEnergyST::getMinimizeIterations(void){
+
+    return minimize_iterations;
+
+}
+
+/** Get the maximum number of iterations in the minimization stage*/
+void OpenMMFrEnergyST::setMinimizeIterations(int iterations){
+
+    minimize_iterations = iterations;
 
 }
 
