@@ -10,6 +10,7 @@
 
 #include "SireBase/process.h"
 #include "SireBase/getinstalldir.h"
+#include "SireBase/cpuid.h"
 
 #include "sire_config.h"
 #include "sire_python_config.h"
@@ -73,7 +74,10 @@ int main(int argc, char **argv)
 
         bool ignore_pythonpath = true;
         bool ignore_ipython = false;
-        int ppn = 1;
+
+        // by default, use all of the cores on the node
+        CPUID cpuid;
+        int ppn = cpuid.numCores();
 
         QList< std::wstring > warg_strings;
 

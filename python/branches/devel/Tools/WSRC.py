@@ -35,10 +35,10 @@ cutoff_method = Parameter("cutoff method", "shift electrostatics",
 rf_dielectric = Parameter("reaction field dielectric", 78.3,
                           """Dielectric constant to use if the reaction field cutoff method is used.""")
 
-coul_cutoff = Parameter("coulomb cutoff", 25*angstrom,
+coul_cutoff = Parameter("coulomb cutoff", 15*angstrom,
                         """Coulomb cutoff length""")
 
-lj_cutoff = Parameter("LJ cutoff", 10*angstrom,
+lj_cutoff = Parameter("LJ cutoff", 15*angstrom,
                       """Lennard Jones cutoff length""")
 
 grid_spacing = Parameter("grid spacing", 1.0*angstrom,
@@ -74,13 +74,13 @@ water_monitor_distance = Parameter("water monitor distance", 5.0*angstrom,
                                    """The distance up to which the free energy of water molecules
                                       interacting with the ligand should be recorded.""")
 
-waterbox_only = Parameter("waterbox only", False,
+waterbox_only = Parameter("waterbox only", True,
                           """Whether or not to select water molecules only from the water box.""")
 
 nrgmon_frequency = Parameter("energy monitor frequency", 1000, 
                              """The number of steps between each evaluation of the energy monitors.""")
 
-lambda_values = Parameter("lambda values", [0.01, 0.99],
+lambda_values = Parameter("lambda values", [ 0.005, 0.071, 0.137, 0.203, 0.269, 0.335, 0.401, 0.467, 0.533, 0.599, 0.665, 0.731, 0.797, 0.863, 0.929, 0.995 ],
                           """The values of lambda to use in the RETI free energy simulation.""")
 nsubmoves = Parameter("nsubmoves", 50000,
                       """The number of moves to perform between each RETI move.""")
@@ -89,7 +89,7 @@ ligand_name = Parameter("ligand name", "LIG",
                         """The name of the ligand. This should be the name of one of the residues
                            in the ligand, so that this program can find the correct molecule.""")
 
-reflection_radius = Parameter("reflection radius", None,
+reflection_radius = Parameter("reflection radius", 15*angstrom,
                               """The radius of the reflection sphere""")
 
 ligand_reflection_radius = Parameter("ligand reflection radius", 2*angstrom,
@@ -126,10 +126,10 @@ restart_file = Parameter("restart file", "wsrc_restart.s3",
 
 sysmoves_file = Parameter("sysmoves file", "wsrc_sysmoves.s3",
                           """Name of the file to save the initial WSRC pre-simulation system.""")
-nequilmoves = Parameter("nequilmoves", 5000,
+nequilmoves = Parameter("nequilmoves", 50000,
                         """Number of equilibration moves to perform before setting up the free energy simulation.""")
 
-nmoves = Parameter("nmoves", 5, """Number of RETI moves to perform during the simulation.""")
+nmoves = Parameter("nmoves", 600, """Number of RETI moves to perform during the simulation.""")
 
 coulomb_power = Parameter("coulomb power", 0,
                           """The soft-core coulomb power parameter""")
@@ -142,21 +142,21 @@ soften_water = Parameter("soften water", 1.1,
                             the swap-water cluster between lambda=0 and lambda=1. This helps keep the cluster
                             together as it is swapped between the two boxes.""")
 
-save_pdb = Parameter("save pdb", False,
+save_pdb = Parameter("save pdb", True,
                      """Whether or not to write a PDB of the system after each iteration.""")
 
 save_all_pdbs = Parameter("save all pdbs", False,
                           """Whether or not to write all of the PDBs. If not, only PDBs at the two 
                              end points of the simulation will be written.""")
 
-pdb_frequency = Parameter("pdb frequency", 1,
+pdb_frequency = Parameter("pdb frequency", 100,
                           """The frequency (number of iterations between) saving PDBs""")
 
-binwidth = Parameter("free energy bin width", 10 * kcal_per_mol,
+binwidth = Parameter("free energy bin width", 1 * kcal_per_mol,
                      """The size of the bins used in the histogram of energies collected
                         as part of creating the free energy average, in multiples of delta lambda""")
 
-restart_frequency = Parameter("restart frequency", 5,
+restart_frequency = Parameter("restart frequency", 10,
                               """The frequency (number of iterations between) saving the restart file for the simulation.""")
 
 ####################################################
